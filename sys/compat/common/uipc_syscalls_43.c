@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.28 2007/03/04 06:01:13 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.28.2.1 2007/06/09 23:57:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.28 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.28.2.1 2007/06/09 23:57:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.28 2007/03/04 06:01:13 christ
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <compat/sys/socket.h>
 #include <net/if.h>
+#include <compat/sys/socket.h>
+#include <compat/sys/sockio.h>
 
 #include <compat/common/compat_util.h>
 
@@ -247,8 +248,7 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		struct cmsghdr *cmsg;
 
 		/* safe - msg.msg_controllen set by kernel */
-		cmsg = (struct cmsghdr *) malloc(msg.msg_controllen,
-		    M_TEMP, M_WAITOK);
+		cmsg =  malloc(msg.msg_controllen, M_TEMP, M_WAITOK);
 
 		error = copyin(msg.msg_control, cmsg, msg.msg_controllen);
 		if (error) {
@@ -263,12 +263,11 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 			omsg.msg_accrightslen = 0;
 		}
 
-		free(cmsg, M_TEMP);
-
 		if (!error) {
 			error = copyout(&cmsg->cmsg_len,
 			    &SCARG(uap, msg)->msg_accrightslen, sizeof(int));
 		}
+		free(cmsg, M_TEMP);
 	}
 
 	if (!error && omsg.msg_name) {
@@ -318,106 +317,72 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 		syscallarg(void *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct omsghdr omsg;
 	struct msghdr msg;
-	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
-	void *sg = stackgap_init(p, 0);
+	struct mbuf *nam;
+	struct mbuf *ctl;
+	struct osockaddr *osa;
+	struct sockaddr *sa;
 
-	error = copyin(SCARG(uap, msg), (void *)&omsg,
-	    sizeof (struct omsghdr));
-	if (error)
+	error = copyin(SCARG(uap, msg), &omsg, sizeof (struct omsghdr));
+	if (error != 0)
 		return (error);
-	if ((u_int)omsg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)omsg.msg_iovlen > IOV_MAX)
-			return (EMSGSIZE);
-		iov = malloc(sizeof(struct iovec) * omsg.msg_iovlen,
-		    M_IOV, M_WAITOK);
-	} else
-		iov = aiov;
-	error = copyin((void *)omsg.msg_iov, (void *)iov,
-	    (unsigned)(omsg.msg_iovlen * sizeof (struct iovec)));
-	if (error)
-		goto done;
 
-	if (omsg.msg_name) {
-		struct osockaddr *osa;
-		struct sockaddr *sa, *usa;
+	msg.msg_iovlen = omsg.msg_iovlen;
+	msg.msg_iov = omsg.msg_iov;
 
-		if ((u_int) omsg.msg_namelen > UCHAR_MAX)
-			return (EINVAL);
+	error = sockargs(&nam, omsg.msg_name, omsg.msg_namelen, MT_SONAME);
+	if (error != 0)
+		return (error);
 
-		osa = malloc(omsg.msg_namelen, M_TEMP, M_WAITOK);
+	sa = mtod(nam, void *);
+	osa = mtod(nam, void *);
+	sa->sa_family = osa->sa_family;
+	sa->sa_len = omsg.msg_namelen;
 
-		if ((error = copyin(omsg.msg_name, osa, omsg.msg_namelen))) {
-			free(osa, M_TEMP);
-			return (error);
-		}
+	msg.msg_flags = MSG_IOVUSRSPACE | MSG_NAMEMBUF;
 
-		sa = (struct sockaddr *) osa;
-		sa->sa_family = osa->sa_family;
-		sa->sa_len = omsg.msg_namelen;
-
-		usa = stackgap_alloc(p, &sg, omsg.msg_namelen);
-		if (!usa) {
-			free(osa, M_TEMP);
-			return (ENOMEM);
-		}
-
-		(void) copyout(sa, usa, omsg.msg_namelen);
-		free(osa, M_TEMP);
-
-		msg.msg_name = usa;
-		msg.msg_namelen = omsg.msg_namelen;
-	} else {
-		msg.msg_name = NULL;
-		msg.msg_namelen = 0;
-	}
-	msg.msg_iovlen	= omsg.msg_iovlen;
-	msg.msg_iov	= iov;
-	msg.msg_flags	= 0;
+	msg.msg_name = nam;
+	msg.msg_namelen = omsg.msg_namelen;
 
 	if (omsg.msg_accrights && omsg.msg_accrightslen != 0) {
-		struct cmsghdr *cmsg, *ucmsg;
+		struct cmsghdr *cmsg;
+		u_int clen;
 
-		/* it was this way in 4.4BSD */
-		if ((u_int) omsg.msg_accrightslen > MLEN)
-			return (EINVAL);
+		clen = CMSG_SPACE(omsg.msg_accrightslen);
+		/* it was (almost) this way in 4.4BSD */
+		if (omsg.msg_accrightslen < 0 || clen > MLEN) {
+			error = EINVAL;
+			goto bad;
+		}
 
-		cmsg = malloc(CMSG_SPACE(omsg.msg_accrightslen), M_TEMP,
-		    M_WAITOK);
+		ctl = m_get(M_WAIT, MT_CONTROL);
+		ctl->m_len = clen;
+		cmsg = mtod(ctl, void *);
 		cmsg->cmsg_len		= CMSG_SPACE(omsg.msg_accrightslen);
 		cmsg->cmsg_level	= SOL_SOCKET;
 		cmsg->cmsg_type 	= SCM_RIGHTS;
 
 		error = copyin(omsg.msg_accrights, CMSG_DATA(cmsg),
 		    omsg.msg_accrightslen);
-		if (error) {
-			free(cmsg, M_TEMP);
-			return (error);
-		}
+		if (error)
+			goto bad;
 
-		ucmsg = stackgap_alloc(p, &sg, CMSG_SPACE(omsg.msg_accrightslen));
-		if (!ucmsg) {
-			free(cmsg, M_TEMP);
-			return (EMSGSIZE);
-		}
-
-		(void) copyout(cmsg, ucmsg, CMSG_SPACE(omsg.msg_accrightslen));
-		free(cmsg, M_TEMP);
-
-		msg.msg_control = ucmsg;
-		msg.msg_controllen = CMSG_SPACE(omsg.msg_accrightslen);
+		msg.msg_control = ctl;
+		msg.msg_controllen = clen;
+		msg.msg_flags |= MSG_CONTROLMBUF;
 	} else {
 		msg.msg_control = NULL;
 		msg.msg_controllen = 0;
 	}
 
-	error = sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
-done:
-	if (iov != aiov)
-		FREE(iov, M_IOV);
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+
+    bad:
+	if (nam != NULL)
+		m_free(nam);
+
 	return (error);
 }
 
@@ -451,57 +416,60 @@ compat_43_sa_put(from)
 }
 
 int
-compat_ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
+compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
+    struct lwp *l)
 {
-	int error, ocmd = cmd;
-	struct ifreq *ifr = (struct ifreq *)data;
+	int error;
+	struct ifreq *ifr = data;
 	struct ifnet *ifp = ifunit(ifr->ifr_name);
+	struct sockaddr *sa;
 
 	if (ifp == NULL)
 		return ENXIO;
 
-	switch (cmd) {
-	case SIOCSIFADDR:
-	case SIOCSIFDSTADDR:
-	case SIOCSIFBRDADDR:
-	case SIOCSIFNETMASK:
+	switch (ocmd) {
+	case OSIOCSIFADDR:
+	case OSIOCSIFDSTADDR:
+	case OSIOCSIFBRDADDR:
+	case OSIOCSIFNETMASK:
+		sa = &ifr->ifr_addr;
 #if BYTE_ORDER != BIG_ENDIAN
-		if (ifr->ifr_addr.sa_family == 0 &&
-		    ifr->ifr_addr.sa_len < 16) {
-			ifr->ifr_addr.sa_family = ifr->ifr_addr.sa_len;
-			ifr->ifr_addr.sa_len = 16;
+		if (sa->sa_family == 0 && sa->sa_len < 16) {
+			sa->sa_family = sa->sa_len;
+			sa->sa_len = 16;
 		}
 #else
-		if (ifr->ifr_addr.sa_len == 0)
-			ifr->ifr_addr.sa_len = 16;
+		if (sa->sa_len == 0)
+			sa->sa_len = 16;
 #endif
 		break;
 
-	case OSIOCGIFADDR:
+	case OOSIOCGIFADDR:
 		cmd = SIOCGIFADDR;
 		break;
 
-	case OSIOCGIFDSTADDR:
+	case OOSIOCGIFDSTADDR:
 		cmd = SIOCGIFDSTADDR;
 		break;
 
-	case OSIOCGIFBRDADDR:
+	case OOSIOCGIFBRDADDR:
 		cmd = SIOCGIFBRDADDR;
 		break;
 
-	case OSIOCGIFNETMASK:
+	case OOSIOCGIFNETMASK:
 		cmd = SIOCGIFNETMASK;
 	}
 
 	error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)ifp, l);
+	    (struct mbuf *)cmd, (struct mbuf *)ifr, (struct mbuf *)ifp, l);
 
 	switch (ocmd) {
-	case OSIOCGIFADDR:
-	case OSIOCGIFDSTADDR:
-	case OSIOCGIFBRDADDR:
-	case OSIOCGIFNETMASK:
-		*(u_int16_t *)&ifr->ifr_addr = ifr->ifr_addr.sa_family;
+	case OOSIOCGIFADDR:
+	case OOSIOCGIFDSTADDR:
+	case OOSIOCGIFBRDADDR:
+	case OOSIOCGIFNETMASK:
+		*(u_int16_t *)&ifr->ifr_addr = 
+		    ((struct sockaddr *)&ifr->ifr_addr)->sa_family;
 	}
 	return error;
 }

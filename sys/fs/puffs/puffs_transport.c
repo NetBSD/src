@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.8.6.6 2007/06/08 14:15:01 ad Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.8.6.7 2007/06/09 23:58:02 ad Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -14,9 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -32,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.6 2007/06/08 14:15:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.7 2007/06/09 23:58:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

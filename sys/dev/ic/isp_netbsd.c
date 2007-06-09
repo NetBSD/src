@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.73.2.4 2007/05/27 14:30:03 ad Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.73.2.5 2007/06/09 23:57:50 ad Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.4 2007/05/27 14:30:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.5 2007/06/09 23:57:50 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -70,8 +70,8 @@ static void isp_polled_cmd_wait(struct ispsoftc *, XS_T *);
 static void isp_dog(void *);
 static void isp_gdt(void *);
 static void isp_ldt(void *);
-static void isp_make_here(void *, int);
-static void isp_make_gone(void *, int);
+static void isp_make_here(ispsoftc_t *, int);
+static void isp_make_gone(ispsoftc_t *, int);
 static void isp_fc_worker(void *);
 
 static const char *roles[4] = {
@@ -127,7 +127,6 @@ isp_attach(struct ispsoftc *isp)
 	if (IS_FC(isp)) {
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
 		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
-		isp->isp_osinfo.threadwork = 1;
 #ifdef	ISP_FW_CRASH_DUMP
 		if (IS_2200(isp)) {
 			FCPARAM(isp)->isp_dump_data =

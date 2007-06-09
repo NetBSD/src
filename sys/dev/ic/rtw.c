@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.85 2007/03/04 06:02:00 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.85.2.1 2007/06/09 23:57:51 ad Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.85 2007/03/04 06:02:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.85.2.1 2007/06/09 23:57:51 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -634,7 +634,7 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 	regs = &sc->sc_regs;
 	rk = &sc->sc_keys;
 
-	(void)memset(rk->rk_keys, 0, sizeof(rk->rk_keys));
+	(void)memset(rk, 0, sizeof(rk));
 
 	/* Temporarily use software crypto for all keys. */
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -678,9 +678,8 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 out:
 	RTW_WRITE8(regs, RTW_PSR, psr & ~RTW_PSR_PSEN);
 
-	bus_space_write_region_4(regs->r_bt, regs->r_bh,
-	    RTW_DK0, rk->rk_words,
-	    sizeof(rk->rk_words) / sizeof(rk->rk_words[0]));
+	bus_space_write_region_stream_4(regs->r_bt, regs->r_bh,
+	    RTW_DK0, rk->rk_words, __arraycount(rk->rk_words));
 
 	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
 	    BUS_SPACE_BARRIER_SYNC);
@@ -1523,7 +1522,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		len -= IEEE80211_CRC_LEN;
 
 		hwrate = __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK);
-		if (hwrate >= sizeof(ratetbl) / sizeof(ratetbl[0])) {
+		if (hwrate >= __arraycount(ratetbl)) {
 			printf("%s: unknown rate #%" __PRIuBITS "\n",
 			    sc->sc_dev.dv_xname,
 			    __SHIFTOUT(hstat, RTW_RXSTAT_RATE_MASK));
@@ -2604,17 +2603,6 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	/* XXX accept all broadcast if scanning */
-	if ((ifp->if_flags & IFF_BROADCAST) != 0)
-		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
-
-	if (ifp->if_flags & IFF_PROMISC) {
-		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
-allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
-		goto setit;
-	}
-
 	/*
 	 * Program the 64-bit multicast hash filter.
 	 */
@@ -2622,24 +2610,30 @@ allmulti:
 	while (enm != NULL) {
 		/* XXX */
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
-		    ETHER_ADDR_LEN) != 0)
-			goto allmulti;
+		    ETHER_ADDR_LEN) != 0) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			break;
+		}
 
 		hash = rtw_calchash(enm->enm_addrlo);
 		hashes[hash >> 5] |= (1 << (hash & 0x1f));
-		sc->sc_rcr |= RTW_RCR_AM;
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	/* all bits set => hash is useless */
-	if (~(hashes[0] & hashes[1]) == 0)
-		goto allmulti;
+	/* XXX accept all broadcast if scanning */
+	if ((ifp->if_flags & IFF_BROADCAST) != 0)
+		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
 
- setit:
-	if (ifp->if_flags & IFF_ALLMULTI) {
-		sc->sc_rcr |= RTW_RCR_AM;	/* accept all multicast */
-		hashes[0] = hashes[1] = 0xffffffff;
+	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_rcr |= RTW_RCR_AB;	/* accept all broadcast */
+		ifp->if_flags |= IFF_ALLMULTI;
 	}
+
+	if (ifp->if_flags & IFF_ALLMULTI)
+		hashes[0] = hashes[1] = 0xffffffff;
+
+	if ((hashes[0] | hashes[1]) != 0)
+		sc->sc_rcr |= RTW_RCR_AM;	/* accept multicast */
 
 	RTW_WRITE(regs, RTW_MAR0, hashes[0]);
 	RTW_WRITE(regs, RTW_MAR1, hashes[1]);
@@ -2650,8 +2644,6 @@ allmulti:
 	    ("%s: RTW_MAR0 %08x RTW_MAR1 %08x RTW_RCR %08x\n",
 	    sc->sc_dev.dv_xname, RTW_READ(regs, RTW_MAR0),
 	    RTW_READ(regs, RTW_MAR1), RTW_READ(regs, RTW_RCR)));
-
-	return;
 }
 
 static struct mbuf *
@@ -2917,43 +2909,31 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int rc = 0, s;
 	struct rtw_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 
 	s = splnet();
-	switch (cmd) {
-	case SIOCSIFFLAGS:
+	if (cmd == SIOCSIFFLAGS) {
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			if ((sc->sc_flags & RTW_F_ENABLED) != 0) {
+			if ((sc->sc_flags & RTW_F_ENABLED) != 0)
 				rtw_pktfilt_load(sc);
-			} else
+			else
 				rc = rtw_init(ifp);
 			RTW_PRINT_REGS(&sc->sc_regs, ifp->if_xname, __func__);
 		} else if ((sc->sc_flags & RTW_F_ENABLED) != 0) {
 			RTW_PRINT_REGS(&sc->sc_regs, ifp->if_xname, __func__);
 			rtw_stop(ifp, 1);
 		}
-		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if (cmd == SIOCADDMULTI)
-			rc = ether_addmulti(ifr, &sc->sc_ec);
-		else
-			rc = ether_delmulti(ifr, &sc->sc_ec);
-		if (rc != ENETRESET)
-			break;
+	} else if ((rc = ieee80211_ioctl(&sc->sc_ic, cmd, data)) != ENETRESET)
+		;	/* nothing to do */
+	else if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
+		/* reload packet filter if running */
 		if (ifp->if_flags & IFF_RUNNING)
 			rtw_pktfilt_load(sc);
 		rc = 0;
-		break;
-	default:
-		if ((rc = ieee80211_ioctl(&sc->sc_ic, cmd, data)) != ENETRESET)
-			break;
-		if ((sc->sc_flags & RTW_F_ENABLED) != 0)
-			rc = rtw_init(ifp);
-		else
-			rc = 0;
-		break;
-	}
+	} else if ((sc->sc_flags & RTW_F_ENABLED) != 0)
+		/* reinitialize h/w if activated */
+		rc = rtw_init(ifp);
+	else
+		rc = 0;
 	splx(s);
 	return rc;
 }

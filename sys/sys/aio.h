@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.5.2.2 2007/06/09 21:37:28 ad Exp $	*/
+/*	$NetBSD: aio.h,v 1.5.2.3 2007/06/09 23:58:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -47,16 +47,16 @@
  * Defined in the Base Definitions volume of IEEE Std 1003.1-2001 .
  */
 struct aiocb {
-	int aio_fildes;			/* File descriptor */
 	off_t aio_offset;		/* File offset */
 	volatile void *aio_buf;		/* I/O buffer in process space */
 	size_t aio_nbytes;		/* Length of transfer */
+	int aio_fildes;			/* File descriptor */
+	int aio_lio_opcode;		/* LIO opcode */
 	int aio_reqprio;		/* Request priority offset */
 	struct sigevent aio_sigevent;	/* Signal to deliver */
-	int aio_lio_opcode;		/* LIO opcode */
 
 	/* Internal kernel variables */
-	char _state;			/* State of the job */
+	int _state;			/* State of the job */
 	int _errno;			/* Error value */
 	ssize_t _retval;		/* Return value */
 };
@@ -99,7 +99,6 @@ struct aio_job {
 struct lio_req {
 	u_int refcnt;		/* Reference counter */
 	struct sigevent sig;	/* Signal of lio_listio() calls */
-	bool dofree;		/* Worker will free the structure */
 };
 
 /* Structure of AIO data for process */
@@ -108,19 +107,16 @@ struct aioproc {
 	kcondvar_t aio_worker_cv;	/* Signals on a new job */
 	kcondvar_t done_cv;		/* Signals when the job is done */
 	struct aio_job *curjob;		/* Currently processing AIO job */
-	struct pool jobs_pool;		/* Jobs pool */
 	unsigned int jobs_count;	/* Count of the jobs */
-	TAILQ_HEAD(, aio_job) jobs_queue;	/* Queue of the AIO jobs */
-	struct pool lio_pool;		/* List of LIO operations */
+	TAILQ_HEAD(, aio_job) jobs_queue;/* Queue of the AIO jobs */
 	struct lwp *aio_worker;		/* AIO worker thread */
 };
 
 /* Prototypes */
-int aio_init(struct proc *);
-void aio_exit(struct proc *);
-#if defined(DDB)
-void aio_print_jobs(void (*pr)(const char *, ...));
-#endif
+void	aio_sysinit(void);
+int	aio_init(struct proc *);
+void	aio_exit(struct proc *, struct aioproc *);
+void	aio_print_jobs(void (*pr)(const char *, ...));
 
 #endif /* _KERNEL */
 

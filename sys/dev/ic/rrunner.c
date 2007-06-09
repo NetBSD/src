@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.61.2.1 2007/04/05 21:57:45 ad Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.61.2.2 2007/06/09 23:57:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.61.2.1 2007/04/05 21:57:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.61.2.2 2007/06/09 23:57:51 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -1325,8 +1325,7 @@ esh_fpstrategy(bp)
 
 	s = splnet();
 	if (sc == NULL || ulp == HIPPI_ULP_802) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
+		error = ENXIO;
 		goto done;
 	}
 
@@ -1336,8 +1335,7 @@ esh_fpstrategy(bp)
 #define UP_FLAGS (ESH_FL_INITIALIZED | ESH_FL_RUNCODE_UP)
 
 	if ((sc->sc_flags & UP_FLAGS) != UP_FLAGS) {
-		bp->b_error = EBUSY;
-		bp->b_flags |= B_ERROR;
+		error = EBUSY;
 		goto done;
 	}
 #undef UP_FLAGS
@@ -1352,8 +1350,7 @@ esh_fpstrategy(bp)
 		struct esh_dmainfo *di = esh_new_dmainfo(sc);
 
 		if (di == NULL) {
-			bp->b_error = ENOMEM;
-			bp->b_flags |= B_ERROR;
+			error = ENOMEM;
 			goto done;
 		}
 		di->ed_buf = bp;
@@ -1366,8 +1363,7 @@ esh_fpstrategy(bp)
 			       "bus_dmamap_load "
 			       "failed\terror code %d\n",
 			       sc->sc_dev.dv_xname, error);
-			bp->b_error = ENOBUFS;
-			bp->b_flags |= B_ERROR;
+			error = ENOBUFS;
 			esh_free_dmainfo(sc, di);
 			goto done;
 		}
@@ -1401,10 +1397,10 @@ esh_fpstrategy(bp)
 done:
 	splx(s);
 #ifdef ESH_PRINTF
-	printf("esh_fpstrategy:  failing, bp->b_error %d!\n",
-	       bp->b_error);
+	printf("esh_fpstrategy:  failing, error %d!\n",
+	       error);
 #endif
-	biodone(bp);
+	biodone(bp, error, bp->b_bcount);
 }
 
 /*
@@ -2205,7 +2201,8 @@ eshstart_cleanup(sc, consumer, error)
 				wakeup((void *) send->ec_cur_dmainfo);
 				send->ec_cur_dmainfo = NULL;
 			} else if (send->ec_cur_buf) {
-				biodone(send->ec_cur_buf);
+				biodone(send->ec_cur_buf, send->ec_cur_buf->b_error,
+				    send->ec_cur_buf->b_resid);
 				send->ec_cur_buf = NULL;
 			} else {
 				panic("%s:  eshstart_cleanup:  "
@@ -2729,7 +2726,8 @@ esh_read_fp_ring(sc, consumer, error, ulp)
 				di->ed_flags &=
 					~(ESH_DI_BUSY | ESH_DI_READING);
 				if (di->ed_buf != NULL)
-					biodone(di->ed_buf);
+					biodone(di->ed_buf, di->ed_buf->b_error, 
+					    di->ed_buf->b_resid);
 				else
 					wakeup((void *) di);
 				recv->ec_read_len = 0;
@@ -3377,11 +3375,7 @@ eshstop(sc)
 		m_freem(sc->sc_send.ec_cur_mbuf);
 	} else if (sc->sc_send.ec_cur_buf) {
 		struct buf *bp = sc->sc_send.ec_cur_buf;
-
-		bp->b_resid = bp->b_bcount;
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
+		biodone(bp, EIO, 0);
 	} else if (sc->sc_send.ec_cur_dmainfo) {
 		struct esh_dmainfo *di = sc->sc_send.ec_cur_dmainfo;
 

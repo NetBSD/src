@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6.2.1 2007/05/27 12:27:19 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.2.2 2007/06/09 23:55:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.2.1 2007/05/27 12:27:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.2.2 2007/06/09 23:55:02 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -104,7 +104,21 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	int i;
 
 	/* Clear BSS */
-	memset(edata, 0, end - edata);
+	if (bi == NULL || bi->bi_size != sizeof(struct bootinfo)) {
+		/*
+		 * No bootinfo, so assume we are loaded by
+		 * the firmware directly and have to clear BSS here.
+		 */
+		memset(edata, 0, end - edata);
+		/*
+		 * XXX
+		 * lwp0 and cpu_info_store are allocated in BSS
+		 * and initialized before mach_init() is called,
+		 * so restore them again.
+		 */
+		lwp0.l_cpu = &cpu_info_store;
+		cpu_info_store.ci_curlwp = &lwp0;
+	}
 
 	/* Setup early-console with BIOS ROM routines */
 	rom_cons_init();

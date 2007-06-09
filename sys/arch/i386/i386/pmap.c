@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.7 2007/05/27 12:27:31 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.8 2007/06/09 23:55:12 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.7 2007/05/27 12:27:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.8 2007/06/09 23:55:12 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -487,8 +487,7 @@ static bool		 pmap_reactivate(struct pmap *);
  */
 
 inline static bool
-pmap_is_curpmap(pmap)
-	struct pmap *pmap;
+pmap_is_curpmap(struct pmap *pmap)
 {
 
 	return((pmap == pmap_kernel()) ||
@@ -500,9 +499,7 @@ pmap_is_curpmap(pmap)
  */
 
 inline static bool
-pmap_is_active(pmap, cpu_id)
-	struct pmap *pmap;
-	int cpu_id;
+pmap_is_active(struct pmap *pmap, int cpu_id)
 {
 
 	return (pmap == pmap_kernel() ||
@@ -553,9 +550,7 @@ pmap_apte_flush(struct pmap *pmap)
  */
 
 static pt_entry_t *
-pmap_map_ptes(pmap, pmap2)
-	struct pmap *pmap;
-	struct pmap **pmap2;
+pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2)
 {
 	pd_entry_t opde, *base;
 	struct pmap *ourpmap;
@@ -631,9 +626,7 @@ pmap_map_ptes(pmap, pmap2)
  */
 
 static void
-pmap_unmap_ptes(pmap, pmap2)
-	struct pmap *pmap;
-	struct pmap *pmap2;
+pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 {
 
 	if (pmap == pmap_kernel()) {
@@ -733,10 +726,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
  */
 
 void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte, npte;
 
@@ -779,9 +769,7 @@ pmap_kenter_pa(va, pa, prot)
  */
 
 void
-pmap_kremove(va, len)
-	vaddr_t va;
-	vsize_t len;
+pmap_kremove(vaddr_t va, vsize_t len)
 {
 	pt_entry_t *pte, opte;
 	int32_t cpumask = 0;
@@ -828,8 +816,7 @@ pmap_kremove(va, len)
  */
 
 void
-pmap_bootstrap(kva_start)
-	vaddr_t kva_start;
+pmap_bootstrap(vaddr_t kva_start)
 {
 	struct pmap *kpm;
 	vaddr_t kva;
@@ -1052,7 +1039,7 @@ pmap_bootstrap(kva_start)
  */
 
 void
-pmap_init()
+pmap_init(void)
 {
 
 	pmap_cpu_init_late(curcpu());
@@ -1145,9 +1132,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
  */
 
 static struct pv_entry *
-pmap_alloc_pv(pmap, mode)
-	struct pmap *pmap;
-	int mode;
+pmap_alloc_pv(struct pmap *pmap, int mode)
 {
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
@@ -1256,10 +1241,7 @@ pmap_alloc_pvpage(struct pmap_cpu *pc, struct pmap *pmap, int mode)
  */
 
 static struct pv_entry *
-pmap_add_pvpage(pc, pvp, need_entry)
-	struct pmap_cpu *pc;
-	struct pv_page *pvp;
-	bool need_entry;
+pmap_add_pvpage(struct pmap_cpu *pc, struct pv_page *pvp, bool need_entry)
 {
 	int tofree, lcv;
 
@@ -1292,9 +1274,7 @@ pmap_add_pvpage(pc, pvp, need_entry)
  */
 
 static void
-pmap_free_pv_doit(pmap, pv)
-	struct pmap *pmap;
-	struct pv_entry *pv;
+pmap_free_pv_doit(struct pmap *pmap, struct pv_entry *pv)
 {
 	struct pv_page *pvp;
 	struct pmap_cpu *pc;
@@ -1340,9 +1320,7 @@ pmap_free_pv_doit(pmap, pv)
  */
 
 static void
-pmap_free_pv(pmap, pv)
-	struct pmap *pmap;
-	struct pv_entry *pv;
+pmap_free_pv(struct pmap *pmap, struct pv_entry *pv)
 {
 	struct pmap_cpu *pc;
 
@@ -1360,9 +1338,7 @@ pmap_free_pv(pmap, pv)
  */
 
 static void
-pmap_free_pvs(pmap, pvs)
-	struct pmap *pmap;
-	struct pv_entry *pvs;
+pmap_free_pvs(struct pmap *pmap, struct pv_entry *pvs)
 {
 	struct pv_entry *nextpv;
 	kmutex_t *lock, *lock2;
@@ -1451,12 +1427,11 @@ pmap_lock_pvhs(struct pv_head *pvh1, struct pv_head *pvh2)
  */
 
 static void
-pmap_enter_pv(pvh, pve, pmap, va, ptp)
-	struct pv_head *pvh;
-	struct pv_entry *pve;	/* preallocated pve for us to use */
-	struct pmap *pmap;
-	vaddr_t va;
-	struct vm_page *ptp;	/* PTP in pmap that maps this VA */
+pmap_enter_pv(struct pv_head *pvh,
+	      struct pv_entry *pve,	/* preallocated pve for us to use */
+	      struct pmap *pmap,
+	      vaddr_t va,
+	      struct vm_page *ptp)	/* PTP in pmap that maps this VA */
 {
 	pve->pv_pmap = pmap;
 	pve->pv_va = va;
@@ -1475,10 +1450,7 @@ pmap_enter_pv(pvh, pve, pmap, va, ptp)
  */
 
 static struct pv_entry *
-pmap_remove_pv(pvh, pmap, va)
-	struct pv_head *pvh;
-	struct pmap *pmap;
-	vaddr_t va;
+pmap_remove_pv(struct pv_head *pvh, struct pmap *pmap, vaddr_t va)
 {
 	struct pv_entry tmp, *pve;
 
@@ -1505,9 +1477,7 @@ pmap_remove_pv(pvh, pmap, va)
  */
 
 static struct vm_page *
-pmap_alloc_ptp(pmap, pde_index)
-	struct pmap *pmap;
-	int pde_index;
+pmap_alloc_ptp(struct pmap *pmap, int pde_index)
 {
 	struct vm_page *ptp;
 
@@ -1534,9 +1504,7 @@ pmap_alloc_ptp(pmap, pde_index)
  */
 
 static struct vm_page *
-pmap_get_ptp(pmap, pde_index)
-	struct pmap *pmap;
-	int pde_index;
+pmap_get_ptp(struct pmap *pmap, int pde_index)
 {
 	struct vm_page *ptp;
 
@@ -1608,7 +1576,7 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
  */
 
 struct pmap *
-pmap_create()
+pmap_create(void)
 {
 	struct pmap *pmap;
 	u_int gen;
@@ -1672,8 +1640,7 @@ pmap_create()
  */
 
 void
-pmap_destroy(pmap)
-	struct pmap *pmap;
+pmap_destroy(struct pmap *pmap)
 {
 	int refs;
 #ifdef DIAGNOSTIC
@@ -1747,8 +1714,7 @@ pmap_destroy(pmap)
  */
 
 void
-pmap_reference(pmap)
-	struct pmap *pmap;
+pmap_reference(struct pmap *pmap)
 {
 	mutex_enter(&pmap->pm_obj.vmobjlock);
 	pmap->pm_obj.uo_refs++;
@@ -1762,8 +1728,7 @@ pmap_reference(pmap)
  */
 
 void
-pmap_fork(pmap1, pmap2)
-	struct pmap *pmap1, *pmap2;
+pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 {
 #ifdef USER_LDT
 	union descriptor *new_ldt;
@@ -1830,8 +1795,7 @@ pmap_fork(pmap1, pmap2)
  */
 
 void
-pmap_ldt_cleanup(l)
-	struct lwp *l;
+pmap_ldt_cleanup(struct lwp *l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
@@ -1872,8 +1836,7 @@ pmap_ldt_cleanup(l)
  */
 
 void
-pmap_activate(l)
-	struct lwp *l;
+pmap_activate(struct lwp *l)
 {
 	struct cpu_info *ci;
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
@@ -1960,7 +1923,7 @@ pmap_reactivate(struct pmap *pmap)
  */
 
 void
-pmap_load()
+pmap_load(void)
 {
 	struct cpu_info *ci;
 	uint32_t cpumask;
@@ -2072,8 +2035,7 @@ pmap_load()
  */
 
 void
-pmap_deactivate(l)
-	struct lwp *l;
+pmap_deactivate(struct lwp *l)
 {
 	struct pmap *pmap;
 	struct cpu_info *ci;
@@ -2129,10 +2091,7 @@ pmap_deactivate(l)
  */
 
 bool
-pmap_extract(pmap, va, pap)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t *pap;
+pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
 	pd_entry_t pde;
@@ -2167,8 +2126,7 @@ pmap_extract(pmap, va, pap)
  */
 
 paddr_t
-vtophys(va)
-	vaddr_t va;
+vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
@@ -2184,9 +2142,7 @@ vtophys(va)
  */
 
 void
-pmap_virtual_space(startp, endp)
-	vaddr_t *startp;
-	vaddr_t *endp;
+pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 {
 	*startp = virtual_avail;
 	*endp = virtual_end;
@@ -2200,10 +2156,7 @@ pmap_virtual_space(startp, endp)
  */
 
 vaddr_t
-pmap_map(va, spa, epa, prot)
-	vaddr_t va;
-	paddr_t spa, epa;
-	vm_prot_t prot;
+pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 {
 	while (spa < epa) {
 		pmap_enter(pmap_kernel(), va, spa, prot, 0);
@@ -2219,8 +2172,7 @@ pmap_map(va, spa, epa, prot)
  */
 
 void
-pmap_zero_page(pa)
-	paddr_t pa;
+pmap_zero_page(paddr_t pa)
 {
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();
@@ -2249,8 +2201,7 @@ pmap_zero_page(pa)
  */
 
 bool
-pmap_pageidlezero(pa)
-	paddr_t pa;
+pmap_pageidlezero(paddr_t pa)
 {
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();
@@ -2309,8 +2260,7 @@ pmap_pageidlezero(pa)
  */
 
 void
-pmap_copy_page(srcpa, dstpa)
-	paddr_t srcpa, dstpa;
+pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
 #ifdef MULTIPROCESSOR
 	int id = cpu_number();
@@ -2351,14 +2301,9 @@ pmap_copy_page(srcpa, dstpa)
  */
 
 static void
-pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags, pv_tofree)
-	struct pmap *pmap;
-	struct vm_page *ptp;
-	vaddr_t ptpva;
-	vaddr_t startva, endva;
-	int32_t *cpumaskp;
-	int flags;
-	struct pv_entry **pv_tofree;
+pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
+		 vaddr_t startva, vaddr_t endva, int32_t *cpumaskp,
+		 int flags, struct pv_entry **pv_tofree)
 {
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
@@ -2453,14 +2398,9 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags, pv_tofree)
  */
 
 static bool
-pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags, pv_tofree)
-	struct pmap *pmap;
-	struct vm_page *ptp;
-	pt_entry_t *pte;
-	vaddr_t va;
-	int32_t *cpumaskp;
-	int flags;
-	struct pv_entry **pv_tofree;
+pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
+		vaddr_t va, int32_t *cpumaskp, int flags,
+		struct pv_entry **pv_tofree)
 {
 	pt_entry_t opte;
 	struct pv_entry *pve;
@@ -2534,9 +2474,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags, pv_tofree)
  */
 
 void
-pmap_remove(pmap, sva, eva)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
+pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
 	pmap_do_remove(pmap, sva, eva, PMAP_REMOVE_ALL);
 }
@@ -2548,10 +2486,7 @@ pmap_remove(pmap, sva, eva)
  */
 
 static void
-pmap_do_remove(pmap, sva, eva, flags)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
-	int flags;
+pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 {
 	pt_entry_t *ptes, opte;
 	struct pv_entry *pv_tofree = NULL;
@@ -2751,8 +2686,7 @@ pmap_do_remove(pmap, sva, eva, flags)
  */
 
 void
-pmap_page_remove(pg)
-	struct vm_page *pg;
+pmap_page_remove(struct vm_page *pg)
 {
 	struct pv_head *pvh;
 	struct pv_entry *pve, *npve, *killlist = NULL;
@@ -2884,9 +2818,7 @@ pmap_page_remove(pg)
  */
 
 bool
-pmap_test_attrs(pg, testbits)
-	struct vm_page *pg;
-	int testbits;
+pmap_test_attrs(struct vm_page *pg, int testbits)
 {
 	struct vm_page_md *mdpg;
 	int *myattrs;
@@ -2949,9 +2881,7 @@ pmap_test_attrs(pg, testbits)
  */
 
 bool
-pmap_clear_attrs(pg, clearbits)
-	struct vm_page *pg;
-	int clearbits;
+pmap_clear_attrs(struct vm_page *pg, int clearbits)
 {
 	struct vm_page_md *mdpg;
 	uint32_t result;
@@ -3139,9 +3069,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
  */
 
 void
-pmap_unwire(pmap, va)
-	struct pmap *pmap;
-	vaddr_t va;
+pmap_unwire(struct pmap *pmap, vaddr_t va)
 {
 	pt_entry_t *ptes;
 	struct pmap *pmap2;
@@ -3180,8 +3108,7 @@ pmap_unwire(pmap, va)
  */
 
 void
-pmap_collect(pmap)
-	struct pmap *pmap;
+pmap_collect(struct pmap *pmap)
 {
 	/*
 	 * free all of the pt pages by removing the physical mappings
@@ -3211,12 +3138,8 @@ pmap_collect(pmap)
  */
 
 int
-pmap_enter(pmap, va, pa, prot, flags)
-	struct pmap *pmap;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int flags;
+pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
+	   int flags)
 {
 	pt_entry_t *ptes, opte, npte;
 	pt_entry_t *ptep;
@@ -3457,8 +3380,7 @@ out:
  */
 
 vaddr_t
-pmap_growkernel(maxkvaddr)
-	vaddr_t maxkvaddr;
+pmap_growkernel(vaddr_t maxkvaddr)
 {
 	struct pmap *kpm = pmap_kernel(), *pm;
 	int needed_kpde;   /* needed number of kernel PTPs */
@@ -3544,9 +3466,7 @@ void pmap_dump(struct pmap *, vaddr_t, vaddr_t);
  */
 
 void
-pmap_dump(pmap, sva, eva)
-	struct pmap *pmap;
-	vaddr_t sva, eva;
+pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
 	pt_entry_t *ptes, *pte;
 	struct pmap *pmap2;
@@ -3656,11 +3576,7 @@ pmap_tlb_shootnow(int32_t cpumask)
  *	Cause the TLB entry for pmap/va to be shot down.
  */
 void
-pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
-	pmap_t pmap;
-	vaddr_t va;
-	pt_entry_t pte;
-	int32_t *cpumaskp;
+pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, int32_t *cpumaskp)
 {
 	struct cpu_info *ci, *self;
 	struct pmap_cpu *pc;
@@ -3867,8 +3783,7 @@ pmap_do_tlb_shootdown(struct cpu_info *self)
  *	Note: We expect the queue to be locked.
  */
 void
-pmap_cpu_drain(pc)
-	struct pmap_cpu *pc;
+pmap_cpu_drain(struct pmap_cpu *pc)
 {
 	struct pmap_tlb_shootdown_job *pj;
 
@@ -3888,8 +3803,7 @@ pmap_cpu_drain(pc)
  *	Note: We expect the queue to be locked.
  */
 struct pmap_tlb_shootdown_job *
-pmap_tlb_shootdown_job_get(pc)
-	struct pmap_cpu *pc;
+pmap_tlb_shootdown_job_get(struct pmap_cpu *pc)
 {
 	struct pmap_tlb_shootdown_job *pj;
 
@@ -3912,9 +3826,8 @@ pmap_tlb_shootdown_job_get(pc)
  *	Note: We expect the queue to be locked.
  */
 void
-pmap_tlb_shootdown_job_put(pc, pj)
-	struct pmap_cpu *pc;
-	struct pmap_tlb_shootdown_job *pj;
+pmap_tlb_shootdown_job_put(struct pmap_cpu *pc,
+			   struct pmap_tlb_shootdown_job *pj)
 {
 
 	KASSERT(pc->pc_count != 0);

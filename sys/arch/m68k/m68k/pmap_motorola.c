@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.27.2.3 2007/05/27 12:27:39 ad Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.27.2.4 2007/06/09 23:55:15 ad Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.27.2.3 2007/05/27 12:27:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.27.2.4 2007/06/09 23:55:15 ad Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -2848,8 +2848,6 @@ pmap_procwr(struct proc	*p, vaddr_t va, size_t len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
-#ifdef mvme68k
-
 void
 _pmap_set_page_cacheable(pmap_t pmap, vaddr_t va)
 {
@@ -2904,8 +2902,6 @@ _pmap_page_is_cacheable(pmap_t pmap, vaddr_t va)
 
 	return (pmap_pte_ci(pmap_pte(pmap, va)) == 0) ? 1 : 0;
 }
-
-#endif /* mvme68k */
 
 #ifdef DEBUG
 /*

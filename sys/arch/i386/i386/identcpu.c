@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.58.2.1 2007/04/10 13:23:05 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.58.2.2 2007/06/09 23:55:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58.2.1 2007/04/10 13:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58.2.2 2007/06/09 23:55:12 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -155,11 +155,6 @@ static const char *amd_amd64_name(struct cpu_info *);
 
 static void transmeta_cpu_info(struct cpu_info *);
 
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
-void p3_get_bus_clock(struct cpu_info *);
-void p4_get_bus_clock(struct cpu_info *);
-#endif
-
 static inline u_char
 cyrix_read_reg(u_char reg)
 {
@@ -267,11 +262,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			NULL,
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
-			p3_get_bus_clock,
-#else
 			NULL,
-#endif
 		},
 		/* Family > 6 */
 		{
@@ -283,11 +274,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			intel_family_new_probe,
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
-			p4_get_bus_clock,
-#else
 			NULL,
-#endif
 		} }
 	},
 	{
@@ -1089,153 +1076,6 @@ amd_family5_setup(struct cpu_info *ci)
 		break;
 	}
 }
-
-
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP)) 
-void
-p3_get_bus_clock(struct cpu_info *ci)
-{
-	uint64_t msr;
-	int model, bus;
-	char *cpuname = ci->ci_dev->dv_xname;
-
-	model = (ci->ci_signature >> 4) & 15;
-	switch (model) {
-	case 0x9: /* Pentium M (130 nm, Banias) */
-		bus_clock = 10000;
-		break;
-	case 0xd: /* Pentium M (90 nm, Dothan) */
-		msr = rdmsr(MSR_FSB_FREQ);
-		bus = (msr >> 0) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = 10000;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		default:
-			aprint_debug("%s: unknown Pentium M FSB_FREQ "
-			    "value %d", cpuname, bus);
-			goto print_msr;
-		}
-		break;
-	case 0xe: /* Core Duo/Solo */
-	case 0xf: /* Core Xeon */
-		msr = rdmsr(MSR_FSB_FREQ);
-		bus = (msr >> 0) & 0x7;
-		switch (bus) {
-		case 5:
-			bus_clock = 10000;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		case 3:
-			bus_clock = 16667;
-			break;
-		case 2:
-			bus_clock = 20000;
-			break;
-		case 0:
-			bus_clock = 26667;
-			break;
-		case 4:
-			bus_clock = 33333;
-			break;
-		default:
-			aprint_debug("%s: unknown Core FSB_FREQ value %d",
-			    cpuname, bus);
-			goto print_msr;
-		}
-		break;
-	case 0x1: /* Pentium Pro, model 1 */
-	case 0x3: /* Pentium II, model 3 */
-	case 0x5: /* Pentium II, II Xeon, Celeron, model 5 */
-	case 0x6: /* Celeron, model 6 */
-	case 0x7: /* Pentium III, III Xeon, model 7 */
-	case 0x8: /* Pentium III, III Xeon, Celeron, model 8 */
-	case 0xa: /* Pentium III Xeon, model A */
-	case 0xb: /* Pentium III, model B */
-		msr = rdmsr(MSR_EBL_CR_POWERON);
-		bus = (msr >> 18) & 0x3;
-		switch (bus) {
-		case 0:
-			bus_clock = 6666;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		case 2:
-			bus_clock = 10000;
-			break;
-		default:
-			aprint_debug("%s: unknown i686 EBL_CR_POWERON "
-			    "value %d ", cpuname, bus);
-			goto print_msr;
-		}
-		break;
-	default:
-		aprint_debug("%s: unknown i686 model %d, can't get bus clock",
-		    cpuname, model);
-print_msr:
-		/*
-		 * Show the EBL_CR_POWERON MSR, so we'll at least have
-		 * some extra information, such as clock ratio, etc.
-		 */
-		aprint_debug(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
-		break;
-	}
-}
-
-void
-p4_get_bus_clock(struct cpu_info *ci)
-{
-	uint64_t msr;
-	int model, bus;
-	char *cpuname = ci->ci_dev->dv_xname;
-
-	model = (ci->ci_signature >> 4) & 15;
-	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
-	if (model < 2) {
-		bus = (msr >> 21) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = 10000;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		default:
-			aprint_debug("%s: unknown Pentium 4 (model %d) "
-			    "EBC_FREQUENCY_ID value %d\n",
-			    cpuname, model, bus);
-			break;
-		}
-	} else {
-		bus = (msr >> 16) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = (model == 2) ? 10000 : 26666;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		case 2:
-			bus_clock = 20000;
-			break;
-		case 3:
-			bus_clock = 16666;
-			break;
-		default:
-			aprint_debug("%s: unknown Pentium 4 (model %d) "
-			    "EBC_FREQUENCY_ID value %d\n",
-			    cpuname, model, bus);
-			break;
-		}
-	}
-}
-#endif /* I686_CPU && ENHANCED_SPEEDSTEP */
 
 /*
  * Transmeta Crusoe LongRun Support by Tamotsu Hattori.

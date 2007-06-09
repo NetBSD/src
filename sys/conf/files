@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.834.2.2 2007/06/08 14:17:12 ad Exp $
+#	$NetBSD: files,v 1.834.2.3 2007/06/09 23:57:48 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -101,7 +101,8 @@ defflag	opt_gre.h		GRE_DEBUG
 
 # compatibility options
 #
-defflag	opt_compat_netbsd.h	COMPAT_30
+defflag	opt_compat_netbsd.h	COMPAT_40
+defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40
 defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
 defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
 defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16

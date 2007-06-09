@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.9 2007/06/08 14:17:15 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.10 2007/06/09 23:58:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.9 2007/06/08 14:17:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.10 2007/06/09 23:58:04 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -369,6 +369,9 @@ main(void)
 
 	/* Initialize the select()/poll() system calls. */
 	selsysinit();
+
+	/* Initialize asynchronous I/O. */
+	aio_sysinit();
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();

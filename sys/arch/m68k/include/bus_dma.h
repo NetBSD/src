@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.8 2007/03/04 06:00:04 christos Exp $ */
+/* $NetBSD: bus_dma.h,v 1.8.2.1 2007/06/09 23:55:14 ad Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h
@@ -119,6 +119,7 @@ typedef struct m68k_bus_dmamap *bus_dmamap_t;
 struct m68k_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	u_int		_ds_flags;	/* MD flags */
 };
 typedef struct m68k_bus_dma_segment	bus_dma_segment_t;
 
@@ -215,7 +216,7 @@ struct m68k_bus_dmamap {
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
-	int		_dm_flags;	/* misc. flags */
+	u_int		_dm_flags;	/* misc. flags */
 
 	/* Machine dependant fields: */
 	bus_size_t  dm_xfer_len;	/* length of successful transfer */

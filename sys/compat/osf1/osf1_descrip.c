@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.21.2.1 2007/05/27 14:35:21 ad Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.21.2.2 2007/06/09 23:57:45 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.21.2.1 2007/05/27 14:35:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.21.2.2 2007/06/09 23:57:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,15 +93,11 @@ osf1_sys_fcntl(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_fcntl_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_fcntl_args a;
 	struct osf1_flock oflock;
 	struct flock nflock;
 	unsigned long xfl, leftovers;
-	void *sg;
 	int error;
-
-	sg = stackgap_init(p, 0);
 
 	SCARG(&a, fd) = SCARG(uap, fd);
 

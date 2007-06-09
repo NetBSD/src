@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.37.2.2 2007/05/27 12:26:58 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.37.2.3 2007/06/09 23:54:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37.2.2 2007/05/27 12:26:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37.2.3 2007/06/09 23:54:51 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37.2.2 2007/05/27 12:26:58 ad
 const char	machine32[] = "i386";
 const char	machine_arch32[] = "i386";	
 
-extern void (osyscall_return) __P((void));
+extern void (osyscall_return)(void);
 
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
 static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
@@ -580,10 +580,7 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 }
 
 int
-netbsd32_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_sysarch_args /* {
 		syscallarg(int) op;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.7.2.1 2007/06/08 14:14:47 ad Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.7.2.2 2007/06/09 23:57:59 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1410,8 +1410,8 @@ extern	char	*memstr __P((const char *, char *, size_t, size_t));
 extern	int	count4bits __P((u_32_t));
 extern	int	frrequest __P((int, ioctlcmd_t, void *, int, int));
 extern	char	*getifname __P((struct ifnet *));
-extern	int	iplattach __P((void));
-extern	int	ipldetach __P((void));
+extern	int	ipfattach __P((void));
+extern	int	ipfdetach __P((void));
 extern	u_short	ipf_cksum __P((u_short *, int));
 extern	int	copyinptr __P((void *, void *, size_t));
 extern	int	copyoutptr __P((void *, void *, size_t));

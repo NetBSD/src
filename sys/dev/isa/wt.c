@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.75 2007/03/04 06:02:13 christos Exp $	*/
+/*	$NetBSD: wt.c,v 1.75.2.1 2007/06/09 23:57:53 ad Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75.2.1 2007/06/09 23:57:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,7 +587,7 @@ static void
 wtstrategy(struct buf *bp)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(bp->b_dev) & T_UNIT);
-	int s;
+	int s, error = 0;
 
 	bp->b_resid = bp->b_bcount;
 
@@ -598,19 +598,19 @@ wtstrategy(struct buf *bp)
 	if (bp->b_flags & B_READ) {
 		/* Check read access and no previous write to this tape. */
 		if ((sc->flags & TPREAD) == 0 || (sc->flags & TPWANY))
-			goto errxit;
+			goto xit;
 
 		/* For now, we assume that all data will be copied out */
 		/* If read command outstanding, just skip down */
 		if ((sc->flags & TPRO) == 0) {
 			if (!wtsense(sc, 1, TP_WRP)) {
 				/* Clear status. */
-				goto errxit;
+				goto xit;
 			}
 			if (!wtcmd(sc, QIC_RDDATA)) {
 				/* Set read mode. */
 				wtsense(sc, 1, TP_WRP);
-				goto errxit;
+				goto xit;
 			}
 			sc->flags |= TPRO | TPRANY;
 		}
@@ -618,18 +618,18 @@ wtstrategy(struct buf *bp)
 		/* Check write access and write protection. */
 		/* No previous read from this tape allowed. */
 		if ((sc->flags & TPWRITE) == 0 || (sc->flags & (TPWP | TPRANY)))
-			goto errxit;
+			goto xit;
 
 		/* If write command outstanding, just skip down */
 		if ((sc->flags & TPWO) == 0) {
 			if (!wtsense(sc, 1, 0)) {
 				/* Clear status. */
-				goto errxit;
+				goto xit;
 			}
 			if (!wtcmd(sc, QIC_WRTDATA)) {
 				/* Set write mode. */
 				wtsense(sc, 1, 0);
-				goto errxit;
+				goto xit;
 			}
 			sc->flags |= TPWO | TPWANY;
 		}
@@ -646,13 +646,8 @@ wtstrategy(struct buf *bp)
 	}
 	splx(s);
 
-	if (sc->flags & TPEXCEP) {
-errxit:
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
-	}
 xit:
-	biodone(bp);
+	biodone(bp, error, bp->b_resid);
 	return;
 }
 

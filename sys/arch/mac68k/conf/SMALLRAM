@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.27 2006/08/26 20:26:55 christos Exp $
+#	$NetBSD: SMALLRAM,v 1.27.12.1 2007/06/09 23:55:16 ad Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.27 $"
+#ident 		"SMALLRAM-$Revision: 1.27.12.1 $"
 
 maxusers	8
 
@@ -168,8 +168,6 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
-fpu0 at mainbus?			# Floating-Point Coprocessor support
 
 
 # Basic Bus Support

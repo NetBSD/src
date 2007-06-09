@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.135.2.3 2007/05/27 14:30:23 ad Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.135.2.4 2007/06/09 23:57:53 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.135.2.3 2007/05/27 14:30:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.135.2.4 2007/06/09 23:57:53 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -739,7 +739,7 @@ static const struct wm_product {
 	  WM_T_82547,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547EI_MOBILE,
-	  "Intel i82547EI Moblie 1000BASE-T Ethernet",
+	  "Intel i82547EI Mobile 1000BASE-T Ethernet",
 	  WM_T_82547,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82547GI,

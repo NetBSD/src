@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76.8.1 2007/05/27 12:27:14 ad Exp $
+# $NetBSD: GENERIC,v 1.76.8.2 2007/06/09 23:55:01 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -220,6 +220,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.30.1 2007/06/09 23:55:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.30.1 2007/06/09 23:55:19 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -246,7 +246,7 @@ initSH3(void *pc)	/* XXX return address */
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* XXX Currently symbol table size is not passed to the kernel. */
-	kernend += 0x40000;					/* XXX */
+	kernend += atop(0x40000);			/* XXX */
 #endif
 
 	/* Load memory to UVM */

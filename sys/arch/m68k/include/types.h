@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: types.h,v 1.24.30.1 2007/06/09 23:55:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,8 +61,10 @@ typedef	volatile unsigned char __cpu_simple_lock_t;
 #define	__SIMPLELOCK_LOCKED	0x80	/* result of `tas' insn */
 #define	__SIMPLELOCK_UNLOCKED	0
 
+/* The m68k does not have strict alignment requirements. */
+#define	__NO_STRICT_ALIGNMENT
+
 #define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_MD_RUNQUEUE
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80.2.2 2007/05/27 12:27:14 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80.2.3 2007/06/09 23:55:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.2 2007/05/27 12:27:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.2.3 2007/06/09 23:55:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -174,7 +174,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 #endif
 
 	/*
-	 * Clear the BSS segment.
+	 * Clear the BSS segment (if needed).
 	 */
 #if NKSYMS || defined(DDB) || defined(LKM)
 	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
@@ -182,12 +182,33 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 		esym = end;
 		esym += ((Elf_Ehdr *)end)->e_entry;
 		kernend = (char *)mips_round_page(esym);
+		/*
+		 * We don't have to clear BSS here
+		 * since our bootloader already does it.
+		 */
+#if 0
 		memset(edata, 0, end - edata);
+#endif
 	} else
 #endif
 	{
 		kernend = (void *)mips_round_page(end);
+		/*
+		 * No symbol table, so assume we are loaded by
+		 * the firmware directly with "bfd" command.
+		 * The firmware loader doesn't clear BSS of
+		 * a loaded kernel, so do it here.
+		 */
 		memset(edata, 0, kernend - edata);
+
+		/*
+		 * XXX
+		 * lwp0 and cpu_info_store are allocated in BSS
+		 * and initialized before mach_init() is called,
+		 * so restore them again.
+		 */
+		lwp0.l_cpu = &cpu_info_store;
+		cpu_info_store.ci_curlwp = &lwp0;
 	}
 
 	/* Check for valid bootinfo passed from bootstrap */

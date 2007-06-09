@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.6 2007/06/08 14:17:30 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.7 2007/06/09 23:58:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.6 2007/06/08 14:17:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.7 2007/06/09 23:58:07 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -628,10 +628,10 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	}
 	if (error == 0 || (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags, l);
-	mutex_enter(&mountlist_lock);
 	if (error) {
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			(void) vfs_allocate_syncvnode(mp);
+		mutex_enter(&mountlist_lock);
 		mp->mnt_iflag &= ~IMNT_UNMOUNT;
 		mp->mnt_unmounter = NULL;
 		mp->mnt_flag |= async;
@@ -648,6 +648,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&mp->mnt_mutex);
 		return (error);
 	}
+	mutex_enter(&mountlist_lock);
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;

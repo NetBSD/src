@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.35 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: fpu.c,v 1.35.30.1 2007/06/09 23:55:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35 2005/12/24 22:45:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35.30.1 2007/06/09 23:55:17 ad Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -47,12 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35 2005/12/24 22:45:35 perry Exp $");
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/time.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
 
-#include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
@@ -62,18 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35 2005/12/24 22:45:35 perry Exp $");
 
 extern label_t *nofault;
 
-static int  fpu_match(struct device *, struct cfdata *, void *);
-static void fpu_attach(struct device *, struct device *, void *);
 static int  fpu_probe(void);
-
-CFATTACH_DECL(fpu, sizeof(struct device),
-    fpu_match, fpu_attach, NULL, NULL);
-
-static int
-fpu_match(struct device *parent, struct cfdata *cf, void *aux)
-{
-	return 1;
-}
 
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
@@ -87,8 +71,8 @@ static const char *fpu_descr[] = {
 	"mc68060",			/* 4 */
 	"unknown" };
 
-static void
-fpu_attach(struct device *parent, struct device *self, void *args)
+void
+initfpu(void)
 {
 	const char *descr;
 
@@ -103,7 +87,7 @@ fpu_attach(struct device *parent, struct device *self, void *args)
 	else
 		descr = "unknown type";
 
-	printf(" (%s)\n", descr);
+	printf("fpu: %s\n", descr);
 }
 
 static int

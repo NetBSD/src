@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.63.2.1 2007/06/08 14:18:05 ad Exp $	*/
+/*	$NetBSD: nfs.h,v 1.63.2.2 2007/06/09 23:58:13 ad Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,13 @@
 
 #ifndef _NFS_NFS_H_
 #define _NFS_NFS_H_
+
+#ifdef _KERNEL
+#include <sys/condvar.h>
+#include <sys/fstypes.h>
+#include <sys/mbuf.h>
+#include <sys/mutex.h>
+#endif
 
 /*
  * Tunable constants for nfs
@@ -433,7 +440,8 @@ struct nfsuid {
 #endif
 
 struct nfssvc_sock {
-	struct simplelock ns_lock;
+	kmutex_t ns_lock;
+	kcondvar_t ns_cv;
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
 	TAILQ_ENTRY(nfssvc_sock) ns_pending;	/* List of pending sockets */
 	TAILQ_HEAD(, nfsuid) ns_uidlruhead;
@@ -463,7 +471,6 @@ struct nfssvc_sock {
 #define	SLP_NEEDQ	0x04
 #define	SLP_DISCONN	0x08
 #define	SLP_BUSY	0x10
-#define	SLP_WANT	0x20
 #define	SLP_LASTFRAG	0x40
 #define	SLP_SENDING	0x80
 
@@ -471,7 +478,6 @@ extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
 extern struct nfssvc_sockhead nfssvc_sockpending;
 extern int nfssvc_sockhead_flag;
 #define	SLP_INIT	0x01
-#define	SLP_WANTINIT	0x02
 
 /*
  * One of these structures is allocated for each nfsd.
@@ -479,6 +485,7 @@ extern int nfssvc_sockhead_flag;
 struct nfsd {
 	TAILQ_ENTRY(nfsd) nfsd_chain;	/* List of all nfsd's */
 	SLIST_ENTRY(nfsd) nfsd_idle;	/* List of idle nfsd's */
+	kcondvar_t	nfsd_cv;
 	int		nfsd_flag;	/* NFSD_ flags */
 	struct nfssvc_sock *nfsd_slp;	/* Current socket */
 	int		nfsd_authlen;	/* Authenticator len */
@@ -545,7 +552,8 @@ struct nfsrv_descript {
 #define ND_KERBFULL	0x40
 #define ND_KERBAUTH	(ND_KERBNICK | ND_KERBFULL)
 
-extern struct simplelock nfsd_slock;
+extern kmutex_t nfsd_lock;
+extern kcondvar_t nfsd_initcv;
 extern TAILQ_HEAD(nfsdhead, nfsd) nfsd_head;
 extern SLIST_HEAD(nfsdidlehead, nfsd) nfsd_idle_head;
 extern int nfsd_head_flag;

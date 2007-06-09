@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.97 2007/03/04 06:02:13 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.97.2.1 2007/06/09 23:57:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.97 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.97.2.1 2007/06/09 23:57:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ mcdstrategy(bp)
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(bp->b_dev));
 	struct disklabel *lp = sc->sc_dk.dk_label;
 	daddr_t blkno;
-	int s;
+	int s, error = 0;
 
 	/* Test validity. */
 	MCD_TRACE("strategy: buf=0x%p blkno=%d bcount=%d\n", bp,
@@ -437,15 +437,15 @@ mcdstrategy(bp)
 	    (bp->b_bcount % sc->blksize) != 0) {
 		printf("%s: strategy: blkno = %" PRId64 " bcount = %d\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
-		bp->b_error = EINVAL;
-		goto bad;
+		error = EINVAL;
+		goto done;
 	}
 
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((sc->flags & MCDF_LOADED) == 0) {
 		MCD_TRACE("strategy: drive not valid%s", "\n");
-		bp->b_error = EIO;
-		goto bad;
+		error = EIO;
+		goto done;
 	}
 
 	/* No data to read. */
@@ -479,11 +479,9 @@ mcdstrategy(bp)
 		mcdstart(sc);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, bp->b_bcount);
 }
 
 void
@@ -510,9 +508,7 @@ loop:
 	/* Changed media? */
 	if ((sc->flags & MCDF_LOADED) == 0) {
 		MCD_TRACE("start: drive not valid%s", "\n");
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		biodone(bp);
+		biodone(bp, EIO, 0);
 		goto loop;
 	}
 
@@ -1262,9 +1258,8 @@ mcdintr(arg)
 		mbx->state = MCD_S_IDLE;
 
 		/* Return buffer. */
-		bp->b_resid = 0;
 		disk_unbusy(&sc->sc_dk, bp->b_bcount, (bp->b_flags & B_READ));
-		biodone(bp);
+		biodone(bp, 0, 0);
 
 		mcdstart(sc);
 		return 1;
@@ -1294,11 +1289,9 @@ readerr:
 
 changed:
 	/* Invalidate the buffer. */
-	bp->b_flags |= B_ERROR;
-	bp->b_resid = bp->b_bcount - mbx->skip;
 	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
-	biodone(bp);
+	biodone(bp, EIO, bp->b_bcount - mbx->skip);
 
 	mcdstart(sc);
 	return -1;

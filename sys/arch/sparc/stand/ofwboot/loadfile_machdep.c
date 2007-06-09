@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.2 2006/03/04 03:03:31 uwe Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.2.26.1 2007/06/09 23:55:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@ typedef int phandle_t;
 
 extern void	itlb_enter(vaddr_t, uint32_t, uint32_t);
 extern void	dtlb_enter(vaddr_t, uint32_t, uint32_t);
+extern void	dtlb_replace(vaddr_t, uint32_t, uint32_t);
 extern vaddr_t	itlb_va_to_pa(vaddr_t);
 extern vaddr_t	dtlb_va_to_pa(vaddr_t);
 
@@ -271,12 +272,8 @@ mmu_mapin(vaddr_t rva, vsize_t len)
 
 			dtlb_store[dtlb_slot].te_pa = pa;
 			dtlb_store[dtlb_slot].te_va = va;
-			itlb_store[itlb_slot].te_pa = pa;
-			itlb_store[itlb_slot].te_va = va;
 			dtlb_slot++;
-			itlb_slot++;
 			dtlb_enter(va, hi(data), lo(data));
-			itlb_enter(va, hi(data), lo(data));
 			pa = (vaddr_t)-1;
 		}
 
@@ -435,6 +432,38 @@ sparc64_memset(void *dst, int c, size_t size)
 }
 
 /*
+ * Remove write permissions from text mappings in the dTLB.
+ * Add entries in the iTLB.
+ */
+void
+sparc64_finalize_tlb(u_long data_va)
+{
+	int i;
+	int64_t data;
+
+	for (i = 0; i < dtlb_slot; i++) {
+		if (dtlb_store[i].te_va >= data_va)
+			continue;
+
+		data = TSB_DATA(0,		/* global */
+				PGSZ_4M,	/* 4mb page */
+				dtlb_store[i].te_pa,	/* phys.address */
+				1,		/* privileged */
+				0,		/* write */
+				1,		/* cache */
+				1,		/* alias */
+				1,		/* valid */
+				0		/* endianness */
+				);
+		data |= TLB_L | TLB_CV; /* locked, virt.cache */
+		dtlb_replace(dtlb_store[i].te_va, hi(data), lo(data));
+		itlb_store[itlb_slot] = dtlb_store[i];
+		itlb_slot++;
+		itlb_enter(dtlb_store[i].te_va, hi(data), lo(data));
+	}
+}
+
+/*
  * Record kernel mappings in bootinfo structure.
  */
 void
@@ -444,11 +473,6 @@ sparc64_bi_add(void)
 	int itlb_size, dtlb_size;
 	struct btinfo_count bi_count;
 	struct btinfo_tlb *bi_itlb, *bi_dtlb;
-
-#ifdef LOADER_DEBUG
-	pmap_print_tlb('i');
-	pmap_print_tlb('d');
-#endif
 
 	bi_count.count = itlb_slot;
 	bi_add(&bi_count, BTINFO_ITLB_SLOTS, sizeof(bi_count));

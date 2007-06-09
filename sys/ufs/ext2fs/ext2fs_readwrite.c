@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.45.4.3 2007/06/08 14:18:15 ad Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.45.4.4 2007/06/09 23:58:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.45.4.3 2007/06/08 14:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.45.4.4 2007/06/09 23:58:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,6 +305,9 @@ ext2fs_write(void *v)
 			bytelen = MIN(fs->e2fs_bsize - blkoffset,
 			    uio->uio_resid);
 
+			if (vp->v_size < oldoff + bytelen) {
+				uvm_vnp_setwritesize(vp, oldoff + bytelen);
+			}
 			error = ufs_balloc_range(vp, uio->uio_offset,
 			    bytelen, ap->a_cred, 0);
 			if (error)

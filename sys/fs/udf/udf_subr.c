@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.32.4.2 2007/06/08 14:15:02 ad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.32.4.3 2007/06/09 23:58:03 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.32.4.2 2007/06/08 14:15:02 ad Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.32.4.3 2007/06/09 23:58:03 ad Exp $");
 #endif /* not lint */
 
 
@@ -359,7 +359,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 			if (i == sector_size) {
 				/* return no error but with no dscrptr */
 				/* dispose first block */
-				brelse(bp);
+				brelse(bp, 0);
 				return 0;
 			}
 		}
@@ -372,8 +372,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		memcpy(dst, src, sector_size);
 	}
 	/* dispose first block */
-	bp->b_flags |= B_AGE;
-	brelse(bp);
+	brelse(bp, B_AGE);
 
 	if (!error && (dscrlen > sector_size)) {
 		DPRINTF(DESCRIPTOR, ("multi block descriptor read\n"));
@@ -386,15 +385,14 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		for (blk = 1; blk < blks; blk++) {
 			error = udf_bread(ump, sector + blk, &bp);
 			if (error) {
-				brelse(bp);
+				brelse(bp, 0);
 				break;
 			}
 			pos = (uint8_t *) dst + blk*sector_size;
 			memcpy(pos, bp->b_data, sector_size);
 
 			/* dispose block */
-			bp->b_flags |= B_AGE;
-			brelse(bp);
+			brelse(bp, B_AGE);
 		}
 		DPRINTFIF(DESCRIPTOR, error, ("read error on multi (%d)\n",
 		    error));
@@ -2772,9 +2770,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 
 	if (sectors > FILEBUFSECT) {
 		printf("udf_read_filebuf: implementation limit on bufsize\n");
-		buf->b_error  = EIO;
-		buf->b_flags |= B_ERROR;
-		biodone(buf);
+		biodone(buf, EIO, 0);
 		return;
 	}
 
@@ -2784,9 +2780,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	DPRINTF(READ, ("\ttranslate %d-%d\n", from, sectors));
 	error = udf_translate_file_extent(node, from, sectors, mapping);
 	if (error) {
-		buf->b_error  = error;
-		buf->b_flags |= B_ERROR;
-		biodone(buf);
+		biodone(buf, error, 0);
 		goto out;
 	}
 	DPRINTF(READ, ("\ttranslate extent went OK\n"));
@@ -2794,11 +2788,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	/* pre-check if internal or parts are zero */
 	if (*mapping == UDF_TRANS_INTERN) {
 		error = udf_read_internal(node, (uint8_t *) buf->b_data);
-		if (error) {
-			buf->b_error  = error;
-			buf->b_flags |= B_ERROR;
-		}
-		biodone(buf);
+		biodone(buf, error, buf->b_resid);
 		goto out;
 	}
 	DPRINTF(READ, ("\tnot intern\n"));

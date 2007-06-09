@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.182 2007/03/04 14:01:22 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182.2.1 2007/06/09 23:55:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2007/03/04 14:01:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182.2.1 2007/06/09 23:55:30 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -219,9 +219,6 @@ cpu_startup(void)
 	char *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
 
 	/*
 	 * Initialize message buffer (for kernel printf).

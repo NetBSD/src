@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.27.2.1 2007/06/08 14:17:36 ad Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.27.2.2 2007/06/09 23:58:12 ad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.27.2.1 2007/06/08 14:17:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.27.2.2 2007/06/09 23:58:12 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.27.2.1 2007/06/08 14:17:36 ad Exp $");
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
+
+#include <compat/sys/sockio.h>
 
 /*
  * sysctl node management
@@ -492,6 +494,9 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
@@ -1033,6 +1038,9 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 		else
 			sc->sc_flags &= ~TAP_NBIO;
 		break;
+#ifdef OTAPGIFNAME
+	case OTAPGIFNAME:
+#endif
 	case TAPGIFNAME:
 		{
 			struct ifreq *ifr = (struct ifreq *)data;

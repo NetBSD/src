@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.6.2 2007/06/09 21:37:06 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.6.3 2007/06/09 23:55:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.6.2 2007/06/09 21:37:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.6.3 2007/06/09 23:55:32 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -143,7 +143,7 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 	if (cp == NULL)
 		return ENOMEM;
 
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		nldt = pmap->pm_ldt_len;
@@ -154,7 +154,7 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 	}
 
 	if (ua.start > nldt) {
-		simple_unlock(&pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		free(cp, M_TEMP);
 		return (EINVAL);
 	}
@@ -170,7 +170,7 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 #endif
 
 	memcpy(cp, lp, num * sizeof(union descriptor));
-	simple_unlock(&pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 
 	error = copyout(cp, ua.desc, num * sizeof(union descriptor));
 	if (error == 0)
@@ -290,7 +290,7 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	new_len = 0;
 	free_ldt = NULL;
 	free_len = 0;
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
@@ -300,12 +300,12 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 			ldt_len *= 2;
 		new_len = ldt_len * sizeof(union descriptor);
 
-		simple_unlock(&pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len, 0, UVM_KMF_WIRED);
 		memset(new_ldt, 0, new_len);
 		sel = ldt_alloc(new_ldt, new_len);
-		simple_lock(&pmap->pm_lock);
+		mutex_enter(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
 			/*
@@ -353,7 +353,7 @@ copy:
 	for (i = 0, n = ua.start; i < ua.num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
 
-	simple_unlock(&pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 	*retval = ua.start;
 
 	if (new_ldt != NULL)

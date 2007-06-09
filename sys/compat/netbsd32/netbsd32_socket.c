@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.22.2.1 2007/04/10 13:26:30 ad Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.22.2.2 2007/06/09 23:57:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.22.2.1 2007/04/10 13:26:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.22.2.2 2007/06/09 23:57:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -84,10 +84,8 @@ netbsd32_recvmsg(l, v, retval)
 		iov = (struct iovec *)malloc(
 		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
 		       M_WAITOK);
-	} else if ((u_int)msg.msg_iovlen > 0)
+	} else 
 		iov = aiov;
-	else
-		return (EMSGSIZE);
 	msg.msg_flags = SCARG(uap, flags);
 	uiov = (struct iovec *)NETBSD32PTR64(msg.msg_iov);
 	error = netbsd32_to_iovecin((struct netbsd32_iovec *)uiov,
@@ -258,6 +256,7 @@ netbsd32_sendmsg(l, v, retval)
 	if (error)
 		return (error);
 	netbsd32_to_msghdr(&msg32, &msg);
+
 	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
 		if ((u_int)msg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
@@ -268,13 +267,17 @@ netbsd32_sendmsg(l, v, retval)
 		iov = aiov;
 	else
 		return (EMSGSIZE);
+
 	error = netbsd32_to_iovecin((struct netbsd32_iovec *)msg.msg_iov,
 				   iov, msg.msg_iovlen);
 	if (error)
 		goto done;
 	msg.msg_iov = iov;
+	msg.msg_flags = 0;
+
 	/* Luckily we can use this directly */
-	error = sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	/* XXX: dsl (June'07) The cmsg alignment rules differ ! */
+	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);
@@ -341,5 +344,6 @@ netbsd32_sendto(l, v, retval)
 	msg.msg_control = 0;
 	aiov.iov_base = SCARG_P32(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
-	return (sendit(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+	msg.msg_flags = 0;
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 }

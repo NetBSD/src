@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.870.2.3 2007/05/27 14:30:26 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.870.2.4 2007/06/09 23:57:55 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.880 2007/05/19 14:56:24 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.881 2007/05/28 05:54:07 mrg Exp
  */
 
 /*
@@ -2814,6 +2814,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5249,
 	    "M5249 Hypertransport to PCI bridge",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5261,
+	    "M5261 Tulip Ethernet Controller",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
@@ -12888,4 +12892,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2627;
+const int pci_nproducts = 2628;

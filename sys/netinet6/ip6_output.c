@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.117.2.1 2007/06/08 14:17:55 ad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.117.2.2 2007/06/09 23:58:13 ad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.117.2.1 2007/06/08 14:17:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.117.2.2 2007/06/09 23:58:13 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -682,14 +682,6 @@ skip_ipsec2:;
 	dst_sa.sin6_addr = ip6->ip6_dst;
 	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro,
 	    &ifp, &rt, 0)) != 0) {
-		switch (error) {
-		case EHOSTUNREACH:
-			ip6stat.ip6s_noroute++;
-			break;
-		case EADDRNOTAVAIL:
-		default:
-			break; /* XXX statistics? */
-		}
 		if (ifp != NULL)
 			in6_ifstat_inc(ifp, ifs6_out_discard);
 		goto bad;

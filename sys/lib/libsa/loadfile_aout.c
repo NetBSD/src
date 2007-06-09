@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.8 2005/12/11 12:24:46 christos Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.8.30.1 2007/06/09 23:58:08 ad Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@ loadfile_aout(fd, x, marks, flags)
 	if (flags & LOAD_DATA) {
 		PROGRESS(("+%ld", x->a_data));
 
+		marks[MARK_DATA] = LOADADDR(maxp);
 		if (READ(fd, maxp, x->a_data) != (ssize_t)x->a_data) {
 			WARN(("read data"));
 			return 1;

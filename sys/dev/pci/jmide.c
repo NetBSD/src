@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.2.2.2 2007/06/09 21:37:24 ad Exp $	*/
+/*	$NetBSD: jmide.c,v 1.2.2.3 2007/06/09 23:57:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.2.2.2 2007/06/09 21:37:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.2.2.3 2007/06/09 23:57:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,12 @@ struct jmide_softc {
 	int sc_chan_swap;
 };
 
+struct jmahci_attach_args {
+	struct pci_attach_args *jma_pa;
+	bus_space_tag_t jma_ahcit;
+	bus_space_handle_t jma_ahcih;
+};
+
 #define JM_NAME(sc) (sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev.dv_xname)
 
 CFATTACH_DECL(jmide, sizeof(struct jmide_softc),
@@ -154,6 +160,7 @@ jmide_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t pcictrl1 = pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_JM_CONTROL1);
 	struct pciide_product_desc *pp;
+	int ahci_used = 0;
 
 	jp = jmide_lookup(pa->pa_id);
 	if (jp == NULL) {
@@ -191,10 +198,14 @@ jmide_attach(struct device *parent, struct device *self, void *aux)
             intrstr ? intrstr : "unknown interrupt");
 
 	if (pcictrl0 & JM_CONTROL0_AHCI_EN) {
+		bus_size_t size;
+		struct jmahci_attach_args jma;
+		u_int32_t saved_pcictrl0;
 		/*
 		 * ahci controller enabled; disable sata on pciide and
 		 * enable on ahci
 		 */
+		saved_pcictrl0 = pcictrl0;
 		pcictrl0 |= JM_CONTROL0_SATA0_AHCI | JM_CONTROL0_SATA1_AHCI;
 		pcictrl0 &= ~(JM_CONTROL0_SATA0_IDE | JM_CONTROL0_SATA1_IDE);
 		pci_conf_write(pa->pa_pc, pa->pa_tag,
@@ -204,27 +215,52 @@ jmide_attach(struct device *parent, struct device *self, void *aux)
 		      (pcictrl0 & JM_CONTROL0_AHCI_F1) == 0) ||
 	    	    (pa->pa_function == 1 &&
 		      (pcictrl0 & JM_CONTROL0_AHCI_F1) != 0)) {
-			sc->sc_ahci = config_found_ia(
-			    &sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev,
-			    "jmide_hl", pa, jmahci_print);
+			jma.jma_pa = pa;
+			/* map registers */
+			if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
+			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+			    &jma.jma_ahcit, &jma.jma_ahcih, NULL, &size) != 0) {
+				aprint_error("%s: can't map ahci registers\n",
+				    JM_NAME(sc));
+			} else {
+				sc->sc_ahci = config_found_ia(
+				    &sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev,
+				    "jmide_hl", &jma, jmahci_print);
+			}
+			/*
+			 * if we couldn't attach an ahci, try to fall back
+			 * to pciide. Note that this will not work if IDE
+			 * is on function 0 and AHCI on function 1.
+			 */
+			if (sc->sc_ahci == NULL) {
+				pcictrl0 = saved_pcictrl0 &
+				    ~(JM_CONTROL0_SATA0_AHCI |
+				      JM_CONTROL0_SATA1_AHCI |
+				      JM_CONTROL0_AHCI_EN);
+				pcictrl0 |= JM_CONTROL0_SATA1_IDE |
+					JM_CONTROL0_SATA0_IDE;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+				    PCI_JM_CONTROL0, pcictrl0);
+			} else
+				ahci_used = 1;
 		}
 	}
 	sc->sc_chan_swap = ((pcictrl0 & JM_CONTROL0_PCIIDE_CS) != 0);
 	/* compute the type of internal primary channel */
-	if ((pcictrl0 & JM_CONTROL0_AHCI_EN) || sc->sc_nsata == 0) {
-		/* only a drive if second PATA enabled */
-		if (sc->sc_npata > 1 && (pcictrl1 & JM_CONTROL1_PATA1_PRI)
-		    && (pcictrl1 & JM_CONTROL1_PATA1_EN))
+	if (pcictrl1 & JM_CONTROL1_PATA1_PRI) {
+		if (sc->sc_npata > 1)
 			sc->sc_chan_type[sc->sc_chan_swap ? 1 : 0] = TYPE_PATA;
 		else
 			sc->sc_chan_type[sc->sc_chan_swap ? 1 : 0] = TYPE_NONE;
-	} else {
-		/* always SATA here */
-			sc->sc_chan_type[sc->sc_chan_swap ? 1 : 0] = TYPE_SATA;
-	}
+	} else if (ahci_used == 0 && sc->sc_nsata > 0)
+		sc->sc_chan_type[sc->sc_chan_swap ? 1 : 0] = TYPE_SATA;
+	else
+		sc->sc_chan_type[sc->sc_chan_swap ? 1 : 0] = TYPE_NONE;
 	/* compute the type of internal secondary channel */
-	if (((pcictrl0 & JM_CONTROL0_AHCI_EN) &&
-	    (pcictrl0 & JM_CONTROL0_PCIIDE0_MS)) || sc->sc_nsata == 0) {
+	if (sc->sc_nsata > 1 && ahci_used == 0 &&
+	    (pcictrl0 & JM_CONTROL0_PCIIDE0_MS) == 0) {
+		sc->sc_chan_type[sc->sc_chan_swap ? 0 : 1] = TYPE_SATA;
+	} else {
 		/* only a drive if first PATA enabled */
 		if (sc->sc_npata > 0 && (pcictrl0 & JM_CONTROL0_PATA0_EN)
 		    && (pcictrl0 &
@@ -232,13 +268,8 @@ jmide_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_chan_type[sc->sc_chan_swap ? 0 : 1] = TYPE_PATA;
 		else
 			sc->sc_chan_type[sc->sc_chan_swap ? 0 : 1] = TYPE_NONE;
-	} else {
-		if (sc->sc_nsata && (pcictrl0 & JM_CONTROL0_AHCI_EN) &&
-		    (pcictrl0 & JM_CONTROL0_PCIIDE0_MS) == 0)
-			sc->sc_chan_type[sc->sc_chan_swap ? 0 : 1] = TYPE_SATA;
-		else
-			sc->sc_chan_type[sc->sc_chan_swap ? 0 : 1] = TYPE_NONE;
 	}
+
 	if (sc->sc_chan_type[0] == TYPE_NONE &&
 	    sc->sc_chan_type[1] == TYPE_NONE)
 		return;
@@ -417,20 +448,15 @@ jmahci_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 jmahci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pci_attach_args *pa = aux;
+	struct jmahci_attach_args *jma = aux;
 	struct ahci_softc *sc = (struct ahci_softc *)self;
-	bus_size_t size;
 
-	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_ahcit, &sc->sc_ahcih, NULL, &size) != 0) {
-		aprint_error("%s: can't map ahci registers\n", AHCINAME(sc));
-		return;
-	}
 	aprint_naive(": AHCI disk controller\n");
 	aprint_normal("\n");
-	
-	sc->sc_dmat = pa->pa_dmat;
+
+	sc->sc_ahcit = jma->jma_ahcit;
+	sc->sc_ahcih = jma->jma_ahcih;
+	sc->sc_dmat = jma->jma_pa->pa_dmat;
 	ahci_attach(sc);
 }
 #endif

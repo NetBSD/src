@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.5 2007/06/08 14:15:00 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.6 2007/06/09 23:58:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.5 2007/06/08 14:15:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.6 2007/06/09 23:58:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -507,17 +504,12 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 	struct buf *bp = arg;
 	size_t moved;
 
-	bp->b_error = preq->preq_rv;
-	if (bp->b_error == 0) {
+	if (preq->preq_rv == 0) {
 		moved = bp->b_bcount - read_argp->pvnr_resid;
-		bp->b_resid = read_argp->pvnr_resid;
-
 		memcpy(bp->b_data, read_argp->pvnr_data, moved);
-	} else {
-		bp->b_flags |= B_ERROR;
 	}
 
-	biodone(bp);
+	biodone(bp, preq->preq_rv, read_argp->pvnr_resid);
 	free(preq, M_PUFFS);
 }
 

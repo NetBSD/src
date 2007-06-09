@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.123 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.123.2.1 2007/06/09 23:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -537,6 +537,7 @@ struct	ifreq {
 		struct	sockaddr ifru_addr;
 		struct	sockaddr ifru_dstaddr;
 		struct	sockaddr ifru_broadaddr;
+		struct	sockaddr_storage ifru_space;
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;

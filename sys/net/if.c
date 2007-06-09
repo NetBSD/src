@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.183.2.1 2007/04/10 13:26:46 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.183.2.2 2007/06/09 23:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,14 +97,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.183.2.1 2007/04/10 13:26:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.183.2.2 2007/06/09 23:58:10 ad Exp $");
 
 #include "opt_inet.h"
 
-#include "opt_compat_linux.h"
-#include "opt_compat_svr4.h"
-#include "opt_compat_ultrix.h"
-#include "opt_compat_43.h"
 #include "opt_atalk.h"
 #include "opt_natm.h"
 #include "opt_pfil_hooks.h"
@@ -151,10 +147,8 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.183.2.1 2007/04/10 13:26:46 ad Exp $");
 #include <netinet/ip_carp.h>
 #endif
 
-#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || defined(COMPAT_ULTRIX) || defined(LKM)
-#define COMPAT_OSOCK
+#include <compat/sys/sockio.h>
 #include <compat/sys/socket.h>
-#endif
 
 MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
 MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");
@@ -1326,16 +1320,36 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
 	int s, error = 0;
+#if defined(COMPAT_OSOCK) || defined(COMPAT_OIFREQ)
+	u_long ocmd = cmd;
+#endif
 	short oif_flags;
+#ifdef COMPAT_OIFREQ
+	struct ifreq ifrb;
+	struct oifreq *oifr = NULL;
+#endif
 
 	switch (cmd) {
-	case SIOCGIFCONF:
+#ifdef COMPAT_OIFREQ
 	case OSIOCGIFCONF:
+	case OOSIOCGIFCONF:
+		return compat_ifconf(cmd, data);
+#endif
+	case SIOCGIFCONF:
 		return ifconf(cmd, data);
 	}
-	ifr = (struct ifreq *)data;
-	ifcr = (struct ifcapreq *)data;
-	ifdr = (struct ifdatareq *)data;
+
+#ifdef COMPAT_OIFREQ
+	cmd = cvtcmd(cmd);
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
+	} else
+#endif
+		ifr = data;
+	ifcr = data;
+	ifdr = data;
 
 	ifp = ifunit(ifr->ifr_name);
 
@@ -1561,7 +1575,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;
 #ifdef COMPAT_OSOCK
-		error = compat_ifioctl(so, cmd, data, l);
+		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
@@ -1579,6 +1593,10 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		}
 #endif
 	}
+#ifdef COMPAT_OIFREQ
+	if (cmd != ocmd)
+		ifreqn2o(oifr, ifr);
+#endif
 
 	return error;
 }
@@ -1597,16 +1615,14 @@ ifconf(u_long cmd, void *data)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct ifreq ifr, *ifrp;
-	int space = ifc->ifc_len, error = 0;
-	const int sz = (int)sizeof(ifr);
-	int sign;
+	int space, error = 0;
+	const int sz = offsetof(struct ifreq, ifr_ifru) +
+	    sizeof(struct sockaddr);
 
-	if ((ifrp = ifc->ifc_req) == NULL) {
+	if ((ifrp = ifc->ifc_req) == NULL)
 		space = 0;
-		sign = -1;
-	} else {
-		sign = 1;
-	}
+	else
+		space = ifc->ifc_len;
 	IFNET_FOREACH(ifp) {
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -1614,66 +1630,46 @@ ifconf(u_long cmd, void *data)
 			return ENAMETOOLONG;
 		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			if (ifrp != NULL && space >= sz) {
+			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0)
-					break;
+					return (error);
 				ifrp++;
 			}
-			space -= sizeof(ifr) * sign;
+			space -= sizeof(struct ifreq);
 			continue;
 		}
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			struct sockaddr *sa = ifa->ifa_addr;
-#ifdef COMPAT_OSOCK
-			if (cmd == OSIOCGIFCONF) {
-				struct osockaddr *osa =
-					 (struct osockaddr *)&ifr.ifr_addr;
-				/*
-				 * If it does not fit, we don't bother with it
-				 */
-				if (sa->sa_len > sizeof(*osa))
-					continue;
-				ifr.ifr_addr = *sa;
-				osa->sa_family = sa->sa_family;
-				if (ifrp != NULL && space >= sz) {
-					error = copyout(&ifr, ifrp, sz);
-					ifrp++;
-				}
-			} else
-#endif
 			if (sa->sa_len <= sizeof(*sa)) {
 				ifr.ifr_addr = *sa;
-				if (ifrp != NULL && space >= sz) {
+				if (space >= sz) {
 					error = copyout(&ifr, ifrp, sz);
 					ifrp++;
 				}
+				space -= sizeof(struct ifreq);
 			} else {
-				space -= (sa->sa_len - sizeof(*sa)) * sign;
-				if (ifrp != NULL && space >= sz) {
-					error = copyout(&ifr, ifrp,
-					    sizeof(ifr.ifr_name));
-					if (error == 0) {
-						error = copyout(sa,
-						    &ifrp->ifr_addr,
-						    sa->sa_len);
-					}
-					ifrp = (struct ifreq *)
-						(sa->sa_len +
-						 (char *)&ifrp->ifr_addr);
-				}
+				space -= sa->sa_len - sizeof(*sa) + sz;
+				if (space < 0)
+					continue;
+				error = copyout(&ifr, ifrp,
+				    sizeof(ifr.ifr_name));
+				if (error == 0)
+					error = copyout(sa,
+					    &ifrp->ifr_addr, sa->sa_len);
+				ifrp = (struct ifreq *)
+				    (sa->sa_len + (char *)&ifrp->ifr_addr);
 			}
 			if (error != 0)
-				break;
-			space -= sz * sign;
+				return (error);
 		}
 	}
 	if (ifrp != NULL)
 		ifc->ifc_len -= space;
 	else
-		ifc->ifc_len = space;
-	return error;
+		ifc->ifc_len = -space;
+	return (0);
 }
 
 /*

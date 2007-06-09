@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.24.8.1 2007/06/08 14:15:02 ad Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.24.8.2 2007/06/09 23:58:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.1 2007/06/08 14:15:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.2 2007/06/09 23:58:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,10 +339,6 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 		printf("smbfs_doio:  type %x unexpected\n",vp->v_type);
 		break;
 	    };
-	    if (error) {
-		bp->b_error = error;
-		bp->b_flags |= B_ERROR;
-	    }
 	} else { /* write */
 		io.iov_len = uiop->uio_resid = bp->b_bcount;
 		uiop->uio_offset = ((off_t)bp->b_blkno) << DEV_BSHIFT;
@@ -351,7 +347,6 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 		bp->b_flags |= B_BUSY;
 		error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
 		bp->b_flags &= ~B_BUSY;
-
 
 #ifndef __NetBSD__ /* XXX */
 		/*
@@ -391,8 +386,7 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 		}
 #endif /* !__NetBSD__ */
 	}
-	bp->b_resid = uiop->uio_resid;
-	biodone(bp);
+	biodone(bp, error, uiop->uio_resid);
 	return error;
 }
 

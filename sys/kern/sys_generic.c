@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.6 2007/04/28 22:40:04 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.100.2.7 2007/06/09 23:58:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.6 2007/04/28 22:40:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.7 2007/06/09 23:58:06 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -163,7 +163,7 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec	ktriov = { .iov_base = NULL, };
+	struct iovec	ktriov;
 #endif
 	p = l->l_proc;
 
@@ -191,11 +191,8 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 	}
 
 #ifdef KTRACE
-	/*
-	 * if tracing, save a copy of iovec
-	 */
-	if (KTRPOINT(p, KTR_GENIO))
-		ktriov = aiov;
+	/* In case we are tracing, save a copy of iovec */
+	ktriov = aiov;
 #endif
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
@@ -391,7 +388,7 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 	size_t cnt;
 	int error;
 #ifdef KTRACE
-	struct iovec	ktriov = { .iov_base = NULL, };
+	struct iovec	ktriov;
 #endif
 
 	p = l->l_proc;
@@ -418,11 +415,8 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 	}
 
 #ifdef KTRACE
-	/*
-	 * if tracing, save a copy of iovec
-	 */
-	if (KTRPOINT(p, KTR_GENIO))
-		ktriov = aiov;
+	/* In case we are tracing, save a copy of iovec */
+	ktriov = aiov;
 #endif
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_write)(fp, offset, &auio, fp->f_cred, flags);

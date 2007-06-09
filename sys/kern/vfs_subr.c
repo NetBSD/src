@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.7 2007/06/08 14:17:29 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.8 2007/06/09 23:58:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.7 2007/06/08 14:17:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.8 2007/06/09 23:58:07 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -611,7 +611,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	KASSERT(uobj->pgops == &uvm_vnodeops);
 	KASSERT(uobj->uo_npages == 0);
 	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
-	vp->v_size = VSIZENOTSET;
+	vp->v_size = vp->v_writesize = VSIZENOTSET;
 
 	if (mp && error != EDEADLK)
 		vfs_unbusy(mp);
@@ -2732,8 +2732,9 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
 	(*pr)("\nVNODE flags %s\n", bf);
-	(*pr)("mp %p numoutput %d size 0x%llx waitcnt %d\n",
-	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_waitcnt);
+	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx waitcnt %d\n",
+	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize,
+	      vp->v_waitcnt);
 
 	(*pr)("data %p usecount %d writecount %ld holdcnt %ld\n",
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
