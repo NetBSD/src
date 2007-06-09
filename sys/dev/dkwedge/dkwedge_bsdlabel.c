@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.13 2007/04/08 09:36:31 scw Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.14 2007/06/09 02:10:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.13 2007/04/08 09:36:31 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.14 2007/06/09 02:10:30 dyoung Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -222,13 +222,64 @@ swap_disklabel(struct disklabel *lp)
 #undef SWAP32
 }
 
+/*
+ * Add wedges for a valid NetBSD disklabel.
+ */
+static void
+addwedges(const mbr_args_t *a, const struct disklabel *lp)
+{
+	int error, i;
+
+	for (i = 0; i < lp->d_npartitions; i++) {
+		struct dkwedge_info dkw;
+		const struct partition *p;
+		const char *ptype;
+
+		p = &lp->d_partitions[i];
+
+		if (p->p_fstype == FS_UNUSED)
+			continue;
+		if ((ptype = bsdlabel_fstype_to_str(p->p_fstype)) == NULL) {
+			/*
+			 * XXX Should probably just add these...
+			 * XXX maybe just have an empty ptype?
+			 */
+			aprint_verbose("%s: skipping partition %d, type %d\n",
+			    a->pdk->dk_name, i, p->p_fstype);
+			continue;
+		}
+		strcpy(dkw.dkw_ptype, ptype);
+
+		strcpy(dkw.dkw_parent, a->pdk->dk_name);
+		dkw.dkw_offset = p->p_offset;
+		dkw.dkw_size = p->p_size;
+
+		/*
+		 * These get historical disk naming style
+		 * wedge names.
+		 */
+		snprintf((char *)&dkw.dkw_wname, sizeof(dkw.dkw_wname),
+		    "%s%c", a->pdk->dk_name, 'a' + i);
+
+		error = dkwedge_add(&dkw);
+		if (error == EEXIST)
+			aprint_error("%s: wedge named '%s' already "
+			    "exists, manual intervention required\n",
+			    a->pdk->dk_name, dkw.dkw_wname);
+		else if (error)
+			aprint_error("%s: error %d adding partition "
+			    "%d type %d\n", a->pdk->dk_name, error,
+			    i, p->p_fstype);
+	}
+}
+
 static int
 validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 {
 	struct disklabel *lp;
 	void *lp_lim;
-	int i, error;
-	u_int checksum;
+	int error, swapped;
+	uint16_t npartitions;
 
 	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, DEV_BSIZE);
 	if (error) {
@@ -250,100 +301,42 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 			return (SCAN_CONTINUE);
 		label_offset = (size_t)((char *)lp - (char *)a->buf);
 		if (lp->d_magic != DISKMAGIC || lp->d_magic2 != DISKMAGIC) {
-			if (lp->d_magic == bswap32(DISKMAGIC) &&
-			    lp->d_magic2 == bswap32(DISKMAGIC)) {
-				/*
-				 * Label is in the other byte order; validate
-				 * its length, then byte-swap it.
-				 */
-				if ((char *)lp +
-				    DISKLABEL_SIZE(bswap16(lp->d_npartitions)) >
-				    (char *)a->buf + DEV_BSIZE) {
-					aprint_error("%s: BSD disklabel @ "
-					    "%" PRId64
-					    "+%zd has bogus partition "
-					    "count (%u)\n", a->pdk->dk_name,
-					    label_sector, label_offset,
-					    bswap16(lp->d_npartitions));
-					continue;
-				}
-				checksum = dkcksum_sized(lp,
-				    bswap16(lp->d_npartitions));
-				swap_disklabel(lp);
-			} else
+			if (lp->d_magic != bswap32(DISKMAGIC) ||
+			    lp->d_magic2 != bswap32(DISKMAGIC))
 				continue;
-		} else {
-			/*
-			 * Validate the disklabel length.
-			 */
-			if ((char *)lp + DISKLABEL_SIZE(lp->d_npartitions) >
-			    (char *)a->buf + DEV_BSIZE) {
-				aprint_error("%s: BSD disklabel @ %" PRId64
-				    "+%zd has bogus partition count (%u)\n",
-				    a->pdk->dk_name, label_sector,
-				    label_offset, lp->d_npartitions);
-				continue;
-			}
-			checksum = dkcksum(lp);
+			/* Label is in the other byte order. */
+			swapped = 1;
+		} else
+			swapped = 0;
+
+		npartitions = (swapped) ? bswap16(lp->d_npartitions)
+					: lp->d_npartitions;
+
+		/* Validate label length. */
+		if ((char *)lp + DISKLABEL_SIZE(npartitions) >
+		    (char *)a->buf + DEV_BSIZE) {
+			aprint_error("%s: BSD disklabel @ "
+			    "%" PRId64 "+%zd has bogus partition count (%u)\n",
+			    a->pdk->dk_name, label_sector, label_offset,
+			    npartitions);
+			continue;
 		}
 
 		/*
-		 * Disklabel is now in the right order and we have validated
-		 * the partition count, checksum it as the final check.
+		 * We have validated the partition count.  Checksum it.
+		 * Note that we purposefully checksum before swapping
+		 * the byte order.
 		 */
-		if (checksum != 0) {
+		if (dkcksum_sized(lp, npartitions) != 0) {
 			aprint_error("%s: BSD disklabel @ %" PRId64
 			    "+%zd has bad checksum\n", a->pdk->dk_name,
 			    label_sector, label_offset);
 			continue;
 		}
-
-		/*
-		 * Ok, we have a valid NetBSD disklabel, add wedges for it.
-		 */
-		for (i = 0; i < lp->d_npartitions; i++) {
-			struct dkwedge_info dkw;
-			struct partition *p;
-			const char *ptype;
-
-			p = &lp->d_partitions[i];
-
-			if (p->p_fstype == FS_UNUSED)
-				continue;
-			if ((ptype =
-			     bsdlabel_fstype_to_str(p->p_fstype)) == NULL) {
-				/*
-				 * XXX Should probably just add these...
-				 * XXX maybe just have an empty ptype?
-				 */
-				aprint_verbose("%s: skipping partition %d, "
-				    "type %d\n", a->pdk->dk_name, i,
-				    p->p_fstype);
-				continue;
-			}
-			strcpy(dkw.dkw_ptype, ptype);
-
-			strcpy(dkw.dkw_parent, a->pdk->dk_name);
-			dkw.dkw_offset = p->p_offset;
-			dkw.dkw_size = p->p_size;
-
-			/*
-			 * These get historical disk naming style
-			 * wedge names.
-			 */
-			snprintf((char *)&dkw.dkw_wname, sizeof(dkw.dkw_wname),
-			    "%s%c", a->pdk->dk_name, 'a' + i);
-
-			error = dkwedge_add(&dkw);
-			if (error == EEXIST)
-				aprint_error("%s: wedge named '%s' already "
-				    "exists, manual intervention required\n",
-				    a->pdk->dk_name, dkw.dkw_wname);
-			else if (error)
-				aprint_error("%s: error %d adding partition "
-				    "%d type %d\n", a->pdk->dk_name, error,
-				    i, p->p_fstype);
-		}
+		/* Put the disklabel in the right order. */
+		if (swapped)
+			swap_disklabel(lp);
+		addwedges(a, lp);
 		return (SCAN_FOUND);
 	}
 }
