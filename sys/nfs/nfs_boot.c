@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.66 2007/05/08 09:29:50 manu Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.67 2007/06/09 02:32:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.66 2007/05/08 09:29:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.67 2007/06/09 02:32:34 dyoung Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -95,11 +95,12 @@ int nfs_boot_bootstatic = 1; /* BOOTSTATIC enabled (default) */
 #endif
 
 /* mountd RPC */
-static int md_mount __P((struct sockaddr_in *mdsin, char *path,
-	struct nfs_args *argp, struct lwp *l));
+static int md_mount(struct sockaddr_in *mdsin, char *path,
+	struct nfs_args *argp, struct lwp *l);
 
-static void nfs_boot_defrt __P((struct in_addr *));
-static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm, struct lwp *));
+static int nfs_boot_delroute(struct radix_node *, void *);
+static void nfs_boot_defrt(struct in_addr *);
+static  int nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *);
 
 
 /*
@@ -401,9 +402,9 @@ int
 nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context, lwp)
 	struct socket *so;
 	struct mbuf *nam;
-	int (*sndproc) __P((struct mbuf*, void*, int));
+	int (*sndproc)(struct mbuf*, void*, int);
 	struct mbuf *snd;
-	int (*rcvproc) __P((struct mbuf*, void*));
+	int (*rcvproc)(struct mbuf*, void*);
 	struct mbuf **rcv, **from_p;
 	void *context;
 	struct lwp *lwp;
@@ -534,11 +535,8 @@ nfs_boot_defrt(gw_ip)
 	}
 }
 
-static int nfs_boot_delroute __P((struct radix_node *, void *));
 static int
-nfs_boot_delroute(rn, w)
-	struct radix_node *rn;
-	void *w;
+nfs_boot_delroute(struct radix_node *rn, void *w)
 {
 	struct rtentry *rt = (struct rtentry *)rn;
 	int error;
@@ -554,8 +552,7 @@ nfs_boot_delroute(rn, w)
 }
 
 void
-nfs_boot_flushrt(ifp)
-	struct ifnet *ifp;
+nfs_boot_flushrt(struct ifnet *ifp)
 {
 
 	rn_walktree(rt_tables[AF_INET], nfs_boot_delroute, ifp);
