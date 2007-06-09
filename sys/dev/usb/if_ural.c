@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.21 2007/05/07 07:29:03 xtraeme Exp $ */
+/*	$NetBSD: if_ural.c,v 1.22 2007/06/09 12:13:12 kiyohara Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.21 2007/05/07 07:29:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.22 2007/06/09 12:13:12 kiyohara Exp $");
 
 #include "bpfilter.h"
 
@@ -423,10 +423,10 @@ USB_ATTACH(ural)
 	}
 
 	usb_init_task(&sc->sc_task, ural_task, sc);
-	callout_init(&sc->scan_ch);
+	usb_callout_init(sc->sc_scan_ch);
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_min_success_threshold = 15;
-	callout_init(&sc->amrr_ch);
+	usb_callout_init(sc->sc_amrr_ch);
 
 	/* retrieve RT2570 rev. no */
 	sc->asic_rev = ural_read(sc, RAL_MAC_CSR0);
@@ -538,8 +538,8 @@ USB_DETACH(ural)
 
 	ural_stop(ifp, 1);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, ural_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, ural_amrr_timeout, sc);
 
 	if (sc->amrr_xfer != NULL) {
 		usbd_free_xfer(sc->amrr_xfer);
@@ -756,7 +756,7 @@ ural_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		ural_set_chan(sc, ic->ic_curchan);
-		callout_reset(&sc->scan_ch, hz / 5, ural_next_scan, sc);
+		usb_callout(sc->sc_scan_ch, hz / 5, ural_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -823,8 +823,8 @@ ural_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	struct ural_softc *sc = ic->ic_ifp->if_softc;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, ural_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, ural_amrr_timeout, sc);
 
 	/* do it in a process context */
 	sc->sc_state = nstate;
@@ -2318,7 +2318,7 @@ ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 	     i--);
 	ni->ni_txrate = i;
 
-	callout_reset(&sc->amrr_ch, hz, ural_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, ural_amrr_timeout, sc);
 }
 
 Static void
@@ -2375,5 +2375,5 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
-	callout_reset(&sc->amrr_ch, hz, ural_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, ural_amrr_timeout, sc);
 }
