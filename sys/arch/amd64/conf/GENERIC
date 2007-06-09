@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148 2007/06/04 08:55:19 martin Exp $
+# $NetBSD: GENERIC,v 1.149 2007/06/09 11:34:01 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.148 $"
+#ident 		"GENERIC-$Revision: 1.149 $"
 
 maxusers	32		# estimated number of users
 
@@ -757,6 +757,7 @@ uscanner* at uhub? port ?
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum* 	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+zyd*	at uhub? port ?		# Zydas ZD1211
 
 # USB scanners that use SCSI emulation, e.g., HP5300
 usscanner* at uhub? port ?

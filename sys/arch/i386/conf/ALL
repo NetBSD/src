@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.102 2007/06/01 14:26:36 blymn Exp $
+# $NetBSD: ALL,v 1.103 2007/06/09 11:34:02 kiyohara Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.102 $"
+#ident 		"ALL-$Revision: 1.103 $"
 
 maxusers	32		# estimated number of users
 
@@ -1100,6 +1100,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
