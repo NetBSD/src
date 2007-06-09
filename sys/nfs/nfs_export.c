@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.27 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.28 2007/06/09 02:33:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.27 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.28 2007/06/09 02:33:41 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -659,7 +659,7 @@ netexport_clear(struct netexport *ne)
 
 	for (i = 0; i <= AF_MAX; i++) {
 		if ((rnh = ne->ne_rtable[i]) != NULL) {
-			(*rnh->rnh_walktree)(rnh, free_netcred, rnh);
+			rn_walktree(rnh, free_netcred, rnh);
 			free(rnh, M_RTABLE);
 			ne->ne_rtable[i] = NULL;
 		}
