@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.64 2007/05/23 17:15:04 christos Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.65 2007/06/09 03:25:32 dyoung Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.64 2007/05/23 17:15:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.65 2007/06/09 03:25:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ static int in6_init_prefix_ltimes __P((struct nd_prefix *));
 static void in6_init_address_ltimes __P((struct nd_prefix *ndpr,
 	struct in6_addrlifetime *lt6));
 
-static int rt6_deleteroute __P((struct radix_node *, void *));
+static int rt6_deleteroute(struct rtentry *, void *);
 
 extern int nd6_recalc_reachtm_interval;
 
@@ -2037,7 +2037,6 @@ in6_init_address_ltimes(struct nd_prefix *new,
 void
 rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 {
-	struct radix_node_head *rnh = rt_tables[AF_INET6];
 	int s = splsoftnet();
 
 	/* We'll care only link-local addresses */
@@ -2046,15 +2045,14 @@ rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 		return;
 	}
 
-	rnh->rnh_walktree(rnh, rt6_deleteroute, (void *)gateway);
+	rt_walktree(AF_INET6, rt6_deleteroute, (void *)gateway);
 	splx(s);
 }
 
 static int
-rt6_deleteroute(struct radix_node *rn, void *arg)
+rt6_deleteroute(struct rtentry *rt, void *arg)
 {
 #define SIN6(s)	((struct sockaddr_in6 *)s)
-	struct rtentry *rt = (struct rtentry *)rn;
 	struct in6_addr *gate = (struct in6_addr *)arg;
 
 	if (rt->rt_gateway == NULL || rt->rt_gateway->sa_family != AF_INET6)
