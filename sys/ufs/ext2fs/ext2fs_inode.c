@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.57.2.2 2007/05/13 17:36:40 ad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.57.2.3 2007/06/09 23:58:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57.2.2 2007/05/13 17:36:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57.2.3 2007/06/09 23:58:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
+		uvm_vnp_setwritesize(ovp, length);
 		error = ufs_balloc_range(ovp, length - 1, 1, cred,
 		    ioflag & IO_SYNC ? B_SYNC : 0);
 		if (error) {

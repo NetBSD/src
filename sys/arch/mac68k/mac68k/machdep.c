@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.314.2.1 2007/05/27 12:27:41 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.314.2.2 2007/06/09 23:55:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314.2.1 2007/05/27 12:27:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314.2.2 2007/06/09 23:55:17 ad Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -2010,6 +2010,7 @@ identifycpu(void)
 	    mpu);
 	printf("%s\n", cpu_model);
 	printf("cpu: delay factor %d\n", delay_factor);
+	initfpu();
 }
 
 static void	get_machine_info(void);

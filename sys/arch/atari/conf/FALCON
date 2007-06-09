@@ -1,46 +1,35 @@
 #
-# $NetBSD: FALCON,v 1.80 2006/08/26 20:26:44 christos Exp $
+# $NetBSD: FALCON,v 1.80.12.1 2007/06/09 23:54:58 ad Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.61 2006/03/28 20:58:39 pavel Exp $
+#		NetBSD: GENERIC.in,v 1.66 2007/06/06 08:20:26 martin Exp $
 include "arch/atari/conf/std.atari"
-
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
-
 maxusers 16
-
 options HZ=64 # Set the clock-rate (48/64/96)
-
 options INSECURE # disable kernel security levels
 options M68030 # support for 030
 options FPU_EMULATE # Support for MC68881/MC68882 emulator
-
 options M68040 # support for 040
 options FPSP # 68040 Floatingpoint support
 options INET # IP + ICMP + TCP + UDP
-
 options INET6 # IPV6
-
 options ISO,TPIP # OSI
-
-
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
-
 options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
-options IPFILTER_LOOKUP	# ippool(8) support
+options IPFILTER_LOOKUP # ippool(8) support
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
-
 file-system NFS # Network File System client side code
 file-system PROCFS # Process filesystem
 file-system FDESC # /dev/fd
@@ -52,18 +41,12 @@ file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
 file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
-
 options QUOTA # Disk quotas for local disks
-
 options SOFTDEP # FFS soft updates support.
-
 options NFSSERVER # Network File System server side code
-
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
-
 options DDB_HISTORY_SIZE=100 # Enable history editing in DDB
-
 options COMPAT_43 # 4.3 BSD compatible system calls (required)
 options COMPAT_10 # Compatibility with NetBSD 1.0
 options COMPAT_11 # Compatibility with NetBSD 1.1
@@ -74,61 +57,40 @@ options COMPAT_15 # Compatibility with NetBSD 1.5
 options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
-
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
-
 options SYSVSHM # System V shared memory
 options SYSVMSG # System V messages
 options SYSVSEM # System V semaphores
-
 options P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 options KTRACE # Add kernel tracing system call
-#options SYSTRACE # system call vetting via systrace(1)
-
 options USERCONF # userconf(4) support
-
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
-
 options SCSIVERBOSE # human readable SCSI error messages
 options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
-
 options FALCON_SCSI # SCSI-support for Falcon
 options FALCON_VIDEO # Graphics support for FALCON
-
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-
 options SERCONSOLE # modem1 console support
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
-
 options TRY_SCSI_LINKED_COMMANDS=0x7f
-
 config netbsd root on ? type ?
-
 pseudo-device sl # Slip
 pseudo-device ppp # ppp
-
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device vnd # 3 pseudo disks (see vnconfig)
-
 pseudo-device md 3 # Boot memory disk
-
 pseudo-device bpfilter # berkeley packet filters
 pseudo-device tun # network tunnel
 pseudo-device tap # virtual Ethernet
-
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
-
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
-
 pseudo-device ccd 4 # concatenating disk driver
-
 pseudo-device raid 8 # RAIDframe disk driver
 options RAID_AUTOCONFIG # auto-configuration of RAID components
 pseudo-device fss 4 # file system snapshot device
@@ -136,36 +98,28 @@ pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
 pseudo-device view 4 # View (graphics mapping)
-
 pseudo-device mouse 1 # mouse
-
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
 scsibus0 at ncrscsi0 # SCSI bus
 zs0 at mainbus0 # Serial support through 8530
-grfbus0 at mainbus0 # bitmapped display's'
+grfbus0 at mainbus0 # bitmapped display's
 grfcc0 at grfbus0 # graphics driver
 ite0 at grfcc0 # console
 nvr0 at mainbus0 # nvram driver
-
 grfcc1 at grfbus0 # 2nd graphics driver
 ite1 at grfcc1 # 2nd tty
 grfcc2 at grfbus0 # 3rd graphics driver
 ite2 at grfcc2 # 3rd tty
 lp0 at mainbus0 # centronics printer
 ser0 at mainbus0 # UART on first 68901 (ttyB0)
-
 wdc0 at mainbus0 # IDE-bus
 atabus* at wdc? channel ?
 wd* at atabus? drive ?
-
 atapibus* at atabus?
-
 cd* at atapibus? drive ? # ATAPI CD-ROM drives
-
 sd* at scsibus? target ? lun ? # SCSI disk drives
 st* at scsibus? target ? lun ? # SCSI tape drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
-
 ch* at scsibus? target ? lun ? # SCSI autochangers
 ss* at scsibus? target ? lun ? # SCSI scanners
 se* at scsibus? target ? lun ? # SCSI ethernet

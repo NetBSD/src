@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.60.2.2 2007/05/27 14:35:15 ad Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.60.2.3 2007/06/09 23:57:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -703,6 +703,7 @@ void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 void	startlwp32(void *);
+int	do_netbsd32___semctl14(struct lwp *, void *, register_t *, void *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);

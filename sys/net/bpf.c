@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.126.2.1 2007/04/10 00:22:12 ad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.126.2.2 2007/06/09 23:58:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.2.1 2007/04/10 00:22:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.2.2 2007/06/09 23:58:09 ad Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_bpf.h"
+#include "sl.h"
+#include "strip.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,11 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.2.1 2007/04/10 00:22:12 ad Exp $");
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 
-#if defined(_KERNEL_OPT)
-#include "opt_bpf.h"
-#include "sl.h"
-#include "strip.h"
-#endif
+
+#include <compat/sys/sockio.h>
 
 #ifndef BPF_BUFSIZE
 /*
@@ -794,6 +797,9 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 	/*
 	 * Set interface name.
 	 */
+#ifdef OBIOCGETIF
+	case OBIOCGETIF:
+#endif
 	case BIOCGETIF:
 		if (d->bd_bif == 0)
 			error = EINVAL;
@@ -804,6 +810,9 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 	/*
 	 * Set interface.
 	 */
+#ifdef OBIOCSETIF
+	case OBIOCSETIF:
+#endif
 	case BIOCSETIF:
 		error = bpf_setif(d, addr);
 		break;

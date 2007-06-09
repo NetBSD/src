@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.37.2.2 2007/05/27 14:35:17 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.37.2.3 2007/06/09 23:57:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.37.2.2 2007/05/27 14:35:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.37.2.3 2007/06/09 23:57:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -547,19 +547,6 @@ compat_43_netbsd32_orecvmsg(l, v, retval)
 		return error;
 	NETBSD32PTR32(omh32.msg_name, omh.msg_name);
 	omh32.msg_namelen = omh.msg_namelen;
-	omh32.msg_iovlen = (netbsd32_size_t)omh.msg_iovlen;
-	iovec32p = NETBSD32PTR64(omh32.msg_iov);
-	sgsbp2 = omh.msg_iov;
-	for (i = 0; i < omh.msg_iovlen; i++, sgsbp2++, iovec32p++) {
-		error = copyin(sgsbp2, &iov, sizeof(iov));
-		if (error)
-			return (error);
-		NETBSD32PTR32(iov32.iov_base, iov.iov_base);
-		iov32.iov_len = (netbsd32_size_t)iov.iov_len;
-		error = copyout(&iov32, iovec32p, sizeof(iov32));
-		if (error)
-			return (error);
-	}
 	NETBSD32PTR32(omh32.msg_accrights, omh.msg_accrights);
 	omh32.msg_accrightslen = omh.msg_accrightslen;
 
@@ -588,7 +575,7 @@ compat_43_netbsd32_osendmsg(l, v, retval)
 	struct iovec iov, *sgsbp2;
 	struct netbsd32_iovec iov32, *iovec32p;
 	void *sg = stackgap_init(p, 0);
-	int i, error, rv;
+	int i, error;
 
 	NETBSD32TO64_UAP(s);
 	NETBSD32TO64_UAP(flags);
@@ -635,34 +622,7 @@ compat_43_netbsd32_osendmsg(l, v, retval)
 	if (error)
 		return (error);
 
-	rv = compat_43_sys_sendmsg(l, &ua, retval);
-
-	error = copyin(sgsbp, &omh, sizeof(omh));
-	if (error)
-		return error;
-	NETBSD32PTR32(omh32.msg_name, omh.msg_name);
-	omh32.msg_namelen = omh.msg_namelen;
-	omh32.msg_iovlen = (netbsd32_size_t)omh.msg_iovlen;
-	iovec32p = NETBSD32PTR64(omh32.msg_iov);
-	sgsbp2 = omh.msg_iov;
-	for (i = 0; i < omh.msg_iovlen; i++, sgsbp2++, iovec32p++) {
-		error = copyin(sgsbp2, &iov, sizeof(iov));
-		if (error)
-			return (error);
-		NETBSD32PTR32(iov32.iov_base, iov.iov_base);
-		iov32.iov_len = (netbsd32_size_t)iov.iov_len;
-		error = copyout(&iov32, iovec32p, sizeof(iov32));
-		if (error)
-			return (error);
-	}
-	NETBSD32PTR32(omh32.msg_accrights, omh.msg_accrights);
-	omh32.msg_accrightslen = omh.msg_accrightslen;
-
-	error = copyout(&omh32, SCARG_P32(uap, msg), sizeof(omh32));
-	if (error)
-		return error;
-
-	return (rv);
+	return compat_43_sys_sendmsg(l, &ua, retval);
 }
 
 int

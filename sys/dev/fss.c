@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.5 2007/05/13 17:36:21 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.6 2007/06/09 23:57:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.5 2007/05/13 17:36:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.6 2007/06/09 23:57:49 ad Exp $");
 
 #include "fss.h"
 
@@ -1006,7 +1006,7 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 static void
 fss_bs_thread(void *arg)
 {
-	int error, len, nfreed, nio, s;
+	int error = 0, len, nfreed, nio, s;
 	long off;
 	char *addr;
 	u_int32_t c, cl, ch, *indirp;

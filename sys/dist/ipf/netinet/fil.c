@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.29.2.1 2007/06/08 14:14:45 ad Exp $	*/
+/*	$NetBSD: fil.c,v 1.29.2.2 2007/06/09 23:57:58 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,7 +154,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.29.2.1 2007/06/08 14:14:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.29.2.2 2007/06/09 23:57:58 ad Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.104 2007/05/11 13:41:51 darrenr Exp";
@@ -6782,8 +6782,8 @@ int ipf_getnextrule(ipftoken_t *t, void *ptr)
 			next = &zero;
 			ipf_freetoken(t);
 			fr = NULL;
+			t = NULL;
 			count = 1;
-			t->ipt_data = next;
 		}
 		RWLOCK_EXIT(&ipf_mutex);
 
@@ -6944,13 +6944,13 @@ void *ctx;
 				if (fr_running > 0)
 					error = 0;
 				else
-					error = iplattach();
+					error = ipfattach();
 				if (error == 0)
 					fr_running = 1;
 				else
-					(void) ipldetach();
+					(void) ipfdetach();
 			} else {
-				error = ipldetach();
+				error = ipfdetach();
 				if (error == 0)
 					fr_running = -1;
 			}

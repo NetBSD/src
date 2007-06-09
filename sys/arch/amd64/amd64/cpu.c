@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15.2.1 2007/05/27 12:26:56 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.15.2.2 2007/06/09 23:54:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.1 2007/05/27 12:26:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.2 2007/06/09 23:54:50 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -117,16 +117,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.1 2007/05/27 12:26:56 ad Exp $");
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
-int     cpu_match __P((struct device *, struct cfdata *, void *));
-void    cpu_attach __P((struct device *, struct device *, void *));
+int     cpu_match(struct device *, struct cfdata *, void *);
+void    cpu_attach(struct device *, struct device *, void *);
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
-int mp_cpu_start __P((struct cpu_info *)); 
-void mp_cpu_start_cleanup __P((struct cpu_info *));
+int mp_cpu_start(struct cpu_info *); 
+void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
 
@@ -160,10 +160,10 @@ u_int32_t cpus_running = 0;
 
 extern char x86_64_doubleflt_stack[];
 
-void    	cpu_hatch __P((void *));
-static void    	cpu_boot_secondary __P((struct cpu_info *ci));
-static void    	cpu_start_secondary __P((struct cpu_info *ci));
-static void	cpu_copy_trampoline __P((void));
+void    	cpu_hatch(void *);
+static void    	cpu_boot_secondary(struct cpu_info *ci);
+static void    	cpu_start_secondary(struct cpu_info *ci);
+static void	cpu_copy_trampoline(void);
 
 /*
  * Runs once per boot once multiprocessor goo has been detected and
@@ -172,7 +172,7 @@ static void	cpu_copy_trampoline __P((void));
  * Called from lapic_boot_init() (from mpbios_scan()).
  */
 void
-cpu_init_first()
+cpu_init_first(void)
 {
 	int cpunum = lapic_cpu_number();
 
@@ -186,10 +186,7 @@ cpu_init_first()
 #endif
 
 int
-cpu_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cpu_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
@@ -232,9 +229,7 @@ cpu_vm_init(struct cpu_info *ci)
 
 
 void
-cpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;
@@ -375,8 +370,7 @@ cpu_attach(parent, self, aux)
  */
 
 void
-cpu_init(ci)
-	struct cpu_info *ci;
+cpu_init(struct cpu_info *ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
@@ -400,7 +394,7 @@ cpu_init(ci)
 
 #ifdef MULTIPROCESSOR
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -429,7 +423,7 @@ cpu_init_idle_lwp(struct cpu_info *ci)
 }
 
 void
-cpu_init_idle_lwps()
+cpu_init_idle_lwps(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -447,8 +441,7 @@ cpu_init_idle_lwps()
 }
 
 void
-cpu_start_secondary (ci)
-	struct cpu_info *ci;
+cpu_start_secondary(struct cpu_info *ci)
 {
 	int i;
 	struct pmap *kmp = pmap_kernel();
@@ -491,8 +484,7 @@ cpu_start_secondary (ci)
 }
 
 void
-cpu_boot_secondary(ci)
-	struct cpu_info *ci;
+cpu_boot_secondary(struct cpu_info *ci)
 {
 	int i;
 
@@ -593,7 +585,7 @@ cpu_debug_dump(void)
 #endif
 
 static void
-cpu_copy_trampoline()
+cpu_copy_trampoline(void)
 {
 	/*
 	 * Copy boot code.
@@ -679,7 +671,7 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
 
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector Xsyscall, Xsyscall32;
 
 void

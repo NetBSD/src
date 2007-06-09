@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.4 2007/04/13 15:49:50 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.5 2007/06/09 23:58:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -105,6 +105,7 @@ struct vnode {
 	kcondvar_t	v_cv;			/* v: synchronization */
 	int		v_waitcnt;		/* v: # waiters for VXLOCK */
 	voff_t		v_size;			/* v: size of file */
+	voff_t		v_writesize;		/* v: new size after write */
 	int		v_flag;			/* v: flags */
 	int		v_numoutput;		/* o: # of pending writes */
 	kcondvar_t	v_outputcv;		/* o: notifier on numoutput */

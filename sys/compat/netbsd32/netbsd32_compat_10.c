@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.18.2.1 2007/04/10 13:26:26 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.18.2.2 2007/06/09 23:57:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.18.2.1 2007/04/10 13:26:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.18.2.2 2007/06/09 23:57:44 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -58,7 +58,6 @@ compat_10_netbsd32_sys_semsys(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_10_netbsd32_sys_semsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
@@ -66,7 +65,7 @@ compat_10_netbsd32_sys_semsys(l, v, retval)
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 	} */ *uap = v;
-	struct compat_14_sys___semctl_args /* {
+	struct netbsd32___semctl14_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
@@ -85,18 +84,14 @@ compat_10_netbsd32_sys_semsys(l, v, retval)
 	struct sys_semconfig_args /* {
 		syscallarg(int) flag;
 	} */ semconfig_args;
-	void *sg = stackgap_init(p, 0);
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */
 		SCARG(&__semctl_args, semid) = SCARG(uap, a2);
 		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
 		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
-		SCARG(&__semctl_args, arg) = stackgap_alloc(p, &sg,
-			sizeof(union semun *));
-		copyout(&SCARG(uap, a5), SCARG(&__semctl_args, arg),
-			sizeof(union __semun));
-		return (compat_14_sys___semctl(l, &__semctl_args, retval));
+		return do_netbsd32___semctl14(l, &__semctl_args, retval,
+						&SCARG(uap, a5));
 
 	case 1:						/* semget() */
 		SCARG(&semget_args, key) = SCARG(uap, a2);

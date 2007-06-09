@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.88.2.5 2007/06/08 14:17:35 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.88.2.6 2007/06/09 23:58:11 ad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.5 2007/06/08 14:17:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.6 2007/06/09 23:58:11 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.5 2007/06/08 14:17:35 ad Exp $");
 
 #include <net/if_gre.h>
 
+#include <compat/sys/sockio.h>
 /*
  * It is not easy to calculate the right value for a GRE MTU.
  * We leave this task to the admin and use the same default that
@@ -878,7 +879,7 @@ gre_closef(struct file **fpp, struct lwp *l)
 {
 	struct file *fp = *fpp;
 
-	simple_lock(&fp->f_slock);
+	mutex_enter(&fp->f_lock);
 	FILE_USE(fp);
 	closef(fp, l);
 	*fpp = NULL;
@@ -893,13 +894,26 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sockaddr_in dst, src;
 	struct proc *p = curproc;	/* XXX */
 	struct lwp *l = curlwp;	/* XXX */
-	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifreq *ifr;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
 	struct sockaddr_in si;
 	struct sockaddr *sa = NULL;
 	int error = 0;
+#ifdef COMPAT_OIFREQ
+	u_long ocmd = cmd;
+	struct oifreq *oifr = NULL;
+	struct ifreq ifrb;
 
+	cmd = cvtcmd(cmd);
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
+	} else
+#endif
+		ifr = data;
+	
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 	case SIOCSIFMTU:
@@ -1155,6 +1169,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = EINVAL;
 		break;
 	}
+#ifdef COMPAT_OIFREQ
+	if (cmd != ocmd)
+		ifreqn2o(oifr, ifr);
+#endif
 	mutex_exit(&sc->sc_mtx);
 	return error;
 }

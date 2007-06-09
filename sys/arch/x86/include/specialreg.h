@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.15 2007/02/17 00:28:25 daniel Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.15.6.1 2007/06/09 23:55:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -169,12 +169,17 @@
 #define	CPUID2_MONITOR	0x00000008	/* MONITOR/MWAIT instructions */
 #define	CPUID2_DS_CPL	0x00000010	/* CPL Qualified Debug Store */
 #define	CPUID2_VMX	0x00000020	/* Virtual Machine Extensions */
+#define	CPUID2_SMX	0x00000040	/* Safer Mode Extensions */
 #define	CPUID2_EST	0x00000080	/* Enhanced SpeedStep Technology */
 #define	CPUID2_TM2	0x00000100	/* Thermal Monitor 2 */
 #define	CPUID2_CID	0x00000400	/* Context ID */
+#define	CPUID2_CX16	0x00002000	/* has CMPXCHG16B instruction */
 #define	CPUID2_xTPR	0x00004000	/* Task Priority Messages disabled? */
+#define	CPUID2_PDCM	0x00008000	/* Perf/Debug Capability MSR */
+#define	CPUID2_DCA	0x00040000	/* Direct Cache Access */
 
-#define CPUID2_FLAGS "\20\1SSE3\4MONITOR\5DS-CPL\6VMX\10EST\11TM2\13CID\17xTPR"
+#define CPUID2_FLAGS "\20\1SSE3\4MONITOR\5DS-CPL\6VMX\7SMX\10EST\11TM2" \
+			"\13CID\17xTPR\20PDCM\23DCA"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.116 2007/03/08 02:24:39 tsutsui Exp $
+#	$NetBSD: files.mac68k,v 1.116.2.1 2007/06/09 23:55:16 ad Exp $
 
 # mac68k-specific configuration info
 
@@ -143,22 +143,18 @@ attach	zstty at zsc
 file	dev/ic/z8530tty.c		zstty needs-flag
 file	arch/mac68k/dev/zs_kgdb.c	kgdb
 
-# This one is out of alphabetical order
-device	fpu
-attach	fpu at mainbus
-file	arch/mac68k/mac68k/fpu.c	fpu
-
-include "arch/m68k/fpe/files.fpe"
-
 # legitimate pseudo-devices
 defpseudo grf
 defpseudo ite
+
+include "arch/m68k/fpe/files.fpe"
 
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/bus_space.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
+file	arch/mac68k/mac68k/fpu.c
 file	arch/mac68k/mac68k/intr.c
 file	arch/mac68k/mac68k/iop.c
 file	arch/mac68k/mac68k/machdep.c

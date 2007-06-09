@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.21.2.1 2007/06/08 14:14:52 ad Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.21.2.2 2007/06/09 23:58:00 ad Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -2804,8 +2804,8 @@ int dir;
 {
 	u_32_t sum1, sum2, sumd, sumd2;
 	struct in_addr a1, a2;
+	int flags, dlen, odst;
 	icmphdr_t *icmp;
-	int flags, dlen;
 	u_short *csump;
 	tcphdr_t *tcp;
 	nat_t *nat;
@@ -2867,9 +2867,30 @@ int dir;
 	 * two changes cancel each other out (if the delta for
 	 * the IP address is x, then the delta for ip_sum is minus x),
 	 * so no change in the icmp_cksum is necessary.
+	 *
+	 * Inbound ICMP
+	 * ------------
+	 * MAP rule, SRC=a,DST=b -> SRC=c,DST=b
+	 * - response to outgoing packet (a,b)=>(c,b) (OIP_SRC=c,OIP_DST=b)
+	 * - OIP_SRC(c)=nat_outip, OIP_DST(b)=nat_oip
+	 *
+	 * RDR rule, SRC=a,DST=b -> SRC=a,DST=c
+	 * - response to outgoing packet (c,a)=>(b,a) (OIP_SRC=b,OIP_DST=a)
+	 * - OIP_SRC(b)=nat_outip, OIP_DST(a)=nat_oip
+	 *
+	 * Outbound ICMP
+	 * -------------
+	 * MAP rule, SRC=a,DST=b -> SRC=c,DST=b
+	 * - response to incoming packet (b,c)=>(b,a) (OIP_SRC=b,OIP_DST=a)
+	 * - OIP_SRC(a)=nat_oip, OIP_DST(c)=nat_inip
+	 *
+	 * RDR rule, SRC=a,DST=b -> SRC=a,DST=c
+	 * - response to incoming packet (a,b)=>(a,c) (OIP_SRC=a,OIP_DST=c)
+	 * - OIP_SRC(a)=nat_oip, OIP_DST(c)=nat_inip
+	 *
 	 */
-
-	if (nat->nat_dir == NAT_OUTBOUND) {
+	odst = (oip->ip_dst.s_addr == nat->nat_oip.s_addr) ? 1 : 0;
+	if (odst == 1) {
 		a1.s_addr = ntohl(nat->nat_inip.s_addr);
 		a2.s_addr = ntohl(oip->ip_src.s_addr);
 		oip->ip_src.s_addr = htonl(a1.s_addr);
@@ -2910,7 +2931,7 @@ int dir;
 		 * checksum will also need to change if there has been an
 		 * IP address change.
 		 */
-		if (nat->nat_dir == NAT_OUTBOUND) {
+		if (odst == 1) {
 			sum1 = ntohs(nat->nat_inport);
 			sum2 = ntohs(tcp->th_sport);
 
@@ -2972,7 +2993,7 @@ int dir;
 		 */
 		orgicmp = (icmphdr_t *)dp;
 
-		if (nat->nat_dir == NAT_OUTBOUND) {
+		if (odst == 1) {
 			if (orgicmp->icmp_id != nat->nat_inport) {
 
 				/*

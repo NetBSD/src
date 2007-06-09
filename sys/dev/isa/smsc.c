@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.1.2.2 2007/06/09 21:37:19 ad Exp $ */
+/*	$NetBSD: smsc.c,v 1.1.2.3 2007/06/09 23:57:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.2 2007/06/09 21:37:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.3 2007/06/09 23:57:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

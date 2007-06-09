@@ -1,4 +1,4 @@
-/*	$NetBSD: ews4800keymap.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: ews4800keymap.c,v 1.1.32.1 2007/06/09 23:55:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ews4800keymap.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ews4800keymap.c,v 1.1.32.1 2007/06/09 23:55:02 ad Exp $");
 
 #include <sys/param.h>
 #include <dev/wscons/wsksymdef.h>
@@ -106,10 +106,10 @@ const keysym_t ews4800kbd_keydesc[] = {
 	KC(0x37), KS_KP_7,
 	KC(0x38), KS_KP_8,
 	KC(0x39), KS_KP_9,
-	KC(0x40), KS_Return,
 	KC(0x3a), KS_space,
 	KC(0x3b), KS_comma,
 	KC(0x3e), KS_Hiragana_Katakana, /* KANA */
+	KC(0x40), KS_Return,
 	KC(0x41), KS_Return,
 	KC(0x42), KS_Prior,
 	KC(0x43), KS_Next,

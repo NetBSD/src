@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.c,v 1.14.2.1 2007/04/10 13:26:33 ad Exp $	 */
+/*	$NetBSD: svr4_32_sockio.c,v 1.14.2.2 2007/06/09 23:57:47 ad Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.14.2.1 2007/04/10 13:26:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.14.2.2 2007/06/09 23:57:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.14.2.1 2007/04/10 13:26:33 ad E
 #include <sys/syscallargs.h>
 
 #include <compat/sys/socket.h>
+#include <compat/sys/sockio.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
 #include <compat/svr4_32/svr4_32_util.h>
@@ -140,7 +141,7 @@ svr4_32_sock_ioctl(fp, l, retval, fd, cmd, data)
 
 	case SVR4_32_SIOCGIFFLAGS:
 		{
-			struct ifreq br;
+			struct oifreq br;
 			struct svr4_32_ifreq sr;
 
 			if ((error = copyin(data, &sr, sizeof(sr))) != 0)
@@ -164,20 +165,20 @@ svr4_32_sock_ioctl(fp, l, retval, fd, cmd, data)
 	case SVR4_32_SIOCGIFCONF:
 		{
 			struct svr4_32_ifconf sc;
-			struct ifconf ifc;
+			struct oifconf ifc;
 
 			if ((error = copyin(data, &sc, sizeof(sc))) != 0)
 				return error;
 
 			DPRINTF(("ifreq %ld svr4_32_ifreq %ld ifc_len %d\n",
-				(unsigned long)sizeof(struct ifreq),
+				(unsigned long)sizeof(struct oifreq),
 				(unsigned long)sizeof(struct svr4_32_ifreq),
 				sc.svr4_32_ifc_len));
 
 			ifc.ifc_len = sc.svr4_32_ifc_len;
 			ifc.ifc_buf = NETBSD32PTR64(sc.ifc_ifcu.ifcu_buf);
 
-			if ((error = (*ctl)(fp, OSIOCGIFCONF, &ifc, l)) != 0)
+			if ((error = (*ctl)(fp, OOSIOCGIFCONF, &ifc, l)) != 0)
 				return error;
 
 			DPRINTF(("SIOCGIFCONF\n"));

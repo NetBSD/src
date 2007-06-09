@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.55 2007/01/19 14:49:12 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.55.6.1 2007/06/09 23:58:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,10 +43,6 @@
 #define FFS_ASYNCFREE		4	/* asynchronous block freeing enabled */
 #define FFS_LOG_CHANGEOPT	5	/* log optimalization strategy change */
 #define FFS_MAXID		6	/* number of valid ffs ids */
-
-#define	FFS_ITIMES(ip, acc, mod, cre) \
-	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
-		ffs_itimes(ip, acc, mod, cre)
 
 struct buf;
 struct fid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107.2.7 2007/06/08 14:18:06 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.107.2.8 2007/06/09 23:58:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.7 2007/06/08 14:18:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.8 2007/06/09 23:58:15 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -98,15 +98,15 @@ struct nfssvc_sock *nfs_cltpsock;
 struct nfssvc_sock *nfs_udp6sock;
 #endif
 int nuidhash_max = NFS_MAXUIDHASH;
-int nfsd_waiting = 0;
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
 static struct nfsdrt nfsdrt;
 #endif
 
 #ifdef NFSSERVER
-struct simplelock nfsd_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t nfsd_lock;
 struct nfssvc_sockhead nfssvc_sockhead;
+kcondvar_t nfsd_initcv;
 struct nfssvc_sockhead nfssvc_sockpending;
 struct nfsdhead nfsd_head;
 struct nfsdidlehead nfsd_idle_head;
@@ -149,7 +149,6 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 #ifdef NFSSERVER
-	int s;
 	struct file *fp;
 	struct mbuf *nam;
 	struct nfsd_args nfsdarg;
@@ -171,15 +170,11 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 	nfs_init();
 
 #ifdef NFSSERVER
-	s = splsoftnet();
-	simple_lock(&nfsd_slock);
+	mutex_enter(&nfsd_lock);
 	while (nfssvc_sockhead_flag & SLP_INIT) {
-		nfssvc_sockhead_flag |= SLP_WANTINIT;
-		(void) ltsleep(&nfssvc_sockhead, PSOCK, "nfsd init", 0,
-		    &nfsd_slock);
+		cv_wait(&nfsd_initcv, &nfsd_lock);
 	}
-	simple_unlock(&nfsd_slock);
-	splx(s);
+	mutex_exit(&nfsd_lock);
 #endif
 	if (SCARG(uap, flag) & NFSSVC_BIOD) {
 #if defined(NFS) && defined(COMPAT_14)
@@ -353,20 +348,18 @@ static struct nfssvc_sock *
 nfsrv_sockalloc()
 {
 	struct nfssvc_sock *slp;
-	int s;
 
 	slp = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
 	memset(slp, 0, sizeof (struct nfssvc_sock));
-	simple_lock_init(&slp->ns_lock);
+	mutex_init(&slp->ns_lock, MUTEX_DRIVER, IPL_SOFTNET);
+	cv_init(&slp->ns_cv, "nfsdsock");
 	TAILQ_INIT(&slp->ns_uidlruhead);
 	LIST_INIT(&slp->ns_tq);
 	SIMPLEQ_INIT(&slp->ns_sendq);
-	s = splsoftnet();
-	simple_lock(&nfsd_slock);
+	mutex_enter(&nfsd_lock);
 	TAILQ_INSERT_TAIL(&nfssvc_sockhead, slp, ns_chain);
-	simple_unlock(&nfsd_slock);
-	splx(s);
+	mutex_exit(&nfsd_lock);
 
 	return slp;
 }
@@ -378,6 +371,8 @@ nfsrv_sockfree(struct nfssvc_sock *slp)
 	KASSERT(slp->ns_so == NULL);
 	KASSERT(slp->ns_fp == NULL);
 	KASSERT((slp->ns_flag & SLP_VALID) == 0);
+	mutex_destroy(&slp->ns_lock);
+	cv_destroy(&slp->ns_cv);
 	free(slp, M_NFSSVC);
 }
 
@@ -459,9 +454,9 @@ nfssvc_addsock(fp, mynam)
 	so->so_rcv.sb_timeo = 0;
 	so->so_snd.sb_flags &= ~SB_NOINTR;
 	so->so_snd.sb_timeo = 0;
-	if (tslp)
+	if (tslp) {
 		slp = tslp;
-	else {
+	} else {
 		slp = nfsrv_sockalloc();
 	}
 	slp->ns_so = so;
@@ -472,7 +467,7 @@ nfssvc_addsock(fp, mynam)
 	so->so_upcallarg = (void *)slp;
 	so->so_upcall = nfsrv_rcv;
 	so->so_rcv.sb_flags |= SB_UPCALL;
-	slp->ns_flag = (SLP_VALID | SLP_NEEDQ);
+	slp->ns_flag = SLP_VALID | SLP_NEEDQ;
 	nfsrv_wakenfsd(slp);
 	splx(s);
 	return (0);
@@ -495,52 +490,55 @@ nfssvc_nfsd(nsd, argp, l)
 	struct nfsrv_descript *nd = NULL;
 	struct mbuf *mreq;
 	u_quad_t cur_usec;
-	int error = 0, cacherep, s, siz, sotype, writes_todo;
+	int error = 0, cacherep, siz, sotype, writes_todo;
 	struct proc *p = l->l_proc;
+	int s;
 
 #ifndef nolint
 	cacherep = RC_DOIT;
 	writes_todo = 0;
 #endif
 	uvm_lwp_hold(l);
-	s = splsoftnet();
 	if (nfsd == (struct nfsd *)0) {
 		nsd->nsd_nfsd = nfsd = (struct nfsd *)
 			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
 		memset((void *)nfsd, 0, sizeof (struct nfsd));
+		cv_init(&nfsd->nfsd_cv, "nfsd");
 		nfsd->nfsd_procp = p;
-		simple_lock(&nfsd_slock);
+		mutex_enter(&nfsd_lock);
 		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
 		nfs_numnfsd++;
-		simple_unlock(&nfsd_slock);
+		mutex_exit(&nfsd_lock);
 	}
 	/*
 	 * Loop getting rpc requests until SIGKILL.
 	 */
 	for (;;) {
+		if ((curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			preempt();
+		}
 		if (nfsd->nfsd_slp == NULL) {
-			simple_lock(&nfsd_slock);
+			mutex_enter(&nfsd_lock);
 			while (nfsd->nfsd_slp == NULL &&
 			    (nfsd_head_flag & NFSD_CHECKSLP) == 0) {
 				SLIST_INSERT_HEAD(&nfsd_idle_head, nfsd,
 				    nfsd_idle);
-				nfsd_waiting++;
-				error = ltsleep(nfsd, PSOCK | PCATCH, "nfsd",
-				    0, &nfsd_slock);
-				nfsd_waiting--;
+				error = cv_wait_sig(&nfsd->nfsd_cv, &nfsd_lock);
 				if (error) {
 					slp = nfsd->nfsd_slp;
 					nfsd->nfsd_slp = NULL;
 					if (!slp)
 						SLIST_REMOVE(&nfsd_idle_head,
 						    nfsd, nfsd, nfsd_idle);
-					simple_unlock(&nfsd_slock);
+					mutex_exit(&nfsd_lock);
 					if (slp) {
 						nfsrv_wakenfsd(slp);
 						nfsrv_slpderef(slp);
 					}
 					goto done;
 				}
+				KASSERT(nfsd->nfsd_slp != NULL);
 			}
 			if (nfsd->nfsd_slp == NULL &&
 			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
@@ -557,7 +555,7 @@ nfssvc_nfsd(nsd, argp, l)
 				} else
 					nfsd_head_flag &= ~NFSD_CHECKSLP;
 			}
-			simple_unlock(&nfsd_slock);
+			mutex_exit(&nfsd_lock);
 			if ((slp = nfsd->nfsd_slp) == NULL)
 				continue;
 			if (slp->ns_flag & SLP_VALID) {
@@ -596,7 +594,6 @@ nfssvc_nfsd(nsd, argp, l)
 			nfsrv_slpderef(slp);
 			continue;
 		}
-		splx(s);
 		sotype = slp->ns_so->so_type;
 		if (nd) {
 			getmicrotime(&nd->nd_starttime);
@@ -736,7 +733,6 @@ nfssvc_nfsd(nsd, argp, l)
 					nfsd_rt(slp->ns_so->so_type, nd,
 					    cacherep);
 				}
-				s = splsoftnet();
 				error = nfsdsock_sendreply(slp, nd);
 				nd = NULL;
 				if (error == EPIPE)
@@ -745,7 +741,6 @@ nfssvc_nfsd(nsd, argp, l)
 					nfsrv_slpderef(slp);
 					goto done;
 				}
-				splx(s);
 				break;
 			case RC_DROPIT:
 				if (nfsrtton)
@@ -775,19 +770,18 @@ nfssvc_nfsd(nsd, argp, l)
 				writes_todo = 0;
 			splx(s);
 		} while (writes_todo);
-		s = splsoftnet();
 		if (nfsrv_dorec(slp, nfsd, &nd)) {
 			nfsd->nfsd_slp = NULL;
 			nfsrv_slpderef(slp);
 		}
 	}
 done:
-	simple_lock(&nfsd_slock);
+	mutex_enter(&nfsd_lock);
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
-	simple_unlock(&nfsd_slock);
-	splx(s);
-	free((void *)nfsd, M_NFSD);
-	nsd->nsd_nfsd = (struct nfsd *)0;
+	mutex_exit(&nfsd_lock);
+	cv_destroy(&nfsd->nfsd_cv);
+	free(nfsd, M_NFSD);
+	nsd->nsd_nfsd = NULL;
 	if (--nfs_numnfsd == 0)
 		nfsrv_init(true);	/* Reinitialize everything */
 	uvm_lwp_rele(l);
@@ -816,11 +810,11 @@ nfsrv_zapsock(slp)
 	if (nfsdsock_drain(slp)) {
 		return;
 	}
-	simple_lock(&nfsd_slock);
+	mutex_enter(&nfsd_lock);
 	if (slp->ns_flag & SLP_DOREC) {
 		TAILQ_REMOVE(&nfssvc_sockpending, slp, ns_pending);
 	}
-	simple_unlock(&nfsd_slock);
+	mutex_exit(&nfsd_lock);
 
 	so = slp->ns_so;
 	KASSERT(so != NULL);
@@ -866,15 +860,13 @@ void
 nfsrv_slpderef(slp)
 	struct nfssvc_sock *slp;
 {
-	KASSERT(!simple_lock_held(&nfsd_slock));
 
 	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		struct file *fp;
-		int s = splsoftnet();
-		simple_lock(&nfsd_slock);
+
+		mutex_enter(&nfsd_lock);
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
-		simple_unlock(&nfsd_slock);
-		splx(s);
+		mutex_exit(&nfsd_lock);
 
 		fp = slp->ns_fp;
 		if (fp != NULL) {
@@ -901,35 +893,35 @@ nfsrv_init(terminating)
 	int terminating;
 {
 	struct nfssvc_sock *slp;
-	int s;
 
-	s = splsoftnet();
-	simple_lock(&nfsd_slock);
+	if (!terminating) {
+		mutex_init(&nfsd_lock, MUTEX_DRIVER, IPL_SOFTNET);
+		cv_init(&nfsd_initcv, "nfsdinit");
+	}
+
+	mutex_enter(&nfsd_lock);
 	if (nfssvc_sockhead_flag & SLP_INIT)
 		panic("nfsd init");
 	nfssvc_sockhead_flag |= SLP_INIT;
 
 	if (terminating) {
 		while ((slp = TAILQ_FIRST(&nfssvc_sockhead)) != NULL) {
-			simple_unlock(&nfsd_slock);
+			mutex_exit(&nfsd_lock);
 			KASSERT(slp->ns_sref == 0);
 			slp->ns_sref++;
 			nfsrv_zapsock(slp);
 			nfsrv_slpderef(slp);
-			simple_lock(&nfsd_slock);
+			mutex_enter(&nfsd_lock);
 		}
-		simple_unlock(&nfsd_slock);
-		splx(s);
+		mutex_exit(&nfsd_lock);
 		nfsrv_cleancache();	/* And clear out server cache */
 	} else {
-		simple_unlock(&nfsd_slock);
-		splx(s);
+		mutex_exit(&nfsd_lock);
 		nfs_pub.np_valid = 0;
 	}
 
 	TAILQ_INIT(&nfssvc_sockhead);
 	TAILQ_INIT(&nfssvc_sockpending);
-	nfssvc_sockhead_flag &= ~SLP_INIT;
 
 	TAILQ_INIT(&nfsd_head);
 	SLIST_INIT(&nfsd_idle_head);
@@ -945,13 +937,10 @@ nfsrv_init(terminating)
 	nfs_cltpsock = nfsrv_sockalloc();
 #endif
 
-	simple_lock(&nfsd_slock);
-	if (nfssvc_sockhead_flag & SLP_WANTINIT) {
-		nfssvc_sockhead_flag &= ~SLP_WANTINIT;
-		wakeup(&nfssvc_sockhead);
-	}
-	simple_unlock(&nfsd_slock);
-	splx(s);
+	mutex_enter(&nfsd_lock);
+	nfssvc_sockhead_flag &= ~SLP_INIT;
+	cv_broadcast(&nfsd_initcv);
+	mutex_exit(&nfsd_lock);
 }
 
 /*

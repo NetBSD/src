@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.1 2007/03/13 16:50:29 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.2 2007/06/09 23:57:56 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.1 2007/03/13 16:50:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.2 2007/06/09 23:57:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -738,7 +738,7 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 void
 raidstrategy(struct buf *bp)
 {
-	int s;
+	int s, error = 0;
 
 	unsigned int raidID = raidunit(bp->b_dev);
 	RF_Raid_t *raidPtr;
@@ -746,19 +746,16 @@ raidstrategy(struct buf *bp)
 	int     wlabel;
 
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
-		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
+		error = ENXIO;
 		goto done;
 	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
-		bp->b_error = ENODEV;
-		bp->b_flags |= B_ERROR;
+		error = ENODEV;
 		goto done;
 	}
 	raidPtr = raidPtrs[raidID];
 	if (!raidPtr->valid) {
-		bp->b_error = ENODEV;
-		bp->b_flags |= B_ERROR;
+		error = ENODEV;
 		goto done;
 	}
 	if (bp->b_bcount == 0) {
@@ -806,8 +803,7 @@ raidstrategy(struct buf *bp)
 	return;
 
 done:
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
+	biodone(bp, error, bp->b_bcount);
 }
 /* ARGSUSED */
 int
@@ -1860,10 +1856,7 @@ raidstart(RF_Raid_t *raidPtr)
 		}
 		if ((sum > raidPtr->totalSectors) || (sum < raid_addr)
 		    || (sum < num_blocks) || (sum < pb)) {
-			bp->b_error = ENOSPC;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
+			biodone(bp, ENOSPC, bp->b_bcount);
 			RF_LOCK_MUTEX(raidPtr->mutex);
 			continue;
 		}
@@ -1872,10 +1865,7 @@ raidstart(RF_Raid_t *raidPtr)
 		 */
 
 		if (bp->b_bcount & raidPtr->sectorMask) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
+			biodone(bp, EINVAL, bp->b_bcount);
 			RF_LOCK_MUTEX(raidPtr->mutex);
 			continue;
 
@@ -1906,10 +1896,7 @@ raidstart(RF_Raid_t *raidPtr)
 				 bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
 
 		if (rc) {
-			bp->b_error = rc;
-			bp->b_flags |= B_ERROR;
-			bp->b_resid = bp->b_bcount;
-			biodone(bp);
+			biodone(bp, rc, bp->b_bcount);
 			/* continue loop */
 		}
 
@@ -2314,7 +2301,7 @@ raidread_component_label(dev_t dev, struct vnode *b_vp,
 		       sizeof(RF_ComponentLabel_t));
 	}
 
-	brelse(bp);
+	brelse(bp, 0);
 	return(error);
 }
 /* ARGSUSED */
@@ -2345,7 +2332,7 @@ raidwrite_component_label(dev_t dev, struct vnode *b_vp,
 		return (ENXIO);
 	(*bdev->d_strategy)(bp);
 	error = biowait(bp);
-	brelse(bp);
+	brelse(bp, 0);
 	if (error) {
 #if 1
 		printf("Failed to write RAID component info!\n");

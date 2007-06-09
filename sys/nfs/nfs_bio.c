@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.5 2007/06/08 14:18:05 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.6 2007/06/09 23:58:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.5 2007/06/08 14:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.6 2007/06/09 23:58:13 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -460,10 +460,9 @@ nfs_write(v)
 	kauth_cred_t cred = ap->a_cred;
 	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	void *win;
 	voff_t oldoff, origoff;
 	vsize_t bytelen;
-	int flags, error = 0;
+	int error = 0;
 	int ioflag = ap->a_ioflag;
 	int extended = 0, wrotedata = 0;
 
@@ -517,7 +516,7 @@ nfs_write(v)
 
 	origoff = uio->uio_offset;
 	do {
-		bool extending; /* if we are extending whole pages */
+		bool overwrite; /* if we are overwriting whole pages */
 		u_quad_t oldsize;
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
@@ -529,17 +528,27 @@ nfs_write(v)
 		if (np->n_size < uio->uio_offset + bytelen) {
 			np->n_size = uio->uio_offset + bytelen;
 		}
-		extending = ((uio->uio_offset & PAGE_MASK) == 0 &&
-		    (bytelen & PAGE_MASK) == 0 &&
-		    uio->uio_offset >= vp->v_size);
-		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-		    UVM_ADV_NORMAL,
-		    UBC_WRITE | (extending ? UBC_FAULTBUSY : 0));
-		error = uiomove(win, bytelen, uio);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
+		overwrite = false;
+		if ((uio->uio_offset & PAGE_MASK) == 0) {
+			if ((vp->v_flag & VMAPPED) == 0 &&
+			    bytelen > PAGE_SIZE) {
+				bytelen = trunc_page(bytelen);
+				overwrite = true;
+			} else if ((bytelen & PAGE_MASK) == 0 &&
+			    uio->uio_offset >= vp->v_size) {
+				overwrite = true;
+			}
+		}
+		if (vp->v_size < uio->uio_offset + bytelen) {
+			uvm_vnp_setwritesize(vp, uio->uio_offset + bytelen);
+		}
+		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+		    UBC_WRITE | UBC_PARTIALOK |
+		    (overwrite ? UBC_FAULTBUSY : 0) |
+		    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
 		if (error) {
-			if (extending) {
+			uvm_vnp_setwritesize(vp, vp->v_size);
+			if (overwrite && np->n_size != oldsize) {
 				/*
 				 * backout size and free pages past eof.
 				 */

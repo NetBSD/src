@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.5 2003/04/29 13:03:55 scw Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.5.60.1 2007/06/09 23:58:08 ad Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,10 +41,11 @@
  */
 #define MARK_START	0
 #define MARK_ENTRY	1
-#define	MARK_NSYM	2
-#define MARK_SYM	3
-#define	MARK_END	4
-#define	MARK_MAX	5
+#define	MARK_DATA	2
+#define	MARK_NSYM	3
+#define MARK_SYM	4
+#define	MARK_END	5
+#define	MARK_MAX	6
 
 /*
  * Bit flags for sections to load

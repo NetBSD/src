@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.53.2.1 2007/05/27 14:35:28 ad Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.53.2.2 2007/06/09 23:57:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.53.2.1 2007/05/27 14:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.53.2.2 2007/06/09 23:57:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.53.2.1 2007/05/27 14:35:28 ad Exp 
 #include <miscfs/specfs/specdev.h>
 
 #include <net/if.h>
+
+#include <compat/sys/sockio.h>
 
 #include <dev/sun/disklabel.h>
 
@@ -635,7 +637,7 @@ sunos_sys_ioctl(l, v, retval)
  * Socket ioctl translations.
  */
 #define IFREQ_IN(a) { \
-	struct ifreq ifreq; \
+	struct oifreq ifreq; \
 	error = copyin (SCARG(uap, data), (void *)&ifreq, sizeof (ifreq)); \
 	if (error) \
 		break; \
@@ -643,7 +645,7 @@ sunos_sys_ioctl(l, v, retval)
 	break; \
 }
 #define IFREQ_INOUT(a) { \
-	struct ifreq ifreq; \
+	struct oifreq ifreq; \
 	error = copyin (SCARG(uap, data), (void *)&ifreq, sizeof (ifreq)); \
 	if (error) \
 		break; \
@@ -653,62 +655,62 @@ sunos_sys_ioctl(l, v, retval)
 	break; \
 }
 
-	case _IOW('i', 12, struct ifreq):	/* SIOCSIFADDR */
-	case _IOW('i', 14, struct ifreq):	/* SIOCSIFDSTADDR */
-	case _IOW('i', 16, struct ifreq):	/* SIOCSIFFLAGS */
-	case _IOWR('i', 17, struct ifreq):	/* SIOCGIFFLAGS */
+	case _IOW('i', 12, struct oifreq):	/* SIOCSIFADDR */
+	case _IOW('i', 14, struct oifreq):	/* SIOCSIFDSTADDR */
+	case _IOW('i', 16, struct oifreq):	/* SIOCSIFFLAGS */
+	case _IOWR('i', 17, struct oifreq):	/* SIOCGIFFLAGS */
 	case _IOW('i', 30, struct arpreq):	/* SIOCSARP */
 	case _IOWR('i', 31, struct arpreq):	/* SIOCGARP */
 	case _IOW('i', 32, struct arpreq):	/* SIOCDARP */
 		break;
 
-	case _IOWR('i', 13, struct ifreq):
-		IFREQ_INOUT(OSIOCGIFADDR);
+	case _IOWR('i', 13, struct oifreq):
+		IFREQ_INOUT(OOSIOCGIFADDR);
 
-	case _IOWR('i', 15, struct ifreq):
-		IFREQ_INOUT(OSIOCGIFDSTADDR);
+	case _IOWR('i', 15, struct oifreq):
+		IFREQ_INOUT(OOSIOCGIFDSTADDR);
 
-	case _IOW('i', 21, struct ifreq):
+	case _IOW('i', 21, struct oifreq):
 		IFREQ_IN(SIOCSIFMTU);
 
-	case _IOWR('i', 22, struct ifreq):
+	case _IOWR('i', 22, struct oifreq):
 		IFREQ_INOUT(SIOCGIFMTU);
 
-	case _IOWR('i', 23, struct ifreq):
+	case _IOWR('i', 23, struct oifreq):
 		IFREQ_INOUT(SIOCGIFBRDADDR);
 
-	case _IOW('i', 24, struct ifreq):
+	case _IOW('i', 24, struct oifreq):
 		IFREQ_IN(SIOCSIFBRDADDR);
 
-	case _IOWR('i', 25, struct ifreq):
-		IFREQ_INOUT(OSIOCGIFNETMASK);
+	case _IOWR('i', 25, struct oifreq):
+		IFREQ_INOUT(OOSIOCGIFNETMASK);
 
-	case _IOW('i', 26, struct ifreq):
+	case _IOW('i', 26, struct oifreq):
 		IFREQ_IN(SIOCSIFNETMASK);
 
-	case _IOWR('i', 27, struct ifreq):
+	case _IOWR('i', 27, struct oifreq):
 		IFREQ_INOUT(SIOCGIFMETRIC);
 
-	case _IOWR('i', 28, struct ifreq):
+	case _IOWR('i', 28, struct oifreq):
 		IFREQ_IN(SIOCSIFMETRIC);
 
-	case _IOW('i', 18, struct ifreq):	/* SIOCSIFMEM */
-	case _IOWR('i', 19, struct ifreq):	/* SIOCGIFMEM */
-	case _IOW('i', 40, struct ifreq):	/* SIOCUPPER */
-	case _IOW('i', 41, struct ifreq):	/* SIOCLOWER */
-	case _IOW('i', 44, struct ifreq):	/* SIOCSETSYNC */
-	case _IOWR('i', 45, struct ifreq):	/* SIOCGETSYNC */
-	case _IOWR('i', 46, struct ifreq):	/* SIOCSDSTATS */
-	case _IOWR('i', 47, struct ifreq):	/* SIOCSESTATS */
+	case _IOW('i', 18, struct oifreq):	/* SIOCSIFMEM */
+	case _IOWR('i', 19, struct oifreq):	/* SIOCGIFMEM */
+	case _IOW('i', 40, struct oifreq):	/* SIOCUPPER */
+	case _IOW('i', 41, struct oifreq):	/* SIOCLOWER */
+	case _IOW('i', 44, struct oifreq):	/* SIOCSETSYNC */
+	case _IOWR('i', 45, struct oifreq):	/* SIOCGETSYNC */
+	case _IOWR('i', 46, struct oifreq):	/* SIOCSDSTATS */
+	case _IOWR('i', 47, struct oifreq):	/* SIOCSESTATS */
 	case _IOW('i', 48, int):		/* SIOCSPROMISC */
-	case _IOW('i', 49, struct ifreq):	/* SIOCADDMULTI */
-	case _IOW('i', 50, struct ifreq):	/* SIOCDELMULTI */
+	case _IOW('i', 49, struct oifreq):	/* SIOCADDMULTI */
+	case _IOW('i', 50, struct oifreq):	/* SIOCDELMULTI */
 		error = EOPNOTSUPP;
 		break;
 
-	case _IOWR('i', 20, struct ifconf):	/* SIOCGIFCONF */
+	case _IOWR('i', 20, struct oifconf):	/* SIOCGIFCONF */
 	    {
-		struct ifconf ifc;
+		struct oifconf ifc;
 
 		/*
 		 * XXX: two more problems
@@ -719,7 +721,7 @@ sunos_sys_ioctl(l, v, retval)
 		    sizeof (ifc));
 		if (error)
 			break;
-		error = (*ctl)(fp, OSIOCGIFCONF, (void *)&ifc, l);
+		error = (*ctl)(fp, OOSIOCGIFCONF, (void *)&ifc, l);
 		if (error)
 			break;
 		error = copyout ((void *)&ifc, SCARG(uap, data),

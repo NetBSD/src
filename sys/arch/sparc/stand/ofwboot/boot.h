@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.1 2006/01/27 18:31:12 cdi Exp $	*/
+/*	$NetBSD: boot.h,v 1.1.32.1 2007/06/09 23:55:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -40,12 +40,8 @@
 
 #if defined(_DEBUG)
 #define DPRINTF(x)	printf x;
-
-void pmap_print_tlb(char);
 #else
 #define DPRINTF(x)
-
-#define pmap_print_tlb(c)	((void)0)
 #endif
 
 /*
@@ -65,6 +61,7 @@ extern ssize_t	sparc64_read(int, void *, size_t);
 extern void*	sparc64_memcpy(void *, const void *, size_t);
 extern void*	sparc64_memset(void *, int, size_t);
 extern void	sparc64_bi_add(void);
+extern void	sparc64_finalize_tlb(u_long);
 
 /* srt0.s */
 extern u_int	get_cpuid(void);

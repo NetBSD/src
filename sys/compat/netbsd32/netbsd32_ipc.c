@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ipc.c,v 1.10.6.1 2007/04/10 13:26:28 ad Exp $	*/
+/*	$NetBSD: netbsd32_ipc.c,v 1.10.6.2 2007/06/09 23:57:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.10.6.1 2007/04/10 13:26:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.10.6.2 2007/06/09 23:57:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -52,11 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ipc.c,v 1.10.6.1 2007/04/10 13:26:28 ad Exp
 #include <compat/netbsd32/netbsd32_conv.h>
 
 #if defined(SYSVSEM)
+
 int
 netbsd32___semctl14(l, v, retval)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
+{
+	return do_netbsd32___semctl14(l, v, retval, NULL);
+}
+
+int
+do_netbsd32___semctl14(struct lwp *l, void *v, register_t *retval, void *vkarg)
 {
 	struct netbsd32___semctl14_args /* {
 		syscallarg(int) semid;
@@ -90,9 +97,14 @@ netbsd32___semctl14(l, v, retval)
 	}
 
 	if (pass_arg) {
-		error = copyin(SCARG_P32(uap, arg), &karg32, sizeof(karg32));
-		if (error)
-			return error;
+		if (vkarg != NULL)
+			karg32 = *(union netbsd32_semun *)vkarg;
+		else {
+			error = copyin(SCARG_P32(uap, arg), &karg32,
+					sizeof(karg32));
+			if (error)
+				return error;
+		}
 		if (pass_arg == &karg) {
 			switch (cmd) {
 			case GETALL:

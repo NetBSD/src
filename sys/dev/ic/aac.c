@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.30.2.1 2007/05/27 14:30:00 ad Exp $	*/
+/*	$NetBSD: aac.c,v 1.30.2.2 2007/06/09 23:57:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.30.2.1 2007/05/27 14:30:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.30.2.2 2007/06/09 23:57:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.30.2.1 2007/05/27 14:30:00 ad Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 
@@ -96,11 +97,16 @@ __KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.30.2.1 2007/05/27 14:30:00 ad Exp $");
 
 #include "locators.h"
 
+static int	aac_new_intr(void *);
+static int	aac_alloc_commands(struct aac_softc *);
+#ifdef notyet
+static void	aac_free_commands(struct aac_softc *);
+#endif
 static int	aac_check_firmware(struct aac_softc *);
 static void	aac_describe_controller(struct aac_softc *);
 static int	aac_dequeue_fib(struct aac_softc *, int, u_int32_t *,
 				struct aac_fib **);
-static int	aac_enqueue_fib(struct aac_softc *, int, struct aac_fib *);
+static int	aac_enqueue_fib(struct aac_softc *, int, struct aac_ccb *);
 static int	aac_enqueue_response(struct aac_softc *, int, struct aac_fib *);
 static void	aac_host_command(struct aac_softc *);
 static void	aac_host_response(struct aac_softc *);
@@ -141,6 +147,8 @@ static struct {
 int	aac_debug = AAC_DEBUG;
 #endif
 
+MALLOC_DEFINE(M_AACBUF, "aacbuf", "Buffers for aac(4)");
+
 static void	*aac_sdh;
 
 extern struct	cfdriver aac_cd;
@@ -149,10 +157,7 @@ int
 aac_attach(struct aac_softc *sc)
 {
 	struct aac_attach_args aaca;
-	int nsegs, i, rv, state, size;
-	struct aac_ccb *ac;
-	struct aac_fib *fib;
-	bus_addr_t fibpa;
+	int i, rv;
 	int locs[AACCF_NLOCS];
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
@@ -172,77 +177,19 @@ aac_attach(struct aac_softc *sc)
 
 	if ((rv = aac_init(sc)) != 0)
 		return (rv);
+
+	if (sc->sc_quirks & AAC_QUIRK_NEW_COMM) {
+		rv = sc->sc_intr_set(sc, aac_new_intr, sc);
+		if (rv)
+			return (rv);
+	}
+
 	aac_startup(sc);
 
 	/*
 	 * Print a little information about the controller.
 	 */
 	aac_describe_controller(sc);
-
-	/*
-	 * Initialize the ccbs.
-	 */
-	sc->sc_ccbs = malloc(sizeof(*ac) * AAC_NCCBS, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (sc->sc_ccbs == NULL) {
-		aprint_error("%s: memory allocation failure\n",
-		    sc->sc_dv.dv_xname);
-		return (ENOMEM);
-	}
-	state = 0;
-	size = sizeof(*fib) * AAC_NCCBS;
-
-	if ((rv = bus_dmamap_create(sc->sc_dmat, size, 1, size,
-	    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->sc_fibs_dmamap)) != 0) {
-		aprint_error("%s: cannot create fibs dmamap\n",
-		    sc->sc_dv.dv_xname);
-		goto bail_out;
-	}
-	state++;
-	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
-	    &sc->sc_fibs_seg, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: can't allocate fibs structure\n",
-		    sc->sc_dv.dv_xname);
-		goto bail_out;
-	}
-	state++;
-	if ((rv = bus_dmamem_map(sc->sc_dmat, &sc->sc_fibs_seg, nsegs, size,
-	    (void **)&sc->sc_fibs, 0)) != 0) {
-		aprint_error("%s: can't map fibs structure\n",
-		    sc->sc_dv.dv_xname);
-		goto bail_out;
-	}
-	state++;
-	if ((rv = bus_dmamap_load(sc->sc_dmat, sc->sc_fibs_dmamap, sc->sc_fibs,
-	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: cannot load fibs dmamap\n",
-		    sc->sc_dv.dv_xname);
-		goto bail_out;
-	}
-	state++;
-
-	memset(sc->sc_fibs, 0, size);
-	fibpa = sc->sc_fibs_seg.ds_addr;
-	fib = sc->sc_fibs;
-
-	for (i = 0, ac = sc->sc_ccbs; i < AAC_NCCBS; i++, ac++) {
-		rv = bus_dmamap_create(sc->sc_dmat, AAC_MAX_XFER,
-		    AAC_MAX_SGENTRIES, AAC_MAX_XFER, 0,
-		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ac->ac_dmamap_xfer);
-		if (rv) {
-			while (--ac >= sc->sc_ccbs)
-				bus_dmamap_destroy(sc->sc_dmat,
-				    ac->ac_dmamap_xfer);
-			aprint_error("%s: cannot create ccb dmamap (%d)",
-			    sc->sc_dv.dv_xname, rv);
-			goto bail_out;
-		}
-
-		ac->ac_fib = fib++;
-		ac->ac_fibphys = fibpa;
-		fibpa += sizeof(*fib);
-		aac_ccb_free(sc, ac);
-	}
 
 	/*
 	 * Attach devices.
@@ -266,26 +213,114 @@ aac_attach(struct aac_softc *sc)
 	if (aac_sdh != NULL)
 		shutdownhook_establish(aac_shutdown, NULL);
 	return (0);
-
- bail_out:
- 	bus_dmamap_unload(sc->sc_dmat, sc->sc_common_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_common,
-	    sizeof(*sc->sc_common));
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_common_seg, 1);
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_common_dmamap);
-
- 	if (state > 3)
- 		bus_dmamap_unload(sc->sc_dmat, sc->sc_fibs_dmamap);
-	if (state > 2)
-		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_fibs, size);
-	if (state > 1)
-		bus_dmamem_free(sc->sc_dmat, &sc->sc_fibs_seg, 1);
-	if (state > 0)
-		bus_dmamap_destroy(sc->sc_dmat, sc->sc_fibs_dmamap);
-
-	free(sc->sc_ccbs, M_DEVBUF);
-	return (rv);
 }
+
+static int
+aac_alloc_commands(struct aac_softc *sc)
+{
+	struct aac_fibmap *fm;
+	struct aac_ccb *ac;
+	bus_addr_t fibpa;
+	int size, nsegs;
+	int i, error;
+	int state;
+
+	if (sc->sc_total_fibs + sc->sc_max_fibs_alloc > sc->sc_max_fibs)
+		return ENOMEM;
+
+	fm = malloc(sizeof(struct aac_fibmap), M_AACBUF, M_NOWAIT|M_ZERO);
+	if (fm == NULL)
+		return ENOMEM;
+
+	size = sc->sc_max_fibs_alloc * sc->sc_max_fib_size;
+
+	state = 0;
+	error = bus_dmamap_create(sc->sc_dmat, size, 1, size,
+	    0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &fm->fm_fibmap);
+	if (error != 0) {
+		aprint_error("%s: cannot create fibs dmamap (%d)\n",
+		    sc->sc_dv.dv_xname, error);
+		goto bail_out;
+	}
+	state++;
+	error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
+	    &fm->fm_fibseg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		aprint_error("%s: can't allocate fibs structure (%d)\n",
+		    sc->sc_dv.dv_xname, error);
+		goto bail_out;
+	}
+	state++;
+	error = bus_dmamem_map(sc->sc_dmat, &fm->fm_fibseg, nsegs, size,
+	    (void **)&fm->fm_fibs, 0);
+	if (error != 0) {
+		aprint_error("%s: can't map fibs structure (%d)\n",
+		    sc->sc_dv.dv_xname, error);
+		goto bail_out;
+	}
+	state++;
+	error = bus_dmamap_load(sc->sc_dmat, fm->fm_fibmap, fm->fm_fibs,
+	    size, NULL, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		aprint_error("%s: cannot load fibs dmamap (%d)\n",
+		    sc->sc_dv.dv_xname, error);
+		goto bail_out;
+	}
+
+	fm->fm_ccbs = sc->sc_ccbs + sc->sc_total_fibs;
+	fibpa = fm->fm_fibseg.ds_addr;
+
+	memset(fm->fm_fibs, 0, size);
+	for (i = 0; i < sc->sc_max_fibs_alloc; i++) {
+		ac = fm->fm_ccbs + i;
+
+		error = bus_dmamap_create(sc->sc_dmat, AAC_MAX_XFER(sc),
+		    sc->sc_max_sgs, AAC_MAX_XFER(sc), 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ac->ac_dmamap_xfer);
+		if (error) {
+			while (--i >= 0) {
+				ac = fm->fm_ccbs + i;
+				bus_dmamap_destroy(sc->sc_dmat,
+				    ac->ac_dmamap_xfer);
+				sc->sc_total_fibs--;
+			}
+			aprint_error("%s: cannot create ccb dmamap (%d)",
+			    sc->sc_dv.dv_xname, error);
+			goto bail_out;
+		}
+
+		ac->ac_fibmap = fm;
+		ac->ac_fib = (struct aac_fib *)
+		    ((char *) fm->fm_fibs + i * sc->sc_max_fib_size);
+		ac->ac_fibphys = fibpa + i * sc->sc_max_fib_size;
+		aac_ccb_free(sc, ac);
+		sc->sc_total_fibs++;
+	}
+
+	TAILQ_INSERT_TAIL(&sc->sc_fibmap_tqh, fm, fm_link);
+
+	return 0;
+bail_out:
+	if (state > 3)
+		bus_dmamap_unload(sc->sc_dmat, fm->fm_fibmap);
+	if (state > 2)
+		bus_dmamem_unmap(sc->sc_dmat, (void *) fm->fm_fibs, size);
+	if (state > 1)
+		bus_dmamem_free(sc->sc_dmat, &fm->fm_fibseg, 1);
+
+	bus_dmamap_destroy(sc->sc_dmat, fm->fm_fibmap);
+
+	free(fm, M_AACBUF);
+
+	return error;
+}
+
+#ifdef notyet
+static void
+aac_free_commands(struct aac_softc *sc)
+{
+}
+#endif
 
 /*
  * Print autoconfiguration message for a sub-device.
@@ -390,7 +425,8 @@ aac_describe_controller(struct aac_softc *sc)
 static int
 aac_check_firmware(struct aac_softc *sc)
 {
-	u_int32_t major, minor, opts;
+	u_int32_t major, minor, opts, atusize = 0, status = 0;
+	u_int32_t calcsgs;
 
 	if ((sc->sc_quirks & AAC_QUIRK_PERC2QC) != 0) {
 		if (aac_sync_command(sc, AAC_MONKER_GETKERNVER, 0, 0, 0, 0,
@@ -411,14 +447,111 @@ aac_check_firmware(struct aac_softc *sc)
 		}
 	}
 
-	if (aac_sync_command(sc, AAC_MONKER_GETINFO, 0, 0, 0, 0, NULL)) {
-		aprint_error("%s: GETINFO failed\n", sc->sc_dv.dv_xname);
-		return (1);
-	}
-	opts = AAC_GET_MAILBOX(sc, 1);
-	sc->sc_supported_options = opts;
+	if (aac_sync_command(sc, AAC_MONKER_GETINFO, 0, 0, 0, 0, &status)) {
+		if (status != AAC_SRB_STS_INVALID_REQUEST) {
+			aprint_error("%s: GETINFO failed, status 0x%08x\n",
+				     sc->sc_dv.dv_xname, status);
+			return (1);
+		}
+	} else {
+		opts = AAC_GET_MAILBOX(sc, 1);
+		atusize = AAC_GET_MAILBOX(sc, 2);
+		sc->sc_supported_options = opts;
 
-	/* XXX -- Enable 64-bit sglists if we can */
+		if (((opts & AAC_SUPPORTED_4GB_WINDOW) != 0) &&
+		    ((sc->sc_quirks & AAC_QUIRK_NO4GB) == 0) )
+			sc->sc_quirks |= AAC_QUIRK_4GB_WINDOW;
+
+		if (((opts & AAC_SUPPORTED_SGMAP_HOST64) != 0) &&
+		    (sizeof(bus_addr_t) > 4)) {
+			aprint_normal("%s: Enabling 64-bit address support\n",
+				      sc->sc_dv.dv_xname);
+			sc->sc_quirks |= AAC_QUIRK_SG_64BIT;
+		}
+		if ((opts & AAC_SUPPORTED_NEW_COMM) &&
+		    (sc->sc_if.aif_send_command != NULL)) {
+			sc->sc_quirks |= AAC_QUIRK_NEW_COMM;
+		}
+#ifdef notyet
+		if (opts & AAC_SUPPORTED_64BIT_ARRAYSIZE)
+			sc->sc_quirks |= AAC_QUIRK_ARRAY_64BIT;
+#endif
+	}
+
+	sc->sc_max_fibs = (sc->sc_quirks & AAC_QUIRK_256FIBS) ? 256 : 512;
+
+	if (   (sc->sc_quirks & AAC_QUIRK_NEW_COMM)
+	    && (sc->sc_regsize < atusize)) {
+		aprint_error("%s: Not enabling new comm i/f -- "
+			     "atusize 0x%08x, regsize 0x%08x\n",
+			     sc->sc_dv.dv_xname, atusize,
+			     (u_int32_t) sc->sc_regsize);
+		sc->sc_quirks &= ~AAC_QUIRK_NEW_COMM;
+	}
+#if 0
+	if (sc->sc_quirks & AAC_QUIRK_NEW_COMM) {
+		aprint_error("%s: Not enabling new comm i/f -- "
+			     "driver not ready yet\n",
+			     sc->sc_dv.dv_xname);
+		sc->sc_quirks &= ~AAC_QUIRK_NEW_COMM;
+	}
+#endif
+
+	sc->sc_max_fib_size = sizeof(struct aac_fib);
+	sc->sc_max_sectors = 128;	/* 64KB */
+	if (sc->sc_quirks & AAC_QUIRK_SG_64BIT)
+		sc->sc_max_sgs = (sc->sc_max_fib_size
+					- sizeof(struct aac_blockwrite64)
+					+ sizeof(struct aac_sg_table64))
+				      / sizeof(struct aac_sg_table64);
+	else
+		sc->sc_max_sgs = (sc->sc_max_fib_size
+					- sizeof(struct aac_blockwrite)
+					+ sizeof(struct aac_sg_table))
+				      / sizeof(struct aac_sg_table);
+
+	if (!aac_sync_command(sc, AAC_MONKER_GETCOMMPREF, 0, 0, 0, 0, NULL)) {
+		u_int32_t	opt1, opt2, opt3;
+		u_int32_t	tmpval;
+
+		opt1 = AAC_GET_MAILBOX(sc, 1);
+		opt2 = AAC_GET_MAILBOX(sc, 2);
+		opt3 = AAC_GET_MAILBOX(sc, 3);
+		if (!opt1 || !opt2 || !opt3) {
+			aprint_verbose("%s: GETCOMMPREF appears untrustworthy."
+			    "  Ignoring.\n", sc->sc_dv.dv_xname);
+		} else {
+			sc->sc_max_fib_size = le32toh(opt1) & 0xffff;
+			sc->sc_max_sectors = (le32toh(opt1) >> 16) << 1;
+			tmpval = (le32toh(opt2) >> 16);
+			if (tmpval < sc->sc_max_sgs) {
+				sc->sc_max_sgs = tmpval;
+			}
+			tmpval = (le32toh(opt3) & 0xffff);
+			if (tmpval < sc->sc_max_fibs) {
+				sc->sc_max_fibs = tmpval;
+			}
+		}
+	}
+	if (sc->sc_max_fib_size > PAGE_SIZE)
+		sc->sc_max_fib_size = PAGE_SIZE;
+
+	if (sc->sc_quirks & AAC_QUIRK_SG_64BIT)
+		calcsgs = (sc->sc_max_fib_size
+			   - sizeof(struct aac_blockwrite64)
+			   + sizeof(struct aac_sg_table64))
+			      / sizeof(struct aac_sg_table64);
+	else
+		calcsgs = (sc->sc_max_fib_size
+			   - sizeof(struct aac_blockwrite)
+			   + sizeof(struct aac_sg_table))
+			      / sizeof(struct aac_sg_table);
+
+	if (calcsgs < sc->sc_max_sgs) {
+		sc->sc_max_sgs = calcsgs;
+	}
+
+	sc->sc_max_fibs_alloc = PAGE_SIZE / sc->sc_max_fib_size;
 
 	return (0);
 }
@@ -458,13 +591,21 @@ aac_init(struct aac_softc *sc)
 		return (ENXIO);
 	}
 
+	sc->sc_aif_fib = malloc(sizeof(struct aac_fib), M_AACBUF,
+	    M_NOWAIT | M_ZERO);
+	if (sc->sc_aif_fib == NULL) {
+		aprint_error("%s: cannot alloc fib structure\n",
+		    sc->sc_dv.dv_xname);
+		return (ENOMEM);
+	}
 	if ((rv = bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_common), 1,
 	    sizeof(*sc->sc_common), 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &sc->sc_common_dmamap)) != 0) {
 		aprint_error("%s: cannot create common dmamap\n",
 		    sc->sc_dv.dv_xname);
-		return (rv);
+		goto bail_out;
 	}
+	state++;
 	if ((rv = bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_common),
 	    PAGE_SIZE, 0, &sc->sc_common_seg, 1, &nsegs,
 	    BUS_DMA_NOWAIT)) != 0) {
@@ -491,12 +632,34 @@ aac_init(struct aac_softc *sc)
 
 	memset(sc->sc_common, 0, sizeof(*sc->sc_common));
 
+	TAILQ_INIT(&sc->sc_fibmap_tqh);
+	sc->sc_ccbs = malloc(sizeof(struct aac_ccb) * sc->sc_max_fibs, M_AACBUF,
+	    M_NOWAIT | M_ZERO);
+	if (sc->sc_ccbs == NULL) {
+		aprint_error("%s: memory allocation failure getting ccbs\n",
+		    sc->sc_dv.dv_xname);
+		rv = ENOMEM;
+		goto bail_out;
+	}
+	state++;
+	while (sc->sc_total_fibs < AAC_PREALLOCATE_FIBS) {
+		if (aac_alloc_commands(sc) != 0)
+			break;
+	}
+	if (sc->sc_total_fibs == 0)
+		goto bail_out;
+
 	/*
 	 * Fill in the init structure.  This tells the adapter about the
 	 * physical location of various important shared data structures.
 	 */
 	ip = &sc->sc_common->ac_init;
 	ip->InitStructRevision = htole32(AAC_INIT_STRUCT_REVISION);
+	if (sc->sc_max_fib_size > sizeof(struct aac_fib)) {
+		ip->InitStructRevision = htole32(AAC_INIT_STRUCT_REVISION_4);
+		sc->sc_quirks |= AAC_QUIRK_RAW_IO;
+	}
+	ip->MiniPortRevision = htole32(AAC_INIT_STRUCT_MINIPORT_REVISION);
 
 	ip->AdapterFibsPhysicalAddress = htole32(sc->sc_common_seg.ds_addr +
 	    offsetof(struct aac_common, ac_fibs));
@@ -521,6 +684,17 @@ aac_init(struct aac_softc *sc)
 		    (ip->HostPhysMemPages + AAC_PAGE_SIZE) / AAC_PAGE_SIZE;
 	}
 	ip->HostElapsedSeconds = 0;	/* reset later if invalid */
+
+	ip->InitFlags = 0;
+	if (sc->sc_quirks & AAC_QUIRK_NEW_COMM) {
+		ip->InitFlags = htole32(AAC_INITFLAGS_NEW_COMM_SUPPORTED);
+		aprint_normal("%s: New comm. interface enabled\n",
+				sc->sc_dv.dv_xname);
+	}
+
+	ip->MaxIoCommands = htole32(sc->sc_max_fibs);
+	ip->MaxIoSize = htole32(sc->sc_max_sectors << 9);
+	ip->MaxFibSize = htole32(sc->sc_max_fib_size);
 
 	/*
 	 * Initialise FIB queues.  Note that it appears that the layout of
@@ -636,14 +810,19 @@ aac_init(struct aac_softc *sc)
 	return (0);
 
  bail_out:
- 	if (state > 2)
+ 	if (state > 4)
+ 		free(sc->sc_ccbs, M_AACBUF);
+ 	if (state > 3)
  		bus_dmamap_unload(sc->sc_dmat, sc->sc_common_dmamap);
-	if (state > 1)
+	if (state > 2)
 		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_common,
 		    sizeof(*sc->sc_common));
-	if (state > 0)
+	if (state > 1)
 		bus_dmamem_free(sc->sc_dmat, &sc->sc_common_seg, 1);
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_common_dmamap);
+	if (state > 0)
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_common_dmamap);
+
+	free(sc->sc_aif_fib, M_AACBUF);
 
 	return (rv);
 }
@@ -745,6 +924,78 @@ aac_shutdown(void *cookie)
 
 		sc->sc_flags &= ~AAC_ONLINE;
 	}
+}
+
+static int
+aac_new_intr(void *cookie)
+{
+	struct aac_softc *sc;
+	u_int32_t index, fast;
+	struct aac_ccb *ac;
+	struct aac_fib *fib;
+	struct aac_fibmap *fm;
+	int i;
+
+	sc = (struct aac_softc *) cookie;
+
+	for (;;) {
+		index = AAC_GET_OUTB_QUEUE(sc);
+		if (index == 0xffffffff)
+			index = AAC_GET_OUTB_QUEUE(sc);
+		if (index == 0xffffffff)
+			break;
+		if (index & 2) {
+			if (index == 0xfffffffe) {
+				/* XXX This means that the controller wants
+				 * more work.  Ignore it for now.
+				 */
+				continue;
+			}
+			/* AIF */
+			index &= ~2;
+			fib = sc->sc_aif_fib;
+			for (i = 0; i < sizeof(struct aac_fib)/4; i++) {
+				((u_int32_t*)fib)[i] =
+				    AAC_GETREG4(sc, index + i*4);
+			}
+#ifdef notyet
+			aac_handle_aif(sc, &fib);
+#endif
+
+			AAC_SET_OUTB_QUEUE(sc, index);
+			AAC_CLEAR_ISTATUS(sc, AAC_DB_RESPONSE_READY);
+		} else {
+			fast = index & 1;
+			ac = sc->sc_ccbs + (index >> 2);
+			fib = ac->ac_fib;
+			fm = ac->ac_fibmap;
+			if (fast) {
+				bus_dmamap_sync(sc->sc_dmat, fm->fm_fibmap,
+				    (char *)fib - (char *)fm->fm_fibs,
+				    sc->sc_max_fib_size,
+				    BUS_DMASYNC_POSTWRITE |
+				    BUS_DMASYNC_POSTREAD);
+				fib->Header.XferState |=
+				    htole32(AAC_FIBSTATE_DONEADAP);
+				*((u_int32_t *)(fib->data)) =
+				    htole32(AAC_ERROR_NORMAL);
+			}
+			ac->ac_flags |= AAC_CCB_COMPLETED;
+
+			if (ac->ac_intr != NULL)
+				(*ac->ac_intr)(ac);
+			else
+				wakeup(ac);
+		}
+	}
+
+	/*
+	 * Try to submit more commands.
+	 */
+	if (! SIMPLEQ_EMPTY(&sc->sc_ccb_queue))
+		aac_ccb_enqueue(sc, NULL);
+
+	return 1;
 }
 
 /*
@@ -900,15 +1151,11 @@ aac_host_response(struct aac_softc *sc)
 		    &fib))
 			break;	/* nothing to do */
 
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_fibs_dmamap,
-		    (char *)fib - (char *)sc->sc_fibs, sizeof(*fib),
-		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-
 		if ((fib->Header.SenderData & 0x80000000) == 0) {
 			/* Not valid; not sent by us. */
 			AAC_PRINT_FIB(sc, fib);
 		} else {
-			ac = (struct aac_ccb *)((char *)sc->sc_ccbs +
+			ac = (struct aac_ccb *)(sc->sc_ccbs +
 			    (fib->Header.SenderData & 0x7fffffff));
 			fib->Header.SenderData = 0;
 			SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_complete, ac, ac_chain);
@@ -924,6 +1171,8 @@ aac_host_response(struct aac_softc *sc)
 
 		if (ac->ac_intr != NULL)
 			(*ac->ac_intr)(ac);
+		else
+			wakeup(ac);
 	}
 
 	/*
@@ -1057,6 +1306,13 @@ aac_ccb_alloc(struct aac_softc *sc, int flags)
 
 	s = splbio();
 	ac = SIMPLEQ_FIRST(&sc->sc_ccb_free);
+	if (ac == NULL) {
+		if (aac_alloc_commands(sc)) {
+			splx(s);
+			return NULL;
+		}
+		ac = SIMPLEQ_FIRST(&sc->sc_ccb_free);
+	}
 #ifdef DIAGNOSTIC
 	if (ac == NULL)
 		panic("aac_ccb_get: no free CCBS");
@@ -1080,7 +1336,7 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	ac->ac_fib->Header.XferState = htole32(AAC_FIBSTATE_EMPTY);
 	ac->ac_fib->Header.StructType = AAC_FIBTYPE_TFIB;
 	ac->ac_fib->Header.Flags = 0;
-	ac->ac_fib->Header.SenderSize = htole16(sizeof(*ac->ac_fib));
+	ac->ac_fib->Header.SenderSize = htole16(sc->sc_max_fib_size);
 
 #ifdef AAC_DEBUG
 	/*
@@ -1088,7 +1344,8 @@ aac_ccb_free(struct aac_softc *sc, struct aac_ccb *ac)
 	 * an intermediate stage may have destroyed them.  They're left
 	 * initialised here for debugging purposes only.
 	 */
-	ac->ac_fib->Header.SenderFibAddress = htole32((u_int32_t)(intptr_t/*XXX LP64*/)ac->ac_fib);
+	ac->ac_fib->Header.SenderFibAddress =
+	    htole32(((u_int32_t) (ac - sc->sc_ccbs)) << 2);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
 #endif
 
@@ -1115,7 +1372,7 @@ aac_ccb_map(struct aac_softc *sc, struct aac_ccb *ac)
 	if (error) {
 		printf("%s: aac_ccb_map: ", sc->sc_dv.dv_xname);
 		if (error == EFBIG)
-			printf("more than %d DMA segs\n", AAC_MAX_SGENTRIES);
+			printf("more than %d DMA segs\n", sc->sc_max_sgs);
 		else
 			printf("error %d loading DMA map\n", error);
 		return (error);
@@ -1176,11 +1433,12 @@ aac_ccb_enqueue(struct aac_softc *sc, struct aac_ccb *ac)
 int
 aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 {
-	u_int32_t	acidx;
+	struct aac_fibmap *fm;
+	u_int32_t acidx;
 
 	AAC_DPRINTF(AAC_D_QUEUE, ("aac_ccb_submit(%p, %p) ", sc, ac));
 
-	acidx = (u_int32_t) ((char *)ac - (char *)sc->sc_ccbs);
+	acidx = (u_int32_t) (ac - sc->sc_ccbs);
 	/* Fix up the address values. */
 	ac->ac_fib->Header.SenderFibAddress = htole32(acidx << 2);
 	ac->ac_fib->Header.ReceiverFibAddress = htole32(ac->ac_fibphys);
@@ -1188,12 +1446,25 @@ aac_ccb_submit(struct aac_softc *sc, struct aac_ccb *ac)
 	/* Save a pointer to the command for speedy reverse-lookup. */
 	ac->ac_fib->Header.SenderData = acidx | 0x80000000;
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_fibs_dmamap,
-	    (char *)ac->ac_fib - (char *)sc->sc_fibs, sizeof(*ac->ac_fib),
+	fm = ac->ac_fibmap;
+	bus_dmamap_sync(sc->sc_dmat, fm->fm_fibmap,
+	    (char *)ac->ac_fib - (char *)fm->fm_fibs, sc->sc_max_fib_size,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	/* Put the FIB on the outbound queue. */
-	return (aac_enqueue_fib(sc, AAC_ADAP_NORM_CMD_QUEUE, ac->ac_fib));
+	if (sc->sc_quirks & AAC_QUIRK_NEW_COMM) {
+		int count = 10000000L;
+		while (AAC_SEND_COMMAND(sc, ac) != 0) {
+			if (--count == 0) {
+				panic("aac: fixme!");
+				return EAGAIN;
+			}
+			DELAY(5);
+		}
+		return 0;
+	} else {
+		return (aac_enqueue_fib(sc, AAC_ADAP_NORM_CMD_QUEUE, ac));
+	}
 }
 
 int
@@ -1211,7 +1482,10 @@ aac_ccb_poll(struct aac_softc *sc, struct aac_ccb *ac, int timo)
 	}
 
 	for (timo *= 1000; timo != 0; timo--) {
-		aac_intr(sc);
+		if (sc->sc_quirks & AAC_QUIRK_NEW_COMM)
+			aac_new_intr(sc);
+		else
+			aac_intr(sc);
 		if ((ac->ac_flags & AAC_CCB_COMPLETED) != 0)
 			break;
 		DELAY(100);
@@ -1230,12 +1504,12 @@ aac_ccb_poll(struct aac_softc *sc, struct aac_ccb *ac, int timo)
  * succession, but implementing this usefully is difficult.
  */
 static int
-aac_enqueue_fib(struct aac_softc *sc, int queue, struct aac_fib *fib)
+aac_enqueue_fib(struct aac_softc *sc, int queue, struct aac_ccb *ac)
 {
 	u_int32_t fib_size, fib_addr, pi, ci;
 
-	fib_size = le16toh(fib->Header.Size);
-	fib_addr = le32toh(fib->Header.ReceiverFibAddress);
+	fib_size = le16toh(ac->ac_fib->Header.Size);
+	fib_addr = le32toh(ac->ac_fib->Header.ReceiverFibAddress);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_common_dmamap,
 	    (char *)sc->sc_common->ac_qbuf - (char *)sc->sc_common,
@@ -1281,6 +1555,7 @@ static int
 aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 		struct aac_fib **fib_addr)
 {
+	struct aac_fibmap *fm;
 	struct aac_ccb *ac;
 	u_int32_t pi, ci, idx;
 	int notify;
@@ -1319,9 +1594,14 @@ aac_dequeue_fib(struct aac_softc *sc, int queue, u_int32_t *fib_size,
 	case AAC_HOST_NORM_RESP_QUEUE:
 	case AAC_HOST_HIGH_RESP_QUEUE:
 		idx = le32toh((sc->sc_qentries[queue] + ci)->aq_fib_addr);
-		ac = (struct aac_ccb *) ((char *) sc->sc_ccbs + (idx >> 2));
+		ac = sc->sc_ccbs + (idx >> 2);
 		*fib_addr = ac->ac_fib;
 		if (idx & 0x01) {
+			fm = ac->ac_fibmap;
+			bus_dmamap_sync(sc->sc_dmat, fm->fm_fibmap,
+			    (char *)ac->ac_fib - (char *)fm->fm_fibs,
+			    sc->sc_max_fib_size,
+			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 			ac->ac_fib->Header.XferState |=
 				htole32(AAC_FIBSTATE_DONEADAP);
 			*((u_int32_t*)(ac->ac_fib->data)) =
