@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.868 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.869 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -126,3 +126,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	amd64: The Enhanced Speedstep driver is now able to work on EM64T
 		CPUs running in 64bit mode. [xtraeme 20070603]
 	file(1): update to 4.21.  [pooka 20070607]
+	zyd(4): Added OpenBSD's driver. Supports ZyDAS ZD1211/ZD1211B
+		USB IEEE 802.11b/g wireless network device. [kiyohara 20070609]

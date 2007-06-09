@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 2006/10/31 22:21:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2007/06/09 11:20:56 kiyohara Exp $
 
-SUBDIR+=	ral rum
+SUBDIR+=	ral rum zyd
 
 .include <bsd.subdir.mk>
