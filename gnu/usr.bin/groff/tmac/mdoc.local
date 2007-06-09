@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.36 2007/05/23 17:01:25 christos Exp $
+.\" $NetBSD: mdoc.local,v 1.37 2007/06/09 10:19:43 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,5 +78,7 @@
 .\" Bluetooth libraries
 .ds doc-str-Lb-libbluetooth     Bluetooth Host Lookup library (libbluetooth, \-lbluetooth)
 .ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
+.ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
+.ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lfuse)
 .ds doc-str-Lb-libsdp           Bluetooth Service Discovery Protocol library (libsdp, \-libsdp)
 .ds doc-str-Lb-libssp		Buffer Overflow Protection Library (libssp, \-lssp)
