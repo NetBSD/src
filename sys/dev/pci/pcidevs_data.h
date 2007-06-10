@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.5 2007/05/02 04:50:37 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.6 2007/06/10 20:56:35 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3150,6 +3150,34 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
 	    "PCscsi-PCI SCSI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_PCHB,
+	    "Geode LX Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_VGA,
+	    "Geode LX VGA Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_AES,
+	    "Geode LX AES Security Block",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_PCIB,
+	    "CS5536 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_OHCI,
+	    "CS5536 OHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_EHCI,
+	    "CS5536 EHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_IDE,
+	    "CS5536 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC520_SC,
@@ -12716,4 +12744,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2585;
+const int pci_nproducts = 2592;
