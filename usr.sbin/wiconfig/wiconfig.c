@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.39 2006/10/07 00:47:18 elad Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.39.2.1 2007/06/10 20:50:23 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.39 2006/10/07 00:47:18 elad Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.39.2.1 2007/06/10 20:50:23 bouyer Exp $");
 #endif
 
 struct wi_table {
@@ -112,6 +112,7 @@ static void wi_printwords	__P((struct wi_req *));
 static void wi_printbool	__P((struct wi_req *));
 static void wi_printhex		__P((struct wi_req *));
 static void wi_printbits	__P((struct wi_req *));
+static void wi_checkwifi	__P((char *));
 static void wi_dumpinfo		__P((char *));
 static void wi_printkeys	__P((struct wi_req *));
 static void wi_printvendor	__P((struct wi_req *));
@@ -638,6 +639,30 @@ wi_optlookup(table, opt)
 	return (NULL);
 }
 
+static void wi_checkwifi(iface)
+	char			*iface;
+{
+	struct ifreq		ifr;
+	struct ieee80211_nwid	nwid;
+	int			s;
+
+	bzero((char *)&ifr, sizeof(ifr));
+
+	strncpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (void *)&nwid;
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+
+	if (s == -1)
+		err(1, "socket");
+	
+	/* Choice of ioctl inspired by ifconfig/ieee80211.c */
+	if (ioctl(s, SIOCG80211NWID, &ifr) == -1)
+		err(1, "SIOCG80211NWID");
+
+	close(s);
+}
+
 static void wi_dumpinfo(iface)
 	char			*iface;
 {
@@ -865,6 +890,9 @@ int main(argc, argv)
 	if (iface == NULL)
 		usage();
 
+	/* Check interface is wireless. Will not return on error */
+	wi_checkwifi(iface);
+	
 	for (table = wi_tables; *table != NULL; table++)
 		for (wt = *table; wt->wi_code != WI_NONE; wt++)
 			if (wt->wi_optval != NULL) {
