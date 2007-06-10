@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.179 2007/01/20 17:26:32 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.180 2007/06/10 20:24:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.179 2007/01/20 17:26:32 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.180 2007/06/10 20:24:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,7 @@ int	doutmp;			/* update utmp file */
 int	dowtmp;			/* update wtmp file */
 int	doxferlog;		/* syslog/write wu-ftpd style xferlog entries */
 int	xferlogfd;		/* fd to write wu-ftpd xferlog entries to */
+int	getnameopts;		/* flags for use with getname() */
 int	dropprivs;		/* if privileges should or have been dropped */
 int	mapped;			/* IPv4 connection on AF_INET6 socket */
 off_t	file_size;
@@ -309,6 +310,7 @@ main(int argc, char *argv[])
 	dowtmp = 1;		/* default: DO log to wtmp */
 	doxferlog = 0;		/* default: Do NOT syslog xferlog */
 	xferlogfd = -1;		/* default: Do NOT write xferlog file */
+	getnameopts = 0;	/* default: xlate addrs to name */
 	dropprivs = 0;
 	mapped = 0;
 	usedefault = 1;
@@ -326,7 +328,7 @@ main(int argc, char *argv[])
 	openlog("ftpd", LOG_PID | LOG_NDELAY, LOG_FTP);
 
 	while ((ch = getopt(argc, argv,
-	    "46a:c:C:Dde:h:HlL:P:qQrst:T:uUvV:wWX")) != -1) {
+	    "46a:c:C:Dde:h:HlL:nP:qQrst:T:uUvV:wWX")) != -1) {
 		switch (ch) {
 		case '4':
 			af = AF_INET;
@@ -378,6 +380,10 @@ main(int argc, char *argv[])
 
 		case 'L':
 			xferlogname = optarg;
+			break;
+
+		case 'n':
+			getnameopts = NI_NUMERICHOST;
 			break;
 
 		case 'P':
@@ -651,8 +657,8 @@ main(int argc, char *argv[])
 	/* if the hostname hasn't been given, attempt to determine it */ 
 	if (hostname[0] == '\0') {
 		if (getnameinfo((struct sockaddr *)&ctrl_addr.si_su,
-		    ctrl_addr.su_len, hostname, sizeof(hostname), NULL, 0, 0)
-		    != 0)
+		    ctrl_addr.su_len, hostname, sizeof(hostname), NULL, 0, 
+			getnameopts) != 0)
 			(void)gethostname(hostname, sizeof(hostname));
 		hostname[sizeof(hostname) - 1] = '\0';
 	}
@@ -2784,7 +2790,8 @@ logremotehost(struct sockinet *who)
 {
 
 	if (getnameinfo((struct sockaddr *)&who->si_su,
-	    who->su_len, remotehost, sizeof(remotehost), NULL, 0, 0))
+	    who->su_len, remotehost, sizeof(remotehost), NULL, 0, 
+	    getnameopts))
 		strlcpy(remotehost, "?", sizeof(remotehost));
 
 #if HAVE_SETPROCTITLE
