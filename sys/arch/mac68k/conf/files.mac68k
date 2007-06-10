@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.117 2007/06/02 12:07:03 tsutsui Exp $
+#	$NetBSD: files.mac68k,v 1.118 2007/06/10 05:59:42 tsutsui Exp $
 
 # mac68k-specific configuration info
 
@@ -82,10 +82,11 @@ file	arch/mac68k/dev/if_mc.c		mc
 file	arch/mac68k/obio/if_mc_obio.c	mc_obio
 
 device	sn: ifnet, ether, arp
-attach	sn at obio with sn_obio
-attach	sn at nubus with sn_nubus
+file	dev/ic/dp83932.c		sn
 file	arch/mac68k/dev/if_sn.c		sn
+attach	sn at obio with sn_obio
 file	arch/mac68k/obio/if_sn_obio.c	sn_obio
+attach	sn at nubus with sn_nubus
 file	arch/mac68k/nubus/if_sn_nubus.c	sn_nubus
 
 attach	sm at nubus with sm_nubus
