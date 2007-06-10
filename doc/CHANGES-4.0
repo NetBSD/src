@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.183 2007/06/08 09:23:11 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.184 2007/06/10 20:58:56 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5983,3 +5983,35 @@ sys/lkm/netinet/if_ipl/mln_ipl.c		1.39
 
 	s/iplattach/ipfattach/ and s/ipldetach/ipfdetach/
 	[martti, ticket #701]
+sys/arch/xen/conf/files.xen			1.60 via patch
+sys/arch/xen/i386/machdep.c			1.38 via patch
+sys/arch/xen/include/cpu.h			1.19 via patch
+sys/arch/xen/include/types.h			1.5 via patch
+sys/arch/xen/xen/clock.c			1.35 via patch
+
+	Convert the xen port to use timecounters; ok'ed by bouyer@.
+	[jld, ticket #711]
+
+usr.sbin/wiconfig/wiconfig.c			1.40
+
+	wiconfig should exit with status 1 if used on an interface which does
+	not exist or is not wireless. The previous commit broke this, so add
+	explicit check before any other task. Approved by dyoung@
+	[sborrill, ticket #712]
+
+share/man/man4/viaide.4				1.8
+sys/dev/pci/pcidevs				1.863
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/viaide.c				1.38
+
+	Add PCI IDs for AMD Geode LX and CS5536.
+	Add support for CS5536 IDE.
+	[hira, ticket #713]
+
+sys/dev/pci/if_bge.c				1.131
+
+	Do not check link state before starting transmitter. Otherwise
+	mbufs will just pile up in the interface queue.
+	[mlelstv, ticket #714]
+
