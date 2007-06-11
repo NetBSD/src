@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.20 2005/06/01 11:22:18 lukem Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.21 2007/06/11 13:05:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.20 2005/06/01 11:22:18 lukem Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.21 2007/06/11 13:05:46 joerg Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -119,7 +119,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		/* FALLTHRU */
 	case SOUND_PCM_READ_RATE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		INTARG = tmpinfo.play.sample_rate;
@@ -129,13 +129,13 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		tmpinfo.play.channels =
 		tmpinfo.record.channels = INTARG ? 2 : 1;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		INTARG = tmpinfo.play.channels - 1;
 		break;
 	case SNDCTL_DSP_GETBLKSIZE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		setblocksize(fd, &tmpinfo);
@@ -198,7 +198,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		/* FALLTHRU */
 	case SOUND_PCM_READ_BITS:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		switch (tmpinfo.play.encoding) {
@@ -245,7 +245,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		/* FALLTHRU */
 	case SOUND_PCM_READ_CHANNELS:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		INTARG = tmpinfo.play.channels;
@@ -255,7 +255,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		errno = EINVAL;
 		return -1; /* XXX unimplemented */
 	case SNDCTL_DSP_SUBDIVIDE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		setblocksize(fd, &tmpinfo);
@@ -280,7 +280,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		if (tmpinfo.hiwat == 0)	/* 0 means set to max */
 			tmpinfo.hiwat = 65536;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		u = tmpinfo.blocksize;
@@ -340,7 +340,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_GETOSPACE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		setblocksize(fd, &tmpinfo);
@@ -352,7 +352,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		*(struct audio_buf_info *)argp = bufinfo;
 		break;
 	case SNDCTL_DSP_GETISPACE:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		setblocksize(fd, &tmpinfo);
@@ -382,7 +382,7 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 #if 0
 	case SNDCTL_DSP_GETTRIGGER:
-		retval = ioctl(fd, AUDIO_GETINFO, &tmpinfo);
+		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
 		idat = (tmpinfo.play.pause ? 0 : PCM_ENABLE_OUTPUT) |
@@ -801,6 +801,6 @@ setblocksize(int fd, struct audio_info *info)
 		AUDIO_INITINFO(&set);
 		set.blocksize = s;
 		ioctl(fd, AUDIO_SETINFO, &set);
-		ioctl(fd, AUDIO_GETINFO, info);
+		ioctl(fd, AUDIO_GETBUFINFO, info);
 	}
 }
