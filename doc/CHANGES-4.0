@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.184 2007/06/10 20:58:56 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.185 2007/06/11 12:29:11 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6015,3 +6015,24 @@ sys/dev/pci/if_bge.c				1.131
 	mbufs will just pile up in the interface queue.
 	[mlelstv, ticket #714]
 
+sys/arch/mips/conf/Makefile.mips		1.46
+sys/arch/mips/mips/trap.c			1.212
+sys/arch/sbmips/conf/GENERIC			1.60
+
+	Preserve local symbols on linking a kernel so that
+	we can get more useful trace on ddb(4).
+
+	Bump SYMTAB_SPACE so that it fits again.
+
+	Use the kernel symbol table to see the beginning of the current
+	subroutine to get more proper backtrace on ddb(4).
+
+	In the previous code it scans backwards from the current PC
+	for the end of the previous subroutine and checks "jr ra" or
+	"jr k0" instructions, but it often fails because gcc is
+	so aggressive nowadays as to reorder instruction blocks
+	to create efficient code path by branch predict etc. and
+	"jr ra" is not always located at the end of subroutines.
+
+	No objection on port-mips.
+	[tsutsui, ticket #715]
