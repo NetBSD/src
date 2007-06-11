@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.870 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.871 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -127,3 +127,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	file(1): update to 4.21.  [pooka 20070607]
 	zyd(4): Added OpenBSD's driver. Supports ZyDAS ZD1211/ZD1211B
 		USB IEEE 802.11b/g wireless network device. [kiyohara 20070609]
+	mac68k: Switch sn(4) Ethernet on mac68k to using MI SONIC driver.
+		[tsutsui 20070610]
