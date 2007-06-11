@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.62 2007/06/11 20:10:00 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.63 2007/06/11 20:54:33 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.62 2007/06/11 20:10:00 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.63 2007/06/11 20:54:33 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -141,14 +141,18 @@ static ino_t fakeino = 3;
 
 /*
  * XXX: do this otherwise if/when we grow thread support
- *
- * XXX2: does not consistently supply uid, gid or pid currently
  */
 static struct fuse_context fcon;
 
 #define SET_FUSE_CONTEXT_FROM_CN(fusectx, cn)	do {			\
-	(fusectx)->uid = (cn)->pcn_cred.pcr_uuc.cr_uid;			\
-	(fusectx)->gid = (cn)->pcn_cred.pcr_uuc.cr_gid;			\
+	uid_t	_uid;							\
+	gid_t	_gid;							\
+	if (puffs_cred_getuid(&(cn)->pcn_cred, &_uid) == 0) {		\
+		(fusectx)->uid = _uid;					\
+	}								\
+	if (puffs_cred_getgid(&(cn)->pcn_cred, &_gid) == 0) {		\
+		(fusectx)->gid = _gid;					\
+	}								\
 	(fusectx)->pid = (cn)->pcn_pid;					\
 } while (/* CONSTCOND */ 0)
 
