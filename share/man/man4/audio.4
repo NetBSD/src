@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.65 2006/03/28 21:43:06 wiz Exp $
+.\"	$NetBSD: audio.4,v 1.66 2007/06/11 13:05:47 joerg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 28, 2006
+.Dd June 11, 2007
 .Dt AUDIO 4
 .Os
 .Sh NAME
@@ -152,7 +152,9 @@ The device appears as a block of memory
 of size
 .Va buffersize
 (as available via
-.Dv AUDIO_GETINFO ) .
+.Dv AUDIO_GETINFO
+or
+.Dv AUDIO_GETBUFINFO) .
 The device driver will continuously move data from this buffer
 from/to the audio hardware, wrapping around at the end of the buffer.
 To find out where the hardware is currently accessing data in the buffer the
@@ -266,6 +268,7 @@ typedef struct audio_offset {
 } audio_offset_t;
 .Ed
 .It Dv AUDIO_GETINFO (audio_info_t)
+.It Dv AUDIO_GETBUFINFO (audio_info_t)
 .It Dv AUDIO_SETINFO (audio_info_t)
 Get or set audio information as encoded in the audio_info structure.
 .Bd -literal
@@ -293,6 +296,8 @@ and then the particular values to be changed should be set.
 This allows the audio driver to only set those things that you wish
 to change and eliminates the need to query the device with
 .Dv AUDIO_GETINFO
+or
+.Dv AUDIO_GETBUFINFO
 first.
 .Pp
 The
@@ -402,7 +407,8 @@ The
 and
 .Va balance
 settings provide simple shortcuts to the richer mixer
-interface described below.
+interface described below and are not obtained by
+.Dv AUDIO_GETBUFINFO .
 The gain should be in the range
 .Bq Dv AUDIO_MIN_GAIN , Dv AUDIO_MAX_GAIN
 and the balance in the range
@@ -433,7 +439,10 @@ to select line output.
 .El
 .Pp
 The available ports can be found in
-.Va avail_ports .
+.Va avail_ports 
+(
+.Dv AUDIO_GETBUFINFO
+only).
 .Pp
 .Va buffer_size
 is the total size of the audio buffer.
@@ -449,8 +458,10 @@ The
 .Va seek
 and
 .Va samples
-fields are only used for
-.Dv AUDIO_GETINFO .
+fields are only used by
+.Dv AUDIO_GETINFO 
+and
+.Dv AUDIO_GETBUFINFO .
 .Va seek
 represents the count of
 samples pending;
