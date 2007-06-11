@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © (c) 2007 \
                 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: fusermount.c,v 1.1 2007/04/26 21:13:39 agc Exp $");
+__RCSID("$NetBSD: fusermount.c,v 1.2 2007/06/11 21:16:23 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -42,6 +42,10 @@ __RCSID("$NetBSD: fusermount.c,v 1.1 2007/04/26 21:13:39 agc Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifndef FUSERMOUNT_VERSION
+#define FUSERMOUNT_VERSION	"2.6.0"
+#endif
 
 enum {
 	FlagCheckPerm = 1,
@@ -96,8 +100,12 @@ main(int argc, char **argv)
 	progname = NULL;
 	flags = 0;
 	action = ActionMount;
-	while ((i = getopt(argc, argv, "cd:hpux")) != -1) {
+	while ((i = getopt(argc, argv, "Vcd:hpux")) != -1) {
 		switch(i) {
+		case 'V':
+			printf("fusermount version: %s\n", FUSERMOUNT_VERSION);
+			exit(EXIT_SUCCESS);
+			/* NOTREACHED */
 		case 'c':
 			flags |= FlagKernelCache;
 			break;

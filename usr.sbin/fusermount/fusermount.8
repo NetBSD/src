@@ -1,4 +1,4 @@
-.\" $NetBSD: fusermount.8,v 1.2 2007/05/16 21:16:31 agc Exp $ */
+.\" $NetBSD: fusermount.8,v 1.3 2007/06/11 21:16:23 agc Exp $ */
 .\"
 .\" Copyright (c) 2007 Alistair Crooks.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 26, 2007
+.Dd June 11, 2007
 .Dt FUSERMOUNT 8
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd manage librefuse mount items
 .Sh SYNOPSIS
 .Nm
-.Op Fl chpx
+.Op Fl Vchpx
 .Op Fl d Ar name
 .Ar refuseoptions
 .Nm
@@ -64,6 +64,10 @@ The arguments to
 .Nm
 are as follows:
 .Bl -tag -width Ds
+.It Fl V
+display the
+.Nm
+version on stdout, and then exit successfully.
 .It Fl c
 sets a flag to enable kernel caching of files.
 At present this option has no effect.
