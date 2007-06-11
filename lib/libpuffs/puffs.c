@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.52 2007/06/06 01:55:01 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.53 2007/06/11 06:13:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.52 2007/06/06 01:55:01 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.53 2007/06/11 06:13:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -331,17 +331,19 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
 	int fd;
 
 	if (develv != PUFFS_DEVEL_LIBVERSION) {
-		warnx("puffs_mount: mounting with lib version %d, need %d",
+		warnx("puffs_init: mounting with lib version %d, need %d",
 		    develv, PUFFS_DEVEL_LIBVERSION);
 		errno = EINVAL;
 		return NULL;
 	}
 
 	fd = open("/dev/puffs", O_RDONLY);
-	if (fd == -1)
+	if (fd == -1) {
+		warnx("puffs_init: cannot open /dev/puffs");
 		return NULL;
+	}
 	if (fd <= 2)
-		warnx("puffs_mount: device fd %d (<= 2), sure this is "
+		warnx("puffs_init: device fd %d (<= 2), sure this is "
 		    "what you want?", fd);
 
 	pu = malloc(sizeof(struct puffs_usermount));
