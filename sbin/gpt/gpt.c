@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.3 2007/02/16 17:13:02 riz Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.4 2007/06/11 04:22:00 dyoung Exp $");
 #endif
 
 #include <sys/param.h>
@@ -456,8 +456,10 @@ drvctl(const char *name, u_int *sector_size, off_t *media_size)
 	int dfd, res;
 	char *dname, *p;
 
-	if ((dfd = open("/dev/drvctl", O_RDONLY)) == -1)
+	if ((dfd = open("/dev/drvctl", O_RDONLY)) == -1) {
+		warn("%s: /dev/drvctl", __func__);
 		return -1;
+	}
 
 	command_dict = prop_dictionary_create();
 	args_dict = prop_dictionary_create();
@@ -488,6 +490,7 @@ drvctl(const char *name, u_int *sector_size, off_t *media_size)
 	(void)close(dfd);
 	prop_object_release(command_dict);
 	if (res) {
+		warn("%s: prop_dictionary_sendrecv_ioctl", __func__);
 		errno = res;
 		return -1;
 	}
