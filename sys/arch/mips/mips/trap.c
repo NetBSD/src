@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.206 2006/08/26 20:18:36 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.206.6.1 2007/06/11 12:24:51 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.206 2006/08/26 20:18:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.206.6.1 2007/06/11 12:24:51 liamjfoy Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -788,6 +788,10 @@ stacktrace_subr(int a0, int a1, int a2, int a3,
 	int more, stksize;
 	unsigned int frames =  0;
 	int foundframesize = 0;
+#ifdef DDB
+	db_expr_t diff;
+	db_sym_t sym;
+#endif
 
 /* Jump here when done with a frame, to start a new one */
 loop:
@@ -814,9 +818,37 @@ loop:
 		goto done;
 	}
 
+#ifdef DDB
+	/*
+	 * Check the kernel symbol table to see the beginning of
+	 * the current subroutine.
+	 */
+	diff = 0;
+	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+	if (sym != DB_SYM_NULL && diff == 0) {
+		/* check func(foo) __attribute__((__noreturn__)) case */
+		instr = kdbpeek(pc - 2 * sizeof(int));
+		i.word = instr;
+		if (i.JType.op == OP_JAL) {
+			sym = db_search_symbol(pc - sizeof(int),
+			    DB_STGY_ANY, &diff);
+			if (sym != DB_SYM_NULL && diff != 0)
+				diff += sizeof(int);
+		}
+	}
+	if (sym == DB_SYM_NULL) {
+		ra = 0;
+		goto done;
+	}
+	va = pc - diff;
+#else
 	/*
 	 * Find the beginning of the current subroutine by scanning backwards
 	 * from the current PC for the end of the previous subroutine.
+	 * 
+	 * XXX This won't work well because nowadays gcc is so aggressive
+	 *     as to reorder instruction blocks for branch-predict.
+	 *     (i.e. 'jr ra' wouldn't indicate the end of subroutine)
 	 */
 	va = pc;
 	do {
@@ -834,6 +866,7 @@ mips3_eret:
 	/* skip over nulls which might separate .o files */
 	while ((instr = kdbpeek(va)) == 0)
 		va += sizeof(int);
+#endif
 	subr = va;
 
 	/* scan forwards to find stack size and any saved registers */
