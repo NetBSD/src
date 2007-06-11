@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.20.4.3 2007/05/23 01:32:20 nisimura Exp $
+#	$NetBSD: files.sandpoint,v 1.20.4.4 2007/06/11 17:37:17 nisimura Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -78,6 +78,8 @@ file	arch/powerpc/pci/pchb.c			pchb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/powerpc/pci/pcib.c			pcib needs-flag
+
+file	arch/sandpoint/pci/pciide_machdep.c	pciide_common
 
 #
 # ISA and mixed ISA+PCI drivers
