@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.872 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.873 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -130,4 +130,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	mac68k: Switch sn(4) Ethernet on mac68k to using MI SONIC driver.
 		[tsutsui 20070610]
 	audio(4): New ioctl AUDIO_GETBUFINFO reduces system overhead for many
-		emulated OSS functions.
+		emulated OSS functions. [joerg 20070611]
