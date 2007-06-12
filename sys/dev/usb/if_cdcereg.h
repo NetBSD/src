@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdcereg.h,v 1.2.40.1 2007/06/01 03:18:04 itohy Exp $ */
+/*	$NetBSD: if_cdcereg.h,v 1.2.40.2 2007/06/12 13:58:24 itohy Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -45,19 +45,9 @@ struct cdce_type {
 #define CDCE_NO_UNION	2
 };
 
-struct cdce_softc;
-
-struct cdce_chain {
-	struct cdce_softc	*cdce_sc;
-	usbd_xfer_handle	 cdce_xfer;
-	struct mbuf		*cdce_mbuf;
-	int			 cdce_accum;
-	int			 cdce_idx;
-};
-
 struct cdce_cdata {
-	struct cdce_chain	 cdce_rx_chain[CDCE_RX_LIST_CNT];
-	struct cdce_chain	 cdce_tx_chain[CDCE_TX_LIST_CNT];
+	struct ue_chain		 cdce_rx_chain[CDCE_RX_LIST_CNT];
+	struct ue_chain		 cdce_tx_chain[CDCE_TX_LIST_CNT];
 	int			 cdce_tx_prod;
 	int			 cdce_tx_cons;
 	int			 cdce_tx_cnt;
