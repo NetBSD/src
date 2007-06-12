@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.185 2007/06/11 12:29:11 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.186 2007/06/12 16:51:33 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6036,3 +6036,10 @@ sys/arch/sbmips/conf/GENERIC			1.60
 
 	No objection on port-mips.
 	[tsutsui, ticket #715]
+
+lib/libc/gen/scandir.c				1.26
+
+	PR/36464: scandir(3) corrupts heap when run on ZFS directories because ZFS
+	returns the number of entries as the directory size.
+	Use a new, more conservative entries estimator.
+	[christos, ticket #717]
