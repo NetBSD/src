@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.11 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.12 2007/06/12 03:34:30 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -95,8 +95,9 @@ ASENTRY_NOPROFILE(fault)
 	clrl	%sp@-			| no VA arg
 	clrl	%sp@-			| or code arg
 	movl	%d0,%sp@-		| push trap type
+	pea	%sp@(12)		| address of trap frame
 	jbsr	_C_LABEL(trap)		| handle trap
-	lea	%sp@(12),%sp		| pop value args
+	lea	%sp@(16),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most user regs
@@ -107,10 +108,9 @@ ASENTRY_NOPROFILE(fault)
  * Similar to above, but will tidy up the stack, if necessary.
  */
 ASENTRY(faultstkadj)
+	pea	%sp@(12)		| address of trap frame
 	jbsr	_C_LABEL(trap)		| handle the error
-/* for 68060 Branch Prediction Error handler */
-_ASM_LABEL(faultstkadjnotrap):
-	lea	%sp@(12),%sp		| pop value args
+	lea	%sp@(16),%sp		| pop value args
 /* for new 68060 Branch Prediction Error handler */
 _ASM_LABEL(faultstkadjnotrap2):
 	movl	%sp@(FR_SP),%a0		| restore user SP
