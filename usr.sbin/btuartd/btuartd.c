@@ -1,4 +1,4 @@
-/*	$NetBSD: btuartd.c,v 1.1 2007/02/20 16:59:36 kiyohara Exp $	*/
+/*	$NetBSD: btuartd.c,v 1.2 2007/06/12 10:05:24 kiyohara Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: btuartd.c,v 1.1 2007/02/20 16:59:36 kiyohara Exp $");
+__RCSID("$NetBSD: btuartd.c,v 1.2 2007/06/12 10:05:24 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -356,6 +356,9 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	openlog(progname, LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_DAEMON);
+
 	if (argc == 0) {
 		if (getuid() != 0)
 			errx(EXIT_FAILURE,
@@ -404,7 +407,6 @@ main(int argc, char *argv[])
 		nbtuart = 1;
 	}
 
-	openlog(progname, LOG_NDELAY | LOG_PERROR | LOG_PID, LOG_DAEMON);
 	signal(SIGINT, btuartd_sigcaught);
 	signal(SIGTERM, btuartd_sigcaught);
 
