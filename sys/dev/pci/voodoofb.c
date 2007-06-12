@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.9 2007/03/27 22:44:42 jmcneill Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.10 2007/06/12 18:16:54 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.9 2007/03/27 22:44:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.10 2007/06/12 18:16:54 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,7 @@ voodoofb_drm_unmap(struct voodoofb_softc *sc)
 	printf("%s: releasing bus resources\n", sc->sc_dev.dv_xname);
 
 	bus_space_unmap(sc->sc_ioregt, sc->sc_ioregh, sc->sc_ioregsize);
-	bus_space_unmap(sc->sc_regt, sc->sc_reg, sc->sc_regsize);
+	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsize);
 	bus_space_unmap(sc->sc_fbt, sc->sc_fbh, sc->sc_fbsize);
 
 	return 0;
