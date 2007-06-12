@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.155 2007/06/05 12:31:32 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.156 2007/06/12 09:42:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.155 2007/06/05 12:31:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.156 2007/06/12 09:42:27 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -460,7 +460,6 @@ nfs_write(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	kauth_cred_t cred = ap->a_cred;
-	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	voff_t oldoff, origoff;
 	vsize_t bytelen;
@@ -483,20 +482,13 @@ nfs_write(v)
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, l);
 #endif
-	if (ioflag & (IO_APPEND | IO_SYNC)) {
-		if (np->n_flag & NMODIFIED) {
-			NFS_INVALIDATE_ATTRCACHE(np);
-			error = nfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
-			if (error)
-				return (error);
-		}
-		if (ioflag & IO_APPEND) {
-			NFS_INVALIDATE_ATTRCACHE(np);
-			error = VOP_GETATTR(vp, &vattr, cred, l);
-			if (error)
-				return (error);
-			uio->uio_offset = np->n_size;
-		}
+	if (ioflag & IO_APPEND) {
+		NFS_INVALIDATE_ATTRCACHE(np);
+		error = nfs_flushstalebuf(vp, cred, l,
+		    NFS_FLUSHSTALEBUF_MYWRITE);
+		if (error)
+			return (error);
+		uio->uio_offset = np->n_size;
 	}
 	if (uio->uio_offset < 0)
 		return (EINVAL);
