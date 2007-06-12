@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.78 2007/06/09 11:20:55 kiyohara Exp $
+#	$NetBSD: files.usb,v 1.79 2007/06/12 07:06:48 kiyohara Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -288,8 +288,3 @@ file	dev/usb/xboxcontroller.c	xboxcontroller
 device	zyd: ether, ifnet, arp, wlan, firmload
 attach	zyd at usbdevif
 file	dev/usb/if_zyd.c		zyd
-
-# Atheros AR5005UG/AR5005UX
-device	uath: ether, ifnet, arp, wlan, firmload
-attach	uath at usbdevif
-file	dev/usb/if_uath.c		uath
