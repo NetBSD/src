@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.113 2007/06/01 14:43:17 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.114 2007/06/12 09:30:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.113 2007/06/01 14:43:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.114 2007/06/12 09:30:49 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -738,6 +738,7 @@ nfssvc_nfsd(nsd, argp, l)
 				if (error == EPIPE)
 					nfsrv_zapsock(slp);
 				if (error == EINTR || error == ERESTART) {
+					nfsd->nfsd_slp = NULL;
 					nfsrv_slpderef(slp);
 					goto done;
 				}
@@ -906,6 +907,8 @@ nfsrv_init(terminating)
 	nfssvc_sockhead_flag |= SLP_INIT;
 
 	if (terminating) {
+		KASSERT(SLIST_EMPTY(&nfsd_idle_head));
+		KASSERT(TAILQ_EMPTY(&nfsd_head));
 		while ((slp = TAILQ_FIRST(&nfssvc_sockhead)) != NULL) {
 			mutex_exit(&nfsd_lock);
 			KASSERT(slp->ns_sref == 0);
@@ -914,6 +917,7 @@ nfsrv_init(terminating)
 			nfsrv_slpderef(slp);
 			mutex_enter(&nfsd_lock);
 		}
+		KASSERT(TAILQ_EMPTY(&nfssvc_sockpending));
 		mutex_exit(&nfsd_lock);
 		nfsrv_cleancache();	/* And clear out server cache */
 	} else {
