@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.64 2007/06/12 18:53:29 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.65 2007/06/12 18:54:36 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.64 2007/06/12 18:53:29 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.65 2007/06/12 18:54:36 agc Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -167,10 +167,9 @@ fill_dirbuf(struct puffs_fuse_dirh *dh, const char *name, ino_t dino,
 
 	/* initial? */
 	if (dh->bufsize == 0) {
-		if ((dh->dbuf = malloc(DIR_CHUNKSIZE)) == NULL) {
+		if ((dh->dbuf = calloc(1, DIR_CHUNKSIZE)) == NULL) {
 			err(EXIT_FAILURE, "fill_dirbuf");
 		}
-		(void) memset(dh->dbuf, 0x0, DIR_CHUNKSIZE);
 		dh->d = dh->dbuf;
 		dh->reslen = dh->bufsize = DIR_CHUNKSIZE;
 	}
@@ -1139,13 +1138,14 @@ fuse_mount(const char *dir, struct fuse_args *args)
  	struct fuse_chan	*fc;
 	char			 name[64];
 
-	if ((fc = malloc(sizeof(*fc))) == NULL)
-		err(1, "fuse_mount");
-	(void) memset(fc, 0x0, sizeof(*fc));
+	if ((fc = calloc(1, sizeof(*fc))) == NULL) {
+		err(EXIT_FAILURE, "fuse_mount");
+	}
 	fc->dead = 0;
 
-	if ((fc->dir = strdup(dir)) == NULL)
-		err(1, "fuse_mount");
+	if ((fc->dir = strdup(dir)) == NULL) {
+		err(EXIT_FAILURE, "fuse_mount");
+	}
 
 	/*
 	 * we need to deep copy the args struct - some fuse file
@@ -1180,9 +1180,9 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 	char			 name[64];
 	char			*argv0;
 
-	if ((fuse = malloc(sizeof(*fuse))) == NULL)
-		err(1, "fuse_new");
-	(void) memset(fuse, 0x0, sizeof(*fuse));
+	if ((fuse = calloc(1, sizeof(*fuse))) == NULL) {
+		err(EXIT_FAILURE, "fuse_new");
+	}
 
 	/* copy fuse ops to their own stucture */
 	(void) memcpy(&fuse->op, ops, sizeof(fuse->op));
