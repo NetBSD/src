@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.25 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: scandir.c,v 1.25.4.1 2007/06/12 16:49:36 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.25 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.25.4.1 2007/06/12 16:49:36 liamjfoy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,32 +55,52 @@ __RCSID("$NetBSD: scandir.c,v 1.25 2005/09/13 01:44:09 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * Compute an estimate of the number of entries in a directory based on
+ * the file size. Returns the estimated number of entries or 0 on failure.
+ */
+static size_t
+dirsize(int fd, size_t olen)
+{
+	struct stat stb;
+	size_t nlen;
+
+	if (fstat(fd, &stb) == -1)
+		return 0;
+	/*
+	 * Estimate the array size by taking the size of the directory file
+	 * and dividing it by a multiple of the minimum size entry. 
+	 */
+	nlen = (size_t)(stb.st_size / _DIRENT_MINSIZE((struct dirent *)0));
+	/*
+	 * If the size turns up 0, switch to an alternate strategy and use the
+	 * file size as the number of entries like ZFS returns. If that turns
+	 * out to be 0 too return a minimum of 10 entries, plus the old length.
+	 */
+	if (nlen == 0)
+		nlen = (size_t)(stb.st_size ? stb.st_size : 10);
+	return olen + nlen;
+}
+
 int
-scandir(dirname, namelist, selectfn, dcomp)
-	const char *dirname;
-	struct dirent ***namelist;
-	int (*selectfn) __P((const struct dirent *));
-	int (*dcomp) __P((const void *, const void *));
+scandir(const char *dirname, struct dirent ***namelist,
+    int (*selectfn)(const struct dirent *),
+    int (*dcomp)(const void *, const void *))
 {
 	struct dirent *d, *p, **names, **newnames;
 	size_t nitems, arraysz;
-	struct stat stb;
 	DIR *dirp;
 
 	_DIAGASSERT(dirname != NULL);
 	_DIAGASSERT(namelist != NULL);
 
 	if ((dirp = opendir(dirname)) == NULL)
-		return (-1);
-	if (fstat(dirp->dd_fd, &stb) < 0)
+		return -1;
+
+	if ((arraysz = dirsize(dirp->dd_fd, 0)) == 0)
 		goto bad;
 
-	/*
-	 * estimate the array size by taking the size of the directory file
-	 * and dividing it by a multiple of the minimum size entry. 
-	 */
-	arraysz = (size_t)(stb.st_size / 24);
-	names = malloc(arraysz * sizeof(struct dirent *));
+	names = malloc(arraysz * sizeof(*names));
 	if (names == NULL)
 		goto bad;
 
@@ -94,11 +114,9 @@ scandir(dirname, namelist, selectfn, dcomp)
 		 * realloc the maximum size.
 		 */
 		if (nitems >= arraysz) {
-			if (fstat(dirp->dd_fd, &stb) < 0)
-				goto bad2;	/* just might have grown */
-			arraysz = (size_t)(stb.st_size / 12);
-			newnames = realloc(names,
-			    arraysz * sizeof(struct dirent *));
+			if ((arraysz = dirsize(dirp->dd_fd, arraysz)) == 0)
+				goto bad2;
+			newnames = realloc(names, arraysz * sizeof(*names));
 			if (newnames == NULL)
 				goto bad2;
 			names = newnames;
@@ -107,27 +125,27 @@ scandir(dirname, namelist, selectfn, dcomp)
 		/*
 		 * Make a minimum size copy of the data
 		 */
-		p = (struct dirent *)malloc((size_t)_DIRENT_SIZE(d));
+		p = malloc((size_t)_DIRENT_SIZE(d));
 		if (p == NULL)
 			goto bad2;
 		p->d_fileno = d->d_fileno;
 		p->d_reclen = d->d_reclen;
 		p->d_type = d->d_type;
 		p->d_namlen = d->d_namlen;
-		memmove(p->d_name, d->d_name, (size_t)(p->d_namlen + 1));
+		(void)memmove(p->d_name, d->d_name, (size_t)(p->d_namlen + 1));
 		names[nitems++] = p;
 	}
-	closedir(dirp);
+	(void)closedir(dirp);
 	if (nitems && dcomp != NULL)
-		qsort(names, nitems, sizeof(struct dirent *), dcomp);
+		qsort(names, nitems, sizeof(*names), dcomp);
 	*namelist = names;
-	return (nitems);
+	return nitems;
 
 bad2:
 	while (nitems-- > 0)
 		free(names[nitems]);
 	free(names);
 bad:
-	closedir(dirp);
-	return (-1);
+	(void)closedir(dirp);
+	return -1;
 }
