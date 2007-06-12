@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.73.10.1 2007/05/22 14:57:35 itohy Exp $
+#	$NetBSD: files.usb,v 1.73.10.2 2007/06/12 13:58:24 itohy Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -155,44 +155,47 @@ file	dev/usb/udsbr.c			udsbr
 
 
 # Ethernet adapters
+define	usb_ether
+file	dev/usb/usb_ethersubr.c		usb_ether
+
 # ADMtek AN986 Pegasus
 device	aue: arp, ether, ifnet, mii, mii_phy
-attach	aue at usbdevif
+attach	aue at usbdevif: usb_ether
 file	dev/usb/if_aue.c		aue
 
 # CDC Ethernet
 device  cdce: arp, ether, ifnet
-attach  cdce at usbdevif
+attach  cdce at usbdevif: usb_ether
 file    dev/usb/if_cdce.c                cdce
 
 # CATC USB-EL1201A
 device	cue: arp, ether, ifnet
-attach	cue at usbdevif
+attach	cue at usbdevif: usb_ether
 file	dev/usb/if_cue.c		cue
 
 # Kawasaki LSI KL5KUSB101B
 device	kue: arp, ether, ifnet
-attach	kue at usbdevif
+attach	kue at usbdevif: usb_ether
 file	dev/usb/if_kue.c		kue
 
 # Prolific PL2302 host-host
 device	upl: ifnet
-attach	upl at usbdevif
+attach	upl at usbdevif: usb_ether
 file	dev/usb/if_upl.c		upl
 
 # Realtek RTL8150L(M)
 device	url: arp, ether, ifnet, mii
-attach	url at usbdevif
+attach	url at usbdevif: usb_ether
 file	dev/usb/if_url.c		url
 
 # ASIX AX88172
 device	axe: arp, ether, ifnet, mii, mii_phy
-attach	axe at usbdevif
+attach	axe at usbdevif: usb_ether
 file	dev/usb/if_axe.c		axe
 
 # DAVICOM DM9601
 device	udav: arp, ether, ifnet, mii, mii_phy
-attach	udav at usbdevif
+attach	udav at usbdevif: usb_ether
 file	dev/usb/if_udav.c		udav
 
 
@@ -253,15 +256,15 @@ file	dev/usb/usscanner.c		usscanner
 
 # Atmel AT76c503 / AT76c503a / AT76c505 / AT76c505a @ USB
 device	atu: ether, ifnet, arp, wlan
-attach	atu at usbdevif
+attach	atu at usbdevif: usb_ether
 file	dev/usb/if_atu.c		atu
 
 # Ralink Technology RT2500USB
-attach	ral at usbdevif with ural
+attach	ral at usbdevif with ural: usb_ether
 file	dev/usb/if_ural.c		ural
 
 device	rum: ether, ifnet, arp, wlan
-attach	rum at usbdevif
+attach	rum at usbdevif: usb_ether
 file	dev/usb/if_rum.c		rum
 
 # Topfield digital PVRs
