@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.122 2007/06/09 03:07:22 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.123 2007/06/12 22:55:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.122 2007/06/09 03:07:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.123 2007/06/12 22:55:44 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -180,7 +180,7 @@ struct	ifnet *myip_ifp = NULL;
 static void db_print_sa(const struct sockaddr *);
 static void db_print_ifa(struct ifaddr *);
 static void db_print_llinfo(void *);
-static int db_show_radix_node(struct rtentry *, void *);
+static int db_show_rtentry(struct rtentry *, void *);
 #endif
 
 /*
@@ -1467,7 +1467,7 @@ db_print_llinfo(void *li)
  * Return non-zero error to abort walk.
  */
 static int
-db_show_radix_node(struct rtentry *rt, void *w)
+db_show_rtentry(struct rtentry *rt, void *w)
 {
 	db_printf("rtentry=%p", rt);
 
@@ -1505,15 +1505,7 @@ void
 db_show_arptab(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	struct radix_node_head *rnh;
-	rnh = rt_tables[AF_INET];
-	db_printf("Route tree for AF_INET\n");
-	if (rnh == NULL) {
-		db_printf(" (not initialized)\n");
-		return;
-	}
-	rt_walktree(AF_INET, db_show_radix_node, NULL);
-	return;
+	rt_walktree(AF_INET, db_show_rtentry, NULL);
 }
 #endif
 
