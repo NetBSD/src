@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.79 2007/06/06 16:01:32 liamjfoy Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.80 2007/06/12 16:24:11 liamjfoy Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3306,3 +3306,10 @@ etc/etc.sgimips/Makefile.inc			1.15
 	the grafted directories. This way both versions of mkisofs can find the
 	boot loader.
 	[bad, ticket #1753]
+
+lib/libc/gen/scandir.c				1.22.6.1
+
+	Be more conservative about computing the number of entries in
+	the directory. Avoids core-dump with ZFS filesystems (they return
+	the number of entries in stat(2) instead of the size in st_size)
+	[christos, ticket #1803]
