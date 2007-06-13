@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.17 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.18 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -634,4 +634,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	ug(4): Driver split in three parts to support the new ACPI
 		attachment (ug* at acpi?). Patch from Mihai Chelaru. 
 		[xtraeme 20070508]
+	xen: Add timecounter support. [jld 20070512]
 	ipf(8): Updated to version 4.1.22. [martin 20070515]
