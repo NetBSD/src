@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.14 2001/01/21 22:09:24 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.14.92.1 2007/06/13 03:59:16 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -145,19 +145,9 @@ struct cue_type {
 	u_int16_t		cue_did;
 };
 
-struct cue_softc;
-
-struct cue_chain {
-	struct cue_softc	*cue_sc;
-	usbd_xfer_handle	cue_xfer;
-	char			*cue_buf;
-	struct mbuf		*cue_mbuf;
-	int			cue_idx;
-};
-
 struct cue_cdata {
-	struct cue_chain	cue_tx_chain[CUE_TX_LIST_CNT];
-	struct cue_chain	cue_rx_chain[CUE_RX_LIST_CNT];
+	struct ue_chain		cue_tx_chain[CUE_TX_LIST_CNT];
+	struct ue_chain		cue_rx_chain[CUE_RX_LIST_CNT];
 	int			cue_tx_prod;
 	int			cue_tx_cons;
 	int			cue_tx_cnt;
