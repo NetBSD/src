@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.133 2007/05/23 17:15:01 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.134 2007/06/13 05:03:19 dyoung Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.133 2007/05/23 17:15:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.134 2007/06/13 05:03:19 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -307,11 +307,9 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 		goto freeit;
 	}
 
-	if (m->m_len < sizeof(struct ip6_hdr)) {
-		m = m_pullup(m, sizeof(struct ip6_hdr));
-		if (m == NULL)
-			return;
-	}
+	if (M_UNWRITABLE(m, sizeof(struct ip6_hdr)) &&
+	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
+		return;
 	oip6 = mtod(m, struct ip6_hdr *);
 
 	/*
@@ -399,7 +397,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 
 	preplen = sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr);
 	M_PREPEND(m, preplen, M_DONTWAIT);
-	if (m && m->m_len < preplen)
+	if (m && M_UNWRITABLE(m, preplen))
 		m = m_pullup(m, preplen);
 	if (m == NULL) {
 		nd6log((LOG_DEBUG, "ENOBUFS in icmp6_error %d\n", __LINE__));
