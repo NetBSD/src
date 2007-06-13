@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.126 2007/05/21 15:35:47 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.127 2007/06/13 20:57:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.126 2007/05/21 15:35:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.127 2007/06/13 20:57:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1193,3 +1193,24 @@ linux_get_uname_arch(void)
 		uname_arch[1] += cpu_class;
 	return uname_arch;
 }
+
+#ifdef LINUX_NPTL
+void *
+linux_get_newtls(l)
+	struct lwp *l;
+{
+	struct trapframe *tf = l->l_md.md_regs;
+
+	/* XXX: Implement me */
+	return NULL;
+}
+
+int
+linux_set_newtls(l, tls)
+	struct lwp *l;
+	void *tls;
+{
+	/* XXX: Implement me */
+	return 0;
+}
+#endif
