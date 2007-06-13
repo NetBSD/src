@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.187 2007/06/13 10:51:45 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.188 2007/06/13 21:26:44 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -5983,11 +5983,13 @@ sys/lkm/netinet/if_ipl/mln_ipl.c		1.39
 
 	s/iplattach/ipfattach/ and s/ipldetach/ipfdetach/
 	[martti, ticket #701]
+
 sys/arch/xen/conf/files.xen			1.60 via patch
 sys/arch/xen/i386/machdep.c			1.38 via patch
 sys/arch/xen/include/cpu.h			1.19 via patch
 sys/arch/xen/include/types.h			1.5 via patch
 sys/arch/xen/xen/clock.c			1.35 via patch
+doc/CHANGES					patch
 
 	Convert the xen port to use timecounters; ok'ed by bouyer@.
 	[jld, ticket #711]
@@ -6066,3 +6068,4 @@ bin/sh/parser.c					1.64
 	1. remove the escape annotations from the function name.
 	2. check if the function has a valid name before storing it.
 	[dsl, ticket #718]
+
