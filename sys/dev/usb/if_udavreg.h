@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udavreg.h,v 1.3 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: if_udavreg.h,v 1.3.40.1 2007/06/13 04:13:00 itohy Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -144,17 +144,9 @@
 #define	GET_IFP(sc)		(&(sc)->sc_ec.ec_if)
 #define	GET_MII(sc)		(&(sc)->sc_mii)
 
-struct udav_chain {
-	struct udav_softc	*udav_sc;
-	usbd_xfer_handle	udav_xfer;
-	char			*udav_buf;
-	struct mbuf		*udav_mbuf;
-	int			udav_idx;
-};
-
 struct udav_cdata {
-	struct udav_chain	udav_tx_chain[UDAV_TX_LIST_CNT];
-	struct udav_chain	udav_rx_chain[UDAV_TX_LIST_CNT];
+	struct ue_chain		udav_tx_chain[UDAV_TX_LIST_CNT];
+	struct ue_chain		udav_rx_chain[UDAV_TX_LIST_CNT];
 #if 0
 	/* XXX: Intrrupt Endpoint is not yet supported! */
 	struct udav_intrpkg	udav_ibuf;

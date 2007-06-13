@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.15.10.1 2007/05/22 14:57:38 itohy Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.15.10.2 2007/06/13 04:13:00 itohy Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.1 2007/05/22 14:57:38 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.2 2007/06/13 04:13:00 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.1 2007/05/22 14:57:38 itohy Exp 
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/usb_ethersubr.h>
 
 #include <dev/usb/if_udavreg.h>
 
@@ -93,9 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.1 2007/05/22 14:57:38 itohy Exp 
 USB_DECLARE_DRIVER(udav);
 
 Static int udav_openpipes(struct udav_softc *);
-Static int udav_rx_list_init(struct udav_softc *);
-Static int udav_tx_list_init(struct udav_softc *);
-Static int udav_newbuf(struct udav_softc *, struct udav_chain *, struct mbuf *);
 Static void udav_start(struct ifnet *);
 Static int udav_send(struct udav_softc *, struct mbuf *, int);
 Static void udav_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -159,6 +157,7 @@ static const struct udav_type {
 };
 #define udav_lookup(v, p) ((const struct udav_type *)usb_lookup(udav_devs, v, p))
 
+char zeros[UDAV_MIN_FRAME_LEN];	/* XXX */
 
 /* Probe */
 USB_MATCH(udav)
@@ -339,7 +338,7 @@ USB_DETACH(udav)
 		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
 	if (ifp->if_flags & IFF_RUNNING)
-		udav_stop(GET_IFP(sc), 1);
+		udav_stop(ifp, 1);
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
@@ -616,6 +615,8 @@ udav_init(struct ifnet *ifp)
 	struct mii_data *mii = GET_MII(sc);
 	u_char *eaddr;
 	int s;
+	struct ue_chain *c;
+	int i;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
@@ -643,15 +644,26 @@ udav_init(struct ifnet *ifp)
 	else
 		UDAV_CLRBIT(sc, UDAV_RCR, UDAV_RCR_ALL|UDAV_RCR_PRMSC);
 
+	if (sc->sc_pipe_tx == NULL || sc->sc_pipe_rx == NULL) {
+		if (udav_openpipes(sc)) {
+			splx(s);
+			return (EIO);
+		}
+	}
+
 	/* Initialize transmit ring */
-	if (udav_tx_list_init(sc) == ENOBUFS) {
+	if (usb_ether_tx_list_init(USBDEV(sc->sc_dev),
+	    sc->sc_cdata.udav_tx_chain, UDAV_TX_LIST_CNT,
+	    sc->sc_udev, sc->sc_pipe_tx, NULL)) {
 		printf("%s: tx list init failed\n", USBDEVNAME(sc->sc_dev));
 		splx(s);
 		return (EIO);
 	}
 
 	/* Initialize receive ring */
-	if (udav_rx_list_init(sc) == ENOBUFS) {
+	if (usb_ether_rx_list_init(USBDEV(sc->sc_dev),
+	    sc->sc_cdata.udav_rx_chain, UDAV_RX_LIST_CNT,
+	    sc->sc_udev, sc->sc_pipe_rx)) {
 		printf("%s: rx list init failed\n", USBDEVNAME(sc->sc_dev));
 		splx(s);
 		return (EIO);
@@ -669,11 +681,17 @@ udav_init(struct ifnet *ifp)
 
 	mii_mediachg(mii);
 
-	if (sc->sc_pipe_tx == NULL || sc->sc_pipe_rx == NULL) {
-		if (udav_openpipes(sc)) {
-			splx(s);
-			return (EIO);
-		}
+	/* Start up the receive pipe. */
+	for (i = 0; i < UDAV_RX_LIST_CNT; i++) {
+		c = &sc->sc_cdata.udav_rx_chain[i];
+		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
+		usbd_setup_xfer(c->ue_xfer, sc->sc_pipe_rx,
+				c, NULL /* XXX buf */, UDAV_BUFSZ,
+				USBD_SHORT_XFER_OK | USBD_NO_COPY,
+				USBD_NO_TIMEOUT, udav_rxeof);
+		(void)usbd_transfer(c->ue_xfer);
+		DPRINTF(("%s: %s: start read\n", USBDEVNAME(sc->sc_dev),
+			 __func__));
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -801,9 +819,7 @@ udav_setmulti(struct udav_softc *sc)
 Static int
 udav_openpipes(struct udav_softc *sc)
 {
-	struct udav_chain *c;
 	usbd_status err;
-	int i;
 	int error = 0;
 
 	if (sc->sc_dying)
@@ -846,122 +862,11 @@ udav_openpipes(struct udav_softc *sc)
 	}
 #endif
 
-
-	/* Start up the receive pipe. */
-	for (i = 0; i < UDAV_RX_LIST_CNT; i++) {
-		c = &sc->sc_cdata.udav_rx_chain[i];
-		usbd_setup_xfer(c->udav_xfer, sc->sc_pipe_rx,
-				c, c->udav_buf, UDAV_BUFSZ,
-				USBD_SHORT_XFER_OK | USBD_NO_COPY,
-				USBD_NO_TIMEOUT, udav_rxeof);
-		(void)usbd_transfer(c->udav_xfer);
-		DPRINTF(("%s: %s: start read\n", USBDEVNAME(sc->sc_dev),
-			 __func__));
-	}
-
  done:
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
 	return (error);
-}
-
-Static int
-udav_newbuf(struct udav_softc *sc, struct udav_chain *c, struct mbuf *m)
-{
-	struct mbuf *m_new = NULL;
-
-	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
-
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("%s: no memory for rx list "
-			       "-- packet dropped!\n", USBDEVNAME(sc->sc_dev));
-			return (ENOBUFS);
-		}
-		MCLGET(m_new, M_DONTWAIT);
-		if (!(m_new->m_flags & M_EXT)) {
-			printf("%s: no memory for rx list "
-			       "-- packet dropped!\n", USBDEVNAME(sc->sc_dev));
-			m_freem(m_new);
-			return (ENOBUFS);
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-
-	m_adj(m_new, ETHER_ALIGN);
-	c->udav_mbuf = m_new;
-
-	return (0);
-}
-
-
-Static int
-udav_rx_list_init(struct udav_softc *sc)
-{
-	struct udav_cdata *cd;
-	struct udav_chain *c;
-	int i;
-
-	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
-
-	cd = &sc->sc_cdata;
-	for (i = 0; i < UDAV_RX_LIST_CNT; i++) {
-		c = &cd->udav_rx_chain[i];
-		c->udav_sc = sc;
-		c->udav_idx = i;
-		if (udav_newbuf(sc, c, NULL) == ENOBUFS)
-			return (ENOBUFS);
-		if (c->udav_xfer == NULL) {
-			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev,
-			    sc->sc_pipe_rx);
-			if (c->udav_xfer == NULL)
-				return (ENOBUFS);
-			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
-			if (c->udav_buf == NULL) {
-				usbd_free_xfer(c->udav_xfer);
-				return (ENOBUFS);
-			}
-		}
-	}
-
-	return (0);
-}
-
-Static int
-udav_tx_list_init(struct udav_softc *sc)
-{
-	struct udav_cdata *cd;
-	struct udav_chain *c;
-	int i;
-
-	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
-
-	cd = &sc->sc_cdata;
-	for (i = 0; i < UDAV_TX_LIST_CNT; i++) {
-		c = &cd->udav_tx_chain[i];
-		c->udav_sc = sc;
-		c->udav_idx = i;
-		c->udav_mbuf = NULL;
-		if (c->udav_xfer == NULL) {
-			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev,
-			    sc->sc_pipe_tx);
-			if (c->udav_xfer == NULL)
-				return (ENOBUFS);
-			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
-			if (c->udav_buf == NULL) {
-				usbd_free_xfer(c->udav_xfer);
-				return (ENOBUFS);
-			}
-		}
-	}
-
-	return (0);
 }
 
 Static void
@@ -986,17 +891,17 @@ udav_start(struct ifnet *ifp)
 	if (m_head == NULL)
 		return;
 
-	if (udav_send(sc, m_head, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
-		return;
-	}
-
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m_head);
 #endif
+
+	if (udav_send(sc, m_head, 0)) {
+		ifp->if_flags |= IFF_OACTIVE;
+		return;
+	}
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1008,39 +913,56 @@ Static int
 udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 {
 	int total_len;
-	struct udav_chain *c;
+	struct ue_chain *c;
 	usbd_status err;
+	int ret;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
 
 	c = &sc->sc_cdata.udav_tx_chain[idx];
 
-	/* Copy the mbuf data into a contiguous buffer */
-	/*  first 2 bytes are packet length */
-	m_copydata(m, 0, m->m_pkthdr.len, c->udav_buf + 2);
-	c->udav_mbuf = m;
+	/* first 2 bytes are packet length */
+	M_PREPEND(m, 2, M_DONTWAIT);
+	if (m != NULL)
+		m = m_pullup(m, 2);	/* just in case */
+	if (m == NULL) {
+		GET_IFP(sc)->if_oerrors++;
+		return (ENOBUFS);
+	}
+
 	total_len = m->m_pkthdr.len;
-	if (total_len < UDAV_MIN_FRAME_LEN) {
-		memset(c->udav_buf + 2 + total_len, 0,
-		    UDAV_MIN_FRAME_LEN - total_len);
-		total_len = UDAV_MIN_FRAME_LEN;
+	if (total_len < UDAV_MIN_FRAME_LEN + 2) {
+		/* expand mbuf chain with zeros */
+		m_copyback(m, total_len, UDAV_MIN_FRAME_LEN + 2 - total_len,
+		    zeros);
+		total_len = UDAV_MIN_FRAME_LEN + 2;
+		if (m->m_pkthdr.len != total_len) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
 	}
 
 	/* Frame length is specified in the first 2bytes of the buffer */
-	c->udav_buf[0] = (u_int8_t)total_len;
-	c->udav_buf[1] = (u_int8_t)(total_len >> 8);
-	total_len += 2;
+	USETW(mtod(m, char *), total_len - 2);
 
-	usbd_setup_xfer(c->udav_xfer, sc->sc_pipe_tx, c, c->udav_buf, total_len,
+	ret = usb_ether_map_tx_buffer_mbuf(c, m);
+	if (ret) {
+		m_freem(m);
+		return (ret);
+	}
+
+	usbd_setup_xfer(c->ue_xfer, sc->sc_pipe_tx, c, NULL /* XXX buf */, total_len,
 			USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			UDAV_TX_TIMEOUT, udav_txeof);
 
 	/* Transmit */
 	sc->sc_refcnt++;
-	err = usbd_transfer(c->udav_xfer);
+	err = usbd_transfer(c->ue_xfer);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	if (err != USBD_IN_PROGRESS) {
+		c->ue_mbuf = NULL;
+		m_freem(m);
 		printf("%s: udav_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
 		/* Stop the interface */
@@ -1061,8 +983,8 @@ Static void
 udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
     usbd_status status)
 {
-	struct udav_chain *c = priv;
-	struct udav_softc *sc = c->udav_sc;
+	struct ue_chain *c = priv;
+	struct udav_softc *sc = (void *)c->ue_dev;
 	struct ifnet *ifp = GET_IFP(sc);
 	int s;
 
@@ -1075,6 +997,8 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	usbd_unmap_buffer(xfer);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
@@ -1096,8 +1020,8 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ifp->if_opackets++;
 
-	m_freem(c->udav_mbuf);
-	c->udav_mbuf = NULL;
+	m_freem(c->ue_mbuf);
+	c->ue_mbuf = NULL;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		udav_start(ifp);
@@ -1108,8 +1032,8 @@ udav_txeof(usbd_xfer_handle xfer, usbd_private_handle priv,
 Static void
 udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
-	struct udav_chain *c = priv;
-	struct udav_softc *sc = c->udav_sc;
+	struct ue_chain *c = priv;
+	struct udav_softc *sc = (void *)c->ue_dev;
 	struct ifnet *ifp = GET_IFP(sc);
 	struct mbuf *m;
 	u_int32_t total_len;
@@ -1120,6 +1044,8 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	if (sc->sc_dying)
 		return;
+
+	usbd_unmap_buffer(xfer);
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
@@ -1142,18 +1068,14 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	/* copy data to mbuf */
-	m = c->udav_mbuf;
-	memcpy(mtod(m, char *), c->udav_buf, total_len);
+	m = c->ue_mbuf;
 
 	/* first byte in received data */
 	pktstat = mtod(m, u_int8_t *);
-	m_adj(m, sizeof(u_int8_t));
 	DPRINTF(("%s: RX Status: 0x%02x\n", USBDEVNAME(sc->sc_dev),
 				*pktstat));
 
-	total_len = UGETW(mtod(m, u_int8_t *));
-	m_adj(m, sizeof(u_int16_t));
+	total_len = UGETW(mtod(m, u_int8_t *) + 1);
 
 	if (*pktstat & UDAV_RSR_LCS) {
 		ifp->if_collisions++;
@@ -1166,6 +1088,21 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done;
 	}
 
+	/*
+	 * Allocate new mbuf cluster for the next transfer.
+	 * If that failed, discard current packet and recycle the mbuf.
+	 */
+	if ((c->ue_mbuf = usb_ether_newbuf(NULL)) == NULL) {
+		printf("%s: no memory for rx list -- packet dropped!\n",
+		    USBDEVNAME(sc->sc_dev));
+		ifp->if_ierrors++;
+		c->ue_mbuf = usb_ether_newbuf(m);
+		goto done;
+	}
+
+	/* strip headers */
+	m_adj(m, sizeof(u_int8_t) + sizeof(u_int16_t));
+
 	ifp->if_ipackets++;
 	total_len -= ETHER_CRC_LEN;
 
@@ -1173,11 +1110,6 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	m->m_pkthdr.rcvif = ifp;
 
 	s = splnet();
-
-	if (udav_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
-		goto done1;
-	}
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -1188,12 +1120,12 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		 __func__, m->m_len));
 	IF_INPUT(ifp, m);
 
- done1:
 	splx(s);
 
  done:
 	/* Setup new transfer */
-	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, c->udav_buf, UDAV_BUFSZ,
+	(void)usbd_map_buffer_mbuf(xfer, c->ue_mbuf);
+	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, NULL /* XXX buf */, UDAV_BUFSZ,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			USBD_NO_TIMEOUT, udav_rxeof);
 	sc->sc_refcnt++;
@@ -1251,7 +1183,7 @@ Static void
 udav_watchdog(struct ifnet *ifp)
 {
 	struct udav_softc *sc = ifp->if_softc;
-	struct udav_chain *c;
+	struct ue_chain *c;
 	usbd_status stat;
 	int s;
 
@@ -1262,8 +1194,8 @@ udav_watchdog(struct ifnet *ifp)
 
 	s = splusb();
 	c = &sc->sc_cdata.udav_tx_chain[0];
-	usbd_get_xfer_status(c->udav_xfer, NULL, NULL, NULL, &stat);
-	udav_txeof(c->udav_xfer, c, stat);
+	usbd_get_xfer_status(c->ue_xfer, NULL, NULL, NULL, &stat);
+	udav_txeof(c->ue_xfer, c, stat);
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		udav_start(ifp);
@@ -1282,7 +1214,6 @@ udav_stop(struct ifnet *ifp, int disable)
 {
 	struct udav_softc *sc = ifp->if_softc;
 	usbd_status err;
-	int i;
 
 	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
@@ -1299,11 +1230,6 @@ udav_stop(struct ifnet *ifp, int disable)
 		if (err)
 			printf("%s: abort rx pipe failed: %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_pipe_rx);
-		if (err)
-			printf("%s: close rx pipe failed: %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-		sc->sc_pipe_rx = NULL;
 	}
 
 	/* TX endpoint */
@@ -1312,11 +1238,6 @@ udav_stop(struct ifnet *ifp, int disable)
 		if (err)
 			printf("%s: abort tx pipe failed: %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_pipe_tx);
-		if (err)
-			printf("%s: close tx pipe failed: %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
-		sc->sc_pipe_tx = NULL;
 	}
 
 #if 0
@@ -1327,6 +1248,33 @@ udav_stop(struct ifnet *ifp, int disable)
 		if (err)
 			printf("%s: abort intr pipe failed: %s\n",
 			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+	}
+#endif
+
+	/* Free RX/TX list resources. */
+	usb_ether_rx_list_free(sc->sc_cdata.udav_rx_chain, UDAV_RX_LIST_CNT);
+	usb_ether_tx_list_free(sc->sc_cdata.udav_tx_chain, UDAV_TX_LIST_CNT);
+
+	/* Close pipes. */
+	if (sc->sc_pipe_rx != NULL) {
+		err = usbd_close_pipe(sc->sc_pipe_rx);
+		if (err)
+			printf("%s: close rx pipe failed: %s\n",
+			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		sc->sc_pipe_rx = NULL;
+	}
+
+	if (sc->sc_pipe_tx != NULL) {
+		err = usbd_close_pipe(sc->sc_pipe_tx);
+		if (err)
+			printf("%s: close tx pipe failed: %s\n",
+			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		sc->sc_pipe_tx = NULL;
+	}
+
+#if 0
+	/* XXX: Interrupt endpoint is not yet supported!! */
+	if (sc->sc_pipe_intr != NULL) {
 		err = usbd_close_pipe(sc->sc_pipe_intr);
 		if (err)
 			printf("%s: close intr pipe failed: %s\n",
@@ -1334,30 +1282,6 @@ udav_stop(struct ifnet *ifp, int disable)
 		sc->sc_pipe_intr = NULL;
 	}
 #endif
-
-	/* Free RX resources. */
-	for (i = 0; i < UDAV_RX_LIST_CNT; i++) {
-		if (sc->sc_cdata.udav_rx_chain[i].udav_mbuf != NULL) {
-			m_freem(sc->sc_cdata.udav_rx_chain[i].udav_mbuf);
-			sc->sc_cdata.udav_rx_chain[i].udav_mbuf = NULL;
-		}
-		if (sc->sc_cdata.udav_rx_chain[i].udav_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.udav_rx_chain[i].udav_xfer);
-			sc->sc_cdata.udav_rx_chain[i].udav_xfer = NULL;
-		}
-	}
-
-	/* Free TX resources. */
-	for (i = 0; i < UDAV_TX_LIST_CNT; i++) {
-		if (sc->sc_cdata.udav_tx_chain[i].udav_mbuf != NULL) {
-			m_freem(sc->sc_cdata.udav_tx_chain[i].udav_mbuf);
-			sc->sc_cdata.udav_tx_chain[i].udav_mbuf = NULL;
-		}
-		if (sc->sc_cdata.udav_tx_chain[i].udav_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.udav_tx_chain[i].udav_xfer);
-			sc->sc_cdata.udav_tx_chain[i].udav_xfer = NULL;
-		}
-	}
 
 	sc->sc_link = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

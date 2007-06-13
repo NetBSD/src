@@ -52,23 +52,6 @@ struct rum_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
 	 (1 << IEEE80211_RADIOTAP_ANTENNA))
 
-struct rum_softc;
-
-struct rum_tx_data {
-	struct rum_softc	*sc;
-	usbd_xfer_handle	xfer;
-	uint8_t			*buf;
-	struct mbuf		*m;
-	struct ieee80211_node	*ni;
-};
-
-struct rum_rx_data {
-	struct rum_softc	*sc;
-	usbd_xfer_handle	xfer;
-	uint8_t			*buf;
-	struct mbuf		*m;
-};
-
 struct rum_softc {
 	USBBASEDEVICE			sc_dev;
 	struct ethercom			sc_ec;
@@ -102,8 +85,9 @@ struct rum_softc {
 	struct ieee80211_amrr		amrr;
 	struct ieee80211_amrr_node	amn;
 
-	struct rum_rx_data		rx_data[RT2573_RX_LIST_COUNT];
-	struct rum_tx_data		tx_data[RT2573_TX_LIST_COUNT];
+	struct ue_chain			rx_data[RT2573_RX_LIST_COUNT];
+	struct ue_chain			tx_data[RT2573_TX_LIST_COUNT];
+	struct ieee80211_node		*tx_ni[RT2573_TX_LIST_COUNT];
 	int				tx_queued;
 
 	struct ieee80211_beacon_offsets	sc_bo;
