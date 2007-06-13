@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.9 2007/06/08 15:57:17 tsutsui Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.10 2007/06/13 07:00:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,12 +155,3 @@ PCIA_60(void)
 {
 	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
-
-#define	DCFA_60()	DCFA_40()
-#define	DCPA_60()	DCPA_40()
-#define	ICPL_60(pa)	ICPL_40(pa)
-#define	ICPP_60(pa)	ICPP_40(pa)
-#define	DCPL_60(pa)	DCPL_40(pa)
-#define	DCPP_60(pa)	DCPP_40(pa)
-#define	DCFL_60(pa)	DCFL_40(pa)
-#define	DCFP_60(pa)	DCFP_40(pa)

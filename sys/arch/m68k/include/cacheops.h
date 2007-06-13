@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.12 2007/06/08 15:44:34 tsutsui Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.13 2007/06/13 07:00:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -97,20 +97,12 @@
 
 #elif defined(M68060)
 
-#define	DCFA()		DCFA_60()
-#define	DCFL(pa)	DCFL_60((pa))
-#define	DCFP(pa)	DCFP_60((pa))
 #define	DCIA()		DCIA_60()
 #define	DCIAS(pa)	DCIAS_60((pa))
 #define	DCIS()		DCIS_60()
 #define	DCIU()		DCIU_60()
-#define	DCPA()		DCPA_60()
-#define	DCPL(pa)	DCPL_60((pa))
-#define	DCPP(pa)	DCPP_60((pa))
 #define	ICIA()		ICIA_60()
 #define	ICPA()		ICPA_60()
-#define	ICPL(pa)	ICPL_60((pa))
-#define	ICPP(pa)	ICPP_60((pa))
 #define	PCIA()		PCIA_60()
 #define	TBIA()		TBIA_60()
 #define	TBIAS()		TBIAS_60()
