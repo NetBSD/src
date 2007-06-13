@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.6 2006/10/31 21:53:41 joerg Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.6.10.1 2007/06/13 04:13:01 itohy Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -53,23 +53,6 @@ struct ural_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
 	 (1 << IEEE80211_RADIOTAP_ANTENNA))
 
-struct ural_softc;
-
-struct ural_tx_data {
-	struct ural_softc	*sc;
-	usbd_xfer_handle	xfer;
-	uint8_t			*buf;
-	struct mbuf		*m;
-	struct ieee80211_node	*ni;
-};
-
-struct ural_rx_data {
-	struct ural_softc	*sc;
-	usbd_xfer_handle	xfer;
-	uint8_t			*buf;
-	struct mbuf		*m;
-};
-
 struct ural_softc {
 	USBBASEDEVICE		sc_dev;
 	struct ethercom		sc_ec;
@@ -98,8 +81,9 @@ struct ural_softc {
 	struct ieee80211_amrr	amrr;
 	struct ieee80211_amrr_node	amn;
 
-	struct ural_rx_data	rx_data[RAL_RX_LIST_COUNT];
-	struct ural_tx_data	tx_data[RAL_TX_LIST_COUNT];
+	struct ue_chain		rx_data[RAL_RX_LIST_COUNT];
+	struct ue_chain		tx_data[RAL_TX_LIST_COUNT];
+	struct ieee80211_node	*tx_ni[RAL_TX_LIST_COUNT];
 	int			tx_queued;
 
 	struct ieee80211_beacon_offsets sc_bo;

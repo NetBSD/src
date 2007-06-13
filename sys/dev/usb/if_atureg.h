@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atureg.h,v 1.6 2006/12/25 18:39:48 wiz Exp $ */
+/*	$NetBSD: if_atureg.h,v 1.6.14.1 2007/06/13 04:13:00 itohy Exp $ */
 /*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
@@ -101,25 +101,11 @@ struct atu_type {
 	u_int16_t		atu_quirk;
 };
 
-struct atu_softc;
-
-struct atu_chain {
-	struct atu_softc	*atu_sc;
-	usbd_xfer_handle	atu_xfer;
-	char			*atu_buf;
-	struct mbuf		*atu_mbuf;
-	u_int8_t		atu_idx;
-	u_int16_t		atu_length;
-	int			atu_in_xfer;
-	SLIST_ENTRY(atu_chain)	atu_list;
-};
-
 struct atu_cdata {
-	struct atu_chain	atu_tx_chain[ATU_TX_LIST_CNT];
-	struct atu_chain	atu_rx_chain[ATU_RX_LIST_CNT];
+	struct ue_chain		atu_tx_chain[ATU_TX_LIST_CNT];
+	struct ue_chain		atu_rx_chain[ATU_RX_LIST_CNT];
 
-	SLIST_HEAD(atu_list_head, atu_chain)	atu_rx_free;
-	struct atu_list_head	atu_tx_free;
+	struct ue_list_head	atu_tx_free;
 
 	u_int8_t		atu_tx_inuse;
 	u_int8_t		atu_tx_last_idx;
