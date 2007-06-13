@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.15.2.1 2007/05/03 05:11:20 snj Exp $ */
+/* $NetBSD: privcmd.c,v 1.15.2.2 2007/06/13 10:38:44 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.15.2.1 2007/05/03 05:11:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.15.2.2 2007/06/13 10:38:44 liamjfoy Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -119,7 +119,7 @@ privcmd_ioctl(void *v)
 
 		pmap_t pmap = vm_map_pmap(vmm);
 		for (i = 0; i < mcmd->num; i++) {
-			error = copyin(mcmd->entry, &mentry, sizeof(mentry));
+			error = copyin(&mcmd->entry[i], &mentry, sizeof(mentry));
 			if (error)
 				return error;
 			//printf("entry %d va 0x%lx npages %lu mfm 0x%lx\n", i, mentry.va, mentry.npages, mentry.mfn);
