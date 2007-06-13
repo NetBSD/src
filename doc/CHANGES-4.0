@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.186 2007/06/12 16:51:33 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.187 2007/06/13 10:51:45 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6043,3 +6043,26 @@ lib/libc/gen/scandir.c				1.26
 	returns the number of entries as the directory size.
 	Use a new, more conservative entries estimator.
 	[christos, ticket #717]
+
+sys/arch/xen/xen/privcmd.c			1.17
+
+	IOCTL_PRIVCMD_MMAP: properly map entries from 0 to (mcmd->num - 1), instead
+	of mapping mcmd->num times entry 0. xentools < 3.1 probably didn't use this
+	with more than one entry at a time ...
+	[bouyer, ticket #720]
+
+bin/sh/parser.c					1.65
+
+	Fix sh -c 'true && ! true | false; echo $?'
+	Add some more TRACE((...)) calls to aid such debugging.
+	Fixes PR bin/36435
+	Clearly no one tried this test when the changes of rev 1.31 and 1.44 were done!
+	[dsl, ticket #719]
+
+bin/sh/parser.c					1.64
+
+	PR/35410: Valeriy E. Ushakov: /bin/sh mishandles shell function definitions
+	with function names that are not plain words
+	1. remove the escape annotations from the function name.
+	2. check if the function has a valid name before storing it.
+	[dsl, ticket #718]
