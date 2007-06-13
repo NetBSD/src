@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.35 2007/06/09 03:07:21 dyoung Exp $	*/
+/*	$NetBSD: radix.c,v 1.36 2007/06/13 05:08:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.35 2007/06/09 03:07:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.36 2007/06/13 05:08:02 dyoung Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -667,7 +667,7 @@ rn_addroute(
 			if (tt->rn_dupedkey)
 				tt->rn_dupedkey->rn_p = tt;
 		}
-		tt->rn_key = __UNCONST(v); /*XXXUNCONST*/
+		tt->rn_key = v;
 		tt->rn_b = -1;
 		tt->rn_flags = RNF_ACTIVE;
 	}
