@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.2 2007/05/21 02:13:11 xtraeme Exp $ */
+/* $NetBSD: uslsa.c,v 1.3 2007/06/13 17:14:25 nathanw Exp $ */
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.2 2007/05/21 02:13:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.3 2007/06/13 17:14:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,7 @@ USB_ATTACH(uslsa)
 	sc->sc_iface = iface;
 
 	uca.info = "Silicon Labs CP210x";
+	uca.portno = UCOM_UNK_PORTNO;
 	uca.ibufsize = USLSA_BUFSIZE;
 	uca.obufsize = USLSA_BUFSIZE;
 	uca.ibufsizepad = USLSA_BUFSIZE;
