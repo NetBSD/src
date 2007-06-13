@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.468 2007/06/09 11:17:02 kiyohara Exp $
+$NetBSD: usbdevs,v 1.469 2007/06/13 00:30:11 uebayasi Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1222,6 +1222,7 @@ product IODATA USBETTX		0x0904	USB ETTX
 product IODATA USBETTXS		0x0913	USB ETTX
 product IODATA USBWNB11		0x0922	USB Airport WN-B11
 product IODATA USBRSAQ		0x0a03	USB serial adapter USB-RSAQ1
+product IODATA USBRSAQ5		0x0a0e	USB serial adapter USB-RSAQ5
 product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 
 /* Iomega products */
