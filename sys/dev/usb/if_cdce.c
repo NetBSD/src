@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.12.10.4 2007/06/12 13:58:24 itohy Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.12.10.5 2007/06/13 04:29:22 itohy Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.4 2007/06/12 13:58:24 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.5 2007/06/13 04:29:22 itohy Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -363,15 +363,20 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	if (sc->cdce_flags & CDCE_ZAURUS) {
 		/* Zaurus wants a 32-bit CRC appended to every frame */
 		u_int32_t crc, crcle;
+		int len;
 
 		crc = cdce_crc32(m);
 		crcle = htole32(crc);
+		len = m->m_pkthdr.len + 4;
 		m_copyback(m, m->m_pkthdr.len, 4, &crcle);
+		if (m->m_pkthdr.len != len) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
 	}
 
 	ret = usb_ether_map_tx_buffer_mbuf(c, m);
 	if (ret) {
-		c->ue_mbuf = NULL;
 		m_freem(m);
 		return (ret);
 	}
