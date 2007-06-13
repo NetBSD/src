@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.10 2007/05/17 11:50:10 yamt Exp $
+.\"	$NetBSD: sysctl.7,v 1.11 2007/06/13 20:37:07 tnn Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd May 17, 2007
+.Dd June 13, 2007
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1196,10 +1196,6 @@ us during connection setup or Path MTU Discovery
 .Li ( ip.mtudisc )
 is disabled.
 Do not change this value unless you really know what you are doing.
-.It Li tcp.newreno
-If set to 1, enables the use of J.
-Hoe's NewReno congestion control algorithm.
-This algorithm improves the start-up behavior of TCP connections.
 .It Li tcp.recvspace
 The default TCP receive buffer size.
 .It Li tcp.rfc1323
