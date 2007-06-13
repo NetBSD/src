@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.82 2007/03/04 06:01:21 christos Exp $
+	$NetBSD: syscalls.master,v 1.83 2007/06/13 14:31:07 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -401,7 +401,9 @@
 237	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
 238	UNIMPL		tkill
 239	UNIMPL		sendfile64
-240	UNIMPL		futex
+240	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
+			    const struct timespec *timeout, int *uaddr2, \
+			    int val3); }
 241	UNIMPL		sched_setaffinity
 242	UNIMPL		sched_getaffinity
 243	UNIMPL		set_thread_area
