@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.66 2007/06/11 13:05:47 joerg Exp $
+.\"	$NetBSD: audio.4,v 1.67 2007/06/13 00:00:23 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -154,7 +154,7 @@ of size
 (as available via
 .Dv AUDIO_GETINFO
 or
-.Dv AUDIO_GETBUFINFO) .
+.Dv AUDIO_GETBUFINFO ) .
 The device driver will continuously move data from this buffer
 from/to the audio hardware, wrapping around at the end of the buffer.
 To find out where the hardware is currently accessing data in the buffer the
@@ -439,9 +439,8 @@ to select line output.
 .El
 .Pp
 The available ports can be found in
-.Va avail_ports 
-(
-.Dv AUDIO_GETBUFINFO
+.Va avail_ports
+.Dv ( AUDIO_GETBUFINFO
 only).
 .Pp
 .Va buffer_size
@@ -459,7 +458,7 @@ The
 and
 .Va samples
 fields are only used by
-.Dv AUDIO_GETINFO 
+.Dv AUDIO_GETINFO
 and
 .Dv AUDIO_GETBUFINFO .
 .Va seek
