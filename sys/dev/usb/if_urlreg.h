@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.3 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.3.40.1 2007/06/13 04:13:01 itohy Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -130,17 +130,9 @@ typedef	uWord url_rxhdr_t;	/* Recive Header */
 #define	GET_IFP(sc)		(&(sc)->sc_ec.ec_if)
 #define	GET_MII(sc)		(&(sc)->sc_mii)
 
-struct url_chain {
-	struct url_softc	*url_sc;
-	usbd_xfer_handle	url_xfer;
-	char			*url_buf;
-	struct mbuf		*url_mbuf;
-	int			url_idx;
-};
-
 struct url_cdata {
-	struct url_chain	url_tx_chain[URL_TX_LIST_CNT];
-	struct url_chain	url_rx_chain[URL_TX_LIST_CNT];
+	struct ue_chain		url_tx_chain[URL_TX_LIST_CNT];
+	struct ue_chain		url_rx_chain[URL_TX_LIST_CNT];
 #if 0
 	/* XXX: Intrrupt Endpoint is not yet supported! */
 	struct url_intrpkg	url_ibuf;
