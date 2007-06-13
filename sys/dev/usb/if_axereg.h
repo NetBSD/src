@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.3 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.3.40.1 2007/06/13 03:59:15 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -128,20 +128,9 @@ struct axe_type {
 /* XXX No flags so far */
 };
 
-struct axe_softc;
-
-struct axe_chain {
-	struct axe_softc	*axe_sc;
-	usbd_xfer_handle	axe_xfer;
-	char			*axe_buf;
-	struct mbuf		*axe_mbuf;
-	int			axe_accum;
-	int			axe_idx;
-};
-
 struct axe_cdata {
-	struct axe_chain	axe_tx_chain[AXE_TX_LIST_CNT];
-	struct axe_chain	axe_rx_chain[AXE_RX_LIST_CNT];
+	struct ue_chain		axe_tx_chain[AXE_TX_LIST_CNT];
+	struct ue_chain		axe_rx_chain[AXE_RX_LIST_CNT];
 	int			axe_tx_prod;
 	int			axe_tx_cons;
 	int			axe_tx_cnt;

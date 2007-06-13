@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.17 2006/09/15 10:47:34 is Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.17.20.1 2007/06/13 03:59:15 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -203,19 +203,9 @@ struct aue_rxpkt {
 #define AUE_TX_LIST_CNT		1
 #define AUE_RX_LIST_CNT		1
 
-struct aue_softc;
-
-struct aue_chain {
-	struct aue_softc	*aue_sc;
-	usbd_xfer_handle	aue_xfer;
-	char			*aue_buf;
-	struct mbuf		*aue_mbuf;
-	int			aue_idx;
-};
-
 struct aue_cdata {
-	struct aue_chain	aue_tx_chain[AUE_TX_LIST_CNT];
-	struct aue_chain	aue_rx_chain[AUE_RX_LIST_CNT];
+	struct ue_chain		aue_tx_chain[AUE_TX_LIST_CNT];
+	struct ue_chain		aue_rx_chain[AUE_RX_LIST_CNT];
 	struct aue_intrpkt	aue_ibuf;
 	int			aue_tx_prod;
 	int			aue_tx_cons;
