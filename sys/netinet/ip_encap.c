@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.30 2007/03/04 06:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.31 2007/06/13 04:55:25 dyoung Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -243,7 +243,7 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	}
 #endif
 
-	for (ep = LIST_FIRST(&encaptab); ep; ep = LIST_NEXT(ep, chain)) {
+	LIST_FOREACH(ep, &encaptab, chain) {
 		if (ep->af != AF_INET)
 			continue;
 		if (ep->proto >= 0 && ep->proto != proto)
@@ -367,7 +367,7 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	}
 #endif
 
-	for (ep = LIST_FIRST(&encaptab); ep; ep = LIST_NEXT(ep, chain)) {
+	LIST_FOREACH(ep, &encaptab, chain) {
 		if (ep->af != AF_INET6)
 			continue;
 		if (ep->proto >= 0 && ep->proto != proto)
@@ -529,7 +529,7 @@ encap_attach(int af, int proto,
 		goto fail;
 
 	/* check if anyone have already attached with exactly same config */
-	for (ep = LIST_FIRST(&encaptab); ep; ep = LIST_NEXT(ep, chain)) {
+	LIST_FOREACH(ep, &encaptab, chain) {
 		if (ep->af != af)
 			continue;
 		if (ep->proto != proto)
@@ -744,7 +744,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	}
 
 	/* inform all listeners */
-	for (ep = LIST_FIRST(&encaptab); ep; ep = LIST_NEXT(ep, chain)) {
+	LIST_FOREACH(ep, &encaptab, chain) {
 		if (ep->af != AF_INET6)
 			continue;
 		if (ep->proto >= 0 && ep->proto != nxt)
@@ -769,7 +769,7 @@ encap_detach(const struct encaptab *cookie)
 	struct encaptab *p;
 	int error;
 
-	for (p = LIST_FIRST(&encaptab); p; p = LIST_NEXT(p, chain)) {
+	LIST_FOREACH(p, &encaptab, chain) {
 		if (p == ep) {
 			error = encap_remove(p);
 			if (error)
