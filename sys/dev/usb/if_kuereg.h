@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.11 2001/01/21 02:35:31 augustss Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.11.92.1 2007/06/13 04:14:17 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -140,19 +140,9 @@ struct kue_type {
 	u_int16_t		kue_did;
 };
 
-struct kue_softc;
-
-struct kue_chain {
-	struct kue_softc	*kue_sc;
-	usbd_xfer_handle	kue_xfer;
-	char			*kue_buf;
-	struct mbuf		*kue_mbuf;
-	int			kue_idx;
-};
-
 struct kue_cdata {
-	struct kue_chain	kue_tx_chain[KUE_TX_LIST_CNT];
-	struct kue_chain	kue_rx_chain[KUE_RX_LIST_CNT];
+	struct ue_chain		kue_tx_chain[KUE_TX_LIST_CNT];
+	struct ue_chain		kue_rx_chain[KUE_RX_LIST_CNT];
 	int			kue_tx_prod;
 	int			kue_tx_cons;
 	int			kue_tx_cnt;
