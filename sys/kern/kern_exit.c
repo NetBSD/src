@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.180 2007/05/31 06:24:23 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.181 2007/06/13 12:14:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.180 2007/05/31 06:24:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.181 2007/06/13 12:14:10 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -613,6 +613,7 @@ exit_lwps(struct lwp *l)
 	KERNEL_UNLOCK_ALL(l, &nlocks);
 
 	p = l->l_proc;
+	KASSERT(mutex_owned(&p->p_smutex));
 
  retry:
 	/*
@@ -654,7 +655,14 @@ exit_lwps(struct lwp *l)
 		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
 	}
 
-	KERNEL_LOCK(nlocks, l);
+#if defined(MULTIPROCESSOR)
+	if (nlocks > 0) {
+		mutex_exit(&p->p_smutex);
+		KERNEL_LOCK(nlocks, l);
+		mutex_enter(&p->p_smutex);
+	}
+#endif /* defined(MULTIPROCESSOR) */
+	KASSERT(p->p_nlwps == 1);
 }
 
 int
