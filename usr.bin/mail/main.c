@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2006/12/25 18:43:29 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2007/06/13 19:39:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2006/12/25 18:43:29 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2007/06/13 19:39:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,12 @@ main(int argc, char *argv[])
 	sig_t prevint;
 	const char *rc;
 	int volatile Hflag;
+
+	/*
+	 * For portability, call setprogname() early, before
+	 * getprogname() is called.
+	 */
+	(void)setprogname(argv[0]);
 
 	/*
 	 * Set up a reasonable environment.
