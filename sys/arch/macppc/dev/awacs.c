@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.28.4.1 2007/05/11 00:19:26 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.28.4.2 2007/06/14 02:25:52 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.28.4.1 2007/05/11 00:19:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.28.4.2 2007/06/14 02:25:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1054,7 +1054,7 @@ awacs_trigger_output(void *h, void *start, void *end, int bsize,
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
-	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
+	out32rb(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
 
 	dbdma_start(sc->sc_odma, sc->sc_odmacmd);
 

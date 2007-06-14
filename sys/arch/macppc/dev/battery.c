@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.2.4.2 2007/05/22 17:27:07 matt Exp $ */
+/*	$NetBSD: battery.c,v 1.2.4.3 2007/06/14 02:25:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.2.4.2 2007/05/22 17:27:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.2.4.3 2007/06/14 02:25:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.2.4.2 2007/05/22 17:27:07 matt Exp $")
 #include <macppc/dev/pmuvar.h>
 #include <macppc/dev/batteryvar.h>
 #include <machine/bus.h>
+#include <machine/pio.h>
 #include "opt_battery.h"
 
 #ifdef BATTERY_DEBUG

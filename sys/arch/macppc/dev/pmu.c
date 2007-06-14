@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.5.4.3 2007/05/22 17:27:07 matt Exp $ */
+/*	$NetBSD: pmu.c,v 1.5.4.4 2007/06/14 02:25:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.3 2007/05/22 17:27:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.4 2007/06/14 02:25:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.3 2007/05/22 17:27:07 matt Exp $");
 #include <sys/kthread.h>
 
 #include <machine/bus.h>
+#include <machine/pio.h>
 #include <machine/autoconf.h>
 #include <dev/clock_subr.h>
 #include <dev/i2c/i2cvar.h>
