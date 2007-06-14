@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.1.2.1 2007/06/06 17:38:35 garbled Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.1.2.2 2007/06/14 02:35:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.2.1 2007/06/06 17:38:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.2.2 2007/06/14 02:35:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.2.1 2007/06/06 17:38:35 garbled
 
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wscons_callbacks.h>
+
+#include <machine/stdarg.h>
 
 #include "akbd.h"
 #include "adbkbd.h"
@@ -107,6 +109,27 @@ int ofkbd_ihandle;
 static void cninit_kd(void);
 static void ofwoea_bootstrap_console(void);
 
+/*#define OFDEBUG*/
+
+#ifdef OFDEBUG
+void ofprint(const char *, ...);
+
+void ofprint(const char *blah, ...)
+{
+	va_list va;
+	char buf[256];
+	int len;
+
+	va_start(va, blah);
+	len = vsnprintf(buf, sizeof(buf), blah, va);
+	OF_write(console_instance, buf, len);
+}
+
+#define OFPRINTF ofprint
+#else
+#define OFPRINTF while(0) printf
+#endif
+
 void
 cninit(void)
 {
@@ -114,6 +137,8 @@ cninit(void)
 
 	ofwoea_bootstrap_console();
 
+	OFPRINTF("console node: %08x\n", console_node);
+ 
 	if (console_node == -1)
 		goto nocons;
 
@@ -121,6 +146,7 @@ cninit(void)
 	if (OF_getprop(console_node, "device_type", type, sizeof(type)) == -1)
 		goto nocons;
 
+	OFPRINTF("console type: %s\n", type);
 	if (strcmp(type, "display") == 0) {
 		cninit_kd();
 		return;
@@ -429,9 +455,10 @@ ofwoea_bootstrap_console(void)
 	node = OF_instance_to_package(stdout);
 	console_node = node;
 	console_instance = stdout;
-
+	
+	return;
 nocons:
-	aprint_error("No /chosen could be found!\n");
+	panic("No /chosen could be found!\n");
 	console_node = -1;
 	return;
 }
