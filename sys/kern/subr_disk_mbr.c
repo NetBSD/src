@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.26 2007/03/04 06:03:07 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.27 2007/06/14 17:18:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,11 +54,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.26 2007/03/04 06:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.27 2007/06/14 17:18:40 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
