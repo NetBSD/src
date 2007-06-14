@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.8 2007/06/07 11:32:46 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.9 2007/06/14 19:26:17 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -43,7 +43,7 @@
 #endif
 #ifndef SIZE_T_MAX
 #ifdef __LP64__
-#define SIZE_T_MAX (size_t)0xfffffffffffffffffU
+#define SIZE_T_MAX (size_t)0xffffffffffffffffUL
 #else
 #define SIZE_T_MAX (size_t)0xffffffffU
 #endif
@@ -53,7 +53,7 @@
 #if 0
 FILE_RCSID("@(#)$File: funcs.c,v 1.32 2007/05/24 17:22:27 christos Exp $")
 #else
-__RCSID("$NetBSD: funcs.c,v 1.8 2007/06/07 11:32:46 pooka Exp $");
+__RCSID("$NetBSD: funcs.c,v 1.9 2007/06/14 19:26:17 pooka Exp $");
 #endif
 #endif	/* lint */
 
