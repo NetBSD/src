@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.5 2006/11/01 00:33:40 dogcow Exp $	*/
+/*	$NetBSD: print.c,v 1.5.2.1 2007/06/15 16:14:51 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -44,9 +44,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.54 2006/10/31 19:37:17 christos Exp")
+FILE_RCSID("@(#)$File: print.c,v 1.59 2007/03/05 02:41:29 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.5 2006/11/01 00:33:40 dogcow Exp $");
+__RCSID("$NetBSD: print.c,v 1.5.2.1 2007/06/15 16:14:51 liamjfoy Exp $");
 #endif
 #endif  /* lint */
 
@@ -58,8 +58,8 @@ file_mdump(struct magic *m)
 {
 	private const char optyp[] = { FILE_OPS };
 
-	(void) fputc('[', stderr);
-	(void) fprintf(stderr, ">>>>>>>> %d" + 8 - (m->cont_level & 7),
+	(void) fprintf(stderr, "[%u", m->lineno);
+	(void) fprintf(stderr, ">>>>>>>> %u" + 8 - (m->cont_level & 7),
 		       m->offset);
 
 	if (m->flag & INDIR) {
@@ -69,9 +69,9 @@ file_mdump(struct magic *m)
 					file_names[m->in_type] : "*bad*");
 		if (m->in_op & FILE_OPINVERSE)
 			(void) fputc('~', stderr);
-		(void) fprintf(stderr, "%c%d),",
-			       ((m->in_op&0x7F) < SZOF(optyp)) ? 
-					optyp[m->in_op&0x7F] : '?',
+		(void) fprintf(stderr, "%c%u),",
+			       ((m->in_op & FILE_OPS_MASK) < SZOF(optyp)) ? 
+					optyp[m->in_op & FILE_OPS_MASK] : '?',
 				m->in_offset);
 	}
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
@@ -79,24 +79,36 @@ file_mdump(struct magic *m)
 		       (m->type < file_nnames) ? file_names[m->type] : "*bad*");
 	if (m->mask_op & FILE_OPINVERSE)
 		(void) fputc('~', stderr);
-	if (m->mask) {
-		if ((m->mask_op & 0x7F) < SZOF(optyp)) 
-			fputc(optyp[m->mask_op&0x7F], stderr);
-		else
-			fputc('?', stderr);
-		if (FILE_STRING != m->type || FILE_PSTRING != m->type)
-			(void) fprintf(stderr, "%.8" PRIx64, m->mask);
-		else {
-			if (m->mask & STRING_IGNORE_LOWERCASE) 
-				(void) fputc(CHAR_IGNORE_LOWERCASE, stderr);
-			if (m->mask & STRING_COMPACT_BLANK) 
+
+	if (IS_STRING(m->type)) {
+		if (m->str_flags) {
+			(void) fputc('/', stderr);
+			if (m->str_flags & STRING_COMPACT_BLANK) 
 				(void) fputc(CHAR_COMPACT_BLANK, stderr);
-			if (m->mask & STRING_COMPACT_OPTIONAL_BLANK) 
+			if (m->str_flags & STRING_COMPACT_OPTIONAL_BLANK) 
 				(void) fputc(CHAR_COMPACT_OPTIONAL_BLANK,
-				stderr);
+				    stderr);
+			if (m->str_flags & STRING_IGNORE_LOWERCASE) 
+				(void) fputc(CHAR_IGNORE_LOWERCASE, stderr);
+			if (m->str_flags & STRING_IGNORE_UPPERCASE) 
+				(void) fputc(CHAR_IGNORE_UPPERCASE, stderr);
+			if (m->str_flags & REGEX_OFFSET_START) 
+				(void) fputc(CHAR_REGEX_OFFSET_START, stderr);
+		}
+		if (m->str_count)
+			(void) fprintf(stderr, "/%u", m->str_count);
+	}
+	else {
+		if ((m->mask_op & FILE_OPS_MASK) < SZOF(optyp))
+			(void) fputc(optyp[m->mask_op & FILE_OPS_MASK], stderr);
+		else
+			(void) fputc('?', stderr);
+			
+		if (m->num_mask) {
+			(void) fprintf(stderr, "%.8llx",
+			    (unsigned long long)m->num_mask);
 		}
 	}
-
 	(void) fprintf(stderr, ",%c", m->reln);
 
 	if (m->reln != 'x') {
@@ -114,7 +126,8 @@ file_mdump(struct magic *m)
 		case FILE_BEQUAD:
 		case FILE_LEQUAD:
 		case FILE_QUAD:
-			(void) fprintf(stderr, "%" PRId64, m->value.q);
+			(void) fprintf(stderr, "%lld",
+			    (unsigned long long)m->value.q);
 			break;
 		case FILE_PSTRING:
 		case FILE_STRING:
@@ -150,6 +163,9 @@ file_mdump(struct magic *m)
 			(void)fprintf(stderr, "%s,",
 			    file_fmttime((uint32_t)m->value.q, 0));
 			break;
+		case FILE_DEFAULT:
+			/* XXX - do anything here? */
+			break;
 		default:
 			(void) fputs("*bad*", stderr);
 			break;
@@ -173,7 +189,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 	    (unsigned long)ms->line);
 	(void) vfprintf(stderr, f, va);
 	va_end(va);
-	fputc('\n', stderr);
+	(void) fputc('\n', stderr);
 }
 
 protected const char *

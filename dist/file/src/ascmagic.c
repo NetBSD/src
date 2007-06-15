@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.4 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.4.2.1 2007/06/15 16:14:49 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -52,9 +52,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.46 2006/10/20 21:04:15 christos Exp")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.50 2007/03/15 14:51:00 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.4 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.4.2.1 2007/06/15 16:14:49 liamjfoy Exp $");
 #endif
 #endif	/* lint */
 
@@ -98,7 +98,7 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 	int n_cr = 0;
 	int n_nel = 0;
 
-	int last_line_end = -1;
+	size_t last_line_end = (size_t)-1;
 	int has_long_lines = 0;
 
 	/*
@@ -173,7 +173,7 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 	 * I believe Plan 9 troff allows non-ASCII characters in the names
 	 * of macros, so this test might possibly fail on such a file.
 	 */
-	if (*ubuf == '.') {
+	if ((ms->flags & MAGIC_NO_CHECK_TROFF) == 0 && *ubuf == '.') {
 		unichar *tp = ubuf + 1;
 
 		while (ISSPC(*tp))
@@ -190,13 +190,17 @@ file_ascmagic(struct magic_set *ms, const unsigned char *buf, size_t nbytes)
 		}
 	}
 
-	if ((*buf == 'c' || *buf == 'C') && ISSPC(buf[1])) {
+	if ((ms->flags & MAGIC_NO_CHECK_FORTRAN) == 0 &&
+	    (*buf == 'c' || *buf == 'C') && ISSPC(buf[1])) {
 		subtype_mime = "text/fortran";
 		subtype = "fortran program";
 		goto subtype_identified;
 	}
 
 	/* look for tokens from names.h - this is expensive! */
+
+	if ((ms->flags & MAGIC_NO_CHECK_TOKENS) != 0)
+		goto subtype_identified;
 
 	i = 0;
 	while (i < ulen) {
@@ -467,7 +471,7 @@ private int
 looks_ascii(const unsigned char *buf, size_t nbytes, unichar *ubuf,
     size_t *ulen)
 {
-	int i;
+	size_t i;
 
 	*ulen = 0;
 
@@ -486,7 +490,7 @@ looks_ascii(const unsigned char *buf, size_t nbytes, unichar *ubuf,
 private int
 looks_latin1(const unsigned char *buf, size_t nbytes, unichar *ubuf, size_t *ulen)
 {
-	int i;
+	size_t i;
 
 	*ulen = 0;
 
@@ -506,7 +510,7 @@ private int
 looks_extended(const unsigned char *buf, size_t nbytes, unichar *ubuf,
     size_t *ulen)
 {
-	int i;
+	size_t i;
 
 	*ulen = 0;
 
@@ -525,7 +529,8 @@ looks_extended(const unsigned char *buf, size_t nbytes, unichar *ubuf,
 private int
 looks_utf8(const unsigned char *buf, size_t nbytes, unichar *ubuf, size_t *ulen)
 {
-	int i, n;
+	size_t i;
+	int n;
 	unichar c;
 	int gotone = 0;
 
@@ -589,7 +594,7 @@ looks_unicode(const unsigned char *buf, size_t nbytes, unichar *ubuf,
     size_t *ulen)
 {
 	int bigend;
-	int i;
+	size_t i;
 
 	if (nbytes < 2)
 		return 0;
@@ -708,7 +713,7 @@ private unsigned char ebcdic_1047_to_8859[] = {
 private void
 from_ebcdic(const unsigned char *buf, size_t nbytes, unsigned char *out)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < nbytes; i++) {
 		out[i] = ebcdic_to_ascii[buf[i]];
