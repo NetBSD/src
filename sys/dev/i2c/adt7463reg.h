@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463reg.h,v 1.2 2006/02/19 08:40:12 xtraeme Exp $ */
+/*	$NetBSD: adt7463reg.h,v 1.2.28.1 2007/06/15 10:37:18 liamjfoy Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -64,13 +64,13 @@
 #define ADT7463_CONFIG_REG3_FAST    0x08
 
 /* currently we use only 8 bits and hence the multiplier */
-#define ADT7463_12V_CONST           (0.0625)
-#define ADT7463_5V_CONST            (0.0260)
-#define ADT7463_3_3V_CONST          (0.0171)
-#define ADT7463_2_5V_CONST          (0.0130)
-#define ADT7463_VCC_CONST           (0.0117)
+#define ADT7463_12V_CONST           625
+#define ADT7463_5V_CONST            260
+#define ADT7463_3_3V_CONST          171
+#define ADT7463_2_5V_CONST          130
+#define ADT7463_VCC_CONST           117
 
-#define ADT7463_CEL_TO_KELVIN       273.15
+#define ADT7463_CEL_TO_KELVIN       27315
 #define ADT7463_RPM_CONST           (90000 * 60)
 
 const struct envsys_range adt7463c_ranges[] = {

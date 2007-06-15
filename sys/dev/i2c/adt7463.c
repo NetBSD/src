@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.6 2006/11/16 01:32:50 christos Exp $ */
+/*	$NetBSD: adt7463.c,v 1.6.2.1 2007/06/15 10:37:18 liamjfoy Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.6 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.6.2.1 2007/06/15 10:37:18 liamjfoy Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -267,29 +267,29 @@ adt7463c_gtredata(sme, tred)
 void
 adt7463c_refresh_volt(struct adt7463c_softc *sc)
 {
-        int i;
-	u_int8_t reg;
-	int data;
-	float mult[] = {ADT7463_2_5V_CONST,
-			ADT7463_VCC_CONST,
-			ADT7463_3_3V_CONST,
-			ADT7463_5V_CONST,
-			ADT7463_12V_CONST};
-	
-	reg = ADT7463_VOLT_REG_START;    
-	for (i = 0; i < ADT7463_VOLT_SENSORS_COUNT; i++) {      
-	  adt7463c_send_1(sc,  reg++);
-	  data = adt7463c_receive_1(sc);
-	  
-	  /* envstat assumes that voltage is in uVDC */
-	  double val = (data * 1000000.0  * mult[i]);      
-	  if (data > 0) 
-	    sc->sc_sensor[i].cur.data_us = (u_int32_t)val;
-	  else      
-	    sc->sc_sensor[i].cur.data_us = 0;
-	}    
-}
+        size_t i;
+        u_int8_t reg;
+        int data;
+	static const uint32_t mult[] = {
+		ADT7463_2_5V_CONST,
+		ADT7463_VCC_CONST,
+		ADT7463_3_3V_CONST,
+		ADT7463_5V_CONST,
+		ADT7463_12V_CONST
+	};
 
+        reg = ADT7463_VOLT_REG_START;
+        for (i = 0; i < ADT7463_VOLT_SENSORS_COUNT; i++) {
+		adt7463c_send_1(sc,  reg++);
+		data = adt7463c_receive_1(sc);
+
+		/* envstat assumes that voltage is in uVDC */
+		if (data > 0)
+			sc->sc_sensor[i].cur.data_us = data * 100 * mult[i];
+		else
+			sc->sc_sensor[i].cur.data_us = 0;
+	}
+}
 
 void
 adt7463c_refresh_temp(struct adt7463c_softc *sc)
@@ -306,10 +306,9 @@ adt7463c_refresh_temp(struct adt7463c_softc *sc)
 	  /* envstat assumes temperature is in micro kelvin */
 	  if (data > 0)
 	    sc->sc_sensor[i + ADT7463_VOLT_SENSORS_COUNT].cur.data_us
-	      = (data + ADT7463_CEL_TO_KELVIN)* 1000000;
+	      = (data * 100 + ADT7463_CEL_TO_KELVIN) * 10000;
 	  else
-	    sc->sc_sensor[i + ADT7463_VOLT_SENSORS_COUNT].cur.data_us
-	      = 0;      
+	    sc->sc_sensor[i + ADT7463_VOLT_SENSORS_COUNT].cur.data_us = 0;      
 	}    
 }
 
