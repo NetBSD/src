@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.80 2007/06/12 16:24:11 liamjfoy Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.81 2007/06/15 11:53:33 liamjfoy Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3313,3 +3313,9 @@ lib/libc/gen/scandir.c				1.22.6.1
 	the directory. Avoids core-dump with ZFS filesystems (they return
 	the number of entries in stat(2) instead of the size in st_size)
 	[christos, ticket #1803]
+
+sys/net/if_spppsubr.c				1.93-1.94
+
+	Do not automagically UP the interface when setting the address.
+	This is the interface level (e.g. pppoe) fix for PR 30694
+	[msaitoh, ticket #1802]
