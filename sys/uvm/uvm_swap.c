@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.124 2007/04/22 08:30:02 dsl Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.125 2007/06/15 18:28:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.124 2007/04/22 08:30:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.125 2007/06/15 18:28:40 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.124 2007/04/22 08:30:02 dsl Exp $");
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
 #include <sys/kauth.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm.h>
 
@@ -285,7 +286,14 @@ uvm_swap_init(void)
 	 * done!
 	 */
 	uvm.swap_running = true;
+	uvm.swapout_enabled = 1;
 	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
+
+        sysctl_createv(NULL, 0, NULL, NULL,
+            CTLFLAG_READWRITE,
+            CTLTYPE_INT, "swapout",
+            SYSCTL_DESCR("Set 0 to disable swapout of kernel stacks"),
+            NULL, 0, &uvm.swapout_enabled, 0, CTL_VM, CTL_CREATE, CTL_EOL);
 }
 
 /*
