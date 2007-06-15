@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.114 2007/06/15 20:17:08 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.115 2007/06/15 20:59:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.114 2007/06/15 20:17:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.115 2007/06/15 20:59:38 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -119,17 +119,9 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #endif /* defined(LOCKDEBUG) */
 
 #if defined(MULTIPROCESSOR)
-/*
- * IPL_BIGLOCK: block IPLs which need to grab kernel_mutex.
- * XXX IPL_VM or IPL_AUDIO should be enough.
- */
-#if !defined(__HAVE_SPLBIGLOCK)
-#define	splbiglock	splclock
-#endif
 int kernel_lock_id;
-#endif
-
 __cpu_simple_lock_t kernel_lock;
+#endif
 
 /*
  * Locking primitives implementation.
@@ -1552,7 +1544,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 		return;
 	_KERNEL_LOCK_ASSERT(nlocks > 0);
 
-	s = splbiglock();
+	s = splsched();	/* XXX splvm() */
 
 	if (ci->ci_biglock_count != 0) {
 		_KERNEL_LOCK_ASSERT(kernel_lock == __SIMPLELOCK_LOCKED);
@@ -1595,7 +1587,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 #endif
 			splx(s);
 			SPINLOCK_SPIN_HOOK;
-			(void)splbiglock();
+			(void)splsched();	/* XXX splvm() */
 		}
 	} while (!__cpu_simple_lock_try(&kernel_lock));
 
@@ -1650,7 +1642,7 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 		_KERNEL_LOCK_ASSERT(olocks == 1);
 	}
 
-	s = splbiglock();
+	s = splsched();	/* XXX splvm() */
 	if ((ci->ci_biglock_count -= nlocks) == 0) {
 		LOCKDEBUG_UNLOCKED(kernel_lock_id,
 		    (uintptr_t)__builtin_return_address(0), 0);
