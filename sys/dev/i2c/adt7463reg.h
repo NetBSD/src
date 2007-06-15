@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463reg.h,v 1.4 2007/06/14 18:20:44 christos Exp $ */
+/*	$NetBSD: adt7463reg.h,v 1.5 2007/06/15 19:47:59 christos Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -39,144 +39,151 @@
 #ifndef INCLUDE_ADT7463REG_H
 #define INCLUDE_ADT7463REG_H
 
-#define ADT7463_VOLT_SENSORS_COUNT 5
-#define ADT7463_TEMP_SENSORS_COUNT 3
-#define ADT7463_FAN_SENSORS_COUNT 4
-#define ADT7463_MAX_ENVSYS_RANGE 12 /* sum of the above */
+#define ADT7463_VOLT_SENSORS_COUNT	5
+#define ADT7463_TEMP_SENSORS_COUNT	3
+#define ADT7463_FAN_SENSORS_COUNT	4
+#define ADT7463_MAX_ENVSYS_RANGE	12 /* sum of the above */
 
 /* I2C/SMBUS address */
-#define ADT7463_ADDR1                0x2C
-#define ADT7463_ADDR2                0x2D
-#define ADT7463_ADDR3                0x2E
+#define ADT7463_ADDR1			0x2C
+#define ADT7463_ADDR2			0x2D
+#define ADT7463_ADDR3			0x2E
 
-#define ADT7463_CONFIG_REG1         0x40
-#define ADT7463_CONFIG_REG3         0x78
-#define ADT7463_START               0x01
-#define ADT7463_COMPANYID_REG       0x3E
-#define ADT7463_COMPANYID           0x41
-#define ADT7463_DEVICEID_REG        0x3D
-#define ADT7463_DEVICEID            0x27
+#define ADT7463_CONFIG_REG1		0x40
+#define ADT7463_CONFIG_REG3		0x78
+#define ADT7463_START			0x01
+#define ADT7463_COMPANYID_REG		0x3E
+#define ADT7463_COMPANYID		0x41
+#define ADT7463_DEVICEID_REG		0x3D
+#define ADT7463_DEVICEID		0x27
   
-#define ADT7463_VOLT_REG_START      0x20
-#define ADT7463_TEMP_REG_START      0x25
-#define ADT7463_FAN_REG_START       0x28
+#define ADT7463_VOLT_REG_START		0x20
+#define ADT7463_TEMP_REG_START		0x25
+#define ADT7463_FAN_REG_START		0x28
 
-#define ADT7463_CONFIG_REG3_FAST    0x08
+#define ADT7463_CONFIG_REG3_FAST	0x08
 
 /* currently we use only 8 bits and hence the multiplier */
-#define ADT7463_12V_CONST           625
-#define ADT7463_5V_CONST            260
-#define ADT7463_3_3V_CONST          171
-#define ADT7463_2_5V_CONST          130
-#define ADT7463_VCC_CONST           117
+#define ADT7463_12V_CONST		625
+#define ADT7463_5V_CONST		260
+#define ADT7463_3_3V_CONST		171
+#define ADT7463_2_5V_CONST		130
+#define ADT7463_VCC_CONST		117
 
-#define ADT7463_CEL_TO_KELVIN       27315
-#define ADT7463_RPM_CONST           (90000 * 60)
+#define ADT7463_CEL_TO_KELVIN		27315
+#define ADT7463_RPM_CONST		(90000 * 60)
 
 const struct envsys_range adt7463c_ranges[] = {
-  
-	{ 5, 7,       ENVSYS_STEMP   },
-	{ 8, 11,      ENVSYS_SFANRPM },
-	{ 1, 0,       ENVSYS_SVOLTS_AC },	/* None */
-	{ 0, 4,       ENVSYS_SVOLTS_DC },
-	{ 1, 0,       ENVSYS_SOHMS },	/* None */
-	{ 1, 0,       ENVSYS_SWATTS },	/* None */
-	{ 1, 0,       ENVSYS_SAMPS }	/* None */
+	{ 5, 7,	 ENVSYS_STEMP },
+	{ 8, 11, ENVSYS_SFANRPM },
+	{ 1, 0,  ENVSYS_SVOLTS_AC },	/* None */
+	{ 0, 4,  ENVSYS_SVOLTS_DC },
+	{ 1, 0,  ENVSYS_SOHMS },	/* None */
+	{ 1, 0,  ENVSYS_SWATTS },	/* None */
+	{ 1, 0,  ENVSYS_SAMPS }		/* None */
 };  
 
 struct adt7463c_softc {
 	struct device sc_dev;		/* generic device structures */
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_address;
-
 	struct envsys_tre_data sc_sensor[ADT7463_MAX_ENVSYS_RANGE];
 	struct envsys_basic_info sc_info[ADT7463_MAX_ENVSYS_RANGE];
-
 	struct sysmon_envsys sc_sysmon;  
-  
 };
 
-/* Fan speed control define(s) 
+/*
+ * Fan speed control define(s) 
  * All below references to page numbers refer to the Automatic Fan
  * Speed Control App Note
  */
- 
-/* step two setting temperature zone 2
+
+/*
+ * step two setting temperature zone 2
  * page 5 gives specific information about how to program the temperature 
  * channel.  Also note that the low order byte of 2 should not be changed.
  */
-#define FANZONEREG1 0x5C
-#define FANZONEREG2 0x5D
-#define FANZONEREG3 0x5E
-#define TEMPCHANNEL 0x42
+#define FANZONEREG1	0x5C
+#define FANZONEREG2	0x5D
+#define FANZONEREG3	0x5E
+#define TEMPCHANNEL	0x42
 
 /* Minimum temperature remote zone 2 (page 7) */   
-#define TMINREG 0x69
-#define TMINTEMP 0x2C
+#define TMINREG		0x69
+#define TMINTEMP	0x2C
 
-/* keep the fans always on
+/*
+ * keep the fans always on
  * please see page 7 for which  bit to set to enable a 
  * pwm to be left always on.
  */
-#define FANONREG 0x62
-#define ALWAYSON 0xE0
+#define FANONREG	0x62
+#define ALWAYSON	0xE0
 
-/* minimum fan speed
+/*
+ * minimum fan speed
  * computing the number for FANMINSPEED is done by converting
  * percent fan speed to a pwm number using the equation on page 8
  */
-#define FANMINREG1 0x64
-#define FANMINREG2 0x65
-#define FANMINREG3 0x66
-#define FANMINSPEED 0x45
+#define FANMINREG1	0x64
+#define FANMINREG2	0x65
+#define FANMINREG3	0x66
+#define FANMINSPEED	0x45
 
-/* give a Trange this is the slope at which the fan speed will 
+/*
+ * give a Trange this is the slope at which the fan speed will 
  * increase based on temperature
  * please make sure not to change the low order byte of 4 if adjusting
  * this value.  In order to calculate Trange use the equation on page 9
  * note that this is the best value given the current bios situation
  */
-#define TRANGEREG 0x61
-#define TRANGEVAL 0x94
+#define TRANGEREG	0x61
+#define TRANGEVAL	0x94
 
-/* This is the hyst value.  once the operating temperature-hyst 
+/*
+ * This is the hyst value.  once the operating temperature-hyst 
  * is broken the fan speed will start to increase
  * consult page 12 for what to put in what register
  */
-#define THYSTREG 0x6E
-#define THYST 0x20
+#define THYSTREG	0x6E
+#define THYST		0x20
 
-/* this is the value when reach will cause the fans to drive at full speed
+/*
+ * this is the value when reach will cause the fans to drive at full speed
  * see page 12
  */
-#define TTERMREG 0x6C
-#define TTERMVAL 0x39
+#define TTERMREG	0x6C
+#define TTERMVAL	0x39
 
-/* This is the desired operating temperature for the cpu
+/*
+ * This is the desired operating temperature for the cpu
  * see page 15-16 for more detail
  */
-#define OPPTREG 0x35
-#define OPPTTEMP 0x34
+#define OPPTREG		0x35
+#define OPPTTEMP	0x34
 
-/* Once the temperature falls below this point the 
+/*
+ * Once the temperature falls below this point the 
  * fans speed will start to decrease
  * see page 17 for more detail
  */
-#define TLOWREG 0x52
-#define TLOW 0x2D
+#define TLOWREG		0x52
+#define TLOW		0x2D
 
-/* Once the temperature rises above this point the fan speed 
+/*
+ * Once the temperature rises above this point the fan speed 
  * will be increased at a more rapid rate
  * see page 17 for more detail
  */
-#define THIGHREG 0x53
-#define THIGH 0x36
+#define THIGHREG	0x53
+#define THIGH		0x36
 
-/* Enable dynamic control on remote2 given a polling interval
+/*
+ * Enable dynamic control on remote2 given a polling interval
  * please see page 18-22 in setting values for register 0x36
  */
-#define ENABLEDYNAMICREG 0x36 
-#define REMOTE2 0x80
+#define ENABLEDYNAMICREG	0x36 
+#define REMOTE2			0x80
 
 /* done with fan speed control additions */
 
