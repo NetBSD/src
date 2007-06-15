@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.160 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.160.2.1 2007/06/15 11:00:22 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.160 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.160.2.1 2007/06/15 11:00:22 liamjfoy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -452,12 +452,9 @@ vndstrategy(struct buf *bp)
 	daddr_t blkno;
 	int s = splbio();
 
-	bp->b_resid = bp->b_bcount;
-
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
-		goto done;
+		goto bad;
 	}
 
 	/*
@@ -465,8 +462,7 @@ vndstrategy(struct buf *bp)
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
-		goto done;
+		goto bad;
 	}
 
 	/*
@@ -491,10 +487,6 @@ vndstrategy(struct buf *bp)
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
 	}
-
-	/* If it's a nil transfer, wake up the top half now. */
-	if (bp->b_bcount == 0)
-		goto done;
 
 	/*
 	 * Put the block number in terms of the logical blocksize
@@ -523,7 +515,10 @@ vndstrategy(struct buf *bp)
 	wakeup(&vnd->sc_tab);
 	splx(s);
 	return;
+bad:
+	bp->b_flags |= B_ERROR;
 done:
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 	splx(s);
 }
@@ -622,7 +617,7 @@ vndthread(void *arg)
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
 		bp->b_data = obp->b_data;
-		bp->b_bcount = bp->b_resid = obp->b_bcount;
+		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
 
 		/* Handle the request using the appropriate operations. */
@@ -757,6 +752,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	 * the client rather than the server.
 	 */
 	error = 0;
+	bp->b_resid = bp->b_bcount;
 	for (offset = 0, resid = bp->b_resid; resid;
 	    resid -= sz, offset += sz) {
 		struct buf *nbp;
@@ -1745,6 +1741,7 @@ compstrategy(struct buf *bp, off_t bn)
 
 	/* read, and transfer the data */
 	addr = bp->b_data;
+	bp->b_resid = bp->b_bcount;
 	s = splbio();
 	while (bp->b_resid > 0) {
 		unsigned length;
