@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.45 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.46 2007/06/15 13:26:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.45 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.46 2007/06/15 13:26:57 joerg Exp $");
 
 #include "midi.h"
 
@@ -243,7 +243,6 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc;
 	const struct cs4280_card_t *cs_card;
 	char const *intrstr;
-	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char devinfo[256];
 	uint32_t mem;
@@ -267,6 +266,9 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		sc->sc_flags = CS428X_FLAG_NONE;
 	}
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pt = pa->pa_tag;
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_BA0,
@@ -309,14 +311,15 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	cs4280_clkrun_hack_init(sc);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &sc->intrh)) {
 		aprint_error("%s: couldn't map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, sc->intrh);
 
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, cs4280_intr, sc);
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
+	    cs4280_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
@@ -946,6 +949,11 @@ cs4280_power(int why, void *v)
 		/* Stop DMA */
 		BA1WRITE4(sc, CS4280_PCTL, pctl & ~PCTL_MASK);
 		BA1WRITE4(sc, CS4280_CCTL, BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK);
+
+		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
+		if (sc->sc_ih != NULL)
+			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+
 		break;
 	case PWR_RESUME:
 		if (sc->sc_suspend == PWR_RESUME) {
@@ -953,6 +961,17 @@ cs4280_power(int why, void *v)
 			sc->sc_suspend = why;
 			return;
 		}
+
+		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh,
+		    IPL_AUDIO, cs4280_intr, sc);
+		if (sc->sc_ih == NULL) {
+			aprint_error("%s: can't establish interrupt",
+			    sc->sc_dev.dv_xname);
+			/* XXX jmcneill what should we do here? */
+			return;
+		}
+		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
+
 		sc->sc_suspend = why;
 		cs4280_init(sc, 0);
 #if 0
