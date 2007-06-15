@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.188 2007/06/13 21:26:44 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.189 2007/06/15 11:23:46 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6069,3 +6069,37 @@ bin/sh/parser.c					1.64
 	2. check if the function has a valid name before storing it.
 	[dsl, ticket #718]
 
+sys/arch/amd64/amd64/identcpu.c			1.23
+
+	Only print cpu features3 for Intel processors.
+	ok by xtraeme.
+	[njoly, ticket #722]
+
+sys/dev/i2c/adt7463.c				1.7
+sys/dev/i2c/adt7463reg.h			1.4
+
+	Eliminate unnessary floating point.
+	XXX: someone should KNF this file.
+	[xtraeme, ticket #723]
+
+sys/dev/vnd.c					patch
+
+	Fix compression problem from Cliff Wright:
+
+	Break one: because b_cylinder, and b_resid are one and the same.
+	The work the routine was commented as being its primary function,
+	end of patition adjustment, is wiped out, as at the end of
+	the routine b_cylinder is set, splat, doing a wipe out of the adjustment
+	to b_resid.
+
+	Break two: When doing the adjustment, a block count is created from a
+	byte count, a block calculation is done, then the results are compared to
+	the original byte count. i.e. apples to oranges, not blocks to blocks,
+	but blocks to bytes.
+
+	Break three: since if all the other drivers that used this routine
+	would have broken as vnd compress did, I must assume they always ignored
+	the results of this routine. So if end of patition adjustment is
+	really required then all these other drivers have been broken for a
+	long time.
+	[xtraeme, ticket #721]
