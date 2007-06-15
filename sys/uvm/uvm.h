@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.49 2007/02/21 23:48:16 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.50 2007/06/15 18:28:39 ad Exp $	*/
 
 /*
  *
@@ -115,10 +115,10 @@ struct uvm {
 	kcondvar_t scheduler_cv;
 	kmutex_t scheduler_mutex;
 	bool scheduler_kicked;
+	int swapout_enabled;
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;
-
 };
 
 #endif /* _KERNEL */
