@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.707 2007/06/10 01:33:47 dogcow Exp $
+# $NetBSD: mi,v 1.708 2007/06/15 09:47:54 jmmv Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -104,6 +104,9 @@
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libdes.so.6				base-obsolete		obsolete
 ./lib/libdes.so.6.0				base-obsolete		obsolete
+./lib/libssp.so					base-obsolete		obsolete
+./lib/libssp.so.0				base-obsolete		obsolete
+./lib/libssp.so.0.0				base-obsolete		obsolete
 ./libdata					base-sys-root
 ./libdata/firmware				base-sys-root
 ./libdata/firmware/ral				base-sys-root
@@ -854,6 +857,9 @@
 ./usr/lib/libntp.so				base-obsolete		obsolete
 ./usr/lib/libntp.so.0				base-obsolete		obsolete
 ./usr/lib/libntp.so.0.0				base-obsolete		obsolete
+./usr/lib/libssp.so				base-obsolete		obsolete
+./usr/lib/libssp.so.0				base-obsolete		obsolete
+./usr/lib/libssp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/libusb.so.0				base-obsolete		obsolete
