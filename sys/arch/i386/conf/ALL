@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.103 2007/06/09 11:34:02 kiyohara Exp $
+# $NetBSD: ALL,v 1.104 2007/06/15 23:05:28 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.103 $"
+#ident 		"ALL-$Revision: 1.104 $"
 
 maxusers	32		# estimated number of users
 
@@ -1327,6 +1327,7 @@ wsmouse*	at mms? mux 0
 # Cryptographic Devices
 
 # PCI cryptographic devices
+glxsb*	at pci? dev ? function ?	# AMD Geode LX Security Block
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
