@@ -1,0 +1,70 @@
+.\" $NetBSD: glxsb.4,v 1.1 2007/06/15 23:04:21 jmcneill Exp $
+.\" $OpenBSD: glxsb.4,v 1.5 2007/05/31 19:19:54 jmc Exp $
+.\"
+.\"Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
+.\"
+.\"Permission to use, copy, modify, and distribute this software for any
+.\"purpose with or without fee is hereby granted, provided that the above
+.\"copyright notice and this permission notice appear in all copies.
+.\"
+.\"THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\"WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\"MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\"ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\"
+.Dd June 15, 2007
+.Dt GLXSB 4 i386
+.Os
+.Sh NAME
+.Nm glxsb
+.Nd Geode LX Security Block crypto accelerator
+.Sh SYNOPSIS
+.Cd "glxsb* at pci?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the security block of the Geode LX series processors.
+The Geode LX is a member of the AMD Geode family
+of integrated x86 system chips.
+.Pp
+Driven by periodic checks for available data from the generator,
+.Nm
+supplies entropy to the
+.Xr random 4
+driver for common usage.
+.Pp
+.Nm
+also supports acceleration of AES-CBC operations for
+.Xr crypto 4 .
+.Sh SEE ALSO
+.Xr crypto 4 ,
+.Xr intro 4 ,
+.Xr pci 4 ,
+.Xr random 4 ,
+.Xr crypto 9
+.Sh HISTORY
+The
+.Nm
+device first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+The
+.Nm
+driver was written for
+.Ox
+by
+.An Tom Cosgrove .
+It was ported to
+.Nx
+by
+.An Jared D. McNeill Aq jmcneill@NetBSD.org .
+.Sh BUGS
+The
+.Nm
+driver only provides random numbers and AES acceleration.
+Since it does not provide HMACs, IPSec will not currently use it;
+it will however be used by OpenSSH.
