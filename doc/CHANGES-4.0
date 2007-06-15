@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.189 2007/06/15 11:23:46 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.190 2007/06/15 16:36:38 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6103,3 +6103,78 @@ sys/dev/vnd.c					patch
 	really required then all these other drivers have been broken for a
 	long time.
 	[xtraeme, ticket #721]
+
+dist/file/ChangeLog				patch
+dist/file/LEGAL.NOTICE				patch
+dist/file/MAINT					patch
+dist/file/README				patch
+dist/file/config.h.in				patch
+dist/file/configure				patch
+dist/file/configure.in				patch
+dist/file/file2netbsd				patch
+dist/file/doc/file.1				patch
+dist/file/doc/libmagic.3			patch
+dist/file/doc/magic.5				patch
+dist/file/magic/Localstuff			patch
+dist/file/magic/Makefile.am			patch
+dist/file/magic/Makefile.in			patch
+dist/file/magic/magic.mime			patch
+dist/file/magic/magic2mime			patch
+dist/file/magic/magdir/animation		patch
+dist/file/magic/magdir/archive			patch
+dist/file/magic/magdir/audio			patch
+dist/file/magic/magdir/c-lang			patch
+dist/file/magic/magdir/cad			patch
+dist/file/magic/magdir/commands			patch
+dist/file/magic/magdir/console			patch
+dist/file/magic/magdir/database			patch
+dist/file/magic/magdir/editors			patch
+dist/file/magic/magdir/elf			patch
+dist/file/magic/magdir/filesystems		patch
+dist/file/magic/magdir/fonts			patch
+dist/file/magic/magdir/images			patch
+dist/file/magic/magdir/linux			patch
+dist/file/magic/magdir/lisp			patch
+dist/file/magic/magdir/mathematica		patch
+dist/file/magic/magdir/mime			patch
+dist/file/magic/magdir/mips			patch
+dist/file/magic/magdir/misctools		patch
+dist/file/magic/magdir/msdos			patch
+dist/file/magic/magdir/os2			patch
+dist/file/magic/magdir/os400			patch
+dist/file/magic/magdir/perl			patch
+dist/file/magic/magdir/python			patch
+dist/file/magic/magdir/revision			patch
+dist/file/magic/magdir/riff			patch
+dist/file/magic/magdir/sgml			patch
+dist/file/magic/magdir/sql			patch
+dist/file/magic/magdir/sysex			patch
+dist/file/magic/magdir/tex			patch
+dist/file/magic/magdir/tgif			patch
+dist/file/magic/magdir/varied.out		patch
+dist/file/magic/magdir/varied.script		patch
+dist/file/magic/magdir/vmware			patch
+dist/file/magic/magdir/wordprocessors		patch
+dist/file/magic/magdir/xwindows			patch
+dist/file/src/apprentice.c			patch
+dist/file/src/apptype.c				patch
+dist/file/src/ascmagic.c			patch
+dist/file/src/compress.c			patch
+dist/file/src/file.c				patch
+dist/file/src/file.h				patch
+dist/file/src/fsmagic.c				patch
+dist/file/src/funcs.c				patch
+dist/file/src/is_tar.c				patch
+dist/file/src/magic.c				patch
+dist/file/src/magic.h				patch
+dist/file/src/names.h				patch
+dist/file/src/patchlevel.h			patch
+dist/file/src/print.c				patch
+dist/file/src/readelf.c				patch
+dist/file/src/softmagic.c			patch
+dist/file/src/tar.h				patch
+dist/file/src/test.c				patch
+dist/lib/libmagic/config.h			patch
+
+	bring file(1) to 4.21
+	[pooka, ticket #724]
