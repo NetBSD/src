@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.111 2007/06/14 14:29:50 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.112 2007/06/15 20:17:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.111 2007/06/14 14:29:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.112 2007/06/15 20:17:08 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -312,7 +312,7 @@ proc0_init(void)
 	 * should operate "lock free".
 	 */
 	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
+	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_HIGH);
 	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 

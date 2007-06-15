@@ -1,7 +1,7 @@
-/*	$NetBSD: lockstat.c,v 1.8 2007/03/04 06:01:42 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.9 2007/06/15 20:17:07 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8 2007/03/04 06:01:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.9 2007/06/15 20:17:07 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -381,7 +381,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 	lc = curcpu()->ci_lockstat;
 	ll = &lc->lc_hash[LOCKSTAT_HASH(lock ^ callsite)];
 	event = (flags & LB_EVENT_MASK) - 1;
-	s = spllock();
+	s = splhigh();
 
 	LIST_FOREACH(lb, ll, lb_chain.list) {
 		if (lb->lb_lock == lock && lb->lb_callsite == callsite)
