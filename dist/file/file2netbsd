@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.15 2006/10/31 21:16:23 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.15.2.1 2007/06/15 16:14:41 liamjfoy Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,7 @@
 #
 
 # edit this
-file_vers='4.18'
+file_vers='4.21'
 
 #
 # (usually) NO NEED TO EDIT BELOW THIS LINE
@@ -111,10 +111,7 @@ wq' | ed Makefile.in > /dev/null 2>&1
 
 echo done
 
-echo You can import now.
-
-echo Path: src/dist/file
-echo Vendor: CHRISTOS
-echo Versiontag: FILE4_XY
+echo You can import now.  Use the following command:
+echo cvs import src/dist/file CHRISTOS FILE${file_vers%.*}_${file_vers#*.}
 
 exit 0

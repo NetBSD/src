@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.16 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.16.2.1 2007/06/15 16:14:49 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -74,9 +74,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.102 2006/06/02 00:07:58 ian Exp")
+FILE_RCSID("@(#)$File: file.c,v 1.111 2007/05/08 14:44:18 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.16 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.16.2.1 2007/06/15 16:14:49 liamjfoy Exp $");
 #endif
 #endif	/* lint */
 
@@ -87,7 +87,7 @@ __RCSID("$NetBSD: file.c,v 1.16 2006/10/31 21:16:23 pooka Exp $");
 #define SYMLINKFLAG ""
 #endif
 
-# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNrsvz] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
+# define USAGE  "Usage: %s [-bcik" SYMLINKFLAG "nNrsvz0] [-e test] [-f namefile] [-F separator] [-m magicfiles] file...\n       %s -C -m magicfiles\n"
 
 #ifndef MAXPATHLEN
 #define	MAXPATHLEN	512
@@ -96,7 +96,8 @@ __RCSID("$NetBSD: file.c,v 1.16 2006/10/31 21:16:23 pooka Exp $");
 private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	nopad = 0,	/* Don't pad output			*/
-	nobuffer = 0;   /* Do not buffer stdout 		*/
+	nobuffer = 0,   /* Do not buffer stdout 		*/
+	nulsep = 0;	/* Append '\0' to the separator		*/
 
 private const char *magicfile = 0;	/* where the magic is	*/
 private const char *default_magicfile = MAGIC;
@@ -127,13 +128,13 @@ private void load(const char *, int);
 int
 main(int argc, char *argv[])
 {
-	int c;
+	int c, i;
 	int action = 0, didsomefiles = 0, errflg = 0;
 	int flags = 0;
 	char *home, *usermagic;
 	struct stat sb;
 	static const char hmagic[] = "/.magic";
-#define OPTSTRING	"bcCdf:F:hikLm:nNprsvz"
+#define OPTSTRING	"bcCde:f:F:hikLm:nNprsvz0"
 #ifdef HAVE_GETOPT_LONG
 	int longindex;
 	static const struct option long_options[] =
@@ -143,6 +144,7 @@ main(int argc, char *argv[])
 		{"brief", 0, 0, 'b'},
 		{"checking-printout", 0, 0, 'c'},
 		{"debug", 0, 0, 'd'},
+		{"exclude", 1, 0, 'e' },
 		{"files-from", 1, 0, 'f'},
 		{"separator", 1, 0, 'F'},
 		{"mime", 0, 0, 'i'},
@@ -161,9 +163,25 @@ main(int argc, char *argv[])
 		{"no-pad", 0, 0, 'N'},
 		{"special-files", 0, 0, 's'},
 		{"compile", 0, 0, 'C'},
+		{"print0", 0, 0, '0'},
 		{0, 0, 0, 0},
 	};
 #endif
+
+	static const struct {
+		const char *name;
+		int value;
+	} nv[] = {
+		{ "apptype",	MAGIC_NO_CHECK_APPTYPE },
+		{ "ascii",	MAGIC_NO_CHECK_ASCII },
+		{ "compress",	MAGIC_NO_CHECK_COMPRESS },
+		{ "elf",	MAGIC_NO_CHECK_ELF },
+		{ "fortran",	MAGIC_NO_CHECK_FORTRAN },
+		{ "soft",	MAGIC_NO_CHECK_SOFT },
+		{ "tar",	MAGIC_NO_CHECK_TAR },
+		{ "tokens",	MAGIC_NO_CHECK_TOKENS },
+		{ "troff",	MAGIC_NO_CHECK_TROFF },
+	};
 
 #ifdef LC_CTYPE
 	/* makes islower etc work for other langs */
@@ -212,6 +230,9 @@ main(int argc, char *argv[])
 				help();
 			break;
 #endif
+		case '0':
+			nulsep = 1;
+			break;
 		case 'b':
 			++bflag;
 			break;
@@ -224,6 +245,17 @@ main(int argc, char *argv[])
 		case 'd':
 			flags |= MAGIC_DEBUG|MAGIC_CHECK;
 			break;
+		case 'e':
+			for (i = 0; i < sizeof(nv) / sizeof(nv[0]); i++)
+				if (strcmp(nv[i].name, optarg) == 0)
+					break;
+
+			if (i == sizeof(nv) / sizeof(nv[0]))
+				errflg++;
+			else
+				flags |= nv[i].value;
+			break;
+			
 		case 'f':
 			if(action)
 				usage();
@@ -334,7 +366,7 @@ private void
 /*ARGSUSED*/
 load(const char *m, int flags)
 {
-	if (magic)
+	if (magic || m == NULL)
 		return;
 	magic = magic_open(flags);
 	if (magic == NULL) {
@@ -402,9 +434,15 @@ process(const char *inname, int wid)
 	const char *type;
 	int std_in = strcmp(inname, "-") == 0;
 
-	if (wid > 0 && !bflag)
-		(void)printf("%s%s%*s ", std_in ? "/dev/stdin" : inname,
-		    separator, (int) (nopad ? 0 : (wid - file_mbswidth(inname))), "");
+	if (wid > 0 && !bflag) {
+		(void)printf("%s", std_in ? "/dev/stdin" : inname);
+		if (nulsep)
+			(void)putc('\0', stdout);
+		else
+			(void)printf("%s", separator);
+		(void)printf("%*s ",
+		    (int) (nopad ? 0 : (wid - file_mbswidth(inname))), "");
+	}
 
 	type = magic_file(magic, std_in ? NULL : inname);
 	if (type == NULL)
@@ -530,6 +568,9 @@ help(void)
 "  -c, --checking-printout    print the parsed form of the magic file, use in\n"
 "                               conjunction with -m to debug a new magic file\n"
 "                               before installing it\n"
+"  -e, --exclude              exclude test from the list of test to be\n"
+"                               performed for file. Valid tests are:\n"
+"                               ascii, apptype, elf, compress, soft, tar\n"
 "  -f, --files-from FILE      read the filenames to be examined from FILE\n"
 "  -F, --separator string     use string as separator instead of `:'\n"
 "  -i, --mime                 output mime type strings\n"
@@ -541,8 +582,12 @@ help(void)
 "  -r, --raw                  don't translate unprintable chars to \\ooo\n"
 "  -s, --special-files        treat special (block/char devices) files as\n"
 "                             ordinary ones\n"
+"or\n"
 "      --help                 display this help and exit\n"
+"or\n"
 "      --version              output version information and exit\n"
+"or\n"
+"  -C, --compile              compile file specified by -m\n"
 );
 	exit(0);
 }

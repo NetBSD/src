@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.12 2006/11/14 14:12:24 martin Exp $	*/
+/*	$NetBSD: readelf.c,v 1.12.2.1 2007/06/15 16:14:51 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -40,9 +40,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: readelf.c,v 1.59 2006/10/31 19:37:17 christos Exp")
+FILE_RCSID("@(#)$File: readelf.c,v 1.63 2007/01/16 14:56:45 ljt Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.12 2006/11/14 14:12:24 martin Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.12.2.1 2007/06/15 16:14:51 liamjfoy Exp $");
 #endif
 #endif
 
@@ -161,7 +161,7 @@ getu64(int swap, uint64_t value)
 #define xph_type	(class == ELFCLASS32		\
 			 ? getu32(swap, ph32.p_type)	\
 			 : getu32(swap, ph64.p_type))
-#define xph_offset	(class == ELFCLASS32		\
+#define xph_offset	(off_t)(class == ELFCLASS32	\
 			 ? getu32(swap, ph32.p_offset)	\
 			 : getu64(swap, ph64.p_offset))
 #define xph_align	(size_t)((class == ELFCLASS32	\
@@ -299,7 +299,7 @@ dophn_core(struct magic_set *ms, int class, int swap, int fd, off_t off,
 		 * This is a PT_NOTE section; loop through all the notes
 		 * in the section.
 		 */
-		if (lseek(fd, (off_t)xph_offset, SEEK_SET) == (off_t)-1) {
+		if (lseek(fd, xph_offset, SEEK_SET) == (off_t)-1) {
 			file_badseek(ms);
 			return -1;
 		}
@@ -864,7 +864,7 @@ dophn_exec(struct magic_set *ms, int class, int swap, int fd, off_t off,
 			 * This is a PT_NOTE section; loop through all the notes
 			 * in the section.
 			 */
-			if (lseek(fd, (off_t)xph_offset, SEEK_SET)
+			if (lseek(fd, xph_offset, SEEK_SET)
 			    == (off_t)-1) {
 				file_badseek(ms);
 				return -1;
