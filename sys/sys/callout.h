@@ -1,7 +1,7 @@
-/*	$NetBSD: callout.h,v 1.23 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.23.6.1 2007/06/16 19:02:54 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2003, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -115,18 +115,12 @@ void	callout_reset(struct callout *, int, void (*)(void *), void *);
 void	callout_schedule(struct callout *, int);
 void	callout_stop(struct callout *);
 int	callout_hardclock(void);
-
-#define	callout_setfunc(c, f, a)					\
-do {									\
-	(c)->c_func = (f);						\
-	(c)->c_arg = (a);						\
-} while (/*CONSTCOND*/0)
-
-#define	callout_pending(c)	((c)->c_flags & CALLOUT_PENDING)
-#define	callout_expired(c)	((c)->c_flags & CALLOUT_FIRED)
-#define	callout_active(c)	((c)->c_flags & (CALLOUT_PENDING|CALLOUT_FIRED))
-#define	callout_invoking(c)	((c)->c_flags & CALLOUT_INVOKING)
-#define	callout_ack(c)		((c)->c_flags &= ~CALLOUT_INVOKING)
-#endif /* _KERNEL */
+void	callout_setfunc(struct callout *, void (*)(void *), void *);
+bool	callout_pending(struct callout *);
+bool	callout_expired(struct callout *);
+bool	callout_active(struct callout *);
+bool	callout_invoking(struct callout *);
+void	callout_ack(struct callout *);
+#endif	/* _KERNEL */
 
 #endif /* !_SYS_CALLOUT_H_ */
