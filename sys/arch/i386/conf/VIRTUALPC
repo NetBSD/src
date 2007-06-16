@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.53 2007/05/29 21:37:09 christos Exp $
+# $NetBSD: VIRTUALPC,v 1.54 2007/06/16 12:35:57 ad Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.53 $"
+#ident 		"VIRTUALPC-$Revision: 1.54 $"
 
 maxusers	32		# estimated number of users
 
@@ -195,7 +195,6 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 #options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
