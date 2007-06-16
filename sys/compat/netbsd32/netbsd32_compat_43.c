@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.42 2007/06/03 11:30:59 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.43 2007/06/16 22:31:08 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.42 2007/06/03 11:30:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.43 2007/06/16 22:31:08 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -695,53 +695,42 @@ compat_43_netbsd32_osigvec(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_osigvec_args /* {
 		syscallarg(int) signum;
 		syscallarg(netbsd32_sigvecp_t) nsv;
 		syscallarg(netbsd32_sigvecp_t) osv;
 	} */ *uap = v;
-	struct compat_43_sys_sigvec_args ua;
 	struct netbsd32_sigvec sv32;
-	struct sigvec sv;
-	void *sg = stackgap_init(p, 0);
-	int rv, error;
+	struct sigaction nsa, osa;
+	int error;
 
-	NETBSD32TO64_UAP(signum);
-	if (SCARG_P32(uap, osv))
-		SCARG(&ua, osv) = stackgap_alloc(p, &sg, sizeof(sv));
-	else
-		SCARG(&ua, osv) = NULL;
+	if (SCARG(uap, signum) >= 32)
+		return EINVAL;
+
 	if (SCARG_P32(uap, nsv)) {
-		SCARG(&ua, nsv) = stackgap_alloc(p, &sg, sizeof(sv));
 		error = copyin(SCARG_P32(uap, nsv), &sv32, sizeof(sv32));
 		if (error)
-			return (error);
-		sv.sv_handler = (void *)NETBSD32PTR64(sv32.sv_handler);
-		sv.sv_mask = sv32.sv_mask;
-		sv.sv_flags = sv32.sv_flags;
-		error = copyout(&sv, SCARG(&ua, nsv), sizeof(sv));
-		if (error)
-			return (error);
+			return error;
+		nsa.sa_handler = NETBSD32PTR64(sv32.sv_handler);
+		nsa.sa_mask.__bits[0] = sv32.sv_mask;
+		nsa.sa_mask.__bits[1] = 0;
+		nsa.sa_mask.__bits[2] = 0;
+		nsa.sa_mask.__bits[3] = 0;
+		nsa.sa_flags = sv32.sv_flags ^ SA_RESTART;
+		error = sigaction1(l, SCARG(uap, signum), &nsa, &osa, NULL, 0);
 	} else
-		SCARG(&ua, nsv) = NULL;
-	rv = compat_43_sys_sigvec(l, &ua, retval);
-	if (rv)
-		return (rv);
+		error = sigaction1(l, SCARG(uap, signum), NULL, &osa, NULL, 0);
+	if (error)
+		return error;
 
 	if (SCARG_P32(uap, osv)) {
-		error = copyin(SCARG(&ua, osv), &sv, sizeof(sv));
-		if (error)
-			return (error);
-		NETBSD32PTR32(sv32.sv_handler, sv.sv_handler);
-		sv32.sv_mask = sv.sv_mask;
-		sv32.sv_flags = sv.sv_flags;
+		NETBSD32PTR32(sv32.sv_handler, osa.sa_handler);
+		sv32.sv_mask = osa.sa_mask.__bits[0];
+		sv32.sv_flags = osa.sa_flags ^ SA_RESTART;
 		error = copyout(&sv32, SCARG_P32(uap, osv), sizeof(sv32));
-		if (error)
-			return (error);
 	}
 
-	return (0);
+	return error;
 }
 
 int
@@ -780,48 +769,32 @@ compat_43_netbsd32_osigstack(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_osigstack_args /* {
 		syscallarg(netbsd32_sigstackp_t) nss;
 		syscallarg(netbsd32_sigstackp_t) oss;
 	} */ *uap = v;
-	struct compat_43_sys_sigstack_args ua;
 	struct netbsd32_sigstack ss32;
-	struct sigstack ss;
-	void *sg = stackgap_init(p, 0);
-	int error, rv;
+	struct sigaltstack nsa, osa;
+	int error;
 
-	if (SCARG_P32(uap, oss))
-		SCARG(&ua, oss) = stackgap_alloc(p, &sg, sizeof(ss));
-	else
-		SCARG(&ua, oss) = NULL;
 	if (SCARG_P32(uap, nss)) {
-		SCARG(&ua, nss) = stackgap_alloc(p, &sg, sizeof(ss));
 		error = copyin(SCARG_P32(uap, nss), &ss32, sizeof(ss32));
 		if (error)
-			return (error);
-		ss.ss_sp = NETBSD32PTR64(ss32.ss_sp);
-		ss.ss_onstack = ss32.ss_onstack;
-		error = copyout(&ss, SCARG(&ua, nss), sizeof(ss));
-		if (error)
-			return (error);
+			return error;
+		nsa.ss_sp = NETBSD32PTR64(ss32.ss_sp);
+		nsa.ss_size = SIGSTKSZ; /* Use the recommended size */
+		nsa.ss_flags = ss32.ss_onstack ? SS_ONSTACK : 0;
+		error = sigaltstack1(l, &nsa, &osa);
 	} else
-		SCARG(&ua, nss) = NULL;
-
-	rv = compat_43_sys_sigstack(l, &ua, retval);
-	if (rv)
-		return (rv);
+		error = sigaltstack1(l, NULL, &osa);
+	if (error)
+		return error;
 
 	if (SCARG_P32(uap, oss)) {
-		error = copyin(SCARG(&ua, oss), &ss, sizeof(ss));
-		if (error)
-			return (error);
-		NETBSD32PTR32(ss32.ss_sp, ss.ss_sp);
-		ss32.ss_onstack = ss.ss_onstack;
+		NETBSD32PTR32(ss32.ss_sp, osa.ss_sp);
+		ss32.ss_onstack = (osa.ss_flags & SS_ONSTACK) != 0;
 		error = copyout(&ss32, SCARG_P32(uap, oss), sizeof(ss32));
-		if (error)
-			return (error);
 	}
 
-	return (0);
+	return error;
 }
