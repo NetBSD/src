@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.18 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.19 2007/06/16 12:32:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ struct iop_msg {
 	u_int			im_tctx;	/* Transaction context */
 	void			*im_dvcontext;	/* Un*x device context */
 	struct i2o_reply	*im_rb;		/* Reply buffer */
+	kcondvar_t		im_cv;		/* Notifier */
 	u_int			im_reqstatus;	/* Status from reply */
 	u_int			im_detstatus;	/* Detailed status code */
 	struct iop_xfer		im_xfer[IOP_MAX_MSG_XFERS];
@@ -87,6 +88,7 @@ struct iop_initiator {
 	void	(*ii_adjqparam)(struct device *, int);
 
 	struct	device *ii_dv;
+	kcondvar_t ii_cv;
 	int	ii_flags;
 	int	ii_ictx;		/* Initiator context */
 	int	ii_tid;
@@ -120,6 +122,7 @@ struct iop_softc {
 
 	struct iop_msg	*sc_ims;	/* Message wrappers */
 	SLIST_HEAD(, iop_msg) sc_im_freelist; /* Free wrapper list */
+	kmutex_t	sc_intrlock;	/* Interrupt level lock */
 
 	bus_dmamap_t	sc_rep_dmamap;	/* Reply frames DMA map */
 	int		sc_rep_size;	/* Reply frames size */
