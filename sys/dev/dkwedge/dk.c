@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.23 2007/06/09 02:26:27 dyoung Exp $	*/
+/*	$NetBSD: dk.c,v 1.24 2007/06/16 18:11:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.23 2007/06/09 02:26:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.24 2007/06/16 18:11:33 christos Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -920,8 +920,8 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 			vp->v_writecount++;
 			VOP_UNLOCK(vp, 0);
 			sc->sc_parent->dk_rawvp = vp;
-			sc->sc_parent->dk_rawopens++;
 		}
+		sc->sc_parent->dk_rawopens++;
 	}
 	if (fmt == S_IFCHR)
 		sc->sc_dk.dk_copenmask |= 1;
