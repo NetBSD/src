@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12.38.4 2007/06/08 09:55:51 nisimura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.12.38.5 2007/06/16 11:13:57 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.4 2007/06/08 09:55:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.12.38.5 2007/06/16 11:13:57 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -272,21 +272,21 @@ printf("line %d, pin %c", line, pin + '@');
 	 * Don't believe identifying labels printed on PCB and
 	 * documents confusing as well since Moto names the slots
 	 * as number 1 origin.
-	 *
-	 * Sandpoint X3 "SP3" brd uses EPIC serial mode IRQ.  WinBond
-	 * SB i8259 PIC interrupt is wired to EPIC IRQ0 while AD13-16
-	 * come through IRQ2-5.
-	 *
-	 * Sandpoint X2 brd uses EPIC direct mode IRQ.  Interrupts
-	 * from AD13-AD16 are wired with EPIC IRQ0-3.  WinBond SB
-	 * i8259 shares EPIC IRQ1 line with the PCI slot next to
-	 * MPMC mezzanine card.  WinBond IDE shares EPIC IRQ2 line.
 	 */
 	case BRD_SANDPOINTX3:
+	/*
+	 * Sandpoint X3 brd uses EPIC serial mode IRQ.
+	 * - i8259 PIC interrupt to EPIC IRQ0.
+	 * - WinBond IDE PCI C/D to EPIC IRQ8/9.
+	 * - PCI AD13 pin A,B,C,D to EPIC IRQ2,5,4,3.
+	 * - PCI AD14 pin A,B,C,D to EPIC IRQ3,2,5,4.
+	 * - PCI AD15 pin A,B,C,D to EPIC IRQ4,3,2,5.
+	 * - PCI AD16 pin A,B,C,D to EPIC IRQ5,4,3,2.
+	 */
 		if (line == 11
 		    && pa->pa_function == 1 && pa->pa_bus == 0) {
-			/* map pin A-D to EPIC IRQ6-9 */
-			*ihp = 6 + (pin - 1);
+			/* X3 wires 83c553 pin C,D to EPIC IRQ8,9 */
+			*ihp = 8; /* pin C only, indeed */
 			break;
 		}
 		if (line < 13 || line > 16) {
@@ -294,10 +294,19 @@ printf("line %d, pin %c", line, pin + '@');
 				line, pin + '@');
 			goto bad;
 		}
-		/* map line 13-16 to EPIC IRQ2-5 */
-		*ihp = line - 11;
+		line -= 13; pin -= 1;
+		*ihp = 2 + ((line + (4 - pin)) & 03);
 		break;
 	case BRD_SANDPOINTX2:
+	/*
+	 * Sandpoint X2 brd uses EPIC direct mode IRQ.
+	 * - i8259 PIC interrupt EPIC IRQ2.
+	 * - PCI AD13 pin A,B,C,D to EPIC IRQ0,1,2,3.
+	 * - PCI AD14 pin A,B,C,D to EPIC IRQ1,2,3,0.
+	 * - PCI AD15 pin A,B,C,D to EPIC IRQ2,3,0,1.
+	 * - PCI AD16 pin A,B,C,D to EPIC IRQ3,0,1,2.
+	 * - PCI AD12 is wired to PMPC device itself.
+	 */
 		if (line == 11
 		    && pa->pa_function == 1 && pa->pa_bus == 0) {
 			/* 83C553 PCI IDE comes thru EPIC IRQ2 */
@@ -309,24 +318,21 @@ printf("line %d, pin %c", line, pin + '@');
 				line, pin + '@');
 			goto bad;
 		}
-		/* map line 13-16 to EPIC IRQ0-3 */
 		line -= 13; pin -= 1;
-		*ihp = (line + (4 - pin)) & 3;
+		*ihp = (line + pin) & 03;
 		break;
 	case BRD_ENCOREPP1:
 	/*
-	 * Ampro EnCorePP1 brd uses EPIC direct mode IRQ. Via 686B SB
+	 * Ampro EnCorePP1 brd uses EPIC direct mode IRQ. VIA 686B SB
 	 * i8259 interrupt goes through EPC IRQ0.  PCI pin A-D are
 	 * tied with EPIC IRQ1-4.
-	 * AD22 pin A,B,C,D -> EPIC IRQ 1,2,3,4.
-	 * AD23 pin A,B,C,D -> EPIC IRQ 2,3,4,1.
-	 * AD24 pin A,B,C,D -> EPIC IRQ 3,4,1,2.
-	 * AD25 pin A,B,C,D -> EPIC IRQ 4,1,2,3.
+	 * - PCI AD22 pin A,B,C,D to EPIC IRQ 1,2,3,4.
+	 * - PCI AD23 pin A,B,C,D to EPIC IRQ 2,3,4,1.
+	 * - PCI AD24 pin A,B,C,D to EPIC IRQ 3,4,1,2.
+	 * - PCI AD25 pin A,B,C,D to EPIC IRQ 4,1,2,3.
 	 */
-		*ihp = pin;
-		break;
 		line -= 22; pin -= 1;
-		*ihp = 1 + ((pin + line) & 3);
+		*ihp = 1 + ((line + pin) & 3);
 		break;
 	case BRD_KUROBOX:
 		/* map line 11,12,13,14 to EPIC IRQ0,1,4,3 */
