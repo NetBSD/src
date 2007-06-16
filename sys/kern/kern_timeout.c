@@ -1,11 +1,11 @@
-/*	$NetBSD: kern_timeout.c,v 1.21.4.1 2007/03/21 20:10:21 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.21.4.2 2007/06/16 19:02:55 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21.4.1 2007/03/21 20:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21.4.2 2007/06/16 19:02:55 ad Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -284,7 +284,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 	 * earlier, reschedule it now. Otherwise leave it in place
 	 * and let it be rescheduled later.
 	 */
-	if (callout_pending(c)) {
+	if ((c->c_flags & CALLOUT_PENDING) != 0) {
 		if (c->c_time - old_time < 0) {
 			CIRCQ_REMOVE(&c->c_list);
 			CIRCQ_INSERT(&c->c_list, &timeout_todo);
@@ -324,7 +324,7 @@ callout_schedule(struct callout *c, int to_ticks)
 	 * earlier, reschedule it now. Otherwise leave it in place
 	 * and let it be rescheduled later.
 	 */
-	if (callout_pending(c)) {
+	if ((c->c_flags & CALLOUT_PENDING) != 0) {
 		if (c->c_time - old_time < 0) {
 			CIRCQ_REMOVE(&c->c_list);
 			CIRCQ_INSERT(&c->c_list, &timeout_todo);
@@ -350,11 +350,78 @@ callout_stop(struct callout *c)
 
 	callout_barrier(c);
 
-	if (callout_pending(c))
+	if ((c->c_flags & CALLOUT_PENDING) != 0)
 		CIRCQ_REMOVE(&c->c_list);
 
 	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
 
+	mutex_spin_exit(&callout_mutex);
+}
+
+void
+callout_setfunc(struct callout *c, void (*func)(void *), void *arg)
+{
+
+	mutex_spin_enter(&callout_mutex);
+	c->c_func = func;
+	c->c_arg = arg;
+	mutex_spin_exit(&callout_mutex);
+}
+
+bool
+callout_pending(struct callout *c)
+{
+	bool rv;
+
+	mutex_spin_enter(&callout_mutex);
+	rv = ((c->c_flags & CALLOUT_PENDING) != 0);
+	mutex_spin_exit(&callout_mutex);
+
+	return rv;
+}
+
+bool
+callout_expired(struct callout *c)
+{
+	bool rv;
+
+	mutex_spin_enter(&callout_mutex);
+	rv = ((c->c_flags & CALLOUT_FIRED) != 0);
+	mutex_spin_exit(&callout_mutex);
+
+	return rv;
+}
+
+bool
+callout_active(struct callout *c)
+{
+	bool rv;
+
+	mutex_spin_enter(&callout_mutex);
+	rv = ((c->c_flags & (CALLOUT_PENDING|CALLOUT_FIRED)) != 0);
+	mutex_spin_exit(&callout_mutex);
+
+	return rv;
+}
+
+bool
+callout_invoking(struct callout *c)
+{
+	bool rv;
+
+	mutex_spin_enter(&callout_mutex);
+	rv = ((c->c_flags & CALLOUT_INVOKING) != 0);
+	mutex_spin_exit(&callout_mutex);
+
+	return rv;
+}
+
+void
+callout_ack(struct callout *c)
+{
+
+	mutex_spin_enter(&callout_mutex);
+	c->c_flags &= ~CALLOUT_INVOKING;
 	mutex_spin_exit(&callout_mutex);
 }
 
@@ -422,7 +489,9 @@ softclock(void *v)
 			ci->ci_data.cpu_callout = c;
 #endif
 			mutex_spin_exit(&callout_mutex);
+			KERNEL_LOCK(1, curlwp);
 			(*func)(arg);
+			KERNEL_UNLOCK_ONE(curlwp);
 			mutex_spin_enter(&callout_mutex);
 #ifdef MULTIPROCESSOR
 			ci->ci_data.cpu_callout = NULL;
