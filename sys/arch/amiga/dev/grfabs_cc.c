@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.28 2006/03/08 23:46:22 lukem Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.29 2007/06/16 20:06:52 dsl Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.28 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.29 2007/06/16 20:06:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -958,7 +958,7 @@ display_hires_view(view_t *v)
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
 		tmp->cp.inst.operand = 0x0020;
-#if defined GRF_AGA
+#if defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
 #endif
@@ -1153,7 +1153,7 @@ display_hires_lace_view(view_t *v)
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
 		tmp->cp.inst.operand = 0x0020;
-#if defined GRF_AGA
+#if defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
 #endif
@@ -1383,7 +1383,7 @@ display_hires_dlace_view(view_t *v)
 #if defined (GRF_ECS) || defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_BPLCON3));
 		tmp->cp.inst.operand = 0x0020;
-#if defined GRF_AGA
+#if defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
 #endif
@@ -2504,7 +2504,7 @@ display_pal_hires_view(view_t *v)
 
 		cp = ph_this_data->frames[F_STORE_LONG];
 #if defined (GRF_ECS) || defined (GRF_AGA)
-#if defined GRF_AGA
+#if defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
 #endif
@@ -2680,7 +2680,7 @@ display_pal_hires_lace_view(view_t *v)
 
 		cp = phl_this_data->frames[F_LACE_STORE_LONG];
 #if defined (GRF_ECS) || defined (GRF_AGA)
-#if defined GRF_AGA
+#if defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
 #endif
@@ -2881,7 +2881,7 @@ display_pal_hires_dlace_view(view_t *v)
 
 		cp = phdl_this_data->frames[F_LACE_STORE_LONG];
 #if defined (GRF_ECS) || defined (GRF_AGA)
-#if defined GRF_AGA
+#if defined (GRF_AGA)
 		tmp = find_copper_inst(cp, CI_MOVE(R_FMODE));
 		tmp->cp.inst.operand = 0;
 #endif
