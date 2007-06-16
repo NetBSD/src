@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.31 2007/05/13 09:07:25 dsl Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.31 2007/05/13 09:07:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.32 2007/06/16 20:04:28 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.31 2007/05/13 09:07:25 dsl Exp $")
 #include <compat/osf1/osf1_signal.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/common/compat_util.h>
+#include <compat/common/compat_sigaltstack.h>
 #include <compat/osf1/osf1_cvt.h>
 
 #if 0
@@ -116,26 +117,9 @@ osf1_sys_sigaltstack(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_sigaltstack_args *uap = v;
-	struct osf1_sigaltstack osf1_ss;
-	struct sigaltstack nbss, obss;
-	int error;
-
-	if (SCARG(uap, nss) != NULL) {
-		error = copyin(SCARG(uap, nss), &osf1_ss, sizeof(osf1_ss));
-		if (error != 0)
-			return error;
-		error = osf1_cvt_sigaltstack_to_native(&osf1_ss, &nbss);
-		if (error != 0)
-			return error;
-		error = sigaltstack1(l, &nbss, &obss);
-	} else
-		error = sigaltstack1(l, NULL, &obss);
-
-	if (error != 0 || SCARG(uap, oss) == NULL)
-		return error;
-
-	osf1_cvt_sigaltstack_from_native(&obss, &osf1_ss);
-	return copyout(&osf1_ss, SCARG(uap, oss), sizeof(osf1_ss));
+	/* We silently ignore OSF1_SS_NOMASK and OSF1_SS_UCONTEXT */
+	compat_sigaltstack(uap, osf1_sigaltstack,
+	    OSF1_SS_ONSTACK, OSF1_SS_DISABLE);
 }
 
 #if 0
