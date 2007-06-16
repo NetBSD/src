@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.91.4.1 2007/05/22 14:57:41 itohy Exp $	*/
+/*	$NetBSD: ugen.c,v 1.91.4.2 2007/06/16 04:12:30 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.91.4.1 2007/05/22 14:57:41 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.91.4.2 2007/06/16 04:12:30 itohy Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -524,8 +524,6 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 			     endpt, dir, sce));
 
 		usbd_abort_pipe(sce->pipeh);
-		usbd_close_pipe(sce->pipeh);
-		sce->pipeh = NULL;
 
 		switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 		case UE_INTERRUPT:
@@ -546,6 +544,9 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 		default:
 			break;
 		}
+
+		usbd_close_pipe(sce->pipeh);
+		sce->pipeh = NULL;
 
 		if (sce->ibuf != NULL) {
 			free(sce->ibuf, M_USBDEV);
