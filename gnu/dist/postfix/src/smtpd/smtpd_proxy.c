@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.5 2006/07/19 01:17:47 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.1.1.5.4.1 2007/06/16 17:01:23 snj Exp $	*/
 
 /*++
 /* NAME
@@ -460,8 +460,7 @@ int     smtpd_proxy_cmd(SMTPD_STATE *state, int expect, const char *fmt,...)
     /*
      * Errors first. Be prepared for delayed errors from the DATA phase.
      */
-    if (vstream_ftimeout(state->proxy)
-	|| vstream_ferror(state->proxy)
+    if (vstream_ferror(state->proxy)
 	|| vstream_feof(state->proxy)
 	|| ((err = vstream_setjmp(state->proxy)) != 0
 	    && smtpd_proxy_rdwr_error(state->proxy, err))) {
@@ -581,8 +580,7 @@ int     smtpd_proxy_rec_put(VSTREAM *stream, int rec_type,
     /*
      * Errors first.
      */
-    if (vstream_ftimeout(stream) || vstream_ferror(stream)
-	|| vstream_feof(stream))
+    if (vstream_ferror(stream) || vstream_feof(stream))
 	return (REC_TYPE_ERROR);
     if ((err = vstream_setjmp(stream)) != 0)
 	return (smtpd_proxy_rdwr_error(stream, err), REC_TYPE_ERROR);
@@ -610,8 +608,7 @@ int     smtpd_proxy_rec_fprintf(VSTREAM *stream, int rec_type,
     /*
      * Errors first.
      */
-    if (vstream_ftimeout(stream) || vstream_ferror(stream)
-	|| vstream_feof(stream))
+    if (vstream_ferror(stream) || vstream_feof(stream))
 	return (REC_TYPE_ERROR);
     if ((err = vstream_setjmp(stream)) != 0)
 	return (smtpd_proxy_rdwr_error(stream, err), REC_TYPE_ERROR);

@@ -1,55 +1,58 @@
 *** ENVELOPE RECORDS test-queue-file.tmp ***
-        0 message_size:             428             654               3               0
-       65 message_arrival_time: Sat May 13 21:04:18 2006
-       84 create_time: Sat May 13 21:04:27 2006
-      108 named_attribute: rewrite_context=local
-      131 sender: wietse@porcupine.org
-      153 named_attribute: client_name=tail.porcupine.org
-      185 named_attribute: client_address=IPv6:2001:240:587:0:2d0:b7ff:febe:ca9f
-      240 named_attribute: message_origin=tail.porcupine.org[2001:240:587:0:2d0:b7ff:febe:ca9f]
-      310 named_attribute: helo_name=tail.porcupine.org
-      340 named_attribute: protocol_name=SMTP
-      360 named_attribute: dsn_orig_rcpt=rfc822;wietse@porcupine.org
-      403 original_recipient: wietse@porcupine.org
-      425 recipient: wietse@porcupine.org
-      447 named_attribute: dsn_orig_rcpt=rfc822;alias@tail.porcupine.org
-      494 original_recipient: alias@tail.porcupine.org
-      520 canceled_recipient: wietse@porcupine.org
-      542 named_attribute: dsn_orig_rcpt=rfc822;alias@tail.porcupine.org
-      589 original_recipient: alias@tail.porcupine.org
-      615 canceled_recipient: root@porcupine.org
-      635 pointer_record:            1103
-     1103 named_attribute: notify_flags=1
-     1119 original_recipient: xxxx
-     1125 recipient: xxxx
-     1131 pointer_record:            1148
-     1148 named_attribute: notify_flags=1
-     1164 original_recipient: yyyy
-     1170 canceled_recipient: yyyy
-     1176 pointer_record:             652
-      652 *** MESSAGE CONTENTS test-queue-file.tmp ***
-      654 regular_text: Received: from tail.porcupine.org (tail.porcupine.org [IPv6:2001:240:587:0:2d0:b7ff:febe:ca9f])
-      751 regular_text: 	by tail.porcupine.org (Postfix) with SMTP id E0F703D1E36;
-      811 regular_text: 	Sat, 13 May 2006 21:04:18 -0400 (EDT)
-      851 pointer_record:            1264
-     1264 regular_text: X-Test-Header: test header value 2
-     1300 pointer_record:            1317
-     1317 regular_text: X-Test-Header: test header value 3
-     1353 pointer_record:            1193
-     1193 deleted_text: X-Test-Header: test header value 1
-     1229 pointer_record:            1370
-     1370 pointer_record:            1433
-     1433 pointer_record:            1496
-     1496 regular_text: X: X-replaced-header replacement header text
-     1542 pointer_record:             881
-      881 regular_text: Y: 1234567
-      893 regular_text: Message-Id: <20060514010427.E0F703D1E36@tail.porcupine.org>
-      954 regular_text: Date: Sat, 13 May 2006 21:04:18 -0400 (EDT)
-      999 regular_text: From: wietse@porcupine.org
-     1027 regular_text: To: undisclosed-recipients:;
-     1057 pointer_record:               0
-     1074 regular_text: 
-     1076 regular_text: text
-     1082 *** HEADER EXTRACTED test-queue-file.tmp ***
-     1084 pointer_record:               0
-     1101 *** MESSAGE FILE END test-queue-file.tmp ***
+        0 message_size:             441             813               3               0             441
+       81 message_arrival_time: Sat Jan 20 19:52:41 2007
+      100 create_time: Sat Jan 20 19:52:47 2007
+      124 named_attribute: rewrite_context=local
+      147 sender: wietse@porcupine.org
+      169 named_attribute: log_client_name=hades.porcupine.org
+      206 named_attribute: log_client_address=168.100.189.10
+      241 named_attribute: log_message_origin=hades.porcupine.org[168.100.189.10]
+      297 named_attribute: log_helo_name=hades.porcupine.org
+      332 named_attribute: log_protocol_name=SMTP
+      356 named_attribute: client_name=hades.porcupine.org
+      389 named_attribute: reverse_client_name=hades.porcupine.org
+      430 named_attribute: client_address=168.100.189.10
+      461 named_attribute: helo_name=hades.porcupine.org
+      492 named_attribute: client_address_type=2
+      515 named_attribute: dsn_orig_rcpt=rfc822;wietse@porcupine.org
+      558 original_recipient: wietse@porcupine.org
+      580 recipient: wietse@porcupine.org
+      602 named_attribute: dsn_orig_rcpt=rfc822;alias@hades.porcupine.org
+      650 original_recipient: alias@hades.porcupine.org
+      677 canceled_recipient: wietse@porcupine.org
+      699 named_attribute: dsn_orig_rcpt=rfc822;alias@hades.porcupine.org
+      747 original_recipient: alias@hades.porcupine.org
+      774 canceled_recipient: root@porcupine.org
+      794 pointer_record:            1258
+     1258 named_attribute: notify_flags=1
+     1274 original_recipient: xxxx
+     1280 recipient: xxxx
+     1286 pointer_record:            1303
+     1303 named_attribute: notify_flags=1
+     1319 original_recipient: yyyy
+     1325 canceled_recipient: yyyy
+     1331 pointer_record:             811
+      811 *** MESSAGE CONTENTS test-queue-file.tmp ***
+      813 regular_text: Received: from hades.porcupine.org (hades.porcupine.org [168.100.189.10])
+      888 regular_text: 	by hades.porcupine.org (Postfix) with SMTP id 38132290405;
+      949 regular_text: 	Sat, 20 Jan 2007 19:52:41 -0500 (EST)
+      989 pointer_record:            1348
+     1348 pointer_record:            1399
+     1399 pointer_record:            1365
+     1365 pointer_record:            1492
+     1492 regular_text: X: X-replaced-header replacement header text
+     1538 pointer_record:            1433
+     1433 regular_text: X2: test header value 3
+     1458 regular_text: Y: 1234567
+     1470 padding:   0
+     1475 pointer_record:            1047
+     1047 regular_text: Message-Id: <20070121005247.38132290405@hades.porcupine.org>
+     1109 regular_text: Date: Sat, 20 Jan 2007 19:52:41 -0500 (EST)
+     1154 regular_text: From: wietse@porcupine.org
+     1182 regular_text: To: undisclosed-recipients:;
+     1212 pointer_record:               0
+     1229 regular_text: 
+     1231 regular_text: text
+     1237 pointer_record:               0
+     1254 *** HEADER EXTRACTED test-queue-file.tmp ***
+     1256 *** MESSAGE FILE END test-queue-file.tmp ***

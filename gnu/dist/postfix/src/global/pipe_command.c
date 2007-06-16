@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.11 2006/07/19 01:17:27 rpaulo Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.11.4.1 2007/06/16 17:00:10 snj Exp $	*/
 
 /*++
 /* NAME
@@ -635,7 +635,7 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 			 "Command died with signal %d: \"%s\"%s%s",
 			 WTERMSIG(wait_status), args.command,
 			 log_len ? ". Command output: " : "", log_buf);
-		return (PIPE_STAT_BOUNCE);
+		return (PIPE_STAT_DEFER);
 	    }
 	    /* Use "D.S.N text" command output. XXX What diagnostic code? */
 	    else if (dsn_valid(log_buf) > 0) {

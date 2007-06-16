@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.h,v 1.1.1.4 2006/07/19 01:17:24 rpaulo Exp $	*/
+/*	$NetBSD: mail_conf.h,v 1.1.1.4.4.1 2007/06/16 16:59:57 snj Exp $	*/
 
 #ifndef _MAIL_CONF_H_INCLUDED_
 #define _MAIL_CONF_H_INCLUDED_
@@ -55,7 +55,7 @@ extern char *get_mail_conf_raw(const char *, const char *, int, int);
 
 extern int get_mail_conf_int2(const char *, const char *, int, int, int);
 extern long get_mail_conf_long2(const char *, const char *, long, long, long);
-extern int get_mail_conf_time2(const char *, const char *, const char *, int, int);
+extern int get_mail_conf_time2(const char *, const char *, int, int, int, int);
 
  /*
   * Lookup with function-call defaults.
@@ -75,6 +75,7 @@ extern void set_mail_conf_int(const char *, int);
 extern void set_mail_conf_long(const char *, long);
 extern void set_mail_conf_bool(const char *, int);
 extern void set_mail_conf_time(const char *, const char *);
+extern void set_mail_conf_time_int(const char *, int);
 
  /*
   * Tables that allow us to selectively copy values from the global

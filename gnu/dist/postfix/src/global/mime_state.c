@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.c,v 1.1.1.5 2006/07/19 01:17:26 rpaulo Exp $	*/
+/*	$NetBSD: mime_state.c,v 1.1.1.5.4.1 2007/06/16 17:00:08 snj Exp $	*/
 
 /*++
 /* NAME
@@ -184,6 +184,13 @@
 /* .IP state
 /*	MIME parser state created with mime_state_alloc().
 /* BUGS
+/*	NOTE: when the end of headers is reached, mime_state_update()
+/*	may execute up to three call-backs before returning to the
+/*	caller: head_out(), head_end(), and body_out() or body_end().
+/*	As long as call-backs return no result, it is up to the
+/*	call-back routines to check if a previous call-back experienced
+/*	an error.
+/*
 /*	Different mail user agents treat malformed message boundary
 /*	strings in different ways. The Postfix MIME processor cannot
 /*	be bug-compatible with everything.
@@ -494,6 +501,7 @@ MIME_STATE *mime_state_alloc(int flags,
 
     /* Volatile members. */
     state->err_flags = 0;
+    state->body_offset = 0;			/* XXX */
     SET_MIME_STATE(state, MIME_STATE_PRIMARY,
 		   MIME_CTYPE_TEXT, MIME_STYPE_PLAIN,
 		   MIME_ENC_7BIT, MIME_ENC_7BIT);
@@ -933,6 +941,15 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	 * messages. Otherwise, treat such headers as part of the "body". Set
 	 * the proper encoding information for the multipart prolog.
 	 * 
+	 * XXX We parse headers inside message/* content even when the encoding
+	 * is invalid (encoding != domain). With base64 we won't recognize
+	 * any headers, and with quoted-printable we won't recognize MIME
+	 * boundary strings, but the MIME processor will still resynchronize
+	 * when it runs into the higher-level boundary string at the end of
+	 * the message/* content. Although we will treat some headers as body
+	 * text, we will still do a better job than if we were treating the
+	 * entire message/* content as body text.
+	 * 
 	 * XXX This changes state to MIME_STATE_NESTED and then outputs a body
 	 * line, so that the body offset is not properly reset.
 	 * 
@@ -961,10 +978,49 @@ int     mime_state_update(MIME_STATE *state, int rec_type,
 	    /*
 	     * Invalid input. Force output of one blank line and jump to the
 	     * body state, leaving all other state alone.
+	     * 
+	     * We don't break legitimate mail by inserting a blank line
+	     * separator between primary headers and a non-empty body. Many
+	     * MTA's don't even record the presence or absence of this
+	     * separator, nor does the Milter protocol pass it on to Milter
+	     * applications.
+	     * 
+	     * XXX We don't insert a blank line separator into attachments, to
+	     * avoid breaking digital signatures. Postfix shall not do a
+	     * worse mail delivery job than MTAs that can't even parse MIME.
+	     * We switch to body state anyway, to avoid treating body text as
+	     * header text, and mis-interpreting or truncating it. The code
+	     * below for initial From_ lines is for educational purposes.
+	     * 
+	     * Sites concerned about MIME evasion can use a MIME normalizer.
+	     * Postfix has a different mission.
 	     */
 	    else {
-		SET_CURR_STATE(state, MIME_STATE_BODY);
-		BODY_OUT(state, REC_TYPE_NORM, "", 0);
+		if (msg_verbose)
+		    msg_info("garbage in %s header",
+		    state->curr_state == MIME_STATE_MULTIPART ? "multipart" :
+		       state->curr_state == MIME_STATE_PRIMARY ? "primary" :
+			 state->curr_state == MIME_STATE_NESTED ? "nested" :
+			     "other");
+		switch (state->curr_state) {
+		case MIME_STATE_PRIMARY:
+		    BODY_OUT(state, REC_TYPE_NORM, "", 0);
+		    SET_CURR_STATE(state, MIME_STATE_BODY);
+		    break;
+#if 0
+		case MIME_STATE_NESTED:
+		    if (state->body_offset <= 1
+			&& rec_type == REC_TYPE_NORM
+			&& len > 7
+			&& (strncmp(text + (*text == '>'), "From ", 5) == 0
+			    || strncmp(text, "=46rom ", 7) == 0))
+			break;
+		    /* FALLTHROUGH */
+#endif
+		default:
+		    SET_CURR_STATE(state, MIME_STATE_BODY);
+		    break;
+		}
 	    }
 	}
 

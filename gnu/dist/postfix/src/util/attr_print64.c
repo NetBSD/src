@@ -1,4 +1,4 @@
-/*	$NetBSD: attr_print64.c,v 1.1.1.5 2006/07/19 01:17:50 rpaulo Exp $	*/
+/*	$NetBSD: attr_print64.c,v 1.1.1.5.4.1 2007/06/16 17:01:40 snj Exp $	*/
 
 /*++
 /* NAME
@@ -24,7 +24,7 @@
 /*	attr_scan64(). The stream is not flushed.
 /*
 /*	attr_vprint64() provides an alternate interface that is convenient
-/*	for calling from within variadoc functions.
+/*	for calling from within variadic functions.
 /*
 /*	Attributes are sent in the requested order as specified with the
 /*	attr_print64() argument list. This routine satisfies the formatting

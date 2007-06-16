@@ -1,4 +1,4 @@
-.\"	$NetBSD: pickup.8,v 1.1.1.8 2005/08/18 21:04:20 rpaulo Exp $
+.\"	$NetBSD: pickup.8,v 1.1.1.8.4.1 2007/06/16 16:58:09 snj Exp $
 .\"
 .TH PICKUP 8 
 .ad
@@ -89,11 +89,11 @@ communication channel.
 Upon input, long lines are chopped up into pieces of at most
 this length; upon delivery, long lines are reconstructed.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBprocess_id (read-only)\fR"
 The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"

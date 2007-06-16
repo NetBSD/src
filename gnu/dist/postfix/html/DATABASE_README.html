@@ -54,7 +54,7 @@ documentation: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#alias_maps">alias_maps</a> = hash:/etc/postfix/aliases            (local aliasing)
     <a href="postconf.5.html#header_checks">header_checks</a> = <a href="regexp_table.5.html">regexp</a>:/etc/postfix/header_checks (content filtering)
     <a href="postconf.5.html#transport_maps">transport_maps</a> = hash:/etc/postfix/transport      (routing table)
@@ -80,7 +80,8 @@ below.
 
 <li> You can use Berkeley DB files with fixed lookup strings for
 simple address rewriting operations and you can use regular expression
-tables for the more complicated work.
+tables for the more complicated work. In other words, you don't
+have to put everything into the same table.
 
 </ul>
 
@@ -189,8 +190,9 @@ because something else happens.  This is because commands such as
 <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> overwrite existing files. If the update
 fails in the middle then you have no usable database, and Postfix
 will stop working. This is not an issue with the CDB database type
-available with Postfix 2.2 and later, because <a href="CDB_README.html">CDB</a>
-database rebuilds are atomic. </p>
+available with Postfix 2.2 and later: <a href="CDB_README.html">CDB</a>
+creates a new file, and renames the file upon successful completion.
+</p>
 
 <p> With multi-file databases such as DBM, there is no simple
 solution. With Berkeley DB and other "one file" databases, it is
@@ -364,7 +366,7 @@ described in <a href="tcp_table.5.html">tcp_table(5)</a>. The lookup table name 
 where "host" specifies a symbolic hostname or a numeric IP address,
 and "port" specifies a symbolic service name or a numeric port
 number. This protocol is not available up to and including Postfix
-version 2.2.  </dd>
+version 2.4.  </dd>
 
 <dt> <b>unix</b> (read-only) </dt>
 

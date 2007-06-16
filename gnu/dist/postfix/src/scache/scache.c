@@ -1,4 +1,4 @@
-/*	$NetBSD: scache.c,v 1.1.1.3 2006/07/19 01:17:41 rpaulo Exp $	*/
+/*	$NetBSD: scache.c,v 1.1.1.3.4.1 2007/06/16 17:01:04 snj Exp $	*/
 
 /*++
 /* NAME
@@ -104,8 +104,8 @@
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -157,6 +157,7 @@
 /* Global library. */
 
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_proto.h>
 #include <scache.h>
 
@@ -534,6 +535,8 @@ static void post_jail_init(char *unused_name, char **unused_argv)
     scache_start_time = event_time();
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the multi-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -543,6 +546,11 @@ int     main(int argc, char **argv)
 	VAR_SCACHE_STAT_TIME, DEF_SCACHE_STAT_TIME, &var_scache_stat_time, 1, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     multi_server_main(argc, argv, scache_service,
 		      MAIL_SERVER_TIME_TABLE, time_table,

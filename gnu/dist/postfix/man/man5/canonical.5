@@ -1,4 +1,4 @@
-.\"	$NetBSD: canonical.5,v 1.7 2006/07/19 01:35:39 rpaulo Exp $
+.\"	$NetBSD: canonical.5,v 1.7.4.1 2007/06/16 16:57:59 snj Exp $
 .\"
 .TH CANONICAL 5 
 .ad
@@ -27,17 +27,17 @@ Normally, the \fBcanonical\fR(5) table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.
 The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
 is used for fast searching by the mail system. Execute the command
-"\fBpostmap /etc/postfix/canonical\fR" in order to rebuild the indexed
-file after changing the text file.
+"\fBpostmap /etc/postfix/canonical\fR" to rebuild an indexed
+file after changing the corresponding text file.
 
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In that case, the lookups are
-done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+can be directed to TCP-based server. In those cases, the lookups
+are done in a slightly different way as described below under
+"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
 
 By default the \fBcanonical\fR(5) mapping affects both message
 header addresses (i.e. addresses that appear inside messages)
@@ -57,10 +57,9 @@ names by \fIFirstname.Lastname\fR, or to clean up addresses produced
 by legacy mail systems.
 
 The \fBcanonical\fR(5) mapping is not to be confused with \fIvirtual
-domain\fR support. Use the \fBvirtual\fR(5) map for that purpose.
-
-The \fBcanonical\fR(5) mapping is not to be confused with local aliasing.
-Use the \fBaliases\fR(5) map for that purpose.
+alias\fR support or with local aliasing. To change the destination
+but not the headers, use the \fBvirtual\fR(5) or \fBaliases\fR(5)
+map instead.
 .SH "CASE FOLDING"
 .na
 .nf
@@ -111,6 +110,14 @@ This form is useful for replacing login names by
 .IP "@\fIdomain address\fR"
 Replace other addresses in \fIdomain\fR by \fIaddress\fR.
 This form has the lowest precedence.
+.sp
+Note: @\fIdomain\fR is a wild-card. When this form is applied
+to recipient addresses, the Postfix SMTP server accepts
+mail for any recipient in \fIdomain\fR, regardless of whether
+that recipient exists.  This may turn your mail system into
+a backscatter source: Postfix first accepts mail for
+non-existent recipients and then tries to return that mail
+as "undeliverable" to the often forged sender address.
 .SH "RESULT ADDRESS REWRITING"
 .na
 .nf
@@ -168,7 +175,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.3.
+This feature is not available up to and including Postfix version 2.4.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their

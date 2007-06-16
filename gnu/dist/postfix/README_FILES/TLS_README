@@ -16,10 +16,10 @@ Transport Layer Security (TLS, formerly called SSL) provides certificate-based
 authentication and encrypted sessions. An encrypted session protects the
 information that is transmitted with SMTP mail or with SASL authentication.
 
-Postfix version 2.2 introduces support for TLS as described in RFC 3207. TLS
-Support for older Postfix versions was available as an add-on patch. The
-section "Compatibility with Postfix < 2.2 TLS support" below discusses the
-differences between these implementations.
+This document describes a TLS user interface that was introduced with Postfix
+version 2.3. Support for an older user interface is documented in
+TLS_LEGACY_README, which also describes the differences between Postfix and the
+third-party patch on which Postfix version 2.2 TLS support was based.
 
 Topics covered in this document:
 
@@ -29,7 +29,6 @@ Topics covered in this document:
   * SMTP Client specific settings
   * TLS manager specific settings
   * Reporting problems
-  * Compatibility with Postfix < 2.2 TLS support
   * Credits
 
 And last but not least, for the impatient:
@@ -674,7 +673,7 @@ Their DSA counterparts:
 
     /etc/postfix/main.cf:
         smtp_tls_dcert_file = /etc/postfix/client-dsa.pem
-        smtp_tls_dkey_file = $smtpd_tls_cert_file
+        smtp_tls_dkey_file = $smtp_tls_dcert_file
 
 To verify a remote SMTP server certificate, the Postfix SMTP client needs to
 trust the certificates of the issuing certification authorities. These
@@ -694,7 +693,7 @@ files in the directory when the information is needed. Thus, the
 $smtp_tls_CApath directory needs to be accessible inside the optional chroot
 jail.
 
-The choice between $smtp_tls_CAfile and $smtpd_tls_CApath is a space/time
+The choice between $smtp_tls_CAfile and $smtp_tls_CApath is a space/time
 tradeoff. If there are many trusted CAs, the cost of preloading them all into
 memory may not pay off in reduced access time when the certificate is needed.
 
@@ -869,8 +868,8 @@ Per destination settings may override this default setting, in which case TLS
 is used selectively, only with destinations explicitly configured for TLS.
 
 You can disable TLS for a subset of destinations, while leaving it enabled for
-the rest. With the Postfix 2.3+ TLS policy table, specify the "none" security
-level. With the obsolete per-site table, specify the "NONE" keyword.
+the rest. With the Postfix 2.3 and later TLS policy table, specify the "none"
+security level. With the obsolete per-site table, specify the "NONE" keyword.
 
 OOppppoorrttuunniissttiicc TTLLSS
 
@@ -906,8 +905,8 @@ configure opportunistic encryption of LMTP sessions will be ignored with a
 warning written to the mail logs.
 
 You can enable opportunistic TLS just for selected destinations. With the
-Postfix 2.3+ TLS policy table, specify the "may" security level. With the
-obsolete per-site table, specify the "MAY" keyword.
+Postfix 2.3 and later TLS policy table, specify the "may" security level. With
+the obsolete per-site table, specify the "MAY" keyword.
 
 This is the most common security level for TLS protected SMTP sessions,
 stronger security is not generally available and, if needed, is typically only
@@ -955,10 +954,11 @@ Internet, you should not configure mandatory TLS encryption as the default
 security level.
 
 You can enable mandatory TLS encryption just for specific destinations. With
-the Postfix 2.3+ TLS policy table, specify the "encrypt" security level. With
-the obsolete per-site table, specify the "MUST_NOPEERMATCH" keyword. While the
-obsolete approach still works with Postfix 2.3, it is strongly discouraged:
-users of Postfix 2.3+ should use the new TLS policy settings.
+the Postfix 2.3 and later TLS policy table, specify the "encrypt" security
+level. With the obsolete per-site table, specify the "MUST_NOPEERMATCH"
+keyword. While the obsolete approach still works with Postfix 2.3, it is
+strongly discouraged: users of Postfix 2.3 and later should use the new TLS
+policy settings.
 
 Examples:
 
@@ -976,7 +976,7 @@ default for all "encrypt" security level sessions.
         .example.com      encrypt
 
 Postfix 2.2 syntax (no support for sub-domains without resorting to regexp
-tables). With Postfix 2.3+, do not use the obsolete per-site table.
+tables). With Postfix 2.3 and later, do not use the obsolete per-site table.
 
     /etc/postfix/main.cf:
         smtp_tls_per_site = hash:/etc/postfix/tls_per_site
@@ -1017,8 +1017,8 @@ NNoottee:: Avoid policy lookups with the bare hostname (for example, "examp
 Instead, use the destination (for example, "[example.net]:587"), as the per-
 site table lookup key (a recipient domain or MX-enabled transport nexthop with
 no port suffix may look like a bare hostname, but is still a suitable
-destination). With Postfix 2.3+, do not use the obsolete per-site table; use
-the new policy table instead.
+destination). With Postfix 2.3 and later, do not use the obsolete per-site
+table; use the new policy table instead.
 
     /etc/postfix/main.cf:
         smtp_tls_per_site = hash:/etc/postfix/tls_per_site
@@ -1064,10 +1064,11 @@ STARTTLS support. In such cases, you can often use a secure-channel
 configuration instead.
 
 You can enable mandatory server certificate verification just for specific
-destinations. With the Postfix 2.3+ TLS policy table, specify the "verify"
-security level. With the obsolete per-site table, specify the "MUST" keyword.
-While the obsolete approach still works with Postfix 2.3, it is strongly
-discouraged: users of Postfix 2.3+ should use the new TLS policy settings.
+destinations. With the Postfix 2.3 and later TLS policy table, specify the
+"verify" security level. With the obsolete per-site table, specify the "MUST"
+keyword. While the obsolete approach still works with Postfix 2.3, it is
+strongly discouraged: users of Postfix 2.3 and later should use the new TLS
+policy settings.
 
 Example:
 
@@ -1129,11 +1130,11 @@ would be a client that sends all email to a central mailhub that offers the
 necessary STARTTLS support.
 
 You can enable secure TLS verification just for specific destinations. With the
-Postfix 2.3+ TLS policy table, specify the "secure" security level. With the
-obsolete per-site table, specify the "MUST" keyword and harden the certificate
-verification against DNS forgery. While the obsolete approach still works with
-Postfix 2.3, it is strongly discouraged: users of Postfix 2.3+ should use the
-new TLS policy settings.
+Postfix 2.3 and later TLS policy table, specify the "secure" security level.
+With the obsolete per-site table, specify the "MUST" keyword and harden the
+certificate verification against DNS forgery. While the obsolete approach still
+works with Postfix 2.3, it is strongly discouraged: users of Postfix 2.3 and
+later should use the new TLS policy settings.
 
 Examples:
 
@@ -1197,14 +1198,14 @@ has the potential to mis-deliver email if the related domains change hands.
     /etc/postfix/tls_policy:
         [tls.example.com] secure match=tls.example.com
 
-Postfix 2.2.9+ syntax:
+Postfix 2.2.9 and later syntax:
 
 NNoottee:: Avoid policy lookups with the bare hostname (for example,
 "tls.example.com"). Instead, use the destination (for example, "
 [tls.example.com]") as the per-site table lookup key (a recipient domain or MX-
 enabled transport nexthop with no port suffix may look like a bare hostname,
-but is still a suitable destination). With Postfix 2.3+, do not use the
-obsolete per-site table; use the new policy table instead.
+but is still a suitable destination). With Postfix 2.3 and later, do not use
+the obsolete per-site table; use the new policy table instead.
 
     /etc/postfix/main.cf:
         smtp_cname_overrides_servername = no
@@ -1333,8 +1334,8 @@ Avoid policy lookups with the bare hostname. Instead, use the full destination
 nexthop (enclosed in [] with a possible ":port" suffix) as the per-site table
 lookup key (a recipient domain or MX-enabled transport nexthop with no port
 suffix may look like a bare hostname, but is still a suitable destination).
-With Postfix 2.3+, use of the obsolete approach documented here is strongly
-discouraged: use the new policy table instead.
+With Postfix 2.3 and later, use of the obsolete approach documented here is
+strongly discouraged: use the new policy table instead.
 
 Starting with Postfix 2.3, the underlying TLS enforcement levels are common to
 the obsolete per-site table and the new policy table. The main.cf
@@ -1422,7 +1423,7 @@ CClloossiinngg aa DDNNSS lloooopphhoollee wwiitthh oobb
 
 For a general discussion of TLS security for SMTP see TLS limitations above.
 What follows applies only to Postfix 2.2.9 and subsequent Postfix 2.2 patch
-levels. Do not use this approach with Postfix 2.3+; instead see the
+levels. Do not use this approach with Postfix 2.3 and later; instead see the
 instructions under secure server certificate verification.
 
 As long as no secure DNS lookup mechanism is available, false hostnames in MX
@@ -1734,42 +1735,6 @@ Problems are preferably reported via <postfix-users@postfix.org>. See http://
 www.postfix.org/lists.html for subscription information. When reporting a
 problem, please be thorough in the report. Patches, when possible, are greatly
 appreciated too.
-
-CCoommppaattiibbiilliittyy wwiitthh PPoossttffiixx << 22..22 TTLLSS ssuuppppoorrtt
-
-Postfix version 2.2 TLS support is based on the Postfix/TLS patch by Lutz
-Jänicke, but differs in a few minor ways.
-
-  * main.cf: Specify "btree" instead of "sdbm" for TLS session cache databases.
-
-    TLS session cache databases are now accessed only by the tlsmgr(8) process,
-    so there are no more concurrency issues. Although Postfix has an sdbm
-    client, the sdbm library (1000 lines of code) is not included with Postfix.
-
-    TLS session caches can use any database that can store objects of several
-    kbytes or more, and that implements the sequence operation. In most cases,
-    btree databases should be adequate.
-
-    NOTE: You cannot use DBM databases. TLS session objects are too large.
-
-  * master.cf: Specify "unix" instead of "fifo" as the tlsmgr service type.
-
-    The smtp(8) and smtpd(8) processes now use a client-server protocol in
-    order to access the tlsmgr(8) pseudo-random number generation (PRNG) pool,
-    and in order to access the TLS session cache databases. Such a protocol
-    cannot be run across fifos.
-
-  * smtp_tls_per_site: the MUST_NOPEERMATCH per-site policy cannot override the
-    global "smtp_tls_enforce_peername = yes" setting.
-
-  * smtp_tls_per_site: a combined (NONE + MAY) lookup result for (hostname and
-    next-hop destination) produces counter-intuitive results for different
-    main.cf settings. TLS is enabled with "smtp_tls_enforce_peername = no", but
-    it is disabled when both "smtp_enforce_tls = yes" and
-    "smtp_tls_enforce_peername = yes".
-
-The smtp_tls_per_site limitations were removed by the end of the Postfix 2.2
-support cycle.
 
 CCrreeddiittss
 

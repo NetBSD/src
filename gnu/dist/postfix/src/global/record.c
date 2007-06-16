@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.1.1.6 2006/11/07 02:57:49 rpaulo Exp $	*/
+/*	$NetBSD: record.c,v 1.1.1.6.2.1 2007/06/16 17:00:13 snj Exp $	*/
 
 /*++
 /* NAME
@@ -54,6 +54,15 @@
 /*	int	rec_goto(stream, where)
 /*	VSTREAM	*stream;
 /*	const char *where;
+/*
+/*	int	rec_pad(stream, type, len)
+/*	VSTREAM *stream;
+/*	int	type;
+/*	int	len;
+/*
+/*	REC_SPACE_NEED(buflen, reclen)
+/*	ssize_t	buflen;
+/*	ssize_t	reclen;
 /* DESCRIPTION
 /*	This module reads and writes typed variable-length records.
 /*	Each record contains a 1-byte type code (0..255), a length
@@ -79,8 +88,8 @@
 /*	and REC_FLAG_DEFAULT for normal use.
 /*
 /*	rec_get() is a wrapper around rec_get_raw() that always
-/*	enables the REC_FLAG_FOLLOW_PTR and REC_FLAG_SKIP_DTXT
-/*	features.
+/*	enables the REC_FLAG_FOLLOW_PTR, REC_FLAG_SKIP_DTXT
+/*	and REC_FLAG_SEEK_END features.
 /*
 /*	rec_put() stores the specified record and returns the record
 /*	type, or REC_TYPE_ERROR in case of problems.
@@ -104,6 +113,13 @@
 /*	the file pointer to the specified location. A zero position
 /*	means do nothing. The result is REC_TYPE_ERROR in case of
 /*	failure.
+/*
+/*	rec_pad() writes a record that occupies the larger of (the
+/*	specified amount) or (an implementation-defined minimum).
+/*
+/*	REC_SPACE_NEED(buflen, reclen) converts the specified buffer
+/*	length into a record length. This macro modifies its second
+/*	argument.
 /* DIAGNOSTICS
 /*	Panics: interface violations. Fatal errors: insufficient memory.
 /*	Warnings: corrupted file.
@@ -373,4 +389,14 @@ int     rec_fprintf(VSTREAM *stream, int type, const char *format,...)
 int     rec_fputs(VSTREAM *stream, int type, const char *str)
 {
     return (rec_put(stream, type, str, str ? strlen(str) : 0));
+}
+
+/* rec_pad - write padding record */
+
+int     rec_pad(VSTREAM *stream, int type, int len)
+{
+    int     width = len - 2;		/* type + length */
+
+    return (rec_fprintf(stream, type, "%*s",
+			width < 1 ? 1 : width, "0"));
 }

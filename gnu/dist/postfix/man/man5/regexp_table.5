@@ -1,4 +1,4 @@
-.\"	$NetBSD: regexp_table.5,v 1.1.1.11 2006/07/19 01:16:48 rpaulo Exp $
+.\"	$NetBSD: regexp_table.5,v 1.1.1.11.4.1 2007/06/16 16:58:04 snj Exp $
 .\"
 .TH REGEXP_TABLE 5 
 .ad
@@ -10,26 +10,34 @@ format of Postfix regular expression tables
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostmap -fq "\fIstring\fB" regexp:/etc/postfix/\fIfilename\fR
+\fBpostmap -q "\fIstring\fB" regexp:/etc/postfix/\fIfilename\fR
 
-\fBpostmap -fq - regexp:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
+\fBpostmap -q - regexp:/etc/postfix/\fIfilename\fR <\fIinputfile\fR
 .SH DESCRIPTION
 .ad
 .fi
 The Postfix mail system uses optional tables for address
-rewriting or mail routing. These tables are usually in
-\fBdbm\fR or \fBdb\fR format.
+rewriting, mail routing, or access control. These tables
+are usually in \fBdbm\fR or \fBdb\fR format.
 
 Alternatively, lookup tables can be specified in POSIX regular
 expression form. In this case, each input is compared against a
-list of patterns, and when a match is found the corresponding
-result is returned.
+list of patterns. When a match is found, the corresponding
+result is returned and the search is terminated.
 
 To find out what types of lookup tables your Postfix system
 supports use the "\fBpostconf -m\fR" command.
 
-To test lookup tables, use the "\fBpostmap -fq\fR" command as
-described in the SYNOPSIS above.
+To test lookup tables, use the "\fBpostmap -q\fR" command
+as described in the SYNOPSIS above.
+.SH "COMPATIBILITY"
+.na
+.nf
+.ad
+.fi
+With Postfix version 2.2 and earlier specify "\fBpostmap
+-fq\fR" to query a table that contains case sensitive
+patterns. Patterns are case insensitive by default.
 .SH "TABLE FORMAT"
 .na
 .nf
@@ -57,7 +65,6 @@ This feature is available in Postfix 2.1 and later.
 Match the input string against the patterns between \fBif\fR
 and \fBendif\fR, if and only if that same input string does
 \fBnot\fR match \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
-matches \fIpattern\fR. The \fBif\fR..\fBendif\fR can nest.
 .sp
 Note: do not prepend whitespace to patterns inside
 \fBif\fR..\fBendif\fR.

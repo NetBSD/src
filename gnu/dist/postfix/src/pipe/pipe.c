@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.1.1.9 2006/07/19 01:17:35 rpaulo Exp $	*/
+/*	$NetBSD: pipe.c,v 1.1.1.9.4.1 2007/06/16 17:00:34 snj Exp $	*/
 
 /*++
 /* NAME
@@ -31,9 +31,10 @@
 /*
 /*	To prevent Postfix from sending multiple recipients per delivery
 /*	request, specify
-/*
-/* .ti +4
-/*	\fItransport\fB_destination_recipient_limit = 1\fR
+/* .sp
+/* .nf
+/*	    \fItransport\fB_destination_recipient_limit = 1\fR
+/* .fi
 /*
 /*	in the Postfix \fBmain.cf\fR file, where \fItransport\fR
 /*	is the name in the first column of the Postfix \fBmaster.cf\fR
@@ -120,8 +121,8 @@
 /*	by, for example, \fBUUCP\fR software.
 /* .RE
 /* .IP "\fBnull_sender\fR=\fIreplacement\fR (default: MAILER-DAEMON)"
-/*	Replace the null sender address, which is typically used
-/*	for delivery status notifications, with the specified text
+/*	Replace the null sender address (typically used for delivery
+/*	status notifications) with the specified text
 /*	when expanding the \fB$sender\fR command-line macro, and
 /*	when generating a From_ or Return-Path: message header.
 /*
@@ -137,17 +138,19 @@
 /*	Caution: a null sender address is easily mis-parsed by
 /*	naive software. For example, when the \fBpipe\fR(8) daemon
 /*	executes a command such as:
-/*
-/* .ti +4
-/*	command -f$sender -- $recipient (\fIbad\fR)
-/*
+/* .sp
+/* .nf
+/*	    command -f$sender -- $recipient (\fIbad\fR)
+/* .fi
+/* .IP
 /*	the command will mis-parse the -f option value when the
 /*	sender address is a null string.  For correct parsing,
 /*	specify \fB$sender\fR as an argument by itself:
-/*
-/* .ti +4
-/*	command -f $sender -- $recipient (\fIgood\fR)
-/*
+/* .sp
+/* .nf
+/*	    command -f $sender -- $recipient (\fIgood\fR)
+/* .fi
+/* .IP
 /*	This feature is available with Postfix 2.3 and later.
 /* .IP "\fBsize\fR=\fIsize_limit\fR (optional)"
 /*	Messages greater in size than this limit (in bytes) will
@@ -305,6 +308,10 @@
 /*	Limit the time for delivery to external command, for delivery via
 /*	the named \fItransport\fR.
 /*	The limit is enforced by the pipe delivery agent.
+/*
+/*	Postfix 2.4 and later support a suffix that specifies the
+/*	time unit: s (seconds), m (minutes), h (hours), d (days),
+/*	w (weeks). The default time unit is seconds.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -327,11 +334,11 @@
 /*	The UNIX system account that owns the Postfix queue and most Postfix
 /*	daemon processes.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -398,6 +405,7 @@
 #include <recipient_list.h>
 #include <deliver_request.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_conf.h>
 #include <bounce.h>
 #include <defer.h>
@@ -716,7 +724,7 @@ static void get_service_params(PIPE_PARAMS *config, char *service)
      * Figure out the command time limit for this transport.
      */
     config->time_limit =
-	get_mail_conf_int2(service, "_time_limit", var_command_maxtime, 1, 0);
+	get_mail_conf_time2(service, "_time_limit", var_command_maxtime, 's', 1, 0);
 
     /*
      * Give the poor tester a clue of what is going on.
@@ -1194,6 +1202,8 @@ static void pre_init(char *unused_name, char **unused_argv)
     flush_init();
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the single-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -1202,6 +1212,11 @@ int     main(int argc, char **argv)
 	VAR_COMMAND_MAXTIME, DEF_COMMAND_MAXTIME, &var_command_maxtime, 1, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, pipe_service,
 		       MAIL_SERVER_TIME_TABLE, time_table,

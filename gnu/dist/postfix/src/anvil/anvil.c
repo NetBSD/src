@@ -1,4 +1,4 @@
-/*	$NetBSD: anvil.c,v 1.1.1.3 2006/07/19 01:17:17 rpaulo Exp $	*/
+/*	$NetBSD: anvil.c,v 1.1.1.3.4.1 2007/06/16 16:58:39 snj Exp $	*/
 
 /*++
 /* NAME
@@ -25,81 +25,74 @@
 /* .fi
 /*	To register a new connection send the following request to
 /*	the \fBanvil\fR(8) server:
-/* .PP
-/* .in +4
-/*	\fBrequest=connect\fR
-/* .br
-/*	\fBident=\fIstring\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBrequest=connect\fR
+/*	    \fBident=\fIstring\fR
+/* .fi
+/*
 /*	The \fBanvil\fR(8) server answers with the number of
 /*	simultaneous connections and the number of connections per
 /*	unit time for the (service, client) combination specified
 /*	with \fBident\fR:
-/* .PP
-/* .in +4
-/*	\fBstatus=0\fR
-/* .br
-/*	\fBcount=\fInumber\fR
-/* .br
-/*	\fBrate=\fInumber\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBstatus=0\fR
+/*	    \fBcount=\fInumber\fR
+/*	    \fBrate=\fInumber\fR
+/* .fi
+/*
 /*	To register a disconnect event send the following request
 /*	to the \fBanvil\fR(8) server:
-/* .PP
-/* .in +4
-/*	\fBrequest=disconnect\fR
-/* .br
-/*	\fBident=\fIstring\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBrequest=disconnect\fR
+/*	    \fBident=\fIstring\fR
+/* .fi
+/*
 /*	The \fBanvil\fR(8) server replies with:
-/* .PP
-/* .ti +4
-/*	\fBstatus=0\fR
+/*
+/* .nf
+/*	    \fBstatus=0\fR
+/* .fi
 /* MESSAGE RATE CONTROL
 /* .ad
 /* .fi
 /*	To register a message delivery request send the following
 /*	request to the \fBanvil\fR(8) server:
-/* .PP
-/* .in +4
-/*	\fBrequest=message\fR
-/* .br
-/*	\fBident=\fIstring\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBrequest=message\fR
+/*	    \fBident=\fIstring\fR
+/* .fi
+/*
 /*	The \fBanvil\fR(8) server answers with the number of message
 /*	delivery requests per unit time for the (service, client)
 /*	combination specified with \fBident\fR:
-/* .PP
-/* .in +4
-/*	\fBstatus=0\fR
-/* .br
-/*	\fBrate=\fInumber\fR
-/* .in
+/*
+/* .nf
+/*	    \fBstatus=0\fR
+/*	    \fBrate=\fInumber\fR
+/* .fi
 /* RECIPIENT RATE CONTROL
 /* .ad
 /* .fi
 /*	To register a recipient request send the following request
 /*	to the \fBanvil\fR(8) server:
-/* .PP
-/* .in +4
-/*	\fBrequest=recipient\fR
-/* .br
-/*	\fBident=\fIstring\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBrequest=recipient\fR
+/*	    \fBident=\fIstring\fR
+/* .fi
+/*
 /*	The \fBanvil\fR(8) server answers with the number of recipient
 /*	addresses per unit time for the (service, client) combination
 /*	specified with \fBident\fR:
-/* .PP
-/* .in +4
-/*	\fBstatus=0\fR
-/* .br
-/*	\fBrate=\fInumber\fR
-/* .in
+/*
+/* .nf
+/*	    \fBstatus=0\fR
+/*	    \fBrate=\fInumber\fR
+/* .fi
 /* TLS SESSION NEGOTIATION RATE CONTROL
 /* .ad
 /* .fi
@@ -108,41 +101,37 @@
 /*
 /*	To register a request for a new (i.e. not cached) TLS session
 /*	send the following request to the \fBanvil\fR(8) server:
-/* .PP
-/* .in +4
-/*	\fBrequest=newtls\fR
-/* .br
-/*	\fBident=\fIstring\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBrequest=newtls\fR
+/*	    \fBident=\fIstring\fR
+/* .fi
+/*
 /*	The \fBanvil\fR(8) server answers with the number of new
 /*	TLS session requests per unit time for the (service, client)
 /*	combination specified with \fBident\fR:
-/* .PP
-/* .in +4
-/*	\fBstatus=0\fR
-/* .br
-/*	\fBrate=\fInumber\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBstatus=0\fR
+/*	    \fBrate=\fInumber\fR
+/* .fi
+/*
 /*	To retrieve new TLS session request rate information without
 /*	updating the counter information, send:
-/* .PP
-/* .in +4
-/*	\fBrequest=newtls_report\fR
-/* .br
-/*	\fBident=\fIstring\fR
-/* .in
-/* .PP
+/*
+/* .nf
+/*	    \fBrequest=newtls_report\fR
+/*	    \fBident=\fIstring\fR
+/* .fi
+/*
 /*	The \fBanvil\fR(8) server answers with the number of new
 /*	TLS session requests per unit time for the (service, client)
 /*	combination specified with \fBident\fR:
-/* .PP
-/* .in +4
-/*	\fBstatus=0\fR
-/* .br
-/*	\fBrate=\fInumber\fR
-/* .in
+/*
+/* .nf
+/*	    \fBstatus=0\fR
+/*	    \fBrate=\fInumber\fR
+/* .fi
 /* SECURITY
 /* .ad
 /* .fi
@@ -175,8 +164,8 @@
 /*
 /*	In this preliminary implementation, a count (or rate) limited server
 /*	can have only one remote client at a time. If a server reports
-/*	multiple simultaneous clients, all but the last reported client
-/*	are ignored.
+/*	multiple simultaneous clients, state is kept only for the last
+/*	reported client.
 /*
 /*	The \fBanvil\fR(8) server automatically discards client
 /*	request information after it expires.  To prevent the
@@ -210,11 +199,11 @@
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -269,6 +258,7 @@
 
 #include <mail_conf.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_proto.h>
 #include <anvil_clnt.h>
 
@@ -947,6 +937,8 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 	var_idle_limit = var_anvil_time_unit;
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the multi-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -956,6 +948,11 @@ int     main(int argc, char **argv)
 	VAR_ANVIL_STAT_TIME, DEF_ANVIL_STAT_TIME, &var_anvil_stat_time, 1, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     multi_server_main(argc, argv, anvil_service,
 		      MAIL_SERVER_TIME_TABLE, time_table,

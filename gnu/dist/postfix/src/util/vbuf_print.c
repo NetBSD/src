@@ -1,4 +1,4 @@
-/*	$NetBSD: vbuf_print.c,v 1.1.1.4 2006/07/19 01:17:56 rpaulo Exp $	*/
+/*	$NetBSD: vbuf_print.c,v 1.1.1.4.4.1 2007/06/16 17:02:12 snj Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,18 @@
 /*	In addition, vbuf_print() recognizes the %m format specifier
 /*	and expands it to the error message corresponding to the current
 /*	value of the global \fIerrno\fR variable.
+/* REENTRANCY
+/* .ad
+/* .fi
+/*	vbuf_print() allocates a static buffer. After completion
+/*	of the first vbuf_print() call, this buffer is safe for
+/*	reentrant vbuf_print() calls by (asynchronous) terminating
+/*	signal handlers or by (synchronous) terminating error
+/*	handlers. vbuf_print() initialization typically happens
+/*	upon the first formatted output to a VSTRING or VSTREAM.
+/*
+/*	However, it is up to the caller to ensure that the destination
+/*	VSTREAM or VSTRING buffer is protected against reentrant usage.
 /* LICENSE
 /* .ad
 /* .fi

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_db.c,v 1.1.1.9 2006/07/19 01:17:51 rpaulo Exp $	*/
+/*	$NetBSD: dict_db.c,v 1.1.1.9.4.1 2007/06/16 17:01:46 snj Exp $	*/
 
 /*++
 /* NAME
@@ -196,7 +196,9 @@ static const char *dict_db_lookup(DICT *dict, const char *name)
     /*
      * Optionally fold the key.
      */
-    if (dict->fold_buf) {
+    if (dict->flags & DICT_FLAG_FOLD_FIX) {
+	if (dict->fold_buf == 0)
+	    dict->fold_buf = vstring_alloc(10);
 	vstring_strcpy(dict->fold_buf, name);
 	name = lowercase(vstring_str(dict->fold_buf));
     }
@@ -267,7 +269,9 @@ static void dict_db_update(DICT *dict, const char *name, const char *value)
     /*
      * Optionally fold the key.
      */
-    if (dict->fold_buf) {
+    if (dict->flags & DICT_FLAG_FOLD_FIX) {
+	if (dict->fold_buf == 0)
+	    dict->fold_buf = vstring_alloc(10);
 	vstring_strcpy(dict->fold_buf, name);
 	name = lowercase(vstring_str(dict->fold_buf));
     }
@@ -351,7 +355,9 @@ static int dict_db_delete(DICT *dict, const char *name)
     /*
      * Optionally fold the key.
      */
-    if (dict->fold_buf) {
+    if (dict->flags & DICT_FLAG_FOLD_FIX) {
+	if (dict->fold_buf == 0)
+	    dict->fold_buf = vstring_alloc(10);
 	vstring_strcpy(dict->fold_buf, name);
 	name = lowercase(vstring_str(dict->fold_buf));
     }

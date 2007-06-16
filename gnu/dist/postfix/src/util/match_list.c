@@ -1,4 +1,4 @@
-/*	$NetBSD: match_list.c,v 1.8 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: match_list.c,v 1.8.4.1 2007/06/16 17:02:00 snj Exp $	*/
 
 /*++
 /* NAME
@@ -28,8 +28,7 @@
 /*	is either a string, a file name (in which case the contents
 /*	of the file are substituted for the file name) or a type:name
 /*	lookup table specification. In order to reverse the result of
-/*	a pattern match, precede a non-file name pattern with an
-/*	exclamation point (!).
+/*	a pattern match, precede a pattern with an exclamation point (!).
 /*
 /*	match_list_init() performs initializations. The flags argument
 /*	specifies the bit-wise OR of zero or more of the following:
@@ -102,55 +101,52 @@ struct MATCH_LIST {
 
 /* match_list_parse - parse buffer, destroy buffer */
 
-static ARGV *match_list_parse(ARGV *list, char *string)
+static ARGV *match_list_parse(ARGV *list, char *string, int init_match)
 {
     const char *myname = "match_list_parse";
-    VSTRING *buf = 0;
+    VSTRING *buf = vstring_alloc(10);
     VSTREAM *fp;
     const char *delim = " ,\t\r\n";
     char   *bp = string;
-    char   *pattern;
-    char   *map_type_name;
+    char   *start;
+    char   *item;
     char   *map_type_name_flags;
+    int     match;
 
     /*
-     * XXX We do not support ! before /filename, because the file contents
-     * are expanded in-line. Fixing this requires separating the operator (!)
-     * from its operands (file content) so that the operator can apply to a
-     * group of operands.
+     * /filename contents are expanded in-line. To support !/filename we
+     * prepend the negation operator to each item from the file.
      */
-    while ((pattern = mystrtok(&bp, delim)) != 0) {
-	if (*pattern == '/') {			/* /file/name */
-	    if (buf == 0)
-		buf = vstring_alloc(10);
-	    if ((fp = vstream_fopen(pattern, O_RDONLY, 0)) == 0)
-		msg_fatal("%s: open file %s: %m", myname, pattern);
+    while ((start = mystrtok(&bp, delim)) != 0) {
+	for (match = init_match, item = start; *item == '!'; item++)
+	    match = !match;
+	if (*item == 0)
+	    msg_fatal("%s: no pattern after '!'", myname);
+	if (*item == '/') {			/* /file/name */
+	    if ((fp = vstream_fopen(item, O_RDONLY, 0)) == 0)
+		msg_fatal("%s: open file %s: %m", myname, item);
 	    while (vstring_fgets(buf, fp))
 		if (vstring_str(buf)[0] != '#')
-		    list = match_list_parse(list, vstring_str(buf));
+		    list = match_list_parse(list, vstring_str(buf), match);
 	    if (vstream_fclose(fp))
-		msg_fatal("%s: read file %s: %m", myname, pattern);
-	} else if (MATCH_DICTIONARY(pattern)) {	/* type:table */
-	    if (buf == 0)
-		buf = vstring_alloc(10);
+		msg_fatal("%s: read file %s: %m", myname, item);
+	} else if (MATCH_DICTIONARY(item)) {	/* type:table */
 #define OPEN_FLAGS	O_RDONLY
 #define DICT_FLAGS	(DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX)
 #define STR(x)		vstring_str(x)
-	    for (map_type_name = pattern; *map_type_name == '!'; map_type_name++)
-		 /* void */ ;
-	    vstring_sprintf(buf, "%s(%o,%s)", pattern, OPEN_FLAGS,
-			    dict_flags_str(DICT_FLAGS));
-	    map_type_name_flags = STR(buf) + (map_type_name - pattern);
+	    vstring_sprintf(buf, "%s%s(%o,%s)", match ? "" : "!",
+			    item, OPEN_FLAGS, dict_flags_str(DICT_FLAGS));
+	    map_type_name_flags = STR(buf) + (match == 0);
 	    if (dict_handle(map_type_name_flags) == 0)
 		dict_register(map_type_name_flags,
-			  dict_open(map_type_name, OPEN_FLAGS, DICT_FLAGS));
+			      dict_open(item, OPEN_FLAGS, DICT_FLAGS));
 	    argv_add(list, STR(buf), (char *) 0);
 	} else {				/* other pattern */
-	    argv_add(list, pattern, (char *) 0);
+	    argv_add(list, match ? item :
+		     STR(vstring_sprintf(buf, "!%s", item)), (char *) 0);
 	}
     }
-    if (buf)
-	vstring_free(buf);
+    vstring_free(buf);
     return (list);
 }
 
@@ -178,8 +174,10 @@ MATCH_LIST *match_list_init(int flags, const char *patterns, int match_count,...
 	list->match_func[i] = va_arg(ap, MATCH_LIST_FN);
     va_end(ap);
 
+#define DO_MATCH	1
+
     saved_patterns = mystrdup(patterns);
-    list->patterns = match_list_parse(argv_alloc(1), saved_patterns);
+    list->patterns = match_list_parse(argv_alloc(1), saved_patterns, DO_MATCH);
     argv_terminate(list->patterns);
     myfree(saved_patterns);
     return (list);

@@ -1,36 +1,54 @@
-/*	$NetBSD: test-milter.c,v 1.1.1.2 2006/08/01 00:04:03 rpaulo Exp $	*/
+/*	$NetBSD: test-milter.c,v 1.1.1.2.6.1 2007/06/16 17:00:21 snj Exp $	*/
 
- /*
-  * Simple test mail filter program.
-  * 
-  * Options:
-  * 
-  * -a accept|tempfail|reject|discard|ddd x.y.z text
-  * 
-  * Specifies a non-default reply. The default is to always continue.
-  * 
-  * -d Enable libmilter debugging.
-  * 
-  * -c connect|helo|mail|rcpt|data|header|eoh|body|eom|unknown|close|abort
-  * 
-  * When to send the non-default reply. The default is "connect".
-  * 
-  * -i "index header-label header-value"
-  * 
-  * Insert header at specified position.
-  * 
-  * -p inet:port@host|unix:/path/name
-  * 
-  * The mail filter listen endpoint.
-  * 
-  * -r "index header-label header-value"
-  * 
-  * Replace header at specified position.
-  * 
-  * -C count
-  * 
-  * Terminate after count connections.
-  */
+/*++
+/* NAME
+/*	test-milter 1
+/* SUMMARY
+/*	Simple test mail filter program.
+/* SYNOPSIS
+/* .fi
+/*	\fBtest-milter\fR [\fIoptions\fR] -p \fBinet:\fIport\fB@\fIhost\fR
+/*
+/*	\fBtest-milter\fR [\fIoptions\fR] -p \fBunix:\fIpathname\fR
+/* DESCRIPTION
+/*	\fBtest-milter\fR is a Milter (mail filter) application that
+/*	exercises selected features.
+/*
+/*	Note: this is an unsupported test program. No attempt is made
+/*	to maintain compatibility between successive versions.
+/*
+/*	Arguments (multiple alternatives are separated by "\fB|\fR"):
+/* .IP "\fB-a accept|tempfail|reject|discard|\fIddd x.y.z text\fR"
+/*	Specifies a non-default reply. The default is to continue
+/*	(i.e. \fBtempfail\fR).
+/* .IP "\fB-d\fI level\fR"
+/*	Enable libmilter debugging at the specified level.
+/* .IP "\fB-c connect|helo|mail|rcpt|data|header|eoh|body|eom|unknown|close|abort\fR"
+/*	When to send the non-default reply specified with \fB-a\fR.
+/*	The default protocol stage is \fBconnect\fR.
+/* .IP "\fB-C\fI count\fR"
+/*	Terminate after \fIcount\fR connections.
+/* .IP "\fB-i \"\fIindex header-label header-value\"\fR"
+/*	Insert header at specified position.
+/* .IP "\fB-p inet:\fIport\fB@\fIhost\fB|unix:\fIpathname\fR"
+/*	The mail filter listen endpoint.
+/* .IP "\fB-r "index header-label header-value"
+/*	Replace the message header at the specified position.
+/* .IP "\fB-R pathname
+/*	Replace the message body by the content of the specified file.
+/* .IP "\fB-v\fR"
+/*	Make the program more verbose.
+/* LICENSE
+/* .ad
+/* .fi
+/*	The Secure Mailer license must be distributed with this software.
+/* AUTHOR(S)
+/*	Wietse Venema
+/*	IBM T.J. Watson Research
+/*	P.O. Box 704
+/*	Yorktown Heights, NY 10598, USA
+/*--*/
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -112,12 +130,17 @@ static char *chg_val;
 
 #endif
 
+#ifdef SMFIR_REPLBODY
+static char *body_file;
+
+#endif
+
 static int test_reply(SMFICTX *ctx, int code)
 {
     (void) fflush(stdout);		/* In case output redirected. */
 
     if (code == SMFIR_REPLYCODE) {
-	if (smfi_setreply(ctx, reply_code, reply_dsn, reply_message) != MI_SUCCESS)
+	if (smfi_setreply(ctx, reply_code, reply_dsn, reply_message) == MI_FAILURE)
 	    fprintf(stderr, "smfi_setreply failed\n");
 	return (reply_code[0] == '4' ? SMFIS_TEMPFAIL : SMFIS_REJECT);
     } else {
@@ -230,6 +253,34 @@ static sfsistat test_eom(SMFICTX *ctx)
     if (chg_hdr && smfi_chgheader(ctx, chg_hdr, chg_idx, chg_val) == MI_FAILURE)
 	fprintf(stderr, "smfi_chgheader failed");
 #endif
+#ifdef SMFIR_REPLBODY
+    if (body_file) {
+	char    buf[BUFSIZ + 2];
+	FILE   *fp;
+	size_t  len;
+	int     count;
+
+	if ((fp = fopen(body_file, "r")) == 0) {
+	    perror(body_file);
+	} else {
+	    printf("replace body with content of %s\n", body_file);
+	    for (count = 0; fgets(buf, BUFSIZ, fp) != 0; count++) {
+		len = strcspn(buf, "\n");
+		buf[len+0] = '\r';
+		buf[len+1] = '\n';
+		if (smfi_replacebody(ctx, buf, len + 2) == MI_FAILURE) {
+		    fprintf(stderr, "body replace failure\n");
+		    exit(1);
+		}
+		if (verbose)
+		    printf("%.*s\n", (int) len, buf);
+	    }
+	    if (count == 0)
+		perror("fgets");
+	    (void) fclose(fp);
+	}
+    }
+#endif
     return (test_reply(ctx, test_eom_reply));
 }
 
@@ -273,7 +324,7 @@ static struct smfiDesc smfilter =
 {
     "test-milter",
     SMFI_VERSION,
-    SMFIF_ADDRCPT | SMFIF_DELRCPT | SMFIF_ADDHDRS | SMFIF_CHGHDRS,
+    SMFIF_ADDRCPT | SMFIF_DELRCPT | SMFIF_ADDHDRS | SMFIF_CHGHDRS | SMFIF_CHGBODY,
     test_connect,
     test_helo,
     test_mail,
@@ -316,7 +367,7 @@ int     main(int argc, char **argv)
     int     ch;
     int     code;
 
-    while ((ch = getopt(argc, argv, "a:c:d:i:p:r:vC:")) > 0) {
+    while ((ch = getopt(argc, argv, "a:c:C:d:i:p:r:R:v")) > 0) {
 	switch (ch) {
 	case 'a':
 	    action = optarg;
@@ -366,6 +417,15 @@ int     main(int argc, char **argv)
 	case 'C':
 	    conn_count = atoi(optarg);
 	    break;
+#ifdef SMFIR_REPLBODY
+	case 'R':
+	    if (body_file) {
+		fprintf(stderr, "too many -R options\n");
+		exit(1);
+	    }
+	    body_file = optarg;
+#endif
+	    break;
 	default:
 	    fprintf(stderr,
 		    "usage: %s [-dv] \n"
@@ -375,6 +435,7 @@ int     main(int argc, char **argv)
 		    "\t-p port                  milter application\n"
 		    "\t[-r 'index label value'] replace header\n"
 		    "\t[-C conn_count]          when to exit\n",
+		    "\t[-R body_text]           replace body\n",
 		    argv[0]);
 	    exit(1);
 	}

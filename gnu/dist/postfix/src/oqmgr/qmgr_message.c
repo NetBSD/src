@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.6 2006/07/19 01:17:34 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.6.4.1 2007/06/16 17:00:28 snj Exp $	*/
 
 /*++
 /* NAME
@@ -11,10 +11,11 @@
 /*	int	qmgr_message_count;
 /*	int	qmgr_recipient_count;
 /*
-/*	QMGR_MESSAGE *qmgr_message_alloc(class, name, qflags)
+/*	QMGR_MESSAGE *qmgr_message_alloc(class, name, qflags, mode)
 /*	const char *class;
 /*	const char *name;
 /*	int	qflags;
+/*	mode_t	mode;
 /*
 /*	QMGR_MESSAGE *qmgr_message_realloc(message)
 /*	QMGR_MESSAGE *message;
@@ -51,6 +52,7 @@
 /*	run through the resolver, and are assigned to destination
 /*	queues. Recipients that cannot be assigned are deferred or
 /*	bounced. Mail that has bounced twice is silently absorbed.
+/*	A non-zero mode means change the queue file permissions.
 /*
 /*	qmgr_message_realloc() resumes reading recipients from the queue
 /*	file, and updates the recipient list and \fIrcpt_offset\fR message
@@ -172,6 +174,7 @@ static QMGR_MESSAGE *qmgr_message_create(const char *queue_name,
     message->inspect_xport = 0;
     message->redirect_addr = 0;
     message->data_size = 0;
+    message->cont_length = 0;
     message->warn_offset = 0;
     message->warn_time = 0;
     message->rcpt_offset = 0;
@@ -506,9 +509,10 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    continue;
 	if (rec_type == REC_TYPE_SIZE) {
 	    if (message->data_offset == 0) {
-		if ((count = sscanf(start, "%ld %ld %d %d",
+		if ((count = sscanf(start, "%ld %ld %d %d %ld",
 				 &message->data_size, &message->data_offset,
-				    &nrcpt, &message->rflags)) >= 3) {
+				    &nrcpt, &message->rflags,
+				    &message->cont_length)) >= 3) {
 		    /* Postfix >= 1.0 (a.k.a. 20010228). */
 		    if (message->data_offset <= 0 || message->data_size <= 0) {
 			msg_warn("%s: invalid size record: %.100s",
@@ -532,6 +536,15 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		    rec_type = REC_TYPE_ERROR;
 		    break;
 		}
+	    }
+	    /* Postfix < 2.4 compatibility. */
+	    if (message->cont_length == 0) {
+		message->cont_length = message->data_size;
+	    } else if (message->cont_length < 0) {
+		msg_warn("%s: invalid size record: %.100s",
+			 message->queue_id, start);
+		rec_type = REC_TYPE_ERROR;
+		break;
 	    }
 	    continue;
 	}
@@ -567,7 +580,7 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    if (message->sender == 0) {
 		message->sender = mystrdup(start);
 		opened(message->queue_id, message->sender,
-		       message->data_size, nrcpt,
+		       message->cont_length, nrcpt,
 		       "queue %s", message->queue_name);
 	    }
 	    continue;
@@ -879,22 +892,24 @@ static void qmgr_message_sort(QMGR_MESSAGE *message)
 static int qmgr_resolve_one(QMGR_MESSAGE *message, RECIPIENT *recipient,
 			            const char *addr, RESOLVE_REPLY *reply)
 {
-    DSN     dsn;
+#define QMGR_REDIRECT(rp, tp, np) do { \
+	(rp)->flags = 0; \
+	vstring_strcpy((rp)->transport, (tp)); \
+	vstring_strcpy((rp)->nexthop, (np)); \
+    } while (0)
 
     if ((message->tflags & DEL_REQ_FLAG_MTA_VRFY) == 0)
 	resolve_clnt_query_from(message->sender, addr, reply);
     else
 	resolve_clnt_verify_from(message->sender, addr, reply);
     if (reply->flags & RESOLVE_FLAG_FAIL) {
-	qmgr_defer_recipient(message, recipient,
-			     DSN_SIMPLE(&dsn, "4.3.0",
-					"address resolver failure"));
-	return (-1);
+	QMGR_REDIRECT(reply, MAIL_SERVICE_RETRY,
+		      "4.3.0 address resolver failure");
+	return (0);
     } else if (reply->flags & RESOLVE_FLAG_ERROR) {
-	qmgr_bounce_recipient(message, recipient,
-			      DSN_SIMPLE(&dsn, "5.1.3",
-					 "bad address syntax"));
-	return (-1);
+	QMGR_REDIRECT(reply, MAIL_SERVICE_ERROR,
+		      "5.1.3 bad address syntax");
+	return (0);
     } else {
 	return (0);
     }
@@ -918,6 +933,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
     int     status;
     DSN     dsn;
     MSG_STATS stats;
+    DSN    *saved_dsn;
 
 #define STREQ(x,y)	(strcmp(x,y) == 0)
 #define STR		vstring_str
@@ -928,15 +944,16 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
     for (recipient = list.info; recipient < list.info + list.len; recipient++) {
 
 	/*
-	 * Redirect overrides all else. But only once (per batch of
-	 * recipients). For consistency with the remainder of Postfix,
-	 * rewrite the address to canonical form before resolving it.
+	 * Redirect overrides all else. But only once (per entire message).
+	 * For consistency with the remainder of Postfix, rewrite the address
+	 * to canonical form before resolving it.
 	 */
 	if (message->redirect_addr) {
 	    if (recipient > list.info) {
 		recipient->u.queue = 0;
 		continue;
 	    }
+	    message->rcpt_offset = 0;
 	    rewrite_clnt_internal(REWRITE_CANON, message->redirect_addr,
 				  reply.recipient);
 	    RECIPIENT_UPDATE(recipient->address, STR(reply.recipient));
@@ -984,10 +1001,8 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * the queue manager process does not help.
 	 */
 	if (recipient->address[0] == 0) {
-	    qmgr_bounce_recipient(message, recipient,
-				  DSN_SIMPLE(&dsn, "5.1.3",
-					     "null recipient address"));
-	    continue;
+	    QMGR_REDIRECT(&reply, MAIL_SERVICE_ERROR,
+			  "5.1.3 null recipient address");
 	}
 
 	/*
@@ -1002,10 +1017,8 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * where it cannot be bypassed.
 	 */
 	if (var_allow_min_user == 0 && recipient->address[0] == '-') {
-	    qmgr_bounce_recipient(message, recipient,
-				  DSN_SIMPLE(&dsn, "5.1.3",
-					     "bad address syntax"));
-	    continue;
+	    QMGR_REDIRECT(&reply, MAIL_SERVICE_ERROR,
+			  "5.1.3 bad address syntax");
 	}
 
 	/*
@@ -1042,17 +1055,15 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * Optionally defer deliveries over specific transports, unless the
 	 * restriction is lifted temporarily.
 	 */
-	if (*var_defer_xports && (message->qflags & QMGR_FLUSH_DEAD) == 0) {
+	if (*var_defer_xports && (message->qflags & QMGR_FLUSH_DFXP) == 0) {
 	    if (defer_xport_argv == 0)
 		defer_xport_argv = argv_split(var_defer_xports, " \t\r\n,");
 	    for (cpp = defer_xport_argv->argv; *cpp; cpp++)
 		if (strcmp(*cpp, STR(reply.transport)) == 0)
 		    break;
 	    if (*cpp) {
-		qmgr_defer_recipient(message, recipient,
-				     DSN_SIMPLE(&dsn, "4.3.2",
-						"deferred transport"));
-		continue;
+		QMGR_REDIRECT(&reply, MAIL_SERVICE_RETRY,
+			      "4.3.2 deferred transport");
 	    }
 	}
 
@@ -1066,11 +1077,27 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	}
 
 	/*
+	 * This message is being flushed. If need-be unthrottle the
+	 * transport.
+	 */
+	if ((message->qflags & QMGR_FLUSH_EACH) != 0
+	    && QMGR_TRANSPORT_THROTTLED(transport))
+	    qmgr_transport_unthrottle(transport);
+
+	/*
 	 * This transport is dead. Defer delivery to this recipient.
 	 */
-	if ((transport->flags & QMGR_TRANSPORT_STAT_DEAD) != 0) {
-	    qmgr_defer_recipient(message, recipient, transport->dsn);
-	    continue;
+	if (QMGR_TRANSPORT_THROTTLED(transport)) {
+	    saved_dsn = transport->dsn;
+	    if ((transport = qmgr_error_transport(MAIL_SERVICE_RETRY)) != 0) {
+		nexthop = qmgr_error_nexthop(saved_dsn);
+		vstring_strcpy(reply.nexthop, nexthop);
+		myfree(nexthop);
+		queue = 0;
+	    } else {
+		qmgr_defer_recipient(message, recipient, saved_dsn);
+		continue;
+	    }
 	}
 
 	/*
@@ -1108,6 +1135,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 */
 	vstring_strcpy(queue_name, STR(reply.nexthop));
 	if (strcmp(transport->name, MAIL_SERVICE_ERROR) != 0
+	    && strcmp(transport->name, MAIL_SERVICE_RETRY) != 0
 	    && transport->recipient_limit == 1) {
 	    /* Copy the recipient localpart. */
 	    at = strrchr(STR(reply.recipient), '@');
@@ -1133,11 +1161,21 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	}
 
 	/*
+	 * This message is being flushed. If need-be unthrottle the queue.
+	 */
+	if ((message->qflags & QMGR_FLUSH_EACH) != 0
+	    && QMGR_QUEUE_THROTTLED(queue))
+	    qmgr_queue_unthrottle(queue);
+
+	/*
 	 * This queue is dead. Defer delivery to this recipient.
 	 */
-	if (queue->window == 0) {
-	    qmgr_defer_recipient(message, recipient, queue->dsn);
-	    continue;
+	if (QMGR_QUEUE_THROTTLED(queue)) {
+	    saved_dsn = queue->dsn;
+	    if ((queue = qmgr_error_queue(MAIL_SERVICE_RETRY, saved_dsn)) == 0) {
+		qmgr_defer_recipient(message, recipient, saved_dsn);
+		continue;
+	    }
 	}
 
 	/*
@@ -1234,7 +1272,7 @@ void    qmgr_message_free(QMGR_MESSAGE *message)
 /* qmgr_message_alloc - create in-core message structure */
 
 QMGR_MESSAGE *qmgr_message_alloc(const char *queue_name, const char *queue_id,
-				         int qflags)
+				         int qflags, mode_t mode)
 {
     const char *myname = "qmgr_message_alloc";
     QMGR_MESSAGE *message;
@@ -1268,6 +1306,13 @@ QMGR_MESSAGE *qmgr_message_alloc(const char *queue_name, const char *queue_id,
 	qmgr_message_free(message);
 	return (0);
     } else {
+
+	/*
+	 * We have validated the queue file content, so it is safe to modify
+	 * the file properties now.
+	 */
+	if (mode != 0 && fchmod(vstream_fileno(message->fp), mode) < 0)
+	    msg_fatal("fchmod %s: %m", VSTREAM_PATH(message->fp));
 
 	/*
 	 * Reset the defer log. This code should not be here, but we must

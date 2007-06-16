@@ -684,20 +684,30 @@ do
 	esac) || exit 1
 	continue;;
 
-     # Hard link
+     # Hard link. Skip files that are not installed.
 
-     h) eval dest_path=$install_root$path
-	check_parent $dest_path || exit 1
-	eval source_path=$install_root$source
-	compare_or_hardlink $source_path $dest_path || exit 1
+     h) eval echo $path | (
+	    IFS=/ read prefix file; IFS="$BACKUP_IFS"
+	    test "$prefix" = "no" || (
+		eval dest_path=$install_root$path
+		check_parent $dest_path || exit 1
+		eval source_path=$install_root$source
+		compare_or_hardlink $source_path $dest_path || exit 1
+	    )
+	) || exit 1
 	continue;;
 
-     # Symbolic link
+     # Symbolic link. Skip files that are not installed.
 
-     l) eval dest_path=$install_root$path
-	check_parent $dest_path || exit 1
-	eval source_path=$install_root$source
-	compare_or_symlink $source_path $dest_path || exit 1
+     l) eval echo $path | (
+	    IFS=/ read prefix file; IFS="$BACKUP_IFS"
+	    test "$prefix" = "no" || (
+		eval dest_path=$install_root$path
+		check_parent $dest_path || exit 1
+		eval source_path=$install_root$source
+		compare_or_symlink $source_path $dest_path || exit 1
+	    )
+	) || exit 1
 	continue;;
 
      *) echo $0: Error: unknown type $type for $path in conf/postfix-files 1>&2

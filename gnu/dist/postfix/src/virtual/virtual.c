@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.c,v 1.1.1.8 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: virtual.c,v 1.1.1.8.4.1 2007/06/16 17:02:17 snj Exp $	*/
 
 /*++
 /* NAME
@@ -28,8 +28,9 @@
 /*
 /*	The mailbox pathname is constructed as follows:
 /*
-/* .ti +2
-/*	\fB$virtual_mailbox_base/$virtual_mailbox_maps(\fIrecipient\fB)\fR
+/* .nf
+/*	  \fB$virtual_mailbox_base/$virtual_mailbox_maps(\fIrecipient\fB)\fR
+/* .fi
 /*
 /*	where \fIrecipient\fR is the full recipient address.
 /* UNIX MAILBOX FORMAT
@@ -226,11 +227,11 @@
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -305,6 +306,7 @@
 #include <deliver_request.h>
 #include <deliver_completed.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_conf.h>
 #include <mail_params.h>
 #include <mail_addr_find.h>
@@ -484,6 +486,8 @@ static void pre_init(char *unused_name, char **unused_argv)
     flush_init();
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the single-threaded skeleton */
 
 int     main(int argc, char **argv)
@@ -502,6 +506,11 @@ int     main(int argc, char **argv)
 	VAR_VIRT_MAILBOX_LOCK, DEF_VIRT_MAILBOX_LOCK, &var_virt_mailbox_lock, 1, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, local_service,
 		       MAIL_SERVER_INT_TABLE, int_table,

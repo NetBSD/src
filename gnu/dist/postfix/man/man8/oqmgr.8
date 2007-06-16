@@ -1,4 +1,4 @@
-.\"	$NetBSD: oqmgr.8,v 1.1.1.4 2006/07/19 01:16:49 rpaulo Exp $
+.\"	$NetBSD: oqmgr.8,v 1.1.1.4.4.1 2007/06/16 16:58:09 snj Exp $
 .\"
 .TH OQMGR 8 
 .ad
@@ -228,14 +228,14 @@ Idem, for delivery via the named message \fItransport\fR.
 .nf
 .ad
 .fi
-.IP "\fBminimal_backoff_time (1000s)\fR"
+.IP "\fBminimal_backoff_time (version dependent)\fR"
 The minimal time between attempts to deliver a deferred message.
 .IP "\fBmaximal_backoff_time (4000s)\fR"
 The maximal time between attempts to deliver a deferred message.
 .IP "\fBmaximal_queue_lifetime (5d)\fR"
 The maximal time a message is queued before it is sent back as
 undeliverable.
-.IP "\fBqueue_run_delay (1000s)\fR"
+.IP "\fBqueue_run_delay (version dependent)\fR"
 The time between deferred queue scans by the queue manager.
 .IP "\fBtransport_retry_time (60s)\fR"
 The time between attempts by the Postfix queue manager to contact

@@ -1,7 +1,7 @@
 # ACCESS(5)                                                            ACCESS(5)
 # 
 # NAME
-#        access - Postfix access table format
+#        access - Postfix SMTP server access table
 # 
 # SYNOPSIS
 #        postmap /etc/postfix/access
@@ -11,36 +11,35 @@
 #        postmap -q - /etc/postfix/access <inputfile
 # 
 # DESCRIPTION
-#        The  optional  access(5)  table  directs  the Postfix SMTP
-#        server to selectively reject or accept mail. Access can be
-#        allowed  or  denied for specific host names, domain names,
-#        networks, host addresses or mail addresses.
+#        This  document  describes  access  control  on remote SMTP
+#        client information: host  names,  network  addresses,  and
+#        envelope  sender or recipient addresses; it is implemented
+#        by the  Postfix  SMTP  server.   See  header_checks(5)  or
+#        body_checks(5)  for access control on the content of email
+#        messages.
 # 
-#        For an example, see the EXAMPLE section at the end of this
-#        manual page.
+#        Normally, the access(5) table is specified as a text  file
+#        that  serves  as  input  to  the  postmap(1) command.  The
+#        result, an indexed file in dbm or db format, is  used  for
+#        fast  searching  by  the  mail system. Execute the command
+#        "postmap /etc/postfix/access" to rebuild an  indexed  file
+#        after changing the corresponding text file.
 # 
-#        Normally,  the access(5) table is specified as a text file
-#        that serves as  input  to  the  postmap(1)  command.   The
-#        result,  an  indexed file in dbm or db format, is used for
-#        fast searching by the mail  system.  Execute  the  command
-#        "postmap  /etc/postfix/access"  in  order  to  rebuild the
-#        indexed file after changing the access table.
-# 
-#        When the table is provided via other means  such  as  NIS,
-#        LDAP  or  SQL,  the  same lookups are done as for ordinary
+#        When  the  table  is provided via other means such as NIS,
+#        LDAP or SQL, the same lookups are  done  as  for  ordinary
 #        indexed files.
 # 
-#        Alternatively, the table can be  provided  as  a  regular-
+#        Alternatively,  the  table  can  be provided as a regular-
 #        expression map where patterns are given as regular expres-
-#        sions, or lookups can be directed to TCP-based server.  In
-#        that  case,  the  lookups are done in a slightly different
-#        way as described below under "REGULAR  EXPRESSION  TABLES"
-#        and "TCP-BASED TABLES".
+#        sions,  or lookups can be directed to TCP-based server. In
+#        those cases, the lookups are done in a slightly  different
+#        way  as  described below under "REGULAR EXPRESSION TABLES"
+#        or "TCP-BASED TABLES".
 # 
 # CASE FOLDING
-#        The  search  string is folded to lowercase before database
-#        lookup. As of Postfix 2.3, the search string is  not  case
-#        folded  with database types such as regexp: or pcre: whose
+#        The search string is folded to lowercase  before  database
+#        lookup.  As  of Postfix 2.3, the search string is not case
+#        folded with database types such as regexp: or pcre:  whose
 #        lookup fields can match both upper and lower case.
 # 
 # TABLE FORMAT
@@ -51,53 +50,53 @@
 #               address, perform the corresponding action.
 # 
 #        blank lines and comments
-#               Empty lines and whitespace-only lines are  ignored,
-#               as  are  lines whose first non-whitespace character
+#               Empty  lines and whitespace-only lines are ignored,
+#               as are lines whose first  non-whitespace  character
 #               is a `#'.
 # 
 #        multi-line text
-#               A logical line starts with non-whitespace  text.  A
-#               line  that starts with whitespace continues a logi-
+#               A  logical  line starts with non-whitespace text. A
+#               line that starts with whitespace continues a  logi-
 #               cal line.
 # 
 # EMAIL ADDRESS PATTERNS
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked  tables  such  as NIS, LDAP or SQL, patterns are
+#        networked tables such as NIS, LDAP or  SQL,  patterns  are
 #        tried in the order as listed below:
 # 
 #        user@domain
 #               Matches the specified mail address.
 # 
 #        domain.tld
-#               Matches domain.tld as the domain part of  an  email
+#               Matches  domain.tld  as the domain part of an email
 #               address.
 # 
 #               The pattern domain.tld also matches subdomains, but
 #               only when the string smtpd_access_maps is listed in
-#               the  Postfix  parent_domain_matches_subdomains con-
-#               figuration setting (note that this is  the  default
-#               for  some versions of Postfix).  Otherwise, specify
-#               .domain.tld (note the  initial  dot)  in  order  to
+#               the Postfix  parent_domain_matches_subdomains  con-
+#               figuration  setting  (note that this is the default
+#               for some versions of Postfix).  Otherwise,  specify
+#               .domain.tld  (note  the  initial  dot)  in order to
 #               match subdomains.
 # 
-#        user@  Matches  all mail addresses with the specified user
+#        user@  Matches all mail addresses with the specified  user
 #               part.
 # 
-#        Note: lookup of the null sender address  is  not  possible
-#        with  some types of lookup table. By default, Postfix uses
-#        <> as the lookup key for  such  addresses.  The  value  is
-#        specified  with the smtpd_null_access_lookup_key parameter
+#        Note:  lookup  of  the null sender address is not possible
+#        with some types of lookup table. By default, Postfix  uses
+#        <>  as  the  lookup  key  for such addresses. The value is
+#        specified with the smtpd_null_access_lookup_key  parameter
 #        in the Postfix main.cf file.
 # 
 # EMAIL ADDRESS EXTENSION
 #        When a mail address localpart contains the optional recip-
-#        ient  delimiter  (e.g., user+foo@domain), the lookup order
-#        becomes: user+foo@domain, user@domain, domain,  user+foo@,
+#        ient delimiter (e.g., user+foo@domain), the  lookup  order
+#        becomes:  user+foo@domain, user@domain, domain, user+foo@,
 #        and user@.
 # 
 # HOST NAME/ADDRESS PATTERNS
 #        With lookups from indexed files such as DB or DBM, or from
-#        networked tables such as NIS, LDAP or SQL,  the  following
+#        networked  tables  such as NIS, LDAP or SQL, the following
 #        lookup patterns are examined in the order as listed:
 # 
 #        domain.tld
@@ -105,9 +104,9 @@
 # 
 #               The pattern domain.tld also matches subdomains, but
 #               only when the string smtpd_access_maps is listed in
-#               the  Postfix  parent_domain_matches_subdomains con-
+#               the Postfix  parent_domain_matches_subdomains  con-
 #               figuration setting.  Otherwise, specify .domain.tld
-#               (note  the  initial  dot)  in order to match subdo-
+#               (note the initial dot) in  order  to  match  subdo-
 #               mains.
 # 
 #        net.work.addr.ess
@@ -116,21 +115,21 @@
 # 
 #        net.work
 # 
-#        net    Matches the specified IPv4 host address or  subnet-
-#               work.  An  IPv4  host address is a sequence of four
+#        net    Matches  the specified IPv4 host address or subnet-
+#               work. An IPv4 host address is a  sequence  of  four
 #               decimal octets separated by ".".
 # 
-#               Subnetworks are matched  by  repeatedly  truncating
+#               Subnetworks  are  matched  by repeatedly truncating
 #               the last ".octet" from the remote IPv4 host address
-#               string until a match is found in the access  table,
+#               string  until a match is found in the access table,
 #               or until further truncation is not possible.
 # 
-#               NOTE 1: The information in the access map should be
-#               in canonical form, with unnecessary null characters
-#               eliminated.    Address   information  must  not  be
-#               enclosed with "[]" characters.
+#               NOTE 1: The access map lookup key must be in canon-
+#               ical  form: do not specify unnecessary null charac-
+#               ters, and do not enclose network  address  informa-
+#               tion with "[]" characters.
 # 
-#               NOTE 2: use the cidr lookup table type  to  specify
+#               NOTE  2:  use the cidr lookup table type to specify
 #               network/netmask  patterns.  See  cidr_table(5)  for
 #               details.
 # 
@@ -140,12 +139,12 @@
 # 
 #        net:work
 # 
-#        net    Matches the specified IPv6 host address or  subnet-
-#               work.  An  IPv6 host address is a sequence of three
-#               to eight hexadecimal octet pairs separated by  ":".
+#        net    Matches  the specified IPv6 host address or subnet-
+#               work. An IPv6 host address is a sequence  of  three
+#               to  eight hexadecimal octet pairs separated by ":".
 # 
-#               Subnetworks  are  matched  by repeatedly truncating
-#               the last ":octetpair" from  the  remote  IPv6  host
+#               Subnetworks are matched  by  repeatedly  truncating
+#               the  last  ":octetpair"  from  the remote IPv6 host
 #               address string until a match is found in the access
 #               table, or until further truncation is not possible.
 # 
@@ -153,12 +152,12 @@
 #               the string representation of the IPv6 host address.
 #               Thus, not all the ":" subnetworks will be tried.
 # 
-#               NOTE 2: The information in the access map should be
-#               in canonical form, with unnecessary null characters
-#               eliminated.    Address   information  must  not  be
-#               enclosed with "[]" characters.
+#               NOTE 2: The access map lookup key must be in canon-
+#               ical  form: do not specify unnecessary null charac-
+#               ters, and do not enclose network  address  informa-
+#               tion with "[]" characters.
 # 
-#               NOTE 3: use the cidr lookup table type  to  specify
+#               NOTE  3:  use the cidr lookup table type to specify
 #               network/netmask  patterns.  See  cidr_table(5)  for
 #               details.
 # 
@@ -169,48 +168,49 @@
 # 
 #        all-numerical
 #               An all-numerical result is treated as OK. This for-
-#               mat is generated by address-based relay  authoriza-
+#               mat  is generated by address-based relay authoriza-
 #               tion schemes such as pop-before-smtp.
 # 
 # REJECT ACTIONS
-#        Postfix  version  2.3  and  later  support enhanced status
-#        codes as defined in RFC 3463.  When no code  is  specified
-#        at  the  beginning  of  the  text below, Postfix inserts a
-#        default enhanced status code of "5.7.1"  in  the  case  of
-#        reject  actions, and "4.7.1" in the case of defer actions.
+#        Postfix version 2.3  and  later  support  enhanced  status
+#        codes  as  defined in RFC 3463.  When no code is specified
+#        at the beginning of the  text  below,  Postfix  inserts  a
+#        default  enhanced  status  code  of "5.7.1" in the case of
+#        reject actions, and "4.7.1" in the case of defer  actions.
 #        See "ENHANCED STATUS CODES" below.
 # 
 #        4NN text
 # 
 #        5NN text
-#               Reject the address etc. that matches  the  pattern,
+#               Reject  the  address etc. that matches the pattern,
 #               and respond with the numerical three-digit code and
-#               text. 4NN means "try again later", while 5NN  means
+#               text.  4NN means "try again later", while 5NN means
 #               "do not try again".
 # 
-#               The  reply  code "421" causes Postfix to disconnect
+#               The reply code "421" causes Postfix  to  disconnect
 #               immediately (Postfix version 2.3 and later).
 # 
 #        REJECT optional text...
-#               Reject the address etc. that matches  the  pattern.
-#               Reply  with  $reject_code optional text... when the
-#               optional text is specified, otherwise reply with  a
+#               Reject  the  address etc. that matches the pattern.
+#               Reply with $reject_code optional text...  when  the
+#               optional  text is specified, otherwise reply with a
 #               generic error response message.
 # 
 #        DEFER_IF_REJECT optional text...
-#               Defer  the  request if some later restriction would
-#               result in a REJECT action. Reply with "450 optional
-#               text... when the optional text is specified, other-
-#               wise reply with a generic error response message.
+#               Defer the request if some later  restriction  would
+#               result  in  a  REJECT action. Reply with "450 4.7.1
+#               optional text... when the optional text  is  speci-
+#               fied, otherwise reply with a generic error response
+#               message.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        DEFER_IF_PERMIT optional text...
 #               Defer  the  request if some later restriction would
 #               result in a an explicit or implicit PERMIT  action.
-#               Reply  with "450 optional text... when the optional
-#               text is specified, otherwise reply with  a  generic
-#               error response message.
+#               Reply  with  "450  4.7.1  optional text... when the
+#               optional text is specified, otherwise reply with  a
+#               generic error response message.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
@@ -247,9 +247,9 @@
 #               about external content filters is  in  the  Postfix
 #               FILTER_README file.
 # 
-#               Note:   this  action  overrides  the  main.cf  con-
-#               tent_filter  setting,  and  currently  affects  all
-#               recipients of the message.
+#               Note: this action overrides the content_filter set-
+#               ting, and currently affects all recipients  of  the
+#               message.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
@@ -266,25 +266,23 @@
 #               Note:  use  "postsuper -r" to release mail that was
 #               kept on hold for a significant fraction  of  $maxi-
 #               mal_queue_lifetime  or  $bounce_queue_lifetime,  or
-#               longer.
+#               longer. Use "postsuper -H" only for mail that  will
+#               not expire within a few delivery attempts.
 # 
-#               Note: this action currently affects all  recipients
+#               Note:  this action currently affects all recipients
 #               of the message.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
 #        PREPEND headername: headervalue
-#               Prepend the specified message header  to  the  mes-
-#               sage.  When this action is used multiple times, the
-#               first prepended header appears  before  the  second
-#               etc. prepended header.
+#               Prepend  the  specified  message header to the mes-
+#               sage.  When more than one PREPEND action  executes,
+#               the  first prepended header appears before the sec-
+#               ond etc. prepended header.
 # 
-#               Note:  this action does not support multi-line mes-
-#               sage headers.
-# 
-#               Note: this action must be used before  the  message
-#               content   is   received;   it  cannot  be  used  in
-#               smtpd_end_of_data_restrictions.
+#               Note: this action must execute before  the  message
+#               content  is received; it cannot execute in the con-
+#               text of smtpd_end_of_data_restrictions.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
@@ -355,7 +353,7 @@
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
-#        Postfix version 2.3.
+#        Postfix version 2.4.
 # 
 #        Each  lookup  operation uses the entire query string once.
 #        Depending on the application, that  string  is  an  entire
@@ -384,11 +382,11 @@
 #            1.2.3   REJECT
 #            1.2.3.4 OK
 # 
-#        Execute the command "postmap /etc/postfix/access" after
+#        Execute  the  command  "postmap /etc/postfix/access" after
 #        editing the file.
 # 
 # BUGS
-#        The  table format does not understand quoting conventions.
+#        The table format does not understand quoting  conventions.
 # 
 # SEE ALSO
 #        postmap(1), Postfix lookup table manager
@@ -397,13 +395,13 @@
 #        transport(5), transport:nexthop syntax
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        SMTPD_ACCESS_README, built-in SMTP server access control
 #        DATABASE_README, Postfix lookup table overview
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

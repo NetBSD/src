@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_params.c,v 1.1.1.2 2006/08/01 00:04:14 rpaulo Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.1.1.2.6.1 2007/06/16 17:01:11 snj Exp $	*/
 
     static CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -46,6 +46,8 @@
 	VAR_PROP_EXTENSION, DEF_PROP_EXTENSION, &var_prop_extension, 0, 0,
 	VAR_LMTP_GENERIC_MAPS, DEF_LMTP_GENERIC_MAPS, &var_smtp_generic_maps, 0, 0,
 	VAR_LMTP_TCP_PORT, DEF_LMTP_TCP_PORT, &var_lmtp_tcp_port, 0, 0,
+	VAR_LMTP_PIX_BUG_WORDS, DEF_LMTP_PIX_BUG_WORDS, &var_smtp_pix_bug_words, 0, 0,
+	VAR_LMTP_PIX_BUG_MAPS, DEF_LMTP_PIX_BUG_MAPS, &var_smtp_pix_bug_maps, 0, 0,
 	0,
     };
     static CONFIG_TIME_TABLE lmtp_time_table[] = {
