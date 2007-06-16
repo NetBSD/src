@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.53 2007/03/04 06:01:42 christos Exp $	*/
+/*	$NetBSD: midi.c,v 1.54 2007/06/16 10:25:03 pavel Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.53 2007/03/04 06:01:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.54 2007/06/16 10:25:03 pavel Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -965,7 +965,7 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			/* do two uiomoves if data wrap around end of buf */
 			if ( buf_cur + appetite > buf_end ) {
 				DPRINTFN(8,
-					("midiread: uiomove cc=%d (prewrap)\n",
+					("midiread: uiomove cc=%td (prewrap)\n",
 					buf_end - buf_cur));
 				error = uiomove(buf_cur, buf_end-buf_cur, uio);
 				if ( error )
@@ -1465,7 +1465,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 			bufspace = MIDI_BUF_PRODUCER_REFRESH(mb,buf) - buf_cur;
 			if ( idxspace >= 1  &&  bufspace >= 3  && !pollout )
 				break;
-			DPRINTFN(8,("midi_write: sleep idx=%d buf=%d\n", 
+			DPRINTFN(8,("midi_write: sleep idx=%zd buf=%zd\n", 
 				 idxspace, bufspace));
 			if (ioflag & IO_NDELAY) {
 				error = EWOULDBLOCK;
@@ -1536,7 +1536,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 		 */
 		if ( ! (sc->props & MIDI_PROP_OUT_INTR) )
 			pollout = 1;
-		DPRINTFN(8,("midiwrite: uio_resid now %u, props=%d\n",
+		DPRINTFN(8,("midiwrite: uio_resid now %zu, props=%d\n",
                         uio->uio_resid, sc->props));
 	}
 	return error;
