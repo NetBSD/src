@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.109.8.1 2007/05/22 14:57:39 itohy Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.109.8.2 2007/06/16 04:11:35 itohy Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.1 2007/05/22 14:57:39 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.2 2007/06/16 04:11:35 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.1 2007/05/22 14:57:39 itohy Exp $
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/mbuf.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -149,9 +150,8 @@ struct chan {
 	struct chanbuf {
 		struct chan	*chan;
 		usbd_xfer_handle xfer;
-		u_char		*buffer;
+		struct mbuf	mbuf[2];	/* for circular buffer */
 		uint16_t	sizes[UAUDIO_NFRAMES];
-		uint16_t	offsets[UAUDIO_NFRAMES];
 		uint16_t	size;
 	} chanbufs[UAUDIO_NCHANBUFS];
 
@@ -288,6 +288,7 @@ Static void	uaudio_ctl_set
 Static usbd_status uaudio_set_speed(struct uaudio_softc *, int, u_int);
 
 Static usbd_status uaudio_chan_open(struct uaudio_softc *, struct chan *);
+Static void	uaudio_chan_abort(struct uaudio_softc *, struct chan *);
 Static void	uaudio_chan_close(struct uaudio_softc *, struct chan *);
 Static usbd_status uaudio_chan_alloc_buffers
 	(struct uaudio_softc *, struct chan *);
@@ -2183,9 +2184,10 @@ uaudio_halt_out_dma(void *addr)
 	DPRINTF(("uaudio_halt_out_dma: enter\n"));
 	sc = addr;
 	if (sc->sc_playchan.pipe != NULL) {
+		uaudio_chan_abort(sc, &sc->sc_playchan);
+		uaudio_chan_free_buffers(sc, &sc->sc_playchan);
 		uaudio_chan_close(sc, &sc->sc_playchan);
 		sc->sc_playchan.pipe = NULL;
-		uaudio_chan_free_buffers(sc, &sc->sc_playchan);
 		sc->sc_playchan.intr = NULL;
 	}
 	return 0;
@@ -2199,9 +2201,10 @@ uaudio_halt_in_dma(void *addr)
 	DPRINTF(("uaudio_halt_in_dma: enter\n"));
 	sc = addr;
 	if (sc->sc_recchan.pipe != NULL) {
+		uaudio_chan_abort(sc, &sc->sc_playchan);
+		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
 		uaudio_chan_close(sc, &sc->sc_recchan);
 		sc->sc_recchan.pipe = NULL;
-		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
 		sc->sc_recchan.intr = NULL;
 	}
 	return 0;
@@ -2529,13 +2532,13 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction));
 
-	err = uaudio_chan_alloc_buffers(sc, ch);
+	err = uaudio_chan_open(sc, ch);
 	if (err)
 		return EIO;
 
-	err = uaudio_chan_open(sc, ch);
+	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
-		uaudio_chan_free_buffers(sc, ch);
+		uaudio_chan_close(sc, ch);
 		return EIO;
 	}
 
@@ -2572,13 +2575,13 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 		    "fraction=0.%03d\n", ch->sample_size, ch->bytes_per_frame,
 		    ch->fraction));
 
-	err = uaudio_chan_alloc_buffers(sc, ch);
+	err = uaudio_chan_open(sc, ch);
 	if (err)
 		return EIO;
 
-	err = uaudio_chan_open(sc, ch);
+	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
-		uaudio_chan_free_buffers(sc, ch);
+		uaudio_chan_close(sc, ch);
 		return EIO;
 	}
 
@@ -2639,7 +2642,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 }
 
 Static void
-uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
+uaudio_chan_abort(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct as_info *as;
 
@@ -2647,16 +2650,29 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 	as->sc_busy = 0;
 	AUFMT_VALIDATE(as->aformat);
 	if (sc->sc_nullalt >= 0) {
-		DPRINTF(("uaudio_chan_close: set null alt=%d\n",
+		DPRINTF(("uaudio_chan_abort: set null alt=%d\n",
 			 sc->sc_nullalt));
 		usbd_set_interface(as->ifaceh, sc->sc_nullalt);
 	}
 	if (ch->pipe) {
 		usbd_abort_pipe(ch->pipe);
-		usbd_close_pipe(ch->pipe);
 	}
 	if (ch->sync_pipe) {
 		usbd_abort_pipe(ch->sync_pipe);
+	}
+}
+
+Static void
+uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
+{
+	struct as_info *as;
+
+	as = &sc->sc_alts[ch->altidx];
+	AUFMT_VALIDATE(as->aformat);
+	if (ch->pipe) {
+		usbd_close_pipe(ch->pipe);
+	}
+	if (ch->sync_pipe) {
 		usbd_close_pipe(ch->sync_pipe);
 	}
 }
@@ -2665,7 +2681,6 @@ Static usbd_status
 uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 {
 	usbd_xfer_handle xfer;
-	void *tbuf;
 	int i, size;
 
 	size = (ch->bytes_per_frame + ch->sample_size) * UAUDIO_NFRAMES;
@@ -2674,13 +2689,16 @@ uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 		if (xfer == 0)
 			goto bad;
 		ch->chanbufs[i].xfer = xfer;
-		tbuf = usbd_alloc_buffer(xfer, size);
-		if (tbuf == 0) {
+		if (usbd_map_alloc(xfer)) {
 			i++;
 			goto bad;
 		}
-		ch->chanbufs[i].buffer = tbuf;
 		ch->chanbufs[i].chan = ch;
+
+		/* fake up mbuf to describe circular buffer */
+		ch->chanbufs[i].mbuf[0].m_flags = M_PKTHDR | M_EXT;
+		ch->chanbufs[i].mbuf[1].m_flags = M_EXT;
+		ch->chanbufs[i].mbuf[1].m_next = NULL;
 	}
 
 	return USBD_NORMAL_COMPLETION;
@@ -2734,24 +2752,35 @@ uaudio_chan_ptransfer(struct chan *ch)
 	cb->size = total;
 
 	/*
-	 * Transfer data from upper layer buffer to channel buffer, taking
-	 * care of wrapping the upper layer buffer.
+	 * Map upper layer buffer, taking care of wrapping.
 	 */
 	n = min(total, ch->end - ch->cur);
-	memcpy(cb->buffer, ch->cur, n);
+	cb->mbuf[0].m_pkthdr.len = total;
+	cb->mbuf[0].m_data = ch->cur;
+	cb->mbuf[0].m_len = n;
 	ch->cur += n;
 	if (ch->cur >= ch->end)
 		ch->cur = ch->start;
 	if (total > n) {
 		total -= n;
-		memcpy(cb->buffer + n, ch->cur, total);
+		cb->mbuf[0].m_next = &cb->mbuf[1];
+		cb->mbuf[1].m_data = ch->cur;
+		cb->mbuf[1].m_len = total;
 		ch->cur += total;
+	} else {
+		cb->mbuf[0].m_next = NULL;
+	}
+	if (usbd_map_buffer_mbuf(cb->xfer, &cb->mbuf[0]) != 0) {
+		/* You should probably increase USB_DMA_NSEG if this happen. */
+		printf("%s: map mbuf failed for playback\n",
+		    USBDEVNAME(ch->sc->sc_dev));
+		return;
 	}
 
 #ifdef UAUDIO_DEBUG
 	if (uaudiodebug > 8) {
-		DPRINTF(("uaudio_chan_ptransfer: buffer=%p, residue=0.%03d\n",
-			 cb->buffer, ch->residue));
+		DPRINTF(("uaudio_chan_ptransfer: residue=0.%03d\n",
+			 ch->residue));
 		for (i = 0; i < UAUDIO_NFRAMES; i++) {
 			DPRINTF(("   [%d] length %d\n", i, cb->sizes[i]));
 		}
@@ -2778,6 +2807,8 @@ uaudio_chan_pintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	cb = priv;
 	ch = cb->chan;
+	usbd_unmap_buffer(xfer);
+
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
 		return;
@@ -2812,7 +2843,7 @@ Static void
 uaudio_chan_rtransfer(struct chan *ch)
 {
 	struct chanbuf *cb;
-	int i, size, residue, total;
+	int i, n, size, residue, total;
 
 	if (ch->sc->sc_dying)
 		return;
@@ -2828,16 +2859,41 @@ uaudio_chan_rtransfer(struct chan *ch)
 	for (i = 0; i < UAUDIO_NFRAMES; i++) {
 		size = ch->bytes_per_frame;
 		cb->sizes[i] = size;
-		cb->offsets[i] = total;
 		total += size;
 	}
 	ch->residue = residue;
 	cb->size = total;
 
+	/*
+	 * Map upper layer buffer, taking care of wrapping.
+	 */
+	n = min(total, ch->end - ch->cur);
+	cb->mbuf[0].m_pkthdr.len = total;
+	cb->mbuf[0].m_data = ch->cur;
+	cb->mbuf[0].m_len = n;
+	ch->cur += n;
+	if (ch->cur >= ch->end)
+		ch->cur = ch->start;
+	if (total > n) {
+		total -= n;
+		cb->mbuf[0].m_next = &cb->mbuf[1];
+		cb->mbuf[1].m_data = ch->cur;
+		cb->mbuf[1].m_len = total;
+		ch->cur += total;
+	} else {
+		cb->mbuf[0].m_next = NULL;
+	}
+	if (usbd_map_buffer_mbuf(cb->xfer, &cb->mbuf[0]) != 0) {
+		/* You should probably increase USB_DMA_NSEG if this happen. */
+		printf("%s: map mbuf failed for recording\n",
+		    USBDEVNAME(ch->sc->sc_dev));
+		return;
+	}
+
 #ifdef UAUDIO_DEBUG
 	if (uaudiodebug > 8) {
-		DPRINTF(("uaudio_chan_rtransfer: buffer=%p, residue=0.%03d\n",
-			 cb->buffer, ch->residue));
+		DPRINTF(("uaudio_chan_rtransfer: residue=0.%03d\n",
+			 ch->residue));
 		for (i = 0; i < UAUDIO_NFRAMES; i++) {
 			DPRINTF(("   [%d] length %d\n", i, cb->sizes[i]));
 		}
@@ -2860,10 +2916,12 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct chanbuf *cb;
 	struct chan *ch;
 	uint32_t count;
-	int s, i, n, frsize;
+	int s;
 
 	cb = priv;
 	ch = cb->chan;
+	usbd_unmap_buffer(xfer);
+
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
 		return;
@@ -2879,24 +2937,6 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		       count, cb->size);
 	}
 #endif
-
-	/*
-	 * Transfer data from channel buffer to upper layer buffer, taking
-	 * care of wrapping the upper layer buffer.
-	 */
-	for(i = 0; i < UAUDIO_NFRAMES; i++) {
-		frsize = cb->sizes[i];
-		n = min(frsize, ch->end - ch->cur);
-		memcpy(ch->cur, cb->buffer + cb->offsets[i], n);
-		ch->cur += n;
-		if (ch->cur >= ch->end)
-			ch->cur = ch->start;
-		if (frsize > n) {
-			memcpy(ch->cur, cb->buffer + cb->offsets[i] + n,
-			    frsize - n);
-			ch->cur += frsize - n;
-		}
-	}
 
 	/* Call back to upper layer */
 	ch->transferred += count;
