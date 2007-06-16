@@ -1,4 +1,4 @@
-# $NetBSD: PARALLELS,v 1.13 2007/05/29 21:37:09 christos Exp $
+# $NetBSD: PARALLELS,v 1.14 2007/06/16 12:35:57 ad Exp $
 #
 # PARALLELS machine description file
 #
@@ -172,7 +172,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
