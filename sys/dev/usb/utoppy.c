@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.8.10.1 2007/05/22 14:57:51 itohy Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.8.10.2 2007/06/16 04:12:32 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.10.1 2007/05/22 14:57:51 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.10.2 2007/06/16 04:12:32 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,47 +262,10 @@ USB_ATTACH(utoppy)
 	sc->sc_iface = uaa->iface;
 	sc->sc_udev = dev;
 
-	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_out_pipe);
-	if (sc->sc_out_xfer == NULL) {
-		printf("%s: could not allocate bulk out xfer\n",
-		    USBDEVNAME(sc->sc_dev));
-		goto fail0;
-	}
-
-	sc->sc_out_buf = usbd_alloc_buffer(sc->sc_out_xfer, UTOPPY_FRAG_SIZE);
-	if (sc->sc_out_buf == NULL) {
-		printf("%s: could not allocate bulk out buffer\n",
-		    USBDEVNAME(sc->sc_dev));
-		goto fail1;
-	}
-
-	sc->sc_in_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_in_pipe);
-	if (sc->sc_in_xfer == NULL) {
-		printf("%s: could not allocate bulk in xfer\n",
-		    USBDEVNAME(sc->sc_dev));
-		goto fail1;
-	}
-
-	sc->sc_in_buf = usbd_alloc_buffer(sc->sc_in_xfer, UTOPPY_FRAG_SIZE);
-	if (sc->sc_in_buf == NULL) {
-		printf("%s: could not allocate bulk in buffer\n",
-		    USBDEVNAME(sc->sc_dev));
-		goto fail2;
-	}
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
-
- fail2:	usbd_free_xfer(sc->sc_in_xfer);
-	sc->sc_in_xfer = NULL;
-
- fail1:	usbd_free_xfer(sc->sc_out_xfer);
-	sc->sc_out_xfer = NULL;
-
- fail0:	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
 }
 
 int
@@ -337,6 +300,11 @@ USB_DETACH(utoppy)
 		usbd_free_xfer(sc->sc_in_xfer);
 	if (sc->sc_out_xfer != NULL)
 		usbd_free_xfer(sc->sc_out_xfer);
+
+	if (sc->sc_out_pipe != NULL)
+		usbd_close_pipe(sc->sc_out_pipe);
+	if (sc->sc_in_pipe != NULL)
+		usbd_close_pipe(sc->sc_in_pipe);
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0)
@@ -1374,6 +1342,30 @@ utoppyopen(dev_t dev, int flag, int mode,
 		goto done;
 	}
 
+	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_out_pipe);
+	if (sc->sc_out_xfer == NULL) {
+		error = ENOMEM;
+		goto error;
+	}
+
+	sc->sc_out_buf = usbd_alloc_buffer(sc->sc_out_xfer, UTOPPY_FRAG_SIZE);
+	if (sc->sc_out_buf == NULL) {
+		error = ENOMEM;
+		goto error;
+	}
+
+	sc->sc_in_xfer = usbd_alloc_xfer(sc->sc_udev, sc->sc_in_pipe);
+	if (sc->sc_in_xfer == NULL) {
+		error = ENOMEM;
+		goto error;
+	}
+
+	sc->sc_in_buf = usbd_alloc_buffer(sc->sc_in_xfer, UTOPPY_FRAG_SIZE);
+	if (sc->sc_in_buf == NULL) {
+		error = ENOMEM;
+		goto error;
+	}
+
 	sc->sc_out_data = malloc(UTOPPY_BSIZE + 1, M_DEVBUF, M_WAITOK);
 	if (sc->sc_out_data == NULL) {
 		error = ENOMEM;
@@ -1396,11 +1388,17 @@ utoppyopen(dev_t dev, int flag, int mode,
 		    " returned %d\n", USBDEVNAME(sc->sc_dev), error));
  error:
 		usbd_abort_pipe(sc->sc_out_pipe);
+		if (sc->sc_out_xfer)
+			usbd_free_xfer(sc->sc_out_xfer);
 		usbd_close_pipe(sc->sc_out_pipe);
 		sc->sc_out_pipe = NULL;
+		sc->sc_out_xfer = NULL;
 		usbd_abort_pipe(sc->sc_in_pipe);
+		if (sc->sc_in_xfer)
+			usbd_free_xfer(sc->sc_in_xfer);
 		usbd_close_pipe(sc->sc_in_pipe);
 		sc->sc_in_pipe = NULL;
+		sc->sc_in_xfer = NULL;
 	}
 
  done:
@@ -1442,17 +1440,23 @@ utoppyclose(dev_t dev, int flag, int mode,
 	if (sc->sc_out_pipe != NULL) {
 		if ((err = usbd_abort_pipe(sc->sc_out_pipe)) != 0)
 			printf("usbd_abort_pipe(OUT) returned %d\n", err);
+		if (sc->sc_out_xfer)
+			usbd_free_xfer(sc->sc_out_xfer);
 		if ((err = usbd_close_pipe(sc->sc_out_pipe)) != 0)
 			printf("usbd_close_pipe(OUT) returned %d\n", err);
 		sc->sc_out_pipe = NULL;
+		sc->sc_out_xfer = NULL;
 	}
 
 	if (sc->sc_in_pipe != NULL) {
 		if ((err = usbd_abort_pipe(sc->sc_in_pipe)) != 0)
 			printf("usbd_abort_pipe(IN) returned %d\n", err);
+		if (sc->sc_in_xfer)
+			usbd_free_xfer(sc->sc_in_xfer);
 		if ((err = usbd_close_pipe(sc->sc_in_pipe)) != 0)
 			printf("usbd_close_pipe(IN) returned %d\n", err);
 		sc->sc_in_pipe = NULL;
+		sc->sc_in_xfer = NULL;
 	}
 
 	if (sc->sc_out_data) {

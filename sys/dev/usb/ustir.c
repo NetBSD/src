@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.17.10.1 2007/05/22 14:57:51 itohy Exp $	*/
+/*	$NetBSD: ustir.c,v 1.17.10.2 2007/06/16 04:12:32 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.17.10.1 2007/05/22 14:57:51 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.17.10.2 2007/06/16 04:12:32 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -964,16 +964,10 @@ ustir_close(void *h, int flag, int mode,
 	while (sc->sc_thread != NULL)
 		tsleep(&sc->sc_closing, PWAIT, "usircl", 0);
 
-	if (sc->sc_rd_pipe != NULL) {
+	if (sc->sc_rd_pipe != NULL)
 		usbd_abort_pipe(sc->sc_rd_pipe);
-		usbd_close_pipe(sc->sc_rd_pipe);
-		sc->sc_rd_pipe = NULL;
-	}
-	if (sc->sc_wr_pipe != NULL) {
+	if (sc->sc_wr_pipe != NULL)
 		usbd_abort_pipe(sc->sc_wr_pipe);
-		usbd_close_pipe(sc->sc_wr_pipe);
-		sc->sc_wr_pipe = NULL;
-	}
 	if (sc->sc_rd_xfer != NULL) {
 		usbd_free_xfer(sc->sc_rd_xfer);
 		sc->sc_rd_xfer = NULL;
@@ -987,6 +981,14 @@ ustir_close(void *h, int flag, int mode,
 	if (sc->sc_ur_buf != NULL) {
 		free(sc->sc_ur_buf, M_USBDEV);
 		sc->sc_ur_buf = NULL;
+	}
+	if (sc->sc_rd_pipe != NULL) {
+		usbd_close_pipe(sc->sc_rd_pipe);
+		sc->sc_rd_pipe = NULL;
+	}
+	if (sc->sc_wr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_wr_pipe);
+		sc->sc_wr_pipe = NULL;
 	}
 
 	if (--sc->sc_refcnt < 0)

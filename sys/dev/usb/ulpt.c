@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.76.10.1 2007/05/22 14:57:43 itohy Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.76.10.2 2007/06/16 04:12:31 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76.10.1 2007/05/22 14:57:43 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76.10.2 2007/06/16 04:12:31 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,24 +662,26 @@ ulptclose(dev_t dev, int flag, int mode,
 		sc->sc_has_callout = 0;
 	}
 
-	if (sc->sc_out_pipe != NULL) {
+	if (sc->sc_out_pipe != NULL)
 		usbd_abort_pipe(sc->sc_out_pipe);
-		usbd_close_pipe(sc->sc_out_pipe);
-		sc->sc_out_pipe = NULL;
-	}
 	if (sc->sc_out_xfer != NULL) {
 		usbd_free_xfer(sc->sc_out_xfer);
 		sc->sc_out_xfer = NULL;
 	}
-
-	if (sc->sc_in_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_in_pipe);
-		usbd_close_pipe(sc->sc_in_pipe);
-		sc->sc_in_pipe = NULL;
+	if (sc->sc_out_pipe != NULL) {
+		usbd_close_pipe(sc->sc_out_pipe);
+		sc->sc_out_pipe = NULL;
 	}
+
+	if (sc->sc_in_pipe != NULL)
+		usbd_abort_pipe(sc->sc_in_pipe);
 	if (sc->sc_in_xfer != NULL) {
 		usbd_free_xfer(sc->sc_in_xfer);
 		sc->sc_in_xfer = NULL;
+	}
+	if (sc->sc_in_pipe != NULL) {
+		usbd_close_pipe(sc->sc_in_pipe);
+		sc->sc_in_pipe = NULL;
 	}
 
 	sc->sc_state = 0;
