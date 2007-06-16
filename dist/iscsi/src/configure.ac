@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.57)
-AC_INIT([netbsd-iscsi],[20060727],[Alistair Crooks <agc@NetBSD.org>])
+AC_INIT([netbsd-iscsi],[20070615],[Alistair Crooks <agc@NetBSD.org>])
 AC_CONFIG_SRCDIR([iscsi.c])
 AC_CONFIG_HEADER(../include/config.h)
 
