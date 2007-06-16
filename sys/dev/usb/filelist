@@ -1,5 +1,5 @@
 #! /bin/sh -e
-# $NetBSD: filelist,v 1.1.2.1 2007/05/22 14:57:35 itohy Exp $
+# $NetBSD: filelist,v 1.1.2.2 2007/06/16 04:14:26 itohy Exp $
 #	List of files in branch
 #
 : ${base='-D2007-03-01'}
@@ -13,6 +13,8 @@ sed -e '1,/^### FILE LIST ###/d' -e '/^#/d' <<'###END' | xargs ${cvsprog} update
 # branch-only files
 #dev/usb/filelist
 #dev/usb/api.txt
+#dev/usb/usb_ethersubr.c
+#dev/usb/usb_ethersubr.h
 #dev/usb/usb_mem_nodma.c
 #dev/usb/usb_mem_nodma.h
 #dev/pcmcia/slhci_pcmcia.c
