@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.56 2006/05/14 21:38:18 elad Exp $	*/
+/*	$NetBSD: file.h,v 1.57 2007/06/16 20:48:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -146,9 +146,10 @@ do {									\
 #define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
 
 /*
- * Flags for fo_read and fo_write.
+ * Flags for fo_read and fo_write and do_fileread/write/v
  */
-#define	FOF_UPDATE_OFFSET	0x01	/* update the file offset */
+#define	FOF_UPDATE_OFFSET	0x0001	/* update the file offset */
+#define	FOF_IOV_SYSSPACE	0x0100	/* iov structure in kernel memory */
 
 LIST_HEAD(filelist, file);
 extern struct filelist	filehead;	/* head of list of open files */
@@ -162,10 +163,10 @@ int	dofileread(struct lwp *, int, struct file *, void *, size_t,
 int	dofilewrite(struct lwp *, int, struct file *, const void *,
 	    size_t, off_t *, int, register_t *);
 
-int	dofilereadv(struct lwp *, int, struct file *,
-	    const struct iovec *, int, off_t *, int, register_t *);
-int	dofilewritev(struct lwp *, int, struct file *,
-	    const struct iovec *, int, off_t *, int, register_t *);
+int	do_filereadv(struct lwp *, int, const struct iovec *, int, off_t *,
+	    int, register_t *);
+int	do_filewritev(struct lwp *, int, const struct iovec *, int, off_t *,
+	    int, register_t *);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);
 int	fgetown(struct proc *, pid_t, int, void *);

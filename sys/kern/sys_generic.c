@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.101 2007/06/02 13:38:31 dsl Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.102 2007/06/16 20:48:03 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.101 2007/06/02 13:38:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.102 2007/06/16 20:48:03 dsl Exp $");
 
 #include "opt_ktrace.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.101 2007/06/02 13:38:31 dsl Exp $"
 #include <sys/kernel.h>
 #include <sys/stat.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 #include <sys/poll.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -174,80 +175,91 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct iovec *)	iovp;
 		syscallarg(int)				iovcnt;
 	} */ *uap = v;
-	struct filedesc	*fdp;
-	struct file *fp;
-	struct proc *p;
-	int fd;
 
-	fd = SCARG(uap, fd);
-	p = l->l_proc;
-	fdp = p->p_fd;
-
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FREAD) == 0) {
-		simple_unlock(&fp->f_slock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	/* dofilereadv() will unuse the descriptor for us */
-	return (dofilereadv(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+	return do_filereadv(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
 }
 
 int
-dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
-	int iovcnt, off_t *offset, int flags, register_t *retval)
+do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
+    off_t *offset, int flags, register_t *retval)
 {
-	struct proc *p;
+	struct proc	*p;
 	struct uio	auio;
-	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct iovec	*iov, *needfree = NULL, aiov[UIO_SMALLIOV];
 	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
+	struct file	*fp;
+	struct filedesc	*fdp;
 #ifdef KTRACE
-	struct iovec	*ktriov;
+	struct iovec	*ktriov = NULL;
 #endif
+
+	if (iovcnt == 0)
+		return EINVAL;
 
 	p = l->l_proc;
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		goto out;
+	fdp = p->p_fd;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return EBADF;
+
+	if ((fp->f_flag & FREAD) == 0) {
+		simple_unlock(&fp->f_slock);
+		return EBADF;
 	}
 
-#ifdef KTRACE
-	ktriov = NULL;
-#endif
-	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof(struct iovec);
-	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX) {
-			error = EINVAL;
+	FILE_USE(fp);
+
+	if (offset == NULL)
+		offset = &fp->f_offset;
+	else {
+		struct vnode *vp = fp->f_data;
+		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+			error = ESPIPE;
 			goto out;
 		}
-		iov = malloc(iovlen, M_IOV, M_WAITOK);
-		needfree = iov;
-	} else if ((u_int)iovcnt > 0) {
-		iov = aiov;
-		needfree = NULL;
-	} else {
-		error = EINVAL;
+		/*
+		 * Test that the device is seekable ?
+		 * XXX This works because no file systems actually
+		 * XXX take any action on the seek operation.
+		 */
+		error = VOP_SEEK(vp, fp->f_offset, *offset, fp->f_cred);
+		if (error != 0)
+			goto out;
+	}
+
+	error = proc_vmspace_getref(p, &vm);
+	if (error)
 		goto out;
+
+	iovlen = iovcnt * sizeof(struct iovec);
+	if (flags & FOF_IOV_SYSSPACE)
+		iov = __UNCONST(iovp);
+	else {
+		iov = aiov;
+		if ((u_int)iovcnt > UIO_SMALLIOV) {
+			if ((u_int)iovcnt > IOV_MAX) {
+				error = EINVAL;
+				goto out;
+			}
+			iov = malloc(iovlen, M_IOV, M_WAITOK);
+			needfree = iov;
+		}
+		error = copyin(iovp, iov, iovlen);
+		if (error)
+			goto done;
 	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
 	auio.uio_vmspace = vm;
-	error = copyin(iovp, iov, iovlen);
-	if (error)
-		goto done;
+
 	auio.uio_resid = 0;
-	for (i = 0; i < iovcnt; i++) {
+	for (i = 0; i < iovcnt; i++, iov++) {
 		auio.uio_resid += iov->iov_len;
 		/*
 		 * Reads return ssize_t because -1 is returned on error.
@@ -258,17 +270,18 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 			error = EINVAL;
 			goto done;
 		}
-		iov++;
 	}
+
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
+
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
 	if (error)
@@ -276,6 +289,8 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
+	*retval = cnt;
+
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
@@ -283,7 +298,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		free(ktriov, M_TEMP);
 	}
 #endif
-	*retval = cnt;
+
  done:
 	if (needfree)
 		free(needfree, M_IOV);
@@ -404,79 +419,91 @@ sys_writev(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct iovec *)	iovp;
 		syscallarg(int)				iovcnt;
 	} */ *uap = v;
-	int		fd;
-	struct file	*fp;
-	struct proc	*p;
-	struct filedesc	*fdp;
 
-	fd = SCARG(uap, fd);
-	p = l->l_proc;
-	fdp = p->p_fd;
-
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FWRITE) == 0) {
-		simple_unlock(&fp->f_slock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	/* dofilewritev() will unuse the descriptor for us */
-	return (dofilewritev(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+	return do_filewritev(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
 }
 
 int
-dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
-	int iovcnt, off_t *offset, int flags, register_t *retval)
+do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
+    off_t *offset, int flags, register_t *retval)
 {
 	struct proc	*p;
 	struct uio	auio;
-	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct iovec	*iov, *needfree = NULL, aiov[UIO_SMALLIOV];
 	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
+	struct file	*fp;
+	struct filedesc	*fdp;
 #ifdef KTRACE
-	struct iovec	*ktriov;
+	struct iovec	*ktriov = NULL;
 #endif
 
+	if (iovcnt == 0)
+		return EINVAL;
+
 	p = l->l_proc;
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		goto out;
+	fdp = p->p_fd;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return EBADF;
+
+	if ((fp->f_flag & FWRITE) == 0) {
+		simple_unlock(&fp->f_slock);
+		return EBADF;
 	}
-#ifdef KTRACE
-	ktriov = NULL;
-#endif
-	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof(struct iovec);
-	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX) {
-			error = EINVAL;
+
+	FILE_USE(fp);
+
+	if (offset == NULL)
+		offset = &fp->f_offset;
+	else {
+		struct vnode *vp = fp->f_data;
+		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+			error = ESPIPE;
 			goto out;
 		}
-		iov = malloc(iovlen, M_IOV, M_WAITOK);
-		needfree = iov;
-	} else if ((u_int)iovcnt > 0) {
-		iov = aiov;
-		needfree = NULL;
-	} else {
-		error = EINVAL;
+		/*
+		 * Test that the device is seekable ?
+		 * XXX This works because no file systems actually
+		 * XXX take any action on the seek operation.
+		 */
+		error = VOP_SEEK(vp, fp->f_offset, *offset, fp->f_cred);
+		if (error != 0)
+			goto out;
+	}
+
+	error = proc_vmspace_getref(p, &vm);
+	if (error)
 		goto out;
+
+	iovlen = iovcnt * sizeof(struct iovec);
+	if (flags & FOF_IOV_SYSSPACE)
+		iov = __UNCONST(iovp);
+	else {
+		iov = aiov;
+		if ((u_int)iovcnt > UIO_SMALLIOV) {
+			if ((u_int)iovcnt > IOV_MAX) {
+				error = EINVAL;
+				goto out;
+			}
+			iov = malloc(iovlen, M_IOV, M_WAITOK);
+			needfree = iov;
+		}
+		error = copyin(iovp, iov, iovlen);
+		if (error)
+			goto done;
 	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_vmspace = vm;
-	error = copyin(iovp, iov, iovlen);
-	if (error)
-		goto done;
+
 	auio.uio_resid = 0;
-	for (i = 0; i < iovcnt; i++) {
+	for (i = 0; i < iovcnt; i++, iov++) {
 		auio.uio_resid += iov->iov_len;
 		/*
 		 * Writes return ssize_t because -1 is returned on error.
@@ -487,15 +514,15 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 			error = EINVAL;
 			goto done;
 		}
-		iov++;
 	}
+
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
+		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -511,6 +538,8 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		}
 	}
 	cnt -= auio.uio_resid;
+	*retval = cnt;
+
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
@@ -518,7 +547,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		free(ktriov, M_TEMP);
 	}
 #endif
-	*retval = cnt;
+
  done:
 	if (needfree)
 		free(needfree, M_IOV);
