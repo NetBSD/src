@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.104 2007/06/15 23:05:28 jmcneill Exp $
+# $NetBSD: ALL,v 1.105 2007/06/16 12:35:55 ad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.104 $"
+#ident 		"ALL-$Revision: 1.105 $"
 
 maxusers	32		# estimated number of users
 
@@ -239,7 +239,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM

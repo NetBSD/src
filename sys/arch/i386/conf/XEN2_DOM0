@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.27 2007/05/29 21:37:09 christos Exp $
+# $NetBSD: XEN2_DOM0,v 1.28 2007/06/16 12:35:57 ad Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -164,7 +164,6 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""

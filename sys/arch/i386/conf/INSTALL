@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.311 2007/06/14 21:14:49 pavel Exp $
+#	$NetBSD: INSTALL,v 1.312 2007/06/16 12:35:56 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -159,7 +159,6 @@ options 	INET6		# IPv6
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 #
 # wscons options

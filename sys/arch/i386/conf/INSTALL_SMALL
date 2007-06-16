@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.133 2007/05/29 21:37:08 christos Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.134 2007/06/16 12:35:56 ad Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -150,7 +150,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

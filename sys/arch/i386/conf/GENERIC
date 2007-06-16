@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.833 2007/06/15 23:05:29 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.834 2007/06/16 12:35:55 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.833 $"
+#ident 		"GENERIC-$Revision: 1.834 $"
 
 maxusers	32		# estimated number of users
 
@@ -248,7 +248,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM

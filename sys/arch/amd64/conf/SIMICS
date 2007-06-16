@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.31 2007/05/29 23:21:52 christos Exp $
+#	$NetBSD: SIMICS,v 1.32 2007/06/16 12:35:55 ad Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -135,7 +135,6 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Squeeze...
 #options 	NVNODE=50
