@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_types.h,v 1.4 2007/03/04 07:54:10 christos Exp $	 */
+/*	$NetBSD: svr4_32_types.h,v 1.5 2007/06/16 20:04:29 dsl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ typedef int		 svr4_32_key_t;
 typedef struct netbsd32_timespec  svr4_32_timestruc_t;
 
 /* Pointer types used by svr4_32_syscallargs.h */
-#define PTR	typedef netbsd32_caddr_t
+#define PTR	typedef netbsd32_pointer_t
 PTR svr4_32_utimbufp;
 PTR svr4_32_tms_tp;
 PTR svr4_32_strbuf_tp;

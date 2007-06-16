@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.78 2007/05/07 21:18:26 dogcow Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.79 2007/06/16 20:04:28 dsl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.78 2007/05/07 21:18:26 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.79 2007/06/16 20:04:28 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -366,8 +366,6 @@ osf1_sys_uname(l, v, retval)
         struct osf1_utsname u;
         const char *cp;
         char *dp, *ep;
-
-	/* XXX would use stackgap, but our struct utsname is too big! */
 
         strncpy(u.sysname, ostype, sizeof(u.sysname));
         strncpy(u.nodename, hostname, sizeof(u.nodename));
