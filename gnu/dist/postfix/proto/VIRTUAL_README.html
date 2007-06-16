@@ -432,9 +432,13 @@ domain!  </p>
 
 <li> <p> Lines 4, 7-13: The virtual_mailbox_maps parameter specifies
 the lookup table with all valid recipient addresses. The lookup
-result is ignored by Postfix.  In the above example, info@example.com
-and sales@example.com are listed as valid addresses, and mail for
-anything else is rejected with "User unknown". If you intend to
+result value is ignored by Postfix.  In the above example,
+info@example.com
+and sales@example.com are listed as valid addresses; other mail for
+example.com is rejected with "User unknown" by the Postfix SMTP
+server. It's left up to the non-Postfix delivery agent to reject
+non-existent recipients from local submission or from local alias
+expansion.  If you intend to
 use LDAP, MySQL or PgSQL instead of local files, be sure to review
 the <a href="#local_vs_database"> "local files versus databases"</a>
 section at the top of this document! </p>

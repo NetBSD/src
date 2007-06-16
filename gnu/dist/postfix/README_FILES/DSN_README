@@ -22,7 +22,7 @@ Specifically, DSN support gives an email sender the ability to specify:
     confused with the message ID, which identifies the message content.
 
 The implementation of DSN support involves extra parameters to the SMTP MAIL
-FROM and RCPT TO commands, as well as new Postfix sendmail command line options
+FROM and RCPT TO commands, as well as two Postfix sendmail command line options
 that provide a sub-set of the functions of the extra SMTP command parameters.
 
 This document has information on the following topics:

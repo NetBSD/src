@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.1.1.5 2006/07/19 01:17:36 rpaulo Exp $	*/
+/*	$NetBSD: postlog.c,v 1.1.1.5.4.1 2007/06/16 17:00:43 snj Exp $	*/
 
 /*++
 /* NAME
@@ -7,8 +7,9 @@
 /*	Postfix-compatible logging utility
 /* SYNOPSIS
 /* .fi
+/* .ad
 /*	\fBpostlog\fR [\fB-iv\fR] [\fB-c \fIconfig_dir\fR]
-/*		[\fB-p \fIpriority\fB] [\fB-t \fItag\fR] [\fItext...\fR]
+/*	[\fB-p \fIpriority\fB] [\fB-t \fItag\fR] [\fItext...\fR]
 /* DESCRIPTION
 /*	The \fBpostlog\fR(1) command implements a Postfix-compatible logging
 /*	interface for use in, for example, shell scripts.
@@ -99,6 +100,7 @@
 /* Global library. */
 
 #include <mail_params.h>		/* XXX right place for LOG_FACILITY? */
+#include <mail_version.h>
 #include <mail_conf.h>
 #include <mail_task.h>
 
@@ -162,6 +164,8 @@ static void log_stream(int level, VSTREAM *fp)
     vstring_free(buf);
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - logger */
 
 int     main(int argc, char **argv)
@@ -173,6 +177,11 @@ int     main(int argc, char **argv)
     const char *tag;
     int     log_flags = 0;
     int     level = MSG_INFO;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Be consistent with file permissions.
@@ -199,6 +208,7 @@ int     main(int argc, char **argv)
     if (isatty(STDERR_FILENO))
 	msg_vstream_init(tag, VSTREAM_ERR);
     msg_syslog_init(tag, LOG_PID, LOG_FACILITY);
+    tag = 0;
 
     /*
      * Parse switches.
@@ -228,18 +238,26 @@ int     main(int argc, char **argv)
     }
 
     /*
-     * Re-initialize the logging, this time with the user-specified tag and
-     * severity level.
-     */
-    if (isatty(STDERR_FILENO))
-	msg_vstream_init(tag, VSTREAM_ERR);
-    msg_syslog_init(tag, log_flags, LOG_FACILITY);
-
-    /*
      * Process the main.cf file. This overrides any logging facility that was
      * specified with msg_syslog_init();
      */
     mail_conf_read();
+    if (tag == 0 && strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0) {
+	if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
+	    tag = mail_task(slash + 1);
+	else
+	    tag = mail_task(argv[0]);
+    }
+
+    /*
+     * Re-initialize the logging, this time with the tag specified in main.cf
+     * or on the command line.
+     */
+    if (tag != 0) {
+	if (isatty(STDERR_FILENO))
+	    msg_vstream_init(tag, VSTREAM_ERR);
+	msg_syslog_init(tag, LOG_PID, LOG_FACILITY);
+    }
 
     /*
      * Log the command line or log lines from standard input.

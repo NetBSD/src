@@ -53,9 +53,11 @@ address classes are very important for the operation of Postfix. </p>
 <li> <p> The list of domains that are a member of the class: for
 example, all local domains, or all relay domains. </p>
 
-<li> <p> The default delivery method. For example, the local or
-smtp delivery agent. This helps to keep Postfix configurations
-simple. </p>
+<li> <p> The default delivery transport. For example, the local,
+virtual or relay delivery transport (delivery transports are defined
+in master.cf). This helps to keep Postfix configurations simple,
+by avoiding the need for explicit routing information in transport
+maps. </p>
 
 <li> <p> The list of valid recipient addresses for that address
 class. The Postfix SMTP server rejects invalid recipients with

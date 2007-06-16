@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_defer.c,v 1.1.1.3 2006/07/19 01:17:34 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_defer.c,v 1.1.1.3.4.1 2007/06/16 17:00:25 snj Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,7 @@
 /*	QMGR_QUEUE *queue;
 /*	DSN	*dsn;
 /*
-/*	QMGR_QUEUE *qmgr_defer_transport(transport, dsn)
+/*	void	qmgr_defer_transport(transport, dsn)
 /*	QMGR_TRANSPORT *transport;
 /*	DSN	*dsn;
 /* DESCRIPTION
@@ -73,6 +73,7 @@
 
 /* Global library. */
 
+#include <mail_proto.h>
 #include <defer.h>
 
 /* Application-specific. */
@@ -108,6 +109,7 @@ void    qmgr_defer_todo(QMGR_QUEUE *queue, DSN *dsn)
     QMGR_MESSAGE *message;
     RECIPIENT *recipient;
     int     nrcpt;
+    QMGR_QUEUE *retry_queue;
 
     /*
      * Sanity checks.
@@ -117,10 +119,22 @@ void    qmgr_defer_todo(QMGR_QUEUE *queue, DSN *dsn)
 		 queue->name, dsn->status, dsn->reason);
 
     /*
-     * Proceed carefully. Queue entries will disappear as a side effect.
+     * See if we can redirect the deliveries to the retry(8) delivery agent,
+     * so that they can be handled asynchronously. If the retry(8) service is
+     * unavailable, use the synchronous defer(8) server. With a large todo
+     * queue, this blocks the queue manager for a significant time.
+     */
+    retry_queue = qmgr_error_queue(MAIL_SERVICE_RETRY, dsn);
+
+    /*
+     * Proceed carefully. Queue entries may disappear as a side effect.
      */
     for (entry = queue->todo.next; entry != 0; entry = next) {
 	next = entry->peers.next;
+	if (retry_queue != 0) {
+	    qmgr_entry_move_todo(retry_queue, entry);
+	    continue;
+	}
 	message = entry->message;
 	for (nrcpt = 0; nrcpt < entry->rcpt_list.len; nrcpt++) {
 	    recipient = entry->rcpt_list.info + nrcpt;

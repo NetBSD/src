@@ -1,0 +1,45 @@
+MAIN 0	|From: Some One <user@example.com>
+MAIN 32	|To: Some One <user@example.com>
+MAIN 46	|Subject: Test
+MAIN 64	|MIME-Version: 1.0
+mime_state: header_token: Multipart / Mixed
+mime_state: header_token: boundary = Boundary-00=_mvhpFky0yqNhsa4
+mime_state: PUSH boundary Boundary-00=_mvhpFky0yqNhsa4
+MAIN 95	|Content-Type: Multipart/Mixed;
+  boundary="Boundary-00=_mvhpFky0yqNhsa4"
+HEADER END
+mime_state: garbage in primary header
+BODY N 0	|
+BODY N 0	|junk in primary header
+BODY N 23	|
+BODY N 24	|--Boundary-00=_mvhpFky0yqNhsa4
+mime_state: header_token: text / plain
+MULT 0	|Content-Type: text/plain;
+  charset="utf-8"
+mime_state: header_token: quoted-printable  
+MULT 44	|Content-Transfer-Encoding: quoted-printable
+MULT 72	|Content-Disposition: inline
+mime_state: garbage in multipart header
+BODY N 0	|junk in multipart header
+BODY N 25	|
+BODY N 26	|This is a test
+BODY N 41	|--Boundary-00=_mvhpFky0yqNhsa4
+mime_state: header_token: message / rfc822
+MULT 0	|Content-Type: message/rfc822;
+  name="forwarded message"
+mime_state: header_token: quoted-printable  
+MULT 44	|Content-Transfer-Encoding: quoted-printable
+MULT 72	|Content-Disposition: inline
+mime_state: warning: invalid message/* or multipart/* encoding domain: quoted-printable
+BODY N 0	|
+mime_state: garbage in nested header
+BODY N 0	|=46rom user@example.com Thu Jan 11 13:08:21 CET 2007
+BODY N 53	|To: user@example.com
+BODY N 74	|=46rom: Some One <user@example.com>
+BODY N 110	|Subject: Forwarded Test
+BODY N 134	|
+BODY N 135	|Blah
+BODY N 140	|
+BODY END
+mime_state: warning: improper message/* or multipart/* encoding domain
+mime_state: POP boundary Boundary-00=_mvhpFky0yqNhsa4

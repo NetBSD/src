@@ -1,4 +1,4 @@
-/*	$NetBSD: fsstone.c,v 1.1.1.2 2004/05/31 00:24:28 heas Exp $	*/
+/*	$NetBSD: fsstone.c,v 1.1.1.2.10.1 2007/06/16 16:59:53 snj Exp $	*/
 
 /*++
 /* NAME
@@ -152,6 +152,8 @@ static void usage(char *myname)
     msg_fatal("usage: %s [-cr] [-s size] messages directory_entries", myname);
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 int     main(int argc, char **argv)
 {
     int     op_count;
@@ -162,6 +164,11 @@ int     main(int argc, char **argv)
     int     seq;
     int     ch;
     int     size = 2;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     msg_vstream_init(argv[0], VSTREAM_ERR);
     while ((ch = GETOPT(argc, argv, "crs:")) != EOF) {

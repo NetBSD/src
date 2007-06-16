@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2006/11/09 21:40:20 christos Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2007/06/16 17:02:22 snj Exp $
 
 MKPRIVATELIB=	yes
 
@@ -24,8 +24,7 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	inet_addr_local.c inet_connect.c inet_listen.c inet_proto.c \
 	inet_trigger.c line_wrap.c lowercase.c lstat_as.c mac_expand.c \
 	mac_parse.c make_dirs.c mask_addr.c match_list.c match_ops.c msg.c \
-	msg_output.c msg_syslog.c msg_vstream.c mvect.c myaddrinfo.c \
-	myflock.c \
+	msg_output.c msg_syslog.c msg_vstream.c mvect.c myaddrinfo.c myflock.c \
 	mymalloc.c myrand.c mystrtok.c name_code.c name_mask.c netstring.c \
 	neuter.c non_blocking.c nvtable.c open_as.c open_limit.c open_lock.c \
 	peekfd.c percentm.c posix_signals.c printable.c rand_sleep.c \
@@ -41,7 +40,7 @@ SRCS=	alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	username.c valid_hostname.c vbuf.c vbuf_print.c vstream.c \
 	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
 	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
-	allascii.c load_file.c
+	allascii.c load_file.c killme_after.c
 
 COPTS.unix_recv_fd.c = -Wno-stack-protector
 COPTS.unix_send_fd.c = -Wno-stack-protector

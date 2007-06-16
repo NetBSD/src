@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_transport.c,v 1.1.1.4 2006/07/19 01:17:37 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_transport.c,v 1.1.1.4.4.1 2007/06/16 17:01:01 snj Exp $	*/
 
 /*++
 /* NAME
@@ -78,6 +78,14 @@
 #include <sys_defs.h>
 #include <unistd.h>
 
+#include <sys/time.h>			/* FD_SETSIZE */
+#include <sys/types.h>			/* FD_SETSIZE */
+#include <unistd.h>			/* FD_SETSIZE */
+
+#ifdef USE_SYS_SELECT_H
+#include <sys/select.h>			/* FD_SETSIZE */
+#endif
+
 /* Utility library. */
 
 #include <msg.h>
@@ -111,6 +119,51 @@ struct QMGR_TRANSPORT_ALLOC {
     VSTREAM *stream;			/* delivery service stream */
     QMGR_TRANSPORT_ALLOC_NOTIFY notify;	/* application call-back routine */
 };
+
+ /*
+  * Connections to delivery agents are managed asynchronously. Each delivery
+  * agent connection goes through multiple wait states:
+  * 
+  * - With Linux/Solaris and old queue manager implementations only, wait for
+  * the server to invoke accept().
+  * 
+  * - Wait for the delivery agent's announcement that it is ready to receive a
+  * delivery request.
+  * 
+  * - Wait for the delivery request completion status.
+  * 
+  * Older queue manager implementations had only one pending delivery agent
+  * connection per transport. With low-latency destinations, the output rates
+  * were reduced on Linux/Solaris systems that had the extra wait state.
+  * 
+  * To maximize delivery agent output rates with low-latency destinations, the
+  * following changes were made to the queue manager by the end of the 2.4
+  * development cycle:
+  * 
+  * - The Linux/Solaris accept() wait state was eliminated.
+  * 
+  * - A pipeline was implemented for pending delivery agent connections. The
+  * number of pending delivery agent connections was increased from one to
+  * two: the number of before-delivery wait states, plus one extra pipeline
+  * slot to prevent the pipeline from stalling easily. Increasing the
+  * pipeline much further actually hurt performance.
+  * 
+  * - To reduce queue manager disk competition with delivery agents, the queue
+  * scanning algorithm was modified to import only one message per interrupt.
+  * The incoming and deferred queue scans now happen on alternate interrupts.
+  * 
+  * Simplistically reasoned, a non-zero (incoming + active) queue length is
+  * equivalent to a time shift for mail deliveries; this is undesirable when
+  * delivery agents are not fully utilized.
+  * 
+  * On the other hand a non-empty active queue is what allows us to do clever
+  * things such as queue file prefetch, concurrency windows, and connection
+  * caching; the idea is that such "thinking time" is affordable only after
+  * the output channels are maxed out.
+  */
+#ifndef QMGR_TRANSPORT_MAX_PEND
+#define QMGR_TRANSPORT_MAX_PEND	2
+#endif
 
 /* qmgr_transport_unthrottle_wrapper - in case (char *) != (struct *) */
 
@@ -198,10 +251,14 @@ static void qmgr_transport_event(int unused_event, char *context)
     event_cancel_timer(qmgr_transport_abort, context);
 
     /*
-     * Disable further read events that end up calling this function.
+     * Disable further read events that end up calling this function, and
+     * free up this pending connection pipeline slot.
      */
-    event_disable_readwrite(vstream_fileno(alloc->stream));
-    alloc->transport->flags &= ~QMGR_TRANSPORT_STAT_BUSY;
+    if (alloc->stream) {
+	event_disable_readwrite(vstream_fileno(alloc->stream));
+	non_blocking(vstream_fileno(alloc->stream), BLOCKING);
+    }
+    alloc->transport->pending -= 1;
 
     /*
      * Notify the requestor.
@@ -210,46 +267,34 @@ static void qmgr_transport_event(int unused_event, char *context)
     myfree((char *) alloc);
 }
 
-#ifdef UNIX_DOMAIN_CONNECT_BLOCKS_FOR_ACCEPT
-
-/* qmgr_transport_connect - handle connection request completion */
-
-static void qmgr_transport_connect(int unused_event, char *context)
-{
-    QMGR_TRANSPORT_ALLOC *alloc = (QMGR_TRANSPORT_ALLOC *) context;
-
-    /*
-     * This code is necessary for some versions of LINUX, where connect(2)
-     * blocks until the application performs an accept(2). Reportedly, the
-     * same can happen on Solaris 2.5.1.
-     */
-    event_disable_readwrite(vstream_fileno(alloc->stream));
-    non_blocking(vstream_fileno(alloc->stream), BLOCKING);
-    event_enable_read(vstream_fileno(alloc->stream),
-		      qmgr_transport_event, (char *) alloc);
-}
-
-#endif
-
 /* qmgr_transport_select - select transport for allocation */
 
 QMGR_TRANSPORT *qmgr_transport_select(void)
 {
     QMGR_TRANSPORT *xport;
     QMGR_QUEUE *queue;
+    int     need;
 
     /*
      * If we find a suitable transport, rotate the list of transports to
      * effectuate round-robin selection. See similar selection code in
      * qmgr_peer_select().
+     * 
+     * This function is called repeatedly until all transports have maxed out
+     * the number of pending delivery agent connections, until all delivery
+     * agent concurrency windows are maxed out, or until we run out of "todo"
+     * queue entries.
      */
-#define STAY_AWAY (QMGR_TRANSPORT_STAT_BUSY | QMGR_TRANSPORT_STAT_DEAD)
+#define MIN5af51743e4eef(x, y) ((x) < (y) ? (x) : (y))
 
     for (xport = qmgr_transport_list.next; xport; xport = xport->peers.next) {
-	if (xport->flags & STAY_AWAY)
+	if ((xport->flags & QMGR_TRANSPORT_STAT_DEAD) != 0
+	    || xport->pending >= QMGR_TRANSPORT_MAX_PEND)
 	    continue;
+	need = xport->pending + 1;
 	for (queue = xport->queue_list.next; queue; queue = queue->peers.next) {
-	    if (queue->window > queue->busy_refcount && queue->todo.next != 0) {
+	    if ((need -= MIN5af51743e4eef(queue->window - queue->busy_refcount,
+					  queue->todo_refcount)) <= 0) {
 		QMGR_LIST_ROTATE(qmgr_transport_list, xport, peers);
 		if (msg_verbose)
 		    msg_info("qmgr_transport_select: %s", xport->name);
@@ -265,47 +310,54 @@ QMGR_TRANSPORT *qmgr_transport_select(void)
 void    qmgr_transport_alloc(QMGR_TRANSPORT *transport, QMGR_TRANSPORT_ALLOC_NOTIFY notify)
 {
     QMGR_TRANSPORT_ALLOC *alloc;
-    VSTREAM *stream;
-    DSN     dsn;
 
     /*
      * Sanity checks.
      */
     if (transport->flags & QMGR_TRANSPORT_STAT_DEAD)
 	msg_panic("qmgr_transport: dead transport: %s", transport->name);
-    if (transport->flags & QMGR_TRANSPORT_STAT_BUSY)
-	msg_panic("qmgr_transport: nested allocation: %s", transport->name);
+    if (transport->pending >= QMGR_TRANSPORT_MAX_PEND)
+	msg_panic("qmgr_transport: excess allocation: %s", transport->name);
 
     /*
      * Connect to the well-known port for this delivery service, and wake up
-     * when a process announces its availability. In the mean time, block out
-     * other delivery process allocation attempts for this transport. In case
-     * of problems, back off. Do not hose the system when it is in trouble
+     * when a process announces its availability. Allow only a limited number
+     * of delivery process allocation attempts for this transport. In case of
+     * problems, back off. Do not hose the system when it is in trouble
      * already.
+     * 
+     * Use non-blocking connect(), so that Linux won't block the queue manager
+     * until the delivery agent calls accept().
+     * 
+     * When the connection to delivery agent cannot be completed, notify the
+     * event handler so that it can throttle the transport and defer the todo
+     * queues, just like it does when communication fails *after* connection
+     * completion.
+     * 
+     * Before Postfix 2.4, the event handler was not invoked after connect()
+     * error, and mail was not deferred. Because of this, mail would be stuck
+     * in the active queue after triggering a "connection refused" condition.
      */
-#ifdef UNIX_DOMAIN_CONNECT_BLOCKS_FOR_ACCEPT
-#define BLOCK_MODE	NON_BLOCKING
-#define ENABLE_EVENTS	event_enable_write
-#define EVENT_HANDLER	qmgr_transport_connect
-#else
-#define BLOCK_MODE	BLOCKING
-#define ENABLE_EVENTS	event_enable_read
-#define EVENT_HANDLER	qmgr_transport_event
-#endif
-
-    if ((stream = mail_connect(MAIL_CLASS_PRIVATE, transport->name, BLOCK_MODE)) == 0) {
-	msg_warn("connect to transport %s: %m", transport->name);
-	qmgr_transport_throttle(transport,
-				DSN_SIMPLE(&dsn, "4.3.0",
-					   "mail transport unavailable"));
-	return;
-    }
     alloc = (QMGR_TRANSPORT_ALLOC *) mymalloc(sizeof(*alloc));
-    alloc->stream = stream;
     alloc->transport = transport;
     alloc->notify = notify;
-    transport->flags |= QMGR_TRANSPORT_STAT_BUSY;
-    ENABLE_EVENTS(vstream_fileno(alloc->stream), EVENT_HANDLER, (char *) alloc);
+    transport->pending += 1;
+    if ((alloc->stream = mail_connect(MAIL_CLASS_PRIVATE, transport->name,
+				      NON_BLOCKING)) == 0) {
+	msg_warn("connect to transport %s: %m", transport->name);
+	event_request_timer(qmgr_transport_event, (char *) alloc, 0);
+	return;
+    }
+#if (EVENTS_STYLE != EVENTS_STYLE_SELECT) && defined(VSTREAM_CTL_DUPFD)
+#ifndef THRESHOLD_FD_WORKAROUND
+#define THRESHOLD_FD_WORKAROUND 128
+#endif
+    vstream_control(alloc->stream,
+		    VSTREAM_CTL_DUPFD, THRESHOLD_FD_WORKAROUND,
+		    VSTREAM_CTL_END);
+#endif
+    event_enable_read(vstream_fileno(alloc->stream), qmgr_transport_event,
+		      (char *) alloc);
 
     /*
      * Guard against broken systems.
@@ -324,6 +376,7 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
 	msg_panic("qmgr_transport_create: transport exists: %s", name);
     transport = (QMGR_TRANSPORT *) mymalloc(sizeof(QMGR_TRANSPORT));
     transport->flags = 0;
+    transport->pending = 0;
     transport->name = mystrdup(name);
 
     /*
@@ -355,6 +408,10 @@ QMGR_TRANSPORT *qmgr_transport_create(const char *name)
 						var_xport_rcpt_limit, 0, 0);
     transport->rcpt_per_stack = get_mail_conf_int2(name, _STACK_RCPT_LIMIT,
 						var_stack_rcpt_limit, 0, 0);
+    transport->refill_limit = get_mail_conf_int2(name, _XPORT_REFILL_LIMIT,
+					      var_xport_refill_limit, 1, 0);
+    transport->refill_delay = get_mail_conf_time2(name, _XPORT_REFILL_DELAY,
+					 var_xport_refill_delay, 's', 1, 0);
 
     transport->queue_byname = htable_create(0);
     QMGR_LIST_INIT(transport->queue_list);

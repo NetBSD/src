@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_version.h,v 1.1.1.26 2006/11/07 02:57:37 rpaulo Exp $	*/
+/*	$NetBSD: mail_version.h,v 1.1.1.26.2.1 2007/06/16 17:00:00 snj Exp $	*/
 
 #ifndef _MAIL_VERSION_H_INCLUDED_
 #define _MAIL_VERSION_H_INCLUDED_
@@ -22,8 +22,8 @@
   * Patches change both the patchlevel and the release date. Snapshots have no
   * patchlevel; they change the release date only.
   */
-#define MAIL_RELEASE_DATE	"20061101"
-#define MAIL_VERSION_NUMBER	"2.3.4"
+#define MAIL_RELEASE_DATE	"20070423"
+#define MAIL_VERSION_NUMBER	"2.4.1"
 
 #ifdef SNAPSHOT
 # define MAIL_VERSION_DATE	"-" MAIL_RELEASE_DATE
@@ -48,6 +48,24 @@ extern char *var_mail_version;
 #define VAR_MAIL_RELEASE	"mail_release_date"
 #define DEF_MAIL_RELEASE	MAIL_RELEASE_DATE
 extern char *var_mail_release;
+
+ /*
+  * The following macros stamp executable files as well as core dumps. This
+  * information helps to answer the following questions:
+  * 
+  * - What Postfix versions(s) are installed on this machine?
+  * 
+  * - Is this installation mixing multiple Postfix versions?
+  * 
+  * - What Postfix version generated this core dump?
+  */
+#include <string.h>
+
+#define MAIL_VERSION_STAMP_DECLARE \
+    char *mail_version_stamp
+
+#define MAIL_VERSION_STAMP_ALLOCATE \
+    mail_version_stamp = strdup(VAR_MAIL_VERSION "=" DEF_MAIL_VERSION)
 
 /* LICENSE
 /* .ad

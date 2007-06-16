@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.1.1.13 2006/11/07 02:58:34 rpaulo Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.1.1.13.2.1 2007/06/16 17:01:05 snj Exp $	*/
 
 /*++
 /* NAME
@@ -170,6 +170,11 @@
 /* .IP "\fB-q\fIinterval\fR (ignored)"
 /*	The interval between queue runs. Use the \fBqueue_run_delay\fR
 /*	configuration parameter instead.
+/* .IP \fB-qI\fIqueueid\fR
+/*	Schedule immediate delivery of mail with the specified queue
+/*	ID.  This option is implemented by executing the
+/*	\fBpostqueue\fR(1) command, and is available with Postfix
+/*	version 2.4 and later.
 /* .IP \fB-qR\fIsite\fR
 /*	Schedule immediate delivery of all mail that is queued for the named
 /*	\fIsite\fR. This option accepts only \fIsite\fR names that are
@@ -219,7 +224,7 @@
 /* .ad
 /* .fi
 /*	By design, this program is not set-user (or group) id. However,
-/*	it must handle data from untrusted users or untrusted machines.
+/*	it must handle data from untrusted, possibly remote, users.
 /*	Thus, the usual precautions need to be taken against malicious
 /*	inputs.
 /* DIAGNOSTICS
@@ -285,7 +290,7 @@
 /* .IP "\fBhopcount_limit (50)\fR"
 /*	The maximal number of Received:  message headers that is allowed
 /*	in the primary message headers.
-/* .IP "\fBqueue_run_delay (1000s)\fR"
+/* .IP "\fBqueue_run_delay (version dependent)\fR"
 /*	The time between deferred queue scans by the queue manager.
 /* FAST FLUSH CONTROLS
 /* .ad
@@ -416,6 +421,7 @@
 #include <mail_queue.h>
 #include <mail_proto.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <record.h>
 #include <rec_type.h>
 #include <rec_streamlf.h>
@@ -887,6 +893,15 @@ static void enqueue(const int flags, const char *encoding,
     myfree(saved_sender);
 }
 
+/* tempfail - sanitize exit status after library run-time error */
+
+static void tempfail(void)
+{
+    exit(EX_TEMPFAIL);
+}
+
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - the main program */
 
 int     main(int argc, char **argv)
@@ -904,6 +919,7 @@ int     main(int argc, char **argv)
     int     n;
     int     flags = SM_FLAG_DEFAULT;
     char   *site_to_flush = 0;
+    char   *id_to_flush = 0;
     char   *encoding = 0;
     char   *qtime = 0;
     const char *errstr;
@@ -912,6 +928,11 @@ int     main(int argc, char **argv)
     int     dsn_notify = 0;
     const char *dsn_envid = 0;
     int     saved_optind;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Be consistent with file permissions.
@@ -954,6 +975,7 @@ int     main(int argc, char **argv)
     if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
     msg_vstream_init(argv[0], VSTREAM_ERR);
+    msg_cleanup(tempfail);
     msg_syslog_init(mail_task("sendmail"), LOG_PID, LOG_FACILITY);
     set_mail_conf_str(VAR_PROCNAME, var_procname = mystrdup(argv[0]));
 
@@ -996,6 +1018,8 @@ int     main(int argc, char **argv)
     }
     optind = saved_optind;
     mail_conf_read();
+    if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
+	msg_syslog_init(mail_task("sendmail"), LOG_PID, LOG_FACILITY);
     get_mail_conf_str_table(str_table);
 
     if (chdir(var_queue_dir))
@@ -1177,6 +1201,10 @@ int     main(int argc, char **argv)
 		site_to_flush = optarg + 1;
 		if (*site_to_flush == 0)
 		    msg_fatal_status(EX_USAGE, "specify: -qRsitename");
+	    } else if (optarg[0] == 'I') {
+		id_to_flush = optarg + 1;
+		if (*id_to_flush == 0)
+		    msg_fatal_status(EX_USAGE, "specify: -qIqueueid");
 	    } else {
 		msg_fatal_status(EX_USAGE, "-q%c is not implemented",
 				 optarg[0]);
@@ -1201,6 +1229,9 @@ int     main(int argc, char **argv)
 
     if (site_to_flush && mode != SM_MODE_ENQUEUE)
 	msg_fatal_status(EX_USAGE, "-qR can be used only in delivery mode");
+
+    if (id_to_flush && mode != SM_MODE_ENQUEUE)
+	msg_fatal_status(EX_USAGE, "-qI can be used only in delivery mode");
 
     if (flags & DEL_REQ_FLAG_USR_VRFY) {
 	if (flags & SM_FLAG_XRCPT)
@@ -1230,20 +1261,32 @@ int     main(int argc, char **argv)
 	msg_panic("unknown operation mode: %d", mode);
 	/* NOTREACHED */
     case SM_MODE_ENQUEUE:
-	if (site_to_flush == 0) {
+	if (site_to_flush) {
+	    if (argv[OPTIND])
+		msg_fatal_status(EX_USAGE, "flush site requires no recipient");
+	    ext_argv = argv_alloc(2);
+	    argv_add(ext_argv, "postqueue", "-s", site_to_flush, (char *) 0);
+	    for (n = 0; n < msg_verbose; n++)
+		argv_add(ext_argv, "-v", (char *) 0);
+	    argv_terminate(ext_argv);
+	    mail_run_replace(var_command_dir, ext_argv->argv);
+	    /* NOTREACHED */
+	} else if (id_to_flush) {
+	    if (argv[OPTIND])
+		msg_fatal_status(EX_USAGE, "flush queue_id requires no recipient");
+	    ext_argv = argv_alloc(2);
+	    argv_add(ext_argv, "postqueue", "-i", id_to_flush, (char *) 0);
+	    for (n = 0; n < msg_verbose; n++)
+		argv_add(ext_argv, "-v", (char *) 0);
+	    argv_terminate(ext_argv);
+	    mail_run_replace(var_command_dir, ext_argv->argv);
+	    /* NOTREACHED */
+	} else {
 	    enqueue(flags, encoding, dsn_envid, dsn_notify,
 		    rewrite_context, sender, full_name, argv + OPTIND);
 	    exit(0);
+	    /* NOTREACHED */
 	}
-	if (argv[OPTIND])
-	    msg_fatal_status(EX_USAGE, "flush site requires no recipient");
-	ext_argv = argv_alloc(2);
-	argv_add(ext_argv, "postqueue", "-s", site_to_flush, (char *) 0);
-	for (n = 0; n < msg_verbose; n++)
-	    argv_add(ext_argv, "-v", (char *) 0);
-	argv_terminate(ext_argv);
-	mail_run_replace(var_command_dir, ext_argv->argv);
-	/* NOTREACHED */
 	break;
     case SM_MODE_MAILQ:
 	if (argv[OPTIND])

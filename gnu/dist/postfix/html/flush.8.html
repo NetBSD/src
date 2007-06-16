@@ -38,9 +38,12 @@ FLUSH(8)                                                              FLUSH(8)
               the  specified queue ID is queued for the specified
               destination.
 
-       <b>send</b> <i>sitename</i>
+       <b>send_site</b> <i>sitename</i>
               Request delivery of mail that  is  queued  for  the
               specified destination.
+
+       <b>send_file</b> <i>queueid</i>
+              Request delivery of the specified deferred message.
 
        <b>refresh</b>
               Refresh  non-empty  per-destination  logfiles  that
@@ -57,7 +60,7 @@ FLUSH(8)                                                              FLUSH(8)
 
 <b>SECURITY</b>
        The <a href="flush.8.html"><b>flush</b>(8)</a> server is not security-sensitive. It does not
-       talk to the network, and it does not talk to local  users.
+       talk  to the network, and it does not talk to local users.
        The fast flush server can run chrooted at fixed low privi-
        lege.
 
@@ -65,46 +68,46 @@ FLUSH(8)                                                              FLUSH(8)
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       Fast flush logfiles are  truncated  only  after  a  "send"
-       request,  not  when mail is actually delivered, and there-
-       fore can accumulate outdated or redundant data.  In  order
-       to  maintain  sanity,  "refresh" must be executed periodi-
-       cally. This can be automated with a suitable wakeup  timer
+       Fast  flush  logfiles  are  truncated  only after a "send"
+       request, not when mail is actually delivered,  and  there-
+       fore  can  accumulate outdated or redundant data. In order
+       to maintain sanity, "refresh" must  be  executed  periodi-
+       cally.  This can be automated with a suitable wakeup timer
        setting in the <a href="master.5.html"><b>master.cf</b></a> configuration file.
 
-       Upon  receipt of a request to deliver mail for an eligible
-       destination, the <a href="flush.8.html"><b>flush</b>(8)</a> server requests delivery of  all
-       messages  that  are  listed in that destination's logfile,
-       regardless of the recipients of those  messages.  This  is
+       Upon receipt of a request to deliver mail for an  eligible
+       destination,  the <a href="flush.8.html"><b>flush</b>(8)</a> server requests delivery of all
+       messages that are listed in  that  destination's  logfile,
+       regardless  of  the  recipients of those messages. This is
        not an issue for mail that is sent to a <b><a href="postconf.5.html#relay_domains">relay_domains</a></b> des-
-       tination because such mail typically only  has  recipients
+       tination  because  such mail typically only has recipients
        in one domain.
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="flush.8.html"><b>flush</b>(8)</a>
-       processes run for only a limited amount of time.  Use  the
+       processes  run  for only a limited amount of time. Use the
        command "<b>postfix reload</b>" to speed up a change.
 
-       The  text  below  provides  only  a parameter summary. See
+       The text below provides  only  a  parameter  summary.  See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
+              How much time a Postfix daemon process may take  to
+              handle  a  request  before  it  is  terminated by a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#fast_flush_domains">fast_flush_domains</a> ($<a href="postconf.5.html#relay_domains">relay_domains</a>)</b>
               Optional list of destinations that are eligible for
-              per-destination logfiles with mail that  is  queued
+              per-destination  logfiles  with mail that is queued
               to those destinations.
 
        <b><a href="postconf.5.html#fast_flush_refresh_time">fast_flush_refresh_time</a> (12h)</b>
-              The  time  after  which a non-empty but unread per-
-              destination  "fast  flush"  logfile  needs  to   be
+              The time after which a non-empty  but  unread  per-
+              destination   "fast  flush"  logfile  needs  to  be
               refreshed.
 
        <b><a href="postconf.5.html#fast_flush_purge_time">fast_flush_purge_time</a> (7d)</b>
@@ -116,13 +119,14 @@ FLUSH(8)                                                              FLUSH(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The  maximum  amount  of  time that an idle Postfix
-              daemon process waits for the next  service  request
-              before exiting.
+              The maximum amount of time  that  an  idle  Postfix
+              daemon  process  waits  for  an incoming connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The  maximal number of connection requests before a
-              Postfix daemon process terminates.
+              The maximal number of incoming connections  that  a
+              Postfix  daemon  process will service before termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#parent_domain_matches_subdomains">parent_domain_matches_subdomains</a> (see 'postconf  -d'  out-</b>
        <b>put)</b>

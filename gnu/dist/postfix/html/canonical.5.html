@@ -26,8 +26,8 @@ CANONICAL(5)                                                      CANONICAL(5)
        file  that serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The
        result, an indexed file in <b>dbm</b> or <b>db</b> format, is  used  for
        fast  searching  by  the  mail system. Execute the command
-       "<b>postmap /etc/postfix/canonical</b>" in order to  rebuild  the
-       indexed file after changing the text file.
+       "<b>postmap /etc/postfix/canonical</b>"  to  rebuild  an  indexed
+       file after changing the corresponding text file.
 
        When  the  table  is provided via other means such as NIS,
        LDAP or SQL, the same lookups are  done  as  for  ordinary
@@ -36,9 +36,9 @@ CANONICAL(5)                                                      CANONICAL(5)
        Alternatively,  the  table  can  be provided as a regular-
        expression map where patterns are given as regular expres-
        sions,  or lookups can be directed to TCP-based server. In
-       that case, the lookups are done in  a  slightly  different
+       those cases, the lookups are done in a slightly  different
        way  as  described below under "REGULAR EXPRESSION TABLES"
-       and "TCP-BASED TABLES".
+       or "TCP-BASED TABLES".
 
        By default the <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping affects  both  message
        header  addresses  (i.e. addresses that appear inside mes-
@@ -59,11 +59,9 @@ CANONICAL(5)                                                      CANONICAL(5)
        addresses produced by legacy mail systems.
 
        The <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping is not to be confused  with  <i>vir-</i>
-       <i>tual  domain</i> support. Use the <a href="virtual.5.html"><b>virtual</b>(5)</a> map for that pur-
-       pose.
-
-       The <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping is not to be confused with  local
-       aliasing.  Use the <a href="aliases.5.html"><b>aliases</b>(5)</a> map for that purpose.
+       <i>tual  alias</i>  support or with local aliasing. To change the
+       destination but not the headers,  use  the  <a href="virtual.5.html"><b>virtual</b>(5)</a>  or
+       <a href="aliases.5.html"><b>aliases</b>(5)</a> map instead.
 
 <b>CASE FOLDING</b>
        The  search  string is folded to lowercase before database
@@ -115,6 +113,15 @@ CANONICAL(5)                                                      CANONICAL(5)
               Replace other addresses in <i>domain</i> by <i>address</i>.  This
               form has the lowest precedence.
 
+              Note:  @<i>domain</i>  is  a  wild-card. When this form is
+              applied to recipient addresses,  the  Postfix  SMTP
+              server  accepts  mail  for any recipient in <i>domain</i>,
+              regardless of whether that recipient exists.   This
+              may  turn  your  mail  system  into  a  backscatter
+              source: Postfix first accepts mail for non-existent
+              recipients  and  then  tries to return that mail as
+              "undeliverable" to the often forged sender address.
+
 <b>RESULT ADDRESS REWRITING</b>
        The lookup result is subject to address rewriting:
 
@@ -162,7 +169,7 @@ CANONICAL(5)                                                      CANONICAL(5)
        lookups are directed to a TCP-based server. For a descrip-
        tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
        <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
-       Postfix version 2.3.
+       Postfix version 2.4.
 
        Each lookup operation uses the entire address once.  Thus,
        <i>user@domain</i>  mail  addresses  are not broken up into their

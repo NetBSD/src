@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_chat.c,v 1.1.1.10 2006/07/19 01:17:43 rpaulo Exp $	*/
+/*	$NetBSD: smtp_chat.c,v 1.1.1.10.4.1 2007/06/16 17:01:13 snj Exp $	*/
 
 /*++
 /* NAME
@@ -307,7 +307,8 @@ SMTP_RESP *smtp_chat_resp(SMTP_SESSION *session)
 	 */
 	session->error_mask |= MAIL_ERROR_PROTOCOL;
 	if (session->features & SMTP_FEATURE_PIPELINING) {
-	    msg_warn("non-%s response from %s: %.100s",
+	    msg_warn("%s: non-%s response from %s: %.100s",
+		     session->state->request->queue_id,
 		     (session->state->misc_flags & SMTP_MISC_FLAG_USE_LMTP) ?
 		     "LMTP" : "ESMTP", session->namaddrport,
 		     STR(session->buffer));

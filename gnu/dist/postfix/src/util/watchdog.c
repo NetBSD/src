@@ -1,4 +1,4 @@
-/*	$NetBSD: watchdog.c,v 1.1.1.5 2006/07/19 01:17:57 rpaulo Exp $	*/
+/*	$NetBSD: watchdog.c,v 1.1.1.5.4.1 2007/06/16 17:02:14 snj Exp $	*/
 
 /*++
 /* NAME
@@ -89,6 +89,7 @@
 
 #include <msg.h>
 #include <mymalloc.h>
+#include <killme_after.h>
 #include <watchdog.h>
 
 /* Application-specific. */
@@ -130,7 +131,8 @@ static void watchdog_event(int unused_sig)
     /*
      * This routine runs as a signal handler. We should not do anything that
      * could involve memory allocation/deallocation, but exiting without
-     * proper explanation would be unacceptable.
+     * proper explanation would be unacceptable. For this reason, msg(3) was
+     * made safe for usage by signal handlers that terminate the process.
      */
     if ((wp = watchdog_curr) == 0)
 	msg_panic("%s: no instance", myname);
@@ -141,8 +143,13 @@ static void watchdog_event(int unused_sig)
     } else {
 	if (wp->action)
 	    wp->action(wp, wp->context);
-	else
+	else {
+	    killme_after(5);
+#ifdef TEST
+	    pause();
+#endif
 	    msg_fatal("watchdog timeout");
+	}
     }
 }
 

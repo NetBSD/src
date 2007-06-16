@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.1.1.3 2006/08/01 00:04:11 rpaulo Exp $	*/
+/*	$NetBSD: tls.h,v 1.1.1.3.4.1 2007/06/16 17:01:31 snj Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -132,6 +132,7 @@ extern NAME_CODE tls_cipher_level_table[];
 
 #define TLS_END_EXCLUDE ((char *)0)
 extern const char *tls_cipher_list(int,...);
+extern const char *tls_set_cipher_list(SSL_CTX *, const char *);
 
  /*
   * tls_client.c
@@ -190,9 +191,19 @@ typedef struct {
     int     ask_ccert;
 } tls_server_props;
 
+typedef struct {
+    SSL_CTX *ctx;			/* SSL application context */
+    VSTREAM *stream;			/* Client stream */
+    int     log_level;			/* TLS log level */
+    int     timeout;			/* TLS handshake timeout */
+    int     requirecert;		/* Insist on client cert? */
+    char   *serverid;			/* Server instance (salt cache key) */
+    char   *peername;			/* Client name */
+    char   *peeraddr;			/* Client address */
+} tls_server_start_props;
+
 extern SSL_CTX *tls_server_init(const tls_server_props *);
-extern TLScontext_t *tls_server_start(SSL_CTX *, VSTREAM *, int, int,
-				           const char *, const char *, int);
+extern TLScontext_t *tls_server_start(const tls_server_start_props *props);
 
 #define tls_server_stop(ctx , stream, timeout, failure, TLScontext) \
 	tls_session_stop((ctx), (stream), (timeout), (failure), (TLScontext))

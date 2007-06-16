@@ -1,4 +1,4 @@
-.\"	$NetBSD: generic.5,v 1.1.1.2 2006/07/19 01:16:45 rpaulo Exp $
+.\"	$NetBSD: generic.5,v 1.1.1.2.4.1 2007/06/16 16:58:00 snj Exp $
 .\"
 .TH GENERIC 5 
 .ad
@@ -41,7 +41,7 @@ text file that serves as input to the \fBpostmap\fR(1)
 command.  The result, an indexed file in \fBdbm\fR or
 \fBdb\fR format, is used for fast searching by the mail
 system. Execute the command "\fBpostmap /etc/postfix/generic\fR"
-in order to rebuild the indexed file after changing the
+to rebuild an indexed file after changing the corresponding
 text file.
 
 When the table is provided via other means such as NIS, LDAP
@@ -49,9 +49,9 @@ or SQL, the same lookups are done as for ordinary indexed files.
 
 Alternatively, the table can be provided as a regular-expression
 map where patterns are given as regular expressions, or lookups
-can be directed to TCP-based server. In that case, the lookups are
-done in a slightly different way as described below under
-"REGULAR EXPRESSION TABLES" and "TCP-BASED TABLES".
+can be directed to TCP-based server. In those case, the lookups
+are done in a slightly different way as described below under
+"REGULAR EXPRESSION TABLES" or "TCP-BASED TABLES".
 .SH "CASE FOLDING"
 .na
 .nf
@@ -152,7 +152,7 @@ pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 This section describes how the table lookups change when lookups
 are directed to a TCP-based server. For a description of the TCP
 client/server lookup protocol, see \fBtcp_table\fR(5).
-This feature is not available up to and including Postfix version 2.3.
+This feature is not available up to and including Postfix version 2.4.
 
 Each lookup operation uses the entire address once.  Thus,
 \fIuser@domain\fR mail addresses are not broken up into their
@@ -176,16 +176,12 @@ that the ISP supports "+" style address extensions).
 .na
 .nf
 /etc/postfix/main.cf:
-.in +4
     smtp_generic_maps = hash:/etc/postfix/generic
-.in -4
 
 /etc/postfix/generic:
-.in +4
     his@localdomain.local   hisaccount@hisisp.example
     her@localdomain.local   heraccount@herisp.example
     @localdomain.local      hisaccount+local@hisisp.example
-.in -4
 
 .ad
 .fi

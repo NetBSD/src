@@ -1,4 +1,4 @@
-.\"	$NetBSD: spawn.8,v 1.1.1.6 2005/08/18 21:04:25 rpaulo Exp $
+.\"	$NetBSD: spawn.8,v 1.1.1.6.4.1 2007/06/16 16:58:13 snj Exp $
 .\"
 .TH SPAWN 8 
 .ad
@@ -89,6 +89,10 @@ in the \fBmaster.cf\fR file.
 .IP "\fItransport\fB_time_limit ($command_time_limit)\fR"
 The amount of time the command is allowed to run before it is
 terminated.
+
+Postfix 2.4 and later support a suffix that specifies the
+time unit: s (seconds), m (minutes), h (hours), d (days),
+w (weeks). The default time unit is seconds.
 .SH "MISCELLANEOUS"
 .na
 .nf
@@ -110,11 +114,11 @@ communication channel.
 The UNIX system account that owns the Postfix queue and most Postfix
 daemon processes.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBprocess_id (read-only)\fR"
 The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"

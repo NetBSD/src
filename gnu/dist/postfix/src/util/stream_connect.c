@@ -1,4 +1,4 @@
-/*	$NetBSD: stream_connect.c,v 1.1.1.3 2006/07/19 01:17:55 rpaulo Exp $	*/
+/*	$NetBSD: stream_connect.c,v 1.1.1.3.4.1 2007/06/16 17:02:06 snj Exp $	*/
 
 /*++
 /* NAME
@@ -74,6 +74,12 @@ int     stream_connect(const char *path, int block_mode, int unused_timeout)
      */
     if ((fifo = open(path, O_WRONLY | O_NONBLOCK, 0)) < 0)
 	return (-1);
+
+    /*
+     * This is for {unix,inet}_connect() compatibility.
+     */
+    if (block_mode == BLOCKING)
+	non_blocking(fifo, BLOCKING);
 
     /*
      * Create a pipe, and send one pipe end to the server.

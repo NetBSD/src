@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp-sink.1,v 1.1.1.5 2006/07/19 01:16:44 rpaulo Exp $
+.\"	$NetBSD: smtp-sink.1,v 1.1.1.5.4.1 2007/06/16 16:57:57 snj Exp $
 .\"
 .TH SMTP-SINK 1 
 .ad
@@ -23,10 +23,18 @@ It takes SMTP messages from the network and throws them away.
 The purpose is to measure client performance, not protocol
 compliance.
 
+\fBsmtp-sink\fR may also be configured to capture each mail
+delivery transaction to file. Since disk latencies are large
+compared to network delays, this mode of operation can
+reduce the maximal performance by several orders of magnitude.
+
 Connections can be accepted on IPv4 or IPv6 endpoints, or on
 UNIX-domain sockets.
 IPv4 and IPv6 are the default.
 This program is the complement of the \fBsmtp-source\fR(1) program.
+
+Note: this is an unsupported test program. No attempt is made
+to maintain compatibility between successive versions.
 
 Arguments:
 .IP \fB-4\fR
@@ -39,12 +47,39 @@ Postfix is built without IPv6 support.
 Do not announce 8BITMIME support.
 .IP \fB-a\fR
 Do not announce SASL authentication support.
+.IP "\fB-A \fIdelay\fR"
+Wait \fIdelay\fR seconds after responding to DATA, then
+abort prematurely with a 550 reply status.  Do not read
+further input from the client; this is an attempt to block
+the client before it sends ".".  Specify a zero delay value
+to abort immediately.
 .IP \fB-c\fR
 Display running counters that are updated whenever an SMTP
 session ends, a QUIT command is executed, or when "." is
 received.
 .IP \fB-C\fR
 Disable XCLIENT support.
+.IP "\fB-d \fIdump-template\fR"
+Dump each mail transaction to a single-message file whose
+name is created by expanding the \fIdump-template\fR via
+strftime(3) and appending a pseudo-random hexadecimal number
+(example: "%Y%m%d%H/%M." expands into "2006081203/05.809a62e3").
+If the template contains "/" characters, missing directories
+are created automatically.  The message dump format is
+described below.
+.sp
+Note: this option keeps one capture file open for every
+mail transaction in progress.
+.IP "\fB-D \fIdump-template\fR"
+Append mail transactions to a multi-message dump file whose
+name is created by expanding the \fIdump-template\fR via
+strftime(3).
+If the template contains "/" characters, missing directories
+are created automatically.  The message dump format is
+described below.
+.sp
+Note: this option keeps one capture file open for every
+mail transaction in progress.
 .IP \fB-e\fR
 Do not announce ESMTP support.
 .IP \fB-E\fR
@@ -64,6 +99,11 @@ Use \fIhostname\fR in the SMTP greeting, in the HELO response,
 and in the EHLO response. The default hostname is "smtp-sink".
 .IP \fB-L\fR
 Enable LMTP instead of SMTP.
+.IP "\fB-m \fIcount\fR (default: 256)"
+An upper bound on the maximal number of simultaneous
+connections that \fBsmtp-sink\fR will handle. This prevents
+the process from running out of file descriptors. Excess
+connections will stay queued in the TCP/IP stack.
 .IP "\fB-n \fIcount\fR"
 Terminate after \fIcount\fR sessions. This is for testing purposes.
 .IP \fB-p\fR
@@ -87,6 +127,10 @@ Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
 DATA, ., RSET, NOOP, and QUIT. Separate command names by
 white space or commas, and use quotes to protect white space
 from the shell. Command names are case-insensitive.
+.IP "\fB-R \fIroot-directory\fR"
+Change the process root directory to the specified location.
+This option requires super-user privileges. See also the
+\fB-u\fR option.
 .IP "\fB-s \fIcommand,command,...\fR"
 Log the named commands to syslogd.
 .sp
@@ -94,9 +138,22 @@ Examples of commands are CONNECT, HELO, EHLO, LHLO, MAIL, RCPT, VRFY,
 DATA, ., RSET, NOOP, and QUIT. Separate command names by
 white space or commas, and use quotes to protect white space
 from the shell. Command names are case-insensitive.
+.IP "\fB-S start-string\fR"
+An optional string that is prepended to each message that is
+written to a dump file (see the dump file format description
+below). The following C escape sequences are supported: \ea
+(bell), \eb (backslace), \ef (formfeed), \en (newline), \er
+(carriage return), \et (horizontal tab), \ev (vertical tab),
+\e\fIddd\fR (up to three octal digits) and \e\e (the backslash
+character).
 .IP "\fB-t \fItimeout\fR (default: 100)"
 Limit the time for receiving a command or sending a response.
 The time limit is specified in seconds.
+.IP "\fB-u \fIusername\fR"
+Switch to the specified user privileges after opening the
+network socket and optionally changing the process root
+directory. This option is required when the process runs
+with super-user privileges. See also the \fB-R\fR option.
 .IP \fB-v\fR
 Show the SMTP conversations.
 .IP "\fB-w \fIdelay\fR"
@@ -110,6 +167,59 @@ Listen on the UNIX-domain socket at \fIpathname\fR.
 .IP \fIbacklog\fR
 The maximum length the queue of pending connections,
 as defined by the \fBlisten\fR(2) system call.
+.SH "DUMP FILE FORMAT"
+.na
+.nf
+.ad
+.fi
+Each dumped message contains a sequence of text lines,
+terminated with the newline character. The sequence of
+information is as follows:
+.IP \(bu
+The optional string specified with the \fB-S\fR option.
+.IP \(bu
+The \fBsmtp-sink\fR generated headers as documented below.
+.IP \(bu
+The message header and body as received from the SMTP client.
+.IP \(bu
+An empty line.
+.PP
+The format of the \fBsmtp-sink\fR generated headers is as
+follows:
+.IP "\fBX-Client-Addr: \fItext\fR"
+The client IP address without enclosing []. An IPv6 address
+is prefixed with "ipv6:". This record is always present.
+.IP "\fBX-Client-Proto: \fItext\fR"
+The client protocol: SMTP, ESMTP or LMTP. This record is
+always present.
+.IP "\fBX-Helo-Args: \fItext\fR"
+The arguments of the last HELO or EHLO command before this
+mail delivery transaction. This record is present only if
+the client sent a recognizable HELO or EHLO command before
+the DATA command.
+.IP "\fBX-Mail-Args: \fItext\fR"
+The arguments of the MAIL command that started this mail
+delivery transaction. This record is present exactly once.
+.IP "\fBX-Rcpt-Args: \fItext\fR"
+The arguments of an RCPT command within this mail delivery
+transaction. There is one record for each RCPT command, and
+they are in the order as sent by the client.
+.IP "\fBReceived: \fItext\fR"
+A message header for compatibility with mail processing
+software. This three-line header marks the end of the headers
+provided by \fBsmtp-sink\fR, and is formatted as follows:
+.RS
+.IP "\fBfrom \fIhelo\fB ([\fIaddr\fB])\fR"
+The HELO or EHLO command argument and client IP address.
+If the client did not send HELO or EHLO, the client IP
+address is used instead.
+.IP "\fBby \fIhost\fB (smtp-sink) with \fIproto\fB id \fIrandom\fB;\fR"
+The hostname specified with the \fB-h\fR option, the client
+protocol (see \fBX-Client-Proto\fR above), and the pseudo-random
+portion of the per-message capture file name.
+.IP \fItime-stamp\fR
+A time stamp as defined in RFC 2822.
+.RE
 .SH "SEE ALSO"
 .na
 .nf

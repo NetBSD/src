@@ -26,15 +26,17 @@ that runs outside Postfix. </p>
 
 <p> With this policy delegation mechanism, a simple <a href="#greylist">
 greylist </a> policy can be implemented with only a dozen lines of
-Perl, as is shown at the end of this document. Another example of
-policy delegation is the SPF policy server by Meng Wong at
-http://spf.pobox.com/.  Examples of both policies can be found in
-the Postfix source code, in the directory examples/smtpd-policy.
-</p>
+Perl, as is shown at the end of this document. A complete example
+can be found in the Postfix source code, in the directory
+examples/smtpd-policy. </p>
+
+<p> Another example of policy delegation is the SPF policy server
+at http://www.openspf.org/Software.  </p>
 
 <p> Policy delegation is now the preferred method for adding policies
 to Postfix. It's much easier to develop a new feature in few lines
-of Perl, than trying to do the same in C code. The difference in
+of Perl, Python, Ruby, or TCL, than trying to do the same in C code.
+The difference in
 performance will be unnoticeable except in the most demanding
 environments. On active systems a policy daemon process is used
 multiple times, for up to $max_use incoming SMTP connections. </p>
@@ -163,7 +165,7 @@ etrn_domain=
     These attributes are empty in case of no certificate authentication.
     As of Postfix 2.2.11 these attribute values are encoded as
     xtext: some characters are represented by +XX, where XX is the
-    two-digit hecadecimal representation of the character value.
+    two-digit hexadecimal representation of the character value.
     </p>
 
     <li> <p> The "encryption_*" attributes (Postfix 2.3 and later)

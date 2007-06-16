@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -67,6 +67,7 @@ anvil.o: ../../include/mail_conf.h
 anvil.o: ../../include/mail_params.h
 anvil.o: ../../include/mail_proto.h
 anvil.o: ../../include/mail_server.h
+anvil.o: ../../include/mail_version.h
 anvil.o: ../../include/msg.h
 anvil.o: ../../include/mymalloc.h
 anvil.o: ../../include/stringops.h

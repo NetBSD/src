@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_listen.c,v 1.6 2005/08/18 22:11:17 rpaulo Exp $	*/
+/*	$NetBSD: inet_listen.c,v 1.6.4.1 2007/06/16 17:01:56 snj Exp $	*/
 
 /*++
 /* NAME
@@ -90,7 +90,6 @@ int     inet_listen(const char *addr, int backlog, int block_mode)
     MAI_HOSTADDR_STR hostaddr;
     MAI_SERVPORT_STR portnum;
     INET_PROTO_INFO *proto_info;
-    int     found;
 
     /*
      * Translate address information to internal form.
@@ -106,53 +105,54 @@ int     inet_listen(const char *addr, int backlog, int block_mode)
     /* No early returns or res0 leaks. */
 
     proto_info = inet_proto_info();
-    for (found = 0, res = res0; res != 0; res = res->ai_next) {
+    for (res = res0; /* see below */ ; res = res->ai_next) {
+
+	/*
+	 * No usable address found.
+	 */
+	if (res == 0)
+	    msg_fatal("%s: host found but no usable address", addr);
 
 	/*
 	 * Safety net.
 	 */
-	if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
-	    msg_info("skipping address family %d for %s",
-		     res->ai_family, addr);
-	    continue;
-	}
-	found++;
+	if (strchr((char *) proto_info->sa_family_list, res->ai_family) != 0)
+	    break;
 
-	/*
-	 * Show what address we're trying.
-	 */
-	if (msg_verbose) {
-	    SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
-				 &hostaddr, &portnum, 0);
-	    msg_info("trying... [%s]:%s", hostaddr.buf, portnum.buf);
-	}
+	msg_info("skipping address family %d for %s", res->ai_family, addr);
+    }
 
-	/*
-	 * Create a listener socket.
-	 */
-	if ((sock = socket(res->ai_family, res->ai_socktype, 0)) < 0)
-	    msg_fatal("socket: %m");
+    /*
+     * Show what address we're trying.
+     */
+    if (msg_verbose) {
+	SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
+			     &hostaddr, &portnum, 0);
+	msg_info("trying... [%s]:%s", hostaddr.buf, portnum.buf);
+    }
+
+    /*
+     * Create a listener socket.
+     */
+    if ((sock = socket(res->ai_family, res->ai_socktype, 0)) < 0)
+	msg_fatal("socket: %m");
 #ifdef HAS_IPV6
 # if defined(IPV6_V6ONLY) && !defined(BROKEN_AI_PASSIVE_NULL_HOST)
-	if (res->ai_family == AF_INET6
-	    && setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
-			  (char *) &on, sizeof(on)) < 0)
-	    msg_fatal("setsockopt(IPV6_V6ONLY): %m");
+    if (res->ai_family == AF_INET6
+	&& setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
+		      (char *) &on, sizeof(on)) < 0)
+	msg_fatal("setsockopt(IPV6_V6ONLY): %m");
 # endif
 #endif
-	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-		       (char *) &on, sizeof(on)) < 0)
-	    msg_fatal("setsockopt(SO_REUSEADDR): %m");
-	if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
-	    SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
-				 &hostaddr, &portnum, 0);
-	    msg_fatal("bind %s port %s: %m", hostaddr.buf, portnum.buf);
-	}
-	break;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+		   (char *) &on, sizeof(on)) < 0)
+	msg_fatal("setsockopt(SO_REUSEADDR): %m");
+    if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+	SOCKADDR_TO_HOSTADDR(res->ai_addr, res->ai_addrlen,
+			     &hostaddr, &portnum, 0);
+	msg_fatal("bind %s port %s: %m", hostaddr.buf, portnum.buf);
     }
     freeaddrinfo(res0);
-    if (found == 0)
-	msg_fatal("%s: host not found", addr);
     non_blocking(sock, block_mode);
     if (listen(sock, backlog) < 0)
 	msg_fatal("listen: %m");
@@ -163,8 +163,8 @@ int     inet_listen(const char *addr, int backlog, int block_mode)
 
 int     inet_accept(int fd)
 {
-    struct sockaddr_in sin;
-    SOCKADDR_SIZE len = sizeof(sin);
+    struct sockaddr_storage ss;
+    SOCKADDR_SIZE ss_len = sizeof(ss);
 
-    return (sane_accept(fd, (struct sockaddr *) & sin, &len));
+    return (sane_accept(fd, (struct sockaddr *) & ss, &ss_len));
 }

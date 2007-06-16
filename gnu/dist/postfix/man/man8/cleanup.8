@@ -1,4 +1,4 @@
-.\"	$NetBSD: cleanup.8,v 1.7 2006/07/19 01:35:39 rpaulo Exp $
+.\"	$NetBSD: cleanup.8,v 1.7.4.1 2007/06/16 16:58:06 snj Exp $
 .\"
 .TH CLEANUP 8 
 .ad
@@ -335,11 +335,11 @@ mail that is still queued.
 The time limit for sending or receiving information over an internal
 communication channel.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBmyhostname (see 'postconf -d' output)\fR"
 The internet hostname of this mail system.
 .IP "\fBmyorigin ($myhostname)\fR"

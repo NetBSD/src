@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.1.1.4 2006/07/19 01:17:53 rpaulo Exp $	*/
+/*	$NetBSD: msg.c,v 1.1.1.4.4.1 2007/06/16 17:02:01 snj Exp $	*/
 
 /*++
 /* NAME
@@ -41,7 +41,7 @@
 /*	to the standard error stream, but the disposition can be changed
 /*	by the user. See the hints below in the SEE ALSO section.
 /*
-/*	msg_info(), msg_warn(), msg_error(), msg_fatal() and msg_panic()
+/*	msg_info(), msg_warn(), msg_error(), msg_fatal*() and msg_panic()
 /*	produce a one-line record with the program name, a severity code
 /*	(except for msg_info()), and an informative message. The program
 /*	name must have been set by calling one of the msg_XXX_init()
@@ -74,6 +74,40 @@
 /*	msg_verbose is a global flag that can be set to make software
 /*	more verbose about what it is doing. By default the flag is zero.
 /*	By convention, a larger value means more noise.
+/* REENTRANCY
+/* .ad
+/* .fi
+/*	The msg_info() etc. output routines are protected against
+/*	ordinary recursive calls and against re-entry by signal
+/*	handlers.
+/*
+/*	Protection against re-entry by signal handlers is subject
+/*	to the following limitations:
+/* .IP \(bu
+/*	The signal handlers must never return. In other words, the
+/*	signal handlers must do one or more of the following: call
+/*	_exit(), kill the process with a signal, and permanently block
+/*	the process.
+/* .IP \(bu
+/*	The signal handlers must invoke msg_info() etc. not until
+/*	after the msg_XXX_init() functions complete initialization,
+/*	and not until after the first formatted output to a VSTRING
+/*	or VSTREAM.
+/* .IP \(bu
+/*	Each msg_cleanup() call-back function, and each Postfix or
+/*	system function invoked by that call-back function, either
+/*	protects itself against recursive calls and re-entry by a
+/*	terminating signal handler, or is called exclusively by the
+/*	msg(3) module.
+/* .PP
+/*	When re-entrancy is detected, the requested output and
+/*	optional cleanup operations are skipped. Skipping the output
+/*	operations prevents memory corruption of VSTREAM_ERR data
+/*	structures, and prevents deadlock on Linux releases that
+/*	use mutexes within system library routines such as syslog().
+/*	This protection exists under the condition that these
+/*	specific resources are accessed exclusively via the msg_info()
+/*	etc.  functions.
 /* SEE ALSO
 /*	msg_output(3) specify diagnostics disposition
 /*	msg_stdio(3) direct diagnostics to standard I/O stream
@@ -120,13 +154,22 @@
 int     msg_verbose = 0;
 
  /*
-  * Private state. The msg_exiting flag prevents us from recursively
-  * reporting an error.
+  * Private state.
   */
 static MSG_CLEANUP_FN msg_cleanup_fn = 0;
-static int msg_exiting = 0;
 static int msg_error_count = 0;
 static int msg_error_bound = 13;
+
+ /*
+  * The msg_exiting flag prevents us from recursively reporting an error with
+  * msg_fatal*() or msg_panic(), and provides a first-level safety net for
+  * optional cleanup actions against signal handler re-entry problems. Note
+  * that msg_vprintf() implements its own guard against re-entry.
+  * 
+  * XXX We specify global scope, to discourage the compiler from doing smart
+  * things.
+  */
+volatile int msg_exiting = 0;
 
 /* msg_info - report informative message */
 
@@ -177,7 +220,8 @@ NORETURN msg_fatal(const char *fmt,...)
 	    msg_cleanup_fn();
     }
     sleep(1);
-    exit(1);
+    /* In case we're running as a signal handler. */
+    _exit(1);
 }
 
 /* msg_fatal_status - report error and terminate gracefully */
@@ -194,7 +238,8 @@ NORETURN msg_fatal_status(int status, const char *fmt,...)
 	    msg_cleanup_fn();
     }
     sleep(1);
-    exit(status);
+    /* In case we're running as a signal handler. */
+    _exit(status);
 }
 
 /* msg_panic - report error and dump core */
@@ -210,7 +255,8 @@ NORETURN msg_panic(const char *fmt,...)
     }
     sleep(1);
     abort();					/* Die! */
-    exit(1);					/* DIE!! */
+    /* In case we're running as a signal handler. */
+    _exit(1);					/* DIE!! */
 }
 
 /* msg_cleanup - specify cleanup routine */

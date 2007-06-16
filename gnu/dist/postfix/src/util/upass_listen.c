@@ -1,4 +1,4 @@
-/*	$NetBSD: upass_listen.c,v 1.1.1.1 2005/08/18 21:10:01 rpaulo Exp $	*/
+/*	$NetBSD: upass_listen.c,v 1.1.1.1.6.1 2007/06/16 17:02:10 snj Exp $	*/
 
 /*++
 /* NAME
@@ -70,7 +70,7 @@ int     upass_accept(int listen_fd)
     int     accept_fd;
     int     recv_fd;
 
-    accept_fd = sane_accept(listen_fd, (struct sockaddr *) 0, (int *) 0);
+    accept_fd = sane_accept(listen_fd, (struct sockaddr *) 0, (SOCKADDR_SIZE *) 0);
     if (accept_fd < 0) {
 	if (errno != EAGAIN)
 	    msg_warn("%s: accept connection: %m", myname);
@@ -142,7 +142,7 @@ static void upass_plumbing(int unused_event, char *context)
      * UNIX-domain connection before closing the connection. This wait needs
      * to be time limited.
      */
-    fd = sane_accept(info->unixsock, (struct sockaddr *) 0, (int *) 0);
+    fd = sane_accept(info->unixsock, (struct sockaddr *) 0, (SOCKADDR_SIZE *) 0);
     if (fd < 0) {
 	if (errno != EAGAIN)
 	    msg_fatal("%s: accept connection: %m", myname);

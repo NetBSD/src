@@ -1,4 +1,4 @@
-/*	$NetBSD: postkick.c,v 1.1.1.5 2005/08/18 21:08:15 rpaulo Exp $	*/
+/*	$NetBSD: postkick.c,v 1.1.1.5.4.1 2007/06/16 17:00:41 snj Exp $	*/
 
 /*++
 /* NAME
@@ -98,12 +98,15 @@
 
 #include <mail_proto.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_conf.h>
 
 static NORETURN usage(char *myname)
 {
     msg_fatal("usage: %s [-c config_dir] [-v] class service request", myname);
 }
+
+MAIL_VERSION_STAMP_DECLARE;
 
 int     main(int argc, char **argv)
 {
@@ -114,6 +117,11 @@ int     main(int argc, char **argv)
     struct stat st;
     char   *slash;
     int     c;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * To minimize confusion, make sure that the standard file descriptors
@@ -176,7 +184,18 @@ int     main(int argc, char **argv)
 	msg_warn("Cannot contact class %s service %s - perhaps the mail system is down",
 		 class, service);
 	exit(1);
-    } else {
+    }
+
+    /*
+     * Problem: With triggers over full duplex (i.e. non-FIFO) channels, we
+     * must avoid closing the channel before the server has received the
+     * request. Otherwise some hostile kernel may throw away the request.
+     * 
+     * Solution: The trigger routine registers a read event handler that runs
+     * when the server closes the channel. The event_drain() routine waits
+     * for the event handler to run, but gives up when it takes too long.
+     */
+    else {
 	event_drain(var_event_drain);
 	exit(0);
     }

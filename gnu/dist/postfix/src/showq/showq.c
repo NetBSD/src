@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.1.1.10 2006/11/07 02:58:34 rpaulo Exp $	*/
+/*	$NetBSD: showq.c,v 1.1.1.10.2.1 2007/06/16 17:01:07 snj Exp $	*/
 
 /*++
 /* NAME
@@ -28,10 +28,6 @@
 /*	outside world.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
-/* BUGS
-/*	The \fBshowq\fR(8) daemon runs at a fixed low privilege; consequently,
-/*	it cannot extract information from queue files in the
-/*	\fBmaildrop\fR directory.
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi
@@ -57,11 +53,11 @@
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -124,6 +120,7 @@
 #include <mail_proto.h>
 #include <mail_date.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mail_scan_dir.h>
 #include <mail_conf.h>
 #include <record.h>
@@ -145,8 +142,8 @@ char   *var_empty_addr;
 #define SENDER_FORMAT	"%-11s %7ld %20.20s %s\n"
 #define DROP_FORMAT	"%-10s%c %7ld %20.20s (maildrop queue, sender UID %u)\n"
 
-static void showq_reasons(VSTREAM *, BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *, 
-HTABLE *);
+static void showq_reasons(VSTREAM *, BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *,
+			          HTABLE *);
 
 #define STR(x)	vstring_str(x)
 
@@ -262,8 +259,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 
 /* showq_reasons - show deferral reasons */
 
-static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, RCPT_BUF *rcpt_buf, 
-DSN_BUF *dsn_buf, HTABLE *dup_filter)
+static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, RCPT_BUF *rcpt_buf,
+			          DSN_BUF *dsn_buf, HTABLE *dup_filter)
 {
     char   *saved_reason = 0;
     int     padding;
@@ -397,6 +394,8 @@ static void showq_service(VSTREAM *client, char *unused_service, char **argv)
     }
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the single-threaded server skeleton */
 
 int     main(int argc, char **argv)
@@ -409,6 +408,11 @@ int     main(int argc, char **argv)
 	VAR_EMPTY_ADDR, DEF_EMPTY_ADDR, &var_empty_addr, 1, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     single_server_main(argc, argv, showq_service,
 		       MAIL_SERVER_INT_TABLE, int_table,

@@ -141,37 +141,40 @@ Postfix version 2.0 and earlier:
 
 MMeeaassuurreess aaggaaiinnsstt cclliieennttss tthhaatt mmaakkee ttoooo mmaannyy ccoonnnneeccttiioonnss
 
-Note: this feature is not included with Postfix version 2.1.
+Note: these features use the Postfix anvil(8) service, introduced with Postfix
+version 2.2.
 
 The Postfix smtpd(8) server can limit the number of simultaneous connections
-from the same SMTP client, as well as the number of connections that a client
-is allowed to make per unit time. These statistics are maintained by the anvil
-(8) server (translation: if anvil(8) breaks, then connection limits stop
-working).
+from the same SMTP client, as well as the connection rate and the rate of
+certain SMTP commands from the same client. These statistics are maintained by
+the anvil(8) server (translation: if anvil(8) breaks, then connection limits
+stop working).
 
-IMPORTANT: These limits are designed to protect the smtpd(8) server against
-flagrant abuse. Do not use these limits to regulate legitimate traffic: mail
-will suffer grotesque delays if you do so.
+IMPORTANT: These limits must not be used to regulate legitimate traffic: mail
+will suffer grotesque delays if you do so. The limits are designed to protect
+the smtpd(8) server against abuse by out-of-control clients.
 
-  * An SMTP client may make up to $smtpd_client_connection_count_limit
-    simultaneous connections (default: 50). This is half the default process
-    limit.
-
-  * An SMTP client may make up to $smtpd_client_message_rate_limit message
-    delivery requests per unit time (default: no limit).
-
-  * An SMTP client may send up to $smtpd_client_recipient_rate_limit recipient
-    addresses per unit time (default: no limit).
-
-  * An SMTP client may make up to $smtpd_client_connection_rate_limit
-    connections per unit time (default: no limit).
-
-  * These limits are not applied to SMTP clients in the networks specified with
-    $smtpd_client_event_limit_exceptions (default: clients in $mynetworks may
-    make an unlimited number of connections).
-
-  * The anvil_rate_time_unit parameter specifies the time unit over which
-    client connection rates are computed (default: 60s).
+    smtpd_client_connection_count_limit (default: 50)
+        The maximum number of connections than an SMTP client may make
+        simultaneously.
+    smtpd_client_connection_rate_limit (default: no limit)
+        The maximum number of connections that an SMTP client may make in the
+        time interval specified with anvil_rate_time_unit (default: 60s).
+    smtpd_client_message_rate_limit (default: no limit)
+        The maximum number of message delivery requests that an SMTP client may
+        make in the time interval specified with anvil_rate_time_unit (default:
+        60s).
+    smtpd_client_recipient_rate_limit (default: no limit)
+        The maximum number of recipient addresses that an SMTP client may
+        specify in the time interval specified with anvil_rate_time_unit
+        (default: 60s).
+    smtpd_client_new_tls_session_rate_limit (default: no limit)
+        The maximum number of new TLS sessions (without using the TLS session
+        cache) that an SMTP client may negotiate in the time interval specified
+        with anvil_rate_time_unit (default: 60s).
+    smtpd_client_event_limit_exceptions (default: $mynetworks)
+        SMTP clients that are excluded from connection and rate limits
+        specified above.
 
 GGeenneerraall mmaaiill ddeelliivveerryy ppeerrffoorrmmaannccee ttiippss
 
@@ -251,7 +254,7 @@ Examples of transport specific concurrency limits are:
     limit delivery concurrency to the same recipient: if the recipient has an
     expensive shell command in her .forward file, or if the recipient is a
     mailing list manager, you don't want to run too many instances of those
-    processes the same time.
+    processes at the same time.
 
   * The default smtp_destination_concurrency_limit of 20 seems enough to
     noticeably load a system without bringing it to its knees. Be careful when
@@ -334,9 +337,9 @@ message it may blame the message itself, or it may blame the receiving party.
 
 This process is governed by a bunch of little parameters.
 
-    queue_run_delay (default: 1000 seconds)
+    queue_run_delay (default: 300 seconds; before Postfix 2.4: 1000s)
         How often the queue manager scans the queue for deferred mail.
-    minimal_backoff_time (default: 1000 seconds)
+    minimal_backoff_time (default: 300 seconds; before Postfix 2.4: 1000s)
         The minimal amount of time a message won't be looked at, and the
         minimal amount of time to stay away from a "dead" destination.
     maximal_backoff_time (default: 4000 seconds)
@@ -374,8 +377,8 @@ mail delivery performance actually becomes worse. The symptoms are as follows:
 When mail is being deferred frequently, fixing the problem is always better
 than increasing the frequency of delivery attempts. However, if you can control
 only the delivery attempt frequency, consider using a dedicated fallback_relay
-"graveyard" machine for bad destinations so that they do not ruin the
-performance of normal mail deliveries.
+"graveyard" machine for bad destinations, so that these destinations do not
+ruin the performance of normal mail deliveries.
 
 TTuunniinngg tthhee nnuummbbeerr ooff PPoossttffiixx pprroocceesssseess
 
@@ -414,6 +417,16 @@ TTuunniinngg tthhee nnuummbbeerr ooff ooppeenn ffiillee
 When Postfix opens too many files or sockets, processes will abort with fatal
 errors, and the system may log "file table full" errors.
 
+  * Depending on your Postfix and operating system versions you may need to
+    recompile Postfix if you need more than 1024 file descriptors per process:
+
+      o No recompilation is needed for Postfix version 2.4 and later, when it
+        was compiled for systems that support BSD kqueue(2) (FreeBSD 4.1,
+        NetBSD 2.0, OpenBSD 2.9), Solaris 8 /dev/poll, or Linux 2.6 epoll(4).
+
+      o Otherwise, Postfix needs to be recompiled to override the default
+        FD_SETSIZE value.
+
   * Reduce the number of processes as described under "Tuning the number of
     Postfix processes" above. Fewer processes need fewer open files and
     sockets.
@@ -423,8 +436,8 @@ errors, and the system may log "file table full" errors.
     sure to verify the following information with your system tuning guide:
 
       o Some FreeBSD kernel parameters can be specified in /boot/loader.conf,
-        and some can be changed with sysctl commands. Which is which depends on
-        the version.
+        and some can be specified in /etc/sysctl.conf or changed with sysctl
+        commands. Which is which depends on the version.
 
         kern.ipc.maxsockets="5000"
         kern.ipc.nmbclusters="65536"
@@ -432,8 +445,8 @@ errors, and the system may log "file table full" errors.
         kern.maxfiles="16384"
         kern.maxfilesperproc="16384"
 
-      o Linux kernel parameters can be specified in /etc/sysctl.conf and can
-        also be changed with sysctl commands:
+      o Linux kernel parameters can be specified in /etc/sysctl.conf or changed
+        with sysctl commands:
 
         fs.file-max=16384
         kernel.threads-max=2048

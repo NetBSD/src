@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.13 2006/08/01 00:04:06 rpaulo Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.13.4.1 2007/06/16 17:00:32 snj Exp $	*/
 
 /*++
 /* NAME
@@ -69,11 +69,11 @@
 /*	Upon input, long lines are chopped up into pieces of at most
 /*	this length; upon delivery, long lines are reconstructed.
 /* .IP "\fBmax_idle (100s)\fR"
-/*	The maximum amount of time that an idle Postfix daemon process
-/*	waits for the next service request before exiting.
+/*	The maximum amount of time that an idle Postfix daemon process waits
+/*	for an incoming connection before terminating voluntarily.
 /* .IP "\fBmax_use (100)\fR"
-/*	The maximal number of connection requests before a Postfix daemon
-/*	process terminates.
+/*	The maximal number of incoming connections that a Postfix daemon
+/*	process will service before terminating voluntarily.
 /* .IP "\fBprocess_id (read-only)\fR"
 /*	The process ID of a Postfix command or daemon process.
 /* .IP "\fBprocess_name (read-only)\fR"
@@ -143,6 +143,7 @@
 #include <lex_822.h>
 #include <input_transp.h>
 #include <rec_attr_map.h>
+#include <mail_version.h>
 
 /* Single-threaded server skeleton. */
 
@@ -572,6 +573,8 @@ static void post_jail_init(char *unused_name, char **unused_argv)
 	input_transp_mask(VAR_INPUT_TRANSP, var_input_transp);
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 /* main - pass control to the multi-threaded server skeleton */
 
 int     main(int argc, char **argv)
@@ -581,6 +584,11 @@ int     main(int argc, char **argv)
 	VAR_INPUT_TRANSP, DEF_INPUT_TRANSP, &var_input_transp, 0, 0,
 	0,
     };
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Use the multi-threaded skeleton, because no-one else should be

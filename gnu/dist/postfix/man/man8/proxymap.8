@@ -1,4 +1,4 @@
-.\"	$NetBSD: proxymap.8,v 1.1.1.6 2005/08/18 21:04:21 rpaulo Exp $
+.\"	$NetBSD: proxymap.8,v 1.1.1.6.4.1 2007/06/16 16:58:10 snj Exp $
 .\"
 .TH PROXYMAP 8 
 .ad
@@ -24,18 +24,20 @@ reject mail for non-existent local addresses, but it is not
 practical to maintain a copy of the passwd file in the chroot
 jail.  The solution:
 .sp
+.nf
 local_recipient_maps =
-.ti +4
-proxy:unix:passwd.byname $alias_maps
+    proxy:unix:passwd.byname $alias_maps
+.fi
 .IP \(bu
 To consolidate the number of open lookup tables by sharing
 one open table among multiple processes. For example, making
 mysql connections from every Postfix daemon process results
 in "too many connections" errors. The solution:
 .sp
+.nf
 virtual_alias_maps =
-.ti +4
-proxy:mysql:/etc/postfix/virtual_alias.cf
+    proxy:mysql:/etc/postfix/virtual_alias.cf
+.fi
 .sp
 The total number of connections is limited by the number of
 proxymap server processes.
@@ -120,11 +122,11 @@ request before it is terminated by a built-in watchdog timer.
 The time limit for sending or receiving information over an internal
 communication channel.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBprocess_id (read-only)\fR"
 The process ID of a Postfix command or daemon process.
 .IP "\fBprocess_name (read-only)\fR"

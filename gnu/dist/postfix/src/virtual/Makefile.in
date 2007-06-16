@@ -18,7 +18,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -187,6 +187,7 @@ virtual.o: ../../include/mail_conf.h
 virtual.o: ../../include/mail_params.h
 virtual.o: ../../include/mail_queue.h
 virtual.o: ../../include/mail_server.h
+virtual.o: ../../include/mail_version.h
 virtual.o: ../../include/maps.h
 virtual.o: ../../include/mbox_conf.h
 virtual.o: ../../include/msg.h

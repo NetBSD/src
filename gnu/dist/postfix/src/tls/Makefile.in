@@ -29,7 +29,7 @@ all: $(LIB)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -151,6 +151,7 @@ tls_mgr.o: ../../include/vstream.h
 tls_mgr.o: ../../include/vstring.h
 tls_mgr.o: tls_mgr.c
 tls_mgr.o: tls_mgr.h
+tls_misc.o: ../../include/argv.h
 tls_misc.o: ../../include/msg.h
 tls_misc.o: ../../include/mymalloc.h
 tls_misc.o: ../../include/name_code.h

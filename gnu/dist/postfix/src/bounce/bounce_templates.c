@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_templates.c,v 1.1.1.2 2006/08/27 00:39:27 rpaulo Exp $	*/
+/*	$NetBSD: bounce_templates.c,v 1.1.1.2.4.1 2007/06/16 16:58:41 snj Exp $	*/
 
 /*++
 /* NAME
@@ -100,7 +100,7 @@ static const char *def_bounce_failure_body[] = {
     "I'm sorry to have to inform you that your message could not",
     "be delivered to one or more recipients. It's attached below.",
     "",
-    "For further assistance, please send mail to <" MAIL_ADDR_POSTMASTER ">",
+    "For further assistance, please send mail to " MAIL_ADDR_POSTMASTER ".",
     "",
     "If you do so, please include this problem report. You can",
     "delete your own text from the attached returned message.",
@@ -136,7 +136,7 @@ static const char *def_bounce_delay_body[] = {
     ,
     "It will be retried until it is $maximal_queue_lifetime_days day(s) old.",
     "",
-    "For further assistance, please send mail to <" MAIL_ADDR_POSTMASTER ">",
+    "For further assistance, please send mail to " MAIL_ADDR_POSTMASTER ".",
     "",
     "If you do so, please include this problem report. You can",
     "delete your own text from the attached returned message.",

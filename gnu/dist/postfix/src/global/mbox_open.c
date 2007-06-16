@@ -1,4 +1,4 @@
-/*	$NetBSD: mbox_open.c,v 1.1.1.3 2006/07/19 01:17:26 rpaulo Exp $	*/
+/*	$NetBSD: mbox_open.c,v 1.1.1.3.4.1 2007/06/16 17:00:00 snj Exp $	*/
 
 /*++
 /* NAME
@@ -113,26 +113,8 @@ MBOX   *mbox_open(const char *path, int flags, mode_t mode, struct stat * st,
     int     locked = 0;
     VSTREAM *fp;
 
-    /*
-     * Open or create the target file. In case of a privileged open, the
-     * privileged user may be attacked with hard/soft link tricks in an
-     * unsafe parent directory. In case of an unprivileged open, the mail
-     * system may be attacked by a malicious user-specified path, or the
-     * unprivileged user may be attacked with hard/soft link tricks in an
-     * unsafe parent directory. Open non-blocking to fend off attacks
-     * involving non-file targets.
-     * 
-     * We open before locking, so that we can avoid attempts to dot-lock
-     * destinations such as /dev/null.
-     */
     if (st == 0)
 	st = &local_statbuf;
-    if ((fp = safe_open(path, flags | O_NONBLOCK, mode, st,
-			chown_uid, chown_gid, why->reason)) == 0) {
-	dsb_status(why, mbox_dsn(errno, def_dsn));
-	return (0);
-    }
-    close_on_exec(vstream_fileno(fp), CLOSE_ON_EXEC);
 
     /*
      * If this is a regular file, create a dotlock file. This locking method
@@ -145,25 +127,48 @@ MBOX   *mbox_open(const char *path, int flags, mode_t mode, struct stat * st,
      * for bass-awkward compatibility with existing installations that
      * deliver to files in non-writable directories.
      * 
-     * Alternatively, we could dot-lock the file before opening, but then we
-     * would be doing silly things like dot-locking /dev/null, something that
-     * an unprivileged user is not supposed to be able to do.
+     * We dot-lock the file before opening, so we must avoid doing silly things
+     * like dot-locking /dev/null. Fortunately, deliveries to non-mailbox
+     * files execute with recipient privileges, so we don't have to worry
+     * about creating dotlock files in places where the recipient would not
+     * be able to write.
+     * 
+     * Note: we use stat() to follow symlinks, because safe_open() allows the
+     * target to be a root-owned symlink, and we don't want to create dotlock
+     * files for /dev/null or other non-file objects.
      */
-    if (S_ISREG(st->st_mode) && (lock_style & MBOX_DOT_LOCK)) {
+    if ((lock_style & MBOX_DOT_LOCK)
+	&& (stat(path, st) < 0 || S_ISREG(st->st_mode))) {
 	if (dot_lockfile(path, why->reason) == 0) {
 	    locked |= MBOX_DOT_LOCK;
 	} else if (errno == EEXIST) {
 	    dsb_status(why, mbox_dsn(EAGAIN, def_dsn));
-	    vstream_fclose(fp);
 	    return (0);
 	} else if (lock_style & MBOX_DOT_LOCK_MAY_FAIL) {
 	    msg_warn("%s", vstring_str(why->reason));
 	} else {
 	    dsb_status(why, mbox_dsn(errno, def_dsn));
-	    vstream_fclose(fp);
 	    return (0);
 	}
     }
+
+    /*
+     * Open or create the target file. In case of a privileged open, the
+     * privileged user may be attacked with hard/soft link tricks in an
+     * unsafe parent directory. In case of an unprivileged open, the mail
+     * system may be attacked by a malicious user-specified path, or the
+     * unprivileged user may be attacked with hard/soft link tricks in an
+     * unsafe parent directory. Open non-blocking to fend off attacks
+     * involving non-file targets.
+     */
+    if ((fp = safe_open(path, flags | O_NONBLOCK, mode, st,
+			chown_uid, chown_gid, why->reason)) == 0) {
+	dsb_status(why, mbox_dsn(errno, def_dsn));
+	if (locked & MBOX_DOT_LOCK)
+	    dot_unlockfile(path);
+	return (0);
+    }
+    close_on_exec(vstream_fileno(fp), CLOSE_ON_EXEC);
 
     /*
      * If this is a regular file, acquire kernel locks. flock() locks are not
@@ -185,6 +190,28 @@ MBOX   *mbox_open(const char *path, int flags, mode_t mode, struct stat * st,
 	    vstream_fclose(fp);
 	    return (0);
 	}
+    }
+
+    /*
+     * Sanity check: reportedly, GNU POP3D creates a new mailbox file and
+     * deletes the old one. This does not play well with software that opens
+     * the mailbox first and then locks it, such as software that that uses
+     * FCNTL or FLOCK locks on open file descriptors (some UNIX systems don't
+     * use dotlock files).
+     * 
+     * To detect that GNU POP3D deletes the mailbox file we look at the target
+     * file hard-link count. Note that safe_open() guarantees a hard-link
+     * count of 1, so any change in this count is a sign of trouble.
+     */
+    if (S_ISREG(st->st_mode)
+	&& (fstat(vstream_fileno(fp), st) < 0 || st->st_nlink != 1)) {
+	vstring_sprintf(why->reason, "target file status changed unexpectedly");
+	dsb_status(why, mbox_dsn(EAGAIN, def_dsn));
+	msg_warn("%s: file status changed unexpectedly", path);
+	if (locked & MBOX_DOT_LOCK)
+	    dot_unlockfile(path);
+	vstream_fclose(fp);
+	return (0);
     }
     mp = (MBOX *) mymalloc(sizeof(*mp));
     mp->path = mystrdup(path);

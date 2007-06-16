@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_entry.c,v 1.1.1.4 2006/07/19 01:17:34 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_entry.c,v 1.1.1.4.4.1 2007/06/16 17:00:26 snj Exp $	*/
 
 /*++
 /* NAME
@@ -21,6 +21,10 @@
 /*
 /*	void	qmgr_entry_unselect(queue, entry)
 /*	QMGR_QUEUE *queue;
+/*	QMGR_ENTRY *entry;
+/*
+/*	void	qmgr_entry_move_todo(dst, entry)
+/*	QMGR_QUEUE *dst;
 /*	QMGR_ENTRY *entry;
 /* DESCRIPTION
 /*	These routines add/delete/manipulate per-site message
@@ -57,6 +61,9 @@
 /*	qmgr_entry_unselect() takes the named entry off the named
 /*	per-site queue's `busy' list and moves it to the queue's
 /*	`todo' list.
+/*
+/*	qmgr_entry_move_todo() moves the specified "todo" queue entry
+/*	to the specified "todo" queue.
 /* DIAGNOSTICS
 /*	Panic: interface violations, internal inconsistencies.
 /* LICENSE
@@ -171,6 +178,38 @@ void    qmgr_entry_unselect(QMGR_QUEUE *queue, QMGR_ENTRY *entry)
     queue->todo_refcount++;
 }
 
+/* qmgr_entry_move_todo - move entry between todo queues */
+
+void    qmgr_entry_move_todo(QMGR_QUEUE *dst, QMGR_ENTRY *entry)
+{
+    const char *myname = "qmgr_entry_move_todo";
+    QMGR_MESSAGE *message = entry->message;
+    QMGR_QUEUE *src = entry->queue;
+    QMGR_ENTRY *new_entry;
+
+    if (entry->stream != 0)
+	msg_panic("%s: queue %s entry is busy", myname, src->name);
+    if (QMGR_QUEUE_THROTTLED(dst))
+	msg_panic("%s: destination queue %s is throttled", myname, dst->name);
+    if (QMGR_TRANSPORT_THROTTLED(dst->transport))
+	msg_panic("%s: destination transport %s is throttled",
+		  myname, dst->transport->name);
+
+    /*
+     * Create new entry, swap the recipients between the old and new entries,
+     * then dispose of the old entry. This gives us any end-game actions that
+     * are implemented by qmgr_entry_done(), so we don't have to duplicate
+     * those actions here.
+     * 
+     * XXX This does not enforce the per-entry recipient limit, but that is not
+     * a problem as long as qmgr_entry_move_todo() is called only to bounce
+     * or defer mail.
+     */
+    new_entry = qmgr_entry_create(dst, message);
+    recipient_list_swap(&entry->rcpt_list, &new_entry->rcpt_list);
+    qmgr_entry_done(entry, QMGR_QUEUE_TODO);
+}
+
 /* qmgr_entry_done - dispose of queue entry */
 
 void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
@@ -212,6 +251,8 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
      * not dead, discard the in-core queue. When this site is dead, but the
      * number of in-core queues exceeds some threshold, get rid of this
      * in-core queue anyway, in order to avoid running out of memory.
+     * 
+     * See also: qmgr_entry_move_todo().
      */
     if (queue->todo.next == 0 && queue->busy.next == 0) {
 	if (queue->window == 0 && qmgr_queue_count > 2 * var_qmgr_rcpt_limit)
@@ -239,7 +280,7 @@ void    qmgr_entry_done(QMGR_ENTRY *entry, int which)
 #define FUDGE(x)	((x) * (var_qmgr_fudge / 100.0))
     message->refcount--;
     if (message->rcpt_offset > 0
-	&& qmgr_recipient_count < FUDGE(var_qmgr_rcpt_limit))
+	&& qmgr_recipient_count < FUDGE(var_qmgr_rcpt_limit) - 100)
 	qmgr_message_realloc(message);
     if (message->refcount == 0)
 	qmgr_active_done(message);

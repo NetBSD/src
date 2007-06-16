@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_active.c,v 1.1.1.3 2006/07/19 01:17:33 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_active.c,v 1.1.1.3.4.1 2007/06/16 17:00:24 snj Exp $	*/
 
 /*++
 /* NAME
@@ -228,8 +228,15 @@ int     qmgr_active_feed(QMGR_SCAN *scan_info, const char *queue_id)
      * being delivered. In that case (the file is locked), defer delivery by
      * a minimal amount of time.
      */
+#define QMGR_FLUSH_AFTER	(QMGR_FLUSH_EACH | QMGR_FLUSH_DFXP)
+
     if ((message = qmgr_message_alloc(MAIL_QUEUE_ACTIVE, queue_id,
-				      scan_info->flags)) == 0) {
+				 (st.st_mode & MAIL_QUEUE_STAT_UNTHROTTLE) ?
+				      scan_info->flags | QMGR_FLUSH_AFTER :
+				      scan_info->flags,
+				 (st.st_mode & MAIL_QUEUE_STAT_UNTHROTTLE) ?
+				  st.st_mode & ~MAIL_QUEUE_STAT_UNTHROTTLE :
+				      0)) == 0) {
 	qmgr_active_corrupt(queue_id);
 	return (0);
     } else if (message == QMGR_MESSAGE_LOCKED) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_bounce.c,v 1.1.1.2 2006/11/07 02:57:06 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_bounce.c,v 1.1.1.2.4.1 2007/06/16 16:58:54 snj Exp $	*/
 
 /*++
 /* NAME
@@ -132,12 +132,12 @@ int     cleanup_bounce(CLEANUP_STATE *state)
      * expand the recipient count by virtual_alias_expansion_limit (default:
      * 1000) times.
      * 
-     * After a queue file size error, purge any unwritten data (so that
+     * After a queue file write error, purge any unwritten data (so that
      * vstream_fseek() won't fail while trying to flush it) and reset the
      * stream error flags to avoid false alarms.
      */
-    if (state->errs & CLEANUP_STAT_SIZE) {
-	(void) vstream_fpurge(state->dst);
+    if (vstream_ferror(state->dst) || vstream_fflush(state->dst)) {
+	(void) vstream_fpurge(state->dst, VSTREAM_PURGE_BOTH);
 	vstream_clearerr(state->dst);
     }
     if (vstream_fseek(state->dst, 0L, SEEK_SET) < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_extracted.c,v 1.1.1.9 2006/07/19 01:17:19 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_extracted.c,v 1.1.1.9.4.1 2007/06/16 16:58:55 snj Exp $	*/
 
 /*++
 /* NAME
@@ -16,8 +16,11 @@
 /* DESCRIPTION
 /*	This module processes message records with information extracted
 /*	from message content, or with recipients that are stored after the
-/*	message content. It updates recipient records, and writes extracted
-/*	information records to the output.
+/*	message content. It updates recipient records, writes extracted
+/*	information records to the output, and writes the queue
+/*	file end marker.  The queue file is left in a state that
+/*	is suitable for Milter inspection, but the size record still
+/*	contains dummy values.
 /*
 /*	Arguments:
 /* .IP state
@@ -289,7 +292,6 @@ void    cleanup_extracted_process(CLEANUP_STATE *state, int type,
 
 void    cleanup_extracted_finish(CLEANUP_STATE *state)
 {
-    const char myname[] = "cleanup_extracted_finish";
 
     /*
      * On the way out, add the optional automatic BCC recipient.
@@ -302,32 +304,4 @@ void    cleanup_extracted_finish(CLEANUP_STATE *state)
      * Terminate the extracted segment.
      */
     cleanup_out_string(state, REC_TYPE_END, "");
-
-    /*
-     * vstream_fseek() would flush the buffer anyway, but the code just reads
-     * better if we flush first, because it makes seek error handling more
-     * straightforward.
-     */
-    if (vstream_fflush(state->dst)) {
-	if (errno == EFBIG) {
-	    msg_warn("%s: queue file size limit exceeded", state->queue_id);
-	    state->errs |= CLEANUP_STAT_SIZE;
-	} else {
-	    msg_warn("%s: write queue file: %m", state->queue_id);
-	    state->errs |= CLEANUP_STAT_WRITE;
-	}
-	return;
-    }
-
-    /*
-     * Update the preliminary message size and count fields with the actual
-     * values.
-     */
-    if (vstream_fseek(state->dst, 0L, SEEK_SET) < 0)
-	msg_fatal("%s: vstream_fseek %s: %m", myname, cleanup_path);
-    cleanup_out_format(state, REC_TYPE_SIZE, REC_TYPE_SIZE_FORMAT,
-	    (REC_TYPE_SIZE_CAST1) (state->xtra_offset - state->data_offset),
-		       (REC_TYPE_SIZE_CAST2) state->data_offset,
-		       (REC_TYPE_SIZE_CAST3) state->rcpt_count,
-		       (REC_TYPE_SIZE_CAST4) state->qmgr_opts);
 }

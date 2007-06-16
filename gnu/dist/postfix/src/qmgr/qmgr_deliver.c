@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_deliver.c,v 1.1.1.10 2006/07/19 01:17:38 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_deliver.c,v 1.1.1.10.4.1 2007/06/16 17:00:55 snj Exp $	*/
 
 /*++
 /* NAME
@@ -165,7 +165,7 @@ static int qmgr_deliver_send_request(QMGR_ENTRY *entry, VSTREAM *stream)
 	       ATTR_TYPE_STR, MAIL_ATTR_QUEUE, message->queue_name,
 	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, message->queue_id,
 	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, message->data_offset,
-	       ATTR_TYPE_LONG, MAIL_ATTR_SIZE, message->data_size,
+	       ATTR_TYPE_LONG, MAIL_ATTR_SIZE, message->cont_length,
 	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, entry->queue->nexthop,
 	       ATTR_TYPE_STR, MAIL_ATTR_ENCODING, message->encoding,
 	       ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
@@ -221,8 +221,16 @@ static void qmgr_deliver_update(int unused_event, char *context)
     QMGR_MESSAGE *message = entry->message;
     static DSN_BUF *dsb;
     int     status;
-    RECIPIENT *recipient;
-    int     nrcpt;
+
+    /*
+     * Release the delivery agent from a "hot" queue entry.
+     */
+#define QMGR_DELIVER_RELEASE_AGENT(entry) do { \
+	event_disable_readwrite(vstream_fileno(entry->stream)); \
+	(void) vstream_fclose(entry->stream); \
+	entry->stream = 0; \
+	qmgr_deliver_concurrency--; \
+    } while (0)
 
     if (dsb == 0)
 	dsb = dsb_create();
@@ -271,16 +279,18 @@ static void qmgr_deliver_update(int unused_event, char *context)
 	 * recipient. This omission was already present in the first queue
 	 * manager implementation of 199703, and was fixed 200511.
 	 * 
-	 * Don't move this queue entry back to the todo queue so that
-	 * qmgr_defer_transport() can update the defer log. The queue entry
-	 * is still hot, and making it cold would involve duplicating most
-	 * but not all code at the end of this routine. That's too tricky.
+	 * To avoid the synchronous qmgr_defer_recipient() operation for each
+	 * recipient of this queue entry, release the delivery process and
+	 * move the entry back to the todo queue. Let qmgr_defer_transport()
+	 * log the recipient asynchronously if possible, and get out of here.
+	 * Note: if asynchronous logging is not possible,
+	 * qmgr_defer_transport() eventually invokes qmgr_entry_done() and
+	 * the entry becomes a dangling pointer.
 	 */
-	for (nrcpt = 0; nrcpt < entry->rcpt_list.len; nrcpt++) {
-	    recipient = entry->rcpt_list.info + nrcpt;
-	    qmgr_defer_recipient(message, recipient, &dsb->dsn);
-	}
+	QMGR_DELIVER_RELEASE_AGENT(entry);
+	qmgr_entry_unselect(entry);
 	qmgr_defer_transport(transport, &dsb->dsn);
+	return;
     }
 
     /*
@@ -325,11 +335,7 @@ static void qmgr_deliver_update(int unused_event, char *context)
      * to be delivered. When all recipients for a message have been tried,
      * decide what to do next with this message: defer, bounce, delete.
      */
-    event_disable_readwrite(vstream_fileno(entry->stream));
-    if (vstream_fclose(entry->stream) != 0)
-	msg_warn("qmgr_deliver_update: close delivery stream: %m");
-    entry->stream = 0;
-    qmgr_deliver_concurrency--;
+    QMGR_DELIVER_RELEASE_AGENT(entry);
     qmgr_entry_done(entry, QMGR_QUEUE_BUSY);
 }
 
@@ -347,7 +353,7 @@ void    qmgr_deliver(QMGR_TRANSPORT *transport, VSTREAM *stream)
      * routine runs in response to an external event, so it does not run
      * while some other queue manipulation is happening.
      */
-    if (qmgr_deliver_initial_reply(stream) != 0) {
+    if (stream == 0 || qmgr_deliver_initial_reply(stream) != 0) {
 #if 0
 	whatsup = concatenate(transport->name,
 			      " mail transport unavailable", (char *) 0);
@@ -360,7 +366,8 @@ void    qmgr_deliver(QMGR_TRANSPORT *transport, VSTREAM *stream)
 					   "mail transport unavailable"));
 #endif
 	qmgr_defer_transport(transport, &dsn);
-	(void) vstream_fclose(stream);
+	if (stream)
+	    (void) vstream_fclose(stream);
 	return;
     }
 

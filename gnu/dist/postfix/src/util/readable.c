@@ -1,4 +1,4 @@
-/*	$NetBSD: readable.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: readable.c,v 1.1.1.2.10.1 2007/06/16 17:02:04 snj Exp $	*/
 
 /*++
 /* NAME
@@ -39,6 +39,10 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifdef USE_SYSV_POLL
+#include <poll.h>
+#endif
+
 #ifdef USE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
@@ -52,6 +56,7 @@
 
 int     readable(int fd)
 {
+#ifndef USE_SYSV_POLL
     struct timeval tv;
     fd_set  read_fds;
     fd_set  except_fds;
@@ -87,4 +92,30 @@ int     readable(int fd)
 	    return (0);
 	}
     }
+#else
+
+    /*
+     * System-V poll() is optimal for polling a few descriptors.
+     */
+    struct pollfd pollfd;
+
+#define DONT_WAIT_FOR_EVENT	0
+
+    pollfd.fd = fd;
+    pollfd.events = POLLIN;
+    for (;;) {
+	switch (poll(&pollfd, 1, DONT_WAIT_FOR_EVENT)) {
+	case -1:
+	    if (errno != EINTR)
+		msg_fatal("poll: %m");
+	    continue;
+	case 0:
+	    return (0);
+	default:
+	    if (pollfd.revents & POLLNVAL)
+		msg_fatal("poll: %m");
+	    return (1);
+	}
+    }
+#endif
 }

@@ -10,25 +10,31 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        regexp_table - format of Postfix regular expression tables
 
 <b>SYNOPSIS</b>
-       <b>postmap -fq "</b><i>string</i><b>" <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i>
+       <b>postmap -q "</b><i>string</i><b>" <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i>
 
-       <b>postmap -fq - <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
+       <b>postmap -q - <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
 <b>DESCRIPTION</b>
        The Postfix mail system uses optional tables  for  address
-       rewriting or mail routing. These tables are usually in <b>dbm</b>
-       or <b>db</b> format.
+       rewriting,  mail  routing, or access control. These tables
+       are usually in <b>dbm</b> or <b>db</b> format.
 
        Alternatively, lookup tables can  be  specified  in  POSIX
        regular  expression form. In this case, each input is com-
-       pared against a list of patterns,  and  when  a  match  is
-       found the corresponding result is returned.
+       pared against a list of patterns. When a match  is  found,
+       the  corresponding  result  is  returned and the search is
+       terminated.
 
-       To  find out what types of lookup tables your Postfix sys-
+       To find out what types of lookup tables your Postfix  sys-
        tem supports use the "<b>postconf -m</b>" command.
 
-       To test lookup tables, use the "<b>postmap  -fq</b>"  command  as
+       To  test  lookup  tables,  use the "<b>postmap -q</b>" command as
        described in the SYNOPSIS above.
+
+<b>COMPATIBILITY</b>
+       With Postfix version 2.2 and earlier specify "<b>postmap -fq</b>"
+       to  query  a  table that contains case sensitive patterns.
+       Patterns are case insensitive by default.
 
 <b>TABLE FORMAT</b>
        The general form of a Postfix regular expression table is:
@@ -38,7 +44,7 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
               responding <i>result</i> value.
 
        <b>!/</b><i>pattern</i><b>/</b><i>flags result</i>
-              When  <i>pattern</i>  does <b>not</b> match the input string, use
+              When <i>pattern</i> does <b>not</b> match the input  string,  use
               the corresponding <i>result</i> value.
 
        <b>if /</b><i>pattern</i><b>/</b><i>flags</i>
@@ -47,7 +53,7 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
               <b>if</b> and <b>endif</b>, if and only if that same input string
               also matches <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
 
-              Note: do not prepend whitespace to patterns  inside
+              Note:  do not prepend whitespace to patterns inside
               <b>if</b>..<b>endif</b>.
 
               This feature is available in Postfix 2.1 and later.
@@ -56,8 +62,7 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
 
        <b>endif</b>  Match the input string against the patterns between
               <b>if</b> and <b>endif</b>, if and only if that same input string
-              does <b>not</b> match <i>pattern</i>.  The  <b>if</b>..<b>endif</b>  can  nest.
-              matches <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
+              does <b>not</b> match <i>pattern</i>. The <b>if</b>..<b>endif</b> can nest.
 
               Note:  do not prepend whitespace to patterns inside
               <b>if</b>..<b>endif</b>.

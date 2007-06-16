@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_scan.c,v 1.1.1.3 2006/07/19 01:17:39 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_scan.c,v 1.1.1.3.4.1 2007/06/16 17:01:00 snj Exp $	*/
 
 /*++
 /* NAME
@@ -33,12 +33,17 @@
 /*	qmgr_scan_request() records a request for the next queue scan. The
 /*	flags argument is the bit-wise OR of zero or more of the following,
 /*	unrecognized flags being ignored:
-/* .IP QMGR_FLUSH_DEAD
-/*	Forget state information about dead hosts or transports. This
-/*	request takes effect upon the next queue scan.
+/* .IP QMGR_FLUSH_ONCE
+/*	Forget state information about dead hosts or transports.
+/*	This request takes effect immediately.
+/* .IP QMGR_FLUSH_DFXP
+/*	Override the defer_transports setting. This takes effect
+/*	immediately when a queue scan is in progress, and affects
+/*	the next queue scan.
 /* .IP QMGR_SCAN_ALL
-/*	Ignore queue file time stamps.
-/*	This flag is passed on to the qmgr_active_feed() routine.
+/*	Ignore queue file time stamps. This takes effect immediately
+/*	when a queue scan is in progress, and affects the next queue
+/*	scan.
 /* .IP QMGR_SCAN_START
 /*	Start a queue scan when none is in progress, or restart the
 /*	current scan upon completion.
@@ -97,12 +102,6 @@ static void qmgr_scan_start(QMGR_SCAN *scan_info)
 		 scan_info->queue);
 
     /*
-     * Optionally forget all dead host information.
-     */
-    if (scan_info->nflags & QMGR_FLUSH_DEAD)
-	qmgr_enable_all();
-
-    /*
      * Start or restart the scan.
      */
     scan_info->flags = scan_info->nflags;
@@ -114,6 +113,33 @@ static void qmgr_scan_start(QMGR_SCAN *scan_info)
 
 void    qmgr_scan_request(QMGR_SCAN *scan_info, int flags)
 {
+
+    /*
+     * Apply "forget all dead destinations" requests immediately. Throttle
+     * dead transports and queues at the earliest opportunity: preferably
+     * during an already ongoing queue scan, otherwise the throttling will
+     * have to wait until a "start scan" trigger arrives.
+     * 
+     * The QMGR_FLUSH_ONCE request always comes with QMGR_FLUSH_DFXP, and
+     * sometimes it also comes with QMGR_SCAN_ALL. It becomes a completely
+     * different story when a flush request is encoded in file permissions.
+     */
+    if (flags & QMGR_FLUSH_ONCE)
+	qmgr_enable_all();
+
+    /*
+     * Apply "ignore time stamp" requests also towards the scan that is
+     * already in progress.
+     */
+    if (scan_info->handle != 0 && (flags & QMGR_SCAN_ALL))
+	scan_info->flags |= QMGR_SCAN_ALL;
+
+    /*
+     * Apply "override defer_transports" requests also towards the scan that
+     * is already in progress.
+     */
+    if (scan_info->handle != 0 && (flags & QMGR_FLUSH_DFXP))
+	scan_info->flags |= QMGR_FLUSH_DFXP;
 
     /*
      * If a scan is in progress, just record the request.
