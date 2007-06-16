@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.37 2007/06/04 12:38:58 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.38 2007/06/16 10:52:27 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.49 2007/05/10 06:00:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.51 2007/05/31 12:27:35 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -41,6 +41,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.49 2007/05/10 06:0
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
+#if (__NetBSD_Version__ >= 399002000)
+# include <sys/kauth.h>
+#endif
 
 #if (__NetBSD_Version__ >= 399002000)
 #include <sys/kauth.h>
@@ -133,10 +136,15 @@ struct selinfo ipfselwait[IPL_LOGSIZE];
 
 const struct cdevsw ipl_cdevsw = {
 	iplopen, iplclose, iplread, nowrite, iplioctl,
-	nostop, notty, iplpoll, nommap, nokqfilter, D_OTHER,
+	nostop, notty, iplpoll, nommap,
+# if  (__NetBSD_Version__ >= 200000000)
+	nokqfilter,
+# endif
+# ifdef D_OTHER
+	D_OTHER,
+# endif
 };
 #endif
-
 
 
 #if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
@@ -518,7 +526,7 @@ struct proc *p;
 #endif
 dev_t dev;
 u_long cmd;
-#if __NetBSD_Version__ >= 499001000
+#if  (__NetBSD_Version__ >= 499001000)
 void *data;
 #else
 caddr_t data;
@@ -529,13 +537,17 @@ int mode;
 	SPL_INT(s);
 
 #if (__NetBSD_Version__ >= 399002000)
-	if ((mode & FWRITE) && kauth_authorize_network(p->l_cred,
-	    KAUTH_NETWORK_FIREWALL, KAUTH_REQ_NETWORK_FIREWALL_FW,
-	    NULL, NULL, NULL))
-#else
-	if ((securelevel >= 2) && (mode & FWRITE))
-#endif
+	if ((mode & FWRITE) &&
+	    kauth_authorize_network(p->l_cred, KAUTH_NETWORK_FIREWALL,
+				    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL,
+				    NULL, NULL)) {
 		return EPERM;
+	}
+#else
+	if ((securelevel >= 2) && (mode & FWRITE)) {
+		return EPERM;
+	}
+#endif
 
 	unit = GET_MINOR(dev);
 	if ((IPL_LOGMAX < unit) || (unit < 0))
@@ -1067,15 +1079,15 @@ frdest_t *fdp;
 	struct route *ro;
 	int off, len, hlen, code;
 	struct ifnet *ifp, *sifp;
-#if __NetBSD_Version__ < 499001100
-	struct sockaddr_in *dst;
-#else /* __NetBSD_Version__ < 499001100 */
+#if __NetBSD_Version__ >= 499001100
 	const struct sockaddr *dst;
 	union {
-		struct sockaddr		dst;
-		struct sockaddr_in	dst4;
+		struct sockaddr         dst;
+		struct sockaddr_in      dst4;
 	} u;
-#endif /* __NetBSD_Version__ < 499001100 */
+#else
+	struct sockaddr_in *dst;
+#endif
 	struct route iproute;
 	u_short ip_off;
 	frentry_t *fr;
@@ -1107,23 +1119,32 @@ frdest_t *fdp;
 	m0->m_pkthdr.csuminfo = 0;
 # endif /* __NetBSD__ && M_CSUM_IPv4 */
 
-	fr = fin->fin_fr;
+	/*
+	 * Route packet.
+	 */
+	ro = &iproute;
+	memset(ro, 0, sizeof(*ro));
+
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
 	else
 		ifp = fin->fin_ifp;
+	fr = fin->fin_fr;
 
 	if ((ifp == NULL) && (!fr || !(fr->fr_flags & FR_FASTROUTE))) {
 		error = -2;
 		goto bad;
 	}
 
-	/*
-	 * Route packet.
-	 */
-	ro = &iproute;
-	memset(ro, 0, sizeof(*ro));
-#if __NetBSD_Version__ < 499001100
+# if __NetBSD_Version__ >= 499001100
+	if ((fdp != NULL) && (fdp->fd_ip.s_addr != 0))
+		sockaddr_in_init(&u.dst4, &fdp->fd_ip, 0);
+	else
+		sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	dst = &u.dst;
+	rtcache_setdst(ro, dst);
+	rtcache_init(ro);
+# else
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
 	dst->sin_addr = ip->ip_dst;
@@ -1132,15 +1153,7 @@ frdest_t *fdp;
 		dst->sin_addr = fdp->fd_ip;
 	dst->sin_len = sizeof(*dst);
 	rtalloc(ro);
-#else /* __NetBSD_Version__ < 499001100 */
-	if ((fdp != NULL) && (fdp->fd_ip.s_addr != 0))
-		sockaddr_in_init(&u.dst4, &fdp->fd_ip, 0);
-	else
-		sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
-	dst = &u.dst;
-	rtcache_setdst(ro, dst);
-	rtcache_init(ro);
-#endif /* __NetBSD_Version__ < 499001100 */
+# endif
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1154,13 +1167,15 @@ frdest_t *fdp;
 			error = ENETUNREACH;
 		goto bad;
 	}
-#if __NetBSD_Version__ < 499001100
+
+# if __NetBSD_Version__ >= 499001100
 	if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-		dst = (struct sockaddr_in *)ro->ro_rt->rt_gateway;
-#else /* __NetBSD_Version__ < 499001100 */
+		dst = ro->ro_rt->rt_gateway;
+# else
 	if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 		dst = ro->ro_rt->rt_gateway;
 #endif /* __NetBSD_Version__ < 499001100 */
+
 	if (ro->ro_rt)
 		ro->ro_rt->rt_use++;
 
@@ -1227,12 +1242,12 @@ frdest_t *fdp;
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 # endif /* M_CSUM_IPv4 */
-#if __NetBSD_Version__ < 499001100
+# if __NetBSD_Version__ >= 499001100
+		error = (*ifp->if_output)(ifp, m, dst, ro->ro_rt);
+# else
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
-#else /* __NetBSD_Version__ < 499001100 */
-		error = (*ifp->if_output)(ifp, m, dst, ro->ro_rt);
-#endif /* __NetBSD_Version__ < 499001100 */
+# endif
 		if (i) {
 			ip->ip_len = ntohs(ip->ip_len);
 			ip->ip_off = ntohs(ip->ip_off);
@@ -1322,18 +1337,18 @@ sendorfree:
 	for (m = m0; m; m = m0) {
 		m0 = m->m_act;
 		m->m_act = 0;
-#if __NetBSD_Version__ < 499001100
+# if __NetBSD_Version__ >= 499001100
+		if (error == 0)
+			error = (*ifp->if_output)(ifp, m, dst, ro->ro_rt);
+		else
+			FREE_MB_T(m);
+# else
 		if (error == 0)
 			error = (*ifp->if_output)(ifp, m,
 			    (struct sockaddr *)dst, ro->ro_rt);
 		else
 			FREE_MB_T(m);
-#else /* __NetBSD_Version__ < 499001100 */
-		if (error == 0)
-			error = (*ifp->if_output)(ifp, m, dst, ro->ro_rt);
-		else
-			FREE_MB_T(m);
-#endif /* __NetBSD_Version__ < 499001100 */
+# endif
 	}
     }
 done:
@@ -1342,13 +1357,13 @@ done:
 	else
 		fr_frouteok[1]++;
 
-#if __NetBSD_Version__ >= 499001100
+# if __NetBSD_Version__ >= 499001100
 	rtcache_free(ro);
-#else
+# else
 	if (ro->ro_rt) {
-		RTFREE(ro->ro_rt);
+		RTFREE(((struct route *)ro)->ro_rt);
 	}
-#endif
+# endif
 	*mpp = NULL;
 	return error;
 bad:
@@ -1378,19 +1393,19 @@ struct mbuf *m0, **mpp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
-#if __NetBSD_Version__ < 499001100
-	struct route_in6 ip6route;
-	struct sockaddr_in6 *dst6;
-	struct route_in6 *ro;
-#else /* __NetBSD_Version__ < 499001100 */
+# if __NetBSD_Version__ >= 499001100
 	struct route ip6route;
 	const struct sockaddr *dst;
 	union {
-		struct sockaddr		dst;
-		struct sockaddr_in6	dst6;
+		struct sockaddr         dst;
+		struct sockaddr_in6     dst6;
 	} u;
 	struct route *ro;
-#endif /* __NetBSD_Version__ < 499001100 */
+# else
+	struct route_in6 ip6route;
+	struct sockaddr_in6 *dst6;
+	struct route_in6 *ro;
+# endif
 	struct rtentry *rt;
 	struct ifnet *ifp;
 	frentry_t *fr;
@@ -1405,19 +1420,8 @@ frdest_t *fdp;
 		ifp = fdp->fd_ifp;
 	else
 		ifp = fin->fin_ifp;
-
-	bzero((void *)ro, sizeof(*ro));
-#if __NetBSD_Version__ < 499001100
-	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
-	dst6->sin6_family = AF_INET6;
-	dst6->sin6_len = sizeof(struct sockaddr_in6);
-	dst6->sin6_addr = fin->fin_fi.fi_dst.in6;
-	if (fdp != NULL) {
-		if (IP6_NOTZERO(&fdp->fd_ip6))
-			dst6->sin6_addr = fdp->fd_ip6.in6;
-	}
-	rtalloc((struct route *)ro);
-#else /* __NetBSD_Version__ < 499001100 */
+	memset(ro, 0, sizeof(*ro));
+# if __NetBSD_Version__ >= 499001100
 	if (fdp != NULL && IP6_NOTZERO(&fdp->fd_ip6))
 		sockaddr_in6_init(&u.dst6, &fdp->fd_ip6.in6, 0, 0, 0);
 	else
@@ -1426,7 +1430,18 @@ frdest_t *fdp;
 	rtcache_setdst(ro, dst);
 
 	rtcache_init(ro);
-#endif /* __NetBSD_Version__ < 499001100 */
+# else
+	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
+	dst6->sin6_family = AF_INET6;
+	dst6->sin6_len = sizeof(struct sockaddr_in6);
+	dst6->sin6_addr = fin->fin_fi.fi_dst.in6;
+
+	if (fdp != NULL) {
+		if (IP6_NOTZERO(&fdp->fd_ip6))
+			dst6->sin6_addr = fdp->fd_ip6.in6;
+	}
+	rtalloc((struct route *)ro);
+# endif
 
 	if ((ifp == NULL) && (ro->ro_rt != NULL))
 		ifp = ro->ro_rt->rt_ifp;
@@ -1439,80 +1454,81 @@ frdest_t *fdp;
 	rt = fdp ? NULL : ro->ro_rt;
 
 	/* KAME */
-#if __NetBSD_Version__ < 499001100
-	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
-		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-#else /* __NetBSD_Version__ < 499001100 */
+# if __NetBSD_Version__ >= 499001100
 	if (IN6_IS_ADDR_LINKLOCAL(&u.dst6.sin6_addr))
 		u.dst6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-#endif /* __NetBSD_Version__ < 499001100 */
+# else
+	if (IN6_IS_ADDR_LINKLOCAL(&dst6->sin6_addr))
+		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+# endif
 
 	{
-#if (__NetBSD_Version__ >= 106010000)
-# if (__NetBSD_Version__ >= 399001400)
+# if (__NetBSD_Version__ >= 106010000)
+#  if (__NetBSD_Version__ >= 399001400)
 		struct in6_ifextra *ife;
-# else
+#  else
 		struct in6_addr finaldst = fin->fin_dst6;
 		int frag;
+#  endif
 # endif
-#endif
-#if __NetBSD_Version__ < 499001100
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
-#else /* __NetBSD_Version__ < 499001100 */
+# if __NetBSD_Version__ >= 499001100
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = ro->ro_rt->rt_gateway;
-#endif /* __NetBSD_Version__ < 499001100 */
+# else
+		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
+			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
+# endif
 		ro->ro_rt->rt_use++;
 
 		/* Determine path MTU. */
-#if (__NetBSD_Version__ <= 106009999)
+# if (__NetBSD_Version__ <= 106009999)
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
-#else
-# if (__NetBSD_Version__ >= 399001400)
+# else
+#  if (__NetBSD_Version__ >= 399001400)
 		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
 		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
-# else
+#  else
 		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
+#  endif
 # endif
-#endif
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
-#if __NetBSD_Version__ < 499001100
-			error = nd6_output(ifp, ifp, m0, dst6, rt);
-#else /* __NetBSD_Version__ < 499001100 */
+# if __NetBSD_Version__ >= 499001100
 			error = nd6_output(ifp, ifp, m0, satocsin6(dst), rt);
-#endif /* __NetBSD_Version__ < 499001100 */
+# else
+			error = nd6_output(ifp, ifp, m0, dst6, rt);
+# endif
 		} else {
 			error = EMSGSIZE;
 		}
 	}
 bad:
-#if __NetBSD_Version__ >= 499001100
+# if __NetBSD_Version__ >= 499001100
 	rtcache_free(ro);
-#else
-	RTFREE(((struct route *)ro)->ro_rt);
-#endif
+# else
+	if (ro->ro_rt != NULL) {
+		RTFREE(((struct route *)ro)->ro_rt);
+	}
+# endif
 	return error;
 }
-#endif
+#endif	/* INET6 */
 
 
 int fr_verifysrc(fin)
 fr_info_t *fin;
 {
-	int rc;
-#if __NetBSD_Version__ < 499001100
-	struct sockaddr_in *dst;
-#else /* __NetBSD_Version__ < 499001100 */
+#if __NetBSD_Version__ >= 499001100
 	union {
-		struct sockaddr		dst;
-		struct sockaddr_in	dst4;
+		struct sockaddr         dst;
+		struct sockaddr_in      dst4;
 	} u;
-#endif /* __NetBSD_Version__ < 499001100 */
+#else
+	struct sockaddr_in *dst;
+#endif
 	struct route iproute;
+	int rc;
 
-	memset(&iproute, 0, sizeof(iproute));
 #if __NetBSD_Version__ >= 499001100
 	sockaddr_in_init(&u.dst4, &fin->fin_src, 0);
 	rtcache_setdst(&iproute, &u.dst);
