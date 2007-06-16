@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.21.14.1 2007/05/22 14:57:51 itohy Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.21.14.2 2007/06/16 04:12:32 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.21.14.1 2007/05/22 14:57:51 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.21.14.2 2007/06/16 04:12:32 itohy Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -397,18 +397,6 @@ USB_DETACH(usscanner)
 Static void
 usscanner_cleanup(struct usscanner_softc *sc)
 {
-	if (sc->sc_in_pipe != NULL) {
-		usbd_close_pipe(sc->sc_in_pipe);
-		sc->sc_in_pipe = NULL;
-	}
-	if (sc->sc_intr_pipe != NULL) {
-		usbd_close_pipe(sc->sc_intr_pipe);
-		sc->sc_intr_pipe = NULL;
-	}
-	if (sc->sc_out_pipe != NULL) {
-		usbd_close_pipe(sc->sc_out_pipe);
-		sc->sc_out_pipe = NULL;
-	}
 	if (sc->sc_cmd_xfer != NULL) {
 		usbd_free_xfer(sc->sc_cmd_xfer);
 		sc->sc_cmd_xfer = NULL;
@@ -420,6 +408,18 @@ usscanner_cleanup(struct usscanner_softc *sc)
 	if (sc->sc_dataout_xfer != NULL) {
 		usbd_free_xfer(sc->sc_dataout_xfer);
 		sc->sc_dataout_xfer = NULL;
+	}
+	if (sc->sc_in_pipe != NULL) {
+		usbd_close_pipe(sc->sc_in_pipe);
+		sc->sc_in_pipe = NULL;
+	}
+	if (sc->sc_intr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_intr_pipe);
+		sc->sc_intr_pipe = NULL;
+	}
+	if (sc->sc_out_pipe != NULL) {
+		usbd_close_pipe(sc->sc_out_pipe);
+		sc->sc_out_pipe = NULL;
 	}
 }
 

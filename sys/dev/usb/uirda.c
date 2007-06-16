@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.23.8.1 2007/05/22 14:57:43 itohy Exp $	*/
+/*	$NetBSD: uirda.c,v 1.23.8.2 2007/06/16 04:12:31 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.23.8.1 2007/05/22 14:57:43 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.23.8.2 2007/06/16 04:12:31 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,16 +524,10 @@ uirda_close(void *h, int flag, int mode,
 
 	DPRINTF(("%s: sc=%p\n", __func__, sc));
 
-	if (sc->sc_rd_pipe != NULL) {
+	if (sc->sc_rd_pipe != NULL)
 		usbd_abort_pipe(sc->sc_rd_pipe);
-		usbd_close_pipe(sc->sc_rd_pipe);
-		sc->sc_rd_pipe = NULL;
-	}
-	if (sc->sc_wr_pipe != NULL) {
+	if (sc->sc_wr_pipe != NULL)
 		usbd_abort_pipe(sc->sc_wr_pipe);
-		usbd_close_pipe(sc->sc_wr_pipe);
-		sc->sc_wr_pipe = NULL;
-	}
 	if (sc->sc_rd_xfer != NULL) {
 		usbd_free_xfer(sc->sc_rd_xfer);
 		sc->sc_rd_xfer = NULL;
@@ -543,6 +537,14 @@ uirda_close(void *h, int flag, int mode,
 		usbd_free_xfer(sc->sc_wr_xfer);
 		sc->sc_wr_xfer = NULL;
 		sc->sc_wr_buf = NULL;
+	}
+	if (sc->sc_rd_pipe != NULL) {
+		usbd_close_pipe(sc->sc_rd_pipe);
+		sc->sc_rd_pipe = NULL;
+	}
+	if (sc->sc_wr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_wr_pipe);
+		sc->sc_wr_pipe = NULL;
 	}
 
 	return (0);

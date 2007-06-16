@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.69.10.1 2007/05/22 14:57:40 itohy Exp $	*/
+/*	$NetBSD: ucom.c,v 1.69.10.2 2007/06/16 04:12:30 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.69.10.1 2007/05/22 14:57:40 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.69.10.2 2007/06/16 04:12:30 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1105,16 +1105,10 @@ ucom_cleanup(struct ucom_softc *sc)
 	DPRINTF(("ucom_cleanup: closing pipes\n"));
 
 	ucom_shutdown(sc);
-	if (sc->sc_bulkin_pipe != NULL) {
+	if (sc->sc_bulkin_pipe != NULL)
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
-	}
-	if (sc->sc_bulkout_pipe != NULL) {
+	if (sc->sc_bulkout_pipe != NULL)
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
-		usbd_close_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
-	}
 	if (sc->sc_ixfer != NULL) {
 		usbd_free_xfer(sc->sc_ixfer);
 		sc->sc_ixfer = NULL;
@@ -1122,6 +1116,14 @@ ucom_cleanup(struct ucom_softc *sc)
 	if (sc->sc_oxfer != NULL) {
 		usbd_free_xfer(sc->sc_oxfer);
 		sc->sc_oxfer = NULL;
+	}
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe != NULL) {
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
 	}
 }
 
