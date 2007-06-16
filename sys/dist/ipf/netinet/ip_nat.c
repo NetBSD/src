@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.29 2007/05/31 10:33:54 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.30 2007/06/16 10:52:28 martin Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -16,8 +16,8 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
-#if (__NetBSD_Version__ >= 399002000)
-#include <sys/kauth.h>
+#if (__NetBSD_Version__ >= 399002000) && defined(_KERNEL)
+# include <sys/kauth.h>
 #endif
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)
@@ -116,7 +116,7 @@ extern struct ifnet vpnif;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.82 2007/05/13 00:08:53 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.87 2007/05/31 10:17:17 darrenr Exp";
 #endif
 
 
@@ -649,16 +649,21 @@ void *ctx;
 	ipnat_t *nat, *nt, *n = NULL, **np = NULL;
 	int error = 0, ret, arg, getlock;
 	ipnat_t natd;
+	SPL_INT(s);
 
 #if (BSD >= 199306) && defined(_KERNEL)
-#if (__NetBSD_Version__ >= 399002000)
-	if ((mode & FWRITE) && kauth_authorize_network(curlwp->l_cred,
-	    KAUTH_NETWORK_FIREWALL, KAUTH_REQ_NETWORK_FIREWALL_NAT,
-	    NULL, NULL, NULL))
-#else
-	if ((securelevel >= 2) && (mode & FWRITE))
-#endif
+# if (__NetBSD_Version__ >= 399002000)
+	if ((mode & FWRITE) &&
+	     kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_FIREWALL,
+				     KAUTH_REQ_NETWORK_FIREWALL_FW,
+				     NULL, NULL, NULL)) {
 		return EPERM;
+	}
+# else
+	if ((securelevel >= 2) && (mode & FWRITE)) {
+		return EPERM;
+	}
+# endif
 #endif
 
 #if defined(__osf__) && defined(_KERNEL)
@@ -713,22 +718,6 @@ void *ctx;
 
 	switch (cmd)
 	{
-	case SIOCGENITER :
-	    {
-		ipfgeniter_t iter;
-		ipftoken_t *token;
-
-		error = fr_inobj(data, &iter, IPFOBJ_GENITER);
-		if (error != 0)
-			break;
-
-		token = ipf_findtoken(iter.igi_type, uid, ctx);
-		if (token != NULL) {
-			error  = nat_iterator(token, &iter);
-		}
-		RWLOCK_EXIT(&ipf_tokens);
-		break;
-	    }
 #ifdef  IPFILTER_LOG
 	case SIOCIPFFB :
 	{
@@ -738,7 +727,10 @@ void *ctx;
 			error = EPERM;
 		else {
 			tmp = ipflog_clear(IPL_LOGNAT);
-			BCOPYOUT((char *)&tmp, (char *)data, sizeof(tmp));
+			error = BCOPYOUT((char *)&tmp, (char *)data,
+					 sizeof(tmp));
+			if (error != 0)
+				error = EFAULT;
 		}
 		break;
 	}
@@ -747,19 +739,25 @@ void *ctx;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			BCOPYIN((char *)data, (char *)&nat_logging,
+			error = BCOPYIN((char *)data, (char *)&nat_logging,
 					sizeof(nat_logging));
+			if (error != 0)
+				error = EFAULT;
 		}
 		break;
 
 	case SIOCGETLG :
-		BCOPYOUT((char *)&nat_logging, (char *)data,
+		error = BCOPYOUT((char *)&nat_logging, (char *)data,
 				 sizeof(nat_logging));
+		if (error != 0)
+			error = EFAULT;
 		break;
 
 	case FIONREAD :
 		arg = iplused[IPL_LOGNAT];
-		BCOPYOUT(&arg, data, sizeof(arg));
+		error = BCOPYOUT(&arg, data, sizeof(arg));
+		if (error != 0)
+			error = EFAULT;
 		break;
 #endif
 	case SIOCADNAT :
@@ -846,19 +844,23 @@ void *ctx;
 			WRITE_ENTER(&ipf_nat);
 		}
 
-		BCOPYIN(data, &arg, sizeof(arg));
-		if (arg == 0)
-			ret = nat_flushtable();
-		else if (arg == 1)
-			ret = nat_clearlist();
-		else
-			ret = nat_extraflush(arg);
+		error = BCOPYIN(data, &arg, sizeof(arg));
+		if (error != 0)
+			error = EFAULT;
+		else {
+			if (arg == 0)
+				ret = nat_flushtable();
+			else if (arg == 1)
+				ret = nat_clearlist();
+			else
+				ret = nat_extraflush(arg);
+		}
 
 		if (getlock) {
 			RWLOCK_EXIT(&ipf_nat);
 		}
 		if (error == 0) {
-			BCOPYOUT(&ret, data, sizeof(ret));
+			error = BCOPYOUT(&ret, data, sizeof(ret));
 		}
 		break;
 
@@ -908,9 +910,33 @@ void *ctx;
 			error = EACCES;
 		break;
 
+	case SIOCGENITER :
+	    {
+		ipfgeniter_t iter;
+		ipftoken_t *token;
+
+		SPL_SCHED(s);
+		error = fr_inobj(data, &iter, IPFOBJ_GENITER);
+		if (error == 0) {
+			token = ipf_findtoken(iter.igi_type, uid, ctx);
+			if (token != NULL) {
+				error  = nat_iterator(token, &iter);
+			}
+			RWLOCK_EXIT(&ipf_tokens);
+		}
+		SPL_X(s);
+		break;
+	    }
+
 	case SIOCIPFDELTOK :
-		BCOPYIN(data, &arg, sizeof(arg));
-		error = ipf_deltoken(arg, uid, ctx);
+		error = BCOPYIN((caddr_t)data, (caddr_t)&arg, sizeof(arg));
+		if (error == 0) {
+			SPL_SCHED(s);
+			error = ipf_deltoken(arg, uid, ctx);
+			SPL_X(s);
+		} else {
+			error = EFAULT;
+		}
 		break;
 
 	case SIOCGTQTAB :
@@ -1176,7 +1202,8 @@ caddr_t data;
 	nat_t *nat, *n;
 	natget_t ng;
 
-	BCOPYIN(data, &ng, sizeof(ng));
+	if (BCOPYIN(data, &ng, sizeof(ng)) != 0)
+		return EFAULT;
 
 	nat = ng.ng_ptr;
 	if (!nat) {
@@ -1186,7 +1213,8 @@ caddr_t data;
 		 * Empty list so the size returned is 0.  Simple.
 		 */
 		if (nat == NULL) {
-			BCOPYOUT(&ng, data, sizeof(ng));
+			if (BCOPYOUT(&ng, data, sizeof(ng)) != 0)
+				return EFAULT;
 			return 0;
 		}
 	} else {
@@ -1213,7 +1241,8 @@ caddr_t data;
 			ng.ng_sz += aps->aps_psiz;
 	}
 
-	BCOPYOUT(&ng, data, sizeof(ng));
+	if (BCOPYOUT(&ng, data, sizeof(ng)) != 0)
+		return EFAULT;
 	return 0;
 }
 
@@ -2319,6 +2348,8 @@ int direction;
 	ni.nai_np = np;
 	ni.nai_nflags = nflags;
 	ni.nai_flags = flags;
+	ni.nai_dport = 0;
+	ni.nai_sport = 0;
 
 	/* Give me a new nat */
 	KMALLOC(nat, nat_t *);
@@ -5309,7 +5340,7 @@ int which;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    nat_flush_entry                                             */
-/* Returns:     1 - always succeeds                                         */
+/* Returns:     0 - always succeeds                                         */
 /* Parameters:  entry(I) - pointer to NAT entry                             */
 /* Write Locks: ipf_nat                                                     */
 /*                                                                          */
@@ -5322,5 +5353,5 @@ static int nat_flush_entry(entry)
 void *entry;
 {
 	nat_delete(entry, NL_FLUSH);
-	return 1;
+	return 0;
 }
