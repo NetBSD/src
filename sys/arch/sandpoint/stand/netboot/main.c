@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1.2.2 2007/06/16 10:47:11 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.1.2.3 2007/06/16 16:17:53 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -30,7 +30,7 @@ void _wbinv(unsigned, unsigned);
 void _inv(unsigned, unsigned);
 unsigned mpc107memsize(void);
 void setup_82C686B(void);
-void setup_83C533F(void);
+void setup_83C553F(void);
 void pcifixup(void);
 
 void run(void *, void *, void *, void *, void *);
@@ -152,7 +152,7 @@ brdsetup()
 	brdtype = BRD_UNKNOWN;
 	if (pcifinddev(0x10ad, 0x0565, &pcib) == 0) {
 		brdtype = BRD_SANDPOINTX3;
-		setup_83C533F();
+		setup_83C553F();
 	}
 	else if (pcifinddev(0x1106, 0x0686, &pcib) == 0) {
 		brdtype = BRD_ENCOREPP1;
@@ -436,7 +436,7 @@ setup_82C686B()
  *	0.11.1	10ad.0105	IDE (slide)
  */
 void
-setup_83C533F()
+setup_83C553F()
 {
 #if 0
 	unsigned pcib, ide, val;
@@ -483,7 +483,7 @@ pcifixup()
 		 * - don't use ISA IRQ14/15 (pcib 0x43)
 		 * - native IDE for both channels (ide 0x40)
 		 * - LEGIRQ bit 11 steers interrupt to pin C (ide 0x40)
-		 * - hunk PCI pin C line 11 (ide 0x3d/3c)
+		 * - sign as PCI pin C line 11 (ide 0x3d/3c)
 		 */
 		val = pcicfgread(ide, 0x08);
 		val &= 0xffff00ff;
@@ -504,7 +504,7 @@ pcifixup()
 
 		/* ide: 0x3d/3c - use PCI pin C/line 11 */
 		val = pcicfgread(ide, 0x3c) & 0xffffff00;
-		val |= 11;
+		val |= 11; /* pin designation is hardwired to pin A */
 		pcicfgwrite(ide, 0x3c, val);
 #else
 		/*
