@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.4 2007/06/16 11:09:31 kiyohara Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.5 2007/06/16 11:18:45 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.4 2007/06/16 11:09:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.5 2007/06/16 11:18:45 kiyohara Exp $");
 
 #include "bpfilter.h"
 
@@ -327,6 +327,8 @@ USB_ATTACH(zyd)
 	if_attach(ifp);
 	/* XXXX: alloc temporarily until the layer2 can be configured. */
 	if_alloc_sadl(ifp);
+
+	SIMPLEQ_INIT(&sc->sc_rqh);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -791,6 +793,7 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 {
 	usbd_xfer_handle xfer;
 	struct zyd_cmd cmd;
+	struct rq rq;
 	uint16_t xferflags;
 	usbd_status error;
 	int s = 0;
@@ -804,11 +807,13 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 	xferflags = USBD_FORCE_SHORT_XFER;
 	if (!(flags & ZYD_CMD_FLAG_READ))
 		xferflags |= USBD_SYNCHRONOUS;
-	else
+	else {
 		s = splusb();
-
-	sc->odata = odata;
-	sc->olen  = olen;
+		rq.idata = idata;
+		rq.odata = odata;
+		rq.len = olen / sizeof (struct zyd_pair);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_rqh, &rq, rq);
+	}
 
 	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_IOUT], 0, &cmd,
 	    sizeof (uint16_t) + ilen, xferflags, ZYD_INTR_TIMEOUT, NULL);
@@ -826,8 +831,10 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 		return 0;	/* write: don't wait for reply */
 	}
 	/* wait at most one second for command reply */
-	error = tsleep(sc, PCATCH, "zydcmd", hz);
-	sc->odata = NULL;	/* in case answer is received too late */
+	error = tsleep(odata, PCATCH, "zydcmd", hz);
+	if (error == EWOULDBLOCK)
+		printf("%s: zyd_read sleep timeout\n", USBDEVNAME(sc->sc_dev));
+	SIMPLEQ_REMOVE(&sc->sc_rqh, &rq, rq, rq);
 	splx(s);
 
 	(void)usbd_free_xfer(xfer);
@@ -1810,7 +1817,7 @@ zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct zyd_softc *sc = (struct zyd_softc *)priv;
 	struct zyd_cmd *cmd;
-	uint32_t len;
+	uint32_t datalen;
 
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
@@ -1854,18 +1861,36 @@ zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			ifp->if_oerrors++;	/* too many retries */
 
 	} else if (le16toh(cmd->code) == ZYD_NOTIF_IORD) {
+		struct rq *rqp;
+
 		if (le16toh(*(uint16_t *)cmd->data) == ZYD_CR_INTERRUPT)
 			return;	/* HMAC interrupt */
 
-		if (sc->odata == NULL)
-			return;	/* unexpected IORD notification */
+		usbd_get_xfer_status(xfer, NULL, NULL, &datalen, NULL);
+		datalen -= sizeof(cmd->code);
+		datalen -= 2;	/* XXX: padding? */
 
-		/* copy answer into caller-supplied buffer */
-		usbd_get_xfer_status(xfer, NULL, NULL, &len, NULL);
-		bcopy(cmd->data, sc->odata, sc->olen);
+		SIMPLEQ_FOREACH(rqp, &sc->sc_rqh, rq) {
+			int i;
 
-		wakeup(sc);	/* wakeup caller */
+			if (rqp->len != datalen)
+				continue;
+			for (i = 0; i < rqp->len; i++) {
+				if (*(((const uint16_t *)rqp->idata) + i) !=
+				    (((struct zyd_pair *)cmd->data) + i)->reg)
+					break;
+			}
+			if (i != rqp->len)
+				continue;
 
+			/* copy answer into caller-supplied buffer */
+			bcopy(cmd->data, rqp->odata,
+			    sizeof(struct zyd_pair) * rqp->len);
+			wakeup(rqp->odata);	/* wakeup caller */
+
+			return;
+		}
+		return;	/* unexpected IORD notification */
 	} else {
 		printf("%s: unknown notification %x\n", USBDEVNAME(sc->sc_dev),
 		    le16toh(cmd->code));
