@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.10 2007/01/10 18:04:31 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.11 2007/06/16 23:13:25 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -11,11 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Alistair Crooks
- *	for the NetBSD project.
- * 4. The name of the author may not be used to endorse or promote
+ * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
