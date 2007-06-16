@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.1.1.4 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.1.1.5 2007/06/16 10:33:19 martin Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
@@ -119,7 +119,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.18 2006/12/16 17:12:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.20 2007/05/29 13:48:54 darrenr Exp";
 #endif
 
 
@@ -420,12 +420,14 @@ void *ctx;
 		if (error != 0)
 			break;
 
+		SPL_SCHED(s);
 		token = ipf_findtoken(IPFGENITER_AUTH, uid, ctx);
 		if (token != NULL)
 			error = fr_authgeniter(token, &iter);
 		else
 			error = ESRCH;
 		RWLOCK_EXIT(&ipf_tokens);
+		SPL_X(s);
 
 		break;
 	    }
@@ -758,8 +760,12 @@ ipfgeniter_t *itp;
 		 * so that it can be used for is_next when we come back.
 		 */
 		ATOMIC_INC(next->fae_ref);
-		if (next->fae_next == NULL)
+		if (next->fae_next == NULL) {
 			ipf_freetoken(token);
+			token = NULL;
+		} else {
+			token->ipt_data = next;
+		}
 	} else {
 		bzero(&zero, sizeof(zero));
 		next = &zero;
@@ -774,7 +780,6 @@ ipfgeniter_t *itp;
 		fr_authderef(&fae);
 		RWLOCK_EXIT(&ipf_auth);
 	}
-	token->ipt_data = next;
 
 	/*
 	 * This should arguably be via fr_outobj() so that the auth

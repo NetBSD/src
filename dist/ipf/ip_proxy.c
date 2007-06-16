@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.1.1.15 2007/05/15 22:26:01 martin Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.1.1.16 2007/06/16 10:33:08 martin Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.19 2007/04/30 09:07:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.20 2007/05/31 12:27:36 darrenr Exp";
 #endif
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
@@ -123,7 +123,7 @@ aproxy_t	*ap_proxylist = NULL;
 aproxy_t	ap_proxies[] = {
 #ifdef	IPF_FTP_PROXY
 	{ NULL, "ftp", (char)IPPROTO_TCP, 0, 0, ippr_ftp_init, ippr_ftp_fini,
-	  ippr_ftp_new, NULL, ippr_ftp_in, ippr_ftp_out, NULL },
+	  ippr_ftp_new, NULL, ippr_ftp_in, ippr_ftp_out, NULL, NULL },
 #endif
 #ifdef	IPF_IRC_PROXY
 	{ NULL, "irc", (char)IPPROTO_TCP, 0, 0, ippr_irc_init, ippr_irc_fini,
@@ -157,9 +157,9 @@ aproxy_t	ap_proxies[] = {
 #endif
 #ifdef  IPF_H323_PROXY
 	{ NULL, "h323", (char)IPPROTO_TCP, 0, 0, ippr_h323_init, ippr_h323_fini,
-	  ippr_h323_new, ippr_h323_del, ippr_h323_in, NULL, NULL },
+	  ippr_h323_new, ippr_h323_del, ippr_h323_in, NULL, NULL, NULL },
 	{ NULL, "h245", (char)IPPROTO_TCP, 0, 0, NULL, NULL,
-	  ippr_h245_new, NULL, NULL, ippr_h245_out, NULL },
+	  ippr_h245_new, NULL, NULL, ippr_h245_out, NULL, NULL },
 #endif
 #ifdef	IPF_RPCB_PROXY
 # if 0
@@ -171,7 +171,7 @@ aproxy_t	ap_proxies[] = {
 	  ippr_rpcb_init, ippr_rpcb_fini, ippr_rpcb_new, ippr_rpcb_del,
 	  ippr_rpcb_in, ippr_rpcb_out, NULL, NULL },
 #endif
-	{ NULL, "", '\0', 0, 0, NULL, NULL, NULL, NULL }
+	{ NULL, "", '\0', 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
 
 /*

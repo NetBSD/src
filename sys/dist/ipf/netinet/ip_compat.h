@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.1.1.7 2007/05/15 22:26:14 martin Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.1.1.8 2007/06/16 10:33:20 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.142.2.44 2007/05/12 09:48:16 darrenr Exp
+ * Id: ip_compat.h,v 2.142.2.48 2007/05/31 12:27:34 darrenr Exp
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -245,6 +245,7 @@ typedef unsigned int	u_32_t;
 #  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
 #  define	KFREES(x,s)	kmem_free((char *)(x), (s))
+#  define	SPL_SCHED(x)	;
 #  define	SPL_NET(x)	;
 #  define	SPL_IMP(x)	;
 #  undef	SPL_X
@@ -417,6 +418,7 @@ typedef	struct	iplog_select_s {
 #  define	RW_DESTROY(x)
 #  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
 #  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
+#  define	SPL_SCHED(x)	;
 #  define	SPL_NET(x)	;
 #  define	SPL_IMP(x)	;
 #  undef	SPL_X
@@ -584,6 +586,7 @@ typedef struct {
 #  define	USE_SPL		1
 #  define	SPL_IMP(x)	(x) = splimp()
 #  define	SPL_NET(x)	(x) = splnet()
+#  define	SPL_SCHED(x)	(x) = splsched()
 #  define	SPL_X(x)	(void) splx(x)
 extern	void	m_copydata __P((struct mbuf *, int, int, caddr_t));
 extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
@@ -644,6 +647,7 @@ typedef struct mbuf mb_t;
 					  simple_unlock(&ipf_rw); }
 #  define	ATOMIC_DEC(x)		{ simple_lock(&ipf_rw); (x)--; \
 					  simple_unlock(&ipf_rw); }
+#  define	SPL_SCHED(x)		;
 #  define	SPL_NET(x)		;
 #  define	SPL_IMP(x)		;
 #  undef	SPL_X
@@ -709,6 +713,9 @@ typedef unsigned int    u_32_t;
 /*                                  N E T B S D                            */
 /* ----------------------------------------------------------------------- */
 #ifdef __NetBSD__
+# if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
+#  include "opt_ipfilter.h"
+# endif
 # if defined(_KERNEL)
 #  include <sys/systm.h>
 # else
@@ -725,6 +732,10 @@ typedef unsigned int    u_32_t;
 #  if (__NetBSD_Version__ >= 105000000)
 #   define HAVE_M_PULLDOWN 1
 #  endif
+# endif
+
+# if (__NetBSD_Version__ >= 499000000)
+typedef	char *	caddr_t;
 # endif
 
 # ifdef _KERNEL
@@ -883,15 +894,16 @@ typedef	u_int32_t	u_32_t;
 					  mtx_unlock(&ipf_rw.ipf_lk); }
 #   define	ATOMIC_INCL(x)		atomic_add_long(&(x), 1)
 #   define	ATOMIC_INC64(x)		ATOMIC_INC(x)
-#   define	ATOMIC_INC32(x)		atomic_add_32(&(x), 1)
+#   define	ATOMIC_INC32(x)		atomic_add_32((u_int *)&(x), 1)
 #   define	ATOMIC_INC16(x)		atomic_add_16(&(x), 1)
 #   define	ATOMIC_DECL(x)		atomic_add_long(&(x), -1)
 #   define	ATOMIC_DEC64(x)		ATOMIC_DEC(x)
-#   define	ATOMIC_DEC32(x)		atomic_add_32(&(x), -1)
+#   define	ATOMIC_DEC32(x)		atomic_add_32((u_int *)&(x), -1)
 #   define	ATOMIC_DEC16(x)		atomic_add_16(&(x), -1)
 #   define	SPL_X(x)	;
 #   define	SPL_NET(x)	;
 #   define	SPL_IMP(x)	;
+#   define	SPL_SCHED(x)	;
 extern	int	in_cksum __P((struct mbuf *, int));
 #  endif /* __FreeBSD_version >= 500043 */
 #  define	MSGDSIZE(x)	mbufchainlen(x)
@@ -1105,6 +1117,7 @@ struct ip6_ext {
 					MUTEX_EXIT(&ipf_rw)
 #  define	ATOMIC_DEC16(x)		MUTEX_ENTER(&ipf_rw); (x)--; \
 					MUTEX_EXIT(&ipf_rw)
+#  define	SPL_SCHED(x)		do { } while (0)
 #  define	SPL_IMP(x)		do { } while (0)
 #  define	SPL_NET(x)		do { } while (0)
 #  define	SPL_X(x)		do { } while (0)
@@ -1254,6 +1267,7 @@ typedef u_int32_t 	u_32_t;
 					  MUTEX_EXIT(&ipf_rw); }
 #   define	ATOMIC_DEC(x)		{ MUTEX_ENTER(&ipf_rw); (x)--; \
 					  MUTEX_EXIT(&ipf_rw); }
+#  define	SPL_SCHED(x)		x = splsched()
 #  define	SPL_NET(x)		x = splnet()
 #  define	SPL_IMP(x)		x = splimp()
 #  undef	SPL_X
@@ -1431,6 +1445,7 @@ typedef	struct	mb_s	{
 # define	POLLWAKEUP(y)	;
 # define	IPF_PANIC(x,y)	;
 # define	PANIC(x,y)	;
+# define	SPL_SCHED(x)	;
 # define	SPL_NET(x)	;
 # define	SPL_IMP(x)	;
 # define	SPL_X(x)	;
@@ -1591,6 +1606,7 @@ MALLOC_DECLARE(M_IPFILTER);
 #   define	SPL_IMP(x)	x = splimp()
 #   define	SPL_NET(x)	x = splnet()
 #  endif /* NetBSD && (NetBSD <= 1991011) && (NetBSD >= 199407) */
+#  define	SPL_SCHED(x)	x = splsched()
 #  define	SPL_X(x)	(void) splx(x)
 # endif /* !USE_MUTEXES */
 

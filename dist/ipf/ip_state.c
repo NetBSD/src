@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.1.1.21 2007/05/15 22:26:02 martin Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.1.1.22 2007/06/16 10:33:09 martin Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -113,7 +113,7 @@ struct file;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.66 2007/05/13 00:08:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.69 2007/05/26 13:05:14 darrenr Exp";
 #endif
 
 static	ipstate_t **ips_table = NULL;
@@ -440,6 +440,7 @@ int mode, uid;
 void *ctx;
 {
 	int arg, ret, error = 0;
+	SPL_INT(s);
 
 	switch (cmd)
 	{
@@ -594,12 +595,14 @@ void *ctx;
 		if (error != 0)
 			break;
 
+		SPL_SCHED(s);
 		token = ipf_findtoken(IPFGENITER_STATE, uid, ctx);
 		if (token != NULL)
 			error = fr_stateiter(token, &iter);
 		else
 			error = ESRCH;
 		RWLOCK_EXIT(&ipf_tokens);
+		SPL_X(s);
 		break;
 	    }
 
@@ -609,10 +612,13 @@ void *ctx;
 
 	case SIOCIPFDELTOK :
 		error = BCOPYIN(data, (char *)&arg, sizeof(arg));
-		if (error != 0)
+		if (error != 0) {
 			error = EFAULT;
-		else
+		} else {
+			SPL_SCHED(s);
 			error = ipf_deltoken(arg, uid, ctx);
+			SPL_X(s);
+		}
 		break;
 
 	case SIOCGTQTAB :
@@ -3530,6 +3536,7 @@ int flags;
 			if ((tcpflags & (TH_FIN|TH_ACK)) == TH_ACK) {
 				nstate = IPF_TCPS_TIME_WAIT;
 			}
+			rval = 1;
 			break;
 
 		case IPF_TCPS_LAST_ACK: /* 8 */
@@ -3567,13 +3574,14 @@ int flags;
 
 		case IPF_TCPS_TIME_WAIT: /* 10 */
 			/* we're in 2MSL timeout now */
+			rval = 2;
 			if (ostate == IPF_TCPS_LAST_ACK) {
 				nstate = IPF_TCPS_CLOSED;
 			}
-			rval = 1;
 			break;
 
 		case IPF_TCPS_CLOSED: /* 11 */
+			rval = 2;
 			break;
 
 		default :
