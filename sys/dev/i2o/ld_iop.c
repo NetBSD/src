@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.23 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.24 2007/06/16 12:32:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,9 +43,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.23 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.24 2007/06/16 12:32:13 ad Exp $");
 
-#include "opt_i2o.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -96,7 +95,6 @@ static void	ld_iop_unconfig(struct ld_iop_softc *, int);
 CFATTACH_DECL(ld_iop, sizeof(struct ld_iop_softc),
     ld_iop_match, ld_iop_attach, ld_iop_detach, NULL);
 
-#ifdef I2OVERBOSE
 static const char * const ld_iop_errors[] = {
 	"success",
 	"media error",
@@ -114,7 +112,6 @@ static const char * const ld_iop_errors[] = {
 	"volume changed, waiting for acknowledgement",
 	"timeout",
 };
-#endif
 
 static int
 ld_iop_match(struct device *parent, struct cfdata *match,
@@ -296,7 +293,6 @@ static void
 ld_iop_unconfig(struct ld_iop_softc *sc, int evreg)
 {
 	struct iop_softc *iop;
-	int s;
 
 	iop = (struct iop_softc *)device_parent(&sc->sc_ld.sc_dv);
 
@@ -310,18 +306,18 @@ ld_iop_unconfig(struct ld_iop_softc *sc, int evreg)
 		 * Note that some adapters won't reply to this (XXX We
 		 * should check the event capabilities).
 		 */
+		mutex_spin_enter(&iop->sc_intrlock);
 		sc->sc_flags &= ~LD_IOP_NEW_EVTMASK;
+		mutex_spin_exit(&iop->sc_intrlock);
+
 		iop_util_eventreg(iop, &sc->sc_eventii,
 		    I2O_EVENT_GEN_EVENT_MASK_MODIFIED);
-		s = splbio();
+
+		mutex_spin_enter(&iop->sc_intrlock);
 		if ((sc->sc_flags & LD_IOP_NEW_EVTMASK) == 0)
-			tsleep(&sc->sc_eventii, PRIBIO, "ld_iopevt", hz * 5);
-		splx(s);
-#ifdef I2ODEBUG
-		if ((sc->sc_flags & LD_IOP_NEW_EVTMASK) == 0)
-			printf("%s: didn't reply to event unregister",
-			    sc->sc_ld.sc_dv.dv_xname);
-#endif
+			cv_timedwait(&sc->sc_eventii.ii_cv,
+			    &iop->sc_intrlock, hz * 5);
+		mutex_spin_exit(&iop->sc_intrlock);
 	}
 
 	iop_initiator_unregister(iop, &sc->sc_eventii);
@@ -475,7 +471,7 @@ ld_iop_flush(struct ld_softc *ld)
 	mf.msgtctx = im->im_tctx;
 	mf.flags = 1 << 16;			/* time multiplier */
 
-	/* XXX Aincent disks will return an error here. */
+	/* Aincent disks will return an error here. */
 	rv = iop_msg_post(iop, im, &mf, LD_IOP_TIMEOUT * 2);
 	iop_msg_free(iop, im);
 	return (rv);
@@ -489,9 +485,7 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 	struct ld_iop_softc *sc;
 	struct iop_softc *iop;
 	int err, detail;
-#ifdef I2OVERBOSE
 	const char *errstr;
-#endif
 
 	rb = reply;
 	bp = im->im_dvcontext;
@@ -502,15 +496,11 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 
 	if (!err && rb->reqstatus != I2O_STATUS_SUCCESS) {
 		detail = le16toh(rb->detail);
-#ifdef I2OVERBOSE
 		if (detail >= __arraycount(ld_iop_errors))
 			errstr = "<unknown>";
 		else
 			errstr = ld_iop_errors[detail];
 		printf("%s: error 0x%04x: %s\n", dv->dv_xname, detail, errstr);
-#else
-		printf("%s: error 0x%04x\n", dv->dv_xname, detail);
-#endif
 		err = 1;
 	}
 
@@ -531,6 +521,7 @@ ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
 	struct ld_iop_softc *sc;
+	struct iop_softc *iop;
 	u_int event;
 
 	rb = reply;
@@ -542,11 +533,12 @@ ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 	sc = (struct ld_iop_softc *)dv;
 
 	if (event == I2O_EVENT_GEN_EVENT_MASK_MODIFIED) {
+		iop = device_private(device_parent(dv));
+		mutex_spin_enter(&iop->sc_intrlock);
 		sc->sc_flags |= LD_IOP_NEW_EVTMASK;
-		wakeup(&sc->sc_eventii);
-#ifndef I2ODEBUG
+		cv_broadcast(&sc->sc_eventii.ii_cv);
+		mutex_spin_exit(&iop->sc_intrlock);
 		return;
-#endif
 	}
 
 	printf("%s: event 0x%08x received\n", dv->dv_xname, event);
