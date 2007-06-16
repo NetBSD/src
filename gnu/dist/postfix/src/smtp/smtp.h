@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.1.1.8 2006/07/19 01:17:42 rpaulo Exp $	*/
+/*	$NetBSD: smtp.h,v 1.1.1.8.4.1 2007/06/16 17:01:12 snj Exp $	*/
 
 /*++
 /* NAME
@@ -108,7 +108,6 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_SIZE		(1<<3)
 #define SMTP_FEATURE_STARTTLS		(1<<4)
 #define SMTP_FEATURE_AUTH		(1<<5)
-#define SMTP_FEATURE_MAYBEPIX		(1<<6)	/* PIX smtp fixup mode */
 #define SMTP_FEATURE_XFORWARD_NAME	(1<<7)
 #define SMTP_FEATURE_XFORWARD_ADDR	(1<<8)
 #define SMTP_FEATURE_XFORWARD_PROTO	(1<<9)
@@ -118,6 +117,8 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_RSET_REJECTED	(1<<13)	/* RSET probe rejected */
 #define SMTP_FEATURE_FROM_CACHE		(1<<14)	/* cached connection */
 #define SMTP_FEATURE_DSN		(1<<15)	/* DSN supported */
+#define SMTP_FEATURE_PIX_NO_ESMTP	(1<<16)	/* PIX smtp fixup mode */
+#define SMTP_FEATURE_PIX_DELAY_DOTCRLF	(1<<17)	/* PIX smtp fixup mode */
 
  /*
   * Features that passivate under the endpoint.
@@ -163,6 +164,8 @@ extern SCACHE *smtp_scache;		/* connection cache instance */
 extern STRING_LIST *smtp_cache_dest;	/* cached destinations */
 
 extern MAPS *smtp_ehlo_dis_maps;	/* ehlo keyword filter */
+
+extern MAPS *smtp_pix_bug_maps;		/* PIX workarounds */
 
 extern MAPS *smtp_generic_maps;		/* make internal address valid */
 extern int smtp_ext_prop_mask;		/* address externsion propagation */

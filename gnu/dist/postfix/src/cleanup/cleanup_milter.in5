@@ -1,0 +1,19 @@
+open test-queue-file5.tmp
+
+# Test with a series of multiple short headers.
+
+# Update short multi-line X header in the middle of other headers,
+# so that the next header gets copied right after the new X header.
+# Then update the X header another time so that it separates from
+# the header that follows it.
+
+upd_header 1 X whatevershebringswesing
+upd_header 1 X whatevershebringswesing
+
+# Update a short Subject header that precedes the updated X header,
+# and see if pointers are updated properly.
+
+upd_header 1 Subject hya
+#upd_header 1 Subject hya
+
+close

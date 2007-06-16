@@ -18,7 +18,7 @@ $(PROG): $(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -67,6 +67,7 @@ proxymap.o: ../../include/mail_conf.h
 proxymap.o: ../../include/mail_params.h
 proxymap.o: ../../include/mail_proto.h
 proxymap.o: ../../include/mail_server.h
+proxymap.o: ../../include/mail_version.h
 proxymap.o: ../../include/msg.h
 proxymap.o: ../../include/mymalloc.h
 proxymap.o: ../../include/stringops.h

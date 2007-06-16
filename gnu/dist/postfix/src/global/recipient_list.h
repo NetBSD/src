@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient_list.h,v 1.1.1.5 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: recipient_list.h,v 1.1.1.5.4.1 2007/06/16 17:00:12 snj Exp $	*/
 
 #ifndef _RECIPIENT_LIST_H_INCLUDED_
 #define _RECIPIENT_LIST_H_INCLUDED_
@@ -18,7 +18,7 @@
   * tells us the position of the REC_TYPE_RCPT byte in the message queue
   * file, This byte is replaced by REC_TYPE_DONE when the delivery status to
   * that recipient is established.
-  * 
+  *
   * Rather than bothering with subclasses that extend this structure with
   * application-specific fields we just add them here.
   */
@@ -32,7 +32,7 @@ typedef struct RECIPIENT {
 	int     status;			/* SMTP client */
 	struct QMGR_QUEUE *queue;	/* Queue manager */
 	const char *addr_type;		/* DSN */
-    } u;
+    }       u;
 } RECIPIENT;
 
 #define RECIPIENT_ASSIGN(rcpt, offs, orcpt, notify, orig, addr) do { \
@@ -57,6 +57,7 @@ typedef struct RECIPIENT_LIST {
 
 extern void recipient_list_init(RECIPIENT_LIST *, int);
 extern void recipient_list_add(RECIPIENT_LIST *, long, const char *, int, const char *, const char *);
+extern void recipient_list_swap(RECIPIENT_LIST *, RECIPIENT_LIST *);
 extern void recipient_list_free(RECIPIENT_LIST *);
 
 #define RCPT_LIST_INIT_STATUS	1

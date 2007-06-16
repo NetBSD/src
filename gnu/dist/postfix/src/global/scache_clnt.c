@@ -1,4 +1,4 @@
-/*	$NetBSD: scache_clnt.c,v 1.1.1.2 2006/07/19 01:17:28 rpaulo Exp $	*/
+/*	$NetBSD: scache_clnt.c,v 1.1.1.2.4.1 2007/06/16 17:00:14 snj Exp $	*/
 
 /*++
 /* NAME
@@ -93,6 +93,7 @@ static void scache_clnt_save_endp(SCACHE *scache, int endp_ttl,
     VSTREAM *stream;
     int     status;
     int     tries;
+    int     count = 0;
 
     if (msg_verbose)
 	msg_info("%s: endp=%s prop=%s fd=%d",
@@ -112,6 +113,7 @@ static void scache_clnt_save_endp(SCACHE *scache, int endp_ttl,
     for (tries = 0; sp->auto_clnt != 0; tries++) {
 	if ((stream = auto_clnt_access(sp->auto_clnt)) != 0) {
 	    errno = 0;
+	    count += 1;
 	    if (attr_print(stream, ATTR_FLAG_NONE,
 			 ATTR_TYPE_STR, MAIL_ATTR_REQ, SCACHE_REQ_SAVE_ENDP,
 			   ATTR_TYPE_INT, MAIL_ATTR_TTL, endp_ttl,
@@ -128,7 +130,7 @@ static void scache_clnt_save_endp(SCACHE *scache, int endp_ttl,
 		|| attr_scan(stream, ATTR_FLAG_STRICT,
 			     ATTR_TYPE_INT, MAIL_ATTR_STATUS, &status,
 			     ATTR_TYPE_END) != 1) {
-		if (msg_verbose || (errno != EPIPE && errno != ENOENT))
+		if (msg_verbose || count > 1 || (errno && errno != EPIPE && errno != ENOENT))
 		    msg_warn("problem talking to service %s: %m",
 			     VSTREAM_PATH(stream));
 		/* Give up or recover. */
@@ -283,7 +285,7 @@ static void scache_clnt_save_dest(SCACHE *scache, int dest_ttl,
 			     myname, status);
 		break;
 	    }
-	    }
+	}
 	/* Give up or recover. */
 	if (tries >= SCACHE_MAX_TRIES - 1) {
 	    msg_warn("disabling connection caching");

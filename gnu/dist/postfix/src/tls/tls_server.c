@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_server.c,v 1.1.1.3 2006/08/01 00:04:13 rpaulo Exp $	*/
+/*	$NetBSD: tls_server.c,v 1.1.1.3.4.1 2007/06/16 17:01:33 snj Exp $	*/
 
 /*++
 /* NAME
@@ -11,15 +11,8 @@
 /*	SSL_CTX	*tls_server_init(props)
 /*	const tls_server_props *props;
 /*
-/*	TLScontext_t *tls_server_start(server_ctx, stream, timeout, log_level,
-/*					peername, peeraddr, requirecert)
-/*	SSL_CTX	*server_ctx;
-/*	VSTREAM	*stream;
-/*	int	timeout;
-/*	int	log_level;
-/*	const char *peername;
-/*	const char *peeraddr;
-/*	int	requirecert;
+/*	TLScontext_t *tls_server_start(props)
+/*	const tls_server_start_props *props;
 /*
 /*	void	tls_server_stop(server_ctx, stream, failure, TLScontext)
 /*	SSL_CTX	*server_ctx;
@@ -156,10 +149,15 @@ static SSL_SESSION *get_server_session_cb(SSL *ssl, unsigned char *session_id,
     if ((TLScontext = SSL_get_ex_data(ssl, TLScontext_index)) == 0)
 	msg_panic("%s: null TLScontext in session lookup callback", myname);
 
-#define HEX_CACHE_ID(id, len) \
-    hex_encode(vstring_alloc(2 * (len) + 1), (char *) (id), (len))
+#define GEN_CACHE_ID(buf, id, len, service) \
+    do { \
+	buf = vstring_alloc(2 * (len) + 1 + strlen(service) + 3); \
+	hex_encode(buf, (char *) (id), (len)); \
+    	vstring_sprintf_append(buf, "&s=%s", (service)); \
+    } while (0)
 
-    cache_id = HEX_CACHE_ID(session_id, session_id_length);
+
+    GEN_CACHE_ID(cache_id, session_id, session_id_length, TLScontext->serverid);
 
     if (TLScontext->log_level >= 2)
 	msg_info("looking up session %s in %s cache",
@@ -197,7 +195,9 @@ static void uncache_session(SSL_CTX *ctx, TLScontext_t *TLScontext)
     if (TLScontext->cache_type == 0)
 	return;
 
-    cache_id = HEX_CACHE_ID(session->session_id, session->session_id_length);
+    GEN_CACHE_ID(cache_id, session->session_id, session->session_id_length,
+		 TLScontext->serverid);
+
     if (TLScontext->log_level >= 2)
 	msg_info("remove session %s from %s cache",
 		 STR(cache_id), TLScontext->cache_type);
@@ -218,7 +218,8 @@ static int new_server_session_cb(SSL *ssl, SSL_SESSION *session)
     if ((TLScontext = SSL_get_ex_data(ssl, TLScontext_index)) == 0)
 	msg_panic("%s: null TLScontext in new session callback", myname);
 
-    cache_id = HEX_CACHE_ID(session->session_id, session->session_id_length);
+    GEN_CACHE_ID(cache_id, session->session_id, session->session_id_length,
+		 TLScontext->serverid);
 
     if (TLScontext->log_level >= 2)
 	msg_info("save session %s to %s cache",
@@ -330,12 +331,12 @@ SSL_CTX *tls_server_init(const tls_server_props *props)
     /*
      * Override the default cipher list with our own list.
      */
-    if (*props->cipherlist != 0)
-	if (SSL_CTX_set_cipher_list(server_ctx, props->cipherlist) == 0) {
-	    tls_print_errors();
-	    SSL_CTX_free(server_ctx);		/* 200411 */
-	    return (0);
-	}
+    if (tls_set_cipher_list(server_ctx, props->cipherlist) == 0) {
+	SSL_CTX_free(server_ctx);
+	msg_warn("Invalid cipherlist \"%s\": disabling TLS support",
+		 props->cipherlist);
+	return (0);				/* Already logged */
+    }
 
     /*
      * Load the CA public key certificates for both the server cert and for
@@ -514,10 +515,7 @@ SSL_CTX *tls_server_init(const tls_server_props *props)
   * the SMTP buffers are flushed and the "220 Ready to start TLS" was sent to
   * the client, so that we can immediately start the TLS handshake process.
   */
-TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
-			               int timeout, int log_level,
-			               const char *peername,
-			               const char *peeraddr, int requirecert)
+TLScontext_t *tls_server_start(const tls_server_start_props *props)
 {
     int     sts;
     int     j;
@@ -529,18 +527,20 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
     unsigned char md[EVP_MAX_MD_SIZE];
     char    buf[CCERT_BUFSIZ];
 
-    if (log_level >= 1)
-	msg_info("setting up TLS connection from %s[%s]", peername, peeraddr);
+    if (props->log_level >= 1)
+	msg_info("setting up TLS connection from %s[%s]",
+		 props->peername, props->peeraddr);
 
     /*
      * Allocate a new TLScontext for the new connection and get an SSL
      * structure. Add the location of TLScontext to the SSL to later retrieve
      * the information inside the tls_verify_certificate_callback().
      */
-    TLScontext = tls_alloc_context(log_level, peername);
-    TLScontext->cache_type = SSL_CTX_get_ex_data(server_ctx, TLSscache_index);
+    TLScontext = tls_alloc_context(props->log_level, props->peername);
+    TLScontext->cache_type = SSL_CTX_get_ex_data(props->ctx, TLSscache_index);
+    TLScontext->serverid = mystrdup(props->serverid);
 
-    if ((TLScontext->con = (SSL *) SSL_new(server_ctx)) == NULL) {
+    if ((TLScontext->con = (SSL *) SSL_new(props->ctx)) == NULL) {
 	msg_warn("Could not allocate 'TLScontext->con' with SSL_new()");
 	tls_print_errors();
 	tls_free_context(TLScontext);
@@ -557,7 +557,7 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * Set the verification parameters to be checked in
      * tls_verify_certificate_callback().
      */
-    if (requirecert) {
+    if (props->requirecert) {
 	verify_flags = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
 	verify_flags |= SSL_VERIFY_FAIL_IF_NO_PEER_CERT;
 	TLScontext->enforce_verify_errors = 1;
@@ -613,7 +613,7 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * Well there is a BIO below the SSL routines that is automatically
      * created for us, so we can use it for debugging purposes.
      */
-    if (log_level >= 3)
+    if (props->log_level >= 3)
 	BIO_set_callback(SSL_get_rbio(TLScontext->con), tls_bio_dump_cb);
 
     /*
@@ -623,15 +623,17 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * Error handling: If the SSL handhake fails, we print out an error message
      * and remove all TLS state concerning this session.
      */
-    sts = tls_bio_accept(vstream_fileno(stream), timeout, TLScontext);
+    sts = tls_bio_accept(vstream_fileno(props->stream), props->timeout,
+			 TLScontext);
     if (sts <= 0) {
-	msg_info("SSL_accept error from %s[%s]: %d", peername, peeraddr, sts);
+	msg_info("SSL_accept error from %s[%s]: %d",
+		 props->peername, props->peeraddr, sts);
 	tls_print_errors();
 	tls_free_context(TLScontext);
 	return (0);
     }
     /* Only loglevel==4 dumps everything */
-    if (log_level < 4)
+    if (props->log_level < 4)
 	BIO_set_callback(SSL_get_rbio(TLScontext->con), 0);
 
     /*
@@ -639,7 +641,7 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * session was negotiated.
      */
     TLScontext->session_reused = SSL_session_reused(TLScontext->con);
-    if (log_level >= 2 && TLScontext->session_reused)
+    if (props->log_level >= 2 && TLScontext->session_reused)
 	msg_info("Reusing old session");
 
     /*
@@ -651,7 +653,7 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
 	if (SSL_get_verify_result(TLScontext->con) == X509_V_OK)
 	    TLScontext->peer_verified = 1;
 
-	if (log_level >= 2) {
+	if (props->log_level >= 2) {
 	    X509_NAME_oneline(X509_get_subject_name(peer),
 			      buf, sizeof(buf));
 	    msg_info("subject=%s", buf);
@@ -671,7 +673,7 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
 		else
 		    TLScontext->peer_fingerprint[(j * 3) + 2] = '\0';
 	    }
-	    if (log_level >= 1)
+	    if (props->log_level >= 1)
 		msg_info("fingerprint=%s", TLScontext->peer_fingerprint);
 	}
 	if ((TLScontext->peer_CN = tls_peer_CN(peer)) == 0)
@@ -679,7 +681,7 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
 	if ((TLScontext->issuer_CN = tls_issuer_CN(peer)) == 0)
 	    TLScontext->issuer_CN = mystrdup("");
 
-	if (log_level >= 1) {
+	if (props->log_level >= 1) {
 	    if (TLScontext->peer_verified)
 		msg_info("Verified: subject_CN=%s, issuer=%s",
 			 TLScontext->peer_CN, TLScontext->issuer_CN);
@@ -694,12 +696,12 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * If this is a cached session, we have to check by hand if the cached
      * session peer was verified.
      */
-    if (requirecert) {
+    if (props->requirecert) {
 	if (!TLScontext->peer_verified || !TLScontext->peer_CN) {
 	    if (TLScontext->session_reused == 0)
 		msg_panic("tls_server_start: peer was not verified");
 	    msg_info("Re-used session without peer certificate removed");
-	    uncache_session(server_ctx, TLScontext);
+	    uncache_session(props->ctx, TLScontext);
 	    tls_free_context(TLScontext);
 	    return (0);
 	}
@@ -718,11 +720,11 @@ TLScontext_t *tls_server_start(SSL_CTX *server_ctx, VSTREAM *stream,
      * The TLS engine is active. Switch to the tls_timed_read/write()
      * functions and make the TLScontext available to those functions.
      */
-    tls_stream_start(stream, TLScontext);
+    tls_stream_start(props->stream, TLScontext);
 
-    if (log_level >= 1)
+    if (props->log_level >= 1)
 	msg_info("TLS connection established from %s[%s]: %s with cipher %s (%d/%d bits)",
-		 peername, peeraddr,
+		 props->peername, props->peeraddr,
 		 TLScontext->protocol, TLScontext->cipher_name,
 		 TLScontext->cipher_usebits, TLScontext->cipher_algbits);
     tls_int_seed();

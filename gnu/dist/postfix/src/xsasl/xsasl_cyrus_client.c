@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.1.6.1 2007/06/16 17:02:19 snj Exp $	*/
 
 /*++
 /* NAME
@@ -161,7 +161,7 @@ static int xsasl_cyrus_client_get_user(void *context, int unused_id,
 				               const char **result,
 				               unsigned *len)
 {
-    const char *myname = "xsasl_cyrus_get_user";
+    const char *myname = "xsasl_cyrus_client_get_user";
     XSASL_CYRUS_CLIENT *client = (XSASL_CYRUS_CLIENT *) context;
 
     if (msg_verbose)
@@ -184,7 +184,7 @@ static int xsasl_cyrus_client_get_user(void *context, int unused_id,
 static int xsasl_cyrus_client_get_passwd(sasl_conn_t *conn, void *context,
 				            int id, sasl_secret_t **psecret)
 {
-    const char *myname = "xsasl_cyrus_get_passwd";
+    const char *myname = "xsasl_cyrus_client_get_passwd";
     XSASL_CYRUS_CLIENT *client = (XSASL_CYRUS_CLIENT *) context;
     int     len;
 

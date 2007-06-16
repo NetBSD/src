@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.1.1.9 2006/07/19 01:17:35 rpaulo Exp $	*/
+/*	$NetBSD: postalias.c,v 1.1.1.9.4.1 2007/06/16 17:00:36 snj Exp $	*/
 
 /*++
 /* NAME
@@ -17,12 +17,12 @@
 /*	and are expected to be suitable for the use as NIS alias maps.
 /*
 /*	If the result files do not exist they will be created with the
-/*	same group and other read permissions as the source file.
+/*	same group and other read permissions as their source file.
 /*
 /*	While a database update is in progress, signal delivery is
 /*	postponed, and an exclusive, advisory, lock is placed on the
 /*	entire database, in order to avoid surprises in spectator
-/*	programs.
+/*	processes.
 /*
 /*	The format of Postfix alias input files is described in
 /*	\fBaliases\fR(5).
@@ -50,6 +50,10 @@
 /* .IP \fB-f\fR
 /*	Do not fold the lookup key to lower case while creating or querying
 /*	a table.
+/*
+/*	With Postfix version 2.3 and later, this option has no
+/*	effect for regular expression tables. There, case folding
+/*	is controlled by appending a flag to a pattern.
 /* .IP \fB-i\fR
 /*	Incremental mode. Read entries from standard input and do not
 /*	truncate an existing database. By default, \fBpostalias\fR(1) creates
@@ -234,6 +238,7 @@
 #include <mail_conf.h>
 #include <mail_dict.h>
 #include <mail_params.h>
+#include <mail_version.h>
 #include <mkmap.h>
 #include <mail_task.h>
 
@@ -394,6 +399,7 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
     mkmap->dict->flags |= DICT_FLAG_TRY0NULL;
     vstring_sprintf(value_buffer, "%010ld", (long) time((time_t *) 0));
 #if (defined(HAS_NIS) || defined(HAS_NISPLUS))
+    mkmap->dict->flags &= ~DICT_FLAG_FOLD_FIX;
     mkmap_append(mkmap, "YP_LAST_MODIFIED", STR(value_buffer));
     mkmap_append(mkmap, "YP_MASTER_NAME", var_myhostname);
 #endif
@@ -595,6 +601,8 @@ static NORETURN usage(char *myname)
 	      myname);
 }
 
+MAIL_VERSION_STAMP_DECLARE;
+
 int     main(int argc, char **argv)
 {
     char   *path_name;
@@ -609,6 +617,11 @@ int     main(int argc, char **argv)
     char   *delkey = 0;
     int     sequence = 0;
     int     found;
+
+    /*
+     * Fingerprint executables and core dumps.
+     */
+    MAIL_VERSION_STAMP_ALLOCATE;
 
     /*
      * Be consistent with file permissions.
@@ -702,6 +715,8 @@ int     main(int argc, char **argv)
 	}
     }
     mail_conf_read();
+    if (strcmp(var_syslog_name, DEF_SYSLOG_NAME) != 0)
+	msg_syslog_init(mail_task(argv[0]), LOG_PID, LOG_FACILITY);
     mail_dict_init();
 
     /*

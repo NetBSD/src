@@ -1,4 +1,4 @@
-/*	$NetBSD: multi_server.c,v 1.1.1.8 2006/07/19 01:17:32 rpaulo Exp $	*/
+/*	$NetBSD: multi_server.c,v 1.1.1.8.4.1 2007/06/16 17:00:18 snj Exp $	*/
 
 /*++
 /* NAME
@@ -151,6 +151,7 @@
 
 #include <sys_defs.h>
 #include <sys/socket.h>
+#include <sys/time.h>			/* select() */
 #include <unistd.h>
 #include <signal.h>
 #include <syslog.h>
@@ -164,6 +165,10 @@
 #include <strings.h>
 #endif
 #include <time.h>
+
+#ifdef USE_SYS_SELECT_H
+#include <sys/select.h>			/* select() */
+#endif
 
 /* Utility library. */
 
@@ -299,11 +304,13 @@ static void multi_server_execute(int unused_event, char *context)
 	msg_fatal("select unlock: %m");
 
     /*
-     * Do not bother the application when the client disconnected.
+     * Do not bother the application when the client disconnected. Don't drop
+     * the already accepted client request after "postfix reload"; that would
+     * be rude.
      */
     if (peekfd(vstream_fileno(stream)) > 0) {
 	if (master_notify(var_pid, multi_server_generation, MASTER_STAT_TAKEN) < 0)
-	    multi_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
+	     /* void */ ;
 	multi_server_service(stream, multi_server_name, multi_server_argv);
 	if (master_notify(var_pid, multi_server_generation, MASTER_STAT_AVAIL) < 0)
 	    multi_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
@@ -330,6 +337,23 @@ static void multi_server_wakeup(int fd)
     VSTREAM *stream;
     char   *tmp;
 
+#if defined(F_DUPFD) && (EVENTS_STYLE != EVENTS_STYLE_SELECT)
+#ifndef THRESHOLD_FD_WORKAROUND
+#define THRESHOLD_FD_WORKAROUND 128
+#endif
+    int     new_fd;
+
+    /*
+     * Leave some handles < FD_SETSIZE for DBMS libraries, in the unlikely
+     * case of a multi-server with a thousand clients.
+     */
+    if (fd < THRESHOLD_FD_WORKAROUND) {
+	if ((new_fd = fcntl(fd, F_DUPFD, THRESHOLD_FD_WORKAROUND)) < 0)
+	    msg_fatal("fcntl F_DUPFD: %m");
+	(void) close(fd);
+	fd = new_fd;
+    }
+#endif
     if (msg_verbose)
 	msg_info("connection established fd %d", fd);
     non_blocking(fd, BLOCKING);
@@ -374,7 +398,7 @@ static void multi_server_accept_local(int unused_event, char *context)
 	msg_fatal("select unlock: %m");
     if (fd < 0) {
 	if (errno != EAGAIN)
-	    msg_fatal("accept connection: %m");
+	    msg_error("accept connection: %m");
 	if (time_left >= 0)
 	    event_request_timer(multi_server_timeout, (char *) 0, time_left);
 	return;
@@ -411,7 +435,7 @@ static void multi_server_accept_pass(int unused_event, char *context)
 	msg_fatal("select unlock: %m");
     if (fd < 0) {
 	if (errno != EAGAIN)
-	    msg_fatal("accept connection: %m");
+	    msg_error("accept connection: %m");
 	if (time_left >= 0)
 	    event_request_timer(multi_server_timeout, (char *) 0, time_left);
 	return;
@@ -448,7 +472,7 @@ static void multi_server_accept_inet(int unused_event, char *context)
 	msg_fatal("select unlock: %m");
     if (fd < 0) {
 	if (errno != EAGAIN)
-	    msg_fatal("accept connection: %m");
+	    msg_error("accept connection: %m");
 	if (time_left >= 0)
 	    event_request_timer(multi_server_timeout, (char *) 0, time_left);
 	return;
@@ -488,6 +512,7 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
     char   *oval;
     char   *generation;
     int     msg_vstream_needed = 0;
+    int     redo_syslog_init = 0;
 
     /*
      * Process environment options as early as we can.
@@ -563,9 +588,12 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	    service_name = optarg;
 	    break;
 	case 'o':
+	    /* XXX Use split_nameval() */
 	    if ((oval = split_at(optarg, '=')) == 0)
 		oval = "";
 	    mail_conf_update(optarg, oval);
+	    if (strcmp(optarg, VAR_SYSLOG_NAME) == 0)
+		redo_syslog_init = 1;
 	    break;
 	case 's':
 	    if ((socket_count = atoi(optarg)) <= 0)
@@ -600,6 +628,16 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
      * Initialize generic parameters.
      */
     mail_params_init();
+    if (redo_syslog_init)
+	msg_syslog_init(mail_task(var_procname), LOG_PID, LOG_FACILITY);
+
+    /*
+     * If not connected to stdin, stdin must not be a terminal.
+     */
+    if (daemon_mode && stream == 0 && isatty(STDIN_FILENO)) {
+	msg_vstream_init(var_procname, VSTREAM_ERR);
+	msg_fatal("do not run this command by hand");
+    }
 
     /*
      * Application-specific initialization.
@@ -668,14 +706,6 @@ NORETURN multi_server_main(int argc, char **argv, MULTI_SERVER_FN service,...)
 	root_dir = var_queue_dir;
     if (user_name)
 	user_name = var_mail_owner;
-
-    /*
-     * If not connected to stdin, stdin must not be a terminal.
-     */
-    if (daemon_mode && stream == 0 && isatty(STDIN_FILENO)) {
-	msg_vstream_init(var_procname, VSTREAM_ERR);
-	msg_fatal("do not run this command by hand");
-    }
 
     /*
      * Can options be required?

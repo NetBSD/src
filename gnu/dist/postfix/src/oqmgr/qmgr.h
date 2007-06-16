@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.h,v 1.1.1.4 2006/07/19 01:17:33 rpaulo Exp $	*/
+/*	$NetBSD: qmgr.h,v 1.1.1.4.4.1 2007/06/16 17:00:23 snj Exp $	*/
 
 /*++
 /* NAME
@@ -116,6 +116,7 @@ struct QMGR_QUEUE_LIST {
 
 struct QMGR_TRANSPORT {
     int     flags;			/* blocked, etc. */
+    int     pending;			/* incomplete DA connections */
     char   *name;			/* transport name */
     int     dest_concurrency_limit;	/* concurrency per domain */
     int     init_dest_concurrency;	/* init. per-domain concurrency */
@@ -127,7 +128,6 @@ struct QMGR_TRANSPORT {
 };
 
 #define QMGR_TRANSPORT_STAT_DEAD	(1<<1)
-#define QMGR_TRANSPORT_STAT_BUSY	(1<<2)
 
 typedef void (*QMGR_TRANSPORT_ALLOC_NOTIFY) (QMGR_TRANSPORT *, VSTREAM *);
 extern QMGR_TRANSPORT *qmgr_transport_select(void);
@@ -136,6 +136,8 @@ extern void qmgr_transport_throttle(QMGR_TRANSPORT *, DSN *);
 extern void qmgr_transport_unthrottle(QMGR_TRANSPORT *);
 extern QMGR_TRANSPORT *qmgr_transport_create(const char *);
 extern QMGR_TRANSPORT *qmgr_transport_find(const char *);
+
+#define QMGR_TRANSPORT_THROTTLED(t)	((t)->flags & QMGR_TRANSPORT_STAT_DEAD)
 
  /*
   * Each next hop (e.g., a domain name) has its own queue of pending message
@@ -179,6 +181,8 @@ extern void qmgr_queue_throttle(QMGR_QUEUE *, DSN *);
 extern void qmgr_queue_unthrottle(QMGR_QUEUE *);
 extern QMGR_QUEUE *qmgr_queue_find(QMGR_TRANSPORT *, const char *);
 
+#define QMGR_QUEUE_THROTTLED(q) ((q)->window <= 0)
+
  /*
   * Structure of one next-hop queue entry. In order to save some copying
   * effort we allow multiple recipients per transaction.
@@ -193,6 +197,7 @@ struct QMGR_ENTRY {
 
 extern QMGR_ENTRY *qmgr_entry_select(QMGR_QUEUE *);
 extern void qmgr_entry_unselect(QMGR_QUEUE *, QMGR_ENTRY *);
+extern void qmgr_entry_move_todo(QMGR_QUEUE *, QMGR_ENTRY *);
 extern void qmgr_entry_done(QMGR_ENTRY *, int);
 extern QMGR_ENTRY *qmgr_entry_create(QMGR_QUEUE *, QMGR_MESSAGE *);
 
@@ -227,7 +232,8 @@ struct QMGR_MESSAGE {
     char   *filter_xport;		/* filtering transport */
     char   *inspect_xport;		/* inspecting transport */
     char   *redirect_addr;		/* info@spammer.tld */
-    long    data_size;			/* message content size */
+    long    data_size;			/* data segment size */
+    long    cont_length;		/* message content length */
     long    rcpt_offset;		/* more recipients here */
     char   *client_name;		/* client hostname */
     char   *client_addr;		/* client address */
@@ -253,7 +259,7 @@ extern int qmgr_recipient_count;
 extern void qmgr_message_free(QMGR_MESSAGE *);
 extern void qmgr_message_update_warn(QMGR_MESSAGE *);
 extern void qmgr_message_kill_record(QMGR_MESSAGE *, long);
-extern QMGR_MESSAGE *qmgr_message_alloc(const char *, const char *, int);
+extern QMGR_MESSAGE *qmgr_message_alloc(const char *, const char *, int, mode_t);
 extern QMGR_MESSAGE *qmgr_message_realloc(QMGR_MESSAGE *);
 
 #define QMGR_MSG_STATS(stats, message) \
@@ -314,7 +320,9 @@ struct QMGR_SCAN {
   */
 #define QMGR_SCAN_START	(1<<0)		/* start now/restart when done */
 #define QMGR_SCAN_ALL	(1<<1)		/* all queue file time stamps */
-#define QMGR_FLUSH_DEAD	(1<<2)		/* all sites, all transports */
+#define QMGR_FLUSH_ONCE	(1<<2)		/* unthrottle once */
+#define QMGR_FLUSH_DFXP	(1<<3)		/* override defer_transports */
+#define QMGR_FLUSH_EACH	(1<<4)		/* unthrottle per message */
 
  /*
   * qmgr_scan.c
@@ -322,6 +330,13 @@ struct QMGR_SCAN {
 extern QMGR_SCAN *qmgr_scan_create(const char *);
 extern void qmgr_scan_request(QMGR_SCAN *, int);
 extern char *qmgr_scan_next(QMGR_SCAN *);
+
+ /*
+  * qmgr_error.c
+  */
+extern QMGR_TRANSPORT *qmgr_error_transport(const char *);
+extern QMGR_QUEUE *qmgr_error_queue(const char *, DSN *);
+extern char *qmgr_error_nexthop(DSN *);
 
 /* LICENSE
 /* .ad

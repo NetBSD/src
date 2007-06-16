@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.c,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+/*	$NetBSD: msg_output.c,v 1.1.1.2.10.1 2007/06/16 17:02:02 snj Exp $	*/
 
 /*++
 /* NAME
@@ -42,6 +42,36 @@
 /*
 /*	msg_text() copies a pre-formatted text, sanitizes the result, and
 /*	calls the output handlers registered with msg_output().
+/* REENTRANCY
+/* .ad
+/* .fi
+/*	The above output routines are protected against ordinary
+/*	recursive calls and against re-entry by signal
+/*	handlers, with the following limitations:
+/* .IP \(bu
+/*	The signal handlers must never return. In other words, the
+/*	signal handlers must do one or more of the following: call
+/*	_exit(), kill the process with a signal, and permanently
+/*	block the process.
+/* .IP \(bu
+/*	The signal handlers must call the above output routines not
+/*	until after msg_output() completes initialization, and not
+/*	until after the first formatted output to a VSTRING or
+/*	VSTREAM.
+/* .IP \(bu
+/*	Each msg_output() call-back function, and each Postfix or
+/*	system function called by that call-back function, either
+/*	must protect itself against recursive calls and re-entry
+/*	by a terminating signal handler, or it must be called
+/*	exclusively by functions in the msg_output(3) module.
+/* .PP
+/*	When re-entrancy is detected, the requested output operation
+/*	is skipped. This prevents memory corruption of VSTREAM_ERR
+/*	data structures, and prevents deadlock on Linux releases
+/*	that use mutexes within system library routines such as
+/*	syslog(). This protection exists under the condition that
+/*	these specific resources are accessed exclusively via
+/*	msg_output() call-back functions.
 /* LICENSE
 /* .ad
 /* .fi
@@ -70,6 +100,12 @@
 #include <msg_output.h>
 
  /*
+  * Global scope, to discourage the compiler from doing smart things.
+  */
+volatile int msg_vprintf_lock;
+volatile int msg_text_lock;
+
+ /*
   * Private state.
   */
 static MSG_OUTPUT_FN *msg_output_fn = 0;
@@ -80,6 +116,12 @@ static VSTRING *msg_buffer = 0;
 
 void    msg_output(MSG_OUTPUT_FN output_fn)
 {
+
+    /*
+     * Allocate all resources during initialization.
+     */
+    if (msg_buffer == 0)
+	msg_buffer = vstring_alloc(100);
 
     /*
      * We're not doing this often, so avoid complexity and allocate memory
@@ -108,10 +150,16 @@ void    msg_printf(int level, const char *format,...)
 
 void    msg_vprintf(int level, const char *format, va_list ap)
 {
-    if (msg_buffer == 0)
-	msg_buffer = vstring_alloc(100);
-    vstring_vsprintf(msg_buffer, percentm(format, errno), ap);
-    msg_text(level, vstring_str(msg_buffer));
+    if (msg_vprintf_lock == 0) {
+	msg_vprintf_lock = 1;
+	/* On-the-fly initialization for debugging test programs only. */
+	if (msg_output_fn_count == 0)
+	    msg_vstream_init("unknown", VSTREAM_ERR);
+	/* OK if terminating signal handler hijacks control before next stmt. */
+	vstring_vsprintf(msg_buffer, percentm(format, errno), ap);
+	msg_text(level, vstring_str(msg_buffer));
+	msg_vprintf_lock = 0;
+    }
 }
 
 /* msg_text - sanitize and log pre-formatted text */
@@ -123,13 +171,17 @@ void    msg_text(int level, const char *text)
     /*
      * Sanitize the text. Use a private copy if necessary.
      */
-    if (msg_buffer == 0)
-	msg_buffer = vstring_alloc(100);
-    if (text != vstring_str(msg_buffer))
-	vstring_strcpy(msg_buffer, text);
-    printable(vstring_str(msg_buffer), '?');
-    if (msg_output_fn_count == 0)
-	msg_vstream_init("unknown", VSTREAM_ERR);
-    for (i = 0; i < msg_output_fn_count; i++)
-	msg_output_fn[i] (level, vstring_str(msg_buffer));
+    if (msg_text_lock == 0) {
+	msg_text_lock = 1;
+	/* OK if terminating signal handler hijacks control before next stmt. */
+	if (text != vstring_str(msg_buffer))
+	    vstring_strcpy(msg_buffer, text);
+	printable(vstring_str(msg_buffer), '?');
+	/* On-the-fly initialization for debugging test programs only. */
+	if (msg_output_fn_count == 0)
+	    msg_vstream_init("unknown", VSTREAM_ERR);
+	for (i = 0; i < msg_output_fn_count; i++)
+	    msg_output_fn[i] (level, vstring_str(msg_buffer));
+	msg_text_lock = 0;
+    }
 }

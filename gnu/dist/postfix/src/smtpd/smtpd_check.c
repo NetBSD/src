@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.20 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.20.4.1 2007/06/16 17:01:20 snj Exp $	*/
 
 /*++
 /* NAME
@@ -1144,6 +1144,7 @@ static int reject_unknown_hostname(SMTPD_STATE *state, char *name,
 {
     const char *myname = "reject_unknown_hostname";
     int     dns_status;
+    DNS_RR *dummy;
 
     if (msg_verbose)
 	msg_info("%s: %s", myname, name);
@@ -1154,15 +1155,20 @@ static int reject_unknown_hostname(SMTPD_STATE *state, char *name,
 #define RR_ADDR_TYPES	T_A
 #endif
 
-    dns_status = dns_lookup_l(name, 0, (DNS_RR **) 0, (VSTRING *) 0,
+    dns_status = dns_lookup_l(name, 0, &dummy, (VSTRING *) 0,
 			      (VSTRING *) 0, DNS_REQ_FLAG_STOP_OK,
 			      RR_ADDR_TYPES, T_MX, 0);
+    if (dummy)
+	dns_rr_free(dummy);
     if (dns_status != DNS_OK) {			/* incl. DNS_INVAL */
 	if (dns_status != DNS_RETRY)
 	    return (smtpd_check_reject(state, MAIL_ERROR_POLICY,
 				       var_unk_name_code, "4.7.1",
-				       "<%s>: %s rejected: Host not found",
-				       reply_name, reply_class));
+				       "<%s>: %s rejected: %s",
+				       reply_name, reply_class,
+				       dns_status == DNS_INVAL ?
+				       "Malformed DNS server reply" :
+				       "Host not found"));
 	else
 	    DEFER_IF_PERMIT2(state, MAIL_ERROR_POLICY,
 			     450, "4.7.1",
@@ -1179,23 +1185,29 @@ static int reject_unknown_mailhost(SMTPD_STATE *state, const char *name,
 {
     const char *myname = "reject_unknown_mailhost";
     int     dns_status;
+    DNS_RR *dummy;
 
     if (msg_verbose)
 	msg_info("%s: %s", myname, name);
 
 #define MAILHOST_LOOKUP_FLAGS	(DNS_REQ_FLAG_STOP_OK | DNS_REQ_FLAG_STOP_INVAL)
 
-    dns_status = dns_lookup_l(name, 0, (DNS_RR **) 0, (VSTRING *) 0,
+    dns_status = dns_lookup_l(name, 0, &dummy, (VSTRING *) 0,
 			      (VSTRING *) 0, MAILHOST_LOOKUP_FLAGS,
 			      T_MX, RR_ADDR_TYPES, 0);
+    if (dummy)
+	dns_rr_free(dummy);
     if (dns_status != DNS_OK) {			/* incl. DNS_INVAL */
 	if (dns_status != DNS_RETRY)
 	    return (smtpd_check_reject(state, MAIL_ERROR_POLICY,
 				       var_unk_addr_code,
 			       strcmp(reply_class, SMTPD_NAME_SENDER) == 0 ?
 				       "4.1.8" : "4.1.2",
-				       "<%s>: %s rejected: Domain not found",
-				       reply_name, reply_class));
+				       "<%s>: %s rejected: %s",
+				       reply_name, reply_class,
+				       dns_status == DNS_INVAL ?
+				       "Malformed DNS server reply" :
+				       "Domain not found"));
 	else
 	    DEFER_IF_PERMIT2(state, MAIL_ERROR_POLICY,
 			  450, strcmp(reply_class, SMTPD_NAME_SENDER) == 0 ?
@@ -1223,8 +1235,12 @@ static int permit_tls_clientcerts(SMTPD_STATE *state, int permit_all_certs)
 	    msg_info("Relaying allowed for all verified client certificates");
 	return (SMTPD_CHECK_OK);
     }
-    if (state->tls_context->peer_verified
-	&& state->tls_context->peer_fingerprint) {
+
+    /*
+     * When directly checking the fingerprint, it is OK if the issuing CA is
+     * not trusted.
+     */
+    if (state->tls_context->peer_fingerprint) {
 	found = maps_find(relay_ccerts, state->tls_context->peer_fingerprint,
 			  DICT_FLAG_NONE);
 	if (found) {
@@ -2231,6 +2247,7 @@ static int check_table_result(SMTPD_STATE *state, const char *table,
 				reply_class, def_acl);
     }
     argv_free(restrictions);
+    memcpy(ADDROF(smtpd_check_buf), ADDROF(savebuf), sizeof(smtpd_check_buf));
     return (status);
 }
 
@@ -2580,8 +2597,11 @@ static int check_ccert_access(SMTPD_STATE *state, const char *table,
     if (!state->tls_context)
 	return SMTPD_CHECK_DUNNO;
 
-    if (state->tls_context->peer_verified
-	&& state->tls_context->peer_fingerprint) {
+    /*
+     * When directly checking the fingerprint, it is OK if the issuing CA is
+     * not trusted.
+     */
+    if (state->tls_context->peer_fingerprint) {
 	if (msg_verbose)
 	    msg_info("%s: %s", myname, state->tls_context->peer_fingerprint);
 
@@ -3337,11 +3357,18 @@ static int check_policy_service(SMTPD_STATE *state, const char *server,
 #define IF_VERIFIED(x) \
     ((state->tls_context && \
       state->tls_context->peer_verified && ((x) != 0)) ? (x) : "")
-			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_SUBJECT, subject,
-			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_ISSUER, issuer,
-			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_FINGERPRINT,
-			  IF_VERIFIED(state->tls_context->peer_fingerprint),
 #define IF_ENCRYPTED(x, y) ((state->tls_context && ((x) != 0)) ? (x) : (y))
+			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_SUBJECT,
+			  IF_VERIFIED(subject),
+			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_ISSUER,
+			  IF_VERIFIED(issuer),
+
+    /*
+     * When directly checking the fingerprint, it is OK if the issuing CA is
+     * not trusted.
+     */
+			  ATTR_TYPE_STR, MAIL_ATTR_CCERT_FINGERPRINT,
+		     IF_ENCRYPTED(state->tls_context->peer_fingerprint, ""),
 			  ATTR_TYPE_STR, MAIL_ATTR_CRYPTO_PROTOCOL,
 			  IF_ENCRYPTED(state->tls_context->protocol, ""),
 			  ATTR_TYPE_STR, MAIL_ATTR_CRYPTO_CIPHER,

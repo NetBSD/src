@@ -1,4 +1,4 @@
-.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.11 2006/07/19 01:16:48 rpaulo Exp $
+.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.11.4.1 2007/06/16 16:58:14 snj Exp $
 .\"
 .TH TRIVIAL-REWRITE 8 
 .ad
@@ -226,11 +226,11 @@ The recipient of mail addressed to the null address.
 The time limit for sending or receiving information over an internal
 communication channel.
 .IP "\fBmax_idle (100s)\fR"
-The maximum amount of time that an idle Postfix daemon process
-waits for the next service request before exiting.
+The maximum amount of time that an idle Postfix daemon process waits
+for an incoming connection before terminating voluntarily.
 .IP "\fBmax_use (100)\fR"
-The maximal number of connection requests before a Postfix daemon
-process terminates.
+The maximal number of incoming connections that a Postfix daemon
+process will service before terminating voluntarily.
 .IP "\fBrelocated_maps (empty)\fR"
 Optional lookup tables with new contact information for users or
 domains that no longer exist.

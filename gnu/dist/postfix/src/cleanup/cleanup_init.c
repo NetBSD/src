@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_init.c,v 1.8 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_init.c,v 1.8.4.1 2007/06/16 16:58:56 snj Exp $	*/
 
 /*++
 /* NAME
@@ -207,7 +207,7 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_BODY_CHECKS, DEF_BODY_CHECKS, &var_body_checks, 0, 0,
     VAR_PROP_EXTENSION, DEF_PROP_EXTENSION, &var_prop_extension, 0, 0,
     VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
-    VAR_RCPT_WITHELD, DEF_RCPT_WITHELD, &var_rcpt_witheld, 1, 0,
+    VAR_RCPT_WITHELD, DEF_RCPT_WITHELD, &var_rcpt_witheld, 0, 0,
     VAR_MASQ_CLASSES, DEF_MASQ_CLASSES, &var_masq_classes, 0, 0,
     VAR_SEND_BCC_MAPS, DEF_SEND_BCC_MAPS, &var_send_bcc_maps, 0, 0,
     VAR_RCPT_BCC_MAPS, DEF_RCPT_BCC_MAPS, &var_rcpt_bcc_maps, 0, 0,

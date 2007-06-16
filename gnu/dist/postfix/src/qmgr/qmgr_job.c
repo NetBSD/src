@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_job.c,v 1.1.1.3 2006/07/19 01:17:38 rpaulo Exp $	*/
+/*	$NetBSD: qmgr_job.c,v 1.1.1.3.4.1 2007/06/16 17:00:58 snj Exp $	*/
 
 /*++
 /* NAME
@@ -28,7 +28,7 @@
 /*
 /*	qmgr_job_obtain() finds an existing job for named message and
 /*	transport combination. New empty job is created if no existing can
-/*	be found. In either case, the job is prepared for assignement of
+/*	be found. In either case, the job is prepared for assignment of
 /*	(more) message recipients.
 /*
 /*	qmgr_job_free() disposes of a per-transport job after all
@@ -140,9 +140,9 @@ static void qmgr_job_link(QMGR_JOB *job)
 
     /*
      * Traverse the time list and the scheduler list from the end and stop
-     * when we found job older than the one beeing linked.
+     * when we found job older than the one being linked.
      * 
-     * During the traversals keep track if we have come accross either the
+     * During the traversals keep track if we have come across either the
      * current job or the first unread job on the job list. If this is the
      * case, these pointers will be adjusted below as required.
      * 
@@ -577,7 +577,7 @@ static QMGR_JOB *qmgr_job_preempt(QMGR_JOB *current)
 
     /*
      * Suppress preempting completely if the current job is not big enough to
-     * accumulate even the mimimal number of slots required.
+     * accumulate even the minimal number of slots required.
      * 
      * Also, don't look for better job candidate if there are no available slots
      * yet (the count can get negative due to the slot loans below).
@@ -735,7 +735,7 @@ static void qmgr_job_pop(QMGR_JOB *job)
     job->stack_level = 0;
 
     /*
-     * Explicitely reset the candidate cache. It's not worth trying to skip
+     * Explicitly reset the candidate cache. It's not worth trying to skip
      * this under some complicated conditions - in most cases the popped job
      * is the current job so we would have to reset it anyway.
      */
@@ -765,25 +765,52 @@ static QMGR_PEER *qmgr_job_peer_select(QMGR_JOB *job)
     QMGR_PEER *peer;
     QMGR_MESSAGE *message = job->message;
 
-    if (HAS_ENTRIES(job) && (peer = qmgr_peer_select(job)) != 0)
-	return (peer);
-
     /*
-     * Try reading in more recipients. Note that we do not try to read them
-     * as soon as possible as that would decrease the chance of per-site
-     * recipient grouping. We waited until reading more is really necessary.
-     * 
+     * Try reading in more recipients. We do that as soon as possible
+     * (almost, see below), to make sure there is enough new blood pouring
+     * in. Otherwise single recipient for slow destination might starve the
+     * entire message delivery, leaving lot of fast destination recipients
+     * sitting idle in the queue file.
+     *
+     * Ideally we would like to read in recipients whenever there is a
+     * space, but to prevent excessive I/O, we read them only when enough
+     * time has passed or we can read enough of them at once.
+     *
+     * Note that even if we read the recipients few at a time, the message
+     * loading code tries to put them to existing recipient entries whenever
+     * possible, so the per-destination recipient grouping is not grossly
+     * affected.
+     *
      * XXX Workaround for logic mismatch. The message->refcount test needs
      * explanation. If the refcount is zero, it means that qmgr_active_done()
-     * is beeing completed asynchronously.  In such case, we can't read in
+     * is being completed asynchronously.  In such case, we can't read in
      * more recipients as bad things would happen after qmgr_active_done()
-     * continues processing. Note that this results in the given job beeing
+     * continues processing. Note that this results in the given job being
      * stalled for some time, but fortunately this particular situation is so
      * rare that it is not critical. Still we seek for better solution.
      */
     if (message->rcpt_offset != 0
-	&& message->rcpt_limit > message->rcpt_count
-	&& message->refcount > 0) {
+	&& message->refcount > 0
+	&& (message->rcpt_limit - message->rcpt_count >= job->transport->refill_limit
+	    || (message->rcpt_limit > message->rcpt_count
+		&& sane_time() - message->refill_time >= job->transport->refill_delay)))
+	qmgr_message_realloc(message);
+
+    /*
+     * Get the next suitable peer, if there is any.
+     */
+    if (HAS_ENTRIES(job) && (peer = qmgr_peer_select(job)) != 0)
+	return (peer);
+
+    /*
+     * There is no suitable peer in-core, so try reading in more recipients if possible.
+     * This is our last chance to get suitable peer before giving up on this job for now.
+     * 
+     * XXX For message->refcount, see above.
+     */
+    if (message->rcpt_offset != 0
+	&& message->refcount > 0
+	&& message->rcpt_limit > message->rcpt_count) {
 	qmgr_message_realloc(message);
 	if (HAS_ENTRIES(job))
 	    return (qmgr_peer_select(job));

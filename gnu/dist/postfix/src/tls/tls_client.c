@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.1.1.3 2006/11/07 02:59:01 rpaulo Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.1.1.3.2.1 2007/06/16 17:01:31 snj Exp $	*/
 
 /*++
 /* NAME
@@ -629,6 +629,15 @@ TLScontext_t *tls_client_start(const tls_client_start_props *props)
 	msg_info("setting up TLS connection to %s", props->host);
 
     /*
+     * Before we create an SSL, update the SSL_CTX cipherlist if necessary.
+     */
+    if (tls_set_cipher_list(props->ctx, props->cipherlist) == 0) {
+	msg_warn("Invalid cipherlist \"%s\": aborting TLS session",
+		 props->cipherlist);
+	return (0);
+    }
+
+    /*
      * Allocate a new TLScontext for the new connection and get an SSL
      * structure. Add the location of TLScontext to the SSL to later retrieve
      * the information inside the tls_verify_certificate_callback().
@@ -712,24 +721,13 @@ TLScontext_t *tls_client_start(const tls_client_start_props *props)
     }
 
     /*
-     * Per session cipher selection for sessions with mandatory encryption
+     * Try to load an existing session from the TLS session cache.
      * 
      * By the time a TLS client is negotiating ciphers it has already offered to
      * re-use a session, it is too late to renege on the offer. So we must
      * not attempt to re-use sessions whose ciphers are too weak. We expect
      * the caller to salt the session lookup key with the cipher list, so
      * that sessions found in the cache are always acceptable.
-     */
-    if (props->cipherlist != 0)
-	if (SSL_set_cipher_list(TLScontext->con, props->cipherlist) == 0) {
-	    msg_warn("Could not set cipherlist: %s", props->cipherlist);
-	    tls_print_errors();
-	    tls_free_context(TLScontext);
-	    return (0);
-	}
-
-    /*
-     * Try to load an existing session from the TLS session cache.
      * 
      * XXX To avoid memory leaks we must always call SSL_SESSION_free() after
      * calling SSL_set_session(), regardless of whether or not the session

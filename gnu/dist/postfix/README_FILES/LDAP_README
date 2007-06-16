@@ -18,6 +18,7 @@ Topics covered in this document:
   * Configuring LDAP lookups
   * Example: aliases
   * Example: virtual domains/addresses
+  * Example: expanding LDAP groups
   * Other uses of LDAP lookups
   * Notes and things to think about
   * Feedback
@@ -96,12 +97,12 @@ in main.cf, you have:
 
 and in ldap:/etc/postfix/ldap-aliases.cf you have:
 
-    server_host = ldap.my.com
-    search_base = dc=my, dc=com
+    server_host = ldap.example.com
+    search_base = dc=example, dc=com
 
 Upon receiving mail for a local address "ldapuser" that isn't found in the /
 etc/aliases database, Postfix will search the LDAP server listening at port 389
-on ldap.my.com. It will bind anonymously, search for any directory entries
+on ldap.example.com. It will bind anonymously, search for any directory entries
 whose mailacceptinggeneralid attribute is "ldapuser", read the "maildrop"
 attributes of those found, and build a list of their maildrops, which will be
 treated as RFC822 addresses to which the message will be delivered.
@@ -116,7 +117,7 @@ want to make sure all of your virtual recipient's mailacceptinggeneralid
 attributes are fully qualified with their virtual domains. Finally, if you want
 to designate a directory entry as the default user for a virtual domain, just
 give it an additional mailacceptinggeneralid (or the equivalent in your
-directory) of "@virtual.dom". That's right, no user part. If you don't want a
+directory) of "@fake.dom". That's right, no user part. If you don't want a
 catchall user, omit this step and mail to unknown users in the domain will
 simply bounce.
 
@@ -143,12 +144,194 @@ this:
 Normal users might simply have one mailacceptinggeneralid and maildrop, e.g.
 "normaluser@fake.dom" and "normaluser@real.dom".
 
+EExxaammppllee:: eexxppaannddiinngg LLDDAAPP ggrroouuppss
+
+LDAP is frequently used to store group member information. There are a number
+of ways of handling LDAP groups. We will show a few examples in order of
+increasing complexity, but owing to the number of independent variables, we can
+only present a tiny portion of the solution space. We show how to:
+
+ 1. query groups as lists of addresses;
+
+ 2. query groups as lists of user objects containing addresses;
+
+ 3. forward special lists unexpanded to a separate list server, for moderation
+    or other processing;
+
+ 4. handle complex schemas by controlling expansion and by treating leaf nodes
+    specially, using features that are new in Postfix 2.4.
+
+The example LDAP entries and implied schema below show two group entries
+("agroup" and "bgroup") and four user entries ("auser", "buser", "cuser" and
+"duser"). The group "agroup" has the users "auser" (1) and "buser" (2) as
+members via DN references in the multi-valued attribute "memberdn", and direct
+email addresses of two external users "auser@example.org" (3) and
+"buser@example.org" (4) stored in the multi-valued attribute "memberaddr". The
+same is true of "bgroup" and "cuser"/"duser" (6)/(7)/(8)/(9), but "bgroup" also
+has a "maildrop" attribute of "bgroup@mlm.example.com" (5):
+
+         dn: cn=agroup, dc=example, dc=com
+         objectclass: top
+         objectclass: ldapgroup
+         cn: agroup
+         mail: agroup@example.com
+    1 -> memberdn: uid=auser, dc=example, dc=com
+    2 -> memberdn: uid=buser, dc=example, dc=com
+    3 -> memberaddr: auser@example.org
+    4 -> memberaddr: buser@example.org
+
+         dn: cn=bgroup, dc=example, dc=com
+         objectclass: top
+         objectclass: ldapgroup
+         cn: bgroup
+         mail: bgroup@example.com
+    5 -> maildrop: bgroup@mlm.example.com
+    6 -> memberdn: uid=cuser, dc=example, dc=com
+    7 -> memberdn: uid=duser, dc=example, dc=com
+    8 -> memberaddr: cuser@example.org
+    9 -> memberaddr: duser@example.org
+
+         dn: uid=auser, dc=example, dc=com
+         objectclass: top
+         objectclass: ldapuser
+         uid: auser
+    10 -> mail: auser@example.com
+    11 -> maildrop: auser@mailhub.example.com
+
+         dn: uid=buser, dc=example, dc=com
+         objectclass: top
+         objectclass: ldapuser
+         uid: buser
+    12 -> mail: buser@example.com
+    13 -> maildrop: buser@mailhub.example.com
+
+         dn: uid=cuser, dc=example, dc=com
+         objectclass: top
+         objectclass: ldapuser
+         uid: cuser
+    14 -> mail: cuser@example.com
+
+         dn: uid=duser, dc=example, dc=com
+         objectclass: top
+         objectclass: ldapuser
+         uid: duser
+    15 -> mail: duser@example.com
+
+Our first use case ignores the "memberdn" attributes, and assumes that groups
+hold only direct "memberaddr" strings as in (3), (4), (8) and (9). The goal is
+to map the group address to the list of constituent "memberaddr" values. This
+is simple, ignoring the various connection related settings (hosts, ports, bind
+settings, timeouts, ...) we have:
+
+        simple.cf:
+            ...
+            search_base = dc=example, dc=com
+            query_filter = mail=%s
+            result_attribute = memberaddr
+        $ postmap -q agroup@example.com ldap:simple.cf
+        auser@example.org,buser@example.org
+
+We search "dc=example, dc=com". The "mail" attribute is used in the
+query_filter to locate the right group, the "result_attribute" setting
+described in ldap_table(5) is used to specify that "memberaddr" values from the
+matching group are to be returned as a comma separated list. Always check
+tables using postmap(1) with the "-q" option, before deploying them into
+production use in main.cf.
+
+Our second use case instead expands "memberdn" attributes (1), (2), (6) and
+(7), follows the DN references and returns the "maildrop" of the referenced
+user entries. Here we use the "special_result_attribute" setting from
+ldap_table(5) to designate the "memberdn" attribute as holding DNs of the
+desired member entries. The "result_attribute" setting selects which attributes
+are returned from the selected DNs. It is important to choose a result
+attribute that is not also present in the group object, because result
+attributes are collected from both the group and the member DNs. In this case
+we choose "maildrop" and assume for the moment that groups never have a
+"maildrop" (the "bgroup" "maildrop" attribute is for a different use case). The
+returned data for "auser" and "buser" is from items (11) and (13) in the
+example data.
+
+        special.cf:
+            ...
+            search_base = dc=example, dc=com
+            query_filter = mail=%s
+            result_attribute = maildrop
+            special_result_attribute = memberdn
+        $ postmap -q agroup@example.com ldap:special.cf
+        auser@mailhub.example.com,buser@mailhub.example.com
+
+Note: if the desired member object result attribute is always also present in
+the group, you get surprising results: the expansion also returns the address
+of the group. This is a known limitation of Postfix releases prior to 2.4, and
+is addressed in the new with Postfix 2.4 "leaf_result_attribute" feature
+described in ldap_table(5).
+
+Our third use case has some groups that are expanded immediately, and other
+groups that are forwarded to a dedicated mailing list manager host for delayed
+expansion. This uses two LDAP tables, one for users and forwarded groups and a
+second for groups that can be expanded immediately. It is assumed that groups
+that require forwarding are never nested members of groups that are directly
+expanded.
+
+        no_expand.cf:
+            ...
+            search_base = dc=example, dc=com
+            query_filter = mail=%s
+            result_attribute = maildrop
+        expand.cf
+            ...
+            search_base = dc=example, dc=com
+            query_filter = mail=%s
+            result_attribute = maildrop
+            special_result_attribute = memberdn
+        $ postmap -q auser@example.com ldap:no_expand.cf ldap:expand.cf
+        auser@mailhub.example.com
+        $ postmap -q agroup@example.com ldap:no_expand.cf ldap:expand.cf
+        auser@mailhub.example.com,buser@mailhub.example.com
+        $ postmap -q bgroup@example.com ldap:no_expand.cf ldap:expand.cf
+        bgroup@mlm.example.com
+
+Non-group objects and groups with delayed expansion (those that have a maildrop
+attribute) are rewritten to a single maildrop value. Groups that don't have a
+maildrop are expanded as the second use case. This admits a more elegant
+solution with Postfix 2.4 and later.
+
+Our final use case is the same as the third, but this time uses new features in
+Postfix 2.4. We now are able to use just one LDAP table and no longer need to
+assume that forwarded groups are never nested inside expanded groups.
+
+        fancy.cf:
+            ...
+            search_base = dc=example, dc=com
+            query_filter = mail=%s
+            result_attribute = memberaddr
+            special_result_attribute = memberdn
+            terminal_result_attribute = maildrop
+            leaf_result_attribute = mail
+        $ postmap -q auser@example.com ldap:fancy.cf
+        auser@mailhub.example.com
+        $ postmap -q cuser@example.com ldap:fancy.cf
+        cuser@example.com
+        $ postmap -q agroup@example.com ldap:fancy.cf
+
+    auser@mailhub.example.com,buser@mailhub.example.com,auser@example.org,buser@example.org
+        $ postmap -q bgroup@example.com ldap:fancy.cf
+        bgroup@mlm.example.com
+
+Above, delayed expansion is enabled via "terminal_result_attribute", which, if
+present, is used as the sole result and all other expansion is suppressed.
+Otherwise, the "leaf_result_attribute" is only returned for leaf objects that
+don't have a "special_result_attribute" (non-groups), while the
+"result_attribute" (direct member address of groups) is returned at every level
+of recursive expansion, not just the leaf nodes. This fancy example illustrates
+all the features of Postfix 2.4 group expansion.
+
 OOtthheerr uusseess ooff LLDDAAPP llooookkuuppss
 
 Other common uses for LDAP lookups include rewriting senders and recipients
 with Postfix's canonical lookups, for example in order to make mail leaving
-your site appear to be coming from "First.Last@site.dom" instead of
-"userid@site.dom".
+your site appear to be coming from "First.Last@example.com" instead of
+"userid@example.com".
 
 NNootteess aanndd tthhiinnggss ttoo tthhiinnkk aabboouutt
 
@@ -166,9 +349,9 @@ NNootteess aanndd tthhiinnggss ttoo tthhiinnkk aabboouu
     define an entry intended for use as a mailing list that looks like this
     (Warning! Schema made up just for this example):
 
-        dn: cn=Accounting Staff List, dc=my, dc=com
+        dn: cn=Accounting Staff List, dc=example, dc=com
         cn: Accounting Staff List
-        o: my.com
+        o: example.com
         objectclass: maillist
         mailacceptinggeneralid: accountingstaff
         mailacceptinggeneralid: accounting-staff
@@ -247,6 +430,9 @@ CCrreeddiittss
   * Liviu Daia with further refinements from Jose Luis Tallon and Victor
     Duchovni developed the common query, result_format, domain and
     expansion_limit interface for LDAP, MySQL and PosgreSQL.
+  * Gunnar Wrobel provided a first implementation of a feature to limit LDAP
+    search results to leaf nodes only. Victor generalized this into the Postfix
+    2.4 "leaf_result_attribute" feature.
 
 And of course Wietse.
 
