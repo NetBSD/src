@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.318 2007/06/07 10:03:12 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.319 2007/06/16 20:48:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.318 2007/06/07 10:03:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.319 2007/06/16 20:48:04 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2185,45 +2185,9 @@ sys_preadv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) iovcnt;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	off_t offset;
-	int error, fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FREAD) == 0) {
-		simple_unlock(&fp->f_slock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
-	}
-
-	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
-		goto out;
-
-	/* dofilereadv() will unuse the descriptor for us */
-	return (dofilereadv(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &offset, 0, retval));
-
- out:
-	FILE_UNUSE(fp, l);
-	return (error);
+	return do_filereadv(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 
 /*
@@ -2291,45 +2255,9 @@ sys_pwritev(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) iovcnt;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	off_t offset;
-	int error, fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FWRITE) == 0) {
-		simple_unlock(&fp->f_slock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
-	}
-
-	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
-		goto out;
-
-	/* dofilewritev() will unuse the descriptor for us */
-	return (dofilewritev(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &offset, 0, retval));
-
- out:
-	FILE_UNUSE(fp, l);
-	return (error);
+	return do_filewritev(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 
 /*
