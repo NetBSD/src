@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.3 2007/06/16 11:02:19 kiyohara Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.4 2007/06/16 11:09:31 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.3 2007/06/16 11:02:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.4 2007/06/16 11:09:31 kiyohara Exp $");
 
 #include "bpfilter.h"
 
@@ -1928,6 +1928,8 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	m->m_pkthdr.len = m->m_len = rlen;
 	bcopy((const uint8_t *)(plcp + 1), mtod(m, uint8_t *), rlen);
 
+	s = splnet();
+
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct zyd_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -1947,7 +1949,6 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len)
 	}
 #endif
 
-	s = splnet();
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
 	ieee80211_input(ic, m, ni, stat->rssi, 0);
