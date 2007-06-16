@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1.2.1 2007/06/02 08:44:37 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.1.2.2 2007/06/16 10:47:11 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -403,9 +403,7 @@ setup_82C686B()
 	pmgt  = pcimaketag(0, 22, 4);
 	ac97  = pcimaketag(0, 22, 5);
 
-	/* route USB (pin C) to i8259 IRQ 5, AC97 (pin D) to 11 */
-	/* from kernel/arch/ppc/kernel/encpp1/encpp1_pci.c */
-
+	/* route pin C to i8259 IRQ 5, pin D to 11 */
 	val = pcicfgread(pcib, 0x54);
 	val = (val & 0xff) | 0xb0500000; /* Dx CB Ax xS */
 	pcicfgwrite(pcib, 0x54, val);
@@ -415,18 +413,19 @@ setup_82C686B()
 	val = val | 0x20000000;
 	pcicfgwrite(pcib, 0x44, val);
 
-	/* select level trigger for IRQ 5/11 with ELCR1/ELCR2 */
-	*(volatile uint8_t *)0xfe0004d0 = 0x20; /* 1 << 5 */
-	*(volatile uint8_t *)0xfe0004d1 = 0x08; /* 1 << 11 */
+	/* select level trigger for IRQ 5/11 at ELCR1/2 */
+	*(volatile uint8_t *)0xfe0004d0 = 0x20; /* bit 5 */
+	*(volatile uint8_t *)0xfe0004d1 = 0x08; /* bit 11 */
 
-	val = pcicfgread(usb12, 0x3c) &~ 0xffff;
-	val = (('C' - '@') << 8) | 5;
+	/* USB and AC97 are hardwired with pin D and C */
+	val = pcicfgread(usb12, 0x3c) &~ 0xff;
+	val |= 11;
 	pcicfgwrite(usb12, 0x3c, val);
-	val = pcicfgread(usb34, 0x3c) &~ 0xffff;
-	val = (('C' - '@') << 8) | 5;
+	val = pcicfgread(usb34, 0x3c) &~ 0xff;
+	val |= 11;
 	pcicfgwrite(usb34, 0x3c, val);
-	val = pcicfgread(ac97, 0x3c) &~ 0xffff;
-	val = (('D' - '@') << 8) | 11;
+	val = pcicfgread(ac97, 0x3c) &~ 0xff;
+	val |= 5;
 	pcicfgwrite(ac97, 0x3c, val);
 }
 
@@ -477,9 +476,39 @@ pcifixup()
 				}
 			}
 		}
+#if 1
 		/*
-		 * //// IDE fixup ////
-		 *
+		 * //// IDE fixup -- case A ////
+		 * - "native PCI mode" (ide 0x09)
+		 * - don't use ISA IRQ14/15 (pcib 0x43)
+		 * - native IDE for both channels (ide 0x40)
+		 * - LEGIRQ bit 11 steers interrupt to pin C (ide 0x40)
+		 * - hunk PCI pin C line 11 (ide 0x3d/3c)
+		 */
+		val = pcicfgread(ide, 0x08);
+		val &= 0xffff00ff;
+		pcicfgwrite(ide, 0x08, val | (0x8f << 8));
+
+		/* pcib: 0x43 - IDE interrupt routing */
+		val = pcicfgread(pcib, 0x40) & 0x00ffffff;
+		pcicfgwrite(pcib, 0x40, val);
+
+		/* pcib: 0x45/44 - PCI interrupt routing */
+		val = pcicfgread(pcib, 0x44) & 0xffff0000;
+		pcicfgwrite(pcib, 0x44, val);
+
+		/* ide: 0x41/40 - IDE channel */
+		val = pcicfgread(ide, 0x40) & 0xffff0000;
+		val |= (1 << 11) | 0x33; /* LEGIRQ turns on PCI interrupt */
+		pcicfgwrite(ide, 0x40, val);
+
+		/* ide: 0x3d/3c - use PCI pin C/line 11 */
+		val = pcicfgread(ide, 0x3c) & 0xffffff00;
+		val |= 11;
+		pcicfgwrite(ide, 0x3c, val);
+#else
+		/*
+		 * //// IDE fixup -- case B ////
 		 * - "compatiblity mode" (ide 0x09)
 		 * - IDE primary/secondary interrupt routing (pcib 0x43)
 		 * - PCI interrupt routing (pcib 0x45/44)
@@ -489,23 +518,23 @@ pcifixup()
 		val &= 0xffff00ff;
 		pcicfgwrite(ide, 0x08, val | (0x8a << 8));
 
-		/* 0x43 - IDE interrupt routing */
-		val = pcicfgread(ide, 0x40) & 0x00ffffff;
-		pcicfgwrite(ide, 0x40, val | (0xee << 24));
+		/* pcib: 0x43 - IDE interrupt routing */
+		val = pcicfgread(pcib, 0x40) & 0x00ffffff;
+		pcicfgwrite(pcib, 0x40, val | (0xee << 24));
 
-		/* 0x45/44 - PCI interrupt routing */
+		/* ide: 0x45/44 - PCI interrupt routing */
 		val = pcicfgread(ide, 0x44) & 0xffff0000;
 		pcicfgwrite(ide, 0x44, val);
 
-		/* 0x3d/3c - turn off PCI pin/line */
+		/* ide: 0x3d/3c - turn off PCI pin/line */
 		val = pcicfgread(ide, 0x3c) & 0xffff0000;
 		pcicfgwrite(ide, 0x3c, val);
+#endif
 
 		/*
 		 * //// fxp fixup ////
 		 * - use PCI pin A line 15 (fxp 0x3d/3c)
 		 */
-		/* 0x3d/3c - PCI pin/line */
 		val = pcicfgread(nic, 0x3c) & 0xffff0000;
 		pcidecomposetag(nic, NULL, &line, NULL);
 		val |= (('A' - '@') << 8) | line;
@@ -553,17 +582,23 @@ pcifixup()
 		 * - ISA IRQ14/15 for primary/secondary (pcib 0x4a)
 		 * - no PCI pin/line assignment (ide 0x3d/3c)
 		 */
-		/* 0x09 - interface; 'native' := 01 << (2 * chan) */
-		val = pcicfgread(ide, 0x08);
-		printf("vide 0x09: %02x\n", (val >> 8) & 0xff);
-		val &= 0xffff00ff;
-		pcicfgwrite(ide, 0x08, val | (0x8a << 8));
+		/* ide: 0x09 - programming interface; 1000'SsPp */
+		val = pcicfgread(ide, 0x08) & 0xffff00ff;
+		val |= (0x8a << 8);
+		pcicfgwrite(ide, 0x08, val);
 
-		/* 0x4a - IDE primary/secondary IRQ routing */
-		val = pcicfgread(pcib, 0x48);
-		printf("pcib 0x4a: %02x\n", (val >> 16) & 0xff);
+		/* ide: 0x10-20 - this mode ignores these addresses */
 
-		/* 0x3d/3c - turn off PCI pin/line */
+		/* ide: 0x40 - use primary only */
+		val = pcicfgread(ide, 0x40);
+		pcicfgwrite(ide, 0x40, val | 0x02);
+
+		/* pcib: 0x4a - IDE primary/secondary IRQ routing */
+		val = pcicfgread(pcib, 0x48) & 0xff00ffff;
+		val |= (0x04 << 16);
+		pcicfgwrite(pcib, 0x48, val);
+
+		/* ide: 0x3d/3c - turn off PCI pin/line */
 		val = pcicfgread(ide, 0x3c) & 0xffff0000;
 		pcicfgwrite(ide, 0x3c, val);
 
