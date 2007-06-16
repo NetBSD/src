@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.116 2007/01/01 21:29:01 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.117 2007/06/16 19:47:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.116 2007/01/01 21:29:01 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.117 2007/06/16 19:47:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.116 2007/01/01 21:29:01 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.117 2007/06/16 19:47:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -500,10 +500,11 @@ Var_Delete(const char *name, GNode *ctxt)
 {
     Hash_Entry 	  *ln;
 
-    if (DEBUG(VAR)) {
-	fprintf(debug_file, "%s:delete %s\n", ctxt->name, name);
-    }
     ln = Hash_FindEntry(&ctxt->context, name);
+    if (DEBUG(VAR)) {
+	fprintf(debug_file, "%s:delete %s%s\n",
+	    ctxt->name, name, ln ? "" : " (not found)");
+    }
     if (ln != NULL) {
 	Var 	  *v;
 
