@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.1 2007/06/09 11:20:55 kiyohara Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.2 2007/06/16 11:18:45 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1158,6 +1158,13 @@ struct zyd_rf {
 	int	width;
 };
 
+struct rq {
+	const uint16_t *idata;
+	struct zyd_pair *odata;
+	int len;
+	SIMPLEQ_ENTRY(rq) rq;
+};
+
 struct zyd_softc {
 	USBBASEDEVICE			sc_dev;
 	struct ethercom			sc_ec;
@@ -1183,8 +1190,7 @@ struct zyd_softc {
 
 	struct ieee80211_amrr		amrr;
 
-	void				*odata;
-	int				olen;
+	SIMPLEQ_HEAD(rqh, rq) sc_rqh;
 
 	uint16_t			fwbase;
 	uint8_t				regdomain;
