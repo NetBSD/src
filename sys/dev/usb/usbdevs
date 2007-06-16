@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.469 2007/06/13 00:30:11 uebayasi Exp $
+$NetBSD: usbdevs,v 1.470 2007/06/16 09:42:17 dsainty Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1946,6 +1946,9 @@ product SILICONPORTALS YAPPHONE 0x0201	YAP Phone
 
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
+
+/* Silicon Integrated Systems products */
+product SIS SIS_163U		0x0163	802.11g Wireless LAN Adapter
 
 /* Sitecom products */
 product SITECOM LN029		0x182d	LN029
