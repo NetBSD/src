@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.191 2007/06/16 17:05:06 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.192 2007/06/17 17:55:37 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6738,4 +6738,10 @@ gnu/usr.sbin/postfix/util/Makefile		patch
 
 	Update Postfix to version 2.4.1.
 	[tron, ticket #664]
+
+sys/dev/pci/if_vr.c				1.86
+
+	Add VT6105M (Rhine III) to the list of supported devices, as found  
+	in the Soekris net5501.
+	[jmcneill, ticket #725]
 
