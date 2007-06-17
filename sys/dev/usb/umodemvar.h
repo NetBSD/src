@@ -1,4 +1,4 @@
-/*	$NetBSD: umodemvar.h,v 1.3 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umodemvar.h,v 1.3.32.1 2007/06/17 01:18:51 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ int	umodem_get_caps(usbd_device_handle, int *, int *,
 void	umodem_get_status(void *, int portno, u_char *lsr, u_char *msr);
 void	umodem_set(void *, int, int, int);
 int	umodem_param(void *, int, struct termios *);
-int	umodem_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+int	umodem_ioctl(void *, int, u_long, usb_ioctlarg_t, int, usb_proc_ptr);
 int	umodem_open(void *, int portno);
 void	umodem_close(void *, int portno);
 int	umodem_common_activate(struct umodem_softc *, enum devact);
