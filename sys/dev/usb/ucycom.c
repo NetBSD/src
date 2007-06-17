@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.16 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.16.10.1 2007/06/17 01:07:26 itohy Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.16 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.16.10.1 2007/06/17 01:07:26 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ ucycom_shutdown(struct ucycom_softc *sc)
 #endif
 
 int
-ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
+ucycomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	int unit = UCYCOMUNIT(dev);
 	struct ucycom_softc *sc;
@@ -333,7 +333,7 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	DPRINTF(("ucycomopen: tp=%p\n", tp));
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+	if (kauth_authorize_device_tty(p->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
 	s = spltty();
@@ -424,7 +424,7 @@ bad:
 
 
 int
-ucycomclose(dev_t dev, int flag, int mode, struct lwp *l)
+ucycomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -723,7 +723,7 @@ ucycomtty(dev_t dev)
 }
 
 int
-ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ucycomioctl(dev_t dev, u_long cmd, usb_ioctlarg_t data, int flag, usb_proc_ptr p)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -735,11 +735,11 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	DPRINTF(("ucycomioctl: sc=%p, tp=%p, data=%p\n", sc, tp, data));
 
-	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	err = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (err != EPASSTHROUGH)
 		return (err);
 
-	err = ttioctl(tp, cmd, data, flag, l);
+	err = ttioctl(tp, cmd, data, flag, p);
 	if (err != EPASSTHROUGH)
 		return (err);
 
@@ -770,7 +770,7 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		err = kauth_authorize_device_tty(l->l_cred,
+		err = kauth_authorize_device_tty(p->l_cred,
 		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (err)
 			break;
@@ -798,18 +798,18 @@ ucycomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-ucycompoll(dev_t dev, int events, struct lwp *l)
+ucycompoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	struct ucycom_softc *sc = ucycom_cd.cd_devs[UCYCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int err;
 	
-	DPRINTF(("ucycompoll: sc=%p, tp=%p, events=%d, lwp=%p\n", sc, tp, events, l));
+	DPRINTF(("ucycompoll: sc=%p, tp=%p, events=%d, lwp=%p\n", sc, tp, events, p));
 
 	if (sc->sc_dying)
 		return (EIO);
 
-	err = ((*tp->t_linesw->l_poll)(tp, events, l));
+	err = ((*tp->t_linesw->l_poll)(tp, events, p));
 	return (err);
 }
 
