@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.11.18.2 2007/05/31 23:15:19 itohy Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.11.18.3 2007/06/17 00:47:19 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.18.2 2007/05/31 23:15:19 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.18.3 2007/06/17 00:47:19 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/sl811hs.c,v 1.4 2006/09/07 00:06:41 imp Exp $"); */
 
 #include "opt_slhci.h"
@@ -310,7 +310,8 @@ sl11read_region(struct slhci_softc *sc, struct usb_buffer_mem *ub, int reg,
 			mlen = m->m_len - off;
 			curlen = (mlen > len) ? len : mlen;
 			bus_space_read_multi_1(sc->sc_iot, sc->sc_ioh,
-			    SL11_IDX_DATA, mtod(m, caddr_t) + off, curlen);
+			    SL11_IDX_DATA, mtod(m, u_int8_t *) + off,
+			    curlen);
 			len -= curlen;
 			off += curlen;
 			if (curlen < mlen)
@@ -354,7 +355,8 @@ sl11write_region(struct slhci_softc *sc, int reg, struct usb_buffer_mem *ub,
 			mlen = m->m_len - off;
 			curlen = (mlen > len) ? len : mlen;
 			bus_space_write_multi_1(sc->sc_iot, sc->sc_ioh,
-			    SL11_IDX_DATA, mtod(m, caddr_t) + off, curlen);
+			    SL11_IDX_DATA, mtod(m, const u_int8_t *) + off,
+			    curlen);
 			len -= curlen;
 			off += curlen;
 			if (curlen < mlen)
