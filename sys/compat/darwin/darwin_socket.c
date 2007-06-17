@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.13 2007/03/04 06:01:14 christos Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.14 2007/06/17 21:30:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.13 2007/03/04 06:01:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.14 2007/06/17 21:30:11 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.13 2007/03/04 06:01:14 christos 
 #include <sys/socketvar.h>
 #include <sys/un.h>
 #include <sys/ucred.h>
-#include <sys/mount.h>
+#include <sys/mbuf.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -160,6 +160,28 @@ native_to_darwin_sockaddr(nsa, dsa)
 	return 0;
 }
 
+static int
+fixup_darwin_sockaddr(struct mbuf *nam)
+{
+	struct sockaddr *sa = mtod(nam, void *);
+
+	if ((unsigned)sa->sa_family >= __arraycount(darwin_to_native_af))
+		return EPROTONOSUPPORT;
+	sa->sa_family = darwin_to_native_af[sa->sa_family];
+
+	/*
+	 * sa_len is zero for AF_LOCAL sockets, believe size we copied in!
+	 * The code used to strlen the filename, but that way lies madness!
+	 */
+
+	if (sa->sa_len > nam->m_len || sa->sa_len == 0)
+		sa->sa_len = nam->m_len;
+	else
+		nam->m_len = sa->sa_len;
+
+	return 0;
+}
+
 int
 darwin_to_native_sockaddr(dsa, nsa)
 	struct sockaddr *dsa;
@@ -200,6 +222,9 @@ darwin_to_native_sockaddr(dsa, nsa)
 		}
 	}
 
+	if ((unsigned)dsa->sa_family >= __arraycount(darwin_to_native_af))
+		return EPROTONOSUPPORT;
+
 	memcpy(nsa, dsa, len);
 	/* Array dereference is safe. sa_family is type unsigned */
 	nsa->ss_family = darwin_to_native_af[dsa->sa_family];
@@ -220,7 +245,7 @@ darwin_sys_socket(l, v, retval)
 	} */ *uap = v;
 	struct compat_30_sys_socket_args cup;
 
-	if (SCARG(uap, domain) < 0)
+	if ((unsigned)SCARG(uap, domain) >= __arraycount(darwin_to_native_af))
 		return (EPROTONOSUPPORT);
 
 	SCARG(&cup, domain) = darwin_to_native_af[SCARG(uap, domain)];
@@ -462,36 +487,17 @@ darwin_sys_connect(l, v, retval)
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) namelen;
 	} */ *uap = v;
-	struct sys_connect_args cup;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sockaddr_storage nss;
-	struct sockaddr_storage dss;
-	struct sockaddr_storage *nssp;
-	size_t len;
+	struct mbuf *nam;
 	int error;
 
-	nssp = stackgap_alloc(p, &sg, sizeof(*nssp));
+	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
+	    MT_SONAME);
+	if (error == 0)
+		error = fixup_darwin_sockaddr(nam);
+	if (error == 0)
+		error = do_sys_connect(l, SCARG(uap, s), nam);
 
-	if ((error = copyin(SCARG(uap, name), &dss, sizeof(dss))) != 0)
-		return error;
-
-	if ((error = darwin_to_native_sockaddr((struct sockaddr *)&dss,
-					       &nss)) != 0)
-		return error;
-
-	len = SCARG(uap, namelen);
-	if (nss.ss_len < len)
-		len = nss.ss_len;
-
-	if ((error = copyout(&nss, nssp, sizeof(nss))) != 0)
-		return error;
-
-	SCARG(&cup, s) = SCARG(uap, s);
-	SCARG(&cup, name) = (struct sockaddr *)nssp;
-	SCARG(&cup, namelen) = len;
-
-	return bsd_sys_connect(l, &cup, retval);
+	return error;
 }
 
 int
@@ -505,36 +511,17 @@ darwin_sys_bind(l, v, retval)
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) namelen;
 	} */ *uap = v;
-	struct sys_bind_args cup;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sockaddr_storage nss;
-	struct sockaddr_storage dss;
-	struct sockaddr_storage *nssp;
-	size_t len;
+	struct mbuf *nam;
 	int error;
 
-	nssp = stackgap_alloc(p, &sg, sizeof(*nssp));
+	error = sockargs(&nam, SCARG(uap, name), SCARG(uap, namelen),
+	    MT_SONAME);
+	if (error == 0)
+		error = fixup_darwin_sockaddr(nam);
+	if (error == 0)
+		error = do_sys_bind(l, SCARG(uap, s), nam);
 
-	if ((error = copyin(SCARG(uap, name), &dss, sizeof(dss))) != 0)
-		return error;
-
-	if ((error = darwin_to_native_sockaddr((struct sockaddr *)&dss,
-					       &nss)) != 0)
-		return error;
-
-	len = SCARG(uap, namelen);
-	if (nss.ss_len < len)
-		len = nss.ss_len;
-
-	if ((error = copyout(&nss, nssp, sizeof(nss))) != 0)
-		return error;
-
-	SCARG(&cup, s) = SCARG(uap, s);
-	SCARG(&cup, name) = (struct sockaddr *)nssp;
-	SCARG(&cup, namelen) = len;
-
-	return bsd_sys_bind(l, &cup, retval);
+	return error;
 }
 
 int
