@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.15 2007/03/16 22:21:42 dsl Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.16 2007/06/17 18:54:20 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.15 2007/03/16 22:21:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.16 2007/06/17 18:54:20 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -458,50 +458,29 @@ svr4_32_msgctl(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	int error;
 	struct svr4_32_sys_msgctl_args *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___msgctl13_args ap;
 	struct svr4_32_msqid_ds ss;
 	struct msqid_ds bs;
-	void *sg = stackgap_init(p, 0);
-
-	SCARG(&ap, msqid) = SCARG(uap, msqid);
-	SCARG(&ap, cmd) = SCARG(uap, cmd);
-	SCARG(&ap, buf) = stackgap_alloc(p, &sg, sizeof(bs));
+	int error;
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_IPC_STAT:
-		SCARG(&ap, cmd) = IPC_STAT;
-		if ((error = sys___msgctl13(l, &ap, retval)) != 0)
-			return error;
-		error = copyin(&bs, SCARG(&ap, buf), sizeof bs);
-		if (error)
-			return error;
-		bsd_to_svr4_32_msqid_ds(&bs, &ss);
-		return copyout(&ss, SCARG_P32(uap, buf), sizeof ss);
+		error = msgctl1(l, SCARG(uap, msqid), IPC_STAT, &bs);
+		if (error == 0) {
+			bsd_to_svr4_32_msqid_ds(&bs, &ss);
+			error = copyout(&ss, SCARG_P32(uap, buf), sizeof ss);
+		}
+		return error;
 
 	case SVR4_IPC_SET:
-		SCARG(&ap, cmd) = IPC_SET;
 		error = copyin(SCARG_P32(uap, buf), &ss, sizeof ss);
 		if (error)
 			return error;
 		svr4_32_to_bsd_msqid_ds(&ss, &bs);
-		error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
-		if (error)
-			return error;
-		return sys___msgctl13(l, &ap, retval);
+		return msgctl1(l, SCARG(uap, msqid), IPC_SET, &bs);
 
 	case SVR4_IPC_RMID:
-		SCARG(&ap, cmd) = IPC_RMID;
-		error = copyin(SCARG_P32(uap, buf), &ss, sizeof ss);
-		if (error)
-			return error;
-		svr4_32_to_bsd_msqid_ds(&ss, &bs);
-		error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
-		if (error)
-			return error;
-		return sys___msgctl13(l, &ap, retval);
+		return msgctl1(l, SCARG(uap, msqid), IPC_RMID, NULL);
 
 	default:
 		return EINVAL;
@@ -651,73 +630,34 @@ svr4_32_shmctl(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_shmctl_args *uap = v;
-	int error;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	struct sys___shmctl13_args ap;
 	struct shmid_ds bs;
 	struct svr4_32_shmid_ds ss;
-
-	SCARG(&ap, shmid) = SCARG(uap, shmid);
-
-	if (SCARG_P32(uap, buf)) {
-		SCARG(&ap, buf) = stackgap_alloc(p, &sg, sizeof (struct shmid_ds));
-		switch (SCARG(uap, cmd)) {
-		case SVR4_IPC_SET:
-		case SVR4_IPC_RMID:
-		case SVR4_SHM_LOCK:
-		case SVR4_SHM_UNLOCK:
-			error = copyin(SCARG_P32(uap, buf),
-				       (void *)&ss, sizeof ss);
-			if (error)
-				return error;
-			svr4_32_to_bsd_shmid_ds(&ss, &bs);
-			error = copyout(&bs, SCARG(&ap, buf), sizeof bs);
-			if (error)
-				return error;
-			break;
-		default:
-			break;
-		}
-	}
-	else
-		SCARG(&ap, buf) = 0;
-
+	int error;
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_IPC_STAT:
-		SCARG(&ap, cmd) = IPC_STAT;
-		if ((error = sys___shmctl13(l, &ap, retval)) != 0)
-			return error;
-		if (!SCARG_P32(uap, buf))
-			return 0;
-		error = copyin(&bs, SCARG(&ap, buf), sizeof bs);
-		if (error)
-			return error;
-		bsd_to_svr4_32_shmid_ds(&bs, &ss);
-		return copyout(&ss, SCARG_P32(uap, buf), sizeof ss);
+		error = shmctl1(l, SCARG(uap, shmid), IPC_STAT, &bs);
+		if (error == 0) {
+			bsd_to_svr4_32_shmid_ds(&bs, &ss);
+			error = copyout(&ss, SCARG_P32(uap, buf), sizeof ss);
+		}
+		return error;
 
 	case SVR4_IPC_SET:
-		SCARG(&ap, cmd) = IPC_SET;
-		return sys___shmctl13(l, &ap, retval);
+		error = copyin(SCARG_P32(uap, buf), &ss, sizeof ss);
+		if (error)
+			return error;
+		svr4_32_to_bsd_shmid_ds(&ss, &bs);
+		return shmctl1(l, SCARG(uap, shmid), IPC_SET, &bs);
 
 	case SVR4_IPC_RMID:
+		return shmctl1(l, SCARG(uap, shmid), IPC_RMID, NULL);
+
 	case SVR4_SHM_LOCK:
+		return shmctl1(l, SCARG(uap, shmid), SHM_LOCK, NULL);
+
 	case SVR4_SHM_UNLOCK:
-		switch (SCARG(uap, cmd)) {
-		case SVR4_IPC_RMID:
-			SCARG(&ap, cmd) = IPC_RMID;
-			break;
-		case SVR4_SHM_LOCK:
-			SCARG(&ap, cmd) = SHM_LOCK;
-			break;
-		case SVR4_SHM_UNLOCK:
-			SCARG(&ap, cmd) = SHM_UNLOCK;
-			break;
-		default:
-			return EINVAL;
-		}
-		return sys___shmctl13(l, &ap, retval);
+		return shmctl1(l, SCARG(uap, shmid), SHM_UNLOCK, NULL);
 
 	default:
 		return EINVAL;
