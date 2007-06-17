@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.303 2007/05/31 05:29:43 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.304 2007/06/17 13:34:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.303 2007/05/31 05:29:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.304 2007/06/17 13:34:43 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.303 2007/05/31 05:29:43 rmind Exp $"
 #include <sys/sched.h>
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
+#include <sys/vmem.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -595,6 +596,8 @@ main(void)
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    uvm_aiodone_worker, NULL, PVM, IPL_BIO, 0))
 		panic("fork aiodoned");
+
+	vmem_rehash_start();
 
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
