@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem_nodma.h,v 1.1.2.1 2007/05/22 14:57:48 itohy Exp $	*/
+/*	$NetBSD: usb_mem_nodma.h,v 1.1.2.2 2007/06/17 01:26:54 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@ struct usb_buffer_mem {
 	enum { UB_NONE, UB_PLAIN, UB_MBUF } ub_type;
 	union {
 		struct {
-			caddr_t ubp_top;	/* start address */
-			caddr_t ubp_cur;	/* current pointer */
+			u_int8_t *ubp_top;	/* start address */
+			u_int8_t *ubp_cur;	/* current pointer */
 			void *ubp_allocbuf;	/* allocated buffer or NULL */
 		} ub_plain;
 		struct {
