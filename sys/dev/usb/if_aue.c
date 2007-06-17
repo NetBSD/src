@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.99.10.2 2007/06/13 03:59:15 itohy Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.99.10.3 2007/06/17 00:49:48 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99.10.2 2007/06/13 03:59:15 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99.10.3 2007/06/17 00:49:48 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -247,7 +247,7 @@ Static void aue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void aue_tick(void *);
 Static void aue_tick_task(void *);
 Static void aue_start(struct ifnet *);
-Static int aue_ioctl(struct ifnet *, u_long, caddr_t);
+Static int aue_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static int aue_init(struct ifnet *);
 Static void aue_stop(struct ifnet *, int);
 Static void aue_watchdog(struct ifnet *);
@@ -265,7 +265,7 @@ Static void aue_lock_mii(struct aue_softc *);
 Static void aue_unlock_mii(struct aue_softc *);
 
 Static void aue_setmulti(struct aue_softc *);
-Static u_int32_t aue_crc(caddr_t);
+Static u_int32_t aue_crc(u_int8_t *);
 Static void aue_reset(struct aue_softc *);
 
 Static int aue_csr_read_1(struct aue_softc *, int);
@@ -578,7 +578,7 @@ aue_miibus_statchg(device_ptr_t dev)
 #define AUE_BITS	6
 
 Static u_int32_t
-aue_crc(caddr_t addr)
+aue_crc(u_int8_t *addr)
 {
 	u_int32_t		idx, bit, data, crc;
 
@@ -1486,7 +1486,7 @@ aue_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 Static int
-aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+aue_ioctl(struct ifnet *ifp, u_long command, usb_ioctlarg_t data)
 {
 	struct aue_softc	*sc = ifp->if_softc;
 #if 0
