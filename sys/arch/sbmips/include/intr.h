@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.6 2007/02/16 02:53:50 ad Exp $ */
+/* $NetBSD: intr.h,v 1.7 2007/06/17 06:04:30 tsutsui Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -36,6 +36,7 @@
 #define	_SBMIPS_INTR_H_
 
 #include <machine/systemsw.h>
+#include <mips/locore.h>
 
 /* Interrupt levels */
 #define	IPL_NONE	0
@@ -91,14 +92,6 @@
 
 #define	spl0()			_spllower(0)
 #define	splx(s)			_splset(s)
-
-int	_splraise(int);
-int	_spllower(int);
-int	_splset(int);
-int	_splget(void);
-int	_splnone(void);
-int	_setsoftintr(int);
-int	_clrsoftintr(int);
 
 typedef int ipl_t;
 typedef struct {

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.76 2007/05/17 14:51:23 yamt Exp $ */
+/* $NetBSD: locore.h,v 1.77 2007/06/17 06:04:28 tsutsui Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -36,6 +36,14 @@ uint32_t mips_cp0_cause_read(void);
 void	mips_cp0_cause_write(uint32_t);
 uint32_t mips_cp0_status_read(void);
 void	mips_cp0_status_write(uint32_t);
+
+int _splraise(int);
+int _spllower(int);
+int _splset(int);
+int _splget(void); 
+void _splnone(void);
+void _setsoftintr(int);
+void _clrsoftintr(int);
 
 #ifdef MIPS1
 void	mips1_SetPID(int);
