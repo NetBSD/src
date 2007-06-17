@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.48.10.2 2007/06/13 03:59:16 itohy Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.48.10.3 2007/06/17 00:51:33 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48.10.2 2007/06/13 03:59:16 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48.10.3 2007/06/17 00:51:33 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -150,7 +150,7 @@ Static void cue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void cue_tick(void *);
 Static void cue_tick_task(void *);
 Static void cue_start(struct ifnet *);
-Static int cue_ioctl(struct ifnet *, u_long, caddr_t);
+Static int cue_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static int cue_init(struct ifnet *);
 Static void cue_stop(struct ifnet *, int);
 Static void cue_watchdog(struct ifnet *);
@@ -1088,7 +1088,7 @@ cue_open_pipes(struct cue_softc	*sc)
 }
 
 Static int
-cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+cue_ioctl(struct ifnet *ifp, u_long command, usb_ioctlarg_t data)
 {
 	struct cue_softc	*sc = ifp->if_softc;
 #if 0
