@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.5 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.5.6.1 2007/06/17 01:14:11 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.5 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.5.6.1 2007/06/17 01:14:11 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,8 @@ struct ukyopon_softc {
 #define UKYOPON_DATA_IFACE_INDEX	3
 
 Static void	ukyopon_get_status(void *, int, u_char *, u_char *);
-Static int	ukyopon_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr);
+Static int	ukyopon_ioctl(void *, int, u_long, usb_ioctlarg_t, int,
+		    usb_proc_ptr);
 
 Static struct ucom_methods ukyopon_methods = {
 	ukyopon_get_status,
@@ -160,8 +161,8 @@ ukyopon_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 }
 
 Static int
-ukyopon_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	      usb_proc_ptr p)
+ukyopon_ioctl(void *addr, int portno, u_long cmd, usb_ioctlarg_t data,
+	      int flag, usb_proc_ptr p)
 {
 	struct ukyopon_softc *sc = addr;
 	struct ukyopon_identify *arg_id = (void*)data;
