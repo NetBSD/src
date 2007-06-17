@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.26.10.1 2007/05/22 14:57:46 itohy Exp $	*/
+/*	$NetBSD: urio.c,v 1.26.10.2 2007/06/17 01:21:27 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.26.10.1 2007/05/22 14:57:46 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.26.10.2 2007/06/17 01:21:27 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ urio_activate(device_ptr_t self, enum devact act)
 #endif
 
 int
-urioopen(dev_t dev, int flag, int mode, struct lwp *l)
+urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct urio_softc *sc;
 	usbd_status err;
@@ -346,7 +346,7 @@ urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 int
 urioclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+    usb_proc_ptr p)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
@@ -488,7 +488,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+urioioctl(dev_t dev, u_long cmd, usb_ioctlarg_t addr, int flag, usb_proc_ptr p)
 {
 	struct urio_softc * sc;
 	int unit = URIOUNIT(dev);
@@ -543,7 +543,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	if (len < 0 || len > 32767)
 		return (EINVAL);
 	if (len != 0) {
-		iov.iov_base = (caddr_t)rcmd->buffer;
+		iov.iov_base = (void *)rcmd->buffer;
 		iov.iov_len = len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
@@ -551,7 +551,7 @@ urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		uio.uio_offset = 0;
 		uio.uio_rw = req.bmRequestType & UT_READ ?
 			     UIO_READ : UIO_WRITE;
-		uio.uio_vmspace = l->l_proc->p_vmspace;
+		USB_UIO_SET_PROC(&uio, p);
 		ptr = malloc(len, M_TEMP, M_WAITOK);
 		if (uio.uio_rw == UIO_WRITE) {
 			error = uiomove(ptr, len, &uio);
@@ -583,7 +583,7 @@ ret:
 
 #if defined(__OpenBSD__)
 int
-urioselect(dev_t dev, int events, struct lwp *l)
+urioselect(dev_t dev, int events, usb_proc_ptr p)
 {
 	return (0);
 }
