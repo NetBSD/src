@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.20 2007/03/04 06:01:13 christos Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.21 2007/06/17 10:24:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.20 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.21 2007/06/17 10:24:21 dsl Exp $");
 
 #include "opt_sysv.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.20 2007/03/04 06:01:13 christos Ex
 
 #include <compat/common/compat_util.h>
 #include <compat/sys/shm.h>
+#include <compat/sys/sem.h>
 
 #if defined(SYSVSEM) && !defined(_LP64)
 int
@@ -61,12 +62,6 @@ compat_10_sys_semsys(l, v, retval)
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 	} */ *uap = v;
-	struct compat_14_sys___semctl_args /* {
-		syscallarg(int) semid;
-		syscallarg(int) semnum;
-		syscallarg(int) cmd;
-		syscallarg(union __semun *) arg;
-	} */ __semctl_args;
 	struct sys_semget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) nsems;
@@ -80,19 +75,35 @@ compat_10_sys_semsys(l, v, retval)
 	struct sys_semconfig_args /* {
 		syscallarg(int) flag;
 	} */ semconfig_args;
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
+	struct semid_ds sembuf;
+	struct semid_ds14 osembuf;
+	void *pass_arg;
+	int error;
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */
-		SCARG(&__semctl_args, semid) = SCARG(uap, a2);
-		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
-		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
-		SCARG(&__semctl_args, arg) = stackgap_alloc(p, &sg,
-			sizeof(union semun *));
-		copyout(&SCARG(uap, a5), SCARG(&__semctl_args, arg),
-			sizeof(union __semun));
-		return (compat_14_sys___semctl(l, &__semctl_args, retval));
+#define	semctl_semid	SCARG(uap, a2)
+#define	semctl_semnum	SCARG(uap, a3)
+#define	semctl_cmd	SCARG(uap, a4)
+#define	semctl_arg	((union __semun *)&SCARG(uap, a5))
+		pass_arg = get_semctl_arg(semctl_cmd, &sembuf, semctl_arg);
+		if (semctl_cmd == IPC_SET) {
+			error = copyin(semctl_arg->buf, &osembuf, sizeof osembuf);
+			if (error != 0)
+				return error;
+			semid_ds14_to_native(&osembuf, &sembuf);
+		}
+		error = semctl1(l, semctl_semid, semctl_semnum, semctl_cmd, 
+		    pass_arg, retval);
+		if (error == 0 && semctl_cmd == IPC_STAT) {
+			native_to_semid_ds14(&sembuf, &osembuf);
+			error = copyout(&osembuf, semctl_arg->buf, sizeof(osembuf));
+		}
+		return error;
+#undef	semctl_semid
+#undef	semctl_semnum
+#undef	semctl_cmd
+#undef	semctl_arg
 
 	case 1:						/* semget() */
 		SCARG(&semget_args, key) = SCARG(uap, a2);
