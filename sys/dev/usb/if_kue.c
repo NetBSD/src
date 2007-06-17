@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.58.10.2 2007/06/13 04:14:16 itohy Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.58.10.3 2007/06/17 00:52:30 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.58.10.2 2007/06/13 04:14:16 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.58.10.3 2007/06/17 00:52:30 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -187,7 +187,7 @@ Static int kue_open_pipes(struct kue_softc *);
 Static void kue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void kue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void kue_start(struct ifnet *);
-Static int kue_ioctl(struct ifnet *, u_long, caddr_t);
+Static int kue_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static int kue_init(struct ifnet *);
 Static void kue_stop(struct ifnet *, int);
 Static void kue_watchdog(struct ifnet *);
@@ -999,7 +999,7 @@ kue_open_pipes(struct kue_softc *sc)
 }
 
 Static int
-kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+kue_ioctl(struct ifnet *ifp, u_long command, usb_ioctlarg_t data)
 {
 	struct kue_softc	*sc = ifp->if_softc;
 #if 0
