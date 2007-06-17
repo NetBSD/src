@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.17.10.2 2007/06/13 03:59:15 itohy Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.17.10.3 2007/06/17 00:50:35 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.2 2007/06/13 03:59:15 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.3 2007/06/17 00:50:35 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -176,7 +176,7 @@ Static void axe_tick_task(void *);
 Static void axe_rxstart(struct ifnet *);
 #endif
 Static void axe_start(struct ifnet *);
-Static int axe_ioctl(struct ifnet *, u_long, caddr_t);
+Static int axe_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static int axe_init(struct ifnet *);
 Static void axe_stop(struct ifnet *, int);
 Static void axe_watchdog(struct ifnet *);
@@ -1086,7 +1086,7 @@ axe_init(struct ifnet *ifp)
 }
 
 Static int
-axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+axe_ioctl(struct ifnet *ifp, u_long cmd, usb_ioctlarg_t data)
 {
 	struct axe_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
