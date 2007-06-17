@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1032 2007/06/01 22:54:52 uwe Exp $
+#	$NetBSD: mi,v 1.1033 2007/06/17 12:47:40 rmind Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3983,6 +3983,7 @@
 ./usr/share/man/cat3/addstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/aio_cancel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_error.0		comp-c-catman		.cat
+./usr/share/man/cat3/aio_fsync.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_read.0			comp-c-catman		.cat
 ./usr/share/man/cat3/aio_return.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_suspend.0		comp-c-catman		.cat
@@ -8322,6 +8323,7 @@
 ./usr/share/man/man3/addstr.3			comp-c-man		.man
 ./usr/share/man/man3/aio_cancel.3		comp-c-man		.man
 ./usr/share/man/man3/aio_error.3		comp-c-man		.man
+./usr/share/man/man3/aio_fsync.3		comp-c-man		.man
 ./usr/share/man/man3/aio_read.3			comp-c-man		.man
 ./usr/share/man/man3/aio_return.3		comp-c-man		.man
 ./usr/share/man/man3/aio_suspend.3		comp-c-man		.man
