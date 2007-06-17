@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.73.10.2 2007/05/31 23:15:18 itohy Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.73.10.3 2007/06/17 01:30:42 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.82 2006/09/07 00:06:42 imp Exp $       */
 
 /*-
@@ -107,11 +107,21 @@ MALLOC_DECLARE(M_USBHC);
 #define USB_KASSERT		KASSERT
 #define USB_KASSERT2(c, m)	KASSERT(c)
 
+#if __NetBSD_Version__ >= 499001400	/* NetBSD 4.99.14 */
+typedef void *usb_ioctlarg_t;
+typedef void *usb_busdma_kaddr_t;
+#else
+typedef caddr_t usb_ioctlarg_t;
+typedef caddr_t usb_busdma_kaddr_t;
+#endif
 typedef struct lwp *usb_proc_ptr;
 typedef struct proc *usb_sigproc_ptr;
 
 #define USB_PROC_LOCK(p)	mutex_enter(&proclist_mutex)
 #define USB_PROC_UNLOCK(p)	mutex_exit(&proclist_mutex)
+
+#define USB_UIO_SET_PROC(uiop, p)	\
+	((uiop)->uio_vmspace = (p)->l_proc->p_vmspace)
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -236,11 +246,17 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 #define USB_KASSERT		KASSERT
 #define USB_KASSERT2(c, m)	KASSERT(c)
 
+typedef caddr_t usb_ioctlarg_t;
+typedef caddr_t usb_busdma_kaddr_t;
 typedef struct proc *usb_proc_ptr;
 typedef struct proc *usb_sigproc_ptr;
 
 #define USB_PROC_LOCK(p)	FIXME
 #define USB_PROC_UNLOCK(p)	FIXME
+
+#define USB_UIO_SET_PROC(uiop, p)	\
+	((uiop)->uio_segflg = UIO_USERSPACE,		\
+	 (uiop)->uio_procp = (p))
 
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
@@ -422,11 +438,17 @@ MALLOC_DECLARE(M_USBHC);
 #define USB_KASSERT(c)		KASSERT(c, (#c))
 #define USB_KASSERT2		KASSERT
 
+typedef caddr_t usb_ioctlarg_t;
+typedef void *usb_busdma_kaddr_t;
 typedef struct thread *usb_proc_ptr;
 typedef struct proc *usb_sigproc_ptr;
 
 #define USB_PROC_LOCK(p)	PROC_LOCK(p)
 #define USB_PROC_UNLOCK(p)	PROC_UNLOCK(p)
+
+#define USB_UIO_SET_PROC(uiop, p)	\
+	((uiop)->uio_segflg = UIO_USERSPACE,		\
+	 (uiop)->uio_td = (p))
 
 #define device_ptr_t device_t
 #define USBBASEDEVICE device_t
