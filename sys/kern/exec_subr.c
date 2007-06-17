@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.52.2.1 2007/03/13 17:50:50 ad Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.52.2.2 2007/06/17 21:31:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.52.2.1 2007/03/13 17:50:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.52.2.2 2007/06/17 21:31:18 ad Exp $");
 
 #include "opt_pax.h"
 
@@ -160,7 +160,7 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	int error;
 	vm_prot_t prot, maxprot;
 
-	KASSERT(vp->v_flag & VTEXT);
+	KASSERT(vp->v_iflag & VI_TEXT);
 
 	/*
 	 * map the vnode in using uvm_map.
@@ -184,10 +184,11 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
                 return(ENOMEM);
 	VREF(vp);
 
-	if ((vp->v_flag & VMAPPED) == 0) {
+	if ((vp->v_vflag & VV_MAPPED) == 0) {
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		mutex_enter(&vp->v_interlock);
-		vp->v_flag |= VMAPPED;
+		vp->v_vflag |= VV_MAPPED;
+		vp->v_iflag |= VI_MAPPED;
 		mutex_exit(&vp->v_interlock);
 		VOP_UNLOCK(vp, 0);
 	}

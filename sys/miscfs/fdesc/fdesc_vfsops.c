@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.64 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.64.6.1 2007/06/17 21:31:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.64 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.64.6.1 2007/06/17 21:31:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -99,7 +99,7 @@ fdesc_mount(struct mount *mp, const char *path, void *data,
 	MALLOC(fmp, struct fdescmount *, sizeof(struct fdescmount),
 				M_UFSMNT, M_WAITOK);	/* XXX */
 	rvp->v_type = VDIR;
-	rvp->v_flag |= VROOT;
+	rvp->v_vflag |= VV_ROOT;
 	fmp->f_root = rvp;
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;

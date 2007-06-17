@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.259 2007/03/04 06:01:53 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.259.2.1 2007/06/17 21:30:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.259 2007/03/04 06:01:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.259.2.1 2007/06/17 21:30:58 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -122,8 +122,8 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.259 2007/03/04 06:01:53 christos Exp $");
 #include <sys/timepps.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>
@@ -245,12 +245,6 @@ static int ppscap =
 	PPS_CAPTURECLEAR |
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
 #endif /* !__HAVE_TIMECOUNTER */
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-volatile int	com_softintr_scheduled;
-#endif
-#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -554,9 +548,7 @@ fifodone:
 	}
 #endif
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, comsoft, sc);
-#endif
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -665,10 +657,8 @@ com_detach(struct device *self, int flags)
 	tty_detach(sc->sc_tty);
 	ttyfree(sc->sc_tty);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* Unhook the soft interrupt handler. */
-	softintr_disestablish(sc->sc_si);
-#endif
+	softint_disestablish(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	/* Unhook the entropy source. */
@@ -1231,18 +1221,7 @@ com_schedrx(struct com_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_schedule(sc->sc_si);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-	setsoftserial();
-#else
-	if (!com_softintr_scheduled) {
-		com_softintr_scheduled = 1;
-		callout_reset(&comsoft_callout, 1, comsoft, NULL);
-	}
-#endif
-#endif
+	softint_schedule(sc->sc_si);
 }
 
 void
@@ -1988,12 +1967,6 @@ comsoft(void *arg)
 	struct com_softc	*sc;
 	struct tty	*tp;
 	int	unit;
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-	int s;
-
-	s = splsoftserial();
-	com_softintr_scheduled = 0;
-#endif
 
 	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
 		sc = device_lookup(&com_cd, unit);
@@ -2288,18 +2261,7 @@ again:	do {
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_schedule(sc->sc_si);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-	setsoftserial();
-#else
-	if (!com_softintr_scheduled) {
-		com_softintr_scheduled = 1;
-		callout_reset(&comsoft_callout, 1, comsoft, NULL);
-	}
-#endif
-#endif
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);

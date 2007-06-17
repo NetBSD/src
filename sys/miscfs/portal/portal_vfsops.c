@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.60.6.1 2007/04/05 21:57:51 ad Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.60.6.2 2007/06/17 21:31:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.60.6.1 2007/04/05 21:57:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.60.6.2 2007/06/17 21:31:42 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,7 +147,7 @@ portal_mount(
 	fmp = (struct portalmount *) malloc(sizeof(struct portalmount),
 				 M_UFSMNT, M_WAITOK);	/* XXX */
 	rvp->v_type = VDIR;
-	rvp->v_flag |= VROOT;
+	rvp->v_vflag |= VV_ROOT;
 	VTOPORTAL(rvp)->pt_arg = 0;
 	VTOPORTAL(rvp)->pt_size = 0;
 	VTOPORTAL(rvp)->pt_fileid = PORTAL_ROOTFILEID;

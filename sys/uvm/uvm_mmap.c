@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.108.2.4 2007/06/08 14:18:21 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.108.2.5 2007/06/17 21:32:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.4 2007/06/08 14:18:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.5 2007/06/17 21:32:21 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1162,15 +1162,16 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 */
 
 		mutex_enter(&vp->v_interlock);
-		needwritemap = (vp->v_flag & VWRITEMAP) == 0 &&
+		needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
 			(flags & MAP_SHARED) != 0 &&
 			(maxprot & VM_PROT_WRITE) != 0;
-		if ((vp->v_flag & VMAPPED) == 0 || needwritemap) {
+		if ((vp->v_iflag & VI_MAPPED) == 0 || needwritemap) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
 			mutex_enter(&vp->v_interlock);
-			vp->v_flag |= VMAPPED;
+			vp->v_iflag |= VI_MAPPED;
+			vp->v_vflag |= VV_MAPPED;
 			if (needwritemap) {
-				vp->v_flag |= VWRITEMAP;
+				vp->v_iflag |= VI_WRMAP;
 			}
 			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.19.6.2 2007/06/08 14:15:03 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.19.6.3 2007/06/17 21:31:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.19.6.2 2007/06/08 14:15:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.19.6.3 2007/06/17 21:31:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 	 * hierarchy.
 	 */
 	if (cnp->cn_flags & ISDOTDOT) {
-		while ((dvp != udvp) && (dvp->v_flag & VROOT)) {
+		while ((dvp != udvp) && (dvp->v_vflag & VV_ROOT)) {
 			/*
 			 * Don't do the NOCROSSMOUNT check
 			 * at this level.  By definition,

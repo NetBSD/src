@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.10 2007/03/04 06:02:41 christos Exp $	*/
+/*	$NetBSD: spif.c,v 1.10.2.1 2007/06/17 21:31:00 ad Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.10 2007/03/04 06:02:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.10.2.1 2007/06/17 21:31:00 ad Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.10 2007/03/04 06:02:41 christos Exp $");
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
 
@@ -220,7 +220,7 @@ spif_attach(parent, self, aux)
 		goto fail_unmapregs;
 	}
 
-	sc->sc_softih = softintr_establish(IPL_TTY, spif_softintr, sc);
+	sc->sc_softih = softint_establish(SOFTINT_SERIAL, spif_softintr, sc);
 	if (sc->sc_softih == NULL) {
 		printf(": can't get soft intr\n");
 		goto fail_unmapregs;
@@ -929,7 +929,7 @@ spif_stcintr(vsc)
 	}
 
 	if (needsoft)
-		softintr_schedule(sc->sc_softih);
+		softint_schedule(sc->sc_softih);
 	return (r);
 }
 

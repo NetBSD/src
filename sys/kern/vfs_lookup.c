@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.84.4.2 2007/06/08 14:17:29 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.84.4.3 2007/06/17 21:31:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.84.4.2 2007/06/08 14:17:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.84.4.3 2007/06/17 21:31:32 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -686,7 +686,7 @@ dirloop:
 				    goto nextname;
 				}
 			}
-			if ((dp->v_flag & VROOT) == 0 ||
+			if ((dp->v_vflag & VV_ROOT) == 0 ||
 			    (cnp->cn_flags & NOCROSSMOUNT))
 				break;
 			tdp = dp;
@@ -714,7 +714,7 @@ unionlookup:
 		printf("not found\n");
 #endif /* NAMEI_DIAGNOSTIC */
 		if ((error == ENOENT) &&
-		    (dp->v_flag & VROOT) &&
+		    (dp->v_vflag & VV_ROOT) &&
 		    (dp->v_mount->mnt_flag & MNT_UNION)) {
 			tdp = dp;
 			dp = dp->v_mount->mnt_vnodecovered;

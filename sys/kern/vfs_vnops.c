@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135.2.5 2007/06/08 14:17:30 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.2.6 2007/06/17 21:31:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.5 2007/06/08 14:17:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.6 2007/06/17 21:31:35 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -233,7 +233,7 @@ vn_writechk(struct vnode *vp)
 	 * If the vnode is in use as a process's text,
 	 * we can't allow writing.
 	 */
-	if (vp->v_flag & VTEXT)
+	if (vp->v_iflag & VI_TEXT)
 		return (ETXTBSY);
 	return (0);
 }
@@ -247,12 +247,12 @@ vn_markexec(struct vnode *vp)
 
 	KASSERT(mutex_owned(&vp->v_interlock));
 
-	if ((vp->v_flag & VEXECMAP) == 0) {
+	if ((vp->v_iflag & VI_EXECMAP) == 0) {
 		/* XXXSMP should be atomic */
 		uvmexp.filepages -= vp->v_uobj.uo_npages;
 		uvmexp.execpages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag |= VEXECMAP;
+	vp->v_iflag |= VI_EXECMAP;
 }
 
 /*
@@ -265,11 +265,11 @@ vn_marktext(struct vnode *vp)
 
 	mutex_enter(&vp->v_interlock);
 	if (vp->v_writecount != 0) {
-		KASSERT((vp->v_flag & VTEXT) == 0);
+		KASSERT((vp->v_iflag & VI_TEXT) == 0);
 		mutex_exit(&vp->v_interlock);
 		return (ETXTBSY);
 	}
-	vp->v_flag |= VTEXT;
+	vp->v_iflag |= VI_TEXT;
 	vn_markexec(vp);
 	mutex_exit(&vp->v_interlock);
 	return (0);
@@ -391,7 +391,7 @@ unionread:
 	}
 #endif /* UNION || LKM */
 
-	if (count == auio.uio_resid && (vp->v_flag & VROOT) &&
+	if (count == auio.uio_resid && (vp->v_vflag & VV_ROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
@@ -667,7 +667,7 @@ vn_lock(struct vnode *vp, int flags)
 
 #if 0
 	KASSERT(vp->v_usecount > 0 || (flags & LK_INTERLOCK) != 0
-	    || (vp->v_flag & VONWORKLST) != 0);
+	    || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags &
 	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_DRAIN|LK_NOWAIT|LK_RETRY|
@@ -677,12 +677,12 @@ vn_lock(struct vnode *vp, int flags)
 	do {
 		if ((flags & LK_INTERLOCK) == 0)
 			mutex_enter(&vp->v_interlock);
-		if (vp->v_flag & VXLOCK) {
+		if (vp->v_iflag & VI_XLOCK) {
 			if (flags & LK_NOWAIT) {
 				mutex_exit(&vp->v_interlock);
 				return EBUSY;
 			}
-			vwait(vp, VXLOCK);
+			vwait(vp, VI_XLOCK);
 			mutex_exit(&vp->v_interlock);
 			error = ENOENT;
 		} else {

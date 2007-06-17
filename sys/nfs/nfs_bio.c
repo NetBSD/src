@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.6 2007/06/09 23:58:13 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.7 2007/06/17 21:31:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.6 2007/06/09 23:58:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.7 2007/06/17 21:31:55 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -140,7 +140,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	    /*
 	     * Don't cache symlinks.
 	     */
-	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
+	    if ((vp->v_vflag & VV_ROOT) && vp->v_type == VLNK) {
 		return (nfs_readlinkrpc(vp, uio, cred));
 	    }
 	    baddr = (void *)0;
@@ -530,7 +530,7 @@ nfs_write(v)
 		}
 		overwrite = false;
 		if ((uio->uio_offset & PAGE_MASK) == 0) {
-			if ((vp->v_flag & VMAPPED) == 0 &&
+			if ((vp->v_vflag & VV_MAPPED) == 0 &&
 			    bytelen > PAGE_SIZE) {
 				bytelen = trunc_page(bytelen);
 				overwrite = true;
@@ -898,7 +898,7 @@ nfs_doio_read(bp, uiop)
 			uiop->uio_resid = 0;
 		}
 #if 0
-		if (uiop->uio_lwp && (vp->v_flag & VTEXT) &&
+		if (uiop->uio_lwp && (vp->v_iflag & VI_TEXT) &&
 		    timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)) {
 			killproc(uiop->uio_lwp->l_proc, "process text file was modified");
 #if 0 /* XXX NJWLWP */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174.2.2 2007/06/08 14:18:07 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.3 2007/06/17 21:31:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.2 2007/06/08 14:18:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.3 2007/06/17 21:31:57 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -920,7 +920,7 @@ nfs_root(mp, vpp)
 		return error;
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
-	vp->v_flag = VROOT;
+	vp->v_vflag = VV_ROOT;
 	*vpp = vp;
 	return (0);
 }

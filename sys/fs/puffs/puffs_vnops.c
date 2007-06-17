@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52.4.5 2007/06/09 23:58:02 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52.4.6 2007/06/17 21:31:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.5 2007/06/09 23:58:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.6 2007/06/17 21:31:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -890,7 +890,7 @@ puffs_reclaim(void *v)
 	 * Note that we don't need to take the lock similarly to
 	 * puffs_root(), since there is only one of us.
 	 */
-	if (ap->a_vp->v_flag & VROOT) {
+	if (ap->a_vp->v_vflag & VV_ROOT) {
 		mutex_enter(&pmp->pmp_lock);
 		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
@@ -1128,7 +1128,7 @@ puffs_fsync(void *v)
 	 */
 	if (dofaf == 0) {
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_iflag & VI_XLOCK)
 			dofaf = 1;
 		mutex_exit(&vp->v_interlock);
 	}
@@ -1924,7 +1924,7 @@ puffs_strategy(void *v)
 	 */
 	if ((bp->b_flags & B_READ) == 0) {
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_iflag & VI_XLOCK)
 			dowritefaf = 1;
 		if (pn->pn_stat & PNODE_SUSPEND)
 			dowritefaf = 1;

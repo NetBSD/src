@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.34.2.1 2007/03/13 16:51:31 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.34.2.2 2007/06/17 21:31:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.34.2.1 2007/03/13 16:51:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.34.2.2 2007/06/17 21:31:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -430,7 +430,7 @@ adosfs_vget(mp, an, vpp)
 	switch (ap->type = adosfs_getblktype(amp, bp)) {
 	case AROOT:
 		vp->v_type = VDIR;
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 		ap->mtimev.days = adoswordn(bp, ap->nwords - 10);
 		ap->mtimev.mins = adoswordn(bp, ap->nwords - 9);
 		ap->mtimev.ticks = adoswordn(bp, ap->nwords - 8);

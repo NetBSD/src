@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.2 2007/05/13 17:36:32 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.3 2007/06/17 21:31:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.2 2007/05/13 17:36:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.3 2007/06/17 21:31:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -482,7 +482,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 			error = VFS_VGET(mp, pi[i], &(ntmp->ntm_sysvn[pi[i]]));
 			if(error)
 				goto out1;
-			ntmp->ntm_sysvn[pi[i]]->v_flag |= VSYSTEM;
+			ntmp->ntm_sysvn[pi[i]]->v_vflag |= VV_SYSTEM;
 			VREF(ntmp->ntm_sysvn[pi[i]]);
 			vput(ntmp->ntm_sysvn[pi[i]]);
 		}
@@ -953,7 +953,7 @@ ntfs_vgetex(
 		vp->v_type = f_type;
 
 	if (ino == NTFS_ROOTINO)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	if (lkflags & LK_TYPE_MASK) {
 		error = vn_lock(vp, lkflags);

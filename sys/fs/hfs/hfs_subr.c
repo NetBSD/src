@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.2.2.2 2007/05/13 17:36:31 ad Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.2.2.3 2007/06/17 21:31:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.2.2.2 2007/05/13 17:36:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.2.2.3 2007/06/17 21:31:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,9 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 			       do it explicitly */
 			    VOP_UNLOCK(vp, 0);
 			    vp->v_op = specops;
-			    vp->v_flag &= ~VLOCKSWORK;
+			    mutex_enter(&vp->v_interlock);
+			    vp->v_iflag &= ~VI_LOCKSWORK;
+			    mutex_exit(&vp->v_interlock);
 			    vrele(vp);
 			    vgone(vp);
 			    lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
@@ -108,7 +110,7 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 	}
 
 	if (hp->h_rec.cnid == HFS_CNID_ROOT_FOLDER)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	*vpp = vp;
 }

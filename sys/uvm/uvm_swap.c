@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.7 2007/06/08 14:18:22 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.8 2007/06/17 21:32:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.7 2007/06/08 14:18:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.8 2007/06/17 21:32:22 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1249,7 +1249,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 * cast pointers between the two structure easily.
 		 */
 		nbp = pool_get(&vndbuf_pool, PR_WAITOK);
-		BUF_INIT(&nbp->vb_buf);
+		buf_init(&nbp->vb_buf);
 		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = sz;
@@ -1271,7 +1271,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 */
 		s = splbio();
 		if (vnx->vx_error != 0) {
-			BUF_DESTROY(&nbp->vb_buf);
+			buf_destroy(&nbp->vb_buf);
 			pool_put(&vndbuf_pool, nbp);
 			goto out;
 		}
@@ -1374,7 +1374,7 @@ sw_reg_iodone(struct buf *bp)
 	/*
 	 * kill vbp structure
 	 */
-	BUF_DESTROY(&vbp->vb_buf);
+	buf_destroy(&vbp->vb_buf);
 	pool_put(&vndbuf_pool, vbp);
 
 	/*
@@ -1385,16 +1385,16 @@ sw_reg_iodone(struct buf *bp)
 		/* pass error upward */
 		error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
-			pool_put(&vndxfer_pool, vnx);
 			biodone(pbp, error, 0);
+			pool_put(&vndxfer_pool, vnx);
 		}
 	} else if (pbp->b_resid == 0) {
 		KASSERT(vnx->vx_pending == 0);
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
 			UVMHIST_LOG(pdhist, "  iodone error=%d !",
 			    pbp, vnx->vx_error, 0, 0);
-			pool_put(&vndxfer_pool, vnx);
 			biodone(pbp, 0, 0);
+			pool_put(&vndxfer_pool, vnx);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.11 2007/06/08 14:17:19 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.12 2007/06/17 21:31:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.11 2007/06/08 14:17:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.12 2007/06/17 21:31:22 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -580,7 +580,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	} else {
 		l2 = isfree;
 		ts = l2->l_ts;
-		KASSERT(l2->l_inheritedprio == MAXPRI);
+		KASSERT(l2->l_inheritedprio == -1);
 		KASSERT(SLIST_EMPTY(&l2->l_pi_lenders));
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = ts;
@@ -591,7 +591,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_refcnt = 1;
 	l2->l_priority = l1->l_priority;
 	l2->l_usrpri = l1->l_usrpri;
-	l2->l_inheritedprio = MAXPRI;
+	l2->l_inheritedprio = -1;
 	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
@@ -832,7 +832,7 @@ lwp_exit_switchaway(struct lwp *l)
 	ci = curcpu();	
 	idlelwp = ci->ci_data.cpu_idlelwp;
 	idlelwp->l_stat = LSONPROC;
-	cpu_switchto(NULL, idlelwp);
+	cpu_switchto(NULL, idlelwp, false);
 }
 
 /*
@@ -914,7 +914,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 #endif
 	uvm_lwp_exit(l);
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
-	KASSERT(l->l_inheritedprio == MAXPRI);
+	KASSERT(l->l_inheritedprio == -1);
 	sched_lwp_exit(l);
 	if (!recycle)
 		pool_put(&lwp_pool, l);

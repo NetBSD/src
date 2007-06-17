@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.7.18.2 2007/04/05 21:57:47 ad Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.7.18.3 2007/06/17 21:31:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.7.18.2 2007/04/05 21:57:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.7.18.3 2007/06/17 21:31:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 	switch (type) {
 	case PTYFSroot:	/* /pts = dr-xr-xr-x */
 		vp->v_type = VDIR;
-		vp->v_flag = VROOT;
+		vp->v_vflag = VV_ROOT;
 		break;
 
 	case PTYFSpts:	/* /pts/N = cxxxxxxxxx */
@@ -240,7 +240,9 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 			/* XXX spec_vnodeops has no locking, do it explicitly */
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
+			mutex_enter(&vp->v_interlock);
+			vp->v_iflag &= ~VI_LOCKSWORK;
+			mutex_exit(&vp->v_interlock);
 			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);

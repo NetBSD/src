@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.8 2007/06/08 14:18:11 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.9 2007/06/17 21:32:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -140,13 +140,14 @@ struct lwp {
 		struct timespec ts;
 	} l_ktrcsw;			/* !: for ktrace CSW trace XXX */
 	void		*l_private;	/* !: svr4-style lwp-private data */
+	lwp_t		*l_pinned;	/* !: lwp under this one */
 	struct kauth_cred *l_cred;	/* !: cached credentials */
 	void		*l_emuldata;	/* !: kernel lwp-private data */
-	u_int8_t	l_cv_signalled;	/* c: restarted by cv_signal() */
-	u_int8_t	l_unused;	/* !: currently unused */
+	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
 	u_short		l_locks;	/* !: lockmgr count of held locks */
+	u_short		l_blcnt;	/* !: count of kernel_lock held */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
 
@@ -189,6 +190,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
+#define	LW_INTR		0x40000000 /* Soft interrupt handler */
 #define	LW_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The second set of flags is kept in l_pflag. */
@@ -343,7 +345,7 @@ static inline int
 lwp_eprio(lwp_t *l)
 {
 
-	return MIN(l->l_inheritedprio, l->l_priority);
+	return MAX(l->l_inheritedprio, l->l_priority);
 }
 
 int newlwp(lwp_t *, struct proc *, vaddr_t, bool, int,

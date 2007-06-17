@@ -1,4 +1,40 @@
-/*	$NetBSD: intr.c,v 1.28.4.1 2007/04/29 12:37:41 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.2 2007/06/17 21:30:42 ad Exp $	*/
+
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.1 2007/04/29 12:37:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.2 2007/06/17 21:30:42 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -117,6 +153,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.1 2007/04/29 12:37:41 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -162,6 +199,7 @@ static int intr_find_pcibridge(int, pcitag_t *, pci_chipset_tag_t *);
 #endif
 
 kmutex_t x86_intr_lock;
+bool x86_intr_lock_initted;
 
 /*
  * Fill in default interrupt table (in case of spurious interrupt
@@ -803,6 +841,7 @@ intr_string(int ih)
 struct intrhand fake_softclock_intrhand;
 struct intrhand fake_softnet_intrhand;
 struct intrhand fake_softserial_intrhand;
+struct intrhand fake_softbio_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
 
@@ -830,45 +869,6 @@ cpu_intr_init(struct cpu_info *ci)
 		again = 0;
 		mutex_init(&x86_intr_lock, MUTEX_DEFAULT, IPL_NONE);
 	}
-
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
-		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftclock;
-	isp->is_resume = Xsoftclock;
-	fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
-	isp->is_handlers = &fake_softclock_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_CLOCK] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softclock");
-
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
-		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftnet;
-	isp->is_resume = Xsoftnet;
-	fake_softnet_intrhand.ih_level = IPL_SOFTNET;
-	isp->is_handlers = &fake_softnet_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_NET] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softnet");
-
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
-		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftserial;
-	isp->is_resume = Xsoftserial;
-	fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
-	isp->is_handlers = &fake_softserial_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_SERIAL] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softserial");
 
 #if NLAPIC > 0
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
@@ -911,20 +911,6 @@ cpu_intr_init(struct cpu_info *ci)
 #endif /* defined(INTRSTACKSIZE) */
 }
 
-#ifdef MULTIPROCESSOR
-void
-x86_softintlock(void)
-{
-	KERNEL_LOCK(1, NULL);
-}
-
-void
-x86_softintunlock(void)
-{
-	KERNEL_UNLOCK_ONE(NULL);
-}
-#endif
-
 #ifdef INTRDEBUG
 void
 intr_printconfig(void)
@@ -956,3 +942,55 @@ intr_printconfig(void)
 	}
 }
 #endif
+
+void
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep, void *cookie)
+{
+	struct intrsource *isp;
+	struct cpu_info *ci;
+	u_int sir;
+
+	ci = l->l_cpu;
+
+	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
+	if (isp == NULL)
+		panic("can't allocate fixed interrupt source");
+	isp->is_recurse = Xsoftintr;
+	isp->is_resume = Xsoftintr;
+	isp->is_pic = &softintr_pic;
+
+	switch (level) {
+	case SOFTINT_BIO:
+		sir = SIR_BIO;
+		fake_softbio_intrhand.ih_level = IPL_SOFTBIO;
+		isp->is_handlers = &fake_softbio_intrhand;
+		break;
+	case SOFTINT_NET:
+		sir = SIR_NET;
+		fake_softnet_intrhand.ih_level = IPL_SOFTNET;
+		isp->is_handlers = &fake_softnet_intrhand;
+		break;
+	case SOFTINT_SERIAL:
+		sir = SIR_SERIAL;
+		fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
+		isp->is_handlers = &fake_softserial_intrhand;
+		break;
+	case SOFTINT_CLOCK:
+		sir = SIR_CLOCK;
+		fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
+		isp->is_handlers = &fake_softclock_intrhand;
+		break;
+	default:
+		panic("softint_init_md");
+	}
+
+	KASSERT(ci->ci_isources[sir] == NULL);
+
+	*machdep = (1 << sir);
+	l->l_private = cookie;
+	ci->ci_isources[sir] = isp;
+	ci->ci_isources[sir]->is_lwp = l;
+
+	intr_calculatemasks(ci);
+}

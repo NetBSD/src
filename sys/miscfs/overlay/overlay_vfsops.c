@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.37.6.2 2007/04/10 13:26:44 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.37.6.3 2007/06/17 21:31:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.2 2007/04/10 13:26:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.3 2007/06/17 21:31:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in ov_unmount.
 	 */
-	vp->v_flag |= VROOT;
+	vp->v_vflag |= VV_ROOT;
 	nmp->ovm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,

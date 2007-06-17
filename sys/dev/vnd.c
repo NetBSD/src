@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.5 2007/05/13 17:36:21 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.6 2007/06/17 21:30:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.5 2007/05/13 17:36:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.6 2007/06/17 21:30:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -613,7 +613,7 @@ vndthread(void *arg)
 		disk_busy(&vnd->sc_dkdev);
 
 		bp = &vnx->vx_buf;
-		BUF_INIT(bp);
+		buf_init(bp);
 		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
@@ -828,8 +828,9 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
-	VND_PUTXFER(vnd, vnx);
 	biodone(obp, bp->b_error, bp->b_resid);
+	buf_destroy(bp);
+	VND_PUTXFER(vnd, vnx);
 }
 
 /* ARGSUSED */

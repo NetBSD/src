@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.59 2007/03/04 06:03:01 christos Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.59.2.1 2007/06/17 21:31:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.59 2007/03/04 06:03:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.59.2.1 2007/06/17 21:31:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +361,7 @@ smbfs_getattr(v)
 	int error;
 
 	SMBVDEBUG("%p: '%.*s' isroot %d\n", vp,
-		(int) np->n_nmlen, np->n_name, (vp->v_flag & VROOT) != 0);
+		(int) np->n_nmlen, np->n_name, (vp->v_vflag & VV_ROOT) != 0);
 
 	if ((error = smbfs_attr_cachelookup(vp, va)) == 0)
 		return (0);

@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_data.h,v 1.7.6.1 2007/06/08 14:18:09 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.7.6.2 2007/06/17 21:32:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,6 @@
 #ifndef _SYS_CPU_DATA_H_
 #define	_SYS_CPU_DATA_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_multiprocessor.h"
-#endif
-
 struct callout;
 struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
@@ -66,18 +62,17 @@ struct cpu_data {
 	struct lwp *cpu_idlelwp;	/* idle lwp */
 
 	struct callout * volatile cpu_callout;	/* MP: a callout running */
-
-#if defined(MULTIPROCESSOR)
 	u_int		cpu_biglock_count;
 	struct lwp	*cpu_biglock_wanted;
-#endif /* defined(MULTIPROCESSOR) */
-
 	/* For LOCKDEBUG. */
-	u_long		cpu_spin_locks;		/* # of spinlockmgr locks */
-	u_long		cpu_simple_locks;	/* # of simple locks held */
+	u_int		cpu_spin_locks;		/* # of spinlockmgr locks */
+	u_int		cpu_simple_locks;	/* # of simple locks held */
 	void		*cpu_lockstat;		/* lockstat private tables */
 	u_int		cpu_spin_locks2;	/* # of spin locks held XXX */
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
+	void		*cpu_softcpu;		/* soft interrupt table */
+	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
+	u_int		cpu_netisrs;		/* legacy netisrs XXX */
 };
 
 /* compat definitions */

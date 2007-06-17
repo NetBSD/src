@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.37.2.2 2007/05/27 14:34:50 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.37.2.3 2007/06/17 21:30:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.37.2.2 2007/05/27 14:34:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.37.2.3 2007/06/17 21:30:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -485,7 +485,7 @@ unionread:
 #endif /* UNION */
 
 	if ((count == auio.uio_resid) &&
-	    (vp->v_flag & VROOT) &&
+	    (vp->v_vflag & VV_ROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;

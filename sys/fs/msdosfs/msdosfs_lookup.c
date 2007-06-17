@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.12.2.1 2007/05/13 17:36:31 ad Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.12.2.2 2007/06/17 21:31:08 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.12.2.1 2007/05/13 17:36:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.12.2.2 2007/06/17 21:31:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ msdosfs_lookup(v)
 	 * they won't find it.  DOS filesystems don't have them in the root
 	 * directory.  So, we fake it. deget() is in on this scam too.
 	 */
-	if ((vdp->v_flag & VROOT) && cnp->cn_nameptr[0] == '.' &&
+	if ((vdp->v_vflag & VV_ROOT) && cnp->cn_nameptr[0] == '.' &&
 	    (cnp->cn_namelen == 1 ||
 		(cnp->cn_namelen == 2 && cnp->cn_nameptr[1] == '.'))) {
 		isadir = ATTR_DIRECTORY;

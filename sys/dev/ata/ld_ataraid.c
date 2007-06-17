@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.19.2.2 2007/05/13 17:36:22 ad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.19.2.3 2007/06/17 21:30:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.2 2007/05/13 17:36:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.3 2007/06/17 21:30:54 ad Exp $");
 
 #include "rnd.h"
 
@@ -246,7 +246,7 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp = CBUF_GET();
 	if (cbp == NULL)
 		return (NULL);
-	BUF_INIT(&cbp->cb_buf);
+	buf_init(&cbp->cb_buf);
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = sc->sc_iodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
@@ -303,6 +303,7 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 			/* Free the already allocated component buffers. */
 			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
+				buf_destroy(&cbp->cb_buf);
 				CBUF_PUT(cbp);
 			}
 			return (EAGAIN);
@@ -400,6 +401,7 @@ free_and_exit:
 			/* Free the already allocated component buffers. */
 			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
+				buf_destroy(&cbp->cb_buf);
 				CBUF_PUT(cbp);
 			}
 			return (error);
@@ -507,6 +509,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 			other_cbp->cb_flags |= CBUF_IODONE;
 	}
 	count = cbp->cb_buf.b_bcount;
+	buf_destroy(&cbp->cb_buf);
 	CBUF_PUT(cbp);
 
 	if (other_cbp != NULL)

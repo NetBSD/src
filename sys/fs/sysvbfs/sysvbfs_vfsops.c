@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.8.4.1 2007/04/10 13:26:37 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.8.4.2 2007/06/17 21:31:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.8.4.1 2007/04/10 13:26:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.8.4.2 2007/06/17 21:31:14 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -381,7 +381,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	if (ino == BFS_ROOT_INODE) {	/* BFS is flat filesystem */
 		vp->v_type = VDIR;
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 	} else {
 		vp->v_type = VREG;
 	}

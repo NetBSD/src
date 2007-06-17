@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.6.2.4 2007/06/08 14:17:23 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.6.2.5 2007/06/17 21:31:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.4 2007/06/08 14:17:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.5 2007/06/17 21:31:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -299,7 +299,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 			prio = lwp_eprio(l);
 			continue;
 		}
-		if (prio >= lwp_eprio(owner)) {
+		if (prio <= lwp_eprio(owner)) {
 			if (dolock)
 				lwp_unlock(owner);
 			break;
@@ -377,11 +377,11 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 		 * - from the rest of the list, find the highest priority.
 		 */
 
-		prio = MAXPRI;
+		prio = -1;
 		KASSERT(!SLIST_EMPTY(&l->l_pi_lenders));
 		for (iter = SLIST_FIRST(&l->l_pi_lenders);
 		    iter != NULL; iter = next) {
-			KASSERT(lwp_eprio(l) <= ts->ts_eprio);
+			KASSERT(lwp_eprio(l) >= ts->ts_eprio);
 			next = SLIST_NEXT(iter, ts_pichain);
 			if (iter == ts) {
 				if (prev == NULL) {

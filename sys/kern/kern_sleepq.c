@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.5 2007/06/08 14:17:22 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.6 2007/06/17 21:31:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.5 2007/06/08 14:17:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.6 2007/06/17 21:31:26 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -165,7 +165,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
 		sched_enqueue(l, false);
-		if (lwp_eprio(l) < spc->spc_curpriority)
+		if (lwp_eprio(l) > spc->spc_curpriority)
 			cpu_need_resched(ci, 0);
 		spc_unlock(ci);
 		return 0;
@@ -187,7 +187,7 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		TAILQ_FOREACH(l2, &sq->sq_queue, l_sleepchain) {
-			if (lwp_eprio(l2) > pri) {
+			if (lwp_eprio(l2) < pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}

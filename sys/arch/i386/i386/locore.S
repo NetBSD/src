@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47.4.1 2007/05/27 12:27:30 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.47.4.2 2007/06/17 21:30:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -705,7 +705,8 @@ ENTRY(longjmp)
 	ret
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp)
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -721,6 +722,7 @@ ENTRY(cpu_switchto)
 
 	movl	16(%esp),%esi		# oldlwp
 	movl	20(%esp),%edi		# newlwp
+	movl	24(%esp),%edx		# returning
 	testl	%esi,%esi
 	jz	1f
 
@@ -734,6 +736,13 @@ ENTRY(cpu_switchto)
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
+	/* Set curlwp. */
+	movl	%edi,CPUVAR(CURLWP)
+
+	/* Skip the rest if returning to a pinned LWP. */
+	testl	%edx,%edx
+	jnz	4f
+
 	/* Switch TSS.  Reset "task busy" flag before loading. */
 	movl	%cr3,%eax
 	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
@@ -741,9 +750,6 @@ ENTRY(cpu_switchto)
 	movl	L_MD_TSS_SEL(%edi),%edx
 	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
-
-	/* Set curlwp. */
-	movl	%edi,CPUVAR(CURLWP)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)

@@ -1,0 +1,493 @@
+/*	$NetBSD: kern_softint.c,v 1.1.2.1 2007/06/17 21:31:27 ad Exp $	*/
+
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Soft interrupt implementation.  XXX blurb
+ *
+ * The !__HAVE_FAST_SOFTINTS case assumes splhigh == splsched.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.1 2007/06/17 21:31:27 ad Exp $");
+
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/intr.h>
+#include <sys/mutex.h>
+#include <sys/kthread.h>
+#include <sys/evcnt.h>
+#include <sys/cpu.h>
+
+#include <net/netisr.h>
+
+#include <uvm/uvm_extern.h>
+
+#define	PRI_SOFTCLOCK	PRI_INTERRUPT
+#define	PRI_SOFTBIO	(PRI_INTERRUPT + 4)
+#define	PRI_SOFTNET	(PRI_INTERRUPT + 8)
+#define	PRI_SOFTSERIAL	(PRI_INTERRUPT + 12)
+
+/* This could overlap with signal info in struct lwp. */
+typedef struct softint {
+	TAILQ_HEAD(, softhand)	si_q;
+	struct lwp		*si_lwp;
+	struct cpu_info		*si_cpu;
+	uintptr_t		si_machdep;
+	struct evcnt		si_evcnt;
+	int			si_active;
+} softint_t;
+
+typedef struct softhand {
+	TAILQ_ENTRY(softhand)	sh_q;
+	void			(*sh_func)(void *);
+	void			*sh_arg;
+	softint_t		*sh_isr;
+	u_int			sh_pending;
+	u_int			sh_flags;
+} softhand_t;
+
+typedef struct softcpu {
+	struct cpu_info		*sc_cpu;
+	softint_t		sc_int[SOFTINT_COUNT];
+	softhand_t		sc_hand[1];
+} softcpu_t;
+
+static void	softint_thread(void *);
+static void	softint_netisr(void *);
+
+u_int		softint_bytes = 8192;
+static u_int	softint_max;
+static kmutex_t	softint_lock;
+static void	*softint_netisr_sih;
+
+/*
+ * softint_init_isr:
+ *
+ *	Initialize a single interrupt level for a single CPU.
+ */
+static void
+softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
+{
+	struct cpu_info *ci;
+	softint_t *si;
+	int error;
+
+	si = &sc->sc_int[level];
+	ci = sc->sc_cpu;
+	si->si_cpu = ci;
+
+	TAILQ_INIT(&si->si_q);
+
+	error = kthread_create(pri, KTHREAD_MPSAFE | KTHREAD_INTR |
+	    KTHREAD_IDLE, ci, softint_thread, si, &si->si_lwp,
+	    "soft%s/%d", desc, (int)ci->ci_cpuid);
+	if (error != 0)
+		panic("softint_init_isr: error %d", error);
+
+	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
+	   "cpu", si->si_lwp->l_name);
+
+	softint_init_md(si->si_lwp, level, &si->si_machdep, si);
+}
+
+/*
+ * softint_init_md:
+ *
+ *	Perform machine-dependent initialization.  Arguments:
+ *
+ *	l
+ *
+ *	    LWP to handle the interrupt
+ *
+ *	level
+ *
+ *	    Symbolic level: SOFTINT_*
+ *
+ *	machdep
+ *
+ *	    Private value for machine dependent code,
+ *	    passed by MI code to softint_trigger().
+ *
+ *	cookie
+ *
+ *	    Value to be passed to softint_execute() by
+ *	    MD code when an interrupt is being handled.
+ */
+#ifndef __HAVE_FAST_SOFTINTS
+void
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep, void *cookie)
+{
+
+	*machdep = (lwp_t)l;
+
+	lwp_lock(l);
+	/* Cheat and make the KASSERT in softint_thread() happy. */
+	((softint_t *)cookie)->si_active = 1;
+	l->l_stat = LSRUN;
+	sched_enqueue(l, false);
+	lwp_unlock(l);
+}
+#endif	/* !__HAVE_FAST_SOFTINTS */
+
+/*
+ * softint_init:
+ *
+ *	Initialize per-CPU data structures.  Called from mi_cpu_attach().
+ */
+void
+softint_init(struct cpu_info *ci)
+{
+	static struct cpu_info *first;
+	softcpu_t *sc, *scfirst;
+	softhand_t *sh, *shmax;
+
+	if (first == NULL) {
+		first = ci;
+		mutex_init(&softint_lock, MUTEX_DEFAULT, IPL_NONE);
+		softint_bytes = round_page(softint_bytes);
+		softint_max = (softint_bytes - sizeof(softcpu_t)) /
+		    sizeof(softhand_t);
+	}
+
+	sc = (softcpu_t *)uvm_km_alloc(kernel_map, softint_bytes, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
+	if (sc == NULL)
+		panic("softint_init_cpu: cannot allocate memory");
+
+	ci->ci_data.cpu_softcpu = sc;
+	sc->sc_cpu = ci;
+
+	softint_init_isr(sc, "net", PRI_SOFTNET, SOFTINT_NET);
+	softint_init_isr(sc, "bio", PRI_SOFTBIO, SOFTINT_BIO);
+	softint_init_isr(sc, "clk", PRI_SOFTCLOCK, SOFTINT_CLOCK);
+	softint_init_isr(sc, "ser", PRI_SOFTSERIAL, SOFTINT_SERIAL);
+
+	if (first != ci) {
+		/* No need to lock - the system is still cold. */
+		scfirst = first->ci_data.cpu_softcpu;
+		sh = sc->sc_hand;
+		memcpy(sh, scfirst->sc_hand, sizeof(*sh) * softint_max);
+
+		/* Update pointers for this CPU. */
+		for (shmax = sh + softint_max; sh < shmax; sh++) {
+			if (sh->sh_func == NULL)
+				continue;
+			sh->sh_isr =
+			    &sc->sc_int[sh->sh_flags & SOFTINT_LVLMASK];
+		}
+	} else {
+		/* Establish a handler for legacy net interrupts. */
+		softint_netisr_sih = softint_establish(SOFTINT_NET,
+		    softint_netisr, NULL);
+		KASSERT(softint_netisr_sih != NULL);
+	}
+}
+
+/*
+ * softint_establish:
+ *
+ *	Register a software interrupt handler.
+ */
+void *
+softint_establish(u_int flags, void (*func)(void *), void *arg)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	softcpu_t *sc;
+	softhand_t *sh;
+	u_int level;
+	u_int index;
+
+	level = (flags & SOFTINT_LVLMASK);
+	KASSERT(level < SOFTINT_COUNT);
+
+	mutex_enter(&softint_lock);
+
+	/* Find a free slot. */
+	sc = curcpu()->ci_data.cpu_softcpu;
+	for (index = 1; index < softint_max; index++)
+		if (sc->sc_hand[index].sh_func == NULL)
+			break;
+	if (index == softint_max) {
+		mutex_exit(&softint_lock);
+		printf("WARNING: softint_establish: table full, "
+		    "increase softint_bytes\n");
+		return NULL;
+	}
+
+	/* Set up the handler on each CPU. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		sc = ci->ci_data.cpu_softcpu;
+		sh = &sc->sc_hand[index];
+		
+		sh->sh_isr = &sc->sc_int[level];
+		sh->sh_func = func;
+		sh->sh_arg = arg;
+		sh->sh_flags = flags;
+		sh->sh_pending = 0;
+	}
+
+	mutex_exit(&softint_lock);
+
+	return (void *)index;
+}
+
+/*
+ * softint_disestablish:
+ *
+ *	Unregister a software interrupt handler.
+ */
+void
+softint_disestablish(void *arg)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	softcpu_t *sc;
+	softhand_t *sh;
+	u_int index;
+
+	index = (u_int)arg;
+	KASSERT(index != 0 && index < softint_max);
+
+	mutex_enter(&softint_lock);
+
+	/* Set up the handler on each CPU. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		sc = ci->ci_data.cpu_softcpu;
+		sh = &sc->sc_hand[index];
+		KASSERT(sh->sh_func != NULL);
+		KASSERT(sh->sh_pending == 0);
+		sh->sh_func = NULL;
+	}
+
+	mutex_exit(&softint_lock);
+}
+
+/*
+ * softint_trigger:
+ *
+ *	Cause a soft interrupt handler to begin executing.
+ */
+#ifndef __HAVE_FAST_SOFTINTS
+inline void
+softint_trigger(uintptr_t machdep)
+{
+	struct cpu_info *ci;
+	lwp_t *l;
+
+	l = (lwp_t *)machdep;
+	ci = l->l_cpu;
+
+	spc_lock(ci);
+	l->l_mutex = ci->ci_schedstate.spc_mutex;
+	l->l_stat = LSRUN;
+	sched_enqueue(l, false);
+	cpu_need_resched(ci, 1);
+	spc_unlock(ci);
+}
+#endif	/* __HAVE_FAST_SOFTINTS */
+
+/*
+ * softint_schedule:
+ *
+ *	Trigger a software interrupt.  Must be called from a hardware
+ *	interrupt handler, or with preemption disabled (since we are
+ *	using the value of curcpu()).
+ */
+void
+softint_schedule(void *arg)
+{
+	softhand_t *sh;
+	softint_t *si;
+	u_int index;
+	int s;
+
+	/* Find the handler record for this CPU. */
+	index = (u_int)arg;
+	KASSERT(index != 0 && index < softint_max);
+	sh = &((softcpu_t *)curcpu()->ci_data.cpu_softcpu)->sc_hand[index];
+
+	/* If it's already pending there's nothing to do. */
+	if (sh->sh_pending)
+		return;
+
+	/*
+	 * Enqueue the handler into the LWP's pending list.
+	 * If the LWP is completely idle, then make it run.
+	 */
+	s = splhigh();
+	if (!sh->sh_pending) {
+		si = sh->sh_isr;
+		sh->sh_pending = 1;
+		TAILQ_INSERT_TAIL(&si->si_q, sh, sh_q);
+		if (si->si_active == 0) {
+			si->si_active = 1;
+			softint_trigger(si->si_machdep);
+		}
+	}
+	splx(s);
+}
+
+/*
+ * softint_thread:
+ *
+ *	MI software interrupt dispatch.  In the __HAVE_FAST_SOFTINTS
+ *	case, the LWP is switched to without restoring any state, so
+ *	we should not arrive here - there is a direct handoff between
+ *	the interrupt stub and softint_execute().
+ */
+void
+softint_thread(void *cookie)
+{
+#ifdef __HAVE_FAST_SOFTINTS
+	panic("softint_thread");
+#else	/* __HAVE_FAST_SOFTINTS */
+	lwp_t *l;
+	int s;
+
+	l = curlwp;
+	s = splhigh();
+
+	for (;;) {
+		softint_execute(cookie, s);
+
+		lwp_lock(l);
+		l->l_stat = LSIDL;
+		mi_switch(l);
+	}
+#endif	/* !__HAVE_FAST_SOFTINTS */
+}
+
+/*
+ * softint_execute:
+ *
+ *	Invoke handlers for the specified soft interrupt.
+ *	Must be entered at splhigh.  Will drop the priority
+ *	to the level specified, but returns back at splhigh.
+ */
+void
+softint_execute(void *cookie, int s)
+{
+	softint_t *si;
+	softhand_t *sh;
+
+	si = cookie;
+
+	KASSERT(si->si_lwp == curlwp);
+	KASSERT(si->si_cpu == curcpu());
+	KASSERT(si->si_lwp->l_wchan == NULL);
+	KASSERT(!TAILQ_EMPTY(&si->si_q));
+	KASSERT(si->si_active);
+
+	while (!TAILQ_EMPTY(&si->si_q)) {
+		/*
+		 * Pick the longest waiting handler to run.  We block
+		 * interrupts but do not lock in order to do this, as
+		 * we are protecting against the local CPU only.
+		 */
+		sh = TAILQ_FIRST(&si->si_q);
+		TAILQ_REMOVE(&si->si_q, sh, sh_q);
+		sh->sh_pending = 0;
+		splx(s);
+
+		/* Run the handler. */
+		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0) {
+			KERNEL_LOCK(1, si->si_lwp);
+		}
+		(*sh->sh_func)(sh->sh_arg);
+		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0) {
+			KERNEL_UNLOCK_ONE(si->si_lwp);
+		}
+	
+		(void)splhigh();
+	}
+
+	/*
+	 * Unlocked, but only for statistics.
+	 * Should be per-CPU to prevent cache ping-pong.
+	 */
+	uvmexp.softs++;
+
+	si->si_evcnt.ev_count++;
+	si->si_active = 0;
+}
+
+/*
+ * schednetisr:
+ *
+ *	Trigger a legacy network interrupt.  XXX Needs to go away.
+ */
+void
+schednetisr(int isr)
+{
+	int s;
+
+	s = splhigh();
+	curcpu()->ci_data.cpu_netisrs |= (1 << isr);
+	softint_schedule(softint_netisr_sih);
+	splx(s);
+}
+
+/*
+ * softintr_netisr:
+ *
+ *	Dispatch legacy network interrupts.  XXX Needs to away.
+ */
+static void
+softint_netisr(void *cookie)
+{
+	struct cpu_info *ci;
+	int s, bits;
+
+	ci = curcpu();
+
+	s = splhigh();
+	bits = ci->ci_data.cpu_netisrs;
+	ci->ci_data.cpu_netisrs = 0;
+	splx(s);
+
+#define	DONETISR(which, func)				\
+	do {						\
+		void func(void);			\
+		if ((bits & (1 << which)) != 0)		\
+			func();				\
+	} while(0);
+#include <net/netisr_dispatch.h>
+#undef DONETISR
+}

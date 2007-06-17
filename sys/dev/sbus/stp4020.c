@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.49.6.1 2007/05/13 17:36:28 ad Exp $ */
+/*	$NetBSD: stp4020.c,v 1.49.6.2 2007/06/17 21:31:01 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49.6.1 2007/05/13 17:36:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49.6.2 2007/06/17 21:31:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49.6.1 2007/05/13 17:36:28 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/device.h>
+#include <sys/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/stp4020reg.h>
@@ -715,7 +715,7 @@ stp4020_intr(arg)
 			 * handler
 			 */
 			if (h->softint != NULL)
-				softintr_schedule(h->softint);
+				softint_schedule(h->softint);
 			/*
 			 * Disable this sbus interrupt, until the soft-int
 			 * handler had a chance to run
@@ -1073,7 +1073,7 @@ stp4020_chip_intr_establish(pch, pf, ipl, handler, arg)
 
 	h->intrhandler = handler;
 	h->intrarg = arg;
-	h->softint = softintr_establish(ipl, stp4020_intr_dispatch, h);
+	h->softint = softint_establish(ipl, stp4020_intr_dispatch, h);
 	return h->softint;
 }
 
@@ -1087,7 +1087,7 @@ stp4020_chip_intr_disestablish(pch, ih)
 	h->intrhandler = NULL;
 	h->intrarg = NULL;
 	if (h->softint) {
-		softintr_disestablish(h->softint);
+		softint_disestablish(h->softint);
 		h->softint = NULL;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.16.6.5 2007/06/08 14:17:18 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.16.6.6 2007/06/17 21:31:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.5 2007/06/08 14:17:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.6 2007/06/17 21:31:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,18 +103,16 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	lwp_lock(l);
 	if (pri == PRI_NONE) {
 		/* Minimum kernel priority level. */
-		pri = PUSER - 1;
+		pri = PRI_KERNEL;
 	}
 	l->l_usrpri = pri;
 	l->l_priority = pri;
-#ifdef notyet
 	if (ci != NULL) {
 		l->l_flag |= LW_BOUND;
 		l->l_cpu = ci;
 	}
 	if ((flag & KTHREAD_INTR) != 0)
 		l->l_flag |= LW_INTR;
-#endif
 	if ((flag & KTHREAD_MPSAFE) != 0)
 		l->l_pflag |= LP_MPSAFE;
 

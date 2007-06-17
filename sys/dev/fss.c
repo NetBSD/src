@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.6 2007/06/09 23:57:49 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.7 2007/06/17 21:30:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.6 2007/06/09 23:57:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.7 2007/06/17 21:30:50 ad Exp $");
 
 #include "fss.h"
 
@@ -541,7 +541,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	if ((error = namei(&nd)) != 0)
 		return error;
 
-	if ((nd.ni_vp->v_flag & VROOT) != VROOT) {
+	if ((nd.ni_vp->v_vflag & VV_ROOT) != VV_ROOT) {
 		vrele(nd.ni_vp);
 		return EINVAL;
 	}
@@ -1138,7 +1138,7 @@ fss_bs_thread(void *arg)
 
 		FSS_UNLOCK(sc, s);
 
-		BUF_INIT(nbp);
+		buf_init(nbp);
 		nbp->b_flags = B_READ;
 		nbp->b_bcount = bp->b_bcount;
 		nbp->b_bufsize = bp->b_bcount;

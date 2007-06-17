@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.28.6.6 2007/06/09 23:58:02 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.28.6.7 2007/06/17 21:31:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.6 2007/06/09 23:58:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28.6.7 2007/06/17 21:31:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -389,7 +389,8 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	} 
 
 	/* store cache */
-	vp->v_flag = VROOT;
+	vp->v_vflag = VV_ROOT;
+	vp->v_iflag = 0;
 	pmp->pmp_root = vp;
 	mutex_exit(&pmp->pmp_lock);
 

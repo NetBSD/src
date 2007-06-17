@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.32.2.1 2007/04/10 13:26:34 ad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.32.2.2 2007/06/17 21:31:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.2.1 2007/04/10 13:26:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.2.2 2007/06/17 21:31:06 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -682,7 +682,7 @@ filecore_vget(mp, ino, vpp)
 	}
 
 	if (ino == FILECORE_ROOTINO)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	/*
 	 * XXX need generation number?

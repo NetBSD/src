@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.67.2.2 2007/06/08 14:17:35 ad Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.67.2.3 2007/06/17 21:31:50 ad Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.2 2007/06/08 14:17:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.3 2007/06/17 21:31:50 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -49,9 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.2 2007/06/08 14:17:35 ad Exp $");
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/kauth.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -331,7 +330,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	splx(s);
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_schedule(sc->gif_si);
+	softint_schedule(sc->gif_si);
 #else
 	/* XXX bad spl level? */
 	gifnetisr();
@@ -792,7 +791,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->gif_si) {
-		softintr_disestablish(sc->gif_si);
+		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
 #endif
@@ -813,7 +812,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		}
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->gif_si = softintr_establish(IPL_SOFTNET, gifintr, sc);
+	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
 	if (sc->gif_si == NULL) {
 		error = ENOMEM;
 		goto bad;
@@ -870,7 +869,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
  bad:
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->gif_si) {
-		softintr_disestablish(sc->gif_si);
+		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
 #endif
@@ -893,7 +892,7 @@ gif_delete_tunnel(struct ifnet *ifp)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->gif_si) {
-		softintr_disestablish(sc->gif_si);
+		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
 #endif

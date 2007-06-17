@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.2 2007/05/13 17:36:31 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.3 2007/06/17 21:31:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.2 2007/05/13 17:36:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.3 2007/06/17 21:31:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -910,7 +910,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	}
 
 	if (ip->iso_extent == imp->root_extent)
-		vp->v_flag |= VROOT;
+		vp->v_vflag |= VV_ROOT;
 
 	/*
 	 * XXX need generation number?

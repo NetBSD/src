@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.7 2007/06/09 23:58:05 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.8 2007/06/17 21:31:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.7 2007/06/09 23:58:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.8 2007/06/17 21:31:28 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -170,7 +170,7 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_enter(sq, l);
-	sleepq_enqueue(sq, priority & PRIMASK, ident, wmesg, &sleep_syncobj);
+	sleepq_enqueue(sq, sched_kpri(l), ident, wmesg, &sleep_syncobj);
 
 	if (interlock != NULL) {
 		KASSERT(simple_lock_held(interlock));
@@ -200,7 +200,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	sq = sleeptab_lookup(&sleeptab, ident);
 	sleepq_enter(sq, l);
-	sleepq_enqueue(sq, priority & PRIMASK, ident, wmesg, &sleep_syncobj);
+	sleepq_enqueue(sq, sched_kpri(l), ident, wmesg, &sleep_syncobj);
 	mutex_exit(mtx);
 	error = sleepq_block(timo, priority & PCATCH);
 
@@ -354,6 +354,7 @@ mi_switch(struct lwp *l)
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
 	int retval, oldspl;
+	bool returning;
 
 	KASSERT(lwp_locked(l, NULL));
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
@@ -369,24 +370,34 @@ mi_switch(struct lwp *l)
 	 */
 	KDASSERT(l->l_cpu == curcpu());
 
-	/* Count time spent in current system call */
-	SYSCALL_TIME_SLEEP(l);
-
-	/*
-	 * XXXSMP If we are using h/w performance counters, save context.
-	 */
-#if PERFCTRS
-	if (PMC_ENABLED(l->l_proc)) {
-		pmc_save_context(l->l_proc);
-	}
-#endif
 	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
 	spc = &l->l_cpu->ci_schedstate;
-	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
-	updatertime(l, spc);
+	if (l->l_pinned != NULL) {
+		returning = true;
+		newl = l->l_pinned;
+		l->l_pinned = NULL;
+	} else {
+		returning = false;
+		newl = NULL;
+
+		/* Count time spent in current system call */
+		SYSCALL_TIME_SLEEP(l);
+
+		/*
+		 * XXXSMP If we are using h/w performance counters,
+		 * save context.
+		 */
+#if PERFCTRS
+		if (PMC_ENABLED(l->l_proc)) {
+			pmc_save_context(l->l_proc);
+		}
+#endif
+		spc->spc_flags &= ~SPCF_SWITCHCLEAR;
+		updatertime(l, spc);
+	}
 
 	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
@@ -407,21 +418,24 @@ mi_switch(struct lwp *l)
 	 * Let sched_nextlwp() select the LWP to run the CPU next. 
 	 * If no LWP is runnable, switch to the idle LWP.
 	 */
-	newl = sched_nextlwp();
-	if (newl) {
-		sched_dequeue(newl);
-		KASSERT(lwp_locked(newl, spc->spc_mutex));
-		newl->l_stat = LSONPROC;
-		newl->l_cpu = l->l_cpu;
-		newl->l_flag |= LW_RUNNING;
-		lwp_setlock(newl, &spc->spc_lwplock);
-	} else {
-		newl = l->l_cpu->ci_data.cpu_idlelwp;
-		newl->l_stat = LSONPROC;
-		newl->l_flag |= LW_RUNNING;
+	if (!returning) {
+		newl = sched_nextlwp();
+		if (newl) {
+			sched_dequeue(newl);
+			KASSERT(lwp_locked(newl, spc->spc_mutex));
+			newl->l_stat = LSONPROC;
+			newl->l_cpu = l->l_cpu;
+			newl->l_flag |= LW_RUNNING;
+			lwp_setlock(newl, &spc->spc_lwplock);
+		} else {
+			newl = l->l_cpu->ci_data.cpu_idlelwp;
+			newl->l_stat = LSONPROC;
+			newl->l_flag |= LW_RUNNING;
+		}
+		spc->spc_curpriority = newl->l_usrpri;
+		newl->l_priority = newl->l_usrpri;
+		cpu_did_resched();
 	}
-	spc->spc_curpriority = newl->l_usrpri;
-	cpu_did_resched();
 
 	if (l != newl) {
 		struct lwp *prevlwp;
@@ -443,14 +457,18 @@ mi_switch(struct lwp *l)
 		/* Unlocked, but for statistics only. */
 		uvmexp.swtch++;
 
-		/* Save old VM context. */
-		pmap_deactivate(l);
+		/*
+		 * Save old VM context, unless a soft interrupt
+		 * handler is blocking.
+		 */
+		if (!returning)
+			pmap_deactivate(l);
 
 		/* Switch to the new LWP.. */
 		l->l_ncsw++;
 		l->l_flag &= ~LW_RUNNING;
 		oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
-		prevlwp = cpu_switchto(l, newl);
+		prevlwp = cpu_switchto(l, newl, returning);
 
 		/*
 		 * .. we have switched away and are now back so we must
@@ -604,7 +622,7 @@ suspendsched(void)
 	/*
 	 * We do this by process in order not to violate the locking rules.
 	 */
-	mutex_enter(&proclist_mutex);
+	mutex_enter(&proclist_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		mutex_enter(&p->p_smutex);
 
@@ -642,7 +660,7 @@ suspendsched(void)
 
 		mutex_exit(&p->p_smutex);
 	}
-	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 
 	/*
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
@@ -665,32 +683,18 @@ suspendsched(void)
 pri_t
 sched_kpri(struct lwp *l)
 {
-	/*
-	 * Scale user priorities (127 -> 50) up to kernel priorities
-	 * in the range (49 -> 8).  Reserve the top 8 kernel priorities
-	 * for high priority kthreads.  Kernel priorities passed in
-	 * are left "as is".  XXX This is somewhat arbitrary.
-	 */
-	static const uint8_t kpri_tab[] = {
-		 0,   1,   2,   3,   4,   5,   6,   7,
-		 8,   9,  10,  11,  12,  13,  14,  15,
-		16,  17,  18,  19,  20,  21,  22,  23,
-		24,  25,  26,  27,  28,  29,  30,  31,
-		32,  33,  34,  35,  36,  37,  38,  39,
-		40,  41,  42,  43,  44,  45,  46,  47,
-		48,  49,   8,   8,   9,   9,  10,  10,
-		11,  11,  12,  12,  13,  14,  14,  15,
-		15,  16,  16,  17,  17,  18,  18,  19,
-		20,  20,  21,  21,  22,  22,  23,  23,
-		24,  24,  25,  26,  26,  27,  27,  28,
-		28,  29,  29,  30,  30,  31,  32,  32,
-		33,  33,  34,  34,  35,  35,  36,  36,
-		37,  38,  38,  39,  39,  40,  40,  41,
-		41,  42,  42,  43,  44,  44,  45,  45,
-		46,  46,  47,  47,  48,  48,  49,  49,
-	};
+	pri_t pri;
 
-	return (pri_t)kpri_tab[l->l_usrpri];
+	/*
+	 * Scale user priorities (0 -> 63) up to kernel priorities
+	 * in the range (64 -> 95).  This makes assumptions about
+	 * the priority space and so should be kept in sync with
+	 * param.h.
+	 */
+	if ((pri = l->l_usrpri) >= PRI_KERNEL)
+		return pri;
+
+	return (pri >> 1) + PRI_KERNEL;
 }
 
 /*
@@ -744,7 +748,7 @@ sched_changepri(struct lwp *l, pri_t pri)
 	KASSERT(lwp_locked(l, NULL));
 
 	l->l_usrpri = pri;
-	if (l->l_priority < PUSER)
+	if (l->l_priority >= PRI_KERNEL)
 		return;
 
 	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
@@ -826,7 +830,7 @@ sched_pstats(void *arg)
 
 	sched_pstats_ticks++;
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(&proclist_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		/*
 		 * Increment time in/out of memory and sleep time (if
@@ -891,11 +895,14 @@ sched_pstats(void *arg)
 		}
 		mutex_exit(&p->p_smutex);
 		if (sig) {
+			/* XXXAD */
+			mutex_enter(&proclist_mutex);
 			psignal(p, sig);
+			mutex_enter(&proclist_mutex);
 		}
 	}
-	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 	uvm_meter();
-	wakeup(&lbolt);
+	cv_broadcast(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);
 }
