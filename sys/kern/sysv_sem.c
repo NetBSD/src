@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.68 2007/03/04 06:03:10 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.69 2007/06/17 10:27:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.68 2007/03/04 06:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.69 2007/06/17 10:27:16 dsl Exp $");
 
 #define SYSVSEM
 
@@ -294,21 +294,7 @@ sys_____semctl13(struct lwp *l, void *v, register_t *retval)
 
 	cmd = SCARG(uap, cmd);
 
-	switch (cmd) {
-	case IPC_SET:
-	case IPC_STAT:
-		pass_arg = &sembuf;
-		break;
-
-	case GETALL:
-	case SETVAL:
-	case SETALL:
-		pass_arg = &karg;
-		break;
-	default:
-		pass_arg = NULL;
-		break;
-	}
+	pass_arg = get_semctl_arg(cmd, &sembuf, &karg);
 
 	if (pass_arg) {
 		error = copyin(SCARG(uap, arg), &karg, sizeof(karg));
