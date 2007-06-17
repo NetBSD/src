@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.6.4.2 2007/06/13 04:13:00 itohy Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.6.4.3 2007/06/17 00:53:36 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.6.4.2 2007/06/13 04:13:00 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.6.4.3 2007/06/17 00:53:36 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -151,7 +151,7 @@ Static int		rum_tx_data(struct rum_softc *, struct mbuf *,
 			    struct ieee80211_node *);
 Static void		rum_start(struct ifnet *);
 Static void		rum_watchdog(struct ifnet *);
-Static int		rum_ioctl(struct ifnet *, u_long, caddr_t);
+Static int		rum_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static void		rum_eeprom_read(struct rum_softc *, uint16_t, void *,
 			    int);
 Static uint32_t		rum_read(struct rum_softc *, uint16_t);
@@ -753,7 +753,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_data = (caddr_t)(desc + 1);
+	m->m_data = (void *)(desc + 1);
 	m->m_pkthdr.len = m->m_len = UGETW((u_int8_t *)&desc->flags + 2);
 
 	s = splnet();
@@ -1272,7 +1272,7 @@ rum_watchdog(struct ifnet *ifp)
 }
 
 Static int
-rum_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+rum_ioctl(struct ifnet *ifp, u_long cmd, usb_ioctlarg_t data)
 {
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
