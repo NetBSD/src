@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.38 2007/06/16 10:52:27 martin Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.39 2007/06/17 09:32:34 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -1173,7 +1173,7 @@ frdest_t *fdp;
 		dst = ro->ro_rt->rt_gateway;
 # else
 	if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-		dst = ro->ro_rt->rt_gateway;
+		dst = (struct sockaddr_in *)ro->ro_rt->rt_gateway;
 #endif /* __NetBSD_Version__ < 499001100 */
 
 	if (ro->ro_rt)
