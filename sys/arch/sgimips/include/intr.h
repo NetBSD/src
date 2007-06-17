@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2007/02/16 02:53:50 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2007/06/17 06:04:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -81,6 +81,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <mips/cpuregs.h>
+#include <mips/locore.h>
 
 #define NINTR	32
 
@@ -102,14 +103,6 @@ struct sgimips_intr {
 };
 
 extern struct sgimips_intrhand intrtab[];
-
-extern int		_splraise(int);
-extern int		_spllower(int);
-extern int		_splset(int);
-extern int		_splget(void);
-extern void		_splnone(void);
-extern void		_setsoftintr(int);
-extern void		_clrsoftintr(int);
 
 extern const int *ipl2spl_table;
 
