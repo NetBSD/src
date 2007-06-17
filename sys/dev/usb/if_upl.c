@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.27.4.2 2007/06/13 03:59:16 itohy Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.27.4.3 2007/06/17 00:57:36 itohy Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.27.4.2 2007/06/13 03:59:16 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.27.4.3 2007/06/17 00:57:36 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -187,7 +187,7 @@ Static void upl_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void upl_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void upl_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void upl_start(struct ifnet *);
-Static int upl_ioctl(struct ifnet *, u_long, caddr_t);
+Static int upl_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static int upl_init(struct ifnet *);
 Static void upl_stop(struct ifnet *, int);
 Static void upl_watchdog(struct ifnet *);
@@ -754,7 +754,7 @@ upl_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 Static int
-upl_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+upl_ioctl(struct ifnet *ifp, u_long command, usb_ioctlarg_t data)
 {
 	struct upl_softc	*sc = ifp->if_softc;
 #if 0
