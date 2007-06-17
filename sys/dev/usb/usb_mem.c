@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.31.10.2 2007/05/31 23:15:18 itohy Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.31.10.3 2007/06/17 01:24:28 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.2 2007/05/31 23:15:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.3 2007/06/17 01:24:28 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $"); */
 
 #include <sys/param.h>
@@ -232,11 +232,11 @@ free0:
 
 	p->size = size;
 	p->align = align;
-	if (bus_dmamem_alloc(p->tag, (void **)&p->kaddr,
+	if (bus_dmamem_alloc(p->tag, &p->kaddr,
 	    BUS_DMA_WAITOK | BUS_DMA_COHERENT, &p->map))
 		goto tagfree;
 
-	if (bus_dmamap_load(p->tag, p->map, (void *)p->kaddr, p->size,
+	if (bus_dmamap_load(p->tag, p->map, p->kaddr, p->size,
 	    usbmem_callback, p, 0))
 		goto memfree;
 
@@ -245,7 +245,7 @@ free0:
 	return (USBD_NORMAL_COMPLETION);
 
 memfree:
-	bus_dmamem_free(p->tag, (void *)p->kaddr, p->map);
+	bus_dmamem_free(p->tag, p->kaddr, p->map);
 tagfree:
 	bus_dma_tag_destroy(p->tag);
 free:
@@ -326,7 +326,7 @@ usb_allocmem(usb_dma_tag_t *utag, size_t size, size_t align, usb_dma_t *p
 		    ("USB_MEM_SMALL(%d) is too small for struct usb_frag_dma(%zd)\n",
 		    USB_MEM_SMALL, sizeof *f));
 		for (i = 0; i < USB_MEM_BLOCK; i += USB_MEM_SMALL) {
-			f = (struct usb_frag_dma *)(b->kaddr + i);
+			f = (struct usb_frag_dma *)((char *)b->kaddr + i);
 			f->block = b;
 			f->offs = i;
 			LIST_INSERT_HEAD(&utag->frag_freelist, f, next);
@@ -1228,7 +1228,7 @@ usb_dma_tag_finish(usb_dma_tag_t *utag
 		bus_dmamem_free(utag->tag, b->segs, b->nsegs);
 #elif defined(__FreeBSD__)
 		bus_dmamap_unload(b->tag, b->map);
-		bus_dmamem_free(b->tag, (void *)b->kaddr, b->map);
+		bus_dmamem_free(b->tag, b->kaddr, b->map);
 		bus_dma_tag_destroy(b->tag);
 #endif
 
