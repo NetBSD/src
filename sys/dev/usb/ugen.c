@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.91.4.2 2007/06/16 04:12:30 itohy Exp $	*/
+/*	$NetBSD: ugen.c,v 1.91.4.3 2007/06/17 01:10:14 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.91.4.2 2007/06/16 04:12:30 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.91.4.3 2007/06/17 01:10:14 itohy Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -199,7 +199,7 @@ Static void ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 Static int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 Static int ugen_do_ioctl(struct ugen_softc *, int, u_long,
-			 caddr_t, int, struct lwp *);
+			 usb_ioctlarg_t, int, usb_proc_ptr);
 Static int ugen_set_config(struct ugen_softc *sc, int configno);
 Static usb_config_descriptor_t *ugen_get_cdesc(struct ugen_softc *sc,
 					       int index, int *lenp);
@@ -339,7 +339,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 }
 
 int
-ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
+ugenopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ugen_softc *sc;
 	int unit = UGENUNIT(dev);
@@ -488,7 +488,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
+ugenclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -1384,7 +1384,7 @@ ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
 
 Static int
 ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
-	      caddr_t addr, int flag, struct lwp *l)
+	      usb_ioctlarg_t addr, int flag, usb_proc_ptr p)
 {
 	struct ugen_endpoint *sce;
 	usbd_status err;
@@ -1724,14 +1724,14 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &len);
 		if (len > fd->ufd_size)
 			len = fd->ufd_size;
-		iov.iov_base = (caddr_t)fd->ufd_data;
+		iov.iov_base = (void *)fd->ufd_data;
 		iov.iov_len = len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
 		uio.uio_resid = len;
 		uio.uio_offset = 0;
 		uio.uio_rw = UIO_READ;
-		uio.uio_vmspace = l->l_proc->p_vmspace;
+		USB_UIO_SET_PROC(&uio, p);
 		error = uiomove((void *)cdesc, len, &uio);
 		free(cdesc, M_TEMP);
 		return (error);
@@ -1769,7 +1769,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		if (len < 0 || len > 32767)
 			return (EINVAL);
 		if (len != 0) {
-			iov.iov_base = (caddr_t)ur->ucr_data;
+			iov.iov_base = (void *)ur->ucr_data;
 			iov.iov_len = len;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
@@ -1778,7 +1778,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			uio.uio_rw =
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
-			uio.uio_vmspace = l->l_proc->p_vmspace;
+			USB_UIO_SET_PROC(&uio, p);
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
@@ -1823,7 +1823,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 }
 
 int
-ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+ugenioctl(dev_t dev, u_long cmd, usb_ioctlarg_t addr, int flag, usb_proc_ptr p)
 {
 	int endpt = UGENENDPOINT(dev);
 	struct ugen_softc *sc;
@@ -1832,14 +1832,14 @@ ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	USB_GET_SC(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
-	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, l);
+	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, p);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 
 int
-ugenpoll(dev_t dev, int events, struct lwp *l)
+ugenpoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	struct ugen_softc *sc;
 	struct ugen_endpoint *sce_in, *sce_out;
@@ -1873,13 +1873,13 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 			if (sce_in->q.c_cc > 0)
 				revents |= events & (POLLIN | POLLRDNORM);
 			else
-				selrecord(l, &sce_in->rsel);
+				selrecord(p, &sce_in->rsel);
 			break;
 		case UE_ISOCHRONOUS:
 			if (sce_in->cur != sce_in->fill)
 				revents |= events & (POLLIN | POLLRDNORM);
 			else
-				selrecord(l, &sce_in->rsel);
+				selrecord(p, &sce_in->rsel);
 			break;
 		case UE_BULK:
 #ifdef UGEN_BULK_RA_WB
@@ -1888,7 +1888,7 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 					revents |= events &
 					    (POLLIN | POLLRDNORM);
 				else
-					selrecord(l, &sce_in->rsel);
+					selrecord(p, &sce_in->rsel);
 				break;
 			}
 #endif
@@ -1916,7 +1916,7 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 					revents |= events &
 					    (POLLOUT | POLLWRNORM);
 				else
-					selrecord(l, &sce_out->rsel);
+					selrecord(p, &sce_out->rsel);
 				break;
 			}
 #endif
