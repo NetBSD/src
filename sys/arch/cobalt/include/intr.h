@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2007/05/27 14:22:36 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2007/06/17 06:04:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -71,14 +71,7 @@
 
 #include <sys/device.h>
 #include <mips/cpuregs.h>
-
-int  _splraise(int);
-int  _spllower(int);
-int  _splset(int);
-int  _splget(void);
-void _splnone(void);
-void _setsoftintr(int);
-void _clrsoftintr(int);
+#include <mips/locore.h>
 
 #define splhigh()       _splraise(MIPS_INT_MASK)
 #define spl0()          (void)_spllower(0)
