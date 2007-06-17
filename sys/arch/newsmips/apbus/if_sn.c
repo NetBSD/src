@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.23 2007/03/08 22:08:50 he Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.24 2007/06/17 05:53:02 tsutsui Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.23 2007/03/08 22:08:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.24 2007/06/17 05:53:02 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.23 2007/03/08 22:08:50 he Exp $");
 #endif
 
 #include <machine/cpu.h>
+#include <newsmips/apbus/apbusvar.h>
 #include <newsmips/apbus/if_snreg.h>
 #include <newsmips/apbus/if_snvar.h>
 
