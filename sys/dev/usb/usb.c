@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.95.4.1 2007/05/22 14:57:46 itohy Exp $	*/
+/*	$NetBSD: usb.c,v 1.95.4.2 2007/06/17 01:22:12 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.95.4.1 2007/05/22 14:57:46 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.95.4.2 2007/06/17 01:22:12 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb.c,v 1.111 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #if defined(__NetBSD__)
@@ -688,7 +688,8 @@ usbclose(usb_cdev_t dev, int flag, int mode, usb_proc_ptr p)
 }
 
 int
-usbioctl(usb_cdev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
+usbioctl(usb_cdev_t devt, u_long cmd, usb_ioctlarg_t data, int flag,
+	 usb_proc_ptr p)
 {
 	struct usb_softc *sc;
 	int unit = USBUNIT(devt);
@@ -762,7 +763,7 @@ usbioctl(usb_cdev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		    sc->sc_bus->devices[addr] == 0)
 			return (EINVAL);
 		if (len != 0) {
-			iov.iov_base = (caddr_t)ur->ucr_data;
+			iov.iov_base = (void *)ur->ucr_data;
 			iov.iov_len = len;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
@@ -771,13 +772,7 @@ usbioctl(usb_cdev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 			uio.uio_rw =
 				ur->ucr_request.bmRequestType & UT_READ ?
 				UIO_READ : UIO_WRITE;
-#ifdef __NetBSD__
-			uio.uio_vmspace = p->l_proc->p_vmspace;
-#endif
-#ifdef __FreeBSD__
-			uio.uio_segflg = UIO_USERSPACE;
-			uio.uio_td = p;
-#endif
+			USB_UIO_SET_PROC(&uio, p);
 			ptr = malloc(len, M_TEMP, M_WAITOK);
 			if (uio.uio_rw == UIO_WRITE) {
 				error = uiomove(ptr, len, &uio);
