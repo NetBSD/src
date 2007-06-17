@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.23.32.2 2007/05/31 23:15:18 itohy Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.23.32.3 2007/06/17 01:25:46 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.21 2005/01/06 01:43:29 imp Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 #endif
 	bus_dmamap_t map;
-        caddr_t kaddr;
+        usb_busdma_kaddr_t kaddr;
         bus_dma_segment_t segs[1];
         int nsegs;
         size_t size;
@@ -90,7 +90,7 @@ typedef struct usb_dma_block {
 #endif
 
 #define KERNADDR(dma, o) \
-	((void *)((dma)->block->kaddr + (dma)->offs + (o)))
+	((void *)((char *)(dma)->block->kaddr + (dma)->offs + (o)))
 
 typedef struct {
 	struct usb_dma_block *block;
@@ -106,12 +106,11 @@ struct usb_dmamem {
 	bus_dma_segment_t ud_segs[USB_DMA_NSEG];
 	int		ud_nsegs;
 	size_t		ud_len;
-	caddr_t		ud_kaddr;
 #elif defined(__FreeBSD__)
-	void		*ud_kaddr;
 	bus_dma_tag_t	ud_tag;
 	bus_dmamap_t	ud_map;
 #endif
+	usb_busdma_kaddr_t	ud_kaddr;
 
 	SIMPLEQ_ENTRY(usb_dmamem)	ud_next;
 
