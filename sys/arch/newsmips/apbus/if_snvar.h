@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.9 2007/03/08 22:08:50 he Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.10 2007/06/17 05:53:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -31,8 +31,8 @@
 
 #define	SN_REGSIZE	(SN_NREGS * 4)
 
-void mips3_wbflush(void);
-void apbus_wbflush(void);
+#include <mips/locore.h>
+#undef wbflush	/* XXX */
 
 static inline void
 wbflush(void)
