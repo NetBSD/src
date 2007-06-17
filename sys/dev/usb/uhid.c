@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.75.4.1 2007/05/22 14:57:42 itohy Exp $	*/
+/*	$NetBSD: uhid.c,v 1.75.4.2 2007/06/17 01:11:54 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.75.4.1 2007/05/22 14:57:42 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.75.4.2 2007/06/17 01:11:54 itohy Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -122,7 +122,8 @@ Static void uhid_intr(struct uhidev *, void *, u_int len);
 
 Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
-Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, usb_proc_ptr);
+Static int uhid_do_ioctl(struct uhid_softc *, u_long, usb_ioctlarg_t, int,
+    usb_proc_ptr);
 
 USB_DECLARE_DRIVER(uhid);
 
@@ -421,7 +422,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
+uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, usb_ioctlarg_t addr,
     int flag, usb_proc_ptr l)
 {
 	struct usb_ctl_report_desc *rd;
@@ -566,7 +567,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 }
 
 int
-uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr l)
+uhidioctl(dev_t dev, u_long cmd, usb_ioctlarg_t addr, int flag, usb_proc_ptr l)
 {
 	struct uhid_softc *sc;
 	int error;
