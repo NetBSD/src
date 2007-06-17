@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.76.10.2 2007/06/16 04:12:31 itohy Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.76.10.3 2007/06/17 01:15:26 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76.10.2 2007/06/16 04:12:31 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76.10.3 2007/06/17 01:15:26 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ int ulptusein = 1;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
+ulptopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	u_char flags = ULPTFLAGS(dev);
 	struct ulpt_softc *sc;
@@ -544,7 +544,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "ulptop", STEP);
+		error = tsleep(sc, LPTPRI | PCATCH, "ulptop", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			goto done;
@@ -647,7 +647,7 @@ ulpt_statusmsg(u_char status, struct ulpt_softc *sc)
 
 int
 ulptclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+    usb_proc_ptr p)
 {
 	struct ulpt_softc *sc;
 
@@ -835,8 +835,7 @@ ulpt_tick(void *xsc)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data,
-    int flag, struct lwp *l)
+ulptioctl(dev_t dev, u_long cmd, usb_ioctlarg_t data, int flag, usb_proc_ptr p)
 {
 	return ENODEV;
 }
