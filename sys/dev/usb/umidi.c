@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.29.4.1 2007/03/13 16:50:56 ad Exp $	*/
+/*	$NetBSD: umidi.c,v 1.29.4.2 2007/06/17 21:31:03 ad Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29.4.1 2007/03/13 16:50:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29.4.2 2007/06/17 21:31:03 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,10 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29.4.1 2007/03/13 16:50:56 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/lock.h>
-
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-#include <machine/intr.h>
-#endif
+#include <sys/intr.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -471,9 +468,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	err = usbd_open_pipe(sc->sc_iface, ep->addr, 0, &ep->pipe);
 	if (err)
 	    usbd_free_xfer(ep->xfer);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	ep->solicit_cookie = softintr_establish(IPL_SOFTCLOCK,out_solicit,ep);
-#endif
+	ep->solicit_cookie = softint_establish(SOFTINT_CLOCK, out_solicit, ep);
 quit:
 	return err;
 }
@@ -485,9 +480,7 @@ free_pipe(struct umidi_endpoint *ep)
 	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
 	usbd_free_xfer(ep->xfer);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_disestablish(ep->solicit_cookie);
-#endif
+	softint_disestablish(ep->solicit_cookie);
 }
 
 
@@ -1517,7 +1510,6 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	ep->next_schedule |= 1<<(out_jack->cable_number);
 	++ ep->num_scheduled;
 	if ( !ep->armed  &&  !ep->soliciting ) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		/*
 		 * It would be bad to call out_solicit directly here (the
 		 * caller need not be reentrant) but a soft interrupt allows
@@ -1526,17 +1518,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 		 * before starting the USB transfer, and send a longer one.
 		 */
 		ep->soliciting = 1;
-		softintr_schedule(ep->solicit_cookie);
-#else
-		/*
-		 * This alternative is a little less desirable, because if the
-		 * writer has several messages to go at once, the first will go
-		 * in a USB frame all to itself, and the rest in a full-size
-		 * transfer one frame later (solicited on the first frame's
-		 * completion interrupt). But it's simple.
-		 */
-		ep->armed = (USBD_IN_PROGRESS == start_output_transfer(ep));
-#endif
+		softint_schedule(ep->solicit_cookie);
 	}
 	splx(s);
 	

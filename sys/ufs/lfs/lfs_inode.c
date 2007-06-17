@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.107.2.3 2007/06/09 23:58:20 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.107.2.4 2007/06/17 21:32:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.3 2007/06/09 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.4 2007/06/17 21:32:12 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -173,7 +173,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 		/* Avoid flushing VDIROP. */
 		mutex_enter(&fs->lfs_interlock);
 		++fs->lfs_diropwait;
-		while (vp->v_flag & VDIROP) {
+		while (vp->v_uflag & VU_DIROP) {
 			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
 			      " (dirops)\n", ip->i_number));
 			DLOG((DLOG_DIROP, "lfs_update: vflags 0x%x, iflags"

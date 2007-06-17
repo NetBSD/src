@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.201.2.6 2007/06/08 14:18:18 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.201.2.7 2007/06/17 21:32:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.6 2007/06/08 14:18:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.7 2007/06/17 21:32:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -525,7 +525,7 @@ lfs_set_dirop_create(struct vnode *dvp, struct vnode **vpp)
 		if (nvpp && *nvpp)					\
 			UNMARK_VNODE(*nvpp);				\
 		/* Check for error return to stem vnode leakage */	\
-		if (nvpp && *nvpp && !((*nvpp)->v_flag & VDIROP))	\
+		if (nvpp && *nvpp && !((*nvpp)->v_uflag & VU_DIROP))	\
 			ungetnewvnode(*(nvpp));				\
 		SET_ENDOP_BASE((fs), (dvp), (str));			\
 		lfs_reserve((fs), (dvp), NULL, -LFS_NRESERVE(fs));	\
@@ -554,19 +554,19 @@ lfs_mark_vnode(struct vnode *vp)
 
 	mutex_enter(&fs->lfs_interlock);
 	if (!(ip->i_flag & IN_ADIROP)) {
-		if (!(vp->v_flag & VDIROP)) {
+		if (!(vp->v_uflag & VU_DIROP)) {
 			(void)lfs_vref(vp);
 			mutex_enter(&lfs_subsys_lock);
 			++lfs_dirvcount;
 			++fs->lfs_dirvcount;
 			mutex_exit(&lfs_subsys_lock);
 			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
-			vp->v_flag |= VDIROP;
+			vp->v_uflag |= VU_DIROP;
 		}
 		++fs->lfs_nadirop;
 		ip->i_flag |= IN_ADIROP;
 	} else
-		KASSERT(vp->v_flag & VDIROP);
+		KASSERT(vp->v_uflag & VU_DIROP);
 	mutex_exit(&fs->lfs_interlock);
 }
 
@@ -576,7 +576,7 @@ lfs_unmark_vnode(struct vnode *vp)
 	struct inode *ip = VTOI(vp);
 
 	if (ip && (ip->i_flag & IN_ADIROP)) {
-		KASSERT(vp->v_flag & VDIROP);
+		KASSERT(vp->v_uflag & VU_DIROP);
 		mutex_enter(&ip->i_lfs->lfs_interlock);
 		--ip->i_lfs->lfs_nadirop;
 		mutex_exit(&ip->i_lfs->lfs_interlock);
@@ -1122,9 +1122,9 @@ lfs_reclaim(void *v)
 		ip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 	}
-	if (vp->v_flag & VDIROP) {
+	if (vp->v_uflag & VU_DIROP) {
 		panic("reclaimed vnode is VDIROP");
-		vp->v_flag &= ~VDIROP;
+		vp->v_uflag &= ~VU_DIROP;
 		TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 	}
 	mutex_exit(&fs->lfs_interlock);
@@ -1312,7 +1312,7 @@ lfs_flush_dirops(struct lfs *fs)
 		 * make sure that we don't clear IN_MODIFIED
 		 * unnecessarily.
 		 */
-		if (vp->v_flag & (VXLOCK | VFREEING)) {
+		if (vp->v_iflag & (VI_XLOCK | VI_FREEING)) {
 			mutex_enter(&fs->lfs_interlock);
 			continue;
 		}
@@ -1397,7 +1397,7 @@ lfs_flush_pchain(struct lfs *fs)
 		if (!(ip->i_flags & IN_PAGING))
 			goto top;
 
-		if (vp->v_flag & (VXLOCK|VDIROP))
+		if ((vp->v_iflag & VI_XLOCK) || (vp->v_uflag & VU_DIROP) != 0)
 			continue;
 		if (vp->v_type != VREG)
 			continue;
@@ -2027,7 +2027,6 @@ lfs_putpages(void *v)
 	struct segment *sp;
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
-	int s;
 	bool seglocked, sync, pagedaemon;
 	struct vm_page *pg, *busypg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
@@ -2051,14 +2050,12 @@ lfs_putpages(void *v)
 	 * If there are no pages, don't do anything.
 	 */
 	if (vp->v_uobj.uo_npages == 0) {
-		s = splbio();
 		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
-		    (vp->v_flag & VONWORKLST) &&
+		    (vp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-			vp->v_flag &= ~VWRITEMAPDIRTY;
+			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
-		splx(s);
 		mutex_exit(&vp->v_interlock);
 		
 		/* Remove us from paging queue, if we were on it */
@@ -2219,7 +2216,7 @@ lfs_putpages(void *v)
 	 * at it).
 	 */
 	if ((ap->a_flags & (PGO_CLEANIT|PGO_LOCKED)) == PGO_CLEANIT &&
-	    (vp->v_flag & VDIROP)) {
+	    (vp->v_uflag & VU_DIROP)) {
 		int locked;
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VDIROP\n"));
@@ -2281,7 +2278,7 @@ lfs_putpages(void *v)
 	 * Ensure that the partial segment is marked SS_DIROP if this
 	 * vnode is a DIROP.
 	 */
-	if (!seglocked && vp->v_flag & VDIROP)
+	if (!seglocked && vp->v_uflag & VU_DIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 
 	/*

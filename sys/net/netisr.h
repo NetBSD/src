@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.35 2006/09/07 02:40:33 dogcow Exp $ */
+/* $NetBSD: netisr.h,v 1.35.12.1 2007/06/17 21:31:54 ad Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -135,14 +135,9 @@ extern void pppnetisr(void);
 #define	NETISR_PPP	31		/* for PPP processing */
 #endif
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-
-#ifndef schednetisr
-#define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
+#if !defined(_LOCORE) && defined(_KERNEL)
+/* XXX Legacy netisr support. */
+void	schednetisr(int);
 #endif
-
-extern	int netisr;			/* scheduling bits for network */
-
-#endif /* defined(_KERNEL) && !defined(_LOCORE) */
 
 #endif /* !_NET_NETISR_H_ */

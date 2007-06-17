@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.12.2.2 2007/05/27 14:29:59 ad Exp $	*/
+/*	$NetBSD: btsco.c,v 1.12.2.3 2007/06/17 21:30:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12.2.2 2007/05/27 14:29:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12.2.3 2007/06/17 21:30:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12.2.2 2007/05/27 14:29:59 ad Exp $");
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/intr.h>
 
 #include <prop/proplib.h>
 
@@ -318,9 +319,9 @@ btsco_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * set up transmit interrupt
 	 */
-	sc->sc_intr = softintr_establish(IPL_SOFTNET, btsco_intr, sc);
+	sc->sc_intr = softint_establish(SOFTINT_NET, btsco_intr, sc);
 	if (sc->sc_intr == NULL) {
-		aprint_error("%s: softintr_establish failed\n",
+		aprint_error("%s: softint_establish failed\n",
 				device_xname((struct device *)sc));
 		return;
 	}
@@ -366,7 +367,7 @@ btsco_detach(struct device *self, int flags)
 	}
 
 	if (sc->sc_intr != NULL) {
-		softintr_disestablish(sc->sc_intr);
+		softint_disestablish(sc->sc_intr);
 		sc->sc_intr = NULL;
 	}
 
@@ -789,7 +790,7 @@ btsco_start_output(void *hdl, void *block, int blksize,
 	sc->sc_tx_intr = intr;
 	sc->sc_tx_intrarg = intrarg;
 
-	softintr_schedule(sc->sc_intr);
+	softint_schedule(sc->sc_intr);
 	return 0;
 }
 

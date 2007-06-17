@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.63.6.2 2007/04/10 13:26:46 ad Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.63.6.3 2007/06/17 21:31:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.6.2 2007/04/10 13:26:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.6.3 2007/06/17 21:31:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ umapfs_mount(mp, path, data, ndp, l)
 	 * Keep a held reference to the root vnode.
 	 * It is vrele'd in umapfs_unmount.
 	 */
-	vp->v_flag |= VROOT;
+	vp->v_vflag |= VV_ROOT;
 	amp->umapm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.umap_target,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24 2007/01/13 17:54:26 cube Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.6.1 2007/06/17 21:30:39 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -588,84 +588,6 @@ _C_LABEL(ioapic_level_stubs):
 	.long _C_LABEL(Xintr_ioapic_level31), _C_LABEL(Xrecurse_ioapic_level31)
 	.long _C_LABEL(Xresume_ioapic_level31)
 #endif
-
-/*
- * Soft interrupt handlers
- */
-
-IDTVEC(softserial)
-	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	sti
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movl	CPUVAR(ISOURCES) + SIR_SERIAL * 4, %edi
-	addl	$1,IS_EVCNTLO(%edi)
-	adcl	$0,IS_EVCNTHI(%edi)
-	pushl	$X86_SOFTINTR_SOFTSERIAL
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	cli
-	IDEPTH_DECR
-	jmp	*%esi
-
-IDTVEC(softnet)
-	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	sti
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movl	CPUVAR(ISOURCES) + SIR_NET * 4, %edi
-	addl	$1,IS_EVCNTLO(%edi)
-	adcl	$0,IS_EVCNTHI(%edi)
-
-	xorl	%edi,%edi
-	xchgl	_C_LABEL(netisr),%edi
-
-	/* XXX Do the legacy netisrs here for now. */
-#define DONETISR(s, c) \
-	.globl  _C_LABEL(c)	;\
-	testl	$(1 << s),%edi	;\
-	jz	1f		;\
-	call	_C_LABEL(c)	;\
-1:
-#include <net/netisr_dispatch.h>
-	
-	pushl	$X86_SOFTINTR_SOFTNET
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)	
-#endif
-	cli
-	IDEPTH_DECR
-	jmp	*%esi
-
-IDTVEC(softclock)
-	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
-	IDEPTH_INCR
-	sti
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movl	CPUVAR(ISOURCES) + SIR_CLOCK * 4, %edi
-	addl	$1,IS_EVCNTLO(%edi)
-	adcl	$0,IS_EVCNTHI(%edi)
-
-	pushl	$X86_SOFTINTR_SOFTCLOCK
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)		
-#endif
-	cli
-	IDEPTH_DECR
-	jmp	*%esi
 
 /*
  * Trap and fault vector routines

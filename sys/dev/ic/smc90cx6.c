@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.47 2007/03/04 06:02:02 christos Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.47.2.1 2007/06/17 21:30:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.47 2007/03/04 06:02:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.47.2.1 2007/06/17 21:30:58 ad Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.47 2007/03/04 06:02:02 christos Exp $
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,10 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.47 2007/03/04 06:02:02 christos Exp $
 #include <net/bpfdesc.h>
 #endif
 
-#include <sys/kernel.h>
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/mtpr.h>
 
 #include <dev/ic/smc90cx6reg.h>
@@ -215,8 +215,8 @@ bah_attach_subr(sc)
 	arc_ifattach(ifp, linkaddress);
 
 #ifdef BAHSOFTCOPY
-	sc->sc_rxcookie = softintr_establish(IPL_SOFTNET, bah_srint, sc);
-	sc->sc_txcookie = softintr_establish(IPL_SOFTNET,
+	sc->sc_rxcookie = softint_establish(SOFTINT_NET, bah_srint, sc);
+	sc->sc_txcookie = softint_establish(SOFTINT_NET,
 		(void (*)(void *))bah_start, ifp);
 #endif
 
@@ -737,7 +737,7 @@ bah_tint(sc, isr)
 	/* XXXX TODO */
 #ifdef BAHSOFTCOPY
 	/* schedule soft int to fill a new buffer for us */
-	softintr_schedule(sc->sc_txcookie);
+	softint_schedule(sc->sc_txcookie);
 #else
 	/* call it directly */
 	bah_start(ifp);
@@ -870,7 +870,7 @@ bahintr(arg)
 				 * this one starts a soft int to copy out
 				 * of the hw
 				 */
-				softintr_schedule(sc->sc_rxcookie);
+				softint_schedule(sc->sc_rxcookie);
 #else
 				/* this one does the copy here */
 				bah_srint(sc);

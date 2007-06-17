@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.2.2 2007/05/13 17:36:39 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.95.2.3 2007/06/17 21:31:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -173,22 +173,6 @@ struct buf {
 	int b_freelistindex;		/* Free list index. (BQ_) */
 };
 
-#define	BUF_INIT(bp)							\
-do {									\
-	LIST_INIT(&(bp)->b_dep);					\
-	mutex_init(&(bp)->b_interlock, MUTEX_DRIVER, IPL_BIO);		\
-	cv_init(&(bp)->b_cv, "biowait");				\
-	(bp)->b_dev = NODEV;						\
-	(bp)->b_error = 0;						\
-	BIO_SETPRIO((bp), BPRIO_DEFAULT);				\
-} while (/*CONSTCOND*/0)
-
-#define	BUF_DESTROY(bp)							\
-do {									\
-	mutex_destroy(&(bp)->b_interlock);				\
-	cv_destroy(&(bp)->b_cv);					\
-} while (/*CONSTCOND*/0)
-
 /*
  * For portability with historic industry practice, the cylinder number has
  * to be maintained in the `b_resid' field.
@@ -291,6 +275,7 @@ int	breadn(struct vnode *, daddr_t, int, daddr_t *, int *, int,
 void	brelse(struct buf *, int);
 void	bremfree(struct buf *);
 void	bufinit(void);
+void	bufinit2(void);
 int	bwrite(struct buf *);
 struct buf *getblk(struct vnode *, daddr_t, int, int, int);
 struct buf *geteblk(int);
@@ -313,6 +298,8 @@ void	vfs_buf_print(struct buf *, int, void (*)(const char *, ...));
 struct buf *getiobuf(void);
 struct buf *getiobuf_nowait(void);
 void putiobuf(struct buf *);
+void	buf_init(struct buf *);
+void	buf_destroy(struct buf *);
 
 void nestiobuf_iodone(struct buf *);
 void nestiobuf_setup(struct buf *, struct buf *, int, size_t);

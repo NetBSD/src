@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.1 2007/06/08 14:17:24 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.2 2007/06/17 21:31:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.1 2007/06/08 14:17:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.2 2007/06/17 21:31:29 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -109,16 +109,18 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.1 2007/06/08 14:17:24 ad Exp $"
  * first non-empty queue.
  */
 
-#define	RUNQUE_NQS		32      /* number of runqueues */
-#define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
+#define	RUNQUE_NQS	64			/* number of runqueues */
+#define	PPQ		(PRI_COUNT / RUNQUE_NQS)/* priorities per queue */
 
 typedef struct subqueue {
 	TAILQ_HEAD(, lwp) sq_queue;
 } subqueue_t;
+
 typedef struct runqueue {
-	subqueue_t rq_subqueues[RUNQUE_NQS];	/* run queues */
-	uint32_t rq_bitmap;	/* bitmap of non-empty queues */
+	subqueue_t	rq_subqueues[RUNQUE_NQS];	/* run queues */
+	uint64_t	rq_bitmap;	/* bitmap of non-empty queues */
 } runqueue_t;
+
 static runqueue_t global_queue; 
 
 static void updatepri(struct lwp *);
@@ -159,7 +161,7 @@ sched_tick(struct cpu_info *ci)
 	cpu_need_resched(curcpu(), 0);
 }
 
-#define	NICE_WEIGHT 2			/* priorities per nice level */
+#define	NICE_WEIGHT 	1			/* priorities per nice level */
 
 #define	ESTCPU_SHIFT	11
 #define	ESTCPU_MAX	((NICE_WEIGHT * PRIO_MAX - PPQ) << ESTCPU_SHIFT)
@@ -296,7 +298,7 @@ sched_pstats_hook(struct proc *p, int minslp)
 			if ((l->l_flag & LW_IDLE) != 0)
 				continue;
 			lwp_lock(l);
-			if (l->l_slptime <= 1 && l->l_priority >= PUSER)
+			if (l->l_slptime <= 1 && l->l_priority < PRI_KERNEL)
 				resetpriority(l);
 			lwp_unlock(l);
 		}
@@ -328,7 +330,8 @@ updatepri(struct lwp *l)
  * On some architectures, it's faster to use a MSB ordering for the priorites
  * than the traditional LSB ordering.
  */
-#define	RQMASK(n) (0x00000001 << (n))
+#define	RQMASK(n)	(1ULL << (n))
+#define WHICHQ(p)	(RUNQUE_NQS - 1 - ((p) / PPQ))
 
 /*
  * The primitives that manipulate the run queues.  whichqs tells which
@@ -402,12 +405,13 @@ static void
 runqueue_enqueue(runqueue_t *rq, struct lwp *l)
 {
 	subqueue_t *sq;
-	const int whichq = lwp_eprio(l) / PPQ;
+	const int whichq = WHICHQ(lwp_eprio(l));
+	const uint64_t rqmask = RQMASK(whichq);
 
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	runqueue_check(rq, whichq, NULL);
-	rq->rq_bitmap |= RQMASK(whichq);
+	rq->rq_bitmap |= rqmask;
 	sq = &rq->rq_subqueues[whichq];
 	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_runq);
 	runqueue_check(rq, whichq, l);
@@ -417,37 +421,41 @@ static void
 runqueue_dequeue(runqueue_t *rq, struct lwp *l)
 {
 	subqueue_t *sq;
-	const int whichq = lwp_eprio(l) / PPQ;
+	const int whichq = WHICHQ(lwp_eprio(l));
+	const uint64_t rqmask = RQMASK(whichq);
 
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	runqueue_check(rq, whichq, l);
-	KASSERT((rq->rq_bitmap & RQMASK(whichq)) != 0);
+	KASSERT((rq->rq_bitmap & rqmask) != 0);
 	sq = &rq->rq_subqueues[whichq];
 	TAILQ_REMOVE(&sq->sq_queue, l, l_runq);
 	if (TAILQ_EMPTY(&sq->sq_queue))
-		rq->rq_bitmap &= ~RQMASK(whichq);
+		rq->rq_bitmap &= ~rqmask;
 	runqueue_check(rq, whichq, NULL);
 }
 
 static struct lwp *
 runqueue_nextlwp(runqueue_t *rq)
 {
-	const uint32_t bitmap = rq->rq_bitmap;
+	const uint64_t bitmap = rq->rq_bitmap;
 	int whichq;
 
 	if (bitmap == 0) {
 		return NULL;
 	}
-	whichq = ffs(bitmap) - 1;
-	return TAILQ_FIRST(&rq->rq_subqueues[whichq].sq_queue);
+	whichq = ffs((uint32_t)bitmap) - 1;
+	if (whichq != -1)
+		return TAILQ_FIRST(&rq->rq_subqueues[whichq].sq_queue);
+	whichq = ffs((uint32_t)(bitmap >> 32)) - 1;
+	return TAILQ_FIRST(&rq->rq_subqueues[whichq + 32].sq_queue);
 }
 
 #if defined(DDB)
 static void
 runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
 {
-	const uint32_t bitmap = rq->rq_bitmap;
+	const uint64_t bitmap = rq->rq_bitmap;
 	struct lwp *l;
 	int i, first;
 
@@ -469,7 +477,6 @@ runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
 	}
 }
 #endif /* defined(DDB) */
-#undef RQMASK
 
 /*
  * Initialize the (doubly-linked) run queues
@@ -545,9 +552,9 @@ resetpriority(struct lwp *l)
 	if ((l->l_flag & LW_SYSTEM) != 0)
 		return;
 
-	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
+	newpriority = PRI_KERNEL - 1 - (p->p_estcpu >> ESTCPU_SHIFT) -
 	    NICE_WEIGHT * (p->p_nice - NZERO);
-	newpriority = min(newpriority, MAXPRI);
+	newpriority = max(newpriority, 0);
 	lwp_changepri(l, newpriority);
 }
 
@@ -594,7 +601,7 @@ sched_schedclock(struct lwp *l)
 	lwp_lock(l);
 	resetpriority(l);
 	mutex_spin_exit(&p->p_stmutex);
-	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_priority >= PUSER)
+	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_priority < PRI_KERNEL)
 		l->l_priority = l->l_usrpri;
 	lwp_unlock(l);
 }
@@ -675,7 +682,7 @@ sched_nextlwp(void)
 		return l2;
 	if (l2 == NULL)
 		return l1;
-	if (lwp_eprio(l2) < lwp_eprio(l1))
+	if (lwp_eprio(l2) > lwp_eprio(l1))
 		return l2;
 	else
 		return l1;

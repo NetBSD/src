@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.6.2 2007/06/08 14:17:16 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.6.3 2007/06/17 21:31:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.2 2007/06/08 14:17:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.3 2007/06/17 21:31:19 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -94,9 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.2 2007/06/08 14:17:16 ad Exp 
 #include <sys/sched.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -382,7 +381,8 @@ initclocks(void)
 {
 	int i;
 
-	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
+	softclock_si = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
+	    softclock, NULL);
 	if (softclock_si == NULL)
 		panic("initclocks: unable to register softclock intr");
 
@@ -876,7 +876,7 @@ hardclock(struct clockframe *frame)
 	 * clock interrupt priority any longer than necessary.
 	 */
 	if (callout_hardclock())
-		softintr_schedule(softclock_si);
+		softint_schedule(softclock_si);
 }
 
 #ifdef __HAVE_TIMECOUNTER
@@ -1229,7 +1229,7 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		if (CLKF_INTR(frame)) {
+		if (CLKF_INTR(frame) || (l->l_flag & LW_INTR) != 0) {
 			if (p != NULL) {
 				p->p_iticks++;
 			}

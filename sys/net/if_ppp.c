@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.114 2007/03/07 22:20:05 liamjfoy Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.114.2.1 2007/06/17 21:31:50 ad Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114 2007/03/07 22:20:05 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114.2.1 2007/06/17 21:31:50 ad Exp $");
 
 #include "ppp.h"
 
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114 2007/03/07 22:20:05 liamjfoy Exp $"
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -134,8 +135,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114 2007/03/07 22:20:05 liamjfoy Exp $"
 #ifdef PPP_FILTER
 #include <net/bpf.h>
 #endif
-
-#include <machine/intr.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -378,7 +377,7 @@ pppalloc(pid_t pid)
 	sc = ppp_create(ppp_cloner.ifc_name, -1);
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-    sc->sc_si = softintr_establish(IPL_SOFTNET, pppintr, sc);
+    sc->sc_si = softint_establish(SOFTINT_NET, pppintr, sc);
     if (sc->sc_si == NULL) {
 	printf("%s: unable to establish softintr\n", sc->sc_if.if_xname);
 	return (NULL);
@@ -416,7 +415,7 @@ pppdealloc(struct ppp_softc *sc)
     struct mbuf *m;
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-    softintr_disestablish(sc->sc_si);
+    softint_disestablish(sc->sc_si);
 #endif
     if_down(&sc->sc_if);
     sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
@@ -1117,7 +1116,7 @@ ppp_restart(struct ppp_softc *sc)
 
     sc->sc_flags &= ~SC_TBUSY;
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-    softintr_schedule(sc->sc_si);
+    softint_schedule(sc->sc_si);
 #else
     schednetisr(NETISR_PPP);
 #endif
@@ -1438,7 +1437,7 @@ ppppktin(struct ppp_softc *sc, struct mbuf *m, int lost)
 	m->m_flags |= M_ERRMARK;
     IF_ENQUEUE(&sc->sc_rawq, m);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-    softintr_schedule(sc->sc_si);
+    softint_schedule(sc->sc_si);
 #else
     schednetisr(NETISR_PPP);
 #endif

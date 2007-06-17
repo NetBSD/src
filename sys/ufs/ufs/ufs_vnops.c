@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.152.2.3 2007/06/08 14:18:20 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.152.2.4 2007/06/17 21:32:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152.2.3 2007/06/08 14:18:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152.2.4 2007/06/17 21:32:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2115,7 +2115,9 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 			/* XXX spec_vnodeops has no locking, do it explicitly */
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
+			mutex_enter(&vp->v_interlock);
+			vp->v_iflag &= ~VI_LOCKSWORK;
+			mutex_exit(&vp->v_interlock);
 			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
@@ -2138,7 +2140,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 		break;
 	}
 	if (ip->i_number == ROOTINO)
-                vp->v_flag |= VROOT;
+                vp->v_vflag |= VV_ROOT;
 	/*
 	 * Initialize modrev times
 	 */

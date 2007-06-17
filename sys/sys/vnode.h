@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.5 2007/06/09 23:58:18 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.6 2007/06/17 21:32:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -89,51 +89,54 @@ LIST_HEAD(buflists, buf);
  * lock.  Field markings and the corresponding locks:
  *
  *	:	stable, reference to the vnode is is required
- *	?	undocumented
  *	f	vnode_free_list_lock
+ *	i	v_interlock
  *	m	mntvnode_lock
  *	n	namecache_lock
  *	o	global_v_numoutput_lock
- *	p	v_vnlock
- *	v	v_interlock
+ *	s	syncer_data_lock
+ *	u	locked by underlying filesystem
+ *	v	v_vnlock
  *
  * Each underlying filesystem allocates its own private area and hangs
  * it from v_data.
  */
 struct vnode {
-	struct uvm_object v_uobj;		/* v: the VM object */
-	kcondvar_t	v_cv;			/* v: synchronization */
-	int		v_waitcnt;		/* v: # waiters for VXLOCK */
-	voff_t		v_size;			/* v: size of file */
-	voff_t		v_writesize;		/* v: new size after write */
-	int		v_flag;			/* v: flags */
+	struct uvm_object v_uobj;		/* i: the VM object */
+	kcondvar_t	v_cv;			/* i: synchronization */
+	int		v_waitcnt;		/* i: # waiters for VXLOCK */
+	voff_t		v_size;			/* i: size of file */
+	voff_t		v_writesize;		/* i: new size after write */
+	int		v_iflag;		/* i: VI_* flags */
+	int		v_vflag;		/* v: VV_* flags */
+	int		v_uflag;		/* u: VU_* flags */
 	int		v_numoutput;		/* o: # of pending writes */
 	kcondvar_t	v_outputcv;		/* o: notifier on numoutput */
-	long		v_writecount;		/* v: ref count of writers */
-	long		v_holdcnt;		/* v: page & buffer refs */
-	struct mount	*v_mount;		/* p: ptr to vfs we are in */
+	long		v_writecount;		/* i: ref count of writers */
+	long		v_holdcnt;		/* i: page & buffer refs */
+	struct mount	*v_mount;		/* v: ptr to vfs we are in */
 	int		(**v_op)(void *);	/* :: vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* f: vnode freelist */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
-	struct buflists	v_cleanblkhd;		/* v: clean blocklist head */
-	struct buflists	v_dirtyblkhd;		/* v: dirty blocklist head */
-	int		v_synclist_slot;	/* ?: synclist slot index */
-	TAILQ_ENTRY(vnode) v_synclist;		/* ?: vnodes with dirty bufs */
+	struct buflists	v_cleanblkhd;		/* i: clean blocklist head */
+	struct buflists	v_dirtyblkhd;		/* i: dirty blocklist head */
+	int		v_synclist_slot;	/* s: synclist slot index */
+	TAILQ_ENTRY(vnode) v_synclist;		/* s: vnodes with dirty bufs */
 	LIST_HEAD(, namecache) v_dnclist;	/* n: namecaches (children) */
 	LIST_HEAD(, namecache) v_nclist;	/* n: namecaches (parent) */
 	union {
-		struct mount	*vu_mountedhere;/* p: ptr to vfs (VDIR) */
-		struct socket	*vu_socket;	/* p: unix ipc (VSOCK) */
-		struct specinfo	*vu_specinfo;	/* p: device (VCHR, VBLK) */
-		struct fifoinfo	*vu_fifoinfo;	/* p: fifo (VFIFO) */
-		struct uvm_ractx *vu_ractx;	/* v: read-ahead ctx (VREG) */
+		struct mount	*vu_mountedhere;/* v: ptr to vfs (VDIR) */
+		struct socket	*vu_socket;	/* v: unix ipc (VSOCK) */
+		struct specinfo	*vu_specinfo;	/* v: device (VCHR, VBLK) */
+		struct fifoinfo	*vu_fifoinfo;	/* v: fifo (VFIFO) */
+		struct uvm_ractx *vu_ractx;	/* i: read-ahead ctx (VREG) */
 	} v_un;
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
-	struct lock	v_lock;			/* p: lock for this vnode */
-	struct lock	*v_vnlock;		/* p: pointer to lock */
+	struct lock	v_lock;			/* v: lock for this vnode */
+	struct lock	*v_vnlock;		/* v: pointer to lock */
 	void 		*v_data;		/* :: private data for fs */
-	struct klist	v_klist;		/* v: notes attached to vnode */
+	struct klist	v_klist;		/* i: notes attached to vnode */
 };
 #define	v_usecount	v_uobj.uo_refs
 #define	v_interlock	v_uobj.vmobjlock
@@ -157,30 +160,41 @@ struct vnode {
  */
 
 /*
- * Vnode flags.
+ * Vnode flags.  The first set are locked by vp->v_vnlock or are stable.
+ * VSYSTEM is only used to skip vflush()ing quota files.  VISTTY is used
+ * when reading dead vnodes.
  */
-#define	VROOT		0x0001	/* root of its file system */
-#define	VTEXT		0x0002	/* vnode is a pure text prototype */
-	/* VSYSTEM only used to skip vflush()ing quota files */
-#define	VSYSTEM		0x0004	/* vnode being used by kernel */
-	/* VISTTY used when reading dead vnodes */
-#define	VISTTY		0x0008	/* vnode represents a tty */
-#define	VEXECMAP	0x0010	/* vnode might have PROT_EXEC mappings */
-#define	VWRITEMAP	0x0020	/* might have PROT_WRITE user mappings */
-#define	VWRITEMAPDIRTY	0x0040	/* might have dirty pages due to VWRITEMAP */
-#define	VLOCKSWORK	0x0080	/* FS supports locking discipline */
-#define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
-#define	VALIASED	0x0800	/* vnode has an alias */
-#define	VDIROP		0x1000	/* LFS: vnode is involved in a directory op */
-#define	VLAYER		0x2000	/* vnode is on a layer filesystem */
-#define	VONWORKLST	0x4000	/* On syncer work-list */
-#define	VFREEING	0x8000	/* vnode is being freed */
-#define	VMAPPED		0x10000	/* vnode might have user mappings */
+#define	VV_ROOT		0x00000001	/* root of its file system */
+#define	VV_SYSTEM	0x00000002	/* vnode being used by kernel */
+#define	VV_ISTTY	0x00000004	/* vnode represents a tty */
+#define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
+
+/* XXXAD ALIASED should be covered by spec lock? */
+
+/*
+ * The second set are locked by vp->v_interlock.
+ */
+#define	VI_TEXT		0x00000100	/* vnode is a pure text prototype */
+#define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
+#define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
+#define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
+#define	VI_XLOCK	0x00002000	/* vnode is locked to change type */
+#define	VI_ALIASED	0x00004000	/* vnode has an alias */
+#define	VI_ONWORKLST	0x00008000	/* On syncer work-list */
+#define	VI_FREEING	0x00010000	/* vnode is being freed */
+#define	VI_LOCKSWORK	0x00020000	/* FS supports locking discipline */
+#define	VI_LAYER	0x00040000	/* vnode is on a layer filesystem */
+#define	VI_MAPPED	0x00080000	/* duplicate of VV_MAPPED */
+
+/*
+ * The third set are locked by the underlying file system.
+ */
+#define	VU_DIROP	0x01000000	/* LFS: involved in a directory op */
 
 #define	VNODE_FLAGBITS \
-    "\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\5EXECMAP\6WRITEMAP\7WRITEMAPDIRTY" \
-    "\10LOCKSWORK\11XLOCK\13BWAIT\14ALIASED" \
-    "\15DIROP\16LAYER\17ONWORKLIST\20FREEING\21MAPPED"
+    "\20\1ROOT\2SYSTEM\3ISTTY\4LAYER\5MAPPED\6LOCKSWORK\2TEXT\10EXECMAP" \
+    "\11WRMAP\12WRMAPDIRTY\14XLOCK\15ALIASED" \
+    "\16ONWORKLST\17FREEING\25DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.6 2007/06/09 23:58:01 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.7 2007/06/17 21:31:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.6 2007/06/09 23:58:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.7 2007/06/17 21:31:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -153,7 +153,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 			 * old (well, actually, new) node
 			 */
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
+			mutex_enter(&vp->v_interlock);
+			vp->v_iflag &= ~VI_LOCKSWORK;
+			mutex_exit(&vp->v_interlock);
 			vrele(vp);
 			vgone(vp); /* cya */
 

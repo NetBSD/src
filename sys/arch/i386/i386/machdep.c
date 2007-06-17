@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601.2.4 2007/05/27 12:27:31 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.2.5 2007/06/17 21:30:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.4 2007/05/27 12:27:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.5 2007/06/17 21:30:37 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2058,9 +2058,6 @@ init386(paddr_t first_avail)
 
 	intr_default_setup();
 
-	/* Initialize software interrupts. */
-	softintr_init();
-
 	splraise(IPL_IPI);
 	enable_intr();
 
@@ -2535,4 +2532,11 @@ cpu_maxproc(void)
 #else
 	return (MAXGDTSIZ - NGDT);
 #endif
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return (curcpu()->ci_idepth >= 0);
 }

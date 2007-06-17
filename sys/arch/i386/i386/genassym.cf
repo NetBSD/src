@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.4.1 2007/05/27 12:27:30 ad Exp $
+#	$NetBSD: genassym.cf,v 1.48.4.2 2007/06/17 21:30:36 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -187,6 +187,7 @@ define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
+define	L_PINNED		offsetof(struct lwp, l_pinned)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
@@ -194,11 +195,16 @@ define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_MUTEX			offsetof(struct lwp, l_mutex)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
+define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	LW_SYSTEM		LW_SYSTEM
+define	LW_RUNNING		LW_RUNNING
+
+define	LSONPROC		LSONPROC
+define	LSIDL			LSIDL
 
 define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
@@ -216,6 +222,7 @@ define	V_INTR			offsetof(struct uvmexp, intrs)
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
+define	PCB_ESP0		offsetof(struct pcb, pcb_esp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
@@ -335,6 +342,7 @@ define		IS_FLAGS	offsetof(struct intrsource, is_flags)
 define		IS_PIN		offsetof(struct intrsource, is_pin)
 define		IS_TYPE		offsetof(struct intrsource, is_type)
 define		IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
+define		IS_LWP		offsetof(struct intrsource, is_lwp)
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)
@@ -361,15 +369,7 @@ define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
 
-define	SIR_NET			SIR_NET
-define	SIR_CLOCK		SIR_CLOCK
-define	SIR_SERIAL		SIR_SERIAL
-
 define	IREENT_MAGIC		IREENT_MAGIC
-
-define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
-define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
-define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
 
 define	PSL_AC			PSL_AC
 define	PSL_MBO			PSL_MBO

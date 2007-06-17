@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.32 2007/03/04 06:01:53 christos Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.32.2.1 2007/06/17 21:30:57 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.32 2007/03/04 06:01:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.32.2.1 2007/06/17 21:30:57 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -60,9 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.32 2007/03/04 06:01:53 christos Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/param.h>
 
 #include <dev/ic/clmpccreg.h>
@@ -307,16 +307,10 @@ clmpcc_attach(sc)
 	printf(": Cirrus Logic CD240%c Serial Controller\n",
 		(clmpcc_rd_msvr(sc) & CLMPCC_MSVR_PORT_ID) ? '0' : '1');
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_soft_running = 0;
-#else
 	sc->sc_softintr_cookie =
-	    softintr_establish(IPL_SOFTSERIAL, clmpcc_softintr, sc);
-#ifdef DEBUG
+	    softint_establish(SOFTINT_SERIAL, clmpcc_softintr, sc);
 	if (sc->sc_softintr_cookie == NULL)
 		panic("clmpcc_attach: softintr_establish");
-#endif
-#endif
 	memset(&(sc->sc_chans[0]), 0, sizeof(sc->sc_chans));
 
 	for (chan = 0; chan < CLMPCC_NUM_CHANS; chan++) {
@@ -1246,14 +1240,7 @@ rx_done:
 		}
 
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, 0);
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		if ( sc->sc_soft_running == 0 ) {
-			sc->sc_soft_running = 1;
-			(sc->sc_softhook)(sc);
-		}
-#else
-		softintr_schedule(sc->sc_softintr_cookie);
-#endif
+		softint_schedule(sc->sc_softintr_cookie);
 	} else
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, CLMPCC_REOIR_NO_TRANS);
 
@@ -1373,14 +1360,7 @@ clmpcc_txintr(arg)
 		 * Request Tx processing in the soft interrupt handler
 		 */
 		ch->ch_tx_done = 1;
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		if ( sc->sc_soft_running == 0 ) {
-			sc->sc_soft_running = 1;
-			(sc->sc_softhook)(sc);
-		}
-#else
-		softintr_schedule(sc->sc_softintr_cookie);
-#endif
+		softint_schedule(sc->sc_softintr_cookie);
 	}
 
 	clmpcc_wrreg(sc, CLMPCC_REG_IER, tir);
@@ -1417,15 +1397,7 @@ clmpcc_mdintr(arg)
 		clmpcc_rd_msvr(sc) & CLMPCC_MSVR_CD;
 
 	clmpcc_wrreg(sc, CLMPCC_REG_MEOIR, 0);
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-	if ( sc->sc_soft_running == 0 ) {
-		sc->sc_soft_running = 1;
-		(sc->sc_softhook)(sc);
-	}
-#else
-	softintr_schedule(sc->sc_softintr_cookie);
-#endif
+	softint_schedule(sc->sc_softintr_cookie);
 
 	return 1;
 }
@@ -1442,10 +1414,6 @@ clmpcc_softintr(arg)
 	u_char reg;
 	u_int c;
 	int chan;
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_soft_running = 0;
-#endif
 
 	/* Handle Modem state changes too... */
 

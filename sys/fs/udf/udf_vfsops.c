@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.22.6.4 2007/06/09 23:58:03 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.22.6.5 2007/06/17 21:31:16 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.22.6.4 2007/06/09 23:58:03 ad Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.22.6.5 2007/06/17 21:31:16 ad Exp $");
 #endif /* not lint */
 
 
@@ -428,11 +428,11 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 #endif
 
 	/*
-	 * By specifying SKIPSYSTEM we can skip vnodes marked with VSYSTEM.
+	 * By specifying SKIPSYSTEM we can skip vnodes marked with VV_SYSTEM.
 	 * This hardly documented feature allows us to exempt certain files
 	 * from being flushed.
 	 */
-	if ((error = vflush(mp, NULLVP, flags | VSYSTEM)) != 0)
+	if ((error = vflush(mp, NULLVP, flags | SKIPSYSTEM)) != 0)
 		return error;
 
 #ifdef DEBUG
@@ -626,9 +626,7 @@ udf_root(struct mount *mp, struct vnode **vpp)
 		return error;
 
 	vp = root_dir->vnode;
-	mutex_enter(&vp->v_interlock);
-		root_dir->vnode->v_flag |= VROOT;
-	mutex_exit(&vp->v_interlock);
+	root_dir->vnode->v_vflag |= VV_ROOT;
 
 	*vpp = vp;
 	return 0;

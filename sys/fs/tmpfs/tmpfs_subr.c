@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.1 2007/04/05 21:57:48 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.2 2007/06/17 21:31:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.1 2007/04/05 21:57:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.2 2007/06/17 21:31:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -403,7 +403,9 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 			 * do it explicitly. */
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vp->v_flag &= ~VLOCKSWORK;
+			mutex_enter(&vp->v_interlock);
+			vp->v_iflag &= ~VI_LOCKSWORK;
+			mutex_exit(&vp->v_interlock);
 			vrele(vp);
 			vgone(vp);
 
@@ -419,7 +421,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		break;
 
 	case VDIR:
-		vp->v_flag = node->tn_spec.tn_dir.tn_parent == node ? VROOT : 0;
+		vp->v_vflag = node->tn_spec.tn_dir.tn_parent == node ? VV_ROOT : 0;
 		break;
 
 	case VFIFO:

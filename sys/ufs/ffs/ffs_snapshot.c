@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.4 2007/05/13 17:36:42 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.5 2007/06/17 21:32:07 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.4 2007/05/13 17:36:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.5 2007/06/17 21:32:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -383,7 +383,7 @@ loop:
 		VI_LOCK(xvp);
 		nvp = TAILQ_NEXT(xvp, v_mntvnodes);
 		MNT_IUNLOCK(mp);
-		if ((xvp->v_flag & VXLOCK) ||
+		if ((xvp->v_iflag & VI_XLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
 		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
 			VI_UNLOCK(xvp);
@@ -508,7 +508,7 @@ loop:
 	VI_UNLOCK(devvp);
 	if (xp == NULL)
 		vn_cow_establish(devvp, ffs_copyonwrite, devvp);
-	vp->v_flag |= VSYSTEM;
+	vp->v_vflag |= VV_SYSTEM;
 out1:
 	/*
 	 * Resume operation on filesystem.
@@ -1759,7 +1759,7 @@ ffs_snapshot_mount(struct mount *mp)
 			    (unsigned long long)ip->i_number);
 		else
 			TAILQ_INSERT_TAIL(&ump->um_snapshots, ip, i_nextsnap);
-		vp->v_flag |= VSYSTEM;
+		vp->v_vflag |= VV_SYSTEM;
 		VI_UNLOCK(devvp);
 		VOP_UNLOCK(vp, 0);
 	}

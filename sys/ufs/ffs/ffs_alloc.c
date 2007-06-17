@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.98.2.4 2007/05/13 17:36:41 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.98.2.5 2007/06/17 21:32:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.4 2007/05/13 17:36:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.5 2007/06/17 21:32:06 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -801,7 +801,7 @@ ffs_dirpref(struct inode *pip)
 	/*
 	 * Force allocation in another cg if creating a first level dir.
 	 */
-	if (ITOV(pip)->v_flag & VROOT) {
+	if (ITOV(pip)->v_vflag & VV_ROOT) {
 		prefcg = random() % fs->fs_ncg;
 		mincg = prefcg;
 		minndir = fs->fs_ipg;

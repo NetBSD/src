@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.2.2.2 2007/06/09 21:37:26 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.2.2.3 2007/06/17 21:31:20 ad Exp $	*/
 
 /*-
  * Copyright (c)2007 YAMAMOTO Takashi,
@@ -28,14 +28,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.2 2007/06/09 21:37:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.3 2007/06/17 21:31:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/idle.h>
 #include <sys/sched.h>
-
-#include <machine/cpu.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 int
 mi_cpu_attach(struct cpu_info *ci)
@@ -52,6 +52,8 @@ mi_cpu_attach(struct cpu_info *ci)
 		return error;
 	}
 
+	softint_init(ci);
+	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 
 	return 0;

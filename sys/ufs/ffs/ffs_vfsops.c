@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.9 2007/06/09 23:58:19 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.10 2007/06/17 21:32:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.9 2007/06/09 23:58:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.10 2007/06/17 21:32:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1338,7 +1338,7 @@ loop:
 		mutex_enter(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
-		if (ip == NULL || (vp->v_flag & VFREEING) != 0 ||
+		if (ip == NULL || (vp->v_iflag & VI_FREEING) != 0 ||
 		    vp->v_type == VNON || ((ip->i_flag &
 		    (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
@@ -1454,7 +1454,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		goto retry;
 	}
 
-	vp->v_flag |= VLOCKSWORK;
+	vp->v_iflag |= VI_LOCKSWORK;
 
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we

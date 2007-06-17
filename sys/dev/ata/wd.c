@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337.2.3 2007/05/13 17:36:22 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.4 2007/06/17 21:30:54 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.3 2007/05/13 17:36:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.4 2007/06/17 21:30:54 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -1913,7 +1913,7 @@ wi_get(void)
 	int s;
 
 	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK|M_ZERO);
-	BUF_INIT(&wi->wi_bp);
+	buf_init(&wi->wi_bp);
 	s = splbio();
 	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);
@@ -1932,7 +1932,7 @@ wi_free(struct wd_ioctl *wi)
 	s = splbio();
 	LIST_REMOVE(wi, wi_list);
 	splx(s);
-	BUF_DESTROY(&wi->wi_bp);
+	buf_destroy(&wi->wi_bp);
 	free(wi, M_TEMP);
 }
 

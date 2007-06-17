@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.74 2007/03/04 06:03:17 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.74.2.1 2007/06/17 21:31:53 ad Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.74 2007/03/04 06:03:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.74.2.1 2007/06/17 21:31:53 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -109,9 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.74 2007/03/04 06:03:17 christos Exp $
 #include <sys/kauth.h>
 #endif
 #include <sys/syslog.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -492,12 +491,12 @@ stripopen(dev_t dev, struct tty *tp)
 	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
 		if (sc->sc_ttyp == NULL) {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-			sc->sc_si = softintr_establish(IPL_SOFTNET,
+			sc->sc_si = softint_establish(SOFTINT_NET,
 			    stripintr, sc);
 #endif
 			if (stripinit(sc) == 0) {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-				softintr_disestablish(sc->sc_si);
+				softint_disestablish(sc->sc_si);
 #endif
 				return (ENOBUFS);
 			}
@@ -524,7 +523,7 @@ stripopen(dev_t dev, struct tty *tp)
 				if (error) {
 					splx(s);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-					softintr_disestablish(sc->sc_si);
+					softint_disestablish(sc->sc_si);
 #endif
 					/*
 					 * clalloc() might return -1 which
@@ -568,7 +567,7 @@ stripclose(struct tty *tp, int flag)
 
 	if (sc != NULL) {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 #endif
 		s = splnet();
 		/*
@@ -927,7 +926,7 @@ stripstart(struct tty *tp)
 	if (sc == NULL)
 		return (0);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 #else
     {
 	int s = splhigh();
@@ -1066,7 +1065,7 @@ stripinput(int c, struct tty *tp)
 
 	IF_ENQUEUE(&sc->sc_inq, m);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 #else
     {
 	int s = splhigh();

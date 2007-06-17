@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.7 2007/06/09 23:58:09 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.8 2007/06/17 21:31:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.7 2007/06/09 23:58:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.8 2007/06/17 21:31:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,13 +241,13 @@ genfs_revoke(void *v)
 	vp = ap->a_vp;
 	mutex_enter(&vp->v_interlock);
 
-	if (vp->v_flag & VALIASED) {
+	if (vp->v_iflag & VI_ALIASED) {
 		/*
 		 * If a vgone (or vclean) is already in progress,
 		 * wait until it is done and return.
 		 */
-		if (vp->v_flag & VXLOCK) {
-			vwait(vp, VXLOCK);
+		if (vp->v_iflag & VI_XLOCK) {
+			vwait(vp, VI_XLOCK);
 			mutex_exit(&vp->v_interlock);
 			return (0);
 		}
@@ -255,9 +255,9 @@ genfs_revoke(void *v)
 		 * Ensure that vp will not be vgone'd while we
 		 * are eliminating its aliases.
 		 */
-		vp->v_flag |= VXLOCK;
+		vp->v_iflag |= VI_XLOCK;
 		mutex_exit(&vp->v_interlock);
-		while (vp->v_flag & VALIASED) {
+		while (vp->v_iflag & VI_ALIASED) {
 			mutex_enter(&spechash_lock);
 			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
@@ -276,7 +276,7 @@ genfs_revoke(void *v)
 		 * vgone will awaken any sleepers.
 		 */
 		mutex_enter(&vp->v_interlock);
-		vp->v_flag &= ~VXLOCK;
+		vp->v_iflag &= ~VI_XLOCK;
 	}
 	vgonel(vp, l);
 	return (0);
@@ -518,11 +518,11 @@ startover:
 
 	if (write) {
 		gp->g_dirtygen++;
-		if ((vp->v_flag & VONWORKLST) == 0) {
+		if ((vp->v_iflag & VI_ONWORKLST) == 0) {
 			vn_syncer_add_to_worklist(vp, filedelay);
 		}
-		if ((vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP) {
-			vp->v_flag |= VWRITEMAPDIRTY;
+		if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
+			vp->v_iflag |= VI_WRMAPDIRTY;
 		}
 	}
 
@@ -1061,7 +1061,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	off_t off;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
-	int i, s, error, npages, nback;
+	int i, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
@@ -1083,16 +1083,14 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
-	KASSERT((vp->v_flag & VONWORKLST) != 0 ||
-	    (vp->v_flag & VWRITEMAPDIRTY) == 0);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
+	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
 	if (uobj->uo_npages == 0) {
-		s = splbio();
-		if (vp->v_flag & VONWORKLST) {
-			vp->v_flag &= ~VWRITEMAPDIRTY;
+		if (vp->v_iflag & VI_ONWORKLST) {
+			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
-		splx(s);
 		mutex_exit(slock);
 		return (0);
 	}
@@ -1130,7 +1128,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	 * don't bother to clean it out.
 	 */
 
-	if ((vp->v_flag & VONWORKLST) == 0) {
+	if ((vp->v_iflag & VI_ONWORKLST) == 0) {
 		if ((flags & (PGO_FREE|PGO_DEACTIVATE)) == 0) {
 			goto skip_scan;
 		}
@@ -1147,7 +1145,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	cleanall = (flags & PGO_CLEANIT) != 0 && wasclean &&
 	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
-	    (vp->v_flag & VONWORKLST) != 0;
+	    (vp->v_iflag & VI_ONWORKLST) != 0;
 	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	if (by_list) {
@@ -1287,7 +1285,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		 */
 
 		if (needs_clean) {
-			KDASSERT((vp->v_flag & VONWORKLST));
+			KDASSERT((vp->v_iflag & VI_ONWORKLST));
 			wasclean = false;
 			memset(pgs, 0, sizeof(pgs));
 			pg->flags |= PG_BUSY;
@@ -1427,7 +1425,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		uvm_lwp_rele(l);
 	}
 
-	if (modified && (vp->v_flag & VWRITEMAPDIRTY) != 0 &&
+	if (modified && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&
 	    (vp->v_type != VBLK ||
 	    (vp->v_mount->mnt_flag & MNT_NODEVMTIME) == 0)) {
 		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
@@ -1439,14 +1437,12 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	 * and we're doing sync i/o, wait for all writes to finish.
 	 */
 
-	s = splbio();
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
-	    (vp->v_flag & VONWORKLST) != 0) {
-		vp->v_flag &= ~VWRITEMAPDIRTY;
+	    (vp->v_iflag & VI_ONWORKLST) != 0) {
+		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 			vn_syncer_remove_from_worklist(vp);
 	}
-	splx(s);
 
 #if !defined(DEBUG)
 skip_scan:
@@ -1691,7 +1687,7 @@ genfs_compat_getpages(void *v)
 	orignpages = *ap->a_count;
 	pgs = ap->a_m;
 
-	if (write && (vp->v_flag & VONWORKLST) == 0) {
+	if (write && (vp->v_iflag & VI_ONWORKLST) == 0) {
 		vn_syncer_add_to_worklist(vp, filedelay);
 	}
 	if (ap->a_flags & PGO_LOCKED) {
@@ -1835,7 +1831,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 	 * buffered I/O if the vnode is mapped to avoid this mess.
 	 */
 
-	if (vp->v_flag & VMAPPED) {
+	if (vp->v_vflag & VV_MAPPED) {
 		return;
 	}
 

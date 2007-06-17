@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.834.2.3 2007/06/09 23:57:48 ad Exp $
+#	$NetBSD: files,v 1.834.2.4 2007/06/17 21:30:46 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1341,6 +1341,7 @@ file	kern/kern_resource.c
 file	kern/kern_rwlock.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
+file	kern/kern_softint.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
 file	kern/kern_systrace.c		systrace

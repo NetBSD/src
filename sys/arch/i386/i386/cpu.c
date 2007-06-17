@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.35.2.3 2007/05/27 12:27:30 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.35.2.4 2007/06/17 21:30:35 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.3 2007/05/27 12:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.4 2007/06/17 21:30:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -140,21 +140,16 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-#ifdef TRAPLOG
 struct tlog tlog_primary;
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
 	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
+	.ci_idepth = -1,
+#ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
-};
-#else  /* TRAPLOG */
-struct cpu_info cpu_info_primary = {
-	.ci_dev = 0,
-	.ci_self = &cpu_info_primary,
-	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
-};
 #endif /* !TRAPLOG */
+};
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 

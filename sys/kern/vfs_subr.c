@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.8 2007/06/09 23:58:07 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.9 2007/06/17 21:31:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.8 2007/06/09 23:58:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.9 2007/06/17 21:31:33 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -157,6 +157,7 @@ kmutex_t spechash_lock;
 kmutex_t vfs_list_lock;
 
 /* XXX - gross; single global lock to protect v_numoutput */
+/* XXXAD make this go away */
 kmutex_t global_v_numoutput_lock;
 
 /*
@@ -199,8 +200,7 @@ vntblinit(void)
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&spechash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	mutex_init(&global_v_numoutput_lock, MUTEX_DRIVER, IPL_BIO);
+	mutex_init(&global_v_numoutput_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mount_specificdata_domain = specificdata_domain_create();
 
@@ -253,8 +253,8 @@ try_nextlist:
 		 * as our lwp might hold the underlying vnode locked,
 		 * don't try to reclaim the VLAYER vnode if it's locked.
 		 */
-		if ((vp->v_flag & VXLOCK) == 0 &&
-		    ((vp->v_flag & VLAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
+		if ((vp->v_iflag & VI_XLOCK) == 0 &&
+		    ((vp->v_iflag & VI_LAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
 				break;
 		}
 		mutex_exit(&vp->v_interlock);
@@ -287,7 +287,7 @@ try_nextlist:
 	if (vp->v_numoutput)
 		panic("clean vnode has pending I/O's, vp %p", vp);
 #endif
-	KASSERT((vp->v_flag & VONWORKLST) == 0);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
 	return vp;
 }
@@ -586,7 +586,9 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 			return (ENFILE);
 		}
 		vp->v_usecount = 1;
-		vp->v_flag = 0;
+		vp->v_iflag = 0;
+		vp->v_vflag = 0;
+		vp->v_uflag = 0;
 		vp->v_socket = NULL;
 	}
 	vp->v_type = VNON;
@@ -954,9 +956,9 @@ brelvp(struct buf *bp)
 	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 
-	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_flag & VONWORKLST) &&
+	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_iflag & VI_ONWORKLST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
-		vp->v_flag &= ~VWRITEMAPDIRTY;
+		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		vn_syncer_remove_from_worklist(vp);
 	}
 
@@ -989,14 +991,14 @@ reassignbuf(struct buf *bp, struct vnode *newvp)
 	if ((bp->b_flags & B_DELWRI) == 0) {
 		listheadp = &newvp->v_cleanblkhd;
 		if (TAILQ_EMPTY(&newvp->v_uobj.memq) &&
-		    (newvp->v_flag & VONWORKLST) &&
+		    (newvp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
-			newvp->v_flag &= ~VWRITEMAPDIRTY;
+			newvp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(newvp);
 		}
 	} else {
 		listheadp = &newvp->v_dirtyblkhd;
-		if ((newvp->v_flag & VONWORKLST) == 0) {
+		if ((newvp->v_iflag & VI_ONWORKLST) == 0) {
 			switch (newvp->v_type) {
 			case VDIR:
 				delayx = dirdelay;
@@ -1144,8 +1146,8 @@ loop:
 
 		*vpp = nvp;
 		if (vp != NULLVP) {
-			nvp->v_flag |= VALIASED;
-			vp->v_flag |= VALIASED;
+			nvp->v_iflag |= VI_ALIASED;
+			vp->v_iflag |= VI_ALIASED;
 			vput(vp);
 		}
 		return (NULLVP);
@@ -1164,7 +1166,7 @@ loop:
 }
 
 /*
- * Wait for a vnode (typically with VXLOCK set) to be cleaned or
+ * Wait for a vnode (typically with VI_XLOCK set) to be cleaned or
  * recycled.
  */
 void
@@ -1174,7 +1176,7 @@ vwait(struct vnode *vp, int flags)
 	KASSERT(mutex_owned(&vp->v_interlock));
 
 	vp->v_waitcnt++;
-	while ((vp->v_flag & flags) != 0)
+	while ((vp->v_iflag & flags) != 0)
 		cv_wait(&vp->v_cv, &vp->v_interlock);
 	vp->v_waitcnt--;
 
@@ -1195,10 +1197,10 @@ vunwait(struct vnode *vp, int flags)
 	KASSERT(mutex_owned(&vp->v_interlock));
 
 	/*
-	 * Clear the condition (typically VXLOCK) and notify
+	 * Clear the condition (typically VI_XLOCK) and notify
 	 * any waiters in vwait().
 	 */
-	vp->v_flag &= ~flags;
+	vp->v_iflag &= ~flags;
 	while (vp->v_waitcnt != 0) {
 		cv_broadcast(&vp->v_cv);
 		cv_wait(&vp->v_cv, &vp->v_interlock);
@@ -1222,17 +1224,17 @@ vget(struct vnode *vp, int flags)
 	 * If the vnode is in the process of being cleaned out for
 	 * another use, we wait for the cleaning to finish and then
 	 * return failure. Cleaning is determined by checking that
-	 * the VXLOCK flag is set.
+	 * the VI_XLOCK flag is set.
 	 */
 
 	if ((flags & LK_INTERLOCK) == 0)
 		mutex_enter(&vp->v_interlock);
-	if ((vp->v_flag & (VXLOCK | VFREEING)) != 0) {
+	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
 		if (flags & LK_NOWAIT) {
 			mutex_exit(&vp->v_interlock);
 			return EBUSY;
 		}
-		vwait(vp, VXLOCK | VFREEING);
+		vwait(vp, VI_XLOCK | VI_FREEING);
 		mutex_exit(&vp->v_interlock);
 		return (ENOENT);
 	}
@@ -1295,11 +1297,12 @@ vput(struct vnode *vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	mutex_exit(&vnode_free_list_lock);
-	if (vp->v_flag & VEXECMAP) {
+	if (vp->v_iflag & VI_EXECMAP) {
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP|VMAPPED);
+	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
+	vp->v_vflag &= ~VV_MAPPED;
 	mutex_exit(&vp->v_interlock);
 	VOP_INACTIVE(vp, l);
 }
@@ -1338,13 +1341,15 @@ vrele(struct vnode *vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	mutex_exit(&vnode_free_list_lock);
-	if (vp->v_flag & VEXECMAP) {
+	if (vp->v_iflag & VI_EXECMAP) {
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP|VMAPPED);
-	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
+	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP|VI_MAPPED);
+	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0) {
+		vp->v_vflag &= ~VV_MAPPED; /* XXX if locking fails? */
 		VOP_INACTIVE(vp, l);
+	}
 }
 
 /*
@@ -1477,7 +1482,7 @@ loop:
 		/*
 		 * Skip over a vnodes marked VSYSTEM.
 		 */
-		if ((flags & SKIPSYSTEM) && (vp->v_flag & VSYSTEM)) {
+		if ((flags & SKIPSYSTEM) && (vp->v_vflag & VV_SYSTEM)) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
@@ -1561,14 +1566,14 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	 * Prevent the vnode from being recycled or
 	 * brought into use while we clean it out.
 	 */
-	if (vp->v_flag & VXLOCK)
+	if (vp->v_iflag & VI_XLOCK)
 		panic("vclean: deadlock, vp %p", vp);
-	vp->v_flag |= VXLOCK;
-	if (vp->v_flag & VEXECMAP) {
+	vp->v_iflag |= VI_XLOCK;
+	if (vp->v_iflag & VI_EXECMAP) {
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
-	vp->v_flag &= ~(VTEXT|VEXECMAP);
+	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
@@ -1592,7 +1597,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 		if (error)
 			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
 		KASSERT(error == 0);
-		KASSERT((vp->v_flag & VONWORKLST) == 0);
+		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
 		if (active)
 			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
@@ -1614,7 +1619,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 					if (vq == NULL)
 						panic("missing bdev");
 				}
-				if (vp->v_flag & VALIASED) {
+				if (vp->v_iflag & VI_ALIASED) {
 					vx = NULL;
 						for (vq = *vp->v_hashchain; vq;
 						     vq = vq->v_specnext) {
@@ -1628,8 +1633,8 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 					if (vx == NULL)
 						panic("missing alias");
 					if (vq == NULL)
-						vx->v_flag &= ~VALIASED;
-					vp->v_flag &= ~VALIASED;
+						vx->v_iflag &= ~VI_ALIASED;
+					vp->v_iflag &= ~VI_ALIASED;
 				}
 			}
 			mutex_exit(&spechash_lock);
@@ -1649,7 +1654,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	} else {
 		/*
 		 * Any other processes trying to obtain this lock must first
-		 * wait for VXLOCK to clear, then call the new lock operation.
+		 * wait for VI_XLOCK to clear, then call the new lock operation.
 		 */
 		VOP_UNLOCK(vp, 0);
 	}
@@ -1702,7 +1707,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	vp->v_tag = VT_NON;
 	mutex_enter(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
-	vunwait(vp, VXLOCK|VLOCKSWORK|VFREEING);
+	vunwait(vp, VI_XLOCK|VI_LOCKSWORK|VI_FREEING);
 	mutex_exit(&vp->v_interlock);
 }
 
@@ -1752,8 +1757,8 @@ vgonel(struct vnode *vp, struct lwp *l)
 	 * wait until it is done and return.
 	 */
 
-	if (vp->v_flag & VXLOCK) {
-		vwait(vp, VXLOCK);
+	if (vp->v_iflag & VI_XLOCK) {
+		vwait(vp, VI_XLOCK);
 		mutex_exit(&vp->v_interlock);
 		return;
 	}
@@ -1763,7 +1768,7 @@ vgonel(struct vnode *vp, struct lwp *l)
 	 */
 
 	vclean(vp, DOCLOSE, l);
-	KASSERT((vp->v_flag & VONWORKLST) == 0);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 
 	/*
 	 * Delete from old mount point vnode list, if on one.
@@ -1858,9 +1863,11 @@ vcount(struct vnode *vp)
 	int count;
 
 loop:
-	if ((vp->v_flag & VALIASED) == 0)
-		return (vp->v_usecount);
 	mutex_enter(&spechash_lock);
+	if ((vp->v_iflag & VI_ALIASED) == 0) {
+		mutex_exit(&spechash_lock);
+		return (vp->v_usecount);
+	}
 	for (count = 0, vq = *vp->v_hashchain; vq; vq = vnext) {
 		vnext = vq->v_specnext;
 		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
@@ -1869,7 +1876,7 @@ loop:
 		 * Alias, but not in use, so flush it out.
 		 */
 		if (vq->v_usecount == 0 && vq != vp &&
-		    (vq->v_flag & VXLOCK) == 0) {
+		    (vq->v_iflag & VI_XLOCK) == 0) {
 			mutex_exit(&spechash_lock);
 			vgone(vq);
 			goto loop;
@@ -1902,7 +1909,8 @@ vprint(const char *label, struct vnode *vp)
 	    "refcount %ld,", ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
+	bitmask_snprintf(vp->v_iflag | vp->v_iflag | vp->v_uflag,
+	    vnode_flagbits, bf, sizeof(bf));
 	if (bf[0] != '\0')
 		printf(" flags (%s)", &bf[1]);
 	if (vp->v_data == NULL) {
@@ -2130,7 +2138,7 @@ vfs_mountedon(struct vnode *vp)
 		return ENOTBLK;
 	if (vp->v_specmountpoint != NULL)
 		return (EBUSY);
-	if (vp->v_flag & VALIASED) {
+	if (vp->v_iflag & VI_ALIASED) {
 		mutex_enter(&spechash_lock);
 		for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 			if (vq->v_rdev != vp->v_rdev ||
@@ -2730,7 +2738,8 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	char bf[256];
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
-	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
+	bitmask_snprintf(vp->v_iflag | vp->v_vflag | vp->v_uflag,
+	    vnode_flagbits, bf, sizeof(bf));
 	(*pr)("\nVNODE flags %s\n", bf);
 	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx waitcnt %d\n",
 	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize,

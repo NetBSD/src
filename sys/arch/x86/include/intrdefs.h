@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.5.32.1 2007/04/10 13:22:45 ad Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.5.32.2 2007/06/17 21:30:42 ad Exp $	*/
 
 #ifndef _X86_INTRDEFS_H_
 #define _X86_INTRDEFS_H_
@@ -21,22 +21,23 @@
  *
  */
 #define	IPL_NONE	0x0	/* nothing */
-#define	IPL_SOFTCLOCK	0x4	/* timeouts */
-#define	IPL_SOFTNET	0x5	/* protocol stacks */
-#define	IPL_BIO		0x6	/* block I/O */
-#define	IPL_NET		0x7	/* network */
-#define	IPL_SOFTSERIAL	0x8	/* serial */
-#define	IPL_TTY		0x9	/* terminal */
-#define	IPL_LPT		IPL_TTY
+#define	IPL_SOFTCLOCK	0x1	/* timeouts */
+#define	IPL_SOFTBIO	0x2	/* block I/O */
+#define	IPL_SOFTNET	0x3	/* protocol stacks */
+#define	IPL_SOFTSERIAL	0x4	/* serial */
+#define	IPL_BIO		0xa	/* block I/O */
+#define	IPL_NET		0xa	/* network */
+#define	IPL_TTY		0xa	/* terminal */
+#define	IPL_LPT		0xa
 #define	IPL_VM		0xa	/* memory allocation */
-#define	IPL_AUDIO	0xb	/* audio */
+#define	IPL_AUDIO	0xa	/* audio */
 #define	IPL_CLOCK	0xc	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define IPL_SCHED	IPL_CLOCK
+#define	IPL_STATCLOCK	0xc
+#define IPL_SCHED	0xc
 #define	IPL_HIGH	0xd	/* everything */
-#define	IPL_LOCK	IPL_HIGH
+#define	IPL_LOCK	0xd
 #define	IPL_SERIAL	0xd	/* serial */
-#define IPL_IPI		0xe	/* inter-processor interrupts */
+#define IPL_IPI		0xd	/* inter-processor interrupts */
 #define	NIPL		16
 
 /* Interrupt sharing types. */
@@ -54,8 +55,9 @@
 
 /* Soft interrupt masks. */
 #define	SIR_CLOCK	29
-#define	SIR_NET		28
-#define	SIR_SERIAL	27
+#define	SIR_BIO		28
+#define	SIR_NET		27
+#define	SIR_SERIAL	26
 
 
 /*

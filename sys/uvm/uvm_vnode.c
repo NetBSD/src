@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81.2.5 2007/06/09 23:58:21 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81.2.6 2007/06/17 21:32:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.5 2007/06/09 23:58:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.6 2007/06/17 21:32:23 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -139,9 +139,9 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	 */
 
 	mutex_enter(&uobj->vmobjlock);
-	if (vp->v_flag & VXLOCK) {
+	if (vp->v_iflag & VI_XLOCK) {
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
-		vwait(vp, VXLOCK);
+		vwait(vp, VI_XLOCK);
 		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
 	}
 
@@ -165,7 +165,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	if (vp->v_size == VSIZENOTSET) {
 
 
-	vp->v_flag |= VXLOCK;
+	vp->v_iflag |= VI_XLOCK;
 	mutex_exit(&uobj->vmobjlock); /* drop lock in case we sleep */
 		/* XXX: curproc? */
 	if (vp->v_type == VBLK) {
@@ -197,7 +197,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 
 	/* relock object */
 	mutex_enter(&uobj->vmobjlock);
-	vunwait(vp, VXLOCK);
+	vunwait(vp, VI_XLOCK);
 
 	if (result != 0) {
 		mutex_exit(&uobj->vmobjlock);
@@ -524,7 +524,7 @@ uvn_text_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	return (vp->v_flag & VEXECMAP) != 0;
+	return (vp->v_iflag & VI_EXECMAP) != 0;
 }
 
 bool
@@ -532,7 +532,7 @@ uvn_clean_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	return (vp->v_flag & VONWORKLST) == 0;
+	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
 bool
@@ -541,5 +541,5 @@ uvn_needs_writefault_p(struct uvm_object *uobj)
 	struct vnode *vp = (struct vnode *)uobj;
 
 	return uvn_clean_p(uobj) ||
-	    (vp->v_flag & (VWRITEMAP|VWRITEMAPDIRTY)) == VWRITEMAP;
+	    (vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP;
 }

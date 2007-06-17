@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.11.2.2 2007/04/05 21:57:51 ad Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.11.2.3 2007/06/17 21:31:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.11.2.2 2007/04/05 21:57:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.11.2.3 2007/06/17 21:31:41 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -233,7 +233,7 @@ again:
 	vp->v_type = kt->kt_vtype;
 
 	if (kfs_type == KFSkern)
-		vp->v_flag = VROOT;
+		vp->v_vflag = VV_ROOT;
 
 	kernfs_hashins(kfs);
 	uvm_vnp_setsize(vp, 0);

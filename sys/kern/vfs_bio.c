@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.8 2007/06/08 14:17:28 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.9 2007/06/17 21:31:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.8 2007/06/08 14:17:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.9 2007/06/17 21:31:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.8 2007/06/08 14:17:28 ad Exp $")
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
 
@@ -139,6 +140,8 @@ int count_lock_queue(void); /* XXX */
 #ifdef DEBUG
 static int checkfreelist(struct buf *, struct bqueue *);
 #endif
+static void biointr(void *);
+static void biodone2(struct buf *);
 
 /*
  * Definitions for the buffer hash lists.
@@ -179,9 +182,10 @@ kcondvar_t needbuffer_cv;
  */
 kmutex_t bqueue_lock;
 
-/*
- * Buffer pool for I/O buffers.
- */
+/* Software ISR for completed transfers. */
+void *biodone_sih;
+
+/* Buffer pool for I/O buffers. */
 static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
     &pool_allocator_nointr, IPL_NONE);
 
@@ -381,7 +385,7 @@ bufinit(void)
 	int use_std;
 	u_int i;
 
-	mutex_init(&bqueue_lock, MUTEX_DRIVER, IPL_BIO);
+	mutex_init(&bqueue_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&needbuffer_cv, "needbuf");
 
 	/*
@@ -443,6 +447,15 @@ bufinit(void)
 	 */
 	nbuf = (bufmem_hiwater / 1024) / 3;
 	bufhashtbl = hashinit(nbuf, HASH_LIST, M_CACHE, M_WAITOK, &bufhash);
+}
+
+void
+bufinit2(void)
+{
+
+	biodone_sih = softint_establish(SOFTINT_BIO, biointr, NULL);
+	if (biodone_sih == NULL)
+		panic("bufinit2: can't establish soft interrupt");
 }
 
 static int
@@ -555,7 +568,7 @@ buf_malloc(size_t size)
 
 		/* Wait for buffers to arrive on the LRU queue */
 		mutex_enter(&bqueue_lock);
-		cv_wait(&needbuffer_cv, &bqueue_lock);
+		cv_timedwait(&needbuffer_cv, &bqueue_lock, hz / 4);
 		mutex_exit(&bqueue_lock);
 	}
 
@@ -995,7 +1008,7 @@ already_queued:
 	mutex_exit(&bp->b_interlock);
 	mutex_exit(&bqueue_lock);
 	if (bp->b_bufsize <= 0) {
-		BUF_DESTROY(bp);
+		buf_destroy(bp);
 #ifdef DEBUG
 		memset((char *)bp, 0, sizeof(*bp));
 #endif
@@ -1226,7 +1239,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		bp = pool_get(&bufpool, PR_NOWAIT);
 		if (bp != NULL) {
 			memset((char *)bp, 0, sizeof(*bp));
-			BUF_INIT(bp);
+			buf_init(bp);
 			bp->b_dev = NODEV;
 			bp->b_vnbufs.le_next = NOLIST;
 			bp->b_flags = B_BUSY;
@@ -1419,44 +1432,89 @@ biowait(struct buf *bp)
 void
 biodone(struct buf *bp, int error, int resid)
 {
+	int s;
+
+	KASSERT(!ISSET(bp->b_flags, B_DONE));
+
+	bp->b_error = error;
+	if (error)
+		bp->b_resid = bp->b_bcount;
+	else
+		bp->b_resid = resid;
+
+	if (cpu_intr_p()) {
+		/* From interrupt mode: defer to a soft interrupt. */
+		s = splvm();
+		TAILQ_INSERT_TAIL(&curcpu()->ci_data.cpu_biodone, bp, b_actq);
+		softint_schedule(biodone_sih);
+		splx(s);
+	} else {
+		/* Process now - the buffer may be freed soon. */
+		biodone2(bp);
+	}
+}
+
+static void
+biodone2(struct buf *bp)
+{
 
 	mutex_enter(&bp->b_interlock);
-	if (error) {
-		bp->b_error = error;
-		bp->b_resid = bp->b_bcount;
+	if (bp->b_error)
 		SET(bp->b_flags, B_ERROR);
-	} else {
-		bp->b_resid = resid;
+	else
 		CLR(bp->b_flags, B_ERROR);
-	}
 	if (ISSET(bp->b_flags, B_DONE))
-		panic("biodone already");
-	SET(bp->b_flags, B_DONE);		/* note that it's done */
+		panic("biodone2 already");
+	SET(bp->b_flags, B_DONE);	/* note that it's done */
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
 	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
 		(*bioops.io_complete)(bp);
 
-	if (!ISSET(bp->b_flags, B_READ))	/* wake up writer */
+	if (!ISSET(bp->b_flags, B_READ))/* wake up writer */
 		vwakeup(bp);
 
 	/*
-	 * If necessary, call out.  Unlock the buffer before calling
-	 * iodone() as the buffer isn't valid any more when it return.
+	 * If necessary, call out.  Unlock the buffer before
+	 * calling iodone() as the buffer isn't valid any more
+	 * when it return.
 	 */
 	if (ISSET(bp->b_flags, B_CALL)) {
-		CLR(bp->b_flags, B_CALL);	/* but note callout done */
+		/* But note callout done */
+		CLR(bp->b_flags, B_CALL);
 		mutex_exit(&bp->b_interlock);
 		(*bp->b_iodone)(bp);
+	} else if (ISSET(bp->b_flags, B_ASYNC)) {
+		/* If async, release */
+		mutex_exit(&bp->b_interlock);
+		brelse(bp, 0);
 	} else {
-		if (ISSET(bp->b_flags, B_ASYNC)) {	/* if async, release */
-			mutex_exit(&bp->b_interlock);
-			brelse(bp, 0);
-		} else {			/* or just wakeup the buffer */
-			CLR(bp->b_flags, B_WANTED);
-			cv_broadcast(&bp->b_cv);
-			mutex_exit(&bp->b_interlock);
-		}
+		/* Or just wakeup the buffer */
+		CLR(bp->b_flags, B_WANTED);
+		cv_broadcast(&bp->b_cv);
+		mutex_exit(&bp->b_interlock);
+	}
+}
+
+
+static void
+biointr(void *cookie)
+{
+	struct cpu_info *ci;
+	struct buf *bp;
+	int s;
+
+	ci = curcpu();
+
+	while (!TAILQ_EMPTY(&ci->ci_data.cpu_biodone)) {
+		KASSERT(curcpu() == ci);
+
+		s = splvm();
+		bp = TAILQ_FIRST(&ci->ci_data.cpu_biodone);
+		TAILQ_REMOVE(&ci->ci_data.cpu_biodone, bp, b_actq);
+		splx(s);
+
+		biodone2(bp);
 	}
 }
 
@@ -1798,7 +1856,7 @@ getiobuf1(int prflags)
 
 	bp = pool_get(&bufiopool, prflags);
 	if (bp != NULL) {
-		BUF_INIT(bp);
+		buf_init(bp);
 	}
 	return bp;
 }
@@ -1821,7 +1879,7 @@ void
 putiobuf(struct buf *bp)
 {
 
-	BUF_DESTROY(bp);
+	buf_destroy(bp);
 	pool_put(&bufiopool, bp);
 }
 
@@ -1908,4 +1966,24 @@ nestiobuf_done(struct buf *mbp, int donebytes, int error)
 		biodone(mbp, error, mbp->b_resid);
 	} else
 		mutex_exit(&mbp->b_interlock);
+}
+
+void
+buf_init(struct buf *bp)
+{
+
+	LIST_INIT(&bp->b_dep);
+	mutex_init(&bp->b_interlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&bp->b_cv, "biowait");
+	bp->b_dev = NODEV;
+	bp->b_error = 0;
+	BIO_SETPRIO(bp, BPRIO_DEFAULT);
+}
+
+void
+buf_destroy(struct buf *bp)
+{
+
+	mutex_destroy(&bp->b_interlock);
+	cv_destroy(&bp->b_cv);
 }

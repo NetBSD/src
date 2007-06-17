@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.43.6.4 2007/06/10 19:40:20 ad Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.43.6.5 2007/06/17 21:31:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.43.6.4 2007/06/10 19:40:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.43.6.5 2007/06/17 21:31:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ dead_read(v)
 	/*
 	 * Return EOF for tty devices, EIO for others
 	 */
-	if ((ap->a_vp->v_flag & VISTTY) == 0)
+	if ((ap->a_vp->v_vflag & VV_ISTTY) == 0)
 		return (EIO);
 	return (0);
 }
@@ -220,7 +220,7 @@ dead_strategy(v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	if (ap->a_vp == NULL || !chkvnlock(ap->a_vp, false)) {
-		biodone(ap->a_bp, EIO, 0, true);
+		biodone(ap->a_bp, EIO, 0);
 		return (EIO);
 	}
 	return (VOP_STRATEGY(ap->a_vp, ap->a_bp));
@@ -314,8 +314,8 @@ chkvnlock(vp, interlock)
 
 	if (!interlock)
 		mutex_enter(&vp->v_interlock);
-	while (vp->v_flag & VXLOCK) {
-		vwait(vp, VXLOCK);
+	while (vp->v_iflag & VI_XLOCK) {
+		vwait(vp, VI_XLOCK);
 		locked = 1;
 	}
 	mutex_exit(&vp->v_interlock);

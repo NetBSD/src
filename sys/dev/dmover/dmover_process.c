@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_process.c,v 1.2 2003/03/06 21:32:59 thorpej Exp $	*/
+/*	$NetBSD: dmover_process.c,v 1.2.60.1 2007/06/17 21:30:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,13 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.2 2003/03/06 21:32:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_process.c,v 1.2.60.1 2007/06/17 21:30:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 #include <dev/dmover/dmovervar.h>
 
@@ -69,7 +68,7 @@ dmover_process_initialize(void)
 	TAILQ_INIT(&dmover_completed_q);
 	simple_lock_init(&dmover_completed_q_slock);
 
-	dmover_completed_si = softintr_establish(IPL_SOFTCLOCK,
+	dmover_completed_si = softint_establish(SOFTINT_CLOCK,
 	    dmover_complete, NULL);
 }
 
@@ -153,7 +152,7 @@ dmover_done(struct dmover_request *dreq)
 		simple_lock(&dmover_completed_q_slock);
 		TAILQ_INSERT_TAIL(&dmover_completed_q, dreq, dreq_dmbq);
 		simple_unlock(&dmover_completed_q_slock);
-		softintr_schedule(dmover_completed_si);
+		softint_schedule(dmover_completed_si);
 	} else if (dreq->dreq_flags & DMOVER_REQ_WAIT)
 		wakeup(dreq);
 

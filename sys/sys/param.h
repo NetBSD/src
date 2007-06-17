@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.255.4.4 2007/06/08 14:18:11 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.255.4.5 2007/06/17 21:32:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -205,12 +205,32 @@
 #define	PUSER	50
 #define	MAXPRI	127		/* Priorities range from 0 through MAXPRI. */
 
-#define	PRI_NONE	((pri_t)-1)	/* No priority: magic */
-
 #define	PRIMASK 	0x0ff
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
 #define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
 				   the interlock */
+
+/*
+ * New priority levels.
+ */
+
+#define	PRI_COUNT	256
+#define	PRI_NONE	(-1)
+
+#define	PRI_INTERRUPT	192
+#define	NPRI_INTERRUPT	64
+
+#define	PRI_KERNEL_RT	160
+#define	NPRI_KERNEL_RT	32
+
+#define	PRI_USER_RT	96
+#define	NPRI_USER_RT	64
+
+#define	PRI_KERNEL	64
+#define	NPRI_KERNEL	32
+
+#define	PRI_USER	0
+#define	NPRI_USER	64
 
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.32 2006/05/10 06:24:03 skrll Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.32.18.1 2007/06/17 21:31:02 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.32 2006/05/10 06:24:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.32.18.1 2007/06/17 21:31:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,9 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.32 2006/05/10 06:24:03 skrll Exp $")
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -329,7 +329,7 @@ zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
 	    zs_ioasic_hardintr, zs);
-	zs->zsc_sih = softintr_establish(IPL_SOFTSERIAL,
+	zs->zsc_sih = softint_establish(SOFTINT_SERIAL,
 	    zs_ioasic_softintr, zs);
 	if (zs->zsc_sih == NULL)
 		panic("zs_ioasic_attach: unable to register softintr");
@@ -430,7 +430,7 @@ zs_ioasic_hardintr(void *arg)
 	 * processing interrupts.
 	 */
 	if (zsc->zsc_cs[0]->cs_softreq | zsc->zsc_cs[1]->cs_softreq)
-		softintr_schedule(zsc->zsc_sih);
+		softint_schedule(zsc->zsc_sih);
 
 	return (1);
 }

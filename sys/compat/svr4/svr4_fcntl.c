@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.55.2.3 2007/05/27 14:35:32 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.55.2.4 2007/06/17 21:30:46 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.3 2007/05/27 14:35:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.4 2007/06/17 21:30:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	struct vnode *vp;
 	struct vattr vattr;
 	int error;
+	bool revoke;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
@@ -261,7 +262,10 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 
-	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
+	mutex_enter(&vp->v_interlock);
+	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED));
+	mutex_exit(&vp->v_interlock);
+	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);

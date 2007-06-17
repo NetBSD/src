@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.135.2.7 2007/06/09 23:55:13 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.135.2.8 2007/06/17 21:30:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -258,6 +258,8 @@ struct clockframe {
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
 #define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
 #define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
+
+extern bool	cpu_intr_p(void);
 
 /*
  * This is used during profiling to integrate system time.  It can safely

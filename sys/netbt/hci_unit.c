@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.3.10.1 2007/04/10 13:26:48 ad Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.3.10.2 2007/06/17 21:31:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.3.10.1 2007/04/10 13:26:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.3.10.2 2007/06/17 21:31:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.3.10.1 2007/04/10 13:26:48 ad Exp $")
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
+#include <sys/intr.h>
 
 #include <netbt/bluetooth.h>
 #include <netbt/hci.h>
@@ -123,7 +124,7 @@ hci_enable(struct hci_unit *unit)
 	unit->hci_acl_mask = HCI_PKT_DM1 | HCI_PKT_DH1;
 	unit->hci_packet_type = unit->hci_acl_mask;
 
-	unit->hci_rxint = softintr_establish(IPL_SOFTNET, &hci_intr, unit);
+	unit->hci_rxint = softint_establish(SOFTINT_NET, &hci_intr, unit);
 	if (unit->hci_rxint == NULL)
 		return EIO;
 
@@ -168,7 +169,7 @@ bad2:
 	splx(s);
 
 bad1:
-	softintr_disestablish(unit->hci_rxint);
+	softint_disestablish(unit->hci_rxint);
 	unit->hci_rxint = NULL;
 
 	return err;
@@ -187,7 +188,7 @@ hci_disable(struct hci_unit *unit)
 	}
 
 	if (unit->hci_rxint) {
-		softintr_disestablish(unit->hci_rxint);
+		softint_disestablish(unit->hci_rxint);
 		unit->hci_rxint = NULL;
 	}
 
@@ -395,7 +396,7 @@ hci_input_event(struct hci_unit *unit, struct mbuf *m)
 	} else {
 		unit->hci_eventqlen++;
 		MBUFQ_ENQUEUE(&unit->hci_eventq, m);
-		softintr_schedule(unit->hci_rxint);
+		softint_schedule(unit->hci_rxint);
 	}
 }
 
@@ -410,7 +411,7 @@ hci_input_acl(struct hci_unit *unit, struct mbuf *m)
 	} else {
 		unit->hci_aclrxqlen++;
 		MBUFQ_ENQUEUE(&unit->hci_aclrxq, m);
-		softintr_schedule(unit->hci_rxint);
+		softint_schedule(unit->hci_rxint);
 	}
 }
 
@@ -425,7 +426,7 @@ hci_input_sco(struct hci_unit *unit, struct mbuf *m)
 	} else {
 		unit->hci_scorxqlen++;
 		MBUFQ_ENQUEUE(&unit->hci_scorxq, m);
-		softintr_schedule(unit->hci_rxint);
+		softint_schedule(unit->hci_rxint);
 	}
 }
 
@@ -508,6 +509,6 @@ hci_complete_sco(struct hci_unit *unit, struct mbuf *m)
 		m_freem(m);
 	} else {
 		MBUFQ_ENQUEUE(&unit->hci_scodone, m);
-		softintr_schedule(unit->hci_rxint);
+		softint_schedule(unit->hci_rxint);
 	}
 }

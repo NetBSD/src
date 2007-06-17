@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.5.2.2 2007/06/09 23:58:11 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.5.2.3 2007/06/17 21:31:48 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -109,6 +109,7 @@
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #include <sys/socket.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -358,7 +359,7 @@ etherip_start(struct ifnet *ifp)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if(sc->sc_si)
-		softintr_schedule(sc->sc_si);
+		softint_schedule(sc->sc_si);
 #else
 	etheripintr(sc);
 #endif
@@ -531,7 +532,7 @@ etherip_set_tunnel(struct ifnet *ifp,
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
 #endif
@@ -552,7 +553,7 @@ etherip_set_tunnel(struct ifnet *ifp,
 	ifp->if_flags |= IFF_RUNNING;
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
+	sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 	if (sc->sc_si == NULL)
 		error = ENOMEM;
 #endif
@@ -573,7 +574,7 @@ etherip_delete_tunnel(struct ifnet *ifp)
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
-		softintr_disestablish(sc->sc_si);
+		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
 #endif
@@ -598,7 +599,7 @@ etherip_init(struct ifnet *ifp)
 	struct etherip_softc *sc = ifp->if_softc;
 
 	if (sc->sc_si == NULL)
-		sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
+		sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 
 	if (sc->sc_si == NULL)
 		return(ENOMEM);

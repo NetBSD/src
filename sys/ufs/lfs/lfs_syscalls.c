@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.122.2.2 2007/05/13 17:36:44 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.122.2.3 2007/06/17 21:32:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122.2.2 2007/05/13 17:36:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122.2.3 2007/06/17 21:32:15 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -368,7 +368,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 		/* Can't clean VDIROP directories in case of truncation */
 		/* XXX - maybe we should mark removed dirs specially? */
-		if (vp->v_type == VDIR && (vp->v_flag & VDIROP)) {
+		if (vp->v_type == VDIR && (vp->v_uflag & VU_DIROP)) {
 			do_again++;
 			continue;
 		}
@@ -728,7 +728,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * here.  Instead, we try an unlocked access.
 			 */
 			vp = ufs_ihashlookup(ump->um_dev, blkp->bi_inode);
-			if (vp != NULL && !(vp->v_flag & VXLOCK)) {
+			if (vp != NULL && !(vp->v_iflag & VI_XLOCK)) {
 				ip = VTOI(vp);
 				if (lfs_vref(vp)) {
 					v_daddr = LFS_UNUSED_DADDR;
@@ -1012,7 +1012,7 @@ int
 lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 {
 	if ((*vpp = ufs_ihashlookup(dev, ino)) != NULL) {
-		if ((*vpp)->v_flag & VXLOCK) {
+		if ((*vpp)->v_iflag & VI_XLOCK) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VXLOCK\n",
 			      ino));
 			lfs_stats.clean_vnlocked++;

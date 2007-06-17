@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.32.4.3 2007/06/09 23:58:03 ad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.32.4.4 2007/06/17 21:31:15 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.32.4.3 2007/06/09 23:58:03 ad Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.32.4.4 2007/06/17 21:31:15 ad Exp $");
 #endif /* not lint */
 
 
@@ -1367,9 +1367,8 @@ udf_read_sparables(struct udf_mount *ump, union udf_pmap *mapping)
 /* --------------------------------------------------------------------- */
 
 #define UDF_SET_SYSTEMFILE(vp) \
-	mutex_enter(&(vp)->v_interlock);	\
-	(vp)->v_flag |= VSYSTEM;		\
-	mutex_exit(&(vp)->v_interlock);\
+	/* XXXAD Is the vnode locked? */	\
+	(vp)->v_vflag |= VV_SYSTEM;		\
 	vref(vp);			\
 	vput(vp);			\
 
@@ -2710,8 +2709,9 @@ udf_read_file_extent(struct udf_node *node,
 {
 	struct buf buf;
 	uint32_t sector_size;
+	int rv;
 
-	BUF_INIT(&buf);
+	buf_init(&buf);
 
 	sector_size = node->ump->discinfo.sector_size;
 
@@ -2728,7 +2728,10 @@ udf_read_file_extent(struct udf_node *node,
 	BIO_SETPRIO(&buf, BPRIO_TIMELIMITED);
 
 	udf_read_filebuf(node, &buf);
-	return biowait(&buf);
+	rv = biowait(&buf);
+	buf_destroy(&buf);
+
+	return rv;
 }
 
 

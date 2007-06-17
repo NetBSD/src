@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.7 2007/06/09 23:58:07 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.8 2007/06/17 21:31:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.7 2007/06/09 23:58:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.8 2007/06/17 21:31:34 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -144,7 +144,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	saved_flags = mp->mnt_flag;
 
 	/* We can operate only on VROOT nodes. */
-	if ((vp->v_flag & VROOT) == 0) {
+	if ((vp->v_vflag & VV_ROOT) == 0) {
 		error = EINVAL;
 		goto out;
 	}
@@ -397,7 +397,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (error)
 		goto out;
 
-	if ((vp->v_flag & VROOT) == 0) {
+	if ((vp->v_vflag & VV_ROOT) == 0) {
 		error = EINVAL;
 		goto out;
 	}
@@ -550,7 +550,7 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * Must be the root of the filesystem
 	 */
-	if ((vp->v_flag & VROOT) == 0) {
+	if ((vp->v_vflag & VV_ROOT) == 0) {
 		vput(vp);
 		return (EINVAL);
 	}
@@ -2051,7 +2051,7 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
-	if (vp->v_flag & VROOT) {
+	if (vp->v_vflag & VV_ROOT) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
@@ -3476,7 +3476,7 @@ sys_rmdir(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
-	if (vp->v_flag & VROOT) {
+	if (vp->v_vflag & VV_ROOT) {
 		error = EBUSY;
 		goto out;
 	}
@@ -3575,6 +3575,7 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	struct vattr vattr;
 	int error;
+	bool revoke;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
@@ -3587,7 +3588,10 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 	    (error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
-	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED | VLAYER)))
+	mutex_enter(&vp->v_interlock);
+	revoke = (vp->v_usecount > 1 || (vp->v_iflag & (VI_ALIASED | VI_LAYER)));
+	mutex_exit(&vp->v_interlock);
+	if (revoke)
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);

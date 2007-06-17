@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.5.2.1 2007/06/08 14:17:24 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.5.2.2 2007/06/17 21:31:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.1 2007/06/08 14:17:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.2 2007/06/17 21:31:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -394,6 +394,12 @@ lockdebug_wantlock(u_int id, uintptr_t where, int shared)
 			recurse = true;
 	}
 
+	if (cpu_intr_p()) {
+		if ((ld->ld_flags & LD_SLEEPER) != 0)
+			lockdebug_abort1(ld, lk, __func__,
+			    "acquiring sleep lock from interrupt context");
+	}
+
 	if (shared)
 		ld->ld_shwant++;
 	else
@@ -533,7 +539,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 					    "not held by current CPU");
 				continue;
 			}
-			if (ld->ld_cpu == cpuno)
+			if (ld->ld_cpu == cpuno && (l->l_flag & LW_INTR) == 0)
 				lockdebug_abort1(ld, &ld_spinner_lk,
 				    __func__, "spin lock held");
 		}

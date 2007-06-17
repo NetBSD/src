@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.9 2007/06/08 14:18:15 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.10 2007/06/17 21:32:08 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.9 2007/06/08 14:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.10 2007/06/17 21:32:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -4688,7 +4688,7 @@ softdep_fsync(vp, f)
 		 * not now, but then the user was not asking to have it
 		 * written, so we are not breaking any promises.
 		 */
-		if (vp->v_flag & VXLOCK)
+		if (vp->v_iflag & VI_XLOCK)
 			break;
 		/*
 		 * We prevent deadlock by always fetching inodes from the

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.18.6.4 2007/05/13 17:36:39 ad Exp $ */
+/*	$NetBSD: crypto.c,v 1.18.6.5 2007/06/17 21:31:58 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.18.6.4 2007/05/13 17:36:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.18.6.5 2007/06/17 21:31:58 ad Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -35,11 +35,12 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.18.6.4 2007/05/13 17:36:39 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <opencrypto/cryptodev.h>
 #include <sys/kthread.h>
 #include <sys/once.h>
 #include <sys/sysctl.h>
+#include <sys/intr.h>
 
+#include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
 #ifdef __NetBSD__
@@ -47,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.18.6.4 2007/05/13 17:36:39 ad Exp $");
   /* below is kludges to check whats still missing */
   #define SWI_CRYPTO 17
   #define register_swi(lvl, fn)  \
-  softintr_establish(IPL_SOFTNET, (void (*)(void*))fn, NULL)
-  #define unregister_swi(lvl, fn)  softintr_disestablish(softintr_cookie)
-  #define setsoftcrypto(x) softintr_schedule(x)
+  softint_establish(SOFTINT_NET, (void (*)(void*))fn, NULL)
+  #define unregister_swi(lvl, fn)  softint_disestablish(softintr_cookie)
+  #define setsoftcrypto(x) softint_schedule(x)
 #endif
 
 #define	SESID2HID(sid)	(((sid) >> 32) & 0xffffffff)

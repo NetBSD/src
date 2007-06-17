@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.67.4.4 2007/06/08 14:18:17 ad Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.67.4.5 2007/06/17 21:32:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.67.4.4 2007/06/08 14:18:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.67.4.5 2007/06/17 21:32:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ lfs_unmark_dirop(struct lfs *fs)
 			--lfs_dirvcount;
 			mutex_exit(&lfs_subsys_lock);
 			--fs->lfs_dirvcount;
-			vp->v_flag &= ~VDIROP;
+			vp->v_uflag &= ~VU_DIROP;
 			TAILQ_REMOVE(&fs->lfs_dchainhd, ip, i_lfs_dchain);
 			mutex_exit(&fs->lfs_interlock);
 			wakeup(&lfs_dirvcount);

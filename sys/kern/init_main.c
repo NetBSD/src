@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.10 2007/06/09 23:58:04 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.11 2007/06/17 21:31:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.10 2007/06/09 23:58:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.11 2007/06/17 21:31:18 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -383,6 +383,9 @@ main(void)
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
+
+	/* Initialize the buffer cache, part 2 */
+	bufinit2();
 
 #if defined(__SSP__) || defined(__SSP_ALL__)
 	{

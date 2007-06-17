@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22.2.2 2007/05/13 17:36:23 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.3 2007/06/17 21:30:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.2 2007/05/13 17:36:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.3 2007/06/17 21:30:56 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -859,7 +859,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 {
 	struct buf b;
 
-	BUF_INIT(&b);
+	buf_init(&b);
 
 	b.b_vp = vp;
 	b.b_dev = vp->v_rdev;
@@ -1069,7 +1069,6 @@ dkstart(struct dkwedge_softc *sc)
 
 		(void) BUFQ_GET(sc->sc_bufq);
 
-		BUF_INIT(nbp);
 		nbp->b_data = bp->b_data;
 		nbp->b_flags = bp->b_flags | B_CALL;
 		nbp->b_iodone = dkiodone;

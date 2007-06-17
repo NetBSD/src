@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.19.2.3 2007/05/13 17:36:31 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.19.2.4 2007/06/17 21:31:07 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.3 2007/05/13 17:36:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.4 2007/06/17 21:31:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ deget(pmp, dirclust, diroffset, depp)
 		 * exists), and then use the time and date from that entry
 		 * as the time and date for the root denode.
 		 */
-		nvp->v_flag |= VROOT; /* should be further down		XXX */
+		nvp->v_vflag |= VV_ROOT; /* should be further down XXX */
 
 		ldep->de_Attributes = ATTR_DIRECTORY;
 		if (FAT32(pmp))
@@ -411,7 +411,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred,
 	 * recognize the root directory at this point in a file or
 	 * directory's life.
 	 */
-	if ((DETOV(dep)->v_flag & VROOT) && !FAT32(pmp)) {
+	if ((DETOV(dep)->v_vflag & VV_ROOT) && !FAT32(pmp)) {
 		printf("detrunc(): can't truncate root directory, clust %ld, offset %ld\n",
 		    dep->de_dirclust, dep->de_diroffset);
 		return (EINVAL);
@@ -534,7 +534,7 @@ deextend(dep, length, cred)
 	/*
 	 * The root of a DOS filesystem cannot be extended.
 	 */
-	if ((DETOV(dep)->v_flag & VROOT) && !FAT32(pmp))
+	if ((DETOV(dep)->v_vflag & VV_ROOT) && !FAT32(pmp))
 		return (EINVAL);
 
 	/*

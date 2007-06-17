@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198.2.4 2007/06/08 14:18:17 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.2.5 2007/06/17 21:32:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.4 2007/06/08 14:18:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.5 2007/06/17 21:32:13 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -382,7 +382,7 @@ lfs_vflush(struct vnode *vp)
 	}
 
 #ifdef DIAGNOSTIC
-	if (vp->v_flag & VDIROP) {
+	if (vp->v_uflag & VU_DIROP) {
 		DLOG((DLOG_VNODE, "lfs_vflush: flushing VDIROP\n"));
 		/* panic("lfs_vflush: VDIROP being flushed...this can\'t happen"); */
 	}
@@ -515,9 +515,9 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		}
 
 		ip = VTOI(vp);
-		if ((op == VN_DIROP && !(vp->v_flag & VDIROP)) ||
+		if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
 		    (op != VN_DIROP && op != VN_CLEAN &&
-		    (vp->v_flag & VDIROP))) {
+		    (vp->v_uflag & VU_DIROP))) {
 			vndebug(vp,"dirop");
 			continue;
 		}
@@ -840,7 +840,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 	fip = sp->fip;
 	lfs_acquire_finfo(fs, ip->i_number, ip->i_gen);
 
-	if (vp->v_flag & VDIROP)
+	if (vp->v_uflag & VU_DIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 
 	if (sp->seg_flags & SEGM_CLEAN) {
@@ -1117,7 +1117,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	}
 
 	/* Check VDIROP in case there is a new file with no data blocks */
-	if (ITOV(ip)->v_flag & VDIROP)
+	if (ITOV(ip)->v_uflag & VU_DIROP)
 		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
 
 	/* Update the inode times and copy the inode onto the inode page. */
@@ -1151,7 +1151,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * current values the next time we clean.
 	 */
 	if (sp->seg_flags & SEGM_CLEAN) {
-		if (ITOV(ip)->v_flag & VDIROP) {
+		if (ITOV(ip)->v_uflag & VU_DIROP) {
 			cdp->di_nlink = ip->i_lfs_odnlink;
 			/* if (ITOV(ip)->v_type == VDIR) */
 			cdp->di_size = ip->i_lfs_osize;
@@ -2748,7 +2748,8 @@ lfs_vunref(struct vnode *vp)
 	if (vp->v_usecount <= 0) {
 		printf("lfs_vunref: inum is %llu\n", (unsigned long long)
 		    VTOI(vp)->i_number);
-		printf("lfs_vunref: flags are 0x%lx\n", (u_long)vp->v_flag);
+		printf("lfs_vunref: flags are 0x%x\n",
+		    vp->v_iflag | vp->v_vflag | vp->v_uflag);
 		printf("lfs_vunref: usecount = %ld\n", (long)vp->v_usecount);
 		panic("lfs_vunref: v_usecount < 0");
 	}
