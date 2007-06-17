@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.29 2007/03/26 22:52:44 hubertf Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.30 2007/06/17 13:34:43 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.29 2007/03/26 22:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.30 2007/06/17 13:34:43 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -51,12 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.29 2007/03/26 22:52:44 hubertf Exp $
 
 #if defined(_KERNEL)
 #include <sys/systm.h>
+#include <sys/kernel.h>	/* hz */
+#include <sys/callout.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/once.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/vmem.h>
+#include <sys/workqueue.h>
 #else /* defined(_KERNEL) */
 #include "../sys/vmem.h"
 #endif /* defined(_KERNEL) */
@@ -73,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.29 2007/03/26 22:52:44 hubertf Exp $
 #define	LOCK_ASSERT(a)		/* nothing */
 #define	simple_lock_init(a)	/* nothing */
 #define	simple_lock(a)		/* nothing */
+#define	simple_lock_try(a)	1
 #define	simple_unlock(a)	/* nothing */
 #define	ASSERT_SLEEPABLE(lk, msg) /* nothing */
 #endif /* defined(_KERNEL) */
@@ -85,7 +89,10 @@ void vmem_dump(const vmem_t *);
 #endif /* defined(VMEM_DEBUG) */
 
 #define	VMEM_MAXORDER		(sizeof(vmem_size_t) * CHAR_BIT)
-#define	VMEM_HASHSIZE_INIT	4096	/* XXX */
+
+#define	VMEM_HASHSIZE_MIN	1	/* XXX */
+#define	VMEM_HASHSIZE_MAX	8192	/* XXX */
+#define	VMEM_HASHSIZE_INIT	VMEM_HASHSIZE_MIN
 
 #define	VM_FITMASK	(VM_BESTFIT | VM_INSTANTFIT)
 
@@ -123,6 +130,7 @@ struct vmem {
 	size_t vm_quantum_mask;
 	int vm_quantum_shift;
 	const char *vm_name;
+	LIST_ENTRY(vmem) vm_alllist;
 
 #if defined(QCACHE)
 	/* quantum cache */
@@ -134,6 +142,7 @@ struct vmem {
 };
 
 #define	VMEM_LOCK(vm)	simple_lock(&vm->vm_lock)
+#define	VMEM_TRYLOCK(vm)	simple_lock_try(&vm->vm_lock)
 #define	VMEM_UNLOCK(vm)	simple_unlock(&vm->vm_lock)
 #define	VMEM_LOCK_INIT(vm)	simple_lock_init(&vm->vm_lock);
 #define	VMEM_ASSERT_LOCKED(vm) \
@@ -404,6 +413,11 @@ bt_insfree(vmem_t *vm, bt_t *bt)
 
 /* ---- vmem internal functions */
 
+#if defined(_KERNEL)
+static kmutex_t vmem_list_lock;
+static LIST_HEAD(, vmem) vmem_list = LIST_HEAD_INITIALIZER(vmem_list);
+#endif /* defined(_KERNEL) */
+
 #if defined(QCACHE)
 static inline vm_flag_t
 prf_to_vmf(int prflags)
@@ -558,6 +572,7 @@ static int
 vmem_init(void)
 {
 
+	mutex_init(&vmem_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	pool_cache_init(&bt_poolcache, &bt_pool, NULL, NULL, NULL);
 	return 0;
 }
@@ -599,6 +614,31 @@ vmem_add1(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags,
 	VMEM_UNLOCK(vm);
 
 	return addr;
+}
+
+static void
+vmem_destroy1(vmem_t *vm)
+{
+
+	VMEM_ASSERT_UNLOCKED(vm);
+
+#if defined(QCACHE)
+	qc_destroy(vm);
+#endif /* defined(QCACHE) */
+	if (vm->vm_hashlist != NULL) {
+		int i;
+
+		for (i = 0; i < vm->vm_hashsize; i++) {
+			bt_t *bt;
+
+			while ((bt = LIST_FIRST(&vm->vm_hashlist[i])) != NULL) {
+				KASSERT(bt->bt_type == BT_TYPE_SPAN_STATIC);
+				bt_free(vm, bt);
+			}
+		}
+		xfree(vm->vm_hashlist);
+	}
+	xfree(vm);
 }
 
 static int
@@ -646,7 +686,10 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
 		LIST_INIT(&newhashlist[i]);
 	}
 
-	VMEM_LOCK(vm);
+	if (!VMEM_TRYLOCK(vm)) {
+		xfree(newhashlist);
+		return EBUSY;
+	}
 	oldhashlist = vm->vm_hashlist;
 	oldhashsize = vm->vm_hashsize;
 	vm->vm_hashlist = newhashlist;
@@ -771,16 +814,22 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 	}
 	vm->vm_hashlist = NULL;
 	if (vmem_rehash(vm, VMEM_HASHSIZE_INIT, flags)) {
-		vmem_destroy(vm);
+		vmem_destroy1(vm);
 		return NULL;
 	}
 
 	if (size != 0) {
 		if (vmem_add(vm, base, size, flags) == 0) {
-			vmem_destroy(vm);
+			vmem_destroy1(vm);
 			return NULL;
 		}
 	}
+
+#if defined(_KERNEL)
+	mutex_enter(&vmem_list_lock);
+	LIST_INSERT_HEAD(&vmem_list, vm, vm_alllist);
+	mutex_exit(&vmem_list_lock);
+#endif /* defined(_KERNEL) */
 
 	return vm;
 }
@@ -789,25 +838,13 @@ void
 vmem_destroy(vmem_t *vm)
 {
 
-	VMEM_ASSERT_UNLOCKED(vm);
+#if defined(_KERNEL)
+	mutex_enter(&vmem_list_lock);
+	LIST_REMOVE(vm, vm_alllist);
+	mutex_exit(&vmem_list_lock);
+#endif /* defined(_KERNEL) */
 
-#if defined(QCACHE)
-	qc_destroy(vm);
-#endif /* defined(QCACHE) */
-	if (vm->vm_hashlist != NULL) {
-		int i;
-
-		for (i = 0; i < vm->vm_hashsize; i++) {
-			bt_t *bt;
-
-			while ((bt = LIST_FIRST(&vm->vm_hashlist[i])) != NULL) {
-				KASSERT(bt->bt_type == BT_TYPE_SPAN_STATIC);
-				bt_free(vm, bt);
-			}
-		}
-		xfree(vm->vm_hashlist);
-	}
-	xfree(vm);
+	vmem_destroy1(vm);
 }
 
 vmem_size_t
@@ -1119,6 +1156,77 @@ vmem_reap(vmem_t *vm)
 	return didsomething;
 }
 
+/* ---- rehash */
+
+#if defined(_KERNEL)
+static struct callout vmem_rehash_ch;
+static int vmem_rehash_interval;
+static struct workqueue *vmem_rehash_wq;
+static struct work vmem_rehash_wk;
+
+static void
+vmem_rehash_all(struct work *wk, void *dummy)
+{
+	vmem_t *vm;
+
+	KASSERT(wk == &vmem_rehash_wk);
+	mutex_enter(&vmem_list_lock);
+	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
+		size_t desired;
+		size_t current;
+		int s;
+
+		s = splvm();
+		if (!VMEM_TRYLOCK(vm)) {
+			splx(s);
+			continue;
+		}
+		desired = vm->vm_nbusytag;
+		current = vm->vm_hashsize;
+		VMEM_UNLOCK(vm);
+		splx(s);
+
+		if (desired > VMEM_HASHSIZE_MAX) {
+			desired = VMEM_HASHSIZE_MAX;
+		} else if (desired < VMEM_HASHSIZE_MIN) {
+			desired = VMEM_HASHSIZE_MIN;
+		}
+		if (desired > current * 2 || desired * 2 < current) {
+			s = splvm();
+			vmem_rehash(vm, desired, VM_NOSLEEP);
+			splx(s);
+		}
+	}
+	mutex_exit(&vmem_list_lock);
+
+	callout_schedule(&vmem_rehash_ch, vmem_rehash_interval);
+}
+
+static void
+vmem_rehash_all_kick(void *dummy)
+{
+
+	workqueue_enqueue(vmem_rehash_wq, &vmem_rehash_wk);
+}
+
+void
+vmem_rehash_start(void)
+{
+	int error;
+
+	error = workqueue_create(&vmem_rehash_wq, "vmem_rehash",
+	    vmem_rehash_all, NULL, PVM, IPL_SOFTCLOCK, 0);
+	if (error) {
+		panic("%s: workqueue_create %d\n", __func__, error);
+	}
+	callout_init(&vmem_rehash_ch);
+	callout_setfunc(&vmem_rehash_ch, vmem_rehash_all_kick, NULL);
+
+	vmem_rehash_interval = hz * 10;
+	callout_schedule(&vmem_rehash_ch, vmem_rehash_interval);
+}
+#endif /* defined(_KERNEL) */
+
 /* ---- debug */
 
 #if defined(VMEM_DEBUG)
@@ -1188,7 +1296,7 @@ main()
 #endif
 
 	vm = vmem_create("test", VMEM_ADDR_NULL, 0, 1,
-	    NULL, NULL, NULL, 0, VM_NOSLEEP);
+	    NULL, NULL, NULL, 0, VM_SLEEP);
 	if (vm == NULL) {
 		printf("vmem_create\n");
 		exit(EXIT_FAILURE);
