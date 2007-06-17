@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.3 2007/01/07 19:08:05 jmcneill Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.3.10.1 2007/06/17 01:35:08 itohy Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.3 2007/01/07 19:08:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.3.10.1 2007/06/17 01:35:08 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,8 @@ static void xboxcontroller_intr(usbd_xfer_handle, usbd_private_handle,
 				usbd_status);
 
 static int xboxcontroller_wsmouse_enable(void *);
-static int xboxcontroller_wsmouse_ioctl(void *, u_long, caddr_t, int,
-					struct lwp *);
+static int xboxcontroller_wsmouse_ioctl(void *, u_long, usb_ioctlarg_t, int,
+					usb_proc_ptr);
 static void xboxcontroller_wsmouse_disable(void *);
 
 static const struct wsmouse_accessops xboxcontroller_accessops = {
@@ -319,8 +319,8 @@ xboxcontroller_wsmouse_disable(void *opaque)
 }
 
 static int
-xboxcontroller_wsmouse_ioctl(void *opaque, u_long cmd, caddr_t data, int flag,
-			     struct lwp *l)
+xboxcontroller_wsmouse_ioctl(void *opaque, u_long cmd, usb_ioctlarg_t data,
+			     int flag, usb_proc_ptr l)
 {
 
 	switch (cmd) {
