@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.18.10.2 2007/06/13 04:13:01 itohy Exp $ */
+/*	$NetBSD: if_ural.c,v 1.18.10.3 2007/06/17 00:58:16 itohy Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.10.2 2007/06/13 04:13:01 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.10.3 2007/06/17 00:58:16 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -144,7 +144,7 @@ Static int		ural_tx_data(struct ural_softc *, struct mbuf *,
 Static void		ural_start(struct ifnet *);
 Static void		ural_watchdog(struct ifnet *);
 Static int		ural_reset(struct ifnet *);
-Static int		ural_ioctl(struct ifnet *, u_long, caddr_t);
+Static int		ural_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static void		ural_set_testmode(struct ural_softc *);
 Static void		ural_eeprom_read(struct ural_softc *, uint16_t, void *,
 			    int);
@@ -1456,7 +1456,7 @@ ural_reset(struct ifnet *ifp)
 }
 
 Static int
-ural_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ural_ioctl(struct ifnet *ifp, u_long cmd, usb_ioctlarg_t data)
 {
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
