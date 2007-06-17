@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.48.4.1 2007/05/22 14:57:50 itohy Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.48.4.2 2007/06/17 01:31:59 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.48.4.1 2007/05/22 14:57:50 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.48.4.2 2007/06/17 01:31:59 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.36 2006/09/07 00:06:42 imp Exp $"); */
 
 #include <sys/param.h>
@@ -452,7 +452,7 @@ usbd_bulk_transfer(usbd_xfer_handle xfer, usbd_pipe_handle pipe,
 		splx(s);
 		return (err);
 	}
-	error = tsleep((caddr_t)xfer, PZERO | PCATCH, lbl, 0);
+	error = tsleep(xfer, PZERO | PCATCH, lbl, 0);
 	splx(s);
 	if (error) {
 		DPRINTF(("usbd_bulk_transfer: tsleep=%d\n", error));
