@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.5.6.1 2007/06/17 01:14:11 itohy Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.5.6.2 2007/06/18 13:54:33 itohy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.5.6.1 2007/06/17 01:14:11 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.5.6.2 2007/06/18 13:54:33 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,7 @@ USB_DECLARE_DRIVER(ukyopon);
 
 USB_MATCH(ukyopon)
 {
+#ifndef USB_USE_IFATTACH
 	USB_MATCH_START(ukyopon, uaa);
 	usb_device_descriptor_t *dd;
 	usb_interface_descriptor_t *id;
@@ -119,9 +120,18 @@ USB_MATCH(ukyopon)
 	dd = usbd_get_device_descriptor(uaa->device);
 	if (id == NULL || dd == NULL)
 		return (UMATCH_NONE);
+#else
+	USB_IFMATCH_START(ukyopon, uaa);
+#endif /* USB_USE_IFATTACH */
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_KYOCERA &&
+	if (
+#ifndef USB_USE_IFATTACH
+	    UGETW(dd->idVendor) == USB_VENDOR_KYOCERA &&
 	    UGETW(dd->idProduct) == USB_PRODUCT_KYOCERA_AHK3001V &&
+#else
+	    uaa->vendor == USB_VENDOR_KYOCERA &&
+	    uaa->product == USB_PRODUCT_KYOCERA_AHK3001V &&
+#endif /* USB_USE_IFATTACH */
 	    (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX ||
 	     uaa->ifaceno == UKYOPON_DATA_IFACE_INDEX))
 		return (UMATCH_VENDOR_PRODUCT);
@@ -131,7 +141,11 @@ USB_MATCH(ukyopon)
 
 USB_ATTACH(ukyopon)
 {
+#ifndef USB_USE_IFATTACH
 	USB_ATTACH_START(ukyopon, sc, uaa);
+#else
+	USB_IFATTACH_START(ukyopon, sc, uaa);
+#endif /* USB_USE_IFATTACH */
 	struct ucom_attach_args uca;
 
 	uca.portno = (uaa->ifaceno == UKYOPON_MODEM_IFACE_INDEX) ?
