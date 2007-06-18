@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.14.4 2007/06/07 20:30:47 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.14.5 2007/06/18 02:38:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.4 2007/06/07 20:30:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.34.14.5 2007/06/18 02:38:23 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,6 +100,8 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	._dmamem_map = _bus_dmamem_map,
 	._dmamem_unmap = _bus_dmamem_unmap,
 	._dmamem_mmap = _bus_dmamem_mmap,
+	._dma_phys_to_bus_mem = _bus_dma_phys_to_bus_mem_generic,
+	._dma_bus_mem_to_phys = _bus_dma_bus_mem_to_phys_generic,
 };
 
 void
