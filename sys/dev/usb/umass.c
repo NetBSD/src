@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.123.10.1 2007/05/22 14:57:43 itohy Exp $	*/
+/*	$NetBSD: umass.c,v 1.123.10.2 2007/06/18 13:55:29 itohy Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.123.10.1 2007/05/22 14:57:43 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.123.10.2 2007/06/18 13:55:29 itohy Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -314,22 +314,38 @@ Static void umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer,
 
 USB_MATCH(umass)
 {
+#ifndef USB_USE_IFATTACH
 	USB_MATCH_START(umass, uaa);
+#else
+	USB_IFMATCH_START(umass, uaa);
+#endif /* USB_USE_IFATTACH */
 	const struct umass_quirk *quirk;
+#ifndef USB_USE_IFATTACH
 	usb_interface_descriptor_t *id;
 
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	quirk = umass_lookup(uaa->vendor, uaa->product);
 	if (quirk != NULL)
 		return (quirk->uq_match);
 
+#ifndef USB_USE_IFATTACH
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL || id->bInterfaceClass != UICLASS_MASS)
+#else
+	if (uaa->class != UICLASS_MASS)
+#endif /* USB_USE_IFATTACH */
 		return (UMATCH_NONE);
 
-	switch (id->bInterfaceSubClass) {
+	switch (
+#ifndef USB_USE_IFATTACH
+	    id->bInterfaceSubClass
+#else
+	    uaa->subclass
+#endif /* USB_USE_IFATTACH */
+	) {
 	case UISUBCLASS_RBC:
 	case UISUBCLASS_SFF8020I:
 	case UISUBCLASS_QIC157:
@@ -341,7 +357,13 @@ USB_MATCH(umass)
 		return (UMATCH_IFACECLASS);
 	}
 
-	switch (id->bInterfaceProtocol) {
+	switch (
+#ifndef USB_USE_IFATTACH
+	    id->bInterfaceProtocol
+#else
+	    uaa->proto
+#endif /* USB_USE_IFATTACH */
+	) {
 	case UIPROTO_MASS_CBI_I:
 	case UIPROTO_MASS_CBI:
 	case UIPROTO_MASS_BBB_OLD:
@@ -356,7 +378,11 @@ USB_MATCH(umass)
 
 USB_ATTACH(umass)
 {
+#ifndef USB_USE_IFATTACH
 	USB_ATTACH_START(umass, sc, uaa);
+#else
+	USB_IFATTACH_START(umass, sc, uaa);
+#endif /* USB_USE_IFATTACH */
 	const struct umass_quirk *quirk;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -393,12 +419,20 @@ USB_ATTACH(umass)
 		sc->sc_busquirks = 0;
 	}
 
+#ifndef USB_USE_IFATTACH
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	if (id == NULL)
 		USB_ATTACH_ERROR_RETURN;
 
+#endif /* USB_USE_IFATTACH */
 	if (sc->sc_wire == UMASS_WPROTO_UNSPEC) {
-		switch (id->bInterfaceProtocol) {
+		switch (
+#ifndef USB_USE_IFATTACH
+		    id->bInterfaceProtocol
+#else
+		    uaa->proto
+#endif /* USB_USE_IFATTACH */
+		) {
 		case UIPROTO_MASS_CBI:
 			sc->sc_wire = UMASS_WPROTO_CBI;
 			break;
@@ -410,16 +444,29 @@ USB_ATTACH(umass)
 			sc->sc_wire = UMASS_WPROTO_BBB;
 			break;
 		default:
+#ifndef USB_USE_IFATTACH
 			DPRINTF(UDMASS_GEN,
 				("%s: Unsupported wire protocol %u\n",
 				USBDEVNAME(sc->sc_dev),
 				id->bInterfaceProtocol));
+#else
+			DPRINTF(UDMASS_GEN,
+				("%s: Unsupported wire protocol %u\n",
+				USBDEVNAME(sc->sc_dev),
+				uaa->proto));
+#endif /* USB_USE_IFATTACH */
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
 
 	if (sc->sc_cmd == UMASS_CPROTO_UNSPEC) {
-		switch (id->bInterfaceSubClass) {
+		switch (
+#ifndef USB_USE_IFATTACH
+		    id->bInterfaceSubClass
+#else
+		    uaa->subclass
+#endif /* USB_USE_IFATTACH */
+		) {
 		case UISUBCLASS_SCSI:
 			sc->sc_cmd = UMASS_CPROTO_SCSI;
 			break;
@@ -435,10 +482,17 @@ USB_ATTACH(umass)
 			sc->sc_cmd = UMASS_CPROTO_RBC;
 			break;
 		default:
+#ifndef USB_USE_IFATTACH
 			DPRINTF(UDMASS_GEN,
 				("%s: Unsupported command protocol %u\n",
 				USBDEVNAME(sc->sc_dev),
 				id->bInterfaceSubClass));
+#else
+			DPRINTF(UDMASS_GEN,
+				("%s: Unsupported command protocol %u\n",
+				USBDEVNAME(sc->sc_dev),
+				uaa->subclass));
+#endif /* USB_USE_IFATTACH */
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
@@ -503,6 +557,9 @@ USB_ATTACH(umass)
 	 * The endpoint addresses are not fixed, so we have to read them
 	 * from the device descriptors of the current interface.
 	 */
+#ifdef USB_USE_IFATTACH
+	id = usbd_get_interface_descriptor(sc->sc_iface);
+#endif /* USB_USE_IFATTACH */
 	for (i = 0 ; i < id->bNumEndpoints ; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
