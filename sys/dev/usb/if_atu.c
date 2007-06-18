@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.24.6.3 2007/06/17 00:49:10 itohy Exp $ */
+/*	$NetBSD: if_atu.c,v 1.24.6.4 2007/06/18 13:38:14 itohy Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.24.6.3 2007/06/17 00:49:10 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.24.6.4 2007/06/18 13:38:14 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -1020,8 +1020,10 @@ USB_MATCH(atu)
 	USB_MATCH_START(atu, uaa);
 	int			i;
 
+#ifndef USB_USE_IFATTACH
 	if (!uaa->iface)
 		return(UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	for (i = 0; i < sizeof(atu_devs)/sizeof(atu_devs[0]); i++) {
 		struct atu_type *t = &atu_devs[i];
@@ -1233,7 +1235,9 @@ USB_ATTACH(atu)
 		USB_ATTACH_SUCCESS_RETURN;
 	}
 
+#ifndef USB_USE_IFATTACH
 	uaa->iface = sc->atu_iface;
+#endif /* USB_USE_IFATTACH */
 
 	if (mode != MODE_NETCARD) {
 		DPRINTFN(15, ("%s: device needs external firmware\n",
