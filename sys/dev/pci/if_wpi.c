@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.9 2007/03/04 06:02:24 christos Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.10 2007/06/18 19:40:49 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.9 2007/03/04 06:02:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.10 2007/06/18 19:40:49 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -553,6 +553,8 @@ wpi_alloc_rbuf(struct wpi_softc *sc)
 	if (rbuf == NULL)
 		return NULL;
 	SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
+	sc->rxq.nb_free_entries --;
+
 	return rbuf;
 }
 
@@ -568,7 +570,9 @@ wpi_free_rbuf(struct mbuf* m, void *buf, size_t size, void *arg)
 	int s;
 
 	/* put the buffer back in the free list */
+
 	SLIST_INSERT_HEAD(&sc->rxq.freelist, rbuf, next);
+	sc->rxq.nb_free_entries ++;
 
 	if (__predict_true(m != NULL)) {
 		s = splvm();
@@ -603,6 +607,8 @@ wpi_alloc_rpool(struct wpi_softc *sc)
 
 		SLIST_INSERT_HEAD(&ring->freelist, rbuf, next);
 	}
+
+	ring->nb_free_entries = WPI_RBUF_COUNT;
 	return 0;
 }
 
@@ -1209,27 +1215,39 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	}
 
 
-	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-	if (mnew == NULL) {
-		ifp->if_ierrors++;
-		return;
+
+	/* 
+	 * If the number of free entry is too low
+	 * just dup the data->m socket and reuse the same rbuf entry
+	 */
+	if (sc->rxq.nb_free_entries <= WPI_RBUF_LOW_LIMIT) {
+		
+		/* Set length before calling m_dup */
+		data->m->m_pkthdr.len = data->m->m_len = le16toh(head->len);
+		
+		m = m_dup(data->m,0,M_COPYALL,M_DONTWAIT);
+	} else {
+
+		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+		if (mnew == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
+
+		rbuf = wpi_alloc_rbuf(sc);
+		KASSERT(rbuf != NULL);
+
+ 		/* attach Rx buffer to mbuf */
+		MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf, 
+		 	rbuf);
+		mnew->m_flags |= M_EXT_RW;
+
+		m = data->m;
+		data->m = mnew;
+
+		/* update Rx descriptor */
+		ring->desc[ring->cur] = htole32(rbuf->paddr);
 	}
-
-	if ((rbuf = wpi_alloc_rbuf(sc)) == NULL) {
-		m_freem(mnew);
-		ifp->if_ierrors++;
-		return;
-	}
-
- 	/* attach Rx buffer to mbuf */
-	MEXTADD(mnew, rbuf->vaddr, WPI_RBUF_SIZE, 0, wpi_free_rbuf, rbuf);
-	mnew->m_flags |= M_EXT_RW;
-
-	m = data->m;
-	data->m = mnew;
-
-	/* update Rx descriptor */
-	ring->desc[ring->cur] = htole32(rbuf->paddr);
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
