@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.12.10.6 2007/06/17 00:50:58 itohy Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.12.10.7 2007/06/18 13:40:59 itohy Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.6 2007/06/17 00:50:58 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.7 2007/06/18 13:40:59 itohy Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -125,6 +125,7 @@ USB_DECLARE_DRIVER(cdce);
 
 USB_MATCH(cdce)
 {
+#ifndef USB_USE_IFATTACH
 	USB_MATCH_START(cdce, uaa);
 	usb_interface_descriptor_t *id;
 
@@ -134,11 +135,19 @@ USB_MATCH(cdce)
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL)
 		return (UMATCH_NONE);
+#else
+	USB_IFMATCH_START(cdce, uaa);
+#endif /* USB_USE_IFATTACH */
 
 	if (cdce_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
 
-	if (id->bInterfaceClass == UICLASS_CDC && id->bInterfaceSubClass ==
+	if (
+#ifndef USB_USE_IFATTACH
+	    id->bInterfaceClass == UICLASS_CDC && id->bInterfaceSubClass ==
+#else
+	    uaa->class == UICLASS_CDC && uaa->subclass ==
+#endif /* USB_USE_IFATTACH */
 	    UISUBCLASS_ETHERNET_NETWORKING_CONTROL_MODEL)
 		return (UMATCH_IFACECLASS_GENERIC);
 
@@ -147,7 +156,11 @@ USB_MATCH(cdce)
 
 USB_ATTACH(cdce)
 {
+#ifndef USB_USE_IFATTACH
 	USB_ATTACH_START(cdce, sc, uaa);
+#else
+	USB_IFATTACH_START(cdce, sc, uaa);
+#endif /* USB_USE_IFATTACH */
 	char				 *devinfop;
 	int				 s;
 	struct ifnet			*ifp;
