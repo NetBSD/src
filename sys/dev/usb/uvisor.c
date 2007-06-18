@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.34 2007/01/24 12:26:49 drochner Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.34.10.1 2007/06/18 14:17:15 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.34 2007/01/24 12:26:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.34.10.1 2007/06/18 14:17:15 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,8 +203,10 @@ USB_MATCH(uvisor)
 {
 	USB_MATCH_START(uvisor, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(20,("uvisor: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
