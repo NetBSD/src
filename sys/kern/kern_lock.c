@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.115 2007/06/15 20:59:38 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.116 2007/06/18 21:37:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.115 2007/06/15 20:59:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.116 2007/06/18 21:37:32 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -117,11 +117,6 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #include <ddb/db_interface.h>
 #endif
 #endif /* defined(LOCKDEBUG) */
-
-#if defined(MULTIPROCESSOR)
-int kernel_lock_id;
-__cpu_simple_lock_t kernel_lock;
-#endif
 
 /*
  * Locking primitives implementation.
@@ -1467,6 +1462,9 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 }
 
 #endif /* LOCKDEBUG */ /* } */
+
+int kernel_lock_id;
+__cpu_simple_lock_t kernel_lock;
 
 #if defined(MULTIPROCESSOR)
 
