@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.7.10.1 2007/06/17 01:08:26 itohy Exp $	*/
+/*	$NetBSD: uep.c,v 1.7.10.2 2007/06/18 13:47:12 itohy Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.7.10.1 2007/06/17 01:08:26 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.7.10.2 2007/06/18 13:47:12 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,10 @@ USB_MATCH(uep)
 {
 	USB_MATCH_START(uep, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
+#endif /* USB_USE_IFATTACH */
 
 	if ((uaa->vendor == USB_VENDOR_EGALAX) && (
 		(uaa->product == USB_PRODUCT_EGALAX_TPANEL)
