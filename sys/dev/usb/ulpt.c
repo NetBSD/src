@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.76.10.3 2007/06/17 01:15:26 itohy Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.76.10.4 2007/06/18 13:55:00 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76.10.3 2007/06/17 01:15:26 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.76.10.4 2007/06/18 13:55:00 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,10 +199,15 @@ USB_DECLARE_DRIVER(ulpt);
 
 USB_MATCH(ulpt)
 {
+#ifndef USB_USE_IFATTACH
 	USB_MATCH_START(ulpt, uaa);
 	usb_interface_descriptor_t *id;
+#else
+	USB_IFMATCH_START(ulpt, uaa);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(10,("ulpt_match\n"));
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
@@ -212,13 +217,25 @@ USB_MATCH(ulpt)
 	    (id->bInterfaceProtocol == UIPROTO_PRINTER_UNI ||
 	     id->bInterfaceProtocol == UIPROTO_PRINTER_BI ||
 	     id->bInterfaceProtocol == UIPROTO_PRINTER_1284))
+#else
+
+	if (uaa->class == UICLASS_PRINTER &&
+	    uaa->subclass == UISUBCLASS_PRINTER &&
+	    (uaa->proto == UIPROTO_PRINTER_UNI ||
+	     uaa->proto == UIPROTO_PRINTER_BI ||
+	     uaa->proto == UIPROTO_PRINTER_1284))
+#endif /* USB_USE_IFATTACH */
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 	return (UMATCH_NONE);
 }
 
 USB_ATTACH(ulpt)
 {
+#ifndef USB_USE_IFATTACH
 	USB_ATTACH_START(ulpt, sc, uaa);
+#else
+	USB_IFATTACH_START(ulpt, sc, uaa);
+#endif /* USB_USE_IFATTACH */
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
