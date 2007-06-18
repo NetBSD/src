@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.73.10.3 2007/06/17 01:30:42 itohy Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.73.10.4 2007/06/18 14:02:44 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.82 2006/09/07 00:06:42 imp Exp $       */
 
 /*-
@@ -114,14 +114,26 @@ typedef void *usb_busdma_kaddr_t;
 typedef caddr_t usb_ioctlarg_t;
 typedef caddr_t usb_busdma_kaddr_t;
 #endif
+#if __NetBSD_Version__ >= 106220000	/* NetBSD 1.6V */
 typedef struct lwp *usb_proc_ptr;
+#else
+typedef struct proc *usb_proc_ptr;
+#endif
 typedef struct proc *usb_sigproc_ptr;
 
 #define USB_PROC_LOCK(p)	mutex_enter(&proclist_mutex)
 #define USB_PROC_UNLOCK(p)	mutex_exit(&proclist_mutex)
 
+#if __NetBSD_Version__ >= 399001600	/* NetBSD 3.99.16 */
 #define USB_UIO_SET_PROC(uiop, p)	\
 	((uiop)->uio_vmspace = (p)->l_proc->p_vmspace)
+#elif __NetBSD_Version__ >= 106220000	/* NetBSD 1.6V */
+#define USB_UIO_SET_PROC(uiop, p)	\
+	((uiop)->uio_lwp = (p))
+#else
+#define USB_UIO_SET_PROC(uiop, p)	\
+	((uiop)->uio_procp = (p))
+#endif
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -177,6 +189,11 @@ int __CONCAT(dname,_match)(struct device *parent, \
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
+#ifdef USB_USE_IFATTACH
+#define USB_IFMATCH_START(dname, uaa) \
+	struct usbif_attach_arg *uaa = aux
+#endif /* USB_USE_IFATTACH */
+
 #define USB_ATTACH(dname) \
 void __CONCAT(dname,_attach)(struct device *parent, \
     struct device *self, void *aux)
@@ -185,6 +202,13 @@ void __CONCAT(dname,_attach)(struct device *parent, \
 	struct __CONCAT(dname,_softc) *sc = \
 		(struct __CONCAT(dname,_softc) *)self; \
 	struct usb_attach_arg *uaa = aux
+
+#ifdef USB_USE_IFATTACH
+#define USB_IFATTACH_START(dname, sc, uaa) \
+	struct __CONCAT(dname,_softc) *sc = \
+		(struct __CONCAT(dname,_softc) *)self; \
+	struct usbif_attach_arg *uaa = aux
+#endif /* USB_USE_IFATTACH */
 
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return
@@ -212,6 +236,12 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm_loc(parent, "usbdevif", \
 			     NULL, args, print, sub))
+
+#ifdef USB_USE_IFATTACH
+#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
+	(config_found_sm_loc(parent, "usbifif", \
+			     NULL, args, print, sub))
+#endif /* USB_USE_IFATTACH */
 
 #elif defined(__OpenBSD__)
 /*
@@ -251,8 +281,8 @@ typedef caddr_t usb_busdma_kaddr_t;
 typedef struct proc *usb_proc_ptr;
 typedef struct proc *usb_sigproc_ptr;
 
-#define USB_PROC_LOCK(p)	FIXME
-#define USB_PROC_UNLOCK(p)	FIXME
+#define USB_PROC_LOCK(p)	/* empty */
+#define USB_PROC_UNLOCK(p)	/* empty */
 
 #define USB_UIO_SET_PROC(uiop, p)	\
 	((uiop)->uio_segflg = UIO_USERSPACE,		\
@@ -376,6 +406,11 @@ __CONCAT(dname,_match)(parent, match, aux) \
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
+#ifdef USB_USE_IFATTACH
+#define USB_IFMATCH_START(dname, uaa) \
+	struct usbif_attach_arg *uaa = aux
+#endif /* USB_USE_IFATTACH */
+
 #define USB_ATTACH(dname) \
 void \
 __CONCAT(dname,_attach)(parent, self, aux) \
@@ -387,6 +422,13 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 	struct __CONCAT(dname,_softc) *sc = \
 		(struct __CONCAT(dname,_softc) *)self; \
 	struct usb_attach_arg *uaa = aux
+
+#ifdef USB_USE_IFATTACH
+#define USB_IFATTACH_START(dname, sc, uaa) \
+	struct __CONCAT(dname,_softc) *sc = \
+		(struct __CONCAT(dname,_softc) *)self; \
+	struct usbif_attach_arg *uaa = aux
+#endif /* USB_USE_IFATTACH */
 
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return
@@ -416,6 +458,11 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm(parent, args, print, sub))
+
+#ifdef USB_USE_IFATTACH
+#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
+	(config_found_sm(parent, args, print, sub))
+#endif /* USB_USE_IFATTACH */
 
 #elif defined(__FreeBSD__)
 /*
@@ -531,6 +578,11 @@ __CONCAT(dname,_match)(device_t self)
 #define USB_MATCH_START(dname, uaa) \
         struct usb_attach_arg *uaa = device_get_ivars(self)
 
+#ifdef USB_USE_IFATTACH
+#define USB_IFMATCH_START(dname, uaa) \
+	struct usbif_attach_arg *uaa = device_get_ivars(self)
+#endif /* USB_USE_IFATTACH */
+
 #define USB_ATTACH(dname) \
 Static int \
 __CONCAT(dname,_attach)(device_t self)
@@ -538,6 +590,12 @@ __CONCAT(dname,_attach)(device_t self)
 #define USB_ATTACH_START(dname, sc, uaa) \
         struct __CONCAT(dname,_softc) *sc = device_get_softc(self); \
         struct usb_attach_arg *uaa = device_get_ivars(self)
+
+#ifdef USB_USE_IFATTACH
+#define USB_IFATTACH_START(dname, sc, uaa) \
+        struct __CONCAT(dname,_softc) *sc = device_get_softc(self); \
+	struct usbif_attach_arg *uaa = device_get_ivars(self)
+#endif /* USB_USE_IFATTACH */
 
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return ENXIO
@@ -566,6 +624,11 @@ __CONCAT(dname,_detach)(device_t self)
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(device_probe_and_attach((bdev)) == 0 ? (bdev) : 0)
+
+#ifdef USB_USE_IFATTACH
+#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
+	(device_probe_and_attach((bdev)) == 0 ? (bdev) : 0)
+#endif /* USB_USE_IFATTACH */
 
 /* conversion from one type of queue to the other */
 #define SIMPLEQ_REMOVE_HEAD	STAILQ_REMOVE_HEAD
