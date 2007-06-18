@@ -1,4 +1,4 @@
-/*	$NetBSD: verrx.c,v 1.13 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: verrx.c,v 1.14 2007/06/18 14:13:54 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verrx.c,v 1.13 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: verrx.c,v 1.14 2007/06/18 14:13:54 ginsbach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: verrx.c,v 1.13 2005/09/13 01:44:09 christos Exp $");
 __weak_alias(verrx, _verrx)
 #endif
 
+#if !HAVE_ERR_H
 __dead void
 verrx(int eval, const char *fmt, _BSD_VA_LIST_ ap)
 {
@@ -61,3 +62,4 @@ verrx(int eval, const char *fmt, _BSD_VA_LIST_ ap)
 	(void)fprintf(stderr, "\n");
 	exit(eval);
 }
+#endif
