@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.1.2.4 2007/06/18 03:31:33 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.1.2.5 2007/06/18 03:51:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.4 2007/06/18 03:31:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.5 2007/06/18 03:51:33 macallan Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.4 2007/06/18 03:31:33 macal
 #include <sys/boot_flag.h>
 #include <sys/extent.h>
 #include <sys/kernel.h>
-
+#include <sys/ksyms.h>
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/openfirm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.4 2007/06/18 03:31:33 macal
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
 #include <arch/powerpc/pic/picvar.h>
+
+#include "ksyms.h"
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -183,6 +185,10 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 #endif /* PPC_OEA64 || PPC_OEA64_BRIDGE */
 
 	restore_ofmap(ofmap, ofmaplen);
+
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+#endif
 
 	/* CPU clock stuff */
 	set_timebase();
