@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174.2.3 2007/06/17 21:31:57 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.4 2007/06/18 13:38:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.3 2007/06/17 21:31:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.4 2007/06/18 13:38:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -725,6 +725,10 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		TAILQ_INIT(&nmp->nm_bufq);
 		rw_init(&nmp->nm_writeverflock);
 		mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&nmp->nm_rcvcv, "nfsrcv");
+		cv_init(&nmp->nm_sndcv, "nfssnd");
+		cv_init(&nmp->nm_aiocv, "nfsaio");
+		cv_init(&nmp->nm_disconcv, "nfsdis");
 	}
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
@@ -819,7 +823,11 @@ bad:
 	nfs_disconnect(nmp);
 	rw_destroy(&nmp->nm_writeverflock);
 	mutex_destroy(&nmp->nm_lock);
-	free((void *)nmp, M_NFSMNT);
+	cv_destroy(&nmp->nm_rcvcv);
+	cv_destroy(&nmp->nm_sndcv);
+	cv_destroy(&nmp->nm_aiocv);
+	cv_destroy(&nmp->nm_disconcv);
+	free(nmp, M_NFSMNT);
 	m_freem(nam);
 	return (error);
 }
