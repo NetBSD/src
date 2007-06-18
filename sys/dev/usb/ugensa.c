@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.9 2007/02/05 15:13:28 gdt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.9.10.1 2007/06/18 13:48:51 itohy Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -105,8 +105,10 @@ USB_MATCH(ugensa)
 {
 	USB_MATCH_START(ugensa, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(20,("ugensa: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
