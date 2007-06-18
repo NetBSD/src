@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.25.38.3 2007/06/07 20:30:47 garbled Exp $	*/
+/*	$NetBSD: bandit.c,v 1.25.38.4 2007/06/18 02:36:28 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.25.38.3 2007/06/07 20:30:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.25.38.4 2007/06/18 02:36:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,14 +110,14 @@ bandit_attach(struct device *parent, struct device *self, void *aux)
 		len -= sizeof(ranges[0]);
 		rp++;
 	}
+	memset(&sc->sc_iot, 0, sizeof(struct powerpc_bus_space));
+	memset(&sc->sc_memt, 0, sizeof(struct powerpc_bus_space));
 	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE;
-	sc->sc_iot.pbs_offset = 0;
 	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_IO, node, &sc->sc_iot,
 	    "bandit io-space") != 0)
 		panic("Can't init bandit io tag");
 
 	sc->sc_memt.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE;
-	sc->sc_memt.pbs_base = 0x00000000;
 	if (ofwoea_map_space(RANGE_TYPE_PCI, RANGE_MEM, node, &sc->sc_memt,
 	    "bandit mem-space") != 0)
 		panic("Can't init bandit mem tag");
