@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.1.2.3 2007/06/18 03:09:09 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.1.2.4 2007/06/18 03:31:33 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.3 2007/06/18 03:09:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.4 2007/06/18 03:31:33 macallan Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -344,6 +344,7 @@ ofwoea_batinit(void)
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
 
+	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
 	for (i=1; i < 0x10; i++)
 		if (bitmap & (1 << i))
