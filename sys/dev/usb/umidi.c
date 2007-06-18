@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.29.8.2 2007/06/16 04:12:32 itohy Exp $	*/
+/*	$NetBSD: umidi.c,v 1.29.8.3 2007/06/18 13:56:23 itohy Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29.8.2 2007/06/16 04:12:32 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.29.8.3 2007/06/18 13:56:23 itohy Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,21 +162,32 @@ USB_DECLARE_DRIVER(umidi);
 
 USB_MATCH(umidi)
 {
+#ifndef USB_USE_IFATTACH
 	USB_MATCH_START(umidi, uaa);
 	usb_interface_descriptor_t *id;
+#else
+	USB_IFMATCH_START(umidi, uaa);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(1,("umidi_match\n"));
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
+#endif /* USB_USE_IFATTACH */
 
 	if (umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno))
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
+#ifndef USB_USE_IFATTACH
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id!=NULL &&
 	    id->bInterfaceClass==UICLASS_AUDIO &&
 	    id->bInterfaceSubClass==UISUBCLASS_MIDISTREAM)
+#else
+	if (uaa->class == UICLASS_AUDIO &&
+	    uaa->subclass == UISUBCLASS_MIDISTREAM)
+#endif /* USB_USE_IFATTACH */
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	return UMATCH_NONE;
@@ -185,7 +196,11 @@ USB_MATCH(umidi)
 USB_ATTACH(umidi)
 {
 	usbd_status err;
+#ifndef USB_USE_IFATTACH
 	USB_ATTACH_START(umidi, sc, uaa);
+#else
+	USB_IFATTACH_START(umidi, sc, uaa);
+#endif /* USB_USE_IFATTACH */
 	char *devinfop;
 
 	DPRINTFN(1,("umidi_attach\n"));
