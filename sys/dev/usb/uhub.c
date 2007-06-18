@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.85.8.1 2007/05/22 14:57:42 itohy Exp $	*/
+/*	$NetBSD: uhub.c,v 1.85.8.2 2007/06/18 13:53:06 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.85.8.1 2007/05/22 14:57:42 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.85.8.2 2007/06/18 13:53:06 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/uhub.c,v 1.74 2007/02/03 21:11:11 flz Exp $"); */
 
 #include <sys/param.h>
@@ -84,13 +84,13 @@ SYSCTL_INT(_hw_usb_uhub, OID_AUTO, debug, CTLFLAG_RW,
 struct uhub_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_hub;		/* USB device */
+	int			sc_proto;	/* device protocol */
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
 	u_int8_t		*sc_status;
 	u_char			sc_running;
 };
-#define UHUB_PROTO(sc) ((sc)->sc_hub->ddesc.bDeviceProtocol)
-#define UHUB_IS_HIGH_SPEED(sc) (UHUB_PROTO(sc) != UDPROTO_FSHUB)
-#define UHUB_IS_SINGLE_TT(sc) (UHUB_PROTO(sc) == UDPROTO_HSHUBSTT)
+#define UHUB_IS_HIGH_SPEED(sc) ((sc)->sc_proto != UDPROTO_FSHUB)
+#define UHUB_IS_SINGLE_TT(sc) ((sc)->sc_proto == UDPROTO_HSHUBSTT)
 
 Static usbd_status uhub_explore(usbd_device_handle hub);
 Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
@@ -145,14 +145,20 @@ Static	driver_t uhubroot_driver = {
 USB_MATCH(uhub)
 {
 	USB_MATCH_START(uhub, uaa);
+#ifndef USB_USE_IFATTACH
 	usb_device_descriptor_t *dd = usbd_get_device_descriptor(uaa->device);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(5,("uhub_match, dd=%p\n", dd));
 	/*
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
 	 */
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface == NULL && dd->bDeviceClass == UDCLASS_HUB)
+#else
+	if (uaa->class == UDCLASS_HUB)
+#endif /* USB_USE_IFATTACH */
 		return (UMATCH_DEVCLASS_DEVSUBCLASS);
 	return (UMATCH_NONE);
 }
@@ -174,6 +180,11 @@ USB_ATTACH(uhub)
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
+#ifndef USB_USE_IFATTACH
+	sc->sc_proto = sc->sc_hub->ddesc.bDeviceProtocol;
+#else
+	sc->sc_proto = uaa->proto;
+#endif /* USB_USE_IFATTACH */
 
 	devinfo = usbd_devinfo_alloc(dev, 1);
 	USB_ATTACH_SETUP;
