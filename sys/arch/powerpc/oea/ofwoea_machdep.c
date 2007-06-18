@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.1.2.2 2007/06/07 20:30:48 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.1.2.3 2007/06/18 03:09:09 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.2 2007/06/07 20:30:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.3 2007/06/18 03:09:09 macallan Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -311,12 +311,12 @@ ranges_bitmap(int node, u_int16_t bitmap)
 		if (len == -1)
 			goto noranges;
 
-		reclen = acells+1+scells;
+		reclen = acells + 1 + scells;
 
 		for (i=0; i < reclen/(mlen/4); i++) {
-			addr = map[reclen*i + acells + 1];
-			len = map[reclen*i + reclen - 1];
-			for (j=0; j < len/0x10000000; j++)
+			addr = map[reclen * i + acells + 1];
+			len = map[reclen * i + reclen - 1];
+			for (j = 0; j < len / 0x10000000; j++)
 				bitmap |= 1 << ((addr+j*0x10000000) >>28);
 			bitmap |= 1 << (addr >> 28);
 		}
@@ -331,17 +331,24 @@ noranges:
 void
 ofwoea_batinit(void)
 {
-	u_int16_t bitmap;
+#if 0
+	/* this is what macppc used to do */
+        oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
+                    0x90000000, BAT_BL_256M, 0xa0000000, BAT_BL_256M,
+                                0xb0000000, BAT_BL_256M, 0);
+#else
+        u_int16_t bitmap;
 	int node, i;
 
 	node = OF_finddevice("/");
 	bitmap = ranges_bitmap(node, 0);
-
 	oea_batinit(0);
 
-	for (i=1; i < 0xf; i++)
+	bitmap = 0x8f00;
+	for (i=1; i < 0x10; i++)
 		if (bitmap & (1 << i))
 			oea_iobat_add(0x10000000 * i, BAT_BL_256M);
+#endif
 }
 
 
@@ -366,36 +373,33 @@ static char ex_storage[EXSTORAGE_MAX][EXTENT_FIXED_STORAGE_SIZE(8)]
 static void
 find_ranges(int base, rangemap_t *regions, int *cur, int type)
 {
-	int node, i, len, reclen, foundfirst;
+	int node, i, len, reclen;
 	u_int32_t acells, scells, map[160];
 	char tmp[32];
 
-	foundfirst = 0;
-
-	for (node = OF_child(base); node; node = OF_peer(node)) {
-		if (OF_getprop(node, "device_type", tmp, sizeof(tmp)) == -1)
-			goto nxt;
-		if ((type == RANGE_TYPE_PCI || type == RANGE_TYPE_FIRSTPCI) &&
-		    strcmp("pci", tmp) != 0)
-			goto nxt;
-		if (type == RANGE_TYPE_ISA && strcmp("isa", tmp) != 0)
-			goto nxt;
-		foundfirst++;
-		len = OF_getprop(node, "ranges", map, sizeof(map));
-		if (len == -1)
-			goto nxt;
-		if (OF_getprop(node, "#address-cells", &acells,
-		    sizeof(acells)) != sizeof(acells))
-			acells = 1;
-		if (OF_getprop(node, "#size-cells", &scells,
-		    sizeof(scells)) != sizeof(scells))
-			scells = 1;
-		if (type == RANGE_TYPE_ISA)
-			reclen = 6;
-		else
-			reclen = acells + scells + 1;
-		printf("found a map reclen=%d cur=%d\n", reclen, *cur);
-		switch (type) {
+	node = base;
+	if (OF_getprop(node, "device_type", tmp, sizeof(tmp)) == -1)
+		goto rec;
+	if ((type == RANGE_TYPE_PCI || type == RANGE_TYPE_FIRSTPCI) &&
+	    strcmp("pci", tmp) != 0)
+		goto rec;
+	if (type == RANGE_TYPE_ISA && strcmp("isa", tmp) != 0)
+		goto rec;
+	len = OF_getprop(node, "ranges", map, sizeof(map));
+	if (len == -1)
+		goto rec;
+	if (OF_getprop(node, "#address-cells", &acells,
+	    sizeof(acells)) != sizeof(acells))
+		acells = 1;
+	if (OF_getprop(node, "#size-cells", &scells,
+	    sizeof(scells)) != sizeof(scells))
+		scells = 1;
+	if (type == RANGE_TYPE_ISA)
+		reclen = 6;
+	else
+		reclen = acells + scells + 1;
+	printf("found a map reclen=%d cur=%d\n", reclen, *cur);
+	switch (type) {
 		case RANGE_TYPE_PCI:
 		case RANGE_TYPE_FIRSTPCI:
 			for (i=0; i < len/(4*reclen); i++) {
@@ -417,14 +421,11 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 				(*cur)++;
 			}
 			break;
-		}
-nxt:
-		if (type != RANGE_TYPE_FIRSTPCI)
-			find_ranges(node, regions, cur, type);
-		else if (foundfirst)
-			return;
-		continue;
 	}
+	return;
+rec:
+	for (node = OF_child(base); node; node = OF_peer(node))
+		find_ranges(node, regions, cur, type);
 }
 
 static int
@@ -510,8 +511,8 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 	range = find_lowest_range(list, cur, iomem);
 	i = 0;
 	nrofholes = 0;
-	printf("range==%d\n", range);
 	while (range != -1) {
+		printf("range==%d\n", range);
 		printf("i==%d\n", i);
 		if (i == 0) {
 			memcpy(&region, &list[range], sizeof(rangemap_t));
@@ -527,8 +528,8 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 			    holes[nrofholes].addr - 1;
 			nrofholes++;
 		}
-		region.size += list[range].size + list[range].addr -
-		    region.addr + region.size;
+		region.size = list[range].size + list[range].addr -
+		    region.addr;
 		list[range].addr = 0;
 		range = find_lowest_range(list, cur, iomem);
 	}
@@ -545,8 +546,20 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		if (exmap == EXSTORAGE_MAX)
 			panic("Not enough ex_storage space. "
 			    "Increase EXSTORAGE_MAX");
-		tag->pbs_offset = region.addr;
-		tag->pbs_limit = region.size;
+
+		/* XXX doing this in here might be wrong */
+		if (iomem == 1) {
+			/* we map an IO region */
+			tag->pbs_offset = region.addr;
+			tag->pbs_base = 0;
+			tag->pbs_limit = region.size;
+		} else {
+			/* ... or a memory region */
+			tag->pbs_offset = 0;
+			tag->pbs_base = region.addr;
+			tag->pbs_limit = region.size + region.addr;
+		}	                                
+
 		error = bus_space_init(tag, name, ex_storage[exmap],
 		    sizeof(ex_storage[exmap]));
 		exmap++;
