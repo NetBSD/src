@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.15.10.3 2007/06/17 00:56:25 itohy Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.15.10.4 2007/06/18 13:42:56 itohy Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.3 2007/06/17 00:56:25 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.4 2007/06/18 13:42:56 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -164,8 +164,10 @@ USB_MATCH(udav)
 {
 	USB_MATCH_START(udav, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	return (udav_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
