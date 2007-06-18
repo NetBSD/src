@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.192 2007/06/17 17:55:37 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.193 2007/06/18 14:03:10 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6745,3 +6745,65 @@ sys/dev/pci/if_vr.c				1.86
 	in the Soekris net5501.
 	[jmcneill, ticket #725]
 
+sys/dev/midi.c					1.54
+
+	Correct format strings for ptrdiff_t and size_t arguments in DPRINTFs,
+	so that a kernel with AUDIO_DEBUG builds.
+	[pavel, ticket #726]
+
+xfree/xc/programs/Xserver/hw/netbsd/arm32vidc/private.h	1.8
+
+	correct typo in last: we have __NetBSD_Version__, not __NetBSD_Version.
+	[pavel, ticket #727]
+
+sys/arch/amiga/amiga/locore.s			1.143
+sys/arch/atari/atari/locore.s			1.99
+sys/arch/cesfic/cesfic/locore.s			1.15
+sys/arch/cesfic/cesfic/trap.c			1.35
+sys/arch/hp300/hp300/locore.s			1.140
+sys/arch/luna68k/luna68k/locore.s		1.27
+sys/arch/luna68k/luna68k/trap.c			1.46
+sys/arch/m68k/m68k/db_trace.c			1.51
+sys/arch/m68k/m68k/trap_subr.s			1.12
+sys/arch/mac68k/mac68k/locore.s			1.152
+sys/arch/mac68k/mac68k/trap.c			1.128
+sys/arch/mvme68k/mvme68k/locore.s		1.98
+sys/arch/mvme68k/mvme68k/trap.c			1.90
+sys/arch/news68k/news68k/locore.s		1.43
+sys/arch/news68k/news68k/trap.c			1.53
+sys/arch/next68k/next68k/locore.s		1.48
+sys/arch/next68k/next68k/trap.c			1.67
+sys/arch/sun2/sun2/locore.s			1.19
+sys/arch/sun2/sun2/trap.c			1.32
+sys/arch/sun3/sun3/locore.s			1.88
+sys/arch/sun3/sun3/trap.c			1.130
+sys/arch/x68k/x68k/locore.s			1.79
+sys/arch/x68k/x68k/trap.c			1.89
+
+	Pass a frame pointer to trap() rather than the 'entire frame' trick.  Gcc4
+	was optimizing away modifications to the frame contents (it's not nice to
+	trick gcc).  Pass the pointer as the first argument to reduce the number
+	of places that would be changed otherwise.  Fixes the getcwd regression
+	test on most m68k ports.
+	[mhitch, ticket #728]
+
+sys/dev/ic/nslm7x.c				1.36
+
+	Fix a typo in RFACT of the second 3.3Vcc of W83627EHF. From OpenBSD.
+	[tsutsui, ticket #730]
+
+sys/dev/pci/if_vge.c				1.35
+
+	Fix one more bug I introduced in rev 1.21:
+	Clear sc->sc_rx_consumed before allocating RX mbufs by vge_newbuf()
+	in vge_intr() otherwise vge_newbuf() might get KASSERT() failure
+	on DIAGNOSTIC kernel when the interface is reinitialized during RX.
+	[tsutsui, ticket #731]
+
+sys/dev/pci/cs4280.c				1.46
+sys/dev/pci/cs4281.c				1.34
+sys/dev/pci/cs428x.h				1.13
+
+	Fix ACPI suspend/resume support of clcs and clct. Based on auich and
+	hints from jmcneill@.
+	[joerg, ticket #733]
