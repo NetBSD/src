@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.29 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.29.8.1 2007/06/18 13:48:13 itohy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.29 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.29.8.1 2007/06/18 13:48:13 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,10 @@ USB_MATCH(uftdi)
 {
 	USB_MATCH_START(uftdi, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
