@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.11 2006/08/06 16:21:11 jmcneill Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.11.8.1 2007/06/18 11:45:34 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -74,7 +74,10 @@ enum cs428x_flags {
 struct cs428x_softc {
 	struct device	      sc_dev;
 
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pt;
 	pci_intr_handle_t *   sc_ih;
+	pci_intr_handle_t intrh;
 
 	/* I/O (BA0) */
 	bus_space_tag_t	      ba0t;
@@ -140,6 +143,7 @@ struct cs428x_softc {
 	/* Power Management */
 	char	sc_suspend;
 	void   *sc_powerhook;		/* Power Hook */
+	struct pci_conf_state sc_pciconf;
 
 	/* CLKRUN hack (CS428X_FLAG_CLKRUN), only for CS4280 */
 	int sc_active;
