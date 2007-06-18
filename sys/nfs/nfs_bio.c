@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.7 2007/06/17 21:31:55 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.8 2007/06/18 13:56:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.7 2007/06/17 21:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.8 2007/06/18 13:56:50 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -582,7 +582,7 @@ nfs_write(v)
 	} while (uio->uio_resid > 0);
 	if (wrotedata)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-	if (ioflag & IO_SYNC) {
+	if (error == 0 && (ioflag & IO_SYNC) != 0) {
 		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & ~(nmp->nm_wsize - 1)),
@@ -636,7 +636,8 @@ nfs_vinvalbuf(vp, flags, cred, l, intrflg)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int error = 0, catch, slptimeo;
+	int error = 0, slptimeo;
+	bool catch;
 
 	if ((nmp->nm_flag & NFSMNT_INT) == 0)
 		intrflg = 0;
@@ -776,7 +777,7 @@ again:
 			 */
 			iod->nid_want = NULL;
 			iod->nid_mount = nmp;
-			wakeup(&iod->nid_want);
+			cv_signal(&iod->nid_cv);
 			mutex_enter(&nmp->nm_lock);
 			mutex_exit(&iod->nid_lock);
 			nmp->nm_bufqiods++;
@@ -841,10 +842,10 @@ again:
 			 * so check and loop if nescessary.
 			 */
 
-			if (nmp->nm_bufqiods == 0)
+			if (nmp->nm_bufqiods == 0) {
+				mutex_exit(&nmp->nm_lock);
 				goto again;
-
-			mutex_enter(&nmp->nm_lock);
+			}
 		}
 		TAILQ_INSERT_TAIL(&nmp->nm_bufq, bp, b_freelist);
 		nmp->nm_bufqlen++;
