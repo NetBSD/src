@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.27.4.3 2007/06/17 00:57:36 itohy Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.27.4.4 2007/06/18 13:43:21 itohy Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.27.4.3 2007/06/17 00:57:36 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.27.4.4 2007/06/18 13:43:21 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -204,8 +204,10 @@ USB_MATCH(upl)
 	USB_MATCH_START(upl, uaa);
 	struct upl_type			*t;
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	for (t = sc_devs; t->upl_vid != 0; t++)
 		if (uaa->vendor == t->upl_vid && uaa->product == t->upl_did)
