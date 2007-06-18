@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.48.10.3 2007/06/17 00:51:33 itohy Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.48.10.4 2007/06/18 13:41:26 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48.10.3 2007/06/17 00:51:33 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48.10.4 2007/06/18 13:41:26 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -463,8 +463,10 @@ USB_MATCH(cue)
 {
 	USB_MATCH_START(cue, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	return (cue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
