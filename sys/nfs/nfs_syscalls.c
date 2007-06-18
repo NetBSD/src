@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107.2.8 2007/06/09 23:58:15 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.107.2.9 2007/06/18 13:46:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.8 2007/06/09 23:58:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.9 2007/06/18 13:46:15 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -499,10 +499,10 @@ nfssvc_nfsd(nsd, argp, l)
 	writes_todo = 0;
 #endif
 	uvm_lwp_hold(l);
-	if (nfsd == (struct nfsd *)0) {
-		nsd->nsd_nfsd = nfsd = (struct nfsd *)
+	if (nfsd == NULL) {
+		nsd->nsd_nfsd = nfsd = 
 			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
-		memset((void *)nfsd, 0, sizeof (struct nfsd));
+		memset(nfsd, 0, sizeof (struct nfsd));
 		cv_init(&nfsd->nfsd_cv, "nfsd");
 		nfsd->nfsd_procp = p;
 		mutex_enter(&nfsd_lock);
