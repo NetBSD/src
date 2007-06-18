@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.17.10.3 2007/06/17 01:33:53 itohy Exp $	*/
+/*	$NetBSD: ustir.c,v 1.17.10.4 2007/06/18 14:16:44 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.17.10.3 2007/06/17 01:33:53 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.17.10.4 2007/06/18 14:16:44 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,8 +296,10 @@ USB_MATCH(ustir)
 
 	DPRINTFN(50,("ustir_match\n"));
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
+#endif /* USB_USE_IFATTACH */
 
 	if (uaa->vendor == USB_VENDOR_SIGMATEL &&
 	    uaa->product == USB_PRODUCT_SIGMATEL_IRDA)
@@ -310,7 +312,11 @@ USB_ATTACH(ustir)
 {
 	USB_ATTACH_START(ustir, sc, uaa);
 	usbd_device_handle dev = uaa->device;
+#ifndef USB_USE_IFATTACH
 	usbd_interface_handle iface = uaa->iface;
+#else
+	usbd_interface_handle iface;
+#endif /* USB_USE_IFATTACH */
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
@@ -323,6 +329,14 @@ USB_ATTACH(ustir)
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
 	usbd_devinfo_free(devinfop);
+
+#ifdef USB_USE_IFATTACH
+	if (usbd_set_config_index(dev, 0, 1)
+	    || usbd_device2interface_handle(dev, 0, &iface)) {
+		printf("%s: Configuration failed\n", USBDEVNAME(sc->sc_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
+#endif /* USB_USE_IFATTACH */
 
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
