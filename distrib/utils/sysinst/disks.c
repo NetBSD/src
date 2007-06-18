@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.95 2006/11/30 20:48:13 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.96 2007/06/18 16:58:42 xtraeme Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -497,11 +497,13 @@ make_fstab(void)
 				tmp_mfs_size);
 	}
 
-	/* Add /kern and /proc to fstab and make mountpoint. */
+	/* Add /kern, /proc and /dev/pts to fstab and make mountpoint. */
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
+	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw,noauto\n");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
+	make_target_dir("/dev/pts");
 
 	scripting_fprintf(NULL, "EOF\n");
 
