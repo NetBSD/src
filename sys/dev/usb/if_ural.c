@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.18.10.3 2007/06/17 00:58:16 itohy Exp $ */
+/*	$NetBSD: if_ural.c,v 1.18.10.4 2007/06/18 13:43:50 itohy Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.10.3 2007/06/17 00:58:16 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.10.4 2007/06/18 13:43:50 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -360,8 +360,10 @@ USB_MATCH(ural)
 {
 	USB_MATCH_START(ural, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
+#endif /* USB_USE_IFATTACH */
 
 	return (usb_lookup(ural_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
