@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.33 2006/12/01 11:30:55 tsutsui Exp $ */
+/* $NetBSD: if_vge.c,v 1.33.2.1 2007/06/18 09:59:23 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.33 2006/12/01 11:30:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.33.2.1 2007/06/18 09:59:23 liamjfoy Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1793,6 +1793,7 @@ vge_init(struct ifnet *ifp)
 
 	/* Initialize the RX descriptors and mbufs. */
 	memset(sc->sc_rxdescs, 0, sizeof(sc->sc_rxdescs));
+	sc->sc_rx_consumed = 0;
 	for (i = 0; i < VGE_NRXDESC; i++) {
 		if (vge_newbuf(sc, i, NULL) == ENOBUFS) {
 			aprint_error("%s: unable to allocate or map "
@@ -1801,7 +1802,6 @@ vge_init(struct ifnet *ifp)
 		}
 	}
 	sc->sc_rx_prodidx = 0;
-	sc->sc_rx_consumed = 0;
 	sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 
 	/* Initialize the  TX descriptors and mbufs. */
