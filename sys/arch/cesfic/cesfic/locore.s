@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.13.24.1 2007/06/18 09:31:11 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -884,8 +884,9 @@ Lrei2:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_ASTFLT,%sp@-		| type == async system trap
+	pea	%sp@(12)		| fp == address of trap frame
 	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(12),%sp		| pop value args
+	lea	%sp@(16),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore user SP
 	movl	%a0,%usp			|   from save area
 	movw	%sp@(FR_ADJ),%d0		| need to adjust stack?
@@ -924,8 +925,9 @@ Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt
+	pea	%sp@(12)		| fp == address of trap frame
 	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(12),%sp		| pop value args
+	lea	%sp@(16),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp			|   user SP
 	moveml	%sp@+,#0x7FFF		| and all remaining registers
