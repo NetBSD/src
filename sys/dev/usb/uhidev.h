@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.6 2005/11/23 08:54:48 augustss Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.6.36.1 2007/06/18 13:49:57 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,11 @@ struct uhidev {
 };
 
 struct uhidev_attach_arg {
+#ifndef USB_USE_IFATTACH
 	struct usb_attach_arg *uaa;
+#else
+	struct usbif_attach_arg *uaa;
+#endif /* USB_USE_IFATTACH */
 	struct uhidev_softc *parent;
 	int reportid;
 	int reportsize;
