@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.72.10.2 2007/05/31 23:15:19 itohy Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.72.10.3 2007/06/18 14:15:39 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.61 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -236,17 +236,45 @@ const struct usb_devno *usb_match_device(const struct usb_devno *,
 /* Attach data */
 struct usb_attach_arg {
 	int			port;
+#ifndef USB_USE_IFATTACH
+	int			configno;
+	int			ifaceno;
+#endif
+	int			vendor;
+	int			product;
+	int			release;
+	usbd_device_handle	device;	/* current device */
+#ifndef USB_USE_IFATTACH
+	usbd_interface_handle	iface; /* current interface */
+#else
+	int			class, subclass, proto;
+#endif
+	int			usegeneric;
+#ifndef USB_USE_IFATTACH
+	usbd_interface_handle  *ifaces;	/* all interfaces */
+	int			nifaces; /* number of interfaces */
+#endif
+};
+
+#ifdef USB_USE_IFATTACH
+struct usbif_attach_arg {
+	int			port;
 	int			configno;
 	int			ifaceno;
 	int			vendor;
 	int			product;
 	int			release;
 	usbd_device_handle	device;	/* current device */
+
 	usbd_interface_handle	iface; /* current interface */
-	int			usegeneric;
+	int			class, subclass, proto;
+
+	/* XXX need accounting for interfaces not matched to */
+
 	usbd_interface_handle  *ifaces;	/* all interfaces */
 	int			nifaces; /* number of interfaces */
 };
+#endif /* USB_USE_IFATTACH */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 /* Match codes. */
