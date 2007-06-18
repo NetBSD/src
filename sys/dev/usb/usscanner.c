@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.21.14.2 2007/06/16 04:12:32 itohy Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.21.14.3 2007/06/18 14:16:11 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.21.14.2 2007/06/16 04:12:32 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.21.14.3 2007/06/18 14:16:11 itohy Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -160,8 +160,10 @@ USB_MATCH(usscanner)
 
 	DPRINTFN(50,("usscanner_match\n"));
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	if (uaa->vendor == USB_VENDOR_HP &&
 	    uaa->product == USB_PRODUCT_HP_5300C)
