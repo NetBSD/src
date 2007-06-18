@@ -1,4 +1,4 @@
-# $NetBSD: UCS%CP874.src,v 1.5 2007/06/18 16:19:31 tnozaki Exp $
+# $NetBSD: UCS%CP1161.src,v 1.1 2007/06/18 16:19:31 tnozaki Exp $
 
 # Copyright (c)2007 Citrus Project,
 # All rights reserved.
@@ -26,18 +26,18 @@
 #
 
 TYPE		ROWCOL
-NAME		"UCS/CP874"
-SRC_ZONE	0x0000-0x0E5B
+NAME		"UCS/CP1161"
+SRC_ZONE	0x0000-0x20AC
 OOB_MODE	INVALID
 DST_INVALID	0x100
 DST_UNIT_BITS	16
 
 BEGIN_MAP
 #
-# CP874 - Thai with Low Tone Marks & Ancient Chars - PC
+# CP1161 - Thai with Low Tone Marks & Ancient Chars - PC
 # this mapping data is made from:
 #    ftp://ftp.software.ibm.com/software/globalization/gcoc/attachments/
-#        CP000874.{pdf,txt}
+#        CP0{00874,01161}.{pdf,txt}
 #    ftp://ftp.unicode.org/Public/MAPPINGS/VENDORS/MICSFT/WINDOWS/CP874.TXT
 #
 0x0000 - 0x007F = 0x00 -
@@ -120,7 +120,6 @@ BEGIN_MAP
 0x0E4A = 0xEA
 0x0E4B = 0xDD
 0x0E4B = 0xEB
-0x0E4C = 0xDE
 0x0E4C = 0xEC
 0x0E4D = 0xED
 0x0E4E = 0xEE
@@ -137,4 +136,5 @@ BEGIN_MAP
 0x0E59 = 0xF9
 0x0E5A = 0xFA
 0x0E5B = 0xFB
+0x20AC = 0xDE
 END_MAP
