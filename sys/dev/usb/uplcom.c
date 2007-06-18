@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.52.6.1 2007/06/17 01:20:25 itohy Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.52.6.2 2007/06/18 13:57:57 itohy Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.52.6.1 2007/06/17 01:20:25 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.52.6.2 2007/06/18 13:57:57 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,8 +213,10 @@ USB_MATCH(uplcom)
 {
 	USB_MATCH_START(uplcom, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	return (uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -224,7 +226,9 @@ USB_ATTACH(uplcom)
 {
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
+#ifndef USB_USE_IFATTACH
 	usb_device_descriptor_t *ddesc;
+#endif /* USB_USE_IFATTACH */
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -257,6 +261,7 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+#ifndef USB_USE_IFATTACH
 	/* get the device descriptor */
 	ddesc = usbd_get_device_descriptor(sc->sc_udev);
 	if (ddesc == NULL) {
@@ -265,6 +270,7 @@ USB_ATTACH(uplcom)
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
+#endif /* USB_USE_IFATTACH */
 
 	/* determine chip type */
 	for (i = 0; uplcom_devs_ext[i].vendor != 0; i++) {
@@ -282,7 +288,11 @@ USB_ATTACH(uplcom)
 	 * The bcdDevice field should also distinguish these versions,
 	 * but who knows.
 	 */
+#ifndef USB_USE_IFATTACH
 	if (UGETW(ddesc->bcdDevice) == 0x0300)
+#else
+	if (uaa->release == 0x0300)
+#endif /* USB_USE_IFATTACH */
 		sc->sc_type = UPLCOM_TYPE_HX;
 	else
 		sc->sc_type = UPLCOM_TYPE_0;
