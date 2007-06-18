@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.27.10.1 2007/04/20 21:09:02 bouyer Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.27.10.2 2007/06/18 09:38:09 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.27.10.1 2007/04/20 21:09:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.27.10.2 2007/06/18 09:38:09 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 		.bank = 0,
 		.reg = 0x23,
 		.refresh = lm_refresh_volt,
-		.rfact = RFACT(34, 24) / 2
+		.rfact = RFACT(34, 34) / 2
 	},
 	{
 		.desc = "-12V",
