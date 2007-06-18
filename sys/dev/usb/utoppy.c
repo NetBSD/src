@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.8.10.3 2007/06/17 01:34:33 itohy Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.8.10.4 2007/06/18 14:16:58 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.10.3 2007/06/17 01:34:33 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.8.10.4 2007/06/18 14:16:58 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,8 +196,10 @@ USB_MATCH(utoppy)
 {
 	USB_MATCH_START(utoppy, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	if (uaa->vendor == USB_VENDOR_TOPFIELD &&
 	    uaa->product == USB_PRODUCT_TOPFIELD_TF5000PVR)
@@ -210,6 +212,9 @@ USB_ATTACH(utoppy)
 {
 	USB_ATTACH_START(utoppy, sc, uaa);
 	usbd_device_handle dev = uaa->device;
+#ifdef USB_USE_IFATTACH
+	usbd_interface_handle iface;
+#endif /* USB_USE_IFATTACH */
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	u_int8_t epcount;
@@ -224,8 +229,20 @@ USB_ATTACH(utoppy)
 	sc->sc_refcnt = 0;
 	sc->sc_udev = dev;
 
+#ifdef USB_USE_IFATTACH
+	if (usbd_set_config_index(dev, 0, 1)
+	    || usbd_device2interface_handle(dev, 0, &iface)) {
+		printf("%s: Configuration failed\n", USBDEVNAME(sc->sc_dev));
+		USB_ATTACH_ERROR_RETURN;
+	}
+#endif /* USB_USE_IFATTACH */
+
 	epcount = 0;
+#ifndef USB_USE_IFATTACH
 	(void) usbd_endpoint_count(uaa->iface, &epcount);
+#else
+	(void) usbd_endpoint_count(iface, &epcount);
+#endif /* USB_USE_IFATTACH */
 	if (epcount != UTOPPY_NUMENDPOINTS) {
 		printf("%s: Expected %d endpoints, got %d\n",
 		    USBDEVNAME(sc->sc_dev), UTOPPY_NUMENDPOINTS, epcount);
@@ -236,7 +253,11 @@ USB_ATTACH(utoppy)
 	sc->sc_out = -1;
 
 	for (i = 0; i < epcount; i++) {
+#ifndef USB_USE_IFATTACH
 		ed = usbd_interface2endpoint_descriptor(uaa->iface, i);
+#else
+		ed = usbd_interface2endpoint_descriptor(iface, i);
+#endif /* USB_USE_IFATTACH */
 		if (ed == NULL) {
 			printf("%s: couldn't get ep %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
@@ -259,7 +280,11 @@ USB_ATTACH(utoppy)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+#ifndef USB_USE_IFATTACH
 	sc->sc_iface = uaa->iface;
+#else
+	sc->sc_iface = iface;
+#endif /* USB_USE_IFATTACH */
 	sc->sc_udev = dev;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
