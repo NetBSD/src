@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.5 2007/01/31 10:09:17 mjf Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.5.10.1 2007/06/18 13:53:30 itohy Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -137,8 +137,10 @@ USB_MATCH(uipaq)
 {
 	USB_MATCH_START(uipaq, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(20,("uipaq: vendor=0x%x, product=0x%x\n",
 	    uaa->vendor, uaa->product));
