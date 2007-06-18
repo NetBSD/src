@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.19 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.19.14.1 2007/06/18 14:17:37 itohy Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.19 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.19.14.1 2007/06/18 14:17:37 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,8 +262,10 @@ USB_MATCH(uvscom)
 {
 	USB_MATCH_START(uvscom, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	return (uvscom_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
