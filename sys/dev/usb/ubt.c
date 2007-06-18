@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.22.10.3 2007/06/17 13:57:59 itohy Exp $	*/
+/*	$NetBSD: ubt.c,v 1.22.10.4 2007/06/18 13:46:27 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.22.10.3 2007/06/17 13:57:59 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.22.10.4 2007/06/18 13:46:27 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -296,21 +296,31 @@ static const struct usb_devno ubt_ignore[] = {
 USB_MATCH(ubt)
 {
 	USB_MATCH_START(ubt, uaa);
+#ifndef USB_USE_IFATTACH
 	usb_device_descriptor_t *dd;
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(50, "ubt_match\n");
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return UMATCH_NONE;
+#endif /* USB_USE_IFATTACH */
 
 	if (usb_lookup(ubt_ignore, uaa->vendor, uaa->product))
 		return UMATCH_NONE;
 
+#ifndef USB_USE_IFATTACH
 	dd = usbd_get_device_descriptor(uaa->device);
 	if (dd != NULL
 	    && dd->bDeviceClass == UDCLASS_WIRELESS
 	    && dd->bDeviceSubClass == UDSUBCLASS_RF
 	    && dd->bDeviceProtocol == UDPROTO_BLUETOOTH)
+#else
+	if (uaa->class == UDCLASS_WIRELESS
+	    && uaa->subclass == UDSUBCLASS_RF
+	    && uaa->proto == UDPROTO_BLUETOOTH)
+#endif /* USB_USE_IFATTACH */
 		return UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO;
 
 	return UMATCH_NONE;
