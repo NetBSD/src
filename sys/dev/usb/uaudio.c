@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.109.8.2 2007/06/16 04:11:35 itohy Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.109.8.3 2007/06/18 13:45:13 itohy Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.2 2007/06/16 04:11:35 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.3 2007/06/18 13:45:13 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,17 +367,29 @@ USB_DECLARE_DRIVER(uaudio);
 
 USB_MATCH(uaudio)
 {
+#ifndef USB_USE_IFATTACH
 	USB_MATCH_START(uaudio, uaa);
 	usb_interface_descriptor_t *id;
 
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
+#else
+	USB_IFMATCH_START(uaudio, uaa);
+#endif /* USB_USE_IFATTACH */
 
+#ifndef USB_USE_IFATTACH
 	id = usbd_get_interface_descriptor(uaa->iface);
+#endif /* USB_USE_IFATTACH */
 	/* Trigger on the control interface. */
-	if (id == NULL ||
+	if (
+#ifndef USB_USE_IFATTACH
+	    id == NULL ||
 	    id->bInterfaceClass != UICLASS_AUDIO ||
 	    id->bInterfaceSubClass != UISUBCLASS_AUDIOCONTROL ||
+#else
+	    uaa->class != UICLASS_AUDIO ||
+	    uaa->subclass != UISUBCLASS_AUDIOCONTROL ||
+#endif /* USB_USE_IFATTACH */
 	    (usbd_get_quirks(uaa->device)->uq_flags & UQ_BAD_AUDIO))
 		return UMATCH_NONE;
 
@@ -386,7 +398,11 @@ USB_MATCH(uaudio)
 
 USB_ATTACH(uaudio)
 {
+#ifndef USB_USE_IFATTACH
 	USB_ATTACH_START(uaudio, sc, uaa);
+#else
+	USB_IFATTACH_START(uaudio, sc, uaa);
+#endif /* USB_USE_IFATTACH */
 	usb_interface_descriptor_t *id;
 	usb_config_descriptor_t *cdesc;
 	char *devinfop;
