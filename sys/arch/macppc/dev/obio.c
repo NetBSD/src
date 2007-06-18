@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.26.14.1 2007/06/07 20:30:44 garbled Exp $	*/
+/*	$NetBSD: obio.c,v 1.26.14.2 2007/06/18 03:00:17 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26.14.1 2007/06/07 20:30:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.26.14.2 2007/06/18 03:00:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 		node = -1;
 		break;
 	}
-	if (node == 1)
+	if (node == -1)
 		panic("macio not found or unknown");
 
 	sc->sc_node = node;
@@ -135,11 +135,12 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 #endif /* PMAC_G5 */
 
 	ca.ca_baseaddr = reg[2];
-	error = bus_space_map (ca.ca_tag, ca.ca_baseaddr, 0x80, 0, &bsh);
+	ca.ca_tag = pa->pa_memt;
+	error = bus_space_map (pa->pa_memt, ca.ca_baseaddr, 0x80, 0, &bsh);
 	if (error)
 		panic(": failed to map mac-io %#x", ca.ca_baseaddr);
 
-	aprint_verbose(": addr 0x%x\n", ca.ca_baseaddr);
+	printf(": addr 0x%x\n", ca.ca_baseaddr);
 
 	/* Enable internal modem (KeyLargo) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_KEYLARGO) {
@@ -168,8 +169,9 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
 			bus_space_write_1(ca.ca_tag, bsh, 0x37, 0x03);
 	}
+
 	bus_space_unmap(ca.ca_tag, bsh, 0x80);
-  
+
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
