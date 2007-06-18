@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.18 2007/02/10 14:28:55 salo Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.18.10.1 2007/06/18 13:45:47 itohy Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.18 2007/02/10 14:28:55 salo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.18.10.1 2007/06/18 13:45:47 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,8 +250,10 @@ USB_MATCH(ubsa)
 {
 	USB_MATCH_START(ubsa, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	return (ubsa_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
