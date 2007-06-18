@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.470 2007/06/16 09:42:17 dsainty Exp $
+$NetBSD: usbdevs,v 1.471 2007/06/18 12:24:04 dsainty Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -662,7 +662,8 @@ product ASAHIOPTICAL OPTIO330	0x0006	Digital camera
 product ASANTE EA		0x1427	Ethernet Adapter
 
 /* ASIX Electronics products */
-product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
+product ASIX AX88172		0x1720	AX88172 USB 2.0 10/100 Ethernet adapter
+product ASIX AX88772		0x7720	AX88772 USB 2.0 10/100 Ethernet adapter
 
 /* ASUSTeK computer products */
 product ASUSTEK WL167G		0x1707	WL-167g USB2.0 WLAN Adapter
