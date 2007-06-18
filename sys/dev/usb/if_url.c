@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.24.10.3 2007/06/17 00:59:40 itohy Exp $	*/
+/*	$NetBSD: if_url.c,v 1.24.10.4 2007/06/18 13:44:15 itohy Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24.10.3 2007/06/17 00:59:40 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24.10.4 2007/06/18 13:44:15 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -169,8 +169,10 @@ USB_MATCH(url)
 {
 	USB_MATCH_START(url, uaa);
 
+#ifndef USB_USE_IFATTACH
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	return (url_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
