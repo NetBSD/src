@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.2 2007/03/07 15:13:50 drochner Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.3 2007/06/19 20:44:28 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@ main(int argc, char *argv[])
 	struct option *longopts = NULL;
 
 	while ((line = fparseln(stdin, &len, &lineno, NULL, 0)) != NULL) {
-		fprintf(stderr, "line %ld: %s\n", (unsigned long)lineno, line);
 		if (strncmp(line, "optstring:", 10) == 0) {
 			if (optstring)
 				free(optstring);
