@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46.16.2 2007/06/07 20:30:45 garbled Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.3 2007/06/19 23:17:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.2 2007/06/07 20:30:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.3 2007/06/19 23:17:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.2 2007/06/07 20:30:45 garbled E
 
 struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
-	struct powerpc_bus_space sc_iot;
 	struct ata_channel *sc_chanptr;
 	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
@@ -160,23 +159,17 @@ wdc_obio_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	sc->sc_iot.pbs_offset = ca->ca_baseaddr + ca->ca_reg[0];
-	sc->sc_iot.pbs_base = 0;
-	sc->sc_iot.pbs_limit = WDC_REG_NPORTS;
-	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN |  4;
-	bus_space_init(&sc->sc_iot, "wdc_obio io", NULL, 0);
-
-	wdr->cmd_iot = wdr->ctl_iot = &sc->sc_iot;
-	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	wdr->cmd_iot = wdr->ctl_iot = ca->ca_tag;
+	if (bus_space_map(wdr->cmd_iot, ca->ca_reg, WDC_REG_NPORTS*4, 0,
 	    &wdr->cmd_baseioh) ||
-	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
+	    bus_space_map(wdr->cmd_iot, ca->ca_reg + WDC_AUXREG_OFFSET*4, 1,
+		          &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
 			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i * 4,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    WDC_REG_NPORTS);
