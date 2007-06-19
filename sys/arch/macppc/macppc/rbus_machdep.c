@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.13.38.1 2007/06/07 20:30:46 garbled Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.13.38.2 2007/06/19 02:21:36 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.13.38.1 2007/06/07 20:30:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.13.38.2 2007/06/19 02:21:36 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,6 +66,9 @@ md_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size,
     bus_addr_t *adrp)
 {
 	DPRINTF("md_space_unmap: %p 0x%x\n", t, bsh);
+
+	if (adrp)
+		*adrp = bsh - t->pbs_offset;
 
 	bus_space_unmap(t, bsh, size);
 }
