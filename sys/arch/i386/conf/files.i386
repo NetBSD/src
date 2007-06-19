@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.296 2006/10/25 15:52:28 jmmv Exp $
+#	$NetBSD: files.i386,v 1.296.2.1 2007/06/19 09:26:31 liamjfoy Exp $
 #
 # new style config file for i386 architecture
 #
@@ -518,5 +518,10 @@ defflag	opt_est.h	EST_FREQ_USERWRITE
 
 # AMD PowerNow K7
 file   arch/i386/i386/powernow_k7.c	powernow_k7
+
+# AMD Geode LX Security Block
+device	glxsb: opencrypto
+attach	glxsb at pci    
+file	arch/i386/pci/glxsb.c		glxsb
 
 include "arch/i386/conf/majors.i386"
