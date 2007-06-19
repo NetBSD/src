@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.66 2007/06/03 19:32:28 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.67 2007/06/19 14:16:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.66 2007/06/03 19:32:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.67 2007/06/19 14:16:56 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -842,8 +842,10 @@ amd_amd64_name(struct cpu_info *ci)
 				break;
 			case 0x2:	/* rev BH-E4 (Manchester) */
 			case 0x4:	/* rev BH-F2 (Windsor) */
-			case 0x6:	/* rev BH-G1 (Brisbane) */
 				ret = "Athlon 64 X2";
+				break;
+			case 0x6:	/* rev BH-G1 (Brisbane) */
+				ret = "Athlon X2 or Athlon 64 X2";
 				break;
 			}
 			break;
@@ -851,10 +853,8 @@ amd_amd64_name(struct cpu_info *ci)
 			switch (extmodel) {
 			case 0x0:	/* rev DH-CG (Newcastle) */
 			case 0x1:	/* rev DH-D0 (Winchester) */
-				ret = "Athlon 64 or Sempron";
-				break;
 			case 0x2:	/* rev DH-E3/E6 */
-				ret = "Sempron";
+				ret = "Athlon 64 or Sempron";
 				break;
 			}
 			break;
@@ -872,6 +872,7 @@ amd_amd64_name(struct cpu_info *ci)
 			case 0x2:	/* rev DH-E3/E6 (Venice/Palermo) */
 			case 0x4:	/* rev DH-F2 (Orleans/Manila) */
 			case 0x5:	/* rev DH-F2 (Orleans/Manila) */
+			case 0x6:	/* rev DH-G1 */
 				ret = "Athlon 64 or Sempron";
 				break;
 			}
