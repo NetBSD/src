@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.114 2007/06/12 09:30:49 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.115 2007/06/19 13:13:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.114 2007/06/12 09:30:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.115 2007/06/19 13:13:37 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1068,11 +1068,17 @@ nfssvc_iod(l)
 	}
 quit:
 	PRELE(l);
-	if (nmp)
+	mutex_enter(&myiod->nid_lock);
+	nmp = myiod->nid_mount;
+	if (nmp) {
+		mutex_enter(&nmp->nm_lock);
 		nmp->nm_bufqiods--;
+		mutex_exit(&nmp->nm_lock);
+	}
 	myiod->nid_want = NULL;
 	myiod->nid_mount = NULL;
 	myiod->nid_proc = NULL;
+	mutex_exit(&myiod->nid_lock);
 	nfs_numasync--;
 
 	return error;
