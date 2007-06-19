@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.10 2007/06/04 19:56:22 bouyer Exp $
+# $NetBSD: mi,v 1.955.2.11 2007/06/19 09:26:32 liamjfoy Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -933,6 +933,7 @@
 ./usr/share/man/cat4/i386/fdc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/geodewdog.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/geodecntr.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/glxsb.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/gscpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/ie.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/intro.0		man-sys-catman		.cat
@@ -3342,6 +3343,7 @@
 ./usr/share/man/man4/i386/fdc.4			man-sys-man		.man
 ./usr/share/man/man4/i386/geodewdog.4		man-sys-man		.man
 ./usr/share/man/man4/i386/geodecntr.4		man-sys-man		.man
+./usr/share/man/man4/i386/glxsb.4		man-sys-man		.man
 ./usr/share/man/man4/i386/gscpcib.4		man-sys-man		.man
 ./usr/share/man/man4/i386/ie.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/intro.4		man-sys-man		.man
