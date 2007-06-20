@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.11 2007/03/27 00:34:16 jmcneill Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.12 2007/06/20 08:17:12 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -224,6 +224,10 @@
 #define 	AGP_I915_GCC1_GMS_STOLEN_0M	0x00
 #define 	AGP_I915_GCC1_GMS_STOLEN_1M	0x10
 #define 	AGP_I915_GCC1_GMS_STOLEN_8M	0x30
+#define 	AGP_I915_GCC1_GMS_STOLEN_16M	0x40
+#define 	AGP_I915_GCC1_GMS_STOLEN_32M	0x50
+#define 	AGP_I915_GCC1_GMS_STOLEN_48M	0x60
+#define 	AGP_I915_GCC1_GMS_STOLEN_64M	0x70
 #define AGP_I915_MSAC			0x62
 #define 	AGP_I915_MSAC_APER_128M		0x02
 
