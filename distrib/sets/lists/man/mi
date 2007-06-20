@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1007 2007/06/15 23:04:20 jmcneill Exp $
+# $NetBSD: mi,v 1.1008 2007/06/20 13:31:54 tsutsui Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1069,7 +1069,7 @@
 ./usr/share/man/cat4/mac68k/mem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/netdock.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/obio.0		man-sys-catman		.cat
-./usr/share/man/cat4/mac68k/sn.0		man-sys-catman		.cat
+./usr/share/man/cat4/mac68k/sn.0		man-obsolete		obsolete
 ./usr/share/man/cat4/mac68k/zsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mach64drm.0		man-sys-catman		.cat
 ./usr/share/man/cat4/macppc/autoconf.0		man-sys-catman		.cat
@@ -1305,6 +1305,7 @@
 ./usr/share/man/cat4/slip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsc.0			man-sys-catman		.cat
+./usr/share/man/cat4/sn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sound.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sp.0			man-obsolete		obsolete
 ./usr/share/man/cat4/sparc/audioamd.0		man-sys-catman		.cat
@@ -3536,7 +3537,7 @@
 ./usr/share/man/man4/mac68k/mem.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/netdock.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/obio.4		man-sys-man		.man
-./usr/share/man/man4/mac68k/sn.4		man-sys-man		.man
+./usr/share/man/man4/mac68k/sn.4		man-obsolete		obsolete
 ./usr/share/man/man4/mac68k/zsc.4		man-sys-man		.man
 ./usr/share/man/man4/mach64drm.4		man-sys-man		.man
 ./usr/share/man/man4/macppc/autoconf.4		man-sys-man		.man
@@ -3772,6 +3773,7 @@
 ./usr/share/man/man4/slip.4			man-sys-man		.man
 ./usr/share/man/man4/sm.4			man-sys-man		.man
 ./usr/share/man/man4/smsc.4			man-sys-man		.man
+./usr/share/man/man4/sn.4			man-sys-man		.man
 ./usr/share/man/man4/sound.4			man-sys-man		.man
 ./usr/share/man/man4/sp.4			man-obsolete		obsolete
 ./usr/share/man/man4/sparc/audioamd.4		man-sys-man		.man
