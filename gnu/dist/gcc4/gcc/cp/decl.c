@@ -2676,6 +2676,11 @@ make_typename_type (tree context, tree name, enum tag_types tag_type,
       name = TREE_OPERAND (name, 0);
       if (TREE_CODE (name) == TEMPLATE_DECL)
 	name = TREE_OPERAND (fullname, 0) = DECL_NAME (name);
+      else if (TREE_CODE (name) == OVERLOAD)
+	{
+	  error ("%qD is not a type", name);
+	  return error_mark_node;
+	}
     }
   if (TREE_CODE (name) == TEMPLATE_DECL)
     {
@@ -4505,19 +4510,24 @@ reshape_init_r (tree type, reshape_iter *d, bool first_initializer_p)
     {
       if (TREE_CODE (init) == CONSTRUCTOR)
 	{
+	  if (TREE_TYPE (init) && TYPE_PTRMEMFUNC_P (TREE_TYPE (init)))
+	    /* There is no need to reshape pointer-to-member function
+	       initializers, as they are always constructed correctly
+	       by the front end.  */
+           ;
+	  else if (COMPOUND_LITERAL_P (init))
 	  /* For a nested compound literal, there is no need to reshape since
 	     brace elision is not allowed. Even if we decided to allow it,
 	     we should add a call to reshape_init in finish_compound_literal,
 	     before calling digest_init, so changing this code would still
 	     not be necessary.  */
-	  if (!COMPOUND_LITERAL_P (init))
+	    gcc_assert (!BRACE_ENCLOSED_INITIALIZER_P (init));
+	  else
 	    {
 	      ++d->cur;
 	      gcc_assert (BRACE_ENCLOSED_INITIALIZER_P (init));
 	      return reshape_init (type, init);
 	    }
-	  else
-	    gcc_assert (!BRACE_ENCLOSED_INITIALIZER_P (init));
 	}
 
       warning (OPT_Wmissing_braces, "missing braces around initializer for %qT",
@@ -5230,7 +5240,15 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
 	     initializer.  It is not legal to redeclare a static data
 	     member, so this issue does not arise in that case.  */
 	  if (var_definition_p && TREE_STATIC (decl))
-	    expand_static_init (decl, init);
+            {
+              if (init)
+                {
+                  if (TREE_READONLY (decl))
+                      TREE_READONLY (decl) = 0;
+                  was_readonly = 0;
+                }
+	      expand_static_init (decl, init);
+            }
 	}
     }
 
@@ -7283,19 +7301,20 @@ grokdeclarator (const cp_declarator *declarator,
 
   /* Warn about storage classes that are invalid for certain
      kinds of declarations (parameters, typenames, etc.).  */
+  if (thread_p
+      && ((storage_class
+	   && storage_class != sc_extern
+	   && storage_class != sc_static)
+	  || declspecs->specs[(int)ds_typedef]))
+    {
+      if (!declspecs->multiple_storage_classes_p)
+	error ("multiple storage classes in declaration of %qs", name);
+      thread_p = false;
+    }
   if (declspecs->multiple_storage_classes_p)
     {
       error ("multiple storage classes in declaration of %qs", name);
       storage_class = sc_none;
-    }
-  else if (thread_p
-	   && ((storage_class
-		&& storage_class != sc_extern
-		&& storage_class != sc_static)
-	       || declspecs->specs[(int)ds_typedef]))
-    {
-      error ("multiple storage classes in declaration of %qs", name);
-      thread_p = false;
     }
   else if (decl_context != NORMAL
 	   && ((storage_class != sc_none
@@ -11005,7 +11024,7 @@ finish_function (int flags)
   if (!processing_template_decl
       && !cp_function_chain->can_throw
       && !flag_non_call_exceptions
-      && targetm.binds_local_p (fndecl))
+      && !DECL_REPLACEABLE_P (fndecl))
     TREE_NOTHROW (fndecl) = 1;
 
   /* This must come after expand_function_end because cleanups might

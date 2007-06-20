@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for ATMEL AVR micro controllers
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2004, 2005
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2004, 2005, 2007
    Free Software Foundation, Inc.
    Contributed by Denis Chertykov (denisc@overta.ru)
 
@@ -268,6 +268,8 @@ avr_override_options (void)
 {
   const struct mcu_type_s *t;
   const struct base_arch_s *base;
+
+  flag_delete_null_pointer_checks = 0;
 
   for (t = avr_mcu_types; t->name; t++)
     if (strcmp (t->name, avr_mcu_name) == 0)
@@ -1006,7 +1008,7 @@ ptrreg_to_str (int regno)
     case REG_Y: return "Y";
     case REG_Z: return "Z";
     default:
-      gcc_unreachable ();
+      output_operand_lossage ("address operand requires constraint for X, Y, or Z register");
     }
   return NULL;
 }
@@ -4679,7 +4681,7 @@ avr_handle_fndecl_attribute (tree *node, tree name,
     }
   else
     {
-      const char *func_name = IDENTIFIER_POINTER (DECL_NAME (*node));
+      const char *func_name = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (*node));
       const char *attr = IDENTIFIER_POINTER (name);
 
       /* If the function has the 'signal' or 'interrupt' attribute, test to
@@ -5050,6 +5052,7 @@ avr_rtx_costs (rtx x, int code, int outer_code, int *total)
 	    *total = COSTS_N_INSNS (AVR_MEGA ? 2 : 1);
 	  else
 	    return false;
+	  break;
 
 	case HImode:
 	  if (AVR_ENHANCED)
@@ -5058,6 +5061,7 @@ avr_rtx_costs (rtx x, int code, int outer_code, int *total)
 	    *total = COSTS_N_INSNS (AVR_MEGA ? 2 : 1);
 	  else
 	    return false;
+	  break;
 
 	default:
 	  return false;

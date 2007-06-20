@@ -1442,6 +1442,10 @@ cp_tree_equal (tree t1, tree t2)
 	&& !memcmp (TREE_STRING_POINTER (t1), TREE_STRING_POINTER (t2),
 		    TREE_STRING_LENGTH (t1));
 
+    case COMPLEX_CST:
+      return cp_tree_equal (TREE_REALPART (t1), TREE_REALPART (t2))
+	&& cp_tree_equal (TREE_IMAGPART (t1), TREE_IMAGPART (t2));
+
     case CONSTRUCTOR:
       /* We need to do this when determining whether or not two
 	 non-type pointer to member function template arguments
@@ -2038,13 +2042,9 @@ cp_cannot_inline_tree_fn (tree* fnp)
       && lookup_attribute ("always_inline", DECL_ATTRIBUTES (fn)) == NULL)
     return 1;
 
-  /* Don't auto-inline anything that might not be bound within
-     this unit of translation.
-     Exclude comdat functions from this rule.  While they can be bound
-     to the other unit, they all must be the same.  This is especially
-     important so templates can inline.  */
-  if (!DECL_DECLARED_INLINE_P (fn) && !(*targetm.binds_local_p) (fn)
-      && !DECL_COMDAT (fn))
+  /* Don't auto-inline functions that might be replaced at link-time
+     with an alternative definition.  */ 
+  if (!DECL_DECLARED_INLINE_P (fn) && DECL_REPLACEABLE_P (fn))
     {
       DECL_UNINLINABLE (fn) = 1;
       return 1;
