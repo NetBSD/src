@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.8 2007/06/06 01:55:02 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.9 2007/06/20 21:11:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < 26; i++)
 		tbl[i + 'A'] = 'A' + ((i + 13) % 26);
 
-	if (puffs_mount(pu, argv[0], mntflags, pn_root) == -1)
+	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
 
 	return puffs_mainloop(pu, lflags);
