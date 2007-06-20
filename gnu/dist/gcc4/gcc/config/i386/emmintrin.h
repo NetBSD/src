@@ -1,4 +1,4 @@
-/* Copyright (C) 2003, 2004, 2005 Free Software Foundation, Inc.
+/* Copyright (C) 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -40,8 +40,10 @@ typedef int __v4si __attribute__ ((__vector_size__ (16)));
 typedef short __v8hi __attribute__ ((__vector_size__ (16)));
 typedef char __v16qi __attribute__ ((__vector_size__ (16)));
 
-typedef __v2di __m128i;
-typedef __v2df __m128d;
+/* The Intel API is flexible enough that we must allow aliasing with other
+   vector types, and their scalar components.  */
+typedef long long __m128i __attribute__ ((__vector_size__ (16), __may_alias__));
+typedef double __m128d __attribute__ ((__vector_size__ (16), __may_alias__));
 
 /* Create a selector for use with the SHUFPD instruction.  */
 #define _MM_SHUFFLE2(fp1,fp0) \
@@ -1060,6 +1062,7 @@ _mm_mul_epu32 (__m128i __A, __m128i __B)
   return (__m128i)__builtin_ia32_pmuludq128 ((__v4si)__A, (__v4si)__B);
 }
 
+#if 0
 static __inline __m128i __attribute__((__always_inline__))
 _mm_slli_epi16 (__m128i __A, int __B)
 {
@@ -1077,7 +1080,16 @@ _mm_slli_epi64 (__m128i __A, int __B)
 {
   return (__m128i)__builtin_ia32_psllqi128 ((__v2di)__A, __B);
 }
+#else
+#define _mm_slli_epi16(__A, __B) \
+  ((__m128i)__builtin_ia32_psllwi128 ((__v8hi)(__A), __B))
+#define _mm_slli_epi32(__A, __B) \
+  ((__m128i)__builtin_ia32_pslldi128 ((__v8hi)(__A), __B))
+#define _mm_slli_epi64(__A, __B) \
+  ((__m128i)__builtin_ia32_psllqi128 ((__v8hi)(__A), __B))
+#endif
 
+#if 0
 static __inline __m128i __attribute__((__always_inline__))
 _mm_srai_epi16 (__m128i __A, int __B)
 {
@@ -1089,18 +1101,24 @@ _mm_srai_epi32 (__m128i __A, int __B)
 {
   return (__m128i)__builtin_ia32_psradi128 ((__v4si)__A, __B);
 }
+#else
+#define _mm_srai_epi16(__A, __B) \
+  ((__m128i)__builtin_ia32_psrawi128 ((__v8hi)(__A), __B))
+#define _mm_srai_epi32(__A, __B) \
+  ((__m128i)__builtin_ia32_psradi128 ((__v8hi)(__A), __B))
+#endif
 
 #if 0
 static __m128i __attribute__((__always_inline__))
-_mm_srli_si128 (__m128i __A, const int __B)
+_mm_srli_si128 (__m128i __A, int __B)
 {
-  return ((__m128i)__builtin_ia32_psrldqi128 (__A, __B))
+  return ((__m128i)__builtin_ia32_psrldqi128 (__A, __B * 8));
 }
 
 static __m128i __attribute__((__always_inline__))
-_mm_srli_si128 (__m128i __A, const int __B)
+_mm_srli_si128 (__m128i __A, int __B)
 {
-  return ((__m128i)__builtin_ia32_pslldqi128 (__A, __B))
+  return ((__m128i)__builtin_ia32_pslldqi128 (__A, __B * 8));
 }
 #else
 #define _mm_srli_si128(__A, __B) \
@@ -1109,6 +1127,7 @@ _mm_srli_si128 (__m128i __A, const int __B)
   ((__m128i)__builtin_ia32_pslldqi128 (__A, (__B) * 8))
 #endif
 
+#if 0
 static __inline __m128i __attribute__((__always_inline__))
 _mm_srli_epi16 (__m128i __A, int __B)
 {
@@ -1126,53 +1145,61 @@ _mm_srli_epi64 (__m128i __A, int __B)
 {
   return (__m128i)__builtin_ia32_psrlqi128 ((__v2di)__A, __B);
 }
+#else
+#define _mm_srli_epi16(__A, __B) \
+  ((__m128i)__builtin_ia32_psrlwi128 ((__v8hi)(__A), __B))
+#define _mm_srli_epi32(__A, __B) \
+  ((__m128i)__builtin_ia32_psrldi128 ((__v4si)(__A), __B))
+#define _mm_srli_epi64(__A, __B) \
+  ((__m128i)__builtin_ia32_psrlqi128 ((__v4si)(__A), __B))
+#endif
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_sll_epi16 (__m128i __A, __m128i __B)
 {
-  return _mm_slli_epi16 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_psllw128((__v8hi)__A, (__v8hi)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_sll_epi32 (__m128i __A, __m128i __B)
 {
-  return _mm_slli_epi32 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_pslld128((__v4si)__A, (__v4si)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_sll_epi64 (__m128i __A, __m128i __B)
 {
-  return _mm_slli_epi64 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_psllq128((__v2di)__A, (__v2di)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_sra_epi16 (__m128i __A, __m128i __B)
 {
-  return _mm_srai_epi16 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_psraw128 ((__v8hi)__A, (__v8hi)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_sra_epi32 (__m128i __A, __m128i __B)
 {
-  return _mm_srai_epi32 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_psrad128 ((__v4si)__A, (__v4si)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_srl_epi16 (__m128i __A, __m128i __B)
 {
-  return _mm_srli_epi16 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_psrlw128 ((__v8hi)__A, (__v8hi)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_srl_epi32 (__m128i __A, __m128i __B)
 {
-  return _mm_srli_epi32 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_psrld128 ((__v4si)__A, (__v4si)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))
 _mm_srl_epi64 (__m128i __A, __m128i __B)
 {
-  return _mm_srli_epi64 (__A, _mm_cvtsi128_si32 (__B));
+  return (__m128i)__builtin_ia32_psrlq128 ((__v2di)__A, (__v2di)__B);
 }
 
 static __inline __m128i __attribute__((__always_inline__))

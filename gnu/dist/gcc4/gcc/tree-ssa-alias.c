@@ -46,6 +46,7 @@ Boston, MA 02110-1301, USA.  */
 #include "ipa-type-escape.h"
 #include "vec.h"
 #include "bitmap.h"
+#include "pointer-set.h"
 
 /* Obstack used to hold grouping bitmaps and other temporary bitmaps used by
    aliasing  */
@@ -2227,6 +2228,38 @@ is_aliased_with (tree tag, tree sym)
 	  return true;
     }
 
+  return false;
+}
+
+
+/* Given two tags return TRUE if their may-alias sets intersect.  */
+
+bool 
+may_aliases_intersect (tree tag1, tree tag2)
+{ 
+  struct pointer_set_t *set1 = pointer_set_create ();
+  unsigned i;
+  varray_type may_aliases1 = var_ann (tag1)->may_aliases; 
+  varray_type may_aliases2 = var_ann (tag2)->may_aliases;
+
+  if (may_aliases1 == NULL || may_aliases2 == NULL)
+    return false;
+ 
+  /* Insert all the symbols from the first may-alias set into the
+     pointer-set.  */
+  for (i = 0; i < VARRAY_ACTIVE_SIZE (may_aliases1); i++)
+    pointer_set_insert (set1, VARRAY_TREE (may_aliases1, i));
+
+  /* Go through the second may-alias set and check if it contains symbols that
+     are common with the first set.  */
+  for (i = 0; i < VARRAY_ACTIVE_SIZE (may_aliases2); i++)
+    if (pointer_set_contains (set1, VARRAY_TREE (may_aliases2, i)))
+      {
+       pointer_set_destroy (set1); 
+       return true;
+      }
+  
+  pointer_set_destroy (set1);
   return false;
 }
 

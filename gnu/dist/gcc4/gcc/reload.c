@@ -1210,7 +1210,7 @@ push_reload (rtx in, rtx out, rtx *inloc, rtx *outloc,
 
   /* If IN appears in OUT, we can't share any input-only reload for IN.  */
   if (in != 0 && out != 0 && MEM_P (out)
-      && (REG_P (in) || MEM_P (in))
+      && (REG_P (in) || MEM_P (in) || GET_CODE (in) == PLUS)
       && reg_overlap_mentioned_for_reload_p (in, XEXP (out, 0)))
     dont_share = 1;
 
@@ -1867,7 +1867,12 @@ combine_reloads (void)
 		    ||  ! (TEST_HARD_REG_BIT
 			   (reg_class_contents[(int) rld[secondary_out].class],
 			    REGNO (XEXP (note, 0)))))))
-	&& ! fixed_regs[REGNO (XEXP (note, 0))])
+	&& ! fixed_regs[REGNO (XEXP (note, 0))]
+	/* Check that we don't use a hardreg for an uninitialized
+	   pseudo.  See also find_dummy_reload().  */
+	&& (ORIGINAL_REGNO (XEXP (note, 0)) < FIRST_PSEUDO_REGISTER
+	    || ! bitmap_bit_p (ENTRY_BLOCK_PTR->il.rtl->global_live_at_end,
+			       ORIGINAL_REGNO (XEXP (note, 0)))))
       {
 	rld[output_reload].reg_rtx
 	  = gen_rtx_REG (rld[output_reload].outmode,
@@ -5962,6 +5967,8 @@ find_reloads_subreg_address (rtx x, int force_replace, int opnum,
 	      unsigned outer_size = GET_MODE_SIZE (GET_MODE (x));
 	      unsigned inner_size = GET_MODE_SIZE (GET_MODE (SUBREG_REG (x)));
 	      int offset;
+	      enum machine_mode orig_mode = GET_MODE (tem);
+	      int reloaded;
 
 	      /* For big-endian paradoxical subregs, SUBREG_BYTE does not
 		 hold the correct (negative) byte offset.  */
@@ -5994,9 +6001,28 @@ find_reloads_subreg_address (rtx x, int force_replace, int opnum,
 		    return x;
 		}
 
-	      find_reloads_address (GET_MODE (tem), &tem, XEXP (tem, 0),
-				    &XEXP (tem, 0), opnum, type,
-				    ind_levels, insn);
+	      reloaded = find_reloads_address (GET_MODE (tem), &tem,
+					       XEXP (tem, 0), &XEXP (tem, 0),
+					       opnum, type, ind_levels, insn);
+
+	      /* For some processors an address may be valid in the
+		 original mode but not in a smaller mode.  For
+		 example, ARM accepts a scaled index register in
+		 SImode but not in HImode.  find_reloads_address
+		 assumes that we pass it a valid address, and doesn't
+		 force a reload.  This will probably be fine if
+		 find_reloads_address finds some reloads.  But if it
+		 doesn't find any, then we may have just converted a
+		 valid address into an invalid one.  Check for that
+		 here.  */
+	      if (reloaded != 1
+		  && strict_memory_address_p (orig_mode, XEXP (tem, 0))
+		  && !strict_memory_address_p (GET_MODE (tem),
+					       XEXP (tem, 0)))
+		push_reload (XEXP (tem, 0), NULL_RTX, &XEXP (tem, 0), (rtx*) 0,
+			     MODE_BASE_REG_CLASS (GET_MODE (tem)),
+			     GET_MODE (XEXP (tem, 0)), VOIDmode, 0, 0,
+			     opnum, type);
 
 	      /* If this is not a toplevel operand, find_reloads doesn't see
 		 this substitution.  We have to emit a USE of the pseudo so
@@ -6438,7 +6464,8 @@ reg_overlap_mentioned_for_reload_p (rtx x, rtx in)
       if (REG_P (in))
 	return 0;
       else if (GET_CODE (in) == PLUS)
-	return (reg_overlap_mentioned_for_reload_p (x, XEXP (in, 0))
+	return (rtx_equal_p (x, in)
+		|| reg_overlap_mentioned_for_reload_p (x, XEXP (in, 0))
 		|| reg_overlap_mentioned_for_reload_p (x, XEXP (in, 1)));
       else return (reg_overlap_mentioned_for_reload_p (XEXP (x, 0), in)
 		   || reg_overlap_mentioned_for_reload_p (XEXP (x, 1), in));
