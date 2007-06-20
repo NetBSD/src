@@ -1,3 +1,21 @@
+2007-02-13  Release Manager
+
+	* GCC 4.1.2 released.
+
+2007-01-23  Andrew Pinski  <pinskia@gmail.com>
+
+	PR objc/27438
+	* objc-act.c (objc_add_static_instance): Mark the decl as
+	TREE_USED.
+
+2007-01-21  Andrew Pinski  <pinskia@gmail.com>
+
+	PR objc/30479
+	* objc-act.c (hash_interface): Use IDENTIFIER_HASH_VALUE instead
+	of htab_hash_pointer.
+	(lookup_interface): Likewise.
+	(add_class): Likewise.
+
 2006-10-03  Andrew Pinski  <pinskia@physics.uc.edu>
 
 	PR objc/29195

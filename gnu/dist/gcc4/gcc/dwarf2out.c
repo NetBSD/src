@@ -8407,7 +8407,10 @@ modified_type_die (tree type, int is_const_type, int is_volatile_type,
 	      mod_type_die = lookup_type_die (qualified_type);
 	    }
 	  else if (is_const_type < TYPE_READONLY (dtype)
-		   || is_volatile_type < TYPE_VOLATILE (dtype))
+		   || is_volatile_type < TYPE_VOLATILE (dtype)
+		   || (is_const_type <= TYPE_READONLY (dtype)
+		       && is_volatile_type <= TYPE_VOLATILE (dtype)
+		       && DECL_ORIGINAL_TYPE (type_name) != type))
 	    /* cv-unqualified version of named type.  Just use the unnamed
 	       type to which it refers.  */
 	    mod_type_die
@@ -12890,7 +12893,8 @@ force_decl_die (tree decl)
   return decl_die;
 }
 
-/* Returns the DIE for TYPE.  A DIE is always returned.  */
+/* Returns the DIE for TYPE, that must not be a base type.  A DIE is
+   always returned.  */
 
 static dw_die_ref
 force_type_die (tree type)
@@ -13241,7 +13245,12 @@ dwarf2out_imported_module_or_decl (tree decl, tree context)
 
   /* For TYPE_DECL or CONST_DECL, lookup TREE_TYPE.  */
   if (TREE_CODE (decl) == TYPE_DECL || TREE_CODE (decl) == CONST_DECL)
-    at_import_die = force_type_die (TREE_TYPE (decl));
+    {
+      if (is_base_type (TREE_TYPE (decl)))
+	at_import_die = base_type_die (TREE_TYPE (decl));
+      else
+	at_import_die = force_type_die (TREE_TYPE (decl));
+    }
   else
     {
       at_import_die = lookup_decl_die (decl);

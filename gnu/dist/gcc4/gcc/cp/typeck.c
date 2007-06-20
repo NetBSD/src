@@ -5094,7 +5094,7 @@ build_reinterpret_cast_1 (tree type, tree expr, bool c_cast_p,
     }
   else if (TREE_CODE (type) == VECTOR_TYPE)
     return fold_if_not_in_template (convert_to_vector (type, expr));
-  else if (TREE_CODE (intype) == VECTOR_TYPE)
+  else if (TREE_CODE (intype) == VECTOR_TYPE && INTEGRAL_TYPE_P (type))
     return fold_if_not_in_template (convert_to_integer (type, expr));
   else
     {
@@ -5449,6 +5449,12 @@ build_modify_expr (tree lhs, enum tree_code modifycode, tree rhs)
 	   so the code to compute it is only emitted once.  */
 	tree cond;
 	tree preeval = NULL_TREE;
+
+	if (VOID_TYPE_P (TREE_TYPE (rhs)))
+	  {
+	    error ("void value not ignored as it ought to be");
+	    return error_mark_node;
+	  }
 
 	rhs = stabilize_expr (rhs, &preeval);
 
