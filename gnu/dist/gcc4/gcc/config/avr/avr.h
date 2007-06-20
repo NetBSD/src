@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for ATMEL AVR at90s8515, ATmega103/103L, ATmega603/603L microcontrollers.
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007
    Free Software Foundation, Inc.
    Contributed by Denis Chertykov (denisc@overta.ru)
 
@@ -690,7 +690,11 @@ sprintf (STRING, "*.%s%lu", PREFIX, (unsigned long)(NUM))
 #define ASM_OUTPUT_SKIP(STREAM, N)		\
 fprintf (STREAM, "\t.skip %lu,0\n", (unsigned long)(N))
 
-#define ASM_OUTPUT_ALIGN(STREAM, POWER)
+#define ASM_OUTPUT_ALIGN(STREAM, POWER)			\
+  do {							\
+      if ((POWER) > 1)					\
+          fprintf (STREAM, "\t.p2align\t%d\n", POWER);	\
+  } while (0)
 
 #define CASE_VECTOR_MODE HImode
 
@@ -868,5 +872,7 @@ extern int avr_case_values_threshold;
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 #define DWARF2_DEBUGGING_INFO 1
+
+#define DWARF2_ADDR_SIZE 4 
 
 #define OBJECT_FORMAT_ELF
