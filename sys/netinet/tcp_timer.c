@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.76 2006/10/09 16:27:07 rpaulo Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.77 2007/06/20 15:29:18 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.76 2006/10/09 16:27:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.77 2007/06/20 15:29:18 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -148,11 +148,12 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.76 2006/10/09 16:27:07 rpaulo Exp $"
  * Various tunable timer parameters.  These are initialized in tcp_init(),
  * unless they are patched.
  */
-int	tcp_keepidle = 0;
-int	tcp_keepintvl = 0;
-int	tcp_keepcnt = 0;		/* max idle probes */
+u_int	tcp_keepinit = 0;
+u_int	tcp_keepidle = 0;
+u_int	tcp_keepintvl = 0;
+u_int	tcp_keepcnt = 0;		/* max idle probes */
+
 int	tcp_maxpersistidle = 0;		/* max idle time in persist */
-int	tcp_maxidle;			/* computed in tcp_slowtimo() */
 
 /*
  * Time to delay the ACK.  This is initialized in tcp_init(), unless
@@ -178,6 +179,9 @@ const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 void
 tcp_timer_init(void)
 {
+
+	if (tcp_keepinit == 0)
+		tcp_keepinit = TCPTV_KEEP_INIT;
 
 	if (tcp_keepidle == 0)
 		tcp_keepidle = TCPTV_KEEP_IDLE;
@@ -251,7 +255,6 @@ tcp_slowtimo(void)
 	int s;
 
 	s = splsoftnet();
-	tcp_maxidle = tcp_keepcnt * tcp_keepintvl;
 	tcp_iss_seq += TCP_ISSINCR;			/* increment iss */
 	tcp_now++;					/* for timestamps */
 	splx(s);
@@ -542,9 +545,9 @@ tcp_timer_keep(void *arg)
 	KASSERT(so != NULL);
 	if (so->so_options & SO_KEEPALIVE &&
 	    tp->t_state <= TCPS_CLOSE_WAIT) {
-	    	if ((tcp_maxidle > 0) &&
+	    	if ((tp->t_maxidle > 0) &&
 		    ((tcp_now - tp->t_rcvtime) >=
-		     tcp_keepidle + tcp_maxidle))
+		     tp->t_keepidle + tp->t_maxidle))
 			goto dropit;
 		/*
 		 * Send a packet designed to force a response
@@ -572,9 +575,9 @@ tcp_timer_keep(void *arg)
 			    (struct mbuf *)NULL, NULL, tp->rcv_nxt,
 			    tp->snd_una - 1, 0);
 		}
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepintvl);
 	} else
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
 
 #ifdef TCP_DEBUG
 	if (tp && so->so_options & SO_DEBUG)
@@ -634,8 +637,9 @@ tcp_timer_2msl(void *arg)
 	 * control block.  Otherwise, check again in a bit.
 	 */
 	if (tp->t_state != TCPS_TIME_WAIT &&
-	    ((tcp_maxidle == 0) || ((tcp_now - tp->t_rcvtime) <= tcp_maxidle)))
-		TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
+	    ((tp->t_maxidle == 0) ||
+	    ((tcp_now - tp->t_rcvtime) <= tp->t_maxidle)))
+	    TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_keepintvl);
 	else
 		tp = tcp_close(tp);
 

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.875 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.876 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -134,3 +134,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	i386:	Import AMD Geode LX Security Block driver glxsb(4) from
 		OpenBSD. [jmcneill 20070615]
 	ipf:	Updated to v4.1.23 [martin 20070616]
+	tcp(4): Per socket keepalive timer settings. Ability to change
+		connection timeout [christos 20070620].

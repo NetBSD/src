@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.22 2007/03/15 23:43:18 gdt Exp $
+.\"	$NetBSD: tcp.4,v 1.23 2007/06/20 15:29:17 christos Exp $
 .\"	$FreeBSD: tcp.4,v 1.11.2.16 2004/02/16 22:21:47 bms Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd March 15, 2007
+.Dd June 19, 2007
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -108,7 +108,7 @@ supports a number of socket options which can be set with
 .Xr setsockopt 2
 and tested with
 .Xr getsockopt 2 :
-.Bl -tag -width TCP_MD5SIGx
+.Bl -tag -width TCP_KEEPINTVL
 .It Dv TCP_NODELAY
 Under most circumstances,
 .Tn TCP
@@ -161,6 +161,92 @@ If an SADB entry cannot be found for the destination, the outgoing traffic
 will have an invalid digest option prepended, and the following error message
 will be visible on the system console:
 .Em "tcp_signature_compute: SADB lookup failed for %d.%d.%d.%d" .
+.It Dv TCP_KEEPIDLE
+.\" XXX: We always do it.
+.\" When the 
+.\" .Dv SO_KEEPALIVE
+.\" option is enabled,
+TCP probes a connection that
+has been idle for some amount of time.
+The default value for this idle period is 4 hours.
+The 
+.Dv TCP_KEEPIDLE
+option can be used to affect this value for a given socket, and specifies
+the number of seconds of idle time between keepalive probes.
+This option takes an
+.Vt "unsigned int"
+value, with a value greater than 0.
+.\" range of 1 to N (where N is 
+.\" the
+.\" .Xr sysctl 8
+.\" variable
+.\" .Dv net.inet.tcp.keepidle ).
+.\" divided by
+.\" .Dv  PR_SLOWHZ 
+.\" which is defined in the 
+.\" .In sys/protosw.h
+.\" header file).
+.It Dv TCP_KEEPINTVL
+When the
+.Dv SO_KEEPALIVE
+option is enabled, TCP probes a connection that
+has been idle for some amount of time.
+If the remote system does not
+respond to a keepalive probe, TCP retransmits the probe after some
+amount of time.
+The default value for this retransmit interval is 150 seconds.
+The
+.Dv TCP_KEEPINTVL
+option can be used to affect this value for
+a given socket, and specifies the number of seconds to wait before
+retransmitting a keepalive probe.
+This option takes an 
+.Vt "unsigned int"
+value, with a value greater than 0.
+.\" range of 1 to N (where N is the
+.\" .Xr sysctl 8
+.\" variable
+.\" .Dv net.inet.tcp.keepintvl ).
+.It Dv TCP_KEEPCNT
+When the 
+.Dv SO_KEEPALIVE
+option is enabled, TCP probes a connection that
+has been idle for some amount of time.
+If the remote system does not
+respond to a keepalive probe, TCP retransmits the probe a certain
+number of times before a connection is considered to be broken.
+The default value for this keepalive probe retransmit limit is 8.
+The
+.Dv TCP_KEEPCNT
+option can be used to affect this value for a given socket,
+and specifies the maximum number of keepalive probes to be sent.
+This option takes an
+.Vt "unsigned int"
+value, with a value greater than 0.
+.\" range of 0 to N (where N is the
+.\" .Xr sysctl 8
+.\" variable
+.\" .Dv net.inet.tcp.keepcnt ).
+.It Dv TCP_KEEPINIT
+If a TCP connection cannot be established within some amount of time,
+TCP will time out the connect attempt.
+The default value for this initial connection establishment timeout
+is 150 seconds.
+The
+.Dv TCP_KEEPINIT
+ option can be used to affect this initial timeout period for a given
+socket, and specifies the number of seconds to wait before the connect
+attempt is timed out.
+For passive connections, the 
+.Dv TCP_KEEPINIT
+option value is inherited from the listening socket.
+This option takes an 
+.Vt "unsigned int"
+value, with a value greater than 0.
+.\" range of 0 to N (where N is the
+.\" .Xr sysctl 8
+.\" variable
+.\" .Dv net.inet.tcp.keepinit ).
 .El
 .Pp
 The option level for the
