@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.131 2007/03/04 06:03:22 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.132 2007/06/20 15:29:19 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.131 2007/03/04 06:03:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.132 2007/06/20 15:29:19 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -436,7 +436,7 @@ tcp_usrreq(struct socket *so, int req,
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 		tp->iss = tcp_new_iss(tp, 0);
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
@@ -614,6 +614,28 @@ release:
 	return (error);
 }
 
+static void
+change_keepalive(struct socket *so, struct tcpcb *tp)
+{
+	tp->t_maxidle = tp->t_keepcnt * tp->t_keepintvl;
+	TCP_TIMER_DISARM(tp, TCPT_KEEP);
+	TCP_TIMER_DISARM(tp, TCPT_2MSL);
+
+	if (tp->t_state == TCPS_SYN_RECEIVED ||
+	    tp->t_state == TCPS_SYN_SENT) {
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
+	} else if (so->so_options & SO_KEEPALIVE && 
+	    tp->t_state <= TCPS_CLOSE_WAIT) {
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepintvl);
+	} else {
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
+	}
+
+	if ((tp->t_state == TCPS_FIN_WAIT_2) && (tp->t_maxidle > 0))
+		TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_maxidle);
+}
+
+
 int
 tcp_ctloutput(int op, struct socket *so, int level, int optname,
     struct mbuf **mp)
@@ -626,6 +648,7 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 	struct tcpcb *tp;
 	struct mbuf *m;
 	int i;
+	u_int ui;
 	int family;	/* family of the socket */
 
 	family = so->so_proto->pr_domain->dom_family;
@@ -715,7 +738,8 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_MAXSEG:
-			if (m && (i = *mtod(m, int *)) > 0 &&
+			if (m && m->m_len >= sizeof(int) &&
+			    (i = *mtod(m, int *)) > 0 &&
 			    i <= tp->t_peermss)
 				tp->t_peermss = i;  /* limit on send size */
 			else
@@ -727,6 +751,42 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 				error = EINVAL;
 			error = tcp_congctl_select(tp, mtod(m, char *));
 #endif
+			break;
+
+		case TCP_KEEPIDLE:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepidle = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
+			break;
+
+		case TCP_KEEPINTVL:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepintvl = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
+			break;
+
+		case TCP_KEEPCNT:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepcnt = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
+			break;
+
+		case TCP_KEEPINIT:
+			if (m && m->m_len >= sizeof(u_int) &&
+			    (ui = *mtod(m, u_int *)) > 0) {
+				tp->t_keepinit = ui;
+				change_keepalive(so, tp);
+			} else
+				error = EINVAL;
 			break;
 
 		default:
@@ -944,8 +1004,8 @@ tcp_usrclosed(struct tcpcb *tp)
 		 * a full close, we start a timer to make sure sockets are
 		 * not left in FIN_WAIT_2 forever.
 		 */
-		if ((tp->t_state == TCPS_FIN_WAIT_2) && (tcp_maxidle > 0))
-			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
+		if ((tp->t_state == TCPS_FIN_WAIT_2) && (tp->t_maxidle > 0))
+			TCP_TIMER_ARM(tp, TCPT_2MSL, tp->t_maxidle);
 	}
 	return (tp);
 }
@@ -1418,6 +1478,27 @@ sysctl_tcp_congctl(SYSCTLFN_ARGS)
 	return error;
 }
 
+static int
+sysctl_tcp_keep(SYSCTLFN_ARGS)
+{  
+	int error;
+	u_int tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = *(u_int *)rnode->sysctl_data;
+	node.sysctl_data = &tmp;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	*(u_int *)rnode->sysctl_data = tmp;
+	tcp_tcpcb_template();	/* update the template */
+	return 0;
+}
+
+
 /*
  * this (second stage) setup routine is a replacement for tcp_sysctl()
  * (which is currently used for ipv4 and ipv6)
@@ -1585,19 +1666,19 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLTYPE_INT, "keepidle",
 		       SYSCTL_DESCR("Allowed connection idle ticks before a "
 				    "keepalive probe is sent"),
-		       NULL, 0, &tcp_keepidle, 0,
+		       sysctl_tcp_keep, 0, &tcp_keepidle, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPIDLE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "keepintvl",
 		       SYSCTL_DESCR("Ticks before next keepalive probe is sent"),
-		       NULL, 0, &tcp_keepintvl, 0,
+		       sysctl_tcp_keep, 0, &tcp_keepintvl, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPINTVL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "keepcnt",
 		       SYSCTL_DESCR("Number of keepalive probes to send"),
-		       NULL, 0, &tcp_keepcnt, 0,
+		       sysctl_tcp_keep, 0, &tcp_keepcnt, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPCNT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -1658,6 +1739,12 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       sysctl_inpcblist, 0, &tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
 		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "keepinit",
+		       SYSCTL_DESCR("Ticks before initial tcp connection times out"),
+		       sysctl_tcp_keep, 0, &tcp_keepinit, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 
 	/* ECN subtree */
 	sysctl_createv(clog, 0, NULL, &ecn_node,
