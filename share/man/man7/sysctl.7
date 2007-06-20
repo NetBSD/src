@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.11 2007/06/13 20:37:07 tnn Exp $
+.\"	$NetBSD: sysctl.7,v 1.12 2007/06/20 15:29:18 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd June 13, 2007
+.Dd June 19, 2007
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -969,6 +969,7 @@ The currently defined protocols and names are:
 .It tcp	keepintvl	integer	yes
 .It tcp	keepcnt	integer	yes
 .It tcp	slowhz	integer	no
+.It tcp	keepinit	integer	yes
 .It tcp	log_refused	integer	yes
 .It tcp	rstppslimit	integer	yes
 .It tcp	ident	struct	no
@@ -1184,6 +1185,8 @@ another probe is sent.
 See also tcp.slowhz.
 .It Li tcp.log_refused
 If set to 1, refused TCP connections to the host will be logged.
+.It Li tcp.keepinit
+Timeout in seconds during connection establishment.
 .It Li tcp.mss_ifmtu
 If set to 1, TCP calculates the outgoing maximum segment size based on
 the MTU of the appropriate interface.

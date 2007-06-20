@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.146 2007/05/02 20:40:25 dyoung Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.147 2007/06/20 15:29:19 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -331,6 +331,14 @@ struct tcpcb {
 	uint8_t t_ecn_retries;		/* # of ECN setup retries */
 	
 	struct tcp_congctl *t_congctl;	/* per TCB congctl algorithm */
+
+	/* Keepalive per socket */
+	u_int	t_keepinit;
+	u_int	t_keepidle;
+	u_int	t_keepintvl;
+	u_int	t_keepcnt;
+	u_int	t_maxidle;		/* t_keepcnt * t_keepintvl */
+
 };
 
 /*
