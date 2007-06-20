@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.12.14.1 2007/05/11 00:19:27 macallan Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.12.14.2 2007/06/20 03:08:03 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.1 2007/05/11 00:19:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.2 2007/06/20 03:08:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.1 2007/05/11 00:19:27 macallan 
 
 struct mediabay_softc {
 	struct device sc_dev;
+	bus_space_tag_t sc_tag;
 	int sc_node;
 	u_int *sc_addr;
 	u_int *sc_fcr;
@@ -112,6 +113,7 @@ mediabay_attach(parent, self, aux)
 	sc->sc_fcr = sc->sc_addr + 1;
 	sc->sc_node = ca->ca_node;
 	sc->sc_baseaddr = ca->ca_baseaddr;
+	sc->sc_tag = ca->ca_tag;
 	irq = ca->ca_intr[0];
 	itype = IST_EDGE;
 
@@ -172,6 +174,7 @@ mediabay_attach_content(sc)
 		ca.ca_name = name;
 		ca.ca_node = child;
 		ca.ca_baseaddr = sc->sc_baseaddr;
+		ca.ca_tag = sc->sc_tag;
 
 		ca.ca_nreg  = OF_getprop(child, "reg", reg, sizeof(reg));
 		ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,
