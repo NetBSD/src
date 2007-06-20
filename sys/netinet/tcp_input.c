@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.266 2007/05/18 21:48:43 riz Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.267 2007/06/20 15:29:18 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.266 2007/05/18 21:48:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.267 2007/06/20 15:29:18 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1606,7 +1606,7 @@ after_listen:
 	 */
 	tp->t_rcvtime = tcp_now;
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
 
 	/*
 	 * Process options.
@@ -2366,9 +2366,9 @@ after_listen:
 				 */
 				if (so->so_state & SS_CANTRCVMORE) {
 					soisdisconnected(so);
-					if (tcp_maxidle > 0)
+					if (tp->t_maxidle > 0)
 						TCP_TIMER_ARM(tp, TCPT_2MSL,
-						    tcp_maxidle);
+						    tp->t_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
 			}
@@ -3377,7 +3377,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= TCPTV_KEEP_INIT)
+	if (sc->sc_rxttot >= tcp_keepinit)
 		goto dropit;
 
 	tcpstat.tcps_sc_retransmitted++;
@@ -3713,7 +3713,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	tcp_sendseqinit(tp);
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 	tcpstat.tcps_accepts++;
 
 	if ((sc->sc_flags & SCF_SACK_PERMIT) && tcp_do_sack)
