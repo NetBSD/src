@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.32 2007/06/06 01:55:00 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.33 2007/06/21 14:11:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.32 2007/06/06 01:55:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.33 2007/06/21 14:11:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -336,6 +336,59 @@ puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
 }
 
 /*
+ * Make sure root vnode exists and reference it.  Does NOT lock.
+ */
+int
+puffs_makeroot(struct puffs_mount *pmp)
+{
+	struct vnode *vp;
+	int rv;
+
+	/*
+	 * pmp_lock must be held if vref()'ing or vrele()'ing the
+	 * root vnode.  the latter is controlled by puffs_inactive().
+	 *
+	 * pmp_root is set here and cleared in puffs_reclaim().
+	 */
+ retry:
+	mutex_enter(&pmp->pmp_lock);
+	vp = pmp->pmp_root;
+	if (vp) {
+		simple_lock(&vp->v_interlock);
+		mutex_exit(&pmp->pmp_lock);
+		if (vget(vp, LK_INTERLOCK) == 0)
+			return 0;
+	} else
+		mutex_exit(&pmp->pmp_lock);
+
+	/*
+	 * So, didn't have the magic root vnode available.
+	 * No matter, grab another an stuff it with the cookie.
+	 */
+	if ((rv = puffs_getvnode(pmp->pmp_mp, pmp->pmp_root_cookie,
+	    pmp->pmp_root_vtype, pmp->pmp_root_vsize, pmp->pmp_root_rdev, &vp)))
+		return rv;
+
+	/*
+	 * Someone magically managed to race us into puffs_getvnode?
+	 * Put our previous new vnode back and retry.
+	 */
+	mutex_enter(&pmp->pmp_lock);
+	if (pmp->pmp_root) {
+		mutex_exit(&pmp->pmp_lock);
+		puffs_putvnode(vp);
+		goto retry;
+	} 
+
+	/* store cache */
+	vp->v_flag = VROOT;
+	pmp->pmp_root = vp;
+	mutex_exit(&pmp->pmp_lock);
+
+	return 0;
+}
+
+/*
  * Locate the in-kernel vnode based on the cookie received given
  * from userspace.  Returns a vnode, if found, NULL otherwise.
  * The parameter "lock" control whether to lock the possible or
@@ -351,17 +404,16 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 	int vgetflags;
 
 	/*
-	 * If we're trying to get the root vnode, return it through
-	 * puffs_root() to get all the right things set.  Lock must
-	 * be set, since VFS_ROOT() always locks the returned vnode.
+	 * Handle root in a special manner, since we want to make sure
+	 * pmp_root is properly set.
 	 */
 	if (cookie == pmp->pmp_root_cookie) {
-		if (!lock)
+		if (puffs_makeroot(pmp))
 			return NULL;
-		if (VFS_ROOT(pmp->pmp_mp, &vp))
-			return NULL;
+		if (lock)
+			vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 
-		return vp;
+		return pmp->pmp_root;
 	}
 
 	vgetflags = LK_INTERLOCK;

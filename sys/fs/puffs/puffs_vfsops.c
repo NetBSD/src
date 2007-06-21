@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.43 2007/06/06 01:55:00 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.44 2007/06/21 14:11:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.43 2007/06/06 01:55:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.44 2007/06/21 14:11:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -340,61 +340,16 @@ int
 puffs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct puffs_mount *pmp;
-	struct puffs_node *pn;
-	struct vnode *vp;
+	int rv;
 
 	pmp = MPTOPUFFSMP(mp);
-
-	/*
-	 * pmp_lock must be held if vref()'ing or vrele()'ing the
-	 * root vnode.  the latter is controlled by puffs_inactive().
-	 */
-	mutex_enter(&pmp->pmp_lock);
-	vp = pmp->pmp_root;
-	if (vp) {
-		simple_lock(&vp->v_interlock);
-		mutex_exit(&pmp->pmp_lock);
-		pn = VPTOPP(vp);
-		if (vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK))
-			goto grabnew;
-		*vpp = vp;
-		return 0;
-	} else
-		mutex_exit(&pmp->pmp_lock);
-
-	/* XXX: this is wrong, so FIXME */
- grabnew:
-
-	/*
-	 * So, didn't have the magic root vnode available.
-	 * No matter, grab another an stuff it with the cookie.
-	 */
-	if (puffs_getvnode(mp, pmp->pmp_root_cookie, pmp->pmp_root_vtype,
-	    pmp->pmp_root_vsize, pmp->pmp_root_rdev, &vp))
-		panic("sloppy programming");
-
-	mutex_enter(&pmp->pmp_lock);
-	/*
-	 * check if by mysterious force someone else created a root
-	 * vnode while we were executing.
-	 */
-	if (pmp->pmp_root) {
-		vref(pmp->pmp_root);
-		mutex_exit(&pmp->pmp_lock);
-		puffs_putvnode(vp);
-		vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
-		*vpp = pmp->pmp_root;
-		return 0;
-	} 
-
-	/* store cache */
-	vp->v_flag = VROOT;
-	pmp->pmp_root = vp;
-	mutex_exit(&pmp->pmp_lock);
+	rv = puffs_makeroot(pmp);
+	if (rv)
+		return rv;
 
 	vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
+	*vpp = pmp->pmp_root;
 
-	*vpp = vp;
 	return 0;
 }
 
