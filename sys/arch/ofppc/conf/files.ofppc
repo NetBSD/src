@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.26.10.1 2007/05/22 17:27:19 matt Exp $
+#	$NetBSD: files.ofppc,v 1.26.10.2 2007/06/21 18:49:37 garbled Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -9,27 +9,38 @@ maxpartitions 16
 maxusers 8 16 64
 
 # Platform support option headers
-defflag	FIREPOWER_ES			# Firepower ES
-defflag	FIREPOWER_MX			# Firepower MX
-defflag	FIREPOWER_LX			# Firepower LX
-defflag	TOTALIMPACT_BRIQ		# Total Impact briQ
+#defflag	FIREPOWER_ES			# Firepower ES
+#defflag	FIREPOWER_MX			# Firepower MX
+#defflag	FIREPOWER_LX			# Firepower LX
+#defflag	TOTALIMPACT_BRIQ		# Total Impact briQ
+
+defflag	akbd.h NO_AKDB_DEVICE
+defflag adbkbd.h NO_ADBKBD_DEVICE
+defflag zsc.h NO_ZSC_DEVICE
+defflag adb.h NO_ADB_DEVICE
+defflag ukbd.h NO_UKBD_DEVICE
+defflag zstty.h NO_ZSTTY_DEVICE
 
 file	arch/ofppc/ofppc/autoconf.c
-file	arch/ofppc/ofppc/clock.c
-file	arch/ofppc/ofppc/conf.c
-file	arch/ofppc/ofppc/disksubr.c		disk
+file	arch/powerpc/powerpc/clock.c
+file	kern/subr_disk_mbr.c			disk
+file	arch/powerpc/oea/ofwoea_machdep.c
+file	arch/powerpc/oea/ofw_consinit.c
 file	arch/ofppc/ofppc/machdep.c
-file	arch/ofppc/ofppc/platform.c
-file	dev/cons.c
-file	dev/cninit.c
+#file	arch/ofppc/ofppc/platform.c
+file	arch/macppc/dev/ofb_cons.c
 
+file	arch/powerpc/powerpc/bus_dma.c
+file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 file	arch/powerpc/powerpc/softintr.c
+file	dev/cons.c
 
 #
 # CPU specific OpenFirmware code
 #
 include "arch/powerpc/conf/files.ofw"
+include "arch/powerpc/pic/files.pic"
 
 #
 # Generic OpenFirmware device support
@@ -64,22 +75,44 @@ include "dev/wsfont/files.wsfont"
 include "dev/wscons/files.wscons"
 include "dev/wsfb/files.wsfb"
 
+define mainbus {}
+device mainbus: mainbus
+attach mainbus at root
+file	arch/ofppc/ofppc/mainbus.c		mainbus
+
 #
 # PCI bus support
 #
 include "dev/pci/files.pci"
+include "dev/pci/files.agp"
+file	arch/powerpc/pci/pciconf_indirect.c	pci
+file	arch/powerpc/pci/pci_machdep_common.c	pci
+file	arch/powerpc/pci/pci_machdep_ofw.c	pci
+
+device ofwpci: pcibus
+attach ofwpci at mainbus
+file	arch/ofppc/pci/ofwpci.c			ofwpci
+
+device pchb: pcibus
+attach pchb at pci
+file	arch/powerpc/pci/pchb.c			pchb
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/powerpc/pci/pcib.c			pcib
+
+device ofb: wsemuldisplaydev, rasops8, vcons
+attach ofb at pci
+file arch/macppc/dev/ofb.c			ofb needs-flag
 
 #
 # ISA bus support
 #
 include "dev/isa/files.isa"
-
-#
-# Main system bus and devices.
-#
-device	mainbus {}: ofbus
-attach	mainbus at root
-file	arch/ofppc/ofppc/mainbus.c		mainbus
+file	arch/powerpc/isa/isa_machdep_common.c	isa
+file	arch/ofppc/isa/isa_machdep.c		isa
+file	arch/powerpc/isa/isadma_machdep.c	isa
 
 device	cpu
 attach	cpu at mainbus
@@ -91,29 +124,7 @@ include "arch/powerpc/conf/files.rtas"
 # Support for generic OpenFirmware driver configurations.  This is
 # always included in the kernel.
 #
-file	arch/ofppc/ofwgen/ofwgen.c
-file	arch/ofppc/ofwgen/ofwgen_intr.c
-
-# DMA support routines that are common to more than one system type.
-file	arch/powerpc/powerpc/bus_dma.c		firepower_es | firepower_mx |
-						firepower_lx
-
-#
-# Support for Firepower EX, MS, and LX systems.
-#
-device	firepower: pcibus
-attach	firepower at mainbus
-file	arch/ofppc/firepower/firepower.c	firepower_es | firepower_mx |
-						firepower_lx
-file	arch/ofppc/firepower/firepower_bus_io.c	firepower_es | firepower_mx |
-						firepower_lx
-file	arch/ofppc/firepower/firepower_bus_mem.c firepower_es | firepower_mx |
-						firepower_lx
-file	arch/ofppc/firepower/firepower_dma.c	firepower_es | firepower_mx |
-						firepower_lx
-file	arch/ofppc/firepower/firepower_intr.c	firepower_es | firepower_mx |
-						firepower_lx
-file	arch/ofppc/firepower/firepower_pci.c	firepower_es | firepower_mx |
-						firepower_lx
+#file	arch/ofppc/ofwgen/ofwgen.c
+#file	arch/ofppc/ofwgen/ofwgen_intr.c
 
 include "arch/ofppc/conf/majors.ofppc"

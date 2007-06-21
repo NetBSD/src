@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.97 2006/11/11 18:47:11 jmmv Exp $
+# $NetBSD: GENERIC,v 1.97.16.1 2007/06/21 18:49:37 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,9 +22,12 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.97.16.1 $"
 
 maxusers	32
+
+options		PIC_OPENPIC
+options		PIC_I8259
 
 # various hacks due to bugs in Openfirmware implementation
 options 	FIRMWORKSBUGS
@@ -146,6 +149,13 @@ options 	NMBCLUSTERS=1024
 #options 	ALTQ_RIO	# RED with IN/OUT
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
+options		WSEMUL_VT100
+options		WS_DEFAULT_FG=WSCOL_BLACK
+options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options		FONT_GALLANT12x22
+
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?
 
@@ -156,23 +166,29 @@ config		netbsd	root on ? type ?
 mainbus*	at root
 
 # Generic OpenFirmware bus support
-ofbus*		at mainbus?
-ofbus*		at ofbus?
+#ofbus*		at mainbus?
+#ofbus*		at ofbus?
 
 # CPUs
 cpu*		at mainbus?
 
-# Generic OpenFirmware disk support
-ofdisk*		at ofbus?
+ofwpci*		at mainbus?
+pci*		at ofwpci? bus ?
 
-# Generic OpenFirmware network interface support
-ofnet*		at ofbus?
+pchb*		at pci? dev ? function ?
+ppb*		at pci? dev ? function ?
+pcn*		at pci? dev ? function ?
+siop*		at pci? dev ? function ?
+pcib*		at pci? dev ? function ?
+ofb*    at pci? dev ? function ?
+# make sure the console display is always wsdisplay0
+wsdisplay0      at wsemuldisplaydev? console 1
+wsdisplay*      at wsemuldisplaydev?
 
-# Generic OpenFirmware console support
-ofcons*		at ofbus?
+isa*		at pcib?
 
-# Generic OpenFirmware real-time clock support
-ofrtc*		at ofbus?
+scsibus*	at scsi?
+sd*		at scsibus? target ? lun ?
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
