@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.1.2.2 2007/06/14 02:35:35 macallan Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.1.2.3 2007/06/21 18:19:47 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.2.2 2007/06/14 02:35:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.2.3 2007/06/21 18:19:47 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.1.2.2 2007/06/14 02:35:35 macalla
 #include "akbd.h"
 #include "adbkbd.h"
 #include "ofb.h"
+#include "isa.h"
 
 #include "zsc.h"
 #if NZSC > 0
@@ -153,7 +154,9 @@ cninit(void)
 	}
 
 	if (strcmp(type, "serial") == 0) {
+#if defined(PMAC_G5) || defined (MAMBO) || NZSTTY > 0 || NCOM > 0
 		struct consdev *cp;
+#endif
 		char name[32];
 
 #if defined(PMAC_G5)
@@ -176,7 +179,7 @@ cninit(void)
 		}
 		return;
 #endif /* NZTTY */
-#if (NCOM > 0 && 0)
+#if (NCOM > 0 && NISA > 0)
 		if (strcmp(name, "serial") == 0) {
 			bus_space_tag_t tag = &genppc_isa_io_space_tag;
 			u_int32_t freq, reg[3];
