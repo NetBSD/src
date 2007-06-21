@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.2 2007/05/11 13:12:14 is Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.2.4.1 2007/06/21 15:14:18 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -106,9 +106,18 @@ USB_DECLARE_DRIVER(stuirda);
 
 USB_MATCH(stuirda)
 {
+#ifndef USB_USE_IFATTACH
+	USB_MATCH_START(stuirda, uaa);
+#else
 	USB_IFMATCH_START(stuirda, uaa);
+#endif /* USB_USE_IFATTACH */
 
 	DPRINTFN(50,("stuirda_match\n"));
+
+#ifndef USB_USE_IFATTACH
+	if (uaa->iface == NULL)
+		return (UMATCH_NONE);
+#endif /* USB_USE_IFATTACH */
 
 	if (stuirda_lookup(uaa->vendor, uaa->product) != NULL)
 		return (UMATCH_VENDOR_PRODUCT);
@@ -120,7 +129,11 @@ void uirda_attach(struct device *,struct device *,void *);
 
 USB_ATTACH(stuirda)
 {
+#ifndef USB_USE_IFATTACH
+	USB_ATTACH_START(stuirda, sc, uaa);
+#else
 	USB_IFATTACH_START(stuirda, sc, uaa);
+#endif /* USB_USE_IFATTACH */
 
 	(void)uaa;
 
@@ -147,7 +160,6 @@ stuirda_fwload(struct uirda_softc *sc) {
 	char *p;
 	char fwname[12];
 	int n;
-	u_int8_t *usbbuf;
 	/* size_t bsize; */
 
 	printf("%s: needing to download firmware\n",
@@ -232,24 +244,18 @@ stuirda_fwload(struct uirda_softc *sc) {
 		    USBDEVNAME(sc->sc_dev), rc);
 		goto giveup3;
 	}
-	fwxfer = usbd_alloc_xfer(sc->sc_udev);
+	fwxfer = usbd_alloc_xfer(sc->sc_udev, fwpipe);
 	if (fwxfer == NULL) {
 		printf("%s: Cannot alloc xfer\n", USBDEVNAME(sc->sc_dev));
 		goto giveup4;
-	}
-	usbbuf = usbd_alloc_buffer(fwxfer, 1024);
-	if (usbbuf == NULL) {
-		printf("%s: Cannot alloc usb buf\n", USBDEVNAME(sc->sc_dev));
-		goto giveup5;
 	}
 	n = (buffer + fwsize - p);
 	while (n > 0) {
 		if (n > 1023)
 			n = 1023;
-		memcpy(usbbuf, p, n);
 		rc = usbd_bulk_transfer(fwxfer, fwpipe,
-		    USBD_SYNCHRONOUS|USBD_FORCE_SHORT_XFER,
-		    5000, usbbuf, &n, "uirda-fw-wr");
+		    USBD_NO_COPY|USBD_SYNCHRONOUS|USBD_FORCE_SHORT_XFER,
+		    5000, p, &n, "uirda-fw-wr");
 		printf("%s: write: rc=%d, %d left\n",
 		    USBDEVNAME(sc->sc_dev), rc, n);
 		if (rc) {
@@ -264,9 +270,8 @@ stuirda_fwload(struct uirda_softc *sc) {
 	delay(100000);
 	/* TODO: more code here */
 	rc = 0;
-	usbd_free_buffer(fwxfer);
 
-	giveup5: usbd_free_xfer(fwxfer);	
+	usbd_free_xfer(fwxfer);	
 	giveup4: usbd_close_pipe(fwpipe);
 	giveup3: firmware_free(buffer, fwsize);
 	giveup2: firmware_close(fh);
