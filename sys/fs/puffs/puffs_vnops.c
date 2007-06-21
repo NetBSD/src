@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.76 2007/06/06 01:55:00 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.77 2007/06/21 14:54:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.76 2007/06/06 01:55:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.77 2007/06/21 14:54:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -497,8 +497,8 @@ puffs_lookup(void *v)
 
 	/* XXX: race here */
 	/* XXX2: this check for node existence twice */
-	vp = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode, 1);
-	if (!vp) {
+	error = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode, 1, &vp);
+	if (error) {
 		error = puffs_getvnode(dvp->v_mount,
 		    lookup_arg.pvnr_newnode, lookup_arg.pvnr_vtype,
 		    lookup_arg.pvnr_size, lookup_arg.pvnr_rdev, &vp);
