@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.33 2007/06/21 14:11:34 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.34 2007/06/21 14:54:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.33 2007/06/21 14:11:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.34 2007/06/21 14:54:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -338,7 +338,7 @@ puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
 /*
  * Make sure root vnode exists and reference it.  Does NOT lock.
  */
-int
+static int
 puffs_makeroot(struct puffs_mount *pmp)
 {
 	struct vnode *vp;
@@ -396,46 +396,48 @@ puffs_makeroot(struct puffs_mount *pmp)
  * in situations where we want the vnode but don't care for the
  * vnode lock, e.g. file server issued putpages.
  */
-struct vnode *
-puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
+int
+puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock,
+	struct vnode **vpp)
 {
 	struct puffs_node *pnode;
 	struct vnode *vp;
-	int vgetflags;
+	int vgetflags, rv;
 
 	/*
 	 * Handle root in a special manner, since we want to make sure
 	 * pmp_root is properly set.
 	 */
 	if (cookie == pmp->pmp_root_cookie) {
-		if (puffs_makeroot(pmp))
-			return NULL;
+		if ((rv = puffs_makeroot(pmp)))
+			return rv;
 		if (lock)
 			vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 
-		return pmp->pmp_root;
+		*vpp = pmp->pmp_root;
+		return 0;
 	}
-
-	vgetflags = LK_INTERLOCK;
-	if (lock)
-		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
 
 	mutex_enter(&pmp->pmp_lock);
 	pnode = puffs_cookie2pnode(pmp, cookie);
 
 	if (pnode == NULL) {
 		mutex_exit(&pmp->pmp_lock);
-		return NULL;
+		return ENOENT;
 	}
-	vp = pnode->pn_vp;
 
+	vp = pnode->pn_vp;
 	simple_lock(&vp->v_interlock);
 	mutex_exit(&pmp->pmp_lock);
 
-	if (vget(vp, vgetflags))
-		return NULL;
+	vgetflags = LK_INTERLOCK;
+	if (lock)
+		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
+	if ((rv = vget(vp, vgetflags)))
+		return rv;
 
-	return vp;
+	*vpp = vp;
+	return 0;
 }
 
 void
