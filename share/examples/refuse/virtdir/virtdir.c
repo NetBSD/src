@@ -79,9 +79,38 @@ mkdirs(virtdir_t *tp, const char *path, size_t size)
 	}
 }
 
+/* get rid of multiple slashes in input */
+static int
+normalise(const char *name, size_t namelen, char *path, size_t pathsize)
+{
+	const char	*np;
+	char		*pp;
+	int		 done;
+
+	for (pp = path, np = name, done = 0 ; !done && (int)(pp - path) < pathsize - 1 && (int)(np - name) <= namelen ; ) {
+		switch(*np) {
+		case '/':
+			if (pp == path || *(pp - 1) != '/') {
+				*pp++ = *np;
+			}
+			np += 1;
+			break;
+		case 0x0:
+			done = 1;
+			break;
+		default:
+			*pp++ = *np++;
+			break;
+		}
+	}
+	/* XXX - trailing slash? */
+	*pp = 0x0;
+	return (int)(pp - path);
+}
+
 /* initialise the tree */
 int
-virtdir_init(virtdir_t *tp, struct stat *d, struct stat *f, struct stat *l)
+virtdir_init(virtdir_t *tp, const char *rootdir, struct stat *d, struct stat *f, struct stat *l)
 {
 	(void) memcpy(&tp->dir, d, sizeof(tp->dir));
 	tp->dir.st_mode = S_IFDIR | 0755;
@@ -92,27 +121,33 @@ virtdir_init(virtdir_t *tp, struct stat *d, struct stat *f, struct stat *l)
 	(void) memcpy(&tp->lnk, l, sizeof(tp->lnk));
 	tp->lnk.st_mode = S_IFLNK | 0644;
 	tp->lnk.st_nlink = 1;
+	if (rootdir != NULL) {
+		tp->rootdir = strdup(rootdir);
+	}
 	return 1;
 }
 
 /* add an entry to the tree */
 int
-virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tgt, size_t tgtlen)
+virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, const char *tgt, size_t tgtlen)
 {
-	struct stat	 st;
+	struct stat	st;
+	char		path[MAXPATHLEN];
+	int		pathlen;
 
 	if (tp->v == NULL) {
 		(void) stat(".", &st);
-		virtdir_init(tp, &st, &st, &st);
+		virtdir_init(tp, NULL, &st, &st, &st);
 	}
-	if (virtdir_find(tp, name, size) != NULL) {
+	pathlen = normalise(name, size, path, sizeof(path));
+	if (virtdir_find(tp, path, pathlen) != NULL) {
 		/* attempt to add a duplicate directory entry */
 		return 0;
 	}
 	ALLOC(virt_dirent_t, tp->v, tp->size, tp->c, 10, 10, "virtdir_add",
 			return 0);
-	tp->v[tp->c].namelen = size;
-	if ((tp->v[tp->c].name = strnsave(name, size)) == NULL) {
+	tp->v[tp->c].namelen = pathlen;
+	if ((tp->v[tp->c].name = strnsave(path, pathlen)) == NULL) {
 		return 0;
 	}
 	tp->v[tp->c].d_name = strrchr(tp->v[tp->c].name, '/') + 1;
@@ -123,7 +158,7 @@ virtdir_add(virtdir_t *tp, const char *name, size_t size, uint8_t type, char *tg
 	}
 	tp->c += 1;
 	qsort(tp->v, tp->c, sizeof(tp->v[0]), compare);
-	mkdirs(tp, name, size);
+	mkdirs(tp, path, pathlen);
 	return 1;
 }
 
@@ -149,10 +184,11 @@ virt_dirent_t *
 virtdir_find(virtdir_t *tp, const char *name, size_t namelen)
 {
 	virt_dirent_t	e;
+	char		path[MAXPATHLEN];
 
 	(void) memset(&e, 0x0, sizeof(e));
-	e.name = __UNCONST(name);
-	e.namelen = namelen;
+	e.namelen = normalise(name, namelen, path, sizeof(path));
+	e.name = path;
 	return bsearch(&e, tp->v, tp->c, sizeof(tp->v[0]), compare);
 }
 
@@ -187,8 +223,8 @@ readvirtdir(VIRTDIR *dirp)
 
 	for ( ; dirp->i < dirp->tp->c ; dirp->i++) {
 		from = (strcmp(dirp->dirname, "/") == 0) ?
-				&dirp->tp->v[dirp->i].name[1] :
-				&dirp->tp->v[dirp->i].name[dirp->dirnamelen + 1];
+			&dirp->tp->v[dirp->i].name[1] :
+			&dirp->tp->v[dirp->i].name[dirp->dirnamelen + 1];
 		if (strncmp(dirp->tp->v[dirp->i].name, dirp->dirname,
 				dirp->dirnamelen) == 0 &&
 		    *from != 0x0 &&
@@ -212,10 +248,12 @@ virt_dirent_t *
 virtdir_find_tgt(virtdir_t *tp, const char *tgt, size_t tgtlen)
 {
 	/* we don't need no stinking binary searches */
+	char	path[MAXPATHLEN];
 	int	i;
 
+	(void) normalise(tgt, tgtlen, path, sizeof(path));
 	for (i = 0 ; i < tp->c ; i++) {
-		if (tp->v[i].tgt && strcmp(tp->v[i].tgt, tgt) == 0) {
+		if (tp->v[i].tgt && strcmp(tp->v[i].tgt, path) == 0) {
 			return &tp->v[i];
 		}
 	}
@@ -235,6 +273,13 @@ virtdir_drop(virtdir_t *tp)
 		}
 	}
 	FREE(tp->v);
+}
+
+/* return the value of the root directory of the tree */
+char *
+virtdir_rootdir(virtdir_t *tp)
+{
+	return tp->rootdir;
 }
 
 #ifdef VIRTDIR_DEBUG
