@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.6 2007/06/16 11:27:40 kiyohara Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.7 2007/06/21 04:04:29 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.6 2007/06/16 11:27:40 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.7 2007/06/21 04:04:29 kiyohara Exp $");
 
 #include "bpfilter.h"
 
@@ -1873,7 +1873,7 @@ zyd_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		SIMPLEQ_FOREACH(rqp, &sc->sc_rqh, rq) {
 			int i;
 
-			if (rqp->len != datalen)
+			if (sizeof(struct zyd_pair) * rqp->len != datalen)
 				continue;
 			for (i = 0; i < rqp->len; i++) {
 				if (*(((const uint16_t *)rqp->idata) + i) !=
