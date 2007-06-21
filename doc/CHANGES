@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.877 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.878 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -139,3 +139,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	newgrp(1): Add POSIX (IEEE Std 1003.1, 2004 / Open Group Base
 		Specifications Issue 6) User Portability Utility to change
 		effective group ID. [ginsbach 20060621]
+	GCC: Updated to version 4.1.3-20070620.  [mrg 20070621]
