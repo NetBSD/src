@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.193 2007/06/18 14:03:10 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.194 2007/06/21 14:29:44 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6807,3 +6807,45 @@ sys/dev/pci/cs428x.h				1.13
 	Fix ACPI suspend/resume support of clcs and clct. Based on auich and
 	hints from jmcneill@.
 	[joerg, ticket #733]
+
+distrib/sets/lists/man/mi			1.1007
+share/man/man4/man4.i386/Makefile		1.66
+share/man/man4/man4.i386/glxsb.4		1.1
+sys/arch/i386/conf/ALL				1.104
+sys/arch/i386/conf/GENERIC			1.833
+sys/arch/i386/conf/files.i386			1.309
+sys/arch/i386/pci/glxsb.c			1.1
+
+	Import driver for the AMD Geode LX AES Security Block, from OpenBSD. The
+	glxsb(4) driver provides random numbers and AES acceleration.
+
+	Add man page for AMD Geode LX AES Security Block driver.
+
+	Enable glxsb(4)
+	[riz, ticket #734]
+
+dist/iscsi/src/target.c				1.18
+
+	Apply the fix from PR 36354, from yamt.
+
+	yamt's reading of RFC 3720 is correct (see section 12.10, InitialR2T).
+
+	The desired transfer length in the initial ready to transmit
+	negotiation should not include any immediate data.
+	[agc, ticket #736]
+
+sys/dev/pci/unichromefb.c			1.5
+
+	Update to compile properly.
+	OK jmcneill
+	[sborrill, ticket #737]
+
+sys/arch/i386/conf/GENERIC			1.800
+
+	Add rtw at pci to the GENERIC kernel.
+	[dyoung, ticket #738]
+
+common/lib/libc/arch/arm/string/memmove.S	1.2
+
+	Apply the patch supplied in PR/36512 to fix the buffer overlap check.
+	[scw, ticket #740]
