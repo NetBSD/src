@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.4 2006/08/13 20:27:33 jmcneill Exp $ */
+/* $NetBSD: unichromefb.c,v 1.4.8.1 2007/06/21 13:50:37 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.4 2006/08/13 20:27:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.4.8.1 2007/06/21 13:50:37 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ struct wsscreen_descr unichromefb_stdscreen = {
 	0, 0,
 	NULL,
 	8, 16,
+	WSSCREEN_WSCOLORS, NULL,
 };
 
 static int	unichromefb_ioctl(void *, void *, u_long, caddr_t, int,
@@ -199,6 +200,8 @@ static void	uni_putchar(void *, int, int, u_int, long);
 struct wsdisplay_accessops unichromefb_accessops = {
 	unichromefb_ioctl,
 	unichromefb_mmap,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,
