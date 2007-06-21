@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: memmove.S,v 1.1.6.1 2007/06/21 14:25:01 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -53,10 +53,10 @@ ENTRY(bcopy)
 	/* Do the buffers overlap? */
 	cmp	r0, r1
 	RETc(eq)		/* Bail now if src/dst are the same */
-	subcc	r3, r0, r1	/* if (dst > src) r3 = dst - src */
-	subcs	r3, r1, r0	/* if (src > dsr) r3 = src - dst */
-	cmp	r3, r2		/* if (r3 < len) we have an overlap */
-	bcc	PIC_SYM(_C_LABEL(memcpy), PLT)
+	subhs	r3, r0, r1	/* if (dst > src) r3 = dst - src */
+	sublo	r3, r1, r0	/* if (src > dst) r3 = src - dst */
+	cmp	r3, r2		/* if (r3 >= len) we have an overlap */
+	bhs	PIC_SYM(_C_LABEL(memcpy), PLT)
 
 	/* Determine copy direction */
 	cmp	r1, r0
