@@ -2367,7 +2367,7 @@ m32c-*-elf*)
 	use_fixproto=yes
  	;;
 *)
-	echo "*** xConfiguration ${target} not supported" 1>&2
+	echo "*** Configuration ${target} not supported" 1>&2
 	exit 1
 	;;
 esac

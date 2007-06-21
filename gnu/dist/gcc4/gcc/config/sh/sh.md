@@ -412,10 +412,12 @@
 	 (eq_attr "type" "jump")
 	 (cond [(eq_attr "med_branch_p" "yes")
 		(const_int 2)
-		(and (eq (symbol_ref "GET_CODE (prev_nonnote_insn (insn))")
-                         (symbol_ref "INSN"))
-                     (eq (symbol_ref "INSN_CODE (prev_nonnote_insn (insn))")
-                         (symbol_ref "code_for_indirect_jump_scratch")))
+		(and (ne (symbol_ref "prev_nonnote_insn (insn)")
+			 (const_int 0))
+		     (and (eq (symbol_ref "GET_CODE (prev_nonnote_insn (insn))")
+			      (symbol_ref "INSN"))
+			  (eq (symbol_ref "INSN_CODE (prev_nonnote_insn (insn))")
+			      (symbol_ref "code_for_indirect_jump_scratch"))))
                 (cond [(eq_attr "braf_branch_p" "yes")
                        (const_int 6)
                        (eq (symbol_ref "flag_pic") (const_int 0))
@@ -3018,7 +3020,9 @@ label:
   "
 {
   if (TARGET_SH1
-      && GET_CODE (operands[2]) == CONST_INT && INTVAL (operands[2]) == 255)
+      && GET_CODE (operands[2]) == CONST_INT && INTVAL (operands[2]) == 255
+      && (GET_CODE (operands[1]) != SUBREG
+	  || SCALAR_INT_MODE_P (GET_MODE (XEXP (operands[1], 0)))))
     {
       emit_insn (gen_zero_extendqisi2 (operands[0],
 				       gen_lowpart (QImode, operands[1])));
@@ -8294,7 +8298,7 @@ label:
       && GET_CODE (XEXP (operands[1], 0)) == UNSPEC
       && GET_CODE (XVECEXP (XEXP (operands[1], 0), 0, 0)) == SYMBOL_REF
       && strcmp (XSTR (XVECEXP (XEXP (operands[1], 0), 0, 0), 0),
-                \"__stack_chk_guard\") == 0)
+		 \"__stack_chk_guard\") == 0)
     emit_insn (gen_blockage ());
 
   /* N.B. This is not constant for a GOTPLT relocation.  */
