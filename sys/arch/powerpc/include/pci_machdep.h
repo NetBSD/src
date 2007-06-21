@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.1.2.5 2007/05/09 09:02:52 garbled Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.1.2.6 2007/06/21 18:54:34 garbled Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -161,6 +161,33 @@ void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
 #ifndef macppc
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 #endif
+
+/* Generic OFW PCI functions */
+
+int genofw_find_picnode(int);
+void genofw_find_ofpics(int);
+void genofw_fixup_picnode_offsets(void);
+void genofw_setup_pciintr_map(struct genppc_pci_chipset_businfo *, int);
+int genofw_find_node_by_devfunc(int, int, int, int);
+int genofw_pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
+int genofw_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
+
+
+/* OFW PCI structures and defines */
+#define PICNODE_TYPE_OPENPIC	1
+#define PICNODE_TYPE_8259	2
+#define PICNODE_TYPE_HEATHROW	3
+#define PICNODE_TYPE_OHARE	4
+
+typedef struct _ofw_pic_node_t {
+	int node;
+	int parent;
+	int16_t cells;
+	int16_t intrs;
+	int16_t offset;
+	int16_t type;
+} ofw_pic_node_t;
+
 #endif /* _KERNEL */
 
 #endif /* _PCI_MACHDEP_H_ */
