@@ -1,3 +1,405 @@
+2007-06-20  Dirk Mueller  <dmueller@suse.de>
+
+	PR c++/31806
+	PR c++/31809
+	* g++.dg/opt/static5.C: New test.
+	* g++.dg/opt/static6.C: New test.
+
+2007-06-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR inline-asm/32109
+	* g++.dg/ext/asm10.C: New test.
+
+	PR middle-end/32285
+	* gcc.c-torture/execute/20070614-1.c: New test.
+
+2007-06-19  Jakub Jelinek  <jakub@redhat.com>
+
+	PR tree-optimization/32353
+	* g++.dg/opt/nrv13.C: New test.
+
+2007-06-17  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.target/sparc/align.c: Use 'unsigned char' as element type.
+	* gcc.target/sparc/combined-2.c: Likewise.
+	* gcc.target/sparc/fexpand.c : Likewise.
+	* gcc.target/sparc/fnot.c: Likewise.  Fix a couple of prototypes.
+	* gcc.target/sparc/fpack16.c : Likewise.
+	* gcc.target/sparc/fpmerge.c : Likewise.
+	* gcc.target/sparc/fpmul.c : Likewise.
+	* gcc.target/sparc/noresult.c : Likewise.
+	* gcc.target/sparc/pdist.c: Likewise.
+
+2007-06-13  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.target/sparc/mfpu.c: New test.
+
+2007-05-23  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libfortran/31964
+	* gfortran.fortran-torture/execute/intrinsic_bitops.f90: Update.
+
+2007-05-17  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.c-torture/execute/20070517-1.c: New test.
+
+2007-05-16  Richard Guenther  <rguenther@suse.de>
+
+	Backport from mainline:
+	2006-06-09  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/26998
+	* gcc.dg/torture/pr26998.c: New testcase.
+	* gcc.dg/tree-ssa/vrp29.c: New testcase.
+
+2007-05-10  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libfortran/31880
+	* gfortran.dg/unf_read_corrupted_2.f90: New test.
+
+2007-05-10  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	* gcc.dg/20070507-1.c: Disable for non-pic targets.
+
+2007-05-08  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	* gcc.dg/20070507-1.c: New testcase.
+
+2007-04-28  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR C++/30221
+	* g++.dg/init/ptrfn2.C: New test.
+	* g++.dg/init/ptrfn3.C: New test.
+
+2007-04-26  Ian Lance Taylor  <iant@google.com>
+
+	PR target/28675
+	* gcc.c-torture/compile/pr28675.c: New test.
+
+2007-04-26  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR C++/30016
+	* g++.dg/ext/vector6.C: New test.
+
+2007-04-25  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/31698
+	* g++.dg/other/pr31698.C: New testcase.
+
+	Backport from mainline:
+	2006-10-13  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/29446
+	* gcc.dg/torture/pr29446.c: New testcase.
+
+2007-04-24  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	PR target/31641
+	* gcc.c-torture/compile/pr31641.c: New testcase.
+
+2007-04-22  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR middle-end/31448
+	* gcc.c-torture/execute/pr31448.c: New testcase.
+
+2007-04-20  Jakub Jelinek  <jakub@redhat.com>
+
+	* gcc.target/i386/ordcmp-1.c: New test.
+	* gcc.target/i386/unordcmp-1.c: New test.
+
+	PR tree-optimization/31632
+	* gcc.c-torture/compile/20070419-1.c: New test.
+
+2007-04-17  Simon Martin  <simartin@users.sourceforge.net>
+
+	PR c++/31517
+	* g++.dg/template/init7.C: New test.
+
+2007-04-15  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR testsuite/31578
+	* gcc.dg/gnu89-init-4.c: Change to a compile only test.
+
+2007-04-14  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR tree-opt/30045
+	* gcc.dg/pr30045.c: New test.
+
+2007-04-14  Andrew Pinski  <pinskia@gmail.com>
+
+	PR middle-end/30729
+	* gcc.dg/Wunused-value-2.c: New testcase.
+
+2007-04-14  Andrew Pinski  <pinskia@gmail.com>
+
+	PR C++/30168
+	* g++.dg/opt/complex6.C: New test.
+
+2007-04-14  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR C/31520
+	* gcc.dg/gnu89-init-4.c: New testcase.
+
+2007-04-13  Jason Merrill  <jason@redhat.com>
+
+	PR c++/31074
+	* conv3.C: New test.
+
+2007-04-09  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/31449
+	* g++.dg/init/const5.C: New test.
+
+2007-04-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/30847
+	* g++.dg/parse/cond3.C: New test.
+
+2007-03-20  Seongbae Park <seongbae.park@gmail.com>
+
+	PR tree-optimization/30590
+	* g++.dg/opt/pr30590.C: New testcase.
+
+2007-03-19  Jeff Law  <law@redhat.com>
+
+	* PR tree-optimization/30984
+	* gcc.c-torture/pr30984.c: New test.
+
+2007-03-19  Ian Lance Taylor  <iant@google.com>
+
+	* gcc.dg/inline-7.c: Add -fgnu89-inline.
+	* gcc.dg/inline-17.c: New test.
+	* gcc.dg/inline-18.c: New test.
+	* gcc.dg/inline-19.c: New test.
+	* gcc.dg/inline-21.c: New test.
+
+2007-03-17  Alexandre Oliva  <aoliva@redhat.com>
+
+	PR debug/29906
+	* g++.dg/debug/pr29906.C: New
+
+2007-03-15  Richard Guenther  <rguenther@suse.de>
+
+	Backport from mainline:
+	2007-02-28  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/30364
+	* gcc.dg/torture/pr30364-1.c: New testcase.
+	* gcc.dg/torture/pr30364-2.c: Likewise.
+	* gcc.dg/torture/pr30364-3.c: Likewise.
+
+2007-03-14  Jakub Jelinek  <jakub@redhat.com>
+
+	* gfortran.dg/module_implicit_conversion.f90: New test.
+
+2007-03-12  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR middle-end/30433
+	* gcc.c-torture/compile/pr30433.c: New testcase to check
+	that complex constant comparisions are folded.
+
+2007-03-12  Ira Rosen  <irar@il.ibm.com>
+
+	PR tree-optimization/29925
+	* gcc.dg/vect/fast-math-vect-pr29925.c: New test.
+
+2007-03-09  Alexandre Oliva  <aoliva@redhat.com>
+
+	PR rtl-optimization/30643
+	* gcc.dg/pr30643.c: New.
+
+2007-03-08  Volker Reichelt  <reichelt@netcologne.de>
+
+	PR c++/30852
+	* g++.dg/ext/offsetof1.C: Add cases with volatile.
+
+2007-03-05  Simon Martin  <simartin@users.sourceforge.net>
+
+	PR c++/30895
+	* g++.dg/parse/template23.C: New test.
+
+2007-03-01  Tobias Schlueter  <tobias.schlueter@physik.uni-muenchen.de>
+
+	Backport from trunk
+	PR fortran/29441
+	* gfortran.dg/initialization_4.f90: New test.
+
+2007-02-27  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.c-torture/execute/20070227-1.c: New test.
+
+2007-02-27  Tobias Schlüter  <tobias.schlueter@physik.uni-muenchen.de>
+
+	PR fortran/25392
+	* gfortran.dg/f2c_8.f90: New test.
+
+2007-02-25  Roger Sayle  <roger@eyesopen.com>
+
+        PR fortran/30400
+        * gfortran.dg/forall_10.f90: New test case.
+
+2007-02-24  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libgfortran/30918
+	* gfortran.dg/namelist_26.f90: New test.
+
+2007-02-23  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libgfortran/30910	
+	* gfortran.dg/fmt_zero_precision.f90: New test.
+
+2007-02-21  Mark Mitchell  <mark@codesourcery.com>
+
+	* lib/wrapper.exp (${tool}_maybe_build_wrapper): Allow the caller
+	to set options for compiling testglue.
+	* lib/g++.exp (g++_init): Compile testglue with -fexceptions.
+	* lib/obj-c++.exp (obj-c++_init): Likewise.
+
+2007-02-20 Ira Rosen  <irar@il.ibm.com>
+
+	* gfortran.dg/vect/vect-2.f90: Xfail to vectorize one of the loops
+	because of aliasing.
+
+2007-02-18  Roger Sayle  <roger@eyesopen.com>
+
+	PR middle-end/24427
+	PR rtl-optimization/28173
+	* gcc.dg/tree-ssa/andor-1.c: New test case.
+
+2007-02-18 Ira Rosen  <irar@il.ibm.com>
+
+	* gcc.dg/vect/vect-106-alias.c: New test.
+
+2007-02-16  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.c-torture/execute/20070216-1.c: New test.
+
+2007-02-15  Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/30799
+	* gfortran.dg/logical_2.f90: New test.
+
+2007-02-15  Alexandre Oliva  <aoliva@redhat.com>
+
+	* g++.dg/tree-ssa/sra-1.C: New.
+
+2007-02-10  Tobias Schlueter  <tobi@gcc.gnu.org>
+
+	PR fortran/30478
+	* gfortran.dg/enum_4.f90: Update expected error message.
+
+2007-02-15  Alexandre Oliva  <aoliva@redhat.com>
+
+	PR debug/30189
+	* gcc.dg/pr30189.c: New test.
+
+2007-02-14  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	* g++.dg/tree-ssa/nothrow-1.C: Skip test if -fpic/-fPIC is used.
+
+2007-02-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/30536
+	* g++.dg/tls/diag-5.C: New test.
+
+	PR middle-end/30473
+	* gcc.dg/pr30473.c: New test.
+	* gcc.c-torture/execute/20070201-1.c: New test.
+
+2007-02-14  Richard Guenther  <rguenther@suse.de>
+
+	Backport from mainline:
+	2007-01-30  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/30313
+	* gcc.dg/torture/pr30313.c: New testcase.
+
+2007-02-13  Release Manager
+
+	* GCC 4.1.2 released.
+
+2007-02-11  Mark Mitchell  <mark@codesourcery.com>
+
+	PR gcc/30649
+	* g++.dg/debug/debug9.C: Remove.
+
+2007-02-10  Bernhard Fischer  <aldot@gcc.gnu.org>
+
+	Backport from trunk:
+	PR fortran/24783
+	* gfortran.dg/implicit_10.f90: New test.
+
+2007-02-06  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/29487
+	* g++.dg/eh/weak1-C: New test.
+	* g++.dg/eh/weak1-a.cc: Likewise.
+	* g++.dg/eh/comdat1.C: Likewise.
+
+2007-01-29  Josh Conner  <jconner@apple.com>
+
+	PR middle-end/29683
+	* gcc.dg/pr29683.c: New.
+
+2007-01-28  Andrew Pinski  <pinskia@gmail.com>
+
+	PR C++/28988
+	* g++.dg/expr/dtor4.C: New test.
+
+2007-01-27  Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/30278
+	* gfortran.dg/backslash_3.f: New test.
+
+2007-01-24  Roger Sayle  <roger@eyesopen.com>
+	    Brooks Moses  <brooks.moses@codesourcery.com>
+	    Francois-Xavier Coudert  <coudert@clipper.ens.fr>
+
+	* gfortran.dg/intrinsic_sign_1.f90: New test case.
+	* gfortran.dg/intrinsic_sign_2.f90: Likewise.
+
+2007-01-23  Andrew Pinski  <pinskia@gmail.com>
+
+	PR objc/27438
+	* objc.dg/const-str-12.m: New test.
+
+2007-01-21 Andrew Pinski  <pinskia@gmail.com>
+
+	PR objc/30479
+	* objc.dg/pch: New directory.
+	* objc.dg/pch/pch.exp: New file.
+	* objc.dg/pch/interface-1.m: New test.
+	* objc.dg/pch/interface-1.hs: New include file.
+	* lib/objc.exp (objc_target_compile): Add
+	"-x objective-c-header" in front of the sources if this is
+	a precompiled header being compiled.
+
+2007-01-21  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* gcc.c-torture/compile/20070121.c: New test.
+
+2007-01-15  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	PR testsuite/12325
+	* gcc.dg/torture/builtin-attr-1.c: Handle warnings from
+	targets that don't support Inf.
+
+2007-01-13  Jerry DeLisle  <jvdelisle@gcc.gnu.org>
+
+	PR libgfortran/30435
+	* gfortran.dg/list_read_6.f90: New test.
+
+2007-01-10  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/28999
+	* g++.dg/template/typename11.C: New test.
+
+2006-12-10  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/29732
+	* g++.dg/template/crash65.C: New test.
+	* g++.dg/template/spec16.C: Tweak error markers.
+
 2007-01-06  Eric Botcazou  <ebotcazou@libertysurf.fr>
 
 	* lib/target-supports.exp (check_effective_target_sync_int_long):

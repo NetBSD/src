@@ -1,3 +1,115 @@
+2007-06-20  Dirk Mueller  <dmueller@suse.de>
+
+	PR c++/31809
+	PR c++/31806
+	Backport from mainline:
+	2007-05-31  Jakub Jelinek  <jakub@redhat.com>
+
+	* decl.c (cp_finish_decl): Also clear was_readonly if a static var
+	needs runtime initialization.
+
+	2007-05-30  Jakub Jelinek  <jakub@redhat.com>
+
+	* decl.c (cp_finish_decl): Clear TREE_READONLY flag on TREE_STATIC
+	variables that need runtime initialization.
+
+2007-04-28  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR C++/30221
+	* decl.c (reshape_init_r): Don't reshape the first element if it
+	is a pointer to member function.
+
+2007-04-26  Andrew Pinski  <andrew_pinski@playstation.sony.com>
+
+	PR C++/30016
+	* typeck.c (build_reinterpret_cast_1): Only allow conversion to
+	integeral types from vectors types.
+
+2007-04-17  Simon Martin  <simartin@users.sourceforge.net>
+
+	PR c++/31517
+	* pt.c (value_dependent_expression_p): Handle MODOP_EXPRs.
+
+2007-04-14  Andrew Pinski  <pinskia@gmail.com> 
+
+	PR C++/30168
+	* optimize.c (update_cloned_parm): Copy DECL_COMPLEX_GIMPLE_REG_P also.
+
+2007-04-13  Jason Merrill  <jason@redhat.com>
+
+	PR c++/31074
+	* call.c (reference_binding): Add c_cast_p parm.  If true,
+	add quals to TO as needed to make it reference-compatible.
+
+2007-04-09  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/31449
+	* class.c (build_base_path): Ensure that the converted pointer has
+	the same cv-qualification as the input.
+
+2007-04-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/30847
+	* typeck.c (build_modify_expr): For COND_EXPR on LHS, if RHS has void
+	type issue error and return early.
+
+2007-03-08  Volker Reichelt  <reichelt@netcologne.de>
+
+	PR c++/30852
+	* semantics.c (finish_offsetof): Handle COMPOUND_EXPR.
+
+2007-03-05  Simon Martin  <simartin@users.sourceforge.net>
+
+	PR c++/30895
+	* tree.c (cp_tree_equal): Properly handle COMPLEX_CST trees.
+
+2007-02-19  Mark Mitchell  <mark@codesourcery.com>
+
+	* call.c (build_new_method_call): Ensure that explicit calls of
+	destructors have type "void".
+
+2007-02-19  Mark Mitchell  <mark@codesourcery.com>
+
+	* decl2.c (import_export_decl): Reverse sense of 
+	DECL_VISIBILITY_SPECIFIED test for target-specific visibility
+	rules.
+
+	Backport of:
+	2006-07-20  Jason Merrill  <jason@redhat.com>
+	* decl2.c (determine_visibility_from_class): Reverse sense of 
+	DECL_VISIBILITY_SPECIFIED test for target-specific visibility
+	rules.
+
+2007-02-14  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/30536
+	* decl.c (grokdeclarator): If __thread is used together with
+	a storage class other than extern and static, clear thread_p
+	after issuing diagnostics and fall through to checking the
+	storage class.
+
+2007-02-13  Release Manager
+
+	* GCC 4.1.2 released.
+
+2007-02-06  Mark Mitchell  <mark@codesourcery.com>
+
+	PR target/29487
+	* decl.c (finish_function): Use DECL_REPLACEABLE.
+	* tree.c (cp_cannot_inline_tree_fn): Likewise.
+
+2007-01-28  Andrew Pinski  <pinskia@gmail.com>
+
+	PR C++/28988
+	* semantics.c (finish_pseudo_destructor_expr): Check the
+	destrutor name by calling check_dtor_name.
+
+2007-01-10  Mark Mitchell  <mark@codesourcery.com>
+
+	PR c++/28999
+	* decl.c (make_typename_type): If the qualified name is not a
+	type, issue an error.
+
 2007-01-05  Jakub Jelinek  <jakub@redhat.com>
 
 	PR c++/30382
