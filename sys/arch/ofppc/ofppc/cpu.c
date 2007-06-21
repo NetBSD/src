@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7.38.1 2007/06/21 18:49:46 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,69 +37,102 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2005/12/11 12:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7.38.1 2007/06/21 18:49:46 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/ofw/openfirm.h>
+#include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/pio.h>
 
 static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
+void cpu_OFgetspeed(struct device *, struct cpu_info *);
 
-CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
+
+extern struct cfdriver cpu_cd;
+
+#define HH_ARBCONF	0xf8000090
 
 int
 cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
 {
-	struct ofbus_attach_args *oba = aux;
-	char name[32];
+	struct confargs *ca = aux;
+	int *reg = ca->ca_reg;
+	int node;
 
-	if (strcmp(oba->oba_busname, "cpu") != 0)
-		return (0);
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
+		return 0;
 
-	if (OF_getprop(oba->oba_phandle, "device_type", name,
-	    sizeof(name)) <= 3)
-		return (0);
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+			uint32_t cpunum;
+			int l;
 
-	if (strcmp(name, "cpu") == 0)
-		return (1);
+			l = OF_getprop(node, "reg", &cpunum, sizeof(cpunum));
+			if (l == 4 && reg[0] == cpunum)
+				return 1;
+		}
+	}
+	switch (reg[0]) {
+	case 0: /* primary CPU */
+		return 1;
+	case 1: /* secondary CPU */
+		if (OF_finddevice("/hammerhead") != -1)
+			if (in32rb(HH_ARBCONF) & 0x02)
+				return 1;
+		break;
+	}
+	return 0;
+}
 
-	return (0);
+void
+cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
+{
+	int node;
+	node = OF_finddevice("/cpus");
+	if (node != -1) {
+		for (node = OF_child(node); node; node = OF_peer(node)) {
+			uint32_t cpunum;
+			int l;
+
+			l = OF_getprop(node, "reg", &cpunum, sizeof(cpunum));
+			if (l == 4 && ci->ci_cpuid == cpunum) {
+				uint32_t cf;
+
+				l = OF_getprop(node, "clock-frequency",
+				    &cf, sizeof(cf));
+				if (l == 4)
+					ci->ci_khz = cf / 1000;
+				break;
+			}
+		}
+	}
+	if (ci->ci_khz)
+		aprint_normal("%s: %u.%02u MHz\n", self->dv_xname,
+		    ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
 }
 
 void
 cpu_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cpu_softc *sc = (struct cpu_softc *) self;
-	struct ofbus_attach_args *oba = aux;
-	unsigned char data[4];
-	int tbase, cpunum;
+	struct cpu_info *ci;
+	struct confargs *ca = aux;
+	int id = ca->ca_reg[0];
 
-	sc->sc_ofnode = oba->oba_phandle;
-
-	if (OF_getprop(sc->sc_ofnode, "reg",
-	    data, sizeof(data)) < sizeof(data)) {
-		printf(": unable to get CPU ID\n");
+	ci = cpu_attach_common(self, id);
+	if (ci == NULL)
 		return;
-	}
-	cpunum = of_decode_int(data);
 
-	cpu_attach_common(self, cpunum);
+	if (ci->ci_khz == 0)
+		cpu_OFgetspeed(self, ci);
 
-	if (OF_getprop(oba->oba_phandle, "timebase-frequency",
-	    data, sizeof(data)) < sizeof(data))
-		printf("%s: unable to get timebase-frequence property\n",
-		    sc->sc_dev.dv_xname);
-	else {
-		tbase = of_decode_int(data);
-		if (cpu_timebase == 0)
-			cpu_timebase = tbase;
-		else if (tbase != cpu_timebase)
-			printf("%s: WARNING: timebase %d != %d\n",
-			    sc->sc_dev.dv_xname, tbase, cpu_timebase);
-	}
+	if (id > 0)
+		return;
 }

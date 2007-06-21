@@ -1,11 +1,11 @@
-/*	$NetBSD: mainbus.c,v 1.13 2005/12/11 12:18:29 christos Exp $	 */
+/*	$NetBSD: mainbus.c,v 1.13.38.1 2007/06/21 18:49:47 garbled Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum; by Jason R. Thorpe.
+ * by Tim Rightnour
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,15 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2005/12/11 12:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13.38.1 2007/06/21 18:49:47 garbled Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
+#include <dev/pci/pcivar.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_pci.h>
+#include <arch/powerpc/pic/picvar.h>
+#include <machine/pci_machdep.h>
 
-#include <machine/platform.h>
+#include <machine/autoconf.h>
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -53,9 +57,48 @@ void	mainbus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
-int	mainbus_print(void *, const char *);
+int mainbus_found = 0;
+struct pic_ops *isa_pic;
 
-extern struct cfdriver mainbus_cd;
+extern ofw_pic_node_t picnodes[8];
+extern int nrofpics;
+extern int primary_pic;
+
+static int
+init_openpic(int node)
+{
+	struct ofw_pci_register aadr;
+	struct ranges {
+		uint32_t pci_hi, pci_mid, pci_lo;
+		uint32_t host;
+		uint32_t size_hi, size_lo;
+	} ranges[6], *rp = ranges;
+	unsigned char *baseaddr = NULL;
+	int parent, len;
+
+	if (OF_getprop(node, "assigned-addresses", &aadr, sizeof(aadr))
+	    != sizeof(aadr))
+		return FALSE;
+
+	parent = OF_parent(node);
+	len = OF_getprop(parent, "ranges", ranges, sizeof(ranges));
+	if (len == -1)
+		return FALSE;
+	while (len >= sizeof(ranges[0])) {
+		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
+		    (aadr.phys_hi & OFW_PCI_PHYS_HI_SPACEMASK) &&
+		    (aadr.size_lo + aadr.phys_lo <= rp->size_lo)) {
+			baseaddr = (unsigned char *)mapiodev(
+			    rp->host | aadr.phys_lo, aadr.size_lo);
+			aprint_normal("Found openpic at %08x\n",
+			    rp->host | aadr.phys_lo);
+			setup_openpic(baseaddr, 0);
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -63,8 +106,9 @@ extern struct cfdriver mainbus_cd;
 int
 mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-
-	return (1);
+	if (mainbus_found)
+		return 0;
+	return 1;
 }
 
 /*
@@ -74,100 +118,72 @@ void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args oba;
-	char buf[32];
-	const char * const *ssp, *sp = NULL;
-	int node;
+	struct confargs ca;
+	int node, i, isa_cascade;
+	u_int32_t reg[4];
+	char name[32];
 
-	static const char * const openfirmware_special[] = {
-		/*
-		 * These are _root_ devices to ignore.  Others must be
-		 * handled elsewhere, if at all.
-		 */
-		"virtual-memory",
-		"mmu",
-		"aliases",
-		"memory",
-		"openprom",
-		"options",
-		"packages",
-		"chosen",
+	mainbus_found = 1;
+	isa_cascade = 0;
 
-		/*
-		 * This one is extra-special .. we make a special case
-		 * and attach CPUs early.
-		 */
-		"cpus",
+	aprint_normal("\n");
 
-		NULL
-	};
-
-	printf(": %s\n", platform_name);
-
-	/*
-	 * Before we do anything else, attach CPUs.  We do this early,
-	 * because we might need to make CPU dependent decisions during
-	 * the autoconfiguration process.  Also, it's a little weird to
-	 * see CPUs after other devices in the boot messages.
-	 */
-	node = OF_finddevice("/cpus");
-	if (node == -1) {
-
-		/*
-		 * No /cpus node; assume they're all children of the
-		 * root OFW node.
-		 */
-		node = OF_peer(0);
-	}
-	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
-		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
-			continue;
-		if (strcmp(buf, "cpu") != 0)
-			continue;
-
-		oba.oba_busname = "cpu";
-		of_packagename(node, oba.oba_ofname, sizeof oba.oba_ofname);
-		oba.oba_phandle = node;
-		(void) config_found(self, &oba, mainbus_print);
+	for (i = 0; i < 2; i++) {
+		ca.ca_name = "cpu";
+		ca.ca_reg = reg;
+		reg[0] = i;
+		config_found(self, &ca, NULL);
 	}
 
-	/*
-	 * Now attach the rest of the devices on the system.
-	 */
-	for (node = OF_child(OF_peer(0)); node != 0; node = OF_peer(node)) {
+	/* Now setup the PIC's */
+	genofw_find_ofpics(OF_finddevice("/"));
+	genofw_fixup_picnode_offsets();
+	pic_init();
+	/* find ISA first */
+	for (i = 0; i < nrofpics; i++)
+		if (picnodes[i].type == PICNODE_TYPE_8259)
+			isa_pic = setup_i8259();
 
-		/*
-		 * Make sure it's not a CPU (we've already attached those).
-		 */
-		if (OF_getprop(node, "device_type", buf, sizeof(buf)) > 0 &&
-		    strcmp(buf, "cpu") == 0)
+	for (i = 0; i < nrofpics; i++) {
+		if (picnodes[i].type == PICNODE_TYPE_8259)
 			continue;
+		if (picnodes[i].type == PICNODE_TYPE_OPENPIC) {
+			if (isa_pic != NULL)
+				isa_cascade = 1;
+			(void)init_openpic(picnodes[i].node);
+		} else
+			aprint_error("Unhandled pic node type node=%x\n",
+			    picnodes[i].node);
+	}
+	if (isa_cascade) {
+		primary_pic = 1;
+		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
+		    isa_pic);
+	}
 
-		/*
-		 * Make sure this isn't one of our "special" child nodes.
-		 */
-		OF_getprop(node, "name", buf, sizeof(buf));
-		for (ssp = openfirmware_special; (sp = *ssp) != NULL; ssp++) {
-			if (strcmp(buf, sp) == 0)
-				break;
-		}
-		if (sp != NULL)
-			continue;
-
+	node = OF_peer(0);
+	if (node) {
 		oba.oba_busname = "ofw";
-		of_packagename(node, oba.oba_ofname, sizeof oba.oba_ofname);
 		oba.oba_phandle = node;
-		(void) config_found(self, &oba, mainbus_print);
+		config_found(self, &oba, NULL);
 	}
-}
 
-int
-mainbus_print(void *aux, const char *pnp)
-{
-	struct ofbus_attach_args *oba = aux;
+	/* this primarily searches for pci bridges on the root bus */
+	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
+		memset(name, 0, sizeof(name));
+		if (OF_getprop(node, "name", name, sizeof(name)) == -1)
+			continue;
 
-	if (pnp)
-		aprint_normal("%s at %s", oba->oba_ofname, pnp);
-	else
-		aprint_normal(" (%s)", oba->oba_ofname);
-	return (UNCONF);
+		ca.ca_name = name;
+		ca.ca_node = node;
+		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
+		ca.ca_reg  = reg;
+		config_found(self, &ca, NULL);
+	}
+
+#ifdef MAMBO
+	ca.ca_name="com";
+	config_found(self, &ca, NULL);
+#endif
+
 }

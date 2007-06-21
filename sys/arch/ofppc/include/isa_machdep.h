@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.91.10.1 2007/06/21 18:49:47 garbled Exp $ */
+/*	$NetBSD: isa_machdep.h,v 1.1.2.1 2007/06/21 18:49:42 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,102 +36,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91.10.1 2007/06/21 18:49:47 garbled Exp $");
+#ifndef _OFPPC_ISA_MACHDEP_H_
+#define _OFPPC_ISA_MACHDEP_H_
 
-#include <sys/param.h>
-#include <sys/buf.h>
-#include <sys/boot_flag.h>
-#include <sys/mount.h>
-#include <sys/kernel.h>
+#include <powerpc/isa_machdep.h>
 
-#include <uvm/uvm_extern.h>
+extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
+extern struct pic_ops *isa_pic;
+extern int isa_pcmciamask;
 
-#include <dev/ofw/openfirm.h>
+/* prototypes from isa_machdep.c */
+int map_isa_ioregs(void);
+uint8_t isa_inb(uint32_t addr);
+void isa_outb(uint32_t addr, uint8_t val);
 
-#include <machine/autoconf.h>
-#include <machine/pmap.h>
-#include <machine/powerpc.h>
-#include <machine/trap.h>
-#include <machine/bus.h>
-#include <machine/isa_machdep.h>
-
-#include <powerpc/oea/bat.h>
-#include <powerpc/ofw_cons.h>
-
-struct pmap ofw_pmap;
-char bootpath[256];
-
-void ofwppc_batinit(void);
-
-void
-initppc(u_int startkernel, u_int endkernel, char *args)
-{
-	ofwoea_initppc(startkernel, endkernel, args);
-	map_isa_ioregs();
-}
-
-void
-cpu_startup(void)
-{
-	oea_startup(NULL);
-}
-
-void
-consinit(void)
-{
-	ofwoea_consinit();
-}
-
-void
-dumpsys(void)
-{
-	printf("dumpsys: TBD\n");
-}
+/* function mappings */
+#define isa_attach_hook(p, s, iaa)					\
+	genppc_isa_attach_hook(p, s, iaa)
+#define isa_intr_evcnt(ic, irq)						\
+	genppc_isa_intr_evcnt(ic, irq)
+#define isa_intr_establish(ic, irq, type, level, fun, arg)		\
+	genppc_isa_intr_establish(ic, irq, type, level, fun, arg)
+#define isa_intr_disestablish(ic, arg)					\
+	genppc_isa_intr_disestablish(ic, arg)
+#define isa_intr_alloc(ic, mask, type, irqp)				\
+	genppc_isa_intr_alloc(ic, isa_pic, mask & isa_pcmciamask, type, irqp)
 
 /*
- * Halt or reboot the machine after syncing/dumping according to howto.
+ * Miscellanous functions.
  */
+void isabeep(int, int);		/* beep with the system speaker */
 
-void
-cpu_reboot(int howto, char *what)
-{
-	static int syncing;
-	static char str[256];
-	char *ap = str, *ap1 = ap;
-
-	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();         /* sync */
-		resettodr();            /* set wall clock */
-	}
-	splhigh();
-	if (howto & RB_HALT) {
-		doshutdownhooks();
-		printf("halted\n\n");
-		ppc_exit();
-	}
-	if (!cold && (howto & RB_DUMP))
-		oea_dumpsys();
-	doshutdownhooks();
-	printf("rebooting\n\n");
-	if (what && *what) {
-		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
-		else {
-			strcpy(str, what);
-			ap1 = ap = str + strlen(str);
-			*ap++ = ' ';
-		}
-	}
-	*ap++ = '-';
-	if (howto & RB_SINGLE)
-		*ap++ = 's';
-	if (howto & RB_KDB)
-		*ap++ = 'd';
-	*ap++ = 0;
-	if (ap[-2] == '-')
-		*ap1 = 0;
-	ppc_boot(str);
-}
+#endif /* _OFPPC_ISA_MACHDEP_H_ */
