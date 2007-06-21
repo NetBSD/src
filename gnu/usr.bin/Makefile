@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126 2006/11/20 17:08:40 skrll Exp $
+#	$NetBSD: Makefile,v 1.127 2007/06/21 12:51:06 skrll Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -17,9 +17,7 @@ SUBDIR+=	groff rcs send-pr texinfo
 SUBDIR+=	gettext
 
 .if ${MKGDB} != "no"
-.if ${HAVE_GDB} == "5"
-SUBDIR+=	gdb53
-.else
+.if ${HAVE_GDB} == "6"
 SUBDIR+=	gdb6
 .endif
 .endif
