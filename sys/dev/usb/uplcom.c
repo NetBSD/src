@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.52.6.2 2007/06/18 13:57:57 itohy Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.52.6.3 2007/06/21 15:25:08 itohy Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.52.6.2 2007/06/18 13:57:57 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.52.6.3 2007/06/21 15:25:08 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3 },
 	/* I/O DATA USB-RSAQ */
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
+	/* I/O DATA USB-RSAQ5 */
+	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5 },
 	/* PLANEX USB-RS232 URS-03 */
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 	/* IOGEAR/ATEN UC-232A */
@@ -203,6 +205,8 @@ static const struct {
 	/* I/O DATA USB-RSAQ3 */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3, UPLCOM_TYPE_HX },
 	{ USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303X, UPLCOM_TYPE_HX },
+	/* I/O DATA USB-RSAQ5 */
+	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5, UPLCOM_TYPE_HX },
 	{0, 0, 0}
 };
 
