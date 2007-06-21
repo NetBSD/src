@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.18.10.4 2007/06/18 13:43:50 itohy Exp $ */
+/*	$NetBSD: if_ural.c,v 1.18.10.5 2007/06/21 15:01:43 itohy Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.10.4 2007/06/18 13:43:50 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.18.10.5 2007/06/21 15:01:43 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -92,6 +92,7 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050 },
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54G },
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GP },
+	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_HU200TS },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU },
 	{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DWLG122 },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWBKG },
@@ -99,26 +100,23 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54 },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54AI },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54YB },
+	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_NINWIFI },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_MS6861 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_MS6865 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_MS6869 },
+	{ USB_VENDOR_NOVATECH,		USB_PRODUCT_NOVATECH_NV902W },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_2 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_3 },
 	{ USB_VENDOR_RALINK_2,		USB_PRODUCT_RALINK_2_RT2570 },
 	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2862WG },
+	{ USB_VENDOR_SPHAIRON,		USB_PRODUCT_SPHAIRON_UB801R },
 	{ USB_VENDOR_SURECOM,		USB_PRODUCT_SURECOM_EP9001G },
 	{ USB_VENDOR_VTECH,		USB_PRODUCT_VTECH_RT2570 },
 	{ USB_VENDOR_ZINWELL,		USB_PRODUCT_ZINWELL_ZWXG261 },
 };
 
-#if 0
-Static int		ural_alloc_tx_list(struct ural_softc *);
-#endif
 Static void		ural_free_tx_list(struct ural_softc *);
-#if 0
-Static int		ural_alloc_rx_list(struct ural_softc *);
-#endif
 Static void		ural_free_rx_list(struct ural_softc *);
 Static int		ural_media_change(struct ifnet *);
 Static void		ural_next_scan(void *);
@@ -429,10 +427,10 @@ USB_ATTACH(ural)
 	}
 
 	usb_init_task(&sc->sc_task, ural_task, sc);
-	callout_init(&sc->scan_ch);
+	usb_callout_init(sc->sc_scan_ch);
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_min_success_threshold = 15;
-	callout_init(&sc->amrr_ch);
+	usb_callout_init(sc->sc_amrr_ch);
 
 	/* retrieve RT2570 rev. no */
 	sc->asic_rev = ural_read(sc, RAL_MAC_CSR0);
@@ -544,8 +542,8 @@ USB_DETACH(ural)
 
 	ural_stop(ifp, 1);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, ural_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, ural_amrr_timeout, sc);
 
 	if (sc->sc_rx_pipeh != NULL)
 		usbd_abort_pipe(sc->sc_rx_pipeh);
@@ -656,7 +654,7 @@ ural_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		ural_set_chan(sc, ic->ic_curchan);
-		callout_reset(&sc->scan_ch, hz / 5, ural_next_scan, sc);
+		usb_callout(sc->sc_scan_ch, hz / 5, ural_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -719,8 +717,8 @@ ural_newstate(struct ieee80211com *ic, enum ieee80211_state nstate,
 	struct ural_softc *sc = ic->ic_ifp->if_softc;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, ural_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, ural_amrr_timeout, sc);
 
 	/* do it in a process context */
 	sc->sc_state = nstate;
@@ -2304,7 +2302,7 @@ ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 	     i--);
 	ni->ni_txrate = i;
 
-	callout_reset(&sc->amrr_ch, hz, ural_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, ural_amrr_timeout, sc);
 }
 
 Static void
@@ -2361,5 +2359,5 @@ ural_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
-	callout_reset(&sc->amrr_ch, hz, ural_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, ural_amrr_timeout, sc);
 }
