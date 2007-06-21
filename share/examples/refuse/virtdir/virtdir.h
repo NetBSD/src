@@ -51,6 +51,7 @@ typedef struct virtdir_t {
 	uint32_t	 c;		/* count of entries */
 	uint32_t	 size;		/* size of allocated list */
 	virt_dirent_t	*v;		/* list */
+	char		*rootdir;	/* root directory of virtual fs */
 	struct stat	 file;		/* stat struct for file entries */
 	struct stat	 dir;		/* stat struct for dir entries */
 	struct stat	 lnk;		/* stat struct for symlinks */
@@ -64,12 +65,13 @@ typedef struct VIRTDIR {
 	int		 i;		/* current offset in dir tree */
 } VIRTDIR;
 
-int virtdir_init(virtdir_t *, struct stat *, struct stat *, struct stat *);
-int virtdir_add(virtdir_t *, const char *, size_t, uint8_t, char *, size_t);
+int virtdir_init(virtdir_t *, const char *, struct stat *, struct stat *, struct stat *);
+int virtdir_add(virtdir_t *, const char *, size_t, uint8_t, const char *, size_t);
 int virtdir_del(virtdir_t *, const char *, size_t);
 virt_dirent_t *virtdir_find(virtdir_t *, const char *, size_t);
 virt_dirent_t *virtdir_find_tgt(virtdir_t *, const char *, size_t);
 void virtdir_drop(virtdir_t *);
+char *virtdir_rootdir(virtdir_t *);
 
 VIRTDIR *openvirtdir(virtdir_t *, const char *);
 virt_dirent_t *readvirtdir(VIRTDIR *);
