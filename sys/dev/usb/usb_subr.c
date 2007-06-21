@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.143.8.2 2007/06/18 14:15:10 itohy Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.143.8.3 2007/06/21 15:27:58 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.143.8.2 2007/06/18 14:15:10 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.143.8.3 2007/06/21 15:27:58 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.88 2007/02/03 16:38:32 imp Exp $"); */
 
 #ifdef __NetBSD__
@@ -600,6 +600,13 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 	int i, ifcidx, nifc, len, selfpowered, power;
 
 	DPRINTFN(5,("usbd_set_config_index: dev=%p index=%d\n", dev, index));
+
+	if (index >= dev->ddesc.bNumConfigurations &&
+	    index != USB_UNCONFIG_NO) {
+		/* panic? */
+		printf("usbd_set_config_index: illegal index\n");
+		return (USBD_INVAL);
+	}
 
 	if (dev->config != USB_UNCONFIG_NO) {
 		nifc = dev->cdesc->bNumInterface;
@@ -1238,13 +1245,13 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 			break;
 		usbd_delay_ms(dev, 200);
 		if ((i & 3) == 3) {
-			DPRINTFN(-1,("usb_new_device: set address %d "
+			DPRINTFN(-1,("usbd_new_device: set address %d "
 			    "failed - trying a port reset\n", addr));
 			usbd_reset_port(up->parent, port, &ps);
 		}
 	}
 	if (err) {
-		DPRINTFN(-1,("usb_new_device: set address %d failed\n", addr));
+		DPRINTFN(-1,("usbd_new_device: set address %d failed\n", addr));
 		err = USBD_SET_ADDR_FAILED;
 		usbd_remove_device(dev, up);
 		return (err);
@@ -1726,4 +1733,14 @@ usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 			       hubname);
 			if (up->portno != 0)
 				printf(" port %d", up->portno);
-			printf(" (addr %d) disconnect
+			printf(" (addr %d) disconnected\n", dev->address);
+			config_detach(dev->subdevs[i], DETACH_FORCE);
+			dev->subdevs[i] = NULL;
+		}
+	}
+
+	usbd_add_dev_event(USB_EVENT_DEVICE_DETACH, dev);
+	dev->bus->devices[dev->address] = NULL;
+	up->device = NULL;
+	usb_free_device(dev);
+}
