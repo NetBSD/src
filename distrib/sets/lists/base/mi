@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.709 2007/06/18 16:19:30 tnozaki Exp $
+# $NetBSD: mi,v 1.710 2007/06/21 14:54:45 ginsbach Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -570,6 +570,7 @@
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
+./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
 ./usr/bin/nfsstat				base-nfsclient-bin
 ./usr/bin/nice					base-util-bin
