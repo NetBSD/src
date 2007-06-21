@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.6.4.4 2007/06/18 13:42:31 itohy Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.6.4.5 2007/06/21 14:58:18 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.6.4.4 2007/06/18 13:42:31 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.6.4.5 2007/06/21 14:58:18 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.6.4.4 2007/06/18 13:42:31 itohy Exp $")
 #ifdef RUM_DEBUG
 #define DPRINTF(x)	do { if (rum_debug) logprintf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rum_debug >= (n)) logprintf x; } while (0)
-int rum_debug = 0;
+int rum_debug = 1;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
@@ -89,23 +89,37 @@ int rum_debug = 0;
 
 /* various supported device vendors/products */
 static const struct usb_devno rum_devs[] = {
-	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573 },
+	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_HWU54DM },
+	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_2 },
+	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_3 },
+	{ USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_RT2573_4 },
+	{ USB_VENDOR_AMIT,		USB_PRODUCT_AMIT_CGWLUSB2GO },
+	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G_2 },
+	{ USB_VENDOR_ASUSTEK,		USB_PRODUCT_ASUSTEK_WL167G_3 },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D7050A },
 	{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D9050V3 },
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GC },
+	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GR },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU2 },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_CWD854F },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_RT2573 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_WUA1340 },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWB01GS },
+	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWI05GS },
 	{ USB_VENDOR_GIGASET,		USB_PRODUCT_GIGASET_RT2573 },
 	{ USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_RT2573 },
+	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWGUSB254LB },
+	{ USB_VENDOR_GUILLEMOT,		USB_PRODUCT_GUILLEMOT_HWGUSB254V2AP },
 	{ USB_VENDOR_HUAWEI3COM,	USB_PRODUCT_HUAWEI3COM_RT2573 },
+	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_G54HP },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_SG54HP },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573_2 },
 	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573_3 },
+	{ USB_VENDOR_MSI,		USB_PRODUCT_MSI_RT2573_4 },
+	{ USB_VENDOR_NOVATECH,		USB_PRODUCT_NOVATECH_RT2573 },
+	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUS54HP },
 	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUS54MINI2 },
 	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUSMM },
 	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573 },
@@ -119,13 +133,7 @@ static const struct usb_devno rum_devs[] = {
 };
 
 Static int		rum_attachhook(void *);
-#if 0
-Static int		rum_alloc_tx_list(struct rum_softc *);
-#endif
 Static void		rum_free_tx_list(struct rum_softc *);
-#if 0
-Static int		rum_alloc_rx_list(struct rum_softc *);
-#endif
 Static void		rum_free_rx_list(struct rum_softc *);
 Static int		rum_media_change(struct ifnet *);
 Static void		rum_next_scan(void *);
@@ -347,11 +355,11 @@ USB_ATTACH(rum)
 	}
 
 	usb_init_task(&sc->sc_task, rum_task, sc);
-	callout_init(&sc->scan_ch);
+	usb_callout_init(sc->sc_scan_ch);
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 10;
-	callout_init(&sc->amrr_ch);
+	usb_callout_init(sc->sc_amrr_ch);
 
 	/* retrieve RT2573 rev. no */
 	tmp = 0;	/* XXX shut up warning */
@@ -478,8 +486,8 @@ USB_DETACH(rum)
 
 	rum_stop(ifp, 1);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, rum_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, rum_amrr_timeout, sc);
 
 	if (sc->sc_rx_pipeh != NULL)
 		usbd_abort_pipe(sc->sc_rx_pipeh);
@@ -588,7 +596,7 @@ rum_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		rum_set_chan(sc, ic->ic_curchan);
-		callout_reset(&sc->scan_ch, hz / 5, rum_next_scan, sc);
+		usb_callout(sc->sc_scan_ch, hz / 5, rum_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -636,8 +644,8 @@ rum_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct rum_softc *sc = ic->ic_ifp->if_softc;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, rum_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, rum_amrr_timeout, sc);
 
 	/* do it in a process context */
 	sc->sc_state = nstate;
@@ -2134,7 +2142,7 @@ rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 	     i--);
 	ni->ni_txrate = i;
 
-	callout_reset(&sc->amrr_ch, hz, rum_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, rum_amrr_timeout, sc);
 }
 
 Static void
@@ -2190,7 +2198,7 @@ rum_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
-	callout_reset(&sc->amrr_ch, hz, rum_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, rum_amrr_timeout, sc);
 }
 
 int
