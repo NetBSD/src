@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rumvar.h,v 1.6 2006/08/18 15:11:12 damien Exp $	*/
-/*	$NetBSD: if_rumvar.h,v 1.1.16.2 2007/06/17 00:55:28 itohy Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.1.16.3 2007/06/21 15:00:06 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -93,8 +93,8 @@ struct rum_softc {
 
 	struct ieee80211_beacon_offsets	sc_bo;
 
-	struct callout			scan_ch;
-	struct callout			amrr_ch;
+	usb_callout_t			sc_scan_ch;
+	usb_callout_t			sc_amrr_ch;
 
 	int				sc_tx_timer;
 
