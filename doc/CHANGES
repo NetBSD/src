@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.876 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.877 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -136,3 +136,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ipf:	Updated to v4.1.23 [martin 20070616]
 	tcp(4): Per socket keepalive timer settings. Ability to change
 		connection timeout [christos 20070620].
+	newgrp(1): Add POSIX (IEEE Std 1003.1, 2004 / Open Group Base
+		Specifications Issue 6) User Portability Utility to change
+		effective group ID. [ginsbach 20060621]
