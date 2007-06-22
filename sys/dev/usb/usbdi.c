@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119.12.3 2007/06/22 10:12:24 itohy Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.12.4 2007/06/22 10:36:42 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.3 2007/06/22 10:12:24 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.4 2007/06/22 10:36:42 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $"); */
 
 #ifdef __NetBSD__
@@ -1056,7 +1056,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	} else {
 		pipe->methods->done(xfer);
 		if (xfer->callback) {
-			if (xfer->rqflags & USBD_CALLBACK_AS_TASK) {
+			if (xfer->flags & USBD_CALLBACK_AS_TASK) {
 				/*
 				 * Callback as a task (in thread context).
 				 */
