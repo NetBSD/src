@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.471 2007/06/18 12:24:04 dsainty Exp $
+$NetBSD: usbdevs,v 1.472 2007/06/22 16:06:30 itohy Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -429,7 +429,7 @@ vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor SIERRA		0x1199	Sierra Wireless
 vendor TOPFIELD		0x11db	Topfield Co., Ltd
-vendor PROLIFIC2	0x11f6	Prolific Technology
+vendor NETINDEX		0x11f6	NetIndex
 vendor TSUNAMI		0x1241	Tsunami
 vendor TARGUS		0x1267	Targus
 vendor TWINMOS		0x126f	TwinMOS
@@ -1580,6 +1580,9 @@ product NETGEAR XA601		0x8100	USB to PL Adapter
 product NETGEAR2 MA101		0x4100	MA101
 product NETGEAR2 MA101B		0x4102	MA101 Rev B
 
+/* NetIndex products */
+product NETINDEX WS002IN	0x2001  Willcom WS002IN (DD)
+
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
 product NIKON E880		0x0103	Digital Camera E880
@@ -1752,7 +1755,6 @@ product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
 product PROLIFIC PL2303X	0xaaa0	PL2303 Serial adapter (Pharos GPS)
-product PROLIFIC2 PL2303X	0x2001  Willcom WS002IN (DD)
 
 /* Putercom products */
 product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
