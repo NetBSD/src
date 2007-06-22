@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.472 2007/06/22 16:06:30 itohy Exp $
+$NetBSD: usbdevs,v 1.473 2007/06/22 16:32:38 itohy Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -607,14 +607,14 @@ product AGFA SNAPSCANE25	0x2095	SnapScan e25
 product AGFA SNAPSCANE26	0x2097	SnapScan e26
 product AGFA SNAPSCANE52	0x20fd	SnapScan e52
 
-/* AirPrime products */
-product AIRPRIME PC5220		0x0112	CDMA Wireless PC Card
+/* Aincomm products */
+product AINCOMM AWU2000B	0x1001	AWU2000B
 
 /* AIPTEK International products */
 product AIPTEK2 PENCAM_MEGA_1_3 0x504a	PenCam Mega 1.3
 
-/* Aincomm products */
-product AINCOMM AWU2000B	0x1001	AWU2000B
+/* AirPrime products */
+product AIRPRIME PC5220		0x0112	CDMA Wireless PC Card
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
@@ -653,6 +653,9 @@ product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
+
+/* ArkMicroChips products */
+product ARKMICROCHIPS USBSERIAL 0x0232	USB-UART Controller
 
 /* Asahi Optical products */
 product ASAHIOPTICAL OPTIO230	0x0004	PENTAX Optio230
@@ -703,11 +706,11 @@ product AVERATEC USBWLAN	0x4013	WLAN
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
 
-/* B&B Electronics products */
-product BBELECTRONICS USOTL4	0xAC01	uLinks RS-422/485
-
 /* Baltech products */
 product BALTECH CARDREADER	0x9999	Card reader
+
+/* B&B Electronics products */
+product BBELECTRONICS USOTL4	0xAC01	uLinks RS-422/485
 
 /* Belkin products */
 /*product BELKIN F5U111		0x????	F5U111 Ethernet adapter*/
@@ -759,16 +762,16 @@ product CANON S200		0x3065	PowerShot S200
 product CANON EOS300D		0x3084	EOS 300D / Digital Rebel
 product CANON SD630		0x30fe	PowerShot SD630
 
+/* CASIO products */
+product CASIO QV		0x1001	QV DigitalCamera
+product CASIO BE300		0x2002	BE-300 PDA
+product CASIO NAMELAND		0x4001	CASIO Nameland EZ-USB
+
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter
 product CATC NETMATE2		0x000c	Netmate2 ethernet adapter
 product CATC CHIEF		0x000d	USB Chief Bus & Protocol Analyzer
 product CATC ANDROMEDA		0x1237	Andromeda hub
-
-/* CASIO products */
-product CASIO QV		0x1001	QV DigitalCamera
-product CASIO BE300		0x2002	BE-300 PDA
-product CASIO NAMELAND		0x4001	CASIO Nameland EZ-USB
 
 /* CCYU Technology products */
 product CCYU EASYDISK		0x2136	EasyDisk Portable Device
@@ -911,11 +914,11 @@ product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
 
+/* DMI products */
+product DMI SA2_0		0xb001	Storage Adapter
+
 /* DrayTek products */
 product DRAYTEK VIGOR550	0x0550	Vigor550
-
-/* Research In Motion */
-product RIM BLACKBERRY		0x0001	BlackBerry
 
 /* Dynastream Innovations */
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
@@ -924,9 +927,6 @@ product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
 product EGALAX TPANEL		0x0001	Touch Panel
 product EGALAX TPANEL2		0x0002	Touch Panel
 product EGALAX2 TPANEL		0x0001	Touch Panel
-
-/* DMI products */
-product DMI SA2_0		0xb001	Storage Adapter
 
 /* Eicon Networks */
 product EICON DIVA852		0x4905	Diva 852 ISDN TA
@@ -1521,6 +1521,11 @@ product MOTOROLA SB4100		0x4100	SB4100 USB Cable Modem
 product MOTOROLA2 T720C		0x2822	T720c
 product MOTOROLA2 A920		0x4002	A920
 
+/* M-Systems products */
+product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
+product MSYSTEMS DISKONKEY2	0x0011	DiskOnKey
+product MSYSTEMS DISKONKEY3	0x0012	DiskOnKey
+
 /* MultiTech products */
 product MULTITECH ATLAS		0xf101	MT5634ZBA-USB modem
 
@@ -1536,11 +1541,6 @@ product MUSTEK BEARPAW1200TA	0x021e	BearPaw 1200TA scanner
 product MUSTEK 600USB		0x0873	600 USB scanner
 product MUSTEK MDC800		0xa800	MDC-800 digital camera
 product MUSTEK DV2000		0xc441	DV2000 digital camera
-
-/* M-Systems products */
-product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
-product MSYSTEMS DISKONKEY2	0x0011	DiskOnKey
-product MSYSTEMS DISKONKEY3	0x0012	DiskOnKey
 
 /* National Instruments */
 product NI GPIB_USB_A		0xc920	GPIB-USB-A
@@ -1583,13 +1583,13 @@ product NETGEAR2 MA101B		0x4102	MA101 Rev B
 /* NetIndex products */
 product NETINDEX WS002IN	0x2001  Willcom WS002IN (DD)
 
+/* NHJ product */
+product NHJ CAM2		0x9120	Camera
+
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
 product NIKON E880		0x0103	Digital Camera E880
 product NIKON E885		0x0105	Digital Camera E885
-
-/* NHJ product */
-product NHJ CAM2		0x9120	Camera
 
 /* Nokia products */
 product NOKIA CA42		0x0802	Mobile Phone adapter
@@ -1623,6 +1623,11 @@ product ONSPEC UCF100		0xa400	FlashLink UCF-100 CompactFlash Reader
 product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 
 product ONSPEC2 8IN2		0xb012	8In2
+
+/* Option N.V. products */
+product OPTIONNV MC3G		0x5000	Mobile Connect 3G datacard
+product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
+product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
@@ -1788,10 +1793,16 @@ product RALINK_2 RT2573		0x2573	RT2573
 product RALINK RT2671		0x2671	RT2671
 
 /* RATOC Systems products */
-product RATOC REXUSB60		0xb000	USB serial REX-USB60
+product RATOC REXUSB60		0xb000	USB serial adapter REX-USB60
 
 /* Realtek products */
 product REALTEK RTL8150L	0x8150	Realtek RTL8150L USB-Ethernet Bridge
+
+/* Research In Motion */
+product RIM BLACKBERRY		0x0001	BlackBerry
+
+/* Rockfire products */
+product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
 
 /* Roland products */
 product ROLAND UA100		0x0000	UA-100 USB Audio I/F
@@ -1825,12 +1836,6 @@ product ROLAND UA101		0x007d	EDIROL UA-101
 product ROLAND UA101F		0x008d	EDIROL UA-101 USB1
 product ROLAND UA1EX		0x0096	EDIROL UA-1EX
 product ROLAND UM3		0x009A	EDIROL UM-3
-
-/* Rockfire products */
-product ROCKFIRE GAMEPAD	0x2033	gamepad 203USB
-
-/* RATOC Systems products */
-product RATOC REXUSB60		0xb000	USB serial adapter REX-USB60
 
 /* Sagem products */
 product SAGEM XG760A		0x004a	XG-760A
@@ -1867,9 +1872,6 @@ product SEALEVEL USBSERIAL	0x2101	USB-Serial converter
 
 /* Senao products */
 product SENAO NUB8301		0x2000	NUB-8301
-
-/* ArkMicroChips products */
-product ARKMICROCHIPS USBSERIAL 0x0232	USB-UART Controller
 
 /* SGI products */
 product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
@@ -1947,11 +1949,11 @@ product SILABS CP210X_2		0xea61	CP210x Serial
 product SILICONPORTALS YAPPH_NF 0x0200	YAP Phone (no firmware)
 product SILICONPORTALS YAPPHONE 0x0201	YAP Phone
 
-/* Sirius Technologies products */
-product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
-
 /* Silicon Integrated Systems products */
 product SIS SIS_163U		0x0163	802.11g Wireless LAN Adapter
+
+/* Sirius Technologies products */
+product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
 
 /* Sitecom products */
 product SITECOM LN029		0x182d	LN029
@@ -2034,6 +2036,13 @@ product SUN KEYBOARD_TYPE_7	0x00a2	Type 7 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
 
+/* Supra products */
+product DIAMOND2 SUPRAEXPRESS56K 0x07da Supra Express 56K modem
+product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
+product DIAMOND2 RIO600USB	0x5001	Rio 600 USB
+product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
+product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
+
 /* Surecom Technology products */
 product SURECOM EP9001G		0x11f3	EP-9001-g
 product SURECOM RT2573		0x31f3	RT2573
@@ -2046,13 +2055,6 @@ product SWEEX ZD1211		0x1809	ZD1211
 
 /* System TALKS, Inc. */
 product SYSTEMTALKS SGCX2UL	0x1920	SGC-X2UL
-
-/* Supra products */
-product DIAMOND2 SUPRAEXPRESS56K 0x07da Supra Express 56K modem
-product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K Modem
-product DIAMOND2 RIO600USB	0x5001	Rio 600 USB
-product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
-product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
@@ -2173,11 +2175,6 @@ product VISIONEER 8600		0x0331	OneTouch 8600
 /* Vivitar products */
 product VIVITAR DSC350		0x0003	DSC350 Camera
 
-/* Option N.V. products */
-product OPTIONNV MC3G		0x5000	Mobile Connect 3G datacard
-product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
-product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
-
 /* VTech products */
 product VTECH RT2570		0x3012	RT2570
 product VTECH ZD1211B		0x3014	ZD1211B
@@ -2197,9 +2194,6 @@ product WISTRONNEWEB UR055G	0x0711	UR055G
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	IMAGING DEVICE
 product XIRLINK PCCAM		0x8080	IBM PC Camera
-
-/* Y-E Data products */
-product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
@@ -2224,13 +2218,16 @@ product YAMAHA RTA55I		0x4004	NetVolante RTA55i Broadband VoIP Router
 /* Yano products */
 product YANO U640MO		0x0101	U640MO-03
 
-/* Zeevo, Inc. products */
-product ZEEVO BLUETOOTH		0x07d0	BT-500 Bluetooth USB Adapter
+/* Y-E Data products */
+product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
 /* Z-Com products */
 product ZCOM 725		0x0002	725/726 Prism2.5 WLAN
 product ZCOM ZD1211		0x0011	ZD1211
 product ZCOM ZD1211B		0x001a	ZD1211B
+
+/* Zeevo, Inc. products */
+product ZEEVO BLUETOOTH		0x07d0	BT-500 Bluetooth USB Adapter
 
 /* Zinwell products */
 product ZINWELL ZWXG261		0x0260	ZWX-G261
