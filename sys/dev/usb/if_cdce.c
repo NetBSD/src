@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.12.10.7 2007/06/18 13:40:59 itohy Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.12.10.8 2007/06/22 10:44:55 itohy Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.7 2007/06/18 13:40:59 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.10.8 2007/06/22 10:44:55 itohy Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -395,7 +395,11 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	}
 
 	usbd_setup_xfer(c->ue_xfer, sc->cdce_bulkout_pipe, c, NULL /* XXX buf */,
-	    m->m_pkthdr.len, USBD_NO_COPY, 10000, cdce_txeof);
+	    m->m_pkthdr.len, USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    , 10000, cdce_txeof);
 	err = usbd_transfer(c->ue_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		c->ue_mbuf = NULL;
@@ -557,7 +561,12 @@ cdce_init(struct ifnet *ifp)
 		c = &sc->cdce_cdata.cdce_rx_chain[i];
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->cdce_bulkin_pipe, c,
-		    NULL /* XXX buf */, CDCE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    NULL /* XXX buf */, CDCE_BUFSZ,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+		    | USBD_CALLBACK_AS_TASK
+#endif
+		    ,
 		    USBD_NO_TIMEOUT, cdce_rxeof);
 		usbd_transfer(c->ue_xfer);
 	}
@@ -642,7 +651,11 @@ done:
 	/* Setup new transfer. */
 	(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 	usbd_setup_xfer(c->ue_xfer, sc->cdce_bulkin_pipe, c, NULL /* XXX buf */,
-	    CDCE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+	    CDCE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    , USBD_NO_TIMEOUT,
 	    cdce_rxeof);
 	usbd_transfer(c->ue_xfer);
 }
