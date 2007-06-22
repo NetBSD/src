@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.72.10.3 2007/06/18 14:15:39 itohy Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.72.10.4 2007/06/22 10:12:25 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.61 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -89,6 +89,7 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
 /* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 #define USBD_FORCE_SHORT_XFER	0x08	/* force last short packet on write */
+#define USBD_CALLBACK_AS_TASK	0x10	/* callback is called in a task */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -212,14 +213,16 @@ struct usb_task {
 	void *arg;
 	int queue;
 };
-#define	USB_TASKQ_HC		0
-#define	USB_TASKQ_DRIVER	1
+#define	USB_TASKQ_IDLE		0 /* should be 0 (uninitialized val will be 0)*/
+#define	USB_TASKQ_HC		1
+#define	USB_TASKQ_DRIVER	2
 #define	USB_NUM_TASKQS		2
 #define	USB_TASKQ_NAMES		{"usbtask-hc", "usbtask-dr"}
 
 void usb_add_task(usbd_device_handle, struct usb_task *, int);
 void usb_rem_task(usbd_device_handle, struct usb_task *);
-#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->queue = -1)
+#define usb_init_task(t, f, a) \
+	((t)->fun = (f), (t)->arg = (a), (t)->queue = USB_TASKQ_IDLE)
 
 struct usb_devno {
 	u_int16_t ud_vendor;

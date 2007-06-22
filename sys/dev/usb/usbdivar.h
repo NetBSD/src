@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.80.12.2 2007/05/31 23:15:19 itohy Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.80.12.3 2007/06/22 10:12:25 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.47 2006/09/07 00:06:42 imp Exp $	*/
 
 /*-
@@ -253,7 +253,7 @@ struct usbd_xfer {
 #define UXFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 
 	usb_callout_t		timeout_handle;
-	struct usb_task		async_task;
+	struct usb_task		task;
 };
 
 void usbd_init(void);
