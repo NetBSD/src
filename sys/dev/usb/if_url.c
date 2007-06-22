@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.24.10.4 2007/06/18 13:44:15 itohy Exp $	*/
+/*	$NetBSD: if_url.c,v 1.24.10.5 2007/06/22 10:44:56 itohy Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24.10.4 2007/06/18 13:44:15 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24.10.5 2007/06/22 10:44:56 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -584,7 +584,11 @@ url_init(struct ifnet *ifp)
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->sc_pipe_rx,
 				c, NULL /* XXX buf */, URL_BUFSZ,
-				USBD_SHORT_XFER_OK | USBD_NO_COPY,
+				USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+				| USBD_CALLBACK_AS_TASK
+#endif
+				,
 				USBD_NO_TIMEOUT, url_rxeof);
 		(void)usbd_transfer(c->ue_xfer);
 		DPRINTF(("%s: %s: start read\n", USBDEVNAME(sc->sc_dev),
@@ -833,7 +837,11 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 	}
 
 	usbd_setup_xfer(c->ue_xfer, sc->sc_pipe_tx, c, NULL /* XXX buf */, total_len,
-			USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+			USBD_FORCE_SHORT_XFER | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+			| USBD_CALLBACK_AS_TASK
+#endif
+			,
 			URL_TX_TIMEOUT, url_txeof);
 
 	/* Transmit */
@@ -1007,7 +1015,11 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* Setup new transfer */
 	(void)usbd_map_buffer_mbuf(xfer, c->ue_mbuf);
 	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, NULL /* XXX buf */, URL_BUFSZ,
-			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+			| USBD_CALLBACK_AS_TASK
+#endif
+			,
 			USBD_NO_TIMEOUT, url_rxeof);
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.15.10.4 2007/06/18 13:42:56 itohy Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.15.10.5 2007/06/22 10:44:56 itohy Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.4 2007/06/18 13:42:56 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.5 2007/06/22 10:44:56 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -689,7 +689,11 @@ udav_init(struct ifnet *ifp)
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->sc_pipe_rx,
 				c, NULL /* XXX buf */, UDAV_BUFSZ,
-				USBD_SHORT_XFER_OK | USBD_NO_COPY,
+				USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+				| USBD_CALLBACK_AS_TASK
+#endif
+				,
 				USBD_NO_TIMEOUT, udav_rxeof);
 		(void)usbd_transfer(c->ue_xfer);
 		DPRINTF(("%s: %s: start read\n", USBDEVNAME(sc->sc_dev),
@@ -954,7 +958,11 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 	}
 
 	usbd_setup_xfer(c->ue_xfer, sc->sc_pipe_tx, c, NULL /* XXX buf */, total_len,
-			USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
+			USBD_FORCE_SHORT_XFER | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+			| USBD_CALLBACK_AS_TASK
+#endif
+			,
 			UDAV_TX_TIMEOUT, udav_txeof);
 
 	/* Transmit */
@@ -1128,7 +1136,11 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* Setup new transfer */
 	(void)usbd_map_buffer_mbuf(xfer, c->ue_mbuf);
 	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, NULL /* XXX buf */, UDAV_BUFSZ,
-			USBD_SHORT_XFER_OK | USBD_NO_COPY,
+			USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+			| USBD_CALLBACK_AS_TASK
+#endif
+			,
 			USBD_NO_TIMEOUT, udav_rxeof);
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);

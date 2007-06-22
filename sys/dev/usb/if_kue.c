@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.58.10.4 2007/06/18 13:42:04 itohy Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.58.10.5 2007/06/22 10:44:56 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.58.10.4 2007/06/18 13:42:04 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.58.10.5 2007/06/22 10:44:56 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -716,7 +716,11 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* Setup new transfer. */
 	(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 	usbd_setup_xfer(c->ue_xfer, sc->kue_ep[KUE_ENDPT_RX],
-	    c, NULL /* XXX buf */, KUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, NULL /* XXX buf */, KUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    ,
 	    USBD_NO_TIMEOUT, kue_rxeof);
 	usbd_transfer(c->ue_xfer);
 
@@ -822,7 +826,11 @@ kue_send(struct kue_softc *sc, struct mbuf *m, int idx)
 	}
 
 	usbd_setup_xfer(c->ue_xfer, sc->kue_ep[KUE_ENDPT_TX],
-	    c, NULL /* XXX buf */, total_len, USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
+	    c, NULL /* XXX buf */, total_len, USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    , USBD_DEFAULT_TIMEOUT,
 	    kue_txeof);
 
 	/* Transmit */
@@ -959,7 +967,11 @@ kue_init(struct ifnet *ifp)
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->kue_ep[KUE_ENDPT_RX],
 		    c, NULL /* XXX buf */, KUE_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+		    | USBD_CALLBACK_AS_TASK
+#endif
+		    , USBD_NO_TIMEOUT,
 		    kue_rxeof);
 		DPRINTFN(5,("%s: %s: start read\n", USBDEVNAME(sc->kue_dev),
 			    __func__));
