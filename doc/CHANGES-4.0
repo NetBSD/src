@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.194 2007/06/21 14:29:44 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.195 2007/06/22 13:10:01 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6849,3 +6849,13 @@ common/lib/libc/arch/arm/string/memmove.S	1.2
 
 	Apply the patch supplied in PR/36512 to fix the buffer overlap check.
 	[scw, ticket #740]
+
+common/lib/libc/arch/arm/string/memcpy_xscale.S	1.2
+
+	Apply the patch, with some minor tweaks, supplied in PR/36513.
+	This prevents a possible prefetch past the end of the source buffer.
+
+	Note that the semantics of the pld instruction mean that it is unlikely
+	that this would have caused any problems except in very specific
+	circumstances in some types of device drivers.
+	[scw, ticket #741]
