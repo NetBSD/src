@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_ethersubr.c,v 1.1.2.1 2007/06/12 13:58:24 itohy Exp $	*/
+/*	$NetBSD: usb_ethersubr.c,v 1.1.2.2 2007/06/22 10:55:18 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_ethersubr.c,v 1.1.2.1 2007/06/12 13:58:24 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_ethersubr.c,v 1.1.2.2 2007/06/22 10:55:18 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb_ethersubr.c,v 1.23 2007/01/08 23:21:06 alfred Exp $"); */
 
 #include <sys/param.h>
@@ -298,137 +298,3 @@ usb_ether_map_tx_buffer_mbuf(struct ue_chain *c, struct mbuf *m)
 
 	return (0);
 }
-
-#ifdef __FreeBSD__
-/*
- * This requires extra context switchings in processing incoming/outgoing
- * packets.  Blocking USB interrupts in networking code is probably better
- * in performance.
- */
-
-/*
- * Callbacks in the USB code operate at splusb() (actually splbio()
- * in FreeBSD). However adding packets to the input queues has to be
- * done at splimp(). It is conceivable that this arrangement could
- * trigger a condition where the splimp() is ignored and the input
- * queues could get trampled in spite of our best effors to prevent
- * it. To work around this, we implement a special input queue for
- * USB ethernet adapter drivers. Rather than passing the frames directly
- * to ether_input(), we pass them here, then schedule a soft interrupt
- * to hand them to ether_input() later, outside of the USB interrupt
- * context.
- *
- * It's questional as to whether this code should be expanded to
- * handle other kinds of devices, or handle USB transfer callbacks
- * in general. Right now, I need USB network interfaces to work
- * properly.
- */
-
-static struct ifqueue usbq_rx;
-static struct ifqueue usbq_tx;
-static int mtx_inited = 0;
-
-static void	usbintr(void);
-
-static void
-usbintr(void)
-{
-	struct mbuf		*m;
-	struct usb_qdat		*q;
-	struct ifnet		*ifp;
-
-	/* Check the RX queue */
-	for (;;) {
-		IF_DEQUEUE(&usbq_rx, m);
-		if (m == NULL)
-			break;
-		q = (struct usb_qdat *)m->m_pkthdr.rcvif;
-		ifp = q->ifp;
-		m->m_pkthdr.rcvif = ifp;
-		(*ifp->if_input)(ifp, m);
-
-		/* Re-arm the receiver */
-		(*q->if_rxstart)(ifp);
-		if (ifp->if_snd.ifq_head != NULL)
-			(*ifp->if_start)(ifp);
-	}
-
-	/* Check the TX queue */
-	for (;;) {
-		IF_DEQUEUE(&usbq_tx, m);
-		if (m == NULL)
-			break;
-		ifp = m->m_pkthdr.rcvif;
-		m_freem(m);
-		if (ifp->if_snd.ifq_head != NULL)
-			(*ifp->if_start)(ifp);
-	}
-
-	return;
-}
-
-void
-usb_register_netisr(void)
-{
-	if (mtx_inited)
-		return;
-	netisr_register(NETISR_USB, (netisr_t *)usbintr, NULL, 0);
-	mtx_init(&usbq_tx.ifq_mtx, "usbq_tx_mtx", NULL, MTX_DEF);
-	mtx_init(&usbq_rx.ifq_mtx, "usbq_rx_mtx", NULL, MTX_DEF);
-	mtx_inited++;
-	return;
-}
-
-/*
- * Must be called at splusb() (actually splbio()). This should be
- * the case when called from a transfer callback routine.
- */
-void
-usb_ether_input(m)
-	struct mbuf		*m;
-{
-	IF_ENQUEUE(&usbq_rx, m);
-	schednetisr(NETISR_USB);
-
-	return;
-}
-
-void
-usb_tx_done(m)
-	struct mbuf		*m;
-{
-	IF_ENQUEUE(&usbq_tx, m);
-	schednetisr(NETISR_USB);
-
-	return;
-}
-
-void
-usb_ether_task_init(device_ptr_t dev, int flags, struct usb_taskqueue *tq)
-{
-
-	/* nothing for now. */
-}
-
-void
-usb_ether_task_enqueue(struct usb_taskqueue *tq, struct task *task)
-{
-
-	taskqueue_enqueue(taskqueue_thread, task);
-}
-
-void
-usb_ether_task_drain(struct usb_taskqueue *tq, struct task *task)
-{
-
-	taskqueue_drain(taskqueue_thread, task);
-}
-
-void
-usb_ether_task_destroy(struct usb_taskqueue *tq)
-{
-
-	/* nothing for now */
-
-}
-#endif	/* __FreeBSD__ */
