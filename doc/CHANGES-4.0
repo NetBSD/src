@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.195 2007/06/22 13:10:01 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.196 2007/06/22 14:18:00 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6859,3 +6859,13 @@ common/lib/libc/arch/arm/string/memcpy_xscale.S	1.2
 	that this would have caused any problems except in very specific
 	circumstances in some types of device drivers.
 	[scw, ticket #741]
+
+usr.sbin/wsmoused/selection.c			1.10
+
+	Guess the terminal size on each change instead of during program startup.
+	This allows the mouse to be used properly in consoles with different sizes:
+	before this change it was restricted to the size reported by the console
+	used to start the daemon.
+
+	Problem reported by Blair Sadewitz.
+	[jmmv, ticket #742]
