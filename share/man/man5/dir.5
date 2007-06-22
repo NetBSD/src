@@ -1,4 +1,4 @@
-.\"	$NetBSD: dir.5,v 1.19 2005/12/26 19:48:12 perry Exp $
+.\"	$NetBSD: dir.5,v 1.20 2007/06/22 15:03:40 rumble Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dir.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd August 15, 2005
+.Dd June 22, 2007
 .Dt DIRENT 5
 .Os
 .Sh NAME
@@ -80,8 +80,8 @@ The directory entry format is defined in the file
 /*
  * A directory entry has a struct dirent at the front of it, containing
  * its inode number, the length of the entry, and the length of the name
- * contained in the entry.  These are followed by the name padded to a
- * 4 byte boundary with null bytes.  All names are guaranteed null
+ * contained in the entry.  These are followed by the name padded to an
+ * 8 byte boundary with null bytes.  All names are guaranteed null
  * terminated.  The maximum length of a name in a directory is MAXNAMLEN.
  */
 
