@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.27.4.4 2007/06/18 13:43:21 itohy Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.27.4.5 2007/06/22 10:42:11 itohy Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.27.4.4 2007/06/18 13:43:21 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.27.4.5 2007/06/22 10:42:11 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -476,17 +476,19 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	splx(s);
 
  done:
-#if 1
 	/* Setup new transfer. */
 	(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 	usbd_setup_xfer(c->ue_xfer, sc->sc_ep[UPL_ENDPT_RX],
-	    c, NULL /* XXX buf */, UPL_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, NULL /* XXX buf */, UPL_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    ,
 	    USBD_NO_TIMEOUT, upl_rxeof);
 	usbd_transfer(c->ue_xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->sc_dev),
 		    __func__));
-#endif
 }
 
 /*
@@ -560,7 +562,11 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 		     USBDEVNAME(sc->sc_dev), __func__, total_len));
 
 	usbd_setup_xfer(c->ue_xfer, sc->sc_ep[UPL_ENDPT_TX],
-	    c, NULL /* XXX buf */, total_len, USBD_NO_COPY, USBD_DEFAULT_TIMEOUT,
+	    c, NULL /* XXX buf */, total_len, USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    , USBD_DEFAULT_TIMEOUT,
 	    upl_txeof);
 
 	/* Transmit */
@@ -668,7 +674,11 @@ upl_init(struct ifnet *ifp)
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->sc_ep[UPL_ENDPT_RX],
 		    c, NULL /* XXX buf */, UPL_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+		    | USBD_CALLBACK_AS_TASK
+#endif
+		    , USBD_NO_TIMEOUT,
 		    upl_rxeof);
 		usbd_transfer(c->ue_xfer);
 	}
