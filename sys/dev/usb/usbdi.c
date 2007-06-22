@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119.12.2 2007/05/31 23:15:18 itohy Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.12.3 2007/06/22 10:12:24 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.2 2007/05/31 23:15:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.3 2007/06/22 10:12:24 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $"); */
 
 #ifdef __NetBSD__
@@ -94,6 +94,7 @@ Static usbd_xfer_handle usbd_alloc_xfer_flag(usbd_device_handle,
 Static void usbd_free_buffer_flag(usbd_xfer_handle, enum usbd_waitflg);
 Static usbd_status usbd_free_xfer_flag(usbd_xfer_handle, enum usbd_waitflg);
 Static usbd_status usbd_ar_pipe(usbd_pipe_handle pipe);
+Static void usbd_callback_task(void *);
 Static void usbd_do_request_async_cb
 	(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void usbd_do_request_async_task(void *);
@@ -579,6 +580,7 @@ Static usbd_status
 usbd_free_xfer_flag(usbd_xfer_handle xfer, enum usbd_waitflg waitflg)
 {
 	DPRINTFN(5,("usbd_free_xfer_flag: %p %d\n", xfer, waitflg));
+	usb_rem_task(xfer->device, &xfer->task);
 	if (xfer->rqflags & (URQ_DEV_BUF | URQ_AUTO_BUF))
 		usbd_free_buffer_flag(xfer, waitflg);
 	if (xfer->rqflags & (URQ_DEV_MAP_BUFFER | URQ_DEV_MAP_MBUF))
@@ -731,7 +733,7 @@ usbd_abort_pipe(usbd_pipe_handle pipe)
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
-		printf("usbd_close_pipe: pipe==NULL\n");
+		printf("usbd_abort_pipe: pipe==NULL\n");
 		return (USBD_NORMAL_COMPLETION);
 	}
 #endif
@@ -1053,8 +1055,18 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		pipe->methods->done(xfer);
 	} else {
 		pipe->methods->done(xfer);
-		if (xfer->callback)
-			xfer->callback(xfer, xfer->priv, xfer->status);
+		if (xfer->callback) {
+			if (xfer->rqflags & USBD_CALLBACK_AS_TASK) {
+				/*
+				 * Callback as a task (in thread context).
+				 */
+				usb_init_task(&xfer->task, usbd_callback_task,
+				    xfer);
+				usb_add_task(xfer->device, &xfer->task,
+				    USB_TASKQ_DRIVER);
+			} else
+				xfer->callback(xfer, xfer->priv, xfer->status);
+		}
 	}
 
 	if (sync && !polling)
@@ -1067,6 +1079,14 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		else
 			usbd_start_next(pipe);
 	}
+}
+
+Static void
+usbd_callback_task(void *arg)
+{
+	usbd_xfer_handle xfer = arg;
+
+	xfer->callback(xfer, xfer->priv, xfer->status);
 }
 
 usbd_status
@@ -1272,8 +1292,8 @@ usbd_do_request_async(usbd_device_handle dev, usb_device_request_t *req,
 	/*
 	 * Request will be processed later as a task (in thread context).
 	 */
-	usb_init_task(&xfer->async_task, usbd_do_request_async_task, xfer);
-	usb_add_task(dev, &xfer->async_task, USB_TASKQ_HC);
+	usb_init_task(&xfer->task, usbd_do_request_async_task, xfer);
+	usb_add_task(dev, &xfer->task, USB_TASKQ_HC);
 
 	return (USBD_IN_PROGRESS);
 }

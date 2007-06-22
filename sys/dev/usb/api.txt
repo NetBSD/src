@@ -1,4 +1,4 @@
-# $NetBSD: api.txt,v 1.1.2.2 2007/05/31 23:15:16 itohy Exp $
+# $NetBSD: api.txt,v 1.1.2.3 2007/06/22 10:12:24 itohy Exp $
 
 usbdi.c:
 int usbd_xfer_isread(usbd_xfer_handle xfer)
@@ -209,6 +209,11 @@ void usb_transfer_complete(usbd_xfer_handle xfer)
 	[nocontext ok]
 	Finish a trasnfer.
 	Called at splusb().
+
+Static void usbd_callback_task(void *arg)
+	[need context]
+	(internal)
+	Do callback in thread context when USBD_CALLBACK_AS_TASK is enabled.
 
 /* HC API */
 usbd_status usb_insert_transfer(usbd_xfer_handle xfer)
