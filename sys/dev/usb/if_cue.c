@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.48.10.4 2007/06/18 13:41:26 itohy Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.48.10.5 2007/06/22 10:44:55 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48.10.4 2007/06/18 13:41:26 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.48.10.5 2007/06/22 10:44:55 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -764,7 +764,11 @@ done:
 	/* Setup new transfer. */
 	(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 	usbd_setup_xfer(c->ue_xfer, sc->cue_ep[CUE_ENDPT_RX],
-	    c, NULL /* XXX buf */, CUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    c, NULL /* XXX buf */, CUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    ,
 	    USBD_NO_TIMEOUT, cue_rxeof);
 	usbd_transfer(c->ue_xfer);
 
@@ -896,7 +900,11 @@ cue_send(struct cue_softc *sc, struct mbuf *m, int idx)
 
 	/* XXX 10000 */
 	usbd_setup_xfer(c->ue_xfer, sc->cue_ep[CUE_ENDPT_TX],
-	    c, NULL /* XXX buf */, total_len, USBD_NO_COPY, 10000, cue_txeof);
+	    c, NULL /* XXX buf */, total_len, USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    , 10000, cue_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->ue_xfer);
@@ -1050,7 +1058,11 @@ cue_init(struct ifnet *ifp)
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->cue_ep[CUE_ENDPT_RX],
 		    c, NULL /* XXX buf */, CUE_BUFSZ,
-		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+		    | USBD_CALLBACK_AS_TASK
+#endif
+		    , USBD_NO_TIMEOUT,
 		    cue_rxeof);
 		usbd_transfer(c->ue_xfer);
 	}
