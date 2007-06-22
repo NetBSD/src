@@ -1,7 +1,7 @@
-/* $NetBSD: selection.c,v 1.9 2005/06/02 09:49:31 lukem Exp $ */
+/* $NetBSD: selection.c,v 1.9.4.1 2007/06/22 14:13:29 liamjfoy Exp $ */
 
 /*
- * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003, 2004, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.9 2005/06/02 09:49:31 lukem Exp $");
+__RCSID("$NetBSD: selection.c,v 1.9.4.1 2007/06/22 14:13:29 liamjfoy Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: selection.c,v 1.9 2005/06/02 09:49:31 lukem Exp $");
 #include <sys/tty.h>
 #include <dev/wscons/wsconsio.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
@@ -155,7 +156,6 @@ int
 selection_startup(struct mouse *m)
 {
 	int i;
-	struct winsize ws;
 	struct wsdisplay_char ch;
 	struct block *conf;
 
@@ -178,12 +178,6 @@ selection_startup(struct mouse *m)
 		Selmouse.sm_but_paste = 2;
 	}
 
-	/* Get terminal size */
-	if (ioctl(0, TIOCGWINSZ, &ws) < 0) {
-		log_warn("cannot get terminal size");
-		return 0;
-	}
-
 	/* Open current tty */
 	(void)ioctl(Selmouse.sm_mouse->m_statfd, WSDISPLAYIO_GETACTIVESCREEN,
 	    &i);
@@ -198,8 +192,8 @@ selection_startup(struct mouse *m)
 		return 0;
 	}
 
-	Selmouse.sm_max_y = ws.ws_row - 1;
-	Selmouse.sm_max_x = ws.ws_col - 1;
+	assert(Selmouse.sm_max_y != 0); /* Initialized by open_tty above. */
+	assert(Selmouse.sm_max_x != 0); /* Initialized by open_tty above. */
 	Selmouse.sm_y = Selmouse.sm_max_y / 2;
 	Selmouse.sm_x = Selmouse.sm_max_x / 2;
 	Selmouse.sm_count_y = 0;
@@ -371,11 +365,14 @@ cursor_show(void)
 
 /* ---------------------------------------------------------------------- */
 
-/* Opens the specified TTY device, used when switching consoles. */
+/* Opens the specified TTY device, used when switching consoles.
+ * Takes care to adjust the pointer status to make sense within the new
+ * console, whose dimensions may differ from the previous one. */
 static void
 open_tty(int ttyno)
 {
 	char buf[20];
+	struct winsize ws;
 
 	if (Selmouse.sm_ttyfd >= 0)
 		(void)close(Selmouse.sm_ttyfd);
@@ -384,6 +381,25 @@ open_tty(int ttyno)
 	Selmouse.sm_ttyfd = open(buf, O_RDONLY | O_NONBLOCK);
 	if (Selmouse.sm_ttyfd < 0)
 		log_warnx("cannot open %s", buf);
+
+	/* Get terminal size and update the maximum cursor coordinates. */
+	if (ioctl(Selmouse.sm_ttyfd, TIOCGWINSZ, &ws) < 0) {
+		log_warn("cannot get terminal size");
+		/* Some defaults; not guaranteed to be correct but we
+		 * cannot do better. */
+		Selmouse.sm_max_y = 24;
+		Selmouse.sm_max_x = 79;
+	} else {
+		Selmouse.sm_max_y = ws.ws_row - 1;
+		Selmouse.sm_max_x = ws.ws_col - 1;
+	}
+
+	/* Adjust current mouse position in case the terminal's size has
+	 * changed. */
+	if (Selmouse.sm_x > Selmouse.sm_max_x)
+		Selmouse.sm_x = Selmouse.sm_max_x;
+	if (Selmouse.sm_y > Selmouse.sm_max_y)
+		Selmouse.sm_y = Selmouse.sm_max_y;
 }
 
 /* ---------------------------------------------------------------------- */
