@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.208.12.4 2007/06/05 09:32:51 itohy Exp $	*/
+/*	$NetBSD: uhci.c,v 1.208.12.5 2007/06/22 10:49:45 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.4 2007/06/05 09:32:51 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.5 2007/06/22 10:49:45 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #include <sys/param.h>
@@ -191,9 +191,9 @@ Static void		uhci_bufptr_init(union uhci_bufptr *,
 			    struct uhci_xfer *);
 Static void		uhci_bufptr_advance(union uhci_bufptr *, int len,
 			    int is_mbuf);
-Static void		uhci_bufptr_rd(const union uhci_bufptr *, void *,
+Static void		uhci_bufptr_wr(const union uhci_bufptr *, void *,
 			    int len, int is_mbuf);
-Static void		uhci_bufptr_wr(const union uhci_bufptr *p,
+Static void		uhci_bufptr_rd(const union uhci_bufptr *p,
 			    const void *, int len, int is_mbuf);
 
 Static void		uhci_aux_mem_init(struct uhci_aux_mem *);
@@ -1946,9 +1946,6 @@ uhci_grow_std(uhci_softc_t *sc)
 		std = KERNADDR(&dma, offs);
 		std->ut_mdesc = um;
 		std->link.std = sc->sc_freetds;
-#if 0
-		std->aux_dma.block = NULL;
-#endif
 		std->aux_len = 0;
 		sc->sc_freetds = std;
 		sc->sc_nfreetds++;
@@ -2002,13 +1999,6 @@ uhci_free_std(uhci_softc_t *sc, uhci_soft_td_t *std)
 		return;
 	}
 	std->td.td_token = htole32(TD_IS_FREE);
-#endif
-#if 0
-	if (std->aux_dma.block != NULL) {
-		usb_freemem(&sc->sc_dmatag, &std->aux_dma);
-		std->aux_dma.block = NULL;
-		std->aux_len = 0;
-	}
 #endif
 	s = splusb();
 	std->link.std = sc->sc_freetds;
@@ -2084,7 +2074,7 @@ uhci_free_desc_chunks(uhci_softc_t *sc, struct uhci_mdescs *c)
  * Manipulate pointer to plain buffer or mbuf.
  */
 
-/* Set the buffer pointer to the beginning of buffer */
+/* Set the buffer pointer at the beginning of buffer */
 Static void
 uhci_bufptr_init(union uhci_bufptr *p, struct uhci_xfer *uxfer)
 {
@@ -2128,7 +2118,7 @@ uhci_bufptr_advance(union uhci_bufptr *p, int len, int is_mbuf)
 
 /* Copy data from the buffer pointer to linear buffer b. */
 Static void
-uhci_bufptr_rd(const union uhci_bufptr *p, void *b, int len, int is_mbuf)
+uhci_bufptr_wr(const union uhci_bufptr *p, void *b, int len, int is_mbuf)
 {
 
 	if (is_mbuf) {
@@ -2140,7 +2130,7 @@ uhci_bufptr_rd(const union uhci_bufptr *p, void *b, int len, int is_mbuf)
 
 /* Copy data to the buffer pointer from linear buffer b. */
 Static void
-uhci_bufptr_wr(const union uhci_bufptr *p, const void *b, int len, int is_mbuf)
+uhci_bufptr_rd(const union uhci_bufptr *p, const void *b, int len, int is_mbuf)
 {
 	struct mbuf *m;
 	int off, mlen, curlen;
@@ -2159,7 +2149,7 @@ uhci_bufptr_wr(const union uhci_bufptr *p, const void *b, int len, int is_mbuf)
 		}
 #ifdef DIAGNOSTIC
 		if (len)
-			panic("uhci_bufptr_wr: overrun %d", len);
+			panic("uhci_bufptr_rd: overrun %d", len);
 #endif
 #endif
 	} else {
@@ -2377,7 +2367,7 @@ uhci_aux_dma_prepare(uhci_soft_td_t *std, int is_mbuf, int isread)
 {
 
 	if (!isread) {
-		uhci_bufptr_rd(&std->aux_ptr, std->aux_kern, std->aux_len,
+		uhci_bufptr_wr(&std->aux_ptr, std->aux_kern, std->aux_len,
 		    is_mbuf);
 	}
 }
@@ -2388,7 +2378,7 @@ uhci_aux_dma_complete(uhci_soft_td_t *std, struct uhci_aux_mem *aux,
 {
 
 	if (isread) {
-		uhci_bufptr_wr(&std->aux_ptr, std->aux_kern, std->aux_len,
+		uhci_bufptr_rd(&std->aux_ptr, std->aux_kern, std->aux_len,
 		    is_mbuf);
 	}
 	std->aux_len = 0;
