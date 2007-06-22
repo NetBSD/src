@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.1.6.1 2007/06/22 13:07:42 liamjfoy Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -247,13 +247,50 @@ ENTRY(memcpy)
 	str	r5, [r3], #0x04
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
-.Lmemcpy_bad1:
-	subs	r2, r2, #0x10
-	bge	.Lmemcpy_bad1_loop16
+	sub	r2, r2, #0x10
 
-	adds	r2, r2, #0x10
+.Lmemcpy_bad1:
+	cmp	r2, #0x20
+	bge	.Lmemcpy_bad1_loop16
+	cmp	r2, #0x10
+	blt	.Lmemcpy_bad1_loop16_short
+
+	/* copy last 16 bytes (without preload) */
+#ifdef __ARMEB__
+	mov	r4, ip, lsl #8
+#else
+	mov	r4, ip, lsr #8
+#endif
+	ldr	r5, [r1], #0x04
+	ldr	r6, [r1], #0x04
+	ldr	r7, [r1], #0x04
+	ldr	ip, [r1], #0x04
+#ifdef __ARMEB__
+	orr	r4, r4, r5, lsr #24
+	mov	r5, r5, lsl #8
+	orr	r5, r5, r6, lsr #24
+	mov	r6, r6, lsl #8
+	orr	r6, r6, r7, lsr #24
+	mov	r7, r7, lsl #8
+	orr	r7, r7, ip, lsr #24
+#else
+	orr	r4, r4, r5, lsl #24
+	mov	r5, r5, lsr #8
+	orr	r5, r5, r6, lsl #24
+	mov	r6, r6, lsr #8
+	orr	r6, r6, r7, lsl #24
+	mov	r7, r7, lsr #8
+	orr	r7, r7, ip, lsl #24
+#endif
+	str	r4, [r3], #0x04
+	str	r5, [r3], #0x04
+	str	r6, [r3], #0x04
+	str	r7, [r3], #0x04
+	subs	r2, r2, #0x10
 	ldmeqfd	sp!, {r4-r7}
 	bxeq	lr			/* Return now if done */
+
+.Lmemcpy_bad1_loop16_short:
 	subs	r2, r2, #0x04
 	sublt	r1, r1, #0x03
 	blt	.Lmemcpy_bad_done
@@ -308,13 +345,50 @@ ENTRY(memcpy)
 	str	r5, [r3], #0x04
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
-.Lmemcpy_bad2:
-	subs	r2, r2, #0x10
-	bge	.Lmemcpy_bad2_loop16
+	sub	r2, r2, #0x10
 
-	adds	r2, r2, #0x10
+.Lmemcpy_bad2:
+	cmp	r2, #0x20
+	bge	.Lmemcpy_bad2_loop16
+	cmp	r2, #0x10
+	blt	.Lmemcpy_bad2_loop16_short
+
+	/* copy last 16 bytes (without preload) */
+#ifdef __ARMEB__
+	mov	r4, ip, lsl #16
+#else
+	mov	r4, ip, lsr #16
+#endif
+	ldr	r5, [r1], #0x04
+	ldr	r6, [r1], #0x04
+	ldr	r7, [r1], #0x04
+	ldr	ip, [r1], #0x04
+#ifdef __ARMEB__
+	orr	r4, r4, r5, lsr #16
+	mov	r5, r5, lsl #16
+	orr	r5, r5, r6, lsr #16
+	mov	r6, r6, lsl #16
+	orr	r6, r6, r7, lsr #16
+	mov	r7, r7, lsl #16
+	orr	r7, r7, ip, lsr #16
+#else
+	orr	r4, r4, r5, lsl #16
+	mov	r5, r5, lsr #16
+	orr	r5, r5, r6, lsl #16
+	mov	r6, r6, lsr #16
+	orr	r6, r6, r7, lsl #16
+	mov	r7, r7, lsr #16
+	orr	r7, r7, ip, lsl #16
+#endif
+	str	r4, [r3], #0x04
+	str	r5, [r3], #0x04
+	str	r6, [r3], #0x04
+	str	r7, [r3], #0x04
+	subs	r2, r2, #0x10
 	ldmeqfd	sp!, {r4-r7}
 	bxeq	lr			/* Return now if done */
+
+.Lmemcpy_bad2_loop16_short:
 	subs	r2, r2, #0x04
 	sublt	r1, r1, #0x02
 	blt	.Lmemcpy_bad_done
@@ -369,13 +443,50 @@ ENTRY(memcpy)
 	str	r5, [r3], #0x04
 	str	r6, [r3], #0x04
 	str	r7, [r3], #0x04
-.Lmemcpy_bad3:
-	subs	r2, r2, #0x10
-	bge	.Lmemcpy_bad3_loop16
+	sub	r2, r2, #0x10
 
-	adds	r2, r2, #0x10
+.Lmemcpy_bad3:
+	cmp	r2, #0x20
+	bge	.Lmemcpy_bad3_loop16
+	cmp	r2, #0x10
+	blt	.Lmemcpy_bad3_loop16_short
+
+	/* copy last 16 bytes (without preload) */
+#ifdef __ARMEB__
+	mov	r4, ip, lsl #24
+#else
+	mov	r4, ip, lsr #24
+#endif
+	ldr	r5, [r1], #0x04
+	ldr	r6, [r1], #0x04
+	ldr	r7, [r1], #0x04
+	ldr	ip, [r1], #0x04
+#ifdef __ARMEB__
+	orr	r4, r4, r5, lsr #8
+	mov	r5, r5, lsl #24
+	orr	r5, r5, r6, lsr #8
+	mov	r6, r6, lsl #24
+	orr	r6, r6, r7, lsr #8
+	mov	r7, r7, lsl #24
+	orr	r7, r7, ip, lsr #8
+#else
+	orr	r4, r4, r5, lsl #8
+	mov	r5, r5, lsr #24
+	orr	r5, r5, r6, lsl #8
+	mov	r6, r6, lsr #24
+	orr	r6, r6, r7, lsl #8
+	mov	r7, r7, lsr #24
+	orr	r7, r7, ip, lsl #8
+#endif
+	str	r4, [r3], #0x04
+	str	r5, [r3], #0x04
+	str	r6, [r3], #0x04
+	str	r7, [r3], #0x04
+	subs	r2, r2, #0x10
 	ldmeqfd	sp!, {r4-r7}
 	bxeq	lr			/* Return now if done */
+
+.Lmemcpy_bad3_loop16_short:
 	subs	r2, r2, #0x04
 	sublt	r1, r1, #0x01
 	blt	.Lmemcpy_bad_done
