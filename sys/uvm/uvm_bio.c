@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.58 2007/06/05 12:31:35 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.59 2007/06/22 15:15:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.58 2007/06/05 12:31:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.59 2007/06/22 15:15:48 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -520,6 +520,7 @@ again:
 			umap->flags &= ~UMAP_MAPPING_CACHED;
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
 		}
+again_faultbusy:
 		memset(pgs, 0, sizeof(pgs));
 		simple_lock(&uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, trunc_page(offset), pgs,
@@ -529,9 +530,28 @@ again:
 			goto out;
 		}
 		for (i = 0; i < npages; i++) {
+			struct vm_page *pg = pgs[i];
+
+			KASSERT(pg->uobject == uobj);
+			if (pg->loan_count != 0) {
+				simple_lock(&uobj->vmobjlock);
+				if (pg->loan_count != 0) {
+					pg = uvm_loanbreak(pg);
+				}
+				simple_unlock(&uobj->vmobjlock);
+				if (pg == NULL) {
+					pmap_kremove(va, ubc_winsize);
+					pmap_update(pmap_kernel());
+					simple_lock(&uobj->vmobjlock);
+					uvm_page_unbusy(pgs, npages);
+					simple_unlock(&uobj->vmobjlock);
+					uvm_wait("ubc_alloc");
+					goto again_faultbusy;
+				}
+				pgs[i] = pg;
+			}
 			pmap_kenter_pa(va + slot_offset + (i << PAGE_SHIFT),
-			    VM_PAGE_TO_PHYS(pgs[i]),
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ | VM_PROT_WRITE);
 		}
 		pmap_update(pmap_kernel());
 		umap->flags |= UMAP_PAGES_LOCKED;
