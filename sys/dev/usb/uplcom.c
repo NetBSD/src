@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.56 2007/06/14 01:22:52 uebayasi Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.57 2007/06/22 16:39:27 itohy Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.56 2007/06/14 01:22:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.57 2007/06/22 16:39:27 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ static const struct usb_devno uplcom_devs[] = {
 	/* Pharos USB GPS - Microsoft version */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
 	/* Willcom WS002IN (DD) */
-	{ USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303X },
+	{ USB_VENDOR_NETINDEX, USB_PRODUCT_NETINDEX_WS002IN },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
@@ -204,7 +204,7 @@ static const struct {
 } uplcom_devs_ext[] = {
 	/* I/O DATA USB-RSAQ3 */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3, UPLCOM_TYPE_HX },
-	{ USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303X, UPLCOM_TYPE_HX },
+	{ USB_VENDOR_NETINDEX, USB_PRODUCT_NETINDEX_WS002IN, UPLCOM_TYPE_HX },
 	/* I/O DATA USB-RSAQ5 */
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5, UPLCOM_TYPE_HX },
 	{0, 0, 0}
