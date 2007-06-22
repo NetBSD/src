@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.157 2007/06/01 11:56:03 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.158 2007/06/22 14:39:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.157 2007/06/01 11:56:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.158 2007/06/22 14:39:59 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2497,6 +2497,7 @@ nfsrv_wakenfsd(slp)
 		if (nd->nfsd_slp)
 			panic("nfsd wakeup");
 		slp->ns_sref++;
+		KASSERT(slp->ns_sref > 0);
 		nd->nfsd_slp = slp;
 		cv_signal(&nd->nfsd_cv);
 	} else {
