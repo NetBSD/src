@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.17.10.4 2007/06/18 13:40:37 itohy Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.17.10.5 2007/06/22 10:42:10 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.4 2007/06/18 13:40:37 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.5 2007/06/22 10:42:10 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -677,35 +677,6 @@ axe_activate(device_ptr_t self, enum devact act)
 	return (0);
 }
 
-#if 0
-Static void
-axe_rxstart(struct ifnet *ifp)
-{
-	struct axe_softc	*sc;
-	struct ue_chain		*c;
-
-	sc = ifp->if_softc;
-	axe_lock_mii(sc);
-	c = &sc->axe_cdata.axe_rx_chain[sc->axe_cdata.axe_rx_prod];
-
-	if ((c->ue_mbuf = usb_ether_newbuf(NULL)) == NULL) {
-		ifp->if_ierrors++;
-		axe_unlock_mii(sc);
-		return;
-	}
-
-	/* Setup new transfer. */
-	(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
-	usbd_setup_xfer(c->ue_xfer, sc->axe_ep[AXE_ENDPT_RX],
-	    c, NULL /* XXX buf */, AXE_BUFSZ, USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, axe_rxeof);
-	usbd_transfer(c->ue_xfer);
-	axe_unlock_mii(sc);
-
-	return;
-}
-#endif
-
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
@@ -793,7 +764,11 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 	usbd_setup_xfer(xfer, sc->axe_ep[AXE_ENDPT_RX],
 	    c, NULL /* XXX buf */, AXE_BUFSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+	    USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    ,
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(xfer);
 
@@ -929,7 +904,12 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 		return (ret);
 
 	usbd_setup_xfer(c->ue_xfer, sc->axe_ep[AXE_ENDPT_TX],
-	    c, NULL /* XXX buf */, m->m_pkthdr.len, USBD_FORCE_SHORT_XFER, 10000,
+	    c, NULL /* XXX buf */, m->m_pkthdr.len,
+	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+	    | USBD_CALLBACK_AS_TASK
+#endif
+	    , 10000,
 	    axe_txeof);
 
 	/* Transmit */
@@ -1073,7 +1053,11 @@ axe_init(struct ifnet *ifp)
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->axe_ep[AXE_ENDPT_RX],
 		    c, NULL /* buf */, AXE_BUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axe_rxeof);
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY
+#ifdef __FreeBSD__	/* callback needs context */
+		    | USBD_CALLBACK_AS_TASK
+#endif
+		    , USBD_NO_TIMEOUT, axe_rxeof);
 		usbd_transfer(c->ue_xfer);
 	}
 
