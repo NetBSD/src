@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.95.4.2 2007/06/17 01:22:12 itohy Exp $	*/
+/*	$NetBSD: usb.c,v 1.95.4.3 2007/06/22 10:12:24 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.95.4.2 2007/06/17 01:22:12 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.95.4.3 2007/06/22 10:12:24 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb.c,v 1.111 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #if defined(__NetBSD__)
@@ -422,9 +422,11 @@ usb_add_task(usbd_device_handle dev, struct usb_task *task, int queue)
 	struct usb_taskq *taskq;
 	int s;
 
+	USB_KASSERT(queue > USB_TASKQ_IDLE && queue <= USB_NUM_TASKQS);
+
 	s = splusb();
-	taskq = &usb_taskq[queue];
-	if (task->queue == -1) {
+	taskq = &usb_taskq[queue - 1];
+	if (task->queue == USB_TASKQ_IDLE) {
 		DPRINTFN(2,("usb_add_task: task=%p\n", task));
 		TAILQ_INSERT_TAIL(&taskq->tasks, task, next);
 		task->queue = queue;
@@ -442,10 +444,10 @@ usb_rem_task(usbd_device_handle dev, struct usb_task *task)
 	int s;
 
 	s = splusb();
-	if (task->queue != -1) {
-		taskq = &usb_taskq[task->queue];
+	if (task->queue != USB_TASKQ_IDLE) {
+		taskq = &usb_taskq[task->queue - 1];
 		TAILQ_REMOVE(&taskq->tasks, task, next);
-		task->queue = -1;
+		task->queue = USB_TASKQ_IDLE;
 	}
 	splx(s);
 }
@@ -533,7 +535,7 @@ usb_task_thread(void *arg)
 		DPRINTFN(2,("usb_task_thread: woke up task=%p\n", task));
 		if (task != NULL) {
 			TAILQ_REMOVE(&taskq->tasks, task, next);
-			task->queue = -1;
+			task->queue = USB_TASKQ_IDLE;
 			splx(s);
 			task->fun(task->arg);
 			s = splusb();
