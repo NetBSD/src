@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.115 2007/06/19 13:13:37 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.116 2007/06/22 14:40:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.115 2007/06/19 13:13:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.116 2007/06/22 14:40:00 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -555,9 +555,12 @@ nfssvc_nfsd(nsd, argp, l)
 				} else
 					nfsd_head_flag &= ~NFSD_CHECKSLP;
 			}
+			KASSERT(nfsd->nfsd_slp == NULL ||
+			    nfsd->nfsd_slp->ns_sref > 0);
 			mutex_exit(&nfsd_lock);
 			if ((slp = nfsd->nfsd_slp) == NULL)
 				continue;
+			KASSERT(slp->ns_sref > 0);
 			if (slp->ns_flag & SLP_VALID) {
 				if (slp->ns_flag & SLP_DISCONN)
 					nfsrv_zapsock(slp);
@@ -585,6 +588,8 @@ nfssvc_nfsd(nsd, argp, l)
 			error = 0;
 			slp = nfsd->nfsd_slp;
 		}
+		KASSERT(slp != NULL);
+		KASSERT(nfsd->nfsd_slp == slp);
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
 				nfsdreq_free(nd);
@@ -862,8 +867,13 @@ void
 nfsrv_slpderef(slp)
 	struct nfssvc_sock *slp;
 {
+	uint32_t ref;
 
-	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
+	mutex_enter(&nfsd_lock);
+	KASSERT(slp->ns_sref > 0);
+	ref = --slp->ns_sref;
+	mutex_exit(&nfsd_lock);
+	if (ref == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		struct file *fp;
 
 		mutex_enter(&nfsd_lock);
