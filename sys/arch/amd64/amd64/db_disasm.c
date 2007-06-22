@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2007/02/22 04:54:36 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7 2007/06/22 20:54:59 dsl Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.6 2007/02/22 04:54:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.7 2007/06/22 20:54:59 dsl Exp $");
 
 #ifndef _KERNEL
 #include "stubs.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.6 2007/02/22 04:54:36 thorpej Exp $"
 #define	X	33			/* extended FP op */
 #define	XA	34			/* for 'fstcw %ax' */
 #define	Ed	35			/* address, double size */
+#define	Iq	36			/* word immediate, maybe 64bits */
 
 struct inst {
 	const char *i_name;			/* name */
@@ -178,18 +179,18 @@ const struct inst db_inst_0f0x[] = {
 /*02*/	{ "lar",   true,  LONG,  op2(E,R),    0 },
 /*03*/	{ "lsl",   true,  LONG,  op2(E,R),    0 },
 /*04*/	{ "",      false, NONE,  0,	      0 },
-/*05*/	{ "",      false, NONE,  0,	      0 },
+/*05*/	{ "syscall",false,NONE,  0,	      0 },
 /*06*/	{ "clts",  false, NONE,  0,	      0 },
-/*07*/	{ "",      false, NONE,  0,	      0 },
+/*07*/	{ "sysret",false, NONE,  0,	      0 },
 
 /*08*/	{ "invd",  false, NONE,  0,	      0 },
 /*09*/	{ "wbinvd",false, NONE,  0,	      0 },
 /*0a*/	{ "",      false, NONE,  0,	      0 },
-/*0b*/	{ "",      false, NONE,  0,	      0 },
+/*0b*/	{ "ud2",   false, NONE,  0,	      0 },
 /*0c*/	{ "",      false, NONE,  0,	      0 },
-/*0d*/	{ "",      false, NONE,  0,	      0 },
-/*0e*/	{ "",      false, NONE,  0,	      0 },
-/*0f*/	{ "",      false, NONE,  0,	      0 },
+/*0d*/	{ "prefetch",true,NONE,  op2(E,R),    0 },  /* Not 'R' really */
+/*0e*/	{ "",      false, NONE,  0,	      0 },  /* FEMMS (3DNow) */
+/*0f*/	{ "",      false, NONE,  0,	      0 },  /* 3DNow */
 };
 
 const struct inst	db_inst_0f2x[] = {
@@ -217,8 +218,8 @@ const struct inst	db_inst_0f3x[] = {
 /*31*/	{ "rdtsc", false, NONE,  0,	      0 },
 /*32*/	{ "rdmsr", false, NONE,  0,	      0 },
 /*33*/	{ "rdpmc", false, NONE,  0,	      0 },
-/*34*/	{ "",	   false, NONE,  0,	      0 },
-/*35*/	{ "",	   false, NONE,  0,	      0 },
+/*34*/	{ "sysenter",false,NONE, 0,	      0 },
+/*35*/	{ "sysexit",false, NONE, 0,	      0 },
 /*36*/	{ "",	   false, NONE,  0,	      0 },
 /*37*/	{ "",	   false, NONE,  0,	      0 },
 
@@ -230,6 +231,25 @@ const struct inst	db_inst_0f3x[] = {
 /*3d*/	{ "",	   false, NONE,  0,	      0 },
 /*3e*/	{ "",	   false, NONE,  0,	      0 },
 /*3f*/	{ "",	   false, NONE,  0,	      0 },
+};
+
+const struct inst	db_inst_0f4x[] = {
+/*40*/	{ "cmovo",  true,  LONG,  op2(E,R),    0 },
+/*41*/	{ "cmovno", true,  LONG,  op2(E,R),    0 },
+/*42*/	{ "cmovc",  true,  LONG,  op2(E,R),    0 },
+/*43*/	{ "cmovnc", true,  LONG,  op2(E,R),    0 },
+/*44*/	{ "cmovz",  true,  LONG,  op2(E,R),    0 },
+/*45*/	{ "cmovnz", true,  LONG,  op2(E,R),    0 },
+/*46*/	{ "cmovbe", true,  LONG,  op2(E,R),    0 },
+/*47*/	{ "cmovmbe",true,  LONG,  op2(E,R),    0 },
+/*48*/	{ "cmovs",  true,  LONG,  op2(E,R),    0 },
+/*49*/	{ "cmovns", true,  LONG,  op2(E,R),    0 },
+/*4a*/	{ "cmovp",  true,  LONG,  op2(E,R),    0 },
+/*4b*/	{ "cmovnp", true,  LONG,  op2(E,R),    0 },
+/*4c*/	{ "cmovl",  true,  LONG,  op2(E,R),    0 },
+/*4d*/	{ "cmovnl", true,  LONG,  op2(E,R),    0 },
+/*4e*/	{ "cmovle", true,  LONG,  op2(E,R),    0 },
+/*4f*/	{ "cmovnle",true,  LONG,  op2(E,R),    0 },
 };
 
 const struct inst	db_inst_0f8x[] = {
@@ -336,7 +356,7 @@ const struct inst * const db_inst_0f[] = {
 	0,
 	db_inst_0f2x,
 	db_inst_0f3x,
-	0,
+	db_inst_0f4x,
 	0,
 	0,
 	0,
@@ -747,14 +767,14 @@ const struct inst db_inst_table[256] = {
 /*b6*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
 /*b7*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
 
-/*b8*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
-/*b9*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
-/*ba*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
-/*bb*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
-/*bc*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
-/*bd*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
-/*be*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
-/*bf*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*b8*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
+/*b9*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
+/*ba*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
+/*bb*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
+/*bc*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
+/*bd*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
+/*be*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
+/*bf*/	{ "mov",   false, LONG,  op2(Iq, Ri),  0 },
 
 /*c0*/	{ "",	   true,  BYTE,  op2(Ib, E),  (const char *)db_Grp2 },
 /*c1*/	{ "",	   true,  LONG,  op2(Ib, E),  (const char *)db_Grp2 },
@@ -887,7 +907,7 @@ const int db_lengths[] = {
 	1,	/* BYTE */
 	2,	/* WORD */
 	4,	/* LONG */
-	8,	/* QUAD */
+	4,	/* QUAD - 64bit immediates are done by Iq */
 	4,	/* SNGL */
 	8,	/* DBLR */
 	10,	/* EXTR */
@@ -1175,6 +1195,7 @@ db_disasm(loc, altfmt)
 	int	prefix;
 	int	imm;
 	int	imm2;
+	uint64_t imm64;
 	int	len;
 	struct i_addr	address;
 #ifdef _KERNEL
@@ -1414,6 +1435,13 @@ db_disasm(loc, altfmt)
 		    case TR:
 			db_printf("%%tr%d", f_reg(regmodrm));
 			break;
+		    case Iq:
+			if (size == QUAD) {
+				get_value_inc(imm64, loc, 8, false);
+				db_format_radix(tbuf, 24, imm64, true);
+				db_printf("$%s", tbuf);
+				break;
+			}
 		    case I:
 			len = db_lengths[size];
 			get_value_inc(imm, loc, len, false);/* unsigned */
@@ -1446,16 +1474,16 @@ db_disasm(loc, altfmt)
 			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
-		    case O:
+		    case O:   /* Only move %eax to/from absolute address */
 			if (short_addr)
-				get_value_inc(displ, loc, 2, true);
+				get_value_inc(imm64, loc, 2, true);
 			else
-				get_value_inc(displ, loc, 4, true);
+				get_value_inc(imm64, loc, 8, true);
 			if (seg) {
-				db_format_radix(tbuf, 24, displ, true);
+				db_format_radix(tbuf, 24, imm64, true);
 				db_printf("%s:%s", seg, tbuf);
 			} else
-				db_printsym((db_addr_t)displ, DB_STGY_ANY,
+				db_printsym((db_addr_t)imm64, DB_STGY_ANY,
 				    db_printf);
 			break;
 		    case Db:
