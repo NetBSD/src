@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.21 2007/05/17 14:51:34 yamt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.22 2007/06/22 20:24:09 mhitch Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.21 2007/05/17 14:51:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.22 2007/06/22 20:24:09 mhitch Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.21 2007/05/17 14:51:34 yamt Exp $");
 #include "ioconf.h"
 
 struct cpu_mp_dep *mp_dep_call;
-
-static	void slaverun(void);
 
 struct cpuq {
 	SIMPLEQ_ENTRY(cpuq) cq_q;
@@ -107,13 +105,8 @@ cpu_slavesetup(struct device *dev)
 #ifdef MUTEX_COUNT_BIAS
 	ci->ci_mtx_count = MUTEX_COUNT_BIAS;
 #endif
-	ci->ci_pcb = (void *)((intptr_t)pcb & ~KERNBASE);
 	ci->ci_istack = istackbase + PAGE_SIZE;
 	SIMPLEQ_INSERT_TAIL(&cpus, ci, ci_next);
-	pcb->KSP = (uintptr_t)pcb + USPACE; /* Idle kernel stack */
-	pcb->SSP = (uintptr_t)ci;
-	pcb->PC = (uintptr_t)slaverun + 2;
-	pcb->PSL = 0;
 
 	cq = malloc(sizeof(*cq), M_TEMP, M_NOWAIT);
 	if (cq == NULL)
@@ -122,21 +115,6 @@ cpu_slavesetup(struct device *dev)
 	cq->cq_ci = ci;
 	cq->cq_dev = dev;
 	SIMPLEQ_INSERT_TAIL(&cpuq, cq, cq_q);
-}
-
-volatile int sta;
-
-void
-slaverun()
-{
-	struct cpu_info *ci = curcpu();
-
-	((volatile struct cpu_info *)ci)->ci_flags |= CI_RUNNING;
-	cpu_send_ipi(IPI_DEST_MASTER, IPI_RUNNING);
-	printf("%s: running\n", ci->ci_dev->dv_xname);
-	while (sta != device_unit(ci->ci_dev))
-		;
-	mi_cpu_attach(ci);
 }
 
 /*
