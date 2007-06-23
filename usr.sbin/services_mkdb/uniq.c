@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.1 2007/06/23 16:55:15 christos Exp $	*/
+/*	$NetBSD: uniq.c,v 1.2 2007/06/23 16:56:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uniq.c,v 1.1 2007/06/23 16:55:15 christos Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.2 2007/06/23 16:56:56 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -53,7 +53,7 @@ void uniq(const char *);
 static int comp(const char *, char **, size_t *);
 
 /*
- * Preserve only uniq content lines in a file. Input lines that have
+ * Preserve only unique content lines in a file. Input lines that have
  * content [alphanumeric characters before a comment] are white-space
  * normalized and have their comments removed. Then they are placed
  * in a hash table, and only the first instance of them is printed.
@@ -75,9 +75,7 @@ uniq(const char *fname)
 	if ((db = dbopen(NULL, O_RDWR, 0, DB_HASH, &hinfo)) == NULL)
 		err(1, "Cannot create in memory database");
 
-	if ((fp = fopen(fname, "r")) == NULL)
-		err(1, "Cannot open `%s'", fname);
-
+	fp = efopen(fname, "r");
 	while ((line = fgetln(fp, &len)) != NULL) {
 		size_t complen = len;
 		char *compline;
