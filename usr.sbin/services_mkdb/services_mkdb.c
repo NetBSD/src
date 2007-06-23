@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.10 2007/06/23 16:55:15 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.11 2007/06/23 17:02:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.10 2007/06/23 16:55:15 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.11 2007/06/23 17:02:03 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,6 +94,7 @@ main(int argc, char *argv[])
 	const char *dbname = _PATH_SERVICES_DB;
 	int	 warndup = 1;
 	int	 unique = 0;
+	int	 otherflag = 0;
 	size_t	 cnt = 0;
 	StringList *sl, ***svc;
 	size_t port, proto;
@@ -103,9 +104,11 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "qo:u")) != -1)
 		switch (ch) {
 		case 'q':
+			otherflag = 1;
 			warndup = 0;
 			break;
 		case 'o':
+			otherflag = 1;
 			dbname = optarg;
 			break;
 		case 'u':
@@ -119,7 +122,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1 || (unique && (!warndup || dbname)))
+	if (argc > 1 || (unique && otherflag))
 		usage();
 	if (argc == 1)
 		fname = argv[0];
