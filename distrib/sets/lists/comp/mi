@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1033 2007/06/17 12:47:40 rmind Exp $
+#	$NetBSD: mi,v 1.1034 2007/06/23 05:25:29 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2524,6 +2524,7 @@
 ./usr/libdata/debug/usr/bin/msguniq.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/netgroup.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/bin/netstat.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/newgrp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/newsyslog.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/nfsstat.debug	comp-nfsclient-debug	debug
 ./usr/libdata/debug/usr/bin/nice.debug		comp-util-debug		debug
