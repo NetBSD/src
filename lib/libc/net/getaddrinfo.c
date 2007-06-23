@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.88 2007/05/10 18:44:24 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.89 2007/06/23 17:32:08 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.88 2007/05/10 18:44:24 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.89 2007/06/23 17:32:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -192,19 +192,21 @@ struct res_target {
 
 static int str2number(const char *);
 static int explore_fqdn(const struct addrinfo *, const char *,
-	const char *, struct addrinfo **);
+	const char *, struct addrinfo **, struct servent_data *);
 static int explore_null(const struct addrinfo *,
-	const char *, struct addrinfo **);
+	const char *, struct addrinfo **, struct servent_data *);
 static int explore_numeric(const struct addrinfo *, const char *,
-	const char *, struct addrinfo **, const char *);
+	const char *, struct addrinfo **, const char *, struct servent_data *);
 static int explore_numeric_scope(const struct addrinfo *, const char *,
-	const char *, struct addrinfo **);
+	const char *, struct addrinfo **, struct servent_data *);
 static int get_canonname(const struct addrinfo *,
 	struct addrinfo *, const char *);
 static struct addrinfo *get_ai(const struct addrinfo *,
 	const struct afd *, const char *);
-static int get_portmatch(const struct addrinfo *, const char *);
-static int get_port(const struct addrinfo *, const char *, int);
+static int get_portmatch(const struct addrinfo *, const char *,
+    struct servent_data *);
+static int get_port(const struct addrinfo *, const char *, int,
+    struct servent_data *);
 static const struct afd *find_afd(int);
 #ifdef INET6
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
@@ -260,10 +262,10 @@ do { 								\
 	} 							\
 } while (/*CONSTCOND*/0)
 
-#define GET_PORT(ai, serv) 					\
+#define GET_PORT(ai, serv, svd) 				\
 do { 								\
 	/* external reference: error and label free */ 		\
-	error = get_port((ai), (serv), 0); 			\
+	error = get_port((ai), (serv), 0, (svd)); 		\
 	if (error != 0) 					\
 		goto free; 					\
 } while (/*CONSTCOND*/0)
@@ -345,12 +347,14 @@ getaddrinfo(const char *hostname, const char *servname,
 	struct addrinfo ai0;
 	struct addrinfo *pai;
 	const struct explore *ex;
+	struct servent_data svd;
 
 	/* hostname is allowed to be NULL */
 	/* servname is allowed to be NULL */
 	/* hints is allowed to be NULL */
 	_DIAGASSERT(res != NULL);
 
+	(void)memset(&svd, 0, sizeof(svd));
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
 	memset(&ai, 0, sizeof(ai));
@@ -424,7 +428,7 @@ getaddrinfo(const char *hostname, const char *servname,
 			pai->ai_family = PF_INET;
 #endif
 		}
-		error = get_portmatch(pai, servname);
+		error = get_portmatch(pai, servname, &svd);
 		if (error)
 			ERR(error);
 
@@ -456,10 +460,11 @@ getaddrinfo(const char *hostname, const char *servname,
 			pai->ai_protocol = ex->e_protocol;
 
 		if (hostname == NULL)
-			error = explore_null(pai, servname, &cur->ai_next);
+			error = explore_null(pai, servname, &cur->ai_next,
+			    &svd);
 		else
 			error = explore_numeric_scope(pai, hostname, servname,
-			    &cur->ai_next);
+			    &cur->ai_next, &svd);
 
 		if (error)
 			goto free;
@@ -507,8 +512,8 @@ getaddrinfo(const char *hostname, const char *servname,
 		if (pai->ai_protocol == ANY && ex->e_protocol != ANY)
 			pai->ai_protocol = ex->e_protocol;
 
-		error = explore_fqdn(pai, hostname, servname,
-			&cur->ai_next);
+		error = explore_fqdn(pai, hostname, servname, &cur->ai_next,
+		    &svd);
 
 		while (cur && cur->ai_next)
 			cur = cur->ai_next;
@@ -520,16 +525,17 @@ getaddrinfo(const char *hostname, const char *servname,
 
 	if (error)
 		goto free;
-	if (error == 0) {
-		if (sentinel.ai_next) {
+
+	if (sentinel.ai_next) {
  good:
-			*res = sentinel.ai_next;
-			return SUCCESS;
-		} else
-			error = EAI_FAIL;
-	}
+		endservent_r(&svd);
+		*res = sentinel.ai_next;
+		return SUCCESS;
+	} else
+		error = EAI_FAIL;
  free:
  bad:
+	endservent_r(&svd);
 	if (sentinel.ai_next)
 		freeaddrinfo(sentinel.ai_next);
 	*res = NULL;
@@ -541,7 +547,7 @@ getaddrinfo(const char *hostname, const char *servname,
  */
 static int
 explore_fqdn(const struct addrinfo *pai, const char *hostname,
-    const char *servname, struct addrinfo **res)
+    const char *servname, struct addrinfo **res, struct servent_data *svd)
 {
 	struct addrinfo *result;
 	struct addrinfo *cur;
@@ -563,7 +569,7 @@ explore_fqdn(const struct addrinfo *pai, const char *hostname,
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
 	 */
-	if (get_portmatch(pai, servname) != 0)
+	if (get_portmatch(pai, servname, svd) != 0)
 		return 0;
 
 	switch (nsdispatch(&result, dtab, NSDB_HOSTS, "getaddrinfo",
@@ -580,7 +586,7 @@ explore_fqdn(const struct addrinfo *pai, const char *hostname,
 	case NS_SUCCESS:
 		error = 0;
 		for (cur = result; cur; cur = cur->ai_next) {
-			GET_PORT(cur, servname);
+			GET_PORT(cur, servname, svd);
 			/* canonname should be filled already */
 		}
 		break;
@@ -603,7 +609,7 @@ free:
  */
 static int
 explore_null(const struct addrinfo *pai, const char *servname,
-    struct addrinfo **res)
+    struct addrinfo **res, struct servent_data *svd)
 {
 	int s;
 	const struct afd *afd;
@@ -633,7 +639,7 @@ explore_null(const struct addrinfo *pai, const char *servname,
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
 	 */
-	if (get_portmatch(pai, servname) != 0)
+	if (get_portmatch(pai, servname, svd) != 0)
 		return 0;
 
 	afd = find_afd(pai->ai_family);
@@ -645,13 +651,13 @@ explore_null(const struct addrinfo *pai, const char *servname,
 		/* xxx meaningless?
 		 * GET_CANONNAME(cur->ai_next, "anyaddr");
 		 */
-		GET_PORT(cur->ai_next, servname);
+		GET_PORT(cur->ai_next, servname, svd);
 	} else {
 		GET_AI(cur->ai_next, afd, afd->a_loopback);
 		/* xxx meaningless?
 		 * GET_CANONNAME(cur->ai_next, "localhost");
 		 */
-		GET_PORT(cur->ai_next, servname);
+		GET_PORT(cur->ai_next, servname, svd);
 	}
 	cur = cur->ai_next;
 
@@ -669,7 +675,8 @@ free:
  */
 static int
 explore_numeric(const struct addrinfo *pai, const char *hostname,
-    const char *servname, struct addrinfo **res, const char *canonname)
+    const char *servname, struct addrinfo **res, const char *canonname,
+    struct servent_data *svd)
 {
 	const struct afd *afd;
 	struct addrinfo *cur;
@@ -689,7 +696,7 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
 	 */
-	if (get_portmatch(pai, servname) != 0)
+	if (get_portmatch(pai, servname, svd) != 0)
 		return 0;
 
 	afd = find_afd(pai->ai_family);
@@ -703,7 +710,7 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 			if (pai->ai_family == afd->a_af ||
 			    pai->ai_family == PF_UNSPEC /*?*/) {
 				GET_AI(cur->ai_next, afd, pton);
-				GET_PORT(cur->ai_next, servname);
+				GET_PORT(cur->ai_next, servname, svd);
 				if ((pai->ai_flags & AI_CANONNAME)) {
 					/*
 					 * Set the numeric address itself as
@@ -724,7 +731,7 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 			if (pai->ai_family == afd->a_af ||
 			    pai->ai_family == PF_UNSPEC /*?*/) {
 				GET_AI(cur->ai_next, afd, pton);
-				GET_PORT(cur->ai_next, servname);
+				GET_PORT(cur->ai_next, servname, svd);
 				if ((pai->ai_flags & AI_CANONNAME)) {
 					/*
 					 * Set the numeric address itself as
@@ -756,7 +763,7 @@ bad:
  */
 static int
 explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
-    const char *servname, struct addrinfo **res)
+    const char *servname, struct addrinfo **res, struct servent_data *svd)
 {
 #if !defined(SCOPE_DELIMITER) || !defined(INET6)
 	return explore_numeric(pai, hostname, servname, res, hostname);
@@ -775,7 +782,7 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
 	/*
 	 * if the servname does not match socktype/protocol, ignore it.
 	 */
-	if (get_portmatch(pai, servname) != 0)
+	if (get_portmatch(pai, servname, svd) != 0)
 		return 0;
 
 	afd = find_afd(pai->ai_family);
@@ -783,11 +790,13 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
 		return 0;
 
 	if (!afd->a_scoped)
-		return explore_numeric(pai, hostname, servname, res, hostname);
+		return explore_numeric(pai, hostname, servname, res, hostname,
+		    svd);
 
 	cp = strchr(hostname, SCOPE_DELIMITER);
 	if (cp == NULL)
-		return explore_numeric(pai, hostname, servname, res, hostname);
+		return explore_numeric(pai, hostname, servname, res, hostname,
+		    svd);
 
 	/*
 	 * Handle special case of <scoped_address><delimiter><scope id>
@@ -800,7 +809,7 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
 	addr = hostname2;
 	scope = cp + 1;
 
-	error = explore_numeric(pai, addr, servname, res, hostname);
+	error = explore_numeric(pai, addr, servname, res, hostname, svd);
 	if (error == 0) {
 		u_int32_t scopeid;
 
@@ -865,17 +874,19 @@ get_ai(const struct addrinfo *pai, const struct afd *afd, const char *addr)
 }
 
 static int
-get_portmatch(const struct addrinfo *ai, const char *servname)
+get_portmatch(const struct addrinfo *ai, const char *servname,
+    struct servent_data *svd)
 {
 
 	_DIAGASSERT(ai != NULL);
 	/* servname may be NULL */
 
-	return get_port(ai, servname, 1);
+	return get_port(ai, servname, 1, svd);
 }
 
 static int
-get_port(const struct addrinfo *ai, const char *servname, int matchonly)
+get_port(const struct addrinfo *ai, const char *servname, int matchonly,
+    struct servent_data *svd)
 {
 	const char *proto;
 	struct servent *sp;
@@ -919,7 +930,6 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly)
 			return EAI_SERVICE;
 		port = htons(port);
 	} else {
-		struct servent_data svd;
 		struct servent sv;
 		if (ai->ai_flags & AI_NUMERICSERV)
 			return EAI_NONAME;
@@ -936,9 +946,7 @@ get_port(const struct addrinfo *ai, const char *servname, int matchonly)
 			break;
 		}
 
-		(void)memset(&svd, 0, sizeof(svd));
-		sp = getservbyname_r(servname, proto, &sv, &svd);
-		endservent_r(&svd);
+		sp = getservbyname_r(servname, proto, &sv, svd);
 		if (sp == NULL)
 			return EAI_SERVICE;
 		port = sp->s_port;
