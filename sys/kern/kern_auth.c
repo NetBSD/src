@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.47 2007/03/12 18:18:32 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.48 2007/06/23 09:02:12 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.47 2007/03/12 18:18:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.48 2007/06/23 09:02:12 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,6 +167,12 @@ kauth_cred_free(kauth_cred_t cred)
 void
 kauth_cred_clone(kauth_cred_t from, kauth_cred_t to)
 {
+	kauth_cred_clone1(from, to, true);
+}
+
+void
+kauth_cred_clone1(kauth_cred_t from, kauth_cred_t to, bool copy_groups)
+{
 	KASSERT(from != NULL);
 	KASSERT(to != NULL);
 	KASSERT(from->cr_refcnt > 0);
@@ -177,8 +183,10 @@ kauth_cred_clone(kauth_cred_t from, kauth_cred_t to)
 	to->cr_gid = from->cr_gid;
 	to->cr_egid = from->cr_egid;
 	to->cr_svgid = from->cr_svgid;
-	to->cr_ngroups = from->cr_ngroups;
-	memcpy(to->cr_groups, from->cr_groups, sizeof(to->cr_groups));
+	if (copy_groups) {
+		to->cr_ngroups = from->cr_ngroups;
+		memcpy(to->cr_groups, from->cr_groups, sizeof(to->cr_groups));
+	}
 
 	kauth_cred_hook(from, KAUTH_CRED_COPY, to, NULL);
 }
@@ -400,6 +408,48 @@ kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
 	return (0);
 }
 
+/* This is the first half of sys_setgroups ... */
+gid_t *
+kauth_cred_setngroups(kauth_cred_t cred, int ngrp)
+{
+	if (cred->cr_refcnt != 1)
+		return NULL;
+	if ((unsigned int)ngrp > NGROUPS)
+		return NULL;
+	cred->cr_ngroups = ngrp;
+	return cred->cr_groups;
+}
+
+/* ... and this is the second */
+int
+kauth_proc_setgroups(struct lwp *l, kauth_cred_t ncred)
+{
+	kauth_cred_t cred;
+	int error;
+
+	/*
+	 * At this point we could delete duplicate groups from ncred,
+	 * and plausibly sort the list - but in general the later is
+	 * a bad idea.
+	 */
+	proc_crmod_enter();
+	/* Maybe we should use curproc here ? */
+	cred = l->l_proc->p_cred;
+
+	kauth_cred_clone1(cred, ncred, false);
+
+	error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
+	    l->l_proc, NULL, NULL, NULL);
+	if (error != 0) {
+		proc_crmod_leave(cred, ncred, false);
+			return error;
+	}
+
+	/* Broadcast our credentials to the process and other LWPs. */
+ 	proc_crmod_leave(ncred, cred, true);
+	return 0;
+}
+
 int
 kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len)
 {
@@ -410,6 +460,14 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len)
 	memcpy(grbuf, cred->cr_groups, sizeof(*grbuf) * len);
 
 	return (0);
+}
+
+const gid_t *
+kauth_cred_getgrlist(kauth_cred_t cred, int ngrp)
+{
+	if (cred->cr_ngroups > ngrp)
+		return NULL;
+	return cred->cr_groups;
 }
 
 int
