@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.98.8.3 2007/06/08 14:18:16 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.98.8.4 2007/06/23 18:06:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.8.3 2007/06/08 14:18:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.8.4 2007/06/23 18:06:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,9 +444,11 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 {
 	struct lfs *fs;
 	struct inode *ip;
-	int fsb, s;
+	struct vnode *vp;
+	int fsb;
 
-	fs = VFSTOUFS(bp->b_vp->v_mount)->um_lfs;
+	vp = bp->b_vp;
+	fs = VFSTOUFS(vp->v_mount)->um_lfs;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(bp->b_flags & B_BUSY);
@@ -487,7 +489,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	if (!(bp->b_flags & B_LOCKED)) {
 		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
 
-		ip = VTOI(bp->b_vp);
+		ip = VTOI(vp);
 		mutex_enter(&fs->lfs_interlock);
 		if (flags & BW_CLEAN) {
 			LFS_SET_UINO(ip, IN_CLEANING);
@@ -500,9 +502,9 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 
 		LFS_LOCK_BUF(bp);
 		bp->b_flags &= ~(B_READ | B_DONE | B_ERROR);
-		s = splbio();
+		mutex_enter(&vp->v_interlock);
 		reassignbuf(bp, bp->b_vp);
-		splx(s);
+		mutex_exit(&vp->v_interlock);
 	}
 
 	if (bp->b_flags & B_CALL)
@@ -752,7 +754,6 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 {
 	struct buf *bp;
 	size_t nbytes;
-	int s;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	nbytes = roundup(size, fsbtob(fs, 1));
@@ -769,9 +770,9 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
 	bp->b_vp = NULL;
-	s = splbio();
+	mutex_enter(&vp->v_interlock);
 	bgetvp(vp, bp);
-	splx(s);
+	mutex_exit(&vp->v_interlock);
 
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
@@ -789,16 +790,17 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 void
 lfs_freebuf(struct lfs *fs, struct buf *bp)
 {
-	int s;
+	struct vnode *vp;
 
-	s = splbio();
-	if (bp->b_vp)
+	if ((vp = bp->b_vp) != NULL) {
+		mutex_enter(&vp->v_interlock);
 		brelvp(bp);
+		mutex_exit(&vp->v_interlock);
+	}
 	if (!(bp->b_flags & B_INVAL)) { /* B_INVAL indicates a "fake" buffer */
 		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
 		bp->b_data = NULL;
 	}
-	splx(s);
 	putiobuf(bp);
 }
 

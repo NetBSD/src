@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.9 2007/06/17 21:31:33 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.10 2007/06/23 18:06:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.9 2007/06/17 21:31:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.10 2007/06/23 18:06:03 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -156,10 +156,6 @@ kmutex_t vnode_free_list_lock;
 kmutex_t spechash_lock;
 kmutex_t vfs_list_lock;
 
-/* XXX - gross; single global lock to protect v_numoutput */
-/* XXXAD make this go away */
-kmutex_t global_v_numoutput_lock;
-
 /*
  * These define the root filesystem and device.
  */
@@ -200,7 +196,6 @@ vntblinit(void)
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&spechash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&global_v_numoutput_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mount_specificdata_domain = specificdata_domain_create();
 
@@ -223,7 +218,6 @@ vfs_drainvnodes(long target, struct lwp *l)
 			return EBUSY; /* give up */
 		mutex_destroy(&vp->v_interlock);
 		cv_destroy(&vp->v_cv);
-		cv_destroy(&vp->v_outputcv);
 		pool_put(&vnode_pool, vp);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
@@ -603,7 +597,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_data = 0;
 	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&vp->v_cv, "vnode");
-	cv_init(&vp->v_outputcv, "vnout");
 
 	/*
 	 * initialize uvm_object within vnode.
@@ -688,16 +681,12 @@ vwakeup(struct buf *bp)
 	struct vnode *vp;
 
 	if ((vp = bp->b_vp) != NULL) {
-		/* XXX global lock hack
-		 * can't use v_interlock here since this is called
-		 * in interrupt context from biodone().
-		 */
-		mutex_enter(&global_v_numoutput_lock);
+		mutex_enter(&vp->v_interlock);
 		if (--vp->v_numoutput < 0)
 			panic("vwakeup: neg numoutput, vp %p", vp);
 		if (vp->v_numoutput <= 0)
-			cv_broadcast(&vp->v_outputcv);
-		mutex_exit(&global_v_numoutput_lock);
+			cv_broadcast(&vp->v_cv);
+		mutex_exit(&vp->v_interlock);
 	}
 }
 
@@ -873,6 +862,7 @@ vflushbuf(struct vnode *vp, int sync)
 {
 	struct buf *bp, *nbp;
 	int flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
+	bool dirty;
 
 	mutex_enter(&vp->v_interlock);
 	(void) VOP_PUTPAGES(vp, 0, 0, flags);
@@ -901,11 +891,14 @@ loop:
 	}
 	if (sync == 0)
 		return;
-	mutex_enter(&global_v_numoutput_lock);
+
+	mutex_enter(&vp->v_interlock);
 	while (vp->v_numoutput != 0)
-		cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
-	mutex_exit(&global_v_numoutput_lock);
-	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
+		cv_wait(&vp->v_cv, &vp->v_interlock);
+	dirty = !LIST_EMPTY(&vp->v_dirtyblkhd);
+	mutex_exit(&vp->v_interlock);
+
+	if (dirty) {
 		vprint("vflushbuf: dirty", vp);
 		goto loop;
 	}
@@ -918,21 +911,20 @@ loop:
 void
 bgetvp(struct vnode *vp, struct buf *bp)
 {
-	int s;
 
-	if (bp->b_vp)
-		panic("bgetvp: not free, bp %p", bp);
-	s = splbio();
+	KASSERT(bp->b_vp == NULL);
+	KASSERT(mutex_owned(&vp->v_interlock));
+
 	bp->b_vp = vp;
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		bp->b_dev = vp->v_rdev;
 	else
 		bp->b_dev = NODEV;
+
 	/*
 	 * Insert onto list for new vnode.
 	 */
 	bufinsvn(bp, &vp->v_cleanblkhd);
-	splx(s);
 }
 
 /*
@@ -941,14 +933,10 @@ bgetvp(struct vnode *vp, struct buf *bp)
 void
 brelvp(struct buf *bp)
 {
-	struct vnode *vp;
-	int s;
+	struct vnode *vp = bp->b_vp;
 
-	if (bp->b_vp == NULL)
-		panic("brelvp: vp NULL, bp %p", bp);
-
-	s = splbio();
-	vp = bp->b_vp;
+	KASSERT(vp != NULL);
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	/*
 	 * Delete from old vnode list, if on one.
@@ -963,21 +951,20 @@ brelvp(struct buf *bp)
 	}
 
 	bp->b_vp = NULL;
-	splx(s);
 }
 
 /*
  * Reassign a buffer from one vnode to another.
  * Used to assign file specific control information
  * (indirect blocks) to the vnode to which they belong.
- *
- * This function must be called at splbio().
  */
 void
 reassignbuf(struct buf *bp, struct vnode *newvp)
 {
 	struct buflists *listheadp;
 	int delayx;
+
+	KASSERT(mutex_owned(&newvp->v_interlock));
 
 	/*
 	 * Delete from old vnode list, if on one.
@@ -1809,7 +1796,6 @@ vgonel(struct vnode *vp, struct lwp *l)
 		if (dofree) {
 			mutex_destroy(&vp->v_interlock);
 			cv_destroy(&vp->v_cv);
-			cv_destroy(&vp->v_outputcv);
 			pool_put(&vnode_pool, vp);
 		}
 	}

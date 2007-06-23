@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.5 2007/06/17 21:32:07 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.6 2007/06/23 18:06:05 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.5 2007/06/17 21:32:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.6 2007/06/23 18:06:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -668,10 +668,10 @@ out:
 			bwrite(bp);
 			s = splbio();
 		}
-		mutex_enter(&global_v_numoutput_lock);
+		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput)
-			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
-		mutex_exit(&global_v_numoutput_lock);
+			cv_wait(&vp->v_cv, &vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		splx(s);
 	}
 	if (sbbuf)

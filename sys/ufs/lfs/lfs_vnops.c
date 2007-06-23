@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.201.2.7 2007/06/17 21:32:16 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.201.2.8 2007/06/23 18:06:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.7 2007/06/17 21:32:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.8 2007/06/23 18:06:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2386,13 +2386,13 @@ lfs_putpages(void *v)
 	 * aiodoned might not have got around to our buffers yet.
 	 */
 	if (sync) {
-		mutex_enter(&global_v_numoutput_lock);
+		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput > 0) {
 			DLOG((DLOG_PAGE, "lfs_putpages: ino %d sleeping on"
 			      " num %d\n", ip->i_number, vp->v_numoutput));
-			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
+			cv_wait(&vp->v_cv, &vp->v_interlock);
 		}
-		mutex_exit(&global_v_numoutput_lock);
+		mutex_exit(&vp->v_interlock);
 	}
 	return error;
 }
