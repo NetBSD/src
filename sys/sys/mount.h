@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.157 2007/04/11 21:06:32 pooka Exp $	*/
+/*	$NetBSD: mount.h,v 1.158 2007/06/23 09:08:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -36,11 +36,11 @@
 
 #ifndef _KERNEL
 #include <sys/featuretest.h>
-#include <sys/ucred.h>
 #if defined(_NETBSD_SOURCE)
 #include <sys/stat.h>
 #endif /* _NETBSD_SOURCE */
 #endif
+#include <sys/ucred.h>
 #include <sys/fstypes.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
