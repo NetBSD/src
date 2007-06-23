@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.179 2007/06/23 09:09:56 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.180 2007/06/23 15:27:23 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.179 2007/06/23 09:09:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.180 2007/06/23 15:27:23 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -1126,51 +1126,34 @@ linux_sys_getgroups16(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(linux_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg;
-	int n, error, i;
-	struct sys_getgroups_args bsa;
-	gid_t *bset, *kbset;
-	linux_gid_t *lset;
-	kauth_cred_t pc = l->l_cred;
+	linux_gid_t lset[16];
+	linux_gid_t *gidset;
+	const gid_t *grbuf;
+	int i, n, j;
+	int error;
 
-	n = SCARG(uap, gidsetsize);
-	if (n < 0)
+	*retval = kauth_cred_ngroups(l->l_cred);
+	if (SCARG(uap, gidsetsize) == 0)
+		return 0;
+
+	grbuf = kauth_cred_getgrlist(l->l_cred, SCARG(uap, gidsetsize));
+	if (grbuf == NULL)
 		return EINVAL;
-	error = 0;
-	bset = kbset = NULL;
-	lset = NULL;
-	if (n > 0) {
-		n = min(kauth_cred_ngroups(pc), n);
-		sg = stackgap_init(p, 0);
-		bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
-		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
-		lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
-		if (bset == NULL || kbset == NULL || lset == NULL)
-		{
-			error = ENOMEM;
-			goto out;
-		}
-		SCARG(&bsa, gidsetsize) = n;
-		SCARG(&bsa, gidset) = bset;
-		error = sys_getgroups(l, &bsa, retval);
+
+	gidset = SCARG(uap, gidset);
+	for (i = 0; i < (n = *retval); i += n, gidset += n) {
+		n -= i;
+		if (n > __arraycount(lset))
+			n = __arraycount(lset);
+		/* XXX: maybe we should drop groups >= 2^16 */
+		for (j = 0; j < n; j++)
+			lset[j] = *grbuf++;
+		error = copyout(lset, gidset, n * sizeof(lset[0]));
 		if (error != 0)
-			goto out;
-		error = copyin(bset, kbset, n * sizeof (gid_t));
-		if (error != 0)
-			goto out;
-		for (i = 0; i < n; i++)
-			lset[i] = (linux_gid_t)kbset[i];
-		error = copyout(lset, SCARG(uap, gidset),
-		    n * sizeof (linux_gid_t));
-	} else
-		*retval = kauth_cred_ngroups(pc);
-out:
-	if (kbset != NULL)
-		free(kbset, M_TEMP);
-	if (lset != NULL)
-		free(lset, M_TEMP);
-	return error;
+			return error;
+	}
+
+	return 0;
 }
 
 int
@@ -1183,45 +1166,35 @@ linux_sys_setgroups16(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(linux_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg;
-	int n;
-	int error, i;
-	struct sys_setgroups_args bsa;
-	gid_t *bset, *kbset;
-	linux_gid_t *lset;
+	linux_gid_t lset[16], *gidset;
+	kauth_cred_t ncred;
+	int error;
+	gid_t *grbuf;
+	int i, j, n;
 
-	n = SCARG(uap, gidsetsize);
-	if (n < 0 || n > NGROUPS)
+	ncred = kauth_cred_alloc();
+
+	grbuf = kauth_cred_setngroups(ncred, SCARG(uap, gidsetsize));
+	if (grbuf == NULL) {
+		kauth_cred_free(ncred);
 		return EINVAL;
-	sg = stackgap_init(p, 0);
-	bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
-	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
-	kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
-	if (bset == NULL || kbset == NULL || lset == NULL)
-	{
-		error = ENOMEM;
-		goto out;
 	}
-	error = copyin(SCARG(uap, gidset), lset, n * sizeof (linux_gid_t));
-	if (error != 0)
-		goto out;
-	for (i = 0; i < n; i++)
-		kbset[i] = (gid_t)lset[i];
-	error = copyout(kbset, bset, n * sizeof (gid_t));
-	if (error != 0)
-		goto out;
-	SCARG(&bsa, gidsetsize) = n;
-	SCARG(&bsa, gidset) = bset;
-	error = sys_setgroups(l, &bsa, retval);
 
-out:
-	if (lset != NULL)
-		free(lset, M_TEMP);
-	if (kbset != NULL)
-		free(kbset, M_TEMP);
+	gidset = SCARG(uap, gidset);
+	for (i = 0; i < SCARG(uap, gidsetsize); i += n, gidset += n) {
+		n = SCARG(uap, gidsetsize) - i;
+		if (n > __arraycount(lset))
+			n = __arraycount(lset);
+		error = copyin(gidset, lset, n * sizeof(*gidset));
+		if (error != 0) {
+			kauth_cred_free(ncred);
+			return error;
+		}
+		for (j = 0; j < n; j++)
+			*grbuf++ = lset[j];
+	}
 
-	return error;
+	return kauth_proc_setgroups(l, ncred);
 }
 
 #endif /* __i386__ || __m68k__ || COMPAT_LINUX32 */
