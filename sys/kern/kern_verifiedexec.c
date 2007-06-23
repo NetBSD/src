@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.28 2005/10/15 17:33:31 riz Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.28.2.1 2007/06/23 19:49:57 ghen Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.28 2005/10/15 17:33:31 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.28.2.1 2007/06/23 19:49:57 ghen Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -187,7 +187,7 @@ veriexec_find_ops(u_char *name)
 	struct veriexec_fp_ops *ops;
 
 	name[VERIEXEC_TYPE_MAXLEN] = '\0';
-	
+
 	LIST_FOREACH(ops, &veriexec_ops_list, entries) {
 		if ((strlen(name) == strlen(ops->type)) &&
 		    (strncasecmp(name, ops->type, sizeof(ops->type) - 1)
@@ -232,7 +232,7 @@ veriexec_fp_calc(struct proc *p, struct vnode *vp,
 		len = ((size - offset) < PAGE_SIZE) ? (size - offset)
 			: PAGE_SIZE;
 
-		error = vn_rdwr(UIO_READ, vp, buf, len, offset, 
+		error = vn_rdwr(UIO_READ, vp, buf, len, offset,
 				UIO_SYSSPACE,
 #ifdef __FreeBSD__
 				IO_NODELOCKED,
@@ -257,7 +257,7 @@ bad:
 
 	return (error);
 }
-	
+
 /* Compare two fingerprints of the same type. */
 int
 veriexec_fp_cmp(struct veriexec_fp_ops *ops, u_char *fp1, u_char *fp2)
@@ -411,8 +411,13 @@ out:
 		veriexec_report("veriexec_verify: No entry.", name, va,
 		    p, REPORT_VERBOSE, REPORT_NOALARM, REPORT_NOPANIC);
 
-		/* Lockdown mode: Deny access to non-monitored files. */
-		if (veriexec_strict >= 3)
+		/* Lockdown mode: Deny access to non-monitored files if
+		 * strict is 3 or higher, make an exception for executables
+		 * since we don't want to run an unverified binary at strict
+		 * 2 or higher.
+		 */
+		if ((veriexec_strict >= 3) ||
+		    ((veriexec_strict >= 2) && (flag != VERIEXEC_FILE)))
 			return (EPERM);
 
 		return (0);
@@ -508,11 +513,12 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
  * Veriexe rename policy.
  */
 int
-veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
+veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from,
+		   const char *to)
 {
 	struct proc *p = curlwp->l_proc;
-	struct veriexec_hash_entry *vhe;
-	struct vattr va;
+	struct veriexec_hash_entry *vhe, *tvhe;
+	struct vattr va, tva;
 	int error;
 
 	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
@@ -530,7 +536,17 @@ veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 
 	/* XXX: dev_t and ino_t are 32bit, long can be 64bit. */
 	vhe = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
-	if (vhe != NULL) {
+
+	if (tvp != NULL) {
+		error = VOP_GETATTR(tvp, &tva, p->p_ucred, p);
+		if (error)
+			return (error);
+		tvhe = veriexec_lookup((dev_t)tva.va_fsid,
+				       (ino_t)tva.va_fileid);
+	} else
+		tvhe = NULL;
+
+	if ((vhe != NULL) || (tvhe != NULL)) {
 		if (veriexec_strict >= 2) {
 			printf("Veriexec: veriexec_renamechk: Preventing "
 			       "rename of \"%s\" [%ld:%llu] to \"%s\", "
