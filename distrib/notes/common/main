@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.36.2.1 2007/04/05 00:35:59 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.36.2.2 2007/06/23 18:39:57 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -504,11 +504,21 @@ Fix a buffer overflow in
 .Xr iso 4
 which could potentially lead to a local root compromise (SA2007-004).
 .It
-Fix an integer underflow in file_printf which could lead to an exploitable heap
-overflow.
+Fix an integer underflow in
+.Xr file 1
+which could lead to an exploitable heap overflow.
 .It
 X11: fix a number of possible memory corruptions due to integer overflows (CVE
 2007-1003, 1351, 1352, 1667).
+.It
+Fix a denial of service vulnerability in
+.Xr racoon 8
+which could allow an attacker to disrupt a connection between IPSec peers.
+.It
+Disable processing or routing header type 0 (RH0) IPv6 packets since they can
+be used for DoS attacks.  Provide a sysctl (net.inet6.ip6.rht0) to re-enable
+them.
+Note: RH0 functionality may be removed completely in future NetBSD releases.
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -518,9 +528,14 @@ Fix some problems with
 .Xr etcupdate 8
 for upgrading.
 .It
-Update time zoneinfo to tzdata2007a.
+Update time zoneinfo to tzdata2007f.
 .It
 Set /etc/postfix/post-install mode 555 (executable) instead of 444.
+.It
+.Xr passwd 1 :
+display a message indicating who's password is being changed, to avoid
+confusion after
+.Xr su 1 .
 .bullet)
 .
 .Ss2 alpha specific
