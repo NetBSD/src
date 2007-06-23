@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.20 2006/11/16 01:32:47 christos Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.21 2007/06/23 20:01:31 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.20 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.21 2007/06/23 20:01:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,7 +438,6 @@ acpitz_get_zone(void *opaque, int verbose)
 		rv = acpi_eval_struct(sc->sc_devnode->ad_handle, buf,
 		    &sc->sc_zone.al[i]);
 		if (ACPI_FAILURE(rv)) {
-			printf("failed getting _AL%d", i);
 			sc->sc_zone.al[i].Pointer = NULL;
 			continue;
 		}
