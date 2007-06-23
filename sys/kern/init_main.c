@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.11 2007/06/17 21:31:18 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.12 2007/06/23 18:10:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.11 2007/06/17 21:31:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.12 2007/06/23 18:10:49 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -609,7 +609,7 @@ main(void)
 
 	/* Create the aiodone daemon kernel thread. */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PVM, IPL_BIO, 0))
+	    uvm_aiodone_worker, NULL, PVM, IPL_NONE, 0))
 		panic("fork aiodoned");
 
 #if defined(MULTIPROCESSOR)
