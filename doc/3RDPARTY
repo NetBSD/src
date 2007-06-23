@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.533 2007/06/21 17:02:08 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.534 2007/06/23 18:16:46 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -908,3 +908,24 @@ Responsible:	gwr, tron, christos
 License:	BSD (3-clause)
 Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
+
+Package:	services, protocols
+Version:	2007-06-14
+Current Vers:	2007-06-14
+Maintainer:	IANA
+Archive Site:	http://www.iana.org/assignments/
+Home Page:	http://www.iana.org
+Mailing List:
+Responsible:	christos
+License:	None
+Notes:
+1. Download the latest converter from:
+	http://www.sethwklein.net/projects/iana-etc/
+2. Unpack it and run:
+	gmake get
+	gmake
+3. Add NetBSD rcsid to the generated protocols and services.
+4. Append the local services from the current services file.
+5. Run:
+	services_mkdb -u services > /usr/src/etc/services
+	cp protocols /usr/src/etc/protocols
