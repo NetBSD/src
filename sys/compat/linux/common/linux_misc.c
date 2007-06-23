@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.178 2007/06/04 21:02:22 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.179 2007/06/23 09:09:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.178 2007/06/04 21:02:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.179 2007/06/23 09:09:56 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.178 2007/06/04 21:02:22 dsl Exp $")
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/prot.h>
 #include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
