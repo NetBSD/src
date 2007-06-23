@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.6 2007/06/17 21:32:02 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.7 2007/06/23 18:06:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -93,7 +93,6 @@ LIST_HEAD(buflists, buf);
  *	i	v_interlock
  *	m	mntvnode_lock
  *	n	namecache_lock
- *	o	global_v_numoutput_lock
  *	s	syncer_data_lock
  *	u	locked by underlying filesystem
  *	v	v_vnlock
@@ -110,8 +109,7 @@ struct vnode {
 	int		v_iflag;		/* i: VI_* flags */
 	int		v_vflag;		/* v: VV_* flags */
 	int		v_uflag;		/* u: VU_* flags */
-	int		v_numoutput;		/* o: # of pending writes */
-	kcondvar_t	v_outputcv;		/* o: notifier on numoutput */
+	int		v_numoutput;		/* i: # of pending writes */
 	long		v_writecount;		/* i: ref count of writers */
 	long		v_holdcnt;		/* i: page & buffer refs */
 	struct mount	*v_mount;		/* v: ptr to vfs we are in */
@@ -232,18 +230,6 @@ struct vattr {
 #define	VA_EXCLUSIVE	0x02		/* exclusive create request */
 
 #ifdef _KERNEL
-
-/*
- * Use a global lock for all v_numoutput updates.
- * Define a convenience macro to increment by one.
- * Note: the only place where v_numoutput is decremented is in vwakeup().
- */
-extern kmutex_t global_v_numoutput_lock;
-#define	V_INCR_NUMOUTPUT(vp) do {			\
-	mutex_enter(&global_v_numoutput_lock);		\
-	(vp)->v_numoutput++;				\
-	mutex_exit(&global_v_numoutput_lock);		\
-} while (/*CONSTCOND*/ 0)
 
 /*
  * Flags for ioflag.

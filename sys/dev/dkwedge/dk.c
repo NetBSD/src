@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22.2.3 2007/06/17 21:30:56 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.4 2007/06/23 18:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.3 2007/06/17 21:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.4 2007/06/23 18:06:02 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1038,6 +1038,7 @@ dkstrategy(struct buf *bp)
 static void
 dkstart(struct dkwedge_softc *sc)
 {
+	struct vnode *vp;
 	struct buf *bp, *nbp;
 
 	/* Do as much work as has been enqueued. */
@@ -1080,9 +1081,13 @@ dkstart(struct dkwedge_softc *sc)
 		nbp->b_private = bp;
 		BIO_COPYPRIO(nbp, bp);
 
-		if ((nbp->b_flags & B_READ) == 0)
-			V_INCR_NUMOUTPUT(nbp->b_vp);
-		VOP_STRATEGY(nbp->b_vp, nbp);
+		vp = nbp->b_vp;
+		if ((nbp->b_flags & B_READ) == 0) {
+			mutex_enter(&vp->v_interlock);
+			vp->v_numoutput++;
+			mutex_exit(&vp->v_interlock);
+		}
+		VOP_STRATEGY(vp, nbp);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.28.6.2 2007/06/17 21:31:47 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.28.6.3 2007/06/23 18:06:04 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.28.6.2 2007/06/17 21:31:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.28.6.3 2007/06/23 18:06:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ vn_syncer_add1(vp, delayx)
 		 * position of the vnode.  syncer_data_lock
 		 * does not protect v_iflag.
 		 */
-		/* XXXAD KASSERT(mutex_owned(&vp->v_interlock)); */
+		KASSERT(mutex_owned(&vp->v_interlock));
 		vp->v_iflag |= VI_ONWORKLST;
 	}
 
@@ -158,7 +158,7 @@ vn_syncer_add_to_worklist(vp, delayx)
 	int delayx;
 {
 
-	/* XXXAD KASSERT(mutex_owned(&vp->v_interlock)); */
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
 	vn_syncer_add1(vp, delayx);
@@ -174,7 +174,7 @@ vn_syncer_remove_from_worklist(vp)
 {
 	struct synclist *slp;
 
-	/* KASSERT(mutex_owned(&vp->v_interlock)); */
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.8 2007/06/17 21:32:22 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.9 2007/06/23 18:06:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.8 2007/06/17 21:32:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.9 2007/06/23 18:06:07 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1043,7 +1043,7 @@ swstrategy(struct buf *bp)
 {
 	struct swapdev *sdp;
 	struct vnode *vp;
-	int s, pageno, bn;
+	int pageno, bn;
 	UVMHIST_FUNC("swstrategy"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -1088,7 +1088,6 @@ swstrategy(struct buf *bp)
 		 * must convert "bp" from an I/O on /dev/drum to an I/O
 		 * on the swapdev (sdp).
 		 */
-		s = splbio();
 		bp->b_blkno = bn;		/* swapdev block number */
 		vp = sdp->swd_vp;		/* swapdev vnode pointer */
 		bp->b_dev = sdp->swd_dev;	/* swapdev dev_t */
@@ -1098,15 +1097,16 @@ swstrategy(struct buf *bp)
 		 * drum's v_numoutput counter to the swapdevs.
 		 */
 		if ((bp->b_flags & B_READ) == 0) {
+			mutex_enter(&vp->v_interlock);
 			vwakeup(bp);	/* kills one 'v_numoutput' on drum */
-			V_INCR_NUMOUTPUT(vp);	/* put it on swapdev */
+			vp->v_numoutput++;	/* put it on swapdev */
+			mutex_exit(&vp->v_interlock);
 		}
 
 		/*
 		 * finally plug in swapdev vnode and start I/O
 		 */
 		bp->b_vp = vp;
-		splx(s);
 		VOP_STRATEGY(vp, bp);
 		return;
 
@@ -1310,6 +1310,7 @@ static void
 sw_reg_start(struct swapdev *sdp)
 {
 	struct buf	*bp;
+	struct vnode	*vp;
 	UVMHIST_FUNC("sw_reg_start"); UVMHIST_CALLED(pdhist);
 
 	/* recursion control */
@@ -1327,10 +1328,13 @@ sw_reg_start(struct swapdev *sdp)
 		UVMHIST_LOG(pdhist,
 		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
 		    bp, bp->b_vp, bp->b_blkno, bp->b_bcount);
-		if ((bp->b_flags & B_READ) == 0)
-			V_INCR_NUMOUTPUT(bp->b_vp);
-
-		VOP_STRATEGY(bp->b_vp, bp);
+		vp = bp->b_vp;
+		if ((bp->b_flags & B_READ) == 0) {
+			mutex_enter(&vp->v_interlock);
+			vp->v_numoutput++;
+			mutex_exit(&vp->v_interlock);
+		}
+		VOP_STRATEGY(vp, bp);
 	}
 	sdp->swd_flags &= ~SWF_BUSY;
 }
@@ -1669,7 +1673,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (write) {
-		V_INCR_NUMOUTPUT(swapdev_vp);
+		mutex_enter(&swapdev_vp->v_interlock);
+		swapdev_vp->v_numoutput++;
+		mutex_exit(&swapdev_vp->v_interlock);
 	}
 
 	/*

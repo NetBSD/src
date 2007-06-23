@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.6 2007/06/17 21:30:53 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.7 2007/06/23 18:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.6 2007/06/17 21:30:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.7 2007/06/23 18:06:02 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -700,8 +700,11 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
-	if (!doread)
-		V_INCR_NUMOUTPUT(vp);
+	if (!doread) {
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
+	} 
 
 	biodone(bp, error, resid);
 }
@@ -719,15 +722,15 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	int bsize, error, flags, skipped;
 	size_t resid, sz;
 	off_t bn, offset;
+	struct vnode *vp;
 
 	flags = obp->b_flags;
 
 	if (!(flags & B_READ)) {
-		int s;
-		
-		s = splbio();
-		V_INCR_NUMOUTPUT(bp->b_vp);
-		splx(s);
+		vp = bp->b_vp;
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
 	}
 
 	/* convert to a byte offset within the file. */
@@ -748,7 +751,6 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	for (offset = 0, resid = bp->b_resid; resid;
 	    resid -= sz, offset += sz) {
 		struct buf *nbp;
-		struct vnode *vp;
 		daddr_t nbn;
 		int off, nra;
 

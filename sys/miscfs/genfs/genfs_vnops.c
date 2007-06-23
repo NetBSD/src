@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.8 2007/06/17 21:31:38 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.9 2007/06/23 18:06:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.8 2007/06/17 21:31:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.9 2007/06/23 18:06:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1112,9 +1112,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 
 	error = 0;
-	mutex_enter(&global_v_numoutput_lock);
 	wasclean = (vp->v_numoutput == 0);
-	mutex_exit(&global_v_numoutput_lock);
 	off = startoff;
 	if (endoff == 0 || flags & PGO_ALLPAGES) {
 		endoff = trunc_page(LLONG_MAX);
@@ -1447,18 +1445,13 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 #if !defined(DEBUG)
 skip_scan:
 #endif /* !defined(DEBUG) */
-	mutex_exit(slock);
 
-	/*
-	 * Safe to test v_numoutput unlocked as any increase in
-	 * its value will be visible here (although may be stale).
-	 */
+	/* Wait for output to complete. */
 	if (!wasclean && !async && vp->v_numoutput != 0) {
-		mutex_enter(&global_v_numoutput_lock);
 		while (vp->v_numoutput != 0)
-			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
-		mutex_exit(&global_v_numoutput_lock);
+			cv_wait(&vp->v_cv, slock);
 	}
+	mutex_exit(slock);
 
 	if (has_trans)
 		fstrans_done(vp->v_mount);
@@ -1530,9 +1523,9 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	KASSERT(bytes != 0);
 
 	if (write) {
-		mutex_enter(&global_v_numoutput_lock);
+		mutex_enter(&vp->v_interlock);
 		vp->v_numoutput += 2;
-		mutex_exit(&global_v_numoutput_lock);
+		mutex_exit(&vp->v_interlock);
 	}
 	mbp = getiobuf();
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
@@ -1761,7 +1754,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	kauth_cred_t cred = curlwp->l_cred;
 	struct buf *bp;
 	vaddr_t kva;
-	int s, error;
+	int error;
 
 	offset = pgs[0]->offset;
 	kva = uvm_pagermapin(pgs, npages,
@@ -1778,9 +1771,9 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	/* XXX vn_lock */
 	error = VOP_WRITE(vp, &uio, 0, cred);
 
-	s = splbio();
-	V_INCR_NUMOUTPUT(vp);
-	splx(s);
+	mutex_enter(&vp->v_interlock);
+	vp->v_numoutput++;
+	mutex_exit(&vp->v_interlock);
 
 	bp = getiobuf();
 	bp->b_flags = B_BUSY | B_WRITE | B_AGE;

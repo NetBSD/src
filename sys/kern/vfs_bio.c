@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.9 2007/06/17 21:31:30 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.10 2007/06/23 18:06:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.9 2007/06/17 21:31:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.10 2007/06/23 18:06:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -760,19 +760,21 @@ bwrite(struct buf *bp)
 
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
+	mutex_exit(&bp->b_interlock);
+
 	/*
 	 * Pay for the I/O operation and make sure the buf is on the correct
 	 * vnode queue.
 	 */
+	mutex_enter(&vp->v_interlock);
 	if (wasdelayed)
 		reassignbuf(bp, bp->b_vp);
 	else
 		curproc->p_stats->p_ru.ru_oublock++;
+	vp->v_numoutput++;
+	mutex_exit(&vp->v_interlock);
 
-	/* Initiate disk write.  Make sure the appropriate party is charged. */
-	V_INCR_NUMOUTPUT(bp->b_vp);
-	mutex_exit(&bp->b_interlock);
-
+	/* Initiate disk write. */
 	if (sync)
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	else
@@ -818,6 +820,7 @@ void
 bdwrite(struct buf *bp)
 {
 	const struct bdevsw *bdev;
+	struct vnode *vp;
 
 	/* If this is a tape block, write the block now. */
 	bdev = bdevsw_lookup(bp->b_dev);
@@ -832,6 +835,9 @@ bdwrite(struct buf *bp)
 	 *	(2) Charge for the write,
 	 *	(3) Make sure it's on its vnode's correct block list.
 	 */
+	if ((vp = bp->b_vp) != NULL) {
+		mutex_enter(&vp->v_interlock);
+	}
 	mutex_enter(&bp->b_interlock);
 
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
@@ -839,12 +845,15 @@ bdwrite(struct buf *bp)
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
 		curproc->p_stats->p_ru.ru_oublock++;
-		reassignbuf(bp, bp->b_vp);
+		reassignbuf(bp, vp);
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
 	CLR(bp->b_flags, B_DONE);
 	mutex_exit(&bp->b_interlock);
+	if (vp != NULL) {
+		mutex_exit(&vp->v_interlock);
+	}
 
 	brelse(bp, 0);
 }
@@ -875,6 +884,7 @@ bdirty(struct buf *bp)
 {
 
 	KASSERT(mutex_owned(&bp->b_interlock));
+	KASSERT(mutex_owned(&bp->b_vp->v_interlock));
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
 
 	CLR(bp->b_flags, B_AGE);
@@ -957,11 +967,8 @@ brelse(struct buf *bp, int set)
 		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
 			(*bioops.io_deallocate)(bp);
 		CLR(bp->b_flags, B_DONE|B_DELWRI);
-		if (bp->b_vp) {
+		if (bp->b_vp)
 			vp = bp->b_vp;
-			reassignbuf(bp, bp->b_vp);
-			brelvp(bp);
-		}
 		if (bp->b_bufsize <= 0)
 			/* no data */
 			goto already_queued;
@@ -1003,9 +1010,13 @@ already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
 	SET(bp->b_flags, B_CACHE);
-
-	/* Allow disk interrupts. */
 	mutex_exit(&bp->b_interlock);
+	if (vp != NULL) {
+		mutex_enter(&vp->v_interlock);
+		reassignbuf(bp, bp->b_vp);
+		brelvp(bp);
+		mutex_exit(&vp->v_interlock);
+	}
 	mutex_exit(&bqueue_lock);
 	if (bp->b_bufsize <= 0) {
 		buf_destroy(bp);
@@ -1092,6 +1103,7 @@ start:
 		SET(bp->b_flags, B_BUSY);
 		bremfree(bp);
 		preserve = 1;
+		mutex_exit(&bp->b_interlock);
 	} else {
 		if ((bp = getnewbuf(slpflag, slptimeo, 0)) == NULL) {
 			mutex_exit(&bqueue_lock);
@@ -1108,10 +1120,12 @@ start:
 
 		binshash(bp, BUFHASH(vp, blkno));
 		bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = blkno;
+		mutex_exit(&bp->b_interlock);
+		mutex_enter(&vp->v_interlock);
 		bgetvp(vp, bp);
+		mutex_exit(&vp->v_interlock);
 		preserve = 0;
 	}
-	mutex_exit(&bp->b_interlock);
 	mutex_exit(&bqueue_lock);
 
 	if (preserve)
@@ -1310,9 +1324,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		return (NULL);
 	}
 
-	/* disassociate us from our vnode, if we had one... */
-	if ((vp = bp->b_vp) != NULL)
-		brelvp(bp);
+	vp = bp->b_vp;
 
 	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
 		(*bioops.io_deallocate)(bp);
@@ -1328,10 +1340,16 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	bremhash(bp);
 
+	/* disassociate us from our vnode, if we had one... */
 	if (vp != NULL) {
 		mutex_exit(&bp->b_interlock);
 		mutex_exit(&bqueue_lock);
-		HOLDRELE(vp);
+
+		mutex_enter(&vp->v_interlock);
+		brelvp(bp);
+		holdrelel(vp);
+		mutex_exit(&vp->v_interlock);
+
 		mutex_enter(&bqueue_lock);
 		mutex_enter(&bp->b_interlock);
 	}
@@ -1471,9 +1489,6 @@ biodone2(struct buf *bp)
 	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
 		(*bioops.io_complete)(bp);
 
-	if (!ISSET(bp->b_flags, B_READ))/* wake up writer */
-		vwakeup(bp);
-
 	/*
 	 * If necessary, call out.  Unlock the buffer before
 	 * calling iodone() as the buffer isn't valid any more
@@ -1483,16 +1498,22 @@ biodone2(struct buf *bp)
 		/* But note callout done */
 		CLR(bp->b_flags, B_CALL);
 		mutex_exit(&bp->b_interlock);
+		if (!ISSET(bp->b_flags, B_READ))/* wake up writer */
+			vwakeup(bp);
 		(*bp->b_iodone)(bp);
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
 		/* If async, release */
 		mutex_exit(&bp->b_interlock);
+		if (!ISSET(bp->b_flags, B_READ))/* wake up writer */
+			vwakeup(bp);
 		brelse(bp, 0);
 	} else {
 		/* Or just wakeup the buffer */
 		CLR(bp->b_flags, B_WANTED);
 		cv_broadcast(&bp->b_cv);
 		mutex_exit(&bp->b_interlock);
+		if (!ISSET(bp->b_flags, B_READ))/* wake up writer */
+			vwakeup(bp);
 	}
 }
 
@@ -1847,7 +1868,7 @@ vfs_bufstats(void)
 /* ------------------------------ */
 
 static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL,
-    IPL_BIO);
+    IPL_NONE);
 
 static struct buf *
 getiobuf1(int prflags)
@@ -1940,7 +1961,9 @@ nestiobuf_setup(struct buf *mbp, struct buf *bp, int offset, size_t size)
 	bp->b_private = mbp;
 	BIO_COPYPRIO(bp, mbp);
 	if (!b_read && vp != NULL) {
-		V_INCR_NUMOUTPUT(vp);
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
 	}
 }
 

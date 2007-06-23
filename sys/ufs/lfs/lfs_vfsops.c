@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.231.4.6 2007/06/08 14:18:18 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.231.4.7 2007/06/23 18:06:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.6 2007/06/08 14:18:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.7 2007/06/23 18:06:06 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1666,11 +1666,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 				     UVMPAGER_MAPIN_WAITOK);
 	}
 
-	s = splbio();
-	mutex_enter(&global_v_numoutput_lock);
+	mutex_enter(&vp->v_interlock);
 	vp->v_numoutput += 2; /* one for biodone, one for aiodone */
-	mutex_exit(&global_v_numoutput_lock);
-	splx(s);
+	mutex_exit(&vp->v_interlock);
 
 	mbp = getiobuf();
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
@@ -1730,11 +1728,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
 			/* correct overcount if there is no second buffer */
-			s = splbio();
-			mutex_enter(&global_v_numoutput_lock);
+			mutex_enter(&vp->v_interlock);
 			--vp->v_numoutput;
-			mutex_exit(&global_v_numoutput_lock);
-			splx(s);
+			mutex_exit(&vp->v_interlock);
 		} else {
 			bp = getiobuf();
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
@@ -1748,9 +1744,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 
 		/* XXX This is silly ... is this necessary? */
 		bp->b_vp = NULL;
-		s = splbio();
+		mutex_enter(&vp->v_interlock);
 		bgetvp(vp, bp);
-		splx(s);
+		mutex_exit(&vp->v_interlock);
 
 		bp->b_lblkno = lblkno(fs, offset);
 		bp->b_private = mbp;

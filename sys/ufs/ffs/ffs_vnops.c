@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.6 2007/06/09 23:58:20 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.7 2007/06/23 18:06:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.6 2007/06/09 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.7 2007/06/23 18:06:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,10 +309,10 @@ ffs_fsync(void *v)
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
-		mutex_enter(&global_v_numoutput_lock);
+		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput > 0)
-			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
-		mutex_exit(&global_v_numoutput_lock);
+			cv_wait(&vp->v_cv, &vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 	}
 
 	error = ffs_update(vp, NULL, NULL,
@@ -418,11 +418,11 @@ loop:
 		goto loop;
 	}
 	if (ap->a_flags & FSYNC_WAIT) {
-		mutex_enter(&global_v_numoutput_lock);
+		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
-			cv_wait(&vp->v_outputcv, &global_v_numoutput_lock);
+			cv_wait(&vp->v_cv, &vp->v_interlock);
 		}
-		mutex_exit(&global_v_numoutput_lock);
+		mutex_exit(&vp->v_interlock);
 
 		/*
 		 * Ensure that any filesystem metadata associated
