@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.710 2007/06/21 14:54:45 ginsbach Exp $
+# $NetBSD: mi,v 1.711 2007/06/23 05:21:24 yamt Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -130,8 +130,8 @@
 ./sbin/amrctl					base-sysutil-root
 ./sbin/apmlabel					base-sysutil-root
 ./sbin/atactl					base-sysutil-root
-./sbin/bioctl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
+./sbin/bioctl					base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
 ./sbin/cgdconfig				base-sysutil-root	crypto
@@ -2175,8 +2175,8 @@
 ./usr/share/i18n/esdb/MISC/NEXTSTEP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-obsolete		obsolete
 ./usr/share/i18n/esdb/MISC/RISCOS-LATIN1.esdb	base-sysutil-share	nls
-./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS-2004.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/TDS565.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/ZW.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/TCVN			base-sysutil-share
@@ -3688,8 +3688,8 @@
 ./usr/share/zoneinfo/Atlantic/Bermuda		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Canary		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Cape_Verde	base-sys-share		share
-./usr/share/zoneinfo/Atlantic/Faroe		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Faeroe		base-sys-share		share
+./usr/share/zoneinfo/Atlantic/Faroe		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Jan_Mayen		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Madeira		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Reykjavik		base-sys-share		share
