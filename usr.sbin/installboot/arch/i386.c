@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.25 2007/02/15 22:23:11 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.26 2007/06/23 14:46:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.25 2007/02/15 22:23:11 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.26 2007/06/23 14:46:00 christos Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -65,10 +65,21 @@ __RCSID("$NetBSD: i386.c,v 1.25 2007/02/15 22:23:11 dsl Exp $");
 
 #define nelem(x) (sizeof (x)/sizeof *(x))
 
-static const char *const console_names[] = {
-	"pc", "com0", "com1", "com2", "com3",
-	"com0kbd", "com1kbd", "com2kbd", "com3kbd",
-	NULL };
+static const struct console_name {
+	const char	*name;		/* Name of console selection */
+	const int	dev;		/* value matching CONSDEV_* from sys/arch/i386/stand/lib/libi386.h */
+} consoles[] = {
+	{ "pc",		0 /* CONSDEV_PC */ },
+	{ "com0",	1 /* CONSDEV_COM0 */ },
+	{ "com1",	2 /* CONSDEV_COM1 */ },
+	{ "com2",	3 /* CONSDEV_COM2 */ },
+	{ "com3",	4 /* CONSDEV_COM3 */ },
+	{ "com0kbd",	5 /* CONSDEV_COM0KBD */ },
+	{ "com1kbd",	6 /* CONSDEV_COM1KBD */ },
+	{ "com2kbd",	7 /* CONSDEV_COM2KBD */ },
+	{ "com3kbd",	8 /* CONSDEV_COM3KBD */ },
+	{ "auto",	-1 /* CONSDEV_AUTO */ },
+};
 
 static int i386_setboot(ib_params *);
 static int i386_editboot(ib_params *);
@@ -186,18 +197,21 @@ write_boot_area(ib_params *params, void *v_buf, int len)
 static void
 show_i386_boot_params(struct x86_boot_params  *bpp)
 {
-	uint32_t i;
+	size_t i;
 
 	printf("Boot options:        ");
 	printf("timeout %d, ", le32toh(bpp->bp_timeout));
 	printf("flags %x, ", le32toh(bpp->bp_flags));
 	printf("speed %d, ", le32toh(bpp->bp_conspeed));
 	printf("ioaddr %x, ", le32toh(bpp->bp_consaddr));
-	i = le32toh(bpp->bp_consdev);
-	if (i < nelem(console_names) - 1)
-		printf("console %s\n", console_names[i]);
+	for (i = 0; i < __arraycount(consoles); i++) {
+		if (consoles[i].dev == le32toh(bpp->bp_consdev))
+			break;
+	}
+	if (i == __arraycount(consoles))
+		printf("console %d\n", le32toh(bpp->bp_consdev));
 	else
-		printf("console %d\n", i);
+		printf("console %s\n", consoles[i].name);
 	if (bpp->bp_keymap[0])
 		printf("                     keymap %s\n", bpp->bp_keymap);
 }
@@ -213,7 +227,7 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 {
 	struct x86_boot_params bp;
 	int bplen;
-	int i;
+	size_t i;
 
 	bplen = le32toh(bpp->bp_length);
 	if (bplen > sizeof bp)
@@ -233,19 +247,19 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 	if (params->flags & IB_CONSADDR)
 		bp.bp_consaddr = htole32(params->consaddr);
 	if (params->flags & IB_CONSOLE) {
-		for (i = 0; ; i++) {
-			if (console_names[i] == NULL) {
-				warnx("invalid console name, valid names are:");
-				fprintf(stderr, "\t%s", console_names[0]);
-				for (i = 1; console_names[i] != NULL; i++)
-					fprintf(stderr, ", %s", console_names[i]);
-				fprintf(stderr, "\n");
-				return 1;
-			}
-			if (strcmp(console_names[i], params->console) == 0)
+		for (i = 0; i < __arraycount(consoles); i++)
+			if (strcmp(consoles[i].name, params->console) == 0)
 				break;
+
+		if (i == __arraycount(consoles)) {
+			warnx("invalid console name, valid names are:");
+			(void)fprintf(stderr, "\t%s", consoles[0].name);
+			for (i = 1; consoles[i].name != NULL; i++)
+				(void)fprintf(stderr, ", %s", consoles[i].name);
+			(void)fprintf(stderr, "\n");
+			return 1;
 		}
-		bp.bp_consdev = htole32(i);
+		bp.bp_consdev = htole32(consoles[i].dev);
 	}
 	if (params->flags & IB_PASSWORD) {
 		if (params->password[0]) {
