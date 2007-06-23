@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 2007/04/16 19:12:19 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2 2007/06/23 15:22:18 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1 2007/04/16 19:12:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2007/06/23 15:22:18 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -112,36 +112,82 @@ x86_print_ldt(int i, const struct segment_descriptor *d)
 #endif
 
 int
+x86_get_ldt_len(struct lwp *l)
+{
+#ifndef USER_LDT
+	return -1;
+#else
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	int nldt;
+
+	simple_lock(&pmap->pm_lock);
+
+	if (pmap->pm_flags & PMF_USER_LDT) {
+		nldt = pmap->pm_ldt_len;
+	} else {
+		nldt = NLDT;
+	}
+	simple_unlock(&pmap->pm_lock);
+	return nldt;
+#endif
+}
+
+
+int
 x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 {
-#ifdef USER_LDT
+#ifndef USER_LDT
+	return EINVAL;
+#else
+	struct x86_get_ldt_args ua;
+	union descriptor *cp;
+	int error;
+
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
+		return error;
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
+	if (cp == NULL)
+		return ENOMEM;
+
+	error = x86_get_ldt1(l, &ua, cp);
+	*retval = ua.num;
+	if (error == 0)
+		error = copyout(cp, ua.desc, ua.num * sizeof(*cp));
+
+	free(cp, M_TEMP);
+	return error;
+#endif
+}
+
+int
+x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
+{
+#ifndef USER_LDT
+	return EINVAL;
+#else
 	int error;
 	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int nldt, num;
-	union descriptor *lp, *cp;
-	struct x86_get_ldt_args ua;
+	union descriptor *lp;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_GET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
 		return (error);
 
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
 #ifdef	LDT_DEBUG
-	printf("x86_get_ldt: start=%d num=%d descs=%p\n", ua.start,
-	    ua.num, ua.desc);
+	printf("x86_get_ldt: start=%d num=%d descs=%p\n", ua->start,
+	    ua->num, ua->desc);
 #endif
 
-	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
-	    ua.start + ua.num > 8192)
+	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
+	    ua->start + ua->num > 8192)
 		return (EINVAL);
-
-	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
-	if (cp == NULL)
-		return ENOMEM;
 
 	simple_lock(&pmap->pm_lock);
 
@@ -153,14 +199,14 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 		lp = ldt;
 	}
 
-	if (ua.start > nldt) {
+	if (ua->start > nldt) {
 		simple_unlock(&pmap->pm_lock);
-		free(cp, M_TEMP);
 		return (EINVAL);
 	}
 
-	lp += ua.start;
-	num = min(ua.num, nldt - ua.start);
+	lp += ua->start;
+	num = min(ua->num, nldt - ua->start);
+	ua->num = num;
 #ifdef LDT_DEBUG
 	{
 		int i;
@@ -172,27 +218,51 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 	memcpy(cp, lp, num * sizeof(union descriptor));
 	simple_unlock(&pmap->pm_lock);
 
-	error = copyout(cp, ua.desc, num * sizeof(union descriptor));
-	if (error == 0)
-		*retval = num;
-
-	free(cp, M_TEMP);
-	return (error);
-#else
-	return EINVAL;
+	return 0;
 #endif
 }
 
 int
 x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 {
-#ifdef USER_LDT
+#ifndef USER_LDT
+	return EINVAL;
+#else
+	struct x86_set_ldt_args ua;
+	union descriptor *descv;
+	int error;
+
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
+		return (error);
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
+	if (descv == NULL)
+		return ENOMEM;
+
+	error = copyin(ua.desc, descv, sizeof (*descv) * ua.num);
+	if (error == 0)
+		error = x86_set_ldt1(l, &ua, descv);
+	*retval = ua.start;
+
+	free(descv, M_TEMP);
+	return error;
+#endif
+}
+
+int
+x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
+    union descriptor *descv)
+{
+#ifndef USER_LDT
+	return EINVAL;
+#else
 	int error, i, n, sel, free_sel;
 	struct proc *p = l->l_proc;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	struct x86_set_ldt_args ua;
-	union descriptor *descv;
 	size_t old_len, new_len, ldt_len, free_len;
 	union descriptor *old_ldt, *new_ldt, *free_ldt;
 
@@ -201,22 +271,12 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	if (error)
 		return (error);
 
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
-	    ua.start + ua.num > 8192)
+	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
+	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
-	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
-	if (descv == NULL)
-		return (ENOMEM);
-
-	if ((error = copyin(ua.desc, descv, sizeof (*descv) * ua.num)) != 0)
-		goto out;
-
 	/* Check descriptors for access violations. */
-	for (i = 0; i < ua.num; i++) {
+	for (i = 0; i < ua->num; i++) {
 		union descriptor *desc = &descv[i];
 
 		switch (desc->sd.sd_type) {
@@ -236,8 +296,7 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 			    ((IDXSEL(desc->gd.gd_selector) >= NGDT) ||
 			     (gdt[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
 				 SEL_UPL))) {
-				error = EACCES;
-				goto out;
+				return EACCES;
 			}
 			break;
 		case SDT_MEMEC:
@@ -245,10 +304,8 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 		case SDT_MEMERC:
 		case SDT_MEMERAC:
 			/* Must be "present" if executable and conforming. */
-			if (desc->sd.sd_p == 0) {
-				error = EACCES;
-				goto out;
-			}
+			if (desc->sd.sd_p == 0)
+				return EACCES;
 			break;
 		case SDT_MEMRO:
 		case SDT_MEMROA:
@@ -268,19 +325,15 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 			 * Make sure that unknown descriptor types are
 			 * not marked present.
 			 */
-			if (desc->sd.sd_p != 0) {
-				error = EACCES;
-				goto out;
-			}
+			if (desc->sd.sd_p != 0)
+				return EACCES;
 			break;
 		}
 
 		if (desc->sd.sd_p != 0) {
 			/* Only user (ring-3) descriptors may be present. */
-			if (desc->sd.sd_dpl != SEL_UPL) {
-				error = EACCES;
-				goto out;
-			}
+			if (desc->sd.sd_dpl != SEL_UPL)
+				return EACCES;
 		}
 	}
 
@@ -291,12 +344,12 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	free_ldt = NULL;
 	free_len = 0;
 	simple_lock(&pmap->pm_lock);
-	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
+	if (pmap->pm_ldt == 0 || (ua->start + ua->num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
 		else
 			ldt_len = 512;
-		while ((ua.start + ua.num) > ldt_len)
+		while ((ua->start + ua->num) > ldt_len)
 			ldt_len *= 2;
 		new_len = ldt_len * sizeof(union descriptor);
 
@@ -350,11 +403,10 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	}
 copy:
 	/* Now actually replace the descriptors. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++)
+	for (i = 0, n = ua->start; i < ua->num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
 
 	simple_unlock(&pmap->pm_lock);
-	*retval = ua.start;
 
 	if (new_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,
@@ -364,11 +416,8 @@ copy:
 	if (free_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)free_ldt, free_len,
 		    UVM_KMF_WIRED);
-out:
-	free(descv, M_TEMP);
+
 	return (error);
-#else
-	return EINVAL;
 #endif
 }
 
