@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.45 2007/04/07 14:21:52 hannken Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.46 2007/06/23 14:56:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.45 2007/04/07 14:21:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.46 2007/06/23 14:56:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -816,6 +816,7 @@ dqref(struct dquot *dq)
 {
 
 	dq->dq_cnt++;
+	KASSERT(dq->dq_cnt > 0);
 }
 
 /*
