@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.90 2007/05/13 11:03:06 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.91 2007/06/23 09:11:12 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.90 2007/05/13 11:03:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.91 2007/06/23 09:11:12 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.90 2007/05/13 11:03:06 dsl Exp $");
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/prot.h>
 #include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
@@ -674,40 +675,33 @@ ibcs2_sys_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(ibcs2_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error, i;
-	ibcs2_gid_t iset[NGROUPS_MAX];
-	gid_t nset[NGROUPS_MAX];
-	struct sys_getgroups_args sa;
-	int gidsetsize;
-	void *sg = stackgap_init(p, 0);
+	ibcs2_gid_t iset[16];
+	ibcs2_gid_t *gidset;
+	const gid_t *grbuf;
+	int i, n, j;
+	int error;
 
-	gidsetsize = SCARG(uap, gidsetsize);
-	if (gidsetsize > NGROUPS_MAX)
+	*retval = kauth_cred_ngroups(l->l_cred);
+	if (SCARG(uap, gidsetsize) == 0)
+		return 0;
+
+	grbuf = kauth_cred_getgrlist(l->l_cred, SCARG(uap, gidsetsize));
+	if (grbuf == NULL)
 		return EINVAL;
 
-	SCARG(&sa, gidsetsize) = gidsetsize;
-
-	if (gidsetsize) {
-		SCARG(&sa, gidset) = stackgap_alloc(p, &sg, NGROUPS_MAX *
-						    sizeof(gid_t *));
-	}
-	if ((error = sys_getgroups(l, &sa, retval)) != 0)
-		return error;
-	if (gidsetsize) {
-		gidsetsize = retval[0];
-		if (gidsetsize < 0)
-			gidsetsize = 0;
-		error = copyin(SCARG(&sa, gidset), nset,
-		    sizeof(gid_t) * gidsetsize);
-		if (error)
+	gidset = SCARG(uap, gidset);
+	for (i = 0; i < (n = *retval); i += n, gidset += n) {
+		n -= i;
+		if (n > __arraycount(iset))
+			n = __arraycount(iset);
+		for (j = 0; j < n; j++)
+			iset[j] = *grbuf++;
+		error = copyout(iset, gidset, n * sizeof(iset[0]));
+		if (error != 0)
 			return error;
-		for (i = 0; i < gidsetsize; i++)
-			iset[i] = (ibcs2_gid_t)nset[i];
-		error = copyout(iset, SCARG(uap, gidset),
-		    sizeof(ibcs2_gid_t) * retval[0]);
 	}
-	return error;
+
+	return 0;
 }
 
 int
@@ -720,32 +714,35 @@ ibcs2_sys_setgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(ibcs2_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error, i;
-	ibcs2_gid_t iset[NGROUPS_MAX];
-	struct sys_setgroups_args sa;
-	gid_t gp[NGROUPS_MAX], *ngid;
-	void *sg = stackgap_init(p, 0);
+	ibcs2_gid_t iset[16], *gidset;
+	kauth_cred_t ncred;
+	int error;
+	gid_t *grbuf;
+	int i, j, n;
 
-	if (SCARG(uap, gidsetsize) > NGROUPS_MAX ||
-	    SCARG(uap, gidsetsize) < 0 )
+	ncred = kauth_cred_alloc();
+
+	grbuf = kauth_cred_setngroups(ncred, SCARG(uap, gidsetsize));
+	if (grbuf == NULL) {
+		kauth_cred_free(ncred);
 		return EINVAL;
-	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-
-	if (SCARG(&sa, gidsetsize)) {
-		error = copyin(SCARG(uap, gidset), iset,
-		    sizeof(ibcs2_gid_t) * SCARG(uap, gidsetsize));
-		if (error)
-			return error;
 	}
-	for (i = 0; i < SCARG(&sa, gidsetsize); i++)
-		gp[i]= (gid_t)iset[i];
-	ngid = stackgap_alloc(p, &sg, NGROUPS_MAX * sizeof(gid_t));
-	error = copyout(gp, ngid, SCARG(&sa, gidsetsize) * sizeof(gid_t));
-	if (error)
-		return error;
-	SCARG(&sa, gidset) = ngid;
-	return sys_setgroups(l, &sa, retval);
+
+	gidset = SCARG(uap, gidset);
+	for (i = 0; i < SCARG(uap, gidsetsize); i += n, gidset += n) {
+		n = SCARG(uap, gidsetsize) - i;
+		if (n > __arraycount(iset))
+			n = __arraycount(iset);
+		error = copyin(gidset, iset, n * sizeof(*gidset));
+		if (error != 0) {
+			kauth_cred_free(ncred);
+			return error;
+		}
+		for (j = 0; j < n; j++)
+			*grbuf++ = iset[j];
+	}
+
+	return kauth_proc_setgroups(l, ncred);
 }
 
 int
