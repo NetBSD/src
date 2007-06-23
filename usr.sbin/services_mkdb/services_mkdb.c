@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.9 2007/05/15 19:57:40 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.10 2007/06/23 16:55:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.9 2007/05/15 19:57:40 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.10 2007/06/23 16:55:15 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,6 +62,8 @@ static char tname[MAXPATHLEN];
 #define	PMASK		0xffff
 #define PROTOMAX	5
 
+extern void	uniq(const char *);
+
 static void	add(DB *, StringList *, size_t, const char *, size_t *, int);
 static StringList ***parseservices(const char *, StringList *);
 static void	cleanup(void);
@@ -73,7 +75,7 @@ static const char *getprotostr(StringList *, size_t);
 static const char *mkaliases(StringList *, char *, size_t);
 static void	usage(void) __attribute__((__noreturn__));
 
-static const HASHINFO hinfo = {
+const HASHINFO hinfo = {
 	.bsize = 256,
 	.ffactor = 4,
 	.nelem = 32768,
@@ -91,19 +93,23 @@ main(int argc, char *argv[])
 	const char *fname = _PATH_SERVICES;
 	const char *dbname = _PATH_SERVICES_DB;
 	int	 warndup = 1;
+	int	 unique = 0;
 	size_t	 cnt = 0;
 	StringList *sl, ***svc;
 	size_t port, proto;
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "qo:")) != -1)
+	while ((ch = getopt(argc, argv, "qo:u")) != -1)
 		switch (ch) {
 		case 'q':
 			warndup = 0;
 			break;
 		case 'o':
 			dbname = optarg;
+			break;
+		case 'u':
+			unique++;
 			break;
 		case '?':
 		default:
@@ -113,10 +119,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 1)
+	if (argc > 1 || (unique && (!warndup || dbname)))
 		usage();
 	if (argc == 1)
 		fname = argv[0];
+
+	if (unique)
+		uniq(fname);
 
 	svc = parseservices(fname, sl = sl_init());
 
@@ -400,7 +409,7 @@ out:
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-q] [-o <db>] [<servicefile>]\n",
-	    getprogname());
+	(void)fprintf(stderr, "Usage:\t%s [-q] [-o <db>] [<servicefile>]\n"
+	    "\t%s -u [<servicefile>]\n", getprogname(), getprogname());
 	exit(1);
 }
