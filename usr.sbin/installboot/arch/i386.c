@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.26 2007/06/23 14:46:00 christos Exp $ */
+/* $NetBSD: i386.c,v 1.27 2007/06/23 23:07:44 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.26 2007/06/23 14:46:00 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.27 2007/06/23 23:07:44 dogcow Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -64,6 +64,9 @@ __RCSID("$NetBSD: i386.c,v 1.26 2007/06/23 14:46:00 christos Exp $");
 #include "installboot.h"
 
 #define nelem(x) (sizeof (x)/sizeof *(x))
+#ifndef __arraycount
+#define __arraycount(__x) (sizeof(__x) / sizeof(__x[0]))
+#endif
 
 static const struct console_name {
 	const char	*name;		/* Name of console selection */
