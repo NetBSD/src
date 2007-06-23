@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.127 2007/06/13 20:57:33 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.128 2007/06/23 15:26:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.127 2007/06/13 20:57:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.128 2007/06/23 15:26:16 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -105,13 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.127 2007/06/13 20:57:33 christos
 #if defined(_KERNEL_OPT)
 #include "opt_xserver.h"
 #endif
-#endif
-
-#ifdef USER_LDT
-int linux_read_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
-    register_t *));
-int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
-    register_t *));
 #endif
 
 #ifdef DEBUG_LINUX
@@ -582,39 +575,46 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 
 #ifdef USER_LDT
 
-int
-linux_read_ldt(l, uap, retval)
-	struct lwp *l;
-	struct linux_sys_modify_ldt_args /* {
-		syscallarg(int) func;
-		syscallarg(void *) ptr;
-		syscallarg(size_t) bytecount;
-	} */ *uap;
-	register_t *retval;
+static int
+linux_read_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
+    register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct x86_get_ldt_args gl;
 	int error;
-	void *sg;
-	char *parms;
+	int num_ldt;
+	union descriptor *ldt_buf;
+
+	/*
+	 * I've checked the linux code - this function is asymetric with
+	 * linux_write_ldt, and returns raw ldt entries.
+	 * NB, the code I saw zerod the spare parts of the user buffer.
+	 */
 
 	DPRINTF(("linux_read_ldt!"));
-	sg = stackgap_init(p, 0);
+
+	num_ldt = x86_get_ldt_len(l);
+	if (num_ldt <= 0)
+		return EINVAL;
 
 	gl.start = 0;
-	gl.desc = SCARG(uap, ptr);
+	gl.desc = NULL;
 	gl.num = SCARG(uap, bytecount) / sizeof(union descriptor);
 
-	parms = stackgap_alloc(p, &sg, sizeof(gl));
+	if (gl.num > num_ldt)
+		gl.num = num_ldt;
 
-	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
-		return (error);
+	ldt_buf = malloc(gl.num * sizeof *ldt, M_TEMP, M_WAITOK);
 
-	if ((error = x86_get_ldt(l, parms, retval)) != 0)
-		return (error);
+	error = x86_get_ldt1(l, &gl, ldt_buf);
+	/* NB gl.num might have changed */
+	if (error == 0) {
+		*retval = gl.num * sizeof *ldt;
+		error = copyout(ldt_buf, SCARG(uap, ptr),
+		    gl.num * sizeof *ldt_buf);
+	}
+	free(ldt, M_TEMP);
 
-	*retval *= sizeof(union descriptor);
-	return (0);
+	return error;
 }
 
 struct linux_ldt_info {
@@ -629,24 +629,14 @@ struct linux_ldt_info {
 	u_int useable:1;
 };
 
-int
-linux_write_ldt(l, uap, retval)
-	struct lwp *l;
-	struct linux_sys_modify_ldt_args /* {
-		syscallarg(int) func;
-		syscallarg(void *) ptr;
-		syscallarg(size_t) bytecount;
-	} */ *uap;
-	register_t *retval;
+static int
+linux_write_ldt(struct lwp *l, struct linux_sys_modify_ldt_args *uap,
+    int oldmode)
 {
-	struct proc *p = l->l_proc;
 	struct linux_ldt_info ldt_info;
-	struct segment_descriptor sd;
+	union descriptor d;
 	struct x86_set_ldt_args sl;
 	int error;
-	void *sg;
-	char *parms;
-	int oldmode = (int)retval[0];
 
 	DPRINTF(("linux_write_ldt %d\n", oldmode));
 	if (SCARG(uap, bytecount) != sizeof(ldt_info))
@@ -668,43 +658,31 @@ linux_write_ldt(l, uap, retval)
 	    ldt_info.limit_in_pages == 0 && ldt_info.seg_not_present == 1 &&
 	    ldt_info.useable == 0))) {
 		/* this means you should zero the ldt */
-		(void)memset(&sd, 0, sizeof(sd));
+		(void)memset(&d, 0, sizeof(d));
 	} else {
-		sd.sd_lobase = ldt_info.base_addr & 0xffffff;
-		sd.sd_hibase = (ldt_info.base_addr >> 24) & 0xff;
-		sd.sd_lolimit = ldt_info.limit & 0xffff;
-		sd.sd_hilimit = (ldt_info.limit >> 16) & 0xf;
-		sd.sd_type = 16 | (ldt_info.contents << 2) |
+		d.sd.sd_lobase = ldt_info.base_addr & 0xffffff;
+		d.sd.sd_hibase = (ldt_info.base_addr >> 24) & 0xff;
+		d.sd.sd_lolimit = ldt_info.limit & 0xffff;
+		d.sd.sd_hilimit = (ldt_info.limit >> 16) & 0xf;
+		d.sd.sd_type = 16 | (ldt_info.contents << 2) |
 		    (!ldt_info.read_exec_only << 1);
-		sd.sd_dpl = SEL_UPL;
-		sd.sd_p = !ldt_info.seg_not_present;
-		sd.sd_def32 = ldt_info.seg_32bit;
-		sd.sd_gran = ldt_info.limit_in_pages;
+		d.sd.sd_dpl = SEL_UPL;
+		d.sd.sd_p = !ldt_info.seg_not_present;
+		d.sd.sd_def32 = ldt_info.seg_32bit;
+		d.sd.sd_gran = ldt_info.limit_in_pages;
 		if (!oldmode)
-			sd.sd_xx = ldt_info.useable;
+			d.sd.sd_xx = ldt_info.useable;
 		else
-			sd.sd_xx = 0;
+			d.sd.sd_xx = 0;
 	}
-	sg = stackgap_init(p, 0);
 	sl.start = ldt_info.entry_number;
-	sl.desc = stackgap_alloc(p, &sg, sizeof(sd));
+	sl.desc = NULL;;
 	sl.num = 1;
 
 	DPRINTF(("linux_write_ldt: idx=%d, base=0x%lx, limit=0x%x\n",
 	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit));
 
-	parms = stackgap_alloc(p, &sg, sizeof(sl));
-
-	if ((error = copyout(&sd, sl.desc, sizeof(sd))) != 0)
-		return (error);
-	if ((error = copyout(&sl, parms, sizeof(sl))) != 0)
-		return (error);
-
-	if ((error = x86_set_ldt(l, parms, retval)) != 0)
-		return (error);
-
-	*retval = 0;
-	return (0);
+	return x86_set_ldt1(l, &sl, &d);
 }
 
 #endif /* USER_LDT */
@@ -724,8 +702,7 @@ linux_sys_modify_ldt(struct lwp *l, void *v,
 	case 0:
 		return linux_read_ldt(l, uap, retval);
 	case 1:
-		retval[0] = 1;
-		return linux_write_ldt(l, uap, retval);
+		return linux_write_ldt(l, uap, 1);
 	case 2:
 #ifdef notyet
 		return (linux_read_default_ldt(l, uap, retval);
@@ -733,8 +710,7 @@ linux_sys_modify_ldt(struct lwp *l, void *v,
 		return (ENOSYS);
 #endif
 	case 0x11:
-		retval[0] = 0;
-		return linux_write_ldt(l, uap, retval);
+		return linux_write_ldt(l, uap, 0);
 #endif /* USER_LDT */
 
 	default:
