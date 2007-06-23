@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2006/01/16 13:05:11 he Exp $
+#	$NetBSD: Makefile,v 1.20 2007/06/23 10:50:25 isaki Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -36,7 +36,6 @@ NOLINT=		# defined
 CPPFLAGS+=	-I${.OBJDIR} -I${LIBSADIR} -I$S -I${LIBZDIR} -D_STANDALONE
 CPPFLAGS+=	-I${.CURDIR}/../libiocs -I${.CURDIR}/../common
 CPPFLAGS+=	-DHEAP_VARIABLE -D__INTERNAL_LIBSA_CREAD
-CPPFLAGS+=	-D_ZLIB_PRIVATE
 CPPFLAGS+=	-DHAVE_CHANGEDISK_HOOK
 #CPPFLAGS+=	-DDEBUG
 
