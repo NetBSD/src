@@ -1,4 +1,3 @@
-# $NetBSD: protocols,v 1.18 2007/05/15 17:13:16 christos Exp $
 # See also: protocols(5), http://www.sethwklein.net/projects/iana-etc/
 #
 # 
@@ -325,187 +324,187 @@ use          254 Use          # for experimentation and testing           [RFC36
 # PEOPLE
 # ------
 # 
-# [Aboba] Bernard Aboba <bernarda&microsoft.com>, April 1998.
+# [Aboba] Bernard Aboba <bernarda@microsoft.com>, April 1998.
 # 
-# [Ballardie] Tony Ballardie <A.Ballardie&cs.ucl.ac.uk>
+# [Ballardie] Tony Ballardie <A.Ballardie@cs.ucl.ac.uk>
 # 
-# [BCH2] Barry Howard  <Howard&NMFECC.LLNL.GOV>
+# [BCH2] Barry Howard  <Howard@NMFECC.LLNL.GOV>
 # 
-# [BK29] Brian Kantor  <brian&UCSD.EDU>
+# [BK29] Brian Kantor  <brian@UCSD.EDU>
 # 
 # [BN7] <mystery contact> 
 # 
-# [Braden] Bob Braden, <braden&isi.edu>, July 1997.
+# [Braden] Bob Braden, <braden@isi.edu>, July 1997.
 # 
-# [BWB6] Barry Boehm  <boehm&ARPA.MIL>
+# [BWB6] Barry Boehm  <boehm@ARPA.MIL>
 # 
 # [BXH] Brian Horn  <---none--->
 # 
 # [BXW] Bruce Willins <---none--->
 # 
-# [Callon] Ross Callon, <rcallon&baynetworks.com>, December 1995.
+# [Callon] Ross Callon, <rcallon@baynetworks.com>, December 1995.
 # 
-# [Carpenter] Brian Carpenter, <brian&dxcoms.cern.ch>, January 1995.
+# [Carpenter] Brian Carpenter, <brian@dxcoms.cern.ch>, January 1995.
 # 
-# [Crowcroft] Jon Crowcroft <jon&cs.ucl.ac.uk>, June 1999.
+# [Crowcroft] Jon Crowcroft <jon@cs.ucl.ac.uk>, June 1999.
 # 
-# [DDC1] David Clark  <ddc&LCS.MIT.EDU>
+# [DDC1] David Clark  <ddc@LCS.MIT.EDU>
 # 
-# [DLM1] David Mills  <Mills&HUEY.UDEL.EDU>
+# [DLM1] David Mills  <Mills@HUEY.UDEL.EDU>
 # 
-# [DRC3] Dave Cheriton  <cheriton&PESCADERO.STANFORD.EDU>
+# [DRC3] Dave Cheriton  <cheriton@PESCADERO.STANFORD.EDU>
 # 
-# [Deering] Steve Deering, <deering&parc.xerox.com>, March 1995.
+# [Deering] Steve Deering, <deering@parc.xerox.com>, March 1995.
 # 
-# [Doraswamy] Naganand Doraswamy, <naganand&BayNetworks.com>, September 1997.
+# [Doraswamy] Naganand Doraswamy, <naganand@BayNetworks.com>, September 1997.
 # 
-# [Durst] Robert Durst, <durst&mitre.org>, March 1997.
+# [Durst] Robert Durst, <durst@mitre.org>, March 1997.
 # 
-# [DXE1] Deborah Estrin  <estrin&usc.edu>
+# [DXE1] Deborah Estrin  <estrin@usc.edu>
 # 
-# [Farinacci] Dino Farinacci, <dino&cisco.com>, March 1996.
+# [Farinacci] Dino Farinacci, <dino@cisco.com>, March 1996.
 # 
-# [Feldman] Nancy Feldman <nkf&vnet.ibm.com> January 1997.
+# [Feldman] Nancy Feldman <nkf@vnet.ibm.com> January 1997.
 # 
-# [DXF] Dirk Fromhein  <df&watershed.com>
+# [DXF] Dirk Fromhein  <df@watershed.com>
 # 
 # [DXM2] David Mittnacht  <---none--->
 # 
-# [Ekblad] Leif Ekblad <leif.ekblad&eslov.mail.telia.com>, March 1999.
+# [Ekblad] Leif Ekblad <leif.ekblad@eslov.mail.telia.com>, March 1999.
 # 
-# [GAL5] Guillermo A. Loyola  <LOYOLA&IBM.COM>
+# [GAL5] Guillermo A. Loyola  <LOYOLA@IBM.COM>
 # 
-# [GLENN]  K. Robert Glenn  <glenn&osi.ncsl.nist.gov>
+# [GLENN]  K. Robert Glenn  <glenn@osi.ncsl.nist.gov>
 # 
-# [GXC] Greg Chesson  <Greg&SGI.COM>
+# [GXC] Greg Chesson  <Greg@SGI.COM>
 # 
-# [GXS] Guenther Schreiner  <snmp-admin&ira.uka.de>
+# [GXS] Guenther Schreiner  <snmp-admin@ira.uka.de>
 # 
-# [GXT1] Gene Tsudik  <tsudik&USC.EDU>
+# [GXT1] Gene Tsudik  <tsudik@USC.EDU>
 # 
-# [Hamilton] Mark Hamilton <mah&spectralink.com>, November 1998.
+# [Hamilton] Mark Hamilton <mah@spectralink.com>, November 1998.
 # 
-# [HCF2] Harry Forsdick  <Forsdick&BBN.COM>
+# [HCF2] Harry Forsdick  <Forsdick@BBN.COM>
 # 
-# [Hinden] Bob Hinden, <hinden&ipsilon.com>, November 1995, 1997.
+# [Hinden] Bob Hinden, <hinden@ipsilon.com>, November 1995, 1997.
 # 
-# [Hunter] Michael Hunter, <mphunter&qnx.com>, July 1997.
+# [Hunter] Michael Hunter, <mphunter@qnx.com>, July 1997.
 # 
-# [HWB] Hans-Werner Braun  <HWB&MCR.UMICH.EDU>
+# [HWB] Hans-Werner Braun  <HWB@MCR.UMICH.EDU>
 # 
-# [HXH] Howard Hart  <hch&hybrid.com>
+# [HXH] Howard Hart  <hch@hybrid.com>
 # 
-# [IANA] Internet Assigned Numbers Authority, <iana&iana.org>, June 1995.
+# [IANA] Internet Assigned Numbers Authority, <iana@iana.org>, June 1995.
 # 
-# [JBP]   Jon Postel <postel&isi.edu>
+# [JBP]   Jon Postel <postel@isi.edu>
 # 
-# [JMP] Jean-Michel Pittet, <jmp&gandalf.engr.sgi.com>, November 1998.
+# [JMP] Jean-Michel Pittet, <jmp@gandalf.engr.sgi.com>, November 1998.
 # 
 # [JC120] <mystery contact>
 # 
-# [JFH2] Jack Haverty <jhaverty&ORACLE.COM>
+# [JFH2] Jack Haverty <jhaverty@ORACLE.COM>
 # 
-# [JI6] John Ioannidis  <ji&CS.COLUMBIA.EDU>
+# [JI6] John Ioannidis  <ji@CS.COLUMBIA.EDU>
 # 
-# [JTM4] John Moy  <jmoy&PROTEON.COM>
+# [JTM4] John Moy  <jmoy@PROTEON.COM>
 # 
-# [JWF] Jim Forgie  <FORGIE&XN.LL.MIT.EDU>
+# [JWF] Jim Forgie  <FORGIE@XN.LL.MIT.EDU>
 # 
-# [JXS] Jim Stevens  <Stevens&ISI.EDU>
+# [JXS] Jim Stevens  <Stevens@ISI.EDU>
 # 
-# [KATZ]  Dave Katz <dkatz&cisco.com>
+# [KATZ]  Dave Katz <dkatz@cisco.com>
 # 
-# [Lee] CJ Lee, <cj_lee&novell.com>, October 1997.
+# [Lee] CJ Lee, <cj_lee@novell.com>, October 1997.
 # 
-# [Lothberg] Peter Lothberg <roll&stupi.se>, March 1999.
+# [Lothberg] Peter Lothberg <roll@stupi.se>, March 1999.
 # 
-# [Markson] Tom Markson, <markson&osmosys.ingog.com>, September 1995.
+# [Markson] Tom Markson, <markson@osmosys.ingog.com>, September 1995.
 # 
-# [MB] Mike Brescia  <Brescia&CCV.BBN.COM>
+# [MB] Mike Brescia  <Brescia@CCV.BBN.COM>
 # 
-# [MBG] Michael Greenwald  <Greenwald&SCRC-STONY-BROOK.SYMBOLICS.COM>
+# [MBG] Michael Greenwald  <Greenwald@SCRC-STONY-BROOK.SYMBOLICS.COM>
 # 
-# [McIntosh] Bill McIntosh <BMcIntosh&fortresstech.com>
+# [McIntosh] Bill McIntosh <BMcIntosh@fortresstech.com>
 # 
-# [ML109] Mike Little  <little&MACOM4.ARPA>
+# [ML109] Mike Little  <little@MACOM4.ARPA>
 # 
-# [MTR] Marshall T. Rose  <mrose&dbc.mtview.ca.us>
+# [MTR] Marshall T. Rose  <mrose@dbc.mtview.ca.us>
 # 
-# [Murphy] John Murphy <john.m.murphy&mci.com>, October 1998.
+# [Murphy] John Murphy <john.m.murphy@mci.com>, October 1998.
 # 
-# [MXS1] Martha Steenstrup  <MSteenst&BBN.COM>
+# [MXS1] Martha Steenstrup  <MSteenst@BBN.COM>
 # 
-# [NC3] J. Noel Chiappa  <JNC&XX.LCS.MIT.EDU>
+# [NC3] J. Noel Chiappa  <JNC@XX.LCS.MIT.EDU>
 # 
-# [Oberg] Christer Oberg <chg&bull.se> October 1994.
+# [Oberg] Christer Oberg <chg@bull.se> October 1994.
 # 
-# [Partridge] Criag Partridge <craig&bbn.com>, August 1999.
+# [Partridge] Criag Partridge <craig@bbn.com>, August 1999.
 # 
-# [Perkins] Charlie Perkins <perk&watson.ibm.com>, October 1994.
+# [Perkins] Charlie Perkins <perk@watson.ibm.com>, October 1994.
 # 
-# [Petri] Bernhard Petri <bernhard.petri&siemens.com>, March 2000.
+# [Petri] Bernhard Petri <bernhard.petri@siemens.com>, March 2000.
 # 
-# [Presotto] Dave Presotto  <presotto&plan9.att.com>, July 1995.
+# [Presotto] Dave Presotto  <presotto@plan9.att.com>, July 1995.
 # 
-# [Przygienda] Tony Przygienda <prz&siara.com>, August 1999.
+# [Przygienda] Tony Przygienda <prz@siara.com>, August 1999.
 # 
 # [PXL1] Paul Liu  <---none--->
 # 
-# [Rajagopal] Murali Rajagopal, <murali&gadzoox.com>, May 2000.
+# [Rajagopal] Murali Rajagopal, <murali@gadzoox.com>, May 2000.
 # 
-# [RH6] Robert Hinden  <Hinden&ENG.SUN.COM>
+# [RH6] Robert Hinden  <Hinden@ENG.SUN.COM>
 # 
-# [RTB3]  Bob Braden <braden&isi.edu>
+# [RTB3]  Bob Braden <braden@isi.edu>
 # 
 # [RC77] <mystery contact>
 # 
-# [RDH1] Russ Housley  <rhousley&rsasecurity.com>
+# [RDH1] Russ Housley  <rhousley@rsasecurity.com>
 # 
-# [RWS4] Robert W. Scheifler  <RWS&XX.LCS.MIT.EDU>
+# [RWS4] Robert W. Scheifler  <RWS@XX.LCS.MIT.EDU>
 # 
-# [RXB3] Robert Woodburn <woody&cseic.saic.com>
+# [RXB3] Robert Woodburn <woody@cseic.saic.com>
 # 
-# [Sautter] Robert Sautter <rsautter&acdnj.itt.com>, August 1999.
+# [Sautter] Robert Sautter <rsautter@acdnj.itt.com>, August 1999.
 # 
-# [SAF3] Stuart A. Friedberg  <stuart&CS.WISC.EDU>
+# [SAF3] Stuart A. Friedberg  <stuart@CS.WISC.EDU>
 # 
-# [SC3] Steve Casner  <casner&isi.edu
+# [SC3] Steve Casner  <casner@isi.edu
 # 
-# [SGC] Steve Chipman  Chipman&F.BBN.COM>
+# [SGC] Steve Chipman  Chipman@F.BBN.COM>
 # 
-# [SHB] Steven Blumenthal  <BLUMENTHAL&VAX.BBN.COM>
+# [SHB] Steven Blumenthal  <BLUMENTHAL@VAX.BBN.COM>
 # 
-# [Speakman] Tony Speakman <speakman&cisco.com>, January 1998.
+# [Speakman] Tony Speakman <speakman@cisco.com>, January 1998.
 # 
-# [Sridhar] Manickam R.Sridhar <msridhar&sitaranetworks.com>, September 1997.
+# [Sridhar] Manickam R.Sridhar <msridhar@sitaranetworks.com>, September 1997.
 # 
-# [Stewart] Randall R. Stewart <rrs&cisco.com>, April 2000. 
+# [Stewart] Randall R. Stewart <rrs@cisco.com>, April 2000. 
 # 
-# [Sue Hares]  Sue Hares <skh&merit.edu>
+# [Sue Hares]  Sue Hares <skh@merit.edu>
 # 
-# [SXA] Susie Armstrong  <Armstrong.wbst128&XEROX.COM>
+# [SXA] Susie Armstrong  <Armstrong.wbst128@XEROX.COM>
 # 
-# [SXD] Steve Deering  <deering&PARC.XEROX.COM>
+# [SXD] Steve Deering  <deering@PARC.XEROX.COM>
 # 
-# [Tony Li] Tony Li  <tli&cisco.com>
+# [Tony Li] Tony Li  <tli@cisco.com>
 # 
-# [TXM] Trudy Miller  <Trudy&ACC.COM>
+# [TXM] Trudy Miller  <Trudy@ACC.COM>
 # 
-# [Volpe] Victor Volpe <vvolpe&smtp.microcom.com>, October 1997.
+# [Volpe] Victor Volpe <vvolpe@smtp.microcom.com>, October 1997.
 # 
 # [VXD] Victor Dafoulas  <---none--->
 # 
-# [Waber] Kurt Waber <kurt.waber&swisscom.com>, August 1999.
+# [Waber] Kurt Waber <kurt.waber@swisscom.com>, August 1999.
 # 
-# [Welzl] Michael Welzl  <michael&tk.uni-linz.ac.at>, August 1999.
+# [Welzl] Michael Welzl  <michael@tk.uni-linz.ac.at>, August 1999.
 # 
-# [WM3] William Melohn  <Melohn&SUN.COM>
+# [WM3] William Melohn  <Melohn@SUN.COM>
 # 
-# [WXC] Wesley Craig   <Wesley.Craig&terminator.cc.umich.edu>
+# [WXC] Wesley Craig   <Wesley.Craig@terminator.cc.umich.edu>
 # 
-# [Worley] John Worley <worley&milehigh.net>, June 1998.
+# [Worley] John Worley <worley@milehigh.net>, June 1998.
 # 
-# [ZSU] Zaw-Sing Su  <ZSu&TSCA.ISTC.SRI.>
+# [ZSU] Zaw-Sing Su  <ZSu@TSCA.ISTC.SRI.>
 # 
 # []
 # 
