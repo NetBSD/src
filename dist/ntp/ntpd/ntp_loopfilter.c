@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.7 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.8 2007/06/24 16:55:14 kardel Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -334,10 +334,13 @@ local_clock(
 	 * these actions interact with the command line options.
 	 *
 	 * Note the system poll is set to minpoll only if the clock is
-	 * stepped. 
+	 * stepped. Note also the kernel is disabled if step is
+	 * disabled or greater than 0.5 s. 
 	 */
 	clock_frequency = flladj = plladj = 0;
 	mu = peer->epoch - sys_clocktime;
+	if (clock_max == 0 || clock_max > 0.5)
+		kern_enable = 0;
 	rval = 1;
 	if (fabs(fp_offset) > clock_max && clock_max > 0) {
 		switch (state) {
@@ -546,8 +549,7 @@ local_clock(
 	 * lead to overflow problems. This might occur if some misguided
 	 * lad set the step threshold to something ridiculous.
 	 */
-	if (pll_control && kern_enable && clock_max < 0.5 &&
-	    clock_max > 0) {
+	if (pll_control && kern_enable) {
 
 		/*
 		 * We initialize the structure for the ntp_adjtime()
@@ -618,16 +620,6 @@ local_clock(
 						ntv.status |= STA_DEL;
 				}
 			}
-
-			/*
-			 * Switch to FLL mode if the poll interval is
-			 * greater than MAXDPOLL, so that the kernel
-			 * loop behaves as the daemon loop; viz.,
-			 * selects the FLL when necessary, etc. For
-			 * legacy only.
-			 */
-			if (sys_poll > NTP_MAXDPOLL)
-				ntv.status |= STA_FLL;
 
 			/*
 			 * If the PPS signal is up and enabled, light
@@ -797,7 +789,7 @@ adj_host_clock(
 	 * get out of Dodge quick.
 	 */
 	if (!ntp_enable || mode_ntpdate || (pll_control &&
-	    kern_enable && clock_max < 0.5))
+	    kern_enable))
 		return;
 
 	/*
@@ -896,15 +888,8 @@ loop_config(
 		 * behind. While at it, ask to set nanosecond mode. If
 		 * the kernel agrees, rejoice; othewise, it does only
 		 * microseconds.
-		 *
-		 * Call out the safety patrol. If ntpdate mode or if the
-		 * step threshold has been increased by the -x option or
-		 * tinker command, kernel discipline is unsafe, so don't
-		 * do any of this stuff. Otherwise, initialize the
-		 * kernel to appear unsynchronized until the first
-		 * update is received.
 		 */
-		if (mode_ntpdate || clock_max > CLOCK_MAX)
+		if (mode_ntpdate)
 			break;
 
 		pll_control = 1;
@@ -987,7 +972,7 @@ loop_config(
 		 */
 		if (pll_control && kern_enable) {
 			memset((char *)&ntv, 0, sizeof(ntv));
-			ntv.modes = MOD_FREQUENCY;
+			ntv.modes = MOD_OFFSET | MOD_FREQUENCY;
 			ntv.freq = (int32)(drift_comp * 65536e6);
 			ntp_adjtime(&ntv);
 		}
@@ -1001,7 +986,7 @@ loop_config(
 		/* Completely turn off the kernel time adjustments. */
 		if (pll_control) {
 			memset((char *)&ntv, 0, sizeof(ntv));
-			ntv.modes = MOD_BITS | MOD_FREQUENCY;
+			ntv.modes = MOD_BITS | MOD_OFFSET | MOD_FREQUENCY;
 			ntv.status = STA_UNSYNC;
 			ntp_adjtime(&ntv);
 			NLOG(NLOG_SYNCEVENT | NLOG_SYSEVENT)

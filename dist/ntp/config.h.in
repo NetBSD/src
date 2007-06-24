@@ -718,6 +718,9 @@
 /* Define to 1 if you have the `sysctl' function. */
 #undef HAVE_SYSCTL
 
+/* Define to 1 if you have the <sysexits.h> header file. */
+#undef HAVE_SYSEXITS_H
+
 /* Define to 1 if you have the <sys/audioio.h> header file. */
 #undef HAVE_SYS_AUDIOIO_H
 
@@ -1073,6 +1076,9 @@
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 #undef NO_MINUS_C_MINUS_O
+
+/* Define this if optional arguments are disallowed */
+#undef NO_OPTIONAL_OPT_ARGS
 
 /* Should we avoid #warning on option name collisions? */
 #undef NO_OPTION_NAME_WARNINGS
