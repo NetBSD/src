@@ -3,6 +3,7 @@
 autogen definitions options;
 
 #include copyright.def
+#include homerc.def
 
 prog-name      = "ntpdsim";
 prog-title     = "NTP daemon simulation program";

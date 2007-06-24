@@ -7,6 +7,7 @@ prog-title     = "vendor-specific NTP query program";
 argument       = '[ host ...]';
 
 #include copyright.def
+#include homerc.def
 #include autogen-version.def
 
 test-main;

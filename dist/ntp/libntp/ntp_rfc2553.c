@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_rfc2553.c,v 1.1.1.3 2007/01/06 16:06:02 kardel Exp $	*/
+/*	$NetBSD: ntp_rfc2553.c,v 1.1.1.4 2007/06/24 15:49:14 kardel Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -394,6 +394,12 @@ do_nodename(
 		ai->ai_addrlen = sizeof(struct sockaddr_in);
 		return (0);
 	}
+
+	/*
+	 * If the numeric host flag is set, don't attempt resolution
+	 */
+	if (hints != NULL && (hints->ai_flags & AI_NUMERICHOST))
+		return (EAI_NONAME);
 
 	/*
 	 * Look for a name

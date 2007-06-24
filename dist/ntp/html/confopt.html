@@ -63,7 +63,10 @@
 			<dd>Force the association to assume truechimer status; that is, always survive the selection and clustering algorithms. This option can be used with any association, but is most useful for reference clocks with large jitter on the serial port and precision pulse-per-second (PPS) signals. Caution: this option defeats the algorithms designed to cast out falsetickers and can allow these sources to set the system clock. This option is valid only with the <tt>server</tt> and <tt>peer</tt> commands.<dt><tt>ttl <i>ttl</i></tt>
 			<dd>This option is used only with broadcast server and manycast client modes. It specifies the time-to-live <i><tt>ttl</tt></i> to use on broadcast server and multicast server and the maximum <i><tt>ttl</tt></i> for the expanding ring search with manycast client packets. Selection of the proper value, which defaults to 127, is something of a black art and should be coordinated with the network administrator.
 			<dt><tt>version <i>version</i></tt>
-			<dd>Specifies the version number to be used for outgoing NTP packets. Versions 1-4 are the choices, with version 4 the default. This option is valid only with the <tt>server,</tt> <tt>peer</tt> and <tt>broadcast</tt> commands.</dl>
+			<dd>Specifies the version number to be used for outgoing NTP packets. Versions 1-4 are the choices, with version 4 the default. This option is valid only with the <tt>server,</tt> <tt>peer</tt> and <tt>broadcast</tt> commands.
+			<dt><tt>dynamic</tt>
+			<dd>Allows a server/peer to be configured even if it is not reachable at configuration time. It is assumed that at some point in the future the network environment changes so that this server/peer can be reached. This option is useful to configure servers/peers on mobile systems with intermittent network access (e.g. wlan clients).
+		</dl>
 		<h4 id="aux">Auxilliary Commands</h4>
 		<dl>
 			<dt><tt>broadcastclient [novolley]</tt>
@@ -71,8 +74,6 @@
 			<dd>This command enables reception of manycast client messages to the multicast group address(es) (type <tt>m</tt>) specified. At least one address is required. The NTP multicast address 224.0.1.1 assigned by the IANA should NOT be used, unless specific means are taken to limit the span of the reply and avoid a possibly massive implosion at the original sender. Note that, in order to avoid accidental or malicious disruption in this mode, both the server and client should operate using symmetric key or public key authentication as described in the <a href="authopt.html">Authentication Options</a> page.
 			<dt><tt>multicastclient <i>address</i> [...]</tt>
 			<dd>This command enables reception of multicast server messages to the multicast group address(es) (type <tt>m</tt>) specified. Upon receiving a message for the first time, the multicast client measures the nominal server propagation delay using a brief client/server exchange with the server, then enters the broadcast client mode, in which it synchronizes to succeeding multicast messages. Note that, in order to avoid accidental or malicious disruption in this mode, both the server and client should operate using symmetric key or public key authentication as described in the <a href="authopt.html">Authentication Options</a> page.
-			<dt><tt>dynamic</tt>
-			<dd>Allows a server/peer to be configured even if it is not reachable at configuration time. It is assumed that at some point in the future the network environment changed so that this server/peer can be reached. This option is usful to configure servers/peers on mobile systems with intermittent network access (e.g. wlan clients).
 		</dl>
 		<h4 id="bug">Bugs</h4>
 		<p>The syntax checking is not picky; some combinations of ridiculous and even hilarious options and modes may not be detected.</p>

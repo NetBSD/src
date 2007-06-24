@@ -1,7 +1,7 @@
 #AUTOMAKE_OPTIONS = ../util/ansi2knr no-dependencies
 AUTOMAKE_OPTIONS = ../util/ansi2knr
 ETAGS_ARGS = $(srcdir)/Makefile.am
-EXTRA_DIST = copyright.def debug-opt.def autogen-version.def version.def
+EXTRA_DIST = autogen-version.def copyright.def debug-opt.def homerc.def version.def
 
 SUBDIRS = isc
 

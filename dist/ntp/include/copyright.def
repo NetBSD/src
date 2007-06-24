@@ -8,13 +8,6 @@ copyright = {
     text  = "see html/copyright.html";
 };
 
-#ifndef __windows__
-rcfile         = ".ntprc";
-#else
-rcfile         = "ntp.ini";
-#endif
-
-homerc         =  $HOME, ".";
 long-opts;
 config-header  = config.h;
 environrc;

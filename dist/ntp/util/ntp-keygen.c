@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.1.1.3 2007/01/06 16:08:21 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.1.1.4 2007/06/24 15:51:30 kardel Exp $	*/
 
 /*
  * Program to generate cryptographic keys for NTP clients and servers
@@ -325,7 +325,7 @@ main(
 
 #ifdef OPENSSL
 	if (HAVE_OPT( MODULUS ))
-	    modulus = DESC(MODULUS).optOccCt;
+	    modulus = OPT_VALUE_MODULUS;
 
 	if (HAVE_OPT( PVT_CERT ))
 	    exten = EXT_KEY_PRIVATE;
@@ -347,12 +347,12 @@ main(
 
 	if (HAVE_OPT( MV_PARAMS )) {
 		mvpar++;
-		nkeys = DESC(MV_PARAMS).optOccCt;
+		nkeys = OPT_VALUE_MV_PARAMS;
 	}
 
 	if (HAVE_OPT( MV_KEYS )) {
 		mvkey++;
-		nkeys = DESC(MV_KEYS).optOccCt;
+		nkeys = OPT_VALUE_MV_KEYS;
 	}
 #endif
 
