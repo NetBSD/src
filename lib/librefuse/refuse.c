@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.67 2007/06/24 22:18:38 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.68 2007/06/24 22:25:49 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.67 2007/06/24 22:18:38 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.68 2007/06/24 22:25:49 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -1330,8 +1330,7 @@ fuse_new(struct fuse_chan *fc, struct fuse_args *args,
 			 PUFFS_FLAG_BUILDPATH
 			   | PUFFS_FLAG_HASHPATH
 			   | PUFFS_FLAG_OPDUMP
-			   | PUFFS_KFLAG_NOCACHE_NAME
-			   | PUFFS_KFLAG_NOCACHE_PAGE);
+			   | PUFFS_KFLAG_NOCACHE);
 	if (pu == NULL) {
 		err(EXIT_FAILURE, "puffs_init");
 	}
