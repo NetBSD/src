@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/05/25 21:51:14 pooka Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2007/06/24 19:42:09 ghen Exp $
 #
 
 .include <bsd.own.mk>
@@ -7,6 +7,7 @@ DIST=		${NETBSDSRCDIR}/dist/file
 .PATH:		${DIST}/src ${DIST}/doc
 
 LIB=		magic
+LIBDPLIBS=	z	${.CURDIR}/../libz
 
 .if ${MACHINE_ARCH} == "i386"
 # Set lint to exit on warnings
