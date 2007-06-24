@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.77 2007/06/21 14:54:49 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.78 2007/06/24 22:16:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.77 2007/06/21 14:54:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.78 2007/06/24 22:16:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -437,7 +437,7 @@ puffs_lookup(void *v)
 	/*
 	 * Check if someone fed it into the cache
 	 */
-	if (PUFFS_DOCACHE(pmp)) {
+	if (PUFFS_USE_NAMECACHE(pmp)) {
 		error = cache_lookup(dvp, ap->a_vpp, cnp);
 
 		if (error >= 0)
@@ -476,7 +476,7 @@ puffs_lookup(void *v)
 				error = EJUSTRETURN;
 			} else {
 				if ((cnp->cn_flags & MAKEENTRY)
-				    && PUFFS_DOCACHE(pmp))
+				    && PUFFS_USE_NAMECACHE(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
 		} else if (error < 0) {
@@ -509,7 +509,7 @@ puffs_lookup(void *v)
 	}
 	*ap->a_vpp = vp;
 
-	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_DOCACHE(pmp))
+	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
 
  errout:
@@ -907,7 +907,7 @@ puffs_reclaim(void *v)
 	    reclaim_argp, sizeof(struct puffs_vnreq_reclaim), ap->a_vp);
 
  out:
-	if (PUFFS_DOCACHE(pmp))
+	if (PUFFS_USE_NAMECACHE(pmp))
 		cache_purge(ap->a_vp);
 	puffs_putvnode(ap->a_vp);
 
@@ -1466,7 +1466,7 @@ puffs_read(void *v)
 	if (uio->uio_offset < 0)
 		return EINVAL;
 
-	if (vp->v_type == VREG && PUFFS_DOCACHE(pmp)) {
+	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
 		const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 		ubcflags = 0;
@@ -1566,7 +1566,7 @@ puffs_write(void *v)
 	write_argp = NULL;
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	if (vp->v_type == VREG && PUFFS_DOCACHE(pmp)) {
+	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
 		ubcflags = UBC_WRITE | UBC_PARTIALOK;
 		if (UBC_WANT_UNMAP(vp))
 			ubcflags = UBC_UNMAP;
@@ -2080,7 +2080,7 @@ puffs_mmap(void *v)
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	if (!PUFFS_DOCACHE(pmp))
+	if (!PUFFS_USE_PAGECACHE(pmp))
 		return genfs_eopnotsupp(v);
 
 	if (EXISTSOP(pmp, MMAP)) {
