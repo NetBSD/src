@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.8 2007/02/21 23:00:10 thorpej Exp $ */
+/* $NetBSD: pax.h,v 1.9 2007/06/24 20:35:37 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -35,7 +35,7 @@
 struct lwp;
 
 void pax_init(void);
-void pax_adjust(struct lwp *, int);
+void pax_adjust(struct lwp *, uint32_t);
 
 void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
 
