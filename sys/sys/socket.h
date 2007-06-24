@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.86 2007/06/01 22:53:52 dsl Exp $	*/
+/*	$NetBSD: socket.h,v 1.87 2007/06/24 18:00:16 dsl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -467,6 +467,7 @@ struct msghdr {
 #define MSG_NAMEMBUF	0x1000000	/* msg_name is an mbuf */
 #define MSG_CONTROLMBUF	0x2000000	/* msg_control is an mbuf */
 #define MSG_IOVUSRSPACE	0x4000000	/* msg_iov is in user space */
+#define MSG_LENUSRSPACE	0x8000000	/* address length is in user space */
 
 /*
  * Header for ancillary data objects in msg_control buffer.
