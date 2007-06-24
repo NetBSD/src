@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.23 2007/06/06 01:55:03 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.24 2007/06/24 22:18:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -234,7 +234,8 @@ main(int argc, char *argv[])
 	}
 	argv += optind;
 	argc -= optind;
-	pflags |= PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_NOCACHE;
+	pflags |= PUFFS_FLAG_BUILDPATH;
+	pflags |= PUFFS_KFLAG_NOCACHE_NAME | PUFFS_KFLAG_NOCACHE_PAGE;
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
