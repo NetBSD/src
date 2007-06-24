@@ -1,15 +1,15 @@
-/*	$NetBSD: sort.c,v 1.1.1.1 2007/01/06 16:08:08 kardel Exp $	*/
+/*	$NetBSD: sort.c,v 1.1.1.2 2007/06/24 15:51:23 kardel Exp $	*/
 
 
 /*
- *  sort.c  Id: sort.c,v 4.8 2006/09/24 02:11:16 bkorb Exp
- * Time-stamp:      "2006-06-24 10:53:35 bkorb"
+ *  sort.c  Id: sort.c,v 4.10 2007/04/28 22:19:23 bkorb Exp
+ * Time-stamp:      "2006-10-18 11:29:04 bkorb"
  *
  *  This module implements argument sorting.
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -212,19 +212,10 @@ optionSort( tOptions* pOpts )
     tOptState os = OPTSTATE_INITIALIZER(DEFINED);
 
     /*
-     *  Disable for POSIX conformance
+     *  Disable for POSIX conformance, or if there are no operands.
      */
-    if (getenv( "POSIXLY_CORRECT" ) != NULL) {
-        errno = 0;
-        return;
-    }
-
-    errno = ENOENT;
-
-    /*
-     *  If all arguments are named, we can't sort 'em.  There are no operands.
-     */
-    if (NAMED_OPTS(pOpts))
+    if (  (getenv( "POSIXLY_CORRECT" ) != NULL)
+       || NAMED_OPTS(pOpts))
         return;
 
     /*
@@ -270,7 +261,7 @@ optionSort( tOptions* pOpts )
         switch (pzArg[1]) {
         case NUL:
             /*
-             *  A regular option.  Put it on the operand list.
+             *  A single hyphen is an operand.
              */
             ppzOpds[ opdsIdx++ ] = pOpts->origArgVect[ (pOpts->curOptIdx)++ ];
             continue;
@@ -302,7 +293,7 @@ optionSort( tOptions* pOpts )
             break;
         }
         if (FAILED( res )) {
-            errno = EIO;
+            errno = EINVAL;
             goto freeTemps;
         }
 
@@ -322,7 +313,7 @@ optionSort( tOptions* pOpts )
             if (  (os.optType == TOPT_SHORT)
                && FAILED( checkShortOpts( pOpts, pzArg+2, &os,
                                           ppzOpts, &optsIdx )) )  {
-                errno = EIO;
+                errno = EINVAL;
                 goto freeTemps;
             }
 

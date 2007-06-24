@@ -1,17 +1,17 @@
-/*	$NetBSD: stack.c,v 1.1.1.1 2007/01/06 16:06:12 kardel Exp $	*/
+/*	$NetBSD: stack.c,v 1.1.1.2 2007/06/24 15:49:27 kardel Exp $	*/
 
 
 /*
  *  stack.c
- *  Id: stack.c,v 4.10 2006/10/05 03:48:57 bkorb Exp
- *  Time-stamp:      "2006-09-22 18:13:19 bkorb"
+ *  Id: stack.c,v 4.13 2007/02/04 17:44:12 bkorb Exp
+ *  Time-stamp:      "2007-01-13 10:43:21 bkorb"
  *
  *  This is a special option processing routine that will save the
  *  argument to an option in a FIFO queue.
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -115,6 +115,7 @@ optionUnstackArg(
                  *  and *not* putting the string pointer back into
                  *  the list.
                  */
+                AGFREE(pzSrc);
                 pAL->useCt--;
                 break;
 
@@ -158,6 +159,7 @@ optionUnstackArg(
                  *  and *not* putting the string pointer back into
                  *  the list.
                  */
+                AGFREE(pzSrc);
                 pAL->useCt--;
             } else {
                 if (pzEq != NULL)
@@ -182,7 +184,7 @@ optionUnstackArg(
         pOptDesc->fOptState &= OPTST_PERSISTENT_MASK;
         if ( (pOptDesc->fOptState & OPTST_INITENABLED) == 0)
             pOptDesc->fOptState |= OPTST_DISABLED;
-        free( (void*)pAL );
+        AGFREE( (void*)pAL );
         pOptDesc->optCookie = NULL;
     }
 }
@@ -252,10 +254,13 @@ optionStackArg(
     tOptions*  pOpts,
     tOptDesc*  pOD )
 {
+    char * pz;
+
     if (pOD->optArg.argString == NULL)
         return;
 
-    addArgListEntry( &(pOD->optCookie), (void*)pOD->optArg.argString );
+    AGDUPSTR(pz, pOD->optArg.argString, "stack arg");
+    addArgListEntry( &(pOD->optCookie), (void*)pz );
 }
 /*
  * Local Variables:

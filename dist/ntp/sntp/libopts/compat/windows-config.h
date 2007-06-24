@@ -1,10 +1,10 @@
-/*	$NetBSD: windows-config.h,v 1.1.1.1 2007/01/06 16:08:16 kardel Exp $	*/
+/*	$NetBSD: windows-config.h,v 1.1.1.2 2007/06/24 15:51:26 kardel Exp $	*/
 
 
 /*
- * Time-stamp:        "2006-10-12 17:42:52 bkorb"
+ * Time-stamp:        "2006-10-14 14:55:09 bkorb"
  *             by: bkorb
- * Last Committed:    $Date: 2007/01/06 16:08:16 $
+ * Last Committed:    $Date: 2007/06/24 15:51:26 $
  */
 #ifndef WINDOWS_CONFIG_HACKERY
 #define WINDOWS_CONFIG_HACKERY 1
@@ -35,11 +35,10 @@
  * #define srandom     srand
  */
 
-#define SIZEOF_INT 4
-
+#define SIZEOF_INT   4
 #define SIZEOF_CHARP 4
 #define SIZEOF_LONG  4
-#define SIZEOF_SHORT 4
+#define SIZEOF_SHORT 2
 
 typedef unsigned long uintptr_t;
 
@@ -95,6 +94,7 @@ typedef unsigned long uintptr_t;
 /* Include Windows headers */
 #include <windows.h>
 #include <winsock2.h>
+#include <limits.h>
 
 /*
  * Compatibility declarations for Windows, assuming SYS_WINNT

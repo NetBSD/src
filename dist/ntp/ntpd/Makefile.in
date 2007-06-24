@@ -50,7 +50,6 @@ DIST_COMMON = $(srcdir)/../bincheck.mf $(srcdir)/Makefile.am \
 subdir = ntpd
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
-	$(top_srcdir)/libopts/m4/libtool.m4 \
 	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
@@ -1021,13 +1020,13 @@ $(srcdir)/ntpd-opts.texi $(srcdir)/ntpd-opts.menu: $(srcdir)/ntpd-opts.def $(src
 	$(run_ag) -Taginfo.tpl -DLEVEL=section ntpd-opts.def
 
 $(srcdir)/ntpdsim-opts.h: $(srcdir)/ntpdsim-opts.c
-$(srcdir)/ntpdsim-opts.c: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
+$(srcdir)/ntpdsim-opts.c: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list) $(top_srcdir)/include/homerc.def
 	$(run_ag) ntpdsim-opts.def
 
-$(srcdir)/ntpdsim.1: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
+$(srcdir)/ntpdsim.1: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list) $(top_srcdir)/include/homerc.def
 	$(run_ag) -Tagman1.tpl -bntpdsim ntpdsim-opts.def
 
-$(srcdir)/ntpdsim-opts.texi $(srcdir)/ntpdsim-opts.menu: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
+$(srcdir)/ntpdsim-opts.texi $(srcdir)/ntpdsim-opts.menu: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list) $(top_srcdir)/include/homerc.def
 	$(run_ag) -Taginfo.tpl -DLEVEL=section ntpdsim-opts.def
 
 $(PROGRAMS): $(LDADD)

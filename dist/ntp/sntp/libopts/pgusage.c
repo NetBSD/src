@@ -1,8 +1,8 @@
-/*	$NetBSD: pgusage.c,v 1.1.1.1 2007/01/06 16:08:08 kardel Exp $	*/
+/*	$NetBSD: pgusage.c,v 1.1.1.2 2007/06/24 15:51:22 kardel Exp $	*/
 
 
 /*
- *  Id: pgusage.c,v 4.11 2006/09/24 02:11:16 bkorb Exp
+ *  Id: pgusage.c,v 4.12 2007/04/28 22:19:23 bkorb Exp
  * Time-stamp:      "2006-07-16 08:13:26 bkorb"
  *
  *   Automated Options Paged Usage module.
@@ -12,7 +12,7 @@
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the

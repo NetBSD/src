@@ -45,7 +45,6 @@ DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/plot_summary.in $(srcdir)/summary.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
-	$(top_srcdir)/libopts/m4/libtool.m4 \
 	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
@@ -197,7 +196,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 bin_SCRIPTS = ntp-wait ntptrace
 noinst_SCRIPTS = calc_tickadj checktime freq_adj html2man mkver ntpsweep ntpver plot_summary summary
-EXTRA_DIST = VersionName fixautomakedepsmagic genChangeLog genver	\
+EXTRA_DIST = VersionName fixautomakedepsmagic genCommitLog genver	\
 	hpadjtime.sh monitoring ntp-close ntp-groper ntp-restart	\
 	ntp-status rc1 rc2 stats
 

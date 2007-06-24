@@ -9,10 +9,12 @@ version=${proto}.${major}.${minor}
 # - Numeric values increment
 # - empty 'increments' to 1
 # - NEW 'increments' to empty
-point=NEW
+point=2
 # Special.  Normally unused.  A suffix.
 #special=ag
 special=
+# [???] To start an RC cycle: RC->yes
+# To release from an RC cycle: rcpoint-> GO
 # ReleaseCandidate. 'yes' or 'no'.
 releasecandidate=no
 #releasecandidate=no

@@ -1,10 +1,10 @@
-/*	$NetBSD: autoopts.h,v 1.1.1.1 2007/01/06 16:06:08 kardel Exp $	*/
+/*	$NetBSD: autoopts.h,v 1.1.1.2 2007/06/24 15:49:23 kardel Exp $	*/
 
 
 /*
- *  Time-stamp:      "2006-09-10 14:43:25 bkorb"
+ *  Time-stamp:      "2007-04-15 09:59:39 bkorb"
  *
- *  autoopts.h  Id: autoopts.h,v 4.17 2006/09/24 02:11:16 bkorb Exp
+ *  autoopts.h  Id: autoopts.h,v 4.23 2007/04/15 19:01:18 bkorb Exp
  *  Time-stamp:      "2005-02-14 05:59:50 bkorb"
  *
  *  This file defines all the global structures and special values
@@ -12,7 +12,7 @@
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -59,19 +59,19 @@
 
 #include "compat/compat.h"
 
-#define AO_NAME_LIMIT    127
-#define AO_NAME_SIZE     (AO_NAME_LIMIT + 1)
+#define AO_NAME_LIMIT           127
+#define AO_NAME_SIZE            ((size_t)(AO_NAME_LIMIT + 1))
 
-#ifndef MAXPATHLEN
+#ifndef AG_PATH_MAX
 #  ifdef PATH_MAX
-#    define MAXPATHLEN   PATH_MAX
+#    define AG_PATH_MAX         ((size_t)PATH_MAX)
 #  else
-#    define MAXPATHLEN   4096
+#    define AG_PATH_MAX         ((size_t)4096)
 #  endif
 #else
 #  if defined(PATH_MAX) && (PATH_MAX > MAXPATHLEN)
-#     undef  MAXPATHLEN
-#     define MAXPATHLEN  PATH_MAX
+#     undef  AG_PATH_MAX
+#     define AG_PATH_MAX        ((size_t)PATH_MAX)
 #  endif
 #endif
 
@@ -79,15 +79,25 @@
 #define EXPORT
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-# define DIRCH '\\'
+# define DIRCH                  '\\'
 #else
-# define DIRCH '/'
+# define DIRCH                  '/'
+#endif
+
+#ifndef EX_NOINPUT
+#  define EX_NOINPUT            66
+#endif
+#ifndef EX_SOFTWARE
+#  define EX_SOFTWARE           70
+#endif
+#ifndef EX_CONFIG
+#  define EX_CONFIG             78
 #endif
 
 /*
  *  Convert the number to a list usable in a printf call
  */
-#define NUM_TO_VER(n)       ((n) >> 12), ((n) >> 7) & 0x001F, (n) & 0x007F
+#define NUM_TO_VER(n)           ((n) >> 12), ((n) >> 7) & 0x001F, (n) & 0x007F
 
 #define NAMED_OPTS(po) \
         (((po)->fOptSet & (OPTPROC_SHORTOPT | OPTPROC_LONGOPT)) == 0)
@@ -95,14 +105,14 @@
 #define SKIP_OPT(p)  (((p)->fOptState & (OPTST_DOCUMENT|OPTST_OMITTED)) != 0)
 
 typedef int tDirection;
-#define DIRECTION_PRESET  -1
-#define DIRECTION_PROCESS  1
-#define DIRECTION_CALLED   0
+#define DIRECTION_PRESET        -1
+#define DIRECTION_PROCESS       1
+#define DIRECTION_CALLED        0
 
-#define PROCESSING(d)     ((d)>0)
-#define PRESETTING(d)     ((d)<0)
+#define PROCESSING(d)           ((d)>0)
+#define PRESETTING(d)           ((d)<0)
 
-#define ISNAMECHAR( c )    (isalnum(c) || ((c) == '_') || ((c) == '-'))
+#define ISNAMECHAR( c )         (isalnum(c) || ((c) == '_') || ((c) == '-'))
 
 /*
  *  Procedure success codes
@@ -121,16 +131,45 @@ typedef int tDirection;
 #undef  FAILED
 #undef  HADGLITCH
 
-#define SUCCESS  ((tSuccess) 0)
-#define FAILURE  ((tSuccess)-1)
-#define PROBLEM  ((tSuccess) 1)
+#define SUCCESS                 ((tSuccess) 0)
+#define FAILURE                 ((tSuccess)-1)
+#define PROBLEM                 ((tSuccess) 1)
 
 typedef int tSuccess;
 
-#define SUCCEEDED( p )     ((p) == SUCCESS)
-#define SUCCESSFUL( p )    SUCCEEDED( p )
-#define FAILED( p )        ((p) <  SUCCESS)
-#define HADGLITCH( p )     ((p) >  SUCCESS)
+#define SUCCEEDED( p )          ((p) == SUCCESS)
+#define SUCCESSFUL( p )         SUCCEEDED( p )
+#define FAILED( p )             ((p) <  SUCCESS)
+#define HADGLITCH( p )          ((p) >  SUCCESS)
+
+/*
+ *  When loading a line (or block) of text as an option, the value can
+ *  be processed in any of several modes:
+ *
+ *  @table @samp
+ *  @item keep
+ *  Every part of the value between the delimiters is saved.
+ *
+ *  @item uncooked
+ *  Even if the value begins with quote characters, do not do quote processing.
+ *
+ *  @item cooked
+ *  If the value looks like a quoted string, then process it.
+ *  Double quoted strings are processed the way strings are in "C" programs,
+ *  except they are treated as regular characters if the following character
+ *  is not a well-established escape sequence.
+ *  Single quoted strings (quoted with apostrophies) are handled the way
+ *  strings are handled in shell scripts, *except* that backslash escapes
+ *  are honored before backslash escapes and apostrophies.
+ *  @end table
+ */
+typedef enum {
+    OPTION_LOAD_COOKED,
+    OPTION_LOAD_UNCOOKED,
+    OPTION_LOAD_KEEP
+} tOptionLoadMode;
+
+extern tOptionLoadMode option_load_mode;
 
 /*
  *  The pager state is used by optionPagedUsage() procedure.
@@ -197,10 +236,22 @@ typedef struct {
     tCC*    pzOptFmt;
 } arg_types_t;
 
-#define AGALOC( c, w )        ao_malloc( (unsigned)c )
-#define AGREALOC( p, c, w )   ao_realloc( p, (unsigned)c )
-#define AGFREE( p )           ao_free( p )
-#define AGDUPSTR( p, s, w )   p = ao_strdup( s )
+#define AGALOC( c, w )          ao_malloc((size_t)c)
+#define AGREALOC( p, c, w )     ao_realloc((void*)p, (size_t)c)
+#define AGFREE( p )             ao_free((void*)p)
+#define AGDUPSTR( p, s, w )     (p = ao_strdup(s))
+
+static void *
+ao_malloc( size_t sz );
+
+static void *
+ao_realloc( void *p, size_t sz );
+
+static void
+ao_free( void *p );
+
+static char *
+ao_strdup( char const *str );
 
 #define TAGMEM( m, t )
 
@@ -285,26 +336,26 @@ typedef struct {
 #  include <sys/mman.h>
 #else
 #  ifndef  PROT_READ
-#   define PROT_READ    0x01
+#   define PROT_READ            0x01
 #  endif
 #  ifndef  PROT_WRITE
-#   define PROT_WRITE   0x02
+#   define PROT_WRITE           0x02
 #  endif
 #  ifndef  MAP_SHARED
-#   define MAP_SHARED   0x01
+#   define MAP_SHARED           0x01
 #  endif
 #  ifndef  MAP_PRIVATE
-#   define MAP_PRIVATE  0x02
+#   define MAP_PRIVATE          0x02
 #  endif
 #endif
 
 #ifndef MAP_FAILED
-#  define  MAP_FAILED   ((void*)-1)
+#  define  MAP_FAILED           ((void*)-1)
 #endif
 
 #ifndef  _SC_PAGESIZE
 # ifdef  _SC_PAGE_SIZE
-#  define _SC_PAGESIZE _SC_PAGE_SIZE
+#  define _SC_PAGESIZE          _SC_PAGE_SIZE
 # endif
 #endif
 

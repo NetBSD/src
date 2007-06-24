@@ -1,9 +1,9 @@
-/*	$NetBSD: usage.c,v 1.1.1.1 2007/01/06 16:06:13 kardel Exp $	*/
+/*	$NetBSD: usage.c,v 1.1.1.2 2007/06/24 15:49:28 kardel Exp $	*/
 
 
 /*
- *  usage.c  Id: usage.c,v 4.12 2006/09/24 02:11:16 bkorb Exp
- * Time-stamp:      "2006-07-01 12:41:02 bkorb"
+ *  usage.c  Id: usage.c,v 4.15 2007/04/28 22:19:23 bkorb Exp
+ * Time-stamp:      "2007-04-15 11:02:46 bkorb"
  *
  *  This module implements the default usage procedure for
  *  Automated Options.  It may be overridden, of course.
@@ -15,7 +15,7 @@
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -171,12 +171,18 @@ optionOnlyUsage(
  *  formats.  The descriptor specifies the default, but AUTOOPTS_USAGE will
  *  over-ride this, providing the value of it is set to either "gnu" or
  *  "autoopts".  This routine will @strong{not} return.
+ *
+ *  If "exitCode" is "EX_USAGE" (normally 64), then output will to to stdout
+ *  and the actual exit code will be "EXIT_SUCCESS".
 =*/
 void
 optionUsage(
     tOptions* pOptions,
-    int       exitCode )
+    int       usage_exit_code )
 {
+    int actual_exit_code =
+        (usage_exit_code == EX_USAGE) ? EXIT_SUCCESS : usage_exit_code;
+
     displayEnum = AG_FALSE;
 
     /*
@@ -185,7 +191,7 @@ optionUsage(
      *  on successful exit (help was requested), otherwise error out.
      */
     if (option_usage_fp == NULL)
-        option_usage_fp = (exitCode != EXIT_SUCCESS) ? stderr : stdout;
+        option_usage_fp = (actual_exit_code != EXIT_SUCCESS) ? stderr : stdout;
 
     fprintf( option_usage_fp, pOptions->pzUsageTitle, pOptions->pzProgName );
 
@@ -209,13 +215,13 @@ optionUsage(
              *  option, we do *NOT* want to emit the column headers.
              *  Otherwise, we do.
              */
-            if (  (exitCode != EXIT_SUCCESS)
+            if (  (usage_exit_code != EXIT_SUCCESS)
                || ((pOptions->pOptDesc->fOptState & OPTST_DOCUMENT) == 0) )
 
                 fputs( pOptTitle, option_usage_fp );
         }
 
-        printOptionUsage( pOptions, exitCode, pOptTitle );
+        printOptionUsage( pOptions, usage_exit_code, pOptTitle );
     }
 
     /*
@@ -243,14 +249,14 @@ optionUsage(
      *  IF the user is asking for help (thus exiting with SUCCESS),
      *  THEN see what additional information we can provide.
      */
-    if (exitCode == EXIT_SUCCESS)
+    if (usage_exit_code == EXIT_SUCCESS)
         printProgramDetails( pOptions );
 
     if (pOptions->pzBugAddr != NULL)
         fprintf( option_usage_fp, zPlsSendBugs, pOptions->pzBugAddr );
     fflush( option_usage_fp );
 
-    exit( exitCode );
+    exit( actual_exit_code );
 }
 
 
@@ -346,12 +352,15 @@ printExtendedUsage(
     /*
      *  IF this particular option can NOT be preset
      *    AND some form of presetting IS allowed,
+     *    AND it is not an auto-managed option (e.g. --help, et al.)
      *  THEN advise that this option may not be preset.
      */
     if (  ((pOD->fOptState & OPTST_NO_INIT) != 0)
        && (  (pOptions->papzHomeList != NULL)
           || (pOptions->pzPROGNAME != NULL)
-       )  )
+          )
+       && (pOD->optIndex < pOptions->presetOptCt)
+       )
 
         fputs( zNoPreset, option_usage_fp );
 
@@ -402,7 +411,7 @@ printInitList(
     tCC*        pzRc,
     tCC*        pzPN )
 {
-    char zPath[ MAXPATHLEN+1 ];
+    char zPath[ AG_PATH_MAX+1 ];
 
     if (papz == NULL)
         return;
@@ -416,7 +425,7 @@ printInitList(
         if (pzPath == NULL)
             break;
 
-        if (optionMakePath( zPath, sizeof( zPath ), pzPath, pzPN ))
+        if (optionMakePath(zPath, (int)sizeof( zPath ), pzPath, pzPN))
             pzPath = zPath;
 
         /*
@@ -511,7 +520,7 @@ printOneUsage(
 
  bogus_desc:
     fprintf( stderr, zInvalOptDesc, pOD->pz_Name );
-    exit( EXIT_FAILURE );
+    exit( EX_SOFTWARE );
 }
 
 

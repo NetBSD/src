@@ -3,6 +3,7 @@
 autogen definitions options;
 
 #include copyright.def
+#include homerc.def
 #include autogen-version.def
 
 prog-name      = "ntpq";

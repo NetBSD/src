@@ -49,7 +49,6 @@ DIST_COMMON = README $(noinst_HEADERS) $(srcdir)/../bincheck.mf \
 subdir = ntpdc
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
-	$(top_srcdir)/libopts/m4/libtool.m4 \
 	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
@@ -245,6 +244,7 @@ run_ag = cd $(srcdir) && autogen -L ../include
 std_def_list = $(top_srcdir)/include/debug-opt.def		\
 		$(top_srcdir)/include/autogen-version.def 	\
 		$(top_srcdir)/include/copyright.def 		\
+		$(top_srcdir)/include/homerc.def 		\
 		$(top_srcdir)/include/version.def
 
 ntpdc_SOURCES = ntpdc.c ntpdc_ops.c ntpdc-opts.c ntpdc-opts.h

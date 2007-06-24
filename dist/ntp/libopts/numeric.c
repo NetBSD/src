@@ -1,13 +1,13 @@
-/*	$NetBSD: numeric.c,v 1.1.1.1 2007/01/06 16:06:10 kardel Exp $	*/
+/*	$NetBSD: numeric.c,v 1.1.1.2 2007/06/24 15:49:25 kardel Exp $	*/
 
 
 /*
- *  Id: numeric.c,v 4.8 2006/10/05 03:48:57 bkorb Exp
- *  Time-stamp:      "2006-10-04 16:12:34 bkorb"
+ *  Id: numeric.c,v 4.11 2007/02/04 17:44:12 bkorb Exp
+ *  Time-stamp:      "2007-01-13 10:28:20 bkorb"
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -77,6 +77,11 @@ optionNumericVal( tOptions* pOpts, tOptDesc* pOD )
     if (*pz != NUL) {
         fprintf( stderr, zNotNumber, pOpts->pzProgName, pOD->optArg.argString );
         (*(pOpts->pUsageProc))(pOpts, EXIT_FAILURE);
+    }
+
+    if (pOD->fOptState & OPTST_ALLOC_ARG) {
+        AGFREE(pOD->optArg.argString);
+        pOD->fOptState &= ~OPTST_ALLOC_ARG;
     }
 
     pOD->optArg.argInt = val;

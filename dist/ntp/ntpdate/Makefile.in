@@ -14,6 +14,8 @@
 
 @SET_MAKE@
 
+#AUTOMAKE_OPTIONS=	../util/ansi2knr
+
 # we traditionally installed software in bindir, while it should have gone
 # in sbindir.  Now that we offer a choice, look in the "other" installation
 # subdir to warn folks if there is another version there.
@@ -41,7 +43,6 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-ANSI2KNR = ../util/ansi2knr
 bin_PROGRAMS = ntpdate$(EXEEXT)
 EXTRA_PROGRAMS = ntptimeset$(EXEEXT)
 DIST_COMMON = README $(noinst_HEADERS) $(srcdir)/../bincheck.mf \
@@ -49,7 +50,6 @@ DIST_COMMON = README $(noinst_HEADERS) $(srcdir)/../bincheck.mf \
 subdir = ntpdate
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
-	$(top_srcdir)/libopts/m4/libtool.m4 \
 	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
@@ -63,11 +63,10 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 ntpdate_SOURCES = ntpdate.c
-ntpdate_OBJECTS = ntpdate$U.$(OBJEXT)
+ntpdate_OBJECTS = ntpdate.$(OBJEXT)
 ntpdate_LDADD = $(LDADD)
 ntpdate_DEPENDENCIES = version.o ../libntp/libntp.a
-am_ntptimeset_OBJECTS = ntptimeset$U.$(OBJEXT) \
-	ntptime_config$U.$(OBJEXT)
+am_ntptimeset_OBJECTS = ntptimeset.$(OBJEXT) ntptime_config.$(OBJEXT)
 ntptimeset_OBJECTS = $(am_ntptimeset_OBJECTS)
 ntptimeset_LDADD = $(LDADD)
 ntptimeset_DEPENDENCIES = version.o ../libntp/libntp.a
@@ -221,7 +220,6 @@ sharedstatedir = @sharedstatedir@
 subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
-AUTOMAKE_OPTIONS = ../util/ansi2knr
 ntptimeset_SOURCES = ntptimeset.c ntptime_config.c
 AM_CPPFLAGS = -I$(top_srcdir)/include
 # LDADD might need RESLIB and ADJLIB
@@ -302,15 +300,10 @@ mostlyclean-compile:
 
 distclean-compile:
 	-rm -f *.tab.c
-../util/ansi2knr:
-	cd ../util && $(MAKE) $(AM_MAKEFLAGS) ansi2knr
 
-mostlyclean-kr:
-	-test "$U" = "" || rm -f *_.c
-
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpdate$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntptime_config$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntptimeset$U.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpdate.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntptime_config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntptimeset.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -332,14 +325,6 @@ mostlyclean-kr:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
-ntpdate_.c: ntpdate.c $(ANSI2KNR)
-	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntpdate.c; then echo $(srcdir)/ntpdate.c; else echo ntpdate.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
-ntptime_config_.c: ntptime_config.c $(ANSI2KNR)
-	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntptime_config.c; then echo $(srcdir)/ntptime_config.c; else echo ntptime_config.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
-ntptimeset_.c: ntptimeset.c $(ANSI2KNR)
-	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntptimeset.c; then echo $(srcdir)/ntptimeset.c; else echo ntptimeset.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
-ntpdate_.$(OBJEXT) ntpdate_.lo ntptime_config_.$(OBJEXT) \
-ntptime_config_.lo ntptimeset_.$(OBJEXT) ntptimeset_.lo : $(ANSI2KNR)
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -498,7 +483,7 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic mostlyclean-kr \
+mostlyclean-am: mostlyclean-compile mostlyclean-generic \
 	mostlyclean-libtool
 
 pdf: pdf-am
@@ -520,8 +505,8 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 	install-man install-strip installcheck installcheck-am \
 	installdirs maintainer-clean maintainer-clean-generic \
 	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-kr mostlyclean-libtool pdf pdf-am ps ps-am tags \
-	uninstall uninstall-am uninstall-binPROGRAMS uninstall-info-am
+	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
+	uninstall-am uninstall-binPROGRAMS uninstall-info-am
 
 
 $(PROGRAMS): $(LDADD)

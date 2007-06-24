@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.1.1.1 2007/01/06 16:08:17 kardel Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.1.1.2 2007/06/24 15:51:26 kardel Exp $	*/
 
 
 #ifndef HAVE_VPRINTF
@@ -45,7 +45,7 @@ snprintf(char *str, size_t n, char const *fmt, ...)
 #endif
 
     if (rval > n) {
-        fprintf(stderr, "snprintf buffer overrun %d > %d\n", rval, n);
+        fprintf(stderr, "snprintf buffer overrun %d > %d\n", rval, (int)n);
         abort();
     }
     return rval;

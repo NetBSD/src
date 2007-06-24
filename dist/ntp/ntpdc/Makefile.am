@@ -23,6 +23,7 @@ run_ag=         cd $(srcdir) && autogen -L ../include
 std_def_list=	$(top_srcdir)/include/debug-opt.def		\
 		$(top_srcdir)/include/autogen-version.def 	\
 		$(top_srcdir)/include/copyright.def 		\
+		$(top_srcdir)/include/homerc.def 		\
 		$(top_srcdir)/include/version.def
 
 $(srcdir)/ntpdc-opts.h: $(srcdir)/ntpdc-opts.c

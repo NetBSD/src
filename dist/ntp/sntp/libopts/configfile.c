@@ -1,14 +1,14 @@
-/*	$NetBSD: configfile.c,v 1.1.1.1 2007/01/06 16:08:05 kardel Exp $	*/
+/*	$NetBSD: configfile.c,v 1.1.1.2 2007/06/24 15:51:20 kardel Exp $	*/
 
 /*
- *  Id: configfile.c,v 1.15 2006/09/28 01:26:33 bkorb Exp
- *  Time-stamp:      "2006-09-24 15:18:51 bkorb"
+ *  Id: configfile.c,v 1.21 2007/04/15 19:01:18 bkorb Exp
+ *  Time-stamp:      "2007-04-15 11:22:46 bkorb"
  *
  *  configuration/rc/ini file handling.
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -147,13 +147,16 @@ configFileLoad( char const* pzFile )
 {
     tmap_info_t   cfgfile;
     tOptionValue* pRes = NULL;
+    tOptionLoadMode save_mode = option_load_mode;
+
     char* pzText =
         text_mmap( pzFile, PROT_READ, MAP_PRIVATE, &cfgfile );
 
     if (TEXT_MMAP_FAILED_ADDR(pzText))
         return NULL; /* errno is set */
 
-    pRes = optionLoadNested(pzText, pzFile, strlen(pzFile), OPTION_LOAD_COOKED);
+    option_load_mode = OPTION_LOAD_COOKED;
+    pRes = optionLoadNested(pzText, pzFile, strlen(pzFile));
 
     if (pRes == NULL) {
         int err = errno;
@@ -161,6 +164,8 @@ configFileLoad( char const* pzFile )
         errno = err;
     } else
         text_munmap( &cfgfile );
+
+    option_load_mode = save_mode;
     return pRes;
 }
 
@@ -394,8 +399,8 @@ optionGetValue( const tOptionValue* pOld, char const* pzValName )
  *  @code{ENOENT} - the supplied @code{pOldValue} pointed to the last entry.
  *  @end itemize
 =*/
-const tOptionValue*
-optionNextValue( const tOptionValue* pOVList, const tOptionValue* pOldOV )
+tOptionValue const *
+optionNextValue(tOptionValue const * pOVList,tOptionValue const * pOldOV )
 {
     tArgList*     pAL;
     tOptionValue* pRes = NULL;
@@ -441,9 +446,9 @@ filePreset(
     int           direction )
 {
     tmap_info_t   cfgfile;
+    tOptState     st = OPTSTATE_INITIALIZER(PRESET);
     char*         pzFileText =
         text_mmap( pzFileName, PROT_READ|PROT_WRITE, MAP_PRIVATE, &cfgfile );
-    tOptState     st = OPTSTATE_INITIALIZER(PRESET);
 
     if (TEXT_MMAP_FAILED_ADDR(pzFileText))
         return;
@@ -702,10 +707,11 @@ handleStructure(
     char*         pzText,
     int           direction )
 {
-    tOptionLoadMode mode = OPTION_LOAD_UNCOOKED;
+    tOptionLoadMode mode = option_load_mode;
     tOptionValue     valu;
 
     char* pzName = ++pzText;
+    char* pzData;
     char* pcNulPoint;
 
     while (ISNAMECHAR( *pzText ))  pzText++;
@@ -720,13 +726,14 @@ handleStructure(
             break;
         if (*pzText != '/')
             return NULL;
+        /* FALLTHROUGH */
 
     case '/':
         if (pzText[1] != '>')
             return NULL;
         *pzText = NUL;
         pzText += 2;
-        loadOptionLine( pOpts, pOS, pzName, direction, OPTION_LOAD_KEEP );
+        loadOptionLine( pOpts, pOS, pzName, direction, mode );
         return pzText;
 
     case '>':
@@ -740,10 +747,11 @@ handleStructure(
     }
 
     /*
-     *  If we are here, we have a value.  Separate the name from the
-     *  value for a moment.
+     *  If we are here, we have a value.  "pzText" points to a closing angle
+     *  bracket.  Separate the name from the value for a moment.
      */
     *pcNulPoint = NUL;
+    pzData = ++pzText;
 
     /*
      *  Find the end of the option text and NUL terminate it
@@ -757,7 +765,7 @@ handleStructure(
         sprintf( pz, "</%s>", pzName );
         *pzText = ' ';
         pzText = strstr( pzText, pz );
-        if (pz != z) free(pz);
+        if (pz != z) AGFREE(pz);
 
         if (pzText == NULL)
             return pzText;
@@ -769,8 +777,9 @@ handleStructure(
 
     /*
      *  Rejoin the name and value for parsing by "loadOptionLine()".
+     *  Erase any attributes parsed by "parseAttributes()".
      */
-    *(pcNulPoint++) = ' ';
+    memset(pcNulPoint, ' ', pzData - pcNulPoint);
 
     /*
      *  "pzName" points to what looks like text for one option/configurable.
@@ -793,7 +802,7 @@ internalFileLoad( tOptions* pOpts )
 {
     int     idx;
     int     inc = DIRECTION_PRESET;
-    char    zFileName[ MAXPATHLEN+1 ];
+    char    zFileName[ AG_PATH_MAX+1 ];
 
     if (pOpts->papzHomeList == NULL)
         return;
@@ -831,7 +840,7 @@ internalFileLoad( tOptions* pOpts )
 
         idx += inc;
 
-        if (! optionMakePath( zFileName, sizeof( zFileName ),
+        if (! optionMakePath( zFileName, (int)sizeof(zFileName),
                               pzPath, pOpts->pzProgPath ))
             continue;
 
@@ -862,11 +871,14 @@ internalFileLoad( tOptions* pOpts )
          *  IF we are now to skip config files AND we are presetting,
          *  THEN change direction.  We must go the other way.
          */
-        if (SKIP_RC_FILES(pOpts) && PRESETTING(inc)) {
-            idx -= inc;  /* go back and reprocess current file */
-            inc =  DIRECTION_PROCESS;
+        {
+            tOptDesc * pOD = pOpts->pOptDesc + pOpts->specOptIdx.save_opts+1;
+            if (DISABLED_OPT(pOD) && PRESETTING(inc)) {
+                idx -= inc;  /* go back and reprocess current file */
+                inc =  DIRECTION_PROCESS;
+            }
         }
-    } /* For every path in the home list, ... */
+    } /* twice for every path in the home list, ... */
 }
 
 
@@ -923,17 +935,17 @@ optionFileLoad( tOptions* pOpts, char const* pzProgram )
  * arg:   + tOptDesc* + pOptDesc + the descriptor for this arg +
  *
  * doc:
- *  Processes the options found in the file named with pOptDesc->optArg.argString.
+ *  Processes the options found in the file named with
+ *  pOptDesc->optArg.argString.
 =*/
 void
 optionLoadOpt( tOptions* pOpts, tOptDesc* pOptDesc )
 {
     /*
-     *  IF the option is not being disabled,
-     *  THEN load the file.  There must be a file.
-     *  (If it is being disabled, then the disablement processing
-     *  already took place.  It must be done to suppress preloading
-     *  of ini/rc files.)
+     *  IF the option is not being disabled, THEN load the file.  There must
+     *  be a file.  (If it is being disabled, then the disablement processing
+     *  already took place.  It must be done to suppress preloading of ini/rc
+     *  files.)
      */
     if (! DISABLED_OPT( pOptDesc )) {
         struct stat sb;
@@ -943,7 +955,7 @@ optionLoadOpt( tOptions* pOpts, tOptDesc* pOptDesc )
 
             fprintf( stderr, zFSErrOptLoad, errno, strerror( errno ),
                      pOptDesc->optArg.argString );
-            (*pOpts->pUsageProc)( pOpts, EXIT_FAILURE );
+            exit(EX_NOINPUT);
             /* NOT REACHED */
         }
 
@@ -952,7 +964,7 @@ optionLoadOpt( tOptions* pOpts, tOptDesc* pOptDesc )
                 return;
 
             fprintf( stderr, zNotFile, pOptDesc->optArg.argString );
-            (*pOpts->pUsageProc)( pOpts, EXIT_FAILURE );
+            exit(EX_NOINPUT);
             /* NOT REACHED */
         }
 
@@ -1215,7 +1227,7 @@ validateOptionsStruct( tOptions* pOpts, char const* pzProgram )
 {
     if (pOpts == NULL) {
         fputs( zAO_Bad, stderr );
-        exit( EXIT_FAILURE );
+        exit( EX_CONFIG );
     }
 
     /*

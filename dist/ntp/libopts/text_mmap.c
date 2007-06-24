@@ -1,7 +1,7 @@
-/*	$NetBSD: text_mmap.c,v 1.1.1.1 2007/01/06 16:06:12 kardel Exp $	*/
+/*	$NetBSD: text_mmap.c,v 1.1.1.2 2007/06/24 15:49:27 kardel Exp $	*/
 
 /*
- * Id: text_mmap.c,v 4.14 2006/09/24 02:11:16 bkorb Exp
+ * Id: text_mmap.c,v 4.15 2006/11/27 01:52:23 bkorb Exp
  *
  * Time-stamp:      "2006-09-10 14:50:04 bkorb"
  */
@@ -141,7 +141,8 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
      *  do the mmap.  If we fail, then preserve errno, close the file and
      *  return the failure.
      */
-    pMI->txt_data = mmap( NULL, pMI->txt_size+1, prot, flags, pMI->txt_fd, 0 );
+    pMI->txt_data =
+        mmap(NULL, pMI->txt_size+1, prot, flags, pMI->txt_fd, (size_t)0);
     if (pMI->txt_data == MAP_FAILED_PTR) {
         pMI->txt_errno = errno;
         goto fail_return;
@@ -180,7 +181,7 @@ text_mmap( char const* pzFile, int prot, int flags, tmap_info_t* pMI )
         pNuls = mmap(
                 (void*)(((char*)pMI->txt_data) + pMI->txt_size),
                 pgsz, PROT_READ|PROT_WRITE,
-                MAP_ANONYMOUS|MAP_FIXED|MAP_PRIVATE, AO_INVALID_FD, 0 );
+                MAP_ANONYMOUS|MAP_FIXED|MAP_PRIVATE, AO_INVALID_FD, (size_t)0);
 
         if (pNuls != MAP_FAILED_PTR)
             return pMI->txt_data;
@@ -304,7 +305,7 @@ text_munmap( tmap_info_t* pMI )
         if (   ((pMI->txt_prot & PROT_WRITE) != 0)
             && ((pMI->txt_flags & MAP_PRIVATE) == 0))  {
 
-            if (lseek( pMI->txt_fd, 0, SEEK_SET) != 0)
+            if (lseek(pMI->txt_fd, (size_t)0, SEEK_SET) != 0)
                 goto error_return;
 
             res = (write( pMI->txt_fd, pMI->txt_data, pMI->txt_size ) < 0)
