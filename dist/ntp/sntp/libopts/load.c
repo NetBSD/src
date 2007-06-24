@@ -1,9 +1,9 @@
-/*	$NetBSD: load.c,v 1.1.1.1 2007/01/06 16:08:06 kardel Exp $	*/
+/*	$NetBSD: load.c,v 1.1.1.2 2007/06/24 15:51:20 kardel Exp $	*/
 
 
 /*
- *  Id: load.c,v 4.14 2006/09/28 01:26:33 bkorb Exp
- *  Time-stamp:      "2006-09-24 15:23:01 bkorb"
+ *  Id: load.c,v 4.20 2007/02/04 22:17:39 bkorb Exp
+ *  Time-stamp:      "2007-02-04 11:54:57 bkorb"
  *
  *  This file contains the routines that deal with processing text strings
  *  for options, either from a NUL-terminated string passed in or from an
@@ -11,7 +11,7 @@
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -52,6 +52,8 @@
  * whether to permit this exception to apply to your modifications.
  * If you do not wish that, delete this exception notice.
  */
+
+tOptionLoadMode option_load_mode = OPTION_LOAD_UNCOOKED;
 
 /* = = = START-STATIC-FORWARD = = = */
 /* static forward declarations maintained by :mkfwd */
@@ -99,8 +101,11 @@ assembleArgValue( char* pzTxt, tOptionLoadMode mode );
  *  @code{$$} is replaced with the directory name of the @code{pzProgPath},
  *  searching @code{$PATH} if necessary.
  *  @*
+ *  @code{$@} is replaced with the AutoGen package data installation directory
+ *  (aka @code{pkgdatadir}).
+ *  @*
  *  @code{$NAME} is replaced by the contents of the @code{NAME} environment
- *  variable.
+ *  variable.  If not found, the search fails.
  *
  *  Please note: both @code{$$} and @code{$NAME} must be at the start of the
  *     @code{pzName} string and must either be the entire string or be followed
@@ -110,8 +115,11 @@ assembleArgValue( char* pzTxt, tOptionLoadMode mode );
  *       @*
  *       @bullet{} The input name exceeds @code{bufSize} bytes.
  *       @*
- *       @bullet{} @code{$$} or @code{$NAME} is not the full string and
- *                 the next character is not '/'.
+ *       @bullet{} @code{$$}, @code{$@@} or @code{$NAME} is not the full string
+ *                 and the next character is not '/'.
+ *       @*
+ *       @bullet{} libopts was built without PKGDATADIR defined and @code{$@@}
+ *                 was specified.
  *       @*
  *       @bullet{} @code{NAME} is not a known environment variable
  *       @*
@@ -125,9 +133,17 @@ optionMakePath(
     tCC*    pzName,
     tCC*    pzProgPath )
 {
+    size_t  name_len = strlen( pzName );
+
+#   ifndef PKGDATADIR
+#     define PKGDATADIR ""
+#   endif
+
+    tSCC    pkgdatadir[] = PKGDATADIR;
+
     ag_bool res = AG_TRUE;
 
-    if (bufSize <= strlen( pzName ))
+    if (bufSize <= name_len)
         return AG_FALSE;
 
     /*
@@ -151,10 +167,28 @@ optionMakePath(
      *  it must start with "$$/".  In either event, replace the "$$"
      *  with the path to the executable and append a "/" character.
      */
-    else if (pzName[1] == '$')
+    else switch (pzName[1]) {
+    case NUL:
+        return AG_FALSE;
+
+    case '$':
         res = insertProgramPath( pzBuf, bufSize, pzName, pzProgPath );
-    else
+        break;
+
+    case '@':
+        if (pkgdatadir[0] == NUL)
+            return AG_FALSE;
+
+        if (name_len + sizeof (pkgdatadir) > bufSize)
+            return AG_FALSE;
+
+        strcpy(pzBuf, pkgdatadir);
+        strcpy(pzBuf + sizeof(pkgdatadir) - 1, pzName + 2);
+        break;
+
+    default:
         res = insertEnvVal( pzBuf, bufSize, pzName, pzProgPath );
+    }
 
     if (! res)
         return AG_FALSE;
@@ -237,7 +271,7 @@ insertProgramPath(
     if ((pz - pzPath)+1 + strlen(pzName) >= bufSize)
         return AG_FALSE;
 
-    memcpy( pzBuf, pzPath, (unsigned)((pz - pzPath)+1) );
+    memcpy( pzBuf, pzPath, (size_t)((pz - pzPath)+1) );
     strcpy( pzBuf + (pz - pzPath) + 1, pzName );
 
     /*
@@ -340,7 +374,7 @@ assembleArgValue( char* pzTxt, tOptionLoadMode mode )
         return pzTxt + strlen(pzTxt);
 
     /*
-     *  If we are keeping all whitespace, then the value starts with the
+     *  If we are keeping all whitespace, then the  modevalue starts with the
      *  character that follows the end of the configurable name, regardless
      *  of which character caused it.
      */
@@ -358,9 +392,8 @@ assembleArgValue( char* pzTxt, tOptionLoadMode mode )
     *(pzEnd++) = NUL;
     while (isspace((int)*pzEnd))  pzEnd++;
     if (space_break && ((*pzEnd == ':') || (*pzEnd == '=')))
-        pzEnd++;
+        while (isspace((int)*++pzEnd))  ;
 
-    mungeString( pzEnd, mode );
     return pzEnd;
 }
 
@@ -464,15 +497,26 @@ loadOptionLine(
     } else if (pOS->pOD->fOptState & OPTST_ARG_OPTIONAL) {
         if (*pOS->pzOptArg == NUL)
              pOS->pzOptArg = NULL;
-        else AGDUPSTR( pOS->pzOptArg, pOS->pzOptArg, "option argument" );
+        else {
+            AGDUPSTR( pOS->pzOptArg, pOS->pzOptArg, "option argument" );
+            pOS->flags |= OPTST_ALLOC_ARG;
+        }
 
     } else {
         if (*pOS->pzOptArg == NUL)
              pOS->pzOptArg = zNil;
-        else AGDUPSTR( pOS->pzOptArg, pOS->pzOptArg, "option argument" );
+        else {
+            AGDUPSTR( pOS->pzOptArg, pOS->pzOptArg, "option argument" );
+            pOS->flags |= OPTST_ALLOC_ARG;
+        }
     }
 
-    handleOption( pOpts, pOS );
+    {
+        tOptionLoadMode sv = option_load_mode;
+        option_load_mode = load_mode;
+        handleOption( pOpts, pOS );
+        option_load_mode = sv;
+    }
 }
 
 

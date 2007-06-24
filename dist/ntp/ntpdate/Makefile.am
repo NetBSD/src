@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS=	../util/ansi2knr
+#AUTOMAKE_OPTIONS=	../util/ansi2knr
 
 bindir=		${exec_prefix}/${BINSUBDIR}
 #bin_PROGRAMS=	ntpdate ntptimeset

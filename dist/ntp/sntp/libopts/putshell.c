@@ -1,9 +1,9 @@
-/*	$NetBSD: putshell.c,v 1.1.1.1 2007/01/06 16:08:08 kardel Exp $	*/
+/*	$NetBSD: putshell.c,v 1.1.1.2 2007/06/24 15:51:23 kardel Exp $	*/
 
 
 /*
- *  Id: putshell.c,v 4.14 2006/10/06 05:29:01 bkorb Exp
- * Time-stamp:      "2006-10-05 20:37:42 bkorb"
+ *  Id: putshell.c,v 4.18 2007/02/04 17:44:12 bkorb Exp
+ * Time-stamp:      "2007-01-13 10:29:39 bkorb"
  *
  *  This module will interpret the options set in the tOptions
  *  structure and print them to standard out in a fashion that
@@ -11,7 +11,7 @@
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -97,7 +97,7 @@ putQuotedStr( tCC* pzStr )
         /*
          *  Emit the string up to the single quote (apostrophe) we just found.
          */
-        (void)fwrite( pzStr, (unsigned)(pz - pzStr), 1, stdout );
+        (void)fwrite( pzStr, (size_t)(pz - pzStr), (size_t)1, stdout );
         fputc( '\'', stdout );
         pzStr = pz;
 
@@ -181,7 +181,7 @@ optionPutShell( tOptions* pOpts )
             char const * pz;
             uintptr_t val = 1;
             printf( zOptNumFmt, pOpts->pzPROGNAME, pOD->pz_NAME,
-                    (uintptr_t)(pOD->optCookie) );
+                    (int)(uintptr_t)(pOD->optCookie) );
             pOD->optCookie = (void*)(uintptr_t)~0UL;
             (*(pOD->pOptProc))( (tOptions*)2UL, pOD );
 
@@ -205,7 +205,10 @@ optionPutShell( tOptions* pOpts )
                 printf( "=%1$lu # 0x%1$lX\n", (unsigned long)val );
                 val <<= 1;
             }
-            free( (void*)(pOD->optArg.argString) );
+
+            AGFREE(pOD->optArg.argString);
+            pOD->optArg.argString = NULL;
+            pOD->fOptState &= ~OPTST_ALLOC_ARG;
             continue;
         }
 
@@ -289,7 +292,7 @@ optionPutShell( tOptions* pOpts )
                 || (pOD->optArg.argString[0] == NUL) )
 
             printf( zOptNumFmt, pOpts->pzPROGNAME, pOD->pz_NAME,
-                    (int)pOD->optOccCt );
+                    pOD->optOccCt );
 
         /*
          *  This option has a text value
