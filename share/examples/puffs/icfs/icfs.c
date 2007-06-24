@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.1 2007/06/24 18:32:00 pooka Exp $	*/
+/*	$NetBSD: icfs.c,v 1.2 2007/06/24 18:43:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-PUFFSOP_PROTOS(puffs_null) /* XXX */
 PUFFSOP_PROTOS(ic)
 
 static void usage(void);
@@ -188,29 +187,9 @@ main(int argc, char *argv[])
 		errx(1, "%s is not a directory", argv[0]);
 
 	PUFFSOP_INIT(pops);
-
-	PUFFSOP_SET(pops, puffs_null, fs, statvfs);
-	PUFFSOP_SETFSNOP(pops, unmount);
-	PUFFSOP_SETFSNOP(pops, sync);
+	puffs_null_setops(pops);
 
 	PUFFSOP_SET(pops, ic, node, readdir);
-
-	PUFFSOP_SET(pops, puffs_null, node, lookup);
-	PUFFSOP_SET(pops, puffs_null, node, create);
-	PUFFSOP_SET(pops, puffs_null, node, mknod);
-	PUFFSOP_SET(pops, puffs_null, node, getattr);
-	PUFFSOP_SET(pops, puffs_null, node, setattr);
-	PUFFSOP_SET(pops, puffs_null, node, fsync);
-	PUFFSOP_SET(pops, puffs_null, node, remove);
-	PUFFSOP_SET(pops, puffs_null, node, link);
-	PUFFSOP_SET(pops, puffs_null, node, rename);
-	PUFFSOP_SET(pops, puffs_null, node, mkdir);
-	PUFFSOP_SET(pops, puffs_null, node, rmdir);
-	PUFFSOP_SET(pops, puffs_null, node, symlink);
-	PUFFSOP_SET(pops, puffs_null, node, readlink);
-	PUFFSOP_SET(pops, puffs_null, node, reclaim);
-	PUFFSOP_SET(pops, puffs_null, node, read);
-	PUFFSOP_SET(pops, puffs_null, node, write);
 
 	if ((pu = puffs_init(pops, "ic", NULL, pflags)) == NULL)
 		err(1, "mount");
