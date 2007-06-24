@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.17 2007/06/24 18:42:25 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.18 2007/06/24 23:02:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.17 2007/06/24 18:42:25 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.18 2007/06/24 23:02:55 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -220,6 +220,7 @@ puffs_null_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn;
+	struct stat sb;
 	int fd, rv;
 
 	fd = open(PCNPATH(pcn), O_RDWR | O_CREAT | O_TRUNC);
@@ -237,6 +238,9 @@ puffs_null_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 		return ENOMEM;
 	}
 	puffs_setvattr(&pn->pn_va, va);
+	rv = lstat(PCNPATH(pcn), &sb);
+	assert(rv == 0);
+	puffs_stat2vattr(&pn->pn_va, &sb);
 
 	*newnode = pn;
 	return 0;
@@ -249,6 +253,7 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn;
+	struct stat sb;
 	mode_t mode;
 	int rv;
 
@@ -267,6 +272,9 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 		return ENOMEM;
 	}
 	puffs_setvattr(&pn->pn_va, va);
+	rv = lstat(PCNPATH(pcn), &sb);
+	assert(rv == 0);
+	puffs_stat2vattr(&pn->pn_va, &sb);
 
 	*newnode = pn;
 	return 0;
@@ -381,6 +389,7 @@ puffs_null_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn;
+	struct stat sb;
 	int rv;
 
 	if (mkdir(PCNPATH(pcn), va->va_mode) == -1)
@@ -397,6 +406,9 @@ puffs_null_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 		return ENOMEM;
 	}
 	puffs_setvattr(&pn->pn_va, va);
+	rv = lstat(PCNPATH(pcn), &sb);
+	assert(rv == 0);
+	puffs_stat2vattr(&pn->pn_va, &sb);
 
 	*newnode = pn;
 	return 0;
@@ -424,6 +436,7 @@ puffs_null_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn;
+	struct stat sb;
 	int rv;
 
 	if (symlink(linkname, PCNPATH(pcn)) == -1)
@@ -440,6 +453,9 @@ puffs_null_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 		return ENOMEM;
 	}
 	puffs_setvattr(&pn->pn_va, va);
+	rv = lstat(PCNPATH(pcn), &sb);
+	assert(rv == 0);
+	puffs_stat2vattr(&pn->pn_va, &sb);
 
 	*newnode = pn;
 	return 0;
