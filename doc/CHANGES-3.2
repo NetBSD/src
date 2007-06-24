@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.82 2007/06/22 14:08:10 liamjfoy Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.83 2007/06/24 19:45:13 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3320,8 +3320,23 @@ sys/net/if_spppsubr.c				1.93-1.94
 	This is the interface level (e.g. pppoe) fix for PR 30694
 	[msaitoh, ticket #1802]
 
-lib/libc/arch/arm/string/memmove.S	1.2
-src/sys/lib/libkern/arch/arm/memmove.S	patch
+lib/libc/arch/arm/string/memmove.S		1.2
+src/sys/lib/libkern/arch/arm/memmove.S		patch
 
 	Apply the patch supplied in PR/36512 to fix the buffer overlap check.
 	[scw, ticket #1805]
+
+dist/file/					synced with HEAD on 20070615
+distrib/sets/lists/base/shl.elf			1.222
+distrib/sets/lists/base/shl.mi			1.375 via patch
+lib/Makefile					1.108 via patch
+lib/libmagic/Makefile				1.5
+lib/libmagic/config.h				patch
+lib/libmagic/shlib_version			1.3-1.4
+tools/file/Makefile				1.4
+usr.bin/file/Makefile				1.51-1.53
+
+	Update file(1) to version 4.21, including security fixes (CVE-2007-1536
+	and CVE-2007-2799).
+	[pooka, ticket #1804]
+
