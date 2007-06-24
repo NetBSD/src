@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.117 2007/03/05 20:32:45 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.118 2007/06/24 01:43:35 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,18 +77,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.117 2007/03/05 20:32:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.118 2007/06/24 01:43:35 dyoung Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/conf.h>
+#include <sys/kauth.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+
+#include <sys/buf.h>
+#include <sys/dirent.h>
+#include <sys/lock.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/unistd.h>
+#include <sys/fcntl.h>
+#include <sys/lockf.h>
+
+#include <sys/disk.h>
+
 #include <machine/limits.h>
 
 #include "opt_userconf.h"
@@ -186,6 +202,112 @@ volatile int config_pending;		/* semaphore for mountroot */
 static int config_initialized;		/* config_init() has been called. */
 
 static int config_do_twiddle;
+
+struct vnode *
+opendisk(struct device *dv)
+{
+	int bmajor, bminor;
+	struct vnode *tmpvn;
+	int error;
+	dev_t dev;
+	
+	/*
+	 * Lookup major number for disk block device.
+	 */
+	bmajor = devsw_name2blk(device_xname(dv), NULL, 0);
+	if (bmajor == -1)
+		return NULL;
+	
+	bminor = minor(device_unit(dv));
+	/*
+	 * Fake a temporary vnode for the disk, open it, and read
+	 * and hash the sectors.
+	 */
+	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
+	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
+	if (bdevvp(dev, &tmpvn))
+		panic("%s: can't alloc vnode for %s", __func__,
+		    device_xname(dv));
+	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
+	if (error) {
+#ifndef DEBUG
+		/*
+		 * Ignore errors caused by missing device, partition,
+		 * or medium.
+		 */
+		if (error != ENXIO && error != ENODEV)
+#endif
+			printf("%s: can't open dev %s (%d)\n",
+			    __func__, device_xname(dv), error);
+		vput(tmpvn);
+		return NULL;
+	}
+
+	return tmpvn;
+}
+
+int
+config_handle_wedges(struct device *dv, int par)
+{
+	struct dkwedge_list wl;
+	struct dkwedge_info *wi;
+	struct vnode *vn;
+	char diskname[16];
+	int i, error;
+
+	if ((vn = opendisk(dv)) == NULL)
+		return -1;
+
+	wl.dkwl_bufsize = sizeof(*wi) * 16;
+	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
+
+	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
+	VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	vput(vn);
+	if (error) {
+#ifdef DEBUG_WEDGE
+		printf("%s: List wedges returned %d\n",
+		    device_xname(dv), error);
+#endif
+		free(wi, M_TEMP);
+		return -1;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Returned %u(%u) wedges\n", device_xname(dv),
+	    wl.dkwl_nwedges, wl.dkwl_ncopied);
+#endif
+	snprintf(diskname, sizeof(diskname), "%s%c", device_xname(dv),
+	    par + 'a');
+
+	for (i = 0; i < wl.dkwl_ncopied; i++) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Looking for %s in %s\n", 
+		    device_xname(dv), diskname, wi[i].dkw_wname);
+#endif
+		if (strcmp(wi[i].dkw_wname, diskname) == 0)
+			break;
+	}
+
+	if (i == wl.dkwl_ncopied) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Cannot find wedge with parent %s\n",
+		    device_xname(dv), diskname);
+#endif
+		free(wi, M_TEMP);
+		return -1;
+	}
+
+#ifdef DEBUG_WEDGE
+	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
+		device_xname(dv), wi[i].dkw_devname, wi[i].dkw_wname,
+		(unsigned long long)wi[i].dkw_offset,
+		(unsigned long long)wi[i].dkw_size);
+#endif
+	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
+	free(wi, M_TEMP);
+	return 0;
+}
 
 /*
  * Initialize the autoconfiguration data structures.  Normally this

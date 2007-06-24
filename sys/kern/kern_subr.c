@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.158 2007/06/03 07:47:50 dsl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.159 2007/06/24 01:43:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.158 2007/06/03 07:47:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.159 2007/06/24 01:43:34 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.158 2007/06/03 07:47:50 dsl Exp $");
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/queue.h>
 #include <sys/systrace.h>
@@ -122,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.158 2007/06/03 07:47:50 dsl Exp $");
 static struct device *finddevice(const char *);
 static struct device *getdisk(char *, int, int, dev_t *, int);
 static struct device *parsedisk(char *, int, int, dev_t *);
+static const char *getwedgename(const char *, int);
 
 /*
  * A generic linear hook.
@@ -811,7 +813,7 @@ void
 setroot(struct device *bootdv, int bootpartition)
 {
 	struct device *dv;
-	int len;
+	int len, majdev;
 #ifdef MEMORY_DISK_HOOKS
 	int i;
 #endif
@@ -1011,8 +1013,6 @@ setroot(struct device *bootdv, int bootpartition)
 		}
 
 	} else if (rootspec == NULL) {
-		int majdev;
-
 		/*
 		 * Wildcarded root; use the boot device.
 		 */
@@ -1046,6 +1046,11 @@ setroot(struct device *bootdv, int bootpartition)
 			rootdv = dv;
 			goto haveroot;
 		}
+
+		if (rootdev == NODEV &&
+		    device_class(dv) == DV_DISK && device_is_a(dv, "dk") &&
+		    (majdev = devsw_name2blk(dv->dv_xname, NULL, 0)) >= 0)
+			rootdev = makedev(majdev, device_unit(dv));
 
 		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
@@ -1152,25 +1157,27 @@ setroot(struct device *bootdv, int bootpartition)
 static struct device *
 finddevice(const char *name)
 {
+	const char *wname;
 	struct device *dv;
 #if defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
 #endif /* BOOT_FROM_MEMORY_HOOKS */
 
+	if ((wname = getwedgename(name, strlen(name))) != NULL)
+		return dkwedge_find_by_wname(wname);
+
 #ifdef BOOT_FROM_MEMORY_HOOKS
 	for (j = 0; j < NMD; j++) {
-		if (strcmp(name, fakemdrootdev[j].dv_xname) == 0) {
-			dv = &fakemdrootdev[j];
-			return (dv);
-		}
+		if (strcmp(name, fakemdrootdev[j].dv_xname) == 0)
+			return &fakemdrootdev[j];
 	}
 #endif /* BOOT_FROM_MEMORY_HOOKS */
 
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	    dv = TAILQ_NEXT(dv, dv_list))
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (strcmp(dv->dv_xname, name) == 0)
 			break;
-	return (dv);
+	}
+	return dv;
 }
 
 static struct device *
@@ -1198,6 +1205,7 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 			if (isdump == 0 && device_class(dv) == DV_IFNET)
 				printf(" %s", dv->dv_xname);
 		}
+		dkwedge_print_wnames();
 		if (isdump)
 			printf(" none");
 #if defined(DDB)
@@ -1205,13 +1213,26 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 #endif
 		printf(" halt reboot\n");
 	}
-	return (dv);
+	return dv;
+}
+
+static const char *
+getwedgename(const char *name, int namelen)
+{
+	const char *wpfx = "wedge:";
+	const int wpfxlen = strlen(wpfx);
+
+	if (namelen < wpfxlen || strncmp(name, wpfx, wpfxlen) != 0)
+		return NULL;
+
+	return name + wpfxlen;
 }
 
 static struct device *
 parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
 	struct device *dv;
+	const char *wname;
 	char *cp, c;
 	int majdev, part;
 #ifdef MEMORY_DISK_HOOKS
@@ -1231,7 +1252,13 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 
 	cp = str + len - 1;
 	c = *cp;
-	if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
+
+	if ((wname = getwedgename(str, len)) != NULL) {
+		if ((dv = dkwedge_find_by_wname(wname)) == NULL)
+			return NULL;
+		part = defpart;
+		goto gotdisk;
+	} else if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
 		part = c - 'a';
 		*cp = '\0';
 	} else
@@ -1248,9 +1275,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 	dv = finddevice(str);
 	if (dv != NULL) {
 		if (device_class(dv) == DV_DISK) {
-#ifdef MEMORY_DISK_HOOKS
  gotdisk:
-#endif
 			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (majdev < 0)
 				panic("parsedisk");

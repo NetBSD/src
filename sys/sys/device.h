@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.94 2007/03/05 20:32:43 drochner Exp $ */
+/* $NetBSD: device.h,v 1.95 2007/06/24 01:43:35 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -306,6 +306,9 @@ extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
 extern volatile int config_pending; 	/* semaphore for mountroot */
+
+struct vnode *opendisk(struct device *);
+int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
 void	configure(void);
