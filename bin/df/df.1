@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.40 2007/01/28 09:56:13 wiz Exp $
+.\"	$NetBSD: df.1,v 1.41 2007/06/24 01:52:46 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)df.1	8.2 (Berkeley) 1/13/92
 .\"
-.Dd January 28, 2007
+.Dd June 23, 2007
 .Dt DF 1
 .Os
 .Sh NAME
@@ -37,7 +37,8 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm
-.Op Fl aghiklmnP
+.Op Fl aGklmn
+.Op Fl g | Fl i | Fl P
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
@@ -71,11 +72,27 @@ Show all mount points,
 including those that were mounted with the
 .Dv MNT_IGNORE
 flag.
-.It Fl g
+.It Fl G
 The
-.Fl g
+.Fl G
 option causes the numbers to be reported in gigabytes (1024*1024*1024
 bytes).
+.It Fl g
+Display all the fields of the structure(s) returned by
+.Xr statvfs 2 .
+This option cannot be used with the
+.Fl i
+or
+.Fl P
+options.
+This option will override the
+.Fl G ,
+.Fl h ,
+.Fl k ,
+and
+.Fl m
+options, as well as any setting of
+.Ev BLOCKSIZE .
 .It Fl h
 "Human-readable" output.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
@@ -136,6 +153,11 @@ The header line is followed by data formatted as follows:
     \*[Lt]space used\*[Gt], \*[Lt]space free\*[Gt], \*[Lt]percentage used\*[Gt],
     \*[Lt]file system root\*[Gt]
 .Ed
+.Pp
+Note that the
+.Fl i
+option may not be specified with
+.Fl P .
 .It Fl t Ar type
 Is used to indicate the actions should only be taken on
 filesystems of the specified type.
@@ -155,7 +177,7 @@ that file system.
 If the environment variable
 .Ev BLOCKSIZE
 is set, and the
-.Fl g ,
+.Fl G ,
 .Fl h ,
 .Fl k
 and
