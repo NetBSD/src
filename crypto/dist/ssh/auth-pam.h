@@ -28,7 +28,7 @@
 #ifdef USE_PAM
 
 #if !defined(SSHD_PAM_SERVICE)
-# define SSHD_PAM_SERVICE		__progname
+# define SSHD_PAM_SERVICE		"sshd"
 #endif
 
 void start_pam(Authctxt *);
