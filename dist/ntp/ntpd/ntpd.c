@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.11 2007/01/06 19:45:23 kardel Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.12 2007/06/24 16:55:14 kardel Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -932,12 +932,14 @@ getgroup:
 			exit (-1);
 		}
 	
+#ifndef HAVE_LINUX_CAPABILITIES
 		/*
 		 * for now assume that the privilege to bind to privileged ports
 		 * is associated with running with uid 0 - should be refined on
 		 * ports that allow binding to NTP_PORT with uid != 0
 		 */
 		disable_dynamic_updates |= (sw_uid != 0);  /* also notifies routing message listener */
+#endif
 
 		if (disable_dynamic_updates && interface_interval) {
 			interface_interval = 0;
@@ -946,11 +948,16 @@ getgroup:
 
 #ifdef HAVE_LINUX_CAPABILITIES
 		do {
-			/*  We may be running under non-root uid now, but we still hold full root privileges!
-			 *  We drop all of them, except for the crucial one: cap_sys_time:
+			/*
+			 *  We may be running under non-root uid now, but we still hold full root privileges!
+			 *  We drop all of them, except for the crucial one or two: cap_sys_time and
+			 *  cap_net_bind_service if doing dynamic interface tracking.
 			 */
 			cap_t caps;
-			if( ! ( caps = cap_from_text( "cap_sys_time=ipe" ) ) ) {
+			char *captext = interface_interval ?
+			       	"cap_sys_time,cap_net_bind_service=ipe" :
+			       	"cap_sys_time=ipe";
+			if( ! ( caps = cap_from_text( captext ) ) ) {
 				msyslog( LOG_ERR, "cap_from_text() failed: %m" );
 				exit(-1);
 			}

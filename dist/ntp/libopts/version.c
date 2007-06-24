@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.1.1.2 2007/06/24 15:49:28 kardel Exp $	*/
+/*	$NetBSD: version.c,v 1.2 2007/06/24 16:55:13 kardel Exp $	*/
 
 
 /*  Id: version.c,v 4.10 2007/04/28 22:19:23 bkorb Exp
@@ -88,7 +88,7 @@ printVersion( tOptions* pOpts, tOptDesc* pOD, FILE* fp )
     if (  ((pOD->fOptState & OPTST_ARG_OPTIONAL) == 0)
        || (pOD->optArg.argString == NULL))
          swCh = 'v';
-    else swCh = tolower(pOD->optArg.argString[0]);
+    else swCh = tolower((int)pOD->optArg.argString[0]);
 
     if (pOpts->pzFullVersion != NULL) {
         fputs( pOpts->pzFullVersion, fp );
