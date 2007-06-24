@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.50 2004/06/16 01:33:35 jmc Exp $
+#	$NetBSD: Makefile,v 1.50.10.1 2007/06/24 19:44:58 ghen Exp $
 
 .include <bsd.own.mk>
+.include <bsd.sys.mk>
 
 DIST=		${NETBSDSRCDIR}/dist/file
 .PATH:		${DIST}/src ${DIST}/doc
 
-WFORMAT=	1
 MFILESDIR=	/usr/share/misc
 MFILES=		magic magic.mgc ${DIST}/magic/magic.mime magic.mime.mgc
 MAGIC=		${MFILESDIR}/magic
@@ -30,7 +30,7 @@ CLEANFILES+=	magic magic.mgc magic.mime magic.mime.mgc
 realall:	file magic magic.mgc magic.mime.mgc
 .endif
 
-MAGDIRF:sh=	LANG=C sh -c 'echo ${DIST}/magic/magdir/[0-9a-z]*'
+MAGDIRF:sh=	LANG=C ${HOST_SH} -c 'echo ${DIST}/magic/magdir/[0-9a-z]*'
 MAGFILES=	${DIST}/magic/Header \
 		${DIST}/magic/Localstuff \
 		${DIST}/magic/magdir/netbsd \
