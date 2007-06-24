@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.16 2007/06/24 17:55:07 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.17 2007/06/24 18:42:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.16 2007/06/24 17:55:07 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.17 2007/06/24 18:42:25 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -131,6 +131,34 @@ inodecmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 	if (pn->pn_va.va_fileid == *cmpino)
 		return pn;
 	return NULL;
+}
+
+/* This should be called first and overriden from the file system */
+void
+puffs_null_setops(struct puffs_ops *pops)
+{
+
+	PUFFSOP_SET(pops, puffs_null, fs, statvfs);
+	PUFFSOP_SETFSNOP(pops, unmount);
+	PUFFSOP_SETFSNOP(pops, sync);
+
+	PUFFSOP_SET(pops, puffs_null, node, lookup);
+	PUFFSOP_SET(pops, puffs_null, node, create);
+	PUFFSOP_SET(pops, puffs_null, node, mknod);
+	PUFFSOP_SET(pops, puffs_null, node, getattr);
+	PUFFSOP_SET(pops, puffs_null, node, setattr);
+	PUFFSOP_SET(pops, puffs_null, node, fsync);
+	PUFFSOP_SET(pops, puffs_null, node, remove);
+	PUFFSOP_SET(pops, puffs_null, node, link);
+	PUFFSOP_SET(pops, puffs_null, node, rename);
+	PUFFSOP_SET(pops, puffs_null, node, mkdir);
+	PUFFSOP_SET(pops, puffs_null, node, rmdir);
+	PUFFSOP_SET(pops, puffs_null, node, symlink);
+	PUFFSOP_SET(pops, puffs_null, node, readlink);
+	PUFFSOP_SET(pops, puffs_null, node, readdir);
+	PUFFSOP_SET(pops, puffs_null, node, read);
+	PUFFSOP_SET(pops, puffs_null, node, write);
+	PUFFSOP_SET(pops, puffs_null, node, reclaim);
 }
 
 /*ARGSUSED*/
