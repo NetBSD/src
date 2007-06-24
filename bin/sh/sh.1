@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.86 2007/03/25 06:56:43 apb Exp $
+.\"	$NetBSD: sh.1,v 1.87 2007/06/24 17:57:56 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd March 25, 2007
+.Dd June 24, 2007
 .Os
 .Dt SH 1
 .Sh NAME
@@ -672,6 +672,9 @@ writes
 .Dq baz
 and nothing else.
 This is not the way it works in C.
+Also, if you forget the left-hand side (for example when continuing lines but
+forgetting to use a backslash) it defaults to a true statement.
+This behavior is not useful and should not be relied upon.
 .Ss Flow-Control Constructs -- if, while, for, case
 The syntax of the if command is
 .Bd -literal -offset indent
@@ -775,7 +778,8 @@ This should appear as the first statement of a function, and the syntax is
 .Pp
 .Dl local [ variable | - ] ...
 .Pp
-Local is implemented as a built-in command.
+.Dq Local
+is implemented as a built-in command.
 .Pp
 When a variable is made local, it inherits the initial value and exported
 and read-only flags from the variable with the same name in the surrounding
@@ -1163,7 +1167,7 @@ This section lists the built-in commands which are built-in because they
 need to perform some operation that can't be performed by a separate
 process.
 In addition to these, there are several other commands that may
-be built-in for efficiency (e.g.
+be built in for efficiency (e.g.
 .Xr printf 1 ,
 .Xr echo 1 ,
 .Xr test 1 ,
@@ -1213,7 +1217,9 @@ that guarantees to find all the standard utilities.
 Do not execute the command but
 search for the command and print the resolution of the
 command search.
-This is the same as the type built-in.
+This is the same as the
+.Ic type
+built-in.
 .It Fl v
 Do not execute the command but
 search for the command and print the absolute pathname
@@ -1822,25 +1828,37 @@ The command
 enables emacs-mode editing.
 The command
 .Ql set -o vi
-enables vi-mode editing and places sh into vi insert mode.
+enables vi-mode editing and places the current shell process into
+.Ar vi
+insert mode.
 (See the
 .Sx Argument List Processing
 section above.)
 .Pp
-The vi mode uses commands similar to a subset of those described in the
+The
+.Ar vi
+mode uses commands similar to a subset of those described in the
 .Xr vi 1
 man page.
 With vi-mode
-enabled, sh can be switched between insert mode and command mode.
-It's similar to vi: typing
+enabled,
+.Nm sh
+can be switched between insert mode and command mode.
+It's similar to
+.Xr vi 1 :
+pressing the
 .Aq ESC
-will throw you into command VI command mode.
-Hitting
+key will throw you into command VI command mode.
+Pressing the
 .Aq return
-while in command mode will pass the line to the shell.
+key while in command mode will pass the line to the shell.
 .Pp
-The emacs mode uses commands similar to a subset available in
-the emacs editor.
+The
+.Ar emacs
+mode uses commands similar to a subset available in
+the
+.Xr emacs 1
+editor.
 With emacs-mode enabled, special keys can be used to modify the text
 in the buffer using the control key.
 .Pp
@@ -1865,13 +1883,16 @@ Set automatically by
 from the user's login directory in the password file
 .Pq Xr passwd 5 .
 This environment variable also functions as the default argument for the
-cd built-in.
+.Ic cd
+built-in.
 .It Ev PATH
 The default search path for executables.
 See the above section
 .Sx Path Search .
 .It Ev CDPATH
-The search path used with the cd built-in.
+The search path used with the
+.Ic cd
+built-in.
 .It Ev LANG
 The string used to specify localization information that allows users
 to work with different culture-specific and language conventions.
