@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.64 2007/06/24 18:42:25 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.65 2007/06/24 22:18:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -125,14 +125,16 @@ struct puffs_cn {
  * Puffs options to mount
  */
 /* kernel */
-#define	PUFFSMOPT_CACHE		{ "cache", 1, PUFFS_KFLAG_NOCACHE, 1 }
+#define	PUFFSMOPT_NAMECACHE	{ "namecache", 1, PUFFS_KFLAG_NOCACHE_NAME, 1 }
+#define	PUFFSMOPT_PAGECACHE	{ "pagecache", 1, PUFFS_KFLAG_NOCACHE_PAGE, 1 }
 #define PUFFSMOPT_ALLOPS	{ "allops", 0, PUFFS_KFLAG_ALLOPS, 1 }
 
 /* libpuffs */
 #define PUFFSMOPT_DUMP		{ "dump", 0, PUFFS_FLAG_OPDUMP, 1 }
 
 #define PUFFSMOPT_STD							\
-	PUFFSMOPT_CACHE,						\
+	PUFFSMOPT_NAMECACHE,						\
+	PUFFSMOPT_PAGECACHE,						\
 	PUFFSMOPT_ALLOPS,						\
 	PUFFSMOPT_DUMP
 
