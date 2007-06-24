@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.41 2007/06/21 14:54:49 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.42 2007/06/24 22:16:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -109,7 +109,10 @@ extern int puffsdebug; /* puffs_subr.c */
 #define EXISTSOP(pmp, op) \
  (ALLOPS(pmp) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
 
-#define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
+#define PUFFS_USE_NAMECACHE(pmp)	\
+    (((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE_NAME) == 0)
+#define PUFFS_USE_PAGECACHE(pmp)	\
+    (((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE_PAGE) == 0)
 
 #define PUFFS_WCACHEINFO(pmp)	0
 
