@@ -43,7 +43,6 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
-	$(top_srcdir)/libopts/m4/libtool.m4 \
 	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
@@ -241,7 +240,8 @@ DISTCHECK_CONFIGURE_FLAGS = --with-arlib --enable-local-libopts
 EXTRA_DIST = \
 	COPYRIGHT	\
 	ChangeLog	\
-	ChangeLog-4.1.0 \
+	CommitLog	\
+	CommitLog-4.1.0 \
 	NEWS		\
 	NOTES.y2kfixes	\
 	README.bk	\
@@ -774,11 +774,11 @@ dist-hook:
 	@sleep 1
 	@touch $@
 
-ChangeLog: FRC.ChangeLog
+CommitLog: FRC.CommitLog
 	cd $(srcdir)					\
-	&& /bin/test -e ChangeLog			\
-		-a SCCS/s.ChangeSet -ot ChangeLog	\
-	|| scripts/genChangeLog
+	&& /bin/test -e CommitLog			\
+		-a SCCS/s.ChangeSet -ot CommitLog	\
+	|| scripts/genCommitLog
 
 .buildcvo:
 	echo "$(CVO)" > .buildcvo
@@ -799,7 +799,7 @@ ChangeLog: FRC.ChangeLog
 		echo " "; \
 	fi
 
-FRC.ChangeLog FRC.distwarn FRC.checkcvo FRC.checkhost FRC.version:
+FRC.CommitLog FRC.distwarn FRC.checkcvo FRC.checkhost FRC.version:
 
 # HMS: what was I trying to do with this?
 #dot.emacs: FRC.distwarn

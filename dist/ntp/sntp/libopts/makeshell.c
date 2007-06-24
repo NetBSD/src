@@ -1,16 +1,16 @@
-/*	$NetBSD: makeshell.c,v 1.1.1.1 2007/01/06 16:08:07 kardel Exp $	*/
+/*	$NetBSD: makeshell.c,v 1.1.1.2 2007/06/24 15:51:21 kardel Exp $	*/
 
 
 /*
- *  Id: makeshell.c,v 4.14 2006/10/06 05:29:00 bkorb Exp
- * Time-stamp:      "2006-10-05 20:41:23 bkorb"
+ *  Id: makeshell.c,v 4.20 2007/02/04 17:44:12 bkorb Exp
+ * Time-stamp:      "2007-01-27 06:05:45 bkorb"
  *
  *  This module will interpret the options set in the tOptions
  *  structure and create a Bourne shell script capable of parsing them.
  */
 
 /*
- *  Automated Options copyright 1992-2006 Bruce Korb
+ *  Automated Options copyright 1992-2007 Bruce Korb
  *
  *  Automated Options is free software.
  *  You may redistribute it and/or modify it under the terms of the
@@ -490,7 +490,7 @@ optionParseShell( tOptions* pOpts )
     if ((pzTrailer != NULL) && (*pzTrailer != '\0'))
         fputs( pzTrailer, stdout );
     else if (ENABLED_OPT( SHELL ))
-        printf( "\nenv | egrep %s_\n", pOpts->pzPROGNAME );
+        printf( "\nenv | grep '^%s_'\n", pOpts->pzPROGNAME );
 
     fflush( stdout );
     fchmod( STDOUT_FILENO, 0755 );
@@ -547,6 +547,10 @@ textToVariable( tOptions* pOpts, teTextTo whichVar, tOptDesc* pOD )
             exit( EXIT_FAILURE );
 
         case TT_VERSION:
+            if (pOD->fOptState & OPTST_ALLOC_ARG) {
+                AGFREE(pOD->optArg.argString);
+                pOD->fOptState &= ~OPTST_ALLOC_ARG;
+            }
             pOD->optArg.argString = "c";
             optionPrintVersion( pOpts, pOD );
             /* NOTREACHED */
@@ -616,7 +620,7 @@ emitUsage( tOptions* pOpts )
         {
             time_t    curTime = time( NULL );
             struct tm*  pTime = localtime( &curTime );
-            strftime( zTimeBuf, AO_NAME_SIZE, "%A %B %e, %Y at %r %Z", pTime );
+            strftime(zTimeBuf, AO_NAME_SIZE, "%A %B %e, %Y at %r %Z", pTime );
         }
 
         if (HAVE_OPT( SCRIPT ))
@@ -948,7 +952,7 @@ openOutput( char const* pzFile )
 
     do  {
         char*    pzScan;
-        uint32_t sizeLeft;
+        size_t sizeLeft;
 
         /*
          *  IF we cannot stat the file,
@@ -966,7 +970,7 @@ openOutput( char const* pzFile )
             exit( EXIT_FAILURE );
         }
 
-        pzData = (char*)malloc( (unsigned)(stbf.st_size + 1) );
+        pzData = AGALOC(stbf.st_size + 1, "file data");
         fp = fopen( pzFile, "r" FOPEN_BINARY_FLAG );
 
         sizeLeft = (unsigned)stbf.st_size;
@@ -976,7 +980,7 @@ openOutput( char const* pzFile )
          *  Read in all the data as fast as our OS will let us.
          */
         for (;;) {
-            int inct = fread( (void*)pzScan, 1, sizeLeft, fp );
+            int inct = fread( (void*)pzScan, (size_t)1, sizeLeft, fp);
             if (inct == 0)
                 break;
 

@@ -40,7 +40,6 @@ subdir = libopts
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
-	$(top_srcdir)/libopts/m4/libtool.m4 \
 	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
@@ -218,7 +217,7 @@ MAINTAINERCLEANFILES = Makefile.in
 @INSTALL_LIBOPTS_FALSE@noinst_LTLIBRARIES = libopts.la
 libopts_la_SOURCES = libopts.c
 libopts_la_CPPFLAGS = -I$(top_srcdir)
-libopts_la_LDFLAGS = -version-info  27:5:3
+libopts_la_LDFLAGS = -version-info  29:0:4
 EXTRA_DIST = \
     COPYING.lgpl            COPYING.mbsd            MakeDefs.inc  \
     README                  autoopts/options.h      autoopts/usage-txt.h  \
