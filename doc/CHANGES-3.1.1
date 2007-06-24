@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.47 2007/06/23 19:51:44 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.48 2007/06/24 19:46:10 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -349,4 +349,18 @@ sys/kern/vfs_syscalls.c				patch
 	Prevent users to rename a file to a veriexec protected file and to run
 	unfingerprinted files at strict level two or above.
 	[blymn, ticket #1471]
+
+dist/file/					synced with HEAD on 20070615
+distrib/sets/lists/base/shl.elf			1.222
+distrib/sets/lists/base/shl.mi			1.375 via patch
+lib/Makefile					1.108 via patch
+lib/libmagic/Makefile				1.5
+lib/libmagic/config.h				patch
+lib/libmagic/shlib_version			1.3-1.4
+tools/file/Makefile				1.4
+usr.bin/file/Makefile				1.51-1.53
+
+	Update file(1) to version 4.21, including security fixes (CVE-2007-1536
+	and CVE-2007-2799).
+	[pooka, ticket #1804]
 
