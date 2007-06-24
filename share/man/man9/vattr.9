@@ -1,4 +1,4 @@
-.\"     $NetBSD: vattr.9,v 1.7 2003/04/16 13:35:35 wiz Exp $
+.\"     $NetBSD: vattr.9,v 1.8 2007/06/24 22:49:44 rumble Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 21, 2001
+.Dd June 24, 2007
 .Dt VATTR 9
 .Os
 .Sh NAME
@@ -69,6 +69,7 @@ struct vattr {
         struct timespec va_atime;       /* time of last access */
         struct timespec va_mtime;       /* time of last modification */
         struct timespec va_ctime;       /* time file changed */
+        struct timespec va_birthtime;   /* time file created */
         u_long          va_gen;         /* generation number of file */
         u_long          va_flags;       /* flags defined for file */
         dev_t           va_rdev;        /* device the special file represents */
