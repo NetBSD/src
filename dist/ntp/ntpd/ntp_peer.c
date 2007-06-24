@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.4 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.5 2007/06/24 16:55:14 kardel Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -532,7 +532,17 @@ void
 set_peerdstadr(struct peer *peer, struct interface *interface)
 {
 	if (peer->dstadr != interface) {
-		struct interface *prev_dstadr = peer->dstadr;
+		if (interface != NULL &&
+		    (peer->cast_flags & MDF_BCLNT) &&
+		    (interface->flags & INT_MCASTIF) &&
+		    peer->burst) {
+			/*
+			 * don't accept updates to a true multicast reception
+			 * interface while a BCLNT peer is running it's
+			 * unicast protocol
+			 */
+			return;
+		}
 
 		if (peer->dstadr != NULL)
 		{
@@ -546,16 +556,6 @@ set_peerdstadr(struct peer *peer, struct interface *interface)
 			    (interface != NULL) ? stoa(&interface->sin) : "<null>"));
 
 		peer->dstadr = interface;
-
-		if (prev_dstadr != NULL) {
-			/*
-			 * reset crypto information if we change from an
-			 * active interface
-			 * all other crypto updates are handled by the crypto
-			 * machinery
-			 */
-			peer_crypto_clear(peer);
-		}
 
 		if (peer->dstadr != NULL)
 		{
@@ -571,7 +571,7 @@ set_peerdstadr(struct peer *peer, struct interface *interface)
 static void
 peer_refresh_interface(struct peer *peer)
 {
-	struct interface *niface;
+	struct interface *niface, *piface;
 
 	niface = select_peerinterface(peer, &peer->srcadr, NULL, peer->cast_flags);
 
@@ -609,9 +609,18 @@ peer_refresh_interface(struct peer *peer)
 	}
 #endif
 
+	piface = peer->dstadr;
+
 	set_peerdstadr(peer, niface);
 
 	if (peer->dstadr) {
+                /*
+                 * clear crypto if we change the local address
+                 */
+                if (peer->dstadr != piface && !(peer->cast_flags & MDF_BCLNT)) {
+			peer_crypto_clear(peer);
+		}
+
 		/*
 	 	 * Broadcast needs the socket enabled for broadcast
 	 	 */
@@ -674,10 +683,10 @@ select_peerinterface(struct peer *peer, struct sockaddr_storage *srcadr, struct 
 #ifdef DEBUG
 			if (debug > 3) {
 				if (interface != NULL)
-					printf("Found broadcast interface address %s, for address %s\n",
+					printf("Found *-cast interface address %s, for address %s\n",
 					       stoa(&(interface)->sin), stoa(srcadr));
 				else
-					printf("No broadcast local address found for address %s\n",
+					printf("No *-cast local address found for address %s\n",
 					       stoa(srcadr));
 			}
 #endif
