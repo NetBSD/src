@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.14 2007/06/06 01:55:01 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.15 2007/06/24 17:41:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.14 2007/06/06 01:55:01 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.15 2007/06/24 17:41:09 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -102,11 +102,11 @@ writeableopen(const char *path)
 	if (fd == -1) {
 		if (errno == EACCES) {
 			if (stat(path, &sb) == -1)
-				return errno;
+				return -1;
 			origmode = sb.st_mode & ALLPERMS;
 
 			if (chmod(path, 0200) == -1)
-				return errno;
+				return -1;
 
 			fd = open(path, O_WRONLY);
 			if (fd == -1)
@@ -116,7 +116,7 @@ writeableopen(const char *path)
 			if (sverr)
 				errno = sverr;
 		} else
-			return errno;
+			return -1;
 	}
 
 	return fd;
