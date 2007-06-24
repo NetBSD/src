@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.9 2007/06/20 21:11:26 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.10 2007/06/24 18:43:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-PUFFSOP_PROTOS(puffs_null) /* XXX */
 PUFFSOP_PROTOS(rot13)
 
 static void usage(void);
@@ -121,29 +120,11 @@ main(int argc, char *argv[])
 		errx(1, "%s is not a directory", argv[0]);
 
 	PUFFSOP_INIT(pops);
-
-	PUFFSOP_SET(pops, puffs_null, fs, statvfs);
-	PUFFSOP_SETFSNOP(pops, unmount);
-	PUFFSOP_SETFSNOP(pops, sync);
+	puffs_null_setops(pops);
 
 	PUFFSOP_SET(pops, rot13, node, readdir);
 	PUFFSOP_SET(pops, rot13, node, read);
 	PUFFSOP_SET(pops, rot13, node, write);
-
-	PUFFSOP_SET(pops, puffs_null, node, lookup);
-	PUFFSOP_SET(pops, puffs_null, node, create);
-	PUFFSOP_SET(pops, puffs_null, node, mknod);
-	PUFFSOP_SET(pops, puffs_null, node, getattr);
-	PUFFSOP_SET(pops, puffs_null, node, setattr);
-	PUFFSOP_SET(pops, puffs_null, node, fsync);
-	PUFFSOP_SET(pops, puffs_null, node, remove);
-	PUFFSOP_SET(pops, puffs_null, node, link);
-	PUFFSOP_SET(pops, puffs_null, node, rename);
-	PUFFSOP_SET(pops, puffs_null, node, mkdir);
-	PUFFSOP_SET(pops, puffs_null, node, rmdir);
-	PUFFSOP_SET(pops, puffs_null, node, symlink);
-	PUFFSOP_SET(pops, puffs_null, node, readlink);
-	PUFFSOP_SET(pops, puffs_null, node, reclaim);
 
 	if ((pu = puffs_init(pops, "rot13", NULL, pflags)) == NULL)
 		err(1, "mount");
