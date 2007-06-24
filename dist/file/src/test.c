@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.2 2005/02/21 15:00:05 pooka Exp $	*/
+/*	$NetBSD: test.c,v 1.2.4.1 2007/06/24 19:43:42 ghen Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -41,19 +41,19 @@ main(int argc, char **argv)
 
     ms = magic_open(MAGIC_NONE);
     if (ms == NULL) {
-	printf("ERROR: out of memory\n");
+	(void) printf("ERROR: out of memory\n");
 	return 1;
     }
     if (magic_load(ms, NULL) == -1) {
-	printf("ERROR: %s\n", magic_error(ms));
+	(void) printf("ERROR: %s\n", magic_error(ms));
 	return 1;
     }
 
     for (i = 1; i < argc; i++) {
 	if ((m = magic_file(ms, argv[i])) == NULL)
-	    printf("ERROR: %s\n", magic_error(ms));
+	    (void) printf("ERROR: %s\n", magic_error(ms));
 	else
-	    printf("%s: %s\n", argv[i], m);
+	    (void) printf("%s: %s\n", argv[i], m);
     }
 
     magic_close(ms);
