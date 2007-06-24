@@ -1,5 +1,4 @@
-/*	$NetBSD: apptype.c,v 1.1.1.5 2005/02/21 14:33:36 pooka Exp $	*/
-
+/*	$NetBSD: apptype.c,v 1.1.1.5.4.1 2007/06/24 19:43:36 ghen Exp $	*/
 
 /*
  * Adapted from: apptype.c, Written by Eberhard Mattes and put into the
@@ -36,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: apptype.c,v 1.6 2003/11/11 20:01:45 christos Exp")
+FILE_RCSID("@(#)$File: apptype.c,v 1.7 2007/01/12 17:38:27 christos Exp $")
 #else
-__RCSID("$NetBSD: apptype.c,v 1.1.1.5 2005/02/21 14:33:36 pooka Exp $");
+__RCSID("$NetBSD: apptype.c,v 1.1.1.5.4.1 2007/06/24 19:43:36 ghen Exp $");
 #endif
 #endif /* lint */
 
