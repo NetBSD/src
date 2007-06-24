@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.3 2007/06/24 18:57:26 pooka Exp $	*/
+/*	$NetBSD: icfs.c,v 1.4 2007/06/24 22:18:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,9 +35,10 @@
  * name in lookup and store the actual lower layer name instead of
  * the mangled name.
  *
- * This is mounted nocache now (to disable the namecache since a
- * separate switch doesn't exist).  Otherwise we might have
- * two different nodes for e.g. FoO and foo.
+ * This is mounted without namecache.  Otherwise we might have
+ * two different nodes for e.g. FoO and foo.  It might be possible
+ * support name cache by having all namespace-altering operations
+ * flush the directory namecache ...
  */
 
 #include <sys/types.h>
@@ -171,7 +172,7 @@ main(int argc, char *argv[])
 		}
 	}
 	pflags |= PUFFS_FLAG_BUILDPATH;
-	pflags |= PUFFS_KFLAG_NOCACHE;
+	pflags |= PUFFS_KFLAG_NOCACHE_NAME;
 	argv += optind;
 	argc -= optind;
 
