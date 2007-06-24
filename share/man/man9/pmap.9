@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.32 2006/12/18 00:41:21 simonb Exp $
+.\"	$NetBSD: pmap.9,v 1.33 2007/06/24 19:26:58 rumble Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -266,7 +266,8 @@ supplying referenced information for a page is not feasible, then the
 .Nm
 implementation should always consider the
 .Dq referenced
-attribute to be FALSE.
+attribute to be
+.Dv false .
 .Pp
 The
 .Dq modified
@@ -597,10 +598,14 @@ including KSEG-style direct-mapped kernel addresses.
 .Pp
 The
 .Fn pmap_extract
-function returns FALSE if a mapping for
+function returns
+.Dv false
+if a mapping for
 .Fa va
 does not exist.
-Otherwise, it returns TRUE and places the physical address mapped at
+Otherwise, it returns
+.Dv true
+and places the physical address mapped at
 .Fa va
 into
 .Fa *pap
@@ -817,7 +822,11 @@ attribute on the page
 .Pp
 The
 .Fn pmap_clear_modify
-function returns TRUE or FALSE indicating whether or not the
+function returns
+.Dv true
+or
+.Dv false
+indicating whether or not the
 .Dq modified
 attribute was set on the page before it was cleared.
 .Pp
@@ -830,7 +839,11 @@ attribute on the page
 .Pp
 The
 .Fn pmap_clear_reference
-function returns TRUE or FALSE indicating whether or not the
+function returns
+.Dv true
+or
+.Dv false
+indicating whether or not the
 .Dq referenced
 attribute was set on the page before it was cleared.
 .Pp

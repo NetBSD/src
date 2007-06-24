@@ -1,4 +1,4 @@
-.\"	$NetBSD: altq.9,v 1.13 2006/10/14 07:31:41 wiz Exp $
+.\"	$NetBSD: altq.9,v 1.14 2007/06/24 19:26:58 rumble Exp $
 .\"	$OpenBSD: altq.9,v 1.4 2001/07/12 12:41:42 itojun Exp $
 .\"
 .\" Copyright (C) 2001
@@ -356,7 +356,7 @@ checks only if there is any packet stored in the queue.
 Another difference is that even when
 .Fn IFQ_IS_EMPTY
 is
-.Dv FALSE ,
+.Dv false ,
 .Fn IFQ_DEQUEUE
 could still return
 .Dv NULL
@@ -372,7 +372,7 @@ or not.
 Note that even when
 .Fn IFQ_IS_EMPTY
 is
-.Dv FALSE ,
+.Dv false ,
 .Fn IFQ_DEQUEUE
 could return
 .Dv NULL
