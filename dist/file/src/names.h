@@ -1,4 +1,4 @@
-/*	$NetBSD: names.h,v 1.2 2005/02/21 15:00:05 pooka Exp $	*/
+/*	$NetBSD: names.h,v 1.2.6.1 2007/06/24 19:45:36 ghen Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -34,7 +34,7 @@
  * appear at fixed offsets into the file. Don't make HOWMANY
  * too high unless you have a very fast CPU.
  *
- * Id: names.h,v 1.25 2004/09/11 19:15:57 christos Exp
+ * $File: names.h,v 1.27 2007/05/08 16:47:03 christos Exp $
  */
 
 /*
@@ -169,6 +169,8 @@ static struct names {
 	{".text",	L_MACH},
 	{"clr",		L_MACH},
 	{"(input,",	L_PAS},
+	{"program",	L_PAS},
+	{"record",	L_PAS},
 	{"dcl",		L_PLI},
 	{"Received:",	L_MAIL},
 	{">From",	L_MAIL},
