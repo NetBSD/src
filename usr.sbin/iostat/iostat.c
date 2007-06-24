@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.50 2006/07/26 03:33:02 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.51 2007/06/24 23:25:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.50 2006/07/26 03:33:02 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.51 2007/06/24 23:25:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,12 +100,12 @@ static int	winlines = 20;
 static int	wincols = 80;
 
 #define	ISSET(x, a)	((x) & (a))
-#define	SHOW_CPU	1<<0
-#define	SHOW_TTY	1<<1
-#define	SHOW_STATS_1	1<<2
-#define	SHOW_STATS_2	1<<3
-#define	SHOW_STATS_X	1<<4
-#define	SHOW_TOTALS	1<<7
+#define	SHOW_CPU	(1<<0)
+#define	SHOW_TTY	(1<<1)
+#define	SHOW_STATS_1	(1<<2)
+#define	SHOW_STATS_2	(1<<3)
+#define	SHOW_STATS_X	(1<<4)
+#define	SHOW_TOTALS	(1<<7)
 #define	SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 | SHOW_STATS_X)
 
 static void cpustats(void);
