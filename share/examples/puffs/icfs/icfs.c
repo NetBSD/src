@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.2 2007/06/24 18:43:30 pooka Exp $	*/
+/*	$NetBSD: icfs.c,v 1.3 2007/06/24 18:57:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,7 @@ dotolower(char *buf, size_t buflen)
 {
 
 	while (buflen--) {
-		*buf = tolower((int)*buf);
+		*buf = tolower((unsigned char)*buf);
 		buf++;
 	}
 }
