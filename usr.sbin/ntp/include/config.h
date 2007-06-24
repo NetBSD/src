@@ -721,6 +721,9 @@
 /* Define to 1 if you have the `sysctl' function. */
 #define HAVE_SYSCTL 1
 
+/* Define to 1 if you have the <sysexits.h> header file. */
+#define HAVE_SYSEXITS_H 1
+
 /* Define to 1 if you have the <sys/audioio.h> header file. */
 #define HAVE_SYS_AUDIOIO_H 1
 
@@ -1077,6 +1080,9 @@
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
 
+/* Define this if optional arguments are disallowed */
+/* #undef NO_OPTIONAL_OPT_ARGS */
+
 /* Should we avoid #warning on option name collisions? */
 /* #undef NO_OPTION_NAME_WARNINGS */
 
@@ -1121,13 +1127,13 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.4"
+#define PACKAGE_STRING "ntp 4.2.4p2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.4"
+#define PACKAGE_VERSION "4.2.4p2"
 
 /* Do we have the ppsclock streams module? */
 /* #undef PPS */
@@ -1253,7 +1259,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.4"
+#define VERSION "4.2.4p2"
 
 /* ISC: Want IPv6? */
 /* #define WANT_IPV6  */
