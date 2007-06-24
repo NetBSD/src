@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.45 2006/08/25 11:00:40 liamjfoy Exp $ */
+/* $NetBSD: rm.c,v 1.46 2007/06/24 17:59:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.45 2006/08/25 11:00:40 liamjfoy Exp $");
+__RCSID("$NetBSD: rm.c,v 1.46 2007/06/24 17:59:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -516,7 +516,7 @@ check(char *path, char *name, struct stat *sp)
 			    " be overwritten", path);
 			return 0;
 		}
-		(void)fprintf(stderr, "override %s%s%s/%s for '%s'? ",
+		(void)fprintf(stderr, "override %s%s%s:%s for '%s'? ",
 		    modep + 1, modep[9] == ' ' ? "" : " ",
 		    user_from_uid(sp->st_uid, 0),
 		    group_from_gid(sp->st_gid, 0), path);
