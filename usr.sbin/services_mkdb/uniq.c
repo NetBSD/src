@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.2 2007/06/23 16:56:56 christos Exp $	*/
+/*	$NetBSD: uniq.c,v 1.3 2007/06/24 19:51:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: uniq.c,v 1.2 2007/06/23 16:56:56 christos Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.3 2007/06/24 19:51:43 christos Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -106,10 +106,10 @@ uniq(const char *fname)
 
 /*
  * normalize whitespace in the original line and place a new string
- * with whitespace converted to a single space in compline If the line
+ * with whitespace converted to a single space in compline. If the line
  * contains just comments, we preserve them. If it contains data and
  * comments, we kill the comments. Return 1 if the line had actual
- * contents, or 0 if it was just a comment.
+ * contents, or 0 if it was just a comment without alphanumeric characters.
  */
 static int
 comp(const char *origline, char **compline, size_t *len)
@@ -118,42 +118,44 @@ comp(const char *origline, char **compline, size_t *len)
 	unsigned char *q;
 	char *cline;
 	size_t l = *len, complen;
-	int iscomment, hasalnum;
+	int hasalnum, iscomment;
 
+	/* Eat leading space */
 	for (p = (const unsigned char *)origline; l && *p && isspace(*p);
 	    p++, l--)
 		continue;
 	cline = emalloc(l + 1);
 	(void)memcpy(cline, p, l);
 	cline[l] = '\0';
-	if (*cline == '\0') {
-		*len = l;
-		*compline = cline;
+	if (*cline == '\0')
 		return 0;
-	}
 
 	complen = 0;
-	iscomment = 0;
 	hasalnum = 0;
+	iscomment = 0;
+
 	for (q = (unsigned char *)cline; l && *p; p++, l--) {
 		if (isspace(*p)) {
-			if (isspace(*q))
+			if (complen && isspace(q[-1]))
 				continue;
-			else
-				*q++ = ' ';
+			*q++ = ' ';
+			complen++;
 		} else {
-			if (*p == '#') {
-				if (hasalnum) {
-					*q++ = '\0';
-					complen++;
+			if (!iscomment && *p == '#') {
+				if (hasalnum)
 					break;
-				}
 				iscomment = 1;
 			} else
 				hasalnum |= isalnum(*p);
+			*q++ = *p;
+			complen++;
 		}
-		*q++ = *p;
-		complen++;
+	}
+
+	/* Eat trailing space */
+	while (complen && isspace(q[-1])) {
+		--q;
+		--complen;
 	}
 	*q = '\0';
 	*compline = cline;
