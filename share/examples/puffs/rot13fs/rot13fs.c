@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.10 2007/06/24 18:43:30 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.11 2007/06/24 18:59:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,8 +28,13 @@
 /*
  * rot13fs: puffs layering experiment
  * (unfinished, as is probably fairly easy to tell)
+ *
+ * This also demonstrates how namemod can be easily set to any
+ * function which reverses itself (argument -f provides a case-flipping
+ * file system).
  */
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <puffs.h>
@@ -49,6 +54,8 @@ usage()
 	    getprogname());
 }
 
+static void (*flipflop)(void *, size_t);
+
 static uint8_t tbl[256];
 
 static void
@@ -62,12 +69,24 @@ dorot13(void *buf, size_t buflen)
 	}
 }
 
+static void
+docase(void *buf, size_t buflen)
+{
+	unsigned char *b = buf;
+
+	while (buflen--) {
+		if (isalpha(*b))
+			*b ^= 0x20;
+		b++;
+	}
+}
+
 static int
 rot13path(struct puffs_usermount *pu, struct puffs_pathobj *base,
 	struct puffs_cn *pcn)
 {
 
-	dorot13(pcn->pcn_name, pcn->pcn_namelen);
+	flipflop(pcn->pcn_name, pcn->pcn_namelen);
 
 	return 0;
 }
@@ -90,9 +109,13 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
+	flipflop = dorot13;
 	pflags = lflags = mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:s")) != -1) {
+	while ((ch = getopt(argc, argv, "fo:s")) != -1) {
 		switch (ch) {
+		case 'f':
+			flipflop = docase;
+			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
@@ -175,7 +198,7 @@ rot13_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		return rv;
 
 	while (rl > *reslen) {
-		dorot13((uint8_t *)dp->d_name, dp->d_namlen);
+		flipflop((uint8_t *)dp->d_name, dp->d_namlen);
 		rl -= _DIRENT_SIZE(dp);
 		dp = _DIRENT_NEXT(dp);
 	}
@@ -195,7 +218,7 @@ rot13_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	if (rv)
 		return rv;
 
-	dorot13(prebuf, preres - *resid);
+	flipflop(prebuf, preres - *resid);
 
 	return rv;
 }
@@ -205,6 +228,6 @@ rot13_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
 
-	dorot13(buf, *resid);
+	flipflop(buf, *resid);
 	return puffs_null_node_write(pcc, opc, buf, offset, resid, pcr, ioflag);
 }
