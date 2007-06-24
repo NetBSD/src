@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.63 2007/06/24 17:55:07 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.64 2007/06/24 18:42:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -357,6 +357,8 @@ enum {
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
+PUFFSOP_PROTOS(puffs_null)	/* XXX */
+
 #define PUFFS_DEVEL_LIBVERSION 20
 #define puffs_init(a,b,c,d) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
@@ -445,6 +447,8 @@ void			*puffs_pn_nodewalk(struct puffs_usermount *,
 
 void			puffs_setvattr(struct vattr *, const struct vattr *);
 void			puffs_vattr_null(struct vattr *);
+
+void			puffs_null_setops(struct puffs_ops *);
 
 /*
  * generic/dummy routines applicable for some file systems
