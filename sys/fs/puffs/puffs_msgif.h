@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.33 2007/06/06 01:55:00 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.34 2007/06/24 22:16:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -83,7 +83,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	10
+#define PUFFSVERSION	11
 #define PUFFSNAMESIZE	32
 struct puffs_kargs {
 	unsigned int	pa_vers;
@@ -106,12 +106,12 @@ struct puffs_kargs {
 	char		pa_name[PUFFSNAMESIZE+1];   /* name for puffs type */
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
 };
-#define PUFFS_KFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
-#define PUFFS_KFLAG_NOCACHE	0x02	/* flush page cache immediately	*/
-#define PUFFS_KFLAG_ALLOPS	0x04	/* ignore pa_vnopmask, send all */
-#define PUFFS_KFLAG_WTCACHE	0x08	/* page cache is write-through  */
-#define PUFFS_KFLAG_IAONDEMAND	0x10	/* call inactive only on demand */
-#define PUFFS_KFLAG_MASK	0x1f
+#define PUFFS_KFLAG_NOCACHE_NAME	0x01	/* don't use name cache     */
+#define PUFFS_KFLAG_NOCACHE_PAGE	0x02	/* don't use page cache	    */
+#define PUFFS_KFLAG_ALLOPS		0x04	/* ignore pa_vnopmask       */
+#define PUFFS_KFLAG_WTCACHE		0x08	/* write-through page cache */
+#define PUFFS_KFLAG_IAONDEMAND		0x10	/* inactive only on demand  */
+#define PUFFS_KFLAG_MASK		0x1f
 
 #define PUFFS_FHFLAG_DYNAMIC	0x01
 #define PUFFS_FHFLAG_NFSV2	0x02
