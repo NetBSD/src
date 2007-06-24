@@ -78,13 +78,13 @@ $(srcdir)/ntpd-opts.texi $(srcdir)/ntpd-opts.menu: $(srcdir)/ntpd-opts.def $(src
 	$(run_ag) -Taginfo.tpl -DLEVEL=section ntpd-opts.def
 
 $(srcdir)/ntpdsim-opts.h: $(srcdir)/ntpdsim-opts.c
-$(srcdir)/ntpdsim-opts.c: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
+$(srcdir)/ntpdsim-opts.c: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list) $(top_srcdir)/include/homerc.def
 	$(run_ag) ntpdsim-opts.def
 
-$(srcdir)/ntpdsim.1: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
+$(srcdir)/ntpdsim.1: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list) $(top_srcdir)/include/homerc.def
 	$(run_ag) -Tagman1.tpl -bntpdsim ntpdsim-opts.def
 
-$(srcdir)/ntpdsim-opts.texi $(srcdir)/ntpdsim-opts.menu: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list)
+$(srcdir)/ntpdsim-opts.texi $(srcdir)/ntpdsim-opts.menu: $(srcdir)/ntpdsim-opts.def $(srcdir)/ntpdbase-opts.def $(std_def_list) $(top_srcdir)/include/homerc.def
 	$(run_ag) -Taginfo.tpl -DLEVEL=section ntpdsim-opts.def
 
 $(PROGRAMS): $(LDADD)
