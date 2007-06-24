@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.32 2007/05/24 18:47:08 christos Exp $ */
+/* $NetBSD: test.c,v 1.33 2007/06/24 18:54:58 christos Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.32 2007/05/24 18:47:08 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.33 2007/06/24 18:54:58 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -21,6 +21,7 @@ __RCSID("$NetBSD: test.c,v 1.32 2007/05/24 18:47:08 christos Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -160,6 +161,7 @@ static int aexpr(enum token);
 static int nexpr(enum token);
 static int primary(enum token);
 static int binop(void);
+static int test_access(struct stat *, mode_t);
 static int filstat(char *, enum token);
 static enum token t_lex(char *);
 static int isoperand(void);
@@ -170,6 +172,7 @@ static int equalf(const char *, const char *);
 
 #if defined(SHELL)
 extern void error(const char *, ...) __attribute__((__noreturn__));
+extern void *ckmalloc(size_t);
 #else
 static void error(const char *, ...) __attribute__((__noreturn__));
 
@@ -182,6 +185,17 @@ error(const char *msg, ...)
 	verrx(2, msg, ap);
 	/*NOTREACHED*/
 	va_end(ap);
+}
+
+static void *ckmalloc(size_t);
+static void *
+ckmalloc(size_t nbytes)
+{
+	void *p = malloc(nbytes);
+
+	if (!p)
+		error("Not enough memory!");
+	return p;
 }
 #endif
 
@@ -356,6 +370,168 @@ binop(void)
 	}
 }
 
+/*
+ * The manual, and IEEE POSIX 1003.2, suggests this should check the mode bits,
+ * not use access():
+ *
+ *	True shall indicate only that the write flag is on.  The file is not
+ *	writable on a read-only file system even if this test indicates true.
+ *
+ * Unfortunately IEEE POSIX 1003.1-2001, as quoted in SuSv3, says only:
+ *
+ *	True shall indicate that permission to read from file will be granted,
+ *	as defined in "File Read, Write, and Creation".
+ *
+ * and that section says:
+ *
+ *	When a file is to be read or written, the file shall be opened with an
+ *	access mode corresponding to the operation to be performed.  If file
+ *	access permissions deny access, the requested operation shall fail.
+ *
+ * and of course access permissions are described as one might expect:
+ *
+ *     * If a process has the appropriate privilege:
+ *
+ *        * If read, write, or directory search permission is requested,
+ *          access shall be granted.
+ *
+ *        * If execute permission is requested, access shall be granted if
+ *          execute permission is granted to at least one user by the file
+ *          permission bits or by an alternate access control mechanism;
+ *          otherwise, access shall be denied.
+ *
+ *   * Otherwise:
+ *
+ *        * The file permission bits of a file contain read, write, and
+ *          execute/search permissions for the file owner class, file group
+ *          class, and file other class.
+ *
+ *        * Access shall be granted if an alternate access control mechanism
+ *          is not enabled and the requested access permission bit is set for
+ *          the class (file owner class, file group class, or file other class)
+ *          to which the process belongs, or if an alternate access control
+ *          mechanism is enabled and it allows the requested access; otherwise,
+ *          access shall be denied.
+ *
+ * and when I first read this I thought:  surely we can't go about using
+ * open(O_WRONLY) to try this test!  However the POSIX 1003.1-2001 Rationale
+ * section for test does in fact say:
+ *
+ *	On historical BSD systems, test -w directory always returned false
+ *	because test tried to open the directory for writing, which always
+ *	fails.
+ *
+ * and indeed this is in fact true for Seventh Edition UNIX, UNIX 32V, and UNIX
+ * System III, and thus presumably also for BSD up to and including 4.3.
+ *
+ * Secondly I remembered why using open() and/or access() are bogus.  They
+ * don't work right for detecting read and write permissions bits when called
+ * by root.
+ *
+ * Interestingly the 'test' in 4.4BSD was closer to correct (as per
+ * 1003.2-1992) and it was implemented efficiently with stat() instead of
+ * open().
+ *
+ * This was apparently broken in NetBSD around about 1994/06/30 when the old
+ * 4.4BSD implementation was replaced with a (arguably much better coded)
+ * implementation derived from pdksh.
+ *
+ * Note that modern pdksh is yet different again, but still not correct, at
+ * least not w.r.t. 1003.2-1992.
+ *
+ * As I think more about it and read more of the related IEEE docs I don't like
+ * that wording about 'test -r' and 'test -w' in 1003.1-2001 at all.  I very
+ * much prefer the original wording in 1003.2-1992.  It is much more useful,
+ * and so that's what I've implemented.
+ *
+ * (Note that a strictly conforming implementation of 1003.1-2001 is in fact
+ * totally useless for the case in question since its 'test -w' and 'test -r'
+ * can never fail for root for any existing files, i.e. files for which 'test
+ * -e' succeeds.)
+ * 
+ * The rationale for 1003.1-2001 suggests that the wording was "clarified" in
+ * 1003.1-2001 to align with the 1003.2b draft.  1003.2b Draft 12 (July 1999),
+ * which is the latest copy I have, does carry the same suggested wording as is
+ * in 1003.1-2001, with its rationale saying:
+ * 
+ * 	This change is a clarification and is the result of interpretation
+ * 	request PASC 1003.2-92 #23 submitted for IEEE Std 1003.2-1992.
+ * 
+ * That interpretation can be found here:
+ * 
+ *   http://www.pasc.org/interps/unofficial/db/p1003.2/pasc-1003.2-23.html
+ * 
+ * Not terribly helpful, unfortunately.  I wonder who that fence sitter was.
+ * 
+ * Worse, IMVNSHO, I think the authors of 1003.2b-D12 have mis-interpreted the
+ * PASC interpretation and appear to be gone against at least one widely used
+ * implementation (namely 4.4BSD).  The problem is that for file access by root
+ * this means that if test '-r' and '-w' are to behave as if open() were called
+ * then there's no way for a shell script running as root to check if a file
+ * has certain access bits set other than by the grotty means of interpreting
+ * the output of 'ls -l'.  This was widely considered to be a bug in V7's
+ * "test" and is, I believe, one of the reasons why direct use of access() was
+ * avoided in some more recent implementations!
+ * 
+ * I have always interpreted '-r' to match '-w' and '-x' as per the original
+ * wording in 1003.2-1992, not the other way around.  I think 1003.2b goes much
+ * too far the wrong way without any valid rationale and that it's best if we
+ * stick with 1003.2-1992 and test the flags, and not mimic the behaviour of
+ * open() since we already know very well how it will work -- existance of the
+ * file is all that matters to open() for root.
+ * 
+ * Unfortunately the SVID is no help at all (which is, I guess, partly why
+ * we're in this mess in the first place :-).
+ * 
+ * The SysV implementation (at least in the 'test' builtin in /bin/sh) does use
+ * access(name, 2) even though it also goes to much greater lengths for '-x'
+ * matching the 1003.2-1992 definition (which is no doubt where that definition
+ * came from).
+ *
+ * The ksh93 implementation uses access() for '-r' and '-w' if
+ * (euid==uid&&egid==gid), but uses st_mode for '-x' iff running as root.
+ * i.e. it does strictly conform to 1003.1-2001 (and presumably 1003.2b).
+ */
+static int
+test_access(struct stat *sp, mode_t stmode)
+{
+	gid_t *groups; 
+	register int n;
+	uid_t euid;
+	int maxgroups;
+
+	/*
+	 * I suppose we could use access() if not running as root and if we are
+	 * running with ((euid == uid) && (egid == gid)), but we've already
+	 * done the stat() so we might as well just test the permissions
+	 * directly instead of asking the kernel to do it....
+	 */
+	euid = geteuid();
+	if (euid == 0)				/* any bit is good enough */
+		stmode = (stmode << 6) | (stmode << 3) | stmode;
+ 	else if (sp->st_uid == euid)
+		stmode <<= 6;
+	else if (sp->st_gid == getegid())
+		stmode <<= 3;
+	else {
+		/* XXX stolen almost verbatim from ksh93.... */
+		/* on some systems you can be in several groups */
+		if ((maxgroups = getgroups(0, NULL)) <= 0)
+			maxgroups = NGROUPS_MAX;	/* pre-POSIX system? */
+		groups = ckmalloc((maxgroups + 1) * sizeof(gid_t));
+		n = getgroups(maxgroups, groups);
+		while (--n >= 0) {
+			if (groups[n] == sp->st_gid) {
+				stmode <<= 3;
+				break;
+			}
+		}
+		free(groups);
+	}
+
+	return sp->st_mode & stmode;
+}
+
 static int
 filstat(char *nm, enum token mode)
 {
@@ -366,13 +542,13 @@ filstat(char *nm, enum token mode)
 
 	switch (mode) {
 	case FILRD:
-		return access(nm, R_OK) == 0;
+		return test_access(&s, S_IROTH);
 	case FILWR:
-		return access(nm, W_OK) == 0;
+		return test_access(&s, S_IWOTH);
 	case FILEX:
-		return access(nm, X_OK) == 0;
+		return test_access(&s, S_IXOTH);
 	case FILEXIST:
-		return access(nm, F_OK) == 0;
+		return 1; /* the successful lstat()/stat() is good enough */
 	case FILREG:
 		return S_ISREG(s.st_mode);
 	case FILDIR:
