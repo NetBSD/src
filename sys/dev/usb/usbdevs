@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.474 2007/06/24 09:46:29 itohy Exp $
+$NetBSD: usbdevs,v 1.475 2007/06/24 10:02:45 veego Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ vendor KYE		0x0458	KYE Systems
 vendor DIAMOND2		0x045a	Diamond (Supra)
 vendor MICROSOFT	0x045e	Microsoft
 vendor PRIMAX		0x0461	Primax Electronics
+vendor MGE		0x0463	MGE UPS Systems
 vendor AMP		0x0464	AMP
 vendor CHERRY		0x046a	Cherry Mikroschalter
 vendor MEGATRENDS	0x046b	American Megatrends
@@ -644,7 +645,7 @@ product ALTEC ADA70		0x0070	ADA70 Speakers
 product ALTEC ASC495		0xff05	ASC495 Speakers
 
 /* American Power Conversion products */
-product APC UPSPRO500		0x0002	Back-UPS Pro 500
+product APC UPS			0x0002	Uninterruptible Power Supply
 
 /* Ambit Microsystems products */
 product AMBIT NTL_250		0x6098	NTL 250 cable modem
@@ -1464,6 +1465,10 @@ product MELCO KG54L		0x00da	WLI-U2-KG54L
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
+
+/* MGE UPS Systems */
+product MGE UPS1		0x0001	MGE UPS SYSTEMS PROTECTIONCENTER 1
+product MGE UPS2		0xffff	MGE UPS SYSTEMS PROTECTIONCENTER 2
 
 /* Micro Star International products */
 product MSI BLUETOOTH		0x1967	Bluetooth USB Adapter
