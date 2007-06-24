@@ -1,12 +1,13 @@
-/*	$NetBSD: main.c,v 1.13 2006/05/13 21:42:45 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2007/06/24 18:00:49 christos Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
  */
 #include <sys/cdefs.h>
+#include <locale.h>
 
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.13 2006/05/13 21:42:45 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2007/06/24 18:00:49 christos Exp $");
 #endif
 
 
@@ -447,6 +448,7 @@ main(int argc, char *argv[])
 	} else
 		Flag(FTRACKALL) = 1;	/* set after ENV */
 
+	setlocale(LC_CTYPE, "");
 	shell(s, TRUE);	/* doesn't return */
 	return 0;
 }
