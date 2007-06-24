@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.39 2006/03/18 05:23:08 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.40 2007/06/24 18:36:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.39 2006/03/18 05:23:08 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.40 2007/06/24 18:36:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,6 +179,9 @@ tryexec(char *cmd, char **argv, char **envp, int vforked)
 			 */
 			exraise(EXSHELLPROC);
 		}
+#ifdef DEBUG
+		TRACE(("execve(cmd=%s) returned ENOEXEC\n", cmd));
+#endif
 		initshellproc();
 		setinputfile(cmd, 0);
 		commandname = arg0 = savestr(argv[0]);
