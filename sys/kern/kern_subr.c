@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.159 2007/06/24 01:43:34 dyoung Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.160 2007/06/24 20:12:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.159 2007/06/24 01:43:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.160 2007/06/24 20:12:34 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -112,6 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.159 2007/06/24 01:43:34 dyoung Exp $
 #include <sys/ktrace.h>
 #include <sys/ptrace.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -775,6 +777,31 @@ dopowerhooks(int why)
 #endif
 }
 
+static int
+isswap(struct device *dv)
+{
+	struct dkwedge_info wi;
+	struct vnode *vn;
+	int error;
+
+	if (device_class(dv) != DV_DISK || !device_is_a(dv, "dk"))
+		return 0;
+
+	if ((vn = opendisk(dv)) == NULL)
+		return 0;
+
+	error = VOP_IOCTL(vn, DIOCGWEDGEINFO, &wi, FREAD, NOCRED, 0);
+	VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	vput(vn);
+	if (error) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Get wedge info returned %d\n", dv->dv_xname, error);
+#endif
+		return 0;
+	}
+	return strcmp(wi.dkw_ptype, DKW_PTYPE_SWAP) == 0;
+}
+
 /*
  * Determine the root device and, if instructed to, the root file system.
  */
@@ -1134,9 +1161,20 @@ setroot(struct device *bootdv, int bootpartition)
 			goto nodumpdev;
 		}
 	} else {				/* (c) */
-		if (DEV_USES_PARTITIONS(rootdv) == 0)
-			goto nodumpdev;
-		else {
+		if (DEV_USES_PARTITIONS(rootdv) == 0) {
+			for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+			    dv = TAILQ_NEXT(dv, dv_list))
+				if (isswap(dv))
+					break;
+			if (dv == NULL)
+				goto nodumpdev;
+
+			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
+			if (majdev < 0)
+				goto nodumpdev;
+			dumpdv = dv;
+			dumpdev = makedev(majdev, device_unit(dumpdv));
+		} else {
 			dumpdv = rootdv;
 			dumpdev = MAKEDISKDEV(major(rootdev),
 			    device_unit(dumpdv), 1);
