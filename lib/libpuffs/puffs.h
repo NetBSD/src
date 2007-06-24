@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.62 2007/06/06 01:55:01 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.63 2007/06/24 17:55:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -75,7 +75,7 @@ struct puffs_kcache {
 /* XXX: might disappear from here into a private header */
 struct puffs_node {
 	off_t			pn_size;
-	int			pn_flag;
+	int			pn_flags;
 	struct vattr		pn_va;
 
 	void			*pn_data;	/* private data		*/
@@ -87,6 +87,7 @@ struct puffs_node {
 
 	LIST_HEAD(,puffs_kcache)pn_cacheinfo;	/* PUFFS_KFLAG_CACHE	*/
 };
+#define PUFFS_NODE_REMOVED	0x01		/* not on entry list	*/
 
 
 struct puffs_usermount;
@@ -432,6 +433,7 @@ struct puffs_pathobj	*puffs_getrootpathobj(struct puffs_usermount *);
 void			puffs_setback(struct puffs_cc *, int);
 
 struct puffs_node	*puffs_pn_new(struct puffs_usermount *, void *);
+void			puffs_pn_remove(struct puffs_node *);
 void			puffs_pn_put(struct puffs_node *);
 
 void			*puffs_pn_getmntspecific(struct puffs_node *);
