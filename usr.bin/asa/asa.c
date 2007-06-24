@@ -1,4 +1,4 @@
-/*	$NetBSD: asa.c,v 1.15 2002/05/30 00:34:06 enami Exp $	*/
+/*	$NetBSD: asa.c,v 1.16 2007/06/24 23:23:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: asa.c,v 1.15 2002/05/30 00:34:06 enami Exp $");
+__RCSID("$NetBSD: asa.c,v 1.16 2007/06/24 23:23:10 christos Exp $");
 #endif
 
 #include <err.h>
@@ -43,6 +43,7 @@ static void asa(FILE *);
 int main(int, char *[]);
 
 int
+/*ARGSUSED*/
 main (int argc, char *argv[])
 {
 	FILE *fp;
@@ -62,7 +63,7 @@ main (int argc, char *argv[])
 			(void)fclose(fp);
         	} while (*++argv != NULL);
 
-	exit(0);
+	return 0;
 }
 
 static void
@@ -72,47 +73,45 @@ asa(FILE *f)
 	size_t len;
 
 	if ((buf = fgetln(f, &len)) != NULL) {
-		if (buf[len - 1] == '\n')
+		if (len > 0 && buf[len - 1] == '\n')
 			buf[--len] = '\0';
 		/* special case the first line */
 		switch (buf[0]) {
 		case '0':
-			putchar('\n');
+			(void)putchar('\n');
 			break;
 		case '1':
-			putchar('\f');
+			(void)putchar('\f');
 			break;
 		}
 
-		if (len > 1 && buf[0] && buf[1]) {
-			printf("%.*s", (int)(len - 1), buf + 1);
-		}
+		if (len > 1 && buf[0] && buf[1])
+			(void)fwrite(buf + 1, 1, len - 1, stdout);
 
 		while ((buf = fgetln(f, &len)) != NULL) {
-			if (buf[len - 1] == '\n')
+			if (len > 0 && buf[len - 1] == '\n')
 				buf[--len] = '\0';
 			switch (buf[0]) {
 			default:
 			case ' ':
-				putchar('\n');
+				(void)putchar('\n');
 				break;
 			case '0':
-				putchar('\n');
-				putchar('\n');
+				(void)putchar('\n');
+				(void)putchar('\n');
 				break;
 			case '1':
-				putchar('\f');
+				(void)putchar('\f');
 				break;
 			case '+':
-				putchar('\r');
+				(void)putchar('\r');
 				break;
 			}
 
-			if (len > 1 && buf[0] && buf[1]) {
-				printf("%.*s", (int)(len - 1), buf + 1);
-			}
+			if (len > 1 && buf[0] && buf[1])
+				(void)fwrite(buf + 1, 1, len - 1, stdout);
 		}
 
-		putchar('\n');
+		(void)putchar('\n');
 	}
 }
