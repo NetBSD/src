@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.7 2007/01/06 19:45:23 kardel Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.8 2007/06/24 16:55:14 kardel Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -161,11 +161,6 @@ int simple_query = 0;
 int unpriv_port = 0;
 
 /*
- * Time to spend measuring drift rate
- */
-int rate = 0;
-
-/*
  * Program name.
  */
 char *progname;
@@ -281,10 +276,6 @@ void clear_globals()
   unpriv_port = 0;
 
   /*
-   * Time to spend measuring drift rate
-   */
-  rate = 0;
-  /*
    * Systemwide parameters and flags
    */
   sys_numservers = 0;	  /* number of servers to poll */
@@ -378,7 +369,7 @@ ntpdatemain (
 	/*
 	 * Decode argument list
 	 */
-	while ((c = ntp_getopt(argc, argv, "46a:bBde:k:o:p:qr:st:uv")) != EOF)
+	while ((c = ntp_getopt(argc, argv, "46a:bBde:k:o:p:qst:uv")) != EOF)
 		switch (c)
 		{
 		case '4':
@@ -434,17 +425,6 @@ ntpdatemain (
 		case 'q':
 			simple_query = 1;
 			break;
-		case 'r':
-			c = atoi(ntp_optarg);
-			if (c <= 0 || c > (60 * 60)) {
-				(void) fprintf(stderr,
-					   "%s: rate (%d) is invalid: 0 - %d\n",
-					   progname, c, (60 * 60));
-				errflg++;
-			} else {
-				rate = c;
-			}
-			break;
 		case 's':
 			syslogit = 1;
 			break;
@@ -476,7 +456,7 @@ ntpdatemain (
 	
 	if (errflg) {
 		(void) fprintf(stderr,
-		    "usage: %s [-46bBdqsuv] [-a key#] [-e delay] [-k file] [-p samples] [-o version#] [-r rate] [-t timeo] server ...\n",
+		    "usage: %s [-46bBdqsuv] [-a key#] [-e delay] [-k file] [-p samples] [-o version#] [-t timeo] server ...\n",
 		    progname);
 		exit(2);
 	}

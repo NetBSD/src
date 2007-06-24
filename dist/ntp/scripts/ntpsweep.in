@@ -1,6 +1,6 @@
 #! @PATH_PERL@ -w
 #
-# $Id: ntpsweep.in,v 1.2 2003/12/04 16:23:38 drochner Exp $
+# $Id: ntpsweep.in,v 1.3 2007/06/24 16:55:15 kardel Exp $
 #
 # DISCLAIMER
 # 
@@ -16,8 +16,7 @@
 # purpose. The name Origin B.V. must not be used to endorse or promote
 # products derived from this software without prior written permission.
 #
-# Hans Lambermont <Hans.Lambermont@nl.origin-it.com>/<H.Lambermont@chello.nl>
-# 14 Jan 2000
+# Hans Lambermont <ntpsweep@lambermont.dyndns.org>
 
 require 5.0;		# But actually tested on 5.004 ;)
 use Getopt::Long;       # GetOptions()

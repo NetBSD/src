@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.5 2003/10/23 02:23:26 simonb Exp $
+#	$NetBSD: ntp2netbsd,v 1.6 2007/06/24 16:55:12 kardel Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,6 +47,8 @@
 #	$ cd ../../../ntp-4.x.y
 #	$ run ./configure  --enable-all-clocks --enable-parse-clocks
 #	$ cp config.h /usr/src/usr.sbin/ntp/include
+#         - not really - we have some changed defaults and the vax port has no ieee.h support.
+#           so do a careful diff and patch - Frank Kardel
 #	$ cp scripts/mkver /usr/src/usr.sbin/ntp/scripts
 #	$ cd ..
 #	$ rm -r src ntp-4.x.y
