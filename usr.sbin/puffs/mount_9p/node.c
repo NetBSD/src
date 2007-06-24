@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.12 2007/05/19 10:38:23 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.13 2007/06/24 19:13:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.12 2007/05/19 10:38:23 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.13 2007/06/24 19:13:39 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -460,9 +460,10 @@ puffs9p_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
  * ice with.
  */
 static int
-noderemove(struct puffs_cc *pcc, struct p9pnode *p9n)
+noderemove(struct puffs_cc *pcc, struct puffs_node *pn)
 {
 	AUTOVAR(pcc);
+	struct p9pnode *p9n = pn->pn_data;
 	p9pfid_t testfid = NEXTFID(p9p);
 
 	rv = proto_cc_dupfid(pcc, p9n->fid_base, testfid);
@@ -484,6 +485,7 @@ noderemove(struct puffs_cc *pcc, struct p9pnode *p9n)
 	} else {
 		proto_cc_clunkfid(pcc, p9n->fid_base, 0);
 		p9n->fid_base = P9P_INVALFID;
+		puffs_pn_remove(pn);
 	}
 
  out:
@@ -502,7 +504,7 @@ puffs9p_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	if (pn->pn_va.va_type == VDIR)
 		return EISDIR;
 
-	return noderemove(pcc, pn->pn_data);
+	return noderemove(pcc, pn);
 }
 
 int
@@ -514,7 +516,7 @@ puffs9p_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	if (pn->pn_va.va_type != VDIR)
 		return ENOTDIR;
 
-	return noderemove(pcc, pn->pn_data);
+	return noderemove(pcc, pn);
 }
 
 /*
