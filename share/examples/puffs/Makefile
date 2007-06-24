@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2007/01/30 01:26:58 gdt Exp $
+#	$NetBSD: Makefile,v 1.2 2007/06/24 18:32:00 pooka Exp $
 
-SUBDIR=	dtfs pnullfs rot13fs sysctlfs
+SUBDIR=	dtfs icfs pnullfs rot13fs sysctlfs
 
 .include <bsd.subdir.mk>
