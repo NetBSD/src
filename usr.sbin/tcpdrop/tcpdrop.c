@@ -1,4 +1,4 @@
-/* 	$NetBSD: tcpdrop.c,v 1.1 2007/06/25 23:34:52 christos Exp $	 */
+/* 	$NetBSD: tcpdrop.c,v 1.2 2007/06/25 23:58:42 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -132,8 +132,8 @@ main(int argc, char **argv)
 
 			(void)memset(sa, 0, sizeof(sa));
 
-			assert(aif->ai_addrlen < sizeof(*sa));
-			assert(ail->ai_addrlen < sizeof(*sa));
+			assert(aif->ai_addrlen <= sizeof(*sa));
+			assert(ail->ai_addrlen <= sizeof(*sa));
 			(void)memcpy(&sa[0], aif->ai_addr, aif->ai_addrlen);
 			(void)memcpy(&sa[1], ail->ai_addr, ail->ai_addrlen);
 
