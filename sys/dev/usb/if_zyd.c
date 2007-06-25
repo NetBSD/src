@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.6.2.3 2007/06/21 15:38:15 itohy Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.6.2.4 2007/06/25 09:27:39 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.6.2.3 2007/06/21 15:38:15 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.6.2.4 2007/06/25 09:27:39 itohy Exp $");
 
 #include "bpfilter.h"
 
@@ -1976,8 +1976,8 @@ zyd_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		}
 
 		/*
-		 * Split an mbuf into packets.  This is done reverse order
-		 * to reduce amount of date to be copied.
+		 * Split an mbuf into packets.  This is done in reverse order
+		 * to reduce amount of data to be copied.
 		 */
 		for (i = npkt - 1; i > 0; i--)
 			pktmbuf[i] = m_split(m, pktoff[i], M_DONTWAIT);
