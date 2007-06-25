@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.711 2007/06/23 05:21:24 yamt Exp $
+# $NetBSD: mi,v 1.712 2007/06/25 23:38:57 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1271,6 +1271,7 @@
 ./usr/sbin/tbrconfig				base-obsolete		obsolete
 ./usr/sbin/tcpdchk				base-netutil-bin
 ./usr/sbin/tcpdmatch				base-netutil-bin
+./usr/sbin/tcpdrop				base-netutil-bin
 ./usr/sbin/tcpdump				base-netutil-bin
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin
