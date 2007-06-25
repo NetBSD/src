@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.3 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.4 2007/06/25 11:22:13 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,6 +44,9 @@ GLOBAL(ofmsr)
 GLOBAL(ofwsprg0save)
 	.long	0
 
+GLOBAL(ofwreal_incharge)
+	.long	0
+
 	.comm	firmstk,NBPG,8
 	.comm	OF_buffer,NBPG,4
 	.comm	openfirmware_entry,4,4	/* openfirmware entry point */
@@ -58,6 +61,10 @@ ENTRY_NOPROFILE(ofwinit)
 	mfmsr	0
 	andi.	0,0,PSL_IR|PSL_DR
 	beq	1f
+
+	li	8,1
+	lis	9,ofwreal_incharge@ha
+	stw	8,ofwreal_incharge@l(9)
 
 	mflr	30
 	bl	_C_LABEL(ofwr_init)
@@ -96,12 +103,25 @@ ENTRY(openfirmware)
 	stw	0,4(1)
 	stwu	1,-16(1)		/* setup stack frame */
 
-	mfmsr	4			/* save msr */
-	stw	4,8(1)
-
 	lis	4,openfirmware_entry@ha	/* get firmware entry point */
 	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
+
+	mfsprg	5,0			/* save current sprg0 (curcpu) */
+	lis	4,ofwsprg0save@ha
+	addi	4,4,ofwsprg0save@l
+	stw	5,0(4)
+
+#ifdef FIRMWORKSBUGS
+	lis	4,ofwreal_incharge@ha
+	lwz	4,ofwreal_incharge@l(4)
+	cmpwi	4,1
+	bne	1f
+	blrl
+1:
+#else
+	mfmsr	4			/* save msr */
+	stw	4,8(1)
 
 	li	0,0			/* clear battable translations */
 #if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
@@ -120,11 +140,6 @@ ENTRY(openfirmware)
 	addis	5,5,0x10000000@h
 	cmpwi	5,0
 	bne	1b
-
-	mfsprg	5,0			/* save current sprg0 (curcpu) */
-	lis	4,ofwsprg0save@ha
-	addi	4,4,ofwsprg0save@l
-	stw	5,0(4)
 
 	lis	4,_C_LABEL(ofw_pmap)@ha	/* load OFW SR */
 	addi	4,4,_C_LABEL(ofw_pmap)@l
@@ -154,11 +169,6 @@ ENTRY(openfirmware)
 
 	blrl				/* call Open Firmware */
 
-	lis	4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
-	addi	4,4,ofwsprg0save@l
-	lwz	5,0(4)
-	mtsprg	0,5
-
 	lis	4,ofwsrsave@ha		/* restore saved SRs */
 	addi	4,4,ofwsrsave@l
 	li	5,0
@@ -172,6 +182,12 @@ ENTRY(openfirmware)
 	lwz	4,8(1)			/* restore msr */
 	mtmsr	4
 	isync
+#endif /* FIRMWORKSBUGS */
+
+	lis	4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
+	addi	4,4,ofwsprg0save@l
+	lwz	5,0(4)
+	mtsprg	0,5
 
 	lwz	1,0(1)			/* and return */
 	lwz	0,4(1)
