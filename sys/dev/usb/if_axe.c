@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.17.10.5 2007/06/22 10:42:10 itohy Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.17.10.6 2007/06/25 09:21:28 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.5 2007/06/22 10:42:10 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.6 2007/06/25 09:21:28 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -136,6 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.17.10.5 2007/06/22 10:42:10 itohy Exp $
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_ethersubr.h>
 
@@ -154,12 +155,27 @@ int	axedebug = 0;
  * Various supported device vendors/products.
  */
 Static const struct axe_type axe_devs[] = {
+	{ { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE2000}, 0 },
+	{ { USB_VENDOR_ACERCM,		USB_PRODUCT_ACERCM_EP1427X2}, 0 },
 	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172}, 0 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88178}, AX178 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772}, AX772 },
+	{ { USB_VENDOR_ATEN,		USB_PRODUCT_ATEN_UC210T}, 0 },
+	{ { USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D5055 }, AX178 },
+	{ { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB2AR}, 0},
+	{ { USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_USB200MV2}, AX772 },
 	{ { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100}, 0 },
+	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100B1 }, AX772 },
+	{ { USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_GWUSB2E}, 0 },
+	{ { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETGUS2 }, AX178 },
+	{ { USB_VENDOR_JVC,		USB_PRODUCT_JVC_MP_PRX1 }, 0 },
 	{ { USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_USB200M}, 0 },
+	{ { USB_VENDOR_LINKSYS4,	USB_PRODUCT_LINKSYS4_USB1000 }, AX178 },
 	{ { USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUAU2KTX}, 0 },
 	{ { USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120}, 0 },
+	{ { USB_VENDOR_OQO,		USB_PRODUCT_OQO_ETHER01PLUS }, AX772 },
+	{ { USB_VENDOR_PLANEX3,		USB_PRODUCT_PLANEX3_GU1000T }, AX178 },
 	{ { USB_VENDOR_SITECOM,		USB_PRODUCT_SITECOM_LN029}, 0 },
 	{ { USB_VENDOR_SYSTEMTALKS,	USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
 };
@@ -172,9 +188,6 @@ Static void axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void axe_tick(void *);
 Static void axe_tick_task(void *);
-#if 0
-Static void axe_rxstart(struct ifnet *);
-#endif
 Static void axe_start(struct ifnet *);
 Static int axe_ioctl(struct ifnet *, u_long, usb_ioctlarg_t);
 Static int axe_init(struct ifnet *);
@@ -187,6 +200,8 @@ Static int axe_cmd(struct axe_softc *, int, int, int, void *);
 Static int axe_ifmedia_upd(struct ifnet *);
 Static void axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 Static void axe_reset(struct axe_softc *sc);
+Static void axe_ax88178_init(struct axe_softc *sc);
+Static void axe_ax88772_init(struct axe_softc *sc);
 
 Static void axe_setmulti(struct axe_softc *);
 Static void axe_lock_mii(struct axe_softc *sc);
@@ -316,6 +331,23 @@ axe_miibus_statchg(device_ptr_t dev)
 		val = AXE_MEDIA_FULL_DUPLEX;
 	else
 		val = 0;
+
+	if (sc->axe_flags & (AX178 | AX772)) {
+		val |= (AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC);
+
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_1000_T:
+			val |= AXE_178_MEDIA_GMII | AXE_178_MEDIA_ENCK;
+			break;
+		case IFM_100_TX:
+			val |= AXE_178_MEDIA_100TX;
+			break;
+		case IFM_10_T:
+			/* doesn't need to be handled */
+			break;
+		}
+	}
+
 	DPRINTF(("axe_miibus_statchg: val=0x%x\n", val));
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	if (err) {
@@ -330,18 +362,18 @@ axe_miibus_statchg(device_ptr_t dev)
 Static int
 axe_ifmedia_upd(struct ifnet *ifp)
 {
-        struct axe_softc        *sc = ifp->if_softc;
-        struct mii_data         *mii = GET_MII(sc);
+	struct axe_softc	*sc = ifp->if_softc;
+	struct mii_data		*mii = GET_MII(sc);
 
-        sc->axe_link = 0;
-        if (mii->mii_instance) {
-                struct mii_softc        *miisc;
-                LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
-                         mii_phy_reset(miisc);
-        }
-        mii_mediachg(mii);
+	sc->axe_link = 0;
+	if (mii->mii_instance) {
+		struct mii_softc	*miisc;
+		LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
+			mii_phy_reset(miisc);
+	}
+	mii_mediachg(mii);
 
-        return (0);
+	return (0);
 }
 
 /*
@@ -350,12 +382,12 @@ axe_ifmedia_upd(struct ifnet *ifp)
 Static void
 axe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
-        struct axe_softc        *sc = ifp->if_softc;
-        struct mii_data         *mii = GET_MII(sc);
+	struct axe_softc	*sc = ifp->if_softc;
+	struct mii_data		*mii = GET_MII(sc);
 
-        mii_pollstat(mii);
-        ifmr->ifm_active = mii->mii_media_active;
-        ifmr->ifm_status = mii->mii_media_status;
+	mii_pollstat(mii);
+	ifmr->ifm_active = mii->mii_media_active;
+	ifmr->ifm_status = mii->mii_media_status;
 }
 
 Static void
@@ -418,6 +450,100 @@ axe_reset(struct axe_softc *sc)
 	return;
 }
 
+Static void
+axe_ax88178_init(struct axe_softc *sc)
+{
+	int gpio0 = 0, phymode = 0;
+	u_int16_t eeprom;
+
+	axe_cmd(sc, AXE_CMD_SROM_WR_ENABLE, 0, 0, NULL);
+	/* XXX magic */
+	axe_cmd(sc, AXE_CMD_SROM_READ, 0, 0x0017, &eeprom);
+	axe_cmd(sc, AXE_CMD_SROM_WR_DISABLE, 0, 0, NULL);
+
+	eeprom = le16toh(eeprom);
+
+	DPRINTF((" EEPROM is 0x%x\n", eeprom));
+
+	/* if EEPROM is invalid we have to use to GPIO0 */
+	if (eeprom == 0xffff) {
+		phymode = 0;
+		gpio0 = 1;
+	} else {
+		phymode = eeprom & 7;
+		gpio0 = (eeprom & 0x80) ? 0 : 1;
+	}
+
+	DPRINTF(("use gpio0: %d, phymode %d\n", gpio0, phymode));
+
+	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x008c, NULL);
+	usbd_delay_ms(sc->axe_udev, 40);
+	if ((eeprom >> 8) != 1) {
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
+
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x001c, NULL);
+		usbd_delay_ms(sc->axe_udev, 300);
+
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x003c, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
+	} else {
+		DPRINTF(("axe gpio phymode == 1 path\n"));
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x0004, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
+		axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x000c, NULL);
+		usbd_delay_ms(sc->axe_udev, 30);
+	}
+
+	/* soft reset */
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, AXE_SW_RESET_CLEAR, NULL);
+	usbd_delay_ms(sc->axe_udev, 150);
+	axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+	    AXE_SW_RESET_PRL | AXE_178_RESET_MAGIC, NULL);
+	usbd_delay_ms(sc->axe_udev, 150);
+	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
+}
+
+Static void
+axe_ax88772_init(struct axe_softc *sc)
+{
+	axe_cmd(sc, AXE_CMD_WRITE_GPIO, 0, 0x00b0, NULL);
+	usbd_delay_ms(sc->axe_udev, 40);
+
+	if (sc->axe_phyaddrs[1] == AXE_INTPHY) {
+		/* ask for the embedded PHY */
+		axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0x01, NULL);
+		usbd_delay_ms(sc->axe_udev, 10);
+
+		/* power down and reset state, pin reset state */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, AXE_SW_RESET_CLEAR, NULL);
+		usbd_delay_ms(sc->axe_udev, 60);
+
+		/* power down/reset state, pin operating state */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+		    AXE_SW_RESET_IPPD | AXE_SW_RESET_PRL, NULL);
+		usbd_delay_ms(sc->axe_udev, 150);
+
+		/* power up, reset */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0, AXE_SW_RESET_PRL, NULL);
+
+		/* power up, operating */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+		    AXE_SW_RESET_IPRL | AXE_SW_RESET_PRL, NULL);
+	} else {
+		/* ask for external PHY */
+		axe_cmd(sc, AXE_CMD_SW_PHY_SELECT, 0, 0x00, NULL);
+		usbd_delay_ms(sc->axe_udev, 10);
+
+		/* power down internal PHY */
+		axe_cmd(sc, AXE_CMD_SW_RESET_REG, 0,
+		    AXE_SW_RESET_IPPD | AXE_SW_RESET_PRL, NULL);
+	}
+
+	usbd_delay_ms(sc->axe_udev, 150);
+	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, 0, NULL);
+}
+
 /*
  * Probe for a AX88172 chip.
  */
@@ -460,9 +586,11 @@ USB_ATTACH(axe)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->axe_dev));
-                usbd_devinfo_free(devinfop);
+		usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
+
+	sc->axe_flags = axe_lookup(uaa->vendor, uaa->product)->axe_flags;
 
 	usb_init_task(&sc->axe_tick_task, axe_tick_task, sc);
 	lockinit(&sc->axe_mii_lock, PZERO, "axemii", 0, LK_CANRECURSE);
@@ -472,7 +600,7 @@ USB_ATTACH(axe)
 	if (err) {
 		printf("%s: getting interface handle failed\n",
 		    USBDEVNAME(sc->axe_dev));
-                usbd_devinfo_free(devinfop);
+		usbd_devinfo_free(devinfop);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -482,15 +610,23 @@ USB_ATTACH(axe)
 
 	id = usbd_get_interface_descriptor(sc->axe_iface);
 
-	printf("%s: %s\n", USBDEVNAME(sc->axe_dev), devinfop);
+	printf("%s: %s", USBDEVNAME(sc->axe_dev), devinfop);
 	usbd_devinfo_free(devinfop);
+
+	/* decide on what our bufsize will be */
+	if (sc->axe_flags & (AX178 | AX772)) {
+		sc->axe_bufsz = (sc->axe_udev->speed == USB_SPEED_HIGH) ?
+		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ;
+		sc->axe_boundary = (sc->axe_udev->speed == USB_SPEED_HIGH) ?
+		    512 : 64;
+	} else
+		sc->axe_bufsz = AXE_172_BUFSZ;
 
 	/* Find endpoints. */
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->axe_iface, i);
 		if (!ed) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->axe_dev), i);
+			printf(": couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -507,10 +643,29 @@ USB_ATTACH(axe)
 
 	s = splnet();
 
+	/* We need the PHYID for init dance in some cases */
+	axe_cmd(sc, AXE_CMD_READ_PHYID, 0, 0, (void *)&sc->axe_phyaddrs);
+
+	DPRINTF((" phyaddrs[0]: %x phyaddrs[1]: %x\n",
+	    sc->axe_phyaddrs[0], sc->axe_phyaddrs[1]));
+
+	if (sc->axe_flags & AX178) {
+		axe_ax88178_init(sc);
+		printf(", AX88178");
+	} else if (sc->axe_flags & AX772) {
+		axe_ax88772_init(sc);
+		printf(", AX88772");
+	} else
+		printf(", AX88172");
+	printf("\n");
+
 	/*
 	 * Get station address.
 	 */
-	axe_cmd(sc, AXE_CMD_READ_NODEID, 0, 0, &eaddr);
+	if (sc->axe_flags & (AX178 | AX772))
+		axe_cmd(sc, AXE_178_CMD_READ_NODEID, 0, 0, &eaddr);
+	else
+		axe_cmd(sc, AXE_172_CMD_READ_NODEID, 0, 0, &eaddr);
 
 	/*
 	 * Load IPG values and PHY indexes.
@@ -527,8 +682,8 @@ USB_ATTACH(axe)
 	/*
 	 * An ASIX chip was detected. Inform the world.
 	 */
-	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->axe_dev),
-	    ether_sprintf(eaddr));
+	printf("%s: Ethernet address %s\n",
+	    USBDEVNAME(sc->axe_dev), ether_sprintf(eaddr));
 
 	/* Initialize interface info.*/
 	ifp = GET_IFP(sc);
@@ -687,8 +842,10 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct axe_softc	*sc;
 	struct ue_chain		*c;
 	struct ifnet		*ifp;
-	struct mbuf		*m;
+	struct mbuf		*m, *n;
 	u_int32_t		total_len;
+	struct axe_sframe_hdr	*hp;
+	u_int16_t		off, prvoff, len;
 	int			s;
 
 	c = priv;
@@ -738,24 +895,91 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done;
 	}
 
-	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = m->m_len = total_len;
+	m->m_nextpkt = NULL;
+	if (sc->axe_flags & (AX178 | AX772)) {
+		/*
+		 * scan received data for packets
+		 */
+		for (off = prvoff = 0; off < total_len;
+		    off += len + sizeof *hp) {
+			if (total_len < off + sizeof *hp) {
+				ifp->if_ierrors++;
+				break;
+			}
+			hp = (void *)(mtod(m, char *) + off);
+			len = UGETW((u_int8_t *)&hp->len);
+			if ((len ^ UGETW((u_int8_t *)&hp->ilen)) != 0xffff) {
+				ifp->if_ierrors++;
+				break;
+			}
+			/* record previous packet header offset in hp->ilen */
+			USETW((u_int8_t *)&hp->ilen, prvoff); /* used below */
+			if (off + len + sizeof *hp > total_len) {
+				ifp->if_ierrors++;
+				break;
+			}
+			prvoff = off;
+		}
+		if (off == 0) {
+			/* first packet had error */
+			m_freem(m);
+			goto done;
+		}
 
-	/* No errors; receive the packet. */
-	total_len -= ETHER_CRC_LEN + 4;
-	/* XXX XXX What is it?  Should it be moved several lines above? */
+		/*
+		 * Split an mbuf into packets.  This is done in reverse order
+		 * to reduce amount of data to be copied.
+		 */
+		for (off = prvoff; off; off = prvoff) {
+			hp = (void *)(mtod(m, char *) + off);
+			len = UGETW((u_int8_t *)&hp->len);
+			prvoff = UGETW((u_int8_t *)&hp->ilen);	/* set above */
+			if (len <= sizeof(struct ether_header)) {
+				ifp->if_ierrors++;
+				continue;
+			}
+			m->m_pkthdr.len = m->m_len = off + sizeof *hp + len;
+			n = m_split(m, off + sizeof *hp, M_DONTWAIT);
+			if (n == NULL) {
+				ifp->if_ierrors++;
+				printf("%s: could not allocate rx mbuf\n",
+				    USBDEVNAME(sc->axe_dev));
+			} else {
+				/* insert right after the first packet */
+				n->m_nextpkt = m->m_nextpkt;
+				m->m_nextpkt = n;
+			}
+		}
 
+		/* fixup the first packet */
+		hp = mtod(m, struct axe_sframe_hdr *);
+		len = UGETW((u_int8_t *)&hp->len);
+		m_adj(m, sizeof *hp);
+		m->m_pkthdr.len = m->m_len = len;
+
+	} else {
+		/* easy case --- AX88172 don't have header */
+		m->m_pkthdr.len = m->m_len = total_len;
+	}
+
+	/* input packets in order */
 	s = splnet();
+	do {
+		n = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+
+		ifp->if_ipackets++;
+		m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
+		if (ifp->if_bpf)
+			BPF_MTAP(ifp, m);
 #endif
 
-	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->axe_dev),
-		    __func__, m->m_len));
-	IF_INPUT(ifp, m);
+		DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->axe_dev),
+			    __func__, m->m_len));
+		IF_INPUT(ifp, m);
+	} while ((m = n) != NULL);
 	splx(s);
 
  done:
@@ -763,7 +987,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* Setup new transfer. */
 	(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 	usbd_setup_xfer(xfer, sc->axe_ep[AXE_ENDPT_RX],
-	    c, NULL /* XXX buf */, AXE_BUFSZ,
+	    c, NULL /* XXX buf */, sc->axe_bufsz,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY
 #ifdef __FreeBSD__	/* callback needs context */
 	    | USBD_CALLBACK_AS_TASK
@@ -895,13 +1119,43 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 {
 	struct ue_chain		*c;
 	usbd_status		err;
-	int			ret;
+	struct axe_sframe_hdr	hdr;
+	int			length, ret;
 
 	c = &sc->axe_cdata.axe_tx_chain[idx];
 
+	if (sc->axe_flags & (AX178 | AX772)) {
+		/* Prepend Tx header */
+		M_PREPEND(m, sizeof hdr, M_DONTWAIT);
+		if (m != NULL)
+			m = m_pullup(m, sizeof hdr);	/* just in case */
+		if (m == NULL) {
+			m_freem(m);
+			return (ENOBUFS);
+		}
+
+		hdr.len = htole16(m->m_pkthdr.len);
+		hdr.ilen = ~hdr.len;
+		m_copyback(m, 0, sizeof hdr, &hdr);
+
+		length = m->m_pkthdr.len;
+		if ((length % sc->axe_boundary) == 0) {
+			hdr.len = 0x0000;
+			hdr.ilen = 0xffff;
+			m_copyback(m, length, sizeof hdr, &hdr);
+			length += sizeof hdr;
+			if (m->m_pkthdr.len != length) {
+				m_freem(m);
+				return (ENOBUFS);
+			}
+		}
+	}
+
 	ret = usb_ether_map_tx_buffer_mbuf(c, m);
-	if (ret)
+	if (ret) {
+		m_freem(m);
 		return (ret);
+	}
 
 	usbd_setup_xfer(c->ue_xfer, sc->axe_ep[AXE_ENDPT_TX],
 	    c, NULL /* XXX buf */, m->m_pkthdr.len,
@@ -915,6 +1169,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	/* Transmit */
 	err = usbd_transfer(c->ue_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		m_freem(m);
 		axe_stop(GET_IFP(sc), 0);
 		return(EIO);
 	}
@@ -945,11 +1200,6 @@ axe_start(struct ifnet *ifp)
 		return;
 	}
 
-	if (axe_encap(sc, m_head, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
-		return;
-	}
-
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 	/*
@@ -958,8 +1208,13 @@ axe_start(struct ifnet *ifp)
 	 */
 #if NBPFILTER > 0
 	 if (ifp->if_bpf)
-	 	BPF_MTAP(ifp, m_head);
+		BPF_MTAP(ifp, m_head);
 #endif
+
+	if (axe_encap(sc, m_head, 0)) {
+		ifp->if_flags |= IFF_OACTIVE;
+		return;
+	}
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -991,12 +1246,24 @@ axe_init(struct ifnet *ifp)
 	axe_reset(sc);
 
 	/* Set transmitter IPG values */
-	axe_cmd(sc, AXE_CMD_WRITE_IPG0, 0, sc->axe_ipgs[0], NULL);
-	axe_cmd(sc, AXE_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
-	axe_cmd(sc, AXE_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
+	if (sc->axe_flags & (AX178 | AX772))
+		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, sc->axe_ipgs[2],
+		    (sc->axe_ipgs[1] << 8) | (sc->axe_ipgs[0]), NULL);
+	else {
+		axe_cmd(sc, AXE_172_CMD_WRITE_IPG0, 0, sc->axe_ipgs[0], NULL);
+		axe_cmd(sc, AXE_172_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
+		axe_cmd(sc, AXE_172_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
+	}
 
 	/* Enable receiver, set RX mode */
-	rxmode = AXE_RXCMD_UNICAST|AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
+	rxmode = AXE_RXCMD_MULTICAST|AXE_RXCMD_ENABLE;
+	if (sc->axe_flags & (AX178 | AX772)) {
+		if (sc->axe_udev->speed == USB_SPEED_HIGH) {
+			/* largest possible USB buffer size for AX88178 */
+			rxmode |= AXE_178_RXCMD_MFB;
+		}
+	} else
+		rxmode |= AXE_172_RXCMD_UNICAST;
 
 	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -1052,7 +1319,7 @@ axe_init(struct ifnet *ifp)
 		c = &sc->axe_cdata.axe_rx_chain[i];
 		(void)usbd_map_buffer_mbuf(c->ue_xfer, c->ue_mbuf);
 		usbd_setup_xfer(c->ue_xfer, sc->axe_ep[AXE_ENDPT_RX],
-		    c, NULL /* buf */, AXE_BUFSZ,
+		    c, NULL /* buf */, sc->axe_bufsz,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY
 #ifdef __FreeBSD__	/* callback needs context */
 		    | USBD_CALLBACK_AS_TASK
@@ -1237,7 +1504,7 @@ axe_stop(struct ifnet *ifp, int disable)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		if (err) {
 			printf("%s: abort rx pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
 		}
 	}
 
@@ -1245,7 +1512,7 @@ axe_stop(struct ifnet *ifp, int disable)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_TX]);
 		if (err) {
 			printf("%s: abort tx pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
 		}
 	}
 
@@ -1253,7 +1520,7 @@ axe_stop(struct ifnet *ifp, int disable)
 		err = usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: abort intr pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
 		}
 	}
 
@@ -1266,7 +1533,7 @@ axe_stop(struct ifnet *ifp, int disable)
 		err = usbd_close_pipe(sc->axe_ep[AXE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
-		    	    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
+			    USBDEVNAME(sc->axe_dev), usbd_errstr(err));
 		}
 		sc->axe_ep[AXE_ENDPT_RX] = NULL;
 	}
