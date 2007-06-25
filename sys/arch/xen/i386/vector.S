@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.17 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.18 2007/06/25 20:09:34 bouyer Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -197,10 +197,8 @@ IDTVEC(recurse_/**/name/**/num)						;\
 IDTVEC(resume_/**/name/**/num)						\
 	/*movl	%esp,%ecx*/						;\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
-	movl	%ebx,%esi						;\
+	pushl	%ebx							;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
-1:									\
-	pushl	%esi							;\
 	movl	$num,CPUVAR(ILEVEL)					;\
 	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\
@@ -213,7 +211,7 @@ IDTVEC(resume_/**/name/**/num)						\
 	movl	IH_IPL_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\
-5:									\
+									\
 	UNLOCK_KERNEL							;\
 	CLI(%eax)							;\
 	unmask(num)			/* unmask it in hardware */	;\
