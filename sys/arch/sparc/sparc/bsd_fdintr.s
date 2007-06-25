@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.25 2005/12/11 12:19:08 christos Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.25.24.1 2007/06/25 09:45:26 liamjfoy Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -216,7 +216,7 @@ _ENTRY(_C_LABEL(fdchwintr))
 nextc:
 	btst	NE7_RQM, %l7			! room in fifo?
 	bnz,a	0f
-	 btst	NE7_NDM, %l7			! overrun?
+	 btst	NE7_NDM, %l7			! execution finished?
 
 	! we filled/emptied the FIFO; update fdc->sc_buf & fdc->sc_tc
 	st	R_tc, [R_fdc + FDC_TC]
@@ -224,8 +224,19 @@ nextc:
 	st	R_buf, [R_fdc + FDC_DATA]
 
 0:
-	bz	resultphase			! overrun/underrun
-	btst	NE7_DIO, %l7			! IO direction
+	bz	resultphase
+
+	tst	R_tc
+	bnz	0f
+	 nop
+
+	!! panic("fdc: overrun")
+	sethi	%hi(.Lpanic_msg), %o0
+	call	_C_LABEL(panic)
+	 or	%lo(.Lpanic_msg), %o0, %o0
+	/* NOTREACHED */
+
+0:	btst	NE7_DIO, %l7			! IO direction
 	bz	1f
 	 deccc	R_tc
 	ldub	[R_fifo], %l7			! reading:
@@ -246,15 +257,9 @@ nextc:
 
 	! flip TC bit in auxreg
 	FD_ASSERT_TC
-
-	! we have some time to kill; anticipate on upcoming
-	! result phase.
-	add	R_fdc, FDC_STATUS, R_stat	! &fdc->sc_status[0]
-	mov	-1, %l7
-	st	%l7, [R_fdc + FDC_NSTAT]	! fdc->sc_nstat = -1;
-
+	nop; nop; nop				! XXX
 	FD_DEASSERT_TC
-	b,a	resultphase1
+	b,a	x
 
 
 sensei:
@@ -322,4 +327,8 @@ x:
 	ld	[%l7 + 8], %l2
 	jmp	%l1
 	rett	%l2
+
+
+.Lpanic_msg:
+	.asciz	"fdc: overrun"
 #endif
