@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.99.10.5 2007/06/22 10:44:54 itohy Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.99.10.6 2007/06/25 09:18:56 itohy Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99.10.5 2007/06/22 10:44:54 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99.10.6 2007/06/25 09:18:56 itohy Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -187,6 +187,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII},	  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_2},  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_3},  PII },
+ {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_4},  PII },
  {{ USB_VENDOR_AEI,		USB_PRODUCT_AEI_USBTOLAN},	  PII },
  {{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_USB2LAN},	  PII },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100},	  0 },
@@ -203,12 +204,15 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX3},	  LSYS|PII },
  {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650TX2},	  LSYS|PII },
  {{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DSB650},	  0 },
+ {{ USB_VENDOR_ELCON,		USB_PRODUCT_ELCON_PLAN},	  PNA|PII },
+ {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSB20},	  PII },
  {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX0},	  0 },
  {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX1},	  LSYS },
  {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX2},	  0 },
  {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBTX3},	  LSYS },
  {{ USB_VENDOR_ELECOM,		USB_PRODUCT_ELECOM_LDUSBLTX},	  PII },
  {{ USB_VENDOR_ELSA,		USB_PRODUCT_ELSA_USB2ETHERNET},	  0 },
+ {{ USB_VENDOR_GIGABYTE,	USB_PRODUCT_GIGABYTE_GNBR402W},	  0 },
  {{ USB_VENDOR_HAWKING,		USB_PRODUCT_HAWKING_UF100},	  PII },
  {{ USB_VENDOR_HP,		USB_PRODUCT_HP_HN210E},		  PII },
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX},	  0 },
@@ -220,16 +224,19 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1},	  LSYS|PNA },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA},	  LSYS },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX2},	  LSYS|PII },
- {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1}, 	  0 },
- {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5}, 	  0 },
- {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUA2TX5}, 	  PII },
+ {{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUATX1},	  0 },
+ {{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUATX5},	  0 },
+ {{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUA2TX5},	  PII },
  {{ USB_VENDOR_MICROSOFT,	USB_PRODUCT_MICROSOFT_MN110},	  PII },
- {{ USB_VENDOR_NETGEAR,         USB_PRODUCT_NETGEAR_FA101},       PII },
+ {{ USB_VENDOR_MOBILITY,	USB_PRODUCT_MOBILITY_EASIDOCK},	  0 },
+ {{ USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA101},	  PII },
  {{ USB_VENDOR_SIEMENS,		USB_PRODUCT_SIEMENS_SPEEDSTREAM}, PII },
+ {{ USB_VENDOR_SIIG2,		USB_PRODUCT_SIIG2_USBTOETHER},	  PII },
  {{ USB_VENDOR_SMARTBRIDGES,	USB_PRODUCT_SMARTBRIDGES_SMARTNIC},PII },
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB},	  0 },
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2206USB},	  PII },
  {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100},	  0 },
+ {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB110},	  PII },
 };
 #define aue_lookup(v, p) ((const struct aue_type *)usb_lookup(aue_devs, v, p))
 
@@ -684,7 +691,7 @@ aue_reset(struct aue_softc *sc)
 	 *
 	 * Note: We force all of the GPIO pins low first, *then*
 	 * enable the ones we want.
-  	 */
+	 */
 	if (sc->aue_flags & LSYS) {
 		/* Grrr. LinkSys has to be different from everyone else. */
 		aue_csr_write_1(sc, AUE_GPIO0,
@@ -693,7 +700,7 @@ aue_reset(struct aue_softc *sc)
 		aue_csr_write_1(sc, AUE_GPIO0,
 		    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
 	}
-  	aue_csr_write_1(sc, AUE_GPIO0,
+	aue_csr_write_1(sc, AUE_GPIO0,
 	    AUE_GPIO_OUT0 | AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 
 	if (sc->aue_flags & PII)
@@ -1355,7 +1362,7 @@ aue_init(struct ifnet *ifp)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		aue_csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
 
-	 /* If we want promiscuous mode, set the allframes bit. */
+	/* If we want promiscuous mode, set the allframes bit. */
 	if (ifp->if_flags & IFF_PROMISC)
 		AUE_SETBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
 	else
@@ -1411,7 +1418,6 @@ aue_init(struct ifnet *ifp)
 		(void)usbd_transfer(c->ue_xfer); /* XXX */
 		DPRINTFN(5,("%s: %s: start read\n", USBDEVNAME(sc->aue_dev),
 			    __func__));
-
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
