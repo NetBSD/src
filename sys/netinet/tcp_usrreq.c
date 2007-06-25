@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.132 2007/06/20 15:29:19 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.133 2007/06/25 23:35:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.132 2007/06/20 15:29:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.133 2007/06/25 23:35:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1145,6 +1145,109 @@ sysctl_net_inet_ip_ports(SYSCTLFN_ARGS)
 }
 
 /*
+ * The superuser can drop any connection.  Normal users can only drop
+ * their own connections.
+ */
+static inline int
+check_sockuid(struct socket *sockp, kauth_cred_t cred)
+{
+	uid_t sockuid;
+
+	sockuid = sockp->so_uidinfo->ui_uid;
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
+	    sockuid == kauth_cred_getuid(cred) ||
+	    sockuid == kauth_cred_geteuid(cred))
+		return 0;
+	return EACCES;
+}
+
+static inline int
+copyout_uid(struct socket *sockp, void *oldp, size_t *oldlenp)
+{
+	size_t sz;
+	int error;
+	uid_t uid;
+
+	uid = sockp->so_uidinfo->ui_uid;
+	if (oldp) {
+		sz = MIN(sizeof(uid), *oldlenp);
+		error = copyout(&uid, oldp, sz);
+		if (error)
+			return error;
+	}
+	*oldlenp = sizeof(uid);
+	return 0;
+}
+
+static inline int
+inet4_ident_core(struct in_addr raddr, u_int rport,
+    struct in_addr laddr, u_int lport,
+    void *oldp, size_t *oldlenp,
+    struct lwp *l, int dodrop)
+{
+	struct inpcb *inp;
+	struct socket *sockp;
+
+	inp = in_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport);
+	
+	if (inp == NULL || (sockp = inp->inp_socket) == NULL)
+		return ESRCH;
+
+	if (dodrop) {
+		struct tcpcb *tp;
+		
+		if (inp == NULL || (tp = intotcpcb(inp)) == NULL ||
+		    (inp->inp_socket->so_options & SO_ACCEPTCONN) != 0)
+			return ESRCH;
+		
+		if (check_sockuid(inp->inp_socket, l->l_cred) != 0)
+			return EACCES;
+		
+		(void)tcp_drop(tp, ECONNABORTED);
+		return 0;
+	}
+	else
+		return copyout_uid(sockp, oldp, oldlenp);
+}
+
+static inline int
+inet6_ident_core(struct in6_addr *raddr, u_int rport,
+    struct in6_addr *laddr, u_int lport,
+    void *oldp, size_t *oldlenp,
+    struct lwp *l, int dodrop)
+{
+	struct in6pcb *in6p;
+	struct socket *sockp;
+
+	in6p = in6_pcblookup_connect(&tcbtable, raddr, rport, laddr, lport, 0);
+
+	if (in6p == NULL || (sockp = in6p->in6p_socket) == NULL)
+		return ESRCH;
+	
+	if (dodrop) {
+		struct tcpcb *tp;
+		
+		if (in6p == NULL || (tp = in6totcpcb(in6p)) == NULL ||
+		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) != 0)
+			return ESRCH;
+
+		if (check_sockuid(in6p->in6p_socket, l->l_cred) != 0)
+			return EACCES;
+
+		(void)tcp_drop(tp, ECONNABORTED);
+		return 0;
+	}
+	else
+		return copyout_uid(sockp, oldp, oldlenp);
+}
+
+/*
+ * sysctl helper routine for the net.inet.tcp.drop and
+ * net.inet6.tcp6.drop nodes.
+ */
+#define sysctl_net_inet_tcp_drop sysctl_net_inet_tcp_ident
+
+/*
  * sysctl helper routine for the net.inet.tcp.ident and
  * net.inet6.tcp6.ident nodes.  contains backwards compat code for the
  * old way of looking up the ident information for ipv4 which involves
@@ -1154,23 +1257,27 @@ static int
 sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 {
 #ifdef INET
-	struct inpcb *inb;
 	struct sockaddr_in *si4[2];
 #endif /* INET */
 #ifdef INET6
-	struct in6pcb *in6b;
 	struct sockaddr_in6 *si6[2];
 #endif /* INET6 */
 	struct sockaddr_storage sa[2];
-	struct socket *sockp;
-	size_t sz;
-	uid_t uid;
-	int error, pf;
+	int error, pf, dodrop, s;
 
+	dodrop = name[-1] == TCPCTL_DROP;
+	if (dodrop) {
+		if (oldp != NULL || *oldlenp != 0)
+			return EINVAL;
+		if (newp == NULL)
+			return EPERM;
+		if (newlen < sizeof(sa))
+			return ENOMEM;
+	}
 	if (namelen != 4 && namelen != 0)
-		return (EINVAL);
+		return EINVAL;
 	if (name[-2] != IPPROTO_TCP)
-		return (EINVAL);
+		return EINVAL;
 	pf = name[-3];
 
 	/* old style lookup, ipv4 only */
@@ -1180,85 +1287,69 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		u_int lport, rport;
 
 		if (pf != PF_INET)
-			return (EPROTONOSUPPORT);
+			return EPROTONOSUPPORT;
 		raddr.s_addr = (uint32_t)name[0];
 		rport = (u_int)name[1];
 		laddr.s_addr = (uint32_t)name[2];
 		lport = (u_int)name[3];
-		inb = in_pcblookup_connect(&tcbtable, raddr, rport,
-					   laddr, lport);
-		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
-			return (ESRCH);
-		uid = sockp->so_uidinfo->ui_uid;
-		if (oldp) {
-			sz = MIN(sizeof(uid), *oldlenp);
-			error = copyout(&uid, oldp, sz);
-			if (error)
-				return (error);
-		}
-		*oldlenp = sizeof(uid);
-		return (0);
+		
+		s = splsoftnet();
+		error = inet4_ident_core(raddr, rport, laddr, lport,
+		    oldp, oldlenp, l, dodrop);
+		splx(s);
+		return error;
 #else /* INET */
-		return (EINVAL);
+		return EINVAL;
 #endif /* INET */
 	}
 
 	if (newp == NULL || newlen != sizeof(sa))
-		return (EINVAL);
+		return EINVAL;
 	error = copyin(newp, &sa, newlen);
 	if (error)
-		return (error);
+		return error;
 
 	/*
 	 * requested families must match
 	 */
 	if (pf != sa[0].ss_family || sa[0].ss_family != sa[1].ss_family)
-		return (EINVAL);
+		return EINVAL;
 
 	switch (pf) {
 #ifdef INET
-	    case PF_INET:
+	case PF_INET:
 		si4[0] = (struct sockaddr_in*)&sa[0];
 		si4[1] = (struct sockaddr_in*)&sa[1];
 		if (si4[0]->sin_len != sizeof(*si4[0]) ||
 		    si4[0]->sin_len != si4[1]->sin_len)
-			return (EINVAL);
-		inb = in_pcblookup_connect(&tcbtable,
-		    si4[0]->sin_addr, si4[0]->sin_port,
-		    si4[1]->sin_addr, si4[1]->sin_port);
-		if (inb == NULL || (sockp = inb->inp_socket) == NULL)
-			return (ESRCH);
-		break;
+			return EINVAL;
+	
+		s = splsoftnet();
+		error = inet4_ident_core(si4[0]->sin_addr, si4[0]->sin_port,
+		    si4[1]->sin_addr, si4[1]->sin_port,
+		    oldp, oldlenp, l, dodrop);
+		splx(s);
+		return error;
 #endif /* INET */
 #ifdef INET6
-	    case PF_INET6:
+	case PF_INET6:
 		si6[0] = (struct sockaddr_in6*)&sa[0];
 		si6[1] = (struct sockaddr_in6*)&sa[1];
 		if (si6[0]->sin6_len != sizeof(*si6[0]) ||
 		    si6[0]->sin6_len != si6[1]->sin6_len)
-			return (EINVAL);
-		in6b = in6_pcblookup_connect(&tcbtable,
-		    &si6[0]->sin6_addr, si6[0]->sin6_port,
-		    &si6[1]->sin6_addr, si6[1]->sin6_port, 0);
-		if (in6b == NULL || (sockp = in6b->in6p_socket) == NULL)
-			return (ESRCH);
-		break;
+			return EINVAL;
+
+		s = splsoftnet();
+		error = inet6_ident_core(&si6[0]->sin6_addr, si6[0]->sin6_port,
+		    &si6[1]->sin6_addr, si6[1]->sin6_port,
+		    oldp, oldlenp, l, dodrop);
+		splx(s);
+		return error;
 #endif /* INET6 */
-	    default:
-		return (EPROTONOSUPPORT);
+	default:
+		return EPROTONOSUPPORT;
 	}
-	*oldlenp = sizeof(uid);
-
-	uid = sockp->so_uidinfo->ui_uid;
-	if (oldp) {
-		sz = MIN(sizeof(uid), *oldlenp);
-		error = copyout(&uid, oldp, sz);
-		if (error)
-			return (error);
-	}
-	*oldlenp = sizeof(uid);
-
-	return (0);
+	/* NOTREACHED */
 }
 
 /*
@@ -1815,6 +1906,12 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DEBX,
 		       CTL_EOL);
 #endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "drop",
+		       SYSCTL_DESCR("TCP drop connection"),
+		       sysctl_net_inet_tcp_drop, 0, NULL, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DROP, CTL_EOL);
 #if NRND > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
