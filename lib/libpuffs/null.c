@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.18 2007/06/24 23:02:55 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.19 2007/06/25 07:52:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.18 2007/06/24 23:02:55 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.19 2007/06/25 07:52:01 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -133,6 +133,30 @@ inodecmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 	return NULL;
 }
 
+static int
+makenode(struct puffs_usermount *pu, void **newnode,
+	const struct puffs_cn *pcn, const struct vattr *va, int regular)
+{
+	struct puffs_node *pn;
+	struct stat sb;
+	int rv;
+
+	if ((rv = processvattr(PCNPATH(pcn), va, regular)) != 0)
+		return rv;
+
+	pn = puffs_pn_new(pu, NULL);
+	if (!pn)
+		return ENOMEM;
+	puffs_setvattr(&pn->pn_va, va);
+
+	if (lstat(PCNPATH(pcn), &sb) == -1)
+		return errno;
+	puffs_stat2vattr(&pn->pn_va, &sb);
+
+	*newnode = pn;
+	return 0;
+}
+
 /* This should be called first and overriden from the file system */
 void
 puffs_null_setops(struct puffs_ops *pops)
@@ -219,31 +243,17 @@ puffs_null_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_node *pn;
-	struct stat sb;
 	int fd, rv;
 
 	fd = open(PCNPATH(pcn), O_RDWR | O_CREAT | O_TRUNC);
 	if (fd == -1)
 		return errno;
 	close(fd);
-	if ((rv = processvattr(PCNPATH(pcn), va, 1)) != 0) {
-		unlink(PCNPATH(pcn));
-		return rv;
-	}
 
-	pn = puffs_pn_new(pu, NULL);
-	if (!pn) {
+	rv = makenode(pu, newnode, pcn, va, 1);
+	if (rv)
 		unlink(PCNPATH(pcn));
-		return ENOMEM;
-	}
-	puffs_setvattr(&pn->pn_va, va);
-	rv = lstat(PCNPATH(pcn), &sb);
-	assert(rv == 0);
-	puffs_stat2vattr(&pn->pn_va, &sb);
-
-	*newnode = pn;
-	return 0;
+	return rv;
 }
 
 /*ARGSUSED*/
@@ -252,8 +262,6 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_node *pn;
-	struct stat sb;
 	mode_t mode;
 	int rv;
 
@@ -261,23 +269,10 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (mknod(PCNPATH(pcn), mode, va->va_rdev) == -1)
 		return errno;
 
-	if ((rv = processvattr(PCNPATH(pcn), va, 0)) != 0) {
+	rv = makenode(pu, newnode, pcn, va, 0);
+	if (rv)
 		unlink(PCNPATH(pcn));
-		return rv;
-	}
-
-	pn = puffs_pn_new(pu, NULL);
-	if (!pn) {
-		unlink(PCNPATH(pcn));
-		return ENOMEM;
-	}
-	puffs_setvattr(&pn->pn_va, va);
-	rv = lstat(PCNPATH(pcn), &sb);
-	assert(rv == 0);
-	puffs_stat2vattr(&pn->pn_va, &sb);
-
-	*newnode = pn;
-	return 0;
+	return rv;
 }
 
 /*ARGSUSED*/
@@ -388,30 +383,15 @@ puffs_null_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_node *pn;
-	struct stat sb;
 	int rv;
 
 	if (mkdir(PCNPATH(pcn), va->va_mode) == -1)
 		return errno;
 
-	if ((rv = processvattr(PCNPATH(pcn), va, 0)) != 0) {
+	rv = makenode(pu, newnode, pcn, va, 0);
+	if (rv)
 		rmdir(PCNPATH(pcn));
-		return rv;
-	}
-
-	pn = puffs_pn_new(pu, NULL);
-	if (pn == NULL) {
-		rmdir(PCNPATH(pcn));
-		return ENOMEM;
-	}
-	puffs_setvattr(&pn->pn_va, va);
-	rv = lstat(PCNPATH(pcn), &sb);
-	assert(rv == 0);
-	puffs_stat2vattr(&pn->pn_va, &sb);
-
-	*newnode = pn;
-	return 0;
+	return rv;
 }
 
 /*ARGSUSED*/
@@ -435,30 +415,15 @@ puffs_null_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	const char *linkname)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_node *pn;
-	struct stat sb;
 	int rv;
 
 	if (symlink(linkname, PCNPATH(pcn)) == -1)
 		return errno;
 
-	if ((rv = processvattr(PCNPATH(pcn), va, 0)) != 0) {
+	rv = makenode(pu, newnode, pcn, va, 0);
+	if (rv)
 		unlink(PCNPATH(pcn));
-		return rv;
-	}
-
-	pn = puffs_pn_new(pu, NULL);
-	if (pn == NULL) {
-		rmdir(PCNPATH(pcn));
-		return ENOMEM;
-	}
-	puffs_setvattr(&pn->pn_va, va);
-	rv = lstat(PCNPATH(pcn), &sb);
-	assert(rv == 0);
-	puffs_stat2vattr(&pn->pn_va, &sb);
-
-	*newnode = pn;
-	return 0;
+	return rv;
 }
 
 /*ARGSUSED*/
