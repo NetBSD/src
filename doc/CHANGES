@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.879 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.880 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -141,3 +141,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		effective group ID. [ginsbach 20060621]
 	GCC: Updated to version 4.1.3-20070620.  [mrg 20070621]
 	ntp: Updated to version 4.2.4p2. [kardel 20070624]
+	tcpdrop(8): Ported by anon ymous (from FreeBSD/OpenBSD)
+		[christos 20070625]
