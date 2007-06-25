@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2007/05/12 07:06:55 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 2007/06/25 19:57:32 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2007/05/12 07:06:55 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2007/06/25 19:57:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,7 +557,7 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
-	int s, r;
+	int r;
 
 	/*
 	 * We set the timer to when we expect the next timer
@@ -565,9 +565,9 @@ idle_block(void)
 	 * easily find out when we will have more work (callouts) to
 	 * process from hardclock.
 	 */
-	s = splclock();
 	r = HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK);
-	splx(s);
 	if (r == 0)
 		HYPERVISOR_block();
+	else
+		__sti();
 }
