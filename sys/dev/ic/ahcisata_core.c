@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.2 2007/06/21 11:32:54 fvdl Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.3 2007/06/25 20:58:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.2 2007/06/21 11:32:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.3 2007/06/25 20:58:07 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -476,9 +476,11 @@ ahci_probe_drive(struct ata_channel *chp)
 		 * cases we get wrong values here, so ignore it.
 		 */
 		s = splbio();
-		if ((sig & 0xffff0000) == 0xeb140000)
-			chp->ch_drive[0].drive_flags |= DRIVE_ATAPI;
-		else
+		if ((sig & 0xffff0000) == 0xeb140000) {
+			aprint_error("%s port %d: ATAPI device ignored\n",
+			    AHCINAME(sc), chp->ch_channel);
+			chp->ch_drive[0].drive_flags |= 0 /* DRIVE_ATAPI XXX */;
+		} else
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
 		/* enable interrupts */
