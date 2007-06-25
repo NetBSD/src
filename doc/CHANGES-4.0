@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.196 2007/06/22 14:18:00 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.197 2007/06/25 15:44:21 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6869,3 +6869,16 @@ usr.sbin/wsmoused/selection.c			1.10
 
 	Problem reported by Blair Sadewitz.
 	[jmmv, ticket #742]
+
+sys/arch/sparc/sparc/bsd_fdintr.s		1.26
+
+	Make this match how the C version of the interrupt handler does
+	pseudo DMA.  Thanks to uwe@ for assistance with sparc assembly
+	language and tnn@ for testing.
+	[743, ticket #jnemeth]
+
+sys/dev/usb/usb_subr.c				1.147
+
+	Retry set_address function for very slow (out of spec) devices, just
+	like FreeBSD.
+	[mlelstv, ticket #745]
