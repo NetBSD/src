@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.10 2004/12/28 19:23:12 wiz Exp $
+.\"     $NetBSD: namecache.9,v 1.11 2007/06/25 16:33:50 rumble Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 28, 2004
+.Dd June 25, 2007
 .Dt NAMECACHE 9
 .Os
 .Sh NAME
@@ -172,6 +172,10 @@ is called with
 pointing to the vnode of the directory to enter and
 .Fa cnp
 pointing to the partially initialised component structure.
+If
+.Fa vp
+is NULL, a negative cache entry is created, specifying that the entry
+does not exist in the file system.
 .Fa cnp-\*[Gt]cn_nameptr
 points to the name of the entry being entered,
 .Fa cnp-\*[Gt]cn_namelen
