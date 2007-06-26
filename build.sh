@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.170 2007/04/14 10:50:48 apb Exp $
+#	$NetBSD: build.sh,v 1.171 2007/06/26 12:59:38 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -156,6 +156,13 @@ set_HOST_SH()
 
 initdefaults()
 {
+	makeenv=
+	makewrapper=
+	makewrappermachine=
+	runcmd=
+	operations=
+	removedirs=
+
 	[ -d usr.bin/make ] || cd "$(dirname $0)"
 	[ -d usr.bin/make ] ||
 	    bomb "build.sh must be run from the top source level"
@@ -206,18 +213,11 @@ initdefaults()
 		;;
 	esac
 
-	makeenv=
-	makewrapper=
-	makewrappermachine=
-	runcmd=
-	operations=
-	removedirs=
+	# do_{operation}=true if given operation is requested.
+	#
 	do_expertmode=false
 	do_rebuildmake=false
 	do_removedirs=false
-
-	# do_{operation}=true if given operation is requested.
-	#
 	do_tools=false
 	do_obj=false
 	do_build=false
@@ -1083,7 +1083,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.170 2007/04/14 10:50:48 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.171 2007/06/26 12:59:38 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
