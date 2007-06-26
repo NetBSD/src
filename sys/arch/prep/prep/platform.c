@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.22.18.3 2007/05/10 15:46:09 garbled Exp $	*/
+/*	$NetBSD: platform.c,v 1.22.18.4 2007/06/26 18:38:11 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22.18.3 2007/05/10 15:46:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.22.18.4 2007/06/26 18:38:11 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,10 @@ struct pciroutinginfo *pciroutinginfo;
 extern struct prep_pci_chipset *genppc_pct;
 
 extern void pci_intr_fixup_ibm_6015(void);
+#if NMCCLOCK > 0
 /* from mcclock_pnpbus.c */
 extern void ds1585_reboot(void);
+#endif
 
 struct platform_quirkdata platform_quirks[] = {
 	{ "IBM PPS Model 6015", PLAT_QUIRK_INTRFIXUP,
@@ -105,11 +107,13 @@ reset_prep_generic(void)
 
 	mtmsr(mfmsr() | PSL_IP);
 
+#if NMCCLOCK > 0
 	/* XXX This is a special hack for 7024 and 7025 models, which have
 	 * no obvious method of rebooting. We call this, because it will
 	 * return if we do not have a 1585.
 	 */
 	ds1585_reboot();
+#endif
 
 	reg = inb(PREP_BUS_SPACE_IO + 0x92);
 	reg &= ~1UL;

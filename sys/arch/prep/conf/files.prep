@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.57.4.10 2007/05/09 19:47:35 garbled Exp $
+#	$NetBSD: files.prep,v 1.57.4.11 2007/06/26 18:38:11 garbled Exp $
 #
 # prep-specific configuration info
 #
@@ -174,7 +174,7 @@ file	arch/prep/pnpbus/mcclock_pnpbus.c	mcclock & mcclock_pnpbus needs-flag
 # mk48t18 stub probe  XXX MUST OCCUR BEFORE NVRAM
 device	mkclock: mk48txx
 attach	mkclock at pnpbus with mkclock_pnpbus
-file	arch/prep/pnpbus/mkclock_pnpbus.c	mkclock_pnpbus
+file	arch/prep/pnpbus/mkclock_pnpbus.c	mkclock & mkclock_pnpbus needs-flag
 
 attach wdc at pnpbus with wdc_pnpbus
 file arch/prep/pnpbus/wdc_pnpbus.c	wdc_pnpbus needs-flag
