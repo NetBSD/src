@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.111 2007/05/24 21:30:41 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.112 2007/06/26 21:00:18 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.111 2007/05/24 21:30:41 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.112 2007/06/26 21:00:18 mjacob Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -814,7 +814,7 @@ isp_reset(ispsoftc_t *isp)
 				}
 				cp = isp->isp_rquest;
 				for (i = 0; i < nw; i++) {
-					cp[i] = ptr[wi++];
+					ISP_IOXPUT_32(isp,  ptr[wi++], &cp[i]);
 					wl--;
 				}
 				MEMORYBARRIER(isp, SYNC_REQUEST,
@@ -877,7 +877,7 @@ isp_reset(ispsoftc_t *isp)
 				}
 				cp = isp->isp_rquest;
 				for (i = 0; i < nw; i++) {
-					cp[i] = ptr[wi++];
+					ISP_IOXPUT_16(isp,  ptr[wi++], &cp[i]);
 					wl--;
 				}
 				MEMORYBARRIER(isp, SYNC_REQUEST,
