@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.29 2007/06/06 01:55:03 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.30 2007/06/26 13:20:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.29 2007/06/06 01:55:03 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.30 2007/06/26 13:20:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -137,11 +137,6 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
-
-#if 0
-	/* XXX: noatime is mandatory for now */
-	mntflags |= MNT_NOATIME;
-#endif
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
