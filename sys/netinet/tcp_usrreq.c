@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.133 2007/06/25 23:35:12 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.134 2007/06/26 09:19:36 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.133 2007/06/25 23:35:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.134 2007/06/26 09:19:36 xtraeme Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1210,6 +1210,7 @@ inet4_ident_core(struct in_addr raddr, u_int rport,
 		return copyout_uid(sockp, oldp, oldlenp);
 }
 
+#ifdef INET6
 static inline int
 inet6_ident_core(struct in6_addr *raddr, u_int rport,
     struct in6_addr *laddr, u_int lport,
@@ -1240,6 +1241,7 @@ inet6_ident_core(struct in6_addr *raddr, u_int rport,
 	else
 		return copyout_uid(sockp, oldp, oldlenp);
 }
+#endif
 
 /*
  * sysctl helper routine for the net.inet.tcp.drop and
