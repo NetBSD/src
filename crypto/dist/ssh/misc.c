@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.19 2007/03/10 22:52:06 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.20 2007/06/26 18:28:34 christos Exp $	*/
 /* $OpenBSD: misc.c,v 1.65 2006/11/23 01:35:11 ray Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.19 2007/03/10 22:52:06 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20 2007/06/26 18:28:34 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -515,7 +515,7 @@ tilde_expand_filename(const char *filename, uid_t uid)
 		if ((pw = getpwnam(user)) == NULL)
 			fatal("tilde_expand_filename: No such user %s", user);
 		homedir = pw->pw_dir;
-	} else if ((homedir = getenv("HOME")) == NULL) { /* ~/path */
+	} else {					/* ~/path */
 		if ((pw = getpwuid(uid)) == NULL)
 			fatal("tilde_expand_filename: No such uid %d",
 			    (int)uid);
