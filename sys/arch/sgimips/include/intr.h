@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2007/06/17 06:04:30 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2007/06/26 12:55:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -69,9 +69,9 @@
 
 #define	SI_QUEUENAMES {							\
 	"misc",								\
-	"serial",							\
-	"net",								\
 	"clock",							\
+	"net",								\
+	"serial",							\
 }
 
 #ifdef _KERNEL
