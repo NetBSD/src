@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28.16.1 2007/05/22 17:27:21 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28.16.2 2007/06/26 18:13:26 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.1 2007/05/22 17:27:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28.16.2 2007/06/26 18:13:26 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -188,6 +188,7 @@ static const struct cputab models[] = {
 	{ "603",	MPC603,		REVFMT_MAJMIN },
 	{ "603e",	MPC603e,	REVFMT_MAJMIN },
 	{ "603ev",	MPC603ev,	REVFMT_MAJMIN },
+	{ "G2",		MPCG2,		REVFMT_MAJMIN },
 	{ "604",	MPC604,		REVFMT_MAJMIN },
 	{ "604e",	MPC604e,	REVFMT_MAJMIN },
 	{ "604ev",	MPC604ev,	REVFMT_MAJMIN },
@@ -202,6 +203,7 @@ static const struct cputab models[] = {
 	{ "7447A",	MPC7447A,	REVFMT_MAJMIN },
 	{ "7448",	MPC7448,	REVFMT_MAJMIN },
 	{ "8240",	MPC8240,	REVFMT_MAJMIN },
+	{ "8245",	MPC8245,	REVFMT_MAJMIN },
 	{ "970",	IBM970,		REVFMT_MAJMIN },
 	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
@@ -284,6 +286,7 @@ cpu_probe_cache(void)
 	case MPC604:
 	case MPC8240:
 	case MPC8245:
+	case MPCG2:
 		curcpu()->ci_ci.dcache_size = 16 K;
 		curcpu()->ci_ci.icache_size = 16 K;
 		assoc = 4;
@@ -427,6 +430,7 @@ cpu_setup(self, ci)
 	case MPC7410:
 	case MPC8240:
 	case MPC8245:
+	case MPCG2:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -619,7 +623,7 @@ cpu_identify(char *str, size_t len)
 		major = minor <= 4 ? 1 : 2;
 		break;
 	default:
-		major = (pvr >>  8) & 0xf;
+		major = (pvr >>  4) & 0xf;
 		minor = (pvr >>  0) & 0xf;
 	}
 

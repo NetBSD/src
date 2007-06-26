@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.5 2005/12/11 12:16:26 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.5.38.1 2007/06/26 18:12:01 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.5 2005/12/11 12:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.5.38.1 2007/06/26 18:12:01 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,19 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.5 2005/12/11 12:16:26 christos Exp $");
 
 #include "isa.h"
 
-int	pcibmatch __P((struct device *, struct cfdata *, void *));
-void	pcibattach __P((struct device *, struct device *, void *));
+int	pcibmatch(struct device *, struct cfdata *, void *);
+void	pcibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcib, sizeof(struct device),
     pcibmatch, pcibattach, NULL, NULL);
 
-void	pcib_callback __P((struct device *));
+void	pcib_callback(struct device *);
 
 int
-pcibmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -170,9 +167,7 @@ pcibmatch(parent, match, aux)
 }
 
 void
-pcibattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
@@ -191,8 +186,7 @@ pcibattach(parent, self, aux)
 }
 
 void
-pcib_callback(self)
-	struct device *self;
+pcib_callback(struct device *self)
 {
 	struct isabus_attach_args iba;
 

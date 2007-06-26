@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2007/03/06 11:28:47 dillo Exp $
+# $NetBSD: GENERIC,v 1.179.10.1 2007/06/26 18:12:51 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.179.10.1 $"
 
 maxusers	16		# estimated number of users
 
@@ -201,8 +201,6 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-fpu0 at mainbus?			# Floating-Point Coprocessor support
-
 
 # Basic Bus Support
 
@@ -335,6 +333,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	grf		2	# grf emulation for wscons

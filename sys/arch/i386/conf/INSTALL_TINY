@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.109 2007/01/24 19:46:26 tls Exp $
+#	$NetBSD: INSTALL_TINY,v 1.109.14.1 2007/06/26 18:12:35 garbled Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -91,6 +91,7 @@ no options	EXEC_AOUT	# we don't a.out support
 #options 	COMPAT_16	# NetBSD 1.6
 #options 	COMPAT_20	# NetBSD 2.0
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -148,7 +149,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Squeeze...
 options 	NVNODE=50

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62.8.1 2007/05/22 17:27:27 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62.8.2 2007/06/26 18:13:30 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62.8.1 2007/05/22 17:27:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62.8.2 2007/06/26 18:13:30 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		pvh = &pg->mdpage;
 		entry |= PG_C;	/* always cached */
 
-		/* Modified/reference tracking */
+		/* Seed modified/reference tracking */
 		if (flags & VM_PROT_WRITE) {
 			entry |= PG_V | PG_D;
 			pvh->pvh_flags |= PVH_MODIFIED | PVH_REFERENCED;
@@ -364,7 +364,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			else
 				entry |= PG_PR_URW;
 		} else {
-			/* RO, COW page */
+			/* RO or COW page */
 			if (kva)
 				entry |= PG_PR_KRO | PG_SH;
 			else

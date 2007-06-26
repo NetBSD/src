@@ -1,10 +1,10 @@
-#	$NetBSD: files.adm5120,v 1.2 2007/04/10 02:33:02 macallan Exp $
+#	$NetBSD: files.adm5120,v 1.2.6.1 2007/06/26 18:12:22 garbled Exp $
 
 file	arch/evbmips/adm5120/autoconf.c
 file	arch/evbmips/adm5120/machdep.c
 
 file	arch/mips/mips/bus_dma.c
-file	arch/evbmips/evbmips/disksubr.c
+file	kern/subr_disk_mbr.c
 file	arch/evbmips/evbmips/interrupt.c
 
 file	arch/mips/mips/mips3_clock.c

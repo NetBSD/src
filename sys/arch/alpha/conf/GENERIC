@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.312 2007/03/14 12:27:21 drochner Exp $
+# $NetBSD: GENERIC,v 1.312.6.1 2007/06/26 18:11:55 garbled Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.312 $"
+ident		"GENERIC-$Revision: 1.312.6.1 $"
 
 maxusers 32
 
@@ -710,6 +710,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
@@ -725,6 +726,8 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pflog			# PF log if
 pseudo-device	lockstat		# lock profiling
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
+
+#options	FILEASSOC		# fileassoc(9) - required for Veriexec
 
 # Veriexec
 #

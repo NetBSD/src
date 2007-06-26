@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.44.20.1 2007/05/22 17:27:08 matt Exp $
+#	$NetBSD: Makefile.mips,v 1.44.20.2 2007/06/26 18:13:00 garbled Exp $
 
 # Makefile for NetBSD
 #
@@ -84,8 +84,8 @@ KERNLDSCRIPT?=		${MIPS}/conf/kern.ldscript
 # some mips ports specify a "magic" format
 LINKFORMAT+=		-T ${KERNLDSCRIPT}
 EXTRA_LINKFLAGS=	${GP} ${LDOPTS}
-LINKFLAGS_NORMAL=	-x
-STRIPFLAGS=		-g -X -x
+LINKFLAGS_NORMAL=	-X
+STRIPFLAGS=		-g -X
 
 ##
 ## (6) port specific target dependencies

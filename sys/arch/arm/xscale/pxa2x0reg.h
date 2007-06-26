@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.14 2007/02/25 13:46:40 nonaka Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.14.12.1 2007/06/26 18:12:15 garbled Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -186,7 +186,7 @@
 #define  DCSR_STOPIRQEN     (1<<29)     /* stop interrupt enable */
 #define  DCSR_NODESCFETCH   (1<<30)	/* no-descriptor fetch mode */
 #define  DCSR_RUN  	    (1<<31)
-#define DMAC_DINT 	0x00f0		/* DAM interrupt */
+#define DMAC_DINT 	0x00f0		/* DMA interrupt */
 #define  DMAC_DINT_MASK	0xffffu
 #define DMAC_DRCMR(n)	(0x100+(n)*4)	/* Channel map register */
 #define  DRCMR_CHLNUM	0x0f		/* channel number */
