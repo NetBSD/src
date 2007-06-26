@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.6.2.9 2005/09/02 12:16:17 tron Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.6.2.9.4.1 2007/06/26 15:04:28 ghen Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -41,7 +41,7 @@
 #include <sys/param.h>
 #include <sys/hash.h>
 
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.6.2.9 2005/09/02 12:16:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.h,v 1.6.2.9.4.1 2007/06/26 15:04:28 ghen Exp $");
 
 /* Max length of the fingerprint type string, including terminating \0 char */
 #define VERIEXEC_TYPE_MAXLEN 9
@@ -188,7 +188,8 @@ int veriexec_hashadd(struct veriexec_hashtbl *, struct veriexec_hash_entry *);
 int veriexec_verify(struct proc *, struct vnode *, struct vattr *,
 		    const u_char *, int, struct veriexec_hash_entry **);
 int veriexec_removechk(struct proc *, struct vnode *, const char *);
-int veriexec_renamechk(struct vnode *, const char *, const char *);
+int veriexec_renamechk(struct vnode *, struct vnode *, const char *,
+		       const char *);
 void veriexec_init_fp_ops(void);
 void veriexec_report(const u_char *, const u_char *, struct vattr *,
 		     struct proc *, int, int, int);
