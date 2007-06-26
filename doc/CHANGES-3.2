@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.84 2007/06/26 16:57:39 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.85 2007/06/26 17:01:12 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3332,4 +3332,12 @@ usr.bin/file/Makefile				1.51-1.53
 	Update file(1) to version 4.21, including security fixes (CVE-2007-1536
 	and CVE-2007-2799).
 	[pooka, ticket #1804]
+
+sys/kern/kern_verifiedexec.c			patch
+sys/kern/vfs_syscalls.c				patch
+sys/sys/verified_exec.h				patch
+
+	Prevent users to rename a file to a veriexec protected file and to run
+	unfingerprinted files at strict level two or above.
+	[blymn, ticket #1471]
 
