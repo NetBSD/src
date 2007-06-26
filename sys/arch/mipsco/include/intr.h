@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2007/02/16 02:53:48 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.14.1 2007/06/26 18:13:03 garbled Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -77,14 +77,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-extern int _splraise __P((int));
-extern int _spllower __P((int));
-extern int _splset __P((int));
-extern int _splget __P((void));
-extern void _splnone __P((void));
-extern void _setsoftintr __P((int));
-extern void _clrsoftintr __P((int));
+#include <mips/locore.h>
 
 /*
  * software simulated interrupt

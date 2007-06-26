@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.26 2007/03/04 06:00:41 christos Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.26.10.1 2007/06/26 18:13:30 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.26 2007/03/04 06:00:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.26.10.1 2007/06/26 18:13:30 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,17 +378,13 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	void *sg = stackgap_init(p, 0);
 
 	/*
 	 * 1. open shlib file
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-#ifdef TODO
-	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
-#endif
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_SYSSPACE, path, l);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));

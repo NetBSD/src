@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.243.12.1 2007/05/22 17:27:34 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.243.12.2 2007/06/26 18:13:43 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6625,7 +6625,6 @@ ENTRY(cpu_idle)
  *	the old lwp switched away from
  */
 ENTRY(cpu_switchto)
- flushw
 	save	%sp, -CC64FSZ, %sp
 	/*
 	 * REGISTER USAGE AT THIS POINT:
@@ -6644,20 +6643,18 @@ ENTRY(cpu_switchto)
 	 */
 
 	flushw				! save all register windows except this one
- membar #Sync
-	rdpr	%pstate, %o1			! oldpstate = %pstate;
 	wrpr	%g0, PSTATE_KERN, %pstate	! make sure we're on normal globals
 						! with traps turned off
 
 	brz,pn	%i0, 1f
 	 sethi	%hi(CPCB), %l6
 
+	rdpr	%pstate, %o1			! oldpstate = %pstate;
 	LDPTR	[%i0 + L_ADDR], %l5
 
 	stx	%i7, [%l5 + PCB_PC]
 	stx	%i6, [%l5 + PCB_SP]
 	sth	%o1, [%l5 + PCB_PSTATE]
-
 
 	rdpr	%cwp, %o2		! Useless
 	stb	%o2, [%l5 + PCB_CWP]
@@ -9465,8 +9462,9 @@ ENTRY(sparc64_ipi_save_fpstate)
 	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
 	ldx	[%o0 + %lo(CPUINFO_VA + CI_FPLWP)], %o0
 	call	savefpstate
-	 ldx	[%o0 + L_FPSTATE], %l1
-	stx	%g0, [%o0]		! fplwp = NULL
+	 ldx	[%o0 + L_FPSTATE], %o0
+	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
+	stx	%g0, [%o0 + %lo(CPUINFO_VA + CI_FPLWP)]		! fplwp = NULL
 	mov	%g6, %o5		! restore saved registers
 	mov	%g5, %o4
 	mov	%g4, %o3

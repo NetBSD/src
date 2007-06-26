@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2007/03/08 15:40:54 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.10.1 2007/06/26 18:12:24 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2004 The NetBSD Foundation, Inc.
@@ -88,15 +88,9 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-extern const uint32_t *ipl_sr_bits;
+#include <mips/locore.h>
 
-extern int		_splraise(int);
-extern int		_spllower(int);
-extern int		_splset(int);
-extern int		_splget(int);
-extern int		_splnone(int);
-extern int		_setsoftintr(int);
-extern int		_clrsoftintr(int);
+extern const uint32_t *ipl_sr_bits;
 
 #define spl0()		(void) _spllower(0)
 #define splx(s)		(void) _splset(s)

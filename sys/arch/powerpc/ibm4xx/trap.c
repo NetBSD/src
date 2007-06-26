@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40.10.2 2007/05/28 20:01:42 freza Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.10.3 2007/06/26 18:13:25 garbled Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.10.2 2007/05/28 20:01:42 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.10.3 2007/06/26 18:13:25 garbled Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"

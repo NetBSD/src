@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20.12.1 2007/05/22 17:26:31 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.20.12.2 2007/06/26 18:11:57 garbled Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -707,6 +707,26 @@ ENTRY(longjmp)
 	movq	56(%rax),%rdx
 	movq	%rdx,(%rsp)
 	movl	$1,%eax
+	ret
+
+ENTRY(dumpsys)
+	# mimic cpu_switchto() for postmortem debugging.
+
+	# build a fake switch frame.
+	pushq	%rbx
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+	
+	# save a context.
+	movq	$dumppcb, %rax
+	movq	%rsp, PCB_RSP(%rax)
+	movq	%rbp, PCB_RBP(%rax)
+
+	call	_C_LABEL(dodumpsys)
+
+	addq	$(5*8), %rsp	# sizeof(switchframe) - sizeof(%rip)
 	ret
 
 /*

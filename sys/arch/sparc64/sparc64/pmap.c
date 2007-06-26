@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188.4.1 2007/05/22 17:27:35 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188.4.2 2007/06/26 18:13:44 garbled Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.4.1 2007/05/22 17:27:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.4.2 2007/06/26 18:13:44 garbled Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1484,6 +1484,8 @@ pmap_kenter_pa(va, pa, prot)
 	/* We don't track mod/ref here. */
 	if (prot & VM_PROT_WRITE)
 		tte.data |= TLB_REAL_W|TLB_W;
+	if (prot & VM_PROT_EXECUTE)
+		tte.data |= TLB_EXEC;
 	tte.data |= TLB_TSB_LOCK;	/* wired */
 	ptp = 0;
 

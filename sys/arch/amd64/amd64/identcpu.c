@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.17.4.1 2007/05/22 17:26:31 matt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.17.4.2 2007/06/26 18:11:57 garbled Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,8 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17.4.1 2007/05/22 17:26:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.17.4.2 2007/06/26 18:11:57 garbled Exp $");
 
+#include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
 #include "opt_powernow_k8.h"
 
@@ -61,7 +62,7 @@ identifycpu(struct cpu_info *ci)
 	char buf[512];
 	u_int32_t brand[12];
 	int vendor;
-	const char *feature_str[3], *feature2_str[1];
+	const char *feature_str[3];
 
 	CPUID(1, ci->ci_signature, val,
 	    ci->ci_feature2_flags, ci->ci_feature_flags);
@@ -89,7 +90,8 @@ identifycpu(struct cpu_info *ci)
 	aprint_normal("%s: %s", ci->ci_dev->dv_xname, cpu_model);
 
 	if (ci->ci_tsc_freq != 0)
-		aprint_normal(", %lu.%02lu MHz", (ci->ci_tsc_freq + 4999) / 1000000,
+		aprint_normal(", %lu.%02lu MHz",
+		    (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
 	aprint_normal("\n");
 
@@ -103,28 +105,38 @@ identifycpu(struct cpu_info *ci)
 		feature_str[2] = CPUID_EXT_FLAGS3;
 	}
 
-	feature2_str[0] = CPUID2_FLAGS;
-
 	if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[0], buf, sizeof(buf));
-		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features: %s\n",
+		   ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[1], buf, sizeof(buf));
-		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features: %s\n",
+		    ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[2], buf, sizeof(buf));
-		aprint_normal("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
+		aprint_verbose("%s: features: %s\n",
+		    ci->ci_dev->dv_xname, buf);
 	}
 
 	if (ci->ci_feature2_flags) {
 		bitmask_snprintf(ci->ci_feature2_flags,
-		    feature2_str[0], buf, sizeof(buf));
-		aprint_normal("%s: features2: %s\n", ci->ci_dev->dv_xname, buf);
+		    CPUID2_FLAGS, buf, sizeof(buf));
+		aprint_verbose("%s: features2: %s\n",
+		    ci->ci_dev->dv_xname, buf);
+	}
+
+	if (vendor == CPUVENDOR_INTEL &&
+	    (ci->ci_feature_flags & CPUID_MASK4) != 0) {
+		bitmask_snprintf(ci->ci_feature_flags,
+		    CPUID_FLAGS4, buf, sizeof(buf));
+		aprint_verbose("%s: features3: %s\n",
+		    ci->ci_dev->dv_xname, buf);
 	}
 
 	x86_print_cacheinfo(ci);
@@ -142,6 +154,18 @@ identifycpu(struct cpu_info *ci)
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
+
+#ifdef ENHANCED_SPEEDSTEP
+	if ((vendor == CPUVENDOR_INTEL) &&
+	    (ci->ci_feature2_flags & CPUID2_EST)) {
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
+			est_init(CPUVENDOR_INTEL);
+		else
+			aprint_normal("%s: Enhanced SpeedStep disabled by "
+			    "BIOS\n", device_xname(ci->ci_dev));
+	}
+#endif
+
 }
 
 void

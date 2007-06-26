@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.255.6.3 2007/05/04 02:55:25 macallan Exp $
+# $NetBSD: GENERIC,v 1.255.6.4 2007/06/26 18:12:58 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.255.6.3 $"
+#ident 		"GENERIC-$Revision: 1.255.6.4 $"
 
 maxusers	32
 
@@ -509,6 +509,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
@@ -581,6 +582,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm

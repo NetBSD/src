@@ -1,4 +1,4 @@
-# $NetBSD: PARALLELS,v 1.12 2007/03/08 22:38:02 jmmv Exp $
+# $NetBSD: PARALLELS,v 1.12.10.1 2007/06/26 18:12:37 garbled Exp $
 #
 # PARALLELS machine description file
 #
@@ -76,6 +76,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -171,7 +172,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM

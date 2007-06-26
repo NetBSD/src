@@ -1,20 +1,16 @@
 #
-# $NetBSD: BOOT,v 1.72 2006/03/28 22:03:47 pavel Exp $
+# $NetBSD: BOOT,v 1.72.26.1 2007/06/26 18:12:17 garbled Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.61 2006/03/28 20:58:39 pavel Exp $
+#		NetBSD: GENERIC.in,v 1.66 2007/06/06 08:20:26 martin Exp $
 include "arch/atari/conf/std.atari"
-
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
-
 maxusers 16
-
 options HZ=64 # Set the clock-rate (48/64/96)
-
 options INSECURE # disable kernel security levels
 options M68030 # support for 030
 options FPU_EMULATE # Support for MC68881/MC68882 emulator
@@ -39,49 +35,38 @@ options COMPAT_15 # Compatibility with NetBSD 1.5
 options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
-
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
-
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
-
 options FALCON_SCSI # SCSI-support for Falcon
 options FALCON_VIDEO # Graphics support for FALCON
-
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
 config netbsd root on ? type ?
-
 pseudo-device sl # Slip
 pseudo-device ppp # ppp
-
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device vnd # 3 pseudo disks (see vnconfig)
-
 pseudo-device md 3 # Boot memory disk
 pseudo-device view 4 # View (graphics mapping)
-
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
 scsibus0 at ncrscsi0 # SCSI bus
 zs0 at mainbus0 # Serial support through 8530
-grfbus0 at mainbus0 # bitmapped display's'
+grfbus0 at mainbus0 # bitmapped display's
 grfcc0 at grfbus0 # graphics driver
 ite0 at grfcc0 # console
 nvr0 at mainbus0 # nvram driver
 wdc0 at mainbus0 # IDE-bus
 atabus* at wdc? channel ?
 wd* at atabus? drive ?
-
 atapibus* at atabus?
-
 cd* at atapibus? drive ? # ATAPI CD-ROM drives
-
 sd* at scsibus? target ? lun ? # SCSI disk drives
 st* at scsibus? target ? lun ? # SCSI tape drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives

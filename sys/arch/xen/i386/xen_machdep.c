@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.16 2006/01/22 20:15:51 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.16.36.1 2007/06/26 18:13:56 garbled Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.16 2006/01/22 20:15:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.16.36.1 2007/06/26 18:13:56 garbled Exp $");
 
 #include "opt_xen.h"
 
@@ -187,7 +187,8 @@ xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 
 		switch (what) {
 		case XEN_PARSE_BOOTDEV:
-			if (strncasecmp(opt, "bootdev=", 8) == 0)
+			if (strncasecmp(opt, "bootdev=", 8) == 0 ||
+			    strncasecmp(opt, "root=", 5) == 0)
 				strncpy(xcp->xcp_bootdev, opt + 8,
 				    sizeof(xcp->xcp_bootdev));
 			break;

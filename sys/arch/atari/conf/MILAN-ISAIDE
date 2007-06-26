@@ -1,38 +1,28 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.49 2006/09/03 13:54:27 bjh21 Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.49.20.1 2007/06/26 18:12:18 garbled Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
-#		NetBSD: GENERIC.in,v 1.64 2006/08/26 20:26:44 christos Exp $
+#		NetBSD: GENERIC.in,v 1.66 2007/06/06 08:20:26 martin Exp $
 include "arch/atari/conf/std.milan"
-
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
-
 maxusers 16
-
 options HZ=64 # Set the clock-rate (48/64/96)
-
 options INSECURE # disable kernel security levels
 options M68040 # support for 040
 options M68060 # support for 060
 options FPSP # 68040 Floatingpoint support
 options M060SP # MC68060 software support (Required for 060)
-
 options INET # IP + ICMP + TCP + UDP
-
 options INET6 # IPV6
-
 options ISO,TPIP # OSI
-
 options NETATALK # AppleTalk networking protocols
-
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
-
 options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
@@ -41,7 +31,6 @@ file-system MFS # Memory based filesystem
 file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
-
 file-system NFS # Network File System client side code
 file-system PROCFS # Process filesystem
 file-system FDESC # /dev/fd
@@ -53,18 +42,12 @@ file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
 file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
-
 options QUOTA # Disk quotas for local disks
-
 options SOFTDEP # FFS soft updates support.
-
 options NFSSERVER # Network File System server side code
-
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger
-
 options DDB_HISTORY_SIZE=100 # Enable history editing in DDB
-
 options COMPAT_43 # 4.3 BSD compatible system calls (required)
 options COMPAT_10 # Compatibility with NetBSD 1.0
 options COMPAT_11 # Compatibility with NetBSD 1.1
@@ -75,91 +58,63 @@ options COMPAT_15 # Compatibility with NetBSD 1.5
 options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
-
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
-
 options SYSVSHM # System V shared memory
 options SYSVMSG # System V messages
 options SYSVSEM # System V semaphores
-
 options P1003_1B_SEMAPHORE # p1003.1b semaphore support
-
 options KTRACE # Add kernel tracing system call
-
 options USERCONF # userconf(4) support
-
 options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
-
 options SCSIVERBOSE # human readable SCSI error messages
-
 options MIIVERBOSE # verbose PHY autoconfig messages
 options PCIVERBOSE # verbose PCI device autoconfig messages
-
 options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-
 options SERCONSOLE # modem1 console support
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
-
 options TRY_SCSI_LINKED_COMMANDS=0x7f
-
 config netbsd root on ? type ?
-
 pseudo-device sl # Slip
 pseudo-device ppp # ppp
-
 pseudo-device pppoe # PPP over Ethernet (RFC 2516)
-
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device vnd # 3 pseudo disks (see vnconfig)
-
 pseudo-device md 3 # Boot memory disk
-
 pseudo-device bpfilter # berkeley packet filters
-
 pseudo-device tun # network tunnel
 pseudo-device tap # virtual Ethernet
-
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
-
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
-
 pseudo-device vlan # IEEE 802.1q encapsulation
 pseudo-device bridge # simple inter-network bridging
-
+pseudo-device agr # IEEE 802.3ad link aggregation
 pseudo-device ccd 4 # concatenating disk driver
-
 pseudo-device raid 8 # RAIDframe disk driver
 options RAID_AUTOCONFIG # auto-configuration of RAID components
 pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
-
 exphy* at mii? phy ? # 3Com internal PHYs
 inphy* at mii? phy ? # Intel 82555 PHYs
 iophy* at mii? phy ? # Intel 82553 PHYs
 ukphy* at mii? phy ? # generic unknown PHYs
-
 ep* at pci? dev ? function ? # 3Com 3c59x
 fxp* at pci? dev ? function ? # Intel EtherExpress PRO 10+/100B
-
 eso* at pci? dev ? function ? # ESS Solo-1 PCI AudioDrive
 audio* at eso?
 options WSEMUL_VT100 # VT100 / VT220 emulation
-
 options WS_KERNEL_FG=WSCOL_WHITE
 options WS_KERNEL_BG=WSCOL_BLACK
 options WSDISPLAY_DEFAULTSCREENS=4
-
 options PCDISPLAY_SOFTCURSOR
-
 isab0 at mainbus0 # ISA-bus
 isa0 at isab0
 pcib0 at mainbus0 # PCI-bus
@@ -171,14 +126,11 @@ fdisa0 at fdcisa0 drive 0
 wdc0 at isa? port 0x1f0 irq 14 flags 0x04 # 1st IDE controller
 wdc1 at isa? port 0x170 irq 15 flags 0x04 # 2nd IDE controller
 atabus* at ata? channel ?
-
 vga0 at pci? dev ? function ? # a PCI VGA card
 wsdisplay* at vga? console ? # as a wscons console
 pckbc0 at isa? # PC keyboard controller
 pckbd* at pckbc? # PC keyboard
 wskbd* at pckbd? console ? # wscons keyboard
-
 wd* at atabus? drive ?
 atapibus* at atabus? # ATAPI bus support
-
 cd* at atapibus? drive ? # ATAPI CD-ROM drives

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.306 2007/03/14 12:27:23 drochner Exp $
+#	$NetBSD: INSTALL,v 1.306.6.1 2007/06/26 18:12:34 garbled Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -15,6 +15,7 @@ include "arch/i386/conf/std.i386"
 
 makeoptions	CPUFLAGS="-march=i486 -mtune=i486"	# i486 is densest code
 makeoptions	COPTS="-Os"
+makeoptions	USE_SSP="no"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -71,6 +72,9 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 no options	EXEC_AOUT
 
+no options	RFC2292		# Previous version of Adv. Sockets API for IPv6
+no options	PTRACE		# Include ptrace(2)
+
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
@@ -94,6 +98,7 @@ options 	DDB		# in-kernel debugger
 #options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -154,7 +159,6 @@ options 	INET6		# IPv6
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 #
 # wscons options
@@ -218,7 +222,7 @@ pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
-puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+#puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # EISA bus support
 eisa0	at mainbus?
@@ -284,7 +288,7 @@ wskbd*		at pckbd? console ?
 # Serial Devices
 
 # PCI serial interfaces
-com*	at puc? port ?			# 16x50s on "universal" comm boards
+#com*	at puc? port ?			# 16x50s on "universal" comm boards
 #cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces
@@ -339,7 +343,6 @@ ahd*	at pci? dev ? function ?	# Adaptec 29320, 39320 (aic790x) SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
-isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
@@ -421,14 +424,14 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
-ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
+#ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
-ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
+#ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -437,7 +440,7 @@ rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
-svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
+#svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 
@@ -530,7 +533,7 @@ mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
-nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
+#nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S

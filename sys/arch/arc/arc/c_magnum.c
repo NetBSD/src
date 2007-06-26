@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.14 2006/06/24 03:50:38 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.14.22.1 2007/06/26 18:12:08 garbled Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.14 2006/06/24 03:50:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.14.22.1 2007/06/26 18:12:08 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,47 +121,41 @@ struct timer_jazzio_config timer_magnum_conf = {
  * given interrupt priority level.
  */
 static const uint32_t magnum_ipl_sr_bits[_IPL_N] = {
-	0,					/* IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_{TTY,SERIAL} */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
+	[IPL_NONE] = 0,
+	[IPL_SOFT] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTCLOCK] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] = 
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_SOFTSERIAL] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_BIO] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_1|
+	    MIPS_INT_MASK_2|
+	    MIPS_INT_MASK_3,
+	[IPL_NET] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3,
+	[IPL_TTY] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3,
+	[IPL_CLOCK] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3 |
+	    MIPS_INT_MASK_4 |
+	    MIPS_INT_MASK_5,
 };
 
 uint32_t

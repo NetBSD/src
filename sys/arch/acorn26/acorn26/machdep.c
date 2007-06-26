@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19 2007/02/22 04:47:28 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.19.12.1 2007/06/26 18:11:53 garbled Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2007/02/22 04:47:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19.12.1 2007/06/26 18:11:53 garbled Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2007/02/22 04:47:28 thorpej Exp $")
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8583var.h>
@@ -213,4 +214,17 @@ cmos_write(int location, int value)
 
 	return (pcfrtc_bootstrap_write(acorn26_i2c_tag, 0x50,
 	    location, &val, 1));
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (want_resched && !immed)
+		return;
+
+	want_resched = 1;
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		setsoftast();
 }

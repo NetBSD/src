@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37.10.1 2007/05/22 17:27:52 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37.10.2 2007/06/26 18:13:55 garbled Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.1 2007/05/22 17:27:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.2 2007/06/26 18:13:55 garbled Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -685,14 +685,12 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 
-	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
-
-	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
-
 	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);
+	sendsig_reset(l, sig);
 
+	mutex_exit(&p->p_smutex);
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
 	mutex_enter(&p->p_smutex);
 

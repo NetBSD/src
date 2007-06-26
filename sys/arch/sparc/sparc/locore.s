@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.232.2.1 2007/05/22 17:27:30 matt Exp $	*/
+/*	$NetBSD: locore.s,v 1.232.2.2 2007/06/26 18:13:36 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4410,7 +4410,6 @@ Lgandul:	nop
 	MUNGE(NOP_ON_4M_10)
 	MUNGE(NOP_ON_4M_11)
 	MUNGE(NOP_ON_4M_12)
-	MUNGE(NOP_ON_4M_15)
 	b,a	2f
 
 1:
@@ -4880,13 +4879,16 @@ ENTRY(cpu_switchto)
 	mov	%i1, %g3			! and newlwp
 
 	sethi	%hi(cpcb), %l6
+
+	tst	%i0				! if (oldlwp == NULL)
+	bz	Lnosaveoldlwp
+	 rd	%psr, %l1			! psr = %psr;
+
 	ld	[%l6 + %lo(cpcb)], %o0
 
 	std	%i6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <fp,pc>;
 
-	rd	%psr, %l1			! psr = %psr;
 	st	%l1, [%o0 + PCB_PSR]		! cpcb->pcb_pcb = psr
-	andn	%l1, PSR_PIL, %l1		! oldpsr &= ~PSR_PIL;
 
 	/*
 	 * Save the old process: write back all windows (excluding
@@ -4895,6 +4897,9 @@ ENTRY(cpu_switchto)
 #define	SAVE save %sp, -64, %sp
 Lwb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE;	/* 6 of each: */
 	restore; restore; restore; restore; restore; restore
+
+Lnosaveoldlwp:
+	andn	%l1, PSR_PIL, %l1		! oldpsr &= ~PSR_PIL;
 
 	/*
 	 * Load the new process.  To load, we must change stacks and

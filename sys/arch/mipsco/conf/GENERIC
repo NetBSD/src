@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.64 2006/11/11 18:47:10 jmmv Exp $
+# $NetBSD: GENERIC,v 1.64.16.1 2007/06/26 18:13:03 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -192,6 +192,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device

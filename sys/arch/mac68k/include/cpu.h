@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82.10.1 2007/05/22 17:27:05 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.82.10.2 2007/06/26 18:12:53 garbled Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -357,6 +357,9 @@ void	m68881_save(struct fpframe *);
 void	m68881_restore(struct fpframe *);
 int	suline(void *, void *);
 void	loadustp(int);
+
+/* fpu.c */
+void	initfpu(void);
 
 #endif
 

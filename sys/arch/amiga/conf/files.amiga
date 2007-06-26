@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.136 2005/12/11 12:16:26 christos Exp $
+#	$NetBSD: files.amiga,v 1.136.38.1 2007/06/26 18:12:07 garbled Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -439,11 +439,13 @@ file	arch/amiga/amiga/dkbad.c
 file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/mem.c
 file	arch/amiga/amiga/pmap.c
+file	arch/amiga/amiga/pmap_bootstrap.c
 file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/cc.c
 file	dev/md_root.c			memory_disk_hooks
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c	ddb
+#file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c	procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2007/04/14 19:33:27 tnn Exp $
+# $NetBSD: GENERIC,v 1.84.2.1 2007/06/26 18:13:40 garbled Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.84.2.1 $"
 
 maxusers	64
 
@@ -604,6 +604,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -687,6 +688,7 @@ pseudo-device	vlan
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.

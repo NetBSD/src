@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.12.10.1 2007/05/22 17:27:04 matt Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.12.10.2 2007/06/26 18:12:48 garbled Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -202,10 +202,8 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap, sz, td)	pmap_prefer((foff), (vap))
 #endif
 
-#ifdef mvme68k
 void	_pmap_set_page_cacheable(struct pmap *, vaddr_t);
 void	_pmap_set_page_cacheinhibit(struct pmap *, vaddr_t);
 int	_pmap_page_is_cacheable(struct pmap *, vaddr_t);
-#endif
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */

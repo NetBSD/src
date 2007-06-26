@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42.12.1 2007/05/22 17:26:40 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42.12.2 2007/06/26 18:12:14 garbled Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -116,6 +116,9 @@ extern int cpu_do_powersave;
 #define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
 #define IRQenable __set_cpsr_c(I32_bit, 0);
 #endif	/* _LOCORE */
+#else
+#define IRQdisable set_r15(R15_IRQ_DISABLE, R15_IRQ_DISABLE);
+#define IRQenable set_r15(R15_IRQ_DISABLE, 0);
 #endif
 
 #ifndef _LOCORE

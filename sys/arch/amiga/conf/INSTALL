@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.74 2006/11/12 09:14:32 jmmv Exp $
+# $NetBSD: INSTALL,v 1.74.16.1 2007/06/26 18:12:06 garbled Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.58 2006/11/11 18:47:09 jmmv Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.59 2007/06/06 08:15:54 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.74.16.1 $"
 
 makeoptions	COPTS="-Os"
 
@@ -417,6 +417,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	fss		4	# file system snapshot device

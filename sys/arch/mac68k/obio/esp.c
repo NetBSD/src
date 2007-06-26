@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.47 2007/03/07 17:22:19 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.47.10.1 2007/06/26 18:12:57 garbled Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.47 2007/03/07 17:22:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.47.10.1 2007/06/26 18:12:57 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -295,6 +295,13 @@ espattach(struct device *parent, struct device *self, void *aux)
 
 	/* We need this to fit into the TCR... */
 	sc->sc_maxxfer = 64 * 1024;
+
+        switch (current_mac_model->machineid) {
+        case MACH_MACQ630:
+		/* XXX on LC630 64k xfer causes timeout error */
+		sc->sc_maxxfer = 63 * 1024;
+		break;
+	}
 
 	if (!quick) {
 		sc->sc_minsync = 0;	/* No synchronous xfers w/o DMA */

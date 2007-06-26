@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.11 2007/02/28 23:47:09 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.11.10.1 2007/06/26 18:11:53 garbled Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -383,44 +383,62 @@ ENTRY_NP(get_r15)
 	mov	r0, r14
 	mov	r15, lr
 
-	/*
-	 * Low-level context-switch operation.  cpu_switch() is in C -- this
-	 * just handles the bits that can't be done in C.
-	 *
-	 * void cpu_loswitch(struct switchframe **fromp,
-	 *		     struct switchframe *to)
-	 *
-	 * We leave a switchframe on the stack pointed to by fromp,
-	 * and return to the context in to.  This should be called in
-	 * splhigh();
-	 */
-/* LINTSTUB: Func: void cpu_loswitch(struct switchframe **fromp, struct switchframe *to) */
+/*
+ * Low-level context-switch operation.  cpu_switchto() is in C -- this
+ * just handles the bits that can't be done in C.
+ *
+ * struct lwp *cpu_loswitch(struct lwp *oldl, struct lwp *newl)
+ *
+ * We leave a switchframe on the stack pointed to by and save this in
+ * oldl's PCB, and return to the context in newl.  This should be called at
+ * splhigh();
+ *
+ * r0 and r1 must be left intact as they're needed by lwp_startup in
+ * lwp_trampoline
+ */
+/* LINTSTUB: Func: struct lwp *cpu_loswitch(struct lwp *oldl, struct lwp *newl) */
 ENTRY(cpu_loswitch)
+	teq	r0, #0x00000000
+	beq	Lswitch_exited
+
+	ldr	r3, [r0, #(L_ADDR)]
+	add	r3, r3, #PCB_SF		/* r3 =  &old->l_addr->u_pcb.pcb_sf */
+
 	mov	r2, sp			/* Temporary stack pointer */
 	stmfd	r2!, {r4-r11, r13-r14}	/* Save all relevant registers */
-	str	r2, [r0]		/* Save switchframe pointer */
-	ldmfd	r1, {r4-r11, r13-r14}	/* Restore from old switchframe */
+	str	r2, [r3]		/* Save switchframe pointer */
+
+Lswitch_exited:
+
+	ldr	r2, [r1, #(L_ADDR)]
+	ldr	r3, [r2, #(PCB_SF)]	/* r3 = new->l_addr->u_pcb.pcb_sf; */
+
+	ldmfd	r3, {r4-r11, r13-r14}	/* Restore from old switchframe */
 	mov	pc, r14			/* and return */
 
-	/*
-	 * This funny little routine implements starting a process.
-	 * It's called by cpu_loswitch returning from a faked
-	 * switchframe set up by cpu_fork(), and gets
-	 * the function it's meant to enter passed in R4 with its
-	 * argument in R5.  If that function's NULL, or if it returns,
-	 * we hope there's a trapframe on the stack that'll take us
-	 * back to userland.
-	 */
-ENTRY(proc_trampoline)
+/*
+ * This funny little routine implements starting a process.
+ * It's called by cpu_loswitch returning from a faked
+ * switchframe set up by cpu_lwp_fork(), and gets
+ * the function it's meant to enter passed in R4 with its
+ * argument in R5.  If that function's NULL, or if it returns,
+ * we hope there's a trapframe on the stack that'll take us
+ * back to userland.
+ *
+ * cpu_loswitch also ensures that r0 is oldl and r1 is newl
+ * for our call to lwp_startup.
+ */
+ENTRY(lwp_trampoline)
 	mov	fp, #0			/* Tie knot in top of stack */
+	bl	_C_LABEL(lwp_startup)
 	mov	r0, #0
-	bl	_C_LABEL(lowerspl)		/* spl0() */
+	bl	_C_LABEL(lowerspl)	/* spl0() */
 	cmp	r4, #0			/* Function to call? */
-	beq	Lproc_trampoline_nofunc
+	beq	Llwp_trampoline_nofunc
 	mov	r0, r5
 	mov	r14, pc			/* Save return address */
 	mov	pc, r4			/* Call function */
-Lproc_trampoline_nofunc:
+Llwp_trampoline_nofunc:
 	b	pull_trapframe
 
 /* LINTSTUB: Func: int setjmp(label_t *l) */
@@ -444,4 +462,4 @@ ENTRY(cpu_Debugger)
 	ldmfd	r13!, {pc}
 #endif
 
-RCSID("$NetBSD: locore.S,v 1.11 2007/02/28 23:47:09 bjh21 Exp $")
+RCSID("$NetBSD: locore.S,v 1.11.10.1 2007/06/26 18:11:53 garbled Exp $")

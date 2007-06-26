@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.200.10.1 2007/05/22 17:27:30 matt Exp $ */
+/*	$NetBSD: cpu.c,v 1.200.10.2 2007/06/26 18:13:35 garbled Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200.10.1 2007/05/22 17:27:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200.10.2 2007/06/26 18:13:35 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -425,10 +425,20 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		 */
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo_global_va(1, NULL);
 		pmap_globalize_boot_cpuinfo(cpi);
+
 		cpuinfo.ci_self = cpi;
 
-		/* XXX - fixup lwp.l_cpu */
+		/* XXX - fixup lwp0 and idlelwp l_cpu */
 		lwp0.l_cpu = cpi;
+		cpi->ci_data.cpu_idlelwp->l_cpu = cpi;
+		cpi->ci_data.cpu_idlelwp->l_mutex =
+		    &cpi->ci_schedstate.spc_lwplock;
+#if defined(LOCKDEBUG)
+		/* XXX */
+		mutex_destroy(&cpuinfo.ci_schedstate.spc_lwplock);
+		mutex_init(&cpi->ci_schedstate.spc_lwplock, MUTEX_SPIN, IPL_SCHED);
+#endif
+
 #else
 		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
@@ -469,7 +479,8 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		 * Note: `eintstack' is set in alloc_cpuinfo() above.
 		 * The %wim register will be initialized in cpu_hatch().
 		 */
-		cpi->curpcb = (struct pcb *)cpi->ci_data.cpu_idlelwp->l_addr;
+		cpi->ci_curlwp = cpi->ci_data.cpu_idlelwp;
+		cpi->curpcb = (struct pcb *)cpi->ci_curlwp->l_addr;
 		cpi->curpcb->pcb_wim = 1;
 		getcpuinfo(cpi, node);
 
@@ -711,6 +722,9 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 	for (n = 0; n < sparc_ncpus; n++) {
 		struct cpu_info *cpi = cpus[n];
 
+		if (!cpi)
+			continue;
+
 		/* Note: n == cpi->ci_cpuid */
 		if ((cpuset & (1 << n)) == 0)
 			continue;
@@ -751,7 +765,7 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 		for (n = 0; n < sparc_ncpus; n++) {
 			struct cpu_info *cpi = cpus[n];
 
-			if ((cpuset & (1 << n)) == 0)
+			if (!cpi || (cpuset & (1 << n)) == 0)
 				continue;
 
 			if (cpi->msg.complete == 0) {
