@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.46.12.1 2007/05/22 17:26:39 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.46.12.2 2007/06/26 18:12:13 garbled Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -168,6 +168,7 @@ _C_LABEL(curpcb):
 /*
  * struct lwp *
  * cpu_switchto(struct lwp *current, struct lwp *next)
+ *
  * Switch to the specified next LWP
  * Arguments:
  *
@@ -207,13 +208,6 @@ ENTRY(cpu_switchto)
 	/* rem: interrupts are enabled */
 
 	/*
-	 * If the new lwp is the same as the old lwp then we do not need to
-	 * save and restore any contexts. This means we can make a quick exit.
-	 */
-	teq	r4, r6
-	beq	.Lswitch_return
-
-	/*
 	 * If the old lwp on entry to cpu_switchto was zero then the
 	 * process that called it was exiting. This means that we do
 	 * not need to save the current context. Instead we can jump
@@ -226,7 +220,7 @@ ENTRY(cpu_switchto)
 	/* rem: r6 = new lwp */
 	/* rem: interrupts are enabled */
 
-	/* Stage two : Save old context */
+	/* Save old context */
 
 	/* Get the user structure for the old lwp. */
 	ldr	r1, [r4, #(L_ADDR)]
@@ -272,9 +266,9 @@ ENTRY(cpu_switchto)
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	/* What else needs to be saved  Only FPA stuff when that is supported */
+	/* What else needs to be saved? Only FPA stuff when that is supported */
 
-	/* Third phase : restore saved context */
+	/* Restore saved context */
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp $
+# $NetBSD: GENERIC,v 1.197.14.1 2007/06/26 18:13:33 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.197 $"
+#ident 		"GENERIC-$Revision: 1.197.14.1 $"
 
 maxusers	32
 
@@ -168,7 +168,8 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_15	# NetBSD 1.5 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0 binary compatibility
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -606,6 +607,7 @@ pseudo-device	vlan
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 #### Audio and video devices
 

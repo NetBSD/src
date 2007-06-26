@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.7 2006/10/08 12:22:35 bjh21 Exp $
+# $NetBSD: genassym.cf,v 1.7.16.1 2007/06/26 18:11:53 garbled Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -47,6 +47,7 @@ endif
 define	__PROG26	1
 
 define	U_PCB		offsetof(struct user, u_pcb)
+define	PCB_SF		offsetof(struct pcb, pcb_sf)
 define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 define	L_ADDR		offsetof(struct lwp, l_addr)
 
@@ -73,4 +74,3 @@ define	EFS_RX_FLAGS	offsetof(struct eca_fiqstate, efs_rx_flags)
 define	EFS_RX_MYADDR	offsetof(struct eca_fiqstate, efs_rx_myaddr)
 define	EFS_TX_CURMBUF	offsetof(struct eca_fiqstate, efs_tx_curmbuf)
 endif
-

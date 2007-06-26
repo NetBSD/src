@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.18 2007/03/05 00:30:58 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.18.10.1 2007/06/26 18:12:15 garbled Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.18 2007/03/05 00:30:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.18.10.1 2007/06/26 18:12:15 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,11 +194,6 @@ pxa2x0_lcd_initialize(struct pxa2x0_lcd_softc *sc,
 	} else {
 		/* Otherwise just L_DD[3:0] */
 		nldd = 4;
-	}
-
-	if (CPU_IS_PXA270 && (nldd == 16)) {
-		pxa2x0_gpio_set_function(86, GPIO_ALT_FN_2_OUT);
-		pxa2x0_gpio_set_function(87, GPIO_ALT_FN_2_OUT);
 	}
 
 	while (nldd--)

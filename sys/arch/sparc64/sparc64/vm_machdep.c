@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.70.10.1 2007/05/22 17:27:36 matt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.70.10.2 2007/06/26 18:13:45 garbled Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70.10.1 2007/05/22 17:27:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70.10.2 2007/06/26 18:13:45 garbled Exp $");
 
 #include "opt_coredump.h"
 
@@ -279,8 +279,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 	bitmask_snprintf(tf2->tf_tstate, TSTATE_BITS, sbuf, sizeof(sbuf));
 
-	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p opcb=%p npcb=%p\n", 
-	       (struct trapframe *)((u_long)opcb + USPACE - sizeof(*tf2)), tf2, opcb, npcb);
+	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
+	       (struct trapframe *)((u_long)opcb + USPACE - sizeof(*tf2)), tf2, rp, opcb, npcb);
 	printf("cpu_lwp_fork: tstate=%s pc=%x:%x npc=%x:%x rsp=%lx\n",
 	       sbuf,
 	       (uint)(tf2->tf_pc>>32), (uint)tf2->tf_pc,
@@ -290,7 +290,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	       (uint)(npcb->pcb_pc>>32), (uint)npcb->pcb_pc, 
 	       (uint)(npcb->pcb_sp>>32), (uint)npcb->pcb_sp);
 
-	//Debugger();
+	Debugger();
     }
 #endif
 }

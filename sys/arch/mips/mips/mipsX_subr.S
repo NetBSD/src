@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.22.14.1 2007/05/22 17:27:12 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.22.14.2 2007/06/26 18:13:02 garbled Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1937,7 +1937,7 @@ LEAF(MIPSX(lwp_trampoline))
 	la	t0, _C_LABEL(lwp_startup)
 	move	a0, v0
 	jal	ra, t0
-	move	a2, s7
+	move	a1, s7
 
 	# Call the routine specified by cpu_setfunc()
 	jal	ra, s0			

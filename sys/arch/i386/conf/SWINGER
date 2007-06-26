@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.89.6.1 2007/05/22 17:26:57 matt Exp $
+#	$NetBSD: SWINGER,v 1.89.6.2 2007/06/26 18:12:37 garbled Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.89.6.1 $"
+#ident 		"SWINGER-$Revision: 1.89.6.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -84,6 +84,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

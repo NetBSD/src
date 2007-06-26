@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15 2007/03/05 16:51:00 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15.10.1 2007/06/26 18:11:58 garbled Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2007/03/05 16:51:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.10.1 2007/06/26 18:11:58 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,13 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2007/03/05 16:51:00 drochner Exp $"
  * XXXfvdl ACPI
  */
 
-int	mainbus_match __P((struct device *, struct cfdata *, void *));
-void	mainbus_attach __P((struct device *, struct device *, void *));
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
-int	mainbus_print __P((void *, const char *));
+int	mainbus_print(void *, const char *);
 
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
@@ -120,10 +120,7 @@ int mp_verbose = 0;
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return 1;
@@ -133,9 +130,7 @@ mainbus_match(parent, match, aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 #if NPCI > 0
 	union mainbus_attach_args mba;
@@ -253,9 +248,7 @@ mainbus_attach(parent, self, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	union mainbus_attach_args *mba = aux;
 

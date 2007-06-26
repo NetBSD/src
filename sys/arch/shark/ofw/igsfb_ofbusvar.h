@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbusvar.h,v 1.1 2006/12/07 03:10:14 macallan Exp $ */
+/*	$NetBSD: igsfb_ofbusvar.h,v 1.1.22.1 2007/06/26 18:13:32 garbled Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -29,12 +29,11 @@
 
 /*
  * Integraphics Systems IGA 168x and CyberPro series.
- * ofbus attachment for Valeriy E. Ushakov's igsfb driver
+ * ofbus attachment for igsfb(4).
  */
-#ifndef _DEV_OFBUS_IGSFB_PCIVAR_H_
-#define _DEV_OFBUS_IGSFB_PCIVAR_H_
+#ifndef _SHARK_OFW_IGSFB_OFBUSVAR_H_
+#define _SHARK_OFW_IGSFB_OFBUSVAR_H_
 
-extern int
-igsfb_ofbus_cnattach(bus_space_tag_t, bus_space_tag_t);
+int igsfb_ofbus_cnattach(bus_space_tag_t, bus_space_tag_t);
 
-#endif /* _DEV_OFBUS_IGSFB_PCIVAR_H_ */
+#endif /* _SHARK_OFW_IGSFB_OFBUSVAR_H_ */
