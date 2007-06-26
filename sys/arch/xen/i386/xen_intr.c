@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.3 2007/06/25 20:02:45 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.4 2007/06/26 19:41:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.3 2007/06/25 20:02:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.4 2007/06/26 19:41:11 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -97,6 +97,5 @@ softintr(int sir)
 {
 	struct cpu_info *ci = curcpu();
 
-	__asm volatile("lock ; orl %1, %0" :
-	    "=m"(ci->ci_ipending) : "ir" (1 << sir));
+	__asm volatile("orl %1, %0" : "=m"(ci->ci_ipending) : "ir" (1 << sir));
 }
