@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.10 2007/06/06 01:55:03 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.11 2007/06/26 11:04:29 pooka Exp $        */
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.10 2007/06/06 01:55:03 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.11 2007/06/26 11:04:29 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -498,7 +498,7 @@ psbuf_do_data(struct puffs_framebuf *pb, uint8_t *data, uint32_t *dlen)
 		if (psbuf_get_type(pb) != SSH_FXP_STATUS)
 			return INVALRESPONSE;
 
-		if (!psbuf_get_4(pb, &val))
+		if (psbuf_get_4(pb, &val) != 0)
 			return INVALRESPONSE;
 
 		if (val != SSH_FX_EOF)
@@ -507,7 +507,7 @@ psbuf_do_data(struct puffs_framebuf *pb, uint8_t *data, uint32_t *dlen)
 		*dlen = 0;
 		return 0;
 	}
-	if (psbuf_get_4(pb, &len) == -1)
+	if (psbuf_get_4(pb, &len) != 0)
 		return INVALRESPONSE;
 
 	if (*dlen < len)
