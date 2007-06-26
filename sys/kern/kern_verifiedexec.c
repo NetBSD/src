@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.29 2006/11/02 12:51:21 tron Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.9.2.30 2007/06/26 15:23:59 ghen Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@bsd.org.il>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.29 2006/11/02 12:51:21 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.9.2.30 2007/06/26 15:23:59 ghen Exp $");
 
 #include "opt_verified_exec.h"
 
@@ -508,10 +508,10 @@ veriexec_removechk(struct proc *p, struct vnode *vp, const char *pathbuf)
  * Veriexe rename policy.
  */
 int
-veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from, const char *to)
+veriexec_renamechk(struct vnode *vp, const char *from, const char *to)
 {
 	struct proc *p = curlwp->l_proc;
-	struct veriexec_hash_entry *vhe, *tvhe;
+	struct veriexec_hash_entry *vhe;
 	struct vattr va;
 	int error;
 
@@ -528,19 +528,9 @@ veriexec_renamechk(struct vnode *vp, struct vnode *tvp, const char *from, const 
 		return (EPERM);
 	}
 
-	tvhe = NULL;
-	if (tvp != NULL) {
-		struct vattr tva;
-		error = VOP_GETATTR(tvp, &tva, p->p_ucred, p);
-		if (error)
-			return (error);
-		tvhe = veriexec_lookup((dev_t)tva.va_fsid, (ino_t)tva.va_fileid);
-	}
-	
-
 	/* XXX: dev_t and ino_t are 32bit, long can be 64bit. */
 	vhe = veriexec_lookup((dev_t)va.va_fsid, (ino_t)va.va_fileid);
-	if ((vhe != NULL) || (tvhe != NULL)) {
+	if (vhe != NULL) {
 		if (veriexec_strict >= 2) {
 			printf("Veriexec: veriexec_renamechk: Preventing "
 			       "rename of \"%s\" [%ld:%llu] to \"%s\", "
