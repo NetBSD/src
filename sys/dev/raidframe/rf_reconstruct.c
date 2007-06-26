@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.95 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.96 2007/06/26 15:22:24 cube Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.95 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.96 2007/06/26 15:22:24 cube Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -438,7 +438,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	       raidPtr->Disks[col].devname);
 #endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	retcode = dk_lookup(raidPtr->Disks[col].devname, lwp, &vp);
+	retcode = dk_lookup(raidPtr->Disks[col].devname, lwp, &vp, UIO_SYSSPACE);
 
 	if (retcode) {
 		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.119 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.120 2007/06/26 15:22:24 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.119 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.120 2007/06/26 15:22:24 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1098,7 +1098,8 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			if (ccddebug & CCDB_INIT)
 				printf("ccdioctl: lookedup = %d\n", lookedup);
 #endif
-			if ((error = dk_lookup(cpp[i], l, &vpp[i])) != 0) {
+			if ((error = dk_lookup(cpp[i], l, &vpp[i],
+			    UIO_USERSPACE)) != 0) {
 				for (j = 0; j < lookedup; ++j)
 					(void)vn_close(vpp[j], FREAD|FWRITE,
 					    uc, l);
