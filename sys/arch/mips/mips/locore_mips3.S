@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.91 2007/05/17 14:51:24 yamt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.92 2007/06/27 08:16:58 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -355,7 +355,7 @@ END(mips3_cp0_pg_mask_write)
 
 LEAF(mips3_ld)
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-	mfc0	t0, MIPS_COP_0_STATUS		# turn of interrupts
+	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
@@ -387,7 +387,7 @@ END(mips3_ld)
 
 LEAF(mips3_sd)
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
-	mfc0	t0, MIPS_COP_0_STATUS		# turn of interrupts
+	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
