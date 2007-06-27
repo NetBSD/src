@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.26 2007/04/11 22:21:41 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.27 2007/06/27 20:38:33 degroote Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.26 2007/04/11 22:21:41 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.27 2007/06/27 20:38:33 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -112,7 +112,7 @@ ah4_ctlinput(cmd, sa, v)
 		 */
 		ah = (struct ah *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
-					   	IPPROTO_AH, ah->ah_spi);
+					   	IPPROTO_AH, ah->ah_spi, 0, 0);
 
 		if (sav) {
         	if (sav->state == SADB_SASTATE_MATURE ||
@@ -163,7 +163,7 @@ esp4_ctlinput(cmd, sa, v)
 		 */
 		esp = (struct esp *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
-					   	IPPROTO_ESP, esp->esp_spi);
+					   	IPPROTO_ESP, esp->esp_spi, 0, 0);
 
 		if (sav) {
         	if (sav->state == SADB_SASTATE_MATURE ||
@@ -249,7 +249,7 @@ ah6_ctlinput(cmd, sa, d)
                         * to the address in the ICMP message payload.
                         */
                        sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
-                                         IPPROTO_AH, ahp->ah_spi);
+                                         IPPROTO_AH, ahp->ah_spi, 0, 0);
 
                        if (sav) {
                                if (sav->state == SADB_SASTATE_MATURE ||
@@ -357,7 +357,7 @@ esp6_ctlinput(cmd, sa, d)
 			 */
 
 			sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
-					  IPPROTO_ESP, espp->esp_spi);
+					  IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
