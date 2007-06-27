@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.15 2007/03/04 06:01:51 christos Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.16 2007/06/27 17:57:55 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 	(((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8))
 #define	CAC_GET4(x)							\
 	((((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8)) |		\
-	(((u_char *)&(x))[0] << 16 | (((u_char *)&(x))[1] << 24)))
+	(((u_char *)&(x))[2] << 16 | (((u_char *)&(x))[3] << 24)))
 
 struct cac_softc;
 struct cac_ccb;
