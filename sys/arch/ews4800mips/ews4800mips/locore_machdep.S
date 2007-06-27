@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.2 2007/06/27 15:48:16 tsutsui Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3 2007/06/27 18:15:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ LEAF_NOPROFILE(nmi_exception)
 	li	a0, 0			/* x-pos */
 	li	k0, 32
 1:
-	mfc0	v0, MIPS_COP_0_EXC_PC	/* get EPC */
+	mfc0	v0, MIPS_COP_0_ERROR_PC	/* get Error EPC */
 	addu	k0, k0, -4
 	srl	v0, v0, k0
 	andi	v1, v0, 0xf
