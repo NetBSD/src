@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.834 2007/06/16 12:35:55 ad Exp $
+# $NetBSD: GENERIC,v 1.835 2007/06/27 23:12:03 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.834 $"
+#ident 		"GENERIC-$Revision: 1.835 $"
 
 maxusers	32		# estimated number of users
 
@@ -763,6 +763,7 @@ ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+gcscide* 	at pci? dev ? function ? 	# AMD CS5535 Companion IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
