@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.882 2007/06/26 22:43:16 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.883 2007/06/27 11:53:54 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.882 2007/06/26 22:42:58 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.883 2007/06/27 11:53:38 xtraeme Exp
  */
 
 /*
@@ -2569,12 +2569,12 @@
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
-#define	PCI_PRODUCT_NS_CS5535_HB	0x0028		/* NS CS5535 Host-PCI Bridge */
-#define	PCI_PRODUCT_NS_CS5535_ISA	0x002b		/* NS CS5535 PCI-ISA Bridge */
-#define	PCI_PRODUCT_NS_CS5535_IDE	0x002d		/* NS CS5535 IDE Controller */
-#define	PCI_PRODUCT_NS_CS5535_AUDIO	0x002e		/* NS CS5535 Audio Controller */
-#define	PCI_PRODUCT_NS_CS5535_USB	0x002f		/* NS CS5535 USB Host Controller */
-#define	PCI_PRODUCT_NS_CS5535_VIDEO	0x0030		/* NS CS5535 Video Controller */
+#define	PCI_PRODUCT_NS_CS5535_HB	0x0028		/* CS5535 Host-PCI Bridge */
+#define	PCI_PRODUCT_NS_CS5535_ISA	0x002b		/* CS5535 PCI-ISA Bridge */
+#define	PCI_PRODUCT_NS_CS5535_IDE	0x002d		/* CS5535 IDE Controller */
+#define	PCI_PRODUCT_NS_CS5535_AUDIO	0x002e		/* CS5535 Audio Controller */
+#define	PCI_PRODUCT_NS_CS5535_USB	0x002f		/* CS5535 USB Host Controller */
+#define	PCI_PRODUCT_NS_CS5535_VIDEO	0x0030		/* CS5535 Video Controller */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 #define	PCI_PRODUCT_NS_SC1100_IDE	0x0502		/* SC1100 PCI IDE */
 #define	PCI_PRODUCT_NS_SC1100_AUDIO	0x0503		/* SC1100 XpressAUDIO */
