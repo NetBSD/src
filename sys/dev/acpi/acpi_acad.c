@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.21 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.22 2007/06/27 19:44:50 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.21 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.22 2007/06/27 19:44:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,9 +272,15 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 	 * adapter status change.
 	 *  --rpaulo@NetBSD.org
 	 */
+	/*
+	 * XXX Sony VAIO VGN-N250E sends BatteryInformationChanged on AC
+	 * adapter status change.
+	 *  --jmcneill@NetBSD.org
+	 */
 	case ACPI_NOTIFY_BusCheck:
 	case ACPI_NOTIFY_DeviceCheck:
 	case ACPI_NOTIFY_PowerSourceStatusChanged:
+	case ACPI_NOTIFY_BatteryInformationChanged:
 #ifdef ACPI_ACAD_DEBUG
 		printf("%s: received notify message: 0x%x\n",
 		    sc->sc_dev.dv_xname, notify);
