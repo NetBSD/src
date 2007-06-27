@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.6 2007/03/04 06:03:29 christos Exp $	*/
+/*	$NetBSD: key.h,v 1.7 2007/06/27 20:38:33 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -35,6 +35,8 @@
 #define _NETIPSEC_KEY_H_
 
 #ifdef _KERNEL
+
+#include "opt_ipsec.h"
 
 struct secpolicy;
 struct secpolicyindex;
@@ -78,11 +80,11 @@ extern void _key_freesp(struct secpolicy **, const char*, int);
 	_key_freesp(spp, __FILE__, __LINE__)
 
 extern struct secasvar *key_allocsa(const union sockaddr_union *, 
-		u_int, u_int32_t,const char*, int);
+		u_int, u_int32_t, u_int16_t, u_int16_t, const char*, int);
 extern void key_freesav(struct secasvar **, const char*, int);
 
-#define	KEY_ALLOCSA(dst, proto, spi)				\
-	key_allocsa(dst, proto, spi, __FILE__, __LINE__)
+#define	KEY_ALLOCSA(dst, proto, spi, sport, dport)				\
+	key_allocsa(dst, proto, spi, sport, dport,  __FILE__, __LINE__)
 #define	KEY_FREESAV(psav)					\
 	key_freesav(psav, __FILE__, __LINE__)
 
@@ -110,6 +112,12 @@ extern void key_init __P((void));
 extern void key_sa_recordxfer __P((struct secasvar *, struct mbuf *));
 extern void key_sa_routechange __P((struct sockaddr *));
 extern void key_sa_stir_iv __P((struct secasvar *));
+
+#ifdef IPSEC_NAT_T
+u_int16_t key_portfromsaddr __P((const union sockaddr_union *));
+#endif
+
+
 
 #ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_SECA);

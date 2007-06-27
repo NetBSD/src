@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.159 2007/05/12 02:03:15 dyoung Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.160 2007/06/27 20:38:32 degroote Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.159 2007/05/12 02:03:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.160 2007/06/27 20:38:32 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1528,7 +1528,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	m_tag_prepend(n, tag);
 
 #ifdef FAST_IPSEC
-	ipsec4_common_input(n, iphdrlen);
+	ipsec4_common_input(n, iphdrlen, IPPROTO_ESP);
 #else
 	esp4_input(n, iphdrlen);
 #endif

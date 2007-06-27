@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.15 2007/03/04 21:17:55 degroote Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.16 2007/06/27 20:38:33 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.15 2007/03/04 21:17:55 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.16 2007/06/27 20:38:33 degroote Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -469,6 +469,11 @@ esp_input_cb(struct cryptop *crp)
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	void *ptr;
+	u_int16_t dport = 0;
+	u_int16_t sport = 0;
+#ifdef IPSEC_NAT_T
+	struct m_tag * tag = NULL;
+#endif
 
 	crd = crp->crp_desc;
 	IPSEC_ASSERT(crd != NULL, ("esp_input_cb: null crypto descriptor!"));
@@ -480,9 +485,17 @@ esp_input_cb(struct cryptop *crp)
 	mtag = (struct m_tag *) tc->tc_ptr;
 	m = (struct mbuf *) crp->crp_buf;
 
+#ifdef IPSEC_NAT_T
+	/* find the source port for NAT-T */
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
+		sport = ((u_int16_t *)(tag + 1))[0];
+		dport = ((u_int16_t *)(tag + 1))[1];
+	}
+#endif
+
 	s = splsoftnet();
 
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi);
+	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, sport, dport);
 	if (sav == NULL) {
 		espstat.esps_notdb++;
 		DPRINTF(("esp_input_cb: SA expired while in crypto "
@@ -920,7 +933,7 @@ esp_output_cb(struct cryptop *crp)
 	s = splsoftnet();
 
 	isr = tc->tc_isr;
-	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi);
+	sav = KEY_ALLOCSA(&tc->tc_dst, tc->tc_proto, tc->tc_spi, 0, 0);
 	if (sav == NULL) {
 		espstat.esps_notdb++;
 		DPRINTF(("esp_output_cb: SA expired while in crypto "

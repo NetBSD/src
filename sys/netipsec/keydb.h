@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.4 2007/03/04 19:54:49 degroote Exp $	*/
+/*	$NetBSD: keydb.h,v 1.5 2007/06/27 20:38:33 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -35,6 +35,8 @@
 #define _NETIPSEC_KEYDB_H_
 
 #ifdef _KERNEL
+
+#include "opt_ipsec.h"
 
 #include <netipsec/key_var.h>
 #include <net/route.h>
@@ -125,6 +127,11 @@ struct secasvar {
 	struct auth_hash *tdb_authalgxform;	/* authentication algorithm */
 	struct comp_algo *tdb_compalgxform;	/* compression algorithm */
 	u_int64_t tdb_cryptoid;		/* crypto session id */
+
+#ifdef IPSEC_NAT_T
+	u_int16_t natt_type;
+	u_int16_t esp_frag;
+#endif
 };
 
 /* replay prevention */
