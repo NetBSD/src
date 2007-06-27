@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_ipsec.4,v 1.5 2007/05/24 23:03:52 degroote Exp $
+.\"	$NetBSD: fast_ipsec.4,v 1.6 2007/06/27 21:27:35 degroote Exp $
 .\"	$FreeBSD: fast_ipsec.4,v 1.2 2003/03/03 11:51:30 ru Exp $
 .\"
 .\" Copyright (c) 2004
@@ -36,6 +36,7 @@
 .Nd hardware-accelerated IP Security Protocols
 .Sh SYNOPSIS
 .Cd "options FAST_IPSEC"
+.Cd "options IPSEC_NAT_T"
 .Cd "pseudo-device crypto"
 .Sh DESCRIPTION
 .Tn IPsec
@@ -106,13 +107,15 @@ Support for IPv6 and
 .Tn IPcomp 
 protocols has been added in
 .Nx 4.0 .
+.Pp
+Support for IPSEC_NAT_T
+(Network Address Translator Traversal as
+described in RFCs 3947 and 3948) has been added in
+.Nx 5.0 .
 .Sh BUGS
 There still are some issues in the IPv6 support. In particular
 .Tn FAST_IPSEC
 does not protect packets with IPv6 extension headers.
-.Pp
-.Tn FAST_IPSEC
-still lacks support for Network Address Translator traversal (NAT-T).
 .Pp
 Certain legacy authentication algorithms are not supported because of
 issues with the
