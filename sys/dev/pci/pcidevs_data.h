@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.881 2007/06/26 22:43:16 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.882 2007/06/27 11:53:54 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.882 2007/06/26 22:42:58 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.883 2007/06/27 11:53:38 xtraeme Exp
  */
 
 /*
@@ -8849,27 +8849,27 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_HB,
-	    "NS CS5535 Host-PCI Bridge",
+	    "CS5535 Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_ISA,
-	    "NS CS5535 PCI-ISA Bridge",
+	    "CS5535 PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_IDE,
-	    "NS CS5535 IDE Controller",
+	    "CS5535 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_AUDIO,
-	    "NS CS5535 Audio Controller",
+	    "CS5535 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_USB,
-	    "NS CS5535 USB Host Controller",
+	    "CS5535 USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_VIDEO,
-	    "NS CS5535 Video Controller",
+	    "CS5535 Video Controller",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
