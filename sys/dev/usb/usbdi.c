@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119.12.4 2007/06/22 10:36:42 itohy Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.12.5 2007/06/28 10:07:16 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.4 2007/06/22 10:36:42 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.5 2007/06/28 10:07:16 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $"); */
 
 #ifdef __NetBSD__
@@ -284,10 +284,10 @@ usbd_transfer(usbd_xfer_handle xfer)
 {
 	usbd_pipe_handle pipe = xfer->pipe;
 	usbd_status err;
-	u_int size;
+	u_int size, flags;
 	int s;
 
-	DPRINTFN(5,("usbd_transfer: xfer=%p, flags=%d, pipe=%p, running=%d\n",
+	DPRINTFN(5,("usbd_transfer: xfer=%p, flags=%x, pipe=%p, running=%d\n",
 		    xfer, xfer->flags, pipe, pipe->running));
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
@@ -299,6 +299,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		return (USBD_CANCELLED);
 
 	size = xfer->length;
+	flags = xfer->flags;
 	/* If there is no buffer, allocate one. */
 	if (!(xfer->rqflags & URQ_MASK_DRV_REQUESTED_BUF) && size != 0) {
 		struct usbd_bus *bus = pipe->device->bus;
@@ -310,7 +311,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 			panic("usbd_transfer: allocm not in process context");
 #endif
 		err = bus->methods->allocm(bus, xfer,
-		    (xfer->flags & USBD_NO_COPY) ? xfer->buffer : NULL,
+		    (flags & USBD_NO_COPY) ? xfer->buffer : NULL,
 		    size);
 		if (err)
 			return (err);
@@ -325,7 +326,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 #endif
 
 #ifdef DIAGNOSTIC
-	if ((xfer->flags & USBD_NO_COPY) == 0 && size != 0) {
+	if ((flags & USBD_NO_COPY) == 0 && size != 0) {
 		if (xfer->rqflags & URQ_DEV_MAP_BUFFER)
 			printf("usbd_transfer: USBD_NO_COPY recommended with mapped buffer");
 		if (xfer->rqflags & URQ_DEV_MAP_MBUF)
@@ -333,7 +334,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 	}
 #endif
 	/* Copy data if going out. */
-	if (!(xfer->flags & USBD_NO_COPY) && size != 0 &&
+	if (!(flags & USBD_NO_COPY) && size != 0 &&
 	    !usbd_xfer_isread(xfer) && xfer->buffer != xfer->hcbuffer) {
 		DPRINTFN(5, ("usbd_transfer: copy %p (alloc) <- %p (buffer), %u bytes\n",
 			     xfer->hcbuffer, xfer->buffer, (unsigned)size));
@@ -341,6 +342,10 @@ usbd_transfer(usbd_xfer_handle xfer)
 	}
 
 	err = pipe->methods->transfer(xfer);
+	/*
+	 * Note xfer may not be valid after non-error completion
+	 * of the transfer method unless synchronous.
+	 */
 
 	if (err != USBD_IN_PROGRESS && err) {
 		/* The transfer has not been queued, so free buffer. */
@@ -356,7 +361,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		}
 	}
 
-	if (!(xfer->flags & USBD_SYNCHRONOUS))
+	if (!(flags & USBD_SYNCHRONOUS))
 		return (xfer->done ? 0 : USBD_IN_PROGRESS);
 
 	/* Sync transfer, wait for completion. */
@@ -976,7 +981,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
-		printf("usbd_transfer_cb: pipe==0, xfer=%p\n", xfer);
+		printf("usb_transfer_complete: pipe==0, xfer=%p\n", xfer);
 		return;
 	}
 #endif
@@ -1001,7 +1006,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 				     xfer->buffer, xfer->hcbuffer, (unsigned)xfer->actlen));
 #ifdef DIAGNOSTIC
 			if ((xfer->rqflags & (URQ_AUTO_BUF | URQ_DEV_BUF)) == 0)
-				panic("usbd_transfer: USBD_NO_COPY required with mapped buffer");
+				panic("usb_transfer_complete: USBD_NO_COPY required with mapped buffer");
 #endif
 			memcpy(xfer->buffer, xfer->hcbuffer, xfer->actlen);
 		}
