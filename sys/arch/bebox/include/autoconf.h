@@ -2,7 +2,7 @@
 #define _MACHINE_AUTOCONF_H_
 
 #ifdef _KERNEL
-void initppc (u_int, u_int, u_int, void *);
+void initppc (u_long, u_long, void *);
 void strayintr (int);
 void lcsplx (int);
 
