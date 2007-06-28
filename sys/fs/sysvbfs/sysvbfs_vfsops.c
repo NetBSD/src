@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.9 2007/03/20 11:27:48 tsutsui Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.10 2007/06/28 12:33:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.9 2007/03/20 11:27:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.10 2007/06/28 12:33:18 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -205,7 +205,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_SYSVBFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_dev_bshift = BFS_BSIZE;
+	mp->mnt_dev_bshift = BFS_BSHIFT;
 	mp->mnt_fs_bshift = BFS_BSHIFT;
 
 	DPRINTF("fstype=%d dtype=%d bsize=%d\n", dpart.part->p_fstype,
