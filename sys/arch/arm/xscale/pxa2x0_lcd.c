@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.19 2007/06/26 15:38:38 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.20 2007/06/28 14:37:36 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.19 2007/06/26 15:38:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.20 2007/06/28 14:37:36 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -870,12 +870,16 @@ paddr_t
 pxa2x0_lcd_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct pxa2x0_lcd_softc *sc = v;
-	struct pxa2x0_lcd_screen *screen = sc->active;  /* ??? */
+	struct pxa2x0_lcd_screen *scr = sc->active;  /* ??? */
 
-	if (screen == NULL)
+	if (scr == NULL)
 		return -1;
 
-	return bus_dmamem_mmap(sc->dma_tag, screen->segs, screen->nsegs,
+	if (offset < 0 ||
+	    offset >= scr->rinfo.ri_stride * scr->rinfo.ri_height)
+		return -1;
+
+	return bus_dmamem_mmap(sc->dma_tag, scr->segs, scr->nsegs,
 	    offset, prot, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 }
 
