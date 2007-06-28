@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.1 2007/06/27 23:02:53 xtraeme Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.2 2007/06/28 01:21:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.1 2007/06/27 23:02:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.2 2007/06/28 01:21:59 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,11 +198,8 @@ gcscide_setup_channel(struct ata_channel *chp)
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			reg = rdmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
 			    GCSCIDE_ATAC_CH0D0_DMA);
-
-			/* high 32 bits */
-			reg = (reg << 32);
 			/* Preserve PIO Format bit */
-			reg &= GCSCIDE_PIO_FORMAT;
+			reg &= ~GCSCIDE_PIO_FORMAT;
 		}
 
 		if (drvp->drive_flags & DRIVE_UDMA) {
@@ -233,7 +230,6 @@ gcscide_setup_channel(struct ata_channel *chp)
 			 */
 			reg = rdmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
 		    	    GCSCIDE_ATAC_CH0D0_DMA);
-			reg = (reg << 32);
 			wrmsr(drive ? GCSCIDE_ATAC_CH0D1_DMA :
 		    	    GCSCIDE_ATAC_CH0D0_DMA, reg | GCSCIDE_PIO_FORMAT);
 		}
