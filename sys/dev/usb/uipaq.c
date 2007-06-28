@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.5.10.1 2007/06/18 13:53:30 itohy Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.5.10.2 2007/06/28 03:18:13 itohy Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -122,10 +122,11 @@ struct uipaq_type {
 };
 
 static const struct uipaq_type uipaq_devs[] = {
+	{{ USB_VENDOR_ASUSTEK, USB_PRODUCT_ASUSTEK_MYPAL_A730} , 0},
+	{{ USB_VENDOR_CASIO, USB_PRODUCT_CASIO_BE300} , 0},
+	{{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQPOCKETPC} , 0},
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_2215 }, 0 },
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_568J }, 0},
-	{{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQPOCKETPC} , 0},
-	{{ USB_VENDOR_CASIO, USB_PRODUCT_CASIO_BE300} , 0},
 	{{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_WS007SH} , 0}
 };
 
