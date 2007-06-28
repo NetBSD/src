@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.16.10.1 2007/06/17 01:07:26 itohy Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.16.10.2 2007/06/28 03:17:29 itohy Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.16.10.1 2007/06/17 01:07:26 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.16.10.2 2007/06/28 03:17:29 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,7 @@ Static void ucycom_get_cfg(struct ucycom_softc *);
 Static const struct usb_devno ucycom_devs[] = {
 	{ USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_USBRS232 },
 	{ USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EARTHMATE },
+	{ USB_VENDOR_DELORME, USB_PRODUCT_DELORME_EARTHMATE_LT20 },
 };
 #define ucycom_lookup(v, p) usb_lookup(ucycom_devs, v, p)
 
