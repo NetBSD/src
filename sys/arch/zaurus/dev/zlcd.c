@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.5 2007/03/04 06:01:11 christos Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.6 2007/06/28 15:41:09 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.5 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.6 2007/06/28 15:41:09 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.5 2007/03/04 06:01:11 christos Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_callbacks.h>
+
+#include <dev/hpc/hpcfbio.h>
 
 #include <machine/bus.h>
 #include <arm/xscale/pxa2x0var.h>
@@ -204,12 +206,121 @@ static int
 lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)v;
+	struct hpcfb_fbconf *fbconf;
+	struct hpcfb_dspconf *dspconf;
 	int res = EINVAL;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETPARAM:
 	case WSDISPLAYIO_SETPARAM:
 		res = lcd_param(sc, cmd, (struct wsdisplay_param *)data);
+		break;
+
+	case HPCFBIO_GCONF:
+		fbconf = (struct hpcfb_fbconf *)data;
+		if (fbconf->hf_conf_index != 0 &&
+		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
+			break;
+		}
+
+		fbconf->hf_conf_index = 0;
+		fbconf->hf_nconfs = 1;
+		fbconf->hf_class = HPCFB_CLASS_RGBCOLOR;
+		strlcpy(fbconf->hf_name, "Sharp Zaurus frame buffer",
+		    sizeof(fbconf->hf_name));
+		strlcpy(fbconf->hf_conf_name, "default",
+		    sizeof(fbconf->hf_conf_name));
+		fbconf->hf_width = sc->geometry->panel_width;
+		fbconf->hf_height = sc->geometry->panel_height;
+		fbconf->hf_baseaddr = (u_long)sc->active->buf_va;
+		fbconf->hf_offset = 0;
+		fbconf->hf_bytes_per_line = sc->geometry->panel_width *
+		    sc->active->depth / 8;
+		fbconf->hf_nplanes = 1;
+		fbconf->hf_bytes_per_plane = sc->geometry->panel_width *
+		    sc->geometry->panel_height * sc->active->depth / 8;
+		fbconf->hf_pack_width = sc->active->depth;
+		fbconf->hf_pixels_per_pack = 1;
+		fbconf->hf_pixel_width = sc->active->depth;
+		fbconf->hf_access_flags = (0
+					   | HPCFB_ACCESS_BYTE
+					   | HPCFB_ACCESS_WORD
+					   | HPCFB_ACCESS_DWORD);
+		fbconf->hf_order_flags = 0;
+		fbconf->hf_reg_offset = 0;
+
+		fbconf->hf_class_data_length = sizeof(struct hf_rgb_tag);
+		fbconf->hf_u.hf_rgb.hf_flags = 0;
+		fbconf->hf_u.hf_rgb.hf_red_width = 5;
+		fbconf->hf_u.hf_rgb.hf_red_shift = 11;
+		fbconf->hf_u.hf_rgb.hf_green_width = 6;
+		fbconf->hf_u.hf_rgb.hf_green_shift = 5;
+		fbconf->hf_u.hf_rgb.hf_blue_width = 5;
+		fbconf->hf_u.hf_rgb.hf_blue_shift = 0;
+		fbconf->hf_u.hf_rgb.hf_alpha_width = 0;
+		fbconf->hf_u.hf_rgb.hf_alpha_shift = 0;
+
+		fbconf->hf_ext_size = 0;
+		fbconf->hf_ext_data = NULL;
+
+		res = 0;
+		break;
+
+	case HPCFBIO_SCONF:
+		fbconf = (struct hpcfb_fbconf *)data;
+		if (fbconf->hf_conf_index != 0 &&
+		    fbconf->hf_conf_index != HPCFB_CURRENT_CONFIG) {
+			break;
+		}
+		/* nothing to do because we have only one configuration */
+		res = 0;
+		break;
+
+	case HPCFBIO_GDSPCONF:
+		dspconf = (struct hpcfb_dspconf *)data;
+		if ((dspconf->hd_unit_index != 0 &&
+		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    (dspconf->hd_conf_index != 0 &&
+		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			break;
+		}
+
+		dspconf->hd_unit_index = 0;
+		dspconf->hd_nunits = 1;
+		dspconf->hd_class = HPCFB_DSP_CLASS_COLORLCD;
+		strlcpy(dspconf->hd_name, "Sharp Zaurus LCD",
+		    sizeof(dspconf->hd_name));
+		dspconf->hd_op_flags = 0;
+		dspconf->hd_conf_index = 0;
+		dspconf->hd_nconfs = 1;
+		strlcpy(dspconf->hd_conf_name, "default",
+		    sizeof(dspconf->hd_conf_name));
+		dspconf->hd_width = sc->geometry->panel_width;
+		dspconf->hd_height = sc->geometry->panel_height;
+		dspconf->hd_xdpi = HPCFB_DSP_DPI_UNKNOWN;
+		dspconf->hd_ydpi = HPCFB_DSP_DPI_UNKNOWN;
+
+		res = 0;
+		break;
+
+	case HPCFBIO_SDSPCONF:
+		dspconf = (struct hpcfb_dspconf *)data;
+		if ((dspconf->hd_unit_index != 0 &&
+		     dspconf->hd_unit_index != HPCFB_CURRENT_UNIT) ||
+		    (dspconf->hd_conf_index != 0 &&
+		     dspconf->hd_conf_index != HPCFB_CURRENT_CONFIG)) {
+			break;
+		}
+		/*
+		 * nothing to do
+		 * because we have only one unit and one configuration
+		 */
+		res = 0;
+		break;
+
+	case HPCFBIO_GOP:
+	case HPCFBIO_SOP:
+		/* curently not implemented...  */
 		break;
 	}
 
@@ -238,8 +349,7 @@ lcd_show_screen(void *v, void *cookie, int waitok,
  * wsdisplay I/O controls
  */
 static int
-lcd_param(struct pxa2x0_lcd_softc *sc, u_long cmd,
-    struct wsdisplay_param *dp)
+lcd_param(struct pxa2x0_lcd_softc *sc, u_long cmd, struct wsdisplay_param *dp)
 {
 	int res = EINVAL;
 
