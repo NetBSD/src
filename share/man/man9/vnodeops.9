@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.64 2007/06/24 19:26:59 rumble Exp $
+.\"     $NetBSD: vnodeops.9,v 1.65 2007/06/28 02:54:23 rumble Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1116,7 +1116,7 @@ flags.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_UNLOCK
-is used to serialise access to the file system such as to present two
+is used to serialise access to the file system such as to prevent two
 writes to the same file from happening at the same time.
 .It Fn VOP_ISLOCKED "vp"
 Test if the vnode
