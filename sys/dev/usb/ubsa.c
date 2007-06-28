@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.18.10.1 2007/06/18 13:45:47 itohy Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.18.10.2 2007/06/28 03:15:58 itohy Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.18.10.1 2007/06/18 13:45:47 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.18.10.2 2007/06/28 03:15:58 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,6 +225,8 @@ struct	ucom_methods ubsa_methods = {
 };
 
 Static const struct usb_devno ubsa_devs[] = {
+	/* AnyDATA ADU-E100H */
+	{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_E100H },
 	/* BELKIN F5U103 */
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U103 },
 	/* BELKIN F5U120 */
@@ -233,14 +235,17 @@ Static const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_ETEK, USB_PRODUCT_ETEK_1COM },
 	/* GoHubs GO-COM232 */
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
-	/* Peracom */
-	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
+	/* Huawei Mobile */
+	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE },
+	/* Novatel Wireless U740 */
+	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MERLINU740 },
 	/* Option N.V. */
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_MC3G },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS2 },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS },
-	/* AnyDATA ADU-E100H */
-	{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_E100H },
+	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADPLUSUMTS },
+	/* Peracom */
+	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
@@ -277,7 +282,7 @@ USB_ATTACH(ubsa)
 	printf("%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
-        sc->sc_udev = dev;
+	sc->sc_udev = dev;
 
 	/*
 	 * initialize rts, dtr variables to something
@@ -295,6 +300,7 @@ USB_ATTACH(ubsa)
 		switch (uaa->product) {
 		case USB_PRODUCT_OPTIONNV_QUADUMTS:
 		case USB_PRODUCT_OPTIONNV_QUADUMTS2:
+		case USB_PRODUCT_OPTIONNV_QUADPLUSUMTS:
 			sc->sc_quadumts = 1;
 			break;
 		}
