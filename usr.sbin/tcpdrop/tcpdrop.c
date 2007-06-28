@@ -1,4 +1,4 @@
-/* 	$NetBSD: tcpdrop.c,v 1.2 2007/06/25 23:58:42 christos Exp $	 */
+/* 	$NetBSD: tcpdrop.c,v 1.3 2007/06/28 18:47:17 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -104,7 +104,7 @@ egetnameinfo(const struct addrinfo *ai, struct hpinfo *hp)
 int
 main(int argc, char **argv)
 {
-	static const int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_DROP };
+	int mib[] = { CTL_NET, 0, IPPROTO_TCP, TCPCTL_DROP };
 	struct addrinfo *ail, *aif, *laddr, *faddr;
 	struct sockaddr_storage sa[2];
 	struct hpinfo fhp, lhp;
@@ -134,8 +134,22 @@ main(int argc, char **argv)
 
 			assert(aif->ai_addrlen <= sizeof(*sa));
 			assert(ail->ai_addrlen <= sizeof(*sa));
+
 			(void)memcpy(&sa[0], aif->ai_addr, aif->ai_addrlen);
 			(void)memcpy(&sa[1], ail->ai_addr, ail->ai_addrlen);
+
+			switch (ail->ai_family) {
+			case AF_INET:
+				mib[1] = PF_INET;
+				break;
+			case AF_INET6:
+				mib[1] = PF_INET6;
+				break;
+			default:
+				warnx("Unsupported socket address family %d",
+				    ail->ai_family);
+				continue;
+			}
 
 			if (sysctl(mib, sizeof(mib) / sizeof(int), NULL,
 			    NULL, sa, sizeof(sa)) == -1) {
