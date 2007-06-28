@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.36.2.2 2007/06/23 18:39:57 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.36.2.3 2007/06/28 18:29:11 ghen Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -460,8 +460,6 @@ fix broken Seagate drive ST3160811A.
 Don't accept a compressed
 .Xr vnd 4
 image with block size 0 to avoid a kernel panic.
-.It
-Fix a panic caused by a NULL dereference.
 .bullet)
 .
 .Ss2 Networking
@@ -485,6 +483,9 @@ Prevent a kernel panic when creating snapshots on filesystems which use quota's.
 Fix a coredump in
 .Xr dump 8
 when using -X (filesystem internal snapshots).
+.It
+Fix a panic when one user has 65536 active vnodes on a quota-enabled file
+system.
 .bullet)
 .
 .Ss2 Security
@@ -516,9 +517,18 @@ Fix a denial of service vulnerability in
 which could allow an attacker to disrupt a connection between IPSec peers.
 .It
 Disable processing or routing header type 0 (RH0) IPv6 packets since they can
-be used for DoS attacks.  Provide a sysctl (net.inet6.ip6.rht0) to re-enable
-them.
-Note: RH0 functionality may be removed completely in future NetBSD releases.
+be used for DoS attacks (CVE-2007-2242).  Provide a sysctl (net.inet6.ip6.rht0)
+to re-enable them.  Note: the sysctl may be removed completely in future NetBSD
+releases.
+.It
+Two
+.Xr veriexec 4
+flaws have been fixed: users can no longer rename a file to a veriexec
+protected file or run unfingerprinted files at strict level two or above.
+.It
+.Xr file 1
+has been updated to version 4.21, including and integer underflow and an
+integer overflow fix (CVE-2007-1536 and CVE-2007-2799).
 .bullet)
 .
 .Ss2 Miscellaneous
@@ -536,6 +546,9 @@ Set /etc/postfix/post-install mode 555 (executable) instead of 444.
 display a message indicating who's password is being changed, to avoid
 confusion after
 .Xr su 1 .
+.It
+The /etc/daily, weekly, monthly and security scripts now use $TMPDIR instead of
+/tmp.
 .bullet)
 .
 .Ss2 alpha specific
