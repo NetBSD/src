@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.22 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: quota.h,v 1.22.12.1 2007/06/28 12:36:01 ghen Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -118,9 +118,8 @@ struct dquot {
 	LIST_ENTRY(dquot) dq_hash;	/* hash list */
 	TAILQ_ENTRY(dquot) dq_freelist;	/* free list */
 	u_int16_t dq_flags;		/* flags, see below */
-	u_int16_t dq_cnt;		/* count of active references */
-	u_int16_t dq_spare;		/* unused spare padding */
 	u_int16_t dq_type;		/* quota type of this dquot */
+	u_int32_t dq_cnt;		/* count of active references */
 	u_int32_t dq_id;		/* identifier this applies to */
 	struct	ufsmount *dq_ump;	/* filesystem that this is taken from */
 	struct	dqblk dq_dqb;		/* actual usage & quotas */
