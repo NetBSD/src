@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.73.10.2 2007/06/12 13:58:24 itohy Exp $
+#	$NetBSD: files.usb,v 1.73.10.3 2007/06/28 03:09:36 itohy Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -113,7 +113,12 @@ file	dev/usb/umass_scsipi.c		umass & (scsibus | atapibus)
 # IrDA bridges
 device	uirda: irbus
 attach	uirda at usbdevif
-file	dev/usb/uirda.c			uirda
+file	dev/usb/uirda.c			uirda | stuirda
+
+# SigmaTel not quite UIRDA IrDA bridge
+device	stuirda: irbus,firmload
+attach	stuirda at usbdevif
+file	dev/usb/stuirda.c		stuirda
 
 # SigmaTel IrDA bridge
 device	ustir: irbus, irdasir
@@ -242,6 +247,10 @@ device	ukyopon: ucombus, umodem_common
 attach	ukyopon at usbdevif
 file	dev/usb/ukyopon.c		ukyopon
 
+# Silicon Labs CP210x serial driver
+device	uslsa: ucombus
+attach	uslsa at usbdevif
+file	dev/usb/uslsa.c			uslsa
 
 # Scanners
 # Generic scanner support
@@ -263,7 +272,7 @@ file	dev/usb/if_atu.c		atu
 attach	ral at usbdevif with ural: usb_ether
 file	dev/usb/if_ural.c		ural
 
-device	rum: ether, ifnet, arp, wlan
+device	rum: ether, ifnet, arp, wlan, firmload
 attach	rum at usbdevif: usb_ether
 file	dev/usb/if_rum.c		rum
 
@@ -276,3 +285,13 @@ file	dev/usb/utoppy.c		utoppy
 device	xboxcontroller: wsmousedev
 attach	xboxcontroller at usbdevif
 file	dev/usb/xboxcontroller.c	xboxcontroller
+
+# Zydas ZD1211
+device	zyd: ether, ifnet, arp, wlan, firmload
+attach	zyd at usbdevif: usb_ether
+file	dev/usb/if_zyd.c		zyd
+
+# Atheros AR5005UG/AR5005UX
+device	uath: ether, ifnet, arp, wlan, firmload
+attach	uath at usbdevif: usb_ether
+file	dev/usb/if_uath.c		uath
