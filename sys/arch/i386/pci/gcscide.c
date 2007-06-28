@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.2 2007/06/28 01:21:59 xtraeme Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.3 2007/06/28 07:50:11 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation.
@@ -37,8 +37,9 @@
  */
 
 /*
- * Driver for the National Semiconductor/AMD CS5535 Companion Controller.
- * Usually this comes with an AMD Geode GX CPU.
+ * Driver for the IDE Controller of the National Semiconductor/AMD
+ * CS5535 Companion device. Available on systems with an AMD Geode GX2
+ * CPU, for example the decTOP.
  *
  * Datasheet at:
  *
@@ -46,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.2 2007/06/28 01:21:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.3 2007/06/28 07:50:11 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
