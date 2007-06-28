@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.106 2007/06/27 23:12:03 xtraeme Exp $
+# $NetBSD: ALL,v 1.107 2007/06/28 12:16:36 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.106 $"
+#ident 		"ALL-$Revision: 1.107 $"
 
 maxusers	32		# estimated number of users
 
@@ -173,6 +173,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	SYSVBFS		# System V boot file system
 file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
