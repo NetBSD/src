@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.61 2007/05/17 14:51:35 yamt Exp $
+#	$NetBSD: files.xen,v 1.62 2007/06/28 20:07:00 alc Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -242,9 +242,15 @@ file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 
 # PCI-ISA bridges
-device  pcib: isabus
-attach  pcib at pci
-file    arch/xen/xen/pcib.c            pcib
+device	pcib: isabus
+attach	pcib at pci
+file	arch/xen/xen/pcib.c		pcib | ichlpcib
+
+# PCI-LPC bridges
+device	ichlpcib: isabus, sysmon_wdog
+attach	ichlpcib at pci
+file	arch/i386/pci/ichlpcib.c	ichlpcib
+
 
 # CPUS
 
