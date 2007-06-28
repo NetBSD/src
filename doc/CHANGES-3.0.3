@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.43 2007/06/26 15:05:37 ghen Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.44 2007/06/28 11:44:52 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -1714,4 +1714,18 @@ usr.bin/file/Makefile				1.51-1.53
 	Update file(1) to version 4.21, including security fixes (CVE-2007-1536
 	and CVE-2007-2799).
 	[pooka, ticket #1804]
+
+sys/ufs/ufs/quota.h				1.24
+sys/ufs/ufs/ufs_quota.c				1.46
+sys/sys/param.h					patch
+
+	If a quota-enabled file system has 65536 active vnodes for one uid the
+	reference counter of the corresponding struct dquot will overflow.
+
+	Change the type of the reference counter from u_int16_t to u_int32_t
+	and add an assertion to check for overflow.
+
+	Bump kernel version as LKM's depending on UFS internals will have to be
+	recompiled after this change (discussed and approved on tech-kern).
+	[hannken, ticket #1807]
 
