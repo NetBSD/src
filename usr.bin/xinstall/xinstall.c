@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.101 2006/12/14 20:09:36 he Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.102 2007/06/28 19:05:56 joerg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.101 2006/12/14 20:09:36 he Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.102 2007/06/28 19:05:56 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,7 +412,7 @@ do_link(char *from_name, char *to_name)
 			ret = rename(tmpl, to_name);
 			/* If rename has posix semantics, then the temporary
 			 * file may still exist when from_name and to_name point
-			 * to the smae file, so unlink it unconditionally.
+			 * to the same file, so unlink it unconditionally.
 			 */
 			(void)unlink(tmpl);
 		}
@@ -871,8 +871,32 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 void
 strip(char *to_name)
 {
+	static const char exec_failure[] = ": exec of strip failed: ";
 	int	serrno, status;
-	char	*stripprog;
+	const char *stripprog, *progname;
+	char *cmd;
+
+	if ((stripprog = getenv("STRIP")) == NULL) {
+#ifdef TARGET_STRIP
+		stripprog = TARGET_STRIP;
+#else
+		stripprog = _PATH_STRIP;
+#endif
+	}
+
+	cmd = NULL;
+
+	if (stripArgs) {
+		/*
+		 * Build up a command line and let /bin/sh
+		 * parse the arguments.
+		 */
+		int ret = asprintf(&cmd, "%s %s %s", stripprog, stripArgs,
+		    to_name);
+
+		if (ret == -1 || cmd == NULL)
+			err(1, "asprintf failed");
+	}
 
 	switch (vfork()) {
 	case -1:
@@ -881,36 +905,25 @@ strip(char *to_name)
 		errx(1, "vfork: %s", strerror(serrno));
 		/*NOTREACHED*/
 	case 0:
-		stripprog = getenv("STRIP");
-		if (stripprog == NULL)
-			stripprog = _PATH_STRIP;
 
-		if (stripArgs) {
-			/*
-			 * build up a command line and let /bin/sh
-			 * parse the arguments
-			 */
-			char* cmd = (char*)malloc(sizeof(char)*
-						  (3+strlen(stripprog)+
-						     strlen(stripArgs)+
-						     strlen(to_name)));
-
-			if (cmd == NULL)
-				errx(1, "%s", strerror(ENOMEM));
-
-			sprintf(cmd, "%s %s %s", stripprog, stripArgs, to_name);
-
+		if (stripArgs)
 			execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
-		} else
+		else
 			execlp(stripprog, "strip", to_name, NULL);
 
-		warn("%s: exec of strip", stripprog);
+		progname = getprogname();
+		write(STDERR_FILENO, progname, strlen(progname));
+		write(STDERR_FILENO, exec_failure, strlen(exec_failure));
+		write(STDERR_FILENO, stripprog, strlen(stripprog));
+		write(STDERR_FILENO, "\n", 1);
 		_exit(1);
 		/*NOTREACHED*/
 	default:
 		if (wait(&status) == -1 || status)
 			(void)unlink(to_name);
 	}
+
+	free(cmd);
 }
 
 /*
