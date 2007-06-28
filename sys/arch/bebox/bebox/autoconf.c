@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15.38.2 2007/05/21 03:19:47 ober Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.38.3 2007/06/28 23:31:26 ober Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.38.2 2007/05/21 03:19:47 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.38.3 2007/06/28 23:31:26 ober Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,26 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.38.2 2007/05/21 03:19:47 ober Exp 
 #include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
 
 #include <machine/pte.h>
 #include <machine/intr.h>
 
+/*
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/ata/atavar.h>
+#include <dev/ic/wdcvar.h>
+#include <machine/isa_machdep.h>
+#include <dev/isa/isareg.h>
+#include <prep/pnpbus/pnpbusvar.h>
+*/
+
+void genppc_cpu_configure(void);
 static void findroot(void);
 
 /*
@@ -127,3 +143,4 @@ device_register(struct device *dev, void *aux)
 {
 	/* do nothing */
 }
+
