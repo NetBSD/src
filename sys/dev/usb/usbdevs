@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.476 2007/06/24 10:43:23 itohy Exp $
+$NetBSD: usbdevs,v 1.477 2007/06/28 03:13:01 itohy Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -421,7 +421,7 @@ vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor SILABS2		0x10a6	SILABS2
-vendor USI              0x10ab  USI
+vendor USI		0x10ab	USI
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
 vendor SILABS		0x10c4	Silicon Labs
@@ -439,6 +439,7 @@ vendor TWINMOS		0x126f	TwinMOS
 vendor CREATIVE2	0x1292	Creative Labs
 vendor BELKIN2		0x1293	Belkin Components
 vendor CYBERTAN		0x129b	CyberTAN Technology
+vendor HUAWEI		0x12d1	Huawei Technologies
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
@@ -447,7 +448,7 @@ vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor NOVATEL2		0x1410	Novatel
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
-vendor HUAWEI3COM	0x1472	Huawei 3Com
+vendor HUAWEI3COM	0x1472	Huawei-3Com
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
 vendor RALINK_2		0x148f	Ralink Technology
@@ -690,6 +691,7 @@ product ASUSTEK WL159G		0x170c	WL-159g
 product ASUSTEK A9T_WIFI	0x171b	A9T wireless
 product ASUSTEK WL167G_2	0x1723	WL-167g USB2.0 WLAN Adapter (version 2)
 product ASUSTEK WL167G_3	0x1724	WL-167g USB2.0 WLAN Adapter (version 2)
+product ASUSTEK MYPAL_A730	0x4202	MyPal A730
 
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
@@ -1183,7 +1185,10 @@ product HP HN210E		0x811c	Ethernet HN210E
 /* HP products */
 product HP2 C500		0x6002	PhotoSmart C500
 
-/* HUAWEI products */
+/* Huawei Technologies products */
+product HUAWEI MOBILE		0x1001	Huawei Mobile
+
+/* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
 
 /* IBM Corporation */
@@ -1616,7 +1621,7 @@ product NETGEAR2 MA101		0x4100	MA101
 product NETGEAR2 MA101B		0x4102	MA101 Rev B
 
 /* NetIndex products */
-product NETINDEX WS002IN	0x2001  Willcom WS002IN (DD)
+product NETINDEX WS002IN	0x2001	Willcom WS002IN (DD)
 
 /* NHJ product */
 product NHJ CAM2		0x9120	Camera
@@ -1636,6 +1641,7 @@ product NOVATECH RT2573		0x9021	RT2573
 /* NovAtel products */
 product NOVATEL FLEXPACKGPS	0x0100	NovAtel FlexPack GPS receiver
 product NOVATEL2 CDMA_MODEM	0x1110	Novatel Wireless Merlin CDMA
+product NOVATEL2 MERLINU740	0x1400	Novatel Merlin U740
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
@@ -1663,6 +1669,7 @@ product ONSPEC2 8IN2		0xb012	8In2
 product OPTIONNV MC3G		0x5000	Mobile Connect 3G datacard
 product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
 product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
+product OPTIONNV QUADPLUSUMTS	0x6600	GlobeTrotter 3G Quad Plus
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
