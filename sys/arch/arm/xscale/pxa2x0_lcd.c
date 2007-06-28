@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.21 2007/06/28 14:41:49 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.22 2007/06/28 14:47:47 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.21 2007/06/28 14:41:49 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.22 2007/06/28 14:47:47 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,8 @@ pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *sc,
 	sc->geometry = info;
 
 	ccr0 = LCCR0_IMASK;
+	if (CPU_IS_PXA270)
+		ccr0 |= LCCR0_CMDIM|LCCR0_RDSTM;
 	if (info->panel_info & LCDPANEL_ACTIVE)
 		ccr0 |= LCCR0_PAS;	/* active mode */
 	if ((info->panel_info & (LCDPANEL_DUAL|LCDPANEL_ACTIVE))
@@ -171,7 +173,10 @@ pxa2x0_lcd_initialize(struct pxa2x0_lcd_softc *sc,
 	/* enable clock */
 	pxa2x0_clkman_config(CKEN_LCD, 1);
 
-	bus_space_write_4(iot, ioh, LCDC_LCCR0, LCCR0_IMASK);
+	lccr0 = LCCR0_IMASK;
+	if (CPU_IS_PXA270)
+		lccr0 |= LCCR0_CMDIM|LCCR0_RDSTM;
+	bus_space_write_4(iot, ioh, LCDC_LCCR0, lccr0);
 
 	/*
 	 * setup GP[77:58] for LCD
