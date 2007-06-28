@@ -62,7 +62,6 @@ struct file_operations {
 };
 
 extern	struct file *open_exec(const char *);
-extern	void fput(struct file *);
 extern	int kernel_read(struct file *, unsigned long, char *, unsigned long);
 extern	int memcmp(const void *, const void *, size_t);
 extern	int register_chrdev(unsigned int, const char *, struct file_operations *);
