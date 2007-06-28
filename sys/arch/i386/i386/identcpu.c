@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.68 2007/06/27 23:28:41 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.69 2007/06/28 21:02:40 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.68 2007/06/27 23:28:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.69 2007/06/28 21:02:40 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -419,7 +419,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			cyrix6x86_cpu_setup,
 			NULL,
-			NULL,
+			amd_cpu_cacheinfo,
 		},
 		/* Family 6, not yet available from NSC */
 		{
