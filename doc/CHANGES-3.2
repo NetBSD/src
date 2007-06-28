@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.85 2007/06/26 17:01:12 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.86 2007/06/28 11:44:24 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3340,4 +3340,18 @@ sys/sys/verified_exec.h				patch
 	Prevent users to rename a file to a veriexec protected file and to run
 	unfingerprinted files at strict level two or above.
 	[blymn, ticket #1471]
+
+sys/ufs/ufs/quota.h				1.24
+sys/ufs/ufs/ufs_quota.c				1.46
+sys/sys/param.h					patch
+
+	If a quota-enabled file system has 65536 active vnodes for one uid the
+	reference counter of the corresponding struct dquot will overflow.
+
+	Change the type of the reference counter from u_int16_t to u_int32_t
+	and add an assertion to check for overflow.
+
+	Bump kernel version as LKM's depending on UFS internals will have to be
+	recompiled after this change (discussed and approved on tech-kern).
+	[hannken, ticket #1807]
 
