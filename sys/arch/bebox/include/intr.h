@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25.14.1 2007/05/02 16:24:45 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.14.2 2007/06/28 23:31:30 ober Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 #ifndef _BEBOX_INTR_H_
 #define _BEBOX_INTR_H_
 
+#include <powerpc/intr.h>
+
+#if 0
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	9	/* nothing */
 #define	IPL_SOFTCLOCK	8	/* software clock interrupt */
@@ -57,6 +61,7 @@
 #define	IPL_LOCK	IPL_HIGH
 #define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
+#endif
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -64,11 +69,8 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#include <machine/cpu.h>
 
-#ifndef _LOCORE
-#include <powerpc/softintr.h>
-
+#if 0
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -81,6 +83,14 @@ struct intrhand {
 	int	ih_level;
 	int	ih_irq;
 };
+
+
+#endif /* if 0 */
+
+#ifndef _LOCORE
+#include <powerpc/softintr.h>
+#include <machine/cpu.h>
+#include <sys/device.h>
 
 void do_pending_int __P((void));
 
@@ -111,20 +121,26 @@ extern int imask[];
 #define	CPU1_INT_MASK	0x1f0
 #define	INT_STATE_REG	0x2f0
 
+
 #define	SINT_CLOCK	0x20000000
 #define	SINT_NET	0x40000000
 #define	SINT_SERIAL	0x80000000
+#if 0
 #define	SPL_CLOCK	0x00000001
+#endif
 #define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
+
 
 #define	CNT_SINT_NET	29
 #define	CNT_SINT_CLOCK	30
 #define	CNT_SINT_SERIAL	31
 #define	CNT_CLOCK	0
 
+#if 0
 #define	setsoftclock()	set_sint(SINT_CLOCK);
 #define	setsoftnet()	set_sint(SINT_NET);
 #define	setsoftserial()	set_sint(SINT_SERIAL);
+
 
 #define	spl0()		spllower(0)
 
@@ -148,7 +164,7 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <sys/spl.h>
-
+#endif /* if 0 */
 #endif /* !_LOCORE */
 
 #endif /* !_BEBOX_INTR_H_ */

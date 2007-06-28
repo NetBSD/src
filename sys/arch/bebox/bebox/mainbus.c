@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19 2005/12/11 12:17:03 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19.38.1 2007/06/28 23:31:27 ober Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2005/12/11 12:17:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.38.1 2007/06/28 23:31:27 ober Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,8 +102,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	extent_destroy(ioext);
 	extent_destroy(memext);
 #endif
-	pba.pba_iot = &bebox_io_bs_tag;
-	pba.pba_memt = &bebox_mem_bs_tag;
+	pba.pba_iot = &genppc_isa_io_space_tag;
+	pba.pba_memt = &genppc_isa_mem_space_tag;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.4 2007/05/26 22:32:06 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.5 2007/06/28 23:31:26 ober Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.4 2007/05/26 22:32:06 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.5 2007/06/28 23:31:26 ober Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -76,11 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.4 2007/05/26 22:32:06 ober Exp $
 #include "pfb.h"
 #include "ksyms.h"
 
-#include "pc.h"
-#if (NPC > 0)
-#include <machine/pccons.h>
-#endif
-
 #include "vga.h"
 #if (NVGA > 0)
 #include <dev/ic/mc6845reg.h>
@@ -117,6 +112,7 @@ struct pic_ops *isa_pic;
 void initppc(u_long, u_long, void *);
 void consinit(void);
 void ext_intr(void);
+void setup_bebox_intr(void);
 
 extern void *startsym, *endsym;
 
@@ -171,9 +167,8 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 	/*
 	 * boothowto
 	 */
-	boothowto = args;
+	/*	boothowto = args; */
 	
-	prep_initppc(startkernel,endkernel,boothowto);
 	setup_bebox_intr();
 }
 
@@ -256,7 +251,7 @@ consinit()
 	if (!strcmp(consinfo->devname, "be")) {
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
-		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -266,7 +261,7 @@ consinit()
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(&bebox_io_bs_tag, &bebox_mem_bs_tag,
+		if (!vga_cnattach(&genppc_isa_io_space_tag, &genppc_isa_mem_space_tag,
 				  -1, 1))
 			goto dokbd;
 #endif
@@ -277,7 +272,7 @@ consinit()
 dokbd:
 #endif
 #if (NPCKBC > 0)
-		pckbc_cnattach(&bebox_isa_io_bs_tag, IO_KBD, KBCMDP,
+		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -368,3 +363,10 @@ cpu_reboot(int howto, char *what)
 	while (1);
 }
 
+void
+mem_regions(struct mem_region **mem, struct mem_region **avail)
+{
+
+  *mem = physmemr;
+  *avail = availmemr;
+}
