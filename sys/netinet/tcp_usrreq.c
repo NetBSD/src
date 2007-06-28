@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.134 2007/06/26 09:19:36 xtraeme Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.135 2007/06/28 21:11:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.134 2007/06/26 09:19:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.135 2007/06/28 21:11:12 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -143,6 +143,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.134 2007/06/26 09:19:36 xtraeme Exp
 #include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/scope6_var.h>
 #endif
 
 #include <netinet/tcp.h>
@@ -1318,12 +1319,45 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	switch (pf) {
+#ifdef INET6
+	case PF_INET6:
+		si6[0] = (struct sockaddr_in6*)&sa[0];
+		si6[1] = (struct sockaddr_in6*)&sa[1];
+		if (si6[0]->sin6_len != sizeof(*si6[0]) ||
+		    si6[1]->sin6_len != sizeof(*si6[1]))
+			return EINVAL;
+
+		if (!IN6_IS_ADDR_V4MAPPED(&si6[0]->sin6_addr) &&
+		    !IN6_IS_ADDR_V4MAPPED(&si6[1]->sin6_addr)) {
+			error = sa6_embedscope(si6[0], ip6_use_defzone);
+			if (error)
+				return error;
+			error = sa6_embedscope(si6[1], ip6_use_defzone);
+			if (error)
+				return error;
+
+			s = splsoftnet();
+			error = inet6_ident_core(&si6[0]->sin6_addr,
+			    si6[0]->sin6_port, &si6[1]->sin6_addr,
+			    si6[1]->sin6_port, oldp, oldlenp, l, dodrop);
+			splx(s);
+			return error;
+		}
+
+		if (IN6_IS_ADDR_V4MAPPED(&si6[0]->sin6_addr) !=
+		    IN6_IS_ADDR_V4MAPPED(&si6[1]->sin6_addr))
+			return EINVAL;
+
+		in6_sin6_2_sin_in_sock((struct sockaddr *)&sa[0]);
+		in6_sin6_2_sin_in_sock((struct sockaddr *)&sa[1]);
+		/*FALLTHROUGH*/
+#endif /* INET6 */
 #ifdef INET
 	case PF_INET:
 		si4[0] = (struct sockaddr_in*)&sa[0];
 		si4[1] = (struct sockaddr_in*)&sa[1];
 		if (si4[0]->sin_len != sizeof(*si4[0]) ||
-		    si4[0]->sin_len != si4[1]->sin_len)
+		    si4[0]->sin_len != sizeof(*si4[1]))
 			return EINVAL;
 	
 		s = splsoftnet();
@@ -1333,25 +1367,9 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		splx(s);
 		return error;
 #endif /* INET */
-#ifdef INET6
-	case PF_INET6:
-		si6[0] = (struct sockaddr_in6*)&sa[0];
-		si6[1] = (struct sockaddr_in6*)&sa[1];
-		if (si6[0]->sin6_len != sizeof(*si6[0]) ||
-		    si6[0]->sin6_len != si6[1]->sin6_len)
-			return EINVAL;
-
-		s = splsoftnet();
-		error = inet6_ident_core(&si6[0]->sin6_addr, si6[0]->sin6_port,
-		    &si6[1]->sin6_addr, si6[1]->sin6_port,
-		    oldp, oldlenp, l, dodrop);
-		splx(s);
-		return error;
-#endif /* INET6 */
 	default:
 		return EPROTONOSUPPORT;
 	}
-	/* NOTREACHED */
 }
 
 /*
