@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.3 2007/06/28 07:50:11 xtraeme Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.4 2007/06/28 10:22:52 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.3 2007/06/28 07:50:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.4 2007/06/28 10:22:52 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,7 +235,7 @@ gcscide_setup_channel(struct ata_channel *chp)
 		    	    GCSCIDE_ATAC_CH0D0_DMA, reg | GCSCIDE_PIO_FORMAT);
 		}
 		/* Set PIO mode and timing */
-		wrmsr(drive ? GCSCIDE_ATAC_CH0D1_PIO : GCSCIDE_ATAC_CH0D1_PIO,
+		wrmsr(drive ? GCSCIDE_ATAC_CH0D1_PIO : GCSCIDE_ATAC_CH0D0_PIO,
 		    gcscide_pio_timings[drvp->PIO_mode]);
 	}
 }
