@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.18 2007/06/25 20:09:34 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.19 2007/06/28 20:50:31 bouyer Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -194,8 +194,8 @@ IDTVEC(recurse_/**/name/**/num)						;\
 	subl	$4,%esp							;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
+	movl	$_C_LABEL(Xdoreti), %esi; /* we now have a trap frame, so loop using doreti instead */ ;\
 IDTVEC(resume_/**/name/**/num)						\
-	/*movl	%esp,%ecx*/						;\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
@@ -216,7 +216,9 @@ IDTVEC(resume_/**/name/**/num)						\
 	CLI(%eax)							;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
-	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
+	IDEPTH_DECR							;\
+	popl	%ebx							;\
+	jmp	*%esi			/* lower spl and do ASTs */	;\
 
 # Just unmasking the event isn't enouth, we also need to
 # reassert the event pending bit if needed. For now just call
@@ -578,6 +580,7 @@ calltrap:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
+.Lalltraps_checkusr:
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	.Lalltraps_checkast
 #ifdef VM86
@@ -604,8 +607,24 @@ calltrap:
 6:	STIC(%eax)
     	jz	4f
 	call	_C_LABEL(stipending)
-	#testl	%eax,%eax		/* XXXcl */
-	#jnz	1b
+	testl	%eax,%eax
+	jz	4f
+	/* process pending interrupts */
+	CLI(%eax)
+	movl	CPUVAR(ILEVEL), %ebx
+	movl	$.Lalltraps_resume, %esi # address to resume loop at
+.Lalltraps_resume:
+	movl    %ebx,%eax		# get cpl
+	movl    CPUVAR(IUNMASK)(,%eax,4),%eax
+	andl    CPUVAR(IPENDING),%eax   # any non-masked bits left?
+	jz	7f
+	bsrl    %eax,%eax
+	btrl    %eax,CPUVAR(IPENDING)
+	movl    CPUVAR(ISOURCES)(,%eax,4),%eax
+	jmp     *IS_RESUME(%eax)
+7:	movl 	%ebx, CPUVAR(ILEVEL) #restore cpl
+	jmp 	.Lalltraps_checkusr
+	
 4:
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
@@ -644,6 +663,7 @@ IDTVEC(trap0e)
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	addl	$4,%esp
+.Ltrap0e_checkusr:
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	trap0e_checkast
 #ifdef VM86
@@ -670,8 +690,23 @@ trap0e_checkast:
 6:	STIC(%eax)
     	jz	4f
 	call	_C_LABEL(stipending)
-	#testl	%eax,%eax		/* XXXcl */
-	#jnz	1b
+	testl	%eax,%eax
+	jz	4f
+	/* process for pending interrupts */
+	CLI(%eax)
+	movl	CPUVAR(ILEVEL), %ebx
+	movl	$.Ltrap0e_resume, %esi # address to resume loop at
+.Ltrap0e_resume:
+	movl    %ebx,%eax		# get cpl
+	movl    CPUVAR(IUNMASK)(,%eax,4),%eax
+	andl    CPUVAR(IPENDING),%eax   # any non-masked bits left?
+	jz	7f
+	bsrl    %eax,%eax
+	btrl    %eax,CPUVAR(IPENDING)
+	movl    CPUVAR(ISOURCES)(,%eax,4),%eax
+	jmp     *IS_RESUME(%eax)
+7:	movl	%ebx, CPUVAR(ILEVEL) #restore cpl
+	jmp 	.Ltrap0e_checkusr
 4:
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
