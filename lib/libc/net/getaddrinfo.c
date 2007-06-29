@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.89 2007/06/23 17:32:08 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.90 2007/06/29 15:53:21 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.89 2007/06/23 17:32:08 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.90 2007/06/29 15:53:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -766,7 +766,7 @@ explore_numeric_scope(const struct addrinfo *pai, const char *hostname,
     const char *servname, struct addrinfo **res, struct servent_data *svd)
 {
 #if !defined(SCOPE_DELIMITER) || !defined(INET6)
-	return explore_numeric(pai, hostname, servname, res, hostname);
+	return explore_numeric(pai, hostname, servname, res, hostname, svd);
 #else
 	const struct afd *afd;
 	struct addrinfo *cur;
