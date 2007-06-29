@@ -1,4 +1,4 @@
-/*	$NetBSD: svhlabel.c,v 1.1 2007/06/29 23:30:25 rumble Exp $	*/
+/*	$NetBSD: svhlabel.c,v 1.2 2007/06/29 23:33:05 rumble Exp $	*/
 
 /*
  * Copyright (C) 2007 Stephen M. Rumble.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: svhlabel.c,v 1.1 2007/06/29 23:30:25 rumble Exp $");
+__RCSID("$NetBSD: svhlabel.c,v 1.2 2007/06/29 23:33:05 rumble Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -229,7 +229,7 @@ is_efs(int sd, uint32_t blkoff)
 
 	BE32TOH(magic);
 
-	return (magic == 0x00072959 || magic == 0x0007295A);
+	return (magic == EFS_SB_MAGIC || magic == EFS_SB_NEWMAGIC);
 }
 
 static struct sgi_boot_block *
