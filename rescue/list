@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.30 2007/05/15 23:23:49 lukem Exp $
+#	$NetBSD: list,v 1.31 2007/06/29 23:30:19 rumble Exp $
 
 SRCDIRS	bin
 
@@ -70,6 +70,7 @@ PROG	modunload
 PROG	mount
 PROG	mount_ados
 PROG	mount_cd9660
+PROG	mount_efs
 PROG	mount_ext2fs
 PROG	mount_fdesc
 PROG	mount_ffs	mount_ufs

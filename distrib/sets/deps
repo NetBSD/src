@@ -23,6 +23,7 @@ base-dhclient-root base-sys-root
 base-dhcpd-bin base-sys-share
 base-dhcpd-bin base-sys-usr
 base-dhcpd-examples base-sys-share
+base-efs-root base-sys-root
 base-ext2fs-root base-sys-root
 base-filecorefs-root base-sys-root
 base-fstab-examples base-sys-share
@@ -367,6 +368,8 @@ man-dhclient-catman base-man-share
 man-dhclient-man base-man-share
 man-dhcpd-catman base-man-share
 man-dhcpd-man base-man-share
+man-efs-catman base-man-share
+man-efs-man base-man-share
 man-ext2fs-catman base-man-share
 man-ext2fs-man base-man-share
 man-filecorefs-catman base-man-share

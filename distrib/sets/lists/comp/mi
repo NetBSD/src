@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1036 2007/06/26 22:45:36 rumble Exp $
+#	$NetBSD: mi,v 1.1037 2007/06/29 23:30:17 rumble Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -537,6 +537,9 @@
 ./usr/include/fnmatch.h				comp-c-include
 ./usr/include/form.h				comp-c-include
 ./usr/include/frame.h				comp-obsolete		obsolete
+./usr/include/fs/efs/efs.h			comp-c-include
+./usr/include/fs/efs/efs_sb.h			comp-c-include
+./usr/include/fs/efs/efs_mount.h		comp-c-include
 ./usr/include/fs/hfs/hfs.h			comp-c-include
 ./usr/include/fs/hfs/libhfs.h			comp-c-include
 ./usr/include/fs/hfsp/hfsp.h			comp-obsolete		obsolete
@@ -2286,6 +2289,7 @@
 ./usr/libdata/debug/sbin/mount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ados.debug	comp-adosfs-debug	debug
 ./usr/libdata/debug/sbin/mount_cd9660.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/mount_efs.debug	comp-efs-debug		debug
 ./usr/libdata/debug/sbin/mount_ext2fs.debug	comp-ext2fs-debug	debug
 ./usr/libdata/debug/sbin/mount_fdesc.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_ffs.debug	comp-sysutil-debug	debug

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.100 2007/06/24 01:43:35 dyoung Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.101 2007/06/29 23:30:32 rumble Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -349,6 +349,7 @@ x(APPLEUFS,22, "Apple UFS", "ffs",   "ffs")   /* Apple UFS */ \
 x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 x(UDF,     24, "UDF",        NULL,   "udf")  /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
+x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */
 
 #ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
