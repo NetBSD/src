@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1011 2007/06/27 23:06:19 xtraeme Exp $
+# $NetBSD: mi,v 1.1012 2007/06/29 23:30:18 rumble Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2107,6 +2107,7 @@
 ./usr/share/man/cat8/mount_9p.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/mount_ados.0		man-adosfs-catman	.cat
 ./usr/share/man/cat8/mount_cd9660.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_efs.0		man-efs-catman		.cat
 ./usr/share/man/cat8/mount_ext2fs.0		man-ext2fs-catman	.cat
 ./usr/share/man/cat8/mount_fdesc.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_ffs.0		man-sysutil-catman	.cat
@@ -2405,6 +2406,7 @@
 ./usr/share/man/cat8/supscan.0			man-sup-catman		.cat
 ./usr/share/man/cat8/supservers.0		man-sup-catman		.cat
 ./usr/share/man/cat8/sushi.0			man-obsolete		obsolete
+./usr/share/man/cat8/svhlabel.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/swapctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/swapon.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/sync.0			man-sysutil-catman	.cat
@@ -4578,6 +4580,7 @@
 ./usr/share/man/man8/mount_9p.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/mount_ados.8		man-adosfs-man		.man
 ./usr/share/man/man8/mount_cd9660.8		man-sysutil-man		.man
+./usr/share/man/man8/mount_efs.8		man-efs-man		.man
 ./usr/share/man/man8/mount_ext2fs.8		man-ext2fs-man		.man
 ./usr/share/man/man8/mount_fdesc.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_ffs.8		man-sysutil-man		.man
@@ -4876,6 +4879,7 @@
 ./usr/share/man/man8/supscan.8			man-sup-man		.man
 ./usr/share/man/man8/supservers.8		man-sup-man		.man
 ./usr/share/man/man8/sushi.8			man-obsolete		obsolete
+./usr/share/man/man8/svhlabel.8			man-sysutil-man		.man
 ./usr/share/man/man8/swapctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/swapon.8			man-sysutil-man		.man
 ./usr/share/man/man8/sync.8			man-sysutil-man		.man

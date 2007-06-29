@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.712 2007/06/25 23:38:57 christos Exp $
+# $NetBSD: mi,v 1.713 2007/06/29 23:30:17 rumble Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -173,6 +173,7 @@
 ./sbin/mount_ados				base-adosfs-root
 ./sbin/mount_cd9660				base-sysutil-root
 ./sbin/mount_ext2fs				base-ext2fs-root
+./sbin/mount_efs				base-efs-root
 ./sbin/mount_fdesc				base-miscfs-root
 ./sbin/mount_ffs				base-sysutil-root
 ./sbin/mount_filecore				base-filecorefs-root
@@ -232,6 +233,7 @@
 ./sbin/setkey					base-netutil-root
 ./sbin/shutdown					base-sysutil-root
 ./sbin/slattach					base-slip-root
+./sbin/svhlabel					base-sysutil-root
 ./sbin/swapctl					base-sysutil-root
 ./sbin/swapon					base-sysutil-root
 ./sbin/sysctl					base-sysutil-root
@@ -779,6 +781,7 @@
 ./usr/include/dev/wscons			base-c-usr
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
+./usr/include/fs/efs				base-c-usr
 ./usr/include/fs/hfs				base-c-usr
 ./usr/include/fs/hfsp				base-obsolete		obsolete
 ./usr/include/fs/puffs				base-c-usr

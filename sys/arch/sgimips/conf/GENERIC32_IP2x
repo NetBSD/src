@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.66 2007/06/06 08:19:10 martin Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.67 2007/06/29 23:30:25 rumble Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.66 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.67 $"
 
 maxusers	32
 
@@ -117,6 +117,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	EFS		# Silicon Graphics Extent File System
 
 # File system options
 options 	QUOTA		# UFS quotas

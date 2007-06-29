@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.107 2007/06/28 12:16:36 tsutsui Exp $
+# $NetBSD: ALL,v 1.108 2007/06/29 23:30:25 rumble Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.107 $"
+#ident 		"ALL-$Revision: 1.108 $"
 
 maxusers	32		# estimated number of users
 
@@ -179,6 +179,7 @@ file-system	TMPFS		# Efficient memory file-system
 file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 file-system	PUFFS		# experimental - Userspace file system support
 file-system	HFS		# experimental - Apple HFS+ file system
+file-system	EFS		# Silicon Graphics Extent File System
 
 # File system options
 options 	QUOTA		# UFS quotas

@@ -24,6 +24,8 @@ base-debug-bin	debugging utilities
 base-dhclient-root	root file system support for DHCP client software
 base-dhcpd-bin	DHCP server
 base-dhcpd-examples	example configuration files for DHCP server
+base-efs-lkm		loadable kernel module for efs file system
+base-efs-root		root file system support for efs file system
 base-ext2fs-lkm	loadable kernel module for ext2fs file system
 base-ext2fs-root	root file system support for ext2fs file system
 base-filecorefs-root	root file system support for the Acorn FILECORE file system
@@ -600,6 +602,8 @@ man-dhclient-catman	formatted manual pages for DHCP (dynamic host configuration 
 man-dhclient-man	manual pages source for DHCP (dynamic host configuration protocol) client utilities
 man-dhcpd-catman	formatted manual pages for DHCP (dynamic host configuration protocol) server utilities
 man-dhcpd-man	manual pages source for DHCP (dynamic host configuration protocol) server utilities
+man-efs-catman		formatted manual pages for the Silicon Graphics EFS file system support
+man-efs-man		manual pages source for the Silicon Graphics EFS file system support
 man-ext2fs-catman	formatted manual pages for the Linux ext2fx file system support
 man-ext2fs-man	manual pages source for the Linux ext2fx file system support
 man-filecorefs-catman	formatted manual pages Acorn FileCore file system support

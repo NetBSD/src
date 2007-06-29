@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.158 2007/06/23 09:08:37 dsl Exp $	*/
+/*	$NetBSD: mount.h,v 1.159 2007/06/29 23:30:32 rumble Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -86,6 +86,7 @@
 #define	MOUNT_SYSVBFS	"sysvbfs"	/* System V Boot Filesystem */
 #define MOUNT_PUFFS	"puffs"		/* Pass-to-Userspace filesystem */
 #define MOUNT_HFS	"hfs"		/* Apple HFS+ Filesystem */
+#define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an

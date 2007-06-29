@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.41 2007/01/01 22:13:18 dsl Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.42 2007/06/29 23:30:31 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1268,6 +1268,7 @@ struct pmax_boot_block {
 #define SGI_BOOT_BLOCK_SIZE_VOLHDR	3135
 #define SGI_BOOT_BLOCK_MAGIC		0xbe5a941
 #define SGI_BOOT_BLOCK_MAXPARTITIONS	16
+#define SGI_BOOT_BLOCK_MAXVOLDIRS	15
 #define SGI_BOOT_BLOCK_BLOCKSIZE	512
 
 /*
@@ -1317,7 +1318,7 @@ struct sgi_boot_block {
 		char		name[8];
 		int32_t		block;
 		int32_t		bytes;
-	}		voldir[15];
+	}		voldir[SGI_BOOT_BLOCK_MAXVOLDIRS];
 	struct {
 		int32_t		blocks;
 		int32_t		first;
@@ -1328,8 +1329,11 @@ struct sgi_boot_block {
 } __packed;
 
 #define SGI_PTYPE_VOLHDR	0
+#define SGI_PTYPE_TRKREPL	1
+#define SGI_PTYPE_SECREPL	2
 #define SGI_PTYPE_RAW		3
 #define SGI_PTYPE_BSD		4
+#define SGI_PTYPE_SYSV		5
 #define SGI_PTYPE_VOLUME	6
 #define SGI_PTYPE_EFS		7
 #define SGI_PTYPE_LVOL		8
