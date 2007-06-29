@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.4 2007/03/04 05:59:47 christos Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.5 2007/06/29 16:09:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Izumi Tsutsui
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.4 2007/03/04 05:59:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.5 2007/06/29 16:09:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -555,6 +555,7 @@ ewskbd_wskbd_pollc(void *cookie, int on)
 	if (on && !__polling) {
 		/* disable interrupt driven I/O */
 		s = splhigh();
+		__polling = true;
 	} else if (!on && __polling) {
 		/* enable interrupt driven I/O */
 		__polling = false;
