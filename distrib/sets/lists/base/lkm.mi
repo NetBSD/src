@@ -1,10 +1,11 @@
-# $NetBSD: lkm.mi,v 1.18 2007/03/06 11:28:44 dillo Exp $
+# $NetBSD: lkm.mi,v 1.19 2007/06/29 23:30:16 rumble Exp $
 ./usr/lkm/adosfs.o				base-vfs-lkm
 ./usr/lkm/bsdcomp.o				base-ppp-lkm
 ./usr/lkm/cd9660.o				base-vfs-lkm
 ./usr/lkm/coda.o				base-vfs-lkm
 ./usr/lkm/coda5.o				base-vfs-lkm
 ./usr/lkm/deflate.o				base-ppp-lkm
+./usr/lkm/efs.o					base-vfs-lkm
 ./usr/lkm/ext2fs.o				base-vfs-lkm
 ./usr/lkm/fdesc.o				base-vfs-lkm
 ./usr/lkm/filecorefs.o				base-vfs-lkm

@@ -1,0 +1,9 @@
+#	$NetBSD: files.efs,v 1.1 2007/06/29 23:30:30 rumble Exp $
+
+deffs	EFS
+
+file	fs/efs/efs_genfs.c		efs
+file	fs/efs/efs_ihash.c		efs
+file	fs/efs/efs_subr.c		efs
+file	fs/efs/efs_vnops.c		efs
+file	fs/efs/efs_vfsops.c		efs
