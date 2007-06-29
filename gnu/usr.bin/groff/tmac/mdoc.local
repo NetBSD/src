@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.22.2.18.2.2 2007/06/28 18:40:57 ghen Exp $
+.\" $NetBSD: mdoc.local,v 1.22.2.18.2.3 2007/06/29 16:59:04 ghen Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,9 @@
 .as doc-str-St--p1003.1-2004	" (\*[Lq]\)\*[Px]\*[doc-str-St].1\*[Rq])
 .
 .\" Default .Os value
-.ds doc-operating-system NetBSD\~3.1.1
+.ds doc-operating-system NetBSD\~3.1.1_PATCH
 .\" Default footer operating system value
-.ds doc-default-operating-system NetBSD\~3.1.1
+.ds doc-default-operating-system NetBSD\~3.1.1_PATCH
 .\" Other known versions, not yet in groff distribution
 .ds doc-operating-system-NetBSD-2.0.1  2.0.1
 .ds doc-operating-system-NetBSD-2.0.2  2.0.2
