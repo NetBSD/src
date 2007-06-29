@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.23 2007/05/16 12:42:00 tsutsui Exp $
+# $NetBSD: rescue.mi,v 1.24 2007/06/29 23:30:17 rumble Exp $
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -75,6 +75,7 @@
 ./rescue/mount					base-rescue-root
 ./rescue/mount_ados				base-rescue-root
 ./rescue/mount_cd9660				base-rescue-root
+./rescue/mount_efs				base-rescue-root
 ./rescue/mount_ext2fs				base-rescue-root
 ./rescue/mount_fdesc				base-rescue-root
 ./rescue/mount_ffs				base-rescue-root

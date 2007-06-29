@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.847 2007/05/29 21:32:29 christos Exp $
+#	$NetBSD: files,v 1.848 2007/06/29 23:30:26 rumble Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1224,6 +1224,7 @@ file	kern/kern_drvctl.c		drvctl
 include "coda/files.coda"
 include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
+include "fs/efs/files.efs"
 include "fs/filecorefs/files.filecorefs"
 include "fs/hfs/files.hfs"
 include "fs/msdosfs/files.msdosfs"

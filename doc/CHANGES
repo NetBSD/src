@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.882 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.883 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -147,3 +147,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	i386: Imported gcscide(4), a driver for the AMD CS5535 Companion
 		IDE Controller for systems with an AMD Geode GX2 CPU
 		(for example the decTOP). [xtraeme 20070627]
+	efs: Added read-only Silicon Graphics EFS file system. [rumble 20070629]
