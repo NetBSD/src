@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18 2007/06/04 08:55:20 martin Exp $
+# $NetBSD: GENERIC,v 1.19 2007/06/29 16:23:29 tsutsui Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.18 $"
+#ident		"GENERIC-$Revision: 1.19 $"
 
 maxusers	16
 
@@ -86,6 +86,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
