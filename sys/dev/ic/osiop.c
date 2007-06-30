@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.28 2007/06/30 14:08:58 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.29 2007/06/30 14:32:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.28 2007/06/30 14:08:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.29 2007/06/30 14:32:50 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -403,6 +403,9 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		acb->status = ACB_S_READY;
 		acb->xs = xs;
+
+		/* Copy SCSI command to DMA buffer */
+		memcpy(acb->ds->scsipi_cmd, xs->cmd, xs->cmdlen);
 
 		/* Setup DMA map for data buffer */
 		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
@@ -927,8 +930,6 @@ osiop_start(struct osiop_softc *sc)
 
 	acb->intstat = 0;
 
-	/* copy SCSI command to DMA buffer */
-	memcpy(ds->scsipi_cmd, xs->cmd, acb->cmdlen);
 	ds->cmd.count = acb->cmdlen;
 
 	ti = &sc->sc_tinfo[target];
