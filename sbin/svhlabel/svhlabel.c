@@ -1,4 +1,4 @@
-/*	$NetBSD: svhlabel.c,v 1.3 2007/06/30 00:54:09 rumble Exp $	*/
+/*	$NetBSD: svhlabel.c,v 1.4 2007/06/30 02:05:27 rumble Exp $	*/
 
 /*
  * Copyright (C) 2007 Stephen M. Rumble.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: svhlabel.c,v 1.3 2007/06/30 00:54:09 rumble Exp $");
+__RCSID("$NetBSD: svhlabel.c,v 1.4 2007/06/30 02:05:27 rumble Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: svhlabel.c,v 1.3 2007/06/30 00:54:09 rumble Exp $");
 #include <sys/bootblock.h>
 #include <sys/ioctl.h>
 
+#include <fs/efs/efs.h>
 #include <fs/efs/efs_sb.h>
 
 #include "dkcksum.h"
@@ -186,7 +187,6 @@ getparts(int sd, int verbose)
 	label.d_secpercyl = 1;
 	label.d_ncylinders = label.d_secperunit;
 
-
 	i = getrawpartition();
 	if (label.d_partitions[i].p_fstype != FS_UNUSED ||
 	    label.d_partitions[i].p_offset != 0 ||
@@ -203,23 +203,21 @@ getparts(int sd, int verbose)
 static int
 is_efs(int sd, uint32_t blkoff)
 {
+	struct efs_sb sb;
 	off_t oldoff;
-	uint32_t magic;
 
 	if ((oldoff = lseek(sd, 0, SEEK_CUR)) == -1) {
 		perror("is_efs lseek 0");
 		exit(1);
 	}
 
-	/* EFS superblock begins at block offset 1 */
-	blkoff++;
-
-	if (lseek(sd, (blkoff*SGI_BOOT_BLOCK_BLOCKSIZE) + 28, SEEK_SET) == -1) {
+	blkoff *= SGI_BOOT_BLOCK_BLOCKSIZE;
+	if (lseek(sd, blkoff + (EFS_BB_SB * EFS_BB_SIZE), SEEK_SET) == -1) {
 		perror("is_efs lseek 1");
 		exit(1);
 	}
 
-	if (read(sd, &magic, sizeof(magic)) != 4) {
+	if (read(sd, &sb, sizeof(sb)) != sizeof(sb)) {
 		perror("is_efs read");
 		exit(1);
 	}
@@ -229,9 +227,9 @@ is_efs(int sd, uint32_t blkoff)
 		exit(1);
 	}
 
-	BE32TOH(magic);
+	BE32TOH(sb.sb_magic);
 
-	return (magic == EFS_SB_MAGIC || magic == EFS_SB_NEWMAGIC);
+	return (sb.sb_magic == EFS_SB_MAGIC || sb.sb_magic == EFS_SB_NEWMAGIC);
 }
 
 static struct sgi_boot_block *
