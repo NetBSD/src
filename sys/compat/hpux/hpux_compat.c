@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.93 2007/05/09 20:42:12 dsl Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.94 2007/06/30 13:34:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.93 2007/05/09 20:42:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.94 2007/06/30 13:34:19 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1010,14 +1010,14 @@ hpux_sys_getaccess(struct lwp *l, void *v, register_t *retval)
 	switch (SCARG(uap, ngroups)) {
 	case -1:	/* NGROUPS_EGID */
 		gid = kauth_cred_getegid(cred);
-		kauth_cred_setgroups(cred, &gid, 1, -1);
+		kauth_cred_setgroups(cred, &gid, 1, -1, UIO_SYSSPACE);
 		break;
 	case -5:	/* NGROUPS_EGID_SUPP */
 		break;
 	case -2:	/* NGROUPS_RGID */
 		kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 		gid = kauth_cred_geteuid(l->l_cred);
-		kauth_cred_setgroups(cred, &gid, 1, -1);
+		kauth_cred_setgroups(cred, &gid, 1, -1, UIO_SYSSPACE);
 		break;
 	case -6:	/* NGROUPS_RGID_SUPP */
 		kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
@@ -1040,7 +1040,7 @@ hpux_sys_getaccess(struct lwp *l, void *v, register_t *retval)
 			error = EINVAL;
 		if (error == 0)
 			kauth_cred_setgroups(cred, lgroups,
-			    SCARG(uap, ngroups), -1);
+			    SCARG(uap, ngroups), -1, UIO_SYSSPACE);
 		break;
 	}
 	/*
