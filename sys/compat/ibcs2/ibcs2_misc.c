@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.91 2007/06/23 09:11:12 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.92 2007/06/30 13:34:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.91 2007/06/23 09:11:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.92 2007/06/30 13:34:19 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -677,25 +677,24 @@ ibcs2_sys_getgroups(l, v, retval)
 	} */ *uap = v;
 	ibcs2_gid_t iset[16];
 	ibcs2_gid_t *gidset;
-	const gid_t *grbuf;
+	unsigned int ngrps;
 	int i, n, j;
 	int error;
 
-	*retval = kauth_cred_ngroups(l->l_cred);
+	ngrps = kauth_cred_ngroups(l->l_cred);
+	*retval = ngrps;
 	if (SCARG(uap, gidsetsize) == 0)
 		return 0;
-
-	grbuf = kauth_cred_getgrlist(l->l_cred, SCARG(uap, gidsetsize));
-	if (grbuf == NULL)
+	if (SCARG(uap, gidsetsize) < ngrps)
 		return EINVAL;
 
 	gidset = SCARG(uap, gidset);
-	for (i = 0; i < (n = *retval); i += n, gidset += n) {
+	for (i = 0; i < (n = ngrps); i += n, gidset += n) {
 		n -= i;
 		if (n > __arraycount(iset))
 			n = __arraycount(iset);
 		for (j = 0; j < n; j++)
-			iset[j] = *grbuf++;
+			iset[j] = kauth_cred_group(l->l_cred, i + j);
 		error = copyout(iset, gidset, n * sizeof(iset[0]));
 		if (error != 0)
 			return error;
@@ -703,6 +702,8 @@ ibcs2_sys_getgroups(l, v, retval)
 
 	return 0;
 }
+
+#define COMPAT_NGROUPS16 min(16, NGROUPS)
 
 int
 ibcs2_sys_setgroups(l, v, retval)
@@ -714,32 +715,28 @@ ibcs2_sys_setgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(ibcs2_gid_t *) gidset;
 	} */ *uap = v;
-	ibcs2_gid_t iset[16], *gidset;
+
+	ibcs2_gid_t iset[COMPAT_NGROUPS16];
 	kauth_cred_t ncred;
 	int error;
-	gid_t *grbuf;
-	int i, j, n;
+	gid_t grbuf[COMPAT_NGROUPS16];
+	unsigned int i, ngroups = SCARG(uap, gidsetsize);
+
+	if (ngroups > COMPAT_NGROUPS16)
+		return EINVAL;
+	error = copyin(SCARG(uap, gidset), iset, ngroups);
+	if (error != 0)
+		return error;
+
+	for (i = 0; i < ngroups; i++)
+		grbuf[i] = iset[i];
 
 	ncred = kauth_cred_alloc();
-
-	grbuf = kauth_cred_setngroups(ncred, SCARG(uap, gidsetsize));
-	if (grbuf == NULL) {
+	error = kauth_cred_setgroups(ncred, grbuf, SCARG(uap, gidsetsize),
+	    -1, UIO_SYSSPACE);
+	if (error != 0) {
 		kauth_cred_free(ncred);
-		return EINVAL;
-	}
-
-	gidset = SCARG(uap, gidset);
-	for (i = 0; i < SCARG(uap, gidsetsize); i += n, gidset += n) {
-		n = SCARG(uap, gidsetsize) - i;
-		if (n > __arraycount(iset))
-			n = __arraycount(iset);
-		error = copyin(gidset, iset, n * sizeof(*gidset));
-		if (error != 0) {
-			kauth_cred_free(ncred);
-			return error;
-		}
-		for (j = 0; j < n; j++)
-			*grbuf++ = iset[j];
+		return error;
 	}
 
 	return kauth_proc_setgroups(l, ncred);
