@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_extent.h,v 1.1 2007/06/29 23:30:28 rumble Exp $	*/
+/*	$NetBSD: efs_extent.h,v 1.2 2007/06/30 15:56:16 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -29,8 +29,8 @@
  * EFS on-disk extent descriptor (8 bytes)
  *
  * SGI smushed this structure's members into bit fields, but we have to
- * be a little more portable. Therefore we use the native_extent type
- * for in-core manipulation and convert immediately to and from disk.
+ * be a little more portable. Therefore we use the efs_extent (see below)
+ * type for in-core manipulation and convert immediately to and from disk.
  */
 struct efs_dextent {
 	union {
