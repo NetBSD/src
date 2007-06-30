@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_dinode.h,v 1.1 2007/06/29 23:30:27 rumble Exp $	*/
+/*	$NetBSD: efs_dinode.h,v 1.2 2007/06/30 15:56:16 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -63,6 +63,13 @@ struct efs_dinode {
 		 *
 		 * else (di_numextents > EFS_DIRECTEXTENTS), _di_extents
 		 * contains indirect extent descriptors.
+		 *
+		 * If indirect extents are being used, extents[0].ex_offset
+		 * contains the number of indirect extents, i.e. the valid
+		 * offsets in 'extents' are:
+		 *     extents[0 ... (extents[0].ex_offset - 1)]
+		 * It's not presently known if the ex_offset fields in
+		 * extents[1 ... EFS_DIRECTEXTENTS] have any meaning.
 		 */
 		struct efs_dextent extents[EFS_DIRECTEXTENTS];
 

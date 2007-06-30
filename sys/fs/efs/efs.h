@@ -1,4 +1,4 @@
-/*	$NetBSD: efs.h,v 1.1 2007/06/29 23:30:27 rumble Exp $	*/
+/*	$NetBSD: efs.h,v 1.2 2007/06/30 15:56:16 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -67,9 +67,19 @@
  * allowing for up to 1,523,712 byte files (12 * 248 * 512) to be described
  * without indirection. When indirection is employed, each of the twelve
  * descriptors may reference extents that contain up to 248 more direct
- * descriptors. Since each descriptor is 8 bytes we have in total 15,872 * 12
- * direct descriptors, allowing for 15,872 * 12 * 248 * 512 = ~22GB. Of course,
- * with a maximum filesystem size of 8GB, such a configuration would be invalid.
+ * descriptors. Since each descriptor is 8 bytes we could theoretically have
+ * in total 15,872 * 12 direct descriptors, allowing for 15,872 * 12 * 248 *
+ * 512 = ~22GB files. However, since ei_numextents is a signed 16-bit quantity,
+ * we're limited to only 32767 indirect extents, which leaves us with a ~3.87GB
+ * maximum file size. (Of course, with a maximum filesystem size of 8GB, such a
+ * restriction isn't so bad.) Note that a single full indirect extent could
+ * reference approximately 1.877GB of data, but SGI strikes again! Earlier
+ * versions of IRIX (4.0.5H certainly, and perhaps prior) limit indirect
+ * extents to 32 basic blocks worth. This caps the number of extents at 12 *
+ * 32 * 64, permitting ~2.91GB files. SGI later raised this limit to 64 blocks
+ * worth, which exceeds the range of ei_numextents and gives a maximum
+ * theoretical file size of ~3.87GB. However, EFS purportedly only permits
+ * files up to 2GB in length.
  *
  * The bitmap referred to by sb_bmsize and (optionally) sb_bmblock contains
  * data block allocation information. I haven't looked at this at all, nor
