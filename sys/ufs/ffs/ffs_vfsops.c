@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.201 2007/05/29 11:30:17 tsutsui Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.202 2007/06/30 09:37:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.201 2007/05/29 11:30:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.202 2007/06/30 09:37:53 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -132,12 +132,9 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_balloc = ffs_balloc,
 };
 
-POOL_INIT(ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0, "dino1pl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0, "dino2pl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool ffs_inode_pool;
+struct pool ffs_dinode1_pool;
+struct pool ffs_dinode2_pool;
 
 static void ffs_oldfscompat_read(struct fs *, struct ufsmount *, daddr_t);
 static void ffs_oldfscompat_write(struct fs *, struct ufsmount *);
@@ -1596,14 +1593,12 @@ ffs_init(void)
 	if (ffs_initcount++ > 0)
 		return;
 
-#ifdef _LKM
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "ffsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
 		  "dino1pl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
 		  "dino2pl", &pool_allocator_nointr, IPL_NONE);
-#endif
 	softdep_initialize();
 	ufs_init();
 }
@@ -1623,11 +1618,9 @@ ffs_done(void)
 
 	/* XXX softdep cleanup ? */
 	ufs_done();
-#ifdef _LKM
 	pool_destroy(&ffs_dinode2_pool);
 	pool_destroy(&ffs_dinode1_pool);
 	pool_destroy(&ffs_inode_pool);
-#endif
 }
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")

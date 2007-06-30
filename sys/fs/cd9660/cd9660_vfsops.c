@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40 2007/03/04 06:02:59 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.41 2007/06/30 09:37:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40 2007/03/04 06:02:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.41 2007/06/30 09:37:55 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40 2007/03/04 06:02:59 christos 
 #include <fs/cd9660/cd9660_node.h>
 #include <fs/cd9660/cd9660_mount.h>
 
-MALLOC_DEFINE(M_ISOFSMNT, "ISOFS mount", "ISOFS mount structure");
+MALLOC_JUSTDEFINE(M_ISOFSMNT, "ISOFS mount", "ISOFS mount structure");
 
 extern const struct vnodeopv_desc cd9660_vnodeop_opv_desc;
 extern const struct vnodeopv_desc cd9660_specop_opv_desc;

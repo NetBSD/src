@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.46 2007/06/23 14:56:10 hannken Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.47 2007/06/30 09:37:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.46 2007/06/23 14:56:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.47 2007/06/30 09:37:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -647,7 +647,7 @@ static u_long dqhash;
 static TAILQ_HEAD(dqfreelist, dquot) dqfreelist;
 static long numdquot, desireddquot = DQUOTINC;
 
-MALLOC_DEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
+MALLOC_JUSTDEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
 
 /*
  * Initialize the quota system.
@@ -655,6 +655,8 @@ MALLOC_DEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
 void
 dqinit(void)
 {
+
+	malloc_type_attach(M_DQUOT);
 	dqhashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &dqhash);
 	TAILQ_INIT(&dqfreelist);
@@ -691,7 +693,9 @@ dqreinit(void)
 void
 dqdone(void)
 {
+
 	hashdone(dqhashtbl, M_DQUOT);
+	malloc_type_detach(M_DQUOT);
 }
 
 /*

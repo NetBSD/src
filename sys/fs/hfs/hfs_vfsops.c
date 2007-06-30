@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.4 2007/03/22 13:21:28 dillo Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.5 2007/06/30 09:37:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.4 2007/03/22 13:21:28 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.5 2007/06/30 09:37:55 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.4 2007/03/22 13:21:28 dillo Exp $")
 #include <fs/hfs/hfs.h>
 #include <fs/hfs/libhfs.h>
 
-MALLOC_DEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
+MALLOC_JUSTDEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
 extern struct lock hfs_hashlock;
 
@@ -674,9 +674,7 @@ hfs_init(void)
 	printf("vfsop = hfs_init()\n");
 #endif /* HFS_DEBUG */
 
-#ifdef _LKM
 	malloc_type_attach(M_HFSMNT);
-#endif
 
 	callbacks.error = hfs_libcb_error;
 	callbacks.allocmem = hfs_libcb_malloc;
@@ -709,9 +707,7 @@ hfs_done(void)
 	printf("vfsop = hfs_done()\n");
 #endif /* HFS_DEBUG */
 
-#ifdef _LKM
 	malloc_type_detach(M_HFSMNT);
-#endif
 
 	hfslib_done();
 	hfs_nhashdone();

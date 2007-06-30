@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.235 2007/05/16 19:11:38 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.236 2007/06/30 09:37:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.235 2007/05/16 19:11:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.236 2007/06/30 09:37:54 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -182,14 +182,10 @@ static const struct ufs_ops lfs_ufsops = {
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?
  */
-POOL_INIT(lfs_inode_pool, sizeof(struct inode), 0, 0, 0, "lfsinopl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(lfs_dinode_pool, sizeof(struct ufs1_dinode), 0, 0, 0, "lfsdinopl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(lfs_inoext_pool, sizeof(struct lfs_inode_ext), 8, 0, 0, "lfsinoextpl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(lfs_lbnentry_pool, sizeof(struct lbnentry), 0, 0, 0, "lfslbnpool",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool lfs_inode_pool;
+struct pool lfs_dinode_pool;
+struct pool lfs_inoext_pool;
+struct pool lfs_lbnentry_pool;
 
 /*
  * The writer daemon.  UVM keeps track of how many dirty pages we are holding
@@ -290,7 +286,7 @@ lfs_writerd(void *arg)
 void
 lfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_SEGMENT);
 	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "lfsinopl", &pool_allocator_nointr, IPL_NONE);
@@ -300,7 +296,6 @@ lfs_init()
 	    "lfsinoextpl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&lfs_lbnentry_pool, sizeof(struct lbnentry), 0, 0, 0,
 	    "lfslbnpool", &pool_allocator_nointr, IPL_NONE);
-#endif
 	ufs_init();
 
 #ifdef DEBUG
@@ -318,14 +313,13 @@ lfs_reinit()
 void
 lfs_done()
 {
+
 	ufs_done();
-#ifdef _LKM
 	pool_destroy(&lfs_inode_pool);
 	pool_destroy(&lfs_dinode_pool);
 	pool_destroy(&lfs_inoext_pool);
 	pool_destroy(&lfs_lbnentry_pool);
 	malloc_type_detach(M_SEGMENT);
-#endif
 }
 
 /*

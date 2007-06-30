@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.14 2007/03/12 18:18:38 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.15 2007/06/30 09:37:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -57,7 +57,7 @@
 #define OFSFMT(ip)		((ip)->i_ump->um_maxsymlinklen <= 0)
 #define BLKFREE2IDX(n)		((n) > DH_NFSTATS ? DH_NFSTATS : (n))
 
-static MALLOC_DEFINE(M_DIRHASH, "UFS dirhash", "UFS directory hash tables");
+static MALLOC_JUSTDEFINE(M_DIRHASH, "UFS dirhash", "UFS directory hash tables");
 
 static int ufs_dirhashminblks = 5;
 static int ufs_dirhashmaxmem = 2 * 1024 * 1024;
@@ -74,8 +74,7 @@ static doff_t ufsdirhash_getprev(struct direct *dp, doff_t offset,
 	   int dirblksiz);
 static int ufsdirhash_recycle(int wanted);
 
-static POOL_INIT(ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
-    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
+static struct pool ufsdirhash_pool;
 
 #define DIRHASHLIST_LOCK()		do { } while (0)
 #define DIRHASHLIST_UNLOCK()		do { } while (0)
@@ -1051,20 +1050,20 @@ ufsdirhash_recycle(int wanted)
 void
 ufsdirhash_init()
 {
-#ifdef _LKM
+
+	malloc_type_attach(M_DIRHASH);
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
 	    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
-#endif
 	TAILQ_INIT(&ufsdirhash_list);
 }
 
 void
 ufsdirhash_done(void)
 {
+
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
-#ifdef _LKM
 	pool_destroy(&ufsdirhash_pool);
-#endif
+	malloc_type_detach(M_DIRHASH);
 }
 
 SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")
