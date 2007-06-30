@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.22 2007/03/04 06:01:23 christos Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.23 2007/06/30 22:18:17 dsl Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.22 2007/03/04 06:01:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.23 2007/06/30 22:18:17 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ linux_ioctl_cdrom(l, uap, retval)
 {
 	int error, idata;
 	u_long com, ncom;
-	void *sg;
 	struct file *fp;
 	struct filedesc *fdp;
 	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
@@ -136,10 +135,8 @@ linux_ioctl_cdrom(l, uap, retval)
 		struct ioc_play_msf tt_msf;
 		struct ioc_play_track tt_track;
 		struct ioc_toc_header tt_header;
-		struct cd_toc_entry tt_entry;
-		struct ioc_read_toc_entry tt_toc_entry;
-		struct cd_sub_channel_info tt_info;
-		struct ioc_read_subchannel tt_subchannel;
+		struct ioc_read_toc_entry_buf tt_toc_entry;
+		struct ioc_read_subchannel_buf tt_subchannel;
 		struct ioc_vol tt_vol;
 	} *u2;
 
@@ -147,14 +144,11 @@ linux_ioctl_cdrom(l, uap, retval)
 #define	t_msf u2->tt_msf
 #define	t_track u2->tt_track
 #define	t_header u2->tt_header
-#define	t_entry u2->tt_entry
 #define	t_toc_entry u2->tt_toc_entry
-#define	t_info u2->tt_info
 #define	t_subchannel u2->tt_subchannel
 #define	t_vol u2->tt_vol
 
 	struct cd_toc_entry *entry;
-	struct cd_sub_channel_info *info;
 	struct proc *p = l->l_proc;
 
 	fdp = p->p_fd;
@@ -216,26 +210,19 @@ linux_ioctl_cdrom(l, uap, retval)
 		if (error)
 			break;
 
-		sg = stackgap_init(p, 0);
-		entry = stackgap_alloc(p, &sg, sizeof *entry);
-		t_toc_entry.address_format = l_tocentry.cdte_format;
-		t_toc_entry.starting_track = l_tocentry.cdte_track;
-		t_toc_entry.data_len = sizeof *entry;
-		t_toc_entry.data = entry;
+		t_toc_entry.req.address_format = l_tocentry.cdte_format;
+		t_toc_entry.req.starting_track = l_tocentry.cdte_track;
+		t_toc_entry.req.data_len = sizeof *entry;
+		t_toc_entry.req.data = NULL;
 
-		error = ioctlf(fp, CDIOREADTOCENTRIES, (void *)&t_toc_entry,
-			       l);
+		error = ioctlf(fp, CDIOREADTOCENTRIES_BUF, &t_toc_entry, l);
 		if (error)
 			break;
 
-		error = copyin(entry, &t_entry, sizeof t_entry);
-		if (error)
-			break;
-
-		l_tocentry.cdte_adr = t_entry.addr_type;
-		l_tocentry.cdte_ctrl = t_entry.control;
-		if (bsd_to_linux_msf_lba(t_entry.addr_type, &t_entry.addr,
-		    &l_tocentry.cdte_addr) < 0) {
+		l_tocentry.cdte_adr = t_toc_entry.entry[0].addr_type;
+		l_tocentry.cdte_ctrl = t_toc_entry.entry[0].control;
+		if (bsd_to_linux_msf_lba(t_toc_entry.entry[0].addr_type,
+		    &t_toc_entry.entry[0].addr, &l_tocentry.cdte_addr) < 0) {
 			DPRINTF(("linux_ioctl: unknown format msf/lba\n"));
 			error = EINVAL;
 			break;
@@ -276,47 +263,40 @@ linux_ioctl_cdrom(l, uap, retval)
 		if (error)
 			break;
 
-		sg = stackgap_init(p, 0);
-		info = stackgap_alloc(p, &sg, sizeof *info);
-		t_subchannel.address_format = CD_MSF_FORMAT;
-		t_subchannel.track = 0;
-		t_subchannel.data_format = l_subchnl.cdsc_format;
-		t_subchannel.data_len = sizeof *info;
-		t_subchannel.data = info;
+		t_subchannel.req.address_format = CD_MSF_FORMAT;
+		t_subchannel.req.track = 0;
+		t_subchannel.req.data_format = l_subchnl.cdsc_format;
+		t_subchannel.req.data_len = sizeof t_subchannel.info;
+		t_subchannel.req.data = NULL;
 		DPRINTF(("linux_ioctl: CDROMSUBCHNL %d %d\n",
 			 l_subchnl.cdsc_format, l_subchnl.cdsc_trk));
 
-		error = ioctlf(fp, CDIOCREADSUBCHANNEL, (void *)&t_subchannel,
-			       l);
+		error = ioctlf(fp, CDIOCREADSUBCHANNEL_BUF, &t_subchannel, l);
 		if (error)
 			break;
 
-		error = copyin(info, &t_info, sizeof t_info);
-		if (error)
-			break;
-
-		l_subchnl.cdsc_audiostatus = t_info.header.audio_status;
-		l_subchnl.cdsc_adr = t_info.what.position.addr_type;
-		l_subchnl.cdsc_ctrl = t_info.what.position.control;
-		l_subchnl.cdsc_ind = t_info.what.position.index_number;
+		l_subchnl.cdsc_audiostatus = t_subchannel.info.header.audio_status;
+		l_subchnl.cdsc_adr = t_subchannel.info.what.position.addr_type;
+		l_subchnl.cdsc_ctrl = t_subchannel.info.what.position.control;
+		l_subchnl.cdsc_ind = t_subchannel.info.what.position.index_number;
 
 		DPRINTF(("linux_ioctl: CDIOCREADSUBCHANNEL %d %d %d\n",
-			t_info.header.audio_status,
-			t_info.header.data_len[0],
-			t_info.header.data_len[1]));
+			t_subchannel.info.header.audio_status,
+			t_subchannel.info.header.data_len[0],
+			t_subchannel.info.header.data_len[1]));
 		DPRINTF(("(more) %d %d %d %d %d\n",
-			t_info.what.position.data_format,
-			t_info.what.position.control,
-			t_info.what.position.addr_type,
-			t_info.what.position.track_number,
-			t_info.what.position.index_number));
+			t_subchannel.info.what.position.data_format,
+			t_subchannel.info.what.position.control,
+			t_subchannel.info.what.position.addr_type,
+			t_subchannel.info.what.position.track_number,
+			t_subchannel.info.what.position.index_number));
 
-		if (bsd_to_linux_msf_lba(t_subchannel.address_format,
-					 &t_info.what.position.absaddr,
-					 &l_subchnl.cdsc_absaddr) < 0 ||
-		    bsd_to_linux_msf_lba(t_subchannel.address_format,
-					 &t_info.what.position.reladdr,
-					 &l_subchnl.cdsc_reladdr) < 0) {
+		if (bsd_to_linux_msf_lba(t_subchannel.req.address_format,
+				     &t_subchannel.info.what.position.absaddr,
+				     &l_subchnl.cdsc_absaddr) < 0 ||
+		    bsd_to_linux_msf_lba(t_subchannel.req.address_format,
+				     &t_subchannel.info.what.position.reladdr,
+				     &l_subchnl.cdsc_reladdr) < 0) {
 			DPRINTF(("linux_ioctl: unknown format msf/lba\n"));
 			error = EINVAL;
 			break;
@@ -381,24 +361,17 @@ linux_ioctl_cdrom(l, uap, retval)
 		if (error)
 			break;
 
-		sg = stackgap_init(p, 0);
-		entry = stackgap_alloc(p, &sg, sizeof *entry);
-		t_toc_entry.address_format = l_session.addr_format;
-		t_toc_entry.starting_track = 0;
-		t_toc_entry.data_len = sizeof *entry;
-		t_toc_entry.data = entry;
+		t_toc_entry.req.address_format = l_session.addr_format;
+		t_toc_entry.req.starting_track = 0;
+		t_toc_entry.req.data_len = sizeof t_toc_entry.entry;
+		t_toc_entry.req.data = NULL;
 
-		error = ioctlf(fp, CDIOREADTOCENTRIES,
-		    (void *)&t_toc_entry, l);
-		if (error)
-			break;
-
-		error = copyin(entry, &t_entry, sizeof t_entry);
+		error = ioctlf(fp, CDIOREADTOCENTRIES_BUF, &t_toc_entry, l);
 		if (error)
 			break;
 
 		if (bsd_to_linux_msf_lba(l_session.addr_format,
-		    &t_entry.addr, &l_session.addr) < 0) {
+		    &t_toc_entry.entry[0].addr, &l_session.addr) < 0) {
 			error = EINVAL;
 			break;
 		}
