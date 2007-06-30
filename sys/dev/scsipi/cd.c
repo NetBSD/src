@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.262 2007/03/04 06:02:42 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.263 2007/06/30 16:00:55 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.262 2007/03/04 06:02:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.263 2007/06/30 16:00:55 dsl Exp $");
 
 #include "rnd.h"
 
@@ -1290,7 +1290,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			lp = newlabel;
 		} else
 #endif
-		lp = (struct disklabel *)addr;
+		lp = addr;
 
 		if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 			goto bad;
@@ -1317,7 +1317,7 @@ bad:
 		return (EBADF);
 
 	case DIOCGDEFLABEL:
-		cdgetdefaultlabel(cd, (struct disklabel *)addr);
+		cdgetdefaultlabel(cd, addr);
 		return (0);
 
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1336,7 +1336,7 @@ bad:
 
 	case CDIOCPLAYTRACKS: {
 		/* PLAY_MSF command */
-		struct ioc_play_track *args = (struct ioc_play_track *)addr;
+		struct ioc_play_track *args = addr;
 
 		if ((error = cd_set_pa_immed(cd, 0)) != 0)
 			return (error);
@@ -1345,7 +1345,7 @@ bad:
 	}
 	case CDIOCPLAYMSF: {
 		/* PLAY_MSF command */
-		struct ioc_play_msf *args = (struct ioc_play_msf *)addr;
+		struct ioc_play_msf *args = addr;
 
 		if ((error = cd_set_pa_immed(cd, 0)) != 0)
 			return (error);
@@ -1354,7 +1354,7 @@ bad:
 	}
 	case CDIOCPLAYBLOCKS: {
 		/* PLAY command */
-		struct ioc_play_blocks *args = (struct ioc_play_blocks *)addr;
+		struct ioc_play_blocks *args = addr;
 
 		if ((error = cd_set_pa_immed(cd, 0)) != 0)
 			return (error);
@@ -1362,8 +1362,7 @@ bad:
 	}
 	case CDIOCREADSUBCHANNEL: {
 		/* READ_SUBCHANNEL command */
-		struct ioc_read_subchannel *args =
-		    (struct ioc_read_subchannel *)addr;
+		struct ioc_read_subchannel *args = addr;
 		struct cd_sub_channel_info data;
 		u_int len = args->data_len;
 
@@ -1396,8 +1395,7 @@ bad:
 	case CDIOREADTOCENTRYS: {
 		/* READ TOC format 0 command, entries */
 		struct cd_formatted_toc toc;
-		struct ioc_read_toc_entry *te =
-		    (struct ioc_read_toc_entry *)addr;
+		struct ioc_read_toc_entry *te = addr;
 		struct ioc_toc_header *th;
 		struct cd_toc_entry *cte;
 		u_int len = te->data_len;
@@ -1440,23 +1438,23 @@ bad:
 		if (sessno != 0)
 			return (EINVAL);
 
-		return (cdreadmsaddr(cd, (int*)addr));
+		return (cdreadmsaddr(cd, addr));
 	}
 	case CDIOCSETPATCH: {
-		struct ioc_patch *arg = (struct ioc_patch *)addr;
+		struct ioc_patch *arg = addr;
 
 		return (cd_setchan(cd, arg->patch[0], arg->patch[1],
 		    arg->patch[2], arg->patch[3], 0));
 	}
 	case CDIOCGETVOL: {
 		/* MODE SENSE command (AUDIO page) */
-		struct ioc_vol *arg = (struct ioc_vol *)addr;
+		struct ioc_vol *arg = addr;
 
 		return (cd_getvol(cd, arg, 0));
 	}
 	case CDIOCSETVOL: {
 		/* MODE SENSE/MODE SELECT commands (AUDIO page) */
-		struct ioc_vol *arg = (struct ioc_vol *)addr;
+		struct ioc_vol *arg = addr;
 
 		return (cd_setvol(cd, arg, 0));
 	}
@@ -1540,13 +1538,13 @@ bad:
 		return (cd_reset(cd));
 	case CDIOCLOADUNLOAD:
 		/* LOAD_UNLOAD command */
-		return (cd_load_unload(cd, (struct ioc_load_unload *)addr));
+		return (cd_load_unload(cd, addr));
 	case DVD_AUTH:
 		/* GPCMD_REPORT_KEY or GPCMD_SEND_KEY command */
-		return (dvd_auth(cd, (dvd_authinfo *)addr));
+		return (dvd_auth(cd, addr));
 	case DVD_READ_STRUCT:
 		/* GPCMD_READ_DVD_STRUCTURE command */
-		return (dvd_read_struct(cd, (dvd_struct *)addr));
+		return (dvd_read_struct(cd, addr));
 	case MMCGETDISCINFO:
 		/*
 		 * GET_CONFIGURATION, READ_DISCINFO, READ_TRACKINFO,
@@ -1558,7 +1556,7 @@ bad:
 		return mmc_gettrackinfo(periph, (struct mmc_trackinfo *) addr);
 	case DIOCGSTRATEGY:
 	    {
-		struct disk_strategy *dks = (void *)addr;
+		struct disk_strategy *dks = addr;
 
 		s = splbio();
 		strlcpy(dks->dks_name, bufq_getstrategyname(cd->buf_queue),
@@ -1570,7 +1568,7 @@ bad:
 	    }
 	case DIOCSSTRATEGY:
 	    {
-		struct disk_strategy *dks = (void *)addr;
+		struct disk_strategy *dks = addr;
 		struct bufq_state *new;
 		struct bufq_state *old;
 
