@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.27 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: osiop.c,v 1.28 2007/06/30 14:08:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.27 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.28 2007/06/30 14:08:58 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -277,13 +277,6 @@ osiop_attach(struct osiop_softc *sc)
 	for (i = 0; i < OSIOP_NACB; i++) {
 		bus_addr_t dsa;
 
-		/* XXX How much size is required for each command block? */
-		err = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
-		    0, BUS_DMA_NOWAIT, &acb->cmddma);
-		if (err) {
-			printf(": failed to create cmddma map, err=%d\n", err);
-			return;
-		}
 		err = bus_dmamap_create(sc->sc_dmat, OSIOP_MAX_XFER, OSIOP_NSG,
 		    OSIOP_MAX_XFER, 0, BUS_DMA_NOWAIT, &acb->datadma);
 		if (err) {
@@ -298,6 +291,7 @@ osiop_attach(struct osiop_softc *sc)
 
 		dsa = sc->sc_dsdma->dm_segs[0].ds_addr + acb->dsoffset;
 		acb->ds->id.addr = dsa + OSIOP_DSIDOFF;
+		acb->ds->cmd.addr = dsa + OSIOP_DSCMDOFF;
 		acb->ds->status.count = 1;
 		acb->ds->status.addr = dsa + OSIOP_DSSTATOFF;
 		acb->ds->msg.count = 1;
@@ -410,19 +404,6 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		acb->status = ACB_S_READY;
 		acb->xs = xs;
 
-		/* Setup DMA map for SCSI command buffer */
-		err = bus_dmamap_load(sc->sc_dmat, acb->cmddma,
-		    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
-		if (err) {
-			printf("%s: unable to load cmd DMA map: %d\n",
-			    sc->sc_dev.dv_xname, err);
-			xs->error = XS_DRIVER_STUFFUP;
-			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
-			scsipi_done(xs);
-			splx(s);
-			return;
-		}
-
 		/* Setup DMA map for data buffer */
 		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 			err = bus_dmamap_load(sc->sc_dmat, acb->datadma,
@@ -435,7 +416,6 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    sc->sc_dev.dv_xname, err);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
-				bus_dmamap_unload(sc->sc_dmat, acb->cmddma);
 				TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 				splx(s);
 				return;
@@ -444,8 +424,6 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			    0, xs->datalen, (xs->xs_control & XS_CTL_DATA_IN) ?
 			    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		}
-		bus_dmamap_sync(sc->sc_dmat, acb->cmddma, 0, xs->cmdlen,
-		    BUS_DMASYNC_PREWRITE);
 
 		acb->cmdlen = xs->cmdlen;
 		acb->datalen = xs->datalen;
@@ -669,10 +647,6 @@ osiop_scsidone(struct osiop_acb *acb, int status)
 		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, acb->datadma);
 	}
-
-	bus_dmamap_sync(sc->sc_dmat, acb->cmddma, 0, acb->cmdlen,
-	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, acb->cmddma);
 
 	/*
 	 * Remove the ACB from whatever queue it's on.  We have to do a bit of
@@ -953,8 +927,9 @@ osiop_start(struct osiop_softc *sc)
 
 	acb->intstat = 0;
 
+	/* copy SCSI command to DMA buffer */
+	memcpy(ds->scsipi_cmd, xs->cmd, acb->cmdlen);
 	ds->cmd.count = acb->cmdlen;
-	ds->cmd.addr = acb->cmddma->dm_segs[0].ds_addr;
 
 	ti = &sc->sc_tinfo[target];
 	ds->scsi_addr = ((1 << 16) << target) | (ti->sxfer << 8);
