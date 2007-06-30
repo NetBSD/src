@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.78 2007/03/04 06:03:46 christos Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.79 2007/06/30 09:37:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.78 2007/03/04 06:03:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.79 2007/06/30 09:37:54 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ static	int mfs_minor;	/* used for building internal dev_t */
 
 extern int (**mfs_vnodeop_p)(void *);
 
-MALLOC_DEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
+MALLOC_JUSTDEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
 
 /*
  * mfs vfs operations.
@@ -137,9 +137,8 @@ SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
 void
 mfs_init(void)
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_MFSNODE);
-#endif
 	/*
 	 * ffs_init() ensures to initialize necessary resources
 	 * only once.
@@ -161,9 +160,7 @@ mfs_done(void)
 	 * only once, when it's no more needed.
 	 */
 	ffs_done();
-#ifdef _LKM
 	malloc_type_detach(M_MFSNODE);
-#endif
 }
 
 /*

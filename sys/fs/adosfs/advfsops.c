@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.35 2007/03/13 01:34:21 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.36 2007/06/30 09:37:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.35 2007/03/13 01:34:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.36 2007/06/30 09:37:55 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -78,12 +78,11 @@ int adosfs_loadbitmap __P((struct adosfsmount *));
 
 struct simplelock adosfs_hashlock;
 
-POOL_INIT(adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool adosfs_node_pool;
 
-MALLOC_DEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
-MALLOC_DEFINE(M_ANODE, "adosfs anode", "adosfs anode structures and tables");
-MALLOC_DEFINE(M_ADOSFSBITMAP, "adosfs bitmap", "adosfs bitmap");
+MALLOC_JUSTDEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
+MALLOC_JUSTDEFINE(M_ANODE, "adosfs anode","adosfs anode structures and tables");
+MALLOC_JUSTDEFINE(M_ADOSFSBITMAP, "adosfs bitmap", "adosfs bitmap");
 
 static const struct genfs_ops adosfs_genfsops = {
 	.gop_size = genfs_size,
@@ -792,25 +791,23 @@ adosfs_sync(mp, waitfor, uc, l)
 void
 adosfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_ADOSFSMNT);
 	malloc_type_attach(M_ANODE);
 	malloc_type_attach(M_ADOSFSBITMAP);
 	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
 	    &pool_allocator_nointr, IPL_NONE);
-#endif
 	simple_lock_init(&adosfs_hashlock);
 }
 
 void
 adosfs_done()
 {
-#ifdef _LKM
+
 	pool_destroy(&adosfs_node_pool);
 	malloc_type_detach(M_ADOSFSBITMAP);
 	malloc_type_detach(M_ANODE);
 	malloc_type_detach(M_ADOSFSMNT);
-#endif
 }
 
 SYSCTL_SETUP(sysctl_vfs_adosfs_setup, "sysctl vfs.adosfs subtree setup")
