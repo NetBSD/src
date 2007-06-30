@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.64 2007/04/03 14:18:19 pooka Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.65 2007/06/30 09:37:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.64 2007/04/03 14:18:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.65 2007/06/30 09:37:57 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -94,7 +94,7 @@ SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
 }
 #endif
 
-static MALLOC_DEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
+static MALLOC_JUSTDEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
 
 int smbfs_mount(struct mount *, const char *, void *,
 		struct nameidata *, struct lwp *);
@@ -111,8 +111,7 @@ void smbfs_done(void);
 
 int smbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp);
 
-POOL_INIT(smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0, "smbfsnopl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool smbfs_node_pool;
 extern struct vnodeopv_desc smbfs_vnodeop_opv_desc;
 
 static const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {
@@ -369,14 +368,12 @@ smbfs_quotactl(struct mount *mp, int cmd, uid_t uid,
 void
 smbfs_init(void)
 {
-#ifdef _LKM
-	/* Need explicit attach if LKM */
+
 	malloc_type_attach(M_SMBNODENAME);
 	malloc_type_attach(M_SMBFSDATA);
 	malloc_type_attach(M_SMBFSHASH);
 	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
 	    "smbfsnopl", &pool_allocator_nointr, IPL_NONE);
-#endif
 
 	SMBVDEBUG("init.\n");
 }
@@ -394,13 +391,10 @@ smbfs_done(void)
 
 	pool_destroy(&smbfs_node_pool);
 
-#ifdef _LKM
-	/* Need explicit detach if LKM */
 	pool_destroy(&smbfs_node_pool);
 	malloc_type_detach(M_SMBNODENAME);
 	malloc_type_detach(M_SMBFSDATA);
 	malloc_type_detach(M_SMBFSHASH);
-#endif
 
 	SMBVDEBUG("done.\n");
 }

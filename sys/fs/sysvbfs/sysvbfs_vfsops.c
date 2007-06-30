@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.10 2007/06/28 12:33:18 tsutsui Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.11 2007/06/30 09:37:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.10 2007/06/28 12:33:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.11 2007/06/30 09:37:57 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,10 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.10 2007/06/28 12:33:18 tsutsui 
 #define	DPRINTF(arg...)		((void)0)
 #endif
 
-MALLOC_DEFINE(M_SYSVBFS_VFS, "sysvbfs vfs", "sysvbfs vfs structures");
+MALLOC_JUSTDEFINE(M_SYSVBFS_VFS, "sysvbfs vfs", "sysvbfs vfs structures");
 
-POOL_INIT(sysvbfs_node_pool, sizeof(struct sysvbfs_node), 0, 0, 0,
-    "sysvbfs_node_pool", &pool_allocator_nointr, IPL_NONE);
+struct pool sysvbfs_node_pool;
 
 int sysvbfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 
@@ -412,12 +411,19 @@ sysvbfs_vptofh(struct vnode *vpp, struct fid *fid, size_t *fh_size)
 	return EOPNOTSUPP;
 }
 
+MALLOC_DECLARE(M_BFS);
+MALLOC_DECLARE(M_SYSVBFS_VNODE);
+
 void
 sysvbfs_init(void)
 {
 
-	/* Nothing to do. */
 	DPRINTF("%s:\n", __FUNCTION__);
+	malloc_type_attach(M_SYSVBFS_VFS);
+	malloc_type_attach(M_BFS);
+	malloc_type_attach(M_SYSVBFS_VNODE);
+	pool_init(&sysvbfs_node_pool, sizeof(struct sysvbfs_node), 0, 0, 0,
+	    "sysvbfs_node_pool", &pool_allocator_nointr, IPL_NONE);
 }
 
 void
@@ -434,6 +440,9 @@ sysvbfs_done(void)
 
 	DPRINTF("%s:\n", __FUNCTION__);
 	pool_destroy(&sysvbfs_node_pool);
+	malloc_type_detach(M_BFS);
+	malloc_type_detach(M_SYSVBFS_VFS);
+	malloc_type_detach(M_SYSVBFS_VNODE);
 }
 
 int
