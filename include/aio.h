@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.2 2007/05/03 21:22:33 rmind Exp $	*/
+/*	$NetBSD: aio.h,v 1.3 2007/06/30 16:36:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -46,7 +46,7 @@ ssize_t	aio_return(struct aiocb *);
 int	aio_suspend(const struct aiocb * const [], int,
 		    const struct timespec *);
 int	aio_write(struct aiocb *);
-int	lio_listio(int, struct aiocb * const __restrict [],
+int	lio_listio(int, struct aiocb * const * __restrict,
 		    int, struct sigevent * __restrict);
 __END_DECLS
 
