@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.38 2007/06/23 09:02:12 dsl Exp $ */
+/* $NetBSD: kauth.h,v 1.39 2007/06/30 13:32:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -276,7 +276,6 @@ int kauth_authorize_device_passthru(kauth_cred_t, dev_t, u_long, void *);
 kauth_cred_t kauth_cred_alloc(void);
 void kauth_cred_free(kauth_cred_t);
 void kauth_cred_clone(kauth_cred_t, kauth_cred_t);
-void kauth_cred_clone1(kauth_cred_t, kauth_cred_t, bool);
 kauth_cred_t kauth_cred_dup(kauth_cred_t);
 kauth_cred_t kauth_cred_copy(kauth_cred_t);
 
@@ -300,12 +299,11 @@ void kauth_cred_setsvgid(kauth_cred_t, gid_t);
 void kauth_cred_hold(kauth_cred_t);
 u_int kauth_cred_getrefcnt(kauth_cred_t);
 
-int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
-int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);
-const gid_t *kauth_cred_getgrlist(kauth_cred_t, int);
+int kauth_cred_setgroups(kauth_cred_t, const gid_t *, size_t, uid_t,
+    unsigned int);
+int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t, unsigned int);
 
-/* These 2 are for sys_setgroups() */
-gid_t *kauth_cred_setngroups(kauth_cred_t, int);
+/* This is for sys_setgroups() */
 int kauth_proc_setgroups(struct lwp *, kauth_cred_t);
 
 int kauth_register_key(const char *, kauth_key_t *);
