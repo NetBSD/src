@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LARGE,v 1.6 2007/06/03 03:39:53 dogcow Exp $
+#	$NetBSD: INSTALL_LARGE,v 1.7 2007/06/30 12:30:34 jmcneill Exp $
 #
 #	INSTALL_LARGE -- INSTALL suitable for modern machines
 #
@@ -14,6 +14,7 @@ options		ACPI_SCANPCI
 
 ioapic* 	at mainbus?
 bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
