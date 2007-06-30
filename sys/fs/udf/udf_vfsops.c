@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.24 2007/04/29 20:23:36 msaitoh Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.25 2007/06/30 09:37:57 pooka Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.24 2007/04/29 20:23:36 msaitoh Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.25 2007/06/30 09:37:57 pooka Exp $");
 #endif /* not lint */
 
 
@@ -77,9 +77,9 @@ __RCSID("$NetBSD: udf_vfsops.c,v 1.24 2007/04/29 20:23:36 msaitoh Exp $");
 int udf_verbose = UDF_DEBUGGING;
 
 /* malloc regions */
-MALLOC_DEFINE(M_UDFMNT,   "UDF mount",		"UDF mount structures");
-MALLOC_DEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
-MALLOC_DEFINE(M_UDFTEMP,  "UDF temp",		"UDF scrap space");
+MALLOC_JUSTDEFINE(M_UDFMNT,   "UDF mount",	"UDF mount structures");
+MALLOC_JUSTDEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
+MALLOC_JUSTDEFINE(M_UDFTEMP,  "UDF temp",	"UDF scrap space");
 struct pool udf_node_pool;
 
 /* supported functions predefined */
@@ -159,11 +159,9 @@ udf_init(void)
 {
 	size_t size;
 
-#ifdef _LKM
 	malloc_type_attach(M_UDFMNT);
 	malloc_type_attach(M_UDFVOLD);
 	malloc_type_attach(M_UDFTEMP);
-#endif
 
 	/* init hashtables and pools */
 	size = sizeof(struct udf_node);
@@ -188,11 +186,9 @@ udf_done(void)
 	/* remove hashtables and pools */
 	pool_destroy(&udf_node_pool);
 
-#ifdef _LKM
 	malloc_type_detach(M_UDFMNT);
 	malloc_type_detach(M_UDFVOLD);
 	malloc_type_detach(M_UDFTEMP);
-#endif
 }
 
 /* --------------------------------------------------------------------- */
