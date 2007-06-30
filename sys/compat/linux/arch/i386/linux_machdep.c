@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.128 2007/06/23 15:26:16 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.129 2007/06/30 22:54:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.128 2007/06/23 15:26:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.129 2007/06/30 22:54:33 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -880,7 +880,6 @@ linux_machdepioctl(l, v, retval)
 	int error, error1;
 #if (NWSDISPLAY > 0)
 	struct vt_mode lvt;
-	void *bvtp, *sg;
 	struct kbentry kbe;
 #endif
 	struct linux_hd_geometry hdg;
@@ -950,33 +949,23 @@ linux_machdepioctl(l, v, retval)
 		com = VT_OPENQRY;
 		break;
 	case LINUX_VT_GETMODE:
-		SCARG(&bia, com) = VT_GETMODE;
-		/* XXX NJWLWP */
-		if ((error = sys_ioctl(curlwp, &bia, retval)))
-			goto out;
-		if ((error = copyin(SCARG(uap, data), (void *)&lvt,
-		    sizeof (struct vt_mode))))
+		error = fp->f_ops->fo_ioctl(fp, VT_GETMODE, &lvt, l);
+		if (error != 0)
 			goto out;
 		lvt.relsig = native_to_linux_signo[lvt.relsig];
 		lvt.acqsig = native_to_linux_signo[lvt.acqsig];
 		lvt.frsig = native_to_linux_signo[lvt.frsig];
-		error = copyout((void *)&lvt, SCARG(uap, data),
-		    sizeof (struct vt_mode));
+		error = copyout(&lvt, SCARG(uap, data), sizeof (lvt));
 		goto out;
 	case LINUX_VT_SETMODE:
-		com = VT_SETMODE;
-		if ((error = copyin(SCARG(uap, data), (void *)&lvt,
-		    sizeof (struct vt_mode))))
+		error = copyin(SCARG(uap, data), &lvt, sizeof (lvt));
+		if (error != 0)
 			goto out;
 		lvt.relsig = linux_to_native_signo[lvt.relsig];
 		lvt.acqsig = linux_to_native_signo[lvt.acqsig];
 		lvt.frsig = linux_to_native_signo[lvt.frsig];
-		sg = stackgap_init(p, 0);
-		bvtp = stackgap_alloc(p, &sg, sizeof (struct vt_mode));
-		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))
-			goto out;
-		SCARG(&bia, data) = bvtp;
-		break;
+		error = fp->f_ops->fo_ioctl(fp, VT_SETMODE, &lvt, l);
+		goto out;
 	case LINUX_VT_DISALLOCATE:
 		/* XXX should use WSDISPLAYIO_DELSCREEN */
 		error = 0;
