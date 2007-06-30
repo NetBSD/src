@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.48 2007/06/23 09:02:12 dsl Exp $ */
+/* $NetBSD: kern_auth.c,v 1.49 2007/06/30 13:32:14 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.48 2007/06/23 09:02:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.49 2007/06/30 13:32:14 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -164,13 +164,7 @@ kauth_cred_free(kauth_cred_t cred)
 	}
 }
 
-void
-kauth_cred_clone(kauth_cred_t from, kauth_cred_t to)
-{
-	kauth_cred_clone1(from, to, true);
-}
-
-void
+static void
 kauth_cred_clone1(kauth_cred_t from, kauth_cred_t to, bool copy_groups)
 {
 	KASSERT(from != NULL);
@@ -189,6 +183,12 @@ kauth_cred_clone1(kauth_cred_t from, kauth_cred_t to, bool copy_groups)
 	}
 
 	kauth_cred_hook(from, KAUTH_CRED_COPY, to, NULL);
+}
+
+void
+kauth_cred_clone(kauth_cred_t from, kauth_cred_t to)
+{
+	kauth_cred_clone1(from, to, true);
 }
 
 /*
@@ -392,35 +392,37 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 
 /* XXX elad: gmuid is unused for now. */
 int
-kauth_cred_setgroups(kauth_cred_t cred, gid_t *grbuf, size_t len, uid_t gmuid)
+kauth_cred_setgroups(kauth_cred_t cred, const gid_t *grbuf, size_t len,
+    uid_t gmuid, unsigned int flags)
 {
+	int error = 0;
+
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt == 1);
-	KASSERT(len <= sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]));
 
-	if (len)
-		memcpy(cred->cr_groups, grbuf, len * sizeof(cred->cr_groups[0]));
+	if (len > sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]))
+		return EINVAL;
+
+	if (len) {
+		if ((flags & (UIO_USERSPACE | UIO_SYSSPACE)) == UIO_USERSPACE)
+			memcpy(cred->cr_groups, grbuf,
+			    len * sizeof(cred->cr_groups[0]));
+		else {
+			error = copyin(grbuf, cred->cr_groups,
+			    len * sizeof(cred->cr_groups[0]));
+			if (error != 0)
+				len = 0;
+		}
+	}
 	memset(cred->cr_groups + len, 0xff,
 	    sizeof(cred->cr_groups) - (len * sizeof(cred->cr_groups[0])));
 
 	cred->cr_ngroups = len;
 
-	return (0);
+	return error;
 }
 
-/* This is the first half of sys_setgroups ... */
-gid_t *
-kauth_cred_setngroups(kauth_cred_t cred, int ngrp)
-{
-	if (cred->cr_refcnt != 1)
-		return NULL;
-	if ((unsigned int)ngrp > NGROUPS)
-		return NULL;
-	cred->cr_ngroups = ngrp;
-	return cred->cr_groups;
-}
-
-/* ... and this is the second */
+/* This supports sys_setgroups() */
 int
 kauth_proc_setgroups(struct lwp *l, kauth_cred_t ncred)
 {
@@ -451,23 +453,19 @@ kauth_proc_setgroups(struct lwp *l, kauth_cred_t ncred)
 }
 
 int
-kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len)
+kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
+    unsigned int flags)
 {
 	KASSERT(cred != NULL);
-	KASSERT(len <= cred->cr_ngroups);
 
-	memset(grbuf, 0xff, sizeof(*grbuf) * len);
+	if (len > cred->cr_ngroups)
+		return EINVAL;
+
+	if ((flags & (UIO_USERSPACE | UIO_SYSSPACE)) == UIO_SYSSPACE)
+		return copyout(cred->cr_groups, grbuf, sizeof(*grbuf) * len);
 	memcpy(grbuf, cred->cr_groups, sizeof(*grbuf) * len);
 
-	return (0);
-}
-
-const gid_t *
-kauth_cred_getgrlist(kauth_cred_t cred, int ngrp)
-{
-	if (cred->cr_ngroups > ngrp)
-		return NULL;
-	return cred->cr_groups;
+	return 0;
 }
 
 int
@@ -567,7 +565,7 @@ kauth_uucred_to_cred(kauth_cred_t cred, const struct uucred *uuc)
 	cred->cr_svgid = uuc->cr_gid;
 	cred->cr_ngroups = min(uuc->cr_ngroups, NGROUPS);
 	kauth_cred_setgroups(cred, __UNCONST(uuc->cr_groups),
-	    cred->cr_ngroups, -1);
+	    cred->cr_ngroups, -1, UIO_SYSSPACE);
 }
 
 /*
@@ -585,7 +583,7 @@ kauth_cred_to_uucred(struct uucred *uuc, const kauth_cred_t cred)
 	uuc->cr_uid = cred->cr_euid;  
 	uuc->cr_gid = cred->cr_egid;  
 	uuc->cr_ngroups = ng;
-	kauth_cred_getgroups(cred, uuc->cr_groups, ng);
+	kauth_cred_getgroups(cred, uuc->cr_groups, ng, UIO_SYSSPACE);
 }
 
 /*
