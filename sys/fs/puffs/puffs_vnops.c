@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.79 2007/06/26 12:50:49 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.80 2007/06/30 16:28:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.79 2007/06/26 12:50:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.80 2007/06/30 16:28:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -485,7 +485,7 @@ puffs_lookup(void *v)
 		} else if (error < 0) {
 			error = EINVAL;
 		}
-		goto errout;
+		goto out;
 	}
 
 	/*
@@ -495,7 +495,7 @@ puffs_lookup(void *v)
 	dpn = dvp->v_data;
 	if (lookup_arg.pvnr_newnode == dpn->pn_cookie) {
 		error = EINVAL;
-		goto errout;
+		goto out;
 	}
 
 	/* XXX: race here */
@@ -506,7 +506,7 @@ puffs_lookup(void *v)
 		    lookup_arg.pvnr_newnode, lookup_arg.pvnr_vtype,
 		    lookup_arg.pvnr_size, lookup_arg.pvnr_rdev, &vp);
 		if (error) {
-			goto errout;
+			goto out;
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
@@ -515,7 +515,7 @@ puffs_lookup(void *v)
 	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
 
- errout:
+ out:
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	
@@ -2009,7 +2009,7 @@ puffs_strategy(void *v)
 	}
 
  out:
-	KASSERT(dofaf && error == 0);
+	KASSERT(dofaf == 0 || error == 0);
 	if (rw_argp && !dofaf)
 		free(rw_argp, M_PUFFS);
 
