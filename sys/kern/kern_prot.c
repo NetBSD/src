@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.102 2007/06/23 09:08:37 dsl Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.103 2007/06/30 13:32:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.102 2007/06/23 09:08:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.103 2007/06/30 13:32:14 dsl Exp $");
 
 #include "opt_compat_43.h"
 
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.102 2007/06/23 09:08:37 dsl Exp $");
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <sys/malloc.h>
 
 int	sys_getpid(struct lwp *, void *, register_t *);
 int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
@@ -233,17 +231,15 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(gid_t *) gidset;
 	} */ *uap = v;
-	const gid_t *grbuf;
 
 	*retval = kauth_cred_ngroups(l->l_cred);
 	if (SCARG(uap, gidsetsize) == 0)
 		return 0;
-
-	grbuf = kauth_cred_getgrlist(l->l_cred, SCARG(uap, gidsetsize));
-	if (grbuf == NULL)
+	if (SCARG(uap, gidsetsize) > *retval)
 		return EINVAL;
 
-	return copyout(grbuf, SCARG(uap, gidset), *retval * sizeof(gid_t));
+	return kauth_cred_getgroups(l->l_cred, SCARG(uap, gidset), *retval,
+	    UIO_USERSPACE);
 }
 
 /* ARGSUSED */
@@ -565,17 +561,10 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	kauth_cred_t ncred;
 	int error;
-	gid_t *grbuf;
 
 	ncred = kauth_cred_alloc();
-
-	grbuf = kauth_cred_setngroups(ncred, SCARG(uap, gidsetsize));
-	if (grbuf == NULL)
-		error = EINVAL;
-	else {
-		error = copyin(SCARG(uap, gidset), grbuf,
-		    SCARG(uap, gidsetsize) * sizeof(gid_t));
-	}
+	error = kauth_cred_setgroups(ncred, SCARG(uap, gidset),
+	    SCARG(uap, gidsetsize), -1, UIO_USERSPACE);
 	if (error != 0) {
 		kauth_cred_free(ncred);
 		return error;
