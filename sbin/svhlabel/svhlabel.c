@@ -1,4 +1,4 @@
-/*	$NetBSD: svhlabel.c,v 1.2 2007/06/29 23:33:05 rumble Exp $	*/
+/*	$NetBSD: svhlabel.c,v 1.3 2007/06/30 00:54:09 rumble Exp $	*/
 
 /*
  * Copyright (C) 2007 Stephen M. Rumble.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: svhlabel.c,v 1.2 2007/06/29 23:33:05 rumble Exp $");
+__RCSID("$NetBSD: svhlabel.c,v 1.3 2007/06/30 00:54:09 rumble Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: svhlabel.c,v 1.2 2007/06/29 23:33:05 rumble Exp $");
 #include <sys/disklabel.h>
 #include <sys/bootblock.h>
 #include <sys/ioctl.h>
+
+#include <fs/efs/efs_sb.h>
 
 #include "dkcksum.h"
 #include "extern.h"
