@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.312 2007/06/16 12:35:56 ad Exp $
+#	$NetBSD: INSTALL,v 1.313 2007/06/30 03:11:03 jmcneill Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -536,6 +536,7 @@ ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #nfe*	at pci?	dev ? function ?	# NVIDIA nForce Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
