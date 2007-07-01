@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.4 2007/07/01 11:46:54 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.5 2007/07/01 21:28:34 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.4 2007/07/01 11:46:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.5 2007/07/01 21:28:34 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,10 +439,10 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/* Sensors return C while we need uK */
 
 	if (edata->sensor < UG_VOLT_MIN - 1) /* CPU and SYS Temps */
-		edata[edata->sensor].value_cur = ug_read(sc, UG_CPUTEMP +
-		    edata->sensor) * 1000000 + 273150000;
+		edata->value_cur = ug_read(sc, UG_CPUTEMP + edata->sensor)
+		    * 1000000 + 273150000;
 	else if (edata->sensor == 2) /* PWMTEMP */
-		edata[edata->sensor].value_cur = ug_read(sc, UG_PWMTEMP)
+		edata->value_cur = ug_read(sc, UG_PWMTEMP)
 		    * 1000000 + 273150000;
 
 	/* Voltages */
@@ -451,18 +451,18 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	else
 	    if ((edata->sensor >= UG_VOLT_MIN) && (edata->sensor < UG_FAN_MIN)) {
-		edata[edata->sensor].value_cur = ug_read(sc, VOLT_SENSOR);
+		edata->value_cur = ug_read(sc, VOLT_SENSOR);
 		switch(VOLT_SENSOR) {
 			case UG_5V:		/* 6V RFact */
 			case UG_5VSB:
-				edata[edata->sensor].value_cur *= UG_RFACT6;
+				edata->value_cur *= UG_RFACT6;
 				break;
 			case UG_3V3:		/* 4V RFact */
 			case UG_3VDUAL:
-				edata[edata->sensor].value_cur *= UG_RFACT4;
+				edata->value_cur *= UG_RFACT4;
 				break;
 			default:		/* 3V RFact */
-				edata[edata->sensor].value_cur *= UG_RFACT3;
+				edata->value_cur *= UG_RFACT3;
 		}
 	    } else
 
@@ -470,7 +470,7 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	/* and Fans */
 	if (edata->sensor >= UG_FAN_MIN)
-		edata[edata->sensor].value_cur = ug_read(sc, UG_CPUFAN +
+		edata->value_cur = ug_read(sc, UG_CPUFAN +
 		    edata->sensor - UG_FAN_MIN) * UG_RFACT_FAN;
 	else
 		return ENODEV;		/* should I scream and panic ? */
@@ -562,15 +562,15 @@ ug2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 	    si->port, 1, &v) == 1) {
 		switch (si->type) {
 		case UG2_TEMP_SENSOR:
-		    edata[edata->sensor].value_cur = SENSOR_VALUE * 1000000
+		    edata->value_cur = SENSOR_VALUE * 1000000
 			+ 273150000;
 		    break;
 		case UG2_VOLTAGE_SENSOR:
 		    rfact = UG_RFACT;
-		    edata[edata->sensor].value_cur = SENSOR_VALUE;
+		    edata->value_cur = SENSOR_VALUE;
 		    break;
 		default:
-		    edata[edata->sensor].value_cur = SENSOR_VALUE;
+		    edata->value_cur = SENSOR_VALUE;
 		}
 	} else
 		return ENODEV;
