@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.28 2007/06/06 01:55:02 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.29 2007/07/01 22:59:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -60,8 +60,8 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-bsdt] [-c hashbuckets] [-o mntopt] [-o puffsopt]\n"
-	    "    [-r rootnodetype] mountpath", getprogname());
+	errx(1, "usage: %s [-bsdft] [-c hashbuckets] [-o mntopt] "
+	    "[-o puffsopt]\n    [-r rootnodetype] mountpath", getprogname());
 }
 
 /*
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 	lflags = mntflags = 0;
 	khashbuckets = 256;
 	pflags = PUFFS_KFLAG_IAONDEMAND;
-	while ((ch = getopt(argc, argv, "bc:dio:r:st")) != -1) {
+	while ((ch = getopt(argc, argv, "bc:dfio:r:st")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
@@ -131,6 +131,9 @@ main(int argc, char *argv[])
 			break;
 		case 'd':
 			dynamicfh = 1;
+			break;
+		case 'f':
+			pflags |= PUFFS_KFLAG_LOOKUP_FULLPNBUF;
 			break;
 		case 'i':
 			pflags &= ~PUFFS_KFLAG_IAONDEMAND;
