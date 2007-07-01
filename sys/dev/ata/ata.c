@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.88 2007/03/17 06:41:36 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.89 2007/07/01 09:47:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.88 2007/03/17 06:41:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.89 2007/07/01 09:47:19 dsl Exp $");
 
 #include "opt_ata.h"
 
@@ -610,50 +610,50 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
-	} else {
-		/* if we didn't read any data something is wrong */
-		if ((ata_c.flags & AT_XFDONE) == 0)
-			return CMD_ERR;
-		/* Read in parameter block. */
-		memcpy(prms, tb, sizeof(struct ataparams));
+	}
+	/* if we didn't read any data something is wrong */
+	if ((ata_c.flags & AT_XFDONE) == 0)
+		return CMD_ERR;
 
-		/*
-		 * Shuffle string byte order.
-		 * ATAPI NEC, Mitsumi and Pioneer drives and
-		 * old ATA TDK CompactFlash cards
-		 * have different byte order.
-		 */
+	/* Read in parameter block. */
+	memcpy(prms, tb, sizeof(struct ataparams));
+
+	/*
+	 * Shuffle string byte order.
+	 * ATAPI NEC, Mitsumi and Pioneer drives and
+	 * old ATA TDK CompactFlash cards
+	 * have different byte order.
+	 */
 #if BYTE_ORDER == BIG_ENDIAN
 # define M(n)	prms->atap_model[(n) ^ 1]
 #else
 # define M(n)	prms->atap_model[n]
 #endif
-		if (
+	if (
 #if BYTE_ORDER == BIG_ENDIAN
-		    !
+	    !
 #endif
-		    ((drvp->drive_flags & DRIVE_ATAPI) ?
-		     ((M(0) == 'N' && M(1) == 'E') ||
-		      (M(0) == 'F' && M(1) == 'X') ||
-		      (M(0) == 'P' && M(1) == 'i')) :
-		     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
-			return CMD_OK;
-#undef M
-		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
-			p = (u_int16_t *)(prms->atap_model + i);
-			*p = bswap16(*p);
-		}
-		for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
-			p = (u_int16_t *)(prms->atap_serial + i);
-			*p = bswap16(*p);
-		}
-		for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
-			p = (u_int16_t *)(prms->atap_revision + i);
-			*p = bswap16(*p);
-		}
-
+	    ((drvp->drive_flags & DRIVE_ATAPI) ?
+	     ((M(0) == 'N' && M(1) == 'E') ||
+	      (M(0) == 'F' && M(1) == 'X') ||
+	      (M(0) == 'P' && M(1) == 'i')) :
+	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
 		return CMD_OK;
+#undef M
+	for (i = 0; i < sizeof(prms->atap_model); i += 2) {
+		p = (u_int16_t *)(prms->atap_model + i);
+		*p = bswap16(*p);
 	}
+	for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
+		p = (u_int16_t *)(prms->atap_serial + i);
+		*p = bswap16(*p);
+	}
+	for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
+		p = (u_int16_t *)(prms->atap_revision + i);
+		*p = bswap16(*p);
+	}
+
+	return CMD_OK;
 }
 
 int
