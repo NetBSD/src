@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.198 2007/06/28 12:36:50 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.199 2007/07/01 17:15:21 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6896,4 +6896,66 @@ sys/sys/param.h					patch
 	Bump kernel version as LKM's depending on UFS internals will have to be
 	recompiled after this change (discussed and approved on tech-kern).
 	[hannken, ticket #747]
+
+distrib/sets/lists/etc/mi			1.190
+distrib/sets/lists/misc/mi			1.145
+usr.sbin/postinstall/postinstall		1.41, 1.42
+usr.sbin/postinstall/postinstall.8		1.7
+
+	Separate postinstall checks in two groups: enabled and disabled by
+	default. Only the former checks/fixes are done if no items are given
+	on the command line. The latter must be requested explicitely.
+	Intended for "fixes" that are dangerous in some way, because they might
+	remove files that are still in use, for example.
+
+	Make the "sendmail" item disabled by default, it removes sendmail
+	configuration. Partly addresses PR install/36180.
+	Proposed on tech-userlevel, review and spelling fixes from lukem@.
+
+	Remove the remaining sendmail config files (including everything in
+	/usr/share/sendmail) from the obsolete list. Instead, remove them in the
+	"sendmail" postinstall item, which is disabled by default, to prevent
+	losing sendmail configuration on upgrade. Fixes the rest of
+	PR install/36180.
+	[pavel, ticket #752]
+
+sys/arch/i386/conf/INSTALL_LARGE		1.7
+
+	Enable ral@pci by default in the INSTALL_LARGE kernel.
+	[jmcneill, ticket #753]
+
+sys/dev/ccd.c					1.120
+sys/dev/cgd.c					1.45
+sys/dev/dksubr.c				1.29
+sys/dev/dkvar.h					1.11
+sys/dev/raidframe/rf_copyback.c			1.38
+sys/dev/raidframe/rf_disks.c			1.66
+sys/dev/raidframe/rf_reconstruct.c		1.96
+
+	Change dk_lookup() to accept an additional argument of the type
+	enum uio_seg that tells whether the given path is in user space
+	or kernel space, so it can tell NDINIT().
+
+	While the raidframe calls were ok, both ccd(4) and cgd(4) were
+	passing pointers to user space data, which leads to strange error
+	on i386, as reported by Jukka Salmi on current-users.
+	[cube, ticket #748]
+
+bin/ksh/main.c					1.14
+
+	PR/36546: Aleksey Cheusov: problems with 8-bit input in /bin/ksh,
+	needs to call setlocale()
+	[christos, ticket #749]
+
+crypto/dist/ssh/misc.c				1.20
+
+	PR/36562: Takeshi Nakayama: sshd(8) HostbasedAuthentication fails
+	after upgrading to 4.0_BETA
+	Remove $HOME test since this is also used by sshd.
+	[christos, ticket #750]
+
+sys/arch/x68k/x68k/locore.s			1.80
+
+	Fixe PR#36567: Panic when booting kernel after Jun 12 2007
+	[mhitch, ticket #751]
 
