@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.4 2007/05/01 17:18:55 bouyer Exp $ */
+/* $NetBSD: mfivar.h,v 1.5 2007/07/01 07:37:14 xtraeme Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -146,8 +146,6 @@ struct mfi_softc {
 	struct mfi_ccb_list	sc_ccb_freeq;
 
 	struct sysmon_envsys    sc_envsys;
-#define sc_ranges       sc_envsys.sme_ranges
-#define sc_sensor_info  sc_envsys.sme_sensor_info
 #define sc_sensor_data  sc_envsys.sme_sensor_data
 
 };
