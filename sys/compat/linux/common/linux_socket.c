@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.75 2007/06/06 17:08:27 rjs Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.76 2007/07/01 18:45:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.75 2007/06/06 17:08:27 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76 2007/07/01 18:45:36 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -459,7 +459,8 @@ linux_sys_sendmsg(l, v, retval)
 	 * Handle cmsg if there is any.
 	 */
 	if (CMSG_FIRSTHDR(&msg)) {
-		struct cmsghdr cmsg, *cc;
+		struct linux_cmsghdr l_cmsg, *l_cc;
+		struct cmsghdr *cmsg;
 		ssize_t resid = msg.msg_controllen;
 		size_t clen, cidx = 0, cspace;
 
@@ -467,17 +468,17 @@ linux_sys_sendmsg(l, v, retval)
 		clen = MLEN;
 		control = mtod(ctl_mbuf, void *);
 
-		cc = CMSG_FIRSTHDR(&msg);
+		l_cc = LINUX_CMSG_FIRSTHDR(&msg);
 		do {
-			error = copyin(cc, &cmsg, sizeof(cmsg));
+			error = copyin(l_cc, &l_cmsg, sizeof(l_cmsg));
 			if (error)
 				goto done;
 
 			/*
 			 * Sanity check the control message length.
 			 */
-			if (cmsg.cmsg_len > resid
-			    || cmsg.cmsg_len < sizeof(struct cmsghdr)) {
+			if (l_cmsg.cmsg_len > resid
+			    || l_cmsg.cmsg_len < sizeof l_cmsg) {
 				error = EINVAL;
 				goto done;
 			}
@@ -486,13 +487,13 @@ linux_sys_sendmsg(l, v, retval)
 			 * Refuse unsupported control messages, and
 			 * translate fields as appropriate.
 			 */
-			switch (cmsg.cmsg_level) {
+			switch (l_cmsg.cmsg_level) {
 			case LINUX_SOL_SOCKET:
 				/* It only differs on some archs */
 				if (LINUX_SOL_SOCKET != SOL_SOCKET)
-					cmsg.cmsg_level = SOL_SOCKET;
+					l_cmsg.cmsg_level = SOL_SOCKET;
 
-				switch(cmsg.cmsg_type) {
+				switch(l_cmsg.cmsg_type) {
 				case LINUX_SCM_RIGHTS:
 					/* Linux SCM_RIGHTS is same as NetBSD */
 					break;
@@ -508,7 +509,7 @@ linux_sys_sendmsg(l, v, retval)
 				break;
 			}
 
-			cspace = CMSG_SPACE(cmsg.cmsg_len - sizeof(cmsg));
+			cspace = CMSG_SPACE(l_cmsg.cmsg_len - sizeof(l_cmsg));
 
 			/* Check the buffer is big enough */
 			if (__predict_false(cidx + cspace > clen)) {
@@ -532,22 +533,25 @@ linux_sys_sendmsg(l, v, retval)
 			}
 
 			/* Copy header */
-			memcpy(&control[cidx], &cmsg, sizeof(cmsg));
+			cmsg = (void *)&control[cidx];
+			cmsg->cmsg_len = l_cmsg.cmsg_len + LINUX_CMSG_ALIGN_DELTA;
+			cmsg->cmsg_level = l_cmsg.cmsg_level;
+			cmsg->cmsg_type = l_cmsg.cmsg_type;
 
 			/* Zero are between header and data */
-			memset(&control[cidx+sizeof(cmsg)], 0,
+			memset(cmsg + 1, 0, 
 				CMSG_ALIGN(sizeof(cmsg)) - sizeof(cmsg));
 
 			/* Copyin the data */
-			error = copyin(LINUX_CMSG_DATA(cc),
+			error = copyin(LINUX_CMSG_DATA(l_cc),
 				CMSG_DATA(control),
-				cmsg.cmsg_len - sizeof(cmsg));
+				l_cmsg.cmsg_len - sizeof(l_cmsg));
 			if (error)
 				goto done;
 
-			resid -= cspace;
+			resid -= LINUX_CMSG_ALIGN(l_cmsg.cmsg_len);
 			cidx += cspace;
-		} while ((cc = LINUX_CMSG_NXTHDR(&msg, cc)) && resid > 0);
+		} while ((l_cc = LINUX_CMSG_NXTHDR(&msg, l_cc)) && resid > 0);
 
 		/* If we allocated a buffer, attach to mbuf */
 		if (cidx > MLEN) {
@@ -607,6 +611,98 @@ linux_sys_recvfrom(l, v, retval)
 	return (0);
 }
 
+static int
+linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
+{
+	int dlen, error = 0;
+	struct cmsghdr *cmsg;
+	struct linux_cmsghdr linux_cmsg;
+	struct mbuf *m;
+	char *q, *q_end;
+
+	if (mp->msg_controllen <= 0 || control == 0) {
+		mp->msg_controllen = 0;
+		free_control_mbuf(l, control, control);
+		return 0;
+	}
+
+	q = (char *)mp->msg_control;
+	q_end = q + mp->msg_controllen;
+
+	for (m = control; m != NULL; ) {
+		cmsg = mtod(m, struct cmsghdr *);
+
+		/*
+		 * Fixup cmsg. We handle two things:
+		 * 0. different sizeof cmsg_len.
+		 * 1. different values for level/type on some archs
+		 * 2. different alignment of CMSG_DATA on some archs
+		 */
+		linux_cmsg.cmsg_len = cmsg->cmsg_len - LINUX_CMSG_ALIGN_DELTA;
+		linux_cmsg.cmsg_level = cmsg->cmsg_level;
+		linux_cmsg.cmsg_type = cmsg->cmsg_type;
+
+		dlen = q_end - q;
+		if (linux_cmsg.cmsg_len > dlen) {
+			/* Not enough room for the parameter */
+			dlen -= sizeof linux_cmsg;
+			if (dlen <= 0)
+				/* Discard if header wont fit */
+				break;
+			mp->msg_flags |= MSG_CTRUNC;
+			if (linux_cmsg.cmsg_level == SOL_SOCKET
+			    && linux_cmsg.cmsg_type == SCM_RIGHTS)
+				/* Do not truncate me ... */
+				break;
+		} else
+			dlen = linux_cmsg.cmsg_len - sizeof linux_cmsg;
+
+		switch (linux_cmsg.cmsg_level) {
+		case SOL_SOCKET:
+			linux_cmsg.cmsg_level = LINUX_SOL_SOCKET;
+			switch (linux_cmsg.cmsg_type) {
+			case SCM_RIGHTS:
+				/* Linux SCM_RIGHTS is same as NetBSD */
+				break;
+
+			default:
+				/* other types not supported */
+				error = EINVAL;
+				goto done;
+			}
+			/* machine dependant ! */
+			break;
+		default:
+			/* pray and leave intact */
+			break;
+		}
+
+		/* There can be padding between the header and data... */
+		error = copyout(&linux_cmsg, q, sizeof *cmsg);
+		if (error != 0) {
+			error = copyout(CCMSG_DATA(cmsg), q + sizeof linux_cmsg,
+			    dlen);
+		}
+		if (error != 0) {
+			/* We must free all the SCM_RIGHTS */
+			m = control;
+			break;
+		}
+		m = m->m_next;
+		if (m == NULL || q + LINUX_CMSG_ALIGN(dlen) > q_end) {
+			q += dlen;
+			break;
+		}
+		q += LINUX_CMSG_ALIGN(dlen);
+	}
+
+  done:
+	free_control_mbuf(l, control, m);
+
+	mp->msg_controllen = q - (char *)mp->msg_control;
+	return error;
+}
+
 int
 linux_sys_recvmsg(l, v, retval)
 	struct lwp *l;
@@ -620,177 +716,47 @@ linux_sys_recvmsg(l, v, retval)
 	} */ *uap = v;
 	struct msghdr	msg;
 	int		error;
-	struct sys_recvmsg_args bsa;
-	int lflags;
-	u_int8_t *ocontrol = NULL; /* XXX: gcc */
-	socklen_t ocontrollen = 0;
+	struct mbuf	*from, *control;
 
-	/*
-	 * Data alignment is different on some architectures. If control
-	 * message is expected, we must arrange for the control message
-	 * to be initially put elsewhere, and copy to target place
-	 * with Linux alignment.
-	 */
-	if (LINUX_CMSG_ALIGNDIFF) {
-		error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
-		if (error)
-			return (error);
+	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
+	if (error)
+		return (error);
 
-		if (CMSG_FIRSTHDR(&msg)) {
-			void *sg;
-
-			/* Need to fit within stackgap */
-			if (msg.msg_controllen > STACKGAPLEN/2) {
-				/* Sorry guys! */
-				return (EINVAL);
-			}
-
-			sg = stackgap_init(l->l_proc, STACKGAPLEN/3);
-
-			ocontrol = msg.msg_control;
-			ocontrollen = msg.msg_controllen;
-
-			/* space for at least one message's worth align */
-			msg.msg_controllen += CMSG_ALIGN(1);
-
-			msg.msg_control = stackgap_alloc(l->l_proc, &sg,
-				msg.msg_controllen);
-			if (!msg.msg_control)
-				return (ENOMEM);
-
-			/*
-			 * Okay to overwrite the original structure, it's
-			 * supposed to be writable.
-			 */
-			error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
-			if (error)
-				return (error);
-		}
-	}
-
-	SCARG(&bsa, s) = SCARG(uap, s);
-	SCARG(&bsa, msg) = SCARG(uap, msg);
-	SCARG(&bsa, flags) = linux_to_bsd_msg_flags(SCARG(uap, flags));
-
-	if (SCARG(&bsa, flags) < 0) {
+	msg.msg_flags = linux_to_bsd_msg_flags(SCARG(uap, flags));
+	if (msg.msg_flags < 0) {
 		/* Some unsupported flag */
 		return (EINVAL);
 	}
+	msg.msg_flags |= MSG_IOVUSRSPACE;
 
-	if ((error = sys_recvmsg(l, &bsa, retval)))
-		goto done;
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
+	    msg.msg_control != NULL ? &control : NULL, retval);
+	if (error != 0)
+		return error;
 
-	/* Fixup sockaddr */
-	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
-	if (error)
-		goto done;
+	if (msg.msg_control != NULL)
+		error = linux_copyout_msg_control(l, &msg, control);
 
-	if (msg.msg_name && msg.msg_namelen > 2) {
-		if ((error = linux_sa_put(msg.msg_name)))
-			goto done;
+	if (error == 0 && from != 0) {
+		mtod(from, struct osockaddr *)->sa_family =
+		    bsd_to_linux_domain(mtod(from, struct sockaddr *)->sa_family);
+		error = copyout_sockname(msg.msg_name, &msg.msg_namelen, 0,
+			from);
+	} else
+		msg.msg_namelen = 0;
+
+	if (from != NULL)
+		m_free(from);
+
+	if (error == 0) {
+		msg.msg_flags = bsd_to_linux_msg_flags(msg.msg_flags);
+		if (msg.msg_flags < 0)
+			/* Some flag unsupported by Linux */
+			error = EINVAL;
+		else
+			error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
 	}
 
-	/* Fixup msg flags */
-	lflags = bsd_to_linux_msg_flags(msg.msg_flags);
-	if (lflags < 0) {
-		/* Some flag unsupported by Linux */
-		error = EINVAL;
-		goto done;
-	}
-	error = copyout(&lflags, (u_int8_t *) SCARG(uap, msg) +
-			offsetof(struct msghdr, msg_flags), sizeof(lflags));
-	if (error)
-		goto done;
-
-	/*
-	 * Fixup cmsg. We handle two things:
-	 * 1. different values for level/type on some archs
-	 * 2. different alignment of CMSG_DATA on some archs
-	 */
-	if (CMSG_FIRSTHDR(&msg)) {
-		struct cmsghdr cmsg, *cc;
-		int changed = 0;
-		size_t resid = ocontrollen;
-
-		cc = CMSG_FIRSTHDR(&msg);
-		do {
-			error = copyin(cc, &cmsg, sizeof(cmsg));
-			if (error)
-				goto done;
-
-			switch (cmsg.cmsg_level) {
-			case SOL_SOCKET:
-				if (SOL_SOCKET != LINUX_SOL_SOCKET) {
-					cmsg.cmsg_level = LINUX_SOL_SOCKET;
-					changed = 1;
-				}
-
-				switch (cmsg.cmsg_type) {
-				case SCM_RIGHTS:
-					/* Linux SCM_RIGHTS is same as NetBSD */
-					break;
-
-				default:
-					/* other types not supported */
-					error = EINVAL;
-					goto done;
-				}
-			default:
-				/* pray and leave intact */
-				break;
-			}
-
-			if (LINUX_CMSG_ALIGNDIFF) {
-				int i;
-				u_int8_t d, *sd, *td;
-
-				/*
-				 * Sanity check.
-				 */
-				if (cmsg.cmsg_len > resid
-				    || cmsg.cmsg_len < sizeof(cmsg)) {
-					error = EINVAL;
-					goto done;
-				}
-
-				/*
-				 * Need to copy the cmsg from scratch area
-				 * to the original place, converting data
-				 * alignment from NetBSD to Linux one.
-				 */
-				error = copyout(&cmsg, ocontrol, sizeof(cmsg));
-				if (error)
-					goto done;
-				/* zero pad */
-#if 0
-				for(i=0; i < LINUX_CMSG_ALIGN(sizeof(cmsg)) - sizeof(cmsg); i++) {
-					copyout("",&ocontrol[sizeof(cmsg)+i],1);
-				}
-#endif
-
-				sd = CMSG_DATA(cc);
-				td = LINUX_CMSG_DATA(ocontrol);
-
-				/* This is not particularily effective, but ..*/
-				d = '\0';
-				for(i=0; i < cmsg.cmsg_len - sizeof(cmsg); i++){
-					copyin(sd++, &d, 1);
-					copyout(&d, td++, 1);
-				}
-
-				resid -= (td - ocontrol);
-				ocontrol = td;
-			} else if (changed) {
-				/* Update cmsghdr in-place */
-				error = copyout(&cmsg, cc, sizeof(cmsg));
-				if (error)
-					goto done;
-				changed = 0;
-			}
-		} while((cc = CMSG_NXTHDR(&msg, cc)));
-	}
-
-done:
 	return (error);
 }
 
