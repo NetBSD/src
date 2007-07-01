@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.1 2007/06/17 21:31:27 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.2 2007/07/01 21:31:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,13 +37,125 @@
  */
 
 /*
- * Soft interrupt implementation.  XXX blurb
+ * Generic software interrupt framework.
+ *
+ * Overview
+ *
+ *	The soft interrupt framework provides a mechanism to schedule a
+ *	low priority callback that runs with thread context.  It allows
+ *	for dynamic registration of software interrupts, and for fair
+ *	queueing and prioritization of those interrupts.  The callbacks
+ *	can be scheduled to run from nearly any point in the kernel: by
+ *	code running with thread context, by code running from a
+ *	hardware interrupt handler, and at any interrupt priority
+ *	level.
+ *
+ * Priority levels
+ *
+ *	Since soft interrupt dispatch can be tied to the underlying
+ *	architecture's interrupt dispatch code, it may be limited by
+ *	both by the capabilities of the hardware and the capabilities
+ *	of the interrupt dispatch code itself.  Therefore the number of
+ *	levels is restricted to four.  In order of priority (lowest to
+ *	highest) the levels are: clock, bio, net, serial.
+ *
+ *	The symbolic names are provided only as guide and in isolation
+ *	do not have any direct connection with a particular kind of
+ *	device activity.
+ *
+ *	The four priority levels map directly to scheduler priority
+ *	levels, and where the architecture implements 'fast' software
+ *	interrupts, they also map onto interrupt priorities.  The
+ *	interrupt priorities are intended to be hidden from machine
+ *	independent code, which should use multiprocessor and
+ *	preemption aware mechanisms to synchronize with software
+ *	interrupts (for example: mutexes).
+ *
+ * Capabilities
+ *
+ *	As with hardware interrupt handlers, software interrupts run
+ *	with limited machine context.  In particular, they do not
+ *	posess any VM (virtual memory) context, and should therefore
+ *	not try to operate on user space addresses, or to use virtual
+ *	memory facilities other than those noted as interrupt safe.
+ *
+ *	Unlike hardware interrupts, software interrupts do have thread
+ *	context.  They may block on synchronization objects, sleep, and
+ *	resume execution at a later time.  Since software interrupts
+ *	are a limited resource and (typically) run with higher priority
+ *	than all other threads in the system, all block-and-resume
+ *	activity by a software interrupt must be kept short in order to
+ *	allow futher processing at that level to continue.  The kernel
+ *	does not allow software interrupts to use facilities or perform
+ *	actions that may block for a significant amount of time.  This
+ *	means that it's not valid for a software interrupt to: sleep on
+ *	condition variables, use the lockmgr() facility, or wait for
+ *	resources to become available (for example, memory).
+ *
+ *	Software interrupts may block to await ownership of locks,
+ *	which are typically owned only for a short perioid of time:
+ *	mutexes and reader/writer locks.  By extension, code running in
+ *	the bottom half of the kernel must take care to ensure that any
+ *	lock that may be taken from a software interrupt can not be
+ *	held for more than a short period of time.
+ *
+ * Per-CPU operation
+ *
+ *	Soft interrupts are strictly per-CPU.  If a soft interrupt is
+ *	triggered on a CPU, it will only be dispatched on that CPU. 
+ *	Each LWP dedicated to handling a soft interrupt is bound to
+ *	it's home CPU, so if the LWP blocks and needs to run again, it
+ *	can only run there.  Nearly all data structures used to manage
+ *	software interrupts are per-CPU.
+ *
+ *	Soft interrupts can occur many thousands of times per second. 
+ *	In light of this, the per-CPU requirement is intended to solve
+ *	three problems:
+ *
+ *	1) For passing work down from a hardware interrupt handler to a
+ *	software interrupt (for example, using a queue) spinlocks need
+ *	not be used to guarantee data integrity.  Adjusting the CPU
+ *	local interrupt priority level is sufficient.  Acquiring
+ *	spinlocks is computationally expensive, as it increases traffic
+ *	on the system bus and can stall processors with long execution
+ *	pipelines.
+ *
+ *	2) Often hardware interrupt handlers manipulate data structures
+ *	and then pass those to a software interrupt for further
+ *	processing.  If those data structures are immediately passed to
+ *	another CPU, the associated cache lines may be forced across
+ *	the system bus, generating more bus traffic.
+ *
+ *	3) The data structures used to manage soft interrupts are also
+ *	CPU local, again to reduce unnecessary bus traffic.
+ *
+ * Generic implementation
+ *
+ *	A generic, low performance implementation is provided that
+ *	works across all architectures, with no machine-dependent
+ *	modifications needed.  This implementation uses the scheduler,
+ *	and so has a number of restrictions:
+ *
+ *	1) Since software interrupts can be triggered from any priority
+ *	level, on architectures where the generic implementation is
+ *	used IPL_SCHED must be equal to IPL_HIGH.
+ *
+ *	2) The software interrupts are not preemptive, and so must wait
+ *	for the currently executing thread to yield the CPU.  This
+ *	can introduce latency.
+ *
+ *	3) A context switch is required for each soft interrupt to be
+ *	handled, which can be quite expensive.
+ *
+ * 'Fast' software interrupts
+ *
+ *	XXX
  *
  * The !__HAVE_FAST_SOFTINTS case assumes splhigh == splsched.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.1 2007/06/17 21:31:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.2 2007/07/01 21:31:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -71,6 +183,7 @@ typedef struct softint {
 	uintptr_t		si_machdep;
 	struct evcnt		si_evcnt;
 	int			si_active;
+	char			si_name[8];
 } softint_t;
 
 typedef struct softhand {
@@ -95,6 +208,7 @@ u_int		softint_bytes = 8192;
 static u_int	softint_max;
 static kmutex_t	softint_lock;
 static void	*softint_netisr_sih;
+struct evcnt	softint_block;
 
 /*
  * softint_init_isr:
@@ -120,10 +234,16 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 	if (error != 0)
 		panic("softint_init_isr: error %d", error);
 
+	snprintf(si->si_name, sizeof(si->si_name), "%s/%d", desc,
+	    (int)ci->ci_cpuid);
 	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
-	   "cpu", si->si_lwp->l_name);
+	   "softint", si->si_name);
 
 	softint_init_md(si->si_lwp, level, &si->si_machdep, si);
+
+#ifdef __HAVE_FAST_SOFTINTS
+	si->si_lwp->l_mutex = &ci->ci_schedstate.spc_lwplock;
+#endif
 }
 
 /*
@@ -178,11 +298,14 @@ softint_init(struct cpu_info *ci)
 	softhand_t *sh, *shmax;
 
 	if (first == NULL) {
+		/* Boot CPU. */
 		first = ci;
 		mutex_init(&softint_lock, MUTEX_DEFAULT, IPL_NONE);
 		softint_bytes = round_page(softint_bytes);
 		softint_max = (softint_bytes - sizeof(softcpu_t)) /
 		    sizeof(softhand_t);
+		evcnt_attach_dynamic(&softint_block, EVCNT_TYPE_INTR,
+		    NULL, "softint", "block");
 	}
 
 	sc = (softcpu_t *)uvm_km_alloc(kernel_map, softint_bytes, 0,
@@ -199,7 +322,7 @@ softint_init(struct cpu_info *ci)
 	softint_init_isr(sc, "ser", PRI_SOFTSERIAL, SOFTINT_SERIAL);
 
 	if (first != ci) {
-		/* No need to lock - the system is still cold. */
+		/* Don't lock -- autoconfiguration will prevent reentry. */
 		scfirst = first->ci_data.cpu_softcpu;
 		sh = sc->sc_hand;
 		memcpy(sh, scfirst->sc_hand, sizeof(*sh) * softint_max);
@@ -406,8 +529,10 @@ softint_execute(void *cookie, int s)
 {
 	softint_t *si;
 	softhand_t *sh;
+	lwp_t *l, *l2;
 
 	si = cookie;
+	l = si->si_lwp;
 
 	KASSERT(si->si_lwp == curlwp);
 	KASSERT(si->si_cpu == curcpu());
@@ -416,6 +541,25 @@ softint_execute(void *cookie, int s)
 	KASSERT(si->si_active);
 
 	while (!TAILQ_EMPTY(&si->si_q)) {
+		/*
+		 * If any interrupted LWP has higher priority then we
+		 * must yield immediatley.  Note that IPL_HIGH may be
+		 * above IPL_SCHED, so we have to drop the interrupt
+		 * priority level before yielding.
+		 *
+		 * XXXAD Optimise this away.
+		 */
+		for (l2 = l->l_pinned; l2 != NULL; l2 = l2->l_pinned) {
+			if (lwp_eprio(l2) > l->l_priority)
+				break;
+		}
+		if (l2 != NULL) {
+			splx(s);
+			yield();
+			(void)splhigh();
+			continue;
+		}
+
 		/*
 		 * Pick the longest waiting handler to run.  We block
 		 * interrupts but do not lock in order to do this, as
@@ -428,11 +572,11 @@ softint_execute(void *cookie, int s)
 
 		/* Run the handler. */
 		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0) {
-			KERNEL_LOCK(1, si->si_lwp);
+			KERNEL_LOCK(1, l);
 		}
 		(*sh->sh_func)(sh->sh_arg);
 		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0) {
-			KERNEL_UNLOCK_ONE(si->si_lwp);
+			KERNEL_UNLOCK_ONE(l);
 		}
 	
 		(void)splhigh();
@@ -467,7 +611,7 @@ schednetisr(int isr)
 /*
  * softintr_netisr:
  *
- *	Dispatch legacy network interrupts.  XXX Needs to away.
+ *	Dispatch legacy network interrupts.  XXX Needs to go away.
  */
 static void
 softint_netisr(void *cookie)
