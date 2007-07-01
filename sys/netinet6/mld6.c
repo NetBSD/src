@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.37.2.1 2007/06/08 14:17:57 ad Exp $	*/
+/*	$NetBSD: mld6.c,v 1.37.2.2 2007/07/01 21:50:53 ad Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.37.2.1 2007/06/08 14:17:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.37.2.2 2007/07/01 21:50:53 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -688,7 +688,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 			return (NULL);
 		}
 
-		callout_init(in6m->in6m_timer_ch);
+		callout_init(in6m->in6m_timer_ch, 0);
 		in6m->in6m_timer = timer;
 		if (in6m->in6m_timer > 0) {
 			in6m->in6m_state = MLD_REPORTPENDING;

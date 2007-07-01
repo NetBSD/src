@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.46 2007/03/04 06:00:40 christos Exp $ */
+/* $NetBSD: sci.c,v 1.46.2.1 2007/07/01 21:50:33 ad Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.46 2007/03/04 06:00:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.46.2.1 2007/07/01 21:50:33 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -409,7 +409,7 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 	}
 
-	callout_init(&sc->sc_diag_ch);
+	callout_init(&sc->sc_diag_ch, 0);
 
 	intc_intr_establish(SH_INTEVT_SCI_ERI, IST_LEVEL, IPL_SERIAL, sciintr,
 	    sc);

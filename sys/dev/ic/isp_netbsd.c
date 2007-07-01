@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.73.2.5 2007/06/09 23:57:50 ad Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.73.2.6 2007/07/01 21:47:51 ad Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.5 2007/06/09 23:57:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.6 2007/07/01 21:47:51 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -118,10 +118,10 @@ isp_attach(struct ispsoftc *isp)
 	 */
 	isp->isp_osinfo._chan.chan_nluns = min(isp->isp_maxluns, 8);
 
-	callout_init(&isp->isp_osinfo.gdt);
+	callout_init(&isp->isp_osinfo.gdt, 0);
 	callout_setfunc(&isp->isp_osinfo.gdt, isp_gdt, isp);
 
-	callout_init(&isp->isp_osinfo.ldt);
+	callout_init(&isp->isp_osinfo.ldt, 0);
 	callout_setfunc(&isp->isp_osinfo.ldt, isp_ldt, isp);
 
 	if (IS_FC(isp)) {

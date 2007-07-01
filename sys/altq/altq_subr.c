@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.21 2007/03/05 22:50:32 he Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.21.2.1 2007/07/01 21:50:32 ad Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.21 2007/03/05 22:50:32 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.21.2.1 2007/07/01 21:50:32 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.21 2007/03/05 22:50:32 he Exp $");
 static void	tbr_timeout(void *);
 int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
-static struct callout tbr_callout = CALLOUT_INITIALIZER;
+static struct callout tbr_callout;
 
 #ifdef ALTQ3_CLFIER_COMPAT
 static int 	extract_ports4(struct mbuf *, struct ip *, struct flowinfo_in *);
@@ -856,6 +856,8 @@ init_machclk(void)
 	}
 
 	machclk_per_tick = machclk_freq / hz;
+
+	callout_init(&tbr_callout, 0);
 
 #ifdef ALTQ_DEBUG
 	printf("altq: CPU clock: %uHz\n", machclk_freq);

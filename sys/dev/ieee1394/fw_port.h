@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.21.2.4 2007/05/27 14:30:09 ad Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.21.2.5 2007/07/01 21:47:58 ad Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -570,7 +570,7 @@ typedef struct lwp fw_proc;
 typedef struct proc fw_thread;
 #include <sys/select.h>
 
-#define CALLOUT_INIT(x) callout_init(x)
+#define CALLOUT_INIT(x) callout_init(x, 0)
 #define DEV_T dev_t
 #define FW_LOCK
 #define FW_UNLOCK

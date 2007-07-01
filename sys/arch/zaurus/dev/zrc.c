@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.3 2007/03/04 06:01:11 christos Exp $	*/
+/*	$NetBSD: zrc.c,v 1.3.2.1 2007/07/01 21:50:36 ad Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.3 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.3.2.1 2007/07/01 21:50:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,7 +172,7 @@ zrc_attach(struct device *parent, struct device *self, void *aux)
 	struct wskbddev_attach_args a;
 
 	/* Configure remote control interrupt handling. */
-	callout_init(&sc->sc_to);
+	callout_init(&sc->sc_to, 0);
 	callout_setfunc(&sc->sc_to, zrc_timeout, sc);
 	pxa2x0_gpio_set_function(C3000_RC_IRQ_PIN, GPIO_IN);
 	sc->sc_ih = pxa2x0_gpio_intr_establish(C3000_RC_IRQ_PIN,

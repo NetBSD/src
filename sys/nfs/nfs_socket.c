@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.148.2.4 2007/06/09 23:58:14 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.148.2.5 2007/07/01 21:50:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148.2.4 2007/06/09 23:58:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.148.2.5 2007/07/01 21:50:58 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -166,8 +166,7 @@ static const int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
 struct nfsreqhead nfs_reqq;
-
-struct callout nfs_timer_ch = CALLOUT_INITIALIZER_SETFUNC(nfs_timer, NULL);
+callout_t nfs_timer_ch;
 
 static int nfs_sndlock(struct nfsmount *, struct nfsreq *);
 static void nfs_sndunlock(struct nfsmount *);
@@ -1569,6 +1568,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
  * Scan the nfsreq list and retranmit any requests that have timed out
  * To avoid retransmission attempts on STREAM sockets (in the future) make
  * sure to set the r_retry field to 0 (implies nm_retry == 0).
+ * A non-NULL argument means 'initialize'.
  */
 void
 nfs_timer(void *arg)
@@ -1584,6 +1584,11 @@ nfs_timer(void *arg)
 	struct nfssvc_sock *slp;
 	u_quad_t cur_usec;
 #endif
+
+	if (arg != NULL) {
+		callout_init(&nfs_timer_ch, 0);
+		callout_setfunc(&nfs_timer_ch, nfs_timer, NULL);
+	}
 
 	s = splsoftnet();
 	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {

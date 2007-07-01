@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.14.2.1 2007/04/10 13:24:25 ad Exp $	 */
+/* $NetBSD: if_bce.c,v 1.14.2.2 2007/07/01 21:48:07 ad Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -139,7 +139,7 @@ struct bce_softc {
 	u_int32_t		bce_txin;	/* last tx descriptor seen */
 	int			bce_txsfree;	/* no. tx slots available */
 	int			bce_txsnext;	/* next available tx slot */
-	struct callout		bce_timeout;
+	callout_t		bce_timeout;
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
@@ -511,7 +511,7 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	rnd_attach_source(&sc->rnd_source, sc->bce_dev.dv_xname,
 	    RND_TYPE_NET, 0);
 #endif
-	callout_init(&sc->bce_timeout);
+	callout_init(&sc->bce_timeout, 0);
 }
 
 /* handle media, and ethernet requests */

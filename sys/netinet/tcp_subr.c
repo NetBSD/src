@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.212.2.2 2007/06/08 14:17:48 ad Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.212.2.3 2007/07/01 21:50:51 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.212.2.2 2007/06/08 14:17:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.212.2.3 2007/07/01 21:50:51 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -924,18 +924,6 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
  * the new TCPCB instead.
  */
 static struct tcpcb tcpcb_template = {
-	/*
-	 * If TCP_NTIMERS ever changes, we'll need to update this
-	 * initializer.
-	 */
-	.t_timer = {
-		CALLOUT_INITIALIZER,
-		CALLOUT_INITIALIZER,
-		CALLOUT_INITIALIZER,
-		CALLOUT_INITIALIZER,
-	},
-	.t_delack_ch = CALLOUT_INITIALIZER,
-
 	.t_srtt = TCPTV_SRTTBASE,
 	.t_rttmin = TCPTV_MIN,
 
@@ -1002,8 +990,11 @@ tcp_newtcpcb(int family, void *aux)
 	LIST_INIT(&tp->t_sc);		/* XXX can template this */
 
 	/* Don't sweat this loop; hopefully the compiler will unroll it. */
-	for (i = 0; i < TCPT_NTIMERS; i++)
+	for (i = 0; i < TCPT_NTIMERS; i++) {
+		callout_init(&tp->t_timer[i], 0);
 		TCP_TIMER_INIT(tp, i);
+	}
+	callout_init(&tp->t_delack_ch, 0);
 
 	switch (family) {
 	case AF_INET:
@@ -1034,6 +1025,9 @@ tcp_newtcpcb(int family, void *aux)
 	    }
 #endif /* INET6 */
 	default:
+		for (i = 0; i < TCPT_NTIMERS; i++)
+			callout_destroy(&tp->t_timer[i]);
+		callout_destroy(&tp->t_delack_ch);
 		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_usrreq */
 		return (NULL);
 	}
@@ -1103,13 +1097,16 @@ tcp_drop(struct tcpcb *tp, int errno)
 int
 tcp_isdead(struct tcpcb *tp)
 {
-	int dead = (tp->t_flags & TF_DEAD);
+	int i, dead = (tp->t_flags & TF_DEAD);
 
 	if (__predict_false(dead)) {
 		if (tcp_timers_invoking(tp) > 0)
 				/* not quite there yet -- count separately? */
 			return dead;
 		tcpstat.tcps_delayed_free++;
+		for (i = 0; i < TCPT_NTIMERS; i++)
+			callout_destroy(&tp->t_timer[i]);
+		callout_destroy(&tp->t_delack_ch);
 		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_timer.c */
 	}
 	return dead;
@@ -1133,6 +1130,7 @@ tcp_close(struct tcpcb *tp)
 	struct rtentry *rt;
 #endif
 	struct route *ro;
+	int j;
 
 	inp = tp->t_inpcb;
 #ifdef INET6
@@ -1239,8 +1237,12 @@ tcp_close(struct tcpcb *tp)
 	}
 	if (tcp_timers_invoking(tp))
 		tp->t_flags |= TF_DEAD;
-	else
+	else {
+		for (j = 0; j < TCPT_NTIMERS; j++)
+			callout_destroy(&tp->t_timer[j]);
+		callout_destroy(&tp->t_delack_ch);
 		pool_put(&tcpcb_pool, tp);
+	}
 
 	if (inp) {
 		inp->inp_ppcb = 0;

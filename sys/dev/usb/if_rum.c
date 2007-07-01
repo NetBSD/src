@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.7.2.2 2007/05/27 14:30:29 ad Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.7.2.3 2007/07/01 21:49:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.2 2007/05/27 14:30:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.3 2007/07/01 21:49:02 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -351,11 +351,11 @@ USB_ATTACH(rum)
 	}
 
 	usb_init_task(&sc->sc_task, rum_task, sc);
-	callout_init(&sc->scan_ch);
+	callout_init(&sc->scan_ch, 0);
 
 	sc->amrr.amrr_min_success_threshold =  1;
 	sc->amrr.amrr_max_success_threshold = 10;
-	callout_init(&sc->amrr_ch);
+	callout_init(&sc->amrr_ch, 0);
 
 	/* retrieve RT2573 rev. no */
 	for (ntries = 0; ntries < 1000; ntries++) {

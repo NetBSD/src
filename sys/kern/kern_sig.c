@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.251.2.4 2007/06/17 21:31:25 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.251.2.5 2007/07/01 21:50:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.251.2.4 2007/06/17 21:31:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.251.2.5 2007/07/01 21:50:39 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -124,7 +124,7 @@ sigset_t	contsigmask, stopsigmask, sigcantmask;
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
-static struct	callout proc_stop_ch;
+static callout_t proc_stop_ch;
 
 static struct pool_allocator sigactspool_allocator = {
         .pa_alloc = sigacts_poolpage_alloc,
@@ -165,7 +165,7 @@ signal_init(void)
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
-	callout_init(&proc_stop_ch);
+	callout_init(&proc_stop_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
 }
 

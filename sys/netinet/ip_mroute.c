@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.101.2.1 2007/06/08 14:17:46 ad Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.101.2.2 2007/07/01 21:50:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.101.2.1 2007/06/08 14:17:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.101.2.2 2007/07/01 21:50:49 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -629,15 +629,15 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 
 	pim_assert = 0;
 
-	callout_init(&expire_upcalls_ch);
+	callout_init(&expire_upcalls_ch, 0);
 	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
 		      expire_upcalls, NULL);
 
-	callout_init(&bw_upcalls_ch);
+	callout_init(&bw_upcalls_ch, 0);
 	callout_reset(&bw_upcalls_ch, BW_UPCALLS_PERIOD,
 		      expire_bw_upcalls_send, NULL);
 
-	callout_init(&bw_meter_ch);
+	callout_init(&bw_meter_ch, 0);
 	callout_reset(&bw_meter_ch, BW_METER_PERIOD,
 		      expire_bw_meter_process, NULL);
 
@@ -979,7 +979,7 @@ add_vif(struct mbuf *m)
 	vifp->v_bytes_in = 0;
 	vifp->v_bytes_out = 0;
 
-	callout_init(&vifp->v_repq_ch);
+	callout_init(&vifp->v_repq_ch, 0);
 
 #ifdef RSVP_ISI
 	vifp->v_rsvp_on = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.43.2.1 2007/05/27 14:30:22 ad Exp $	*/
+/*	$NetBSD: cz.c,v 1.43.2.2 2007/07/01 21:48:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.43.2.1 2007/05/27 14:30:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.43.2.2 2007/07/01 21:48:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ struct cztty_softc {
 	struct cz_softc *sc_parent;
 	struct tty *sc_tty;
 
-	struct callout sc_diag_ch;
+	callout_t sc_diag_ch;
 
 	int sc_channel;			/* Also used to flag unattached chan */
 #define CZTTY_CHANNEL_DEAD	-1
@@ -154,7 +154,7 @@ struct cz_softc {
 	struct plx9060_config cz_plx;	/* PLX 9060 config info */
 	bus_space_tag_t cz_win_st;	/* window space tag */
 	bus_space_handle_t cz_win_sh;	/* window space handle */
-	struct callout cz_callout;	/* callout for polling-mode */
+	callout_t cz_callout;		/* callout for polling-mode */
 
 	void *cz_ih;			/* interrupt handle */
 
@@ -364,7 +364,7 @@ cz_attach(struct device *parent,
 
  polling_mode:
 	if (cz->cz_ih == NULL) {
-		callout_init(&cz->cz_callout);
+		callout_init(&cz->cz_callout, 0);
 		if (cz_timeout_ticks == 0)
 			cz_timeout_ticks = max(1, hz * CZ_POLL_MS / 1000);
 		aprint_normal("%s: polling mode, %d ms interval (%d tick%s)\n",
@@ -419,7 +419,7 @@ cz_attach(struct device *parent,
 			continue;
 		}
 
-		callout_init(&sc->sc_diag_ch);
+		callout_init(&sc->sc_diag_ch, 0);
 
 		tp = ttymalloc();
 		tp->t_dev = makedev(cdevsw_lookup_major(&cz_cdevsw),

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.31 2007/03/04 06:02:13 christos Exp $	*/
+/*	$NetBSD: satlink.c,v 1.31.2.1 2007/07/01 21:48:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.31 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.31.2.1 2007/07/01 21:48:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ struct satlink_softc {
 	int	sc_lastresid;		/* residual */
 	struct selinfo sc_selq;		/* our select/poll queue */
 	struct	satlink_id sc_id;	/* ID cached at attach time */
-	struct callout sc_ch;		/* callout pseudo-interrupt */
+	callout_t sc_ch;		/* callout pseudo-interrupt */
 };
 
 /* sc_flags */
@@ -209,7 +209,7 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_id.sid_grpid, sc->sc_id.sid_userid,
 	    sc->sc_id.sid_serial);
 
-	callout_init(&sc->sc_ch);
+	callout_init(&sc->sc_ch, 0);
 
 	sc->sc_bufsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 

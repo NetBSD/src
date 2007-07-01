@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.50.2.1 2007/03/13 16:52:00 ad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.50.2.2 2007/07/01 21:50:43 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.50.2.1 2007/03/13 16:52:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.50.2.2 2007/07/01 21:50:43 ad Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -377,8 +377,8 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	/* Initialize our routing table. */
 	bridge_rtable_init(sc);
 
-	callout_init(&sc->sc_brcallout);
-	callout_init(&sc->sc_bstpcallout);
+	callout_init(&sc->sc_brcallout, 0);
+	callout_init(&sc->sc_bstpcallout, 0);
 
 	LIST_INIT(&sc->sc_iflist);
 

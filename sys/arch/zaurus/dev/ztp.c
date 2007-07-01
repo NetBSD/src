@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.2 2007/03/04 06:01:11 christos Exp $	*/
+/*	$NetBSD: ztp.c,v 1.2.2.1 2007/07/01 21:50:36 ad Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.2 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.2.2.1 2007/07/01 21:50:36 ad Exp $");
 
 #include "lcd.h"
 
@@ -127,7 +127,7 @@ ztp_attach(struct device *parent, struct device *self, void *aux)
 	struct ztp_softc *sc = (struct ztp_softc *)self;
 	struct wsmousedev_attach_args a;  
 
-	callout_init(&sc->sc_tp_poll);
+	callout_init(&sc->sc_tp_poll, 0);
 	callout_setfunc(&sc->sc_tp_poll, ztp_poll, sc);
 
 	/* Initialize ADS7846 Difference Reference mode */

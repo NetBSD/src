@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.193.2.5 2007/06/08 14:17:27 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.193.2.6 2007/07/01 21:50:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.5 2007/06/08 14:17:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.6 2007/07/01 21:50:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2536,7 +2536,7 @@ ttymalloc(void)
 	tp = pool_get(&tty_pool, PR_WAITOK);
 	memset(tp, 0, sizeof(*tp));
 	mutex_init(&tp->t_lock, MUTEX_DRIVER, IPL_TTY);
-	callout_init(&tp->t_rstrt_ch);
+	callout_init(&tp->t_rstrt_ch, 0);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);
@@ -2562,6 +2562,7 @@ ttyfree(struct tty *tp)
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
+	callout_destroy(&tp->t_rstrt_ch);
 	mutex_destroy(&tp->t_lock);
 	pool_put(&tty_pool, tp);
 }

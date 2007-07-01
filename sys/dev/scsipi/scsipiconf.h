@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.109.2.1 2007/04/09 22:10:00 ad Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.109.2.2 2007/07/01 21:48:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -388,7 +388,7 @@ struct scsipi_periph {
 	/* Pending scsipi_xfers on this peripherial. */
 	struct scsipi_xfer_queue periph_xferq;
 
-	struct callout periph_callout;
+	callout_t periph_callout;
 
 	/* xfer which has a pending CHECK_CONDITION */
 	struct scsipi_xfer *periph_xscheck;
@@ -498,9 +498,9 @@ typedef enum {
 struct scsipi_xfer {
 	TAILQ_ENTRY(scsipi_xfer) channel_q; /* entry on channel queue */
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
-	struct callout xs_callout;	/* callout for adapter use */
+	callout_t xs_callout;		/* callout for adapter use */
 	int	xs_control;		/* control flags */
-	volatile int xs_status;	/* status flags */
+	volatile int xs_status;		/* status flags */
 	struct scsipi_periph *xs_periph;/* peripherial doing the xfer */
 	int	xs_retries;		/* the number of times to retry */
 	int	xs_requeuecnt;		/* number of requeues */

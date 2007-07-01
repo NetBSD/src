@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.58 2007/03/04 06:02:45 christos Exp $	*/
+/*	$NetBSD: kbd.c,v 1.58.2.1 2007/07/01 21:49:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.58 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.58.2.1 2007/07/01 21:49:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +543,7 @@ kbd_cc_open(struct cons_channel *cc)
 	/* XXX: verify that callout is not active? */
 	k->k_repeat_start = hz/2;
 	k->k_repeat_step = hz/20;
-	callout_init(&k->k_repeat_ch);
+	callout_init(&k->k_repeat_ch, 0);
 
 	return (ret);
 }
@@ -1035,7 +1035,7 @@ kbd_enable(struct device *dev)
 	/* Attach the wskbd */
 	k->k_wskbd = config_found(&k->k_dev, &a, wskbddevprint);
 
-	callout_init(&k->k_wsbell);
+	callout_init(&k->k_wsbell, 0);
 
 	wssunkbd_enable(k,1);
 	

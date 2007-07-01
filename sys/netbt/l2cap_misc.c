@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_misc.c,v 1.1.24.2 2007/06/08 14:17:41 ad Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.1.24.3 2007/07/01 21:50:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.24.2 2007/06/08 14:17:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.1.24.3 2007/07/01 21:50:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -130,7 +130,7 @@ l2cap_request_alloc(struct l2cap_channel *chan, uint8_t code)
 	req->lr_chan = chan;
 	req->lr_link = link;
 
-	callout_init(&req->lr_rtx);
+	callout_init(&req->lr_rtx, 0);
 	callout_reset(&req->lr_rtx, l2cap_response_timeout*hz, l2cap_rtx, req);
 
 	TAILQ_INSERT_TAIL(&link->hl_reqs, req, lr_next);

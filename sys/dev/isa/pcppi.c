@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.22 2006/12/10 22:10:57 cube Exp $ */
+/* $NetBSD: pcppi.c,v 1.22.6.1 2007/07/01 21:48:02 ad Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.22 2006/12/10 22:10:57 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.22.6.1 2007/07/01 21:48:02 ad Exp $");
 
 #include "attimer.h"
 
@@ -172,7 +172,7 @@ pcppi_attach(struct pcppi_softc *sc)
 {
         struct pcppi_attach_args pa;
 
-        callout_init(&sc->sc_bell_ch);
+        callout_init(&sc->sc_bell_ch, 0);
 
         sc->sc_bellactive = sc->sc_bellpitch = sc->sc_slp = 0;
 

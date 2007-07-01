@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.20 2007/03/04 06:03:31 christos Exp $
+ *	$Id: i4b_rbch.c,v 1.20.2.1 2007/07/01 21:50:56 ad Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.20 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.20.2.1 2007/07/01 21:50:56 ad Exp $");
 
 #include "isdnbchan.h"
 
@@ -350,7 +350,7 @@ isdnbchanattach()
 		callout_handle_init(&rbch_softc[i].sc_callout);
 #endif
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
-		callout_init(&rbch_softc[i].sc_callout);
+		callout_init(&rbch_softc[i].sc_callout, 0);
 #endif
 		rbch_softc[i].sc_fn = 1;
 #endif

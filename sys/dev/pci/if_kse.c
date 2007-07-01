@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.3 2007/03/04 06:02:20 christos Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.3.2.1 2007/07/01 21:48:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.3 2007/03/04 06:02:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.3.2.1 2007/07/01 21:48:09 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -199,7 +199,7 @@ struct kse_softc {
 	struct ifmedia sc_media;	/* ifmedia information */
 	int sc_media_status;		/* PHY */
 	int sc_media_active;		/* PHY */
-	struct callout sc_callout;	/* tick callout */
+	callout_t sc_callout;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -457,7 +457,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 
 	ifmedia_init(&sc->sc_media, 0, ifmedia_upd, ifmedia_sts);
 	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);

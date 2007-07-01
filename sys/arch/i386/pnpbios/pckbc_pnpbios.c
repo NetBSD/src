@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.10.8.1 2007/07/01 21:50:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.10.8.1 2007/07/01 21:50:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ pckbc_pnpbios_attach(struct device *parent, struct device *self,
 			t->t_ioh_c = ioh_c;
 			t->t_addr = iobase;
 			t->t_cmdbyte = KC8_CPU;	/* Enable ports */
-			callout_init(&t->t_cleanup);
+			callout_init(&t->t_cleanup, 0);
 		}
 
 		t->t_sc = &first->sc_pckbc;

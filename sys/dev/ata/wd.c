@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337.2.4 2007/06/17 21:30:54 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.5 2007/07/01 21:47:42 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.4 2007/06/17 21:30:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.5 2007/07/01 21:47:42 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -301,7 +301,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	const struct wd_quirk *wdq;
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
-	callout_init(&wd->sc_restart_ch);
+	callout_init(&wd->sc_restart_ch, 0);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 #ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);

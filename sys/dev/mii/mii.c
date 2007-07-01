@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.40 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: mii.c,v 1.40.30.1 2007/07/01 21:48:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.40 2005/12/11 12:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.40.30.1 2007/07/01 21:48:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -149,7 +149,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 			/*
 			 * Link it up in the parent's MII data.
 			 */
-			callout_init(&child->mii_nway_ch);
+			callout_init(&child->mii_nway_ch, 0);
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
 			child->mii_offset = offset;
 			mii->mii_instance++;

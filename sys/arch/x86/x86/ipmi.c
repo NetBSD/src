@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.5.6.3 2007/05/13 17:36:19 ad Exp $ */
+/*	$NetBSD: ipmi.c,v 1.5.6.4 2007/07/01 21:50:35 ad Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5.6.3 2007/05/13 17:36:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5.6.4 2007/07/01 21:50:35 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1832,7 +1832,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 0;
 	sc->sc_max_retries = 50; /* 50 * 1/100 = 0.5 seconds max */
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, _bmc_io_wait, sc);
 
 	if (kthread_create(PRI_NONE, 0, NULL, ipmi_poll_thread, sc,

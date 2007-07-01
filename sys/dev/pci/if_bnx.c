@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.3.2.1 2007/04/10 13:24:25 ad Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.3.2.2 2007/07/01 21:48:08 ad Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.3.2.1 2007/04/10 13:24:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.3.2.2 2007/07/01 21:48:08 ad Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -709,7 +709,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp,sc->eaddr);
 
-	callout_init(&sc->bnx_timeout);
+	callout_init(&sc->bnx_timeout, 0);
 
 	/* Print some important debugging info. */
 	DBRUN(BNX_INFO, bnx_dump_driver_state(sc));

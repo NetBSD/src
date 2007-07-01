@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.97 2007/03/04 06:02:11 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.97.2.1 2007/07/01 21:48:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.97 2007/03/04 06:02:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.97.2.1 2007/07/01 21:48:01 ad Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -188,7 +188,7 @@ struct gus_softc {
 	bus_space_handle_t sc_ioh3;	/* ICS2101 handle */
 	bus_space_handle_t sc_ioh4;	/* MIDI handle */
 
-	struct callout sc_dmaout_ch;
+	callout_t sc_dmaout_ch;
 
 	int sc_iobase;			/* I/O base address */
 	int sc_irq;			/* IRQ used */
@@ -834,7 +834,7 @@ gusattach(struct device *parent, struct device *self, void *aux)
 
 	sc = (void *) self;
 	ia = aux;
-	callout_init(&sc->sc_dmaout_ch);
+	callout_init(&sc->sc_dmaout_ch, 0);
 
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;

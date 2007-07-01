@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridgevar.h,v 1.10 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if_bridgevar.h,v 1.10.2.1 2007/07/01 21:50:43 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -293,8 +293,8 @@ struct bridge_softc {
 	uint32_t		sc_brtmax;	/* max # of addresses */
 	uint32_t		sc_brtcnt;	/* cur. # of addresses */
 	uint32_t		sc_brttimeout;	/* rt timeout in seconds */
-	struct callout		sc_brcallout;	/* bridge callout */
-	struct callout		sc_bstpcallout;	/* STP callout */
+	callout_t		sc_brcallout;	/* bridge callout */
+	callout_t		sc_bstpcallout;	/* STP callout */
 	LIST_HEAD(, bridge_iflist) sc_iflist;	/* member interface list */
 	LIST_HEAD(, bridge_rtnode) *sc_rthash;	/* our forwarding table */
 	LIST_HEAD(, bridge_rtnode) sc_rtlist;	/* list version of above */

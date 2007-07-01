@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.6 2007/06/17 21:31:26 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.7 2007/07/01 21:50:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.6 2007/06/17 21:31:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.7 2007/07/01 21:50:40 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -237,7 +237,7 @@ sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
 int
 sleepq_block(int timo, bool catch)
 {
-	int error = 0, expired, sig;
+	int error = 0, sig;
 	struct proc *p;
 	lwp_t *l = curlwp;
 
@@ -281,9 +281,7 @@ sleepq_block(int timo, bool catch)
 		 * Even if the callout appears to have fired, we need to
 		 * stop it in order to synchronise with other CPUs.
 		 */
-		expired = callout_expired(&l->l_tsleep_ch);
-		callout_stop(&l->l_tsleep_ch);
-		if (expired)
+		if (callout_stop(&l->l_tsleep_ch))
 			error = EWOULDBLOCK;
 	}
 

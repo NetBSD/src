@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrtimer.c,v 1.3.30.1 2007/06/08 14:17:39 ad Exp $	*/
+/*	$NetBSD: if_agrtimer.c,v 1.3.30.2 2007/07/01 21:50:46 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrtimer.c,v 1.3.30.1 2007/06/08 14:17:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrtimer.c,v 1.3.30.2 2007/07/01 21:50:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -46,7 +46,7 @@ void
 agrtimer_init(struct agr_softc *sc)
 {
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, agrtimer_tick, sc);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.31 2007/03/04 06:02:27 christos Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.31.2.1 2007/07/01 21:48:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.31 2007/03/04 06:02:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.31.2.1 2007/07/01 21:48:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ esp_pcmcia_init(esc)
 	sc->sc_glue = &esp_pcmcia_glue;
 
 #ifdef ESP_PCMCIA_POLL
-	callout_init(&esc->sc_poll_ch);
+	callout_init(&esc->sc_poll_ch, 0);
 #endif
 
 	sc->sc_rev = NCR_VARIANT_ESP406;

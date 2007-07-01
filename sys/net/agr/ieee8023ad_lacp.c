@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.5.4.1 2007/06/08 14:17:38 ad Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.5.4.2 2007/07/01 21:50:46 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.5.4.1 2007/06/08 14:17:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.5.4.2 2007/07/01 21:50:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -458,7 +458,7 @@ ieee8023ad_ctor(struct agr_softc *sc)
 
 	lsc->lsc_active_aggregator = NULL;
 	TAILQ_INIT(&lsc->lsc_aggregators);
-	callout_init(&lsc->lsc_transit_callout);
+	callout_init(&lsc->lsc_transit_callout, 0);
 	callout_setfunc(&lsc->lsc_transit_callout, lacp_transit_expire, sc);
 }
 

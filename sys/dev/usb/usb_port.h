@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.74.2.2 2007/04/10 12:07:12 ad Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.74.2.3 2007/07/01 21:49:02 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -122,7 +122,8 @@ typedef struct device *device_ptr_t;
 	} usb_dma_t
 
 typedef struct callout usb_callout_t;
-#define usb_callout_init(h)	callout_init(&(h))
+#define usb_callout_init(h)	callout_init(&(h), 0)
+#define usb_callout_destroy(h)	callout_destroy((&h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
 

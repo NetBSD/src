@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.5.2.3 2007/06/08 14:17:42 ad Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.5.2.4 2007/07/01 21:50:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.5.2.3 2007/06/08 14:17:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.5.2.4 2007/07/01 21:50:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -170,7 +170,7 @@ rfcomm_session_alloc(struct rfcomm_session_list *list,
 
 	rs->rs_state = RFCOMM_SESSION_CLOSED;
 
-	callout_init(&rs->rs_timeout);
+	callout_init(&rs->rs_timeout, 0);
 	callout_setfunc(&rs->rs_timeout, rfcomm_session_timeout, rs);
 
 	SIMPLEQ_INIT(&rs->rs_credits);

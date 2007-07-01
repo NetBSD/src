@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.3 2007/03/04 06:01:11 christos Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.3.2.1 2007/07/01 21:50:36 ad Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.3 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.3.2.1 2007/07/01 21:50:36 ad Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -258,7 +258,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
-	callout_init(&sc->sc_roll_to);
+	callout_init(&sc->sc_roll_to, 0);
 	callout_setfunc(&sc->sc_roll_to, zkbd_poll, sc);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	callout_setfunc(&sc->sc_rawrepeat_ch, zkbd_rawrepeat, sc);

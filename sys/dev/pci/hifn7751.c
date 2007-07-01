@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.34 2007/03/04 06:02:18 christos Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.34.2.1 2007/07/01 21:48:07 ad Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.34 2007/03/04 06:02:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.34.2.1 2007/07/01 21:48:07 ad Exp $");
 
 #include "rnd.h"
 
@@ -444,7 +444,7 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_tickto, hifn_tick, sc);
 	timeout_add(&sc->sc_tickto, hz);
 #else
-	callout_init(&sc->sc_tickto);
+	callout_init(&sc->sc_tickto, 0);
 	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
 #endif
 	return;
@@ -542,7 +542,7 @@ hifn_init_pubrng(struct hifn_softc *sc)
 #ifdef	__OpenBSD__
 		timeout_set(&sc->sc_rngto, hifn_rng, sc);
 #else	/* !__OpenBSD__ */
-		callout_init(&sc->sc_rngto);
+		callout_init(&sc->sc_rngto, 0);
 #endif	/* !__OpenBSD__ */
 	}
 

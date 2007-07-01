@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.9 2007/03/04 06:01:46 christos Exp $ */
+/*	$NetBSD: mt.c,v 1.9.2.1 2007/07/01 21:47:44 ad Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.9 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.9.2.1 2007/07/01 21:47:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,8 @@ mtattach(parent, self, aux)
 	sc->sc_flags = MTF_EXISTS;
 
 	bufq_alloc(&sc->sc_tab, "fcfs", 0);
-	callout_init(&sc->sc_start_ch);
-	callout_init(&sc->sc_intr_ch);
+	callout_init(&sc->sc_start_ch, 0);
+	callout_init(&sc->sc_intr_ch, 0);
 
 	if (gpibregister(sc->sc_ic, sc->sc_slave, mtcallback, sc,
 	    &sc->sc_hdl)) {

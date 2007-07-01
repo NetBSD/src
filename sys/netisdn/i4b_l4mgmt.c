@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l4mgmt.c,v 1.16 2006/06/07 22:34:04 kardel Exp $	*/
+/*	$NetBSD: i4b_l4mgmt.c,v 1.16.16.1 2007/07/01 21:50:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.16 2006/06/07 22:34:04 kardel Exp $
+ *	$Id: i4b_l4mgmt.c,v 1.16.16.1 2007/07/01 21:50:56 ad Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.16 2006/06/07 22:34:04 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.16.16.1 2007/07/01 21:50:56 ad Exp $");
 
 #include "isdn.h"
 
@@ -365,14 +365,14 @@ i4b_init_callout(call_desc_t *cd)
 {
 	if(cd->callouts_inited == 0)
 	{
-		callout_init(&cd->idle_timeout_handle);
-		callout_init(&cd->T303_callout);
-		callout_init(&cd->T305_callout);
-		callout_init(&cd->T308_callout);
-		callout_init(&cd->T309_callout);
-		callout_init(&cd->T310_callout);
-		callout_init(&cd->T313_callout);
-		callout_init(&cd->T400_callout);
+		callout_init(&cd->idle_timeout_handle, 0);
+		callout_init(&cd->T303_callout, 0);
+		callout_init(&cd->T305_callout, 0);
+		callout_init(&cd->T308_callout, 0);
+		callout_init(&cd->T309_callout, 0);
+		callout_init(&cd->T310_callout, 0);
+		callout_init(&cd->T313_callout, 0);
+		callout_init(&cd->T400_callout, 0);
 		cd->callouts_inited = 1;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.126.2.1 2007/03/13 16:50:23 ad Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.126.2.2 2007/07/01 21:47:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.126.2.1 2007/03/13 16:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.126.2.2 2007/07/01 21:47:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ ncr53c9x_attach(sc)
 
 	simple_lock_init(&sc->sc_lock);
 
-	callout_init(&sc->sc_watchdog);
+	callout_init(&sc->sc_watchdog, 0);
 
 	/*
 	 * Note, the front-end has set us up to print the chip variation.

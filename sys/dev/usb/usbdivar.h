@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.80 2007/02/26 13:23:59 drochner Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.80.4.1 2007/07/01 21:49:03 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -126,14 +126,7 @@ struct usbd_bus {
 #define USBREV_2_0	4
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0" }
 
-#ifdef USB_USE_SOFTINTR
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void		       *soft; /* soft interrupt cookie */
-#else
-	struct callout		softi;
-#endif
-#endif
-
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
 #endif

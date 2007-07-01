@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.97.2.1 2007/06/09 23:57:52 ad Exp $	*/
+/*	$NetBSD: mcd.c,v 1.97.2.2 2007/07/01 21:48:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.97.2.1 2007/06/09 23:57:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.97.2.2 2007/07/01 21:48:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ struct mcd_softc {
 	struct	lock sc_lock;
 	void *sc_ih;
 
-	struct callout sc_pintr_ch;
+	callout_t sc_pintr_ch;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -261,7 +261,7 @@ mcdattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	bufq_alloc(&sc->buf_queue, "disksort", BUFQ_SORT_RAWBLOCK);
-	callout_init(&sc->sc_pintr_ch);
+	callout_init(&sc->sc_pintr_ch, 0);
 
 	/*
 	 * Initialize and attach the disk structure.

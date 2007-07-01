@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.149 2007/03/04 06:02:02 christos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.149.2.1 2007/07/01 21:47:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.149 2007/03/04 06:02:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.149.2.1 2007/07/01 21:47:56 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -201,8 +201,8 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
 
-	callout_init(&sc->sc_nway_callout);
-	callout_init(&sc->sc_tick_callout);
+	callout_init(&sc->sc_nway_callout, 0);
+	callout_init(&sc->sc_tick_callout, 0);
 
 	/*
 	 * NOTE: WE EXPECT THE FRONT-END TO INITIALIZE sc_regshift!

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.41.2.1 2007/05/13 17:36:23 ad Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.41.2.2 2007/07/01 21:47:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.41.2.1 2007/05/13 17:36:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.41.2.2 2007/07/01 21:47:45 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -317,7 +317,7 @@ hpcfbattach(struct device *parent,
 
 	sc->sc_polling = 0; /* XXX */
 	sc->sc_mapping = 0; /* XXX */
-	callout_init(&sc->sc_switch_callout);
+	callout_init(&sc->sc_switch_callout, 0);
 
 	/* Add a power hook to power management */
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
@@ -488,7 +488,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
 	dc->dc_scroll = 0;
-	callout_init(&dc->dc_scroll_ch);
+	callout_init(&dc->dc_scroll_ch, 0);
 #endif /* HPCFB_JUMP */
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
 	/* hook rasops in hpcfb_ops */

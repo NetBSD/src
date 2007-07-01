@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22.2.4 2007/06/23 18:06:02 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.5 2007/07/01 21:47:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.4 2007/06/23 18:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.5 2007/07/01 21:47:44 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -306,7 +306,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 
 	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 
-	callout_init(&sc->sc_restart_ch);
+	callout_init(&sc->sc_restart_ch, 0);
 	callout_setfunc(&sc->sc_restart_ch, dkrestart, sc);
 
 	/*
