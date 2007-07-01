@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.20 2007/07/01 17:23:44 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.21 2007/07/01 18:40:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -241,7 +241,7 @@ addrcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 
 int
 dtfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
-	void **fcookie, enum vtype *ftype, voff_t *fsize, dev_t *fdev)
+	struct puffs_newinfo *pni)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct dtfs_fid *dfid;
@@ -258,10 +258,10 @@ dtfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 	    || pn->pn_va.va_gen != dfid->dfid_gen)
 		return EINVAL;
 	
-	*fcookie = pn;
-	*ftype = pn->pn_va.va_type;
-	*fsize = pn->pn_va.va_size;
-	*fdev = pn->pn_va.va_rdev;
+	puffs_newinfo_setcookie(pni, pn);
+	puffs_newinfo_setvtype(pni, pn->pn_va.va_type);
+	puffs_newinfo_setsize(pni, pn->pn_va.va_size);
+	puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
 
 	return 0;
 }
