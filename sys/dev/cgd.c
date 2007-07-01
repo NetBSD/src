@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.44.2.1 2007/05/13 17:36:20 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.44.2.2 2007/07/01 17:35:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.1 2007/05/13 17:36:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.2 2007/07/01 17:35:21 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -296,6 +296,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	void *	addr;
 	void *	newaddr;
 	daddr_t	bn;
+	struct	vnode *vp;
 
 	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
 	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
@@ -342,7 +343,10 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	BIO_COPYPRIO(nbp, bp);
 
 	if ((nbp->b_flags & B_READ) == 0) {
-		V_INCR_NUMOUTPUT(nbp->b_vp);
+		vp = nbp->b_vp;
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
 	}
 	VOP_STRATEGY(cs->sc_tvn, nbp);
 	return 0;
