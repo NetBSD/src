@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.7 2007/07/01 07:37:15 xtraeme Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.8 2007/07/01 11:28:14 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -37,7 +37,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.7 2007/07/01 07:37:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.8 2007/07/01 11:28:14 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,24 +269,22 @@ int
 adt7467c_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct adt7467c_softc *sc=sme->sme_cookie;
-	envsys_data_t *cur_data;
 	int i;
 	uint8_t reg;
 	
 	i = edata->sensor;
-	cur_data = &sme->sme_sensor_data[i];
 	reg = sc->regs[i];
-	switch (cur_data->units)
+	switch (edata->units)
 	{
 		case ENVSYS_STEMP:
-			cur_data->value_cur = 
+			edata->value_cur = 
 			    temp2muk(adt7467c_readreg(sc, reg));
 			break;
 			
 		case ENVSYS_SVOLTS_DC:
 			{
 				uint32_t vr = adt7467c_readreg(sc, reg);
-				cur_data->value_cur = 
+				edata->value_cur = 
 				    (int)((vr * 2500000) / 0xc0);
 			}
 			break;
@@ -297,11 +295,11 @@ adt7467c_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 				blah = (((uint16_t)adt7467c_readreg(sc, reg)) | 
 				    ((uint16_t)adt7467c_readreg(sc, reg + 1) <<
 				    8));
-				cur_data->value_cur = reg2rpm(blah);
+				edata->value_cur = reg2rpm(blah);
 			}
 			break;
 	}
-	cur_data->state = ENVSYS_SVALID;
+	edata->state = ENVSYS_SVALID;
 	return 0;
 }
 #endif /* NSYSMON_ENVSYS > 0 */
