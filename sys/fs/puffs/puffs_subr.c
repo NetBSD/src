@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.37 2007/07/01 17:22:14 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.38 2007/07/01 22:54:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.37 2007/07/01 17:22:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.38 2007/07/01 22:54:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -442,16 +442,21 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock,
 
 void
 puffs_makecn(struct puffs_kcn *pkcn, struct puffs_kcred *pkcr,
-	struct puffs_kcid *pkcid, const struct componentname *cn)
+	struct puffs_kcid *pkcid, const struct componentname *cn, int full)
 {
 
 	pkcn->pkcn_nameiop = cn->cn_nameiop;
 	pkcn->pkcn_flags = cn->cn_flags;
 	puffs_cidcvt(pkcid, cn->cn_lwp);
 
-	(void)memcpy(pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
-	pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	if (full) {
+		(void)strcpy(pkcn->pkcn_name, cn->cn_nameptr);
+	} else {
+		(void)memcpy(pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
+		pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	}
 	pkcn->pkcn_namelen = cn->cn_namelen;
+	pkcn->pkcn_consume = 0;
 
 	puffs_credcvt(pkcr, cn->cn_cred);
 }
