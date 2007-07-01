@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.1 2007/05/19 12:03:30 pooka Exp $
+	$NetBSD: TODO,v 1.2 2007/07/01 23:04:13 pooka Exp $
 
 Document some possible user-visible changes that may take place.
 For a complete list, please dump my brain and excavate.
@@ -6,9 +6,6 @@ For a complete list, please dump my brain and excavate.
   * figure out what do to with struct vattr, maybe introduce some
     vattr-like puffs-specific structure (translation costs?) instead
     of direct exposure
-
-  * get rid of pid argument on most ops - virtually nobody (not the nfs guy)
-    uses it and we should provide the lwp also.  introduce puffs_caller(pcc)?
 
   * make puffs_node opaque outside the library
 
