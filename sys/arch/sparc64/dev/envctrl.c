@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.3 2007/05/02 11:40:44 tnn Exp $ */
+/*	$NetBSD: envctrl.c,v 1.4 2007/07/01 07:37:21 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.3 2007/05/02 11:40:44 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.4 2007/07/01 07:37:21 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,8 +79,7 @@ struct envctrl_softc {
 	kmutex_t sc_sleepmtx;
 
 	struct sysmon_envsys sc_sysmon;
-	struct envsys_basic_info sc_binfo[13];
-	struct envsys_tre_data sc_sensor[13];
+	envsys_data_t sc_sensor[13];
 	uint8_t sc_keyswitch;
 	uint8_t sc_fanstate;
 	uint8_t sc_ps_state[3];
@@ -95,8 +94,6 @@ CFATTACH_DECL(envctrl, sizeof(struct envctrl_softc),
 
 static void deferred_envctrl_thread(void *);
 static void envctrl_thread(void *);
-static int envctrl_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-static int envctrl_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 static void envctrl_sleep(struct envctrl_softc *, int);
 static int envctrl_write_1(struct envctrl_softc *, int, uint8_t);
 static int envctrl_write_2(struct envctrl_softc *, int, uint8_t, uint8_t);
@@ -111,12 +108,6 @@ static void envctrl_init_components(struct envctrl_softc *);
 static int envctrl_init_tables(struct envctrl_softc *, int);
 static void envctrl_update_sensors(struct envctrl_softc *);
 static void envctrl_interpolate_ob_table(int *, uint8_t *);
-
-static const struct envsys_range envctrl_ranges[] = {
-	{  0,  7,	ENVSYS_STEMP},
-	{  8,  9,	ENVSYS_SVOLTS_DC},
-	{ 10, 11,	ENVSYS_INTEGER}, 
-};
 
 static int
 envctrlmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -166,44 +157,36 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 	 * fill envsys sensor structures
 	 */
 	for (i = 0; i < 12; i++) {
-		sc->sc_binfo[i].sensor = i;
 		sc->sc_sensor[i].sensor = i;
-		sc->sc_binfo[i].validflags = ENVSYS_FVALID;
-		sc->sc_sensor[i].warnflags = ENVSYS_WARN_OK;
-		sc->sc_sensor[i].validflags = ENVSYS_FVALID;
+		sc->sc_sensor[i].state = ENVSYS_SVALID;
 	}
 
 	for (i = 0; i < 8; i++)
-		sc->sc_binfo[i].units = sc->sc_sensor[i].units = ENVSYS_STEMP;
+		sc->sc_sensor[i].units = ENVSYS_STEMP;
 
 	for (i = 0; i < 4; i++)
-		sprintf(sc->sc_binfo[i].desc, "CPU%i", i);
+		sprintf(sc->sc_sensor[i].desc, "CPU%i", i);
 
 	for (i = 4; i < 7; i++)
-		sprintf(sc->sc_binfo[i].desc, "PS%i", i - 4);
+		sprintf(sc->sc_sensor[i].desc, "PS%i", i - 4);
 
 	for (i = 8; i < 10; i++)
-		sc->sc_binfo[i].units = sc->sc_sensor[i].units =
-		    ENVSYS_SVOLTS_DC;
+		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
 
 	for (i = 10; i < 12; i++)
-		sc->sc_binfo[i].units = sc->sc_sensor[i].units =
-		    ENVSYS_INTEGER;
+		sc->sc_sensor[i].units = ENVSYS_INTEGER;
 
-	sprintf(sc->sc_binfo[7].desc, "ambient");
-	sprintf(sc->sc_binfo[8].desc, "cpufan voltage");
-	sprintf(sc->sc_binfo[9].desc, "psfan voltage");
-	sprintf(sc->sc_binfo[10].desc, "ps failed");
-	sprintf(sc->sc_binfo[11].desc, "fans failed");
+	sprintf(sc->sc_sensor[7].desc, "ambient");
+	sprintf(sc->sc_sensor[8].desc, "cpufan voltage");
+	sprintf(sc->sc_sensor[9].desc, "psfan voltage");
+	sprintf(sc->sc_sensor[10].desc, "ps failed");
+	sprintf(sc->sc_sensor[11].desc, "fans failed");
 
-	sc->sc_sysmon.sme_ranges = envctrl_ranges;
-	sc->sc_sysmon.sme_sensor_info = sc->sc_binfo;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
 	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = envctrl_gtredata;
-	sc->sc_sysmon.sme_streinfo = envctrl_streinfo;
+	sc->sc_sysmon.sme_flags = SME_DISABLE_GTREDATA;
 	sc->sc_sysmon.sme_nsensors = 12;
-	sc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
@@ -254,31 +237,6 @@ deferred_envctrl_thread(void *arg)
 	    &sc->sc_proc, "envctrl");
 	if (error)
 		panic("cannot start envctrl thread; error %d", error);
-}
-
-static int
-envctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
-{
-	struct envctrl_softc *sc = sme->sme_cookie;
-
-	*tred = sc->sc_sensor[tred->sensor];
-
-	return 0;
-}
-
-static int
-envctrl_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
-{
-	struct envctrl_softc *sc = sme->sme_cookie;
-
-	memcpy(sc->sc_binfo[binfo->sensor].desc, binfo->desc,
-	    sizeof(sc->sc_binfo[binfo->sensor].desc));
-	sc->sc_binfo[binfo->sensor].desc[
-	    sizeof(sc->sc_binfo[binfo->sensor].desc) - 1] = '\0';
-
-	binfo->validflags = ENVSYS_FVALID;
-
-	return 0;
 }
 
 static void
@@ -478,10 +436,10 @@ envctrl_update_sensors(struct envctrl_softc *sc)
 		if (temp != -1) {
 			if (cputemp_max < temp)
 				cputemp_max = temp;
-			sc->sc_sensor[i].cur.data_us = temp + 273150000;
-			sc->sc_sensor[i].validflags |= ENVSYS_FCURVALID;
+			sc->sc_sensor[i].value_cur = temp + 273150000;
+			sc->sc_sensor[i].state = ENVSYS_SVALID;
 		} else
-			sc->sc_sensor[i].validflags &= ~ENVSYS_FCURVALID;
+			sc->sc_sensor[i].state = ENVSYS_SINVALID;
 	}
 
 	/* read power supply state & temperature */
@@ -498,34 +456,34 @@ envctrl_update_sensors(struct envctrl_softc *sc)
 			temp = envctrl_get_pstemp(sc, i);
 			if (pstemp_max < temp)
 				pstemp_max = temp;
-			sc->sc_sensor[i + 4].cur.data_us = temp + 273150000;
-			sc->sc_sensor[i + 4].validflags |= ENVSYS_FCURVALID;
+			sc->sc_sensor[i + 4].value_cur = temp + 273150000;
+			sc->sc_sensor[i + 4].state = ENVSYS_SVALID;
 		} else
-			sc->sc_sensor[i + 4].validflags &= ~ENVSYS_FCURVALID;
+			sc->sc_sensor[i + 4].state = ENVSYS_SINVALID;
 	}
-	sc->sc_sensor[10].cur.data_s = nfail;
-	sc->sc_sensor[10].validflags |= ENVSYS_FCURVALID;
+	sc->sc_sensor[10].value_cur = nfail;
+	sc->sc_sensor[10].state = ENVSYS_SVALID;
 
 	/* read ambient temperature */
 	temp = envctrl_get_ambtemp(sc);
 	if (temp != -1) {
-		sc->sc_sensor[7].cur.data_us = temp + 273150000;
-		sc->sc_sensor[7].validflags |= ENVSYS_FCURVALID;
+		sc->sc_sensor[7].value_cur = temp + 273150000;
+		sc->sc_sensor[7].state = ENVSYS_SVALID;
 	} else
-		sc->sc_sensor[7].validflags &= ~ENVSYS_FCURVALID;
+		sc->sc_sensor[7].state = ENVSYS_SINVALID;
 
 	/* read fan state */
 	if (envctrl_read(sc, ENVCTRL_FANFAIL_ADDR, &sc->sc_fanstate, 1)) {
 		sc->sc_fanstate = 0;
-		sc->sc_sensor[11].validflags &= ~ENVSYS_FCURVALID;
+		sc->sc_sensor[11].state = ENVSYS_SINVALID;
 	} else {
 		nfail = 0;
 		for (i = 0; i < 8; i++) {
 			if (((sc->sc_fanstate >> i) & 1) == 0)
 				nfail++;
 		}
-		sc->sc_sensor[11].cur.data_s = nfail;
-		sc->sc_sensor[11].validflags |= ENVSYS_FCURVALID;
+		sc->sc_sensor[11].value_cur = nfail;
+		sc->sc_sensor[11].state = ENVSYS_SVALID;
 	}
 
 	/* read keyswitch */
@@ -546,10 +504,10 @@ envctrl_update_sensors(struct envctrl_softc *sc)
 	envctrl_set_fanvoltage(sc, ENVCTRL_FANPORT_CPU, cpufan_voltage);
 	envctrl_set_fanvoltage(sc, ENVCTRL_FANPORT_PS, psfan_voltage);
 
-	sc->sc_sensor[8].cur.data_us = cpufan_voltage * ENVCTRL_UVFACT;
-	sc->sc_sensor[9].cur.data_us = psfan_voltage * ENVCTRL_UVFACT;
-	sc->sc_sensor[8].validflags |= ENVSYS_FCURVALID;
-	sc->sc_sensor[9].validflags |= ENVSYS_FCURVALID;
+	sc->sc_sensor[8].value_cur = cpufan_voltage * ENVCTRL_UVFACT;
+	sc->sc_sensor[9].value_cur = psfan_voltage * ENVCTRL_UVFACT;
+	sc->sc_sensor[8].state = ENVSYS_SVALID;
+	sc->sc_sensor[9].state = ENVSYS_SVALID;
 }
 
 /*
