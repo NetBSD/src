@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.17 2007/07/01 15:32:02 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.18 2007/07/01 22:59:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -110,7 +110,7 @@ dtfs_genfile(struct puffs_node *dir, const struct puffs_cn *pcn,
 	df_dir = dir->pn_data;
 	dfd = emalloc(sizeof(struct dtfs_dirent));
 	dfd->dfd_node = newpn;
-	dfd->dfd_name = estrdup(pcn->pcn_name);
+	dfd->dfd_name = estrndup(pcn->pcn_name, pcn->pcn_namelen);
 	dfd->dfd_parent = dir;
 	dtfs_adddent(dir, dfd);
 
@@ -160,12 +160,12 @@ dtfs_dirgetnth(struct dtfs_file *searchdir, int n)
 }
 
 struct dtfs_dirent *
-dtfs_dirgetbyname(struct dtfs_file *searchdir, const char *fname)
+dtfs_dirgetbyname(struct dtfs_file *searchdir, const char *fname, size_t fnlen)
 {
 	struct dtfs_dirent *dirent;
 
 	LIST_FOREACH(dirent, &searchdir->df_dirents, dfd_entries)
-		if (strcmp(dirent->dfd_name, fname) == 0)
+		if (strncmp(dirent->dfd_name, fname, fnlen) == 0)
 			return dirent;
 
 	return NULL;
@@ -176,14 +176,14 @@ dtfs_dirgetbyname(struct dtfs_file *searchdir, const char *fname)
  */
 void
 dtfs_nukenode(struct puffs_node *nukeme, struct puffs_node *pn_parent,
-	const char *fname)
+	const char *fname, size_t fnlen)
 {
 	struct dtfs_dirent *dfd;
 	struct dtfs_mount *dtm;
 
 	assert(pn_parent->pn_va.va_type == VDIR);
 
-	dfd = dtfs_dirgetbyname(DTFS_PTOF(pn_parent), fname);
+	dfd = dtfs_dirgetbyname(DTFS_PTOF(pn_parent), fname, fnlen);
 	assert(dfd);
 
 	dtm = puffs_pn_getmntspecific(nukeme);
