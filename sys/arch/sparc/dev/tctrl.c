@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.39 2007/07/01 07:37:21 xtraeme Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.40 2007/07/01 20:01:44 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.39 2007/07/01 07:37:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.40 2007/07/01 20:01:44 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1335,7 +1335,7 @@ tctrl_lid_state(struct tctrl_softc *sc)
 	int state;
 	
 	state = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) ? 
-	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED;
 	sysmon_pswitch_event(&sc->sc_sm_lid, state);
 }
 
@@ -1345,7 +1345,7 @@ tctrl_ac_state(struct tctrl_softc *sc)
 	int state;
 	
 	state = (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) ? 
-	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED;
 	sysmon_pswitch_event(&sc->sc_sm_ac, state);
 }
 
