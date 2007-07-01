@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.314 2007/06/30 12:30:34 jmcneill Exp $
+#	$NetBSD: INSTALL,v 1.315 2007/07/01 11:15:14 xtraeme Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -428,6 +428,7 @@ aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+gcscide* 	at pci? dev ? function ? 	# AMD CS5535 Companion IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
