@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.66 2007/06/24 22:25:49 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.67 2007/07/01 15:30:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@ struct puffs_cc;
 
 struct puffs_getreq;
 struct puffs_putreq;
+struct puffs_cred;
 
 /* paths */
 struct puffs_pathobj {
@@ -112,12 +113,14 @@ struct puffs_usermount;
 
 struct puffs_cn {
 	struct puffs_kcn	*pcn_pkcnp;	/* kernel input */
+
+	struct puffs_cred	*pcn_cred;	/* cred used for lookup */
+
 	struct puffs_pathobj	pcn_po_full;	/* PUFFS_FLAG_BUILDPATH */
 };
 #define pcn_nameiop	pcn_pkcnp->pkcn_nameiop
 #define pcn_flags	pcn_pkcnp->pkcn_flags
 #define pcn_pid		pcn_pkcnp->pkcn_pid
-#define pcn_cred	pcn_pkcnp->pkcn_cred
 #define pcn_name	pcn_pkcnp->pkcn_name
 #define pcn_namelen	pcn_pkcnp->pkcn_namelen
 
@@ -363,7 +366,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 20
+#define PUFFS_DEVEL_LIBVERSION 21
 #define puffs_init(a,b,c,d) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
 

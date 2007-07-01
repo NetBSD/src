@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.80 2007/06/30 16:28:14 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.81 2007/07/01 15:30:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.80 2007/06/30 16:28:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.81 2007/07/01 15:30:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -454,7 +454,7 @@ puffs_lookup(void *v)
 		return 0;
 	}
 
-	puffs_makecn(&lookup_arg.pvnr_cn, cnp);
+	puffs_makecn(&lookup_arg.pvnr_cn, &lookup_arg.pvnr_cn_cred, cnp);
 
 	if (cnp->cn_flags & ISDOTDOT)
 		VOP_UNLOCK(dvp, 0);
@@ -539,7 +539,7 @@ puffs_create(void *v)
 	DPRINTF(("puffs_create: dvp %p, cnp: %s\n",
 	    ap->a_dvp, ap->a_cnp->cn_nameptr));
 
-	puffs_makecn(&create_arg.pvnr_cn, ap->a_cnp);
+	puffs_makecn(&create_arg.pvnr_cn, &create_arg.pvnr_cn_cred, ap->a_cnp);
 	create_arg.pvnr_va = *ap->a_vap;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_CREATE,
@@ -574,7 +574,7 @@ puffs_mknod(void *v)
 
 	PUFFS_VNREQ(mknod);
 
-	puffs_makecn(&mknod_arg.pvnr_cn, ap->a_cnp);
+	puffs_makecn(&mknod_arg.pvnr_cn, &mknod_arg.pvnr_cn_cred, ap->a_cnp);
 	mknod_arg.pvnr_va = *ap->a_vap;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_MKNOD,
@@ -1202,7 +1202,7 @@ puffs_remove(void *v)
 	PUFFS_VNREQ(remove);
 
 	remove_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&remove_arg.pvnr_cn, ap->a_cnp);
+	puffs_makecn(&remove_arg.pvnr_cn, &remove_arg.pvnr_cn_cred, ap->a_cnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_REMOVE,
 	    &remove_arg, sizeof(remove_arg), 0, ap->a_dvp, ap->a_vp);
@@ -1230,7 +1230,7 @@ puffs_mkdir(void *v)
 
 	PUFFS_VNREQ(mkdir);
 
-	puffs_makecn(&mkdir_arg.pvnr_cn, ap->a_cnp);
+	puffs_makecn(&mkdir_arg.pvnr_cn, &mkdir_arg.pvnr_cn_cred, ap->a_cnp);
 	mkdir_arg.pvnr_va = *ap->a_vap;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_MKDIR,
@@ -1262,7 +1262,7 @@ puffs_rmdir(void *v)
 	PUFFS_VNREQ(rmdir);
 
 	rmdir_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&rmdir_arg.pvnr_cn, ap->a_cnp);
+	puffs_makecn(&rmdir_arg.pvnr_cn, &rmdir_arg.pvnr_cn_cred, ap->a_cnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_RMDIR,
 	    &rmdir_arg, sizeof(rmdir_arg), 0, ap->a_dvp, ap->a_vp);
@@ -1289,7 +1289,7 @@ puffs_link(void *v)
 	PUFFS_VNREQ(link);
 
 	link_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&link_arg.pvnr_cn, ap->a_cnp);
+	puffs_makecn(&link_arg.pvnr_cn, &link_arg.pvnr_cn_cred, ap->a_cnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_LINK,
 	    &link_arg, sizeof(link_arg), 0, ap->a_dvp, ap->a_vp);
@@ -1317,30 +1317,34 @@ puffs_symlink(void *v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
+	struct puffs_vnreq_symlink *symlink_argp;
 	int error;
-
-	PUFFS_VNREQ(symlink); /* XXX: large structure */
 
 	*ap->a_vpp = NULL;
 
-	puffs_makecn(&symlink_arg.pvnr_cn, ap->a_cnp);
-	symlink_arg.pvnr_va = *ap->a_vap;
-	(void)strlcpy(symlink_arg.pvnr_link, ap->a_target,
-	    sizeof(symlink_arg.pvnr_link));
+	symlink_argp = malloc(sizeof(struct puffs_vnreq_symlink),
+	    M_PUFFS, M_ZERO | M_WAITOK);
+	puffs_makecn(&symlink_argp->pvnr_cn,
+	    &symlink_argp->pvnr_cn_cred, ap->a_cnp);
+	symlink_argp->pvnr_va = *ap->a_vap;
+	(void)strlcpy(symlink_argp->pvnr_link, ap->a_target,
+	    sizeof(symlink_argp->pvnr_link));
 
 	error =  puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount),
-	    PUFFS_VN_SYMLINK, &symlink_arg, sizeof(symlink_arg), 0,
+	    PUFFS_VN_SYMLINK, symlink_argp, sizeof(*symlink_argp), 0,
 	    ap->a_dvp, NULL);
 	if (error)
 		goto out;
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
-	    symlink_arg.pvnr_newnode, ap->a_cnp, VLNK, 0);
+	    symlink_argp->pvnr_newnode, ap->a_cnp, VLNK, 0);
 
  out:
+	free(symlink_argp, M_PUFFS);
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 	vput(ap->a_dvp);
+
 	return error;
 }
 
@@ -1388,24 +1392,28 @@ puffs_rename(void *v)
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
 	} */ *ap = v;
+	struct puffs_vnreq_rename *rename_argp = NULL;
 	int error;
-
-	PUFFS_VNREQ(rename);
 
 	if (ap->a_fvp->v_mount != ap->a_tdvp->v_mount)
 		ERROUT(EXDEV);
 
-	rename_arg.pvnr_cookie_src = VPTOPNC(ap->a_fvp);
-	rename_arg.pvnr_cookie_targdir = VPTOPNC(ap->a_tdvp);
+	rename_argp = malloc(sizeof(struct puffs_vnreq_rename),
+	    M_PUFFS, M_WAITOK | M_ZERO);
+
+	rename_argp->pvnr_cookie_src = VPTOPNC(ap->a_fvp);
+	rename_argp->pvnr_cookie_targdir = VPTOPNC(ap->a_tdvp);
 	if (ap->a_tvp)
-		rename_arg.pvnr_cookie_targ = VPTOPNC(ap->a_tvp);
+		rename_argp->pvnr_cookie_targ = VPTOPNC(ap->a_tvp);
 	else
-		rename_arg.pvnr_cookie_targ = NULL;
-	puffs_makecn(&rename_arg.pvnr_cn_src, ap->a_fcnp);
-	puffs_makecn(&rename_arg.pvnr_cn_targ, ap->a_tcnp);
+		rename_argp->pvnr_cookie_targ = NULL;
+	puffs_makecn(&rename_argp->pvnr_cn_src,
+	    &rename_argp->pvnr_cn_src_cred, ap->a_fcnp);
+	puffs_makecn(&rename_argp->pvnr_cn_targ,
+	    &rename_argp->pvnr_cn_targ_cred, ap->a_tcnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_fdvp->v_mount),
-	    PUFFS_VN_RENAME, &rename_arg, sizeof(rename_arg), 0,
+	    PUFFS_VN_RENAME, rename_argp, sizeof(*rename_argp), 0,
 	    ap->a_fdvp, NULL); /* XXX */
 
 	/*
@@ -1416,6 +1424,8 @@ puffs_rename(void *v)
 		puffs_updatenode(ap->a_fvp, PUFFS_UPDATECTIME);
 
  out:
+	if (rename_argp)
+		free(rename_argp, M_PUFFS);
 	if (ap->a_tvp != NULL)
 		vput(ap->a_tvp);
 	if (ap->a_tdvp == ap->a_tvp)
