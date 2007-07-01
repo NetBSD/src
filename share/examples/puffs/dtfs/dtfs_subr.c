@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.16 2007/06/06 01:55:02 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.17 2007/07/01 15:32:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -92,7 +92,7 @@ dtfs_genfile(struct puffs_node *dir, const struct puffs_cn *pcn,
 	assert(dir->pn_mnt != NULL);
 
 	uid = 0;
-	rv = puffs_cred_getuid(&pcn->pcn_cred, &uid);
+	rv = puffs_cred_getuid(pcn->pcn_cred, &uid);
 	assert(rv == 0);
 
 	if (type == VDIR) {
