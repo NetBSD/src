@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.9 2007/07/01 07:37:19 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.10 2007/07/01 22:20:34 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.9 2007/07/01 07:37:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.10 2007/07/01 22:20:34 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ it_refresh_temp(struct it_softc *sc, envsys_data_t *edata)
 	sdata = it_readreg(sc, IT_SENSORTEMPBASE + edata->sensor);
 	DPRINTF(("sdata[temp%d] 0x%x\n", edata->sensor, sdata));
 	/* Convert temperature to Fahrenheit degres */
-	sc->sc_data[edata->sensor].value_cur = sdata * 1000000 + 273150000;
+	edata->value_cur = sdata * 1000000 + 273150000;
 }
 
 static void
@@ -289,12 +289,12 @@ it_refresh_volts(struct it_softc *sc, envsys_data_t *edata)
 	sdata = it_readreg(sc, it_sensorvolt[i]);
 	DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
 	/* voltage returned as (mV >> 4) */
-	sc->sc_data[edata->sensor].value_cur = (sdata << 4);
+	edata->value_cur = (sdata << 4);
 	/* rfact is (factor * 10^4) */
-	sc->sc_data[edata->sensor].value_cur *= it_vrfact[i];
+	edata->value_cur *= it_vrfact[i];
 	/* division by 10 gets us back to uVDC */
-	sc->sc_data[edata->sensor].value_cur /= 10;
-	sc->sc_data[edata->sensor].rfact = it_vrfact[i];
+	edata->value_cur /= 10;
+	edata->rfact = it_vrfact[i];
 }
 
 static void
@@ -315,8 +315,7 @@ it_refresh_fans(struct it_softc *sc, envsys_data_t *edata)
 	} else {
 		if (i == 2)
 			divisor = divisor & 1 ? 3 : 1;
-		sc->sc_data[edata->sensor].value_cur =
-		    1350000 / (sdata << (divisor & 7));
+		edata->value_cur = 1350000 / (sdata << (divisor & 7));
 	}
 
 	DPRINTF(("sdata[fan%d] 0x%x div: 0x%x\n", i, sdata, divisor));
