@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.83 2007/07/01 22:54:16 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.84 2007/07/01 23:30:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.83 2007/07/01 22:54:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.84 2007/07/01 23:30:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2035,7 +2035,7 @@ puffs_strategy(void *v)
 	}
 
  out:
-	KASSERT(dofaf == 0 || error == 0);
+	KASSERT(dofaf == 0 || error == 0 || rw_argp == NULL);
 	if (rw_argp && !dofaf)
 		free(rw_argp, M_PUFFS);
 
