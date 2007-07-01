@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.81 2007/07/01 15:30:16 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.82 2007/07/01 17:22:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.81 2007/07/01 15:30:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.82 2007/07/01 17:22:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -454,7 +454,8 @@ puffs_lookup(void *v)
 		return 0;
 	}
 
-	puffs_makecn(&lookup_arg.pvnr_cn, &lookup_arg.pvnr_cn_cred, cnp);
+	puffs_makecn(&lookup_arg.pvnr_cn, &lookup_arg.pvnr_cn_cred,
+	    &lookup_arg.pvnr_cn_cid, cnp);
 
 	if (cnp->cn_flags & ISDOTDOT)
 		VOP_UNLOCK(dvp, 0);
@@ -539,7 +540,8 @@ puffs_create(void *v)
 	DPRINTF(("puffs_create: dvp %p, cnp: %s\n",
 	    ap->a_dvp, ap->a_cnp->cn_nameptr));
 
-	puffs_makecn(&create_arg.pvnr_cn, &create_arg.pvnr_cn_cred, ap->a_cnp);
+	puffs_makecn(&create_arg.pvnr_cn, &create_arg.pvnr_cn_cred,
+	    &create_arg.pvnr_cn_cid, ap->a_cnp);
 	create_arg.pvnr_va = *ap->a_vap;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_CREATE,
@@ -574,7 +576,8 @@ puffs_mknod(void *v)
 
 	PUFFS_VNREQ(mknod);
 
-	puffs_makecn(&mknod_arg.pvnr_cn, &mknod_arg.pvnr_cn_cred, ap->a_cnp);
+	puffs_makecn(&mknod_arg.pvnr_cn, &mknod_arg.pvnr_cn_cred,
+	    &mknod_arg.pvnr_cn_cid, ap->a_cnp);
 	mknod_arg.pvnr_va = *ap->a_vap;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_MKNOD,
@@ -619,7 +622,7 @@ puffs_open(void *v)
 
 	open_arg.pvnr_mode = mode;
 	puffs_credcvt(&open_arg.pvnr_cred, ap->a_cred);
-	open_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_cidcvt(&open_arg.pvnr_cid, ap->a_l);
 
 	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_OPEN,
 	    &open_arg, sizeof(open_arg), 0, vp, NULL);
@@ -645,7 +648,7 @@ puffs_close(void *v)
 	    M_PUFFS, M_WAITOK | M_ZERO);
 	close_argp->pvnr_fflag = ap->a_fflag;
 	puffs_credcvt(&close_argp->pvnr_cred, ap->a_cred);
-	close_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_cidcvt(&close_argp->pvnr_cid, ap->a_l);
 
 	puffs_vntouser_faf(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_CLOSE,
 	    close_argp, sizeof(struct puffs_vnreq_close), ap->a_vp);
@@ -676,8 +679,8 @@ puffs_access(void *v)
 		return 0;
 
 	access_arg.pvnr_mode = ap->a_mode;
-	access_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 	puffs_credcvt(&access_arg.pvnr_cred, ap->a_cred);
+	puffs_cidcvt(&access_arg.pvnr_cid, ap->a_l);
 
 	return puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_ACCESS,
 	    &access_arg, sizeof(access_arg), 0, vp, NULL);
@@ -707,7 +710,7 @@ puffs_getattr(void *v)
 
 	vattr_null(&getattr_arg.pvnr_va);
 	puffs_credcvt(&getattr_arg.pvnr_cred, ap->a_cred);
-	getattr_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_cidcvt(&getattr_arg.pvnr_cid, ap->a_l);
 
 	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_GETATTR,
 	    &getattr_arg, sizeof(getattr_arg), 0, vp, NULL);
@@ -789,7 +792,7 @@ puffs_setattr(void *v)
 
 	(void)memcpy(&setattr_arg.pvnr_va, vap, sizeof(struct vattr));
 	puffs_credcvt(&setattr_arg.pvnr_cred, ap->a_cred);
-	setattr_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_cidcvt(&setattr_arg.pvnr_cid, ap->a_l);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_SETATTR,
 	    &setattr_arg, sizeof(setattr_arg), 0, ap->a_vp, NULL);
@@ -824,7 +827,7 @@ puffs_inactive(void *v)
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
-	inactive_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_cidcvt(&inactive_arg.pvnr_cid, ap->a_l);
 
 	if (EXISTSOP(pmp, INACTIVE))
 		if (pmp->pmp_flags & PUFFS_KFLAG_IAONDEMAND)
@@ -900,7 +903,7 @@ puffs_reclaim(void *v)
 
 	reclaim_argp = malloc(sizeof(struct puffs_vnreq_reclaim),
 	    M_PUFFS, M_WAITOK | M_ZERO);
-	reclaim_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_cidcvt(&reclaim_argp->pvnr_cid, ap->a_l);
 
 	puffs_vntouser_faf(pmp, PUFFS_VN_RECLAIM,
 	    reclaim_argp, sizeof(struct puffs_vnreq_reclaim), ap->a_vp);
@@ -1043,7 +1046,7 @@ puffs_poll(void *v)
 			    M_PUFFS, M_ZERO | M_WAITOK);
 
 			poll_argp->pvnr_events = ap->a_events;
-			poll_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
+			puffs_cidcvt(&poll_argp->pvnr_cid, ap->a_l);
 
 			selrecord(ap->a_l, &pn->pn_sel);
 			puffs_vntouser_call(pmp, PUFFS_VN_POLL,
@@ -1141,7 +1144,7 @@ puffs_fsync(void *v)
 	fsync_argp->pvnr_flags = ap->a_flags;
 	fsync_argp->pvnr_offlo = ap->a_offlo;
 	fsync_argp->pvnr_offhi = ap->a_offhi;
-	fsync_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
+	puffs_cidcvt(&fsync_argp->pvnr_cid, ap->a_l);
 
 	/*
 	 * XXX: see comment at puffs_getattr about locking
@@ -1202,7 +1205,8 @@ puffs_remove(void *v)
 	PUFFS_VNREQ(remove);
 
 	remove_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&remove_arg.pvnr_cn, &remove_arg.pvnr_cn_cred, ap->a_cnp);
+	puffs_makecn(&remove_arg.pvnr_cn, &remove_arg.pvnr_cn_cred,
+	    &remove_arg.pvnr_cn_cid, ap->a_cnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_REMOVE,
 	    &remove_arg, sizeof(remove_arg), 0, ap->a_dvp, ap->a_vp);
@@ -1230,7 +1234,8 @@ puffs_mkdir(void *v)
 
 	PUFFS_VNREQ(mkdir);
 
-	puffs_makecn(&mkdir_arg.pvnr_cn, &mkdir_arg.pvnr_cn_cred, ap->a_cnp);
+	puffs_makecn(&mkdir_arg.pvnr_cn, &mkdir_arg.pvnr_cn_cred,
+	    &mkdir_arg.pvnr_cn_cid, ap->a_cnp);
 	mkdir_arg.pvnr_va = *ap->a_vap;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_MKDIR,
@@ -1262,7 +1267,8 @@ puffs_rmdir(void *v)
 	PUFFS_VNREQ(rmdir);
 
 	rmdir_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&rmdir_arg.pvnr_cn, &rmdir_arg.pvnr_cn_cred, ap->a_cnp);
+	puffs_makecn(&rmdir_arg.pvnr_cn, &rmdir_arg.pvnr_cn_cred,
+	    &rmdir_arg.pvnr_cn_cid, ap->a_cnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_RMDIR,
 	    &rmdir_arg, sizeof(rmdir_arg), 0, ap->a_dvp, ap->a_vp);
@@ -1289,7 +1295,8 @@ puffs_link(void *v)
 	PUFFS_VNREQ(link);
 
 	link_arg.pvnr_cookie_targ = VPTOPNC(ap->a_vp);
-	puffs_makecn(&link_arg.pvnr_cn, &link_arg.pvnr_cn_cred, ap->a_cnp);
+	puffs_makecn(&link_arg.pvnr_cn, &link_arg.pvnr_cn_cred,
+	    &link_arg.pvnr_cn_cid, ap->a_cnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_dvp->v_mount), PUFFS_VN_LINK,
 	    &link_arg, sizeof(link_arg), 0, ap->a_dvp, ap->a_vp);
@@ -1324,8 +1331,8 @@ puffs_symlink(void *v)
 
 	symlink_argp = malloc(sizeof(struct puffs_vnreq_symlink),
 	    M_PUFFS, M_ZERO | M_WAITOK);
-	puffs_makecn(&symlink_argp->pvnr_cn,
-	    &symlink_argp->pvnr_cn_cred, ap->a_cnp);
+	puffs_makecn(&symlink_argp->pvnr_cn, &symlink_argp->pvnr_cn_cred,
+		&symlink_argp->pvnr_cn_cid, ap->a_cnp);
 	symlink_argp->pvnr_va = *ap->a_vap;
 	(void)strlcpy(symlink_argp->pvnr_link, ap->a_target,
 	    sizeof(symlink_argp->pvnr_link));
@@ -1408,9 +1415,11 @@ puffs_rename(void *v)
 	else
 		rename_argp->pvnr_cookie_targ = NULL;
 	puffs_makecn(&rename_argp->pvnr_cn_src,
-	    &rename_argp->pvnr_cn_src_cred, ap->a_fcnp);
+	    &rename_argp->pvnr_cn_src_cred, &rename_argp->pvnr_cn_src_cid,
+	    ap->a_fcnp);
 	puffs_makecn(&rename_argp->pvnr_cn_targ,
-	    &rename_argp->pvnr_cn_targ_cred, ap->a_tcnp);
+	    &rename_argp->pvnr_cn_targ_cred, &rename_argp->pvnr_cn_targ_cid,
+	    ap->a_tcnp);
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_fdvp->v_mount),
 	    PUFFS_VN_RENAME, rename_argp, sizeof(*rename_argp), 0,
@@ -2057,7 +2066,7 @@ puffs_mmap(void *v)
 	if (EXISTSOP(pmp, MMAP)) {
 		mmap_arg.pvnr_fflags = ap->a_fflags;
 		puffs_credcvt(&mmap_arg.pvnr_cred, ap->a_cred);
-		mmap_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+		puffs_cidcvt(&mmap_arg.pvnr_cid, ap->a_l);
 
 		error = puffs_vntouser(pmp, PUFFS_VN_MMAP,
 		    &mmap_arg, sizeof(mmap_arg), 0,
