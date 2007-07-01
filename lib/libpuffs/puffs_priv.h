@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.14 2007/07/01 17:22:18 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.15 2007/07/01 17:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -177,23 +177,23 @@ struct puffs_putreq {
 
 #define PUFFS_MAKEKCRED(to, from)					\
 	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_kcred *to = (const struct puffs_kcred *)from
+	const struct puffs_kcred *to = (const void *)from
 #define PUFFS_MAKECRED(to, from)					\
 	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_cred *to = (const struct puffs_cred *)from
+	const struct puffs_cred *to = (const void *)from
 #define PUFFS_KCREDTOCRED(to, from)					\
 	/*LINTED: tnilxnaht, the cast is ok */				\
-	to = (struct puffs_cred *)from
+	to = (void *)from
 
 #define PUFFS_MAKEKCID(to, from)					\
 	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_kcid *to = (const struct puffs_kcid *)from
+	const struct puffs_kcid *to = (const void *)from
 #define PUFFS_MAKECID(to, from)						\
 	/*LINTED: tnilxnaht, the cast is ok */				\
-	const struct puffs_cid *to = (const struct puffs_cid *)from
+	const struct puffs_cid *to = (const void *)from
 #define PUFFS_KCIDTOCID(to, from)					\
 	/*LINTED: tnilxnaht, the cast is ok */				\
-	to = (struct puffs_cid *)from
+	to = (void *)from
 
 __BEGIN_DECLS
 
