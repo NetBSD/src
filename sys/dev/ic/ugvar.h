@@ -1,4 +1,4 @@
-/* $NetBSD: ugvar.h,v 1.1 2007/05/08 16:48:38 xtraeme Exp $ */
+/* $NetBSD: ugvar.h,v 1.2 2007/07/01 08:29:48 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -28,19 +28,6 @@
 #ifndef _UGVAR_H_
 #define _UGVAR_H_
 
-/*
- * sc->sensors sub-intervals for each unit type.
- */
-static const struct envsys_range ug_ranges[] = {
-	{ 0,	2,	ENVSYS_STEMP },
-	{ 14,	18,	ENVSYS_SFANRPM },
-	{ 1,	0,	ENVSYS_SVOLTS_AC },	/* None */
-	{ 3,	13,	ENVSYS_SVOLTS_DC },
-	{ 1,	0,	ENVSYS_SOHMS },		/* None */
-	{ 1,	0,	ENVSYS_SWATTS },	/* None */
-	{ 1,	0,	ENVSYS_SAMPS }		/* None */
-};
-
 struct ug_softc {
 	struct device sc_dev;
 
@@ -48,8 +35,7 @@ struct ug_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct sysmon_envsys sc_sysmon;
-	envsys_tre_data_t sc_data[UG_MAX_SENSORS];
-	envsys_basic_info_t sc_info[UG_MAX_SENSORS];
+	envsys_data_t sc_data[UG_MAX_SENSORS];
 	uint8_t version;
 	void *mbsens;
 };
@@ -81,8 +67,7 @@ int ug2_sync(struct ug_softc *);
 int ug2_read(struct ug_softc *, uint8_t, uint8_t, uint8_t, uint8_t*);
 
 /* Envsys */
-int ug_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
-int ug_streinfo_ni(struct sysmon_envsys *, envsys_basic_info_t *);
-int ug2_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
+int ug_gtredata(struct sysmon_envsys *, envsys_data_t *);
+int ug2_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 #endif		/* _UGVAR_H_ */
