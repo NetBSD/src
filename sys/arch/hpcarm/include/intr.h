@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.8 2006/12/21 15:55:23 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.9 2007/07/01 16:04:57 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -79,6 +79,7 @@
 void *softintr_establish(int, void (*)(void *), void *);
 void softintr_disestablish(void *);
 void softintr_schedule(void *);
+void setsoftnet(void);
 #endif
 
 #endif	/* _HPCARM_INTR_H */
