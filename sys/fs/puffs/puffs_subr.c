@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.35 2007/06/24 22:16:03 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.36 2007/07/01 15:30:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.35 2007/06/24 22:16:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.36 2007/07/01 15:30:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -441,37 +441,39 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock,
 }
 
 void
-puffs_makecn(struct puffs_kcn *pkcn, const struct componentname *cn)
+puffs_makecn(struct puffs_kcn *pkcn, struct puffs_kcred *pkcr,
+	const struct componentname *cn)
 {
 
 	pkcn->pkcn_nameiop = cn->cn_nameiop;
 	pkcn->pkcn_flags = cn->cn_flags;
 	pkcn->pkcn_pid = cn->cn_lwp->l_proc->p_pid;
-	puffs_credcvt(&pkcn->pkcn_cred, cn->cn_cred);
 
 	(void)memcpy(&pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
 	pkcn->pkcn_name[cn->cn_namelen] = '\0';
 	pkcn->pkcn_namelen = cn->cn_namelen;
+
+	puffs_credcvt(pkcr, cn->cn_cred);
 }
 
 /*
- * Convert given credentials to struct puffs_cred for userspace.
+ * Convert given credentials to struct puffs_kcred for userspace.
  */
 void
-puffs_credcvt(struct puffs_cred *pcr, const kauth_cred_t cred)
+puffs_credcvt(struct puffs_kcred *pkcr, const kauth_cred_t cred)
 {
 
-	memset(pcr, 0, sizeof(struct puffs_cred));
+	memset(pkcr, 0, sizeof(struct puffs_kcred));
 
 	if (cred == NOCRED || cred == FSCRED) {
-		pcr->pcr_type = PUFFCRED_TYPE_INTERNAL;
+		pkcr->pkcr_type = PUFFCRED_TYPE_INTERNAL;
 		if (cred == NOCRED)
-			pcr->pcr_internal = PUFFCRED_CRED_NOCRED;
+			pkcr->pkcr_internal = PUFFCRED_CRED_NOCRED;
 		if (cred == FSCRED)
-			pcr->pcr_internal = PUFFCRED_CRED_FSCRED;
+			pkcr->pkcr_internal = PUFFCRED_CRED_FSCRED;
  	} else {
-		pcr->pcr_type = PUFFCRED_TYPE_UUC;
-		kauth_cred_to_uucred(&pcr->pcr_uuc, cred);
+		pkcr->pkcr_type = PUFFCRED_TYPE_UUC;
+		kauth_cred_to_uucred(&pkcr->pkcr_uuc, cred);
 	}
 }
 

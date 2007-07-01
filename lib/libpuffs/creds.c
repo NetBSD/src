@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.10 2007/06/06 01:55:00 pooka Exp $	*/
+/*	$NetBSD: creds.c,v 1.11 2007/07/01 15:30:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.10 2007/06/06 01:55:00 pooka Exp $");
+__RCSID("$NetBSD: creds.c,v 1.11 2007/07/01 15:30:15 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -43,18 +43,21 @@ __RCSID("$NetBSD: creds.c,v 1.10 2007/06/06 01:55:00 pooka Exp $");
 #include <puffs.h>
 #include <string.h>
 
-#define UUCCRED(a) (a->pcr_type == PUFFCRED_TYPE_UUC)
-#define INTCRED(a) (a->pcr_type == PUFFCRED_TYPE_INTERNAL)
+#include "puffs_priv.h"
+
+#define UUCCRED(a) (a->pkcr_type == PUFFCRED_TYPE_UUC)
+#define INTCRED(a) (a->pkcr_type == PUFFCRED_TYPE_INTERNAL)
 
 int
 puffs_cred_getuid(const struct puffs_cred *pcr, uid_t *ruid)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 
-	if (!UUCCRED(pcr)) {
+	if (!UUCCRED(pkcr)) {
 		errno = EOPNOTSUPP;
 		return -1;
 	}
-	*ruid = pcr->pcr_uuc.cr_uid;
+	*ruid = pkcr->pkcr_uuc.cr_uid;
 
 	return 0;
 }
@@ -62,12 +65,13 @@ puffs_cred_getuid(const struct puffs_cred *pcr, uid_t *ruid)
 int
 puffs_cred_getgid(const struct puffs_cred *pcr, gid_t *rgid)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 
-	if (!UUCCRED(pcr)) {
+	if (!UUCCRED(pkcr)) {
 		errno = EOPNOTSUPP;
 		return -1;
 	}
-	*rgid = pcr->pcr_uuc.cr_gid;
+	*rgid = pkcr->pkcr_uuc.cr_gid;
 
 	return 0;
 }
@@ -75,15 +79,16 @@ puffs_cred_getgid(const struct puffs_cred *pcr, gid_t *rgid)
 int
 puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *rgids, short *ngids)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 	size_t ncopy;
 
-	if (!UUCCRED(pcr)) {
+	if (!UUCCRED(pkcr)) {
 		errno = EOPNOTSUPP;
 		return -1;
 	}
 
 	ncopy = MIN(*ngids, NGROUPS);
-	(void)memcpy(rgids, pcr->pcr_uuc.cr_groups, sizeof(gid_t) * ncopy);
+	(void)memcpy(rgids, pkcr->pkcr_uuc.cr_groups, sizeof(gid_t) * ncopy);
 	*ngids = (short)ncopy;
 
 	return 0;
@@ -92,22 +97,24 @@ puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *rgids, short *ngids)
 int
 puffs_cred_isuid(const struct puffs_cred *pcr, uid_t uid)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 
-	return UUCCRED(pcr) && pcr->pcr_uuc.cr_uid == uid;
+	return UUCCRED(pkcr) && pkcr->pkcr_uuc.cr_uid == uid;
 }
 
 int
 puffs_cred_hasgroup(const struct puffs_cred *pcr, gid_t gid)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 	short i;
 
-	if (!UUCCRED(pcr))
+	if (!UUCCRED(pkcr))
 		return 0;
 
-	if (pcr->pcr_uuc.cr_gid == gid)
+	if (pkcr->pkcr_uuc.cr_gid == gid)
 		return 1;
-	for (i = 0; i < pcr->pcr_uuc.cr_ngroups; i++)
-		if (pcr->pcr_uuc.cr_groups[i] == gid)
+	for (i = 0; i < pkcr->pkcr_uuc.cr_ngroups; i++)
+		if (pkcr->pkcr_uuc.cr_groups[i] == gid)
 			return 1;
 
 	return 0;
@@ -116,22 +123,25 @@ puffs_cred_hasgroup(const struct puffs_cred *pcr, gid_t gid)
 int
 puffs_cred_isregular(const struct puffs_cred *pcr)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 
-	return UUCCRED(pcr);
+	return UUCCRED(pkcr);
 }
 
 int
 puffs_cred_iskernel(const struct puffs_cred *pcr)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 
-	return INTCRED(pcr) && pcr->pcr_internal == PUFFCRED_CRED_NOCRED;
+	return INTCRED(pkcr) && pkcr->pkcr_internal == PUFFCRED_CRED_NOCRED;
 }
 
 int
 puffs_cred_isfs(const struct puffs_cred *pcr)
 {
+	PUFFS_MAKEKCRED(pkcr, pcr);
 
-	return INTCRED(pcr) && pcr->pcr_internal == PUFFCRED_CRED_FSCRED;
+	return INTCRED(pkcr) && pkcr->pkcr_internal == PUFFCRED_CRED_FSCRED;
 }
 
 int
