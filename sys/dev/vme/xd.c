@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.67 2007/03/04 22:12:44 mrg Exp $	*/
+/*	$NetBSD: xd.c,v 1.67.2.1 2007/07/01 21:49:03 ad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.67 2007/03/04 22:12:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.67.2.1 2007/07/01 21:49:03 ad Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -636,7 +636,7 @@ xdcattach(parent, self, aux)
 	/* init queue of waiting bufs */
 
 	bufq_alloc(&xdc->sc_wq, "fcfs", 0);
-	callout_init(&xdc->sc_tick_ch);
+	callout_init(&xdc->sc_tick_ch, 0);
 
 	/*
 	 * section 7 of the manual tells us how to init the controller:

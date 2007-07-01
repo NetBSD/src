@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.26.18.4 2007/05/13 17:36:38 ad Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.26.18.5 2007/07/01 21:50:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.26.18.4 2007/05/13 17:36:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.26.18.5 2007/07/01 21:50:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	error = rqp->sr_lerror = (m) ? SMB_TRAN_SEND(vcp, m, l) : ENOBUFS;
 	if (error == 0) {
 		if (rqp->sr_timo > 0) {
-			callout_init(&rqp->sr_timo_ch);
+			callout_init(&rqp->sr_timo_ch, 0);
 			callout_reset(&rqp->sr_timo_ch, rqp->sr_timo,
 				smb_iod_rqtimedout, rqp);
 		}

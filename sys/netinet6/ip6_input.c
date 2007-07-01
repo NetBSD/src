@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.98.2.2 2007/06/08 14:17:55 ad Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.98.2.3 2007/07/01 21:50:52 ad Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98.2.2 2007/06/08 14:17:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98.2.3 2007/07/01 21:50:52 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -161,6 +161,7 @@ static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
 void
 ip6_init()
 {
+	extern callout_t in6_tmpaddrtimer_ch;
 	const struct ip6protosw *pr;
 	int i;
 
@@ -186,6 +187,8 @@ ip6_init()
 	ip6flow_init(ip6_hashsize);
 #endif
 
+	callout_init(&in6_tmpaddrtimer_ch, 0);
+
 #ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
 	inet6_pfil_hook.ph_type = PFIL_TYPE_AF;
@@ -202,11 +205,11 @@ ip6_init2(void *dummy)
 {
 
 	/* nd6_timer_init */
-	callout_init(&nd6_timer_ch);
+	callout_init(&nd6_timer_ch, 0);
 	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
 
 	/* timer for regeneranation of temporary addresses randomize ID */
-	callout_init(&in6_tmpaddrtimer_ch);
+	callout_init(&in6_tmpaddrtimer_ch, 0);
 	callout_reset(&in6_tmpaddrtimer_ch,
 		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
 		       ip6_temp_regen_advance) * hz,

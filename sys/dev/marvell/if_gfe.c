@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.22 2007/03/07 09:15:21 he Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.22.2.1 2007/07/01 21:48:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.22 2007/03/07 09:15:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.22.2.1 2007/07/01 21:48:04 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -245,7 +245,7 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error(": failed to map registers\n");
 	}
 
-	callout_init(&sc->sc_co);
+	callout_init(&sc->sc_co, 0);
 
 	data = bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, ETH_EPAR);
 	phyaddr = ETH_EPAR_PhyAD_GET(data, sc->sc_macno);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.219 2007/03/04 06:02:03 christos Exp $	*/
+/*	$NetBSD: wi.c,v 1.219.2.1 2007/07/01 21:47:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.219 2007/03/04 06:02:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.219.2.1 2007/07/01 21:47:58 ad Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -547,7 +547,7 @@ wi_attach(struct wi_softc *sc, const u_int8_t *macaddr)
 	sc->sc_cnfauthmode = IEEE80211_AUTH_OPEN;
 	sc->sc_roaming_mode = 1;
 
-	callout_init(&sc->sc_rssadapt_ch);
+	callout_init(&sc->sc_rssadapt_ch, 0);
 
 	/*
 	 * Call MI attach routines.

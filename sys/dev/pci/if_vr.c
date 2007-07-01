@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.85 2007/03/04 06:02:23 christos Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.85.2.1 2007/07/01 21:48:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.85 2007/03/04 06:02:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.85.2.1 2007/07/01 21:48:13 ad Exp $");
 
 #include "rnd.h"
 
@@ -224,7 +224,7 @@ struct vr_softc {
 
 	uint8_t			vr_revid;	/* Rhine chip revision */
 
-	struct callout		vr_tick_ch;	/* tick callout */
+	callout_t		vr_tick_ch;	/* tick callout */
 
 	bus_dmamap_t		vr_cddmamap;	/* control data DMA map */
 #define	vr_cddma	vr_cddmamap->dm_segs[0].ds_addr
@@ -1503,7 +1503,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->vr_pc = pa->pa_pc;
 	sc->vr_tag = pa->pa_tag;
-	callout_init(&sc->vr_tick_ch);
+	callout_init(&sc->vr_tick_ch, 0);
 
 	vrt = vr_lookup(pa);
 	if (vrt == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.39 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: adv.c,v 1.39.2.1 2007/07/01 21:47:45 ad Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.39 2007/03/04 06:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.39.2.1 2007/07/01 21:47:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,7 @@ adv_init_ccb(sc, ccb)
 {
 	int	hashnum, error;
 
-	callout_init(&ccb->ccb_watchdog);
+	callout_init(&ccb->ccb_watchdog, 0);
 
 	/*
 	 * Create the DMA map for this CCB.

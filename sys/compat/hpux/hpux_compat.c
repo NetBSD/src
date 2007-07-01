@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.90.2.1 2007/05/27 14:34:54 ad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.90.2.2 2007/07/01 21:50:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.90.2.1 2007/05/27 14:34:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.90.2.2 2007/07/01 21:50:36 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1234,7 +1234,7 @@ hpux_sys_alarm_6x(struct lwp *l, void *v, register_t *retval)
 		ptp->pt_type = CLOCK_REALTIME;
 		ptp->pt_entry = CLOCK_REALTIME;
 		p->p_timers->pts_timers[ITIMER_REAL] = ptp;
-		callout_init(&ptp->pt_ch);
+		callout_init(&ptp->pt_ch, 0);
 	}
 
 	if (timerisset(&it.it_value)) {

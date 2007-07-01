@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.98.2.3 2007/05/13 17:36:24 ad Exp $	*/
+/*	$NetBSD: i82365.c,v 1.98.2.4 2007/07/01 21:47:49 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.98.2.3 2007/05/13 17:36:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.98.2.4 2007/07/01 21:47:49 ad Exp $");
 
 #define	PCICDEBUG
 
@@ -483,7 +483,7 @@ pcic_attach_socket_finish(h)
 	reg = PCIC_CSC_INTR_CD_ENABLE;
 	if (sc->irq == -1) {
 		if (sc->poll_established == 0) {
-			callout_init(&sc->poll_ch);
+			callout_init(&sc->poll_ch, 0);
 			callout_reset(&sc->poll_ch, hz / 2, pcic_poll_intr, sc);
 			sc->poll_established = 1;
 		}

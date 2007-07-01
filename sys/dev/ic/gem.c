@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.54.2.1 2007/05/27 14:30:01 ad Exp $ */
+/*	$NetBSD: gem.c,v 1.54.2.2 2007/07/01 21:47:48 ad Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.54.2.1 2007/05/27 14:30:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.54.2.2 2007/07/01 21:47:48 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -444,7 +444,7 @@ gem_attach(sc, enaddr)
 		    sc->sc_dev.dv_xname);
 #endif
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 	return;
 
 	/*

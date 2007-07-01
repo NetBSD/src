@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.117.2.2 2007/06/08 14:17:22 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.117.2.3 2007/07/01 21:50:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.117.2.2 2007/06/08 14:17:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.117.2.3 2007/07/01 21:50:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -685,7 +685,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_entry = timerid;
 	timerclear(&pt->pt_time.it_value);
 	if (id == CLOCK_REALTIME)
-		callout_init(&pt->pt_ch);
+		callout_init(&pt->pt_ch, 0);
 	else
 		pt->pt_active = 0;
 
@@ -713,9 +713,10 @@ sys_timer_delete(struct lwp *l, void *v, register_t *retval)
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
 
-	if (pt->pt_type == CLOCK_REALTIME)
+	if (pt->pt_type == CLOCK_REALTIME) {
 		callout_stop(&pt->pt_ch);
-	else if (pt->pt_active) {
+		callout_destroy(&pt->pt_ch);
+	} else if (pt->pt_active) {
 		s = splclock();
 		ptn = LIST_NEXT(pt, pt_list);
 		LIST_REMOVE(pt, pt_list);
@@ -1183,7 +1184,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		pt->pt_entry = which;
 		switch (which) {
 		case ITIMER_REAL:
-			callout_init(&pt->pt_ch);
+			callout_init(&pt->pt_ch, 0);
 			pt->pt_ev.sigev_signo = SIGALRM;
 			break;
 		case ITIMER_VIRTUAL:
@@ -1285,8 +1286,10 @@ timers_free(struct proc *p, int which)
 		}
 		for ( ; i < TIMER_MAX; i++)
 			if ((pt = pts->pts_timers[i]) != NULL) {
-				if (pt->pt_type == CLOCK_REALTIME)
+				if (pt->pt_type == CLOCK_REALTIME) {
 					callout_stop(&pt->pt_ch);
+					callout_destroy(&pt->pt_ch);
+				}
 				pts->pts_timers[i] = NULL;
 				pool_put(&ptimer_pool, pt);
 			}

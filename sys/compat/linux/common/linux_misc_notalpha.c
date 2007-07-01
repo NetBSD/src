@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.86.2.2 2007/05/27 14:35:07 ad Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.86.2.3 2007/07/01 21:50:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.86.2.2 2007/05/27 14:35:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.86.2.3 2007/07/01 21:50:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ linux_sys_alarm(l, v, retval)
 		ptp->pt_proc = p;
 		ptp->pt_type = CLOCK_REALTIME;
 		ptp->pt_entry = CLOCK_REALTIME;
-		callout_init(&ptp->pt_ch);
+		callout_init(&ptp->pt_ch, 0);
 		p->p_timers->pts_timers[ITIMER_REAL] = ptp;
 	}
 

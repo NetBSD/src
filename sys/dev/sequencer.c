@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.40.2.2 2007/06/17 21:30:52 ad Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.40.2.3 2007/07/01 21:47:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.40.2.2 2007/06/17 21:30:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.40.2.3 2007/07/01 21:47:41 ad Exp $");
 
 #include "sequencer.h"
 
@@ -148,7 +148,7 @@ sequencerattach(int n)
 
 	for (n = 0; n < NSEQUENCER; n++) {
 		sc = &seqdevs[n];
-		callout_init(&sc->sc_callout);
+		callout_init(&sc->sc_callout, 0);
 		sc->sih = softint_establish(SOFTINT_SERIAL, seq_softintr, sc);
 	}
 }

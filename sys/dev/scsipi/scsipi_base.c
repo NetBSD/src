@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.143.6.5 2007/05/13 17:36:28 ad Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.143.6.6 2007/07/01 21:48:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.5 2007/05/13 17:36:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143.6.6 2007/07/01 21:48:58 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -477,7 +477,7 @@ scsipi_get_xs(struct scsipi_periph *periph, int flags)
 
 	if (xs != NULL) {
 		memset(xs, 0, sizeof(*xs));
-		callout_init(&xs->xs_callout);
+		callout_init(&xs->xs_callout, 0);
 		xs->xs_periph = periph;
 		xs->xs_control = flags;
 		xs->xs_status = 0;

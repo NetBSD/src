@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.196.2.1 2007/05/13 17:36:29 ad Exp $ */
+/*	$NetBSD: st.c,v 1.196.2.2 2007/07/01 21:49:00 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.1 2007/05/13 17:36:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.2 2007/07/01 21:49:00 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -382,7 +382,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	 */
 	bufq_alloc(&st->buf_queue, "fcfs", 0);
 
-	callout_init(&st->sc_callout);
+	callout_init(&st->sc_callout, 0);
 
 	/*
 	 * Check if the drive is a known criminal and take

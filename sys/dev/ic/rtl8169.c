@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.83.2.2 2007/05/27 14:30:06 ad Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.83.2.3 2007/07/01 21:47:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -775,7 +775,7 @@ re_attach(struct rtk_softc *sc)
 	ifp->if_capenable = ifp->if_capabilities;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	callout_init(&sc->rtk_tick_ch);
+	callout_init(&sc->rtk_tick_ch, 0);
 
 	/* Do MII setup */
 	sc->mii.mii_ifp = ifp;

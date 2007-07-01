@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.16 2007/03/04 06:01:44 christos Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.16.2.1 2007/07/01 21:47:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.16 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.16.2.1 2007/07/01 21:47:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.16 2007/03/04 06:01:44 christos Ex
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
-struct callout arcbios_tty_ch = CALLOUT_INITIALIZER;
-
+callout_t  arcbios_tty_ch;
+bool arcbios_ch_init;
 static struct tty *arcbios_tty[1];
 
 void	arcbios_tty_start(struct tty *);
@@ -76,6 +76,11 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int unit = minor(dev);
 	struct tty *tp;
 	int s, error = 0, setuptimeout = 0;
+
+	if (!arcbios_ch_init) {
+		arcbios_ch_init = true;
+		callout_init(&arcbios_tty_ch);
+	}
 
 	if (unit != 0)
 		return (ENODEV);

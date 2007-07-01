@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.33.2.1 2007/06/08 14:18:12 ad Exp $ */
+/* $NetBSD: sched.h,v 1.33.2.2 2007/07/01 21:51:00 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -209,6 +209,7 @@ void preempt(void);
 int mi_switch(struct lwp *);
 
 void schedclock(struct lwp *);
+void sched_init(void);
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

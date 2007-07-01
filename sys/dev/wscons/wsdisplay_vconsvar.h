@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.6 2007/03/04 06:02:51 christos Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.6.2.1 2007/07/01 21:49:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -100,7 +100,7 @@ struct vcons_data {
 	/* virtual screen management stuff */
 	void (*switch_cb)(void *, int, int);
 	void *switch_cb_arg;
-	struct callout switch_callout;
+	callout_t switch_callout;
 	uint32_t switch_pending;
 	LIST_HEAD(, vcons_screen) screens;
 	struct vcons_screen *active, *wanted;

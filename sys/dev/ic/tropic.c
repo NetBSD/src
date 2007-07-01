@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.30 2007/03/04 06:02:02 christos Exp $	*/
+/*	$NetBSD: tropic.c,v 1.30.2.1 2007/07/01 21:47:55 ad Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.30 2007/03/04 06:02:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.30.2.1 2007/07/01 21:47:55 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -435,8 +435,8 @@ tr_attach(sc)
 	printf("%s: address %s ring speed %d Mbps\n", sc->sc_dev.dv_xname,
 	    token_sprintf(myaddr), (sc->sc_init_status & RSP_16) ? 16 : 4);
 
-	callout_init(&sc->sc_init_callout);
-	callout_init(&sc->sc_reinit_callout);
+	callout_init(&sc->sc_init_callout, 0);
+	callout_init(&sc->sc_reinit_callout, 0);
 
 	sc->sc_sdhook = shutdownhook_establish(tr_shutdown, sc);
 	return 0;

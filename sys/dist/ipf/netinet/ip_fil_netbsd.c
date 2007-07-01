@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.31.2.2 2007/06/09 23:57:59 ad Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.31.2.3 2007/07/01 21:50:37 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -398,7 +398,7 @@ int ipfattach()
 	SPL_X(s);
 
 #if (__NetBSD_Version__ >= 104010000)
-	callout_init(&fr_slowtimer_ch);
+	callout_init(&fr_slowtimer_ch, 0);
 	callout_reset(&fr_slowtimer_ch, (hz / IPF_HZ_DIVIDE) * IPF_HZ_MULT,
 		     fr_slowtimer, NULL);
 #else

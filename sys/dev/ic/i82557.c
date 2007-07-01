@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.101 2007/03/04 06:01:55 christos Exp $	*/
+/*	$NetBSD: i82557.c,v 1.101.2.1 2007/07/01 21:47:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.101 2007/03/04 06:01:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.101.2.1 2007/07/01 21:47:50 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -271,7 +271,7 @@ fxp_attach(struct fxp_softc *sc)
 	int rseg, i, error;
 	struct fxp_phytype *fp;
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 
 	/*
 	 * Enable some good stuff on i82558 and later.

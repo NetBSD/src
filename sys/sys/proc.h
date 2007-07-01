@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.243.2.3 2007/06/09 23:58:16 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.243.2.4 2007/07/01 21:51:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
 #include <sys/condvar.h>
 #include <sys/lwp.h>
 #include <sys/queue.h>
-#include <sys/callout.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>

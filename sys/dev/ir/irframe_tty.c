@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.43.2.1 2007/04/05 21:57:45 ad Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.43.2.2 2007/07/01 21:47:59 ad Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.43.2.1 2007/04/05 21:57:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.43.2.2 2007/07/01 21:47:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -539,7 +539,7 @@ irframet_open(void *h, int flag, int mode,
 	sc->sc_nframes = 0;
 	sc->sc_framei = 0;
 	sc->sc_frameo = 0;
-	callout_init(&sc->sc_timeout);
+	callout_init(&sc->sc_timeout, 0);
 	lockinit(&sc->sc_wr_lk, PZERO, "irfrtl", 0, 0);
 
 	return (0);

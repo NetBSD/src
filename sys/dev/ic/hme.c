@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.56 2007/03/04 06:01:55 christos Exp $	*/
+/*	$NetBSD: hme.c,v 1.56.2.1 2007/07/01 21:47:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.56 2007/03/04 06:01:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.56.2.1 2007/07/01 21:47:49 ad Exp $");
 
 /* #define HMEDEBUG */
 
@@ -324,7 +324,7 @@ hme_config(sc)
 			  RND_TYPE_NET, 0);
 #endif
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 }
 
 void

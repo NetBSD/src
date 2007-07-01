@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.70 2007/03/04 22:12:44 mrg Exp $	*/
+/*	$NetBSD: xy.c,v 1.70.2.1 2007/07/01 21:49:04 ad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.70 2007/03/04 22:12:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.70.2.1 2007/07/01 21:49:04 ad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -576,7 +576,7 @@ xycattach(parent, self, aux)
 	evcnt_attach_dynamic(&xyc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    xyc->sc_dev.dv_xname, "intr");
 
-	callout_init(&xyc->sc_tick_ch);
+	callout_init(&xyc->sc_tick_ch, 0);
 
 	/* now we must look for disks using autoconfig */
 	xa.fullmode = XY_SUB_POLL;

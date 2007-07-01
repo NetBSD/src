@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.40.2.1 2007/06/17 21:30:59 ad Exp $	*/
+/*	$NetBSD: magma.c,v 1.40.2.2 2007/07/01 21:48:56 ad Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.40.2.1 2007/06/17 21:30:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.40.2.2 2007/07/01 21:48:56 ad Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -1482,8 +1482,8 @@ mbpp_attach(parent, dev, args)
 	for( port = 0 ; port < sc->ms_board->mb_npar ; port++ ) {
 		mp = &ms->ms_port[port];
 
-		callout_init(&mp->mp_timeout_ch);
-		callout_init(&mp->mp_start_ch);
+		callout_init(&mp->mp_timeout_ch, 0);
+		callout_init(&mp->mp_start_ch, 0);
 
 		if( sc->ms_ncd1190 )
 			mp->mp_cd1190 = &sc->ms_cd1190[port];

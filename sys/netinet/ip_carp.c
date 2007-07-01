@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.12 2007/03/04 06:03:20 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.12.2.1 2007/07/01 21:50:49 ad Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -756,9 +756,9 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_im6o.im6o_multicast_hlim = CARP_DFLTTL;
 #endif /* INET6 */
 
-	callout_init(&sc->sc_ad_tmo);
-	callout_init(&sc->sc_md_tmo);
-	callout_init(&sc->sc_md6_tmo);
+	callout_init(&sc->sc_ad_tmo, 0);
+	callout_init(&sc->sc_md_tmo, 0);
+	callout_init(&sc->sc_md6_tmo, 0);
 
 	callout_setfunc(&sc->sc_ad_tmo, carp_send_ad, sc);
 	callout_setfunc(&sc->sc_md_tmo, carp_master_down, sc);
@@ -794,9 +794,14 @@ carp_clone_create(struct if_clone *ifc, int unit)
 int
 carp_clone_destroy(struct ifnet *ifp)
 {
+	struct carp_softc *sc = ifp->if_softc;
+
 	carpdetach(ifp->if_softc);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	callout_destroy(&sc->sc_ad_tmo);
+	callout_destroy(&sc->sc_md_tmo);
+	callout_destroy(&sc->sc_md6_tmo);
 	free(ifp->if_softc, M_DEVBUF);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.87.2.2 2007/06/08 14:17:37 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.87.2.3 2007/07/01 21:50:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.2 2007/06/08 14:17:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.3 2007/07/01 21:50:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -975,7 +975,7 @@ rt_timer_init(void)
 	assert(rt_init_done == 0);
 
 	LIST_INIT(&rttimer_queue_head);
-	callout_init(&rt_timer_ch);
+	callout_init(&rt_timer_ch, 0);
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 	rt_init_done = 1;
 }

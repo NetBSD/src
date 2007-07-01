@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.261.2.1 2007/05/13 17:36:29 ad Exp $	*/
+/*	$NetBSD: sd.c,v 1.261.2.2 2007/07/01 21:48:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.261.2.1 2007/05/13 17:36:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.261.2.2 2007/07/01 21:48:59 ad Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -240,7 +240,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	bufq_alloc(&sd->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
-	callout_init(&sd->sc_callout);
+	callout_init(&sd->sc_callout, 0);
 
 	/*
 	 * Store information needed to contact our base driver

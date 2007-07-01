@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.82 2007/03/04 06:02:23 christos Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.82.2.1 2007/07/01 21:48:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.82 2007/03/04 06:02:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.82.2.1 2007/07/01 21:48:11 ad Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -310,8 +310,8 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&sc->tl_tick_ch);
-	callout_init(&sc->tl_restart_ch);
+	callout_init(&sc->tl_tick_ch, 0);
+	callout_init(&sc->tl_restart_ch, 0);
 
 	tp = tl_lookup_product(pa->pa_id);
 	if (tp == NULL)

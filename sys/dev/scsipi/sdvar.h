@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.28 2005/12/11 12:23:51 christos Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.28.30.1 2007/07/01 21:48:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct sd_softc {
 	} params;
 
 	struct bufq_state *buf_queue;
-	struct callout sc_callout;
+	callout_t sc_callout;
 	u_int8_t type;
 	char name[16]; /* product name, for default disklabel */
 

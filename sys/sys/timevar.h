@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.7.6.1 2007/06/08 14:18:14 ad Exp $	*/
+/*	$NetBSD: timevar.h,v 1.7.6.2 2007/07/01 21:51:00 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -80,7 +80,7 @@
  */
 struct 	ptimer {
 	union {
-		struct	callout	pt_ch;
+		callout_t	pt_ch;
 		struct {
 			LIST_ENTRY(ptimer)	pt_list;
 			int	pt_active;

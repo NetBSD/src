@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.73.2.1 2007/03/21 20:11:57 ad Exp $	*/
+/*	$NetBSD: tty.h,v 1.73.2.2 2007/07/01 21:51:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -82,7 +82,7 @@ struct tty {
 	struct	clist t_canq;		/* Device canonical queue. */
 	long	t_cancc;		/* Canonical queue statistics. */
 	struct	clist t_outq;		/* Device output queue. */
-	struct	callout t_rstrt_ch;	/* for delayed output start */
+	callout_t t_rstrt_ch;		/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
 	struct	linesw *t_linesw;	/* Interface to device drivers. */
 	dev_t	t_dev;			/* Device. */

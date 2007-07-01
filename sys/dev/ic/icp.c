@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.23.2.1 2007/03/13 16:50:22 ad Exp $	*/
+/*	$NetBSD: icp.c,v 1.23.2.2 2007/07/01 21:47:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.23.2.1 2007/03/13 16:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.23.2.2 2007/07/01 21:47:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	SIMPLEQ_INIT(&icp->icp_ccb_queue);
 	SIMPLEQ_INIT(&icp->icp_ccb_freelist);
 	SIMPLEQ_INIT(&icp->icp_ucmd_queue);
-	callout_init(&icp->icp_wdog_callout);
+	callout_init(&icp->icp_wdog_callout, 0);
 
 	/*
 	 * Allocate a scratch area.

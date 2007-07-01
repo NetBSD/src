@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.18 2007/03/04 06:02:45 christos Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.18.2.1 2007/07/01 21:49:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.18 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.18.2.1 2007/07/01 21:49:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,7 +62,7 @@ struct simplelock sysmon_wdog_list_slock = SIMPLELOCK_INITIALIZER;
 
 struct simplelock sysmon_wdog_slock = SIMPLELOCK_INITIALIZER;
 struct sysmon_wdog *sysmon_armed_wdog;
-struct callout sysmon_wdog_callout = CALLOUT_INITIALIZER;
+callout_t sysmon_wdog_callout;
 void *sysmon_wdog_sdhook;
 
 #define	SYSMON_WDOG_LOCK(s)						\
@@ -100,6 +100,7 @@ sysmonopen_wdog(dev_t dev, int flag, int mode,
 		if (sysmon_wdog_sdhook == NULL)
 			printf("WARNING: unable to register watchdog "
 			    "shutdown hook\n");
+		callout_init(&sysmon_wdog_callout, 0);
 	}
 	simple_unlock(&sysmon_wdog_list_slock);
 
