@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.29 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.29.2.1 2007/07/01 19:23:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.29 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.29.2.1 2007/07/01 19:23:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,15 +148,17 @@ nb_poll(struct nbpcb *nbp, int events, struct lwp *l)
 #endif
 }
 
+/* XXX WTF re-implemented select()? */
 static int
 nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 	struct lwp *l)
 {
+	extern kcondvar_t select_cv;
+	extern kmutex_t select_lock;
 	struct timeval atv;
 	extern int nselcoll;
 	int ncoll;
 	int timo, error;
-	int s;
 
 	if (tv) {
 		atv = *tv;
@@ -168,9 +170,11 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 	} else
 		timo = 0;
 
+ 	mutex_enter(&select_lock);
  retry:
 	ncoll = nselcoll;
-	l->l_flag |= LW_SELECT;
+	l->l_selflag = 1;
+ 	mutex_exit(&select_lock);
 	error = nb_poll(nbp, events, l);
 	if (error) {
 		error = 0;
@@ -187,20 +191,17 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		}
 	}
 
-	s = splsched();
-	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
-		splx(s);
+	mutex_enter(&select_lock);
+	if (l->l_selflag != 1 || nselcoll != ncoll)
 		goto retry;
-	}
-	l->l_flag &= ~LW_SELECT;
-	error = tsleep((void *)&selwait, PSOCK, "smbsel", timo);
-	splx(s);
-
+	l->l_selflag = 2;
+	error = cv_timedwait(&select_cv, &select_lock, timo);
 	if (error == 0)
 		goto retry;
 
 done:
-	l->l_flag &= ~LW_SELECT;
+	l->l_selflag = 0;
+	mutex_exit(&select_lock);
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
 		error = 0;
