@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.23.6.1 2007/06/16 19:02:54 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.23.6.2 2007/07/01 21:37:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,90 +37,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
- * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL  DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
 #ifndef _SYS_CALLOUT_H_
 #define _SYS_CALLOUT_H_
 
+#include <sys/types.h>
+
 /*
- * The following funkyness is to appease gcc3's strict aliasing.
+ * The callout implementation is private to kern_timeout.c yet uses
+ * caller-supplied storage, as lightweight callout operations are
+ * critical to system performance.
+ *
+ * The size of callout_t must remain constant in order to ensure ABI
+ * compatibility for kernel modules: it may become smaller, but must
+ * not grow.  If more space is required, rearrange the members of
+ * callout_impl_t.
  */
-struct callout;
-struct callout_circq {
-	/* next element */
-	union {
-		struct callout		*elem;
-		struct callout_circq	*list;
-	} cq_next;
-	/* previous element */
-	union {
-		struct callout		*elem;
-		struct callout_circq	*list;
-	} cq_prev;
-};
-#define	cq_next_e	cq_next.elem
-#define	cq_prev_e	cq_prev.elem
-#define	cq_next_l	cq_next.list
-#define	cq_prev_l	cq_prev.list
+typedef struct callout {
+	void	*_c_store[12];
+} callout_t;
 
-struct callout {
-	struct callout_circq c_list;		/* linkage on queue */
-	void	(*c_func)(void *);		/* function to call */
-	void	*c_arg;				/* function argument */
-	int	c_time;				/* when callout fires */
-	int	c_flags;			/* state of this entry */
-	void	*c_oncpu;			/* MP: running on CPU */
-};
-
+/* Internal flags. */
 #define	CALLOUT_PENDING		0x0002	/* callout is on the queue */
 #define	CALLOUT_FIRED		0x0004	/* callout has fired */
 #define	CALLOUT_INVOKING	0x0008	/* callout function is being invoked */
 
-#define	CALLOUT_INITIALIZER_SETFUNC(func, arg)				\
-				{ {{NULL}, {NULL}}, func, arg, 0, 0, NULL }
-
-#define	CALLOUT_INITIALIZER	CALLOUT_INITIALIZER_SETFUNC(NULL, NULL)
+/* End-user flags. */
+#define	CALLOUT_MPSAFE		0x0100	/* does not need kernel_lock */
+#define	CALLOUT_FLAGMASK	0xff00
 
 #ifdef _KERNEL
 void	callout_startup(void);
-void	callout_init(struct callout *);
-void	callout_setfunc(struct callout *, void (*)(void *), void *);
-void	callout_reset(struct callout *, int, void (*)(void *), void *);
-void	callout_schedule(struct callout *, int);
-void	callout_stop(struct callout *);
-int	callout_hardclock(void);
-void	callout_setfunc(struct callout *, void (*)(void *), void *);
-bool	callout_pending(struct callout *);
-bool	callout_expired(struct callout *);
-bool	callout_active(struct callout *);
-bool	callout_invoking(struct callout *);
-void	callout_ack(struct callout *);
+void	callout_startup2(void);
+void	callout_hardclock(void);
+
+void	callout_init(callout_t *, u_int);
+void	callout_destroy(callout_t *);
+void	callout_setfunc(callout_t *, void (*)(void *), void *);
+void	callout_reset(callout_t *, int, void (*)(void *), void *);
+void	callout_schedule(callout_t *, int);
+bool	callout_stop(callout_t *);
+bool	callout_pending(callout_t *);
+bool	callout_expired(callout_t *);
+bool	callout_active(callout_t *);
+bool	callout_invoking(callout_t *);
+void	callout_ack(callout_t *);
 #endif	/* _KERNEL */
 
 #endif /* !_SYS_CALLOUT_H_ */
