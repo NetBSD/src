@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.8 2007/07/01 07:37:14 xtraeme Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.9 2007/07/01 11:28:14 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.8 2007/07/01 07:37:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.9 2007/07/01 11:28:14 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,28 +257,26 @@ static int
 adm1030c_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct adm1030c_softc *sc = sme->sme_cookie;
-	envsys_data_t *cur_tre;
 	int i;
 	uint8_t reg;
 	
 	i = edata->sensor;
-	cur_tre = &sme->sme_sensor_data[i];
 	reg = sc->regs[i];
-	switch (cur_tre->units)
+	switch (edata->units)
 	{
 		case ENVSYS_STEMP:
-			cur_tre->value_cur = 
+			edata->value_cur = 
 			    adm1030c_temp2muk(adm1030c_readreg(sc, reg));
 			break;
 			
 		case ENVSYS_SFANRPM:
 			{
 				uint8_t blah = adm1030c_readreg(sc,reg);
-				cur_tre->value_cur = adm1030c_reg2rpm(blah);
+				edata->value_cur = adm1030c_reg2rpm(blah);
 			}
 			break;
 	}
-	cur_tre->state = ENVSYS_SVALID;
+	edata->state = ENVSYS_SVALID;
 	return 0;
 }
 #endif /* NSYSMON_ENVSYS > 0 */
