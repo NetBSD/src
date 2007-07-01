@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.19 2006/12/01 21:36:56 martin Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.20 2007/07/01 05:17:28 tsutsui Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -81,7 +81,7 @@ struct scsipi_rw_12 {
 	u_int8_t length[4];
 	u_int8_t byte11;
 	u_int8_t control;
-};
+} __attribute__((__packed__));
 
 #define	READ_16			0x88
 #define	WRITE_16		0x8a
@@ -92,7 +92,7 @@ struct scsipi_rw_16 {
 	u_int8_t length[4];
 	u_int8_t byte15;
 	u_int8_t control;
-};
+} __attribute__((__packed__));
 
 #define	READ_CAPACITY_10	0x25
 struct scsipi_read_capacity_10 {
@@ -120,7 +120,7 @@ struct scsipi_read_capacity_16 {
 	u_int8_t byte15;
 #define	SRC16_PMI		0x01
 	u_int8_t control;
-};
+} __attribute__((__packed__));
 
 struct scsipi_read_capacity_16_data {
 	u_int8_t addr[8];
@@ -129,7 +129,7 @@ struct scsipi_read_capacity_16_data {
 #define	SRC16D_PROT_EN		0x01
 #define	SRC16D_RTO_EN		0x02
 	u_int8_t reserved[19];
-};
+} __attribute__((__packed__));
 
 /* XXX SBC-2 says this is vendor-specific */
 #define READ_FORMAT_CAPACITIES	0x23
