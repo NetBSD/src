@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.19 2007/06/06 01:55:02 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.20 2007/07/01 17:23:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -191,7 +191,8 @@ dtfs_domount(struct puffs_usermount *pu, const char *typestr)
 #define ROUND(a,b) (((a) + ((b)-1)) & ~((b)-1))
 #define NFILES 1024*1024
 int
-dtfs_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp, pid_t pid)
+dtfs_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp,
+	const struct puffs_cid *pcid)
 {
 	struct puffs_usermount *pu;
 	struct rlimit rlim;
@@ -302,7 +303,7 @@ dtfs_fs_suspend(struct puffs_cc *pcc, int status)
 }
 
 int
-dtfs_fs_unmount(struct puffs_cc *pcc, int flags, pid_t pid)
+dtfs_fs_unmount(struct puffs_cc *pcc, int flags, const struct puffs_cid *pcid)
 {
 
 	return 0;

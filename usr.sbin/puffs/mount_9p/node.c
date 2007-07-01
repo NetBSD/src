@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.13 2007/06/24 19:13:39 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.14 2007/07/01 17:23:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.13 2007/06/24 19:13:39 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.14 2007/07/01 17:23:44 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -172,7 +172,7 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 
 int
 puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, pid_t pid)
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 	AUTOVAR(pcc);
 	struct puffs_node *pn = opc;
@@ -195,7 +195,8 @@ puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 int
 puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
+	const struct vattr *va, const struct puffs_cred *pcr,
+	const struct puffs_cid *pcid)
 {
 	AUTOVAR(pcc);
 	struct puffs_node *pn = opc;
@@ -228,7 +229,7 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
  */
 int
 puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, pid_t pid)
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
 	struct puffs_node *pn = opc;
@@ -260,8 +261,8 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-puffs9p_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid,
-	int *refcount)
+puffs9p_node_inactive(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cid *pcid, int *refcount)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
@@ -571,7 +572,8 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
  * - "thanks"
  */
 int
-puffs9p_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+puffs9p_node_reclaim(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
