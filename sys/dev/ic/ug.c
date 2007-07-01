@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.3 2007/07/01 08:29:48 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.4 2007/07/01 11:46:54 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.3 2007/07/01 08:29:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.4 2007/07/01 11:46:54 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,7 +547,6 @@ int
 ug2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct ug_softc *sc = sme->sme_cookie;
-	envsys_data_t *t = sc->sc_data;	/* makes code readable */
 	struct ug2_sensor_info *si = (struct ug2_sensor_info *)sc->mbsens;
 	int rfact = 1;
 	uint8_t v;
@@ -563,22 +562,20 @@ ug2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 	    si->port, 1, &v) == 1) {
 		switch (si->type) {
 		case UG2_TEMP_SENSOR:
-		    t[edata->sensor].value_cur = SENSOR_VALUE * 1000000
+		    edata[edata->sensor].value_cur = SENSOR_VALUE * 1000000
 			+ 273150000;
 		    break;
 		case UG2_VOLTAGE_SENSOR:
 		    rfact = UG_RFACT;
-		    t[edata->sensor].value_cur = SENSOR_VALUE;
+		    edata[edata->sensor].value_cur = SENSOR_VALUE;
 		    break;
 		default:
-		    t[edata->sensor].value_cur = SENSOR_VALUE;
+		    edata[edata->sensor].value_cur = SENSOR_VALUE;
 		}
 	} else
 		return ENODEV;
 
 #undef SENSOR_VALUE
-
-	*edata = sc->sc_data[edata->sensor];
 	return 0;
 }
 
