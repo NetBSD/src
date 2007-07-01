@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.25 2007/06/24 22:25:49 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.26 2007/07/01 17:23:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -484,7 +484,7 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 int
 sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcr, pid_t pid)
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	struct sfsnode *sfs = pn->pn_data;
@@ -513,7 +513,8 @@ sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 
 int
 sysctlfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
+	const struct vattr *va, const struct puffs_cred *pcr,
+	const struct puffs_cid *pcid)
 {
 
 	/* dummy, but required for write */

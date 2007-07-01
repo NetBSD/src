@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.30 2007/06/06 01:55:03 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.31 2007/07/01 17:23:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.30 2007/06/06 01:55:03 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.31 2007/07/01 17:23:45 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -107,7 +107,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 int
 psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, pid_t pid)
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	int rv;
@@ -123,7 +123,8 @@ psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 int
 psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
+	const struct vattr *va, const struct puffs_cred *pcr,
+	const struct puffs_cid *pcid)
 {
 	PSSHFSAUTOVAR(pcc);
 	struct vattr kludgeva;
@@ -202,7 +203,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 
 int
 psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, pid_t pid)
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 	PSSHFSAUTOVAR(pcc);
 	struct vattr va;
@@ -241,7 +242,8 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-psshfs_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid, int *refcount)
+psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cid *pcid, int *refcount)
 {
 	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
@@ -585,7 +587,8 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
  * bit.
  */
 int
-psshfs_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+psshfs_node_reclaim(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cid *pcid)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc, *pn_next, *pn_root;
