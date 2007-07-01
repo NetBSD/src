@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.3 2006/08/23 03:53:32 jnemeth Exp $ */
+/* $NetBSD: psm.c,v 1.4 2007/07/01 20:01:44 xtraeme Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.3 2006/08/23 03:53:32 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.4 2007/07/01 20:01:44 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,13 +248,13 @@ psm_event_thread(void *arg)
 		if (event & PSM_EV_LID) {
 			sysmon_pswitch_event(&sc->sc_sm_lid,
 			    flags & PSM_FLAG_LIDCLOSED ?
-			    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED);
+			    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 		}
 
 		if (event & PSM_EV_ACPWR) {
 			sysmon_pswitch_event(&sc->sc_sm_ac,
 			    flags & PSM_FLAG_ACPWR ?
-			    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED);
+			    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 		}
 
 		/* XXX: handle PSM_EV_TEMP */
