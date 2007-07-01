@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.304 2007/06/17 13:34:43 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.305 2007/07/01 07:36:39 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.304 2007/06/17 13:34:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.305 2007/07/01 07:36:39 xtraeme Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.304 2007/06/17 13:34:43 yamt Exp $")
 #include "opt_pax.h"
 
 #include "rnd.h"
+#include "sysmon_envsys.h"
+#include "sysmon_power.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -177,6 +179,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.304 2007/06/17 13:34:43 yamt Exp $")
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
+#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0
+#include <dev/sysmon/sysmonvar.h>
+#endif
 
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -362,6 +367,12 @@ main(void)
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
 
+#if NSYSMON_ENVSYS > 0
+	sysmon_envsys_init();
+#endif
+#if NSYSMON_POWER > 0
+	sysmon_power_init();
+#endif
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
