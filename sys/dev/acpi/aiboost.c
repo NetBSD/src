@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.6 2007/07/01 07:37:13 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.7 2007/07/01 20:45:10 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.6 2007/07/01 07:37:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.7 2007/07/01 20:45:10 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 		break;
 	case ENVSYS_SFANRPM:
 		/* Fans */
-		j = i - sc->sc_aivolt->num;
+		j = i - (sc->sc_aitemp->num + sc->sc_aivolt->num);
 		val = aiboost_get_value(h, "RFAN", sc->sc_aifan->elem[j].id);
 		sc->sc_data[i].value_cur = val;
 		DPRINTF(("%s: fan[%d] val=%d j=%d\n", __func__, i, val, j));
