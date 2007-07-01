@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.69 2007/06/28 21:02:40 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.70 2007/07/01 20:12:36 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.69 2007/06/28 21:02:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.70 2007/07/01 20:12:36 xtraeme Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -613,7 +613,7 @@ cyrix6x86_cpu_setup(ci)
 	/* 
 	 * Do not disable the TSC on the Geode GX, it's reported to
 	 * work fine.
-	 */	
+	 */
 	if (ci->ci_signature != 0x552)
 		disable_tsc(ci);
 
@@ -1614,9 +1614,12 @@ identifycpu(struct cpu_info *ci)
 
 #ifdef ENHANCED_SPEEDSTEP
 	if (cpu_feature2 & CPUID2_EST) {
-		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(CPUVENDOR_INTEL);
-		else
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16)) {
+			if (cpu_vendor == CPUVENDOR_INTEL)
+				est_init(CPUVENDOR_INTEL);
+			if (cpu_vendor == CPUVENDOR_IDT)
+				est_init(CPUVENDOR_IDT);
+		} else
 			aprint_normal("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    cpuname);
 	}
