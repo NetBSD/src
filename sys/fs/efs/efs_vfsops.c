@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.1 2007/06/29 23:30:30 rumble Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.2 2007/07/01 01:09:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.1 2007/06/29 23:30:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.2 2007/07/01 01:09:05 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,12 +558,6 @@ const struct vnodeopv_desc * const efs_vnodeopv_descs[] = {
 //	&efs_specop_opv_desc,
 //	&efs_fifoop_opv_desc,
 	NULL
-};
-
-const struct genfs_ops sysvbfs_genfsops = {
-	.gop_size = genfs_size,
-	.gop_alloc = efs_gop_alloc,
-	.gop_write = genfs_gop_write,
 };
 
 struct vfsops efs_vfsops = {
