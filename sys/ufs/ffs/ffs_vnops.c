@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.7 2007/06/23 18:06:05 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.8 2007/07/01 21:17:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.7 2007/06/23 18:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.8 2007/07/01 21:17:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,6 +354,8 @@ ffs_full_fsync(void *v)
 	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
 		softdep_fsync_mountdev(vp);
 
+	mutex_enter(&vp->v_interlock);
+
 	inodedeps_only = DOINGSOFTDEP(vp) && (ap->a_flags & FSYNC_RECLAIM)
 	    && vp->v_uobj.uo_npages == 0 && LIST_EMPTY(&vp->v_dirtyblkhd);
 
@@ -362,7 +364,6 @@ ffs_full_fsync(void *v)
 	 */
 
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
-		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
 		    (fstrans_getstate(vp->v_mount) == FSTRANS_SUSPENDING ?
@@ -370,6 +371,7 @@ ffs_full_fsync(void *v)
 		if (error) {
 			return error;
 		}
+		mutex_enter(&vp->v_interlock);
 	}
 
 	passes = NIADDR + 1;
@@ -403,10 +405,12 @@ loop:
 		 * so that we can find out if our flush is failing
 		 * because of write errors.
 		 */
+		mutex_exit(&vp->v_interlock);
 		if (passes > 0 || !(ap->a_flags & FSYNC_WAIT))
 			(void) bawrite(bp);
 		else if ((error = bwrite(bp)) != 0)
 			return (error);
+		mutex_enter(&vp->v_interlock);
 		/*
 		 * Since we may have slept during the I/O, we need
 		 * to start from a known point.
@@ -418,7 +422,6 @@ loop:
 		goto loop;
 	}
 	if (ap->a_flags & FSYNC_WAIT) {
-		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
 			cv_wait(&vp->v_cv, &vp->v_interlock);
 		}
@@ -449,7 +452,8 @@ loop:
 				vprint("ffs_fsync: dirty", vp);
 #endif
 		}
-	}
+	} else
+		mutex_exit(&vp->v_interlock);
 
 	if (inodedeps_only)
 		waitfor = 0;
