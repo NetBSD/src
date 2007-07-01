@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76.24.1 2007/06/18 09:31:10 liamjfoy Exp $	*/
+/*	$NetBSD: locore.s,v 1.76.24.2 2007/07/01 17:14:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -722,8 +722,9 @@ Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt
+	pea	%sp@(12)		| fp = trap frame address
 	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(12),%sp		| pop value args
+	lea	%sp@(16),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| and all remaining registers
