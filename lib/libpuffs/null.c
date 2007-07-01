@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.20 2007/07/01 17:22:18 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.21 2007/07/01 18:39:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.20 2007/07/01 17:22:18 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.21 2007/07/01 18:39:39 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -134,7 +134,7 @@ inodecmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 }
 
 static int
-makenode(struct puffs_usermount *pu, void **newnode,
+makenode(struct puffs_usermount *pu, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va, int regular)
 {
 	struct puffs_node *pn;
@@ -153,7 +153,7 @@ makenode(struct puffs_usermount *pu, void **newnode,
 		return errno;
 	puffs_stat2vattr(&pn->pn_va, &sb);
 
-	*newnode = pn;
+	puffs_newinfo_setcookie(pni, pn);
 	return 0;
 }
 
@@ -199,9 +199,8 @@ puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb,
 }
 
 int
-puffs_null_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
-	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
-	const struct puffs_cn *pcn)
+puffs_null_node_lookup(struct puffs_cc *pcc, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc, *pn_res;
@@ -230,18 +229,19 @@ puffs_null_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 		puffs_stat2vattr(&pn_res->pn_va, &sb);
 	}
 
-	*newnode = pn_res;
-	*newtype = pn_res->pn_va.va_type;
-	*newsize = pn_res->pn_va.va_size;
-	*newrdev = pn_res->pn_va.va_rdev;
+	puffs_newinfo_setcookie(pni, pn_res);
+	puffs_newinfo_setvtype(pni, pn_res->pn_va.va_type);
+	puffs_newinfo_setsize(pni, (voff_t)pn_res->pn_va.va_size);
+	puffs_newinfo_setrdev(pni, pn_res->pn_va.va_rdev);
 
 	return 0;
 }
 
 /*ARGSUSED*/
 int
-puffs_null_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn, const struct vattr *va)
+puffs_null_node_create(struct puffs_cc *pcc, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	int fd, rv;
@@ -251,7 +251,7 @@ puffs_null_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 		return errno;
 	close(fd);
 
-	rv = makenode(pu, newnode, pcn, va, 1);
+	rv = makenode(pu, pni, pcn, va, 1);
 	if (rv)
 		unlink(PCNPATH(pcn));
 	return rv;
@@ -259,8 +259,9 @@ puffs_null_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 
 /*ARGSUSED*/
 int
-puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn, const struct vattr *va)
+puffs_null_node_mknod(struct puffs_cc *pcc, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	mode_t mode;
@@ -270,7 +271,7 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (mknod(PCNPATH(pcn), mode, va->va_rdev) == -1)
 		return errno;
 
-	rv = makenode(pu, newnode, pcn, va, 0);
+	rv = makenode(pu, pni, pcn, va, 0);
 	if (rv)
 		unlink(PCNPATH(pcn));
 	return rv;
@@ -381,8 +382,9 @@ puffs_null_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 
 /*ARGSUSED*/
 int
-puffs_null_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn, const struct vattr *va)
+puffs_null_node_mkdir(struct puffs_cc *pcc, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	int rv;
@@ -390,7 +392,7 @@ puffs_null_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (mkdir(PCNPATH(pcn), va->va_mode) == -1)
 		return errno;
 
-	rv = makenode(pu, newnode, pcn, va, 0);
+	rv = makenode(pu, pni, pcn, va, 0);
 	if (rv)
 		rmdir(PCNPATH(pcn));
 	return rv;
@@ -412,9 +414,9 @@ puffs_null_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 /*ARGSUSED*/
 int
-puffs_null_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn, const struct vattr *va,
-	const char *linkname)
+puffs_null_node_symlink(struct puffs_cc *pcc, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va, const char *linkname)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	int rv;
@@ -422,7 +424,7 @@ puffs_null_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (symlink(linkname, PCNPATH(pcn)) == -1)
 		return errno;
 
-	rv = makenode(pu, newnode, pcn, va, 0);
+	rv = makenode(pu, pni, pcn, va, 0);
 	if (rv)
 		unlink(PCNPATH(pcn));
 	return rv;

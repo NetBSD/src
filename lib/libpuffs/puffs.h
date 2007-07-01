@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.68 2007/07/01 17:22:18 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.69 2007/07/01 18:39:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -52,6 +52,7 @@ struct puffs_getreq;
 struct puffs_putreq;
 struct puffs_cred;
 struct puffs_cid;
+struct puffs_newinfo;
 
 /* paths */
 struct puffs_pathobj {
@@ -156,18 +157,19 @@ struct puffs_ops {
 	int (*puffs_fs_sync)(struct puffs_cc *, int,
 	    const struct puffs_cred *, const struct puffs_cid *);
 	int (*puffs_fs_fhtonode)(struct puffs_cc *, void *, size_t,
-	    void **, enum vtype *, voff_t *, dev_t *);
+	    struct puffs_newinfo *);
 	int (*puffs_fs_nodetofh)(struct puffs_cc *, void *cookie,
 	    void *, size_t *);
 	void (*puffs_fs_suspend)(struct puffs_cc *, int);
 
 	int (*puffs_node_lookup)(struct puffs_cc *,
-	    void *, void **, enum vtype *, voff_t *, dev_t *,
-	    const struct puffs_cn *);
+	    void *, struct puffs_newinfo *, const struct puffs_cn *);
 	int (*puffs_node_create)(struct puffs_cc *,
-	    void *, void **, const struct puffs_cn *, const struct vattr *);
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,
+	    const struct vattr *);
 	int (*puffs_node_mknod)(struct puffs_cc *,
-	    void *, void **, const struct puffs_cn *, const struct vattr *);
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,
+	    const struct vattr *);
 	int (*puffs_node_open)(struct puffs_cc *,
 	    void *, int, const struct puffs_cred *, const struct puffs_cid *);
 	int (*puffs_node_close)(struct puffs_cc *,
@@ -197,11 +199,13 @@ struct puffs_ops {
 	    void *, void *, const struct puffs_cn *, void *, void *,
 	    const struct puffs_cn *);
 	int (*puffs_node_mkdir)(struct puffs_cc *,
-	    void *, void **, const struct puffs_cn *, const struct vattr *);
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,
+	    const struct vattr *);
 	int (*puffs_node_rmdir)(struct puffs_cc *,
 	    void *, void *, const struct puffs_cn *);
 	int (*puffs_node_symlink)(struct puffs_cc *,
-	    void *, void **, const struct puffs_cn *, const struct vattr *,
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,
+	    const struct vattr *,
 	    const char *);
 	int (*puffs_node_readdir)(struct puffs_cc *,
 	    void *, struct dirent *, off_t *, size_t *,
@@ -278,8 +282,6 @@ enum {
  */
 
 #define PUFFSOP_PROTOS(fsname)						\
-	int fsname##_fs_mount(struct puffs_usermount *, void **,	\
-	    struct statvfs *);						\
 	int fsname##_fs_unmount(struct puffs_cc *, int,			\
 	    const struct puffs_cid *);					\
 	int fsname##_fs_statvfs(struct puffs_cc *,			\
@@ -287,19 +289,18 @@ enum {
 	int fsname##_fs_sync(struct puffs_cc *, int,			\
 	    const struct puffs_cred *cred, const struct puffs_cid *);	\
 	int fsname##_fs_fhtonode(struct puffs_cc *, void *, size_t,	\
-	    void **, enum vtype *, voff_t *, dev_t *);			\
+	    struct puffs_newinfo *);					\
 	int fsname##_fs_nodetofh(struct puffs_cc *, void *cookie,	\
 	    void *, size_t *);						\
 	void fsname##_fs_suspend(struct puffs_cc *, int);		\
 									\
 	int fsname##_node_lookup(struct puffs_cc *,			\
-	    void *, void **, enum vtype *, voff_t *, dev_t *,		\
-	    const struct puffs_cn *);					\
+	    void *, struct puffs_newinfo *, const struct puffs_cn *);	\
 	int fsname##_node_create(struct puffs_cc *,			\
-	    void *, void **, const struct puffs_cn *,			\
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,	\
 	    const struct vattr *);					\
 	int fsname##_node_mknod(struct puffs_cc *,			\
-	    void *, void **, const struct puffs_cn *,			\
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,	\
 	    const struct vattr *);					\
 	int fsname##_node_open(struct puffs_cc *,			\
 	    void *, int, const struct puffs_cred *,			\
@@ -334,12 +335,12 @@ enum {
 	    void *, void *, const struct puffs_cn *, void *, void *,	\
 	    const struct puffs_cn *);					\
 	int fsname##_node_mkdir(struct puffs_cc *,			\
-	    void *, void **, const struct puffs_cn *,			\
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,	\
 	    const struct vattr *);					\
 	int fsname##_node_rmdir(struct puffs_cc *,			\
 	    void *, void *, const struct puffs_cn *);			\
 	int fsname##_node_symlink(struct puffs_cc *,			\
-	    void *, void **, const struct puffs_cn *,			\
+	    void *, struct puffs_newinfo *, const struct puffs_cn *,	\
 	    const struct vattr *, const char *);			\
 	int fsname##_node_readdir(struct puffs_cc *,			\
 	    void *, struct dirent *, off_t *, size_t *,			\
@@ -458,6 +459,11 @@ void			puffs_setback(struct puffs_cc *, int);
 struct puffs_node	*puffs_pn_new(struct puffs_usermount *, void *);
 void			puffs_pn_remove(struct puffs_node *);
 void			puffs_pn_put(struct puffs_node *);
+
+void	puffs_newinfo_setcookie(struct puffs_newinfo *, void *);
+void	puffs_newinfo_setvtype(struct puffs_newinfo *, enum vtype);
+void	puffs_newinfo_setsize(struct puffs_newinfo *, voff_t);
+void	puffs_newinfo_setrdev(struct puffs_newinfo *, dev_t);
 
 void			*puffs_pn_getmntspecific(struct puffs_node *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.7 2007/06/24 17:55:07 pooka Exp $	*/
+/*	$NetBSD: pnode.c,v 1.8 2007/07/01 18:39:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.7 2007/06/24 17:55:07 pooka Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.8 2007/07/01 18:39:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -107,4 +107,35 @@ puffs_pn_getmntspecific(struct puffs_node *pn)
 {
 
 	return pn->pn_mnt->pu_privdata;
+}
+
+/*
+ * newnode parameters
+ */
+void
+puffs_newinfo_setcookie(struct puffs_newinfo *pni, void *cookie)
+{
+
+	*pni->pni_cookie = cookie;
+}
+
+void
+puffs_newinfo_setvtype(struct puffs_newinfo *pni, enum vtype vt)
+{
+
+	*pni->pni_vtype = vt;
+}
+
+void
+puffs_newinfo_setsize(struct puffs_newinfo *pni, voff_t size)
+{
+
+	*pni->pni_size = size;
+}
+
+void
+puffs_newinfo_setrdev(struct puffs_newinfo *pni, dev_t rdev)
+{
+
+	*pni->pni_rdev = rdev;
 }
