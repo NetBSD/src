@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.191 2007/07/01 07:55:52 xtraeme Exp $
+# $NetBSD: mi,v 1.192 2007/07/01 08:01:29 xtraeme Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -176,6 +176,7 @@
 ./etc/rc.d/dhcrelay				etc-dhcpd-rc
 ./etc/rc.d/dmesg				etc-sys-rc
 ./etc/rc.d/downinterfaces			etc-sys-rc
+./etc/rc.d/envsys				etc-sys-rc
 ./etc/rc.d/fixsb				etc-sys-rc
 ./etc/rc.d/fsck					etc-sys-rc
 ./etc/rc.d/fsck.sh				etc-obsolete		obsolete
