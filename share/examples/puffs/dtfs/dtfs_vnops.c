@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.30 2007/07/01 17:23:44 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.31 2007/07/01 18:40:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -40,8 +40,7 @@
 #include "dtfs.h"
 
 int
-dtfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
-	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
+dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_dir = opc;
@@ -51,19 +50,19 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	/* parent dir? */
 	if (PCNISDOTDOT(pcn)) {
-		*newnode = df->df_dotdot;
-		*newtype = df->df_dotdot->pn_va.va_type;
-		assert(*newtype == VDIR);
+		assert(df->df_dotdot->pn_va.va_type == VDIR);
+		puffs_newinfo_setcookie(pni, df->df_dotdot);
+		puffs_newinfo_setvtype(pni, df->df_dotdot->pn_va.va_type);
 
 		return 0;
 	}
 
 	dfd = dtfs_dirgetbyname(df, pcn->pcn_name);
 	if (dfd) {
-		*newnode = dfd->dfd_node;
-		*newtype = dfd->dfd_node->pn_va.va_type;
-		*newsize = dfd->dfd_node->pn_va.va_size;
-		*newrdev = dfd->dfd_node->pn_va.va_rdev;
+		puffs_newinfo_setcookie(pni, dfd->dfd_node);
+		puffs_newinfo_setvtype(pni, dfd->dfd_node->pn_va.va_type);
+		puffs_newinfo_setsize(pni, dfd->dfd_node->pn_va.va_size);
+		puffs_newinfo_setrdev(pni, dfd->dfd_node->pn_va.va_rdev);
 		return 0;
 	}
 
@@ -162,7 +161,7 @@ dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
 
 /* create a new node in the parent directory specified by opc */
 int
-dtfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
+dtfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct puffs_node *pn_parent = opc;
@@ -174,7 +173,7 @@ dtfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	pn_new = dtfs_genfile(pn_parent, pcn, va->va_type);
 	puffs_setvattr(&pn_new->pn_va, va);
 
-	*newnode = pn_new;
+	puffs_newinfo_setcookie(pni, pn_new);
 
 	return 0;
 }
@@ -198,7 +197,7 @@ dtfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 int
-dtfs_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
+dtfs_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct puffs_node *pn_parent = opc;
@@ -207,7 +206,7 @@ dtfs_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	pn_new = dtfs_genfile(pn_parent, pcn, VDIR);
 	puffs_setvattr(&pn_new->pn_va, va);
 
-	*newnode = pn_new;
+	puffs_newinfo_setcookie(pni, pn_new);
 
 	return 0;
 }
@@ -351,7 +350,7 @@ dtfs_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 int
-dtfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
+dtfs_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn_src, const struct vattr *va,
 	const char *link_target)
 {
@@ -368,7 +367,7 @@ dtfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	df_new->df_linktarget = estrdup(link_target);
 	pn_new->pn_va.va_size = strlen(df_new->df_linktarget);
 
-	*newnode = pn_new;
+	puffs_newinfo_setcookie(pni, pn_new);
 
 	return 0;
 }
@@ -388,7 +387,7 @@ dtfs_node_readlink(struct puffs_cc *pcc, void *opc,
 }
 
 int
-dtfs_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
+dtfs_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 	struct puffs_node *pn_parent = opc;
@@ -403,7 +402,7 @@ dtfs_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	puffs_setvattr(&pn_new->pn_va, va);
 
 	df = DTFS_PTOF(pn_new);
-	*newnode = pn_new;
+	puffs_newinfo_setcookie(pni, pn_new);
 
 	return 0;
 }
