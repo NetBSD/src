@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.119.2.8 2007/06/09 23:58:04 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.119.2.9 2007/07/01 21:44:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.8 2007/06/09 23:58:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119.2.9 2007/07/01 21:44:58 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -99,7 +99,7 @@ struct ktr_desc {
 	struct file *ktd_fp;		/* trace output file */
 	struct lwp *ktd_lwp;		/* our kernel thread */
 	TAILQ_HEAD(, ktrace_entry) ktd_queue;
-	struct callout ktd_wakch;	/* delayed wakeup */
+	callout_t ktd_wakch;		/* delayed wakeup */
 	kcondvar_t ktd_sync_cv;
 	kcondvar_t ktd_cv;
 };
@@ -158,6 +158,8 @@ static void
 ktd_wakeup(struct ktr_desc *ktd)
 {
 
+	KASSERT(mutex_owned(&ktrace_mutex));
+
 	callout_stop(&ktd->ktd_wakch);
 	cv_signal(&ktd->ktd_cv);
 }
@@ -166,11 +168,9 @@ static void
 ktd_callout(void *arg)
 {
 
-	/*
-	 * XXXSMP Should be acquiring ktrace_mutex, but that
-	 * is not yet possible from a callout.
-	 */
+	mutex_enter(&ktrace_mutex);
 	ktd_wakeup(arg);
+	mutex_exit(&ktrace_mutex);
 }
 
 static void
@@ -913,7 +913,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 		if (ktd == NULL) {
 			ktd = kmem_alloc(sizeof(*ktd), KM_SLEEP);
 			TAILQ_INIT(&ktd->ktd_queue);
-			callout_init(&ktd->ktd_wakch);
+			callout_init(&ktd->ktd_wakch, CALLOUT_MPSAFE);
 			cv_init(&ktd->ktd_cv, "ktrwait");
 			cv_init(&ktd->ktd_sync_cv, "ktrsync");
 			ktd->ktd_flags = ktd->ktd_qcount =
@@ -1355,6 +1355,7 @@ ktrace_thread(void *arg)
 	closef(fp, NULL);
 
 	callout_stop(&ktd->ktd_wakch);
+	callout_destroy(&ktd->ktd_wakch);
 	kmem_free(ktd, sizeof(*ktd));
 
 	kthread_exit(0);
