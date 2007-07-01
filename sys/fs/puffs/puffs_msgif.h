@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.37 2007/07/01 17:22:13 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.38 2007/07/01 22:54:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -83,7 +83,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	12
+#define PUFFSVERSION	13
 #define PUFFSNAMESIZE	32
 struct puffs_kargs {
 	unsigned int	pa_vers;
@@ -112,7 +112,8 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_ALLOPS		0x04	/* ignore pa_vnopmask       */
 #define PUFFS_KFLAG_WTCACHE		0x08	/* write-through page cache */
 #define PUFFS_KFLAG_IAONDEMAND		0x10	/* inactive only on demand  */
-#define PUFFS_KFLAG_MASK		0x1f
+#define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x20	/* full pnbuf in lookup     */
+#define PUFFS_KFLAG_MASK		0x2f
 
 #define PUFFS_FHFLAG_DYNAMIC	0x01
 #define PUFFS_FHFLAG_NFSV2	0x02
@@ -341,8 +342,9 @@ struct puffs_kcn {
 	u_long			pkcn_nameiop;	/* namei operation	*/
 	u_long			pkcn_flags;	/* flags		*/
 
-	char pkcn_name[MAXPATHLEN+1];  /* nul-terminated path component	*/
-	long pkcn_namelen;
+	char pkcn_name[MAXPATHLEN];	/* nulterminated path component */
+	long pkcn_namelen;		/* current component length	*/
+	long pkcn_consume;		/* IN: extra chars server ate   */
 };
 
 /*
