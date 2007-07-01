@@ -1,4 +1,4 @@
-/*	$NetBSD: itvar.h,v 1.3 2007/01/07 01:39:24 xtraeme Exp $	*/
+/*	$NetBSD: itvar.h,v 1.4 2007/07/01 07:37:20 xtraeme Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -86,16 +86,6 @@
 
 #define IT_VREF	(4096) /* Vref = 4.096 V */
 
-static const struct envsys_range it_ranges[] = {
-	{ 0, 2,		ENVSYS_STEMP   },
-	{ 8, 9,		ENVSYS_SFANRPM },
-	{ 1, 0,		ENVSYS_SVOLTS_AC },	/* None */
-	{ 3, 7,		ENVSYS_SVOLTS_DC },
-	{ 1, 0,		ENVSYS_SOHMS },		/* None */
-	{ 1, 0,		ENVSYS_SWATTS },	/* None */
-	{ 1, 0,		ENVSYS_SAMPS }		/* None */
-};
-
 struct it_softc {
 	struct device sc_dev;
 
@@ -103,8 +93,7 @@ struct it_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct sysmon_envsys sc_sysmon;
-	envsys_tre_data_t sc_data[IT_NUM_SENSORS];
-	envsys_basic_info_t sc_info[IT_NUM_SENSORS];
+	envsys_data_t sc_data[IT_NUM_SENSORS];
 };
 
 #endif /* _DEV_ISA_ITVAR_H_ */

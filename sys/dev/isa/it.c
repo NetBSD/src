@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.8 2007/05/07 10:54:44 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.9 2007/07/01 07:37:19 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.8 2007/05/07 10:54:44 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.9 2007/07/01 07:37:19 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,11 +88,10 @@ static void it_writereg(struct it_softc *, int, int);
 
 /* envsys(9) glue */
 static void it_setup_sensors(struct it_softc *);
-static void it_refresh_temp(struct it_softc *, envsys_tre_data_t *);
-static void it_refresh_volts(struct it_softc *, envsys_tre_data_t *);
-static void it_refresh_fans(struct it_softc *, envsys_tre_data_t *);
-static int it_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
-static int it_streinfo(struct sysmon_envsys *, envsys_basic_info_t *);
+static void it_refresh_temp(struct it_softc *, envsys_data_t *);
+static void it_refresh_volts(struct it_softc *, envsys_data_t *);
+static void it_refresh_fans(struct it_softc *, envsys_data_t *);
+static int it_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 /* voltage sensors used */
 static const int it_sensorvolt[] = {
@@ -176,10 +175,8 @@ it_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize sensors */
 	for (i = 0; i < IT_NUM_SENSORS; ++i) {
-		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
-		sc->sc_data[i].validflags = (ENVSYS_FVALID|ENVSYS_FCURVALID);
-		sc->sc_info[i].validflags = ENVSYS_FVALID;
-		sc->sc_data[i].warnflags = ENVSYS_WARN_OK;
+		sc->sc_data[i].sensor = i;
+		sc->sc_data[i].state = ENVSYS_SVALID;
 	}
 
 	it_setup_sensors(sc);
@@ -187,15 +184,11 @@ it_isa_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Hook into the system monitor.
 	 */
-	sc->sc_sysmon.sme_ranges = it_ranges;
-	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = it_gtredata;
-	sc->sc_sysmon.sme_streinfo = it_streinfo;
 	sc->sc_sysmon.sme_nsensors = IT_NUM_SENSORS;
-	sc->sc_sysmon.sme_envsys_version = 1000;
-	sc->sc_sysmon.sme_flags = 0;
 	
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		printf("%s: unable to register with sysmon\n",
@@ -250,73 +243,66 @@ it_setup_sensors(struct it_softc *sc)
 	int i;
 
 	/* temperatures */
-	for (i = 0; i < IT_VOLTSTART_IDX; i++) {
+	for (i = 0; i < IT_VOLTSTART_IDX; i++)
 		sc->sc_data[i].units = ENVSYS_STEMP;
-		sc->sc_info[i].units = ENVSYS_STEMP;
-	}
 
-	COPYDESCR(sc->sc_info[0].desc, "CPU Temp");
-	COPYDESCR(sc->sc_info[1].desc, "System Temp");
+	COPYDESCR(sc->sc_data[0].desc, "CPU Temp");
+	COPYDESCR(sc->sc_data[1].desc, "System Temp");
 
 	/* voltages */
-	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++) {
+	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++)
 		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
-		sc->sc_info[i].units = ENVSYS_SVOLTS_DC;
-	}
 
-	COPYDESCR(sc->sc_info[2].desc, "VCORE_A");
-	COPYDESCR(sc->sc_info[3].desc, "+3.3V");
-	COPYDESCR(sc->sc_info[4].desc, "+5V");
-	COPYDESCR(sc->sc_info[5].desc, "+12V");
-	COPYDESCR(sc->sc_info[6].desc, "VBAT");
+	COPYDESCR(sc->sc_data[2].desc, "VCORE_A");
+	COPYDESCR(sc->sc_data[3].desc, "+3.3V");
+	COPYDESCR(sc->sc_data[4].desc, "+5V");
+	COPYDESCR(sc->sc_data[5].desc, "+12V");
+	COPYDESCR(sc->sc_data[6].desc, "VBAT");
 
 	/* fans */
-	for (i = IT_FANSTART_IDX; i < IT_NUM_SENSORS; i++) {
+	for (i = IT_FANSTART_IDX; i < IT_NUM_SENSORS; i++)
 		sc->sc_data[i].units = ENVSYS_SFANRPM;
-		sc->sc_info[i].units = ENVSYS_SFANRPM;
-	}
 
-	COPYDESCR(sc->sc_info[7].desc, "CPU Fan");
-	COPYDESCR(sc->sc_info[8].desc, "System Fan");
+	COPYDESCR(sc->sc_data[7].desc, "CPU Fan");
+	COPYDESCR(sc->sc_data[8].desc, "System Fan");
 }
 #undef COPYDESCR
 
 static void
-it_refresh_temp(struct it_softc *sc, envsys_tre_data_t *tred)
+it_refresh_temp(struct it_softc *sc, envsys_data_t *edata)
 {
 	int sdata;
 
-	sdata = it_readreg(sc, IT_SENSORTEMPBASE + tred->sensor);
-	DPRINTF(("sdata[temp%d] 0x%x\n", tred->sensor, sdata));
+	sdata = it_readreg(sc, IT_SENSORTEMPBASE + edata->sensor);
+	DPRINTF(("sdata[temp%d] 0x%x\n", edata->sensor, sdata));
 	/* Convert temperature to Fahrenheit degres */
-	sc->sc_data[tred->sensor].cur.data_us = sdata * 1000000 + 273150000;
+	sc->sc_data[edata->sensor].value_cur = sdata * 1000000 + 273150000;
 }
 
 static void
-it_refresh_volts(struct it_softc *sc, envsys_tre_data_t *tred)
+it_refresh_volts(struct it_softc *sc, envsys_data_t *edata)
 {
 	int i, sdata;
 
-	i = tred->sensor - IT_VOLTSTART_IDX;
+	i = edata->sensor - IT_VOLTSTART_IDX;
 
 	sdata = it_readreg(sc, it_sensorvolt[i]);
 	DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
 	/* voltage returned as (mV >> 4) */
-	sc->sc_data[tred->sensor].cur.data_s = (sdata << 4);
+	sc->sc_data[edata->sensor].value_cur = (sdata << 4);
 	/* rfact is (factor * 10^4) */
-	sc->sc_data[tred->sensor].cur.data_s *= it_vrfact[i];
+	sc->sc_data[edata->sensor].value_cur *= it_vrfact[i];
 	/* division by 10 gets us back to uVDC */
-	sc->sc_data[tred->sensor].cur.data_s /= 10;
-	sc->sc_info[tred->sensor].rfact =
-	    sc->sc_data[tred->sensor].cur.data_s;
+	sc->sc_data[edata->sensor].value_cur /= 10;
+	sc->sc_data[edata->sensor].rfact = it_vrfact[i];
 }
 
 static void
-it_refresh_fans(struct it_softc *sc, envsys_tre_data_t *tred)
+it_refresh_fans(struct it_softc *sc, envsys_data_t *edata)
 {
 	int i, sdata, divisor, odivisor, ndivisor;
 
-	i = tred->sensor - IT_FANSTART_IDX;
+	i = edata->sensor - IT_FANSTART_IDX;
 	odivisor = ndivisor = divisor = it_readreg(sc, IT_FAN);
 
 	if ((sdata = it_readreg(sc, IT_SENSORFANBASE + i)) == 0xff) {
@@ -329,7 +315,7 @@ it_refresh_fans(struct it_softc *sc, envsys_tre_data_t *tred)
 	} else {
 		if (i == 2)
 			divisor = divisor & 1 ? 3 : 1;
-		sc->sc_data[tred->sensor].cur.data_us =
+		sc->sc_data[edata->sensor].value_cur =
 		    1350000 / (sdata << (divisor & 7));
 	}
 
@@ -339,77 +325,19 @@ it_refresh_fans(struct it_softc *sc, envsys_tre_data_t *tred)
 }
 
 static int              
-it_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+it_gtredata(struct sysmon_envsys *sme, struct envsys_data *edata)
 {
 	struct it_softc *sc = sme->sme_cookie;
 
-	if (tred->sensor < IT_VOLTSTART_IDX)
-		it_refresh_temp(sc, tred);
-	else if (tred->sensor >= IT_VOLTSTART_IDX &&
-	         tred->sensor < IT_FANSTART_IDX)
-		it_refresh_volts(sc, tred);
-	else if (tred->sensor >= IT_FANSTART_IDX)
-		it_refresh_fans(sc, tred);
+	if (edata->sensor < IT_VOLTSTART_IDX)
+		it_refresh_temp(sc, edata);
+	else if (edata->sensor >= IT_VOLTSTART_IDX &&
+	         edata->sensor < IT_FANSTART_IDX)
+		it_refresh_volts(sc, edata);
+	else if (edata->sensor >= IT_FANSTART_IDX)
+		it_refresh_fans(sc, edata);
         else
 		return 0;
 
-	*tred = sc->sc_data[tred->sensor]; 
-	return 0;
-}
-
-static int              
-it_streinfo(struct sysmon_envsys *sme, envsys_basic_info_t *info)
-{                                       
-	struct it_softc *sc = sme->sme_cookie;
-	int divisor, i;
-	uint8_t sdata;          
-                        
-	if (sc->sc_info[info->sensor].units == ENVSYS_SVOLTS_DC)
-		sc->sc_info[info->sensor].rfact = info->rfact;
-	else {  
-		if (sc->sc_info[info->sensor].units == ENVSYS_SFANRPM) {
-			if (info->rpms == 0) {
-				info->validflags = 2;
-				return 0;
-			}
-
-			/* write back nominal FAN speed */
-			sc->sc_info[info->sensor].rpms = info->rpms;
-
-			/* 153 is the nominal FAN speed value */
-			divisor = 1350000 / (info->rpms * 153);
-
-			/* ...but we need lg(divisor) */
-			for (i = 0; i < 7; i++) {
-				if (divisor <= (1 << i))
-					break;
-			}
-			divisor = i;
-
-			sdata = it_readreg(sc, IT_FAN);
-			/*
-			 * FAN1 div is in bits <0:2>, FAN2 is in <3:5>
-			 * and FAN3 is in <6>, if set divisor is 8, else 2.
-			 */
-			switch (info->sensor) {
-			case 10: /* FAN1 */
-				sdata = (sdata & 0xf8) | divisor;
-				break;
-			case 11: /* FAN2 */
-				sdata = (sdata & 0xc7) | divisor << 3;
-				break;
-			default: /* FAN3 */
-				if (divisor > 2)
-					sdata = sdata & 0xbf;
-				else 
-					sdata = sdata | 0x40;
-				break; 
-			}
-			it_writereg(sc, IT_FAN, sdata);
-		}
-		strlcpy(sc->sc_info[info->sensor].desc, info->desc,
-		    sizeof(sc->sc_info[info->sensor].desc));
-		info->validflags = ENVSYS_FVALID;
-	}
 	return 0;
 }

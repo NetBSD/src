@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463reg.h,v 1.5 2007/06/15 19:47:59 christos Exp $ */
+/*	$NetBSD: adt7463reg.h,v 1.6 2007/07/01 07:37:15 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -39,8 +39,13 @@
 #ifndef INCLUDE_ADT7463REG_H
 #define INCLUDE_ADT7463REG_H
 
+#define ADT7463_VOLT_SENSORS_START	0
 #define ADT7463_VOLT_SENSORS_COUNT	5
+#define ADT7463_TEMP_SENSORS_START	\
+	(ADT7463_VOLT_SENSORS_START + ADT7463_VOLT_SENSORS_COUNT)
 #define ADT7463_TEMP_SENSORS_COUNT	3
+#define ADT7463_FAN_SENSORS_START	\
+	(ADT7463_TEMP_SENSORS_START + ADT7463_TEMP_SENSORS_COUNT)
 #define ADT7463_FAN_SENSORS_COUNT	4
 #define ADT7463_MAX_ENVSYS_RANGE	12 /* sum of the above */
 
@@ -73,22 +78,11 @@
 #define ADT7463_CEL_TO_KELVIN		27315
 #define ADT7463_RPM_CONST		(90000 * 60)
 
-const struct envsys_range adt7463c_ranges[] = {
-	{ 5, 7,	 ENVSYS_STEMP },
-	{ 8, 11, ENVSYS_SFANRPM },
-	{ 1, 0,  ENVSYS_SVOLTS_AC },	/* None */
-	{ 0, 4,  ENVSYS_SVOLTS_DC },
-	{ 1, 0,  ENVSYS_SOHMS },	/* None */
-	{ 1, 0,  ENVSYS_SWATTS },	/* None */
-	{ 1, 0,  ENVSYS_SAMPS }		/* None */
-};  
-
 struct adt7463c_softc {
 	struct device sc_dev;		/* generic device structures */
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_address;
-	struct envsys_tre_data sc_sensor[ADT7463_MAX_ENVSYS_RANGE];
-	struct envsys_basic_info sc_info[ADT7463_MAX_ENVSYS_RANGE];
+	envsys_data_t sc_sensor[ADT7463_MAX_ENVSYS_RANGE];
 	struct sysmon_envsys sc_sysmon;  
 };
 
