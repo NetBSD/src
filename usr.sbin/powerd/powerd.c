@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.7 2007/05/07 02:33:35 xtraeme Exp $	*/
+/*	$NetBSD: powerd.c,v 1.8 2007/07/01 07:39:47 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -52,6 +52,7 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <prop/proplib.h>
 
 int	debug;
 
@@ -65,7 +66,7 @@ static void run_script(const char *[]);
 static struct kevent *allocchange(void);
 static int wait_for_events(struct kevent *, size_t);
 static void dispatch_dev_power(struct kevent *);
-static void dispatch_power_event_switch_state_change(power_event_t *);
+static void dispatch_power_event_state_change(int, power_event_t *);
 
 static const char *script_paths[] = {
 	NULL,
@@ -250,47 +251,6 @@ wait_for_events(struct kevent *events, size_t nevents)
 	return rv;
 }
 
-static const char *
-pswitch_type_name(int type)
-{
-
-	switch (type) {
-	case PSWITCH_TYPE_POWER:
-		return "power_button";
-
-	case PSWITCH_TYPE_SLEEP:
-		return "sleep_button";
-
-	case PSWITCH_TYPE_LID:
-		return "lid_switch";
-
-	case PSWITCH_TYPE_RESET:
-		return "reset_button";
-
-	case PSWITCH_TYPE_ACADAPTER:
-		return "acadapter";
-
-	default:
-		return "=unknown pswitch type=";
-	}
-}
-
-static const char *
-pswitch_event_name(int type)
-{
-
-	switch (type) {
-	case PSWITCH_EVENT_PRESSED:
-		return "pressed";
-
-	case PSWITCH_EVENT_RELEASED:
-		return "released";
-
-	default:
-		return "=unknown pswitch event=";
-	}
-}
-
 static void
 dispatch_dev_power(struct kevent *ev)
 {
@@ -298,8 +258,9 @@ dispatch_dev_power(struct kevent *ev)
 	int fd = ev->ident;
 
 	if (debug)
-		(void)fprintf(stderr, "dispatch_dev_power: %" PRId64 
-		    " events available\n", ev->data);
+		(void)fprintf(stderr, "%s: %" PRId64 
+		    " event%s available\n", __func__,
+		    ev->data, ev->data > 1 ? "s" : "");
 
  again:
 	if (read(fd, &pev, sizeof(pev)) != sizeof(pev)) {
@@ -309,16 +270,15 @@ dispatch_dev_power(struct kevent *ev)
 		exit(EX_OSERR);
 	}
 
-	if (debug) {
-		(void)fprintf(stderr, "dispatch_dev_power: event type %d\n",
-		    pev.pev_type);
-	}
+	if (debug)
+		(void)fprintf(stderr, "%s: event type %d\n",
+		    __func__, pev.pev_type);
 
 	switch (pev.pev_type) {
+	case POWER_EVENT_ENVSYS_STATE_CHANGE:
 	case POWER_EVENT_SWITCH_STATE_CHANGE:
-		dispatch_power_event_switch_state_change(&pev);
+		dispatch_power_event_state_change(fd, &pev);
 		break;
-
 	default:
 		syslog(LOG_INFO, "unknown %s event type: %d",
 		    _PATH_DEV_POWER, pev.pev_type);
@@ -328,18 +288,42 @@ dispatch_dev_power(struct kevent *ev)
 }
 
 static void
-dispatch_power_event_switch_state_change(power_event_t *pev)
+dispatch_power_event_state_change(int fd, power_event_t *pev)
 {
-	const char *argv[4];
+	prop_dictionary_t dict;
+	prop_object_t obj;
+	const char *argv[6];
+	int error;
 
-	argv[0] = pswitch_type_name(pev->pev_switch.psws_type);
-	argv[1] = pev->pev_switch.psws_name;
-	argv[2] = pswitch_event_name(pev->pev_switch.psws_state);
-	argv[3] = NULL;
-
+	error = prop_dictionary_recv_ioctl(fd, POWER_EVENT_RECVDICT, &dict);
+	if (error) {
+		if (debug)
+			printf("%s: prop_dictionary_recv_ioctl error=%d\n",
+			    __func__, error);
+		return;
+	}
+	
 	if (debug)
-		(void)fprintf(stderr, "%s on %s %s\n", argv[0], argv[1],
-		    argv[2]);
+		printf("%s", prop_dictionary_externalize(dict));
+
+	obj = prop_dictionary_get(dict, "powerd-script-name");
+	argv[0] = prop_string_cstring_nocopy(obj);
+
+	obj = prop_dictionary_get(dict, "driver-name");
+	argv[1] = prop_string_cstring_nocopy(obj);
+
+	obj = prop_dictionary_get(dict, "powerd-event-name");
+	argv[2] = prop_string_cstring_nocopy(obj);
+
+	obj = prop_dictionary_get(dict, "sensor-name");
+	argv[3] = prop_string_cstring_nocopy(obj);
+
+	obj = prop_dictionary_get(dict, "drive-state-desc");
+	argv[4] = prop_string_cstring_nocopy(obj);
+
+	argv[5] = NULL;
+
+	prop_object_release(dict);
 
 	run_script(argv);
 }
