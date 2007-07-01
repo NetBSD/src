@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.68 2007/06/24 22:25:49 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.69 2007/07/01 15:32:02 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.68 2007/06/24 22:25:49 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.69 2007/07/01 15:32:02 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -567,7 +567,7 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn->pcn_cred);
+	set_fuse_context_uid_gid(pcn->pcn_cred);
 
 	ret = fuse->op.getattr(path, &st);
 
@@ -662,7 +662,7 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 		return ENOSYS;
 	}
 
-	set_fuse_context_uid_gid(&pcn->pcn_cred);
+	set_fuse_context_uid_gid(pcn->pcn_cred);
 	set_fuse_context_pid(pcn->pcn_pid);
 
 	/* wrap up return code */
@@ -690,7 +690,7 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn->pcn_cred);
+	set_fuse_context_uid_gid(pcn->pcn_cred);
 	set_fuse_context_pid(pcn->pcn_pid);
 
 	if (fuse->op.mkdir == NULL) {
@@ -728,7 +728,7 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn->pcn_cred);
+	set_fuse_context_uid_gid(pcn->pcn_cred);
 	set_fuse_context_pid(pcn->pcn_pid);
 
 	created = 0;
@@ -776,7 +776,7 @@ puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn->pcn_cred);
+	set_fuse_context_uid_gid(pcn->pcn_cred);
 	set_fuse_context_pid(pcn->pcn_pid);
 
 	if (fuse->op.unlink == NULL) {
@@ -803,7 +803,7 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn->pcn_cred);
+	set_fuse_context_uid_gid(pcn->pcn_cred);
 	set_fuse_context_pid(pcn->pcn_pid);
 
 	if (fuse->op.rmdir == NULL) {
@@ -830,7 +830,7 @@ puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn_src->pcn_cred);
+	set_fuse_context_uid_gid(pcn_src->pcn_cred);
 	set_fuse_context_pid(pcn_src->pcn_pid);
 
 	if (fuse->op.symlink == NULL) {
@@ -862,7 +862,7 @@ puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn_targ->pcn_cred);
+	set_fuse_context_uid_gid(pcn_targ->pcn_cred);
 	set_fuse_context_pid(pcn_targ->pcn_pid);
 
 	if (fuse->op.rename == NULL) {
@@ -890,7 +890,7 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 
 	fuse = puffs_getspecific(pu);
 
-	set_fuse_context_uid_gid(&pcn->pcn_cred);
+	set_fuse_context_uid_gid(pcn->pcn_cred);
 	set_fuse_context_pid(pcn->pcn_pid);
 
 	if (fuse->op.link == NULL) {
