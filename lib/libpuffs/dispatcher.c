@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.8 2007/07/01 17:22:18 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.9 2007/07/01 18:39:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.8 2007/07/01 17:22:18 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.9 2007/07/01 18:39:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -190,11 +190,15 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VFS_FHTOVP:
 		{
 			struct puffs_vfsreq_fhtonode *auxt = auxbuf;
+			struct puffs_newinfo pni;
+
+			pni.pni_cookie = &auxt->pvfsr_fhcookie;
+			pni.pni_vtype = &auxt->pvfsr_vtype;
+			pni.pni_size = &auxt->pvfsr_size;
+			pni.pni_rdev = &auxt->pvfsr_rdev;
 
 			error = pops->puffs_fs_fhtonode(pcc, auxt->pvfsr_data,
-			    auxt->pvfsr_dsize, &auxt->pvfsr_fhcookie,
-			    &auxt->pvfsr_vtype, &auxt->pvfsr_size,
-			    &auxt->pvfsr_rdev);
+			    auxt->pvfsr_dsize, &pni);
 
 			break;
 		}
@@ -237,11 +241,16 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_LOOKUP:
 		{
 			struct puffs_vnreq_lookup *auxt = auxbuf;
+			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
 			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
+			pni.pni_cookie = &auxt->pvnr_newnode;
+			pni.pni_vtype = &auxt->pvnr_vtype;
+			pni.pni_size = &auxt->pvnr_size;
+			pni.pni_rdev = &auxt->pvnr_rdev;
 
 			if (buildpath) {
 				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
@@ -251,8 +260,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			/* lookup *must* be present */
 			error = pops->puffs_node_lookup(pcc, opcookie,
-			    &auxt->pvnr_newnode, &auxt->pvnr_vtype,
-			    &auxt->pvnr_size, &auxt->pvnr_rdev, &pcn);
+			    &pni, &pcn);
 
 			if (buildpath) {
 				if (error) {
@@ -279,7 +287,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_CREATE:
 		{
 			struct puffs_vnreq_create *auxt = auxbuf;
+			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+
 			if (pops->puffs_node_create == NULL) {
 				error = 0;
 				break;
@@ -289,6 +299,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
 			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
+			memset(&pni, 0, sizeof(pni));
+			pni.pni_cookie = &auxt->pvnr_newnode;
+
 			if (buildpath) {
 				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
 				if (error)
@@ -296,8 +309,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_create(pcc,
-			    opcookie, &auxt->pvnr_newnode,
-			    &pcn, &auxt->pvnr_va);
+			    opcookie, &pni, &pcn, &auxt->pvnr_va);
 
 			if (buildpath) {
 				if (error) {
@@ -316,7 +328,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_MKNOD:
 		{
 			struct puffs_vnreq_mknod *auxt = auxbuf;
+			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+
 			if (pops->puffs_node_mknod == NULL) {
 				error = 0;
 				break;
@@ -326,6 +340,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
 			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
+			memset(&pni, 0, sizeof(pni));
+			pni.pni_cookie = &auxt->pvnr_newnode;
+
 			if (buildpath) {
 				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
 				if (error)
@@ -333,8 +350,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_mknod(pcc,
-			    opcookie, &auxt->pvnr_newnode,
-			    &pcn, &auxt->pvnr_va);
+			    opcookie, &pni, &pcn, &auxt->pvnr_va);
 
 			if (buildpath) {
 				if (error) {
@@ -601,7 +617,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_MKDIR:
 		{
 			struct puffs_vnreq_mkdir *auxt = auxbuf;
+			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+
 			if (pops->puffs_node_mkdir == NULL) {
 				error = 0;
 				break;
@@ -611,6 +629,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
 			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
+			memset(&pni, 0, sizeof(pni));
+			pni.pni_cookie = &auxt->pvnr_newnode;
+
 			if (buildpath) {
 				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
 				if (error)
@@ -618,8 +639,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_mkdir(pcc,
-			    opcookie, &auxt->pvnr_newnode,
-			    &pcn, &auxt->pvnr_va);
+			    opcookie, &pni, &pcn, &auxt->pvnr_va);
 
 			if (buildpath) {
 				if (error) {
@@ -656,7 +676,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_SYMLINK:
 		{
 			struct puffs_vnreq_symlink *auxt = auxbuf;
+			struct puffs_newinfo pni;
 			struct puffs_cn pcn;
+
 			if (pops->puffs_node_symlink == NULL) {
 				error = 0;
 				break;
@@ -666,6 +688,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
 			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
+			memset(&pni, 0, sizeof(pni));
+			pni.pni_cookie = &auxt->pvnr_newnode;
+
 			if (buildpath) {
 				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
 				if (error)
@@ -673,8 +698,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_symlink(pcc,
-			    opcookie, &auxt->pvnr_newnode,
-			    &pcn, &auxt->pvnr_va, auxt->pvnr_link);
+			    opcookie, &pni, &pcn,
+			    &auxt->pvnr_va, auxt->pvnr_link);
 
 			if (buildpath) {
 				if (error) {

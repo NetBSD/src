@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.15 2007/07/01 17:42:19 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.16 2007/07/01 18:39:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -173,6 +173,13 @@ struct puffs_putreq {
 
 	/* diagnostics */
 	struct puffs_getreq	*ppr_pgr;
+};
+
+struct puffs_newinfo {
+	void		**pni_cookie;
+	enum vtype	*pni_vtype;
+	voff_t		*pni_size;
+	dev_t		*pni_rdev;
 };
 
 #define PUFFS_MAKEKCRED(to, from)					\
