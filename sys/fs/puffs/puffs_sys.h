@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.43 2007/07/01 15:30:16 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.44 2007/07/01 17:22:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -232,9 +232,9 @@ void	puffs_referencenode(struct puffs_node *);
 
 int	puffs_pnode2vnode(struct puffs_mount *, void *, int, struct vnode **);
 void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
-		     const struct componentname *);
+		     struct puffs_kcid *, const struct componentname *);
 void	puffs_credcvt(struct puffs_kcred *, kauth_cred_t);
-pid_t	puffs_lwp2pid(struct lwp *);
+void	puffs_cidcvt(struct puffs_kcid *, const struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_req *, void *);
 void	puffs_parkdone_poll(struct puffs_req *, void *);

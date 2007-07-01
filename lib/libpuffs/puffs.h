@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.67 2007/07/01 15:30:15 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.68 2007/07/01 17:22:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -51,6 +51,7 @@ struct puffs_cc;
 struct puffs_getreq;
 struct puffs_putreq;
 struct puffs_cred;
+struct puffs_cid;
 
 /* paths */
 struct puffs_pathobj {
@@ -115,6 +116,7 @@ struct puffs_cn {
 	struct puffs_kcn	*pcn_pkcnp;	/* kernel input */
 
 	struct puffs_cred	*pcn_cred;	/* cred used for lookup */
+	struct puffs_cid	*pcn_cid;	/* the who called	*/
 
 	struct puffs_pathobj	pcn_po_full;	/* PUFFS_FLAG_BUILDPATH */
 };
@@ -147,11 +149,12 @@ extern const struct mntopt puffsmopts[]; /* puffs.c */
 
 /* callbacks for operations */
 struct puffs_ops {
-	int (*puffs_fs_unmount)(struct puffs_cc *, int, pid_t);
+	int (*puffs_fs_unmount)(struct puffs_cc *, int,
+	    const struct puffs_cid *);
 	int (*puffs_fs_statvfs)(struct puffs_cc *,
-	    struct statvfs *, pid_t);
+	    struct statvfs *, const struct puffs_cid *);
 	int (*puffs_fs_sync)(struct puffs_cc *, int,
-	    const struct puffs_cred *, pid_t);
+	    const struct puffs_cred *, const struct puffs_cid *);
 	int (*puffs_fs_fhtonode)(struct puffs_cc *, void *, size_t,
 	    void **, enum vtype *, voff_t *, dev_t *);
 	int (*puffs_fs_nodetofh)(struct puffs_cc *, void *cookie,
@@ -166,20 +169,24 @@ struct puffs_ops {
 	int (*puffs_node_mknod)(struct puffs_cc *,
 	    void *, void **, const struct puffs_cn *, const struct vattr *);
 	int (*puffs_node_open)(struct puffs_cc *,
-	    void *, int, const struct puffs_cred *, pid_t);
+	    void *, int, const struct puffs_cred *, const struct puffs_cid *);
 	int (*puffs_node_close)(struct puffs_cc *,
-	    void *, int, const struct puffs_cred *, pid_t);
+	    void *, int, const struct puffs_cred *, const struct puffs_cid *);
 	int (*puffs_node_access)(struct puffs_cc *,
-	    void *, int, const struct puffs_cred *, pid_t);
+	    void *, int, const struct puffs_cred *, const struct puffs_cid *);
 	int (*puffs_node_getattr)(struct puffs_cc *,
-	    void *, struct vattr *, const struct puffs_cred *, pid_t);
+	    void *, struct vattr *, const struct puffs_cred *,
+	    const struct puffs_cid *);
 	int (*puffs_node_setattr)(struct puffs_cc *,
-	    void *, const struct vattr *, const struct puffs_cred *, pid_t);
-	int (*puffs_node_poll)(struct puffs_cc *, void *, int *, pid_t);
+	    void *, const struct vattr *, const struct puffs_cred *,
+	    const struct puffs_cid *);
+	int (*puffs_node_poll)(struct puffs_cc *, void *, int *,
+	    const struct puffs_cid *);
 	int (*puffs_node_mmap)(struct puffs_cc *,
-	    void *, int, const struct puffs_cred *, pid_t);
+	    void *, int, const struct puffs_cred *, const struct puffs_cid *);
 	int (*puffs_node_fsync)(struct puffs_cc *,
-	    void *, const struct puffs_cred *, int, off_t, off_t, pid_t);
+	    void *, const struct puffs_cred *, int, off_t, off_t,
+	    const struct puffs_cid *);
 	int (*puffs_node_seek)(struct puffs_cc *,
 	    void *, off_t, off_t, const struct puffs_cred *);
 	int (*puffs_node_remove)(struct puffs_cc *,
@@ -202,9 +209,9 @@ struct puffs_ops {
 	int (*puffs_node_readlink)(struct puffs_cc *,
 	    void *, const struct puffs_cred *, char *, size_t *);
 	int (*puffs_node_reclaim)(struct puffs_cc *,
-	    void *, pid_t);
+	    void *, const struct puffs_cid *);
 	int (*puffs_node_inactive)(struct puffs_cc *,
-	    void *, pid_t, int *);
+	    void *, const struct puffs_cid *, int *);
 	int (*puffs_node_print)(struct puffs_cc *,
 	    void *);
 	int (*puffs_node_pathconf)(struct puffs_cc *,
@@ -273,11 +280,12 @@ enum {
 #define PUFFSOP_PROTOS(fsname)						\
 	int fsname##_fs_mount(struct puffs_usermount *, void **,	\
 	    struct statvfs *);						\
-	int fsname##_fs_unmount(struct puffs_cc *, int, pid_t);		\
+	int fsname##_fs_unmount(struct puffs_cc *, int,			\
+	    const struct puffs_cid *);					\
 	int fsname##_fs_statvfs(struct puffs_cc *,			\
-	    struct statvfs *, pid_t);					\
+	    struct statvfs *, const struct puffs_cid *);		\
 	int fsname##_fs_sync(struct puffs_cc *, int,			\
-	    const struct puffs_cred *cred, pid_t);			\
+	    const struct puffs_cred *cred, const struct puffs_cid *);	\
 	int fsname##_fs_fhtonode(struct puffs_cc *, void *, size_t,	\
 	    void **, enum vtype *, voff_t *, dev_t *);			\
 	int fsname##_fs_nodetofh(struct puffs_cc *, void *cookie,	\
@@ -294,22 +302,28 @@ enum {
 	    void *, void **, const struct puffs_cn *,			\
 	    const struct vattr *);					\
 	int fsname##_node_open(struct puffs_cc *,			\
-	    void *, int, const struct puffs_cred *, pid_t);		\
+	    void *, int, const struct puffs_cred *,			\
+	    const struct puffs_cid *);					\
 	int fsname##_node_close(struct puffs_cc *,			\
-	    void *, int, const struct puffs_cred *, pid_t);		\
+	    void *, int, const struct puffs_cred *,			\
+	    const struct puffs_cid *);					\
 	int fsname##_node_access(struct puffs_cc *,			\
-	    void *, int, const struct puffs_cred *, pid_t);		\
+	    void *, int, const struct puffs_cred *,			\
+	    const struct puffs_cid *);					\
 	int fsname##_node_getattr(struct puffs_cc *,			\
-	    void *, struct vattr *, const struct puffs_cred *, pid_t);	\
+	    void *, struct vattr *, const struct puffs_cred *,		\
+	    const struct puffs_cid *);					\
 	int fsname##_node_setattr(struct puffs_cc *,			\
 	    void *, const struct vattr *, const struct puffs_cred *,	\
-	    pid_t);							\
-	int fsname##_node_poll(struct puffs_cc *, void *, int *,pid_t);	\
+	    const struct puffs_cid *);					\
+	int fsname##_node_poll(struct puffs_cc *, void *, int *,	\
+	    const struct puffs_cid *);					\
 	int fsname##_node_mmap(struct puffs_cc *,			\
-	    void *, int, const struct puffs_cred *, pid_t);		\
+	    void *, int, const struct puffs_cred *,			\
+	    const struct puffs_cid *);					\
 	int fsname##_node_fsync(struct puffs_cc *,			\
 	    void *, const struct puffs_cred *, int, off_t, off_t,	\
-	    pid_t);							\
+	    const struct puffs_cid *);					\
 	int fsname##_node_seek(struct puffs_cc *,			\
 	    void *, off_t, off_t, const struct puffs_cred *);		\
 	int fsname##_node_remove(struct puffs_cc *,			\
@@ -333,9 +347,9 @@ enum {
 	int fsname##_node_readlink(struct puffs_cc *,			\
 	    void *, const struct puffs_cred *, char *, size_t *);	\
 	int fsname##_node_reclaim(struct puffs_cc *,			\
-	    void *, pid_t);						\
+	    void *, const struct puffs_cid *);				\
 	int fsname##_node_inactive(struct puffs_cc *,			\
-	    void *, pid_t, int *);					\
+	    void *, const struct puffs_cid *, int *);			\
 	int fsname##_node_print(struct puffs_cc *,			\
 	    void *);							\
 	int fsname##_node_pathconf(struct puffs_cc *,			\
@@ -460,12 +474,14 @@ void			puffs_null_setops(struct puffs_ops *);
 /*
  * generic/dummy routines applicable for some file systems
  */
-int  puffs_fsnop_unmount(struct puffs_cc *, int, pid_t);
-int  puffs_fsnop_statvfs(struct puffs_cc *, struct statvfs *, pid_t);
+int  puffs_fsnop_unmount(struct puffs_cc *, int, const struct puffs_cid *);
+int  puffs_fsnop_statvfs(struct puffs_cc *, struct statvfs *,
+			 const struct puffs_cid *);
 void puffs_zerostatvfs(struct statvfs *);
 int  puffs_fsnop_sync(struct puffs_cc *, int waitfor,
-		      const struct puffs_cred *, pid_t);
-int  puffs_genfs_node_reclaim(struct puffs_cc *, void *, pid_t);
+		      const struct puffs_cred *, const struct puffs_cid *);
+int  puffs_genfs_node_reclaim(struct puffs_cc *, void *,
+			      const struct puffs_cid *);
 
 /*
  * Subroutine stuff
@@ -485,9 +501,9 @@ mode_t		puffs_addvtype2mode(mode_t, enum vtype);
  */
 
 /* Credential fetch */
-int	puffs_cred_getuid(const struct puffs_cred *pcr, uid_t *);
-int	puffs_cred_getgid(const struct puffs_cred *pcr, gid_t *);
-int	puffs_cred_getgroups(const struct puffs_cred *pcr, gid_t *, short *);
+int	puffs_cred_getuid(const struct puffs_cred *, uid_t *);
+int	puffs_cred_getgid(const struct puffs_cred *, gid_t *);
+int	puffs_cred_getgroups(const struct puffs_cred *, gid_t *, short *);
 
 /* Credential check */
 int	puffs_cred_isuid(const struct puffs_cred *, uid_t);
@@ -496,6 +512,10 @@ int	puffs_cred_isregular(const struct puffs_cred *);
 int	puffs_cred_iskernel(const struct puffs_cred *);
 int	puffs_cred_isfs(const struct puffs_cred *);
 int	puffs_cred_isjuggernaut(const struct puffs_cred *);
+
+/* Caller ID */
+int	puffs_cid_getpid(const struct puffs_cid *, pid_t *);
+int	puffs_cid_getlwpid(const struct puffs_cid *, lwpid_t *);
 
 /* misc */
 int	puffs_access(enum vtype, mode_t, uid_t, gid_t, mode_t,

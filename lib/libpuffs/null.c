@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.19 2007/06/25 07:52:01 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.20 2007/07/01 17:22:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.19 2007/06/25 07:52:01 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.20 2007/07/01 17:22:18 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -187,7 +187,8 @@ puffs_null_setops(struct puffs_ops *pops)
 
 /*ARGSUSED*/
 int
-puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
+puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb,
+	const struct puffs_cid *pcid)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 
@@ -278,7 +279,7 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 /*ARGSUSED*/
 int
 puffs_null_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcred, pid_t pid)
+	const struct puffs_cred *pcred, const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	struct stat sb;
@@ -293,7 +294,8 @@ puffs_null_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 /*ARGSUSED*/
 int
 puffs_null_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcred, pid_t pid)
+	const struct vattr *va, const struct puffs_cred *pcred,
+	const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	int rv;
@@ -311,7 +313,7 @@ puffs_null_node_setattr(struct puffs_cc *pcc, void *opc,
 int
 puffs_null_node_fsync(struct puffs_cc *pcc, void *opc,
 	const struct puffs_cred *pcred, int how,
-	off_t offlo, off_t offhi, pid_t pid)
+	off_t offlo, off_t offhi, const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	int fd, rv;
@@ -561,8 +563,9 @@ puffs_null_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 /*ARGSUSED*/
 int
-puffs_null_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+puffs_null_node_reclaim(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cid *pcid)
 {
 
-	return puffs_genfs_node_reclaim(pcc, opc, pid);
+	return puffs_genfs_node_reclaim(pcc, opc, pcid);
 }
