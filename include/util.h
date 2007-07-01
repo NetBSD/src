@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.45 2006/12/14 19:18:01 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.46 2007/07/01 21:41:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -132,6 +132,7 @@ void		(*esetfunc(void (*)(int, const char *, ...)))
 size_t 		estrlcpy(char *, const char *, size_t);
 size_t 		estrlcat(char *, const char *, size_t);
 char 		*estrdup(const char *);
+char 		*estrndup(const char *, size_t);
 void 		*ecalloc(size_t, size_t);
 void 		*emalloc(size_t);
 void 		*erealloc(void *, size_t);

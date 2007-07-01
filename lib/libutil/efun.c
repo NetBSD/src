@@ -1,4 +1,4 @@
-/*	$NetBSD: efun.c,v 1.4 2006/09/27 16:20:03 christos Exp $	*/
+/*	$NetBSD: efun.c,v 1.5 2007/07/01 21:41:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: efun.c,v 1.4 2006/09/27 16:20:03 christos Exp $");
+__RCSID("$NetBSD: efun.c,v 1.5 2007/07/01 21:41:16 pooka Exp $");
 #endif
 
 #include <err.h>
@@ -93,6 +93,15 @@ char *
 estrdup(const char *s)
 {
 	char *d = strdup(s);
+	if (d == NULL)
+		(*efunc)(1, "Cannot copy string");
+	return d;
+}
+
+char *
+estrndup(const char *s, size_t len)
+{
+	char *d = strndup(s, len);
 	if (d == NULL)
 		(*efunc)(1, "Cannot copy string");
 	return d;
