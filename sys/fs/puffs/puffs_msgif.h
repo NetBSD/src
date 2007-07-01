@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.36 2007/07/01 15:30:15 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.37 2007/07/01 17:22:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -326,12 +326,20 @@ struct puffs_kcred {
 
 #define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX))
 
+/* caller id */
+struct puffs_kcid {
+	int	pkcid_type;
+	pid_t	pkcid_pid;
+	lwpid_t	pkcid_lwpid;
+};
+#define PUFFCID_TYPE_REAL	1
+#define PUFFCID_TYPE_FAKE	2
+
 /* puffs struct componentname built by kernel */
 struct puffs_kcn {
 	/* args */
 	u_long			pkcn_nameiop;	/* namei operation	*/
 	u_long			pkcn_flags;	/* flags		*/
-	pid_t			pkcn_pid;	/* caller pid		*/
 
 	char pkcn_name[MAXPATHLEN+1];  /* nul-terminated path component	*/
 	long pkcn_namelen;
@@ -369,21 +377,21 @@ struct puffs_vfsreq_unmount {
 	struct puffs_req	pvfsr_pr;
 
 	int			pvfsr_flags;
-	pid_t			pvfsr_pid;
+	struct puffs_kcid	pvfsr_cid;
 };
 
 struct puffs_vfsreq_statvfs {
 	struct puffs_req	pvfsr_pr;
 
 	struct statvfs		pvfsr_sb;
-	pid_t			pvfsr_pid;
+	struct puffs_kcid	pvfsr_cid;
 };
 
 struct puffs_vfsreq_sync {
 	struct puffs_req	pvfsr_pr;
 
 	struct puffs_kcred	pvfsr_cred;
-	pid_t			pvfsr_pid;
+	struct puffs_kcid	pvfsr_cid;
 	int			pvfsr_waitfor;
 };
 
@@ -429,6 +437,7 @@ struct puffs_vnreq_lookup {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	void			*pvnr_newnode;		/* IN	*/
 	enum vtype		pvnr_vtype;		/* IN	*/
@@ -441,6 +450,7 @@ struct puffs_vnreq_create {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
@@ -451,6 +461,7 @@ struct puffs_vnreq_mknod {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
@@ -460,7 +471,7 @@ struct puffs_vnreq_open {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	pid_t			pvnr_pid;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	int			pvnr_mode;		/* OUT	*/
 };
 
@@ -468,7 +479,7 @@ struct puffs_vnreq_close {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	pid_t			pvnr_pid;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	int			pvnr_fflag;		/* OUT	*/
 };
 
@@ -476,7 +487,7 @@ struct puffs_vnreq_access {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	pid_t			pvnr_pid;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	int			pvnr_mode;		/* OUT	*/
 };
 
@@ -486,8 +497,8 @@ struct puffs_vnreq_setgetattr {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	struct vattr		pvnr_va;		/* IN/OUT (op depend) */
-	pid_t			pvnr_pid;		/* OUT	*/
 };
 
 #define puffs_vnreq_read puffs_vnreq_readwrite
@@ -522,16 +533,16 @@ struct puffs_vnreq_poll {
 	struct puffs_req	pvn_pr;
 
 	int			pvnr_events;		/* IN/OUT */
-	pid_t			pvnr_pid;		/* OUT	  */
+	struct puffs_kcid	pvnr_cid;		/* OUT    */
 };
 
 struct puffs_vnreq_fsync {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	off_t			pvnr_offlo;		/* OUT	*/
 	off_t			pvnr_offhi;		/* OUT	*/
-	pid_t			pvnr_pid;		/* OUT	*/
 	int			pvnr_flags;		/* OUT	*/
 };
 
@@ -548,6 +559,7 @@ struct puffs_vnreq_remove {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
@@ -557,6 +569,7 @@ struct puffs_vnreq_mkdir {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
@@ -567,6 +580,8 @@ struct puffs_vnreq_rmdir {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
+
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
 
@@ -575,6 +590,8 @@ struct puffs_vnreq_link {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
+
 	void			*pvnr_cookie_targ;	/* OUT	*/
 };
 
@@ -583,8 +600,10 @@ struct puffs_vnreq_rename {
 
 	struct puffs_kcn	pvnr_cn_src;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_src_cred;	/* OUT	*/
+	struct puffs_kcid	pvnr_cn_src_cid;	/* OUT	*/
 	struct puffs_kcn	pvnr_cn_targ;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_targ_cred;	/* OUT	*/
+	struct puffs_kcid	pvnr_cn_targ_cid;	/* OUT	*/
 
 	void			*pvnr_cookie_src;	/* OUT	*/
 	void			*pvnr_cookie_targ;	/* OUT	*/
@@ -596,6 +615,7 @@ struct puffs_vnreq_symlink {
 
 	struct puffs_kcn	pvnr_cn;		/* OUT	*/
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
+	struct puffs_kcid	pvnr_cn_cid;		/* OUT	*/
 
 	struct vattr		pvnr_va;		/* OUT	*/
 	void			*pvnr_newnode;		/* IN	*/
@@ -627,13 +647,13 @@ struct puffs_vnreq_readlink {
 struct puffs_vnreq_reclaim {
 	struct puffs_req	pvn_pr;
 
-	pid_t			pvnr_pid;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
 
 struct puffs_vnreq_inactive {
 	struct puffs_req	pvn_pr;
 
-	pid_t			pvnr_pid;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 	int			pvnr_backendrefs;	/* IN	*/
 };
 
@@ -664,7 +684,7 @@ struct puffs_vnreq_mmap {
 
 	int			pvnr_fflags;		/* OUT	*/
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
-	pid_t			pvnr_pid;		/* OUT	*/
+	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
 
 

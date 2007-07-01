@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.11 2007/07/01 15:30:15 pooka Exp $	*/
+/*	$NetBSD: creds.c,v 1.12 2007/07/01 17:22:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: creds.c,v 1.11 2007/07/01 15:30:15 pooka Exp $");
+__RCSID("$NetBSD: creds.c,v 1.12 2007/07/01 17:22:18 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -150,6 +150,30 @@ puffs_cred_isjuggernaut(const struct puffs_cred *pcr)
 
 	return puffs_cred_isuid(pcr, 0) || puffs_cred_iskernel(pcr)
 	    || puffs_cred_isfs(pcr);
+}
+
+int
+puffs_cid_getpid(const struct puffs_cid *pcid, pid_t *pid)
+{
+	PUFFS_MAKEKCID(pkcid, pcid);
+
+	if (pkcid->pkcid_type == PUFFCID_TYPE_REAL) {
+		*pid = pkcid->pkcid_pid;
+		return 0;
+	} else
+		return ESRCH;
+}
+
+int
+puffs_cid_getlwpid(const struct puffs_cid *pcid, lwpid_t *lid)
+{
+	PUFFS_MAKEKCID(pkcid, pcid);
+
+	if (pkcid->pkcid_type == PUFFCID_TYPE_REAL) {
+		*lid = pkcid->pkcid_lwpid;
+		return 0;
+	} else
+		return ESRCH;
 }
 
 /*
