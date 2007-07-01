@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.190 2007/06/08 22:24:07 pavel Exp $
+# $NetBSD: mi,v 1.191 2007/07/01 07:55:52 xtraeme Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -42,6 +42,7 @@
 ./etc/disktab					etc-sysutil-etc
 ./etc/dm.conf					etc-games-etc
 ./etc/dumpdates					etc-sysutil-etc
+./etc/envsys.conf				etc-sysutil-etc
 ./etc/floppytab					etc-sysutil-etc
 ./etc/fstab.nfs					etc-obsolete		obsolete
 ./etc/fstab.sd					etc-obsolete		obsolete
@@ -134,6 +135,13 @@
 ./etc/powerd/scripts/lid_switch			etc-sysutil-etc
 ./etc/powerd/scripts/power_button		etc-sysutil-etc
 ./etc/powerd/scripts/reset_button		etc-sysutil-etc
+./etc/powerd/scripts/sensor_battery		etc-sysutil-etc
+./etc/powerd/scripts/sensor_drive		etc-sysutil-etc
+./etc/powerd/scripts/sensor_fan			etc-sysutil-etc
+./etc/powerd/scripts/sensor_power		etc-sysutil-etc
+./etc/powerd/scripts/sensor_resistance		etc-sysutil-etc
+./etc/powerd/scripts/sensor_temperature		etc-sysutil-etc
+./etc/powerd/scripts/sensor_voltage		etc-sysutil-etc
 ./etc/powerd/scripts/sleep_button		etc-sysutil-etc
 ./etc/primes					etc-obsolete		obsolete
 ./etc/printcap					etc-lpr-etc
