@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.11 2007/06/23 18:06:05 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.12 2007/07/01 21:43:08 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.11 2007/06/23 18:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.12 2007/07/01 21:43:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -542,8 +542,8 @@ static int softdep_worklist_req; /* serialized waiters */
 static int max_softdeps;	/* maximum number of structs before slowdown */
 static int tickdelay = 2;	/* number of ticks to pause during slowdown */
 static int proc_waiting;	/* tracks whether we have a timeout posted */
-static struct callout pause_timer_ch = CALLOUT_INITIALIZER;
-static struct lwp *filesys_syncer; /* proc of filesystem syncer process */
+static callout_t pause_timer_ch;
+static lwp_t *filesys_syncer;	/* proc of filesystem syncer process */
 static int req_clear_inodedeps;	/* syncer process flush some inodedeps */
 #define FLUSH_INODES	1
 static int req_clear_remove;	/* syncer process flush some freeblks */
@@ -1113,6 +1113,7 @@ softdep_initialize()
 	mutex_init(&softdep_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&softdep_tb_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&softdep_tb_cv, "softdbuf");
+	callout_init(&pause_timer_ch, CALLOUT_MPSAFE);
 
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
@@ -5340,7 +5341,9 @@ request_cleanup(resource, islocked)
 		callout_reset(&pause_timer_ch,
 		    tickdelay > 2 ? tickdelay : 2, pause_timer, NULL);
 	else {
+		mutex_exit(&softdep_lock);
 		callout_stop(&pause_timer_ch);
+		mutex_enter(&softdep_lock);
 #if 0
 		switch (resource) {
 
@@ -5368,7 +5371,9 @@ pause_timer(void *arg)
 {
 
 	/* XXX was wakeup_one(), but makes no difference in uniprocessor */
+	mutex_enter(&softdep_lock);
 	wakeup(&proc_waiting);
+	mutex_exit(&softdep_lock);
 }
 
 /*
