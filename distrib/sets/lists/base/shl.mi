@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.392 2007/05/30 16:23:23 tls Exp $
+# $NetBSD: shl.mi,v 1.393 2007/07/01 21:41:17 pooka Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.150				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
@@ -12,7 +12,7 @@
 ./lib/libradius.so.1.0				base-sys-shlib
 ./lib/libtermcap.so.0.6				base-sys-shlib
 ./lib/libtermlib.so.0.6				base-sys-shlib
-./lib/libutil.so.7.13				base-sys-shlib
+./lib/libutil.so.7.14				base-sys-shlib
 ./lib/libz.so.1.0				base-sys-shlib
 ./usr/lib/i18n/libBIG5.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libDECHanyu.so.4.4		base-i18n-shlib
@@ -108,7 +108,7 @@
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
-./usr/lib/libutil.so.7.13			base-sys-shlib
+./usr/lib/libutil.so.7.14			base-sys-shlib
 ./usr/lib/libwrap.so.0.2			base-net-shlib
 ./usr/lib/libz.so.1.0				base-sys-shlib
 ./usr/lib/security/pam_afslog.so.0		base-sys-shlib		kerberos,pam
