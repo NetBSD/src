@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.26 2007/07/01 17:23:44 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.27 2007/07/01 18:40:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -307,7 +307,7 @@ sysctlfs_domount(struct puffs_usermount *pu)
 
 int
 sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
-	void **fcookie, enum vtype *ftype, voff_t *fsize, dev_t *fdev)
+	struct puffs_newinfo *pni)
 {
 	struct puffs_pathobj po;
 	struct puffs_node *pn;
@@ -324,11 +324,11 @@ sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 		return EINVAL;
 	sfs = pn->pn_data;
 
-	*fcookie = pn;
+	puffs_newinfo_setcookie(pni, pn);
 	if (ISADIR(sfs))
-		*ftype = VDIR;
+		puffs_newinfo_setvtype(pni, VDIR);
 	else
-		*ftype = VREG;
+		puffs_newinfo_setvtype(pni, VREG);
 
 	return 0;
 }
@@ -426,8 +426,7 @@ getsize(struct sfsnode *sfs, struct puffs_pathobj *po)
 }
 
 int
-sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
-	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
+sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
@@ -472,12 +471,11 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	pn_new = getnode(pu, &p2cn->pcn_po_full, nodetype);
 	sfs_new = pn_new->pn_data;
 
-	*newnode = pn_new;
+	puffs_newinfo_setcookie(pni, pn_new);
 	if (ISADIR(sfs_new))
-		*newtype = VDIR;
+		puffs_newinfo_setvtype(pni, VDIR);
 	else
-		*newtype = VREG;
-	*newsize = 0; /* not needed because we're using NOCACHE */
+		puffs_newinfo_setvtype(pni, VREG);
 
 	return 0;
 }
