@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.9 2007/06/17 21:32:01 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.10 2007/07/01 19:25:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ struct lwp {
 	struct sleepq	*l_sleepq;	/* l: current sleep queue */
 	int		l_sleeperr;	/* !: error before unblock */
 	u_int		l_slptime;	/* l: time since last blocked */
-	struct callout	l_tsleep_ch;	/* !: callout for tsleep */
+	callout_t	l_tsleep_ch;	/* !: callout for tsleep */
 
 	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
@@ -178,7 +178,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
-#define	LW_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
