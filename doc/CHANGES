@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.883 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.884 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -148,3 +148,15 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		IDE Controller for systems with an AMD Geode GX2 CPU
 		(for example the decTOP). [xtraeme 20070627]
 	efs: Added read-only Silicon Graphics EFS file system. [rumble 20070629]
+	envsys(4), sysmon_envsys(9): Imported envsys2. New API with the following
+		features:
+		- Cleaned up the API for simplicity and efficiency.
+		- Ability to send capacity/critical/warning events to powerd(8).
+		- Added support for a 'dictionary based communication channel'
+		  between sysmon_power(9) and powerd(8), that means there is
+		  no 32 bytes event size event restriction anymore.
+		- Binary compatibility with old envstat(8) and powerd(8) via
+		  COMPAT_40.
+		And more, please see envsys(4) and sysmon_envsys(9) for more
+		information.
+		[xtraeme 20070701]
