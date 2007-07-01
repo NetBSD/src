@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.8 2007/06/17 21:31:28 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.9 2007/07/01 21:43:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.8 2007/06/17 21:31:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.9 2007/07/01 21:43:40 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -97,10 +97,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.8 2007/06/17 21:31:28 ad Exp 
 #include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
+#include <sys/evcnt.h>
 
 #include <uvm/uvm_extern.h>
 
-struct callout sched_pstats_ch = CALLOUT_INITIALIZER_SETFUNC(sched_pstats, NULL);
+callout_t sched_pstats_ch;
 unsigned int sched_pstats_ticks;
 
 kcondvar_t	lbolt;			/* once a second sleep address */
@@ -376,9 +377,12 @@ mi_switch(struct lwp *l)
 	 */
 	spc = &l->l_cpu->ci_schedstate;
 	if (l->l_pinned != NULL) {
+		extern struct evcnt softint_block;
+
 		returning = true;
 		newl = l->l_pinned;
 		l->l_pinned = NULL;
+		softint_block.ev_count++;
 	} else {
 		returning = false;
 		newl = NULL;
@@ -814,9 +818,6 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  * Update process statistics and check CPU resource allocation.
  * Call scheduler-specific hook to eventually adjust process/LWP
  * priorities.
- *
- *	XXXSMP This needs to be reorganised in order to reduce the locking
- *	burden.
  */
 /* ARGSUSED */
 void
@@ -905,4 +906,14 @@ sched_pstats(void *arg)
 	uvm_meter();
 	cv_broadcast(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);
+}
+
+void
+sched_init(void)
+{
+
+	callout_init(&sched_pstats_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&sched_pstats_ch, sched_pstats, NULL);
+	sched_setup();
+	sched_pstats(NULL);
 }
