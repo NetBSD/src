@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.6.3 2007/06/17 21:31:19 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.6.4 2007/07/01 21:43:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.3 2007/06/17 21:31:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.6.4 2007/07/01 21:43:41 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -349,8 +349,6 @@ volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
 #endif /* !__HAVE_TIMECOUNTER */
 
-void	*softclock_si;
-
 #ifdef __HAVE_TIMECOUNTER
 static u_int get_intr_timecount(struct timecounter *);
 
@@ -380,11 +378,6 @@ void
 initclocks(void)
 {
 	int i;
-
-	softclock_si = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
-	    softclock, NULL);
-	if (softclock_si == NULL)
-		panic("initclocks: unable to register softclock intr");
 
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
@@ -875,8 +868,7 @@ hardclock(struct clockframe *frame)
 	 * very low CPU priority, so we don't keep the relatively high
 	 * clock interrupt priority any longer than necessary.
 	 */
-	if (callout_hardclock())
-		softint_schedule(softclock_si);
+	callout_hardclock();
 }
 
 #ifdef __HAVE_TIMECOUNTER

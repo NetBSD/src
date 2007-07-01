@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.12 2007/06/23 18:10:49 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.13 2007/07/01 21:43:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.12 2007/06/23 18:10:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.13 2007/07/01 21:43:42 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -278,7 +278,7 @@ main(void)
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
-	/* Initialize callouts. */
+	/* Initialize callouts, part 1. */
 	callout_startup();
 
 	/*
@@ -341,6 +341,9 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
+
+	/* Initialize callouts, part 2. */
+	callout_startup2();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -483,7 +486,7 @@ main(void)
 #endif
 
 	/* Setup the scheduler */
-	sched_setup();
+	sched_init();
 
 #ifdef KTRACE
 	/* Initialize ktrace. */

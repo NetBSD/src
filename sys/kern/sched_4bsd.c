@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.2 2007/06/17 21:31:29 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.3 2007/07/01 21:43:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.2 2007/06/17 21:31:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.3 2007/07/01 21:43:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -508,7 +508,6 @@ sched_setup()
 {
 
 	rrticks = hz / 10;
-	sched_pstats(NULL);
 }
 
 void
