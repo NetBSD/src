@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.6 2007/07/01 07:37:14 xtraeme Exp $ */
+/* $NetBSD: mfi.c,v 1.7 2007/07/01 11:35:31 xtraeme Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.6 2007/07/01 07:37:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.7 2007/07/01 11:35:31 xtraeme Exp $");
 
 #include "bio.h"
 
@@ -1873,8 +1873,6 @@ mfi_create_sensors(struct mfi_softc *sc)
 		sc->sc_sensor_data[i].monitor = true;
 		/* Enable monitoring for drive state changes */
 		sc->sc_sensor_data[i].flags |= ENVSYS_FMONDRVSTATE;
-		/* Disable userland monitoring */
-		sc->sc_sensor_data[i].flags |= ENVSYS_FMONNOTSUPP;
 		/* logical drives */
 		snprintf(sc->sc_sensor_data[i].desc,
 		    sizeof(sc->sc_sensor_data[i].desc), "%s:%d",
