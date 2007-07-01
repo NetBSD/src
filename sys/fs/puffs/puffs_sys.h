@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.44 2007/07/01 17:22:15 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.45 2007/07/01 22:54:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -113,6 +113,8 @@ extern int puffsdebug; /* puffs_subr.c */
     (((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE_NAME) == 0)
 #define PUFFS_USE_PAGECACHE(pmp)	\
     (((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE_PAGE) == 0)
+#define PUFFS_USE_FULLPNBUF(pmp)	\
+    ((pmp)->pmp_flags & PUFFS_KFLAG_LOOKUP_FULLPNBUF)
 
 #define PUFFS_WCACHEINFO(pmp)	0
 
@@ -232,7 +234,7 @@ void	puffs_referencenode(struct puffs_node *);
 
 int	puffs_pnode2vnode(struct puffs_mount *, void *, int, struct vnode **);
 void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
-		     struct puffs_kcid *, const struct componentname *);
+		     struct puffs_kcid *, const struct componentname *, int);
 void	puffs_credcvt(struct puffs_kcred *, kauth_cred_t);
 void	puffs_cidcvt(struct puffs_kcid *, const struct lwp *);
 
