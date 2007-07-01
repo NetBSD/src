@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.113 2007/06/24 18:00:15 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.114 2007/07/01 18:38:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.113 2007/06/24 18:00:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.114 2007/07/01 18:38:11 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -701,13 +701,15 @@ void
 free_control_mbuf(struct lwp *l, struct mbuf *control, struct mbuf *uncopied)
 {
 	struct mbuf *next;
+	struct cmsghdr *cmsg;
 	bool do_free_rights = false;
 
 	while (control != NULL) {
+		cmsg = mtod(control, struct cmsghdr *);
 		if (control == uncopied)
 			do_free_rights = true;
-		if (do_free_rights
-		    && mtod(control, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
+		if (do_free_rights && cmsg->cmsg_level == SOL_SOCKET
+		    && cmsg->cmsg_type == SCM_RIGHTS)
 			free_rights(control, l);
 		next = control->m_next;
 		m_free(control);
@@ -720,6 +722,7 @@ int
 copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 {
 	int i, len, error = 0;
+	struct cmsghdr *cmsg;
 	struct mbuf *m;
 	char *q;
 
@@ -733,10 +736,12 @@ copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 	q = (char *)mp->msg_control;
 
 	for (m = control; m != NULL; ) {
+		cmsg = mtod(m, struct cmsghdr *);
 		i = m->m_len;
 		if (len < i) {
 			mp->msg_flags |= MSG_CTRUNC;
-			if (mtod(m, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
+			if (cmsg->cmsg_level == SOL_SOCKET
+			    && cmsg->cmsg_type == SCM_RIGHTS)
 				/* Do not truncate me ... */
 				break;
 			i = len;
