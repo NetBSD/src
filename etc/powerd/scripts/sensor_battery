@@ -1,0 +1,37 @@
+#!/bin/sh -
+#
+#	$NetBSD: sensor_battery,v 1.1 2007/07/01 07:55:53 xtraeme Exp $
+#
+# Generic script for battery sensors.
+#
+# Arguments passed by powerd(8):
+#
+#	script_path device event sensor
+
+case "${2}" in
+normal)
+	logger -p warning "${0}: ${3}: NORMAL: capacity reached normal state (${1})" >&1
+	exit 0
+	;;
+critical)
+	/sbin/shutdown -p now \
+	    "${0}: ${3}: CRITICAL: capacity dropped below low limit! (${1}) shutting down." >&1
+	exit 0
+	;;
+warning-under)
+	logger -p warning "${0}: ${3}: WARNING: capacity dropped below limit (${1})" >&1
+	exit 0
+	;;
+critical-under)
+	logger -p warning "${0}: ${3}: CRITICAL: capacity dropped below low critical limit! (${1})" >&1
+	exit 0
+	;;
+user-capacity)
+	logger -p warning "${0}: ${3}: USER DEFINED: capacity dropped below limit (${1})" >&1
+	exit 0
+	;;
+*)
+	logger -p warning "${0}: unsupported event ${2} on device ${1}" >&1
+	exit 1
+	;;
+esac

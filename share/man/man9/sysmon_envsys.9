@@ -1,0 +1,478 @@
+.\"	$NetBSD: sysmon_envsys.9,v 1.1 2007/07/01 07:55:51 xtraeme Exp $
+.\"
+.\"
+.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Juan Romero Pardines.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 23, 2007
+.Dt SYSMON_ENVSYS 9
+.Os
+.Sh NAME
+.Nm sysmon_envsys
+.Nd kernel part of the envsys 2 framework
+.Sh SYNOPSIS
+.In dev/sysmon/sysmonvar.h
+.Ft int
+.Fn sysmon_envsys_register "struct sysmon_envsys *sme"
+.Ft void
+.Fn sysmon_envsys_unregister "struct sysmon_envsys *sme"
+.Ft struct sysmon_envsys *
+.Fn sysmon_envsys_find "const char *name"
+.Sh DESCRIPTION
+.Pp
+.Nm
+is the kernel part of the
+.Xr envsys 4
+framework.
+With this framework you are able to register/unregister/find a
+.Nm
+driver, define what sensors the driver will support, enable or
+disable them on demand (for example if the values are not reporting
+data within the accepted limits), enable/disable automatic monitoring,
+etc.
+.Pp
+.Ss HOW TO USE THE FRAMEWORK
+.Pp
+To register a new driver with the
+.Nm
+framework, a
+.Sy sysmon_envsys
+structure must be used. It's defined as follow
+(only the public members are shown):
+.Bd -literal
+struct sysmon_envsys {
+	const char 	*sme_name;
+	uint32_t 	sme_nsensors;
+	int		sme_flags;
+	envsys_data_t 	*sme_sensor_data;
+	void 		*sme_cookie;
+	int (*sme_gtredata)(struct sysmon_envsys *sme, envsys_data_t *edata);
+};
+.Ed
+.Pp
+The four required members have the following meaning:
+.Pp
+.Bl -tag -width "sme_sensor_data_xxxxxxxxx"
+.It Fa sme_name
+The name that will be used in the driver.
+.It Fa sme_nsensors
+Total number of sensors that the driver supports.
+.It Fa sme_flags
+Additional flags for the
+.Nm
+device. Currently supporting
+.Ar SME_DISABLE_GTREDATA .
+If enabled, the
+.Ar sme_gtredata
+function callback won't be used
+to refresh sensors data and the driver will use its own method.
+Hence
+.Ar sme_cookie
+won't be necessary either.
+.It Fa sme_sensor_data
+Pointer to the first
+.Sy envsys_data_t
+structure specified in the driver.
+.El
+.Pp
+If the driver wants to refresh sensors data via the
+.Nm
+framework, the following members must be set:
+.Pp
+.Bl -tag -width "sme_sensor_data_xxxxxxxxx"
+.It Fa sme_cookie
+Pointer to the driver's struct, also called
+.Dq softc ,
+to be used in the
+.Sy sme_gtredata
+function callback.
+.It Fa sme_gtredata
+Pointer to a function that will be used to refresh sensor data.
+.Em NOTE :
+.Em You don't have to refresh all sensors, only the sensor specified by the
+.Sy edata->sensor
+.Em index.
+.El
+.Pp
+Note that it's not necessary to refresh sensors data before the
+driver is registered, because at register time,
+.Nm
+will execute the
+.Sy sme_gtredata
+function callback to get the current data if the
+.Ar SME_DISABLE_GTREDATA
+flag is not set on
+.Ar sme_flags .
+.Pp
+Before registering a driver, the properties for all supported sensors
+must be set, see the section
+.Sy SENSOR DETAILS
+for more information.
+.Pp
+Once all required members are set, the
+.Fn sysmon_envsys_register
+function must be used to register the driver. If the required fields
+to enable automatic monitoring were set,
+.Nm
+will register all these events and a timeout of 10 seconds will check
+if any condition was triggered. If it was triggered, an event of the same type
+will be sent to
+.Xr powerd 8
+with the
+.Xr sysmon_power 9
+framework.
+.Pp
+To unregister a driver previously registered with the
+.Nm
+framework, the
+.Fn sysmon_envsys_unregister
+function must be used. If there were monitoring events registered for the
+driver, they all will be unregistered before the device unregistered.
+.Pp
+To find a specific driver, the
+.Fn sysmon_envsys_find
+function must be used. It accepts a name as argument, this
+should be the same name that was used at register time.
+.Pp
+.Ss SENSOR DETAILS
+.Pp
+Each sensor uses a
+.Sy envsys_data_t
+structure, which is defined as:
+.Bd -literal
+typedef struct envsys_data {
+	uint32_t	sensor;
+	uint32_t	units;
+	uint32_t	state;
+	uint32_t	flags;
+	uint32_t	rpms;
+	int32_t		rfact;
+	int32_t		value_cur;
+	int32_t		value_max;
+	int32_t		value_min;
+	int32_t		value_avg;
+	bool		monitor;
+	char		desc[ENVSYS_DESCLEN];
+} envsys_data_t;
+.Ed
+.Pp
+The members for the
+.Sy envsys_data_t
+structure have the following meaning:
+.Pp
+.Bl -tag -width cdoscdosrunru
+.It Fa sensor
+Used to set the sensor number.
+.It Fa units
+Used to set the unit type.
+.It Fa state
+Used to set the current state.
+.It Fa flags
+Used to set additional flags.
+.It Fa rpms
+Used to set the nominal RPM value for
+.Sy fan 
+sensors.
+.It Fa rfact
+Used to set the rfact value for
+.Sy voltage
+sensors.
+.It Fa value_cur
+Used to set the current value.
+.It Fa value_max
+Used to set the maximum value.
+.It Fa value_min
+Used to set the minimum value.
+.It Fa value_avg
+Used to set the average value.
+.It Fa monitor
+Used to enable automatic sensor monitoring (by default
+it's disabled). The monitoring events will be registered when this flag
+is
+.Em true
+and one or more
+.Em ENVSYS_FMONFOO
+flags were enabled in the
+.Ar flags
+member.
+.It Fa desc
+Used to set the description string.
+.El
+.Pp
+Users of this framework must take care about the following points:
+.Bl -bullet
+.It
+Each sensor must have a different
+.Ar sensor
+number starting from 0, otherwise there won't be any way to
+differentiate them. This restriction is only per-driver.
+.It
+The
+.Ar units
+type must be valid. The following units are defined:
+.Pp
+.Bl -tag -width "ENVSYS_SVOLTS_DCXXX" -compact
+.It ENVSYS_STEMP
+For temperature sensors.
+.It ENVSYS_SFANRPM
+For fan sensors.
+.It ENVSYS_SVOLTS_AC
+For AC Voltage.
+.It ENVSYS_SVOLTS_DC
+For DC Voltage.
+.It ENVSYS_SOHMS
+For Ohms.
+.It ENVSYS_SWATTS
+For Watts.
+.It ENVSYS_SAMPS
+For Ampere.
+.It ENVSYS_SWATTHOUR
+For Watts hour.
+.It ENVSYS_SAMPHOUR
+For Ampere hour.
+.It ENVSYS_INDICATOR
+For sensors that only want a boolean type.
+.It ENVSYS_INTEGER
+For sensors that only want an integer type.
+.It ENVSYS_DRIVE
+For drive sensors.
+.El
+.It
+When initializing the sensor, the
+.Ar state
+field must be set to
+.Em ENVSYS_SVALID
+(otherwise some sensor's objects won't be created into its dictionary):
+.Pp
+.Bl -tag -width "ENVSYS_SCRITUNDERXX" -compact
+.It ENVSYS_SVALID
+Sets the sensor to a valid state.
+.It ENVSYS_SINVALID
+Sets the sensor to an invalid state.
+.It ENVSYS_SCRITICAL
+Sets the sensor to a critical state.
+.It ENVSYS_SCRITUNDER
+Sets the sensor to a critical under state.
+.It ENVSYS_SCRITOVER
+Sets the sensor to a critical over state.
+.It ENVSYS_SWARNUNDER
+Sets the sensor to a warning under state.
+.It ENVSYS_SWARNOVER
+Sets the sensor to a warning over state.
+.El
+.Pp
+.It
+The
+.Ar flags
+member accepts one or more of the following flags:
+.Pp
+.Bl -tag -width "ENVSYS_FCHANGERFACTXX"
+.It ENVSYS_FCHANGERFACT
+Marks the sensor with ability to change the
+.Ar rfact
+value on the fly (in voltage sensors). The
+.Ar rfact
+member must be used in the correct place of the code
+that retrieves and converts the value of the sensor.
+.It ENVSYS_FPERCENTAGE
+This uses the
+.Ar value_cur
+and
+.Ar value_max
+members to make a percentage. Both values must be enabled
+and have data.
+.It ENVSYS_FVALID_MAX
+Marks the
+.Ar value_max
+value as valid.
+.It ENVSYS_FVALID_MIN
+Marks the
+.Ar value_min
+value as valid.
+.It ENVSYS_FVALID_AVG
+Marks the
+.Ar value_avg
+value as valid.
+.It ENVSYS_FMONCRITICAL
+Enables and registers a new event to monitor a critical state.
+.It ENVSYS_FMONCRITUNDER
+Enables and registers a new event to monitor a critical under state.
+.It ENVSYS_FMONCRITOVER
+Enables and registers a new event to monitor a critical over state.
+.It ENVSYS_FMONWARNUNDER
+Enables and registers a new event to monitor a warning under state.
+.It ENVSYS_FMONWARNOVER
+Enables and registers a new event to monitor a warning over state.
+.It ENVSYS_FMONDRVSTATE
+Enables and registers a new event to monitor drive's state.
+.It ENVSYS_FMONNOTSUPP
+Disables monitoring for userland limits, so that
+.Xr envstat 8
+is not able to set a critical limit. This flag has not any
+effect for monitoring flags set in the driver.
+.El
+.Pp
+.Em If the driver has to use any of the
+.Ar value_max ,
+.Ar value_min
+.Em or
+.Ar value_avg
+.Em members, they should be marked as valid with the appropiate flag.
+.Pp
+.It
+If
+.Ar units
+is set to
+.Ar ENVSYS_DRIVE ,
+there are some predefined states that must be set (only one)
+to the
+.Ar value_cur
+member:
+.Pp
+.Bl -tag -width "ENVSYS_DRIVE_POWERDOWNXX" -compact
+.It ENVSYS_DRIVE_EMPTY
+Drive state is unknown.
+.It ENVSYS_DRIVE_READY
+Drive is ready.
+.It ENVSYS_DRIVE_POWERUP
+Drive is powering up.
+.It ENVSYS_DRIVE_ONLINE
+Drive is online.
+.It ENVSYS_DRIVE_IDLE
+Drive is idle.
+.It ENVSYS_DRIVE_ACTIVE
+Drive is active.
+.It ENVSYS_DRIVE_REBUILD
+Drive is rebuilding.
+.It ENVSYS_DRIVE_POWERDOWN
+Drive is powering down.
+.It ENVSYS_DRIVE_FAIL
+Drive has failed.
+.It ENVSYS_DRIVE_PFAIL
+Drive has been degraded.
+.El
+.It
+The
+.Xr envsys 4
+framework expects to have the values converted to
+a unit that can be converted to another one easily. That means the user
+should convert the value returned by the driver to the appropiate unit.
+For example voltage sensors to
+.Sy mV ,
+temperature sensors to
+.Sy uK ,
+Watts to
+.Sy mW ,
+Ampere to
+.Sy mA ,
+etc.
+.Pp
+The following types shouldn't need any conversion:
+.Ar ENVSYS_INDICATOR ,
+.Ar ENVSYS_INTEGER
+and
+.Ar ENVSYS_DRIVE .
+.Pp
+.Em PLEASE NOTE THAT YOU MUST AVOID USING FLOATING POINT OPERATIONS
+.Em IN KERNEL WHEN CONVERTING THE DATA RETURNED BY THE DRIVER TO THE
+.Em APPROPIATE UNIT, IT'S NOT ALLOWED.
+.Pp
+.El
+.Ss HOW TO ENABLE AUTOMATIC MONITORING IN SENSORS
+The following example illustrates how to enable automatic monitoring
+in a virtual driver for a 
+.Em critical
+state in the first sensor
+.Em (sc_sensor[0]):
+.Pp
+.Bd -literal
+int
+mydriver_initialize_sensors(struct mysoftc *sc)
+{
+	...
+	/* sensor is initialized with a valid state */
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
+
+	/* 
+	 * the monitor member must be true to enable
+	 * automatic monitoring.
+	 */
+	sc->sc_sensor[0].monitor = true;
+
+	/* and now we specify the type of the monitoring event */
+	sc->sc_sensor[0].flags |= ENVSYS_FMONCRITICAL;
+	...
+}
+
+int
+mydriver_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct mysoftc *sc = sme->sme_cookie;
+
+	/* we get current data from the driver */
+	edata->value_cur = sc->sc_getdata();
+
+	/* 
+	 * if value is too high, mark the sensor in
+	 * critical state.
+	 */
+	if (edata->value_cur > MYDRIVER_SENSOR0_HIWAT) {
+		edata->state = ENVSYS_SCRITICAL;
+		/* a critical event will be sent now automatically */
+	} else {
+		/* 
+		 * if value is within the limits, and we came from
+		 * a critical state make sure to change sensor's state
+		 * to valid.
+		 */
+		edata->state = ENVSYS_SVALID;
+	}
+	...
+}
+.Ed
+.Pp
+.Sh AUTHORS
+The
+.Sy envsys
+2 framework was designed and implemented by
+.An Juan Romero Pardines
+for
+.Nx 5.0 .
+Many useful comments for this framework were from
+Jason R. Thorpe, Tim Rightnour and Michael Lorenz. The previous
+framework was implemented by Jason R. Thorpe, Tim Rightnour
+and Bill Squier.
+.Sh SEE ALSO
+.Xr envsys 4 ,
+.Xr sysmon_power 9

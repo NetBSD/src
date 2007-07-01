@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.111 2007/05/10 17:45:50 christos Exp $
+#	$NetBSD: special,v 1.112 2007/07/01 07:55:53 xtraeme Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -59,6 +59,7 @@
 ./etc/disktab			type=file mode=0644
 ./etc/dm.conf			type=file mode=0644
 ./etc/dumpdates			type=file mode=0664 gname=operator optional tags=exclude
+./etc/envsys.conf		type=file mode=0644 optional
 ./etc/ethers			type=file mode=0644 optional
 ./etc/exports			type=file mode=0644 optional
 ./etc/floppytab			type=file mode=0644
@@ -151,6 +152,13 @@
 ./etc/powerd/scripts/lid_switch type=file mode=0555 optional
 ./etc/powerd/scripts/power_button type=file mode=0555 optional
 ./etc/powerd/scripts/reset_button type=file mode=0555 optional
+./etc/powerd/scripts/sensor_battery type=file mode=0555 optional
+./etc/powerd/scripts/sensor_drive type=file mode=0555 optional
+./etc/powerd/scripts/sensor_fan type=file mode=0555 optional
+./etc/powerd/scripts/sensor_power type=file mode=0555 optional
+./etc/powerd/scripts/sensor_resistance type=file mode=0555 optional
+./etc/powerd/scripts/sensor_temperature type=file mode=0555 optional
+./etc/powerd/scripts/sensor_voltage type=file mode=0555 optional
 ./etc/powerd/scripts/sleep_button type=file mode=0555 optional
 ./etc/ppp			type=dir  mode=0755 optional
 ./etc/ppp/options		type=file mode=0644 optional
