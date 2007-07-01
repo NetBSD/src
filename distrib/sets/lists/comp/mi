@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1037 2007/06/29 23:30:17 rumble Exp $
+#	$NetBSD: mi,v 1.1038 2007/07/01 07:55:52 xtraeme Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7351,6 +7351,7 @@
 ./usr/share/man/cat9/sysctl_query.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_teardown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_unlock.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_envsys.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_badaddr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_disestablish.0	comp-sys-catman		.cat
@@ -11686,6 +11687,7 @@
 ./usr/share/man/man9/sysctl_query.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_teardown.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_unlock.9		comp-sys-man		.man
+./usr/share/man/man9/sysmon_envsys.9		comp-sys-man		.man
 ./usr/share/man/man9/tc.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_badaddr.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_disestablish.9	comp-sys-man		.man
