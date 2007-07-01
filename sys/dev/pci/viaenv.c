@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.21 2007/07/01 07:37:14 xtraeme Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.22 2007/07/01 22:20:34 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.21 2007/07/01 07:37:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.22 2007/07/01 22:20:34 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,21 +240,20 @@ viaenv_refresh_sensor_data(struct viaenv_softc *sc, envsys_data_t *edata)
 		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TIRQ);
 		v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS1);
 		DPRINTF(("TSENS1 = %d\n", (v2 << 2) | (v >> 6)));
-		sc->sc_data[0].value_cur = val_to_uK((v2 << 2) | (v >> 6));
-		sc->sc_data[0].state = ENVSYS_SVALID;
+		edata->value_cur = val_to_uK((v2 << 2) | (v >> 6));
+		edata->state = ENVSYS_SVALID;
 	} else if (edata->sensor == 1) {
 		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TLOW);
 		v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS2);
 		DPRINTF(("TSENS2 = %d\n", (v2 << 2) | ((v >> 4) & 0x3)));
-		sc->sc_data[1].value_cur =
-	    	    val_to_uK((v2 << 2) | ((v >> 4) & 0x3));
-		sc->sc_data[1].state = ENVSYS_SVALID;
+		edata->value_cur = val_to_uK((v2 << 2) | ((v >> 4) & 0x3));
+		edata->state = ENVSYS_SVALID;
 	} else if (edata->sensor == 2) {
 		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TLOW);
 		v2 = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_TSENS3);
 		DPRINTF(("TSENS3 = %d\n", (v2 << 2) | (v >> 6)));
-		sc->sc_data[2].value_cur = val_to_uK((v2 << 2) | (v >> 6));
-		sc->sc_data[2].state = ENVSYS_SVALID;
+		edata->value_cur = val_to_uK((v2 << 2) | (v >> 6));
+		edata->state = ENVSYS_SVALID;
 	} else if (edata->sensor > 2 && edata->sensor < 5) {
 		/* fans */
 		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh, VIAENV_FANCONF);
@@ -266,16 +265,15 @@ viaenv_refresh_sensor_data(struct viaenv_softc *sc, envsys_data_t *edata)
 		    VIAENV_FAN1 + edata->sensor - 3);
 		DPRINTF(("FAN%d = %d / %d\n", edata->sensor - 3, v,
 		    sc->sc_fan_div[edata->sensor - 3]));
-		sc->sc_data[edata->sensor].value_cur = val_to_rpm(v,
+		edata->value_cur = val_to_rpm(v,
 		    sc->sc_fan_div[edata->sensor - 3]);
-		sc->sc_data[edata->sensor].state = ENVSYS_SVALID;
+		edata->state = ENVSYS_SVALID;
 	} else {
 		v = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    VIAENV_VSENS1 + edata->sensor - 5);
 		DPRINTF(("V%d = %d\n", edata->sensor - 5, v));
-		sc->sc_data[edata->sensor].value_cur =
-		    val_to_uV(v, edata->sensor - 5);
-		sc->sc_data[edata->sensor].state = ENVSYS_SVALID;
+		edata->value_cur = val_to_uV(v, edata->sensor - 5);
+		edata->state = ENVSYS_SVALID;
 	}
 }
 
