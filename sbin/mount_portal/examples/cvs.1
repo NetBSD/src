@@ -26,7 +26,7 @@ Here's a list of things I've done with this:
 
 	% grep NetBSD: /etc/security
 	#	$NetBSD: security,v 1.52 ...
-	% diff -u -< /p/netbsd/basesrc/etc/security,1.52 /etc/security
+	% diff -u -< /p/netbsd/src/etc/security,1.52 /etc/security
 	[ diffs elided ]
 	%
 
@@ -39,7 +39,7 @@ This gets around the stat() problem.
 	% grep NetBSD: /etc/security
 	#	$NetBSD: security,v 1.52 ...
 	% foreach i (`jot 10 43`)
-	> cp /p/netbsd/basesrc/etc/security,1.$i /tmp
+	> cp /p/netbsd/src/etc/security,1.$i /tmp
 	> end
 	%
 
@@ -51,7 +51,7 @@ You can use tags instead of revision numbers if you like.
 3) Instant upgrades.  Since cvs always defaults to the head of the
 trunk, you can do this:
 
-	# cp /p/netbsd/basesrc/etc/security /etc/security
+	# cp /p/netbsd/src/etc/security /etc/security
 	#
 
 to upgrade to the latest and greatest version any time you like,
@@ -59,7 +59,7 @@ or you can do this:
 
 	# uname -r
 	1.5.2
-	# cp /p/netbsd/basesrc/etc/security,netbsd-1-5-PATCH002 /etc/security
+	# cp /p/netbsd/src/etc/security,netbsd-1-5-PATCH002 /etc/security
 	#
 
 to get rid of any changes you might have made to /etc/security that
