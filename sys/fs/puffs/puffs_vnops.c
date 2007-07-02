@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.84 2007/07/01 23:30:42 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.85 2007/07/02 10:24:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.84 2007/07/01 23:30:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.85 2007/07/02 10:24:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -818,7 +818,7 @@ puffs_inactive(void *v)
 	} */ *ap = v;
 	struct puffs_mount *pmp;
 	struct puffs_node *pnode;
-	int rv, vnrefs, call;
+	int rv, call;
 
 	PUFFS_VNREQ(inactive);
 
@@ -850,19 +850,13 @@ puffs_inactive(void *v)
 		rv = 1; /* see below */
 	pnode->pn_stat &= ~PNODE_DOINACT;
 
-	/* can't trust userspace return value?  simulate safe answer */
-	if (rv)
-		vnrefs = 1;
-	else
-		vnrefs = inactive_arg.pvnr_backendrefs;
-
 	VOP_UNLOCK(ap->a_vp, 0);
 
 	/*
-	 * user server thinks it's gone?  then don't be afraid care,
+	 * file server thinks it's gone?  then don't be afraid care,
 	 * node's life was already all it would ever be
 	 */
-	if (vnrefs == 0 || (pnode->pn_stat & PNODE_NOREFS)) {
+	if (pnode->pn_stat & PNODE_NOREFS) {
 		pnode->pn_stat |= PNODE_DYING;
 		vrecycle(ap->a_vp, NULL, ap->a_l);
 	}

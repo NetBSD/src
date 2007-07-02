@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.38 2007/07/01 22:54:16 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.39 2007/07/02 10:24:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -83,7 +83,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	13
+#define PUFFSVERSION	14
 #define PUFFSNAMESIZE	32
 struct puffs_kargs {
 	unsigned int	pa_vers;
@@ -656,7 +656,6 @@ struct puffs_vnreq_inactive {
 	struct puffs_req	pvn_pr;
 
 	struct puffs_kcid	pvnr_cid;		/* OUT	*/
-	int			pvnr_backendrefs;	/* IN	*/
 };
 
 struct puffs_vnreq_print {
