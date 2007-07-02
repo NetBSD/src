@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.15 2007/07/01 18:40:16 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.16 2007/07/02 10:26:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.15 2007/07/01 18:40:16 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.16 2007/07/02 10:26:50 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -261,7 +261,7 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 
 int
 puffs9p_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid, int *refcount)
+	const struct puffs_cid *pcid)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
@@ -279,7 +279,6 @@ puffs9p_node_inactive(struct puffs_cc *pcc, void *opc,
 		}
 	}
 
-	*refcount = 1;
 	return 0;
 }
 
