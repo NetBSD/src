@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.8 2007/07/02 10:06:58 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.9 2007/07/02 10:27:12 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.8 2007/07/02 10:06:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.9 2007/07/02 10:27:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,7 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 	ACPI_HANDLE *h = sc->sc_node->ad_handle;
 	int i, j, val;
 
+	j = 0;
 	i = edata->sensor; /* sensor number */
 
 	switch (edata->units) {
