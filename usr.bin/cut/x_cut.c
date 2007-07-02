@@ -1,4 +1,4 @@
-/*	$NetBSD: x_cut.c,v 1.1 2007/02/17 19:10:00 hubertf Exp $	*/
+/*	$NetBSD: x_cut.c,v 1.2 2007/07/02 18:41:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
 
 /* ARGSUSED */
 void
-CUT_FN(FILE *fp, const char *fname)
+CUT_FN(FILE *fp, const char *fname __unused)
 {
 	CUT_CH_T ch;
 	int col;

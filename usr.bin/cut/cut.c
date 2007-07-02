@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.22 2007/02/17 19:10:00 hubertf Exp $	*/
+/*	$NetBSD: cut.c,v 1.23 2007/07/02 18:41:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.22 2007/02/17 19:10:00 hubertf Exp $");
+__RCSID("$NetBSD: cut.c,v 1.23 2007/07/02 18:41:03 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -54,20 +54,22 @@ __RCSID("$NetBSD: cut.c,v 1.22 2007/02/17 19:10:00 hubertf Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 #include <wchar.h>
+#include <sys/param.h>
 
-int bflag;
-int	cflag;
-char	dchar;
-int	dflag;
-int	fflag;
-int	sflag;
+static int bflag;
+static int	cflag;
+static char	dchar;
+static int	dflag;
+static int	fflag;
+static int	sflag;
 
-void	b_cut(FILE *, const char *);
-void	c_cut(FILE *, const char *);
-void	f_cut(FILE *, const char *);
-void	get_list(char *);
-void	usage(void);
+static void	b_cut(FILE *, const char *);
+static void	c_cut(FILE *, const char *);
+static void	f_cut(FILE *, const char *);
+static void	get_list(char *);
+static void	usage(void) __attribute__((__noreturn__));
 
 int
 main(int argc, char *argv[])
@@ -77,7 +79,7 @@ main(int argc, char *argv[])
 	int ch;
 
 	fcn = NULL;
-	setlocale (LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	dchar = '\t';			/* default delimiter is \t */
 
@@ -137,19 +139,26 @@ main(int argc, char *argv[])
 		}
 	else
 		fcn(stdin, "stdin");
-	exit(0);
+	return 0;
 }
 
-int autostart, autostop, maxval;
+static size_t autostart, autostop, maxval;
 
-char positions[_POSIX2_LINE_MAX + 1];
+static char *positions = NULL;
+static size_t numpositions = 0;
+#define ALLOC_CHUNK	_POSIX2_LINE_MAX	/* malloc granularity */
 
-void
+static void
 get_list(char *list)
 {
-	int setautostart, start, stop;
+	size_t setautostart, start, stop;
 	char *pos;
 	char *p;
+
+	if (positions == NULL) {
+		numpositions = ALLOC_CHUNK;
+		positions = ecalloc(numpositions, sizeof(*positions));
+	}
 
 	/*
 	 * set a byte in the positions array to indicate if a field or
@@ -183,12 +192,18 @@ get_list(char *list)
 			errx(1, "[-cf] list: illegal list value");
 		if (!stop || !start)
 			errx(1, "[-cf] list: values may not include zero");
-		if (stop > _POSIX2_LINE_MAX)
-			errx(1, "[-cf] list: %d too large (max %d)",
-			    stop, _POSIX2_LINE_MAX);
+		if (stop + 1 > numpositions) {
+			size_t newsize;
+			newsize = roundup(stop + 1, ALLOC_CHUNK);
+			positions = erealloc(positions, newsize);
+			(void)memset(positions + numpositions, 0,
+			    newsize - numpositions);
+			numpositions = newsize;
+		}
 		if (maxval < stop)
 			maxval = stop;
-		for (pos = positions + start; start++ <= stop; *pos++ = 1);
+		for (pos = positions + start; start++ <= stop; pos++)
+			*pos = 1;
 	}
 
 	/* overlapping ranges */
@@ -197,11 +212,12 @@ get_list(char *list)
 
 	/* set autostart */
 	if (autostart)
-		memset(positions + 1, '1', autostart);
+		(void)memset(positions + 1, '1', autostart);
 }
 
-void
-f_cut(FILE *fp, const char *fname)
+static void
+/*ARGSUSED*/
+f_cut(FILE *fp, const char *fname __unused)
 {
 	int ch, field, isdelim;
 	char *pos, *p, sep;
@@ -209,13 +225,13 @@ f_cut(FILE *fp, const char *fname)
 	size_t len;
 	char *lbuf, *tbuf;
 
-	for (sep = dchar, tbuf = NULL; (lbuf = fgetln(fp, &len));) {
+	for (sep = dchar, tbuf = NULL; (lbuf = fgetln(fp, &len)) != NULL;) {
 		output = 0;
 		if (lbuf[len - 1] != '\n') {
 			/* no newline at the end of the last line so add one */
 			if ((tbuf = (char *)malloc(len + 1)) == NULL)
 				err(1, NULL);
-			memcpy(tbuf, lbuf, len);
+			(void)memcpy(tbuf, lbuf, len);
 			tbuf[len++] = '\n';
 			lbuf = tbuf;
 		}
@@ -266,10 +282,10 @@ f_cut(FILE *fp, const char *fname)
 		free(tbuf);
 }
 
-void
+static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage:\tcut -b list [-n] [file ...]\n"
+	(void)fprintf(stderr, "Usage:\tcut -b list [-n] [file ...]\n"
 	    "\tcut -c list [file1 ...]\n"
 	    "\tcut -f list [-d delim] [-s] [file ...]\n");
 	exit(1);
