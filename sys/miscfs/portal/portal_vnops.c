@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.72 2007/06/30 18:28:15 pooka Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.73 2007/07/02 17:55:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.72 2007/06/30 18:28:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.73 2007/07/02 17:55:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,7 +536,6 @@ portal_getattr(v)
 	vap->va_blocksize = DEV_BSIZE;
 	/* Make all times be current TOD. */
 	getnanotime(&vap->va_ctime);
-	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;
