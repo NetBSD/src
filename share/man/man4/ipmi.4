@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmi.4,v 1.2 2006/10/03 02:11:19 wiz Exp $
+.\"	$NetBSD: ipmi.4,v 1.3 2007/07/02 15:48:33 xtraeme Exp $
 .\"
 .\" Copyright (c) 2006 Manuel Bouyer.
 .\"
@@ -28,7 +28,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 1, 2006
+.Dd July 2, 2007
 .Dt IPMI 4
 .Os
 .Sh NAME
@@ -44,6 +44,25 @@ Intelligent Platform Management Interface version 1.5 or 2.0,
 and exports sensors and the watchdog through the
 .Xr envsys 4
 interface.
+.Sh EVENTS
+The
+.Nm
+driver is able to send events to
+.Xr powerd 8 
+when sensor's state has changed.
+Intrusion sensors will send a
+.Em critical
+event when state is not ok.
+Power Supply sensors will send a
+.Em critical
+event when the Power Supply unit is not installed and
+.Em warning-over
+when the Power Supply unit is installed but not powered on.
+Fan, temperature and voltage sensors will send
+.Em critical-over
+when the value is very critical, or
+.Em warning-over
+if it's in a warning alert.
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr envstat 8 ,
