@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.39 2007/07/02 10:24:17 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.40 2007/07/02 18:25:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -359,6 +359,7 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
 #define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
 #define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
+#define PUFFSLOOKUP_REQUIREDIR	0x80000 /* must be directory */
 
 
 /*
