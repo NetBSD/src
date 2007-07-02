@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.37 2007/07/01 08:29:48 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.38 2007/07/02 17:49:47 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.37 2007/07/01 08:29:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.38 2007/07/02 17:49:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1781,6 +1781,10 @@ wb_match(struct lm_softc *sc)
 	case WB_CHIPID_W83627THF:
 		model = "W83627THF";
 		lm_setup_sensors(sc, w83637hf_sensors);
+		break;
+	case WB_CHIPID_W83627EHF_A:
+		model = "W83627EHF-A";
+		lm_setup_sensors(sc, w83627ehf_sensors);
 		break;
 	case WB_CHIPID_W83627EHF:
 		model = "W83627EHF";
