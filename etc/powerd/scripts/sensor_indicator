@@ -1,0 +1,40 @@
+#!/bin/sh -
+#
+#	$NetBSD: sensor_indicator,v 1.1 2007/07/02 15:26:18 xtraeme Exp $
+#
+# Generic script for indicator sensors.
+#
+# Arguments passed by powerd(8):
+#
+#	script_path device event sensor
+
+case "${2}" in
+normal)
+	logger -p warning "${0}: ${3}: NORMAL: state entered (${1})" >&1
+	exit 0
+	;;
+critical)
+	logger -p warning "${0}: ${3}: CRITICAL: state entered (${1})" >&1
+	exit 0
+	;;
+critical-under)
+	logger -p warning "${0}: ${3}: CRITICAL: dropped below limit (${1})" >&1
+	exit 0
+	;;
+critical-over)
+	logger -p warning "${0}: ${3}: CRITICAL: limit exceeded (${1})" >&1
+	exit 0
+	;;
+warning-under)
+	logger -p warning "${0}: ${3}: WARNING: dropped below limit (${1})" >&1
+	exit 0
+	;;
+warning-over)
+	logger -p warning "${0}: ${3}: WARNING: limit exceeded (${1})" >&1
+	exit 0
+	;;
+*)
+	logger -p warning "${0}: unsupported event ${2} on device ${1}" >&1
+	exit 1
+	;;
+esac
