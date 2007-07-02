@@ -1,4 +1,4 @@
-/*	$NetBSD: portald.h,v 1.8 2007/07/02 16:33:05 pooka Exp $	*/
+/*	$NetBSD: portald.h,v 1.9 2007/07/02 18:07:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@ typedef struct provider provider;
 struct provider {
 	const char *pr_match;
 	int (*pr_func)(struct portal_cred *,
-				char *key, char **v, int so, int *fdp);
+				char *key, char **v, int *fdp);
 };
 extern provider providers[];
 
@@ -64,20 +64,21 @@ extern provider providers[];
  * Portal providers
  */
 extern int portal_exec(struct portal_cred *,
-				char *key, char **v, int so, int *fdp);
+				char *key, char **v, int *fdp);
 extern int portal_file(struct portal_cred *,
-				char *key, char **v, int so, int *fdp);
+				char *key, char **v, int *fdp);
 extern int portal_tcp(struct portal_cred *,
-				char *key, char **v, int so, int *fdp);
+				char *key, char **v, int *fdp);
 extern int portal_rfilter(struct portal_cred *,
-				char *key, char **v, int so, int *fdp);
+				char *key, char **v, int *fdp);
 extern int portal_wfilter(struct portal_cred *,
-				char *key, char **v, int so, int *fdp);
+				char *key, char **v, int *fdp);
 
 /*
  * Global functions
  */
 extern void activate(qelem *q, int so);
+extern int activate_argv(struct portal_cred *, char *, char **, int *);
 extern char **conf_match(qelem *q, char *key);
 extern int conf_read(qelem *q, const char *conf);
 extern int lose_credentials(struct portal_cred *);

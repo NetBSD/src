@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.8 2006/11/09 19:41:59 christos Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.9 2007/07/02 18:07:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.8 2006/11/09 19:41:59 christos Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.9 2007/07/02 18:07:45 pooka Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -89,16 +89,13 @@ fill_cmd(char **cmdv, char *path, char *buff, int n)
  * of the path, and exec v[2] v[3] ... on the remainder.
  */
 int
-portal_rfilter(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
+portal_rfilter(struct portal_cred *pcr, char *key, char **v, int *fdp)
 {
 	char    cmd[FILTER_CMD_SIZE];
 	char   *path;
 	FILE   *fp;
 	int     error = 0;
 	char	percent_s[] = "%s";
-
-	/* We don't use this parameter. */
-	(void) kso;
 
 	error = lose_credentials(pcr);
 	if (error != 0)
@@ -169,16 +166,13 @@ portal_rfilter(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
 }
 
 int
-portal_wfilter(struct portal_cred *pcr, char *key, char **v, int kso, int *fdp)
+portal_wfilter(struct portal_cred *pcr, char *key, char **v, int *fdp)
 {
 	char    cmd[FILTER_CMD_SIZE];
 	char   *path;
 	FILE   *fp;
 	int     error = 0;
 	int     cred_change_err = 0;
-
-	/* We don't use this parameter. */
-	(void) kso;
 
 	cred_change_err = lose_credentials(pcr);
 	if (cred_change_err != 0)
