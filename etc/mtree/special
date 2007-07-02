@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.113 2007/07/01 08:01:29 xtraeme Exp $
+#	$NetBSD: special,v 1.114 2007/07/02 15:26:18 xtraeme Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -150,16 +150,17 @@
 ./etc/powerd/scripts		type=dir  mode=0755 optional
 ./etc/powerd/scripts/acadapter	type=file mode=0555 optional
 ./etc/powerd/scripts/lid_switch type=file mode=0555 optional
-./etc/powerd/scripts/power_button type=file mode=0555 optional
-./etc/powerd/scripts/reset_button type=file mode=0555 optional
-./etc/powerd/scripts/sensor_battery type=file mode=0555 optional
-./etc/powerd/scripts/sensor_drive type=file mode=0555 optional
-./etc/powerd/scripts/sensor_fan type=file mode=0555 optional
-./etc/powerd/scripts/sensor_power type=file mode=0555 optional
-./etc/powerd/scripts/sensor_resistance type=file mode=0555 optional
-./etc/powerd/scripts/sensor_temperature type=file mode=0555 optional
-./etc/powerd/scripts/sensor_voltage type=file mode=0555 optional
-./etc/powerd/scripts/sleep_button type=file mode=0555 optional
+./etc/powerd/scripts/power_button	type=file mode=0555 optional
+./etc/powerd/scripts/reset_button	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_battery	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_drive	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_fan		type=file mode=0555 optional
+./etc/powerd/scripts/sensor_indicator	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_power	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_resistance	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_temperature	type=file mode=0555 optional
+./etc/powerd/scripts/sensor_voltage	type=file mode=0555 optional
+./etc/powerd/scripts/sleep_button	type=file mode=0555 optional
 ./etc/ppp			type=dir  mode=0755 optional
 ./etc/ppp/options		type=file mode=0644 optional
 ./etc/printcap			type=file mode=0644
