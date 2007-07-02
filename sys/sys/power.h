@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.5 2007/07/01 07:36:41 xtraeme Exp $	*/
+/*	$NetBSD: power.h,v 1.6 2007/07/02 15:18:30 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -121,6 +121,7 @@ struct pswitch_state {
  *
  *	sensor drive		To handle drive sensors.
  *
+ * 	sensor indicator	To handle indicator sensors.
  */
 
 #define PENVSYS_TYPE_TEMP		10
@@ -130,6 +131,7 @@ struct pswitch_state {
 #define PENVSYS_TYPE_BATTERY		14
 #define PENVSYS_TYPE_FAN		15
 #define PENVSYS_TYPE_DRIVE		16
+#define PENVSYS_TYPE_INDICATOR		17
 
 /*
  * The following events apply for temperatures, power, resistance, 

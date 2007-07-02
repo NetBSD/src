@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.18 2007/07/01 07:36:45 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.18 2007/07/01 07:36:45 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -109,8 +109,8 @@ static const struct sme_sensor_type sme_sensor_type[] = {
 	{ ENVSYS_SAMPS,		PENVSYS_TYPE_POWER,	"Ampere" },
 	{ ENVSYS_SWATTHOUR,	PENVSYS_TYPE_BATTERY,	"Watt hour" },
 	{ ENVSYS_SAMPHOUR,	PENVSYS_TYPE_BATTERY,	"Ampere hour" },
-	{ ENVSYS_INDICATOR,	-1,			"Indicator" },
-	{ ENVSYS_INTEGER,	-1,			"Integer" },
+	{ ENVSYS_INDICATOR,	PENVSYS_TYPE_INDICATOR,	"Indicator" },
+	{ ENVSYS_INTEGER,	-1, 			"Integer" },
 	{ ENVSYS_DRIVE,		PENVSYS_TYPE_DRIVE,	"Drive" },
 	{ -1,			-1,			NULL }
 };
@@ -758,7 +758,7 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	/*
 	 * Add a new event if a monitoring flag was set.
 	 */
-	if (edata->monitor) {
+	if (edata->monitor && edata->units != ENVSYS_INTEGER) {
 		sme_evdrv_t = kmem_zalloc(sizeof(*sme_evdrv_t), KM_SLEEP);
 
 		sme_evdrv_t->sdict = dict;
