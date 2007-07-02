@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.17 2006/06/28 06:25:15 mjl Exp $
+.\"	$NetBSD: getopt_long.3,v 1.18 2007/07/02 17:56:17 ginsbach Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.Dd December 2, 2005
+.Dd July 2, 2007
 .Dt GETOPT_LONG 3
 .Os
 .Sh NAME
@@ -85,6 +85,11 @@ shortcuts is not backwards compatible with
 It is possible to combine these methods, providing for long options
 processing with short option equivalents for some options.
 Less frequently used options would be processed as long options only.
+.Pp
+Abbreviated long option names are accepted when
+.Fn getopt_long
+processes long options if the abbreviation is unique.
+An exact match is always preferred for a defined long option.
 .Pp
 The
 .Fn getopt_long
