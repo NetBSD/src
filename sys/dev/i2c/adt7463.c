@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.9 2007/07/01 07:37:15 xtraeme Exp $ */
+/*	$NetBSD: adt7463.c,v 1.10 2007/07/02 10:25:54 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.9 2007/07/01 07:37:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.10 2007/07/02 10:25:54 xtraeme Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -244,9 +244,9 @@ adt7463c_refresh_volt(struct adt7463c_softc *sc, envsys_data_t *edata)
 
 	/* envstat assumes that voltage is in uVDC */
 	if (data > 0)
-		sc->sc_sensor[i].value_cur = data * 100 * mult[i];
+		edata->value_cur = data * 100 * mult[i];
 	else
-		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		edata->state = ENVSYS_SINVALID;
 }
 
 static void
@@ -262,10 +262,9 @@ adt7463c_refresh_temp(struct adt7463c_softc *sc, envsys_data_t *edata)
 
 	/* envstat assumes temperature is in micro kelvin */
 	if (data > 0)
-		sc->sc_sensor[i].value_cur =
-		    (data * 100 + ADT7463_CEL_TO_KELVIN) * 10000;
+		edata->value_cur = (data * 100 + ADT7463_CEL_TO_KELVIN) * 10000;
 	else
-		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		edata->state = ENVSYS_SINVALID;
 }
 
 static void
@@ -298,9 +297,9 @@ adt7463c_refresh_fan(struct adt7463c_softc *sc, envsys_data_t *edata)
 
 	/* calculate RPM */
 	if (val > 0)
-		sc->sc_sensor[i].value_cur = (ADT7463_RPM_CONST) / val;
+		edata->value_cur = (ADT7463_RPM_CONST) / val;
 	else
-		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		edata->state = ENVSYS_SINVALID;
 }
 
 static int
