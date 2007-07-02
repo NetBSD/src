@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 2005/02/09 13:57:57 xtraeme Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 2007/07/02 16:33:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.11 2005/02/09 13:57:57 xtraeme Exp $");
+__RCSID("$NetBSD: conf.c,v 1.12 2007/07/02 16:33:05 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -295,15 +295,21 @@ readfp(qelem *q0, FILE *fp, const char *conf_file)
  * the existing path list with the new version.
  * If the file is not readable, then no changes take place
  */
-void
-conf_read(qelem *q, char *conf)
+int
+conf_read(qelem *q, const char *conf)
 {
 	FILE *fp = fopen(conf, "r");
+	int sverrno;
 	if (fp) {
 		readfp(q, fp, conf);
 		(void) fclose(fp);
-	} else
+		return 0;
+	} else {
+		sverrno = errno;
 		syslog(LOG_WARNING, "open config file \"%s\": %m", conf);
+		errno = sverrno;
+		return -1;
+	}
 }
 
 

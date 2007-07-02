@@ -1,4 +1,4 @@
-/*	$NetBSD: portald.h,v 1.7 2005/02/09 13:57:57 xtraeme Exp $	*/
+/*	$NetBSD: portald.h,v 1.8 2007/07/02 16:33:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,5 +79,5 @@ extern int portal_wfilter(struct portal_cred *,
  */
 extern void activate(qelem *q, int so);
 extern char **conf_match(qelem *q, char *key);
-extern void conf_read(qelem *q, char *conf);
+extern int conf_read(qelem *q, const char *conf);
 extern int lose_credentials(struct portal_cred *);
