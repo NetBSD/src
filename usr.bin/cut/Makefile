@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2005/02/17 17:35:47 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.5 2007/07/02 18:41:03 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
+WARNS?=	4
 PROG=	cut
-WARNS=	3
+
+LDADD+=	-lutil
+DPADD+=	${LIBUTIL}
 
 .include <bsd.prog.mk>
