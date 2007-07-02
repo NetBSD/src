@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_file.c,v 1.16 2005/02/09 13:57:57 xtraeme Exp $	*/
+/*	$NetBSD: pt_file.c,v 1.17 2007/07/02 18:07:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_file.c,v 1.16 2005/02/09 13:57:57 xtraeme Exp $");
+__RCSID("$NetBSD: pt_file.c,v 1.17 2007/07/02 18:07:45 pooka Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -128,7 +128,7 @@ lose_credentials(struct portal_cred *pcr)
 }
 
 int
-portal_file(struct portal_cred *pcr, char *key, char **v, int so, int *fdp)
+portal_file(struct portal_cred *pcr, char *key, char **v, int *fdp)
 {
 	int     fd;
 	char    pbuf[MAXPATHLEN];
