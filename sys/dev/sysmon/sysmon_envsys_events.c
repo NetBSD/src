@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.1 2007/07/01 07:36:52 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.2 2007/07/02 11:05:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.1 2007/07/01 07:36:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.2 2007/07/02 11:05:52 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -205,6 +205,7 @@ void
 sme_event_drvadd(void *arg)
 {
 	sme_event_drv_t *sed_t = arg;
+	int error = 0;
 
 	KASSERT(sed_t != NULL);
 
@@ -213,19 +214,25 @@ do {									\
 	if (sed_t->edata->flags & (a)) {				\
 		char str[32] = "monitoring-state-";			\
 									\
-		if (sme_event_add(sed_t->sdict,				\
-				  sed_t->edata,				\
-				  sed_t->sme->sme_name,			\
-				  NULL,					\
-				  0,					\
-				  (b),					\
-				  sed_t->powertype))			\
-			printf("%s: failed to add event (%s)\n",	\
-			    __func__, (c));				\
-		mutex_enter(&sme_mtx);					\
-		(void)strlcat(str, (c), sizeof(str));			\
-		prop_dictionary_set_bool(sed_t->sdict, str, true);	\
-		mutex_exit(&sme_mtx);					\
+		error = sme_event_add(sed_t->sdict,			\
+				      sed_t->edata,			\
+				      sed_t->sme->sme_name,		\
+				      NULL,				\
+				      0,				\
+				      (b),				\
+				      sed_t->powertype);		\
+		if (error && error != EEXIST)				\
+			printf("%s: failed to add event! "		\
+			    "error=%d sensor=%s event=%s\n",		\
+			    __func__, error, sed_t->edata->desc, (c));	\
+		else {							\
+			mutex_enter(&sme_mtx);				\
+			(void)strlcat(str, (c), sizeof(str));		\
+			prop_dictionary_set_bool(sed_t->sdict,		\
+						 str,			\
+						 true);			\
+			mutex_exit(&sme_mtx);				\
+		}							\
 	}								\
 } while (/* CONSTCOND */ 0)
 
