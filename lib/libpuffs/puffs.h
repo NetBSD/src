@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.69 2007/07/01 18:39:39 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.70 2007/07/02 10:24:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -126,6 +126,7 @@ struct puffs_cn {
 #define pcn_pid		pcn_pkcnp->pkcn_pid
 #define pcn_name	pcn_pkcnp->pkcn_name
 #define pcn_namelen	pcn_pkcnp->pkcn_namelen
+#define pcn_consume	pcn_pkcnp->pkcn_consume
 
 /*
  * Puffs options to mount
@@ -215,7 +216,7 @@ struct puffs_ops {
 	int (*puffs_node_reclaim)(struct puffs_cc *,
 	    void *, const struct puffs_cid *);
 	int (*puffs_node_inactive)(struct puffs_cc *,
-	    void *, const struct puffs_cid *, int *);
+	    void *, const struct puffs_cid *);
 	int (*puffs_node_print)(struct puffs_cc *,
 	    void *);
 	int (*puffs_node_pathconf)(struct puffs_cc *,
@@ -350,7 +351,7 @@ enum {
 	int fsname##_node_reclaim(struct puffs_cc *,			\
 	    void *, const struct puffs_cid *);				\
 	int fsname##_node_inactive(struct puffs_cc *,			\
-	    void *, const struct puffs_cid *, int *);			\
+	    void *, const struct puffs_cid *);				\
 	int fsname##_node_print(struct puffs_cc *,			\
 	    void *);							\
 	int fsname##_node_pathconf(struct puffs_cc *,			\
@@ -381,7 +382,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 21
+#define PUFFS_DEVEL_LIBVERSION 22
 #define puffs_init(a,b,c,d) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
 

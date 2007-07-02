@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.53 2007/06/11 06:13:34 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.54 2007/07/02 10:24:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.53 2007/06/11 06:13:34 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.54 2007/07/02 10:24:18 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -297,7 +297,8 @@ puffs_setback(struct puffs_cc *pcc, int whatback)
 	    preq->preq_optype == PUFFS_VN_OPEN ||
 	    preq->preq_optype == PUFFS_VN_MMAP ||
 	    preq->preq_optype == PUFFS_VN_REMOVE ||
-	    preq->preq_optype == PUFFS_VN_RMDIR));
+	    preq->preq_optype == PUFFS_VN_RMDIR ||
+	    preq->preq_optype == PUFFS_VN_INACTIVE));
 
 	preq->preq_setbacks |= whatback & PUFFS_SETBACK_MASK;
 }
