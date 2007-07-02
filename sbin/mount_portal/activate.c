@@ -1,4 +1,4 @@
-/*	$NetBSD: activate.c,v 1.13 2005/02/09 13:57:57 xtraeme Exp $	*/
+/*	$NetBSD: activate.c,v 1.14 2007/07/02 18:07:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: activate.c,v 1.13 2005/02/09 13:57:57 xtraeme Exp $");
+__RCSID("$NetBSD: activate.c,v 1.14 2007/07/02 18:07:44 pooka Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -55,8 +55,6 @@ __RCSID("$NetBSD: activate.c,v 1.13 2005/02/09 13:57:57 xtraeme Exp $");
 
 #include "portald.h"
 
-static	int	activate_argv(struct portal_cred *, char *, char **,
-				    int, int *);
 static	int	get_request(int, struct portal_cred *, char *, int);
 static	void	send_reply(int, int, int);
 
@@ -64,14 +62,14 @@ static	void	send_reply(int, int, int);
  * Scan the providers list and call the
  * appropriate function.
  */
-static int
-activate_argv(struct portal_cred *pcr, char *key, char **v, int so, int *fdp)
+int
+activate_argv(struct portal_cred *pcr, char *key, char **v, int *fdp)
 {
 	provider *pr;
 
 	for (pr = providers; pr->pr_match; pr++)
 		if (strcmp(v[0], pr->pr_match) == 0)
-			return ((*pr->pr_func)(pcr, key, v, so, fdp));
+			return ((*pr->pr_func)(pcr, key, v, fdp));
 
 	return (ENOENT);
 }
@@ -211,7 +209,7 @@ activate(qelem *q, int so)
 	 * otherwise simply return ENOENT.
 	 */
 	if (v) {
-		error = activate_argv(&pcred, key, v, so, &fd);
+		error = activate_argv(&pcred, key, v, &fd);
 		if (error)
 			fd = -1;
 		else if (fd < 0)
