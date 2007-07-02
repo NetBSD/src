@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.32 2007/07/01 18:40:16 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.33 2007/07/02 10:26:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.32 2007/07/01 18:40:16 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.33 2007/07/02 10:26:50 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -242,7 +242,7 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 
 int
 psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid, int *refcount)
+	const struct puffs_cid *pcid)
 {
 	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
@@ -270,7 +270,6 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
 	}
 
  out:
-	*refcount = 1;
 	return 0;
 }
 
