@@ -1,4 +1,4 @@
-.\" $NetBSD: acpitz.4,v 1.4 2004/04/25 03:12:11 kochi Exp $
+.\" $NetBSD: acpitz.4,v 1.5 2007/07/02 16:05:08 xtraeme Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 25, 2004
+.Dd July 2, 2007
 .Dt ACPITZ 4
 .Os
 .Sh NAME
@@ -49,10 +49,20 @@ The temperature can be monitored by the
 API or the
 .Xr envstat 8
 command.
+.Sh EVENTS
+The
+.Nm
+driver is able to send events to powerd(8) when sensor's state has changed.
+When a Thermal Zone is critical, a
+.Em critical
+event will be sent or if the Thermal Zone is hot, a
+.Em warning-over
+event will be sent.
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr envsys 4 ,
-.Xr envstat 8
+.Xr envstat 8 ,
+.Xr powerd 8
 .Sh HISTORY
 The
 .Nm
