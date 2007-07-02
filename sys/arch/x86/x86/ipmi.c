@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.6 2007/07/01 07:37:13 xtraeme Exp $ */
+/*	$NetBSD: ipmi.c,v 1.7 2007/07/02 15:29:47 xtraeme Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.6 2007/07/01 07:37:13 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.7 2007/07/02 15:29:47 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1375,7 +1375,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	case IPMI_SENSOR_TYPE_INTRUSION:
 		edata->value_cur = (reading[2] & 1) ? 0 : 1;
 		if (reading[2] & 0x1)
-			return ENVSYS_SCRITOVER;
+			return ENVSYS_SCRITICAL;
 		break;
 
 	case IPMI_SENSOR_TYPE_PWRSUPPLY:
@@ -1387,7 +1387,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 			 * warn: power supply installed && !powered
 			 * crit: power supply !installed
 			 */
-			return ENVSYS_SCRITOVER;
+			return ENVSYS_SCRITICAL;
 		}
 		if (reading[2] & 0x08) {
 			/* Power supply AC lost */
@@ -1745,8 +1745,13 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sensor_data[i].units = ipmi_s->i_envtype;
 		sc->sc_sensor_data[i].state = ENVSYS_SVALID;
 		sc->sc_sensor_data[i].monitor = true;
-		sc->sc_sensor_data[i].flags |=
-		    (ENVSYS_FMONCRITOVER|ENVSYS_FMONWARNOVER);
+		/*
+		 * Monitor critical/critical-over/warning-over states
+		 * in the sensors.
+		 */
+		sc->sc_sensor_data[i].flags |= ENVSYS_FMONCRITICAL;
+		sc->sc_sensor_data[i].flags |= ENVSYS_FMONCRITOVER;
+		sc->sc_sensor_data[i].flags |= ENVSYS_FMONWARNOVER;
 		(void)strlcpy(sc->sc_sensor_data[i].desc, ipmi_s->i_envdesc,
 		    sizeof(sc->sc_sensor_data[i].desc));
 	}
