@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.98.2.3 2007/07/01 21:50:52 ad Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.98.2.4 2007/07/02 13:46:08 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98.2.3 2007/07/01 21:50:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98.2.4 2007/07/02 13:46:08 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -136,7 +136,7 @@ static int ip6qmaxlen = IFQ_MAXLEN;
 struct in6_ifaddr *in6_ifaddr;
 struct ifqueue ip6intrq;
 
-extern struct callout in6_tmpaddrtimer_ch;
+extern callout_t in6_tmpaddrtimer_ch;
 
 int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
@@ -161,7 +161,6 @@ static struct mbuf *ip6_pullexthdr __P((struct mbuf *, size_t, int));
 void
 ip6_init()
 {
-	extern callout_t in6_tmpaddrtimer_ch;
 	const struct ip6protosw *pr;
 	int i;
 
@@ -186,8 +185,6 @@ ip6_init()
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
-
-	callout_init(&in6_tmpaddrtimer_ch, 0);
 
 #ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
