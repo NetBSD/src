@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.18 2007/07/01 07:36:59 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.18 2007/07/01 07:36:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -149,6 +149,7 @@ static const struct power_event_description penvsys_type_desc[] = {
 	{ PENVSYS_TYPE_BATTERY,		"sensor_battery" },
 	{ PENVSYS_TYPE_DRIVE,		"sensor_drive" },
 	{ PENVSYS_TYPE_FAN,		"sensor_fan" },
+	{ PENVSYS_TYPE_INDICATOR,	"sensor_indicator" },
 	{ PENVSYS_TYPE_POWER,		"sensor_power" },
 	{ PENVSYS_TYPE_RESISTANCE,	"sensor_resistance" },
 	{ PENVSYS_TYPE_TEMP,		"sensor_temperature" },
@@ -699,11 +700,12 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 			break;
 		}
 		break;
+	case PENVSYS_TYPE_FAN:
+	case PENVSYS_TYPE_INDICATOR:
 	case PENVSYS_TYPE_TEMP:
 	case PENVSYS_TYPE_POWER:
 	case PENVSYS_TYPE_RESISTANCE:
 	case PENVSYS_TYPE_VOLTAGE:
-	case PENVSYS_TYPE_FAN:
 		switch (event) {
 		case PENVSYS_EVENT_CRITICAL:
 			mystr = "critical";
