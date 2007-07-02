@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.16 2007/07/01 07:39:46 xtraeme Exp $
+.\"	$NetBSD: envstat.8,v 1.17 2007/07/02 20:37:06 xtraeme Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 15, 2007
+.Dd July 2, 2007
 .Dt ENVSTAT 8
 .Os
 .Sh NAME
@@ -217,7 +217,7 @@ In the example configuration file the first argument is the name of
 the device, second argument is the name of the sensor that we want to change,
 third argument is the target that will be used for the
 .Ar -m
-flag and finally the four arguments in the value that will be used for the
+flag and finally the fourth argument in the value that will be used for the
 target.
 .Pp
 The first example sets a critical over limit of
@@ -227,7 +227,7 @@ degC to the
 sensor in the
 .Dq aiboost0
 device. By default the value specified on temperature sensors must be
-in degrees Celsius but also is possible to specify it in degrees Fahrenheit too.
+in degrees Celsius but also it is possible to specify it in degrees Fahrenheit too.
 The
 .Em value
 argument will have to contain the
