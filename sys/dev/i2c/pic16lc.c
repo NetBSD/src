@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.7 2007/07/01 07:37:17 xtraeme Exp $ */
+/* $NetBSD: pic16lc.c,v 1.8 2007/07/02 10:36:47 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.7 2007/07/01 07:37:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.8 2007/07/02 10:36:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,14 +201,12 @@ pic16lc_update(struct pic16lc_softc *sc, envsys_data_t *edata)
 
 	if (edata->sensor == XBOX_SENSOR_CPU) {
 		pic16lc_read_1(sc, PIC16LC_REG_CPUTEMP, &cputemp);
-		sc->sc_data[XBOX_SENSOR_CPU].state = ENVSYS_SVALID;
-		sc->sc_data[XBOX_SENSOR_CPU].value_cur =
-		    (int)cputemp * 1000000 + 273150000;
+		edata->state = ENVSYS_SVALID;
+		edata->value_cur = (int)cputemp * 1000000 + 273150000;
 	} else {
 		pic16lc_read_1(sc, PIC16LC_REG_BOARDTEMP, &boardtemp);
-		sc->sc_data[XBOX_SENSOR_BOARD].state = ENVSYS_SVALID;
-		sc->sc_data[XBOX_SENSOR_BOARD].value_cur =
-		    (int)boardtemp * 1000000 + 273150000;
+		edata->state = ENVSYS_SVALID;
+		edata->value_cur = (int)boardtemp * 1000000 + 273150000;
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
