@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.85 2007/07/02 10:24:17 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.86 2007/07/02 18:25:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.85 2007/07/02 10:24:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.86 2007/07/02 18:25:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -515,6 +515,13 @@ puffs_lookup(void *v)
 
 	if ((cnp->cn_flags & MAKEENTRY) != 0 && PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
+
+	/* XXX */
+	if ((lookup_arg.pvnr_cn.pkcn_flags & REQUIREDIR) == 0)
+		cnp->cn_flags &= ~REQUIREDIR;
+	if (lookup_arg.pvnr_cn.pkcn_consume)
+		cnp->cn_consume = MIN(lookup_arg.pvnr_cn.pkcn_consume,
+		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
 
  out:
 	if (cnp->cn_flags & ISDOTDOT)
