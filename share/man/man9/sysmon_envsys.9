@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.1 2007/07/01 07:55:51 xtraeme Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.2 2007/07/03 22:47:20 xtraeme Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 23, 2007
+.Dd July 3, 2007
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -142,8 +142,9 @@ for more information.
 .Pp
 Once all required members are set, the
 .Fn sysmon_envsys_register
-function must be used to register the driver. If the required fields
-to enable automatic monitoring were set,
+function must be used to register the driver.
+.Pp
+If the required fields to enable automatic monitoring were set,
 .Nm
 will register all these events and a timeout of 10 seconds will check
 if any condition was triggered. If it was triggered, an event of the same type
@@ -152,6 +153,11 @@ will be sent to
 with the
 .Xr sysmon_power 9
 framework.
+.Pp
+The timeout value may be changed via sysctl(8) like:
+.Bd -literal -offset indent
+$ sysctl kern.envsys.refresh_value
+.Ed
 .Pp
 To unregister a driver previously registered with the
 .Nm
