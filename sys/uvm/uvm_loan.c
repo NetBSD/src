@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.65.4.1 2007/03/13 17:51:55 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.65.4.2 2007/07/03 13:14:03 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.65.4.1 2007/03/13 17:51:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.65.4.2 2007/07/03 13:14:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -987,6 +987,7 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 				break;
 			}
 			mutex_exit(&uvm_pageqlock);
+			yield();
 			mutex_enter(&uvm_pageqlock);
 			slock = NULL;
 		}
