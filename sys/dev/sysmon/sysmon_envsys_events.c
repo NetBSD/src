@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.2 2007/07/02 11:05:52 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.3 2007/07/03 22:33:36 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,13 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.2 2007/07/02 11:05:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.3 2007/07/03 22:33:36 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
@@ -80,6 +81,63 @@ static struct workqueue *seewq;
 static struct callout seeco;
 static bool sme_events_initialized = false;
 kmutex_t sme_mtx, sme_event_mtx, sme_event_init_mtx;
+
+/* 10 seconds of timeout for the callout */
+static int sme_events_timeout = 10;
+static int sme_events_timeout_sysctl(SYSCTLFN_PROTO);
+#define SME_EVTIMO 	(sme_events_timeout * hz)
+
+/*
+ * sysctl(9) stuff to handle the refresh value in the callout
+ * function.
+ */
+static int
+sme_events_timeout_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int timo, error;
+
+	node = *rnode;
+	timo = sme_events_timeout;
+	node.sysctl_data = &timo;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	/* min 1s, max 5m */
+	if (timo < 1 || timo > 350)
+		return EINVAL;
+
+	sme_events_timeout = timo;
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_kern_envsys_timeout_setup, "sysctl kern.envsys subtree")
+{
+	const struct sysctlnode *node, *envsys_node;
+
+	sysctl_createv(clog, 0, NULL, &node,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "kern", NULL,
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, &envsys_node,
+			0,
+			CTLTYPE_NODE, "envsys", NULL,
+			NULL, 0, NULL, 0,
+			CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &envsys_node, &node,
+			CTLFLAG_READWRITE,
+			CTLTYPE_INT, "refresh_value",
+			SYSCTL_DESCR("wait time in seconds to refresh "
+			    "sensors being monitored"),
+			sme_events_timeout_sysctl, 0, &sme_events_timeout, 0,
+			CTL_CREATE, CTL_EOL);
+}
+
 
 /*
  * sme_event_register:
