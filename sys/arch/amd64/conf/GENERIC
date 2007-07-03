@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.150 2007/06/16 12:35:54 ad Exp $
+# $NetBSD: GENERIC,v 1.151 2007/07/03 23:05:26 briggs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.150 $"
+#ident 		"GENERIC-$Revision: 1.151 $"
 
 maxusers	32		# estimated number of users
 
@@ -238,6 +238,9 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+
+#IPMI support
+#ipmi0		at mainbus?
 
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
