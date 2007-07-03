@@ -1,4 +1,4 @@
-.\"     $NetBSD: preempt.9,v 1.4 2005/12/20 19:34:43 rpaulo Exp $
+.\"     $NetBSD: preempt.9,v 1.5 2007/07/03 12:14:25 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,34 +34,30 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd July 3, 2007
 .Dt PREEMPT 9
 .Os
 .Sh NAME
-.Nm preempt
-.Nd general preempt function
+.Nm preempt ,
+.Nm yield
+.Nd general preempt and yield functions
 .Sh SYNOPSIS
 .In sys/sched.h
 .Ft void
-.Fn preempt "int more"
+.Fn preempt "void"
+.In sys/proc.h
+.Ft void
+.Fn yield "void"
 .Sh DESCRIPTION
 The
 .Fn preempt
-function puts the current process back on the system run queue
+function puts the current LWP back on the system run queue
 and performs an involuntary context switch.
-If the specified argument
-.Fa more
-is not
-.Dv 0
-then a "voluntary" preemption is made, using
-.Fn sa_preempt .
-.Xr mi_switch 9
-is used to select the new process.
-.Pp
 The
-.Fn preempt
-function must not be called with the scheduler lock held.
-.Sh SEE ALSO
-.Xr mi_switch 9 ,
-.Xr setrunqueue 9 ,
-.Xr userret 9
+.Fn yield
+function is mostly same as
+.Fn preempt ,
+except that it performs a voluntary context switch.
+.Pp
+These functions drop the kernel lock before switching
+and re-acquire it before returning.
