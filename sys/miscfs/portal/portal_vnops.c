@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.68.2.1 2007/02/17 23:27:50 tron Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.68.2.2 2007/07/03 12:35:13 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.68.2.1 2007/02/17 23:27:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.68.2.2 2007/07/03 12:35:13 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,8 @@ portal_lookup(v)
 	memcpy(pt->pt_arg, pname, pt->pt_size);
 	pt->pt_fileid = portal_fileid++;
 
+	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = fvp;
-	VOP_LOCK(fvp, LK_EXCLUSIVE | LK_RETRY);
 	return (0);
 
 bad:;
