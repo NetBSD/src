@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.58 2007/01/09 17:34:27 ginsbach Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.59 2007/07/03 12:11:09 nakayama Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -236,6 +236,7 @@ void (*esetfunc(void (*)(int, const char *, ...)))(int, const char *, ...);
 size_t estrlcpy(char *, const char *, size_t);
 size_t estrlcat(char *, const char *, size_t);
 char *estrdup(const char *);
+char *estrndup(const char *, size_t);
 void *ecalloc(size_t, size_t);
 void *emalloc(size_t);
 void *erealloc(void *, size_t);
@@ -385,6 +386,10 @@ size_t strlcpy(char *, const char *, size_t);
 
 #if !HAVE_STRMODE
 void strmode(mode_t, char *);
+#endif
+
+#if !HAVE_STRNDUP
+char *strndup(const char *, size_t);
 #endif
 
 #if !HAVE_STRSEP || defined(__NetBSD__)
