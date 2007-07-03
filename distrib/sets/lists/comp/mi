@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1039 2007/07/01 21:41:16 pooka Exp $
+#	$NetBSD: mi,v 1.1040 2007/07/03 12:15:31 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -538,8 +538,8 @@
 ./usr/include/form.h				comp-c-include
 ./usr/include/frame.h				comp-obsolete		obsolete
 ./usr/include/fs/efs/efs.h			comp-c-include
-./usr/include/fs/efs/efs_sb.h			comp-c-include
 ./usr/include/fs/efs/efs_mount.h		comp-c-include
+./usr/include/fs/efs/efs_sb.h			comp-c-include
 ./usr/include/fs/hfs/hfs.h			comp-c-include
 ./usr/include/fs/hfs/libhfs.h			comp-c-include
 ./usr/include/fs/hfsp/hfsp.h			comp-obsolete		obsolete
@@ -4398,9 +4398,9 @@
 ./usr/share/man/cat3/errx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/esetfunc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/estrdup.0			comp-c-catman		.cat
-./usr/share/man/cat3/estrndup.0			comp-c-catman		.cat
 ./usr/share/man/cat3/estrlcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/estrlcpy.0			comp-c-catman		.cat
+./usr/share/man/cat3/estrndup.0			comp-c-catman		.cat
 ./usr/share/man/cat3/etext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ether_aton.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ether_hostton.0		comp-c-catman		.cat
@@ -8740,9 +8740,9 @@
 ./usr/share/man/man3/errx.3			comp-c-man		.man
 ./usr/share/man/man3/esetfunc.3			comp-c-man		.man
 ./usr/share/man/man3/estrdup.3			comp-c-man		.man
-./usr/share/man/man3/estrndup.3			comp-c-man		.man
 ./usr/share/man/man3/estrlcat.3			comp-c-man		.man
 ./usr/share/man/man3/estrlcpy.3			comp-c-man		.man
+./usr/share/man/man3/estrndup.3			comp-c-man		.man
 ./usr/share/man/man3/etext.3			comp-c-man		.man
 ./usr/share/man/man3/ether_aton.3		comp-c-man		.man
 ./usr/share/man/man3/ether_hostton.3		comp-c-man		.man
