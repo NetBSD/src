@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.7 2007/07/02 15:29:47 xtraeme Exp $ */
+/*	$NetBSD: ipmi.c,v 1.8 2007/07/03 22:58:07 briggs Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.7 2007/07/02 15:29:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.8 2007/07/03 22:58:07 briggs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -904,8 +904,8 @@ void
 ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 {
 
-	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x %08llx %02x "
-	    "%02x\n",
+	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x "
+	    "%08" PRIx64 " %02x %02x\n",
 	    pipmi->smipmi_if_type,
 	    pipmi->smipmi_if_rev,
 	    pipmi->smipmi_i2c_address,
