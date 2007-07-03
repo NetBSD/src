@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1040 2007/07/03 12:15:31 yamt Exp $
+#	$NetBSD: mi,v 1.1041 2007/07/03 12:16:51 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7584,6 +7584,7 @@
 ./usr/share/man/cat9/wsmouse.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmouse_input.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmousedevprint.0		comp-sys-catman		.cat
+./usr/share/man/cat9/yield.0			comp-sys-catman		.cat
 ./usr/share/man/man1/addr2line.1		comp-debug-man		bfd,.man
 ./usr/share/man/man1/ar.1			comp-util-man		bfd,.man
 ./usr/share/man/man1/as.1			comp-util-man		bfd,.man
@@ -11921,6 +11922,7 @@
 ./usr/share/man/man9/wsmouse.9			comp-sys-man		.man
 ./usr/share/man/man9/wsmouse_input.9		comp-sys-man		.man
 ./usr/share/man/man9/wsmousedevprint.9		comp-sys-man		.man
+./usr/share/man/man9/yield.9			comp-sys-man		.man
 ./usr/share/misc/gprof.callg			comp-obsolete		obsolete
 ./usr/share/misc/gprof.flat			comp-obsolete		obsolete
 ./usr/share/misc/indent.pro			comp-util-share		share
