@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.162 2007/06/10 00:45:08 ad Exp $
+$NetBSD: UPDATING,v 1.163 2007/07/03 16:35:47 joerg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20070703:
+	nbinstall has been renamed as it calls the target specific and
+	the logic to pass down STRIP from mk been removed.  This forces
+	a re-installation of tools.
 
 20070422:
 	The way OS emulations lookup filenames inside the emulation root
