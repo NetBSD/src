@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.495 2007/04/08 09:35:51 scw Exp $
+#	$NetBSD: bsd.own.mk,v 1.496 2007/07/03 16:29:24 joerg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -199,7 +199,7 @@ HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
 DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
-INSTALL=	STRIP=${STRIP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}install
+INSTALL=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install
 LEX=		${TOOLDIR}/bin/${_TOOL_PREFIX}lex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM=${NM:Q} MKTEMP=${TOOL_MKTEMP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}lorder
