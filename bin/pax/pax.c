@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.42 2007/04/29 20:23:34 msaitoh Exp $	*/
+/*	$NetBSD: pax.c,v 1.43 2007/07/03 10:20:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.42 2007/04/29 20:23:34 msaitoh Exp $");
+__RCSID("$NetBSD: pax.c,v 1.43 2007/07/03 10:20:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,6 +341,9 @@ main(int argc, char **argv)
 void
 sig_cleanup(int which_sig)
 {
+	struct sigaction n_hand;
+	sigset_t n_mask;
+
 	/*
 	 * restore modes and times for any dirs we may have created
 	 * or any dirs we may have read. Set vflag and vfpart so the user
@@ -361,6 +364,16 @@ sig_cleanup(int which_sig)
 	proc_dir();
 	if (tflag)
 		atdir_end();
+
+	memset(&n_hand, 0, sizeof n_hand);
+	sigemptyset(&n_hand.sa_mask);
+	n_hand.sa_handler = SIG_DFL;
+	if ((sigaction(which_sig, &n_hand, NULL) == 0) &&
+	    (sigemptyset(&n_mask) == 0) &&
+	    (sigaddset(&n_mask, which_sig) == 0) &&
+	    (sigprocmask(SIG_UNBLOCK, &n_mask, 0) == 0)) {
+		raise(which_sig);
+	}
 	exit(1);
 }
 
