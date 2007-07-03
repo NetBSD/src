@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.3 2007/07/03 22:33:36 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.4 2007/07/03 22:38:20 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.3 2007/07/03 22:33:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.4 2007/07/03 22:38:20 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -106,7 +106,7 @@ sme_events_timeout_sysctl(SYSCTLFN_ARGS)
 		return error;
 
 	/* min 1s, max 5m */
-	if (timo < 1 || timo > 350)
+	if (timo < 1 || timo > 300)
 		return EINVAL;
 
 	sme_events_timeout = timo;
