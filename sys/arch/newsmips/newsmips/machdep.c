@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2007/05/17 14:51:25 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2007/07/03 09:55:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2007/05/17 14:51:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2007/07/03 09:55:30 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -480,6 +480,8 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
+	printf("SONY NET WORK STATION, Model %s, ", idrom.id_model);
+	printf("Machine ID #%d\n", idrom.id_serial);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 

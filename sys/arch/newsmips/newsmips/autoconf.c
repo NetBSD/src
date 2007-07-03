@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 2007/07/03 09:55:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2005/12/11 12:18:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2007/07/03 09:55:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,10 +125,6 @@ static void findroot(void);
 void
 cpu_configure(void)
 {
-	extern struct idrom idrom;
-
-	printf("SONY NET WORK STATION, Model %s, ", idrom.id_model);
-	printf("Machine ID #%d\n", idrom.id_serial);
 
 	/*
 	 * Kick off autoconfiguration
