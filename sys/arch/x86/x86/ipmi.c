@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.8 2007/07/03 22:58:07 briggs Exp $ */
+/*	$NetBSD: ipmi.c,v 1.9 2007/07/03 23:13:12 xtraeme Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.8 2007/07/03 22:58:07 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.9 2007/07/03 23:13:12 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1352,7 +1352,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		if (ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun,
 		    SE_NETFN, SE_GET_SENSOR_THRESHOLD, 1, data) ||
 		    ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
-			return (ENVSYS_WARN_OK);
+			return ENVSYS_SVALID;
 
 		dbg_printf(25, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
 		    data[0], data[1], data[2], data[3], data[4], data[5],
