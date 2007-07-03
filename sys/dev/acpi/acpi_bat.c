@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.46 2007/07/01 07:37:12 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.47 2007/07/03 07:44:05 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.46 2007/07/01 07:37:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.47 2007/07/03 07:44:05 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,21 +227,10 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NONE);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-				      ACPI_DEVICE_NOTIFY,
+				      ACPI_ALL_NOTIFY,
 				      acpibat_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to register DEVICE NOTIFY "
-		    "handler: %s\n", sc->sc_dev.dv_xname,
-		    AcpiFormatException(rv));
-		return;
-	}
-
-	/* XXX See acpibat_notify_handler() */
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-				      ACPI_SYSTEM_NOTIFY,
-				      acpibat_notify_handler, sc);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: unable to register SYSTEM NOTIFY "
+		aprint_error("%s: unable to register DEVICE/SYSTEM NOTIFY "
 		    "handler: %s\n", sc->sc_dev.dv_xname,
 		    AcpiFormatException(rv));
 		return;
