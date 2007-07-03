@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.43.4.2 2007/03/13 17:51:54 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.43.4.3 2007/07/03 13:14:02 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.43.4.2 2007/03/13 17:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.43.4.3 2007/07/03 13:14:02 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -326,6 +326,7 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 				 * someone locking the object has a chance to
 				 * lock us right now
 				 */
+				yield();
 
 				mutex_enter(&anon->an_lock);
 				continue;

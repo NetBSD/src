@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.87.4.3 2007/04/05 21:32:51 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.87.4.4 2007/07/03 13:14:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.3 2007/04/05 21:32:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.4 2007/07/03 13:14:03 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1264,6 +1264,7 @@ restart:
 
 		if (!mutex_tryenter(&aobj->u_obj.vmobjlock)) {
 			mutex_exit(&uao_list_lock);
+			yield();
 			goto restart;
 		}
 
