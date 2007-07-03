@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.1 2007/07/01 07:36:56 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.2 2007/07/03 22:33:36 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -61,14 +61,6 @@
 #else
 #define DPRINTFOBJ(x)
 #endif
-
-/*
- * We run at ENVSYS version 2.
- */
-#define SYSMON_ENVSYS_VERSION	(2 * 1000)
-
-/* timeout for the callout */
-#define SME_EVTIMO	(10 * hz)	/* 10 seconds */
 
 /* convenience macros to avoid writing same code many times */
 #define SENSOR_OBJUPDATED(a, b)						\
