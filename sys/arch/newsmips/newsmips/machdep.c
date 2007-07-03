@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2007/07/03 09:55:30 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2007/07/03 10:07:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2007/07/03 09:55:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2007/07/03 10:07:27 tsutsui Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -256,11 +256,6 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 #endif
 	bi_arg = NULL;
 
-	/* clear the BSS segment */
-	memset(edata, 0, end - edata);
-
-	systype = NEWS3400;			/* XXX compatibility */
-
 	bootinfo = (void *)BOOTINFO_ADDR;	/* XXX */
 	bi_magic = lookup_bootinfo(BTINFO_MAGIC);
 	if (bi_magic && bi_magic->magic == BOOTINFO_MAGIC) {
@@ -282,7 +277,16 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 		bi_systype = lookup_bootinfo(BTINFO_SYSTYPE);
 		if (bi_systype)
 			systype = bi_systype->type;
+	} else {
+		/*
+		 * Running kernel is loaded by non-native loader;
+		 * clear the BSS segment here.
+		 */
+		memset(edata, 0, end - edata);
 	}
+
+	if (systype == 0) 
+		systype = NEWS3400;	/* XXX compatibility for old boot */
 
 #ifdef news5000
 	if (systype == NEWS5000) {
