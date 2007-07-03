@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 2007/05/27 14:10:49 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 2007/07/03 10:31:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2007/05/27 14:10:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2007/07/03 10:31:57 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -176,11 +176,12 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/*
 	 * Clear the BSS segment (if needed).
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
 	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
+#if NKSYMS || defined(DDB) || defined(LKM)
 		esym += ((Elf_Ehdr *)end)->e_entry;
+#endif
 		kernend = (char *)mips_round_page(esym);
 		/*
 		 * We don't have to clear BSS here
@@ -189,9 +190,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 #if 0
 		memset(edata, 0, end - edata);
 #endif
-	} else
-#endif
-	{
+	} else {
 		kernend = (void *)mips_round_page(end);
 		/*
 		 * No symbol table, so assume we are loaded by
