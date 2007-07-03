@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.73 2007/06/24 01:52:46 christos Exp $ */
+/*	$NetBSD: df.c,v 1.74 2007/07/03 14:39:47 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.73 2007/06/24 01:52:46 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.74 2007/07/03 14:39:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -324,9 +324,9 @@ void
 prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
 {
 
-	prthumanval(sfsp->f_blocks * sfsp->f_frsize, "");
-	prthumanval(used * sfsp->f_frsize, "   ");
-	prthumanval(bavail * sfsp->f_frsize, "	 ");
+	prthumanval(sfsp->f_blocks * sfsp->f_frsize, "   ");
+	prthumanval(used * sfsp->f_frsize, "    ");
+	prthumanval(bavail * sfsp->f_frsize, "    ");
 }
 
 /*
@@ -428,12 +428,12 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 			(void)printf("Filesystem %s Used Available Capacity "
 			    "Mounted on\n", header);
 		} else {
-			(void)printf("%-*.*s %s	      Used	Avail %%Cap",
+			(void)printf("%-*.*s %s       Used      Avail %%Cap",
 			    maxwidth - (headerlen - 9),
 			    maxwidth - (headerlen - 9),
 			    "Filesystem", header);
 			if (iflag)
-				(void)printf("	  iUsed	 iAvail %%iCap");
+				(void)printf("    iUsed   iAvail %%iCap");
 			(void)printf(" Mounted on\n");
 		}
 	}
