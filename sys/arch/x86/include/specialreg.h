@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.16 2007/06/04 16:21:29 xtraeme Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.17 2007/07/03 17:07:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -155,11 +155,20 @@
 				    "\0373DNOW2\0403DNOW"
 
 /*
- * "Features" that are copied from elsewhere -- not necessarily tied to
- * a specific CPUID response
+ * Centaur Extended Feature flags
  */
+#define CPUID_VIA_HAS_RNG	0x00000004	/* Random number generator */
+#define CPUID_VIA_DO_RNG	0x00000008
+#define CPUID_VIA_HAS_ACE	0x00000040	/* AES Encryption */
+#define CPUID_VIA_DO_ACE	0x00000080
+#define CPUID_VIA_HAS_ACE2	0x00000100	/* AES+CTR instructions */
+#define CPUID_VIA_DO_ACE2	0x00000200
+#define CPUID_VIA_HAS_PHE	0x00000400	/* SHA1+SHA256 HMAC */
+#define CPUID_VIA_DO_PHE	0x00000800
+#define CPUID_VIA_HAS_PMM	0x00001000	/* RSA Instructions */
+#define CPUID_VIA_DO_PMM	0x00002000
 
-#define CPUID_FEAT_VACE	0x00000002	/* VIA C3 AES Crypto Extension */
+#define CPUID_FLAGS_PADLOCK	"\20\3RNG\7AES\11AES/CTR\13SHA1/SHA256\15RSA"
 
 /*
  * CPUID "features" bits in %ecx
