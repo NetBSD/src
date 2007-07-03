@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.6 2007/07/03 09:32:05 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.7 2007/07/03 09:40:28 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.6 2007/07/03 09:32:05 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.7 2007/07/03 09:40:28 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,6 +463,7 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 				break;
 			default:		/* 3V RFact */
 				edata->value_cur *= UG_RFACT3;
+				break;
 		}
 	    } else
 
