@@ -1,4 +1,4 @@
-/* $NetBSD: ug.c,v 1.5 2007/07/01 21:28:34 xtraeme Exp $ */
+/* $NetBSD: ug.c,v 1.6 2007/07/03 09:32:05 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.5 2007/07/01 21:28:34 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.6 2007/07/03 09:32:05 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,6 +571,7 @@ ug2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		    break;
 		default:
 		    edata->value_cur = SENSOR_VALUE;
+		    break;
 		}
 	} else
 		return ENODEV;
