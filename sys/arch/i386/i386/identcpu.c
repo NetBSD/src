@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.70 2007/07/01 20:12:36 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.71 2007/07/03 17:07:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.70 2007/07/01 20:12:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.71 2007/07/03 17:07:54 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -480,7 +480,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, "C3 Samuel",
 				"C3 Samuel 2/Ezra", "C3 Ezra-T",
-				"C3 Nehemiah", 0, 0, 0, 0, 0, 0,
+				"C3 Nehemiah", "C7 Esther", 0, 0, 0, 0, 0,
 				"C3"	/* Default */
 			},
 			NULL,
@@ -672,12 +672,14 @@ via_cpu_probe(struct cpu_info *ci)
 		/* Nehemiah or Esther */
 		CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
 		lfunc = descs[0];
-		if (lfunc == 0xc0000001) {
-			CPUID(lfunc, descs[0], descs[1], descs[2], descs[3]);
+		if (lfunc >= 0xc0000001) {
+			CPUID(0xc0000001, descs[0], descs[1], descs[2],
+			    descs[3]);
 			lfunc = descs[3];
 			if (model > 0x9 || stepping >= 8) {	/* ACE */
-				if ((lfunc & 0xc0) == 0xc0) {
-					ci->ci_padlock_flags |= CPUID_FEAT_VACE;
+				ci->ci_padlock_flags = lfunc;
+#define VIA_ACE 	(CPUID_VIA_HAS_ACE|CPUID_VIA_DO_ACE)
+				if ((lfunc & VIA_ACE)  == VIA_ACE) {
 					msr = rdmsr(MSR_VIA_ACE);
 					wrmsr(MSR_VIA_ACE,
 					    msr | MSR_VIA_ACE_ENABLE);
@@ -1472,6 +1474,12 @@ identifycpu(struct cpu_info *ci)
 		bitmask_snprintf(ci->ci_feature3_flags,
 			CPUID_FLAGS4, buf, MAXPATHLEN);
 		aprint_verbose("%s: features3 %s\n", cpuname, buf);
+	}
+
+	if (ci->ci_padlock_flags) {
+		bitmask_snprintf(ci->ci_padlock_flags,
+			CPUID_FLAGS_PADLOCK, buf, MAXPATHLEN);
+		aprint_verbose("%s: padlock features %s\n", cpuname, buf);
 	}
 
 	free(buf, M_TEMP);
