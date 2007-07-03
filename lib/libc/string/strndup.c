@@ -1,4 +1,4 @@
-/*	$NetBSD: strndup.c,v 1.3 2007/01/14 23:41:24 cbiere Exp $	*/
+/*	$NetBSD: strndup.c,v 1.4 2007/07/03 12:11:09 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -29,12 +29,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strndup.c,v 1.3 2007/01/14 23:41:24 cbiere Exp $");
+__RCSID("$NetBSD: strndup.c,v 1.4 2007/07/03 12:11:09 nakayama Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +53,7 @@ __RCSID("$NetBSD: strndup.c,v 1.3 2007/01/14 23:41:24 cbiere Exp $");
 __weak_alias(strndup,_strndup)
 #endif
 
+#if !HAVE_STRNDUP
 char *
 strndup(const char *str, size_t n)
 {
@@ -66,3 +71,4 @@ strndup(const char *str, size_t n)
 	copy[len] = '\0';
 	return (copy);
 }
+#endif /* !HAVE_STRNDUP */

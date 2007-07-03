@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.60 2006/10/09 14:59:05 christos Exp $
+#	$NetBSD: configure.ac,v 1.61 2007/07/03 12:11:10 nakayama Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -8,7 +8,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.60 2006/10/09 14:59:05 christos Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.61 2007/07/03 12:11:10 nakayama Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -133,7 +133,7 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
 	mkdtemp poll pread putc_unlocked pwcache_userdb pwrite random setenv \
 	setgroupent setprogname setpassent snprintf strlcat strlcpy strmode \
-	strsep strsuftoll strtoll \
+	strndup strsep strsuftoll strtoll \
 	user_from_uid vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
