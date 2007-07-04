@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.40 2007/07/01 20:01:44 xtraeme Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.41 2007/07/04 00:32:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.40 2007/07/01 20:01:44 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.41 2007/07/04 00:32:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1386,7 +1386,7 @@ tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->value_cur =             /* 273160? */
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
-			cur_tre->state = ENVSYS_SVALID;
+			edata->state = ENVSYS_SVALID;
 			req.cmdbuf[0] = TS102_OP_RD_MAX_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
