@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.20 2007/07/04 16:30:18 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.20 2007/07/04 16:30:18 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -349,19 +349,18 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			tred->avg.data_s = edata->value_avg;
 			tred->units = edata->units;
 
-			/* mark invalid sensors */
-			if (edata->state == ENVSYS_SINVALID) {
-				tred->validflags &=
-				    ~(ENVSYS_FVALID|ENVSYS_FCURVALID);
-				tred->validflags &=
-				    ~(ENVSYS_FMAXVALID|ENVSYS_FFRACVALID);
-				tred->cur.data_us = tred->cur.data_s = 0;
+			tred->validflags |= ENVSYS_FVALID;
+			tred->validflags |= ENVSYS_FCURVALID;
+
+			if (edata->flags & ENVSYS_FPERCENT) {
+				tred->validflags |= ENVSYS_FMAXVALID;
+				tred->validflags |= ENVSYS_FFRACVALID;
 			}
 
-			tred->validflags |= (ENVSYS_FVALID|ENVSYS_FCURVALID);
-			if (edata->flags & ENVSYS_FPERCENT)
-				tred->validflags |=
-				    (ENVSYS_FMAXVALID|ENVSYS_FFRACVALID);
+			if (edata->state == ENVSYS_SINVALID) {
+				tred->validflags &= ~ENVSYS_FCURVALID;
+				tred->cur.data_us = tred->cur.data_s = 0;
+			}
 
 			DPRINTFOBJ(("%s: sensor=%s tred->cur.data_s=%d\n",
 			    __func__, edata->desc, tred->cur.data_s));
@@ -391,18 +390,9 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		edata = &sme->sme_sensor_data[binfo->sensor];
 
-		/* skip invalid sensors */
-		if (edata->state == ENVSYS_SINVALID) {
-			binfo->validflags &= ~(ENVSYS_FVALID|ENVSYS_FCURVALID);
-			binfo->validflags &=
-			    ~(ENVSYS_FMAXVALID|ENVSYS_FFRACVALID);
-		}
+		binfo->validflags |= ENVSYS_FVALID;
 
 		if (binfo->sensor < sme->sme_nsensors) {
-			binfo->validflags |= (ENVSYS_FVALID|ENVSYS_FCURVALID);
-			if (edata->flags & ENVSYS_FPERCENT)
-				binfo->validflags |=
-				    (ENVSYS_FMAXVALID|ENVSYS_FFRACVALID);
 			binfo->units = edata->units;
 			(void)strlcpy(binfo->desc, edata->desc,
 			    sizeof(binfo->desc));
