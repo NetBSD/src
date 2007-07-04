@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.7 2007/07/01 07:37:21 xtraeme Exp $ */
+/*	$NetBSD: owtemp.c,v 1.8 2007/07/04 19:00:44 xtraeme Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.7 2007/07/01 07:37:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.8 2007/07/04 19:00:44 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct owtemp_softc *sc = device_private(self);
 	struct onewire_attach_args *oa = aux;
-	prop_string_t desc;
 
 	sc->sc_onewire = oa->oa_onewire;
 	sc->sc_rom = oa->oa_rom;
@@ -107,14 +106,6 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[0].sensor = 0;
 	sc->sc_sensor[0].state = ENVSYS_SVALID;
 	sc->sc_sensor[0].units = ENVSYS_STEMP;
-	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
-				   "envsys-description");
-	if (desc != NULL &&
-	    prop_object_type(desc) == PROP_TYPE_STRING &&
-	    prop_string_size(desc) > 0)
-		strcpy(sc->sc_sensor[0].desc, prop_string_cstring_nocopy(desc));
-	else
-		strcpy(sc->sc_sensor[0].desc, sc->sc_dev.dv_xname);
 
 	/* Hook into system monitor. */
 	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
@@ -126,19 +117,6 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
-
-#if 0  /* Old OpenBSD code */
-	strlcpy(sc->sc_sensor.device, sc->sc_dev.dv_xname,
-	    sizeof(sc->sc_sensor.device));
-	sc->sc_sensor.type = SENSOR_TEMP;
-	strlcpy(sc->sc_sensor.desc, "Temp", sizeof(sc->sc_sensor.desc));
-
-	if (sensor_task_register(sc, owtemp_update, 5)) {
-		printf(": unable to register update task\n");
-		return;
-	}
-	sensor_add(&sc->sc_sensor);
-#endif
 
 	printf("\n");
 }
