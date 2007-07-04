@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.7 2007/07/01 11:35:31 xtraeme Exp $ */
+/* $NetBSD: mfi.c,v 1.8 2007/07/04 17:07:04 xtraeme Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.7 2007/07/01 11:35:31 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.8 2007/07/04 17:07:04 xtraeme Exp $");
 
 #include "bio.h"
 
@@ -1933,8 +1933,6 @@ mfi_sensor_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SINVALID;
 	}
 
-	edata->state = ENVSYS_SVALID;
-	edata->units = ENVSYS_DRIVE;
 	return 0;
 }
 
