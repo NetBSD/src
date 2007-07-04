@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.29 2007/05/24 20:04:05 ad Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.30 2007/07/04 18:27:46 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.29 2007/05/24 20:04:05 ad Exp $
+ * $Id: m_netbsd15.c,v 1.30 2007/07/04 18:27:46 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.29 2007/05/24 20:04:05 ad Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.30 2007/07/04 18:27:46 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -645,6 +645,7 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	if (lbase == NULL) {
 		if (sel->pid != -1) {
 			nproc = 0;
+			nlwp = 0;
 		} else {
 			(void) fprintf(stderr, "top: Out of memory.\n");
 			quit(23);
