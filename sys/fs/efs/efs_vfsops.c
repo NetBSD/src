@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.2 2007/07/01 01:09:05 rumble Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.2 2007/07/01 01:09:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 	emp->em_mnt = mp;
 
 	/* read in the superblock */
-	err = efs_bread(emp, EFS_BB_SB, EFS_BY2BB(EFS_SB_SIZE), l, &bp);
+	err = efs_bread(emp, EFS_BB_SB, l, &bp);
 	if (err) {
 		EFS_DPRINTF(("superblock read failed\n"));
 		free(emp, M_EFSMNT);
@@ -102,8 +102,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 		struct buf *rbp;
 		bool skip = false;
 
-		err = efs_bread(emp, be32toh(emp->em_sb.sb_replsb),
-		    EFS_BY2BB(EFS_SB_SIZE), l, &rbp);
+		err = efs_bread(emp, be32toh(emp->em_sb.sb_replsb), l, &rbp);
 		if (err) {
 			printf("efs: read of superblock replicant failed; "
 			    "please run fsck_efs(8)\n");
@@ -132,7 +131,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 	}
 
 	/* ensure we can read last block */
-	err = efs_bread(emp, be32toh(emp->em_sb.sb_size) - 1, 1, l, &bp);
+	err = efs_bread(emp, be32toh(emp->em_sb.sb_size) - 1, l, &bp);
 	if (err) {
 		printf("efs: cannot access all filesystem blocks; please run "
 		    "fsck_efs(8)\n");

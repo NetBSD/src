@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.2 2007/07/04 18:40:18 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.2 2007/07/04 18:40:18 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ efs_read(void *v)
 	if (ap->a_vp->v_type != VREG)
 		return (EINVAL);
 
-	efs_extent_iterator_init(&exi, eip);
+	efs_extent_iterator_init(&exi, eip, uio->uio_offset);
 	ret = efs_extent_iterator_next(&exi, &ex);
 	while (ret == 0) {
 		if (uio->uio_offset < 0 || uio->uio_offset >= eip->ei_size ||
@@ -277,11 +277,9 @@ efs_read(void *v)
 		if (err) {
 			EFS_DPRINTF(("efs_read: uiomove error %d\n",
 			    err));
-			efs_extent_iterator_free(&exi);
 			return (err);
 		}
 	}
-	efs_extent_iterator_free(&exi);
 
 	return ((ret == -1) ? 0 : ret);
 }
@@ -317,21 +315,21 @@ efs_readdir(void *v)
 
 	offset = 0;
 
-	efs_extent_iterator_init(&exi, ei);
+	efs_extent_iterator_init(&exi, ei, 0);
 	while ((ret = efs_extent_iterator_next(&exi, &ex)) == 0) {
-		err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
-		    ex.ex_bn, ex.ex_length, NULL, &bp);
-		if (err) {
-			efs_extent_iterator_free(&exi);
-			brelse(bp);
-			return (err);
-		}
-
 		for (i = 0; i < ex.ex_length; i++) {
-			db = ((struct efs_dirblk *)bp->b_data) + i;
+			err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
+			    ex.ex_bn + i, NULL, &bp);
+			if (err) {
+				brelse(bp);
+				return (err);
+			}
+
+			db = (struct efs_dirblk *)bp->b_data;
 
 			if (be16toh(db->db_magic) != EFS_DIRBLK_MAGIC) {
 				printf("efs_readdir: bad dirblk\n");
+				brelse(bp);
 				continue;
 			}
 
@@ -356,13 +354,11 @@ efs_readdir(void *v)
 				if (offset > uio->uio_offset) {
 					/* XXX - shouldn't happen, right? */
 					brelse(bp);
-					efs_extent_iterator_free(&exi);
 					return (0);
 				}
 
 				if (s > uio->uio_resid) {
 					brelse(bp);
-					efs_extent_iterator_free(&exi);
 					return (0);
 				}
 
@@ -381,7 +377,6 @@ efs_readdir(void *v)
 				if (err) {
 					brelse(bp);
 					free(dp, M_EFSTMP);
-					efs_extent_iterator_free(&exi);
 					return (err);
 				}
 
@@ -416,17 +411,15 @@ efs_readdir(void *v)
 				free(dp, M_EFSTMP);
 				if (err) {
 					brelse(bp);
-					efs_extent_iterator_free(&exi);
 					return (err);	
 				}
 
 				offset += s;
 			}
-		}
 
-		brelse(bp);
+			brelse(bp);
+		}
 	}
-	efs_extent_iterator_free(&exi);
 
 	if (ret != -1)
 		return (ret);
@@ -450,7 +443,7 @@ efs_readlink(void *v)
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 	char *buf;
 	size_t len;
-	int err;
+	int err, i;
 
 	if ((eip->ei_mode & EFS_IFMT) != EFS_IFLNK)
 		return (EINVAL);
@@ -470,39 +463,55 @@ efs_readlink(void *v)
 
 		memcpy(buf, eip->ei_di.di_symlink, eip->ei_size);
 		len = MIN(uio->uio_resid, eip->ei_size + 1);
-		buf[len - 1] = '\0';
-		err = uiomove(buf, len, uio);
-		free(buf, M_EFSTMP);
-		if (err)
-			return (err);
 	} else {
+		struct efs_extent_iterator exi;
 		struct efs_extent ex;
-		struct efs_dextent *dexp;
 		struct buf *bp;
+		int resid, off, ret;
 
-		if (eip->ei_numextents > 1) {
-			printf("efs_readlink: lazy\n");
-			free(buf, M_EFSTMP);
-			return (EBADF);
+		off = 0;
+		resid = eip->ei_size;
+
+		efs_extent_iterator_init(&exi, eip, 0);
+		while ((ret = efs_extent_iterator_next(&exi, &ex)) == 0) {
+			for (i = 0; i < ex.ex_length; i++) {
+				err = efs_bread(VFSTOEFS(ap->a_vp->v_mount),
+				    ex.ex_bn + i, NULL, &bp);
+				if (err) {
+					brelse(bp);
+					free(buf, M_EFSTMP);
+					return (err);
+				}
+
+				len = MIN(resid, bp->b_bcount);
+				memcpy(buf + off, bp->b_data, len);
+				brelse(bp);
+
+				off += len;
+				resid -= len;
+
+				if (resid == 0)
+					break;
+			}
+
+			if (resid == 0)
+				break;
 		}
 
-		dexp = &eip->ei_di.di_extents[0];
-		efs_dextent_to_extent(dexp, &ex);
+		if (ret != 0 && ret != -1) {
+			free(buf, M_EFSTMP);
+			return (ret);
+		}
 
-		err = efs_bread(VFSTOEFS(ap->a_vp->v_mount), ex.ex_bn,
-		    ex.ex_length, NULL, &bp);
-
-		len = MIN(eip->ei_size, ex.ex_length * EFS_BB_SIZE);
-		memcpy(buf, bp->b_data, len);
-		brelse(bp);
-		buf[len] = '\0';
-		err = uiomove(buf, len + 1, uio);
-		free(buf, M_EFSTMP);
-		if (err)
-			return (err);
+		len = off + 1;
 	}
 
-	return (0);
+	KASSERT(len >= 1 && len <= (eip->ei_size + 1));
+	buf[len - 1] = '\0';
+	err = uiomove(buf, len, uio);
+	free(buf, M_EFSTMP);
+
+	return (err);
 }
 
 /*
@@ -571,7 +580,7 @@ efs_bmap(void *v)
 		*ap->a_vpp = VFSTOEFS(vp->v_mount)->em_devvp;
 
 	found = false;
-	efs_extent_iterator_init(&exi, eip);
+	efs_extent_iterator_init(&exi, eip, ap->a_bn * EFS_BB_SIZE);
 	while ((ret = efs_extent_iterator_next(&exi, &ex)) == 0) {
 		if (ap->a_bn >= ex.ex_offset &&
 		    ap->a_bn < (ex.ex_offset + ex.ex_length)) {
@@ -579,7 +588,6 @@ efs_bmap(void *v)
 			break;
 		}
 	}
-	efs_extent_iterator_free(&exi);
 
 	KASSERT(!found || (found && ret == 0));
 

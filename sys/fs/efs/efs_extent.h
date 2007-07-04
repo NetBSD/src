@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_extent.h,v 1.2 2007/06/30 15:56:16 rumble Exp $	*/
+/*	$NetBSD: efs_extent.h,v 1.3 2007/07/04 19:24:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -58,5 +58,7 @@ struct efs_extent {
 #define EFS_EXTENT_MAGIC	0
 #define EFS_EXTENT_BN_MASK	0x00ffffff
 #define EFS_EXTENT_OFFSET_MASK	0x00ffffff
+
+#define EFS_EXTENTS_PER_BB	(EFS_BB_SIZE / sizeof(struct efs_dextent))
 
 #endif /* !_FS_EFS_EFS_EXTENT_H_ */

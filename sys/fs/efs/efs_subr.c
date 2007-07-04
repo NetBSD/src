@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.1 2007/06/29 23:30:29 rumble Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.2 2007/07/04 19:24:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.1 2007/06/29 23:30:29 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.2 2007/07/04 19:24:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.1 2007/06/29 23:30:29 rumble Exp $");
 #include <fs/efs/efs_dinode.h>
 #include <fs/efs/efs_inode.h>
 #include <fs/efs/efs_subr.h>
-
-MALLOC_DECLARE(M_EFSTMP);
 
 struct pool efs_inode_pool;
 
@@ -165,7 +163,7 @@ efs_read_inode(struct efs_mount *emp, ino_t ino, struct lwp *l,
 	sbp = &emp->em_sb;
 	efs_locate_inode(ino, sbp, &bboff, &index);
 
-	err = efs_bread(emp, bboff, EFS_BY2BB(EFS_DINODE_SIZE), l, &bp);
+	err = efs_bread(emp, bboff, l, &bp);
 	if (err) {
 		brelse(bp);
 		return (err);
@@ -182,19 +180,16 @@ efs_read_inode(struct efs_mount *emp, ino_t ino, struct lwp *l,
  * we as EFS block sizing.
  *
  * bboff: basic block offset
- * nbb: number of basic blocks to be read
  *
  * Returns 0 on success.
  */
 int
-efs_bread(struct efs_mount *emp, uint32_t bboff, int nbb, struct lwp *l,
-    struct buf **bp)
+efs_bread(struct efs_mount *emp, uint32_t bboff, struct lwp *l, struct buf **bp)
 {
-	KASSERT(nbb > 0);
 	KASSERT(bboff < EFS_SIZE_MAX);
 
 	return (bread(emp->em_devvp, (daddr_t)bboff * (EFS_BB_SIZE / DEV_BSIZE),
-	    nbb * EFS_BB_SIZE, (l == NULL) ? NOCRED : l->l_cred, bp));
+	    EFS_BB_SIZE, (l == NULL) ? NOCRED : l->l_cred, bp));
 }
 
 /*
@@ -320,25 +315,25 @@ efs_extent_lookup(struct efs_mount *emp, struct efs_extent *ex,
 	int i, err;
 
 	/*
-	 * Read in the entire extent, evaluating all of the dirblks until we
-	 * find our entry. If we don't, return ENOENT.
+	 * Read in each of the dirblks until we find our entry.
+	 * If we don't, return ENOENT.
 	 */
-	err = efs_bread(emp, ex->ex_bn, ex->ex_length, NULL, &bp);
-	if (err) {
-		printf("efs: warning: invalid extent descriptor\n");
-		brelse(bp);
-		return (err);
-	}
-
 	for (i = 0; i < ex->ex_length; i++) {
-		db = ((struct efs_dirblk *)bp->b_data) + i;
+		err = efs_bread(emp, ex->ex_bn + i, NULL, &bp);
+		if (err) {
+			printf("efs: warning: invalid extent descriptor\n");
+			brelse(bp);
+			return (err);
+		}
+
+		db = (struct efs_dirblk *)bp->b_data;
 		if (efs_dirblk_lookup(db, cn, ino) == 0) {
 			brelse(bp);
 			return (0);
 		}
+		brelse(bp);
 	}
 	
-	brelse(bp);
 	return (ENOENT);
 }
 
@@ -360,14 +355,12 @@ efs_inode_lookup(struct efs_mount *emp, struct efs_inode *ei,
 	KASSERT(efs_is_inode_synced(ei) == 0);
 	KASSERT((ei->ei_mode & S_IFMT) == S_IFDIR);
 
-	efs_extent_iterator_init(&exi, ei);
+	efs_extent_iterator_init(&exi, ei, 0);
 	while ((ret = efs_extent_iterator_next(&exi, &ex)) == 0) {
 		if (efs_extent_lookup(emp, &ex, cn, ino) == 0) {
-			efs_extent_iterator_free(&exi);
 			return (0);
 		}
 	}
-	efs_extent_iterator_free(&exi);
 
 	return ((ret == -1) ? ENOENT : ret);
 }
@@ -407,17 +400,167 @@ efs_extent_to_dextent(struct efs_extent *ex, struct efs_dextent *dex)
 
 /*
  * Initialise an extent iterator.
+ *
+ * If start_hint is non-0, attempt to set up the iterator beginning with the
+ * extent descriptor in which the start_hint'th byte exists. Callers must not
+ * expect success (this is simply an optimisation), so we reserve the right
+ * to start from the beginning.
  */
 void
-efs_extent_iterator_init(struct efs_extent_iterator *exi, struct efs_inode *eip)
+efs_extent_iterator_init(struct efs_extent_iterator *exi, struct efs_inode *eip,
+    off_t start_hint)
 {
+	struct efs_extent ex, ex2;
+	struct buf *bp;
+	struct efs_mount *emp = VFSTOEFS(eip->ei_vp->v_mount);
+	off_t offset, length, next;
+	int i, err, numextents, numinextents;
+	int hi, lo, mid;
+	int indir;
 	
-	exi->exi_eip		= eip;
-	exi->exi_next		= 0;
-	exi->exi_dnext		= 0;
-	exi->exi_innext		= 0;
-	exi->exi_incache	= NULL;
-	exi->exi_nincache	= 0;
+	exi->exi_eip	= eip;
+	exi->exi_next	= 0;
+	exi->exi_dnext	= 0;
+	exi->exi_innext	= 0;
+
+	if (start_hint == 0)
+		return;
+
+	/* force iterator to end if hint is too big */
+	if (start_hint >= eip->ei_size) {
+		exi->exi_next = eip->ei_numextents;
+		return;
+	}
+
+	/*
+	 * Use start_hint to jump to the right extent descriptor. We'll
+	 * iterate over the 12 indirect extents because it's cheap, then
+	 * bring the appropriate vector into core and binary search it.
+	 */
+
+	/*
+	 * Handle the small file case separately first...
+	 */
+	if (eip->ei_numextents <= EFS_DIRECTEXTENTS) {
+		for (i = 0; i < eip->ei_numextents; i++) {
+			efs_dextent_to_extent(&eip->ei_di.di_extents[i], &ex);
+
+			offset = ex.ex_offset * EFS_BB_SIZE;
+			length = ex.ex_length * EFS_BB_SIZE;
+
+			if (start_hint >= offset &&
+			    start_hint < (offset + length)) {
+				exi->exi_next = exi->exi_dnext = i;
+				return;
+			}
+		}
+
+		/* shouldn't get here, no? */
+		EFS_DPRINTF(("efs_extent_iterator_init: bad direct extents\n"));
+		return;
+	}
+
+	/*
+	 * Now do the large files with indirect extents...
+	 *
+	 * The first indirect extent's ex_offset field contains the
+	 * number of indirect extents used.
+	 */
+	efs_dextent_to_extent(&eip->ei_di.di_extents[0], &ex);
+
+	numinextents = ex.ex_offset;
+	if (numinextents < 1 || numinextents >= EFS_DIRECTEXTENTS) {
+		EFS_DPRINTF(("efs_extent_iterator_init: bad ex.ex_offset\n"));
+		return;
+	}
+
+	next = 0;
+	indir = -1;
+	numextents = 0;
+	for (i = 0; i < numinextents; i++) {
+		efs_dextent_to_extent(&eip->ei_di.di_extents[i], &ex);
+
+		err = efs_bread(emp, ex.ex_bn, NULL, &bp);
+		if (err) {
+			brelse(bp);
+			return;
+		}
+
+		efs_dextent_to_extent((struct efs_dextent *)bp->b_data, &ex2);
+		brelse(bp);
+
+		offset = ex2.ex_offset * EFS_BB_SIZE;
+
+		if (offset > start_hint) {
+			indir = MAX(0, i - 1);
+			break;
+		}
+
+		next += numextents;
+
+		numextents = ex.ex_length * EFS_EXTENTS_PER_BB;
+		numextents = MIN(numextents, eip->ei_numextents);
+	}
+
+	/*
+	 * We hit the end, so assume it's in the last extent.
+	 */
+	if (indir == -1)
+		indir = numinextents - 1;
+
+	/*
+	 * Binary search to find our desired direct extent.
+	 */
+	lo = 0;
+	mid = 0;
+	hi = numextents - 1;
+	efs_dextent_to_extent(&eip->ei_di.di_extents[indir], &ex);
+	while (lo <= hi) {
+		int bboff;
+		int index;
+
+		mid = (lo + hi) / 2;
+
+		bboff = mid / EFS_EXTENTS_PER_BB;
+		index = mid % EFS_EXTENTS_PER_BB;
+
+		err = efs_bread(emp, ex.ex_bn + bboff, NULL, &bp);
+		if (err) {
+			brelse(bp);
+			EFS_DPRINTF(("efs_extent_iterator_init: bsrch read\n"));
+			return;
+		}
+
+		efs_dextent_to_extent((struct efs_dextent *)bp->b_data + index,
+		    &ex2);
+		brelse(bp);
+
+		offset = ex2.ex_offset * EFS_BB_SIZE;
+		length = ex2.ex_length * EFS_BB_SIZE;
+
+		if (start_hint >= offset && start_hint < (offset + length))
+			break;
+
+		if (start_hint < offset)
+			hi = mid - 1;
+		else
+			lo = mid + 1;
+	}
+
+	/*
+	 * This is bad. Either the hint is bogus (which shouldn't
+	 * happen) or the extent list must be screwed up. We
+	 * have to abort.
+	 */
+	if (lo > hi) {
+		EFS_DPRINTF(("efs_extent_iterator_init: bsearch "
+		    "failed to find extent\n"));
+		return;
+	}
+
+	exi->exi_next	= next + mid;
+	exi->exi_dnext	= indir;
+	exi->exi_innext	= mid;
 }
 
 /*
@@ -431,7 +574,11 @@ int
 efs_extent_iterator_next(struct efs_extent_iterator *exi,
     struct efs_extent *exp)
 {
+	struct efs_extent ex;
+	struct efs_dextent *dexp;
 	struct efs_inode *eip = exi->exi_eip;
+	struct buf *bp;
+	int err, bboff, index;
 
 	if (exi->exi_next++ >= eip->ei_numextents)
 		return (-1);
@@ -439,66 +586,37 @@ efs_extent_iterator_next(struct efs_extent_iterator *exi,
 	/* direct or indirect extents? */
 	if (eip->ei_numextents <= EFS_DIRECTEXTENTS) {
 		if (exp != NULL) {
-			efs_dextent_to_extent(
-			    &eip->ei_di.di_extents[exi->exi_dnext++], exp);
+			dexp = &eip->ei_di.di_extents[exi->exi_dnext++];
+			efs_dextent_to_extent(dexp, exp);
 		}
 	} else {
-		/*
-		 * Cache a full indirect extent worth of extent descriptors.
-		 * This is maximally 124KB (248 * 512).
-		 */
-		if (exi->exi_incache == NULL) {
-			struct efs_extent ex;
-			struct buf *bp;
-			int err;
+		efs_dextent_to_extent(
+		    &eip->ei_di.di_extents[exi->exi_dnext], &ex);
 
-			efs_dextent_to_extent(
-			    &eip->ei_di.di_extents[exi->exi_dnext], &ex);
+		bboff	= exi->exi_innext / EFS_EXTENTS_PER_BB;
+		index	= exi->exi_innext % EFS_EXTENTS_PER_BB;
 
-			err = efs_bread(VFSTOEFS(eip->ei_vp->v_mount),
-			    ex.ex_bn, ex.ex_length, NULL, &bp);
-			if (err) {
-				EFS_DPRINTF(("efs_extent_iterator_next: "
-				    "efs_bread failed: %d\n", err));
-				brelse(bp);
-				return (err);
-			}
-
-			exi->exi_incache = malloc(ex.ex_length * EFS_BB_SIZE,
-			    M_EFSTMP, M_WAITOK);
-			exi->exi_nincache = ex.ex_length * EFS_BB_SIZE /
-			    sizeof(struct efs_dextent);
-			memcpy(exi->exi_incache, bp->b_data,
-			    ex.ex_length * EFS_BB_SIZE);
+		err = efs_bread(VFSTOEFS(eip->ei_vp->v_mount),
+		    ex.ex_bn + bboff, NULL, &bp);
+		if (err) {
+			EFS_DPRINTF(("efs_extent_iterator_next: "
+			    "efs_bread failed: %d\n", err));
 			brelse(bp);
+			return (err);
 		}
 
 		if (exp != NULL) {
-			efs_dextent_to_extent(
-			    &exi->exi_incache[exi->exi_innext++], exp);
+			dexp = (struct efs_dextent *)bp->b_data + index;
+			efs_dextent_to_extent(dexp, exp);
 		}
+		brelse(bp);
 
-		/* if this is the last one, ditch the cache */
-		if (exi->exi_innext >= exi->exi_nincache) {
+		bboff = exi->exi_innext++ / EFS_EXTENTS_PER_BB;
+		if (bboff >= ex.ex_length) {
 			exi->exi_innext = 0;
-			exi->exi_nincache = 0;
-			free(exi->exi_incache, M_EFSTMP);
-			exi->exi_incache = NULL;
 			exi->exi_dnext++;
 		}
 	}
 
 	return (0);
-}
-
-/*
- * Clean up the extent iterator.
- */
-void
-efs_extent_iterator_free(struct efs_extent_iterator *exi)
-{
-
-	if (exi->exi_incache != NULL)
-		free(exi->exi_incache, M_EFSTMP);
-	efs_extent_iterator_init(exi, NULL);
 }
