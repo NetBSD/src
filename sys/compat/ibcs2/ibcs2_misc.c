@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.92 2007/06/30 13:34:19 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.93 2007/07/04 22:02:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.92 2007/06/30 13:34:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.93 2007/07/04 22:02:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,7 +703,12 @@ ibcs2_sys_getgroups(l, v, retval)
 	return 0;
 }
 
-#define COMPAT_NGROUPS16 min(16, NGROUPS)
+/*
+ * It is very unlikly that any problem using 16bit groups is written
+ * to allow for more than 16 of them, so don't bother trying to
+ * support that.
+ */
+#define COMPAT_NGROUPS16 16
 
 int
 ibcs2_sys_setgroups(l, v, retval)
