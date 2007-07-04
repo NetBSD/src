@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.25 2007/07/01 07:39:46 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.26 2007/07/04 19:56:02 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 #define USERF_SDESCR	0x00000080	/* set a new description */
 
 struct envsys_sensor {
+	bool	invalid;
 	bool	visible;
 	bool	percentage;
 	int32_t	cur_value;
@@ -581,9 +582,9 @@ find_sensors(prop_array_t array)
 		/* check sensor's state */
 		state = prop_dictionary_get(obj, "state");
 
-		/* skip invalid sensors */
+		/* mark invalid sensors */
 		if (prop_string_equals_cstring(state, "invalid"))
-			continue;
+			esen[i].invalid = true;
 
 		/* description string */
 		desc = prop_dictionary_get(obj, "description");
@@ -738,6 +739,7 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 {
 	size_t maxlen = 0;
 	double temp = 0;
+	const char *invalid = "*";
 	const char *degrees = NULL;
 	int i;
 
@@ -760,10 +762,6 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		/* skip indicator sensor if value is 0 */
 		if ((strcmp(es[i].type, "Indicator") == 0) &&
 		    es[i].cur_value == 0)
-			continue;
-
-		/* skip other sensors if value is 0 */
-		if (es[i].cur_value == 0)
 			continue;
 
 		/* we have a winner... */
@@ -790,7 +788,10 @@ do {								\
 		if (strcmp(es[i].type, "Temperature") == 0) {
 
 			CONVERTTEMP(temp, es[i].cur_value, degrees);
-			(void)printf(": %10.3f %s", temp, degrees);
+			if (es[i].invalid)
+				(void)printf(": %10s", invalid);
+			else
+				(void)printf(": %10.3f %s", temp, degrees);
 			
 			if (es[i].critmax_value || es[i].critmin_value)
 				(void)printf("  ");
@@ -808,7 +809,10 @@ do {								\
 		/* fans */
 		} else if (strcmp(es[i].type, "Fan") == 0) {
 
-			(void)printf(": %10u RPM", es[i].cur_value);
+			if (es[i].invalid)
+				(void)printf(": %10s", invalid);
+			else
+				(void)printf(": %10u RPM", es[i].cur_value);
 
 			if (es[i].critmax_value || es[i].critmin_value)
 				(void)printf("   ");
@@ -822,7 +826,10 @@ do {								\
 		/* integers */
 		} else if (strcmp(es[i].type, "Integer") == 0) {
 
-			(void)printf(": %10d", es[i].cur_value);
+			if (es[i].invalid)
+				(void)printf(": %10s", invalid);
+			else
+				(void)printf(": %10d", es[i].cur_value);
 
 		/* drives */
 		} else if (strcmp(es[i].type, "Drive") == 0) {
@@ -849,13 +856,17 @@ do {								\
 			else
 				type = NULL;
 
-			(void)printf(": %10.3f %s",
-			    es[i].cur_value / 1000000.0, type);
+			if (es[i].invalid)
+				(void)printf(": %10s", invalid);
+			else {
+				(void)printf(": %10.3f %s",
+				    es[i].cur_value / 1000000.0, type);
 
-			if (es[i].percentage && es[i].max_value) {
-				(void)printf(" (%5.2f%%)",
-				    (es[i].cur_value * 100.0) /
-				    es[i].max_value);
+				if (es[i].percentage && es[i].max_value) {
+					(void)printf(" (%5.2f%%)",
+					    (es[i].cur_value * 100.0) /
+					    es[i].max_value);
+				}
 			}
 
 			if (es[i].critcap_value) {
