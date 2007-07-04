@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.10 2007/06/18 19:40:49 degroote Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.11 2007/07/04 23:18:49 pooka Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.10 2007/06/18 19:40:49 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.11 2007/07/04 23:18:49 pooka Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -2713,7 +2713,7 @@ wpi_init(struct ifnet *ifp)
 		le32toh(hdr.datasz) + le32toh(hdr.bootsz);
 
 	if (size < wsize) {
-		aprint_error("%s: fw file too short: should be %zd bytes\n",
+		aprint_error("%s: fw file too short: should be %zu bytes\n",
 			sc->sc_dev.dv_xname, wsize);
 		error = EINVAL;
 		goto fail2;
