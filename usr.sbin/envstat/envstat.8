@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.18 2007/07/04 17:15:03 xtraeme Exp $
+.\"	$NetBSD: envstat.8,v 1.19 2007/07/04 17:16:15 xtraeme Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,7 +265,7 @@ Display the
 .Dq acpibat0 charge
 sensor on one line every ten seconds:
 .Pp
-.Dl $ envstat -s \*qacpibat0 charge\*q -i 10
+.Dl $ envstat -s \*qacpibat0 charge\*q -d acpibat0 -i 10
 .Pp
 Lists the drivers that are currently registered with
 .Xr envsys 4 :
