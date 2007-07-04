@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.181 2007/06/30 13:34:19 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.182 2007/07/04 21:59:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.181 2007/06/30 13:34:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.182 2007/07/04 21:59:16 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -1154,7 +1154,12 @@ linux_sys_getgroups16(l, v, retval)
 	return 0;
 }
 
-#define COMPAT_NGROUPS16 min(16, NGROUPS)
+/*
+ * It is very unlikly that any problem using 16bit groups is written
+ * to allow for more than 16 of them, so don't bother trying to
+ * support that.
+ */
+#define COMPAT_NGROUPS16 16
 
 int
 linux_sys_setgroups16(l, v, retval)
