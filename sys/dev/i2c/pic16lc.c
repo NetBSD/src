@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.8 2007/07/02 10:36:47 xtraeme Exp $ */
+/* $NetBSD: pic16lc.c,v 1.9 2007/07/04 18:56:16 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.8 2007/07/02 10:36:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.9 2007/07/04 18:56:16 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,6 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_data[XBOX_SENSOR_BOARD].units = ENVSYS_STEMP;
 	(void)strlcpy(sc->sc_data[XBOX_SENSOR_BOARD].desc, "Xbox Board Temp",
 	    sizeof(sc->sc_data[XBOX_SENSOR_BOARD]));
-
-	/* Get initial sensor values */
-	pic16lc_update(sc, &sc->sc_data[XBOX_SENSOR_CPU]);
-	pic16lc_update(sc, &sc->sc_data[XBOX_SENSOR_BOARD]);
 
 	/* hook into sysmon */
 	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
