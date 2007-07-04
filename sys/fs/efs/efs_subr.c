@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.2 2007/07/04 19:24:09 rumble Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.3 2007/07/04 20:20:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.2 2007/07/04 19:24:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.3 2007/07/04 20:20:30 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -496,10 +496,12 @@ efs_extent_iterator_init(struct efs_extent_iterator *exi, struct efs_inode *eip,
 			break;
 		}
 
+		/* number of extents prior to this indirect vector of extents */
 		next += numextents;
 
+		/* number of extents within this indirect vector of extents */
 		numextents = ex.ex_length * EFS_EXTENTS_PER_BB;
-		numextents = MIN(numextents, eip->ei_numextents);
+		numextents = MIN(numextents, eip->ei_numextents - next);
 	}
 
 	/*
