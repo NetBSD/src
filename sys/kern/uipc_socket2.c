@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.83 2007/07/04 07:13:13 tls Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.84 2007/07/04 07:17:11 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.83 2007/07/04 07:13:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.84 2007/07/04 07:17:11 tls Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -182,6 +182,8 @@ sonewconn(struct socket *head, int connstatus)
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
 	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
 	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
+	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
+	so->so_snd.sb_timeo = head->so_snd.sb_timeo;
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
