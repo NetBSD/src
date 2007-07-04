@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1041 2007/07/03 12:16:51 yamt Exp $
+#	$NetBSD: mi,v 1.1042 2007/07/04 02:04:26 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2335,6 +2335,7 @@
 ./usr/libdata/debug/sbin/setkey.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/shutdown.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/slattach.debug		comp-slip-debug		debug
+./usr/libdata/debug/sbin/svhlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/swapctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/sysctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/tbrconfig.debug	comp-router-debug	debug
