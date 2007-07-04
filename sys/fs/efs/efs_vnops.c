@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.1 2007/06/29 23:30:30 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.2 2007/07/04 18:40:18 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.1 2007/06/29 23:30:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.2 2007/07/04 18:40:18 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,11 +232,13 @@ efs_read(void *v)
 	} */ *ap = v;
 	struct efs_extent ex;
 	struct efs_extent_iterator exi;
+	void *win;
 	struct uio *uio = ap->a_uio;
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 	off_t start;
 	vsize_t len;
-	int err, ret;
+	int err, ret, flags;
+	const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 	if (ap->a_vp->v_type == VDIR)
 		return (EISDIR);
@@ -245,7 +247,8 @@ efs_read(void *v)
 		return (EINVAL);
 
 	efs_extent_iterator_init(&exi, eip);
-	while ((ret = efs_extent_iterator_next(&exi, &ex)) == 0) {
+	ret = efs_extent_iterator_next(&exi, &ex);
+	while (ret == 0) {
 		if (uio->uio_offset < 0 || uio->uio_offset >= eip->ei_size ||
 		    uio->uio_resid == 0)
 			break;
@@ -253,30 +256,29 @@ efs_read(void *v)
 		start = ex.ex_offset * EFS_BB_SIZE;
 		len   = ex.ex_length * EFS_BB_SIZE;
 
-		if (uio->uio_offset >= start &&
-		    uio->uio_offset < (start + len)) {
-			void *win;
-			int flags;
-			const int advice = IO_ADV_DECODE(ap->a_ioflag);
+		if (!(uio->uio_offset >= start &&
+		      uio->uio_offset < (start + len))) {
+			ret = efs_extent_iterator_next(&exi, &ex);
+			continue;
+		}
 
-			start = uio->uio_offset - start;
+		start = uio->uio_offset - start;
 
-			len = MIN(len - start, uio->uio_resid);
-			len = MIN(len, eip->ei_size - uio->uio_offset);
+		len = MIN(len - start, uio->uio_resid);
+		len = MIN(len, eip->ei_size - uio->uio_offset);
 
-			win = ubc_alloc(&ap->a_vp->v_uobj, uio->uio_offset,
-			    &len, advice, UBC_READ);
+		win = ubc_alloc(&ap->a_vp->v_uobj, uio->uio_offset,
+		    &len, advice, UBC_READ);
 
-			flags = UBC_WANT_UNMAP(ap->a_vp) ? UBC_UNMAP : 0;
+		flags = UBC_WANT_UNMAP(ap->a_vp) ? UBC_UNMAP : 0;
 
-			err = uiomove(win, len, uio);
-			ubc_release(win, flags);
-			if (err) {
-				EFS_DPRINTF(("efs_read: uiomove error %d\n",
-				    err));
-				efs_extent_iterator_free(&exi);
-				return (err);
-			}
+		err = uiomove(win, len, uio);
+		ubc_release(win, flags);
+		if (err) {
+			EFS_DPRINTF(("efs_read: uiomove error %d\n",
+			    err));
+			efs_extent_iterator_free(&exi);
+			return (err);
 		}
 	}
 	efs_extent_iterator_free(&exi);
