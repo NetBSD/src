@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.9 2007/07/03 23:13:12 xtraeme Exp $ */
+/*	$NetBSD: ipmi.c,v 1.10 2007/07/04 17:36:17 bouyer Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.9 2007/07/03 23:13:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.10 2007/07/04 17:36:17 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1424,9 +1424,8 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 		/* Check if sensor is valid */
 		edata->state = ENVSYS_SINVALID;
 	} else {
-		edata->state = ENVSYS_SVALID;
+		edata->state = ipmi_sensor_status(sc, psensor, edata, data);
 	}
-	edata->state = ipmi_sensor_status(sc, psensor, edata, data);
 	rv = 0;
 done:
 	if (!cold)
@@ -1743,7 +1742,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 		ipmi_s->i_envnum = i;
 		sc->sc_sensor_data[i].sensor = i;
 		sc->sc_sensor_data[i].units = ipmi_s->i_envtype;
-		sc->sc_sensor_data[i].state = ENVSYS_SVALID;
+		sc->sc_sensor_data[i].state = ENVSYS_SINVALID;
 		sc->sc_sensor_data[i].monitor = true;
 		/*
 		 * Monitor critical/critical-over/warning-over states
