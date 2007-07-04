@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.12 2007/07/01 07:37:16 xtraeme Exp $	*/
+/*	$NetBSD: lm75.c,v 1.13 2007/07/04 19:00:43 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -116,7 +116,6 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	prop_string_t desc;
 	int i;
 
 	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
@@ -144,14 +143,6 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sensor[0].sensor = 0;
 	sc->sc_sensor[0].state = ENVSYS_FVALID;
 	sc->sc_sensor[0].units =  ENVSYS_STEMP;
-	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
-				   "envsys-description");
-	if (desc != NULL &&
-	    prop_object_type(desc) == PROP_TYPE_STRING &&
-	    prop_string_size(desc) > 0)
-	    	strcpy(sc->sc_sensor[0].desc, prop_string_cstring_nocopy(desc));
-	else
-		strcpy(sc->sc_sensor[0].desc, sc->sc_dev.dv_xname);
 
 	sc->sc_lmtemp_decode = lmtemptbl[i].lmtemp_decode;
 
