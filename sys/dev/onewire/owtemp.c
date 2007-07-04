@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.8 2007/07/04 19:00:44 xtraeme Exp $ */
+/*	$NetBSD: owtemp.c,v 1.9 2007/07/04 19:12:42 xtraeme Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.8 2007/07/04 19:00:44 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.9 2007/07/04 19:12:42 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ owtemp_update(void *arg)
 #endif
 
 	sc->sc_sensor[0].value_cur = sc->sc_owtemp_decode(data);
-	sc->sc_sensor[0].state |= ENVSYS_SVALID;
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
 
 done:
 	onewire_unlock(sc->sc_onewire);
