@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.h,v 1.1 2007/06/29 23:30:30 rumble Exp $	*/
+/*	$NetBSD: efs_subr.h,v 1.2 2007/07/04 19:24:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -25,9 +25,7 @@ struct efs_extent_iterator {
 	struct efs_inode       *exi_eip;
 	off_t			exi_next;		/* next logical extent*/
 	off_t			exi_dnext;		/* next direct extent */
-	off_t			exi_innext;		/* next indirect ext */	
-	struct efs_dextent     *exi_incache;		/* indirect ext cache */
-	size_t			exi_nincache;		/* size of incache */
+	off_t			exi_innext;		/* next indirect ext. */
 };
 
 int32_t	efs_sb_checksum(struct efs_sb *, int);
@@ -39,14 +37,12 @@ void	efs_dextent_to_extent(struct efs_dextent *, struct efs_extent *);
 void	efs_extent_to_dextent(struct efs_extent *, struct efs_dextent *);
 int	efs_inode_lookup(struct efs_mount *, struct efs_inode *,
 	    struct componentname *, ino_t *);
-int	efs_bread(struct efs_mount *, uint32_t, int, struct lwp *,
-	    struct buf **);
+int	efs_bread(struct efs_mount *, uint32_t, struct lwp *, struct buf **);
 void	efs_sync_inode_to_dinode(struct efs_inode *);
 void	efs_sync_dinode_to_inode(struct efs_inode *);
 void	efs_extent_iterator_init(struct efs_extent_iterator *,
-	    struct efs_inode *);
+	    struct efs_inode *, off_t);
 int	efs_extent_iterator_next(struct efs_extent_iterator *,
 	    struct efs_extent *);
-void	efs_extent_iterator_free(struct efs_extent_iterator *);
 
 #endif /* !_FS_EFS_EFS_SUBR_H_ */
