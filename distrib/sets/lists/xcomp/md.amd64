@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.3 2004/01/19 03:03:31 matt Exp $
+# $NetBSD: md.amd64,v 1.4 2007/07/04 13:23:11 njoly Exp $
 ./usr/X11R6/include/xf86Optrec.h
 ./usr/X11R6/include/xf86Parser.h
 ./usr/X11R6/man/cat3/XF86VidMode.0		-unknown-		.cat
@@ -47,3 +47,14 @@
 ./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3	-unknown-		.man
 ./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-		.man
 ./usr/X11R6/man/man4/fpit.4			-unknown-		.man
+./usr/libdata/debug/usr/X11R6/bin/XFree86.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/gtf.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/ioport.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/kbd_mode.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/mmapr.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/mmapw.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/pcitweak.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug
