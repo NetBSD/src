@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.48 2007/07/05 12:08:45 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.49 2007/07/05 12:14:18 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.48 2007/07/05 12:08:45 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.49 2007/07/05 12:14:18 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,9 +529,9 @@ acpibat_print_stat(struct acpibat_softc *sc)
 	else
 		capstat = "";
 
-	if (sc->sc_data[ACPIBAT_CHARGING].value_cur)
+	if (sc->sc_data[ACPIBAT_CHARGING].state == ENVSYS_SVALID)
 		chargestat = "charging";
-	else if (!sc->sc_data[ACPIBAT_CHARGING].value_cur)
+	else if (!sc->sc_data[ACPIBAT_CHARGING].state == ENVSYS_SINVALID)
 		chargestat = "discharging";
 	else
 		chargestat = "idling";
