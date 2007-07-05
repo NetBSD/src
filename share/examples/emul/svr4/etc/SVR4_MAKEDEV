@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.9 2001/02/10 23:25:51 eeh Exp $
+#	$NetBSD: SVR4_MAKEDEV,v 1.10 2007/07/05 19:34:36 dsl Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.
@@ -30,7 +30,7 @@
 #	all	everything
 # Terminal devices:
 #	ptmx		pty master multiplexer
-#	pts[0-3]	pty slave devices in /dev/pts (actually symlinks)
+#			Use the ptyfs for the slaves.
 # Network:
 #	udp		UDP socket creation
 #	tcp		TCP socket creation
@@ -72,37 +72,12 @@ unit=`expr $i : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $i in
 
 all)
-	sh SVR4_MAKEDEV ptmx pts0 pts1 pts2 pts3
+	sh SVR4_MAKEDEV ptmx
 	sh SVR4_MAKEDEV tcp udp rawip ticlts ticotsord ticots wabi
 	;;
 
 ptmx)
-	rm -f $i
-	mknod $i		c $major 10
-	chown bin.bin $i
-	chmod 666 $i
-	;;
-
-pts*)
-	case $unit in
-	0) name=p;;
-	1) name=q;;
-	2) name=r;;
-	3) name=s;;
-	*) name=''; echo 'pts: units range from 0 to 3';;
-	esac
-
-	mkdir >/dev/null 2>&1 pts
-	chown bin.bin pts
-	chmod 755 pts
-	if [ -n "$name" ]; then
-		j=`expr $unit \* 16`
-		for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f; do
-			rm -f pts/$j
-			ln -s /dev/tty$name$i pts/$j
-			j=`expr $j + 1`
-		done
-	fi
+	mknod -R -u bin -g bin -m 666 $i c ptm 2
 	;;
 
 tcp)
