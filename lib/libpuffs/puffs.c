@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.54 2007/07/02 10:24:18 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.55 2007/07/05 12:27:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.54 2007/07/02 10:24:18 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.55 2007/07/05 12:27:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -477,18 +477,6 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		if (pu->pu_ml_lfn)
 			pu->pu_ml_lfn(pu);
 
-		/* micro optimization: skip kevent syscall if possible */
-		if (pfctrl->nfds == 0 && pu->pu_ml_timep == NULL
-		    && (pu->pu_state & PU_ASYNCFD) == 0) {
-			if (puffs_req_handle(pgr, ppr, 0) == -1)
-				goto out;
-			if (puffs_req_putput(ppr) == -1)
-				goto out;
-			puffs_req_resetput(ppr);
-			continue;
-		}
-		/* else: do full processing */
-
 		/*
 		 * Do this here, because:
 		 *  a) loopfunc might generate some results
@@ -497,6 +485,16 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 		if (puffs_req_putput(ppr) == -1)
 			goto out;
 		puffs_req_resetput(ppr);
+
+		/* micro optimization: skip kevent syscall if possible */
+		if (pfctrl->nfds == 0 && pu->pu_ml_timep == NULL
+		    && (pu->pu_state & PU_ASYNCFD) == 0) {
+			if (puffs_req_handle(pgr, ppr, 0) == -1)
+				goto out;
+			continue;
+		}
+
+		/* else: do full processing */
 
 		/*
 		 * Build list of which to enable/disable in writecheck.
@@ -574,7 +572,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 			}
 
 			if (curev->filter == EVFILT_READ) {
-				if (curev->flags & EV_EOF)
+				if (curev->flags & EV_EOF && curev->data == 0)
 					puffs_framev_readclose(pu, fio,
 					    ECONNRESET);
 				else
