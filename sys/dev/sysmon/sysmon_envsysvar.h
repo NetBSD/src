@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.2 2007/07/03 22:33:36 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.3 2007/07/05 23:48:22 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ do {									\
 #define SENSOR_UPTYPE(a, b, c, d, e)					\
 do {									\
 	obj = prop_dictionary_get((a), (b));				\
-	if (!prop_number_equals_ ## e(obj, (c)) && (c)) {		\
+	if (!prop_number_equals_ ## e(obj, (c))) {			\
 		if (!prop_dictionary_set_ ## d((a), (b), (c))) { 	\
 			SENSOR_DICTSETFAILED((b), (c));			\
 			return EINVAL;					\
