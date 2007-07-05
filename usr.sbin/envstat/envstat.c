@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.26 2007/07/04 19:56:02 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.27 2007/07/05 12:11:05 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -739,7 +739,7 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 {
 	size_t maxlen = 0;
 	double temp = 0;
-	const char *invalid = "*";
+	const char *invalid = "N/A";
 	const char *degrees = NULL;
 	int i;
 
@@ -759,19 +759,18 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		if (sensors && !es[i].visible)
 			continue;
 
-		/* skip indicator sensor if value is 0 */
-		if ((strcmp(es[i].type, "Indicator") == 0) &&
-		    es[i].cur_value == 0)
-			continue;
-
 		/* we have a winner... */
 		(void)printf("%*.*s", (int)maxlen, (int)maxlen, es[i].desc);
 
 		if (strcmp(es[i].type, "Indicator") == 0) {
-			(void)printf("\n");
-			continue;
-		}
+			const char *str;
 
+			if (es[i].invalid)
+				str = "OFF";
+			else
+				str = "ON";
+
+			(void)printf(": %10s", str);
 /* converts the value to degC or degF */
 #define CONVERTTEMP(a, b, c)					\
 do {								\
@@ -785,7 +784,7 @@ do {								\
 
 
 		/* temperatures */
-		if (strcmp(es[i].type, "Temperature") == 0) {
+		} else if (strcmp(es[i].type, "Temperature") == 0) {
 
 			CONVERTTEMP(temp, es[i].cur_value, degrees);
 			if (es[i].invalid)
@@ -833,7 +832,11 @@ do {								\
 
 		/* drives */
 		} else if (strcmp(es[i].type, "Drive") == 0) {
-			(void)printf(": %s", es[i].drvstate);
+
+			if (es[i].invalid)
+				(void)printf(": %10s", invalid);
+			else
+				(void)printf(": %s", es[i].drvstate);
 
 		/* everything else */
 		} else {
