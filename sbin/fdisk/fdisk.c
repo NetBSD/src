@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.104 2007/04/26 18:51:00 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.105 2007/07/05 20:30:29 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.104 2007/04/26 18:51:00 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.105 2007/07/05 20:30:29 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -588,6 +588,11 @@ print_s0(int which)
 			printf(".\n");
 		}
 #endif
+
+		if (mboot.mbr_dsn != 0)
+			printf("Drive serial number: %"PRId32" (0x%08x)\n",
+			    le32toh(mboot.mbr_dsn),
+			    le32toh(mboot.mbr_dsn));
 		return;
 	}
 
@@ -875,12 +880,6 @@ print_pbr(daddr_t sector, int indent, uint8_t part_type)
 			sizeof(pboot.mbr_oemname));
 	}
 
-	if (pboot.mbr_dsn != 0)
-		printf("%*sDrive serial number: %"PRId32" (0x%08x)\n",
-		    indent, "",
-		    le32toh(pboot.mbr_dsn),
-		    le32toh(pboot.mbr_dsn));
-
 	if (pboot.mbr_bpb.bpb16.bsBootSig == 0x29)
 		printf("%*sBPB FAT16 boot signature found\n",
 		    indent, "");
@@ -949,7 +948,7 @@ void
 init_sector0(int zappart)
 {
 	int i;
-	int copy_size =  MBR_PART_OFFSET;
+	int copy_size = offsetof(struct mbr_sector, mbr_dsn);
 
 #ifdef DEFAULT_BOOTCODE
 	if (bootsize == 0)
@@ -965,6 +964,7 @@ init_sector0(int zappart)
 	if (bootsize != 0) {
 		boot_installed = 1;
 		memcpy(&mboot, bootcode, copy_size);
+		mboot.mbr_bootsel_magic = bootcode[0].mbr_bootsel_magic;
 	}
 	mboot.mbr_magic = LE_MBR_MAGIC;
 	
