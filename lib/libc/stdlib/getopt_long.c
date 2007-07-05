@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.20 2006/10/04 17:29:42 wiz Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.21 2007/07/05 16:05:40 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.20 2006/10/04 17:29:42 wiz Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.21 2007/07/05 16:05:40 ginsbach Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -362,6 +362,11 @@ getopt_long(nargc, nargv, options, long_options, idx)
 {
 	int retval;
 
+#define IDENTICAL_INTERPRETATION(_x, _y)				\
+	(long_options[(_x)].has_arg == long_options[(_y)].has_arg &&	\
+	 long_options[(_x)].flag == long_options[(_y)].flag &&		\
+	 long_options[(_x)].val == long_options[(_y)].val)
+
 	_DIAGASSERT(nargv != NULL);
 	_DIAGASSERT(options != NULL);
 	_DIAGASSERT(long_options != NULL);
@@ -371,10 +376,11 @@ getopt_long(nargc, nargv, options, long_options, idx)
 	if (retval == -2) {
 		char *current_argv, *has_equal;
 		size_t current_argv_len;
-		int i, match;
+		int i, ambiguous, match;
 
 		current_argv = __UNCONST(place);
 		match = -1;
+		ambiguous = 0;
 
 		optind++;
 		place = EMSG;
@@ -409,18 +415,21 @@ getopt_long(nargc, nargv, options, long_options, idx)
 			    (unsigned)current_argv_len) {
 				/* exact match */
 				match = i;
+				ambiguous = 0;
 				break;
 			}
 			if (match == -1)		/* partial match */
 				match = i;
-			else {
-				/* ambiguous abbreviation */
-				if (PRINT_ERROR)
-					warnx(ambig, (int)current_argv_len,
-					     current_argv);
-				optopt = 0;
-				return BADCH;
-			}
+			else if (!IDENTICAL_INTERPRETATION(i, match))
+				ambiguous = 1;
+		}
+		if (ambiguous) {
+			/* ambiguous abbreviation */
+			if (PRINT_ERROR)
+				warnx(ambig, (int)current_argv_len,
+				     current_argv);
+			optopt = 0;
+			return BADCH;
 		}
 		if (match != -1) {			/* option found */
 		        if (long_options[match].has_arg == no_argument
@@ -485,5 +494,6 @@ getopt_long(nargc, nargv, options, long_options, idx)
 			*idx = match;
 	}
 	return retval;
+#undef IDENTICAL_INTERPRETATION
 }
 #endif /* !GETOPT_LONG */
