@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.115 2006/11/19 19:01:26 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.116 2007/07/05 20:03:00 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -231,6 +231,7 @@ md_read_bootcode(const char *path, struct mbr_sector *mbrs)
 	struct stat st;
 	size_t len;
 	struct mbr_sector new_mbr;
+	uint32_t dsn;
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
@@ -255,7 +256,11 @@ md_read_bootcode(const char *path, struct mbr_sector *mbrs)
 	} else
 		len = offsetof(struct mbr_sector, mbr_parts);
 
+	/* Preserve the 'drive serial number' - especially for Vista */
+	dsn = mbrs->mbr_dsn;
 	memcpy(mbrs, &new_mbr, len);
+	mbrs->mbr_dsn = dsn;
+
 	/* Keep flags from object file - indicate the properties */
 	mbrs->mbr_bootsel.mbrbs_flags = new_mbr.mbr_bootsel.mbrbs_flags;
 	mbrs->mbr_magic = htole16(MBR_MAGIC);
