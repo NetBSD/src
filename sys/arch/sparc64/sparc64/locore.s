@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.250 2007/05/28 20:09:50 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.251 2007/07/05 20:21:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9453,25 +9453,15 @@ Lkcerr:
 
 #ifdef MULTIPROCESSOR
 ENTRY(sparc64_ipi_save_fpstate)
-	mov	%o0, %g1		! save registers used by savefpstate
-	mov	%o1, %g2		! to alternate globals
-	mov	%o2, %g3
-	mov	%o3, %g4
-	mov	%o4, %g5
-	mov	%o5, %g6
+	save	%sp, -CC64FSZ, %sp
 	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
 	ldx	[%o0 + %lo(CPUINFO_VA + CI_FPLWP)], %o0
 	call	savefpstate
 	 ldx	[%o0 + L_FPSTATE], %o0
 	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
 	stx	%g0, [%o0 + %lo(CPUINFO_VA + CI_FPLWP)]		! fplwp = NULL
-	mov	%g6, %o5		! restore saved registers
-	mov	%g5, %o4
-	mov	%g4, %o3
-	mov	%g3, %o2
-	mov	%g2, %o1
 	ba	ret_from_intr_vector
-	 mov	%g1, %o0
+	 restore
 
 ENTRY(sparc64_ipi_drop_fpstate)
 	mov	%o0, %g1		! save registers used here
