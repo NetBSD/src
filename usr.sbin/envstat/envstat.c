@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.28 2007/07/05 13:51:28 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.29 2007/07/05 14:08:37 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -762,12 +762,14 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		/* we have a winner... */
 		(void)printf("%*.*s", (int)maxlen, (int)maxlen, es[i].desc);
 
+		if (es[i].invalid) {
+			(void)printf(": %10s\n", invalid);
+			continue;
+		}
+
 		if (strcmp(es[i].type, "Indicator") == 0) {
-			if (es[i].invalid)
-				(void)printf(": %10s", invalid);
-			else
-				(void)printf(": %10s",
-				    es[i].cur_value ? "ON" : "OFF");
+
+			(void)printf(": %10s", es[i].cur_value ? "ON" : "OFF");
 
 /* converts the value to degC or degF */
 #define CONVERTTEMP(a, b, c)					\
@@ -785,10 +787,7 @@ do {								\
 		} else if (strcmp(es[i].type, "Temperature") == 0) {
 
 			CONVERTTEMP(temp, es[i].cur_value, degrees);
-			if (es[i].invalid)
-				(void)printf(": %10s", invalid);
-			else
-				(void)printf(": %10.3f %s", temp, degrees);
+			(void)printf(": %10.3f %s", temp, degrees);
 			
 			if (es[i].critmax_value || es[i].critmin_value)
 				(void)printf("  ");
@@ -806,10 +805,7 @@ do {								\
 		/* fans */
 		} else if (strcmp(es[i].type, "Fan") == 0) {
 
-			if (es[i].invalid)
-				(void)printf(": %10s", invalid);
-			else
-				(void)printf(": %10u RPM", es[i].cur_value);
+			(void)printf(": %10u RPM", es[i].cur_value);
 
 			if (es[i].critmax_value || es[i].critmin_value)
 				(void)printf("   ");
@@ -823,18 +819,12 @@ do {								\
 		/* integers */
 		} else if (strcmp(es[i].type, "Integer") == 0) {
 
-			if (es[i].invalid)
-				(void)printf(": %10s", invalid);
-			else
-				(void)printf(": %10d", es[i].cur_value);
+			(void)printf(": %10d", es[i].cur_value);
 
 		/* drives */
 		} else if (strcmp(es[i].type, "Drive") == 0) {
 
-			if (es[i].invalid)
-				(void)printf(": %10s", invalid);
-			else
-				(void)printf(": %s", es[i].drvstate);
+			(void)printf(": %s", es[i].drvstate);
 
 		/* everything else */
 		} else {
@@ -857,17 +847,13 @@ do {								\
 			else
 				type = NULL;
 
-			if (es[i].invalid)
-				(void)printf(": %10s", invalid);
-			else {
-				(void)printf(": %10.3f %s",
-				    es[i].cur_value / 1000000.0, type);
+			(void)printf(": %10.3f %s",
+			    es[i].cur_value / 1000000.0, type);
 
-				if (es[i].percentage && es[i].max_value) {
-					(void)printf(" (%5.2f%%)",
-					    (es[i].cur_value * 100.0) /
-					    es[i].max_value);
-				}
+			if (es[i].percentage && es[i].max_value) {
+				(void)printf(" (%5.2f%%)",
+				    (es[i].cur_value * 100.0) /
+				    es[i].max_value);
 			}
 
 			if (es[i].critcap_value) {
