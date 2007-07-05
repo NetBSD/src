@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.66 2007/06/01 20:56:23 dyoung Exp $
+.\"	$NetBSD: installboot.8,v 1.67 2007/07/05 19:49:53 dsl Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 15, 2007
+.Dd July 5, 2007
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -79,6 +79,9 @@ into
 .Ar filesystem ,
 or disable an existing bootstrap in
 .Ar filesystem .
+.Pp
+One some architectures the options of an existing installed bootstrap,
+or those of a bootstrap file can be changed.
 .Pp
 Generally,
 .Nx
@@ -175,6 +178,10 @@ Clear (remove) any existing bootstrap instead of installing one.
 .
 .It Fl e
 Edit the options of an existing bootstrap.
+This can be use to change the options in bootxx_xxxfs files,
+raw disk partitions, and the
+.Pa pxeboot_ia32.bin
+file.
 .Sy [ amd64 , i386 ]
 .
 .It Fl f
@@ -734,6 +741,7 @@ already present:
 .Xr boot 8 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8
+.Xr pxeboot 8
 .
 .Sh HISTORY
 This implementation of
