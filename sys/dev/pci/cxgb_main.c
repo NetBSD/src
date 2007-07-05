@@ -157,9 +157,9 @@ static int offload_open(struct port_info *pi);
 static int offload_close(struct toedev *tdev);
 #endif
 
+#ifdef __FreeBSD__
 static d_ioctl_t cxgb_extension_ioctl;
 
-#ifdef __FreeBSD__
 static device_method_t cxgb_controller_methods[] = {
 	DEVMETHOD(device_probe,		cxgb_controller_probe),
 	DEVMETHOD(device_attach,	cxgb_controller_attach),
@@ -767,6 +767,7 @@ cxgb_port_probe(device_t dev)
 }
 
 
+#ifdef __FreeBSD__
 static int
 cxgb_makedev(struct port_info *pi)
 {
@@ -775,10 +776,8 @@ cxgb_makedev(struct port_info *pi)
 	if ((cxgb_cdevsw = malloc(sizeof(struct cdevsw), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 	
-#ifdef __FreeBSD__
 	cxgb_cdevsw->d_version = D_VERSION;
 	cxgb_cdevsw->d_name = strdup(pi->ifp->if_xname, M_DEVBUF);
-#endif
 	cxgb_cdevsw->d_ioctl = cxgb_extension_ioctl;	
 	
 	pi->port_cdev = make_dev(cxgb_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
@@ -791,6 +790,7 @@ cxgb_makedev(struct port_info *pi)
 	
 	return (0);
 }
+#endif
 
 
 #ifdef TSO_SUPPORTED
@@ -806,6 +806,7 @@ cxgb_makedev(struct port_info *pi)
 #endif
 
 
+#ifdef __FreeBSD__
 static int
 cxgb_port_attach(device_t dev)
 {
@@ -928,6 +929,7 @@ cxgb_port_detach(device_t dev)
 
 	return (0);
 }
+#endif
 
 void
 t3_fatal_err(struct adapter *sc)
@@ -940,6 +942,7 @@ t3_fatal_err(struct adapter *sc)
 		    fw_status[0], fw_status[1], fw_status[2], fw_status[3]);
 }
 
+#ifdef __FreeBSD__
 int
 t3_os_find_pci_capability(adapter_t *sc, int cap)
 {
@@ -1005,6 +1008,7 @@ t3_os_pci_restore_state(struct adapter *sc)
 	pci_cfg_restore(dev, dinfo);
 	return (0);
 }
+#endif
 
 /**
  *	t3_os_link_changed - handle link status changes
@@ -1076,7 +1080,8 @@ t3_os_set_hw_addr(adapter_t *adapter, int port_idx, u8 hw_addr[])
 	 * save the address off in the port structure
 	 */
 	if (cxgb_debug)
-		printf("set_hw_addr on idx %d addr %6D\n", port_idx, hw_addr, ":");
+		printf("set_hw_addr on idx %d addr %02x:%02x:%02x:%02x:%02x:%02x\n", 
+		port_idx, hw_addr[0], hw_addr[1], hw_addr[2], hw_addr[3], hw_addr[4], hw_addr[5]);
 	bcopy(hw_addr, adapter->port[port_idx].hw_addr, ETHER_ADDR_LEN);
 }
 
@@ -1138,7 +1143,6 @@ setup_rss(adapter_t *adap)
 	    V_RRCPLCPUSIZE(6), cpus, rspq_map);
 }
 
-#ifdef __FreeBSD__
 /*
  * Sends an mbuf to an offload queue driver
  * after dealing with any active network taps.
@@ -1178,7 +1182,6 @@ write_smt_entry(struct adapter *adapter, int idx)
 
 	return (0);
 }
-#endif
 
 static int
 init_smt(struct adapter *adapter)

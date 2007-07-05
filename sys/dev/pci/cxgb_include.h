@@ -52,7 +52,7 @@
 #include <dev/pci/cxgb_sge_defs.h>
 #include <dev/pci/cxgb_firmware_exports.h>
 // #include <sys/mvec.h>
-// #include <ulp/toecore/toedev.h>
+#include "toedev.h"
 // #include <sys/mbufq.h>
 #include <dev/pci/jhash.h>
 #else
@@ -66,7 +66,7 @@
 #include <dev/pci/cxgb_sge_defs.h>
 #include <dev/pci/cxgb_firmware_exports.h>
 // #include <sys/mvec.h>
-// #include <ulp/toecore/toedev.h>
+#include "toedev.h"
 // #include <sys/mbufq.h>
 #include <dev/pci/jhash.h>
 #endif
