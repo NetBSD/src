@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.24 2007/07/05 12:07:40 xtraeme Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.25 2007/07/05 13:47:46 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.24 2007/07/05 12:07:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25 2007/07/05 13:47:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,14 +176,15 @@ acpiacad_get_status(void *arg)
 	mutex_enter(&sc->sc_mtx);
 	if (sc->sc_status != status) {
 		sc->sc_status = status;
-		if (status) {
-			sc->sc_data[0].state = ENVSYS_SVALID;
+		if (status)
 			sc->sc_data[0].value_cur = 1;
-		}
+		else
+			sc->sc_data[0].value_cur = 0;
 		AACAD_SET(sc, AACAD_F_STCHANGED);
 		sc->sc_notifysent = 0;
 	}
 
+	sc->sc_data[0].state = ENVSYS_SVALID;
 	AACAD_SET(sc, AACAD_F_AVAILABLE);
 	/*
 	 * If status has changed, send the event.

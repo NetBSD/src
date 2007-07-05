@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.49 2007/07/05 12:14:18 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.50 2007/07/05 13:47:47 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.49 2007/07/05 12:14:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.50 2007/07/05 13:47:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ acpibat_battery_present(struct acpibat_softc *sc)
 		sc->sc_data[ACPIBAT_PRESENT].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_PRESENT].value_cur = 1;
 	} else
-		sc->sc_data[ACPIBAT_PRESENT].state = ENVSYS_SINVALID;
+		sc->sc_data[ACPIBAT_PRESENT].value_cur = 0;
 
 	mutex_exit(&sc->sc_mtx);
 
@@ -458,7 +458,8 @@ acpibat_get_status(struct acpibat_softc *sc)
 	} else if (status & ACPIBAT_ST_DISCHARGING) {
 		sc->sc_data[ACPIBAT_DISCHARGERATE].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_DISCHARGERATE].value_cur = battrate * 1000;
-		sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SINVALID;
+		sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SVALID;
+		sc->sc_data[ACPIBAT_CHARGING].value_cur = 0;
 	}
 
 	sc->sc_data[ACPIBAT_CAPACITY].value_cur = p2[2].Integer.Value * 1000;
@@ -531,7 +532,7 @@ acpibat_print_stat(struct acpibat_softc *sc)
 
 	if (sc->sc_data[ACPIBAT_CHARGING].state == ENVSYS_SVALID)
 		chargestat = "charging";
-	else if (!sc->sc_data[ACPIBAT_CHARGING].state == ENVSYS_SINVALID)
+	else if (sc->sc_data[ACPIBAT_CHARGING].state == ENVSYS_SINVALID)
 		chargestat = "discharging";
 	else
 		chargestat = "idling";
