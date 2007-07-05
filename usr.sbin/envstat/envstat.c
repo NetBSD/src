@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.29 2007/07/05 14:08:37 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.30 2007/07/05 14:11:08 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -824,7 +824,7 @@ do {								\
 		/* drives */
 		} else if (strcmp(es[i].type, "Drive") == 0) {
 
-			(void)printf(": %s", es[i].drvstate);
+			(void)printf(": %10s", es[i].drvstate);
 
 		/* everything else */
 		} else {
