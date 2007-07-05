@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.47 2007/07/03 07:44:05 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.48 2007/07/05 12:08:45 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.47 2007/07/03 07:44:05 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.48 2007/07/05 12:08:45 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.47 2007/07/03 07:44:05 xtraeme Exp $"
 #define ACPIBAT_DISCHARGERATE	9
 #define ACPIBAT_CAPACITY	10
 #define ACPIBAT_CHARGING	11
-#define ACPIBAT_DISCHARGING	12
-#define ACPIBAT_NSENSORS	13  /* number of sensors */
+#define ACPIBAT_NSENSORS	12  /* number of sensors */
 
 struct acpibat_softc {
 	struct device sc_dev;		/* base device glue */
@@ -282,7 +281,6 @@ acpibat_clear_stat(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SINVALID;
 	sc->sc_data[ACPIBAT_VOLTAGE].state = ENVSYS_SINVALID;
 	sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SINVALID;
-	sc->sc_data[ACPIBAT_DISCHARGING].state = ENVSYS_SINVALID;
 }
 
 
@@ -309,11 +307,11 @@ acpibat_battery_present(struct acpibat_softc *sc)
 	sc->sc_available = ABAT_ALV_PRESENCE;
 	if (sta & ACPIBAT_STA_PRESENT) {
 		ABAT_SET(sc, ABAT_F_PRESENT);
+		sc->sc_data[ACPIBAT_PRESENT].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_PRESENT].value_cur = 1;
 	} else
-		sc->sc_data[ACPIBAT_PRESENT].value_cur = 0;
+		sc->sc_data[ACPIBAT_PRESENT].state = ENVSYS_SINVALID;
 
-	sc->sc_data[ACPIBAT_PRESENT].state = ENVSYS_SVALID;
 	mutex_exit(&sc->sc_mtx);
 
 	return (sta & ACPIBAT_STA_PRESENT) ? 1 : 0;
@@ -457,12 +455,9 @@ acpibat_get_status(struct acpibat_softc *sc)
 		sc->sc_data[ACPIBAT_CHARGERATE].value_cur = battrate * 1000;
 		sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_CHARGING].value_cur = 1;
-		sc->sc_data[ACPIBAT_DISCHARGING].state = ENVSYS_SINVALID;
 	} else if (status & ACPIBAT_ST_DISCHARGING) {
 		sc->sc_data[ACPIBAT_DISCHARGERATE].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_DISCHARGERATE].value_cur = battrate * 1000;
-		sc->sc_data[ACPIBAT_DISCHARGING].state = ENVSYS_SVALID;
-		sc->sc_data[ACPIBAT_DISCHARGING].value_cur = 1;
 		sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SINVALID;
 	}
 
@@ -536,7 +531,7 @@ acpibat_print_stat(struct acpibat_softc *sc)
 
 	if (sc->sc_data[ACPIBAT_CHARGING].value_cur)
 		chargestat = "charging";
-	else if (sc->sc_data[ACPIBAT_DISCHARGING].value_cur)
+	else if (!sc->sc_data[ACPIBAT_CHARGING].value_cur)
 		chargestat = "discharging";
 	else
 		chargestat = "idling";
@@ -552,7 +547,7 @@ acpibat_print_stat(struct acpibat_softc *sc)
 	    percent,
 	    SCALE(sc->sc_data[ACPIBAT_CHARGING].value_cur ?
 	        sc->sc_data[ACPIBAT_CHARGERATE].value_cur :
-	        sc->sc_data[ACPIBAT_DISCHARGING].value_cur ?
+	        sc->sc_data[ACPIBAT_CHARGING].value_cur ?
 	        sc->sc_data[ACPIBAT_DISCHARGERATE].value_cur : 0),
 	        RATEUNITS(sc));
 }
@@ -692,7 +687,6 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_DISCHARGERATE, rateunit, "discharge rate");
 	INITDATA(ACPIBAT_CAPACITY, capunit, "charge");
 	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
-	INITDATA(ACPIBAT_DISCHARGING, ENVSYS_INDICATOR, "discharging");
 
 #undef INITDATA
 
