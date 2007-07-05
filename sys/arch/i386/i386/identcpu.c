@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.71 2007/07/03 17:07:54 christos Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.72 2007/07/05 13:51:37 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.71 2007/07/03 17:07:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.72 2007/07/05 13:51:37 isaki Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -62,8 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.71 2007/07/03 17:07:54 christos Exp $
 static const struct x86_cache_info
 intel_cpuid_cache_info[] = {
 	{ CAI_ITLB, 	0x01,	 4, 32,        4 * 1024, NULL },
+	{ CAI_ITLB,     0xb0,    4,128,        4 * 1024, NULL },
 	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024, NULL },
 	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024, NULL },
+	{ CAI_DTLB,     0xb3,    4,128,        4 * 1024, NULL },
 	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024, NULL },
 	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
 	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
@@ -99,6 +101,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x86,  4,      512 * 1024, 64, NULL },
 	{ 0,               0,  0,	        0,  0, NULL },
 };
 
