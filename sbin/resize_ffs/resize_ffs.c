@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.8 2005/06/03 03:34:44 snj Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.9 2007/07/05 21:38:20 bouyer Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1841,7 +1841,7 @@ main(int ac, char **av)
 	oldsb = (struct fs *) & sbbuf;
 	newsb = (struct fs *) (SBLOCKSIZE + (char *) &sbbuf);
 	for (where = search[i = 0]; search[i] != -1; where = search[++i]) {
-		readat(where, oldsb, SBLOCKSIZE);
+		readat(where / DEV_BSIZE, oldsb, SBLOCKSIZE);
 		if (oldsb->fs_magic == FS_UFS1_MAGIC)
 			break;
 		if (where == SBLOCK_UFS2)
