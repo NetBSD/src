@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.10 2007/07/01 22:20:34 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.11 2007/07/05 15:20:30 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -28,11 +28,11 @@
  */
 
 /*
- * Driver for the iTE IT87{05,12}F hardware monitor.
+ * Driver for the iTE IT8705/IT871[26]F Super I/O hardware monitor.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.10 2007/07/01 22:20:34 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.11 2007/07/05 15:20:30 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: it.c,v 1.10 2007/07/01 22:20:34 xtraeme Exp $");
 
 #include <dev/isa/itvar.h>
 
-#define IT_VOLTSTART_IDX	2	/* voltage start index */
-#define IT_FANSTART_IDX		7	/* fan start index */
+#define IT_VOLTSTART_IDX 	3 	/* voltage start index */
+#define IT_FANSTART_IDX 	12 	/* fan start index */
 
 #if defined(ITDEBUG)
 #define DPRINTF(x)		do { printf x; } while (0)
@@ -93,22 +93,17 @@ static void it_refresh_volts(struct it_softc *, envsys_data_t *);
 static void it_refresh_fans(struct it_softc *, envsys_data_t *);
 static int it_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
-/* voltage sensors used */
-static const int it_sensorvolt[] = {
-	IT_SENSORVCORE0,
-	IT_SENSORV33,
-	IT_SENSORV5,
-	IT_SENSORV12,
-	IT_SENSORVBAT
-};
-
 /* rfact values for voltage sensors */
 static const int it_vrfact[] = {
-	RFACT_NONE,	/* VCORE */
-	RFACT_NONE,	/* +3.3V */
-	RFACT(68, 100),	/* +5V   */
-	RFACT(30, 10),	/* +12V  */
-	RFACT_NONE	/* VBAT  */
+	RFACT_NONE,	/* VCORE_A	*/
+	RFACT_NONE,	/* VCORE_B	*/
+	RFACT_NONE,	/* +3.3V	*/
+	RFACT(68, 100),	/* +5V 		*/
+	RFACT(30, 10),	/* +12V 	*/
+	RFACT(21, 10),	/* -12V 	*/
+	RFACT(83, 20),	/* -5V 		*/
+	RFACT(68, 100),	/* STANDBY	*/
+	RFACT_NONE	/* VBAT		*/
 };
 
 static int
@@ -146,7 +141,7 @@ it_isa_attach(struct device *parent, struct device *self, void *aux)
 	struct it_softc *sc = (struct it_softc *)self;
 	struct isa_attach_args *ia = aux;
 	int i;
-	uint8_t idr, cr;
+	uint8_t cr;
 
 	ia->ia_iot = sc->sc_iot;
 
@@ -156,22 +151,30 @@ it_isa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	idr = it_readreg(sc, IT_COREID);
-	if (idr == IT_REV_8712)
-		aprint_normal(": IT8712F Hardware monitor\n");
+	sc->sc_idr = it_readreg(sc, IT_COREID);
+	if (sc->sc_idr == IT_REV_8712)
+		aprint_normal(": IT871[26]F Hardware monitor\n");
 	else {
-		idr = it_readreg(sc, IT_VENDORID);
-		if (idr == IT_REV_8705)
+		sc->sc_idr = it_readreg(sc, IT_VENDORID);
+		if (sc->sc_idr == IT_REV_8705)
 			aprint_normal(": IT8705F Hardware monitor\n");
 		else
-			aprint_normal(": iTE unknown vendor id (0x%x)\n", idr);
+			aprint_normal(": iTE unknown vendor id (0x%x)\n",
+			    sc->sc_idr);
 	}
 
 	/* Activate monitoring */
 	cr = it_readreg(sc, IT_CONFIG);
 	SET(cr, 0x01);
-	SET(cr, 0x08);
 	it_writereg(sc, IT_CONFIG, cr);
+
+#ifdef notyet
+	/* Enable beep alarms */
+	br = it_readreg(sc, IT_BEEPEER);
+	SET(br, 0x02);	/* Voltage exceeds limit */
+	SET(br, 0x04);	/* Temperature exceeds limit */
+	it_writereg(sc, IT_BEEPEER, br);
+#endif
 
 	/* Initialize sensors */
 	for (i = 0; i < IT_NUM_SENSORS; ++i) {
@@ -248,23 +251,29 @@ it_setup_sensors(struct it_softc *sc)
 
 	COPYDESCR(sc->sc_data[0].desc, "CPU Temp");
 	COPYDESCR(sc->sc_data[1].desc, "System Temp");
+	COPYDESCR(sc->sc_data[2].desc, "Aux Temp");
 
 	/* voltages */
 	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++)
 		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
 
-	COPYDESCR(sc->sc_data[2].desc, "VCORE_A");
-	COPYDESCR(sc->sc_data[3].desc, "+3.3V");
-	COPYDESCR(sc->sc_data[4].desc, "+5V");
-	COPYDESCR(sc->sc_data[5].desc, "+12V");
-	COPYDESCR(sc->sc_data[6].desc, "VBAT");
+	COPYDESCR(sc->sc_data[3].desc, "VCORE_A");
+	COPYDESCR(sc->sc_data[4].desc, "VCORE_B");
+	COPYDESCR(sc->sc_data[5].desc, "+3.3V");
+	COPYDESCR(sc->sc_data[6].desc, "+5V");
+	COPYDESCR(sc->sc_data[7].desc, "+12V");
+	COPYDESCR(sc->sc_data[8].desc, "-12V");
+	COPYDESCR(sc->sc_data[9].desc, "-5V");
+	COPYDESCR(sc->sc_data[10].desc, "STANDBY");
+	COPYDESCR(sc->sc_data[11].desc, "VBAT");
 
 	/* fans */
 	for (i = IT_FANSTART_IDX; i < IT_NUM_SENSORS; i++)
 		sc->sc_data[i].units = ENVSYS_SFANRPM;
 
-	COPYDESCR(sc->sc_data[7].desc, "CPU Fan");
-	COPYDESCR(sc->sc_data[8].desc, "System Fan");
+	COPYDESCR(sc->sc_data[12].desc, "CPU Fan");
+	COPYDESCR(sc->sc_data[13].desc, "System Fan");
+	COPYDESCR(sc->sc_data[14].desc, "Aux Fan");
 }
 #undef COPYDESCR
 
@@ -274,53 +283,121 @@ it_refresh_temp(struct it_softc *sc, envsys_data_t *edata)
 	int sdata;
 
 	sdata = it_readreg(sc, IT_SENSORTEMPBASE + edata->sensor);
-	DPRINTF(("sdata[temp%d] 0x%x\n", edata->sensor, sdata));
-	/* Convert temperature to Fahrenheit degres */
+	/* sensor is not connected or reporting invalid data */
+	if (sdata == 0 || sdata >= 0xfa) {
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+
+	DPRINTF(("%s: sdata[temp%d] 0x%x\n", __func__, edata->sensor, sdata));
+	/* Convert temperature to uK */
 	edata->value_cur = sdata * 1000000 + 273150000;
+	edata->state = ENVSYS_SVALID;
 }
 
 static void
 it_refresh_volts(struct it_softc *sc, envsys_data_t *edata)
 {
+	uint8_t vbatcr = 0;
 	int i, sdata;
 
 	i = edata->sensor - IT_VOLTSTART_IDX;
 
-	sdata = it_readreg(sc, it_sensorvolt[i]);
-	DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
-	/* voltage returned as (mV >> 4) */
+	sdata = it_readreg(sc, IT_SENSORVOLTBASE + i);
+	/* not connected */
+	if (sdata == 0) {
+		edata->state = ENVSYS_SINVALID;
+		return;
+	}
+
+	/* 
+	 * update VBAT voltage reading every time we read it, to get
+	 * latest value.
+	 */
+	if (i == 8) {
+		vbatcr = it_readreg(sc, IT_CONFIG);
+		SET(vbatcr, IT_UPDATEVBAT);
+		it_writereg(sc, IT_CONFIG, vbatcr);
+	}
+
+	DPRINTF(("%s: sdata[volt%d] 0x%x\n", __func__, i, sdata));
+
+	/* voltage returned as (mV << 4) */
 	edata->value_cur = (sdata << 4);
 	/* rfact is (factor * 10^4) */
 	edata->value_cur *= it_vrfact[i];
+	/*
+	 * Enable ENVSYS_FCHANGERFACT to be able to specify a different
+	 * rfact value from userland.
+	 */
+	edata->flags |= ENVSYS_FCHANGERFACT;
+	if (edata->rfact)
+		edata->value_cur += edata->rfact;
+	else
+		edata->rfact = it_vrfact[i];
+
 	/* division by 10 gets us back to uVDC */
 	edata->value_cur /= 10;
-	edata->rfact = it_vrfact[i];
+	edata->state = ENVSYS_SVALID;
 }
 
 static void
 it_refresh_fans(struct it_softc *sc, envsys_data_t *edata)
 {
-	int i, sdata, divisor, odivisor, ndivisor;
+	int i, mode, sdata, divisor, odivisor, ndivisor;
 
 	i = edata->sensor - IT_FANSTART_IDX;
-	odivisor = ndivisor = divisor = it_readreg(sc, IT_FAN);
+	sdata = divisor = odivisor = ndivisor = 0;
 
-	if ((sdata = it_readreg(sc, IT_SENSORFANBASE + i)) == 0xff) {
-		if (i == 2)
-			ndivisor ^= 0x40;
-		else {
-			ndivisor &= ~(7 << (i * 3));
-			ndivisor |= ((divisor + 1) & 7) << (i * 3);
+#define FANDATA()	it_readreg(sc, IT_SENSORFANEXTBASE + i)
+
+	mode = it_readreg(sc, IT_FAN16);
+	if (sc->sc_idr == IT_REV_8705) {
+		odivisor = ndivisor = divisor = it_readreg(sc, IT_FAN);
+		divisor >>= 3;
+		sdata = it_readreg(sc, IT_SENSORFANBASE + i);
+		if (mode & (1 << i))
+			sdata += (FANDATA() << 8);
+		if (!(mode & (1 << i)) && sdata == 0xff) {
+			edata->state = ENVSYS_SINVALID;
+			if (i == 2)
+				ndivisor |= 0x40;
+			else if ((divisor & 7) != 7) {
+				ndivisor &= ~(7 << (i * 3));
+				ndivisor |= ((divisor + 1) & 7) << (i * 3);
+			}
+		} else {
+			if (i == 2)
+				divisor = divisor & 1 ? 3 : 1;
+			if ((sdata << (divisor & 7)) == 0)
+				edata->state = ENVSYS_SINVALID;
+			else {
+				edata->value_cur =
+				    1350000 / (sdata << (divisor & 7));
+				edata->state = ENVSYS_SVALID;
+			}
 		}
+		DPRINTF(("%s: sdata[fan%d] 0x%x div: 0x%x\n", __func__,
+		    i, sdata, divisor));
+		if (ndivisor != odivisor)
+			it_writereg(sc, IT_FAN, ndivisor);
 	} else {
-		if (i == 2)
-			divisor = divisor & 1 ? 3 : 1;
-		edata->value_cur = 1350000 / (sdata << (divisor & 7));
+		/* IT8712F, IT8716F */
+		sdata = it_readreg(sc, IT_SENSORFANBASE + i);
+		if (mode & (1 << i)) /* 16-bit mode enabled */
+			sdata += (FANDATA() << 8);
+		edata->state = ENVSYS_SVALID;
+		if (sdata == 0 ||
+		    sdata == ((mode & (1 << i)) ? 0xffff : 0xff))
+			edata->state = ENVSYS_SINVALID;
+		else {
+			edata->value_cur = 1350000 / 2 / sdata;
+			edata->state = ENVSYS_SVALID;
+		}
+		DPRINTF(("%s: sdata[fan%d] 0x%x div: 0x%x\n", __func__,
+		    i, sdata, divisor));
 	}
-
-	DPRINTF(("sdata[fan%d] 0x%x div: 0x%x\n", i, sdata, divisor));
-	if (ndivisor != odivisor)
-		it_writereg(sc, IT_FAN, ndivisor);
+#undef FANDATA
 }
 
 static int              
