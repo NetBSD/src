@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.23 2007/07/01 07:37:12 xtraeme Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.24 2007/07/05 12:07:40 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.23 2007/07/01 07:37:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.24 2007/07/05 12:07:40 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,12 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.23 2007/07/01 07:37:12 xtraeme Exp $
 
 #include <dev/sysmon/sysmonvar.h>
 
-#define ACPIACAD_NSENSORS	2
-
-/* sensor indexes */
-#define ACPIACAD_CONNECTED	0
-#define ACPIACAD_DISCONNECTED	1
-
 struct acpiacad_softc {
 	struct device sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
@@ -72,7 +66,7 @@ struct acpiacad_softc {
 
 	struct sysmon_envsys sc_sysmon;
 	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
-	struct envsys_data sc_data[ACPIACAD_NSENSORS];
+	struct envsys_data sc_data[1];
 
 	kmutex_t sc_mtx;
 };
@@ -183,12 +177,8 @@ acpiacad_get_status(void *arg)
 	if (sc->sc_status != status) {
 		sc->sc_status = status;
 		if (status) {
-			sc->sc_data[ACPIACAD_CONNECTED].state = ENVSYS_SVALID;
-			sc->sc_data[ACPIACAD_CONNECTED].value_cur = 1;
-		} else {
-			sc->sc_data[ACPIACAD_DISCONNECTED].state =
-			    ENVSYS_SVALID;
-			sc->sc_data[ACPIACAD_DISCONNECTED].value_cur = 1;
+			sc->sc_data[0].state = ENVSYS_SVALID;
+			sc->sc_data[0].value_cur = 1;
 		}
 		AACAD_SET(sc, AACAD_F_STCHANGED);
 		sc->sc_notifysent = 0;
@@ -217,8 +207,7 @@ acpiacad_get_status(void *arg)
 static void
 acpiacad_clear_status(struct acpiacad_softc *sc)
 {
-	sc->sc_data[ACPIACAD_CONNECTED].state = ENVSYS_SINVALID;
-	sc->sc_data[ACPIACAD_DISCONNECTED].state = ENVSYS_SINVALID;
+	sc->sc_data[0].state = ENVSYS_SINVALID;
 	AACAD_CLEAR(sc, AACAD_F_AVAILABLE);
 	AACAD_CLEAR(sc, AACAD_F_STCHANGED);
 }
@@ -281,26 +270,17 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 static void
 acpiacad_init_envsys(struct acpiacad_softc *sc)
 {
-	int i;
-
-	for (i = 0; i < ACPIACAD_NSENSORS; i++) {
-		sc->sc_data[i].sensor = i;
-		sc->sc_data[i].state = ENVSYS_SVALID;
-	}
-
-#define INITDATA(index, unit, string) \
-	sc->sc_data[index].units = unit;     				\
-	snprintf(sc->sc_data[index].desc, sizeof(sc->sc_data->desc),	\
-	    "%s %s", sc->sc_dev.dv_xname, string);			\
-
-	INITDATA(ACPIACAD_CONNECTED, ENVSYS_INDICATOR, "connected");
-	INITDATA(ACPIACAD_DISCONNECTED, ENVSYS_INDICATOR, "disconnected");
+	sc->sc_data[0].sensor = 0;
+	sc->sc_data[0].state = ENVSYS_SVALID;
+	sc->sc_data[0].units = ENVSYS_INDICATOR;
+	snprintf(sc->sc_data[0].desc, sizeof(sc->sc_data->desc),
+	    "%s %s", sc->sc_dev.dv_xname, "connected");
 
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = acpiacad_gtredata;
-	sc->sc_sysmon.sme_nsensors = ACPIACAD_NSENSORS;
+	sc->sc_sysmon.sme_nsensors = 1;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
