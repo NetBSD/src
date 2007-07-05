@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.27 2007/07/05 12:11:05 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.28 2007/07/05 13:51:28 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -763,14 +763,12 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		(void)printf("%*.*s", (int)maxlen, (int)maxlen, es[i].desc);
 
 		if (strcmp(es[i].type, "Indicator") == 0) {
-			const char *str;
-
 			if (es[i].invalid)
-				str = "OFF";
+				(void)printf(": %10s", invalid);
 			else
-				str = "ON";
+				(void)printf(": %10s",
+				    es[i].cur_value ? "ON" : "OFF");
 
-			(void)printf(": %10s", str);
 /* converts the value to degC or degF */
 #define CONVERTTEMP(a, b, c)					\
 do {								\
