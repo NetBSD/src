@@ -1,4 +1,4 @@
-#	$NetBSD: opttest,v 1.1 2007/01/18 16:29:21 ginsbach Exp $
+#	$NetBSD: opttest,v 1.2 2007/07/05 16:05:40 ginsbach Exp $
 #
 # GNU libc tests with these
 #
@@ -19,9 +19,9 @@ result:	-optional=bazbug|0
 # This is promblematic
 args:	foo --col
 # GNU libc 2.1.3 this fails with ambiguous
-result:	!?|0
+#result:	!?|0
 # GNU libc 2.2 >= this works
-#result:	color|0
+result:	color|0
 #
 args:	foo --colour
 result:	-colour|0
@@ -30,6 +30,18 @@ result:	-colour|0
 args:	foo -a -b -cfoobar --required foobar --optional=bazbug --none random \
 		--col --color --colour
 # GNU libc 2.1.3 this fails with ambiguous
-result:	a,b,c=foobar,-required=foobar,-optional=bazbug,-none,!?,-color,-colour|1
+#result:	a,b,c=foobar,-required=foobar,-optional=bazbug,-none,!?,-color,-colour|1
 # GNU libc 2.2 >= this works
-#result:	a,b,c=foobar,-required=foobar,-optional=bazbug,-none,-color,-color,-colour|1
+result:	a,b,c=foobar,-required=foobar,-optional=bazbug,-none,-color,-color,-colour|1
+#
+# The order of long options in the long option array should not matter.
+# An exact match should never be treated as ambiguous.
+#
+optstring:	fgl
+longopts:	3
+longopt:	list-foobar, no_argument, lopt, 'f'
+longopt:	list-goobar, no_argument, lopt, 'g'
+longopt:	list, no_argument, lopt, 'l'
+#
+args:		foo --list
+result:		-list|0
