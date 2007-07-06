@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.200 2007/07/06 10:39:42 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.201 2007/07/06 13:47:08 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6973,3 +6973,8 @@ sys/arch/hppa/hppa/trap.c			1.45
 
 	Thanks to David H. Gutteridge.
 	[skrll, ticket #758]
+
+sys/dev/pci/if_wpi.c				1.11
+
+	wsize is size_t = unsigned and should be printed with %zu instead of %zd.
+	cosmetics for PR 36591 by khorben.
