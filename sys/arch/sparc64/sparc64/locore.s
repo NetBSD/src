@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.251 2007/07/05 20:21:11 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.252 2007/07/06 07:36:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9454,27 +9454,23 @@ Lkcerr:
 #ifdef MULTIPROCESSOR
 ENTRY(sparc64_ipi_save_fpstate)
 	save	%sp, -CC64FSZ, %sp
-	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
-	ldx	[%o0 + %lo(CPUINFO_VA + CI_FPLWP)], %o0
+	sethi	%hi(FPLWP), %o0
+	LDPTR	[%o0 + %lo(FPLWP)], %o0
 	call	savefpstate
-	 ldx	[%o0 + L_FPSTATE], %o0
-	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
-	stx	%g0, [%o0 + %lo(CPUINFO_VA + CI_FPLWP)]		! fplwp = NULL
+	 LDPTR	[%o0 + L_FPSTATE], %o0
+	sethi	%hi(FPLWP), %o0
+	STPTR	%g0, [%o0 + %lo(FPLWP)]		! fplwp = NULL
 	ba	ret_from_intr_vector
 	 restore
 
 ENTRY(sparc64_ipi_drop_fpstate)
-	mov	%o0, %g1		! save registers used here
-	mov	%o1, %g2		! to alternate globals
-	rdpr	%pstate, %o1
+	rdpr	%pstate, %g1
 	wr	%g0, FPRS_FEF, %fprs
-	or	%o1, PSTATE_PEF, %o1
-	wrpr	%o1, 0, %pstate
-	sethi	%hi(CPUINFO_VA + CI_FPLWP), %o0
-	stx	%g0, [%o0 + %lo(CPUINFO_VA + CI_FPLWP)]	! fplwp = NULL
-	mov	%g2, %o1		! restore saved registers
+	or	%g1, PSTATE_PEF, %g1
+	wrpr	%g1, 0, %pstate
+	sethi	%hi(FPLWP), %g1
 	ba	ret_from_intr_vector
-	 mov	%g1, %o0
+	 STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
 #endif
 
 /*
