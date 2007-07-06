@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.12 2007/03/07 03:18:53 dogcow Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.13 2007/07/06 21:19:33 kardel Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -3615,7 +3615,7 @@ crypto_key(
 	if (debug)
 		printf("crypto_key: %s\n", statstr);
 	if (debug > 1) {
-		if (host_pkey->type == EVP_PKEY_DSA)
+		if (pkey->type == EVP_PKEY_DSA)
 			DSA_print_fp(stdout, pkey->pkey.dsa, 0);
 		else
 			RSA_print_fp(stdout, pkey->pkey.rsa, 0);
@@ -3863,7 +3863,6 @@ crypto_setup(void)
 	tstamp_t sstamp;	/* sign filestamp */
 	u_int	len, bytes;
 	u_char	*ptr;
-	const char *fnptr;
 
 	/*
 	 * Initialize structures.
@@ -3890,10 +3889,9 @@ crypto_setup(void)
 	 */
 	ERR_load_crypto_strings();
 	if (rand_file == NULL) {
-		fnptr = RAND_file_name(filename, MAXFILENAME);
-		if (fnptr != NULL) {
-			rand_file = emalloc(strlen(fnptr) + 1);
-			strcpy(rand_file, fnptr);
+		if ((RAND_file_name(filename, MAXFILENAME)) != NULL) {
+			rand_file = emalloc(strlen(filename) + 1);
+			strcpy(rand_file, filename);
 		}
 	} else if (*rand_file != '/') {
 		snprintf(filename, MAXFILENAME, "%s/%s", keysdir,
