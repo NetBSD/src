@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.39 2007/07/06 18:44:16 briggs Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.40 2007/07/06 18:52:52 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1419,8 +1419,9 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sk_init_yukon(sc_if);
 		break;
 	default:
-		panic("%s: unknown device type %d", sc->sk_dev.dv_xname,
-		      sc->sk_type);
+		aprint_error("%s: unknown device type %d\n",
+		    sc->sk_dev.dv_xname, sc->sk_type);
+		goto fail;
 	}
 
  	DPRINTFN(2, ("sk_attach: 1\n"));
@@ -1600,6 +1601,11 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	/* bail out here if chip is not recognized */
 	if ( sc->sk_type != SK_GENESIS && ! SK_YUKON_FAMILY(sc->sk_type)) {
 		aprint_error("%s: unknown chip type\n",sc->sk_dev.dv_xname);
+		goto fail;
+	}
+	if (SK_IS_YUKON2(sc)) {
+		aprint_error("%s: Does not support Yukon2--try msk(4).\n",
+		    sc->sk_dev.dv_xname);
 		goto fail;
 	}
 	DPRINTFN(2, ("skc_attach: allocate interrupt\n"));
