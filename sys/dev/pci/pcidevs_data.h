@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.882 2007/06/27 11:53:54 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.883 2007/07/06 19:23:53 hpeyerl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.883 2007/06/27 11:53:38 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.884 2007/07/06 15:05:42 hpeyerl Exp
  */
 
 /*
@@ -3784,8 +3784,52 @@ static const struct pci_product pci_products[] = {
 	    "SB600 SATA Controller",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AC97_AUDIO,
+	    "SB600 AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AZALIA,
+	    "SB600 Azalia",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PPB_4384,
+	    "SB600 PCI to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMBUS,
+	    "SB600 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_EHCI,
+	    "SB600 USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI0,
+	    "SB600 USB OHCI0 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI1,
+	    "SB600 USB OHCI1 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI2,
+	    "SB600 USB OHCI2 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI3,
+	    "SB600 USB OHCI3 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI4,
+	    "SB600 USB OHCI4 Controller",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_600,
 	    "SB600 IXP IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PLB_438D,
+	    "SB600 PCI to LPC Bridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -4336,6 +4380,18 @@ static const struct pci_product pci_products[] = {
 	    "Radeon 9200 Secondary",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_HB,
+	    "RS480 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD580,
+	    "RD580 CrossFire Xpress 3200 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5954,
+	    "Radeon Xpress 200G Series",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5960,
 	    "Radeon 9200PRO 5960",
 	},
@@ -4356,10 +4412,6 @@ static const struct pci_product pci_products[] = {
 	    "Radeon 9200SE 5964",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_HB,
-	    "RS480 Host Bridge",
-	},
-	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS482M,
 	    "Radeon Xpress Series (RS482M)",
 	},
@@ -4372,12 +4424,28 @@ static const struct pci_product pci_products[] = {
 	    "RS480 PCI Express Bridge",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A37,
+	    "RS480 PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A38,
+	    "RS480 PCI Express Bridge",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A3F,
 	    "RS480 PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B60,
 	    "Radeon X300 (RV370) 5B60",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_5B62,
+	    "Radeon X600 PCI Express",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B63,
+	    "Radeon Sapphire X550 Silent",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B64,
@@ -4390,6 +4458,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_S,
 	    "Radeon X300 Series Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B73,
+	    "Radeon RV370 secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5C61,
@@ -12916,4 +12988,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2634;
+const int pci_nproducts = 2652;
