@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38.2.1 2007/01/04 19:41:46 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.38.2.2 2007/07/06 10:36:41 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38.2.1 2007/01/04 19:41:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38.2.2 2007/07/06 10:36:41 liamjfoy Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -415,7 +415,6 @@ frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 	extern register_t kpsw;
 	extern vaddr_t hpt_base;
 	extern vsize_t hpt_mask;
-	vsize_t uspace_size;
 #define SANITY(e)					\
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
@@ -429,33 +428,40 @@ do {							\
 	SANITY(tf->tf_hptm == hpt_mask && tf->tf_vtop == hpt_base);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
+ 		vaddr_t minsp, maxsp;
+
 		/*
 		 * If the trap happened in the gateway
 		 * page, we take the easy way out and 
 		 * assume that the trapframe is okay.
 		 */
-		if ((tf->tf_iioq_head & ~PAGE_MASK) != SYSCALLGATE) {
-			SANITY(!USERMODE(tf->tf_iioq_head));
-			SANITY(!USERMODE(tf->tf_iioq_tail));
-			SANITY(tf->tf_iioq_head >= (u_int) &kernel_text);
-			SANITY(tf->tf_iioq_head < (u_int) &etext);
-			SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
-			SANITY(tf->tf_iioq_tail < (u_int) &etext);
+		if ((tf->tf_iioq_head & ~PAGE_MASK) != SYSCALLGATE)
+			goto out;
+
+		if ((type & ~T_USER) == T_INTERRUPT)
+			goto out;
+
+		SANITY(!USERMODE(tf->tf_iioq_head));
+		SANITY(!USERMODE(tf->tf_iioq_tail));
+		SANITY(tf->tf_iioq_head >= (u_int) &kernel_text);
+		SANITY(tf->tf_iioq_head < (u_int) &etext);
+		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
+		SANITY(tf->tf_iioq_tail < (u_int) &etext);
 #ifdef HPPA_REDZONE
-			uspace_size = HPPA_REDZONE;
+		maxsp = (u_int)(l->l_addr) + HPPA_REDZONE;
 #else
-			uspace_size = USPACE;
+		maxsp = (u_int)(l->l_addr) + USPACE;
 #endif
-			SANITY(l == NULL ||
-				((tf->tf_sp >= (u_int)(l->l_addr) + PAGE_SIZE &&
-				  tf->tf_sp < (u_int)(l->l_addr) + uspace_size)));
-		}
+		minsp = (u_int)(l->l_addr) + PAGE_SIZE;
+  
+		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
 	} else {
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
 		SANITY(l != NULL && tf->tf_cr30 == kvtop((caddr_t)l->l_addr));
 	}
 #undef SANITY
+out:
 	if (sanity_frame == tf) {
 		printf("insanity: where 0x%x type 0x%x tf %p lwp %p line %d "
 		       "sp 0x%x pc 0x%x\n",
