@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.199 2007/07/01 17:15:21 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.200 2007/07/06 10:39:42 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6959,3 +6959,17 @@ sys/arch/x68k/x68k/locore.s			1.80
 	Fixe PR#36567: Panic when booting kernel after Jun 12 2007
 	[mhitch, ticket #751]
 
+sys/miscfs/portal/portal_vnops.c		1.72
+
+	VOP_LOCK() doesn't handle LK_RETRY, call vn_lock() instead
+	[pooka, ticket #754]
+
+sys/arch/hppa/hppa/trap.c			1.45
+
+	Fix up the frame sanity checking to not bitch when taking interrupts in
+	the sti ROM code.
+
+	Fixes PR/34715.
+
+	Thanks to David H. Gutteridge.
+	[skrll, ticket #758]
