@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.50 2007/07/06 17:27:49 dsl Exp $ */
+/* $NetBSD: kern_auth.c,v 1.51 2007/07/06 17:33:31 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.50 2007/07/06 17:27:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.51 2007/07/06 17:33:31 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -461,7 +461,7 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len,
 	if (len > cred->cr_ngroups)
 		return EINVAL;
 
-	if ((flags & (UIO_USERSPACE | UIO_SYSSPACE)) == UIO_SYSSPACE)
+	if ((flags & (UIO_USERSPACE | UIO_SYSSPACE)) == UIO_USERSPACE)
 		return copyout(cred->cr_groups, grbuf, sizeof(*grbuf) * len);
 	memcpy(grbuf, cred->cr_groups, sizeof(*grbuf) * len);
 
