@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.4 2007/01/22 19:07:13 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.5 2007/07/06 20:14:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.4 2007/01/22 19:07:13 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.5 2007/07/06 20:14:33 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -792,6 +792,29 @@ subjof(struct message *mp)
 	return subj;
 }
 
+/*
+ * Protect a string against strftime() conversion.
+ */
+static const char*
+protect(const char *str)
+{
+	char *p, *q;
+	size_t size;
+	
+	size = strlen(str);
+	if (size == 0)
+		return str;
+	
+	p = salloc(2 * size);
+	for (q = p; *str; str++) {
+		*q = *str;
+		if (*q++ == '%')
+			*q++ = '%';
+	}
+	*q = '\0';
+	return p;
+}
+
 static char *
 preformat(struct tm *tm, const char *oldfmt, struct message *mp, int use_hl_date)
 {
@@ -808,9 +831,9 @@ preformat(struct tm *tm, const char *oldfmt, struct message *mp, int use_hl_date
 	if (mp != NULL && (mp->m_flag & MDELETED) != 0)
 		mp = NULL; /* deleted mail shouldn't show up! */
 
-	subj = subjof(mp);
-	addr = addrof(mp);
-	user = userof(mp);
+	subj = protect(subjof(mp));
+	addr = protect(addrof(mp));
+	user = protect(userof(mp));
 	gmtoff = dateof(tm, mp, use_hl_date);
 	zone = tm->tm_zone;
 	fmtsize = LINESIZE;
