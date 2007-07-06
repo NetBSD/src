@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.38 2007/03/13 09:50:00 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.39 2007/07/06 18:44:16 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -232,13 +232,13 @@ static int sk_sysctl_handler(SYSCTLFN_PROTO);
 static int sk_root_num;
 
 /* supported device vendors */
+/* PCI_PRODUCT_DLINK_DGE560T_2 might belong in if_msk instead */
 static const struct sk_product {
 	pci_vendor_id_t		sk_vendor;
 	pci_product_id_t	sk_product;
 } sk_products[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940, },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T, },
-	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T, },
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2, },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, },
 	{ PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, },
