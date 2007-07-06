@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.70 2007/05/17 21:42:32 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.71 2007/07/06 14:25:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.70 2007/05/17 21:42:32 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.71 2007/07/06 14:25:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -328,7 +328,7 @@ _kvm_convertcred(kvm_t *kd, u_long cred, struct eproc *eproc)
 	uc->cr_ref = kauthcred.cr_refcnt;
 	uc->cr_uid = kauthcred.cr_euid;
 	uc->cr_gid = kauthcred.cr_egid;
-	uc->cr_ngroups = MIN(kauthcred.cr_ngroups,
+	uc->cr_ngroups = (uint32_t)MIN(kauthcred.cr_ngroups,
 	    sizeof(uc->cr_groups) / sizeof(uc->cr_groups[0]));
 	memcpy(uc->cr_groups, kauthcred.cr_groups,
 	    uc->cr_ngroups * sizeof(uc->cr_groups[0]));
@@ -618,8 +618,10 @@ again:
 			kp2p->p_tsess = PTRTOUINT64(kp->kp_eproc.e_tsess);
 
 			kp2p->p_estcpu = kp->kp_proc.p_estcpu;
-			kp2p->p_rtime_sec = kp->kp_proc.p_rtime.tv_sec;
-			kp2p->p_rtime_usec = kp->kp_proc.p_rtime.tv_usec;
+			kp2p->p_rtime_sec =
+			    (uint32_t)kp->kp_proc.p_rtime.tv_sec;
+			kp2p->p_rtime_usec =
+			    (uint32_t)kp->kp_proc.p_rtime.tv_usec;
 			kp2p->p_cpticks = kl[0].l_cpticks;
 			kp2p->p_pctcpu = kp->kp_proc.p_pctcpu;
 			kp2p->p_swtime = kl[0].l_swtime;
@@ -754,18 +756,30 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 		mib[2] = pid;
 		mib[3] = (int)esize;
 		mib[4] = 0;
+again:
 		st = sysctl(mib, 5, NULL, &size, NULL, (size_t)0);
 		if (st == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getlwps");
-			return (NULL);
+			switch (errno) {
+			case ESRCH:
+				return NULL;
+			default:
+				_kvm_syserr(kd, kd->program, "kvm_getlwps");
+				return NULL;
+			}
 		}
-
 		mib[4] = (int) (size / esize);
 		KVM_ALLOC(kd, lwpbase, size);
 		st = sysctl(mib, 5, kd->lwpbase, &size, NULL, (size_t)0);
 		if (st == -1) {
-			_kvm_syserr(kd, kd->program, "kvm_getlwps");
-			return (NULL);
+			switch (errno) {
+			case ESRCH:
+				return NULL;
+			case ENOMEM:
+				goto again;
+			default:
+				_kvm_syserr(kd, kd->program, "kvm_getlwps");
+				return NULL;
+			}
 		}
 		nlwps = (int) (size / esize);
 	} else {
