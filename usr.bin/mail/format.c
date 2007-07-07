@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.5 2007/07/06 20:14:33 christos Exp $	*/
+/*	$NetBSD: format.c,v 1.6 2007/07/07 17:53:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.5 2007/07/06 20:14:33 christos Exp $");
+__RCSID("$NetBSD: format.c,v 1.6 2007/07/07 17:53:13 christos Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -801,8 +801,7 @@ protect(const char *str)
 	char *p, *q;
 	size_t size;
 	
-	size = strlen(str);
-	if (size == 0)
+	if (str == NULL || (size = strlen(str)) == 0)
 		return str;
 	
 	p = salloc(2 * size);
