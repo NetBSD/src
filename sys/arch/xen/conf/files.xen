@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.62 2007/06/28 20:07:00 alc Exp $
+#	$NetBSD: files.xen,v 1.63 2007/07/07 05:13:17 tsutsui Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -50,7 +50,6 @@ file	arch/xen/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	netns/ns_cksum.c		ns
 file	arch/xen/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs

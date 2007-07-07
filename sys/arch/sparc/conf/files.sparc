@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.139 2007/04/10 02:57:14 macallan Exp $
+#	$NetBSD: files.sparc,v 1.140 2007/07/07 05:13:17 tsutsui Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -340,8 +340,6 @@ file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 file	arch/sparc/sparc/compat_13_machdep.c	compat_13 | compat_sunos
 
 # Miscellaneous
-file	netns/ns_cksum.c		ns
-
 file	dev/md_root.c			memory_disk_hooks
 
 include "arch/sparc/conf/majors.sparc"
