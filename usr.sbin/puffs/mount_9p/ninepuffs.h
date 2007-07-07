@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.8 2007/05/16 09:57:21 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.9 2007/07/07 21:14:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -73,7 +73,7 @@ typedef uint32_t p9pfid_t;
 
 #define GETRESPONSE(pb)							\
 do {									\
-	if (puffs_framev_enqueue_cc(pcc, p9p->servsock, pb) == -1) {	\
+	if (puffs_framev_enqueue_cc(pcc, p9p->servsock, pb, 0) == -1) {	\
 		rv = errno;						\
 		goto out;						\
 	}								\
@@ -81,7 +81,7 @@ do {									\
 
 #define JUSTSEND(pb)							\
 do {									\
-	if (puffs_framev_enqueue_justsend(pu,p9p->servsock,pb,1) == -1){\
+	if (puffs_framev_enqueue_justsend(pu,p9p->servsock,pb,1,0)==-1){\
 		rv = errno;						\
 		goto out;						\
 	}								\
@@ -89,7 +89,7 @@ do {									\
 
 #define SENDCB(pb, f, a)						\
 do {									\
-	if (puffs_framev_enqueue_cb(pu, p9p->servsock, pb, f,a) == -1) {\
+	if (puffs_framev_enqueue_cb(pu, p9p->servsock,pb,f,a,0) == -1) {\
 		rv = errno;						\
 		goto out;						\
 	}								\

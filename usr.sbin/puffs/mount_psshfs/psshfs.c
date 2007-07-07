@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.30 2007/06/26 13:20:34 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.31 2007/07/07 21:14:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.30 2007/06/26 13:20:34 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.31 2007/07/07 21:14:26 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -205,7 +205,8 @@ main(int argc, char *argv[])
 
 	puffs_framev_init(pu, psbuf_read, psbuf_write, psbuf_cmp,
 	    puffs_framev_unmountonclose);
-	if (puffs_framev_addfd(pu, pctx.sshfd) == -1)
+	if (puffs_framev_addfd(pu, pctx.sshfd,
+	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
 		err(1, "framebuf addfd");
 
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
