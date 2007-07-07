@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.35 2005/10/01 20:24:44 christos Exp $	*/
+/*	$NetBSD: mknod.c,v 1.36 2007/07/07 20:11:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.35 2005/10/01 20:24:44 christos Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.36 2007/07/07 20:11:07 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -391,7 +391,7 @@ major_from_name(const char *name, mode_t mode)
 	for (i = 0; i < num_drivers; kd++, i++) {
 		if (strcmp(name, kd->d_name))
 			continue;
-		if (mode & S_IFCHR)
+		if (S_ISCHR(mode))
 			return kd->d_cmajor;
 		return kd->d_bmajor;
 	}
