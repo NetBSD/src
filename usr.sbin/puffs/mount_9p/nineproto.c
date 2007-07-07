@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.7 2007/05/16 09:57:21 pooka Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.8 2007/07/07 21:14:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.7 2007/05/16 09:57:21 pooka Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.8 2007/07/07 21:14:28 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -221,7 +221,7 @@ proto_cc_clunkfid(struct puffs_cc *pcc, p9pfid_t fid, int waitforit)
 	p9pbuf_put_4(pb, fid);
 
 	if (waitforit) {
-		if (puffs_framev_enqueue_cc(pcc, p9p->servsock, pb) == 0) {
+		if (puffs_framev_enqueue_cc(pcc, p9p->servsock, pb, 0) == 0) {
 			if (p9pbuf_get_type(pb) != P9PROTO_R_CLUNK)
 				rv = EPROTO;
 		} else {

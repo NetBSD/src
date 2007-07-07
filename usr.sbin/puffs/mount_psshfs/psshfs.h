@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.20 2007/06/06 01:55:03 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.21 2007/07/07 21:14:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@ PUFFSOP_PROTOS(psshfs);
 
 #define GETRESPONSE(pb)							\
 do {									\
-	if (puffs_framev_enqueue_cc(pcc, pctx->sshfd, pb) == -1) {	\
+	if (puffs_framev_enqueue_cc(pcc, pctx->sshfd, pb, 0) == -1) {	\
 		rv = errno;						\
 		goto out;						\
 	}								\
@@ -69,7 +69,7 @@ do {									\
 
 #define JUSTSEND(pb)							\
 do {									\
-	if (puffs_framev_enqueue_justsend(pu,pctx->sshfd,pb,1) == -1) {	\
+	if (puffs_framev_enqueue_justsend(pu,pctx->sshfd,pb,1,0) == -1){\
 		rv = errno;						\
 		goto out;						\
 	}								\
@@ -77,7 +77,7 @@ do {									\
 
 #define SENDCB(pb, f, a)						\
 do {									\
-	if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb, f,a) == -1) {	\
+	if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb,f,a,0) == -1) {	\
 		rv = errno;						\
 		goto out;						\
 	}								\
