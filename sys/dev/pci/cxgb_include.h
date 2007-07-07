@@ -45,7 +45,7 @@
 #include <dev/pci/cxgb_osdep.h>
 #include <dev/pci/cxgb_common.h>
 #include <dev/pci/cxgb_ioctl.h>
-// #include <dev/pci/cxgb_offload.h>
+#include <dev/pci/cxgb_offload.h>
 #include <dev/pci/cxgb_regs.h>
 #include <dev/pci/cxgb_t3_cpl.h>
 #include <dev/pci/cxgb_ctl_defs.h>
@@ -59,16 +59,16 @@
 #include <dev/pci/cxgb_osdep.h>
 #include <dev/pci/cxgb_common.h>
 #include <dev/pci/cxgb_ioctl.h>
-// #include <dev/pci/cxgb_offload.h>
+#include <dev/pci/cxgb_offload.h>
 #include <dev/pci/cxgb_regs.h>
 #include <dev/pci/cxgb_t3_cpl.h>
 #include <dev/pci/cxgb_ctl_defs.h>
 #include <dev/pci/cxgb_sge_defs.h>
 #include <dev/pci/cxgb_firmware_exports.h>
 // #include <sys/mvec.h>
-#include "toedev.h"
+#include "cxgb_toedev.h"
 // #include <sys/mbufq.h>
-#include <dev/pci/jhash.h>
+#include "cxgb_jhash.h"
 #endif
 #endif
 
