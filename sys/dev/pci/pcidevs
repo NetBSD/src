@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.884 2007/07/06 15:05:42 hpeyerl Exp $
+$NetBSD: pcidevs,v 1.885 2007/07/07 20:30:47 jklos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -555,6 +555,7 @@ vendor ETIMEDIA		0x1409	eTIMedia Technology
 vendor ICENSEMBLE	0x1412	IC Ensemble / VIA Technologies
 vendor MICROSOFT	0x1414	Microsoft
 vendor OXFORDSEMI	0x1415	Oxford Semiconductor
+vendor CHELSIO		0x1425	Chelsio Communications
 vendor TAMARACK		0x143d	Tamarack Microelectronics
 vendor SAMSUNGELEC3	0x144d	Samsung Electronics (3rd vendor ID)
 vendor ASKEY		0x144f	Askey Computer
@@ -1399,6 +1400,17 @@ product C4T GPPCI		0x6773	GPPCI
 
 /* Cavium products */
 product CAVIUM NITROX		0x0001	Nitrox XL
+
+/* Chelsio products */
+product CHELSIO T302E		0x0021	T302e
+product CHELSIO	T310E		0x0022	T310e
+product CHELSIO	T320X		0x0023	T320x
+product CHELSIO	T302X		0x0024	T302x
+product CHELSIO	T320E		0x0025	T320e
+product CHELSIO	T310X		0x0026	T310x
+product CHELSIO	T3B10		0x0030	T3B10
+product CHELSIO	T3B20		0x0031	T3B20
+product CHELSIO	T3B02		0x0032	T3B02
 
 /* Chips and Technologies products */
 product CHIPS 64310		0x00b8	64310
