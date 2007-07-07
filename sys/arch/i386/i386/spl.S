@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.6.2 2007/06/17 21:30:39 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.6.3 2007/07/07 11:56:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -313,24 +313,16 @@ IDTVEC(softintr)
 	movl	CPUVAR(CURLWP),%esi
 	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
 	movl	%edi,CPUVAR(CURLWP)
-	movl	%esi,L_PINNED(%edi)	/* note interrupted LWP */
 	movl	L_ADDR(%edi),%edx
 	movl	L_ADDR(%esi),%ecx
 	movl	%esp,PCB_ESP(%ecx)
 	movl	%ebp,PCB_EBP(%ecx)
-	orl	$LW_RUNNING,L_FLAG(%edi)
-	movl	$LSONPROC,L_STAT(%edi)
 	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
 	sti
 	pushl	IS_MAXLEVEL(%eax)	/* ipl to run at */
-	pushl	L_PRIVATE(%edi)		/* MI cookie */
-	call	_C_LABEL(softint_execute)/* run handlers */
+	pushl	%esi
+	call	_C_LABEL(softint_dispatch)/* run handlers */
 	addl	$8,%esp
-	movl	$LSIDL,L_STAT(%edi)
-	andl	$~LW_RUNNING,L_FLAG(%edi)
-	cmpl	$0,L_PINNED(%edi)	/* if blocked, switch to idle */
-	je,pn	1f			/*   loop. */
-	movl	$0,L_PINNED(%edi)	/* switch back to old LWP */
 	movl	L_ADDR(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
 	movl	%esi,CPUVAR(CURLWP)
@@ -339,13 +331,6 @@ IDTVEC(softintr)
 	addl	$8,%esp
 	cli
 	jmp	*%esi			/* back to splx/doreti */
-1:
-	pushl	$IPL_SCHED		/* lower to splsched */
-	call	_C_LABEL(spllower)
-	pushl	%edi			/* curlwp */
-	call	_C_LABEL(lwp_exit_switchaway)
-
-	/* NOTREACHED */
 
 /*
  * softintr_ret()
