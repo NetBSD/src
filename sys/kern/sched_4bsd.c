@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.3 2007/07/01 21:43:41 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.4 2007/07/07 11:56:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.3 2007/07/01 21:43:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.4 2007/07/07 11:56:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -102,15 +102,12 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.3 2007/07/01 21:43:41 ad Exp $"
 /*
  * Run queues.
  *
- * We have 32 run queues in descending priority of 0..31.  We maintain
- * a bitmask of non-empty queues in order speed up finding the first
- * runnable process.  The bitmask is maintained only by machine-dependent
- * code, allowing the most efficient instructions to be used to find the
- * first non-empty queue.
+ * We maintain a bitmask of non-empty queues in order speed up finding
+ * the first runnable process.
  */
 
-#define	RUNQUE_NQS	64			/* number of runqueues */
-#define	PPQ		(PRI_COUNT / RUNQUE_NQS)/* priorities per queue */
+#define	PPQ		4			/* priorities per queue */
+#define	RUNQUE_NQS	(PRI_COUNT / PPQ)	/* number of runqueues */
 
 typedef struct subqueue {
 	TAILQ_HEAD(, lwp) sq_queue;
@@ -134,6 +131,8 @@ kmutex_t sched_mutex;
 
 /* Number of hardclock ticks per sched_tick() */
 int rrticks;
+
+const int schedppq = PPQ;
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -334,12 +333,9 @@ updatepri(struct lwp *l)
 #define WHICHQ(p)	(RUNQUE_NQS - 1 - ((p) / PPQ))
 
 /*
- * The primitives that manipulate the run queues.  whichqs tells which
- * of the 32 queues qs have processes in them.  sched_enqueue() puts processes
- * into queues, sched_dequeue removes them from queues.  The running process is
- * on no queue, other processes are on a queue related to p->p_priority,
- * divided by 4 actually to shrink the 0-127 range of priorities into the 32
- * available queues.
+ * The primitives that manipulate the run queues.  whichqs tells which of
+ * the queues have processes in them.  sched_enqueue() puts processes into
+ * queues, sched_dequeue() removes them from queues.
  */
 #ifdef RQDEBUG
 static void

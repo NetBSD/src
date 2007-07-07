@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.255.4.5 2007/06/17 21:32:02 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.255.4.6 2007/07/07 11:56:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -214,11 +214,8 @@
  * New priority levels.
  */
 
-#define	PRI_COUNT	256
+#define	PRI_COUNT	192
 #define	PRI_NONE	(-1)
-
-#define	PRI_INTERRUPT	192
-#define	NPRI_INTERRUPT	64
 
 #define	PRI_KERNEL_RT	160
 #define	NPRI_KERNEL_RT	32

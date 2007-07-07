@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.33.2.2 2007/07/01 21:51:00 ad Exp $ */
+/*	$NetBSD: sched.h,v 1.33.2.3 2007/07/07 11:56:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@ struct schedstate_percpu {
 #ifdef _KERNEL
 
 extern int schedhz;			/* ideally: 16 */
+extern const int schedppq;
 
 struct proc;
 struct cpu_info;

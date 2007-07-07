@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.9 2007/07/01 21:43:40 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.10 2007/07/07 11:56:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.9 2007/07/01 21:43:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.10 2007/07/07 11:56:11 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.9 2007/07/01 21:43:40 ad Exp 
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 #include <sys/evcnt.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -376,17 +377,19 @@ mi_switch(struct lwp *l)
 	 * scheduling flags.
 	 */
 	spc = &l->l_cpu->ci_schedstate;
-	if (l->l_pinned != NULL) {
-		extern struct evcnt softint_block;
+	returning = false;
+	newl = NULL;
 
-		returning = true;
-		newl = l->l_pinned;
-		l->l_pinned = NULL;
-		softint_block.ev_count++;
-	} else {
-		returning = false;
-		newl = NULL;
+	if (l->l_switchto != NULL) {
+		if ((l->l_flag & LW_INTR) != 0) {
+			returning = true;
+			softint_block.ev_count++;
+		}
+		newl = l->l_switchto;
+		l->l_switchto = NULL;
+	}
 
+	if (!returning) {
 		/* Count time spent in current system call */
 		SYSCALL_TIME_SLEEP(l);
 
@@ -422,9 +425,9 @@ mi_switch(struct lwp *l)
 	 * Let sched_nextlwp() select the LWP to run the CPU next. 
 	 * If no LWP is runnable, switch to the idle LWP.
 	 */
-	if (!returning) {
+	if (newl == NULL) {
 		newl = sched_nextlwp();
-		if (newl) {
+		if (newl != NULL) {
 			sched_dequeue(newl);
 			KASSERT(lwp_locked(newl, spc->spc_mutex));
 			newl->l_stat = LSONPROC;

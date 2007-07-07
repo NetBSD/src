@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.1 2007/06/17 21:32:00 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.2 2007/07/07 11:56:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,9 +52,9 @@ void	softint_disestablish(void *);
 void	softint_schedule(void *);
 
 /* MD-MI interface. */
-void	softint_init_md(lwp_t *, u_int, uintptr_t *, void *);
+void	softint_init_md(lwp_t *, u_int, uintptr_t *);
 void	softint_trigger(uintptr_t);
-void	softint_execute(void *, int);
+void	softint_dispatch(lwp_t *, int);
 
 /* Flags for softint_establish(). */
 #define	SOFTINT_BIO	0x0000
@@ -65,6 +65,8 @@ void	softint_execute(void *, int);
 
 #define	SOFTINT_COUNT	0x0004
 #define	SOFTINT_LVLMASK	0x00ff
+
+extern struct evcnt softint_block;
 
 #endif	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28.4.2 2007/06/17 21:30:42 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.28.4.3 2007/07/07 11:56:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.2 2007/06/17 21:30:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28.4.3 2007/07/07 11:56:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -944,7 +944,7 @@ intr_printconfig(void)
 #endif
 
 void
-softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep, void *cookie)
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
 	struct intrsource *isp;
 	struct cpu_info *ci;
@@ -988,7 +988,6 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep, void *cookie)
 	KASSERT(ci->ci_isources[sir] == NULL);
 
 	*machdep = (1 << sir);
-	l->l_private = cookie;
 	ci->ci_isources[sir] = isp;
 	ci->ci_isources[sir]->is_lwp = l;
 
