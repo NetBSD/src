@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.15 2007/03/04 05:59:08 christos Exp $ */
+/* $NetBSD: if_xb.c,v 1.16 2007/07/07 21:04:29 tsutsui Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.15 2007/03/04 05:59:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.16 2007/07/07 21:04:29 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.15 2007/03/04 05:59:08 christos Exp $");
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/dec/clockvar.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -199,8 +199,8 @@ static int  xb_intr __P((void *));
 static void xb_intr_rcv __P((void));
 Static void quickload __P((volatile long *, long *));
 static void xb_init_config __P((struct xb_config *, int));
-static int  xb_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
-			struct rtentry *));
+static int  xb_output __P((struct ifnet *, struct mbuf *,
+			const struct sockaddr *, struct rtentry *));
 static int  xb_ioctl __P((struct ifnet *, u_long, void *));
 static void xb_stop __P((void));
 static void a12_xbar_setup __P((void));
@@ -215,7 +215,6 @@ xbmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct pcibus_attach_args *pba = aux;
 
 	return	cputype == ST_AVALON_A12
 		&& !xbfound;
@@ -232,7 +231,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.15 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.16 $", xbi.if_mtu);
 }
 
 static void
@@ -367,7 +366,7 @@ int	s = 0;	/* XXX gcc */
 			      ++xbi.if_iqdrops;
 			} else {
 				m = m_devget((void *)xb_incoming,
-					(void *)xb_ibp - (void *)xb_incoming,
+					(char *)xb_ibp - (char *)xb_incoming,
 					0, &xbi, 0L);
 				if (m) {
 					xbi.if_ibytes += m->m_pkthdr.len;
@@ -485,13 +484,13 @@ static int
 xb_output(ifp, m0, dst, rt0)
 	struct ifnet *ifp;
 	struct mbuf *m0;
-	struct sockaddr *dst;
+	const struct sockaddr *dst;
 	struct rtentry *rt0;
 {
 	int	i,s;
 	struct	mbuf *m = m0;
 	char	*lladdr;
-	void *	xbh;
+	char	*xbh;
 	long	xbo_framesize;
 	struct	sockaddr_dl *llsa;
 	int	xbaddr;
@@ -545,7 +544,7 @@ xb_output(ifp, m0, dst, rt0)
 	M_PREPEND(m, 16 * llsa->sdl_alen + 8, M_DONTWAIT);
 	if (m == NULL)
 		return ENOBUFS;
-	xbh = mtod(m, void *);
+	xbh = mtod(m, char *);
 	for (i=0; i<llsa->sdl_alen; ++i) {
 		xbaddr = (lladdr[i] & 0xff) - 1;
 		if (!(0 <= xbaddr && xbaddr <= 11))	/* XXX */
@@ -636,10 +635,10 @@ xb_put_blk(m)
 		fillin,		/* amount needed to complete a switch word */
 		full,		/* remember to restart on fifo full */
 		len;		/* amount of mbuf left to do */
-	void *	blk;		/* location we are at in mbuf */
+	char	*blk;		/* location we are at in mbuf */
 	static	int fifo_free;	/* current # of switch words free in fifo */
 
-#define	XFERADJ() ((void *)xfertmp+leftover_len)
+#define	XFERADJ() ((char *)xfertmp + leftover_len)
 
 	/* There is always room for the close word */
 
@@ -667,7 +666,7 @@ restart:
 	len = m->m_len;
 	if (len == 0)
 		return 1;	/* clean finish, nothing left over */
-	blk = mtod(m, void *);
+	blk = mtod(m, char *);
 	if (leftover_len) {
 		/* See function intro comment regarding padding */
 		if (leftover_len + len < sizeof leftover) {
@@ -706,7 +705,7 @@ restart:
 		len -= frag_len;
 		blk += frag_len;
 		if (full) {
-			m_adj(m, blk - mtod(m, void *));
+			m_adj(m, blk - mtod(m, char *));
 			goto restart;
 		}
 	}
