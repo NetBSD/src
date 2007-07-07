@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.68 2007/05/24 21:30:44 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.69 2007/07/07 00:04:10 mjacob Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.68 2007/05/24 21:30:44 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.69 2007/07/07 00:04:10 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,9 +159,6 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 		 * Convert from HZ to MHz, rounding up.
 		 */
 		freq = (freq + 500000)/1000000;
-#if	0
-		printf("%s: %d MHz\n", self->dv_xname, freq);
-#endif
 	}
 	sbc->sbus_mdvec.dv_clock = freq;
 
@@ -379,8 +376,8 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	}
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		/* Allocate a DMA handle */
-		if (bus_dmamap_create(isp->isp_dmatag, MAXPHYS, 1, MAXPHYS, 0,
-		    BUS_DMA_NOWAIT, &sbc->sbus_dmamap[i]) != 0) {
+		if (bus_dmamap_create(isp->isp_dmatag, MAXPHYS, 1, MAXPHYS,
+		    1 << 24, BUS_DMA_NOWAIT, &sbc->sbus_dmamap[i]) != 0) {
 			isp_prt(isp, ISP_LOGERR, "cmd DMA maps create error");
 			break;
 		}
@@ -412,8 +409,8 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 		goto dmafail;
 	}
 	progress++;
-	if (bus_dmamap_create(isp->isp_dmatag, len, 1, len, 0, BUS_DMA_NOWAIT,
-	    &isp->isp_rqdmap) != 0) {
+	if (bus_dmamap_create(isp->isp_dmatag, len, 1, len, 1 << 24,
+	    BUS_DMA_NOWAIT, &isp->isp_rqdmap) != 0) {
 		goto dmafail;
 	}
 	progress++;
@@ -435,8 +432,8 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 		goto dmafail;
 	}
 	progress++;
-	if (bus_dmamap_create(isp->isp_dmatag, len, 1, len, 0, BUS_DMA_NOWAIT,
-	    &isp->isp_rsdmap) != 0) {
+	if (bus_dmamap_create(isp->isp_dmatag, len, 1, len, 1 << 24,
+	    BUS_DMA_NOWAIT, &isp->isp_rsdmap) != 0) {
 		goto dmafail;
 	}
 	progress++;
