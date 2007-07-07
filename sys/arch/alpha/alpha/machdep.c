@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.297 2007/05/17 14:51:12 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.298 2007/07/07 17:08:15 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.297 2007/05/17 14:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.298 2007/07/07 17:08:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,17 +780,14 @@ nobootinfo:
 #endif
 	}
 
-	/*
-	 * Figure out our clock frequency, from RPB fields.
-	 */
-	hz = hwrpb->rpb_intr_freq >> 12;
-	if (!(60 <= hz && hz <= 10240)) {
-		hz = 1024;
 #ifdef DIAGNOSTIC
+	/*
+	 * Check our clock frequency, from RPB fields.
+	 */
+	if ((hwrpb->rpb_intr_freq >> 12) != 1024)
 		printf("WARNING: unbelievable rpb_intr_freq: %ld (%d hz)\n",
 			hwrpb->rpb_intr_freq, hz);
 #endif
-	}
 }
 
 void
