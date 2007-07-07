@@ -138,6 +138,25 @@ void t3_l2t_proc_free(struct proc_dir_entry *dir);
 
 int cxgb_ofld_send(struct toedev *dev, struct mbuf *m);
 
+#ifdef __NetBSD__
+static inline u_int atomic_fetchadd_int(volatile u_int *p, u_int v)
+{
+#if 0
+	if (v == 1)
+		return (atomic_inc_return(*p));
+	else
+		return (atomic_dec_return(*p));
+#else
+	return (atomic_fetchadd_int(p, v)); // XXXXXXXXXXXXXXXXXXXXXX
+#endif
+}
+
+static inline void atomic_add_int(volatile int *p, int v)
+{
+	*p += v; // XXXXXXXXXXXXXXXXXXXXXXXXXX
+}
+#endif
+
 static inline int l2t_send(struct toedev *dev, struct mbuf *m,
 			   struct l2t_entry *e)
 {

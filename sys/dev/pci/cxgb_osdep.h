@@ -30,6 +30,9 @@ $FreeBSD: src/sys/dev/cxgb/cxgb_osdep.h,v 1.10 2007/05/27 22:07:47 kmacy Exp $
 
 ***************************************************************************/
 
+#ifndef _CXGB_OSDEP_H_
+#define _CXGB_OSDEP_H_
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #ifdef __FreeBSD__
@@ -49,10 +52,20 @@ $FreeBSD: src/sys/dev/cxgb/cxgb_osdep.h,v 1.10 2007/05/27 22:07:47 kmacy Exp $
 #ifdef __NetBSD__
 #include <dev/pci/cxgb_version.h>
 #include <dev/pci/cxgb_config.h>
-#endif
 
-#ifndef _CXGB_OSDEP_H_
-#define _CXGB_OSDEP_H_
+struct task
+{
+	void *context;
+};
+
+static inline void critical_enter(void)
+{
+}
+
+static inline void critical_exit(void)
+{
+}
+#endif
 
 struct sge_rspq;
 

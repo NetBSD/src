@@ -46,11 +46,11 @@ $FreeBSD: src/sys/dev/cxgb/cxgb_offload.h,v 1.1 2007/05/25 09:48:19 kmacy Exp $
 #include <dev/cxgb/common/cxgb_t3_cpl.h>
 #endif
 #ifdef __NetBSD__
-#include <dev/pci/cxgb_tcb.h>
-// #include <dev/pci/cxgb_l2t.h>
+#include "cxgb_tcb.h"
+#include "cxgb_l2t.h"
 
-// #include <ulp/toecore/toedev.h>
-#include <dev/pci/cxgb_t3_cpl.h>
+#include "cxgb_toedev.h"
+#include "cxgb_t3_cpl.h"
 #endif
 
 struct adapter;

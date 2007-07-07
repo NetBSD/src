@@ -40,6 +40,7 @@ $FreeBSD: src/sys/dev/cxgb/common/cxgb_common.h,v 1.4 2007/05/28 22:57:26 kmacy 
 #endif
 #ifdef __NetBSD__
 #include <dev/pci/cxgb_osdep.h>
+#include "cxgb_toedev.h"
 #endif
 #endif
 
