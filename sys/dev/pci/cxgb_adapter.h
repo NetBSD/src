@@ -44,10 +44,11 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_adapter.h,v 1.10 2007/05/28 22:57:26 k
 #include <sys/mutex.h>
 #ifdef __NetBSD__
 #define mtx kmutex
-#define mtx_init mutex_init
+#define mtx_init(a, b, c, d) mutex_init(a, MUTEX_DEFAULT, IPL_NONE)
 #define mtx_destroy mutex_destroy
 #define mtx_lock mutex_enter
 #define mtx_unlock mutex_exit
+#define mtx_assert(x, y) // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 #endif
 #ifdef __FreeBSD__
 #include <sys/rman.h>
@@ -60,8 +61,7 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_adapter.h,v 1.10 2007/05/28 22:57:26 k
 #include <net/ethernet.h>
 #endif
 #ifdef __NetBSD__
-#define ETHER_ADDR_LEN 6
-#define ETHER_HDR_LEN 14
+#include <net/if_ether.h>
 #endif
 #include <net/if.h>
 #include <net/if_media.h>
@@ -348,9 +348,7 @@ struct adapter {
 	uint32_t                open_device_map;
 	uint32_t                registered_device_map;
 	struct mtx              lock;
-#ifdef __FreeBSD__
-	driver_intr_t           *cxgb_intr;
-#endif
+	void 			(*cxgb_intr)(void *);
 	int                     msi_count;
 };
 
