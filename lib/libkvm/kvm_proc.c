@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.71 2007/07/06 14:25:42 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.72 2007/07/07 18:27:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.71 2007/07/06 14:25:42 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.72 2007/07/07 18:27:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -760,7 +760,8 @@ again:
 		st = sysctl(mib, 5, NULL, &size, NULL, (size_t)0);
 		if (st == -1) {
 			switch (errno) {
-			case ESRCH:
+			case ESRCH: /* Treat this as a soft error; see kvm.c */
+				_kvm_syserr(kd, NULL, "kvm_getlwps");
 				return NULL;
 			default:
 				_kvm_syserr(kd, kd->program, "kvm_getlwps");
@@ -772,7 +773,8 @@ again:
 		st = sysctl(mib, 5, kd->lwpbase, &size, NULL, (size_t)0);
 		if (st == -1) {
 			switch (errno) {
-			case ESRCH:
+			case ESRCH: /* Treat this as a soft error; see kvm.c */
+				_kvm_syserr(kd, NULL, "kvm_getlwps");
 				return NULL;
 			case ENOMEM:
 				goto again;
