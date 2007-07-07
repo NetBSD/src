@@ -33,6 +33,7 @@ $FreeBSD: src/sys/dev/cxgb/ulp/toecore/toedev.h,v 1.1 2007/05/25 16:17:59 kmacy 
 #ifndef _OFFLOAD_DEV_H_
 #define _OFFLOAD_DEV_H_
 
+#include <net/route.h>
 
 /* Parameter values for offload_get_phys_egress() */
 enum {
@@ -84,7 +85,6 @@ enum toetype {
         T3B
 };
 
-}}}
 struct toedev {
 	char name[TOENAMSIZ];       /* TOE device name */
 	enum toetype type;

@@ -714,7 +714,12 @@ int
 t3_sge_init_sw(adapter_t *sc)
 {
 
+#ifdef __FreeBSD__
 	callout_init(&sc->sge_timer_ch, CALLOUT_MPSAFE);
+#endif
+#ifdef __NetBSD__
+	callout_init(&sc->sge_timer_ch);
+#endif
 	callout_reset(&sc->sge_timer_ch, TX_RECLAIM_PERIOD, sge_timer_cb, sc);
 	TASK_INIT(&sc->timer_reclaim_task, 0, sge_timer_reclaim, sc);
 	TASK_INIT(&sc->slow_intr_task, 0, sge_slow_intr_handler, sc);
@@ -2139,7 +2144,14 @@ t3_rx_eth(struct port_info *pi, struct sge_rspq *rq, struct mbuf *m, int ethpad)
 	if (&pi->adapter->port[cpl->iff] != pi)
 		panic("bad port index %d m->m_data=%p\n", cpl->iff, m->m_data);
 
-	if ((ifp->if_capenable & IFCAP_RXCSUM) && !cpl->fragment &&
+	if (
+#ifdef __FreeBSD__
+		(ifp->if_capenable & IFCAP_RXCSUM) && 
+#endif
+#ifdef __NetBSD__
+		(ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) && 
+#endif
+		!cpl->fragment &&
 	    cpl->csum_valid && cpl->csum == 0xffff) {
 		m->m_pkthdr.csum_flags = (CSUM_IP_CHECKED|CSUM_IP_VALID);
 		rspq_to_qset(rq)->port_stats[SGE_PSTAT_RX_CSUM_GOOD]++;
