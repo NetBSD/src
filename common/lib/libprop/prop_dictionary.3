@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.6 2007/04/28 06:01:13 xtraeme Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.7 2007/07/07 19:03:52 degroote Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -237,7 +237,7 @@ The results are undefined if the iterator used to obtain the key symbol
 is not associated with
 .Fa dict .
 .It Fn prop_dictionary_set_keysym "prop_dictionary_t dict" \
-    "prop_dictionary_keysym_t sym"
+    "prop_dictionary_keysym_t sym" "prop_object_t obj"
 Like
 .Fn prop_dictionary_set ,
 but the lookup of the object to replace is performed using a key symbol
