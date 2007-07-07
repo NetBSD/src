@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.55 2007/07/05 12:27:39 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.56 2007/07/07 21:13:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.55 2007/07/05 12:27:39 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.56 2007/07/07 21:13:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -511,7 +511,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 			 * case is that we can fit everything into the
 			 * socket buffer.
 			 */
-			if (puffs_framev_output(pu, pfctrl, fio)) {
+			if (puffs_framev_output(pu, pfctrl, fio, ppr)) {
 				/* need kernel notify? (error condition) */
 				if (puffs_req_putput(ppr) == -1)
 					goto out;
@@ -571,21 +571,11 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 				continue;
 			}
 
-			if (curev->filter == EVFILT_READ) {
-				if (curev->flags & EV_EOF && curev->data == 0)
-					puffs_framev_readclose(pu, fio,
-					    ECONNRESET);
-				else
-					puffs_framev_input(pu, pfctrl,
-					    fio, ppr);
+			if (curev->filter == EVFILT_READ)
+				puffs_framev_input(pu, pfctrl, fio, ppr);
 
-			} else if (curev->filter == EVFILT_WRITE) {
-				if (curev->flags & EV_EOF)
-					puffs_framev_writeclose(pu, fio,
-					    ECONNRESET);
-				else
-					puffs_framev_output(pu, pfctrl, fio);
-			}
+			else if (curev->filter == EVFILT_WRITE)
+				puffs_framev_output(pu, pfctrl, fio, ppr);
 		}
 
 		/*

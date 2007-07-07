@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.70 2007/07/02 10:24:18 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.71 2007/07/07 21:13:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -382,7 +382,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 22
+#define PUFFS_DEVEL_LIBVERSION 23
 #define puffs_init(a,b,c,d) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
 
@@ -418,9 +418,11 @@ typedef void (*puffs_framev_fdnotify_fn)(struct puffs_usermount *, int, int);
 typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 				struct puffs_framebuf *,
 				void *, int);
-#define PUFFS_FBGONE_READ	0x01
-#define PUFFS_FBGONE_WRITE	0x02
-#define PUFFS_FBGONE_BOTH(a)	((a)==(PUFFS_FBGONE_READ|PUFFS_FBGONE_WRITE))
+#define PUFFS_FBIO_READ		0x01
+#define PUFFS_FBIO_WRITE	0x02
+#define PUFFS_FBGONE_BOTH(a)	((a)==(PUFFS_FBIO_READ|PUFFS_FBIO_WRITE))
+
+#define PUFFS_FBQUEUE_URGENT	0x01
 
 
 __BEGIN_DECLS
@@ -653,18 +655,24 @@ int	puffs_framebuf_getwindow(struct puffs_framebuf *, size_t,
 				 void **, size_t *);
 
 int	puffs_framev_enqueue_cc(struct puffs_cc *, int,
-				struct puffs_framebuf *);
+				struct puffs_framebuf *, int);
 int	puffs_framev_enqueue_cb(struct puffs_usermount *, int,
 				struct puffs_framebuf *,
-				puffs_framev_cb, void *);
+				puffs_framev_cb, void *, int);
 int	puffs_framev_enqueue_justsend(struct puffs_usermount *, int,
-				      struct puffs_framebuf *, int);
+				      struct puffs_framebuf *, int, int);
+int	puffs_framev_enqueue_directreceive(struct puffs_cc *, int,
+					   struct puffs_framebuf *, int);
+int	puffs_framev_enqueue_directsend(struct puffs_cc *, int,
+					   struct puffs_framebuf *, int);
 int	puffs_framev_framebuf_ccpromote(struct puffs_framebuf *,
 					struct puffs_cc *);
 
-int	puffs_framev_addfd(struct puffs_usermount *pu, int);
-int	puffs_framev_removefd(struct puffs_usermount *pu, int, int);
-void	puffs_framev_unmountonclose(struct puffs_usermount *pu, int, int);
+int	puffs_framev_addfd(struct puffs_usermount *, int, int);
+int	puffs_framev_enablefd(struct puffs_usermount *, int, int);
+int	puffs_framev_disablefd(struct puffs_usermount *, int, int);
+int	puffs_framev_removefd(struct puffs_usermount *, int, int);
+void	puffs_framev_unmountonclose(struct puffs_usermount *, int, int);
 
 __END_DECLS
 
