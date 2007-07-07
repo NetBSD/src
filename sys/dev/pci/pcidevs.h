@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.884 2007/07/06 19:23:52 hpeyerl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.885 2007/07/07 20:37:40 jklos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.884 2007/07/06 15:05:42 hpeyerl Exp
+ *	NetBSD: pcidevs,v 1.885 2007/07/07 20:30:47 jklos Exp
  */
 
 /*
@@ -562,6 +562,7 @@
 #define	PCI_VENDOR_ICENSEMBLE	0x1412		/* IC Ensemble / VIA Technologies */
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor */
+#define	PCI_VENDOR_CHELSIO	0x1425		/* Chelsio Communications */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
 #define	PCI_VENDOR_SAMSUNGELEC3	0x144d		/* Samsung Electronics (3rd vendor ID) */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer */
@@ -1406,6 +1407,17 @@
 
 /* Cavium products */
 #define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* Nitrox XL */
+
+/* Chelsio products */
+#define	PCI_PRODUCT_CHELSIO_T302E	0x0021		/* T302e */
+#define	PCI_PRODUCT_CHELSIO_T310E	0x0022		/* T310e */
+#define	PCI_PRODUCT_CHELSIO_T320X	0x0023		/* T320x */
+#define	PCI_PRODUCT_CHELSIO_T302X	0x0024		/* T302x */
+#define	PCI_PRODUCT_CHELSIO_T320E	0x0025		/* T320e */
+#define	PCI_PRODUCT_CHELSIO_T310X	0x0026		/* T310x */
+#define	PCI_PRODUCT_CHELSIO_T3B10	0x0030		/* T3B10 */
+#define	PCI_PRODUCT_CHELSIO_T3B20	0x0031		/* T3B20 */
+#define	PCI_PRODUCT_CHELSIO_T3B02	0x0032		/* T3B02 */
 
 /* Chips and Technologies products */
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */
