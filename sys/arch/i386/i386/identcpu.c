@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.72 2007/07/05 13:51:37 isaki Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.73 2007/07/07 17:35:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.72 2007/07/05 13:51:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.73 2007/07/07 17:35:18 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -671,22 +671,24 @@ via_cpu_probe(struct cpu_info *ci)
 		ci->ci_feature_flags |= descs[3];
 	}
 
-	if (model >= 0x9) {
-		/* Nehemiah or Esther */
-		CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
-		lfunc = descs[0];
-		if (lfunc >= 0xc0000001) {
-			CPUID(0xc0000001, descs[0], descs[1], descs[2],
-			    descs[3]);
-			lfunc = descs[3];
-			if (model > 0x9 || stepping >= 8) {	/* ACE */
-				ci->ci_padlock_flags = lfunc;
-#define VIA_ACE 	(CPUID_VIA_HAS_ACE|CPUID_VIA_DO_ACE)
-				if ((lfunc & VIA_ACE)  == VIA_ACE) {
-					msr = rdmsr(MSR_VIA_ACE);
-					wrmsr(MSR_VIA_ACE,
-					    msr | MSR_VIA_ACE_ENABLE);
-				}
+	if (model < 0x9)
+		return;
+
+	/* Nehemiah or Esther */
+	CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[0];
+	if (lfunc < 0xc0000001)	/* no ACE, no RNG */
+		return;
+
+	CPUID(0xc0000001, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[3];
+	if (model > 0x9 || stepping >= 8) {	/* ACE */
+		if (lfunc & CPUID_VIA_HAS_ACE) {
+			ci->ci_padlock_flags = lfunc;
+			if ((lfunc & CPUID_VIA_DO_ACE) == 0) {
+				msr = rdmsr(MSR_VIA_ACE);
+				wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
+				ci->ci_padlock_flags |= CPUID_VIA_DO_ACE;
 			}
 		}
 	}
