@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.12 2007/07/01 21:43:08 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.13 2007/07/07 21:27:06 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.12 2007/07/01 21:43:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.13 2007/07/07 21:27:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -910,7 +910,6 @@ static struct sema pagedep_in_progress;
  * when asked to allocate but not associated with any buffer.
  * If not found, allocate if DEPALLOC flag is passed.
  * Found or allocated entry is returned in pagedeppp.
- * This routine must be called with splbio interrupts blocked.
  */
 static int
 pagedep_lookup(ip, lbn, flags, pagedeppp)
@@ -923,6 +922,8 @@ pagedep_lookup(ip, lbn, flags, pagedeppp)
 	struct pagedep_hashhead *pagedephd;
 	struct mount *mp;
 	int i;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -983,7 +984,6 @@ static struct sema inodedep_in_progress;
  * Look up a inodedep. Return 1 if found, 0 if not found.
  * If not found, allocate if DEPALLOC flag is passed.
  * Found or allocated entry is returned in inodedeppp.
- * This routine must be called with splbio interrupts blocked.
  */
 static int
 inodedep_lookup(fs, inum, flags, inodedeppp)
@@ -995,6 +995,8 @@ inodedep_lookup(fs, inum, flags, inodedeppp)
 	struct inodedep *inodedep;
 	struct inodedep_hashhead *inodedephd;
 	int firsttry;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -1074,6 +1076,8 @@ newblk_lookup(fs, newblkno, flags, newblkpp)
 	struct newblk *newblk;
 	struct newblk_hashhead *newblkhd;
 
+	KASSERT(mutex_owned(&softdep_lock));
+
 	newblkhd = NEWBLK_HASH(fs, newblkno);
 top:
 	for (newblk = LIST_FIRST(newblkhd); newblk;
@@ -1088,13 +1092,14 @@ top:
 		*newblkpp = NULL;
 		return (0);
 	}
-	if (sema_get(&newblk_in_progress, 0) == 0)
+	if (sema_get(&newblk_in_progress, &softdep_lock) == 0)
 		goto top;
 	newblk = pool_get(&newblk_pool, PR_WAITOK);
 	newblk->nb_state = 0;
 	newblk->nb_fs = fs;
 	newblk->nb_newblkno = newblkno;
 	LIST_INSERT_HEAD(newblkhd, newblk, nb_hash);
+	mutex_enter(&softdep_lock);
 	sema_release(&newblk_in_progress);
 	*newblkpp = newblk;
 	return (0);
@@ -1315,9 +1320,9 @@ softdep_setup_blkmapdep(bp, fs, newblkno)
 	 * Add it to the dependency list for the buffer holding
 	 * the cylinder group map from which it was allocated.
 	 */
+	mutex_enter(&softdep_lock);
 	if (newblk_lookup(fs, newblkno, DEPALLOC, &newblk) != 0)
 		panic("softdep_setup_blkmapdep: found block");
-	mutex_enter(&softdep_lock);
 	newblk->nb_bmsafemap = bmsafemap = bmsafemap_lookup(bp);
 	LIST_INSERT_HEAD(&bmsafemap->sm_newblkhd, newblk, nb_deps);
 	mutex_exit(&softdep_lock);
@@ -1326,8 +1331,7 @@ softdep_setup_blkmapdep(bp, fs, newblkno)
 /*
  * Find the bmsafemap associated with a cylinder group buffer.
  * If none exists, create one. The buffer must be locked when
- * this routine is called and this routine must be called with
- * splbio interrupts blocked.
+ * this routine is called.
  */
 static struct bmsafemap *
 bmsafemap_lookup(bp)
@@ -1335,6 +1339,8 @@ bmsafemap_lookup(bp)
 {
 	struct bmsafemap *bmsafemap;
 	struct worklist *wk;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -1418,8 +1424,10 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	else
 		adp->ad_freefrag = newfreefrag(ip, oldblkno, oldsize);
 
+	mutex_enter(&softdep_lock);
 	if (newblk_lookup(ip->i_fs, newblkno, 0, &newblk) == 0)
 		panic("softdep_setup_allocdirect: lost block");
+	mutex_exit(&softdep_lock);
 
 	/*
 	 * If we were not passed a bp to attach the dep to,
@@ -1505,7 +1513,6 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 
 /*
  * Replace an old allocdirect dependency with a newer one.
- * This routine must be called with splbio interrupts blocked.
  */
 static void
 allocdirect_merge(adphead, newadp, oldadp)
@@ -1516,6 +1523,8 @@ allocdirect_merge(adphead, newadp, oldadp)
 	struct worklist *wk;
 	struct freefrag *freefrag;
 	struct newdirblk *newdirblk;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -1735,8 +1744,8 @@ setup_allocindir_phase2(bp, ip, aip)
 
 	if (bp->b_lblkno >= 0)
 		panic("setup_allocindir_phase2: not indir blk");
+	mutex_enter(&softdep_lock);
 	for (indirdep = NULL, newindirdep = NULL; ; ) {
-		mutex_enter(&softdep_lock);
 		for (wk = LIST_FIRST(&bp->b_dep); wk;
 		     wk = LIST_NEXT(wk, wk_list)) {
 			if (wk->wk_type != D_INDIRDEP)
@@ -1749,12 +1758,10 @@ setup_allocindir_phase2(bp, ip, aip)
 			WORKLIST_INSERT(&bp->b_dep, &indirdep->ir_list);
 			newindirdep = NULL;
 		}
-		mutex_exit(&softdep_lock);
 		if (indirdep) {
 			if (newblk_lookup(ip->i_fs, aip->ai_newblkno, 0,
 			    &newblk) == 0)
 				panic("setup_allocindir: lost block");
-			mutex_enter(&softdep_lock);
 			if (newblk->nb_state == DEPCOMPLETE) {
 				aip->ai_state |= DEPCOMPLETE;
 				aip->ai_buf = NULL;
@@ -1801,7 +1808,8 @@ setup_allocindir_phase2(bp, ip, aip)
 			mutex_exit(&softdep_lock);
 			if (freefrag != NULL)
 				handle_workitem_freefrag(freefrag);
-		}
+		} else
+			mutex_exit(&softdep_lock);
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
 				brelse(newindirdep->ir_savebp, 0);
@@ -1830,6 +1838,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
 		bcopy(bp->b_data, newindirdep->ir_savebp->b_data, bp->b_bcount);
 	}
+	mutex_exit(&softdep_lock);
 }
 
 /*
@@ -2143,7 +2152,6 @@ deallocate_dependencies(bp, inodedep)
 
 /*
  * Free an allocdirect. Generate a new freefrag work request if appropriate.
- * This routine must be called with splbio interrupts blocked.
  */
 static void
 free_allocdirect(adphead, adp, delayx)
@@ -2153,6 +2161,8 @@ free_allocdirect(adphead, adp, delayx)
 {
 	struct newdirblk *newdirblk;
 	struct worklist *wk;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -2186,7 +2196,6 @@ free_allocdirect(adphead, adp, delayx)
 
 /*
  * Free a newdirblk. Clear the NEWBLOCK flag on its associated pagedep.
- * This routine must be called with splbio interrupts blocked.
  */
 static void
 free_newdirblk(newdirblk)
@@ -2195,6 +2204,8 @@ free_newdirblk(newdirblk)
 	struct pagedep *pagedep;
 	struct diradd *dap;
 	int i;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -2273,7 +2284,6 @@ softdep_freefile(struct vnode *pvp, ino_t ino, int mode)
 /*
  * Check to see if an inode has never been written to disk. If
  * so free the inodedep and return success, otherwise return failure.
- * This routine must be called with splbio interrupts blocked.
  *
  * If we still have a bitmap dependency, then the inode has never
  * been written to disk. Drop the dependency as it is no longer
@@ -2289,6 +2299,8 @@ static int
 check_inode_unwritten(inodedep)
 	struct inodedep *inodedep;
 {
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	if ((inodedep->id_state & DEPCOMPLETE) != 0 ||
 	    LIST_FIRST(&inodedep->id_pendinghd) != NULL ||
@@ -2501,7 +2513,6 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 
 /*
  * Free an allocindir.
- * This routine must be called with splbio interrupts blocked.
  */
 static void
 free_allocindir(aip, inodedep)
@@ -2509,6 +2520,8 @@ free_allocindir(aip, inodedep)
 	struct inodedep *inodedep;
 {
 	struct freefrag *freefrag;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -2753,8 +2766,7 @@ done:
 }
 
 /*
- * Free a diradd dependency structure. This routine must be called
- * with splbio interrupts blocked.
+ * Free a diradd dependency structure.
  */
 static void
 free_diradd(dap)
@@ -2764,6 +2776,8 @@ free_diradd(dap)
 	struct pagedep *pagedep;
 	struct inodedep *inodedep;
 	struct mkdir *mkdir, *nextmd;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 #ifdef DEBUG
 	if (lk.lkt_held == NULL)
@@ -3933,8 +3947,7 @@ softdep_disk_write_complete(bp)
 
 /*
  * Called from within softdep_disk_write_complete above. Note that
- * this routine is always called from interrupt level with further
- * splbio interrupts blocked.
+ * this routine is always called from interrupt level.
  */
 static void
 handle_allocdirect_partdone(adp)
@@ -3944,6 +3957,8 @@ handle_allocdirect_partdone(adp)
 	struct inodedep *inodedep;
 	long bsize;
 	int delayx;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	if ((adp->ad_state & ALLCOMPLETE) != ALLCOMPLETE)
 		return;
@@ -4008,14 +4023,15 @@ handle_allocdirect_partdone(adp)
 
 /*
  * Called from within softdep_disk_write_complete above. Note that
- * this routine is always called from interrupt level with further
- * splbio interrupts blocked.
+ * this routine is always called from interrupt level.
  */
 static void
 handle_allocindir_partdone(aip)
 	struct allocindir *aip;		/* the completed allocindir */
 {
 	struct indirdep *indirdep;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	if ((aip->ai_state & ALLCOMPLETE) != ALLCOMPLETE)
 		return;
@@ -4042,8 +4058,7 @@ handle_allocindir_partdone(aip)
 /*
  * Called from within softdep_disk_write_complete above to restore
  * in-memory inode block contents to their most up-to-date state. Note
- * that this routine is always called from interrupt level with further
- * splbio interrupts blocked.
+ * that this routine is always called from interrupt level.
  */
 static int
 handle_written_inodeblock(inodedep, bp)
@@ -4058,6 +4073,8 @@ handle_written_inodeblock(inodedep, bp)
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(inodedep->id_fs);
 #endif
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	if ((inodedep->id_state & IOSTARTED) == 0)
 		panic("handle_written_inodeblock: not started");
@@ -4262,7 +4279,6 @@ handle_written_inodeblock(inodedep, bp)
 
 /*
  * Process a diradd entry after its dependent inode has been written.
- * This routine must be called with splbio interrupts blocked.
  */
 static void
 diradd_inode_written(dap, inodedep)
@@ -4270,6 +4286,8 @@ diradd_inode_written(dap, inodedep)
 	struct inodedep *inodedep;
 {
 	struct pagedep *pagedep;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	dap->da_state |= COMPLETE;
 	if ((dap->da_state & ALLCOMPLETE) == ALLCOMPLETE) {
@@ -4316,8 +4334,7 @@ handle_written_mkdir(mkdir, type)
  * Called from within softdep_disk_write_complete above.
  * A write operation was just completed. Removed inodes can
  * now be freed and associated block pointers may be committed.
- * Note that this routine is always called from interrupt level
- * with further splbio interrupts blocked.
+ * Note that this routine is always called from interrupt level.
  */
 static int
 handle_written_filepage(pagedep, bp)
@@ -4331,6 +4348,8 @@ handle_written_filepage(pagedep, bp)
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(VFSTOUFS(pagedep->pd_mnt)->um_fs);
 #endif
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	if ((pagedep->pd_state & IOSTARTED) == 0)
 		panic("handle_written_filepage: not started");
@@ -4529,14 +4548,15 @@ softdep_update_inodeblock(ip, bp, waitfor)
 
 /*
  * Merge the new inode dependency list (id_newinoupdt) into the old
- * inode dependency list (id_inoupdt). This routine must be called
- * with splbio interrupts blocked.
+ * inode dependency list (id_inoupdt).
  */
 static void
 merge_inode_lists(inodedep)
 	struct inodedep *inodedep;
 {
 	struct allocdirect *listadp, *newadp;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	listadp = TAILQ_FIRST(&inodedep->id_inoupdt);
 	newadp = TAILQ_FIRST(&inodedep->id_newinoupdt);
@@ -5031,7 +5051,6 @@ clean:
 
 /*
  * Flush the dependencies associated with an inodedep.
- * Called with splbio blocked.
  */
 static int
 flush_inodedep_deps(fs, ino)
@@ -5043,6 +5062,8 @@ flush_inodedep_deps(fs, ino)
 	int error, waitfor;
 	struct buf *bp;
 	struct vnode *vp;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	vp = softdep_lookupvp(fs, ino);
 
@@ -5158,7 +5179,6 @@ flush_inodedep_deps(fs, ino)
 
 /*
  * Eliminate a pagedep dependency by flushing out all its diradd dependencies.
- * Called with splbio blocked.
  */
 static int
 flush_pagedep_deps(pvp, mp, diraddhdp)
@@ -5175,6 +5195,8 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 	struct buf *bp;
 	ino_t inum;
 	u_int ipflag;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 	ump = VFSTOUFS(mp);
 	while ((dap = LIST_FIRST(diraddhdp)) != NULL) {
@@ -5574,7 +5596,6 @@ out:
 
 /*
  * Acquire exclusive access to a buffer.
- * Must be called with splbio blocked.
  * Return 1 if buffer was acquired.
  */
 static int
@@ -5583,6 +5604,8 @@ getdirtybuf(bpp, waitfor)
 	int waitfor;
 {
 	struct buf *bp;
+
+	KASSERT(mutex_owned(&softdep_lock));
 
 again:
 	for (;;) {
