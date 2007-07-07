@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.16 2007/07/01 18:39:39 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.17 2007/07/07 21:13:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -67,9 +67,18 @@ struct puffs_fctrl_io {
 #define FIO_WRGONE	0x02
 #define FIO_RDGONE	0x04
 #define FIO_DEAD	0x08
+#define FIO_ENABLE_R	0x10
+#define FIO_ENABLE_W	0x20
 
-#define FIO_EN_WRITE(fio) (!(fio->stat & FIO_WR)&& !TAILQ_EMPTY(&fio->snd_qing))
-#define FIO_RM_WRITE(fio) ((fio->stat & FIO_WR) && TAILQ_EMPTY(&fio->snd_qing))
+#define FIO_EN_WRITE(fio)			\
+    (!(fio->stat & FIO_WR)			\
+      && !TAILQ_EMPTY(&fio->snd_qing)		\
+      && (fio->stat & FIO_ENABLE_W))
+
+#define FIO_RM_WRITE(fio)			\
+    ((fio->stat & FIO_WR)			\
+      && (TAILQ_EMPTY(&fio->snd_qing)		\
+        || ((fio->stat & FIO_ENABLE_W) == 0)))
 
 /*
  * usermount: describes one file system instance
@@ -209,7 +218,7 @@ void	puffs_calldispatcher(struct puffs_cc *);
 void	puffs_framev_input(struct puffs_usermount *, struct puffs_framectrl *,
 			   struct puffs_fctrl_io *, struct puffs_putreq *);
 int	puffs_framev_output(struct puffs_usermount *, struct puffs_framectrl*,
-			    struct puffs_fctrl_io *);
+			    struct puffs_fctrl_io *, struct puffs_putreq *);
 void	puffs_framev_exit(struct puffs_usermount *);
 void	puffs_framev_readclose(struct puffs_usermount *,
 			       struct puffs_fctrl_io *, int);

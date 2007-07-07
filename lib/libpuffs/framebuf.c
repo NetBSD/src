@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.13 2007/05/20 19:56:56 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.14 2007/07/07 21:13:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.13 2007/05/20 19:56:56 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.14 2007/07/07 21:13:41 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -66,6 +66,7 @@ struct puffs_framebuf {
 #define ISTAT_NODESTROY	0x01	/* indestructible by framebuf_destroy() */
 #define ISTAT_INTERNAL	0x02	/* never leaves library			*/
 #define ISTAT_NOREPLY	0x04	/* nuke after sending 			*/
+#define ISTAT_DIRECT	0x08	/* receive directly, no moveinfo	*/
 
 #define ISTAT_ONQUEUE	ISTAT_NODESTROY	/* alias */
 
@@ -306,7 +307,7 @@ do {									\
 
 int
 puffs_framev_enqueue_cc(struct puffs_cc *pcc, int fd,
-	struct puffs_framebuf *pufbuf)
+	struct puffs_framebuf *pufbuf, int flags)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_fctrl_io *fio;
@@ -327,7 +328,10 @@ puffs_framev_enqueue_cc(struct puffs_cc *pcc, int fd,
 	pufbuf->offset = 0;
 	pufbuf->istat |= ISTAT_NODESTROY;
 
-	TAILQ_INSERT_TAIL(&fio->snd_qing, pufbuf, pfb_entries);
+	if (flags & PUFFS_FBQUEUE_URGENT)
+		TAILQ_INSERT_HEAD(&fio->snd_qing, pufbuf, pfb_entries);
+	else
+		TAILQ_INSERT_TAIL(&fio->snd_qing, pufbuf, pfb_entries);
 
 	puffs_cc_yield(pcc);
 	if (pufbuf->rv) {
@@ -341,7 +345,8 @@ puffs_framev_enqueue_cc(struct puffs_cc *pcc, int fd,
 
 int
 puffs_framev_enqueue_cb(struct puffs_usermount *pu, int fd,
-	struct puffs_framebuf *pufbuf, puffs_framev_cb fcb, void *arg)
+	struct puffs_framebuf *pufbuf, puffs_framev_cb fcb, void *arg,
+	int flags)
 {
 	struct puffs_fctrl_io *fio;
 
@@ -355,14 +360,17 @@ puffs_framev_enqueue_cb(struct puffs_usermount *pu, int fd,
 	pufbuf->offset = 0;
 	pufbuf->istat |= ISTAT_NODESTROY;
 
-	TAILQ_INSERT_TAIL(&fio->snd_qing, pufbuf, pfb_entries);
+	if (flags & PUFFS_FBQUEUE_URGENT)
+		TAILQ_INSERT_HEAD(&fio->snd_qing, pufbuf, pfb_entries);
+	else
+		TAILQ_INSERT_TAIL(&fio->snd_qing, pufbuf, pfb_entries);
 
 	return 0;
 }
 
 int
 puffs_framev_enqueue_justsend(struct puffs_usermount *pu, int fd,
-	struct puffs_framebuf *pufbuf, int reply)
+	struct puffs_framebuf *pufbuf, int reply, int flags)
 {
 	struct puffs_fctrl_io *fio;
 
@@ -377,7 +385,76 @@ puffs_framev_enqueue_justsend(struct puffs_usermount *pu, int fd,
 	if (!reply)
 		pufbuf->istat |= ISTAT_NOREPLY;
 
+	if (flags & PUFFS_FBQUEUE_URGENT)
+		TAILQ_INSERT_HEAD(&fio->snd_qing, pufbuf, pfb_entries);
+	else
+		TAILQ_INSERT_TAIL(&fio->snd_qing, pufbuf, pfb_entries);
+
+	return 0;
+}
+
+/* ARGSUSED */
+int
+puffs_framev_enqueue_directreceive(struct puffs_cc *pcc, int fd,
+	struct puffs_framebuf *pufbuf, int flags /* used in the future */)
+{
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_fctrl_io *fio;
+
+	fio = getfiobyfd(pu, fd);
+	if (fio == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* XXX: should have cur_in queue */
+	assert(fio->cur_in == NULL);
+	fio->cur_in = pufbuf;
+
+	pufbuf->pcc = pcc;
+	pufbuf->fcb = NULL;
+	pufbuf->fcb_arg = NULL;
+
+	pufbuf->offset = 0;
+	pufbuf->istat |= ISTAT_NODESTROY | ISTAT_DIRECT;
+
+	puffs_cc_yield(pcc);
+	pufbuf->istat &= ~ISTAT_NODESTROY; /* XXX: not the right place */
+	if (pufbuf->rv) {
+		errno = pufbuf->rv;
+		return -1;
+	}
+
+	return 0;
+}
+
+int
+puffs_framev_enqueue_directsend(struct puffs_cc *pcc, int fd,
+	struct puffs_framebuf *pufbuf, int flags)
+{
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_fctrl_io *fio;
+
+	if (flags & PUFFS_FBQUEUE_URGENT)
+		abort(); /* EOPNOTSUPP for now */
+
+	GETFIO(fd);
+
+	pufbuf->pcc = pcc;
+	pufbuf->fcb = NULL;
+	pufbuf->fcb_arg = NULL;
+
+	pufbuf->offset = 0;
+	pufbuf->istat |= ISTAT_NODESTROY | ISTAT_DIRECT;
+
 	TAILQ_INSERT_TAIL(&fio->snd_qing, pufbuf, pfb_entries);
+
+	puffs_cc_yield(pcc);
+	if (pufbuf->rv) {
+		pufbuf->istat &= ~ISTAT_NODESTROY;
+		errno = pufbuf->rv;
+		return -1;
+	}
 
 	return 0;
 }
@@ -446,10 +523,7 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	struct puffs_framebuf *pufbuf, *appbuf;
 	int rv, complete;
 
-	if (fio->stat & FIO_DEAD)
-		return;
-
-	for (;;) {
+	while ((fio->stat & FIO_DEAD) == 0 && (fio->stat & FIO_ENABLE_R)) {
 		if ((pufbuf = fio->cur_in) == NULL) {
 			pufbuf = puffs_framebuf_make();
 			if (pufbuf == NULL)
@@ -472,17 +546,23 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 			break;
 
 		/* else: full read, process */
+		if ((pufbuf->istat & ISTAT_DIRECT) == 0) {
+			appbuf = findbuf(pu, fctrl, fio, pufbuf);
 
-		appbuf = findbuf(pu, fctrl, fio, pufbuf);
-
-		/* XXX: error delivery? */
-		if (appbuf == NULL) {
-			/* errno = ENOMSG; */
-			return;
-		}
+			/* XXX: error delivery? */
+			if (appbuf == NULL) {
+				/* errno = ENOMSG; */
+				return;
+			}
 			
+			moveinfo(pufbuf, appbuf);
+			puffs_framebuf_destroy(pufbuf);
+		} else {
+			appbuf = pufbuf;
+		}
 		appbuf->istat &= ~ISTAT_NODESTROY;
-		moveinfo(pufbuf, appbuf);
+		fio->cur_in = NULL;
+	
 		if (appbuf->pcc) {
 			puffs_docc(appbuf->pcc, ppr);
 		} else if (appbuf->fcb) {
@@ -490,25 +570,23 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		} else {
 			puffs_framebuf_destroy(appbuf);
 		}
-		puffs_framebuf_destroy(pufbuf);
 
 		/* hopeless romantics, here we go again */
-		fio->cur_in = NULL;
 	}
 }
 
 int
 puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
-	struct puffs_fctrl_io *fio)
+	struct puffs_fctrl_io *fio, struct puffs_putreq *ppr)
 {
 	struct puffs_framebuf *pufbuf, *pufbuf_next;
-	int rv, complete, error;
+	int rv, complete, done;
 
 	if (fio->stat & FIO_DEAD)
 		return 0;
 
-	for (pufbuf = TAILQ_FIRST(&fio->snd_qing), error = 0;
-	    pufbuf;
+	for (pufbuf = TAILQ_FIRST(&fio->snd_qing), done = 0;
+	    pufbuf && (fio->stat & FIO_DEAD) == 0 && fio->stat & FIO_ENABLE_W;
 	    pufbuf = pufbuf_next) {
 		complete = 0;
 		pufbuf_next = TAILQ_NEXT(pufbuf, pfb_entries);
@@ -516,13 +594,13 @@ puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 
 		if (rv) {
 			puffs_framev_writeclose(pu, fio, rv);
-			error = 1;
+			done = 1;
 			break;
 		}
 
 		/* partial write */
 		if (complete == 0)
-			return error;
+			return done;
 
 		/* else, complete write */
 		TAILQ_REMOVE(&fio->snd_qing, pufbuf, pfb_entries);
@@ -530,9 +608,12 @@ puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		/* can't wait for result if we can't read */
 		if (fio->stat & FIO_RDGONE) {
 			errnotify(pufbuf, ENXIO);
-			error = 1;
-
-		} else  if ((pufbuf->istat & ISTAT_NOREPLY) == 0) {
+			done = 1;
+		} else if ((pufbuf->istat & ISTAT_DIRECT)) {
+			pufbuf->istat &= ~ISTAT_NODESTROY;
+			puffs_docc(pufbuf->pcc, ppr);
+			done = 1;
+		} else if ((pufbuf->istat & ISTAT_NOREPLY) == 0) {
 			TAILQ_INSERT_TAIL(&fio->res_qing, pufbuf,
 			    pfb_entries);
 		} else {
@@ -543,18 +624,18 @@ puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		/* omstart! */
 	}
 
-	return error;
+	return done;
 }
 
 int
-puffs_framev_addfd(struct puffs_usermount *pu, int fd)
+puffs_framev_addfd(struct puffs_usermount *pu, int fd, int what)
 {
 	struct puffs_framectrl *pfctrl = &pu->pu_framectrl;
 	struct puffs_fctrl_io *fio;
-	struct kevent kev[2];
 	struct kevent *newevs;
+	struct kevent kev[2];
 	size_t nfds;
-	int rv;
+	int rv, readenable;
 
 	nfds = pfctrl->nfds+1;
 	newevs = realloc(pfctrl->evs, (2*nfds+1) * sizeof(struct kevent));
@@ -565,28 +646,111 @@ puffs_framev_addfd(struct puffs_usermount *pu, int fd)
 	fio = malloc(sizeof(struct puffs_fctrl_io));
 	if (fio == NULL)
 		return -1;
-
-	if (pu->pu_state & PU_INLOOP) {
-		EV_SET(&kev[0], fd, EVFILT_READ, EV_ADD, 0, 0, (intptr_t)fio);
-		EV_SET(&kev[1], fd, EVFILT_WRITE, EV_ADD|EV_DISABLE,
-		    0, 0, (intptr_t)fio);
-		rv = kevent(pu->pu_kq, kev, 2, NULL, 0, NULL);
-		if (rv == -1) {
-			free(fio);
-			return -1;
-		}
-	}
-
 	fio->io_fd = fd;
 	fio->cur_in = NULL;
 	fio->stat = 0;
 	TAILQ_INIT(&fio->snd_qing);
 	TAILQ_INIT(&fio->res_qing);
 
+	readenable = 0;
+	if ((what & PUFFS_FBIO_READ) == 0)
+		readenable = EV_DISABLE;
+
+	if (pu->pu_state & PU_INLOOP) {
+		EV_SET(&kev[0], fd, EVFILT_READ,
+		    EV_ADD|readenable, 0, 0, (intptr_t)fio);
+		EV_SET(&kev[1], fd, EVFILT_WRITE,
+		    EV_ADD|EV_DISABLE, 0, 0, (intptr_t)fio);
+		rv = kevent(pu->pu_kq, kev, 2, NULL, 0, NULL);
+		if (rv == -1) {
+			free(fio);
+			return -1;
+		}
+	}
+	if (what & PUFFS_FBIO_READ)
+		fio->stat |= FIO_ENABLE_R;
+	if (what & PUFFS_FBIO_WRITE)
+		fio->stat |= FIO_ENABLE_W;
+
 	LIST_INSERT_HEAD(&pfctrl->fb_ios, fio, fio_entries);
 	pfctrl->nfds = nfds;
 
 	return 0;
+}
+
+/*
+ * XXX: the following en/disable should be coalesced and executed
+ * only during the actual keven call.  So feel free to fix if
+ * threatened by mindblowing boredom.
+ */
+
+int
+puffs_framev_enablefd(struct puffs_usermount *pu, int fd, int what)
+{
+	struct kevent kev;
+	struct puffs_fctrl_io *fio;
+	int rv;
+
+	assert((what & (PUFFS_FBIO_READ | PUFFS_FBIO_WRITE)) != 0);
+
+	fio = getfiobyfd(pu, fd);
+	if (fio == NULL) {
+		errno = ENXIO;
+		return -1;
+	}
+
+	/* write is enabled in the event loop if there is output */
+	EV_SET(&kev, fd, EVFILT_READ, EV_ENABLE, 0, 0, (uintptr_t)fio);
+	rv = kevent(pu->pu_kq, &kev, 1, NULL, 0, NULL);
+
+	if (rv == 0) {
+		if (what & PUFFS_FBIO_READ)
+			fio->stat |= FIO_ENABLE_R;
+		if (what & PUFFS_FBIO_WRITE)
+			fio->stat |= FIO_ENABLE_W;
+	}
+
+	return rv;
+}
+
+int
+puffs_framev_disablefd(struct puffs_usermount *pu, int fd, int what)
+{
+	struct kevent kev[2];
+	struct puffs_fctrl_io *fio;
+	size_t i;
+	int rv;
+
+	assert((what & (PUFFS_FBIO_READ | PUFFS_FBIO_WRITE)) != 0);
+
+	fio = getfiobyfd(pu, fd);
+	if (fio == NULL) {
+		errno = ENXIO;
+		return -1;
+	}
+
+	i = 0;
+
+	if (what & PUFFS_FBIO_READ) {
+		EV_SET(&kev[0], fd,
+		    EVFILT_READ, EV_DISABLE, 0, 0, (uintptr_t)fio);
+		i++;
+	}
+	if (what & PUFFS_FBIO_WRITE && fio->stat & FIO_WR) {
+		EV_SET(&kev[1], fd,
+		    EVFILT_WRITE, EV_DISABLE, 0, 0, (uintptr_t)fio);
+		i++;
+	}
+	rv = kevent(pu->pu_kq, kev, i, NULL, 0, NULL);
+
+	if (rv == 0) {
+		if (what & PUFFS_FBIO_READ)
+			fio->stat &= ~FIO_ENABLE_R;
+		if (what & PUFFS_FBIO_WRITE)
+			fio->stat &= ~FIO_ENABLE_W;
+	}
+
+	return rv;
 }
 
 void
@@ -602,8 +766,12 @@ puffs_framev_readclose(struct puffs_usermount *pu,
 	fio->stat |= FIO_RDGONE;
 
 	if (fio->cur_in) {
-		puffs_framebuf_destroy(fio->cur_in);
-		fio->cur_in = NULL;
+		if ((fio->cur_in->istat & ISTAT_DIRECT) == 0) {
+			puffs_framebuf_destroy(fio->cur_in);
+			fio->cur_in = NULL;
+		} else {
+			errnotify(fio->cur_in, error);
+		}
 	}
 
 	while ((pufbuf = TAILQ_FIRST(&fio->res_qing)) != NULL) {
@@ -614,9 +782,9 @@ puffs_framev_readclose(struct puffs_usermount *pu,
 	EV_SET(&kev, fio->io_fd, EVFILT_READ, EV_DELETE, 0, 0, 0);
 	(void) kevent(pu->pu_kq, &kev, 1, NULL, 0, NULL);
 
-	notflag = PUFFS_FBGONE_READ;
+	notflag = PUFFS_FBIO_READ;
 	if (fio->stat & FIO_WRGONE)
-		notflag |= PUFFS_FBGONE_WRITE;
+		notflag |= PUFFS_FBIO_WRITE;
 
 	pu->pu_framectrl.fdnotfn(pu, fio->io_fd, notflag);
 }
@@ -641,9 +809,9 @@ puffs_framev_writeclose(struct puffs_usermount *pu,
 	EV_SET(&kev, fio->io_fd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
 	(void) kevent(pu->pu_kq, &kev, 1, NULL, 0, NULL);
 
-	notflag = PUFFS_FBGONE_WRITE;
+	notflag = PUFFS_FBIO_WRITE;
 	if (fio->stat & FIO_RDGONE)
-		notflag |= PUFFS_FBGONE_READ;
+		notflag |= PUFFS_FBIO_READ;
 
 	pu->pu_framectrl.fdnotfn(pu, fio->io_fd, notflag);
 }
