@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.5 2007/06/27 20:38:33 degroote Exp $	*/
+/*	$NetBSD: keydb.h,v 1.6 2007/07/07 18:38:23 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -170,21 +170,21 @@ struct secacq {
 #define SADB_KILL_INTERVAL	600	/* six seconds */
 
 /* secpolicy */
-extern struct secpolicy *keydb_newsecpolicy __P((void));
-extern void keydb_delsecpolicy __P((struct secpolicy *));
+struct secpolicy *keydb_newsecpolicy (void);
+void keydb_delsecpolicy (struct secpolicy *);
 /* secashead */
-extern struct secashead *keydb_newsecashead __P((void));
-extern void keydb_delsecashead __P((struct secashead *));
+struct secashead *keydb_newsecashead (void);
+void keydb_delsecashead (struct secashead *);
 /* secasvar */
-extern struct secasvar *keydb_newsecasvar __P((void));
-extern void keydb_refsecasvar __P((struct secasvar *));
-extern void keydb_freesecasvar __P((struct secasvar *));
+struct secasvar *keydb_newsecasvar (void);
+void keydb_refsecasvar (struct secasvar *);
+void keydb_freesecasvar (struct secasvar *);
 /* secreplay */
-extern struct secreplay *keydb_newsecreplay __P((size_t));
-extern void keydb_delsecreplay __P((struct secreplay *));
+struct secreplay *keydb_newsecreplay (size_t);
+void keydb_delsecreplay (struct secreplay *);
 /* secreg */
-extern struct secreg *keydb_newsecreg __P((void));
-extern void keydb_delsecreg __P((struct secreg *));
+struct secreg *keydb_newsecreg (void);
+void keydb_delsecreg (struct secreg *);
 
 #endif /* _KERNEL */
 
