@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.27 2007/06/27 20:38:33 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.28 2007/07/07 18:38:22 degroote Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.27 2007/06/27 20:38:33 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.28 2007/07/07 18:38:22 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -89,10 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.27 2007/06/27 20:38:33 degroote E
 
 /* assumes that ip header and ah header are contiguous on mbuf */
 void*
-ah4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct ah *ah;
@@ -140,10 +137,7 @@ ah4_ctlinput(cmd, sa, v)
 
 /* assumes that ip header and esp header are contiguous on mbuf */
 void*
-esp4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct esp *esp;
@@ -190,10 +184,7 @@ esp4_ctlinput(cmd, sa, v)
 
 #ifdef INET6
 void
-ah6_ctlinput(cmd, sa, d)
-       int cmd;
-       const struct sockaddr *sa;
-       void *d;
+ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
        const struct newah *ahp;
        struct newah ah;
@@ -279,10 +270,7 @@ ah6_ctlinput(cmd, sa, d)
 
 
 void
-esp6_ctlinput(cmd, sa, d)
-	int cmd;
-	const struct sockaddr *sa;
-	void *d;
+esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newesp *espp;
 	struct newesp esp;
