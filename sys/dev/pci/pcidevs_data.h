@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.883 2007/07/06 19:23:53 hpeyerl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.884 2007/07/07 20:37:41 jklos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.884 2007/07/06 15:05:42 hpeyerl Exp
+ *	NetBSD: pcidevs,v 1.885 2007/07/07 20:30:47 jklos Exp
  */
 
 /*
@@ -2060,6 +2060,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Oxford Semiconductor",
 	},
 	{
+	    PCI_VENDOR_CHELSIO,
+	    "Chelsio Communications",
+	},
+	{
 	    PCI_VENDOR_TAMARACK,
 	    "Tamarack Microelectronics",
 	},
@@ -2376,7 +2380,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 584;
+const int pci_nvendors = 585;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -5046,6 +5050,42 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX,
 	    "Nitrox XL",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302E,
+	    "T302e",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310E,
+	    "T310e",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320X,
+	    "T320x",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302X,
+	    "T302x",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320E,
+	    "T320e",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310X,
+	    "T310x",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B10,
+	    "T3B10",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B20,
+	    "T3B20",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B02,
+	    "T3B02",
 	},
 	{
 	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_64310,
@@ -12988,4 +13028,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2652;
+const int pci_nproducts = 2661;
