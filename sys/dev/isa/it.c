@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.11 2007/07/05 15:20:30 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.12 2007/07/07 05:27:22 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.11 2007/07/05 15:20:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.12 2007/07/07 05:27:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,8 +254,10 @@ it_setup_sensors(struct it_softc *sc)
 	COPYDESCR(sc->sc_data[2].desc, "Aux Temp");
 
 	/* voltages */
-	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++)
+	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++) {
 		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
+		sc->sc_data[i].rfact = ENVSYS_FCHANGERFACT;
+	}
 
 	COPYDESCR(sc->sc_data[3].desc, "VCORE_A");
 	COPYDESCR(sc->sc_data[4].desc, "VCORE_B");
@@ -326,11 +328,7 @@ it_refresh_volts(struct it_softc *sc, envsys_data_t *edata)
 	edata->value_cur = (sdata << 4);
 	/* rfact is (factor * 10^4) */
 	edata->value_cur *= it_vrfact[i];
-	/*
-	 * Enable ENVSYS_FCHANGERFACT to be able to specify a different
-	 * rfact value from userland.
-	 */
-	edata->flags |= ENVSYS_FCHANGERFACT;
+
 	if (edata->rfact)
 		edata->value_cur += edata->rfact;
 	else
