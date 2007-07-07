@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.3 2007/07/07 11:56:11 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.4 2007/07/07 12:12:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.3 2007/07/07 11:56:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.4 2007/07/07 12:12:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -678,16 +678,13 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * reentered, at a minimum until the priority is finally dropped
 	 * to IPL_NONE on entry to the idle loop.
 	 */
+	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
 		splx(s);
-		(void)splsched();
 		lwp_exit_switchaway(l);
 		/* NOTREACHED */
 	}
-
-	/* Again it's OK to modify these fields without holding locks. */
 	l->l_switchto = NULL;
-	l->l_stat = LSIDL;
 	l->l_flag &= ~LW_RUNNING;
 }
 
