@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.4 2007/07/07 12:12:40 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.5 2007/07/07 12:18:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.4 2007/07/07 12:12:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.5 2007/07/07 12:18:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -670,13 +670,12 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * will be gone so switch to the idle LWP.  It will select a new
 	 * LWP to run.
 	 *
-	 * We must drop the priority level to IPL_SCHED here as switching
-	 * at IPL_HIGH could deadlock the system.  We have already set 
-	 * si->si_active = 0 (which means another interrupt at this level
-	 * can be triggered).  That's not be a problem: we are lowering
-	 * to level 's' which will prevent softint_execute() from being
-	 * reentered, at a minimum until the priority is finally dropped
-	 * to IPL_NONE on entry to the idle loop.
+	 * We must drop the priority level as switching at IPL_HIGH could
+	 * deadlock the system.  We have already set si->si_active = 0,
+	 * which means another interrupt at this level can be triggered. 
+	 * That's not be a problem: we are lowering to level 's' which will
+	 * prevent softint_execute() from being reentered until the priority
+	 * is finally dropped to IPL_NONE on entry to the idle loop.
 	 */
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
