@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.32 2007/03/04 05:59:36 christos Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.33 2007/07/08 10:19:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32 2007/03/04 05:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.33 2007/07/08 10:19:22 pooka Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -128,7 +128,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));

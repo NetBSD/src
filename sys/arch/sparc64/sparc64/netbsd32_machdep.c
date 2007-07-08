@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.71 2007/03/16 22:24:49 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.72 2007/07/08 10:19:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.71 2007/03/16 22:24:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.72 2007/07/08 10:19:24 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -348,7 +348,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
-	uc.uc_link = 0;
+	uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
