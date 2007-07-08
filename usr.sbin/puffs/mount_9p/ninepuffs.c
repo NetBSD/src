@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.c,v 1.13 2007/07/07 21:14:28 pooka Exp $	*/
+/*	$NetBSD: ninepuffs.c,v 1.14 2007/07/08 16:29:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninepuffs.c,v 1.13 2007/07/07 21:14:28 pooka Exp $");
+__RCSID("$NetBSD: ninepuffs.c,v 1.14 2007/07/08 16:29:29 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -51,12 +51,14 @@ __RCSID("$NetBSD: ninepuffs.c,v 1.13 2007/07/07 21:14:28 pooka Exp $");
 #include "ninepuffs.h"
 
 #define DEFPORT_9P 564
+#define DEFUSER_9P "glenda"
 
 static void
 usage(void)
 {
 
-	errx(1, "usage: %s user server mountpoint", getprogname());
+	errx(1, "usage: %s [-o mntopts] [-p port] [-u user] [-s] server mount",
+	    getprogname());
 }
 
 /*
@@ -100,21 +102,22 @@ main(int argc, char *argv[])
 	struct puffs_node *pn_root;
 	mntoptparse_t mp;
 	char *srvhost;
-	char *user;
+	const char *user;
 	unsigned short port;
 	int mntflags, pflags, lflags, ch;
 	int detach;
 
 	setprogname(argv[0]);
 
-	if (argc < 3)
+	if (argc < 2)
 		usage();
 
 	mntflags = pflags = lflags = 0;
 	detach = 1;
 	port = DEFPORT_9P;
+	user = DEFUSER_9P;
 
-	while ((ch = getopt(argc, argv, "o:p:s")) != -1) {
+	while ((ch = getopt(argc, argv, "o:p:su:")) != -1) {
 		switch (ch) {
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
@@ -128,6 +131,9 @@ main(int argc, char *argv[])
 		case 's':
 			lflags |= PUFFSLOOP_NODAEMON;
 			break;
+		case 'u':
+			user = optarg;
+			break;
 		default:
 			usage();
 			/*NOTREACHED*/
@@ -136,11 +142,10 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 3)
+	if (argc != 2)
 		usage();
 
-	user = argv[0];
-	srvhost = argv[1];
+	srvhost = argv[0];
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
@@ -193,7 +198,7 @@ main(int argc, char *argv[])
 	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
 		err(1, "puffs_framebuf_addfd");
 
-	if (puffs_mount(pu, argv[2], mntflags, pn_root) == -1)
+	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
 
 	return puffs_mainloop(pu, lflags);
