@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.48.4.2 2007/06/28 23:31:28 ober Exp $
+#	$NetBSD: files.bebox,v 1.48.4.3 2007/07/08 02:28:44 ober Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -6,10 +6,11 @@ maxpartitions 8
 
 maxusers 2 8 64
 
+include "arch/powerpc/pic/files.pic"
+
 defflag	XSERVER
 
 file	arch/bebox/bebox/autoconf.c
-file	arch/bebox/bebox/extintr.c
 file	arch/bebox/bebox/machdep.c
 file    arch/powerpc/powerpc/clock.c
 file    arch/powerpc/oea/prep_machdep.c
@@ -17,6 +18,7 @@ file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
+file    arch/bebox/bebox/pic_bebox.c
 
 # General files
 file	dev/cons.c
@@ -65,14 +67,9 @@ include "dev/wsfb/files.wsfb"
 #
 
 include "dev/pci/files.pci"
-#file	arch/bebox/pci/pci_machdep.c	pci
-file    arch/prep/pci/pci_machdep.c             pci
-#file    arch/prep/pci/prep_pciconf_direct.c     pci
-#file    arch/powerpc/pci/pci_machdep_common.c   pci
-#file    arch/powerpc/pci/pciconf_indirect.c     pci
-
-
-
+file	arch/bebox/pci/pci_machdep.c	pci
+file    arch/powerpc/pci/pci_machdep_common.c   pci
+file    arch/powerpc/pci/pciconf_indirect.c     pci
 
 include "dev/pci/files.agp"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.24.38.1 2007/05/02 16:24:45 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.24.38.2 2007/07/08 02:28:43 ober Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.24.38.1 2007/05/02 16:24:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.24.38.2 2007/07/08 02:28:43 ober Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -284,7 +284,7 @@ intr_establish(irq, type, level, ih_fun, ih_arg)
 	 */
 	ih->ih_fun = ih_fun;
 	ih->ih_arg = ih_arg;
-	ih->ih_count = 0;
+	/*ih->ih_count = 0;*/
 	ih->ih_next = NULL;
 	ih->ih_level = level;
 	ih->ih_irq = irq;

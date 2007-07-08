@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.5 2007/06/28 23:31:26 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.6 2007/07/08 02:28:43 ober Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.5 2007/06/28 23:31:26 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.6 2007/07/08 02:28:43 ober Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -160,10 +160,11 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 	 * BeBox MotherBoard's Register
 	 *  Interrupt Mask Reset
 	 */
+#if 0
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x0ffffffc;
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU0_INT_MASK) = 0x80000023;
 	*(volatile u_int *)(MOTHER_BOARD_REG + CPU1_INT_MASK) = 0x0ffffffc;
-
+#endif
 	/*
 	 * boothowto
 	 */
@@ -181,7 +182,7 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
+	//bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
 	if (!bebox_mb_reg)
 		panic("cpu_startup: no room for interrupt register");
 
@@ -370,3 +371,4 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
   *mem = physmemr;
   *avail = availmemr;
 }
+

@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.1.2.1 2007/05/10 18:53:26 garbled Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.1.2.2 2007/07/08 02:28:44 ober Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.1.2.1 2007/05/10 18:53:26 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.1.2.2 2007/07/08 02:28:44 ober Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -62,6 +62,7 @@ static void bebox_enable_irq(struct pic_ops *, int, int);
 static void bebox_disable_irq(struct pic_ops *, int);
 static int bebox_get_irq(struct pic_ops *);
 static void bebox_ack_irq(struct pic_ops *, int);
+struct pic_ops * setup_bebox_intr(void); 
 
 struct pic_ops *
 setup_bebox_intr(void)
@@ -81,14 +82,14 @@ setup_bebox_intr(void)
 	pic->pic_establish_irq = dummy_pic_establish_intr;
 	strcpy(pic->pic_name, "bebox");
 	pic_add(pic);
+	return(pic);
 }
 
 static void
 bebox_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 	out32rb(bebox_mb_reg + CPU0_INT_MASK, BEBOX_INTR_MASK);
-	out32rb(bebox_mb_reg + CPU0_INT_MASK,
-	    BEBOX_SET_MASK | (1 << (31 - irq));
+	out32rb(bebox_mb_reg + CPU0_INT_MASK,  BEBOX_SET_MASK | (1 << (31 - irq)) );
 }
 
 static void
