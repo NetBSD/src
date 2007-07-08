@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.11 2007/03/04 19:21:55 christos Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.12 2007/07/08 10:19:24 pooka Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11 2007/03/04 19:21:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12 2007/07/08 10:19:24 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -422,7 +422,7 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	/* Save register context.  */
 	uc.uc_flags = _UC_SIGMASK;
 	uc.uc_sigmask = *mask;
-	uc.uc_link = NULL;
+	uc.uc_link = l->l_ctxlink;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 	sendsig_reset(l, ksi->ksi_signo);
 	mutex_exit(&p->p_smutex);
