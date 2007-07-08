@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.14 2007/07/07 21:13:41 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.15 2007/07/08 11:24:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.14 2007/07/07 21:13:41 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.15 2007/07/08 11:24:58 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -786,7 +786,8 @@ puffs_framev_readclose(struct puffs_usermount *pu,
 	if (fio->stat & FIO_WRGONE)
 		notflag |= PUFFS_FBIO_WRITE;
 
-	pu->pu_framectrl.fdnotfn(pu, fio->io_fd, notflag);
+	if (pu->pu_framectrl.fdnotfn)
+		pu->pu_framectrl.fdnotfn(pu, fio->io_fd, notflag);
 }
 
 void
@@ -813,7 +814,8 @@ puffs_framev_writeclose(struct puffs_usermount *pu,
 	if (fio->stat & FIO_RDGONE)
 		notflag |= PUFFS_FBIO_READ;
 
-	pu->pu_framectrl.fdnotfn(pu, fio->io_fd, notflag);
+	if (pu->pu_framectrl.fdnotfn)
+		pu->pu_framectrl.fdnotfn(pu, fio->io_fd, notflag);
 }
 
 static int
@@ -852,8 +854,8 @@ puffs_framev_removefd(struct puffs_usermount *pu, int fd, int error)
 	return removefio(pu, fio, error ? error : ECONNRESET);
 }
 
-static void
-defaultnot(struct puffs_usermount *pu, int fd, int what)
+void
+puffs_framev_removeonclose(struct puffs_usermount *pu, int fd, int what)
 {
 
 	if (PUFFS_FBGONE_BOTH(what))
@@ -865,7 +867,7 @@ puffs_framev_unmountonclose(struct puffs_usermount *pu, int fd, int what)
 {
 
 	/* XXX & X: unmount is non-sensible */
-	defaultnot(pu, fd, what);
+	puffs_framev_removeonclose(pu, fd, what);
 	if (PUFFS_FBGONE_BOTH(what))
 		PU_SETSTATE(pu, PUFFS_STATE_UNMOUNTED);
 }
@@ -881,10 +883,7 @@ puffs_framev_init(struct puffs_usermount *pu,
 	pfctrl->rfb = rfb;
 	pfctrl->wfb = wfb;
 	pfctrl->cmpfb = cmpfb;
-	if (fdnotfn)
-		pfctrl->fdnotfn = fdnotfn;
-	else
-		pfctrl->fdnotfn = defaultnot;
+	pfctrl->fdnotfn = fdnotfn;
 }
 
 void
