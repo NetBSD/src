@@ -112,11 +112,21 @@ typedef char *caddr_t;
 #endif
 
 static int cxgb_setup_msix(adapter_t *, int);
+#ifdef __FreeBSD__
 static void cxgb_init(void *);
+#endif
+#ifdef __NetBSD__
+static int cxgb_init(struct ifnet *);
+#endif
 static void cxgb_init_locked(struct port_info *);
 static void cxgb_stop_locked(struct port_info *);
 static void cxgb_set_rxmode(struct port_info *);
+#ifdef __FreeBSD__
 static int cxgb_ioctl(struct ifnet *, unsigned long, caddr_t);
+#endif
+#ifdef __NetBSD__
+static int cxgb_ioctl(struct ifnet *, unsigned long, void *);
+#endif
 static void cxgb_start(struct ifnet *);
 static void cxgb_start_proc(void *, int ncount);
 static int cxgb_media_change(struct ifnet *);
@@ -160,9 +170,16 @@ static int offload_open(struct port_info *pi);
 static int offload_close(struct toedev *tdev);
 #endif
 
+
 #ifdef __FreeBSD__
 static d_ioctl_t cxgb_extension_ioctl;
+#endif
 
+#ifdef __NetBSD__
+static int cxgb_extension_ioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *td);
+#endif
+
+#ifdef __FreeBSD__
 static device_method_t cxgb_controller_methods[] = {
 	DEVMETHOD(device_probe,		cxgb_controller_probe),
 	DEVMETHOD(device_attach,	cxgb_controller_attach),
@@ -906,7 +923,7 @@ cxgb_port_probe(device_t dev)
 #endif
 
 #ifdef __NetBSD__
-static int cxgb_port_match(device_t dev, struct cfdata *match, void *context);
+static int cxgb_port_match(device_t dev, struct cfdata *match, void *context)
 {
 	struct port_info *p = (struct port_info *)dev;  // device is first thing in adapter
 	char buf[80];
@@ -927,11 +944,11 @@ cxgb_makedev(struct port_info *pi)
 	if ((cxgb_cdevsw = malloc(sizeof(struct cdevsw), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
 	
+#ifdef __FreeBSD__
 	cxgb_cdevsw->d_version = D_VERSION;
 	cxgb_cdevsw->d_name = strdup(pi->ifp->if_xname, M_DEVBUF);
-#ifdef __FreeBSD__
-	cxgb_cdevsw->d_ioctl = cxgb_extension_ioctl;	
 #endif
+	cxgb_cdevsw->d_ioctl = cxgb_extension_ioctl;	
 	
 	pi->port_cdev = make_dev(cxgb_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
 	    pi->ifp->if_xname);
@@ -988,26 +1005,45 @@ static void cxgb_port_attach(device_t dev, device_t self, void *context)
 #endif
 #ifdef __NetBSD__
 	struct port_info *p = (struct port_info *)dev;  // device is first thing in adapter
+	int err;
 #endif
 	struct ifnet *ifp;
 	int media_flags;
-	int err;
 	char buf[64];
 	
 	snprintf(buf, sizeof(buf), "cxgb port %d", p->port);  	
 	mtx_init(&p->lock, buf, 0, MTX_DEF);
 
 	/* Allocate an ifnet object and set it up */
+#ifdef __FreeBSD__
 	ifp = p->ifp = if_alloc(IFT_ETHER);
+#endif
+#ifdef __NetBSD__
+	ifp = p->ifp = (void *)malloc(sizeof (struct ifnet), M_IFADDR, M_WAITOK);
+#endif
 	if (ifp == NULL) {
 		device_printf(dev, "Cannot allocate ifnet\n");
+#ifdef __FreeBSD__
 		return (ENOMEM);
+#endif
+#ifdef __NetBSD__
+		return;
+#endif
 	}
+#ifdef __NetBSD__
+	memset(ifp, 0, sizeof(struct ifnet));
+#endif
 	
 	/*
 	 * Note that there is currently no watchdog timer.
 	 */
+#ifdef __FreeBSD__
 	if_initname(ifp, device_get_name(dev), device_get_unit(dev));
+#endif
+#ifdef __NetBSD__
+	snprintf(buf, sizeof(buf), "cxgb%d", p->port);  	
+	strcpy(ifp->if_xname, buf);
+#endif
 	ifp->if_init = cxgb_init;
 	ifp->if_softc = p;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1015,9 +1051,14 @@ static void cxgb_port_attach(device_t dev, device_t self, void *context)
 	ifp->if_start = cxgb_start;
 	ifp->if_timer = 0;	/* Disable ifnet watchdog */
 	ifp->if_watchdog = NULL;
-
+#ifdef __FreeBSD__
 	ifp->if_snd.ifq_drv_maxlen = TX_ETH_Q_SIZE;
 	IFQ_SET_MAXLEN(&ifp->if_snd, ifp->if_snd.ifq_drv_maxlen);
+#endif
+#ifdef __NetBSD__
+	ifp->if_snd.ifq_maxlen = TX_ETH_Q_SIZE;
+	IFQ_SET_MAXLEN(&ifp->if_snd, ifp->if_snd.ifq_maxlen);
+#endif
 	IFQ_SET_READY(&ifp->if_snd);
 
 #ifdef __FreeBSD__
@@ -1037,10 +1078,12 @@ static void cxgb_port_attach(device_t dev, device_t self, void *context)
 #ifdef DEFAULT_JUMBO
 	ifp->if_mtu = 9000;
 #endif	
+#ifdef __FreeBSD__
 	if ((err = cxgb_makedev(p)) != 0) {
 		printf("makedev failed %d\n", err);
 		return (err);
 	}
+#endif
 	ifmedia_init(&p->media, IFM_IMASK, cxgb_media_change,
 	    cxgb_media_status);
 
@@ -1052,7 +1095,12 @@ static void cxgb_port_attach(device_t dev, device_t self, void *context)
 	        media_flags = IFM_ETHER | IFM_10G_LR;
 	else {
 	        printf("unsupported media type %s\n", p->port_type->desc);
+#ifdef __FreeBSD__
 		return (ENXIO);
+#endif
+#ifdef __NetBSD__
+		return;
+#endif
 	}
 		
 	ifmedia_add(&p->media, media_flags, 0, NULL);
@@ -1074,18 +1122,30 @@ static void cxgb_port_attach(device_t dev, device_t self, void *context)
 	
 	if (p->tq == NULL) {
 		device_printf(dev, "failed to allocate port task queue\n");
+#ifdef __FreeBSD__
 		return (ENOMEM);
+#endif
+#ifdef __NetBSD__
+		return;
+#endif
 	}	
 	taskqueue_start_threads(&p->tq, 1, PI_NET, "%s taskq",
 	    device_get_nameunit(dev));
 	TASK_INIT(&p->start_task, 0, cxgb_start_proc, ifp);
 #endif
 	
+#ifdef __FreeBSD__
 	return (0);
+#endif
 }
 
 static int
+#ifdef __FreeBSD__
 cxgb_port_detach(device_t dev)
+#endif
+#ifdef __NetBSD__
+cxgb_port_detach(device_t dev, int flags)
+#endif
 {
 #ifdef __FreeBSD__
 	struct port_info *p = device_get_softc(dev);
@@ -1108,11 +1168,13 @@ cxgb_port_detach(device_t dev)
 #endif
 	
 	ether_ifdetach(p->ifp);
+#ifdef __FreeBSD__
 	if_free(p->ifp);
-	
 	destroy_dev(p->port_cdev);
-
-
+#endif
+#ifdef __NetBSD__
+	if_detach(p->ifp);
+#endif
 	return (0);
 }
 
@@ -1638,14 +1700,29 @@ offload_close(struct toedev *tdev)
 	return 0;
 }
 
+#ifdef __FreeBSD__
 static void
 cxgb_init(void *arg)
+#endif
+#ifdef __NetBSD__
+static int
+cxgb_init(struct ifnet *ifp)
+#endif
 {
+#ifdef __FreeBSD__
 	struct port_info *p = arg;
+#endif
+#ifdef __NetBSD__
+	struct port_info *p = ifp->if_softc;
+#endif
 
 	PORT_LOCK(p);
 	cxgb_init_locked(p);
 	PORT_UNLOCK(p);
+
+#ifdef __NetBSD__
+	return (0); // ???????????
+#endif
 }
 
 static void
@@ -1740,8 +1817,14 @@ cxgb_stop_locked(struct port_info *p)
 	ADAPTER_UNLOCK(p->adapter);
 }
 
+#ifdef __FreeBSD__
 static int
 cxgb_ioctl(struct ifnet *ifp, unsigned long command, caddr_t data)
+#endif
+#ifdef __NetBSD__
+static int
+cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
+#endif
 {
 	struct port_info *p = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1775,7 +1858,12 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, caddr_t data)
 			if (!(ifp->if_flags & IFF_RUNNING))
 #endif
 			{
+#ifdef __FreeBSD__
 				cxgb_init(p);
+#endif
+#ifdef __NetBSD__
+				cxgb_init(ifp);
+#endif
 			}
 			arp_ifinit(ifp, ifa);
 		} else
@@ -1833,7 +1921,12 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, caddr_t data)
 		break;
 	case SIOCSIFCAP:
 		PORT_LOCK(p);
+#ifdef __FreeBSD__
 		mask = ifr->ifr_reqcap ^ ifp->if_capenable;
+#endif
+#ifdef __NetBSD__
+		mask = ifp->if_capenable;
+#endif
 		if (mask & IFCAP_TXCSUM) {
 			if (IFCAP_TXCSUM & ifp->if_capenable) {
 				ifp->if_capenable &= ~(IFCAP_TXCSUM|IFCAP_TSO4);
@@ -2189,9 +2282,14 @@ in_range(int val, int lo, int hi)
 static int
 cxgb_extension_ioctl(struct cdev *dev, unsigned long cmd, caddr_t data,
     int fflag, struct thread *td)
+#endif
+#ifdef __NetBSD__
+static int
+cxgb_extension_ioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *td)
+#endif
 {
 	int mmd, error = 0;
-	struct port_info *pi = dev->si_drv1;
+	struct port_info *pi = &dev->si_drv1;
 	adapter_t *sc = pi->adapter;
 
 #ifdef PRIV_SUPPORTED	
@@ -2584,7 +2682,6 @@ cxgb_extension_ioctl(struct cdev *dev, unsigned long cmd, caddr_t data,
 
 	return (error);
 }
-#endif
 
 static __inline void
 reg_block_dump(struct adapter *ap, uint8_t *buf, unsigned int start,
