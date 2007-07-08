@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.2 2007/07/08 10:43:03 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.3 2007/07/08 11:45:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -244,13 +244,6 @@ portal_frame_wf(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 	return error;
 }
 
-static void
-portal_frame_notify(struct puffs_usermount *pu, int fd, int what)
-{
-
-	/* nada */
-}
-
 /* transfer file descriptor to master file server */
 static int
 sendfd(int s, int fd, int error)
@@ -428,8 +421,7 @@ main(int argc, char *argv[])
 		err(1, "cannot read cfg \"%s\"", cfg);
 
 	puffs_ml_setloopfn(pu, portal_loopfn);
-	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf,
-	    NULL, portal_frame_notify);
+	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL, NULL);
 	if (puffs_mount(pu,  argv[1], mntflags, PORTAL_ROOT) == -1)
 		err(1, "mount");
 	if (puffs_mainloop(pu, lflags) == -1)
@@ -658,8 +650,10 @@ portal_node_reclaim(struct puffs_cc *pcc, void *opc,
 {
 	struct portal_node *portn = opc;
 
-	if (portn->fd != -1)
+	if (portn->fd != -1) {
+		puffs_framev_removefd(puffs_cc_getusermount(pcc), portn->fd, 0);
 		close(portn->fd);
+	}
 	free(portn->path);
 	free(portn);
 
