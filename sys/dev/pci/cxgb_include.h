@@ -65,7 +65,7 @@
 #include <dev/pci/cxgb_ctl_defs.h>
 #include <dev/pci/cxgb_sge_defs.h>
 #include <dev/pci/cxgb_firmware_exports.h>
-// #include <sys/mvec.h>
+#include "cxgb_mvec.h"
 #include "cxgb_toedev.h"
 // #include <sys/mbufq.h>
 #include "cxgb_jhash.h"

@@ -42,11 +42,15 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_lro.c,v 1.7 2007/06/13 05:35:59 kmacy 
 #endif
 #include <sys/conf.h>
 #include <machine/bus.h>
+#ifdef __FreeBSD__
 #include <machine/resource.h>
 #include <sys/bus_dma.h>
 #include <sys/rman.h>
+#endif
 #include <sys/queue.h>
+#ifdef __FreeBSD__
 #include <sys/taskqueue.h>
+#endif
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -60,12 +64,12 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_lro.c,v 1.7 2007/06/13 05:35:59 kmacy 
 #else
 #include <dev/cxgb/cxgb_include.h>
 #endif
+
+#include <machine/in_cksum.h>
 #endif
 #ifdef __NetBSD__
 #include "cxgb_include.h"
 #endif
-
-#include <machine/in_cksum.h>
 
 
 #ifndef M_LRO
@@ -185,6 +189,25 @@ lro_new_session_init(struct t3_lro_session *s, struct mbuf *m)
 
 } 
 
+#ifdef __NetBSD__
+u_short in_cksum_hdr(struct ip *ih);
+u_short in_cksum_hdr(struct ip *ih)
+{
+	u_long sum = 0;
+	u_short *p = (u_short *)ih;
+	int i;
+
+        i = ih->ip_hl*2;
+	while (i--)
+		sum += *p++;
+
+	if (sum > 0xffff)
+		sum -= 0xffff;
+
+	return (~sum);
+}
+#endif
+
 static void
 lro_flush_session(struct sge_qset *qs, struct t3_lro_session *s, struct mbuf *m)
 {
@@ -192,7 +215,7 @@ lro_flush_session(struct sge_qset *qs, struct t3_lro_session *s, struct mbuf *m)
 	struct mbuf *sm = s->head;
 	struct ip *ih = (struct ip *)(mtod(sm, uint8_t *) + IPH_OFFSET);
 
-	
+#ifdef __FreeBSD__	
 	DPRINTF("%s(qs=%p, s=%p, ", __FUNCTION__,
 	    qs, s);
 
@@ -200,6 +223,7 @@ lro_flush_session(struct sge_qset *qs, struct t3_lro_session *s, struct mbuf *m)
 		DPRINTF("m=%p)\n", m);
 	else
 		DPRINTF("m=NULL)\n");
+#endif
 	
 	ih->ip_len = htons(s->ip_len);
 	ih->ip_sum = 0;
@@ -386,9 +410,11 @@ no_lro:
 	if (s)
 		lro_flush_session(qs, s, NULL);
 	
+#ifdef __FreeBSD__
 	if (m->m_len == 0 || m->m_pkthdr.len == 0 || (m->m_flags & M_PKTHDR) == 0)
 		DPRINTF("rx_eth_lro mbuf len=%d pktlen=%d flags=0x%x\n",
 		    m->m_len, m->m_pkthdr.len, m->m_flags);
+#endif
 	t3_rx_eth(pi, rq, m, ethpad);
 }
 

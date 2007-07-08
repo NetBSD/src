@@ -46,10 +46,16 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_l2t.c,v 1.2 2007/05/28 22:57:26 kmacy 
 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#ifdef __FreeBSD__
 #include <net/if.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
 #include <net/if_vlan_var.h>
+#endif
+#ifdef __NetBSD__
+#define EVL_VLID_MASK		0x0FFF
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/if_inarp.h>
 #endif
 #include <net/if_dl.h>
 #include <net/route.h>
@@ -74,6 +80,7 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_l2t.c,v 1.2 2007/05/28 22:57:26 kmacy 
 #define RT_ENADDR(rt)  ((char *)LLADDR(SDL((rt))))
 #define rt_expire rt_rmx.rmx_expire 
 
+#ifdef __FreeBSD__
 struct llinfo_arp { 
         struct  callout la_timer; 
         struct  rtentry *la_rt; 
@@ -81,6 +88,7 @@ struct llinfo_arp {
         u_short la_preempt;     /* countdown for pre-expiry arps */ 
         u_short la_asked;       /* # requests sent */ 
 }; 
+#endif
 
 /*
  * Module locking notes:  There is a RW lock protecting the L2 table as a
@@ -111,16 +119,30 @@ arp_hash(u32 key, int ifindex, const struct l2t_data *d)
 static inline void
 neigh_replace(struct l2t_entry *e, struct rtentry *rt)
 {
-	RT_LOCK(rt);
-	RT_ADDREF(rt);
-	RT_UNLOCK(rt);
+#ifdef __FreeBSD__
+	mtx_lock(rt->rt_mtx)
+	rt->rt_refcnt++;
+	mtx_unlock(rt->rt_mtx);
 	
 	if (e->neigh) {
-		RT_LOCK(e->neigh);
-		RT_REMREF(e->neigh);
-		RT_UNLOCK(e->neigh);
+		mtx_lock(e->neigh->rt_mtx);
+		e->neigh->rt_refcnt--;
+		mtx_unlock(e->neigh->rt_mtx);
 	}
 	e->neigh = rt;
+#endif
+#ifdef __NetBSD__
+	int s = splsoftnet();
+
+	rt->rt_refcnt++;
+	
+	if (e->neigh) {
+		e->neigh->rt_refcnt--;
+	}
+	e->neigh = rt;
+
+	splx(s);
+#endif
 }
 
 /*
@@ -286,18 +308,39 @@ alloc_l2e(struct l2t_data *d)
 {
 	struct l2t_entry *end, *e, **p;
 
+#ifdef __FreeBSD__
 	if (!atomic_load_acq_int(&d->nfree))
 		return NULL;
+#endif
+#ifdef __NetBSD__
+	if (!d->nfree)
+		return NULL;
+#endif
 
 	/* there's definitely a free entry */
 	for (e = d->rover, end = &d->l2tab[d->nentries]; e != end; ++e)
+#ifdef __FreeBSD__
 		if (atomic_load_acq_int(&e->refcnt) == 0)
+#endif
+#ifdef __NetBSD__
+		if (e->refcnt == 0)
+#endif
 			goto found;
 
+#ifdef __FreeBSD__
 	for (e = &d->l2tab[1]; atomic_load_acq_int(&e->refcnt); ++e) ;
+#endif
+#ifdef __NetBSD__
+	for (e = &d->l2tab[1]; e->refcnt; ++e) ;
+#endif
 found:
 	d->rover = e + 1;
+#ifdef __FreeBSD__
 	atomic_add_int(&d->nfree, -1);
+#endif
+#ifdef __NetBSD__
+	d->nfree--; // XXXXXXXXXXXXXXXXXXX
+#endif
 
 	/*
 	 * The entry we found may be an inactive entry that is
@@ -331,16 +374,30 @@ void
 t3_l2e_free(struct l2t_data *d, struct l2t_entry *e)
 {
 	mtx_lock(&e->lock);
+#ifdef __FreeBSD__
 	if (atomic_load_acq_int(&e->refcnt) == 0) {  /* hasn't been recycled */
+#endif
+#ifdef __NetBSD__
+	if (e->refcnt == 0) {  /* hasn't been recycled */
+#endif
 		if (e->neigh) {
-			RT_LOCK(e->neigh);
-			RT_REMREF(e->neigh);
-			RT_UNLOCK(e->neigh);
+#ifdef __FreeBSD__
+			mtx_lock(e->neigh->rt_mtx);
+#endif
+			e->neigh->rt_refcnt--;
+#ifdef __FreeBSD__
+			mtx_unlock(e->neigh->rt_mtx);
+#endif
 			e->neigh = NULL;
 		}
 	}
 	mtx_unlock(&e->lock);
+#ifdef __FreeBSD__
 	atomic_add_int(&d->nfree, 1);
+#endif
+#ifdef __NetBSD__
+	d->nfree++; // XXXXXXXXXXXXXXXXXXXXXXXXXXXX
+#endif
 }
 
 /*
@@ -378,12 +435,22 @@ t3_l2t_get(struct toedev *dev, struct rtentry *neigh,
 	int ifidx = neigh->rt_ifp->if_index;
 	int hash = arp_hash(addr, ifidx, d);
 
+#ifdef __FreeBSD__
 	rw_wlock(&d->lock);
+#endif
+#ifdef __NetBSD__
+	rw_enter(&d->lock, RW_WRITER);
+#endif
 	for (e = d->l2tab[hash].first; e; e = e->next)
 		if (e->addr == addr && e->ifindex == ifidx &&
 		    e->smt_idx == smt_idx) {
 			l2t_hold(d, e);
+#ifdef __FreeBSD__
 			if (atomic_load_acq_int(&e->refcnt) == 1)
+#endif
+#ifdef __NetBSD__
+			if (e->refcnt == 1)
+#endif
 				reuse_entry(e, neigh);
 			goto done;
 		}
@@ -398,7 +465,12 @@ t3_l2t_get(struct toedev *dev, struct rtentry *neigh,
 		e->addr = addr;
 		e->ifindex = ifidx;
 		e->smt_idx = smt_idx;
+#ifdef __FreeBSD__
 		atomic_store_rel_int(&e->refcnt, 1);
+#endif
+#ifdef __NetBSD__
+		e->refcnt = 1;
+#endif
 		neigh_replace(e, neigh);
 #ifdef notyet
 		/* 
@@ -412,7 +484,12 @@ t3_l2t_get(struct toedev *dev, struct rtentry *neigh,
 		mtx_unlock(&e->lock);
 	}
 done:
+#ifdef __FreeBSD__
 	rw_wunlock(&d->lock);
+#endif
+#ifdef __NetBSD__
+	rw_exit(&d->lock);
+#endif
 	return e;
 }
 
@@ -461,18 +538,34 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
 	int hash = arp_hash(addr, ifidx, d);
 	struct llinfo_arp *la;
 	
+#ifdef __FreeBSD__
 	rw_rlock(&d->lock);
+#endif
+#ifdef __NetBSD__
+	rw_enter(&d->lock, RW_READER);
+#endif
 	for (e = d->l2tab[hash].first; e; e = e->next)
 		if (e->addr == addr && e->ifindex == ifidx) {
 			mtx_lock(&e->lock);
 			goto found;
 		}
+#ifdef __FreeBSD__
 	rw_runlock(&d->lock);
+#endif
+#ifdef __NetBSD__
+	rw_exit(&d->lock);
+#endif
 	return;
 
 found:
+#ifdef __FreeBSD__
 	rw_runlock(&d->lock);
 	if (atomic_load_acq_int(&e->refcnt)) {
+#endif
+#ifdef __NetBSD__
+	rw_exit(&d->lock);
+	if (e->refcnt) {
+#endif
 		if (neigh != e->neigh)
 			neigh_replace(e, neigh);
 		
@@ -509,11 +602,21 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
 	int ifidx = neigh->dev->ifindex;
 	int hash = arp_hash(addr, ifidx, d);
 
+#ifdef __FreeBSD__
 	rw_rlock(&d->lock);
+#endif
+#ifdef __NetBSD__
+	rw_enter(&d->lock, RW_READER);
+#endif
 	for (e = d->l2tab[hash].first; e; e = e->next)
 		if (e->addr == addr && e->ifindex == ifidx) {
 			mtx_lock(&e->lock);
+#ifdef __FreeBSD__
 			if (atomic_load_acq_int(&e->refcnt)) {
+#endif
+#ifdef __NetBSD__
+			if (e->refcnt) {
+#endif
 				if (neigh != e->neigh)
 					neigh_replace(e, neigh);
 				e->tdev = dev;
@@ -522,7 +625,12 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
 			mtx_unlock(&e->lock);
 			break;
 		}
+#ifdef __FreeBSD__
 	rw_runlock(&d->lock);
+#endif
+#ifdef __NetBSD__
+	rw_exit(&d->lock);
+#endif
 }
 
 static void
@@ -534,13 +642,28 @@ update_timer_cb(unsigned long data)
 	struct toedev *dev = e->tdev;
 
 	barrier();
+#ifdef __FreeBSD__
 	if (!atomic_load_acq_int(&e->refcnt))
+#endif
+#ifdef __NetBSD__
+	if (!e->refcnt)
+#endif
 		return;
 
+#ifdef __FreeBSD__
 	rw_rlock(&neigh->lock);
+#endif
+#ifdef __NetBSD__
+	rw_enter(&neigh->lock, RW_READER);
+#endif
 	mtx_lock(&e->lock);
 
+#ifdef __FreeBSD__
 	if (atomic_load_acq_int(&e->refcnt)) {
+#endif
+#ifdef __NeteBSD__
+	if (&e->refcnt) {
+#endif
 		if (e->state == L2T_STATE_RESOLVING) {
 			if (neigh->nud_state & NUD_FAILED) {
 				arpq = e->arpq_head;
@@ -555,7 +678,12 @@ update_timer_cb(unsigned long data)
 		}
 	}
 	mtx_unlock(&e->lock);
+#ifdef __FreeBSD__
 	rw_runlock(&neigh->lock);
+#endif
+#ifdef __NetBSD__
+	rw_exit(&neigh->lock);
+#endif
 
 	if (arpq)
 		handle_failed_resolution(dev, arpq);
@@ -574,14 +702,25 @@ t3_init_l2t(unsigned int l2t_capacity)
 
 	d->nentries = l2t_capacity;
 	d->rover = &d->l2tab[1];	/* entry 0 is not used */
+#ifdef __FreeBSD__
 	atomic_store_rel_int(&d->nfree, l2t_capacity - 1);
 	rw_init(&d->lock, "L2T");
+#endif
+#ifdef __NetBSD__
+	d->nfree = l2t_capacity - 1;
+	rw_init(&d->lock);
+#endif
 
 	for (i = 0; i < l2t_capacity; ++i) {
 		d->l2tab[i].idx = i;
 		d->l2tab[i].state = L2T_STATE_UNUSED;
 		mtx_init(&d->l2tab[i].lock, "L2TAB", NULL, MTX_DEF);
+#ifdef __FreeBSD__
 		atomic_store_rel_int(&d->l2tab[i].refcnt, 0);
+#endif
+#ifdef __NetBSD__
+		d->l2tab[i].refcnt = 0;
+#endif
 #ifndef NETEVENT
 #ifdef CONFIG_CHELSIO_T3_MODULE
 		setup_timer(&d->l2tab[i].update_timer, update_timer_cb,
