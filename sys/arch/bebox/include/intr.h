@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25.14.3 2007/07/08 02:28:44 ober Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.14.4 2007/07/08 16:57:24 ober Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ void enable_intr(void);
 void disable_intr(void);
 
 extern int imask[];
-extern vaddr_t mvmeppc_intr_reg;
+extern paddr_t bebox_mb_reg;
 
 #define ICU_LEN         32
 #define IRQ_SLAVE       2
