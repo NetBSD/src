@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.72 2007/07/08 11:24:58 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.73 2007/07/08 17:24:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -420,7 +420,6 @@ typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 				void *, int);
 #define PUFFS_FBIO_READ		0x01
 #define PUFFS_FBIO_WRITE	0x02
-#define PUFFS_FBGONE_BOTH(a)	((a)==(PUFFS_FBIO_READ|PUFFS_FBIO_WRITE))
 
 #define PUFFS_FBQUEUE_URGENT	0x01
 
