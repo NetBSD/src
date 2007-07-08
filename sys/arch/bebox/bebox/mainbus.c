@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.19.38.1 2007/06/28 23:31:27 ober Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19.38.2 2007/07/08 02:28:43 ober Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,33 +31,36 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.38.1 2007/06/28 23:31:27 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19.38.2 2007/07/08 02:28:43 ober Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include "opt_pci.h"
-#include "mainbus.h"
 #include "pci.h"
+#include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
+#include <machine/pci_machdep.h>
+#include <machine/isa_machdep.h>
 
-#if NCPU == 0
-#error	A cpu device is now required
-#endif
-
-static int	mainbus_match (struct device *, struct cfdata *, void *);
-static void	mainbus_attach (struct device *, struct device *, void *);
+int	mainbus_match(struct device *, struct cfdata *, void *);
+void	mainbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print (void *, const char *);
+
+/* There can be only one */
+int mainbus_found = 0;
+struct powerpc_isa_chipset genppc_ict;
+struct genppc_pci_chipset *genppc_pct;
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -111,30 +114,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 #endif
-}
-
-static int	cpu_match(struct device *, struct cfdata *, void *);
-static void	cpu_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(cpu, sizeof(struct device),
-    cpu_match, cpu_attach, NULL, NULL);
-
-extern struct cfdriver cpu_cd;
-
-int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	if (cpu_info[0].ci_dev != NULL)
-		return 0;
-
-	return 1;
-}
-
-void
-cpu_attach(struct device *parent, struct device *self, void *aux)
-{
-	(void) cpu_attach_common(self, 0);
 }
 
 int

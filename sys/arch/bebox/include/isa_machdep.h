@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.16.38.1 2007/06/28 23:31:30 ober Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.16.38.2 2007/07/08 02:28:44 ober Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
  * or in spite of using isavar.h, and should be fixed.
  */
 
-#ifndef _PREP_ISA_MACHDEP_H_
-#define _PREP_ISA_MACHDEP_H_
+#ifndef _BEBOX_ISA_MACHDEP_H_
+#define _BEBOX_ISA_MACHDEP_H_
 
 #include <powerpc/isa_machdep.h>
 
@@ -70,4 +70,4 @@ extern int isa_pcmciamask;
  */
 void sysbeep(int, int);		/* beep with the system speaker */
 
-#endif /* _PREP_ISA_MACHDEP_H_ */
+#endif /* _BEBOX_ISA_MACHDEP_H_ */
