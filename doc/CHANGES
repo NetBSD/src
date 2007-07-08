@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.886 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.887 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -160,5 +160,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		And more, please see envsys(4) and sysmon_envsys(9) for more
 		information.
 		[xtraeme 20070701]
-	mount_portal(8): add experimental version based on puffs(3).
-		[pooka 20070702]
+	mount_puffsportal: add experimental version of portalfs
+		based on puffs(3).  [pooka 20070708]
