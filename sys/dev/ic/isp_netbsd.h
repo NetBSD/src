@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.60 2007/07/07 00:49:49 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.61 2007/07/08 05:22:33 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -292,6 +292,7 @@ default:							\
 #define	ISP_IOXGET_16(isp, s, d)	d = *(s)
 #define	ISP_IOXGET_32(isp, s, d)	d = *(s)
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)
+#define	ISP_SWIZZLE_NVRAM_LONG(isp, rp)
 
 #define	ISP_IOZPUT_8(isp, s, d)		*(d) = s
 #define	ISP_IOZPUT_16(isp, s, d)	*(d) = bswap16(s)
