@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.62 2007/03/04 06:00:41 christos Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.63 2007/07/08 10:19:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.62 2007/03/04 06:00:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.63 2007/07/08 10:19:23 pooka Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -456,7 +456,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	--fp;
 
 	frame.sf_si._info = ksi->ksi_info;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
