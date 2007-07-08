@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.15 2007/07/08 11:24:58 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.16 2007/07/08 17:24:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.15 2007/07/08 11:24:58 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.16 2007/07/08 17:24:41 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -858,7 +858,7 @@ void
 puffs_framev_removeonclose(struct puffs_usermount *pu, int fd, int what)
 {
 
-	if (PUFFS_FBGONE_BOTH(what))
+	if (what == (PUFFS_FBIO_READ | PUFFS_FBIO_WRITE))
 		(void) puffs_framev_removefd(pu, fd, ECONNRESET);
 }
 
@@ -868,7 +868,7 @@ puffs_framev_unmountonclose(struct puffs_usermount *pu, int fd, int what)
 
 	/* XXX & X: unmount is non-sensible */
 	puffs_framev_removeonclose(pu, fd, what);
-	if (PUFFS_FBGONE_BOTH(what))
+	if (what == (PUFFS_FBIO_READ | PUFFS_FBIO_WRITE))
 		PU_SETSTATE(pu, PUFFS_STATE_UNMOUNTED);
 }
 
