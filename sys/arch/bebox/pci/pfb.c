@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.15 2007/03/04 05:59:42 christos Exp $	*/
+/*	$NetBSD: pfb.c,v 1.15.10.1 2007/07/08 16:57:24 ober Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfb.c,v 1.15 2007/03/04 05:59:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfb.c,v 1.15.10.1 2007/07/08 16:57:24 ober Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -290,9 +290,9 @@ pfb_show_screen(v, cookie, waitok, cb, cbarg)
 
 int
 pfb_cnattach(addr)
-	int addr;
 {
-	struct pfb_devconfig *dc = &pfb_console_dc;
+  int addr;
+  struct pfb_devconfig *dc = &pfb_console_dc;
 	long defattr;
 
 	pfb_common_init(addr, dc);

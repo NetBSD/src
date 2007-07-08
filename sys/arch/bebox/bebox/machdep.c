@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.7 2007/07/08 02:30:59 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.8 2007/07/08 16:57:23 ober Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.7 2007/07/08 02:30:59 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.8 2007/07/08 16:57:23 ober Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -182,30 +182,30 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	/* bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE); */
-	if (!bebox_mb_reg)
-		panic("cpu_startup: no room for interrupt register");
-
-	/*
-	 * Do common VM initialization
-	 */
-	oea_startup(NULL);
-
-	/*
-	 * Now that we have VM, malloc's are OK in bus_space.
-	 */
-	bus_space_mallocok();
-
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	{
-		int msr;
-
-		splhigh();
-		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
-	}
+  /*bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
+  if (!bebox_mb_reg)
+    panic("cpu_startup: no room for interrupt register");
+  */
+  /*
+   * Do common VM initialization
+   */
+  oea_startup(NULL);
+  
+  /*
+   * Now that we have VM, malloc's are OK in bus_space.
+   */
+  bus_space_mallocok();
+  
+  /*
+   * Now allow hardware interrupts.
+   */
+  {
+    int msr;
+    
+    splhigh();
+    __asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
+		    : "=r"(msr) : "K"(PSL_EE));
+  }
 }
 
 /*
@@ -247,7 +247,7 @@ consinit()
 	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
 	if (!consinfo)
 		panic("not found console information in bootinfo");
-
+	
 #if (NPFB > 0)
 	if (!strcmp(consinfo->devname, "be")) {
 		pfb_cnattach(consinfo->addr);
@@ -255,9 +255,11 @@ consinit()
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
-		return;
+
+	return;
 	}
 #endif
+	
 
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
