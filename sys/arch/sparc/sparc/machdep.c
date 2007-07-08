@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272 2007/05/17 14:51:30 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.273 2007/07/08 10:19:23 pooka Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2007/05/17 14:51:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2007/07/08 10:19:23 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -696,7 +696,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
-	uc.uc_link = NULL;
+	uc.uc_link = l->l_ctxlink;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.298 2007/07/07 17:08:15 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.299 2007/07/08 10:19:21 pooka Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.298 2007/07/07 17:08:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299 2007/07/08 10:19:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1489,7 +1489,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
