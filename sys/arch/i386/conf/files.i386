@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.311 2007/07/07 05:13:15 tsutsui Exp $
+#	$NetBSD: files.i386,v 1.312 2007/07/08 01:13:26 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -192,6 +192,11 @@ file	arch/i386/pci/elan520.c		elansc
 device	gcscide: ata, ata_dma, ata_udma, pciide_common, wdc_common
 attach	gcscide at pci
 file	arch/i386/pci/gcscide.c 	gcscide
+
+# AMD Geode CS5536 Companion EHCI
+device	gcscehci: usbus
+attach	gcscehci at pci
+file	arch/i386/pci/gcscehci.c	gcscehci
 
 # AMD Geode SC1100 GCB area
 device  geodegcb {}
