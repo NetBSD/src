@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2007/06/24 01:43:34 dyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2007/07/08 21:14:14 bouyer Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2007/06/24 01:43:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2007/07/08 21:14:14 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -433,7 +433,7 @@ found:
 
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (is_valid_disk(dv) == 0)
 			continue;
 
@@ -492,6 +492,41 @@ found:
 #include <dev/pci/pcivar.h>
 #endif
 
+
+#if defined(NFS_BOOT_BOOTSTATIC) && defined(DOM0OPS)
+static int
+dom0_bootstatic_callback(struct nfs_diskless *nd)
+{
+#if 0
+	struct ifnet *ifp = nd->nd_ifp;
+#endif
+	union xen_cmdline_parseinfo xcp;
+	struct sockaddr_in *sin;
+
+	memset(&xcp, 0, sizeof(xcp.xcp_netinfo));
+	xcp.xcp_netinfo.xi_ifno = 0; /* XXX first interface hardcoded */
+	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
+	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
+	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
+	nd->nd_mask.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[3]);
+
+	sin = (struct sockaddr_in *) &nd->nd_root.ndm_saddr;
+	memset((void *)sin, 0, sizeof(*sin));
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
+
+	if (nd->nd_myip.s_addr == 0)
+		return NFS_BOOTSTATIC_NOSTATIC;
+	else
+		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
+		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
+		    NFS_BOOTSTATIC_HAS_SERVER);
+}
+#endif
+
 void
 device_register(struct device *dev, void *aux)
 {
@@ -500,14 +535,21 @@ device_register(struct device *dev, void *aux)
 	 * not available driver independently later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
-#if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0
+#if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0 || defined(DOM0OPS)
 	if (device_class(dev) == DV_IFNET) {
 		union xen_cmdline_parseinfo xcp;
 
 		xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 		if (strncmp(xcp.xcp_bootdev, dev->dv_xname, 16) == 0) {
 #ifdef NFS_BOOT_BOOTSTATIC
+#ifdef DOM0OPS
+			if (xen_start_info.flags & SIF_PRIVILEGED) {
+				nfs_bootstatic_callback = dom0_bootstatic_callback;
+			} else
+#endif
+#if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0
 			nfs_bootstatic_callback = xennet_bootstatic_callback;
+#endif
 #endif
 			goto found;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.18 2007/06/28 20:54:47 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.19 2007/07/08 21:14:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.18 2007/06/28 20:54:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.19 2007/07/08 21:14:14 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -163,12 +163,16 @@ lgdt(struct region_descriptor *rdp)
 void
 xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 {
-	char _cmd_line[128], *cmd_line, *opt, *s;
+	char _cmd_line[256], *cmd_line, *opt, *s;
 	int b, i, ipidx = 0;
 	uint32_t xi_ip[5];
+	size_t len;
 
-	cmd_line = strncpy(_cmd_line, xen_start_info.cmd_line, 128);
-	cmd_line[127] = '\0';
+	len = strlcpy(_cmd_line, xen_start_info.cmd_line, sizeof(_cmd_line));
+	if (len > sizeof(_cmd_line)) {
+		printf("command line exceeded limit of 255 chars. Truncated.\n");
+	}
+	cmd_line = _cmd_line;
 
 	switch (what) {
 	case XEN_PARSE_BOOTDEV:
