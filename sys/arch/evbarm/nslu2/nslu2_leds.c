@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.4 2006/12/10 10:23:37 scw Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.5 2007/07/08 08:37:25 scw Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.4 2006/12/10 10:23:37 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.5 2007/07/08 08:37:25 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,8 @@ slugled_tmr(void *arg)
 	uint32_t reg, bit;
 	int is;
 
-	if (CLKF_INTR(frame) || sched_whichqs || curlwp)
+	if (CLKF_INTR(frame) || sched_curcpu_runnable_p() ||
+	    (curlwp != NULL && curlwp != curcpu()->ci_data.cpu_idlelwp))
 		bit = LEDBITS_STATUS;
 	else
 		bit = 0;
