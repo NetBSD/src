@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.108 2007/06/29 23:30:25 rumble Exp $
+# $NetBSD: ALL,v 1.109 2007/07/08 03:01:20 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.108 $"
+#ident 		"ALL-$Revision: 1.109 $"
 
 maxusers	32		# estimated number of users
 
@@ -1021,6 +1021,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # PCI USB controllers
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
@@ -1034,6 +1035,7 @@ slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # USB bus support
 usb*	at ehci?
+usb*	at gcscehci?
 usb*	at ohci?
 usb*	at uhci?
 usb*	at slhci?
