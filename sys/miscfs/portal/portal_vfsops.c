@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.60 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.61 2007/07/08 23:58:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.60 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.61 2007/07/08 23:58:53 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -183,17 +183,7 @@ portal_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	/*
-	 * Clear out buffer cache.  I don't think we
-	 * ever get anything cached at this level at the
-	 * moment, but who knows...
-	 */
-#ifdef notyet
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp, 1))
-		return (EBUSY);
-#endif
-	if (rtvp->v_usecount > 1)
+	if (rtvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);
