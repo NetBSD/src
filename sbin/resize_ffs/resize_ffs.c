@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.9 2007/07/05 21:38:20 bouyer Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.10 2007/07/08 16:54:40 bouyer Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1815,7 +1815,7 @@ write_sbs(void)
 {
 	int i;
 
-	writeat(where, newsb, SBLOCKSIZE);
+	writeat(where /  DEV_BSIZE, newsb, SBLOCKSIZE);
 	for (i = 0; i < newsb->fs_ncg; i++) {
 		writeat(fsbtodb(newsb, cgsblock(newsb, i)), newsb, SBLOCKSIZE);
 	}
