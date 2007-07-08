@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.887 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.888 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -162,3 +162,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[xtraeme 20070701]
 	mount_puffsportal: add experimental version of portalfs
 		based on puffs(3).  [pooka 20070708]
+	i386: Add gcscehci(4) driver for the EHCI controller found in the AMD
+		Geode CS5536 companion controllers. [jmcneill 20070708]
