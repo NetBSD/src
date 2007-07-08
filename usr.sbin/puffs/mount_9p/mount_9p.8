@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.1 2007/04/21 14:21:43 pooka Exp $
+.\"	$NetBSD: mount_9p.8,v 1.2 2007/07/08 16:29:29 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 21, 2007
+.Dd July 8, 2007
 .Dt MOUNT_9P 8
 .Os
 .Sh NAME
@@ -31,8 +31,10 @@
 .Nd mount a file server using the 9P resource sharing protocol
 .Sh SYNOPSIS
 .Nm
-.Op Ar options
-.Ar user
+.Op Fl o Ar mntopts
+.Op Fl p Ar port
+.Op Fl u Ar user
+.Op Fl s
 .Ar file_server
 .Ar mount_point
 .Sh DESCRIPTION
@@ -44,7 +46,8 @@ After the file system is mounted, the files on the remote
 .Ar file_server
 will be accessed using the credentials of the user named
 .Ar user
-and whatever uid the user happens to have on the remote server.
+(default "glenda") and whatever uid the user happens to have
+on the remote server.
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs 4 ,
