@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.38 2007/04/08 11:20:48 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.39 2007/07/08 23:58:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.38 2007/04/08 11:20:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.39 2007/07/08 23:58:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,17 +215,7 @@ ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	/*
-	 * Clear out buffer cache.  I don't think we
-	 * ever get anything cached at this level at the
-	 * moment, but who knows...
-	 */
-#if 0
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp, 1))
-		return (EBUSY);
-#endif
-	if (overlay_rootvp->v_usecount > 1)
+	if (overlay_rootvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, overlay_rootvp, flags)) != 0)
 		return (error);
