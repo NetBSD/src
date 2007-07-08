@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.3 2007/07/08 11:45:00 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.4 2007/07/08 17:13:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -411,6 +411,8 @@ main(int argc, char *argv[])
 		warn("cannot set sighup handler");
 	if (signal(SIGCHLD, sigcry) == SIG_ERR)
 		err(1, "cannot set sigchild handler");
+	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+		err(1, "cannot ignore sigpipe");
 
 	readcfg = 0;
 	cfg = argv[0];
