@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.6 2007/07/08 02:28:43 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.7 2007/07/08 02:30:59 ober Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.6 2007/07/08 02:28:43 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.7 2007/07/08 02:30:59 ober Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -182,7 +182,7 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-	//bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
+	/* bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE); */
 	if (!bebox_mb_reg)
 		panic("cpu_startup: no room for interrupt register");
 
