@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.13 2006/06/13 13:55:58 simonb Exp $ */
+/* $NetBSD: sysident.h,v 1.13.4.1 2007/07/09 10:30:57 liamjfoy Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -71,6 +71,20 @@ __asm(
 	"\t.long\t" __S(ELF_NOTE_TYPE_NETBSD_TAG) "\n"
 	"\t.ascii\t" __S(ELF_NOTE_NETBSD_NAME) "\n"
 	"\t.long\t" __S(__NetBSD_Version__) "\n\n"
+
+	"\t.previous\n"
+	"\t.p2align\t2\n"
+);
+
+__asm(
+	".section\t\".note.netbsd.pax\", \"a\"\n"
+	"\t.p2align\t2\n\n"
+
+	"\t.long\t" __S(ELF_NOTE_PAX_NAMESZ) "\n"
+	"\t.long\t" __S(ELF_NOTE_PAX_DESCSZ) "\n"
+	"\t.long\t" __S(ELF_NOTE_TYPE_PAX_TAG) "\n"
+	"\t.ascii\t" __S(ELF_NOTE_PAX_NAME) "\n"
+	"\t.long\t" __S(0) "\n\n"
 
 	"\t.previous\n"
 	"\t.p2align\t2\n"

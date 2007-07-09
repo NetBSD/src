@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.8.2.1 2007/01/04 18:54:30 bouyer Exp $ */
+/* $NetBSD: kern_pax.c,v 1.8.2.2 2007/07/09 10:30:56 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -193,14 +193,14 @@ pax_init(void)
 }
 
 void
-pax_adjust(struct lwp *l, int f)
+pax_adjust(struct lwp *l, uint32_t f)
 {
 #ifdef PAX_MPROTECT
 	if (pax_mprotect_enabled) {
-		if (f & PF_PAXMPROTECT)
+		if (f & ELF_NOTE_PAX_MPROTECT)
 			proc_setspecific(l->l_proc, pax_mprotect_key,
 			    PAX_MPROTECT_EXPLICIT_ENABLE);
-		if (f & PF_PAXNOMPROTECT)
+		if (f & ELF_NOTE_PAX_NOMPROTECT)
 			proc_setspecific(l->l_proc, pax_mprotect_key,
 			    PAX_MPROTECT_EXPLICIT_DISABLE);
 	}
@@ -208,11 +208,10 @@ pax_adjust(struct lwp *l, int f)
 
 #ifdef PAX_SEGVGUARD
 	if (pax_segvguard_enabled) {
-		if (f & PF_PAXGUARD) {
+		if (f & ELF_NOTE_PAX_GUARD)
 			proc_setspecific(l->l_proc, pax_segvguard_key,
 			    PAX_SEGVGUARD_EXPLICIT_ENABLE);
-		}
-		if (f & PF_PAXNOGUARD)
+		if (f & ELF_NOTE_PAX_NOGUARD)
 			proc_setspecific(l->l_proc, pax_segvguard_key,
 			    PAX_SEGVGUARD_EXPLICIT_DISABLE);
 	}

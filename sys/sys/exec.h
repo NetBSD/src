@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.114.6.1 2006/12/21 14:25:45 tron Exp $	*/
+/*	$NetBSD: exec.h,v 1.114.6.2 2007/07/09 10:30:56 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -200,6 +200,7 @@ struct exec_package {
 	void	*ep_emul_arg;		/* emulation argument */
 	const struct	execsw *ep_es;	/* appropriate execsw entry */
 	const struct	execsw *ep_esch;/* checked execsw entry */
+	uint32_t ep_pax_flags;		/* pax flags */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
