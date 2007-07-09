@@ -42,14 +42,6 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_adapter.h,v 1.10 2007/05/28 22:57:26 k
 
 #include <sys/lock.h>
 #include <sys/mutex.h>
-#ifdef __NetBSD__
-#define mtx kmutex
-#define mtx_init(a, b, c, d) mutex_init(a, MUTEX_DEFAULT, IPL_NONE)
-#define mtx_destroy mutex_destroy
-#define mtx_lock mutex_enter
-#define mtx_unlock mutex_exit
-#define mtx_assert(x, y) // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-#endif
 #ifdef __FreeBSD__
 #include <sys/rman.h>
 #endif
@@ -107,10 +99,8 @@ struct port_info {
 	uint8_t		hw_addr[ETHER_ADDR_LEN];
 	uint8_t		nqsets;
 	uint8_t         first_qset;
-#ifdef __FreeBSD__
 	struct taskqueue *tq;
 	struct task     start_task;
-#endif
 	struct cdev     *port_cdev;
 };
 
@@ -206,11 +196,14 @@ struct sge_fl {
 	bus_addr_t	phys_addr;
 	uint32_t	cntxt_id;
 	uint64_t	empty;
-#ifdef __FreeBSD__
 	bus_dma_tag_t	desc_tag;
 	bus_dmamap_t	desc_map;
 	bus_dma_tag_t   entry_tag;
+#ifdef __FreeBSD__
 	uma_zone_t      zone;
+#endif
+#ifdef __NetBSD__
+	int		zone;
 #endif
 	int             type;
 };
@@ -233,18 +226,14 @@ struct sge_txq {
 	struct tx_sw_desc *sdesc;
 	uint32_t	token;
 	bus_addr_t	phys_addr;
-#ifdef __FreeBSD__
 	struct task     qresume_tsk;
-#endif
 	uint32_t	cntxt_id;
 	uint64_t	stops;
 	uint64_t	restarts;
-#ifdef __FreeBSD__
 	bus_dma_tag_t	desc_tag;
 	bus_dmamap_t	desc_map;
 	bus_dma_tag_t   entry_tag;
 	struct mbuf_head sendq;
-#endif
 	struct mtx      lock;
 };
      	
@@ -295,13 +284,11 @@ struct adapter {
 	bus_size_t              mmio_len;
 	uint32_t                link_width;
 				
-#ifdef __FreeBSD__	
 	/* DMA resources */
 	bus_dma_tag_t		parent_dmat;
 	bus_dma_tag_t		rx_dmat;
 	bus_dma_tag_t		rx_jumbo_dmat;
 	bus_dma_tag_t		tx_dmat;
-#endif
 
 	/* Interrupt resources */
 	struct resource		*irq_res;
@@ -315,7 +302,6 @@ struct adapter {
 	int			msix_irq_rid[SGE_QSETS];
 	void			*msix_intr_tag[SGE_QSETS];
 
-#ifdef __FreeBSD__
 	/* Tasks */
 	struct task		ext_intr_task;
 	struct task		timer_reclaim_task;
@@ -323,7 +309,6 @@ struct adapter {
 	struct task		process_responses_task;
 	struct task		mr_refresh_task;
 	struct taskqueue	*tq;
-#endif
 	struct callout		cxgb_tick_ch;
 	struct callout		sge_timer_ch;
 

@@ -50,13 +50,25 @@ $FreeBSD: src/sys/dev/cxgb/cxgb_osdep.h,v 1.10 2007/05/27 22:07:47 kmacy Exp $
 #include <dev/cxgb/cxgb_config.h>
 #endif
 #ifdef __NetBSD__
+typedef char *caddr_t;
 #include <dev/pci/cxgb_version.h>
 #include <dev/pci/cxgb_config.h>
+#include <sys/mbuf.h>
+#include <machine/bus.h>
 
-struct task
-{
-	void *context;
-};
+#include <sys/simplelock.h>
+
+#define mtx simplelock
+#define mtx_init(a, b, c, d) { (a)->lock_data = __SIMPLELOCK_UNLOCKED; }
+#define mtx_destroy(a)
+#define mtx_lock(a) simple_lock(a)
+#define mtx_unlock(a) simple_unlock(a)
+#define mtx_trylock(a) simple_lock_try(a)
+#define MA_OWNED 1
+#define MA_NOTOWNED 0
+#define mtx_assert(a, w) { if (w == MA_OWNED) { simple_lock_assert_locked(a, "generic"); } else { simple_lock_assert_unlocked(a, "generic"); } }
+
+#define EVL_VLID_MASK		0x0FFF
 
 static inline void critical_enter(void)
 {
@@ -65,6 +77,72 @@ static inline void critical_enter(void)
 static inline void critical_exit(void)
 {
 }
+
+static inline void device_printf(device_t d, ...)
+{
+}
+
+#define if_drv_flags if_flags
+#define IFF_DRV_RUNNING IFF_RUNNING
+#define IFF_DRV_OACTIVE IFF_OACTIVE
+
+#define MJUM16BYTES (16*1024)
+#define MJUMPAGESIZE PAGE_SIZE
+
+#define rw_rlock(x) rw_enter(x, RW_READER)
+#define rw_runlock(x) rw_exit(x)
+#define rw_wlock(x) rw_enter(x, RW_WRITER)
+#define rw_wunlock(x) rw_exit(x)
+
+#define callout_drain(x) callout_stop(x)
+
+static inline int atomic_cmpset_ptr(volatile long *dst, long exp, long src)
+{
+	if (*dst == exp)
+	{
+		*dst = src;
+		return (1);
+	}
+	return (0);
+}
+#define atomic_cmpset_int(a, b, c) atomic_cmpset_ptr((volatile long *)a, (long)b, (long)c)
+
+static inline int atomic_set_int(volatile int *dst, int val)
+{
+	*dst = val;
+
+	return (val);
+}
+
+static inline void log(int x, ...)
+{
+}
+
+struct task
+{
+	void (*function)(void *context);
+	void *context;
+};
+
+static inline struct mbuf *
+m_defrag(struct mbuf *m0, int flags)
+{
+        struct mbuf *m;
+        MGETHDR(m, flags, MT_DATA);
+        if (m == NULL)
+                return NULL;
+
+        M_COPY_PKTHDR(m, m0);
+        MCLGET(m, flags);
+        if ((m->m_flags & M_EXT) == 0) {
+                m_free(m);
+                return NULL;
+        }
+        m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
+        m->m_len = m->m_pkthdr.len;
+        return m;
+}
+
 #endif
 
 struct sge_rspq;
@@ -169,10 +247,18 @@ static const int debug_flags = DBG_RX;
 #define promisc_rx_mode(rm)  ((rm)->port->ifp->if_flags & IFF_PROMISC) 
 #define allmulti_rx_mode(rm) ((rm)->port->ifp->if_flags & IFF_ALLMULTI) 
 
+#ifdef __FreeBSD__
 #define CH_ERR(adap, fmt, ...)device_printf(adap->dev, fmt, ##__VA_ARGS__);
 
 #define CH_WARN(adap, fmt, ...)	device_printf(adap->dev, fmt, ##__VA_ARGS__)
 #define CH_ALERT(adap, fmt, ...) device_printf(adap->dev, fmt, ##__VA_ARGS__)
+#endif
+#ifdef __NetBSD__
+#define CH_ERR(adap, fmt, ...) { }
+
+#define CH_WARN(adap, fmt, ...) { }
+#define CH_ALERT(adap, fmt, ...) { }
+#endif
 
 #define t3_os_sleep(x) DELAY((x) * 1000)
 

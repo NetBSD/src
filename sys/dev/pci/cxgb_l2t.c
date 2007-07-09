@@ -52,7 +52,6 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_l2t.c,v 1.2 2007/05/28 22:57:26 kmacy 
 #include <net/if_vlan_var.h>
 #endif
 #ifdef __NetBSD__
-#define EVL_VLID_MASK		0x0FFF
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
@@ -435,12 +434,7 @@ t3_l2t_get(struct toedev *dev, struct rtentry *neigh,
 	int ifidx = neigh->rt_ifp->if_index;
 	int hash = arp_hash(addr, ifidx, d);
 
-#ifdef __FreeBSD__
 	rw_wlock(&d->lock);
-#endif
-#ifdef __NetBSD__
-	rw_enter(&d->lock, RW_WRITER);
-#endif
 	for (e = d->l2tab[hash].first; e; e = e->next)
 		if (e->addr == addr && e->ifindex == ifidx &&
 		    e->smt_idx == smt_idx) {
@@ -484,12 +478,7 @@ t3_l2t_get(struct toedev *dev, struct rtentry *neigh,
 		mtx_unlock(&e->lock);
 	}
 done:
-#ifdef __FreeBSD__
 	rw_wunlock(&d->lock);
-#endif
-#ifdef __NetBSD__
-	rw_exit(&d->lock);
-#endif
 	return e;
 }
 
@@ -538,32 +527,21 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
 	int hash = arp_hash(addr, ifidx, d);
 	struct llinfo_arp *la;
 	
-#ifdef __FreeBSD__
 	rw_rlock(&d->lock);
-#endif
-#ifdef __NetBSD__
-	rw_enter(&d->lock, RW_READER);
-#endif
 	for (e = d->l2tab[hash].first; e; e = e->next)
 		if (e->addr == addr && e->ifindex == ifidx) {
 			mtx_lock(&e->lock);
 			goto found;
 		}
-#ifdef __FreeBSD__
 	rw_runlock(&d->lock);
-#endif
-#ifdef __NetBSD__
-	rw_exit(&d->lock);
-#endif
 	return;
 
 found:
-#ifdef __FreeBSD__
 	rw_runlock(&d->lock);
+#ifdef __FreeBSD__
 	if (atomic_load_acq_int(&e->refcnt)) {
 #endif
 #ifdef __NetBSD__
-	rw_exit(&d->lock);
 	if (e->refcnt) {
 #endif
 		if (neigh != e->neigh)
@@ -602,12 +580,7 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
 	int ifidx = neigh->dev->ifindex;
 	int hash = arp_hash(addr, ifidx, d);
 
-#ifdef __FreeBSD__
 	rw_rlock(&d->lock);
-#endif
-#ifdef __NetBSD__
-	rw_enter(&d->lock, RW_READER);
-#endif
 	for (e = d->l2tab[hash].first; e; e = e->next)
 		if (e->addr == addr && e->ifindex == ifidx) {
 			mtx_lock(&e->lock);
@@ -625,12 +598,7 @@ t3_l2t_update(struct toedev *dev, struct rtentry *neigh)
 			mtx_unlock(&e->lock);
 			break;
 		}
-#ifdef __FreeBSD__
 	rw_runlock(&d->lock);
-#endif
-#ifdef __NetBSD__
-	rw_exit(&d->lock);
-#endif
 }
 
 static void
@@ -650,12 +618,7 @@ update_timer_cb(unsigned long data)
 #endif
 		return;
 
-#ifdef __FreeBSD__
 	rw_rlock(&neigh->lock);
-#endif
-#ifdef __NetBSD__
-	rw_enter(&neigh->lock, RW_READER);
-#endif
 	mtx_lock(&e->lock);
 
 #ifdef __FreeBSD__
@@ -678,12 +641,7 @@ update_timer_cb(unsigned long data)
 		}
 	}
 	mtx_unlock(&e->lock);
-#ifdef __FreeBSD__
 	rw_runlock(&neigh->lock);
-#endif
-#ifdef __NetBSD__
-	rw_exit(&neigh->lock);
-#endif
 
 	if (arpq)
 		handle_failed_resolution(dev, arpq);

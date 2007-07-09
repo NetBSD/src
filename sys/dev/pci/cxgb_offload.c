@@ -300,23 +300,27 @@ cxgb_ulp_iscsi_ctl(adapter_t *adapter, unsigned int req, void *data)
 #define ASYNC_NOTIF_RSPQ 0
 
 static int
-cxgb_rdma_ctl(adapter_t *adapter, unsigned int req, void *data)
+cxgb_rdma_ctl(adapter_t *adapter, unsigned int request, void *data)
 {
 	int ret = 0;
 
-	switch (req) {
+	switch (request) {
 	case RDMA_GET_PARAMS: {
 		struct rdma_info *req = data;
 
+#ifdef __FreeBSD__
 		req->udbell_physbase = rman_get_start(adapter->regs_res);
 		req->udbell_len = rman_get_size(adapter->regs_res);
+#endif
 		req->tpt_base = t3_read_reg(adapter, A_ULPTX_TPT_LLIMIT);
 		req->tpt_top  = t3_read_reg(adapter, A_ULPTX_TPT_ULIMIT);
 		req->pbl_base = t3_read_reg(adapter, A_ULPTX_PBL_LLIMIT);
 		req->pbl_top  = t3_read_reg(adapter, A_ULPTX_PBL_ULIMIT);
 		req->rqt_base = t3_read_reg(adapter, A_ULPRX_RQ_LLIMIT);
 		req->rqt_top  = t3_read_reg(adapter, A_ULPRX_RQ_ULIMIT);
+#ifdef __FreeBSD__
 		req->kdb_addr = (void *)(rman_get_start(adapter->regs_res) + A_SG_KDOORBELL);
+#endif
 		break;
 	}
 	case RDMA_CQ_OP: {
@@ -562,6 +566,7 @@ mk_tid_release(struct mbuf *m, unsigned int tid)
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_TID_RELEASE, tid));
 }
 
+#ifdef __FreeBSD__
 static void
 t3_process_tid_release_list(void *data, int pending)
 {
@@ -583,6 +588,7 @@ t3_process_tid_release_list(void *data, int pending)
 	}
 	mtx_unlock(&td->tid_release_lock);
 }
+#endif
 
 /* use ctx as a next pointer in the tid release list */
 void
@@ -595,8 +601,10 @@ cxgb_queue_tid_release(struct toedev *tdev, unsigned int tid)
 	p->ctx = td->tid_release_list;
 	td->tid_release_list = p;
 
+#ifdef __FreeBSD__
 	if (!p->ctx)
 		taskqueue_enqueue(tdev->adapter->tq, &td->tid_release_task);
+#endif
 
 	mtx_unlock(&td->tid_release_lock);
 }
@@ -795,24 +803,24 @@ do_abort_req_rss(struct toedev *dev, struct mbuf *m)
 		struct cpl_abort_req_rss *req = cplhdr(m);
 		struct cpl_abort_rpl *rpl;
 		
-		struct mbuf *m = m_get(M_NOWAIT, MT_DATA);
-		if (!m) {
+		struct mbuf *m2 = m_get(M_NOWAIT, MT_DATA);
+		if (!m2) {
 			log(LOG_NOTICE, "do_abort_req_rss: couldn't get mbuf!\n");
 			goto out;
 		}
 
-		m_set_priority(m, CPL_PRIORITY_DATA);
+		m_set_priority(m2, CPL_PRIORITY_DATA);
 #if 0	
 		__skb_put(skb, sizeof(struct cpl_abort_rpl));
 #endif		
-		rpl = cplhdr(m);
+		rpl = cplhdr(m2);
 		rpl->wr.wr_hi = 
 			htonl(V_WR_OP(FW_WROPCODE_OFLD_HOST_ABORT_CON_RPL));
 		rpl->wr.wr_lo = htonl(V_WR_TID(GET_TID(req)));
 		OPCODE_TID(rpl) =
 			htonl(MK_OPCODE_TID(CPL_ABORT_RPL, GET_TID(req)));
 		rpl->cmd = req->status;
-		cxgb_ofld_send(dev, m);
+		cxgb_ofld_send(dev, m2);
  out:
 		return CPL_RET_BUF_DONE;
 	}
@@ -1423,7 +1431,9 @@ cxgb_offload_activate(struct adapter *adapter)
 	t->mtus = mtutab.mtus;
 	t->nmtus = mtutab.size;
 
+#ifdef __FreeBSD__
 	TASK_INIT(&t->tid_release_task, 0 /* XXX? */, t3_process_tid_release_list, dev);
+#endif
 	mtx_init(&t->tid_release_lock, "tid release", NULL, MTX_DEF);
 	t->dev = dev;
 
@@ -1533,7 +1543,12 @@ cxgb_offload_init(void)
 		inited = 1;
 	
 	mtx_init(&cxgb_db_lock, "ofld db", NULL, MTX_DEF);
+#ifdef __FreeBSD__
 	rw_init(&adapter_list_lock, "ofld adap list");
+#endif
+#ifdef __NetBSD__
+	rw_init(&adapter_list_lock);
+#endif
 	TAILQ_INIT(&client_list);
 	TAILQ_INIT(&ofld_dev_list);
 	TAILQ_INIT(&adapter_list);
