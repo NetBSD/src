@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.17.2.2 2007/04/05 21:57:47 ad Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.17.2.3 2007/07/09 21:30:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.2 2007/04/05 21:57:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.3 2007/07/09 21:30:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -61,7 +61,7 @@ static LIST_HEAD(, sysmon_pswitch) sysmon_pswitch_list =
 static struct simplelock sysmon_pswitch_list_slock =
     SIMPLELOCK_INITIALIZER;
 
-static struct proc *sysmon_power_daemon;
+static lwp_t *sysmon_power_daemon;
 
 #define	SYSMON_MAX_POWER_EVENTS		32
 
@@ -156,7 +156,7 @@ sysmonopen_power(dev_t dev, int flag, int mode,
 	if (sysmon_power_daemon != NULL)
 		error = EBUSY;
 	else {
-		sysmon_power_daemon = l->l_proc;
+		sysmon_power_daemon = l;
 		sysmon_power_event_queue_flush();
 	}
 	simple_unlock(&sysmon_power_event_queue_slock);
