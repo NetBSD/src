@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.89 2006/11/22 15:08:47 riz Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.89.2.1 2007/07/09 10:30:55 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -346,11 +346,6 @@ typedef struct {
 #define	PF_W		0x2	/* Segment is writable */
 #define	PF_X		0x1	/* Segment is executable */
 
-#define	PF_PAXMPROTECT		0x08000000	/* Explicitly enable PaX MPROTECT */
-#define	PF_PAXNOMPROTECT	0x04000000	/* Explicitly disable PaX MPROTECT */
-#define	PF_PAXGUARD		0x02000000	/* Explicitly enable PaX Segvguard */
-#define	PF_PAXNOGUARD		0x01000000	/* Explicitly disable PaX Segvguard */
-
 #define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
 
@@ -678,6 +673,12 @@ typedef struct {
 
 /* NetBSD-specific note type: Emulation name.  desc is emul name string. */
 #define	ELF_NOTE_TYPE_NETBSD_TAG	1
+/* NetBSD-specific note name and description sizes */
+#define	ELF_NOTE_NETBSD_NAMESZ		7
+#define	ELF_NOTE_NETBSD_DESCSZ		4
+/* NetBSD-specific note name */
+#define	ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
+
 /* NetBSD-specific note type: Checksum.  There should be 1 NOTE per PT_LOAD
    section.  desc is a tuple of <phnum>(16),<chk-type>(16),<chk-value>. */
 #define	ELF_NOTE_TYPE_CHECKSUM_TAG	2
@@ -686,11 +687,16 @@ typedef struct {
 #define	ELF_NOTE_CHECKSUM_SHA1		3
 #define	ELF_NOTE_CHECKSUM_SHA256	4
 
-/* NetBSD-specific note name and description sizes */
-#define	ELF_NOTE_NETBSD_NAMESZ		7
-#define	ELF_NOTE_NETBSD_DESCSZ		4
-/* NetBSD-specific note name */
-#define	ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
+/* NetBSD-specific note type: PaX.  There should be 1 NOTE per executable.
+   section.  desc is a 32 bit bitmask */
+#define ELF_NOTE_TYPE_PAX_TAG		3
+#define	ELF_NOTE_PAX_MPROTECT		0x1	/* Force enable Mprotect */
+#define	ELF_NOTE_PAX_NOMPROTECT		0x2	/* Force disable Mprotect */
+#define	ELF_NOTE_PAX_GUARD		0x4	/* Force enable Segvguard */
+#define	ELF_NOTE_PAX_NOGUARD		0x8	/* Force disable Servguard */
+#define ELF_NOTE_PAX_NAMESZ		4
+#define ELF_NOTE_PAX_NAME		"PaX\0"
+#define ELF_NOTE_PAX_DESCSZ		4
 
 /*
  * NetBSD-specific core file information.
