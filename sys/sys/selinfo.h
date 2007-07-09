@@ -1,4 +1,4 @@
-/*	$NetBSD: selinfo.h,v 1.2 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: selinfo.h,v 1.3 2007/07/09 21:11:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,8 +43,9 @@
  */
 struct selinfo {
 	struct klist	sel_klist;	/* knotes attached to this selinfo */
-	pid_t		sel_pid;	/* process to be notified */
-	uint8_t		sel_collision;	/* non-zero if a collision occurred */
+	struct lwp	*sel_lwp;	/* first LWP to be notified */
+	SLIST_ENTRY(selinfo) sel_chain;	/* entry on LWP's list of selinfo */
+	bool		sel_collision;	/* true if more than one waiter */
 };
 
 #endif /* !_SYS_SELINFO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.8 2007/03/04 06:02:00 christos Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.9 2007/07/09 21:00:38 ad Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.8 2007/03/04 06:02:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.9 2007/07/09 21:00:38 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -345,8 +345,8 @@ rt2560_attach(void *xsc, int id)
 	struct ifnet *ifp = &sc->sc_if;
 	int error, i;
 
-	callout_init(&sc->scan_ch);
-	callout_init(&sc->rssadapt_ch);
+	callout_init(&sc->scan_ch, 0);
+	callout_init(&sc->rssadapt_ch, 0);
 
 	/* retrieve RT2560 rev. no */
 	sc->asic_rev = RAL_READ(sc, RT2560_CSR0);

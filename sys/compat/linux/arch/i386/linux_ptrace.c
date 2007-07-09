@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.17 2007/03/04 06:01:19 christos Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.18 2007/07/09 21:10:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.17 2007/03/04 06:01:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18 2007/07/09 21:10:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -299,7 +299,7 @@ linux_sys_ptrace_arch(l, v, retval)
 	case  LINUX_PTRACE_PEEKUSR:
 		addr = SCARG(uap, addr);
 
-		PHOLD(lt);	/* need full process info */
+		uvm_lwp_hold(lt);	/* need full process info */
 		error = 0;
 		if (addr < LUSR_OFF(lusr_startgdb)) {
 			/* XXX should provide appropriate register */
@@ -344,7 +344,7 @@ linux_sys_ptrace_arch(l, v, retval)
 			error = 1;
 		}
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		if (!error)
 			return 0;
@@ -361,9 +361,9 @@ linux_sys_ptrace_arch(l, v, retval)
 			if (t->p_emul != &emul_linux)
 				return EINVAL;
 
-			PHOLD(lt);
+			uvm_lwp_hold(lt);
 			((struct linux_emuldata *)t->p_emuldata)->debugreg[off] = data;
-			PRELE(lt);
+			uvm_lwp_rele(lt);
 			return (0);
 		}
 

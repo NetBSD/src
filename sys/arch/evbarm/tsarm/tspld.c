@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.11 2005/11/12 05:34:28 hamajima Exp $	*/
+/*	$NetBSD: tspld.c,v 1.12 2007/07/09 20:52:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.11 2005/11/12 05:34:28 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.12 2007/07/09 20:52:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -394,7 +394,7 @@ tspldattach(parent, self, aux)
 	SSP_CLEARBITS(SSPCR1, 0x10);
 	SSP_SETBITS(SSPCR1, 0x10);
 	GPIO_SET(PFDR, 0x0);
-	callout_init(&sc->boardtemp_callout);
+	callout_init(&sc->boardtemp_callout, 0);
 	callout_setfunc(&sc->boardtemp_callout, boardtemp_poll, sc);
 	boardtemp_poll(sc);
 	delay(1000);

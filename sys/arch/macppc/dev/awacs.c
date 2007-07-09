@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.28 2007/03/25 23:25:23 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.29 2007/07/09 20:52:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.28 2007/03/25 23:25:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.29 2007/07/09 20:52:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -82,7 +82,7 @@ struct awacs_softc {
 	int sc_have_perch;
 	int vol_l, vol_r;
 	int sc_bass, sc_treble;
-	struct proc *sc_thread;
+	lwp_t *sc_thread;
 	int sc_event;
 	int sc_output_wanted;
 #if NSGSMIX > 0
@@ -144,7 +144,6 @@ static void awacs_set_loopthrough_volume(struct awacs_softc *, int, int);
 static int awacs_set_rate(struct awacs_softc *, const audio_params_t *);
 static void awacs_select_output(struct awacs_softc *, int);
 static int awacs_check_headphones(struct awacs_softc *);
-static void awacs_create_thread(void *);
 static void awacs_thread(void *);
 
 #if NSGSMIX > 0
@@ -491,7 +490,10 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 
 	audio_attach_mi(&awacs_hw_if, sc, &sc->sc_dev);
 	
-	kthread_create(awacs_create_thread, sc);
+	if (kthread_create(PRI_NONE, 0, NULL, awacs_thread, sc,
+	    &sc->sc_thread, "%s", "awacs") != 0) {
+		printf("awacs: unable to create event kthread");
+	}
 }
 
 static int
@@ -1304,17 +1306,6 @@ awacs_status_intr(void *cookie)
 	/* clear the interrupt */
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, sc->sc_soundctl | AWACS_PORTCHG);
 	return 1;
-}
-
-static void
-awacs_create_thread(void *cookie)
-{
-	struct awacs_softc *sc = cookie;
-	
-	if (kthread_create1(awacs_thread, sc, &sc->sc_thread, "%s",
-	    "awacs") != 0) {
-		printf("awacs: unable to create event kthread");
-	}
 }
 
 static void

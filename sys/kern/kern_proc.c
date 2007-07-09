@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.112 2007/06/15 20:17:08 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.113 2007/07/09 21:10:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.112 2007/06/15 20:17:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.113 2007/07/09 21:10:53 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -315,6 +315,7 @@ proc0_init(void)
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_HIGH);
 	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 
 	cv_init(&p->p_refcv, "drainref");
 	cv_init(&p->p_waitcv, "wait");
@@ -367,9 +368,9 @@ proc0_init(void)
 	l->l_usrpri = PRIBIO;
 	l->l_inheritedprio = MAXPRI;
 	SLIST_INIT(&l->l_pi_lenders);
-	l->l_name = "swapper";
+	l->l_name = __UNCONST("swapper");
 
-	callout_init(&l->l_tsleep_ch);
+	callout_init(&l->l_tsleep_ch, 0);
 	cv_init(&l->l_sigcv, "sigwait");
 
 	/* Create credentials. */
@@ -382,11 +383,11 @@ proc0_init(void)
 	p->p_cwdi = &cwdi0;
 	cwdi0.cwdi_cmask = cmask;
 	cwdi0.cwdi_refcnt = 1;
-	simple_lock_init(&cwdi0.cwdi_slock);
+	rw_init(&cwdi0.cwdi_lock);
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
-	simple_lock_init(&limit0.p_slock);
+	mutex_init(&limit0.p_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
 		limit0.pl_rlimit[i].rlim_cur =
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
@@ -1262,7 +1263,7 @@ proclist_foreach_call(struct proclist *list,
 	int ret = 0;
 
 	marker.p_flag = PK_MARKER;
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	mutex_enter(&proclist_lock);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
 		if (p->p_flag & PK_MARKER) {
@@ -1276,7 +1277,7 @@ proclist_foreach_call(struct proclist *list,
 		LIST_REMOVE(&marker, p_list);
 	}
 	mutex_exit(&proclist_lock);
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	return ret;
 }
@@ -1330,10 +1331,10 @@ proc_crmod_enter(void)
 			limfree(lim);
 			lim = p->p_limit;
 		}
-		simple_lock(&lim->p_slock);
+		mutex_enter(&lim->p_lock);
 		cn = lim->pl_corename;
 		lim->pl_corename = defcorename;
-		simple_unlock(&lim->p_slock);
+		mutex_exit(&lim->p_lock);
 		if (cn != defcorename)
 			free(cn, M_TEMP);
 	}

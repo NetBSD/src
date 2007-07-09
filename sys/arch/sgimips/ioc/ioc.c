@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.5 2006/12/22 01:32:37 rumble Exp $	 */
+/* $NetBSD: ioc.c,v 1.6 2007/07/09 20:52:26 ad Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.5 2006/12/22 01:32:37 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.6 2007/07/09 20:52:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
 	      ioc_match, ioc_attach, NULL, NULL);
 
 #if defined(BLINK)
-static struct callout ioc_blink_ch = CALLOUT_INITIALIZER;
+static callout_t ioc_blink_ch;
 static void     ioc_blink(void *);
 #endif
 
@@ -101,6 +101,10 @@ ioc_attach(struct device * parent, struct device * self, void *aux)
 	struct ioc_softc *sc = (struct ioc_softc *) self;
 	struct mainbus_attach_args *maa = aux;
 	u_int32_t       sysid;
+
+#ifdef BLINK
+	callout_init(&ioc_blink_ch, 0);
+#endif
 
 	sc->sc_iot = SGIMIPS_BUS_SPACE_HPC;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.116 2007/06/22 14:40:00 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.117 2007/07/09 21:11:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.116 2007/06/22 14:40:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.117 2007/07/09 21:11:31 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -498,6 +498,7 @@ nfssvc_nfsd(nsd, argp, l)
 	cacherep = RC_DOIT;
 	writes_todo = 0;
 #endif
+	uvm_lwp_hold(l);
 	if (nfsd == NULL) {
 		nsd->nsd_nfsd = nfsd = 
 			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
@@ -509,7 +510,6 @@ nfssvc_nfsd(nsd, argp, l)
 		nfs_numnfsd++;
 		mutex_exit(&nfsd_lock);
 	}
-	PHOLD(l);
 	/*
 	 * Loop getting rpc requests until SIGKILL.
 	 */
@@ -621,7 +621,7 @@ nfssvc_nfsd(nsd, argp, l)
 				    !copyout(nfsd->nfsd_verfstr,
 				    nsd->nsd_verfstr, nfsd->nfsd_verflen) &&
 				    !copyout(nsd, argp, sizeof (*nsd))) {
-					PRELE(l);
+					uvm_lwp_rele(l);
 					return (ENEEDAUTH);
 				}
 				cacherep = RC_DROPIT;
@@ -782,8 +782,6 @@ nfssvc_nfsd(nsd, argp, l)
 		}
 	}
 done:
-	KASSERT(nfsd->nfsd_slp == NULL);
-	PRELE(l);
 	mutex_enter(&nfsd_lock);
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	mutex_exit(&nfsd_lock);
@@ -792,6 +790,7 @@ done:
 	nsd->nsd_nfsd = NULL;
 	if (--nfs_numnfsd == 0)
 		nfsrv_init(true);	/* Reinitialize everything */
+	uvm_lwp_rele(l);
 	return (error);
 }
 
@@ -1027,7 +1026,7 @@ nfssvc_iod(l)
 		return (EBUSY);
 	myiod->nid_proc = p;
 	nfs_numasync++;
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	/*
 	 * Just loop around doing our stuff until SIGKILL
 	 */
@@ -1077,7 +1076,7 @@ nfssvc_iod(l)
 		mutex_exit(&nmp->nm_lock);
 	}
 quit:
-	PRELE(l);
+	uvm_lwp_rele(l);
 	mutex_enter(&myiod->nid_lock);
 	nmp = myiod->nid_mount;
 	if (nmp) {
@@ -1131,7 +1130,8 @@ nfs_getset_niothreads(set)
 		start = nfs_niothreads - have;
 
 		while (start > 0) {
-			kthread_create1(start_nfsio, NULL, NULL, "nfsio");
+			kthread_create(PRI_NONE, 0, NULL, start_nfsio, NULL,
+			    NULL, "nfsio");
 			start--;
 		}
 

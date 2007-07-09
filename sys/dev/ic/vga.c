@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.92 2007/03/04 06:02:03 christos Exp $ */
+/* $NetBSD: vga.c,v 1.93 2007/07/09 21:00:40 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.92 2007/03/04 06:02:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.93 2007/07/09 21:00:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -565,7 +565,7 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
-	callout_init(&vc->vc_switch_callout);
+	callout_init(&vc->vc_switch_callout, 0);
 
 	wsfont_init();
 	if (vga_no_builtinfont) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.39 2007/03/04 15:55:29 yamt Exp $	*/
+/*	$NetBSD: stic.c,v 1.40 2007/07/09 21:01:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.39 2007/03/04 15:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.40 2007/07/09 21:01:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ stic_attach(struct device *self, struct stic_info *si, int console)
 	} else
 		si->si_unit = -1;
 
-	callout_init(&si->si_switch_callout);
+	callout_init(&si->si_switch_callout, 0);
 
 	/*
 	 * Allocate backing for the console.  We could trawl back through

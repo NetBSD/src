@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.4 2007/07/01 07:37:21 xtraeme Exp $ */
+/*	$NetBSD: envctrl.c,v 1.5 2007/07/09 20:52:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.4 2007/07/01 07:37:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.5 2007/07/09 20:52:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,7 +74,7 @@ struct envctrl_softc {
 
 	struct pcf8584_handle sc_pcfiic;
 
-	struct proc *sc_proc;
+	lwp_t *sc_thread;
 	kcondvar_t sc_sleepcond;
 	kmutex_t sc_sleepmtx;
 
@@ -92,7 +92,6 @@ struct envctrl_softc {
 CFATTACH_DECL(envctrl, sizeof(struct envctrl_softc),
     envctrlmatch, envctrlattach, NULL, NULL);
 
-static void deferred_envctrl_thread(void *);
 static void envctrl_thread(void *);
 static void envctrl_sleep(struct envctrl_softc *, int);
 static int envctrl_write_1(struct envctrl_softc *, int, uint8_t);
@@ -123,7 +122,7 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 	struct envctrl_softc *sc = (struct envctrl_softc *)self;
 	struct ebus_attach_args *ea = aux;
 	bus_addr_t devaddr;
-	int i;
+	int i, error;
 
 	sc->sc_iot = ea->ea_bustag;
 	devaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
@@ -223,18 +222,9 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 
 	mutex_init(&sc->sc_sleepmtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_sleepcond, "envidle");
-	kthread_create(deferred_envctrl_thread, sc);
 
-}
-
-static void
-deferred_envctrl_thread(void *arg)
-{
-	int error;
-	struct envctrl_softc *sc = arg;
-
-	error = kthread_create1(envctrl_thread, arg,
-	    &sc->sc_proc, "envctrl");
+	error = kthread_create(PRI_NONE, 0, NULL, envctrl_thread, sc,
+	    &sc->sc_thread, "envctrl");
 	if (error)
 		panic("cannot start envctrl thread; error %d", error);
 }

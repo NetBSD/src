@@ -1,4 +1,4 @@
-/* $NetBSD: toastersensors.c,v 1.4 2007/01/24 13:08:13 hubertf Exp $ */
+/* $NetBSD: toastersensors.c,v 1.5 2007/07/09 20:52:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.4 2007/01/24 13:08:13 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.5 2007/07/09 20:52:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -276,7 +276,7 @@ toastersensors_attach(parent, self, aux)
 	wa.accesscookie = &sc->sc_mxkp;
 	sc->sc_mxkp.sc_wskbddev = config_found(self, &wa, wskbddevprint);
 
-	callout_init(&sc->poll);
+	callout_init(&sc->poll, 0);
 	callout_setfunc(&sc->poll, toastersensors_poll, sc);
 	callout_schedule(&sc->poll, 1);
 }

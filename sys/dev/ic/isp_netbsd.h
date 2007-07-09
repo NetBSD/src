@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.61 2007/07/08 05:22:33 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.62 2007/07/09 21:00:37 ad Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -104,7 +104,7 @@ struct isposinfo {
 #define	wwn_seed	un._wwn
 #define	discovered	un._discovered
 	} un;
-	struct proc *		thread;
+	struct lwp *		thread;
 };
 #define	isp_dmatag		isp_osinfo.dmatag
 #define	isp_rqdmap		isp_osinfo.rqdmap

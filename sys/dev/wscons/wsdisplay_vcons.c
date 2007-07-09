@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.10 2007/03/04 06:02:51 christos Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.11 2007/07/09 21:01:26 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.10 2007/03/04 06:02:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.11 2007/07/09 21:01:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	vd->active = NULL;
 	vd->wanted = NULL;
 	vd->currenttype = def;
-	callout_init(&vd->switch_callout);
+	callout_init(&vd->switch_callout, 0);
 
 	/*
 	 * a lock to serialize access to the framebuffer.

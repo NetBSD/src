@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.46 2007/07/01 17:22:16 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.47 2007/07/09 21:10:49 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.46 2007/07/01 17:22:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.47 2007/07/09 21:10:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.46 2007/07/01 17:22:16 pooka Exp 
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
+#include <sys/proc.h>
 
 #include <lib/libkern/libkern.h>
 

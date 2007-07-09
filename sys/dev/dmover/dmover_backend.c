@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_backend.c,v 1.5 2003/04/26 04:44:18 briggs Exp $	*/
+/*	$NetBSD: dmover_backend.c,v 1.6 2007/07/09 21:00:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,39 +40,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.5 2003/04/26 04:44:18 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.6 2007/07/09 21:00:32 ad Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/systm.h>
 
 #include <dev/dmover/dmovervar.h>
 
 TAILQ_HEAD(, dmover_backend) dmover_backend_list;
-struct lock dmover_backend_list_lock;
-
-#define	BACKEND_LIST_LOCK_READ()					\
-do {									\
-	(void) spinlockmgr(&dmover_backend_list_lock, LK_SHARED, NULL);	\
-} while (/*CONSTCOND*/0)
-
-#define	BACKEND_LIST_UNLOCK_READ()					\
-do {									\
-	(void) spinlockmgr(&dmover_backend_list_lock, LK_RELEASE, NULL);\
-} while (/*CONSTCOND*/0)
-
-#define	BACKEND_LIST_LOCK_WRITE(s)					\
-do {									\
-	(s) = splbio();							\
-	(void) spinlockmgr(&dmover_backend_list_lock, LK_EXCLUSIVE, NULL); \
-} while (/*CONSTCOND*/0)
-
-#define	BACKEND_LIST_UNLOCK_WRITE(s)					\
-do {									\
-	(void) spinlockmgr(&dmover_backend_list_lock, LK_RELEASE, NULL);\
-	splx((s));							\
-} while (/*CONSTCOND*/0)
-
+kmutex_t dmover_backend_list_lock;
 static int initialized;
 static struct simplelock initialized_slock = SIMPLELOCK_INITIALIZER;
 
@@ -83,7 +60,7 @@ initialize(void)
 	simple_lock(&initialized_slock);
 	if (__predict_true(initialized == 0)) {
 		TAILQ_INIT(&dmover_backend_list);
-		spinlockinit(&dmover_backend_list_lock, "dmbelk", 0);
+		mutex_init(&dmover_backend_list_lock, MUTEX_DRIVER, IPL_BIO);
 
 		/* Initialize the other bits of dmover. */
 		dmover_session_initialize();
@@ -103,7 +80,6 @@ initialize(void)
 void
 dmover_backend_register(struct dmover_backend *dmb)
 {
-	int s;
 
 	if (__predict_false(initialized == 0))
 		initialize();
@@ -114,9 +90,9 @@ dmover_backend_register(struct dmover_backend *dmb)
 	TAILQ_INIT(&dmb->dmb_pendreqs);
 	dmb->dmb_npendreqs = 0;
 
-	BACKEND_LIST_LOCK_WRITE(s);
+	mutex_enter(&dmover_backend_list_lock);
 	TAILQ_INSERT_TAIL(&dmover_backend_list, dmb, dmb_list);
-	BACKEND_LIST_UNLOCK_WRITE(s);
+	mutex_exit(&dmover_backend_list_lock);
 }
 
 /*
@@ -127,7 +103,6 @@ dmover_backend_register(struct dmover_backend *dmb)
 void
 dmover_backend_unregister(struct dmover_backend *dmb)
 {
-	int s;
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(initialized == 0)) {
@@ -146,9 +121,9 @@ dmover_backend_unregister(struct dmover_backend *dmb)
 	if (dmb->dmb_nsessions)
 		panic("dmover_backend_unregister");
 
-	BACKEND_LIST_LOCK_WRITE(s);
+	mutex_enter(&dmover_backend_list_lock);
 	TAILQ_REMOVE(&dmover_backend_list, dmb, dmb_list);
-	BACKEND_LIST_UNLOCK_WRITE(s);
+	mutex_exit(&dmover_backend_list_lock);
 }
 
 /*
@@ -173,7 +148,7 @@ dmover_backend_alloc(struct dmover_session *dses, const char *type)
 			return (ESRCH);
 	}
 
-	BACKEND_LIST_LOCK_READ();
+	mutex_enter(&dmover_backend_list_lock);
 
 	/* First, find a back-end that can handle the session parts. */
 	for (dmb = TAILQ_FIRST(&dmover_backend_list); dmb != NULL;
@@ -225,7 +200,7 @@ dmover_backend_alloc(struct dmover_session *dses, const char *type)
 		}
 	}
 	if (best_dmb == NULL) {
-		BACKEND_LIST_UNLOCK_READ();
+		mutex_exit(&dmover_backend_list_lock);
 		return (ESRCH);
 	}
 
@@ -240,7 +215,7 @@ dmover_backend_alloc(struct dmover_session *dses, const char *type)
 	LIST_INSERT_HEAD(&best_dmb->dmb_sessions, dses, __dses_list);
 	best_dmb->dmb_nsessions++;
 
-	BACKEND_LIST_UNLOCK_READ();
+	mutex_exit(&dmover_backend_list_lock);
 
 	return (0);
 }
@@ -255,7 +230,7 @@ dmover_backend_release(struct dmover_session *dses)
 {
 	struct dmover_backend *dmb;
 
-	BACKEND_LIST_LOCK_READ();
+	mutex_enter(&dmover_backend_list_lock);
 
 	/* XXX Clear out the static assignment. */
 	dmb = dses->__dses_assignment.das_backend;
@@ -265,5 +240,5 @@ dmover_backend_release(struct dmover_session *dses)
 	LIST_REMOVE(dses, __dses_list);
 	dmb->dmb_nsessions--;
 
-	BACKEND_LIST_UNLOCK_READ();
+	mutex_exit(&dmover_backend_list_lock);
 }

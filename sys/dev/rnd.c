@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.62 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.63 2007/07/09 21:00:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.62 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.63 2007/07/09 21:00:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -154,7 +154,7 @@ static rndsource_t rnd_source_no_collect = {
 	NULL
 };
 
-struct callout rnd_callout = CALLOUT_INITIALIZER;
+struct callout rnd_callout;
 
 void	rndattach(int);
 
@@ -310,6 +310,8 @@ rnd_init(void)
 
 	if (rnd_ready)
 		return;
+
+	callout_init(&rnd_callout, 0);
 
 	/*
 	 * take a counter early, hoping that there's some variance in

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.12 2007/03/27 10:17:48 jnemeth Exp $	*/
+/*	$NetBSD: fdc.c,v 1.13 2007/07/09 20:52:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.12 2007/03/27 10:17:48 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.13 2007/07/09 20:52:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -765,8 +765,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	int drive_attached;
 	char code;
 
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	fdc->sc_state = DEVIDLE;
 	fdc->sc_itask = FDC_ITASK_NONE;
@@ -942,8 +942,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 

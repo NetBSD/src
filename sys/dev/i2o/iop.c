@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.65 2007/06/16 12:32:12 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.66 2007/07/09 21:00:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.65 2007/06/16 12:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.66 2007/07/09 21:00:33 ad Exp $");
 
 #include "iop.h"
 
@@ -218,7 +218,6 @@ static int	iop_print(void *, const char *);
 static void	iop_shutdown(void *);
 
 static void	iop_adjqparam(struct iop_softc *, int);
-static void	iop_create_reconf_thread(void *);
 static int	iop_handle_reply(struct iop_softc *, u_int32_t);
 static int	iop_hrt_get(struct iop_softc *);
 static int	iop_hrt_get0(struct iop_softc *, struct i2o_hrt *, int);
@@ -601,30 +600,11 @@ iop_config_interrupts(struct device *self)
 	if ((rv = iop_reconfigure(sc, 0)) == -1)
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
 
-	mutex_exit(&sc->sc_conflock);
 
-	if (rv == 0)
-		kthread_create(iop_create_reconf_thread, sc);
-
-}
-
-/*
- * Create the reconfiguration thread.  Called after the standard kernel
- * threads have been created.
- */
-static void
-iop_create_reconf_thread(void *cookie)
-{
-	struct iop_softc *sc;
-	int rv;
-
-	sc = cookie;
-	mutex_enter(&sc->sc_conflock);
 	sc->sc_flags |= IOP_ONLINE;
+	rv = kthread_create(PRI_NONE, 0, NULL, iop_reconf_thread, sc,
+	    &sc->sc_reconf_thread, "%s", sc->sc_dv.dv_xname);
 	mutex_exit(&sc->sc_conflock);
-
-	rv = kthread_create1(iop_reconf_thread, sc, &sc->sc_reconf_proc,
- 	    "%s", sc->sc_dv.dv_xname);
  	if (rv != 0) {
 		printf("%s: unable to create reconfiguration thread (%d)",
  		    sc->sc_dv.dv_xname, rv);
@@ -1122,9 +1102,9 @@ iop_hrt_get(struct iop_softc *sc)
 	struct i2o_hrt hrthdr, *hrt;
 	int size, rv;
 
-	PHOLD(curlwp);
+	uvm_lwp_hold(curlwp);
 	rv = iop_hrt_get0(sc, &hrthdr, sizeof(hrthdr));
-	PRELE(curlwp);
+	uvm_lwp_rele(curlwp);
 	if (rv != 0)
 		return (rv);
 
@@ -1298,7 +1278,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	pgop->oat.group = htole16(group);
 
 	if (ii == NULL)
-		PHOLD(curlwp);
+		uvm_lwp_hold(curlwp);
 
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1, NULL);
@@ -1306,7 +1286,7 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
 
 	if (ii == NULL)
-		PRELE(curlwp);
+		uvm_lwp_rele(curlwp);
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
@@ -1406,7 +1386,7 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 	pgop.oat.group = htole16(group);
 	pgop.oat.fields[0] = htole16(0);
 
-	PHOLD(curlwp);
+	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, &pgop, sizeof(pgop), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 30000);
 	if (rv != 0)
@@ -1414,7 +1394,7 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 		    sc->sc_dv.dv_xname, tid, group);
 
 	iop_msg_unmap(sc, im);
-	PRELE(curlwp);
+	uvm_lwp_rele(curlwp);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -1545,14 +1525,14 @@ iop_systab_set(struct iop_softc *sc)
 		}
 	}
 
-	PHOLD(curlwp);
+	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1, NULL);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1, NULL);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
-	PRELE(curlwp);
+	uvm_lwp_rele(curlwp);
 	return (rv);
 }
 

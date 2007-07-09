@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.57 2007/03/08 02:24:39 tsutsui Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.58 2007/07/09 20:52:19 ad Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.57 2007/03/08 02:24:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.58 2007/07/09 20:52:19 ad Exp $");
 
 #include "opt_adb.h"
 
@@ -270,7 +270,7 @@ int	tickle_count = 0;		/* how many tickles seen for this packet? */
 int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
-struct callout adb_cuda_tickle_ch = CALLOUT_INITIALIZER;
+callout_t adb_cuda_tickle_ch;
 
 void *adb_softintr_cookie;
 
@@ -2110,6 +2110,12 @@ adb_reinit(void)
 	int saveptr;		/* point to next free relocation address */
 	int device;
 	int nonewtimes;		/* times thru loop w/o any new devices */
+	static bool again;
+
+	if (!again) {
+		callout_init(&adb_cuda_tickle_ch, 0);
+		again = true;
+	}
 
 	adb_setup_hw_type();	/* setup hardware type */
 

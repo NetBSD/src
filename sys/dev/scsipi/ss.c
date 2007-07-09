@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.70 2007/03/04 06:02:44 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.71 2007/07/09 21:01:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.70 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.71 2007/07/09 21:01:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	 */
 	bufq_alloc(&ss->buf_queue, "fcfs", 0);
 
-	callout_init(&ss->sc_callout);
+	callout_init(&ss->sc_callout, 0);
 
 	/*
 	 * look for non-standard scanners with help of the quirk table

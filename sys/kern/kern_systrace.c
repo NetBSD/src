@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.73 2007/06/08 17:51:41 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.74 2007/07/09 21:10:54 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.73 2007/06/08 17:51:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.74 2007/07/09 21:10:54 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -1136,13 +1136,14 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 
 	/* Store our current values */
 	fst->fd_pid = strp->pid;
+	rw_enter(&mycwdp->cwdi_lock, RW_READER);
 	fst->fd_cdir = mycwdp->cwdi_cdir;
 	fst->fd_rdir = mycwdp->cwdi_rdir;
-
 	if ((mycwdp->cwdi_cdir = cwdp->cwdi_cdir) != NULL)
 		VREF(mycwdp->cwdi_cdir);
 	if ((mycwdp->cwdi_rdir = cwdp->cwdi_rdir) != NULL)
 		VREF(mycwdp->cwdi_rdir);
+	rw_exit(&mycwdp->cwdi_lock);
 #else
 	myfdp = curlwp->p_fd;
 	fdp = strp->proc->p_fd;

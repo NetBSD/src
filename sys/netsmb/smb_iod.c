@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.26 2006/04/12 01:16:02 christos Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.27 2007/07/09 21:11:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.26 2006/04/12 01:16:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.27 2007/07/09 21:11:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	error = rqp->sr_lerror = (m) ? SMB_TRAN_SEND(vcp, m, l) : ENOBUFS;
 	if (error == 0) {
 		if (rqp->sr_timo > 0) {
-			callout_init(&rqp->sr_timo_ch);
+			callout_init(&rqp->sr_timo_ch, 0);
 			callout_reset(&rqp->sr_timo_ch, rqp->sr_timo,
 				smb_iod_rqtimedout, rqp);
 		}
@@ -680,7 +680,6 @@ int
 smb_iod_create(struct smb_vc *vcp)
 {
 	struct smbiod *iod;
-	struct proc *p;
 	int error;
 
 	iod = smb_zmalloc(sizeof(*iod), M_SMBIOD, M_WAITOK);
@@ -697,8 +696,8 @@ smb_iod_create(struct smb_vc *vcp)
 	smb_sl_init(&iod->iod_evlock, "smbevl");
 	SIMPLEQ_INIT(&iod->iod_evlist);
 #ifdef __NetBSD__
-	error = kthread_create1(smb_iod_thread, iod, &p,
-				"smbiod%d", iod->iod_id);
+	error = kthread_create(PRI_NONE, 0, NULL, smb_iod_thread, iod,
+	   &iod->iod_l, "smbiod%d", iod->iod_id);
 #else
 	error = kthread_create(smb_iod_thread, iod, &iod->iod_p,
 	    RFNOWAIT, "smbiod%d", iod->iod_id);
@@ -708,9 +707,6 @@ smb_iod_create(struct smb_vc *vcp)
 		free(iod, M_SMBIOD);
 		return error;
 	}
-#ifdef __NetBSD__
-	iod->iod_l = LIST_FIRST(&p->p_lwps);
-#endif
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.34 2007/06/05 04:04:13 briggs Exp $	*/
+/*	$NetBSD: aac.c,v 1.35 2007/07/09 21:00:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.34 2007/06/05 04:04:13 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.35 2007/07/09 21:00:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.34 2007/06/05 04:04:13 briggs Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 

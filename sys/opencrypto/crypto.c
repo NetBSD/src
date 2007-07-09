@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.19 2007/03/12 18:18:37 ad Exp $ */
+/*	$NetBSD: crypto.c,v 1.20 2007/07/09 21:11:31 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.19 2007/03/12 18:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.20 2007/07/09 21:11:31 ad Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -91,10 +91,6 @@ static	TAILQ_HEAD(,cryptkop) crp_ret_kq =
 struct pool cryptop_pool;
 struct pool cryptodesc_pool;
 int crypto_pool_initialized = 0;
-
-#ifdef __NetBSD__
-static void deferred_crypto_thread(void *arg);
-#endif
 
 int	crypto_usercrypto = 1;		/* userland may open /dev/crypto */
 int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
@@ -182,7 +178,7 @@ MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
  */
 static	void cryptointr(void);		/* swi thread to dispatch ops */
 static	void cryptoret(void);		/* kernel thread for callbacks*/
-static	struct proc *cryptoproc;
+static	struct lwp *cryptothread;
 static	void crypto_destroy(void);
 static	int crypto_invoke(struct cryptop *crp, int hint);
 static	int crypto_kinvoke(struct cryptkop *krp, int hint);
@@ -203,9 +199,9 @@ SYSCTL_STRUCT(_kern, OID_AUTO, crypto_stats, CTLFLAG_RW, &cryptostats,
 static int
 crypto_init0(void)
 {
-#ifdef __FreeBSD__
 	int error;
 
+#ifdef __FreeBSD__
 	cryptop_zone = zinit("cryptop", sizeof (struct cryptop), 0, 0, 1);
 	cryptodesc_zone = zinit("cryptodesc", sizeof (struct cryptodesc),
 				0, 0, 1);
@@ -226,16 +222,17 @@ crypto_init0(void)
 	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
 #ifdef __FreeBSD__
 	error = kthread_create((void (*)(void *)) cryptoret, NULL,
-		    &cryptoproc, "cryptoret");
+		    &cryptothread, "cryptoret");
+#else
+	error = kthread_create(PRI_NONE, 0, NULL, (void (*)(void*))cryptoret,
+	    NULL, &cryptothread, "cryptoret");
+#endif
 	if (error) {
 		printf("crypto_init: cannot start cryptoret thread; error %d",
 			error);
 		crypto_destroy();
 	}
-#else
-	/* defer thread creation until after boot */
-	kthread_create( deferred_crypto_thread, NULL);
-#endif
+
 	return 0;
 }
 
@@ -1220,19 +1217,6 @@ cryptoret(void)
 	}
 }
 
-static void
-deferred_crypto_thread(void *arg)
-{
-	int error;
-
-	error = kthread_create1((void (*)(void*)) cryptoret, NULL,
-				&cryptoproc, "cryptoret");
-	if (error) {
-		printf("crypto_init: cannot start cryptoret thread; error %d",
-		    error);
-		crypto_destroy();
-	}
-}
 
 #ifdef __FreeBSD__
 /*

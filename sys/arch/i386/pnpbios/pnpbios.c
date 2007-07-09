@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.58 2007/03/04 05:59:59 christos Exp $ */
+/* $NetBSD: pnpbios.c,v 1.59 2007/07/09 20:52:18 ad Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.58 2007/03/04 05:59:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.59 2007/07/09 20:52:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ int	pnpbiosdebug = 1;
 struct pnpbios_softc {
 	struct device		sc_dev;
 	isa_chipset_tag_t	sc_ic;
-	struct proc		*sc_evthread;
+	lwp_t		*sc_evthread;
 	int		sc_version;
 	int		sc_control;
 #ifdef PNPBIOSEVENTS
@@ -118,7 +118,6 @@ static int	pnpbios_getnumnodes(int *, size_t *);
 #ifdef PNPBIOSEVENTS
 static int	pnpbios_getdockinfo(struct pnpdockinfo *);
 
-static void	pnpbios_create_event_thread(void *);
 static int	pnpbios_getevent(uint16_t *);
 static void	pnpbios_event_thread(void *);
 static int	pnpbios_sendmessage(int);
@@ -373,7 +372,10 @@ pnpbios_attach(struct device *parent, struct device *self, void *aux)
 		if (evtype != PNP_IC_CONTROL_EVENT_POLL || sc->sc_evaddr) {
 			sc->sc_threadrun = 1;
 			config_pending_incr();
-			kthread_create(pnpbios_create_event_thread, sc);
+			if (kthread_create(PRI_NONE, 0, NULL,
+			    pnpbios_event_thread, sc, &sc->sc_evthread,
+			    "%s", sc->sc_dev.dv_xname))
+			    	panic("pnpbios: create event thread");
 		}
 	}
 #endif
@@ -1398,17 +1400,6 @@ pnpbios_getdmachan(pnpbios_tag_t pbt, struct pnpresources *resc,
 }
 
 #ifdef PNPBIOSEVENTS
-static void
-pnpbios_create_event_thread(void *arg)
-{
-	struct pnpbios_softc *sc;
-
-	sc = arg;
-	if (kthread_create1(pnpbios_event_thread, sc, &sc->sc_evthread,
-	    "%s", sc->sc_dev.dv_xname))
-		panic("pnpbios_create_event_thread");
-}
-
 static void
 pnpbios_event_thread(void *arg)
 {

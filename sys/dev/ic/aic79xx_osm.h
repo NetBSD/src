@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.12 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.13 2007/07/09 21:00:34 ad Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.12 2006/11/16 01:32:50 christos Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.13 2007/07/09 21:00:34 ad Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.12 2006/11/16 01:32:50 christos Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.13 2007/07/09 21:00:34 ad Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -188,7 +188,7 @@ typedef struct callout ahd_timer_t;
 
 /***************************** Timer Facilities *******************************/
 void ahd_timeout(void*);
-#define ahd_timer_init(timer) callout_init(timer)
+#define ahd_timer_init(timer) callout_init(timer, 0)
 #define ahd_timer_stop callout_stop
 
 static __inline void

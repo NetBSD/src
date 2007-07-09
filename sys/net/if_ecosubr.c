@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.22 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.23 2007/07/09 21:11:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.22 2007/03/04 06:03:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.23 2007/07/09 21:11:00 ad Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -831,7 +831,7 @@ eco_defer(struct ifnet *ifp, struct mbuf *m, int retry_delay)
 		m_freem(m);
 		return;
 	}
-	callout_init(&er->er_callout);
+	callout_init(&er->er_callout, 0);
 	er->er_packet = m;
 	er->er_ifp = ifp;
 	s = splnet();
@@ -850,6 +850,7 @@ eco_retry_free(struct eco_retry *er)
 	s = splnet();
 	LIST_REMOVE(er, er_link);
 	splx(s);
+	callout_destroy(&er->er_callout);
 	FREE(er, M_TEMP);
 }
 

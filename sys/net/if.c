@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.192 2007/06/09 03:07:21 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.193 2007/07/09 21:10:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.192 2007/06/09 03:07:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.193 2007/07/09 21:10:59 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -154,7 +154,7 @@ MALLOC_DEFINE(M_IFADDR, "ifaddr", "interface address");
 MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");
 
 int	ifqmaxlen = IFQ_MAXLEN;
-struct	callout if_slowtimo_ch;
+callout_t if_slowtimo_ch;
 
 int netisr;			/* scheduling bits for network */
 
@@ -182,7 +182,7 @@ void
 ifinit(void)
 {
 
-	callout_init(&if_slowtimo_ch);
+	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
 #ifdef PFIL_HOOKS
 	if_pfil.ph_type = PFIL_TYPE_IFNET;

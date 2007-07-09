@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.8 2006/06/27 13:58:08 peter Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.9 2007/07/09 20:52:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.8 2006/06/27 13:58:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.9 2007/07/09 20:52:06 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,8 +130,8 @@ sapcic_kthread_create(void *arg)
 		pcmcia_card_attach(so->pcmcia);
 	}
 
-	if (kthread_create1(sapcic_event_thread, so, &so->event_thread,
-			    "%s,%d", so->sc->sc_dev.dv_xname, so->socket)) {
+	if (kthread_create(PRI_NONE, 0, NULL, sapcic_event_thread, so,
+	    &so->event_thread, "%s,%d", so->sc->sc_dev.dv_xname, so->socket)) {
 		printf("%s: unable to create event thread for socket %d\n",
 		       so->sc->sc_dev.dv_xname, so->socket);
 		panic("sapcic_kthread_create");

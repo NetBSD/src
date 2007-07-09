@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.60 2007/05/17 14:51:42 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.61 2007/07/09 21:11:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@
  * p:	l_proc->p_smutex
  * s:	spc_mutex, which may or may not be referenced by l_mutex
  * t:	l_proc->p_stmutex
+ * S:	select_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be safely accessed by the LWP itself
  * ?:	undecided
@@ -92,6 +93,7 @@ struct lwp {
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
 	int		l_cpticks;	/* t: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
+	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -102,9 +104,9 @@ struct lwp {
 	struct sleepq	*l_sleepq;	/* l: current sleep queue */
 	int		l_sleeperr;	/* !: error before unblock */
 	u_int		l_slptime;	/* l: time since last blocked */
-	struct callout	l_tsleep_ch;	/* !: callout for tsleep */
+	callout_t	l_tsleep_ch;	/* !: callout for tsleep */
 
-	/* Process level and global state */
+	/* Process level and global state, misc. */
 	LIST_ENTRY(lwp)	l_list;		/* a: entry on list of all LWPs */
 	void		*l_ctxlink;	/* p: uc_link {get,set}context */
 	struct proc	*l_proc;	/* p: parent process */
@@ -114,7 +116,9 @@ struct lwp {
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
-	const char	*l_name;	/* l: name, optional */
+	int		l_selflag;	/* S: select() flags */
+	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
+	char		*l_name;	/* (: name, optional */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
@@ -136,13 +140,14 @@ struct lwp {
 		struct timespec ts;
 	} l_ktrcsw;			/* !: for ktrace CSW trace XXX */
 	void		*l_private;	/* !: svr4-style lwp-private data */
+	lwp_t		*l_switchto;	/* !: mi_switch: switch to this LWP */
 	struct kauth_cred *l_cred;	/* !: cached credentials */
 	void		*l_emuldata;	/* !: kernel lwp-private data */
-	u_int8_t	l_cv_signalled;	/* c: restarted by cv_signal() */
-	u_int8_t	l_unused;	/* !: currently unused */
+	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
 	u_short		l_locks;	/* !: lockmgr count of held locks */
+	u_short		l_blcnt;	/* !: count of kernel_lock held */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
 
@@ -173,7 +178,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 /* These flags are kept in l_flag. */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
-#define	LW_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
@@ -185,6 +189,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
+#define	LW_INTR		0x40000000 /* Soft interrupt handler */
 #define	LW_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The second set of flags is kept in l_pflag. */
@@ -193,6 +198,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
 #define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
+#define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
@@ -223,13 +229,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
 #ifdef _KERNEL
-#define	PHOLD(l)							\
-do {									\
-	if ((l)->l_holdcnt++ == 0 && ((l)->l_flag & LW_INMEM) == 0)	\
-		uvm_swapin(l);						\
-} while (/* CONSTCOND */ 0)
-#define	PRELE(l)	(--(l)->l_holdcnt)
-
 #define	LWP_CACHE_CREDS(l, p)						\
 do {									\
 	if ((l)->l_cred != (p)->p_cred)					\

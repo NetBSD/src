@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_leds.c,v 1.5 2007/07/08 08:37:25 scw Exp $	*/
+/*	$NetBSD: nslu2_leds.c,v 1.6 2007/07/09 20:52:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.5 2007/07/08 08:37:25 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_leds.c,v 1.6 2007/07/09 20:52:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,15 +224,15 @@ slugled_defer(struct device *self)
 		aprint_error("%s: WARNING - Failed to register shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 
-	callout_init(&sc->sc_usb0);
+	callout_init(&sc->sc_usb0, 0);
 	callout_setfunc(&sc->sc_usb0, slugled_callout,
 	    (void *)(uintptr_t)LEDBITS_USB0);
 
-	callout_init(&sc->sc_usb1);
+	callout_init(&sc->sc_usb1, 0);
 	callout_setfunc(&sc->sc_usb1, slugled_callout,
 	    (void *)(uintptr_t)LEDBITS_USB1);
 
-	callout_init(&sc->sc_usb2);
+	callout_init(&sc->sc_usb2, 0);
 	callout_setfunc(&sc->sc_usb2, slugled_callout,
 	    (void *)(uintptr_t)(LEDBITS_USB0 | LEDBITS_USB1));
 
