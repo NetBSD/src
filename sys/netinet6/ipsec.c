@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.119 2007/05/23 17:32:47 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.120 2007/07/09 19:11:05 gdt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.119 2007/05/23 17:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.120 2007/07/09 19:11:05 gdt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3104,8 +3104,16 @@ ipsec4_splithdr(struct mbuf *m)
 	struct ip *ip;
 	int hlen;
 
-	if (m->m_len < sizeof(struct ip))
+	if (m->m_len < sizeof(struct ip)) {
+		/* XXX Print and drop until we understand. */
+		printf("ipsec4_splithdr: m->m_len %d m_length %d < %d\n",
+		       m->m_len, m_length(m), sizeof(struct ip));
+		m_freem(m);
+		return NULL;
+#if 0
 		panic("ipsec4_splithdr: first mbuf too short");
+#endif
+	}
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
 	if (m->m_len > hlen) {
