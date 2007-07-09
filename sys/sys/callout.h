@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.23.6.2 2007/07/01 21:37:34 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.23.6.3 2007/07/09 21:31:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  * callout_impl_t.
  */
 typedef struct callout {
-	void	*_c_store[12];
+	uint64_t _c_store[5];
 } callout_t;
 
 /* Internal flags. */
