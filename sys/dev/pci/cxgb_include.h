@@ -53,21 +53,21 @@
 #include <dev/pci/cxgb_firmware_exports.h>
 // #include <sys/mvec.h>
 #include "toedev.h"
-// #include <sys/mbufq.h>
+#include "cxgb_mbuf.h"
 #include <dev/pci/jhash.h>
 #else
-#include <dev/pci/cxgb_osdep.h>
-#include <dev/pci/cxgb_common.h>
-#include <dev/pci/cxgb_ioctl.h>
-#include <dev/pci/cxgb_offload.h>
-#include <dev/pci/cxgb_regs.h>
-#include <dev/pci/cxgb_t3_cpl.h>
-#include <dev/pci/cxgb_ctl_defs.h>
-#include <dev/pci/cxgb_sge_defs.h>
-#include <dev/pci/cxgb_firmware_exports.h>
+#include "cxgb_osdep.h"
+#include "cxgb_mbuf.h"
+#include "cxgb_common.h"
+#include "cxgb_ioctl.h"
+#include "cxgb_offload.h"
+#include "cxgb_regs.h"
+#include "cxgb_t3_cpl.h"
+#include "cxgb_ctl_defs.h"
+#include "cxgb_sge_defs.h"
+#include "cxgb_firmware_exports.h"
 #include "cxgb_mvec.h"
 #include "cxgb_toedev.h"
-// #include <sys/mbufq.h>
 #include "cxgb_jhash.h"
 #endif
 #endif
