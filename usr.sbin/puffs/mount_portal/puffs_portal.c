@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.4 2007/07/08 17:13:24 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.5 2007/07/09 09:28:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -143,41 +143,52 @@ readfd(struct puffs_framebuf *pufbuf, int fd, int *done)
 	return rv;
 }
 
-/* receive data from provider */
+/*
+ * receive data from provider
+ *
+ * XXX: should read directly into the buffer and adjust offsets
+ * instead of doing memcpy
+ */
 static int
 readdata(struct puffs_framebuf *pufbuf, int fd, int *done)
 {
 	char buf[1024];
 	size_t max;
 	ssize_t n;
-	int moved = 0;
-
-	/* we're always done */
-	*done = 1;
+	size_t moved;
 
 	/* don't override metadata */
 	if (puffs_framebuf_telloff(pufbuf) == 0)
 		puffs_framebuf_seekset(pufbuf, METADATASIZE);
 	puffs_framebuf_getdata_atoff(pufbuf, sizeof(int), &max, sizeof(size_t));
+	moved = puffs_framebuf_tellsize(pufbuf) - METADATASIZE;
+	assert(max >= moved);
+	max -= moved;
 
 	do {
 		n = read(fd, buf, MIN(sizeof(buf), max));
 		if (n == 0) {
 			if (moved)
-				return 0;
+				break;
 			else
 				return -1; /* caught by read */
 		}
 		if (n < 0) {
+			if (moved)
+				return 0;
+
 			if (errno != EAGAIN)
 				return errno;
-			break;
+			else
+				return 0;
 		}
 
 		puffs_framebuf_putdata(pufbuf, buf, n);
-		moved = 1;
+		moved += n;
 		max -= n;
-	} while (n == sizeof(buf) || max == 0);
+	} while (max > 0);
+
+	*done = 1;
 
 	return 0;
 }
@@ -206,7 +217,7 @@ portal_frame_wf(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 	void *win;
 	size_t pbsize, pboff, winlen;
 	ssize_t n;
-	int moved, error;
+	int error;
 
 	pboff = puffs_framebuf_telloff(pufbuf);
 	pbsize = puffs_framebuf_tellsize(pufbuf);
@@ -219,24 +230,22 @@ portal_frame_wf(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf,
 			return errno;
 		n = write(fd, win, winlen);
 		if (n == 0) {
-			if (moved)
-				return 0;
-			else {
-				error = -1; /* caught by node_write */
+			if (pboff != 0)
 				break;
-			}
+			else
+				return -1; /* caught by node_write */
 		}
 		if (n < 0) {
-			if (errno != EAGAIN) {
-				error = errno;
+			if (pboff != 0)
 				break;
-			}
+
+			if (errno != EAGAIN)
+				return errno;
 			return 0;
 		}
 
 		pboff += n;
 		puffs_framebuf_seekset(pufbuf, pboff);
-		moved = 1;
 	} while (pboff != pbsize);
 
 	*done = 1;
@@ -400,6 +409,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, portal, node, open);
 	PUFFSOP_SET(pops, portal, node, read);
 	PUFFSOP_SET(pops, portal, node, write);
+	PUFFSOP_SET(pops, portal, node, seek);
 	PUFFSOP_SET(pops, portal, node, inactive);
 	PUFFSOP_SET(pops, portal, node, reclaim);
 
@@ -538,6 +548,9 @@ portal_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	if (opc == PORTAL_ROOT)
 		return 0;
 
+	if (mode & O_NONBLOCK)
+		return EOPNOTSUPP;
+
 	v = conf_match(&q, portn->path);
 	if (v == NULL)
 		return ENOENT;
@@ -556,7 +569,7 @@ portal_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	size_t xfersize, winsize, boff;
 	void *win;
 	int rv, error;
-	int data;
+	int data, dummy;
 
 	assert(opc != PORTAL_ROOT);
 	error = 0;
@@ -571,16 +584,33 @@ portal_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	puffs_framebuf_putdata(pufbuf, &data, sizeof(int));
 	puffs_framebuf_putdata(pufbuf, resid, sizeof(size_t));
 
-	rv = puffs_framev_enqueue_directreceive(pcc, portn->fd, pufbuf, 0);
-	if (rv == -1) {
-		error = errno;
-		goto out;
+	/* if we are doing nodelay, do read directly */
+	if (ioflag & PUFFS_IO_NDELAY) {
+		rv = readdata(pufbuf, portn->fd, &dummy);
+		if (rv != 0) {
+			error = rv;
+			goto out;
+		}
+	} else {
+		rv = puffs_framev_enqueue_directreceive(pcc,
+		    portn->fd, pufbuf, 0);
+
+		if (rv == -1) {
+			error = errno;
+			goto out;
+		}
 	}
 
 	xfersize = puffs_framebuf_tellsize(pufbuf) - METADATASIZE;
+	if (xfersize == 0) {
+		assert(ioflag & PUFFS_IO_NDELAY);
+		error = EAGAIN;
+		goto out;
+	}
+
 	*resid -= xfersize;
 	boff = 0;
-	do {
+	while (xfersize > 0) {
 		winsize = xfersize;
 		rv = puffs_framebuf_getwindow(pufbuf, METADATASIZE,
 		    &win, &winsize);
@@ -590,7 +620,7 @@ portal_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 		memcpy(buf + boff, win, winsize);
 		xfersize -= winsize;
 		boff += winsize;
-	} while (xfersize);
+	}
 
  out:
 	puffs_framev_disablefd(pu, portn->fd, PUFFS_FBIO_READ);
@@ -609,7 +639,7 @@ portal_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	struct portal_node *portn = opc;
 	struct puffs_framebuf *pufbuf;
 	size_t written;
-	int error, rv;
+	int error, rv, dummy;
 
 	assert(opc != PORTAL_ROOT);
 
@@ -617,9 +647,19 @@ portal_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	puffs_framebuf_putdata(pufbuf, buf, *resid);
 
 	error = 0;
-	if (puffs_framev_enqueue_directsend(pcc, portn->fd, pufbuf, 0) == -1) {
-		error = errno;
-		goto out;
+	if (ioflag & PUFFS_IO_NDELAY) {
+		rv = portal_frame_wf(puffs_cc_getusermount(pcc),
+		    pufbuf, portn->fd, &dummy);
+		if (rv) {
+			error = rv;
+			goto out;
+		}
+	} else  {
+		rv = puffs_framev_enqueue_directsend(pcc, portn->fd, pufbuf, 0);
+		if (rv == -1) {
+			error = errno;
+			goto out;
+		}
 	}
 
 	rv = puffs_framebuf_getdata_atoff(pufbuf, 0, &written, sizeof(size_t));
@@ -631,6 +671,20 @@ portal_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	puffs_framebuf_destroy(pufbuf);
 	if (error == -1)
 		error = 0;
+	return 0;
+}
+
+int
+portal_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
+	const struct puffs_cred *pcr)
+{
+	struct portal_node *portn = opc;
+
+	if (opc == PORTAL_ROOT || portn->fd == -1)
+		return EOPNOTSUPP;
+
+	if (lseek(portn->fd, newoff, SEEK_SET) == -1)
+		return errno;
 	return 0;
 }
 
