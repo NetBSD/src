@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.16 2007/07/09 21:11:35 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.17 2007/07/09 22:44:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -1071,6 +1071,7 @@ void
 ufsdirhash_init()
 {
 
+	mutex_init(&ufsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);
 	malloc_type_attach(M_DIRHASH);
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
 	    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
@@ -1084,6 +1085,7 @@ ufsdirhash_done(void)
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
 	pool_destroy(&ufsdirhash_pool);
 	malloc_type_detach(M_DIRHASH);
+	mutex_destroy(&ufsdirhash_lock);
 }
 
 SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")
