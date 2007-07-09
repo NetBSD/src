@@ -1,4 +1,4 @@
-.\" $NetBSD: wpi.4,v 1.4 2007/02/06 23:40:32 wiz Exp $
+.\" $NetBSD: wpi.4,v 1.5 2007/07/09 19:59:40 degroote Exp $
 .\"
 .\" Copyright (c) 2006
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -168,11 +168,11 @@ Disable WEP encryption.
 This is the default mode of operation.
 .El
 .Sh FILES
-The driver needs at least version 1.13 of the following firmware file,
+The driver needs at least version 2.14.3 of the following firmware file,
 which is loaded when an interface is brought up:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It Pa /usr/pkg/libdata/if_wpi/ipw3945.ucode
+.It Pa /usr/pkg/libdata/if_wpi/iwlwifi-3945.ucode
 .El
 .Pp
 This firmware file is not free because Intel refuses to grant
@@ -185,9 +185,9 @@ The official person to state your views to about this issue is
 peter.engelbrecht@intel.com at +1 (858) 391 1857.
 .Pp
 The firmware can be found at
-.Pa http://bughost.org/ipw3945/
+.Pa http://intellinuxwireless.org/
 (Microcode), or can be installed using the
-.Pa pkgsrc/sysutils/wpi-firmware
+.Pa pkgsrc/sysutils/wpi-firmware2
 package.
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -244,7 +244,7 @@ when the interface will be set to up
 .Xr pci 4 ,
 .Xr ifconfig 8 ,
 .Xr firmload 9 ,
-.Pa pkgsrc/sysutils/wpi-firmware
+.Pa pkgsrc/sysutils/wpi-firmware2
 .Rs
 .%T The IPW Web Page
 .%O http://damien.bergamini.free.fr/ipw/
