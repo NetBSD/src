@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.288 2007/06/05 12:31:31 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.289 2007/07/09 11:35:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.288 2007/06/05 12:31:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.289 2007/07/09 11:35:20 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1522,12 +1522,14 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
-	 * have the object locked while it cleans it out. The VOP_LOCK
-	 * ensures that the VOP_INACTIVE routine is done with its work.
-	 * For active vnodes, it ensures that no other activity can
+	 * have the object locked while it cleans it out.  For
+	 * active vnodes, it ensures that no other activity can
 	 * occur while the underlying object is being cleaned out.
+	 *
+	 * We don't drain the lock because it might have been exported
+	 * to upper layers by this vnode and could still be in use.
 	 */
-	VOP_LOCK(vp, LK_DRAIN | LK_INTERLOCK);
+	VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1649,6 +1651,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	 */
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
+	vp->v_vnlock = NULL;
 	simple_lock(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
 	vp->v_flag &= ~(VXLOCK|VLOCKSWORK);
