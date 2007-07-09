@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.50 2007/06/15 18:28:39 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.51 2007/07/09 21:11:35 ad Exp $	*/
 
 /*
  *
@@ -92,7 +92,7 @@ struct uvm {
 
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
-	struct proc *pagedaemon_proc;	/* daemon's pid */
+	struct lwp *pagedaemon_lwp;	/* daemon's pid */
 	struct simplelock pagedaemon_lock;
 
 		/* aiodone daemon */
@@ -113,13 +113,18 @@ struct uvm {
 	struct simplelock swap_data_lock;
 	bool swap_running;
 	kcondvar_t scheduler_cv;
-	kmutex_t scheduler_mutex;
 	bool scheduler_kicked;
 	int swapout_enabled;
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;
 };
+
+/*
+ * locks (made globals for lockstat).
+ */
+
+extern kmutex_t uvm_scheduler_mutex;
 
 #endif /* _KERNEL */
 

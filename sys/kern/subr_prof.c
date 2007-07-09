@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.40 2007/03/06 16:16:02 drochner Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.41 2007/07/09 21:10:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.40 2007/03/06 16:16:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.41 2007/07/09 21:10:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ addupc_intr(struct lwp *l, u_long pc)
 
 	p = l->l_proc;
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	prof = &p->p_stats->p_prof;
 	if (pc < prof->pr_off ||

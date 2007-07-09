@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.97 2007/05/30 21:02:03 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.98 2007/07/09 21:11:00 ad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.97 2007/05/30 21:02:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98 2007/07/09 21:11:00 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -807,9 +807,8 @@ gre_kick(struct gre_softc *sc)
 	if (sc->sc_proto == IPPROTO_UDP && (ifp->if_flags & IFF_UP) == IFF_UP &&
 	    !sc->sc_running) {
 		sc->sc_running = 1;
-		mutex_exit(&sc->sc_mtx);
-		rc = kthread_create1(gre_thread, sc, NULL, ifp->if_xname);
-		mutex_enter(&sc->sc_mtx);
+		rc = kthread_create(PRI_NONE, 0, NULL, gre_thread, sc,
+		    NULL, ifp->if_xname);
 		if (rc != 0)
 			gre_stop(sc);
 		return rc;

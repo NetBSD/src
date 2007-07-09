@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.141 2007/05/29 07:17:23 simonb Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142 2007/07/09 21:00:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.141 2007/05/29 07:17:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142 2007/07/09 21:00:56 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -285,7 +285,7 @@ struct wm_softc {
 
 	struct mii_data sc_mii;		/* MII/media information */
 
-	struct callout sc_tick_ch;	/* tick callout */
+	callout_t sc_tick_ch;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -352,7 +352,7 @@ struct wm_softc {
 	int	sc_txfifo_head;		/* current head of FIFO */
 	uint32_t sc_txfifo_addr;	/* internal address of start of FIFO */
 	int	sc_txfifo_stall;	/* Tx FIFO is stalled */
-	struct callout sc_txfifo_ch;	/* Tx FIFO stall work-around timer */
+	callout_t sc_txfifo_ch;		/* Tx FIFO stall work-around timer */
 
 	bus_addr_t sc_rdt_reg;		/* offset of RDT register */
 
@@ -919,7 +919,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t preg, memtype;
 	uint32_t reg;
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	wmp = wm_lookup(pa);
 	if (wmp == NULL) {
@@ -1063,7 +1063,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		aprint_verbose("%s: Communication Streaming Architecture\n",
 		    sc->sc_dev.dv_xname);
 		if (sc->sc_type == WM_T_82547) {
-			callout_init(&sc->sc_txfifo_ch);
+			callout_init(&sc->sc_txfifo_ch, 0);
 			callout_setfunc(&sc->sc_txfifo_ch,
 					wm_82547_txfifo_stall, sc);
 			aprint_verbose("%s: using 82547 Tx FIFO stall "

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.74 2007/05/18 14:10:37 joerg Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.75 2007/07/09 21:00:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.74 2007/05/18 14:10:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.75 2007/07/09 21:00:38 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -633,7 +633,7 @@ rtk_attach(struct rtk_softc *sc)
 	int error;
 	int i, addr_len;
 
-	callout_init(&sc->rtk_tick_ch);
+	callout_init(&sc->rtk_tick_ch, 0);
 
 	/*
 	 * Check EEPROM type 9346 or 9356.

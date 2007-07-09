@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.10 2007/03/04 06:01:44 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.11 2007/07/09 21:00:30 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.11 2007/07/09 21:00:30 ad Exp $");
 
 #include "opt_apm.h"
 
@@ -693,27 +693,17 @@ apm_attach(struct apm_softc *sc)
 	 * Create a kernel thread to periodically check for APM events,
 	 * and notify other subsystems when they occur.
 	 */
-	kthread_create(apm_create_thread, sc);
-
-	return;
-}
-
-void
-apm_create_thread(void *arg)
-{
-	struct apm_softc *sc = arg;
-
-	if (kthread_create1(apm_thread, sc, &sc->sc_thread,
-			    "%s", sc->sc_dev.dv_xname) == 0)
-		return;
-
-	/*
-	 * We were unable to create the APM thread; bail out.
-	 */
-	if (sc->sc_ops->aa_disconnect)
-		(*sc->sc_ops->aa_disconnect)(sc->sc_cookie);
-	printf("%s: unable to create thread, kernel APM support disabled\n",
-	       sc->sc_dev.dv_xname);
+	if (kthread_create(PRI_NONE, 0, NULL, apm_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		/*
+		 * We were unable to create the APM thread; bail out.
+		 */
+		if (sc->sc_ops->aa_disconnect)
+			(*sc->sc_ops->aa_disconnect)(sc->sc_cookie);
+		printf("%s: unable to create thread, "
+		    "kernel APM support disabled\n",
+		    sc->sc_dev.dv_xname);
+	}
 }
 
 void

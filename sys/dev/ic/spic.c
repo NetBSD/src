@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.7 2007/03/04 06:02:02 christos Exp $	*/
+/*	$NetBSD: spic.c,v 1.8 2007/07/09 21:00:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.7 2007/03/04 06:02:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.8 2007/07/09 21:00:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ spic_attach(struct spic_softc *sc)
 		printf("spic_attach %x %x\n", sc->sc_iot, (uint)sc->sc_ioh);
 #endif
 
-	callout_init(&sc->sc_poll);
+	callout_init(&sc->sc_poll, 0);
 
 	spic_call1(sc, 0x82);
 	spic_call2(sc, 0x81, 0xff);

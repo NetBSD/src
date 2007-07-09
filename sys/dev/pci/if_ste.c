@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.27 2007/03/04 06:02:22 christos Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.28 2007/07/09 21:00:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.27 2007/03/04 06:02:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.28 2007/07/09 21:00:55 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -140,7 +140,7 @@ struct ste_softc {
 
 	struct mii_data sc_mii;		/* MII/media information */
 
-	struct callout sc_tick_ch;	/* tick callout */
+	callout_t sc_tick_ch;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -318,7 +318,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	uint16_t myea[ETHER_ADDR_LEN / 2];
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	sp = ste_lookup(pa);
 	if (sp == NULL) {

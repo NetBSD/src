@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 2007/05/19 14:19:39 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143 2007/07/09 20:52:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2007/05/19 14:19:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2007/07/09 20:52:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -326,6 +326,8 @@ cpu_startup(void)
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
+
+	callout_init(&candbtimer_ch, 0);
 }
 
 /*
@@ -932,15 +934,13 @@ makeiplcookie(ipl_t ipl)
 #define PANICBUTTON
 #endif
 
+static callout_t candbtimer_ch;
+
 #ifdef PANICBUTTON
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 void candbtimer(void *);
-
-#ifndef DDB
-static struct callout candbtimer_ch = CALLOUT_INITIALIZER;
-#endif
 
 void
 candbtimer(void *arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.64 2007/05/17 14:51:39 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.65 2007/07/09 21:10:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,10 +49,6 @@
  *	private address space, global execution state (stopped, active,
  *	zombie, ...), signal disposition and so on.  On a multiprocessor
  *	machine, multiple LWPs be executing in kernel simultaneously.
- *
- *	Note that LWPs differ from kernel threads (kthreads) in that kernel
- *	threads are distinct processes (system processes) with no user space
- *	component, which themselves may contain one or more LWPs.
  *
  * Execution states
  *
@@ -208,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.64 2007/05/17 14:51:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.65 2007/07/09 21:10:52 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -611,7 +607,8 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	}
 
 	lwp_update_creds(l2);
-	callout_init(&l2->l_tsleep_ch);
+	callout_init(&l2->l_tsleep_ch, CALLOUT_MPSAFE);
+	mutex_init(&l2->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&l2->l_sigcv, "sigwait");
 	l2->l_syncobj = &sched_syncobj;
 
@@ -643,9 +640,11 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 
 	mutex_exit(&p2->p_smutex);
 
+	mutex_enter(&proclist_lock);
 	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);
 
@@ -671,22 +670,26 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 	spl0();
 	pmap_activate(new);
 	LOCKDEBUG_BARRIER(NULL, 0);
-	KERNEL_LOCK(1, new);
+	if ((new->l_pflag & LP_MPSAFE) == 0) {
+		KERNEL_LOCK(1, new);
+	}
 }
 
 /*
- * Quit the process.
- * this can only be used meaningfully if you're willing to switch away. 
- * Calling with l != curlwp would be weird.
+ * Exit an LWP.
  */
 void
 lwp_exit(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
+	bool current;
+
+	current = (l == curlwp);
 
 	DPRINTF(("lwp_exit: %d.%d exiting.\n", p->p_pid, l->l_lid));
 	DPRINTF((" nlwps: %d nzlwps: %d\n", p->p_nlwps, p->p_nzlwps));
+	KASSERT(current || l->l_stat == LSIDL);
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
@@ -709,6 +712,7 @@ lwp_exit(struct lwp *l)
 	 */
 	mutex_enter(&p->p_smutex);
 	if (p->p_nlwps - p->p_nzlwps == 1) {
+		KASSERT(current == true);
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
 		    p->p_pid, l->l_lid));
 		exit1(l, 0);
@@ -727,13 +731,23 @@ lwp_exit(struct lwp *l)
 	 * Release our cached credentials.
 	 */
 	kauth_cred_free(l->l_cred);
+	callout_destroy(&l->l_tsleep_ch);
+
+	/*
+	 * While we can still block, mark the LWP as unswappable to
+	 * prevent conflicts with the with the swapper.
+	 */
+	if (current)
+		uvm_lwp_hold(l);
 
 	/*
 	 * Remove the LWP from the global list.
 	 */
+	mutex_enter(&proclist_lock);
 	mutex_enter(&proclist_mutex);
 	LIST_REMOVE(l, l_list);
 	mutex_exit(&proclist_mutex);
+	mutex_exit(&proclist_lock);
 
 	/*
 	 * Get rid of all references to the LWP that others (e.g. procfs)
@@ -786,20 +800,22 @@ lwp_exit(struct lwp *l)
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free(l, 0);
 #endif
-	pmap_deactivate(l);
 
-	/*
-	 * Release the kernel lock, signal another LWP to collect us,
-	 * and switch away into oblivion.
-	 */
+	if (current) {
+		pmap_deactivate(l);
+
+		/*
+		 * Release the kernel lock, and switch away into
+		 * oblivion.
+		 */
 #ifdef notyet
-	/* XXXSMP hold in lwp_userret() */
-	KERNEL_UNLOCK_LAST(l);
+		/* XXXSMP hold in lwp_userret() */
+		KERNEL_UNLOCK_LAST(l);
 #else
-	KERNEL_UNLOCK_ALL(l, NULL);
+		KERNEL_UNLOCK_ALL(l, NULL);
 #endif
-
-	lwp_exit_switchaway(l);
+		lwp_exit_switchaway(l);
+	}
 }
 
 void
@@ -880,6 +896,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	sigclear(&l->l_sigpend, NULL, &kq);
 	ksiginfo_queue_drain(&kq);
 	cv_destroy(&l->l_sigcv);
+	mutex_destroy(&l->l_swaplock);
 
 	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the

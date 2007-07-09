@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.33 2007/03/04 05:59:41 christos Exp $	*/
+/*	$NetBSD: ser.c,v 1.34 2007/07/09 20:52:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.33 2007/03/04 05:59:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.34 2007/07/09 20:52:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -323,7 +323,7 @@ void	*auxp;
 	MFP->mf_imrb &= ~(IB_SCTS|IB_SDCD);
 	MFP->mf_imra &= ~(IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
 
-	callout_init(&sc->sc_diag_ch);
+	callout_init(&sc->sc_diag_ch, 0);
 
 #if SERCONSOLE > 0
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.154 2007/06/05 12:31:31 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.155 2007/07/09 21:10:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.154 2007/06/05 12:31:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.155 2007/07/09 21:10:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1067,7 +1067,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
 	bool async = (flags & PGO_SYNCIO) == 0;
-	bool pagedaemon = curproc == uvm.pagedaemon_proc;
+	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
@@ -1162,7 +1162,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		endmp.flags = PG_BUSY;
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
-		PHOLD(l);
+		uvm_lwp_hold(l);
 	} else {
 		pg = uvm_pagelookup(uobj, off);
 	}
@@ -1427,7 +1427,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
-		PRELE(l);
+		uvm_lwp_rele(l);
 	}
 
 	if (modified && (vp->v_flag & VWRITEMAPDIRTY) != 0 &&
@@ -1557,7 +1557,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	mbp->b_flags = B_BUSY | brw | B_AGE | (async ? (B_CALL | B_ASYNC) : 0);
 	mbp->b_iodone = iodone;
 	mbp->b_vp = vp;
-	if (curproc == uvm.pagedaemon_proc)
+	if (curlwp == uvm.pagedaemon_lwp)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else if (async)
 		BIO_SETPRIO(mbp, BPRIO_TIMENONCRITICAL);

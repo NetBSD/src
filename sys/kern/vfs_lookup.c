@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.92 2007/05/19 22:11:22 christos Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.93 2007/07/09 21:10:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.92 2007/05/19 22:11:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.93 2007/07/09 21:10:57 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -266,8 +266,8 @@ namei(struct nameidata *ndp)
 	/*
 	 * Get root directory for the translation.
 	 */
-	/* XXX: SMP access to p_cwdi needs locking and vnodes held */
 	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
 	dp = cwdi->cwdi_rdir;
 	if (dp == NULL)
 		dp = rootvnode;
@@ -299,7 +299,8 @@ namei(struct nameidata *ndp)
 		ndp->ni_erootdir = NULL;
 	}
 	VREF(dp);
-
+	rw_exit(&cwdi->cwdi_lock);
+ 
 #ifdef KTRACE
 	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI)) {
 		if (ndp->ni_erootdir != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.34 2007/03/04 05:59:27 christos Exp $ */
+/*	$NetBSD: par.c,v 1.35 2007/07/09 20:52:02 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.34 2007/03/04 05:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.35 2007/07/09 20:52:02 ad Exp $");
 
 /*
  * parallel port interface
@@ -142,8 +142,8 @@ parattach(struct device *pdp, struct device *dp, void *auxp)
 		par_softcp->sc_flags = PARF_ALIVE;
 	printf("\n");
 
-	callout_init(&par_softcp->sc_timo_ch);
-	callout_init(&par_softcp->sc_start_ch);
+	callout_init(&par_softcp->sc_timo_ch, 0);
+	callout_init(&par_softcp->sc_start_ch, 0);
 }
 
 int

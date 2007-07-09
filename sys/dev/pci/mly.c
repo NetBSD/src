@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.34 2007/03/04 06:02:24 christos Exp $	*/
+/*	$NetBSD: mly.c,v 1.35 2007/07/09 21:00:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.34 2007/03/04 06:02:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.35 2007/07/09 21:00:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,6 @@ static void	mly_release_ccbs(struct mly_softc *);
 static int	mly_scan_btl(struct mly_softc *, int, int);
 static void	mly_scan_channel(struct mly_softc *, int);
 static void	mly_thread(void *);
-static void	mly_thread_create(void *);
 
 static int	mly_ccb_alloc(struct mly_softc *, struct mly_ccb **);
 static void	mly_ccb_complete(struct mly_softc *, struct mly_ccb *);
@@ -550,9 +549,12 @@ mly_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Finally, create our monitoring thread.
 	 */
-	kthread_create(mly_thread_create, mly);
-
 	mly->mly_state |= MLY_STATE_INITOK;
+	rv = kthread_create(PRI_NONE, 0, NULL, mly_thread, mly,
+	    &mly->mly_thread, "%s", mly->mly_dv.dv_xname);
+ 	if (rv != 0)
+		printf("%s: unable to create thread (%d)\n",
+		    mly->mly_dv.dv_xname, rv);
 	return;
 
  bad:
@@ -1249,25 +1251,6 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 		/* Probably a 'noisy' event being ignored. */
 		break;
 	}
-}
-
-/*
- * Create the monitoring thread.  Called after the standard kernel threads
- * have been created.
- */
-static void
-mly_thread_create(void *cookie)
-{
-	struct mly_softc *mly;
-	int rv;
-
-	mly = cookie;
-
-	rv = kthread_create1(mly_thread, mly, &mly->mly_thread, "%s",
-	    mly->mly_dv.dv_xname);
- 	if (rv != 0)
-		printf("%s: unable to create thread (%d)\n",
-		    mly->mly_dv.dv_xname, rv);
 }
 
 /*

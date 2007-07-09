@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.123 2007/06/01 20:24:21 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.124 2007/07/09 21:10:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.123 2007/06/01 20:24:21 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.124 2007/07/09 21:10:52 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -97,9 +97,9 @@ struct ktr_desc {
 	int ktd_intrwakdl;		/* ditto, but when interactive */
 
 	struct file *ktd_fp;		/* trace output file */
-	struct proc *ktd_proc;		/* our kernel thread */
+	struct lwp *ktd_lwp;		/* our kernel thread */
 	TAILQ_HEAD(, ktrace_entry) ktd_queue;
-	struct callout ktd_wakch;	/* delayed wakeup */
+	callout_t ktd_wakch;		/* delayed wakeup */
 	kcondvar_t ktd_sync_cv;
 	kcondvar_t ktd_cv;
 };
@@ -920,7 +920,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 		if (ktd == NULL) {
 			ktd = kmem_alloc(sizeof(*ktd), KM_SLEEP);
 			TAILQ_INIT(&ktd->ktd_queue);
-			callout_init(&ktd->ktd_wakch);
+			callout_init(&ktd->ktd_wakch, 0);
 			cv_init(&ktd->ktd_cv, "ktrwait");
 			cv_init(&ktd->ktd_sync_cv, "ktrsync");
 			ktd->ktd_flags = ktd->ktd_qcount =
@@ -936,8 +936,8 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 			if (fp->f_type == DTYPE_PIPE)
 				ktd->ktd_flags |= KTDF_INTERACTIVE;
 
-			error = kthread_create1(ktrace_thread, ktd,
-			    &ktd->ktd_proc, "ktr %p", ktd);
+			error = kthread_create(PRI_NONE, 0, NULL,
+			    ktrace_thread, ktd, &ktd->ktd_lwp, "ktrace");
 			if (error != 0) {
 				kmem_free(ktd, sizeof(*ktd));
 				goto done;
@@ -954,11 +954,11 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 				ktd = NULL;
 			} else
 				TAILQ_INSERT_TAIL(&ktdq, ktd, ktd_list);
+			if (ktd == NULL)
+				cv_wait(&lbolt, &ktrace_mutex);
 			mutex_exit(&ktrace_mutex);
-			if (ktd == NULL) {
-				tsleep(&lbolt, PWAIT, "ktrzzz", 0);
+			if (ktd == NULL)
 				goto done;
-			}
 		}
 		break;
 
@@ -1362,6 +1362,7 @@ ktrace_thread(void *arg)
 	closef(fp, NULL);
 
 	callout_stop(&ktd->ktd_wakch);
+	callout_destroy(&ktd->ktd_wakch);
 	kmem_free(ktd, sizeof(*ktd));
 
 	kthread_exit(0);

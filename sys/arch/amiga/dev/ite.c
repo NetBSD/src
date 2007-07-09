@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.76 2007/03/04 05:59:21 christos Exp $ */
+/*	$NetBSD: ite.c,v 1.77 2007/07/09 20:52:01 ad Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.76 2007/03/04 05:59:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.77 2007/07/09 20:52:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -422,6 +422,8 @@ iteinit(dev_t dev)
 {
 	struct ite_softc *ip;
 	static int kbdmap_loaded = 0;
+
+	callout_init(&repeat_ch, 0);
 
 	ip = getitesp(dev);
 	if (ip->flags & ITE_INITED)
@@ -859,7 +861,7 @@ ite_cnfilter(u_char c, enum caller caller)
 static u_char last_char;
 static u_char tout_pending;
 
-static struct callout repeat_ch = CALLOUT_INITIALIZER;
+static callout_t repeat_ch;
 
 /*ARGSUSED*/
 static void

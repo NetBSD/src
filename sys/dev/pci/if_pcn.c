@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.38 2007/03/04 06:02:22 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.39 2007/07/09 21:00:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.38 2007/03/04 06:02:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.39 2007/07/09 21:00:55 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -260,7 +260,7 @@ struct pcn_softc {
 
 	struct mii_data sc_mii;		/* MII/media information */
 
-	struct callout sc_tick_ch;	/* tick callout */
+	callout_t sc_tick_ch;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -593,7 +593,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	prop_object_t obj;
 	bool is_vmware;
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	printf(": AMD PCnet-PCI Ethernet\n");
 

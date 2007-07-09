@@ -1,4 +1,4 @@
-/* $NetBSD: toaster.c,v 1.3 2007/01/29 01:52:45 hubertf Exp $ */
+/* $NetBSD: toaster.c,v 1.4 2007/07/09 21:00:50 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.3 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.4 2007/07/09 21:00:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct toaster_softc {
 	u_int32_t led_duty[4];
 	u_int32_t led_width_sysctl[4];
 	u_int32_t led_duty_sysctl[4];
-	struct callout led_callout[4];
+	callout_t led_callout[4];
 };
 
 static int	toaster_match(struct device *, struct cfdata *, void *);
@@ -251,10 +251,10 @@ toaster_attach(parent, self, aux)
 	aprint_normal("%s: using port A, bit 0 for magnetic latch\n", sc->sc_dev.dv_xname);
 	aprint_normal("%s: using port A, bit 1 for burner element\n", sc->sc_dev.dv_xname);
 	
-	callout_init(&sc->led_callout[0]);
-	callout_init(&sc->led_callout[1]);
-	callout_init(&sc->led_callout[2]);
-	callout_init(&sc->led_callout[3]);
+	callout_init(&sc->led_callout[0], 0);
+	callout_init(&sc->led_callout[1], 0);
+	callout_init(&sc->led_callout[2], 0);
+	callout_init(&sc->led_callout[3], 0);
 	sc->led_duty[0] = sc->led_width[0] = 0;
 	sc->led_duty[1] = sc->led_width[1] = 0;
 	sc->led_duty[2] = sc->led_width[2] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.148 2007/06/25 23:35:13 christos Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.149 2007/07/09 21:11:12 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -193,7 +193,7 @@ struct tcpcb {
 	int	t_family;		/* address family on the wire */
 	struct ipqehead segq;		/* sequencing queue */
 	int	t_segqlen;		/* length of the above */
-	struct callout t_timer[TCPT_NTIMERS];/* tcp timers */
+	callout_t t_timer[TCPT_NTIMERS];/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	uint32_t t_rxtcur;		/* current retransmit value */
@@ -227,7 +227,7 @@ struct tcpcb {
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
 	struct	in6pcb *t_in6pcb;	/* back pointer to internet pcb */
-	struct	callout t_delack_ch;	/* delayed ACK callout */
+	callout_t t_delack_ch;		/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC793, Dec. 1981, page 21.
@@ -478,7 +478,7 @@ union syn_cache_sa {
 
 struct syn_cache {
 	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
-	struct callout sc_timer;		/* rexmt timer */
+	callout_t sc_timer;			/* rexmt timer */
 	struct route sc_route;
 	long sc_win;				/* advertised window */
 	int sc_bucketidx;			/* our bucket index */

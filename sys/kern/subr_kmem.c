@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.15 2007/03/26 22:52:44 hubertf Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.16 2007/07/09 21:10:55 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.15 2007/03/26 22:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.16 2007/07/09 21:10:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -146,7 +146,7 @@ kmem_init(void)
 
 	kmem_arena = vmem_create("kmem", 0, 0, KMEM_QUANTUM_SIZE,
 	    kmem_backend_alloc, kmem_backend_free, NULL,
-	    KMEM_QUANTUM_SIZE * 32, VM_SLEEP);
+	    KMEM_QUANTUM_SIZE * 32, VM_SLEEP, IPL_NONE);
 	callback_register(&vm_map_to_kernel(kernel_map)->vmk_reclaim_callback,
 	    &kmem_kva_reclaim_entry, kmem_arena, kmem_kva_reclaim_callback);
 }

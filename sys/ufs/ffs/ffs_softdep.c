@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.91 2007/06/30 09:37:53 pooka Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.92 2007/07/09 21:11:34 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.91 2007/06/30 09:37:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.92 2007/07/09 21:11:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -503,7 +503,7 @@ inodedep_allocdino(struct inodedep *inodedep, const struct buf *origbp,
 
 	KASSERT(inodedep->id_savedino1 == NULL);
 
-	if (curproc != uvm.pagedaemon_proc)
+	if (curlwp != uvm.pagedaemon_lwp)
 		return malloc(size, M_INODEDEP, M_WAITOK);
 
 	vp = malloc(size, M_INODEDEP, M_NOWAIT);
@@ -630,7 +630,7 @@ static int softdep_worklist_req; /* serialized waiters */
 static int max_softdeps;	/* maximum number of structs before slowdown */
 static int tickdelay = 2;	/* number of ticks to pause during slowdown */
 static int proc_waiting;	/* tracks whether we have a timeout posted */
-static struct callout pause_timer_ch = CALLOUT_INITIALIZER;
+static struct callout pause_timer_ch;
 static struct proc *filesys_syncer; /* proc of filesystem syncer process */
 static int req_clear_inodedeps;	/* syncer process flush some inodedeps */
 #define FLUSH_INODES	1
@@ -1191,6 +1191,7 @@ softdep_initialize()
 	malloc_type_attach(M_PAGEDEP);
 	malloc_type_attach(M_INODEDEP);
 	malloc_type_attach(M_NEWBLK);
+	callout_init(&pause_timer_ch, CALLOUT_MPSAFE);
 
 	pool_init(&sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
 	    &pool_allocator_nointr, IPL_NONE);

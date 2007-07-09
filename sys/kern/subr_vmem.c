@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.30 2007/06/17 13:34:43 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.31 2007/07/09 21:10:55 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.30 2007/06/17 13:34:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.31 2007/07/09 21:10:55 ad Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -65,20 +65,21 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.30 2007/06/17 13:34:43 yamt Exp $");
 #endif /* defined(_KERNEL) */
 
 #if defined(_KERNEL)
-#define	SIMPLELOCK_DECL(name)	struct simplelock name
+#define	LOCK_DECL(name)		kmutex_t name
 #else /* defined(_KERNEL) */
 #include <errno.h>
 #include <assert.h>
 #include <stdlib.h>
 
 #define	KASSERT(a)		assert(a)
-#define	SIMPLELOCK_DECL(name)	/* nothing */
-#define	LOCK_ASSERT(a)		/* nothing */
-#define	simple_lock_init(a)	/* nothing */
-#define	simple_lock(a)		/* nothing */
-#define	simple_lock_try(a)	1
-#define	simple_unlock(a)	/* nothing */
+#define	LOCK_DECL(name)		/* nothing */
+#define	mutex_init(a, b, c)	/* nothing */
+#define	mutex_destroy(a)	/* nothing */
+#define	mutex_enter(a)		/* nothing */
+#define	mutex_exit(a)		/* nothing */
+#define	mutex_owned(a)		/* nothing */
 #define	ASSERT_SLEEPABLE(lk, msg) /* nothing */
+#define	IPL_VM			0
 #endif /* defined(_KERNEL) */
 
 struct vmem;
@@ -117,7 +118,7 @@ typedef struct qcache qcache_t;
 
 /* vmem arena */
 struct vmem {
-	SIMPLELOCK_DECL(vm_lock);
+	LOCK_DECL(vm_lock);
 	vmem_addr_t (*vm_allocfn)(vmem_t *, vmem_size_t, vmem_size_t *,
 	    vm_flag_t);
 	void (*vm_freefn)(vmem_t *, vmem_addr_t, vmem_size_t);
@@ -141,14 +142,16 @@ struct vmem {
 #endif /* defined(QCACHE) */
 };
 
-#define	VMEM_LOCK(vm)	simple_lock(&vm->vm_lock)
-#define	VMEM_TRYLOCK(vm)	simple_lock_try(&vm->vm_lock)
-#define	VMEM_UNLOCK(vm)	simple_unlock(&vm->vm_lock)
-#define	VMEM_LOCK_INIT(vm)	simple_lock_init(&vm->vm_lock);
-#define	VMEM_ASSERT_LOCKED(vm) \
-	LOCK_ASSERT(simple_lock_held(&vm->vm_lock))
-#define	VMEM_ASSERT_UNLOCKED(vm) \
-	LOCK_ASSERT(!simple_lock_held(&vm->vm_lock))
+#define	VMEM_LOCK(vm)		mutex_enter(&vm->vm_lock)
+#define	VMEM_TRYLOCK(vm)	mutex_tryenter(&vm->vm_lock)
+#define	VMEM_UNLOCK(vm)		mutex_exit(&vm->vm_lock)
+#ifdef notyet /* XXX needs vmlocking branch changes */
+#define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DRIVER, ipl)
+#else
+#define	VMEM_LOCK_INIT(vm, ipl)	mutex_init(&vm->vm_lock, MUTEX_DRIVER, IPL_VM)
+#endif
+#define	VMEM_LOCK_DESTROY(vm)	mutex_destroy(&vm->vm_lock)
+#define	VMEM_ASSERT_LOCKED(vm)	KASSERT(mutex_owned(&vm->vm_lock))
 
 /* boundary tag */
 struct vmem_btag {
@@ -477,7 +480,7 @@ qc_poolpage_free(struct pool *pool, void *addr)
 }
 
 static void
-qc_init(vmem_t *vm, size_t qcache_max)
+qc_init(vmem_t *vm, size_t qcache_max, int ipl)
 {
 	qcache_t *prevqc;
 	struct pool_allocator *pa;
@@ -506,7 +509,7 @@ qc_init(vmem_t *vm, size_t qcache_max)
 		    vm->vm_name, size);
 		pool_init(&qc->qc_pool, size, ORDER2SIZE(vm->vm_quantum_shift),
 		    0, PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa,
-		    IPL_NONE);
+		    ipl);
 		if (prevqc != NULL &&
 		    qc->qc_pool.pr_itemsperpage ==
 		    prevqc->qc_pool.pr_itemsperpage) {
@@ -587,7 +590,6 @@ vmem_add1(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags,
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
-	VMEM_ASSERT_UNLOCKED(vm);
 
 	btspan = bt_alloc(vm, flags);
 	if (btspan == NULL) {
@@ -620,8 +622,6 @@ static void
 vmem_destroy1(vmem_t *vm)
 {
 
-	VMEM_ASSERT_UNLOCKED(vm);
-
 #if defined(QCACHE)
 	qc_destroy(vm);
 #endif /* defined(QCACHE) */
@@ -638,6 +638,7 @@ vmem_destroy1(vmem_t *vm)
 		}
 		xfree(vm->vm_hashlist);
 	}
+	VMEM_LOCK_DESTROY(vm);
 	xfree(vm);
 }
 
@@ -645,8 +646,6 @@ static int
 vmem_import(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 {
 	vmem_addr_t addr;
-
-	VMEM_ASSERT_UNLOCKED(vm);
 
 	if (vm->vm_allocfn == NULL) {
 		return EINVAL;
@@ -675,7 +674,6 @@ vmem_rehash(vmem_t *vm, size_t newhashsize, vm_flag_t flags)
 	size_t oldhashsize;
 
 	KASSERT(newhashsize > 0);
-	VMEM_ASSERT_UNLOCKED(vm);
 
 	newhashlist =
 	    xmalloc(sizeof(struct vmem_hashlist *) * newhashsize, flags);
@@ -774,7 +772,8 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
     vmem_size_t quantum,
     vmem_addr_t (*allocfn)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t),
     void (*freefn)(vmem_t *, vmem_addr_t, vmem_size_t),
-    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags)
+    vmem_t *source, vmem_size_t qcache_max, vm_flag_t flags,
+    int ipl)
 {
 	vmem_t *vm;
 	int i;
@@ -795,7 +794,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 		return NULL;
 	}
 
-	VMEM_LOCK_INIT(vm);
+	VMEM_LOCK_INIT(vm, ipl);
 	vm->vm_name = name;
 	vm->vm_quantum_mask = quantum - 1;
 	vm->vm_quantum_shift = calc_order(quantum);
@@ -805,7 +804,7 @@ vmem_create(const char *name, vmem_addr_t base, vmem_size_t size,
 	vm->vm_source = source;
 	vm->vm_nbusytag = 0;
 #if defined(QCACHE)
-	qc_init(vm, qcache_max);
+	qc_init(vm, qcache_max, ipl);
 #endif /* defined(QCACHE) */
 
 	CIRCLEQ_INIT(&vm->vm_seglist);
@@ -869,7 +868,6 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
-	VMEM_ASSERT_UNLOCKED(vm);
 
 	KASSERT(size0 > 0);
 	KASSERT(size > 0);
@@ -1044,7 +1042,6 @@ void
 vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 {
 
-	VMEM_ASSERT_UNLOCKED(vm);
 	KASSERT(addr != VMEM_ADDR_NULL);
 	KASSERT(size > 0);
 
@@ -1066,7 +1063,6 @@ vmem_xfree(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 	bt_t *bt;
 	bt_t *t;
 
-	VMEM_ASSERT_UNLOCKED(vm);
 	KASSERT(addr != VMEM_ADDR_NULL);
 	KASSERT(size > 0);
 
@@ -1148,8 +1144,6 @@ vmem_reap(vmem_t *vm)
 {
 	bool didsomething = false;
 
-	VMEM_ASSERT_UNLOCKED(vm);
-
 #if defined(QCACHE)
 	didsomething = qc_reap(vm);
 #endif /* defined(QCACHE) */
@@ -1219,7 +1213,7 @@ vmem_rehash_start(void)
 	if (error) {
 		panic("%s: workqueue_create %d\n", __func__, error);
 	}
-	callout_init(&vmem_rehash_ch);
+	callout_init(&vmem_rehash_ch, 0);
 	callout_setfunc(&vmem_rehash_ch, vmem_rehash_all_kick, NULL);
 
 	vmem_rehash_interval = hz * 10;

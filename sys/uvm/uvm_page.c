@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.121 2007/05/17 14:51:43 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.122 2007/07/09 21:11:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.121 2007/05/17 14:51:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.122 2007/07/09 21:11:36 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1074,7 +1074,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
 	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !(use_reserve && curproc == uvm.pagedaemon_proc)))
+	     !(use_reserve && curlwp == uvm.pagedaemon_lwp)))
 		goto fail;
 
 #if PGFL_NQUEUES != 2

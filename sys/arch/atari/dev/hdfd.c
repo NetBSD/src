@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.55 2007/03/06 14:45:31 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.56 2007/07/09 20:52:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.55 2007/03/06 14:45:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.56 2007/07/09 20:52:07 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -431,8 +431,8 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	if (intr_establish(22, USER_VEC|FAST_VEC, 0,
 			   (hw_ifun_t)(has_fifo ? mfp_hdfd_fifo : mfp_hdfd_nf),
@@ -525,8 +525,8 @@ fdattach(parent, self, aux)
 	struct fd_type		*type = fa->fa_deftype;
 	int			drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 

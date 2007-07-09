@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.14 2007/03/04 06:02:00 christos Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.15 2007/07/09 21:00:38 ad Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.14 2007/03/04 06:02:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.15 2007/07/09 21:00:38 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -356,8 +356,8 @@ rt2661_attach(void *xsc, int id)
 
 	sc->sc_id = id;
 
-	callout_init(&sc->scan_ch);
-	callout_init(&sc->rssadapt_ch);
+	callout_init(&sc->scan_ch, 0);
+	callout_init(&sc->rssadapt_ch, 0);
 
 	/* wait for NIC to initialize */
 	for (ntries = 0; ntries < 1000; ntries++) {

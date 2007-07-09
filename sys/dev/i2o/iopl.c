@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.25 2007/06/16 12:32:12 ad Exp $	*/
+/*	$NetBSD: iopl.c,v 1.26 2007/07/09 21:00:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.25 2007/06/16 12:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.26 2007/07/09 21:00:33 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1390,7 +1390,7 @@ iopl_init(struct ifnet *ifp)
 		sc->sc_flags |= (IOPL_MEDIA_CHANGE | IOPL_INITTED);
 		splx(s);
 
-		callout_init(&sc->sc_pg_callout);
+		callout_init(&sc->sc_pg_callout, 0);
 
 		sc->sc_next_pg = -1;
 		iopl_tick_sched(sc);

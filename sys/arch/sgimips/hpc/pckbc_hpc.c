@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.5 2005/12/11 12:18:53 christos Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.6 2007/07/09 20:52:26 ad Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.5 2005/12/11 12:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.6 2007/07/09 20:52:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ pckbc_hpc_attach(struct device * parent, struct device * self, void *aux)
 		t->t_ioh_c = ioh_c;
 		t->t_addr = haa->ha_sh;
 		t->t_cmdbyte = KC8_CPU;	/* Enable ports */
-		callout_init(&t->t_cleanup);
+		callout_init(&t->t_cleanup, 0);
 	}
 
 	t->t_sc = sc;

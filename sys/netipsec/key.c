@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.49 2007/07/07 18:38:22 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.50 2007/07/09 21:11:13 ad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.49 2007/07/07 18:38:22 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.50 2007/07/09 21:11:13 ad Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7621,7 +7621,7 @@ key_init()
 {
 	int i;
 
-	callout_init(&key_timehandler_ch);
+	callout_init(&key_timehandler_ch, 0);
 
 	for (i = 0; i < IPSEC_DIR_MAX; i++) {
 		LIST_INIT(&sptree[i]);

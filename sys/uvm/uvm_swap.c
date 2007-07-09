@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.125 2007/06/15 18:28:40 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.126 2007/07/09 21:11:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.125 2007/06/15 18:28:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.126 2007/07/09 21:11:37 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -266,7 +266,7 @@ uvm_swap_init(void)
 	simple_lock_init(&uvm.swap_data_lock);
 
 	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
-	mutex_init(&uvm.scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
@@ -278,7 +278,7 @@ uvm_swap_init(void)
 	 * failure, or no allocation).
 	 */
 	swapmap = vmem_create("swapmap", 1, INT_MAX - 1, 1, NULL, NULL, NULL, 0,
-	    VM_NOSLEEP);
+	    VM_NOSLEEP, IPL_NONE);
 	if (swapmap == 0)
 		panic("uvm_swap_init: extent_create failed");
 
@@ -1713,7 +1713,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		bp->b_flags |= B_CALL;
 		bp->b_iodone = uvm_aio_biodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
-		if (curproc == uvm.pagedaemon_proc)
+		if (curlwp == uvm.pagedaemon_lwp)
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);

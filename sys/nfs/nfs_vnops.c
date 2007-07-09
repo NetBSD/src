@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.255 2007/04/29 15:30:26 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.256 2007/07/09 21:11:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.255 2007/04/29 15:30:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.256 2007/07/09 21:11:31 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1334,7 +1334,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 		return (EFBIG);
 	if (pageprotected) {
 		l = curlwp;
-		PHOLD(l);
+		uvm_lwp_hold(l);
 	}
 retry:
 	origresid = uiop->uio_resid;
@@ -1505,7 +1505,7 @@ nfsmout:
 			cv_wait(&ctx.nwc_cv, &ctx.nwc_lock);
 		}
 		mutex_exit(&ctx.nwc_lock);
-		PRELE(l);
+		uvm_lwp_rele(l);
 	}
 	mutex_destroy(&ctx.nwc_lock);
 	cv_destroy(&ctx.nwc_cv);

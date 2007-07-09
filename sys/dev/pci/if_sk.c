@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.40 2007/07/06 18:52:52 briggs Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.41 2007/07/09 21:00:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1454,7 +1454,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	callout_init(&sc_if->sk_tick_ch);
+	callout_init(&sc_if->sk_tick_ch, 0);
 	callout_reset(&sc_if->sk_tick_ch,hz,sk_tick,sc_if);
 
 	DPRINTFN(2, ("sk_attach: 1\n"));

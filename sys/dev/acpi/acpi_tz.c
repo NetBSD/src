@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.22 2007/07/01 07:37:12 xtraeme Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23 2007/07/09 21:00:30 ad Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.22 2007/07/01 07:37:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23 2007/07/09 21:00:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 	callout_reset(&sc->sc_callout, sc->sc_zone.tzp * hz / 10,
 	    acpitz_tick, sc);
 

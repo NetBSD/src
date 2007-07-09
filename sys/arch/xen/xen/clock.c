@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2007/07/02 06:26:35 jld Exp $	*/
+/*	$NetBSD: clock.c,v 1.38 2007/07/09 20:52:39 ad Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2007/07/02 06:26:35 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2007/07/09 20:52:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static volatile uint64_t xen_clock_bias = 0;
 #ifdef DOM0OPS
 /* If we're dom0, send our time to Xen every minute or so. */
 int xen_timepush_ticks = 0;
-static struct callout xen_timepush_co = CALLOUT_INITIALIZER;
+static callout_t xen_timepush_co;
 #endif
 
 #define NS_PER_TICK (1000000000ULL/hz)
@@ -444,7 +444,7 @@ xen_delay(int n)
 static void
 xen_timepush(void *arg)
 {
-	struct callout *co = arg;
+	callout_t *co = arg;
 
 	resettodr();
 	if (xen_timepush_ticks > 0)
@@ -498,6 +498,7 @@ xen_initclocks()
 {
 	int evtch;
 
+	callout_init(&xen_timepush_co, 0);
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
