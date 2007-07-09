@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.95 2007/06/24 01:43:35 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.96 2007/07/09 11:46:21 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -118,7 +118,7 @@ struct device {
 	int		dv_unit;	/* device unit number */
 	char		dv_xname[16];	/* external name (name + unit) */
 	device_t	dv_parent;	/* pointer to parent device
-					   (NULL if pesudo- or root node) */
+					   (NULL if pseudo- or root node) */
 	int		dv_flags;	/* misc. flags; see below */
 	int		*dv_locators;	/* our actual locators (optional) */
 	prop_dictionary_t dv_properties;/* properties dictionary */
