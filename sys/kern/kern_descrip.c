@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.153.2.5 2007/06/08 14:17:17 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.153.2.6 2007/07/09 11:27:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153.2.5 2007/06/08 14:17:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153.2.6 2007/07/09 11:27:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1423,7 +1423,7 @@ fdfree(struct lwp *l)
 int
 closef(struct file *fp, struct lwp *l)
 {
-	struct proc	*p = l->l_proc;
+	struct proc	*p = l ? l->l_proc : NULL;
 	struct vnode	*vp;
 	struct flock	lf;
 	int		error;
@@ -1439,7 +1439,7 @@ closef(struct file *fp, struct lwp *l)
 	 * If the descriptor was in a message, POSIX-style locks
 	 * aren't passed with the descriptor.
 	 */
-	if ((p->p_flag & PK_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
+	if (p && (p->p_flag & PK_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;
