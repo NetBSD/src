@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.73 2007/07/08 17:24:41 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.74 2007/07/09 09:28:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -100,7 +100,10 @@ struct puffs_usermount;
  * need to work on the translation for ALL the necessary values.
  */
 #define PUFFS_VNOVAL (-1)
-#define PUFFS_IO_APPEND 0x20
+
+#define PUFFS_IO_APPEND 0x020
+#define PUFFS_IO_NDELAY	0x100
+
 #define PUFFS_VEXEC	01
 #define PUFFS_VWRITE	02
 #define PUFFS_VREAD	04
