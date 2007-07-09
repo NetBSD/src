@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.291 2007/07/09 01:08:22 jklos Exp $
+#	$NetBSD: files.pci,v 1.292 2007/07/09 01:14:05 jklos Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -794,7 +794,6 @@ file	dev/pci/cxgb_sge.c		cxgb
 file	dev/pci/cxgb_lro.c		cxgb
 file	dev/pci/cxgb_offload.c		cxgb
 file	dev/pci/cxgb_l2t.c		cxgb
-file	dev/pci/cxgb_mbuf.h		cxgb
 
 # Chips & Technologies 65550 framebuffer console driver
 device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
