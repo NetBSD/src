@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.23 2007/03/04 05:59:37 christos Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.24 2007/07/09 20:52:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.23 2007/03/04 05:59:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.24 2007/07/09 20:52:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -190,7 +190,7 @@ fcom_attach(parent, self, aux)
 	/* Set up the softc */
 	sc->sc_iot = fba->fba_fca.fca_iot;
 	sc->sc_ioh = fba->fba_fca.fca_ioh;
-	callout_init(&sc->sc_softintr_ch);
+	callout_init(&sc->sc_softintr_ch, 0);
 	sc->sc_rx_irq = fba->fba_fca.fca_rx_irq;
 	sc->sc_tx_irq = fba->fba_fca.fca_tx_irq;
 	sc->sc_hwflags = 0;

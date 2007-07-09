@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.172 2007/05/17 14:51:42 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.173 2007/07/09 21:10:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.172 2007/05/17 14:51:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.173 2007/07/09 21:10:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -790,12 +790,10 @@ vn_bwrite(void *v)
 void
 bdwrite(struct buf *bp)
 {
-	const struct bdevsw *bdev;
 	int s;
 
 	/* If this is a tape block, write the block now. */
-	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev != NULL && bdev->d_type == D_TAPE) {
+	if (bdev_type(bp->b_dev) == D_TAPE) {
 		bawrite(bp);
 		return;
 	}
@@ -1038,7 +1036,7 @@ start:
 		simple_lock(&bp->b_interlock);
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			simple_unlock(&bqueue_slock);
-			if (curproc == uvm.pagedaemon_proc) {
+			if (curlwp == uvm.pagedaemon_lwp) {
 				simple_unlock(&bp->b_interlock);
 				splx(s);
 				return NULL;
@@ -1220,7 +1218,7 @@ start:
 		/*
 		 * XXX: !from_bufq should be removed.
 		 */
-		if (!from_bufq || curproc != uvm.pagedaemon_proc) {
+		if (!from_bufq || curlwp != uvm.pagedaemon_lwp) {
 			/* wait for a free buffer of any kind */
 			needbuffer = 1;
 			ltsleep(&needbuffer, slpflag|(PRIBIO + 1),

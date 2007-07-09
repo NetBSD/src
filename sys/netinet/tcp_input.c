@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.267 2007/06/20 15:29:18 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.268 2007/07/09 21:11:11 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.267 2007/06/20 15:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.268 2007/07/09 21:11:11 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3216,8 +3216,10 @@ do {									\
 	rtcache_free(&(sc)->sc_route);					\
 	if (callout_invoking(&(sc)->sc_timer))				\
 		(sc)->sc_flags |= SCF_DEAD;				\
-	else								\
+	else {								\
+		callout_destroy(&sc->sc_timer);				\
 		pool_put(&syn_cache_pool, (sc));			\
+	}								\
 } while (/*CONSTCOND*/0)
 
 POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL,
@@ -3361,6 +3363,7 @@ syn_cache_timer(void *arg)
 
 	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
 		tcpstat.tcps_sc_delayed_free++;
+		callout_destroy(&sc->sc_timer);
 		pool_put(&syn_cache_pool, sc);
 		splx(s);
 		return;
@@ -3965,7 +3968,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * options into the reply.
 	 */
 	bzero(sc, sizeof(struct syn_cache));
-	callout_init(&sc->sc_timer);
+	callout_init(&sc->sc_timer, 0);
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
 	sc->sc_flags = 0;

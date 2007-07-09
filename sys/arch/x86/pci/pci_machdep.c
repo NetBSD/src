@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 2007/02/22 04:58:26 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23 2007/07/09 20:52:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2007/02/22 04:58:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.23 2007/07/09 20:52:38 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -135,17 +135,17 @@ struct pci_bridge_hook_arg {
 }; 
 
 
-struct simplelock pci_conf_slock = SIMPLELOCK_INITIALIZER;
+__cpu_simple_lock_t pci_conf_lock = __SIMPLELOCK_UNLOCKED;
 
 #define	PCI_CONF_LOCK(s)						\
 do {									\
 	(s) = splhigh();						\
-	simple_lock(&pci_conf_slock);					\
+	__cpu_simple_lock(&pci_conf_lock);				\
 } while (0)
 
 #define	PCI_CONF_UNLOCK(s)						\
 do {									\
-	simple_unlock(&pci_conf_slock);					\
+	__cpu_simple_unlock(&pci_conf_lock);				\
 	splx((s));							\
 } while (0)
 

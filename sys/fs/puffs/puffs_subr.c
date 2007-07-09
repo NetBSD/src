@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.39 2007/07/02 21:14:00 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.40 2007/07/09 21:10:49 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.39 2007/07/02 21:14:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.40 2007/07/09 21:10:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.39 2007/07/02 21:14:00 pooka Exp $"
 #include <sys/poll.h>
 #include <sys/socketvar.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>

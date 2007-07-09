@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.14 2006/09/29 14:36:30 christos Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.15 2007/07/09 20:52:40 ad Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.14 2006/09/29 14:36:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.15 2007/07/09 20:52:40 ad Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -64,7 +64,6 @@ static int  xenbus_match(struct device *, struct cfdata *, void *);
 static void xenbus_attach(struct device *, struct device *, void *);
 static int  xenbus_print(void *, const char *);
 
-static void xenbus_kthread_create(void *);
 static void xenbus_probe_init(void *);
 
 static struct xenbus_device *xenbus_lookup_device_path(const char *);
@@ -91,26 +90,22 @@ xenbus_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 xenbus_attach(struct device *parent, struct device *self, void *aux)
 {
+	int err;
+
 	aprint_normal(": Xen Virtual Bus Interface\n");
 	xenbus_sc = self;
 	config_pending_incr();
-	kthread_create(xenbus_kthread_create, NULL);
+
+	err = kthread_create(PRI_NONE, 0, NULL, xenbus_probe_init, NULL,
+	    NULL, "xenbus_probe");
+	if (err)
+		printf("kthread_create(xenbus_probe): %d\n", err);
 }
 
 void
 xenbus_backend_register(struct xenbus_backend_driver *xbakd)
 {
 	SLIST_INSERT_HEAD(&xenbus_backend_driver_list, xbakd, xbakd_entries);
-}
-
-void
-xenbus_kthread_create(void *unused)
-{
-	struct proc *p;
-	int err;
-	err = kthread_create1(xenbus_probe_init, NULL, &p, "xenbus_probe");
-	if (err)
-		printf("kthread_create1(xenbus_probe): %d\n", err);
 }
 
 static int

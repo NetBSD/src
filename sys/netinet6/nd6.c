@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.115 2007/05/17 00:53:26 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.116 2007/07/09 21:11:13 ad Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.115 2007/05/17 00:53:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.116 2007/07/09 21:11:13 ad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -119,9 +119,9 @@ static struct llinfo_nd6 *nd6_free __P((struct rtentry *, int));
 static void nd6_llinfo_timer __P((void *));
 static void clear_llinfo_pqueue __P((struct llinfo_nd6 *));
 
-struct callout nd6_slowtimo_ch = CALLOUT_INITIALIZER;
-struct callout nd6_timer_ch = CALLOUT_INITIALIZER;
-extern struct callout in6_tmpaddrtimer_ch;
+callout_t nd6_slowtimo_ch;
+callout_t nd6_timer_ch;
+extern callout_t in6_tmpaddrtimer_ch;
 
 static int fill_drlist __P((void *, size_t *, size_t));
 static int fill_prlist __P((void *, size_t *, size_t));
@@ -148,6 +148,9 @@ nd6_init(void)
 	TAILQ_INIT(&nd_defrouter);
 
 	nd6_init_done = 1;
+
+	callout_init(&nd6_slowtimo_ch, 0);
+	callout_init(&nd6_timer_ch, 0);
 
 	/* start timer */
 	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
@@ -1245,7 +1248,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		nd6_allocated++;
 		bzero(ln, sizeof(*ln));
 		ln->ln_rt = rt;
-		callout_init(&ln->ln_timer_ch);
+		callout_init(&ln->ln_timer_ch, 0);
 		/* this is required for "ndp" command. - shin */
 		if (req == RTM_ADD) {
 		        /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.236 2007/06/30 09:37:54 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.237 2007/07/09 21:11:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.236 2007/06/30 09:37:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.237 2007/07/09 21:11:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -866,7 +866,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	/* Start the pagedaemon-anticipating daemon */
 	if (lfs_writer_daemon == 0 &&
-	    kthread_create1(lfs_writerd, NULL, NULL, "lfs_writer") != 0)
+	    kthread_create(PRI_NONE, 0, NULL, lfs_writerd, NULL, NULL,
+	    "lfs_writer") != 0)
 		panic("fork lfs_writer");
 
 	return (0);

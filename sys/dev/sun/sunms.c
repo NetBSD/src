@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.26 2007/03/04 06:02:45 christos Exp $	*/
+/*	$NetBSD: sunms.c,v 1.27 2007/07/09 21:01:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.26 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.27 2007/07/09 21:01:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,15 +200,10 @@ sunmsiopen(dev, flags)
 	struct tty *tp = (struct tty *)ms->ms_cs;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct termios t;
-	const struct cdevsw *cdev;
 	int error;
 
-	cdev = cdevsw_lookup(tp->t_dev);
-	if (cdev == NULL)
-		return (ENXIO);
-
 	/* Open the lower device */
-	if ((error = (*cdev->d_open)(tp->t_dev, O_NONBLOCK|flags,
+	if ((error = cdev_open(tp->t_dev, O_NONBLOCK|flags,
 				     0/* ignored? */, l)) != 0)
 		return (error);
 

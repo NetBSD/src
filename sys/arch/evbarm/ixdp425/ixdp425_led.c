@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_led.c,v 1.1 2003/05/31 01:16:32 ichiro Exp $ */
+/*	$NetBSD: ixdp425_led.c,v 1.2 2007/07/09 20:52:10 ad Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_led.c,v 1.1 2003/05/31 01:16:32 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_led.c,v 1.2 2007/07/09 20:52:10 ad Exp $");
 
 /*
  * LED support for IXDP425
@@ -97,7 +97,7 @@ ixdpled_attach(struct device *parent, struct device *self, void *aux)
 		IXP425_EXP_RECOVERY_T(15) | EXP_SZ_512 | EXP_WR_EN |
 		IXP425_EXP_CS_EN;
 
-	callout_init(&sc->sc_co);
+	callout_init(&sc->sc_co, 0);
         callout_reset(&sc->sc_co, hz / 5, ixdpled_callout, sc);
 
 }

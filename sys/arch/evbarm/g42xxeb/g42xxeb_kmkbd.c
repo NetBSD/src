@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.5 2007/03/04 05:59:44 christos Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.6 2007/07/09 20:52:10 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.5 2007/03/04 05:59:44 christos Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.6 2007/07/09 20:52:10 ad Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ kmkbd_attach(struct device *parent, struct device *self, void *aux)
 		state0 = ST_DISABLED;
 	}
 
-	callout_init(&sc->callout);
+	callout_init(&sc->callout, 0);
 
 	s = spltty();
 	sc->ih = obio_intr_establish(osc, G42XXEB_INT_KEY, IPL_TTY, 

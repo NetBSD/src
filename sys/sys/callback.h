@@ -1,4 +1,4 @@
-/*	$NetBSD: callback.h,v 1.2 2006/08/28 13:40:44 yamt Exp $	*/
+/*	$NetBSD: callback.h,v 1.3 2007/07/09 21:11:32 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -30,7 +30,8 @@
 #define	_SYS_CALLBACK_H_
 
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 struct callback_entry {
 	TAILQ_ENTRY(callback_entry) ce_q;
@@ -39,7 +40,8 @@ struct callback_entry {
 };
 
 struct callback_head {
-	struct simplelock ch_lock;
+	kmutex_t ch_lock;
+	kcondvar_t ch_cv;
 	TAILQ_HEAD(, callback_entry) ch_q;
 	struct callback_entry *ch_next;
 	int ch_nentries;
@@ -55,6 +57,7 @@ int callback_run_roundrobin(struct callback_head *, void *);
 void callback_register(struct callback_head *, struct callback_entry *,
     void *, int (*)(struct callback_entry *, void *, void *));
 void callback_unregister(struct callback_head *, struct callback_entry *);
-void callback_head_init(struct callback_head *);
+void callback_head_init(struct callback_head *, int);
+void callback_head_destroy(struct callback_head *);
 
 #endif /* !_SYS_CALLBACK_H_ */

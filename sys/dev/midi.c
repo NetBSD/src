@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.54 2007/06/16 10:25:03 pavel Exp $	*/
+/*	$NetBSD: midi.c,v 1.55 2007/07/09 21:00:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.54 2007/06/16 10:25:03 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.55 2007/07/09 21:00:29 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -231,8 +231,8 @@ midi_attach(struct midi_softc *sc, struct device *parent)
 	struct midi_info mi;
 	int s;
 
-	callout_init(&sc->xmt_asense_co);
-	callout_init(&sc->rcv_asense_co);
+	callout_init(&sc->xmt_asense_co, 0);
+	callout_init(&sc->rcv_asense_co, 0);
 	callout_setfunc(&sc->xmt_asense_co, midi_xmt_asense, sc);
 	callout_setfunc(&sc->rcv_asense_co, midi_rcv_asense, sc);
 	simple_lock_init(&sc->out_lock);

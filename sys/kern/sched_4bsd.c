@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.2 2007/05/17 14:51:41 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.3 2007/07/09 21:10:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.2 2007/05/17 14:51:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.3 2007/07/09 21:10:55 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -312,7 +312,7 @@ updatepri(struct lwp *l)
 	struct proc *p = l->l_proc;
 	fixpt_t loadfac;
 
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_slptime > 1);
 
 	loadfac = loadfactor(averunnable.ldavg[0]);
@@ -501,7 +501,6 @@ sched_setup()
 {
 
 	rrticks = hz / 10;
-	sched_pstats(NULL);
 }
 
 void
@@ -559,7 +558,7 @@ resetprocpriority(struct proc *p)
 {
 	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
@@ -608,7 +607,7 @@ void
 sched_proc_fork(struct proc *parent, struct proc *child)
 {
 
-	LOCK_ASSERT(mutex_owned(&parent->p_smutex));
+	KASSERT(mutex_owned(&parent->p_smutex));
 
 	child->p_estcpu = child->p_estcpu_inherited = parent->p_estcpu;
 	child->p_forktime = sched_pstats_ticks;

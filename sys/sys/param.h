@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.264 2007/06/30 13:42:47 dsl Exp $	*/
+/*	$NetBSD: param.h,v 1.265 2007/07/09 21:11:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -209,6 +209,9 @@
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
 #define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
 				   the interlock */
+
+#define	PRI_NONE	(-1)
+
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */

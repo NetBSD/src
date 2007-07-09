@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.155 2007/04/11 21:33:40 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.156 2007/07/09 21:11:14 ad Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.155 2007/04/11 21:33:40 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.156 2007/07/09 21:11:14 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -8039,7 +8039,7 @@ key_init()
 
 	bzero((void *)&key_cb, sizeof(key_cb));
 
-	callout_init(&key_timehandler_ch);
+	callout_init(&key_timehandler_ch, 0);
 
 	for (i = 0; i < IPSEC_DIR_MAX; i++)
 		LIST_INIT(&sptree[i]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.8 2007/06/27 13:04:15 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.9 2007/07/09 21:01:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.8 2007/06/27 13:04:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.9 2007/07/09 21:01:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -78,9 +78,8 @@ do {									\
 
 static int sysmon_task_queue_cleanup_sem;
 
-static struct proc *sysmon_task_queue_proc;
+static struct lwp *sysmon_task_queue_lwp;
 
-static void sysmon_task_queue_create_thread(void *);
 static void sysmon_task_queue_thread(void *);
 
 static struct simplelock sysmon_task_queue_initialized_slock =
@@ -95,6 +94,7 @@ static int sysmon_task_queue_initialized;
 void
 sysmon_task_queue_init(void)
 {
+	int error;
 
 	simple_lock(&sysmon_task_queue_initialized_slock);
 	if (sysmon_task_queue_initialized) {
@@ -105,7 +105,13 @@ sysmon_task_queue_init(void)
 	sysmon_task_queue_initialized = 1;
 	simple_unlock(&sysmon_task_queue_initialized_slock);
 
-	kthread_create(sysmon_task_queue_create_thread, NULL);
+	error = kthread_create(PRI_NONE, 0, NULL, sysmon_task_queue_thread,
+	    NULL, &sysmon_task_queue_lwp, "sysmon");
+	if (error) {
+		printf("Unable to create sysmon task queue thread, "
+		    "error = %d\n", error);
+		panic("sysmon_task_queue_init");
+	}
 }
 
 /*
@@ -129,25 +135,6 @@ sysmon_task_queue_fini(void)
 	}
 
 	SYSMON_TASK_QUEUE_UNLOCK(s);
-}
-
-/*
- * sysmon_task_queue_create_thread:
- *
- *	Create the sysmon task queue execution thread.
- */
-static void
-sysmon_task_queue_create_thread(void *arg)
-{
-	int error;
-
-	error = kthread_create1(sysmon_task_queue_thread, NULL,
-	    &sysmon_task_queue_proc, "sysmon");
-	if (error) {
-		printf("Unable to create sysmon task queue thread, "
-		    "error = %d\n", error);
-		panic("sysmon_task_queue_create_thread");
-	}
 }
 
 /*
@@ -204,7 +191,7 @@ sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 	struct sysmon_task *st, *lst;
 	int s;
 
-	if (sysmon_task_queue_proc == NULL)
+	if (sysmon_task_queue_lwp == NULL)
 		aprint_debug("WARNING: Callback scheduled before sysmon "
 		    "task queue thread present\n");
 

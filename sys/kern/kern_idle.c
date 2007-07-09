@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.2 2007/05/17 14:51:39 yamt Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.3 2007/07/09 21:10:52 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.2 2007/05/17 14:51:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.3 2007/07/09 21:10:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -52,6 +52,7 @@ idle_loop(void *dummy)
 
 	KERNEL_UNLOCK_ALL(l, NULL);
 	l->l_usrpri = PIDLELWP;
+	l->l_priority = l->l_usrpri;
 	l->l_stat = LSONPROC;
 	while (1 /* CONSTCOND */) {
 		KERNEL_LOCK_ASSERT_UNLOCKED();
@@ -103,7 +104,7 @@ create_idle_lwp(struct cpu_info *ci)
 	if (error != 0) {
 		panic("create_idle_lwp: newlwp failed");
 	}
-	PHOLD(l);
+	uvm_lwp_hold(l);
 	l->l_flag |= (LW_IDLE | LW_BOUND);
 	l->l_cpu = ci;
 	l->l_mutex = &ci->ci_schedstate.spc_lwplock;
@@ -115,7 +116,7 @@ create_idle_lwp(struct cpu_info *ci)
 #else
 		cpuid = 0;
 #endif
-		snprintf(name, MAXCOMLEN, "idle:%d", (int)cpuid);
+		snprintf(name, MAXCOMLEN, "idle/%d", (int)cpuid);
 		lwp_lock(l);
 		l->l_name = name;
 		lwp_unlock(l);

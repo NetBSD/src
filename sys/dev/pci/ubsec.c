@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.12 2007/03/04 06:02:26 christos Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.13 2007/07/09 21:00:58 ad Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -445,7 +445,7 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 #else
-		callout_init(&sc->sc_rngto);
+		callout_init(&sc->sc_rngto, 0);
 		callout_reset(&sc->sc_rngto, sc->sc_rnghz, ubsec_rng, sc);
 #endif
  skip_rng:

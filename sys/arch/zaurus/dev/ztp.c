@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.3 2007/06/28 15:44:01 nonaka Exp $	*/
+/*	$NetBSD: ztp.c,v 1.4 2007/07/09 20:52:41 ad Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.3 2007/06/28 15:44:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.4 2007/07/09 20:52:41 ad Exp $");
 
 #include "lcd.h"
 
@@ -143,7 +143,7 @@ ztp_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&sc->sc_tp_poll);
+	callout_init(&sc->sc_tp_poll, 0);
 	callout_setfunc(&sc->sc_tp_poll, ztp_poll, sc);
 
 	/* Initialize ADS7846 Difference Reference mode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.25 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: dz.c,v 1.26 2007/07/09 21:00:31 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.25 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.26 2007/07/09 21:00:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 
 	if (dz_timer == 0) {
 		dz_timer = 1;
-		callout_init(&dzscan_ch);
+		callout_init(&dzscan_ch, 0);
 		callout_reset(&dzscan_ch, hz, dzscan, NULL);
 	}
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.22 2007/01/19 20:10:36 christos Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.23 2007/07/09 21:10:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.22 2007/01/19 20:10:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.23 2007/07/09 21:10:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,8 +156,6 @@ static int ptyfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t,
     struct lwp *);
 static int ptyfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
 static int atoi(const char *, size_t);
-
-extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
 
 /*
  * ptyfs vnode operations.
@@ -794,15 +792,9 @@ ptyfs_read(void *v)
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
-		VOP_UNLOCK(vp, 0);
-		error = (*pts_cdevsw.d_read)(vp->v_rdev, ap->a_uio,
-		    ap->a_ioflag);
-		vn_lock(vp, LK_RETRY|LK_EXCLUSIVE);
-		return error;
 	case PTYFSptc:
 		VOP_UNLOCK(vp, 0);
-		error = (*ptc_cdevsw.d_read)(vp->v_rdev, ap->a_uio,
-		    ap->a_ioflag);
+		error = cdev_read(vp->v_rdev, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_RETRY|LK_EXCLUSIVE);
 		return error;
 	default:
@@ -830,15 +822,9 @@ ptyfs_write(void *v)
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
-		VOP_UNLOCK(vp, 0);
-		error = (*pts_cdevsw.d_write)(vp->v_rdev, ap->a_uio,
-		    ap->a_ioflag);
-		vn_lock(vp, LK_RETRY|LK_EXCLUSIVE);
-		return error;
 	case PTYFSptc:
 		VOP_UNLOCK(vp, 0);
-		error = (*ptc_cdevsw.d_write)(vp->v_rdev, ap->a_uio,
-		    ap->a_ioflag);
+		error = cdev_write(vp->v_rdev, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_RETRY|LK_EXCLUSIVE);
 		return error;
 	default:
@@ -862,10 +848,8 @@ ptyfs_ioctl(void *v)
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
-		return (*pts_cdevsw.d_ioctl)(vp->v_rdev, ap->a_command,
-		    ap->a_data, ap->a_fflag, ap->a_l);
 	case PTYFSptc:
-		return (*ptc_cdevsw.d_ioctl)(vp->v_rdev, ap->a_command,
+		return cdev_ioctl(vp->v_rdev, ap->a_command,
 		    ap->a_data, ap->a_fflag, ap->a_l);
 	default:
 		return EOPNOTSUPP;
@@ -885,9 +869,8 @@ ptyfs_poll(void *v)
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
-		return (*pts_cdevsw.d_poll)(vp->v_rdev, ap->a_events, ap->a_l);
 	case PTYFSptc:
-		return (*ptc_cdevsw.d_poll)(vp->v_rdev, ap->a_events, ap->a_l);
+		return cdev_poll(vp->v_rdev, ap->a_events, ap->a_l);
 	default:
 		return genfs_poll(v);
 	}
@@ -905,9 +888,8 @@ ptyfs_kqfilter(void *v)
 
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
-		return (*pts_cdevsw.d_kqfilter)(vp->v_rdev, ap->a_kn);
 	case PTYFSptc:
-		return (*ptc_cdevsw.d_kqfilter)(vp->v_rdev, ap->a_kn);
+		return cdev_kqfilter(vp->v_rdev, ap->a_kn);
 	default:
 		return genfs_kqfilter(v);
 	}

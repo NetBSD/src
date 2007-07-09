@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.16 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.17 2007/07/09 21:00:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.16 2007/03/04 06:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.17 2007/07/09 21:00:34 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -156,7 +156,7 @@ sf_attach(struct sf_softc *sc)
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 
-	callout_init(&sc->sc_tick_callout);
+	callout_init(&sc->sc_tick_callout, 0);
 
 	/*
 	 * If we're I/O mapped, the functional register handle is

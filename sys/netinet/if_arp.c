@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.123 2007/06/12 22:55:44 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.124 2007/07/09 21:11:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.123 2007/06/12 22:55:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.124 2007/07/09 21:11:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -415,7 +415,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			time.tv_sec++;
 #endif /* !__HAVE_TIMECOUNTER */
 		}
-		callout_init(&arptimer_ch);
+		callout_init(&arptimer_ch, 0);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
 	}
 

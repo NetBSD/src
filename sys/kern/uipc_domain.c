@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.65 2007/05/06 02:56:37 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.66 2007/07/09 21:10:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.65 2007/05/06 02:56:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.66 2007/07/09 21:10:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -58,7 +58,7 @@ void	pfslowtimo(void *);
 struct domainhead domains = STAILQ_HEAD_INITIALIZER(domains);
 static struct domain *domain_array[AF_MAX];
 
-struct callout pffasttimo_ch, pfslowtimo_ch;
+callout_t pffasttimo_ch, pfslowtimo_ch;
 
 /*
  * Current time values for fast and slow timeouts.  We can use u_int
@@ -88,8 +88,8 @@ domaininit(void)
 	if (rt_domain)
 		domain_attach(rt_domain);
 
-	callout_init(&pffasttimo_ch);
-	callout_init(&pfslowtimo_ch);
+	callout_init(&pffasttimo_ch, 0);
+	callout_init(&pfslowtimo_ch, 0);
 
 	callout_reset(&pffasttimo_ch, 1, pffasttimo, NULL);
 	callout_reset(&pfslowtimo_ch, 1, pfslowtimo, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.65 2007/03/04 15:17:20 yamt Exp $	*/
+/*	$NetBSD: if_se.c,v 1.66 2007/07/09 21:01:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.65 2007/03/04 15:17:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.66 2007/07/09 21:01:21 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -311,8 +311,8 @@ seattach(parent, self, aux)
 	printf("\n");
 	SC_DEBUG(periph, SCSIPI_DB2, ("seattach: "));
 
-	callout_init(&sc->sc_ifstart_ch);
-	callout_init(&sc->sc_recv_ch);
+	callout_init(&sc->sc_ifstart_ch, 0);
+	callout_init(&sc->sc_recv_ch, 0);
 
 
 	/*

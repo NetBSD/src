@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.14 2007/03/04 06:01:10 christos Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.15 2007/07/09 20:52:39 ad Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.14 2007/03/04 06:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.15 2007/07/09 20:52:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,6 @@ static struct {
 
 /* For received messages that must be deferred to process context. */
 static void __ctrl_if_rxmsg_deferred(void *unused);
-static void ctrl_if_kthread_create(void *);
 
 static int ctrl_if_tx_wait;
 static void __ctrl_if_tx_tasklet(unsigned long data);
@@ -520,7 +519,7 @@ void ctrl_if_early_init(void)
 
 void ctrl_if_init(void)
 {
-	int i;
+	int i, error;
 
 	for ( i = 0; i < 256; i++ )
 		ctrl_if_rxmsg_handler[i] = ctrl_if_rxmsg_default_handler;
@@ -528,23 +527,15 @@ void ctrl_if_init(void)
 	if (ctrl_if_evtchn == -1)
 		ctrl_if_early_init();
 
-	kthread_create(ctrl_if_kthread_create, NULL);
-
-	ctrl_if_resume();
-}
-
-static void
-ctrl_if_kthread_create(void *arg)
-{
-	int error;
-	static struct proc *ctrl_if_proc;
-	if ((error = kthread_create1(__ctrl_if_rxmsg_deferred, NULL,
-	    &ctrl_if_proc, "ctrlif")) != 0) {
+	error = kthread_create(PRI_NONE, 0, NULL, __ctrl_if_rxmsg_deferred,
+	    NULL, NULL, "ctrlif");
+	if (error != 0) {
 		aprint_error("ctrlif: unable to create kernel thread: "
 		    "error %d\n", error);
 	}
-}
 
+	ctrl_if_resume();
+}
 
 /*
  * !! The following are DANGEROUS FUNCTIONS !!

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.75 2007/05/23 17:15:03 christos Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.76 2007/07/09 21:11:13 ad Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.75 2007/05/23 17:15:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.76 2007/07/09 21:11:13 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1105,7 +1105,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 		return;
 	}
 	bzero(dp, sizeof(*dp));
-	callout_init(&dp->dad_timer_ch);
+	callout_init(&dp->dad_timer_ch, 0);
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),

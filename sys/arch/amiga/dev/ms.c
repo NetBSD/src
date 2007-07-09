@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.31 2007/03/04 05:59:24 christos Exp $ */
+/*	$NetBSD: ms.c,v 1.32 2007/07/09 20:52:02 ad Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.31 2007/03/04 05:59:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.32 2007/07/09 20:52:02 ad Exp $");
 
 /*
  * Mouse driver.
@@ -186,7 +186,7 @@ msattach(struct device *pdp, struct device *dp, void *auxp)
 	printf("\n");
 	for (i = 0; i < MS_NPORTS; i++) {
 		sc->sc_ports[i].ms_portno = i;
-		callout_init(&sc->sc_ports[i].ms_intr_ch);
+		callout_init(&sc->sc_ports[i].ms_intr_ch, 0);
 #if NWSMOUSE > 0
 		waa.accessops = &ms_wscons_accessops;
 		waa.accesscookie = &sc->sc_ports[i];

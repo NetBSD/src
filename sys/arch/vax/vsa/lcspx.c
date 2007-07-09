@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.7 2007/03/31 06:00:38 matt Exp $ */
+/*	$NetBSD: lcspx.c,v 1.8 2007/07/09 20:52:34 ad Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.7 2007/03/31 06:00:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.8 2007/07/09 20:52:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ struct	lcspx_screen {
 static	struct lcspx_screen lcspx_conscreen;
 static	struct lcspx_screen *curscr;
 
-static	struct callout lcspx_cursor_ch = CALLOUT_INITIALIZER;
+static	callout_t lcspx_cursor_ch;
 
 int
 lcspx_match(struct device *parent, struct cfdata *match, void *aux)
@@ -193,8 +193,10 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 	aa.console = lcspxaddr != NULL;
-	if (lcspxaddr == 0)
+	if (lcspxaddr == 0) {
+		callout_init(&lcspx_cursor_ch, 0);
 		lcspxaddr = (void *)vax_map_physmem(va->va_paddr, (SPXSIZE/VAX_NBPG));
+	}
 	if (lcspxaddr == 0) {
 		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
 		return;
@@ -469,6 +471,8 @@ lcspxcninit(struct consdev *cndev)
 {
 	int fcookie;
 	struct wsdisplay_font *console_font;
+
+	callout_init(&lcspx_cursor_ch, 0);
 
 	/* Clear screen */
 	memset(lcspxaddr, 0, SPX_XWIDTH * SPX_YWIDTH);

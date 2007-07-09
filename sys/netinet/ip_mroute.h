@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.27 2007/03/04 06:03:21 christos Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.28 2007/07/09 21:11:11 ad Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -237,7 +237,7 @@ struct vif {
 	u_long	  v_bytes_in;		/* # bytes in on interface */
 	u_long	  v_bytes_out;		/* # bytes out on interface */
 	struct	  route v_route;	/* cached route if this is a tunnel */
-	struct	  callout v_repq_ch;	/* for tbf_reprocess_q() */
+	callout_t v_repq_ch;		/* for tbf_reprocess_q() */
 #ifdef RSVP_ISI
 	int	  v_rsvp_on;		/* # RSVP listening on this vif */
 	struct	  socket *v_rsvpd;	/* # RSVPD daemon */

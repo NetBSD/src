@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.5 2007/07/04 17:48:16 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.6 2007/07/09 21:01:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.5 2007/07/04 17:48:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.6 2007/07/09 21:01:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -425,7 +425,7 @@ sme_events_init(void)
 	if (error)
 		goto out;
 
-	callout_init(&seeco);
+	callout_init(&seeco, 0);
 	callout_setfunc(&seeco, sme_events_check, NULL);
 	callout_schedule(&seeco, SME_EVTIMO);
 	sme_events_initialized = true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.105 2007/06/23 08:45:25 scw Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.106 2007/07/09 21:11:00 ad Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.105 2007/06/23 08:45:25 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.106 2007/07/09 21:11:00 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -246,7 +246,7 @@ struct cp {
 };
 
 static struct sppp *spppq;
-static struct callout keepalive_ch;
+static callout_t keepalive_ch;
 
 #ifdef INET
 /*
@@ -897,7 +897,7 @@ sppp_attach(struct ifnet *ifp)
 
 	/* Initialize keepalive handler. */
 	if (! spppq) {
-		callout_init(&keepalive_ch);
+		callout_init(&keepalive_ch, 0);
 		callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 	}
 
@@ -2027,7 +2027,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
-	callout_init(&sp->ch[IDX_LCP]);
+	callout_init(&sp->ch[IDX_LCP], 0);
 }
 
 static void
@@ -2754,7 +2754,7 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPCP] = 0;
 	sp->pp_seq[IDX_IPCP] = 0;
 	sp->pp_rseq[IDX_IPCP] = 0;
-	callout_init(&sp->ch[IDX_IPCP]);
+	callout_init(&sp->ch[IDX_IPCP], 0);
 }
 
 static void
@@ -3293,7 +3293,7 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPV6CP] = 0;
 	sp->pp_seq[IDX_IPV6CP] = 0;
 	sp->pp_rseq[IDX_IPV6CP] = 0;
-	callout_init(&sp->ch[IDX_IPV6CP]);
+	callout_init(&sp->ch[IDX_IPV6CP], 0);
 }
 
 static void
@@ -4156,7 +4156,7 @@ sppp_chap_init(struct sppp *sp)
 	sp->fail_counter[IDX_CHAP] = 0;
 	sp->pp_seq[IDX_CHAP] = 0;
 	sp->pp_rseq[IDX_CHAP] = 0;
-	callout_init(&sp->ch[IDX_CHAP]);
+	callout_init(&sp->ch[IDX_CHAP], 0);
 }
 
 static void
@@ -4508,8 +4508,8 @@ sppp_pap_init(struct sppp *sp)
 	sp->fail_counter[IDX_PAP] = 0;
 	sp->pp_seq[IDX_PAP] = 0;
 	sp->pp_rseq[IDX_PAP] = 0;
-	callout_init(&sp->ch[IDX_PAP]);
-	callout_init(&sp->pap_my_to_ch);
+	callout_init(&sp->ch[IDX_PAP], 0);
+	callout_init(&sp->pap_my_to_ch, 0);
 }
 
 static void

@@ -1,11 +1,11 @@
-/*	$NetBSD: kern_timeout.c,v 1.21 2007/02/22 04:38:02 matt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.22 2007/07/09 21:10:54 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,11 +66,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21 2007/02/22 04:38:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.22 2007/07/09 21:10:54 ad Exp $");
 
 /*
- * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
- * modified to match NetBSD's pre-existing callout API.
+ * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
+ * value of the global variable "hardclock_ticks" when the timeout should
+ * be called.  There are four levels with 256 buckets each. See 'Scheme 7'
+ * in "Hashed and Hierarchical Timing Wheels: Efficient Data Structures
+ * for Implementing a Timer Facility" by George Varghese and Tony Lauck.
+ *
+ * Some of the "math" in here is a bit tricky.  We have to beware of
+ * wrapping ints.
+ *
+ * We use the fact that any element added to the queue must be added with
+ * a positive time.  That means that any element `to' on the queue cannot
+ * be scheduled to timeout further in time than INT_MAX, but c->c_time can
+ * be positive or negative so comparing it with anything is dangerous. 
+ * The only way we can use the c->c_time value in any predictable way is
+ * when we calculate how far in the future `to' will timeout - "c->c_time
+ * - hardclock_ticks".  The result will always be positive for future
+ * timeouts and 0 or negative for due timeouts.
  */
 
 #include <sys/param.h>
@@ -79,6 +94,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21 2007/02/22 04:38:02 matt Exp $
 #include <sys/lock.h>
 #include <sys/callout.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/sleepq.h>
+#include <sys/syncobj.h>
+#include <sys/evcnt.h>
+
+#include <machine/intr.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -88,17 +109,41 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21 2007/02/22 04:38:02 matt Exp $
 #include <ddb/db_output.h>
 #endif
 
-/*
- * Timeouts are kept in a hierarchical timing wheel. The c_time is the value
- * of the global variable "hardclock_ticks" when the timeout should be called.
- * There are four levels with 256 buckets each. See 'Scheme 7' in
- * "Hashed and Hierarchical Timing Wheels: Efficient Data Structures for
- * Implementing a Timer Facility" by George Varghese and Tony Lauck.
- */
-#define BUCKETS 1024
-#define WHEELSIZE 256
-#define WHEELMASK 255
-#define WHEELBITS 8
+#define BUCKETS		1024
+#define WHEELSIZE	256
+#define WHEELMASK	255
+#define WHEELBITS	8
+
+/* The following funkyness is to appease gcc3's strict aliasing. */
+struct callout_circq {
+	/* next element */
+	union {
+		struct callout_impl	*elem;
+		struct callout_circq	*list;
+	} cq_next;
+	/* previous element */
+	union {
+		struct callout_impl	*elem;
+		struct callout_circq	*list;
+	} cq_prev;
+};
+#define	cq_next_e	cq_next.elem
+#define	cq_prev_e	cq_prev.elem
+#define	cq_next_l	cq_next.list
+#define	cq_prev_l	cq_prev.list
+
+typedef struct callout_impl {
+	struct callout_circq c_list;		/* linkage on queue */
+	void	(*c_func)(void *);		/* function to call */
+	void	*c_arg;				/* function argument */
+	void	*c_oncpu;			/* non-NULL while running */
+	void	*c_onlwp;			/* non-NULL while running */
+	int	c_time;				/* when callout fires */
+	u_int	c_flags;			/* state of this entry */
+	u_int	c_runwait;			/* number of waiters */
+	u_int	c_magic;			/* magic number */
+} callout_impl_t;
+#define	CALLOUT_MAGIC		0x11deeba1
 
 static struct callout_circq timeout_wheel[BUCKETS];	/* Queues of timeouts */
 static struct callout_circq timeout_todo;		/* Worklist */
@@ -117,12 +162,6 @@ static struct callout_circq timeout_todo;		/* Worklist */
 #define MOVEBUCKET(wheel, time)						\
     CIRCQ_APPEND(&timeout_todo,						\
         &timeout_wheel[MASKWHEEL((wheel), (time)) + (wheel)*WHEELSIZE])
-
-/*
- * All wheels are locked with the same lock (which must also block out all
- * interrupts).
- */
-kmutex_t callout_mutex;
 
 /*
  * Circular queue definitions.
@@ -164,61 +203,76 @@ do {									\
 #define CIRCQ_LAST(elem,list)	((elem)->cq_next_l == (list))
 #define CIRCQ_EMPTY(list)	((list)->cq_next_l == (list))
 
-/*
- * Some of the "math" in here is a bit tricky.
- *
- * We have to beware of wrapping ints.
- * We use the fact that any element added to the queue must be added with a
- * positive time. That means that any element `to' on the queue cannot be
- * scheduled to timeout further in time than INT_MAX, but c->c_time can
- * be positive or negative so comparing it with anything is dangerous.
- * The only way we can use the c->c_time value in any predictable way
- * is when we calculate how far in the future `to' will timeout -
- * "c->c_time - hardclock_ticks". The result will always be positive for
- * future timeouts and 0 or negative for due timeouts.
- */
+static void	callout_softclock(void *);
 
-#ifdef CALLOUT_EVENT_COUNTERS
+/*
+ * All wheels are locked with the same lock (which must also block out
+ * all interrupts).  Eventually this should become per-CPU.
+ */
+kmutex_t callout_lock;
+sleepq_t callout_sleepq;
+void	*callout_si;
+
 static struct evcnt callout_ev_late;
-#endif
+static struct evcnt callout_ev_block;
 
 /*
  * callout_barrier:
  *
- *	If the callout is running on another CPU, busy wait until it
- *	completes.
+ *	If the callout is already running, wait until it completes.
+ *	XXX This should do priority inheritance.
  */
-static inline void
-callout_barrier(struct callout *c)
+static void
+callout_barrier(callout_impl_t *c)
 {
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci, *ci_cur;
+	extern syncobj_t sleep_syncobj;
+	struct cpu_info *ci;
+	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(&callout_mutex));
+	l = curlwp;
 
-	/*
-	 * The callout may have already been dispatched to run on the
-	 * current CPU.  It's possible for us to arrive here before it
-	 * actually runs because the SPL is dropped from IPL_SCHED in
-	 * softclock(), and IPL_SOFTCLOCK is low priority. We can't deal
-	 * with that race easily, so for now the caller must deal with
-	 * it.
-	 */
-#if 1
-	ci_cur = curcpu();	/* XXXgcc get around alpha problem */
-	while ((ci = c->c_oncpu) != NULL && ci != ci_cur &&
-	    ci->ci_data.cpu_callout == c) {
-#else
-	while ((ci = c->c_oncpu) != NULL && ci != curcpu() &&
-	    ci->ci_data.cpu_callout == c) {
-#endif
-		mutex_spin_exit(&callout_mutex);
-		while (ci->ci_data.cpu_callout == c)
-			;
-		mutex_spin_enter(&callout_mutex);
+	if ((c->c_flags & CALLOUT_MPSAFE) == 0) {
+		/*
+		 * Note: we must be called with the kernel lock held,
+		 * as we use it to synchronize with callout_softclock().
+		 */
+		ci = c->c_oncpu;
+		ci->ci_data.cpu_callout_cancel = c;
+		return;
 	}
-	c->c_oncpu = NULL;
-#endif
+
+	while ((ci = c->c_oncpu) != NULL && ci->ci_data.cpu_callout == c) {
+		KASSERT(l->l_wchan == NULL);
+
+		ci->ci_data.cpu_callout_nwait++;
+		callout_ev_block.ev_count++;
+
+		lwp_lock(l);
+		lwp_unlock_to(l, &callout_lock);
+		sleepq_enqueue(&callout_sleepq, sched_kpri(l), ci,
+		    "callout", &sleep_syncobj);
+		sleepq_block(0, false);
+		mutex_spin_enter(&callout_lock);
+	}
+}
+
+/*
+ * callout_running:
+ *
+ *	Return non-zero if callout 'c' is currently executing.
+ */
+static inline bool
+callout_running(callout_impl_t *c)
+{
+	struct cpu_info *ci;
+
+	if ((ci = c->c_oncpu) == NULL)
+		return false;
+	if (ci->ci_data.cpu_callout != c)
+		return false;
+	if (c->c_onlwp == curlwp)
+		return false;
+	return true;
 }
 
 /*
@@ -231,15 +285,34 @@ callout_startup(void)
 {
 	int b;
 
+	KASSERT(sizeof(callout_impl_t) <= sizeof(callout_t));
+
 	CIRCQ_INIT(&timeout_todo);
 	for (b = 0; b < BUCKETS; b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
-	mutex_init(&callout_mutex, MUTEX_SPIN, IPL_SCHED);
 
-#ifdef CALLOUT_EVENT_COUNTERS
+	mutex_init(&callout_lock, MUTEX_SPIN, IPL_SCHED);
+	sleepq_init(&callout_sleepq, &callout_lock);
+
 	evcnt_attach_dynamic(&callout_ev_late, EVCNT_TYPE_MISC,
 	    NULL, "callout", "late");
-#endif
+	evcnt_attach_dynamic(&callout_ev_block, EVCNT_TYPE_MISC,
+	    NULL, "callout", "block waiting");
+}
+
+/*
+ * callout_startup2:
+ *
+ *	Complete initialization once soft interrupts are available.
+ */
+void
+callout_startup2(void)
+{
+
+	callout_si = softintr_establish(IPL_SOFTCLOCK,
+	    callout_softclock, NULL);
+	if (callout_si == NULL)
+		panic("callout_startup2: unable to register softclock intr");
 }
 
 /*
@@ -248,11 +321,42 @@ callout_startup(void)
  *	Initialize a callout structure.
  */
 void
-callout_init(struct callout *c)
+callout_init(callout_t *cs, u_int flags)
 {
+	callout_impl_t *c = (callout_impl_t *)cs;
+
+	KASSERT((flags & ~CALLOUT_FLAGMASK) == 0);
 
 	memset(c, 0, sizeof(*c));
+	c->c_flags = flags;
+	c->c_magic = CALLOUT_MAGIC;
 }
+
+/*
+ * callout_destroy:
+ *
+ *	Destroy a callout structure.  The callout must be stopped.
+ */
+void
+callout_destroy(callout_t *cs)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+
+	/*
+	 * It's not necessary to lock in order to see the correct value
+	 * of c->c_flags.  If the callout could potentially have been
+	 * running, the current thread should have stopped it.
+	 */
+	KASSERT((c->c_flags & CALLOUT_PENDING) == 0);
+	if (c->c_oncpu != NULL) {
+		KASSERT(
+		    ((struct cpu_info *)c->c_oncpu)->ci_data.cpu_callout != c);
+	}
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+
+	c->c_magic = 0;
+}
+
 
 /*
  * callout_reset:
@@ -261,20 +365,21 @@ callout_init(struct callout *c)
  *	schedule it to run.
  */
 void
-callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
+callout_reset(callout_t *cs, int to_ticks, void (*func)(void *), void *arg)
 {
+	callout_impl_t *c = (callout_impl_t *)cs;
 	int old_time;
 
 	KASSERT(to_ticks >= 0);
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERT(func != NULL);
 
-	mutex_spin_enter(&callout_mutex);
-
-	callout_barrier(c);
+	mutex_spin_enter(&callout_lock);
 
 	/* Initialize the time here, it won't change. */
 	old_time = c->c_time;
 	c->c_time = to_ticks + hardclock_ticks;
-	c->c_flags &= ~(CALLOUT_FIRED|CALLOUT_INVOKING);
+	c->c_flags &= ~CALLOUT_FIRED;
 
 	c->c_func = func;
 	c->c_arg = arg;
@@ -284,7 +389,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 	 * earlier, reschedule it now. Otherwise leave it in place
 	 * and let it be rescheduled later.
 	 */
-	if (callout_pending(c)) {
+	if ((c->c_flags & CALLOUT_PENDING) != 0) {
 		if (c->c_time - old_time < 0) {
 			CIRCQ_REMOVE(&c->c_list);
 			CIRCQ_INSERT(&c->c_list, &timeout_todo);
@@ -294,7 +399,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 		CIRCQ_INSERT(&c->c_list, &timeout_todo);
 	}
 
-	mutex_spin_exit(&callout_mutex);
+	mutex_spin_exit(&callout_lock);
 }
 
 /*
@@ -304,27 +409,28 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
  *	already be set in the callout structure.
  */
 void
-callout_schedule(struct callout *c, int to_ticks)
+callout_schedule(callout_t *cs, int to_ticks)
 {
+	callout_impl_t *c = (callout_impl_t *)cs;
 	int old_time;
 
 	KASSERT(to_ticks >= 0);
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERT(c->c_func != NULL);
 
-	mutex_spin_enter(&callout_mutex);
-
-	callout_barrier(c);
+	mutex_spin_enter(&callout_lock);
 
 	/* Initialize the time here, it won't change. */
 	old_time = c->c_time;
 	c->c_time = to_ticks + hardclock_ticks;
-	c->c_flags &= ~(CALLOUT_FIRED|CALLOUT_INVOKING);
+	c->c_flags &= ~CALLOUT_FIRED;
 
 	/*
 	 * If this timeout is already scheduled and now is moved
 	 * earlier, reschedule it now. Otherwise leave it in place
 	 * and let it be rescheduled later.
 	 */
-	if (callout_pending(c)) {
+	if ((c->c_flags & CALLOUT_PENDING) != 0) {
 		if (c->c_time - old_time < 0) {
 			CIRCQ_REMOVE(&c->c_list);
 			CIRCQ_INSERT(&c->c_list, &timeout_todo);
@@ -334,7 +440,7 @@ callout_schedule(struct callout *c, int to_ticks)
 		CIRCQ_INSERT(&c->c_list, &timeout_todo);
 	}
 
-	mutex_spin_exit(&callout_mutex);
+	mutex_spin_exit(&callout_lock);
 }
 
 /*
@@ -342,32 +448,126 @@ callout_schedule(struct callout *c, int to_ticks)
  *
  *	Cancel a pending callout.
  */
-void
-callout_stop(struct callout *c)
+bool
+callout_stop(callout_t *cs)
 {
+	callout_impl_t *c = (callout_impl_t *)cs;
+	bool expired;
 
-	mutex_spin_enter(&callout_mutex);
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
 
-	callout_barrier(c);
+	mutex_spin_enter(&callout_lock);
 
-	if (callout_pending(c))
+	if (callout_running(c))
+		callout_barrier(c);
+
+	if ((c->c_flags & CALLOUT_PENDING) != 0)
 		CIRCQ_REMOVE(&c->c_list);
 
+	expired = ((c->c_flags & CALLOUT_FIRED) != 0);
 	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
 
-	mutex_spin_exit(&callout_mutex);
+	mutex_spin_exit(&callout_lock);
+
+	return expired;
+}
+
+void
+callout_setfunc(callout_t *cs, void (*func)(void *), void *arg)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+
+	mutex_spin_enter(&callout_lock);
+	c->c_func = func;
+	c->c_arg = arg;
+	mutex_spin_exit(&callout_lock);
+}
+
+bool
+callout_expired(callout_t *cs)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+	bool rv;
+
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+
+	mutex_spin_enter(&callout_lock);
+	rv = ((c->c_flags & CALLOUT_FIRED) != 0);
+	mutex_spin_exit(&callout_lock);
+
+	return rv;
+}
+
+bool
+callout_active(callout_t *cs)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+	bool rv;
+
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+
+	mutex_spin_enter(&callout_lock);
+	rv = ((c->c_flags & (CALLOUT_PENDING|CALLOUT_FIRED)) != 0);
+	mutex_spin_exit(&callout_lock);
+
+	return rv;
+}
+
+bool
+callout_pending(callout_t *cs)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+	bool rv;
+
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+
+	mutex_spin_enter(&callout_lock);
+	rv = ((c->c_flags & CALLOUT_PENDING) != 0);
+	mutex_spin_exit(&callout_lock);
+
+	return rv;
+}
+
+bool
+callout_invoking(callout_t *cs)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+	bool rv;
+
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+
+	mutex_spin_enter(&callout_lock);
+	rv = ((c->c_flags & CALLOUT_INVOKING) != 0);
+	mutex_spin_exit(&callout_lock);
+
+	return rv;
+}
+
+void
+callout_ack(callout_t *cs)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+
+	mutex_spin_enter(&callout_lock);
+	c->c_flags &= ~CALLOUT_INVOKING;
+	mutex_spin_exit(&callout_lock);
 }
 
 /*
  * This is called from hardclock() once every tick.
- * We return !0 if we need to schedule a softclock.
+ * We schedule callout_softclock() if there is work
+ * to be done.
  */
-int
+void
 callout_hardclock(void)
 {
 	int needsoftclock;
 
-	mutex_spin_enter(&callout_mutex);
+	mutex_spin_enter(&callout_lock);
 
 	MOVEBUCKET(0, hardclock_ticks);
 	if (MASKWHEEL(0, hardclock_ticks) == 0) {
@@ -380,26 +580,32 @@ callout_hardclock(void)
 	}
 
 	needsoftclock = !CIRCQ_EMPTY(&timeout_todo);
-	mutex_spin_exit(&callout_mutex);
+	mutex_spin_exit(&callout_lock);
 
-	return needsoftclock;
+	if (needsoftclock)
+		softintr_schedule(callout_si);
 }
 
 /* ARGSUSED */
-void
-softclock(void *v)
+static void
+callout_softclock(void *v)
 {
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci = curcpu();
-#endif
-	struct callout *c;
+	callout_impl_t *c;
+	struct cpu_info *ci;
 	void (*func)(void *);
 	void *arg;
+	u_int mpsafe, count;
+	lwp_t *l;
 
-	mutex_spin_enter(&callout_mutex);
+	l = curlwp;
+	ci = l->l_cpu;
+
+	mutex_spin_enter(&callout_lock);
 
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
 		c = CIRCQ_FIRST(&timeout_todo);
+		KASSERT(c->c_magic == CALLOUT_MAGIC);
+		KASSERT(c->c_func != NULL);
 		CIRCQ_REMOVE(&c->c_list);
 
 		/* If due run it, otherwise insert it into the right bucket. */
@@ -407,41 +613,50 @@ softclock(void *v)
 			CIRCQ_INSERT(&c->c_list,
 			    BUCKET((c->c_time - hardclock_ticks), c->c_time));
 		} else {
-#ifdef CALLOUT_EVENT_COUNTERS
 			if (c->c_time - hardclock_ticks < 0)
 				callout_ev_late.ev_count++;
-#endif
-			c->c_flags = (c->c_flags & ~CALLOUT_PENDING) |
-			    (CALLOUT_FIRED|CALLOUT_INVOKING);
 
+			c->c_flags ^= (CALLOUT_PENDING | CALLOUT_FIRED);
+			mpsafe = (c->c_flags & CALLOUT_MPSAFE);
 			func = c->c_func;
 			arg = c->c_arg;
-
-#ifdef MULTIPROCESSOR
 			c->c_oncpu = ci;
-			ci->ci_data.cpu_callout = c;
-#endif
-			mutex_spin_exit(&callout_mutex);
-			(*func)(arg);
-			mutex_spin_enter(&callout_mutex);
-#ifdef MULTIPROCESSOR
-			ci->ci_data.cpu_callout = NULL;
+			c->c_onlwp = l;
+
+			mutex_spin_exit(&callout_lock);
+			if (!mpsafe) {
+				KERNEL_LOCK(1, curlwp);
+				if (ci->ci_data.cpu_callout_cancel != c)
+					(*func)(arg);
+				KERNEL_UNLOCK_ONE(curlwp);
+			} else
+					(*func)(arg);
+			mutex_spin_enter(&callout_lock);
+
 			/*
-			 * we can't touch 'c' here because it might be
-			 * freed already.
+			 * We can't touch 'c' here because it might be
+			 * freed already.  If LWPs waiting for callout
+			 * to complete, awaken them.
 			 */
-#endif
+			ci->ci_data.cpu_callout_cancel = NULL;
+			ci->ci_data.cpu_callout = NULL;
+			if ((count = ci->ci_data.cpu_callout_nwait) != 0) {
+				ci->ci_data.cpu_callout_nwait = 0;
+				/* sleepq_wake() drops the lock. */
+				sleepq_wake(&callout_sleepq, ci, count);
+				mutex_spin_enter(&callout_lock);
+			}
 		}
 	}
 
-	mutex_spin_exit(&callout_mutex);
+	mutex_spin_exit(&callout_lock);
 }
 
 #ifdef DDB
 static void
 db_show_callout_bucket(struct callout_circq *bucket)
 {
-	struct callout *c;
+	callout_impl_t *c;
 	db_expr_t offset;
 	const char *name;
 	static char question[] = "?";

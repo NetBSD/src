@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.28 2007/06/09 02:33:41 dyoung Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.29 2007/07/09 21:11:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.28 2007/06/09 02:33:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.29 2007/07/09 21:11:30 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -830,32 +830,32 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 	return np;
 }
 
-static struct lock netexport_lock = LOCK_INITIALIZER(PVFS, "netexp", 0, 0);
+krwlock_t netexport_lock;
 
 void
 netexport_rdlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_SHARED, NULL);
+	rw_enter(&netexport_lock, RW_READER);
 }
 
 void
 netexport_rdunlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_RELEASE, NULL);
+	rw_exit(&netexport_lock);
 }
 
 static void
 netexport_wrlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&netexport_lock, RW_WRITER);
 }
 
 static void
 netexport_wrunlock(void)
 {
 
-	lockmgr(&netexport_lock, LK_RELEASE, NULL);
+	rw_exit(&netexport_lock);
 }

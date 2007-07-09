@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.20 2006/05/14 21:42:26 elad Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.21 2007/07/09 21:00:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ struct vnd_softc {
 	struct vndgeom	 sc_geom;	/* virtual geometry */
 	struct pool	 sc_vxpool;	/* vndxfer pool */
 	struct pool	 sc_vbpool;	/* vndbuf pool */
-	struct proc 	*sc_kthread;	/* kernel thread */
+	struct lwp 	*sc_kthread;	/* kernel thread */
 	u_int32_t	 sc_comp_blksz;	/* precompressed block size */
 	u_int32_t	 sc_comp_numoffs;/* count of compressed block offsets */
 	u_int64_t	*sc_comp_offsets;/* file idx's to compressed blocks */

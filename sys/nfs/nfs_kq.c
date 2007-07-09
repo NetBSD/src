@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.14 2007/04/29 15:31:53 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.15 2007/07/09 21:11:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.14 2007/04/29 15:31:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.15 2007/07/09 21:11:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ struct kevq {
 SLIST_HEAD(kevqlist, kevq);
 
 static kmutex_t nfskevq_lock;
-static struct proc *pnfskq;
+static struct lwp *nfskq_thread;
 static kcondvar_t nfskq_cv;
 static struct kevqlist kevlist = SLIST_HEAD_INITIALIZER(kevlist);
 
@@ -160,7 +160,7 @@ nfs_kqpoll(void *arg)
 
 		if (SLIST_EMPTY(&kevlist)) {
 			/* Nothing more to watch, exit */
-			pnfskq = NULL;
+			nfskq_thread = NULL;
 			mutex_exit(&nfskevq_lock);
 			kthread_exit(0);
 		}
@@ -284,9 +284,9 @@ nfs_kqfilter(void *v)
 	mutex_enter(&nfskevq_lock);
 
 	/* ensure the poller is running */
-	if (!pnfskq) {
-		error = kthread_create1(nfs_kqpoll, NULL, &pnfskq,
-				"nfskqpoll");
+	if (!nfskq_thread) {
+		error = kthread_create(PRI_NONE, 0, NULL, nfs_kqpoll,
+		    NULL, &nfskq_thread, "nfskqpoll");
 		if (error)
 			goto out;
 	}

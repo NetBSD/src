@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.16 2007/05/21 19:25:54 rumble Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.17 2007/07/09 21:00:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.16 2007/05/21 19:25:54 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.17 2007/07/09 21:00:40 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -205,7 +205,7 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	chan->chan_nluns = SBIC_NLUN;
 	chan->chan_id = dev->sc_id;
 
-	callout_init(&dev->sc_watchdog);
+	callout_init(&dev->sc_watchdog, 0);
 
 	/*
 	 * Add reference to adapter so that we drop the reference after

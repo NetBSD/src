@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.17 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.18 2007/07/09 21:00:34 ad Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -206,7 +206,7 @@ typedef struct callout ahc_timer_t;
 /***************************** Timer Facilities *******************************/
 void ahc_timeout(void*);
 
-#define ahc_timer_init callout_init
+#define ahc_timer_init(x) callout_init(x, 0)
 #define ahc_timer_stop callout_stop
 
 static __inline void

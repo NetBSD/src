@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.27 2006/11/16 01:33:09 christos Exp $ */
+/* $NetBSD: isic_pci.c,v 1.28 2007/07/09 21:00:57 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.27 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.28 2007/07/09 21:00:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -148,8 +148,8 @@ isic_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s\n", prod->name);
 
-	callout_init(&sc->sc_T3_callout);
-	callout_init(&sc->sc_T4_callout);
+	callout_init(&sc->sc_T3_callout, 0);
+	callout_init(&sc->sc_T4_callout, 0);
 
 	/* card initilization and sc setup */
 	if (!prod->attach(psc, pa))

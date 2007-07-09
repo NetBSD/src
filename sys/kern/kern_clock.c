@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.108 2007/05/17 14:51:38 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.109 2007/07/09 21:10:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.108 2007/05/17 14:51:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.109 2007/07/09 21:10:51 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -94,9 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.108 2007/05/17 14:51:38 yamt Exp $"
 #include <sys/sched.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -350,8 +348,6 @@ volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
 #endif /* !__HAVE_TIMECOUNTER */
 
-void	*softclock_si;
-
 #ifdef __HAVE_TIMECOUNTER
 static u_int get_intr_timecount(struct timecounter *);
 
@@ -381,10 +377,6 @@ void
 initclocks(void)
 {
 	int i;
-
-	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
-	if (softclock_si == NULL)
-		panic("initclocks: unable to register softclock intr");
 
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
@@ -875,8 +867,7 @@ hardclock(struct clockframe *frame)
 	 * very low CPU priority, so we don't keep the relatively high
 	 * clock interrupt priority any longer than necessary.
 	 */
-	if (callout_hardclock())
-		softintr_schedule(softclock_si);
+	callout_hardclock();
 }
 
 #ifdef __HAVE_TIMECOUNTER
@@ -1046,7 +1037,7 @@ void
 startprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	if ((p->p_stflag & PST_PROFIL) == 0) {
 		p->p_stflag |= PST_PROFIL;
@@ -1066,7 +1057,7 @@ void
 stopprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	if (p->p_stflag & PST_PROFIL) {
 		p->p_stflag &= ~PST_PROFIL;
@@ -1229,7 +1220,7 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		if (CLKF_INTR(frame)) {
+		if (CLKF_INTR(frame) || (l->l_flag & LW_INTR) != 0) {
 			if (p != NULL) {
 				p->p_iticks++;
 			}

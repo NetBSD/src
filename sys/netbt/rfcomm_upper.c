@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.7 2007/07/09 21:11:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.6 2007/04/21 06:15:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.7 2007/07/09 21:11:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,7 +89,7 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 
 	dlc->rd_lmodem = RFCOMM_MSC_RTC | RFCOMM_MSC_RTR | RFCOMM_MSC_DV;
 
-	callout_init(&dlc->rd_timeout);
+	callout_init(&dlc->rd_timeout, 0);
 	callout_setfunc(&dlc->rd_timeout, rfcomm_dlc_timeout, dlc);
 
 	*handle = dlc;

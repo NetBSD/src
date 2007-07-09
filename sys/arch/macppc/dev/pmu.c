@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.6 2007/05/09 00:09:28 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.7 2007/07/09 20:52:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.6 2007/05/09 00:09:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.7 2007/07/09 20:52:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ struct pmu_softc {
 	int sc_brightness, sc_brightness_wanted;
 	int sc_volume, sc_volume_wanted;
 	/* deferred processing */
-	struct proc *sc_thread;
+	lwp_t *sc_thread;
 	/* signalling the event thread */
 	int sc_event;
 	/* ADB */
@@ -112,7 +112,6 @@ static void pmu_ack_on(struct pmu_softc *);
 static int pmu_intr_state(struct pmu_softc *);
 
 static void pmu_init(struct pmu_softc *);
-static void pmu_create_thread(void *);
 static void pmu_thread(void *);
 static void pmu_eject_card(struct pmu_softc *, int);
 static void pmu_update_brightness(struct pmu_softc *);
@@ -389,7 +388,11 @@ bat_done:
 	sc->sc_i2c.ic_exec = pmu_i2c_exec;
 	config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 #endif
-	kthread_create(pmu_create_thread, sc);
+	
+	if (kthread_create(PRI_NONE, 0, NULL, pmu_thread, sc, &sc->sc_thread,
+	    "%s", "pmu") != 0) {
+		printf("pmu: unable to create event kthread");
+	}
 }
 
 static void
@@ -939,17 +942,6 @@ pmu_update_brightness(struct pmu_softc *sc)
 	pmu_send(sc, PMU_SET_BRIGHTNESS, 1, cmd, 16, resp);
 
 	sc->sc_brightness = sc->sc_brightness_wanted;
-}
-
-static void
-pmu_create_thread(void *cookie)
-{
-	struct pmu_softc *sc = cookie;
-	
-	if (kthread_create1(pmu_thread, sc, &sc->sc_thread, "%s",
-	    "pmu") != 0) {
-		printf("pmu: unable to create event kthread");
-	}
 }
 
 static void

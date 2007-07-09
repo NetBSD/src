@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.38 2007/06/06 01:54:59 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.39 2007/07/09 21:10:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.38 2007/06/06 01:54:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.39 2007/07/09 21:10:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.38 2007/06/06 01:54:59 pooka Exp $
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>
+#include <sys/proc.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>

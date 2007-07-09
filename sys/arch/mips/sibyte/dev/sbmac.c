@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.24 2007/03/07 17:24:38 christos Exp $ */
+/* $NetBSD: sbmac.c,v 1.25 2007/07/09 20:52:23 ad Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.24 2007/03/07 17:24:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.25 2007/07/09 20:52:23 ad Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2318,7 +2318,7 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 
 	sbmac_initctx(sc);
 
-	callout_init(&(sc->sc_tick_ch));
+	callout_init(&(sc->sc_tick_ch), 0);
 
 	/*
 	 * Read the ethernet address.  The firwmare left this programmed

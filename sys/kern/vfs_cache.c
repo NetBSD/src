@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.69 2007/03/12 18:18:34 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.70 2007/07/09 21:10:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.69 2007/03/12 18:18:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.70 2007/07/09 21:10:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -187,7 +187,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	}
 
 	if (cnp->cn_namelen > NCHNAMLEN) {
-		/* XXXSMP - updating stats without lock; do we care? */
+		/* Unlocked, but only for stats. */
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
 		goto fail;
@@ -271,13 +271,13 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 * Check that the lock succeeded.
 	 */
 	if (error) {
-		/* XXXSMP - updating stats without lock; do we care? */
+		/* Unlocked, but only for stats. */
 		nchstats.ncs_badhits++;
 		*vpp = NULL;
 		return (-1);
 	}
 
-	/* XXXSMP - updating stats without lock; do we care? */
+	/* Unlocked, but only for stats. */
 	nchstats.ncs_goodhits++;
 	*vpp = vp;
 	return (0);
@@ -313,7 +313,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 	}
 
 	if (cnp->cn_namelen > NCHNAMLEN) {
-		/* XXXSMP - updating stats without lock; do we care? */
+		/* Unlocked, but only for stats. */
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
 		goto fail;

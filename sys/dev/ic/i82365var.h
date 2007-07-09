@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.26 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.27 2007/07/09 21:00:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -79,7 +79,7 @@ struct pcic_handle {
 	struct device *pcmcia;
 
 	int shutdown;
-	struct proc *event_thread;
+	struct lwp *event_thread;
 	SIMPLEQ_HEAD(, pcic_event) events;
 };
 

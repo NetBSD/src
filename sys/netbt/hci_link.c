@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.11 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.12 2007/07/09 21:11:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.11 2007/04/21 06:15:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.12 2007/07/09 21:11:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -896,7 +896,7 @@ hci_link_alloc(struct hci_unit *unit)
 	link->hl_state = HCI_LINK_CLOSED;
 
 	/* init ACL portion */
-	callout_init(&link->hl_expire);
+	callout_init(&link->hl_expire, 0);
 	callout_setfunc(&link->hl_expire, hci_acl_timeout, link);
 
 	TAILQ_INIT(&link->hl_txq);	/* outgoing packets */

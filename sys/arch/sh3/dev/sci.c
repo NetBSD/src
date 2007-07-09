@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.46 2007/03/04 06:00:40 christos Exp $ */
+/* $NetBSD: sci.c,v 1.47 2007/07/09 20:52:27 ad Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.46 2007/03/04 06:00:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.47 2007/07/09 20:52:27 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -140,7 +140,7 @@ struct sci_softc {
 	struct device sc_dev;		/* boilerplate */
 	struct tty *sc_tty;
 	void *sc_si;
-	struct callout sc_diag_ch;
+	callout_t sc_diag_ch;
 
 #if 0
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
@@ -195,15 +195,8 @@ void	sci_break(struct sci_softc *, int);
 void	sci_iflush(struct sci_softc *);
 
 #define	integrate	static inline
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void 	scisoft(void *);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-void 	scisoft(void);
-#else
-void 	scisoft(void *);
-#endif
-#endif
+
 integrate void sci_rxsoft(struct sci_softc *, struct tty *);
 integrate void sci_txsoft(struct sci_softc *, struct tty *);
 integrate void sci_stsoft(struct sci_softc *, struct tty *);
@@ -242,13 +235,6 @@ int scicn_speed = 9600;
 #endif
 
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-volatile int	sci_softintr_scheduled;
-struct callout sci_soft_ch = CALLOUT_INITIALIZER;
-#endif
-#endif
 
 u_int sci_rbuf_size = SCI_RING_SIZE;
 
@@ -409,7 +395,7 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 	}
 
-	callout_init(&sc->sc_diag_ch);
+	callout_init(&sc->sc_diag_ch, 0);
 
 	intc_intr_establish(SH_INTEVT_SCI_ERI, IST_LEVEL, IPL_SERIAL, sciintr,
 	    sc);
@@ -420,9 +406,7 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 	intc_intr_establish(SH_INTEVT_SCI_TEI, IST_LEVEL, IPL_SERIAL, sciintr,
 	    sc);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scisoft, sc);
-#endif
 	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
 	tp = ttymalloc();
@@ -865,18 +849,7 @@ sci_schedrx(struct sci_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-	setsoftserial();
-#else
-	if (!sci_softintr_scheduled) {
-		sci_softintr_scheduled = 1;
-		callout_reset(&sci_soft_ch, 1, scisoft, NULL);
-	}
-#endif
-#endif
 }
 
 void
@@ -1077,7 +1050,6 @@ sci_stsoft(struct sci_softc *sc, struct tty *tp)
 #endif
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 scisoft(void *arg)
 {
@@ -1087,64 +1059,24 @@ scisoft(void *arg)
 	if (!device_is_active(&sc->sc_dev))
 		return;
 
-	{
-#else
-void
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-scisoft()
-#else
-scisoft(void *arg)
-#endif
-{
-	struct sci_softc	*sc;
-	struct tty	*tp;
-	int	unit;
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-	int s;
+	tp = sc->sc_tty;
 
-	s = splsoftserial();
-	sci_softintr_scheduled = 0;
-#endif
-
-	for (unit = 0; unit < sci_cd.cd_ndevs; unit++) {
-		sc = sci_cd.cd_devs[unit];
-		if (sc == NULL || !ISSET(sc->sc_hwflags, SCI_HW_DEV_OK))
-			continue;
-
-		if (!device_is_active(&sc->sc_dev))
-			continue;
-
-		tp = sc->sc_tty;
-		if (tp == NULL)
-			continue;
-		if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0)
-			continue;
-#endif
-		tp = sc->sc_tty;
-
-		if (sc->sc_rx_ready) {
-			sc->sc_rx_ready = 0;
-			sci_rxsoft(sc, tp);
-		}
-
-#if 0
-		if (sc->sc_st_check) {
-			sc->sc_st_check = 0;
-			sci_stsoft(sc, tp);
-		}
-#endif
-
-		if (sc->sc_tx_done) {
-			sc->sc_tx_done = 0;
-			sci_txsoft(sc, tp);
-		}
+	if (sc->sc_rx_ready) {
+		sc->sc_rx_ready = 0;
+		sci_rxsoft(sc, tp);
 	}
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-	splx(s);
+#if 0
+	if (sc->sc_st_check) {
+		sc->sc_st_check = 0;
+		sci_stsoft(sc, tp);
+	}
 #endif
-#endif
+
+	if (sc->sc_tx_done) {
+		sc->sc_tx_done = 0;
+		sci_txsoft(sc, tp);
+	}
 }
 
 int
@@ -1349,18 +1281,7 @@ sciintr(void *arg)
 	}
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-	setsoftserial();
-#else
-	if (!sci_softintr_scheduled) {
-		sci_softintr_scheduled = 1;
-		callout_reset(&sci_soft_ch, 1, scisoft, 1);
-	}
-#endif
-#endif
 
 #if NRND > 0 && defined(RND_SCI)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);

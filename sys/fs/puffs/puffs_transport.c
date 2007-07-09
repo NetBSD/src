@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.20 2007/06/21 14:54:49 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.21 2007/07/09 21:10:49 ad Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.20 2007/06/21 14:54:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.21 2007/07/09 21:10:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -485,7 +485,8 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		mutex_exit(&pmp->pmp_lock);
 		if (rv)
 			break;
-		rv = kthread_create1(dosuspendresume, pmp, NULL, "puffsusp");
+		rv = kthread_create(PRI_NONE, 0, NULL, dosuspendresume,
+		    pmp, NULL, "puffsusp");
 		break;
 
 	default:

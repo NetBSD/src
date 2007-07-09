@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.14 2007/03/21 20:54:30 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.15 2007/07/09 21:00:57 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.14 2007/03/21 20:54:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.15 2007/07/09 21:00:57 ad Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -873,7 +873,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		radeonfb_blank(dp, 0);
 		
 		/* Initialise delayed lvds operations for backlight. */
-		callout_init(&dp->rd_bl_lvds_co);
+		callout_init(&dp->rd_bl_lvds_co, 0);
 		callout_setfunc(&dp->rd_bl_lvds_co,
 				radeonfb_lvds_callout, dp);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.89 2007/07/01 09:47:19 dsl Exp $	*/
+/*	$NetBSD: ata.c,v 1.90 2007/07/09 21:00:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.89 2007/07/01 09:47:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90 2007/07/09 21:00:30 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -155,7 +155,7 @@ ata_channel_attach(struct ata_channel *chp)
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
 
-	callout_init(&chp->ch_callout);
+	callout_init(&chp->ch_callout, 0);
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
@@ -366,24 +366,6 @@ atabus_thread(void *arg)
 }
 
 /*
- * atabus_create_thread:
- *
- *	Helper routine to create the ATA bus worker thread.
- */
-static void
-atabus_create_thread(void *arg)
-{
-	struct atabus_softc *sc = arg;
-	struct ata_channel *chp = sc->sc_chan;
-	int error;
-
-	if ((error = kthread_create1(atabus_thread, sc, &chp->ch_thread,
-				     "%s", sc->sc_dev.dv_xname)) != 0)
-		aprint_error("%s: unable to create kernel thread: error %d\n",
-		    sc->sc_dev.dv_xname, error);
-}
-
-/*
  * atabus_match:
  *
  *	Autoconfiguration match routine.
@@ -414,6 +396,7 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	struct atabus_softc *sc = (void *) self;
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
+	int error;
 
 	sc->sc_chan = chp;
 
@@ -427,7 +410,11 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	initq->atabus_sc = sc;
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
 	config_pending_incr();
-	kthread_create(atabus_create_thread, sc);
+
+	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
+	    &chp->ch_thread, "%s", sc->sc_dev.dv_xname)) != 0)
+		aprint_error("%s: unable to create kernel thread: error %d\n",
+		    sc->sc_dev.dv_xname, error);
 
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
 	    atabus_powerhook, sc);

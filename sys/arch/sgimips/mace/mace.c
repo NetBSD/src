@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.11 2007/04/14 20:57:55 jmcneill Exp $	*/
+/*	$NetBSD: mace.c,v 1.12 2007/07/09 20:52:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.11 2007/04/14 20:57:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.12 2007/07/09 20:52:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ CFATTACH_DECL(mace, sizeof(struct mace_softc),
     mace_match, mace_attach, NULL, NULL);
 
 #if defined(BLINK)
-static struct callout mace_blink_ch = CALLOUT_INITIALIZER;
+static callout_t mace_blink_ch;
 static void	mace_blink(void *);
 #endif
 
@@ -132,6 +132,10 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 	struct mace_softc *sc = (struct mace_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	u_int32_t scratch;
+
+#ifdef BLINK
+	callout_init(&mace_blink_ch, 0);
+#endif
 
 	sc->iot = SGIMIPS_BUS_SPACE_MACE;
 	sc->dmat = &sgimips_default_bus_dma_tag;

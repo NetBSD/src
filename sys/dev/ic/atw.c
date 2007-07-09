@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.126 2007/03/04 06:01:50 christos Exp $  */
+/*	$NetBSD: atw.c,v 1.127 2007/07/09 21:00:34 ad Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.126 2007/03/04 06:01:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.127 2007/07/09 21:00:34 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -853,7 +853,7 @@ atw_attach(struct atw_softc *sc)
 
 	/* complete initialization */
 	ieee80211_media_init(ic, atw_media_change, ieee80211_media_status);
-	callout_init(&sc->sc_scan_ch);
+	callout_init(&sc->sc_scan_ch, 0);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,

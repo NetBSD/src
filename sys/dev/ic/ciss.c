@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.7 2007/03/04 06:01:53 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.8 2007/07/09 21:00:35 ad Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.7 2007/03/04 06:01:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.8 2007/07/09 21:00:35 ad Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -312,7 +312,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	CISS_UNLOCK_SCRATCH(sc, lock);
 
-	callout_init(&sc->sc_hb);
+	callout_init(&sc->sc_hb, 0);
 	callout_setfunc(&sc->sc_hb, ciss_heartbeat, sc);
 	callout_schedule(&sc->sc_hb, hz * 3);
 

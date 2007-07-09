@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.75 2007/05/17 14:51:43 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.76 2007/07/09 21:11:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -310,7 +310,7 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 
 typedef struct kauth_cred *kauth_cred_t;
 
-typedef unsigned int pri_t;
+typedef int pri_t;
 
 #endif
 
@@ -325,10 +325,13 @@ typedef struct lwp lwp_t;
 struct	user;
 struct	__ucontext;
 struct	proc;
+typedef struct proc proc_t;
 struct	pgrp;
 struct	rusage;
 struct	file;
+typedef struct file file_t;
 struct	buf;
+typedef struct buf buf_t;
 struct	tty;
 struct	uio;
 #endif

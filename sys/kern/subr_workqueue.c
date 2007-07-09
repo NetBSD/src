@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.12 2007/02/27 15:07:29 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.13 2007/07/09 21:10:55 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.12 2007/02/27 15:07:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.13 2007/07/09 21:10:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ struct workqueue_queue {
 	kmutex_t q_mutex;
 	kcondvar_t q_cv;
 	struct workqhead q_queue;
-	struct proc *q_worker;
+	struct lwp *q_worker;
 };
 
 struct workqueue {
@@ -131,16 +131,17 @@ workqueue_init(struct workqueue *wq, const char *name,
 }
 
 static int
-workqueue_initqueue(struct workqueue *wq, int ipl)
+workqueue_initqueue(struct workqueue *wq, int ipl, int flags)
 {
 	struct workqueue_queue *q = &wq->wq_queue;
-	int error;
+	int error, ktf;
 
-	mutex_init(&q->q_mutex, MUTEX_SPIN, ipl);
+	mutex_init(&q->q_mutex, MUTEX_DRIVER, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
 	SIMPLEQ_INIT(&q->q_queue);
-	error = kthread_create1(workqueue_worker, wq, &q->q_worker,
-	    wq->wq_name);
+	ktf = ((flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
+	error = kthread_create(wq->wq_prio, ktf, NULL, workqueue_worker,
+	    wq, &q->q_worker, wq->wq_name);
 
 	return error;
 }
@@ -160,7 +161,7 @@ workqueue_exit(struct work *wk, void *arg)
 	 * only competition at this point is workqueue_finiqueue.
 	 */
 
-	KASSERT(q->q_worker == curproc);
+	KASSERT(q->q_worker == curlwp);
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
 	cv_signal(&q->q_cv);
@@ -207,7 +208,7 @@ workqueue_create(struct workqueue **wqp, const char *name,
 
 	workqueue_init(wq, name, callback_func, callback_arg, prio, ipl);
 
-	error = workqueue_initqueue(wq, ipl);
+	error = workqueue_initqueue(wq, ipl, flags);
 	if (error) {
 		kmem_free(wq, sizeof(*wq));
 		return error;
@@ -231,8 +232,7 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk)
 	struct workqueue_queue *q = &wq->wq_queue;
 
 	mutex_enter(&q->q_mutex);
-	if (SIMPLEQ_EMPTY(&q->q_queue))
-		cv_signal(&q->q_cv);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, wk, wk_entry);
+	cv_signal(&q->q_cv);
 	mutex_exit(&q->q_mutex);
 }

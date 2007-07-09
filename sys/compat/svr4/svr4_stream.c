@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.66 2007/06/24 18:09:52 dsl Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.67 2007/07/09 21:10:47 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.66 2007/06/24 18:09:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.67 2007/07/09 21:10:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1586,7 +1586,7 @@ svr4_sys_getmsg(l, v, retval)
 	struct file	*fp;
 	struct svr4_strbuf dat, ctl;
 	struct svr4_strmcmd sc;
-	int error;
+	int error = 0;
 	struct msghdr msg;
 	struct iovec aiov;
 	struct svr4_strm *st;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.156 2007/06/12 09:42:27 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.157 2007/07/09 21:11:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.156 2007/06/12 09:42:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.157 2007/07/09 21:11:30 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -809,7 +809,7 @@ again:
 		/*
 		 * Ensure that the queue never grows too large.
 		 */
-		if (curproc == uvm.pagedaemon_proc) {
+		if (curlwp == uvm.pagedaemon_lwp) {
 	  		/* Enque for later, to avoid free-page deadlock */
 			  (void) 0;
 		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {

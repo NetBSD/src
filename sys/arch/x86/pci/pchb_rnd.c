@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.2 2006/02/19 23:10:16 tron Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.3 2007/07/09 20:52:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.2 2006/02/19 23:10:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.3 2007/07/09 20:52:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			printf("%s: random number generator enabled\n",
 			    sc->sc_dev.dv_xname);
 
-			callout_init(&sc->sc_rnd_ch);
+			callout_init(&sc->sc_rnd_ch, 0);
 			rnd_attach_source(&sc->sc_rnd_source,
 			    sc->sc_dev.dv_xname, RND_TYPE_RNG,
 			    /*

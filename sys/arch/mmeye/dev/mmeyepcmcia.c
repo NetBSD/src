@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.12 2007/03/04 06:00:13 christos Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.13 2007/07/09 20:52:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.12 2007/03/04 06:00:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmeyepcmcia.c,v 1.13 2007/07/09 20:52:24 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,7 +99,7 @@ struct mmeyepcmcia_handle {
 	struct device *pcmcia;
 
 	int	shutdown;
-	struct proc *event_thread;
+	lwp_t	*event_thread;
 	SIMPLEQ_HEAD(, mmeyepcmcia_event) events;
 };
 
@@ -232,7 +232,6 @@ int	mmeyepcmcia_intr_socket(struct mmeyepcmcia_handle *);
 void	mmeyepcmcia_attach_card(struct mmeyepcmcia_handle *);
 void	mmeyepcmcia_detach_card(struct mmeyepcmcia_handle *, int);
 void	mmeyepcmcia_deactivate_card(struct mmeyepcmcia_handle *);
-void	mmeyepcmcia_create_event_thread(void *);
 void	mmeyepcmcia_event_thread(void *);
 void	mmeyepcmcia_queue_event(struct mmeyepcmcia_handle *, int);
 
@@ -369,19 +368,6 @@ mmeyepcmcia_attach_socket(struct mmeyepcmcia_handle *h)
 }
 
 void
-mmeyepcmcia_create_event_thread(void *arg)
-{
-	struct mmeyepcmcia_handle *h = arg;
-
-	if (kthread_create1(mmeyepcmcia_event_thread, h, &h->event_thread,
-	    "%s", h->sc->dev.dv_xname)) {
-		printf("%s: unable to create event thread\n",
-		    h->sc->dev.dv_xname);
-		panic("mmeyepcmcia_create_event_thread");
-	}
-}
-
-void
 mmeyepcmcia_event_thread(void *arg)
 {
 	struct mmeyepcmcia_handle *h = arg;
@@ -480,7 +466,6 @@ mmeyepcmcia_init_socket(struct mmeyepcmcia_handle *h)
 	if (h->event_thread != NULL)
 		panic("mmeyepcmcia_attach_socket: event thread");
 #endif
-	kthread_create(mmeyepcmcia_create_event_thread, h);
 
 	/* if there's a card there, then attach it. */
 
@@ -503,6 +488,13 @@ mmeyepcmcia_init_socket(struct mmeyepcmcia_handle *h)
 		h->laststate = MMEYEPCMCIA_LASTSTATE_PRESENT;
 	} else {
 		h->laststate = MMEYEPCMCIA_LASTSTATE_EMPTY;
+	}
+
+	if (kthread_create(PRI_NONE, 0, NULL, mmeyepcmcia_event_thread, h,
+	    &h->event_thread, "%s", h->sc->dev.dv_xname)) {
+		printf("%s: unable to create event thread\n",
+		    h->sc->dev.dv_xname);
+		panic("mmeyepcmcia_create_event_thread");
 	}
 }
 

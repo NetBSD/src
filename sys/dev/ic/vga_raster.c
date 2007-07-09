@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.27 2007/03/15 16:58:36 dogcow Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.28 2007/07/09 21:00:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.27 2007/03/15 16:58:36 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.28 2007/07/09 21:00:40 ad Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -411,7 +411,7 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
-	callout_init(&vc->vc_switch_callout);
+	callout_init(&vc->vc_switch_callout, 0);
 
 	wsfont_init();
 	vc->nfonts = 1;

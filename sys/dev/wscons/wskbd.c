@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.103 2007/04/04 14:50:21 mishka Exp $ */
+/* $NetBSD: wskbd.c,v 1.104 2007/07/09 21:01:26 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.103 2007/04/04 14:50:21 mishka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104 2007/07/09 21:01:26 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -166,7 +166,7 @@ struct wskbd_softc {
 #endif
 
 	int	sc_repeating;		/* we've called timeout() */
-	struct callout sc_repeat_ch;
+	callout_t sc_repeat_ch;
 	u_int	sc_repeat_type;
 	int	sc_repeat_value;
 
@@ -414,7 +414,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		wskbd_update_layout(sc->id, ap->keymap->layout);
 	}
 
-	callout_init(&sc->sc_repeat_ch);
+	callout_init(&sc->sc_repeat_ch, 0);
 
 	sc->id->t_sc = sc;
 

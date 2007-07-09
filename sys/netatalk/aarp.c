@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.23 2007/05/02 20:40:23 dyoung Exp $	*/
+/*	$NetBSD: aarp.c,v 1.24 2007/07/09 21:11:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.23 2007/05/02 20:40:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.24 2007/07/09 21:11:01 ad Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -506,7 +506,7 @@ aarptnew(const struct at_addr *addr)
 
 	if (first) {
 		first = 0;
-		callout_init(&aarptimer_callout);
+		callout_init(&aarptimer_callout, 0);
 		callout_reset(&aarptimer_callout, hz, aarptimer, NULL);
 		MOWNER_ATTACH(&aarp_mowner);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.13 2007/03/04 06:00:51 christos Exp $	*/
+/*	$NetBSD: pcons.c,v 1.14 2007/07/09 20:52:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.13 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.14 2007/07/09 20:52:33 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -109,7 +109,7 @@ pconsattach(struct device *parent, struct device *self, void *aux)
 
 	cn_init_magic(&pcons_cnm_state);
 	cn_set_magic("+++++");
-	callout_init(&sc->sc_poll_ch);
+	callout_init(&sc->sc_poll_ch, 0);
 }
 
 static void pconsstart(struct tty *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.131 2007/06/09 21:42:33 mlelstv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132 2007/07/09 21:00:53 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.131 2007/06/09 21:42:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132 2007/07/09 21:00:53 ad Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2700,7 +2700,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    NULL, sc->bge_dev.dv_xname, "xoffentered");
 #endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
-	callout_init(&sc->bge_timeout);
+	callout_init(&sc->bge_timeout, 0);
 
 	sc->bge_powerhook = powerhook_establish(sc->bge_dev.dv_xname,
 	    bge_powerhook, sc);

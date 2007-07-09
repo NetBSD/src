@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.10 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.11 2007/07/09 21:00:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.10 2007/03/04 06:02:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.11 2007/07/09 21:00:51 ad Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -299,7 +299,7 @@ idma_attach(
 	sc->idma_reg_size = 0x100;
 	sc->idma_ien = 0;
         sc->idma_callout_state = 0;
-	callout_init(&sc->idma_callout);
+	callout_init(&sc->idma_callout, 0);
 
 	for (i=0; i < NIDMA_CHANS; i++)
 		idma_chan_init(sc, &sc->idma_chan[i], i);

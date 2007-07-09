@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.41 2007/07/04 00:32:35 xtraeme Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.42 2007/07/09 20:52:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.41 2007/07/04 00:32:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.42 2007/07/09 20:52:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,9 +171,8 @@ struct tctrl_softc {
 	int sc_extvga;
 	
 	uint32_t sc_events;
-	struct proc *sc_thread;		/* event thread */
-
-	struct lock sc_requestlock;
+	lwp_t *sc_thread;			/* event thread */
+	kmutex_t sc_requestlock;
 };
 
 #define TCTRL_STD_DEV		0
@@ -202,7 +201,6 @@ static void tctrl_ac_state(struct tctrl_softc *);
 
 static int tctrl_powerfail(void *);
 
-static void tctrl_create_event_thread(void *);
 static void tctrl_event_thread(void *);
 void tctrl_update_lcd(struct tctrl_softc *);
 
@@ -311,7 +309,8 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ext_pending = 0;
 		sc->sc_ext_pending = 0;
 
-	lockinit(&sc->sc_requestlock, PUSER, "tctrl_req", 0, 0);
+	mutex_init(&sc->sc_requestlock, MUTEX_DEFAULT, IPL_NONE);
+
 	/* setup sensors and register the power button */
 	tctrl_sensor_setup(sc);
 	tctrl_lid_state(sc);
@@ -327,7 +326,12 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 	
 	/* fire up the LCD event thread */
 	sc->sc_events = 0;
-	kthread_create(tctrl_create_event_thread, sc);
+
+	if (kthread_create(PRI_NONE, 0, NULL, tctrl_event_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		printf("%s: unable to create event kthread",
+		    sc->sc_dev.dv_xname);
+	}
 }
 
 static int
@@ -837,14 +841,14 @@ static void
 tctrl_lock(struct tctrl_softc *sc)
 {
 
-	lockmgr(&sc->sc_requestlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_requestlock);
 }
 
 static void
 tctrl_unlock(struct tctrl_softc *sc)
 {
 
-	lockmgr(&sc->sc_requestlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_requestlock);
 }
 
 int
@@ -1433,18 +1437,6 @@ tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 	edata->state = ENVSYS_SVALID;
 	return 0;
-}
-
-static void
-tctrl_create_event_thread(void *v)
-{
-	struct tctrl_softc *sc = v;
-	const char *name = sc->sc_dev.dv_xname;
-	
-	if (kthread_create1(tctrl_event_thread, sc, &sc->sc_thread, "%s",
-	    name) != 0) {
-		printf("%s: unable to create event kthread", name);
-	}
 }
 
 static void
