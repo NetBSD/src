@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.40 2007/03/09 14:11:22 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.41 2007/07/09 21:10:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.40 2007/03/09 14:11:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.41 2007/07/09 21:10:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.40 2007/03/09 14:11:22 ad Exp $");
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -290,10 +292,10 @@ procfs_control(curl, l, op, sig, pfs)
 	case PROCFS_CTL_RUN:
 	case PROCFS_CTL_DETACH:
 #ifdef PT_STEP
-		PHOLD(l);
+		uvm_lwp_hold(l);
 		/* XXXAD locking? */
 		error = process_sstep(l, op == PROCFS_CTL_STEP);
-		PRELE(l);
+		uvm_lwp_rele(l);
 		if (error)
 			break;
 #endif

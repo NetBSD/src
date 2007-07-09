@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.82 2007/05/23 17:32:46 christos Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.83 2007/07/09 21:11:12 ad Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.82 2007/05/23 17:32:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.83 2007/07/09 21:11:12 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -290,7 +290,7 @@ static int del_m6if __P((mifi_t *));
 static int add_m6fc __P((struct mf6cctl *));
 static int del_m6fc __P((struct mf6cctl *));
 
-static struct callout expire_upcalls_ch = CALLOUT_INITIALIZER;
+static callout_t expire_upcalls_ch;
 
 /*
  * Handle MRT setsockopt commands to modify the multicast routing tables.
@@ -475,7 +475,7 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
 
-	callout_init(&expire_upcalls_ch);
+	callout_init(&expire_upcalls_ch, 0);
 	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
 	    expire_upcalls, NULL);
 

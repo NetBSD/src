@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.10 2007/07/04 17:36:17 bouyer Exp $ */
+/*	$NetBSD: ipmi.c,v 1.11 2007/07/09 20:52:38 ad Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.10 2007/07/04 17:36:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.11 2007/07/09 20:52:38 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1622,19 +1622,6 @@ ipmi_poll_thread(void *arg)
 	kthread_exit(0);
 }
 
-void
-ipmi_create_thread(void *arg)
-{
-	struct ipmi_softc *sc = arg;
-
-	if (kthread_create1(ipmi_poll_thread, sc, &sc->sc_kthread,
-	    DEVNAME(sc)) != 0) {
-		printf("%s: unable to create polling thread, ipmi disabled\n",
-		    DEVNAME(sc));
-		return;
-	}
-}
-
 int
 ipmi_probe(struct ipmi_attach_args *ia)
 {
@@ -1767,9 +1754,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	if (!SLIST_EMPTY(&ipmi_sensor_list))
 		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
 
-	/* Setup threads */
-	kthread_create(ipmi_create_thread, sc);
-
 	aprint_normal(": version %d.%d interface %s %sbase 0x%x/%x spacing %d",
 	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,
 	    ia->iaa_if_iotype == 'i' ? "io" : "mem", ia->iaa_if_iobase,
@@ -1795,8 +1779,15 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 0;
 	sc->sc_max_retries = 50; /* 50 * 1/100 = 0.5 seconds max */
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, _bmc_io_wait, sc);
+
+	if (kthread_create(PRI_NONE, 0, NULL, ipmi_poll_thread, sc,
+	    &sc->sc_kthread, DEVNAME(sc)) != 0) {
+		printf("%s: unable to create polling thread, ipmi disabled\n",
+		    DEVNAME(sc));
+		return;
+	}
 }
 
 int

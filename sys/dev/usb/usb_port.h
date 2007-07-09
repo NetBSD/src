@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.75 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.76 2007/07/09 21:01:25 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -122,14 +122,15 @@ typedef struct device *device_ptr_t;
 	} usb_dma_t
 
 typedef struct callout usb_callout_t;
-#define usb_callout_init(h)	callout_init(&(h))
+#define usb_callout_init(h)	callout_init(&(h), 0)
+#define usb_callout_destroy(h)	callout_destroy((&h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
 
 #define usb_lockmgr lockmgr
 
-#define usb_kthread_create1	kthread_create1
-#define usb_kthread_create	kthread_create
+#define usb_kthread_create1		kthread_create
+#define usb_kthread_create(f, a)	((f)(a))
 
 typedef struct malloc_type *usb_malloc_type;
 

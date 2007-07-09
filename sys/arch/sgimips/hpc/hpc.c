@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.57 2007/02/22 01:04:18 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.58 2007/07/09 20:52:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.57 2007/02/22 01:04:18 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.58 2007/07/09 20:52:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ static int	hpc_submatch(struct device *, struct cfdata *,
 //static int	hpc_power_intr(void *);
 
 #if defined(BLINK)
-static struct callout hpc_blink_ch = CALLOUT_INITIALIZER;
+static callout_t hpc_blink_ch;
 static void	hpc_blink(void *);
 #endif
 
@@ -403,6 +403,10 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	int isonboard;
 	int isioplus;
 	int sysmask;
+
+#ifdef BLINK
+	callout_init(&hpc_blink_ch, 0);
+#endif
 
 	switch (mach_type) {
 	case MACH_SGI_IP12:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.40 2007/03/04 06:01:51 christos Exp $	*/
+/*	$NetBSD: cac.c,v 1.41 2007/07/09 21:00:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.40 2007/03/04 06:01:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.41 2007/07/09 21:00:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 {
 	struct cac_ccb *ccb;
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	timo *= 1000;
 
@@ -396,7 +396,7 @@ static int
 cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	if (ccb != NULL)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_queue, ccb, ccb_chain);
@@ -426,7 +426,7 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 
 	error = 0;
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 #ifdef DIAGNOSTIC
 	if ((ccb->ccb_flags & CAC_CCB_ACTIVE) == 0)
@@ -493,7 +493,7 @@ static void
 cac_ccb_free(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	ccb->ccb_flags = 0;
 	if (SIMPLEQ_EMPTY(&sc->sc_ccb_free))
@@ -509,7 +509,7 @@ static int
 cac_l0_fifo_full(struct cac_softc *sc)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	return (cac_inl(sc, CAC_REG_CMD_FIFO) == 0);
 }
@@ -518,7 +518,7 @@ static void
 cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    (char *)ccb - (char *)sc->sc_ccbs,
@@ -532,7 +532,7 @@ cac_l0_completed(struct cac_softc *sc)
 	struct cac_ccb *ccb;
 	paddr_t off;
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	if ((off = cac_inl(sc, CAC_REG_DONE_FIFO)) == 0)
 		return (NULL);
@@ -557,7 +557,7 @@ static int
 cac_l0_intr_pending(struct cac_softc *sc)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	return (cac_inl(sc, CAC_REG_INTR_PENDING) & CAC_INTR_ENABLE);
 }
@@ -566,7 +566,7 @@ static void
 cac_l0_intr_enable(struct cac_softc *sc, int state)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	cac_outl(sc, CAC_REG_INTR_MASK,
 	    state ? CAC_INTR_ENABLE : CAC_INTR_DISABLE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.15 2007/03/04 06:01:46 christos Exp $ */
+/*	$NetBSD: rd.c,v 1.16 2007/07/09 21:00:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.15 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.16 2007/07/09 21:00:32 ad Exp $");
 
 #include "rnd.h"
 
@@ -451,7 +451,7 @@ rdattach(parent, self, aux)
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	disk_attach(&sc->sc_dk);
 
-	callout_init(&sc->sc_restart_ch);
+	callout_init(&sc->sc_restart_ch, 0);
 
 	if (gpibregister(sc->sc_ic, sc->sc_slave, rdcallback, sc,
 	    &sc->sc_hdl)) {

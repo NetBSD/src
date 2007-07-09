@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.36 2007/06/24 19:07:00 christos Exp $ */
+/* $NetBSD: pckbc.c,v 1.37 2007/07/09 21:00:38 ad Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.36 2007/06/24 19:07:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.37 2007/07/09 21:00:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	pckbc_consdata.t_ioh_d = ioh_d;
 	pckbc_consdata.t_ioh_c = ioh_c;
 	pckbc_consdata.t_addr = addr;
-	callout_init(&pckbc_consdata.t_cleanup);
+	callout_init(&pckbc_consdata.t_cleanup, 0);
 
 	/* flush */
 	(void) pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.25 2007/03/11 08:09:25 isaki Exp $ */
+/*	$NetBSD: ms.c,v 1.26 2007/07/09 20:52:35 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.25 2007/03/11 08:09:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.26 2007/07/09 20:52:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -185,7 +185,7 @@ ms_attach(struct device *parent, struct device *self, void *aux)
 	struct cfdata *cf;
 	int reset, s;
 
-	callout_init(&ms->ms_modem_ch);
+	callout_init(&ms->ms_modem_ch, 0);
 
 	cf = device_cfdata(&ms->ms_dev);
 	cs = zsc->zsc_cs[1];

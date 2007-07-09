@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.9 2007/05/17 14:51:41 yamt Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.10 2007/07/09 21:10:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.9 2007/05/17 14:51:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.10 2007/07/09 21:10:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -139,7 +139,7 @@ turnstile_ctor(void *arg, void *obj, int flags)
  *	Remove an LWP from a turnstile sleep queue and wake it.
  */
 static inline void
-turnstile_remove(turnstile_t *ts, struct lwp *l, sleepq_t *sq)
+turnstile_remove(turnstile_t *ts, lwp_t *l, sleepq_t *sq)
 {
 	turnstile_t *nts;
 
@@ -215,9 +215,9 @@ turnstile_exit(wchan_t obj)
 void
 turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 {
-	struct lwp *l;
-	struct lwp *cur; /* cached curlwp */
-	struct lwp *owner;
+	lwp_t *l;
+	lwp_t *cur; /* cached curlwp */
+	lwp_t *owner;
 	turnstile_t *ots;
 	tschain_t *tc;
 	sleepq_t *sq;
@@ -336,11 +336,11 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
  *	in a turnstile.
  */
 void
-turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
+turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 {
 	sleepq_t *sq;
 	tschain_t *tc;
-	struct lwp *l;
+	lwp_t *l;
 
 	tc = &turnstile_tab[TS_HASH(ts->ts_obj)];
 	sq = &ts->ts_sleepq[q];
@@ -432,7 +432,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
  *	since LWPs blocking on a turnstile are not interruptable.
  */
 void
-turnstile_unsleep(struct lwp *l)
+turnstile_unsleep(lwp_t *l)
 {
 
 	lwp_unlock(l);
@@ -445,7 +445,7 @@ turnstile_unsleep(struct lwp *l)
  *	Adjust the priority of an LWP residing on a turnstile.
  */
 void
-turnstile_changepri(struct lwp *l, pri_t pri)
+turnstile_changepri(lwp_t *l, pri_t pri)
 {
 
 	/* XXX priority inheritance */
@@ -465,7 +465,7 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 	turnstile_t *ts;
 	tschain_t *tc;
 	sleepq_t *rsq, *wsq;
-	struct lwp *l;
+	lwp_t *l;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
 

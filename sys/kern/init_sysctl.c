@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.102 2007/06/30 13:32:14 dsl Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.103 2007/07/09 21:10:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.102 2007/06/30 13:32:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.103 2007/07/09 21:10:50 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -134,7 +134,6 @@ static const u_int sysctl_stflagmap[] = {
 
 static const u_int sysctl_lwpflagmap[] = {
 	LW_INMEM, P_INMEM,
-	LW_SELECT, P_SELECT,
 	LW_SINTR, P_SINTR,
 	LW_SYSTEM, P_SYSTEM,
 	0

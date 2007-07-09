@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.11 2006/03/08 23:46:22 lukem Exp $ */
+/* $NetBSD: sbic.c,v 1.12 2007/07/09 20:51:59 ad Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -114,7 +114,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.11 2006/03/08 23:46:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.12 2007/07/09 20:51:59 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -731,7 +731,7 @@ sbicinit(struct sbic_softc *dev)
 		TAILQ_INIT(&dev->ready_list);
 		TAILQ_INIT(&dev->nexus_list);
 		TAILQ_INIT(&dev->free_list);
-		callout_init(&dev->sc_timo_ch);
+		callout_init(&dev->sc_timo_ch, 0);
 		dev->sc_nexus = NULL;
 		acb = dev->sc_acb;
 		memset(acb, 0, sizeof(dev->sc_acb));

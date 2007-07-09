@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.22 2007/03/04 06:03:30 christos Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.23 2007/07/09 21:11:14 ad Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.22 2007/03/04 06:03:30 christos Exp $
+ *	$Id: i4b_l2.c,v 1.23 2007/07/09 21:11:14 ad Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.22 2007/03/04 06:03:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.23 2007/07/09 21:11:14 ad Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -234,10 +234,10 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 			i4b_l2_unit_init(l2sc);
 
 			/* initialize the callout handles for timeout routines */
-			callout_init(&l2sc->T200_callout);
-			callout_init(&l2sc->T202_callout);
-			callout_init(&l2sc->T203_callout);
-			callout_init(&l2sc->IFQU_callout);
+			callout_init(&l2sc->T200_callout, 0);
+			callout_init(&l2sc->T202_callout, 0);
+			callout_init(&l2sc->T203_callout, 0);
+			callout_init(&l2sc->IFQU_callout, 0);
 
 			break;
 

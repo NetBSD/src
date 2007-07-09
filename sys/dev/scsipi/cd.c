@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.264 2007/06/30 22:16:38 dsl Exp $	*/
+/*	$NetBSD: cd.c,v 1.265 2007/07/09 21:01:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.264 2007/06/30 22:16:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.265 2007/07/09 21:01:21 ad Exp $");
 
 #include "rnd.h"
 
@@ -250,7 +250,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	bufq_alloc(&cd->buf_queue, "disksort", BUFQ_SORT_RAWBLOCK);
 
-	callout_init(&cd->sc_callout);
+	callout_init(&cd->sc_callout, 0);
 
 	/*
 	 * Store information needed to contact our base driver

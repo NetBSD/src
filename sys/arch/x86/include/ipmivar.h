@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.3 2007/07/01 07:37:13 xtraeme Exp $ */
+/* $NetBSD: ipmivar.h,v 1.4 2007/07/09 20:52:37 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -89,7 +89,7 @@ struct ipmi_softc {
 
 	int			sc_btseq;
 
-	struct proc		*sc_kthread;
+	struct lwp		*sc_kthread;
 
 	struct callout		sc_callout;
 	int			sc_max_retries;
@@ -152,7 +152,6 @@ struct ipmi_get_watchdog {
 	u_int16_t		wdog_countdown;
 } __packed;
 
-void	ipmi_create_thread(void *);
 void	ipmi_poll_thread(void *);
 
 int	kcs_probe(struct ipmi_softc *);

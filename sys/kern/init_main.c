@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.306 2007/07/09 10:05:26 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.306 2007/07/09 10:05:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -124,6 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.306 2007/07/09 10:05:26 ad Exp $");
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
 #include <sys/vmem.h>
+#include <sys/uuid.h>
+#include <sys/extent.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -274,10 +276,13 @@ main(void)
 
 	kmem_init();
 
+	/* Initialize the extent manager. */
+	extent_init();
+
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
-	/* Initialize callouts. */
+	/* Initialize callouts, part 1. */
 	callout_startup();
 
 	/*
@@ -321,9 +326,10 @@ main(void)
 	/* Create process 0 (the swapper). */
 	proc0_init();
 
-	/*
-	 * Charge root for one process.
-	 */
+	/* Initialize the UID hash table. */
+	uid_init();
+
+	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
@@ -334,6 +340,9 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
+
+	/* Initialize callouts, part 2. */
+	callout_startup2();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -357,6 +366,9 @@ main(void)
 	/* Initialize fstrans. */
 	fstrans_init();
 
+	/* Initialize the select()/poll() system calls. */
+	selsysinit();
+
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
 
@@ -370,6 +382,9 @@ main(void)
 	inittimecounter();
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
+
+	/* Initialize the device switch tables. */
+	devsw_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
@@ -470,12 +485,15 @@ main(void)
 #endif
 
 	/* Setup the scheduler */
-	sched_setup();
+	sched_init();
 
 #ifdef KTRACE
 	/* Initialize ktrace. */
 	ktrinit();
 #endif
+
+	/* Initialize the UUID system calls. */
+	uuid_init();
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
@@ -488,12 +506,6 @@ main(void)
 	 */
 	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
 		panic("fork init");
-
-	/*
-	 * Create any kernel threads who's creation was deferred because
-	 * initproc had not yet been created.
-	 */
-	kthread_run_deferred_queue();
 
 	/*
 	 * Now that device driver threads have been created, wait for
@@ -589,11 +601,12 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create1(uvm_pageout, NULL, NULL, "pagedaemon"))
+	if (kthread_create(PVM, 0, NULL, uvm_pageout,
+	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PINOD, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */

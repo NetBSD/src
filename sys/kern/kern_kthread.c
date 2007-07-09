@@ -1,12 +1,12 @@
-/*	$NetBSD: kern_kthread.c,v 1.16 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.17 2007/07/09 21:10:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,16 +38,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.17 2007/07/09 21:10:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
-#include <sys/wait.h>
-#include <sys/malloc.h>
-#include <sys/queue.h>
+#include <sys/sched.h>
+#include <sys/kmem.h>
+
+#include <uvm/uvm_extern.h>
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
@@ -56,35 +57,90 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16 2007/02/09 21:55:30 ad Exp $")
  */
 #include <machine/stdarg.h>
 
-int	kthread_create_now;
-
 /*
  * Fork a kernel thread.  Any process can request this to be done.
- * The VM space and limits, etc. will be shared with proc0.
  */
 int
-kthread_create1(void (*func)(void *), void *arg,
-    struct proc **newpp, const char *fmt, ...)
+kthread_create(pri_t pri, int flag, struct cpu_info *ci,
+	       void (*func)(void *), void *arg,
+	       lwp_t **lp, const char *fmt, ...)
 {
-	struct proc *p2;
+	lwp_t *l;
+	vaddr_t uaddr;
+	bool inmem;
 	int error;
 	va_list ap;
 
-	/* First, create the new process. */
-	error = fork1(&lwp0, FORK_SHAREVM | FORK_SHARECWD | FORK_SHAREFILES |
-	    FORK_SHARESIGS | FORK_SYSTEM, SIGCHLD, NULL, 0, func, arg, NULL,
-	    &p2);
-	if (__predict_false(error != 0))
-		return (error);
+	inmem = uvm_uarea_alloc(&uaddr);
+	if (uaddr == 0)
+		return ENOMEM;
+	error = newlwp(&lwp0, &proc0, uaddr, inmem, LWP_DETACHED, NULL, 0,
+	    func, arg, &l);
+	if (error) {
+		uvm_uarea_free(uaddr);
+		return error;
+	}
+	uvm_lwp_hold(l);
+	if (fmt != NULL) {
+		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);
+		if (l->l_name == NULL) {
+			lwp_exit(l);
+			return ENOMEM;
+		}
+		va_start(ap, fmt);
+		vsnprintf(l->l_name, MAXCOMLEN, fmt, ap);
+		va_end(ap);
+	}
 
-	/* Name it as specified. */
-	va_start(ap, fmt);
-	vsnprintf(p2->p_comm, MAXCOMLEN, fmt, ap);
-	va_end(ap);
+	/*
+	 * Set parameters.
+	 */
+	if ((flag & KTHREAD_INTR) != 0) {
+		KASSERT((flag & KTHREAD_MPSAFE) != 0);
+	}
+
+	mutex_enter(&proc0.p_smutex);
+	lwp_lock(l);
+	if (pri == PRI_NONE) {
+		/* Minimum kernel priority level. */
+		pri = PUSER - 1;
+	}
+	l->l_usrpri = pri;
+	l->l_priority = pri;
+	if (ci != NULL) {
+		if (ci != l->l_cpu) {
+			lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
+			lwp_lock(l);
+		}
+		l->l_flag |= LW_BOUND;
+		l->l_cpu = ci;
+	}
+	if ((flag & KTHREAD_INTR) != 0)
+		l->l_flag |= LW_INTR;
+	if ((flag & KTHREAD_MPSAFE) != 0)
+		l->l_pflag |= LP_MPSAFE;
+
+	/*
+	 * Set the new LWP running, unless the caller has requested
+	 * otherwise.
+	 */
+	if ((flag & KTHREAD_IDLE) == 0) {
+		l->l_stat = LSRUN;
+		sched_enqueue(l, false);
+	}
+
+	/*
+	 * The LWP is not created suspended or stopped and cannot be set
+	 * into those states later, so must be considered runnable.
+	 */
+	proc0.p_nrlwps++;
+	lwp_unlock(l);
+	mutex_exit(&proc0.p_smutex);
 
 	/* All done! */
-	if (newpp != NULL)
-		*newpp = p2;
+	if (lp != NULL)
+		*lp = l;
+
 	return (0);
 }
 
@@ -95,73 +151,33 @@ kthread_create1(void (*func)(void *), void *arg,
 void
 kthread_exit(int ecode)
 {
-	struct proc *p = curproc;
+	lwp_t *l = curlwp;
 
-	/*
-	 * XXX What do we do with the exit code?  Should we even bother
-	 * XXX with it?  The parent (proc0) isn't going to do much with
-	 * XXX it.
-	 */
+	/* We can't do much with the exit code, so just report it. */
 	if (ecode != 0)
-		printf("WARNING: thread `%s' (%d) exits with status %d\n",
-		    p->p_comm, p->p_pid, ecode);
+		printf("WARNING: kthread `%s' (%d) exits with status %d\n",
+		    l->l_name, l->l_lid, ecode);
 
-	/* Acquire the sched state mutex.  exit1() will release it. */
-	mutex_enter(&p->p_smutex);
-	exit1(curlwp, W_EXITCODE(ecode, 0));
+	/* And exit.. */
+	lwp_exit(l);
 
 	/*
 	 * XXX Fool the compiler.  Making exit1() __noreturn__ is a can
 	 * XXX of worms right now.
 	 */
-	for (;;);
+	for (;;)
+		;
 }
-
-struct kthread_q {
-	SIMPLEQ_ENTRY(kthread_q) kq_q;
-	void (*kq_func)(void *);
-	void *kq_arg;
-};
-
-SIMPLEQ_HEAD(, kthread_q) kthread_q = SIMPLEQ_HEAD_INITIALIZER(kthread_q);
 
 /*
- * Defer the creation of a kernel thread.  Once the standard kernel threads
- * and processes have been created, this queue will be run to callback to
- * the caller to create threads for e.g. file systems and device drivers.
+ * Destroy an inactive kthread.  The kthread must be in the LSIDL state.
  */
 void
-kthread_create(void (*func)(void *), void *arg)
+kthread_destroy(lwp_t *l)
 {
-	struct kthread_q *kq;
 
-	if (kthread_create_now) {
-		(*func)(arg);
-		return;
-	}
+	KASSERT((l->l_flag & LW_SYSTEM) != 0);
+	KASSERT(l->l_stat == LSIDL);
 
-	kq = malloc(sizeof(*kq), M_TEMP, M_NOWAIT);
-	if (kq == NULL)
-		panic("unable to allocate kthread_q");
-	memset(kq, 0, sizeof(*kq));
-
-	kq->kq_func = func;
-	kq->kq_arg = arg;
-
-	SIMPLEQ_INSERT_TAIL(&kthread_q, kq, kq_q);
-}
-
-void
-kthread_run_deferred_queue(void)
-{
-	struct kthread_q *kq;
-
-	/* No longer need to defer kthread creation. */
-	kthread_create_now = 1;
-
-	while ((kq = SIMPLEQ_FIRST(&kthread_q)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&kthread_q, kq_q);
-		(*kq->kq_func)(kq->kq_arg);
-		free(kq, M_TEMP);
-	}
+	lwp_exit(l);
 }

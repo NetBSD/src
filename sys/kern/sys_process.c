@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.125 2007/04/19 22:42:10 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.126 2007/07/09 21:10:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.125 2007/04/19 22:42:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.126 2007/07/09 21:10:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,12 +525,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			break;
 		}
 
-		PHOLD(lt);
+		uvm_lwp_hold(lt);
 
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
 			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0) {
-				PRELE(lt);
+				uvm_lwp_rele(lt);
 				break;
 			}
 
@@ -540,12 +540,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 */
 		error = process_sstep(lt, req == PT_STEP);
 		if (error) {
-			PRELE(lt);
+			uvm_lwp_rele(lt);
 			break;
 		}
 #endif
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		if (req == PT_DETACH) {
 			mutex_enter(&t->p_smutex);
@@ -777,7 +777,7 @@ process_doregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	error = process_read_regs(l, &r);
 	if (error == 0)
@@ -789,7 +789,7 @@ process_doregs(struct lwp *curl /*tracer*/,
 			error = process_write_regs(l, &r);
 	}
 
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -831,7 +831,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	error = process_read_fpregs(l, &r);
 	if (error == 0)
@@ -843,7 +843,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 			error = process_write_fpregs(l, &r);
 	}
 
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);

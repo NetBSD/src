@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.9 2005/12/11 12:21:20 christos Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.10 2007/07/09 21:00:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.9 2005/12/11 12:21:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.10 2007/07/09 21:00:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -723,23 +723,6 @@ const struct dmover_algdesc swdmover_algdescs[] = {
 	(sizeof(swdmover_algdescs) / sizeof(swdmover_algdescs[0]))
 
 /*
- * swdmover_create_thread:
- *
- *	Actually create the swdmover processing thread.
- */
-static void
-swdmover_create_thread(void *arg)
-{
-	int error;
-
-	error = kthread_create1(swdmover_thread, arg, &swdmover_proc,
-	    "swdmover");
-	if (error)
-		printf("WARNING: unable to create swdmover thread, "
-		    "error = %d\n", error);
-}
-
-/*
  * swdmoverattach:
  *
  *	Pesudo-device attach routine.
@@ -747,6 +730,7 @@ swdmover_create_thread(void *arg)
 void
 swdmoverattach(int count)
 {
+	int error;
 
 	swdmover_backend.dmb_name = "swdmover";
 	swdmover_backend.dmb_speed = 1;		/* XXX */
@@ -755,7 +739,11 @@ swdmoverattach(int count)
 	swdmover_backend.dmb_nalgdescs = SWDMOVER_ALGDESC_COUNT;
 	swdmover_backend.dmb_process = swdmover_process;
 
-	kthread_create(swdmover_create_thread, &swdmover_backend);
+	error = kthread_create(PRI_NONE, 0, NULL, swdmover_thread,
+	    arg, &swdmover_proc, "swdmover");
+	if (error)
+		printf("WARNING: unable to create swdmover thread, "
+		    "error = %d\n", error);
 
 	/* XXX Should only register this when kthread creation succeeds. */
 	dmover_backend_register(&swdmover_backend);

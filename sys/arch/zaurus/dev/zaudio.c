@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.3 2007/02/22 06:47:16 thorpej Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.4 2007/07/09 20:52:41 ad Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_unmute[ZAUDIO_OP_HP] = 0;
 
 	/* Configure headphone jack state change handling. */
-	callout_init(&sc->sc_to);
+	callout_init(&sc->sc_to, 0);
 	callout_setfunc(&sc->sc_to, zaudio_jack, sc);
 	pxa2x0_gpio_set_function(GPIO_HP_IN_C3000, GPIO_IN);
 	(void)pxa2x0_gpio_intr_establish(GPIO_HP_IN_C3000,

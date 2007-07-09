@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.88 2007/05/29 18:38:20 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.89 2007/07/09 21:00:39 ad Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.88 2007/05/29 18:38:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.89 2007/07/09 21:00:39 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -2898,8 +2898,8 @@ rtw_led_slowblink(void *arg)
 static inline void
 rtw_led_attach(struct rtw_led_state *ls, void *arg)
 {
-	callout_init(&ls->ls_fast_ch);
-	callout_init(&ls->ls_slow_ch);
+	callout_init(&ls->ls_fast_ch, 0);
+	callout_init(&ls->ls_slow_ch, 0);
 	callout_setfunc(&ls->ls_fast_ch, rtw_led_fastblink, arg);
 	callout_setfunc(&ls->ls_slow_ch, rtw_led_slowblink, arg);
 }
@@ -4169,7 +4169,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	/* complete initialization */
 	ieee80211_media_init(&sc->sc_ic, rtw_media_change, rtw_media_status);
-	callout_init(&sc->sc_scan_ch);
+	callout_init(&sc->sc_scan_ch, 0);
 
 	rtw_init_radiotap(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.21 2007/06/30 09:37:57 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.22 2007/07/09 21:10:50 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.21 2007/06/30 09:37:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.22 2007/07/09 21:10:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.21 2007/06/30 09:37:57 pooka Exp 
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #include <fs/tmpfs/tmpfs.h>
 

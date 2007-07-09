@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.55 2007/03/04 13:59:47 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.56 2007/07/09 20:52:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.55 2007/03/04 13:59:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2007/07/09 20:52:33 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -405,8 +405,8 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 	fdc->sc_reg = (void *)bus_mapin(ca->ca_bustype, ca->ca_paddr,
 		sizeof(union fdreg));
 
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	fdc->sc_state = DEVIDLE;
 	fdc->sc_istate = ISTATE_IDLE;
@@ -541,8 +541,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 

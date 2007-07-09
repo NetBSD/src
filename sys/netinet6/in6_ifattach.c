@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.71 2007/05/23 17:15:01 christos Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.72 2007/07/09 21:11:12 ad Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.71 2007/05/23 17:15:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.72 2007/07/09 21:11:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ unsigned long in6_maxmtu = 0;
 
 int ip6_auto_linklocal = 1;	/* enable by default */
 
-struct callout in6_tmpaddrtimer_ch = CALLOUT_INITIALIZER;
+callout_t in6_tmpaddrtimer_ch;
 
 
 #if 0

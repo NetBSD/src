@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.28 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.29 2007/07/09 21:11:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -57,6 +57,8 @@ struct mfs_args {
 #include "opt_ffs.h"
 #endif
 
+#include <sys/mutex.h>
+
 #include <ufs/ufs/extattr.h>
 
 struct buf;
@@ -92,6 +94,7 @@ struct ufsmount {
 	u_long	um_lognindir;			/* log2 of um_nindir */
 	u_long	um_bptrtodb;			/* indir ptr to disk block */
 	u_long	um_seqinc;			/* inc between seq blocks */
+	kmutex_t um_lock;			/* lock on global data */
 	time_t	um_btime[MAXQUOTAS];		/* block quota time limit */
 	time_t	um_itime[MAXQUOTAS];		/* inode quota time limit */
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */

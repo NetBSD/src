@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.20 2006/11/16 01:33:00 christos Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.21 2007/07/09 21:00:50 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.20 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.21 2007/07/09 21:00:50 ad Exp $");
 
 #include "opt_pckbc.h"
 
@@ -196,7 +196,7 @@ pckbc_isa_attach(struct device *parent, struct device *self, void *aux)
 		t->t_ioh_c = ioh_c;
 		t->t_addr = IO_KBD;
 		t->t_cmdbyte = KC8_CPU; /* Enable ports */
-		callout_init(&t->t_cleanup);
+		callout_init(&t->t_cleanup, 0);
 	}
 
 	t->t_sc = sc;

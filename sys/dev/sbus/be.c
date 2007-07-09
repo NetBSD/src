@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.52 2007/03/04 07:54:11 christos Exp $	*/
+/*	$NetBSD: be.c,v 1.53 2007/07/09 21:01:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.52 2007/03/04 07:54:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.53 2007/07/09 21:01:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -369,7 +369,7 @@ beattach(parent, self, aux)
 
 	ifmedia_init(&mii->mii_media, 0, be_ifmedia_upd, be_ifmedia_sts);
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	/*
 	 * Initialize transceiver and determine which PHY connection to use.

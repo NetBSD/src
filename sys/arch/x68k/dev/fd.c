@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.75 2007/05/20 10:52:40 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.76 2007/07/09 20:52:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.75 2007/05/20 10:52:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.76 2007/07/09 20:52:35 ad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -420,8 +420,8 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	/* Re-map the I/O space. */
 	bus_space_map(iot, ia->ia_addr, 0x2000, BUS_SPACE_MAP_SHIFTED, &ioh);
@@ -572,8 +572,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	struct fd_type *type = &fd_types[0];	/* XXX 1.2MB */
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	fd->sc_flags = 0;
 

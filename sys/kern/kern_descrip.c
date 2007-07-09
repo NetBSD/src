@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.158 2007/05/12 23:02:50 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.159 2007/07/09 21:10:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.158 2007/05/12 23:02:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.159 2007/07/09 21:10:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1072,7 +1072,7 @@ cwdinit(struct proc *p)
 
 	cwdi = pool_get(&cwdi_pool, PR_WAITOK);
 
-	simple_lock_init(&cwdi->cwdi_slock);
+	rw_init(&cwdi->cwdi_lock);
 	cwdi->cwdi_cdir = p->p_cwdi->cwdi_cdir;
 	if (cwdi->cwdi_cdir)
 		VREF(cwdi->cwdi_cdir);
@@ -1096,9 +1096,9 @@ cwdshare(struct proc *p1, struct proc *p2)
 {
 	struct cwdinfo *cwdi = p1->p_cwdi;
 
-	simple_lock(&cwdi->cwdi_slock);
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	cwdi->cwdi_refcnt++;
-	simple_unlock(&cwdi->cwdi_slock);
+	rw_exit(&cwdi->cwdi_lock);
 	p2->p_cwdi = cwdi;
 }
 
@@ -1128,9 +1128,9 @@ cwdfree(struct cwdinfo *cwdi)
 {
 	int n;
 
-	simple_lock(&cwdi->cwdi_slock);
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	n = --cwdi->cwdi_refcnt;
-	simple_unlock(&cwdi->cwdi_slock);
+	rw_exit(&cwdi->cwdi_lock);
 	if (n > 0)
 		return;
 
@@ -1139,6 +1139,7 @@ cwdfree(struct cwdinfo *cwdi)
 		vrele(cwdi->cwdi_rdir);
 	if (cwdi->cwdi_edir)
 		vrele(cwdi->cwdi_edir);
+	rw_destroy(&cwdi->cwdi_lock);
 	pool_put(&cwdi_pool, cwdi);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.34 2007/02/04 23:39:02 dyoung Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.35 2007/07/09 21:00:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.34 2007/02/04 23:39:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.35 2007/07/09 21:00:31 ad Exp $");
 
 #include "opt_cardslot.h"
 
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.34 2007/02/04 23:39:02 dyoung Exp $")
 STATIC void cardslotattach(struct device *, struct device *, void *);
 
 STATIC int cardslotmatch(struct device *, struct cfdata *, void *);
-static void create_slot_manager(void *);
 static void cardslot_event_thread(void *arg);
 
 STATIC int cardslot_cb_print(void *aux, const char *pcic);
@@ -146,7 +145,13 @@ cardslotattach(struct device *parent, struct device *self,
 
 	if (csc != NULL || psc != NULL) {
 		config_pending_incr();
-		kthread_create(create_slot_manager, (void *)sc);
+		if (kthread_create(PRI_NONE, 0, NULL, cardslot_event_thread,
+		    sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname)) {
+			printf("%s: unable to create thread for slot %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_slot);
+			panic("cardslotattach");
+		}
+		sc->sc_th_enable = 1;
 	}
 
 	if (csc && (csc->sc_cf->cardbus_ctrl)(csc->sc_cc, CARDBUS_CD)) {
@@ -207,26 +212,6 @@ cardslot_16_print(void *arg, const char *pnp)
 
 	return UNCONF;
 }
-
-
-
-
-static void
-create_slot_manager(void *arg)
-{
-	struct cardslot_softc *sc = (struct cardslot_softc *)arg;
-
-	sc->sc_th_enable = 1;
-
-	if (kthread_create1(cardslot_event_thread, sc, &sc->sc_event_thread,
-	    "%s", sc->sc_dev.dv_xname)) {
-		printf("%s: unable to create event thread for slot %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_slot);
-		panic("create_slot_manager");
-	}
-}
-
-
 
 
 /*

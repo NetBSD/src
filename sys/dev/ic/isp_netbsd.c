@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.74 2007/05/24 21:30:43 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.75 2007/07/09 21:00:36 ad Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.74 2007/05/24 21:30:43 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.75 2007/07/09 21:00:36 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -72,7 +72,6 @@ static void isp_gdt(void *);
 static void isp_ldt(void *);
 static void isp_make_here(ispsoftc_t *, int);
 static void isp_make_gone(ispsoftc_t *, int);
-static void isp_create_fc_worker(void *);
 static void isp_fc_worker(void *);
 
 static const char *roles[4] = {
@@ -120,16 +119,15 @@ isp_attach(struct ispsoftc *isp)
 	 */
 	isp->isp_osinfo._chan.chan_nluns = min(isp->isp_maxluns, 8);
 
-	callout_init(&isp->isp_osinfo.gdt);
+	callout_init(&isp->isp_osinfo.gdt, 0);
 	callout_setfunc(&isp->isp_osinfo.gdt, isp_gdt, isp);
 
-	callout_init(&isp->isp_osinfo.ldt);
+	callout_init(&isp->isp_osinfo.ldt, 0);
 	callout_setfunc(&isp->isp_osinfo.ldt, isp_ldt, isp);
 
 	if (IS_FC(isp)) {
 		isp->isp_osinfo._chan.chan_ntargets = MAX_FC_TARG;
 		isp->isp_osinfo._chan.chan_id = MAX_FC_TARG;
-		kthread_create(isp_create_fc_worker, isp);
 #ifdef	ISP_FW_CRASH_DUMP
 		if (IS_2200(isp)) {
 			FCPARAM(isp)->isp_dump_data =
@@ -186,7 +184,15 @@ static void
 isp_config_interrupts(struct device *self)
 {
         struct ispsoftc *isp = (struct ispsoftc *) self;
-	isp->isp_osinfo.mbox_sleep_ok = 1;
+
+        isp->isp_osinfo.mbox_sleep_ok = 1;
+
+	if (kthread_create(PRI_NONE, 0, NULL, isp_fc_worker, isp,
+	    &isp->isp_osinfo.thread, "%s:fc_thrd", isp->isp_name)) {
+		isp_prt(isp, ISP_LOGERR,
+		    "unable to create FC worker thread");
+		panic("isp_config_interrupts");
+	}
 }
 
 
@@ -877,22 +883,6 @@ isp_make_gone(ispsoftc_t *isp, int tgt)
 {
 	isp_prt(isp, ISP_LOGINFO, "target %d has departed", tgt);
 }
-
-/*
- * Fibre Channel state cleanup thread
- */
-static void
-isp_create_fc_worker(void *arg)
-{
-	struct ispsoftc *isp = arg;
-	if (kthread_create1(isp_fc_worker, isp, &isp->isp_osinfo.thread,
-	    "%s:fc_thrd", isp->isp_name)) {
-		isp_prt(isp, ISP_LOGERR, "unable to create FC worker thread");
-		panic("isp_create_fc_worker");
-	}
-
-}
-
 
 static void
 isp_fc_worker(void *arg)
