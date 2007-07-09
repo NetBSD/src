@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.92 2007/07/09 21:11:34 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.93 2007/07/09 22:02:00 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.92 2007/07/09 21:11:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.93 2007/07/09 22:02:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -115,11 +115,7 @@ const char *softdep_typenames[] = {
 };
 #define TYPENAME(type) \
 	((unsigned)(type) <= D_LAST ? softdep_typenames[type] : "???")
-/*
- * Finding the current process.
- */
-#define CURPROC curproc
-#define CURPROC_PID (curproc ? curproc->p_pid : 0)
+
 /*
  * End system adaptation definitions.
  */
@@ -251,7 +247,7 @@ static struct lockit {
 #else /* DEBUG */
 static struct lockit {
 	int	lkt_spl;
-	volatile pid_t	lkt_held;
+	lwp_t	*lkt_held;
 } lk = { 0, -1 };
 static int lockcnt;
 
@@ -270,13 +266,13 @@ acquire_lock(lkp)
 	struct lockit *lkp;
 {
 	if (lkp->lkt_held != -1) {
-		if (lkp->lkt_held == CURPROC_PID)
+		if (lkp->lkt_held == curlwp)
 			panic("softdep_lock: locking against myself");
 		else
-			panic("softdep_lock: lock held by %d", lkp->lkt_held);
+			panic("softdep_lock: lock held by %p", lkp->lkt_held);
 	}
 	lkp->lkt_spl = splbio();
-	lkp->lkt_held = CURPROC_PID;
+	lkp->lkt_held = curlwp;
 	lockcnt++;
 }
 
@@ -285,9 +281,9 @@ free_lock(lkp)
 	struct lockit *lkp;
 {
 
-	if (lkp->lkt_held == -1)
+	if (lkp->lkt_held == NULL)
 		panic("softdep_unlock: lock not held");
-	lkp->lkt_held = -1;
+	lkp->lkt_held = NULL;
 	splx(lkp->lkt_spl);
 }
 
@@ -296,15 +292,15 @@ acquire_lock_interlocked(lkp, s)
 	struct lockit *lkp;
 	int s;
 {
-	if (lkp->lkt_held != -1) {
-		if (lkp->lkt_held == CURPROC_PID)
+	if (lkp->lkt_held != NULL) {
+		if (lkp->lkt_held == curlwp)
 			panic("softdep_lock_interlocked: locking against self");
 		else
-			panic("softdep_lock_interlocked: lock held by %d",
+			panic("softdep_lock_interlocked: lock held by %p",
 			    lkp->lkt_held);
 	}
 	lkp->lkt_spl = s;
-	lkp->lkt_held = CURPROC_PID;
+	lkp->lkt_held = curlwp;
 	lockcnt++;
 }
 
@@ -323,9 +319,9 @@ free_lock_interlocked(lkp)
  * Place holder for real semaphores.
  */
 struct sema {
-	int	value;
-	pid_t	holder;
+	lwp_t	*holder;
 	const char *name;
+	int	value;
 	int	prio;
 	int	timo;
 };
@@ -340,7 +336,7 @@ sema_init(semap, name, prio, timo)
 	int prio, timo;
 {
 
-	semap->holder = -1;
+	semap->holder = NULL;
 	semap->value = 0;
 	semap->name = name;
 	semap->prio = prio;
@@ -364,7 +360,7 @@ sema_get(semap, interlock)
 		}
 		return (0);
 	}
-	semap->holder = CURPROC_PID;
+	semap->holder = curlwp;
 	if (interlock != NULL)
 		FREE_LOCK(interlock);
 	return (1);
@@ -375,13 +371,13 @@ sema_release(semap)
 	struct sema *semap;
 {
 
-	if (semap->value <= 0 || semap->holder != CURPROC_PID)
+	if (semap->value <= 0 || semap->holder != curlwp)
 		panic("sema_release: not held");
 	if (--semap->value > 0) {
 		semap->value = 0;
 		wakeup(semap);
 	}
-	semap->holder = -1;
+	semap->holder = NULL;
 }
 
 /*
@@ -630,8 +626,8 @@ static int softdep_worklist_req; /* serialized waiters */
 static int max_softdeps;	/* maximum number of structs before slowdown */
 static int tickdelay = 2;	/* number of ticks to pause during slowdown */
 static int proc_waiting;	/* tracks whether we have a timeout posted */
-static struct callout pause_timer_ch;
-static struct proc *filesys_syncer; /* proc of filesystem syncer process */
+static callout_t pause_timer_ch;
+static lwp_t *filesys_syncer;	/* filesystem syncer thread */
 static int req_clear_inodedeps;	/* syncer process flush some inodedeps */
 #define FLUSH_INODES	1
 static int req_clear_remove;	/* syncer process flush some freeblks */
@@ -715,7 +711,7 @@ softdep_process_worklist(matchmnt)
 	 * Record the process identifier of our caller so that we can give
 	 * this process preferential treatment in request_cleanup below.
 	 */
-	filesys_syncer = l->l_proc;
+	filesys_syncer = l;
 	matchcnt = 0;
 	/*
 	 * There is no danger of having multiple processes run this
@@ -5390,13 +5386,13 @@ request_cleanup(resource, islocked)
 	int resource;
 	int islocked;
 {
-	struct proc *p = CURPROC;
+	lwp_t *l = curlwp;
 	int s;
 
 	/*
 	 * We never hold up the filesystem syncer process.
 	 */
-	if (p == filesys_syncer)
+	if (l == filesys_syncer)
 		return (0);
 	/*
 	 * If we are resource constrained on inode dependencies, try
