@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.189 2007/07/09 21:11:30 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.190 2007/07/09 21:29:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.189 2007/07/09 21:11:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.190 2007/07/09 21:29:09 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1491,9 +1491,6 @@ nfs_invaldircache(vp, flags)
 static int
 nfs_init0(void)
 {
-	extern krwlock_t netexport_lock;	/* XXX */
-
-	rw_init(&netexport_lock);
 
 	nfsrtt.pos = 0;
 	rpc_vers = txdr_unsigned(RPC_VER2);
@@ -1515,6 +1512,10 @@ nfs_init0(void)
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
+	{
+		extern krwlock_t netexport_lock;	/* XXX */
+		rw_init(&netexport_lock);
+	}
 #endif /* NFSSERVER */
 
 #if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))
