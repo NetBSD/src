@@ -1,6 +1,6 @@
 #!@BSHELL@ -
 #
-#	$NetBSD: host-mkdep.in,v 1.16 2005/09/01 21:51:11 jwise Exp $
+#	$NetBSD: host-mkdep.in,v 1.17 2007/07/09 15:27:10 jmmv Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -137,7 +137,7 @@ else
 				shift 2
 				;;
 				
-		-isystem-cxx)
+		-isystem-cxx|-cxx-isystem)
 				CPPFLAGS="$CPPFLAGS -isystem $2"
 				shift 2
 				;;
