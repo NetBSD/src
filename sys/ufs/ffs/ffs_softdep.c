@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.93 2007/07/09 22:02:00 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.94 2007/07/09 22:52:14 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.93 2007/07/09 22:02:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.94 2007/07/09 22:52:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -248,7 +248,7 @@ static struct lockit {
 static struct lockit {
 	int	lkt_spl;
 	lwp_t	*lkt_held;
-} lk = { 0, -1 };
+} lk = { 0, NULL };
 static int lockcnt;
 
 static	void acquire_lock(struct lockit *);
@@ -265,7 +265,7 @@ static void
 acquire_lock(lkp)
 	struct lockit *lkp;
 {
-	if (lkp->lkt_held != -1) {
+	if (lkp->lkt_held != NULL) {
 		if (lkp->lkt_held == curlwp)
 			panic("softdep_lock: locking against myself");
 		else
@@ -308,9 +308,9 @@ static int
 free_lock_interlocked(lkp)
 	struct lockit *lkp;
 {
-	if (lkp->lkt_held == -1)
+	if (lkp->lkt_held == NULL)
 		panic("softdep_unlock_interlocked: lock not held");
-	lkp->lkt_held = -1;
+	lkp->lkt_held = NULL;
 	return lkp->lkt_spl;
 }
 #endif /* DEBUG */
@@ -585,7 +585,7 @@ worklist_insert(head, item)
 	struct worklist *item;
 {
 
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("worklist_insert: lock not held");
 	if (item->wk_state & ONWORKLIST)
 		panic("worklist_insert: already on list");
@@ -598,7 +598,7 @@ worklist_remove(item)
 	struct worklist *item;
 {
 
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("worklist_remove: lock not held");
 	if ((item->wk_state & ONWORKLIST) == 0)
 		panic("worklist_remove: not on list");
@@ -1000,7 +1000,7 @@ pagedep_lookup(ip, lbn, flags, pagedeppp)
 	int i;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("pagedep_lookup: lock not held");
 #endif
 	mp = ITOV(ip)->v_mount;
@@ -1072,7 +1072,7 @@ inodedep_lookup(fs, inum, flags, inodedeppp)
 	int firsttry;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("inodedep_lookup: lock not held");
 #endif
 	firsttry = 1;
@@ -1442,7 +1442,7 @@ bmsafemap_lookup(bp)
 	struct worklist *wk;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("bmsafemap_lookup: lock not held");
 #endif
 	for (wk = LIST_FIRST(&bp->b_dep); wk; wk = LIST_NEXT(wk, wk_list))
@@ -1623,7 +1623,7 @@ allocdirect_merge(adphead, newadp, oldadp)
 	struct newdirblk *newdirblk;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("allocdirect_merge: lock not held");
 #endif
 	if (newadp->ad_oldblkno != oldadp->ad_newblkno ||
@@ -2259,7 +2259,7 @@ free_allocdirect(adphead, adp, delayx)
 	struct worklist *wk;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("free_allocdirect: lock not held");
 #endif
 	if ((adp->ad_state & DEPCOMPLETE) == 0)
@@ -2301,7 +2301,7 @@ free_newdirblk(newdirblk)
 	int i;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("free_newdirblk: lock not held");
 #endif
 	/*
@@ -2616,7 +2616,7 @@ free_allocindir(aip, inodedep)
 	struct freefrag *freefrag;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("free_allocindir: lock not held");
 #endif
 	if ((aip->ai_state & DEPCOMPLETE) == 0)
@@ -2871,7 +2871,7 @@ free_diradd(dap)
 	struct mkdir *mkdir, *nextmd;
 
 #ifdef DEBUG
-	if (lk.lkt_held == -1)
+	if (lk.lkt_held == NULL)
 		panic("free_diradd: lock not held");
 #endif
 	WORKLIST_REMOVE(&dap->da_list);
@@ -3928,9 +3928,8 @@ softdep_disk_write_complete(bp)
 		return;
 
 #ifdef DEBUG
-	if (lk.lkt_held != -1)
+	if (lk.lkt_held != NULL)
 		panic("softdep_disk_write_complete: lock is held");
-	lk.lkt_held = -2;
 #endif
 	LIST_INIT(&reattach);
 	while ((wk = LIST_FIRST(&bp->b_dep)) != NULL) {
@@ -4026,9 +4025,7 @@ softdep_disk_write_complete(bp)
 		WORKLIST_INSERT(&bp->b_dep, wk);
 	}
 #ifdef DEBUG
-	if (lk.lkt_held != -2)
-		panic("softdep_disk_write_complete: lock lost");
-	lk.lkt_held = -1;
+	lk.lkt_held = NULL;
 #endif
 }
 
