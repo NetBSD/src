@@ -39,7 +39,7 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/common/cxgb_t3_hw.c,v 1.4 2007/05/28 22:57:
 #include <dev/cxgb/cxgb_include.h>
 #endif
 #ifdef __NetBSD__
-#include <dev/pci/cxgb_include.h>
+#include "cxgb_include.h"
 #endif
 #endif
 
@@ -479,7 +479,7 @@ const struct adapter_info *t3_get_adapter_info(unsigned int id)
 #define CAPS_10G (SUPPORTED_10000baseT_Full | SUPPORTED_AUI)
 
 static struct port_type_info port_types[] = {
-	{ NULL },
+	{ NULL, 0, NULL },
 	{ t3_ael1002_phy_prep, CAPS_10G | SUPPORTED_FIBRE,
 	  "10GBASE-XR" },
 	{ t3_vsc8211_phy_prep, CAPS_1G | SUPPORTED_TP | SUPPORTED_IRQ,
@@ -1230,7 +1230,7 @@ static void pci_intr_handler(adapter_t *adapter)
 		  1 },
 		{ V_MSIXPARERR(M_MSIXPARERR), "PCI MSI-X table/PBA parity "
 		  "error", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
 	};
 
 	if (t3_handle_intr_status(adapter, A_PCIX_INT_CAUSE, PCIX_INTR_MASK,
@@ -1256,7 +1256,7 @@ static void pcie_intr_handler(adapter_t *adapter)
 		{ V_PCIE_MSIXPARERR(M_PCIE_MSIXPARERR),
 		  "PCI MSI-X table/PBA parity error", -1, 1 },
 		{ V_BISTERR(M_BISTERR), "PCI BIST error", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
 	};
 
 	if (t3_handle_intr_status(adapter, A_PCIE_INT_CAUSE, PCIE_INTR_MASK,
@@ -1273,7 +1273,7 @@ static void tp_intr_handler(adapter_t *adapter)
 		{ 0xffffff,  "TP parity error", -1, 1 },
 		{ 0x1000000, "TP out of Rx pages", -1, 1 },
 		{ 0x2000000, "TP out of Tx pages", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
 	};
 
 	if (t3_handle_intr_status(adapter, A_TP_INT_CAUSE, 0xffffffff,
@@ -1299,7 +1299,7 @@ static void cim_intr_handler(adapter_t *adapter)
 		{ F_BLKWRCTLINT, "CIM block write to CTL space", -1, 1 },
 		{ F_BLKRDPLINT, "CIM block read from PL space", -1, 1 },
 		{ F_BLKWRPLINT, "CIM block write to PL space", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
         };
 
 	if (t3_handle_intr_status(adapter, A_CIM_HOST_INT_CAUSE, 0xffffffff,
@@ -1314,7 +1314,7 @@ static void ulprx_intr_handler(adapter_t *adapter)
 {
 	static struct intr_info ulprx_intr_info[] = {
 		{ F_PARERR, "ULP RX parity error", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
         };
 
 	if (t3_handle_intr_status(adapter, A_ULPRX_INT_CAUSE, 0xffffffff,
@@ -1332,7 +1332,7 @@ static void ulptx_intr_handler(adapter_t *adapter)
 		  STAT_ULP_CH0_PBL_OOB, 0 },
 		{ F_PBL_BOUND_ERR_CH1, "ULP TX channel 1 PBL out of bounds",
 		  STAT_ULP_CH1_PBL_OOB, 0 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
         };
 
 	if (t3_handle_intr_status(adapter, A_ULPTX_INT_CAUSE, 0xffffffff,
@@ -1362,7 +1362,7 @@ static void pmtx_intr_handler(adapter_t *adapter)
 		  "PMTX ispi parity error", -1, 1 },
 		{ V_OESPI_PAR_ERROR(M_OESPI_PAR_ERROR),
 		  "PMTX ospi parity error", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
         };
 
 	if (t3_handle_intr_status(adapter, A_PM1_TX_INT_CAUSE, 0xffffffff,
@@ -1392,7 +1392,7 @@ static void pmrx_intr_handler(adapter_t *adapter)
 		  "PMRX ispi parity error", -1, 1 },
 		{ V_OCSPI_PAR_ERROR(M_OCSPI_PAR_ERROR),
 		  "PMRX ospi parity error", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
         };
 
 	if (t3_handle_intr_status(adapter, A_PM1_RX_INT_CAUSE, 0xffffffff,
@@ -1411,7 +1411,7 @@ static void cplsw_intr_handler(adapter_t *adapter)
 		{ F_SGE_FRAMING_ERROR, "CPL switch SGE framing error", -1, 1 },
 		{ F_CIM_FRAMING_ERROR, "CPL switch CIM framing error", -1, 1 },
 		{ F_ZERO_SWITCH_ERROR, "CPL switch no-switch error", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
         };
 
 	if (t3_handle_intr_status(adapter, A_CPL_INTR_CAUSE, 0xffffffff,
@@ -1426,7 +1426,7 @@ static void mps_intr_handler(adapter_t *adapter)
 {
 	static struct intr_info mps_intr_info[] = {
 		{ 0x1ff, "MPS parity error", -1, 1 },
-		{ 0 }
+		{ 0, NULL, 0, 0 }
 	};
 
 	if (t3_handle_intr_status(adapter, A_MPS_INT_CAUSE, 0xffffffff,
@@ -2278,6 +2278,40 @@ static inline unsigned int pm_num_pages(unsigned int mem_size,
 #define mem_region(adap, start, size, reg) \
 	t3_write_reg((adap), A_ ## reg, (start)); \
 	start += size
+
+#ifdef __NetBSD__
+/*
+ * fls: find last bit set.
+ */
+static __inline int fls(int x)
+{
+    int r = 32;
+
+    if (!x)
+        return 0;
+    if (!(x & 0xffff0000u)) {
+        x <<= 16;
+        r -= 16;
+    }
+    if (!(x & 0xff000000u)) {
+        x <<= 8;
+        r -= 8;
+    }
+    if (!(x & 0xf0000000u)) {
+        x <<= 4;
+        r -= 4;
+    }
+    if (!(x & 0xc0000000u)) {
+        x <<= 2;
+        r -= 2;
+    }
+    if (!(x & 0x80000000u)) {
+        x <<= 1;
+        r -= 1;
+    }
+    return r;
+}
+#endif
 
 /*
  *	partition_mem - partition memory and configure TP memory settings
@@ -3233,7 +3267,7 @@ int t3_init_hw(adapter_t *adapter, u32 fw_params)
 static void __devinit get_pci_mode(adapter_t *adapter, struct pci_params *p)
 {
 	static unsigned short speed_map[] = { 33, 66, 100, 133 };
-	u32 pci_mode, pcie_cap;
+	u32 my_pci_mode, pcie_cap;
 
 	pcie_cap = t3_os_find_pci_capability(adapter, PCI_CAP_ID_EXP);
 	if (pcie_cap) {
@@ -3247,15 +3281,15 @@ static void __devinit get_pci_mode(adapter_t *adapter, struct pci_params *p)
 		return;
 	}
 
-	pci_mode = t3_read_reg(adapter, A_PCIX_MODE);
-	p->speed = speed_map[G_PCLKRANGE(pci_mode)];
-	p->width = (pci_mode & F_64BIT) ? 64 : 32;
-	pci_mode = G_PCIXINITPAT(pci_mode);
-	if (pci_mode == 0)
+	my_pci_mode = t3_read_reg(adapter, A_PCIX_MODE);
+	p->speed = speed_map[G_PCLKRANGE(my_pci_mode)];
+	p->width = (my_pci_mode & F_64BIT) ? 64 : 32;
+	my_pci_mode = G_PCIXINITPAT(my_pci_mode);
+	if (my_pci_mode == 0)
 		p->variant = PCI_VARIANT_PCI;
-	else if (pci_mode < 4)
+	else if (my_pci_mode < 4)
 		p->variant = PCI_VARIANT_PCIX_MODE1_PARITY;
-	else if (pci_mode < 8)
+	else if (my_pci_mode < 8)
 		p->variant = PCI_VARIANT_PCIX_MODE1_ECC;
 	else
 		p->variant = PCI_VARIANT_PCIX_266_MODE2;
