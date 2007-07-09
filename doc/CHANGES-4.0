@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.201 2007/07/06 13:47:08 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.202 2007/07/09 10:00:51 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6978,3 +6978,19 @@ sys/dev/pci/if_wpi.c				1.11
 
 	wsize is size_t = unsigned and should be printed with %zu instead of %zd.
 	cosmetics for PR 36591 by khorben.
+
+sys/sys/socketvar.h				1.97
+
+	Fix a bug in sblock() that has existed since revision 1.1 from BSD:
+	correctly return an error if M_NOWAIT is passed to sblock() and the
+	operation might block.  This remarkably subtle macro bug appears to
+	be responsible for quite a few undiagnosed socket buffer corruption
+	and mbuf-related kernel panics.
+	[christos, ticket #759]
+
+sys/dev/pci/ehci_pci.c				1.28
+
+	If the USB legacy capability flag is not set, we mistakenly attempt to
+	clear it anyway by writing to PCI configuration register 0x00.  
+	Instead, if this flag is not set, simply bail out from ehci_get_ownership.
+	[jmcneill, ticket #760]
