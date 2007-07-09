@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.305 2007/07/01 07:36:39 xtraeme Exp $	*/
+/*	$NetBSD: init_main.c,v 1.306 2007/07/09 10:05:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.305 2007/07/01 07:36:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.306 2007/07/09 10:05:26 ad Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_kcont.h"
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
@@ -99,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.305 2007/07/01 07:36:39 xtraeme Exp 
 #include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/kcont.h>
 #include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -304,11 +302,6 @@ main(void)
 
 	/* Initialize sockets. */
 	soinit();
-
-#ifdef KCONT
-	/* Initialize kcont. */
-        kcont_init();
-#endif
 
 	/*
 	 * The following things must be done before autoconfiguration.
