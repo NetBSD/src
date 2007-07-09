@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.72 2007/07/07 18:27:26 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.73 2007/07/09 22:28:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.72 2007/07/07 18:27:26 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.73 2007/07/09 22:28:13 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -209,7 +209,6 @@ _kvm_ureadm(kd, p, va, cnt)
 	u_long va;
 	u_long *cnt;
 {
-	int true = 1;
 	u_long addr, head;
 	u_long offset;
 	struct vm_map_entry vme;
@@ -231,7 +230,7 @@ _kvm_ureadm(kd, p, va, cnt)
 	 */
 	head = (u_long)&p->p_vmspace->vm_map.header;
 	addr = head;
-	while (true) {
+	for (;;) {
 		if (KREAD(kd, addr, &vme))
 			return (NULL);
 
