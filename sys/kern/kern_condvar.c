@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.5.2.4 2007/06/17 21:31:20 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.5.2.5 2007/07/09 20:33:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5.2.4 2007/06/17 21:31:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5.2.5 2007/07/09 20:33:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -107,7 +107,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 	sleepq_t *sq;
 
 	KASSERT(cv->cv_wmesg != NULL);
-	KASSERT((l->l_flag & LW_INTR) == 0);
+	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
 
 	l->l_cv_signalled = 0;
 	sq = sleeptab_lookup(&sleeptab, cv);
