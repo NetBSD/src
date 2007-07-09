@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.7 2007/06/17 21:31:21 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.8 2007/07/09 20:33:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.7 2007/06/17 21:31:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.8 2007/07/09 20:33:14 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -405,7 +405,7 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 
 	/* LK_RETRY is for vn_lock, not for lockmgr. */
 	KASSERT((flags & LK_RETRY) == 0);
-	KASSERT((l->l_flag & LW_INTR) == 0);
+	KASSERT((l->l_flag & LW_INTR) == 0 || panicstr != NULL);
 
 	mutex_enter(mutex);
 	if (flags & LK_INTERLOCK)
