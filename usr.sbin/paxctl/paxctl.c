@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.1.2.2 2007/02/06 22:20:42 tron Exp $ */
+/* $NetBSD: paxctl.c,v 1.1.2.3 2007/07/09 10:30:56 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.1.2.2 2007/02/06 22:20:42 tron Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.1.2.3 2007/07/09 10:30:56 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,13 +56,17 @@ static int pax_flags_sane(u_long);
 static int pax_haveflags(u_long);
 static void pax_printflags(u_long);
 
-#ifndef PF_PAXMPROTECT
-#define PF_PAXMPROTECT		0x08000000
-#define PF_PAXNOMPROTECT	0x04000000
-#endif
-#ifndef PF_PAXGUARD
-#define PF_PAXGUARD		0x02000000
-#define PF_PAXNOGUARD		0x01000000
+#ifndef ELF_NOTE_TYPE_PAX_TAG
+/* NetBSD-specific note type: PaX.  There should be 1 NOTE per executable.
+   section.  desc is a 32 bit bitmask */
+#define ELF_NOTE_TYPE_PAX_TAG		3
+#define	ELF_NOTE_PAX_MPROTECT		0x1	/* Force enable Mprotect */
+#define	ELF_NOTE_PAX_NOMPROTECT		0x2	/* Force disable Mprotect */
+#define	ELF_NOTE_PAX_GUARD		0x4	/* Force enable Segvguard */
+#define	ELF_NOTE_PAX_NOGUARD		0x8	/* Force disable Servguard */
+#define ELF_NOTE_PAX_NAMESZ		4
+#define ELF_NOTE_PAX_NAME		"PaX\0"
+#define ELF_NOTE_PAX_DESCSZ		4
 #endif
 #ifndef __arraycount
 #define __arraycount(a) (sizeof(a) / sizeof(a[0]))
@@ -74,10 +78,14 @@ static const struct paxflag {
 	const char *name;
 	int bits;
 } flags[] = {
-	{ 'G', "Segvguard, explicit enable", PF_PAXGUARD },
-	{ 'g', "Segvguard, explicit disable", PF_PAXNOGUARD },
-	{ 'M', "mprotect(2) restrictions, explicit enable", PF_PAXMPROTECT },
-	{ 'm', "mprotect(2) restrictions, explicit disable", PF_PAXNOMPROTECT },
+	{ 'G', "Segvguard, explicit enable",
+	  ELF_NOTE_PAX_GUARD },
+	{ 'g', "Segvguard, explicit disable",
+	  ELF_NOTE_PAX_NOGUARD },
+	{ 'M', "mprotect(2) restrictions, explicit enable",
+	  ELF_NOTE_PAX_MPROTECT },
+	{ 'm', "mprotect(2) restrictions, explicit disable",
+	  ELF_NOTE_PAX_NOMPROTECT },
 };
 
 static void
@@ -156,8 +164,13 @@ main(int argc, char **argv)
 	    Elf32_Phdr h32;
 	    Elf64_Phdr h64;
 	} p;
+	union {
+	    Elf32_Nhdr h32;
+	    Elf64_Nhdr h64;
+	} n;
 #define EH(field)	(size == 32 ? e.h32.field : e.h64.field)
 #define PH(field)	(size == 32 ? p.h32.field : p.h64.field)
+#define NH(field)	(size == 32 ? n.h32.field : n.h64.field)
 #define SPH(field, val)	do { \
     if (size == 32) \
 	    p.h32.field val; \
@@ -165,6 +178,11 @@ main(int argc, char **argv)
 	    p.h64.field val; \
 } while (/*CONSTCOND*/0)
 #define PHSIZE		(size == 32 ? sizeof(p.h32) : sizeof(p.h64))
+#define NHSIZE		(size == 32 ? sizeof(n.h32) : sizeof(n.h64))
+	struct {
+		char name[ELF_NOTE_PAX_NAMESZ];
+		uint32_t flags;
+	} pax_tag;
 
 	int size;
 	char *opt = NULL;
@@ -227,41 +245,57 @@ main(int argc, char **argv)
 	for (i = 0; i < EH(e_phnum); i++) {
 		if (pread(fd, &p, PHSIZE,
 		    (off_t)EH(e_phoff) + i * PHSIZE) != PHSIZE)
-			err(EXIT_FAILURE, "Can't read data from `%s'", opt);
+			err(EXIT_FAILURE, "Can't read program header data"
+			    " from `%s'", opt);
 
 		if (PH(p_type) != PT_NOTE)
 			continue;
 
+		if (pread(fd, &n, NHSIZE, (off_t)PH(p_offset)) != NHSIZE)
+			err(EXIT_FAILURE, "Can't read note header from `%s'",
+			    opt);
+		if (NH(n_type) != ELF_NOTE_TYPE_PAX_TAG ||
+		    NH(n_descsz) != ELF_NOTE_PAX_DESCSZ ||
+		    NH(n_namesz) != ELF_NOTE_PAX_NAMESZ)
+			continue;
+		if (pread(fd, &pax_tag, sizeof(pax_tag), PH(p_offset) + NHSIZE)
+		    != sizeof(pax_tag))
+			err(EXIT_FAILURE, "Can't read pax_tag from `%s'",
+			    opt);
+		if (memcmp(pax_tag.name, ELF_NOTE_PAX_NAME,
+		    sizeof(pax_tag.name)) != 0)
+			err(EXIT_FAILURE, "Unknown pax_tag name `%*.*s' from"
+			    " `%s'", ELF_NOTE_PAX_NAMESZ, ELF_NOTE_PAX_NAMESZ,
+			    pax_tag.name, opt);
 		ok = 1;
 
 		if (list) {
-			if (!pax_haveflags((u_long)PH(p_flags)))
+			if (!pax_haveflags(pax_tag.flags))
 				break;
 
-			if (!pax_flags_sane((u_long)PH(p_flags)))
-				warnx("Current flags %lx don't make sense",
-				    (u_long)PH(p_flags));
+			if (!pax_flags_sane(pax_tag.flags))
+				warnx("Current flags %x don't make sense",
+				    pax_tag.flags);
 
 			(void)printf("PaX flags:\n");
 
-			pax_printflags((u_long)PH(p_flags));
+			pax_printflags(pax_tag.flags);
 
 			flagged = 1;
 
 			break;
 		}
 
-		SPH(p_flags, |= add_flags);
-		SPH(p_flags, &= ~del_flags);
+		pax_tag.flags |= add_flags;
+		pax_tag.flags &= ~del_flags;
 
-		if (!pax_flags_sane((u_long)PH(p_flags)))
-			errx(EXIT_FAILURE, "New flags %lx don't make sense",
-			    (u_long)PH(p_flags));
+		if (!pax_flags_sane(pax_tag.flags))
+			errx(EXIT_FAILURE, "New flags %x don't make sense",
+			    pax_tag.flags);
 
-		if (pwrite(fd, &p, PHSIZE,
-		    (off_t)EH(e_phoff) + i * PHSIZE) != PHSIZE)
+		if (pwrite(fd, &pax_tag, sizeof(pax_tag),
+		    (off_t)PH(p_offset) + NHSIZE) != sizeof(pax_tag))
 			err(EXIT_FAILURE, "Can't modify flags on `%s'", opt);
-
 		break;
 	}
 
@@ -269,7 +303,7 @@ main(int argc, char **argv)
 
 	if (!ok)
 		errx(EXIT_FAILURE,
-		    "Could not find an ELF PT_NOTE section in `%s'", opt);
+		    "Could not find an ELF PaX PT_NOTE section in `%s'", opt);
 
 	if (list && !flagged)
 		(void)printf("No PaX flags.\n");
