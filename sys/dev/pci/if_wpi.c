@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.12 2007/07/09 19:38:51 degroote Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.13 2007/07/09 20:29:06 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.12 2007/07/09 19:38:51 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.13 2007/07/09 20:29:06 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -3065,73 +3065,8 @@ wpi_init(struct ifnet *ifp)
 	WPI_WRITE(sc, WPI_UCODE_CLR, WPI_RADIO_OFF);
 	WPI_WRITE(sc, WPI_UCODE_CLR, WPI_RADIO_OFF);
 
-<<<<<<< if_wpi.c
 	if ((error = wpi_load_firmware(sc)) != 0) {
 		aprint_error("%s: could not load firmware\n", sc->sc_dev.dv_xname);
-=======
-	if (size < wsize) {
-		aprint_error("%s: fw file too short: should be %zu bytes\n",
-			sc->sc_dev.dv_xname, wsize);
-		error = EINVAL;
-		goto fail2;
-	}
-
-	dfw = firmware_malloc(size);
-	if (dfw == NULL) {
-		aprint_error("%s: not enough memory to stock firmware\n",
-			sc->sc_dev.dv_xname);
-		error = ENOMEM;
-		goto fail2;
-	}
-
-	if ((error = firmware_read(fw, 0, dfw, size)) != 0) {
-		aprint_error("%s: can't get firmware\n",
-			sc->sc_dev.dv_xname);
-		goto fail2;
-	}
-
-	/* firmware image layout: |HDR|<--TEXT-->|<--DATA-->|<--BOOT-->| */
-	text = dfw + sizeof (struct wpi_firmware_hdr);
-	data = text + le32toh(hdr.textsz);
-	boot = data + le32toh(hdr.datasz);
-
-	/* load firmware boot code into NIC */
-	error = wpi_load_microcode(sc, boot, le32toh(hdr.bootsz));
-	if (error != 0) {
-		aprint_error("%s: could not load microcode\n", sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	/* load firmware .text segment into NIC */
-	error = wpi_load_firmware(sc, WPI_FW_TEXT, text, le32toh(hdr.textsz));
-	if (error != 0) {
-		aprint_error("%s: could not load firmware\n",
-			sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	/* load firmware .data segment into NIC */
-	error = wpi_load_firmware(sc, WPI_FW_DATA, data, le32toh(hdr.datasz));
-	if (error != 0) {
-		aprint_error("%s: could not load firmware\n",
-			sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	firmware_free(dfw, 0);
-	firmware_close(fw);
-
-	/* now press "execute" ;-) */
-	tmp = WPI_READ(sc, WPI_RESET);
-	tmp &= ~(WPI_MASTER_DISABLED | WPI_STOP_MASTER | WPI_NEVO_RESET);
-	WPI_WRITE(sc, WPI_RESET, tmp);
-
-	/* ..and wait at most one second for adapter to initialize */
-	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
-		/* this isn't what was supposed to happen.. */
-		aprint_error("%s: timeout waiting for adapter to initialize\n",
-			sc->sc_dev.dv_xname);
->>>>>>> 1.11
 		goto fail1;
 	}
 
