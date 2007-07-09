@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.41 2007/06/30 09:37:55 pooka Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.42 2007/07/09 00:01:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.41 2007/06/30 09:37:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.42 2007/07/09 00:01:42 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -535,11 +535,6 @@ cd9660_unmount(mp, mntflags, l)
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#if 0
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp))
-		return EBUSY;
-#endif
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 
