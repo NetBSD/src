@@ -169,7 +169,7 @@ static int offload_close(struct toedev *tdev);
 static d_ioctl_t cxgb_extension_ioctl;
 #endif
 #ifdef __NetBSD__
-static int cxgb_extension_ioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *mylwp);
+static int cxgb_extension_ioctl(dev_t dev, uint32_t cmd, void *data, int fflag, struct lwp *mylwp);
 #endif
 #endif
 
@@ -197,7 +197,7 @@ DRIVER_MODULE(cxgbc, pci, cxgb_controller_driver, cxgb_controller_devclass, 0, 0
 #endif
 
 #ifdef __NetBSD__
-CFATTACH_DECL(cxgb, sizeof(struct adapter), cxgb_controller_match, cxgb_controller_attach, cxgb_controller_detach, NULL);
+CFATTACH_DECL(cxgbc, sizeof(struct adapter), cxgb_controller_match, cxgb_controller_attach, cxgb_controller_detach, NULL);
 #endif
 
 /*
@@ -234,7 +234,7 @@ DRIVER_MODULE(cxgb, cxgbc, cxgb_port_driver, cxgb_port_devclass, 0, 0);
 #endif
 
 #ifdef __NetBSD__
-CFATTACH_DECL(cxgbp, 0, cxgb_port_match, cxgb_port_attach, cxgb_port_detach, NULL);
+CFATTACH_DECL(cxgb, 0, cxgb_port_match, cxgb_port_attach, cxgb_port_detach, NULL);
 #endif
 
 #define SGE_MSIX_COUNT (SGE_QSETS + 1)
@@ -425,18 +425,14 @@ static int cxgb_controller_match(device_t dev, struct cfdata *match, void *conte
 {
 	struct pci_attach_args *pa = context;
 	const struct adapter_info *ai;
-	static int printed = 0;
 
 	ai = cxgb_get_adapter_info(pa);
 	if (ai == NULL)
 		return (0);
 
-	if (printed++ == 0)
-	{
-		printf("%s RNIC, %d port(s)", ai->desc, ai->nports);
-	}
+	printf("%s, %d port(s)\n", ai->desc, ai->nports);
 
-	return (100); // ???????????
+	return (100); // we ARE the best driver for this card!!
 }
 #endif
 
@@ -470,6 +466,23 @@ upgrade_fw(adapter_t *sc)
 }
 #endif
 
+#ifdef __NetBSD__
+int cxgb_cfprint(void *aux, const char *info);
+int cxgb_cfprint(void *aux, const char *info)
+{
+	struct cxgb_attach_args *cxgb_args = aux;
+
+	printf("cxgb_cfprint - port = %d\n", cxgb_args->port);
+
+	if (info)
+		printf("cxgb_cfprint(%p, \"%s\")\n", aux, info);
+	else
+		printf("cxgb_cfprint(%p, NULL)\n", aux);
+
+	return (QUIET);
+}
+#endif
+
 #ifdef __FreeBSD__
 static int
 cxgb_controller_attach(device_t dev)
@@ -487,13 +500,18 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 #ifdef __NetBSD__
 	struct adapter *sc = (struct adapter *)self;  // device is first thing in adapter
 	struct pci_attach_args *pa = context;
+	struct cxgb_attach_args cxgb_args;
 #endif
 	int i, error = 0;
 #ifdef MSI_SUPPORTED
-	int reg, msi_needed;
+	int msi_needed;
 #endif
+	int reg;
 	uint32_t vers;
 	int port_qsets = 1;
+
+	MARK;
+	printf("dev=%p, sc=%p\n", dev, sc);
 
 	sc->dev = dev;
 #ifdef __NetBSD__
@@ -502,16 +520,22 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 #endif
 	sc->msi_count = 0;
 	
-#ifdef __FreeBSD__
 	/* find the PCIe link width and set max read request to 4KB*/
-	if (pci_find_extcap(dev, PCIY_EXPRESS, &reg) == 0) {
+#ifdef __FreeBSD__
+	reg = t3_os_find_pci_capability(sc, PCIY_EXPRESS);
+#endif
+#ifdef __NetBSD__
+	reg = t3_os_find_pci_capability(sc, PCI_CAP_PCIEXPRESS);
+#endif
+	if (reg) {
 		uint16_t lnk, pectl;
-		lnk = pci_read_config(dev, reg + 0x12, 2);
+		printf("PCI express card\n");
+		t3_os_pci_read_config_2(sc, reg + 0x12, &lnk);
 		sc->link_width = (lnk >> 4) & 0x3f;
 		
-		pectl = pci_read_config(dev, reg + 0x8, 2);
+		t3_os_pci_read_config_2(sc, reg + 0x8, &pectl);
 		pectl = (pectl & ~0x7000) | (5 << 12);
-		pci_write_config(dev, reg + 0x8, pectl, 2);
+		t3_os_pci_write_config_2(sc, reg + 0x8, pectl);
 	}
 	if (sc->link_width != 0 && sc->link_width <= 4) {
 		device_printf(sc->dev,
@@ -519,18 +543,33 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 		    sc->link_width);
 	}
 
+#ifdef __FreeBSD__
 	pci_enable_busmaster(dev);
+#endif
+#ifdef __NetBSD__
+	t3_os_pci_read_config_4(sc, PCI_COMMAND_STATUS_REG, &reg);
+	reg |= PCI_COMMAND_MASTER_ENABLE;
+	t3_os_pci_write_config_4(sc, PCI_COMMAND_STATUS_REG, reg);
+#endif
 
 	/*
 	 * Allocate the registers and make them available to the driver.
 	 * The registers that we care about for NIC mode are in BAR 0
 	 */
+#ifdef __FreeBSD__
 	sc->regs_rid = PCIR_BAR(0);
 	if ((sc->regs_res = bus_alloc_resource_any(dev, SYS_RES_MEMORY,
 	    &sc->regs_rid, RF_ACTIVE)) == NULL) {
 		device_printf(dev, "Cannot allocate BAR\n");
 		return (ENXIO);
 	}
+#endif
+#ifdef __NetBSD__
+	sc->regs_rid = PCI_MAPREG_START;
+	t3_os_pci_read_config_4(sc, PCI_MAPREG_START, &reg);
+	printf("BAR0 = %08x\n", reg);
+
+	// call bus_space_map
 #endif
 
 	mtx_init(&sc->sge.reg_lock, "SGE reg lock", NULL, MTX_DEF);
@@ -549,11 +588,14 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 #ifdef __NetBSD__
 	ai = cxgb_get_adapter_info(pa);
 #endif
+	MARK;
 	if (t3_prep_adapter(sc, ai, 1) < 0) {
+		MARK;
 		error = ENODEV;
 		goto out;
 	}
-	
+	MARK;
+
 #ifdef MSI_SUPPORTED
 	/* Allocate the BAR for doing MSI-X.  If it succeeds, try to allocate
 	 * enough messages for the queue sets.  If that fails, try falling
@@ -602,6 +644,7 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 		sc->irq_rid = 0;
 		sc->cxgb_intr = t3b_intr;
 	}
+	MARK;
 
 #ifdef __FreeBSD__
 	/* Create a private taskqueue thread for handling driver events */
@@ -630,7 +673,10 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 	callout_init(&sc->cxgb_tick_ch);
 #endif
 	
+	MARK;
 	if (t3_check_fw_version(sc) != 0) {
+		MARK;
+
 		/*
 		 * Warn user that a firmware update will be attempted in init.
 		 */
@@ -653,6 +699,7 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 	 * Create a child device for each MAC.  The ethernet attachment
 	 * will be done in these children.
 	 */	
+	printf("nports=%d\n", (sc)->params.nports);
 	for (i = 0; i < (sc)->params.nports; i++) {
 #ifdef __FreeBSD__
 		if ((child = device_add_child(dev, "cxgb", -1)) == NULL) {
@@ -663,7 +710,8 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 #endif
 #ifdef __NetBSD__
 		// XXXXXXXXXXXXXXXXXXXXXXXXXX
-		child = NULL; // XXXXXXXXXXXXXXXXXXXXXXX
+		cxgb_args.port = i;
+		child = config_found_sm_loc(self, NULL, NULL, &cxgb_args, cxgb_cfprint, NULL);
 #endif
 		sc->portdev[i] = child;
 		sc->port[i].adapter = sc;
@@ -687,8 +735,10 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 	 */
 	sc->params.stats_update_period = 1;
 
+	MARK;
 	/* initialize sge private state */
 	t3_sge_init_sw(sc);
+	MARK;
 
 	t3_led_ready(sc);
 	
@@ -709,8 +759,10 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 	t3_add_sysctls(sc);
 #endif
 out:
+	MARK;
 	if (error)
 		cxgb_free(sc);
+	MARK;
 #ifdef __FreeBSD__
 	return (error);
 #endif
@@ -731,6 +783,8 @@ static int cxgb_controller_detach(device_t dev, int flags)
 	struct adapter *sc = (struct adapter *)dev;  // device is first thing in adapter
 #endif
 
+	MARK;
+	printf("dev=%p, sc=%p\n", dev, sc);
 	cxgb_free(sc);
 
 	return (0);
@@ -883,7 +937,7 @@ cxgb_setup_msix(adapter_t *sc, int msix_count)
 			    
 			rid = k + 2;
 			if (cxgb_debug)
-				printf("rid=%d ", rid);
+				printf("rid=%d\n", rid);
 #ifdef __FreeBSD__
 			if ((sc->msix_irq_res[k] = bus_alloc_resource_any(
 			    sc->dev, SYS_RES_IRQ, &rid,
@@ -929,7 +983,14 @@ static int cxgb_port_match(device_t dev, struct cfdata *match, void *context)
 {
 	struct port_info *p = (struct port_info *)dev;  // device is first thing in adapter
 	char buf[80];
+	struct cxgb_attach_args *cxgb_args = context;
 
+	printf("cxgb_port_match(%p, %p, %p)\n", dev, match, context);
+
+	printf("port = %d\n", cxgb_args->port);
+	return (0);
+
+	printf("==> port %d %s\n", p->port, p->port_type->desc);
 	snprintf(buf, sizeof(buf), "Port %d %s", p->port, p->port_type->desc);
 //	device_set_desc_copy(dev, buf);
 
@@ -1074,7 +1135,7 @@ static void cxgb_port_attach(device_t dev, device_t self, void *context)
 #ifdef __FreeBSD__
 	ifp->if_hwassist |= (CSUM_TCP | CSUM_UDP | CSUM_IP | CSUM_TSO);
 #endif
-	ifp->if_baudrate = 100000000;
+	ifp->if_baudrate = 10000000000;
 	
 	ether_ifattach(ifp, p->hw_addr);
 #ifdef DEFAULT_JUMBO
@@ -1194,8 +1255,8 @@ t3_fatal_err(struct adapter *sc)
 int
 t3_os_find_pci_capability(adapter_t *sc, int cap)
 {
-#if 0
 	device_t dev;
+#ifdef __FreeBSD__
 	struct pci_devinfo *dinfo;
 	pcicfgregs *cfg;
 	uint32_t status;
@@ -1227,6 +1288,43 @@ t3_os_find_pci_capability(adapter_t *sc, int cap)
 		if (pci_read_config(dev, ptr + PCICAP_ID, 1) == cap)
 			return (ptr);
 		ptr = pci_read_config(dev, ptr + PCICAP_NEXTPTR, 1);
+	}
+#endif
+#ifdef __NetBSD__
+	uint32_t status;
+	uint32_t bhlc;
+	uint32_t temp;
+	uint8_t ptr;
+
+	dev = sc->dev;
+
+	status = pci_conf_read(sc->chip, sc->tag, PCI_COMMAND_STATUS_REG);
+	if (!(status&PCI_STATUS_CAPLIST_SUPPORT))
+		return (0);
+
+	bhlc = pci_conf_read(sc->chip, sc->tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE(bhlc))
+	{
+	case 0:
+	case 1:
+		ptr = PCI_CAPLISTPTR_REG;
+		break;
+	case 2:
+		ptr = PCI_CARDBUS_CAPLISTPTR_REG;
+		break;
+	default:
+		return (0);
+	}
+
+	temp = pci_conf_read(sc->chip, sc->tag, ptr);
+	ptr = PCI_CAPLIST_PTR(temp);
+
+	while (ptr != 0) {
+		temp = pci_conf_read(sc->chip, sc->tag, ptr);
+		if (PCI_CAPLIST_CAP(temp) == cap)
+			return (ptr);
+
+		ptr = PCI_CAPLIST_NEXT(temp);
 	}
 #endif
 	return (0);
@@ -2256,7 +2354,7 @@ cxgb_extension_ioctl(struct cdev *dev, unsigned long cmd, caddr_t data,
 #endif
 #ifdef __NetBSD__
 static int
-cxgb_extension_ioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *mylwp)
+cxgb_extension_ioctl(dev_t dev, uint32_t cmd, void *data, int fflag, struct lwp *mylwp)
 #endif
 {
 	int mmd, error = 0;
