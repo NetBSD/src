@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.32 2007/07/09 21:00:50 ad Exp $	*/
+/*	$NetBSD: satlink.c,v 1.33 2007/07/10 12:15:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.32 2007/07/09 21:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.33 2007/07/10 12:15:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ struct satlink_softc {
 #define	SATF_DATA		0x02	/* waiting for data */
 
 /*
- * Our pesudo-interrupt.  Since up to 328 bytes can arrive in 1/100 of
+ * Our pseudo-interrupt.  Since up to 328 bytes can arrive in 1/100 of
  * a second, this gives us 3280 bytes per timeout.
  */
 #define	SATLINK_TIMEOUT		(hz/10)
