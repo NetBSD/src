@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.67 2007/07/09 21:10:55 ad Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.68 2007/07/10 22:58:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.67 2007/07/09 21:10:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.68 2007/07/10 22:58:54 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_lockdebug.h"
@@ -82,24 +82,22 @@ free(p, t)			free(p)
 #define	\
 cv_wait_sig(cv, lock)		(EWOULDBLOCK)
 #define	\
-cv_wait(cv)			((void)0)
-#define	\
-cv_broadcast(cv)		((void)0)
-#define	\
 pool_get(pool, flags)		malloc((pool)->pr_size,0,0)
 #define	\
 pool_put(pool, rp)		free(rp,0)
 #define	\
 panic(a)			printf(a)
-#define	\
-mutex_init(a, b, c)		((void)(a, b, c))
-#define	\
-mutex_destroy(a)		((void)(a, b, c))
-#define	\
-mutex_enter(l)			((void)(l))
-#define	\
-mutex_exit(l)			((void)(l))
+#define	mutex_init(a, b, c)
+#define	mutex_destroy(a)
+#define	mutex_enter(l)
+#define	mutex_exit(l)
+#define	cv_wait(cv, lock)
+#define	cv_broadcast(cv)
+#define	cv_init(a, b)
+#define	cv_destroy(a)
 #define	KMEM_IS_RUNNING			(1)
+#define	IPL_VM				(0)
+#define	MUTEX_DRIVER			(0)
 #endif
 
 static struct pool expool;
