@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.23 2007/07/10 21:12:32 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.24 2007/07/10 21:26:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.23 2007/07/10 21:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.24 2007/07/10 21:26:00 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.23 2007/07/10 21:12:32 ad Exp $")
  * - hardclock_ticks".  The result will always be positive for future
  * timeouts and 0 or negative for due timeouts.
  */
+
+#define	_CALLOUT_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
