@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.49 2006/10/07 17:27:57 elad Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.50 2007/07/10 13:52:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.49 2006/10/07 17:27:57 elad Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.50 2007/07/10 13:52:51 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: nfsd.c,v 1.49 2006/10/07 17:27:57 elad Exp $");
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,18 +90,35 @@ int	debug = 1;
 int	debug = 0;
 #endif
 
-struct	nfsd_srvargs nsd;
-
 int	main __P((int, char **));
 void	nonfs __P((int));
 void	reapchild __P((int));
 void	usage __P((void));
 
+static void *
+child(void *dummy)
+{
+	struct	nfsd_srvargs nsd;
+	int nfssvc_flag;
+
+	nfssvc_flag = NFSSVC_NFSD;
+	memset(&nsd, 0, sizeof(nsd));
+	while (nfssvc(nfssvc_flag, &nsd) < 0) {
+		if (errno != ENEEDAUTH) {
+			syslog(LOG_ERR, "nfssvc: %m");
+			exit(1);
+		}
+		nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHINFAIL;
+	}
+
+	return NULL;
+}
+
 /*
  * Nfs server daemon mostly just a user context for nfssvc()
  *
  * 1 - do file descriptor and signal cleanup
- * 2 - fork the nfsd(s)
+ * 2 - create the nfsd thread(s)
  * 3 - create server socket(s)
  * 4 - register socket with portmap
  *
@@ -113,7 +131,7 @@ void	usage __P((void));
  *	-r - reregister with portmapper
  *	-t - support tcp nfs clients
  *	-u - support udp nfs clients
- * followed by "n" which is the number of nfsds' to fork off
+ * followed by "n" which is the number of nfsd threads to create
  */
 int
 main(argc, argv)
@@ -132,7 +150,7 @@ main(argc, argv)
 	struct pollfd set[4];
 	socklen_t len;
 	int ch, cltpflag, connect_type_cnt, i, maxsock, msgsock;
-	int nfsdcnt, nfssvc_flag, on = 1, reregister, sock, tcpflag, tcpsock;
+	int nfsdcnt, on = 1, reregister, sock, tcpflag, tcpsock;
 	int tcp6sock, ip6flag;
 	int tp4cnt, tp4flag, tpipcnt, tpipflag, udpflag, ecode, s;
 
@@ -335,27 +353,15 @@ main(argc, argv)
 	openlog("nfsd", LOG_PID, LOG_DAEMON);
 
 	for (i = 0; i < nfsdcnt; i++) {
-		switch (fork()) {
-		case -1:
-			syslog(LOG_ERR, "fork: %m");
-			exit (1);
-		case 0:
-			break;
-		default:
-			continue;
-		}
+		pthread_t t;
+		int error;
 
-		setproctitle("server");
-		nfssvc_flag = NFSSVC_NFSD;
-		nsd.nsd_nfsd = NULL;
-		while (nfssvc(nfssvc_flag, &nsd) < 0) {
-			if (errno != ENEEDAUTH) {
-				syslog(LOG_ERR, "nfssvc: %m");
-				exit(1);
-			}
-			nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHINFAIL;
+		error = pthread_create(&t, NULL, child, NULL);
+		if (error) {
+			errno = error;
+			syslog(LOG_ERR, "pthread_create: %m");
+			exit (1);
 		}
-		exit(0);
 	}
 
 	/* If we are serving udp, set up the socket. */
