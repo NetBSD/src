@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.6 2007/07/09 21:01:23 ad Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.7 2007/07/10 06:32:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.6 2007/07/09 21:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.7 2007/07/10 06:32:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -421,7 +421,7 @@ sme_events_init(void)
 	int error;
 
 	error = workqueue_create(&seewq, "envsysev",
-	    sme_events_worker, NULL, 0, IPL_NONE, 0);
+	    sme_events_worker, NULL, 0, IPL_SOFTCLOCK, 0);
 	if (error)
 		goto out;
 
