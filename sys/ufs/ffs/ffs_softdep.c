@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.94 2007/07/09 22:52:14 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.95 2007/07/10 10:47:07 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.94 2007/07/09 22:52:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.95 2007/07/10 10:47:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3930,6 +3930,7 @@ softdep_disk_write_complete(bp)
 #ifdef DEBUG
 	if (lk.lkt_held != NULL)
 		panic("softdep_disk_write_complete: lock is held");
+	lk.lkt_held = (struct lwp *)1;
 #endif
 	LIST_INIT(&reattach);
 	while ((wk = LIST_FIRST(&bp->b_dep)) != NULL) {
@@ -4025,6 +4026,8 @@ softdep_disk_write_complete(bp)
 		WORKLIST_INSERT(&bp->b_dep, wk);
 	}
 #ifdef DEBUG
+	if (lk.lkt_held != (struct lwp *)1)
+		panic("softdep_disk_write_complete: lock lost");
 	lk.lkt_held = NULL;
 #endif
 }
