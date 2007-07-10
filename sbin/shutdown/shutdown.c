@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.47 2007/03/14 03:52:28 christos Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.48 2007/07/10 23:50:35 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.47 2007/03/14 03:52:28 christos Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.48 2007/07/10 23:50:35 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,9 @@ die_you_gravy_sucking_pig_dog(void)
 	if (doreboot || dohalt) {
 		const char *args[16];
 		const char **arg, *path;
+#ifndef DEBUG
 		int serrno;
+#endif
 
 		arg = &args[0];
 		if (doreboot) {
