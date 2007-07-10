@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.77 2006/09/22 23:21:52 elad Exp $	*/
+/*	$NetBSD: inet.c,v 1.78 2007/07/10 21:12:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,9 +34,11 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.77 2006/09/22 23:21:52 elad Exp $");
+__RCSID("$NetBSD: inet.c,v 1.78 2007/07/10 21:12:33 ad Exp $");
 #endif
 #endif /* not lint */
+
+#define	_CALLOUT_PRIVATE	/* for defs in sys/callout.h */
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -875,6 +877,7 @@ void
 tcp_dump(pcbaddr)
 	u_long pcbaddr;
 {
+	callout_impl_t *ci;
 	struct tcpcb tcpcb;
 	int i, hardticks;
 
@@ -885,9 +888,10 @@ tcp_dump(pcbaddr)
 
 	printf("Timers:\n");
 	for (i = 0; i < TCPT_NTIMERS; i++) {
+		ci = (callout_impl_t *)&tcpcb.t_timer[i];
 		printf("\t%s: %d", tcptimers[i],
-		    (tcpcb.t_timer[i].c_flags & CALLOUT_PENDING) ?
-		    tcpcb.t_timer[i].c_time - hardticks : 0);
+		    (ci->c_flags & CALLOUT_PENDING) ?
+		    ci->c_time - hardticks : 0);
 	}
 	printf("\n\n");
 
