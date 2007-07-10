@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.202 2007/06/30 09:37:53 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.203 2007/07/10 09:50:08 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.202 2007/06/30 09:37:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.203 2007/07/10 09:50:08 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1461,12 +1461,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ip->i_number = ino;
 	LIST_INIT(&ip->i_pcbufhd);
 #ifdef QUOTA
-	{
-		int i;
-
-		for (i = 0; i < MAXQUOTAS; i++)
-			ip->i_dquot[i] = NODQUOT;
-	}
+	ufsquota_init(ip);
 #endif
 
 	/*

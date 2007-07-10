@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.14 2007/06/30 09:37:54 pooka Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.15 2007/07/10 09:50:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.14 2007/06/30 09:37:54 pooka Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.15 2007/07/10 09:50:09 hannken Exp $");
 
 #include "opt_ffs.h"
 
@@ -70,7 +70,6 @@ __RCSID("$NetBSD: ufs_extattr.c,v 1.14 2007/06/30 09:37:54 pooka Exp $");
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/extattr.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>

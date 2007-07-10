@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.47 2007/06/30 09:37:54 pooka Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.48 2007/07/10 09:50:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.47 2007/06/30 09:37:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.48 2007/07/10 09:50:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,6 +52,58 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.47 2007/06/30 09:37:54 pooka Exp $")
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+
+/*
+ * The following structure records disk usage for a user or group on a
+ * filesystem. There is one allocated for each quota that exists on any
+ * filesystem for the current user or group. A cache is kept of recently
+ * used entries.
+ */
+struct dquot {
+	LIST_ENTRY(dquot) dq_hash;	/* hash list */
+	TAILQ_ENTRY(dquot) dq_freelist;	/* free list */
+	u_int16_t dq_flags;		/* flags, see below */
+	u_int16_t dq_type;		/* quota type of this dquot */
+	u_int32_t dq_cnt;		/* count of active references */
+	u_int32_t dq_id;		/* identifier this applies to */
+	struct	ufsmount *dq_ump;	/* filesystem that this is taken from */
+	struct	dqblk dq_dqb;		/* actual usage & quotas */
+};
+/*
+ * Flag values.
+ */
+#define	DQ_LOCK		0x01		/* this quota locked (no MODS) */
+#define	DQ_WANT		0x02		/* wakeup on unlock */
+#define	DQ_MOD		0x04		/* this quota modified since read */
+#define	DQ_FAKE		0x08		/* no limits here, just usage */
+#define	DQ_BLKS		0x10		/* has been warned about blk limit */
+#define	DQ_INODS	0x20		/* has been warned about inode limit */
+/*
+ * Shorthand notation.
+ */
+#define	dq_bhardlimit	dq_dqb.dqb_bhardlimit
+#define	dq_bsoftlimit	dq_dqb.dqb_bsoftlimit
+#define	dq_curblocks	dq_dqb.dqb_curblocks
+#define	dq_ihardlimit	dq_dqb.dqb_ihardlimit
+#define	dq_isoftlimit	dq_dqb.dqb_isoftlimit
+#define	dq_curinodes	dq_dqb.dqb_curinodes
+#define	dq_btime	dq_dqb.dqb_btime
+#define	dq_itime	dq_dqb.dqb_itime
+/*
+ * If the system has never checked for a quota for this file, then it is
+ * set to NODQUOT.  Once a write attempt is made the inode pointer is set
+ * to reference a dquot structure.
+ */
+#define	NODQUOT		NULL
+
+static int chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
+static int chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
+static void dqflush(struct vnode *);
+static int dqget(struct vnode *, u_long, struct ufsmount *, int,
+		 struct dquot **);
+static void dqref(struct dquot *);
+static void dqrele(struct vnode *, struct dquot *); 
+static int dqsync(struct vnode *, struct dquot *);
 
 /*
  * Quota name to error message mapping.
@@ -74,6 +126,14 @@ getinoquota(struct inode *ip)
 	int error;
 
 	/*
+	 * If the file uid changed the user quota needs update.
+	 */
+	if (ip->i_dquot[USRQUOTA] != NODQUOT &&
+	    ip->i_dquot[USRQUOTA]->dq_id != ip->i_uid) {
+		dqrele(ITOV(ip), ip->i_dquot[USRQUOTA]);
+		ip->i_dquot[USRQUOTA] = NODQUOT;
+	}
+	/*
 	 * Set up the user quota based on file uid.
 	 * EINVAL means that quotas are not enabled.
 	 */
@@ -82,6 +142,14 @@ getinoquota(struct inode *ip)
 		dqget(vp, ip->i_uid, ump, USRQUOTA, &ip->i_dquot[USRQUOTA])) &&
 	    error != EINVAL)
 		return (error);
+	/*
+	 * If the file gid changed the group quota needs update.
+	 */
+	if (ip->i_dquot[GRPQUOTA] != NODQUOT &&
+	    ip->i_dquot[GRPQUOTA]->dq_id != ip->i_gid) {
+		dqrele(ITOV(ip), ip->i_dquot[GRPQUOTA]);
+		ip->i_dquot[GRPQUOTA] = NODQUOT;
+	}
 	/*
 	 * Set up the group quota based on file gid.
 	 * EINVAL means that quotas are not enabled.
@@ -95,6 +163,32 @@ getinoquota(struct inode *ip)
 }
 
 /*
+ * Initialize the quota fields of an inode.
+ */
+void
+ufsquota_init(struct inode *ip)
+{
+	int i;
+
+	for (i = 0; i < MAXQUOTAS; i++)
+		ip->i_dquot[i] = NODQUOT;
+}
+
+/*
+ * Release the quota fields from an inode.
+ */
+void
+ufsquota_free(struct inode *ip)
+{
+	int i;
+
+	for (i = 0; i < MAXQUOTAS; i++) {
+		dqrele(ITOV(ip), ip->i_dquot[i]);
+		ip->i_dquot[i] = NODQUOT;
+	}
+}
+
+/*
  * Update disk usage, and take corrective action.
  */
 int
@@ -104,10 +198,8 @@ chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 	int i;
 	int ncurblocks, error;
 
-#ifdef DIAGNOSTIC
-	if ((flags & CHOWN) == 0)
-		chkdquot(ip);
-#endif
+	if ((error = getinoquota(ip)) != 0)
+		return error;
 	if (change == 0)
 		return (0);
 	if (change < 0) {
@@ -154,7 +246,7 @@ chkdq(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
  * Check for a valid change to a users allocation.
  * Issue an error message if appropriate.
  */
-int
+static int
 chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 {
 	struct dquot *dq = ip->i_dquot[type];
@@ -211,10 +303,8 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 	int i;
 	int ncurinodes, error;
 
-#ifdef DIAGNOSTIC
-	if ((flags & CHOWN) == 0)
-		chkdquot(ip);
-#endif
+	if ((error = getinoquota(ip)) != 0)
+		return error;
 	if (change == 0)
 		return (0);
 	if (change < 0) {
@@ -261,7 +351,7 @@ chkiq(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
  * Check for a valid change to a users allocation.
  * Issue an error message if appropriate.
  */
-int
+static int
 chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 {
 	struct dquot *dq = ip->i_dquot[type];
@@ -307,29 +397,6 @@ chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 	}
 	return (0);
 }
-
-#ifdef DIAGNOSTIC
-/*
- * On filesystems with quotas enabled, it is an error for a file to change
- * size and not to have a dquot structure associated with it.
- */
-void
-chkdquot(struct inode *ip)
-{
-	struct ufsmount *ump = ip->i_ump;
-	int i;
-
-	for (i = 0; i < MAXQUOTAS; i++) {
-		if (ump->um_quotas[i] == NULLVP ||
-		    (ump->um_qflags[i] & (QTF_OPENING|QTF_CLOSING)))
-			continue;
-		if (ip->i_dquot[i] == NODQUOT) {
-			vprint("chkdquot: missing dquot", ITOV(ip));
-			panic("missing dquot");
-		}
-	}
-}
-#endif
 
 /*
  * Code to process quotactl commands.
@@ -702,7 +769,7 @@ dqdone(void)
  * Obtain a dquot structure for the specified identifier and quota file
  * reading the information from the file if necessary.
  */
-int
+static int
 dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
     struct dquot **dqp)
 {
@@ -815,7 +882,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 /*
  * Obtain a reference to a dquot.
  */
-void
+static void
 dqref(struct dquot *dq)
 {
 
@@ -826,7 +893,7 @@ dqref(struct dquot *dq)
 /*
  * Release a reference to a dquot.
  */
-void
+static void
 dqrele(struct vnode *vp, struct dquot *dq)
 {
 
@@ -846,7 +913,7 @@ dqrele(struct vnode *vp, struct dquot *dq)
 /*
  * Update the disk quota in the quota file.
  */
-int
+static int
 dqsync(struct vnode *vp, struct dquot *dq)
 {
 	struct vnode *dqvp;
@@ -894,7 +961,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 /*
  * Flush all entries from the cache for a particular vnode.
  */
-void
+static void
 dqflush(struct vnode *vp)
 {
 	struct dquot *dq, *nextdq;
