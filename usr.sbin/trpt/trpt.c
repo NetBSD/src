@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.22 2006/03/31 10:20:21 rpaulo Exp $	*/
+/*	$NetBSD: trpt.c,v 1.23 2007/07/10 22:23:13 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2005, 2006 The NetBSD Foundation, Inc.
@@ -77,9 +77,11 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.22 2006/03/31 10:20:21 rpaulo Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.23 2007/07/10 22:23:13 jmcneill Exp $");
 #endif
 #endif /* not lint */
+
+#define _CALLOUT_PRIVATE	/* for defs in sys/callout.h */
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -397,6 +399,7 @@ tcp_trace(short act, short ostate, struct tcpcb *atp, struct tcpcb *tp,
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif
+	callout_impl_t *ci;
 	char hbuf[MAXHOSTNAMELEN];
 
 	len = 0;	/* XXXGCC -Wuninitialized */
@@ -539,11 +542,11 @@ skipact:
 				errx(3, "hardclock_ticks: %s", kvm_geterr(kd));
 
 			for (i = 0; i < TCPT_NTIMERS; i++) {
-				if ((tp->t_timer[i].c_flags 
-				    & CALLOUT_PENDING) == 0)
+				ci = (callout_impl_t *)&tp->t_timer[i];
+				if ((ci->c_flags & CALLOUT_PENDING) == 0)
 					continue;
 				printf("%s%s=%d", cp, tcptimers[i],
-				    tp->t_timer[i].c_time - hardticks);
+				    ci->c_time - hardticks);
 				if (i == TCPT_REXMT)
 					printf(" (t_rxtshft=%d)", 
 					    tp->t_rxtshift);
