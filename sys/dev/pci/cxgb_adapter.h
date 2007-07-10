@@ -396,7 +396,12 @@ t3_os_pci_read_config_2(adapter_t *adapter, int reg, uint16_t *val)
 	*val = pci_read_config(adapter->dev, reg, 2);
 #endif
 #ifdef __NetBSD__
-	*val = (pci_conf_read(adapter->chip, adapter->tag, reg)&0xffff);
+	uint32_t temp;
+	temp = pci_conf_read(adapter->chip, adapter->tag, reg&0xfc);
+	if (reg&0x2)
+		*val = (temp>>16)&0xffff;
+	else
+		*val = temp&0xffff;
 #endif
 }
 
@@ -407,8 +412,12 @@ t3_os_pci_write_config_2(adapter_t *adapter, int reg, uint16_t val)
 	pci_write_config(adapter->dev, reg, val, 2);
 #endif
 #ifdef __NetBSD__
-	pci_conf_write(adapter->chip, adapter->tag, reg, 
-		(pci_conf_read(adapter->chip, adapter->tag, reg)&0xffff0000)|val);
+	uint32_t temp = pci_conf_read(adapter->chip, adapter->tag, reg&0xfc);
+	if (reg&0x2)
+		temp = (temp&0xffff)|(val<<16);
+	else
+		temp = (temp&0xffff0000)|val;
+	pci_conf_write(adapter->chip, adapter->tag, reg&0xfc, temp);
 #endif
 }
 
