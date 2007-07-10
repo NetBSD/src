@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.66 2007/05/17 07:26:22 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.67 2007/07/10 09:50:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.66 2007/05/17 07:26:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.67 2007/07/10 09:50:09 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.66 2007/05/17 07:26:22 hannken Exp $
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -101,8 +100,7 @@ ufs_inactive(void *v)
 
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef QUOTA
-		if (!getinoquota(ip))
-			(void)chkiq(ip, -1, NOCRED, 0);
+		(void)chkiq(ip, -1, NOCRED, 0);
 #endif
 #ifdef UFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, l);
@@ -171,15 +169,7 @@ ufs_reclaim(struct vnode *vp, struct lwp *l)
 		ip->i_devvp = 0;
 	}
 #ifdef QUOTA
-	{
-		int i;
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if (ip->i_dquot[i] != NODQUOT) {
-				dqrele(vp, ip->i_dquot[i]);
-				ip->i_dquot[i] = NODQUOT;
-			}
-		}
-	}
+	ufsquota_free(ip);
 #endif
 #ifdef UFS_DIRHASH
 	if (ip->i_dirhash != NULL)
