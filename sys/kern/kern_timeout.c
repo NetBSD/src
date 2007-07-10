@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.22 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.23 2007/07/10 21:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.22 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.23 2007/07/10 21:12:32 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -113,37 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.22 2007/07/09 21:10:54 ad Exp $")
 #define WHEELSIZE	256
 #define WHEELMASK	255
 #define WHEELBITS	8
-
-/* The following funkyness is to appease gcc3's strict aliasing. */
-struct callout_circq {
-	/* next element */
-	union {
-		struct callout_impl	*elem;
-		struct callout_circq	*list;
-	} cq_next;
-	/* previous element */
-	union {
-		struct callout_impl	*elem;
-		struct callout_circq	*list;
-	} cq_prev;
-};
-#define	cq_next_e	cq_next.elem
-#define	cq_prev_e	cq_prev.elem
-#define	cq_next_l	cq_next.list
-#define	cq_prev_l	cq_prev.list
-
-typedef struct callout_impl {
-	struct callout_circq c_list;		/* linkage on queue */
-	void	(*c_func)(void *);		/* function to call */
-	void	*c_arg;				/* function argument */
-	void	*c_oncpu;			/* non-NULL while running */
-	void	*c_onlwp;			/* non-NULL while running */
-	int	c_time;				/* when callout fires */
-	u_int	c_flags;			/* state of this entry */
-	u_int	c_runwait;			/* number of waiters */
-	u_int	c_magic;			/* magic number */
-} callout_impl_t;
-#define	CALLOUT_MAGIC		0x11deeba1
 
 static struct callout_circq timeout_wheel[BUCKETS];	/* Queues of timeouts */
 static struct callout_circq timeout_todo;		/* Worklist */
