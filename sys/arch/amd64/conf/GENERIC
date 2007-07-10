@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.151 2007/07/03 23:05:26 briggs Exp $
+# $NetBSD: GENERIC,v 1.152 2007/07/10 11:23:21 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.151 $"
+#ident 		"GENERIC-$Revision: 1.152 $"
 
 maxusers	32		# estimated number of users
 
@@ -587,6 +587,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
 wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
+wpi* 	at pci? dev ? function ? 	# Intel PRO/Wireless 3945ABG
 xge*	at pci? dev ? function ?	# Neterion (S2io) Xframe-I 10GbE
 
 # PCMCIA network interfaces
