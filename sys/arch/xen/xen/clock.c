@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 2007/07/09 20:52:39 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.39 2007/07/10 16:27:58 he Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2007/07/09 20:52:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2007/07/10 16:27:58 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,7 +498,9 @@ xen_initclocks()
 {
 	int evtch;
 
+#ifdef DOM0OPS
 	callout_init(&xen_timepush_co, 0);
+#endif
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
