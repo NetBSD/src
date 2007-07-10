@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.24 2007/06/23 14:56:09 hannken Exp $	*/
+/*	$NetBSD: quota.h,v 1.25 2007/07/10 09:50:08 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -106,95 +106,14 @@ struct dqblk {
 };
 
 #ifdef _KERNEL
-#include <sys/queue.h>
-
-/*
- * The following structure records disk usage for a user or group on a
- * filesystem. There is one allocated for each quota that exists on any
- * filesystem for the current user or group. A cache is kept of recently
- * used entries.
- */
-struct dquot {
-	LIST_ENTRY(dquot) dq_hash;	/* hash list */
-	TAILQ_ENTRY(dquot) dq_freelist;	/* free list */
-	u_int16_t dq_flags;		/* flags, see below */
-	u_int16_t dq_type;		/* quota type of this dquot */
-	u_int32_t dq_cnt;		/* count of active references */
-	u_int32_t dq_id;		/* identifier this applies to */
-	struct	ufsmount *dq_ump;	/* filesystem that this is taken from */
-	struct	dqblk dq_dqb;		/* actual usage & quotas */
-};
-/*
- * Flag values.
- */
-#define	DQ_LOCK		0x01		/* this quota locked (no MODS) */
-#define	DQ_WANT		0x02		/* wakeup on unlock */
-#define	DQ_MOD		0x04		/* this quota modified since read */
-#define	DQ_FAKE		0x08		/* no limits here, just usage */
-#define	DQ_BLKS		0x10		/* has been warned about blk limit */
-#define	DQ_INODS	0x20		/* has been warned about inode limit */
-/*
- * Shorthand notation.
- */
-#define	dq_bhardlimit	dq_dqb.dqb_bhardlimit
-#define	dq_bsoftlimit	dq_dqb.dqb_bsoftlimit
-#define	dq_curblocks	dq_dqb.dqb_curblocks
-#define	dq_ihardlimit	dq_dqb.dqb_ihardlimit
-#define	dq_isoftlimit	dq_dqb.dqb_isoftlimit
-#define	dq_curinodes	dq_dqb.dqb_curinodes
-#define	dq_btime	dq_dqb.dqb_btime
-#define	dq_itime	dq_dqb.dqb_itime
-
-/*
- * If the system has never checked for a quota for this file, then it is
- * set to NODQUOT.  Once a write attempt is made the inode pointer is set
- * to reference a dquot structure.
- */
-#define	NODQUOT		NULL
-
-/*
- * Flags to chkdq() and chkiq()
- */
-#define	FORCE	0x01	/* force usage changes independent of limits */
-#define	CHOWN	0x02	/* (advisory) change initiated by chown */
 
 #include <sys/cdefs.h>
 
-struct dquot;
-struct inode;
-struct mount;
-struct proc;
-struct ufsmount;
-struct vnode;
 __BEGIN_DECLS
-int	chkdq(struct inode *, int64_t, kauth_cred_t, int);
-int	chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
-int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
-int	chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
-void	dqflush(struct vnode *);
-int	dqget(struct vnode *,
-	    u_long, struct ufsmount *, int, struct dquot **);
 void	dqinit(void);
 void	dqreinit(void);
 void	dqdone(void);
-void	dqref(struct dquot *);
-void	dqrele(struct vnode *, struct dquot *);
-int	dqsync(struct vnode *, struct dquot *);
-int	getinoquota(struct inode *);
-int	getquota(struct mount *, u_long, int, void *);
-int	qsync(struct mount *mp);
-int	quotaoff(struct lwp *, struct mount *, int);
-int	quotaon(struct lwp *, struct mount *, int, void *);
-int	setquota(struct mount *, u_long, int, void *);
-int	setuse(struct mount *, u_long, int, void *);
-int	ufs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 __END_DECLS
-
-#ifdef DIAGNOSTIC
-__BEGIN_DECLS
-void	chkdquot(struct inode *);
-__END_DECLS
-#endif
 #else
 __BEGIN_DECLS
 int quotactl(const char *, int , int, void *);

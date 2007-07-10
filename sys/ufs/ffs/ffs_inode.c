@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.87 2007/06/05 12:31:34 yamt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.88 2007/07/10 09:50:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.87 2007/06/05 12:31:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.88 2007/07/10 09:50:07 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -203,10 +203,6 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ffs_update(ovp, NULL, NULL, 0));
 	}
-#ifdef QUOTA
-	if ((error = getinoquota(oip)) != 0)
-		return (error);
-#endif
 	fs = oip->i_fs;
 	if (length > ump->um_maxfilesize)
 		return (EFBIG);

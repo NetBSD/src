@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.17 2007/07/09 22:44:07 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.18 2007/07/10 09:50:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -44,7 +44,6 @@
 #include <sys/pool.h>
 #include <sys/sysctl.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dirhash.h>
