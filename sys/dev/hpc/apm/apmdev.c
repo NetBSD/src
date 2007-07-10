@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.11 2007/07/09 21:00:32 ad Exp $ */
+/*	$NetBSD: apmdev.c,v 1.12 2007/07/10 13:55:20 nonaka Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.11 2007/07/09 21:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.12 2007/07/10 13:55:20 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -104,7 +104,7 @@ struct apm_softc {
 	int	event_count;
 	int	event_ptr;
 	int	sc_power_state;
-	struct proc *sc_thread;
+	struct lwp *sc_thread;
 	struct lock sc_lock;
 	struct apm_event_info event_list[APM_NEVENTS];
 	struct apm_accessops *ops;
