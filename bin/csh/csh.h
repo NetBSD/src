@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.17 2007/04/29 20:23:34 msaitoh Exp $ */
+/* $NetBSD: csh.h,v 1.18 2007/07/10 00:30:23 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -92,11 +92,10 @@ typedef void *ptr_t;
 #define xfree(p) Free(p)
 
 #include <stdio.h>
+#include <stdbool.h>
 FILE *cshin, *cshout, *csherr;
 
 #define	isdir(d) (S_ISDIR(d.st_mode))
-
-typedef int bool;
 
 #define	eq(a, b) (Strcmp(a, b) == 0)
 
