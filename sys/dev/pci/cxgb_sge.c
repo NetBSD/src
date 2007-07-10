@@ -198,7 +198,7 @@ static uint8_t flit_desc_map[] = {
 
 
 static int lro_default = 0;
-int cxgb_debug = 0;
+int cxgb_debug = 1;
 
 #define my_static
 

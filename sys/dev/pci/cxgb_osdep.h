@@ -96,6 +96,8 @@ static inline void device_printf(device_t d, ...)
 
 #define callout_drain(x) callout_stop(x)
 
+#define MARK printf(__FILE__"(%d):\n", __LINE__)
+
 static inline int atomic_cmpset_ptr(volatile long *dst, long exp, long src)
 {
 	if (*dst == exp)
@@ -123,6 +125,13 @@ struct task
 	void (*function)(void *context);
 	void *context;
 };
+
+struct cxgb_attach_args
+{
+	int port;
+};
+
+#define INT3 __asm("int $3")
 
 static inline struct mbuf *
 m_defrag(struct mbuf *m0, int flags)

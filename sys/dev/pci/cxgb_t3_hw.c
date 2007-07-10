@@ -565,6 +565,7 @@ int t3_seeprom_read(adapter_t *adapter, u32 addr, u32 *data)
 	}
 	t3_os_pci_read_config_4(adapter, base + PCI_VPD_DATA, data);
 	*data = le32_to_cpu(*data);
+	printf("t3_seeprom_read() succeeded!\n");
 	return 0;
 }
 
@@ -670,6 +671,7 @@ static int get_vpd_params(adapter_t *adapter, struct vpd_params *p)
 	for (i = 0; i < 6; i++)
 		p->eth_base[i] = hex2int(vpd.na_data[2 * i]) * 16 +
 				 hex2int(vpd.na_data[2 * i + 1]);
+	printf("get_vpd_params() succeeded!\n");
 	return 0;
 }
 
@@ -3451,7 +3453,10 @@ int __devinit t3_prep_adapter(adapter_t *adapter,
 		return ret;
 
 	if (reset && t3_reset_adapter(adapter))
+	{	
+		printf("t3_reset_adapter() failed!\n");
 		return -1;
+	}
 
 	t3_sge_prep(adapter, &adapter->params.sge);
 
