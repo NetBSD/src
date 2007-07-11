@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.228 2007/07/03 23:05:26 briggs Exp $
+#	$NetBSD: DEVNAMES,v 1.229 2007/07/11 08:08:39 kiyohara Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -897,6 +897,7 @@ newgpbusif		hpcmips
 nextdisplay		next68k
 nextkbd			next68k
 nfe			MI
+nfsmb			MI
 nhpib			hp300
 ni			MI
 njata			MI
@@ -1493,3 +1494,4 @@ zstty			sun2
 zstty			sun3
 zstty			x68k
 zx			MI
+zyd			MI
