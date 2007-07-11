@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.2 2007/03/12 16:31:54 ad Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.2.2.1 2007/07/11 20:12:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -133,6 +133,8 @@ struct simplelock {
 #endif
 #endif	/* __CPU_SIMPLE_LOCK_PAD */
 
+#ifdef _KERNEL
+
 #if defined(LOCKDEBUG)
 
 void _simple_lock(volatile struct simplelock *, const char *, int);
@@ -187,5 +189,7 @@ void	simple_lock_switchcheck(void);
 #endif /* __lint__ */
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
+
+#endif	/* _KERNEL */
 
 #endif	/* _SYS_SIMPLELOCK_H_ */

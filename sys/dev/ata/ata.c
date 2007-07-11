@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.87 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.87.2.1 2007/07/11 20:05:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,11 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.87 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.87.2.1 2007/07/11 20:05:15 mjf Exp $");
 
-#ifndef ATADEBUG
-#define ATADEBUG
-#endif /* ATADEBUG */
+#include "opt_ata.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +155,7 @@ ata_channel_attach(struct ata_channel *chp)
 	if (chp->ch_flags & ATACH_DISABLED)
 		return;
 
-	callout_init(&chp->ch_callout);
+	callout_init(&chp->ch_callout, 0);
 
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
@@ -368,24 +366,6 @@ atabus_thread(void *arg)
 }
 
 /*
- * atabus_create_thread:
- *
- *	Helper routine to create the ATA bus worker thread.
- */
-static void
-atabus_create_thread(void *arg)
-{
-	struct atabus_softc *sc = arg;
-	struct ata_channel *chp = sc->sc_chan;
-	int error;
-
-	if ((error = kthread_create1(atabus_thread, sc, &chp->ch_thread,
-				     "%s", sc->sc_dev.dv_xname)) != 0)
-		aprint_error("%s: unable to create kernel thread: error %d\n",
-		    sc->sc_dev.dv_xname, error);
-}
-
-/*
  * atabus_match:
  *
  *	Autoconfiguration match routine.
@@ -416,6 +396,7 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	struct atabus_softc *sc = (void *) self;
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
+	int error;
 
 	sc->sc_chan = chp;
 
@@ -429,7 +410,11 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	initq->atabus_sc = sc;
 	TAILQ_INSERT_TAIL(&atabus_initq_head, initq, atabus_initq);
 	config_pending_incr();
-	kthread_create(atabus_create_thread, sc);
+
+	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
+	    &chp->ch_thread, "%s", sc->sc_dev.dv_xname)) != 0)
+		aprint_error("%s: unable to create kernel thread: error %d\n",
+		    sc->sc_dev.dv_xname, error);
 
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
 	    atabus_powerhook, sc);
@@ -578,7 +563,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	int i;
 	u_int16_t *p;
 
-	ATADEBUG_PRINT(("ata_get_parms\n"), DEBUG_FUNCS);
+	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
@@ -612,50 +597,50 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
-	} else {
-		/* if we didn't read any data something is wrong */
-		if ((ata_c.flags & AT_XFDONE) == 0)
-			return CMD_ERR;
-		/* Read in parameter block. */
-		memcpy(prms, tb, sizeof(struct ataparams));
+	}
+	/* if we didn't read any data something is wrong */
+	if ((ata_c.flags & AT_XFDONE) == 0)
+		return CMD_ERR;
 
-		/*
-		 * Shuffle string byte order.
-		 * ATAPI NEC, Mitsumi and Pioneer drives and
-		 * old ATA TDK CompactFlash cards
-		 * have different byte order.
-		 */
+	/* Read in parameter block. */
+	memcpy(prms, tb, sizeof(struct ataparams));
+
+	/*
+	 * Shuffle string byte order.
+	 * ATAPI NEC, Mitsumi and Pioneer drives and
+	 * old ATA TDK CompactFlash cards
+	 * have different byte order.
+	 */
 #if BYTE_ORDER == BIG_ENDIAN
 # define M(n)	prms->atap_model[(n) ^ 1]
 #else
 # define M(n)	prms->atap_model[n]
 #endif
-		if (
+	if (
 #if BYTE_ORDER == BIG_ENDIAN
-		    !
+	    !
 #endif
-		    ((drvp->drive_flags & DRIVE_ATAPI) ?
-		     ((M(0) == 'N' && M(1) == 'E') ||
-		      (M(0) == 'F' && M(1) == 'X') ||
-		      (M(0) == 'P' && M(1) == 'i')) :
-		     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
-			return CMD_OK;
-#undef M
-		for (i = 0; i < sizeof(prms->atap_model); i += 2) {
-			p = (u_int16_t *)(prms->atap_model + i);
-			*p = bswap16(*p);
-		}
-		for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
-			p = (u_int16_t *)(prms->atap_serial + i);
-			*p = bswap16(*p);
-		}
-		for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
-			p = (u_int16_t *)(prms->atap_revision + i);
-			*p = bswap16(*p);
-		}
-
+	    ((drvp->drive_flags & DRIVE_ATAPI) ?
+	     ((M(0) == 'N' && M(1) == 'E') ||
+	      (M(0) == 'F' && M(1) == 'X') ||
+	      (M(0) == 'P' && M(1) == 'i')) :
+	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
 		return CMD_OK;
+#undef M
+	for (i = 0; i < sizeof(prms->atap_model); i += 2) {
+		p = (u_int16_t *)(prms->atap_model + i);
+		*p = bswap16(*p);
 	}
+	for (i = 0; i < sizeof(prms->atap_serial); i += 2) {
+		p = (u_int16_t *)(prms->atap_serial + i);
+		*p = bswap16(*p);
+	}
+	for (i = 0; i < sizeof(prms->atap_revision); i += 2) {
+		p = (u_int16_t *)(prms->atap_revision + i);
+		*p = bswap16(*p);
+	}
+
+	return CMD_OK;
 }
 
 int

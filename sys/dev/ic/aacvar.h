@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.8 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.8.32.1 2007/07/11 20:05:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -102,6 +102,12 @@ struct aac_softc;
 #define AAC_ADAPTER_FIBS	8
 
 /*
+ * FIBs are allocated in page-size chunks and can grow up to the 512
+ * limit imposed by the hardware.
+ */
+#define AAC_PREALLOCATE_FIBS	128
+
+/*
  * Firmware messages are passed in the printf buffer.
  */
 #define AAC_PRINTF_BUFSIZE	256
@@ -128,11 +134,12 @@ struct aac_softc;
 #define AAC_SYNC_DELAY		20000
 
 /*
- * The firmware interface allows for a 16-bit s/g list length.  We limit
- * ourselves to a reasonable maximum and ensure alignment.
+ * sc->sc_max_sgs is the number of scatter-gather elements we can fit
+ * in one block I/O request (64-bit or 32-bit, depending) FIB, or the
+ * maximum number that the firmware will accept.  We subtract one to
+ * deal with requests that do not start on an even page boundary.
  */
-#define AAC_MAX_SGENTRIES	17	/* max S/G entries, limit 65535 */
-#define	AAC_MAX_XFER		((AAC_MAX_SGENTRIES - 1) * PAGE_SIZE)
+#define	AAC_MAX_XFER(sc)	(((sc)->sc_max_sgs - 1) * PAGE_SIZE)
 
 /*
  * Fixed sector size.
@@ -140,10 +147,9 @@ struct aac_softc;
 #define	AAC_SECTOR_SIZE		512
 
 /*
- * Number of CCBs to allocate, and to reserve for control operations.
+ * Number of CCBs to reserve for control operations.
  */
-#define	AAC_NCCBS		256
-#define	AAC_NCCBS_RESERVE	4
+#define	AAC_NCCBS_RESERVE	8
 
 /*
  * Quirk listings.
@@ -155,6 +161,9 @@ struct aac_softc;
 #define AAC_QUIRK_NO4GB		(1 << 6)	/* Can't access host mem >2GB */
 #define AAC_QUIRK_256FIBS	(1 << 7)	/* Can only handle 256 cmds */
 #define AAC_QUIRK_BROKEN_MMAP	(1 << 8)	/* Broken HostPhysMemPages */
+#define AAC_QUIRK_NEW_COMM	(1 << 11)	/* New comm. i/f supported */
+#define AAC_QUIRK_RAW_IO	(1 << 12)	/* Raw I/O interface */
+#define AAC_QUIRK_ARRAY_64BIT	(1 << 13)	/* 64-bit array size */
 
 
 /*
@@ -187,6 +196,8 @@ struct aac_common {
 	struct aac_fib ac_sync_fib;
 };
 
+struct aac_ccb;
+
 /*
  * Interface operations
  */
@@ -199,6 +210,9 @@ struct aac_interface {
 				   u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 	uint32_t (*aif_get_mailbox)(struct aac_softc *, int);
 	void	(*aif_set_interrupts)(struct aac_softc *, int);
+	int	(*aif_send_command)(struct aac_softc *, struct aac_ccb *);
+	int	(*aif_get_outb_queue)(struct aac_softc *);
+	void	(*aif_set_outb_queue)(struct aac_softc *, int);
 };
 
 #define AAC_GET_FWSTATUS(sc)		((sc)->sc_if.aif_get_fwstatus(sc))
@@ -218,6 +232,12 @@ struct aac_interface {
 	((sc)->sc_if.aif_set_interrupts((sc), 0))
 #define AAC_UNMASK_INTERRUPTS(sc) \
 	((sc)->sc_if.aif_set_interrupts((sc), 1))
+#define AAC_SEND_COMMAND(sc, cm) \
+	((sc)->sc_if.aif_send_command((sc), cm))
+#define AAC_GET_OUTB_QUEUE(sc) \
+	((sc)->sc_if.aif_get_outb_queue((sc)))
+#define AAC_SET_OUTB_QUEUE(sc, idx) \
+	((sc)->sc_if.aif_set_outb_queue((sc), (idx)))
 
 #define AAC_SETREG4(sc, reg, val) \
 	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (reg), (val))
@@ -232,15 +252,23 @@ struct aac_interface {
 #define AAC_GETREG1(sc, reg) \
 	bus_space_read_1((sc)->sc_memt, (sc)->sc_memh, (reg))
 
+struct aac_fibmap {
+	TAILQ_ENTRY(aac_fibmap)	fm_link;
+	struct aac_fib		*fm_fibs;
+	bus_dma_segment_t	fm_fibseg;
+	bus_dmamap_t		fm_fibmap;
+	struct aac_ccb		*fm_ccbs;
+};
 
 /*
- * A command contol block, one for each corresponding command index of the
- * controller.
+ * A command control block, one for each corresponding command index
+ * of the controller.
  */
 struct aac_ccb {
 	SIMPLEQ_ENTRY(aac_ccb)	ac_chain;
 
 	struct aac_fib		*ac_fib;
+	struct aac_fibmap	*ac_fibmap;
 	bus_addr_t		ac_fibphys;
 	bus_dmamap_t		ac_dmamap_xfer;
 
@@ -272,18 +300,26 @@ struct aac_softc {
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
 	bus_dma_tag_t		sc_dmat;
+	bus_size_t		sc_regsize;
 
 	struct FsaRevision	sc_revision;
 	int			sc_hwif;
 	int			sc_quirks;
 	struct aac_interface	sc_if;
 
+	u_int32_t		sc_max_fibs;
+	u_int32_t		sc_max_fibs_alloc;
+	u_int32_t		sc_max_sectors;
+	u_int32_t		sc_max_fib_size;
+	u_int32_t		sc_max_sgs;
+
+	u_int32_t		sc_total_fibs;
+	TAILQ_HEAD(,aac_fibmap)	sc_fibmap_tqh;
+
 	struct aac_common	*sc_common;
 	bus_dma_segment_t	sc_common_seg;
 	bus_dmamap_t		sc_common_dmamap;
-	struct aac_fib		*sc_fibs;
-	bus_dma_segment_t	sc_fibs_seg;
-	bus_dmamap_t		sc_fibs_dmamap;
+	struct aac_fib		*sc_aif_fib;
 
 	struct aac_ccb		*sc_ccbs;
 	SIMPLEQ_HEAD(, aac_ccb)	sc_ccb_free;
@@ -296,9 +332,16 @@ struct aac_softc {
 	int			sc_nunits;
 	int			sc_flags;
 	uint32_t		sc_supported_options;
+
+	/* Set by parent */
+	int			(*sc_intr_set)(struct aac_softc *,
+						int (*)(void *), void *);
 };
 #define AAC_HWIF_I960RX		0
 #define AAC_HWIF_STRONGARM	1
+#define AAC_HWIF_FALCON		2
+#define AAC_HWIF_RKT		3
+#define AAC_HWIF_UNKNOWN	-1
 
 #define	AAC_ONLINE		2
 

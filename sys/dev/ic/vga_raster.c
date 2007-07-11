@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.26 2007/03/04 06:02:03 christos Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.26.4.1 2007/07/11 20:06:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.26 2007/03/04 06:02:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.26.4.1 2007/07/11 20:06:17 mjf Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -411,7 +411,7 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
-	callout_init(&vc->vc_switch_callout);
+	callout_init(&vc->vc_switch_callout, 0);
 
 	wsfont_init();
 	vc->nfonts = 1;
@@ -554,6 +554,25 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	aa.accesscookie = vc;
 
 	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+}
+
+int
+vga_cndetach(void)
+{
+	struct vga_config *vc;
+	struct vga_handle *vh;
+
+	vc = &vga_console_vc;
+	vh = &vc->hdl;
+
+	if (vgaconsole) {
+		bus_space_unmap(vh->vh_iot, vh->vh_ioh_vga, 0x10);
+		bus_space_unmap(vh->vh_iot, vh->vh_ioh_6845, 0x10);
+
+		return 1;
+	}
+
+	return 0;
 }
 
 int

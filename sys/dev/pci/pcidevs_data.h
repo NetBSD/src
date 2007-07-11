@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.871 2007/03/10 21:08:49 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.871.2.1 2007/07/11 20:07:58 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.872 2007/03/10 21:08:16 christos Exp
+ *	NetBSD: pcidevs,v 1.885 2007/07/07 20:30:47 jklos Exp
  */
 
 /*
@@ -2060,6 +2060,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Oxford Semiconductor",
 	},
 	{
+	    PCI_VENDOR_CHELSIO,
+	    "Chelsio Communications",
+	},
+	{
 	    PCI_VENDOR_TAMARACK,
 	    "Tamarack Microelectronics",
 	},
@@ -2248,6 +2252,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Datum Inc. Bancomm-Timing Division",
 	},
 	{
+	    PCI_VENDOR_JMICRON,
+	    "JMicron Technology",
+	},
+	{
 	    PCI_VENDOR_HINT,
 	    "HiNT",
 	},
@@ -2372,7 +2380,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 583;
+const int pci_nvendors = 585;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -2812,6 +2820,10 @@ static const struct pci_product pci_products[] = {
 	    "M5249 Hypertransport to PCI bridge",
 	},
 	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5261,
+	    "M5261 Tulip Ethernet Controller",
+	},
+	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
 	    "M5451 AC-Link Controller Audio Device",
 	},
@@ -3030,6 +3042,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
 	    "AN985 (Centaur-C) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM5120,
+	    "Infineon ADM5120 PCI host bridge",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
@@ -3772,8 +3788,52 @@ static const struct pci_product pci_products[] = {
 	    "SB600 SATA Controller",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AC97_AUDIO,
+	    "SB600 AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AZALIA,
+	    "SB600 Azalia",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PPB_4384,
+	    "SB600 PCI to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMBUS,
+	    "SB600 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_EHCI,
+	    "SB600 USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI0,
+	    "SB600 USB OHCI0 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI1,
+	    "SB600 USB OHCI1 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI2,
+	    "SB600 USB OHCI2 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI3,
+	    "SB600 USB OHCI3 Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI4,
+	    "SB600 USB OHCI4 Controller",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_600,
 	    "SB600 IXP IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PLB_438D,
+	    "SB600 PCI to LPC Bridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -4196,6 +4256,10 @@ static const struct pci_product pci_products[] = {
 	    "Radeon 7000/VE QZ",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ES1000,
+	    "ES1000",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100_S,
 	    "Radeon 9100 Series Secondary",
 	},
@@ -4320,6 +4384,18 @@ static const struct pci_product pci_products[] = {
 	    "Radeon 9200 Secondary",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_HB,
+	    "RS480 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD580,
+	    "RD580 CrossFire Xpress 3200 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5954,
+	    "Radeon Xpress 200G Series",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5960,
 	    "Radeon 9200PRO 5960",
 	},
@@ -4340,10 +4416,6 @@ static const struct pci_product pci_products[] = {
 	    "Radeon 9200SE 5964",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_HB,
-	    "RS480 Host Bridge",
-	},
-	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS482M,
 	    "Radeon Xpress Series (RS482M)",
 	},
@@ -4356,12 +4428,28 @@ static const struct pci_product pci_products[] = {
 	    "RS480 PCI Express Bridge",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A37,
+	    "RS480 PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A38,
+	    "RS480 PCI Express Bridge",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A3F,
 	    "RS480 PCI Express Bridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B60,
 	    "Radeon X300 (RV370) 5B60",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_5B62,
+	    "Radeon X600 PCI Express",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B63,
+	    "Radeon Sapphire X550 Silent",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B64,
@@ -4374,6 +4462,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_S,
 	    "Radeon X300 Series Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B73,
+	    "Radeon RV370 secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5C61,
@@ -4958,6 +5050,42 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX,
 	    "Nitrox XL",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302E,
+	    "T302e",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310E,
+	    "T310e",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320X,
+	    "T320x",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302X,
+	    "T302x",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320E,
+	    "T320e",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310X,
+	    "T310x",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B10,
+	    "T3B10",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B20,
+	    "T3B20",
+	},
+	{
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B02,
+	    "T3B02",
 	},
 	{
 	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_64310,
@@ -6472,6 +6600,10 @@ static const struct pci_product pci_products[] = {
 	    "ServeRAID",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P,
+	    "GXT-250P",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
 	    "16/4 Token Ring",
 	},
@@ -6990,6 +7122,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
 	    "i80003 Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT,
+	    "i82801H IFE (GT) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_G,
+	    "i82801H IFE (G) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -8324,6 +8464,30 @@ static const struct pci_product pci_products[] = {
 	    "ITT3204 MPEG Decoder",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
+	    "JMB360 SATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB361,
+	    "JMB361 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB363,
+	    "JMB363 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB365,
+	    "JMB365 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB366,
+	    "JMB366 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
+	    "JMB368 PATA controller",
+	},
+	{
 	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
 	    "JNIC-1460 Fibre-Channel adapter",
 	},
@@ -8796,6 +8960,30 @@ static const struct pci_product pci_products[] = {
 	    "DP83820 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_HB,
+	    "CS5535 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_ISA,
+	    "CS5535 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_IDE,
+	    "CS5535 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_AUDIO,
+	    "CS5535 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_USB,
+	    "CS5535 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_VIDEO,
+	    "CS5535 Video Controller",
+	},
+	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
 	    "NS87410",
 	},
@@ -9206,6 +9394,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2M64,
 	    "RIVA TNT2 Model 64",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SMBUS,
+	    "MCP04 SMBus",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_IDE,
@@ -9870,6 +10062,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA2,
 	    "nForce MCP55 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_GO_7600,
+	    "GeForce Go 7600",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA,
@@ -12832,4 +13028,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2614;
+const int pci_nproducts = 2661;

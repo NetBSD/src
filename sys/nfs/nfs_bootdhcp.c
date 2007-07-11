@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.33 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.33.4.1 2007/07/11 20:12:09 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,9 +51,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.33 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.33.4.1 2007/07/11 20:12:09 mjf Exp $");
 
 #include "opt_nfs_boot.h"
+#include "opt_tftproot.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,6 +697,7 @@ bootp_extract(bootp, replylen, nd)
 	gateway.s_addr = 0;
 	mydomain    = myname    = rootpath = NULL;
 	mydomainlen = mynamelen = rootpathlen = 0;
+
 	/* default root server to bootp next-server */
 	rootserver = bootp->bp_siaddr;
 	/* assume that server name field is not overloaded by default */
@@ -831,4 +833,15 @@ bootp_extract(bootp, replylen, nd)
 			ndm->ndm_host[len + rootpathlen] = '\0';
 		} /* else: upper layer will handle error */
 	}
+
+#ifdef TFTPROOT
+#if BP_FILE_LEN > MNAMELEN
+#define BOOTFILELEN MNAMELEN
+#else
+#define BOOTFILELEN BP_FILE_LEN
+#endif
+	strncpy(nd->nd_bootfile, bootp->bp_file, BOOTFILELEN);
+	nd->nd_bootfile[BOOTFILELEN - 1] = '\0';
+#undef BOOTFILELEN
+#endif /* TFTPROOT */
 }

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2007/03/06 11:28:45 dillo Exp $
+# $NetBSD: Makefile,v 1.19.4.1 2007/07/11 20:10:38 mjf Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ SUBDIR+=	adosfs
 SUBDIR+=	cd9660
 SUBDIR+=	coda
 SUBDIR+=	coda5
+SUBDIR+=	efs
 SUBDIR+=	filecorefs
 SUBDIR+=	hfs
 SUBDIR+=	miscfs

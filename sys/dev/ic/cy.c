@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.50 2007/03/04 06:01:53 christos Exp $	*/
+/*	$NetBSD: cy.c,v 1.50.4.1 2007/07/11 20:05:44 mjf Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.50 2007/03/04 06:01:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.50.4.1 2007/07/11 20:05:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -67,8 +67,8 @@ static int      cy_open = 0;
 static int      cy_events = 0;
 
 int	cy_attached_ttys;
-
-struct callout cy_poll_callout = CALLOUT_INITIALIZER;
+bool	cy_callout_init;
+callout_t cy_poll_callout;
 
 /*
  * Common probe routine
@@ -174,6 +174,11 @@ cy_attach(struct cy_softc *sc)
 {
 	int port, cy_chip, num_chips, cdu, chip;
 	int cy_clock;
+
+	if (!cy_callout_init) {
+		cy_callout_init = true;
+		callout_init(&cy_poll_callout, 0);
+	}
 
 	num_chips = sc->sc_nchips;
 	if (num_chips == 0)

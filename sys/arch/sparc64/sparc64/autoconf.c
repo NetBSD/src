@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.137 2007/03/04 06:00:50 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.137.4.1 2007/07/11 20:02:37 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.137 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.137.4.1 2007/07/11 20:02:37 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -430,58 +430,9 @@ cpu_configure(void)
 	(void)spl0();
 }
 
-static struct vnode *
-opendisk(struct device *dv)
-{
-	int bmajor, bminor;
-	struct vnode *tmpvn;
-	int error;
-	dev_t dev;
-	
-	/*
-	 * Lookup major number for disk block device.
-	 */
-	bmajor = devsw_name2blk(device_xname(dv), NULL, 0);
-	if (bmajor == -1)
-		return NULL;
-	
-	bminor = minor(device_unit(dv));
-	/*
-	 * Fake a temporary vnode for the disk, open it, and read
-	 * and hash the sectors.
-	 */
-	dev = device_is_a(dv, "dk") ? makedev(bmajor, bminor) :
-	    MAKEDISKDEV(bmajor, bminor, RAW_PART);
-	if (bdevvp(dev, &tmpvn))
-		panic("%s: can't alloc vnode for %s", __func__,
-		    device_xname(dv));
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
-	if (error) {
-#ifndef DEBUG
-		/*
-		 * Ignore errors caused by missing device, partition,
-		 * or medium.
-		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
-			printf("%s: can't open dev %s (%d)\n",
-			    __func__, device_xname(dv), error);
-		vput(tmpvn);
-		return NULL;
-	}
-
-	return tmpvn;
-}
-
 void
 cpu_rootconf(void)
 {
-	struct dkwedge_list wl;
-	struct dkwedge_info *wi;
-	struct vnode *vn;
-	char diskname[16];
-	int i, error;
-
 	if (booted_device == NULL) {
 		printf("FATAL: boot device not found, check your firmware "
 		    "settings!\n");
@@ -489,37 +440,10 @@ cpu_rootconf(void)
 		return;
 	}
 
-	if ((vn = opendisk(booted_device)) == NULL)
-		goto nowedge;
-
-	wl.dkwl_bufsize = sizeof(*wi) * 16;
-	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
-	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
-	VOP_CLOSE(vn, FREAD, NOCRED, 0);
-	vput(vn);
-	if (error)
-		goto nowedge2;
-
-	snprintf(diskname, sizeof(diskname), "%s%c",
-	    device_xname(booted_device),
-	    booted_partition + 'a');
-
-	for (i = 0; i < wl.dkwl_ncopied; i++) {
-		if (strcmp(wi[i].dkw_wname, diskname) == 0)
-			break;
-	}
-	if (i == wl.dkwl_ncopied)
-		goto nowedge2;
-
-	dkwedge_set_bootwedge(booted_device, wi[i].dkw_offset, wi[i].dkw_size);
-	free(wi, M_TEMP);
-	setroot(booted_wedge, 0);
-	return;
-
-nowedge2:
-	free(wi, M_TEMP);
-nowedge:
-	setroot(booted_device, booted_partition);
+	if (config_handle_wedges(booted_device, booted_partition) == 0)
+		setroot(booted_wedge, 0);
+	else
+		setroot(booted_device, booted_partition);
 }
 
 char *

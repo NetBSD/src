@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.7 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.7.26.1 2007/07/11 20:00:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ TBIA_60(void)
 static __inline void __attribute__((__unused__))
 TBIS_60(vaddr_t va)
 {
-	register vaddr_t	r_va __asm("%a0") = va;
+	register uint8_t *r_va __asm("%a0") = (void *)va;
 	int	tmp;
 
 	__asm volatile (" movc   %1, %%dfc;"	/* select supervisor	*/
@@ -145,7 +145,7 @@ DCIU_60(void)
 static __inline void __attribute__((__unused__))
 DCIAS_60(paddr_t pa)
 {
-	register paddr_t	r_pa __asm("%a0") = pa;
+	register uint8_t *r_pa __asm("%a0") = (void *)pa;
 
 	__asm volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
 }
@@ -156,69 +156,11 @@ PCIA_60(void)
 	__asm volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
-static __inline void __attribute__((__unused__))
-DCFA_60(void)
-{
-	__asm volatile (" .word 0xf478;"); /* cpusha dc */
-}
-
-/* invalidate instruction physical cache line */
-static __inline void __attribute__((__unused__))
-ICPL_60(paddr_t pa)
-{
-	register paddr_t	r_pa __asm("%a0") = pa;
-
-	__asm volatile (" .word 0xf488;" : : "a" (r_pa)); /* cinvl ic,%a0@ */
-}
-
-/* invalidate instruction physical cache page */
-static __inline void __attribute__((__unused__))
-ICPP_60(paddr_t pa)
-{
-	register paddr_t	r_pa __asm("%a0") = pa;
-
-	__asm volatile (" .word 0xf490;" : : "a" (r_pa)); /* cinvp ic,%a0@ */
-}
-
-/* invalidate data physical cache line */
-static __inline void __attribute__((__unused__))
-DCPL_60(paddr_t pa)
-{
-	register paddr_t	r_pa __asm("%a0") = pa;
-
-	__asm volatile (" .word 0xf448;" : : "a" (r_pa)); /* cinvl dc,%a0@ */
-}
-
-/* invalidate data physical cache page */
-static __inline void __attribute__((__unused__))
-DCPP_60(paddr_t pa)
-{
-	register paddr_t	r_pa __asm("%a0") = pa;
-
-	__asm volatile (" .word 0xf450;" : : "a" (r_pa)); /* cinvp dc,%a0@ */
-}
-
-/* invalidate data physical all */
-static __inline void __attribute__((__unused__))
-DCPA_60(void)
-{
-	__asm volatile (" .word 0xf458;"); /* cinva dc */
-}
-
-/* data cache flush line */
-static __inline void __attribute__((__unused__))
-DCFL_60(paddr_t pa)
-{
-	register paddr_t	r_pa __asm("%a0") = pa;
-
-	__asm volatile (" .word 0xf468;" : : "a" (r_pa)); /* cpushl dc,%a0@ */
-}
-
-/* data cache flush page */
-static __inline void __attribute__((__unused__))
-DCFP_60(paddr_t pa)
-{
-	register paddr_t	r_pa __asm("%a0") = pa;
-
-	__asm volatile (" .word 0xf470;" : : "a" (r_pa)); /* cpushp dc,%a0@ */
-}
+#define	DCFA_60()	DCFA_40()
+#define	DCPA_60()	DCPA_40()
+#define	ICPL_60(pa)	ICPL_40(pa)
+#define	ICPP_60(pa)	ICPP_40(pa)
+#define	DCPL_60(pa)	DCPL_40(pa)
+#define	DCPP_60(pa)	DCPP_40(pa)
+#define	DCFL_60(pa)	DCFL_40(pa)
+#define	DCFP_60(pa)	DCFP_40(pa)

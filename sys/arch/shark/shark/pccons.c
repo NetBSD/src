@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.30 2007/03/08 20:48:40 matt Exp $       */
+/*      $NetBSD: pccons.c,v 1.30.4.1 2007/07/11 20:02:15 mjf Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30 2007/03/08 20:48:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30.4.1 2007/07/11 20:02:15 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -299,7 +299,7 @@ struct pc_softc
     } vs;
 };
 
-static struct callout async_update_ch = CALLOUT_INITIALIZER;
+static callout_t async_update_ch;
 
 /*
 ** Forward routine declarations
@@ -1561,7 +1561,7 @@ pcintr(void *arg)
 **           Meaning           | DDDLLLLLLLLLLLLLGGGGGGGGCCCCCCCC
 **
 **           D - Command direction, in/out/both.
-**           L - Command arguement length.
+**           L - Command argument length.
 **           G - Command group, 't' used for tty.
 **           C - Actual command enumeration.
 ** 
@@ -2044,6 +2044,8 @@ void
 pccninit(struct consdev *cp)
 {
     int                s = splhigh();
+
+    callout_init(&async_update_ch, 0);
 
     actingConsole = true;
     if (I8042_MAP(bootSoftc.kbd.sc_iot, CONKBDADDR, bootSoftc.kbd.sc_ioh))

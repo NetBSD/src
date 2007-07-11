@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.21 2007/03/04 06:00:13 christos Exp $ */
+/* $NetBSD: sbscn.c,v 1.21.4.1 2007/07/11 20:00:53 mjf Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.21 2007/03/04 06:00:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.21.4.1 2007/07/11 20:00:53 mjf Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -326,7 +326,7 @@ sbscn_attach_channel(struct sbscn_softc *sc, int chan, int intr)
 	ch->ch_o_mask = ch->ch_o_dtr | ch->ch_o_rts;
 
 	ch->ch_intrhand = cpu_intr_establish(intr, IPL_SERIAL, sbscn_intr, ch);
-	callout_init(&ch->ch_diag_callout);
+	callout_init(&ch->ch_diag_callout, 0);
 
 	/* Disable interrupts before configuring the device. */
 	ch->ch_imr = 0;

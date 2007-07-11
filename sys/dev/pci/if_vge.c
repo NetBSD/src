@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.34 2007/03/04 06:02:23 christos Exp $ */
+/* $NetBSD: if_vge.c,v 1.34.4.1 2007/07/11 20:07:44 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.34 2007/03/04 06:02:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.34.4.1 2007/07/11 20:07:44 mjf Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -207,7 +207,7 @@ struct vge_softc {
 	int			sc_if_flags;
 	int			sc_link;
 	int			sc_camidx;
-	struct callout		sc_timeout;
+	callout_t		sc_timeout;
 
 	bus_dmamap_t		sc_cddmamap;
 #define sc_cddma		sc_cddmamap->dm_segs[0].ds_addr
@@ -1069,7 +1069,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-	callout_init(&sc->sc_timeout);
+	callout_init(&sc->sc_timeout, 0);
 	callout_setfunc(&sc->sc_timeout, vge_tick, sc);
 
 	/*
@@ -1793,6 +1793,7 @@ vge_init(struct ifnet *ifp)
 
 	/* Initialize the RX descriptors and mbufs. */
 	memset(sc->sc_rxdescs, 0, sizeof(sc->sc_rxdescs));
+	sc->sc_rx_consumed = 0;
 	for (i = 0; i < VGE_NRXDESC; i++) {
 		if (vge_newbuf(sc, i, NULL) == ENOBUFS) {
 			aprint_error("%s: unable to allocate or map "
@@ -1801,7 +1802,6 @@ vge_init(struct ifnet *ifp)
 		}
 	}
 	sc->sc_rx_prodidx = 0;
-	sc->sc_rx_consumed = 0;
 	sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 
 	/* Initialize the  TX descriptors and mbufs. */

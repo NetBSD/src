@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.816 2007/03/10 10:54:53 bouyer Exp $
+# $NetBSD: GENERIC,v 1.816.4.1 2007/07/11 19:59:45 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.816 $"
+#ident 		"GENERIC-$Revision: 1.816.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -54,6 +54,9 @@ options 	POWERNOW_K8
 
 # VIA PadLock
 #options	VIA_PADLOCK
+
+# Intel(R) On Demand Clock Modulation (aka ODCM)
+# options 	INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -145,6 +148,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -244,7 +248,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
@@ -343,6 +346,7 @@ acpi0 		at mainbus0
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
+apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
@@ -351,6 +355,7 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
+aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
 attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
@@ -361,6 +366,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -534,6 +540,10 @@ wsmouse*	at pms? mux 0
 #options 	VESAFB_PM		# power management support
 #wsdisplay*	at vesafb? console ?
 
+# VIA Unichrome framebuffer console
+#unichromefb* 	at pci? dev ? function ?
+#wsdisplay* 	at unichromefb?
+
 attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
@@ -555,7 +565,7 @@ pcmcom* at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? function ?	# Modems and serial cards
+com*	at cardbus? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -599,6 +609,12 @@ lpt2	at isa? port 0x3bc
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
+
+# NVIDIA nForce2/3/4 SMBus controller
+nfsmbc*	at pci? dev ? function ?
+nfsmb*	at nfsmbc?
+iic*	at nfsmb?
+
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E		# Tyan S2882-D
@@ -613,9 +629,15 @@ iic*	at piixpm?			# SMBus on PIIX4
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
+# SMSC LPC47B397 hardware monitor functions
+#smsc0	at isa? port 0x02e
+
 # PC87366 hardware monitor
 #nsclpcsio*	at isa?
 #gpio*		at nsclpcsio?
+
+# Abit uGuru Hardware system monitor
+#ug0    at isa? port 0xe0
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 #viaenv*	at pci? dev ? function ?
@@ -693,9 +715,9 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*	at cardbus? function ?	# Adaptec ADP-1480
-#njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
+adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? function ?	# Adaptec ADP-1480
+njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -747,10 +769,13 @@ ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+gcscide* 	at pci? dev ? function ? 	# AMD CS5535 Companion IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* 	at jmide?
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -781,6 +806,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -948,14 +974,14 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
-#ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
-#atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
-#ex*	at cardbus? function ?	# 3Com 3C575TX
-#fxp*	at cardbus? function ?	# Intel i8255x
-#rtk*	at cardbus? function ?	# Realtek 8129/8139
-#ral*	at cardbus? function ?	# Ralink Technology
-#rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
-#tlp*	at cardbus? function ?	# DECchip 21143
+ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
+ex*	at cardbus? function ?	# 3Com 3C575TX
+fxp*	at cardbus? function ?	# Intel i8255x
+ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g
+rtk*	at cardbus? function ?	# Realtek 8129/8139
+rtw*	at cardbus? function ?	# Realtek 8180L (802.11)
+tlp*	at cardbus? function ?	# DECchip 21143
 
 # MCA network cards
 elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
@@ -1002,26 +1028,28 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # PCI USB controllers
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # CardBus USB controllers
-#ehci*	at cardbus? function ?	# Enhanced Host Controller
-#ohci*	at cardbus? function ?	# Open Host Controller
-#uhci*	at cardbus? function ?	# Universal Host Controller (Intel)
+ehci*	at cardbus? function ?		# Enhanced Host Controller
+ohci*	at cardbus? function ?		# Open Host Controller
+uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # USB bus support
 usb*	at ehci?
+usb*	at gcscehci?
 usb*	at ohci?
 usb*	at uhci?
 #usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -1083,6 +1111,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -1102,6 +1131,9 @@ ucom*	at umct? portno ?
 
 uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
+
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
@@ -1150,7 +1182,7 @@ irframe* at oboe?
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
 
 # CardBus IEEE1394 controllers
-#fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
+fwohci*	at cardbus? function ?	# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
@@ -1270,7 +1302,7 @@ radio* at bktr?
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
@@ -1306,6 +1338,7 @@ wsmouse*	at mms? mux 0
 # Cryptographic Devices
 
 # PCI cryptographic devices
+glxsb*	at pci? dev ? function ?	# AMD Geode LX Security Block
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
@@ -1348,6 +1381,7 @@ pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
@@ -1385,6 +1419,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL

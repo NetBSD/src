@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520reg.h,v 1.4 2007/01/26 19:42:56 dyoung Exp $	*/
+/*	$NetBSD: elan520reg.h,v 1.4.8.1 2007/07/11 20:00:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -94,6 +94,44 @@
 /*
  * PCI Host Bridge Registers
  */
+#define	MMCR_HBMSTIRQCTL	0x66	/* Host Bridge Master Interrupt Ctrl */
+#define	MMCR_M_RTRTO_IRQ_SEL	__BIT(13)	/* Master Retry Time-Out
+						 * Interrupt Select
+						 */
+#define	MMCR_M_TABRT_IRQ_SEL	__BIT(12)	/* Master Target Abort
+						 * Interrupt Select
+						 */
+#define	MMCR_M_MABRT_IRQ_SEL	__BIT(11)	/* Master Abort
+						 * Interrupt Select
+						 */
+#define	MMCR_M_SERR_IRQ_SEL	__BIT(10)	/* Master System Error
+						 * Interrupt Select
+						 */
+#define	MMCR_M_RPER_IRQ_SEL	__BIT(9)	/* Master Received PERR
+						 * Interrupt Select
+						 */
+#define	MMCR_M_DPER_IRQ_SEL	__BIT(8)	/* Master Detected PERR
+						 * Interrupt Select
+						 */
+#define	MMCR_M_RTRTO_IRQ_ENB	__BIT(5)	/* Master Retry Time-Out
+						 * Interrupt Enable
+						 */
+#define	MMCR_M_TABRT_IRQ_ENB	__BIT(4)	/* Master Target Abort
+						 * Interrupt Enable
+						 */
+#define	MMCR_M_MABRT_IRQ_ENB	__BIT(3)	/* Master Abort
+						 * Interrupt Enable
+						 */
+#define	MMCR_M_SERR_IRQ_ENB	__BIT(2)	/* Master System Error
+						 * Interrupt Enable
+						 */
+#define	MMCR_M_RPER_IRQ_ENB	__BIT(1)	/* Master Received PERR
+						 * Interrupt Enable
+						 */
+#define	MMCR_M_DPER_IRQ_ENB	__BIT(0)	/* Master Detected PERR
+						 * Interrupt Enable
+						 */
+
 #define	MMCR_PCIHOSTMAP	0x0d14	/* PCI Host Bridge Interrupt Mapping */
 
 #define	MMCR_PCIHOSTMAP_PCI_NMI_ENB	__BIT(8)

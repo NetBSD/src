@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.16 2007/03/04 21:17:54 degroote Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.16.4.1 2007/07/11 20:11:51 mjf Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.16 2007/03/04 21:17:54 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.16.4.1 2007/07/11 20:11:51 mjf Exp $");
 
 /*
  * IPsec input processing.
@@ -116,7 +116,12 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	union sockaddr_union dst_address;
 	struct secasvar *sav;
 	u_int32_t spi;
+	u_int16_t sport = 0;
+	u_int16_t dport = 0;
 	int s, error;
+#ifdef IPSEC_NAT_T
+	struct m_tag * tag = NULL;
+#endif
 
 	IPSEC_ISTAT(sproto, espstat.esps_input, ahstat.ahs_input,
 		ipcompstat.ipcomps_input);
@@ -149,7 +154,19 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		u_int16_t cpi;
 		m_copydata(m, skip + sizeof(u_int16_t), sizeof(u_int16_t), &cpi);
 		spi = ntohl(htons(cpi));
+	} else {
+		panic("ipsec_common_input called with bad protocol number :"
+		      "%d\n", sproto);
 	}
+		
+
+#ifdef IPSEC_NAT_T
+	/* find the source port for NAT-T */
+	if ((tag = m_tag_find(m, PACKET_TAG_IPSEC_NAT_T_PORTS, NULL))) {
+		sport = ((u_int16_t *)(tag + 1))[0];
+		dport = ((u_int16_t *)(tag + 1))[1];
+	}
+#endif
 
 	/*
 	 * Find the SA and (indirectly) call the appropriate
@@ -187,12 +204,12 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	s = splsoftnet();
 
 	/* NB: only pass dst since key_allocsa follows RFC2401 */
-	sav = KEY_ALLOCSA(&dst_address, sproto, spi);
+	sav = KEY_ALLOCSA(&dst_address, sproto, spi, sport, dport);
 	if (sav == NULL) {
 		DPRINTF(("ipsec_common_input: no key association found for"
-			  " SA %s/%08lx/%u\n",
+			  " SA %s/%08lx/%u/%u\n",
 			  ipsec_address(&dst_address),
-			  (u_long) ntohl(spi), sproto));
+			  (u_long) ntohl(spi), sproto, ntohs(dport)));
 		IPSEC_ISTAT(sproto, espstat.esps_notdb, ahstat.ahs_notdb,
 		    ipcompstat.ipcomps_notdb);
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.130 2007/03/09 08:59:00 he Exp $	*/
+/*	$NetBSD: fd.c,v 1.130.4.1 2007/07/11 20:02:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.130 2007/03/09 08:59:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.130.4.1 2007/07/11 20:02:19 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -611,8 +611,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	int drive_attached;
 	char code;
 
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	fdc->sc_state = DEVIDLE;
 	fdc->sc_itask = FDC_ITASK_NONE;
@@ -763,8 +763,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 
@@ -1333,15 +1333,17 @@ fdc_c_hwintr(void *arg)
 			break;
 
 		if ((msr & NE7_NDM) == 0) {
+			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			softintr_schedule(fdc->sc_sicookie);
-#ifdef FD_DEBUG
-			if (fdc_debug > 1)
-				printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
-#endif
 			break;
 		}
+
+		if (fdc->sc_tc == 0)
+			/* For some reason the controller wants to transfer
+			   more data then what we want to transfer. */
+			panic("fdc: overrun");
 
 		/* Another byte can be transferred */
 		if ((msr & NE7_DIO) != 0)
@@ -1353,10 +1355,7 @@ fdc_c_hwintr(void *arg)
 
 		fdc->sc_data++;
 		if (--fdc->sc_tc == 0) {
-			fdc->sc_istatus = FDC_ISTATUS_DONE;
 			FTC_FLIP;
-			fdcresult(fdc);
-			softintr_schedule(fdc->sc_sicookie);
 			break;
 		}
 	}

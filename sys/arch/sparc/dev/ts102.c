@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.7 2006/03/06 21:43:29 macallan Exp $ */
+/*	$NetBSD: ts102.c,v 1.7.26.1 2007/07/11 20:02:21 mjf Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -146,7 +146,7 @@ struct	tslot_softc {
 
 	pcmcia_chipset_tag_t sc_pct;
 
-	struct proc	*sc_thread;	/* event thread */
+	lwp_t		*sc_thread;	/* event thread */
 	uint32_t	sc_events;	/* sockets with pending events */
 
 	/* bits 0 and 1 are set according to card presence in slot 0 and 1 */
@@ -156,7 +156,6 @@ struct	tslot_softc {
 };
 
 static void tslot_attach(struct device *, struct device *, void *);
-static void tslot_create_event_thread(void *);
 static void tslot_event_thread(void *);
 static int  tslot_intr(void *);
 static void tslot_intr_disestablish(pcmcia_chipset_handle_t, void *);
@@ -356,7 +355,13 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 	 * Setup asynchronous event handler
 	 */
 	sc->sc_events = 0;
-	kthread_create(tslot_create_event_thread, sc);
+
+	TSPRINTF("starting event thread...\n");
+	if (kthread_create(PRI_NONE, 0, NULL, tslot_event_thread, sc,
+	    &sc->sc_thread, "%s", self->dv_xname) != 0) {
+		panic("%s: unable to create event kthread",
+		    self->dv_xname);
+	}
 
 	sc->sc_pct = (pcmcia_chipset_tag_t)&tslot_functions;
 	sc->sc_active = 0;
@@ -719,23 +724,6 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 		return;
 	}
 }
-
-/*
- * Event management
- */
-static void
-tslot_create_event_thread(void *v)
-{
-	struct tslot_softc *sc = v;
-	const char *name = sc->sc_dev.dv_xname;
-
-	TSPRINTF("starting event thread...\n");
-	if (kthread_create1(tslot_event_thread, sc, &sc->sc_thread, "%s",
-	    name) != 0) {
-		panic("%s: unable to create event kthread", name);
-	}
-}
-
 static void
 tslot_event_thread(void *v)
 {

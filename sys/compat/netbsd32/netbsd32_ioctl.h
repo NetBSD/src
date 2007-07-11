@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.19 2007/03/04 07:54:08 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.19.4.1 2007/07/11 20:04:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -48,8 +48,8 @@
 #endif
 
 /* from <sys/dkio.h> */
-typedef int32_t netbsd32_disklabel_tp_t;
-typedef int32_t netbsd32_partition_tp_t;
+typedef netbsd32_pointer_t netbsd32_disklabel_tp_t;
+typedef netbsd32_pointer_t netbsd32_partition_tp_t;
 struct netbsd32_partinfo {
 	netbsd32_disklabel_tp_t disklab;
 	netbsd32_partition_tp_t part;

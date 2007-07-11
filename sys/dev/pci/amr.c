@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.44 2007/03/04 06:02:16 christos Exp $	*/
+/*	$NetBSD: amr.c,v 1.44.4.1 2007/07/11 20:06:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.44 2007/03/04 06:02:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.44.4.1 2007/07/11 20:06:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ static int	amr_print(void *, const char *);
 static void	amr_shutdown(void *);
 static void	amr_teardown(struct amr_softc *);
 static void	amr_thread(void *);
-static void	amr_thread_create(void *);
 
 static int	amr_quartz_get_work(struct amr_softc *,
 				    struct amr_mailbox_resp *);
@@ -491,8 +490,15 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INIT(&amr->amr_ccb_queue);
 
 	/* XXX This doesn't work for newer boards yet. */
-	if ((apt->apt_flags & AT_QUARTZ) == 0)
-		kthread_create(amr_thread_create, amr);
+	if ((apt->apt_flags & AT_QUARTZ) == 0) {
+		rv = kthread_create(PRI_NONE, 0, NULL, amr_thread, amr,
+		    &amr->amr_thread, "%s", amr->amr_dv.dv_xname);
+ 		if (rv != 0)
+			aprint_error("%s: unable to create thread (%d)",
+ 			    amr->amr_dv.dv_xname, rv);
+ 		else
+ 			amr->amr_flags |= AMRF_THREAD;
+	}
 }
 
 /*
@@ -810,32 +816,6 @@ amr_intr(void *cookie)
 		amr_ccb_enqueue(amr, NULL);
 
 	return (forus);
-}
-
-/*
- * Create the watchdog thread.
- */
-static void
-amr_thread_create(void *cookie)
-{
-	struct amr_softc *amr;
-	int rv;
-
-	amr = cookie;
-
-	if ((amr->amr_flags & AMRF_THREAD_EXIT) != 0) {
-		amr->amr_flags ^= AMRF_THREAD_EXIT;
-		wakeup(&amr->amr_flags);
-		return;
-	}
-
-	rv = kthread_create1(amr_thread, amr, &amr->amr_thread, "%s",
-	    amr->amr_dv.dv_xname);
- 	if (rv != 0)
-		aprint_error("%s: unable to create thread (%d)",
- 		    amr->amr_dv.dv_xname, rv);
- 	else
- 		amr->amr_flags |= AMRF_THREAD;
 }
 
 /*

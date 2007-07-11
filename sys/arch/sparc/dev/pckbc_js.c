@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.13 2005/11/16 01:39:27 uwe Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.13.32.1 2007/07/11 20:02:20 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.13 2005/11/16 01:39:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.13.32.1 2007/07/11 20:02:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 		t->t_ioh_c = ioh_c;
 		t->t_addr = ioaddr;
 		t->t_cmdbyte = KC8_CPU; /* initial command: enable ports */
-		callout_init(&t->t_cleanup);
+		callout_init(&t->t_cleanup, 0);
 
 		(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT); /* flush */
 

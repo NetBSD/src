@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.37 2007/03/04 06:03:27 christos Exp $	*/
+/*	$NetBSD: mld6.c,v 1.37.4.1 2007/07/11 20:11:47 mjf Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.37 2007/03/04 06:03:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.37.4.1 2007/07/11 20:11:47 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -189,8 +189,7 @@ mld_init()
 }
 
 static void
-mld_starttimer(in6m)
-	struct in6_multi *in6m;
+mld_starttimer(struct in6_multi *in6m)
 {
 	struct timeval now;
 
@@ -209,8 +208,7 @@ mld_starttimer(in6m)
 }
 
 static void
-mld_stoptimer(in6m)
-	struct in6_multi *in6m;
+mld_stoptimer(struct in6_multi *in6m)
 {
 	if (in6m->in6m_timer == IN6M_TIMER_UNDEF)
 		return;
@@ -221,8 +219,7 @@ mld_stoptimer(in6m)
 }
 
 static void
-mld_timeo(in6m)
-	struct in6_multi *in6m;
+mld_timeo(struct in6_multi *in6m)
 {
 	int s = splsoftnet();
 
@@ -243,8 +240,7 @@ mld_timeo(in6m)
 }
 
 static u_long
-mld_timerresid(in6m)
-	struct in6_multi *in6m;
+mld_timerresid(struct in6_multi *in6m)
 {
 	struct timeval now, diff;
 
@@ -268,8 +264,7 @@ mld_timerresid(in6m)
 }
 
 static void
-mld_start_listening(in6m)
-	struct in6_multi *in6m;
+mld_start_listening(struct in6_multi *in6m)
 {
 	struct in6_addr all_in6;
 
@@ -301,8 +296,7 @@ mld_start_listening(in6m)
 }
 
 static void
-mld_stop_listening(in6m)
-	struct in6_multi *in6m;
+mld_stop_listening(struct in6_multi *in6m)
 {
 	struct in6_addr allnode, allrouter;
 
@@ -326,9 +320,7 @@ mld_stop_listening(in6m)
 }
 
 void
-mld_input(m, off)
-	struct mbuf *m;
-	int off;
+mld_input(struct mbuf *m, int off)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct mld_hdr *mldh;
@@ -497,10 +489,8 @@ mld_input(m, off)
 }
 
 static void
-mld_sendpkt(in6m, type, dst)
-	struct in6_multi *in6m;
-	int type;
-	const struct in6_addr *dst;
+mld_sendpkt(struct in6_multi *in6m, int type, 
+	const struct in6_addr *dst)
 {
 	struct mbuf *mh;
 	struct mld_hdr *mldh;
@@ -620,10 +610,8 @@ mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
  * Add an address to the list of IP6 multicast addresses for a given interface.
  */
 struct	in6_multi *
-in6_addmulti(maddr6, ifp, errorp, timer)
-	struct in6_addr *maddr6;
-	struct ifnet *ifp;
-	int *errorp, timer;
+in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, 
+	int *errorp, int timer)
 {
 	struct	in6_ifaddr *ia;
 	struct	in6_ifreq ifr;
@@ -700,7 +688,7 @@ in6_addmulti(maddr6, ifp, errorp, timer)
 			return (NULL);
 		}
 
-		callout_init(in6m->in6m_timer_ch);
+		callout_init(in6m->in6m_timer_ch, 0);
 		in6m->in6m_timer = timer;
 		if (in6m->in6m_timer > 0) {
 			in6m->in6m_state = MLD_REPORTPENDING;
@@ -724,8 +712,7 @@ in6_addmulti(maddr6, ifp, errorp, timer)
  * Delete a multicast address record.
  */
 void
-in6_delmulti(in6m)
-	struct in6_multi *in6m;
+in6_delmulti(struct in6_multi *in6m)
 {
 	struct	in6_ifreq ifr;
 	struct	in6_ifaddr *ia;
@@ -779,10 +766,8 @@ in6_delmulti(in6m)
 
 
 struct in6_multi_mship *
-in6_joingroup(ifp, addr, errorp, timer)
-	struct ifnet *ifp;
-	struct in6_addr *addr;
-	int *errorp, timer;
+in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, 
+	int *errorp, int timer)
 {
 	struct in6_multi_mship *imm;
 
@@ -803,8 +788,7 @@ in6_joingroup(ifp, addr, errorp, timer)
 }
 
 int
-in6_leavegroup(imm)
-	struct in6_multi_mship *imm;
+in6_leavegroup(struct in6_multi_mship *imm)
 {
 
 	if (imm->i6mm_maddr) {
@@ -822,8 +806,7 @@ in6_leavegroup(imm)
  * such time as this interface is reconfigured for IPv6.
  */
 void
-in6_savemkludge(oia)
-	struct in6_ifaddr *oia;
+in6_savemkludge(struct in6_ifaddr *oia)
 {
 	struct in6_ifaddr *ia;
 	struct in6_multi *in6m;
@@ -863,9 +846,7 @@ in6_savemkludge(oia)
  * then we re-attach it to the first address configured on the i/f.
  */
 void
-in6_restoremkludge(ia, ifp)
-	struct in6_ifaddr *ia;
-	struct ifnet *ifp;
+in6_restoremkludge(struct in6_ifaddr *ia, struct ifnet *ifp)
 {
 	struct multi6_kludge *mk;
 	struct in6_multi *in6m;
@@ -896,8 +877,7 @@ in6_restoremkludge(ia, ifp)
  * it is a global function.
  */
 void
-in6_createmkludge(ifp)
-	struct ifnet *ifp;
+in6_createmkludge(struct ifnet *ifp)
 {
 	struct multi6_kludge *mk;
 
@@ -916,8 +896,7 @@ in6_createmkludge(ifp)
 }
 
 void
-in6_purgemkludge(ifp)
-	struct ifnet *ifp;
+in6_purgemkludge(struct ifnet *ifp)
 {
 	struct multi6_kludge *mk;
 	struct in6_multi *in6m, *next;

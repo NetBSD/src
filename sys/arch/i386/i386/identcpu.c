@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.58 2007/03/09 14:15:34 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.58.4.1 2007/07/11 19:59:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58 2007/03/09 14:15:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58.4.1 2007/07/11 19:59:59 mjf Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
+#include "opt_intel_odcm.h"
 #include "opt_powernow_k7.h"
 #include "opt_powernow_k8.h"
 
@@ -54,14 +55,17 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.58 2007/03/09 14:15:34 ad Exp $");
 #include <machine/pio.h>
 #include <machine/cpu.h>
 #include <x86/cacheinfo.h>
-#include <x86/include/cpuvar.h>
-#include <x86/include/powernow.h>
+#include <x86/cpuvar.h>
+#include <x86/cpu_msr.h>
+#include <x86/powernow.h>
 
 static const struct x86_cache_info
 intel_cpuid_cache_info[] = {
 	{ CAI_ITLB, 	0x01,	 4, 32,        4 * 1024, NULL },
+	{ CAI_ITLB,     0xb0,    4,128,        4 * 1024, NULL },
 	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024, NULL },
 	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024, NULL },
+	{ CAI_DTLB,     0xb3,    4,128,        4 * 1024, NULL },
 	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024, NULL },
 	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
 	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
@@ -97,6 +101,7 @@ intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x86,  4,      512 * 1024, 64, NULL },
 	{ 0,               0,  0,	        0,  0, NULL },
 };
 
@@ -152,11 +157,6 @@ static const char *intel_family6_name(struct cpu_info *);
 static const char *amd_amd64_name(struct cpu_info *);
 
 static void transmeta_cpu_info(struct cpu_info *);
-
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
-void p3_get_bus_clock(struct cpu_info *);
-void p4_get_bus_clock(struct cpu_info *);
-#endif
 
 static inline u_char
 cyrix_read_reg(u_char reg)
@@ -265,11 +265,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			NULL,
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
-			p3_get_bus_clock,
-#else
 			NULL,
-#endif
 		},
 		/* Family > 6 */
 		{
@@ -281,11 +277,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			NULL,
 			intel_family_new_probe,
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP))
-			p4_get_bus_clock,
-#else
 			NULL,
-#endif
 		} }
 	},
 	{
@@ -430,7 +422,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			cyrix6x86_cpu_setup,
 			NULL,
-			NULL,
+			amd_cpu_cacheinfo,
 		},
 		/* Family 6, not yet available from NSC */
 		{
@@ -491,7 +483,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, "C3 Samuel",
 				"C3 Samuel 2/Ezra", "C3 Ezra-T",
-				"C3 Nehemiah", 0, 0, 0, 0, 0, 0,
+				"C3 Nehemiah", "C7 Esther", 0, 0, 0, 0, 0,
 				"C3"	/* Default */
 			},
 			NULL,
@@ -620,7 +612,13 @@ cyrix6x86_cpu_setup(ci)
 	 * so this should really be optional. XXX
 	 */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
-	disable_tsc(ci);
+
+	/* 
+	 * Do not disable the TSC on the Geode GX, it's reported to
+	 * work fine.
+	 */
+	if (ci->ci_signature != 0x552)
+		disable_tsc(ci);
 
 	/* enable access to ccr4/ccr5 */
 	c3 = cyrix_read_reg(0xC3);
@@ -673,20 +671,24 @@ via_cpu_probe(struct cpu_info *ci)
 		ci->ci_feature_flags |= descs[3];
 	}
 
-	if (model >= 0x9) {
-		/* Nehemiah or Esther */
-		CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
-		lfunc = descs[0];
-		if (lfunc == 0xc0000001) {
-			CPUID(lfunc, descs[0], descs[1], descs[2], descs[3]);
-			lfunc = descs[3];
-			if (model > 0x9 || stepping >= 8) {	/* ACE */
-				if ((lfunc & 0xc0) == 0xc0) {
-					ci->ci_padlock_flags |= CPUID_FEAT_VACE;
-					msr = rdmsr(MSR_VIA_ACE);
-					wrmsr(MSR_VIA_ACE,
-					    msr | MSR_VIA_ACE_ENABLE);
-				}
+	if (model < 0x9)
+		return;
+
+	/* Nehemiah or Esther */
+	CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[0];
+	if (lfunc < 0xc0000001)	/* no ACE, no RNG */
+		return;
+
+	CPUID(0xc0000001, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[3];
+	if (model > 0x9 || stepping >= 8) {	/* ACE */
+		if (lfunc & CPUID_VIA_HAS_ACE) {
+			ci->ci_padlock_flags = lfunc;
+			if ((lfunc & CPUID_VIA_DO_ACE) == 0) {
+				msr = rdmsr(MSR_VIA_ACE);
+				wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
+				ci->ci_padlock_flags |= CPUID_VIA_DO_ACE;
 			}
 		}
 	}
@@ -853,8 +855,10 @@ amd_amd64_name(struct cpu_info *ci)
 				break;
 			case 0x2:	/* rev BH-E4 (Manchester) */
 			case 0x4:	/* rev BH-F2 (Windsor) */
-			case 0x6:	/* rev BH-G1 (Brisbane) */
 				ret = "Athlon 64 X2";
+				break;
+			case 0x6:	/* rev BH-G1 (Brisbane) */
+				ret = "Athlon X2 or Athlon 64 X2";
 				break;
 			}
 			break;
@@ -862,10 +866,8 @@ amd_amd64_name(struct cpu_info *ci)
 			switch (extmodel) {
 			case 0x0:	/* rev DH-CG (Newcastle) */
 			case 0x1:	/* rev DH-D0 (Winchester) */
-				ret = "Athlon 64 or Sempron";
-				break;
 			case 0x2:	/* rev DH-E3/E6 */
-				ret = "Sempron";
+				ret = "Athlon 64 or Sempron";
 				break;
 			}
 			break;
@@ -883,6 +885,7 @@ amd_amd64_name(struct cpu_info *ci)
 			case 0x2:	/* rev DH-E3/E6 (Venice/Palermo) */
 			case 0x4:	/* rev DH-F2 (Orleans/Manila) */
 			case 0x5:	/* rev DH-F2 (Orleans/Manila) */
+			case 0x6:	/* rev DH-G1 */
 				ret = "Athlon 64 or Sempron";
 				break;
 			}
@@ -1088,153 +1091,6 @@ amd_family5_setup(struct cpu_info *ci)
 	}
 }
 
-
-#if (defined(I686_CPU) && defined(ENHANCED_SPEEDSTEP)) 
-void
-p3_get_bus_clock(struct cpu_info *ci)
-{
-	uint64_t msr;
-	int model, bus;
-	char *cpuname = ci->ci_dev->dv_xname;
-
-	model = (ci->ci_signature >> 4) & 15;
-	switch (model) {
-	case 0x9: /* Pentium M (130 nm, Banias) */
-		bus_clock = 10000;
-		break;
-	case 0xd: /* Pentium M (90 nm, Dothan) */
-		msr = rdmsr(MSR_FSB_FREQ);
-		bus = (msr >> 0) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = 10000;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		default:
-			aprint_debug("%s: unknown Pentium M FSB_FREQ "
-			    "value %d", cpuname, bus);
-			goto print_msr;
-		}
-		break;
-	case 0xe: /* Core Duo/Solo */
-	case 0xf: /* Core Xeon */
-		msr = rdmsr(MSR_FSB_FREQ);
-		bus = (msr >> 0) & 0x7;
-		switch (bus) {
-		case 5:
-			bus_clock = 10000;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		case 3:
-			bus_clock = 16667;
-			break;
-		case 2:
-			bus_clock = 20000;
-			break;
-		case 0:
-			bus_clock = 26667;
-			break;
-		case 4:
-			bus_clock = 33333;
-			break;
-		default:
-			aprint_debug("%s: unknown Core FSB_FREQ value %d",
-			    cpuname, bus);
-			goto print_msr;
-		}
-		break;
-	case 0x1: /* Pentium Pro, model 1 */
-	case 0x3: /* Pentium II, model 3 */
-	case 0x5: /* Pentium II, II Xeon, Celeron, model 5 */
-	case 0x6: /* Celeron, model 6 */
-	case 0x7: /* Pentium III, III Xeon, model 7 */
-	case 0x8: /* Pentium III, III Xeon, Celeron, model 8 */
-	case 0xa: /* Pentium III Xeon, model A */
-	case 0xb: /* Pentium III, model B */
-		msr = rdmsr(MSR_EBL_CR_POWERON);
-		bus = (msr >> 18) & 0x3;
-		switch (bus) {
-		case 0:
-			bus_clock = 6666;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		case 2:
-			bus_clock = 10000;
-			break;
-		default:
-			aprint_debug("%s: unknown i686 EBL_CR_POWERON "
-			    "value %d ", cpuname, bus);
-			goto print_msr;
-		}
-		break;
-	default:
-		aprint_debug("%s: unknown i686 model %d, can't get bus clock",
-		    cpuname, model);
-print_msr:
-		/*
-		 * Show the EBL_CR_POWERON MSR, so we'll at least have
-		 * some extra information, such as clock ratio, etc.
-		 */
-		aprint_debug(" (0x%llx)\n", rdmsr(MSR_EBL_CR_POWERON));
-		break;
-	}
-}
-
-void
-p4_get_bus_clock(struct cpu_info *ci)
-{
-	uint64_t msr;
-	int model, bus;
-	char *cpuname = ci->ci_dev->dv_xname;
-
-	model = (ci->ci_signature >> 4) & 15;
-	msr = rdmsr(MSR_EBC_FREQUENCY_ID);
-	if (model < 2) {
-		bus = (msr >> 21) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = 10000;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		default:
-			aprint_debug("%s: unknown Pentium 4 (model %d) "
-			    "EBC_FREQUENCY_ID value %d\n",
-			    cpuname, model, bus);
-			break;
-		}
-	} else {
-		bus = (msr >> 16) & 0x7;
-		switch (bus) {
-		case 0:
-			bus_clock = (model == 2) ? 10000 : 26666;
-			break;
-		case 1:
-			bus_clock = 13333;
-			break;
-		case 2:
-			bus_clock = 20000;
-			break;
-		case 3:
-			bus_clock = 16666;
-			break;
-		default:
-			aprint_debug("%s: unknown Pentium 4 (model %d) "
-			    "EBC_FREQUENCY_ID value %d\n",
-			    cpuname, model, bus);
-			break;
-		}
-	}
-}
-#endif /* I686_CPU && ENHANCED_SPEEDSTEP */
-
 /*
  * Transmeta Crusoe LongRun Support by Tamotsu Hattori.
  * Port from FreeBSD-current(August, 2001) to NetBSD by tshiozak.
@@ -1357,7 +1213,6 @@ tmx86_get_longrun_status_all(void)
 	    &crusoe_voltage, &crusoe_percentage);
 }
 
-
 static void
 transmeta_cpu_info(struct cpu_info *ci)
 {
@@ -1446,8 +1301,7 @@ identifycpu(struct cpu_info *ci)
 	buf = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
-		if (cpu < 0 || cpu >=
-		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
+		if (cpu < 0 || cpu >= __arraycount(i386_nocpuid_cpus))
 			panic("unknown cpu type %d", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
@@ -1458,7 +1312,7 @@ identifycpu(struct cpu_info *ci)
 		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
 		modifier = "";
 	} else {
-		xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+		xmax = __arraycount(i386_cpuid_cpus);
 		modif = (ci->ci_signature >> 12) & 0x3;
 		family = CPUID2FAMILY(ci->ci_signature);
 		if (family < CPU_MINFAMILY)
@@ -1512,8 +1366,7 @@ identifycpu(struct cpu_info *ci)
 				}
 				if (family == CPU_MAXFAMILY &&
 				    ci->ci_brand_id <
-				    (sizeof(i386_intel_brand) /
-				     sizeof(i386_intel_brand[0])) &&
+				    __arraycount(i386_intel_brand) &&
 				    i386_intel_brand[ci->ci_brand_id])
 					name =
 					     i386_intel_brand[ci->ci_brand_id];
@@ -1626,6 +1479,12 @@ identifycpu(struct cpu_info *ci)
 		bitmask_snprintf(ci->ci_feature3_flags,
 			CPUID_FLAGS4, buf, MAXPATHLEN);
 		aprint_verbose("%s: features3 %s\n", cpuname, buf);
+	}
+
+	if (ci->ci_padlock_flags) {
+		bitmask_snprintf(ci->ci_padlock_flags,
+			CPUID_FLAGS_PADLOCK, buf, MAXPATHLEN);
+		aprint_verbose("%s: padlock features %s\n", cpuname, buf);
 	}
 
 	free(buf, M_TEMP);
@@ -1768,9 +1627,12 @@ identifycpu(struct cpu_info *ci)
 
 #ifdef ENHANCED_SPEEDSTEP
 	if (cpu_feature2 & CPUID2_EST) {
-		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
-			est_init(ci, CPUVENDOR_INTEL);
-		else
+		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16)) {
+			if (cpu_vendor == CPUVENDOR_INTEL)
+				est_init(CPUVENDOR_INTEL);
+			if (cpu_vendor == CPUVENDOR_IDT)
+				est_init(CPUVENDOR_IDT);
+		} else
 			aprint_normal("%s: Enhanced SpeedStep disabled by BIOS\n",
 			    cpuname);
 	}
@@ -1795,6 +1657,10 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* POWERNOW_K7 || POWERNOW_K8 */
 
+#ifdef INTEL_ONDEMAND_CLOCKMOD
+	clockmod_init();
+#endif
 	x86_errata(ci, cpu_vendor);
 	x86_patch();
+
 }

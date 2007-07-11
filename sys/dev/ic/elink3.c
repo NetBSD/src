@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.121 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.121.4.1 2007/07/11 20:05:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.121 2007/03/04 06:01:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.121.4.1 2007/07/11 20:05:46 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -348,8 +348,8 @@ epconfig(sc, chipset, enaddr)
 	u_int16_t i;
 	u_int8_t myla[ETHER_ADDR_LEN];
 
-	callout_init(&sc->sc_mii_callout);
-	callout_init(&sc->sc_mbuf_callout);
+	callout_init(&sc->sc_mii_callout, 0);
+	callout_init(&sc->sc_mbuf_callout, 0);
 
 	sc->ep_chipset = chipset;
 

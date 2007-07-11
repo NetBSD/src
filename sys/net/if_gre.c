@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.88 2007/03/04 06:03:16 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.88.4.1 2007/07/11 20:10:56 mjf Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.4.1 2007/07/11 20:10:56 mjf Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -72,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88 2007/03/04 06:03:16 christos Exp $")
 #include <sys/kauth.h>
 #endif
 
+#include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/kthread.h>
 
 #include <machine/cpu.h>
@@ -106,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88 2007/03/04 06:03:16 christos Exp $")
 
 #include <net/if_gre.h>
 
+#include <compat/sys/sockio.h>
 /*
  * It is not easy to calculate the right value for a GRE MTU.
  * We leave this task to the admin and use the same default that
@@ -138,38 +142,35 @@ static int	gre_ioctl(struct ifnet *, u_long, void *);
 
 static int	gre_compute_route(struct gre_softc *sc);
 
+static void gre_closef(struct file **, struct lwp *);
 static int gre_getsockname(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getpeername(struct socket *, struct mbuf *, struct lwp *);
 static int gre_getnames(struct socket *, struct lwp *, struct sockaddr_in *,
     struct sockaddr_in *);
 
+/* Calling thread must hold sc->sc_mtx. */
 static void
-gre_stop(volatile int *running)
+gre_stop(struct gre_softc *sc)
 {
-	*running = 0;
-	wakeup(running);
+	sc->sc_running = 0;
+	cv_signal(&sc->sc_join_cv);
 }
 
+/* Calling thread must hold sc->sc_mtx. */
 static void
-gre_join(volatile int *running)
+gre_join(struct gre_softc *sc)
 {
-	int s;
-
-	s = splnet();
-	while (*running != 0) {
-		splx(s);
-		tsleep(running, PSOCK, "grejoin", 0);
-		s = splnet();
-	}
-	splx(s);
+	while (sc->sc_running != 0)
+		cv_wait(&sc->sc_join_cv, &sc->sc_mtx);
 }
 
+/* Calling thread must hold sc->sc_mtx. */
 static void
 gre_wakeup(struct gre_softc *sc)
 {
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-	sc->sc_waitchan = 1;
-	wakeup(&sc->sc_waitchan);
+	sc->sc_haswork = 1;
+	cv_signal(&sc->sc_work_cv);
 }
 
 static int
@@ -179,6 +180,10 @@ gre_clone_create(struct if_clone *ifc, int unit)
 
 	sc = malloc(sizeof(struct gre_softc), M_DEVBUF, M_WAITOK);
 	memset(sc, 0, sizeof(struct gre_softc));
+	mutex_init(&sc->sc_mtx, MUTEX_DRIVER, IPL_NET);
+	cv_init(&sc->sc_work_cv, "gre work");
+	cv_init(&sc->sc_join_cv, "gre join");
+	cv_init(&sc->sc_soparm_cv, "gre soparm");
 
 	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
 	    ifc->ifc_name, unit);
@@ -208,26 +213,23 @@ gre_clone_create(struct if_clone *ifc, int unit)
 static int
 gre_clone_destroy(struct ifnet *ifp)
 {
-	int s;
 	struct gre_softc *sc = ifp->if_softc;
 
 	LIST_REMOVE(sc, sc_list);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	s = splnet();
-	ifp->if_flags &= ~IFF_UP;
-	gre_wakeup(sc);
-	splx(s);
-	gre_join(&sc->sc_thread);
-	s = splnet();
-	rtcache_free(&sc->route);
 	if_detach(ifp);
-	splx(s);
-	if (sc->sc_fp != NULL) {
-		closef(sc->sc_fp, curlwp);
-		sc->sc_fp = NULL;
-	}
+	mutex_enter(&sc->sc_mtx);
+	gre_wakeup(sc);
+	gre_join(sc);
+	mutex_exit(&sc->sc_mtx);
+	rtcache_free(&sc->route);
+
+	cv_destroy(&sc->sc_soparm_cv);
+	cv_destroy(&sc->sc_join_cv);
+	cv_destroy(&sc->sc_work_cv);
+	mutex_destroy(&sc->sc_mtx);
 	free(sc, M_DEVBUF);
 
 	return 0;
@@ -299,7 +301,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 
 	so = *sop;
 
-	gre_upcall_add(so, (void *)sc);
+	gre_upcall_add(so, sc);
 	if ((m = gre_getsockmbuf(so)) == NULL) {
 		rc = ENOBUFS;
 		goto out;
@@ -357,18 +359,19 @@ out:
 static void
 gre_thread1(struct gre_softc *sc, struct lwp *l)
 {
-	int flags, rc, s;
+	int flags, rc;
 	const struct gre_h *gh;
 	struct ifnet *ifp = &sc->sc_if;
 	struct mbuf *m;
 	struct socket *so = NULL;
 	struct uio uio;
 	struct gre_soparm sp;
+	struct file *fp = NULL;
 
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-	s = splnet();
+	mutex_enter(&sc->sc_mtx);
 
-	sc->sc_waitchan = 1;
+	sc->sc_haswork = 1;
 
 	memset(&sp, 0, sizeof(sp));
 	memset(&uio, 0, sizeof(uio));
@@ -376,13 +379,11 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 	ifp->if_flags |= IFF_RUNNING;
 
 	for (;;) {
-		while (sc->sc_waitchan == 0) {
-			splx(s);
+		while (sc->sc_haswork == 0) {
 			GRE_DPRINTF(sc, "%s: sleeping\n", __func__);
-			tsleep(&sc->sc_waitchan, PSOCK, "grewait", 0);
-			s = splnet();
+			cv_wait(&sc->sc_work_cv, &sc->sc_mtx);
 		}
-		sc->sc_waitchan = 0;
+		sc->sc_haswork = 0;
 		GRE_DPRINTF(sc, "%s: awake\n", __func__);
 		if ((ifp->if_flags & IFF_UP) != IFF_UP) {
 			GRE_DPRINTF(sc, "%s: not up & running; exiting\n",
@@ -394,24 +395,26 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			break;
 		}
 		/* XXX optimize */ 
-		if (so == NULL || memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0){
+		if (so == NULL || sc->sc_fp != NULL ||
+		    memcmp(&sp, &sc->sc_soparm, sizeof(sp)) != 0) {
 			GRE_DPRINTF(sc, "%s: parameters changed\n", __func__);
 
-			if (sp.sp_fp != NULL) {
-				FILE_UNUSE(sp.sp_fp, NULL);
-				sp.sp_fp = NULL;
+			if (fp != NULL) {
+				gre_closef(&fp, curlwp);
 				so = NULL;
 			} else if (so != NULL)
 				gre_sodestroy(&so);
 
 			if (sc->sc_fp != NULL) {
-				so = (struct socket *)sc->sc_fp->f_data;
-				gre_upcall_add(so, (void *)sc);
+				fp = sc->sc_fp;
+				sc->sc_fp = NULL;
+				so = (struct socket *)fp->f_data;
+				gre_upcall_add(so, sc);
 				sp = sc->sc_soparm;
-				FILE_USE(sp.sp_fp);
 			} else if (gre_socreate1(sc, l, &sp, &so) != 0)
 				goto out;
 		}
+		cv_signal(&sc->sc_soparm_cv);
 		for (;;) {
 			flags = MSG_DONTWAIT;
 			uio.uio_resid = 1000000;
@@ -439,10 +442,9 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			}
 			gh = mtod(m, const struct gre_h *);
 
-			if (gre_input3(sc, m, 0, IPPROTO_GRE, gh) == 0) {
+			if (gre_input3(sc, m, 0, gh, 1) == 0) {
 				GRE_DPRINTF(sc, "%s: dropping unsupported\n",
 				    __func__);
-				ifp->if_ierrors++;
 				m_freem(m);
 			}
 		}
@@ -463,32 +465,26 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 				GRE_DPRINTF(sc, "%s: so_send failed\n",
 				    __func__);
 		}
-		/* Give the software interrupt queues a chance to
-		 * run, or else when I send a ping from gre0 to gre1 on
-		 * the same host, gre0 will not wake for the reply.
-		 */
-		splx(s);
-		s = splnet();
 	}
-	if (sp.sp_fp != NULL) {
+	if (fp != NULL) {
 		GRE_DPRINTF(sc, "%s: removing upcall\n", __func__);
 		gre_upcall_remove(so);
-		FILE_UNUSE(sp.sp_fp, NULL);
-		sp.sp_fp = NULL;
 	} else if (so != NULL)
 		gre_sodestroy(&so);
 out:
 	GRE_DPRINTF(sc, "%s: stopping\n", __func__);
+	if (fp != NULL)
+		gre_closef(&fp, curlwp);
 	if (sc->sc_proto == IPPROTO_UDP)
 		ifp->if_flags &= ~IFF_RUNNING;
 	while (!IF_IS_EMPTY(&sc->sc_snd)) {
 		IF_DEQUEUE(&sc->sc_snd, m);
 		m_freem(m);
 	}
-	gre_stop(&sc->sc_thread);
+	gre_stop(sc);
 	/* must not touch sc after this! */
 	GRE_DPRINTF(sc, "%s: restore ipl\n", __func__);
-	splx(s);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static void
@@ -501,70 +497,67 @@ gre_thread(void *arg)
 	kthread_exit(0);
 }
 
+/* Calling thread must hold sc->sc_mtx. */
 int
-gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
-    const struct gre_h *gh)
+gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen,
+    const struct gre_h *gh, int mtx_held)
 {
 	u_int16_t flags;
 #if NBPFILTER > 0
 	u_int32_t af = AF_INET;		/* af passed to BPF tap */
 #endif
-	int s, isr;
+	int isr;
 	struct ifqueue *ifq;
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-	switch (proto) {
-	case IPPROTO_GRE:
-		hlen += sizeof(struct gre_h);
+	hlen += sizeof(struct gre_h);
 
-		/* process GRE flags as packet can be of variable len */
-		flags = ntohs(gh->flags);
+	/* process GRE flags as packet can be of variable len */
+	flags = ntohs(gh->flags);
 
-		/* Checksum & Offset are present */
-		if ((flags & GRE_CP) | (flags & GRE_RP))
-			hlen += 4;
-		/* We don't support routing fields (variable length) */
-		if (flags & GRE_RP)
-			return 0;
-		if (flags & GRE_KP)
-			hlen += 4;
-		if (flags & GRE_SP)
-			hlen += 4;
+	/* Checksum & Offset are present */
+	if ((flags & GRE_CP) | (flags & GRE_RP))
+		hlen += 4;
+	/* We don't support routing fields (variable length) */
+	if (flags & GRE_RP) {
+		sc->sc_if.if_ierrors++;
+		return 0;
+	}
+	if (flags & GRE_KP)
+		hlen += 4;
+	if (flags & GRE_SP)
+		hlen += 4;
 
-		switch (ntohs(gh->ptype)) { /* ethertypes */
-		case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
-			ifq = &ipintrq;          /* we are in ip_input */
-			isr = NETISR_IP;
-			break;
+	switch (ntohs(gh->ptype)) { /* ethertypes */
+	case ETHERTYPE_IP: /* shouldn't need a schednetisr(), as */
+		ifq = &ipintrq;          /* we are in ip_input */
+		isr = NETISR_IP;
+		break;
 #ifdef NETATALK
-		case ETHERTYPE_ATALK:
-			ifq = &atintrq1;
-			isr = NETISR_ATALK;
+	case ETHERTYPE_ATALK:
+		ifq = &atintrq1;
+		isr = NETISR_ATALK;
 #if NBPFILTER > 0
-			af = AF_APPLETALK;
+		af = AF_APPLETALK;
 #endif
-			break;
+		break;
 #endif
 #ifdef INET6
-		case ETHERTYPE_IPV6:
-			GRE_DPRINTF(sc, "%s: IPv6 packet\n", __func__);
-			ifq = &ip6intrq;
-			isr = NETISR_IPV6;
+	case ETHERTYPE_IPV6:
+		GRE_DPRINTF(sc, "%s: IPv6 packet\n", __func__);
+		ifq = &ip6intrq;
+		isr = NETISR_IPV6;
 #if NBPFILTER > 0
-			af = AF_INET6;
+		af = AF_INET6;
 #endif
-			break;
-#endif
-		default:	   /* others not yet supported */
-			printf("%s: unhandled ethertype 0x%04x\n", __func__,
-			    ntohs(gh->ptype));
-			return 0;
-		}
 		break;
-	default:
-		/* others not yet supported */
+#endif
+	default:	   /* others not yet supported */
+		GRE_DPRINTF(sc, "%s: unhandled ethertype 0x%04x\n", __func__,
+		    ntohs(gh->ptype));
+		sc->sc_if.if_noproto++;
 		return 0;
 	}
 
@@ -582,7 +575,8 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
 
-	s = splnet();		/* possible */
+	if (!mtx_held)
+		mutex_enter(&sc->sc_mtx);
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
@@ -591,7 +585,8 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
 	}
 	/* we need schednetisr since the address family may change */
 	schednetisr(isr);
-	splx(s);
+	if (!mtx_held)
+		mutex_exit(&sc->sc_mtx);
 
 	return 1;	/* packet is done, no further processing needed */
 }
@@ -604,7 +599,7 @@ static int
 gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	   struct rtentry *rt)
 {
-	int error = 0, hlen;
+	int error = 0, hlen, msiz;
 	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gi;
 	struct gre_h *gh;
@@ -632,56 +627,54 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	switch (sc->sc_proto) {
 	case IPPROTO_MOBILE:
-		if (dst->sa_family == AF_INET) {
-			int msiz;
-
-			if (M_UNWRITABLE(m, sizeof(*ip)) &&
-			    (m = m_pullup(m, sizeof(*ip))) == NULL) {
-				error = ENOBUFS;
-				goto end;
-			}
-			ip = mtod(m, struct ip *);
-
-			memset(&mob_h, 0, MOB_H_SIZ_L);
-			mob_h.proto = (ip->ip_p) << 8;
-			mob_h.odst = ip->ip_dst.s_addr;
-			ip->ip_dst.s_addr = sc->g_dst.s_addr;
-
-			/*
-			 * If the packet comes from our host, we only change
-			 * the destination address in the IP header.
-			 * Else we also need to save and change the source
-			 */
-			if (in_hosteq(ip->ip_src, sc->g_src)) {
-				msiz = MOB_H_SIZ_S;
-			} else {
-				mob_h.proto |= MOB_H_SBIT;
-				mob_h.osrc = ip->ip_src.s_addr;
-				ip->ip_src.s_addr = sc->g_src.s_addr;
-				msiz = MOB_H_SIZ_L;
-			}
-			HTONS(mob_h.proto);
-			mob_h.hcrc = gre_in_cksum((u_int16_t *)&mob_h, msiz);
-
-			M_PREPEND(m, msiz, M_DONTWAIT);
-			if (m == NULL) {
-				error = ENOBUFS;
-				goto end;
-			}
-			/* XXX Assuming that ip does not dangle after
-			 * M_PREPEND.  In practice, that's true, but
-			 * that's in M_PREPEND's contract.
-			 */
-			memmove(mtod(m, void *), ip, sizeof(*ip));
-			ip = mtod(m, struct ip *);
-			memcpy((void *)(ip + 1), &mob_h, (unsigned)msiz);
-			ip->ip_len = htons(ntohs(ip->ip_len) + msiz);
-		} else {  /* AF_INET */
+		if (dst->sa_family != AF_INET) {
 			IF_DROP(&ifp->if_snd);
 			m_freem(m);
 			error = EINVAL;
 			goto end;
 		}
+
+		if (M_UNWRITABLE(m, sizeof(*ip)) &&
+		    (m = m_pullup(m, sizeof(*ip))) == NULL) {
+			error = ENOBUFS;
+			goto end;
+		}
+		ip = mtod(m, struct ip *);
+
+		memset(&mob_h, 0, MOB_H_SIZ_L);
+		mob_h.proto = (ip->ip_p) << 8;
+		mob_h.odst = ip->ip_dst.s_addr;
+		ip->ip_dst.s_addr = sc->g_dst.s_addr;
+
+		/*
+		 * If the packet comes from our host, we only change
+		 * the destination address in the IP header.
+		 * Else we also need to save and change the source
+		 */
+		if (in_hosteq(ip->ip_src, sc->g_src)) {
+			msiz = MOB_H_SIZ_S;
+		} else {
+			mob_h.proto |= MOB_H_SBIT;
+			mob_h.osrc = ip->ip_src.s_addr;
+			ip->ip_src.s_addr = sc->g_src.s_addr;
+			msiz = MOB_H_SIZ_L;
+		}
+		HTONS(mob_h.proto);
+		mob_h.hcrc = gre_in_cksum((u_int16_t *)&mob_h, msiz);
+
+		M_PREPEND(m, msiz, M_DONTWAIT);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto end;
+		}
+		/* XXX Assuming that ip does not dangle after
+		 * M_PREPEND.  In practice, that's true, but
+		 * that's not in M_PREPEND's contract.
+		 */
+		memmove(mtod(m, void *), ip, sizeof(*ip));
+		ip = mtod(m, struct ip *);
+		memcpy(ip + 1, &mob_h, (size_t)msiz);
+		ip->ip_len = htons(ntohs(ip->ip_len) + msiz);
 		break;
 	case IPPROTO_UDP:
 	case IPPROTO_GRE:
@@ -789,23 +782,22 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		rtcache_init(&sc->route);
 	else
 		rtcache_check(&sc->route);
-	if (sc->route.ro_rt == NULL)
+	if (sc->route.ro_rt == NULL) {
+		m_freem(m);
 		goto end;
-	if (sc->route.ro_rt->rt_ifp->if_softc == sc)
-		rtcache_free(&sc->route);
-	else
-		error = ip_output(m, NULL, &sc->route, 0,
-		    (struct ip_moptions *)NULL, (struct socket *)NULL);
+	}
+	if (sc->route.ro_rt->rt_ifp->if_softc == sc) {
+		rtcache_clear(&sc->route);
+		m_freem(m);
+	} else
+		error = ip_output(m, NULL, &sc->route, 0, NULL, NULL);
   end:
 	if (error)
 		ifp->if_oerrors++;
 	return error;
 }
 
-/* gre_kick must be synchronized with network interrupts in order
- * to synchronize access to gre_softc members, so call it with
- * interrupt priority level set to IPL_NET or greater.
- */
+/* Calling thread must hold sc->sc_mtx. */
 static int
 gre_kick(struct gre_softc *sc)
 {
@@ -813,12 +805,12 @@ gre_kick(struct gre_softc *sc)
 	struct ifnet *ifp = &sc->sc_if;
 
 	if (sc->sc_proto == IPPROTO_UDP && (ifp->if_flags & IFF_UP) == IFF_UP &&
-	    !sc->sc_thread) {
-		sc->sc_thread = 1;
-		rc = kthread_create1(gre_thread, (void *)sc, NULL,
-		    ifp->if_xname);
+	    !sc->sc_running) {
+		sc->sc_running = 1;
+		rc = kthread_create(PRI_NONE, 0, NULL, gre_thread, sc,
+		    NULL, ifp->if_xname);
 		if (rc != 0)
-			gre_stop(&sc->sc_thread);
+			gre_stop(sc);
 		return rc;
 	} else {
 		gre_wakeup(sc);
@@ -826,30 +818,28 @@ gre_kick(struct gre_softc *sc)
 	}
 }
 
+/* Calling thread must hold sc->sc_mtx. */
 static int
 gre_getname(struct socket *so, int req, struct mbuf *nam, struct lwp *l)
 {
-	int s, error;
-
-	s = splsoftnet();
-	error = (*so->so_proto->pr_usrreq)(so, req, (struct mbuf *)0,
-	    nam, (struct mbuf *)0, l);
-	splx(s);
-	return error;
+	return (*so->so_proto->pr_usrreq)(so, req, NULL, nam, NULL, l);
 }
 
+/* Calling thread must hold sc->sc_mtx. */
 static int
 gre_getsockname(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	return gre_getname(so, PRU_SOCKADDR, nam, l);
 }
 
+/* Calling thread must hold sc->sc_mtx. */
 static int
 gre_getpeername(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	return gre_getname(so, PRU_PEERADDR, nam, l);
 }
 
+/* Calling thread must hold sc->sc_mtx. */
 static int
 gre_getnames(struct socket *so, struct lwp *l, struct sockaddr_in *src,
     struct sockaddr_in *dst)
@@ -884,23 +874,46 @@ out:
 	return rc;
 }
 
+static void
+gre_closef(struct file **fpp, struct lwp *l)
+{
+	struct file *fp = *fpp;
+
+	simple_lock(&fp->f_slock);
+	FILE_USE(fp);
+	closef(fp, l);
+	*fpp = NULL;
+}
+
 static int
 gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	u_char oproto;
-	struct file *fp, *ofp;
+	struct file *fp;
 	struct socket *so;
 	struct sockaddr_in dst, src;
 	struct proc *p = curproc;	/* XXX */
 	struct lwp *l = curlwp;	/* XXX */
-	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifreq *ifr;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
-	int s;
 	struct sockaddr_in si;
 	struct sockaddr *sa = NULL;
 	int error = 0;
+#ifdef COMPAT_OIFREQ
+	u_long ocmd = cmd;
+	struct oifreq *oifr = NULL;
+	struct ifreq ifrb;
 
+	cmd = cvtcmd(cmd);
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
+	} else
+#endif
+		ifr = data;
+	
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 	case SIOCSIFMTU:
@@ -920,7 +933,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 
-	s = splnet();
+	mutex_enter(&sc->sc_mtx);
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
@@ -1027,10 +1040,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (sc->sc_proto == IPPROTO_UDP ||
 		    (sc->g_src.s_addr != INADDR_ANY &&
 		     sc->g_dst.s_addr != INADDR_ANY)) {
-			if (sc->sc_fp != NULL) {
-				closef(sc->sc_fp, l);
-				sc->sc_fp = NULL;
-			}
 			rtcache_free(&sc->route);
 			if (sc->sc_proto == IPPROTO_UDP)
 				error = gre_kick(sc);
@@ -1057,18 +1066,19 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		ifr->ifr_addr = *sa;
 		break;
 	case GREDSOCK:
-		if (sc->sc_proto != IPPROTO_UDP)
-			return EINVAL;
-		if (sc->sc_fp != NULL) {
-			closef(sc->sc_fp, l);
-			sc->sc_fp = NULL;
-			error = gre_kick(sc);
+		if (sc->sc_proto != IPPROTO_UDP) {
+			error = EINVAL;
+			break;
 		}
+		ifp->if_flags &= ~IFF_UP;
+		gre_wakeup(sc);
 		break;
 	case GRESSOCK:
-		if (sc->sc_proto != IPPROTO_UDP)
-			return EINVAL;
-		/* getsock() will FILE_USE() the descriptor for us */
+		if (sc->sc_proto != IPPROTO_UDP) {
+			error = EINVAL;
+			break;
+		}
+		/* getsock() will FILE_USE() and unlock the descriptor for us */
 		if ((error = getsock(p->p_fd, (int)ifr->ifr_value, &fp)) != 0)
 			break;
 		so = (struct socket *)fp->f_data;
@@ -1083,21 +1093,37 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 
-		fp->f_count++;
+                /* Increase reference count.  Now that our reference
+                 * to the file descriptor is counted, this thread
+                 * can release our "use" of the descriptor, but it
+                 * will not be destroyed by some other thread's
+                 * action.  This thread needs to release its use,
+                 * too, because one and only one thread can have
+                 * use of the descriptor at once.  The kernel thread
+                 * will pick up the use if it needs it.
+		 */
 
-		ofp = sc->sc_fp;
-		sc->sc_fp = fp;
-		if ((error = gre_kick(sc)) != 0) {
-			closef(fp, l);
-			sc->sc_fp = ofp;
+		fp->f_count++;
+		FILE_UNUSE(fp, NULL);
+
+		while (sc->sc_fp != NULL && error == 0) {
+			error = cv_timedwait_sig(&sc->sc_soparm_cv, &sc->sc_mtx,
+					         MAX(1, hz / 2));
+		}
+		if (error == 0) {
+			sc->sc_fp = fp;
+			ifp->if_flags |= IFF_UP;
+		}
+
+		if (error != 0 || (error = gre_kick(sc)) != 0) {
+			gre_closef(&fp, l);
 			break;
 		}
+		/* fp does not any longer belong to this thread. */
 		sc->g_src = src.sin_addr;
 		sc->g_srcport = src.sin_port;
 		sc->g_dst = dst.sin_addr;
 		sc->g_dstport = dst.sin_port;
-		if (ofp != NULL)
-			closef(ofp, l);
 		break;
 	case SIOCSLIFPHYADDR:
 		if (lifr->addr.ss_family != AF_INET ||
@@ -1143,7 +1169,11 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = EINVAL;
 		break;
 	}
-	splx(s);
+#ifdef COMPAT_OIFREQ
+	if (cmd != ocmd)
+		ifreqn2o(oifr, ifr);
+#endif
+	mutex_exit(&sc->sc_mtx);
 	return error;
 }
 
@@ -1154,28 +1184,25 @@ static int
 gre_compute_route(struct gre_softc *sc)
 {
 	struct route *ro;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	ro = &sc->route;
 
-	memset(ro, 0, sizeof(struct route));
-	satosin(&ro->ro_dst)->sin_addr = sc->g_dst;
-	ro->ro_dst.sa_family = AF_INET;
-	ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-
-#ifdef DIAGNOSTIC
-	printf("%s: searching for a route to %s", sc->sc_if.if_xname,
-	    inet_ntoa(satocsin(rtcache_getdst(ro))->sin_addr));
-#endif
+	memset(ro, 0, sizeof(*ro));
+	sockaddr_in_init(&u.dst4, &sc->g_dst, 0);
+	rtcache_setdst(ro, &u.dst);
 
 	rtcache_init(ro);
 
 	if (ro->ro_rt == NULL || ro->ro_rt->rt_ifp->if_softc == sc) {
-#ifdef DIAGNOSTIC
-		if (ro->ro_rt == NULL)
-			printf(" - no route found!\n");
-		else
-			printf(" - route loops back to ourself!\n");
-#endif
+		GRE_DPRINTF(sc, "%s: route to %s %s\n", sc->sc_if.if_xname,
+		    inet_ntoa(u.dst4.sin_addr),
+		    (ro->ro_rt == NULL)
+		        ?  "does not exist"
+			: "loops back to ourself");
 		rtcache_free(ro);
 		return EADDRNOTAVAIL;
 	}

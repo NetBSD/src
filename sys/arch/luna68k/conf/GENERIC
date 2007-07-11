@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2006/11/24 22:04:23 wiz Exp $
+# $NetBSD: GENERIC,v 1.77.10.1 2007/07/11 20:00:18 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.77.10.1 $"
 
 maxusers	8
 
@@ -197,6 +197,7 @@ pseudo-device	fss		4	# file system snapshot device
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	rnd			# /dev/random and in-kernel generator

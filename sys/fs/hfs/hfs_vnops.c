@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.2.6.1 2007/07/11 20:09:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.2.6.1 2007/07/11 20:09:22 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -782,7 +782,8 @@ hfs_vop_bmap(void *v)
 	}
 
 	*ap->a_bnp = ((extents[i].start_block + lblkno)
-		      << (bshift-DEV_BSHIFT)) + hp->h_hmp->offset;
+		      << (bshift-DEV_BSHIFT))
+	    + (hp->h_hmp->hm_vol.offset >> DEV_BSHIFT);
 
 	if (ap->a_runp) {
 		int nblk;

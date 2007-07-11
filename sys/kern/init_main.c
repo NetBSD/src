@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299 2007/03/10 15:56:21 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.4.1 2007/07/11 20:09:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299 2007/03/10 15:56:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.4.1 2007/07/11 20:09:40 mjf Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_kcont.h"
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
@@ -87,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299 2007/03/10 15:56:21 ad Exp $");
 #include "opt_pax.h"
 
 #include "rnd.h"
+#include "sysmon_envsys.h"
+#include "sysmon_power.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -95,8 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299 2007/03/10 15:56:21 ad Exp $");
 #include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/callout.h>
+#include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/kcont.h>
 #include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -119,8 +120,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299 2007/03/10 15:56:21 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
+#include <sys/sched.h>
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
+#include <sys/vmem.h>
+#include <sys/uuid.h>
+#include <sys/extent.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -144,9 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299 2007/03/10 15:56:21 ad Exp $");
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-#ifndef PIPE_SOCKETPAIR
 #include <sys/pipe.h>
-#endif
 #ifdef LKM
 #include <sys/lkm.h>
 #endif
@@ -176,6 +179,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299 2007/03/10 15:56:21 ad Exp $");
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
+#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0
+#include <dev/sysmon/sysmonvar.h>
+#endif
 
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -196,7 +202,7 @@ int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 time_t	rootfstime;			/* recorded root fs time, if known */
-int	ncpu =  1;			/* number of CPUs configured, assume 1 */
+int	ncpu = 0;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -240,13 +246,8 @@ main(void)
 	struct pdevinit *pdev;
 	int s, error;
 	extern struct pdevinit pdevinit[];
-	extern void schedcpu(void *);
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
-#endif
-#ifdef MULTIPROCESSOR
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
 #endif
 
 	/*
@@ -275,10 +276,13 @@ main(void)
 
 	kmem_init();
 
+	/* Initialize the extent manager. */
+	extent_init();
+
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
-	/* Initialize callouts. */
+	/* Initialize callouts, part 1. */
 	callout_startup();
 
 	/*
@@ -304,11 +308,6 @@ main(void)
 	/* Initialize sockets. */
 	soinit();
 
-#ifdef KCONT
-	/* Initialize kcont. */
-        kcont_init();
-#endif
-
 	/*
 	 * The following things must be done before autoconfiguration.
 	 */
@@ -327,15 +326,23 @@ main(void)
 	/* Create process 0 (the swapper). */
 	proc0_init();
 
-	/*
-	 * Charge root for one process.
-	 */
+	/* Initialize the UID hash table. */
+	uid_init();
+
+	/* Charge root for one process. */
 	(void)chgproccnt(0, 1);
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
-	rqinit();
+	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
+
+	/* MI initialization of the boot cpu */
+	error = mi_cpu_attach(curcpu());
+	KASSERT(error == 0);
+
+	/* Initialize callouts, part 2. */
+	callout_startup2();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -359,10 +366,25 @@ main(void)
 	/* Initialize fstrans. */
 	fstrans_init();
 
+	/* Initialize the select()/poll() system calls. */
+	selsysinit();
+
+	/* Initialize asynchronous I/O. */
+	aio_sysinit();
+
+#if NSYSMON_ENVSYS > 0
+	sysmon_envsys_init();
+#endif
+#if NSYSMON_POWER > 0
+	sysmon_power_init();
+#endif
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
+
+	/* Initialize the device switch tables. */
+	devsw_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
@@ -457,13 +479,21 @@ main(void)
 	/* Initialize system accouting. */
 	acct_init();
 
-	/* Kick off timeout driven events by calling first time. */
-	schedcpu(NULL);
+#ifndef PIPE_SOCKETPAIR
+	/* Initialize pipes. */
+	pipe_init();
+#endif
+
+	/* Setup the scheduler */
+	sched_init();
 
 #ifdef KTRACE
 	/* Initialize ktrace. */
 	ktrinit();
 #endif
+
+	/* Initialize the UUID system calls. */
+	uuid_init();
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
@@ -476,12 +506,6 @@ main(void)
 	 */
 	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
 		panic("fork init");
-
-	/*
-	 * Create any kernel threads who's creation was deferred because
-	 * initproc had not yet been created.
-	 */
-	kthread_run_deferred_queue();
 
 	/*
 	 * Now that device driver threads have been created, wait for
@@ -577,11 +601,12 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create1(uvm_pageout, NULL, NULL, "pagedaemon"))
+	if (kthread_create(PVM, 0, NULL, uvm_pageout,
+	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PINOD, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
@@ -589,15 +614,11 @@ main(void)
 	    uvm_aiodone_worker, NULL, PVM, IPL_BIO, 0))
 		panic("fork aiodoned");
 
+	vmem_rehash_start();
+
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
-
-	/* Count the number of running CPUs. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		ncpu++;
-	}
-	ncpu--;
 #endif
 
 	/* Initialize exec structures */

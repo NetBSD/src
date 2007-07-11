@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.7 2007/03/04 06:00:39 christos Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.7.4.1 2007/07/11 20:01:35 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.7 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.7.4.1 2007/07/11 20:01:35 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.7 2007/03/04 06:00:39 christos Ex
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <machine/residual.h>
 #include <machine/nvram.h>
 
 #include <prep/pnpbus/pnpbusvar.h>
@@ -72,6 +75,7 @@ struct simplelock nvram_slock;	/* lock */
 int prep_clock_mk48txx;
 
 extern char bootpath[256];
+extern RESIDUAL resdata;
 
 #define NVRAM_STD_DEV 0
 
@@ -93,10 +97,11 @@ CFATTACH_DECL(nvram_pnpbus, sizeof(struct nvram_pnpbus_softc),
 dev_type_open(prep_nvramopen);
 dev_type_ioctl(prep_nvramioctl);
 dev_type_close(prep_nvramclose);
+dev_type_read(prep_nvramread);
 
 const struct cdevsw nvram_cdevsw = {
-	prep_nvramopen, prep_nvramclose, noread, nowrite, prep_nvramioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+	prep_nvramopen, prep_nvramclose, prep_nvramread, nowrite,
+	prep_nvramioctl, nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
 
 extern struct cfdriver nvram_cd;
@@ -453,11 +458,56 @@ prep_nvramioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 }
 
 int
+prep_nvramread(dev_t dev, struct uio *uio, int flags)
+{
+	int size, resid, error;
+	u_int c;
+	char *rdata;
+
+	error = 0;
+	rdata = (char *)&resdata;
+
+	if (uio->uio_rw == UIO_WRITE) {
+		uio->uio_resid = 0;
+		return 0;
+	}
+
+	switch (minor(dev)) {
+	case DEV_NVRAM:
+		size = nvram->Header.Size * 1024;
+		break;
+	case DEV_RESIDUAL:
+		size = res->ResidualLength;
+		break;
+	default:
+		return ENXIO;
+	}
+	resid = size;
+	if (uio->uio_resid < resid)
+		resid = uio->uio_resid;
+	while (resid > 0 && error == 0 && uio->uio_offset < size) {
+		switch (minor(dev)) {
+		case DEV_NVRAM:
+			c = min(resid, PAGE_SIZE);
+			error = uiomove(&nvramData[uio->uio_offset], c, uio);
+			break;
+		case DEV_RESIDUAL:
+			c = min(resid, PAGE_SIZE);
+			error = uiomove(&rdata[uio->uio_offset], c, uio);
+			break;
+		default:
+			return ENXIO;
+		}
+	}
+	return error;
+}
+
+int
 prep_nvramopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	sc = device_lookup(&nvram_cd, minor(dev));
+	sc = device_lookup(&nvram_cd, NVRAM_STD_DEV);
 	if (sc == NULL)
 		return ENODEV;
 
@@ -474,7 +524,7 @@ prep_nvramclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	sc = device_lookup(&nvram_cd, minor(dev));
+	sc = device_lookup(&nvram_cd, NVRAM_STD_DEV);
 	if (sc == NULL) 
 		return ENODEV;
 	sc->sc_open = 0;

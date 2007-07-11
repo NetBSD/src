@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.25 2007/03/04 05:59:40 christos Exp $ */
+/*	$NetBSD: lpt.c,v 1.25.4.1 2007/07/11 19:58:22 mjf Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.25 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.25.4.1 2007/07/11 19:58:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ void	*auxp;
 
 	printf("\n");
 
-	callout_init(&sc->sc_wakeup_ch);
+	callout_init(&sc->sc_wakeup_ch, 0);
 }
 
 /*

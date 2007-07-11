@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.84 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.84.4.1 2007/07/11 20:12:36 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -462,6 +462,13 @@ struct msghdr {
 #define	MSG_MCAST	0x0200		/* this message was rcvd using link-level mcast */
 #define	MSG_NOSIGNAL	0x0400		/* do not generate SIGPIPE on EOF */
 
+/* Extra flags used internally only */
+#define	MSG_USERFLAGS	0x0ffffff
+#define MSG_NAMEMBUF	0x1000000	/* msg_name is an mbuf */
+#define MSG_CONTROLMBUF	0x2000000	/* msg_control is an mbuf */
+#define MSG_IOVUSRSPACE	0x4000000	/* msg_iov is in user space */
+#define MSG_LENUSRSPACE	0x8000000	/* address length is in user space */
+
 /*
  * Header for ancillary data objects in msg_control buffer.
  * Used for additional information with/about a datagram
@@ -536,6 +543,16 @@ struct cmsghdr {
 __BEGIN_DECLS
 int	__cmsg_alignbytes(void);
 __END_DECLS
+
+#ifdef	_KERNEL
+__BEGIN_DECLS
+struct sockaddr *sockaddr_copy(struct sockaddr *, const struct sockaddr *);
+struct sockaddr *sockaddr_alloc(sa_family_t, int);
+int sockaddr_cmp(const struct sockaddr *, const struct sockaddr *);
+struct sockaddr *sockaddr_dup(const struct sockaddr *, int);
+void sockaddr_free(struct sockaddr *);
+__END_DECLS
+#endif /* _KERNEL */
 
 #ifndef	_KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.4 2007/03/05 19:11:54 plunky Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.4.4.1 2007/07/11 20:11:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.4 2007/03/05 19:11:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.4.4.1 2007/07/11 20:11:15 mjf Exp $");
+
+/* load symbolic names */
+#ifdef BLUETOOTH_DEBUG
+#define PRUREQUESTS
+#define PRCOREQUESTS
+#endif
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -58,6 +64,7 @@ static void rfcomm_connected(void *);
 static void rfcomm_disconnected(void *, int);
 static void *rfcomm_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void rfcomm_complete(void *, int);
+static void rfcomm_linkmode(void *, int);
 static void rfcomm_input(void *, struct mbuf *);
 
 static const struct btproto rfcomm_proto = {
@@ -66,6 +73,7 @@ static const struct btproto rfcomm_proto = {
 	rfcomm_disconnected,
 	rfcomm_newconn,
 	rfcomm_complete,
+	rfcomm_linkmode,
 	rfcomm_input,
 };
 
@@ -152,7 +160,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_detach((struct rfcomm_dlc **)&up->so_pcb);
 
 	case PRU_BIND:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -164,7 +172,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_bind(pcb, sa);
 
 	case PRU_CONNECT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -177,13 +185,13 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_connect(pcb, sa);
 
 	case PRU_PEERADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return rfcomm_peeraddr(pcb, sa);
 
 	case PRU_SOCKADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return rfcomm_sockaddr(pcb, sa);
@@ -193,7 +201,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		break;
 
 	case PRU_SEND:
-		KASSERT(m);
+		KASSERT(m != NULL);
 
 		if (ctl)	/* no use for that */
 			m_freem(ctl);
@@ -219,7 +227,7 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return rfcomm_listen(pcb);
 
 	case PRU_ACCEPT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 		nam->m_len = sizeof(struct sockaddr_bt);
 		return rfcomm_peeraddr(pcb, sa);
@@ -302,7 +310,7 @@ rfcomm_connecting(void *arg)
 {
 	/* struct socket *so = arg; */
 
-	KASSERT(arg);
+	KASSERT(arg != NULL);
 	DPRINTF("Connecting\n");
 }
 
@@ -311,7 +319,7 @@ rfcomm_connected(void *arg)
 {
 	struct socket *so = arg;
 
-	KASSERT(so);
+	KASSERT(so != NULL);
 	DPRINTF("Connected\n");
 	soisconnected(so);
 }
@@ -321,7 +329,7 @@ rfcomm_disconnected(void *arg, int err)
 {
 	struct socket *so = arg;
 
-	KASSERT(so);
+	KASSERT(so != NULL);
 	DPRINTF("Disconnected\n");
 
 	so->so_error = err;
@@ -359,6 +367,29 @@ rfcomm_complete(void *arg, int length)
 }
 
 /*
+ * rfcomm_linkmode(rfcomm_dlc, new)
+ *
+ * link mode change notification.
+ */
+static void
+rfcomm_linkmode(void *arg, int new)
+{
+	struct socket *so = arg;
+	int mode;
+
+	DPRINTF("auth %s, encrypt %s, secure %s\n",
+		(new & RFCOMM_LM_AUTH ? "on" : "off"),
+		(new & RFCOMM_LM_ENCRYPT ? "on" : "off"),
+		(new & RFCOMM_LM_SECURE ? "on" : "off"));
+
+	(void)rfcomm_getopt(so->so_pcb, SO_RFCOMM_LM, &mode);
+	if (((mode & RFCOMM_LM_AUTH) && !(new & RFCOMM_LM_AUTH))
+	    || ((mode & RFCOMM_LM_ENCRYPT) && !(new & RFCOMM_LM_ENCRYPT))
+	    || ((mode & RFCOMM_LM_SECURE) && !(new & RFCOMM_LM_SECURE)))
+		rfcomm_disconnect(so->so_pcb, 0);
+}
+
+/*
  * rfcomm_input(rfcomm_dlc, mbuf)
  */
 static void
@@ -366,7 +397,7 @@ rfcomm_input(void *arg, struct mbuf *m)
 {
 	struct socket *so = arg;
 
-	KASSERT(so);
+	KASSERT(so != NULL);
 
 	if (m->m_pkthdr.len > sbspace(&so->so_rcv)) {
 		printf("%s: %d bytes dropped (socket buffer full)\n",

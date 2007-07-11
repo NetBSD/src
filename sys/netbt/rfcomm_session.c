@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.6 2007/03/12 18:18:35 ad Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.6.2.1 2007/07/11 20:11:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.6 2007/03/12 18:18:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.6.2.1 2007/07/11 20:11:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,6 +75,7 @@ static void rfcomm_session_connected(void *);
 static void rfcomm_session_disconnected(void *, int);
 static void *rfcomm_session_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void rfcomm_session_complete(void *, int);
+static void rfcomm_session_linkmode(void *, int);
 static void rfcomm_session_input(void *, struct mbuf *);
 
 static const struct btproto rfcomm_session_proto = {
@@ -83,7 +84,8 @@ static const struct btproto rfcomm_session_proto = {
 	rfcomm_session_disconnected,
 	rfcomm_session_newconn,
 	rfcomm_session_complete,
-	rfcomm_session_input
+	rfcomm_session_linkmode,
+	rfcomm_session_input,
 };
 
 struct rfcomm_session_list
@@ -105,7 +107,7 @@ int rfcomm_mcc_timeout = 20;	/* seconds */
 /*
  * Reversed CRC table as per TS 07.10 Annex B.3.5
  */
-static uint8_t crctable[256] = {	/* reversed, 8-bit, poly=0x07 */
+static const uint8_t crctable[256] = {	/* reversed, 8-bit, poly=0x07 */
 	0x00, 0x91, 0xe3, 0x72, 0x07, 0x96, 0xe4, 0x75,
 	0x0e, 0x9f, 0xed, 0x7c, 0x09, 0x98, 0xea, 0x7b,
 	0x1c, 0x8d, 0xff, 0x6e, 0x1b, 0x8a, 0xf8, 0x69,
@@ -168,7 +170,7 @@ rfcomm_session_alloc(struct rfcomm_session_list *list,
 
 	rs->rs_state = RFCOMM_SESSION_CLOSED;
 
-	callout_init(&rs->rs_timeout);
+	callout_init(&rs->rs_timeout, 0);
 	callout_setfunc(&rs->rs_timeout, rfcomm_session_timeout, rs);
 
 	SIMPLEQ_INIT(&rs->rs_credits);
@@ -323,7 +325,7 @@ rfcomm_session_timeout(void *arg)
 static void
 rfcomm_session_connecting(void *arg)
 {
-	//struct rfcomm_session *rs = arg;
+	/* struct rfcomm_session *rs = arg; */
 
 	DPRINTF("Connecting\n");
 }
@@ -480,6 +482,104 @@ rfcomm_session_complete(void *arg, int count)
 }
 
 /*
+ * Link Mode changed
+ *
+ * This is called when a mode change is complete. Proceed with connections
+ * where appropriate, or pass the new mode to any active DLCs.
+ */
+static void
+rfcomm_session_linkmode(void *arg, int new)
+{
+	struct rfcomm_session *rs = arg;
+	struct rfcomm_dlc *dlc, *next;
+	int err, mode = 0;
+
+	DPRINTF("auth %s, encrypt %s, secure %s\n",
+		(new & L2CAP_LM_AUTH ? "on" : "off"),
+		(new & L2CAP_LM_ENCRYPT ? "on" : "off"),
+		(new & L2CAP_LM_SECURE ? "on" : "off"));
+
+	if (new & L2CAP_LM_AUTH)
+		mode |= RFCOMM_LM_AUTH;
+
+	if (new & L2CAP_LM_ENCRYPT)
+		mode |= RFCOMM_LM_ENCRYPT;
+
+	if (new & L2CAP_LM_SECURE)
+		mode |= RFCOMM_LM_SECURE;
+
+	next = LIST_FIRST(&rs->rs_dlcs);
+	while ((dlc = next) != NULL) {
+		next = LIST_NEXT(dlc, rd_next);
+
+		switch (dlc->rd_state) {
+		case RFCOMM_DLC_WAIT_SEND_SABM:	/* we are connecting */
+			if ((mode & dlc->rd_mode) != dlc->rd_mode) {
+				rfcomm_dlc_close(dlc, ECONNABORTED);
+			} else {
+				err = rfcomm_session_send_frame(rs,
+					    RFCOMM_FRAME_SABM, dlc->rd_dlci);
+				if (err) {
+					rfcomm_dlc_close(dlc, err);
+				} else {
+					dlc->rd_state = RFCOMM_DLC_WAIT_RECV_UA;
+					callout_schedule(&dlc->rd_timeout,
+							rfcomm_ack_timeout * hz);
+					break;
+				}
+			}
+
+			/*
+			 * If we aborted the connection and there are no more DLCs
+			 * on the session, it is our responsibility to disconnect.
+			 */
+			if (!LIST_EMPTY(&rs->rs_dlcs))
+				break;
+
+			rs->rs_state = RFCOMM_SESSION_WAIT_DISCONNECT;
+			rfcomm_session_send_frame(rs, RFCOMM_FRAME_DISC, 0);
+			callout_schedule(&rs->rs_timeout, rfcomm_ack_timeout * hz);
+			break;
+
+		case RFCOMM_DLC_WAIT_SEND_UA: /* they are connecting */
+			if ((mode & dlc->rd_mode) != dlc->rd_mode) {
+				rfcomm_session_send_frame(rs,
+					    RFCOMM_FRAME_DM, dlc->rd_dlci);
+				rfcomm_dlc_close(dlc, ECONNABORTED);
+				break;
+			}
+
+			err = rfcomm_session_send_frame(rs,
+					    RFCOMM_FRAME_UA, dlc->rd_dlci);
+			if (err) {
+				rfcomm_session_send_frame(rs,
+						RFCOMM_FRAME_DM, dlc->rd_dlci);
+				rfcomm_dlc_close(dlc, err);
+				break;
+			}
+
+			err = rfcomm_dlc_open(dlc);
+			if (err) {
+				rfcomm_session_send_frame(rs,
+						RFCOMM_FRAME_DM, dlc->rd_dlci);
+				rfcomm_dlc_close(dlc, err);
+				break;
+			}
+
+			break;
+
+		case RFCOMM_DLC_WAIT_RECV_UA:
+		case RFCOMM_DLC_OPEN: /* already established */
+			(*dlc->rd_proto->linkmode)(dlc->rd_upper, mode);
+			break;
+
+		default:
+			break;
+		}
+	}
+}
+
+/*
  * Receive data from L2CAP layer for session. There is always exactly one
  * RFCOMM frame contained in each L2CAP frame.
  */
@@ -598,7 +698,6 @@ done:
 static void
 rfcomm_session_recv_sabm(struct rfcomm_session *rs, int dlci)
 {
-	struct rfcomm_mcc_msc msc;
 	struct rfcomm_dlc *dlc;
 	int err;
 
@@ -637,29 +736,36 @@ rfcomm_session_recv_sabm(struct rfcomm_session *rs, int dlci)
 			return;	/* (DM is sent) */
 	}
 
-	DPRINTFN(2, "send UA(%d) state = %d\n", dlci, dlc->rd_state);
-
-	err = rfcomm_session_send_frame(rs, RFCOMM_FRAME_UA, dlci);
-	if (err) {
-		rfcomm_dlc_close(dlc, err);
-		return;
-	}
-
 	/*
-	 * If this was some kind of spurious SABM then lets
-	 * not do anything, heh.
+	 * ..but if this DLC is not waiting to connect, they did
+	 * something wrong, ignore it.
 	 */
 	if (dlc->rd_state != RFCOMM_DLC_WAIT_CONNECT)
 		return;
 
-	msc.address = RFCOMM_MKADDRESS(1, dlc->rd_dlci);
-	msc.modem = dlc->rd_lmodem & 0xfe;	/* EA = 0 */
-	msc.brk =	0x00	| 0x01;		/* EA = 1 */
-	rfcomm_session_send_mcc(rs, 1, RFCOMM_MCC_MSC, &msc, sizeof(msc));
-	callout_schedule(&dlc->rd_timeout, rfcomm_mcc_timeout * hz);
+	/* set link mode */
+	err = rfcomm_dlc_setmode(dlc);
+	if (err == EINPROGRESS) {
+		dlc->rd_state = RFCOMM_DLC_WAIT_SEND_UA;
+		(*dlc->rd_proto->connecting)(dlc->rd_upper);
+		return;
+	}
+	if (err)
+		goto close;
 
-	dlc->rd_state = RFCOMM_DLC_OPEN;
-	(*dlc->rd_proto->connected)(dlc->rd_upper);
+	err = rfcomm_session_send_frame(rs, RFCOMM_FRAME_UA, dlci);
+	if (err)
+		goto close;
+
+	/* and mark it open */
+	err = rfcomm_dlc_open(dlc);
+	if (err)
+		goto close;
+
+	return;
+
+close:
+	rfcomm_dlc_close(dlc, err);
 }
 
 /*
@@ -707,7 +813,6 @@ rfcomm_session_recv_disc(struct rfcomm_session *rs, int dlci)
 static void
 rfcomm_session_recv_ua(struct rfcomm_session *rs, int dlci)
 {
-	struct rfcomm_mcc_msc msc;
 	struct rfcomm_dlc *dlc;
 
 	DPRINTFN(5, "UA(%d)\n", dlci);
@@ -747,16 +852,8 @@ rfcomm_session_recv_ua(struct rfcomm_session *rs, int dlci)
 		goto check;
 
 	switch (dlc->rd_state) {
-	case RFCOMM_DLC_WAIT_CONNECT:		/* We sent SABM */
-		msc.address = RFCOMM_MKADDRESS(1, dlc->rd_dlci);
-		msc.modem = dlc->rd_lmodem & 0xfe;	/* EA = 0 */
-		msc.brk =	0x00	| 0x01;		/* EA = 1 */
-		rfcomm_session_send_mcc(rs, 1, RFCOMM_MCC_MSC,
-						&msc, sizeof(msc));
-		callout_schedule(&dlc->rd_timeout, rfcomm_mcc_timeout * hz);
-
-		dlc->rd_state = RFCOMM_DLC_OPEN;
-		(*dlc->rd_proto->connected)(dlc->rd_upper);
+	case RFCOMM_DLC_WAIT_RECV_UA:		/* We sent SABM */
+		rfcomm_dlc_open(dlc);
 		return;
 
 	case RFCOMM_DLC_WAIT_DISCONNECT:	/* We sent DISC */
@@ -904,7 +1001,7 @@ rfcomm_session_recv_mcc(struct rfcomm_session *rs, struct mbuf *m)
 	m_adj(m, sizeof(b));
 
 	if (RFCOMM_EA(b) == 0) {	/* verify no extensions */
-		DPRINTF("MCC type EA = 1, discarded\n");
+		DPRINTF("MCC type EA = 0, discarded\n");
 		goto release;
 	}
 
@@ -1077,7 +1174,7 @@ rfcomm_session_recv_mcc_msc(struct rfcomm_session *rs, int cr, struct mbuf *m)
 	len += sizeof(msc.modem);
 
 	dlc->rd_rmodem = msc.modem;
-	// XXX how do we signal this upstream?
+	/* XXX how do we signal this upstream? */
 
 	if (RFCOMM_EA(msc.modem) == 0) {
 		if (m->m_pkthdr.len < sizeof(msc.brk))
@@ -1087,7 +1184,7 @@ rfcomm_session_recv_mcc_msc(struct rfcomm_session *rs, int cr, struct mbuf *m)
 		m_adj(m, sizeof(msc.brk));
 		len += sizeof(msc.brk);
 
-		// XXX how do we signal this upstream?
+		/* XXX how do we signal this upstream? */
 	}
 
 	rfcomm_session_send_mcc(rs, 0, RFCOMM_MCC_MSC, &msc, len);
@@ -1272,19 +1369,34 @@ rfcomm_session_recv_mcc_pn(struct rfcomm_session *rs, int cr, struct mbuf *m)
 		}
 		dlc->rd_mtu = pn.mtu;
 
-		/* initial credits can only be set before DLC is open */
-		if (dlc->rd_state == RFCOMM_DLC_WAIT_CONNECT
-		    && (pn.flow_control & 0xf0) == 0xe0) {
+		/* if DLC is not waiting to connect, we are done */
+		if (dlc->rd_state != RFCOMM_DLC_WAIT_CONNECT)
+			return;
+
+		/* set initial credits according to RFCOMM spec */
+		if ((pn.flow_control & 0xf0) == 0xe0) {
 			rs->rs_flags |= RFCOMM_SESSION_CFC;
 			dlc->rd_txcred = (pn.credits & 0x07);
 		}
 
-		/* Ok, lets go with it */
+		callout_schedule(&dlc->rd_timeout, rfcomm_ack_timeout * hz);
+
+		/* set link mode */
+		err = rfcomm_dlc_setmode(dlc);
+		if (err == EINPROGRESS) {
+			dlc->rd_state = RFCOMM_DLC_WAIT_SEND_SABM;
+			(*dlc->rd_proto->connecting)(dlc->rd_upper);
+			return;
+		}
+		if (err)
+			goto close;
+
+		/* we can proceed now */
 		err = rfcomm_session_send_frame(rs, RFCOMM_FRAME_SABM, pn.dlci);
 		if (err)
 			goto close;
 
-		callout_schedule(&dlc->rd_timeout, rfcomm_ack_timeout * hz);
+		dlc->rd_state = RFCOMM_DLC_WAIT_RECV_UA;
 	}
 	return;
 

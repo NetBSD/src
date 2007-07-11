@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.40 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.40.10.1 2007/07/11 20:05:08 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.40 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.40.10.1 2007/07/11 20:05:08 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -869,24 +869,21 @@ EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event)
 		    sc->sc_dev.dv_xname);
 
 	/*
-	 * Stall 1us:
+	 * Stall 10us:
 	 * ----------
-	 * Stall for 1 microsecond before reading the status register
+	 * Stall for 10 microseconds before reading the status register
 	 * for the first time.  This allows the EC to set the IBF/OBF
 	 * bit to its proper state.
-	 *
-	 * XXX it is not clear why we read the CSR twice.
 	 */
-	AcpiOsStall(1);
-	EcStatus = EC_CSR_READ(sc);
+	AcpiOsStall(10);
 
 	/*
 	 * Wait For Event:
 	 * ---------------
 	 * Poll the EC status register to detect completion of the last
-	 * command.  Wait up to 10ms (in 100us chunks) for this to occur.
+	 * command.  Wait up to 100ms (in 100us chunks) for this to occur.
 	 */
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 1000; i++) {
 		EcStatus = EC_CSR_READ(sc);
 
 		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
@@ -932,8 +929,12 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 	EcLock(sc);
 
 	/*
-	 * Perform the transaction.
+	 * Perform the transaction, and make sure GPE is enabled before
+	 * doing so.
 	 */
+	rv = AcpiEnableGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
+	if (ACPI_FAILURE(rv))
+		return rv;
 	switch (EcRequest->Command) {
 	case EC_COMMAND_READ:
 		rv = EcRead(sc, EcRequest->Address, &(EcRequest->Data));

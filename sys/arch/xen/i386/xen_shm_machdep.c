@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.21 2007/01/20 22:01:06 bouyer Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.21.8.1 2007/07/11 20:03:34 mjf Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -99,7 +99,7 @@ xen_shm_init()
 {
 	SIMPLEQ_INIT(&xen_shm_callbacks);
 	pool_init(&xen_shm_callback_pool, sizeof(struct xen_shm_callback_entry),
-	    0, 0, 0, "xshmc", NULL);
+	    0, 0, 0, "xshmc", NULL, IPL_VM);
 	/* ensure we'll always get items */
 	if (pool_prime(&xen_shm_callback_pool,
 	    PAGE_SIZE / sizeof(struct xen_shm_callback_entry)) != 0) {
@@ -116,7 +116,7 @@ xen_shm_init()
 	xen_shm_arena = vmem_create("xen_shm",
 	    xen_shm_base_address_pg,
 	    (xen_shm_end_address >> PAGE_SHIFT) - 1 - xen_shm_base_address_pg,
-	    1, NULL, NULL, NULL, 1, VM_NOSLEEP);
+	    1, NULL, NULL, NULL, 1, VM_NOSLEEP, IPL_VM);
 	if (xen_shm_arena == NULL) {
 		panic("xen_shm_init no arena");
 	}

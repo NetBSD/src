@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.88 2007/03/04 06:03:47 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.88.4.1 2007/07/11 20:12:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.88 2007/03/04 06:03:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.88.4.1 2007/07/11 20:12:51 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -170,8 +170,7 @@ ufs_lookup(void *v)
 		return (error);
 	}
 
-	if ((error = fstrans_start(vdp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(vdp->v_mount, FSTRANS_SHARED);
 
 	/*
 	 * Suppress search for slots unless creating

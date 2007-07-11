@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2007/03/04 06:00:41 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55.4.1 2007/07/11 20:01:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2007/03/04 06:00:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.4.1 2007/07/11 20:01:57 mjf Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -105,14 +105,15 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2007/03/04 06:00:41 christos Exp
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
 
-extern void proc_trampoline(void);
+extern void lwp_trampoline(void);
+extern void lwp_setfunc_trampoline(void);
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -135,7 +136,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 	vaddr_t spbase, fptop;
 #define	P1ADDR(x)	(SH3_PHYS_TO_P1SEG(*__pmap_kpte_lookup(x) & PG_PPN))
 
+#if 0 /* FIXME: probably wrong for yamt-idlelwp */
 	KDASSERT(l1 == curlwp || l1 == &lwp0);
+#endif
 
 	/* Copy flags */
 	l2->l_md.md_flags = l1->l_md.md_flags;
@@ -205,13 +208,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 
 	/* Setup switch frame */
 	sf = &pcb->pcb_sf;
-	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
-	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
+	sf->sf_r10 = (int)l2;		/* "new" for lwp_startup */
+	sf->sf_r11 = (int)arg;		/* lwp_trampoline hook func */
+	sf->sf_r12 = (int)func;		/* lwp_trampoline hook func's arg */
 	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
 	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
 	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
-	/* when switch to me, jump to proc_trampoline */
-	sf->sf_pr  = (int)proc_trampoline;
+	/* when switch to me, jump to lwp_trampoline */
+	sf->sf_pr  = (int)lwp_trampoline;
 	/*
 	 * Enable interrupt when switch frame is restored, since
 	 * kernel thread begin to run without restoring trapframe.
@@ -223,7 +227,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
  * void cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg):
  *	+ Reset the stack pointer for the process.
  *	+ Arrange to the process to call the specified func
- *	  with argument via the proc_trampoline.
+ *	  with argument via the lwp_setfunc_trampoline.
  *
  *	XXX There is a lot of duplicated code here (with cpu_lwp_fork()).
  */
@@ -291,13 +295,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	/* Setup switch frame */
 	sf = &pcb->pcb_sf;
-	sf->sf_r11 = (int)arg;		/* proc_trampoline hook func */
-	sf->sf_r12 = (int)func;		/* proc_trampoline hook func's arg */
+	sf->sf_r11 = (int)arg;		/* lwp_setfunc_trampoline hook func */
+	sf->sf_r12 = (int)func;	    /* lwp_setfunc_trampoline hook func's arg */
 	sf->sf_r15 = spbase + USPACE - PAGE_SIZE;/* current stack pointer */
 	sf->sf_r7_bank = sf->sf_r15;	/* stack top */
 	sf->sf_r6_bank = (vaddr_t)tf;	/* current frame pointer */
-	/* when switch to me, jump to proc_trampoline */
-	sf->sf_pr  = (int)proc_trampoline;
+	/* when switch to me, jump to lwp_setfunc_trampoline */
+	sf->sf_pr  = (int)lwp_setfunc_trampoline;
 	/*
 	 * Enable interrupt when switch frame is restored, since
 	 * kernel thread begin to run without restoring trapframe.

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.35 2007/02/21 22:59:51 thorpej Exp $	*/
+/*	$NetBSD: exception.c,v 1.35.6.1 2007/07/11 20:01:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.35 2007/02/21 22:59:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.35.6.1 2007/07/11 20:01:53 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -146,13 +146,11 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	bool usermode = !KERNELMODE(tf->tf_ssr);
-	int ipl;
 	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
-	ipl = tf->tf_ssr & PSL_IMASK;
-	splx(ipl);
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	if (l == NULL)
  		goto do_panic;
@@ -277,15 +275,18 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			}				\
 		} while(/*CONSTCOND*/0)
 
+	splx(tf->tf_ssr & PSL_IMASK);
 
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf);
 		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
+#if 0 /* FIXME: probably wrong for yamt-idlelwp */
 		KDASSERT(l == NULL ||		/* idle */
 		    l == &lwp0 ||		/* kthread */
 		    l->l_md.md_regs != tf);	/* other */
+#endif
 	}
 
 	switch (tf->tf_expevt) {
@@ -436,8 +437,16 @@ void
 ast(struct lwp *l, struct trapframe *tf)
 {
 
-	if (KERNELMODE(tf->tf_ssr))
+	if (KERNELMODE(tf->tf_ssr)) {
+		extern char _lock_cas_ras_start[];
+		extern char _lock_cas_ras_end[];
+
+		if ((uintptr_t)tf->tf_spc > (uintptr_t)_lock_cas_ras_start
+		    && (uintptr_t)tf->tf_spc < (uintptr_t)_lock_cas_ras_end)
+			tf->tf_spc = (uintptr_t)_lock_cas_ras_start;
 		return;
+	}
+
 	KDASSERT(l != NULL);
 	KDASSERT(l->l_md.md_regs == tf);
 

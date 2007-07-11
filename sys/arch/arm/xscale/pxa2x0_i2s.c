@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.4 2007/03/05 00:44:31 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.4.4.1 2007/07/11 19:58:12 mjf Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.4 2007/03/05 00:44:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.4.4.1 2007/07/11 19:58:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ pxa2x0_i2s_setspeed(struct pxa2x0_i2s_softc *sc, u_int *argp)
 		{44100,	SADIV_2_836MHz},
 		{48000,	SADIV_3_058MHz},
 	};
-	const const int n = (int)__arraycount(speed_table);
+	const int n = (int)__arraycount(speed_table);
 	u_int arg = (u_int)*argp;
 	int selected = -1;
 	int i;

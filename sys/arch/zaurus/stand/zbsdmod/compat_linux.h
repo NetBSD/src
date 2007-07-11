@@ -1,3 +1,4 @@
+/*	$NetBSD: compat_linux.h,v 1.1.14.1 2007/07/11 20:03:42 mjf Exp $	*/
 /*	$OpenBSD: compat_linux.h,v 1.5 2006/01/15 17:58:27 deraadt Exp $	*/
 
 /*
@@ -62,7 +63,6 @@ struct file_operations {
 };
 
 extern	struct file *open_exec(const char *);
-extern	void fput(struct file *);
 extern	int kernel_read(struct file *, unsigned long, char *, unsigned long);
 extern	int memcmp(const void *, const void *, size_t);
 extern	int register_chrdev(unsigned int, const char *, struct file_operations *);

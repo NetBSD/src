@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.12 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: btsco.c,v 1.12.4.1 2007/07/11 20:05:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.12.4.1 2007/07/11 20:05:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -215,6 +215,7 @@ static void  btsco_sco_connected(void *);
 static void  btsco_sco_disconnected(void *, int);
 static void *btsco_sco_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void  btsco_sco_complete(void *, int);
+static void  btsco_sco_linkmode(void *, int);
 static void  btsco_sco_input(void *, struct mbuf *);
 
 static const struct btproto btsco_sco_proto = {
@@ -223,6 +224,7 @@ static const struct btproto btsco_sco_proto = {
 	btsco_sco_disconnected,
 	btsco_sco_newconn,
 	btsco_sco_complete,
+	btsco_sco_linkmode,
 	btsco_sco_input,
 };
 
@@ -502,6 +504,14 @@ btsco_sco_complete(void *arg, int count)
 }
 
 static void
+btsco_sco_linkmode(void *arg, int new)
+{
+/*	struct btsco_softc *sc = arg;	*/
+
+	/* dont care */
+}
+
+static void
 btsco_sco_input(void *arg, struct mbuf *m)
 {
 	struct btsco_softc *sc = arg;
@@ -747,7 +757,7 @@ btsco_round_blocksize(void *hdl, int bs, int mode,
 		if (bs == 0)
 			bs = sc->sc_mtu;
 	}
-	
+
 	DPRINTF("%s mode=0x%x, bs=%d, sc_mtu=%d\n",
 			device_xname((struct device *)sc), mode, bs, sc->sc_mtu);
 

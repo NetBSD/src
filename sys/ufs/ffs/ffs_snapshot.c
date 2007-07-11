@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.4.1 2007/07/11 20:12:42 mjf Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,11 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.4.1 2007/07/11 20:12:42 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
-#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -188,10 +187,6 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_cred))
 		return EACCES;
 
-#ifdef QUOTA
-	if ((error = getinoquota(VTOI(vp))) != 0)
-		return error;
-#endif
 	if (vp->v_size != 0) {
 		error = ffs_truncate(vp, 0, 0, NOCRED, l);
 		if (error)
@@ -2007,7 +2002,7 @@ readfsblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 	nbp->b_dev = ip->i_devvp->v_rdev;
 	nbp->b_vp = NULLVP;
 
-	DEV_STRATEGY(nbp);
+	bdev_strategy(nbp);
 
 	error = biowait(nbp);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.24 2007/03/05 16:51:02 drochner Exp $
+#	$NetBSD: files.x86,v 1.24.4.1 2007/07/11 20:03:12 mjf Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -10,12 +10,22 @@ defflag                 MTRR
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
 
+# Intel Enhanced Speedstep
+defflag 			ENHANCED_SPEEDSTEP
+defflag	opt_est.h		EST_FREQ_USERWRITE
+
+# Pentium 4+ Thermal Monitor ODCM (aka On Demand Clock Modulation)
+defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
+
 # AMD Powernow/Cool`n'Quiet Technology
 defflag opt_powernow_k8.h	POWERNOW_K8
 
 # VIA PadLock support
 defflag	opt_viapadlock.h	VIA_PADLOCK:	opencrypto
 file	arch/x86/x86/via_padlock.c	via_padlock
+
+# To be able to test for NetBSD/xen in shared files
+defflag	opt_xen.h		DO_NOT_DEFINE
 
 define  cpubus { [apid = -1] }
 define  ioapicbus { [apid = -1] }
@@ -31,9 +41,11 @@ file	arch/x86/x86/i8259.c
 file	arch/x86/x86/intr.c
 file	arch/x86/x86/ipi.c		multiprocessor
 file	arch/x86/x86/lock_machdep.c	lockdebug
+file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
 file	arch/x86/x86/softintr.c
+file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_machdep.c
 
@@ -63,7 +75,14 @@ file	arch/x86/pci/pciide_machdep.c	pciide_common
 file	arch/x86/x86/powernow_k8.c	powernow_k8
 file	arch/x86/x86/powernow_common.c	powernow_k8 | powernow_k7
 
-#IPMI device
+# Intel On Demand Clock Modulation
+file	arch/x86/x86/iclockmod.c	intel_ondemand_clockmod
+
+# Intel Enhanced Speedstep
+file	arch/x86/x86/est.c		enhanced_speedstep
+file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
+
+# IPMI device
 device ipmi : sysmon_envsys, sysmon_wdog
 attach ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag

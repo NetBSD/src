@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.83 2007/03/05 00:50:53 liamjfoy Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.83.4.1 2007/07/11 20:11:21 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.83 2007/03/05 00:50:53 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.83.4.1 2007/07/11 20:11:21 mjf Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.83 2007/03/05 00:50:53 liamjfoy Exp $
 #include <netinet/in_ifattach.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_proto.h>
-#include <netinet/in_route.h>
 
 #ifdef INET6
 #ifndef INET
@@ -405,11 +404,14 @@ const struct protosw inetsw[] = {
 
 extern struct ifqueue ipintrq;
 
+POOL_INIT(sockaddr_in_pool, sizeof(struct sockaddr_in), 0, 0, 0,
+    "sockaddr_in_pool", NULL, IPL_NET);
+
 struct domain inetdomain = {
 	.dom_family = PF_INET, .dom_name = "internet", .dom_init = NULL,
 	.dom_externalize = NULL, .dom_dispose = NULL,
 	.dom_protosw = inetsw,
-	.dom_protoswNPROTOSW = &inetsw[sizeof(inetsw)/sizeof(inetsw[0])],
+	.dom_protoswNPROTOSW = &inetsw[__arraycount(inetsw)],
 	.dom_rtattach = rn_inithead,
 	.dom_rtoffset = 32, .dom_maxrtkey = sizeof(struct sockaddr_in),
 #ifdef IPSELSRC
@@ -422,11 +424,35 @@ struct domain inetdomain = {
 	.dom_ifqueues = { &ipintrq, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_rtcache = in_rtcache,
-	.dom_rtflush = in_rtflush,
-	.dom_rtflushall = in_rtflushall
+	.dom_sa_pool = &sockaddr_in_pool,
+	.dom_sa_len = sizeof(struct sockaddr_in),
+	.dom_sa_cmpofs = offsetof(struct sockaddr_in, sin_addr),
+	.dom_sa_cmplen = sizeof(struct in_addr),
+	.dom_rtcache = LIST_HEAD_INITIALIZER(inetdomain.dom_rtcache)
 };
 
 u_char	ip_protox[IPPROTO_MAX];
 
 int icmperrppslim = 100;			/* 100pps */
+
+int
+sockaddr_in_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	uint_fast8_t len;
+	const uint_fast8_t addrofs = offsetof(struct sockaddr_in, sin_addr),
+			   addrend = addrofs + sizeof(struct in_addr);
+	int rc;
+	const struct sockaddr_in *sin1, *sin2;
+
+	sin1 = satocsin(sa1);
+	sin2 = satocsin(sa2);
+
+	len = MIN(addrend, MIN(sin1->sin_len, sin2->sin_len));
+
+	if (len > addrofs &&
+	     (rc = memcmp(&sin1->sin_addr, &sin2->sin_addr,
+	                  len - addrofs)) != 0)
+		return rc;
+
+	return sin1->sin_len - sin2->sin_len;
+}

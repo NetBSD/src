@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3 2007/03/12 02:22:43 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3.2.1 2007/07/11 20:02:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -92,11 +92,13 @@ NENTRY(mutex_spin_enter, 0)
 	mtpr	%r3, $PR_IPL			/*   yes, raise IPL */
 1:	mfpr	$PR_SSP, %r1			/* get curcpu */
 	sobgeq	CI_MTX_COUNT(%r1), 2f		/* decr mutex count */
-	movl	%r2, CI_MTX_OLDSPL(%r1)		/*   save was-current IPL */
+	brb	3f
+2:	movl	%r2, CI_MTX_OLDSPL(%r1)		/*   save was-current IPL */
+3:
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
-	bbssi	$0, (%r0), 3f			/* take out mutex */
+	bbssi	$0, (%r0), 4f			/* take out mutex */
 	ret
-3:	callg	(%ap), _C_LABEL(mutex_spin_retry)	/* slow path */
+4:	callg	(%ap), _C_LABEL(mutex_spin_retry)	/* slow path */
 #endif
 	ret
 

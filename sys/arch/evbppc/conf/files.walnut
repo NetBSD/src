@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.12 2006/11/24 19:46:58 christos Exp $
+#	$NetBSD: files.walnut,v 1.12.10.1 2007/07/11 19:58:54 mjf Exp $
 #
 # walnut-specific configuration info
 
@@ -23,6 +23,7 @@ include	"dev/ata/files.ata"
 
 # Workstation Console
 include "dev/wscons/files.wscons"
+include "dev/wsfb/files.wsfb"
 
 # Raster operations
 include "dev/rasops/files.rasops"

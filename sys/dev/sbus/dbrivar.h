@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.5 2007/03/04 06:02:40 christos Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.5.4.1 2007/07/11 20:08:13 mjf Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -114,7 +114,8 @@ struct dbri_softc {
 	bus_dma_segment_t sc_dmaseg;
 	
 	int		sc_have_powerctl;
-	int		sc_powerstate;
+	int		sc_powerstate;	/* DBRI's powered up or not */
+	int		sc_pmgrstate;	/* PWR_RESUME etc. */
 	int		sc_burst;	/* DVMA burst size in effect */
 	
 	bus_addr_t	sc_dmabase;	/* VA of buffer we provide */
@@ -126,6 +127,7 @@ struct dbri_softc {
 	int		sc_waitseen;
 
 	int		sc_open;
+	int		sc_playing;
 
 	int		sc_liu_state;
 	void		(*sc_liu)(void *);
@@ -135,7 +137,11 @@ struct dbri_softc {
 	struct dbri_desc sc_desc[DBRI_NUM_DESCRIPTORS];
 
 	struct cs4215_state	sc_mm;
-	int		sc_latt, sc_ratt;
+	int		sc_latt, sc_ratt;	/* output attenuation */
+	int		sc_linp, sc_rinp;	/* input volume */
+	int		sc_monitor;		/* monitor volume */
+	int		sc_input;		/* 0 - line, 1 - mic */
+
 	int		sc_ctl_mode;
 	
 	uint32_t	sc_version;

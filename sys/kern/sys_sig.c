@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_sig.c,v 1.7 2007/03/09 14:11:27 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.7.4.1 2007/07/11 20:10:12 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.7 2007/03/09 14:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.7.4.1 2007/07/11 20:10:12 mjf Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -501,7 +501,7 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 {
 	int more;
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 	if (oss)
 		*oss = l->l_sigmask;

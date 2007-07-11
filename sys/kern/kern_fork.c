@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.136 2007/03/09 14:11:24 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136.4.1 2007/07/11 20:09:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136 2007/03/09 14:11:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.4.1 2007/07/11 20:09:47 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -319,8 +319,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
 	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
-	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_NONE);
+	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_HIGH);
+	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&p2->p_refcv, "drainref");
 	cv_init(&p2->p_waitcv, "wait");
@@ -362,9 +362,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_limit = limcopy(p1);
 		mutex_exit(&p1->p_mutex);
 	} else {
-		simple_lock(&p1->p_limit->p_slock);
+		mutex_enter(&p1->p_limit->p_lock);
 		p1->p_limit->p_refcnt++;
-		simple_unlock(&p1->p_limit->p_slock);
+		mutex_exit(&p1->p_limit->p_lock);
 		p2->p_limit = p1->p_limit;
 	}
 
@@ -375,6 +375,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_pptr = parent;
 	LIST_INIT(&p2->p_children);
 
+	p2->p_aio = NULL;
 
 #ifdef KTRACE
 	/*
@@ -397,7 +398,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
 	p2->p_sflag |=
 	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
-	scheduler_fork_hook(p1, p2);
+	sched_proc_fork(p1, p2);
 	mutex_exit(&p1->p_smutex);
 
 	p2->p_stflag = p1->p_stflag;
@@ -424,8 +425,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
-	PHOLD(l1);
-
+	uvm_lwp_hold(l1);
 	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
 
 	/*
@@ -468,7 +468,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Now can be swapped.
 	 */
-	PRELE(l1);
+	uvm_lwp_rele(l1);
 
 	/*
 	 * Notify any interested parties about the new process.
@@ -520,7 +520,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		lwp_lock(l2);
 		l2->l_stat = LSRUN;
 		l2->l_flag |= tmp;
-		setrunqueue(l2);
+		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
 
@@ -557,19 +557,3 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	return (0);
 }
-
-#if defined(MULTIPROCESSOR)
-/*
- * XXX This is a slight hack to get newly-formed processes to
- * XXX acquire the kernel lock as soon as they run.
- */
-void
-proc_trampoline_mp(void)
-{
-	struct lwp *l;
-
-	l = curlwp;
-
-	KERNEL_LOCK(1, l);
-}
-#endif

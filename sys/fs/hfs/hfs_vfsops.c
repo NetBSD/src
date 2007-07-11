@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.2.6.1 2007/07/11 20:09:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2.6.1 2007/07/11 20:09:22 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $")
 #include <fs/hfs/hfs.h>
 #include <fs/hfs/libhfs.h>
 
-MALLOC_DEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
+MALLOC_JUSTDEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
 extern struct lock hfs_hashlock;
 
@@ -287,10 +287,10 @@ hfs_mount(struct mount *mp, const char *path, void *data,
 		goto error;
 	}
 
-	if ((error = hfs_mountfs(devvp, mp, l, args.fspec, args.offset)) != 0)
+	if ((error = hfs_mountfs(devvp, mp, l, args.fspec)) != 0)
 		goto error;
 	
-	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_SYSSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 		mp, l);
 
 #ifdef HFS_DEBUG
@@ -332,7 +332,7 @@ hfs_start(struct mount *mp, int flags, struct lwp *l)
 
 int
 hfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
-    const char *devpath, uint64_t offset)
+    const char *devpath)
 {
 	hfs_callback_args cbargs;
 	hfs_libcb_argsopen argsopen;
@@ -374,7 +374,7 @@ hfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	cbargs.read = (void*)&argsread;
 	cbargs.openvol = (void*)&argsopen;
 
-	if ((error = hfslib_open_volume(devpath, offset, mp->mnt_flag & MNT_RDONLY,
+	if ((error = hfslib_open_volume(devpath, mp->mnt_flag & MNT_RDONLY,
 		&hmp->hm_vol, &cbargs)) != 0)
 		goto error;
 		
@@ -385,7 +385,6 @@ hfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 		goto error;
 	}
 
-	hmp->offset = offset >> DEV_BSHIFT;
 	mp->mnt_fs_bshift = 0;
         while ((1 << mp->mnt_fs_bshift) < hmp->hm_vol.vh.block_size)
 		mp->mnt_fs_bshift++;
@@ -675,9 +674,7 @@ hfs_init(void)
 	printf("vfsop = hfs_init()\n");
 #endif /* HFS_DEBUG */
 
-#ifdef _LKM
 	malloc_type_attach(M_HFSMNT);
-#endif
 
 	callbacks.error = hfs_libcb_error;
 	callbacks.allocmem = hfs_libcb_malloc;
@@ -710,9 +707,7 @@ hfs_done(void)
 	printf("vfsop = hfs_done()\n");
 #endif /* HFS_DEBUG */
 
-#ifdef _LKM
 	malloc_type_detach(M_HFSMNT);
-#endif
 
 	hfslib_done();
 	hfs_nhashdone();

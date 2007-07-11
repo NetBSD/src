@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.16 2006/07/23 22:06:10 ad Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.16.16.1 2007/07/11 20:04:44 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.16 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.16.16.1 2007/07/11 20:04:44 mjf Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -285,8 +285,7 @@ svr4_32_elf32_probe(l, epp, eh, itp, pos)
 	int error;
 
 	if (itp) {
-		if ((error = emul_find_interp(l,
-		    epp->ep_esch->es_emul->e_path, itp)))
+		if ((error = emul_find_interp(l, epp, itp)))
 			return error;
 	}
 	epp->ep_flags |= EXEC_32;

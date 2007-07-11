@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.31 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.31.10.1 2007/07/11 20:05:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.31 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.31.10.1 2007/07/11 20:05:24 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -247,7 +247,6 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	 * configuration registers.
 	 */
 	rtk_cardbus_setup(csc);
-	sc->rtk_type = t->rtk_basetype;
 
 	rtk_attach(sc);
 

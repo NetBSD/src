@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.10 2007/02/09 21:55:23 ad Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.10.8.1 2007/07/11 20:04:35 mjf Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.10 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.10.8.1 2007/07/11 20:04:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/prot.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 

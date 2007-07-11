@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.16 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: slide.c,v 1.16.8.1 2007/07/11 20:08:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.16 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.16.8.1 2007/07/11 20:08:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

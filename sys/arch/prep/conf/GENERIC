@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2006/11/11 18:47:11 jmmv Exp $
+# $NetBSD: GENERIC,v 1.131.10.1 2007/07/11 20:01:32 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.131 $"
+#ident		"GENERIC-$Revision: 1.131.10.1 $"
 
 maxusers	32
 
@@ -312,6 +312,7 @@ wdc*	at pnpbus?
 # PCI IDE controllers
 pciide*		at pci? dev ? function ? flags 0x0000
 hptide*		at pci? dev ? function ?
+slide*		at pci? dev ? function ?
 
 #fdc0 at pnpbus?	# standard ISA floppy controller
 #fd0 at fdc0 drive ?
@@ -412,7 +413,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+#uhub*	at uhub? port ?
 
 # USB HID device
 #uhidev*	at uhub? port ? configuration ? interface ?
@@ -559,6 +560,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

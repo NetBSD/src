@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.25 2007/02/05 23:38:15 jmcneill Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.25.8.1 2007/07/11 20:06:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.25 2007/02/05 23:38:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.25.8.1 2007/07/11 20:06:59 mjf Exp $");
 
 #include "opt_amdpm.h"
 
@@ -189,7 +189,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			aprint_normal("%s: "
 			    "random number generator enabled (apprx. %dms)\n",
 			    sc->sc_dev.dv_xname, i);
-			callout_init(&sc->sc_rnd_ch);
+			callout_init(&sc->sc_rnd_ch, 0);
 			rnd_attach_source(&sc->sc_rnd_source,
 			    sc->sc_dev.dv_xname, RND_TYPE_RNG,
 			    /*

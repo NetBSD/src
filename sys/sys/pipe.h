@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.20 2007/03/12 16:20:53 ad Exp $ */
+/* $NetBSD: pipe.h,v 1.20.2.1 2007/07/11 20:12:33 mjf Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -139,7 +139,8 @@ struct pipe {
 }
 
 #ifdef _KERNEL
-int sysctl_dopipe(int *, u_int, void *, size_t *, void *, size_t);
+int	sysctl_dopipe(int *, u_int, void *, size_t *, void *, size_t);
+void	pipe_init(void);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_PIPE_H_ */

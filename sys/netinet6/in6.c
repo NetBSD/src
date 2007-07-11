@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.125 2007/03/04 06:03:25 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.125.4.1 2007/07/11 20:11:36 mjf Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.125 2007/03/04 06:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.125.4.1 2007/07/11 20:11:36 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -227,7 +227,7 @@ in6_ifaddloop(struct ifaddr *ifa)
 	if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0 ||
 	    (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
 		in6_ifloop_request(RTM_ADD, ifa);
-	if (rt)
+	if (rt != NULL)
 		rt->rt_refcnt--;
 }
 
@@ -309,9 +309,7 @@ in6_ifremloop(struct ifaddr *ifa)
 }
 
 int
-in6_mask2len(mask, lim0)
-	struct in6_addr *mask;
-	u_char *lim0;
+in6_mask2len(struct in6_addr *mask, u_char *lim0)
 {
 	int x = 0, y;
 	u_char *lim = lim0, *p;
@@ -364,7 +362,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	 */
 	case SIOCSIFADDR:
 	case SIOCSIFDSTADDR:
-#ifdef SIOCSIFCONF_X26
+#ifdef SIOCSIFCONF_X25
 	case SIOCSIFCONF_X25:
 #endif
 		return EOPNOTSUPP;
@@ -1354,8 +1352,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 }
 
 void
-in6_purgeaddr(ifa)
-	struct ifaddr *ifa;
+in6_purgeaddr(struct ifaddr *ifa)
 {
 	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in6_ifaddr *ia = (struct in6_ifaddr *) ifa;
@@ -1398,9 +1395,7 @@ in6_purgeaddr(ifa)
 }
 
 static void
-in6_unlink_ifa(ia, ifp)
-	struct in6_ifaddr *ia;
-	struct ifnet *ifp;
+in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 {
 	struct in6_ifaddr *oia;
 	int	s = splnet();
@@ -1471,8 +1466,7 @@ in6_unlink_ifa(ia, ifp)
 }
 
 void
-in6_purgeif(ifp)
-	struct ifnet *ifp;
+in6_purgeif(struct ifnet *ifp)
 {
 	struct ifaddr *ifa, *nifa;
 
@@ -1510,12 +1504,8 @@ in6_purgeif(ifp)
  * address encoding scheme. (see figure on page 8)
  */
 static int
-in6_lifaddr_ioctl(so, cmd, data, ifp, l)
-	struct socket *so;
-	u_long cmd;
-	void *	data;
-	struct ifnet *ifp;
-	struct lwp *l;
+in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data, 
+	struct ifnet *ifp, struct lwp *l)
 {
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
@@ -1750,11 +1740,8 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
  * and routing table entry.
  */
 static int
-in6_ifinit(ifp, ia, sin6, newhost)
-	struct ifnet *ifp;
-	struct in6_ifaddr *ia;
-	struct sockaddr_in6 *sin6;
-	int newhost;
+in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia, 
+	struct sockaddr_in6 *sin6, int newhost)
 {
 	int	error = 0, plen, ifacount = 0;
 	int	s = splnet();
@@ -1863,8 +1850,7 @@ in6ifa_ifpwithaddr(const struct ifnet *ifp, const struct in6_addr *addr)
  */
 static int ip6round = 0;
 char *
-ip6_sprintf(addr)
-	const struct in6_addr *addr;
+ip6_sprintf(const struct in6_addr *addr)
 {
 	static char ip6buf[8][48];
 	int i;
@@ -1915,8 +1901,7 @@ ip6_sprintf(addr)
  * Determine if an address is on a local network.
  */
 int
-in6_localaddr(in6)
-	struct in6_addr *in6;
+in6_localaddr(struct in6_addr *in6)
 {
 	struct in6_ifaddr *ia;
 
@@ -1932,8 +1917,7 @@ in6_localaddr(in6)
 }
 
 int
-in6_is_addr_deprecated(sa6)
-	struct sockaddr_in6 *sa6;
+in6_is_addr_deprecated(struct sockaddr_in6 *sa6)
 {
 	struct in6_ifaddr *ia;
 
@@ -1957,8 +1941,7 @@ in6_is_addr_deprecated(sa6)
  * hard coding...
  */
 int
-in6_matchlen(src, dst)
-struct in6_addr *src, *dst;
+in6_matchlen(struct in6_addr *src, struct in6_addr *dst)
 {
 	int match = 0;
 	u_char *s = (u_char *)src, *d = (u_char *)dst;
@@ -1978,9 +1961,7 @@ struct in6_addr *src, *dst;
 
 /* XXX: to be scope conscious */
 int
-in6_are_prefix_equal(p1, p2, len)
-	struct in6_addr *p1, *p2;
-	int len;
+in6_are_prefix_equal(struct in6_addr *p1, struct in6_addr *p2, int len)
 {
 	int bytelen, bitlen;
 
@@ -2005,9 +1986,7 @@ in6_are_prefix_equal(p1, p2, len)
 }
 
 void
-in6_prefixlen2mask(maskp, len)
-	struct in6_addr *maskp;
-	int len;
+in6_prefixlen2mask(struct in6_addr *maskp, int len)
 {
 	static const u_char maskarray[NBBY] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
 	int bytelen, bitlen, i;
@@ -2033,9 +2012,7 @@ in6_prefixlen2mask(maskp, len)
  * found, return the first valid address from designated IF.
  */
 struct in6_ifaddr *
-in6_ifawithifp(ifp, dst)
-	struct ifnet *ifp;
-	struct in6_addr *dst;
+in6_ifawithifp(struct ifnet *ifp, struct in6_addr *dst)
 {
 	int dst_scope =	in6_addrscope(dst), blen = -1, tlen;
 	struct ifaddr *ifa;
@@ -2115,8 +2092,7 @@ in6_ifawithifp(ifp, dst)
  * perform DAD when interface becomes IFF_UP.
  */
 void
-in6_if_up(ifp)
-	struct ifnet *ifp;
+in6_if_up(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ia;
@@ -2144,8 +2120,7 @@ in6_if_up(ifp)
 }
 
 int
-in6if_do_dad(ifp)
-	struct ifnet *ifp;
+in6if_do_dad(struct ifnet *ifp)
 {
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
 		return 0;
@@ -2208,8 +2183,7 @@ in6_setmaxmtu()
  * consistent, and those really are as of August 2004.
  */
 int
-in6_if2idlen(ifp)
-	struct ifnet *ifp;
+in6_if2idlen(struct ifnet *ifp)
 {
 	switch (ifp->if_type) {
 	case IFT_ETHER:		/* RFC2464 */
@@ -2243,8 +2217,7 @@ in6_if2idlen(ifp)
 }
 
 void *
-in6_domifattach(ifp)
-	struct ifnet *ifp;
+in6_domifattach(struct ifnet *ifp)
 {
 	struct in6_ifextra *ext;
 
@@ -2275,4 +2248,62 @@ in6_domifdetach(struct ifnet *ifp, void *aux)
 	free(ext->icmp6_ifstat, M_IFADDR);
 	scope6_ifdetach(ext->scope6_id);
 	free(ext, M_IFADDR);
+}
+
+/*
+ * Convert sockaddr_in6 to sockaddr_in.  Original sockaddr_in6 must be
+ * v4 mapped addr or v4 compat addr
+ */
+void
+in6_sin6_2_sin(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
+{
+	bzero(sin, sizeof(*sin));
+	sin->sin_len = sizeof(struct sockaddr_in);
+	sin->sin_family = AF_INET;
+	sin->sin_port = sin6->sin6_port;
+	sin->sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
+}
+
+/* Convert sockaddr_in to sockaddr_in6 in v4 mapped addr format. */
+void
+in6_sin_2_v4mapsin6(struct sockaddr_in *sin, struct sockaddr_in6 *sin6)
+{
+	bzero(sin6, sizeof(*sin6));
+	sin6->sin6_len = sizeof(struct sockaddr_in6);
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_port = sin->sin_port;
+	sin6->sin6_addr.s6_addr32[0] = 0;
+	sin6->sin6_addr.s6_addr32[1] = 0;
+	sin6->sin6_addr.s6_addr32[2] = IPV6_ADDR_INT32_SMP;
+	sin6->sin6_addr.s6_addr32[3] = sin->sin_addr.s_addr;
+}
+
+/* Convert sockaddr_in6 into sockaddr_in. */
+void
+in6_sin6_2_sin_in_sock(struct sockaddr *nam)
+{
+	struct sockaddr_in *sin_p;
+	struct sockaddr_in6 sin6;
+
+	/*
+	 * Save original sockaddr_in6 addr and convert it
+	 * to sockaddr_in.
+	 */
+	sin6 = *(struct sockaddr_in6 *)nam;
+	sin_p = (struct sockaddr_in *)nam;
+	in6_sin6_2_sin(sin_p, &sin6);
+}
+
+/* Convert sockaddr_in into sockaddr_in6 in v4 mapped addr format. */
+void
+in6_sin_2_v4mapsin6_in_sock(struct sockaddr **nam)
+{
+	struct sockaddr_in *sin_p;
+	struct sockaddr_in6 *sin6_p;
+
+	sin6_p = malloc(sizeof(*sin6_p), M_SONAME, M_WAITOK);
+	sin_p = (struct sockaddr_in *)*nam;
+	in6_sin_2_v4mapsin6(sin_p, sin6_p);
+	free(*nam, M_SONAME);
+	*nam = (struct sockaddr *)sin6_p;
 }

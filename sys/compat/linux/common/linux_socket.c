@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.71 2007/03/04 06:01:24 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.71.4.1 2007/07/11 20:04:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,11 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71 2007/03/04 06:01:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71.4.1 2007/07/11 20:04:19 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
+#include "opt_ktrace.h"
 #include "opt_inet.h"
-#endif
+#endif /* defined(_KERNEL_OPT) */
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,6 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71 2007/03/04 06:01:24 christos E
 #include <sys/kauth.h>
 
 #include <sys/syscallargs.h>
+#ifdef KTRACE 
+#include <sys/ktrace.h>
+#endif
 
 #include <lib/libkern/libkern.h>
 
@@ -86,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71 2007/03/04 06:01:24 christos E
 #endif
 
 #include <compat/sys/socket.h>
+#include <compat/sys/sockio.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_util.h>
@@ -121,8 +126,8 @@ int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
 int linux_getifhwaddr __P((struct lwp *, register_t *, u_int, void *));
-static int linux_sa_get __P((struct lwp *, int, void **, struct sockaddr **,
-		const struct osockaddr *, socklen_t *));
+static int linux_get_sa(struct lwp *, int, struct mbuf **,
+		const struct osockaddr *, int);
 static int linux_sa_put __P((struct osockaddr *osa));
 static int linux_to_bsd_msg_flags __P((int));
 static int bsd_to_linux_msg_flags __P((int));
@@ -382,31 +387,34 @@ linux_sys_sendto(l, v, retval)
 		syscallarg(struct osockaddr *)		to;
 		syscallarg(int)				tolen;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_sendto_args bsa;
-	socklen_t tolen;
+	struct msghdr   msg;
+	struct iovec    aiov;
+	struct mbuf *nam;
+	int bflags;
+	int error;
 
-	SCARG(&bsa, s) = SCARG(uap, s);
-	SCARG(&bsa, buf) = SCARG(uap, msg);
-	SCARG(&bsa, len) = (size_t) SCARG(uap, len);
-	SCARG(&bsa, flags) = SCARG(uap, flags);
-	tolen = SCARG(uap, tolen);
-	if (SCARG(uap, to)) {
-		struct sockaddr *sa;
-		int error;
-		void *sg = stackgap_init(p, 0);
+	/* Translate message flags.  */
+	bflags = linux_to_bsd_msg_flags(SCARG(uap, flags));
+	if (bflags < 0)
+		/* Some supported flag */
+		return EINVAL;
 
-		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-		    SCARG(uap, to), &tolen);
-		if (error)
-			return (error);
+	/* Read in and convert the sockaddr */
+	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, to),
+	    SCARG(uap, tolen));
+	if (error)
+		return (error);
+	msg.msg_flags = MSG_NAMEMBUF;
 
-		SCARG(&bsa, to) = sa;
-	} else
-		SCARG(&bsa, to) = NULL;
-	SCARG(&bsa, tolen) = tolen;
+	msg.msg_name = nam;
+	msg.msg_namelen = SCARG(uap, tolen);
+	msg.msg_iov = &aiov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = 0;
+	aiov.iov_base = __UNCONST(SCARG(uap, msg));
+	aiov.iov_len = SCARG(uap, len);
 
-	return (sys_sendto(l, &bsa, retval));
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 }
 
 int
@@ -420,91 +428,57 @@ linux_sys_sendmsg(l, v, retval)
 		syscallarg(struct msghdr *) msg;
 		syscallarg(u_int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct msghdr	msg;
 	int		error;
-	struct iovec	aiov[UIO_SMALLIOV], *iov;
-	void *sg = 0;
 	int		bflags;
-	u_int8_t	*control=NULL;
+	struct mbuf     *nam;
+	u_int8_t	*control;
+	struct mbuf     *ctl_mbuf = NULL;
 
-	error = copyin(SCARG(uap, msg), (void *)&msg, sizeof(msg));
-	if (error)
-		return (error);
-	if ((unsigned int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((unsigned int)msg.msg_iovlen > IOV_MAX)
-			return (EMSGSIZE);
-		iov = malloc(sizeof(struct iovec) * msg.msg_iovlen,
-		    M_IOV, M_WAITOK);
-	} else
-		iov = aiov;
-	if ((unsigned int)msg.msg_iovlen > 0) {
-		error = copyin((void *)msg.msg_iov, (void *)iov,
-		    (size_t)(msg.msg_iovlen * sizeof(struct iovec)));
-		if (error)
-			goto done;
-	}
-	msg.msg_iov = iov;
-	msg.msg_flags = 0;
-
-	/* Convert the sockaddr if necessary */
-	if (msg.msg_name) {
-		struct sockaddr *sa;
-		sg = stackgap_init(p, 0);
-
-		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-		    (struct osockaddr *) msg.msg_name, &msg.msg_namelen);
-		if (error)
-			goto done;
-		msg.msg_name = sa;
-	}
+	msg.msg_flags = MSG_IOVUSRSPACE;
 
 	/*
 	 * Translate message flags.
 	 */
 	bflags = linux_to_bsd_msg_flags(SCARG(uap, flags));
-	if (bflags < 0) {
+	if (bflags < 0)
 		/* Some supported flag */
-		error = EINVAL;
-		goto done;
+		return EINVAL;
+
+	if (msg.msg_name) {
+		/* Read in and convert the sockaddr */
+		error = linux_get_sa(l, SCARG(uap, s), &nam, msg.msg_name,
+		    msg.msg_namelen);
+		if (error)
+			return (error);
+		msg.msg_flags |= MSG_NAMEMBUF;
+		msg.msg_name = nam;
 	}
 
 	/*
 	 * Handle cmsg if there is any.
 	 */
 	if (CMSG_FIRSTHDR(&msg)) {
-		struct cmsghdr cmsg, *cc;
-		int changed = 0;
+		struct linux_cmsghdr l_cmsg, *l_cc;
+		struct cmsghdr *cmsg;
 		ssize_t resid = msg.msg_controllen;
 		size_t clen, cidx = 0, cspace;
 
-		/*
-		 * Limit the size even more than what sockargs() would do,
-		 * We need to fit into stackgap space.
-		 */
-		if (msg.msg_controllen > (STACKGAPLEN / 2)) {
-			/* Sorry guys! */
-			error = EMSGSIZE;
-			goto done;
-		}
+		ctl_mbuf = m_get(M_WAIT, MT_CONTROL);
+		clen = MLEN;
+		control = mtod(ctl_mbuf, void *);
 
-		control = malloc((clen = msg.msg_controllen), M_TEMP, M_WAITOK);
-		if (!control) {
-			error = ENOMEM;
-			goto done;
-		}
-
-		cc = CMSG_FIRSTHDR(&msg);
+		l_cc = LINUX_CMSG_FIRSTHDR(&msg);
 		do {
-			error = copyin(cc, &cmsg, sizeof(cmsg));
+			error = copyin(l_cc, &l_cmsg, sizeof(l_cmsg));
 			if (error)
 				goto done;
 
 			/*
 			 * Sanity check the control message length.
 			 */
-			if (cmsg.cmsg_len > resid
-			    || cmsg.cmsg_len < sizeof(struct cmsghdr)) {
+			if (l_cmsg.cmsg_len > resid
+			    || l_cmsg.cmsg_len < sizeof l_cmsg) {
 				error = EINVAL;
 				goto done;
 			}
@@ -513,15 +487,13 @@ linux_sys_sendmsg(l, v, retval)
 			 * Refuse unsupported control messages, and
 			 * translate fields as appropriate.
 			 */
-			switch (cmsg.cmsg_level) {
+			switch (l_cmsg.cmsg_level) {
 			case LINUX_SOL_SOCKET:
 				/* It only differs on some archs */
-				if (LINUX_SOL_SOCKET != SOL_SOCKET) {
-					cmsg.cmsg_level = SOL_SOCKET;
-					changed = 1;
-				}
+				if (LINUX_SOL_SOCKET != SOL_SOCKET)
+					l_cmsg.cmsg_level = SOL_SOCKET;
 
-				switch(cmsg.cmsg_type) {
+				switch(l_cmsg.cmsg_type) {
 				case LINUX_SCM_RIGHTS:
 					/* Linux SCM_RIGHTS is same as NetBSD */
 					break;
@@ -537,95 +509,72 @@ linux_sys_sendmsg(l, v, retval)
 				break;
 			}
 
-			cspace = CMSG_SPACE(cmsg.cmsg_len - sizeof(cmsg));
+			cspace = CMSG_SPACE(l_cmsg.cmsg_len - sizeof(l_cmsg));
 
 			/* Check the buffer is big enough */
 			if (__predict_false(cidx + cspace > clen)) {
 				u_int8_t *nc;
 
 				clen = cidx + cspace;
-				nc = realloc(control, clen, M_TEMP, M_WAITOK);
+				if (clen >= PAGE_SIZE) {
+					error = EINVAL;
+					goto done;
+				}
+				nc = realloc(clen <= MLEN ? NULL : control,
+						clen, M_TEMP, M_WAITOK);
 				if (!nc) {
 					error = ENOMEM;
 					goto done;
 				}
+				if (cidx <= MLEN)
+					/* Old buffer was in mbuf... */
+					memcpy(nc, control, cidx);
 				control = nc;
 			}
 
 			/* Copy header */
-			memcpy(&control[cidx], &cmsg, sizeof(cmsg));
+			cmsg = (void *)&control[cidx];
+			cmsg->cmsg_len = l_cmsg.cmsg_len + LINUX_CMSG_ALIGN_DELTA;
+			cmsg->cmsg_level = l_cmsg.cmsg_level;
+			cmsg->cmsg_type = l_cmsg.cmsg_type;
 
 			/* Zero are between header and data */
-			memset(&control[cidx+sizeof(cmsg)], 0,
+			memset(cmsg + 1, 0, 
 				CMSG_ALIGN(sizeof(cmsg)) - sizeof(cmsg));
 
 			/* Copyin the data */
-			error = copyin(LINUX_CMSG_DATA(cc),
+			error = copyin(LINUX_CMSG_DATA(l_cc),
 				CMSG_DATA(control),
-				cmsg.cmsg_len - sizeof(cmsg));
+				l_cmsg.cmsg_len - sizeof(l_cmsg));
 			if (error)
 				goto done;
 
-			/*
-			 * If there is alignment difference, we changed
-			 * layout of cmsg.
-			 */
-			if (LINUX_CMSG_ALIGNDIFF)
-				changed = 1;
-
-			resid -= cspace;
+			resid -= LINUX_CMSG_ALIGN(l_cmsg.cmsg_len);
 			cidx += cspace;
-		} while ((cc = LINUX_CMSG_NXTHDR(&msg, cc)) && resid > 0);
+		} while ((l_cc = LINUX_CMSG_NXTHDR(&msg, l_cc)) && resid > 0);
 
-		/*
-		 * If any of the passed control message needed
-		 * a change, put the changed data into stackgap
-		 * and adjust msg appropriately.
-		 */
-		if (changed) {
-			char *newc;
-
-			/*
-			 * Check again the total len is maximum half of
-			 * stackgap. The length might change if the
-			 * alignment is different.
-			 */
-			if (clen > STACKGAPLEN/2) {
-				error = EMSGSIZE;
-				goto done;
-			}
-
-			/*
-			 * Allocate space on stack within stackgap, and
-			 * copy changed data there.
-			 */
-			if (!sg)
-				sg = stackgap_init(p, STACKGAPLEN/3);
-			newc = stackgap_alloc(p, &sg, clen);
-			if (!newc) {
-				error = ENOMEM;
-				goto done;
-			}
-
-			error = copyout(control, newc, clen);
-			if (error)
-				goto done;
-
-			msg.msg_control = newc;
-			msg.msg_controllen = clen;
+		/* If we allocated a buffer, attach to mbuf */
+		if (cidx > MLEN) {
+			MEXTADD(ctl_mbuf, control, clen, M_MBUF, NULL, NULL);
+			ctl_mbuf->m_flags |= M_EXT_RW;
 		}
-
-		free(control, M_TEMP);
 		control = NULL;
+		ctl_mbuf->m_len = cidx;
+
+		msg.msg_control = ctl_mbuf;
+		msg.msg_flags |= MSG_CONTROLMBUF;
 	}
 
-	error = sendit(l, SCARG(uap, s), &msg, bflags, retval);
+	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
+	/* Freed internally */
+	ctl_mbuf = NULL;
 
 done:
-	if (control)
-		free(control, M_TEMP);
-	if (iov != aiov)
-		free(iov, M_IOV);
+	if (ctl_mbuf != NULL) {
+		if (control != NULL && control != mtod(ctl_mbuf, void *))
+			free(control, M_MBUF);
+		m_free(ctl_mbuf);
+	}
 	return (error);
 }
 
@@ -662,6 +611,98 @@ linux_sys_recvfrom(l, v, retval)
 	return (0);
 }
 
+static int
+linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
+{
+	int dlen, error = 0;
+	struct cmsghdr *cmsg;
+	struct linux_cmsghdr linux_cmsg;
+	struct mbuf *m;
+	char *q, *q_end;
+
+	if (mp->msg_controllen <= 0 || control == 0) {
+		mp->msg_controllen = 0;
+		free_control_mbuf(l, control, control);
+		return 0;
+	}
+
+	q = (char *)mp->msg_control;
+	q_end = q + mp->msg_controllen;
+
+	for (m = control; m != NULL; ) {
+		cmsg = mtod(m, struct cmsghdr *);
+
+		/*
+		 * Fixup cmsg. We handle two things:
+		 * 0. different sizeof cmsg_len.
+		 * 1. different values for level/type on some archs
+		 * 2. different alignment of CMSG_DATA on some archs
+		 */
+		linux_cmsg.cmsg_len = cmsg->cmsg_len - LINUX_CMSG_ALIGN_DELTA;
+		linux_cmsg.cmsg_level = cmsg->cmsg_level;
+		linux_cmsg.cmsg_type = cmsg->cmsg_type;
+
+		dlen = q_end - q;
+		if (linux_cmsg.cmsg_len > dlen) {
+			/* Not enough room for the parameter */
+			dlen -= sizeof linux_cmsg;
+			if (dlen <= 0)
+				/* Discard if header wont fit */
+				break;
+			mp->msg_flags |= MSG_CTRUNC;
+			if (linux_cmsg.cmsg_level == SOL_SOCKET
+			    && linux_cmsg.cmsg_type == SCM_RIGHTS)
+				/* Do not truncate me ... */
+				break;
+		} else
+			dlen = linux_cmsg.cmsg_len - sizeof linux_cmsg;
+
+		switch (linux_cmsg.cmsg_level) {
+		case SOL_SOCKET:
+			linux_cmsg.cmsg_level = LINUX_SOL_SOCKET;
+			switch (linux_cmsg.cmsg_type) {
+			case SCM_RIGHTS:
+				/* Linux SCM_RIGHTS is same as NetBSD */
+				break;
+
+			default:
+				/* other types not supported */
+				error = EINVAL;
+				goto done;
+			}
+			/* machine dependant ! */
+			break;
+		default:
+			/* pray and leave intact */
+			break;
+		}
+
+		/* There can be padding between the header and data... */
+		error = copyout(&linux_cmsg, q, sizeof *cmsg);
+		if (error != 0) {
+			error = copyout(CCMSG_DATA(cmsg), q + sizeof linux_cmsg,
+			    dlen);
+		}
+		if (error != 0) {
+			/* We must free all the SCM_RIGHTS */
+			m = control;
+			break;
+		}
+		m = m->m_next;
+		if (m == NULL || q + LINUX_CMSG_ALIGN(dlen) > q_end) {
+			q += dlen;
+			break;
+		}
+		q += LINUX_CMSG_ALIGN(dlen);
+	}
+
+  done:
+	free_control_mbuf(l, control, m);
+
+	mp->msg_controllen = q - (char *)mp->msg_control;
+	return error;
+}
+
 int
 linux_sys_recvmsg(l, v, retval)
 	struct lwp *l;
@@ -675,178 +716,47 @@ linux_sys_recvmsg(l, v, retval)
 	} */ *uap = v;
 	struct msghdr	msg;
 	int		error;
-	struct sys_recvmsg_args bsa;
-	int lflags;
-	u_int8_t *ocontrol = NULL; /* XXX: gcc */
-	socklen_t ocontrollen = 0;
+	struct mbuf	*from, *control;
 
-	/*
-	 * Data alignment is different on some architectures. If control
-	 * message is expected, we must arrange for the control message
-	 * to be initially put elsewhere, and copy to target place
-	 * with Linux alignment.
-	 */
-	if (LINUX_CMSG_ALIGNDIFF) {
-		error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
-		if (error)
-			return (error);
+	error = copyin(SCARG(uap, msg), &msg, sizeof(msg));
+	if (error)
+		return (error);
 
-		if (CMSG_FIRSTHDR(&msg)) {
-			void *sg;
-
-			/* Need to fit within stackgap */
-			if (msg.msg_controllen > STACKGAPLEN/2) {
-				/* Sorry guys! */
-				return (EINVAL);
-			}
-
-			sg = stackgap_init(l->l_proc, STACKGAPLEN/3);
-
-			ocontrol = msg.msg_control;
-			ocontrollen = msg.msg_controllen;
-
-			/* space for at least one message's worth align */
-			msg.msg_controllen += CMSG_ALIGN(1);
-
-			msg.msg_control = stackgap_alloc(l->l_proc, &sg,
-				msg.msg_controllen);
-			if (!msg.msg_control)
-				return (ENOMEM);
-
-			/*
-			 * Okay to overwrite the original structure, it's
-			 * supposed to be writable.
-			 */
-			error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
-			if (error)
-				return (error);
-		}
-	}
-
-	SCARG(&bsa, s) = SCARG(uap, s);
-	SCARG(&bsa, msg) = SCARG(uap, msg);
-	SCARG(&bsa, flags) = linux_to_bsd_msg_flags(SCARG(uap, flags));
-
-	if (SCARG(&bsa, flags) < 0) {
+	msg.msg_flags = linux_to_bsd_msg_flags(SCARG(uap, flags));
+	if (msg.msg_flags < 0) {
 		/* Some unsupported flag */
 		return (EINVAL);
 	}
+	msg.msg_flags |= MSG_IOVUSRSPACE;
 
-	if ((error = sys_recvmsg(l, &bsa, retval)))
-		goto done;
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
+	    msg.msg_control != NULL ? &control : NULL, retval);
+	if (error != 0)
+		return error;
 
-	/* Fixup sockaddr */
-	error = copyin((void *)SCARG(uap, msg), (void *)&msg,
-		       sizeof(msg));
-	if (error)
-		goto done;
+	if (msg.msg_control != NULL)
+		error = linux_copyout_msg_control(l, &msg, control);
 
-	if (msg.msg_name && msg.msg_namelen > 2) {
-		if ((error = linux_sa_put(msg.msg_name)))
-			goto done;
+	if (error == 0 && from != 0) {
+		mtod(from, struct osockaddr *)->sa_family =
+		    bsd_to_linux_domain(mtod(from, struct sockaddr *)->sa_family);
+		error = copyout_sockname(msg.msg_name, &msg.msg_namelen, 0,
+			from);
+	} else
+		msg.msg_namelen = 0;
+
+	if (from != NULL)
+		m_free(from);
+
+	if (error == 0) {
+		msg.msg_flags = bsd_to_linux_msg_flags(msg.msg_flags);
+		if (msg.msg_flags < 0)
+			/* Some flag unsupported by Linux */
+			error = EINVAL;
+		else
+			error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
 	}
 
-	/* Fixup msg flags */
-	lflags = bsd_to_linux_msg_flags(msg.msg_flags);
-	if (lflags < 0) {
-		/* Some flag unsupported by Linux */
-		error = EINVAL;
-		goto done;
-	}
-	error = copyout(&lflags, (u_int8_t *) SCARG(uap, msg) +
-			offsetof(struct msghdr, msg_flags), sizeof(lflags));
-	if (error)
-		goto done;
-
-	/*
-	 * Fixup cmsg. We handle two things:
-	 * 1. different values for level/type on some archs
-	 * 2. different alignment of CMSG_DATA on some archs
-	 */
-	if (CMSG_FIRSTHDR(&msg)) {
-		struct cmsghdr cmsg, *cc;
-		int changed = 0;
-		size_t resid = ocontrollen;
-
-		cc = CMSG_FIRSTHDR(&msg);
-		do {
-			error = copyin(cc, &cmsg, sizeof(cmsg));
-			if (error)
-				goto done;
-
-			switch (cmsg.cmsg_level) {
-			case SOL_SOCKET:
-				if (SOL_SOCKET != LINUX_SOL_SOCKET) {
-					cmsg.cmsg_level = LINUX_SOL_SOCKET;
-					changed = 1;
-				}
-
-				switch (cmsg.cmsg_type) {
-				case SCM_RIGHTS:
-					/* Linux SCM_RIGHTS is same as NetBSD */
-					break;
-
-				default:
-					/* other types not supported */
-					error = EINVAL;
-					goto done;
-				}
-			default:
-				/* pray and leave intact */
-				break;
-			}
-
-			if (LINUX_CMSG_ALIGNDIFF) {
-				int i;
-				u_int8_t d, *sd, *td;
-
-				/*
-				 * Sanity check.
-				 */
-				if (cmsg.cmsg_len > resid
-				    || cmsg.cmsg_len < sizeof(cmsg)) {
-					error = EINVAL;
-					goto done;
-				}
-
-				/*
-				 * Need to copy the cmsg from scratch area
-				 * to the original place, converting data
-				 * alignment from NetBSD to Linux one.
-				 */
-				error = copyout(&cmsg, ocontrol, sizeof(cmsg));
-				if (error)
-					goto done;
-				/* zero pad */
-#if 0
-				for(i=0; i < LINUX_CMSG_ALIGN(sizeof(cmsg)) - sizeof(cmsg); i++) {
-					copyout("",&ocontrol[sizeof(cmsg)+i],1);
-				}
-#endif
-
-				sd = CMSG_DATA(cc);
-				td = LINUX_CMSG_DATA(ocontrol);
-
-				/* This is not particularily effective, but ..*/
-				d = '\0';
-				for(i=0; i < cmsg.cmsg_len - sizeof(cmsg); i++){
-					copyin(sd++, &d, 1);
-					copyout(&d, td++, 1);
-				}
-
-				resid -= (td - ocontrol);
-				ocontrol = td;
-			} else if (changed) {
-				/* Update cmsghdr in-place */
-				error = copyout(&cmsg, cc, sizeof(cmsg));
-				if (error)
-					goto done;
-				changed = 0;
-			}
-		} while((cc = CMSG_NXTHDR(&msg, cc)));
-	}
-
-done:
 	return (error);
 }
 
@@ -1142,7 +1052,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		goto out;
 	}
 
-	error = copyin(data, (void *)&lreq, sizeof(lreq));
+	error = copyin(data, &lreq, sizeof(lreq));
 	if (error)
 		goto out;
 	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
@@ -1165,14 +1075,12 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				if (sadl->sdl_family != AF_LINK ||
 				    sadl->sdl_type != IFT_ETHER)
 					continue;
-				memcpy((void *)&lreq.hwaddr.sa_data,
-				       LLADDR(sadl),
+				memcpy(&lreq.hwaddr.sa_data, LLADDR(sadl),
 				       MIN(sadl->sdl_alen,
 					   sizeof(lreq.hwaddr.sa_data)));
 				lreq.hwaddr.sa_family =
 					sadl->sdl_family;
-				error = copyout((void *)&lreq, data,
-						sizeof(lreq));
+				error = copyout(&lreq, data, sizeof(lreq));
 				goto out;
 			}
 		} else {
@@ -1209,14 +1117,13 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 					if (ifnum--)
 						/* not the reqested iface */
 						continue;
-					memcpy((void *)&lreq.hwaddr.sa_data,
+					memcpy(&lreq.hwaddr.sa_data,
 					       LLADDR(sadl),
 					       MIN(sadl->sdl_alen,
 						   sizeof(lreq.hwaddr.sa_data)));
 					lreq.hwaddr.sa_family =
 						sadl->sdl_family;
-					error = copyout((void *)&lreq, data,
-							sizeof(lreq));
+					error = copyout(&lreq, data, sizeof(lreq));
 					found = 1;
 					break;
 				}
@@ -1252,7 +1159,7 @@ linux_ioctl_socket(l, uap, retval)
 	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
 	struct ioctl_pt pt;
 
-        fdp = p->p_fd;
+	fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
@@ -1292,34 +1199,34 @@ linux_ioctl_socket(l, uap, retval)
 
 	switch (com) {
 	case LINUX_SIOCGIFCONF:
-		SCARG(&ia, com) = OSIOCGIFCONF;
+		SCARG(&ia, com) = OOSIOCGIFCONF;
 		break;
 	case LINUX_SIOCGIFFLAGS:
-		SCARG(&ia, com) = SIOCGIFFLAGS;
+		SCARG(&ia, com) = OSIOCGIFFLAGS;
 		break;
 	case LINUX_SIOCSIFFLAGS:
-		SCARG(&ia, com) = SIOCSIFFLAGS;
+		SCARG(&ia, com) = OSIOCSIFFLAGS;
 		break;
 	case LINUX_SIOCGIFADDR:
-		SCARG(&ia, com) = OSIOCGIFADDR;
+		SCARG(&ia, com) = OOSIOCGIFADDR;
 		break;
 	case LINUX_SIOCGIFDSTADDR:
-		SCARG(&ia, com) = OSIOCGIFDSTADDR;
+		SCARG(&ia, com) = OOSIOCGIFDSTADDR;
 		break;
 	case LINUX_SIOCGIFBRDADDR:
-		SCARG(&ia, com) = OSIOCGIFBRDADDR;
+		SCARG(&ia, com) = OOSIOCGIFBRDADDR;
 		break;
 	case LINUX_SIOCGIFNETMASK:
-		SCARG(&ia, com) = OSIOCGIFNETMASK;
+		SCARG(&ia, com) = OOSIOCGIFNETMASK;
 		break;
 	case LINUX_SIOCADDMULTI:
-		SCARG(&ia, com) = SIOCADDMULTI;
+		SCARG(&ia, com) = OSIOCADDMULTI;
 		break;
 	case LINUX_SIOCDELMULTI:
-		SCARG(&ia, com) = SIOCDELMULTI;
+		SCARG(&ia, com) = OSIOCDELMULTI;
 		break;
 	case LINUX_SIOCGIFHWADDR:
-	        error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
+		error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
 					 SCARG(uap, data));
 		dosys = 0;
 		break;
@@ -1351,24 +1258,15 @@ linux_sys_connect(l, v, retval)
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int		error;
-	struct sockaddr *sa;
-	struct sys_connect_args bca;
-	void *sg = stackgap_init(p, 0);
-	socklen_t namlen;
+	struct mbuf *nam;
 
-	namlen = SCARG(uap, namelen);
-	error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-	    SCARG(uap, name), &namlen);
+	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, name),
+	    SCARG(uap, namelen));
 	if (error)
 		return (error);
 
-	SCARG(&bca, s) = SCARG(uap, s);
-	SCARG(&bca, name) = sa;
-	SCARG(&bca, namelen) =  namlen;
-
-	error = sys_connect(l, &bca, retval);
+	error = do_sys_connect(l, SCARG(uap, s), nam);
 
 	if (error == EISCONN) {
 		struct file *fp;
@@ -1376,7 +1274,7 @@ linux_sys_connect(l, v, retval)
 		int s, state, prflags;
 
 		/* getsock() will use the descriptor for us */
-	    	if (getsock(p->p_fd, SCARG(uap, s), &fp) != 0)
+	    	if (getsock(l->l_proc->p_fd, SCARG(uap, s), &fp) != 0)
 		    	return EISCONN;
 
 		s = splsoftnet();
@@ -1409,28 +1307,15 @@ linux_sys_bind(l, v, retval)
 		syscallarg(const struct osockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int		error;
-	socklen_t	namlen;
-	struct sys_bind_args bsa;
+	struct mbuf     *nam;
 
-	namlen = SCARG(uap, namelen);
-	SCARG(&bsa, s) = SCARG(uap, s);
-	if (SCARG(uap, name)) {
-		struct sockaddr *sa;
-		void *sg = stackgap_init(p, 0);
+	error = linux_get_sa(l, SCARG(uap, s), &nam, SCARG(uap, name),
+	    SCARG(uap, namelen));
+	if (error)
+		return (error);
 
-		error = linux_sa_get(l, SCARG(uap, s), &sg, &sa,
-		    SCARG(uap, name), &namlen);
-		if (error)
-			return (error);
-
-		SCARG(&bsa, name) = sa;
-	} else
-		SCARG(&bsa, name) = NULL;
-	SCARG(&bsa, namelen) = namlen;
-
-	return (sys_bind(l, &bsa, retval));
+	return do_sys_bind(l, SCARG(uap, s), nam);
 }
 
 int
@@ -1478,60 +1363,68 @@ linux_sys_getpeername(l, v, retval)
 }
 
 /*
- * Copy the osockaddr structure pointed to by osa to kernel, adjust
- * family and convert to sockaddr, allocate stackgap and put the
- * the converted structure there, address on stackgap returned in sap.
+ * Copy the osockaddr structure pointed to by osa to mbuf, adjust
+ * family and convert to sockaddr.
  */
 static int
-linux_sa_get(l, s, sgp, sap, osa, osalen)
-	struct lwp *l;
-	int s;
-	void **sgp;
-	struct sockaddr **sap;
-	const struct osockaddr *osa;
-	socklen_t *osalen;
+linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa, int salen)
 {
-	int error=0, bdom;
-	struct sockaddr *sa, *usa;
-	struct osockaddr *kosa = (struct osockaddr *) &sa;
-	struct proc *p = l->l_proc;
-	socklen_t alloclen;
-#ifdef INET6
-	int oldv6size;
-	struct sockaddr_in6 *sin6;
+	int error, bdom;
+	struct sockaddr *sa;
+	struct osockaddr *kosa;
+	struct mbuf *m;
+
+	if (salen == 1 || salen > UCHAR_MAX) {
+		DPRINTF(("bad osa=%p salen=%d\n", osa, salen));
+		return EINVAL;
+	}
+
+	/* We'll need the address in an mbuf later, so copy into one here */
+	m = m_get(M_WAIT, MT_SONAME);
+	if (salen > MLEN)
+		MEXTMALLOC(m, salen, M_WAITOK);
+
+	m->m_len = salen;
+
+	if (salen == 0)
+		return 0;
+
+	kosa = mtod(m, void *);
+	if ((error = copyin(osa, kosa, salen))) {
+		DPRINTF(("error %d copying osa %p len %d\n",
+				error, osa, salen));
+		goto bad;
+	}
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_USER))
+		ktrkuser(l, "linux sockaddr", kosa, salen);
 #endif
-
-	if (*osalen < 2 || *osalen > UCHAR_MAX || !osa) {
-		DPRINTF(("bad osa=%p osalen=%d\n", osa, *osalen));
-		return (EINVAL);
-	}
-
-	alloclen = *osalen;
-#ifdef INET6
-	oldv6size = 0;
-	/*
-	 * Check for old (pre-RFC2553) sockaddr_in6. We may accept it
-	 * if it's a v4-mapped address, so reserve the proper space
-	 * for it.
-	 */
-	if (alloclen == sizeof (struct sockaddr_in6) - sizeof (u_int32_t)) {
-		alloclen = sizeof (struct sockaddr_in6);
-		oldv6size = 1;
-	}
-#endif
-
-	kosa = (struct osockaddr *) malloc(alloclen, M_TEMP, M_WAITOK);
-
-	if ((error = copyin(osa, (void *) kosa, *osalen))) {
-		DPRINTF(("error copying osa %d\n", error));
-		goto out;
-	}
 
 	bdom = linux_to_bsd_domain(kosa->sa_family);
 	if (bdom == -1) {
 		DPRINTF(("bad linux family=%d\n", kosa->sa_family));
 		error = EINVAL;
-		goto out;
+		goto bad;
+	}
+
+	/*
+	 * If the family is unspecified, use address family of the socket.
+	 * This avoid triggering strict family checks in netinet/in_pcb.c et.al.
+	 */
+	if (bdom == AF_UNSPEC) {
+		struct file *fp;
+		struct socket *so;
+
+		/* getsock() will use the descriptor for us */
+		if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0)
+			goto bad;
+
+		so = (struct socket *)fp->f_data;
+		bdom = so->so_proto->pr_domain->dom_family;
+
+		FILE_UNUSE(fp, l);
+
+		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
 
 #ifdef INET6
@@ -1542,16 +1435,15 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 	 *
 	 * Still accept addresses for which the scope id is not used.
 	 */
-	if (oldv6size && bdom == AF_INET6) {
-		sin6 = (struct sockaddr_in6 *)kosa;
-		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) ||
-		    (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_V4COMPAT(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) &&
-		     !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
-			sin6->sin6_scope_id = 0;
-		} else {
+	if (bdom == AF_INET6 && salen == sizeof (struct sockaddr_in6) - sizeof (u_int32_t)) {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)kosa;
+		if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) &&
+		    (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_V4COMPAT(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+		     IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))) {
+			struct proc *p = l->l_proc;
 			int uid = l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1;
 
 			log(LOG_DEBUG,
@@ -1559,40 +1451,25 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 			    "sockaddr_in6 rejected",
 			    p->p_pid, p->p_comm, uid);
 			error = EINVAL;
-			goto out;
+			goto bad;
 		}
+		salen = sizeof (struct sockaddr_in6);
+		sin6->sin6_scope_id = 0;
 	}
 #endif
 
-	/*
-	 * If the family is unspecified, use address family of the
-	 * socket. This avoid triggering COMPAT_43 struct socket family check
-	 * in sockargs() on little-endian machines, and strict family checks
-	 * in netinet/in_pcb.c et.al.
-	 */
-	if (bdom == AF_UNSPEC) {
-		struct file *fp;
-		struct socket *so;
-
-		/* getsock() will use the descriptor for us */
-		if ((error = getsock(p->p_fd, s, &fp)) != 0)
-			goto out;
-
-		so = (struct socket *)fp->f_data;
-		bdom = so->so_proto->pr_domain->dom_family;
-
-		FILE_UNUSE(fp, l);
-
-		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
-	}
-
-	if (bdom == AF_INET) {
-		alloclen = sizeof(struct sockaddr_in);
-	}
+	if (bdom == AF_INET)
+		salen = sizeof(struct sockaddr_in);
 
 	sa = (struct sockaddr *) kosa;
 	sa->sa_family = bdom;
-	sa->sa_len = alloclen;
+	sa->sa_len = salen;
+	m->m_len = salen;
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_USER))
+		ktrkuser(l, "new sockaddr", kosa, salen);
+#endif
+
 #ifdef DEBUG_LINUX
 	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));
 	for (bdom = 0; bdom < sizeof(sa->sa_data); bdom++)
@@ -1600,23 +1477,12 @@ linux_sa_get(l, s, sgp, sap, osa, osalen)
 	DPRINTF(("\n"));
 #endif
 
-	usa = (struct sockaddr *) stackgap_alloc(p, sgp, alloclen);
-	if (!usa) {
-		error = ENOMEM;
-		goto out;
-	}
+	*mp = m;
+	return 0;
 
-	if ((error = copyout(sa, usa, alloclen))) {
-		DPRINTF(("error copying out socket %d\n", error));
-		goto out;
-	}
-
-	*sap = usa;
-
-    out:
-	*osalen = alloclen;
-	free(kosa, M_TEMP);
-	return (error);
+    bad:
+	m_free(m);
+	return error;
 }
 
 static int
@@ -1633,7 +1499,7 @@ linux_sa_put(osa)
 	 */
 	len = sizeof(sa.sa_len) + sizeof(sa.sa_family);
 
-	error = copyin((void *) osa, (void *) &sa, len);
+	error = copyin(osa, &sa, len);
 	if (error)
 		return (error);
 

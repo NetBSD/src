@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.28 2007/03/12 18:18:25 ad Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.28.2.1 2007/07/11 20:00:25 mjf Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.28 2007/03/12 18:18:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.28.2.1 2007/07/11 20:00:25 mjf Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -834,7 +834,8 @@ pmap_activate(struct lwp *l)
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
 	    ("pmap_activate(%p)\n", l));
 
-	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
+	PMAP_ACTIVATE(pmap, (curlwp->l_flag & LW_IDLE) != 0 ||
+	    l->l_proc == curproc);
 }
 
 /*
@@ -1026,7 +1027,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 /*
  * pmap_protect:		[ INTERFACE ]
  *
- *	Set the physical protectoin on the specified range of this map
+ *	Set the physical protection on the specified range of this map
  *	as requested.
  */
 void
@@ -2847,8 +2848,6 @@ pmap_procwr(struct proc	*p, vaddr_t va, size_t len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
-#ifdef mvme68k
-
 void
 _pmap_set_page_cacheable(pmap_t pmap, vaddr_t va)
 {
@@ -2903,8 +2902,6 @@ _pmap_page_is_cacheable(pmap_t pmap, vaddr_t va)
 
 	return (pmap_pte_ci(pmap_pte(pmap, va)) == 0) ? 1 : 0;
 }
-
-#endif /* mvme68k */
 
 #ifdef DEBUG
 /*

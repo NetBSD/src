@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.105 2007/02/08 20:36:55 jdc Exp $	*/
+/*	$NetBSD: zs.c,v 1.105.8.1 2007/07/11 20:02:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.105 2007/02/08 20:36:55 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.105.8.1 2007/07/11 20:02:22 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.105 2007/02/08 20:36:55 jdc Exp $");
 
 #include "kbd.h"
 #include "ms.h"
+#include "wskbd.h"
 
 /*
  * Some warts needed by z8530tty.c -
@@ -422,6 +423,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
+		int hwflags;
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
@@ -435,24 +437,35 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 
 		zc = (channel == 0) ? &zsd->zs_chan_a : &zsd->zs_chan_b;
 
-		zsc_args.hwflags = zs_console_flags(zsc->zsc_promunit,
+		hwflags = zs_console_flags(zsc->zsc_promunit,
 						    zsc->zsc_node,
 						    channel);
 
+#if NWSKBD == 0	
+		/* Not using wscons console, so always set console flags.*/
+		zsc_args.hwflags = hwflags;
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE) {
 			zsc_args.hwflags |= ZS_HWFLAG_USE_CONSDEV;
 			zsc_args.consdev = &zs_consdev;
 		}
-
+#else
+		/* If we are unit 1, then this is the "real" console.
+		 * Remember this in order to set up the keyboard and
+		 * mouse line disciplines for SUN4 machines below.
+		 * Also, don't set the console flags, otherwise we
+		 * tell zstty_attach() to attach as console.
+		 */
+		if (zsc->zsc_promunit == 1) {
+			if ((hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0 &&
+			    !channel) {
+				ch0_is_cons = 1;
+			}
+		} else {
+			zsc_args.hwflags = hwflags;
+		}
+#endif
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
 			zs_conschan_get = zc;
-			/*
-			 * For SUN4, we need to remember if there is a
-			 * "real" keyboard connected, in order to set up
-			 * the keyboard and mouse line disciplines below.
-			 */
-			if (zsc->zsc_promunit == 1 && !channel)
-				ch0_is_cons = 1;
 		}
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
 			zs_conschan_put = zc;

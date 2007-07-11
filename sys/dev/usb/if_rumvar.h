@@ -108,8 +108,8 @@ struct rum_softc {
 
 	struct ieee80211_beacon_offsets	sc_bo;
 
-	struct callout			scan_ch;
-	struct callout			amrr_ch;
+	usb_callout_t			sc_scan_ch;
+	usb_callout_t			sc_amrr_ch;
 
 	int				sc_tx_timer;
 

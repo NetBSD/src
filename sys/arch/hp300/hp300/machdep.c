@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 2007/03/05 12:50:15 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194.4.1 2007/07/11 19:59:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2007/03/05 12:50:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194.4.1 2007/07/11 19:59:16 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -649,7 +649,7 @@ cpu_reboot(int howto, char *bootstr)
 	(void)&howto;
 #endif
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->l_addr)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is cold, just halt. */
@@ -1046,7 +1046,7 @@ static void	candbtimer(void *);
 
 int crashandburn;
 
-struct callout candbtimer_ch = CALLOUT_INITIALIZER;
+callout_t candbtimer_ch;
 
 void
 candbtimer(void *arg)
@@ -1090,6 +1090,8 @@ nmihand(struct frame frame)
 #else
 #ifdef PANICBUTTON
 		if (panicbutton) {
+			/* XXX */
+			callout_init(&candbtimer_ch, 0);
 			if (crashandburn) {
 				crashandburn = 0;
 				printf(": CRASH AND BURN!\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.20 2007/03/12 02:22:43 matt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.20.2.1 2007/07/11 20:02:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.20 2007/03/12 02:22:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.20.2.1 2007/07/11 20:02:58 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.20 2007/03/12 02:22:43 matt Exp $");
 #include "ioconf.h"
 
 struct cpu_mp_dep *mp_dep_call;
-
-static	void slaverun(void);
 
 struct cpuq {
 	SIMPLEQ_ENTRY(cpuq) cq_q;
@@ -91,22 +89,8 @@ cpu_slavesetup(struct device *dev)
 	struct cpu_mp_softc *sc = (struct cpu_mp_softc *)dev;
 	struct cpuq *cq;
 	struct cpu_info *ci;
-	struct pglist mlist;
 	struct vm_page *pg;
-	struct pcb *pcb;
-	vaddr_t istackbase, scratch;
-	int error;
-
-	/* Get an UAREA */
-	error = uvm_pglistalloc(USPACE, avail_start, avail_end, 0, 0,
-	    &mlist, 1, 1);
-	if (error)
-		panic("cpu_slavesetup: error %d", error);
-	pcb = (struct pcb *)(VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist)) | KERNBASE);
-
-	/* Copy our own idle PCB */
-	memcpy(pcb, (void *)proc0paddr, sizeof(struct user));
-	kvtopte((u_int)pcb + REDZONEADDR)->pg_v = 0;
+	vaddr_t istackbase;
 
 	/* Allocate an interrupt stack */
 	pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -115,26 +99,14 @@ cpu_slavesetup(struct device *dev)
 	istackbase = VM_PAGE_TO_PHYS(pg) | KERNBASE;
 	kvtopte(istackbase)->pg_v = 0; /* istack safety belt */
 
-	/* Get scratch pages for different use, see pmap.c for comment */
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
-	if (pg == NULL)
-		panic("cpu_slavesetup3");
-	scratch = VM_PAGE_TO_PHYS(pg) | KERNBASE;
-
 	/* Populate the PCB and the cpu_info struct */
 	ci = &sc->sc_ci;
 	ci->ci_dev = dev;
-	ci->ci_exit = scratch;
 #ifdef MUTEX_COUNT_BIAS
 	ci->ci_mtx_count = MUTEX_COUNT_BIAS;
 #endif
-	ci->ci_pcb = (void *)((intptr_t)pcb & ~KERNBASE);
 	ci->ci_istack = istackbase + PAGE_SIZE;
 	SIMPLEQ_INSERT_TAIL(&cpus, ci, ci_next);
-	pcb->KSP = (uintptr_t)pcb + USPACE; /* Idle kernel stack */
-	pcb->SSP = (uintptr_t)ci;
-	pcb->PC = (uintptr_t)slaverun + 2;
-	pcb->PSL = 0;
 
 	cq = malloc(sizeof(*cq), M_TEMP, M_NOWAIT);
 	if (cq == NULL)
@@ -143,23 +115,6 @@ cpu_slavesetup(struct device *dev)
 	cq->cq_ci = ci;
 	cq->cq_dev = dev;
 	SIMPLEQ_INSERT_TAIL(&cpuq, cq, cq_q);
-}
-
-volatile int sta;
-
-void
-slaverun()
-{
-	struct cpu_info *ci = curcpu();
-
-	((volatile struct cpu_info *)ci)->ci_flags |= CI_RUNNING;
-	cpu_send_ipi(IPI_DEST_MASTER, IPI_RUNNING);
-	printf("%s: running\n", ci->ci_dev->dv_xname);
-	while (sta != device_unit(ci->ci_dev))
-		;
-	splsched();
-	sched_lock_idle();
-	cpu_switch(NULL,NULL);
 }
 
 /*

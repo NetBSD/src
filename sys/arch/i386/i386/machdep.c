@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.4.1 2007/07/11 20:00:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.4.1 2007/07/11 20:00:00 mjf Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -96,18 +96,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $"
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
@@ -131,10 +128,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $"
 
 #include <sys/sysctl.h>
 
+#include <x86/cpu_msr.h>
+
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/gdt.h>
+#include <machine/intr.h>
 #include <machine/kcore.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
@@ -488,6 +488,11 @@ cpu_startup()
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+	gdt_init();
+	i386_proc0_tss_ldt_init();
+
+	x86_init();
 }
 
 /*
@@ -496,13 +501,12 @@ cpu_startup()
 void
 i386_proc0_tss_ldt_init()
 {
+	struct lwp *l;
 	struct pcb *pcb;
 	int x;
 
-	gdt_init();
-
-	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
-
+	l = &lwp0;
+	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_tss.tss_ioopt =
 	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16;
 
@@ -512,33 +516,12 @@ i386_proc0_tss_ldt_init()
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(lwp0.l_addr) + KSTACK_SIZE - 16;
-	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
+	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	l->l_md.md_tss_sel = tss_alloc(pcb);
 
-	ltr(lwp0.l_md.md_tss_sel);
+	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
-}
-
-/*
- * Set up TSS and LDT for a new PCB.
- */
-
-void
-i386_init_pcb_tss_ldt(struct cpu_info *ci)
-{
-	int x;
-	struct pcb *pcb = ci->ci_idle_pcb;
-
-	pcb->pcb_tss.tss_ioopt =
-	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16;
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
-
-	ci->ci_idle_tss_sel = tss_alloc(pcb);
 }
 
 /*
@@ -771,7 +754,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	fp--;
 
@@ -794,7 +777,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
@@ -828,7 +811,7 @@ void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 
-	LOCK_ASSERT(mutex_owned(&curproc->p_smutex));
+	KASSERT(mutex_owned(&curproc->p_smutex));
 
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
@@ -1267,7 +1250,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 union	descriptor *gdt, *ldt;
 struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
-struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
+kmutex_t idt_lock;
 #ifdef I586_CPU
 union	descriptor *pentium_idt;
 #endif
@@ -1493,7 +1476,6 @@ init386(paddr_t first_avail)
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
-	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
 #ifdef XBOX
 	/*
@@ -1618,6 +1600,13 @@ init386(paddr_t first_avail)
 			case BIM_NVS:
 				break;
 			default:
+				continue;
+			}
+
+			/*
+			 * If the segment is smaller than a page, skip it.
+			 */
+			if (bim->entry[x].size < NBPG) {
 				continue;
 			}
 
@@ -2020,6 +2009,7 @@ init386(paddr_t first_avail)
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 
+	mutex_init(&idt_lock, MUTEX_DEFAULT, IPL_NONE);
 	cpu_init_idt();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -2452,19 +2442,28 @@ cpu_initclocks()
 }
 
 void
-cpu_need_resched(struct cpu_info *ci)
+cpu_need_resched(struct cpu_info *ci, int flags)
 {
+	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (ci->ci_want_resched)
+	if (ci->ci_want_resched && !immed)
 		return;
 	ci->ci_want_resched = 1;
 
-	if ((ci)->ci_curlwp != NULL)
-		aston((ci)->ci_curlwp);
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
+		aston(ci->ci_curlwp);
 #ifdef MULTIPROCESSOR
-	else if (ci != curcpu())
-		x86_send_ipi(ci, 0);
+		if (immed && ci != curcpu()) {
+			x86_send_ipi(ci, 0);
+		}
 #endif
+	} else {
+#ifdef MULTIPROCESSOR
+		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
+		    ci != curcpu())
+			x86_send_ipi(ci, 0);
+#endif
+	}
 }
 
 void
@@ -2490,7 +2489,6 @@ cpu_need_proftick(struct lwp *l)
 
 /*
  * Allocate an IDT vector slot within the given range.
- * XXX needs locking to avoid MP allocation races.
  */
 
 int
@@ -2498,15 +2496,18 @@ idt_vec_alloc(int low, int high)
 {
 	int vec;
 
-	simple_lock(&idt_lock);
+	if (!cold)
+		mutex_enter(&idt_lock);
 	for (vec = low; vec <= high; vec++) {
 		if (idt_allocmap[vec] == 0) {
 			idt_allocmap[vec] = 1;
-			simple_unlock(&idt_lock);
+			if (!cold)
+				mutex_exit(&idt_lock);
 			return vec;
 		}
 	}
-	simple_unlock(&idt_lock);
+	if (!cold)
+		mutex_exit(&idt_lock);
 	return 0;
 }
 
@@ -2524,10 +2525,10 @@ idt_vec_set(int vec, void (*function)(void))
 void
 idt_vec_free(int vec)
 {
-	simple_lock(&idt_lock);
+	mutex_enter(&idt_lock);
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
-	simple_unlock(&idt_lock);
+	mutex_exit(&idt_lock);
 }
 
 /*

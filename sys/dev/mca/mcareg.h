@@ -1,4 +1,4 @@
-/*	$NetBSD: mcareg.h,v 1.1 2000/05/11 15:42:06 jdolecek Exp $	*/
+/*	$NetBSD: mcareg.h,v 1.1.90.1 2007/07/11 20:06:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
 /*
  * Standardized MCA configuration information
  */
-
-#define MCA_MAX_SLOTS		8	/* max number of slots per bus */
 
 /* POS register bits */
 

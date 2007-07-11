@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.63 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.63.8.1 2007/07/11 20:10:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.8.1 2007/07/11 20:10:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,6 @@ umapfs_mount(mp, path, data, ndp, l)
 	memset(amp, 0, sizeof(struct umap_mount));
 
 	mp->mnt_data = amp;
-	mp->mnt_leaf = lowerrootvp->v_mount->mnt_leaf;
 	amp->umapm_vfs = lowerrootvp->v_mount;
 	if (amp->umapm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
@@ -251,17 +250,7 @@ umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	/*
-	 * Clear out buffer cache.  I don't think we
-	 * ever get anything cached at this level at the
-	 * moment, but who knows...
-	 */
-#ifdef notyet
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp, 1))
-		return (EBUSY);
-#endif
-	if (rtvp->v_usecount > 1)
+	if (rtvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, rtvp, flags)) != 0)
 		return (error);

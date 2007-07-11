@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.39 2007/03/07 22:20:04 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.39.4.1 2007/07/11 20:11:45 mjf Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -64,6 +64,8 @@
 #ifndef _NETINET6_IP6_VAR_H_
 #define _NETINET6_IP6_VAR_H_
 
+#include <net/route.h>
+
 /*
  * IP6 reassembly queue structure.  Each fragment
  * being reassembled is attached to one of these structures.
@@ -119,7 +121,7 @@ struct	ip6_moptions {
 /* Routing header related info */
 struct	ip6po_rhinfo {
 	struct	ip6_rthdr *ip6po_rhi_rthdr; /* Routing header */
-	struct	route_in6 ip6po_rhi_route; /* Route to the 1st hop */
+	struct	route ip6po_rhi_route; /* Route to the 1st hop */
 };
 #define ip6po_rthdr	ip6po_rhinfo.ip6po_rhi_rthdr
 #define ip6po_route	ip6po_rhinfo.ip6po_rhi_route
@@ -127,7 +129,7 @@ struct	ip6po_rhinfo {
 /* Nexthop related info */
 struct	ip6po_nhinfo {
 	struct	sockaddr *ip6po_nhi_nexthop;
-	struct	route_in6 ip6po_nhi_route; /* Route to the nexthop */
+	struct	route ip6po_nhi_route; /* Route to the nexthop */
 };
 #define ip6po_nexthop	ip6po_nhinfo.ip6po_nhi_nexthop
 #define ip6po_nextroute	ip6po_nhinfo.ip6po_nhi_route
@@ -228,7 +230,7 @@ struct ip6flow {
 	LIST_ENTRY(ip6flow) ip6f_hash;  /* next ip6flow in bucket */
 	struct in6_addr ip6f_dst;       /* destination address */
 	struct in6_addr ip6f_src;       /* source address */
-	struct route_in6 ip6f_ro;       /* associated route entry */
+	struct route ip6f_ro;       /* associated route entry */
 	u_int32_t ip6f_flow;		/* flow (tos) */
 	u_quad_t ip6f_uses;               /* number of uses in this period */
 	u_quad_t ip6f_last_uses;          /* number of uses in last period */
@@ -302,6 +304,7 @@ extern int	ip6_use_defzone; /* whether to use the default scope zone
 
 #ifdef GATEWAY
 extern int      ip6_maxflows;           /* maximum amount of flows for ip6ff */
+extern int	ip6_hashsize;		/* size of hash table */
 #endif
 
 struct in6pcb;
@@ -337,7 +340,7 @@ void	ip6_forward(struct mbuf *, int);
 void	ip6_mloopback(struct ifnet *, struct mbuf *,
 	              const struct sockaddr_in6 *);
 int	ip6_output(struct mbuf *, struct ip6_pktopts *,
-			struct route_in6 *, int,
+			struct route *, int,
 			struct ip6_moptions *, struct socket *,
 			struct ifnet **);
 int	ip6_ctloutput(int, struct socket *, int, int, struct mbuf **);
@@ -356,11 +359,11 @@ int	frag6_input(struct mbuf **, int *, int);
 void	frag6_slowtimo(void);
 void	frag6_drain(void);
 
-void    ip6flow_init(void);
+int	ip6flow_init(int);
 struct  ip6flow *ip6flow_reap(int);
-void    ip6flow_create(const struct route_in6 *, struct mbuf *);
+void    ip6flow_create(const struct route *, struct mbuf *);
 void    ip6flow_slowtimo(void);
-void    ip6flow_invalidate_all(void);
+int	ip6flow_invalidate_all(int);
 
 void	rip6_init(void);
 int	rip6_input(struct mbuf **, int *, int);

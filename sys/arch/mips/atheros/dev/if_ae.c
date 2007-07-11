@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.5 2007/03/04 06:00:11 christos Exp $ */
+/* $Id: if_ae.c,v 1.5.4.1 2007/07/11 20:00:44 mjf Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.5 2007/03/04 06:00:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.5.4.1 2007/07/11 20:00:44 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -240,7 +240,7 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
 
-	callout_init(&sc->sc_tick_callout);
+	callout_init(&sc->sc_tick_callout, 0);
 
 	printf(": Atheros AR531X 10/100 Ethernet\n");
 

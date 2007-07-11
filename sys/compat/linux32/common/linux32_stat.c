@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.5 2007/03/11 19:36:37 dsl Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.5.2.1 2007/07/11 20:04:24 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.5 2007/03/11 19:36:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.5.2.1 2007/07/11 20:04:24 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -119,22 +119,19 @@ linux32_sys_stat64(l, v, retval)
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_statp) sp;
 	} */ *uap = v;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
 	struct linux32_stat64 *st32p;
-	const char *path = (void *)(uintptr_t)SCARG(uap, path);
+	const char *path = SCARG_P32(uap, path);
 	
-	CHECK_ALT_EXIST(l, &sg, path);
-
 	error = do_sys_stat(l, path, FOLLOW, &st);
 	if (error != 0)
 		return error;
 
 	linux32_from_stat(&st, &st32);
 
-	st32p = (struct linux32_stat64 *)(long)SCARG(uap, sp);
+	st32p = SCARG_P32(uap, sp);
 
 	return copyout(&st32, st32p, sizeof(*st32p));
 }
@@ -149,22 +146,19 @@ linux32_sys_lstat64(l, v, retval)
 	        syscallarg(netbsd32_charp) path;
 	        syscallarg(linux32_stat64p) sp;
 	} */ *uap = v;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
 	struct linux32_stat64 *st32p;
-	const char *path = (void *)(uintptr_t)SCARG(uap, path);
+	const char *path = SCARG_P32(uap, path);
 	
-	CHECK_ALT_EXIST(l, &sg, path);
-		
 	error = do_sys_stat(l, path, NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 
 	linux32_from_stat(&st, &st32);
 
-	st32p = (struct linux32_stat64 *)(long)SCARG(uap, sp);
+	st32p = SCARG_P32(uap, sp);
 
 	return copyout(&st32, st32p, sizeof(*st32p));
 }
@@ -190,7 +184,7 @@ linux32_sys_fstat64(l, v, retval)
 
 	linux32_from_stat(&st, &st32);
 
-	st32p = (struct linux32_stat64 *)(long)SCARG(uap, sp);
+	st32p = SCARG_P32(uap, sp);
 
 	return copyout(&st32, st32p, sizeof(*st32p));
 }

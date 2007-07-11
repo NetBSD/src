@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.19 2006/09/15 16:03:14 gdamore Exp $
+#	$NetBSD: files.sandpoint,v 1.19.12.1 2007/07/11 20:01:36 mjf Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -44,6 +44,9 @@ attach	mainbus at root
 device	cpu
 attach	cpu at mainbus
 file	arch/sandpoint/sandpoint/mainbus.c	mainbus|cpu needs-flag
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers

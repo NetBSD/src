@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.6 2007/02/05 23:33:53 jmcneill Exp $ */
+/* $NetBSD: pic16lc.c,v 1.6.10.1 2007/07/11 20:05:31 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.6 2007/02/05 23:33:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.6.10.1 2007/07/11 20:05:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,7 @@ struct pic16lc_softc {
 	i2c_addr_t	sc_addr;
 	void *		sc_ih;
 
-	struct envsys_tre_data sc_data[2];
-	struct envsys_basic_info sc_info[2];
+	envsys_data_t sc_data[2];
 	struct sysmon_envsys sc_sysmon;
 };
 
@@ -80,15 +79,8 @@ static struct pic16lc_softc *pic16lc = NULL;
 #define XBOX_SENSOR_BOARD	1
 #define XBOX_NSENSORS		2
 
-static const struct envsys_range pic16lc_ranges[] = {
-	{ 0, 1, ENVSYS_STEMP },
-};
-
-static void	pic16lc_update(struct pic16lc_softc *);
-static int	pic16lc_gtredata(struct sysmon_envsys *,
-				 struct envsys_tre_data *);
-static int	pic16lc_streinfo(struct sysmon_envsys *,
-				 struct envsys_basic_info *);
+static void	pic16lc_update(struct pic16lc_softc *, envsys_data_t *);
+static int	pic16lc_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 static void	pic16lc_write_1(struct pic16lc_softc *, uint8_t, uint8_t);
 static void	pic16lc_read_1(struct pic16lc_softc *, uint8_t, uint8_t *);
@@ -127,30 +119,22 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 	pic16lc = sc;
 
 	/* initialize CPU sensor */
-	sc->sc_data[XBOX_SENSOR_CPU].sensor =
-	    sc->sc_info[XBOX_SENSOR_CPU].sensor = XBOX_SENSOR_CPU;
-	sc->sc_data[XBOX_SENSOR_CPU].units =
-	    sc->sc_info[XBOX_SENSOR_CPU].units = ENVSYS_STEMP;
-	strcpy(sc->sc_info[XBOX_SENSOR_CPU].desc, "Xbox CPU Temp");
+	sc->sc_data[XBOX_SENSOR_CPU].sensor = XBOX_SENSOR_CPU;
+	sc->sc_data[XBOX_SENSOR_CPU].units = ENVSYS_STEMP;
+	(void)strlcpy(sc->sc_data[XBOX_SENSOR_CPU].desc, "Xbox CPU Temp",
+	    sizeof(sc->sc_data[XBOX_SENSOR_CPU]));
 	/* initialize board sensor */
-	sc->sc_data[XBOX_SENSOR_BOARD].sensor =
-	    sc->sc_info[XBOX_SENSOR_BOARD].sensor = XBOX_SENSOR_BOARD;
-	sc->sc_data[XBOX_SENSOR_BOARD].units =
-	    sc->sc_info[XBOX_SENSOR_BOARD].units = ENVSYS_STEMP;
-	strcpy(sc->sc_info[XBOX_SENSOR_BOARD].desc, "Xbox Board Temp");
-
-	/* Get initial sensor values */
-	pic16lc_update(sc);
+	sc->sc_data[XBOX_SENSOR_BOARD].sensor = XBOX_SENSOR_BOARD;
+	sc->sc_data[XBOX_SENSOR_BOARD].units = ENVSYS_STEMP;
+	(void)strlcpy(sc->sc_data[XBOX_SENSOR_BOARD].desc, "Xbox Board Temp",
+	    sizeof(sc->sc_data[XBOX_SENSOR_BOARD]));
 
 	/* hook into sysmon */
-	sc->sc_sysmon.sme_ranges = pic16lc_ranges;
-	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = pic16lc_gtredata;
-	sc->sc_sysmon.sme_streinfo = pic16lc_streinfo;
 	sc->sc_sysmon.sme_nsensors = XBOX_NSENSORS;
-	sc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
@@ -202,7 +186,7 @@ pic16lc_read_1(struct pic16lc_softc *sc, uint8_t cmd, uint8_t *valp)
 }
 
 static void
-pic16lc_update(struct pic16lc_softc *sc)
+pic16lc_update(struct pic16lc_softc *sc, envsys_data_t *edata)
 {
 	uint8_t cputemp, boardtemp;
 
@@ -211,19 +195,15 @@ pic16lc_update(struct pic16lc_softc *sc)
 		return;
 	}
 
-	pic16lc_read_1(sc, PIC16LC_REG_CPUTEMP, &cputemp);
-	sc->sc_info[XBOX_SENSOR_CPU].validflags = ENVSYS_FVALID;
-	sc->sc_data[XBOX_SENSOR_CPU].validflags = ENVSYS_FVALID;
-	sc->sc_data[XBOX_SENSOR_CPU].cur.data_us =
-	    (int)cputemp * 1000000 + 273150000;
-	sc->sc_data[XBOX_SENSOR_CPU].validflags |= ENVSYS_FCURVALID;
-
-	pic16lc_read_1(sc, PIC16LC_REG_BOARDTEMP, &boardtemp);
-	sc->sc_info[XBOX_SENSOR_BOARD].validflags = ENVSYS_FVALID;
-	sc->sc_data[XBOX_SENSOR_BOARD].validflags = ENVSYS_FVALID;
-	sc->sc_data[XBOX_SENSOR_BOARD].cur.data_us =
-	    (int)boardtemp * 1000000 + 273150000;
-	sc->sc_data[XBOX_SENSOR_BOARD].validflags |= ENVSYS_FCURVALID;
+	if (edata->sensor == XBOX_SENSOR_CPU) {
+		pic16lc_read_1(sc, PIC16LC_REG_CPUTEMP, &cputemp);
+		edata->state = ENVSYS_SVALID;
+		edata->value_cur = (int)cputemp * 1000000 + 273150000;
+	} else {
+		pic16lc_read_1(sc, PIC16LC_REG_BOARDTEMP, &boardtemp);
+		edata->state = ENVSYS_SVALID;
+		edata->value_cur = (int)boardtemp * 1000000 + 273150000;
+	}
 
 	iic_release_bus(sc->sc_tag, 0);
 
@@ -231,24 +211,11 @@ pic16lc_update(struct pic16lc_softc *sc)
 }
 
 static int
-pic16lc_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *data)
+pic16lc_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	struct pic16lc_softc *sc;
+	struct pic16lc_softc *sc = (struct pic16lc_softc *)sme->sme_cookie;
 
-	sc = (struct pic16lc_softc *)sme->sme_cookie;
-
-	pic16lc_update(sc);
-	*data = sc->sc_data[data->sensor];
-
-	return 0;
-}
-
-static int
-pic16lc_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *info)
-{
-	/* not implemented */
-	info->validflags = 0;
-
+	pic16lc_update(sc, edata);
 	return 0;
 }
 

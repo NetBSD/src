@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci.c,v 1.22 2007/03/04 06:02:24 christos Exp $	*/
+/* $NetBSD: ifpci.c,v 1.22.4.1 2007/07/11 20:07:48 mjf Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.22 2007/03/04 06:02:24 christos Exp $
+ *	$Id: ifpci.c,v 1.22.4.1 2007/07/11 20:07:48 mjf Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.22 2007/03/04 06:02:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.22.4.1 2007/07/11 20:07:48 mjf Exp $");
 
 
 #include <sys/param.h>
@@ -286,8 +286,8 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Fritz!PCI card\n");
 
 	/* initialize sc */
-	callout_init(&sc->sc_T3_callout);
-	callout_init(&sc->sc_T4_callout);
+	callout_init(&sc->sc_T3_callout, 0);
+	callout_init(&sc->sc_T4_callout, 0);
 
 	/* setup io mappings */
 	sc->sc_cardtyp = CARD_TYPEP_AVMA1PCI;

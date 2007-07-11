@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.71 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.71.2.1 2007/07/11 20:09:57 mjf Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.71 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.71.2.1 2007/07/11 20:09:57 mjf Exp $");
 
 #include "opt_systrace.h"
 
@@ -286,7 +286,7 @@ int
 systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	int ret = 0;
-	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
+	struct fsystrace *fst = fp->f_data;
 #ifdef __NetBSD__
 	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdp;
@@ -303,6 +303,7 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case STRIOCDETACH:
 	case STRIOCREPORT:
+	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
@@ -319,11 +320,6 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	case STRIOCSCRIPTNAME:
 		pid = ((struct systrace_scriptname *)data)->sn_pid;
-		if (!pid)
-			ret = EINVAL;
-		break;
-	case STRIOCGETCWD:
-		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
 		break;
@@ -425,9 +421,13 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	}
 
-	mutex_enter(&p->p_mutex);
-	proc_delref(strp->proc);
-	mutex_exit(&p->p_mutex);
+	if (strp) {
+		struct proc *q = strp->proc;
+
+		mutex_enter(&q->p_mutex);
+		proc_delref(q);
+		mutex_exit(&q->p_mutex);
+	}
  unlock:
 	SYSTRACE_UNLOCK(fst, curlwp);
 
@@ -1136,13 +1136,14 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 
 	/* Store our current values */
 	fst->fd_pid = strp->pid;
+	rw_enter(&mycwdp->cwdi_lock, RW_READER);
 	fst->fd_cdir = mycwdp->cwdi_cdir;
 	fst->fd_rdir = mycwdp->cwdi_rdir;
-
 	if ((mycwdp->cwdi_cdir = cwdp->cwdi_cdir) != NULL)
 		VREF(mycwdp->cwdi_cdir);
 	if ((mycwdp->cwdi_rdir = cwdp->cwdi_rdir) != NULL)
 		VREF(mycwdp->cwdi_rdir);
+	rw_exit(&mycwdp->cwdi_lock);
 #else
 	myfdp = curlwp->p_fd;
 	fdp = strp->proc->p_fd;

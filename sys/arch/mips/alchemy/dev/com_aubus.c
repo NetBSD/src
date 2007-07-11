@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.2 2006/07/13 22:56:01 gdamore Exp $ */
+/* $NetBSD: com_aubus.c,v 1.2.22.1 2007/07/11 20:00:43 mjf Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.2 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.2.22.1 2007/07/11 20:00:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
 

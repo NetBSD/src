@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.13 2007/03/04 06:03:47 christos Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.13.4.1 2007/07/11 20:12:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.13 2007/03/04 06:03:47 christos Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.13.4.1 2007/07/11 20:12:50 mjf Exp $");
 
 #include "opt_ffs.h"
 
@@ -70,13 +70,12 @@ __RCSID("$NetBSD: ufs_extattr.c,v 1.13 2007/03/04 06:03:47 christos Exp $");
 
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/extattr.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
 #include <ufs/ufs/ufs_extern.h>
 
-static MALLOC_DEFINE(M_UFS_EXTATTR, "ufs_extattr", "ufs extended attribute");
+static MALLOC_JUSTDEFINE(M_UFS_EXTATTR, "ufs_extattr","ufs extended attribute");
 
 int ufs_extattr_sync = 1;
 
@@ -1297,4 +1296,18 @@ ufs_extattr_vnode_inactive(struct vnode *vp, struct lwp *l)
 		    uele->uele_attrname, lwp0.l_cred, l);
 
 	ufs_extattr_uepm_unlock(ump);
+}
+
+void
+ufs_extattr_init()
+{
+
+	malloc_type_attach(M_UFS_EXTATTR);
+}
+
+void
+ufs_extattr_done()
+{
+
+	malloc_type_detach(M_UFS_EXTATTR);
 }

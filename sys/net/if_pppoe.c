@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.77 2007/03/04 06:03:16 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.77.4.1 2007/07/11 20:10:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.77 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.77.4.1 2007/07/11 20:10:58 mjf Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -145,7 +145,7 @@ struct pppoe_softc {
 	u_int8_t *sc_hunique;		/* content of host unique we must echo back */
 	size_t sc_hunique_len;		/* length of host unique */
 #endif
-	struct callout sc_timeout;	/* timeout while not in session state */
+	callout_t sc_timeout;	/* timeout while not in session state */
 	int sc_padi_retried;		/* number of PADI retries already done */
 	int sc_padr_retried;		/* number of PADR retries already done */
 };
@@ -154,13 +154,8 @@ struct pppoe_softc {
 struct ifqueue ppoediscinq = { .ifq_maxlen = IFQ_MAXLEN };
 struct ifqueue ppoeinq = { .ifq_maxlen = IFQ_MAXLEN };
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void *pppoe_softintr = NULL;
 static void pppoe_softintr_handler(void *);
-#else
-struct callout pppoe_softintr = CALLOUT_INITIALIZER;
-void pppoe_softintr_handler(void *);
-#endif
 
 extern int sppp_ioctl(struct ifnet *, unsigned long, void *);
 
@@ -220,9 +215,7 @@ pppoeattach(int count)
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	pppoe_softintr = softintr_establish(IPL_SOFTNET, pppoe_softintr_handler, NULL);
-#endif
 }
 
 static int
@@ -250,7 +243,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	/* changed to real address later */
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 
-	callout_init(&sc->sc_timeout);
+	callout_init(&sc->sc_timeout, 0);
 
 	sc->sc_sppp.pp_if.if_start = pppoe_start;
 	sc->sc_sppp.pp_tls = pppoe_tls;
@@ -295,6 +288,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 		free(sc->sc_service_name, M_DEVBUF);
 	if (sc->sc_ac_cookie)
 		free(sc->sc_ac_cookie, M_DEVBUF);
+	callout_destroy(&sc->sc_timeout);
 	free(sc, M_DEVBUF);
 
 	return (0);
@@ -364,22 +358,12 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
 	return sc;
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 static void
 pppoe_softintr_handler(void *dummy)
 {
 	/* called at splsoftnet() */
 	pppoe_input();
 }
-#else
-void
-pppoe_softintr_handler(void *dummy)
-{
-	int s = splnet();
-	pppoe_input();
-	splx(s);
-}
-#endif
 
 /* called at appropriate protection level */
 static void
@@ -512,7 +496,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				break;
 			}
 #ifdef PPPOE_SERVER
-			hunique = mtod(n, void *) + noff;
+			hunique = mtod(n, u_int8_t *) + noff;
 			hunique_len = len;
 #endif
 			sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.64 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.64.10.1 2007/07/11 20:08:09 mjf Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.64 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.64.10.1 2007/07/11 20:08:09 mjf Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -602,7 +602,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		return (0);
 	}
 
-	error = dk_lookup(diskPtr->devname, l, &vp);
+	error = dk_lookup(diskPtr->devname, l, &vp, UIO_SYSSPACE);
 	if (error) {
 		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {
@@ -664,7 +664,7 @@ static int rf_check_label_vitals(RF_Raid_t *raidPtr, int row, int column,
 		fatal_error = 1;
 	}
 	if (mod_counter != ci_label->mod_counter) {
-		printf("%s has a different modfication count: %d %d\n",
+		printf("%s has a different modification count: %d %d\n",
 		       dev_name, mod_counter, ci_label->mod_counter);
 	}
 

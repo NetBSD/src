@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.11 2007/03/05 22:18:59 he Exp $	*/
+/*	$NetBSD: epe.c,v 1.11.4.1 2007/07/11 19:58:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.11 2007/03/05 22:18:59 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.11.4.1 2007/07/11 19:58:07 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -314,7 +314,7 @@ epe_init(struct epe_softc *sc)
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
 	int mdcdiv = DEFAULT_MDCDIV;
 
-	callout_init(&sc->epe_tick_ch);
+	callout_init(&sc->epe_tick_ch, 0);
 
 	/* Select primary Individual Address in Address Filter Pointer */
 	EPE_WRITE(AFP, 0);

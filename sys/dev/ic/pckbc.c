@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.35 2005/12/11 12:21:28 christos Exp $ */
+/* $NetBSD: pckbc.c,v 1.35.32.1 2007/07/11 20:06:07 mjf Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.35 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.35.32.1 2007/07/11 20:06:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,14 +166,14 @@ pckbc_poll_data1(pt, slot)
 			if (checkaux && (stat & 0x20)) { /* aux data */
 				if (slot != PCKBC_AUX_SLOT) {
 #ifdef PCKBCDEBUG
-					printf("lost aux 0x%x\n", c);
+					printf("pckbc: lost aux 0x%x\n", c);
 #endif
 					continue;
 				}
 			} else {
 				if (slot == PCKBC_AUX_SLOT) {
 #ifdef PCKBCDEBUG
-					printf("lost kbd 0x%x\n", c);
+					printf("pckbc: lost kbd 0x%x\n", c);
 #endif
 					continue;
 				}
@@ -326,7 +326,7 @@ pckbc_attach(sc)
 
 	/* set initial cmd byte */
 	if (!pckbc_put8042cmd(t)) {
-		printf("kbc: cmd word write error\n");
+		printf("pckbc: cmd word write error\n");
 		return;
 	}
 
@@ -349,12 +349,12 @@ pckbc_attach(sc)
 	if (res == 0 || res == 0xfa || res == 0x01 || res == 0xab) {
 #ifdef PCKBCDEBUG
 		if (res != 0)
-			printf("kbc: returned %x on kbd slot test\n", res);
+			printf("pckbc: returned %x on kbd slot test\n", res);
 #endif
 		if (pckbc_attach_slot(sc, PCKBC_KBD_SLOT))
 			cmdbits |= KC8_KENABLE;
 	} else {
-		printf("kbc: kbd port test: %x\n", res);
+		printf("pckbc: kbd port test: %x\n", res);
 		return;
 	}
 #else
@@ -368,11 +368,11 @@ pckbc_attach(sc)
 	 *  (eg UMC880?).
 	 */
 	if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO)) {
-		printf("kbc: aux echo error 1\n");
+		printf("pckbc: aux echo error 1\n");
 		goto nomouse;
 	}
 	if (!pckbc_wait_output(iot, ioh_c)) {
-		printf("kbc: aux echo error 2\n");
+		printf("pckbc: aux echo error 2\n");
 		goto nomouse;
 	}
 	t->t_haveaux = 1;
@@ -390,7 +390,7 @@ pckbc_attach(sc)
 			cmdbits |= KC8_MENABLE;
 	} else {
 #ifdef PCKBCDEBUG
-		printf("kbc: aux echo test failed\n");
+		printf("pckbc: aux echo test failed\n");
 #endif
 		t->t_haveaux = 0;
 	}
@@ -399,7 +399,7 @@ nomouse:
 	/* enable needed interrupts */
 	t->t_cmdbyte |= cmdbits;
 	if (!pckbc_put8042cmd(t))
-		printf("kbc: cmd word write error\n");
+		printf("pckbc: cmd word write error\n");
 }
 
 static void
@@ -472,7 +472,7 @@ pckbc_slot_enable(self, slot, on)
 
 	if (!pckbc_send_cmd(t->t_iot, t->t_ioh_c,
 			    on ? cmd->cmd_en : cmd->cmd_dis))
-		printf("pckbc_slot_enable(%d) failed\n", on);
+		printf("pckbc: pckbc_slot_enable(%d) failed\n", on);
 }
 
 static void
@@ -539,7 +539,7 @@ pckbcintr_hard(vsc)
 
 		if (!q) {
 			/* XXX do something for live insertion? */
-			printf("pckbcintr: no dev for slot %d\n", slot);
+			printf("pckbc: no dev for slot %d\n", slot);
 			KBD_DELAY;
 			(void) bus_space_read_1(t->t_iot, t->t_ioh_d, 0);
 			continue;
@@ -668,7 +668,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	pckbc_consdata.t_ioh_d = ioh_d;
 	pckbc_consdata.t_ioh_c = ioh_c;
 	pckbc_consdata.t_addr = addr;
-	callout_init(&pckbc_consdata.t_cleanup);
+	callout_init(&pckbc_consdata.t_cleanup, 0);
 
 	/* flush */
 	(void) pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT);
@@ -679,14 +679,14 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	 * all until we request a self-test.
 	 */
 	if (!pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST)) {
-		printf("kbc: unable to request selftest\n");
+		printf("pckbc: unable to request selftest\n");
 		res = EIO;
 		goto out;
 	}
 
 	reply = pckbc_poll_data1(&pckbc_consdata, PCKBC_KBD_SLOT);
 	if (reply != 0x55) {
-		printf("kbc: selftest returned 0x%02x\n", reply);
+		printf("pckbc: selftest returned 0x%02x\n", reply);
 		res = EIO;
 		goto out;
 	}
@@ -695,7 +695,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	/* init cmd byte, enable ports */
 	pckbc_consdata.t_cmdbyte = KC8_CPU;
 	if (!pckbc_put8042cmd(&pckbc_consdata)) {
-		printf("kbc: cmd word write error\n");
+		printf("pckbc: cmd word write error\n");
 		res = EIO;
 		goto out;
 	}

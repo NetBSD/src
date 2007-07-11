@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD	*/
+/*	$NetBSD: via_padlock.c,v 1.3.2.1 2007/07/11 20:03:26 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.3 2007/03/11 18:37:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.3.2.1 2007/07/11 20:03:26 mjf Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -57,7 +57,8 @@ static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 void
 via_padlock_attach(void)
 {
-	if (!(cpu_feature_padlock & CPUID_FEAT_VACE))
+#define VIA_ACE (CPUID_VIA_HAS_ACE|CPUID_VIA_DO_ACE)
+	if ((cpu_feature_padlock & VIA_ACE) != VIA_ACE)
 		return;
 
 	struct via_padlock_softc *vp_sc;

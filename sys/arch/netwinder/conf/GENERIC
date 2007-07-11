@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.86 2006/11/11 18:47:11 jmmv Exp $
+# $NetBSD: GENERIC,v 1.86.10.1 2007/07/11 20:00:59 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -78,7 +78,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	NFSSERVER
 options 	SOFTDEP
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
 
@@ -120,6 +120,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
@@ -133,7 +134,7 @@ options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_LINUX	# binary compatibility with Linux
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Shared memory options
 
@@ -165,7 +166,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
@@ -304,7 +305,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

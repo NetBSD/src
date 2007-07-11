@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.5 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.5.4.1 2007/07/11 20:00:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5.4.1 2007/07/11 20:00:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ zs_kgdb_init()
 	zs_setparam(&cs, 0, kgdb_rate);
 
 	/* Store the getc/putc functions and arg. */
-	kgdb_attach(zs_getc, zs_putc, (void *)zc);
+	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
 }
 
 /*

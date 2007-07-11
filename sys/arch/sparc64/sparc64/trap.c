@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.142 2007/03/04 06:00:51 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.142.4.1 2007/07/11 20:02:43 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142.4.1 2007/07/11 20:02:43 mjf Exp $");
 
 #define NEW_FPSTATE
 
@@ -528,7 +528,7 @@ extern void db_printf(const char * , ...);
 			} else {
 				newfplwp = curlwp;
 				/* force other cpus to give up this fpstate */
-				if (curlwp->l_md.md_fpstate)
+				if (newfplwp->l_md.md_fpstate)
 					save_and_clear_fpstate(newfplwp);
 			}
 			if (fplwp != newfplwp) {
@@ -1061,10 +1061,10 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			       curproc->p_pid, curproc->p_comm,
+			       l->l_proc->p_pid, l->l_proc->p_comm,
 				/* XXX */
-			       curlwp->l_sigmask.__bits[0], 
-			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
+			       l->l_sigmask.__bits[0], 
+			       l->l_proc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
 
@@ -1106,6 +1106,9 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			 * meaningfull message and the details are sometims
 			 * hard to find, so better panic now with a helpfull
 			 * message.
+			 */
+			/*
+			 * XXXMRG in yamt-idlelwp world this seems unlikely?
 			 */
 			if (curlwp == NULL) {
 				panic("cpu%d: kernel data access fault "

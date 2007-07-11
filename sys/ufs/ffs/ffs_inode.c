@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.86 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.86.4.1 2007/07/11 20:12:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.86 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.86.4.1 2007/07/11 20:12:42 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -203,10 +203,6 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ffs_update(ovp, NULL, NULL, 0));
 	}
-#ifdef QUOTA
-	if ((error = getinoquota(oip)) != 0)
-		return (error);
-#endif
 	fs = oip->i_fs;
 	if (length > ump->um_maxfilesize)
 		return (EFBIG);
@@ -230,18 +226,19 @@ ffs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred,
 			off_t eob;
 
 			eob = blkroundup(fs, osize);
+			uvm_vnp_setwritesize(ovp, eob);
 			error = ufs_balloc_range(ovp, osize, eob - osize,
 			    cred, aflag);
 			if (error)
 				return error;
 			if (ioflag & IO_SYNC) {
-				ovp->v_size = eob;
 				simple_lock(&ovp->v_interlock);
 				VOP_PUTPAGES(ovp,
 				    trunc_page(osize & fs->fs_bmask),
 				    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 			}
 		}
+		uvm_vnp_setwritesize(ovp, length);
 		error = ufs_balloc_range(ovp, length - 1, 1, cred, aflag);
 		if (error) {
 			(void) ffs_truncate(ovp, osize, ioflag & IO_SYNC,

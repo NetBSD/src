@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.7 2007/01/03 19:42:37 gdt Exp $
+# $NetBSD: XEN2_DOMU,v 1.7.8.1 2007/07/11 19:59:55 mjf Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -71,6 +71,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

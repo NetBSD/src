@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.58 2006/11/11 18:47:09 jmmv Exp $
+# $NetBSD: GENERIC.in,v 1.58.10.1 2007/07/11 19:57:47 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.58 $"
+#ident 		"GENERIC-$Revision: 1.58.10.1 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -583,6 +583,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 m4_ifdef(`GENERIC_CONFIGURATION', `m4_dnl

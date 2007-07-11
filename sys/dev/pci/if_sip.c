@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.112 2007/03/04 15:05:24 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.112.4.1 2007/07/11 20:07:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.112 2007/03/04 15:05:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.112.4.1 2007/07/11 20:07:40 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -238,7 +238,7 @@ struct sip_softc {
 
 	struct mii_data sc_mii;		/* MII/media information */
 
-	struct callout sc_tick_ch;	/* tick callout */
+	callout_t sc_tick_ch;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -670,7 +670,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	u_int32_t reg;
 #endif /* DP83820 */
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	sip = SIP_DECL(lookup)(pa);
 	if (sip == NULL) {

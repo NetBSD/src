@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.17 2007/03/04 06:03:10 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.17.4.1 2007/07/11 20:10:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.17 2007/03/04 06:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.17.4.1 2007/07/11 20:10:16 mjf Exp $");
 
 #include "opt_ptm.h"
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.17 2007/03/04 06:03:10 christos Exp $"
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/signalvar.h>
-#include <sys/uio.h>
 #include <sys/filedesc.h>
 #include <sys/conf.h>
 #include <sys/poll.h>
@@ -92,15 +91,15 @@ pty_makedev(char ms, int minor)
 static dev_t
 pty_getfree(void)
 {
-	extern struct simplelock pt_softc_mutex;
+	extern kmutex_t pt_softc_mutex;
 	int i;
 
-	simple_lock(&pt_softc_mutex);
+	mutex_enter(&pt_softc_mutex);
 	for (i = 0; i < npty; i++) {
 		if (pty_isfree(i, 0))
 			break;
 	}
-	simple_unlock(&pt_softc_mutex);
+	mutex_exit(&pt_softc_mutex);
 	return pty_makedev('t', i);
 }
 

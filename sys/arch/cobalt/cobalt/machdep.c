@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2007/03/05 21:05:00 dogcow Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80.4.1 2007/07/11 19:58:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2007/03/05 21:05:00 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80.4.1 2007/07/11 19:58:30 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,7 +152,7 @@ static u_int read_board_id(void);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern void *esym;
+extern char *esym;
 extern struct user *proc0paddr;
 
 
@@ -163,31 +163,51 @@ extern struct user *proc0paddr;
 void
 mach_init(unsigned int memsize, u_int bim, char *bip)
 {
-	void *kernend, *v;
+	char *kernend, *v;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
-	void *ssym = 0;
+	char *ssym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
 
 	/*
-	 * Clear the BSS segment.
+	 * Clear the BSS segment (if needed).
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
 	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
+#if NKSYMS || defined(DDB) || defined(LKM)
 		esym += ((Elf_Ehdr *)end)->e_entry;
-		kernend = (void *)mips_round_page(esym);
-		memset(edata, 0, end - edata);
-	} else
 #endif
-	{
+		kernend = (char *)mips_round_page(esym);
+		/*
+		 * We don't have to clear BSS here
+		 * since our bootloader already does it.
+		 */
+#if 0
+		memset(edata, 0, end - edata);
+#endif
+	} else {
 		kernend = (void *)mips_round_page(end);
+		/*
+		 * No symbol table, so assume we are loaded by
+		 * the firmware directly with "bfd" command.
+		 * The firmware loader doesn't clear BSS of
+		 * a loaded kernel, so do it here.
+		 */
 		memset(edata, 0, kernend - edata);
+
+		/*
+		 * XXX
+		 * lwp0 and cpu_info_store are allocated in BSS
+		 * and initialized before mach_init() is called,
+		 * so restore them again.
+		 */
+		lwp0.l_cpu = &cpu_info_store;
+		cpu_info_store.ci_curlwp = &lwp0;
 	}
 
 	/* Check for valid bootinfo passed from bootstrap */
@@ -309,11 +329,11 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE);
+	v = (char *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	   MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 /*
