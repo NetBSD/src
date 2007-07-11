@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.74 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.74.4.1 2007/07/11 20:08:46 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -122,14 +122,15 @@ typedef struct device *device_ptr_t;
 	} usb_dma_t
 
 typedef struct callout usb_callout_t;
-#define usb_callout_init(h)	callout_init(&(h))
+#define usb_callout_init(h)	callout_init(&(h), 0)
+#define usb_callout_destroy(h)	callout_destroy((&h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
 
 #define usb_lockmgr lockmgr
 
-#define usb_kthread_create1	kthread_create1
-#define usb_kthread_create	kthread_create
+#define usb_kthread_create1		kthread_create
+#define usb_kthread_create(f, a)	((f)(a))
 
 typedef struct malloc_type *usb_malloc_type;
 
@@ -161,6 +162,9 @@ int __CONCAT(dname,_match)(struct device *parent, \
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
+#define USB_IFMATCH_START(dname, uaa) \
+	struct usbif_attach_arg *uaa = aux
+
 #define USB_ATTACH(dname) \
 void __CONCAT(dname,_attach)(struct device *parent, \
     struct device *self, void *aux)
@@ -169,6 +173,11 @@ void __CONCAT(dname,_attach)(struct device *parent, \
 	struct __CONCAT(dname,_softc) *sc = \
 		(struct __CONCAT(dname,_softc) *)self; \
 	struct usb_attach_arg *uaa = aux
+
+#define USB_IFATTACH_START(dname, sc, uaa) \
+	struct __CONCAT(dname,_softc) *sc = \
+		(struct __CONCAT(dname,_softc) *)self; \
+	struct usbif_attach_arg *uaa = aux
 
 /* Returns from attach */
 #define USB_ATTACH_ERROR_RETURN	return
@@ -195,6 +204,10 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm_loc(parent, "usbdevif", \
+			     NULL, args, print, sub))
+
+#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
+	(config_found_sm_loc(parent, "usbifif", \
 			     NULL, args, print, sub))
 
 #elif defined(__OpenBSD__)

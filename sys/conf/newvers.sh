@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.47 2006/12/11 19:46:56 martin Exp $
+#	$NetBSD: newvers.sh,v 1.47.8.1 2007/07/11 20:04:53 mjf Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -85,7 +85,8 @@ ${copyright}
     defined(__i386__) || \
     defined(__sparc64__) || \
     defined(__m68k__) || \
-    defined(__macppc__)
+    defined(__macppc__) || \
+    defined(__x86_64__)
 /*
  * NetBSD identity note.
  */

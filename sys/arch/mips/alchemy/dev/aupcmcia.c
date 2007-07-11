@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.2 2006/03/25 07:25:56 gdamore Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.2.26.1 2007/07/11 20:00:43 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.2 2006/03/25 07:25:56 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.2.26.1 2007/07/11 20:00:43 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,7 +108,6 @@ static void aupcm_slot_settype(pcmcia_chipset_handle_t, int);
 static int aupcm_match(struct device *, struct cfdata *, void *);
 static void aupcm_attach(struct device *, struct device *, void *);
 
-static void aupcm_create_thread(void *);
 static void aupcm_event_thread(void *);
 static int aupcm_card_intr(void *);
 static void aupcm_softintr(void *);
@@ -147,7 +146,7 @@ struct aupcm_softc {
 	paddr_t			sc_base;
 
 	int			sc_wake;
-	struct proc		*sc_thread;
+	lwp_t			*sc_thread;
 
 	int			sc_nslots;
 	struct aupcm_slot	sc_slots[AUPCMCIA_NSLOTS];
@@ -288,7 +287,10 @@ aupcm_attach(struct device *parent, struct device *self, void *aux)
 	 * au_icu.c won't support it right now.  We poll in the event thread
 	 * for now.  Start by initializing it now.
 	 */
-	kthread_create(aupcm_create_thread, sc);
+	if (kthread_create(PRI_NONE, 0, NULL, aupcm_event_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0)
+		panic("%s: unable to create event kthread",
+		    sc->sc_dev.dv_xname);
 }
 
 int
@@ -357,17 +359,6 @@ aupcm_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 	sp->as_softint = 0;
 	sp->as_intr = NULL;
 	sp->as_intrarg = NULL;
-}
-
-void
-aupcm_create_thread(void *arg)
-{
-	struct aupcm_softc *sc = arg;
-	const char *name = sc->sc_dev.dv_xname;
-
-	if (kthread_create1(aupcm_event_thread, sc,
-		&sc->sc_thread, "%s", name) != 0)
-		panic("%s: unable to create event kthread", name);
 }
 
 /*

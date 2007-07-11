@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.48 2007/03/06 12:41:52 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.48.4.1 2007/07/11 20:01:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.48 2007/03/06 12:41:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.48.4.1 2007/07/11 20:01:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh, bus_size_t o)
 		case SGIMIPS_BUS_SPACE_MACE:
 			s = splhigh();
 			delay(10);
+			wbflush();
 			reg = (*(volatile u_int32_t *)(bsh + o));
 			delay(10);
 			splx(s);
@@ -224,6 +225,7 @@ bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 			s = splhigh();
 			delay(10);
 			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			wbflush();
 			delay(10);
 			splx(s);
 			break;
@@ -266,6 +268,7 @@ bus_space_read_stream_4(bus_space_tag_t t, bus_space_handle_t bsh,
 		case SGIMIPS_BUS_SPACE_MACE:
 			s = splhigh();
 			delay(10);
+			wbflush();
 			reg = (*(volatile u_int32_t *)(bsh + o));
 			delay(10);
 			splx(s);
@@ -318,6 +321,7 @@ bus_space_write_stream_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 			s = splhigh();
 			delay(10);
 			*(volatile u_int32_t *)((bsh) + (o)) = (v);
+			wbflush();
 			delay(10);
 			splx(s);
 			break;

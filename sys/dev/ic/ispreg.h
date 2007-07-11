@@ -1,35 +1,9 @@
-/* $NetBSD: ispreg.h,v 1.30 2005/12/11 12:21:27 christos Exp $ */
-/*
- * This driver, which is contained in NetBSD in the files:
- *
- *	sys/dev/ic/isp.c
- *	sys/dev/ic/isp_inline.h
- *	sys/dev/ic/isp_netbsd.c
- *	sys/dev/ic/isp_netbsd.h
- *	sys/dev/ic/isp_target.c
- *	sys/dev/ic/isp_target.h
- *	sys/dev/ic/isp_tpublic.h
- *	sys/dev/ic/ispmbox.h
- *	sys/dev/ic/ispreg.h
- *	sys/dev/ic/ispvar.h
- *	sys/microcode/isp/asm_sbus.h
- *	sys/microcode/isp/asm_1040.h
- *	sys/microcode/isp/asm_1080.h
- *	sys/microcode/isp/asm_12160.h
- *	sys/microcode/isp/asm_2100.h
- *	sys/microcode/isp/asm_2200.h
- *	sys/pci/isp_pci.c
- *	sys/sbus/isp_sbus.c
- *
- * Is being actively maintained by Matthew Jacob (mjacob@NetBSD.org).
- * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
- * Linux versions. This tends to be an interesting maintenance problem.
- *
- * Please coordinate with Matthew Jacob on changes you wish to make here.
- */
-/* release_6_5_99 */
+/* $NetBSD: ispreg.h,v 1.30.32.1 2007/07/11 20:05:58 mjf Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
+ * All rights reserved.
+ *
+ * Additional Copyright (C) 2000-2007 by Matthew Jacob
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,9 +31,6 @@
 /*
  * Machine Independent (well, as best as possible) register
  * definitions for Qlogic ISP SCSI adapters.
- *
- * Matthew Jacob <mjacob@nas.nasa.gov>
- *
  */
 #ifndef	_ISPREG_H
 #define	_ISPREG_H
@@ -98,6 +69,7 @@
 #define	PCI_MBOX_REGS_OFF		0x70
 #define	PCI_MBOX_REGS2100_OFF		0x10
 #define	PCI_MBOX_REGS2300_OFF		0x40
+#define	PCI_MBOX_REGS2400_OFF		0x80
 #define	SBUS_MBOX_REGS_OFF		0x80
 
 #define	PCI_SXP_REGS_OFF		0x80
@@ -144,12 +116,6 @@
 #define	BIU_NVRAM	(BIU_BLOCK+0xE)		/* RW : Bus NVRAM */
 /*
  * These are specific to the 2300.
- *
- * They *claim* you can read BIU_R2HSTSLO with a full 32 bit access
- * and get both registers, but I'm a bit dubious about that. But the
- * point here is that the top 16 bits are firmware defined bits that
- * the RISC processor uses to inform the host about something- usually
- * something which was nominally in a mailbox register.
  */
 #define	BIU_REQINP	(BIU_BLOCK+0x10)	/* Request Queue In */
 #define	BIU_REQOUTP	(BIU_BLOCK+0x12)	/* Request Queue Out */
@@ -173,6 +139,7 @@
 #define		ISPR2HST_FPOST		0x16	/* Low 16 bits fast post */
 #define		ISPR2HST_FPOST_CTIO	0x17	/* Low 16 bits fast post ctio */
 
+/* fifo command stuff- mostly for SPI */
 #define	DFIFO_COMMAND	(BIU_BLOCK+0x60)	/* RW : Command FIFO Port */
 #define		RDMA2100_CONTROL	DFIFO_COMMAND
 #define	DFIFO_DATA	(BIU_BLOCK+0x62)	/* RW : Data FIFO Port */
@@ -238,7 +205,8 @@
 #define		BIU2100_FB_REGS		(1 << 4)	/* FrameBuffer Regs */
 #define		BIU2100_FPM0_REGS	(2 << 4)	/* FPM 0 Regs */
 #define		BIU2100_FPM1_REGS	(3 << 4)	/* FPM 1 Regs */
-#define	BIU2100_PCI64			0x04	/*  R: 64 Bit PCI slot */
+#define	BIU2100_NVRAM_OFFSET		(1 << 14)
+#define	BIU2100_FLASH_UPPER_64K		0x04	/* RW: Upper 64K Bank Select */
 #define	BIU2100_FLASH_ENABLE		0x02	/* RW: Enable Flash RAM */
 #define	BIU2100_SOFT_RESET		0x01
 /* SOFT RESET FOR ISP2100 is same bit, but in this register, not ICR */
@@ -252,6 +220,8 @@
 #define	BIU_ICR_ENABLE_ALL_INTS		0x0002	/* Global enable all inter */
 #define	BIU_ICR_SOFT_RESET		0x0001	/* Soft Reset of ISP */
 
+#define	BIU_IMASK	(BIU_ICR_ENABLE_RISC_INT|BIU_ICR_ENABLE_ALL_INTS)
+
 #define	BIU2100_ICR_ENABLE_ALL_INTS	0x8000
 #define	BIU2100_ICR_ENA_FPM_INT		0x0020
 #define	BIU2100_ICR_ENA_FB_INT		0x0010
@@ -261,16 +231,7 @@
 #define	BIU2100_ICR_ENABLE_TXDMA_INT	0x0001
 #define	BIU2100_ICR_DISABLE_ALL_INTS	0x0000
 
-#define	ENABLE_INTS(isp)	(IS_SCSI(isp))?  \
- ISP_WRITE(isp, BIU_ICR, BIU_ICR_ENABLE_RISC_INT | BIU_ICR_ENABLE_ALL_INTS) : \
- ISP_WRITE(isp, BIU_ICR, BIU2100_ICR_ENA_RISC_INT | BIU2100_ICR_ENABLE_ALL_INTS)
-
-#define	INTS_ENABLED(isp)	((IS_SCSI(isp))?  \
- (ISP_READ(isp, BIU_ICR) & (BIU_ICR_ENABLE_RISC_INT|BIU_ICR_ENABLE_ALL_INTS)) :\
- (ISP_READ(isp, BIU_ICR) & \
-	(BIU2100_ICR_ENA_RISC_INT|BIU2100_ICR_ENABLE_ALL_INTS)))
-
-#define	DISABLE_INTS(isp)	ISP_WRITE(isp, BIU_ICR, 0)
+#define	BIU2100_IMASK	(BIU2100_ICR_ENA_RISC_INT|BIU2100_ICR_ENABLE_ALL_INTS)
 
 /* BUS STATUS REGISTER */
 #define	BIU_ISR_DMA_INT			0x0020	/* DMA interrupt pending */
@@ -287,11 +248,14 @@
 #define	BIU2100_ISR_RXDMA_INT_PENDING	0x0002	/* Global interrupt pending */
 #define	BIU2100_ISR_TXDMA_INT_PENDING	0x0001	/* Global interrupt pending */
 
-#define	INT_PENDING(isp, isr)	(IS_FC(isp)? \
-	((isr & BIU2100_ISR_RISC_INT) != 0) : ((isr & BIU_ISR_RISC_INT) != 0))
+#define	INT_PENDING(isp, isr)						\
+ IS_FC(isp)?								\
+  (IS_24XX(isp)? (isr & BIU2400_ISR_RISC_INT) : (isr & BIU2100_ISR_RISC_INT)) :\
+  (isr & BIU_ISR_RISC_INT)
 
 #define	INT_PENDING_MASK(isp)	\
-	(IS_FC(isp)? BIU2100_ISR_RISC_INT: BIU_ISR_RISC_INT)
+ (IS_FC(isp)? (IS_24XX(isp)? BIU2400_ISR_RISC_INT : BIU2100_ISR_RISC_INT) : \
+ (BIU_ISR_RISC_INT))
 
 /* BUS SEMAPHORE REGISTER */
 #define	BIU_SEMA_STATUS		0x0002	/* Semaphore Status Bit */
@@ -302,6 +266,7 @@
 #define	BIU_NVRAM_SELECT	0x0002
 #define	BIU_NVRAM_DATAOUT	0x0004
 #define	BIU_NVRAM_DATAIN	0x0008
+#define	BIU_NVRAM_BUSY		0x0080	/* 2322/24xx only */
 #define		ISP_NVRAM_READ		6
 
 /* COMNMAND && DATA DMA CONFIGURATION REGISTER */
@@ -384,6 +349,86 @@
 #define	DMA_FIFO_PCI_COUNT_MASK		0x00FF	/* FIFO Byte count mask */
 
 /*
+ * 2400 Interface Offsets and Register Definitions
+ * 
+ * The 2400 looks quite different in terms of registers from other QLogic cards.
+ * It is getting to be a genuine pain and challenge to keep the same model
+ * for all.
+ */
+#define	BIU2400_FLASH_ADDR	(BIU_BLOCK+0x00)
+#define	BIU2400_FLASH_DATA	(BIU_BLOCK+0x04)
+#define	BIU2400_CSR		(BIU_BLOCK+0x08)
+#define	BIU2400_ICR		(BIU_BLOCK+0x0C)
+#define	BIU2400_ISR		(BIU_BLOCK+0x10)
+
+#define	BIU2400_REQINP		(BIU_BLOCK+0x1C) /* Request Queue In */
+#define	BIU2400_REQOUTP		(BIU_BLOCK+0x20) /* Request Queue Out */
+#define	BIU2400_RSPINP		(BIU_BLOCK+0x24) /* Response Queue In */
+#define	BIU2400_RSPOUTP		(BIU_BLOCK+0x28) /* Response Queue Out */
+#define	BIU2400_PRI_RQINP 	(BIU_BLOCK+0x2C) /* Priority Request Q In */
+#define	BIU2400_PRI_RSPINP 	(BIU_BLOCK+0x30) /* Priority Request Q Out */
+
+#define	BIU2400_ATIO_RSPINP	(BIU_BLOCK+0x3C)	/* ATIO Queue In */
+#define	BIU2400_ATIO_REQINP	(BIU_BLOCK+0x40)	/* ATIO Queue Out */
+
+#define	BIU2400_R2HSTSLO	(BIU_BLOCK+0x44)
+#define	BIU2400_R2HSTSHI	(BIU_BLOCK+0x46)
+
+#define	BIU2400_HCCR		(BIU_BLOCK+0x48)
+#define	BIU2400_GPIOD		(BIU_BLOCK+0x4C)
+#define	BIU2400_GPIOE		(BIU_BLOCK+0x50)
+#define	BIU2400_HSEMA		(BIU_BLOCK+0x58)
+
+/* BIU2400_FLASH_ADDR definitions */
+#define	BIU2400_FLASH_DFLAG	(1 << 30)
+
+/* BIU2400_CSR definitions */
+#define	BIU2400_NVERR		(1 << 18)
+#define	BIU2400_DMA_ACTIVE	(1 << 17)		/* RO */
+#define	BIU2400_DMA_STOP	(1 << 16)
+#define	BIU2400_FUNCTION	(1 << 15)		/* RO */
+#define	BIU2400_PCIX_MODE(x)	(((x) >> 8) & 0xf)	/* RO */
+#define	BIU2400_CSR_64BIT	(1 << 2)		/* RO */
+#define	BIU2400_FLASH_ENABLE	(1 << 1)
+#define	BIU2400_SOFT_RESET	(1 << 0)
+
+/* BIU2400_ICR definitions */
+#define	BIU2400_ICR_ENA_RISC_INT	0x8
+#define	BIU2400_IMASK			(BIU2400_ICR_ENA_RISC_INT)
+
+/* BIU2400_ISR definitions */
+#define	BIU2400_ISR_RISC_INT		0x8
+
+#define	BIU2400_R2HST_INTR		BIU_R2HST_INTR
+#define	BIU2400_R2HST_PAUSED		BIU_R2HST_PAUSED
+#define	BIU2400_R2HST_ISTAT_MASK	0x1f
+/* interrupt status meanings */
+#define	ISP2400R2HST_ROM_MBX_OK		0x1	/* ROM mailbox cmd done ok */
+#define	ISP2400R2HST_ROM_MBX_FAIL	0x2	/* ROM mailbox cmd done fail */
+#define	ISP2400R2HST_MBX_OK		0x10	/* mailbox cmd done ok */
+#define	ISP2400R2HST_MBX_FAIL		0x11	/* mailbox cmd done fail */
+#define	ISP2400R2HST_ASYNC_EVENT	0x12	/* Async Event */
+#define	ISP2400R2HST_RSPQ_UPDATE	0x13	/* Response Queue Update */
+#define	ISP2400R2HST_ATIO_RSPQ_UPDATE	0x1C	/* ATIO Response Queue Update */
+#define	ISP2400R2HST_ATIO_RQST_UPDATE	0x1D	/* ATIO Request Queue Update */
+
+/* BIU2400_HCCR definitions */
+
+#define	HCCR_2400_CMD_NOP		0x00000000
+#define	HCCR_2400_CMD_RESET		0x10000000
+#define	HCCR_2400_CMD_CLEAR_RESET	0x20000000
+#define	HCCR_2400_CMD_PAUSE		0x30000000
+#define	HCCR_2400_CMD_RELEASE		0x40000000
+#define	HCCR_2400_CMD_SET_HOST_INT	0x50000000
+#define	HCCR_2400_CMD_CLEAR_HOST_INT	0x60000000
+#define	HCCR_2400_CMD_CLEAR_RISC_INT	0xA0000000
+
+#define	HCCR_2400_RISC_ERR(x)		(((x) >> 12) & 0x7)	/* RO */
+#define	HCCR_2400_RISC2HOST_INT		(1 << 6)		/* RO */
+#define	HCCR_2400_RISC_RESET		(1 << 5)		/* RO */
+
+
+/*
  * Mailbox Block Register Offsets
  */
 
@@ -405,15 +450,32 @@
 #define	OUTMAILBOX6	(MBOX_BLOCK+0xC)
 #define	OUTMAILBOX7	(MBOX_BLOCK+0xE)
 
+/*
+ * Strictly speaking, it's 
+ *  SCSI && 2100 : 8 MBOX registers
+ *  2200: 24 MBOX registers
+ *  2300/2400: 32 MBOX registers
+ */
 #define	MBOX_OFF(n)	(MBOX_BLOCK + ((n) << 1))
 #define	NMBOX(isp)	\
 	(((((isp)->isp_type & ISP_HA_SCSI) >= ISP_HA_SCSI_1040A) || \
-	 ((isp)->isp_type & ISP_HA_FC))? 8 : 6)
+	 ((isp)->isp_type & ISP_HA_FC))? 12 : 6)
 #define	NMBOX_BMASK(isp)	\
 	(((((isp)->isp_type & ISP_HA_SCSI) >= ISP_HA_SCSI_1040A) || \
-	 ((isp)->isp_type & ISP_HA_FC))? 0xff : 0x3f)
+	 ((isp)->isp_type & ISP_HA_FC))? 0xfff : 0x3f)
 
-#define	MAX_MAILBOX	8
+#define	MAX_MAILBOX(isp)	((IS_FC(isp))? 12 : 8)
+#define	MAILBOX_STORAGE		12
+/* if timeout == 0, then default timeout is picked */
+#define	MBCMD_DEFAULT_TIMEOUT	100000	/* 100 ms */
+typedef struct {
+	uint16_t param[MAILBOX_STORAGE];
+	uint16_t ibits;
+	uint16_t obits;
+	uint32_t	: 28,
+		logval	: 4;
+	uint32_t timeout;
+} mbreg_t;
 
 /*
  * Fibre Protocol Module and Frame Buffer Register Offsets/Definitions (2X00).
@@ -461,7 +523,7 @@
 #define	SXP_FIFO_STATUS	(SXP_BLOCK+0x5C)	/* RW*: SCSI FIFO Status */
 #define	SXP_FIFO_TOP	(SXP_BLOCK+0x5E)	/* RW*: SCSI FIFO Top Resid */
 #define	SXP_FIFO_BOTTOM	(SXP_BLOCK+0x60)	/* RW*: SCSI FIFO Bot Resid */
-#define	SXP_TRAN_REG	(SXP_BLOCK+0x64)	/* RW*: SCSI Transfer Reg */
+#define	SXP_TRAN_REG	(SXP_BLOCK+0x64)	/* RW*: SCSI Transferr Reg */
 #define	SXP_TRAN_CNT_LO	(SXP_BLOCK+0x68)	/* RW*: SCSI Trans Count */
 #define	SXP_TRAN_CNT_HI	(SXP_BLOCK+0x6A)	/* RW*: SCSI Trans Count */
 #define	SXP_TRAN_CTR_LO	(SXP_BLOCK+0x6C)	/* RW*: SCSI Trans Counter */
@@ -693,6 +755,7 @@
 #define	PCI_HCCR_CMD_PARITY_ERR		0xE000	/* Generate parity error */
 #define	HCCR_CMD_TEST_MODE		0xF000	/* Set Test Mode */
 
+
 #define	ISP2100_HCCR_PARITY_ENABLE_2	0x0400
 #define	ISP2100_HCCR_PARITY_ENABLE_1	0x0200
 #define	ISP2100_HCCR_PARITY_ENABLE_0	0x0100
@@ -707,6 +770,25 @@
 #define	HCCR_PAUSE			0x0020	/* R  : RISC paused */
 
 #define	PCI_HCCR_BIOS			0x0001	/*  W : BIOS enable */
+
+/*
+ * Defines for Interrupts
+ */
+#define	ISP_INTS_ENABLED(isp)						\
+ ((IS_SCSI(isp))?  							\
+  (ISP_READ(isp, BIU_ICR) & BIU_IMASK) :				\
+   (IS_24XX(isp)? (ISP_READ(isp, BIU2400_ICR) & BIU2400_IMASK) :	\
+   (ISP_READ(isp, BIU_ICR) & BIU2100_IMASK)))
+
+#define	ISP_ENABLE_INTS(isp)						\
+ (IS_SCSI(isp) ?  							\
+   ISP_WRITE(isp, BIU_ICR, BIU_IMASK) :					\
+   (IS_24XX(isp) ?							\
+    (ISP_WRITE(isp, BIU2400_ICR, BIU2400_IMASK)) :			\
+    (ISP_WRITE(isp, BIU_ICR, BIU2100_IMASK))))
+
+#define	ISP_DISABLE_INTS(isp)						\
+ IS_24XX(isp)? ISP_WRITE(isp, BIU2400_ICR, 0) : ISP_WRITE(isp, BIU_ICR, 0)
 
 /*
  * NVRAM Definitions (PCI cards only)
@@ -757,9 +839,9 @@
 #define	ISP_NVRAM_FAST_MTTR_ENABLE(c)		ISPBSMX(c, 22, 0, 0x01)
 
 #define	ISP_NVRAM_TARGOFF			28
-#define	ISP_NVARM_TARGSIZE			6
+#define	ISP_NVRAM_TARGSIZE			6
 #define	_IxT(tgt, tidx)			\
-	(ISP_NVRAM_TARGOFF + (ISP_NVARM_TARGSIZE * (tgt)) + (tidx))
+	(ISP_NVRAM_TARGOFF + (ISP_NVRAM_TARGSIZE * (tgt)) + (tidx))
 #define	ISP_NVRAM_TGT_RENEG(c, t)		ISPBSMX(c, _IxT(t, 0), 0, 0x01)
 #define	ISP_NVRAM_TGT_QFRZ(c, t)		ISPBSMX(c, _IxT(t, 0), 1, 0x01)
 #define	ISP_NVRAM_TGT_ARQ(c, t)			ISPBSMX(c, _IxT(t, 0), 2, 0x01)
@@ -789,26 +871,26 @@
 
 /* Offset 5 */
 /*
-	u_int8_t bios_configuration_mode     :2;
-	u_int8_t bios_disable                :1;
-	u_int8_t selectable_scsi_boot_enable :1;
-	u_int8_t cd_rom_boot_enable          :1;
-	u_int8_t disable_loading_risc_code   :1;
-	u_int8_t enable_64bit_addressing     :1;
-	u_int8_t unused_7                    :1;
+	uint8_t bios_configuration_mode     :2;
+	uint8_t bios_disable                :1;
+	uint8_t selectable_scsi_boot_enable :1;
+	uint8_t cd_rom_boot_enable          :1;
+	uint8_t disable_loading_risc_code   :1;
+	uint8_t enable_64bit_addressing     :1;
+	uint8_t unused_7                    :1;
  */
 
 /* Offsets 6, 7 */
 /*
-        u_int8_t boot_lun_number    :5;
-        u_int8_t scsi_bus_number    :1;
-        u_int8_t unused_6           :1;
-        u_int8_t unused_7           :1;
-        u_int8_t boot_target_number :4;
-        u_int8_t unused_12          :1;
-        u_int8_t unused_13          :1;
-        u_int8_t unused_14          :1;
-        u_int8_t unused_15          :1;
+        uint8_t boot_lun_number    :5;
+        uint8_t scsi_bus_number    :1;
+        uint8_t unused_6           :1;
+        uint8_t unused_7           :1;
+        uint8_t boot_target_number :4;
+        uint8_t unused_12          :1;
+        uint8_t unused_13          :1;
+        uint8_t unused_14          :1;
+        uint8_t unused_15          :1;
  */
 
 #define	ISP1080_NVRAM_HBA_ENABLE(c)			ISPBSMX(c, 16, 3, 0x01)
@@ -958,7 +1040,7 @@
 	ISPBSMX(c, _IxT16(t, 4, (b)), 7, 0x01)
 
 /*
- * Qlogic 2XXX NVRAM is an array of 256 bytes.
+ * Qlogic 2100 thru 2300 NVRAM is an array of 256 bytes.
  *
  * Some portion of the front of this is for general RISC engine parameters,
  * mostly reflecting the state of the last INITIALIZE FIRMWARE mailbox command.
@@ -970,7 +1052,7 @@
 #define	ISP2100_NVRAM_SIZE	256
 /* ISP_NVRAM_VERSION is in same overall place */
 #define	ISP2100_NVRAM_RISCVER(c)		(c)[6]
-#define	ISP2100_NVRAM_OPTIONS(c)		(c)[8]
+#define	ISP2100_NVRAM_OPTIONS(c)		((c)[8] | ((c)[9] << 8))
 #define	ISP2100_NVRAM_MAXFRAMELENGTH(c)		(((c)[10]) | ((c)[11] << 8))
 #define	ISP2100_NVRAM_MAXIOCBALLOCATION(c)	(((c)[12]) | ((c)[13] << 8))
 #define	ISP2100_NVRAM_EXECUTION_THROTTLE(c)	(((c)[14]) | ((c)[15] << 8))
@@ -978,28 +1060,38 @@
 #define	ISP2100_NVRAM_RETRY_DELAY(c)		(c)[17]
 
 #define	ISP2100_NVRAM_PORT_NAME(c)	(\
-		(((u_int64_t)(c)[18]) << 56) | \
-		(((u_int64_t)(c)[19]) << 48) | \
-		(((u_int64_t)(c)[20]) << 40) | \
-		(((u_int64_t)(c)[21]) << 32) | \
-		(((u_int64_t)(c)[22]) << 24) | \
-		(((u_int64_t)(c)[23]) << 16) | \
-		(((u_int64_t)(c)[24]) <<  8) | \
-		(((u_int64_t)(c)[25]) <<  0))
+		(((uint64_t)(c)[18]) << 56) | \
+		(((uint64_t)(c)[19]) << 48) | \
+		(((uint64_t)(c)[20]) << 40) | \
+		(((uint64_t)(c)[21]) << 32) | \
+		(((uint64_t)(c)[22]) << 24) | \
+		(((uint64_t)(c)[23]) << 16) | \
+		(((uint64_t)(c)[24]) <<  8) | \
+		(((uint64_t)(c)[25]) <<  0))
 
-#define	ISP2100_NVRAM_HARDLOOPID(c)		(c)[26]
+#define	ISP2100_NVRAM_HARDLOOPID(c)		((c)[26] | ((c)[27] << 8))
+#define	ISP2100_NVRAM_TOV(c)			((c)[29])
 
-#define	ISP2200_NVRAM_NODE_NAME(c)	(\
-		(((u_int64_t)(c)[30]) << 56) | \
-		(((u_int64_t)(c)[31]) << 48) | \
-		(((u_int64_t)(c)[32]) << 40) | \
-		(((u_int64_t)(c)[33]) << 32) | \
-		(((u_int64_t)(c)[34]) << 24) | \
-		(((u_int64_t)(c)[35]) << 16) | \
-		(((u_int64_t)(c)[36]) <<  8) | \
-		(((u_int64_t)(c)[37]) <<  0))
+#define	ISP2100_NVRAM_NODE_NAME(c)	(\
+		(((uint64_t)(c)[30]) << 56) | \
+		(((uint64_t)(c)[31]) << 48) | \
+		(((uint64_t)(c)[32]) << 40) | \
+		(((uint64_t)(c)[33]) << 32) | \
+		(((uint64_t)(c)[34]) << 24) | \
+		(((uint64_t)(c)[35]) << 16) | \
+		(((uint64_t)(c)[36]) <<  8) | \
+		(((uint64_t)(c)[37]) <<  0))
 
-#define	ISP2100_NVRAM_HBA_OPTIONS(c)		(c)[70]
+#define	ISP2100_XFW_OPTIONS(c)			((c)[38] | ((c)[39] << 8))
+
+#define	ISP2100_RACC_TIMER(c)			(c)[40]
+#define	ISP2100_IDELAY_TIMER(c)			(c)[41]
+
+#define	ISP2100_ZFW_OPTIONS(c)			((c)[42] | ((c)[43] << 8))
+
+#define	ISP2100_SERIAL_LINK(c)			((c)[68] | ((c)[69] << 8))
+
+#define	ISP2100_NVRAM_HBA_OPTIONS(c)		((c)[70] | ((c)[71] << 8))
 #define	ISP2100_NVRAM_HBA_DISABLE(c)		ISPBSMX(c, 70, 0, 0x01)
 #define	ISP2100_NVRAM_BIOS_DISABLE(c)		ISPBSMX(c, 70, 1, 0x01)
 #define	ISP2100_NVRAM_LUN_DISABLE(c)		ISPBSMX(c, 70, 2, 0x01)
@@ -1008,18 +1100,64 @@
 #define	ISP2100_NVRAM_SET_CACHELINESZ(c)	ISPBSMX(c, 70, 5, 0x01)
 
 #define	ISP2100_NVRAM_BOOT_NODE_NAME(c)	(\
-		(((u_int64_t)(c)[72]) << 56) | \
-		(((u_int64_t)(c)[73]) << 48) | \
-		(((u_int64_t)(c)[74]) << 40) | \
-		(((u_int64_t)(c)[75]) << 32) | \
-		(((u_int64_t)(c)[76]) << 24) | \
-		(((u_int64_t)(c)[77]) << 16) | \
-		(((u_int64_t)(c)[78]) <<  8) | \
-		(((u_int64_t)(c)[79]) <<  0))
+		(((uint64_t)(c)[72]) << 56) | \
+		(((uint64_t)(c)[73]) << 48) | \
+		(((uint64_t)(c)[74]) << 40) | \
+		(((uint64_t)(c)[75]) << 32) | \
+		(((uint64_t)(c)[76]) << 24) | \
+		(((uint64_t)(c)[77]) << 16) | \
+		(((uint64_t)(c)[78]) <<  8) | \
+		(((uint64_t)(c)[79]) <<  0))
 
 #define	ISP2100_NVRAM_BOOT_LUN(c)		(c)[80]
+#define	ISP2100_RESET_DELAY(c)			(c)[81]
 
-#define	ISP2200_HBA_FEATURES(c)			(c)[232] | ((c)[233] << 8)
+#define	ISP2100_HBA_FEATURES(c)			((c)[232] | ((c)[233] << 8))
+
+/*
+ * Qlogic 2400 NVRAM is an array of 512 bytes with a 32 bit checksum.
+ */
+#define	ISP2400_NVRAM_PORT0_ADDR	0x80
+#define	ISP2400_NVRAM_PORT1_ADDR	0x180
+#define	ISP2400_NVRAM_SIZE		512
+
+#define	ISP2400_NVRAM_VERSION(c)		((c)[4] | ((c)[5] << 8))
+#define	ISP2400_NVRAM_MAXFRAMELENGTH(c)		(((c)[12]) | ((c)[13] << 8))
+#define	ISP2400_NVRAM_EXECUTION_THROTTLE(c)	(((c)[14]) | ((c)[15] << 8))
+#define	ISP2400_NVRAM_EXCHANGE_COUNT(c)		(((c)[16]) | ((c)[17] << 8))
+#define	ISP2400_NVRAM_HARDLOOPID(c)		((c)[18] | ((c)[19] << 8))
+
+#define	ISP2400_NVRAM_PORT_NAME(c)	(\
+		(((uint64_t)(c)[20]) << 56) | \
+		(((uint64_t)(c)[21]) << 48) | \
+		(((uint64_t)(c)[22]) << 40) | \
+		(((uint64_t)(c)[23]) << 32) | \
+		(((uint64_t)(c)[24]) << 24) | \
+		(((uint64_t)(c)[25]) << 16) | \
+		(((uint64_t)(c)[26]) <<  8) | \
+		(((uint64_t)(c)[27]) <<  0))
+
+#define	ISP2400_NVRAM_NODE_NAME(c)	(\
+		(((uint64_t)(c)[28]) << 56) | \
+		(((uint64_t)(c)[29]) << 48) | \
+		(((uint64_t)(c)[30]) << 40) | \
+		(((uint64_t)(c)[31]) << 32) | \
+		(((uint64_t)(c)[32]) << 24) | \
+		(((uint64_t)(c)[33]) << 16) | \
+		(((uint64_t)(c)[34]) <<  8) | \
+		(((uint64_t)(c)[35]) <<  0))
+
+#define	ISP2400_NVRAM_LOGIN_RETRY_CNT(c)	((c)[36] | ((c)[37] << 8))
+#define	ISP2400_NVRAM_LINK_DOWN_ON_NOS(c)	((c)[38] | ((c)[39] << 8))
+#define	ISP2400_NVRAM_INTERRUPT_DELAY(c)	((c)[40] | ((c)[41] << 8))
+#define	ISP2400_NVRAM_LOGIN_TIMEOUT(c)		((c)[42] | ((c)[43] << 8))
+
+#define	ISP2400_NVRAM_FIRMWARE_OPTIONS1(c)	\
+	((c)[44] | ((c)[45] << 8) | ((c)[46] << 16) | ((c)[47] << 24))
+#define	ISP2400_NVRAM_FIRMWARE_OPTIONS2(c)	\
+	((c)[48] | ((c)[49] << 8) | ((c)[50] << 16) | ((c)[51] << 24))
+#define	ISP2400_NVRAM_FIRMWARE_OPTIONS3(c)	\
+	((c)[52] | ((c)[53] << 8) | ((c)[54] << 16) | ((c)[55] << 24))
 
 /*
  * Firmware Crash Dump
@@ -1031,15 +1169,15 @@
  */
 
 #define	QLA2200_RISC_IMAGE_DUMP_SIZE					\
-	(1 * sizeof (u_int16_t)) +	/* 'used' flag (also HBA type) */ \
-	(352 * sizeof (u_int16_t)) +	/* RISC registers */		\
- 	(61440 * sizeof (u_int16_t))	/* RISC SRAM (offset 0x1000..0xffff) */
+	(1 * sizeof (uint16_t)) +	/* 'used' flag (also HBA type) */ \
+	(352 * sizeof (uint16_t)) +	/* RISC registers */		\
+ 	(61440 * sizeof (uint16_t))	/* RISC SRAM (offset 0x1000..0xffff) */
 #define	QLA2300_RISC_IMAGE_DUMP_SIZE					\
-	(1 * sizeof (u_int16_t)) +	/* 'used' flag (also HBA type) */ \
-	(464 * sizeof (u_int16_t)) +	/* RISC registers */		\
- 	(63488 * sizeof (u_int16_t)) +	/* RISC SRAM (0x0800..0xffff) */ \
-	(4096 * sizeof (u_int16_t)) +	/* RISC SRAM (0x10000..0x10FFF) */ \
-	(61440 * sizeof (u_int16_t))	/* RISC SRAM (0x11000..0x1FFFF) */
+	(1 * sizeof (uint16_t)) +	/* 'used' flag (also HBA type) */ \
+	(464 * sizeof (uint16_t)) +	/* RISC registers */		\
+ 	(63488 * sizeof (uint16_t)) +	/* RISC SRAM (0x0800..0xffff) */ \
+	(4096 * sizeof (uint16_t)) +	/* RISC SRAM (0x10000..0x10FFF) */ \
+	(61440 * sizeof (uint16_t))	/* RISC SRAM (0x11000..0x1FFFF) */
 /* the larger of the two */
 #define	ISP_CRASH_IMAGE_SIZE	QLA2300_RISC_IMAGE_DUMP_SIZE
 #endif	/* _ISPREG_H */

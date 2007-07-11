@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.263 2007/03/12 18:18:36 ad Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.263.2.1 2007/07/11 20:11:27 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.263 2007/03/12 18:18:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.263.2.1 2007/07/11 20:11:27 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -377,7 +377,7 @@ extern struct evcnt tcp_reass_fragdup;
 static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
     int *);
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
-    const struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
+    struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
 #ifdef INET
 static void tcp4_log_refused(const struct ip *, const struct tcphdr *);
@@ -1606,7 +1606,7 @@ after_listen:
 	 */
 	tp->t_rcvtime = tcp_now;
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
 
 	/*
 	 * Process options.
@@ -2366,9 +2366,9 @@ after_listen:
 				 */
 				if (so->so_state & SS_CANTRCVMORE) {
 					soisdisconnected(so);
-					if (tcp_maxidle > 0)
+					if (tp->t_maxidle > 0)
 						TCP_TIMER_ARM(tp, TCPT_2MSL,
-						    tcp_maxidle);
+						    tp->t_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
 			}
@@ -2861,7 +2861,7 @@ tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
 
 static int
 tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
-    const struct tcphdr *th,
+    struct tcphdr *th,
     struct mbuf *m, int toff, struct tcp_opt_info *oi)
 {
 	u_int16_t mss;
@@ -2983,7 +2983,6 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 
 			sigp = sigbuf;
 			memcpy(sigbuf, cp + 2, TCP_SIGLEN);
-			memset(cp + 2, 0, TCP_SIGLEN);
 			tp->t_flags |= TF_SIGNATURE;
 			break;
 #endif
@@ -3214,11 +3213,13 @@ do {									\
 do {									\
 	if ((sc)->sc_ipopts)						\
 		(void) m_free((sc)->sc_ipopts);				\
-	rtcache_free(&(sc)->sc_route4);					\
+	rtcache_free(&(sc)->sc_route);					\
 	if (callout_invoking(&(sc)->sc_timer))				\
 		(sc)->sc_flags |= SCF_DEAD;				\
-	else								\
+	else {								\
+		callout_destroy(&sc->sc_timer);				\
 		pool_put(&syn_cache_pool, (sc));			\
+	}								\
 } while (/*CONSTCOND*/0)
 
 POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL,
@@ -3362,6 +3363,7 @@ syn_cache_timer(void *arg)
 
 	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
 		tcpstat.tcps_sc_delayed_free++;
+		callout_destroy(&sc->sc_timer);
 		pool_put(&syn_cache_pool, sc);
 		splx(s);
 		return;
@@ -3378,7 +3380,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= TCPTV_KEEP_INIT)
+	if (sc->sc_rxttot >= tcp_keepinit)
 		goto dropit;
 
 	tcpstat.tcps_sc_retransmitted++;
@@ -3631,14 +3633,13 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	 * Give the new socket our cached route reference.
 	 */
 	if (inp) {
-		rtcache_copy(&inp->inp_route, &sc->sc_route4, sizeof(inp->inp_route));
-		rtcache_free(&sc->sc_route4);
+		rtcache_copy(&inp->inp_route, &sc->sc_route);
+		rtcache_free(&sc->sc_route);
 	}
 #ifdef INET6
 	else {
-		rtcache_copy((struct route *)&in6p->in6p_route,
-		    (struct route *)&sc->sc_route6, sizeof(in6p->in6p_route));
-		rtcache_free((struct route *)&sc->sc_route6);
+		rtcache_copy(&in6p->in6p_route, &sc->sc_route);
+		rtcache_free(&sc->sc_route);
 	}
 #endif
 
@@ -3715,7 +3716,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	tcp_sendseqinit(tp);
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 	tcpstat.tcps_accepts++;
 
 	if ((sc->sc_flags & SCF_SACK_PERMIT) && tcp_do_sack)
@@ -3967,7 +3968,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * options into the reply.
 	 */
 	bzero(sc, sizeof(struct syn_cache));
-	callout_init(&sc->sc_timer);
+	callout_init(&sc->sc_timer, 0);
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
 	sc->sc_flags = 0;
@@ -4064,15 +4065,14 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	u_int hlen;
 	struct socket *so;
 
+	ro = &sc->sc_route;
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		hlen = sizeof(struct ip);
-		ro = &sc->sc_route4;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		hlen = sizeof(struct ip6_hdr);
-		ro = (struct route *)&sc->sc_route6;
 		break;
 #endif
 	default:
@@ -4336,8 +4336,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		ip6->ip6_hlim = in6_selecthlim(NULL,
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
-		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
-			(struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;
 #endif
 	default:

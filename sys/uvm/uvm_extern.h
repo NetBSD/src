@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.128 2007/03/04 06:03:48 christos Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.128.4.1 2007/07/11 20:12:54 mjf Exp $	*/
 
 /*
  *
@@ -189,14 +189,19 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 /*
  * flags for ubc_alloc()
  */
-#define UBC_READ	0x01
-#define UBC_WRITE	0x02
-#define UBC_FAULTBUSY	0x04
+#define UBC_READ	0x001
+#define UBC_WRITE	0x002
+#define UBC_FAULTBUSY	0x004
 
 /*
  * flags for ubc_release()
  */
-#define UBC_UNMAP	0x01
+#define UBC_UNMAP	0x010
+
+/*
+ * flags for ubc_uiomve()
+ */
+#define	UBC_PARTIALOK	0x100
 
 /*
  * helpers for calling ubc_release()
@@ -556,6 +561,8 @@ void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 			    int);
 void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
+int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
+			    int);
 
 /* uvm_fault.c */
 #define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)
@@ -581,9 +588,12 @@ __dead void		uvm_scheduler(void) __attribute__((noreturn));
 void			uvm_kick_scheduler(void);
 void			uvm_swapin(struct lwp *);
 bool			uvm_uarea_alloc(vaddr_t *);
+void			uvm_uarea_free(vaddr_t uaddr);
 void			uvm_uarea_drain(bool);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
+void			uvm_lwp_hold(struct lwp *);
+void			uvm_lwp_rele(struct lwp *);
 
 
 /* uvm_init.c */
@@ -702,6 +712,7 @@ void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 
 /* uvm_vnode.c */
 void			uvm_vnp_setsize(struct vnode *, voff_t);
+void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 void			uvm_vnp_sync(struct mount *);
 struct uvm_object	*uvn_attach(void *, vm_prot_t);
 int			uvn_findpages(struct uvm_object *, voff_t,

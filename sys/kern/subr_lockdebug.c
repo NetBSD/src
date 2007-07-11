@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.5 2007/03/10 15:56:21 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.5.4.1 2007/07/11 20:10:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5 2007/03/10 15:56:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.4.1 2007/07/11 20:10:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -125,7 +125,7 @@ lockdebug_lock(lockdebuglk_t *lk)
 {
 	int s;
 	
-	s = spllock();
+	s = splhigh();
 	__cpu_simple_lock(&lk->lk_lock);
 	lk->lk_oldspl = s;
 }
@@ -225,7 +225,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 	/*
 	 * Pinch a new debug structure.  We may recurse because we call
 	 * kmem_alloc(), which may need to initialize new locks somewhere
-	 * down the path.  If not recursing, we try to maintain at keep
+	 * down the path.  If not recursing, we try to maintain at least
 	 * LD_SLOP structures free, which should hopefully be enough to
 	 * satisfy kmem_alloc().  If we can't provide a structure, not to
 	 * worry: we'll just mark the lock as not having an ID.
@@ -640,7 +640,7 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
  *	An error has been trapped - dump lock info and call panic().
  */
 void
-lockdebug_abort(int id, volatile void *lock, lockops_t *ops,
+lockdebug_abort(u_int id, volatile void *lock, lockops_t *ops,
 		const char *func, const char *msg)
 {
 #ifdef LOCKDEBUG

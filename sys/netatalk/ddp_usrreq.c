@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.24 2007/03/04 06:03:19 christos Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.24.4.1 2007/07/11 20:11:09 mjf Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.24 2007/03/04 06:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.24.4.1 2007/07/11 20:11:09 mjf Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.24 2007/03/04 06:03:19 christos Exp
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
@@ -256,8 +257,7 @@ at_pcbsetaddr(ddp, addr, l)
 
 		if (sat->sat_addr.s_node != ATADDR_ANYNODE ||
 		    sat->sat_addr.s_net != ATADDR_ANYNET) {
-			for (aa = at_ifaddr.tqh_first; aa;
-			    aa = aa->aa_list.tqe_next) {
+			TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 				if ((sat->sat_addr.s_net ==
 				    AA_SAT(aa)->sat_addr.s_net) &&
 				    (sat->sat_addr.s_node ==
@@ -288,9 +288,9 @@ at_pcbsetaddr(ddp, addr, l)
 
 	if (sat->sat_addr.s_node == ATADDR_ANYNODE &&
 	    sat->sat_addr.s_net == ATADDR_ANYNET) {
-		if (at_ifaddr.tqh_first == NULL)
-			return (EADDRNOTAVAIL);
-		sat->sat_addr = AA_SAT(at_ifaddr.tqh_first)->sat_addr;
+		if (TAILQ_EMPTY(&at_ifaddr))
+			return EADDRNOTAVAIL;
+		sat->sat_addr = AA_SAT(TAILQ_FIRST(&at_ifaddr))->sat_addr;
 	}
 	ddp->ddp_lsat = *sat;
 
@@ -335,16 +335,17 @@ at_pcbconnect(ddp, addr, l)
 	struct mbuf    *addr;
 	struct lwp     *l;
 {
+	const struct sockaddr_at *cdst;
 	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
 	struct route *ro;
-	struct at_ifaddr *aa = 0;
+	struct at_ifaddr *aa;
 	struct ifnet   *ifp;
 	u_short         hintnet = 0, net;
 
 	if (addr->m_len != sizeof(*sat))
-		return (EINVAL);
+		return EINVAL;
 	if (sat->sat_family != AF_APPLETALK) {
-		return (EAFNOSUPPORT);
+		return EAFNOSUPPORT;
 	}
 	/*
          * Under phase 2, network 0 means "the network".  We take "the
@@ -354,7 +355,7 @@ at_pcbconnect(ddp, addr, l)
 	if (sat->sat_addr.s_net == ATADDR_ANYNET
 	    && sat->sat_addr.s_node != ATADDR_ANYNODE) {
 		if (ddp->ddp_lsat.sat_port == ATADDR_ANYPORT) {
-			return (EADDRNOTAVAIL);
+			return EADDRNOTAVAIL;
 		}
 		hintnet = ddp->ddp_lsat.sat_addr.s_net;
 	}
@@ -371,58 +372,54 @@ at_pcbconnect(ddp, addr, l)
 		} else {
 			net = sat->sat_addr.s_net;
 		}
-		aa = 0;
 		if ((ifp = ro->ro_rt->rt_ifp) != NULL) {
-			for (aa = at_ifaddr.tqh_first; aa;
-			    aa = aa->aa_list.tqe_next) {
+			TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 				if (aa->aa_ifp == ifp &&
 				    ntohs(net) >= ntohs(aa->aa_firstnet) &&
 				    ntohs(net) <= ntohs(aa->aa_lastnet)) {
 					break;
 				}
 			}
-		}
-		if (aa == NULL || (satocsat(rtcache_getdst(ro))->sat_addr.s_net !=
+		} else
+			aa = NULL;
+		cdst = satocsat(rtcache_getdst(ro));
+		if (aa == NULL || (cdst->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
-		    satocsat(rtcache_getdst(ro))->sat_addr.s_node !=
-		    sat->sat_addr.s_node))
+		    cdst->sat_addr.s_node != sat->sat_addr.s_node))
 			rtcache_free(ro);
 	}
 	/*
          * If we've got no route for this interface, try to find one.
          */
 	if (ro->ro_rt == NULL) {
-		memset(&ro->ro_dst, 0, sizeof(struct sockaddr_at));
-		ro->ro_dst.sa_len = sizeof(struct sockaddr_at);
-		ro->ro_dst.sa_family = AF_APPLETALK;
-		if (hintnet) {
-			satosat(&ro->ro_dst)->sat_addr.s_net = hintnet;
-		} else {
-			satosat(&ro->ro_dst)->sat_addr.s_net =
-			    sat->sat_addr.s_net;
-		}
-		satosat(&ro->ro_dst)->sat_addr.s_node = sat->sat_addr.s_node;
+		union {
+			struct sockaddr		dst;
+			struct sockaddr_at	dsta;
+		} u;
+
+		sockaddr_at_init(&u.dsta, &sat->sat_addr, 0);
+		if (hintnet)
+			u.dsta.sat_addr.s_net = hintnet;
+		rtcache_setdst(ro, &u.dst);
+
 		rtcache_init(ro);
 	}
 	/*
          * Make sure any route that we have has a valid interface.
          */
-	aa = 0;
 	if (ro->ro_rt != NULL && (ifp = ro->ro_rt->rt_ifp) != NULL) {
-		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
-			if (aa->aa_ifp == ifp) {
+		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
+			if (aa->aa_ifp == ifp)
 				break;
-			}
 		}
-	}
-	if (aa == 0) {
-		return (ENETUNREACH);
-	}
+	} else
+		aa = NULL;
+	if (aa == NULL)
+		return ENETUNREACH;
 	ddp->ddp_fsat = *sat;
-	if (ddp->ddp_lsat.sat_port == ATADDR_ANYPORT) {
-		return (at_pcbsetaddr(ddp, (struct mbuf *) 0, l));
-	}
-	return (0);
+	if (ddp->ddp_lsat.sat_port == ATADDR_ANYPORT)
+		return at_pcbsetaddr(ddp, NULL, l);
+	return 0;
 }
 
 static void
@@ -460,7 +457,7 @@ at_pcballoc(so)
 	so->so_rcv.sb_mowner = &atalk_rx_mowner;
 	so->so_snd.sb_mowner = &atalk_tx_mowner;
 #endif
-	return (0);
+	return 0;
 }
 
 static void
@@ -484,9 +481,7 @@ at_pcbdetach(so, ddp)
 			ddp->ddp_pnext->ddp_pprev = ddp->ddp_pprev;
 		}
 	}
-	if (ddp->ddp_route.ro_rt) {
-		rtfree(ddp->ddp_route.ro_rt);
-	}
+	rtcache_free(&ddp->ddp_route);
 	if (ddp->ddp_prev) {
 		ddp->ddp_prev->ddp_next = ddp->ddp_next;
 	} else {
@@ -515,9 +510,9 @@ ddp_search(
 	/*
          * Check for bad ports.
          */
-	if (to->sat_port < ATPORT_FIRST || to->sat_port >= ATPORT_LAST) {
-		return (NULL);
-	}
+	if (to->sat_port < ATPORT_FIRST || to->sat_port >= ATPORT_LAST)
+		return NULL;
+
 	/*
          * Make sure the local address matches the sent address.  What about
          * the interface?

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.14 2007/03/04 06:02:19 christos Exp $	 */
+/* $NetBSD: if_bce.c,v 1.14.4.1 2007/07/11 20:07:31 mjf Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -36,6 +36,7 @@
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +55,9 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #include <dev/pci/pcireg.h>
@@ -135,7 +139,10 @@ struct bce_softc {
 	u_int32_t		bce_txin;	/* last tx descriptor seen */
 	int			bce_txsfree;	/* no. tx slots available */
 	int			bce_txsnext;	/* next available tx slot */
-	struct callout		bce_timeout;
+	callout_t		bce_timeout;
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 };
 
 /* for ring descriptors */
@@ -500,7 +507,11 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: Ethernet address %s\n", sc->bce_dev.dv_xname,
 	       ether_sprintf(sc->enaddr));
 	ether_ifattach(ifp, sc->enaddr);
-	callout_init(&sc->bce_timeout);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->bce_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
+	callout_init(&sc->bce_timeout, 0);
 }
 
 /* handle media, and ethernet requests */
@@ -745,6 +756,10 @@ bce_intr(void *xsc)
 	if (handled) {
 		if (wantinit)
 			bce_init(ifp);
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, intstatus);
+#endif
 		/* Try to get more packets going. */
 		bce_start(ifp);
 	}

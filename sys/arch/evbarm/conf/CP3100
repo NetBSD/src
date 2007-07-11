@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.2 2006/11/11 23:50:54 he Exp $
+#	$NetBSD: CP3100,v 1.2.16.1 2007/07/11 19:58:34 mjf Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -144,7 +144,7 @@ options 	DIAGNOSTIC	# internally consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=310000
+options 	SYMTAB_SPACE=330000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs

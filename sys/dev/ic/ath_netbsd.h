@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.5 2006/02/05 06:03:26 xtraeme Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.5.26.1 2007/07/11 20:05:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -39,8 +39,7 @@ typedef struct ath_task {
 
 #define	M_RDONLY	M_EXT	/* XXX check different/additional flags? */
 
-#define	CALLOUT_MPSAFE	0
-#define ATH_CALLOUT_INIT(__ch, __mpsafe) callout_init((__ch))
+#define ATH_CALLOUT_INIT(__ch, __mpsafe) callout_init((__ch), 0)
 
 #define TASK_INIT(__task, __zero, __func, __context)	\
 	do {						\

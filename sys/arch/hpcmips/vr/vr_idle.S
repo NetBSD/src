@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.11 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.11.8.1 2007/07/11 19:59:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,40 +58,11 @@
  * profiling.
  */
 LEAF(vr_idle)
-	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
-	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
-	nop
-	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
-	nop
-
-	/* Try to zero some free pages. */
-	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
-	nop
-	beq	t0, zero, 1f
-	nop
-	jal	_C_LABEL(uvm_pageidlezero)
-	nop
-1:
-	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
-	bne	t0, zero, 1f
-	nop
 	.word	VR_OPCODE_STANDBY
 	nop
 	nop
 	nop
 	nop
-	beq	t0, zero, 1b
-	nop
-1:
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	nop
-	nop
-	nop
-	nop
-	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
-	nop
-	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	ra
 	nop
 END(vr_idle)

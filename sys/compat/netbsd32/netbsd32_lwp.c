@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.2 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.2.4.1 2007/07/11 20:04:31 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.2 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.2.4.1 2007/07/11 20:04:31 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,26 +137,9 @@ netbsd32__lwp_park(struct lwp *l, void *v, register_t *retval)
 		syscallarg(netbsd32_ucontextp) ucp;
 		syscallarg(netbsd32_voidp) hint;
 	} */ *uap = v;
-	struct sys__lwp_park_args ua;
-	struct timespec *tsp = NULL;
-
-	if (SCARG(uap, ts)) {
-		struct timespec ts;
-		struct netbsd32_timespec ts32;
-		int error;
-		void *sg;
-
-		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)), &ts32,
-		    sizeof ts32)) != 0)
-			return error;
-		netbsd32_to_timespec(&ts32, &ts);
-
-		sg = stackgap_init(l->l_proc, sizeof(ts));
-		tsp = (struct timespec *)stackgap_alloc(l->l_proc, &sg,
-		    sizeof(ts));
-		if ((error = copyout(&ts, tsp, sizeof(ts))) != 0)
-			return error;
-	}
+	struct timespec ts;
+	struct netbsd32_timespec ts32;
+	int error;
 
 	/*
 	 * sys__lwp_park() ignores the ucontext_t argument, so we won't be
@@ -165,10 +148,16 @@ netbsd32__lwp_park(struct lwp *l, void *v, register_t *retval)
 	 * opaque value.
 	 */
 
-	SCARG(&ua, ts) = tsp;
-	NETBSD32TOP_UAP(ucp, ucontext_t);
-	NETBSD32TOP_UAP(hint, void);
-	return sys__lwp_park(l, &ua, retval);
+	if (SCARG_P32(uap, ts) == NULL)
+		return do_sys_lwp_park(l, NULL, SCARG_P32(uap, ucp),
+					SCARG_P32(uap, hint));
+
+	if ((error = copyin(SCARG_P32(uap, ts), &ts32, sizeof ts32)) != 0)
+		return error;
+	netbsd32_to_timespec(&ts32, &ts);
+
+	return do_sys_lwp_park(l, &ts, SCARG_P32(uap, ucp),
+				SCARG_P32(uap, hint));
 }
 
 int

@@ -1,5 +1,4 @@
-/*	$NetBSD: asm_12160.h,v 1.6 2005/12/11 12:22:27 christos Exp $	*/
-/* @(#)asm_12160.h 1.4 */
+/* $NetBSD: asm_12160.h,v 1.6.32.1 2007/07/11 20:06:41 mjf Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.
@@ -24,7 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ */ 
 
 /************************************************************************
  *									*
@@ -36,7 +35,7 @@
 /*
  *	Firmware Version 10.04.41 (10:30 Mar 21, 2003)
  */
-static const u_int16_t isp_12160_risc_code[] = {
+static const uint16_t isp_12160_risc_code[] = {
 	0x0804, 0x1041, 0x0000, 0x36c9, 0x0000, 0x2043, 0x4f50, 0x5952,
 	0x4947, 0x4854, 0x2031, 0x3939, 0x312c, 0x3139, 0x3932, 0x2c31,
 	0x3939, 0x332c, 0x3139, 0x3934, 0x2051, 0x4c4f, 0x4749, 0x4320,
@@ -1796,7 +1795,7 @@ static const u_int16_t isp_12160_risc_code[] = {
 /*
  *	Firmware Version 11.12.19 (17:10 Oct 25, 2001)
  */
-static const u_int16_t isp_12160_risc_code[] = {
+static const uint16_t isp_12160_risc_code[] = {
 	0x0804, 0x103a, 0x0000, 0x4f4e, 0x0000, 0x2043, 0x4f50, 0x5952,
 	0x4947, 0x4854, 0x2031, 0x3939, 0x3520, 0x514c, 0x4f47, 0x4943,
 	0x2043, 0x4f52, 0x504f, 0x5241, 0x5449, 0x4f4e, 0x2049, 0x5350,

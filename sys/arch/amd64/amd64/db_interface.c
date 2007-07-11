@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 2007/02/22 20:09:42 dogcow Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7.6.1 2007/07/11 19:57:30 mjf Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7 2007/02/22 20:09:42 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7.6.1 2007/07/11 19:57:30 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -78,7 +78,7 @@ const struct db_command db_machine_command_table[] = {
 	{ (char *)0, },
 };
 
-void kdbprinttrap __P((int, int));
+void kdbprinttrap(int, int);
 #ifdef MULTIPROCESSOR
 extern void ddb_ipi(struct trapframe);
 static void ddb_suspend(struct trapframe *);
@@ -89,11 +89,11 @@ int ddb_vec;
 
 int ddb_cpu = NOCPU;
 
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector Xintrddb;
 
 void
-db_machine_init()
+db_machine_init(void)
 {
 
 #ifdef MULTIPROCESSOR
@@ -152,8 +152,7 @@ db_resume_others(void)
  * Print trap reason.
  */
 void
-kdbprinttrap(type, code)
-	int type, code;
+kdbprinttrap(int type, int code)
 {
 	db_printf("kernel: ");
 	if (type >= trap_types || type < 0)
@@ -167,9 +166,7 @@ kdbprinttrap(type, code)
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(type, code, regs)
-	int type, code;
-	db_regs_t *regs;
+kdb_trap(int type, int code, db_regs_t *regs)
 {
 	int s;
 	db_regs_t dbreg;
@@ -227,7 +224,7 @@ kdb_trap(type, code, regs)
 }
 
 void
-cpu_Debugger()
+cpu_Debugger(void)
 {
 	breakpoint();
 }
@@ -270,11 +267,7 @@ ddb_suspend(struct trapframe *frame)
 extern void cpu_debug_dump(void); /* XXX */
 
 void
-db_mach_cpu(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	bool		have_addr;
-	db_expr_t	count;
-	const char *	modif;
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_info *ci;
 	if (!have_addr) {

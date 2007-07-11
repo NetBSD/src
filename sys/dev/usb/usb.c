@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.96 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.96.4.1 2007/07/11 20:08:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.96 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.96.4.1 2007/07/11 20:08:46 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -102,14 +102,14 @@ struct usb_softc {
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
-	struct proc	*sc_event_thread;
+	struct lwp	*sc_event_thread;
 
 	char		sc_dying;
 };
 
 struct usb_taskq {
 	TAILQ_HEAD(, usb_task) tasks;
-	struct proc *task_thread_proc;
+	struct lwp *task_thread_lwp;
 	const char *name;
 	int taskcreated;	/* task thread exists. */
 };
@@ -263,8 +263,8 @@ usb_create_event_thread(void *arg)
 	struct usb_taskq *taskq;
 	int i;
 
-	if (usb_kthread_create1(usb_event_thread, sc, &sc->sc_event_thread,
-			   "%s", sc->sc_dev.dv_xname)) {
+	if (usb_kthread_create1(PRI_NONE, 0, NULL, usb_event_thread, sc,
+	    &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname)) {
 		printf("%s: unable to create event thread for\n",
 		       sc->sc_dev.dv_xname);
 		panic("usb_create_event_thread");
@@ -278,8 +278,8 @@ usb_create_event_thread(void *arg)
 		TAILQ_INIT(&taskq->tasks);
 		taskq->taskcreated = 1;
 		taskq->name = taskq_names[i];
-		if (usb_kthread_create1(usb_task_thread, taskq,
-					&taskq->task_thread_proc, taskq->name)) {
+		if (usb_kthread_create1(PRI_NONE, 0, NULL, usb_task_thread,
+		    taskq, &taskq->task_thread_lwp, taskq->name)) {
 			printf("unable to create task thread: %s\n", taskq->name);
 			panic("usb_create_event_thread task");
 		}

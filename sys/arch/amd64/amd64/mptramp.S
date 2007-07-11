@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.2 2006/07/24 10:55:25 drochner Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.2.16.1 2007/07/11 19:57:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 
-	.globl	_C_LABEL(mpidle)
+	.globl	_C_LABEL(idle_loop)
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
@@ -210,7 +210,8 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	wrmsr
 1:
 
-	movq	CPU_INFO_IDLE_PCB(%rdi),%rsi
+	movq	CPU_INFO_IDLELWP(%rdi),%rsi
+	movq	L_ADDR(%rsi),%rsi
 	
 	movq	PCB_RSP(%rsi),%rsp
 	movq	PCB_RBP(%rsi),%rbp
@@ -226,8 +227,7 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movl    PCB_CR0(%rsi),%eax
 	movq    %rax,%cr0
 	call	_C_LABEL(cpu_hatch)
-	xorq	%r13,%r13
-	jmp	_C_LABEL(mpidle)
+	jmp	_C_LABEL(idle_loop)
 	
 	.data
 _C_LABEL(mp_pdirpa):

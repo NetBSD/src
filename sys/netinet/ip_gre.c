@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.44 2006/11/16 22:54:14 dyoung Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.44.10.1 2007/07/11 20:11:23 mjf Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.44 2006/11/16 22:54:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.44.10.1 2007/07/11 20:11:23 mjf Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -141,6 +141,7 @@ gre_input(struct mbuf *m, ...)
 int
 gre_input2(struct mbuf *m, int hlen, u_char proto)
 {
+	int rc;
 	const struct greip *gip;
 	struct gre_softc *sc;
 
@@ -156,7 +157,8 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	}
 	gip = mtod(m, const struct greip *);
 
-	return gre_input3(sc, m, hlen, proto, &gip->gi_g);
+	rc = gre_input3(sc, m, hlen, &gip->gi_g, 0);
+	return rc;
 }
 
 /*

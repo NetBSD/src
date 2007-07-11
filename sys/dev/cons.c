@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.63 2007/03/04 06:01:41 christos Exp $	*/
+/*	$NetBSD: cons.c,v 1.63.4.1 2007/07/11 20:05:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.63 2007/03/04 06:01:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.63.4.1 2007/07/11 20:05:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -104,7 +104,7 @@ dev_type_ioctl(cnioctl);
 dev_type_poll(cnpoll);
 dev_type_kqfilter(cnkqfilter);
 
-static const struct cdevsw *cn_redirect(dev_t *, int, int *);
+static bool cn_redirect(dev_t *, int, int *);
 
 const struct cdevsw cons_cdevsw = {
 	cnopen, cnclose, cnread, cnwrite, cnioctl,
@@ -160,7 +160,7 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(cndev, &cn_devvp[unit]);
 	}
-	return ((*cdev->d_open)(cndev, flag, mode, l));
+	return cdev_open(cndev, flag, mode, l);
 }
 
 int
@@ -191,13 +191,12 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
 		return (0);
-	return ((*cdev->d_close)(dev, flag, mode, l));
+	return cdev_close(dev, flag, mode, l);
 }
 
 int
 cnread(dev_t dev, struct uio *uio, int flag)
 {
-	const struct cdevsw *cdev;
 	int error;
 
 	/*
@@ -207,30 +206,25 @@ cnread(dev_t dev, struct uio *uio, int flag)
 	 * input (except a shell in single-user mode, but then,
 	 * one wouldn't TIOCCONS then).
 	 */
-	cdev = cn_redirect(&dev, 1, &error);
-	if (cdev == NULL)
+	if (!cn_redirect(&dev, 1, &error))
 		return error;
-	return ((*cdev->d_read)(dev, uio, flag));
+	return cdev_read(dev, uio, flag);
 }
 
 int
 cnwrite(dev_t dev, struct uio *uio, int flag)
 {
-	const struct cdevsw *cdev;
 	int error;
 
 	/* Redirect output, if that's appropriate. */
-	cdev = cn_redirect(&dev, 0, &error);
-	if (cdev == NULL)
+	if (!cn_redirect(&dev, 0, &error))
 		return error;
-
-	return ((*cdev->d_write)(dev, uio, flag));
+	return cdev_write(dev, uio, flag);
 }
 
 int
 cnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	const struct cdevsw *cdev;
 	int error;
 
 	error = 0;
@@ -239,17 +233,11 @@ cnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * Superuser can always use this to wrest control of console
 	 * output from the "virtual" console.
 	 */
-#ifdef notyet
-	mutex_enter(&tty_mutex);
-#endif
 	if (cmd == TIOCCONS && constty != NULL) {
 		error = kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (!error)
 			constty = NULL;
-#ifdef notyet
-		mutex_exit(&tty_mutex);
-#endif
 		return (error);
 	}
 
@@ -259,20 +247,15 @@ cnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 * ioctls on /dev/console, then the console is redirected
 	 * out from under it.
 	 */
-	cdev = cn_redirect(&dev, 0, &error);
-#ifdef notyet
-	mutex_exit(&tty_mutex);
-#endif
-	if (cdev != NULL)
-		error = (*cdev->d_ioctl)(dev, cmd, data, flag, l);
-	return (error);
+	if (!cn_redirect(&dev, 0, &error))
+		return error;
+	return cdev_ioctl(dev, cmd, data, flag, l);
 }
 
 /*ARGSUSED*/
 int
 cnpoll(dev_t dev, int events, struct lwp *l)
 {
-	const struct cdevsw *cdev;
 	int error;
 
 	/*
@@ -280,17 +263,15 @@ cnpoll(dev_t dev, int events, struct lwp *l)
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	cdev = cn_redirect(&dev, 0, &error);
-	if (cdev == NULL)
+	if (!cn_redirect(&dev, 0, &error))
 		return POLLHUP;
-	return ((*cdev->d_poll)(dev, events, l));
+	return cdev_poll(dev, events, l);
 }
 
 /*ARGSUSED*/
 int
 cnkqfilter(dev_t dev, struct knote *kn)
 {
-	const struct cdevsw *cdev;
 	int error;
 
 	/*
@@ -298,10 +279,9 @@ cnkqfilter(dev_t dev, struct knote *kn)
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	cdev = cn_redirect(&dev, 0, &error);
-	if (cdev == NULL)
+	if (!cn_redirect(&dev, 0, &error))
 		return error;
-	return ((*cdev->d_kqfilter)(dev, kn));
+	return cdev_kqfilter(dev, kn);
 }
 
 int
@@ -424,7 +404,7 @@ cnhalt(void)
  *
  * Call with tty_mutex held.
  */
-static const struct cdevsw *
+static bool
 cn_redirect(dev_t *devp, int is_read, int *error)
 {
 	dev_t dev = *devp;
@@ -434,13 +414,13 @@ cn_redirect(dev_t *devp, int is_read, int *error)
 	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE))) {
 		if (is_read) {
 			*error = 0;
-			return NULL;
+			return false;
 		}
 		dev = constty->t_dev;
 	} else if (cn_tab == NULL)
-		return NULL;
+		return false;
 	else
 		dev = cn_tab->cn_dev;
 	*devp = dev;
-	return cdevsw_lookup(dev);
+	return true;
 }

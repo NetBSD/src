@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.5 2007/03/04 06:01:38 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.5.4.1 2007/07/11 20:04:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -34,7 +34,22 @@
 #ifndef _COMPAT_SYS_SOCKET_H_
 #define	_COMPAT_SYS_SOCKET_H_
 
-#if defined(_NETBSD_SOURCE)
+#ifdef _KERNEL_OPT
+
+#include "opt_compat_linux.h"
+#include "opt_compat_svr4.h"
+#include "opt_compat_ultrix.h"
+#include "opt_compat_43.h"
+
+#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_ULTRIX) || defined(LKM)
+#define COMPAT_OSOCK
+#endif
+
+#else
+#define COMPAT_OSOCK
+#endif
+
 /*
  * 4.3 compat sockaddr
  */
@@ -59,12 +74,11 @@ struct omsghdr {
 __BEGIN_DECLS
 struct socket;
 struct proc;
-int compat_ifioctl(struct socket *, u_long, void *, struct lwp *);
+int compat_ifioctl(struct socket *, u_long, u_long, void *, struct lwp *);
+int compat43_set_accrights(struct msghdr *, void *, int);
 __END_DECLS
 #else
 int	__socket30(int, int, int);
-#endif
-
 #endif
 
 #endif /* !_COMPAT_SYS_SOCKET_H_ */

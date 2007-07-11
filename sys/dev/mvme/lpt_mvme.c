@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.8 2007/03/04 06:02:15 christos Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.8.4.1 2007/07/11 20:06:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.8 2007/03/04 06:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.8.4.1 2007/07/11 20:06:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ lpt_attach_subr(sc)
 {
 
 	sc->sc_state = 0;
-	callout_init(&sc->sc_wakeup_ch);
+	callout_init(&sc->sc_wakeup_ch, 0);
 }
 
 /*

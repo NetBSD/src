@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.26 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.26.12.1 2007/07/11 20:12:55 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.26 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.26.12.1 2007/07/11 20:12:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.26 2006/09/15 15:51:13 yamt Exp $");
 
 struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
+kmutex_t uvm_scheduler_mutex;
 
 /*
  * local prototypes
  */
+
+extern kmutex_t uvm_uareas_lock;
 
 /*
  * uvm_init: init the VM system.   called from kern/init_main.c.
@@ -89,6 +92,7 @@ uvm_init(void)
 
 	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
+	mutex_init(&uvm_uareas_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * step 2: init the page sub-system.  this includes allocating the

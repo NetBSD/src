@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.49 2007/03/04 06:03:01 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.49.4.1 2007/07/11 20:09:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49 2007/03/04 06:03:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.4.1 2007/07/11 20:09:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49 2007/03/04 06:03:01 christos Ex
 #include <fs/ntfs/ntfs_ihash.h>
 #include <fs/ntfs/ntfsmount.h>
 
-MALLOC_DEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
-MALLOC_DEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
-MALLOC_DEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
-MALLOC_DEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
+MALLOC_JUSTDEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
+MALLOC_JUSTDEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
+MALLOC_JUSTDEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
+MALLOC_JUSTDEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 
 #if defined(__FreeBSD__)
 static int	ntfs_mount(struct mount *, char *, void *,
@@ -173,7 +173,7 @@ ntfs_mountroot()
 static void
 ntfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_NTFSMNT);
 	malloc_type_attach(M_NTFSNTNODE);
 	malloc_type_attach(M_NTFSFNODE);
@@ -183,7 +183,6 @@ ntfs_init()
 	malloc_type_attach(M_NTFSRDATA);
 	malloc_type_attach(M_NTFSDECOMP);
 	malloc_type_attach(M_NTFSRUN);
-#endif
 	ntfs_nthashinit();
 	ntfs_toupper_init();
 }
@@ -198,7 +197,6 @@ static void
 ntfs_done()
 {
 	ntfs_nthashdone();
-#ifdef _LKM
 	malloc_type_detach(M_NTFSMNT);
 	malloc_type_detach(M_NTFSNTNODE);
 	malloc_type_detach(M_NTFSFNODE);
@@ -208,7 +206,6 @@ ntfs_done()
 	malloc_type_detach(M_NTFSRDATA);
 	malloc_type_detach(M_NTFSDECOMP);
 	malloc_type_detach(M_NTFSRUN);
-#endif
 }
 
 #elif defined(__FreeBSD__)

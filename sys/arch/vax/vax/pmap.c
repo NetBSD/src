@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148 2007/03/12 02:22:43 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.148.2.1 2007/07/11 20:02:59 mjf Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2007/03/12 02:22:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148.2.1 2007/07/11 20:02:59 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -324,7 +324,7 @@ pmap_bootstrap()
 	scratch = istack + ISTACK_SIZE;
 
 	/* Physical-to-virtual translation table */
-	pv_table = (struct pv_entry *)(scratch + 4 * VAX_NBPG);
+	pv_table = (struct pv_entry *)(scratch + 3 * VAX_NBPG);
 
 	avail_start = (vaddr_t)pv_table + (round_page(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;
@@ -396,11 +396,10 @@ pmap_bootstrap()
 	mtpr(pcb->P0LR, PR_P0LR);
 
 	/* cpu_info struct */
-	pcb->SSP = scratch + VAX_NBPG;
+	pcb->SSP = scratch;
 	mtpr(pcb->SSP, PR_SSP);
-	bzero((void *)pcb->SSP,
+	memset((void *)pcb->SSP, 0,
 	    sizeof(struct cpu_info) + sizeof(struct device));
-	curcpu()->ci_exit = scratch;
 #ifdef MUTEX_COUNT_BIAS
 	curcpu()->ci_mtx_count = MUTEX_COUNT_BIAS;
 #endif
@@ -1438,19 +1437,20 @@ pmap_clear_reference_long(struct pv_entry *pv)
 	if (pv->pv_pmap != NULL) {
 		pte = vaddrtopte(pv);
 		if (pte->pg_w == 0) {
-			pte[0].pg_v = pte[1].pg_v = pte[2].pg_v = 
-			pte[3].pg_v = pte[4].pg_v = pte[5].pg_v =
-			pte[6].pg_v = pte[7].pg_v = 0;
+			pte[0].pg_v = 0; pte[1].pg_v = 0;
+			pte[2].pg_v = 0; pte[3].pg_v = 0;
+			pte[4].pg_v = 0; pte[5].pg_v = 0;
+			pte[6].pg_v = 0; pte[7].pg_v = 0;
 		}
 	}
 
 	while ((pv = pv->pv_next)) {
 		pte = vaddrtopte(pv);
 		if (pte[0].pg_w == 0) {
-			pte[0].pg_v = pte[1].pg_v =
-			    pte[2].pg_v = pte[3].pg_v = 
-			    pte[4].pg_v = pte[5].pg_v = 
-			    pte[6].pg_v = pte[7].pg_v = 0;
+			pte[0].pg_v = 0; pte[1].pg_v = 0;
+			pte[2].pg_v = 0; pte[3].pg_v = 0;
+			pte[4].pg_v = 0; pte[5].pg_v = 0;
+			pte[6].pg_v = 0; pte[7].pg_v = 0;
 		}
 	}
 	PVTABLE_UNLOCK;
@@ -1599,14 +1599,15 @@ pmap_page_protect_long(struct pv_entry *pv, vm_prot_t prot)
 		splx(s);
 	} else { /* read-only */
 		do {
+			int pr;
 			pt = vaddrtopte(pv);
 			if (pt == 0)
 				continue;
-			pt[0].pg_prot = pt[1].pg_prot = 
-			    pt[2].pg_prot = pt[3].pg_prot = 
-			    pt[4].pg_prot = pt[5].pg_prot = 
-			    pt[6].pg_prot = pt[7].pg_prot = 
-			    ((vaddr_t)pt < ptemapstart ? PROT_KR : PROT_RO);
+			pr = ((vaddr_t)pt < ptemapstart ? PROT_KR : PROT_RO);
+			pt[0].pg_prot = pr; pt[1].pg_prot = pr;
+			pt[2].pg_prot = pr; pt[3].pg_prot = pr;
+			pt[4].pg_prot = pr; pt[5].pg_prot = pr;
+			pt[6].pg_prot = pr; pt[7].pg_prot = pr;
 		} while ((pv = pv->pv_next));
 	}
 	PVTABLE_UNLOCK;

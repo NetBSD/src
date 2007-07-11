@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150 2007/03/04 06:03:14 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.4.1 2007/07/11 20:10:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150 2007/03/04 06:03:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.4.1 2007/07/11 20:10:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,7 @@ genfs_getpages(void *v)
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
 	int flags = ap->a_flags;
-	size_t bytes, iobytes, tailbytes, totalbytes, skipbytes;
+	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
 	vaddr_t kva;
 	struct buf *bp, *mbp;
 	struct vnode *vp = ap->a_vp;
@@ -463,13 +463,23 @@ startover:
 	origvsize = vp->v_size;
 	origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
-	GOP_SIZE(vp, vp->v_size, &diskeof, 0);
+	GOP_SIZE(vp, origvsize, &diskeof, 0);
 	if (flags & PGO_PASTEOF) {
-		newsize = MAX(vp->v_size,
+#if defined(DIAGNOSTIC)
+		off_t writeeof;
+#endif /* defined(DIAGNOSTIC) */
+
+		newsize = MAX(origvsize,
 		    origoffset + (orignpages << PAGE_SHIFT));
 		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_MEM);
+#if defined(DIAGNOSTIC)
+		GOP_SIZE(vp, vp->v_writesize, &writeeof, GOP_SIZE_MEM);
+		if (newsize > round_page(writeeof)) {
+			panic("%s: past eof", __func__);
+		}
+#endif /* defined(DIAGNOSTIC) */
 	} else {
-		GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_MEM);
+		GOP_SIZE(vp, origvsize, &memeof, GOP_SIZE_MEM);
 	}
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
 	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
@@ -599,11 +609,10 @@ startover:
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
 
-	if (!has_trans &&
-	    (error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0) {
-		goto out_err;
+	if (!has_trans) {
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
+		has_trans = true;
 	}
-	has_trans = true;
 
 	/*
 	 * hold g_glock to prevent a race with truncate.
@@ -729,20 +738,22 @@ startover:
 
 	/*
 	 * if EOF is in the middle of the range, zero the part past EOF.
-	 * if the page including EOF is not PG_FAKE, skip over it since
-	 * in that case it has valid data that we need to preserve.
+	 * skip over pages which are not PG_FAKE since in that case they have
+	 * valid data that we need to preserve.
 	 */
 
-	if (tailbytes > 0) {
-		size_t tailstart = bytes;
+	tailstart = bytes;
+	while (tailbytes > 0) {
+		const int len = PAGE_SIZE - (tailstart & PAGE_MASK);
 
-		if ((pgs[bytes >> PAGE_SHIFT]->flags & PG_FAKE) == 0) {
-			tailstart = round_page(tailstart);
-			tailbytes -= tailstart - bytes;
+		KASSERT(len <= tailbytes);
+		if ((pgs[tailstart >> PAGE_SHIFT]->flags & PG_FAKE) != 0) {
+			memset((void *)(kva + tailstart), 0, len);
+			UVMHIST_LOG(ubchist, "tailbytes %p 0x%x 0x%x",
+			    kva, tailstart, len, 0);
 		}
-		UVMHIST_LOG(ubchist, "tailbytes %p 0x%x 0x%x",
-		    kva, tailstart, tailbytes,0);
-		memset((void *)(kva + tailstart), 0, tailbytes);
+		tailstart += len;
+		tailbytes -= len;
 	}
 
 	/*
@@ -1037,13 +1048,18 @@ genfs_putpages(void *v)
 		voff_t a_offhi;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+
+	return genfs_do_putpages(ap->a_vp, ap->a_offlo, ap->a_offhi,
+	    ap->a_flags, NULL);
+}
+
+int
+genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
+	struct vm_page **busypg)
+{
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct simplelock *slock = &uobj->vmobjlock;
-	off_t startoff = ap->a_offlo;
-	off_t endoff = ap->a_offhi;
 	off_t off;
-	int flags = ap->a_flags;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, s, error, npages, nback;
@@ -1051,7 +1067,7 @@ genfs_putpages(void *v)
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
 	bool async = (flags & PGO_SYNCIO) == 0;
-	bool pagedaemon = curproc == uvm.pagedaemon_proc;
+	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
@@ -1088,12 +1104,12 @@ genfs_putpages(void *v)
 
 	if ((flags & PGO_CLEANIT) != 0) {
 		simple_unlock(slock);
-		if (pagedaemon)
+		if (pagedaemon) {
 			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
-		else
-			error = fstrans_start(vp->v_mount, FSTRANS_LAZY);
-		if (error)
-			return error;
+			if (error)
+				return error;
+		} else
+			fstrans_start(vp->v_mount, FSTRANS_LAZY);
 		has_trans = true;
 		simple_lock(slock);
 	}
@@ -1146,7 +1162,7 @@ genfs_putpages(void *v)
 		endmp.flags = PG_BUSY;
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq);
-		PHOLD(l);
+		uvm_lwp_hold(l);
 	} else {
 		pg = uvm_pagelookup(uobj, off);
 	}
@@ -1197,6 +1213,8 @@ genfs_putpages(void *v)
 			if (flags & PGO_BUSYFAIL && pg->flags & PG_BUSY) {
 				UVMHIST_LOG(ubchist, "busyfail %p", pg, 0,0,0);
 				error = EDEADLK;
+				if (busypg != NULL)
+					*busypg = pg;
 				break;
 			}
 			KASSERT(!pagedaemon);
@@ -1409,7 +1427,7 @@ genfs_putpages(void *v)
 	}
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
-		PRELE(l);
+		uvm_lwp_rele(l);
 	}
 
 	if (modified && (vp->v_flag & VWRITEMAPDIRTY) != 0 &&
@@ -1508,7 +1526,8 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	UVMHIST_LOG(ubchist, "vp %p kva %p len 0x%x flags 0x%x",
 	    vp, kva, len, flags);
 
-	GOP_SIZE(vp, vp->v_size, &eof, 0);
+	KASSERT(vp->v_size <= vp->v_writesize);
+	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
 	if (vp->v_type != VBLK) {
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
 		dev_bshift = vp->v_mount->mnt_dev_bshift;
@@ -1538,7 +1557,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	mbp->b_flags = B_BUSY | brw | B_AGE | (async ? (B_CALL | B_ASYNC) : 0);
 	mbp->b_iodone = iodone;
 	mbp->b_vp = vp;
-	if (curproc == uvm.pagedaemon_proc)
+	if (curlwp == uvm.pagedaemon_lwp)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else if (async)
 		BIO_SETPRIO(mbp, BPRIO_TIMENONCRITICAL);

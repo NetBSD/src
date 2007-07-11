@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.14 2007/03/04 06:01:36 christos Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.14.4.1 2007/07/11 20:04:45 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.14 2007/03/04 06:01:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.14.4.1 2007/07/11 20:04:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -161,5 +161,5 @@ svr4_32_sys_ioctl(l, v, retval)
 		return 0;	/* XXX: really ENOSYS */
 	}
 	return (*fun)(fp, l, retval, SCARG(uap, fd), cmd,
-		      (void *)(u_long)SCARG(uap, data));
+		      SCARG_P32(uap, data));
 }

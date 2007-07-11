@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86 2007/02/20 16:21:04 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.6.1 2007/07/11 20:12:43 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86 2007/02/20 16:21:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.6.1 2007/07/11 20:12:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, ufs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_getpages_desc, ffs_getpages },		/* getpages */
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
@@ -254,8 +254,7 @@ ffs_fsync(void *v)
 
 	vp = ap->a_vp;
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_LAZY)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_LAZY);
 	/*
 	 * XXX no easy way to sync a range in a file with softdep.
 	 */
@@ -493,8 +492,7 @@ ffs_reclaim(void *v)
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = fstrans_start(mp, FSTRANS_LAZY)) != 0)
-		return error;
+	fstrans_start(mp, FSTRANS_LAZY);
 	if ((error = ufs_reclaim(vp, ap->a_l)) != 0) {
 		fstrans_done(mp);
 		return (error);
@@ -516,6 +514,7 @@ ffs_reclaim(void *v)
 	return (0);
 }
 
+#if 0
 int
 ffs_getpages(void *v)
 {
@@ -550,6 +549,7 @@ ffs_getpages(void *v)
 	}
 	return genfs_getpages(v);
 }
+#endif
 
 /*
  * Return the last logical file offset that should be written for this file
@@ -631,8 +631,7 @@ ffs_getextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_getextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;
@@ -664,8 +663,7 @@ ffs_setextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_setextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;
@@ -717,8 +715,7 @@ ffs_deleteextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-			return error;
+		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		error = ufs_deleteextattr(ap);
 		fstrans_done(vp->v_mount);
 		return error;

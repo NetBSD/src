@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.16 2007/03/10 21:40:24 dsl Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.16.2.1 2007/07/11 20:04:04 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,14 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.16 2007/03/10 21:40:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.16.2.1 2007/07/11 20:04:04 mjf Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
+#include <sys/filedesc.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/stdint.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
@@ -128,9 +130,9 @@ bsd_to_irix_stat64(bsp, isp)
 }
 
 static int
-convert_irix_stat(struct stat *st, void *buf, int version)
+convert_irix_stat(struct stat *st, void *buf, int stat_version)
 {
-	switch (version) {
+	switch (stat_version) {
 	case IRIX__STAT_VER: {
 		struct irix_stat ist;
 
@@ -146,7 +148,7 @@ convert_irix_stat(struct stat *st, void *buf, int version)
 	case IRIX__R3_STAT_VER:
 	default:
 		printf("Warning: unimplemented irix_sys_?stat() version %d\n",
-		    version);
+		    stat_version);
 		return EINVAL;
 	}
 }
@@ -163,16 +165,13 @@ irix_sys_xstat(l, v, retval)
 		syscallarg(struct stat *) buf;
 	} */ *uap = v;
 	struct stat st;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st)
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
-	return convert_irix_stat(&sb, SCARG(uap, buf), SCARG(uap, version));
+	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));
 }
 
 int
@@ -187,15 +186,12 @@ irix_sys_lxstat(l, v, retval)
 		syscallarg(struct stat *) buf;
 	} */ *uap = v;
 	struct stat st;
-	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st)
+	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
-	return convert_irix_stat(&sb, SCARG(uap, buf), SCARG(uap, version));
+	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));
 }
 
 int
@@ -212,8 +208,8 @@ irix_sys_fxstat(l, v, retval)
 	struct stat st;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &st)
+	error = do_sys_fstat(l, SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
-	return convert_irix_stat(&sb, SCARG(uap, buf), SCARG(uap, version));
+	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));
 }

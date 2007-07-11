@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.11 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.11.10.1 2007/07/11 20:10:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.11 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.11.10.1 2007/07/11 20:10:15 mjf Exp $");
 
 #include "opt_ptm.h"
 
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.11 2006/11/01 10:17:59 yamt Exp $")
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/signalvar.h>
-#include <sys/uio.h>
 #include <sys/filedesc.h>
 #include <sys/conf.h>
 #include <sys/poll.h>

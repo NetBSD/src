@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.20 2007/03/12 18:18:32 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.20.2.1 2007/07/11 20:09:24 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.20 2007/03/12 18:18:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.20.2.1 2007/07/11 20:09:24 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,7 @@ u_long dehash;			/* size of hash table - 1 */
 
 struct simplelock msdosfs_ihash_slock;
 
-POOL_INIT(msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0, "msdosnopl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool msdosfs_denode_pool;
 
 extern int prtactive;
 
@@ -94,19 +93,16 @@ static struct denode *msdosfs_hashget(dev_t, u_long, u_long);
 static void msdosfs_hashins(struct denode *);
 static void msdosfs_hashrem(struct denode *);
 
-#ifdef _LKM
 MALLOC_DECLARE(M_MSDOSFSFAT);
-#endif
 
 void
 msdosfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_MSDOSFSMNT);
 	malloc_type_attach(M_MSDOSFSFAT);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", &pool_allocator_nointr, IPL_NONE);
-#endif
 	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
 	    M_WAITOK, &dehash);
 	simple_lock_init(&msdosfs_ihash_slock);
@@ -148,11 +144,9 @@ void
 msdosfs_done()
 {
 	hashdone(dehashtbl, M_MSDOSFSMNT);
-#ifdef _LKM
 	pool_destroy(&msdosfs_denode_pool);
 	malloc_type_detach(M_MSDOSFSFAT);
 	malloc_type_detach(M_MSDOSFSMNT);
-#endif
 }
 
 static struct denode *

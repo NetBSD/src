@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.24 2007/03/04 21:17:55 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.24.4.1 2007/07/11 20:11:52 mjf Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24 2007/03/04 21:17:55 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24.4.1 2007/07/11 20:11:52 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -89,10 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24 2007/03/04 21:17:55 degroote E
 
 /* assumes that ip header and ah header are contiguous on mbuf */
 void*
-ah4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct ah *ah;
@@ -112,7 +109,7 @@ ah4_ctlinput(cmd, sa, v)
 		 */
 		ah = (struct ah *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
-					   	IPPROTO_AH, ah->ah_spi);
+					   	IPPROTO_AH, ah->ah_spi, 0, 0);
 
 		if (sav) {
         	if (sav->state == SADB_SASTATE_MATURE ||
@@ -140,10 +137,7 @@ ah4_ctlinput(cmd, sa, v)
 
 /* assumes that ip header and esp header are contiguous on mbuf */
 void*
-esp4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct esp *esp;
@@ -163,7 +157,7 @@ esp4_ctlinput(cmd, sa, v)
 		 */
 		esp = (struct esp *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
-					   	IPPROTO_ESP, esp->esp_spi);
+					   	IPPROTO_ESP, esp->esp_spi, 0, 0);
 
 		if (sav) {
         	if (sav->state == SADB_SASTATE_MATURE ||
@@ -190,10 +184,7 @@ esp4_ctlinput(cmd, sa, v)
 
 #ifdef INET6
 void
-ah6_ctlinput(cmd, sa, d)
-       int cmd;
-       const struct sockaddr *sa;
-       void *d;
+ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
        const struct newah *ahp;
        struct newah ah;
@@ -249,7 +240,7 @@ ah6_ctlinput(cmd, sa, d)
                         * to the address in the ICMP message payload.
                         */
                        sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
-                                         IPPROTO_AH, ahp->ah_spi);
+                                         IPPROTO_AH, ahp->ah_spi, 0, 0);
 
                        if (sav) {
                                if (sav->state == SADB_SASTATE_MATURE ||
@@ -279,10 +270,7 @@ ah6_ctlinput(cmd, sa, d)
 
 
 void
-esp6_ctlinput(cmd, sa, d)
-	int cmd;
-	const struct sockaddr *sa;
-	void *d;
+esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newesp *espp;
 	struct newesp esp;
@@ -357,7 +345,7 @@ esp6_ctlinput(cmd, sa, d)
 			 */
 
 			sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
-					  IPPROTO_ESP, espp->esp_spi);
+					  IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
@@ -528,7 +516,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "cleartos", NULL,
-		       NULL, 0, &/*ip4_*/ah_cleartos, 0,
+		       NULL, 0, &ip4_ah_cleartos, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH,
 		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -610,7 +598,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ah_cleartos", NULL,
-		       NULL, 0, &/*ip4_*/ah_cleartos, 0,
+		       NULL, 0, &ip4_ah_cleartos, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -660,3 +648,107 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 		       CTL_CREATE, CTL_EOL);
 #endif
 }
+
+#ifdef INET6
+SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
+	     "sysctl net.inet6.ipsec6 subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ipsec6",
+		       SYSCTL_DESCR("IPv6 related IPSec settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("IPSec statistics and counters"),
+		       NULL, 0, &ipsec6stat, sizeof(ipsec6stat),
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_STATS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "def_policy",
+		       SYSCTL_DESCR("Default action for non-IPSec packets"),
+		       sysctl_fast_ipsec, 0, &ip6_def_policy, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_POLICY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode traffic"),
+		       sysctl_fast_ipsec, 0, &ip6_esp_trans_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled traffic"),
+		       sysctl_fast_ipsec, 0, &ip6_esp_net_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode headers"),
+		       sysctl_fast_ipsec, 0, &ip6_ah_trans_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled headers"),
+		       sysctl_fast_ipsec, 0, &ip6_ah_net_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ecn",
+		       SYSCTL_DESCR("Behavior of ECN for tunneled traffic"),
+		       NULL, 0, &ip6_ipsec_ecn, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_ECN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "debug",
+		       SYSCTL_DESCR("Enable IPSec debugging output"),
+		       NULL, 0, &ipsec_debug, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEBUG, CTL_EOL);
+
+	/*
+	 * "aliases" for the ipsec6 subtree
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "esp6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ESP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ipcomp6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPCOMP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ah6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_CREATE, CTL_EOL);
+}
+#endif /* INET6 */

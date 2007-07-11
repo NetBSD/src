@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.14 2006/09/22 17:45:21 xtraeme Exp $	*/
+/*	$NetBSD: denode.h,v 1.14.10.1 2007/07/11 20:09:24 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -241,7 +241,7 @@ struct denode {
 		msdosfs_detimes(dep, acc, mod, cre, gmtoff)
 
 /*
- * This overlays the fid structure (see mount.h)
+ * This overlays the fid structure (see fstypes.h)
  */
 struct defid {
 	u_int16_t defid_len;	/* length of structure */

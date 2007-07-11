@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.37 2007/03/04 06:00:44 christos Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.37.4.1 2007/07/11 20:02:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.37 2007/03/04 06:00:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.37.4.1 2007/07/11 20:02:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,9 +150,7 @@ struct tctrl_softc {
 #define ENVSYS_NUMSENSORS 3
 	struct	evcnt sc_intrcnt;	/* interrupt counting */
 	struct	sysmon_envsys sc_sme;
-	struct	envsys_tre_data sc_tre[ENVSYS_NUMSENSORS];
-	struct	envsys_basic_info sc_binfo[ENVSYS_NUMSENSORS];
-	struct	envsys_range sc_range[ENVSYS_NUMSENSORS];
+	envsys_data_t sc_sensor[ENVSYS_NUMSENSORS];
 
 	struct	sysmon_pswitch sc_sm_pbutton;	/* power button */
 	struct	sysmon_pswitch sc_sm_lid;	/* lid state */
@@ -173,9 +171,8 @@ struct tctrl_softc {
 	int sc_extvga;
 	
 	uint32_t sc_events;
-	struct proc *sc_thread;		/* event thread */
-
-	struct lock sc_requestlock;
+	lwp_t *sc_thread;			/* event thread */
+	kmutex_t sc_requestlock;
 };
 
 #define TCTRL_STD_DEV		0
@@ -196,8 +193,7 @@ static int tctrl_apm_record_event(struct tctrl_softc *, u_int);
 static void tctrl_init_lcd(void);
 
 static void tctrl_sensor_setup(struct tctrl_softc *);
-static int tctrl_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-static int tctrl_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
+static int tctrl_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 static void tctrl_power_button_pressed(void *);
 static void tctrl_lid_state(struct tctrl_softc *);
@@ -205,7 +201,6 @@ static void tctrl_ac_state(struct tctrl_softc *);
 
 static int tctrl_powerfail(void *);
 
-static void tctrl_create_event_thread(void *);
 static void tctrl_event_thread(void *);
 void tctrl_update_lcd(struct tctrl_softc *);
 
@@ -215,6 +210,7 @@ static void tctrl_unlock(struct tctrl_softc *);
 CFATTACH_DECL(tctrl, sizeof(struct tctrl_softc),
     tctrl_match, tctrl_attach, NULL, NULL);
 
+static int tadpole_request(struct tctrl_req *, int, int);
 
 /* XXX wtf is this? see i386/apm.c */
 int tctrl_apm_evindex;
@@ -313,7 +309,8 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ext_pending = 0;
 		sc->sc_ext_pending = 0;
 
-	lockinit(&sc->sc_requestlock, PUSER, "tctrl_req", 0, 0);
+	mutex_init(&sc->sc_requestlock, MUTEX_DEFAULT, IPL_NONE);
+
 	/* setup sensors and register the power button */
 	tctrl_sensor_setup(sc);
 	tctrl_lid_state(sc);
@@ -329,7 +326,12 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 	
 	/* fire up the LCD event thread */
 	sc->sc_events = 0;
-	kthread_create(tctrl_create_event_thread, sc);
+
+	if (kthread_create(PRI_NONE, 0, NULL, tctrl_event_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		printf("%s: unable to create event kthread",
+		    sc->sc_dev.dv_xname);
+	}
 }
 
 static int
@@ -477,8 +479,7 @@ tctrl_setup_bitport_nop(void)
 	req.cmdbuf[2] = 0x00;
 	req.cmdlen = 3;
 	req.rsplen = 2;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	sc->sc_bitport = (req.rspbuf[0] & req.cmdbuf[1]) ^ req.cmdbuf[2];
 	splx(s);
@@ -502,8 +503,7 @@ tctrl_setup_bitport(void)
 	req.cmdbuf[1] = ~TS102_BITPORT_TFTPWR;
 	req.cmdlen = 3;
 	req.rsplen = 2;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	sc->sc_bitport = (req.rspbuf[0] & req.cmdbuf[1]) ^ req.cmdbuf[2];
 	splx(s);
@@ -540,8 +540,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x00;	/* ..... */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -556,8 +555,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x01;	/* ....X */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -572,8 +570,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x16;	/* X.XX. */
 	req.cmdbuf[9] =  0x0c;	/* .XXX. */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -588,8 +585,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x0d;	/* .XX.X */
 	req.cmdbuf[9] =  0x0c;	/* .XXX. */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -604,8 +600,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x04;	/* ..X.. */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -620,8 +615,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x04;	/* ..X.. */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 
 	req.cmdbuf[0] = TS102_OP_BLK_DEF_SPCL_CHAR;
 	req.cmdlen = 11;
@@ -636,8 +630,7 @@ tctrl_init_lcd(void)
 	req.cmdbuf[8] =  0x1f;	/* XXXXX */
 	req.cmdbuf[9] =  0x00;	/* ..... */
 	req.cmdbuf[10] = 0x00;	/* ..... */
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 }
 
 /* sc_lcdwanted -> lcd_state */
@@ -678,8 +671,7 @@ tctrl_update_lcd(struct tctrl_softc *sc)
 	req.cmdlen = 5;
 	req.rsplen = 4;
 #endif
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 }
 
 
@@ -722,11 +714,10 @@ tctrl_read_ext_status(void)
 	req.cmdbuf[0] = TS102_OP_RD_EXT_STATUS;
 	req.cmdlen = 1;
 	req.rsplen = 3;
-	req.p = NULL;
 #ifdef TCTRLDEBUG
 	printf("pre read: sc->sc_ext_status = 0x%x\n", sc->sc_ext_status);
 #endif
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	sc->sc_ext_status = (req.rspbuf[0] << 8) + req.rspbuf[1];
 	splx(s);
@@ -768,8 +759,7 @@ tctrl_read_event_status(struct tctrl_softc *sc)
 	req.cmdbuf[0] = TS102_OP_RD_EVENT_STATUS;
 	req.cmdlen = 1;
 	req.rsplen = 3;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 	s = splts102();
 	v = req.rspbuf[0] * 256 + req.rspbuf[1];
 #ifdef TCTRLDEBUG
@@ -851,18 +841,18 @@ static void
 tctrl_lock(struct tctrl_softc *sc)
 {
 
-	lockmgr(&sc->sc_requestlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_requestlock);
 }
 
 static void
 tctrl_unlock(struct tctrl_softc *sc)
 {
 
-	lockmgr(&sc->sc_requestlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_requestlock);
 }
 
 int
-tadpole_request(struct tctrl_req *req, int spin)
+tadpole_request(struct tctrl_req *req, int spin, int sleep)
 {
 	struct tctrl_softc *sc;
 	int i, s;
@@ -920,7 +910,7 @@ tadpole_request(struct tctrl_req *req, int spin)
 		while (((sc->sc_rspoff != sc->sc_rsplen) ||
 		    (sc->sc_cmdoff != sc->sc_cmdlen)) &&
 		    (i < timeout))
-			if (req->p != NULL) {
+			if (sleep) {
 				tsleep(sc, PWAIT, "tctrl_data", 15);
 				i++;
 			} else
@@ -957,8 +947,7 @@ tadpole_powerdown(void)
 	req.cmdbuf[0] = TS102_OP_ADMIN_POWER_OFF;
 	req.cmdlen = 1;
 	req.rsplen = 1;
-	req.p = NULL;
-	tadpole_request(&req, 1);
+	tadpole_request(&req, 1, 0);
 }
 
 void
@@ -972,7 +961,6 @@ tadpole_set_video(int enabled)
 	while (sc->sc_wantdata != 0)
 		DELAY(1);
 	s = splts102();
-	req.p = NULL;
 	if ((sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN && !enabled)
 	    || (sc->sc_tft_on)) {
 		req.cmdbuf[2] = TS102_BITPORT_TFTPWR;
@@ -990,7 +978,7 @@ tadpole_set_video(int enabled)
 			splx(s);
 			return;
 		}
-		tadpole_request(&req, 1);
+		tadpole_request(&req, 1, 0);
 		sc->sc_bitport =
 		    (req.rspbuf[0] & req.cmdbuf[1]) ^ req.cmdbuf[2];
 	}
@@ -1129,15 +1117,13 @@ tctrlioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_RATE;
 		req.cmdlen = 1;
 		req.rsplen = 2;
-		req.p = l->l_proc;
-		tadpole_request(&req, 0);
+		tadpole_request(&req, 0, l->l_proc ? 1 : 0);
 		if (req.rspbuf[0] > 0x00)
 			powerp->battery_state = APM_BATT_CHARGING;
 		req.cmdbuf[0] = TS102_OP_RD_INT_CHARGE_LEVEL;
 		req.cmdlen = 1;
 		req.rsplen = 3;
-		req.p = l->l_proc;
-		tadpole_request(&req, 0);
+		tadpole_request(&req, 0, l->l_proc ? 1 : 0);
 		c = req.rspbuf[0];
 		powerp->battery_life = c;
 		if (c > 0x70)	/* the tadpole sometimes dips below zero, and */
@@ -1186,8 +1172,7 @@ tctrlioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		    reqn->cmdbuf[0] < TS102_OP_RD_INT_CHARGE_LEVEL) ||
 		    reqn->cmdbuf[0] > TS102_OP_RD_EXT_CHARGE_LEVEL))
 			return(i);
-		reqn->p = l->l_proc;
-		tadpole_request(reqn, 0);
+		tadpole_request(reqn, 0, l->l_proc ? 1 : 0);
 		break;
 	/* serial power mode (via auxiotwo) */
 	case TCTRL_SERIAL_PWR:
@@ -1281,53 +1266,31 @@ tctrl_sensor_setup(struct tctrl_softc *sc)
 	int error;
 
 	/* case temperature */
-	strcpy(sc->sc_binfo[0].desc, "Case temperature");
-	sc->sc_binfo[0].sensor = 0;
-	sc->sc_binfo[0].units = ENVSYS_STEMP;
-	sc->sc_binfo[0].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	sc->sc_range[0].low = 0;
-	sc->sc_range[0].high = 0;
-	sc->sc_range[0].units = ENVSYS_STEMP;
-	sc->sc_tre[0].sensor = 0;
-	sc->sc_tre[0].warnflags = ENVSYS_WARN_OK;
-	sc->sc_tre[0].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	sc->sc_tre[0].units = ENVSYS_STEMP;
+	(void)strlcpy(sc->sc_sensor[0].desc, "Case temperature",
+	    sizeof(sc->sc_sensor[0].desc));
+	sc->sc_sensor[0].sensor = 0;
+	sc->sc_sensor[0].units = ENVSYS_STEMP;
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
 
 	/* battery voltage */
-	strcpy(sc->sc_binfo[1].desc, "Internal battery voltage");
-	sc->sc_binfo[1].sensor = 1;
-	sc->sc_binfo[1].units = ENVSYS_SVOLTS_DC;
-	sc->sc_binfo[1].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	sc->sc_range[1].low = 0;
-	sc->sc_range[1].high = 0;
-	sc->sc_range[1].units = ENVSYS_SVOLTS_DC;
-	sc->sc_tre[1].sensor = 0;
-	sc->sc_tre[1].warnflags = ENVSYS_WARN_OK;
-	sc->sc_tre[1].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	sc->sc_tre[1].units = ENVSYS_SVOLTS_DC;
+	(void)strlcpy(sc->sc_sensor[1].desc, "Internal battery voltage",
+	    sizeof(sc->sc_sensor[1].desc));
+	sc->sc_sensor[1].sensor = 1;
+	sc->sc_sensor[1].units = ENVSYS_SVOLTS_DC;
+	sc->sc_sensor[1].state = ENVSYS_SVALID;
 
 	/* DC voltage */
-	strcpy(sc->sc_binfo[2].desc, "DC-In voltage");
-	sc->sc_binfo[2].sensor = 2;
-	sc->sc_binfo[2].units = ENVSYS_SVOLTS_DC;
-	sc->sc_binfo[2].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	sc->sc_range[2].low = 0;
-	sc->sc_range[2].high = 0;
-	sc->sc_range[2].units = ENVSYS_SVOLTS_DC;
-	sc->sc_tre[2].sensor = 0;
-	sc->sc_tre[2].warnflags = ENVSYS_WARN_OK;
-	sc->sc_tre[2].validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	sc->sc_tre[2].units = ENVSYS_SVOLTS_DC;
+	(void)strlcpy(sc->sc_sensor[2].desc, "DC-In voltage",
+	    sizeof(sc->sc_sensor[2].desc));
+	sc->sc_sensor[2].sensor = 2;
+	sc->sc_sensor[2].units = ENVSYS_SVOLTS_DC;
+	sc->sc_sensor[2].state = ENVSYS_SVALID;
 
+	sc->sc_sme.sme_name = sc->sc_dev.dv_xname;
 	sc->sc_sme.sme_nsensors = ENVSYS_NUMSENSORS;
-	sc->sc_sme.sme_envsys_version = 1000;
-	sc->sc_sme.sme_ranges = sc->sc_range;
-	sc->sc_sme.sme_sensor_info = sc->sc_binfo;
-	sc->sc_sme.sme_sensor_data = sc->sc_tre;
+	sc->sc_sme.sme_sensor_data = sc->sc_sensor;
 	sc->sc_sme.sme_cookie = sc;
 	sc->sc_sme.sme_gtredata = tctrl_gtredata;
-	sc->sc_sme.sme_streinfo = tctrl_streinfo;
-	sc->sc_sme.sme_flags = 0;
 
 	if ((error = sysmon_envsys_register(&sc->sc_sme)) != 0) {
 		printf("%s: couldn't register sensors (%d)\n",
@@ -1376,7 +1339,7 @@ tctrl_lid_state(struct tctrl_softc *sc)
 	int state;
 	
 	state = (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) ? 
-	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED;
 	sysmon_pswitch_event(&sc->sc_sm_lid, state);
 }
 
@@ -1386,7 +1349,7 @@ tctrl_ac_state(struct tctrl_softc *sc)
 	int state;
 	
 	state = (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) ? 
-	    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED;
+	    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED;
 	sysmon_pswitch_event(&sc->sc_sm_ac, state);
 }
 
@@ -1407,19 +1370,15 @@ tctrl_powerfail(void *arg)
 }
 
 static int
-tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+tctrl_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	/*struct tctrl_softc *sc = sme->sme_cookie;*/
-	struct envsys_tre_data *cur_tre;
-	struct envsys_basic_info *cur_i;
 	struct tctrl_req req;
-	struct proc *p;
+	int sleepable;
 	int i;
 
-	i = tred->sensor;
-	cur_tre = &sme->sme_sensor_data[i];
-	cur_i = &sme->sme_sensor_info[i];
-	p = __curproc();
+	i = edata->sensor;
+	sleepable = curlwp ? 1 : 0;
 
 	switch (i)
 	{
@@ -1427,86 +1386,57 @@ tctrl_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 			req.cmdbuf[0] = TS102_OP_RD_CURRENT_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
-			tadpole_request(&req, 0);
-			cur_tre->cur.data_us =             /* 273160? */
+			tadpole_request(&req, 0, sleepable);
+			edata->value_cur =             /* 273160? */
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
-			cur_tre->validflags |= ENVSYS_FCURVALID;
+			edata->state = ENVSYS_SVALID;
 			req.cmdbuf[0] = TS102_OP_RD_MAX_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
-			tadpole_request(&req, 0);
-			cur_tre->max.data_us =
+			tadpole_request(&req, 0, sleepable);
+			edata->value_max =
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
-			cur_tre->validflags |= ENVSYS_FMAXVALID;
+			edata->flags |= ENVSYS_FVALID_MAX;
 			req.cmdbuf[0] = TS102_OP_RD_MIN_TEMP;
 			req.cmdlen = 1;
 			req.rsplen = 2;
-			req.p = p;
-			tadpole_request(&req, 0);
-			cur_tre->min.data_us =
+			tadpole_request(&req, 0, sleepable);
+			edata->value_min =
 			    (uint32_t)((int)((int)req.rspbuf[0] - 32) * 5000000
 			    / 9 + 273150000);
-			cur_tre->validflags |= ENVSYS_FMINVALID;
-			cur_tre->units = ENVSYS_STEMP;
+			edata->flags |= ENVSYS_FVALID_MIN;
+			edata->units = ENVSYS_STEMP;
 			break;
 
 		case 1: /* battery voltage */
 			{
-				cur_tre->validflags =
-				    ENVSYS_FVALID|ENVSYS_FCURVALID;
-				cur_tre->units = ENVSYS_SVOLTS_DC;
+				edata->state = ENVSYS_SVALID;
+				edata->units = ENVSYS_SVOLTS_DC;
 				req.cmdbuf[0] = TS102_OP_RD_INT_BATT_VLT;
 				req.cmdlen = 1;
 				req.rsplen = 2;
-				req.p = p;
-				tadpole_request(&req, 0);
-				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] *
+				tadpole_request(&req, 0, sleepable);
+				edata->value_cur = (int32_t)req.rspbuf[0] *
 				    1000000 / 11;
 			}
 			break;
 		case 2: /* DC voltage */
 			{
-				cur_tre->validflags =
-				    ENVSYS_FVALID|ENVSYS_FCURVALID;
-				cur_tre->units = ENVSYS_SVOLTS_DC;
+				edata->state = ENVSYS_SVALID;
+				edata->units = ENVSYS_SVOLTS_DC;
 				req.cmdbuf[0] = TS102_OP_RD_DC_IN_VLT;
 				req.cmdlen = 1;
 				req.rsplen = 2;
-				req.p = p;
-				tadpole_request(&req, 0);
-				cur_tre->cur.data_s = (int32_t)req.rspbuf[0] *
+				tadpole_request(&req, 0, sleepable);
+				edata->value_cur = (int32_t)req.rspbuf[0] *
 				    1000000 / 11;
 			}
 			break;
 	}
-	cur_tre->validflags |= ENVSYS_FVALID;
-	*tred = sme->sme_sensor_data[i];
+	edata->state = ENVSYS_SVALID;
 	return 0;
-}
-
-
-static int
-tctrl_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
-{
-
-	/* There is nothing to set here. */
-	return (EINVAL);
-}
-
-static void
-tctrl_create_event_thread(void *v)
-{
-	struct tctrl_softc *sc = v;
-	const char *name = sc->sc_dev.dv_xname;
-	
-	if (kthread_create1(tctrl_event_thread, sc, &sc->sc_thread, "%s",
-	    name) != 0) {
-		printf("%s: unable to create event kthread", name);
-	}
 }
 
 static void

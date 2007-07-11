@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.24 2006/12/09 05:33:09 dyoung Exp $	*/
+/*	$NetBSD: domain.h,v 1.24.8.1 2007/07/11 20:12:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,7 +46,10 @@ struct	lwp;
 struct	mbuf;
 struct	ifnet;
 struct	ifqueue;
-struct	route;
+struct  route;
+struct  sockaddr;
+
+LIST_HEAD(dom_rtlist, route);
 
 struct	domain {
 	int	dom_family;		/* AF_xxx */
@@ -66,12 +69,16 @@ struct	domain {
 			(struct ifnet *);
 	void	(*dom_ifdetach)		/* detach af-dependent data on ifnet */
 			(struct ifnet *, void *);
+	int	(*dom_sockaddr_cmp)(const struct sockaddr *,
+	                            const struct sockaddr *);
 	struct ifqueue *dom_ifqueues[2]; /* ifqueue for domain */
 	STAILQ_ENTRY(domain) dom_link;
 	struct	mowner dom_mowner;
-	void	(*dom_rtcache)(struct route *);
-	void	(*dom_rtflush)(struct route *);
-	void	(*dom_rtflushall)(void);
+	struct pool	*dom_sa_pool;
+	uint_fast8_t	dom_sa_len;
+	uint_fast8_t	dom_sa_cmpofs;
+	uint_fast8_t	dom_sa_cmplen;
+	struct dom_rtlist dom_rtcache;
 };
 
 STAILQ_HEAD(domainhead,domain);

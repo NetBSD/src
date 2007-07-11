@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.6 2007/03/04 06:03:23 christos Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.6.4.1 2007/07/11 20:11:33 mjf Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.6 2007/03/04 06:03:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.6.4.1 2007/07/11 20:11:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,7 @@ typedef struct {
 } aesctr_ctx;
 
 int
-esp_aesctr_mature(sav)
-	struct secasvar *sav;
+esp_aesctr_mature(struct secasvar *sav)
 {
 	int keylen;
 	const struct esp_algorithm *algo;
@@ -131,12 +130,8 @@ esp_aesctr_schedule(const struct esp_algorithm *algo,
 }
 
 int
-esp_aesctr_decrypt(m, off, sav, algo, ivlen)
-	struct mbuf *m;
-	size_t off;
-	struct secasvar *sav;
-	const struct esp_algorithm *algo;
-	int ivlen;
+esp_aesctr_decrypt(struct mbuf *m, size_t off, struct secasvar *sav, 
+	const struct esp_algorithm *algo, int ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0 = NULL, *dp;

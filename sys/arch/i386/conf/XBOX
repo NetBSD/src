@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.6 2007/01/06 19:29:36 jmcneill Exp $
+# $NetBSD: XBOX,v 1.6.12.1 2007/07/11 19:59:55 mjf Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -43,6 +43,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 
 # Compatibility options
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
@@ -186,7 +187,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

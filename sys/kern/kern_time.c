@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.118 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.118.2.1 2007/07/11 20:09:58 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.118 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.118.2.1 2007/07/11 20:09:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -78,9 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.118 2007/03/12 18:18:33 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#else /* !__HAVE_TIMECOUNTER */
+#ifndef __HAVE_TIMECOUNTER
 #include <sys/timevar.h>
 #endif /* !__HAVE_TIMECOUNTER */
 #include <sys/kauth.h>
@@ -215,18 +214,7 @@ sys_clock_gettime(struct lwp *l, void *v, register_t *retval)
 		nanotime(&ats);
 		break;
 	case CLOCK_MONOTONIC:
-#ifdef __HAVE_TIMECOUNTER
 		nanouptime(&ats);
-#else /* !__HAVE_TIMECOUNTER */
-		{
-		int s;
-
-		/* XXX "hz" granularity */
-		s = splclock();
-		TIMEVAL_TO_TIMESPEC(&mono_time,&ats);
-		splx(s);
-		}
-#endif /* !__HAVE_TIMECOUNTER */
 		break;
 	default:
 		return (EINVAL);
@@ -292,14 +280,10 @@ sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 	case CLOCK_REALTIME:
 	case CLOCK_MONOTONIC:
 		ts.tv_sec = 0;
-#ifdef __HAVE_TIMECOUNTER
 		if (tc_getfrequency() > 1000000000)
 			ts.tv_nsec = 1;
 		else
 			ts.tv_nsec = 1000000000 / tc_getfrequency();
-#else /* !__HAVE_TIMECOUNTER */
-		ts.tv_nsec = 1000000000 / hz;
-#endif /* !__HAVE_TIMECOUNTER */
 		break;
 	default:
 		return (EINVAL);
@@ -315,29 +299,43 @@ sys_clock_getres(struct lwp *l, void *v, register_t *retval)
 int
 sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 {
-#ifdef __HAVE_TIMECOUNTER
 	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
 	struct timespec rmt, rqt;
-	int error, timo;
+	int error, error1;
 
 	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
 		return (error);
 
-	if (itimespecfix(&rqt))
+	error = nanosleep1(l, &rqt, SCARG(uap, rmtp) ? &rmt : NULL);
+	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
+
+	error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt));
+	return error1 ? error1 : error;
+}
+
+int
+nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
+{
+#ifdef __HAVE_TIMECOUNTER
+	int error, timo;
+
+	if (itimespecfix(rqt))
 		return (EINVAL);
 
-	timo = tstohz(&rqt);
+	timo = tstohz(rqt);
 	/*
 	 * Avoid inadvertantly sleeping forever
 	 */
 	if (timo == 0)
 		timo = 1;
 
-	getnanouptime(&rmt);
+	if (rmt != NULL)
+		getnanouptime(rmt);
 
 	error = kpause("nanoslp", true, timo, NULL);
 	if (error == ERESTART)
@@ -345,39 +343,23 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (SCARG(uap, rmtp)) {
-		int error1;
+	if (rmt!= NULL) {
 		struct timespec rmtend;
 
 		getnanouptime(&rmtend);
 
-		timespecsub(&rmtend, &rmt, &rmt);
-		timespecsub(&rqt, &rmt, &rmt);
-		if (rmt.tv_sec < 0)
-			timespecclear(&rmt);
-
-		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
-			sizeof(rmt));
-		if (error1)
-			return (error1);
+		timespecsub(&rmtend, rmt, rmt);
+		timespecsub(rqt, rmt, rmt);
+		if (rmt->tv_sec < 0)
+			timespecclear(rmt);
 	}
 
 	return error;
 #else /* !__HAVE_TIMECOUNTER */
-	struct sys_nanosleep_args/* {
-		syscallarg(struct timespec *) rqtp;
-		syscallarg(struct timespec *) rmtp;
-	} */ *uap = v;
-	struct timespec rqt;
-	struct timespec rmt;
 	struct timeval atv, utv;
 	int error, s, timo;
 
-	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
-	if (error)
-		return (error);
-
-	TIMESPEC_TO_TIMEVAL(&atv,&rqt);
+	TIMESPEC_TO_TIMEVAL(&atv, rqt);
 	if (itimerfix(&atv))
 		return (EINVAL);
 
@@ -397,9 +379,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (SCARG(uap, rmtp)) {
-		int error1;
-
+	if (rmt != NULL) {
 		s = splclock();
 		utv = time;
 		splx(s);
@@ -408,11 +388,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		if (utv.tv_sec < 0)
 			timerclear(&utv);
 
-		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
-		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
-			sizeof(rmt));
-		if (error1)
-			return (error1);
+		TIMEVAL_TO_TIMESPEC(&utv, rmt);
 	}
 
 	return error;
@@ -457,39 +433,46 @@ sys_settimeofday(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct timeval *) tv;
 		syscallarg(const void *) tzp;	really "const struct timezone *"
 	} */ *uap = v;
-	int error;
 
-	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
-	    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL)) != 0)
-		return (error);
-
-	return settimeofday1(SCARG(uap, tv), SCARG(uap, tzp), l->l_proc);
+	return settimeofday1(SCARG(uap, tv), true, SCARG(uap, tzp), l, true);
 }
 
 int
-settimeofday1(const struct timeval *utv, const struct timezone *utzp,
-    struct proc *p)
+settimeofday1(const struct timeval *utv, bool userspace,
+    const void *utzp, struct lwp *l, bool check_kauth)
 {
 	struct timeval atv;
 	struct timespec ts;
 	int error;
 
 	/* Verify all parameters before changing time. */
+
+	if (check_kauth) {
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,
+		    KAUTH_REQ_SYSTEM_TIME_SYSTEM, NULL, NULL, NULL);
+		if (error != 0)
+			return (error);
+	}
+
 	/*
 	 * NetBSD has no kernel notion of time zone, and only an
 	 * obsolete program would try to set it, so we log a warning.
 	 */
 	if (utzp)
 		log(LOG_WARNING, "pid %d attempted to set the "
-		    "(obsolete) kernel time zone\n", p->p_pid);
+		    "(obsolete) kernel time zone\n", l->l_proc->p_pid);
 
 	if (utv == NULL) 
 		return 0;
 
-	if ((error = copyin(utv, &atv, sizeof(atv))) != 0)
-		return error;
-	TIMEVAL_TO_TIMESPEC(&atv, &ts);
-	return settime(p, &ts);
+	if (userspace) {
+		if ((error = copyin(utv, &atv, sizeof(atv))) != 0)
+			return error;
+		utv = &atv;
+	}
+
+	TIMEVAL_TO_TIMESPEC(utv, &ts);
+	return settime(l->l_proc, &ts);
 }
 
 #ifndef __HAVE_TIMECOUNTER
@@ -693,7 +676,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_info.ksi_code = 0;
 	pt->pt_info.ksi_pid = p->p_pid;
 	pt->pt_info.ksi_uid = kauth_cred_getuid(l->l_cred);
-	pt->pt_info.ksi_sigval = pt->pt_ev.sigev_value;
+	pt->pt_info.ksi_value = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;
 	pt->pt_proc = p;
@@ -702,7 +685,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	pt->pt_entry = timerid;
 	timerclear(&pt->pt_time.it_value);
 	if (id == CLOCK_REALTIME)
-		callout_init(&pt->pt_ch);
+		callout_init(&pt->pt_ch, 0);
 	else
 		pt->pt_active = 0;
 
@@ -730,9 +713,10 @@ sys_timer_delete(struct lwp *l, void *v, register_t *retval)
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
 
-	if (pt->pt_type == CLOCK_REALTIME)
+	if (pt->pt_type == CLOCK_REALTIME) {
 		callout_stop(&pt->pt_ch);
-	else if (pt->pt_active) {
+		callout_destroy(&pt->pt_ch);
+	} else if (pt->pt_active) {
 		s = splclock();
 		ptn = LIST_NEXT(pt, pt_list);
 		LIST_REMOVE(pt, pt_list);
@@ -1200,7 +1184,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		pt->pt_entry = which;
 		switch (which) {
 		case ITIMER_REAL:
-			callout_init(&pt->pt_ch);
+			callout_init(&pt->pt_ch, 0);
 			pt->pt_ev.sigev_signo = SIGALRM;
 			break;
 		case ITIMER_VIRTUAL:
@@ -1302,8 +1286,10 @@ timers_free(struct proc *p, int which)
 		}
 		for ( ; i < TIMER_MAX; i++)
 			if ((pt = pts->pts_timers[i]) != NULL) {
-				if (pt->pt_type == CLOCK_REALTIME)
+				if (pt->pt_type == CLOCK_REALTIME) {
 					callout_stop(&pt->pt_ch);
+					callout_destroy(&pt->pt_ch);
+				}
 				pts->pts_timers[i] = NULL;
 				pool_put(&ptimer_pool, pt);
 			}
@@ -1408,7 +1394,7 @@ itimerfire(struct ptimer *pt)
 			KSI_INIT(&ksi);
 			ksi.ksi_signo = pt->pt_ev.sigev_signo;
 			ksi.ksi_code = SI_TIMER;
-			ksi.ksi_sigval = pt->pt_ev.sigev_value;
+			ksi.ksi_value = pt->pt_ev.sigev_value;
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
 			mutex_enter(&proclist_mutex);

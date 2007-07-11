@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.110 2007/03/12 18:18:37 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.110.2.1 2007/07/11 20:12:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.110 2007/03/12 18:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.110.2.1 2007/07/11 20:12:41 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -161,22 +161,19 @@ static const struct ufs_ops ext2fs_ufsops = {
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?
  */
-POOL_INIT(ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0, "ext2fsinopl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
-    "ext2dinopl", &pool_allocator_nointr, IPL_NONE);
+struct pool ext2fs_inode_pool;
+struct pool ext2fs_dinode_pool;
 
 extern u_long ext2gennumber;
 
 void
 ext2fs_init(void)
 {
-#ifdef _LKM
+
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
 	    "ext2dinopl", &pool_allocator_nointr, IPL_NONE);
-#endif
 	ufs_init();
 }
 
@@ -189,11 +186,10 @@ ext2fs_reinit(void)
 void
 ext2fs_done(void)
 {
+
 	ufs_done();
-#ifdef _LKM
 	pool_destroy(&ext2fs_inode_pool);
 	pool_destroy(&ext2fs_dinode_pool);
-#endif
 }
 
 /*
@@ -1038,7 +1034,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
-	vp->v_size = ext2fs_size(ip);
+	uvm_vnp_setsize(vp, ext2fs_size(ip));
 	*vpp = vp;
 	return (0);
 }

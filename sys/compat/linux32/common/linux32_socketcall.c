@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.c,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_socketcall.c,v 1.1.34.1 2007/07/11 20:04:24 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,12 +31,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.1 2006/02/09 19:18:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.1.34.1 2007/07/11 20:04:24 mjf Exp $");
 
+#include "opt_ktrace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/proc.h>
 #include <sys/ucred.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -97,9 +102,16 @@ linux32_sys_socketcall(l, v, retval)
 	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX32_MAX_SOCKETCALL)
 		return ENOSYS;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, args)), &ua,
+	if ((error = copyin(SCARG_P32(uap, args), &ua,
 	    linux32_socketcall[SCARG(uap, what)].argsize)) != 0)
 		return error;
+
+#ifdef KTRACE
+	/* Trace the socket-call arguments as 'GIO' on fd -1 */
+	if (KTRPOINT(l->l_proc, KTR_USER))
+		ktrkuser(l, linux32_socketcall[SCARG(uap, what)].name,
+			    &ua, linux32_socketcall[SCARG(uap, what)].argsize);
+#endif
 
 	return linux32_socketcall[SCARG(uap, what)].syscall(l, &ua, retval);
 }

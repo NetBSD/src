@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.75 2007/03/04 06:02:13 christos Exp $	*/
+/*	$NetBSD: wt.c,v 1.75.4.1 2007/07/11 20:06:34 mjf Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75 2007/03/04 06:02:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75.4.1 2007/07/11 20:06:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ struct wt_softc {
 	bus_space_handle_t	sc_ioh;
 	isa_chipset_tag_t	sc_ic;
 
-	struct callout		sc_timer_ch;
+	callout_t		sc_timer_ch;
 
 	enum wttype type;	/* type of controller */
 	int chan;		/* DMA channel number, 1..3 */
@@ -276,7 +276,7 @@ wtattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 	sc->sc_ic = ia->ia_ic;
 
-	callout_init(&sc->sc_timer_ch);
+	callout_init(&sc->sc_timer_ch, 0);
 
 	/* Try Wangtek. */
 	if (wtreset(iot, ioh, &wtregs)) {

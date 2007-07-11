@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.5 2006/02/23 05:37:47 thorpej Exp $ */
+/*	$NetBSD: gb225.c,v 1.5.26.1 2007/07/11 19:58:39 mjf Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -151,7 +151,7 @@ opio_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 
 	for (i=0; i < N_OPIO_INTR; ++i) {
 		sc->sc_intr[i].func = NULL;

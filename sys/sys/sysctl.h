@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.169 2007/03/11 21:38:38 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.169.2.1 2007/07/11 20:12:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -239,7 +239,7 @@ struct ctlname {
 #define	KERN_PROC2		47	/* struct: process entries */
 #define	KERN_PROC_ARGS		48	/* struct: process argv/env */
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
-#define	KERN_CCPU		50	/* int: fixpt ccpu */
+#define	KERN_CCPU		50	/* old: fixpt ccpu */
 #define	KERN_CP_TIME		51	/* struct: CPU time counters */
 #define	KERN_OLDSYSVIPC_INFO	52	/* old: number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
@@ -326,7 +326,7 @@ struct ctlname {
 	{ "proc2", CTLTYPE_STRUCT }, \
 	{ "proc_args", CTLTYPE_STRING }, \
 	{ "fscale", CTLTYPE_INT }, \
-	{ "ccpu", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
 	{ 0, 0 }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \
@@ -458,6 +458,7 @@ struct kinfo_proc {
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
 #define	KI_MAXEMULLEN	16
+#define	KI_LNAMELEN	20	/* extra 4 for alignment */
 
 #define KI_NOCPU	(~(uint64_t)0)
 
@@ -651,6 +652,10 @@ struct kinfo_lwp {
 	uint64_t l_cpuid;		/* LONG: CPU id */
 	uint32_t l_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
 	uint32_t l_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
+	uint32_t l_cpticks;		/* INT: ticks during l_swtime */
+	uint32_t l_pctcpu;		/* FIXPT_T: cpu usage for ps */
+	uint32_t l_pid;			/* PID_T: process identifier */
+	char	l_name[KI_LNAMELEN];	/* CHAR[]: name, may be empty */
 };
 
 /*

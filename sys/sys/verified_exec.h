@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.55 2007/03/04 06:03:42 christos Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.55.4.1 2007/07/11 20:12:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -31,16 +31,18 @@
 #ifndef _SYS_VERIFIED_EXEC_H_
 #define _SYS_VERIFIED_EXEC_H_
 
-#include <sys/cdefs.h>
-#include <sys/param.h>
-#include <sys/ioctl.h>
+#include <sys/ioccom.h>
 
 #if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
-#include <sys/malloc.h>
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_pglist.h>
-#include <uvm/uvm_page.h>
+#include <sys/types.h>
 #include <prop/proplib.h>
+
+struct mount;
+struct vnode;
+
+#ifdef notyet
+struct vm_page;
+#endif /* notyet */
 #endif /* _KERNEL */
 
 /* Flags for a Veriexec entry. These can be OR'd together. */
@@ -49,11 +51,13 @@
 #define VERIEXEC_FILE		0x04 /* Plain file (open) */
 #define	VERIEXEC_UNTRUSTED	0x10 /* Untrusted storage */
 
-/* Operations for /dev/veriexec. */
+/* Operations for the Veriexec pseudo-device. */
 #define VERIEXEC_LOAD		_IOW('X',  0x1, struct plistref)
 #define VERIEXEC_TABLESIZE	_IOW('X',  0x2, struct plistref)
 #define VERIEXEC_DELETE		_IOW('X',  0x3, struct plistref)
 #define VERIEXEC_QUERY		_IOWR('X', 0x4, struct plistref)
+#define	VERIEXEC_DUMP		_IOR('X', 0x5, struct plistref)
+#define	VERIEXEC_FLUSH		_IO('X', 0x6)
 
 /* Veriexec modes (strict levels). */
 #define	VERIEXEC_LEARNING	0	/* Learning mode. */
@@ -71,37 +75,47 @@
 #define	PAGE_FP_READY	1	/* per-page fingerprints ready for use. */
 #define	PAGE_FP_FAIL	2	/* mismatch in per-page fingerprints. */
 
+#if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
+
+#if NVERIEXEC > 0
+#define VERIEXEC_PATH_GET(from, seg, cto, to) \
+	do { \
+		if (seg == UIO_USERSPACE) { \
+			to = PNBUF_GET(); \
+			error = copyinstr(from, to, MAXPATHLEN, NULL); \
+			if (error) \
+				goto out; \
+			cto = to; \
+			seg = UIO_SYSSPACE; \
+		} else { \
+			to = NULL; \
+			cto = from; \
+		} \
+	} while (/*CONSTCOND*/0)
+#define VERIEXEC_PATH_PUT(to) \
+	do { \
+		if (to) \
+			PNBUF_PUT(to); \
+	} while (/*CONSTCOND*/0)
+#else
+#define VERIEXEC_PATH_GET(from, seg, cto, to) \
+	cto = from
+#define VERIEXEC_PATH_PUT(to) \
+	(void)to
+	
+#endif
+
 /*
- * Operations vector for verified exec, this defines the characteristics
- * for the fingerprint type.
+ * Fingerprint operations vector for Veriexec.
  * Function types: init, update, final.
  */
 typedef void (*veriexec_fpop_init_t)(void *);
 typedef void (*veriexec_fpop_update_t)(void *, u_char *, u_int);
 typedef void (*veriexec_fpop_final_t)(u_char *, void *);
 
-#if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
-MALLOC_DECLARE(M_VERIEXEC);
-
-extern int veriexec_strict;
-
-/* Readable values for veriexec_report(). */
-#define	REPORT_ALWAYS		0x01	/* Always print */
-#define	REPORT_VERBOSE		0x02	/* Print when verbose >= 1 */
-#define	REPORT_DEBUG		0x04	/* Print when verbose >= 2 (debug) */
-#define	REPORT_PANIC		0x08	/* Call panic() */
-#define	REPORT_ALARM		0x10	/* Alarm - also print pid/uid/.. */
-#define	REPORT_LOGMASK		(REPORT_ALWAYS|REPORT_VERBOSE|REPORT_DEBUG)
-
-void	veriexecattach(struct device *, struct device *, void *);
-int     veriexecopen(dev_t, int, int, struct lwp *);
-int     veriexecclose(dev_t, int, int, struct lwp *);
-int     veriexecioctl(dev_t, u_long, void *, int, struct lwp *);
-
 void veriexec_init(void);
 int veriexec_fpops_add(const char *, size_t, size_t, veriexec_fpop_init_t,
     veriexec_fpop_update_t, veriexec_fpop_final_t);
-int veriexec_table_add(struct lwp *, prop_dictionary_t);
 int veriexec_file_add(struct lwp *, prop_dictionary_t);
 int veriexec_verify(struct lwp *, struct vnode *, const u_char *, int,
     bool *);
@@ -113,11 +127,12 @@ bool veriexec_lookup(struct vnode *);
 int veriexec_file_delete(struct lwp *, struct vnode *);
 int veriexec_table_delete(struct lwp *, struct mount *);
 int veriexec_convert(struct vnode *, prop_dictionary_t);
-void veriexec_report(const u_char *, const u_char *, struct lwp *, int);
+int veriexec_dump(struct lwp *, prop_array_t);
+int veriexec_flush(struct lwp *);
 void veriexec_purge(struct vnode *);
-int veriexec_removechk(struct vnode *, const char *, struct lwp *l);
-int veriexec_renamechk(struct vnode *, const char *, struct vnode *,
-    const char *, struct lwp *);
+int veriexec_removechk(struct lwp *, struct vnode *, const char *);
+int veriexec_renamechk(struct lwp *, struct vnode *, const char *,
+    struct vnode *, const char *);
 int veriexec_unmountchk(struct mount *);
 int veriexec_openchk(struct lwp *, struct vnode *, const char *, int);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32 2007/03/09 19:21:57 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.32.4.1 2007/07/11 19:58:06 mjf Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -80,8 +80,6 @@ define	UPAGES			UPAGES
 define	PGSHIFT			PGSHIFT
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_FORW			offsetof(struct lwp, l_forw)
-define	L_BACK			offsetof(struct lwp, l_back)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
@@ -89,9 +87,6 @@ define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
-
-# Process status constants
-define	LSONPROC		LSONPROC
 
 define	PCB_TF			offsetof(struct pcb, pcb_tf)
 define	PCB_PAGEDIR		offsetof(struct pcb, pcb_pagedir)

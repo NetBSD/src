@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.246 2007/03/12 18:18:36 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.246.2.1 2007/07/11 20:11:23 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.246 2007/03/12 18:18:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.246.2.1 2007/07/11 20:11:23 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -429,7 +429,7 @@ ip_init(void)
 	    M_WAITOK, &in_multihash);
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
-	ipflow_init();
+	ipflow_init(ip_hashsize);
 #endif
 
 #ifdef PFIL_HOOKS
@@ -1674,23 +1674,18 @@ bad:
 struct in_ifaddr *
 ip_rtaddr(struct in_addr dst)
 {
-	if (!in_hosteq(dst, satocsin(rtcache_getdst(&ipforward_rt))->sin_addr))
-		rtcache_free(&ipforward_rt);
-	else
-		rtcache_check(&ipforward_rt);
+	struct rtentry *rt;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
-	if (ipforward_rt.ro_rt == NULL) {
-		struct sockaddr_in *sin = satosin(&ipforward_rt.ro_dst);
+	sockaddr_in_init(&u.dst4, &dst, 0);
 
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = dst;
+	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL)
+		return NULL;
 
-		rtcache_init(&ipforward_rt);
-		if (ipforward_rt.ro_rt == NULL)
-			return NULL;
-	}
-	return ifatoia(ipforward_rt.ro_rt->rt_ifa);
+	return ifatoia(rt->rt_ifa);
 }
 
 /*
@@ -1841,6 +1836,10 @@ ip_forward(struct mbuf *m, int srcrt)
 	int error, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy;
 	n_long dest;
+	union {
+		struct sockaddr		dst;
+		struct sockaddr_in	dst4;
+	} u;
 
 	/*
 	 * We are now in the output path.
@@ -1869,25 +1868,11 @@ ip_forward(struct mbuf *m, int srcrt)
 		return;
 	}
 
-	if (!in_hosteq(ip->ip_dst,
-	               satocsin(rtcache_getdst(&ipforward_rt))->sin_addr))
-		rtcache_free(&ipforward_rt);
-	else
-		rtcache_check(&ipforward_rt);
-	if (ipforward_rt.ro_rt == NULL) {
-		struct sockaddr_in *sin = satosin(&ipforward_rt.ro_dst);
-
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = ip->ip_dst;
-
-		rtcache_init(&ipforward_rt);
-		if (ipforward_rt.ro_rt == NULL) {
-			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
-			return;
-		}
+	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
+	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL) {
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
+		return;
 	}
-	rt = ipforward_rt.ro_rt;
 
 	/*
 	 * Save at most 68 bytes of the packet in case
@@ -2160,8 +2145,7 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 
 #ifdef GATEWAY
 /*
- * sysctl helper routine for net.inet.ip.maxflows.  apparently if
- * maxflows is even looked up, we "reap flows".
+ * sysctl helper routine for net.inet.ip.maxflows.
  */
 static int
 sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
@@ -2169,12 +2153,41 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 	int s;
 
 	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (s)
+	if (s || newp == NULL)
 		return (s);
 
 	s = splsoftnet();
 	ipflow_reap(0);
 	splx(s);
+
+	return (0);
+}
+
+static int
+sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
+{  
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	tmp = ip_hashsize;
+	node.sysctl_data = &tmp;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if ((tmp & (tmp - 1)) == 0 && tmp != 0) {
+		/*
+		 * Can only fail due to malloc()
+		 */
+		if (ipflow_invalidate_all(tmp))
+			return ENOMEM;
+	} else {
+		/*
+		 * EINVAL if not a power of 2
+	         */
+		return EINVAL;
+	}	
 
 	return (0);
 }
@@ -2299,6 +2312,13 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       sysctl_net_inet_ip_maxflows, 0, &ip_maxflows, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MAXFLOWS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "hashsize",
+			SYSCTL_DESCR("Size of hash table for fast forwarding (IPv4)"),
+			sysctl_net_inet_ip_hashsize, 0, &ip_hashsize, 0,
+			CTL_NET, PF_INET, IPPROTO_IP,
+			CTL_CREATE, CTL_EOL);
 #endif /* GATEWAY */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

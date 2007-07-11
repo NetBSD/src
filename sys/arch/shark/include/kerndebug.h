@@ -1,4 +1,4 @@
-/*	$NetBSD: kerndebug.h,v 1.3 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: kerndebug.h,v 1.3.32.1 2007/07/11 20:02:14 mjf Exp $	*/
 
 /*
  * Copyright 1997
@@ -96,7 +96,7 @@ typedef unsigned int Kern_Debug_Flags;
 **                  (normal printf arguments));
 **     
 **       pay special attention to the extra set of () around the 
-**       final arguement.
+**       final argument.
 **
 */
 #ifdef KERNEL_DEBUG

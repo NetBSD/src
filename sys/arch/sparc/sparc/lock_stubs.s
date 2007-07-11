@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.8 2007/03/03 23:42:20 macallan Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.8.4.1 2007/07/11 20:02:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ _ENTRY(_C_LABEL(mutex_exit))
 	retl
 	 nop
 
+#if 0 /* does not work for MP yet */
 /*
  * void mutex_spin_enter(kmutex_t *);
  */
@@ -186,6 +187,8 @@ _ENTRY(_C_LABEL(mutex_spin_exit))
 1:
 	retl
 	 nop
+
+#endif
 
 #endif	/* LOCKDEBUG */
 

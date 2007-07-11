@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.4 2007/03/04 05:59:47 christos Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.4.4.1 2007/07/11 19:59:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.4 2007/03/04 05:59:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.4.4.1 2007/07/11 19:59:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ fb_common_init(struct rasops_info *ri, struct ga *ga)
 	 * 128	 dark gray
 	 * 255	 white
 	 * other black
-	 * When CLUT isn't intialized for NetBSD, use black-red pair.
+	 * When CLUT isn't initialized for NetBSD, use black-red pair.
 	 */
 	ri->ri_flg = RI_CENTER | RI_CLEAR;
 	if (!ga_active)

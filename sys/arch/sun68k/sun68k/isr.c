@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.14 2007/03/12 02:51:03 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.14.2.1 2007/07/11 20:02:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2007/03/12 02:51:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14.2.1 2007/07/11 20:02:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ struct isr {
 struct softintr_head soft_level_heads[_IPL_NSOFT];
 void *softnet_cookie;
 static int softintr_handler(void *);
+static void netintr(void);
 
 void set_vector_entry(int, void *);
 void *get_vector_entry(int);
@@ -140,8 +141,10 @@ isr_autovec(struct clockframe cf)
 	int n, ipl, vec;
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
+#ifdef DIAGNOSTIC
 	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE + NUM_LEVELS)))
 		panic("isr_autovec: bad vec");
+#endif
 	ipl = vec - AUTOVEC_BASE;
 
 	n = intrcnt[ipl];
@@ -213,10 +216,12 @@ isr_vectored(struct clockframe cf)
 	intrcnt[ipl]++;
 	uvmexp.intrs++;
 
+#ifdef DIAGNOSTIC
 	if (vec < 64 || vec >= 256) {
 		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
 		goto out;
 	}
+#endif
 	vh = &isr_vector_handlers[vec - 64];
 	if (vh->func == NULL) {
 		printf("isr_vectored: vector=0x%x (nul func)\n", vec);

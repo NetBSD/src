@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.45 2006/03/31 17:39:33 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.45.20.1 2007/07/11 20:08:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.45 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.45.20.1 2007/07/11 20:08:28 mjf Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -280,7 +280,7 @@ tc_devinfo(const char *id, char *cp, size_t l)
 {
 	const char *driver, *description;
 #ifdef TCVERBOSE
-	struct tc_knowndev *tdp;
+	const struct tc_knowndev *tdp;
 	int match;
 	const char *unmatched = "unknown ";
 #else

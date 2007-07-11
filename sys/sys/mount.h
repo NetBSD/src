@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.155 2007/03/10 16:50:01 dsl Exp $	*/
+/*	$NetBSD: mount.h,v 1.155.4.1 2007/07/11 20:12:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -36,11 +36,11 @@
 
 #ifndef _KERNEL
 #include <sys/featuretest.h>
-#include <sys/ucred.h>
 #if defined(_NETBSD_SOURCE)
 #include <sys/stat.h>
 #endif /* _NETBSD_SOURCE */
 #endif
+#include <sys/ucred.h>
 #include <sys/fstypes.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
@@ -86,6 +86,7 @@
 #define	MOUNT_SYSVBFS	"sysvbfs"	/* System V Boot Filesystem */
 #define MOUNT_PUFFS	"puffs"		/* Pass-to-Userspace filesystem */
 #define MOUNT_HFS	"hfs"		/* Apple HFS+ Filesystem */
+#define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
@@ -109,11 +110,7 @@ struct mount {
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct lwp	*mnt_unmounter;		/* who is unmounting */
-	int		mnt_writeopcountupper;	/* upper writeops in progress */
-	int		mnt_writeopcountlower;	/* lower writeops in progress */
-	struct simplelock mnt_slock;		/* mutex for wcnt and
-						   writeops counters */
-	struct mount	*mnt_leaf;		/* leaf fs we mounted on */
+	struct simplelock mnt_slock;		/* mutex for wcnt */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 };
@@ -202,7 +199,7 @@ int	fsname##_sync(struct mount *, int, struct kauth_cred *,		\
 		struct lwp *);						\
 int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
 int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
-int	fsname##_vptofh(struct vnode *, struct fid *);			\
+int	fsname##_vptofh(struct vnode *, struct fid *, size_t *);	\
 void	fsname##_init(void);						\
 void	fsname##_reinit(void);						\
 void	fsname##_done(void);						\

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.41 2007/03/04 06:01:46 christos Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.41.4.1 2007/07/11 20:05:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.41 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.41.4.1 2007/07/11 20:05:28 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -187,7 +187,6 @@ void	hpcfb_refresh_screen(struct hpcfb_softc *);
 void	hpcfb_doswitch(struct hpcfb_softc *);
 
 #ifdef HPCFB_JUMP
-static void	hpcfb_create_thread(void *);
 static void	hpcfb_thread(void *);
 #endif /* HPCFB_JUMP */
 
@@ -318,7 +317,7 @@ hpcfbattach(struct device *parent,
 
 	sc->sc_polling = 0; /* XXX */
 	sc->sc_mapping = 0; /* XXX */
-	callout_init(&sc->sc_switch_callout);
+	callout_init(&sc->sc_switch_callout, 0);
 
 	/* Add a power hook to power management */
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
@@ -338,28 +337,20 @@ hpcfbattach(struct device *parent,
 	/*
 	 * Create a kernel thread to scroll,
 	 */
-	kthread_create(hpcfb_create_thread, sc);
+	if (kthread_create(PRI_NONE, 0, NULL, hpcfb_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		/*
+		 * We were unable to create the HPCFB thread; bail out.
+		 */
+		sc->sc_thread = 0;
+		printf("%s: unable to create thread, kernel "
+		    "hpcfb scroll support disabled\n",
+		    sc->sc_dev.dv_xname);
+	}
 #endif /* HPCFB_JUMP */
 }
 
 #ifdef HPCFB_JUMP
-void
-hpcfb_create_thread(void *arg)
-{
-	struct hpcfb_softc *sc = arg;
-
-	if (kthread_create1(hpcfb_thread, sc, &sc->sc_thread,
-	    "%s", sc->sc_dev.dv_xname) == 0)
-		return;
-
-	/*
-	 * We were unable to create the HPCFB thread; bail out.
-	 */
-	sc->sc_thread = 0;
-	printf("%s: unable to create thread, kernel hpcfb scroll support disabled\n",
-	    sc->sc_dev.dv_xname);
-}
-
 void
 hpcfb_thread(void *arg)
 {
@@ -497,7 +488,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
 	dc->dc_scroll = 0;
-	callout_init(&dc->dc_scroll_ch);
+	callout_init(&dc->dc_scroll_ch, 0);
 #endif /* HPCFB_JUMP */
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
 	/* hook rasops in hpcfb_ops */

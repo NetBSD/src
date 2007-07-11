@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.31 2007/03/04 10:06:49 macallan Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.31.4.1 2007/07/11 20:00:37 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31 2007/03/04 10:06:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.4.1 2007/07/11 20:00:37 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -201,7 +201,7 @@ bmac_attach(parent, self, aux)
 	struct mii_data *mii = &sc->sc_mii;
 	u_char laddr[6];
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	sc->sc_flags =0;
 	if (strcmp(ca->ca_name, "ethernet") == 0) {

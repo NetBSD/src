@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5.32.1 2007/07/11 19:58:43 mjf Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5.32.1 2007/07/11 19:58:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/systm.h>
 
 static int	cpu_match(struct device *, struct cfdata *, void *);

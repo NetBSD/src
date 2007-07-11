@@ -1,7 +1,6 @@
-#	$NetBSD: files.netinet,v 1.17 2006/12/09 05:33:04 dyoung Exp $
+#	$NetBSD: files.netinet,v 1.17.8.1 2007/07/11 20:11:17 mjf Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
-defflag opt_in_route.h		IN_RTFLUSH_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
 defflag opt_inet.h		INET INET6 INET6_MD_CKSUM TCP_SIGNATURE
 				TCP_OUTPUT_COUNTERS TCP_REASS_COUNTERS IPSELSRC
@@ -23,7 +22,6 @@ file	netinet/in.c		inet
 file	netinet/in_offload.c	inet
 file	netinet/in_pcb.c	inet
 file	netinet/in_proto.c	inet
-file	netinet/in_route.c	inet
 file	netinet/in_selsrc.c	inet & ipselsrc
 file	netinet/ip_flow.c	inet & gateway
 file	netinet/ip_icmp.c	inet

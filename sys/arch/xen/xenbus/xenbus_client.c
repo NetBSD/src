@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.5 2006/06/25 16:46:59 bouyer Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.5.18.1 2007/07/11 20:03:38 mjf Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.5 2006/06/25 16:46:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.5.18.1 2007/07/11 20:03:38 mjf Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.5 2006/06/25 16:46:59 bouyer Exp
 
 #include <machine/stdarg.h>
 
+#include <machine/xen.h>
+#include <machine/hypervisor.h>
 #include <machine/evtchn.h>
 #include <machine/xenbus.h>
 #include <machine/granttables.h>

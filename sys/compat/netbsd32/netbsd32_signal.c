@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.21 2007/03/04 06:01:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.21.4.1 2007/07/11 20:04:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.21 2007/03/04 06:01:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.21.4.1 2007/07/11 20:04:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.21 2007/03/04 06:01:27 christo
 #include <compat/sys/signalvar.h>
 #include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
+#include <compat/common/compat_sigaltstack.h>
 
 #ifdef unused
 static void netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
@@ -73,9 +74,8 @@ netbsd32_sigaction(l, v, retval)
 	struct netbsd32_sigaction *sa32p, sa32;
 	int error;
 
-	if (SCARG(uap, nsa)) {
-		sa32p =
-		    (struct netbsd32_sigaction *)NETBSD32PTR64(SCARG(uap, nsa));
+	if (SCARG_P32(uap, nsa)) {
+		sa32p = SCARG_P32(uap, nsa);
 		if (copyin(sa32p, &sa32, sizeof(sa32)))
 			return EFAULT;
 		nsa.sa_handler = (void *)NETBSD32PTR64(sa32.netbsd32_sa_handler);
@@ -83,19 +83,18 @@ netbsd32_sigaction(l, v, retval)
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
 	error = sigaction1(l, SCARG(uap, signum),
-			   SCARG(uap, nsa) ? &nsa : 0,
-			   SCARG(uap, osa) ? &osa : 0,
+			   SCARG_P32(uap, nsa) ? &nsa : 0,
+			   SCARG_P32(uap, osa) ? &osa : 0,
 			   NULL, 0);
 
 	if (error)
 		return (error);
 
-	if (SCARG(uap, osa)) {
-		sa32.netbsd32_sa_handler = (netbsd32_sigactionp_t)(u_long)osa.sa_handler;
+	if (SCARG_P32(uap, osa)) {
+		NETBSD32PTR32(sa32.netbsd32_sa_handler, osa.sa_handler);
 		sa32.netbsd32_sa_mask = osa.sa_mask;
 		sa32.netbsd32_sa_flags = osa.sa_flags;
-		sa32p =
-		    (struct netbsd32_sigaction *)NETBSD32PTR64(SCARG(uap, osa));
+		sa32p = SCARG_P32(uap, osa);
 		if (copyout(&sa32, sa32p, sizeof(sa32)))
 			return EFAULT;
 	}
@@ -113,33 +112,7 @@ netbsd32___sigaltstack14(l, v, retval)
 		syscallarg(const netbsd32_sigaltstackp_t) nss;
 		syscallarg(netbsd32_sigaltstackp_t) oss;
 	} */ *uap = v;
-	struct netbsd32_sigaltstack s32;
-	struct sigaltstack nss, oss;
-	int error;
-
-	if (SCARG(uap, nss)) {
-		error = copyin((void *)NETBSD32PTR64(SCARG(uap, nss)), &s32,
-		    sizeof(s32));
-		if (error)
-			return (error);
-		nss.ss_sp = (void *)NETBSD32PTR64(s32.ss_sp);
-		nss.ss_size = (size_t)s32.ss_size;
-		nss.ss_flags = s32.ss_flags;
-	}
-	error = sigaltstack1(l,
-	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
-	if (error)
-		return (error);
-	if (SCARG(uap, oss)) {
-		s32.ss_sp = (netbsd32_voidp)(u_long)oss.ss_sp;
-		s32.ss_size = (netbsd32_size_t)oss.ss_size;
-		s32.ss_flags = oss.ss_flags;
-		error = copyout(&s32, (void *)NETBSD32PTR64(SCARG(uap, oss)),
-		    sizeof(s32));
-		if (error)
-			return (error);
-	}
-	return (0);
+	compat_sigaltstack(uap, netbsd32_sigaltstack, SS_ONSTACK, SS_DISABLE);
 }
 
 /* ARGSUSED */
@@ -158,26 +131,25 @@ netbsd32___sigaction14(l, v, retval)
 	struct sigaction nsa, osa;
 	int error;
 
-	if (SCARG(uap, nsa)) {
-		error = copyin((void *)NETBSD32PTR64(SCARG(uap, nsa)), &sa32,
-		    sizeof(sa32));
+	if (SCARG_P32(uap, nsa)) {
+		error = copyin(SCARG_P32(uap, nsa), &sa32, sizeof(sa32));
 		if (error)
 			return (error);
-		nsa.sa_handler = (void *)NETBSD32PTR64(sa32.netbsd32_sa_handler);
+		nsa.sa_handler = NETBSD32PTR64(sa32.netbsd32_sa_handler);
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
 	error = sigaction1(l, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
-	    NULL, 0);
+		    SCARG_P32(uap, nsa) ? &nsa : 0,
+		    SCARG_P32(uap, osa) ? &osa : 0,
+		    NULL, 0);
 	if (error)
 		return (error);
-	if (SCARG(uap, osa)) {
-		sa32.netbsd32_sa_handler = (netbsd32_voidp)(u_long)osa.sa_handler;
+	if (SCARG_P32(uap, osa)) {
+		NETBSD32PTR32(sa32.netbsd32_sa_handler, osa.sa_handler);
 		sa32.netbsd32_sa_mask = osa.sa_mask;
 		sa32.netbsd32_sa_flags = osa.sa_flags;
-		error = copyout(&sa32, (void *)NETBSD32PTR64(SCARG(uap, osa)),
-		    sizeof(sa32));
+		error = copyout(&sa32, SCARG_P32(uap, osa), sizeof(sa32));
 		if (error)
 			return (error);
 	}
@@ -202,26 +174,25 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 	struct sigaction nsa, osa;
 	int error;
 
-	if (SCARG(uap, nsa)) {
-		error = copyin((void *)NETBSD32PTR64(SCARG(uap, nsa)), &sa32,
-		    sizeof(sa32));
+	if (SCARG_P32(uap, nsa)) {
+		error = copyin(SCARG_P32(uap, nsa), &sa32, sizeof(sa32));
 		if (error)
 			return (error);
-		nsa.sa_handler = (void *)NETBSD32PTR64(sa32.netbsd32_sa_handler);
+		nsa.sa_handler = NETBSD32PTR64(sa32.netbsd32_sa_handler);
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
 	error = sigaction1(l, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
-	    NETBSD32PTR64(SCARG(uap, tramp)), SCARG(uap, vers));
+	    SCARG_P32(uap, nsa) ? &nsa : 0,
+	    SCARG_P32(uap, osa) ? &osa : 0,
+	    SCARG_P32(uap, tramp), SCARG(uap, vers));
 	if (error)
 		return (error);
-	if (SCARG(uap, osa)) {
-		sa32.netbsd32_sa_handler = (netbsd32_voidp)(u_long)osa.sa_handler;
+	if (SCARG_P32(uap, osa)) {
+		NETBSD32PTR32(sa32.netbsd32_sa_handler, osa.sa_handler);
 		sa32.netbsd32_sa_mask = osa.sa_mask;
 		sa32.netbsd32_sa_flags = osa.sa_flags;
-		error = copyout(&sa32, (void *)NETBSD32PTR64(SCARG(uap, osa)),
-		    sizeof(sa32));
+		error = copyout(&sa32, SCARG_P32(uap, osa), sizeof(sa32));
 		if (error)
 			return (error);
 	}
@@ -243,7 +214,7 @@ netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
 	case SIGSEGV:
 	case SIGFPE:
 	case SIGTRAP:
-		si->si_addr = (void *)NETBSD32PTR64(si32->si_addr);
+		si->si_addr = NETBSD32PTR64(si32->si_addr);
 		si->si_trap = si32->si_trap;
 		break;
 	case SIGALRM:
@@ -254,7 +225,7 @@ netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
 		/*
 		 * XXX sival_ptr is currently unused.
 		 */
-		si->si_sigval.sival_int = si32->si_sigval.sival_int;
+		si->si_value.sival_int = si32->si_value.sival_int;
 		break;
 	case SIGCHLD:
 		si->si_pid = si32->si_pid;
@@ -281,7 +252,7 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 
 	switch (si32->si_signo) {
 	case 0:	/* SA */
-		si32->si_sigval.sival_int = si->si_sigval.sival_int;
+		si32->si_value.sival_int = si->si_value.sival_int;
 		break;
 	case SIGILL:
 	case SIGBUS:
@@ -299,7 +270,7 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 		/*
 		 * XXX sival_ptr is currently unused.
 		 */
-		si32->si_sigval.sival_int = si->si_sigval.sival_int;
+		si32->si_value.sival_int = si->si_value.sival_int;
 		break;
 	case SIGCHLD:
 		si32->si_pid = si->si_pid;
@@ -365,8 +336,7 @@ netbsd32_getcontext(struct lwp *l, void *v, register_t *retval)
 	getucontext32(l, &uc);
 	mutex_exit(&p->p_smutex);
 
-	return copyout(&uc, NETBSD32PTR64(SCARG(uap, ucp)),
-	    sizeof (ucontext32_t));
+	return copyout(&uc, SCARG_P32(uap, ucp), sizeof (ucontext32_t));
 }
 
 int
@@ -416,7 +386,7 @@ netbsd32_setcontext(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct proc *p = l->l_proc;
 
-	error = copyin(NETBSD32PTR64(SCARG(uap, ucp)), &uc, sizeof (uc));
+	error = copyin(SCARG_P32(uap, ucp), &uc, sizeof (uc));
 	if (error)
 		return (error);
 	if (!(uc.uc_flags & _UC_CPU))

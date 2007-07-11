@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.122.4.1 2007/07/11 20:09:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.122.4.1 2007/07/11 20:09:39 mjf Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -90,6 +90,8 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $"
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#include <compat/common/compat_util.h>
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
 #include <sys/pax.h>
@@ -341,7 +343,6 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
     Elf_Addr *last)
 {
 	int error, i;
-	struct nameidata nd;
 	struct vnode *vp;
 	struct vattr attr;
 	Elf_Ehdr eh;
@@ -360,10 +361,16 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, l);
-	if ((error = namei(&nd)) != 0)
-		return error;
-	vp = nd.ni_vp;
+	vp = epp->ep_interp;
+	if (vp == NULL) {
+		error = emul_find_interp(l, epp, path);
+		if (error != 0)
+			return error;
+		vp = epp->ep_interp;
+	}
+	/* We'll tidy this ourselves - otherwise we have locking issues */
+	epp->ep_interp = NULL;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
 	 * Similarly, if it's not marked as executable, or it's not a regular
@@ -692,11 +699,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		case PT_DYNAMIC:
 			break;
 		case PT_NOTE:
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
-			pax_adjust(l, ph[i].p_flags);
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 			break;
-
 		case PT_PHDR:
 			/* Note address of program headers (in text segment) */
 			phdr = pp->p_vaddr;
@@ -709,6 +712,11 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			break;
 		}
 	}
+
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+	if (epp->ep_pax_flags)
+		pax_adjust(l, epp->ep_pax_flags);
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
@@ -764,7 +772,10 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 	Elf_Phdr *ph;
 	size_t phsize;
 	int error;
+	int isnetbsd = 0;
+	char *ndata;
 
+	epp->ep_pax_flags = 0;
 	if (eh->e_phnum > MAXPHNUM)
 		return ENOEXEC;
 
@@ -789,23 +800,38 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		if (error)
 			goto next;
 
-		if (np->n_type != ELF_NOTE_TYPE_NETBSD_TAG ||
-		    np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
-		    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ ||
-		    memcmp(np + 1, ELF_NOTE_NETBSD_NAME,
-		    ELF_NOTE_NETBSD_NAMESZ))
-			goto next;
+		ndata = (char *)(np + 1);
+		switch (np->n_type) {
+		case ELF_NOTE_TYPE_NETBSD_TAG:
+			if (np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
+			    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ ||
+			    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
+			    ELF_NOTE_NETBSD_NAMESZ))
+				goto next;
+			isnetbsd = 1;
+			break;
 
-		error = 0;
-		free(np, M_TEMP);
-		goto out;
+		case ELF_NOTE_TYPE_PAX_TAG:
+			if (np->n_namesz != ELF_NOTE_PAX_NAMESZ ||
+			    np->n_descsz != ELF_NOTE_PAX_DESCSZ ||
+			    memcmp(ndata, ELF_NOTE_PAX_NAME,
+			    ELF_NOTE_PAX_NAMESZ))
+				goto next;
+			(void)memcpy(&epp->ep_pax_flags,
+			    ndata + ELF_NOTE_PAX_NAMESZ,
+			    sizeof(epp->ep_pax_flags));
+			break;
 
-	next:
+		default:
+			break;
+		}
+
+next:
 		free(np, M_TEMP);
 		continue;
 	}
 
-	error = ENOEXEC;
+	error = isnetbsd ? 0 : ENOEXEC;
 out:
 	free(ph, M_TEMP);
 	return error;

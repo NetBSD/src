@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/11/29 17:11:22 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.4.66.1 2007/07/11 20:10:37 mjf Exp $
 
 .include "../Makefile.inc"
 
@@ -12,15 +12,5 @@ KMOD=	exec_pecoff
 
 SRCS=	lkminit_exec.c
 SRCS+=	pecoff_exec.c
-
-# compat_util.c symbol redifinitions
-CPPFLAGS+=	-Demul_find=pecoff_emul_find				\
-		-Demul_find_interp=pecoff_emul_find_interp		\
-		-Dstackgap_init=pecoff_stackgap_init			\
-		-Demul_flags_translate=pecoff_emul_flags_translate	\
-		-Dstackgap_alloc=pecoff_stackgap_alloc		 	\
-		-Dcompat_offseterr=pecoff_compat_offseterr
-.PATH: $S/compat/common
-SRCS+=	compat_util.c
 
 .include <bsd.kmod.mk>

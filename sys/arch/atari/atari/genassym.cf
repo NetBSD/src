@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2007/02/09 21:55:02 ad Exp $
+#	$NetBSD: genassym.cf,v 1.24.8.1 2007/07/11 19:58:15 mjf Exp $
 
 #-
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,8 +83,6 @@ endif
 
 # lwp & proc fields and values
 define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_BACK			offsetof(struct lwp, l_back)
-define	L_FORW			offsetof(struct lwp, l_forw)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)

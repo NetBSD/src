@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.11 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: itevar.h,v 1.11.32.1 2007/07/11 20:03:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -154,7 +154,7 @@ enum emul_level {
 
 #define attrclr(ip, sy, sx, h, w) \
 	memset(ip->attrbuf + ((sy) * ip->cols) + (sx), 0, (h) * (w))
-  
+
 #define attrmov(ip, sy, sx, dy, dx, h, w) \
 	memcpy(ip->attrbuf + ((dy) * ip->cols) + (dx), \
 	      ip->attrbuf + ((sy) * ip->cols) + (sx), \
@@ -173,7 +173,7 @@ enum emul_level {
 #define attrset(ip, attr)
 #endif
 
-  
+
 /*
  * X and Y location of character 'c' in the framebuffer, in pixels.
  */
@@ -193,7 +193,7 @@ enum emul_level {
 
 /* Keyboard attributes */
 #define ATTR_KPAD	0x80		/* keypad transmit */
-  
+
 /* Replacement Rules */
 #define RR_CLEAR		0x0
 #define RR_COPY			0x3
@@ -238,10 +238,10 @@ enum emul_level {
 #define KBD_MOD_OPT1	(1<<8)
 #define KBD_MOD_OPT2	(1<<9)
 
-/* type for the second argument to itefilter(). Note that the 
+/* type for the second argument to itefilter(). Note that the
    driver doesn't support key-repeat for console-mode, since it can't use
    timeout() for polled I/O. */
-   
+
 enum tab_size { TABSIZE = 8 };
 #define TABEND(u) (ite_tty[u]->t_windsize.ws_col - TABSIZE) /* XXX */
 

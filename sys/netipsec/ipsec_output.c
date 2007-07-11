@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.21 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.21.8.1 2007/07/11 20:11:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.21 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.21.8.1 2007/07/11 20:11:52 mjf Exp $");
 
 /*
  * IPsec output processing.
@@ -72,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.21 2007/02/10 09:43:05 degroote E
 #ifdef INET6
 #include <netinet/icmp6.h>
 #endif
+#ifdef IPSEC_NAT_T
+#include <netinet/udp.h>
+#endif
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
@@ -99,6 +102,18 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	int error;
+#ifdef INET
+	struct ip * ip;
+#endif /* INET */
+#ifdef INET6
+	struct ip6_hdr * ip6;
+#endif /* INET6 */
+#ifdef IPSEC_NAT_T
+	struct mbuf * mo;
+	struct udphdr *udp = NULL;
+	uint64_t * data = NULL;
+	int hlen, roff;
+#endif /* IPSEC_NAT_T */
 
 	IPSEC_SPLASSERT_SOFTNET("ipsec_process_done");
 
@@ -109,11 +124,57 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	IPSEC_ASSERT(sav->sah != NULL, ("ipsec_process_done: null SAH"));
 
 	saidx = &sav->sah->saidx;
+
+#ifdef IPSEC_NAT_T
+	if(sav->natt_type != 0) {
+		ip = mtod(m, struct ip *);
+
+		hlen = sizeof(struct udphdr);
+		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE) 
+			hlen += sizeof(uint64_t);
+
+		mo = m_makespace(m, sizeof(struct ip), hlen, &roff);
+		if (mo == NULL) {
+			DPRINTF(("ipsec_process_done : failed to inject" 
+				 "%u byte UDP for SA %s/%08lx\n",
+					 hlen, ipsec_address(&saidx->dst),
+					 (u_long) ntohl(sav->spi)));
+			error = ENOBUFS;
+			goto bad;
+		}
+		
+		udp = (struct udphdr*) (mtod(mo, char*) + roff);
+		data = (uint64_t*) (udp + 1);
+
+		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
+			*data = 0; /* NON-IKE Marker */
+
+		if (sav->natt_type == UDP_ENCAP_ESPINUDP_NON_IKE)
+			udp->uh_sport = htons(UDP_ENCAP_ESPINUDP_PORT);
+		else
+			udp->uh_sport = key_portfromsaddr(&saidx->src);
+		
+		udp->uh_dport = key_portfromsaddr(&saidx->dst);
+		udp->uh_sum = 0;
+#ifdef _IP_VHL
+        	udp->uh_ulen = htons(m->m_pkthdr.len - 
+				    (IP_VHL_HL(ip->ip_vhl) << 2));
+#else
+        	udp->uh_ulen = htons(m->m_pkthdr.len - (ip->ip_hl << 2));
+#endif
+	}
+#endif /* IPSEC_NAT_T */
+	
 	switch (saidx->dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
 		/* Fix the header length, for AH processing. */
-		mtod(m, struct ip *)->ip_len = htons(m->m_pkthdr.len);
+		ip = mtod(m, struct ip *);
+		ip->ip_len = htons(m->m_pkthdr.len);
+#ifdef IPSEC_NAT_T
+		if (sav->natt_type != 0)
+			ip->ip_p = IPPROTO_UDP;
+#endif /* IPSEC_NAT_T */
 		break;
 #endif /* INET */
 #ifdef INET6
@@ -128,8 +189,12 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 			error = ENXIO;	/*?*/
 			goto bad;
 		}
-		mtod(m, struct ip6_hdr *)->ip6_plen =
-			htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
+		ip6 = mtod(m, struct ip6_hdr *);
+		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
+#ifdef IPSEC_NAT_T
+		if (sav->natt_type != 0)
+			ip6->ip6_nxt = IPPROTO_UDP;
+#endif /* IPSEC_NAT_T */
 		break;
 #endif /* INET6 */
 	default:
@@ -190,7 +255,6 @@ ipsec_process_done(struct mbuf *m, struct ipsecrequest *isr)
 	 */
 	switch (saidx->dst.sa.sa_family) {
 #ifdef INET
-	struct ip *ip;
 	case AF_INET:
 		ip = mtod(m, struct ip *);
 #ifdef __FreeBSD__

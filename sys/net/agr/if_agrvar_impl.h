@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrvar_impl.h,v 1.6 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: if_agrvar_impl.h,v 1.6.4.1 2007/07/11 20:11:05 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -33,7 +33,7 @@
  * implementaion details for agr(4) driver.  (contrast to if_agrvar.h)
  */
 
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 struct agr_port;
@@ -103,8 +103,8 @@ struct agr_ifreq {
 };
 
 struct agr_softc {
-	struct lock sc_ioctl_lock;
-	struct simplelock sc_lock;
+	kmutex_t sc_ioctl_lock;
+	kmutex_t sc_lock;
 	struct callout sc_callout;
 	int sc_nports;
 	TAILQ_HEAD(, agr_port) sc_ports;
@@ -118,11 +118,11 @@ struct agr_softc {
 	((struct agr_softc *)(port)->port_agrifp->if_softc)
 
 #define	AGR_LOCK(sc)		agr_lock(sc)
-#define	AGR_UNLOCK(sc, s)	agr_unlock((sc), (s))
-#define	AGR_ASSERT_LOCKED(sc)	LOCK_ASSERT(simple_lock_held(&(sc)->sc_lock))
+#define	AGR_UNLOCK(sc)		agr_unlock(sc)
+#define	AGR_ASSERT_LOCKED(sc)	KASSERT(mutex_owned(&(sc)->sc_lock))
 
-int agr_lock(struct agr_softc *);
-void agr_unlock(struct agr_softc *, int);
+void agr_lock(struct agr_softc *);
+void agr_unlock(struct agr_softc *);
 
 void agr_ioctl_lock(struct agr_softc *);
 void agr_ioctl_unlock(struct agr_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2007/03/04 05:59:13 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.4.1 2007/07/11 19:57:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2007/03/04 05:59:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.4.1 2007/07/11 19:57:36 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -117,9 +117,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2007/03/04 05:59:13 christos Exp $");
 #include <sys/kgdb.h>
 #endif
 
-void trap __P((struct trapframe *));
+void trap(struct trapframe *);
 #if defined(I386_CPU)
-int trapwrite __P((unsigned));
+int trapwrite(unsigned);
 #endif
 
 const char *trap_type[] = {
@@ -169,11 +169,10 @@ static void frame_dump(struct trapframe *);
  */
 /*ARGSUSED*/
 void
-trap(frame)
-	struct trapframe *frame;
+trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : 0;
+	struct proc *p;
 	int type = (int)frame->tf_trapno;
 	struct pcb *pcb;
 	extern char fusuintrfailure[],
@@ -193,8 +192,16 @@ trap(frame)
 
 	uvmexp.traps++;
 
-	pcb = (l != NULL) ? &l->l_addr->u_pcb : NULL;
-
+	if (__predict_true(l != NULL)) {
+		pcb = &l->l_addr->u_pcb;
+		p = l->l_proc;
+	} else {
+		/*
+		 * this can happen eg. on break points in early on boot.
+		 */
+		pcb = NULL;
+		p = NULL;
+	}
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %lx eip %lx cs %lx rflags %lx cr2 %lx "
@@ -375,8 +382,10 @@ copyfault:
 			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched)
+		if (curcpu()->ci_want_resched) {
+			curcpu()->ci_want_resched = 0;
 			preempt();
+		}
 		goto out;
 
 #if 0 /* handled by fpudna() */

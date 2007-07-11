@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.14 2007/03/04 06:01:08 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.14.4.1 2007/07/11 20:03:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14 2007/03/04 06:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14.4.1 2007/07/11 20:03:10 mjf Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.14 2007/03/04 06:01:08 christos Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.14.4.1 2007/07/11 20:03:10 mjf Exp $";
 #endif
 
 #include <sys/param.h>
@@ -195,7 +195,7 @@ restart:
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-static int 
+static int
 computeSignal(int type)
 {
 	int sigval;
@@ -244,7 +244,7 @@ computeSignal(int type)
 }
 
 /*
- * Trap into kgdb to wait for debugger to connect, 
+ * Trap into kgdb to wait for debugger to connect,
  * noting on the console why nothing else is going on.
  */
 void
@@ -314,10 +314,10 @@ static u_char inbuffer[SL_RPCSIZE+1];
 static u_char outbuffer[SL_RPCSIZE];
 
 /*
- * This function does all command procesing for interfacing to 
+ * This function does all command procesing for interfacing to
  * a remote gdb.
  */
-int 
+int
 kgdb_trap(int type, struct frame *frame)
 {
 	u_long len;
@@ -349,7 +349,7 @@ kgdb_trap(int type, struct frame *frame)
 		/*
 		 * If the packet that woke us up isn't an exec packet,
 		 * ignore it since there is no active debugger.  Also,
-		 * we check that it's not an ack to be sure that the 
+		 * we check that it's not an ack to be sure that the
 		 * remote side doesn't send back a response after the
 		 * local gdb has exited.  Otherwise, the local host
 		 * could trap into gdb if it's running a gdb kernel too.
@@ -375,7 +375,7 @@ kgdb_trap(int type, struct frame *frame)
 			;
 		/*
 		 * Do the printf *before* we ack the message.  This way
-		 * we won't drop any inbound characters while we're 
+		 * we won't drop any inbound characters while we're
 		 * doing the polling printf.
 		 */
 		printf("kgdb started from device %x\n", kgdb_dev);
@@ -391,7 +391,7 @@ kgdb_trap(int type, struct frame *frame)
 		/*
 		 * Only send an asynchronous SIGNAL message when we hit
 		 * a breakpoint.  Otherwise, we will drop the incoming
-		 * packet while we output this one (and on entry the other 
+		 * packet while we output this one (and on entry the other
 		 * side isn't interested in the SIGNAL type -- if it is,
 		 * it will have used a signal packet.)
 		 */

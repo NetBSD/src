@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.21 2006/11/24 22:04:22 wiz Exp $
+#	$NetBSD: majors.evbmips,v 1.21.10.1 2007/07/11 19:58:49 mjf Exp $
 #
 # Device majors for evbmips
 #
@@ -78,6 +78,7 @@ device-major	wsfont		char 72			wsfont
 device-major	sysmon		char 74			sysmon_envsys | sysmon_wdog
 device-major	cgd		char 75  block 18	cgd
 device-major	ksyms		char 76			ksyms
+device-major	uart		char 77			uart
 
 device-major	nsmb		char 98			nsmb
 device-major	athflash	char 99			athflash

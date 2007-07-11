@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.2 2006/03/12 20:25:25 cube Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.2.22.1 2007/07/11 19:57:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -38,6 +38,13 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+
+#define PT_MACHDEP_STRINGS \
+	"PT_STEP", \
+	"PT_GETREGS", \
+	"PT_SETREGS", \
+	"PT_GETFPREGS", \
+	"PT_SETFPREGS",
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"

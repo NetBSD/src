@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bktr2netbsd,v 1.4 2003/03/12 00:23:39 wiz Exp $
+#	$NetBSD: bktr2netbsd,v 1.4.62.1 2007/07/11 20:08:05 mjf Exp $
 #
 # Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,7 +75,7 @@ rm -f CHANGELOG.TXT README.* bktr_i2c.[ch]
 
 ### Remove the $'s around RCS tags
 find $d -type f -print | xargs egrep -l '\$Id:' | while read f; do
-	sed -e 's/\$Id: bktr2netbsd,v 1.4 2003/03/12 00:23:39 wiz Exp $SourceForge:/' \
+	sed -e 's/\$\(Id:\)\(.*\) \$/SourceForge:\2/' \
 	    < $f > /tmp/bktr1f$$ && mv /tmp/bktr1f$$ $f && \
 	echo quoted \$RCS tag from $f
 done

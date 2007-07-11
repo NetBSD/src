@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.35 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.35.10.1 2007/07/11 20:06:37 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.35.10.1 2007/07/11 20:06:37 mjf Exp $");
 
 #include "rnd.h"
 
@@ -132,7 +132,6 @@ static void	edc_dump_status_block(struct edc_mca_softc *,
 static int	edc_do_attn(struct edc_mca_softc *, int, int, int);
 static void	edc_cmd_wait(struct edc_mca_softc *, int, int);
 static void	edcworker(void *);
-static void	edc_spawn_worker(void *);
 
 int
 edc_mca_probe(struct device *parent, struct cfdata *match,
@@ -341,7 +340,12 @@ edc_mca_attach(struct device *parent, struct device *self, void *aux)
 	 * Run the worker thread.
 	 */
 	config_pending_incr();
-	kthread_create(edc_spawn_worker, (void *) sc);
+	if ((error = kthread_create(PRI_NONE, 0, NULL, edcworker, sc, NULL,
+	    "%s", sc->sc_dev.dv_xname))) {
+		printf("%s: cannot spawn worker thread: errno=%d\n",
+			sc->sc_dev.dv_xname, error);
+		panic("edc_mca_attach");
+	}
 }
 
 void
@@ -801,23 +805,6 @@ edc_dump_status_block(struct edc_mca_softc *sc, u_int16_t *status_block,
 #endif
 	}
 }
-
-static void
-edc_spawn_worker(void *arg)
-{
-	struct edc_mca_softc *sc = (struct edc_mca_softc *) arg;
-	int error;
-	struct proc *wrk;
-
-	/* Now, everything is ready, start a kthread */
-	if ((error = kthread_create1(edcworker, sc, &wrk,
-			"%s", sc->sc_dev.dv_xname))) {
-		printf("%s: cannot spawn worker thread: errno=%d\n",
-			sc->sc_dev.dv_xname, error);
-		panic("edc_spawn_worker");
-	}
-}
-
 /*
  * Main worker thread function.
  */

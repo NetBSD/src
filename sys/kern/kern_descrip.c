@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.154 2007/03/12 18:18:32 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.154.2.1 2007/07/11 20:09:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.154 2007/03/12 18:18:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.154.2.1 2007/07/11 20:09:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,6 +433,84 @@ fcntl_forfs(int fd, struct lwp *l, int cmd, void *arg)
 	return (error);
 }
 
+int
+do_fcntl_lock(struct lwp *l, int fd, int cmd, struct flock *fl)
+{
+	struct file *fp;
+	struct vnode *vp;
+	struct proc *p = l->l_proc;
+	int error, flg;
+
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
+		return (EBADF);
+
+	FILE_USE(fp);
+
+	if (fp->f_type != DTYPE_VNODE) {
+		error = EINVAL;
+		goto out;
+	}
+	vp = (struct vnode *)fp->f_data;
+	if (fl->l_whence == SEEK_CUR)
+		fl->l_start += fp->f_offset;
+
+	flg = F_POSIX;
+
+	switch (cmd) {
+
+	case F_SETLKW:
+		flg |= F_WAIT;
+		/* Fall into F_SETLK */
+
+	case F_SETLK:
+		switch (fl->l_type) {
+		case F_RDLCK:
+			if ((fp->f_flag & FREAD) == 0) {
+				error = EBADF;
+				goto out;
+			}
+			p->p_flag |= PK_ADVLOCK;
+			error = VOP_ADVLOCK(vp, p, F_SETLK, fl, flg);
+			goto out;
+
+		case F_WRLCK:
+			if ((fp->f_flag & FWRITE) == 0) {
+				error = EBADF;
+				goto out;
+			}
+			p->p_flag |= PK_ADVLOCK;
+			error = VOP_ADVLOCK(vp, p, F_SETLK, fl, flg);
+			goto out;
+
+		case F_UNLCK:
+			error = VOP_ADVLOCK(vp, p, F_UNLCK, fl, F_POSIX);
+			goto out;
+
+		default:
+			error = EINVAL;
+			goto out;
+		}
+
+	case F_GETLK:
+		if (fl->l_type != F_RDLCK &&
+		    fl->l_type != F_WRLCK &&
+		    fl->l_type != F_UNLCK) {
+			error = EINVAL;
+			goto out;
+		}
+		error = VOP_ADVLOCK(vp, p, F_GETLK, fl, F_POSIX);
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+
+    out:
+	FILE_UNUSE(fp, l);
+	return error;
+}
+
 /*
  * The file control system call.
  */
@@ -448,8 +526,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 	struct filedesc *fdp;
 	struct file	*fp;
 	struct proc	*p;
-	struct vnode	*vp;
-	int		fd, i, tmp, error, flg, cmd, newmin;
+	int		fd, i, tmp, error, cmd, newmin;
 	struct flock	fl;
 
 	p = l->l_proc;
@@ -457,7 +534,6 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 	cmd = SCARG(uap, cmd);
 	fdp = p->p_fd;
 	error = 0;
-	flg = F_POSIX;
 
 	switch (cmd) {
 	case F_CLOSEM:
@@ -470,6 +546,17 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 	case F_MAXFD:
 		*retval = fdp->fd_lastfile;
 		return 0;
+
+	case F_SETLKW:
+	case F_SETLK:
+	case F_GETLK:
+		error = copyin(SCARG(uap, arg), &fl, sizeof(fl));
+		if (error)
+			return error;
+		error = do_fcntl_lock(l, fd, cmd, &fl);
+		if (cmd == F_GETLK && error == 0)
+			error = copyout(&fl, SCARG(uap, arg), sizeof(fl));
+		return error;
 
 	default:
 		/* Handled below */
@@ -561,74 +648,6 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 	case F_SETOWN:
 		tmp = (int)(intptr_t) SCARG(uap, arg);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOSETOWN, &tmp, l);
-		break;
-
-	case F_SETLKW:
-		flg |= F_WAIT;
-		/* Fall into F_SETLK */
-
-	case F_SETLK:
-		if (fp->f_type != DTYPE_VNODE) {
-			error = EINVAL;
-			goto out;
-		}
-		vp = (struct vnode *)fp->f_data;
-		/* Copy in the lock structure */
-		error = copyin(SCARG(uap, arg), &fl, sizeof(fl));
-		if (error)
-			goto out;
-		if (fl.l_whence == SEEK_CUR)
-			fl.l_start += fp->f_offset;
-		switch (fl.l_type) {
-		case F_RDLCK:
-			if ((fp->f_flag & FREAD) == 0) {
-				error = EBADF;
-				goto out;
-			}
-			p->p_flag |= PK_ADVLOCK;
-			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
-			goto out;
-
-		case F_WRLCK:
-			if ((fp->f_flag & FWRITE) == 0) {
-				error = EBADF;
-				goto out;
-			}
-			p->p_flag |= PK_ADVLOCK;
-			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
-			goto out;
-
-		case F_UNLCK:
-			error = VOP_ADVLOCK(vp, p, F_UNLCK, &fl, F_POSIX);
-			goto out;
-
-		default:
-			error = EINVAL;
-			goto out;
-		}
-
-	case F_GETLK:
-		if (fp->f_type != DTYPE_VNODE) {
-			error = EINVAL;
-			goto out;
-		}
-		vp = (struct vnode *)fp->f_data;
-		/* Copy in the lock structure */
-		error = copyin(SCARG(uap, arg), &fl, sizeof(fl));
-		if (error)
-			goto out;
-		if (fl.l_whence == SEEK_CUR)
-			fl.l_start += fp->f_offset;
-		if (fl.l_type != F_RDLCK &&
-		    fl.l_type != F_WRLCK &&
-		    fl.l_type != F_UNLCK) {
-			error = EINVAL;
-			goto out;
-		}
-		error = VOP_ADVLOCK(vp, p, F_GETLK, &fl, F_POSIX);
-		if (error)
-			goto out;
-		error = copyout(&fl, SCARG(uap, arg), sizeof(fl));
 		break;
 
 	default:
@@ -1053,13 +1072,16 @@ cwdinit(struct proc *p)
 
 	cwdi = pool_get(&cwdi_pool, PR_WAITOK);
 
-	simple_lock_init(&cwdi->cwdi_slock);
+	rw_init(&cwdi->cwdi_lock);
 	cwdi->cwdi_cdir = p->p_cwdi->cwdi_cdir;
 	if (cwdi->cwdi_cdir)
 		VREF(cwdi->cwdi_cdir);
 	cwdi->cwdi_rdir = p->p_cwdi->cwdi_rdir;
 	if (cwdi->cwdi_rdir)
 		VREF(cwdi->cwdi_rdir);
+	cwdi->cwdi_edir = p->p_cwdi->cwdi_edir;
+	if (cwdi->cwdi_edir)
+		VREF(cwdi->cwdi_edir);
 	cwdi->cwdi_cmask =  p->p_cwdi->cwdi_cmask;
 	cwdi->cwdi_refcnt = 1;
 
@@ -1074,9 +1096,9 @@ cwdshare(struct proc *p1, struct proc *p2)
 {
 	struct cwdinfo *cwdi = p1->p_cwdi;
 
-	simple_lock(&cwdi->cwdi_slock);
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	cwdi->cwdi_refcnt++;
-	simple_unlock(&cwdi->cwdi_slock);
+	rw_exit(&cwdi->cwdi_lock);
 	p2->p_cwdi = cwdi;
 }
 
@@ -1106,15 +1128,18 @@ cwdfree(struct cwdinfo *cwdi)
 {
 	int n;
 
-	simple_lock(&cwdi->cwdi_slock);
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
 	n = --cwdi->cwdi_refcnt;
-	simple_unlock(&cwdi->cwdi_slock);
+	rw_exit(&cwdi->cwdi_lock);
 	if (n > 0)
 		return;
 
 	vrele(cwdi->cwdi_cdir);
 	if (cwdi->cwdi_rdir)
 		vrele(cwdi->cwdi_rdir);
+	if (cwdi->cwdi_edir)
+		vrele(cwdi->cwdi_edir);
+	rw_destroy(&cwdi->cwdi_lock);
 	pool_put(&cwdi_pool, cwdi);
 }
 
@@ -1751,6 +1776,9 @@ fdcloseexec(struct lwp *l)
 	fdunshare(l);
 	cwdunshare(p);
 
+	if (p->p_cwdi->cwdi_edir)
+		vrele(p->p_cwdi->cwdi_edir);
+
 	fdp = p->p_fd;
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
@@ -1766,8 +1794,7 @@ fdcloseexec(struct lwp *l)
  */
 #define CHECK_UPTO 3
 int
-fdcheckstd(l)
-	struct lwp *l;
+fdcheckstd(struct lwp *l)
 {
 	struct proc *p;
 	struct nameidata nd;

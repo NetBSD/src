@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.11 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.11.2.1 2007/07/11 20:06:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.11 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.11.2.1 2007/07/11 20:06:17 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -144,8 +144,7 @@ void	wd33c93_sched_msgout (struct wd33c93_softc *, u_short);
 void	wd33c93_msgout (struct wd33c93_softc *);
 void	wd33c93_timeout (void *arg);
 void	wd33c93_watchdog (void *arg);
-int	wd33c93_div2stp (struct wd33c93_softc *, int);
-int	wd33c93_stp2div (struct wd33c93_softc *, int);
+u_char	wd33c93_stp2syn (struct wd33c93_softc *, struct wd33c93_tinfo *);
 void	wd33c93_setsync (struct wd33c93_softc *, struct wd33c93_tinfo *);
 void	wd33c93_update_xfer_mode (struct wd33c93_softc *, int);
 
@@ -206,9 +205,7 @@ wd33c93_attach(struct wd33c93_softc *dev)
 	chan->chan_nluns = SBIC_NLUN;
 	chan->chan_id = dev->sc_id;
 
-	callout_init(&dev->sc_watchdog);
-
-	dev->sc_maxoffset = SBIC_SYN_MAX_OFFSET; /* Max Sync Offset */
+	callout_init(&dev->sc_watchdog, 0);
 
 	/*
 	 * Add reference to adapter so that we drop the reference after
@@ -222,11 +219,21 @@ wd33c93_attach(struct wd33c93_softc *dev)
 
 	dev->sc_cfflags = device_cfdata(&dev->sc_dev)->cf_flags;
 	wd33c93_init(dev);
-
-	printf(": %s revision %d, %d.%d MHz, SCSI ID %d\n",
-	    wd33c93_chip_names[dev->sc_chip], dev->sc_rev,
+	
+	printf(": %s (%d.%d MHz clock, %s, SCSI ID %d)\n",
+	    wd33c93_chip_names[dev->sc_chip],
 	    dev->sc_clkfreq / 10, dev->sc_clkfreq % 10,
+	    (dev->sc_dmamode == SBIC_CTL_DMA) ? "DMA" :
+	    (dev->sc_dmamode == SBIC_CTL_DBA_DMA) ? "DBA" :
+	    (dev->sc_dmamode == SBIC_CTL_BURST_DMA) ? "BURST DMA" : "PIO",
 	    dev->sc_channel.chan_id);
+	if (dev->sc_chip == SBIC_CHIP_WD33C93B) {
+		printf("%s: microcode revision 0x%02x",
+		    dev->sc_dev.dv_xname, dev->sc_rev);
+		if (dev->sc_minsyncperiod < 50)
+			printf(", Fast SCSI");
+		printf("\n");
+	}
 
 	dev->sc_child = config_found(&dev->sc_dev, &dev->sc_channel,
 				     scsiprint);
@@ -266,18 +273,18 @@ wd33c93_init(struct wd33c93_softc *dev)
 	for (i = 0; i < 8; i++) {
 		struct wd33c93_tinfo *ti = &dev->sc_tinfo[i];
 		/*
-		 * sc_flags = 0xTTRRSS
+		 * cf_flags = 0xTTSSRR
 		 *
 		 *   TT = Bitmask to disable Tagged Queues
+		 *   SS = Bitmask to disable Sync negotiation
 		 *   RR = Bitmask to disable disconnect/reselect
-		 *   SS = Bitmask to diable Sync negotiation
 		 */
 		ti->flags = T_NEED_RESET;
-		if (dev->sc_cfflags & (1<<(i+8)))
+		if (CFFLAGS_NOSYNC(dev->sc_cfflags, i))
 			ti->flags |= T_NOSYNC;
-		if (dev->sc_cfflags & (1<<i) || wd33c93_nodisc)
+		if (CFFLAGS_NODISC(dev->sc_cfflags, i) || wd33c93_nodisc)
 			ti->flags |= T_NODISC;
-		ti->period = dev->sc_syncperiods[0];
+		ti->period = dev->sc_minsyncperiod;
 		ti->offset = 0;
 	}
 }
@@ -297,33 +304,10 @@ wd33c93_reset(struct wd33c93_softc *dev)
 		(*dev->sc_reset)(dev);
 
 	my_id = dev->sc_channel.chan_id & SBIC_ID_MASK;
-	/*
-	 * Choose a suitable clock divisor and work out the resulting
-	 * sync transfer periods in 4ns units.
-	 */
-	if (dev->sc_clkfreq < 110) {
-		my_id |= SBIC_ID_FS_8_10;
-		div = 2;
-	} else if (dev->sc_clkfreq < 160) {
-		my_id |= SBIC_ID_FS_12_15;
-		div = 3;
-	} else if (dev->sc_clkfreq < 210) {
-		my_id |= SBIC_ID_FS_16_20;
-		div = 4;
-	} else
-		panic("wd33c93: invalid clock speed %d", dev->sc_clkfreq);
-	for (i = 0; i < 7; i++)
-		dev->sc_syncperiods[i] =
-		    (i + 2) * div * 1250 / dev->sc_clkfreq;
-	SBIC_DEBUG(SYNC, ("available sync periods: %d %d %d %d %d %d %d\n",
-	    dev->sc_syncperiods[0], dev->sc_syncperiods[1],
-	    dev->sc_syncperiods[2], dev->sc_syncperiods[3],
-	    dev->sc_syncperiods[4], dev->sc_syncperiods[5],
-	    dev->sc_syncperiods[6]));
 
-	/* Enable advanced features */
+	/* Enable advanced features and really(!) advanced features */
 #if 1
-	my_id |= SBIC_ID_EAF;	/* XXX - MD Layer */
+	my_id |= (SBIC_ID_EAF | SBIC_ID_RAF);	/* XXX - MD Layer */
 #endif
 
 	SET_SBIC_myid(dev, my_id);
@@ -336,8 +320,8 @@ wd33c93_reset(struct wd33c93_softc *dev)
 	/* Set up various chip parameters */
 	SET_SBIC_control(dev, SBIC_CTL_EDI | SBIC_CTL_IDI);
 
-	GET_SBIC_csr(dev, csr);		/* clears interrupt also */
-	GET_SBIC_cdb1(dev, dev->sc_rev);
+	GET_SBIC_csr(dev, csr);			/* clears interrupt also */
+	GET_SBIC_cdb1(dev, dev->sc_rev);	/* valid with RAF on wd33c93b */
 
 	switch (csr) {
 	case SBIC_CSR_RESET:
@@ -353,6 +337,49 @@ wd33c93_reset(struct wd33c93_softc *dev)
 	default:
 		dev->sc_chip = SBIC_CHIP_UNKNOWN;
 	}
+
+	/*
+	 * Choose a suitable clock divisor and work out the resulting
+	 * sync transfer periods in 4ns units.
+	 */
+	if (dev->sc_clkfreq < 110) {
+		my_id |= SBIC_ID_FS_8_10;
+		div = 2;
+	} else if (dev->sc_clkfreq < 160) {
+		my_id |= SBIC_ID_FS_12_15;
+		div = 3;
+	} else if (dev->sc_clkfreq < 210) {
+		my_id |= SBIC_ID_FS_16_20;
+		div = 4;
+	} else
+		panic("wd33c93: invalid clock speed %d", dev->sc_clkfreq);
+
+	for (i = 0; i < 7; i++)
+		dev->sc_syncperiods[i] =
+		    (i + 2) * div * 1250 / dev->sc_clkfreq;
+	dev->sc_minsyncperiod = dev->sc_syncperiods[0];
+	SBIC_DEBUG(SYNC, ("available sync periods: %d %d %d %d %d %d %d\n",
+	    dev->sc_syncperiods[0], dev->sc_syncperiods[1],
+	    dev->sc_syncperiods[2], dev->sc_syncperiods[3],
+	    dev->sc_syncperiods[4], dev->sc_syncperiods[5],
+	    dev->sc_syncperiods[6]));
+
+	if (dev->sc_clkfreq >= 160 && dev->sc_chip == SBIC_CHIP_WD33C93B) {
+		for (i = 0; i < 3; i++)
+			dev->sc_fsyncperiods[i] =
+			    (i + 2) * 2 * 1250 / dev->sc_clkfreq;
+		SBIC_DEBUG(SYNC, ("available fast sync periods: %d %d %d\n",
+		    dev->sc_fsyncperiods[0], dev->sc_fsyncperiods[1],
+		    dev->sc_fsyncperiods[2]));
+		dev->sc_minsyncperiod = dev->sc_fsyncperiods[0];
+	}
+
+	/* Max Sync Offset */
+	if (dev->sc_chip == SBIC_CHIP_WD33C93A ||
+	    dev->sc_chip == SBIC_CHIP_WD33C93B)
+		dev->sc_maxoffset = SBIC_SYN_93AB_MAX_OFFSET;
+	else
+		dev->sc_maxoffset = SBIC_SYN_93_MAX_OFFSET;
 
 	/*
 	 * don't allow Selection (SBIC_RID_ES)
@@ -384,24 +411,49 @@ wd33c93_error(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 }
 
 /*
+ * Determine an appropriate value for the synchronous transfer register
+ * given the period and offset values in *ti.
+ */
+u_char
+wd33c93_stp2syn(struct wd33c93_softc *dev, struct wd33c93_tinfo *ti)
+{
+	unsigned i;
+
+	/* see if we can handle fast scsi (100-200ns) first */
+	if (ti->period < 50 && dev->sc_minsyncperiod < 50) {
+		for (i = 0; i < 3; i++)
+			if (dev->sc_fsyncperiods[i] >= ti->period)
+				return (SBIC_SYN(ti->offset, i + 2, 1));
+	}
+
+	for (i = 0; i < 7; i++) {
+		if (dev->sc_syncperiods[i] >= ti->period) {
+			if (i == 6)
+				return (SBIC_SYN(0, 0, 0));
+			else
+				return (SBIC_SYN(ti->offset, i + 2, 0));
+		}
+	}
+
+	/* XXX - can't handle it; do async */
+	return (SBIC_SYN(0, 0, 0));
+}
+
+/*
  * Setup sync mode for given target
  */
 void
 wd33c93_setsync(struct wd33c93_softc *dev, struct wd33c93_tinfo *ti)
 {
-	u_char offset, period;
+	u_char syncreg;
 
-	if (ti->flags & T_SYNCMODE) {
-		offset = ti->offset;
-		period = wd33c93_stp2div(dev, ti->period);
-	} else {
-		offset = 0;
-		period = 0;
-	}
+	if (ti->flags & T_SYNCMODE)
+		syncreg = wd33c93_stp2syn(dev, ti);
+	else
+		syncreg = SBIC_SYN(0, 0, 0);
 
-	SBIC_DEBUG(SYNC, ("wd33c93_setsync: sync reg = 0x%02x\n",
-		       SBIC_SYN(offset, period)));
-	SET_SBIC_syn(dev, SBIC_SYN(offset, period));
+	SBIC_DEBUG(SYNC, ("wd33c93_setsync: sync reg = 0x%02x\n", syncreg));
+	SET_SBIC_syn(dev, syncreg);
 }
 
 /*
@@ -504,6 +556,8 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 	struct wd33c93_acb *acb;
 	int flags, s;
 
+	SBIC_DEBUG(MISC, ("wd33c93_scsi_request: req 0x%x\n", (int)req));
+
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
 		xs = arg;
@@ -576,7 +630,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		ti = &dev->sc_tinfo[xm->xm_target];
 		ti->flags &= ~T_WANTSYNC;
 
-		if ((dev->sc_cfflags & (1<<(xm->xm_target+16))) == 0 &&
+		if ((CFFLAGS_NOTAGS(dev->sc_cfflags, xm->xm_target) == 0) &&
 		    (xm->xm_mode & PERIPH_CAP_TQING) && !wd33c93_notags)
 			ti->flags |= T_TAG;
 		else
@@ -1039,7 +1093,7 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 			/* Inititae a SDTR message */
 			SBIC_DEBUG(SYNC, ("Sending SDTR to target %d\n", id));
 			if (ti->flags & T_WANTSYNC) {
-				ti->period = dev->sc_syncperiods[0];
+				ti->period = dev->sc_minsyncperiod;
 				ti->offset = dev->sc_maxoffset;
 			} else {
 				ti->period = 0;
@@ -1051,7 +1105,7 @@ wd33c93_selectbus(struct wd33c93_softc *dev, struct wd33c93_acb *acb)
 			dev->sc_omsg[2] = MSG_EXT_SDTR_LEN;
 			dev->sc_omsg[3] = MSG_EXT_SDTR;
 			if (ti->flags & T_WANTSYNC) {
-				dev->sc_omsg[4] = dev->sc_syncperiods[0];
+				dev->sc_omsg[4] = dev->sc_minsyncperiod;
 				dev->sc_omsg[5] = dev->sc_maxoffset;
 			} else {
 				dev->sc_omsg[4] = 0;
@@ -1611,10 +1665,21 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 					goto reject;
 
 				ti->period =
-				    MAX(msgaddr[3], dev->sc_syncperiods[0]);
+				    MAX(msgaddr[3], dev->sc_minsyncperiod);
 				ti->offset = MIN(msgaddr[4], dev->sc_maxoffset);
+
+				/*
+				 * <SGI, IBM DORS-32160, WA6A> will do nothing
+				 * but attempt sync negotiation until it gets
+				 * what it wants. To avoid an infinite loop set
+				 * off by the identify request, oblige them.
+				 */
+				if ((dev->sc_flags&SBICF_SYNCNEGO) == 0 &&
+				    msgaddr[3] != 0)
+					ti->flags |= T_WANTSYNC;
+
 				if (!(ti->flags & T_WANTSYNC))
-				    ti->period = ti->offset = 0;
+					ti->period = ti->offset = 0;
 
 				ti->flags &= ~T_NEGOTIATE;
 
@@ -1623,8 +1688,8 @@ void wd33c93_msgin(struct wd33c93_softc *dev, u_char *msgaddr, int msglen)
 				else
 					ti->flags |= T_SYNCMODE; /* Sync */
 
+				/* target initiated negotiation */
 				if ((dev->sc_flags&SBICF_SYNCNEGO) == 0)
-					/* target initiated negotiation */
 					wd33c93_sched_msgout(dev, SEND_SDTR);
 				dev->sc_flags &= ~SBICF_SYNCNEGO;
 
@@ -2206,39 +2271,6 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
 		       (xm.xm_mode & PERIPH_CAP_SYNC) ? "sync" : "async"));
 
 	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
-}
-
-
-/*
- * Calculate SCSI Tranfser Period Factor (4ns units each) from the
- * WD33c93 divisor value
- *
- * cycle = DIV / (2 * CLK)
- * DIV = FS + 2
- * best we can do is 200ns at 20 MHz, 2 cycles
- */
-int
-wd33c93_div2stp(struct wd33c93_softc *dev, int div)
-{
-
-	if (div < 2)
-		div = 8;		/* map to Cycles */
-	return dev->sc_syncperiods[div - 2];
-}
-
-/*
- * Convert SCSI Transfer Period Factor (in 4ns units) to the divisor
- * value used by the WD33c93 controller.
- */
-int
-wd33c93_stp2div(struct wd33c93_softc *dev, int stp)
-{
-	unsigned i;
-
-	for (i = 0; i < 7; i++)
-		if (dev->sc_syncperiods[i] >= stp)
-			return (i == 6 ? 0 : i + 2);
-	return 0; /* XXX we can't slow down far enough */
 }
 
 void

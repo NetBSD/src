@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.55 2007/02/09 21:55:06 ad Exp $
+#	$NetBSD: files.mips,v 1.55.8.1 2007/07/11 20:00:45 mjf Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -54,7 +54,6 @@ file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
 file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
 
 file	arch/mips/mips/in_cksum.c		inet
-file	netns/ns_cksum.c			ns
 
 file	arch/mips/mips/mips_fputrap.c		softfloat | !nofpu
 file	arch/mips/mips/mips_emul.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.29 2007/03/06 13:54:44 he Exp $	*/
+/*	$NetBSD: fd.c,v 1.29.4.1 2007/07/11 19:58:01 mjf Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.29 2007/03/06 13:54:44 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.29.4.1 2007/07/11 19:58:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,8 +262,8 @@ fdcattach(struct fdc_softc *fdc)
 
 	iot = fdc->sc_iot;
 	ioh = fdc->sc_ioh;
-	callout_init(&fdc->sc_timo_ch);
-	callout_init(&fdc->sc_intr_ch);
+	callout_init(&fdc->sc_timo_ch, 0);
+	callout_init(&fdc->sc_intr_ch, 0);
 
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
@@ -335,8 +335,8 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	const struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
-	callout_init(&fd->sc_motoron_ch);
-	callout_init(&fd->sc_motoroff_ch);
+	callout_init(&fd->sc_motoron_ch, 0);
+	callout_init(&fd->sc_motoroff_ch, 0);
 
 	/* XXX Allow `flags' to override device type? */
 

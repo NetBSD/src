@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.4.1 2007/07/11 20:05:25 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.4.1 2007/07/11 20:05:25 mjf Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -306,7 +306,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 
 	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 
-	callout_init(&sc->sc_restart_ch);
+	callout_init(&sc->sc_restart_ch, 0);
 	callout_setfunc(&sc->sc_restart_ch, dkrestart, sc);
 
 	/*
@@ -642,6 +642,47 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	return (error);
 }
 
+device_t
+dkwedge_find_by_wname(const char *wname)
+{
+	device_t dv = NULL;
+	struct dkwedge_softc *sc;
+	int i;
+
+	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+	for (i = 0; i < ndkwedges; i++) {
+		if ((sc = dkwedges[i]) == NULL)
+			continue;
+		if (strcmp(sc->sc_wname, wname) == 0) {
+			if (dv != NULL) {
+				printf(
+				    "WARNING: double match for wedge name %s "
+				    "(%s, %s)\n", wname, device_xname(dv),
+				    device_xname(sc->sc_dev));
+				continue;
+			}
+			dv = sc->sc_dev;
+		}
+	}
+	(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+	return dv;
+}
+
+void
+dkwedge_print_wnames(void)
+{
+	struct dkwedge_softc *sc;
+	int i;
+
+	(void) lockmgr(&dkwedges_lock, LK_EXCLUSIVE, NULL);
+	for (i = 0; i < ndkwedges; i++) {
+		if ((sc = dkwedges[i]) == NULL)
+			continue;
+		printf(" wedge:%s", sc->sc_wname);
+	}
+	(void) lockmgr(&dkwedges_lock, LK_RELEASE, NULL);
+}
+
 /*
  * dkwedge_set_bootwedge
  *
@@ -901,7 +942,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
 	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
 	if (sc->sc_dk.dk_openmask == 0) {
-		if (sc->sc_parent->dk_rawopens++ == 0) {
+		if (sc->sc_parent->dk_rawopens == 0) {
 			KASSERT(sc->sc_parent->dk_rawvp == NULL);
 			error = bdevvp(sc->sc_pdev, &vp);
 			if (error)
@@ -921,6 +962,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 			VOP_UNLOCK(vp, 0);
 			sc->sc_parent->dk_rawvp = vp;
 		}
+		sc->sc_parent->dk_rawopens++;
 	}
 	if (fmt == S_IFCHR)
 		sc->sc_dk.dk_copenmask |= 1;
@@ -1251,10 +1293,45 @@ dksize(dev_t dev)
  *	Perform a crash dump to a wedge.
  */
 static int
-dkdump(dev_t dev, daddr_t blkno, void *va,
-    size_t size)
+dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	const struct bdevsw *bdev;
+	int rv = 0;
 
-	/* XXX */
-	return (ENXIO);
+	if (sc == NULL)
+		return (-1);
+	
+	if (sc->sc_state != DKW_STATE_RUNNING)
+		return (ENXIO);
+
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
+	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
+
+	/* Our content type is static, no need to open the device. */
+
+	if (strcmp(sc->sc_ptype, DKW_PTYPE_SWAP) != 0) {
+		rv = ENXIO;
+		goto out;
+	}
+	if (size % DEV_BSIZE != 0) {
+		rv = EINVAL;
+		goto out;
+	}
+	if (blkno + size / DEV_BSIZE > sc->sc_size) {
+		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
+		    "sc->sc_size (%" PRIu64 ")\n", __func__, blkno,
+		    size / DEV_BSIZE, sc->sc_size);
+		rv = EINVAL;
+		goto out;
+	}
+
+	bdev = bdevsw_lookup(sc->sc_pdev);
+	rv = (*bdev->d_dump)(sc->sc_pdev, blkno + sc->sc_offset, va, size);
+
+out:
+	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
+	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+
+	return rv;
 }

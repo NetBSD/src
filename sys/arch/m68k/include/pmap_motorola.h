@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.12 2007/03/05 12:50:17 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.12.4.1 2007/07/11 20:00:23 mjf Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -110,7 +110,11 @@ typedef struct pmap	*pmap_t;
  * physically contiguous pages for the ST in pmap.c!
  */
 #define MAXKL2SIZE	32
+#if PAGE_SIZE == 8192
+#define MAXUL2SIZE	16
+#else
 #define MAXUL2SIZE	8
+#endif
 #define l2tobm(n)	(1 << (n))
 #define bmtol2(n)	(ffs(n) - 1)
 
@@ -151,7 +155,11 @@ struct pv_page_info {
  * This is basically:
  * ((PAGE_SIZE - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
  */
+#if PAGE_SIZE == 8192
+#define	NPVPPG	340
+#else
 #define	NPVPPG	170
+#endif
 
 struct pv_page {
 	struct pv_page_info pvp_pgi;
@@ -194,10 +202,8 @@ void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap, sz, td)	pmap_prefer((foff), (vap))
 #endif
 
-#ifdef mvme68k
 void	_pmap_set_page_cacheable(struct pmap *, vaddr_t);
 void	_pmap_set_page_cacheinhibit(struct pmap *, vaddr_t);
 int	_pmap_page_is_cacheable(struct pmap *, vaddr_t);
-#endif
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */

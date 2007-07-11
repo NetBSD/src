@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.68 2007/03/05 12:50:16 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.68.4.1 2007/07/11 20:00:32 mjf Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.68 2007/03/05 12:50:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.68.4.1 2007/07/11 20:00:32 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -432,7 +432,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	Sysptmap = PA2VA(kptmpa, pt_entry_t *);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
-	 * Immediately follows `nptpages' of static kernel page table.
+	 * Allocated at the end of KVA space.
 	 */
 	Sysmap = (pt_entry_t *)m68k_ptob((NPTEPG - 2) * NPTEPG);
 

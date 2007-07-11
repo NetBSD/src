@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.1 2006/10/02 07:18:19 gdamore Exp $ */
+/* $NetBSD: tmp121.c,v 1.1.16.1 2007/07/11 20:08:21 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.1 2006/10/02 07:18:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.1.16.1 2007/07/11 20:08:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,7 @@ struct tmp121temp_softc {
 
 	struct spi_handle *sc_sh;
 	
-	struct envsys_tre_data sc_sensor[1];
-	struct envsys_basic_info sc_info[1];
+	struct envsys_data sc_sensor[1];
 
 	struct sysmon_envsys sc_sysmon;
 };
@@ -67,20 +66,10 @@ struct tmp121temp_softc {
 static int tmp121temp_match(struct device *, struct cfdata *, void *);
 static void tmp121temp_attach(struct device *, struct device *, void *);
 
-static int tmp121temp_gtredata(struct sysmon_envsys *,
-    struct envsys_tre_data *);
-static int tmp121temp_streinfo(struct sysmon_envsys *,
-    struct envsys_basic_info *);
+static int tmp121temp_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL(tmp121temp, sizeof(struct tmp121temp_softc),
     tmp121temp_match, tmp121temp_attach, NULL, NULL);
-
-
-static const struct envsys_range tmp121temp_ranges[] = {
-	/* this looks suspect to me, manual says ranges are inclusive */
-	{ 0, 1,	ENVSYS_STEMP },
-	{ 1, 0,	-1 },
-};
 
 static int
 tmp121temp_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -106,13 +95,9 @@ tmp121temp_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sh = sa->sa_handle;
 
-	sc->sc_info[0].sensor = 0;
-	sc->sc_info[0].validflags = ENVSYS_FVALID;
-
 	sc->sc_sensor[0].sensor = 0;
-	sc->sc_sensor[0].validflags = ENVSYS_FVALID;
-	sc->sc_sensor[0].warnflags = ENVSYS_WARN_OK;
-	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
+	sc->sc_sensor[0].units = ENVSYS_STEMP;
 
 	/*
 	 * set up the description, which we allow MD code to override in
@@ -123,19 +108,15 @@ tmp121temp_attach(struct device *parent, struct device *self, void *aux)
 	if (desc != NULL &&
 	    prop_object_type(desc) == PROP_TYPE_STRING &&
 	    prop_string_size(desc) > 0)
-		strcpy(sc->sc_info[0].desc, prop_string_cstring_nocopy(desc));
+		strcpy(sc->sc_sensor[0].desc, prop_string_cstring_nocopy(desc));
 	else
-		strcpy(sc->sc_info[0].desc, device_xname(self));
+		strcpy(sc->sc_sensor[0].desc, device_xname(self));
 
-	
-	sc->sc_sysmon.sme_ranges = tmp121temp_ranges;
-	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
+	sc->sc_sysmon.sme_name = device_xname(self);
 	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
 	sc->sc_sysmon.sme_gtredata = tmp121temp_gtredata;
-	sc->sc_sysmon.sme_streinfo = tmp121temp_streinfo;
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_nsensors = 1;
-	sc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
@@ -151,7 +132,7 @@ tmp121temp_refresh(struct tmp121temp_softc *sc)
 	int			val;
 
 	if (spi_recv(sc->sc_sh, 2, (uint8_t *)&reg) != 0) {
-		sc->sc_sensor[0].validflags &= ~ENVSYS_FCURVALID;
+		sc->sc_sensor[0].state = ENVSYS_SINVALID;
 		return;
 	}
 
@@ -170,38 +151,15 @@ tmp121temp_refresh(struct tmp121temp_softc *sc)
 	sreg >>= 3;
 	val = sreg * 62500 + 273150000;
 
-	sc->sc_sensor[0].cur.data_us = val;
-	sc->sc_sensor[0].validflags |= ENVSYS_FCURVALID;
+	sc->sc_sensor[0].value_cur = val;
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
 }
 
 static int
-tmp121temp_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+tmp121temp_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct tmp121temp_softc *sc = sme->sme_cookie;
-
-	/*
-	 * XXX: locking?  possibly we could copy out bad sensor data.
-	 * I'm not going to worry about it right now -- sysmon is probably
-	 * single threaded anyway.
-	 */
 
 	tmp121temp_refresh(sc);
-	*tred = sc->sc_sensor[tred->sensor];
-
-	return (0);
-}
-
-static int
-tmp121temp_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
-{
-	struct tmp121temp_softc *sc = sme->sme_cookie;
-
-	memcpy(sc->sc_info[binfo->sensor].desc, binfo->desc,
-	    sizeof(sc->sc_info[binfo->sensor].desc));
-	sc->sc_info[binfo->sensor].desc[
-	    sizeof(sc->sc_info[binfo->sensor].desc) - 1] = '\0';
-
-	binfo->validflags = ENVSYS_FVALID;
-
 	return (0);
 }

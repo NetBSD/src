@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2007/03/04 06:00:29 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168.4.1 2007/07/11 20:01:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2007/03/04 06:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168.4.1 2007/07/11 20:01:13 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -332,7 +332,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    | (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	(void)memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 

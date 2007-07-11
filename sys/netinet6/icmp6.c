@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.131 2007/03/04 06:03:25 christos Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.131.4.1 2007/07/11 20:11:35 mjf Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.131 2007/03/04 06:03:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.131.4.1 2007/07/11 20:11:35 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -179,9 +179,7 @@ icmp6_init()
 }
 
 static void
-icmp6_errcount(stat, type, code)
-	struct icmp6errstat *stat;
-	int type, code;
+icmp6_errcount(struct icmp6errstat *stat, int type, int code)
 {
 	switch (type) {
 	case ICMP6_DST_UNREACH:
@@ -240,8 +238,7 @@ icmp6_errcount(stat, type, code)
  * Register a Path MTU Discovery callback.
  */
 void
-icmp6_mtudisc_callback_register(func)
-	void (*func) __P((struct in6_addr *));
+icmp6_mtudisc_callback_register(void (*func) __P((struct in6_addr *)))
 {
 	struct icmp6_mtudisc_callback *mc;
 
@@ -264,10 +261,8 @@ icmp6_mtudisc_callback_register(func)
  * may not contain enough scope zone information.
  */
 void
-icmp6_error2(m, type, code, param, ifp)
-	struct mbuf *m;
-	int type, code, param;
-	struct ifnet *ifp;
+icmp6_error2(struct mbuf *m, int type, int code, int param, 
+	struct ifnet *ifp)
 {
 	struct ip6_hdr *ip6;
 
@@ -294,9 +289,7 @@ icmp6_error2(m, type, code, param, ifp)
  * Generate an error packet of type error in response to bad IP6 packet.
  */
 void
-icmp6_error(m, type, code, param)
-	struct mbuf *m;
-	int type, code, param;
+icmp6_error(struct mbuf *m, int type, int code, int param)
 {
 	struct ip6_hdr *oip6, *nip6;
 	struct icmp6_hdr *icmp6;
@@ -314,11 +307,9 @@ icmp6_error(m, type, code, param)
 		goto freeit;
 	}
 
-	if (m->m_len < sizeof(struct ip6_hdr)) {
-		m = m_pullup(m, sizeof(struct ip6_hdr));
-		if (m == NULL)
-			return;
-	}
+	if (M_UNWRITABLE(m, sizeof(struct ip6_hdr)) &&
+	    (m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL)
+		return;
 	oip6 = mtod(m, struct ip6_hdr *);
 
 	/*
@@ -406,7 +397,7 @@ icmp6_error(m, type, code, param)
 
 	preplen = sizeof(struct ip6_hdr) + sizeof(struct icmp6_hdr);
 	M_PREPEND(m, preplen, M_DONTWAIT);
-	if (m && m->m_len < preplen)
+	if (m && M_UNWRITABLE(m, preplen))
 		m = m_pullup(m, preplen);
 	if (m == NULL) {
 		nd6log((LOG_DEBUG, "ENOBUFS in icmp6_error %d\n", __LINE__));
@@ -876,9 +867,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 }
 
 static int
-icmp6_notify_error(m, off, icmp6len, code)
-	struct mbuf *m;
-	int off, icmp6len, code;
+icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 {
 	struct icmp6_hdr *icmp6;
 	struct ip6_hdr *eip6;
@@ -1071,9 +1060,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 }
 
 void
-icmp6_mtudisc_update(ip6cp, validated)
-	struct ip6ctlparam *ip6cp;
-	int validated;
+icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 {
 	unsigned long rtcount;
 	struct icmp6_mtudisc_callback *mc;
@@ -1148,9 +1135,7 @@ icmp6_mtudisc_update(ip6cp, validated)
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 #endif
 static struct mbuf *
-ni6_input(m, off)
-	struct mbuf *m;
-	int off;
+ni6_input(struct mbuf *m, int off)
 {
 	struct icmp6_nodeinfo *ni6, *nni6;
 	struct mbuf *n = NULL;
@@ -1447,12 +1432,11 @@ ni6_input(m, off)
  *
  * XXX names with less than 2 dots (like "foo" or "foo.section") will be
  * treated as truncated name (two \0 at the end).  this is a wild guess.
+ *
+ * old - return pascal string if non-zero
  */
 static struct mbuf *
-ni6_nametodns(name, namelen, old)
-	const char *name;
-	int namelen;
-	int old;	/* return pascal string if non-zero */
+ni6_nametodns(const char *name, int namelen, int old)
 {
 	struct mbuf *m;
 	char *cp, *ep;
@@ -1559,11 +1543,7 @@ ni6_nametodns(name, namelen, old)
  * XXX upper/lowercase match (see RFC2065)
  */
 static int
-ni6_dnsmatch(a, alen, b, blen)
-	const char *a;
-	int alen;
-	const char *b;
-	int blen;
+ni6_dnsmatch(const char *a, int alen, const char *b, int blen)
 {
 	const char *a0, *b0;
 	int l;
@@ -1714,10 +1694,9 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
 }
 
 static int
-ni6_store_addrs(ni6, nni6, ifp0, resid)
-	struct icmp6_nodeinfo *ni6, *nni6;
-	struct ifnet *ifp0;
-	int resid;
+ni6_store_addrs(struct icmp6_nodeinfo *ni6, 
+	struct icmp6_nodeinfo *nni6, struct ifnet *ifp0,
+	int resid)
 {
 	struct ifnet *ifp = ifp0 ? ifp0 : TAILQ_FIRST(&ifnet);
 	struct in6_ifaddr *ifa6;
@@ -1857,9 +1836,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
  * XXX almost dup'ed code with rip6_input.
  */
 static int
-icmp6_rip6_input(mp, off)
-	struct	mbuf **mp;
-	int	off;
+icmp6_rip6_input(struct mbuf **mp, int off)
 {
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
@@ -2056,7 +2033,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	if (src == NULL) {
 		int e;
 		struct sockaddr_in6 sin6;
-		struct route_in6 ro;
+		struct route ro;
 
 		/*
 		 * This case matches to multicasts, our anycast, or unicasts
@@ -2069,9 +2046,8 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		sin6.sin6_addr = ip6->ip6_dst; /* zone ID should be embedded */
 
 		memset(&ro, 0, sizeof(ro));
-		src = in6_selectsrc(&sin6, NULL, NULL, (struct route *)&ro,
-		    NULL, &outif, &e);
-		rtcache_free((struct route *)&ro);
+		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
+		rtcache_free(&ro);
 		if (src == NULL) {
 			nd6log((LOG_DEBUG,
 			    "icmp6_reflect: source can't be determined: "
@@ -2124,10 +2100,8 @@ icmp6_reflect(struct mbuf *m, size_t off)
 }
 
 static const char *
-icmp6_redirect_diag(src6, dst6, tgt6)
-	struct in6_addr *src6;
-	struct in6_addr *dst6;
-	struct in6_addr *tgt6;
+icmp6_redirect_diag(struct in6_addr *src6, struct in6_addr *dst6, 
+	struct in6_addr *tgt6)
 {
 	static char buf[1024];
 	snprintf(buf, sizeof(buf), "(src=%s dst=%s tgt=%s)",
@@ -2136,9 +2110,7 @@ icmp6_redirect_diag(src6, dst6, tgt6)
 }
 
 void
-icmp6_redirect_input(m, off)
-	struct mbuf *m;
-	int off;
+icmp6_redirect_input(struct mbuf *m, int off)
 {
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
@@ -2350,9 +2322,7 @@ icmp6_redirect_input(m, off)
 }
 
 void
-icmp6_redirect_output(m0, rt)
-	struct mbuf *m0;
-	struct rtentry *rt;
+icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 {
 	struct ifnet *ifp;	/* my outgoing interface */
 	struct in6_addr *ifp_ll6;
@@ -2610,11 +2580,8 @@ fail:
  * ICMPv6 socket option processing.
  */
 int
-icmp6_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+icmp6_ctloutput(int op, struct socket *so, int level, 
+	int optname, struct mbuf **mp)
 {
 	int error = 0;
 	int optlen;
@@ -2717,8 +2684,7 @@ icmp6_ratelimit(
 }
 
 static struct rtentry *
-icmp6_mtudisc_clone(dst)
-	struct sockaddr *dst;
+icmp6_mtudisc_clone(struct sockaddr *dst)
 {
 	struct rtentry *rt;
 	int    error;

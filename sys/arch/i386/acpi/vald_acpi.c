@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.24 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.24.10.1 2007/07/11 19:59:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.24 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.24.10.1 2007/07/11 19:59:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,6 +469,11 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
 
 		sc->lcd_num = param->Package.Count;
 		sc->lcd_level = AcpiOsAllocate(sizeof(int) * sc->lcd_num);
+		if (sc->lcd_level == NULL) {
+			if (buf.Pointer)
+				AcpiOsFree(buf.Pointer);
+			return (AE_NO_MEMORY);
+		}
 
 		PrtElement = param->Package.Elements;
 		pi = sc->lcd_level;

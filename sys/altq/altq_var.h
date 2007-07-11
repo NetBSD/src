@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.10 2006/10/15 13:17:13 peter Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.10.10.1 2007/07/11 19:57:11 mjf Exp $	*/
 /*	$KAME: altq_var.h,v 1.18 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ typedef u_long ioctlcmd_t;
 /* use callout */
 #include <sys/callout.h>
 
-#if (__FreeBSD_version > 500000)
+#if (__FreeBSD_version > 500000) || defined(__NetBSD__)
 #define	CALLOUT_INIT(c)		callout_init((c), 0)
 #else
 #define	CALLOUT_INIT(c)		callout_init((c))

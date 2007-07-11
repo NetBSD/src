@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.9 2007/03/10 16:01:13 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.9.4.1 2007/07/11 20:12:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  *	  to acquire the lock determines if the thread that holds it is
  *	  currently running.  If so, it spins, else it sleeps.
  *
- *	* Spin -- If the lock is already held, the thead attempting to
+ *	* Spin -- If the lock is already held, the thread attempting to
  *	  acquire the lock spins.  The IPL will be raised on entry.
  *
  * Machine dependent code must provide the following:

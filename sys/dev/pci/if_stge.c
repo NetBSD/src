@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.36 2007/03/04 06:02:23 christos Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.36.4.1 2007/07/11 20:07:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.36 2007/03/04 06:02:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.36.4.1 2007/07/11 20:07:42 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -151,7 +151,7 @@ struct stge_softc {
 
 	struct mii_data sc_mii;		/* MII/media information */
 
-	struct callout sc_tick_ch;	/* tick callout */
+	callout_t sc_tick_ch;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -401,7 +401,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	const struct stge_product *sp;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	sp = stge_lookup(pa);
 	if (sp == NULL) {

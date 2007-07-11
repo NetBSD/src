@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.3 2007/03/12 18:18:36 ad Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.3.2.1 2007/07/11 20:11:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@
 #include <net/pfil.h>
 
 #include <netinet/in.h>
-#include <netinet/in_route.h>
 #include <netinet6/in6_var.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
@@ -93,9 +92,9 @@ LIST_HEAD(ip6flowhead, ip6flow);
  * use our own (possibly for future expansion).
  */
 #define	IP6FLOW_TIMER		(5 * PR_SLOWHZ)
-#define	IP6FLOW_HASHSIZE	(1 << IP6FLOW_HASHBITS)
+#define	IP6FLOW_DEFAULT_HASHSIZE	(1 << IP6FLOW_HASHBITS) 
 
-static struct ip6flowhead ip6flowtable[IP6FLOW_HASHSIZE];
+static struct ip6flowhead *ip6flowtable = NULL;
 static struct ip6flowhead ip6flowlist;
 static int ip6flow_inuse;
 
@@ -122,6 +121,7 @@ do { \
 #endif
 
 int ip6_maxflows = IP6FLOW_DEFAULT;
+int ip6_hashsize = IP6FLOW_DEFAULT_HASHSIZE;
 
 /*
  * Calculate hash table position.
@@ -131,7 +131,7 @@ ip6flow_hash(struct ip6_hdr *ip6)
 {
 	size_t hash;
 	uint32_t dst_sum, src_sum;
-	int idx;
+	size_t idx;
 
 	src_sum = ip6->ip6_src.s6_addr32[0] + ip6->ip6_src.s6_addr32[1]
 	    + ip6->ip6_src.s6_addr32[2] + ip6->ip6_src.s6_addr32[3];
@@ -143,7 +143,7 @@ ip6flow_hash(struct ip6_hdr *ip6)
 	for (idx = 0; idx < 32; idx += IP6FLOW_HASHBITS)
 		hash += (dst_sum >> (32 - idx)) + (src_sum >> idx);
 
-	return hash & (IP6FLOW_HASHSIZE-1);
+	return hash & (ip6_hashsize-1);
 }
 
 /*
@@ -170,16 +170,34 @@ ip6flow_lookup(struct ip6_hdr *ip6)
 }
 
 /*
- * Initalise lists.
+ * Allocate memory and initialise lists. This function is called
+ * from ip6_init and called there after to resize the hash table.
+ * If a newly sized table cannot be malloc'ed we just continue
+ * to use the old one.
  */
-void
-ip6flow_init(void)
+int
+ip6flow_init(int table_size)
 {
+	struct ip6flowhead *new_table;
 	size_t i;
 
+	new_table = (struct ip6flowhead *)malloc(sizeof(struct ip6flowhead) *
+	    table_size, M_RTABLE, M_NOWAIT);
+
+	if (new_table == NULL)
+		return 1;
+
+	if (ip6flowtable != NULL)
+		free(ip6flowtable, M_RTABLE);
+
+	ip6flowtable = new_table;
+	ip6_hashsize = table_size;
+
 	LIST_INIT(&ip6flowlist);
-	for (i = 0; i < IP6FLOW_HASHSIZE; i++)
+	for (i = 0; i < ip6_hashsize; i++)
 		LIST_INIT(&ip6flowtable[i]);
+
+	return 0;
 }
 
 /*
@@ -193,7 +211,7 @@ ip6flow_fastforward(struct mbuf *m)
 	struct ip6flow *ip6f;
 	struct ip6_hdr *ip6;
 	struct rtentry *rt;
-	struct sockaddr_in6 *dst;
+	const struct sockaddr *dst;
 	int error;
 
 	/*
@@ -214,7 +232,7 @@ ip6flow_fastforward(struct mbuf *m)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
 		return 0;
 
-	if (IP6_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
 				(max_linkhdr + 3) & ~3)) == NULL) {
 			return 0;
@@ -250,7 +268,7 @@ ip6flow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
-	rtcache_check((struct route *)&ip6f->ip6f_ro);
+	rtcache_check(&ip6f->ip6f_ro);
 	rt = ip6f->ip6f_ro.ro_rt;
 	if (rt == NULL || (rt->rt_ifp->if_flags & IFF_UP) == 0) {
 	    	/* Route or interface is down */
@@ -272,17 +290,16 @@ ip6flow_fastforward(struct mbuf *m)
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
 
 	if (rt->rt_flags & RTF_GATEWAY)
-		dst =  (struct sockaddr_in6 *)rt->rt_gateway;
+		dst = rt->rt_gateway;
 	else
-		dst = &ip6f->ip6f_ro.ro_dst;
+		dst = rtcache_getdst(&ip6f->ip6f_ro);
 
 	PRT_SLOW_ARM(ip6f->ip6f_timer, IP6FLOW_TIMER);
 
 	ip6f->ip6f_uses++;
 
 	/* Send on its way - straight to the interface output routine. */
-	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,
-	    (struct sockaddr *)dst, rt)) != 0) {
+	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
 		ip6f->ip6f_dropped++;
 	} else {
 		ip6f->ip6f_forwarded++;
@@ -297,7 +314,7 @@ ip6flow_fastforward(struct mbuf *m)
 static void
 ip6flow_addstats(struct ip6flow *ip6f)
 {
-	rtcache_check((struct route *)&ip6f->ip6f_ro);
+	rtcache_check(&ip6f->ip6f_ro);
 	if (ip6f->ip6f_ro.ro_rt != NULL)
 		ip6f->ip6f_ro.ro_rt->rt_use += ip6f->ip6f_uses;
 	ip6stat.ip6s_fastforwardflows = ip6flow_inuse;
@@ -326,7 +343,7 @@ ip6flow_free(struct ip6flow *ip6f)
 	splx(s);
 	ip6flow_inuse--;
 	ip6flow_addstats(ip6f);
-	rtcache_free((struct route *)&ip6f->ip6f_ro);
+	rtcache_free(&ip6f->ip6f_ro);
 	pool_put(&ip6flow_pool, ip6f);
 }
 
@@ -347,7 +364,7 @@ ip6flow_reap(int just_one)
 			 * If this no longer points to a valid route -
 			 * reclaim it.
 			 */
-			rtcache_check((struct route *)&ip6f->ip6f_ro);
+			rtcache_check(&ip6f->ip6f_ro);
 			if (ip6f->ip6f_ro.ro_rt == NULL)
 				goto done;
 			/*
@@ -372,7 +389,7 @@ ip6flow_reap(int just_one)
 		s = splnet();
 		IP6FLOW_REMOVE(ip6f);
 		splx(s);
-		rtcache_free((struct route *)&ip6f->ip6f_ro);
+		rtcache_free(&ip6f->ip6f_ro);
 		if (just_one) {
 			ip6flow_addstats(ip6f);
 			return ip6f;
@@ -391,7 +408,7 @@ ip6flow_slowtimo(void)
 
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
-		rtcache_check((struct route *)&ip6f->ip6f_ro);	
+		rtcache_check(&ip6f->ip6f_ro);	
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
 		    ip6f->ip6f_ro.ro_rt == NULL) {
 			ip6flow_free(ip6f);
@@ -410,7 +427,7 @@ ip6flow_slowtimo(void)
  * IPv6 stack. Now create/update a flow.
  */
 void
-ip6flow_create(const struct route_in6 *ro, struct mbuf *m)
+ip6flow_create(const struct route *ro, struct mbuf *m)
 {
 	struct ip6_hdr *ip6;
 	struct ip6flow *ip6f;
@@ -455,7 +472,7 @@ ip6flow_create(const struct route_in6 *ro, struct mbuf *m)
 		IP6FLOW_REMOVE(ip6f);
 		splx(s);
 		ip6flow_addstats(ip6f);
-		rtcache_free((struct route *)&ip6f->ip6f_ro);
+		rtcache_free(&ip6f->ip6f_ro);
 		ip6f->ip6f_uses = 0;
 		ip6f->ip6f_last_uses = 0;
 		ip6f->ip6f_dropped = 0;
@@ -465,8 +482,7 @@ ip6flow_create(const struct route_in6 *ro, struct mbuf *m)
 	/*
 	 * Fill in the updated/new details.
 	 */
-	rtcache_copy((struct route *)&ip6f->ip6f_ro, (const struct route *)ro,
-	    sizeof(ip6f->ip6f_ro));
+	rtcache_copy(&ip6f->ip6f_ro, ro);
 	ip6f->ip6f_dst = ip6->ip6_dst;
 	ip6f->ip6f_src = ip6->ip6_src;
 	ip6f->ip6f_flow = ip6->ip6_flow;
@@ -483,18 +499,25 @@ ip6flow_create(const struct route_in6 *ro, struct mbuf *m)
 }
 
 /*
- * Invalidate/remove all flows.
+ * Invalidate/remove all flows - if new_size is positive we
+ * resize the hash table.
  */
-void
-ip6flow_invalidate_all(void)
+int
+ip6flow_invalidate_all(int new_size)
 {
 	struct ip6flow *ip6f, *next_ip6f;
-	int s;
+	int s, error;
 
+	error = 0;
 	s = splnet();
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		ip6flow_free(ip6f);
 	}
+
+	if (new_size) 
+		error = ip6flow_init(new_size);
 	splx(s);
+
+	return error;
 }

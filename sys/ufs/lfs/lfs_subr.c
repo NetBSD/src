@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.68 2007/03/12 18:18:37 ad Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.68.2.1 2007/07/11 20:12:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.68 2007/03/12 18:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.68.2.1 2007/07/11 20:12:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 		} else {
 			while (fs->lfs_seglock) {
 				(void)ltsleep(&fs->lfs_seglock, PRIBIO + 1,
-					"lfs seglock", 0, &fs->lfs_interlock);
+					"lfs_seglock", 0, &fs->lfs_interlock);
 			}
 		}
 	}
@@ -575,7 +575,9 @@ lfs_segunlock(struct lfs *fs)
 }
 
 /*
- * drain dirops and start writer.
+ * Drain dirops and start writer.
+ *
+ * No simple_locks are held when we enter and none are held when we return.
  */
 int
 lfs_writer_enter(struct lfs *fs, const char *wmesg)

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.82 2007/03/04 06:01:21 christos Exp $
+	$NetBSD: syscalls.master,v 1.82.4.1 2007/07/11 20:04:11 mjf Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,7 +82,11 @@
 18	OBSOL		ostat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
+#ifdef	LINUX_NPTL
+20	STD		{ pid_t linux_sys_getpid(void); }
+#else
 20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
+#endif
 21	UNIMPL		mount
 22	UNIMPL		umount
 23	NOARGS		linux_setuid16 { int sys_setuid(uid_t uid); }
@@ -132,7 +136,11 @@
 61	NOARGS		{ int sys_chroot(char *path); }
 62	UNIMPL		ustat
 63	NOARGS		{ int sys_dup2(u_int from, u_int to); }
+#ifdef LINUX_NPTL
+64	STD		{ pid_t linux_sys_getppid(void); }
+#else
 64	NOARGS		{ pid_t sys_getppid(void); }
+#endif
 65	NOARGS		{ int sys_getpgrp(void); }
 66	NOARGS		{ int sys_setsid(void); }
 67	STD		{ int linux_sys_sigaction(int signum, \
@@ -217,7 +225,8 @@
 			    void *ptr); }
 118	NOARGS		{ int sys_fsync(int fd); }
 119	STD		{ int linux_sys_sigreturn(struct linux_sigcontext *scp); }
-120	STD		{ int linux_sys_clone(int flags, void *stack); }
+120	STD		{ int linux_sys_clone(int flags, void *stack, \
+			    void *parent_tidptr, void *child_tidptr); }
 121	STD		{ int linux_sys_setdomainname(char *domainname, \
 			    int len); }
 122	STD		{ int linux_sys_uname(struct linux_utsname *up); }
@@ -375,7 +384,11 @@
 221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
 222	UNIMPL		/* unused */
 223	UNIMPL		/* unused */
+#ifdef LINUX_NPTL
+224	STD		{ pid_t linux_sys_gettid(void); }
+#else
 224	UNIMPL		gettid
+#endif
 225	UNIMPL		readahead
 
 226	STD		{ int linux_sys_setxattr(char *path, char *name, \
@@ -399,11 +412,24 @@
 235	STD		{ int linux_sys_removexattr(char *path, char *name); }
 236	STD		{ int linux_sys_lremovexattr(char *path, char *name); }
 237	STD		{ int linux_sys_fremovexattr(int fd, char *name); }
+#ifdef LINUX_NPTL
+238	STD		{ int linux_sys_tkill(int tid, int sig); }
+#else
 238	UNIMPL		tkill
+#endif
 239	UNIMPL		sendfile64
-240	UNIMPL		futex
-241	UNIMPL		sched_setaffinity
-242	UNIMPL		sched_getaffinity
+240	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
+			    const struct timespec *timeout, int *uaddr2, \
+			    int val3); }
+#ifdef LINUX_NPTL
+241	STD		{ int linux_sys_sched_setaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
+242	STD		{ int linux_sys_sched_getaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
+#else
+241	UNIMPL		setaffinity
+242	UNIMPL		getaffinity
+#endif
 243	UNIMPL		set_thread_area
 244	UNIMPL		get_thread_area
 245	UNIMPL		io_setup
@@ -419,7 +445,11 @@
 255	UNIMPL		epoll_ctl
 256	UNIMPL		epoll_wait
 257	UNIMPL		remap_file_pages
+#ifdef LINUX_NPTL
+258	STD		{ int linux_sys_set_tid_address(int *tid); }
+#else
 258	UNIMPL		set_tid_address
+#endif
 259	UNIMPL		timer_create
 260	UNIMPL		timer_settime
 261	UNIMPL		timer_gettime
@@ -438,7 +468,11 @@
 			    size_t sz, struct linux_statfs64 *sp); }
 269	STD		{ int linux_sys_fstatfs64(int fd, \
 			    size_t sz, struct linux_statfs64 *sp); }
+#ifdef LINUX_NPTL
+270	STD		{ int linux_sys_tgkill(int tgid, int tid, int sig); }
+#else
 270	UNIMPL		tgkill
+#endif
 271	UNIMPL		utimes
 272	UNIMPL		fadvise64_64
 273	UNIMPL		vserver

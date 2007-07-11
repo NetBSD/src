@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.314 2007/03/12 18:18:27 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.314.2.1 2007/07/11 20:02:27 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314 2007/03/12 18:18:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.314.2.1 2007/07/11 20:02:27 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -4153,6 +4153,10 @@ pmap_quiet_check(struct pmap *pm)
 			n = 0;
 #endif
 			{
+#if defined(MULTIPROCESSOR)
+				if (cpus[n] == NULL)
+					continue;
+#endif
 				if (pm->pm_reg_ptps[n][vr] != SRMMU_TEINVALID)
 					printf("pmap_chk: spurious PTP in user "
 						"region %d on CPU %d\n", vr, n);
@@ -4267,6 +4271,10 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 		{
 			int *upt, *kpt;
 
+#if defined(MULTIPROCESSOR)
+			if (cpus[n] == NULL)
+				continue;
+#endif
 			upt = pool_get(&L1_pool, flags);
 			pm->pm_reg_ptps[n] = upt;
 			pm->pm_reg_ptps_pa[n] = VA2PA((char *)upt);
@@ -4317,6 +4325,10 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 		n = 0;
 #endif
 		{
+#if defined(MULTIPROCESSOR)
+			if (cpus[n] == NULL)
+				continue;
+#endif
 			int *pt = pm->pm_reg_ptps[n];
 			pm->pm_reg_ptps[n] = NULL;
 			pm->pm_reg_ptps_pa[n] = 0;
@@ -4498,9 +4510,14 @@ pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp, struct segmap *sp,
 					 PMAP_CPUSET(pm));
 #ifdef MULTIPROCESSOR
 		/* Invalidate level 1 PTP entries on all CPUs */
-		for (; n < sparc_ncpus; n++)
+		for (; n < sparc_ncpus; n++) {
+			if (cpus[n] == NULL)
+				continue;
 #endif
 			setpgt4m(&pm->pm_reg_ptps[n][vr], SRMMU_TEINVALID);
+#ifdef MULTIPROCESSOR
+		}
+#endif
 
 		pool_put(&segmap_pool, rp->rg_segmap);
 		rp->rg_segmap = NULL;
@@ -6342,6 +6359,10 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 		i = 0;
 #endif
 		{
+#if defined(MULTIPROCESSOR)
+			if (cpus[i] == NULL)
+				continue;
+#endif
 			setpgt4m(&pm->pm_reg_ptps[i][vr],
 				 (VA2PA((void *)ptd) >> SRMMU_PPNPASHIFT) |
 					SRMMU_TEPTD);
@@ -7406,7 +7427,7 @@ pmap_activate(struct lwp *l)
 	 */
 
 	s = splvm();
-	if (l->l_proc == curproc) {
+	if (l == curlwp) {
 		write_user_windows();
 		if (pm->pm_ctx == NULL) {
 			ctx_alloc(pm);	/* performs setcontext() */

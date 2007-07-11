@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.20 2007/03/04 05:59:44 christos Exp $	*/
+/*	$NetBSD: plcom.c,v 1.20.4.1 2007/07/11 19:58:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.20 2007/03/04 05:59:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.20.4.1 2007/07/11 19:58:38 mjf Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -191,16 +191,7 @@ void	plcomcnputc	(dev_t, int);
 void	plcomcnpollc	(dev_t, int);
 
 #define	integrate	static inline
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void 	plcomsoft	(void *);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-void 	plcomsoft	(void);
-#else
-void 	plcomsoft	(void *);
-struct callout plcomsoft_callout = CALLOUT_INITIALIZER;
-#endif
-#endif
 integrate void plcom_rxsoft	(struct plcom_softc *, struct tty *);
 integrate void plcom_txsoft	(struct plcom_softc *, struct tty *);
 integrate void plcom_stsoft	(struct plcom_softc *, struct tty *);
@@ -240,12 +231,6 @@ static int ppscap =
 	PPS_HARDPPSONASSERT | PPS_HARDPPSONCLEAR |
 #endif	/* PPS_SYNC */
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-volatile int	plcom_softintr_scheduled;
-#endif
-#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -380,7 +365,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 
-	callout_init(&sc->sc_diag_callout);
+	callout_init(&sc->sc_diag_callout, 0);
 	simple_lock_init(&sc->sc_lock);
 
 	/* Disable interrupts before configuring the device. */
@@ -458,9 +443,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	}
 #endif
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, plcomsoft, sc);
-#endif
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -516,10 +499,8 @@ plcom_detach(self, flags)
 	tty_detach(sc->sc_tty);
 	ttyfree(sc->sc_tty);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* Unhook the soft interrupt handler. */
 	softintr_disestablish(sc->sc_si);
-#endif
 
 #if NRND > 0 && defined(RND_COM)
 	/* Unhook the entropy source. */
@@ -1020,18 +1001,7 @@ plcom_schedrx(struct plcom_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-	setsoftserial();
-#else
-	if (!plcom_softintr_scheduled) {
-		plcom_softintr_scheduled = 1;
-		callout_reset(&plcomsoft_callout, 1, plcomsoft, NULL);
-	}
-#endif
-#endif
 }
 
 void
@@ -1693,7 +1663,6 @@ plcom_stsoft(struct plcom_softc *sc, struct tty *tp)
 #endif
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 plcomsoft(void *arg)
 {
@@ -1704,67 +1673,24 @@ plcomsoft(void *arg)
 		return;
 
 	{
-#else
-void
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-plcomsoft(void)
-#else
-plcomsoft(void *arg)
-#endif
-{
-	struct plcom_softc	*sc;
-	struct tty	*tp;
-	int	unit;
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-	int s;
 
-	s = splsoftserial();
-	plcom_softintr_scheduled = 0;
-#endif
-
-	for (unit = 0; unit < plcom_cd.cd_ndevs; unit++) {
-		sc = device_lookup(&plcom_cd, unit);
-		if (sc == NULL || !ISSET(sc->sc_hwflags, PLCOM_HW_DEV_OK))
-			continue;
-
-		if (PLCOM_ISALIVE(sc) == 0)
-			continue;
-
-		tp = sc->sc_tty;
-		if (tp == NULL)
-			continue;
-		if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0)
-			continue;
-#endif
-		tp = sc->sc_tty;
+	tp = sc->sc_tty;
 		
-		if (sc->sc_rx_ready) {
-			sc->sc_rx_ready = 0;
-			plcom_rxsoft(sc, tp);
-		}
-
-		if (sc->sc_st_check) {
-			sc->sc_st_check = 0;
-			plcom_stsoft(sc, tp);
-		}
-
-		if (sc->sc_tx_done) {
-			sc->sc_tx_done = 0;
-			plcom_txsoft(sc, tp);
-		}
+	if (sc->sc_rx_ready) {
+		sc->sc_rx_ready = 0;
+		plcom_rxsoft(sc, tp);
 	}
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-	splx(s);
-#endif
-#endif
-}
+	if (sc->sc_st_check) {
+		sc->sc_st_check = 0;
+		plcom_stsoft(sc, tp);
+	}
 
-#ifdef __ALIGN_BRACKET_LEVEL_FOR_CTAGS
-	/* there has got to be a better way to do plcomsoft() */
-}}
-#endif
+	if (sc->sc_tx_done) {
+		sc->sc_tx_done = 0;
+		plcom_txsoft(sc, tp);
+	}
+}
 
 int
 plcomintr(void *arg)
@@ -2010,18 +1936,7 @@ plcomintr(void *arg)
 	PLCOM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
-	setsoftserial();
-#else
-	if (!plcom_softintr_scheduled) {
-		plcom_softintr_scheduled = 1;
-		callout_reset(&plcomsoft_callout, 1, plcomsoft, NULL);
-	}
-#endif
-#endif
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | rsr);

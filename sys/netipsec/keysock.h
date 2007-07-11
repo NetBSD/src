@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.4 2005/12/11 12:25:06 christos Exp $	*/
+/*	$NetBSD: keysock.h,v 1.4.32.1 2007/07/11 20:11:55 mjf Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
@@ -72,17 +72,17 @@ struct keycb {
 
 extern struct pfkeystat pfkeystat;
 
-extern int key_output __P((struct mbuf *, ...));
+int key_output (struct mbuf *, ...);
 #ifndef __NetBSD__
-extern int key_usrreq __P((struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *));
+int key_usrreq (struct socket *,
+	int, struct mbuf *, struct mbuf *, struct mbuf *);
 #else
-extern int key_usrreq __P((struct socket *,
-	int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
+int key_usrreq (struct socket *,
+	int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 #endif
 
-extern int key_sendup __P((struct socket *, struct sadb_msg *, u_int, int));
-extern int key_sendup_mbuf __P((struct socket *, struct mbuf *, int));
+int key_sendup (struct socket *, struct sadb_msg *, u_int, int);
+int key_sendup_mbuf (struct socket *, struct mbuf *, int);
 #endif /* _KERNEL */
 
 #endif /* !_NETIPSEC_KEYSOCK_H_ */

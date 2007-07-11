@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.2 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.2.8.1 2007/07/11 19:57:40 mjf Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H

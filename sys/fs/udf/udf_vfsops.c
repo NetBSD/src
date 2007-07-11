@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.23 2007/03/12 18:18:32 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.23.2.1 2007/07/11 20:09:36 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.23 2007/03/12 18:18:32 ad Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.23.2.1 2007/07/11 20:09:36 mjf Exp $");
 #endif /* not lint */
 
 
@@ -77,9 +77,9 @@ __RCSID("$NetBSD: udf_vfsops.c,v 1.23 2007/03/12 18:18:32 ad Exp $");
 int udf_verbose = UDF_DEBUGGING;
 
 /* malloc regions */
-MALLOC_DEFINE(M_UDFMNT,   "UDF mount",		"UDF mount structures");
-MALLOC_DEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
-MALLOC_DEFINE(M_UDFTEMP,  "UDF temp",		"UDF scrap space");
+MALLOC_JUSTDEFINE(M_UDFMNT,   "UDF mount",	"UDF mount structures");
+MALLOC_JUSTDEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
+MALLOC_JUSTDEFINE(M_UDFTEMP,  "UDF temp",	"UDF scrap space");
 struct pool udf_node_pool;
 
 /* supported functions predefined */
@@ -159,11 +159,9 @@ udf_init(void)
 {
 	size_t size;
 
-#ifdef _LKM
 	malloc_type_attach(M_UDFMNT);
 	malloc_type_attach(M_UDFVOLD);
 	malloc_type_attach(M_UDFTEMP);
-#endif
 
 	/* init hashtables and pools */
 	size = sizeof(struct udf_node);
@@ -188,11 +186,9 @@ udf_done(void)
 	/* remove hashtables and pools */
 	pool_destroy(&udf_node_pool);
 
-#ifdef _LKM
 	malloc_type_detach(M_UDFMNT);
 	malloc_type_detach(M_UDFVOLD);
 	malloc_type_detach(M_UDFTEMP);
-#endif
 }
 
 /* --------------------------------------------------------------------- */
@@ -493,7 +489,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
 		return error;
 
-	/* allocate udf part of mount structure; malloc allways succeeds */
+	/* allocate udf part of mount structure; malloc always succeeds */
 	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK);
 	memset(ump, 0, sizeof(struct udf_mount));
 
@@ -583,7 +579,7 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mp->mnt_stat.f_namemax = UDF_MAX_NAMELEN;
 	mp->mnt_flag |= MNT_LOCAL;
 
-	/* bshift is allways equal to disc sector size */
+	/* bshift is always equal to disc sector size */
 	mp->mnt_dev_bshift = bshift;
 	mp->mnt_fs_bshift  = bshift;
 

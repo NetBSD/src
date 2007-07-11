@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.11 2006/07/10 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: lm75.c,v 1.11.16.1 2007/07/11 20:05:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -50,9 +50,7 @@ struct lmtemp_softc {
 	i2c_tag_t sc_tag;
 	int sc_address;
 
-	struct envsys_tre_data sc_sensor[1];
-	struct envsys_basic_info sc_info[1];
-
+	envsys_data_t sc_sensor[1];
 	struct sysmon_envsys sc_sysmon;
 
 	uint32_t (*sc_lmtemp_decode)(const uint8_t *);
@@ -64,15 +62,7 @@ static void lmtemp_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(lmtemp, sizeof(struct lmtemp_softc),
 	lmtemp_match, lmtemp_attach, NULL, NULL);
 
-static int	lmtemp_gtredata(struct sysmon_envsys *,
-				struct envsys_tre_data *);
-static int	lmtemp_streinfo(struct sysmon_envsys *,
-				struct envsys_basic_info *);
-
-static const struct envsys_range lmtemp_ranges[] = {
-	{ 0, 1,		ENVSYS_STEMP },
-	{ 1, 0,		-1 },
-};
+static int	lmtemp_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 static int lmtemp_config_write(struct lmtemp_softc *, uint8_t);
 static uint32_t lmtemp_decode_lm75(const uint8_t *);
@@ -126,7 +116,6 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct lmtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	prop_string_t desc;
 	int i;
 
 	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
@@ -151,34 +140,18 @@ lmtemp_attach(struct device *parent, struct device *self, void *aux)
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
 	/* Initialize sensor data. */
-	sc->sc_sensor[0].sensor = sc->sc_info[0].sensor = 0;
-	sc->sc_sensor[0].validflags = ENVSYS_FVALID;
-	sc->sc_info[0].validflags = ENVSYS_FVALID;
-	sc->sc_sensor[0].warnflags = ENVSYS_WARN_OK;
-
-	sc->sc_sensor[0].units = sc->sc_info[0].units = ENVSYS_STEMP;
-	desc = prop_dictionary_get(device_properties(&sc->sc_dev),
-				   "envsys-description");
-	if (desc != NULL &&
-	    prop_object_type(desc) == PROP_TYPE_STRING &&
-	    prop_string_size(desc) > 0)
-	    	strcpy(sc->sc_info[0].desc, prop_string_cstring_nocopy(desc));
-	else
-		strcpy(sc->sc_info[0].desc, sc->sc_dev.dv_xname);
+	sc->sc_sensor[0].sensor = 0;
+	sc->sc_sensor[0].state = ENVSYS_FVALID;
+	sc->sc_sensor[0].units =  ENVSYS_STEMP;
 
 	sc->sc_lmtemp_decode = lmtemptbl[i].lmtemp_decode;
 
 	/* Hook into system monitor. */
-	sc->sc_sysmon.sme_ranges = lmtemp_ranges;
-	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
 	sc->sc_sysmon.sme_cookie = sc;
-
 	sc->sc_sysmon.sme_gtredata = lmtemp_gtredata;
-	sc->sc_sysmon.sme_streinfo = lmtemp_streinfo;
-
 	sc->sc_sysmon.sme_nsensors = 1;
-	sc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",
@@ -227,44 +200,22 @@ lmtemp_refresh_sensor_data(struct lmtemp_softc *sc)
 		printf("%s: unable to read temperature, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 #endif
-		sc->sc_sensor[0].validflags &= ~ENVSYS_FCURVALID;
+		sc->sc_sensor[0].state = ENVSYS_SINVALID;
 		return;
 	}
 
-	sc->sc_sensor[0].cur.data_us = val;
-	sc->sc_sensor[0].validflags |= ENVSYS_FCURVALID;
+	sc->sc_sensor[0].value_cur = val;
+	sc->sc_sensor[0].state = ENVSYS_SVALID;
 }
 
 static int
-lmtemp_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+lmtemp_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct lmtemp_softc *sc = sme->sme_cookie;
 
 	iic_acquire_bus(sc->sc_tag, 0);	/* also locks our instance */
-
 	lmtemp_refresh_sensor_data(sc);
-	*tred = sc->sc_sensor[tred->sensor];
-
 	iic_release_bus(sc->sc_tag, 0);	/* also unlocks our instance */
-
-	return (0);
-}
-
-static int
-lmtemp_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
-{
-	struct lmtemp_softc *sc = sme->sme_cookie;
-
-	iic_acquire_bus(sc->sc_tag, 0);	/* also locks our instance */
-
-	memcpy(sc->sc_info[binfo->sensor].desc, binfo->desc,
-	    sizeof(sc->sc_info[binfo->sensor].desc));
-	sc->sc_info[binfo->sensor].desc[
-	    sizeof(sc->sc_info[binfo->sensor].desc) - 1] = '\0';
-
-	iic_release_bus(sc->sc_tag, 0);	/* also unlocks our instance */
-
-	binfo->validflags = ENVSYS_FVALID;
 
 	return (0);
 }

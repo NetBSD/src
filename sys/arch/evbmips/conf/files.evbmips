@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbmips,v 1.5 2005/12/11 12:17:11 christos Exp $
+#	$NetBSD: files.evbmips,v 1.5.32.1 2007/07/11 19:58:48 mjf Exp $
 
 # maxpartitions must be the first item in files.${ARCH}
 maxpartitions 16
@@ -11,6 +11,7 @@ defflag		ALGOR_P5064	# Algorithmics P-5064
 defflag		ALGOR_P6032	# Algorithmics P-6032
 defflag		ALCHEMY_PB1000	# Alchemy Semi Pb1000
 defflag		MIPS_MALTA	# MIPS Malta mips32/64 eval board
+defflag		INFINEON_ADM5120 # Infineon ADM5120
 
 # Various items that a buggy proms might not provide us.
 defparam	MEMSIZE

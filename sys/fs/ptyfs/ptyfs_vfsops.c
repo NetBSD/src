@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.23 2007/01/19 14:49:09 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.23.8.1 2007/07/11 20:09:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.23 2007/01/19 14:49:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.23.8.1 2007/07/11 20:09:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.23 2007/01/19 14:49:09 hannken Ex
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
 
-MALLOC_DEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
+MALLOC_JUSTDEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
 
 void	ptyfs_init(void);
 void	ptyfs_reinit(void);
@@ -188,9 +188,8 @@ ptyfs__getvattr(struct ptm_pty *pt, struct lwp *l, struct vattr *vattr)
 void
 ptyfs_init(void)
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_PTYFSMNT);
-#endif
 	ptyfs_hashinit();
 }
 
@@ -203,10 +202,9 @@ ptyfs_reinit(void)
 void
 ptyfs_done(void)
 {
-#ifdef _LKM
-	malloc_type_detach(M_PTYFSMNT);
-#endif
+
 	ptyfs_hashdone();
+	malloc_type_detach(M_PTYFSMNT);
 }
 
 /*

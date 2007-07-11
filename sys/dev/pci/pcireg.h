@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.53 2007/01/26 02:04:09 dyoung Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.53.8.1 2007/07/11 20:08:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -193,6 +193,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MULTIMEDIA_VIDEO		0x00
 #define	PCI_SUBCLASS_MULTIMEDIA_AUDIO		0x01
 #define	PCI_SUBCLASS_MULTIMEDIA_TELEPHONY	0x02
+#define	PCI_SUBCLASS_MULTIMEDIA_HDAUDIO		0x03
 #define	PCI_SUBCLASS_MULTIMEDIA_MISC		0x80
 
 /* 0x05 memory subclasses */

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2006/11/11 18:47:09 jmmv Exp $
+# $NetBSD: GENERIC,v 1.113.10.1 2007/07/11 19:58:27 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -365,7 +365,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -577,6 +577,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

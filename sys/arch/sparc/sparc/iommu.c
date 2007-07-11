@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.85 2007/03/04 06:00:45 christos Exp $ */
+/*	$NetBSD: iommu.c,v 1.85.4.1 2007/07/11 20:02:26 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.85 2007/03/04 06:00:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.85.4.1 2007/07/11 20:02:26 mjf Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -362,7 +362,7 @@ iommu_copy_prom_entries(struct iommu_softc *sc)
 		mmupcr_save = lda(SRMMU_PCR, ASI_SRMMU);
 		sta(SRMMU_PCR, ASI_SRMMU, mmupcr_save | VIKING_PCR_AC);
 	} else
-		mmupcr_save = 0; /* XXX - avoid GCC `unintialized' warning */
+		mmupcr_save = 0; /* XXX - avoid GCC `uninitialized' warning */
 
 	/* Flush entire IOMMU TLB before messing with the in-memory tables */
 	IOMMU_FLUSHALL(sc);

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.5 2006/10/01 09:53:08 itohy Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.5.10.1 2007/07/11 19:58:53 mjf Exp $
 #
 
 include         "arch/evbppc/conf/OPENBLOCKS266"
@@ -133,7 +133,7 @@ usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

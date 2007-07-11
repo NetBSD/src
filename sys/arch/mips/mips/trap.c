@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.209.4.1 2007/07/11 20:00:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.4.1 2007/07/11 20:00:51 mjf Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $");
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -123,8 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209 2007/03/04 06:00:12 christos Exp $");
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-int want_resched;
 
 const char *trap_type[] = {
 	"external interrupt",
@@ -171,7 +170,7 @@ void MachFPTrap(u_int32_t, u_int32_t, vaddr_t, struct frame *);	/* XXX */
 #define DELAYBRANCH(x) ((int)(x)<0)
 
 /*
- * fork syscall returns directly to user process via proc_trampoline,
+ * fork syscall returns directly to user process via lwp_trampoline(),
  * which will be called the very first time when child gets running.
  */
 void
@@ -621,7 +620,7 @@ ast(unsigned pc)	/* pc is program counter where to continue */
 
 		userret(l);
 
-		if (want_resched) {
+		if (curcpu()->ci_want_resched) {
 			/*
 			 * We are being preempted.
 			 */
@@ -743,7 +742,6 @@ extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
 int main(void *);	/* XXX */
-void mips_idle(void);	/* XXX */
 
 /*
  *  stack trace code, also useful to DDB one day
@@ -774,6 +772,10 @@ stacktrace_subr(int a0, int a1, int a2, int a3,
 	int more, stksize;
 	unsigned int frames =  0;
 	int foundframesize = 0;
+#ifdef DDB
+	db_expr_t diff;
+	db_sym_t sym;
+#endif
 
 /* Jump here when done with a frame, to start a new one */
 loop:
@@ -800,9 +802,37 @@ loop:
 		goto done;
 	}
 
+#ifdef DDB
+	/*
+	 * Check the kernel symbol table to see the beginning of
+	 * the current subroutine.
+	 */
+	diff = 0;
+	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+	if (sym != DB_SYM_NULL && diff == 0) {
+		/* check func(foo) __attribute__((__noreturn__)) case */
+		instr = kdbpeek(pc - 2 * sizeof(int));
+		i.word = instr;
+		if (i.JType.op == OP_JAL) {
+			sym = db_search_symbol(pc - sizeof(int),
+			    DB_STGY_ANY, &diff);
+			if (sym != DB_SYM_NULL && diff != 0)
+				diff += sizeof(int);
+		}
+	}
+	if (sym == DB_SYM_NULL) {
+		ra = 0;
+		goto done;
+	}
+	va = pc - diff;
+#else
 	/*
 	 * Find the beginning of the current subroutine by scanning backwards
 	 * from the current PC for the end of the previous subroutine.
+	 * 
+	 * XXX This won't work well because nowadays gcc is so aggressive
+	 *     as to reorder instruction blocks for branch-predict.
+	 *     (i.e. 'jr ra' wouldn't indicate the end of subroutine)
 	 */
 	va = pc;
 	do {
@@ -820,6 +850,7 @@ mips3_eret:
 	/* skip over nulls which might separate .o files */
 	while ((instr = kdbpeek(va)) == 0)
 		va += sizeof(int);
+#endif
 	subr = va;
 
 	/* scan forwards to find stack size and any saved registers */
@@ -969,8 +1000,8 @@ static struct { void *addr; const char *name;} names[] = {
 	Name(mips3_UserIntr),
 #endif	/* MIPS3 && !MIPS3_5900 */
 
-	Name(mips_idle),
-	Name(cpu_switch),
+	Name(cpu_idle),
+	Name(cpu_switchto),
 	{0, 0}
 };
 

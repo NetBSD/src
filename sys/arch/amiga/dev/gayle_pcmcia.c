@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.21 2007/02/22 05:04:12 thorpej Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.21.6.1 2007/07/11 19:57:50 mjf Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.21 2007/02/22 05:04:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.21.6.1 2007/07/11 19:57:50 mjf Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -51,7 +51,6 @@ static void	pccard_attach(struct device *, struct device *, void *);
 static void	pccard_attach_slot(struct pccard_slot *);
 static int	pccard_intr6(void *);
 static int	pccard_intr2(void *);
-static void	pccard_create_kthread(void *);
 static void	pccard_kthread(void *);
 
 static int pcf_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
@@ -199,7 +198,12 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	self->intr2.isr_ipl = 2;
 	add_isr(&self->intr2);
 
-	kthread_create(pccard_create_kthread, self);
+	if (kthread_create(PRI_NONE, 0, NULL, pccard_kthread, self,
+	    NULL, "pccard")) {
+		printf("%s: can't create kernel thread\n",
+			self->sc_dev.dv_xname);
+		panic("pccard kthread_create() failed");
+	}
 
 	gayle.intena |= GAYLE_INT_DETECT | GAYLE_INT_IREQ;
 
@@ -213,19 +217,6 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	}
 
 	pccard_attach_slot(&self->devs[0]);
-}
-
-/* This is called as soon as it is possible to create a kernel thread */
-static void
-pccard_create_kthread(void *arg)
-{
-	struct pccard_softc *self = arg;
-
-	if (kthread_create1(pccard_kthread, self, NULL, "pccard thread")) {
-		printf("%s: can't create kernel thread\n",
-			self->sc_dev.dv_xname);
-		panic("pccard kthread_create() failed");
-	}
 }
 
 static int

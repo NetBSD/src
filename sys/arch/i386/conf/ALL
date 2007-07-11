@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.85 2007/03/06 11:28:46 dillo Exp $
+# $NetBSD: ALL,v 1.85.4.1 2007/07/11 19:59:42 mjf Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.85 $"
+#ident 		"ALL-$Revision: 1.85.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -43,6 +43,9 @@ options 	POWERNOW_K7
 
 # AMD PowerNow! and Cool`n'Quiet technology
 options 	POWERNOW_K8
+
+# Intel(R) On Demand Clock Modulation (aka ODCM)
+options 	INTEL_ONDEMAND_CLOCKMOD
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -134,6 +137,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -169,11 +173,13 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+file-system	SYSVBFS		# System V boot file system
 file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 file-system	PUFFS		# experimental - Userspace file system support
 file-system	HFS		# experimental - Apple HFS+ file system
+file-system	EFS		# Silicon Graphics Extent File System
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -208,6 +214,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+options 	TCP_SIGNATURE	# RFC2385 support, used with BGP
 
 options 	ALTQ		# Manipulate network interfaces' output queues
 options 	ALTQ_BLUE	# Stochastic Fair Blue
@@ -234,7 +241,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
@@ -281,7 +287,7 @@ options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
 # console scrolling support.
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
-options 	VGA_RASTERCONSOLE
+#options 	VGA_RASTERCONSOLE
 # enable splash screen support; requires hw driver support
 #options 	SPLASHSCREEN
 #options 	SPLASHSCREEN_PROGRESS
@@ -341,6 +347,7 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
+aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
 attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
 fdc* 		at acpi?		# Floppy disk controller
@@ -350,6 +357,7 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -523,6 +531,20 @@ options 	VESAFB_DEPTH=8
 options 	VESAFB_PM		# power management support
 wsdisplay*	at vesafb? console ?
 
+# VIA Unichrome framebuffer console
+unichromefb*   at pci? dev ? function ?
+wsdisplay*     at unichromefb?
+
+# DRI driver
+i915drm*	at vga?		# Intel i915, i945 DRM driver
+mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
+mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
+r128drm*	at vga?		# ATI Rage 128 DRM driver
+radeondrm*	at vga?		# ATI Radeon DRM driver
+savagedrm*	at vga?		# S3 Savage DRM driver
+sisdrm*		at vga?		# SiS DRM driver
+tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
+
 attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
@@ -588,6 +610,12 @@ lpt2	at isa? port 0x3bc
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
+
+# NVIDIA nForce2/3/4 SMBus controller
+nfsmbc*	at pci? dev ? function ?
+nfsmb*	at nfsmbc?
+iic*	at nfsmb?
+
 adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 adt7463c* at iic? addr 0x2D		# Tyan S2881
 adt7463c* at iic? addr 0x2E		# Tyan S2882-D
@@ -602,9 +630,15 @@ it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
 # LM7[89] and compatible hardware monitors
 lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
+# SMSC LPC47B397 hardware monitor functions
+smsc0	at isa? port 0x02e
+
 # PC87366 hardware monitor
 nsclpcsio*	at isa?
 gpio*		at nsclpcsio?
+
+# Abit uGuru Hardware system monitor
+ug0    at isa? port 0xe0
 
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 viaenv* 	at pci? dev ? function ?
@@ -736,6 +770,7 @@ ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+gcscide* 	at pci? dev ? function ? 	# AMD CS5535 Companion IDE controllers
 geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
@@ -770,6 +805,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
+options	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -991,6 +1027,7 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # PCI USB controllers
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
 ohci*	at pci?	dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
@@ -1004,13 +1041,14 @@ slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # USB bus support
 usb*	at ehci?
+usb*	at gcscehci?
 usb*	at ohci?
 usb*	at uhci?
 usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -1072,6 +1110,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -1091,6 +1130,9 @@ ucom*	at umct? portno ?
 
 uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
+
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
@@ -1259,7 +1301,7 @@ radio* at bktr?
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
@@ -1295,6 +1337,7 @@ wsmouse*	at mms? mux 0
 # Cryptographic Devices
 
 # PCI cryptographic devices
+glxsb*	at pci? dev ? function ?	# AMD Geode LX Security Block
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
@@ -1356,6 +1399,7 @@ pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
+pseudo-device	agr			# Link aggregation agr(4)
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

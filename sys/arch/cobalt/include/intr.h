@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2007/02/16 02:53:45 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.8.1 2007/07/11 19:58:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -30,9 +30,9 @@
 
 #define	IPL_NONE	0	/* Disable only this interrupt. */
 #define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTSERIAL	2	/* serial software interrupts */
+#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
 #define	IPL_SOFTNET	3	/* network software interrupts */
-#define	IPL_SOFTCLOCK	4	/* clock software interrupts */
+#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
 #define	IPL_BIO		5	/* Disable block I/O interrupts. */
 #define	IPL_NET		6	/* Disable network interrupts. */
 #define	IPL_TTY		7	/* Disable terminal interrupts. */
@@ -71,14 +71,7 @@
 
 #include <sys/device.h>
 #include <mips/cpuregs.h>
-
-int  _splraise(int);
-int  _spllower(int);
-int  _splset(int);
-int  _splget(void);
-void _splnone(void);
-void _setsoftintr(int);
-void _clrsoftintr(int);
+#include <mips/locore.h>
 
 #define splhigh()       _splraise(MIPS_INT_MASK)
 #define spl0()          (void)_spllower(0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.314 2007/03/05 12:50:16 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.314.4.1 2007/07/11 20:00:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314 2007/03/05 12:50:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314.4.1 2007/07/11 20:00:31 mjf Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -538,7 +538,7 @@ cpu_reboot(int howto, char *bootstr)
 	(void)&howto;
 #endif
 	/* take a snap shot before clobbering any registers */
-	if (curlwp && curlwp->l_addr)
+	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);
 
 	/* If system is cold, just halt. */
@@ -2010,6 +2010,7 @@ identifycpu(void)
 	    mpu);
 	printf("%s\n", cpu_model);
 	printf("cpu: delay factor %d\n", delay_factor);
+	initfpu();
 }
 
 static void	get_machine_info(void);

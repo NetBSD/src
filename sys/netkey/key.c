@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.153 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.153.4.1 2007/07/11 20:12:05 mjf Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.153 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.153.4.1 2007/07/11 20:12:05 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2179,7 +2179,8 @@ key_spdget(so, m, mhp)
 		return key_senderror(so, m, ENOENT);
 	}
 
-	n = key_setdumpsp(sp, SADB_X_SPDGET, 0, mhp->msg->sadb_msg_pid);
+	n = key_setdumpsp(sp, SADB_X_SPDGET, mhp->msg->sadb_msg_seq, 
+                                         mhp->msg->sadb_msg_pid);
 	key_freesp(sp);	/* ref gained by key_getspbyid */
 	if (n != NULL) {
 		m_freem(m);
@@ -5225,7 +5226,7 @@ key_do_getnewspi(spirange, saidx)
 	}
 
 	if (xmin == xmax) {
-		if (key_checkspidup(saidx, xmin) != NULL) {
+		if (key_checkspidup(saidx, htonl(xmin)) != NULL) {
 			ipseclog((LOG_DEBUG, "key_do_getnewspi: SPI %u exists already.\n", xmin));
 			return 0;
 		}
@@ -5243,7 +5244,7 @@ key_do_getnewspi(spirange, saidx)
 			/* generate pseudo-random SPI value ranged. */
 			newspi = xmin + (key_random() % (xmax - xmin + 1));
 
-			if (key_checkspidup(saidx, newspi) == NULL)
+			if (key_checkspidup(saidx, htonl(newspi)) == NULL)
 				break;
 		}
 
@@ -8038,7 +8039,7 @@ key_init()
 
 	bzero((void *)&key_cb, sizeof(key_cb));
 
-	callout_init(&key_timehandler_ch);
+	callout_init(&key_timehandler_ch, 0);
 
 	for (i = 0; i < IPSEC_DIR_MAX; i++)
 		LIST_INIT(&sptree[i]);

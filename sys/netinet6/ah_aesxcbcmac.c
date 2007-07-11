@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_aesxcbcmac.c,v 1.3 2005/12/11 12:25:02 christos Exp $	*/
+/*	$NetBSD: ah_aesxcbcmac.c,v 1.3.32.1 2007/07/11 20:11:31 mjf Exp $	*/
 /*	$KAME: ah_aesxcbcmac.c,v 1.7 2004/06/02 05:53:14 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_aesxcbcmac.c,v 1.3 2005/12/11 12:25:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_aesxcbcmac.c,v 1.3.32.1 2007/07/11 20:11:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,7 @@ typedef struct {
 } aesxcbc_ctx;
 
 int
-ah_aes_xcbc_mac_init(state, sav)
-	struct ah_algorithm_state *state;
-	struct secasvar *sav;
+ah_aes_xcbc_mac_init(struct ah_algorithm_state *state, struct secasvar * sav)
 {
 	u_int8_t k1seed[AES_BLOCKSIZE] = { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
 	u_int8_t k2seed[AES_BLOCKSIZE] = { 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2 };
@@ -109,10 +107,8 @@ ah_aes_xcbc_mac_init(state, sav)
 }
 
 void
-ah_aes_xcbc_mac_loop(state, addr, len)
-	struct ah_algorithm_state *state;
-	u_int8_t *addr;
-	size_t len;
+ah_aes_xcbc_mac_loop(struct ah_algorithm_state *state, u_int8_t *addr, 
+	size_t len)
 {
 	u_int8_t buf[AES_BLOCKSIZE];
 	aesxcbc_ctx *ctx;
@@ -160,10 +156,8 @@ ah_aes_xcbc_mac_loop(state, addr, len)
 }
 
 void
-ah_aes_xcbc_mac_result(state, addr, l)
-	struct ah_algorithm_state *state;
-	u_int8_t *addr;
-	size_t l;
+ah_aes_xcbc_mac_result(struct ah_algorithm_state *state, u_int8_t *addr, 
+	size_t l)
 {
 	u_char digest[AES_BLOCKSIZE];
 	aesxcbc_ctx *ctx;

@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.14 2007/02/25 13:46:40 nonaka Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.14.6.1 2007/07/11 19:58:14 mjf Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -186,7 +186,7 @@
 #define  DCSR_STOPIRQEN     (1<<29)     /* stop interrupt enable */
 #define  DCSR_NODESCFETCH   (1<<30)	/* no-descriptor fetch mode */
 #define  DCSR_RUN  	    (1<<31)
-#define DMAC_DINT 	0x00f0		/* DAM interrupt */
+#define DMAC_DINT 	0x00f0		/* DMA interrupt */
 #define  DMAC_DINT_MASK	0xffffu
 #define DMAC_DRCMR(n)	(0x100+(n)*4)	/* Channel map register */
 #define  DRCMR_CHLNUM	0x0f		/* channel number */
@@ -510,6 +510,12 @@ struct pxa2x0_dma_desc {
 #define  LCCR0_QDM	(1U<<11) /* LCD Quick Disable Mask */
 #define  LCCR0_BM	(1U<<20) /* Branch Mask */
 #define  LCCR0_OUM	(1U<<21) /* Output FIFO Underrun Mask */
+/* PXA270 */
+#define  LCCR0_LCDT	(1U<<22) /* LCD Panel Type */
+#define  LCCR0_RDSTM	(1U<<23) /* Read Status Interrupt Mask */
+#define  LCCR0_CMDIM	(1U<<24) /* Command Interrupt Mask */
+#define  LCCR0_OUC	(1U<<25) /* Overlay Underlay Control */
+#define  LCCR0_LDDALT	(1U<<26) /* LDD Alternate Mapping Control Bit */
 
 #define  LCCR0_IMASK	(LCCR0_LDM|LCCR0_SFM|LCCR0_IUM|LCCR0_EFM|LCCR0_QDM|LCCR0_BM|LCCR0_OUM)
 
@@ -517,7 +523,9 @@ struct pxa2x0_dma_desc {
 #define LCDC_LCCR1	0x004	/* Controller Control Register 1 */
 #define LCDC_LCCR2	0x008	/* Controller Control Register 2 */
 #define LCDC_LCCR3	0x00c	/* Controller Control Register 2 */
-#define  LCCR3_BPP_SHIFT 24		/* Bits per pixel */
+#define  LCCR3_BPP3_SHIFT 29		/* Bits per pixel[3] */
+#define  LCCR3_BPP3	(0x01<<LCCR3_BPP3_SHIFT)
+#define  LCCR3_BPP_SHIFT 24		/* Bits per pixel[2:0] */
 #define  LCCR3_BPP	(0x07<<LCCR3_BPP_SHIFT)
 #define LCDC_LCCR4	0x010	/* Controller Control Register 4 */
 #define LCDC_LCCR5	0x014	/* Controller Control Register 5 */

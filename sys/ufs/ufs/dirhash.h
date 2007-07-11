@@ -1,4 +1,4 @@
-/*	$NetBSD: dirhash.h,v 1.4 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: dirhash.h,v 1.4.32.1 2007/07/11 20:12:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
@@ -82,6 +82,8 @@
     ((dh)->dh_hash[(slot) >> DH_BLKOFFSHIFT][(slot) & DH_BLKOFFMASK])
 
 struct dirhash {
+	kmutex_t dh_lock;	/* protects all fields except dh_list */
+
 	doff_t	**dh_hash;	/* the hash array (2-level) */
 	int	dh_narrays;	/* number of entries in dh_hash */
 	int	dh_hlen;	/* total slots in the 2-level hash array */
@@ -99,6 +101,7 @@ struct dirhash {
 
 	int	dh_onlist;	/* true if on the ufsdirhash_list chain */
 
+	/* Protected by ufsdirhash_lock. */
 	TAILQ_ENTRY(dirhash) dh_list;	/* chain of all dirhashes */
 };
 

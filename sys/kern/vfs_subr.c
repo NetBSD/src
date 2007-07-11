@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.284 2007/03/12 18:18:35 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.284.2.1 2007/07/11 20:10:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.284 2007/03/12 18:18:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.284.2.1 2007/07/11 20:10:23 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -227,7 +227,6 @@ struct vnode *
 getcleanvnode(struct lwp *l)
 {
 	struct vnode *vp;
-	struct mount *mp;
 	struct freelst *listhd;
 
 	LOCK_ASSERT(simple_lock_held(&vnode_free_list_slock));
@@ -243,10 +242,8 @@ try_nextlist:
 		 */
 		if ((vp->v_flag & VXLOCK) == 0 &&
 		    ((vp->v_flag & VLAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
-			if (vn_start_write(vp, &mp, V_NOWAIT) == 0)
-				break;
+			break;
 		}
-		mp = NULL;
 		simple_unlock(&vp->v_interlock);
 	}
 
@@ -270,7 +267,6 @@ try_nextlist:
 		vgonel(vp, l);
 	else
 		simple_unlock(&vp->v_interlock);
-	vn_finished_write(mp, 0);
 #ifdef DIAGNOSTIC
 	if (vp->v_data || vp->v_uobj.uo_npages ||
 	    TAILQ_FIRST(&vp->v_uobj.memq))
@@ -368,7 +364,6 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
-	mp->mnt_leaf = mp;
 	vfsp->vfs_refcount++;
 	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name, MFSNAMELEN);
 	mp->mnt_stat.f_mntonname[0] = '/';
@@ -599,7 +594,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	KASSERT(uobj->pgops == &uvm_vnodeops);
 	KASSERT(uobj->uo_npages == 0);
 	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
-	vp->v_size = VSIZENOTSET;
+	vp->v_size = vp->v_writesize = VSIZENOTSET;
 
 	if (mp && error != EDEADLK)
 		vfs_unbusy(mp);
@@ -701,7 +696,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	struct buf *bp, *nbp;
 	int s, error;
 	int flushflags = PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO |
-		(flags & V_SAVE ? PGO_CLEANIT : 0);
+		(flags & V_SAVE ? PGO_CLEANIT | PGO_RECLAIM : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
 	simple_lock(&vp->v_interlock);
@@ -1491,7 +1486,6 @@ loop:
 static void
 vclean(struct vnode *vp, int flags, struct lwp *l)
 {
-	struct mount *mp;
 	int active;
 
 	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
@@ -1528,12 +1522,14 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
-	 * have the object locked while it cleans it out. The VOP_LOCK
-	 * ensures that the VOP_INACTIVE routine is done with its work.
-	 * For active vnodes, it ensures that no other activity can
+	 * have the object locked while it cleans it out.  For
+	 * active vnodes, it ensures that no other activity can
 	 * occur while the underlying object is being cleaned out.
+	 *
+	 * We don't drain the lock because it might have been exported
+	 * to upper layers by this vnode and could still be in use.
 	 */
-	VOP_LOCK(vp, LK_DRAIN | LK_INTERLOCK);
+	VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1544,9 +1540,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 		int error;
 		struct vnode *vq, *vx;
 
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		vn_finished_write(mp, V_LOWER);
 		if (error)
 			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
 		KASSERT(error == 0);
@@ -1657,6 +1651,7 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	 */
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
+	vp->v_vnlock = NULL;
 	simple_lock(&vp->v_interlock);
 	VN_KNOTE(vp, NOTE_REVOKE);	/* FreeBSD has this in vn_pollgone() */
 	vp->v_flag &= ~(VXLOCK|VLOCKSWORK);
@@ -2646,8 +2641,8 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	uvm_object_printit(&vp->v_uobj, full, pr);
 	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
 	(*pr)("\nVNODE flags %s\n", bf);
-	(*pr)("mp %p numoutput %d size 0x%llx\n",
-	      vp->v_mount, vp->v_numoutput, vp->v_size);
+	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx\n",
+	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize);
 
 	(*pr)("data %p usecount %d writecount %ld holdcnt %ld numoutput %d\n",
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
@@ -2711,8 +2706,6 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	if (mp->mnt_unmounter) {
 		(*pr)("unmounter pid = %d ",mp->mnt_unmounter->l_proc);
 	}
-	(*pr)("wcnt = %d, writeopcountupper = %d, writeopcountupper = %d\n",
-		mp->mnt_wcnt,mp->mnt_writeopcountupper,mp->mnt_writeopcountlower);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);

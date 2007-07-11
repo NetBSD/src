@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.3 2006/07/08 20:22:19 christos Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.3.16.1 2007/07/11 20:05:14 mjf Exp $	*/
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -61,7 +61,7 @@ struct apm_softc {
 	int	sc_event_count;
 	int	sc_event_ptr;
 	int	sc_power_state;
-	struct proc *sc_thread;
+	lwp_t	*sc_thread;
 	struct lock sc_lock;
 	struct apm_event_info sc_event_list[APM_NEVENTS];
 	struct apm_accessops *sc_ops;

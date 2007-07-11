@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.3 2007/03/04 06:02:44 christos Exp $ */
+/* $NetBSD: spiflash.c,v 1.3.4.1 2007/07/11 20:08:21 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.4.1 2007/07/11 20:08:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -119,7 +119,6 @@ STATIC void spiflash_process_done(spiflash_handle_t, int);
 STATIC void spiflash_process_read(spiflash_handle_t);
 STATIC void spiflash_process_write(spiflash_handle_t);
 STATIC void spiflash_thread(void *);
-STATIC void spiflash_thread_create(void *);
 STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
 STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
 STATIC int spiflash_sector(spiflash_handle_t, struct buf *);
@@ -149,7 +148,7 @@ const struct bdevsw spiflash_bdevsw = {
 	.d_ioctl = spiflash_ioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
-	.d_type = D_DISK,
+	.d_flag = D_DISK,
 };
 
 const struct cdevsw spiflash_cdevsw = {
@@ -163,7 +162,7 @@ const struct cdevsw spiflash_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_type = D_DISK,
+	.d_flag = D_DISK,
 };
 
 static struct dkdriver spiflash_dkdriver = { spiflash_strategy, NULL };
@@ -232,13 +231,14 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	bufq_alloc(&sc->sc_workq, "fcfs", BUFQ_SORT_RAWBLOCK);
 	bufq_alloc(&sc->sc_doneq, "fcfs", BUFQ_SORT_RAWBLOCK);
 
-	/* arrange to allocate the kthread */
-	kthread_create(spiflash_thread_create, sc);
-
 	sc->sc_dk.dk_driver = &spiflash_dkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 
 	disk_attach(&sc->sc_dk);
+
+	/* arrange to allocate the kthread */
+	kthread_create(PRI_NONE, 0, NULL, spiflash_thread, arg,
+	    &sc->sc_thread, "spiflash");
 }
 
 int
@@ -563,16 +563,6 @@ spiflash_thread(void *arg)
 		spiflash_process_write(sc);
 	}
 }
-
-void
-spiflash_thread_create(void *arg)
-{
-	spiflash_handle_t sc = arg;
-
-	kthread_create1(spiflash_thread, arg, &sc->sc_thread,
-	    "spiflash_thread");
-}
-
 /*
  * SPI flash common implementation.
  */

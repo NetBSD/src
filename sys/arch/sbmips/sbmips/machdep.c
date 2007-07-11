@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.35 2007/03/06 00:45:06 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.35.4.1 2007/07/11 20:01:38 mjf Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/03/06 00:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.4.1 2007/07/11 20:01:38 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -323,8 +323,8 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	p0 = (void *)pmap_steal_memory(USPACE, NULL, NULL);
 	lwp0.l_addr = proc0paddr = (struct user *)p0;
 	lwp0.l_md.md_regs = (struct frame *)((char *)p0 + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	pmap_bootstrap();
 

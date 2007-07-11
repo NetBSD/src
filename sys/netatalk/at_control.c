@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.18 2007/03/04 06:03:19 christos Exp $	 */
+/*	$NetBSD: at_control.c,v 1.18.4.1 2007/07/11 20:11:07 mjf Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.18 2007/03/04 06:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.18.4.1 2007/07/11 20:11:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ at_control(cmd, data, ifp, l)
 			if (aa == NULL)
 				return (ENOBUFS);
 
-			callout_init(&aa->aa_probe_ch);
+			callout_init(&aa->aa_probe_ch, 0);
 
 			if ((aa0 = at_ifaddr.tqh_first) != NULL) {
 				/*

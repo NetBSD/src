@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.10 2007/01/13 18:52:04 cube Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.10.8.1 2007/07/11 20:12:06 mjf Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.10 2007/01/13 18:52:04 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.10.8.1 2007/07/11 20:12:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ struct domain natmdomain = {
 	.dom_protosw = natmsw,
 	.dom_protoswNPROTOSW = &natmsw[sizeof(natmsw)/sizeof(natmsw[0])],
 	.dom_ifqueues = { &natmintrq, NULL },
+	.dom_rtcache = LIST_HEAD_INITIALIZER(natmdomain.dom_rtcache)
 };
 #ifdef NATM_STAT
 u_int natm_sodropcnt = 0;		/* # mbufs dropped due to full sb */

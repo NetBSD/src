@@ -1,0 +1,18 @@
+# $NetBSD: std.adm5120,v 1.1.10.2 2007/07/11 19:58:50 mjf Exp $
+
+machine evbmips mips
+include		"conf/std"	# MI standard options
+
+options MIPS3_ENABLE_CLOCK_INTR
+
+# Platform support
+options	INFINEON_ADM5120
+
+options	EXEC_ELF32	# exec ELF32 binaries
+options	EXEC_SCRIPT	# exec #! scripts
+
+makeoptions	DEFTEXTADDR="0x80002000"
+makeoptions	BOARDTYPE="adm5120"
+
+include 	"arch/evbmips/conf/files.adm5120"
+include 	"arch/mips/conf/files.adm5120"

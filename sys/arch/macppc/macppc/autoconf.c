@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2007/02/28 04:21:51 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.4.1 2007/07/11 20:00:41 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2007/02/28 04:21:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56.4.1 2007/07/11 20:00:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2007/02/28 04:21:51 thorpej Exp $"
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+#include <dev/wsfb/genfbvar.h>
 
 void canonicalize_bootpath __P((void));
 void ofw_stack __P((void));
@@ -63,6 +64,9 @@ char cbootpath[256];
 int    console_node = 0, console_instance = 0;
 
 u_int *heathrow_FCR = NULL;
+
+struct genfb_colormap_callback gfb_cb;
+static void of_set_palette(void *, int, int, int, int);
 
 static void add_model_specifics(prop_dictionary_t);
 static void copyprops(int, prop_dictionary_t);
@@ -285,10 +289,17 @@ device_register(dev, aux)
 		}
 
 		if (console) {
+			uint64_t cmap_cb;
 
 			prop_dictionary_set_uint32(dict, "instance_handle",
 			    console_instance);
 			copyprops(console_node, dict);
+
+			gfb_cb.gcc_cookie = (void *)console_instance;
+			gfb_cb.gcc_set_mapreg = of_set_palette;
+			cmap_cb = (uint64_t)&gfb_cb;
+			prop_dictionary_set_uint64(dict, "cmap_callback",
+			    cmap_cb);
 		}
 	}
 
@@ -553,3 +564,12 @@ copyprops(int node, prop_dictionary_t dict)
 	OF_to_dataprop(dict, console_node, "EDID", "EDID");
 	add_model_specifics(dict);
 }
+
+static void
+of_set_palette(void *cookie, int index, int r, int g, int b)
+{
+	int ih = (int)cookie;
+
+	OF_call_method_1("color!", ih, 4, r, g, b, index);
+}
+

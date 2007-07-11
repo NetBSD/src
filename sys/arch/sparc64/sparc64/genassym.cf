@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2006/09/13 11:35:53 mrg Exp $
+#	$NetBSD: genassym.cf,v 1.41.12.1 2007/07/11 20:02:39 mjf Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,8 +119,6 @@ define	USRSTACK	USRSTACK
 define	PAGE_SIZE	PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_FORW			offsetof(struct lwp, l_forw)
-define	L_BACK			offsetof(struct lwp, l_back)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -145,9 +143,6 @@ define	USIZ		sizeof(struct user)
 
 # VM structure fields
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
-
-# UVM structure fields
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # pmap structure fields
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
@@ -177,7 +172,6 @@ define	CI_INITSTACK	offsetof(struct cpu_info, ci_initstack)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
 define	CI_WANT_AST	offsetof(struct cpu_info, ci_want_ast)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
-define	CI_IDLE_U	offsetof(struct cpu_info, ci_idle_u)
 define	CI_EINTRSTACK	offsetof(struct cpu_info, ci_eintstack)
 
 # CPU boot arguments structure
@@ -222,7 +216,6 @@ define	PCB_SP		offsetof(struct pcb, pcb_sp)
 define	PCB_PC		offsetof(struct pcb, pcb_pc)
 define  PCB_LASTCALL	offsetof(struct pcb, lastcall)
 define	PCB_SIZE	sizeof(struct pcb)
-
 
 # trapframe64 fields
 define	TF_TSTATE	offsetof(struct trapframe64, tf_tstate)

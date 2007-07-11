@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.10 2007/03/04 06:01:55 christos Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.10.4.1 2007/07/11 20:05:47 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.10 2007/03/04 06:01:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.10.4.1 2007/07/11 20:05:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,7 +429,7 @@ hd44780_attach_subr(sc)
 	memset(sc->sc_screen.image, ' ', PAGE_SIZE);
 	sc->sc_curscr = NULL;
 	sc->sc_curchip = 0;
-	callout_init(&sc->redraw);
+	callout_init(&sc->redraw, 0);
 	callout_setfunc(&sc->redraw, hlcd_redraw, sc);
 }
 

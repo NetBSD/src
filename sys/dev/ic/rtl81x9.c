@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.71 2007/03/04 06:02:00 christos Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.71.4.1 2007/07/11 20:06:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.71 2007/03/04 06:02:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.71.4.1 2007/07/11 20:06:10 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -159,7 +159,7 @@ STATIC int rtk_enable(struct rtk_softc *);
 STATIC void rtk_disable(struct rtk_softc *);
 STATIC void rtk_power(int, void *);
 
-STATIC int rtk_list_tx_init(struct rtk_softc *);
+STATIC void rtk_list_tx_init(struct rtk_softc *);
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RTK_EECMD,			\
@@ -437,7 +437,7 @@ rtk_phy_readreg(struct device *self, int phy, int reg)
 	int rval;
 	int rtk8139_reg;
 
-	if (sc->rtk_type == RTK_8139) {
+	if ((sc->sc_quirk & RTKQ_8129) == 0) {
 		if (phy != 7)
 			return 0;
 
@@ -482,7 +482,7 @@ STATIC void rtk_phy_writereg(struct device *self, int phy, int reg, int data)
 	struct rtk_mii_frame frame;
 	int rtk8139_reg;
 
-	if (sc->rtk_type == RTK_8139) {
+	if ((sc->sc_quirk & RTKQ_8129) == 0) {
 		if (phy != 7)
 			return;
 
@@ -539,7 +539,7 @@ rtk_setmulti(struct rtk_softc *sc)
 {
 	struct ifnet *ifp;
 	uint32_t hashes[2] = { 0, 0 };
-	uint32_t rxfilt, hwrev;
+	uint32_t rxfilt;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int h, mcnt;
@@ -594,10 +594,7 @@ rtk_setmulti(struct rtk_softc *sc)
 	 * parts. This means we have to write the hash pattern in reverse
 	 * order for those devices.
 	 */
-	hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
-	if (hwrev == RTK_HWREV_8100E || hwrev == RTK_HWREV_8100E_SPIN2 ||
-	    hwrev == RTK_HWREV_8101E ||
-	    hwrev == RTK_HWREV_8168_SPIN1 || hwrev == RTK_HWREV_8168_SPIN2) {
+	if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
 		CSR_WRITE_4(sc, RTK_MAR0, bswap32(hashes[1]));
 		CSR_WRITE_4(sc, RTK_MAR4, bswap32(hashes[0]));
 	} else {
@@ -636,7 +633,7 @@ rtk_attach(struct rtk_softc *sc)
 	int error;
 	int i, addr_len;
 
-	callout_init(&sc->rtk_tick_ch);
+	callout_init(&sc->rtk_tick_ch, 0);
 
 	/*
 	 * Check EEPROM type 9346 or 9356.
@@ -800,7 +797,7 @@ rtk_attach(struct rtk_softc *sc)
 /*
  * Initialize the transmit descriptors.
  */
-STATIC int
+STATIC void
 rtk_list_tx_init(struct rtk_softc *sc)
 {
 	struct rtk_tx_desc *txd;
@@ -816,8 +813,6 @@ rtk_list_tx_init(struct rtk_softc *sc)
 		CSR_WRITE_4(sc, txd->txd_txaddr, 0);
 		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_free, txd, txd_q);
 	}
-
-	return 0;
 }
 
 /*
@@ -1254,6 +1249,10 @@ rtk_intr(void *arg)
 	for (;;) {
 
 		status = CSR_READ_2(sc, RTK_ISR);
+
+		if (status == 0xffff)
+			break; /* Card is gone... */
+
 		if (status)
 			CSR_WRITE_2(sc, RTK_ISR, status);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337 2007/03/04 06:01:44 christos Exp $ */
+/*	$NetBSD: wd.c,v 1.337.4.1 2007/07/11 20:05:20 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,11 +66,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337 2007/03/04 06:01:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.4.1 2007/07/11 20:05:20 mjf Exp $");
 
-#ifndef ATADEBUG
-#define ATADEBUG
-#endif /* ATADEBUG */
+#include "opt_ata.h"
 
 #include "rnd.h"
 
@@ -303,7 +301,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	const struct wd_quirk *wdq;
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
-	callout_init(&wd->sc_restart_ch);
+	callout_init(&wd->sc_restart_ch, 0);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 #ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);
@@ -1401,18 +1399,33 @@ bad:
 
 		if (atareq->datalen && atareq->flags &
 		    (ATACMD_READ | ATACMD_WRITE)) {
-			wi->wi_iov.iov_base = atareq->databuf;
-			wi->wi_iov.iov_len = atareq->datalen;
+			void *tbuf;
+			if (atareq->datalen < DEV_BSIZE
+			    && atareq->command == WDCC_IDENTIFY) {
+				tbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
+				wi->wi_iov.iov_base = tbuf;
+				wi->wi_iov.iov_len = DEV_BSIZE;
+				UIO_SETUP_SYSSPACE(&wi->wi_uio);
+			} else {
+				tbuf = NULL;
+				wi->wi_iov.iov_base = atareq->databuf;
+				wi->wi_iov.iov_len = atareq->datalen;
+				wi->wi_uio.uio_vmspace = l->l_proc->p_vmspace;
+			}
 			wi->wi_uio.uio_iov = &wi->wi_iov;
 			wi->wi_uio.uio_iovcnt = 1;
 			wi->wi_uio.uio_resid = atareq->datalen;
 			wi->wi_uio.uio_offset = 0;
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_vmspace = l->l_proc->p_vmspace;
 			error1 = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
+			if (tbuf != NULL && error1 == 0) {
+				error1 = copyout(tbuf, atareq->databuf,
+				    atareq->datalen);
+				free(tbuf, M_TEMP);
+			}
 		} else {
 			/* No need to call physio if we don't have any
 			   user data */

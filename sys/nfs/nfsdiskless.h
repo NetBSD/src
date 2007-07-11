@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.24 2005/12/11 12:25:17 christos Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.24.32.1 2007/07/11 20:12:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,10 @@ struct nfs_diskless {
 	struct in_addr nd_gwip; /* My gateway */
 	/* Information for each mount point we need. */
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
+#ifdef TFTPROOT
+	char nd_bootfile[MNAMELEN];	/* Boot file */
+	int nd_nomount;
+#endif
 };
 
 #ifdef _KERNEL
@@ -94,6 +98,7 @@ extern int (*nfs_bootstatic_callback)(struct nfs_diskless *);
 #define	NFS_BOOTSTATIC_HAS_MASK		0x04
 #define	NFS_BOOTSTATIC_HAS_SERVADDR	0x08
 #define	NFS_BOOTSTATIC_HAS_SERVER	0x10
+#define	NFS_BOOTSTATIC_NOSTATIC		0x20
 #endif /* _KERNEL */
 
 #endif /* _NFS_NFSDISKLESS_H_ */

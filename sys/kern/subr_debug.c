@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_debug.c,v 1.2 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: subr_debug.c,v 1.2.10.1 2007/07/11 20:10:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.2.10.1 2007/07/11 20:10:02 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -106,6 +106,13 @@ freecheck_out(void **head, void *addr)
 
 	s = splvm();
 	__cpu_simple_lock(&freecheck_lock);
+	for (i = *head; i != NULL; i = i->i_next) {
+		if (i->i_addr != addr)
+			continue;
+		__cpu_simple_unlock(&freecheck_lock);
+		splx(s);
+		panic("freecheck_out: %p already out", addr);
+	}
 	if ((i = freecheck_free) != NULL) {
 		freecheck_free = i->i_next;
 		i->i_addr = addr;

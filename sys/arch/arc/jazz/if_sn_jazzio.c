@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.7 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.7.32.1 2007/07/11 19:58:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.7 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_jazzio.c,v 1.7.32.1 2007/07/11 19:58:01 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -125,8 +125,13 @@ sonic_jazzio_attach(struct device *parent, struct device *self, void *aux)
 	 *	- Latched bug retry
 	 *	- Synchronous bus (memory cycle 2 clocks)
 	 *	- 0 wait states added (WC0,WC1 == 0,0)
+	 *	- 4 byte Rx DMA threshold (RFT0,RFT1 == 0,0)
+	 *	- 28 byte Tx DMA threshold (TFT0,TFT1 == 1,1)
+	 *	  XXX There was a comment
+	 *	  	"XXX RFT & TFT according to MIPS manual"
+	 *	      in old MD sys/arch/arc/dev/if_sn.c in Attic.
 	 */
-	sc->sc_dcr = DCR_LBR | DCR_SBUS;
+	sc->sc_dcr = DCR_LBR | DCR_SBUS | DCR_TFT0 | DCR_TFT1;
 	sc->sc_dcr2 = 0;
 
 	/* Hook up our interrupt handler. */

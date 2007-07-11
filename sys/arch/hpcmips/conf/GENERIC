@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194 2006/11/11 18:47:10 jmmv Exp $
+# $NetBSD: GENERIC,v 1.194.10.1 2007/07/11 19:59:23 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.194 $"
+#ident 		"GENERIC-$Revision: 1.194.10.1 $"
 
 maxusers	16
 
@@ -549,7 +549,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 # USB Hubs
 usb*	at ohci?
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -684,6 +684,7 @@ pseudo-device	vlan
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if

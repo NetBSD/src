@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.16 2007/02/21 20:41:26 mrg Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.16.6.1 2007/07/11 20:03:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2007/02/21 20:41:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16.6.1 2007/07/11 20:03:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,7 @@ extern vector *IDTVEC(intr)[];
 int
 isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
+	extern kmutex_t x86_intr_lock;
 	int i, tmp, bestirq, count;
 	struct intrhand **p, *q;
 	struct intrsource *isp;
@@ -157,7 +158,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 	 */
 	mask &= 0xefbf;
 
-	simple_lock(&ci->ci_slock);
+	mutex_enter(&x86_intr_lock);
 
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
@@ -168,7 +169,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 			 * if nothing's using the irq, just return it
 			 */
 			*irq = i;
-			simple_unlock(&ci->ci_slock);
+			mutex_exit(&x86_intr_lock);
 			return (0);
 		}
 
@@ -201,7 +202,7 @@ isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 		}
 	}
 
-	simple_unlock(&ci->ci_slock);
+	mutex_exit(&x86_intr_lock);
 
 	if (bestirq == -1)
 		return (1);

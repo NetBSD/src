@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.5 2007/01/10 20:38:32 cube Exp $	*/
+/*	$NetBSD: cec.c,v 1.5.8.1 2007/07/11 20:06:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.5 2007/01/10 20:38:32 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.5.8.1 2007/07/11 20:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ struct cec_softc {
 #define	CECF_TIMO	0x10
 #define CECF_USEDMA	0x20
 	int sc_ppoll_slave;		/* XXX stash our ppoll address */
-	struct callout sc_timeout_ch;
+	callout_t sc_timeout_ch;
 };
 
 int	cecprobe(struct device *, struct cfdata *, void *);
@@ -230,7 +230,7 @@ cecattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	callout_init(&sc->sc_timeout_ch);
+	callout_init(&sc->sc_timeout_ch, 0);
 
 	/* attach MI GPIB bus */
 	cec_ic.cookie = (void *)sc;

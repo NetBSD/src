@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2007/03/04 12:24:09 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.4.1 2007/07/11 19:59:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2007/03/04 12:24:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.4.1 2007/07/11 19:59:10 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -104,7 +104,21 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	int i;
 
 	/* Clear BSS */
-	memset(edata, 0, end - edata);
+	if (bi == NULL || bi->bi_size != sizeof(struct bootinfo)) {
+		/*
+		 * No bootinfo, so assume we are loaded by
+		 * the firmware directly and have to clear BSS here.
+		 */
+		memset(edata, 0, end - edata);
+		/*
+		 * XXX
+		 * lwp0 and cpu_info_store are allocated in BSS
+		 * and initialized before mach_init() is called,
+		 * so restore them again.
+		 */
+		lwp0.l_cpu = &cpu_info_store;
+		cpu_info_store.ci_curlwp = &lwp0;
+	}
 
 	/* Setup early-console with BIOS ROM routines */
 	rom_cons_init();
@@ -168,8 +182,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	v = (void *)uvm_pageboot_alloc(USPACE);	/* proc0 USPACE */
 	lwp0.l_addr = proc0paddr = (struct user *) v;
 	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	curpcb = &lwp0.l_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	proc0paddr->u_pcb.pcb_context[11] =
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 void

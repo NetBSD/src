@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.14 2007/03/12 18:18:38 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.14.2.1 2007/07/11 20:12:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -44,7 +44,6 @@
 #include <sys/pool.h>
 #include <sys/sysctl.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dirhash.h>
@@ -57,7 +56,7 @@
 #define OFSFMT(ip)		((ip)->i_ump->um_maxsymlinklen <= 0)
 #define BLKFREE2IDX(n)		((n) > DH_NFSTATS ? DH_NFSTATS : (n))
 
-static MALLOC_DEFINE(M_DIRHASH, "UFS dirhash", "UFS directory hash tables");
+static MALLOC_JUSTDEFINE(M_DIRHASH, "UFS dirhash", "UFS directory hash tables");
 
 static int ufs_dirhashminblks = 5;
 static int ufs_dirhashmaxmem = 2 * 1024 * 1024;
@@ -74,18 +73,30 @@ static doff_t ufsdirhash_getprev(struct direct *dp, doff_t offset,
 	   int dirblksiz);
 static int ufsdirhash_recycle(int wanted);
 
-static POOL_INIT(ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
-    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
+static struct pool ufsdirhash_pool;
 
-#define DIRHASHLIST_LOCK()		do { } while (0)
-#define DIRHASHLIST_UNLOCK()		do { } while (0)
-#define DIRHASH_LOCK(dh)		do { } while (0)
-#define DIRHASH_UNLOCK(dh)		do { } while (0)
+#define DIRHASHLIST_LOCK()		mutex_enter(&ufsdirhash_lock)
+#define DIRHASHLIST_UNLOCK()		mutex_exit(&ufsdirhash_lock)
+#define DIRHASH_LOCK(dh)		mutex_enter(&(dh)->dh_lock)
+#define DIRHASH_UNLOCK(dh)		mutex_exit(&(dh)->dh_lock)
 #define DIRHASH_BLKALLOC_WAITOK()	pool_get(&ufsdirhash_pool, PR_WAITOK)
 #define DIRHASH_BLKFREE(ptr)		pool_put(&ufsdirhash_pool, ptr)
 
 /* Dirhash list; recently-used entries are near the tail. */
 static TAILQ_HEAD(, dirhash) ufsdirhash_list;
+
+/* Protects: ufsdirhash_list, `dh_list' field, ufs_dirhashmem. */
+static kmutex_t ufsdirhash_lock;
+
+/*
+ * Locking order:
+ *	ufsdirhash_lock
+ *	dh_lock
+ *
+ * The dh_lock mutex should be acquired either via the inode lock, or via
+ * ufsdirhash_lock. Only the owner of the inode may free the associated
+ * dirhash, but anything can steal its memory and set dh_hash to NULL.
+ */
 
 /*
  * Attempt to build up a hash table for the directory contents in
@@ -163,6 +174,7 @@ ufsdirhash_build(struct inode *ip)
 		DIRHASHLIST_UNLOCK();
 		return (-1);
 	}
+	mutex_init(&dh->dh_lock, MUTEX_DEFAULT, IPL_NONE);
 	dh->dh_hash = (doff_t **)malloc(narrays * sizeof(dh->dh_hash[0]),
 	    M_DIRHASH, M_NOWAIT | M_ZERO);
 	dh->dh_blkfree = (u_int8_t *)malloc(nblocks * sizeof(dh->dh_blkfree[0]),
@@ -244,6 +256,7 @@ fail:
 	}
 	if (dh->dh_blkfree != NULL)
 		FREE(dh->dh_blkfree, M_DIRHASH);
+	mutex_destroy(&dh->dh_lock);
 	FREE(dh, M_DIRHASH);
 	ip->i_dirhash = NULL;
 	DIRHASHLIST_LOCK();
@@ -282,6 +295,7 @@ ufsdirhash_free(struct inode *ip)
 		    dh->dh_narrays * DH_NBLKOFF * sizeof(**dh->dh_hash) +
 		    dh->dh_nblk * sizeof(*dh->dh_blkfree);
 	}
+	mutex_destroy(&dh->dh_lock);
 	FREE(dh, M_DIRHASH);
 	ip->i_dirhash = NULL;
 
@@ -318,11 +332,11 @@ ufsdirhash_lookup(struct inode *ip, const char *name, int namelen, doff_t *offp,
 		return (EJUSTRETURN);
 	/*
 	 * Move this dirhash towards the end of the list if it has a
-	 * score higher than the next entry, and acquire the dh_mtx.
+	 * score higher than the next entry, and acquire the dh_lock.
 	 * Optimise the case where it's already the last by performing
 	 * an unlocked read of the TAILQ_NEXT pointer.
 	 *
-	 * In both cases, end up holding just dh_mtx.
+	 * In both cases, end up holding just dh_lock.
 	 */
 	if (TAILQ_NEXT(dh, dh_list) != NULL) {
 		DIRHASHLIST_LOCK();
@@ -875,7 +889,7 @@ ufsdirhash_hash(struct dirhash *dh, const char *name, int namelen)
  * by the value specified by `diff'.
  *
  * The caller must ensure we have exclusive access to `dh'; normally
- * that means that dh_mtx should be held, but this is also called
+ * that means that dh_lock should be held, but this is also called
  * from ufsdirhash_build() where exclusive access can be assumed.
  */
 static void
@@ -919,6 +933,8 @@ ufsdirhash_findslot(struct dirhash *dh, const char *name, int namelen,
 {
 	int slot;
 
+	KASSERT(mutex_owned(&dh->dh_lock));
+
 	/* Find the entry. */
 	KASSERT(dh->dh_hused < dh->dh_hlen);
 	slot = ufsdirhash_hash(dh, name, namelen);
@@ -940,6 +956,8 @@ static void
 ufsdirhash_delslot(struct dirhash *dh, int slot)
 {
 	int i;
+
+	KASSERT(mutex_owned(&dh->dh_lock));
 
 	/* Mark the entry as deleted. */
 	DH_ENTRY(dh, slot) = DIRHASH_DEL;
@@ -1051,20 +1069,22 @@ ufsdirhash_recycle(int wanted)
 void
 ufsdirhash_init()
 {
-#ifdef _LKM
+
+	mutex_init(&ufsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);
+	malloc_type_attach(M_DIRHASH);
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
 	    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
-#endif
 	TAILQ_INIT(&ufsdirhash_list);
 }
 
 void
 ufsdirhash_done(void)
 {
+
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
-#ifdef _LKM
 	pool_destroy(&ufsdirhash_pool);
-#endif
+	malloc_type_detach(M_DIRHASH);
+	mutex_destroy(&ufsdirhash_lock);
 }
 
 SYSCTL_SETUP(sysctl_vfs_ufs_setup, "sysctl vfs.ufs.dirhash subtree setup")

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.194 2007/03/12 18:18:34 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.194.2.1 2007/07/11 20:10:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.194 2007/03/12 18:18:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.194.2.1 2007/07/11 20:10:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ unsigned char const char_type[] = {
 #undef	TB
 #undef	VT
 
-struct simplelock ttylist_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t ttylist_lock;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 
@@ -2383,6 +2383,7 @@ ttyinfo(struct tty *tp, int fromsig)
 	struct proc	*p, *pick = NULL;
 	struct timeval	utime, stime;
 	int		tmp;
+	fixpt_t		pctcpu = 0;
 	const char	*msg;
 
 	if (ttycheckoutq_wlock(tp, 0) == 0)
@@ -2417,12 +2418,15 @@ ttyinfo(struct tty *tp, int fromsig)
 	}
 
 	ttyprintf_nolock(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
-	LIST_FOREACH(l, &pick->p_lwps, l_sibling)
+	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
 	    ttyprintf_nolock(tp, "%s%s",
 	    l->l_stat == LSONPROC ? "running" :
 	    l->l_stat == LSRUN ? "runnable" :
 	    l->l_wmesg ? l->l_wmesg : "iowait",
 		(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
+	    pctcpu += l->l_pctcpu;
+	}
+	pctcpu += pick->p_pctcpu;
 
 	mutex_enter(&pick->p_smutex);
 	calcru(pick, &utime, &stime, NULL, NULL);
@@ -2448,7 +2452,7 @@ ttyinfo(struct tty *tp, int fromsig)
 
 #define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
 	/* Print percentage CPU. */
-	tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
+	tmp = (pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 	ttyprintf_nolock(tp, "%d%% ", tmp / 100);
 
 	/* Print resident set size. */
@@ -2599,11 +2603,17 @@ ttysleep(struct tty *tp, void *chan, int pri, const char *wmesg, int timo)
 void
 tty_attach(struct tty *tp)
 {
+	static bool again;
 
-	simple_lock(&ttylist_slock);
+	if (!again) {
+		again = true;
+		mutex_init(&ttylist_lock, MUTEX_DEFAULT, IPL_NONE);
+	}
+
+	mutex_enter(&ttylist_lock);
 	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
 	++tty_count;
-	simple_unlock(&ttylist_slock);
+	mutex_exit(&ttylist_lock);
 }
 
 /*
@@ -2613,14 +2623,14 @@ void
 tty_detach(struct tty *tp)
 {
 
-	simple_lock(&ttylist_slock);
+	mutex_enter(&ttylist_lock);
 	--tty_count;
 #ifdef DIAGNOSTIC
 	if (tty_count < 0)
 		panic("tty_detach: tty_count < 0");
 #endif
 	TAILQ_REMOVE(&ttylist, tp, tty_link);
-	simple_unlock(&ttylist_slock);
+	mutex_exit(&ttylist_lock);
 }
 
 /*
@@ -2634,7 +2644,7 @@ ttymalloc(void)
 	tp = pool_get(&tty_pool, PR_WAITOK);
 	memset(tp, 0, sizeof(*tp));
 	simple_lock_init(&tp->t_slock);
-	callout_init(&tp->t_rstrt_ch);
+	callout_init(&tp->t_rstrt_ch, 0);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);

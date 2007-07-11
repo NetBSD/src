@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.18 2007/03/04 06:02:39 christos Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.18.4.1 2007/07/11 20:08:11 mjf Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.18 2007/03/04 06:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.18.4.1 2007/07/11 20:08:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -177,7 +177,7 @@ rcons_init(rc, clear)
 {
 	mydevicep = rc;
 
-	callout_init(&rc->rc_belltmr_ch);
+	callout_init(&rc->rc_belltmr_ch, 0);
 
 	/* Initialize operations set, clear screen and turn cursor on */
 	rcons_init_ops(rc);

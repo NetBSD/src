@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.15 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: extent.h,v 1.15.4.1 2007/07/11 20:12:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #include <sys/lock.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 struct extent_region {
 	LIST_ENTRY(extent_region) er_link;	/* link in region list */
@@ -54,7 +56,8 @@ struct extent_region {
 
 struct extent {
 	const char *ex_name;		/* name of extent */
-	struct simplelock ex_slock;	/* lock on this extent */
+	kmutex_t ex_lock;		/* lock on this extent */
+	kcondvar_t ex_cv;		/* synchronization */
 					/* allocated regions in extent */
 	LIST_HEAD(, extent_region) ex_regions;
 	u_long	ex_start;		/* start of extent */
@@ -74,10 +77,9 @@ struct extent_fixed {
 /* ex_flags; for internal use only */
 #define EXF_FIXED	0x01		/* extent uses fixed storage */
 #define EXF_NOCOALESCE	0x02		/* coalescing of regions not allowed */
-#define EXF_WANTED	0x04		/* someone asleep on extent */
 #define EXF_FLWANTED	0x08		/* someone asleep on freelist */
 
-#define EXF_BITS	"\20\4FLWANTED\3WANTED\2NOCOALESCE\1FIXED"
+#define EXF_BITS	"\20\4FLWANTED\2NOCOALESCE\1FIXED"
 
 /* misc. flags passed to extent functions */
 #define EX_NOWAIT	0x00		/* not safe to sleep */
@@ -117,6 +119,7 @@ int	extent_alloc1(struct extent *, u_long, u_long, u_long, u_long, int,
 int	extent_alloc(struct extent *, u_long, u_long, u_long, int, u_long *);
 int	extent_free(struct extent *, u_long, u_long, int);
 void	extent_print(struct extent *);
+void	extent_init(void);
 
 #endif /* _KERNEL || _EXTENT_TESTING */
 

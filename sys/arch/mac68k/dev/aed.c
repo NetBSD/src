@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.23 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: aed.c,v 1.23.4.1 2007/07/11 20:00:29 mjf Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.23 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.23.4.1 2007/07/11 20:00:29 mjf Exp $");
 
 #include "opt_adb.h"
 
@@ -109,7 +109,7 @@ aedattach(struct device *parent, struct device *self, void *aux)
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	struct aed_softc *sc = (struct aed_softc *)self;
 
-	callout_init(&sc->sc_repeat_ch);
+	callout_init(&sc->sc_repeat_ch, 0);
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;

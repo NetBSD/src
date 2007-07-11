@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.148 2007/01/09 21:59:08 cube Exp $
+#	$NetBSD: files.isa,v 1.148.8.1 2007/07/11 20:06:27 mjf Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -451,6 +451,11 @@ file	dev/isa/attimer_isa.c		attimer_isa
 # Environmental monitors
 #
 
+# SMSC LPC47B397 temp/fanspeed monitor
+device	smsc: sysmon_envsys
+attach	smsc at isa with smsc
+file	dev/isa/smsc.c			smsc			needs-flag
+
 # LM78 temp/fanspeed monitor
 attach	lm at isa with lm_isa
 file	dev/isa/lm_isa.c		lm_isa
@@ -461,9 +466,8 @@ attach	it at isa with it_isa
 file	dev/isa/it.c			it_isa
 
 # Abit uGuru hardware monitor
-device ug: sysmon_envsys
-attach ug at isa with ug_isa
-file   dev/isa/ug.c                    ug_isa
+attach	ug at isa with ug_isa
+file	dev/isa/ug_isa.c		ug_isa
 
 # ISDN devices
 attach	isic at isa with isic_isa

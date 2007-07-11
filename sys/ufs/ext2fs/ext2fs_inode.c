@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.57 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.57.4.1 2007/07/11 20:12:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57.4.1 2007/07/11 20:12:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,6 @@ ext2fs_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *mp;
 	struct lwp *l = ap->a_l;
 	int error = 0;
 
@@ -157,19 +156,15 @@ ext2fs_inactive(void *v)
 
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		if (ext2fs_size(ip) != 0) {
 			error = ext2fs_truncate(vp, (off_t)0, 0, NOCRED, NULL);
 		}
 		ip->i_e2fs_dtime = time_second;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
-		vn_finished_write(mp, V_LOWER);
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		ext2fs_update(vp, NULL, NULL, 0);
-		vn_finished_write(mp, V_LOWER);
 	}
 out:
 	VOP_UNLOCK(vp, 0);
@@ -295,6 +290,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	 * value of osize is 0, length will be at least 1.
 	 */
 	if (osize < length) {
+		uvm_vnp_setwritesize(ovp, length);
 		error = ufs_balloc_range(ovp, length - 1, 1, cred,
 		    ioflag & IO_SYNC ? B_SYNC : 0);
 		if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.8.1 2007/07/11 20:03:42 mjf Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.8.1 2007/07/11 20:03:42 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -245,12 +245,15 @@ struct user *proc0paddr;
 const char *console = "glass";
 int glass_console = 0;
 
-char	bootargs[MAX_BOOT_STRING];
-void	process_kernel_args(char *);
+char bootargs[MAX_BOOT_STRING];
 
+/* Prototypes */
 void	consinit(void);
-void	kgdb_port_init(void);
 void	dumpsys(void);
+void	process_kernel_args(char *);
+#ifdef KGDB
+void	kgdb_port_init(void);
+#endif
 
 /*
  * void cpu_reboot(int howto, char *bootstr)
@@ -268,19 +271,11 @@ cpu_reboot(int howto, char *bootstr)
 	 * and crash to earth fast
 	 */
 	if (cold) {
-		doshutdownhooks();
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cngetc();
-
-		printf("rebooting...\n");
-		delay(6 * 1000 * 1000);	/* wait 6s */
-		zaurus_restart();
-		printf("REBOOT FAILED: spinning\n");
-		for (;;)
-			continue;
-		/*NOTREACHED*/
+		howto |= RB_HALT;
+		goto haltsys;
 	}
+
+	boothowto = howto;
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
@@ -289,8 +284,17 @@ cpu_reboot(int howto, char *bootstr)
 	 * that it cannot page part of the binary in as the filesystem has
 	 * been unmounted.
 	 */
-	if (!(howto & RB_NOSYNC))
+	if (!(howto & RB_NOSYNC)) {
 		bootsync();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 */
+		resettodr();
+	}
+
+	/* Wait 3s */
+	delay(3 * 1000 * 1000);
 
 	/* Say NO to interrupts */
 	splhigh();
@@ -298,7 +302,8 @@ cpu_reboot(int howto, char *bootstr)
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-	
+
+haltsys:
 	/* Run any shutdown hooks */
 	doshutdownhooks();
 
@@ -309,7 +314,6 @@ cpu_reboot(int howto, char *bootstr)
 #if NAPM > 0
 		if (howto & RB_POWERDOWN) {
 			printf("\nAttempting to power down...\n");
-			delay(1 * 1000 * 1000);
 			zapm_poweroff();
 		}
 #endif
@@ -321,6 +325,7 @@ cpu_reboot(int howto, char *bootstr)
 	printf("rebooting...\n");
 	delay(1 * 1000 * 1000);
 	zaurus_restart();
+
 	printf("REBOOT FAILED!!!\n");
 	for (;;)
 		continue;
@@ -347,7 +352,7 @@ zaurus_restart(void)
 	delay(1 * 1000* 1000);	/* wait 1s */
 }
 
-static __inline pd_entry_t *
+static inline pd_entry_t *
 read_ttb(void)
 {
 	u_long ttb;
@@ -1140,7 +1145,7 @@ kgdb_port_init(void)
 	} else
 		return;
 
-	if (com_kgdb_attach_pxa2x0(&pxa2x0_a4x_bs_tag, paddr,
+	if (com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
 	    kgdb_rate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode) == 0) {
 		pxa2x0_clkman_config(cken, 1);
 	}

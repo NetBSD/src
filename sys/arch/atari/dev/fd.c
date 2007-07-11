@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56 2007/03/06 14:03:07 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.56.4.1 2007/07/11 19:58:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2007/03/06 14:03:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56.4.1 2007/07/11 19:58:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ void		*auxp;
 
 	sc = (struct fd_softc *)dp;
 
-	callout_init(&sc->sc_motor_ch);
+	callout_init(&sc->sc_motor_ch, 0);
 
 	/*
 	 * Find out if an Ajax chip might be installed. Set the default

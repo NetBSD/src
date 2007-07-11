@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.13 2006/02/19 08:20:46 dyoung Exp $	*/
+/*	$NetBSD: anreg.h,v 1.13.26.1 2007/07/11 20:05:40 mjf Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -35,11 +35,6 @@
 
 #ifndef _DEV_IC_ANREG_H
 #define	_DEV_IC_ANREG_H
-
-/*
- * Size of Aironet I/O space.
- */
-#define AN_IOSIZ		0x40
 
 /*
  * Hermes register definitions and what little I know about them.

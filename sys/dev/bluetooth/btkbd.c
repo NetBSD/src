@@ -1,4 +1,4 @@
-/*	$NetBSD: btkbd.c,v 1.6 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: btkbd.c,v 1.6.4.1 2007/07/11 20:05:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.6 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btkbd.c,v 1.6.4.1 2007/07/11 20:05:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -197,7 +197,7 @@ btkbd_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #ifdef BTKBD_REPEAT
-	callout_init(&sc->sc_repeat);
+	callout_init(&sc->sc_repeat, 0);
 	callout_setfunc(&sc->sc_repeat, btkbd_repeat, sc);
 #endif
 #endif

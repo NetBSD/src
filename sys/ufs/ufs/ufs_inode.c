@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.64 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.64.8.1 2007/07/11 20:12:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64.8.1 2007/07/11 20:12:50 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.64 2007/01/29 15:42:50 hannken Exp $
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -81,7 +80,7 @@ ufs_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *mp, *transmp;
+	struct mount *transmp;
 	struct lwp *l = ap->a_l;
 	mode_t mode;
 	int error = 0;
@@ -90,8 +89,7 @@ ufs_inactive(void *v)
 		vprint("ufs_inactive: pushing active", vp);
 
 	transmp = vp->v_mount;
-	if ((error = fstrans_start(transmp, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(transmp, FSTRANS_SHARED);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
@@ -101,10 +99,8 @@ ufs_inactive(void *v)
 		softdep_releasefile(ip);
 
 	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 #ifdef QUOTA
-		if (!getinoquota(ip))
-			(void)chkiq(ip, -1, NOCRED, 0);
+		(void)chkiq(ip, -1, NOCRED, 0);
 #endif
 #ifdef UFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, l);
@@ -129,13 +125,10 @@ ufs_inactive(void *v)
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
 		UFS_VFREE(vp, ip->i_number, mode);
-		vn_finished_write(mp, V_LOWER);
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 		UFS_UPDATE(vp, NULL, NULL, 0);
-		vn_finished_write(mp, V_LOWER);
 	}
 out:
 	VOP_UNLOCK(vp, 0);
@@ -157,14 +150,11 @@ int
 ufs_reclaim(struct vnode *vp, struct lwp *l)
 {
 	struct inode *ip = VTOI(vp);
-	struct mount *mp;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_reclaim: pushing active", vp);
 
-	vn_start_write(vp, &mp, V_WAIT | V_LOWER);
 	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-	vn_finished_write(mp, V_LOWER);
 
 	/*
 	 * Remove the inode from its hash chain.
@@ -179,15 +169,7 @@ ufs_reclaim(struct vnode *vp, struct lwp *l)
 		ip->i_devvp = 0;
 	}
 #ifdef QUOTA
-	{
-		int i;
-		for (i = 0; i < MAXQUOTAS; i++) {
-			if (ip->i_dquot[i] != NODQUOT) {
-				dqrele(vp, ip->i_dquot[i]);
-				ip->i_dquot[i] = NODQUOT;
-			}
-		}
-	}
+	ufsquota_free(ip);
 #endif
 #ifdef UFS_DIRHASH
 	if (ip->i_dirhash != NULL)

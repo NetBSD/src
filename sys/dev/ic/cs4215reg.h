@@ -1,7 +1,7 @@
-/*	$NetBSD: cs4215reg.h,v 1.2 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: cs4215reg.h,v 1.2.34.1 2007/07/11 20:05:44 mjf Exp $	*/
 
 /*
- * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
+ * Copyright (c) 2001 Jared D. McNeill <jmcneill@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,22 +73,22 @@ const struct {
 #define	CS4215_BSEL_128	(1<<2)		/* bitrate: 128 bits per frame */
 
 /* time slot 5: output setting */
-#define	CS4215_LO(v)	v	/* left output attenuation 0x3f: -94.5 dB */
+#define	CS4215_LO(v)	(v)	/* left output attenuation 0x3f: -94.5 dB */
 #define	CS4215_LE	(1<<6)	/* line out enable */
 #define	CS4215_HE	(1<<7)	/* headphone enable */
 
 /* time slot 6: output setting */
-#define CS4215_RO(v)	v	/* right output attenuation 0x3f: -94.5 dB */
+#define CS4215_RO(v)	(v)	/* right output attenuation 0x3f: -94.5 dB */
 #define	CS4215_SE	(1<<6)	/* speaker enable */
 #define CS4215_ADI	(1<<7)	/* a/d data invalid: busy in calibration */
 
 /* time slot 7: input setting */
-#define	CS4215_LG(v)	v	/* left gain setting 0xf: 22.5 dB */
+#define	CS4215_LG(v)	(v)	/* left gain setting 0xf: 22.5 dB */
 #define	CS4215_IS	(1<<4)	/* input select: 1 = mic, 0 = line */
 #define	CS4215_PIO0	(1<<6)	/* parallel I/O 0 */
 #define	CS4215_PIO1	(1<<7)	/* parallel I/O 1 */
 
 /* time slot 8: input setting */
-#define	CS4215_RG(v)	v	/* right gain setting 0xf: 22.5 dB */
-#define	CS4215_MA(v)	(v<<4)	/* monitor path attenuation 0xf: mute */
+#define	CS4215_RG(v)	(v)	/* right gain setting 0xf: 22.5 dB */
+#define	CS4215_MA(v)	((v)<<4)	/* monitor path attenuation 0xf: mute */
 

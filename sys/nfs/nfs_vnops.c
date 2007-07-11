@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.252 2007/03/04 06:03:38 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.252.4.1 2007/07/11 20:12:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252 2007/03/04 06:03:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252.4.1 2007/07/11 20:12:15 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -52,9 +52,11 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.252 2007/03/04 06:03:38 christos Exp
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/condvar.h>
 #include <sys/disk.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/dirent.h>
@@ -1261,8 +1263,9 @@ nfsmout:
 }
 
 struct nfs_writerpc_context {
-	struct simplelock nwc_slock;
-	volatile int nwc_mbufcount;
+	kmutex_t nwc_lock;
+	kcondvar_t nwc_cv;
+	int nwc_mbufcount;
 };
 
 /*
@@ -1277,11 +1280,11 @@ nfs_writerpc_extfree(struct mbuf *m, void *tbuf, size_t size, void *arg)
 	KASSERT(m != NULL);
 	KASSERT(ctx != NULL);
 	pool_cache_put(&mbpool_cache, m);
-	simple_lock(&ctx->nwc_slock);
+	mutex_enter(&ctx->nwc_lock);
 	if (--ctx->nwc_mbufcount == 0) {
-		wakeup(ctx);
+		cv_signal(&ctx->nwc_cv);
 	}
-	simple_unlock(&ctx->nwc_slock);
+	mutex_exit(&ctx->nwc_lock);
 }
 
 /*
@@ -1306,7 +1309,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	int committed = NFSV3WRITE_FILESYNC;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfs_writerpc_context ctx;
-	int s, byte_count;
+	int byte_count;
 	struct lwp *l = NULL;
 	size_t origresid;
 #ifndef NFS_V2_ONLY
@@ -1314,7 +1317,8 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	int rlen, commit;
 #endif
 
-	simple_lock_init(&ctx.nwc_slock);
+	mutex_init(&ctx.nwc_lock, MUTEX_DRIVER, IPL_VM);
+	cv_init(&ctx.nwc_cv, "nfsmblk");
 	ctx.nwc_mbufcount = 1;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
@@ -1330,7 +1334,7 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 		return (EFBIG);
 	if (pageprotected) {
 		l = curlwp;
-		PHOLD(l);
+		uvm_lwp_hold(l);
 	}
 retry:
 	origresid = uiop->uio_resid;
@@ -1396,11 +1400,9 @@ retry:
 #endif
 			UIO_ADVANCE(uiop, len);
 			uiop->uio_offset += len;
-			s = splvm();
-			simple_lock(&ctx.nwc_slock);
+			mutex_enter(&ctx.nwc_lock);
 			ctx.nwc_mbufcount++;
-			simple_unlock(&ctx.nwc_slock);
-			splx(s);
+			mutex_exit(&ctx.nwc_lock);
 			nfs_zeropad(mb, 0, nfsm_padlen(len));
 		} else {
 			nfsm_uiotom(uiop, len);
@@ -1435,7 +1437,7 @@ retry:
 				else if (committed == NFSV3WRITE_DATASYNC &&
 					commit == NFSV3WRITE_UNSTABLE)
 					committed = commit;
-				simple_lock(&nmp->nm_slock);
+				mutex_enter(&nmp->nm_lock);
 				if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0){
 					memcpy(nmp->nm_writeverf, tl,
 					    NFSX_V3WRITEVERF);
@@ -1458,7 +1460,7 @@ retry:
 						    NFSMNT_STALEWRITEVERF;
 					}
 				}
-				simple_unlock(&nmp->nm_slock);
+				mutex_exit(&nmp->nm_lock);
 			}
 		} else
 #endif
@@ -1497,16 +1499,16 @@ nfsmout:
 		 * retransmitted mbufs can survive longer than rpc requests
 		 * themselves.
 		 */
-		s = splvm();
-		simple_lock(&ctx.nwc_slock);
+		mutex_enter(&ctx.nwc_lock);
 		ctx.nwc_mbufcount--;
 		while (ctx.nwc_mbufcount > 0) {
-			ltsleep(&ctx, PRIBIO, "nfsmblk", 0, &ctx.nwc_slock);
+			cv_wait(&ctx.nwc_cv, &ctx.nwc_lock);
 		}
-		simple_unlock(&ctx.nwc_slock);
-		splx(s);
-		PRELE(l);
+		mutex_exit(&ctx.nwc_lock);
+		uvm_lwp_rele(l);
 	}
+	mutex_destroy(&ctx.nwc_lock);
+	cv_destroy(&ctx.nwc_cv);
 	*iomode = committed;
 	if (error)
 		uiop->uio_resid = tsiz;
@@ -3150,12 +3152,12 @@ nfs_commit(vp, offset, cnt, l)
 	    (unsigned long)(offset + cnt));
 #endif
 
-	simple_lock(&nmp->nm_slock);
+	mutex_enter(&nmp->nm_lock);
 	if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0) {
-		simple_unlock(&nmp->nm_slock);
+		mutex_exit(&nmp->nm_lock);
 		return (0);
 	}
-	simple_unlock(&nmp->nm_slock);
+	mutex_exit(&nmp->nm_lock);
 	nfsstats.rpccnt[NFSPROC_COMMIT]++;
 	np = VTONFS(vp);
 	nfsm_reqhead(np, NFSPROC_COMMIT, NFSX_FH(1));
@@ -3168,14 +3170,14 @@ nfs_commit(vp, offset, cnt, l)
 	nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, false);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
-		simple_lock(&nmp->nm_slock);
+		mutex_enter(&nmp->nm_lock);
 		if ((nmp->nm_iflag & NFSMNT_STALEWRITEVERF) ||
 		    memcmp(nmp->nm_writeverf, tl, NFSX_V3WRITEVERF)) {
 			memcpy(nmp->nm_writeverf, tl, NFSX_V3WRITEVERF);
 			error = NFSERR_STALEWRITEVERF;
 			nmp->nm_iflag |= NFSMNT_STALEWRITEVERF;
 		}
-		simple_unlock(&nmp->nm_slock);
+		mutex_exit(&nmp->nm_lock);
 	}
 	nfsm_reqdone;
 	return (error);

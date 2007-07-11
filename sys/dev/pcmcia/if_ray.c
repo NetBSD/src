@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.64 2007/03/04 06:02:27 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.64.4.1 2007/07/11 20:08:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.64 2007/03/04 06:02:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.64.4.1 2007/07/11 20:08:08 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -528,9 +528,9 @@ ray_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = cfe->memspace[0].handle.memt;
 	sc->sc_memh = cfe->memspace[0].handle.memh;
 
-	callout_init(&sc->sc_reset_resetloop_ch);
-	callout_init(&sc->sc_disable_ch);
-	callout_init(&sc->sc_start_join_timo_ch);
+	callout_init(&sc->sc_reset_resetloop_ch, 0);
+	callout_init(&sc->sc_disable_ch, 0);
+	callout_init(&sc->sc_start_join_timo_ch, 0);
 
 	error = ray_enable(sc);
 	if (error)
@@ -790,8 +790,8 @@ ray_init(sc)
 	/* clear the interrupt if present */
 	REG_WRITE(sc, RAY_HCSIR, 0);
 
-	callout_init(&sc->sc_check_ccs_ch);
-	callout_init(&sc->sc_check_scheduled_ch);
+	callout_init(&sc->sc_check_ccs_ch, 0);
+	callout_init(&sc->sc_check_scheduled_ch, 0);
 
 	/* we are now up and running -- and are busy until download is cplt */
 	sc->sc_if.if_flags |= IFF_RUNNING | IFF_OACTIVE;

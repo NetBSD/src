@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.3 2007/03/06 19:04:31 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.3.4.1 2007/07/11 20:11:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.3 2007/03/06 19:04:31 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.3.4.1 2007/07/11 20:11:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,9 +65,9 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 {
 	struct rfcomm_dlc *dlc;
 
-	KASSERT(handle);
-	KASSERT(proto);
-	KASSERT(upper);
+	KASSERT(handle != NULL);
+	KASSERT(proto != NULL);
+	KASSERT(upper != NULL);
 
 	dlc = malloc(sizeof(struct rfcomm_dlc), M_BLUETOOTH, M_NOWAIT | M_ZERO);
 	if (dlc == NULL)
@@ -89,7 +89,7 @@ rfcomm_attach(struct rfcomm_dlc **handle,
 
 	dlc->rd_lmodem = RFCOMM_MSC_RTC | RFCOMM_MSC_RTR | RFCOMM_MSC_DV;
 
-	callout_init(&dlc->rd_timeout);
+	callout_init(&dlc->rd_timeout, 0);
 	callout_setfunc(&dlc->rd_timeout, rfcomm_dlc_timeout, dlc);
 
 	*handle = dlc;
@@ -228,7 +228,14 @@ rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
 	case RFCOMM_DLC_LISTEN:
 		return EINVAL;
 
+	case RFCOMM_DLC_WAIT_SEND_UA:
+		err = rfcomm_session_send_frame(rs,
+				RFCOMM_FRAME_DM, dlc->rd_dlci);
+
+		/* fall through */
 	case RFCOMM_DLC_WAIT_SESSION:
+	case RFCOMM_DLC_WAIT_CONNECT:
+	case RFCOMM_DLC_WAIT_SEND_SABM:
 		rfcomm_dlc_close(dlc, 0);
 		break;
 
@@ -239,7 +246,7 @@ rfcomm_disconnect(struct rfcomm_dlc *dlc, int linger)
 		}
 
 		/* else fall through */
-	case RFCOMM_DLC_WAIT_CONNECT:
+	case RFCOMM_DLC_WAIT_RECV_UA:
 		dlc->rd_state = RFCOMM_DLC_WAIT_DISCONNECT;
 		err = rfcomm_session_send_frame(rs, RFCOMM_FRAME_DISC,
 							dlc->rd_dlci);
@@ -416,19 +423,35 @@ rfcomm_rcvd(struct rfcomm_dlc *dlc, size_t space)
 int
 rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, void *addr)
 {
-	int err = 0;
+	int mode, err = 0;
 	uint16_t mtu;
-
-	if (dlc->rd_state != RFCOMM_DLC_CLOSED)
-		return EBUSY;
 
 	switch (opt) {
 	case SO_RFCOMM_MTU:
 		mtu = *(uint16_t *)addr;
 		if (mtu < RFCOMM_MTU_MIN || mtu > RFCOMM_MTU_MAX)
 			err = EINVAL;
-		else
+		else if (dlc->rd_state == RFCOMM_DLC_CLOSED)
 			dlc->rd_mtu = mtu;
+		else
+			err = EBUSY;
+
+		break;
+
+	case SO_RFCOMM_LM:
+		mode = *(int *)addr;
+		mode &= (RFCOMM_LM_SECURE | RFCOMM_LM_ENCRYPT | RFCOMM_LM_AUTH);
+
+		if (mode & RFCOMM_LM_SECURE)
+			mode |= RFCOMM_LM_ENCRYPT;
+
+		if (mode & RFCOMM_LM_ENCRYPT)
+			mode |= RFCOMM_LM_AUTH;
+
+		dlc->rd_mode = mode;
+
+		if (dlc->rd_state == RFCOMM_DLC_OPEN)
+			err = rfcomm_dlc_setmode(dlc);
 
 		break;
 
@@ -466,6 +489,10 @@ rfcomm_getopt(struct rfcomm_dlc *dlc, int opt, void *addr)
 			fc->cfc = 1;
 
 		return sizeof(*fc);
+
+	case SO_RFCOMM_LM:
+		*(int *)addr = dlc->rd_mode;
+		return sizeof(int);
 
 	default:
 		break;

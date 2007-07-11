@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.7 2007/01/05 23:09:33 jmcneill Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.7.8.1 2007/07/11 20:05:28 mjf Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.7 2007/01/05 23:09:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.7.8.1 2007/07/11 20:05:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,17 +54,16 @@ static void adm1030c_attach(struct device *, struct device *, void *);
 static int adm1030c_match(struct device *, struct cfdata *, void *);
 
 struct adm1030c_sysmon {
-		struct sysmon_envsys sme;
-		struct adm1030c_softc *sc;
-		struct envsys_tre_data adm1030c_info[];
-	};
+	struct sysmon_envsys sme;
+	struct adm1030c_softc *sc;
+	envsys_data_t adm1030c_data[];
+};
 
 static uint8_t adm1030c_readreg(struct adm1030c_softc *, uint8_t);
 static void adm1030c_writereg(struct adm1030c_softc *, uint8_t, uint8_t);
 static int adm1030c_temp2muk(uint8_t);
 static int adm1030c_reg2rpm(uint8_t);
-static int adm1030c_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-static int adm1030c_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
+static int adm1030c_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL(adm1030c, sizeof(struct adm1030c_softc),
     adm1030c_match, adm1030c_attach, NULL, NULL);
@@ -118,8 +117,7 @@ adm1030c_writereg(struct adm1030c_softc *sc, uint8_t reg, uint8_t data)
 
 #if NSYSMON_ENVSYS > 0
 
-struct envsys_range *adm1030c_ranges;
-struct envsys_basic_info *adm1030c_info;
+envsys_data_t *adm1030c_data;
 
 /* convert temperature read from the chip to micro kelvin */
 static inline int 
@@ -186,9 +184,7 @@ adm1030c_setup(struct adm1030c_softc *sc)
 {
 	struct adm1030c_sysmon *datap;
 	int error;
-	struct envsys_range *cur_r;
-	struct envsys_basic_info *cur_i;
-	struct envsys_tre_data *cur_t;
+	envsys_data_t *cur_t;
 	int ret;
 	struct sysctlnode *me = NULL, *node = NULL;
 	
@@ -196,10 +192,7 @@ adm1030c_setup(struct adm1030c_softc *sc)
 	    sizeof(struct envsys_tre_data) + sizeof(void *),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 	    
-	adm1030c_ranges = malloc (sizeof(struct envsys_range) * 3,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
-	    
-	adm1030c_info = malloc (sizeof(struct envsys_basic_info) * 3,
+	adm1030c_data = malloc (sizeof(envsys_data_t) * 3,
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 	
 	ret=sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
@@ -208,83 +201,51 @@ adm1030c_setup(struct adm1030c_softc *sc)
 	       NULL, 0, NULL, 0,
 	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
-	cur_r = &adm1030c_ranges[0];
-	cur_i = &adm1030c_info[0];
-	cur_t = &datap->adm1030c_info[0];
-	strcpy(cur_i->desc, "case temperature");
-	cur_i->units = ENVSYS_STEMP;
-	cur_i->sensor = 0;
+	cur_t = &datap->adm1030c_data[0];
+	(void)strlcpy(cur_t->desc, "case temperature", sizeof(cur_t->desc));
+	cur_t->units = ENVSYS_STEMP;
+	cur_t->sensor = 0;
 	sc->regs[0] = 0x0a;	/* remote temperature register */
-	cur_r->low = adm1030c_temp2muk(-127);
-	cur_r->high = adm1030c_temp2muk(127);
-	cur_r->units = ENVSYS_STEMP;
 	ret=sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&node,
 		CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
-		CTLTYPE_INT, "temp0", cur_i->desc,
+		CTLTYPE_INT, "temp0", cur_t->desc,
 		sysctl_adm1030c_temp, 0x25, NULL, 0,
 		CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 		if (node != NULL) {
 			node->sysctl_data = sc;
 		}
-	cur_i->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	cur_t->sensor = 0;
-	cur_t->warnflags = ENVSYS_WARN_OK;
-	cur_t->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-	cur_t->units = cur_i->units;
+	cur_t->state = ENVSYS_SVALID;
 
-	cur_r = &adm1030c_ranges[1];
-	cur_i = &adm1030c_info[1];
-	cur_t = &datap->adm1030c_info[1];
-	strcpy(cur_i->desc, "CPU temperature");
-	
-	cur_i->units = ENVSYS_STEMP;
-	cur_i->sensor = 1;
+	cur_t = &datap->adm1030c_data[1];
+	(void)strlcpy(cur_t->desc, "CPU temperature", sizeof(cur_t->desc));
+	cur_t->units = ENVSYS_STEMP;
+	cur_t->sensor = 1;
 	sc->regs[1] = 0x0b;	/* built-in temperature register */
-	cur_r->low = adm1030c_temp2muk(-127);
-	cur_r->high = adm1030c_temp2muk(127);
-	cur_r->units = ENVSYS_STEMP;
+	cur_t->units = ENVSYS_STEMP;
 	ret=sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&node,
 		CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
-		CTLTYPE_INT, "temp1", cur_i->desc,
+		CTLTYPE_INT, "temp1", cur_t->desc,
 		sysctl_adm1030c_temp,0x24, NULL, 0,
 		CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
 		if(node!=NULL) {
 			node->sysctl_data = sc;
 		}
-	cur_i->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
-	cur_t->sensor = 1;
-	cur_t->warnflags = ENVSYS_WARN_OK;
-	cur_t->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
-	cur_t->units = cur_i->units;
+	cur_t->state = ENVSYS_SVALID;
 
-	cur_r = &adm1030c_ranges[2];
-	cur_i = &adm1030c_info[2];
-	cur_t = &datap->adm1030c_info[2];
-	strcpy(cur_i->desc, "fan speed");
-	cur_i->units = ENVSYS_SFANRPM;
-	cur_i->sensor = 2;
-	sc->regs[2] = 0x08;	/* fan rpm */
-	cur_r->low = 0;
-	cur_r->high = adm1030c_reg2rpm(0xfe);
-	cur_r->units = ENVSYS_SFANRPM;
-
-	cur_i->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
+	cur_t = &datap->adm1030c_data[2];
+	(void)strlcpy(cur_t->desc, "fan speed", sizeof(cur_t->desc));
+	cur_t->units = ENVSYS_SFANRPM;
 	cur_t->sensor = 2;
-	cur_t->warnflags = ENVSYS_WARN_OK;
-	cur_t->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
-	cur_t->units = cur_i->units;
+	sc->regs[2] = 0x08;	/* fan rpm */
+	cur_t->units = ENVSYS_SFANRPM;
+	cur_t->state = ENVSYS_SVALID;
 
 	sc->sc_sysmon_cookie = &datap->sme;
+	datap->sme.sme_name = sc->sc_dev.dv_xname;
 	datap->sme.sme_nsensors = 3;
-	datap->sme.sme_envsys_version = 1000;
-	datap->sme.sme_ranges = adm1030c_ranges;
-	datap->sme.sme_sensor_info = adm1030c_info;
-	datap->sme.sme_sensor_data = datap->adm1030c_info;
-	
+	datap->sme.sme_sensor_data = datap->adm1030c_data;
 	datap->sme.sme_cookie = sc;
 	datap->sme.sme_gtredata = adm1030c_gtredata;
-	datap->sme.sme_streinfo = adm1030c_streinfo;
-	datap->sme.sme_flags = 0;
 
 	if ((error = sysmon_envsys_register(&datap->sme)) != 0)
 		aprint_error("%s: unable to register with sysmon (%d)\n",
@@ -293,42 +254,29 @@ adm1030c_setup(struct adm1030c_softc *sc)
 
 
 static int
-adm1030c_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+adm1030c_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct adm1030c_softc *sc = sme->sme_cookie;
-	struct envsys_tre_data *cur_tre;
-	struct envsys_basic_info *cur_i;
 	int i;
 	uint8_t reg;
 	
-	i = tred->sensor;
-	cur_tre = &sme->sme_sensor_data[i];
-	cur_i = &sme->sme_sensor_info[i];
+	i = edata->sensor;
 	reg = sc->regs[i];
-	switch (cur_tre->units)
+	switch (edata->units)
 	{
 		case ENVSYS_STEMP:
-			cur_tre->cur.data_s = 
+			edata->value_cur = 
 			    adm1030c_temp2muk(adm1030c_readreg(sc, reg));
 			break;
 			
 		case ENVSYS_SFANRPM:
 			{
 				uint8_t blah = adm1030c_readreg(sc,reg);
-				cur_tre->cur.data_us = adm1030c_reg2rpm(blah);
+				edata->value_cur = adm1030c_reg2rpm(blah);
 			}
 			break;
 	}
-	cur_tre->validflags |= ENVSYS_FCURVALID | ENVSYS_FVALID;
-	*tred = sme->sme_sensor_data[i];
+	edata->state = ENVSYS_SVALID;
 	return 0;
-}
-
-static int
-adm1030c_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
-{
-
-	/* There is nothing to set here. */
-	return (EINVAL);
 }
 #endif /* NSYSMON_ENVSYS > 0 */

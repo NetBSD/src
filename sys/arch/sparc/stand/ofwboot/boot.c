@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2006/07/13 20:03:34 uwe Exp $	*/
+/*	$NetBSD: boot.c,v 1.13.16.1 2007/07/11 20:02:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -225,6 +225,7 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
 	bi_kend.addr= bootinfo + BOOTINFO_SIZE;
 	bi_add(&bi_kend, BTINFO_KERNEND, sizeof(bi_kend));
+	sparc64_finalize_tlb(marks[MARK_DATA]);
 	sparc64_bi_add();
 
 	ssym  = (void*)(long)marks[MARK_SYM];

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.16 2007/03/04 05:59:03 christos Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.16.4.1 2007/07/11 19:57:14 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2007/03/04 05:59:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16.4.1 2007/07/11 19:57:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -113,7 +113,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	char *stacktop;
 
 #if 0
-	printf("cpu_fork: %p -> %p\n", p1, p2);
+	printf("cpu_lwp_fork: %p -> %p\n", p1, p2);
 #endif
 	pcb = &l2->l_addr->u_pcb;
 	/* Copy the pcb */
@@ -137,24 +137,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Fabricate a new switchframe */
 	bzero(sf, sizeof(*sf));
 	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
-	sf->sf_r14 = (register_t)proc_trampoline | R15_MODE_SVC;
-
-	pcb->pcb_tf = tf;
-	pcb->pcb_sf = sf;
-	pcb->pcb_onfault = NULL;
-	sf->sf_r4 = (register_t)func;
-	sf->sf_r5 = (register_t)arg;
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	struct trapframe *tf = pcb->pcb_tf;
-	struct switchframe *sf = (struct switchframe *)tf - 1;
-
-	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
-	sf->sf_r14 = (register_t)proc_trampoline | R15_MODE_SVC;
+	sf->sf_r14 = (register_t)lwp_trampoline | R15_MODE_SVC;
 
 	pcb->pcb_tf = tf;
 	pcb->pcb_sf = sf;
@@ -175,14 +158,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do here? */
-}
-
-void
-cpu_exit(struct lwp *l)
-{
-
-	mutex_enter(&sched_mutex);		/* expected by cpu_switch */
-	cpu_switch(NULL, NULL);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.83 2007/03/04 06:02:00 christos Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.83.4.1 2007/07/11 20:06:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -259,7 +259,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 
 	s = splnet();
 
-	if (sc->rtk_type == RTK_8169) {
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		rval = re_gmii_readreg(dev, phy, reg);
 		splx(s);
 		return rval;
@@ -306,7 +306,7 @@ re_miibus_readreg(struct device *dev, int phy, int reg)
 		return 0;
 	}
 	rval = CSR_READ_2(sc, re8139_reg);
-	if (sc->rtk_type == RTK_8139CPLUS && re8139_reg == RTK_BMCR) {
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0 && re8139_reg == RTK_BMCR) {
 		/* 8139C+ has different bit layout. */
 		rval &= ~(BMCR_LOOP | BMCR_ISO);
 	}
@@ -323,7 +323,7 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 
 	s = splnet();
 
-	if (sc->rtk_type == RTK_8169) {
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		re_gmii_writereg(dev, phy, reg, data);
 		splx(s);
 		return;
@@ -337,7 +337,7 @@ re_miibus_writereg(struct device *dev, int phy, int reg, int data)
 	switch (reg) {
 	case MII_BMCR:
 		re8139_reg = RTK_BMCR;
-		if (sc->rtk_type == RTK_8139CPLUS) {
+		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0) {
 			/* 8139C+ has different bit layout. */
 			data &= ~(BMCR_LOOP | BMCR_ISO);
 		}
@@ -588,7 +588,7 @@ re_attach(struct rtk_softc *sc)
 		eaddr[(i * 2) + 1] = val >> 8;
 	}
 
-	if (sc->rtk_type == RTK_8169) {
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		uint32_t hwrev;
 
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
@@ -600,7 +600,8 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_rev = 14;
 		} else if (hwrev == RTK_HWREV_8101E) {
 			sc->sc_rev = 13;
-		} else if (hwrev == RTK_HWREV_8168_SPIN2) {
+		} else if (hwrev == RTK_HWREV_8168_SPIN2 ||
+		           hwrev == RTK_HWREV_8168_SPIN3) {
 			sc->sc_rev = 12;
 		} else if (hwrev == RTK_HWREV_8168_SPIN1) {
 			sc->sc_rev = 11;
@@ -612,8 +613,15 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_rev = 3;
 		} else if (hwrev == RTK_HWREV_8110S) {
 			sc->sc_rev = 2;
-		} else /* RTK_HWREV_8169 */
+		} else if (hwrev == RTK_HWREV_8169) {
 			sc->sc_rev = 1;
+			sc->sc_quirk |= RTKQ_8169NONS;
+		} else {
+			aprint_normal("%s: Unknown revision (0x%08x)\n",
+			    sc->sc_dev.dv_xname, hwrev);
+			/* assume the latest one */
+			sc->sc_rev = 15;
+		}
 
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_GFRAGLEN;
@@ -763,15 +771,11 @@ re_attach(struct rtk_softc *sc)
 	    IFCAP_TSOv4;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
-	if (sc->rtk_type == RTK_8169)
-		ifp->if_baudrate = 1000000000;
-	else
-		ifp->if_baudrate = 100000000;
 	ifp->if_snd.ifq_maxlen = RE_IFQ_MAXLEN;
 	ifp->if_capenable = ifp->if_capabilities;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	callout_init(&sc->rtk_tick_ch);
+	callout_init(&sc->rtk_tick_ch, 0);
 
 	/* Do MII setup */
 	sc->mii.mii_ifp = ifp;
@@ -1189,7 +1193,7 @@ re_rxeof(struct rtk_softc *sc)
 		 * them using the 8169 status as though it was in the
 		 * same format as that of the 8139C+.
 		 */
-		if (sc->rtk_type == RTK_8169)
+		if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0)
 			rxstat >>= 1;
 
 		if (__predict_false((rxstat & RE_RDESC_STAT_RXERRSUM) != 0)) {
@@ -1354,9 +1358,21 @@ re_txeof(struct rtk_softc *sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->re_ldata.re_txq_free < RE_TX_QLEN)
+	if (sc->re_ldata.re_txq_free < RE_TX_QLEN) {
 		CSR_WRITE_4(sc, RTK_TIMERCNT, 1);
-	else
+		if ((sc->sc_quirk & RTKQ_PCIE) != 0) {
+			/*
+			 * Some chips will ignore a second TX request
+			 * issued while an existing transmission is in
+			 * progress. If the transmitter goes idle but
+			 * there are still packets waiting to be sent,
+			 * we need to restart the channel here to flush
+			 * them out. This only seems to be required with
+			 * the PCIe devices.
+			 */
+			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+		}
+	} else
 		ifp->if_timer = 0;
 }
 
@@ -1725,10 +1741,10 @@ re_start(struct ifnet *ifp)
 		 * RealTek put the TX poll request register in a different
 		 * location on the 8169 gigE chip. I don't know why.
 		 */
-		if (sc->rtk_type == RTK_8169)
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
-		else
+		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
 			CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
+		else
+			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
 
 		/*
 		 * Use the countdown timer for interrupt moderation.
@@ -1780,10 +1796,10 @@ re_init(struct ifnet *ifp)
 	 */
 
 	/*
-	 * XXX: For 8169 and 8169S revs below 2, set bit 14.
-	 * For 8169S/8110S rev 2 and above, do not set bit 14.
+	 * XXX: For old 8169 set bit 14.
+	 *      For 8169S/8110S and above, do not set bit 14.
 	 */
-	if (sc->rtk_type == RTK_8169 && sc->sc_rev == 1)
+	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
 		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;;
 
 	if (1)  {/* not for 8169S ? */
@@ -1799,7 +1815,7 @@ re_init(struct ifnet *ifp)
 	    reg | RTK_CPLUSCMD_RXENB | RTK_CPLUSCMD_TXENB);
 
 	/* XXX: from Realtek-supplied Linux driver. Wholly undocumented. */
-	if (sc->rtk_type == RTK_8169)
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0)
 		CSR_WRITE_2(sc, RTK_IM, 0x0000);
 
 	DELAY(10000);
@@ -1845,13 +1861,10 @@ re_init(struct ifnet *ifp)
 	/*
 	 * Set the initial TX and RX configuration.
 	 */
-	if (sc->re_testmode) {
-		if (sc->rtk_type == RTK_8169)
-			CSR_WRITE_4(sc, RTK_TXCFG,
-			    RE_TXCFG_CONFIG | RTK_LOOPTEST_ON);
-		else
-			CSR_WRITE_4(sc, RTK_TXCFG,
-			    RE_TXCFG_CONFIG | RTK_LOOPTEST_ON_CPLUS);
+	if (sc->re_testmode && (sc->sc_quirk & RTKQ_8169NONS) != 0) {
+		/* test mode is needed only for old 8169 */
+		CSR_WRITE_4(sc, RTK_TXCFG,
+		    RE_TXCFG_CONFIG | RTK_LOOPTEST_ON);
 	} else
 		CSR_WRITE_4(sc, RTK_TXCFG, RE_TXCFG_CONFIG);
 
@@ -1915,17 +1928,17 @@ re_init(struct ifnet *ifp)
 	 * moderation, which dramatically improves TX frame rate.
 	 */
 
-	if (sc->rtk_type == RTK_8169)
-		CSR_WRITE_4(sc, RTK_TIMERINT_8169, 0x800);
-	else
+	if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
 		CSR_WRITE_4(sc, RTK_TIMERINT, 0x400);
+	else {
+		CSR_WRITE_4(sc, RTK_TIMERINT_8169, 0x800);
 
-	/*
-	 * For 8169 gigE NICs, set the max allowed RX packet
-	 * size so we can receive jumbo frames.
-	 */
-	if (sc->rtk_type == RTK_8169)
+		/*
+		 * For 8169 gigE NICs, set the max allowed RX packet
+		 * size so we can receive jumbo frames.
+		 */
 		CSR_WRITE_2(sc, RTK_MAXRXPKTLEN, 16383);
+	}
 
 	if (sc->re_testmode)
 		return 0;

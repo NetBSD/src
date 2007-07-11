@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.19 2007/03/04 06:03:31 christos Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.19.4.1 2007/07/11 20:11:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.19 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.19.4.1 2007/07/11 20:11:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ int
 clnp_fragment(
 	struct ifnet   *ifp,	/* ptr to outgoing interface */
 	struct mbuf    *m,	/* ptr to packet */
-	struct sockaddr *first_hop,	/* ptr to first hop */
+	const struct sockaddr *first_hop,	/* ptr to first hop */
 	int             total_len,	/* length of datagram */
 	int             segoff,	/* offset of segpart in hdr */
 	int             flags,	/* flags passed to clnp_output */
@@ -903,7 +903,7 @@ int
 troll_output(ifp, m, dst, rt)
 	struct ifnet   *ifp;
 	struct mbuf    *m;
-	struct sockaddr *dst;
+	const struct sockaddr *dst;
 	struct rtentry *rt;
 {
 	int             err = 0;

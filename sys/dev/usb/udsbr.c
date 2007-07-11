@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.11 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.11.32.1 2007/07/11 20:08:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.11 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.11.32.1 2007/07/11 20:08:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,6 @@ USB_MATCH(udsbr)
 	USB_MATCH_START(udsbr, uaa);
 
 	DPRINTFN(50,("udsbr_match\n"));
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	if (uaa->vendor != USB_VENDOR_CYPRESS ||
 	    uaa->product != USB_PRODUCT_CYPRESS_FMRADIO)

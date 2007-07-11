@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43 2006/10/01 20:38:35 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43.10.1 2007/07/11 20:00:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2006/10/01 20:38:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43.10.1 2007/07/11 20:00:41 mjf Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -251,7 +251,6 @@ cpu_spinup(self, ci)
 
 	pcb = (struct pcb *)cp;
 	cp += USPACE;
-	cpu_info[1].ci_idle_pcb = pcb;
 
 	cpu_info[1].ci_intstk = cp + INTSTK;
 	cp += INTSTK;

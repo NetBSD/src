@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.50 2007/03/04 06:01:13 christos Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.50.4.1 2007/07/11 20:03:52 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.50 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.50.4.1 2007/07/11 20:03:52 mjf Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -326,15 +326,7 @@ darwin_e_proc_exit(p)
 {
 	struct darwin_emuldata *ded;
 	int error, mode;
-	struct wsdisplay_cmap cmap;
-	u_char *red;
-	u_char *green;
-	u_char *blue;
-	u_char kred[256];
-	u_char kgreen[256];
-	u_char kblue[256];
 	struct lwp *l;
-	void *sg = stackgap_init(p, 0);
 
 	ded = p->p_emuldata;
 	l = LIST_FIRST(&p->p_lwps);
@@ -368,6 +360,16 @@ darwin_e_proc_exit(p)
 		if (error != 0)
 			printf("Unable to switch back to text mode\n");
 #endif
+#if 0	/* Comment out stackgap use - this needs to be done another way */
+	    {
+		void *sg = stackgap_init(p, 0);
+		struct wsdisplay_cmap cmap;
+		u_char *red;
+		u_char *green;
+		u_char *blue;
+		u_char kred[256];
+		u_char kgreen[256];
+		u_char kblue[256];
 		red = stackgap_alloc(p, &sg, 256);
 		green = stackgap_alloc(p, &sg, 256);
 		blue = stackgap_alloc(p, &sg, 256);
@@ -394,6 +396,8 @@ darwin_e_proc_exit(p)
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Cannot revert colormap (error %d)\n", error);
+#endif
+	    }
 #endif
 
 	}

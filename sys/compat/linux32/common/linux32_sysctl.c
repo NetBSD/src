@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.4 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.4.8.1 2007/07/11 20:04:24 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.4 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.4.8.1 2007/07/11 20:04:24 mjf Exp $");
 
 #include "opt_ktrace.h"
 
@@ -168,8 +168,7 @@ linux32_sys___sysctl(l, v, retval)
 	/*
 	 * Read sysctl arguments 
 	 */
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, lsp)), 
-	    &ls32, sizeof(ls32))) != 0)
+	if ((error = copyin(SCARG_P32(uap, lsp), &ls32, sizeof(ls32))) != 0)
 		return error;
 
 	/*

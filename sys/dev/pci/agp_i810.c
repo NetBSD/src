@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.36 2007/03/04 06:02:15 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.36.4.1 2007/07/11 20:06:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.36 2007/03/04 06:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.36.4.1 2007/07/11 20:06:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
 	int error, apbase;
+	bus_size_t mmadrsize;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
 	if (isc == NULL) {
@@ -218,7 +219,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	if (isc->chiptype == CHIP_I915) {
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_MMADR,
-		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL);
+		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
+		    NULL, &mmadrsize);
 		if (error != 0) {
 			aprint_error(": can't map mmadr registers\n");
 			agp_generic_detach(sc);
@@ -235,7 +237,8 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I810_MMADR,
-		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh, NULL, NULL);
+		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
+		    NULL, &mmadrsize);
 		if (error != 0) {
 			aprint_error(": can't map mmadr registers\n");
 			agp_generic_detach(sc);
@@ -376,6 +379,18 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		case AGP_I915_GCC1_GMS_STOLEN_8M:
 			isc->stolen = (8192 - 260) * 1024 / 4096;
 			break;
+		case AGP_I915_GCC1_GMS_STOLEN_16M:
+			isc->stolen = (16384 - 260) * 1024 / 4096;
+			break;
+		case AGP_I915_GCC1_GMS_STOLEN_32M:
+			isc->stolen = (32768 - 260) * 1024 / 4096;
+			break;
+		case AGP_I915_GCC1_GMS_STOLEN_48M:
+			isc->stolen = (49152 - 260) * 1024 / 4096;
+			break;
+		case AGP_I915_GCC1_GMS_STOLEN_64M:
+			isc->stolen = (65536 - 260) * 1024 / 4096;
+			break;
 		default:
 			isc->stolen = 0;
 			aprint_error(
@@ -406,6 +421,14 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	if (isc->sc_powerhook == NULL)
 		printf("%s: WARNING: unable to establish PCI power hook\n",
 		    sc->as_dev.dv_xname);
+
+#if 0
+	/*      
+	 * another device (drm) may need access to this region
+	 * we do not need it anymore
+	 */     
+	bus_space_unmap(isc->bst, isc->bsh, mmadrsize);
+#endif
 
 	return 0;
 }
@@ -713,6 +736,8 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	 * to the GTT through the MMIO window.
 	 * Until the issue is solved, simply restore it.
 	 */
+
+#if 0
 	regval = bus_space_read_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL);
 	if (regval != (isc->gatt->ag_physical | 1)) {
 		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
@@ -720,6 +745,8 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		bus_space_write_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL,
 				  isc->gatt->ag_physical | 1);
 	}
+#endif
+	regval = 0;
 
 	if (mem->am_type == 2) {
 		WRITEGTT(offset, mem->am_physical | 1);

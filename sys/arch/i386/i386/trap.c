@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.4.1 2007/07/11 20:00:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217 2007/03/04 05:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.4.1 2007/07/11 20:00:04 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -249,7 +249,7 @@ trap(frame)
 	struct trapframe *frame;
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : 0;
+	struct proc *p;
 	int type = frame->tf_trapno;
 	struct pcb *pcb;
 	extern char fusubail[], kcopy_fault[],
@@ -265,7 +265,16 @@ trap(frame)
 
 	uvmexp.traps++;
 
-	pcb = (l != NULL) ? &l->l_addr->u_pcb : NULL;
+	if (__predict_true(l != NULL)) {
+		pcb = &l->l_addr->u_pcb;
+		p = l->l_proc;
+	} else {
+		/*
+		 * this can happen eg. on break points in early on boot.
+		 */
+		pcb = NULL;
+		p = NULL;
+	}
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
@@ -279,7 +288,6 @@ trap(frame)
 
 	if (!KVM86MODE && !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
-		KASSERT(l != NULL);
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;
 		LWP_CACHE_CREDS(l, p);
@@ -440,7 +448,6 @@ copyfault:
 			goto out;
 		}
 #endif
-		KASSERT(p != NULL);
 		/* If pmap_exec_fixup does something, let's retry the trap. */
 		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
 		    &l->l_addr->u_pcb)) {
@@ -500,7 +507,6 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
-		KASSERT(l != NULL);
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			KERNEL_LOCK(1, l);
@@ -508,8 +514,10 @@ copyfault:
 			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
-		if (curcpu()->ci_want_resched) /* XXX CSE me? */
+		if (curcpu()->ci_want_resched) { /* XXX CSE me? */
+			curcpu()->ci_want_resched = 0;
 			preempt();
+		}
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -586,7 +594,6 @@ copyfault:
 		extern struct vm_map *kernel_map;
 
 		cr2 = rcr2();
-		KASSERT(l != NULL);
 		KERNEL_LOCK(1, l);
 	faultcommon:
 		vm = p->p_vmspace;

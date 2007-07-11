@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.126 2007/03/04 06:03:14 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.126.4.1 2007/07/11 20:10:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126 2007/03/04 06:03:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.4.1 2007/07/11 20:10:51 mjf Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_bpf.h"
+#include "sl.h"
+#include "strip.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,11 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126 2007/03/04 06:03:14 christos Exp $");
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 
-#if defined(_KERNEL_OPT)
-#include "opt_bpf.h"
-#include "sl.h"
-#include "strip.h"
-#endif
+
+#include <compat/sys/sockio.h>
 
 #ifndef BPF_BUFSIZE
 /*
@@ -399,7 +402,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
 	d->bd_pid = l->l_proc->p_pid;
-	callout_init(&d->bd_callout);
+	callout_init(&d->bd_callout, 0);
 
 	simple_lock(&bpf_slock);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
@@ -435,6 +438,7 @@ bpf_close(struct file *fp, struct lwp *l)
 	simple_lock(&bpf_slock);
 	LIST_REMOVE(d, bd_list);
 	simple_unlock(&bpf_slock);
+	callout_destroy(&d->bd_callout);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
 
@@ -563,8 +567,6 @@ bpf_wakeup(struct bpf_d *d)
 		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
 
 	selnotify(&d->bd_sel, 0);
-	/* XXX */
-	d->bd_sel.sel_pid = 0;
 }
 
 
@@ -796,6 +798,9 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 	/*
 	 * Set interface name.
 	 */
+#ifdef OBIOCGETIF
+	case OBIOCGETIF:
+#endif
 	case BIOCGETIF:
 		if (d->bd_bif == 0)
 			error = EINVAL;
@@ -806,6 +811,9 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
 	/*
 	 * Set interface.
 	 */
+#ifdef OBIOCSETIF
+	case OBIOCSETIF:
+#endif
 	case BIOCSETIF:
 		error = bpf_setif(d, addr);
 		break;

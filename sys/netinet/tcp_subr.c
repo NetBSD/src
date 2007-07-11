@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.213 2007/03/12 18:18:36 ad Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.213.2.1 2007/07/11 20:11:28 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.213 2007/03/12 18:18:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.213.2.1 2007/07/11 20:11:28 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -379,9 +379,6 @@ tcp_init(void)
 {
 	int hlen;
 
-	/* Initialize the TCPCB template. */
-	tcp_tcpcb_template();
-
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
@@ -409,6 +406,9 @@ tcp_init(void)
 
 	/* Initialize the congestion control algorithms. */
 	tcp_congctl_init();
+
+	/* Initialize the TCPCB template. */
+	tcp_tcpcb_template();
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
@@ -906,8 +906,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0,
-		    (struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, NULL, ro, 0, NULL, so, NULL);
 		break;
 #endif
 	default:
@@ -925,18 +924,6 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
  * the new TCPCB instead.
  */
 static struct tcpcb tcpcb_template = {
-	/*
-	 * If TCP_NTIMERS ever changes, we'll need to update this
-	 * initializer.
-	 */
-	.t_timer = {
-		CALLOUT_INITIALIZER,
-		CALLOUT_INITIALIZER,
-		CALLOUT_INITIALIZER,
-		CALLOUT_INITIALIZER,
-	},
-	.t_delack_ch = CALLOUT_INITIALIZER,
-
 	.t_srtt = TCPTV_SRTTBASE,
 	.t_rttmin = TCPTV_MIN,
 
@@ -977,6 +964,13 @@ tcp_tcpcb_template(void)
 	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << (TCP_RTTVAR_SHIFT + 2 - 1);
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
 	    TCPTV_MIN, TCPTV_REXMTMAX);
+
+	/* Keep Alive */
+	tp->t_keepinit = tcp_keepinit;
+	tp->t_keepidle = tcp_keepidle;
+	tp->t_keepintvl = tcp_keepintvl;
+	tp->t_keepcnt = tcp_keepcnt;
+	tp->t_maxidle = tp->t_keepcnt * tp->t_keepintvl;
 }
 
 /*
@@ -1003,8 +997,11 @@ tcp_newtcpcb(int family, void *aux)
 	LIST_INIT(&tp->t_sc);		/* XXX can template this */
 
 	/* Don't sweat this loop; hopefully the compiler will unroll it. */
-	for (i = 0; i < TCPT_NTIMERS; i++)
+	for (i = 0; i < TCPT_NTIMERS; i++) {
+		callout_init(&tp->t_timer[i], 0);
 		TCP_TIMER_INIT(tp, i);
+	}
+	callout_init(&tp->t_delack_ch, 0);
 
 	switch (family) {
 	case AF_INET:
@@ -1035,6 +1032,9 @@ tcp_newtcpcb(int family, void *aux)
 	    }
 #endif /* INET6 */
 	default:
+		for (i = 0; i < TCPT_NTIMERS; i++)
+			callout_destroy(&tp->t_timer[i]);
+		callout_destroy(&tp->t_delack_ch);
 		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_usrreq */
 		return (NULL);
 	}
@@ -1050,7 +1050,7 @@ tcp_newtcpcb(int family, void *aux)
 	
 	tp->t_congctl = tcp_congctl_global;
 	tp->t_congctl->refcnt++;
-	
+
 	return (tp);
 }
 
@@ -1104,13 +1104,16 @@ tcp_drop(struct tcpcb *tp, int errno)
 int
 tcp_isdead(struct tcpcb *tp)
 {
-	int dead = (tp->t_flags & TF_DEAD);
+	int i, dead = (tp->t_flags & TF_DEAD);
 
 	if (__predict_false(dead)) {
 		if (tcp_timers_invoking(tp) > 0)
 				/* not quite there yet -- count separately? */
 			return dead;
 		tcpstat.tcps_delayed_free++;
+		for (i = 0; i < TCPT_NTIMERS; i++)
+			callout_destroy(&tp->t_timer[i]);
+		callout_destroy(&tp->t_delack_ch);
 		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_timer.c */
 	}
 	return dead;
@@ -1134,6 +1137,7 @@ tcp_close(struct tcpcb *tp)
 	struct rtentry *rt;
 #endif
 	struct route *ro;
+	int j;
 
 	inp = tp->t_inpcb;
 #ifdef INET6
@@ -1240,8 +1244,12 @@ tcp_close(struct tcpcb *tp)
 	}
 	if (tcp_timers_invoking(tp))
 		tp->t_flags |= TF_DEAD;
-	else
+	else {
+		for (j = 0; j < TCPT_NTIMERS; j++)
+			callout_destroy(&tp->t_timer[j]);
+		callout_destroy(&tp->t_delack_ch);
 		pool_put(&tcpcb_pool, tp);
+	}
 
 	if (inp) {
 		inp->inp_ppcb = 0;
@@ -2017,7 +2025,7 @@ tcp_established(struct tcpcb *tp)
 #endif
 
 	tp->t_state = TCPS_ESTABLISHED;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
 
 #ifdef RTV_RPIPE
 	if (rt != NULL && rt->rt_rmx.rmx_recvpipe != 0)

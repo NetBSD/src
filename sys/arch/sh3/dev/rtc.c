@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1 2006/09/20 00:41:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1.16.1 2007/07/11 20:01:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,10 +50,15 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.1 2006/09/20 00:41:11 uwe Exp $");
 
 #include <sh3/rtcreg.h>
 
+#if defined(DEBUG) && !defined(RTC_DEBUG)
+#define RTC_DEBUG
+#endif
+
 
 struct rtc_softc {
 	struct device sc_dev;
 
+	int sc_valid;
 	struct todr_chip_handle sc_todr;
 };
 
@@ -82,40 +87,66 @@ static void
 rtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtc_softc *sc = (void *)self;
+	uint8_t r;
+#ifdef RTC_DEBUG
+	char bits[128];
+#endif
 
 	printf("\n");
 
-	/* Make sure RTC is started */
-	_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE | SH_RCR2_START);
+	r = _reg_read_1(SH_(RCR2));
 
 #ifdef RTC_DEBUG
-	{
-		struct clock_ymdhms dt;
-		int error;
-
-		error = rtc_gettime_ymdhms(NULL, &dt);
-		if (error)
-			printf("%s: error %d\n", sc->sc_dev.dv_xname, error);
-		else
-			printf("%s: %04d-%02d-%02d %02d:%02d:%02d\n",
-			       sc->sc_dev.dv_xname,
-			       dt.dt_year, dt.dt_mon, dt.dt_day,
-			       dt.dt_hour, dt.dt_min, dt.dt_sec);
-	}
+	printf("%s: RCR2=%s\n", sc->sc_dev.dv_xname,
+	       bitmask_snprintf(r, SH_RCR2_BITS, bits, sizeof(bits)));
 #endif
+
+	/* Was the clock running? */
+	if ((r & (SH_RCR2_ENABLE | SH_RCR2_START)) == (SH_RCR2_ENABLE
+						       | SH_RCR2_START))
+		sc->sc_valid = 1;
+	else {
+		sc->sc_valid = 0;
+		printf("%s: WARNING: clock was stopped\n",
+		       sc->sc_dev.dv_xname);
+	}
+
+	/* Disable carry and alarm interrupts */
+	_reg_write_1(SH_(RCR1), 0);
+
+	/* Clock runs, no periodic interrupts, no 30-sec adjustment */
+	_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE | SH_RCR2_START);
+
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime_ymdhms = rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = rtc_settime_ymdhms;
 
 	todr_attach(&sc->sc_todr);
+
+#ifdef RTC_DEBUG
+	{
+		struct clock_ymdhms dt;
+		rtc_gettime_ymdhms(&sc->sc_todr, &dt);
+	}
+#endif
 }
 
 
 static int
 rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
+	struct rtc_softc *sc = h->cookie;
 	unsigned int year;
 	int retry = 8;
+
+	if (!sc->sc_valid) {
+#ifdef RTC_DEBUG
+		printf("RTC: gettime: not valid\n");
+		/* but proceed and read/print it anyway */
+#else
+		return EIO;
+#endif
+	}
 
 	/* disable carry interrupt */
 	_reg_bclr_1(SH_(RCR1), SH_RCR1_CIE);
@@ -145,12 +176,25 @@ rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 #undef RTCGET
 	} while ((_reg_read_1(SH_(RCR1)) & SH_RCR1_CF) && --retry > 0);
 
-	if (retry == 0)
+	if (retry == 0) {
+#ifdef RTC_DEBUG
+		printf("RTC: gettime: retry failed\n");
+#endif
 		return EIO;
+	}
 
 	dt->dt_year += 1900;
 	if (dt->dt_year < POSIX_BASE_YEAR)
 		dt->dt_year += 100;
+
+#ifdef RTC_DEBUG
+	printf("RTC: gettime: %04d-%02d-%02d %02d:%02d:%02d\n",
+	       dt->dt_year, dt->dt_mon, dt->dt_day,
+	       dt->dt_hour, dt->dt_min, dt->dt_sec);
+
+	if (!sc->sc_valid)
+		return EIO;
+#endif
 
 	return 0;
 }
@@ -159,16 +203,16 @@ rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 static int
 rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
+	struct rtc_softc *sc = h->cookie;
 	unsigned int year;
 	uint8_t r;
 
 	year = TOBCD(dt->dt_year % 100);
 
-	/* stop clock */
 	r = _reg_read_1(SH_(RCR2));
-	r |= SH_RCR2_RESET;
-	r &= ~SH_RCR2_START;
-	_reg_write_1(SH_(RCR2), r);
+
+	/* stop clock */
+	_reg_write_1(SH_(RCR2), (r & ~SH_RCR2_START) | SH_RCR2_RESET);
 
 	/* set time */
 	if (CPU_IS_SH3)
@@ -189,7 +233,14 @@ rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 #undef RTCSET
 
 	/* start clock */
-	_reg_write_1(SH_(RCR2), r | SH_RCR2_START);
+	_reg_write_1(SH_(RCR2), r);
+	sc->sc_valid = 1;
+
+#ifdef RTC_DEBUG
+	printf("RTC: settime: %04d-%02d-%02d %02d:%02d:%02d\n",
+	       dt->dt_year, dt->dt_mon, dt->dt_day,
+	       dt->dt_hour, dt->dt_min, dt->dt_sec);
+#endif
 
 	return 0;
 }

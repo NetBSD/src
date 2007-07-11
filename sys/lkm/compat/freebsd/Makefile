@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.20 2006/08/31 13:25:50 tron Exp $
+#	$NetBSD: Makefile,v 1.20.14.1 2007/07/11 20:10:35 mjf Exp $
 
-COMPAT_UTIL_OVERRIDE=	freebsd
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/freebsd

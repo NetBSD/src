@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.19 2006/03/28 20:58:40 pavel Exp $
+# 	$NetBSD: config.playstation2,v 1.19.20.1 2007/07/11 20:01:21 mjf Exp $
 #
 
 maxusers	16
@@ -56,7 +56,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

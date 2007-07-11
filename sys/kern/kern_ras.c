@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.18 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.18.2.1 2007/07/11 20:09:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.18 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.18.2.1 2007/07/11 20:09:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -216,10 +216,13 @@ ras_install(struct proc *p, void *addr, size_t len)
 again:
 	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
-		if (++nras >= ras_per_proc ||
-		    (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr)) {
+		if (++nras >= ras_per_proc) {
 			mutex_exit(&p->p_rasmutex);
 			return (EINVAL);
+		}
+		if (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr) {
+			mutex_exit(&p->p_rasmutex);
+			return (EEXIST);
 		}
 	}
 	if (newrp == NULL) {

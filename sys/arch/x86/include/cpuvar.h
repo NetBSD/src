@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.8 2007/03/06 12:32:46 yamt Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.8.4.1 2007/07/11 20:03:14 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,10 @@ struct cpu_attach_args {
 #ifdef _KERNEL
 
 #include "opt_multiprocessor.h"
+#ifndef XEN
+#include "opt_enhanced_speedstep.h"
+#include "opt_intel_odcm.h"
+#endif
 
 #ifdef MULTIPROCESSOR
 extern u_int32_t cpus_running;
@@ -107,6 +111,17 @@ void x86_errata(struct cpu_info *, int);
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
+
+#ifdef INTEL_ONDEMAND_CLOCKMOD
+void clockmod_init(void);
+#endif
+
+#ifdef ENHANCED_SPEEDSTEP
+void	est_init(int);
+int	via_get_bus_clock(struct cpu_info *);
+int	p3_get_bus_clock(struct cpu_info *);
+int	p4_get_bus_clock(struct cpu_info *);
+#endif
 
 #endif
 

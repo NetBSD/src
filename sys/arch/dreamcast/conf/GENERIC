@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.76 2006/11/11 18:47:09 jmmv Exp $
+# $NetBSD: GENERIC,v 1.76.10.1 2007/07/11 19:58:32 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -56,7 +56,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB			# remote debugger
 #options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=250000
+options 	SYMTAB_SPACE=260000
 #options 	SYSCALL_DEBUG
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
@@ -220,6 +220,7 @@ pseudo-device	loop			# network loopback
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

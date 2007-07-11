@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.45 2007/03/04 06:03:32 christos Exp $	*/
+/*	$NetBSD: esis.c,v 1.45.4.1 2007/07/11 20:12:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.45 2007/03/04 06:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.45.4.1 2007/07/11 20:12:00 mjf Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -145,8 +145,8 @@ esis_init(void)
 
 	LIST_INIT(&esis_pcb);
 
-	callout_init(&snpac_age_ch);
-	callout_init(&esis_config_ch);
+	callout_init(&snpac_age_ch, 0);
+	callout_init(&esis_config_ch, 0);
 
 	callout_reset(&snpac_age_ch, hz, snpac_age, NULL);
 	callout_reset(&esis_config_ch, hz, esis_config, NULL);

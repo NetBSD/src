@@ -1,0 +1,15 @@
+# $NetBSD: INSTALL,v 1.1.6.2 2007/07/11 20:00:17 mjf Exp $
+#
+# landisk install kernel - GENERIC + ramdisk
+#
+
+include "arch/landisk/conf/GENERIC"
+
+no config	netbsd
+config		netbsd	root on ? type ?
+
+# Enable the hooks used for initializing the root memory-disk.   
+options         MEMORY_DISK_HOOKS       
+options         MEMORY_DISK_IS_ROOT     # force root on memory disk 
+options         MEMORY_DISK_SERVER=0    # no userspace memory disk support
+options         MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks

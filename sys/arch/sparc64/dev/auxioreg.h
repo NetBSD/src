@@ -1,4 +1,4 @@
-/*	$NetBSD: auxioreg.h,v 1.5 2006/10/06 08:44:59 jnemeth Exp $	*/
+/*	$NetBSD: auxioreg.h,v 1.5.10.1 2007/07/11 20:02:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -76,3 +76,9 @@
 #define	AUXIO_TEMP_ENABLE		0x2
 #define	AUXIO_TEMP_DATAOUT		0x3
 #define	AUXIO_TEMP_DATAINT		0x4
+
+#define FTC_FLIP \
+	do { \
+		auxio_fd_control(AUXIO_LED_FTC); \
+		auxio_fd_control(0); \
+	} while (0)

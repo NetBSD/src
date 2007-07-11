@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.6.1 2007/07/11 20:12:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.6.1 2007/07/11 20:12:56 mjf Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1074,7 +1074,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
 	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
 	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !(use_reserve && curproc == uvm.pagedaemon_proc)))
+	     !(use_reserve && curlwp == uvm.pagedaemon_lwp)))
 		goto fail;
 
 #if PGFL_NQUEUES != 2
@@ -1499,6 +1499,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 			panic("uvm_page_own");
 		}
 		pg->owner = (curproc) ? curproc->p_pid :  (pid_t) -1;
+		pg->lowner = (curlwp) ? curlwp->l_lid :  (lwpid_t) -1;
 		pg->owner_tag = tag;
 		return;
 	}
@@ -1525,8 +1526,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
  *
  * => try to complete one color bucket at a time, to reduce our impact
  *	on the CPU cache.
- * => we loop until we either reach the target or whichqs indicates that
- *	there is a process ready to run.
+ * => we loop until we either reach the target or there is a lwp ready to run.
  */
 void
 uvm_pageidlezero(void)
@@ -1540,8 +1540,9 @@ uvm_pageidlezero(void)
 	s = uvm_lock_fpageq();
 	firstbucket = nextbucket;
 	do {
-		if (sched_whichqs != 0)
+		if (sched_curcpu_runnable_p()) {
 			goto quit;
+		}
 		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
 			uvm.page_idle_zero = false;
 			goto quit;
@@ -1550,7 +1551,7 @@ uvm_pageidlezero(void)
 			pgfl = &uvm.page_free[free_list];
 			while ((pg = TAILQ_FIRST(&pgfl->pgfl_buckets[
 			    nextbucket].pgfl_queues[PGFL_UNKNOWN])) != NULL) {
-				if (sched_whichqs != 0)
+				if (sched_curcpu_runnable_p())
 					goto quit;
 
 				TAILQ_REMOVE(&pgfl->pgfl_buckets[

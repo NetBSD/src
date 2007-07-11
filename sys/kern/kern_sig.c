@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.252 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.252.2.1 2007/07/11 20:09:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.252 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.252.2.1 2007/07/11 20:09:55 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -124,7 +124,7 @@ sigset_t	contsigmask, stopsigmask, sigcantmask;
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
-static struct	callout proc_stop_ch;
+static callout_t proc_stop_ch;
 
 static struct pool_allocator sigactspool_allocator = {
         .pa_alloc = sigacts_poolpage_alloc,
@@ -165,7 +165,7 @@ signal_init(void)
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
-	callout_init(&proc_stop_ch);
+	callout_init(&proc_stop_ch, 0);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
 }
 
@@ -1551,7 +1551,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 
 	mutex_exit(&p->p_smutex);
 	lwp_lock(l);
-	mi_switch(l, NULL);
+	mi_switch(l);
 	KERNEL_LOCK(biglocks, l);
 	mutex_enter(&p->p_smutex);
 }

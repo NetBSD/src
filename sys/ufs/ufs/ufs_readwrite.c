@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.76 2007/02/22 06:10:49 thorpej Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.76.6.1 2007/07/11 20:12:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.76 2007/02/22 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.76.6.1 2007/07/11 20:12:51 mjf Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -105,8 +105,7 @@ READ(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
@@ -215,9 +214,7 @@ WRITE(void *v)
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
 	int aflag;
-	int ubc_alloc_flags, ubc_release_flags;
 	int extended=0;
-	void *win;
 	vsize_t bytelen;
 	bool async;
 	bool usepc = false;
@@ -274,14 +271,15 @@ WRITE(void *v)
 	if (vp->v_type == VREG && l &&
 	    uio->uio_offset + uio->uio_resid >
 	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(&proclist_mutex);
 		psignal(l->l_proc, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)
 		return (0);
 
-	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
-		return error;
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -314,20 +312,20 @@ WRITE(void *v)
 		off_t eob;
 
 		eob = blkroundup(fs, osize);
+		uvm_vnp_setwritesize(vp, eob);
 		error = ufs_balloc_range(vp, osize, eob - osize, cred, aflag);
 		if (error)
 			goto out;
 		if (flags & B_SYNC) {
-			vp->v_size = eob;
 			simple_lock(&vp->v_interlock);
 			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
 			    round_page(eob), PGO_CLEANIT | PGO_SYNCIO);
 		}
 	}
 
-	ubc_alloc_flags = UBC_WRITE;
 	while (uio->uio_resid > 0) {
-		bool extending; /* if we're extending a whole block */
+		int ubc_flags = UBC_WRITE;
+		bool overwrite; /* if we're overwrite a whole block */
 		off_t newoff;
 
 		if (ioflag & IO_DIRECT) {
@@ -348,15 +346,31 @@ WRITE(void *v)
 		 * since the new blocks will be inaccessible until the write
 		 * is complete.
 		 */
-		extending = uio->uio_offset >= preallocoff &&
+		overwrite = uio->uio_offset >= preallocoff &&
 		    uio->uio_offset < endallocoff;
+		if (!overwrite && (vp->v_flag & VMAPPED) == 0 &&
+		    blkoff(fs, uio->uio_offset) == 0 &&
+		    (uio->uio_offset & PAGE_MASK) == 0) {
+			vsize_t len;
 
-		if (!extending) {
+			len = trunc_page(bytelen);
+			len -= blkoff(fs, len);
+			if (len > 0) {
+				overwrite = true;
+				bytelen = len;
+			}
+		}
+
+		newoff = oldoff + bytelen;
+		if (vp->v_size < newoff) {
+			uvm_vnp_setwritesize(vp, newoff);
+		}
+
+		if (!overwrite) {
 			error = ufs_balloc_range(vp, uio->uio_offset, bytelen,
 			    cred, aflag);
 			if (error)
 				break;
-			ubc_alloc_flags &= ~UBC_FAULTBUSY;
 		} else {
 			genfs_node_wrlock(vp);
 			error = GOP_ALLOC(vp, uio->uio_offset, bytelen,
@@ -364,26 +378,15 @@ WRITE(void *v)
 			genfs_node_unlock(vp);
 			if (error)
 				break;
-			ubc_alloc_flags |= UBC_FAULTBUSY;
+			ubc_flags |= UBC_FAULTBUSY;
 		}
 
 		/*
 		 * copy the data.
 		 */
 
-		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
-		    UVM_ADV_NORMAL, ubc_alloc_flags);
-		error = uiomove(win, bytelen, uio);
-		if (error && extending) {
-			/*
-			 * if we haven't initialized the pages yet,
-			 * do it now.  it's safe to use memset here
-			 * because we just mapped the pages above.
-			 */
-			memset(win, 0, bytelen);
-		}
-		ubc_release_flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, ubc_release_flags);
+		ubc_flags |= UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+		error = ubc_uiomove(&vp->v_uobj, uio, bytelen, ubc_flags);
 
 		/*
 		 * update UVM's notion of the size now that we've
@@ -393,7 +396,6 @@ WRITE(void *v)
 		 * otherwise ffs_truncate can't flush soft update states.
 		 */
 
-		newoff = oldoff + bytelen;
 		if (vp->v_size < newoff) {
 			uvm_vnp_setsize(vp, newoff);
 			extended = 1;

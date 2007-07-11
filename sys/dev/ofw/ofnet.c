@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.39 2007/03/08 20:52:21 matt Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.39.4.1 2007/07/11 20:06:54 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.39 2007/03/08 20:52:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.39.4.1 2007/07/11 20:06:54 mjf Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -152,7 +152,7 @@ ofnet_attach(struct device *parent, struct device *self, void *aux)
 		panic("ofnet_attach: no mac-address");
 	printf(": address %s\n", ether_sprintf(myaddr));
 
-	callout_init(&of->sc_callout);
+	callout_init(&of->sc_callout, 0);
 
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = of;

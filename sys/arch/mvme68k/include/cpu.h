@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2007/03/04 06:00:14 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35.4.1 2007/07/11 20:00:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -100,6 +100,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -145,15 +146,16 @@ extern volatile unsigned int interrupt_depth;
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern int want_resched;	/* resched() was called */
-#define	cpu_need_resched(ci)	{ want_resched++; aston(); }
+#define	cpu_need_resched(ci, flags)	\
+	do { ci->ci_want_resched++; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the hp300, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	cpu_need_proftick(l)	{ (l)->l_pflag |= LP_OWEUPC; aston(); }
+#define	cpu_need_proftick(l)	\
+	do { (l)->l_pflag |= LP_OWEUPC; aston(); } while (/* CONSTCOND */0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -223,26 +225,13 @@ extern	u_int intiobase_phys, intiotop_phys;
 extern	u_long ether_data_buff_size;
 extern	u_char mvme_ea[6];
 
-struct frame;
-struct pcb;
 void	doboot __P((int)) 
 	__attribute__((__noreturn__));
 int	nmihand __P((void *));
 void	mvme68k_abort __P((const char *));
-void	physaccess __P((void *, void *, int, int));
-void	physunaccess __P((void *, int));
 void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
-int	kvtop __P((void *));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
 void	loadustp __P((paddr_t));
-
-/* Prototypes from sys_machdep.c: */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((void *, int));
 
 /* physical memory addresses where mvme147's onboard devices live */
 #define	INTIOBASE147	(0xfffe0000u)

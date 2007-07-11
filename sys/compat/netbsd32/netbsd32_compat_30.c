@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.18 2007/03/10 21:40:25 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.18.2.1 2007/07/11 20:04:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.18 2007/03/10 21:40:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.18.2.1 2007/07/11 20:04:28 mjf Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -91,7 +91,7 @@ compat_30_netbsd32_getdents(l, v, retval)
 	error = vn_readdir(fp, buf, UIO_SYSSPACE, count, &done, l, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
-		error = copyout(buf, NETBSD32PTR64(SCARG(uap, buf)), *retval);
+		error = copyout(buf, SCARG_P32(uap, buf), *retval);
 	}
 	free(buf, M_TEMP);
  out:
@@ -112,20 +112,15 @@ compat_30_netbsd32___stat13(l, v, retval)
 	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
-	void *sg;
 	const char *path;
-	struct proc *p = l->l_proc;
 
-	path = (char *)NETBSD32PTR64(SCARG(uap, path));
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
+	path = SCARG_P32(uap, path);
 
 	error = do_sys_stat(l, path, FOLLOW, &sb);
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, ub)),
-	    sizeof(sb32));
+	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
 }
 
@@ -156,8 +151,7 @@ compat_30_netbsd32___fstat13(l, v, retval)
 
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
-		error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, sb)),
-		    sizeof(sb32));
+		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	}
 	return (error);
 }
@@ -175,20 +169,15 @@ compat_30_netbsd32___lstat13(l, v, retval)
 	struct netbsd32_stat13 sb32;
 	struct stat sb;
 	int error;
-	void *sg;
 	const char *path;
-	struct proc *p = l->l_proc;
 
-	path = (char *)NETBSD32PTR64(SCARG(uap, path));
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, path);
+	path = SCARG_P32(uap, path);
 
 	error = do_sys_stat(l, path, NOFOLLOW, &sb);
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, ub)),
-	    sizeof(sb32));
+	error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
 	return (error);
 }
 
@@ -200,7 +189,7 @@ compat_30_netbsd32_fhstat(l, v, retval)
 {
 	struct compat_30_netbsd32_fhstat_args /* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
-		syscallarg(netbsd32_stat13p_t) sb);
+		syscallarg(netbsd32_stat13p_t) sb;
 	} */ *uap = v;
 	struct stat sb;
 	struct netbsd32_stat13 sb32;
@@ -216,8 +205,7 @@ compat_30_netbsd32_fhstat(l, v, retval)
 	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)))
 		return (error);
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, fhp)), &fh,
-	    sizeof(fh))) != 0)
+	if ((error = copyin(SCARG_P32(uap, fhp), &fh, sizeof(fh))) != 0)
 		return (error);
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
@@ -231,7 +219,7 @@ compat_30_netbsd32_fhstat(l, v, retval)
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
+	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
 	return (error);
 }
 
@@ -248,41 +236,20 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 	} */ *uap = v;
 	struct statvfs *sbuf;
 	struct netbsd32_statvfs *s32;
-	fhandle_t *fh;
-	struct vnode *vp;
 	int error;
 
-	/*
-	 * Must be super user
-	 */
-	if ((error = kauth_authorize_system(l->l_cred,
-	    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)) != 0)
-		return error;
+	sbuf = STATVFSBUF_GET();
+	error = do_fhstatvfs(l, SCARG_P32(uap, fhp), FHANDLE_SIZE_COMPAT, sbuf,
+	    SCARG(uap, flags));
 
-	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)), 
-	    FHANDLE_SIZE_COMPAT, &fh)) != 0)
-		goto bad;
-	if ((error = vfs_fhtovp(fh, &vp)) != 0)
-		goto bad;
+	if (error != 0) {
+		s32 = malloc(sizeof *s32, M_TEMP, M_WAITOK);
+		netbsd32_from_statvfs(sbuf, s32);
+		error = copyout(s32, SCARG_P32(uap, buf), sizeof *s32);
+		free(s32, M_TEMP);
+	}
+	STATVFSBUF_PUT(sbuf);
 
-	sbuf = (struct statvfs *)malloc(sizeof(struct statvfs), M_TEMP,
-	    M_WAITOK);
-	error = dostatvfs(vp->v_mount, sbuf, l, SCARG(uap, flags), 1);
-	vput(vp);
-	if (error != 0)
-		goto out;
-
-	s32 = (struct netbsd32_statvfs *)
-	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
-	netbsd32_from_statvfs(sbuf, s32);
-	error = copyout(s32, (void *)NETBSD32PTR64(SCARG(uap, buf)),
-	    sizeof(struct netbsd32_statvfs));
-	free(s32, M_TEMP);
-
-out:
-	free(sbuf, M_TEMP);
-bad:
-	vfs_copyinfh_free(fh);
 	return (error);
 }
 
@@ -336,31 +303,13 @@ int compat_30_netbsd32_sys___fhstat30(l, v, retval)
 	struct stat sb;
 	struct netbsd32_stat sb32;
 	int error;
-	fhandle_t *fh;
-	struct vnode *vp;
 
-	/*
-	 * Must be super user
-	 */
-	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL)))
+	error = do_fhstat(l, SCARG_P32(uap, fhp), FHANDLE_SIZE_COMPAT, &sb);
+	if (error)
 		return error;
 
-	if ((error = vfs_copyinfh_alloc(NETBSD32PTR64(SCARG(uap, fhp)),
-	    FHANDLE_SIZE_COMPAT, &fh)) != 0)
-		goto bad;
-
-	if ((error = vfs_fhtovp(fh, &vp)) != 0)
-		goto bad;
-
-	error = vn_stat(vp, &sb, l);
-	vput(vp);
-	if (error)
-		goto bad;
 	netbsd32_from___stat30(&sb, &sb32);
-	error = copyout(&sb32, NETBSD32PTR64(SCARG(uap, sb)), sizeof(sb));
-bad:
-	vfs_copyinfh_free(fh);
+	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	return error;
 }
 

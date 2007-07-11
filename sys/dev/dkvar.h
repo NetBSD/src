@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.10 2007/03/04 06:01:41 christos Exp $ */
+/* $NetBSD: dkvar.h,v 1.10.4.1 2007/07/11 20:05:00 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -118,4 +118,4 @@ void	dk_getdisklabel(struct dk_intf *, struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_intf *, struct dk_softc *,
 			   struct disklabel *);
 
-int	dk_lookup(const char *, struct lwp *, struct vnode **);
+int	dk_lookup(const char *, struct lwp *, struct vnode **, enum uio_seg);

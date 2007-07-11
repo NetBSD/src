@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.33 2007/02/22 05:28:53 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.33.6.1 2007/07/11 20:00:47 mjf Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,17 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33 2007/02/22 05:28:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.33.6.1 2007/07/11 20:00:47 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/cpu.h>
 
 #include <mips/mips_opcode.h>
 
 #include <machine/db_machdep.h>
+
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
@@ -171,7 +173,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	(*pr)("at %p\n", pcb);
 
 	stacktrace_subr(0,0,0,0,	/* no args known */
-			(int)cpu_switch,
+			(int)cpu_switchto,
 			pcb->pcb_context[8],
 			pcb->pcb_context[9],
 			pcb->pcb_context[10],

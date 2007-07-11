@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.38 2007/03/04 06:03:00 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.38.4.1 2007/07/11 20:09:25 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.38 2007/03/04 06:03:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.38.4.1 2007/07/11 20:09:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,7 +605,9 @@ msdosfs_write(v)
 	 */
 	if (((uio->uio_offset + uio->uio_resid) >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
+		mutex_enter(&proclist_mutex);
 		psignal(p, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.67 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.67.4.1 2007/07/11 20:10:56 mjf Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67 2007/03/04 06:03:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.4.1 2007/07/11 20:10:56 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -188,8 +188,8 @@ gif_clone_destroy(struct ifnet *ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	rtcache_free(&sc->gif_ro);
 	if_detach(ifp);
+	rtcache_free(&sc->gif_ro);
 
 	free(sc, M_DEVBUF);
 
@@ -351,10 +351,8 @@ gifnetisr(void)
 {
 	struct gif_softc *sc;
 
-	for (sc = LIST_FIRST(&gif_softc_list); sc != NULL;
-	     sc = LIST_NEXT(sc, gif_list)) {
+	LIST_FOREACH(sc, &gif_softc_list, gif_list)
 		gifintr(sc);
-	}
 }
 #endif
 
@@ -689,7 +687,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((void *)src, (void *)dst, src->sa_len);
+		memcpy(dst, src, src->sa_len);
 		break;
 
 	case SIOCGIFPDSTADDR:
@@ -721,7 +719,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((void *)src, (void *)dst, src->sa_len);
+		memcpy(dst, src, src->sa_len);
 		break;
 
 	case SIOCGLIFPHYADDR:
@@ -737,7 +735,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		size = sizeof(((struct if_laddrreq *)data)->addr);
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((void *)src, (void *)dst, src->sa_len);
+		memcpy(dst, src, src->sa_len);
 
 		/* copy dst */
 		src = sc->gif_pdst;
@@ -746,7 +744,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		size = sizeof(((struct if_laddrreq *)data)->dstaddr);
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((void *)src, (void *)dst, src->sa_len);
+		memcpy(dst, src, src->sa_len);
 		break;
 
 	case SIOCSIFFLAGS:
@@ -772,8 +770,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	s = splsoftnet();
 
-	for (sc2 = LIST_FIRST(&gif_softc_list); sc2 != NULL;
-	     sc2 = LIST_NEXT(sc2, gif_list)) {
+	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
 		if (sc2 == sc)
 			continue;
 		if (!sc2->gif_pdst || !sc2->gif_psrc)
@@ -784,8 +781,8 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		    sc2->gif_psrc->sa_len != src->sa_len)
 			continue;
 		/* can't configure same pair of address onto two gifs */
-		if (bcmp(sc2->gif_pdst, dst, dst->sa_len) == 0 &&
-		    bcmp(sc2->gif_psrc, src, src->sa_len) == 0) {
+		if (memcmp(sc2->gif_pdst, dst, dst->sa_len) == 0 &&
+		    memcmp(sc2->gif_psrc, src, src->sa_len) == 0) {
 			error = EADDRNOTAVAIL;
 			goto bad;
 		}
@@ -825,12 +822,12 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	osrc = sc->gif_psrc;
 	sa = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
-	bcopy((void *)src, (void *)sa, src->sa_len);
+	memcpy(sa, src, src->sa_len);
 	sc->gif_psrc = sa;
 
 	odst = sc->gif_pdst;
 	sa = (struct sockaddr *)malloc(dst->sa_len, M_IFADDR, M_WAITOK);
-	bcopy((void *)dst, (void *)sa, dst->sa_len);
+	memcpy(sa, dst, dst->sa_len);
 	sc->gif_pdst = sa;
 
 	switch (sc->gif_psrc->sa_family) {

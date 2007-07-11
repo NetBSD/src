@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.193 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.193.4.1 2007/07/11 20:00:51 mjf Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193.4.1 2007/07/11 20:00:51 mjf Exp $");
 
 #include "opt_cputype.h"
 
@@ -139,9 +139,12 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193 2007/03/04 06:00:12 christos 
 #include <sys/kcore.h>
 #include <sys/pool.h>
 #include <sys/ras.h>
-
+#include <sys/cpu.h>
 #include <sys/ucontext.h>
+
 #include <machine/kcore.h>
+#include <machine/cpu.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
@@ -153,7 +156,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.193 2007/03/04 06:00:12 christos 
 #include <mips/locore.h>
 #include <mips/psl.h>
 #include <mips/pte.h>
-#include <machine/cpu.h>
 #include <mips/userret.h>
 
 #ifdef __HAVE_BOOTINFO_H
@@ -208,8 +210,6 @@ int mips3_pg_cached;
 u_int mips3_pg_shift;
 
 struct	user *proc0paddr;
-struct	lwp  *fpcurlwp;
-struct	pcb  *curpcb;
 struct	segtab *segbase;
 
 void *	msgbufaddr;
@@ -778,6 +778,14 @@ void
 mips_vector_init(void)
 {
 	const struct pridtab *ct;
+
+	/*
+	 * XXX Set-up curlwp/curcpu again.  They may have been clobbered
+	 * beween verylocore and here.
+	 */
+	lwp0.l_cpu = &cpu_info_store;
+	cpu_info_store.ci_curlwp = &lwp0;
+	curlwp = &lwp0;
 
 	mycpu = NULL;
 	for (ct = cputab; ct->cpu_name != NULL; ct++) {
@@ -1761,4 +1769,26 @@ cpu_setmcontext(l, mcp, flags)
 	mutex_exit(&p->p_smutex);
 
 	return (0);
+}
+
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
+	ci->ci_want_resched = 1;
+
+	if (curlwp != ci->ci_data.cpu_idlelwp)
+		aston(curlwp);
+}
+
+void
+cpu_idle(void)
+{
+	void (*mach_idle)(void) = (void (*)(void))CPU_IDLE;
+
+	while (!curcpu()->ci_want_resched)
+		(*mach_idle)();
 }

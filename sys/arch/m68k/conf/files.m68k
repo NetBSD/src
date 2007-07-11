@@ -1,11 +1,10 @@
-#	$NetBSD: files.m68k,v 1.38 2007/02/15 02:48:48 mhitch Exp $
+#	$NetBSD: files.m68k,v 1.38.8.1 2007/07/11 20:00:21 mjf Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
 defflag				FPU_EMULATE
 defflag				PMAP_DEBUG
 
-file	arch/m68k/m68k/bcopy.s
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s
 file	arch/m68k/m68k/db_disasm.c		ddb
@@ -17,7 +16,6 @@ file	arch/m68k/m68k/kgdb_m68k.c		kgdb
 file	arch/m68k/m68k/lock_stubs.s
 file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
-file	netns/ns_cksum.c			ns
 file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/reenter_syscall.s

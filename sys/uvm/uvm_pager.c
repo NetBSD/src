@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.81 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.81.6.1 2007/07/11 20:12:57 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81 2007/02/22 06:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.6.1 2007/07/11 20:12:57 mjf Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -134,7 +134,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vaddr_t cva;
 	struct vm_page *pp;
 	vm_prot_t prot;
-	const bool pdaemon = curproc == uvm.pagedaemon_proc;
+	const bool pdaemon = curlwp == uvm.pagedaemon_lwp;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d)", pps, npages,0,0);

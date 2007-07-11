@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.157 2007/03/04 06:03:22 christos Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.157.4.1 2007/07/11 20:11:27 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.157 2007/03/04 06:03:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.157.4.1 2007/07/11 20:11:27 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -589,7 +589,7 @@ tcp_output(struct tcpcb *tp)
 #ifdef INET6
 	else if (tp->t_in6pcb) {
 		so = tp->t_in6pcb->in6p_socket;
-		ro = (struct route *)&tp->t_in6pcb->in6p_route;
+		ro = &tp->t_in6pcb->in6p_route;
 	}
 #endif
 
@@ -1391,8 +1391,8 @@ send:
 		}
 
 		m->m_pkthdr.len = hdrlen + len;
-		sigp = (void *)th + sizeof(*th) + sigoff;
-		tcp_signature(m, th, (void *)th - mtod(m, void *), sav, sigp);
+		sigp = (char *)th + sizeof(*th) + sigoff;
+		tcp_signature(m, th, (char *)th - mtod(m, char *), sav, sigp);
 
 		key_sa_recordxfer(sav, m);
 #ifdef FAST_IPSEC
@@ -1578,9 +1578,8 @@ timer:
 			opts = tp->t_in6pcb->in6p_outputopts;
 		else
 			opts = NULL;
-		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE,
-			(struct ip6_moptions *)0, so, NULL);
+		error = ip6_output(m, opts, ro, so->so_options & SO_DONTROUTE,
+			NULL, so, NULL);
 		break;
 	    }
 #endif

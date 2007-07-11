@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.32 2007/03/04 21:18:08 jnemeth Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.32.4.1 2007/07/11 20:09:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32 2007/03/04 21:18:08 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.4.1 2007/07/11 20:09:21 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -94,7 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32 2007/03/04 21:18:08 jnemeth
 #include <fs/filecorefs/filecore_node.h>
 #include <fs/filecorefs/filecore_mount.h>
 
-MALLOC_DEFINE(M_FILECOREMNT, "filecore mount", "Filecore FS mount structures");
+MALLOC_JUSTDEFINE(M_FILECOREMNT,
+    "filecore mount", "Filecore FS mount structures");
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 
@@ -400,10 +401,6 @@ out:
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
 	VOP_UNLOCK(devvp, 0);
-	if (fcmp) {
-		free(fcmp, M_FILECOREMNT);
-		mp->mnt_data = NULL;
-	}
 	return error;
 }
 
@@ -435,11 +432,6 @@ filecore_unmount(mp, mntflags, l)
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#if 0
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp))
-		return EBUSY;
-#endif
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 

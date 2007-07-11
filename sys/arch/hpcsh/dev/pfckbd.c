@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.20 2006/02/23 01:43:47 uwe Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.20.26.1 2007/07/11 19:59:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.20 2006/02/23 01:43:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.20.26.1 2007/07/11 19:59:29 mjf Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -148,7 +148,7 @@ pfckbd_attach(struct device *parent, struct device *self, void *aux)
 	config_found(self, &haa, hpckbd_print);
 
 	/* install callout handler */
-	callout_init(&pfckbd_core.pc_soft_ch);
+	callout_init(&pfckbd_core.pc_soft_ch, 0);
 	callout_reset(&pfckbd_core.pc_soft_ch, 1,
 		      pfckbd_core.pc_callout, &pfckbd_core);
 }

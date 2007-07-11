@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.3 2007/03/04 06:01:11 christos Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.3.4.1 2007/07/11 20:03:40 mjf Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.3 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.3.4.1 2007/07/11 20:03:40 mjf Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -166,6 +166,9 @@ static int
 zkbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
+	if (zkbd_sc)
+		return 0;
+
 	return 1;
 }
 
@@ -177,20 +180,15 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	int pin, i;
 
 	zkbd_sc = sc;
+
+	printf("\n");
+
 	sc->sc_polling = 0;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
 #endif
-	/* Determine which system we are - XXX */
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    zkbd_power, sc);
-	if (sc->sc_powerhook == NULL) {
-		printf(": unable to establish powerhook\n");
-		return;
-	}
-
-	if (1 /* C3000 */) {
+	if (ZAURUS_ISC3000) {
 		sc->sc_sense_array = gpio_sense_pins_c3000;
 		sc->sc_strobe_array = gpio_strobe_pins_c3000;
 		sc->sc_nsense = __arraycount(gpio_sense_pins_c3000);
@@ -203,7 +201,18 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 		sc->sc_xt_keymap = xt_keymap;
 #endif
-	} /* XXX */
+	} else {
+		/* XXX */
+		return;
+	}
+
+	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	    zkbd_power, sc);
+	if (sc->sc_powerhook == NULL) {
+		printf("%s: unable to establish powerhook\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
 
 	sc->sc_okeystate = malloc(sc->sc_nsense * sc->sc_nstrobe,
 	    M_DEVBUF, M_NOWAIT);
@@ -216,18 +225,16 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	/* set all the strobe bits */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
 		pin = sc->sc_strobe_array[i];
-		if (pin == -1) {
+		if (pin == -1)
 			continue;
-		}
 		pxa2x0_gpio_set_function(pin, GPIO_SET|GPIO_OUT);
 	}
 
 	/* set all the sense bits */
 	for (i = 0; i < sc->sc_nsense; i++) {
 		pin = sc->sc_sense_array[i];
-		if (pin == -1) {
+		if (pin == -1)
 			continue;
-		}
 		pxa2x0_gpio_set_function(pin, GPIO_IN);
 		pxa2x0_gpio_intr_establish(pin, IST_EDGE_BOTH, IPL_TTY,
 		    zkbd_irq, sc);
@@ -252,13 +259,11 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &zkbd_accessops;
 	a.accesscookie = sc;
 
-	printf("\n");
-
 	zkbd_hinge(sc);		/* to initialize sc_hinge */
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
-	callout_init(&sc->sc_roll_to);
+	callout_init(&sc->sc_roll_to, 0);
 	callout_setfunc(&sc->sc_roll_to, zkbd_poll, sc);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	callout_setfunc(&sc->sc_rawrepeat_ch, zkbd_rawrepeat, sc);
@@ -309,10 +314,10 @@ zkbd_poll(void *v)
 	/* discharge all */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
 		pin = sc->sc_strobe_array[i];
-		if (pin != -1) {
-			pxa2x0_gpio_clear_bit(pin);
-			pxa2x0_gpio_set_dir(pin, GPIO_IN);
-		}
+		if (pin == -1)
+			continue;
+		pxa2x0_gpio_clear_bit(pin);
+		pxa2x0_gpio_set_dir(pin, GPIO_IN);
 	}
 
 	delay(10);
@@ -332,9 +337,8 @@ zkbd_poll(void *v)
 		for (i = 0; i < sc->sc_nsense; i++) {
 			int bit;
 
-			if (sc->sc_sense_array[i] == -1) 
+			if (sc->sc_sense_array[i] == -1)
 				continue;
-
 			bit = pxa2x0_gpio_get_bit(sc->sc_sense_array[i]);
 			if (bit && sc->sc_hinge && col < sc->sc_maxkbdcol)
 				continue;
@@ -351,17 +355,18 @@ zkbd_poll(void *v)
 	/* charge all */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
 		pin = sc->sc_strobe_array[i];
-		if (pin != -1) {
-			pxa2x0_gpio_set_bit(pin);
-			pxa2x0_gpio_set_dir(pin, GPIO_OUT);
-		}
+		if (pin == -1)
+			continue;
+		pxa2x0_gpio_set_bit(pin);
+		pxa2x0_gpio_set_dir(pin, GPIO_OUT);
 	}
 
 	/* force the irqs to clear as we have just played with them. */
 	for (i = 0; i < sc->sc_nsense; i++) {
-		if (sc->sc_sense_array[i] != -1) {
-			pxa2x0_gpio_clear_intr(sc->sc_sense_array[i]);
-		}
+		pin = sc->sc_sense_array[i];
+		if (pin == -1)
+			continue;
+		pxa2x0_gpio_clear_intr(pin);
 	}
 
 	/* process after resetting interrupt */

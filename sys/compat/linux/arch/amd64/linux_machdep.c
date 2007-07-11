@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.20 2007/03/05 14:14:15 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.20.4.1 2007/07/11 20:04:05 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2007/03/05 14:14:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20.4.1 2007/07/11 20:04:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2007/03/05 14:14:15 christos 
 #include <sys/user.h>
 #include <sys/wait.h>
 #include <sys/ucontext.h>
+#include <sys/conf.h>
 
 #include <machine/reg.h>
 #include <machine/pcb.h>
@@ -52,6 +53,18 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2007/03/05 14:14:15 christos 
 #include <machine/mcontext.h>
 #include <machine/specialreg.h>
 #include <machine/vmparam.h>
+
+/* 
+ * To see whether wscons is configured (for virtual console ioctl calls).
+ */
+#if defined(_KERNEL_OPT)
+#include "wsdisplay.h"
+#endif
+#if (NWSDISPLAY > 0)
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplay_usl_io.h>
+#endif
+
 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_errno.h>
@@ -198,6 +211,7 @@ linux_sendsig(ksi, mask)
 	sigframe.uc.luc_mcontext.rbp = tf->tf_rbp;
 	sigframe.uc.luc_mcontext.rbx = tf->tf_rbx;
 	sigframe.uc.luc_mcontext.rdx = tf->tf_rdx;
+	sigframe.uc.luc_mcontext.rax = tf->tf_rax;
 	sigframe.uc.luc_mcontext.rcx = tf->tf_rcx;
 	sigframe.uc.luc_mcontext.rsp = tf->tf_rsp;
 	sigframe.uc.luc_mcontext.rip = tf->tf_rip;
@@ -259,7 +273,7 @@ linux_sendsig(ksi, mask)
 		if ((sigframe.info.lsi_signo == LINUX_SIGALRM) ||
 		    (sigframe.info.lsi_signo >= LINUX_SIGRTMIN))
 			sigframe.info._sifields._timer._sigval.sival_ptr =
-			     ksi->ksi_sigval.sival_ptr;
+			     ksi->ksi_value.sival_ptr;
 		break;
 	}
 
@@ -345,6 +359,23 @@ linux_fakedev(dev, raw)
         dev_t dev;
 	int raw;
 {
+
+       extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
+       const struct cdevsw *cd = cdevsw_lookup(dev);
+
+       if (raw) {
+#if (NWSDISPLAY > 0)
+	       extern const struct cdevsw wsdisplay_cdevsw;
+	       if (cd == &wsdisplay_cdevsw)
+		       return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
+#endif
+       }
+
+       if (cd == &ptc_cdevsw)
+	       return makedev(LINUX_PTC_MAJOR, minor(dev));
+       if (cd == &pts_cdevsw)
+	       return makedev(LINUX_PTS_MAJOR, minor(dev));
+
 	return ((minor(dev) & 0xff) | ((major(dev) & 0xfff) << 8)
 	    | (((unsigned long long int) (minor(dev) & ~0xff)) << 12)
 	    | (((unsigned long long int) (major(dev) & ~0xfff)) << 32));
@@ -417,7 +448,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mctx->__gregs[_REG_RSI] = lsigctx->rsi;
 	mctx->__gregs[_REG_RBP] = lsigctx->rbp;
 	mctx->__gregs[_REG_RBX] = lsigctx->rbx;
-	mctx->__gregs[_REG_RAX] = tf->tf_rax;
+	mctx->__gregs[_REG_RAX] = lsigctx->rax;
 	mctx->__gregs[_REG_RDX] = lsigctx->rdx;
 	mctx->__gregs[_REG_RCX] = lsigctx->rcx;
 	mctx->__gregs[_REG_RIP] = lsigctx->rip;
@@ -476,8 +507,10 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mutex_enter(&l->l_proc->p_smutex);
 	error = setucontext(l, &uctx);
 	mutex_exit(&l->l_proc->p_smutex);
+	if (error)
+		return error;
 
-	return error;
+	return EJUSTRETURN;
 }
 
 int

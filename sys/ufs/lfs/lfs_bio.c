@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.98 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.98.10.1 2007/07/11 20:12:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.10.1 2007/07/11 20:12:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,8 +509,8 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 }
 
 /*
- * Called and return with the lfs_interlock held, but the lfs_subsys_lock
- * not held.
+ * Called and return with the lfs_interlock held, but no other simple_locks
+ * held.
  */
 void
 lfs_flush_fs(struct lfs *fs, int flags)
@@ -685,6 +685,12 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		DLOG((DLOG_FLUSH, "lfs_check: ldvw = %d\n",
 		      fs->lfs_diropwait));
 #endif
+
+	/* If there are too many pending dirops, we have to flush them. */
+	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
+	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
+		flags |= SEGM_CKP;
+	}
 
 	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||

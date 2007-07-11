@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.6 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.6.8.1 2007/07/11 20:08:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.6 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.6.8.1 2007/07/11 20:08:24 mjf Exp $");
 
 /*
  *
@@ -87,7 +87,7 @@ swwdogattach(int count __unused)
 		sc->sc_smw.smw_setmode = swwdog_setmode;
 		sc->sc_smw.smw_tickle = swwdog_tickle;
 		sc->sc_smw.smw_period = SWDOG_DEFAULT;
-		callout_init(&sc->sc_c);
+		callout_init(&sc->sc_c, 0);
 		callout_setfunc(&sc->sc_c, swwdog_panic, sc);
 
 		if (sysmon_wdog_register(&sc->sc_smw) == 0)

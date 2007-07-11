@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.123 2007/03/09 14:11:26 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.123.4.1 2007/07/11 20:10:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123 2007/03/09 14:11:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.4.1 2007/07/11 20:10:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,12 +525,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			break;
 		}
 
-		PHOLD(lt);
+		uvm_lwp_hold(lt);
 
 		/* If the address parameter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
 			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0) {
-				PRELE(lt);
+				uvm_lwp_rele(lt);
 				break;
 			}
 
@@ -540,12 +540,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		 */
 		error = process_sstep(lt, req == PT_STEP);
 		if (error) {
-			PRELE(lt);
+			uvm_lwp_rele(lt);
 			break;
 		}
 #endif
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		if (req == PT_DETACH) {
 			mutex_enter(&t->p_smutex);
@@ -630,10 +630,12 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 				error = ESRCH;
 				break;
 			}
+			lt = LIST_NEXT(lt, l_sibling);
 		}
 		pl.pl_lwpid = 0;
 		pl.pl_event = 0;
 		if (lt) {
+			lwp_addref(lt);
 			pl.pl_lwpid = lt->l_lid;
 			if (lt->l_lid == t->p_sigctx.ps_lwp)
 				pl.pl_event = PL_EVENT_SIGNAL;
@@ -775,7 +777,7 @@ process_doregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	error = process_read_regs(l, &r);
 	if (error == 0)
@@ -787,7 +789,7 @@ process_doregs(struct lwp *curl /*tracer*/,
 			error = process_write_regs(l, &r);
 	}
 
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -829,7 +831,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 	if ((size_t)kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	error = process_read_fpregs(l, &r);
 	if (error == 0)
@@ -841,7 +843,7 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 			error = process_write_fpregs(l, &r);
 	}
 
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -931,10 +933,15 @@ process_stoptrace(struct lwp *l)
 	p->p_xstat = SIGTRAP;
 	proc_stop(p, 1, SIGSTOP);
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
-	lwp_lock(l);
-	mi_switch(l, NULL);
+
+	/*
+	 * Call issignal() once only, to have it take care of the
+	 * pending stop.  Signal processing will take place as usual
+	 * from userret().
+	 */
+	(void)issignal(l);
+	mutex_exit(&p->p_smutex);
 	KERNEL_LOCK(l->l_biglocks - 1, l);
 }
 #endif	/* KTRACE || PTRACE */

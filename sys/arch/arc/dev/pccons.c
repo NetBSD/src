@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.49 2007/03/04 05:59:34 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.49.4.1 2007/07/11 19:58:00 mjf Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.49 2007/03/04 05:59:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.49.4.1 2007/07/11 19:58:00 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -158,7 +158,7 @@ static struct video_state {
 	char	so_at;		/* standout attributes */
 } vs;
 
-static struct callout async_update_ch = CALLOUT_INITIALIZER;
+static callout_t async_update_ch;
 
 void pc_xmode_on(void);
 void pc_xmode_off(void);
@@ -586,6 +586,7 @@ void pccons_common_attach(struct pc_softc *sc, bus_space_tag_t crt_iot,
 {
 
 	printf(": %s\n", vs.color ? "color" : "mono");
+	callout_init(&async_update_ch, 0);
 	do_async_update(1);
 }
 

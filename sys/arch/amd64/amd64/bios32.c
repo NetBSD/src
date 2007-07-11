@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.5 2007/03/04 05:59:12 christos Exp $	*/
+/*	$NetBSD: bios32.c,v 1.5.4.1 2007/07/11 19:57:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.5 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.5.4.1 2007/07/11 19:57:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,12 +79,18 @@ __KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.5 2007/03/04 05:59:12 christos Exp $");
 
 #include <machine/segments.h>
 #include <machine/bios32.h>
+#include <x86/smbiosvar.h>
+
+#include <uvm/uvm.h>
+
+#include "ipmi.h"
 
 #define	BIOS32_START	0xe0000
 #define	BIOS32_SIZE	0x20000
 #define	BIOS32_END	(BIOS32_START + BIOS32_SIZE - 0x10)
 
 struct bios32_entry bios32_entry;
+struct smbios_entry smbios_entry;
 
 /*
  * Initialize the BIOS32 interface.
@@ -130,6 +136,57 @@ bios32_init()
 	if (entry != 0) {
 		bios32_entry.offset = (void *)ISA_HOLE_VADDR(entry);
 		bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
+	}
+#endif
+#if NIPMI > 0
+	uint8_t *p;
+	int i;
+
+	/* see if we have SMBIOS extentions */
+	for (p = ISA_HOLE_VADDR(SMBIOS_START);
+	    p < (uint8_t *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
+		struct smbhdr * sh = (struct smbhdr *)p;
+		u_int8_t chksum;
+		vaddr_t eva;
+		paddr_t pa, end;
+
+		if (sh->sig != BIOS32_MAKESIG('_', 'S', 'M', '_'))
+			continue;
+		i = sh->len;
+		for (chksum = 0; i--; chksum += p[i])
+			;
+		if (chksum != 0)
+			continue;
+		p += 0x10;
+		if (p[0] != '_' && p[1] != 'D' && p[2] != 'M' &&
+		    p[3] != 'I' && p[4] != '_')
+			continue;
+		for (chksum = 0, i = 0xf; i--; chksum += p[i]);
+			;
+		if (chksum != 0)
+			continue;
+
+		pa = trunc_page(sh->addr);
+		end = round_page(sh->addr + sh->size);
+		eva = uvm_km_alloc(kernel_map, end - pa, 0, UVM_KMF_VAONLY);
+		if (eva == 0)
+			break;
+
+		smbios_entry.addr = (u_int8_t *)(eva +
+		    (sh->addr & PGOFSET));
+		smbios_entry.len = sh->size;
+		smbios_entry.mjr = sh->majrev;
+		smbios_entry.min = sh->minrev;
+		smbios_entry.count = sh->count;
+
+    		for (; pa < end; pa+= NBPG, eva+= NBPG)
+			pmap_kenter_pa(eva, pa, VM_PROT_READ);
+
+		printf("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+			    sh->majrev, sh->minrev, (u_long)sh->addr,
+			    sh->count);
+
+		break;
 	}
 #endif
 }
@@ -178,3 +235,89 @@ bios32_service(service, e, ei)
 
 	return (1);
 }
+
+#if NIPMI > 0
+/*
+ * smbios_find_table() takes a caller supplied smbios struct type and
+ * a pointer to a handle (struct smbtable) returning one if the structure
+ * is sucessfully located and zero otherwise. Callers should take care
+ * to initilize the cookie field of the smbtable structure to zero before
+ * the first invocation of this function.
+ * Multiple tables of the same type can be located by repeadtly calling
+ * smbios_find_table with the same arguments.
+ */
+int
+smbios_find_table(u_int8_t type, struct smbtable *st)
+{
+	u_int8_t *va, *end;
+	struct smbtblhdr *hdr;
+	int ret = 0, tcount = 1;
+
+	va = smbios_entry.addr;
+	end = va + smbios_entry.len;
+
+	/*
+	 * The cookie field of the smtable structure is used to locate
+	 * multiple instances of a table of an arbitrary type. Following the
+	 * sucessful location of a table, the type is encoded as bits 0:7 of
+	 * the cookie value, the offset in terms of the number of structures
+	 * preceding that referenced by the handle is encoded in bits 15:31.
+	 */
+	if ((st->cookie & 0xfff) == type && st->cookie >> 16) {
+		if ((u_int8_t *)st->hdr >= va && (u_int8_t *)st->hdr < end) {
+			hdr = st->hdr;
+			if (hdr->type == type) {
+				va = (u_int8_t *)hdr + hdr->size;
+				for (; va + 1 < end; va++)
+					if (*va == 0 && *(va + 1) == 0)
+						break;
+				va+= 2;
+				tcount = st->cookie >> 16;
+			}
+		}
+	}
+	for (; va + sizeof(struct smbtblhdr) < end && tcount <=
+	    smbios_entry.count; tcount++) {
+		hdr = (struct smbtblhdr *)va;
+		if (hdr->type == type) {
+			ret = 1;
+			st->hdr = hdr;
+			st->tblhdr = va + sizeof(struct smbtblhdr);
+			st->cookie = (tcount + 1) << 16 | type;
+			break;
+		}
+		if (hdr->type == SMBIOS_TYPE_EOT)
+			break;
+		va+= hdr->size;
+		for (; va + 1 < end; va++)
+			if (*va == 0 && *(va + 1) == 0)
+				break;
+		va+=2;
+	}
+
+	return ret;
+}
+
+char *
+smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
+{
+	u_int8_t *va, *end;
+	char *ret = NULL;
+	int i;
+
+	va = (u_int8_t *)st->hdr + st->hdr->size;
+	end = smbios_entry.addr + smbios_entry.len;
+	for (i = 1; va < end && i < indx && *va; i++)
+		while (*va++)
+			;
+	if (i == indx) {
+		if (va + len < end) {
+			ret = dest;
+			bcopy(va, ret, len);
+			ret[len - 1] = '\0';
+		}
+	}
+
+	return ret;
+}
+#endif
