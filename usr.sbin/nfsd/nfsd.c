@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.50 2007/07/10 13:52:51 yamt Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.51 2007/07/11 04:59:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.50 2007/07/10 13:52:51 yamt Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.51 2007/07/11 04:59:19 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,6 @@ int	debug = 0;
 
 int	main __P((int, char **));
 void	nonfs __P((int));
-void	reapchild __P((int));
 void	usage __P((void));
 
 static void *
@@ -101,6 +100,7 @@ child(void *dummy)
 	struct	nfsd_srvargs nsd;
 	int nfssvc_flag;
 
+	pthread_setname_np(pthread_self(), "slave", NULL);
 	nfssvc_flag = NFSSVC_NFSD;
 	memset(&nsd, 0, sizeof(nsd));
 	while (nfssvc(nfssvc_flag, &nsd) < 0) {
@@ -244,7 +244,6 @@ main(argc, argv)
 		(void)signal(SIGQUIT, SIG_IGN);
 		(void)signal(SIGSYS, nonfs);
 	}
-	(void)signal(SIGCHLD, reapchild);
 
 	if (udpflag) {
 		memset(&hints, 0, sizeof hints);
@@ -613,7 +612,7 @@ main(argc, argv)
 	if (connect_type_cnt == 0)
 		exit(0);
 
-	setproctitle("master");
+	pthread_setname_np(pthread_self(), "master", NULL);
 
 	/*
 	 * Loop forever accepting connections and passing the sockets
@@ -713,11 +712,4 @@ nonfs(signo)
 	int signo;
 {
 	syslog(LOG_ERR, "missing system call: NFS not available.");
-}
-
-void
-reapchild(signo)
-	int signo;
-{
-	while (wait3(NULL, WNOHANG, NULL) > 0);
 }
