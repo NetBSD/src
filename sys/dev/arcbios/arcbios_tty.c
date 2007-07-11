@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.17 2007/07/09 21:00:30 ad Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.18 2007/07/11 21:19:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.17 2007/07/09 21:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.18 2007/07/11 21:19:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -79,7 +79,7 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (!arcbios_ch_init) {
 		arcbios_ch_init = true;
-		callout_init(&arcbios_tty_ch);
+		callout_init(&arcbios_tty_ch, 0);
 	}
 
 	if (unit != 0)
