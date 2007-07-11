@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.13 2007/05/28 15:01:53 blymn Exp $	*/
+/*	$NetBSD: acs.c,v 1.14 2007/07/11 18:44:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.13 2007/05/28 15:01:53 blymn Exp $");
+__RCSID("$NetBSD: acs.c,v 1.14 2007/07/11 18:44:46 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -94,6 +94,14 @@ __init_acs(SCREEN *screen)
 /*	ACS_TTEE = '+';		*/
 	ACS_VLINE = '|';
 	ACS_BULLET = 'o';
+	/* Add the extensions defaults */
+	ACS_S3 = '-';
+	ACS_S7 = '-';
+	ACS_LEQUAL = '<';
+	ACS_GEQUAL = '>';
+	ACS_PI = '*';
+	ACS_NEQUAL = '!';
+	ACS_STERLING = 'f';
 
 	if (screen->tc_ac == NULL)
 		goto out;
@@ -176,6 +184,13 @@ __init_wacs(SCREEN *screen)
 		WACS_S9	  = ( wchar_t )btowc( '_' );
 		WACS_VLINE   = ( wchar_t )btowc( '|' );
 		WACS_BULLET  = ( wchar_t )btowc( 'o' );
+		WACS_S3 = ( wchar_t )btowc( 'p' );
+		WACS_S7 = ( wchar_t )btowc( 'r' );
+		WACS_LEQUAL = ( wchar_t )btowc( 'y' );
+		WACS_GEQUAL = ( wchar_t )btowc( 'z' );
+		WACS_PI = ( wchar_t )btowc( '{' );
+		WACS_NEQUAL = ( wchar_t )btowc( '|' );
+		WACS_STERLING = ( wchar_t )btowc( '}' );
 	} else {
 		/* Unicode defaults */
 #ifdef DEBUG
@@ -207,6 +222,13 @@ __init_wacs(SCREEN *screen)
   		WACS_TTEE	   = 0x252c;
 		WACS_VLINE	  = 0x2502;
 		WACS_BULLET	 = 0x00b7;
+		WACS_S3		 = 0x23bb;
+		WACS_S7		 = 0x23bc;
+		WACS_LEQUAL	 = 0x2264;
+		WACS_GEQUAL	 = 0x2265;
+		WACS_PI		 = 0x03C0;
+		WACS_NEQUAL	 = 0x2260;
+		WACS_STERLING	 = 0x00A3;
 	}
 
 	if (screen->tc_ac == NULL) {
