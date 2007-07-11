@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.7 2007/07/09 20:52:40 ad Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.8 2007/07/11 04:07:08 dogcow Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.7 2007/07/09 20:52:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.8 2007/07/11 04:07:08 dogcow Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -830,23 +830,19 @@ xenbus_thread(void *unused)
 int
 xs_init(void)
 {
+	int err;
+
 	SIMPLEQ_INIT(&xs_state.reply_list);
 	simple_lock_init(&xs_state.reply_lock);
 	lockinit(&xs_state.xs_lock, IPL_TTY, "xenst", 0, 0);
 
-static void
-xenwatch_create_thread(void *unused)
-{
-	struct proc *p;
-	int err;
-
 	err = kthread_create(PRI_NONE, 0, NULL, xenwatch_thread,
-	    unused, NULL, "xenwatch");
+	    NULL, NULL, "xenwatch");
 	if (err)
 		printf("kthread_create(xenwatch): %d\n", err);
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_thread,
-	    unused, NULL, "xenbus");
+	    NULL, NULL, "xenbus");
 	if (err)
 		printf("kthread_create(xenbus): %d\n", err);
 
