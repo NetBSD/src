@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.21 2007/07/09 20:52:09 ad Exp $	*/
+/*	$NetBSD: plcom.c,v 1.22 2007/07/11 19:50:27 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.21 2007/07/09 20:52:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.22 2007/07/11 19:50:27 he Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -1671,8 +1671,6 @@ plcomsoft(void *arg)
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return;
-
-	{
 
 	tp = sc->sc_tty;
 		
