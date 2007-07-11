@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.36 2007/07/09 20:52:14 ad Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.37 2007/07/11 22:13:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.36 2007/07/09 20:52:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.37 2007/07/11 22:13:30 uwe Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -151,7 +151,7 @@ struct hd64461pcmcia_softc {
 	int sc_shutdown;
 
 	/* CSC event */
-	lwp_t sc_event_thread;
+	lwp_t *sc_event_thread;
 	struct hd64461pcmcia_event sc_event_pool[EVENT_QUEUE_MAX];
 	SIMPLEQ_HEAD (, hd64461pcmcia_event) sc_event_head;
 
