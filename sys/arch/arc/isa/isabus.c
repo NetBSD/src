@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.38 2007/07/09 20:52:03 ad Exp $	*/
+/*	$NetBSD: isabus.c,v 1.39 2007/07/11 19:37:22 he Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.38 2007/07/09 20:52:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.39 2007/07/11 19:37:22 he Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -183,7 +183,7 @@ isabrattach(struct isabr_softc *sc)
 {
 	struct isabus_attach_args iba;
 
-	callout_init(&sysbeep_ch);
+	callout_init(&sysbeep_ch, 0);
 
 	if (isabr_conf == NULL)
 		panic("isabr_conf isn't initialized");
