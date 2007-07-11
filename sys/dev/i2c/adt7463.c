@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.10 2007/07/02 10:25:54 xtraeme Exp $ */
+/*	$NetBSD: adt7463.c,v 1.11 2007/07/11 21:15:54 njoly Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.10 2007/07/02 10:25:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.11 2007/07/11 21:15:54 njoly Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
@@ -296,7 +296,7 @@ adt7463c_refresh_fan(struct adt7463c_softc *sc, envsys_data_t *edata)
 #endif
 
 	/* calculate RPM */
-	if (val > 0)
+	if (val != 0 && val != 0xffff)
 		edata->value_cur = (ADT7463_RPM_CONST) / val;
 	else
 		edata->state = ENVSYS_SINVALID;
