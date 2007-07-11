@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.22 2007/03/04 05:59:38 christos Exp $ */
+/*	$NetBSD: sscom.c,v 1.23 2007/07/11 23:57:02 he Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.22 2007/03/04 05:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.23 2007/07/11 23:57:02 he Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -409,7 +409,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 
-	callout_init(&sc->sc_diag_callout);
+	callout_init(&sc->sc_diag_callout, 0);
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
 #endif
