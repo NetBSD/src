@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.5 2005/12/11 12:17:24 christos Exp $ */
+/* $NetBSD: power.c,v 1.6 2007/07/11 21:57:29 dsl Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.5 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.6 2007/07/11 21:57:29 dsl Exp $");
 
 
 /*
@@ -193,7 +193,7 @@ pwr_sw_init(bus_space_tag_t bst)
 		else
 			/* Power Reg. is hardware dampened, poll at 1 Hz. */
 			pwr_sw_poll_interval = hz;
-		callout_init(&pwr_sw_callout);
+		callout_init(&pwr_sw_callout, 0);
 		callout_reset(&pwr_sw_callout, pwr_sw_poll_interval, 
 		    pwr_sw_poll, NULL);
 		return;
