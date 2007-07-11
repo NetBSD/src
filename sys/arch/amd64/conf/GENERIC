@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152 2007/07/10 11:23:21 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.153 2007/07/11 08:01:51 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.152 $"
+#ident 		"GENERIC-$Revision: 1.153 $"
 
 maxusers	32		# estimated number of users
 
@@ -386,6 +386,12 @@ lpt1	at isa? port 0x278
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
+
+# NVIDIA nForce2/3/4 SMBus controller
+nfsmbc*	at pci? dev ? function ?
+nfsmb*	at nfsmbc?
+iic*	at nfsmb?
+
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
