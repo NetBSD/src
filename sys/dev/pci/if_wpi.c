@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.14 2007/07/09 21:00:56 ad Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.15 2007/07/11 17:26:25 xtraeme Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.14 2007/07/09 21:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.15 2007/07/11 17:26:25 xtraeme Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1146,7 +1146,7 @@ wpi_load_firmware(struct wpi_softc *sc)
 
 	/* extract firmware header information */
 	if (size < sizeof (struct wpi_firmware_hdr)) {
-		aprint_error("%s: truncated firmware header: %d bytes\n",
+		aprint_error("%s: truncated firmware header: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
 		goto fail2;
@@ -1193,7 +1193,7 @@ wpi_load_firmware(struct wpi_softc *sc)
 	/* check that all firmware segments are present */
 	if (size < sizeof (struct wpi_firmware_hdr) + main_textsz +
 	    main_datasz + boot_textsz + boot_datasz) {
-		aprint_error("%s: firmware file too short: %d bytes\n",
+		aprint_error("%s: firmware file too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
 		goto fail2;
