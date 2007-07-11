@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.12 2007/06/09 12:13:12 kiyohara Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.13 2007/07/11 20:13:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.12 2007/06/09 12:13:12 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.13 2007/07/11 20:13:14 drochner Exp $");
 
 #include "bpfilter.h"
 
@@ -476,6 +476,9 @@ USB_DETACH(rum)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_if;
 	int s;
+
+	if (!ifp->if_softc)
+		return 0;
 
 	s = splusb();
 
