@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.433 2007/06/20 13:31:54 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.434 2007/07/11 07:53:30 kiyohara Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
@@ -27,7 +27,8 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
 	ksyms.4 kttcp.4 lc.4 ld.4 lkm.4 lo.4 lxtphy.4 mainbus.4 makphy.4 \
 	mbe.4 mca.4 mcclock.4 md.4 mfb.4 mfi.4 mhzc.4 midi.4 \
 	mii.4 mk48txx.4 mlx.4 mly.4 mpt.4 mpu.4 mtd.4 \
-	mtio.4 multicast.4 nadb.4 ne.4 neo.4 netintro.4 nfe.4 njata.4 njs.4 \
+	mtio.4 multicast.4 nadb.4 ne.4 neo.4 netintro.4 nfe.4 nfsmb.4 \
+	njata.4 njs.4 \
 	nsclpcsio.4 nsphy.4 nsphyter.4 ntwoc.4 \
 	null.4 nsmb.4 oak.4 oosiop.4 opl.4 options.4 \
 	optiide.4 osiop.4 pas.4 pcdisplay.4 pciide.4 \
@@ -144,6 +145,7 @@ MLINKS+=midi.4 rmidi.4
 MLINKS+=midi.4 sequencer.4
 MLINKS+=mii.4 phy.4
 MLINKS+=netintro.4 networking.4
+MLINKS+=nfsmb.4 nfsmbc.4
 MLINKS+=nsmb.4 netsmb.4
 MLINKS+=ntwoc.4 ntwo.4
 MLINKS+=pci.4 pchb.4
