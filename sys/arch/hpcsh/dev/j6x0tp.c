@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.19 2007/07/11 22:15:41 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.20 2007/07/11 22:17:55 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.19 2007/07/11 22:15:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.20 2007/07/11 22:17:55 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.19 2007/07/11 22:15:41 uwe Exp $");
 #include <sh3/dev/adcvar.h>
 
 
-#define J6X0TP_DEBUG 1
 #if 0 /* XXX: disabled in favor of local version that uses printf_nolog */
 #define DPRINTF_ENABLE
 #define DPRINTF_DEBUG	j6x0tp_debug
@@ -142,9 +141,6 @@ static int	j6x0tp_wskbd_enable(void *, int);
 static void	j6x0tp_wskbd_set_leds(void *, int);
 static int	j6x0tp_wskbd_ioctl(void *, u_long, void *, int,
 				   struct lwp *);
-
-/* power hook */
-static void	j6x0tp_powerhook(int, void *);
 
 /* internal driver routines */
 static void	j6x0tp_enable(struct j6x0tp_softc *);
@@ -251,13 +247,6 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_enabled = 0;
 	sc->sc_hard_icon = 0;
 
-	/*
-	 * Hook for dopowerhooks(9).  We don't implement detach, so
-	 * don't bother saving a cookie to disablish the power hook.
-	 */
-	(void)powerhook_establish(device_xname(&sc->sc_dev),
-				  j6x0tp_powerhook, sc);
-
 	/* touch-panel as a pointing device */
 	wsma.accessops = &j6x0tp_accessops;
 	wsma.accesscookie = sc;
@@ -288,25 +277,6 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	intc_intr_establish(SH7709_INTEVT2_IRQ3, IST_EDGE, IPL_TTY,
 			    j6x0tp_intr, sc);
 	intc_intr_disable(SH7709_INTEVT2_IRQ3);
-}
-
-
-static void
-j6x0tp_powerhook(int why, void *cookie)
-{
-	struct j6x0tp_softc *sc = (struct j6x0tp_softc *)cookie;
-
-	printf("%s: powerhook(%d)\n", device_xname(&sc->sc_dev), why);
-
-	if (!sc->sc_enabled)
-		return;
-
-	if (why == PWR_SUSPEND) {
-		j6x0tp_disable(sc);
-	}
-	else if (why == PWR_RESUME) {
-		j6x0tp_enable(sc);
-	}
 }
 
 
