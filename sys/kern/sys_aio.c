@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.5 2007/05/31 06:24:23 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.6 2007/07/11 00:40:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.5 2007/05/31 06:24:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.6 2007/07/11 00:40:42 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -619,8 +619,11 @@ sys_aio_cancel(struct lwp *l, void *v, register_t *retval)
 			errcnt++;
 		/* Send a signal if any */
 		aio_sendsig(p, &a_job->aiocbp.aio_sigevent);
-		if (a_job->lio)
-			pool_put(&aio_lio_pool, a_job->lio);
+		if (a_job->lio) {
+			lio = a_job->lio;
+			aio_sendsig(p, &lio->sig);
+			pool_put(&aio_lio_pool, lio);
+		}
 		pool_put(&aio_job_pool, a_job);
 	}
 
