@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.76 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.76.8.1 2007/07/11 20:10:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.76 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.76.8.1 2007/07/11 20:10:41 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.76 2007/01/19 14:49:11 hannken E
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
 
-MALLOC_DEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
+MALLOC_JUSTDEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
 
@@ -82,9 +82,8 @@ int	kernfs_vget(struct mount *, ino_t, struct vnode **);
 void
 kernfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_KERNFSMNT);
-#endif
 	kernfs_hashinit();
 }
 
@@ -97,10 +96,9 @@ kernfs_reinit()
 void
 kernfs_done()
 {
-#ifdef _LKM
-	malloc_type_detach(M_KERNFSMNT);
-#endif
+
 	kernfs_hashdone();
+	malloc_type_detach(M_KERNFSMNT);
 }
 
 void

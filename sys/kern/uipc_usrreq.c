@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.95 2007/03/04 06:03:11 christos Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.95.4.1 2007/07/11 20:10:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95 2007/03/04 06:03:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95.4.1 2007/07/11 20:10:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,7 +605,6 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
 	struct vnode *vp;
-	struct mount *mp;
 	struct vattr vattr;
 	size_t addrlen;
 	struct proc *p;
@@ -626,37 +625,28 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-restart:
-	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
+	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT | TRYEMULROOT, UIO_SYSSPACE,
 	    sun->sun_path, l);
 
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0)
 		goto bad;
 	vp = nd.ni_vp;
-	if (vp != NULL || vn_start_write(nd.ni_dvp, &mp, V_NOWAIT) != 0) {
+	if (vp != NULL) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
 		vrele(vp);
-		if (vp != NULL) {
-			error = EADDRINUSE;
-			goto bad;
-		}
-		error = vn_start_write(NULL, &mp,
-		    V_WAIT | V_SLEEPONLY | V_PCATCH);
-		if (error)
-			goto bad;
-		goto restart;
+		error = EADDRINUSE;
+		goto bad;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
-	vn_finished_write(mp, 0);
 	if (error)
 		goto bad;
 	vp = nd.ni_vp;
@@ -694,7 +684,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE, sun->sun_path, l);
 
 	if ((error = namei(&nd)) != 0)
 		goto bad2;

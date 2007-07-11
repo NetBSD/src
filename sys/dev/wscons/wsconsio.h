@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.84 2007/01/19 20:59:45 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.84.8.1 2007/07/11 20:08:56 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -308,6 +308,7 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_VESA	42	/* VESA BIOS framebuffer */
 #define	WSDISPLAY_TYPE_XILFB 	43 	/* Xilinx TFT cores */
 #define WSDISPLAY_TYPE_LIGHT	44	/* SGI Light (a.k.a. Entry/Starter) */
+#define WSDISPLAY_TYPE_GENFB	45	/* generic nondescript framebuffer */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

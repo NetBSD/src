@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.2 2007/03/07 20:44:52 plunky Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.2.4.1 2007/07/11 20:11:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.2 2007/03/07 20:44:52 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.2.4.1 2007/07/11 20:11:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.2 2007/03/07 20:44:52 plunky Exp $
  * Config failed
  * Other end reported invalid CID
  * Normal disconnection
+ * Change link mode failed
  */
 void
 l2cap_close(struct l2cap_channel *chan, int err)
@@ -120,7 +121,6 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 	DPRINTFN(5, "(%s) received packet (%d bytes)\n",
 		    link->hl_unit->hci_devname, hdr.length);
 
-	// wasnt this checked in hci_acl_recv() already?
 	if (hdr.length != m->m_pkthdr.len)
 		goto failed;
 
@@ -130,12 +130,13 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 	}
 
 	if (hdr.dcid == L2CAP_CLT_CID) {
-		m_freem(m);	// TODO
+		m_freem(m);	/* TODO */
 		return;
 	}
 
 	chan = l2cap_cid_lookup(hdr.dcid);
-	if (chan != NULL && chan->lc_link == link) {
+	if (chan != NULL && chan->lc_link == link
+	    && chan->lc_state == L2CAP_OPEN) {
 		(*chan->lc_proto->input)(chan->lc_upper, m);
 		return;
 	}
@@ -192,8 +193,8 @@ l2cap_start(struct l2cap_channel *chan)
 
 	MBUFQ_DEQUEUE(&chan->lc_txq, m);
 
-	KASSERT(chan->lc_link);
-	KASSERT(m);
+	KASSERT(chan->lc_link != NULL);
+	KASSERT(m != NULL);
 
 	DPRINTFN(5, "CID #%d sending packet (%d bytes)\n",
 		chan->lc_lcid, m->m_pkthdr.len);

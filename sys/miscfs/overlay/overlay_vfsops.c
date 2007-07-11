@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.37.8.1 2007/07/11 20:10:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.8.1 2007/07/11 20:10:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,6 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	memset(nmp, 0, sizeof(struct overlay_mount));
 
 	mp->mnt_data = nmp;
-	mp->mnt_leaf = lowerrootvp->v_mount->mnt_leaf;
 	nmp->ovm_vfs = lowerrootvp->v_mount;
 	if (nmp->ovm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
@@ -216,17 +215,7 @@ ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	/*
-	 * Clear out buffer cache.  I don't think we
-	 * ever get anything cached at this level at the
-	 * moment, but who knows...
-	 */
-#if 0
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp, 1))
-		return (EBUSY);
-#endif
-	if (overlay_rootvp->v_usecount > 1)
+	if (overlay_rootvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, overlay_rootvp, flags)) != 0)
 		return (error);

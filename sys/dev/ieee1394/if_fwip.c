@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.7 2007/03/04 06:02:07 christos Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.7.4.1 2007/07/11 20:06:24 mjf Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -34,10 +34,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/if_fwip.c,v 1.6 2005/01/06 01:42:41 imp Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/if_fwip.c,v 1.14 2007/03/16 05:39:33 simokawa Exp $
  */
 
+#ifdef HAVE_KERNEL_OPTION_HEADERS
+#include "opt_device_polling.h"
 #include "opt_inet.h"
+#endif
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -57,6 +60,7 @@
 #include <net/if.h>
 #include <net/firewire.h>
 #include <net/if_arp.h>
+#include <net/if_types.h>
 #ifdef __DragonFly__
 #include <bus/firewire/fw_port.h>
 #include <bus/firewire/firewire.h>
@@ -81,6 +85,7 @@
 
 #include <net/if.h>
 #include <net/if_ieee1394.h>
+#include <net/if_types.h>
 
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
@@ -198,19 +203,6 @@ err:
 #endif
 
 #ifdef DEVICE_POLLING
-#define FWIP_POLL_REGISTER(func, fwip, ifp)			\
-	if (ether_poll_register(func, ifp)) {			\
-		struct firewire_comm *fc = (fwip)->fd.fc;	\
-		fc->set_intr(fc, 0);				\
-	}
-
-#define FWIP_POLL_DEREGISTER(fwip, ifp)				\
-	do {							\
-		struct firewire_comm *fc = (fwip)->fd.fc;	\
-		ether_poll_deregister(ifp);			\
-		fc->set_intr(fc, 1);				\
-	} while(0)						\
-
 static poll_handler_t fwip_poll;
 
 static void
@@ -219,19 +211,14 @@ fwip_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
 	struct fwip_softc *fwip;
 	struct firewire_comm *fc;
 
+	if (!(ifp->if_drv_flags & IFF_DRV_RUNNING))
+		return;
+
 	fwip = ((struct fwip_eth_softc *)ifp->if_softc)->fwip;
 	fc = fwip->fd.fc;
-	if (cmd == POLL_DEREGISTER) {
-		/* enable interrupts */
-		fc->set_intr(fc, 1);
-		return;
-	}
 	fc->poll(fc, (cmd == POLL_AND_CHECK_STATUS)?0:1, count);
 }
-#else
-#define FWIP_POLL_REGISTER(func, fwip, ifp)
-#define FWIP_POLL_DEREGISTER(fwip, ifp)
-#endif
+#endif /* DEVICE_POLLING */
 #if defined(__FreeBSD__)
 static void
 fwip_identify(driver_t *driver, device_t parent)
@@ -273,6 +260,10 @@ FW_ATTACH(fwip)
 
 	FWIP_ATTACH_SETUP;
 
+	ifp = fwip->fw_softc.fwip_ifp;
+	if (ifp == NULL)
+		FW_ATTACH_RETURN(ENOSPC);
+
 	/* XXX */
 	fwip->dma_ch = -1;
 
@@ -296,7 +287,6 @@ FW_ATTACH(fwip)
 	hwaddr->sender_unicast_FIFO_lo = htonl((uint32_t)INET_FIFO);
 
 	/* fill the rest and attach interface */	
-	ifp = &fwip->fwip_if;
 	ifp->if_softc = &fwip->fw_softc;
 
 #if __FreeBSD_version >= 501113 || defined(__DragonFly__) || defined(__NetBSD__)
@@ -312,6 +302,9 @@ FW_ATTACH(fwip)
 	ifp->if_flags = (IFF_BROADCAST|IFF_SIMPLEX|IFF_MULTICAST|
 	    IFF_NEEDSGIANT);
 	ifp->if_snd.ifq_maxlen = TX_MAX_QUEUE;
+#ifdef DEVICE_POLLING
+	ifp->if_capabilities |= IFCAP_POLLING;
+#endif
 
 	s = splfwnet();
 	FIREWIRE_IFATTACH(ifp, hwaddr);
@@ -330,8 +323,6 @@ IF_STOP(fwip)
 	int i;
 
 	fc = fwip->fd.fc;
-
-	FWIP_POLL_DEREGISTER(fwip, ifp);
 
 	if (fwip->dma_ch >= 0) {
 		xferq = fc->ir[fwip->dma_ch];
@@ -365,18 +356,30 @@ IF_STOP(fwip)
 		fwip->dma_ch = -1;
 	}
 
+#if defined(__FreeBSD__)
+	ifp->if_drv_flags &= ~(IFF_DRV_RUNNING | IFF_DRV_OACTIVE);
+#elif defined(__NetBSD__)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+#endif
 }
 
 FW_DETACH(fwip)
 {
 	IF_DETACH_START(fwip, fwip);
+	struct ifnet *ifp;
 	int s;
+
+	ifp = fwip->fw_softc.fwip_ifp;
+
+#ifdef DEVICE_POLLING
+	if (ifp->if_capenable & IFCAP_POLLING)
+		ether_poll_deregister(ifp);
+#endif
 
 	s = splfwnet();
 
 	FWIP_STOP(fwip);
-	FIREWIRE_IFDETACH(&fwip->fwip_if);
+	FIREWIRE_IFDETACH(ifp);
 
 	splx(s);
 	return 0;
@@ -396,7 +399,7 @@ fwipactivate(struct device *self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if_deactivate(&fwip->fwip_if);
+		if_deactivate(fwip->fw_softc.fwip_ifp);
 			break;
 	}
 	splx(s);
@@ -509,10 +512,14 @@ found:
 	if ((xferq->flag & FWXFERQ_RUNNING) == 0)
 		fc->irx_enable(fc, fwip->dma_ch);
 
+#if defined(__FreeBSD__)
+	ifp->if_drv_flags |= IFF_DRV_RUNNING;
+	ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+#elif defined(__NetBSD__)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+#endif
 
-	FWIP_POLL_REGISTER(fwip_poll, fwip, ifp);
 #if 0
 	/* attempt to start output */
 	fwip_start(ifp);
@@ -530,16 +537,52 @@ fwip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFFLAGS:
 		s = splfwnet();
 		if (ifp->if_flags & IFF_UP) {
+#if defined(__FreeBSD__)
+			if (!(ifp->if_drv_flags & IFF_DRV_RUNNING))
+#elif defined(__NetBSD__)
 			if (!(ifp->if_flags & IFF_RUNNING))
+#endif
 				FWIP_INIT(fwip);
 		} else {
+#if defined(__FreeBSD__)
+			if (ifp->if_drv_flags & IFF_DRV_RUNNING)
+#elif defined(__NetBSD__)
 			if (ifp->if_flags & IFF_RUNNING)
+#endif
 				FWIP_STOP(fwip);
 		}
 		splx(s);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		break;
+	case SIOCSIFCAP:
+#ifdef DEVICE_POLLING
+	    {
+		struct ifreq *ifr = (struct ifreq *) data;
+		struct firewire_comm *fc = fc = fwip->fd.fc;
+
+		if (ifr->ifr_reqcap & IFCAP_POLLING &&
+		    !(ifp->if_capenable & IFCAP_POLLING)) {
+			error = ether_poll_register(fwip_poll, ifp);
+			if (error)
+				return(error);
+			/* Disable interrupts */
+			fc->set_intr(fc, 0);
+			ifp->if_capenable |= IFCAP_POLLING;
+			return (error);
+
+		}
+		if (!(ifr->ifr_reqcap & IFCAP_POLLING) &&
+		    ifp->if_capenable & IFCAP_POLLING) {
+			error = ether_poll_deregister(ifp);
+			/* Enable interrupts. */
+			fc->set_intr(fc, 1);
+			ifp->if_capenable &= ~IFCAP_POLLING;
+			return (error);
+		}
+	    }
+#endif /* DEVICE_POLLING */
 		break;
 
 #if (defined(__FreeBSD__) && __FreeBSD_version >= 500000) || defined(__NetBSD__)
@@ -591,7 +634,7 @@ fwip_post_busreset(void *arg)
 
 	fwip->last_dest.hi = 0;
 	fwip->last_dest.lo = 0;
-	FIREWIRE_BUSRESET(&fwip->fwip_if);
+	FIREWIRE_BUSRESET(fwip->fw_softc.fwip_ifp);
 }
 
 static void
@@ -604,7 +647,7 @@ fwip_output_callback(struct fw_xfer *xfer)
 	GIANT_REQUIRED;
 
 	fwip = (struct fwip_softc *)xfer->sc;
-	ifp = &fwip->fwip_if;
+	ifp = fwip->fw_softc.fwip_ifp;
 	/* XXX error check */
 	FWIPDEBUG(ifp, "resp = %d\n", xfer->resp);
 	if (xfer->resp != 0)
@@ -625,7 +668,8 @@ fwip_output_callback(struct fw_xfer *xfer)
 static void
 fwip_start(struct ifnet *ifp)
 {
-	struct fwip_softc *fwip = ((struct fwip_eth_softc *)ifp->if_softc)->fwip;
+	struct fwip_softc *fwip =
+	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip;
 	int s;
 
 	GIANT_REQUIRED;
@@ -650,12 +694,20 @@ fwip_start(struct ifnet *ifp)
 	}
 
 	s = splfwnet();
+#if defined(__FreeBSD__)
+	ifp->if_drv_flags |= IFF_DRV_OACTIVE;
+#elif defined(__NetBSD__)
 	ifp->if_flags |= IFF_OACTIVE;
+#endif
 
 	if (ifp->if_snd.ifq_len != 0)
 		fwip_async_output(fwip, ifp);
 
+#if defined(__FreeBSD__)
+	ifp->if_drv_flags &= ~IFF_DRV_OACTIVE;
+#elif defined(__NetBSD__)
 	ifp->if_flags &= ~IFF_OACTIVE;
+#endif
 	splx(s);
 }
 
@@ -848,10 +900,7 @@ fwip_stream_input(struct fw_xferq *xferq)
 	GIANT_REQUIRED;
 
 	fwip = (struct fwip_softc *)xferq->sc;
-	ifp = &fwip->fwip_if;
-#if 0
-	FWIP_POLL_REGISTER(fwip_poll, fwip, ifp);
-#endif
+	ifp = fwip->fw_softc.fwip_ifp;
 	while ((sxfer = STAILQ_FIRST(&xferq->stvalid)) != NULL) {
 		STAILQ_REMOVE_HEAD(&xferq->stvalid, link);
 		fp = mtod(sxfer->mbuf, struct fw_pkt *);
@@ -911,7 +960,7 @@ fwip_stream_input(struct fw_xferq *xferq)
 		 * Record the sender ID for possible BPF usage.
 		 */
 		src = ntohl(p[1]) >> 16;
-		if (ifp->if_bpf) {
+		if (bpf_peers_present(ifp->if_bpf)) {
 			mtag = m_tag_alloc(MTAG_FIREWIRE,
 			    MTAG_FIREWIRE_SENDER_EUID,
 			    2*sizeof(uint32_t), M_NOWAIT);
@@ -980,7 +1029,7 @@ fwip_unicast_input(struct fw_xfer *xfer)
 	GIANT_REQUIRED;
 
 	fwip = (struct fwip_softc *)xfer->sc;
-	ifp = &fwip->fwip_if;
+	ifp = fwip->fw_softc.fwip_ifp;
 	m = xfer->mbuf;
 	xfer->mbuf = 0;
 	fp = &xfer->recv.hdr;
@@ -1014,7 +1063,7 @@ fwip_unicast_input(struct fw_xfer *xfer)
 		return;
 	}
 
-	if (ifp->if_bpf) {
+	if (bpf_peers_present(ifp->if_bpf)) {
 		/*
 		 * Record the sender ID for possible BPF usage.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.29 2007/03/11 08:09:24 isaki Exp $	*/
+/*	$NetBSD: kbd.c,v 1.29.2.1 2007/07/11 20:03:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.29 2007/03/11 08:09:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.29.2.1 2007/07/11 20:03:05 mjf Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -260,7 +260,7 @@ kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #if NBELL > 0
 		return opm_bell_setup((struct bell_info *)data);
 #else
-		return (0);	/* allways success */
+		return (0);	/* always success */
 #endif
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
@@ -389,7 +389,7 @@ unsigned char kbdled;
 void
 kbd_setLED(void)
 {
-        mfp_send_usart(~kbdled | 0x80);
+	mfp_send_usart(~kbdled | 0x80);
 }
 
 int

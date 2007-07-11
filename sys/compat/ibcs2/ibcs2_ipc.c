@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ipc.c,v 1.23 2007/03/04 06:01:16 christos Exp $	*/
+/*	$NetBSD: ibcs2_ipc.c,v 1.23.4.1 2007/07/11 20:04:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.23 2007/03/04 06:01:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.23.4.1 2007/07/11 20:04:00 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -71,9 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_ipc.c,v 1.23 2007/03/04 06:01:16 christos Exp 
 #include <compat/sys/shm.h>
 #include <compat/sys/msg.h>
 
-#define IBCS2_IPC_RMID	0
-#define IBCS2_IPC_SET	1
-#define IBCS2_IPC_STAT	2
+/* Verify that the standard values are correct. */
+typedef char x[IPC_RMID == 0 && IPC_SET == 1 && IPC_STAT == 2 ? 1 : -1];
 
 struct ibcs2_ipc_perm {
 	ibcs2_uid_t uid;
@@ -85,49 +84,10 @@ struct ibcs2_ipc_perm {
 	ibcs2_key_t key;
 };
 
-#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-static void cvt_perm2iperm __P((struct ipc_perm14 *, struct ibcs2_ipc_perm *));
-static void cvt_iperm2perm __P((struct ibcs2_ipc_perm *, struct ipc_perm14 *));
-
-static void
-cvt_perm2iperm(bp, ibp)
-	struct ipc_perm14 *bp;
-	struct ibcs2_ipc_perm *ibp;
-{
-	ibp->cuid = bp->cuid;
-	ibp->cgid = bp->cgid;
-	ibp->uid = bp->uid;
-	ibp->gid = bp->gid;
-	ibp->mode = bp->mode;
-	ibp->seq = bp->seq;
-	ibp->key = bp->key;
-}
-
-static void
-cvt_iperm2perm(ibp, bp)
-	struct ibcs2_ipc_perm *ibp;
-	struct ipc_perm14 *bp;
-{
-	bp->cuid = ibp->cuid;
-	bp->cgid = ibp->cgid;
-	bp->uid = ibp->uid;
-	bp->gid = ibp->gid;
-	bp->mode = ibp->mode;
-	bp->seq = ibp->seq;
-	bp->key = ibp->key;
-}
-#endif /* SYSVMSG || SYSVSEM || SYSVMSG */
-
-#ifdef SYSVMSG
-
-/*
- * iBCS2 msgsys call
- */
-
 struct ibcs2_msqid_ds {
 	struct ibcs2_ipc_perm msg_perm;
-	struct __msg *msg_first;
-	struct __msg *msg_last;
+	struct __msg *msg_first;	/* kernel address don't copyout */
+	struct __msg *msg_last;		/* kernel address don't copyout */
 	u_short msg_cbytes;
 	u_short msg_qnum;
 	u_short msg_qbytes;
@@ -138,39 +98,61 @@ struct ibcs2_msqid_ds {
 	ibcs2_time_t msg_ctime;
 };
 
-static void cvt_msqid2imsqid __P((struct msqid_ds14 *,
-	struct ibcs2_msqid_ds *));
-static void cvt_imsqid2msqid __P((struct ibcs2_msqid_ds *,
-	struct msqid_ds14 *));
-
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 static void
-cvt_msqid2imsqid(bp, ibp)
-	struct msqid_ds14 *bp;
-	struct ibcs2_msqid_ds *ibp;
+cvt_perm2iperm(const struct ipc_perm *bp, struct ibcs2_ipc_perm *ibp)
 {
-	cvt_perm2iperm(&bp->msg_perm, &ibp->msg_perm);
-	ibp->msg_first = bp->msg_first;
-	ibp->msg_last = bp->msg_last;
-	ibp->msg_cbytes = (u_short)bp->msg_cbytes;
-	ibp->msg_qnum = (u_short)bp->msg_qnum;
-	ibp->msg_qbytes = (u_short)bp->msg_qbytes;
-	ibp->msg_lspid = (u_short)bp->msg_lspid;
-	ibp->msg_lrpid = (u_short)bp->msg_lrpid;
-	ibp->msg_stime = bp->msg_stime;
-	ibp->msg_rtime = bp->msg_rtime;
-	ibp->msg_ctime = bp->msg_ctime;
-	return;
+	ibp->cuid = bp->cuid;
+	ibp->cgid = bp->cgid;
+	ibp->uid = bp->uid;
+	ibp->gid = bp->gid;
+	ibp->mode = bp->mode;
+	ibp->seq = bp->_seq;
+	ibp->key = bp->_key;
 }
 
 static void
-cvt_imsqid2msqid(ibp, bp)
-	struct ibcs2_msqid_ds *ibp;
-	struct msqid_ds14 *bp;
+cvt_iperm2perm(const struct ibcs2_ipc_perm *ibp, struct ipc_perm *bp)
+{
+	bp->cuid = ibp->cuid;
+	bp->cgid = ibp->cgid;
+	bp->uid = ibp->uid;
+	bp->gid = ibp->gid;
+	bp->mode = ibp->mode;
+	bp->_seq = ibp->seq;
+	bp->_key = ibp->key;
+}
+#endif /* SYSVMSG || SYSVSEM || SYSVMSG */
+
+#ifdef SYSVMSG
+
+/*
+ * iBCS2 msgsys call
+ */
+
+static void
+cvt_msqid2imsqid(const struct msqid_ds *bp, struct ibcs2_msqid_ds *ibp)
+{
+	cvt_perm2iperm(&bp->msg_perm, &ibp->msg_perm);
+	ibp->msg_first = NULL;
+	ibp->msg_last = NULL;
+	ibp->msg_cbytes = bp->_msg_cbytes;
+	ibp->msg_qnum = bp->msg_qnum;
+	ibp->msg_qbytes = bp->msg_qbytes;
+	ibp->msg_lspid = bp->msg_lspid;
+	ibp->msg_lrpid = bp->msg_lrpid;
+	ibp->msg_stime = bp->msg_stime;
+	ibp->msg_rtime = bp->msg_rtime;
+	ibp->msg_ctime = bp->msg_ctime;
+}
+
+static void
+cvt_imsqid2msqid(struct ibcs2_msqid_ds *ibp, struct msqid_ds *bp)
 {
 	cvt_iperm2perm(&ibp->msg_perm, &bp->msg_perm);
-	bp->msg_first = ibp->msg_first;
-	bp->msg_last = ibp->msg_last;
-	bp->msg_cbytes = ibp->msg_cbytes;
+	bp->_msg_first = NULL;
+	bp->_msg_last = NULL;
+	bp->_msg_cbytes = ibp->msg_cbytes;
 	bp->msg_qnum = ibp->msg_qnum;
 	bp->msg_qbytes = ibp->msg_qbytes;
 	bp->msg_lspid = ibp->msg_lspid;
@@ -178,7 +160,6 @@ cvt_imsqid2msqid(ibp, bp)
 	bp->msg_stime = ibp->msg_stime;
 	bp->msg_rtime = ibp->msg_rtime;
 	bp->msg_ctime = ibp->msg_ctime;
-	return;
 }
 
 int
@@ -187,6 +168,7 @@ ibcs2_sys_msgsys(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef SYSVMSG
 	struct ibcs2_sys_msgsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
@@ -195,52 +177,48 @@ ibcs2_sys_msgsys(l, v, retval)
 		syscallarg(int) a5;
 		syscallarg(int) a6;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
+	int error;
+	struct msqid_ds msqbuf;
+	struct ibcs2_msqid_ds msqbuf_ibcs2, *ibp;
 
 	switch (SCARG(uap, which)) {
-#ifdef SYSVMSG
 	case 0:				/* msgget */
 		SCARG(uap, which) = 1;
 		return compat_10_sys_msgsys(l, uap, retval);
-	case 1: {			/* msgctl */
-		int error;
-		struct compat_10_sys_msgsys_args margs;
-		void *sg = stackgap_init(p, 0);
-
-		SCARG(&margs, which) = 0;
-		SCARG(&margs, a2) = SCARG(uap, a2);
-		SCARG(&margs, a4) =
-		    (int)stackgap_alloc(p, &sg, sizeof(struct msqid_ds14));
-		SCARG(&margs, a3) = SCARG(uap, a3);
-		switch (SCARG(&margs, a3)) {
-		case IBCS2_IPC_STAT:
-			error = compat_10_sys_msgsys(l, &margs, retval);
-			if (!error)
-				cvt_msqid2imsqid((struct msqid_ds14 *)
-				    SCARG(&margs, a4),
-				    (struct ibcs2_msqid_ds *)SCARG(uap, a4));
+	case 1: 			/* msgctl */
+		ibp = (void *)SCARG(uap, a4);
+		switch (SCARG(uap, a3)) {
+		case IPC_STAT:
+			error = msgctl1(l, SCARG(uap, a2), IPC_STAT, &msqbuf);
+			if (error == 0) {
+				cvt_msqid2imsqid(&msqbuf, &msqbuf_ibcs2);
+				error = copyout(&msqbuf_ibcs2, ibp,
+				    sizeof msqbuf_ibcs2);
+			}
 			return error;
-		case IBCS2_IPC_SET:
-			cvt_imsqid2msqid((struct ibcs2_msqid_ds *)SCARG(uap,
-									a4),
-					 (struct msqid_ds14 *) SCARG(&margs,
-					 			     a4));
-			return compat_10_sys_msgsys(l, &margs, retval);
-		case IBCS2_IPC_RMID:
-			return compat_10_sys_msgsys(l, &margs, retval);
+		case IPC_SET:
+			error = copyin(ibp, &msqbuf_ibcs2, sizeof msqbuf_ibcs2);
+			if (error == 0) {
+				cvt_imsqid2msqid(&msqbuf_ibcs2, &msqbuf);
+				error = msgctl1(l, SCARG(uap, a2),
+				    IPC_SET, &msqbuf);
+			}
+			return error;
+		case IPC_RMID:
+			return msgctl1(l, SCARG(uap, a2), IPC_RMID, NULL);
 		}
 		return EINVAL;
-	}
 	case 2:				/* msgrcv */
 		SCARG(uap, which) = 3;
 		return compat_10_sys_msgsys(l, uap, retval);
 	case 3:				/* msgsnd */
 		SCARG(uap, which) = 2;
 		return compat_10_sys_msgsys(l, uap, retval);
-#endif
 	default:
-		return EINVAL;
+		break;
 	}
+#endif
+	return EINVAL;
 }
 
 #endif /* SYSVMSG */
@@ -267,10 +245,6 @@ struct ibcs2_sem {
 	u_short semzcnt;
 };
 
-static void cvt_semid2isemid __P((struct semid_ds14 *,
-	struct ibcs2_semid_ds *));
-static void cvt_isemid2semid __P((struct ibcs2_semid_ds *,
-	struct semid_ds14 *));
 #ifdef notdef
 static void cvt_sem2isem __P((struct sem *, struct ibcs2_sem *));
 static void cvt_isem2sem __P((struct ibcs2_sem *, struct sem *));
@@ -284,7 +258,6 @@ cvt_sem2isem(bp, ibp)
 	ibp->sempid = bp->sempid;
 	ibp->semncnt = bp->semncnt;
 	ibp->semzcnt = bp->semzcnt;
-	return;
 }
 
 static void
@@ -296,35 +269,28 @@ cvt_isem2sem(ibp, bp)
 	bp->sempid = ibp->sempid;
 	bp->semncnt = ibp->semncnt;
 	bp->semzcnt = ibp->semzcnt;
-	return;
 }
 #endif
 
 static void
-cvt_semid2isemid(bp, ibp)
-	struct semid_ds14 *bp;
-	struct ibcs2_semid_ds *ibp;
+cvt_semid2isemid(const struct semid_ds *bp, struct ibcs2_semid_ds *ibp)
 {
 	cvt_perm2iperm(&bp->sem_perm, &ibp->sem_perm);
-	ibp->sem_base = (struct ibcs2_sem *)bp->sem_base;
+	ibp->sem_base = (struct ibcs2_sem *)bp->_sem_base;
 	ibp->sem_nsems = bp->sem_nsems;
 	ibp->sem_otime = bp->sem_otime;
 	ibp->sem_ctime = bp->sem_ctime;
-	return;
 }
 
 
 static void
-cvt_isemid2semid(ibp, bp)
-	struct ibcs2_semid_ds *ibp;
-	struct semid_ds14 *bp;
+cvt_isemid2semid(const struct ibcs2_semid_ds *ibp, struct semid_ds *bp)
 {
 	cvt_iperm2perm(&ibp->sem_perm, &bp->sem_perm);
-	bp->sem_base = (struct __sem *)ibp->sem_base;
+	bp->_sem_base = (struct __sem *)ibp->sem_base;
 	bp->sem_nsems = ibp->sem_nsems;
 	bp->sem_otime = ibp->sem_otime;
 	bp->sem_ctime = ibp->sem_ctime;
-	return;
 }
 
 int
@@ -333,6 +299,7 @@ ibcs2_sys_semsys(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef SYSVSEM
 	struct ibcs2_sys_semsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
@@ -340,54 +307,35 @@ ibcs2_sys_semsys(l, v, retval)
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
+	struct semid_ds sembuf;
+	struct ibcs2_semid_ds isembuf;
+	void *pass_arg;
 	int error;
 
-#ifdef SYSVSEM
 	switch (SCARG(uap, which)) {
 	case 0:					/* semctl */
-		switch(SCARG(uap, a4)) {
-		case IBCS2_IPC_STAT:
-		    {
-			    struct ibcs2_semid_ds *isp, isi;
-			    struct semid_ds14 *sp, s;
-			    void *sg = stackgap_init(p, 0);
-
-			    isp = (struct ibcs2_semid_ds *)SCARG(uap, a5);
-			    sp = stackgap_alloc(p, &sg, sizeof(struct semid_ds14));
-			    SCARG(uap, a5) = (int)sp;
-			    error = compat_10_sys_semsys(l, uap, retval);
-			    if (error)
-				    return error;
-			    error = copyin((void *)sp, (void *)&s,
-					   sizeof(s));
-			    if (error)
-				    return error;
-			    cvt_semid2isemid(&s, &isi);
-			    return copyout((void *)&isi, (void *)isp,
-					   sizeof(isi));
-		    }
-		case IBCS2_IPC_SET:
-		    {
-			    struct ibcs2_semid_ds isp;
-			    struct semid_ds14 *sp, s;
-			    void *sg = stackgap_init(p, 0);
-
-			    error = copyin((void *)SCARG(uap, a5),
-					   (void *)&isp, sizeof(isp));
-			    if (error)
-				    return error;
-			    cvt_isemid2semid(&isp, &s);
-			    sp = stackgap_alloc(p, &sg, sizeof(s));
-			    error = copyout((void *)&s, (void *)sp,
-					    sizeof(s));
-			    if (error)
-				    return error;
-			    SCARG(uap, a5) = (int)sp;
-			    return compat_10_sys_semsys(l, uap, retval);
-		    }
+#define	semctl_semid	SCARG(uap, a2)
+#define	semctl_semnum	SCARG(uap, a3)
+#define	semctl_cmd	SCARG(uap, a4)
+#define	semctl_arg	((union __semun *)&SCARG(uap, a5))
+		pass_arg = get_semctl_arg(semctl_cmd, &sembuf, semctl_arg);
+		if (semctl_cmd == IPC_SET) {
+			error = copyin(semctl_arg->buf, &isembuf, sizeof isembuf);
+			if (error != 0)
+				return error;
+			cvt_isemid2semid(&isembuf, &sembuf);
 		}
-		return compat_10_sys_semsys(l, uap, retval);
+		error = semctl1(l, semctl_semid, semctl_semnum, semctl_cmd, 
+		    pass_arg, retval);
+		if (error == 0 && semctl_cmd == IPC_STAT) {
+			cvt_semid2isemid(&sembuf, &isembuf);
+			error = copyout(&isembuf, semctl_arg->buf, sizeof(isembuf));
+		}
+		return error;
+#undef	semctl_semid
+#undef	semctl_semnum
+#undef	semctl_cmd
+#undef	semctl_arg
 
 	case 1:				/* semget */
 		return compat_10_sys_semsys(l, uap, retval);
@@ -421,15 +369,8 @@ struct ibcs2_shmid_ds {
 	ibcs2_time_t shm_ctime;
 };
 
-static void cvt_shmid2ishmid __P((struct shmid_ds14 *,
-	struct ibcs2_shmid_ds *));
-static void cvt_ishmid2shmid __P((struct ibcs2_shmid_ds *,
-	struct shmid_ds14 *));
-
 static void
-cvt_shmid2ishmid(bp, ibp)
-	struct shmid_ds14 *bp;
-	struct ibcs2_shmid_ds *ibp;
+cvt_shmid2ishmid(const struct shmid_ds *bp, struct ibcs2_shmid_ds *ibp)
 {
 	cvt_perm2iperm(&bp->shm_perm, &ibp->shm_perm);
 	ibp->shm_segsz = bp->shm_segsz;
@@ -440,13 +381,10 @@ cvt_shmid2ishmid(bp, ibp)
 	ibp->shm_atime = bp->shm_atime;
 	ibp->shm_dtime = bp->shm_dtime;
 	ibp->shm_ctime = bp->shm_ctime;
-	return;
 }
 
 static void
-cvt_ishmid2shmid(ibp, bp)
-	struct ibcs2_shmid_ds *ibp;
-	struct shmid_ds14 *bp;
+cvt_ishmid2shmid(const struct ibcs2_shmid_ds *ibp, struct shmid_ds *bp)
 {
 	cvt_iperm2perm(&ibp->shm_perm, &bp->shm_perm);
 	bp->shm_segsz = ibp->shm_segsz;
@@ -456,7 +394,7 @@ cvt_ishmid2shmid(ibp, bp)
 	bp->shm_atime = ibp->shm_atime;
 	bp->shm_dtime = ibp->shm_dtime;
 	bp->shm_ctime = ibp->shm_ctime;
-	bp->shm_internal = (void *)0;		/* ignored anyway */
+	bp->_shm_internal = (void *)0;		/* ignored anyway */
 	return;
 }
 
@@ -466,63 +404,39 @@ ibcs2_sys_shmsys(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+#ifdef SYSVSHM
 	struct ibcs2_sys_shmsys_args /* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
+	struct shmid_ds shmbuf;
+	struct ibcs2_shmid_ds *isp, ishmbuf;
+	int cmd, error;
 
-#ifdef SYSVSHM
 	switch (SCARG(uap, which)) {
 	case 0:						/* shmat */
 		return compat_10_sys_shmsys(l, uap, retval);
 
 	case 1:						/* shmctl */
-		switch(SCARG(uap, a3)) {
-		case IBCS2_IPC_STAT:
-		    {
-			    struct ibcs2_shmid_ds *isp, is;
-			    struct shmid_ds14 *sp, s;
-			    void *sg = stackgap_init(p, 0);
-
-			    isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
-			    sp = stackgap_alloc(p, &sg, sizeof(*sp));
-			    SCARG(uap, a4) = (int)sp;
-			    error = compat_10_sys_shmsys(l, uap, retval);
-			    if (error)
-				    return error;
-			    error = copyin((void *)sp, (void *)&s,
-					   sizeof(s));
-			    if (error)
-				    return error;
-			    cvt_shmid2ishmid(&s, &is);
-			    return copyout((void *)&is, (void *)isp,
-					   sizeof(is));
-		    }
-		case IBCS2_IPC_SET:
-		    {
-			    struct ibcs2_shmid_ds is;
-			    struct shmid_ds14 *sp, s;
-			    void *sg = stackgap_init(p, 0);
-
-			    error = copyin((void *)SCARG(uap, a4),
-					   (void *)&is, sizeof(is));
-			    if (error)
-				    return error;
-			    cvt_ishmid2shmid(&is, &s);
-			    sp = stackgap_alloc(p, &sg, sizeof(*sp));
-			    SCARG(uap, a4) = (int)sp;
-			    error = copyout((void *)&s, (void *)sp,
-					    sizeof(s));
-			    if (error)
-				    return error;
-			    return compat_10_sys_shmsys(l, uap, retval);
-		    }
+		cmd = SCARG(uap, a3);
+		isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
+		if (cmd == IPC_SET) {
+			error = copyin(isp, &ishmbuf, sizeof(ishmbuf));
+			if (error)
+				return error;
+			cvt_ishmid2shmid(&ishmbuf, &shmbuf);
 		}
-		return compat_10_sys_shmsys(l, uap, retval);
+
+		error = shmctl1(l, SCARG(uap, a2), cmd,
+		    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
+
+		if (error == 0 && cmd == IPC_STAT) {
+			cvt_shmid2ishmid(&shmbuf, &ishmbuf);
+			error = copyout(&ishmbuf, isp, sizeof(ishmbuf));
+		}
+		return error;
 
 	case 2:						/* shmdt */
 		return compat_10_sys_shmsys(l, uap, retval);

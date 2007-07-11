@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.6 2007/03/04 06:02:57 christos Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.6.4.1 2007/07/11 20:09:15 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.5 2005/08/20 13:48:25 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.8 2007/05/11 10:44:14 darrenr Exp
  */
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
@@ -41,7 +41,6 @@ typedef struct ipstate {
 	struct	ipstate	**is_me;
 	void		*is_ifp[4];
 	void		*is_sync;
-	struct nat	*is_nat[2];
 	frentry_t	*is_rule;
 	struct	ipftq	*is_tqehead[2];
 	struct	ipscan	*is_isc;
@@ -189,6 +188,7 @@ typedef	struct	ipslog	{
 #define	ISL_INTERMEDIATE	0xfffc
 #define	ISL_KILLED		0xfffb
 #define	ISL_ORPHAN		0xfffa
+#define	ISL_UNLOAD		0xfff9
 
 
 typedef	struct	ips_stat {
@@ -215,6 +215,7 @@ typedef	struct	ips_stat {
 	ipstate_t **iss_table;
 	ipstate_t *iss_list;
 	u_long	*iss_bucketlen;
+	ipftq_t	*iss_tcptab;
 } ips_stat_t;
 
 
@@ -250,12 +251,12 @@ extern	int	fr_tcpinwindow __P((struct fr_info *, struct tcpdata *,
 				    struct tcpdata *, tcphdr_t *, int));
 extern	void	fr_stateunload __P((void));
 extern	void	ipstate_log __P((struct ipstate *, u_int));
-extern	int	fr_state_ioctl __P((void *, ioctlcmd_t, int));
+extern	int	fr_state_ioctl __P((caddr_t, ioctlcmd_t, int, int, void *));
 extern	void	fr_stinsert __P((struct ipstate *, int));
 extern	void	fr_sttab_init __P((struct ipftq *));
 extern	void	fr_sttab_destroy __P((struct ipftq *));
 extern	void	fr_updatestate __P((fr_info_t *, ipstate_t *, ipftq_t *));
-extern	void	fr_statederef __P((fr_info_t *, ipstate_t **));
+extern	void	fr_statederef __P((ipstate_t **));
 extern	void	fr_setstatequeue __P((ipstate_t *, int));
 
 #endif /* _NETINET_IP_STATE_H_ */

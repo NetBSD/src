@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.30 2007/03/12 18:18:31 ad Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.30.2.1 2007/07/11 20:09:18 mjf Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -246,7 +246,7 @@ pfattach(int num)
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
 	timeout_add(&pf_expire_to, timeout[PFTM_INTERVAL] * hz);
 #else
-	callout_init(&pf_expire_to);
+	callout_init(&pf_expire_to, 0);
 	callout_reset(&pf_expire_to, timeout[PFTM_INTERVAL] * hz,
 	    pf_purge_timeout, &pf_expire_to);
 #endif

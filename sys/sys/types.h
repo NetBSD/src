@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.73 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.73.4.1 2007/07/11 20:12:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -141,9 +141,12 @@ typedef	__fsfilcnt_t	fsfilcnt_t;	/* fs file count */
 #define fsfilcnt_t	__fsfilcnt_t
 #endif
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+/* We don't and shouldn't use caddr_t in the kernel anymore */
 #ifndef	caddr_t
 typedef	__caddr_t	caddr_t;	/* core address */
 #define	caddr_t		__caddr_t
+#endif
 #endif
 
 #ifdef __daddr_t
@@ -307,7 +310,7 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 
 typedef struct kauth_cred *kauth_cred_t;
 
-typedef unsigned int pri_t;
+typedef int pri_t;
 
 #endif
 
@@ -318,13 +321,17 @@ typedef unsigned int pri_t;
  * used in the same place that the structure is defined.
  */
 struct	lwp;
+typedef struct lwp lwp_t;
 struct	user;
 struct	__ucontext;
 struct	proc;
+typedef struct proc proc_t;
 struct	pgrp;
 struct	rusage;
 struct	file;
+typedef struct file file_t;
 struct	buf;
+typedef struct buf buf_t;
 struct	tty;
 struct	uio;
 #endif

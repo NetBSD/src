@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs.h,v 1.22 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.22.32.1 2007/07/11 20:08:28 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.19 2003/10/25 16:24:30 chs Exp
+ *	NetBSD: tcdevs,v 1.20 2005/12/11 12:24:00 christos Exp
  */
 
 /*

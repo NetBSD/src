@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.21 2007/03/04 06:02:05 christos Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.21.4.1 2007/07/11 20:06:21 mjf Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -204,7 +204,7 @@ typedef struct proc fw_proc;
 	static void	\
 	__CONCAT(dname,_stop)(struct __CONCAT(dname,_softc) *fwip)
 #define IF_STOP_START(dname, ifp, sc) \
-	struct ifnet *ifp = &(sc)->fwip_if
+	struct ifnet *ifp = (sc)->fw_softc.fwip_ifp;
 #define IF_DETACH_START(dname, sc)		\
 	struct __CONCAT(dname,_softc) *sc =	\
 	    (struct __CONCAT(dname,_softc) *)device_get_softc(dev)
@@ -214,7 +214,7 @@ typedef struct proc fw_proc;
 #define IF_INIT_START(dname, sc, ifp)			\
 	struct __CONCAT(dname,_softc) *sc =		\
 	    ((struct fwip_eth_softc *)arg)->fwip;	\
-	struct ifnet *ifp = &(sc)->fwip_if
+	struct ifnet *ifp = (sc)->fw_softc.fwip_ifp
 #define IF_INIT_RETURN(r)	return
 #define IF_IOCTL_START(dname, sc)		\
 	struct __CONCAT(dname,_softc) *sc =	\
@@ -344,16 +344,24 @@ typedef struct proc fw_proc;
 /*
  * fwip macro for FreeBSD
  */
-#define FWIP_ATTACH_START						\
-	int unit = device_get_unit(dev);				\
-	struct fw_hwaddr *hwaddr = &fwip->fw_softc.fwcom.fc_hwaddr
-#define FWIP_ATTACH_SETUP	bzero(fwip, sizeof(struct fwip_softc))
+#define FWIP_ATTACH_START		\
+	int unit = device_get_unit(dev);\
+	struct fw_hwaddr *hwaddr;
+#define FWIP_ATTACH_SETUP						\
+	do {								\
+		fwip->fw_softc.fwip_ifp = if_alloc(IFT_IEEE1394);	\
+		hwaddr = &IFP2FWC(fwip->fw_softc.fwip_ifp)->fc_hwaddr;	\
+	} while (/*CONSTCOND*/0)
 
 #define FWDEV_MAKEDEV(sc)	fwdev_makedev(sc)
 
 #define FIREWIRE_IFATTACH(ifp, ha) \
 				firewire_ifattach((ifp), (ha))
-#define FIREWIRE_IFDETACH(ifp)	firewire_ifdetach((ifp));
+#define FIREWIRE_IFDETACH(ifp)		\
+	do {				\
+		firewire_ifdetach(ifp);	\
+		if_free(ifp);		\
+	} while (/*CONSTCOND*/0)
 #define FIREWIRE_BUSRESET(ifp)	firewire_busreset((ifp))
 #define FIREWIRE_INPUT(ifp, m, src) \
 				firewire_input((ifp), (m), (src))
@@ -562,15 +570,14 @@ typedef struct lwp fw_proc;
 typedef struct proc fw_thread;
 #include <sys/select.h>
 
-#define CALLOUT_INIT(x) callout_init(x)
+#define CALLOUT_INIT(x) callout_init(x, 0)
 #define DEV_T dev_t
 #define FW_LOCK
 #define FW_UNLOCK
 #define THREAD_CREATE(f, sc, p, name, arg) \
-     kthread_create1(f, (void *)sc, p, name, arg)
+     kthread_create(PRI_NONE, 0, NULL, f, (void *)sc, p, name, arg)
 #define THREAD_EXIT(x)  kthread_exit(x)
-#define fw_kthread_create(func, arg) \
-				kthread_create((func), (arg))
+#define fw_kthread_create(func, arg)	(*(func))(arg)
 
 struct fwbus_attach_args {
 	const char *name;
@@ -740,7 +747,7 @@ struct fwbus_attach_args {
 	__CONCAT(dname,_init)(struct ifnet *ifp)
 #define IF_INIT_START(dname, sc, ifp)	\
 	struct __CONCAT(dname,_softc) *sc =	\
-	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip
+	    ((struct fwip_eth_softc *)(ifp)->if_softc)->fwip
 #define IF_INIT_RETURN(r)	return (r)
 #define IF_IOCTL_START(dname, sc)		\
 	struct __CONCAT(dname,_softc) *sc =	\
@@ -949,17 +956,21 @@ struct fwbus_attach_args {
 #define SBP_BUS_FREEZE(b)	scsipi_channel_freeze(&(b)->sc_channel, 1)
 #define SBP_BUS_THAW(b)		scsipi_channel_thaw(&(b)->sc_channel, 1)
 #define SBP_DEVICE_PREATTACH()	\
-	if (!sbp->proc)		\
-		fw_kthread_create(fw_kthread_create0, sbp)
+	if (!sbp->lwp)		\
+		fw_kthread_create0(sbp)
 
 /*
  * fwip macro for NetBSD
  */
 #define FWIP_ATTACH_START						\
 	device_t dev = &fwip->fd._dev;					\
-	struct fw_hwaddr *hwaddr =					\
-	    (struct fw_hwaddr *)&fwip->fw_softc.fwcom.ic_hwaddr
-#define FWIP_ATTACH_SETUP	aprint_normal(": IP over IEEE1394\n")
+	struct fw_hwaddr *hwaddr;
+#define FWIP_ATTACH_SETUP						      \
+	do {								      \
+		aprint_normal(": IP over IEEE1394\n");			      \
+		fwip->fw_softc.fwip_ifp = &fwip->fw_softc.fwcom.fc_if;	      \
+		hwaddr = (struct fw_hwaddr *)&fwip->fw_softc.fwcom.ic_hwaddr; \
+	} while (/*CONSTCOND*/0)
 
 #define FWDEV_MAKEDEV(sc)
 #define FIREWIRE_IFATTACH(ifp, ha)					       \
@@ -969,14 +980,14 @@ struct fwbus_attach_args {
 	} while (/*CONSTCOND*/0)
 #define FIREWIRE_IFDETACH(ifp)			\
 	do {					\
-		ieee1394_ifdetach((ifp));	\
-		if_detach((ifp));		\
+		ieee1394_ifdetach(ifp);		\
+		if_detach(ifp);			\
 	} while (/*CONSTCOND*/0)
 #define FIREWIRE_BUSRESET(ifp)	ieee1394_drain((ifp))
 #define FIREWIRE_INPUT(ifp, m, src) \
 				ieee1394_input((ifp), (m), (src))
-#define	FWIP_INIT(sc)		fwip_init(&(sc)->fwip_if)
-#define	FWIP_STOP(sc)		fwip_stop(&(sc)->fwip_if, 1)
+#define	FWIP_INIT(sc)		fwip_init((sc)->fw_softc.fwip_ifp)
+#define	FWIP_STOP(sc)		fwip_stop((sc)->fw_softc.fwip_ifp, 1)
 #define FIREWIRE_IOCTL(ifp, cmd, data) \
 				ieee1394_ioctl((ifp), (cmd), (data))
 #define IF_INITNAME(ifp, dev, unit)	\
@@ -1280,6 +1291,8 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
  * XXXXXXXXXXX
  */
 #define atomic_set_int(P, V) (*(u_int*)(P) |= (V))
+
+#define bpf_peers_present(if_bpf)	(if_bpf)
 
 #endif
 #endif

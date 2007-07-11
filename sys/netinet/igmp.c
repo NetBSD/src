@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.44 2007/03/12 18:18:35 ad Exp $	*/
+/*	$NetBSD: igmp.c,v 1.44.2.1 2007/07/11 20:11:17 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.44 2007/03/12 18:18:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.44.2.1 2007/07/11 20:11:17 mjf Exp $");
 
 #include "opt_mrouting.h"
 
@@ -571,8 +571,7 @@ igmp_sendpkt(struct in_multi *inm, int type)
 	imo.imo_multicast_loop = 0;
 #endif /* MROUTING */
 
-	ip_output(m, (struct mbuf *)NULL, (struct route *)NULL,
-	    IP_MULTICASTOPTS, &imo, (struct socket *)NULL);
+	ip_output(m, NULL, NULL, IP_MULTICASTOPTS, &imo, NULL);
 
 	++igmpstat.igps_snd_reports;
 }

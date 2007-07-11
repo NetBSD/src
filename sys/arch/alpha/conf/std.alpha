@@ -1,4 +1,4 @@
-# $NetBSD: std.alpha,v 1.23 2005/12/11 12:16:16 christos Exp $
+# $NetBSD: std.alpha,v 1.23.32.1 2007/07/11 19:57:26 mjf Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
@@ -6,6 +6,7 @@ machine		alpha
 include		"conf/std"	# MI standard options
 
 # standard ("mandatory") kernel options.
+options 	HZ=1024
 
 # Executable support: once transitioned to ELF, EXEC_ECOFF will become optional
 options 	EXEC_ECOFF	# (native) ECOFF binary support

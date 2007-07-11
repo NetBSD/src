@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.11 2007/03/04 05:59:38 christos Exp $	*/
+/*	$NetBSD: qms.c,v 1.11.4.1 2007/07/11 19:58:09 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.11 2007/03/04 05:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.11.4.1 2007/07/11 19:58:09 mjf Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -132,7 +132,7 @@ qms_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wsmousedev =
 	    config_found(&sc->sc_dev, &wsmouseargs, wsmousedevprint);
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 }
 
 

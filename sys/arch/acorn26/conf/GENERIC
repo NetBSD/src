@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49 2006/11/11 18:47:08 jmmv Exp $
+# $NetBSD: GENERIC,v 1.49.10.1 2007/07/11 19:57:14 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -260,6 +260,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	rnd			# /dev/random and in-kernel generator

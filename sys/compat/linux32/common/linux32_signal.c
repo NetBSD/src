@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.2 2007/02/15 15:29:52 ad Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.2.8.1 2007/07/11 20:04:24 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -151,10 +151,10 @@ native_to_linux32_sigaction(lsa, bsa)
 	struct linux32_sigaction *lsa;
 	const struct sigaction *bsa;
 {
-	lsa->linux_sa_handler = (linux32_handler_t)(long)bsa->sa_handler;
+	NETBSD32PTR32(lsa->linux_sa_handler, bsa->sa_handler);
 	native_to_linux32_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
 	lsa->linux_sa_flags = native_to_linux32_sigflags(bsa->sa_flags);
-	lsa->linux_sa_restorer = (linux32_restorer_t)NULL;
+	NETBSD32PTR32(lsa->linux_sa_restorer, NULL);
 }
 
 void
@@ -162,7 +162,7 @@ native_to_linux32_sigaltstack(lss, bss)
 	struct linux32_sigaltstack *lss;
 	const struct sigaltstack *bss;
 {
-	lss->ss_sp = (netbsd32_voidp)(long)bss->ss_sp;
+	NETBSD32PTR32(lss->ss_sp, bss->ss_sp);
 	lss->ss_size = bss->ss_size;
 	if (bss->ss_flags & SS_ONSTACK)
 	    lss->ss_flags = LINUX32_SS_ONSTACK;
@@ -223,8 +223,8 @@ linux32_sys_rt_sigaction(l, v, retval)
 	if (SCARG(uap, sigsetsize) != sizeof(linux32_sigset_t))
 		return EINVAL;
 
-	if (NETBSD32PTR64(SCARG(uap, nsa)) != NULL) {
-		if ((error = copyin(NETBSD32PTR64(SCARG(uap, nsa)), 
+	if (SCARG_P32(uap, nsa) != NULL) {
+		if ((error = copyin(SCARG_P32(uap, nsa), 
 		    &nls32, sizeof(nls32))) != 0)
 			return error;
 		linux32_to_native_sigaction(&ns, &nls32);
@@ -241,16 +241,16 @@ linux32_sys_rt_sigaction(l, v, retval)
 	} else {
 		if ((error = sigaction1(l, 
 		    linux32_to_native_signo[sig],	
-		    NETBSD32PTR64(SCARG(uap, nsa)) ? &ns : NULL,
-		    NETBSD32PTR64(SCARG(uap, osa)) ? &os : NULL,
+		    SCARG_P32(uap, nsa) ? &ns : NULL,
+		    SCARG_P32(uap, osa) ? &os : NULL,
 		    tramp, vers)) != 0)
 			return error;
 	}
 
-	if (NETBSD32PTR64(SCARG(uap, osa)) != NULL) {
+	if (SCARG_P32(uap, osa) != NULL) {
 		native_to_linux32_sigaction(&ols32, &os);
 
-		if ((error = copyout(&ols32, NETBSD32PTR64(SCARG(uap, osa)),
+		if ((error = copyout(&ols32, SCARG_P32(uap, osa),
 		    sizeof(ols32))) != 0)
 			return error;
 	}
@@ -294,8 +294,8 @@ linux32_sys_rt_sigprocmask(l, v, retval)
 		break;
 	}
 
-	if (NETBSD32PTR64(SCARG(uap, set)) != NULL) {
-		if ((error = copyin(NETBSD32PTR64(SCARG(uap, set)), 
+	if (SCARG_P32(uap, set) != NULL) {
+		if ((error = copyin(SCARG_P32(uap, set), 
 		    &nls32, sizeof(nls32))) != 0)
 			return error;
 		linux32_to_native_sigset(&ns, &nls32);
@@ -303,17 +303,17 @@ linux32_sys_rt_sigprocmask(l, v, retval)
 
 	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, how,
-	    NETBSD32PTR64(SCARG(uap, set)) ? &ns : NULL,
-	    NETBSD32PTR64(SCARG(uap, oset)) ? &os : NULL);
+	    SCARG_P32(uap, set) ? &ns : NULL,
+	    SCARG_P32(uap, oset) ? &os : NULL);
 	mutex_exit(&p->p_smutex);
       
         if (error != 0)
 		return error;
 		
-	if (NETBSD32PTR64(SCARG(uap, oset)) != NULL) {
+	if (SCARG_P32(uap, oset) != NULL) {
 		native_to_linux32_sigset(&ols32, &os);
 		if ((error = copyout(&ols32, 
-		    NETBSD32PTR64(SCARG(uap, oset)), sizeof(ols32))) != 0)
+		    SCARG_P32(uap, oset), sizeof(ols32))) != 0)
 			return error;
 	}
 
@@ -359,7 +359,7 @@ linux32_sys_rt_sigsuspend(l, v, retval)
 	if (SCARG(uap, sigsetsize) != sizeof(linux32_sigset_t))
 		return EINVAL;
 
-	if ((error = copyin(NETBSD32PTR64(SCARG(uap, unewset)), 
+	if ((error = copyin(SCARG_P32(uap, unewset), 
 	    &lss, sizeof(linux32_sigset_t))) != 0)
 		return error;
 
@@ -387,7 +387,7 @@ linux32_sys_signal(l, v, retval)
         if (sig < 0 || sig >= LINUX32__NSIG)
                 return EINVAL;
 
-        nbsa.sa_handler = NETBSD32PTR64(SCARG(uap, handler));
+        nbsa.sa_handler = SCARG_P32(uap, handler);
         sigemptyset(&nbsa.sa_mask);
         nbsa.sa_flags = SA_RESETHAND | SA_NODEFER;
 

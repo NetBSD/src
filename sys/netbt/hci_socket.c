@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.7 2007/03/05 19:11:54 plunky Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.7.4.1 2007/07/11 20:11:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.7 2007/03/05 19:11:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.7.4.1 2007/07/11 20:11:11 mjf Exp $");
 
-#include "opt_bluetooth.h"
+/* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
+#define PRUREQUESTS
 #define PRCOREQUESTS
 #endif
 
@@ -94,17 +95,27 @@ hci_security_check_opcode(uint16_t opcode)
 	switch (opcode) {
 	/* Link control */
 	case HCI_CMD_INQUIRY:
+		return sizeof(hci_inquiry_cp);
 	case HCI_CMD_REMOTE_NAME_REQ:
+		return sizeof(hci_remote_name_req_cp);
 	case HCI_CMD_READ_REMOTE_FEATURES:
+		return sizeof(hci_read_remote_features_cp);
 	case HCI_CMD_READ_REMOTE_EXTENDED_FEATURES:
+		return sizeof(hci_read_remote_extended_features_cp);
 	case HCI_CMD_READ_REMOTE_VER_INFO:
+		return sizeof(hci_read_remote_ver_info_cp);
 	case HCI_CMD_READ_CLOCK_OFFSET:
+		return sizeof(hci_read_clock_offset_cp);
 	case HCI_CMD_READ_LMP_HANDLE:
+		return sizeof(hci_read_lmp_handle_cp);
 
 	/* Link policy */
 	case HCI_CMD_ROLE_DISCOVERY:
+		return sizeof(hci_role_discovery_cp);
 	case HCI_CMD_READ_LINK_POLICY_SETTINGS:
+		return sizeof(hci_read_link_policy_settings_cp);
 	case HCI_CMD_READ_DEFAULT_LINK_POLICY_SETTINGS:
+		return 0;	/* No command parameters */
 
 	/* Host controller and baseband */
 	case HCI_CMD_READ_PIN_TYPE:
@@ -118,12 +129,18 @@ hci_security_check_opcode(uint16_t opcode)
 	case HCI_CMD_READ_ENCRYPTION_MODE:
 	case HCI_CMD_READ_UNIT_CLASS:
 	case HCI_CMD_READ_VOICE_SETTING:
+		return 0;	/* No command parameters */
 	case HCI_CMD_READ_AUTO_FLUSH_TIMEOUT:
+		return sizeof(hci_read_auto_flush_timeout_cp);
 	case HCI_CMD_READ_NUM_BROADCAST_RETRANS:
 	case HCI_CMD_READ_HOLD_MODE_ACTIVITY:
+		return 0;	/* No command parameters */
 	case HCI_CMD_READ_XMIT_LEVEL:
+		return sizeof(hci_read_xmit_level_cp);
 	case HCI_CMD_READ_SCO_FLOW_CONTROL:
+		return 0;	/* No command parameters */
 	case HCI_CMD_READ_LINK_SUPERVISION_TIMEOUT:
+		return sizeof(hci_read_link_supervision_timeout_cp);
 	case HCI_CMD_READ_NUM_SUPPORTED_IAC:
 	case HCI_CMD_READ_IAC_LAP:
 	case HCI_CMD_READ_PAGE_SCAN_PERIOD:
@@ -132,29 +149,38 @@ hci_security_check_opcode(uint16_t opcode)
 	case HCI_CMD_READ_INQUIRY_MODE:
 	case HCI_CMD_READ_PAGE_SCAN_TYPE:
 	case HCI_CMD_READ_AFH_ASSESSMENT:
+		return 0;	/* No command parameters */
 
 	/* Informational */
 	case HCI_CMD_READ_LOCAL_VER:
 	case HCI_CMD_READ_LOCAL_COMMANDS:
 	case HCI_CMD_READ_LOCAL_FEATURES:
+		return 0;	/* No command parameters */
 	case HCI_CMD_READ_LOCAL_EXTENDED_FEATURES:
+		return sizeof(hci_read_local_extended_features_cp);
 	case HCI_CMD_READ_BUFFER_SIZE:
 	case HCI_CMD_READ_COUNTRY_CODE:
 	case HCI_CMD_READ_BDADDR:
+		return 0;	/* No command parameters */
 
 	/* Status */
 	case HCI_CMD_READ_FAILED_CONTACT_CNTR:
+		return sizeof(hci_read_failed_contact_cntr_cp);
 	case HCI_CMD_READ_LINK_QUALITY:
+		return sizeof(hci_read_link_quality_cp);
 	case HCI_CMD_READ_RSSI:
+		return sizeof(hci_read_rssi_cp);
 	case HCI_CMD_READ_AFH_CHANNEL_MAP:
+		return sizeof(hci_read_afh_channel_map_cp);
 	case HCI_CMD_READ_CLOCK:
+		return sizeof(hci_read_clock_cp);
 
 	/* Testing */
 	case HCI_CMD_READ_LOOPBACK_MODE:
-		return 1;
+		return 0;	/* No command parameters */
 	}
 
-	return 0;
+	return -1;	/* disallowed */
 }
 
 static int
@@ -165,10 +191,10 @@ hci_security_check_event(uint8_t event)
 	case HCI_EVENT_RETURN_LINK_KEYS:
 	case HCI_EVENT_LINK_KEY_NOTIFICATION:
 	case HCI_EVENT_VENDOR:
-		return 0;
+		return -1;	/* disallowed */
 	}
 
-	return 1;
+	return 0;	/* ok */
 }
 
 /*
@@ -222,8 +248,8 @@ hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 	hci_cmd_hdr_t hdr;
 	int err;
 
-	KASSERT(m);
-	KASSERT(addr);
+	KASSERT(m != NULL);
+	KASSERT(addr != NULL);
 
 	/* wants at least a header to start with */
 	if (m->m_pkthdr.len < sizeof(hdr)) {
@@ -246,7 +272,7 @@ hci_send(struct hci_pcb *pcb, struct mbuf *m, bdaddr_t *addr)
 
 	/* security checks for unprivileged users */
 	if ((pcb->hp_flags & HCI_PRIVILEGED) == 0
-	    && (hci_security_check_opcode(le16toh(hdr.opcode)) == 0)) {
+	    && hci_security_check_opcode(le16toh(hdr.opcode)) != hdr.length) {
 		err = EPERM;
 		goto bad;
 	}
@@ -382,7 +408,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_BIND:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -401,7 +427,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_CONNECT:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		if (sa->bt_len != sizeof(struct sockaddr_bt))
@@ -418,7 +444,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_PEERADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		memset(sa, 0, sizeof(struct sockaddr_bt));
@@ -429,7 +455,7 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		return 0;
 
 	case PRU_SOCKADDR:
-		KASSERT(nam);
+		KASSERT(nam != NULL);
 		sa = mtod(nam, struct sockaddr_bt *);
 
 		memset(sa, 0, sizeof(struct sockaddr_bt));
@@ -633,7 +659,7 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 				continue;
 
 			if ((pcb->hp_flags & HCI_PRIVILEGED) == 0
-			    && hci_security_check_event(event) == 0)
+			    && hci_security_check_event(event) == -1)
 				continue;
 			break;
 
@@ -643,7 +669,7 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 			opcode = le16toh(mtod(m, hci_cmd_hdr_t *)->opcode);
 
 			if ((pcb->hp_flags & HCI_PRIVILEGED) == 0
-			    && hci_security_check_opcode(opcode) == 0)
+			    && hci_security_check_opcode(opcode) == -1)
 				continue;
 			break;
 

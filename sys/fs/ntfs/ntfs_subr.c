@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.30 2007/03/04 06:03:00 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.30.4.1 2007/07/11 20:09:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.30 2007/03/04 06:03:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.30.4.1 2007/07/11 20:09:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.30 2007/03/04 06:03:00 christos Exp 
 int ntfs_debug = NTFS_DEBUG;
 #endif
 
-MALLOC_DEFINE(M_NTFSNTVATTR, "NTFS vattr", "NTFS file attribute information");
-MALLOC_DEFINE(M_NTFSRDATA, "NTFS res data", "NTFS resident data");
-MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
-MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
+MALLOC_JUSTDEFINE(M_NTFSNTVATTR, "NTFS vattr",
+    "NTFS file attribute information");
+MALLOC_JUSTDEFINE(M_NTFSRDATA, "NTFS res data", "NTFS resident data");
+MALLOC_JUSTDEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
+MALLOC_JUSTDEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 
 /* Local struct used in ntfs_ntlookupfile() */
 struct ntfs_lookup_ctx {

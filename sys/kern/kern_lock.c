@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lock.c,v 1.110 2007/03/04 06:20:25 christos Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.4.1 2007/07/11 20:09:50 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110 2007/03/04 06:20:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.4.1 2007/07/11 20:09:50 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -118,18 +118,6 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #endif
 #endif /* defined(LOCKDEBUG) */
 
-#if defined(MULTIPROCESSOR)
-/*
- * IPL_BIGLOCK: block IPLs which need to grab kernel_mutex.
- * XXX IPL_VM or IPL_AUDIO should be enough.
- */
-#if !defined(__HAVE_SPLBIGLOCK)
-#define	splbiglock	splclock
-#endif
-__cpu_simple_lock_t kernel_lock;
-int kernel_lock_id;
-#endif
-
 /*
  * Locking primitives implementation.
  * Locks provide shared/exclusive synchronization.
@@ -159,7 +147,7 @@ do {									\
 #define	INTERLOCK_ACQUIRE(lkp, flags, s)				\
 do {									\
 	if ((flags) & LK_SPIN)						\
-		s = spllock();						\
+		s = splhigh();						\
 	simple_lock(&(lkp)->lk_interlock);				\
 } while (/*CONSTCOND*/ 0)
 
@@ -355,7 +343,7 @@ _TAILQ_HEAD(, struct lock, volatile) spinlock_list =
 #define	HAVEIT(lkp)							\
 do {									\
 	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int sp = spllock();					\
+		int sp = splhigh();					\
 		SPINLOCK_LIST_LOCK();					\
 		TAILQ_INSERT_TAIL(&spinlock_list, (lkp), lk_list);	\
 		SPINLOCK_LIST_UNLOCK();					\
@@ -366,7 +354,7 @@ do {									\
 #define	DONTHAVEIT(lkp)							\
 do {									\
 	if ((lkp)->lk_flags & LK_SPIN) {				\
-		int sp = spllock();					\
+		int sp = splhigh();					\
 		SPINLOCK_LIST_LOCK();					\
 		TAILQ_REMOVE(&spinlock_list, (lkp), lk_list);		\
 		SPINLOCK_LIST_UNLOCK();					\
@@ -534,7 +522,7 @@ spinlock_switchcheck(void)
 	u_long cnt;
 	int s;
 
-	s = spllock();
+	s = splhigh();
 #if defined(MULTIPROCESSOR)
 	cnt = curcpu()->ci_spin_locks;
 #else
@@ -564,17 +552,6 @@ spinlock_switchcheck(void)
  *
  * A raw __cpu_simple_lock may be used from interrupts are long as it
  * is acquired and held at a single IPL.
- *
- * A simple_lock (which is a __cpu_simple_lock wrapped with some
- * debugging hooks) may be used at or below spllock(), which is
- * typically at or just below splhigh() (i.e. blocks everything
- * but certain machine-dependent extremely high priority interrupts).
- *
- * spinlockmgr spinlocks should be used at or below splsched().
- *
- * Some platforms may have interrupts of higher priority than splsched(),
- * including hard serial interrupts, inter-processor interrupts, and
- * kernel debugger traps.
  */
 
 /*
@@ -883,10 +860,11 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 					    "exclusive lock holder %lu "
 					    "unlocking", cpu_num, lkp->lk_cpu);
 				} else {
-					lockpanic(lkp, "lockmgr: pid %d, not "
-					    "exclusive lock holder %d "
-					    "unlocking", pid,
-					    lkp->lk_lockholder);
+					lockpanic(lkp, "lockmgr: pid %d.%d, not "
+					    "exclusive lock holder %d.%d "
+					    "unlocking", pid, lid,
+					    lkp->lk_lockholder,
+					    lkp->lk_locklwp);
 				}
 			}
 			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)
@@ -1187,7 +1165,7 @@ _simple_lock(volatile struct simplelock *alp, const char *id, int l)
 	cpuid_t cpu_num = cpu_number();
 	int s;
 
-	s = spllock();
+	s = splhigh();
 
 	/*
 	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
@@ -1210,7 +1188,7 @@ _simple_lock(volatile struct simplelock *alp, const char *id, int l)
 	/* Acquire the lock before modifying any fields. */
 	splx(s);
 	__cpu_simple_lock(&alp->lock_data);
-	s = spllock();
+	s = splhigh();
 #else
 	alp->lock_data = __SIMPLELOCK_LOCKED;
 #endif /* } */
@@ -1241,7 +1219,7 @@ _simple_lock_held(volatile struct simplelock *alp)
 #endif
 	int s, locked = 0;
 
-	s = spllock();
+	s = splhigh();
 
 #if defined(MULTIPROCESSOR)
 	if (__cpu_simple_lock_try(&alp->lock_data) == 0)
@@ -1266,7 +1244,7 @@ _simple_lock_try(volatile struct simplelock *alp, const char *id, int l)
 	cpuid_t cpu_num = cpu_number();
 	int s, rv = 0;
 
-	s = spllock();
+	s = splhigh();
 
 	/*
 	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
@@ -1313,7 +1291,7 @@ _simple_unlock(volatile struct simplelock *alp, const char *id, int l)
 {
 	int s;
 
-	s = spllock();
+	s = splhigh();
 
 	/*
 	 * MULTIPROCESSOR case: This is `safe' because we think we hold
@@ -1357,7 +1335,7 @@ simple_lock_dump(void)
 	volatile struct simplelock *alp;
 	int s;
 
-	s = spllock();
+	s = splhigh();
 	SLOCK_LIST_LOCK();
 	lock_printf("all simple locks:\n");
 	TAILQ_FOREACH(alp, &simplelock_list, list) {
@@ -1374,7 +1352,7 @@ simple_lock_freecheck(void *start, void *end)
 	volatile struct simplelock *alp;
 	int s;
 
-	s = spllock();
+	s = splhigh();
 	SLOCK_LIST_LOCK();
 	TAILQ_FOREACH(alp, &simplelock_list, list) {
 		if ((volatile void *)alp >= start &&
@@ -1390,7 +1368,7 @@ simple_lock_freecheck(void *start, void *end)
 }
 
 /*
- * We must be holding exactly one lock: the sched_lock.
+ * We must be holding exactly one lock: the spc_lock.
  */
 
 void
@@ -1414,7 +1392,7 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 	if (lp) {
 		LOCK_ASSERT(simple_lock_held(lp));
 	}
-	s = spllock();
+	s = splhigh();
 	SLOCK_LIST_LOCK();
 	TAILQ_FOREACH(alp, &simplelock_list, list) {
 		if (alp == lp)
@@ -1477,13 +1455,16 @@ void
 assert_sleepable(struct simplelock *interlock, const char *msg)
 {
 
-	if (curlwp == NULL) {
-		panic("assert_sleepable: NULL curlwp");
+	if (CURCPU_IDLE_P()) {
+		panic("assert_sleepable: idle");
 	}
 	simple_lock_only_held(interlock, msg);
 }
 
 #endif /* LOCKDEBUG */ /* } */
+
+int kernel_lock_id;
+__cpu_simple_lock_t kernel_lock;
 
 #if defined(MULTIPROCESSOR)
 
@@ -1561,7 +1542,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 		return;
 	_KERNEL_LOCK_ASSERT(nlocks > 0);
 
-	s = splbiglock();
+	s = splsched();	/* XXX splvm() */
 
 	if (ci->ci_biglock_count != 0) {
 		_KERNEL_LOCK_ASSERT(kernel_lock == __SIMPLELOCK_LOCKED);
@@ -1604,7 +1585,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 #endif
 			splx(s);
 			SPINLOCK_SPIN_HOOK;
-			(void)splbiglock();
+			(void)splsched();	/* XXX splvm() */
 		}
 	} while (!__cpu_simple_lock_try(&kernel_lock));
 
@@ -1659,7 +1640,7 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 		_KERNEL_LOCK_ASSERT(olocks == 1);
 	}
 
-	s = splbiglock();
+	s = splsched();	/* XXX splvm() */
 	if ((ci->ci_biglock_count -= nlocks) == 0) {
 		LOCKDEBUG_UNLOCKED(kernel_lock_id,
 		    (uintptr_t)__builtin_return_address(0), 0);

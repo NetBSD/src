@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.33 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.33.8.1 2007/07/11 20:01:31 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.33 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.33.8.1 2007/07/11 20:01:31 mjf Exp $");
 
 #include "opt_altivec.h"
 
@@ -52,6 +52,9 @@ int cpu_printfataltraps;
 #if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
 extern int powersave;
 #endif
+
+/* exported variable to be filled in by the bootloaders */
+char *booted_kernel;
 
 /*
  * Set set up registers on exec.
@@ -126,6 +129,34 @@ sysctl_machdep_powersave(SYSCTLFN_ARGS)
 }
 #endif
 
+static int
+sysctl_machdep_booted_device(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+
+	if (booted_device == NULL)
+		return (EOPNOTSUPP);
+
+	node = *rnode;
+	node.sysctl_data = booted_device->dv_xname;
+	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+static int
+sysctl_machdep_booted_kernel(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+
+	if (booted_kernel == NULL || booted_kernel[0] == '\0')
+		return (EOPNOTSUPP);
+
+	node = *rnode;
+	node.sysctl_data = booted_kernel;
+	node.sysctl_size = strlen(booted_kernel) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
@@ -180,6 +211,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRING, "model", NULL,
 		       NULL, 0, cpu_model, 0,
 		       CTL_MACHDEP, CPU_MODEL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_device", NULL,
+		       sysctl_machdep_booted_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_DEVICE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_booted_kernel, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
 }
 
 /*

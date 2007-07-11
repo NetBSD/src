@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.158 2007/03/04 06:03:22 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.158.4.1 2007/07/11 20:11:30 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.158 2007/03/04 06:03:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.158.4.1 2007/07/11 20:11:30 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -384,16 +384,8 @@ udp_input(struct mbuf *m, ...)
 		goto badcsum;
 
 	/* construct source and dst sockaddrs. */
-	bzero(&src, sizeof(src));
-	src.sin_family = AF_INET;
-	src.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_src, &src.sin_addr, sizeof(src.sin_addr));
-	src.sin_port = uh->uh_sport;
-	bzero(&dst, sizeof(dst));
-	dst.sin_family = AF_INET;
-	dst.sin_len = sizeof(struct sockaddr_in);
-	bcopy(&ip->ip_dst, &dst.sin_addr, sizeof(dst.sin_addr));
-	dst.sin_port = uh->uh_dport;
+	sockaddr_in_init(&src, &ip->ip_src, uh->uh_sport);
+	sockaddr_in_init(&dst, &ip->ip_dst, uh->uh_dport);
 
 	if ((n = udp4_realinput(&src, &dst, &m, iphlen)) == -1) {
 		udpstat.udps_hdrops++;
@@ -1536,7 +1528,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	m_tag_prepend(n, tag);
 
 #ifdef FAST_IPSEC
-	ipsec4_common_input(n, iphdrlen);
+	ipsec4_common_input(n, iphdrlen, IPPROTO_ESP);
 #else
 	esp4_input(n, iphdrlen);
 #endif

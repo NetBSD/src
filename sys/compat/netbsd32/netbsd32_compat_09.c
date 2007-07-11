@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.14 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.14.8.1 2007/07/11 20:04:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.14 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.14.8.1 2007/07/11 20:04:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ compat_09_netbsd32_ogetdomainname(l, v, retval)
 	name[1] = KERN_DOMAINNAME;
 	sz = SCARG(uap, len);
 	return (old_sysctl(&name[0], 2,
-	    (char *)NETBSD32PTR64(SCARG(uap, domainname)), &sz, 0, 0, l));
+	    (char *)SCARG_P32(uap, domainname), &sz, 0, 0, l));
 }
 
 int
@@ -78,7 +78,7 @@ compat_09_netbsd32_osetdomainname(l, v, retval)
 	name[0] = CTL_KERN;
 	name[1] = KERN_DOMAINNAME;
 	return (old_sysctl(&name[0], 2, 0, 0,
-	    (char *)NETBSD32PTR64(SCARG(uap, domainname)), SCARG(uap, len), l));
+	    (char *)SCARG_P32(uap, domainname), SCARG(uap, len), l));
 }
 
 int

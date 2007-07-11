@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.104 2007/03/04 06:03:16 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.104.4.1 2007/07/11 20:10:59 mjf Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.104 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.104.4.1 2007/07/11 20:10:59 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -246,7 +246,7 @@ struct cp {
 };
 
 static struct sppp *spppq;
-static struct callout keepalive_ch;
+static callout_t keepalive_ch;
 
 #ifdef INET
 /*
@@ -897,7 +897,7 @@ sppp_attach(struct ifnet *ifp)
 
 	/* Initialize keepalive handler. */
 	if (! spppq) {
-		callout_init(&keepalive_ch);
+		callout_init(&keepalive_ch, 0);
 		callout_reset(&keepalive_ch, hz * LCP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 	}
 
@@ -1075,7 +1075,8 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #define ifr_mtu ifr_metric
 #endif
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < 128 || ifr->ifr_mtu > sp->lcp.their_mru) {
+		if (ifr->ifr_mtu < PPP_MINMRU ||
+		    ifr->ifr_mtu > sp->lcp.their_mru) {
 			error = EINVAL;
 			break;
 		}
@@ -1085,7 +1086,8 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 #ifdef SLIOCSETMTU
 	case SLIOCSETMTU:
-		if (*(short *)data < 128 || *(short *)data > sp->lcp.their_mru)
+		if (*(short *)data < PPP_MINMRU ||
+		    *(short *)data > sp->lcp.their_mru)
 		{
 			error = EINVAL;
 			break;
@@ -2007,7 +2009,12 @@ sppp_lcp_init(struct sppp *sp)
 	sp->pp_seq[IDX_LCP] = 0;
 	sp->pp_rseq[IDX_LCP] = 0;
 	sp->lcp.protos = 0;
-	sp->lcp.mru = sp->lcp.their_mru = PP_MTU;
+	if (sp->pp_if.if_mtu < PP_MTU) {
+		sp->lcp.mru = sp->pp_if.if_mtu;
+		sp->lcp.opts |= (1 << LCP_OPT_MRU);
+	} else
+		sp->lcp.mru = PP_MTU;
+	sp->lcp.their_mru = PP_MTU;
 
 	/*
 	 * Initialize counters and timeout values.  Note that we don't
@@ -2020,7 +2027,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
-	callout_init(&sp->ch[IDX_LCP]);
+	callout_init(&sp->ch[IDX_LCP], 0);
 }
 
 static void
@@ -2394,11 +2401,18 @@ sppp_lcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 			break;
 		case LCP_OPT_MRU:
 			/*
-			 * Should not be rejected anyway, since we only
-			 * negotiate a MRU if explicitly requested by
-			 * peer.
+			 * We try to negotiate a lower MRU if the underlying
+			 * link's MTU is less than PP_MTU (e.g. PPPoE). If the
+			 * peer rejects this lower rate, fallback to the
+			 * default.
 			 */
+			if (debug) {
+				addlog("%s: warning: peer rejected our MRU of "
+				    "%ld bytes. Defaulting to %d bytes\n",
+				    ifp->if_xname, sp->lcp.mru, PP_MTU);
+			}
 			sp->lcp.opts &= ~(1 << LCP_OPT_MRU);
+			sp->lcp.mru = PP_MTU;
 			break;
 		case LCP_OPT_AUTH_PROTO:
 			/*
@@ -2494,8 +2508,8 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				u_int mru = p[2] * 256 + p[3];
 				if (debug)
 					addlog(" %d", mru);
-				if (mru < PP_MTU || mru > PP_MAX_MRU)
-					mru = PP_MTU;
+				if (mru < PPP_MINMRU || mru > sp->pp_if.if_mtu)
+					mru = sp->pp_if.if_mtu;
 				sp->lcp.mru = mru;
 				sp->lcp.opts |= (1 << LCP_OPT_MRU);
 			}
@@ -2740,7 +2754,7 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPCP] = 0;
 	sp->pp_seq[IDX_IPCP] = 0;
 	sp->pp_rseq[IDX_IPCP] = 0;
-	callout_init(&sp->ch[IDX_IPCP]);
+	callout_init(&sp->ch[IDX_IPCP], 0);
 }
 
 static void
@@ -3279,7 +3293,7 @@ sppp_ipv6cp_init(struct sppp *sp)
 	sp->fail_counter[IDX_IPV6CP] = 0;
 	sp->pp_seq[IDX_IPV6CP] = 0;
 	sp->pp_rseq[IDX_IPV6CP] = 0;
-	callout_init(&sp->ch[IDX_IPV6CP]);
+	callout_init(&sp->ch[IDX_IPV6CP], 0);
 }
 
 static void
@@ -4142,7 +4156,7 @@ sppp_chap_init(struct sppp *sp)
 	sp->fail_counter[IDX_CHAP] = 0;
 	sp->pp_seq[IDX_CHAP] = 0;
 	sp->pp_rseq[IDX_CHAP] = 0;
-	callout_init(&sp->ch[IDX_CHAP]);
+	callout_init(&sp->ch[IDX_CHAP], 0);
 }
 
 static void
@@ -4494,8 +4508,8 @@ sppp_pap_init(struct sppp *sp)
 	sp->fail_counter[IDX_PAP] = 0;
 	sp->pp_seq[IDX_PAP] = 0;
 	sp->pp_rseq[IDX_PAP] = 0;
-	callout_init(&sp->ch[IDX_PAP]);
-	callout_init(&sp->pap_my_to_ch);
+	callout_init(&sp->ch[IDX_PAP], 0);
+	callout_init(&sp->pap_my_to_ch, 0);
 }
 
 static void

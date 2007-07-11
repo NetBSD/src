@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.145 2007/03/04 06:03:22 christos Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.145.4.1 2007/07/11 20:11:30 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -193,7 +193,7 @@ struct tcpcb {
 	int	t_family;		/* address family on the wire */
 	struct ipqehead segq;		/* sequencing queue */
 	int	t_segqlen;		/* length of the above */
-	struct callout t_timer[TCPT_NTIMERS];/* tcp timers */
+	callout_t t_timer[TCPT_NTIMERS];/* tcp timers */
 	short	t_state;		/* state of this connection */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
 	uint32_t t_rxtcur;		/* current retransmit value */
@@ -227,7 +227,7 @@ struct tcpcb {
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
 	struct	in6pcb *t_in6pcb;	/* back pointer to internet pcb */
-	struct	callout t_delack_ch;	/* delayed ACK callout */
+	callout_t t_delack_ch;		/* delayed ACK callout */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC793, Dec. 1981, page 21.
@@ -331,6 +331,14 @@ struct tcpcb {
 	uint8_t t_ecn_retries;		/* # of ECN setup retries */
 	
 	struct tcp_congctl *t_congctl;	/* per TCB congctl algorithm */
+
+	/* Keepalive per socket */
+	u_int	t_keepinit;
+	u_int	t_keepidle;
+	u_int	t_keepintvl;
+	u_int	t_keepcnt;
+	u_int	t_maxidle;		/* t_keepcnt * t_keepintvl */
+
 };
 
 /*
@@ -470,17 +478,8 @@ union syn_cache_sa {
 
 struct syn_cache {
 	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
-	struct callout sc_timer;		/* rexmt timer */
-	union {					/* cached route */
-		struct route route4;
-#ifdef INET6
-		struct route_in6 route6;
-#endif
-	} sc_route_u;
-#define sc_route4	sc_route_u.route4
-#ifdef INET6
-#define sc_route6	sc_route_u.route6
-#endif
+	callout_t sc_timer;			/* rexmt timer */
+	struct route sc_route;
 	long sc_win;				/* advertised window */
 	int sc_bucketidx;			/* our bucket index */
 	u_int32_t sc_hash;
@@ -696,7 +695,8 @@ struct	tcpstat {
 #define	TCPCTL_STATS		30	/* TCP statistics */
 #define	TCPCTL_DEBUG		31	/* TCP debug sockets */
 #define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
-#define	TCPCTL_MAXID		33
+#define	TCPCTL_DROP		33	/* drop tcp connection */
+#define	TCPCTL_MAXID		34
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -732,6 +732,7 @@ struct	tcpstat {
 	{ "stats", CTLTYPE_STRUCT }, \
 	{ "debug", CTLTYPE_STRUCT }, \
 	{ "debx", CTLTYPE_INT }, \
+	{ "drop", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL

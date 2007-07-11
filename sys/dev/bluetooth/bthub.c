@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.9 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: bthub.c,v 1.9.4.1 2007/07/11 20:05:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.9 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.9.4.1 2007/07/11 20:05:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -198,7 +198,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		sc = (struct bthub_softc *)bthub_cd.cd_devs[unit];
 		if (sc == NULL)
 			continue;
-		
+
 		prop = device_properties(&sc->sc_dev);
 		obj = prop_dictionary_get(prop, BTDEVladdr);
 		if (prop_data_equals(laddr, obj))
@@ -208,7 +208,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 	/* validate remote address */
 	raddr = prop_dictionary_get(dict, BTDEVraddr);
 	if (prop_data_size(raddr) != sizeof(bdaddr_t)
-	    || bdaddr_any(prop_data_data_nocopy(raddr))) 
+	    || bdaddr_any(prop_data_data_nocopy(raddr)))
 		return EINVAL;
 
 	/* validate service name */
@@ -233,12 +233,12 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 
 	switch (cmd) {
 	case BTDEV_ATTACH:	/* attach BTDEV */
-		if (dev != NULL) 
+		if (dev != NULL)
 			return EADDRINUSE;
 
 		dev = (struct btdev *)config_found((struct device *)sc,
 						dict, bthub_print);
-		if (dev == NULL) 
+		if (dev == NULL)
 			return ENXIO;
 
 		prop = device_properties(&dev->sc_dev);
@@ -250,7 +250,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		break;
 
 	case BTDEV_DETACH:	/* detach BTDEV */
-		if (dev == NULL) 
+		if (dev == NULL)
 			return ENXIO;
 
 		LIST_REMOVE(dev, sc_next);

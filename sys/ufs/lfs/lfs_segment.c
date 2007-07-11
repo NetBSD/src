@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198 2007/03/04 06:03:45 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.4.1 2007/07/11 20:12:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198 2007/03/04 06:03:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.4.1 2007/07/11 20:12:46 mjf Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198 2007/03/04 06:03:45 christos E
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-MALLOC_DEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
+MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
 extern int count_lock_queue(void);
 extern struct simplelock vnode_free_list_slock;		/* XXX */
@@ -647,7 +647,8 @@ lfs_segwrite(struct mount *mp, int flags)
 	else if (!(sp->seg_flags & SEGM_FORCE_CKP)) {
 		do {
 			um_error = lfs_writevnodes(fs, mp, sp, VN_REG);
-			if (!fs->lfs_dirops || !fs->lfs_flushvp) {
+
+			if (do_ckp || fs->lfs_dirops == 0) {
 				if (!writer_set) {
 					lfs_writer_enter(fs, "lfs writer");
 					writer_set = 1;
@@ -1656,6 +1657,9 @@ lfs_updatemeta(struct segment *sp)
 		}
 
 	}
+
+	/* This inode has been modified */
+	LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
 }
 
 /*
@@ -2303,6 +2307,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			lfs_stats.cleanblocks += nblocks - 1;
 		}
 	}
+
 	return (lfs_initseg(fs) || do_again);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.45 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: vm86.c,v 1.45.4.1 2007/07/11 20:00:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.45 2007/03/04 05:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.45.4.1 2007/07/11 20:00:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,7 @@ bad:
 }
 
 int
-i386_vm86(struct lwp *l, char *args, register_t *retval)
+x86_vm86(struct lwp *l, char *args, register_t *retval)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;

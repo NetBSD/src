@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.23 2007/03/12 18:18:32 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.23.2.1 2007/07/11 20:09:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,17 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.23 2007/03/12 18:18:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.23.2.1 2007/07/11 20:09:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/hash.h>
+#include <sys/kauth.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/poll.h>
 #include <sys/socketvar.h>
 #include <sys/vnode.h>
-#include <sys/kauth.h>
-#include <sys/namei.h>
+#include <sys/proc.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -51,8 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.23 2007/03/12 18:18:32 ad Exp $");
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/specfs/specdev.h>
 
-POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool puffs_pnpool;
 
 #ifdef PUFFSDEBUG
 int puffsdebug;
@@ -86,6 +84,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	struct puffs_node *pnode;
 	struct puffs_node_hashlist *plist;
 	int error;
+
+	if (type <= VNON || type >= VBAD)
+		return EINVAL;
 
 	pmp = MPTOPUFFSMP(mp);
 
@@ -133,6 +134,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	/*
 	 * clerical tasks & footwork
 	 */
+
+	/* default size */
+	uvm_vnp_setsize(vp, 0);
 
 	/* dances based on vnode type. almost ufs_vinit(), but not quite */
 	switch (type) {
@@ -185,6 +189,12 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
 	pnode->pn_cookie = cookie;
 	pnode->pn_stat = 0;
+	pnode->pn_refcount = 1;
+
+	mutex_init(&pnode->pn_mtx, MUTEX_DEFAULT, IPL_NONE);
+	SLIST_INIT(&pnode->pn_sel.sel_klist);
+	pnode->pn_revents = 0;
+
 	plist = puffs_cookie2hashlist(pmp, cookie);
 	LIST_INSERT_HEAD(plist, pnode, pn_hashent);
 	vp->v_data = pnode;
@@ -223,14 +233,14 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	 * XXX: technically this error check should punish the fs,
 	 * not the caller.
 	 */
-	simple_lock(&pmp->pmp_lock);
-	if (cookie == pmp->pmp_rootcookie
+	mutex_enter(&pmp->pmp_lock);
+	if (cookie == pmp->pmp_root_cookie
 	    || puffs_cookie2pnode(pmp, cookie) != NULL) {
-		simple_unlock(&pmp->pmp_lock);
+		mutex_exit(&pmp->pmp_lock);
 		error = EEXIST;
 		return error;
 	}
-	simple_unlock(&pmp->pmp_lock);
+	mutex_exit(&pmp->pmp_lock);
 
 	error = puffs_getvnode(dvp->v_mount, cookie, type, 0, rdev, &vp);
 	if (error)
@@ -240,10 +250,43 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 
-	if ((cnp->cn_flags & MAKEENTRY) && PUFFS_DOCACHE(pmp))
+	if ((cnp->cn_flags & MAKEENTRY) && PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
 
 	return 0;
+}
+
+/*
+ * Release pnode structure which dealing with references to the
+ * puffs_node instead of the vnode.  Can't use vref()/vrele() on
+ * the vnode there, since that causes the lovely VOP_INACTIVE(),
+ * which in turn causes the lovely deadlock when called by the one
+ * who is supposed to handle it.
+ */
+void
+puffs_releasenode(struct puffs_node *pn)
+{
+
+	mutex_enter(&pn->pn_mtx);
+	if (--pn->pn_refcount == 0) {
+		mutex_exit(&pn->pn_mtx);
+		mutex_destroy(&pn->pn_mtx);
+		pool_put(&puffs_pnpool, pn);
+	} else {
+		mutex_exit(&pn->pn_mtx);
+	}
+}
+
+/*
+ * Add reference to node.
+ *  mutex held on entry and return
+ */
+void
+puffs_referencenode(struct puffs_node *pn)
+{
+
+	KASSERT(mutex_owned(&pn->pn_mtx));
+	pn->pn_refcount++;
 }
 
 void
@@ -262,7 +305,7 @@ puffs_putvnode(struct vnode *vp)
 
 	LIST_REMOVE(pnode, pn_hashent);
 	genfs_node_destroy(vp);
-	pool_put(&puffs_pnpool, vp->v_data);
+	puffs_releasenode(pnode);
 	vp->v_data = NULL;
 
 	return;
@@ -297,6 +340,59 @@ puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
 }
 
 /*
+ * Make sure root vnode exists and reference it.  Does NOT lock.
+ */
+static int
+puffs_makeroot(struct puffs_mount *pmp)
+{
+	struct vnode *vp;
+	int rv;
+
+	/*
+	 * pmp_lock must be held if vref()'ing or vrele()'ing the
+	 * root vnode.  the latter is controlled by puffs_inactive().
+	 *
+	 * pmp_root is set here and cleared in puffs_reclaim().
+	 */
+ retry:
+	mutex_enter(&pmp->pmp_lock);
+	vp = pmp->pmp_root;
+	if (vp) {
+		simple_lock(&vp->v_interlock);
+		mutex_exit(&pmp->pmp_lock);
+		if (vget(vp, LK_INTERLOCK) == 0)
+			return 0;
+	} else
+		mutex_exit(&pmp->pmp_lock);
+
+	/*
+	 * So, didn't have the magic root vnode available.
+	 * No matter, grab another an stuff it with the cookie.
+	 */
+	if ((rv = puffs_getvnode(pmp->pmp_mp, pmp->pmp_root_cookie,
+	    pmp->pmp_root_vtype, pmp->pmp_root_vsize, pmp->pmp_root_rdev, &vp)))
+		return rv;
+
+	/*
+	 * Someone magically managed to race us into puffs_getvnode?
+	 * Put our previous new vnode back and retry.
+	 */
+	mutex_enter(&pmp->pmp_lock);
+	if (pmp->pmp_root) {
+		mutex_exit(&pmp->pmp_lock);
+		puffs_putvnode(vp);
+		goto retry;
+	} 
+
+	/* store cache */
+	vp->v_flag = VROOT;
+	pmp->pmp_root = vp;
+	mutex_exit(&pmp->pmp_lock);
+
+	return 0;
+}
+
+/*
  * Locate the in-kernel vnode based on the cookie received given
  * from userspace.  Returns a vnode, if found, NULL otherwise.
  * The parameter "lock" control whether to lock the possible or
@@ -304,95 +400,106 @@ puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
  * in situations where we want the vnode but don't care for the
  * vnode lock, e.g. file server issued putpages.
  */
-struct vnode *
-puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
+int
+puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock,
+	struct vnode **vpp)
 {
 	struct puffs_node *pnode;
 	struct vnode *vp;
-	int vgetflags;
+	int vgetflags, rv;
 
 	/*
-	 * If we're trying to get the root vnode, return it through
-	 * puffs_root() to get all the right things set.  Lock must
-	 * be set, since VFS_ROOT() always locks the returned vnode.
+	 * Handle root in a special manner, since we want to make sure
+	 * pmp_root is properly set.
 	 */
-	if (cookie == pmp->pmp_rootcookie) {
-		if (!lock)
-			return NULL;
-		if (VFS_ROOT(pmp->pmp_mp, &vp))
-			return NULL;
+	if (cookie == pmp->pmp_root_cookie) {
+		if ((rv = puffs_makeroot(pmp)))
+			return rv;
+		if (lock)
+			vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 
-		return vp;
+		*vpp = pmp->pmp_root;
+		return 0;
 	}
+
+	mutex_enter(&pmp->pmp_lock);
+	pnode = puffs_cookie2pnode(pmp, cookie);
+
+	if (pnode == NULL) {
+		mutex_exit(&pmp->pmp_lock);
+		return ENOENT;
+	}
+
+	vp = pnode->pn_vp;
+	simple_lock(&vp->v_interlock);
+	mutex_exit(&pmp->pmp_lock);
 
 	vgetflags = LK_INTERLOCK;
 	if (lock)
 		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
+	if ((rv = vget(vp, vgetflags)))
+		return rv;
 
-	simple_lock(&pmp->pmp_lock);
-	pnode = puffs_cookie2pnode(pmp, cookie);
-
-	if (pnode == NULL) {
-		simple_unlock(&pmp->pmp_lock);
-		return NULL;
-	}
-	vp = pnode->pn_vp;
-
-	simple_lock(&vp->v_interlock);
-	simple_unlock(&pmp->pmp_lock);
-
-	if (vget(vp, vgetflags))
-		return NULL;
-
-	return vp;
+	*vpp = vp;
+	return 0;
 }
 
 void
-puffs_makecn(struct puffs_kcn *pkcn, const struct componentname *cn)
+puffs_makecn(struct puffs_kcn *pkcn, struct puffs_kcred *pkcr,
+	struct puffs_kcid *pkcid, const struct componentname *cn, int full)
 {
 
 	pkcn->pkcn_nameiop = cn->cn_nameiop;
 	pkcn->pkcn_flags = cn->cn_flags;
-	pkcn->pkcn_pid = cn->cn_lwp->l_proc->p_pid;
-	puffs_credcvt(&pkcn->pkcn_cred, cn->cn_cred);
+	puffs_cidcvt(pkcid, cn->cn_lwp);
 
-	(void)memcpy(&pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
-	pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	if (full) {
+		(void)strcpy(pkcn->pkcn_name, cn->cn_nameptr);
+	} else {
+		(void)memcpy(pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
+		pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	}
 	pkcn->pkcn_namelen = cn->cn_namelen;
+	pkcn->pkcn_consume = 0;
+
+	puffs_credcvt(pkcr, cn->cn_cred);
 }
 
 /*
- * Convert given credentials to struct puffs_cred for userspace.
+ * Convert given credentials to struct puffs_kcred for userspace.
  */
 void
-puffs_credcvt(struct puffs_cred *pcr, const kauth_cred_t cred)
+puffs_credcvt(struct puffs_kcred *pkcr, const kauth_cred_t cred)
 {
 
-	memset(pcr, 0, sizeof(struct puffs_cred));
+	memset(pkcr, 0, sizeof(struct puffs_kcred));
 
 	if (cred == NOCRED || cred == FSCRED) {
-		pcr->pcr_type = PUFFCRED_TYPE_INTERNAL;
+		pkcr->pkcr_type = PUFFCRED_TYPE_INTERNAL;
 		if (cred == NOCRED)
-			pcr->pcr_internal = PUFFCRED_CRED_NOCRED;
+			pkcr->pkcr_internal = PUFFCRED_CRED_NOCRED;
 		if (cred == FSCRED)
-			pcr->pcr_internal = PUFFCRED_CRED_FSCRED;
+			pkcr->pkcr_internal = PUFFCRED_CRED_FSCRED;
  	} else {
-		pcr->pcr_type = PUFFCRED_TYPE_UUC;
-		kauth_cred_to_uucred(&pcr->pcr_uuc, cred);
+		pkcr->pkcr_type = PUFFCRED_TYPE_UUC;
+		kauth_cred_to_uucred(&pkcr->pkcr_uuc, cred);
 	}
 }
 
-/*
- * Return pid.  In case the operation is coming from within the
- * kernel without any process context, borrow the swapper's pid.
- */
-pid_t
-puffs_lwp2pid(struct lwp *l)
+void
+puffs_cidcvt(struct puffs_kcid *pkcid, const struct lwp *l)
 {
 
-	return l ? l->l_proc->p_pid : 0;
+	if (l) {
+		pkcid->pkcid_type = PUFFCID_TYPE_REAL;
+		pkcid->pkcid_pid = l->l_proc->p_pid;
+		pkcid->pkcid_lwpid = l->l_lid;
+	} else {
+		pkcid->pkcid_type = PUFFCID_TYPE_FAKE;
+		pkcid->pkcid_pid = 0;
+		pkcid->pkcid_lwpid = 0;
+	}
 }
-
 
 static void
 puffs_gop_size(struct vnode *vp, off_t size, off_t *eobp,
@@ -418,35 +525,31 @@ puffs_gop_markupdate(struct vnode *vp, int flags)
 void
 puffs_updatenode(struct vnode *vp, int flags)
 {
+	struct puffs_node *pn;
 	struct timespec ts;
-	struct puffs_vnreq_setattr *setattr_arg;
 
 	if (flags == 0)
 		return;
 
-	setattr_arg = malloc(sizeof(struct puffs_vnreq_setattr), M_PUFFS,
-	    M_NOWAIT | M_ZERO);
-	if (setattr_arg == NULL)
-		return; /* 2bad */
-
+	pn = VPTOPP(vp);
 	nanotime(&ts);
 
-	VATTR_NULL(&setattr_arg->pvnr_va);
-	if (flags & PUFFS_UPDATEATIME)
-		setattr_arg->pvnr_va.va_atime = ts;
-	if (flags & PUFFS_UPDATECTIME)
-		setattr_arg->pvnr_va.va_ctime = ts;
-	if (flags & PUFFS_UPDATEMTIME)
-		setattr_arg->pvnr_va.va_mtime = ts;
-	if (flags & PUFFS_UPDATESIZE)
-		setattr_arg->pvnr_va.va_size = vp->v_size;
-
-	setattr_arg->pvnr_pid = 0;
-	puffs_credcvt(&setattr_arg->pvnr_cred, NOCRED);
-
-	/* setattr_arg ownership shifted to callee */
-	puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
-	    setattr_arg, sizeof(struct puffs_vnreq_setattr), VPTOPNC(vp));
+	if (flags & PUFFS_UPDATEATIME) {
+		pn->pn_mc_atime = ts;
+		pn->pn_stat |= PNODE_METACACHE_ATIME;
+	}
+	if (flags & PUFFS_UPDATECTIME) {
+		pn->pn_mc_ctime = ts;
+		pn->pn_stat |= PNODE_METACACHE_CTIME;
+	}
+	if (flags & PUFFS_UPDATEMTIME) {
+		pn->pn_mc_mtime = ts;
+		pn->pn_stat |= PNODE_METACACHE_MTIME;
+	}
+	if (flags & PUFFS_UPDATESIZE) {
+		pn->pn_mc_size = vp->v_size;
+		pn->pn_stat |= PNODE_METACACHE_SIZE;
+	}
 }
 
 void
@@ -461,64 +564,62 @@ puffs_updatevpsize(struct vnode *vp)
 		vp->v_size = va.va_size;
 }
 
-/*
- * We're dead, kaput, RIP, slightly more than merely pining for the
- * fjords, belly-up, fallen, lifeless, finished, expired, gone to meet
- * our maker, ceased to be, etcetc.  YASD.  It's a dead FS!
- *
- * Caller must hold puffs spinlock.
- */
 void
-puffs_userdead(struct puffs_mount *pmp)
+puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 {
-	struct puffs_park *park;
+	struct puffs_vnreq_read *read_argp = (void *)preq;
+	struct buf *bp = arg;
+	size_t moved;
 
-	/*
-	 * Mark filesystem status as dying so that operations don't
-	 * attempt to march to userspace any longer.
-	 */
-	pmp->pmp_status = PUFFSTAT_DYING;
+	bp->b_error = preq->preq_rv;
+	if (bp->b_error == 0) {
+		moved = bp->b_bcount - read_argp->pvnr_resid;
+		bp->b_resid = read_argp->pvnr_resid;
 
-	/* and wakeup processes waiting for a reply from userspace */
-	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
-		if (park->park_preq)
-			park->park_preq->preq_rv = ENXIO;
-		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
-		wakeup(park);
+		memcpy(bp->b_data, read_argp->pvnr_data, moved);
+	} else {
+		bp->b_flags |= B_ERROR;
 	}
 
-	/* wakeup waiters for completion of vfs/vnode requests */
-	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
-		if (park->park_preq)
-			park->park_preq->preq_rv = ENXIO;
-		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
-		wakeup(park);
-	}
+	biodone(bp);
+	free(preq, M_PUFFS);
 }
 
-/*
- * Converts a non-FAF op to a FAF.  This simply involves making copies
- * of the park and request structures and tagging the request as a FAF.
- * It is safe to block here, since the original op is not a FAF.
- */
-struct puffs_park *
-puffs_reqtofaf(struct puffs_park *ppark)
+void
+puffs_parkdone_poll(struct puffs_req *preq, void *arg)
 {
-	struct puffs_park *newpark;
-	struct puffs_req *newpreq;
+	struct puffs_vnreq_poll *poll_argp = (void *)preq;
+	struct puffs_node *pn = arg;
+	int revents;
 
-	KASSERT((ppark->park_preq->preq_opclass & PUFFSOPFLAG_FAF) == 0);
+	if (preq->preq_rv == 0)
+		revents = poll_argp->pvnr_events;
+	else
+		revents = POLLERR;
 
-	MALLOC(newpark, struct puffs_park *, sizeof(struct puffs_park),
-	    M_PUFFS, M_ZERO | M_WAITOK);
-	MALLOC(newpreq, struct puffs_req *, sizeof(struct puffs_req),
-	    M_PUFFS, M_ZERO | M_WAITOK);
+	mutex_enter(&pn->pn_mtx);
+	pn->pn_revents |= revents;
+	mutex_exit(&pn->pn_mtx);
 
-	memcpy(newpark, ppark, sizeof(struct puffs_park));
-	memcpy(newpreq, ppark->park_preq, sizeof(struct puffs_req));
+	selnotify(&pn->pn_sel, 0);
+	free(preq, M_PUFFS);
 
-	newpark->park_preq = newpreq;
-	newpark->park_preq->preq_opclass |= PUFFSOPFLAG_FAF;
+	puffs_releasenode(pn);
+}
 
-	return newpark;
+void
+puffs_mp_reference(struct puffs_mount *pmp)
+{
+
+	KASSERT(mutex_owned(&pmp->pmp_lock));
+	pmp->pmp_refcount++;
+}
+
+void
+puffs_mp_release(struct puffs_mount *pmp)
+{
+
+	KASSERT(mutex_owned(&pmp->pmp_lock));
+	if (--pmp->pmp_refcount == 0)
+		cv_broadcast(&pmp->pmp_refcount_cv);
 }

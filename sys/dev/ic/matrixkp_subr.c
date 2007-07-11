@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.5 2007/03/04 06:01:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.5.4.1 2007/07/11 20:06:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ mxkp_attach(struct matrixkp_softc *sc)
 {
 	u_int32_t i;
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, mxkp_poll, sc);
 	if (sc->poll_freq > hz || sc->poll_freq == 0)
 		sc->poll_freq = hz;

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.51 2007/03/04 06:02:52 christos Exp $ */
+/* $NetBSD: wsmouse.c,v 1.51.4.1 2007/07/11 20:08:59 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.51 2007/03/04 06:02:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.51.4.1 2007/07/11 20:08:59 mjf Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -173,7 +173,7 @@ struct wsmouse_softc {
 
 	struct wsmouse_repeat	sc_repeat;
 	int			sc_repeat_button;
-	struct callout		sc_repeat_callout;
+	callout_t		sc_repeat_callout;
 	unsigned int		sc_repeat_delay;
 };
 
@@ -255,7 +255,7 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 	memset(&sc->sc_repeat, 0, sizeof(sc->sc_repeat));
 	sc->sc_repeat_button = -1;
 	sc->sc_repeat_delay = 0;
-	callout_init(&sc->sc_repeat_callout);
+	callout_init(&sc->sc_repeat_callout, 0);
 
 #if NWSMUX > 0
 	sc->sc_base.me_ops = &wsmouse_srcops;

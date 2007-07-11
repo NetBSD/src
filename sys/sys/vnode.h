@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167 2007/03/06 11:28:46 dillo Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.4.1 2007/07/11 20:12:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,7 +71,7 @@ enum vtagtype	{
 	VT_FDESC, VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS,
 	VT_AFS, VT_ISOFS, VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA,
 	VT_FILECORE, VT_NTFS, VT_VFS, VT_OVERLAY, VT_SMBFS, VT_PTYFS,
-	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS
+	VT_TMPFS, VT_UDF, VT_SYSVBFS, VT_PUFFS, VT_HFS, VT_EFS
 };
 
 #define	VNODE_TAGS \
@@ -79,7 +79,7 @@ enum vtagtype	{
     "VT_FDESC", "VT_PORTAL", "VT_NULL", "VT_UMAP", "VT_KERNFS", "VT_PROCFS", \
     "VT_AFS", "VT_ISOFS", "VT_UNION", "VT_ADOSFS", "VT_EXT2FS", "VT_CODA", \
     "VT_FILECORE", "VT_NTFS", "VT_VFS", "VT_OVERLAY", "VT_SMBFS", "VT_PTYFS", \
-    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS"
+    "VT_TMPFS", "VT_UDF", "VT_SYSVBFS", "VT_PUFFS", "VT_HFS", "VT_EFS"
 
 LIST_HEAD(buflists, buf);
 
@@ -98,6 +98,7 @@ struct vnode {
 #define	v_usecount	v_uobj.uo_refs
 #define	v_interlock	v_uobj.vmobjlock
 	voff_t		v_size;			/* size of file */
+	voff_t		v_writesize;		/* new size after write */
 	int		v_flag;			/* flags */
 	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
@@ -271,12 +272,6 @@ extern const int	vttoif_tab[];
 #define	WRITECLOSE	0x0004		/* vflush: only close writable files */
 #define	DOCLOSE		0x0008		/* vclean: close active files */
 #define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
-					/* vn_start_write: */
-#define	V_WAIT		0x0001		/*  sleep for suspend */
-#define	V_NOWAIT	0x0002		/*  don't sleep for suspend */
-#define	V_SLEEPONLY	0x0004		/*  just return after sleep */
-#define	V_PCATCH	0x0008		/*  sleep with PCATCH set */
-#define	V_LOWER		0x0010		/*  lower level operation */
 
 /*
  * Flags to various vnode operations.
@@ -495,14 +490,8 @@ struct vop_generic_args {
 #define	VDESC(OP) (& __CONCAT(OP,_desc))
 #define	VOFFSET(OP) (VDESC(OP)->vdesc_offset)
 
-/*
- * Functions to gate filesystem write operations. Declared static inline
- * here because they usually go into time critical code paths.
- */
+/* XXX This include should go away */
 #include <sys/mount.h>
-
-int vn_start_write(struct vnode *, struct mount **, int);
-void vn_finished_write(struct mount *, int);
 
 /*
  * Finally, include the default set of vnode operations.

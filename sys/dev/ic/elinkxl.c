@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.96 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.96.4.1 2007/07/11 20:05:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.96 2007/03/04 06:01:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.96.4.1 2007/07/11 20:05:46 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -192,7 +192,7 @@ ex_config(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, error, attach_stage;
 
-	callout_init(&sc->ex_mii_callout);
+	callout_init(&sc->ex_mii_callout, 0);
 
 	ex_reset(sc);
 

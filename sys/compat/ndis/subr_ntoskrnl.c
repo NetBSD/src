@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.8 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.8.2.1 2007/07/11 20:04:26 mjf Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2860,7 +2860,7 @@ KeInitializeTimerEx(timer, type)
 #ifdef __FreeBSD__
 	callout_handle_init(&timer->k_handle);
 #else
-	callout_init(timer->k_handle);
+	callout_init(timer->k_handle, 0);
 #endif
 
 	return;

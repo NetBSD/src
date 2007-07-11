@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.35 2006/08/14 18:17:48 rpaulo Exp $	*/
+/*	$NetBSD: unistd.h,v 1.35.14.1 2007/07/11 20:12:39 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,10 +61,12 @@
 #define	_POSIX2_VERSION		199212L
 
 /* execution-time symbolic constants */
+				/* asynchronous I/O is available */
+#define	_POSIX_ASYNCHRONOUS_IO	200112L
 				/* chown requires appropriate privileges */
 #define	_POSIX_CHOWN_RESTRICTED	1
 				/* clock selection */
-#define _POSIX_CLOCK_SELECTION	-1
+#define	_POSIX_CLOCK_SELECTION	-1
 				/* too-long path components generate errors */
 #define	_POSIX_NO_TRUNC		1
 				/* may disable terminal special characters */
@@ -195,7 +197,10 @@
 #define	_SC_READER_WRITER_LOCKS	46
 #define	_SC_GETGR_R_SIZE_MAX	47
 #define	_SC_GETPW_R_SIZE_MAX	48
-#define _SC_CLOCK_SELECTION	49
+#define	_SC_CLOCK_SELECTION	49
+#define	_SC_ASYNCHRONOUS_IO	50
+#define	_SC_AIO_LISTIO_MAX	51
+#define	_SC_AIO_MAX		52
 
 /* configurable system strings */
 #define	_CS_PATH		 1

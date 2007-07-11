@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 2005/12/11 12:24:47 christos Exp $
+#	$NetBSD: Makefile,v 1.4.32.1 2007/07/11 20:10:35 mjf Exp $
 
-COMPAT_UTIL_OVERRIDE=	pecoff
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/pecoff

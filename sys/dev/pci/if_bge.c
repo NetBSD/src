@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.127 2007/03/05 10:39:09 tsutsui Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.127.4.1 2007/07/11 20:07:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.127 2007/03/05 10:39:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.127.4.1 2007/07/11 20:07:32 mjf Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2156,6 +2156,10 @@ static const struct bge_product {
 	  "Broadcom BCM5714/5715 Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5715,
+	  "Broadcom BCM5714/5715 Gigabit Ethernet",
+	  },
+	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5789,
 	  "Broadcom BCM5789 Gigabit Ethernet",
 	  },
@@ -2193,6 +2197,16 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5752M,
 	  "Broadcom BCM5752M Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5753,
+	  "Broadcom BCM5753 Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5753M,
+	  "Broadcom BCM5753M Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
@@ -2686,7 +2700,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    NULL, sc->bge_dev.dv_xname, "xoffentered");
 #endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
-	callout_init(&sc->bge_timeout);
+	callout_init(&sc->bge_timeout, 0);
 
 	sc->bge_powerhook = powerhook_establish(sc->bge_dev.dv_xname,
 	    bge_powerhook, sc);
@@ -3335,6 +3349,8 @@ bge_cksum_pad(struct mbuf *pkt)
 			/* Allocate new empty mbuf, pad it. Compact later. */
 			struct mbuf *n;
 			MGET(n, M_DONTWAIT, MT_DATA);
+			if (n == NULL)
+				return ENOBUFS;
 			n->m_len = 0;
 			last->m_next = n;
 			last = n;
@@ -3771,7 +3787,7 @@ bge_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->bge_link && ifp->if_snd.ifq_len < 10)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
 	prodidx = sc->bge_tx_prodidx;
@@ -3806,7 +3822,6 @@ bge_start(struct ifnet *ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (bge_encap(sc, m_head, &prodidx)) {
-			printf("bge: failed on len %d?\n", m_head->m_pkthdr.len);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}

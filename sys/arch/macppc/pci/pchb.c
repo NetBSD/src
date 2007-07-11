@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.13 2006/09/24 19:17:28 briggs Exp $	*/
+/*	$NetBSD: pchb.c,v 1.13.10.1 2007/07/11 20:00:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.13 2006/09/24 19:17:28 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.13.10.1 2007/07/11 20:00:42 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.13 2006/09/24 19:17:28 briggs Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/agpreg.h>
+#include <dev/pci/agpvar.h>
+#include "agp.h"
 
 int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
@@ -114,6 +117,9 @@ pchbattach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
+#if NAGP > 0
+	struct agpbus_attach_args apa;
+#endif
 	char devinfo[256];
 
 	printf("\n");
@@ -127,4 +133,11 @@ pchbattach(parent, self, aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
+#if NAGP > 0
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
+			       NULL, NULL) != 0) {
+		apa.apa_pci_args = *pa;
+		config_found_ia(self, "agpbus", &apa, agpbusprint);
+	}
+#endif
 }

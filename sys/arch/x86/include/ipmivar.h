@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.2 2007/02/15 15:40:50 ad Exp $ */
+/* $NetBSD: ipmivar.h,v 1.2.8.1 2007/07/11 20:03:15 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -89,7 +89,7 @@ struct ipmi_softc {
 
 	int			sc_btseq;
 
-	struct proc		*sc_kthread;
+	struct lwp		*sc_kthread;
 
 	struct callout		sc_callout;
 	int			sc_max_retries;
@@ -104,8 +104,6 @@ struct ipmi_softc {
 	volatile int		sc_thread_running;
 	struct sysmon_wdog	sc_wdog;
 	struct sysmon_envsys	sc_envsys;
-#define sc_ranges	sc_envsys.sme_ranges
-#define sc_sensor_info	sc_envsys.sme_sensor_info
 #define sc_sensor_data	sc_envsys.sme_sensor_data
 	int 		sc_nsensors; /* total number of sensors */
 	int		sc_nsensors_typ[ENVSYS_NSENSORS]; /* number per type */
@@ -154,7 +152,6 @@ struct ipmi_get_watchdog {
 	u_int16_t		wdog_countdown;
 } __packed;
 
-void	ipmi_create_thread(void *);
 void	ipmi_poll_thread(void *);
 
 int	kcs_probe(struct ipmi_softc *);

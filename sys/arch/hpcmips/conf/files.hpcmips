@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.100 2006/02/24 13:06:12 cube Exp $
+#	$NetBSD: files.hpcmips,v 1.100.26.1 2007/07/11 19:59:25 mjf Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -75,6 +75,7 @@ defparam opt_memsize.h			MEMSIZE
 # Workstation Console
 #
 include "dev/wscons/files.wscons"
+include "dev/wsfb/files.wsfb"
 
 #
 # H/PC Platform common files.

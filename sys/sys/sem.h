@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.22 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: sem.h,v 1.22.16.1 2007/07/11 20:12:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -228,6 +228,10 @@ void	seminit(void);
 void	semexit(struct proc *, void *);
 
 int	semctl1(struct lwp *, int, int, int, void *, register_t *);
+#define get_semctl_arg(cmd, sembuf, arg) \
+    ((cmd) == IPC_SET || (cmd) == IPC_STAT ? (void *)sembuf \
+    : (cmd) == GETALL || (cmd) == SETVAL || (cmd) == SETALL ? (void *)arg \
+    : NULL)
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_SEM_H_ */

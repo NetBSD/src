@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.7 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: JORNADA820,v 1.7.10.1 2007/07/11 19:59:20 mjf Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.7.10.1 $"
 
 # estimated number of users
 maxusers	32
@@ -170,7 +170,9 @@ saost*	at saip? addr 0x90000000 size 0x20
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 ##sm*	at pcmcia? function ?		# Megahertz Ethernet
 #wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-##xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+##xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+##com*	at xirc?
+##xi*	at xirc?
 #
 ##mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 ##com*	at mhzc?

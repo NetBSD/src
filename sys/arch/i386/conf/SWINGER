@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.88 2006/11/28 16:15:37 christos Exp $
+#	$NetBSD: SWINGER,v 1.88.10.1 2007/07/11 19:59:53 mjf Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.88 $"
+#ident 		"SWINGER-$Revision: 1.88.10.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -84,6 +84,7 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -530,7 +531,9 @@ rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 #wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
-#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
+#com*	at xirc?
+#xi*	at xirc?
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
@@ -601,7 +604,7 @@ usb*	at ohci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?

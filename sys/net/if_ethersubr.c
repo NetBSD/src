@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.148 2007/03/07 22:20:05 liamjfoy Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.148.4.1 2007/07/11 20:10:55 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.148 2007/03/07 22:20:05 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.148.4.1 2007/07/11 20:10:55 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1343,7 +1343,8 @@ ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
 	u_char addrhi[ETHER_ADDR_LEN];
 	int s = splnet(), error;
 
-	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	error = ether_multiaddr(&ifr->ifr_addr, addrlo,
+	    addrhi);
 	if (error != 0) {
 		splx(s);
 		return error;
@@ -1401,7 +1402,8 @@ ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
 	u_char addrhi[ETHER_ADDR_LEN];
 	int s = splnet(), error;
 
-	error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
+	error = ether_multiaddr(&ifr->ifr_addr, addrlo,
+	    addrhi);
 	if (error != 0) {
 		splx(s);
 		return (error);

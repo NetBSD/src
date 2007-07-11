@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.43 2007/03/04 19:21:56 christos Exp $ */
+/*	$NetBSD: smg.c,v 1.43.4.1 2007/07/11 20:03:01 mjf Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.43 2007/03/04 19:21:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.43.4.1 2007/07/11 20:03:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -192,7 +192,7 @@ struct	smg_screen {
 static	struct smg_screen smg_conscreen;
 static	struct smg_screen *curscr;
 
-static	struct callout smg_cursor_ch = CALLOUT_INITIALIZER;
+static	callout_t smg_cursor_ch;
 
 int
 smg_match(struct device *parent, struct cfdata *match, void *aux)
@@ -239,6 +239,8 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
 		return;
 	}
+	if (curscr == NULL)
+		callout_init(&smg_cursor_ch, 0);
 	curscr = &smg_conscreen;
 	aa.console = (vax_confdata & (KA420_CFG_L3CON|KA420_CFG_MULTU)) == 0;
 
@@ -569,9 +571,9 @@ smg_show_screen(void *v, void *cookie, int waitok,
 				if (ss->ss_attr[row][col] & WSATTR_REVERSE)
 					s ^= 255;
 				SM_ADDR(row, col, line) = s;
+				if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
+					SM_ADDR(row, col, line) = 255;
 			}
-			if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
-				SM_ADDR(row, col, line) = 255;
 		}
 	cursor = &sm_addr[(ss->ss_cury * SM_CHEIGHT * SM_COLS) + ss->ss_curx +
 	    ((SM_CHEIGHT - 1) * SM_COLS)];
@@ -592,6 +594,8 @@ smgcninit(cndev)
 	extern int dz_vsbus_lk201_cnattach __P((int));
 	/* Clear screen */
 	memset(sm_addr, 0, 128*864);
+
+	callout_init(&smg_cursor_ch, 0);
 
 	curscr = &smg_conscreen;
 	wsdisplay_cnattach(&smg_stdscreen, &smg_conscreen, 0, 0, 0);

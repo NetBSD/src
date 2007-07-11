@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.8.1 2007/07/11 20:00:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -71,6 +71,34 @@ _C_LABEL(splx):
 #endif
 
 /*
+ * int splraise(int s);
+ */
+	.align	32
+
+ENTRY(splraise)
+	movl	4(%esp),%edx
+	movl	CPUVAR(ILEVEL),%eax
+	cmpl	%edx,%eax
+	ja	1f
+	movl	%edx,CPUVAR(ILEVEL)
+1:
+	ret
+
+/*
+ * void softintr(int sir);
+ *
+ * Software interrupt registration.
+ */
+	.align	32
+
+ENTRY(softintr)
+	movl	4(%esp),%ecx
+	movl	$1,%eax
+	shll	%cl,%eax
+	orl	%eax,CPUVAR(IPENDING)
+	ret
+
+/*
  * void spllower(int s);
  *
  * spllower() for i486 and Pentium.  Must be the same size as
@@ -120,6 +148,7 @@ ENTRY(i686_spllower)
 	cmpl	%edx,%ecx			/* new level is lower? */
 	pushl	%ebx
 	jae,pn	1f
+0:
 	movl	CPUVAR(IPENDING),%eax
 	testl	%eax,CPUVAR(IUNMASK)(,%ecx,4)	/* deferred interrupts? */
 	movl	%eax,%ebx
@@ -129,7 +158,7 @@ ENTRY(i686_spllower)
 	 */
 	jnz,pn	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
-	jnz,pn	2f
+	jnz,pn	0b
 1:
 	popl	%ebx
 	ret

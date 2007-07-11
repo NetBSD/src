@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.54 2007/03/04 07:54:11 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.54.4.1 2007/07/11 20:05:47 mjf Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.54 2007/03/04 07:54:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.54.4.1 2007/07/11 20:05:47 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -444,7 +444,7 @@ gem_attach(sc, enaddr)
 		    sc->sc_dev.dv_xname);
 #endif
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 	return;
 
 	/*
@@ -1340,15 +1340,15 @@ gem_tint(sc)
 		    txs->txs_ndescs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-#ifdef GEM_DEBUG
+#ifdef GEM_DEBUG	/* XXX DMA synchronization? */
 		if (ifp->if_flags & IFF_DEBUG) {
 			int i;
 			printf("    txsoft %p transmit chain:\n", txs);
 			for (i = txs->txs_firstdesc;; i = GEM_NEXTTX(i)) {
 				printf("descriptor %d: ", i);
-				printf("gd_flags: 0x%016llx\t", (long long)
+				printf("gd_flags: 0x%016" PRIx64 "\t",
 					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
-				printf("gd_addr: 0x%016llx\n", (long long)
+				printf("gd_addr: 0x%016" PRIx64 "\n",
 					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
 				if (i == txs->txs_lastdesc)
 					break;
@@ -1404,10 +1404,9 @@ gem_tint(sc)
 
 #if 0
 	DPRINTF(sc, ("gem_tint: GEM_TX_STATE_MACHINE %x "
-		"GEM_TX_DATA_PTR %llx "
-		"GEM_TX_COMPLETION %x\n",
+		"GEM_TX_DATA_PTR %" PRIx64 "GEM_TX_COMPLETION %" PRIx32 "\n",
 		bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_TX_STATE_MACHINE),
-		((long long) bus_space_read_4(sc->sc_bustag, sc->sc_h1,
+		((uint64_t)bus_space_read_4(sc->sc_bustag, sc->sc_h1,
 			GEM_TX_DATA_PTR_HI) << 32) |
 			     bus_space_read_4(sc->sc_bustag, sc->sc_h1,
 			GEM_TX_DATA_PTR_LO),
@@ -1474,6 +1473,7 @@ gem_rint(sc)
 		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
+			GEM_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			/*
 			 * We have processed all of the receive buffers.
 			 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11.26.1 2007/07/11 19:59:38 mjf Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -92,6 +92,7 @@ struct pmap {
 	pa_space_t		pmap_space;	/* space for this pmap */
 	u_int			pmap_pid;	/* protection id for pmap */
 	struct pmap_statistics	pmap_stats;	/* statistics */
+	struct vmspace		*pmap_vmspace;	/* last vmspace */
 } *pmap_t;
 extern pmap_t	kernel_pmap;			/* The kernel's map */
 
@@ -132,10 +133,10 @@ do { if (pmap) { \
 #define pmap_release(pmap)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 #define	pmap_update(p)
-void	pmap_activate __P((struct lwp *));
+void	pmap_activate(struct lwp *);
 
 static __inline void
-pmap_deactivate(struct lwp *lwp)
+pmap_deactivate(struct lwp *l)
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.197.4.1 2007/07/11 20:02:41 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.4.1 2007/07/11 20:02:41 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/ucontext.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 
@@ -185,14 +186,11 @@ cpu_startup()
 	int opmapdebug = pmapdebug;
 #endif
 	vaddr_t minaddr, maxaddr;
-	extern struct user *proc0paddr;
 	char pbuf[9];
 
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
-
-	lwp0.l_addr = proc0paddr;
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -502,7 +500,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ((l->l_sigstk.ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
-	uc.uc_link = NULL;
+	uc.uc_link = l->l_ctxlink;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
@@ -1173,7 +1171,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 * Lock the part of the user address space involved
 		 *    in the transfer.
 		 */
-		PHOLD(p);
+		uvm_lwp_hold(p);
 		if (__predict_false(uvm_vslock(p->p_vmspace, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
 			    VM_PROT_WRITE : VM_PROT_READ) != 0)) {
@@ -1207,7 +1205,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			i++;
 		}
 		uvm_vsunlock(p->p_vmspace, bp->b_data, todo);
-		PRELE(p);
+		uvm_lwp_rele(p);
  		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
 			return EFBIG;
@@ -1945,3 +1943,20 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	return (0);
 }
 
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+void
+cpu_need_resched(struct cpu_info *ci, int flags)
+{
+
+	ci->ci_want_resched = 1;
+	ci->ci_want_ast = 1;
+
+#if defined(MULTIPROCESSOR)
+	/* Just interrupt the target CPU, so it can notice its AST */
+	if ((flags & RESCHED_IMMED) || ci->ci_cpuid != cpu_number())
+		sparc64_send_ipi(ci->ci_upaid, sparc64_ipi_nop);
+#endif
+}

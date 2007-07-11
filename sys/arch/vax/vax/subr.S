@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.16 2007/03/12 02:22:43 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.16.2.1 2007/07/11 20:02:59 mjf Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -295,117 +295,6 @@ _C_LABEL(longjmp):.word	0
 	jmp	*8(%r1)
 #endif
 
-#
-# setrunqueue/remrunqueue fast variants.
-#
-
-JSBENTRY(Setrq)
-#ifdef DIAGNOSTIC
-	tstl	4(%r0)	# Check that process actually are off the queue
-	beql	1f
-	pushab	setrq
-	calls	$1,_C_LABEL(panic)
-setrq:	.asciz	"setrunqueue"
-#endif
-1:	extzv	$2,$6,L_PRIORITY(%r0),%r1		# get priority
-	movaq	_C_LABEL(sched_qs)[%r1],%r2	# get address of queue
-	insque	(%r0),*PH_RLINK(%r2)		# put proc last in queue
-	bbss	%r1,_C_LABEL(sched_whichqs),1f	# set queue bit.
-1:	rsb
-
-JSBENTRY(Remrq)
-	extzv	$2,$6,L_PRIORITY(%r0),%r1
-#ifdef DIAGNOSTIC
-	bbs	%r1,_C_LABEL(sched_whichqs),1f
-	pushab	remrq
-	calls	$1,_C_LABEL(panic)
-remrq:	.asciz	"remrunqueue"
-#endif
-1:	remque	(%r0),%r2
-	bneq	2f			# Not last process on queue
-	bbsc	%r1,_C_LABEL(sched_whichqs),2f
-2:	clrl	L_BACK(%r0)		# saftey belt
-	rsb
-
-#
-# Idle loop. Here we could do something fun, maybe, like calculating
-# pi or something.
-#
-idle:
-	calls	$0,_C_LABEL(sched_unlock_idle)
-	mtpr	$1,$PR_IPL 		# IPL cannot be 0 because we are
-					# running on the interrupt stack
-					# and may get interrupts
-
-1:	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
-	beql	1b			# no, run the idle loop again.
-/* Now try the test the long way */
-	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
-3:	calls	$0,_C_LABEL(sched_lock_idle)
-	brb	lp			# check sched_whichqs again
-
-#
-# cpu_switch, cpu_preempt, cpu_exit and the idle loop implemented in
-# assembler for efficiency.  This is called at IPL_HIGH.
-#
-
-JSBENTRY(Swtch)
-	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
-	clrl	CI_CURLWP(%r1)		# Stop process accounting
-	svpctx				# Save context if another CPU
-					# get control first (must be on
-					# the interrupt stack when idling)
-
-
-lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
-	beql	idle			# no bit set, go to idle loop
-
-	movaq	_C_LABEL(sched_qs)[%r3],%r1	# get address of queue head
-	remque	*(%r1),%r2		# remove lwp pointed to by queue head
-					# lwp ptr is now in %r2
-#ifdef DIAGNOSTIC
-	bvc	1f			# check if something on queue
-	pushab	noque
-	calls	$1,_C_LABEL(panic)
-#endif
-
-1:	bneq	2f			# more processes on queue?
-	bbsc	%r3,_C_LABEL(sched_whichqs),2f	# no, clear bit in whichqs
-2:	clrl	L_BACK(%r2)		# clear proc backpointer
-	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
-	/* p->p_cpu initialized in fork1() for single-processor */
-#if defined(MULTIPROCESSOR)
-	movl	%r1,L_CPU(%r2)		# l->l_cpu = curcpu();
-#endif
-	movb	$LSONPROC,L_STAT(%r2)	# l->l_stat = LSONPROC;
-	movl	%r2,CI_CURLWP(%r1)	# set new process running
-	clrl	CI_WANT_RESCHED(%r1)	# we are now changing process
-	movl	L_ADDR(%r2),%r0		# Get pointer to new pcb.
-	addl3	%r0,$IFTRAP,%r1		# Save for copy* functions.
-	mtpr	%r1,$PR_ESP		# Use ESP as CPU-specific pointer
-	movl	%r1,ESP(%r0)		# Must save in PCB also.
-	mfpr	$PR_SSP,%r1		# New process must inherit cpu_info
-	movl	%r1,SSP(%r0)		# Put it in new PCB
-
-#
-# Nice routine to get physical from virtual addresses.
-#
-	extzv	$9,$21,%r0,%r1		# extract offset
-	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r3
-
-	clrl	PCB_R0(%r0)		# Assume switch to same lwp
-	mfpr	$PR_PCBB,%r1		# Get old PCB address
-	cmpl	%r1,%r3			# The same lwp?
-	beql	1f			# Branch if it is
-	movl	$1,PCB_R0(%r0)		# Otherwise, return 1.
-
-1:	mtpr	%r3,$PR_PCBB
-	ldpctx
-	pushl	%r0
-	calls	$0,_C_LABEL(sched_unlock_idle)
-	movl	(%sp)+,%r0
-	rei
-
 #if defined(MULTIPROCESSOR)
 	.align 2
 	.globl	_C_LABEL(vax_mp_tramp)	# used to kick off multiprocessor systems.
@@ -414,54 +303,47 @@ _C_LABEL(vax_mp_tramp):
 	rei
 #endif
 
+/*
+ * Helper routine for cpu_lwp_fork.  It get invoked by Swtchto.
+ * It let's the kernel know the lwp is alive and then calls func(arg)
+ * and possibly returns to sret.
+ */
+ENTRY(cpu_lwp_bootstrap, 0)
+	movq	%r2,-(%sp)			/* save func & arg */
+	movq	%r0,-(%sp)			/* push oldl/newl */
+	calls	$2,_C_LABEL(lwp_startup)	/* startup the lwp */
+	movl	(%sp)+,%r0			/* grab func */
+	calls	$1,(%r0)			/* call it with arg */
+	ret
+
+/*
+ * r1 = newlwp
+ * r0 = oldlwp
+ */
 JSBENTRY(Swtchto)
-	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
-	clrl	CI_CURLWP(%r1)		# Stop process accounting
+	/* this pops the pc and psw from the stack and puts them in the pcb. */
 	svpctx				# Now on interrupt stack
 
-	# New LWP already in %r2
-	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
-#if defined(MULTIPROCESSOR)
-	movl	%r1,L_CPU(%r2)		# l->l_cpu = curcpu();
-#endif
-	movb	$LSONPROC,L_STAT(%r2)	# l->l_stat = LSONPROC;
-	movl	%r2,CI_CURLWP(%r1)	# set new process running
-	movl	L_ADDR(%r2),%r0		# Get pointer to new pcb.
-	addl3	%r0,$IFTRAP,%r3		# Save for copy* functions.
-	mtpr	%r3,$PR_ESP		# Use ESP as CPU-specific pointer
-	movl	%r3,ESP(%r0)		# Must save in PCB also.
-	movl	%r1,SSP(%r0)		# Put it in new PCB
+	/* We can know use any register because ldpctx will overwrite them */
+	/* New LWP already in %r1 */
+	mfpr	$PR_SSP,%r4		# Get curcpu
+	movl	%r1,CI_CURLWP(%r4)	# update ci_curlwp
+	movl	L_ADDR(%r1),%r3		# Get pointer to new pcb.
+	movl	%r0,PCB_R0(%r3)		# move r0 into new pcb (return value)
+	movl	%r4,SSP(%r3)		# Put curcpu into new PCB
+	addl3	%r3,$IFTRAP,%r4		# Save for copy* functions.
+	mtpr	%r4,$PR_ESP		# Use ESP as CPU-specific pointer
+	movl	%r4,ESP(%r3)		# Must save in PCB also.
 
-	extzv	$9,$21,%r0,%r1		# extract offset
-	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r3
+	extzv	$9,$21,%r3,%r1		# extract offset of PCB
+	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r4
 
-	mtpr	%r3,$PR_PCBB
-	ldpctx
-	pushl	%r0
-	calls	$0,_C_LABEL(sched_unlock_idle)
-	movl	(%sp)+,%r0
-	rei	
-
-#
-# the last routine called by a process.
-#
-
-ENTRY(cpu_exit,0)
-	movl	4(%ap),%r6	# Process pointer in %r6
-
-	mtpr	$IPL_CLOCK,$PR_IPL # Block almost everything
-	mfpr	$PR_SSP,%r7	# get cpu_info ptr
-	movl	CI_EXIT(%r7),%r8	# scratch page address
-	movab	512(%r8),%sp	# change stack
-	bicl2	$0xc0000000,%r8	# get physical address
-	mtpr	%r8,$PR_PCBB	# new PCB
-	mtpr	%r7,$PR_SSP	# In case...
-	pushl	%r6
-	calls	$1,_C_LABEL(lwp_exit2)	# release last resources.
-	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
-	calls	$0,_C_LABEL(sched_lock_idle)
-	clrl	%r6
-	brw	Swtch
+	mtpr	%r4,$PR_PCBB		# set PA of new pcb
+	ldpctx				# load it
+	/* r0 already has previous lwp */
+	/* r1 already has this lwp */
+	/* r2/r3 and r4/r5 restored */
+	rei				/* get off interrupt stack */
 
 #
 # copy/fetch/store routines. 

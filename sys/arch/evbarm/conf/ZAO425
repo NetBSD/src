@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.27 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: ZAO425,v 1.27.14.1 2007/07/11 19:58:38 mjf Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -243,7 +243,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Hubs
 #uhub*   at usb?
-#uhub*   at uhub? port ? configuration ? interface ?
+#uhub*   at uhub? port ?
 
 # Pseudo-Devices
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.16 2007/03/04 06:00:04 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.16.4.1 2007/07/11 20:00:19 mjf Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -96,6 +96,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -138,7 +139,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define cpu_need_resched(ci)	{ want_resched = 1; aston(); }
+#define cpu_need_resched(ci,flags)	{ ci->ci_want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -156,7 +157,6 @@ struct clockframe {
 #define aston()		(astpending = 1)
 
 extern int	astpending;	/* need to trap before returning to user mode */
-extern int	want_resched;	/* resched() was called */
 
 #endif /* _KERNEL */
 
@@ -187,28 +187,14 @@ void	dumpconf __P((void));
 void	dumpsys __P((void));
 
 /* locore.s functions */
-struct pcb;
 struct fpframe;
 int	suline __P((void *, void *));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
 void	loadustp __P((int));
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
 /* machdep.c functions */
 int	badaddr __P((void *, int));
-
-/* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((void *, int));
-
-/* vm_machdep.c functions */
-void	physaccess __P((void *, void *, int, int));
-void	physunaccess __P((void *, int));
-int	kvtop __P((void *));
 
 #endif
 

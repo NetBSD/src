@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.3 2006/08/23 03:53:32 jnemeth Exp $ */
+/* $NetBSD: psm.c,v 1.3.18.1 2007/07/11 20:02:35 mjf Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.3 2006/08/23 03:53:32 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.3.18.1 2007/07/11 20:02:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct psm_softc {
 	struct sysmon_pswitch	sc_sm_lid;
 	struct sysmon_pswitch	sc_sm_ac;
 	struct evcnt		sc_intrcnt;
-	struct proc		*sc_thread;
+	lwp_t			*sc_thread;
 };
 
 #define	PUT8(sc, r, v)		\
@@ -104,7 +104,6 @@ struct psm_softc {
 #define	PSM_EV_TEMP		0x10
 
 STATIC void psm_sysmon_setup(struct psm_softc *);
-STATIC void psm_create_event_thread(void *);
 STATIC void psm_event_thread(void *);
 STATIC int psm_init(struct psm_softc *);
 STATIC void psm_reset(struct psm_softc *);
@@ -165,8 +164,11 @@ psm_attach(struct device *parent, struct device *self, void *aux)
 
 	psm_sysmon_setup(sc);
 
-	/* create the event thread */
-	kthread_create(psm_create_event_thread, sc);
+	if (kthread_create(PRI_NONE, 0, NULL, psm_event_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		printf("%s: unable to create event kthread\n",
+		    sc->sc_dev.dv_xname);
+	}
 
 	/*
 	 * Establish device interrupts
@@ -210,18 +212,6 @@ psm_sysmon_setup(struct psm_softc *sc)
 }
 
 void
-psm_create_event_thread(void *arg)
-{
-	struct psm_softc *sc = arg;
-
-	if (kthread_create1(psm_event_thread, sc, &sc->sc_thread, "%s",
-		sc->sc_dev.dv_xname) != 0) {
-		printf("%s: unable to create event kthread\n",
-		    sc->sc_dev.dv_xname);
-	}
-}
-
-void
 psm_event_thread(void *arg)
 {
 	struct psm_softc *sc = arg;
@@ -248,13 +238,13 @@ psm_event_thread(void *arg)
 		if (event & PSM_EV_LID) {
 			sysmon_pswitch_event(&sc->sc_sm_lid,
 			    flags & PSM_FLAG_LIDCLOSED ?
-			    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED);
+			    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 		}
 
 		if (event & PSM_EV_ACPWR) {
 			sysmon_pswitch_event(&sc->sc_sm_ac,
 			    flags & PSM_FLAG_ACPWR ?
-			    PSWITCH_STATE_PRESSED : PSWITCH_STATE_RELEASED);
+			    PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 		}
 
 		/* XXX: handle PSM_EV_TEMP */

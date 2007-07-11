@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 2007/03/04 06:01:30 christos Exp $
+	$NetBSD: syscalls.master,v 1.27.4.1 2007/07/11 20:04:39 mjf Exp $
 ; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -74,22 +74,21 @@
 3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
 4	NOARGS		{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
-5	STD		{ int pecoff_sys_open(const char *path, \
+5	NOARGS		{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
 8	EXCL		{ int sys_creat(const char *path, mode_t mode); } ocreat
-9	STD		{ int pecoff_sys_link(const char *path, \
-			    const char *link); }
-10	STD		{ int pecoff_sys_unlink(const char *path); }
+9	NOARGS		{ int sys_link(const char *path, const char *link); }
+10	NOARGS		{ int sys_unlink(const char *path); }
 11	OBSOL		execv
-12	STD		{ int pecoff_sys_chdir(const char *path); }
+12	NOARGS		{ int sys_chdir(const char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
 14	NOARGS		{ int sys_mknod(const char *path, mode_t mode, \
 			    dev_t dev); }
-15	STD		{ int pecoff_sys_chmod(const char *path, mode_t mode); }
-16	STD		{ int pecoff_sys_chown(const char *path, uid_t uid, \
+15	NOARGS		{ int sys_chmod(const char *path, mode_t mode); }
+16	NOARGS		{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 #ifdef COMPAT_20
@@ -107,7 +106,7 @@
 #endif
 21	NOARGS		{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
-22	STD		{ int pecoff_sys_unmount(const char *path, int flags); }
+22	NOARGS		{ int sys_unmount(const char *path, int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 #ifdef COMPAT_43
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); } getuid
@@ -130,16 +129,15 @@
 			    unsigned int *alen); }
 32	NOARGS		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    unsigned int *alen); }
-33	STD		{ int pecoff_sys_access(const char *path, int flags); }
-34	STD		{ int pecoff_sys_chflags(const char *path, \
-			    u_long flags); }
+33	NOARGS		{ int sys_access(const char *path, int flags); }
+34	NOARGS		{ int sys_chflags(const char *path, u_long flags); }
 35	NOARGS		{ int sys_fchflags(int fd, u_long flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	EXCL		{ int pecoff_compat_43_sys_stat(const char *path, \
+38	EXCL		{ int compat_43_sys_stat(const char *path, \
 			    struct stat43 *ub); } stat43
 39	NOARGS		{ pid_t sys_getppid(void); }
-40	EXCL		{ int pecoff_compat_43_sys_lstat(const char *path, \
+40	EXCL		{ int compat_43_sys_lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
@@ -172,15 +170,15 @@
 54	NOARGS		{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	EXCL		{ int sys_reboot(int opt); } oreboot
-56	STD		{ int pecoff_sys_revoke(const char *path); }
-57	STD		{ int pecoff_sys_symlink(const char *path, \
+56	NOARGS		{ int sys_revoke(const char *path); }
+57	NOARGS		{ int sys_symlink(const char *path, \
 			    const char *link); }
-58	STD		{ ssize_t pecoff_sys_readlink(const char *path, char *buf, \
+58	NOARGS		{ ssize_t sys_readlink(const char *path, char *buf, \
 			    size_t count); }
-59	STD		{ int pecoff_sys_execve(const char *path, \
+59	NOARGS		{ int sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
 60	NOARGS		{ mode_t sys_umask(mode_t newmask); }
-61	STD		{ int pecoff_sys_chroot(const char *path); }
+61	NOARGS		{ int sys_chroot(const char *path); }
 62	EXCL		{ int sys_fstat(int fd, struct stat43 *sb); } fstat43
 63	EXCL		{ int sys_getkerninfo(int op, char *where, int *size, \
 			    int arg); } ogetkerninfo
@@ -279,9 +277,9 @@
 			    orecvfrom
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
-128	STD		{ int pecoff_sys_rename(const char *from, \
+128	NOARGS		{ int sys_rename(const char *from, \
 			    const char *to); }
-129	EXCL		{ int pecoff_compat_43_sys_truncate(const char *path, \
+129	EXCL		{ int compat_43_sys_truncate(const char *path, \
 			    long length); } otruncate
 130	EXCL		{ int sys_ftruncate(int fd, long length); } oftruncate
 131	NOARGS		{ int sys_flock(int fd, int how); }
@@ -293,8 +291,8 @@
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
 136	NOARGS		{ int sys_mkdir(const char *path, mode_t mode); }
-137	STD		{ int pecoff_sys_rmdir(const char *path); }
-138	STD		{ int pecoff_sys_utimes(const char *path, \
+137	NOARGS		{ int sys_rmdir(const char *path); }
+138	NOARGS		{ int sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
 139	OBSOL		4.2 sigreturn
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
@@ -330,7 +328,7 @@
 #endif
 156	EXCL		{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	STD		{ int pecoff_sys_statfs(const char *path, \
+157	NOARGS		{ int compat_20_sys_statfs(const char *path, \
 			    struct statvfs12 *buf); }
 #ifdef COMPAT_20
 158	NOARGS		{ int compat_20_sys_fstatfs(int fd, \
@@ -341,7 +339,7 @@
 159	UNIMPL
 160	UNIMPL
 #ifdef COMPAT_30
-161	STD		{ int pecoff_compat_30_sys_getfh(const char *fname, \
+161	NOARGS		{ int compat_30_sys_getfh(const char *fname, \
 			    struct commpat_30_fhandle *fhp); }
 #else
 161	EXCL		compat_30_sys_getfh
@@ -410,12 +408,12 @@
 186	EXCL		lfs_segclean
 187	EXCL		lfs_segwait
 #endif
-188	EXCL		{ int pecoff_compat_12_sys_stat(const char *path, \
+188	EXCL		{ int compat_12_sys_stat(const char *path, \
 			    struct stat12 *ub); } stat12
 189	EXCL		{ int sys_fstat(int fd, struct stat12 *sb); } fstat12
-190	EXCL		{ int pecoff_compat_12_sys_lstat(const char *path, \
+190	EXCL		{ int compat_12_sys_lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
-191	STD		{ long pecoff_sys_pathconf(const char *path, int name); }
+191	NOARGS		{ long sys_pathconf(const char *path, int name); }
 192	NOARGS		{ long sys_fpathconf(int fd, int name); }
 193	UNIMPL
 194	NOARGS		{ int sys_getrlimit(int which, \
@@ -429,7 +427,7 @@
 198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
 199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
-200	STD		{ int pecoff_sys_truncate(const char *path, int pad, \
+200	NOARGS		{ int sys_truncate(const char *path, int pad, \
 			    off_t length); }
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
 202	NOARGS		{ int sys___sysctl(const int *name, u_int namelen, \
@@ -437,7 +435,7 @@
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
 204	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
-205	STD		{ int pecoff_sys_undelete(const char *path); }
+205	NOARGS		{ int sys_undelete(const char *path); }
 206	NOARGS		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
 207	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
@@ -580,7 +578,7 @@
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
-270	STD		{ int pecoff_sys___posix_rename(const char *from, \
+270	NOARGS		{ int sys___posix_rename(const char *from, \
 			    const char *to); }
 271	NOARGS		{ int sys_swapctl(int cmd, void *arg, int misc); }
 #ifdef COMPAT_30
@@ -588,28 +586,28 @@
 #endif
 273	NOARGS		{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
-274	STD		{ int pecoff_sys_lchmod(const char *path, mode_t mode); }
-275	STD		{ int pecoff_sys_lchown(const char *path, uid_t uid, \
+274	NOARGS		{ int sys_lchmod(const char *path, mode_t mode); }
+275	NOARGS		{ int sys_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
-276	STD		{ int pecoff_sys_lutimes(const char *path, \
+276	NOARGS		{ int sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
 277	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
 #ifdef COMPAT_30
-278	STD		{ int pecoff_sys___stat13(const char *path, \
+278	NOARGS		{ int compat_30_sys___stat13(const char *path, \
 			    struct stat30 *ub); }
 279	NOARGS		{ int compat_30_sys___fstat13(int fd, struct stat30 *sb); }
-280	STD		{ int pecoff_sys___lstat13(const char *path, \
+280	NOARGS		{ int compat_30_sys___lstat13(const char *path, \
 			    struct stat30 *ub); }
 #endif
 281	NOARGS		{ int sys___sigaltstack14( \
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
 282	NOARGS		{ int sys___vfork14(void); }
-283	STD		{ int pecoff_sys___posix_chown(const char *path, \
+283	NOARGS		{ int sys___posix_chown(const char *path, \
 			    uid_t uid, gid_t gid); }
 284	NOARGS		{ int sys___posix_fchown(int fd, uid_t uid, \
 			    gid_t gid); }
-285	STD		{ int pecoff_sys___posix_lchown(const char *path, uid_t uid, \
+285	NOARGS		{ int sys___posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 286	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 287	NOARGS		{ pid_t sys___clone(int flags, void *stack); }
@@ -677,7 +675,7 @@
 #else
 303	EXCL		__shmctl13
 #endif
-304	STD		{ int pecoff_sys_lchflags(const char *path, u_long flags); }
+304	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
 305	NOARGS		{ int sys_issetugid(void); }
 306	NOARGS		{ int sys_utrace(const char *label, void *addr, \
 				size_t len); }
@@ -825,9 +823,9 @@
 			    const char *name); }
 386	NOARGS		{ int sys_fremovexattr(int fd, \
 			    const char *name); }
-387	STD		{ int pecoff_sys___stat30(const char *path, struct stat *ub); }
+387	NOARGS		{ int sys___stat30(const char *path, struct stat *ub); }
 388	NOARGS		{ int sys___fstat30(int fd, struct stat *sb); }
-389	STD		{ int pecoff_sys___lstat30(const char *path, struct stat *ub); }
+389	NOARGS		{ int sys___lstat30(const char *path, struct stat *ub); }
 390	NOARGS		{ int sys___getdents30(int fd, char *buf, size_t count); }
 391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
@@ -839,7 +837,7 @@
 #endif
 393	NOARGS		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
 394	NOARGS		{ int sys___socket30(int domain, int type, int protocol); }
-395	STD		{ int pecoff_sys___getfh30(const char *fname, \
+395	NOARGS		{ int sys___getfh30(const char *fname, \
 			    void *fhp, size_t *fh_size); }
 396	NOARGS		{ int sys___fhopen40(const void *fhp, size_t fh_size,\
 			    int flags); }

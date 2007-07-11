@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.30 2006/12/29 21:49:03 yamt Exp $
+#	$NetBSD: SIMICS,v 1.30.8.1 2007/07/11 19:57:38 mjf Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -72,7 +72,8 @@ options 	USERCONF	# userconf(4) support
 #options 	COMPAT_15	# NetBSD 1.5,
 #options 	COMPAT_16	# NetBSD 1.6,
 #options 	COMPAT_20	# NetBSD 2.0,
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
@@ -134,7 +135,6 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Squeeze...
 #options 	NVNODE=50

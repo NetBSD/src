@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 2007/03/05 05:10:04 christos Exp $
+	$NetBSD: syscalls.master,v 1.13.4.1 2007/07/11 20:04:22 mjf Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -184,13 +184,15 @@
 91	NOARGS	{ int netbsd32_munmap(netbsd32_caddr_t addr, int len); }
 92	STD	{ int linux32_sys_truncate(const netbsd32_charp path, \
 		    netbsd32_long length); }
-93	NOARGS	{ int compat_43_sys_ftruncate(int fd, long length); }
+93	NOARGS	{ int compat_43_netbsd32_oftruncate(int fd, \
+		    netbsd32_long length); }
 94	NOARGS	{ int sys_fchmod(int fd, int mode); }
 95	STD	{ int linux32_sys_fchown16(int fd, int uid, int gid); }
 96	STD	{ int linux32_sys_getpriority(int which, int who); }
 97	STD	{ int linux32_sys_setpriority(int which, int who, int prio); }
 98	UNIMPL	profil
-99	UNIMPL	statfs
+99	STD	{ int linux32_sys_statfs(const netbsd32_charp path, \
+		    linux32_statfsp sp); }
 100	UNIMPL	fstatfs
 101	UNIMPL	ioperm
 102	STD	{ int linux32_sys_socketcall(int what, netbsd32_voidp args); }

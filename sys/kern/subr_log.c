@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.40 2007/03/04 06:03:07 christos Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.40.4.1 2007/07/11 20:10:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.40 2007/03/04 06:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.40.4.1 2007/07/11 20:10:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ logread(dev_t dev, struct uio *uio, int flag)
 	int s;
 	int error = 0;
 
-	s = splhigh();
+	s = splsched();
 	while (mbp->msg_bufr == mbp->msg_bufx) {
 		if (flag & IO_NDELAY) {
 			splx(s);
@@ -181,7 +181,7 @@ static int
 logpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;
-	int s = splhigh();
+	int s = splsched();
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
@@ -199,7 +199,7 @@ filt_logrdetach(struct knote *kn)
 {
 	int s;
 
-	s = splhigh();
+	s = splsched();
 	SLIST_REMOVE(&logsoftc.sc_selp.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -241,7 +241,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = NULL;
 
-	s = splhigh();
+	s = splsched();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
@@ -274,7 +274,7 @@ logioctl(dev_t dev, u_long com, void *data, int flag, struct lwp *lwp)
 
 	/* return number of characters immediately available */
 	case FIONREAD:
-		s = splhigh();
+		s = splsched();
 		l = msgbufp->msg_bufx - msgbufp->msg_bufr;
 		splx(s);
 		if (l < 0)

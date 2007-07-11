@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.42 2006/02/20 19:00:27 cdi Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.42.26.1 2007/07/11 20:02:36 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -953,6 +953,18 @@ stda(paddr_t loc, int asi, uint64_t value)
 	}
 }
 #endif
+
+/* set dmmu secondary context */
+static __inline void
+dmmu_set_secondary_context(uint ctx)
+{
+	__asm volatile(
+		"stxa %0,[%1]%2;	"
+		"membar #Sync		"
+		: : "r" (ctx),
+		"r" (CTX_SECONDARY), "n" (ASI_DMMU)
+		: "memory");
+}
 
 #ifdef __arch64__
 /* native store 64-bit int to alternate address space w/64-bit compiler*/

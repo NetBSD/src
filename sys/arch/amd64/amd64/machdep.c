@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2007/03/04 14:36:11 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.4.1 2007/07/11 19:57:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2007/03/04 14:36:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.4.1 2007/07/11 19:57:33 mjf Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -92,18 +92,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2007/03/04 14:36:11 yamt Exp $");
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/extent.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -127,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2007/03/04 14:36:11 yamt Exp $");
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -135,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2007/03/04 14:36:11 yamt Exp $");
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
+#include <x86/cpu_msr.h>
 #include <x86/x86/tsc.h>
 
 #include <dev/isa/isareg.h>
@@ -231,6 +230,7 @@ int	cpu_dump(void);
 int	cpu_dumpsize(void);
 u_long	cpu_dump_mempagecnt(void);
 void	dumpsys(void);
+void	dodumpsys(void);
 void	init_x86_64(paddr_t);
 
 /*
@@ -306,6 +306,9 @@ cpu_startup(void)
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+	gdt_init();
+	x86_64_proc0_tss_ldt_init();
 }
 
 /*
@@ -314,56 +317,34 @@ cpu_startup(void)
 void
 x86_64_proc0_tss_ldt_init(void)
 {
+	struct lwp *l;
 	struct pcb *pcb;
 	int x;
 
-	gdt_init();
-
-	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
-
+	l = &lwp0;
+	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_iobase =
 	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
+
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)lwp0.l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)lwp0.l_addr + PAGE_SIZE;
+	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l->l_addr + USPACE - 16;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l->l_addr + PAGE_SIZE;
 	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack
 	    + PAGE_SIZE - 16;
-	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
-	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
+	l->l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
+	l->l_md.md_tss_sel = tss_alloc(pcb);
 
-	ltr(lwp0.l_md.md_tss_sel);
+	ltr(l->l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 }
-
-/*       
- * Set up TSS and LDT for a new PCB.
- */         
-         
-void    
-x86_64_init_pcb_tss_ldt(struct cpu_info *ci)   
-{        
-	int x;      
-	struct pcb *pcb = ci->ci_idle_pcb;
- 
-	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
-	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
-		pcb->pcb_iomap[x] = 0xffffffff;
-
-	/* XXXfvdl pmap_kernel not needed */ 
-	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
-	    GSYSSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
-        
-        ci->ci_idle_tss_sel = tss_alloc(pcb);
-}       
-
 
 /*  
  * machine dependent system variables.
@@ -498,7 +479,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
@@ -744,7 +725,7 @@ reserve_dumppages(vaddr_t p)
 }
 
 void
-dumpsys(void)
+dodumpsys(void)
 {
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memseg;
@@ -753,9 +734,6 @@ dumpsys(void)
 	daddr_t blkno;
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
 		return;
@@ -879,6 +857,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
+	pcb->pcb_fs = 0;
+	pcb->pcb_gs = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
@@ -1029,7 +1009,6 @@ init_x86_64(paddr_t first_avail)
 	cpu_init_msrs(&cpu_info_primary);
 
 	lwp0.l_addr = proc0paddr;
-	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
 	x86_bus_space_init();
 
@@ -1527,9 +1506,13 @@ init_x86_64(paddr_t first_avail)
 	splraise(IPL_IPI);
 	enable_intr();
 
+	x86_init();
+
         /* Make sure maxproc is sane */ 
         if (maxproc > cpu_maxproc())
                 maxproc = cpu_maxproc();
+
+	curlwp = &lwp0;
 }
 
 void
@@ -1745,15 +1728,28 @@ cpu_initclocks(void)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci)
+cpu_need_resched(struct cpu_info *ci, int flags)
 {
+	bool immed = (flags & RESCHED_IMMED) != 0;
+
+	if (ci->ci_want_resched && !immed)
+		return;
 	ci->ci_want_resched = 1;
-	if (ci->ci_curlwp != NULL)
+
+	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
 		aston(ci->ci_curlwp);
 #ifdef MULTIPROCESSOR
-	if (ci != curcpu())
-		x86_send_ipi(ci, 0);
+		if (immed && ci != curcpu()) {
+			x86_send_ipi(ci, 0);
+		}
 #endif
+	} else {
+#ifdef MULTIPROCESSOR
+		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
+		    ci != curcpu())
+			x86_send_ipi(ci, 0);
+#endif
+	}
 }
 
 void

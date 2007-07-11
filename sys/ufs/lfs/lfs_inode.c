@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.107 2007/03/04 06:03:45 christos Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.107.4.1 2007/07/11 20:12:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107 2007/03/04 06:03:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.4.1 2007/07/11 20:12:46 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -256,10 +256,6 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
-#ifdef QUOTA
-	if ((error = getinoquota(oip)) != 0)
-		return (error);
-#endif
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_size;
@@ -284,12 +280,12 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 				off_t eob;
 
 				eob = blkroundup(fs, osize);
+				uvm_vnp_setwritesize(ovp, eob);
 				error = ufs_balloc_range(ovp, osize,
 				    eob - osize, cred, aflags);
 				if (error)
 					return error;
 				if (ioflag & IO_SYNC) {
-					ovp->v_size = eob;
 					simple_lock(&ovp->v_interlock);
 					VOP_PUTPAGES(ovp,
 					    trunc_page(osize & fs->lfs_bmask),
@@ -297,6 +293,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 					    PGO_CLEANIT | PGO_SYNCIO);
 				}
 			}
+			uvm_vnp_setwritesize(ovp, length);
 			error = ufs_balloc_range(ovp, length - 1, 1, cred,
 						 aflags);
 			if (error) {

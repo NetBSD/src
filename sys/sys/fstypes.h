@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.18 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.18.8.1 2007/07/11 20:12:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -43,7 +43,7 @@ typedef struct { int32_t __fsid_val[2]; } fsid_t; /* file system id type */
  */
 struct fid {
 	unsigned short	fid_len;		/* length of data in bytes */
-	unsigned short	fid_reserved;		/* force longword alignment */
+	unsigned short	fid_reserved;		/* compat: historic align */
 	char		fid_data[];		/* data (variable length) */
 };
 
@@ -205,9 +205,6 @@ typedef struct fhandle	fhandle_t;
 #define	IMNT_GONE	0x00000001	/* filesystem is gone.. */
 #define	IMNT_UNMOUNT	0x00000002	/* unmount in progress */
 #define	IMNT_WANTRDWR	0x00000004	/* upgrade to read/write requested */
-#define	IMNT_SUSPEND	0x00000008	/* request upper write suspension */
-#define	IMNT_SUSPENDLOW	0x00000010	/* request lower write suspension */
-#define	IMNT_SUSPENDED	0x00000020	/* write operations are suspended */
 #define	IMNT_DTYPE	0x00000040	/* returns d_type fields */
 #define	IMNT_HAS_TRANS	0x00000080	/* supports transactions */
 
@@ -256,9 +253,6 @@ typedef struct fhandle	fhandle_t;
 	"\20" \
 	"\10IMNT_HAS_TRANS" \
 	"\07IMNT_DTYPE" \
-	"\06IMNT_SUSPENDED" \
-	"\05IMNT_SUSPENDLOW" \
-	"\04IMNT_SUSPEND" \
 	"\03IMNT_WANTRDWR" \
 	"\02IMNT_UNMOUNT" \
 	"\01IMNT_GONE"

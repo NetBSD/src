@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.129 2007/03/07 21:43:46 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.129.4.1 2007/07/11 20:00:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.129 2007/03/07 21:43:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.129.4.1 2007/07/11 20:00:07 mjf Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -126,7 +126,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with l2 as an
+ * lwp_trampoline() and call child_return() with l2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -145,7 +145,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
-	struct switchframe *sf;
 
 #if NNPX > 0
 	/*
@@ -198,12 +197,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (stack != NULL)
 		tf->tf_esp = (u_int)stack + stacksize;
 
-	sf = (struct switchframe *)tf - 1;
-	sf->sf_esi = (int)func;
-	sf->sf_ebx = (int)arg;
-	sf->sf_eip = (int)proc_trampoline;
-	pcb->pcb_esp = (int)sf;
-	pcb->pcb_ebp = 0;
+	cpu_setfunc(l2, func, arg);
 }
 
 void
@@ -215,9 +209,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
-	sf->sf_eip = (int)proc_trampoline;
+	sf->sf_eip = (int)lwp_trampoline;
 	pcb->pcb_esp = (int)sf;
-	pcb->pcb_ebp = 0;
+	pcb->pcb_ebp = (int)l;
 }	
 
 void

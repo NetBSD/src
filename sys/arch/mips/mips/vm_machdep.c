@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.116 2007/03/04 12:33:32 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.116.4.1 2007/07/11 20:00:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116 2007/03/04 12:33:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116.4.1 2007/07/11 20:00:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
+ * lwp_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
  * directly to user level with an apparent return value of 0 from
  * fork(), while the parent process returns normally.
@@ -167,8 +167,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb = &l2->l_addr->u_pcb;
 	pcb->pcb_context[0] = (intptr_t)func;		/* S0 */
 	pcb->pcb_context[1] = (intptr_t)arg;		/* S1 */
+	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
-	pcb->pcb_context[10] = (intptr_t)proc_trampoline;	/* RA */
+	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
 	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
@@ -177,7 +178,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 /*
  * Set the given LWP to start at the given function via the
- * proc_trampoline.
+ * lwp_trampoline.
  */
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
@@ -191,8 +192,9 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_context[0] = (intptr_t)func;			/* S0 */
 	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
+	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
-	pcb->pcb_context[10] = (intptr_t)proc_trampoline;	/* RA */
+	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;	/* RA */
 	pcb->pcb_context[11] |= PSL_LOWIPL;			/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
@@ -212,8 +214,8 @@ cpu_swapin(struct lwp *l)
 
 	/*
 	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switch() can quickly map in
-	 * the user struct and kernel stack.
+	 * part of the proc struct so cpu_switchto() can quickly map
+	 * in the user struct and kernel stack.
 	 */
 	x = (MIPS_HAS_R4K_MMU) ?
 	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
@@ -236,24 +238,6 @@ cpu_lwp_free2(struct lwp *l)
 {
 
 	(void)l;
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's PCB and stack,
- * schedules the dead proc's vmspace and stack to be freed, then jumps
- * into the middle of cpu_switch(), as if it were switching from proc0.
- */
-void
-cpu_exit(struct lwp *l)
-{
-	void switch_exit(struct lwp *, void (*)(struct lwp *));
-
-	(void)splhigh();
-	switch_exit(l, lwp_exit2);
-	/* NOTREACHED */
 }
 
 #ifdef COREDUMP

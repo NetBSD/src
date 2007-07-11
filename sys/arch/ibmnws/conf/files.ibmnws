@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.8 2006/05/09 18:02:32 rjs Exp $
+#	$NetBSD: files.ibmnws,v 1.8.20.1 2007/07/11 20:00:15 mjf Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -59,6 +59,7 @@ file	arch/ibmnws/ibmnws/cpu.c		cpu
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 include "dev/rasops/files.rasops"
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers

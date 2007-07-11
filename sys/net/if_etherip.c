@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.5 2007/03/04 06:03:15 christos Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.5.4.1 2007/07/11 20:10:55 mjf Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -139,6 +139,8 @@
 #include <netinet6/in6_gif.h>
 #include <netinet6/ip6protosw.h>
 #endif /* INET6 */
+
+#include <compat/sys/sockio.h>
 
 static int etherip_node;
 static int etherip_sysctl_handler(SYSCTLFN_PROTO);
@@ -321,6 +323,7 @@ etherip_detach(struct device* self, int flags)
 	etherip_delete_tunnel(ifp);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	rtcache_free(&sc->sc_ro);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 
 	return 0;
@@ -407,7 +410,7 @@ static int
 etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifreq *ifr = data;
 	struct sockaddr *src, *dst;
 	int s, error;
 
@@ -473,6 +476,9 @@ etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = 0;
 		break;
 
+#ifdef OSIOCSIFMEDIA
+	case OSIOCSIFMEDIA:
+#endif
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		s = splnet();

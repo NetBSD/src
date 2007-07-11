@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.10 2005/12/11 12:18:19 christos Exp $
+#	$NetBSD: files.mvmeppc,v 1.10.32.1 2007/07/11 20:00:59 mjf Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -46,6 +46,9 @@ file	arch/mvmeppc/mvmeppc/mainbus.c	mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/mvmeppc/mvmeppc/cpu.c	cpu
+
+# generic fb driver
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers

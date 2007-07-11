@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.13 2007/02/09 21:55:01 ad Exp $
+# $NetBSD: genassym.cf,v 1.13.8.1 2007/07/11 19:57:20 mjf Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -112,8 +112,6 @@ define	ALPHA_PTE_KR		ALPHA_PTE_KR
 define	ALPHA_PTE_KW		ALPHA_PTE_KW
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_FORW			offsetof(struct lwp, l_forw)
-define	L_BACK			offsetof(struct lwp, l_back)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_CPU			offsetof(struct lwp, l_cpu)
@@ -127,15 +125,9 @@ define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
-define	PH_LINK			offsetof(struct prochd, ph_link)
-define	PH_RLINK		offsetof(struct prochd, ph_rlink)
-
-# Process status constants
-define	LSONPROC			LSONPROC
 
 # offsets needed by cpu_switch() to switch mappings.
 define	VM_MAP_PMAP		offsetof(struct vmspace, vm_map.pmap)
-define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # Important offsets into the user struct & associated constants
 define	UPAGES			UPAGES
@@ -175,6 +167,5 @@ define	SYS_exit		SYS_exit
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
-define	CPU_INFO_IDLE_PCB_PADDR	offsetof(struct cpu_info, ci_idle_pcb_paddr)
-define	CPU_INFO_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CPU_INFO_IDLE_LWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_SIZEOF		sizeof(struct cpu_info)

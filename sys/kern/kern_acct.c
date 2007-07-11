@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.73 2007/03/09 14:11:24 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.73.4.1 2007/07/11 20:09:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73 2007/03/09 14:11:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73.4.1 2007/07/11 20:09:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73 2007/03/09 14:11:24 ad Exp $");
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
 #include <sys/acct.h>
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.73 2007/03/09 14:11:24 ad Exp $");
 /*
  * Mutex to serialize system calls and kernel threads.
  */
-kmutex_t	acct_mutex;
+kmutex_t	acct_lock;
 
 /*
  * The global accounting state and related data.  Gain the mutex before
@@ -122,7 +122,7 @@ static struct vnode *acct_vp;		/* Accounting vnode pointer. */
 static kauth_cred_t acct_cred;		/* Credential of accounting file
 					   owner (i.e root).  Used when
  					   accounting file i/o.  */
-static struct proc *acct_dkwatcher;	/* Free disk space checker. */
+static struct lwp *acct_dkwatcher;	/* Free disk space checker. */
 
 /*
  * Values associated with enabling and disabling accounting
@@ -176,10 +176,14 @@ acct_chkfree(void)
 	struct statvfs *sb;
 	int64_t bavail;
 
-	sb = malloc(sizeof(*sb), M_TEMP, M_WAITOK);
+	sb = kmem_alloc(sizeof(*sb), KM_SLEEP);
+	if (sb == NULL)
+		return (ENOMEM);
 	error = VFS_STATVFS(acct_vp->v_mount, sb, NULL);
-	if (error != 0)
+	if (error != 0) {
+		kmem_free(sb, sizeof(*sb));
 		return (error);
+	}
 
 	bavail = sb->f_bfree - sb->f_bresvd;
 
@@ -199,7 +203,7 @@ acct_chkfree(void)
 	case ACCT_STOP:
 		break;
 	}
-	free(sb, M_TEMP);
+	kmem_free(sb, sizeof(*sb));
 	return (0);
 }
 
@@ -236,7 +240,7 @@ acctwatch(void *arg)
 	int error;
 
 	log(LOG_NOTICE, "Accounting started\n");
-	mutex_enter(&acct_mutex);
+	mutex_enter(&acct_lock);
 	while (acct_state != ACCT_STOP) {
 		if (acct_vp->v_type == VBAD) {
 			log(LOG_NOTICE, "Accounting terminated\n");
@@ -250,14 +254,14 @@ acctwatch(void *arg)
 			printf("acctwatch: failed to statvfs, error = %d\n",
 			    error);
 #endif
-		error = kpause("actwat", false, acctchkfreq * hz, &acct_mutex);
+		error = kpause("actwat", false, acctchkfreq * hz, &acct_lock);
 #ifdef DIAGNOSTIC
 		if (error != 0 && error != EWOULDBLOCK)
 			printf("acctwatch: sleep error %d\n", error);
 #endif
 	}
 	acct_dkwatcher = NULL;
-	mutex_exit(&acct_mutex);
+	mutex_exit(&acct_lock);
 
 	kthread_exit(0);
 }
@@ -269,7 +273,7 @@ acct_init(void)
 	acct_state = ACCT_STOP;
 	acct_vp = NULLVP;
 	acct_cred = NULL;
-	mutex_init(&acct_mutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&acct_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -297,7 +301,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, path) != NULL) {
 		struct vattr va;
 		size_t pad;
-		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
+		NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path),
 		    l);
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
@@ -329,7 +333,7 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 		VOP_UNLOCK(nd.ni_vp, 0);
 	}
 
-	mutex_enter(&acct_mutex);
+	mutex_enter(&acct_lock);
 
 	/*
 	 * If accounting was previously enabled, kill the old space-watcher,
@@ -356,14 +360,14 @@ sys_acct(struct lwp *l, void *v, register_t *retval)
 	}
 
 	if (acct_dkwatcher == NULL) {
-		error = kthread_create1(acctwatch, NULL, &acct_dkwatcher,
-		    "acctwatch");
+		error = kthread_create(PRI_NONE, 0, NULL, acctwatch, NULL,
+		    &acct_dkwatcher, "acctwatch");
 		if (error != 0)
 			acct_stop();
 	}
 
  out:
-	mutex_exit(&acct_mutex);
+	mutex_exit(&acct_lock);
 	return (error);
  bad:
 	vn_close(nd.ni_vp, FWRITE, l->l_cred, l);
@@ -386,7 +390,7 @@ acct_process(struct lwp *l)
 	struct plimit *oplim = NULL;
 	struct proc *p = l->l_proc;
 
-	mutex_enter(&acct_mutex);
+	mutex_enter(&acct_lock);
 
 	/* If accounting isn't enabled, don't bother */
 	if (acct_state != ACCT_ACTIVE)
@@ -471,6 +475,6 @@ acct_process(struct lwp *l)
 	}
 
  out:
-	mutex_exit(&acct_mutex);
+	mutex_exit(&acct_lock);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.33 2007/03/12 14:03:48 tsutsui Exp $	*/
+/*	$NetBSD: maple.c,v 1.33.2.1 2007/07/11 19:58:33 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.33 2007/03/12 14:03:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.33.2.1 2007/07/11 19:58:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.33 2007/03/12 14:03:48 tsutsui Exp $");
  */
 static int	maplematch(struct device *, struct cfdata *, void *);
 static void	mapleattach(struct device *, struct device *, void *);
-static void	maple_create_event_thread(void *);
 static void	maple_scanbus(struct maple_softc *);
 static char *	maple_unit_name(char *, int port, int subunit);
 static void	maple_begin_txbuf(struct maple_softc *);
@@ -245,22 +244,15 @@ mapleattach(struct device *parent, struct device *self, void *aux)
 	maple_polling = 1;
 	maple_scanbus(sc);
 
-	callout_init(&sc->maple_callout_ch);
+	callout_init(&sc->maple_callout_ch, 0);
 
 	sc->sc_intrhand = sysasic_intr_establish(SYSASIC_EVENT_MAPLE_DMADONE,
 	    IPL_MAPLE, SYSASIC_IRL9, maple_intr, sc);
 
 	config_pending_incr();	/* create thread before mounting root */
-	kthread_create(maple_create_event_thread, sc);
-}
 
-static void
-maple_create_event_thread(void *arg)
-{
-	struct maple_softc *sc = arg;
-
-	if (kthread_create1(maple_event_thread, sc, &sc->event_thread,
-	    "%s", sc->sc_dev.dv_xname) == 0)
+	if (kthread_create(PRI_NONE, 0, NULL, maple_event_thread, sc,
+	    &sc->event_thread, "%s", sc->sc_dev.dv_xname) == 0)
 		return;
 
 	panic("%s: unable to create event thread", sc->sc_dev.dv_xname);

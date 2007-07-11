@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.38 2005/12/11 12:24:49 christos Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.38.32.1 2007/07/11 20:10:38 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.38 2005/12/11 12:24:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.38.32.1 2007/07/11 20:10:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ if_ipl_lkmload(struct lkm_table *lkmtp, int cmd)
 	if (lkmexists(lkmtp))
 		return (EEXIST);
 
-	error = iplattach();
+	error = ipfattach();
 	if (error == 0) {
 		if (FR_ISPASS(fr_pass))
 			defpass = "pass";
@@ -116,7 +116,7 @@ if_ipl_lkmunload(struct lkm_table *lkmtp, int cmd)
 	int error = 0;
 
 	if (fr_running > 0) {
-		error = ipldetach();
+		error = ipfdetach();
 		if (error == 0)
 			fr_running = -1;
 	}

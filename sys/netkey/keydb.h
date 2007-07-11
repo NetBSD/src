@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.27 2007/03/04 06:03:35 christos Exp $	*/
+/*	$NetBSD: keydb.h,v 1.27.4.1 2007/07/11 20:12:06 mjf Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -70,11 +70,7 @@ struct secashead {
 					/* SA chain */
 					/* The first of this list is newer SA */
 
-	union {
-		struct route sau_route;
-		struct route_in6 sau_route6;
-	} sa_u;
-#define sa_route sa_u.sau_route
+	struct route sa_route;
 };
 
 /* Security Association */

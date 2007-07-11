@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187 2007/03/12 18:18:28 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187.2.1 2007/07/11 20:02:42 mjf Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2007/03/12 18:18:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.1 2007/07/11 20:02:42 mjf Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1097,7 +1097,6 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_paddr = cpu0paddr;
-		cpus->ci_idle_u = (struct pcb *)IDLE_U_VA;
 		cpus->ci_cpcb = (struct pcb *)u0va;
 		cpus->ci_initstack = (void *)INITSTACK_VA;
 		proc0paddr = cpus->ci_cpcb;
@@ -1436,7 +1435,7 @@ pmap_activate_pmap(struct pmap *pmap)
 	if (pmap->pm_ctx == 0) {
 		(void) ctx_alloc(pmap);
 	}
-	stxa(CTX_SECONDARY, ASI_DMMU, pmap->pm_ctx);
+	dmmu_set_secondary_context(pmap->pm_ctx);
 }
 
 /*
@@ -1485,6 +1484,8 @@ pmap_kenter_pa(va, pa, prot)
 	/* We don't track mod/ref here. */
 	if (prot & VM_PROT_WRITE)
 		tte.data |= TLB_REAL_W|TLB_W;
+	if (prot & VM_PROT_EXECUTE)
+		tte.data |= TLB_EXEC;
 	tte.data |= TLB_TSB_LOCK;	/* wired */
 	ptp = 0;
 
@@ -1846,9 +1847,10 @@ pmap_remove_all(pm)
 	if (pm == pmap_kernel()) {
 		return;
 	}
-	stxa(CTX_SECONDARY, ASI_DMMU, 0);
+	write_user_windows();
 	pm->pm_refs = 0;
 	ctx_free(pm);
+	REMOVE_STAT(flushes);
 	blast_dcache();
 }
 

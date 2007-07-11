@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.162 2007/03/12 18:18:24 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.162.2.1 2007/07/11 19:58:06 mjf Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2007/03/12 18:18:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162.2.1 2007/07/11 19:58:06 mjf Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3064,6 +3064,7 @@ pmap_activate(struct lwp *l)
 
 	if (l == curlwp) {
 		u_int cur_dacr, cur_ttb;
+		int oldirqstate;
 
 		__asm volatile("mrc p15, 0, %0, c2, c0, 0" : "=r"(cur_ttb));
 		__asm volatile("mrc p15, 0, %0, c3, c0, 0" : "=r"(cur_dacr));
@@ -3080,7 +3081,7 @@ pmap_activate(struct lwp *l)
 
 		s = splhigh();
 		pmap_acquire_pmap_lock(pm);
-		disable_interrupts(I32_bit | F32_bit);
+		oldirqstate = disable_interrupts(I32_bit | F32_bit);
 
 		/*
 		 * We MUST, I repeat, MUST fix up the L1 entry corresponding
@@ -3100,7 +3101,7 @@ pmap_activate(struct lwp *l)
 		cpu_domains(pcb->pcb_dacr);
 		cpu_setttb(pcb->pcb_pagedir);
 
-		enable_interrupts(I32_bit | F32_bit);
+		restore_interrupts(oldirqstate);
 
 		/*
 		 * Flag any previous userland pmap as being NOT
@@ -3365,7 +3366,7 @@ pmap_pageidlezero(paddr_t phys)
 
 	for (i = 0, ptr = (int *)cdstp;
 			i < (PAGE_SIZE / sizeof(int)); i++) {
-		if (sched_whichqs != 0) {
+		if (sched_curcpu_runnable_p()) {
 			/*
 			 * A process has become ready.  Abort now,
 			 * so we don't keep it waiting while we

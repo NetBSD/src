@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.42 2007/02/15 16:01:51 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.42.8.1 2007/07/11 20:12:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,9 @@
 #ifndef _NFS_NFSMOUNT_H_
 #define _NFS_NFSMOUNT_H_
 #ifdef _KERNEL
+#include <sys/condvar.h>
 #include <sys/rwlock.h>
+#include <sys/mutex.h>
 #include <sys/disk.h>
 #endif
 
@@ -125,7 +127,9 @@ struct nfs_args {
  * Holds NFS specific information for mount.
  */
 struct	nfsmount {
-	struct simplelock nm_slock;	/* Lock for this structure */
+	kmutex_t nm_lock;		/* Lock for this structure */
+	kcondvar_t nm_rcvcv;
+	kcondvar_t nm_sndcv;
 	int	nm_flag;		/* Flags for soft/hard... */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
 	int	nm_numgrps;		/* Max. size of groupslist */
@@ -160,12 +164,13 @@ struct	nfsmount {
 	TAILQ_HEAD(, nfsuid) nm_uidlruhead; /* Lists of nfsuid mappings */
 	LIST_HEAD(, nfsuid) nm_uidhashtbl[NFS_MUIDHASHSIZ];
 	TAILQ_HEAD(, buf) nm_bufq;      /* async io buffer queue */
-	short	nm_bufqlen;		/* number of buffers in queue */
-	short	nm_bufqwant;		/* process wants to add to the queue */
+	int	nm_bufqlen;		/* number of buffers in queue */
+	kcondvar_t nm_aiocv;
 	int	nm_bufqiods;		/* number of iods processing queue */
 	u_int64_t nm_maxfilesize;	/* maximum file size */
 	int	nm_iflag;		/* internal flags */
 	int	nm_waiters;		/* number of waiting listeners.. */
+	kcondvar_t nm_disconcv;
 	long	nm_wcckludgetime;	/* see nfs_check_wccdata() */
 	struct io_stats *nm_stats;	/* per nfs mount statistics */
 };

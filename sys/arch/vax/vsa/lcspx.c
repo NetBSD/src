@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.6 2007/03/04 06:01:05 christos Exp $ */
+/*	$NetBSD: lcspx.c,v 1.6.4.1 2007/07/11 20:03:01 mjf Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.6 2007/03/04 06:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.6.4.1 2007/07/11 20:03:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ struct	lcspx_screen {
 static	struct lcspx_screen lcspx_conscreen;
 static	struct lcspx_screen *curscr;
 
-static	struct callout lcspx_cursor_ch = CALLOUT_INITIALIZER;
+static	callout_t lcspx_cursor_ch;
 
 int
 lcspx_match(struct device *parent, struct cfdata *match, void *aux)
@@ -193,8 +193,10 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 	aa.console = lcspxaddr != NULL;
-	if (lcspxaddr == 0)
+	if (lcspxaddr == 0) {
+		callout_init(&lcspx_cursor_ch, 0);
 		lcspxaddr = (void *)vax_map_physmem(va->va_paddr, (SPXSIZE/VAX_NBPG));
+	}
 	if (lcspxaddr == 0) {
 		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
 		return;
@@ -452,9 +454,9 @@ lcspx_show_screen(void *v, void *cookie, int waitok,
 				if (ss->ss_attr[row][col] & WSATTR_REVERSE)
 					s ^= 255;
 				SPX_ADDR(row, col, line, 0) = s;
+				if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
+					SPX_ADDR(row, col, line, 0) = 255;
 			}
-			if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
-				SPX_ADDR(row, col, line, 0) = 255;
 		}
 	cursor = &lcspxaddr[(ss->ss_cury * SPX_CHEIGHT * SPX_COLS) + ss->ss_curx +
 	    ((SPX_CHEIGHT - 1) * SPX_COLS)];
@@ -469,6 +471,8 @@ lcspxcninit(struct consdev *cndev)
 {
 	int fcookie;
 	struct wsdisplay_font *console_font;
+
+	callout_init(&lcspx_cursor_ch, 0);
 
 	/* Clear screen */
 	memset(lcspxaddr, 0, SPX_XWIDTH * SPX_YWIDTH);

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.168 2007/03/06 16:09:21 drochner Exp $
+	$NetBSD: syscalls.master,v 1.168.4.1 2007/07/11 20:10:13 mjf Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -793,3 +793,15 @@
 			    size_t fh_size, struct statvfs *buf, int flags); }
 398	STD		{ int sys___fhstat40(const void *fhp, \
 			    size_t fh_size, struct stat *sb); }
+
+; Asynchronous I/O system calls
+399	STD		{ int sys_aio_cancel(int fildes, struct aiocb *aiocbp); }
+400	STD		{ int sys_aio_error(const struct aiocb *aiocbp); }
+401	STD		{ int sys_aio_fsync(int op, struct aiocb *aiocbp); }
+402	STD		{ int sys_aio_read(struct aiocb *aiocbp); }
+403	STD		{ int sys_aio_return(struct aiocb *aiocbp); }
+404	STD		{ int sys_aio_suspend(const struct aiocb *const *list, \
+			    int nent, const struct timespec *timeout); }
+405	STD		{ int sys_aio_write(struct aiocb *aiocbp); }
+406	STD		{ int sys_lio_listio(int mode, struct aiocb *const *list, \
+			    int nent, struct sigevent *sig); }

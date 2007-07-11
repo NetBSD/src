@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.101 2007/03/04 06:03:21 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.101.4.1 2007/07/11 20:11:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.101 2007/03/04 06:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.101.4.1 2007/07/11 20:11:24 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -629,15 +629,15 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 
 	pim_assert = 0;
 
-	callout_init(&expire_upcalls_ch);
+	callout_init(&expire_upcalls_ch, 0);
 	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
 		      expire_upcalls, NULL);
 
-	callout_init(&bw_upcalls_ch);
+	callout_init(&bw_upcalls_ch, 0);
 	callout_reset(&bw_upcalls_ch, BW_UPCALLS_PERIOD,
 		      expire_bw_upcalls_send, NULL);
 
-	callout_init(&bw_meter_ch);
+	callout_init(&bw_meter_ch, 0);
 	callout_reset(&bw_meter_ch, BW_METER_PERIOD,
 		      expire_bw_meter_process, NULL);
 
@@ -979,7 +979,7 @@ add_vif(struct mbuf *m)
 	vifp->v_bytes_in = 0;
 	vifp->v_bytes_out = 0;
 
-	callout_init(&vifp->v_repq_ch);
+	callout_init(&vifp->v_repq_ch, 0);
 
 #ifdef RSVP_ISI
 	vifp->v_rsvp_on = 0;
@@ -2219,9 +2219,8 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 		imo.imo_multicast_vif = -1;
 #endif
 
-		error = ip_output(m, (struct mbuf *)NULL, (struct route *)NULL,
-		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
-		    (struct socket *)NULL);
+		error = ip_output(m, NULL, NULL, IP_FORWARDING|IP_MULTICASTOPTS,
+		    &imo, NULL);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",
@@ -3305,7 +3304,7 @@ pim_register_send_rp(struct ip *ip, struct vif *vifp,
      */
     ip_outer->ip_tos = ip->ip_tos;
     if (ntohs(ip->ip_off) & IP_DF)
-	ip_outer->ip_off |= IP_DF;
+	ip_outer->ip_off |= htons(IP_DF);
     pimhdr = (struct pim_encap_pimhdr *)((char *)ip_outer
 					 + sizeof(pim_encap_iphdr));
     *pimhdr = pim_encap_pimhdr;

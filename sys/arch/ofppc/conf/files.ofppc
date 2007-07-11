@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.26 2007/03/10 14:15:48 jmmv Exp $
+#	$NetBSD: files.ofppc,v 1.26.4.1 2007/07/11 20:01:10 mjf Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -62,11 +62,12 @@ include "dev/wsfont/files.wsfont"
 # Workstation Console support
 #
 include "dev/wscons/files.wscons"
+include "dev/wsfb/files.wsfb"
 
 #
 # PCI bus support
 #
-file	dev/pci/pcibusprint.c
+include "dev/pci/files.pci"
 
 #
 # ISA bus support

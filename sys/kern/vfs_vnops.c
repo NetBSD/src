@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135 2007/03/09 14:11:27 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.4.1 2007/07/11 20:10:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135 2007/03/09 14:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.4.1 2007/07/11 20:10:25 mjf Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -72,9 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135 2007/03/09 14:11:27 ad Exp $");
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 #endif
 
-#if NVERIEXEC > 0
 #include <sys/verified_exec.h>
-#endif /* NVERIEXEC > 0 */
 
 static int vn_read(struct file *fp, off_t *offset, struct uio *uio,
 	    kauth_cred_t cred, int flags);
@@ -99,36 +97,32 @@ int
 vn_open(struct nameidata *ndp, int fmode, int cmode)
 {
 	struct vnode *vp;
-	struct mount *mp = NULL;	/* XXX: GCC */
 	struct lwp *l = ndp->ni_cnd.cn_lwp;
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
-	pathname_t pn = NULL;
+	char *path;
 
-restart:
+	ndp->ni_cnd.cn_flags &= TRYEMULROOT;
+
 	if (fmode & O_CREAT) {
 		ndp->ni_cnd.cn_nameiop = CREATE;
-		ndp->ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKPARENT | LOCKLEAF;
 		if ((fmode & O_EXCL) == 0 &&
 		    ((fmode & O_NOFOLLOW) == 0))
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags = LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKLEAF;
 		if ((fmode & O_NOFOLLOW) == 0)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	}
-#if NVERIEXEC > 0
-	error = pathname_get(ndp->ni_dirp, ndp->ni_segflg, &pn);
-	if (error)
-		goto bad2;
-	ndp->ni_dirp = pathname_path(pn);
-	ndp->ni_segflg = UIO_SYSSPACE;
-#endif /* NVERIEXEC > 0 */
+
+	VERIEXEC_PATH_GET(ndp->ni_dirp, ndp->ni_segflg, ndp->ni_dirp, path);
+
 	error = namei(ndp);
 	if (error)
-		goto bad2;
+		goto out;
 
 	vp = ndp->ni_vp;
 
@@ -145,20 +139,11 @@ restart:
 			va.va_mode = cmode;
 			if (fmode & O_EXCL)
 				 va.va_vaflags |= VA_EXCLUSIVE;
-			if (vn_start_write(ndp->ni_dvp, &mp, V_NOWAIT) != 0) {
-				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
-				vput(ndp->ni_dvp);
-				if ((error = vn_start_write(NULL, &mp,
-				    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
-					goto bad2;
-				goto restart;
-			}
 			VOP_LEASE(ndp->ni_dvp, l, cred, LEASE_WRITE);
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
-			vn_finished_write(mp, 0);
 			if (error)
-				goto bad2;
+				goto out;
 			fmode &= ~O_TRUNC;
 			vp = ndp->ni_vp;
 		} else {
@@ -207,16 +192,11 @@ restart:
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 
-		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0) {
-			vrele(vp);
-			goto bad2;
-		}
 		VOP_LEASE(vp, l, cred, LEASE_WRITE);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
 		error = VOP_SETATTR(vp, &va, cred, l);
-		vn_finished_write(mp, 0);
 		if (error != 0)
 			goto bad;
 	}
@@ -233,10 +213,8 @@ restart:
 bad:
 	if (error)
 		vput(vp);
-
-bad2:
-	pathname_put(pn);
-
+out:
+	VERIEXEC_PATH_PUT(path);
 	return (error);
 }
 
@@ -315,17 +293,12 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
 {
 	struct uio auio;
 	struct iovec aiov;
-	struct mount *mp = NULL;
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
 		if (rw == UIO_READ) {
 			vn_lock(vp, LK_SHARED | LK_RETRY);
 		} else /* UIO_WRITE */ {
-			if (vp->v_type != VCHR &&
-			    (error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH))
-			    != 0)
-				return (error);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -352,8 +325,6 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
 		if (auio.uio_resid && error == 0)
 			error = EIO;
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		if (rw == UIO_WRITE)
-			vn_finished_write(mp, 0);
 		VOP_UNLOCK(vp, 0);
 	}
 	return (error);
@@ -460,7 +431,6 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-	struct mount *mp;
 	int count, error, ioflag = IO_UNIT;
 	struct lwp *l = curlwp;
 
@@ -477,10 +447,6 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
-	mp = NULL;
-	if (vp->v_type != VCHR &&
-	    (error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
-		return (error);
 	VOP_LEASE(vp, l, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
@@ -493,7 +459,6 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			*offset += count - uio->uio_resid;
 	}
 	VOP_UNLOCK(vp, 0);
-	vn_finished_write(mp, 0);
 	return (error);
 }
 
@@ -853,7 +818,6 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 {
 	struct uio auio;
 	struct iovec aiov;
-	struct mount *mp = NULL;	/* XXX: GCC */
 	int error;
 
 	aiov.iov_len = buflen;
@@ -867,15 +831,12 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 	UIO_SETUP_SYSSPACE(&auio);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		if ((error = vn_start_write(vp, &mp, V_WAIT)) != 0)
-			return (error);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, NULL, l);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		vn_finished_write(mp, 0);
 		VOP_UNLOCK(vp, 0);
 	}
 
@@ -886,12 +847,9 @@ int
 vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
     const char *attrname, struct lwp *l)
 {
-	struct mount *mp = NULL;	/* XXX: GCC */
 	int error;
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		if ((error = vn_start_write(vp, &mp, V_WAIT)) != 0)
-			return (error);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
@@ -901,51 +859,10 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 		    NULL, l);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		vn_finished_write(mp, 0);
 		VOP_UNLOCK(vp, 0);
 	}
 
 	return (error);
-}
-
-/*
- * OBSOLETE -- this function will be removed in the near future!
- *
- * Preparing to start a filesystem write operation. If the operation is
- * permitted, then we bump the count of operations in progress and
- * proceed. If a suspend request is in progress, we wait until the
- * suspension is over, and then proceed.
- * V_PCATCH    adds PCATCH to the tsleep flags.
- * V_WAIT      waits until suspension is over. Otherwise returns EWOULDBLOCK.
- * V_SLEEPONLY wait, but do not bump the operations count.
- * V_LOWER     this is a lower level operation. No further vnodes should be
- *             locked. Otherwise it is a upper level operation. No vnodes
- *             should be locked.
- */
-int
-vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
-{
-
-	/*
-	 * If a vnode is provided, get and return the mount point that
-	 * to which it will write.
-	 */
-	if (vp != NULL) {
-		*mpp = vp->v_mount;
-	}
-	return 0;
-}
-
-/*
- * OBSOLETE -- this function will be removed in the near future!
- *
- * Filesystem write operation has completed. If we are suspending and this
- * operation is the last one, notify the suspender that the suspension is
- * now in effect.
- */
-void
-vn_finished_write(struct mount *mp, int flags)
-{
 }
 
 void

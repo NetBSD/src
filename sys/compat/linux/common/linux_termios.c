@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.29 2007/03/04 06:01:24 christos Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.29.4.1 2007/07/11 20:04:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.29 2007/03/04 06:01:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.29.4.1 2007/07/11 20:04:20 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -105,7 +105,7 @@ linux_ioctl_termios(l, uap, retval)
 	com = SCARG(uap, com);
 	retval[0] = 0;
 
-	switch (com & 0xffff) {
+	switch (com) {
 	case LINUX_TCGETS:
 		error = (*bsdioctl)(fp, TIOCGETA, (void *)&tmpbts, l);
 		if (error)
@@ -325,20 +325,11 @@ linux_ioctl_termios(l, uap, retval)
 	case LINUX_TIOCGPTN:
 #ifndef NO_DEV_PTM
 		{
-			void *sg = stackgap_init(l->l_proc, 0);
-			struct ptmget ptm, *ptmp = stackgap_alloc(l->l_proc, &sg,
-				sizeof(*ptmp));
+			struct ptmget ptm;
 
-			SCARG(&ia, fd) = SCARG(uap, fd);
-			SCARG(&ia, com) = TIOCPTSNAME;
-			SCARG(&ia, data) = ptmp;
-
-			if ((error = sys_ioctl(curlwp, &ia, retval)) != 0)
+			error = (*bsdioctl)(fp, TIOCPTSNAME, &ptm, l);
+			if (error != 0)
 				goto out;
-
-			if ((error = copyin(ptmp, &ptm, sizeof(ptm))) != 0)
-				printf("copyin %d\n", error);
-
 			error = copyout(&ptm.sfd, SCARG(uap, data),
 			    sizeof(ptm.sfd));
 			goto out;

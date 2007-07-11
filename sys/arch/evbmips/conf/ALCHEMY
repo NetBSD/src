@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.15 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: ALCHEMY,v 1.15.10.1 2007/07/11 19:58:46 mjf Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.15 $"
+#ident 		"ALCHEMY-$Revision: 1.15.10.1 $"
 
 maxusers	32
 
@@ -167,7 +167,7 @@ usb*		at ohci?
 
 # USB Hubs
 uhub*		at usb?
-uhub*		at uhub? port ? configuration ? interface ?
+uhub*		at uhub? port ?
 
 # USB HID device
 uhidev* at uhub? port ? configuration ? interface ?

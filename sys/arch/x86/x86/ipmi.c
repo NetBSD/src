@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.5 2007/02/15 15:40:50 ad Exp $ */
+/*	$NetBSD: ipmi.c,v 1.5.8.1 2007/07/11 20:03:22 mjf Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5 2007/02/15 15:40:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.5.8.1 2007/07/11 20:03:22 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,8 +174,6 @@ struct ipmi_sensors_head ipmi_sensor_list =
 void	dumpb(const char *, int, const u_int8_t *);
 
 int	read_sensor(struct ipmi_softc *, struct ipmi_sensor *);
-int	ipmi_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-int	ipmi_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
 int	add_sdr_sensor(struct ipmi_softc *, u_int8_t *);
 int	get_sdr_partial(struct ipmi_softc *, u_int16_t, u_int16_t,
 	    u_int8_t, u_int8_t, void *, u_int16_t *);
@@ -219,7 +217,7 @@ void	*scan_sig(long, long, int, int, const void *);
 
 int	ipmi_test_threshold(u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
-    struct envsys_tre_data *, u_int8_t *);
+			   envsys_data_t *, u_int8_t *);
 
 int	 add_child_sensors(struct ipmi_softc *, u_int8_t *, int, int, int,
     int, int, int, const char *);
@@ -906,8 +904,8 @@ void
 ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 {
 
-	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x %08llx %02x "
-	    "%02x\n",
+	dbg_printf(1, "ipmi_smbios_probe: %02x %02x %02x %02x "
+	    "%08" PRIx64 " %02x %02x\n",
 	    pipmi->smipmi_if_type,
 	    pipmi->smipmi_if_rev,
 	    pipmi->smipmi_i2c_address,
@@ -1319,26 +1317,26 @@ ipmi_test_threshold(u_int8_t v, u_int8_t valid, u_int8_t hi, u_int8_t lo)
 
 int
 ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
-    struct envsys_tre_data *sdata, u_int8_t *reading)
+    envsys_data_t *edata, u_int8_t *reading)
 {
 	u_int8_t	data[32];
 	struct sdrtype1	*s1 = (struct sdrtype1 *)psensor->i_sdr;
 	int		rxlen, etype;
 	/* Get reading of sensor */
-	switch (sdata->units) {
+	switch (edata->units) {
 	case ENVSYS_STEMP:
-		sdata->cur.data_s = ipmi_convert(reading[0], s1, 6);
-		sdata->cur.data_s += 273150000;
+		edata->value_cur = ipmi_convert(reading[0], s1, 6);
+		edata->value_cur += 273150000;
 		break;
 
 	case ENVSYS_SVOLTS_DC:
-		sdata->cur.data_us = ipmi_convert(reading[0], s1, 6);
+		edata->value_cur = ipmi_convert(reading[0], s1, 6);
 		break;
 
 	case ENVSYS_SFANRPM:
-		sdata->cur.data_us = ipmi_convert(reading[0], s1, 0);
+		edata->value_cur = ipmi_convert(reading[0], s1, 0);
 		if (((s1->units1>>3)&0x7) == 0x3)
-			sdata->cur.data_us *= 60; /* RPS -> RPM */
+			edata->value_cur *= 60; /* RPS -> RPM */
 		break;
 	default:
 		break;
@@ -1354,7 +1352,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		if (ipmi_sendcmd(sc, s1->owner_id, s1->owner_lun,
 		    SE_NETFN, SE_GET_SENSOR_THRESHOLD, 1, data) ||
 		    ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
-			return (ENVSYS_WARN_OK);
+			return ENVSYS_SVALID;
 
 		dbg_printf(25, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
 		    data[0], data[1], data[2], data[3], data[4], data[5],
@@ -1362,43 +1360,43 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 
 		if (ipmi_test_threshold(*reading, data[0] >> 2 ,
 		    data[6], data[3]))
-			return (ENVSYS_WARN_CRITOVER);
+			return ENVSYS_SCRITOVER;
 
 		if (ipmi_test_threshold(*reading, data[0] >> 1,
 		    data[5], data[2]))
-			return (ENVSYS_WARN_CRITOVER);
+			return ENVSYS_SCRITOVER;
 
 		if (ipmi_test_threshold(*reading, data[0] ,
 		    data[4], data[1]))
-			return (ENVSYS_WARN_OVER);
+			return ENVSYS_SWARNOVER;
 
 		break;
 
 	case IPMI_SENSOR_TYPE_INTRUSION:
-		sdata->cur.data_s = (reading[2] & 1) ? 0 : 1;
+		edata->value_cur = (reading[2] & 1) ? 0 : 1;
 		if (reading[2] & 0x1)
-			return (ENVSYS_WARN_CRITOVER);
+			return ENVSYS_SCRITICAL;
 		break;
 
 	case IPMI_SENSOR_TYPE_PWRSUPPLY:
 		/* Reading: 1 = present+powered, 0 = otherwise */
-		sdata->cur.data_s = (reading[2] & 1) ? 0 : 1;
+		edata->value_cur = (reading[2] & 1) ? 0 : 1;
 		if (reading[2] & 0x10) {
 			/* XXX: Need envsys type for Power Supply types
 			 *   ok: power supply installed && powered
 			 * warn: power supply installed && !powered
 			 * crit: power supply !installed
 			 */
-			return (ENVSYS_WARN_CRITOVER);
+			return ENVSYS_SCRITICAL;
 		}
 		if (reading[2] & 0x08) {
 			/* Power supply AC lost */
-			return (ENVSYS_WARN_OVER);
+			return ENVSYS_SWARNOVER;
 		}
 		break;
 	}
 
-	return (ENVSYS_WARN_OK);
+	return ENVSYS_SVALID;
 }
 
 int
@@ -1407,7 +1405,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	struct sdrtype1	*s1 = (struct sdrtype1 *) psensor->i_sdr;
 	u_int8_t	data[8];
 	int		rxlen, rv = -1;
-	struct envsys_tre_data *sdata = &sc->sc_sensor_data[psensor->i_envnum];
+	envsys_data_t *edata = &sc->sc_sensor_data[psensor->i_envnum];
 
 	if (!cold)
 		mutex_enter(&sc->sc_lock);
@@ -1421,41 +1419,18 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	if (ipmi_recvcmd(sc, sizeof(data), &rxlen, data))
 		goto done;
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
-	    data[0],data[1],data[2],data[3],
-	    sc->sc_sensor_info[psensor->i_envnum].desc);
+	    data[0],data[1],data[2],data[3], edata->desc);
 	if (data[1] & IPMI_INVALID_SENSOR) {
 		/* Check if sensor is valid */
-		sdata->validflags &= ~ENVSYS_FCURVALID;
+		edata->state = ENVSYS_SINVALID;
 	} else {
-		sdata->validflags |= ENVSYS_FCURVALID;
+		edata->state = ipmi_sensor_status(sc, psensor, edata, data);
 	}
-	sdata->warnflags = ipmi_sensor_status(sc, psensor, sdata, data);
 	rv = 0;
 done:
 	if (!cold)
 		mutex_exit(&sc->sc_lock);
 	return (rv);
-}
-
-int
-ipmi_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
-{
-	struct ipmi_softc *sc = sme->sme_cookie;
-
-	mutex_enter(&sc->sc_lock);
-	*tred = sc->sc_sensor_data[tred->sensor];
-	mutex_exit(&sc->sc_lock);
-	return 0;
-}
-
-int
-ipmi_streinfo(struct sysmon_envsys *sme,
-    struct envsys_basic_info *binfo)
-{
-	/* XXX Not implemented */
-	binfo->validflags = 0;
-
-	return (0);
 }
 
 int
@@ -1647,19 +1622,6 @@ ipmi_poll_thread(void *arg)
 	kthread_exit(0);
 }
 
-void
-ipmi_create_thread(void *arg)
-{
-	struct ipmi_softc *sc = arg;
-
-	if (kthread_create1(ipmi_poll_thread, sc, &sc->sc_kthread,
-	    DEVNAME(sc)) != 0) {
-		printf("%s: unable to create polling thread, ipmi disabled\n",
-		    DEVNAME(sc));
-		return;
-	}
-}
-
 int
 ipmi_probe(struct ipmi_attach_args *ia)
 {
@@ -1731,8 +1693,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	struct ipmi_sensor *ipmi_s;
 	int i;
 	int current_index_typ[ENVSYS_NSENSORS];
-	int nrange, currange;
-	struct envsys_range *env_ranges;
 
 
 	sc->sc_thread_running = 1;
@@ -1748,70 +1708,44 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* fill in sensor infos: */
 	/* get indexes for each unit, and number of units */
 	current_index_typ[0] = 0;
-	nrange = sc->sc_nsensors_typ[0] ? 1 : 0;
 	for (i = 1; i < ENVSYS_NSENSORS; i++) {
 		current_index_typ[i] =
 		    current_index_typ[i-1] + sc->sc_nsensors_typ[i - 1];
-		if (sc->sc_nsensors_typ[i])
-			nrange += 1;
 	}
-	/* allocate range array, and fill in */
-	env_ranges = malloc(sizeof(struct envsys_range) * (nrange + 1),
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (env_ranges == NULL) {
-		aprint_error("%s: can't allocate envsys_range\n", DEVNAME(sc));
-		return;
-	}
-	currange = 0;
-	for (i = 0 ; i < ENVSYS_NSENSORS; i++) {
-		if (sc->sc_nsensors_typ[i]) {
-			env_ranges[currange].low = current_index_typ[i];
-			env_ranges[currange].high =
-			    current_index_typ[i] + sc->sc_nsensors_typ[i];
-			env_ranges[currange].units = i;
-			currange++;
-		}
-	}
-	env_ranges[currange].low = 1;
-	env_ranges[currange].high = 0; /* end */
-	KASSERT(currange == nrange);
+
 	/* allocate and fill sensor arrays */
 	sc->sc_sensor_data =
-	    malloc(sizeof(struct envsys_tre_data) * sc->sc_nsensors,
+	    malloc(sizeof(envsys_data_t) * sc->sc_nsensors,
 	        M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_sensor_data == NULL) {
-		aprint_error("%s: can't allocate envsys_tre_data\n",
+		aprint_error("%s: can't allocate envsys_data_t\n",
 		    DEVNAME(sc));
 		return;
 	}
-	sc->sc_sensor_info =
-	    malloc(sizeof(struct envsys_basic_info) * sc->sc_nsensors,
-	        M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_sensor_info == NULL) {
-		aprint_error("%s: can't allocate envsys_basic_info\n",
-		    DEVNAME(sc));
-		return;
-	}
+
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
 		i = current_index_typ[ipmi_s->i_envtype];
 		current_index_typ[ipmi_s->i_envtype]++;
 		ipmi_s->i_envnum = i;
 		sc->sc_sensor_data[i].sensor = i;
 		sc->sc_sensor_data[i].units = ipmi_s->i_envtype;
-		/* ENVSYS_FCURVALID set by read_sensor() */
-		sc->sc_sensor_data[i].validflags = ENVSYS_FVALID;
-		sc->sc_sensor_data[i].warnflags = ENVSYS_WARN_OK;
-		sc->sc_sensor_info[i].sensor = i;
-		sc->sc_sensor_info[i].units = ipmi_s->i_envtype;
-		sc->sc_sensor_info[i].validflags = ENVSYS_FVALID;
-		strcpy(sc->sc_sensor_info[i].desc, ipmi_s->i_envdesc);
+		sc->sc_sensor_data[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor_data[i].monitor = true;
+		/*
+		 * Monitor critical/critical-over/warning-over states
+		 * in the sensors.
+		 */
+		sc->sc_sensor_data[i].flags |= ENVSYS_FMONCRITICAL;
+		sc->sc_sensor_data[i].flags |= ENVSYS_FMONCRITOVER;
+		sc->sc_sensor_data[i].flags |= ENVSYS_FMONWARNOVER;
+		(void)strlcpy(sc->sc_sensor_data[i].desc, ipmi_s->i_envdesc,
+		    sizeof(sc->sc_sensor_data[i].desc));
 	}
-	sc->sc_ranges = env_ranges;
+
+	sc->sc_envsys.sme_name = DEVNAME(sc);
 	sc->sc_envsys.sme_cookie = sc;
-	sc->sc_envsys.sme_gtredata = ipmi_gtredata;
-	sc->sc_envsys.sme_streinfo = ipmi_streinfo;
+	sc->sc_envsys.sme_flags = SME_DISABLE_GTREDATA;
 	sc->sc_envsys.sme_nsensors = sc->sc_nsensors;
-	sc->sc_envsys.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_envsys))
 	    printf("%s: unable to register with sysmon\n", DEVNAME(sc));
@@ -1819,9 +1753,6 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	/* initialize sensor list for thread */
 	if (!SLIST_EMPTY(&ipmi_sensor_list))
 		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
-
-	/* Setup threads */
-	kthread_create(ipmi_create_thread, sc);
 
 	aprint_normal(": version %d.%d interface %s %sbase 0x%x/%x spacing %d",
 	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,
@@ -1848,8 +1779,15 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 0;
 	sc->sc_max_retries = 50; /* 50 * 1/100 = 0.5 seconds max */
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, _bmc_io_wait, sc);
+
+	if (kthread_create(PRI_NONE, 0, NULL, ipmi_poll_thread, sc,
+	    &sc->sc_kthread, DEVNAME(sc)) != 0) {
+		printf("%s: unable to create polling thread, ipmi disabled\n",
+		    DEVNAME(sc));
+		return;
+	}
 }
 
 int

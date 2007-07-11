@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.23 2007/01/20 18:48:17 xtraeme Exp $
+# $NetBSD: XEN2_DOM0,v 1.23.8.1 2007/07/11 19:59:55 mjf Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -74,6 +74,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -163,7 +164,6 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
@@ -205,16 +205,25 @@ xencons*	at hypervisor?		# Xen virtual console
 #sd*		at hypervisor?		# Xen vbd (sd identity)
 #cd*		at hypervisor?		# Xen vbd (cd identity)
 
+# PCI bus support
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
+
+# PCI bridges
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
+					# SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
 
-# XXX 'puc's aren't really bridges, but there's no better place for them here
-puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+# ISA bus support
+#isa0	at ichlpcib?
+isa0	at pcib?
+isa0	at hypervisor?
 
 # Serial Devices
 
@@ -356,6 +365,8 @@ geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide*		at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* 	at jmide?
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -450,10 +461,6 @@ ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
 
-# ISA bus support
-isa0	at pcib?
-isa0	at hypervisor?
-
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -483,7 +490,7 @@ usb*    at uhci?
 
 # USB Hubs
 uhub*   at usb?
-uhub*   at uhub? port ? configuration ? interface ?
+uhub*   at uhub? port ?
 
 # USB HID device
 uhidev* at uhub? port ? configuration ? interface ?
@@ -649,7 +656,7 @@ midi*	at midibus?
 # bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
 
 # Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
@@ -683,6 +690,7 @@ pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
+pseudo-device	bio			# RAID control device driver
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver

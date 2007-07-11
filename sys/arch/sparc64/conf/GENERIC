@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2007/03/01 14:57:38 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.82.4.1 2007/07/11 20:02:31 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.82 $"
+#ident 		"GENERIC-$Revision: 1.82.4.1 $"
 
 maxusers	64
 
@@ -543,7 +543,7 @@ usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
-uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at uhub? port ?
 
 # USB HID device
 uhidev*	at uhub? port ? configuration ? interface ?
@@ -604,6 +604,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
@@ -687,6 +688,7 @@ pseudo-device	vlan
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
@@ -783,7 +785,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
 
 ## Bluetooth USB Controllers
-ubt* at uhub? port ? configuration ? interface ?
+ubt* at uhub? port ?
 
 ## Bluetooth Device Hub
 #bthub* at bt3c?
@@ -861,6 +863,7 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 #### Other device configuration
 
 psm*		at ebus?		# Ultrabook IIi microcontroller
+envctrl*	at ebus?		# Ultra E450 environmental monitoring
 
 ### Other pseudo-devices
 

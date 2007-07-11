@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.64 2007/03/04 06:02:01 christos Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.64.4.1 2007/07/11 20:06:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.64 2007/03/04 06:02:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.64.4.1 2007/07/11 20:06:12 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -125,7 +125,7 @@ epic_attach(sc)
 	uint16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
 	char *nullbuf;
 
-	callout_init(&sc->sc_mii_callout);
+	callout_init(&sc->sc_mii_callout, 0);
 
 	/*
 	 * Allocate the control data structures, and create and load the

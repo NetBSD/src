@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.69 2007/03/04 06:01:57 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.69.4.1 2007/07/11 20:06:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69 2007/03/04 06:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.69.4.1 2007/07/11 20:06:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ lpt_attach_subr(sc)
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 
-	callout_init(&sc->sc_wakeup_ch);
+	callout_init(&sc->sc_wakeup_ch, 0);
 
 	sc->sc_dev_ok = 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.36 2007/03/04 06:00:45 christos Exp $ */
+/*	$NetBSD: auxreg.c,v 1.36.4.1 2007/07/11 20:02:24 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.36 2007/03/04 06:00:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.36.4.1 2007/07/11 20:02:24 mjf Exp $");
 
 #include "opt_blink.h"
 
@@ -70,7 +70,7 @@ CFATTACH_DECL(auxreg_obio, sizeof(struct device),
     auxregmatch_obio, auxregattach_obio, NULL, NULL);
 
 #ifdef BLINK
-static struct callout blink_ch = CALLOUT_INITIALIZER;
+static callout_t blink_ch;
 
 static void blink(void *);
 
@@ -165,6 +165,7 @@ auxregattach(struct device *self)
 
 	printf("\n");
 #ifdef BLINK
+	callout_init(&blink_ch, 0);
 	blink((void *)0);
 #else
 	LED_ON;
