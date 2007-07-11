@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.51 2007/01/31 10:08:23 elad Exp $
+.\" $NetBSD: kauth.9,v 1.52 2007/07/11 19:12:09 dsl Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 31, 2007
+.Dd July 11, 2007
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -867,13 +867,13 @@ The return value is an error code, or zero for success.
 .It Ft u_int Fn kauth_cred_ngroups "kauth_cred_t cred"
 Return the number of groups in the group list of
 .Ar cred .
-.It Ft int Fn kauth_cred_group "kauth_cred_t cred" "u_int idx"
+.It Ft gid_t Fn kauth_cred_group "kauth_cred_t cred" "u_int idx"
 Return the group-id of the group at index
 .Ar idx
 in the group list of
 .Ar cred .
 .It Ft int Fn kauth_cred_setgroups "kauth_cred_t cred" "gid_t *groups" \
-"size_t ngroups" "uid_t gmuid"
+"size_t ngroups" "uid_t gmuid" "unsigned int flags"
 Copy
 .Ar ngroups
 groups from array pointed to by
@@ -883,24 +883,40 @@ to the group list in
 adjusting the number of groups in
 .Ar cred
 appropriately.
+.Ar flags
+should contain either
+.Dv UIO_USERSPACE
+or
+.Dv UIO_SYSSPACE
+indicating whether
+.Ar groups
+is a user or kernel space address.
 .Pp
 Any groups remaining will be set to an invalid value.
 .Pp
 .Ar gmuid
 is unused for now, and to maintain interface compatibility with the Darwin
 KPI.
+.Pp
+The return value is an error code, or zero for success.
 .It Ft int Fn kauth_cred_getgroups "kauth_cred_t cred" "gid_t *groups" \
-"size_t ngroups"
+"size_t ngroups" "unsigned int flags"
 Copy
 .Ar ngroups
 groups from the group list in
 .Ar cred
 to the buffer pointed to by
 .Ar groups .
+.Ar flags
+should contain either
+.Dv UIO_USERSPACE
+or
+.Dv UIO_SYSSPACE
+indicating whether
+.Ar groups
+is a user or kernel space address.
 .Pp
-The number of groups in
-.Ar cred
-will be returned.
+The return value is an error code, or zero for success.
 .El
 .Ss Credential Private Data
 .Nm
