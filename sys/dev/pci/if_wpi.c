@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.15 2007/07/11 17:26:25 xtraeme Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.16 2007/07/11 17:51:07 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.15 2007/07/11 17:26:25 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.16 2007/07/11 17:51:07 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1361,7 +1361,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	tail = (struct wpi_rx_tail *)((char *)(head + 1) + le16toh(head->len));
 
 	DPRINTFN(4, ("rx intr: idx=%d len=%d stat len=%d rssi=%d rate=%x "
-		"chan=%d tstamp=%llu\n", ring->cur, le32toh(desc->len),
+		"chan=%d tstamp=%" PRId64 "\n", ring->cur, le32toh(desc->len),
 		le16toh(head->len), (int8_t)stat->rssi, head->rate, head->chan,
 		le64toh(tail->tstamp)));
 
@@ -2339,7 +2339,7 @@ wpi_enable_tsf(struct wpi_softc *sc, struct ieee80211_node *ni)
 	mod = le64toh(tsf.tstamp) % val;
 	tsf.binitval = htole32((uint32_t)(val - mod));
 
-	DPRINTF(("TSF bintval=%u tstamp=%llu, init=%u\n",
+	DPRINTF(("TSF bintval=%u tstamp=%" PRId64 ", init=%u\n",
 	    ni->ni_intval, le64toh(tsf.tstamp), (uint32_t)(val - mod)));
 
 	if (wpi_cmd(sc, WPI_CMD_TSF, &tsf, sizeof tsf, 1) != 0)
