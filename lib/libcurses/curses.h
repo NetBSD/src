@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.89 2007/07/01 10:53:59 xtraeme Exp $	*/
+/*	$NetBSD: curses.h,v 1.90 2007/07/11 18:44:46 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -280,6 +280,8 @@ extern chtype _acs_char[NUM_ACS];
 #else
 #define __UC_CAST(a)	(unsigned char)(a)
 #endif
+
+/* Standard definitions */
 #define	ACS_RARROW	_acs_char[__UC_CAST('+')]
 #define	ACS_LARROW	_acs_char[__UC_CAST(',')]
 #define	ACS_UARROW	_acs_char[__UC_CAST('-')]
@@ -305,6 +307,15 @@ extern chtype _acs_char[NUM_ACS];
 #define	ACS_TTEE	_acs_char[__UC_CAST('w')]
 #define	ACS_VLINE	_acs_char[__UC_CAST('x')]
 #define	ACS_BULLET	_acs_char[__UC_CAST('~')]
+
+/* Extensions */
+#define	ACS_S3		_acs_char[__UC_CAST('p')]
+#define	ACS_S7		_acs_char[__UC_CAST('r')]
+#define	ACS_LEQUAL	_acs_char[__UC_CAST('y')]
+#define	ACS_GEQUAL	_acs_char[__UC_CAST('z')]
+#define	ACS_PI		_acs_char[__UC_CAST('{')]
+#define	ACS_NEQUAL	_acs_char[__UC_CAST('|')]
+#define	ACS_STERLING	_acs_char[__UC_CAST('}')]
 
 #ifdef HAVE_WCHAR
 extern cchar_t _wacs_char[NUM_ACS];
@@ -334,6 +345,13 @@ extern cchar_t _wacs_char[NUM_ACS];
 #define	WACS_TTEE       _wacs_char[(unsigned char)'w'].vals[0]
 #define	WACS_VLINE      _wacs_char[(unsigned char)'x'].vals[0]
 #define	WACS_BULLET     _wacs_char[(unsigned char)'~'].vals[0]
+#define	WACS_S3		_wacs_char[(unsigned char)'p'].vals[0]
+#define	WACS_S7		_wacs_char[(unsigned char)'r'].vals[0]
+#define	WACS_LEQUAL	_wacs_char[(unsigned char)'y'].vals[0]
+#define	WACS_GEQUAL	_wacs_char[(unsigned char)'z'].vals[0]
+#define	WACS_PI		_wacs_char[(unsigned char)'{'].vals[0]
+#define	WACS_NEQUAL	_wacs_char[(unsigned char)'|'].vals[0]
+#define	WACS_STERLING	_wacs_char[(unsigned char)'}'].vals[0]
 #endif /* HAVE_WCHAR */
 
 /* System V compatibility */
