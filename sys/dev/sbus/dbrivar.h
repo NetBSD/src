@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.6 2007/03/14 05:40:35 macallan Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.7 2007/07/12 22:58:50 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -45,7 +45,7 @@
 #define DBRI_VAR_H
 
 #define	DBRI_NUM_COMMANDS	64
-#define	DBRI_NUM_DESCRIPTORS	64
+#define	DBRI_NUM_DESCRIPTORS	32
 #define	DBRI_INT_BLOCKS		64
 
 #define DBRI_PIPE_MAX		32
@@ -56,7 +56,7 @@ enum direction {
 };
 
 /* DBRI DMA transmit descriptor */
-struct dbri_mem {
+struct dbri_xmit {
 	volatile uint32_t	flags;
 		#define TX_EOF	0x80000000	/* End of frame marker */
 		#define TX_BCNT(x)	((x&0x3fff)<<16)
@@ -73,6 +73,23 @@ struct dbri_mem {
 		#define TS_UNDERRUN	0x0008	/* DMA underrun */
 };
 
+struct dbri_recv {
+	volatile uint32_t	status;
+		#define RX_EOF		0x80000000
+		#define RX_COMPLETED	0x40000000
+		#define RX_BCNT(x)	((x & 0x3fff) << 16)
+		#define RX_CRCERROR	0x00000080
+		#define RX_BBC		0x00000040	/* bad byte count */
+		#define RX_ABORT	0x00000020
+		#define RX_OVERRUN	0x00000008
+	volatile uint32_t	ba;
+	volatile uint32_t	nda;
+	volatile uint32_t	flags;
+		#define RX_BSIZE(x)	(x & 0x3fff)
+		#define RX_FINAL	0x00008000
+		#define RX_MARKER	0x00004000
+};
+		
 struct dbri_pipe {
 	uint32_t	sdp;		/* SDP command word */
 	enum direction	direction;
@@ -99,8 +116,8 @@ struct dbri_desc {
 struct dbri_dma {
 	volatile uint32_t	command[DBRI_NUM_COMMANDS];
 	volatile int32_t	intr[DBRI_INT_BLOCKS];
-	struct dbri_mem		desc[DBRI_NUM_DESCRIPTORS];
-	bus_dmamap_t		dmamap;
+	struct dbri_xmit	xmit[DBRI_NUM_DESCRIPTORS];
+	struct dbri_recv	recv[DBRI_NUM_DESCRIPTORS];
 };
 
 struct dbri_softc {
@@ -109,6 +126,7 @@ struct dbri_softc {
 	struct sbusdev	sc_sd;		/* sbus device */
 	bus_space_handle_t sc_ioh;
 	bus_space_tag_t	sc_iot;
+	/* DMA buffer for sending commands to the chip */
 	bus_dma_tag_t	sc_dmat;
 	bus_dmamap_t	sc_dmamap;
 	bus_dma_segment_t sc_dmaseg;
@@ -126,8 +144,9 @@ struct dbri_softc {
 
 	int		sc_waitseen;
 
-	int		sc_open;
+	int		sc_refcount;
 	int		sc_playing;
+	int		sc_recording;
 
 	int		sc_liu_state;
 	void		(*sc_liu)(void *);
