@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.157 2007/07/09 21:11:30 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.158 2007/07/12 18:29:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.157 2007/07/09 21:11:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.158 2007/07/12 18:29:43 rmind Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -821,9 +821,10 @@ again:
 				    &nmp->nm_lock, slptimeo);
 			}
 			if (error) {
-				mutex_exit(&nmp->nm_lock);
-				if (nfs_sigintr(nmp, NULL, curlwp))
+				if (nfs_sigintr(nmp, NULL, curlwp)) {
+					mutex_exit(&nmp->nm_lock);
 					return (EINTR);
+				}
 				if (catch) {
 					catch = false;
 					slptimeo = 2 * hz;
