@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.25 2007/04/22 08:29:56 dsl Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.26 2007/07/12 19:41:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.25 2007/04/22 08:29:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.26 2007/07/12 19:41:57 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -105,23 +105,18 @@ freebsd_sys_mount(l, v, retval)
 		syscallarg(int) flags;
 		syscallarg(void *) data;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
 	const char *type;
-	char *s;
-	void *sg = stackgap_init(p, 0);
-	struct sys_mount_args bma;
+	struct vfsops *vfsops;
+	register_t dummy;
 
 	if ((type = convert_from_freebsd_mount_type(SCARG(uap, type))) == NULL)
 		return ENODEV;
-	s = stackgap_alloc(p, &sg, MFSNAMELEN + 1);
-	if ((error = copyout(type, s, strlen(type) + 1)) != 0)
-		return error;
-	SCARG(&bma, type) = s;
-	SCARG(&bma, path) = SCARG(uap, path);
-	SCARG(&bma, flags) = SCARG(uap, flags);
-	SCARG(&bma, data) = SCARG(uap, data);
-	return sys_mount(l, &bma, retval);
+	vfsops = vfs_getopsbyname(type);
+	if (vfsops == NULL)
+		return ENODEV;
+
+	return do_sys_mount(l, vfsops, NULL, SCARG(uap, path),
+	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE, 0, &dummy);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.19 2007/05/13 15:57:39 dsl Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.20 2007/07/12 19:41:57 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.19 2007/05/13 15:57:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.20 2007/07/12 19:41:57 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ static struct irix_waiting_proc_rec *iur_proc_getfirst
  * at driver attach time, in irix_usemaattach().
  */
 struct vfsops irix_usema_dummy_vfsops = {
-	"usema_dummy",
+	"usema_dummy", 0,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
 	NULL,
