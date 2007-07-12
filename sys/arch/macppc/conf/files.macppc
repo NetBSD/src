@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.10 2007/06/07 20:30:42 garbled Exp $
+#	$NetBSD: files.macppc,v 1.84.2.11 2007/07/12 19:11:00 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -78,6 +78,10 @@ attach cpu at mainbus
 file arch/macppc/macppc/cpu.c
 
 include "dev/wsfb/files.wsfb"
+
+# ISA stuff
+# we don't need it but some of the shared code needs isa.h
+include "dev/isa/files.isa"
 
 # PCI bus support
 include "dev/pci/files.pci"
