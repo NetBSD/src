@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.101 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.102 2007/07/12 20:39:56 rmind Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.101 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.102 2007/07/12 20:39:56 rmind Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1619,7 +1619,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 #if defined(__NetBSD__)
-				workqueue_enqueue(sc->wqp,&sc->wk);
+				workqueue_enqueue(sc->wqp,&sc->wk, NULL);
 				/* XXX */
 #else
 				aue_init(sc);

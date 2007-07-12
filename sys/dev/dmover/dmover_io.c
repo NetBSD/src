@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.26 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.27 2007/07/12 20:39:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.26 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.27 2007/07/12 20:39:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -320,7 +320,7 @@ dmio_usrreq_fini(struct dmio_state *ds, struct dmio_usrreq_state *dus)
 		free(dus->dus_uio_in, M_TEMP);
 	}
 
-	workqueue_enqueue(dmio_cleaner, &dus->dus_work);
+	workqueue_enqueue(dmio_cleaner, &dus->dus_work, NULL);
 }
 
 static void
