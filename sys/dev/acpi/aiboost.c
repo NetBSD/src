@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.9 2007/07/02 10:27:12 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.10 2007/07/12 18:50:40 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.9 2007/07/02 10:27:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.10 2007/07/12 18:50:40 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,8 +212,10 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 	case ENVSYS_STEMP:
 		/* Temperatures */
 		val = aiboost_get_value(h, "RTMP", sc->sc_aitemp->elem[i].id);
-		if (val == -1)
+		if (val == -1) {
 			edata->state = ENVSYS_SINVALID;
+			return;
+		}
 		/* envsys(9) wants mK... convert from Celsius. */
 		edata->value_cur = val * 100000 + 273150000;
 		DPRINTF(("%s: temp[%d] value_cur=%d val=%d j=%d\n", __func__,
@@ -223,8 +225,10 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 		/* Voltages */
 		j = i - sc->sc_aitemp->num;
 		val = aiboost_get_value(h, "RVLT", sc->sc_aivolt->elem[j].id);
-		if (val == -1)
+		if (val == -1) {
 			edata->state = ENVSYS_SINVALID;
+			return;
+		}
 		/* envsys(4) wants mV... */
 		edata->value_cur = val * 10000;
 		edata->value_cur /= 10;
@@ -235,12 +239,16 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 		/* Fans */
 		j = i - (sc->sc_aitemp->num + sc->sc_aivolt->num);
 		val = aiboost_get_value(h, "RFAN", sc->sc_aifan->elem[j].id);
-		if (val == -1)
+		if (val == -1) {
 			edata->state = ENVSYS_SINVALID;
+			return;
+		}
 		edata->value_cur = val;
 		DPRINTF(("%s: fan[%d] val=%d j=%d\n", __func__, i, val, j));
 		break;
 	}
+
+	edata->state = ENVSYS_SVALID;
 }
 
 static int
