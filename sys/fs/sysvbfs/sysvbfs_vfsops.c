@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.11 2007/06/30 09:37:57 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.12 2007/07/12 19:35:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.11 2007/06/30 09:37:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.12 2007/07/12 19:35:34 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,10 +74,10 @@ struct pool sysvbfs_node_pool;
 int sysvbfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 
 int
-sysvbfs_mount(struct mount *mp, const char *path, void *data,
+sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
-	struct sysvbfs_args args;
+	struct sysvbfs_args *args = data;
 	struct sysvbfs_mount *bmp = NULL;
 	struct vnode *devvp = NULL;
 	int error;
@@ -85,26 +85,28 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 
 	DPRINTF("%s: mnt_flag=%x\n", __FUNCTION__, mp->mnt_flag);
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		if ((bmp = (void *)mp->mnt_data) == NULL)
 			return EIO;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
-	if ((error = copyin(data, &args, sizeof(args))) != 0)
-		return error;
 
-	DPRINTF("%s: args.fspec=%s\n", __FUNCTION__, args.fspec);
+	DPRINTF("%s: args->fspec=%s\n", __FUNCTION__, args->fspec);
 	update = mp->mnt_flag & MNT_UPDATE;
-	if (args.fspec == NULL) {
+	if (args->fspec == NULL) {
 		/* nothing to do. */
 		return EINVAL;
 	}
 
-	if (args.fspec != NULL) {
+	if (args->fspec != NULL) {
 		/* Look up the name and verify that it's sane. */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		devvp = ndp->ni_vp;
@@ -158,7 +160,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 		/* XXX: r/w -> read only */
 	}
 
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 	    mp, l);
 }
 

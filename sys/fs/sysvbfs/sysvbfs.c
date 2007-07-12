@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.4 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.5 2007/07/12 19:35:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.4 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.5 2007/07/12 19:35:34 dsl Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -115,6 +115,7 @@ const struct genfs_ops sysvbfs_genfsops = {
 
 struct vfsops sysvbfs_vfsops = {
 	MOUNT_SYSVBFS,
+	sizeof (struct sysvbfs_args),
 	sysvbfs_mount,
 	sysvbfs_start,
 	sysvbfs_unmount,

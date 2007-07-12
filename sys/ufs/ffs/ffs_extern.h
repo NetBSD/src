@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.56 2007/06/07 05:34:48 yamt Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.57 2007/07/12 19:35:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -108,8 +108,8 @@ void	ffs_init(void);
 void	ffs_reinit(void);
 void	ffs_done(void);
 int	ffs_mountroot(void);
-int	ffs_mount(struct mount *, const char *, void *, struct nameidata *,
-		  struct lwp *);
+int	ffs_mount(struct mount *, const char *, void *, size_t *,
+		struct nameidata *, struct lwp *);
 int	ffs_reload(struct mount *, kauth_cred_t, struct lwp *);
 int	ffs_mountfs(struct vnode *, struct mount *, struct lwp *);
 int	ffs_unmount(struct mount *, int, struct lwp *);

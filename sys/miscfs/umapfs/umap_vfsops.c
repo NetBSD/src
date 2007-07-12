@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.65 2007/07/08 23:58:53 pooka Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.66 2007/07/12 19:35:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.65 2007/07/08 23:58:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.66 2007/07/12 19:35:35 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.65 2007/07/08 23:58:53 pooka Exp $
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umapfs_mount(struct mount *, const char *, void *,
+int	umapfs_mount(struct mount *, const char *, void *, size_t *,
 			  struct nameidata *, struct lwp *);
 int	umapfs_unmount(struct mount *, int, struct lwp *);
 
@@ -65,14 +65,15 @@ int	umapfs_unmount(struct mount *, int, struct lwp *);
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, ndp, l)
+umapfs_mount(mp, path, data, data_len, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
+	size_t *data_len;
 	struct nameidata *ndp;
 	struct lwp *l;
 {
-	struct umap_args args;
+	struct umap_args *args = data;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
 	int error;
@@ -80,14 +81,18 @@ umapfs_mount(mp, path, data, ndp, l)
 	int i;
 #endif
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = MOUNTTOUMAPMOUNT(mp);
 		if (amp == NULL)
 			return EIO;
-		args.la.target = NULL;
-		args.nentries = amp->info_nentries;
-		args.gnentries = amp->info_gnentries;
-		return copyout(&args, data, sizeof(args));
+		args->la.target = NULL;
+		args->nentries = amp->info_nentries;
+		args->gnentries = amp->info_gnentries;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
 	/* only for root */
@@ -100,13 +105,6 @@ umapfs_mount(mp, path, data, ndp, l)
 #endif
 
 	/*
-	 * Get argument
-	 */
-	error = copyin(data, &args, sizeof(struct umap_args));
-	if (error)
-		return (error);
-
-	/*
 	 * Update is not supported
 	 */
 	if (mp->mnt_flag & MNT_UPDATE)
@@ -116,7 +114,7 @@ umapfs_mount(mp, path, data, ndp, l)
 	 * Find lower node
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args.umap_target, l);
+		UIO_USERSPACE, args->umap_target, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 
@@ -149,37 +147,37 @@ umapfs_mount(mp, path, data, ndp, l)
 	/*
 	 * Now copy in the number of entries and maps for umap mapping.
 	 */
-	if (args.nentries > MAPFILEENTRIES || args.gnentries > GMAPFILEENTRIES) {
+	if (args->nentries > MAPFILEENTRIES || args->gnentries > GMAPFILEENTRIES) {
 		vput(lowerrootvp);
 		return (error);
 	}
 
-	amp->info_nentries = args.nentries;
-	amp->info_gnentries = args.gnentries;
-	error = copyin(args.mapdata, amp->info_mapdata,
-	    2*sizeof(u_long)*args.nentries);
+	amp->info_nentries = args->nentries;
+	amp->info_gnentries = args->gnentries;
+	error = copyin(args->mapdata, amp->info_mapdata,
+	    2*sizeof(u_long)*args->nentries);
 	if (error) {
 		vput(lowerrootvp);
 		return (error);
 	}
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umap_mount:nentries %d\n",args.nentries);
-	for (i = 0; i < args.nentries; i++)
+	printf("umap_mount:nentries %d\n",args->nentries);
+	for (i = 0; i < args->nentries; i++)
 		printf("   %ld maps to %ld\n", amp->info_mapdata[i][0],
 	 	    amp->info_mapdata[i][1]);
 #endif
 
-	error = copyin(args.gmapdata, amp->info_gmapdata,
-	    2*sizeof(u_long)*args.gnentries);
+	error = copyin(args->gmapdata, amp->info_gmapdata,
+	    2*sizeof(u_long)*args->gnentries);
 	if (error) {
 		vput(lowerrootvp);
 		return (error);
 	}
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umap_mount:gnentries %d\n",args.gnentries);
-	for (i = 0; i < args.gnentries; i++)
+	printf("umap_mount:gnentries %d\n",args->gnentries);
+	for (i = 0; i < args->gnentries; i++)
 		printf("\tgroup %ld maps to %ld\n",
 		    amp->info_gmapdata[i][0],
 	 	    amp->info_gmapdata[i][1]);
@@ -224,7 +222,7 @@ umapfs_mount(mp, path, data, ndp, l)
 	vp->v_flag |= VROOT;
 	amp->umapm_rootvp = vp;
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args.umap_target,
+	error = set_statvfs_info(path, UIO_USERSPACE, args->umap_target,
 	    UIO_USERSPACE, mp, l);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
@@ -304,6 +302,7 @@ const struct vnodeopv_desc * const umapfs_vnodeopv_descs[] = {
 
 struct vfsops umapfs_vfsops = {
 	MOUNT_UMAP,
+	sizeof (struct umap_args),
 	umapfs_mount,
 	layerfs_start,
 	umapfs_unmount,
