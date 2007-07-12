@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.45 2007/07/10 09:50:08 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.46 2007/07/12 09:30:04 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.45 2007/07/10 09:50:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.46 2007/07/12 09:30:04 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1652,6 +1652,12 @@ ffs_snapshot_mount(struct mount *mp)
 	struct inode *ip, *xp;
 	ufs2_daddr_t snaplistsize, *snapblklist;
 	int i, error, ns, snaploc, loc;
+
+	/*
+	 * No persistent snapshots on apple ufs file systems.
+	 */
+	if (UFS_MPISAPPLEUFS(ump))
+		return;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
