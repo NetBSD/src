@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2007/05/18 09:10:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 2007/07/12 14:15:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2007/05/18 09:10:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2007/07/12 14:15:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1242,7 +1242,6 @@ pmap_pinit(pmap_t pmap)
 	pmap->pmap_refcnt = 1;
 	pmap->pmap_stats.resident_count = 0;
 	pmap->pmap_stats.wired_count = 0;
-	pmap->pmap_vmspace = NULL;
 	splx(s);
 }
 
@@ -1333,20 +1332,6 @@ pmap_activate(struct lwp *l)
 
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcb->pcb_space = space;
-
-	if (pmap->pmap_vmspace != l->l_proc->p_vmspace) {
-		struct trapframe *tf = l->l_md.md_regs;
-
-		pmap->pmap_vmspace = l->l_proc->p_vmspace;
-
-		/* Load all of the user's space registers. */
-		tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
-		tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
-		tf->tf_iisq_head = tf->tf_iisq_tail = space;
-
-		/* Load the protection registers. */
-		tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
-	}
 
 	if (p == curproc)
 		mtctl(pmap->pmap_pid, CR_PIDR2);
