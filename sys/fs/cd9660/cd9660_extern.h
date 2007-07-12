@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.20 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.21 2007/07/12 19:35:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -99,7 +99,7 @@ extern struct pool cd9660_node_pool;
 extern int cd9660_utf8_joliet;
 
 int cd9660_mount(struct mount *,
-	    const char *, void *, struct nameidata *, struct lwp *);
+	    const char *, void *, size_t *, struct nameidata *, struct lwp *);
 int cd9660_start(struct mount *, int, struct lwp *);
 int cd9660_unmount(struct mount *, int, struct lwp *);
 int cd9660_root(struct mount *, struct vnode **);

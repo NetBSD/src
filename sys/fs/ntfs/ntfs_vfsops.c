@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.50 2007/06/30 09:37:56 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.51 2007/07/12 19:35:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.50 2007/06/30 09:37:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.51 2007/07/12 19:35:33 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ MALLOC_JUSTDEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 static int	ntfs_mount(struct mount *, char *, void *,
 				struct nameidata *, struct proc *);
 #else
-static int	ntfs_mount(struct mount *, const char *, void *,
+static int	ntfs_mount(struct mount *, const char *, void *, size_t *,
 				struct nameidata *, struct lwp *);
 #endif
 static int	ntfs_quotactl(struct mount *, int, uid_t, void *,
@@ -230,6 +230,7 @@ ntfs_mount (
 #else
 	const char *path,
 	void *data,
+	size_t *data_len,
 #endif
 	struct nameidata *ndp,
 #if defined(__FreeBSD__)
@@ -240,18 +241,30 @@ ntfs_mount (
 {
 	int		err = 0, flags;
 	struct vnode	*devvp;
-	struct ntfs_args args;
+#if defined(__FreeBSD__)
+	struct ntfs_args *args = args_buf;
+#else
+	struct ntfs_args *args = data;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
+#endif
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		struct ntfsmount *ntmp = VFSTONTFS(mp);
 		if (ntmp == NULL)
 			return EIO;
-		args.fspec = NULL;
-		args.uid = ntmp->ntm_uid;
-		args.gid = ntmp->ntm_gid;
-		args.mode = ntmp->ntm_mode;
-		args.flag = ntmp->ntm_flag;
-		return copyout(&args, data, sizeof(args));
+		args->fspec = NULL;
+		args->uid = ntmp->ntm_uid;
+		args->gid = ntmp->ntm_gid;
+		args->mode = ntmp->ntm_mode;
+		args->flag = ntmp->ntm_flag;
+#if defined(__FreeBSD__)
+		return copyout(args, data, sizeof(args));
+#else
+		*data_len = sizeof *args;
+		return 0;
+#endif
 	}
 	/*
 	 ***
@@ -259,10 +272,12 @@ ntfs_mount (
 	 ***
 	 */
 
+#if defined(__FreeBSD__)
 	/* copy in user arguments*/
-	err = copyin(data, &args, sizeof (struct ntfs_args));
+	err = copyin(data, args, sizeof (struct ntfs_args));
 	if (err)
 		return (err);		/* can't get arguments*/
+#endif
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -278,9 +293,9 @@ ntfs_mount (
 	 * and verify that it refers to a sensible block device.
 	 */
 #ifdef __FreeBSD__
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, p);
 #else
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 #endif
 	err = namei(ndp);
 	if (err) {
@@ -318,7 +333,7 @@ ntfs_mount (
 		/*
 		 * Update device name only on success
 		 */
-		err = set_statvfs_info(NULL, UIO_USERSPACE, args.fspec,
+		err = set_statvfs_info(NULL, UIO_USERSPACE, args->fspec,
 		    UIO_USERSPACE, mp, p);
 		if (err)
 			goto fail;
@@ -340,7 +355,7 @@ ntfs_mount (
 		 */
 
 		/* Save "last mounted on" info for mount point (NULL pad)*/
-		err = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
+		err = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 		    UIO_USERSPACE, mp, l);
 		if (err)
 			goto fail;
@@ -365,7 +380,7 @@ ntfs_mount (
 		err = VOP_OPEN(devvp, flags, FSCRED, l);
 		if (err)
 			goto fail;
-		err = ntfs_mountfs(devvp, mp, &args, l);
+		err = ntfs_mountfs(devvp, mp, args, l);
 		if (err) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, flags, NOCRED, l);
@@ -1002,6 +1017,9 @@ const struct vnodeopv_desc * const ntfs_vnodeopv_descs[] = {
 
 struct vfsops ntfs_vfsops = {
 	MOUNT_NTFS,
+#if !defined(__FreeBSD__)
+	sizeof (struct ntfs_args),
+#endif
 	ntfs_mount,
 	ntfs_start,
 	ntfs_unmount,
