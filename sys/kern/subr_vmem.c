@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.31 2007/07/09 21:10:55 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.32 2007/07/12 20:39:56 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.31 2007/07/09 21:10:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32 2007/07/12 20:39:56 rmind Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -1200,7 +1200,7 @@ static void
 vmem_rehash_all_kick(void *dummy)
 {
 
-	workqueue_enqueue(vmem_rehash_wq, &vmem_rehash_wk);
+	workqueue_enqueue(vmem_rehash_wq, &vmem_rehash_wk, NULL);
 }
 
 void

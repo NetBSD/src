@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.201 2007/06/30 09:37:53 pooka Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.202 2007/07/12 20:39:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.201 2007/06/30 09:37:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.202 2007/07/12 20:39:57 rmind Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2591,7 +2591,7 @@ lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = aiodone;
 
-	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work);
+	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work, NULL);
 }
 
 static void
