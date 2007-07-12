@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.7 2007/07/10 06:32:08 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.8 2007/07/12 20:39:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.7 2007/07/10 06:32:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.8 2007/07/12 20:39:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -452,7 +452,7 @@ sme_events_check(void *arg)
 		    see->pes.pes_dvname,
 		    see->pes.pes_sensname,
 		    see->type));
-		workqueue_enqueue(seewq, &see->see_wk);
+		workqueue_enqueue(seewq, &see->see_wk, NULL);
 	}
 	callout_schedule(&seeco, SME_EVTIMO);
 }

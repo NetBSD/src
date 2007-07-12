@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.82 2007/07/09 21:11:37 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.83 2007/07/12 20:39:57 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.82 2007/07/09 21:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.83 2007/07/12 20:39:57 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -275,7 +275,7 @@ uvm_aio_biodone(struct buf *bp)
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = uvm_aio_aiodone;
 
-	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work);
+	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work, NULL);
 }
 
 /*
