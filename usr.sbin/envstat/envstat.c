@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.31 2007/07/12 18:24:35 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.32 2007/07/12 18:34:07 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -790,8 +790,6 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		if (sensors && !es[i].visible)
 			continue;
 
-
-		/* we have a winner... */
 		(void)printf("%*.*s", (int)maxlen, (int)maxlen, es[i].desc);
 
 		if (es[i].invalid) {
