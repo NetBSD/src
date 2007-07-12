@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.32 2007/07/12 18:34:07 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.33 2007/07/12 22:52:54 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -514,15 +514,6 @@ parse_dictionary(int fd)
 		rval = find_sensors(obj);
 		if (rval)
 			goto out;
-
-		if (userreq == NULL) {
-			if ((flags & ENVSYS_LFLAG) == 0)
-				print_sensors(gesen, gnelems);
-		}
-
-		if (interval)
-			(void)printf("\n");
-
 	} else {
 		iter = prop_dictionary_iterator(dict);
 		if (iter == NULL) {
@@ -552,12 +543,14 @@ parse_dictionary(int fd)
 		}
 
 		prop_object_iterator_release(iter);
-
-		if (userreq == NULL) {
-			if ((flags & ENVSYS_LFLAG) == 0)
-				print_sensors(gesen, gnelems);
-		}
 	}
+
+	if (userreq == NULL)
+		if ((flags & ENVSYS_LFLAG) == 0)
+			print_sensors(gesen, gnelems);
+
+	if (interval)
+		(void)printf("\n");
 
 out:
 	if (gesen) {
