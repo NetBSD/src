@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.54 2007/01/19 14:49:08 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.55 2007/07/12 19:38:26 dsl Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.54 2007/01/19 14:49:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.55 2007/07/12 19:38:26 dsl Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -103,6 +103,7 @@ const struct vnodeopv_desc * const coda_vnodeopv_descs[] = {
 
 struct vfsops coda_vfsops = {
     MOUNT_CODA,
+    256,		/* This is the pathname, unlike every other fs */
     coda_mount,
     coda_start,
     coda_unmount,
@@ -152,6 +153,7 @@ int
 coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     const char *path,	/* path covered: ignored by the fs-layer */
     void *data,		/* Need to define a data type for this in netbsd? */
+    size_t *data_len,
     struct nameidata *ndp,	/* Clobber this to lookup the device name */
     struct lwp *l)		/* The ever-famous lwp pointer */
 {
@@ -166,7 +168,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     int error;
 
     if (vfsp->mnt_flag & MNT_GETARGS)
-	return 0;
+	return EINVAL;
     ENTRY;
 
     coda_vfsopstats_init();
@@ -180,7 +182,13 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 
     /* Validate mount device.  Similar to getmdev(). */
 
-    NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, data, l);
+    /*
+     * XXX: coda passes the mount device as the entire mount args,
+     * All other fs pass a structure contining a pointer.
+     * In order to get sys_mount() to do the copyin() we've set a
+     * fixed size for the filename buffer.
+     */
+    NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, data, l);
     error = namei(ndp);
     dvp = ndp->ni_vp;
 
