@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.149 2007/05/12 20:27:56 dsl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.150 2007/07/12 19:41:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.149 2007/05/12 20:27:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.150 2007/07/12 19:41:58 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -291,10 +291,9 @@ sunos_sys_mount(l, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_mount_args *uap = v;
-	struct proc *p = l->l_proc;
 	int oflags = SCARG(uap, flags), nflags, error;
 	char fsname[MFSNAMELEN];
-	void *sg = stackgap_init(p, 0);
+	register_t dummy;
 
 	if (oflags & (SUNM_NOSUB | SUNM_SYS5))
 		return (EINVAL);
@@ -307,40 +306,26 @@ sunos_sys_mount(l, v, retval)
 		nflags |= MNT_NOSUID;
 	if (oflags & SUNM_REMOUNT)
 		nflags |= MNT_UPDATE;
-	SCARG(uap, flags) = nflags;
 
-	error = copyinstr((void *)SCARG(uap, type), fsname,
-	    sizeof fsname, (size_t *)0);
+	error = copyinstr(SCARG(uap, type), fsname, sizeof fsname, NULL);
 	if (error)
 		return (error);
 
-	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
-		SCARG(uap, type) = stackgap_alloc(p, &sg, sizeof("ffs"));
-		error = copyout("ffs", SCARG(uap, type), sizeof("ffs"));
-		if (error)
-			return (error);
-	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
+	if (strcmp(fsname, "nfs") == 0) {
 		struct sunos_nfs_args sna;
-		struct sockaddr_in sain;
 		struct nfs_args na;
-		struct sockaddr sa;
 		int n;
 
 		error = copyin(SCARG(uap, data), &sna, sizeof sna);
 		if (error)
 			return (error);
-		error = copyin(sna.addr, &sain, sizeof sain);
-		if (error)
-			return (error);
-		memcpy(&sa, &sain, sizeof sa);
-		sa.sa_len = sizeof(sain);
-		SCARG(uap, data) = stackgap_alloc(p, &sg, sizeof(na));
+		/* sa.sa_len = sizeof(sain); */
 		na.version = NFS_ARGSVERSION;
-		na.addr = stackgap_alloc(p, &sg, sizeof(struct sockaddr));
+		na.addr = (void *)sna.addr;
 		na.addrlen = sizeof(struct sockaddr);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
-		na.fh = (void *)sna.fh;
+		na.fh = sna.fh;
 		na.fhsize = NFSX_V2FH;
 		na.flags = 0;
 		n = sizeof(sunnfs_flgtab) / sizeof(sunnfs_flgtab[0]);
@@ -355,16 +340,19 @@ sunos_sys_mount(l, v, retval)
 		}
 		na.timeo = sna.timeo;
 		na.retrans = sna.retrans;
-		na.hostname = (char *)(u_long)sna.hostname;
+		na.hostname = /* (char *)(u_long) */ sna.hostname;
 
-		error = copyout(&sa, na.addr, sizeof sa);
-		if (error)
-			return (error);
-		error = copyout(&na, SCARG(uap, data), sizeof na);
-		if (error)
-			return (error);
+		return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL,
+		    SCARG(uap, dir), nflags, &na,
+		    UIO_SYSSPACE, sizeof na, &dummy);
 	}
-	return (sys_mount(l, (struct sys_mount_args *)uap, retval));
+
+	if (strcmp(fsname, "4.2") == 0)
+		strcpy(fsname, "ffs");
+
+	return do_sys_mount(l, vfs_getopsbyname(fsname), NULL,
+	    SCARG(uap, dir), nflags, SCARG(uap, data),
+	    UIO_USERSPACE, 0, &dummy);
 }
 
 #if defined(NFS)
