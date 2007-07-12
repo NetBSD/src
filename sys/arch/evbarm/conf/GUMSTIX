@@ -1,6 +1,6 @@
-#	$NetBSD: GUMSTIX,v 1.13 2007/04/20 13:22:21 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.14 2007/07/12 02:37:47 kiyohara Exp $
 #
-#	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
+#	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
 
 include 	"arch/evbarm/conf/std.gumstix"
@@ -27,7 +27,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # File systems
 
 file-system	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
 file-system	NFS		# Network file system client
@@ -93,6 +93,7 @@ options 	NFS_BOOT_DHCP
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
@@ -249,7 +250,6 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB Devices
 
 # USB bus support
-#usb*	at slhci?
 
 # USB Hubs
 #uhub*	at usb?
@@ -270,7 +270,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #ukbd*	at uhidev? reportid ?
 #wskbd*	at ukbd? console ? mux 1
 
-# USB serial adpater
+# USB serial adapter
 #ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
@@ -291,15 +291,15 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #uaudio*	at uhub? port ? configuration ?
 
 # USB MIDI
-#umidi*	at uhub? port ? configuration ?
+#umidi* at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
-#uirda*	at uhub? port ? configuration ? interface ?
+#uirda* at uhub? port ? configuration ? interface ?
 #irframe* at uirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
-#ustir*	at uhub? port ?
+#ustir* at uhub? port ?
 #irframe* at ustir?
 
 # USB Ethernet adapters
@@ -311,9 +311,11 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #udav*	at uhub? port ?		# Davicom DM9601 based adapters
 #url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
-# USB 802.11b adapters
+# USB 802.11 adapters
 #atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 #ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+#rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+#zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
 #upl*	at uhub? port ?
@@ -331,10 +333,13 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 #ucom*	at umct? portno ?
 
-#uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+#uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
 #ucom*	at uplcom? portno ?
 
-#uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+#uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+#ucom*	at uslsa? portno ?
+
+#uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
@@ -354,8 +359,11 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB scanners that use SCSI emulation, e.g., HP5300
 #usscanner* at uhub? port ?
 
+# Topfield TF5000PVR range of DVB recorders
+#utoppy*	at uhub? port ?
+
 # Y@P firmware loader
-#uyap*	at uhub? port ?
+#uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
 #udsbr*	at uhub? port ?
@@ -363,6 +371,8 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 
 # USB Generic driver
 #ugen*	at uhub? port ?
+# On ugen bulk endpoints, perform read-ahead and write-behind.
+#options UGEN_BULK_RA_WB
 
 # Bluetooth Controller and Device support
 
@@ -393,9 +403,11 @@ bthub*	at btuart?
 
 # Pseudo-Devices
 
+pseudo-device	crypto			# /dev/crypto device
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
+#pseudo-device	bio			# RAID control device driver
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
@@ -433,6 +445,7 @@ pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 
