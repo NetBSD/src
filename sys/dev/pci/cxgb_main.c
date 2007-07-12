@@ -670,7 +670,7 @@ cxgb_controller_attach(device_t dev, device_t self, void *context)
 	callout_init_mtx(&sc->cxgb_tick_ch, &sc->lock, CALLOUT_RETURNUNLOCKED);
 #endif
 #ifdef __NetBSD__
-	callout_init(&sc->cxgb_tick_ch);
+	callout_init(&sc->cxgb_tick_ch, 0);
 #endif
 	
 	MARK;
