@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.47 2007/07/09 21:10:49 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.48 2007/07/12 19:35:33 dsl Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.47 2007/07/09 21:10:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.48 2007/07/12 19:35:33 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -64,7 +64,7 @@ int puffs_pnodebuckets_default = PUFFS_PNODEBUCKETS;
 int puffs_maxpnodebuckets = PUFFS_MAXPNODEBUCKETS;
 
 int
-puffs_mount(struct mount *mp, const char *path, void *data,
+puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	    struct nameidata *ndp, struct lwp *l)
 {
 	struct puffs_mount *pmp = NULL;
@@ -72,9 +72,14 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	char namebuf[PUFFSNAMESIZE+sizeof(PUFFS_NAMEPREFIX)+1]; /* spooky */
 	int error = 0, i;
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = MPTOPUFFSMP(mp);
-		return copyout(&pmp->pmp_args,data,sizeof(struct puffs_kargs));
+		*(struct puffs_kargs *)data = pmp->pmp_args;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
 	/* update is not supported currently */
@@ -90,9 +95,7 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	MALLOC(args, struct puffs_kargs *, sizeof(struct puffs_kargs),
 	    M_PUFFS, M_WAITOK);
 
-	error = copyin(data, args, sizeof(struct puffs_kargs));
-	if (error)
-		goto out;
+	*args = *(struct puffs_kargs *)data;
 
 	/* devel phase */
 	if (args->pa_vers != (PUFFSVERSION | PUFFSDEVELVERS)) {
@@ -712,6 +715,7 @@ const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 
 struct vfsops puffs_vfsops = {
 	MOUNT_PUFFS,
+	sizeof (struct puffs_kargs),
 	puffs_mount,		/* mount	*/
 	puffs_start,		/* start	*/
 	puffs_unmount,		/* unmount	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.237 2007/07/09 21:11:34 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.238 2007/07/12 19:35:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.237 2007/07/09 21:11:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.238 2007/07/12 19:35:36 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -140,6 +140,7 @@ const struct vnodeopv_desc * const lfs_vnodeopv_descs[] = {
 
 struct vfsops lfs_vfsops = {
 	MOUNT_LFS,
+	sizeof (struct ufs_args),
 	lfs_mount,
 	ufs_start,
 	lfs_unmount,
@@ -363,34 +364,36 @@ lfs_mountroot()
  * mount system call
  */
 int
-lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp, struct lwp *l)
+lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
+    struct nameidata *ndp, struct lwp *l)
 {
 	struct vnode *devvp;
-	struct ufs_args args;
+	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct lfs *fs = NULL;				/* LFS */
-	int error, update;
+	int error = 0, update;
 	mode_t accessmode;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
 			return EIO;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	error = copyin(data, &args, sizeof (struct ufs_args));
-	if (error)
-		return (error);
 
 	update = mp->mnt_flag & MNT_UPDATE;
 
 	/* Check arguments */
-	if (args.fspec != NULL) {
+	if (args->fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		devvp = ndp->ni_vp;
@@ -505,11 +508,11 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 				lfs_writesuper(fs, fs->lfs_sboffs[1]);
 			}
 		}
-		if (args.fspec == NULL)
+		if (args->fspec == NULL)
 			return EINVAL;
 	}
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp, l);
 	if (error == 0)
 		(void)strncpy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname,

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.35 2007/07/09 00:01:42 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.36 2007/07/12 19:35:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.35 2007/07/09 00:01:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.36 2007/07/12 19:35:32 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -106,6 +106,7 @@ const struct vnodeopv_desc * const filecore_vnodeopv_descs[] = {
 
 struct vfsops filecore_vfsops = {
 	MOUNT_FILECORE,
+	sizeof (struct filecore_args),
 	filecore_mount,
 	filecore_start,
 	filecore_unmount,
@@ -186,43 +187,45 @@ filecore_mountroot()
  * mount system call
  */
 int
-filecore_mount(mp, path, data, ndp, l)
+filecore_mount(mp, path, data, data_len, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
+	size_t *data_len;
 	struct nameidata *ndp;
 	struct lwp *l;
 {
 	struct vnode *devvp;
-	struct filecore_args args;
+	struct filecore_args *args = data;
 	int error;
 	struct filecore_mnt *fcmp = NULL;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fcmp = VFSTOFILECORE(mp);
 		if (fcmp == NULL)
 			return EIO;
-		args.flags = fcmp->fc_mntflags;
-		args.uid = fcmp->fc_uid;
-		args.gid = fcmp->fc_gid;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->flags = fcmp->fc_mntflags;
+		args->uid = fcmp->fc_uid;
+		args->gid = fcmp->fc_gid;
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	error = copyin(data, &args, sizeof (struct filecore_args));
-	if (error)
-		return (error);
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 
-	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+	if ((mp->mnt_flag & MNT_UPDATE) && args->fspec == NULL)
 		return EINVAL;
 
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
@@ -249,7 +252,7 @@ filecore_mount(mp, path, data, ndp, l)
 		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = filecore_mountfs(devvp, mp, l, &args);
+		error = filecore_mountfs(devvp, mp, l, args);
 	else {
 		if (devvp != fcmp->fc_devvp)
 			error = EINVAL;	/* needs translation */
@@ -261,7 +264,7 @@ filecore_mount(mp, path, data, ndp, l)
 		return error;
 	}
 	fcmp = VFSTOFILECORE(mp);
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 	    mp, l);
 }
 

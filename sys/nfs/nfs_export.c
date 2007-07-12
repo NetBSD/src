@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.29 2007/07/09 21:11:30 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.30 2007/07/12 19:35:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.29 2007/07/09 21:11:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.30 2007/07/12 19:35:35 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -392,38 +392,27 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
  * Otherwise, returns 0 on success or an appropriate error code otherwise.
  */
 int
-nfs_update_exports_30(struct mount *mp, const char *path, void *data,
-    struct lwp *l)
+nfs_update_exports_30(struct mount *mp, const char *path,
+    struct mnt_export_args30 *args, struct lwp *l)
 {
-	int error;
-	struct {
-		const char *fspec;
-		struct export_args30 eargs;
-	} args;
 	struct mountd_exports_list mel;
 
 	mel.mel_path = path;
 
-	error = copyin(data, &args, sizeof(args));
-	if (error != 0)
+	if (args->fspec != NULL)
 		return EJUSTRETURN;
 
-	if (args.fspec != NULL)
-		return EJUSTRETURN;
-
-	if (args.eargs.ex_flags & 0x00020000) {
+	if (args->eargs.ex_flags & 0x00020000) {
 		/* Request to delete exports.  The mask above holds the
 		 * value that used to be in MNT_DELEXPORT. */
 		mel.mel_nexports = 0;
 	} else {
-		struct export_args eargs;
-
 		/* The following assumes export_args has not changed since
-		 * export_args30. */
-		memcpy(&eargs, &args.eargs, sizeof(struct export_args));
+		 * export_args30 - typedef checks sizes. */
+		typedef char x[sizeof args->eargs == sizeof *mel.mel_exports ? 1 : -1];
 
 		mel.mel_nexports = 1;
-		mel.mel_exports = &eargs;
+		mel.mel_exports = (void *)&args->eargs;
 	}
 
 	return mountd_set_exports_list(&mel, l);

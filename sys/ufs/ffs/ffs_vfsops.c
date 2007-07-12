@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.203 2007/07/10 09:50:08 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.204 2007/07/12 19:35:36 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.203 2007/07/10 09:50:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.204 2007/07/12 19:35:36 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -93,6 +93,7 @@ const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 
 struct vfsops ffs_vfsops = {
 	MOUNT_FFS,
+	sizeof (struct ufs_args),
 	ffs_mount,
 	ufs_start,
 	ffs_unmount,
@@ -184,26 +185,27 @@ ffs_mountroot(void)
  * mount system call
  */
 int
-ffs_mount(struct mount *mp, const char *path, void *data,
+ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
 	struct vnode *devvp = NULL;
-	struct ufs_args args;
+	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
-	int error, flags, update;
+	int error = 0, flags, update;
 	mode_t accessmode;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		ump = VFSTOUFS(mp);
 		if (ump == NULL)
 			return EIO;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	error = copyin(data, &args, sizeof (struct ufs_args));
-	if (error)
-		return (error);
 
 #if !defined(SOFTDEP)
 	mp->mnt_flag &= ~MNT_SOFTDEP;
@@ -212,11 +214,11 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	update = mp->mnt_flag & MNT_UPDATE;
 
 	/* Check arguments */
-	if (args.fspec != NULL) {
+	if (args->fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 		if ((error = namei(ndp)) != 0)
 			return (error);
 		devvp = ndp->ni_vp;
@@ -424,7 +426,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			if (fs->fs_snapinum[0] != 0)
 				ffs_snapshot_mount(mp);
 		}
-		if (args.fspec == NULL)
+		if (args->fspec == NULL)
 			return EINVAL;
 		if ((mp->mnt_flag & (MNT_SOFTDEP | MNT_ASYNC)) ==
 		    (MNT_SOFTDEP | MNT_ASYNC)) {
@@ -434,7 +436,7 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 		}
 	}
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp, l);
 	if (error == 0)
 		(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,

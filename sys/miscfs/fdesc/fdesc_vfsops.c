@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.65 2007/07/08 23:58:53 pooka Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.66 2007/07/12 19:35:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.65 2007/07/08 23:58:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.66 2007/07/12 19:35:34 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.65 2007/07/08 23:58:53 pooka Exp 
 
 #include <miscfs/fdesc/fdesc.h>
 
-int	fdesc_mount(struct mount *, const char *, void *,
+int	fdesc_mount(struct mount *, const char *, void *, size_t *,
 			 struct nameidata *, struct lwp *);
 int	fdesc_start(struct mount *, int, struct lwp *);
 int	fdesc_unmount(struct mount *, int, struct lwp *);
@@ -77,15 +77,17 @@ int	fdesc_vget(struct mount *, ino_t, struct vnode **);
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-fdesc_mount(struct mount *mp, const char *path, void *data,
+fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
 	struct fdescmount *fmp;
 	struct vnode *rvp;
 
-	if (mp->mnt_flag & MNT_GETARGS)
+	if (mp->mnt_flag & MNT_GETARGS) {
+		*data_len = 0;
 		return 0;
+	}
 	/*
 	 * Update is a no-op
 	 */
@@ -278,6 +280,7 @@ const struct vnodeopv_desc * const fdesc_vnodeopv_descs[] = {
 
 struct vfsops fdesc_vfsops = {
 	MOUNT_FDESC,
+	0,
 	fdesc_mount,
 	fdesc_start,
 	fdesc_unmount,

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.177 2007/04/29 15:31:08 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.178 2007/07/12 19:35:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.177 2007/04/29 15:31:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.178 2007/07/12 19:35:35 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -103,6 +103,7 @@ const struct vnodeopv_desc * const nfs_vnodeopv_descs[] = {
 
 struct vfsops nfs_vfsops = {
 	MOUNT_NFS,
+	sizeof (struct nfs_args),
 	nfs_mount,
 	nfs_start,
 	nfs_unmount,
@@ -345,7 +346,7 @@ nfs_mountroot()
 	 * Side effect:  Finds and configures a network interface.
 	 */
 	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
-	memset((void *)nd, 0, sizeof(*nd));
+	memset(nd, 0, sizeof(*nd));
 	error = nfs_boot_init(nd, l);
 	if (error) {
 		free(nd, M_NFSMNT);
@@ -577,11 +578,11 @@ nfs_decode_args(nmp, argp, l)
  */
 /* ARGSUSED */
 int
-nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
-    struct lwp *l)
+nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
+    struct nameidata *ndp, struct lwp *l)
 {
 	int error;
-	struct nfs_args args;
+	struct nfs_args *args = data;
 	struct mbuf *nam;
 	struct nfsmount *nmp = VFSTONFS(mp);
 	struct sockaddr *sa;
@@ -591,49 +592,49 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	size_t len;
 	u_char *nfh;
 
-	error = copyin(data, (void *)&args, sizeof (struct nfs_args));
-	if (error)
-		return (error);
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
 
 		if (nmp == NULL)
 			return (EIO);
-		if (args.addr != NULL) {
+		if (args->addr != NULL) {
 			sa = mtod(nmp->nm_nam, struct sockaddr *);
-			error = copyout(sa, args.addr, sa->sa_len);
+			error = copyout(sa, args->addr, sa->sa_len);
 			if (error)
 				return (error);
-			args.addrlen = sa->sa_len;
+			args->addrlen = sa->sa_len;
 		} else
-			args.addrlen = 0;
+			args->addrlen = 0;
 
-		args.version = NFS_ARGSVERSION;
-		args.sotype = nmp->nm_sotype;
-		args.proto = nmp->nm_soproto;
-		args.fh = NULL;
-		args.fhsize = 0;
-		args.flags = nmp->nm_flag;
-		args.wsize = nmp->nm_wsize;
-		args.rsize = nmp->nm_rsize;
-		args.readdirsize = nmp->nm_readdirsize;
-		args.timeo = nmp->nm_timeo;
-		args.retrans = nmp->nm_retry;
-		args.maxgrouplist = nmp->nm_numgrps;
-		args.readahead = nmp->nm_readahead;
-		args.leaseterm = 0; /* dummy */
-		args.deadthresh = nmp->nm_deadthresh;
-		args.hostname = NULL;
-		return (copyout(&args, data, sizeof(args)));
+		args->version = NFS_ARGSVERSION;
+		args->sotype = nmp->nm_sotype;
+		args->proto = nmp->nm_soproto;
+		args->fh = NULL;
+		args->fhsize = 0;
+		args->flags = nmp->nm_flag;
+		args->wsize = nmp->nm_wsize;
+		args->rsize = nmp->nm_rsize;
+		args->readdirsize = nmp->nm_readdirsize;
+		args->timeo = nmp->nm_timeo;
+		args->retrans = nmp->nm_retry;
+		args->maxgrouplist = nmp->nm_numgrps;
+		args->readahead = nmp->nm_readahead;
+		args->leaseterm = 0; /* dummy */
+		args->deadthresh = nmp->nm_deadthresh;
+		args->hostname = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
-	if (args.version != NFS_ARGSVERSION)
+	if (args->version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
-	if (args.flags & (NFSMNT_NQNFS|NFSMNT_KERB))
+	if (args->flags & (NFSMNT_NQNFS|NFSMNT_KERB))
 		return (EPROGUNAVAIL);
 #ifdef NFS_V2_ONLY
-	if (args.flags & NFSMNT_NFSV3)
+	if (args->flags & NFSMNT_NFSV3)
 		return (EPROGMISMATCH);
 #endif
 	if (mp->mnt_flag & MNT_UPDATE) {
@@ -643,15 +644,15 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		 * When doing an update, we can't change from or to
 		 * v3, or change cookie translation
 		 */
-		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_XLATECOOKIE)) |
+		args->flags = (args->flags & ~(NFSMNT_NFSV3|NFSMNT_XLATECOOKIE)) |
 		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_XLATECOOKIE));
-		nfs_decode_args(nmp, &args, l);
+		nfs_decode_args(nmp, args, l);
 		return (0);
 	}
-	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
+	if (args->fhsize < 0 || args->fhsize > NFSX_V3FHMAX)
 		return (EINVAL);
 	MALLOC(nfh, u_char *, NFSX_V3FHMAX, M_TEMP, M_WAITOK);
-	error = copyin((void *)args.fh, (void *)nfh, args.fhsize);
+	error = copyin(args->fh, nfh, args->fhsize);
 	if (error)
 		return (error);
 	MALLOC(pth, char *, MNAMELEN, M_TEMP, M_WAITOK);
@@ -660,17 +661,17 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		goto free_nfh;
 	memset(&pth[len], 0, MNAMELEN - len);
 	MALLOC(hst, char *, MNAMELEN, M_TEMP, M_WAITOK);
-	error = copyinstr(args.hostname, hst, MNAMELEN - 1, &len);
+	error = copyinstr(args->hostname, hst, MNAMELEN - 1, &len);
 	if (error)
 		goto free_pth;
 	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
-	error = sockargs(&nam, (void *)args.addr, args.addrlen, MT_SONAME);
+	error = sockargs(&nam, args->addr, args->addrlen, MT_SONAME);
 	if (error)
 		goto free_hst;
 	MCLAIM(nam, &nfs_mowner);
-	args.fh = nfh;
-	error = mountnfs(&args, mp, nam, pth, hst, &vp, l);
+	args->fh = nfh;
+	error = mountnfs(args, mp, nam, pth, hst, &vp, l);
 
 free_hst:
 	FREE(hst, M_TEMP);
@@ -719,7 +720,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	} else {
 		MALLOC(nmp, struct nfsmount *, sizeof (struct nfsmount),
 		    M_NFSMNT, M_WAITOK);
-		memset((void *)nmp, 0, sizeof (struct nfsmount));
+		memset(nmp, 0, sizeof (struct nfsmount));
 		mp->mnt_data = nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);

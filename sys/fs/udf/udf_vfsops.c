@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.25 2007/06/30 09:37:57 pooka Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.26 2007/07/12 19:35:34 dsl Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.25 2007/06/30 09:37:57 pooka Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.26 2007/07/12 19:35:34 dsl Exp $");
 #endif /* not lint */
 
 
@@ -84,7 +84,8 @@ struct pool udf_node_pool;
 
 /* supported functions predefined */
 int udf_mountroot(void);
-int udf_mount(struct mount *, const char *, void *, struct nameidata *, struct lwp *);
+int udf_mount(struct mount *, const char *, void *, size_t *,
+	struct nameidata *, struct lwp *);
 int udf_start(struct mount *, int, struct lwp *);
 int udf_unmount(struct mount *, int, struct lwp *);
 int udf_root(struct mount *, struct vnode **);
@@ -127,6 +128,7 @@ const struct vnodeopv_desc * const udf_vnodeopv_descs[] = {
 /* vfsops descriptor linked in as anchor point for the filingsystem */
 struct vfsops udf_vfsops = {
 	MOUNT_UDF,			/* vfs_name */
+	sizeof (struct udf_args),
 	udf_mount,
 	udf_start,
 	udf_unmount,
@@ -254,21 +256,26 @@ free_udf_mountinfo(struct mount *mp)
 
 int
 udf_mount(struct mount *mp, const char *path,
-	  void *data, struct nameidata *ndp, struct lwp *l)
+	  void *data, size_t *data_len, struct nameidata *ndp, struct lwp *l)
 {
-	struct udf_args args;
+	struct udf_args *args = data;
 	struct udf_mount *ump;
 	struct vnode *devvp;
 	int openflags, accessmode, error;
 
 	DPRINTF(CALL, ("udf_mount called\n"));
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		/* request for the mount arguments */
 		ump = VFSTOUDF(mp);
 		if (ump == NULL)
 			return EINVAL;
-		return copyout(&ump->mount_args, data, sizeof(args));
+		*args = ump->mount_args;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
 	/* handle request for updating mount parameters */
@@ -278,19 +285,16 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* OK, so we are asked to mount the device */
-	error = copyin(data, &args, sizeof(struct udf_args));
-	if (error)
-		return error;
 
 	/* check/translate struct version */
 	/* TODO sanity checking other mount arguments */
-	if (args.version != 1) {
+	if (args->version != 1) {
 		printf("mount_udf: unrecognized argument structure version\n");
 		return EINVAL;
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 	error = namei(ndp);
 	if (error)
 		return error;
@@ -357,7 +361,7 @@ udf_mount(struct mount *mp, const char *path,
 	error = VOP_OPEN(devvp, openflags, FSCRED, l);
 	if (error == 0) {
 		/* opened ok, try mounting */
-		error = udf_mountfs(devvp, mp, l, &args);
+		error = udf_mountfs(devvp, mp, l, args);
 		if (error) {
 			free_udf_mountinfo(mp);
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -377,7 +381,7 @@ udf_mount(struct mount *mp, const char *path,
 	/* successfully mounted */
 	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
 
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 			mp, l);
 }
 

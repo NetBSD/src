@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.77 2007/06/30 09:37:58 pooka Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.78 2007/07/12 19:35:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.77 2007/06/30 09:37:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.78 2007/07/12 19:35:34 dsl Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -69,7 +69,7 @@ void	kernfs_init(void);
 void	kernfs_reinit(void);
 void	kernfs_done(void);
 void	kernfs_get_rrootdev(void);
-int	kernfs_mount(struct mount *, const char *, void *,
+int	kernfs_mount(struct mount *, const char *, void *, size_t *,
 	    struct nameidata *, struct lwp *);
 int	kernfs_start(struct mount *, int, struct lwp *);
 int	kernfs_unmount(struct mount *, int, struct lwp *);
@@ -125,7 +125,7 @@ kernfs_get_rrootdev()
  * Mount the Kernel params filesystem
  */
 int
-kernfs_mount(struct mount *mp, const char *path, void *data,
+kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
@@ -136,8 +136,10 @@ kernfs_mount(struct mount *mp, const char *path, void *data,
 		return (EINVAL);
 	}
 
-	if (mp->mnt_flag & MNT_GETARGS)
+	if (mp->mnt_flag & MNT_GETARGS) {
+		*data_len = 0;
 		return 0;
+	}
 	/*
 	 * Update is a no-op
 	 */
@@ -280,6 +282,7 @@ const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 
 struct vfsops kernfs_vfsops = {
 	MOUNT_KERNFS,
+	0,
 	kernfs_mount,
 	kernfs_start,
 	kernfs_unmount,
