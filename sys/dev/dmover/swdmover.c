@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.10 2007/07/09 21:00:32 ad Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.11 2007/07/12 14:15:55 he Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.10 2007/07/09 21:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.11 2007/07/12 14:15:55 he Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -64,7 +64,7 @@ struct swdmover_function {
 };
 
 static struct dmover_backend swdmover_backend;
-static struct proc *swdmover_proc;
+static struct lwp *swdmover_lwp;
 static int swdmover_cv;
 
 void	swdmoverattach(int);
@@ -740,7 +740,7 @@ swdmoverattach(int count)
 	swdmover_backend.dmb_process = swdmover_process;
 
 	error = kthread_create(PRI_NONE, 0, NULL, swdmover_thread,
-	    arg, &swdmover_proc, "swdmover");
+	    &swdmover_backend, &swdmover_lwp, "swdmover");
 	if (error)
 		printf("WARNING: unable to create swdmover thread, "
 		    "error = %d\n", error);
