@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.6 2007/02/20 00:28:53 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.7 2007/07/12 19:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -59,8 +59,11 @@
 
 #ifndef MULTIPROCESSOR
 
-	.global _lock_cas_rasstart
-	.global _lock_cas_rasend
+	.global _lock_cas_ras_start
+	.global _lock_cas_ras_end
+
+	.global mutex_enter_crit_start
+	.global mutex_enter_crit_end
 
 	.import	curlwp, data
 	.import mutex_vector_enter, code
@@ -68,13 +71,12 @@
 	.import mutex_wakeup, code
 
 LEAF_ENTRY(_lock_cas)
-_lock_cas_rasstart:
+_lock_cas_ras_start:
 	ldw	0(%arg0),%t1
 	comb,<>	%arg1, %t1, 1f
 	 ldi	0,%ret0
+_lock_cas_ras_end:
 	stw	%arg2,0(%arg0)
-_lock_cas_rasend:
-
 	ldi	1,%ret0
 1:
 	bv,n	%r0(%rp)
@@ -165,12 +167,15 @@ LEAF_ENTRY(mutex_enter)
 	 */
 .Lmutexunowned:
 	ldcw	MTX_LOCK(%arg0), %ret0
+
+mutex_enter_crit_start:
 	comib,=	0,%ret0,.Lenter_slowpath
 
 	ldil	L%curlwp, %t1
 	ldw	R%curlwp(%t1), %t2
 
 	bv	%r0(%rp)
+mutex_enter_crit_end:
 	 stw	%t2,MTX_OWNER(%arg0)
 EXIT(mutex_enter)
 
