@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.39 2007/07/08 23:58:53 pooka Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.40 2007/07/12 19:35:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.39 2007/07/08 23:58:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.40 2007/07/12 19:35:35 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.39 2007/07/08 23:58:53 pooka Ex
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	ov_mount(struct mount *, const char *, void *,
+int	ov_mount(struct mount *, const char *, void *, size_t *,
 			  struct nameidata *, struct lwp *);
 int	ov_unmount(struct mount *, int, struct lwp *);
 
@@ -98,11 +98,11 @@ int	ov_unmount(struct mount *, int, struct lwp *);
  * Mount overlay layer
  */
 int
-ov_mount(struct mount *mp, const char *path, void *data,
+ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
-	struct overlay_args args;
+	struct overlay_args *args = data;
 	struct vnode *lowerrootvp, *vp;
 	struct overlay_mount *nmp;
 	struct layer_mount *lmp;
@@ -111,19 +111,17 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	printf("ov_mount(mp = %p)\n", mp);
 #endif
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		lmp = MOUNTTOLAYERMOUNT(mp);
 		if (lmp == NULL)
 			return EIO;
-		args.la.target = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->la.target = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	/*
-	 * Get argument
-	 */
-	error = copyin(data, &args, sizeof(struct overlay_args));
-	if (error)
-		return (error);
 
 	/*
 	 * Update is not supported
@@ -189,7 +187,7 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	vp->v_flag |= VROOT;
 	nmp->ovm_rootvp = vp;
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
+	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp, l);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
@@ -262,6 +260,7 @@ const struct vnodeopv_desc * const ov_vnodeopv_descs[] = {
 
 struct vfsops overlay_vfsops = {
 	MOUNT_OVERLAY,
+	sizeof (struct overlay_args),
 	ov_mount,
 	layerfs_start,
 	ov_unmount,

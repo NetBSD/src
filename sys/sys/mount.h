@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.159 2007/06/29 23:30:32 rumble Exp $	*/
+/*	$NetBSD: mount.h,v 1.160 2007/07/12 19:35:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -187,7 +187,7 @@ struct kauth_cred;
 
 #define VFS_PROTOS(fsname)						\
 int	fsname##_mount(struct mount *, const char *, void *,		\
-		struct nameidata *, struct lwp *);			\
+		size_t *, struct nameidata *, struct lwp *);		\
 int	fsname##_start(struct mount *, int, struct lwp *);		\
 int	fsname##_unmount(struct mount *, int, struct lwp *);		\
 int	fsname##_root(struct mount *, struct vnode **);			\
@@ -210,10 +210,12 @@ int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
 		const char *, struct lwp *);				\
 int	fsname##_suspendctl(struct mount *, int);
 
+#define	VFS_MAX_MOUNT_DATA	8192
 struct vfsops {
 	const char *vfs_name;
+	size_t	vfs_min_mount_data;
 	int	(*vfs_mount)	(struct mount *, const char *, void *,
-				    struct nameidata *, struct lwp *);
+				    size_t *, struct nameidata *, struct lwp *);
 	int	(*vfs_start)	(struct mount *, int, struct lwp *);
 	int	(*vfs_unmount)	(struct mount *, int, struct lwp *);
 	int	(*vfs_root)	(struct mount *, struct vnode **);
@@ -244,8 +246,8 @@ struct vfsops {
 
 #define	VFS_ATTACH(vfs)		__link_set_add_data(vfsops, vfs)
 
-#define VFS_MOUNT(MP, PATH, DATA, NDP, L) \
-	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, L)
+#define VFS_MOUNT(MP, PATH, DATA, DATA_LEN, NDP, L) \
+	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, DATA_LEN, NDP, L)
 #define VFS_START(MP, FLAGS, L)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, L)
 #define VFS_UNMOUNT(MP, FORCE, L) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, L)
 #define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
@@ -293,6 +295,11 @@ struct export_args30 {
 	char	*ex_indexfile;		/* index file for WebNFS URLs */
 };
 
+struct mnt_export_args30 {
+	const char *fspec;		/* Always NULL */
+	struct export_args30 eargs;
+};
+
 #ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_MOUNT);
@@ -328,6 +335,8 @@ extern	struct simplelock mountlist_slock;
 extern	struct simplelock spechash_slock;
 long	makefstype(const char *);
 int	dounmount(struct mount *, int, struct lwp *);
+int	do_sys_mount(struct lwp *, struct vfsops *, const char *, const char *,
+	    int, void *, enum uio_seg, size_t, register_t *);
 void	vfsinit(void);
 void	vfs_opv_init(const struct vnodeopv_desc * const *);
 void	vfs_opv_free(const struct vnodeopv_desc * const *);

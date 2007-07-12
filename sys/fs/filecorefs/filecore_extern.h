@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.14 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.15 2007/07/12 19:35:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -107,8 +107,8 @@ struct filecore_mnt {
 
 extern struct pool filecore_node_pool;
 
-int filecore_mount __P((struct mount *,
-	    const char *, void *, struct nameidata *, struct lwp *));
+int filecore_mount __P((struct mount *, const char *, void *, size_t *,
+	    struct nameidata *, struct lwp *));
 int filecore_start __P((struct mount *, int, struct lwp *));
 int filecore_unmount __P((struct mount *, int, struct lwp *));
 int filecore_root __P((struct mount *, struct vnode **));

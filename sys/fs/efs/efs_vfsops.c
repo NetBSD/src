@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.4 2007/07/12 19:35:32 dsl Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.4 2007/07/12 19:35:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,32 +164,33 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
  * Returns 0 on success.
  */
 static int
-efs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
-    struct lwp *l)
+efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
+    struct nameidata *ndp, struct lwp *l)
 {
-	struct efs_args args;
+	struct efs_args *args = data;
 	struct nameidata devndp;
 	struct efs_mount *emp; 
 	struct vnode *devvp;
 	int err, mode;
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		if ((emp = VFSTOEFS(mp)) == NULL)
 			return (EIO);
-		args.fspec = NULL;
-		args.version = EFS_MNT_VERSION;
-		return (copyout(&args, data, sizeof(args)));
+		args->fspec = NULL;
+		args->version = EFS_MNT_VERSION;
+		*data_len = sizeof *args;
+		return 0;
 	}
-
-	if ((err = copyin(data, &args, sizeof(struct efs_args))))
-		return (err);
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);	/* XXX read-only */
 
 	/* look up our device's vnode. it is returned locked */
 	NDINIT(&devndp, LOOKUP, FOLLOW | LOCKLEAF,
-	    UIO_USERSPACE, args.fspec, l);
+	    UIO_USERSPACE, args->fspec, l);
 	if ((err = namei(&devndp)))
 		return (err);
 
@@ -219,7 +220,7 @@ efs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		return (err);
 	}
 
-	err = efs_mount_common(mp, path, devvp, &args, l);
+	err = efs_mount_common(mp, path, devvp, args, l);
 	if (err) {
 		VOP_CLOSE(devvp, mode, l->l_cred, l);
 		vput(devvp);
@@ -561,6 +562,7 @@ const struct vnodeopv_desc * const efs_vnodeopv_descs[] = {
 
 struct vfsops efs_vfsops = {
 	.vfs_name	= MOUNT_EFS,
+	.vfs_min_mount_data = sizeof (struct efs_args),
 	.vfs_mount	= efs_mount,
 	.vfs_start	= efs_start,
 	.vfs_unmount	= efs_unmount,
