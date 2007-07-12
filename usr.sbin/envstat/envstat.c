@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.30 2007/07/05 14:11:08 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.31 2007/07/12 18:24:35 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ struct envsys_sensor {
 static int interval, flags, width;
 static char *mydevname, *sensors, *userreq;
 static struct envsys_sensor *gesen;
-static size_t gnelems;
+static size_t gnelems, newsize;
 
 static int parse_dictionary(int);
 static int send_dictionary(int);
@@ -109,6 +109,8 @@ int main(int argc, char **argv)
 	char *endptr;
 
 	rval = flags = interval = width = 0;
+	newsize = gnelems = 0;
+	gesen = NULL;
 
 	setprogname(argv[0]);
 
@@ -208,6 +210,8 @@ out:
 		free(userreq);
 	if (mydevname)
 		free(mydevname);
+	if (gesen)
+		free(gesen);
 	(void)close(fd);
 	return rval;
 }
@@ -511,6 +515,11 @@ parse_dictionary(int fd)
 		if (rval)
 			goto out;
 
+		if (userreq == NULL) {
+			if ((flags & ENVSYS_LFLAG) == 0)
+				print_sensors(gesen, gnelems);
+		}
+
 		if (interval)
 			(void)printf("\n");
 
@@ -534,21 +543,29 @@ parse_dictionary(int fd)
 			dnp = prop_dictionary_keysym_cstring_nocopy(obj);
 
 			if (flags & ENVSYS_DFLAG) {
-				(void)printf("%s", dnp);
+				(void)printf("%s\n", dnp);
 			} else {
 				rval = find_sensors(array);
 				if (rval)
 					goto out;
 			}
-			if (prop_dictionary_count(dict) > 1 || interval)
-				(void)printf("\n");
 		}
+
 		prop_object_iterator_release(iter);
-		if ((flags & ENVSYS_DFLAG) && prop_dictionary_count(dict) == 1)
-			(void)printf("\n");
+
+		if (userreq == NULL) {
+			if ((flags & ENVSYS_LFLAG) == 0)
+				print_sensors(gesen, gnelems);
+		}
 	}
 
 out:
+	if (gesen) {
+		free(gesen);
+		gesen = NULL;
+		gnelems = 0;
+		newsize = 0;
+	}
 	prop_object_release(dict);
 	return rval;
 }
@@ -559,17 +576,22 @@ find_sensors(prop_array_t array)
 	prop_object_iterator_t iter;
 	prop_object_t obj, obj1;
 	prop_string_t state, desc = NULL;
-	struct envsys_sensor *esen;
-	int i, rval;
-	size_t nelems = 0;
+	struct envsys_sensor *esen = NULL;
+	int rval = 0;
+	size_t oldsize;
 	char *str = NULL;
 
-	i = rval = 0;
-
-	esen = (struct envsys_sensor *)calloc(prop_array_count(array),
-	    sizeof(struct envsys_sensor));
-	if (esen == NULL)
-		return ENOMEM;
+	oldsize = newsize;
+	newsize += prop_array_count(array) * sizeof(*gesen);
+	esen = realloc(gesen, newsize);
+	if (esen == NULL) {
+		if (gesen)
+			free(gesen);
+		gesen = NULL;
+		rval = ENOMEM;
+		goto out;
+	}
+	gesen = esen;
 
 	iter = prop_array_iterator(array);
 	if (iter == NULL) {
@@ -579,80 +601,98 @@ find_sensors(prop_array_t array)
 
 	/* iterate over the array of dictionaries */
 	while ((obj = prop_object_iterator_next(iter)) != NULL) {
+		
+		gesen[gnelems].visible = false;
+
 		/* check sensor's state */
 		state = prop_dictionary_get(obj, "state");
 
 		/* mark invalid sensors */
 		if (prop_string_equals_cstring(state, "invalid"))
-			esen[i].invalid = true;
+			gesen[gnelems].invalid = true;
+		else
+			gesen[gnelems].invalid = false;
 
 		/* description string */
 		desc = prop_dictionary_get(obj, "description");
 		/* copy description */
-		(void)strlcpy(esen[i].desc, prop_string_cstring_nocopy(desc),
-		    sizeof(esen[i].desc));
+		(void)strlcpy(gesen[gnelems].desc,
+		    prop_string_cstring_nocopy(desc),
+		    sizeof(gesen[gnelems].desc));
 
 		/* type string */
 		obj1  = prop_dictionary_get(obj, "type");
 		/* copy type */
-		(void)strlcpy(esen[i].type, prop_string_cstring_nocopy(obj1),
-		    sizeof(esen[i].type));
+		(void)strlcpy(gesen[gnelems].type,
+		    prop_string_cstring_nocopy(obj1),
+		    sizeof(gesen[gnelems].type));
 
 		/* get current drive state string */
 		obj1 = prop_dictionary_get(obj, "drive-state");
 		if (obj1 != NULL)
-			(void)strlcpy(esen[i].drvstate,
+			(void)strlcpy(gesen[gnelems].drvstate,
 			    prop_string_cstring_nocopy(obj1),
-			    sizeof(esen[i].drvstate));
+			    sizeof(gesen[gnelems].drvstate));
 
 		/* get current value */
 		obj1 = prop_dictionary_get(obj, "cur-value");
-		esen[i].cur_value = prop_number_integer_value(obj1);
+		gesen[gnelems].cur_value = prop_number_integer_value(obj1);
 
 		/* get max value */
 		obj1 = prop_dictionary_get(obj, "max-value");
 		if (obj1 != NULL)
-			esen[i].max_value = prop_number_integer_value(obj1);
+			gesen[gnelems].max_value =
+			    prop_number_integer_value(obj1);
+		else
+			gesen[gnelems].max_value = 0;
 
 		/* get min value */
 		obj1 = prop_dictionary_get(obj, "min-value");
 		if (obj1 != NULL)
-			esen[i].min_value = prop_number_integer_value(obj1);
+			gesen[gnelems].min_value =
+			    prop_number_integer_value(obj1);
+		else
+			gesen[gnelems].min_value = 0;
 
 		/* get avg value */
 		obj1 = prop_dictionary_get(obj, "avg-value");
 		if (obj1 != NULL)
-			esen[i].avg_value = prop_number_integer_value(obj1);
+			gesen[gnelems].avg_value =
+			    prop_number_integer_value(obj1);
+		else
+			gesen[gnelems].avg_value = 0;
 
 		/* get percentage flag */
 		obj1 = prop_dictionary_get(obj, "want-percentage");
 		if (obj1 != NULL)
-			esen[i].percentage = prop_bool_true(obj1);
+			gesen[gnelems].percentage = prop_bool_true(obj1);
 
 		/* get critical max value if available */
 		obj1 = prop_dictionary_get(obj, "critical-max-limit");
 		if (obj1 != NULL) {
-			esen[i].critmax_value =
+			gesen[gnelems].critmax_value =
 			    prop_number_integer_value(obj1);
-		}
+		} else
+			gesen[gnelems].critmax_value = 0;
 
 		/* get critical min value if available */
 		obj1 = prop_dictionary_get(obj, "critical-min-limit");
 		if (obj1 != NULL) {
-			esen[i].critmin_value =
+			gesen[gnelems].critmin_value =
 			    prop_number_integer_value(obj1);
-		}
+		} else
+			gesen[gnelems].critmin_value = 0;
 
 		/* get critical capacity value if available */
 		obj1 = prop_dictionary_get(obj, "critical-capacity");
 		if (obj1 != NULL) {
-			esen[i].critcap_value =
+			gesen[gnelems].critcap_value =
 			    prop_number_integer_value(obj1);
-		}
+		} else
+			gesen[gnelems].critcap_value = 0;
 
-		/* pass to the next struct */
-		i++;
-		nelems++;
+		/* pass to the next struct and increase the counter */
+		gnelems++;
 
 		/* print sensor names if -l was given */
 		if (flags & ENVSYS_LFLAG) {
@@ -677,23 +717,14 @@ find_sensors(prop_array_t array)
 		if (str == NULL)
 			return ENOMEM;
 
-		rval = check_sensors(esen, str, nelems);
+		rval = check_sensors(gesen, str, gnelems);
 		if (rval)
 			goto out;
-
-		free(str);
-	}
-
-	gesen = esen;
-	gnelems = nelems;
-
-	if (userreq == NULL) {
-		if ((flags & ENVSYS_LFLAG) == 0)
-			print_sensors(esen, nelems);
 	}
 
 out:
-	free(esen);
+	if (str)
+		free(str);
 	return rval;
 }
 
@@ -744,7 +775,7 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 	int i;
 
 	/* find the longest description */
-	for (i = 0; i < nelems; ++i) {
+	for (i = 0; i < nelems; i++) {
 		if (strlen(es[i].desc) > maxlen)
 			maxlen = strlen(es[i].desc);
 	}
@@ -753,11 +784,12 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		maxlen = width;
 
 	/* print the sensors */
-	for (i = 0; i < nelems; ++i) {
+	for (i = 0; i < nelems; i++) {
 
 		/* skip sensors that were not marked as visible */
 		if (sensors && !es[i].visible)
 			continue;
+
 
 		/* we have a winner... */
 		(void)printf("%*.*s", (int)maxlen, (int)maxlen, es[i].desc);
