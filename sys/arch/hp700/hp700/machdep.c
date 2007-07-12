@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2007/03/07 11:29:46 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2007/07/12 14:15:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/03/07 11:29:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2007/07/12 14:15:36 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1691,6 +1691,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_md.md_regs;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pa_space_t space = pmap->pmap_space;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	tf->tf_flags = TFF_SYS|TFF_LAST;
@@ -1699,6 +1701,17 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_rp = 0;
 	tf->tf_arg0 = (u_long)p->p_psstr;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
+
+	tf->tf_sr7 = HPPA_SID_KERNEL;
+
+	/* Load all of the user's space registers. */
+	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr2 = tf->tf_sr3 =
+	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
+
+	tf->tf_iisq_head = tf->tf_iisq_tail = space;
+
+	/* Load the protection regsiters. */
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
 
 	/* reset any of the pending FPU exceptions */
 	hppa_fpu_flush(l);
