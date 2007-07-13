@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.10 2007/07/13 22:49:15 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.11 2007/07/13 23:21:46 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.10 2007/07/13 22:49:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.11 2007/07/13 23:21:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -409,10 +409,9 @@ register_event:
 	see->snum = edata->sensor;
 	mutex_exit(&sme_event_mtx);
 
-	if (sme_event_register(see)) {
+	error = sme_event_register(see);
+	if (error)
 		kmem_free(see, sizeof(*see));
-		return EINVAL;
-	}
 
 out:
 	/* update the object in the dictionary */
