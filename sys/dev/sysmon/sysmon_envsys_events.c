@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.9 2007/07/13 11:09:09 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.10 2007/07/13 22:49:15 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.9 2007/07/13 11:09:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.10 2007/07/13 22:49:15 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,6 +63,11 @@ struct sme_sensor_state {
 	const char 	*desc;
 };
 
+struct sme_sensor_event {
+	int		state;
+	int		event;
+};
+
 static const struct sme_sensor_state sme_sensor_drive_state[] = {
 	{ ENVSYS_DRIVE_EMPTY, 		"drive state is unknown" },
 	{ ENVSYS_DRIVE_READY, 		"drive is ready" },
@@ -75,6 +80,16 @@ static const struct sme_sensor_state sme_sensor_drive_state[] = {
 	{ ENVSYS_DRIVE_FAIL, 		"drive failed" },
 	{ ENVSYS_DRIVE_PFAIL,		"drive degraded" },
 	{ -1, 				"unknown" }
+};
+
+static const struct sme_sensor_event sme_sensor_event[] = {
+	{ ENVSYS_SVALID, 	PENVSYS_EVENT_NORMAL },
+	{ ENVSYS_SCRITICAL, 	PENVSYS_EVENT_CRITICAL },
+	{ ENVSYS_SCRITOVER, 	PENVSYS_EVENT_CRITOVER },
+	{ ENVSYS_SCRITUNDER, 	PENVSYS_EVENT_CRITUNDER },
+	{ ENVSYS_SWARNOVER, 	PENVSYS_EVENT_WARNOVER },
+	{ ENVSYS_SWARNUNDER,	PENVSYS_EVENT_WARNUNDER },
+	{ -1, 			-1 }
 };
 
 static struct workqueue *seewq;
@@ -468,6 +483,7 @@ void
 sme_events_worker(struct work *wk, void *arg)
 {
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
+	const struct sme_sensor_event *sse = sme_sensor_event;
 	sme_event_t *see = (void *)wk;
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
@@ -497,7 +513,7 @@ sme_events_worker(struct work *wk, void *arg)
 	if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
 		error = (*sme->sme_gtredata)(sme, edata);
 		if (error) {
-			mutex_exit(&sme_event_mtx);
+			/* XXX: NOT YET mutex_exit(&sme_event_mtx); */
 			return;
 		}
 	}
@@ -506,108 +522,65 @@ sme_events_worker(struct work *wk, void *arg)
 	    __func__, edata->desc, edata->sensor,
 	    edata->units, edata->value_cur));
 
-#define SME_SENDNORMALEVENT()						\
+#define SME_SEND_NORMALEVENT()						\
 do {									\
-	if (see->evsent && edata->state == ENVSYS_SVALID) {		\
-		see->evsent = false;					\
-		sysmon_penvsys_event(&see->pes, PENVSYS_EVENT_NORMAL);	\
-	}								\
+	see->evsent = false;						\
+	sysmon_penvsys_event(&see->pes, PENVSYS_EVENT_NORMAL);		\
+} while (/* CONSTCOND */ 0)
+
+#define SME_SEND_EVENT(type)						\
+do {									\
+	see->evsent = true;						\
+	sysmon_penvsys_event(&see->pes, (type));			\
 } while (/* CONSTCOND */ 0)
 
 	switch (see->type) {
-	/* handle a critical limit event */
+	/*
+	 * if state is the same than the one that matches sse[i].state,
+	 * send the event...
+	 */
 	case PENVSYS_EVENT_CRITICAL:
-		SME_SENDNORMALEVENT();
-		if (!see->evsent && edata->state == ENVSYS_SCRITICAL) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-			    PENVSYS_EVENT_CRITICAL);
-		}
-
-		break;
-	/* handle a critical under limit event */
 	case PENVSYS_EVENT_CRITUNDER:
-		SME_SENDNORMALEVENT();
-		if (!see->evsent && edata->state == ENVSYS_SCRITUNDER) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-			    PENVSYS_EVENT_CRITUNDER);
-		}
-
-		break;
-	/* handle a critical over limit event */
 	case PENVSYS_EVENT_CRITOVER:
-		SME_SENDNORMALEVENT();
-		if (!see->evsent && edata->state == ENVSYS_SCRITOVER) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-			    PENVSYS_EVENT_CRITOVER);
-		}
-
-		break;
-	/* handle a warning under limit event */
 	case PENVSYS_EVENT_WARNUNDER:
-		SME_SENDNORMALEVENT();
-		if (!see->evsent && edata->state == ENVSYS_SWARNUNDER) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-			    PENVSYS_EVENT_WARNUNDER);
-		}
-
-		break;
-	/* handle a warning over limit event */
 	case PENVSYS_EVENT_WARNOVER:
-		SME_SENDNORMALEVENT();
-		if (!see->evsent && edata->state == ENVSYS_SWARNOVER) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-			    PENVSYS_EVENT_WARNOVER);
-		}
+		for (i = 0; sse[i].state != -1; i++)
+			if (sse[i].event == see->type)
+				break;
+
+		if (see->evsent && edata->state == ENVSYS_SVALID)
+			SME_SEND_NORMALEVENT();
+
+		if (!see->evsent && edata->state == sse[i].state)
+			SME_SEND_EVENT(see->type);
 
 		break;
-	/* handle an user critical capacity */
+	/*
+	 * if value_cur is lower than the limit, send the event...
+	 */
 	case PENVSYS_EVENT_BATT_USERCAP:
-		if (see->evsent && edata->value_cur > see->critval) {
-			see->evsent = false;
-			sysmon_penvsys_event(&see->pes, PENVSYS_EVENT_NORMAL);
-		}
-
-		if (!see->evsent && edata->value_cur < see->critval) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-			    PENVSYS_EVENT_BATT_USERCAP);
-		}
-
-		break;
-	/* handle a max critical event */
-	case PENVSYS_EVENT_USER_CRITMAX:
-		if (see->evsent && edata->value_cur < see->critval) {
-			see->evsent = false;
-			sysmon_penvsys_event(&see->pes, PENVSYS_EVENT_NORMAL);
-		}
-
-		if (!see->evsent && edata->value_cur > see->critval) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-		    	    PENVSYS_EVENT_USER_CRITMAX);
-		}
-
-		break;
-	/* handle a min critical event */
 	case PENVSYS_EVENT_USER_CRITMIN:
-		if (see->evsent && edata->value_cur > see->critval) {
-			see->evsent = false;
-			sysmon_penvsys_event(&see->pes, PENVSYS_EVENT_NORMAL);
-		}
+		if (see->evsent && edata->value_cur > see->critval)
+			SME_SEND_NORMALEVENT();
 
-		if (!see->evsent && edata->value_cur < see->critval) {
-			see->evsent = true;
-			sysmon_penvsys_event(&see->pes,
-		    	    PENVSYS_EVENT_USER_CRITMIN);
-		}
+		if (!see->evsent && edata->value_cur < see->critval)
+			SME_SEND_EVENT(see->type);
 
 		break;
-	/* handle a drive state change event */
+	/*
+	 * if value_cur is higher than the limit, send the event...
+	 */
+	case PENVSYS_EVENT_USER_CRITMAX:
+		if (see->evsent && edata->value_cur < see->critval)
+			SME_SEND_NORMALEVENT();
+
+		if (!see->evsent && edata->value_cur > see->critval)
+			SME_SEND_EVENT(see->type);
+
+		break;
+	/*
+	 * if value_cur is not ENVSYS_DRIVE_ONLINE, send the event...
+	 */
 	case PENVSYS_EVENT_DRIVE_STCHANGED:
 		/* the state has not been changed, just ignore the event */
 		if (edata->value_cur == see->evsent)
@@ -622,21 +595,16 @@ do {									\
 		    sizeof(see->pes.pes_statedesc));
 
 		/* state is ok again... send a normal event */
-		if (see->evsent && edata->value_cur == ENVSYS_DRIVE_ONLINE) {
-			see->evsent = false;
-			sysmon_penvsys_event(&see->pes, PENVSYS_EVENT_NORMAL);
-		}
+		if (see->evsent && edata->value_cur == ENVSYS_DRIVE_ONLINE)
+			SME_SEND_NORMALEVENT();
 
 		/* something bad happened to the drive... send the event */
 		if (see->evsent || edata->value_cur != ENVSYS_DRIVE_ONLINE) {
 			/* save current drive state */
 			see->evsent = edata->value_cur;
-			sysmon_penvsys_event(&see->pes,
-			    PENVSYS_EVENT_DRIVE_STCHANGED);
+			sysmon_penvsys_event(&see->pes, see->type);
 		}
 
-		break;
-	default:
 		break;
 	}
 	/* XXX: NOT YET mutex_exit(&sme_event_mtx); */
