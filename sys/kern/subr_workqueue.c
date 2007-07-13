@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.14 2007/07/12 20:39:56 rmind Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.15 2007/07/13 07:21:31 rmind Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.14 2007/07/12 20:39:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.15 2007/07/13 07:21:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,13 @@ workqueue_initqueue(struct workqueue *wq, int ipl,
 {
 	struct workqueue_queue *q;
 	int error, ktf;
+	cpuid_t cpuid;
+
+#ifdef MULTIPROCESSOR
+	cpuid = ci->ci_cpuid;
+#else
+	cpuid = 0;
+#endif
 
 	q = kmem_alloc(sizeof(struct workqueue_queue), KM_SLEEP);
 	SLIST_INSERT_HEAD(&wq->wq_queue, q, q_list);
@@ -164,7 +171,7 @@ workqueue_initqueue(struct workqueue *wq, int ipl,
 	SIMPLEQ_INIT(&q->q_queue);
 	ktf = ((flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
 	error = kthread_create(wq->wq_prio, ktf, ci, workqueue_worker,
-	    wq, &q->q_worker, "%s/%d", wq->wq_name, (int)ci->ci_cpuid);
+	    wq, &q->q_worker, "%s/%d", wq->wq_name, (int)cpuid);
 
 	return error;
 }
@@ -228,6 +235,7 @@ workqueue_create(struct workqueue **wqp, const char *name,
 
 	workqueue_init(wq, name, callback_func, callback_arg, prio, ipl);
 
+#ifdef MULTIPROCESSOR   
 	if (flags & WQ_PERCPU) {
 		struct cpu_info *ci;
 		CPU_INFO_ITERATOR cii;
@@ -248,6 +256,13 @@ workqueue_create(struct workqueue **wqp, const char *name,
 			return error;
 		}
 	}
+#else
+	error = workqueue_initqueue(wq, ipl, flags, curcpu());
+	if (error) {
+		kmem_free(wq, sizeof(*wq));
+		return error;
+	}
+#endif
 
 	*wqp = wq;
 	return 0;
