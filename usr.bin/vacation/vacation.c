@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.32 2006/08/15 16:21:59 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.33 2007/07/13 13:21:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.32 2006/08/15 16:21:59 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.33 2007/07/13 13:21:49 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -106,7 +106,6 @@ static int toanybody = 0;	/* Don't check if we appear in the to or cc */
 
 static int debug = 0;
 
-int main(int, char **);
 static void opendb(void);
 static int junkmail(const char *);
 static int nsearch(const char *, const char *);
@@ -116,7 +115,7 @@ static void getfrom(char *);
 static void sendmessage(const char *);
 static void setinterval(time_t);
 static void setreply(void);
-static void usage(void);
+static void usage(void) __attribute__((__noreturn__));
 
 int
 main(int argc, char **argv)
@@ -131,7 +130,7 @@ main(int argc, char **argv)
 	opterr = 0;
 	interval = -1;
 	openlog(getprogname(), 0, LOG_USER);
-	while ((ch = getopt(argc, argv, "a:df:F:Iijr:s:t:T:")) != -1)
+	while ((ch = getopt(argc, argv, "a:df:F:Iijm:r:s:t:T:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (alias_t *)malloc((size_t)sizeof(alias_t))))
