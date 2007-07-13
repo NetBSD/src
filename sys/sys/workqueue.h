@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.6 2007/07/12 20:39:56 rmind Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.7 2007/07/13 07:21:37 rmind Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -30,6 +30,8 @@
 #define	_SYS_WORKQUEUE_H_
 
 #include <sys/queue.h>
+
+#include <machine/cpu.h>
 
 /*
  * a simple "do it in thread context" framework.
