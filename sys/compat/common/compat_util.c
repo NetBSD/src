@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.36 2007/04/26 20:06:55 dsl Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.36 2007/04/26 20:06:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.37 2007/07/13 21:04:29 dsl Exp $");
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +147,8 @@ emul_flags_translate(const struct emul_flags_xtab *tab,
 	return (out);
 }
 
+/* The only user left of the stackgap is the systrace code. */
+#if SYSTRACE
 void *
 stackgap_init(p, sz)
 	const struct proc *p;
@@ -179,6 +183,7 @@ stackgap_alloc(p, sgp, sz)
 	*sgp = nsgp;
 	return n;
 }
+#endif
 
 void
 compat_offseterr(vp, msg)
