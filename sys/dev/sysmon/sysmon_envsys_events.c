@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.11 2007/07/13 23:21:46 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.12 2007/07/13 23:46:24 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.11 2007/07/13 23:21:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.12 2007/07/13 23:46:24 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -369,9 +369,15 @@ sme_event_add(prop_dictionary_t sdict, envsys_data_t *edata,
 					if (crittype == see->type)
 						break;
 		 	}
-			see->critval = critval;
+
+			if (see->critval != critval) {
+				see->critval = critval;
+				DPRINTF(("%s: sensor=%s type=%d "
+				    "(critval updated)\n", __func__,
+				    edata->desc, see->type));
+			}
+
 			mutex_exit(&sme_event_mtx);
-			DPRINTF(("%s: event updated\n", __func__));
 			goto out;
 		}
 	}
