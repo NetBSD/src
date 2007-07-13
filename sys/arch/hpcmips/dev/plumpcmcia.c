@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.20 2007/07/09 20:52:12 ad Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.21 2007/07/13 08:22:31 he Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.20 2007/07/09 20:52:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumpcmcia.c,v 1.21 2007/07/13 08:22:31 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ plumpcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Slot0/1 CSC event queue */
 	SIMPLEQ_INIT (&sc->sc_event_head);
-	error = kthread_create(PRI_NONE, 0, NULL plumpcmcia_event_thread,
+	error = kthread_create(PRI_NONE, 0, NULL, plumpcmcia_event_thread,
 	    sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname);
 	KASSERT(error == 0);
 
@@ -920,6 +920,7 @@ plumpcmcia_event_alloc()
 			return (&__event_queue_pool[i]);
 		}
 	}
+	return NULL;
 }
 
 static void
