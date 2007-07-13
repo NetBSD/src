@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.33 2007/07/13 13:21:49 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.34 2007/07/13 14:52:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.33 2007/07/13 13:21:49 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.34 2007/07/13 14:52:15 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -243,7 +243,8 @@ main(int argc, char **argv)
 		    getprogname(), *argv);
 		exit(1);
 	}
-	if (chdir(pw->pw_dir)) {
+	if (chdir(pw->pw_dir) == -1 && 
+	    (dbprefix[0] != '/' || msgfile[0] != '/')) {
 		syslog(LOG_ERR, "%s: no such directory %s.",
 		    getprogname(), pw->pw_dir);
 		exit(1);
