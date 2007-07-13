@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.8 2007/07/12 20:39:56 rmind Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.9 2007/07/13 11:09:09 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.8 2007/07/12 20:39:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.9 2007/07/13 11:09:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -231,7 +231,7 @@ sme_event_unregister(const char *sensor, int type)
 	/*
 	 * So the events list is empty, we'll do the following:
 	 *
-	 * 	- stop the callout.
+	 * 	- stop and destroy the callout.
 	 * 	- destroy the workqueue.
 	 */
 	if (LIST_EMPTY(&sme_events_list)) {
@@ -239,6 +239,7 @@ sme_event_unregister(const char *sensor, int type)
 
 		mutex_enter(&sme_event_init_mtx);
 		callout_stop(&seeco);
+		callout_destroy(&seeco);
 		workqueue_destroy(seewq);
 		sme_events_initialized = false;
 		DPRINTF(("%s: events framework destroyed\n", __func__));
