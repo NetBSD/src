@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.20 2007/07/12 19:41:57 dsl Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.21 2007/07/13 20:46:04 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.20 2007/07/12 19:41:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21 2007/07/13 20:46:04 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/condvar.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -222,8 +223,9 @@ irix_usema_ioctl(v)
 			return EBADF;
 
 		if ((iwpr = iur_proc_getfirst(iur)) != NULL) {
+			extern kcondvar_t select_cv;
 			iur_proc_release(iur, iwpr);
-			wakeup((void *)&selwait);
+			cv_broadcast(&select_cv);
 		}
 		break;
 
