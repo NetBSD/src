@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.33 2007/07/12 22:52:54 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.34 2007/07/13 00:42:57 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -269,23 +269,25 @@ send_dictionary(int fd)
 	 */
 	udict = prop_dictionary_create();
 
-	/* create the driver-name object */
-	obj = prop_string_create_cstring_nocopy(mydevname);
-	if (obj == NULL || !prop_dictionary_set(udict, "driver-name", obj)) {
-		error = EINVAL;
-		goto out;
-	}
+#define MKPROP(var, str)						\
+do {									\
+	obj = prop_string_create_cstring_nocopy(var);			\
+	if (obj == NULL || !prop_dictionary_set(udict, (str), obj)) {	\
+		error = EINVAL;						\
+		goto out;						\
+	}								\
+} while (/* CONSTCOND */ 0)
 
+	/* create the driver-name object */
+	MKPROP(mydevname, "driver-name");
 	prop_object_release(obj);
 
 	/* create the sensor-name object */
-	obj = prop_string_create_cstring_nocopy(sensors);
-	if (obj == NULL || !prop_dictionary_set(udict, "sensor-name", obj)) {
-		error = EINVAL;
-		goto out;
-	}
-
+	MKPROP(sensors, "sensor-name");
 	prop_object_release(obj);
+
+#undef MKPROP
+
 	/* 
 	 * parse the -m argument; we understand the following ways:
 	 *
@@ -360,6 +362,8 @@ do {									\
 		free(target);
 	}
 
+#undef SETNCHECKVAL
+
 	/* critical capacity for percentage sensors */
 	if (uflag & USERF_SCRITICAL) {
 		/* sanity check */
@@ -407,64 +411,48 @@ do {									\
 		}
 	}
 
+#define SETPROP(str)							\
+do {									\
+	if (!prop_dictionary_set(udict, (str), obj)) {			\
+		error = EINVAL;						\
+		goto out;						\
+	}								\
+} while ( /*CONSTCOND*/ 0)
+
 	/* user wanted to set a new description */	
 	if (uflag & USERF_SDESCR) {
-		if (!prop_dictionary_set(udict, "new-description", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("new-description");
 
 	/* user wanted to set a new critical capacity */
 	} else if (uflag & USERF_SCRITICAL) {
-		if (!prop_dictionary_set(udict, "critical-capacity", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("critical-capacity");
 
 	} else if (uflag & USERF_RCRITICAL) {
 		obj = prop_bool_create(1);
-		if (!prop_dictionary_set(udict, "remove-critical-cap", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("remove-critical-cap");
 
 	/* user wanted to remove a critical min limit */
 	} else if (uflag & USERF_RCRITMIN) {
 		obj = prop_bool_create(1);
-		if (!prop_dictionary_set(udict, "remove-cmin-limit", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("remove-cmin-limit");
 
 	/* user wanted to remove a critical max limit */
 	} else if (uflag & USERF_RCRITMAX) {
 		obj = prop_bool_create(1);
-		if (!prop_dictionary_set(udict, "remove-cmax-limit", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("remove-cmax-limit");
 
 	/* user wanted to set a new critical min value */
 	} else if (uflag & USERF_SCRITMIN) {
-		if (!prop_dictionary_set(udict, "critical-min-limit", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("critical-min-limit");
 
 	/* user wanted to set a new critical max value */
 	} else if (uflag & USERF_SCRITMAX) {
-		if (!prop_dictionary_set(udict, "critical-max-limit", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("critical-max-limit");
 
 	/* user wanted to set a new rfact */
 	} else if (uflag & USERF_SRFACT) {
 		obj = prop_number_create_integer(val);
-		if (!prop_dictionary_set(udict, "new-rfact", obj)) {
-			error = EINVAL;
-			goto out;
-		}
+		SETPROP("new-rfact");
 
 	} else {
 		(void)printf("%s: unknown operation\n", getprogname());
@@ -472,9 +460,11 @@ do {									\
 		goto out;
 	}
 
+#undef SETPROP
+
 	prop_object_release(obj);
 
-#if 0
+#ifdef DEBUG
 	printf("%s", prop_dictionary_externalize(udict));
 	return error;
 #endif
@@ -824,6 +814,7 @@ do {								\
 				CONVERTTEMP(temp, es[i].critmin_value, degrees);
 				(void)printf("min: %8.3f %s", temp, degrees);
 			}
+#undef CONVERTTEMP
 
 		/* fans */
 		} else if (strcmp(es[i].type, "Fan") == 0) {
