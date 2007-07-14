@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 2007/07/09 20:52:36 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 2007/07/14 09:50:04 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2007/07/09 20:52:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2007/07/14 09:50:04 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -206,6 +206,8 @@ static int cpuspeed;		/* MPU clock (in MHz) */
  * Machine-dependent crash dump header info.
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
+
+static callout_t candbtimer_ch;
 
 /*
  * Console initialization: called early on from main,
@@ -933,8 +935,6 @@ makeiplcookie(ipl_t ipl)
 #if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
 #define PANICBUTTON
 #endif
-
-static callout_t candbtimer_ch;
 
 #ifdef PANICBUTTON
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
