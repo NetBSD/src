@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.15 2006/10/16 03:37:43 christos Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.16 2007/07/14 15:57:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.15 2006/10/16 03:37:43 christos Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.16 2007/07/14 15:57:27 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -191,7 +191,7 @@ mount_tmpfs(int argc, char *argv[])
 	args.ta_root_gid = gidset ? gid : sb.st_gid;
 	args.ta_root_mode = modeset ? mode : sb.st_mode;
 
-	if (mount(MOUNT_TMPFS, canon_dir, mntflags, &args)) {
+	if (mount(MOUNT_TMPFS, canon_dir, mntflags, &args, sizeof args)) {
 		err(EXIT_FAILURE, "tmpfs on %s", canon_dir);
 		/* NOTREACHED */
 	}

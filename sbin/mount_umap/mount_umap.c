@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.19 2006/10/16 03:37:43 christos Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.20 2007/07/14 15:57:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.19 2006/10/16 03:37:43 christos Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.20 2007/07/14 15:57:27 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ mount_umap(int argc, char *argv[])
 	args.gnentries = gnentries;
 	args.gmapdata = gmapdata;
 
-	if (mount(MOUNT_UMAP, target, mntflags, &args))
+	if (mount(MOUNT_UMAP, target, mntflags, &args, sizeof args))
 		err(1, "%s on %s", source, target);
 	if (mntflags & MNT_GETARGS) {
 		printf("nentries=%d, gnentries=%d\n", args.nentries,

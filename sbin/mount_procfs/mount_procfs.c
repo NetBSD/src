@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.19 2006/10/16 03:37:43 christos Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.20 2007/07/14 15:57:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.19 2006/10/16 03:37:43 christos Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.20 2007/07/14 15:57:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ mount_procfs(int argc, char *argv[])
 	args.version = PROCFS_ARGSVERSION;
 	args.flags = altflags;
 
-	if (mount(MOUNT_PROCFS, canon_dir, mntflags, &args))
+	if (mount(MOUNT_PROCFS, canon_dir, mntflags, &args, sizeof args))
 		err(1, "procfs on %s", canon_dir);
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
