@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.12 2007/07/13 23:46:24 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.13 2007/07/14 00:48:56 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.12 2007/07/13 23:46:24 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.13 2007/07/14 00:48:56 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -492,7 +492,7 @@ sme_events_worker(struct work *wk, void *arg)
 	sme_event_t *see = (void *)wk;
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
-	int d, i, error = 0;
+	int i, error = 0;
 
 	KASSERT(wk == &see->see_wk);
 
@@ -507,9 +507,8 @@ sme_events_worker(struct work *wk, void *arg)
 
 	KASSERT(sme != NULL);
 
-	/* get the sensor number in the sme event */
-	d = see->snum;
-	edata = &sme->sme_sensor_data[d];
+	/* get the sensor with the index specified in see->snum */
+	edata = &sme->sme_sensor_data[see->snum];
 
 	/* 
 	 * refresh the sensor that was marked with a critical
