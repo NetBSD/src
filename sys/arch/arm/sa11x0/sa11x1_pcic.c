@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.14 2007/07/09 20:52:05 ad Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.15 2007/07/14 21:46:36 ad Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.14 2007/07/09 20:52:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.15 2007/07/14 21:46:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,10 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 
 		/* create kthread */
 		sapcic_kthread_create(&sc->sc_socket[i]);
-		config_interrupt(&sc->sc_socket[i], sacpcic_config_intr);
+#if 0 /* XXX */
+		/* establish_intr should be after creating the kthread */
+		config_interrupt(&sc->sc_socket[i], sapcic_config_intr);
+#endif
 	}
 }
 
