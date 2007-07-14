@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.14 2005/03/04 05:53:19 mycroft Exp $
+.\"	$NetBSD: callout.9,v 1.15 2007/07/14 11:34:54 ad Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,42 +39,40 @@
 .Os
 .Sh NAME
 .Nm callout_init ,
+.Nm callout_destroy ,
 .Nm callout_reset ,
 .Nm callout_schedule ,
 .Nm callout_setfunc ,
 .Nm callout_stop ,
 .Nm callout_expired ,
 .Nm callout_invoking ,
-.Nm callout_ack ,
-.Nm CALLOUT_INITIALIZER ,
-.Nm CALLOUT_INITIALIZER_SETFUNC
+.Nm callout_ack
 .Nd execute a function after a specified length of time
 .Sh SYNOPSIS
 .In sys/callout.h
 .Ft void
-.Fn "callout_init" "struct callout *c"
+.Fn "callout_init" "callout_t *c" "u_int flags"
 .Ft void
-.Fn "callout_reset" "struct callout *c" "int ticks" \
+.Fn "callout_destroy" "callout_t *c"
+.Ft void
+.Fn "callout_reset" "callout_t *c" "int ticks" \
     "void (*func)(void *)" "void *arg"
 .Ft void
-.Fn "callout_schedule" "struct callout *c" "int ticks"
+.Fn "callout_schedule" "callout_t *c" "int ticks"
 .Ft void
-.Fn "callout_setfunc" "struct callout *c" "void (*func)(void *)" "void *arg"
+.Fn "callout_setfunc" "callout_t *c" "void (*func)(void *)" "void *arg"
+.Ft bool
+.Fn "callout_stop" "callout_t *c"
+.Ft int
+.Fn "callout_pending" "callout_t *c"
+.Ft int
+.Fn "callout_expired" "callout_t *c"
+.Ft int
+.Fn "callout_active" "callout_t *c"
+.Ft int
+.Fn "callout_invoking" "callout_t *c"
 .Ft void
-.Fn "callout_stop" "struct callout *c"
-.Ft int
-.Fn "callout_pending" "struct callout *c"
-.Ft int
-.Fn "callout_expired" "struct callout *c"
-.Ft int
-.Fn "callout_active" "struct callout *c"
-.Ft int
-.Fn "callout_invoking" "struct callout *c"
-.Ft void
-.Fn "callout_ack" "struct callout *c"
-.Fd CALLOUT_INITIALIZER
-.Pp
-.Fn CALLOUT_INITIALIZER_SETFUNC "func" "arg"
+.Fn "callout_ack" "callout_t *c"
 .Sh DESCRIPTION
 The
 .Nm callout
@@ -92,7 +90,7 @@ callout structures, or
 The
 .Nm callout
 facility replaces the historic
-.Bx
+.Ux
 functions
 .Fn timeout
 and
@@ -103,12 +101,18 @@ The
 function initializes the callout handle
 .Fa c
 for use.
-If it is inconvenient to call
-.Fn callout_init ,
-statically-allocated callout handles may be initialized by assigning
-the value
-.Dv CALLOUT_INITIALIZER
-to them.
+No operations can be performed on the callout before it is initialized.
+Currently, the
+.Fa flags
+argument must be specified as zero (0).
+.Pp
+.Fn callout_destroy
+destroys the callout, preventing further use.
+It is provided as a diagnostic facility intended to catch bugs.
+To ensure future compatibility,
+.Fn callout_destroy
+should always be called when the callout is no longer required (for instance,
+when a device is being detached).
 .Pp
 The
 .Fn callout_reset
@@ -151,12 +155,6 @@ used in conjunction with
 .Fn callout_schedule
 is slightly more efficient than using
 .Fn callout_reset .
-If it is inconvenient to call
-.Fn callout_setfunc ,
-statically-allocated callout handles may be initialized by assigning
-the value
-.Dv CALLOUT_INITIALIZER_SETFUNC
-to them, passing the function and argument to the initializer.
 .Pp
 The
 .Fn callout_stop
@@ -170,6 +168,9 @@ status for the callout handle is cleared.
 It is safe to call
 .Fn callout_stop
 on a callout handle that is not pending, so long as it is initialized.
+. Fn callout_stop
+will return a non-zero value if the callout was
+.Em EXPIRED .
 .Pp
 The
 .Fn callout_pending
