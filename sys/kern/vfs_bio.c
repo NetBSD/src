@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.10 2007/06/23 18:06:03 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.11 2007/07/14 22:06:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.10 2007/06/23 18:06:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.11 2007/07/14 22:06:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1486,8 +1486,11 @@ biodone2(struct buf *bp)
 	SET(bp->b_flags, B_DONE);	/* note that it's done */
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete) {
+		mutex_exit(&bp->b_interlock);
 		(*bioops.io_complete)(bp);
+		mutex_enter(&bp->b_interlock);
+	}
 
 	/*
 	 * If necessary, call out.  Unlock the buffer before
