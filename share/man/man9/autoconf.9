@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.20 2006/10/13 20:47:42 wiz Exp $
+.\"     $NetBSD: autoconf.9,v 1.21 2007/07/14 10:52:47 ad Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -351,9 +351,8 @@ removal)) and DETACH_QUIET (do not print a notice).
 .Fn config_detach
 returns zero if successful and an error code otherwise.
 .Fn config_detach
-is always called from a thread context, allowing
-.Xr ltsleep 9
-to be called while the device detaches itself.
+is always called from a thread context, allowing condition variables
+to be used while the device detaches itself.
 .It Fn config_activate "dev"
 Called by the parent to activate the child device
 .Fa dev .
@@ -420,6 +419,7 @@ Data structures and function prototypes for the framework are located in
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr config 5 ,
+.Xr condvar 9 ,
 .Xr config 9 ,
 .Xr driver 9
 .Sh HISTORY
