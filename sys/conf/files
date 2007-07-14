@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.849 2007/07/09 10:05:26 ad Exp $
+#	$NetBSD: files,v 1.850 2007/07/14 10:52:14 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -16,7 +16,6 @@ devclass tty
 # (note, these are case-sensitive)
 #
 defflag				INSECURE
-defflag				KCONT
 defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
