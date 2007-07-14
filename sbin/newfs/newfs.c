@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.97 2007/04/28 02:56:32 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.98 2007/07/14 15:57:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.97 2007/04/28 02:56:32 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.98 2007/07/14 15:57:27 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,7 +413,7 @@ main(int argc, char *argv[])
 	if (mntflags & (MNT_GETARGS | MNT_UPDATE)) {
 		if ((mntflags & MNT_GETARGS) == 0)
 			mntflags |= MNT_ASYNC;
-		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
+		if (mount(MOUNT_MFS, argv[1], mntflags, &args, sizeof args) < 0)
 			err(1, "mount `%s' failed", argv[1]);
 		if (mntflags & MNT_GETARGS)
 			printf("base=%p, size=%ld\n", args.base, args.size);
@@ -703,7 +703,7 @@ main(int argc, char *argv[])
 
 		args.base = membase;
 		args.size = fssize * sectorsize;
-		if (mount(MOUNT_MFS, argv[1], mntflags | MNT_ASYNC, &args) < 0)
+		if (mount(MOUNT_MFS, argv[1], mntflags | MNT_ASYNC, &args, sizeof args) < 0)
 			exit(errno); /* parent prints message */
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.58 2007/03/10 00:30:37 hubertf Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.59 2007/07/14 15:57:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.58 2007/03/10 00:30:37 hubertf Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.59 2007/07/14 15:57:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ retry:
 		}
 		free(tspec);
 	}
-	if ((retval = mount(MOUNT_NFS, name, mntflags, nfsargsp))) {
+	if ((retval = mount(MOUNT_NFS, name, mntflags, nfsargsp, sizeof *nfsargsp))) {
 		/* Did we just default to v3 on a v2-only kernel?
 		 * If so, default to v2 & try again */
 		if (errno == EPROGMISMATCH &&

@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.41 2007/03/10 00:30:37 hubertf Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.42 2007/07/14 15:57:26 dsl Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.41 2007/03/10 00:30:37 hubertf Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.42 2007/07/14 15:57:26 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,7 +192,7 @@ mount_msdos(int argc, char **argv)
 	args.flags |= MSDOSFSMNT_VERSIONED;
 	args.version = MSDOSFSMNT_VERSION;
 
-	if (mount(MOUNT_MSDOS, dir, mntflags, &args) < 0)
+	if (mount(MOUNT_MSDOS, dir, mntflags, &args, sizeof args) < 0)
 		err(1, "%s on %s", dev, dir);
 
 	if (mntflags & MNT_GETARGS) {
