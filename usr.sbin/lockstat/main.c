@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.8 2007/01/20 20:01:03 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2007/07/14 13:30:44 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.8 2007/01/20 20:01:03 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2007/07/14 13:30:44 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: main.c,v 1.8 2007/01/20 20:01:03 ad Exp $");
 #include <util.h>
 #include <ctype.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #include "extern.h"
 
@@ -138,9 +139,10 @@ locklist_t	sortlist;
 
 lsbuf_t		*bufs;
 lsdisable_t	ld;
-int		lflag;
+bool		lflag;
+bool		fflag;
 int		nbufs;
-int		cflag;
+bool		cflag;
 int		lsfd;
 int		displayed;
 int		bin64;
@@ -149,11 +151,12 @@ double		cscale;
 double		cpuscale[sizeof(ld.ld_freq) / sizeof(ld.ld_freq[0])];
 FILE		*outfp;
 
-void	findsym(findsym_t, char *, uintptr_t *, uintptr_t *);
+void	findsym(findsym_t, char *, uintptr_t *, uintptr_t *, bool);
 void	spawn(int, char **);
 void	display(int, const char *name);
 void	listnames(const name_t *);
-int	matchname(const name_t *, const char *);
+void	collapse(bool, bool);
+int	matchname(const name_t *, char *);
 void	makelists(int, int);
 void	nullsig(int);
 void	usage(void);
@@ -163,7 +166,8 @@ lock_t	*morelocks(void);
 int
 main(int argc, char **argv)
 {
-	int eventtype, locktype, ch, nlfd, sflag, fd, i, pflag;
+	int eventtype, locktype, ch, nlfd, fd, i;
+	bool sflag, pflag, mflag, Mflag;
 	const char *nlistf, *outf;
 	char *lockname, *funcname;
 	const name_t *name;
@@ -178,10 +182,12 @@ main(int argc, char **argv)
 	eventtype = -1;
 	locktype = -1;
 	nbufs = 0;
-	sflag = 0;
-	pflag = 0;
+	sflag = false;
+	pflag = false;
+	mflag = false;
+	Mflag = false;
 
-	while ((ch = getopt(argc, argv, "E:F:L:M:N:T:b:ceflo:pst")) != -1)
+	while ((ch = getopt(argc, argv, "E:F:L:MN:T:b:ceflmo:pst")) != -1)
 		switch (ch) {
 		case 'E':
 			eventtype = matchname(eventnames, optarg);
@@ -204,22 +210,31 @@ main(int argc, char **argv)
 				usage();
 			break;
 		case 'c':
-			cflag = 1;
+			cflag = true;
 			break;
 		case 'e':
 			listnames(eventnames);
 			break;
+		case 'f':
+			fflag = true;
+			break;
 		case 'l':
-			lflag = 1;
+			lflag = true;
+			break;
+		case 'm':
+			mflag = true;
+			break;
+		case 'M':
+			Mflag = true;
 			break;
 		case 'o':
 			outf = optarg;
 			break;
 		case 'p':
-			pflag = 1;
+			pflag = true;
 			break;
 		case 's':
-			sflag = 1;
+			sflag = true;
 			break;
 		case 't':
 			listnames(locknames);
@@ -270,15 +285,17 @@ main(int argc, char **argv)
 	 */
 	if (lockname != NULL) {
 		findsym(LOCK_BYNAME, lockname, &le.le_lockstart,
-		    &le.le_lockend);
+		    &le.le_lockend, true);
 		le.le_flags |= LE_ONE_LOCK;
 	}
 	if (!lflag)
 		le.le_flags |= LE_CALLSITE;
+	if (!fflag)
+		le.le_flags |= LE_LOCK;
 	if (funcname != NULL) {
 		if (lflag)
 			usage();
-		findsym(FUNC_BYNAME, funcname, &le.le_csstart, &le.le_csend);
+		findsym(FUNC_BYNAME, funcname, &le.le_csstart, &le.le_csend, true);
 		le.le_flags |= LE_ONE_CALLSITE;
 	}
 	le.le_mask = (eventtype & LB_EVENT_MASK) | (locktype & LB_LOCK_MASK);
@@ -340,6 +357,9 @@ main(int argc, char **argv)
 	TAILQ_INIT(&sortlist);
 	TAILQ_INIT(&freelist);
 
+	if ((mflag | Mflag) != 0)
+		collapse(mflag, Mflag);
+
 	/*
 	 * Display the results.
 	 */
@@ -381,9 +401,12 @@ usage(void)
 	    "-c\t\treport percentage of total events by count, not time\n"
 	    "-E evt\t\tdisplay only one type of event\n"
 	    "-e\t\tlist event types\n"
+	    "-f\t\ttrace only by function\n"
 	    "-F func\t\tlimit trace to one function\n"
 	    "-L lock\t\tlimit trace to one lock (name, or address)\n"
 	    "-l\t\ttrace only by lock\n"
+	    "-m\t\tmerge call sites within unique functions\n"
+	    "-M\t\tmerge lock addresses within unique objects\n"
 	    "-N nlist\tspecify name list file\n"
 	    "-o file\t\tsend output to named file, not stdout\n"
 	    "-p\t\tshow average count/time per CPU, not total\n"
@@ -413,16 +436,33 @@ listnames(const name_t *name)
 }
 
 int
-matchname(const name_t *name, const char *string)
+matchname(const name_t *name, char *string)
 {
+	int empty, mask;
+	char *sp;
 
-	for (; name->name != NULL; name++)
-		if (strcasecmp(name->name, string) == 0)
-			return name->mask;
+	empty = 1;
+	mask = 0;
 
-	warnx("unknown type `%s'", string);
-	usage();
-	return 0;
+	while ((sp = strsep(&string, ",")) != NULL) {
+		if (*sp == '\0')
+			usage();
+
+		for (; name->name != NULL; name++) {
+			if (strcasecmp(name->name, sp) == 0) {
+				mask |= name->mask;
+				break;
+			}
+		}
+		if (name->name == NULL)
+			errx(EXIT_FAILURE, "unknown identifier `%s'", sp);
+		empty = 0;
+	}
+
+	if (empty)
+		usage();
+
+	return mask;
 }
 
 /*
@@ -447,11 +487,17 @@ ncpu(void)
  * Call into the ELF parser and look up a symbol by name or by address.
  */
 void
-findsym(findsym_t find, char *name, uintptr_t *start, uintptr_t *end)
+findsym(findsym_t find, char *name, uintptr_t *start, uintptr_t *end, bool chg)
 {
-	uintptr_t tend;
+	uintptr_t tend, sa, ea;
 	char *p;
 	int rv;
+
+	if (!chg) {
+		sa = *start;
+		start = &sa;
+		end = &ea;
+	}
 
 	if (end == NULL)
 		end = &tend;
@@ -521,6 +567,26 @@ morelocks(void)
 		TAILQ_INSERT_TAIL(&freelist, lp, chain);
 
 	return l;
+}
+
+/*
+ * Collapse addresses from unique objects.
+ */
+void
+collapse(bool func, bool lock)
+{
+	lsbuf_t *lb, *max;
+
+	for (lb = bufs, max = bufs + nbufs; lb < max; lb++) {
+		if (func && lb->lb_callsite != 0) {
+			findsym(FUNC_BYADDR, NULL, &lb->lb_callsite, NULL,
+			    true);
+		}
+		if (lock && lb->lb_lock != 0) {
+			findsym(LOCK_BYADDR, NULL, &lb->lb_lock, NULL,
+			    true);
+		}
+	}
 }
 
 /*
@@ -698,7 +764,7 @@ display(int mask, const char *name)
 		metric *= pcscale;
 
 		if (l->name[0] == '\0')
-			findsym(LOCK_BYADDR, l->name, &l->lock, NULL);
+			findsym(LOCK_BYADDR, l->name, &l->lock, NULL, false);
 
 		if (lflag || l->nbufs > 1)
 			fprintf(outfp, "%6.2f %7d %9.2f %-22s <all>\n",
@@ -715,7 +781,8 @@ display(int mask, const char *name)
 				metric = lb->lb_times[event];
 			metric *= pcscale;
 
-			findsym(FUNC_BYADDR, fname, &lb->lb_callsite, NULL);
+			findsym(FUNC_BYADDR, fname, &lb->lb_callsite, NULL,
+			    false);
 			fprintf(outfp, "%6.2f %7d %9.2f %-22s %s\n",
 			    metric, (int)(lb->lb_counts[event] * cscale),
 			    lb->lb_times[event] * tscale, l->name, fname);
