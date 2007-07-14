@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.2 2006/07/29 19:10:57 ad Exp $	*/
+/*	$NetBSD: sii.c,v 1.3 2007/07/14 17:23:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.2 2006/07/29 19:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.3 2007/07/14 17:23:58 ad Exp $");
 
 #include "sii.h"
 /*
@@ -1809,7 +1809,6 @@ sii_CmdDone(sc, target, error)
 		sc->sc_xs[target]->error = XS_DRIVER_STUFFUP;
 	}
 	sc->sc_xs[target]->resid = sc->sc_st[target].buflen;
-	sc->sc_xs[target]->xs_status |= XS_STS_DONE;
 	scsipi_done(sc->sc_xs[target]);
 }
 
