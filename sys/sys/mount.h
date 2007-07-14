@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.160 2007/07/12 19:35:37 dsl Exp $	*/
+/*	$NetBSD: mount.h,v 1.161 2007/07/14 15:41:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -364,10 +364,10 @@ int	getfh(const char *, void *, size_t *)
 	__RENAME(__getfh30);
 #endif
 
-int	mount(const char *, const char *, int, void *);
 int	unmount(const char *, int);
 #if defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
+int mount(const char *, const char *, int, void *, size_t) __RENAME(__mount50);
 int	fhopen(const void *, size_t, int) __RENAME(__fhopen40);
 int	fhstat(const void *, size_t, struct stat *) __RENAME(__fhstat40);
 #endif
