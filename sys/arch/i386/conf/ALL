@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.110 2007/07/11 08:01:51 kiyohara Exp $
+# $NetBSD: ALL,v 1.111 2007/07/14 16:16:17 kiyohara Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.110 $"
+#ident 		"ALL-$Revision: 1.111 $"
 
 maxusers	32		# estimated number of users
 
@@ -616,13 +616,13 @@ nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
 
-adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-adt7463c* at iic? addr 0x2D		# Tyan S2881
-adt7463c* at iic? addr 0x2E		# Tyan S2882-D
-
 # Intel PIIX4 power management controllers
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
+
+adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
+adt7463c* at iic? addr 0x2D		# Tyan S2881
+adt7463c* at iic? addr 0x2E		# Tyan S2882-D
 
 # iTE IT87xxF and compatible hardware monitors
 it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
