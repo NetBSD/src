@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.114 2007/07/02 15:26:18 xtraeme Exp $
+#	$NetBSD: special,v 1.115 2007/07/14 21:20:33 ad Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -193,7 +193,6 @@
 ./etc/rc.d/dmesg		type=file mode=0555
 ./etc/rc.d/downinterfaces	type=file mode=0555
 ./etc/rc.d/envsys		type=file mode=0555
-./etc/rc.d/fixsb		type=file mode=0555
 ./etc/rc.d/fsck			type=file mode=0555
 ./etc/rc.d/ftpd			type=file mode=0555
 ./etc/rc.d/hostapd		type=file mode=0555
