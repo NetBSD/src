@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1013 2007/07/11 07:53:30 kiyohara Exp $
+# $NetBSD: mi,v 1.1014 2007/07/14 20:05:35 adrianp Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -51,6 +51,7 @@
 ./usr/share/man/cat1/audioctl.0			man-audio-catman	.cat
 ./usr/share/man/cat1/audioplay.0		man-audio-catman	.cat
 ./usr/share/man/cat1/audiorecord.0		man-audio-catman	.cat
+./usr/share/man/cat1/audit-packages.0		man-pkgutil-catman	.cat
 ./usr/share/man/cat1/awk.0			man-util-catman		.cat
 ./usr/share/man/cat1/banner.0			man-util-catman		.cat
 ./usr/share/man/cat1/basename.0			man-util-catman		.cat
@@ -115,6 +116,7 @@
 ./usr/share/man/cat1/dnskeygen.0		man-obsolete		obsolete
 ./usr/share/man/cat1/dnsquery.0			man-obsolete		obsolete
 ./usr/share/man/cat1/domainname.0		man-nis-catman		.cat
+./usr/share/man/cat1/download-vulnerability-list.0	man-pkgutil-catman	.cat
 ./usr/share/man/cat1/dtmfdecode.0		man-isdn-catman		.cat
 ./usr/share/man/cat1/du.0			man-util-catman		.cat
 ./usr/share/man/cat1/echo.0			man-util-catman		.cat
@@ -1583,6 +1585,7 @@
 ./usr/share/man/cat5/altq.conf.0		man-router-catman	.cat
 ./usr/share/man/cat5/amd.conf.0			man-amd-catman		.cat
 ./usr/share/man/cat5/ar.0			man-sys-catman		.cat
+./usr/share/man/cat5/audit-packages.conf.0	man-pkgutil-catman	.cat
 ./usr/share/man/cat5/bluetooth.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/body_checks.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/bootparams.0		man-bootserver-catman	.cat
@@ -2526,6 +2529,7 @@
 ./usr/share/man/man1/audioctl.1			man-audio-man		.man
 ./usr/share/man/man1/audioplay.1		man-audio-man		.man
 ./usr/share/man/man1/audiorecord.1		man-audio-man		.man
+./usr/share/man/man1/audit-packages.1		man-pkgutil-man		.man
 ./usr/share/man/man1/awk.1			man-util-man		.man
 ./usr/share/man/man1/banner.1			man-util-man		.man
 ./usr/share/man/man1/basename.1			man-util-man		.man
@@ -2590,6 +2594,7 @@
 ./usr/share/man/man1/dnskeygen.1		man-obsolete		obsolete
 ./usr/share/man/man1/dnsquery.1			man-obsolete		obsolete
 ./usr/share/man/man1/domainname.1		man-nis-man		.man
+./usr/share/man/man1/download-vulnerability-list.1	man-pkgutil-man	.man
 ./usr/share/man/man1/dtmfdecode.1		man-isdn-man		.man
 ./usr/share/man/man1/du.1			man-util-man		.man
 ./usr/share/man/man1/echo.1			man-util-man		.man
@@ -4058,6 +4063,7 @@
 ./usr/share/man/man5/altq.conf.5		man-router-man		.man
 ./usr/share/man/man5/amd.conf.5			man-amd-man		.man
 ./usr/share/man/man5/ar.5			man-sys-man		.man
+./usr/share/man/man5/audit-packages.conf.5	man-pkgutil-man		.man
 ./usr/share/man/man5/bluetooth.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/body_checks.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/bootparams.5		man-bootserver-man	.man
