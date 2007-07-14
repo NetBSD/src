@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1045 2007/07/14 20:23:13 dsieger Exp $
+#	$NetBSD: mi,v 1.1046 2007/07/14 20:39:33 dsieger Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7275,7 +7275,6 @@
 ./usr/share/man/cat9/sendsig.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/setjmp.0			comp-sys-catman		.cat
-./usr/share/man/cat9/setrunqueue.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/shutdownhook_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/shutdownhook_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sigaction1.0		comp-sys-catman		.cat
@@ -11616,7 +11615,6 @@
 ./usr/share/man/man9/sendsig.9			comp-sys-man		.man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/setjmp.9			comp-sys-man		.man
-./usr/share/man/man9/setrunqueue.9		comp-sys-man		.man
 ./usr/share/man/man9/shutdownhook_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/shutdownhook_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/sigaction1.9		comp-sys-man		.man
