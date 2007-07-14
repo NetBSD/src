@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.714 2007/07/08 14:29:52 pooka Exp $
+# $NetBSD: mi,v 1.715 2007/07/14 20:05:33 adrianp Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1018,6 +1018,7 @@
 ./usr/sbin/amd					base-amd-bin
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
+./usr/sbin/audit-packages			base-pkgutil-bin
 ./usr/sbin/authpf				base-pf-bin		pf
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
@@ -1048,6 +1049,7 @@
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
+./usr/sbin/download-vulnerability-list		base-pkgutil-bin
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dumpfs				base-sysutil-bin
 ./usr/sbin/dumplfs				base-sysutil-bin
