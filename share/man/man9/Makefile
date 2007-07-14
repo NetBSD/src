@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.239 2007/07/14 10:52:47 ad Exp $
+#       $NetBSD: Makefile,v 1.240 2007/07/14 11:39:01 ad Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -143,8 +143,7 @@ MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 MLINKS+=callout.9 callout_init.9 callout.9 callout_reset.9 \
 	callout.9 callout_schedule.9 callout.9 callout_setfunc.9 \
 	callout.9 callout_stop.9 callout.9 callout_pending.9 \
-	callout.9 CALLOUT_INITIALIZER.9 \
-	callout.9 CALLOUT_INITIALIZER_SETFUNC.9 \
+	callout.9 callout_destroy.9 \
 	callout.9 timeout.9 callout.9 untimeout.9
 MLINKS+=cardbus.9 cardbus_attach_card.9 \
 	cardbus.9 cardbus_detach_card.9 \
@@ -307,7 +306,7 @@ MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
 	kprintf.9 aprint_error.9 kprintf.9 aprint_get_error_count.9
 MLINKS+=kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create.9 \
-	kthread.9 kthread_create1.9
+	kthread.9 kthread_destroy.9
 MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_unlock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
