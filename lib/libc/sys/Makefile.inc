@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.174 2007/06/03 17:35:24 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.175 2007/07/14 15:53:04 dsl Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -74,8 +74,8 @@ ASM=	access.S acct.S \
 		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
 		_lwp_getprivate.S _lwp_setprivate.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
-		mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S \
-		munlock.S munlockall.S munmap.S \
+		mlock.S mlockall.S __mount50.S mprotect.S __msgctl13.S \
+		msgget.S munlock.S munlockall.S munmap.S \
 	nfssvc.S __ntp_gettime30.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
 		posix_fadvise.S \
