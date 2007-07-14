@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.4 2007/03/07 00:41:17 dogcow Exp $
+.\"	$NetBSD: opencrypto.9,v 1.5 2007/07/14 10:52:49 ad Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -137,8 +137,8 @@ these sessionless commands perform mathematical operations using
 input and output parameters.
 .Pp
 Since the consumers may not be associated with a process, drivers may
-not use
-.Xr tsleep 9 .
+not use condition variables: 
+.Xr condvar 9 .
 The same holds for the framework.
 Thus, a callback mechanism is used
 to notify a consumer that a request has been completed (the
@@ -564,10 +564,10 @@ field.
 most of the framework code
 .El
 .Sh SEE ALSO
+.Xr condvar 9 ,
 .Xr ipsec 4 ,
 .Xr pcmcia 4 ,
-.Xr malloc 9 ,
-.Xr tsleep 9
+.Xr malloc 9
 .Rs
 .%A "Angelos D. Keromytis"
 .%A "Jason L. Wright"

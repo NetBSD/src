@@ -1,4 +1,4 @@
-.\"     $NetBSD: delay.9,v 1.4 2003/04/16 13:35:27 wiz Exp $
+.\"     $NetBSD: delay.9,v 1.5 2007/07/14 10:52:48 ad Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,10 +58,9 @@ interrupt handlers for unmasked interrupts to run.
 is reentrant (doesn't modify any global kernel or machine state) and is
 safe to use in interrupt or process context.
 .Pp
-For long delays,
-.Xr tsleep 9
-should be considered, however it can only be called from process context
-and its resolution is limited by the system clock frequency.
+For long delays, condition variables
+should be considered, however they can only be used from process context
+and their resolution is limited by the system clock frequency.
 .Sh SEE ALSO
-.Xr hz 9 ,
-.Xr tsleep 9
+.Xr condvar 9 ,
+.Xr hz 9
