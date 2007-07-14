@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.48 2007/07/12 19:35:33 dsl Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.49 2007/07/14 16:06:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.48 2007/07/12 19:35:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.49 2007/07/14 16:06:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -160,10 +160,6 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		    "adjust puffs_maxpnodebuckets for more\n",
 		    puffs_maxpnodebuckets);
 	}
-
-	error = copyout(args, data, sizeof(struct puffs_kargs)); 
-	if (error)
-		goto out;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, namebuf,
 	    UIO_SYSSPACE, mp, l);
