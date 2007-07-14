@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.26 2007/07/09 21:00:31 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.27 2007/07/14 17:23:21 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.26 2007/07/09 21:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.27 2007/07/14 17:23:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	DZ_WRITE_BYTE(dr_dtr, 0);
 	DZ_WRITE_BYTE(dr_break, 0);
 	DZ_BARRIER();
+	DELAY(50000);
 
 	/* Initialize our softc structure. Should be done in open? */
 
