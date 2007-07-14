@@ -1,4 +1,4 @@
-.\"     $NetBSD: csf.9,v 1.1 2007/07/14 20:23:12 dsieger Exp $
+.\"     $NetBSD: csf.9,v 1.2 2007/07/14 22:02:33 dsieger Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,10 @@ common scheduler framework
 .Sh DESCRIPTION
 CSF provides a modular and self-contained interface for
 implementing different thread scheduling algorithms. The different
-schedulers can be selected at compile-time.
+schedulers can be selected at compile-time. Currently, the only
+scheduler available is
+.Xr sched_4bsd 9 ,
+the traditional 4.4BSD thread scheduler.
 .Pp
 The interface is divided into two parts: A set of functions each
 scheduler needs to implement and common functions used by all
@@ -199,7 +202,8 @@ Functions common to all scheduler implementations are in
 The traditional 4.4BSD scheduler is implemented in
 .Pa sys/kern/sched_4bsd.c
 .Sh SEE ALSO
-.Xr mi_switch 9
+.Xr mi_switch 9 ,
+.Xr sched_4bsd 9 ,
 .Xr preempt 9
 .Sh HISTORY
 The
