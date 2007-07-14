@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.8 2004/10/29 19:15:20 dsl Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.9 2007/07/14 16:03:05 dsl Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mount_smbfs.c,v 1.8 2004/10/29 19:15:20 dsl Exp $");
+__RCSID("$NetBSD: mount_smbfs.c,v 1.9 2007/07/14 16:03:05 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -241,7 +241,7 @@ main(int argc, char *argv[])
 	mdata.version = SMBFS_VERSION;
 	mdata.dev_fd = ctx->ct_fd;
 	mdata.caseopt = caseopt;
-	error = mount(SMBFS_VFSNAME, mount_point, mntflags, (void*)&mdata);
+	error = mount(SMBFS_VFSNAME, mount_point, mntflags, (void*)&mdata, sizeof mdata);
 	smb_ctx_done(ctx);
 	if (error) {
 		smb_error("mount error for %s: %s", error, mount_point,
