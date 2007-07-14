@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.5 2007/07/07 12:18:16 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.6 2007/07/14 22:09:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.5 2007/07/07 12:18:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.6 2007/07/14 22:09:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -205,6 +205,7 @@ static void	softint_thread(void *);
 static void	softint_netisr(void *);
 
 u_int		softint_bytes = 8192;
+u_int		softint_timing;
 static u_int	softint_max;
 static kmutex_t	softint_lock;
 static void	*softint_netisr_sih;
@@ -542,20 +543,7 @@ softint_netisr(void *cookie)
 /*
  * softint_init_md:
  *
- *	Perform machine-dependent initialization.  Arguments:
- *
- *	l
- *
- *	    LWP to handle the interrupt
- *
- *	level
- *
- *	    Symbolic level: SOFTINT_*
- *
- *	machdep
- *
- *	    Private value for machine dependent code,
- *	    passed by MI code to softint_trigger().
+ *	Perform machine-dependent initialization.
  */
 void
 softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
@@ -598,10 +586,7 @@ softint_trigger(uintptr_t machdep)
 /*
  * softint_thread:
  *
- *	MI software interrupt dispatch.  In the __HAVE_FAST_SOFTINTS
- *	case, the LWP is switched to without restoring any state, so
- *	we should not arrive here - there is a direct handoff between
- *	the interrupt stub and softint_execute().
+ *	Slow path MI software interrupt dispatch.
  */
 void
 softint_thread(void *cookie)
@@ -647,7 +632,9 @@ softint_thread(void *cookie)
 void
 softint_dispatch(lwp_t *pinned, int s)
 {
+	struct timeval now;
 	softint_t *si;
+	u_int timing;
 	lwp_t *l;
 
 	l = curlwp;
@@ -659,23 +646,36 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * the LWP locked, at this point no external agents will want to
 	 * modify the interrupt LWP's state.
 	 */
+	timing = (softint_timing ? LW_TIMEINTR : 0);
 	l->l_switchto = pinned;
 	l->l_stat = LSONPROC;
-	l->l_flag |= LW_RUNNING;
-
-	softint_execute(si, l, s);
+	l->l_flag |= (LW_RUNNING | timing);
 
 	/*
-	 * If we blocked while handling the interrupt, the LWP underneath
-	 * will be gone so switch to the idle LWP.  It will select a new
-	 * LWP to run.
+	 * Dispatch the interrupt.  If softints are being timed, charge
+	 * for it.
+	 */
+	if (timing)
+		microtime(&l->l_stime);
+	softint_execute(si, l, s);
+	if (timing) {
+		microtime(&now);
+		updatertime(l, &now);
+		l->l_flag &= ~LW_TIMEINTR;
+	}
+
+	/*
+	 * If we blocked while handling the interrupt, the pinned LWP is
+	 * gone so switch to the idle LWP.  It will select a new LWP to
+	 * run.
 	 *
 	 * We must drop the priority level as switching at IPL_HIGH could
 	 * deadlock the system.  We have already set si->si_active = 0,
 	 * which means another interrupt at this level can be triggered. 
 	 * That's not be a problem: we are lowering to level 's' which will
-	 * prevent softint_execute() from being reentered until the priority
-	 * is finally dropped to IPL_NONE on entry to the idle loop.
+	 * prevent softint_dispatch() from being reentered at level 's',
+	 * until the priority is finally dropped to IPL_NONE on entry to
+	 * the idle loop.
 	 */
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {

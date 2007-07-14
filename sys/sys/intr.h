@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.2.2 2007/07/07 11:56:12 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.2.3 2007/07/14 22:09:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ void	softint_dispatch(lwp_t *, int);
 #define	SOFTINT_LVLMASK	0x00ff
 
 extern struct evcnt softint_block;
+extern u_int softint_timing;
 
 #endif	/* _KERNEL */
 

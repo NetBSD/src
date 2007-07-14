@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.33.2.3 2007/06/08 14:17:34 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.33.2.4 2007/07/14 22:09:48 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.33.2.3 2007/06/08 14:17:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.33.2.4 2007/07/14 22:09:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		i += 1;
 	}
 
-	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
+	timersub(&curlwp->l_stime, &boottime, &runtime);
 	len += snprintf(&bf[len], LBFSZ - len,
 			"disk 0 0 0 0\n"
 			"page %u %u\n"
@@ -512,7 +512,7 @@ procfs_douptime(struct lwp *curl, struct proc *p,
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	timersub(&curcpu()->ci_schedstate.spc_runtime, &boottime, &runtime);
+	timersub(&curlwp->l_stime, &boottime, &runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
 	len = snprintf(bf, LBFSZ,
 	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",

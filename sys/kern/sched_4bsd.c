@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.4 2007/07/07 11:56:11 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.5 2007/07/14 22:09:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.4 2007/07/07 11:56:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.5 2007/07/14 22:09:48 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.4 2007/07/07 11:56:11 ad Exp $"
 #include <sys/kauth.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -683,7 +684,6 @@ sched_nextlwp(void)
 		return l1;
 }
 
-/* Dummy */
 void
 sched_lwp_fork(struct lwp *l)
 {
@@ -696,8 +696,9 @@ sched_lwp_exit(struct lwp *l)
 
 }
 
-/* SysCtl */
-
+/*
+ * sysctl setup.  XXX This should be split with kern_synch.c.
+ */
 SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 {
 	const struct sysctlnode *node = NULL;
@@ -714,13 +715,19 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
-	if (node != NULL) {
-		sysctl_createv(clog, 0, &node, NULL,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_STRING, "name", NULL,
-			NULL, 0, __UNCONST("4.4BSD"), 0,
-			CTL_CREATE, CTL_EOL);
-	}
+	KASSERT(node != NULL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_STRING, "name", NULL,
+		NULL, 0, __UNCONST("4.4BSD"), 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_READWRITE,
+		CTLTYPE_INT, "timesoftints",
+		SYSCTL_DESCR("Track CPU time for soft interrupts"),
+		NULL, 0, &softint_timing, 0,
+		CTL_CREATE, CTL_EOL);
 }
 
 #if defined(DDB)
