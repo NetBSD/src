@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1046 2007/07/14 20:39:33 dsieger Exp $
+#	$NetBSD: mi,v 1.1047 2007/07/14 21:54:31 dsieger Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7261,10 +7261,10 @@
 ./usr/share/man/cat9/rw_tryupgrade.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_write_held.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rwlock.0			comp-sys-catman		.cat
+./usr/share/man/cat9/sched_4bsd.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_lock_idle.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_psignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_unlock_idle.0	comp-sys-catman		.cat
-./usr/share/man/cat9/scheduler.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/scsipi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_bsd44.0		comp-sys-catman		.cat
@@ -11601,10 +11601,10 @@
 ./usr/share/man/man9/rw_tryupgrade.9		comp-sys-man		.man
 ./usr/share/man/man9/rw_write_held.9		comp-sys-man		.man
 ./usr/share/man/man9/rwlock.9			comp-sys-man		.man
+./usr/share/man/man9/sched_4bsd.9		comp-sys-man		.man
 ./usr/share/man/man9/sched_lock_idle.9		comp-sys-man		.man
 ./usr/share/man/man9/sched_psignal.9		comp-sys-man		.man
 ./usr/share/man/man9/sched_unlock_idle.9	comp-sys-man		.man
-./usr/share/man/man9/scheduler.9		comp-sys-man		.man
 ./usr/share/man/man9/scsipi.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel_bsd44.9		comp-sys-man		.man
