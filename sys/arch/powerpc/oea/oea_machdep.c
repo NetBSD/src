@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.34 2007/05/17 14:51:26 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.35 2007/07/14 21:48:22 ad Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.34 2007/05/17 14:51:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.35 2007/07/14 21:48:22 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -762,24 +762,6 @@ oea_dumpsys(void)
 {
 	printf("dumpsys: TBD\n");
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-/*
- * Soft networking interrupts.
- */
-void
-softnet(int pendisr)
-{
-#define DONETISR(bit, fn) do {		\
-	if (pendisr & (1 << bit))	\
-		(*fn)();		\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-#endif
 
 /*
  * Convert kernel VA to physical address

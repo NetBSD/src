@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.34 2007/06/01 07:18:31 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.35 2007/07/14 21:48:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,7 +66,6 @@ typedef volatile char	__cpu_simple_lock_t;
 #define	__NO_STRICT_ALIGNMENT
 
 #define	__HAVE_DEVICE_REGISTER
-#define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_GENERIC_TODR
 #define	__HAVE_SYSCALL_INTERN
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2007/03/10 14:15:48 jmmv Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2007/07/14 21:48:22 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -98,9 +98,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <powerpc/softintr.h>
-#endif
 
 struct clockframe;
 
