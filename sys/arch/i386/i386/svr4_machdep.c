@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.83.2.1 2007/05/27 12:27:32 ad Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.83.2.2 2007/07/14 22:09:40 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.1 2007/05/27 12:27:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.2 2007/07/14 22:09:40 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -578,9 +578,9 @@ svr4_fasttrap(frame)
 		microtime(&tv);
 
 		tm = (l->l_rtime.tv_sec + tv.tv_sec -
-		    spc->spc_runtime.tv_sec) * 1000000ull;
+		    l->l_stime.tv_sec) * 1000000ull;
 		tm += l->l_rtime.tv_usec + tv.tv_usec;
-		tm -= spc->spc_runtime.tv_usec;
+		tm -= l->l_stime.tv_usec;
 		tm *= 1000u;
 		/* XXX: dsl - I would have expected the msb in %edx */
 		frame.tf_edx = tm & 0xffffffffu;

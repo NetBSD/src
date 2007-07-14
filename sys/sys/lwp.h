@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.11 2007/07/07 11:56:12 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.12 2007/07/14 22:09:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@ struct lwp {
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
 	struct timeval 	l_rtime;	/* l: real time */
+	struct timeval	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
@@ -180,6 +181,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
+#define	LW_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */

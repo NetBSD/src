@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.33.2.3 2007/07/07 11:56:12 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.33.2.4 2007/07/14 22:09:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@ struct schedstate_percpu {
 	void		*spc_sched_info;/* (: scheduler-specific structure */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	spc_lwplock;	/* (: general purpose lock for LWPs */
-	struct timeval	spc_runtime;	/* s: time curlwp started running */
 	volatile int	spc_flags;	/* s: flags; see below */
 	u_int		spc_schedticks;	/* s: ticks for schedclock() */
 	uint64_t	spc_cp_time[CPUSTATES];/* s: CPU state statistics */
@@ -208,6 +207,7 @@ inline void resched_cpu(struct lwp *); /* Arrange reschedule */
 void setrunnable(struct lwp *);
 void preempt(void);
 int mi_switch(struct lwp *);
+void updatertime(lwp_t *, struct timeval *);
 
 void schedclock(struct lwp *);
 void sched_init(void);

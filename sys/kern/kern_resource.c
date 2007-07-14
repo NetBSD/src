@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.116.2.3 2007/06/08 14:17:21 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.116.2.4 2007/07/14 22:09:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.3 2007/06/08 14:17:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.4 2007/07/14 22:09:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,12 +420,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			sec++;
 			usec -= 1000000;
 		}
-		if (l->l_cpu == curcpu()) {
-			struct schedstate_percpu *spc;
-
-			KDASSERT(l->l_cpu != NULL);
-			spc = &l->l_cpu->ci_schedstate;
-
+		if ((l->l_flag & LW_RUNNING) != 0) {
 			/*
 			 * Adjust for the current time slice.  This is
 			 * actually fairly important since the error
@@ -434,8 +429,8 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			 * error.
 			 */
 			microtime(&tv);
-			sec += tv.tv_sec - spc->spc_runtime.tv_sec;
-			usec += tv.tv_usec - spc->spc_runtime.tv_usec;
+			sec += tv.tv_sec - l->l_stime.tv_sec;
+			usec += tv.tv_usec - l->l_stime.tv_usec;
 			if (usec >= 1000000) {
 				sec++;
 				usec -= 1000000;
