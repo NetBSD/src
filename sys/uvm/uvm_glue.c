@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.107 2007/07/09 21:11:36 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.108 2007/07/14 22:27:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.107 2007/07/09 21:11:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.108 2007/07/14 22:27:15 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -496,8 +496,6 @@ uvm_scheduler(void)
 	l->l_priority = PVM;
 	l->l_usrpri = PVM;
 	lwp_unlock(l);
-
-	KERNEL_UNLOCK_LAST(l);	/* XXX */
 
 	for (;;) {
 #ifdef DEBUG
