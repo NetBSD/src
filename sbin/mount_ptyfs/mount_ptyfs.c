@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.6 2006/10/16 03:37:43 christos Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.7 2007/07/14 15:57:26 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.6 2006/10/16 03:37:43 christos Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.7 2007/07/14 15:57:26 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -198,7 +198,7 @@ mount_ptyfs(int argc, char *argv[])
 		warnx("using \"%s\" instead.", canon_dir);
 	}
 
-	if (mount(MOUNT_PTYFS, canon_dir, mntflags, &args))
+	if (mount(MOUNT_PTYFS, canon_dir, mntflags, &args, sizeof args))
 		err(1, "ptyfs on %s", canon_dir);
 	if (mntflags & MNT_GETARGS)
 		printf("version=%d, gid=%lu, mode=0%o\n", args.version,
