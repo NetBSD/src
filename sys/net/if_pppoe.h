@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.9 2007/03/04 06:03:16 christos Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.10 2007/07/14 21:02:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,12 +74,7 @@ struct pppoeconnectionstate {
 extern struct ifqueue ppoediscinq;
 extern struct ifqueue ppoeinq;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 extern void *pppoe_softintr;			/* softinterrupt cookie */
-#else
-extern struct callout pppoe_softintr;		/* callout (poor mans softint) */
-extern void pppoe_softintr_handler(void*);	/* handler function */
-#endif
 
 #endif /* _KERNEL */
 #endif /* !_NET_IF_PPPOE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.32 2006/06/07 22:33:43 kardel Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.33 2007/07/14 21:02:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,9 +57,7 @@ struct sl_softc {
 	long	sc_starttime;		/* time of first abort in window */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void	*sc_si;			/* softintr handle */
-#endif
 #ifdef __NetBSD__
 	int	sc_oldbufsize;		/* previous output buffer size */
 	int	sc_oldbufquot;		/* previous output buffer quoting */

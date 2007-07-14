@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.8 2007/05/30 21:02:03 christos Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.9 2007/07/14 21:02:39 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -213,9 +213,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t ui;
 	int error;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si  = NULL;
-#endif
 	sc->sc_src = NULL;
 	sc->sc_dst = NULL;
 
@@ -356,12 +354,8 @@ etherip_start(struct ifnet *ifp)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if(sc->sc_si)
 		softintr_schedule(sc->sc_si);
-#else
-	etheripintr(sc);
-#endif
 }
 
 static void
@@ -529,12 +523,10 @@ etherip_set_tunnel(struct ifnet *ifp,
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
 		softintr_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
-#endif
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
@@ -551,11 +543,9 @@ etherip_set_tunnel(struct ifnet *ifp,
 
 	ifp->if_flags |= IFF_RUNNING;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_SOFTNET, etheripintr, sc);
 	if (sc->sc_si == NULL)
 		error = ENOMEM;
-#endif
 
 out:
 	splx(s);
@@ -571,12 +561,10 @@ etherip_delete_tunnel(struct ifnet *ifp)
 
 	s = splsoftnet();
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
 		softintr_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
-#endif
 
 	if (sc->sc_src) {
 		FREE(sc->sc_src, M_IFADDR);
@@ -594,7 +582,6 @@ etherip_delete_tunnel(struct ifnet *ifp)
 static int
 etherip_init(struct ifnet *ifp)
 {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	struct etherip_softc *sc = ifp->if_softc;
 
 	if (sc->sc_si == NULL)
@@ -602,7 +589,6 @@ etherip_init(struct ifnet *ifp)
 
 	if (sc->sc_si == NULL)
 		return(ENOMEM);
-#endif
 
 	ifp->if_flags |= IFF_RUNNING;
 	etherip_start(ifp);

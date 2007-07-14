@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.149 2007/05/29 21:32:29 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.150 2007/07/14 21:02:39 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.149 2007/05/29 21:32:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.150 2007/07/14 21:02:39 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -797,12 +797,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			m_freem(m);
 		} else
 			IF_ENQUEUE(inq, m);
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		if (!callout_pending(&pppoe_softintr))
-			callout_reset(&pppoe_softintr, 1, pppoe_softintr_handler, NULL);
-#else
 		softintr_schedule(pppoe_softintr);
-#endif
 		return;
 #endif /* NPPPOE > 0 */
 	case ETHERTYPE_SLOWPROTOCOLS: {

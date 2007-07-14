@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.17 2007/05/02 20:40:23 dyoung Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.18 2007/07/14 21:02:40 ad Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -59,9 +59,7 @@ struct gif_softc {
 	const struct encaptab *encap_cookie4;
 	const struct encaptab *encap_cookie6;
 	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void	*gif_si;		/* softintr handle */
-#endif
 };
 #define GIF_ROUTE_TTL	10
 

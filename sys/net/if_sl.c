@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.105 2007/03/04 06:03:16 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.106 2007/07/14 21:02:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.105 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.106 2007/07/14 21:02:41 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -187,9 +187,6 @@ struct if_clone sl_cloner =
 #define TRANS_FRAME_END		0xdc		/* transposed frame end */
 #define TRANS_FRAME_ESCAPE	0xdd		/* transposed frame esc */
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void	slnetisr(void);
-#endif
 static void	slintr(void *);
 
 static int	slinit(struct sl_softc *);
@@ -317,16 +314,12 @@ slopen(dev_t dev, struct tty *tp)
 
 	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
 		if (sc->sc_ttyp == NULL) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			sc->sc_si = softintr_establish(IPL_SOFTNET,
 			    slintr, sc);
 			if (sc->sc_si == NULL)
 				return ENOMEM;
-#endif
 			if (slinit(sc) == 0) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 				softintr_disestablish(sc->sc_si);
-#endif
 				return ENOBUFS;
 			}
 			tp->t_sc = (void *)sc;
@@ -354,9 +347,7 @@ slopen(dev_t dev, struct tty *tp)
 				error = clalloc(&tp->t_outq, 2 * SLMAX + 2, 0);
 				if (error) {
 					splx(s);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 					softintr_disestablish(sc->sc_si);
-#endif
 					/*
 					 * clalloc() might return -1 which
 					 * is no good, so we need to return
@@ -387,9 +378,7 @@ slclose(struct tty *tp, int flag)
 	sc = tp->t_sc;
 
 	if (sc != NULL) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr_disestablish(sc->sc_si);
-#endif
 		s = splnet();
 		if_down(&sc->sc_if);
 		IF_PURGE(&sc->sc_fastq);
@@ -554,15 +543,7 @@ slstart(struct tty *tp)
 	 */
 	if (sc == NULL)
 		return 0;
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-    {
-	int s = splhigh();
-	schednetisr(NETISR_SLIP);
-	splx(s);
-    }
-#endif
 	return 0;
 }
 
@@ -679,15 +660,7 @@ slinput(int c, struct tty *tp)
 			goto error;
 
 		IF_ENQUEUE(&sc->sc_inq, m);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr_schedule(sc->sc_si);
-#else
-	    {
-		int s = splhigh();
-		schednetisr(NETISR_SLIP);
-		splx(s);
-	    }
-#endif
 		goto newpack;
 	}
 	if (sc->sc_mp < sc->sc_ep) {
@@ -708,20 +681,6 @@ newpack:
 
 	return 0;
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void
-slnetisr(void)
-{
-	struct sl_softc *sc;
-
-	LIST_FOREACH(sc, &sl_softc_list, sc_iflist) {
-		if (sc->sc_ttyp == NULL)
-			continue;
-		slintr(sc);
-	}
-}
-#endif
 
 static void
 slintr(void *arg)

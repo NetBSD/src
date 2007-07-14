@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.13 2006/09/07 02:40:33 dogcow Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.14 2007/07/14 21:02:42 ad Exp $ */
 
 #ifndef _NET_NETISR_DISPATCH_H_
 #define _NET_NETISR_DISPATCH_H_
@@ -44,15 +44,6 @@
 #endif
 #ifdef NATM
 	DONETISR(NETISR_NATM,natmintr);
-#endif
-#if NSL > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
-	DONETISR(NETISR_SLIP,slnetisr);
-#endif
-#if NSTRIP > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
-	DONETISR(NETISR_STRIP,stripnetisr);
-#endif
-#if NPPP > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
-	DONETISR(NETISR_PPP,pppnetisr);
 #endif
 
 #endif /* !_NET_NETISR_DISPATCH_H_ */

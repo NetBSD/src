@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.75 2007/07/09 21:11:01 ad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.76 2007/07/14 21:02:41 ad Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.75 2007/07/09 21:11:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.76 2007/07/14 21:02:41 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -221,9 +221,6 @@ struct if_clone strip_cloner =
 
 #define STRIP_FRAME_END		0x0D		/* carriage return */
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void	stripnetisr(void);
-#endif
 static void	stripintr(void *);
 
 static int	stripinit(struct strip_softc *);
@@ -491,14 +488,10 @@ stripopen(dev_t dev, struct tty *tp)
 
 	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
 		if (sc->sc_ttyp == NULL) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			sc->sc_si = softintr_establish(IPL_SOFTNET,
 			    stripintr, sc);
-#endif
 			if (stripinit(sc) == 0) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 				softintr_disestablish(sc->sc_si);
-#endif
 				return (ENOBUFS);
 			}
 			tp->t_sc = (void *)sc;
@@ -523,9 +516,7 @@ stripopen(dev_t dev, struct tty *tp)
 				error = clalloc(&tp->t_outq, 3*SLMTU, 0);
 				if (error) {
 					splx(s);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 					softintr_disestablish(sc->sc_si);
-#endif
 					/*
 					 * clalloc() might return -1 which
 					 * is no good, so we need to return
@@ -567,9 +558,7 @@ stripclose(struct tty *tp, int flag)
 	sc = tp->t_sc;
 
 	if (sc != NULL) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr_disestablish(sc->sc_si);
-#endif
 		s = splnet();
 		/*
 		 * Cancel watchdog timer, which stops the "probe-for-death"/
@@ -926,15 +915,7 @@ stripstart(struct tty *tp)
 	 */
 	if (sc == NULL)
 		return (0);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-    {
-	int s = splhigh();
-	schednetisr(NETISR_STRIP);
-	splx(s);
-    }
-#endif
 	return (0);
 }
 
@@ -1065,15 +1046,7 @@ stripinput(int c, struct tty *tp)
 		goto error;
 
 	IF_ENQUEUE(&sc->sc_inq, m);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-    {
-	int s = splhigh();
-	schednetisr(NETISR_STRIP);
-	splx(s);
-    }
-#endif
 	goto newpack;
 
 error:
@@ -1085,20 +1058,6 @@ newpack:
 
 	return (0);
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void
-stripnetisr(void)
-{
-	struct strip_softc *sc;
-
-	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
-		if (sc->sc_ttyp == NULL)
-			continue;
-		stripintr(sc);
-	}
-}
-#endif
 
 static void
 stripintr(void *arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.97 2007/07/09 21:01:24 ad Exp $	*/
+/*	$NetBSD: usb.c,v 1.98 2007/07/14 21:02:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.97 2007/07/09 21:01:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.98 2007/07/14 21:02:39 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -205,7 +205,6 @@ USB_ATTACH(usb)
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
 #ifdef USB_USE_SOFTINTR
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* XXX we should have our own level */
 	sc->sc_bus->soft = softintr_establish(IPL_SOFTNET,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
@@ -214,9 +213,6 @@ USB_ATTACH(usb)
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-#else
-	usb_callout_init(sc->sc_bus->softi);
-#endif
 #endif
 
 	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, speed, 0,
@@ -879,13 +875,7 @@ usb_schedsoftintr(usbd_bus_handle bus)
 	if (bus->use_polling) {
 		bus->methods->soft_intr(bus);
 	} else {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr_schedule(bus->soft);
-#else
-		if (!callout_pending(&bus->softi))
-			callout_reset(&bus->softi, 0, bus->methods->soft_intr,
-			    bus);
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 	}
 #else
 	bus->methods->soft_intr(bus);
@@ -938,14 +928,10 @@ usb_detach(device_ptr_t self, int flags)
 	}
 
 #ifdef USB_USE_SOFTINTR
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_bus->soft != NULL) {
 		softintr_disestablish(sc->sc_bus->soft);
 		sc->sc_bus->soft = NULL;
 	}
-#else
-	callout_stop(&sc->sc_bus->softi);
-#endif
 #endif
 
 	ue = usb_alloc_event();
