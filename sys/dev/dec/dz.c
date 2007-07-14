@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.27 2007/07/14 17:23:21 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.28 2007/07/14 19:20:20 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.27 2007/07/14 17:23:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.28 2007/07/14 19:20:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,6 +600,9 @@ dzparam(struct tty *tp, struct termios *t)
 
 	s = spltty();
 
+	/* XXX This is wrong.  Flush output or the chip gets very confused. */
+	ttywait(tp);
+
 	lpr = DZ_LPR_RX_ENABLE | ((ispeed&0xF)<<8) | line;
 
 	switch (cflag & CSIZE)
@@ -626,8 +629,9 @@ dzparam(struct tty *tp, struct termios *t)
 
 	DZ_WRITE_WORD(dr_lpr, lpr);
 	DZ_BARRIER();
-
 	(void) splx(s);
+	DELAY(10000);
+
 	return (0);
 }
 
@@ -692,6 +696,8 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 		DZ_WRITE_BYTE(dr_dtr, DZ_READ_BYTE(dr_dtr) & ~bit);
 	}
 
+	DZ_BARRIER();
+
 	if (mbits & DML_BRK) {
 		sc->sc_brk |= bit;
 		DZ_WRITE_BYTE(dr_break, sc->sc_brk);
@@ -702,6 +708,7 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 
 	DZ_BARRIER();
 	(void) splx(s);
+
 	return (mbits);
 }
 
