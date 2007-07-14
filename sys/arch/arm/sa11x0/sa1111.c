@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.18 2006/06/27 13:58:08 peter Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.19 2007/07/14 21:48:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.18 2006/06/27 13:58:08 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.19 2007/07/14 21:48:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.18 2006/06/27 13:58:08 peter Exp $");
 #include <sys/uio.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <arm/sa11x0/sa11x0_reg.h>
 #include <arm/sa11x0/sa11x0_var.h>
@@ -67,11 +68,6 @@ static int	sa1111_print(void *, const char *);
 
 static void	sacc_intr_calculatemasks(struct sacc_softc *);
 static void	sacc_intr_setpolarity(sacc_chipset_tag_t *, int , int);
-
-#if !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
-void *softintr_establish(int, int (*)(void *), void *);
-void softintr_schedule(void *);
-#endif
 
 #ifdef INTR_DEBUG
 #define DPRINTF(arg)	printf arg
@@ -153,9 +149,7 @@ sacc_intr_establish(sacc_chipset_tag_t *ic, int irq, int type, int level,
 		panic("sacc_intr_establish: type must be unique");
 
 	/* install intr handler */
-#if defined(__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS) || \
-	!defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
-
+#if defined(__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS)
 	ih->ih_soft = softintr_establish(level, (void (*)(void *)) ih_fun,
 					 ih_arg);
 #else

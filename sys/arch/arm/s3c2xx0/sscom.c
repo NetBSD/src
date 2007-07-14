@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.23 2007/07/11 23:57:02 he Exp $ */
+/*	$NetBSD: sscom.c,v 1.24 2007/07/14 21:48:18 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.23 2007/07/11 23:57:02 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.24 2007/07/14 21:48:18 ad Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -1520,7 +1520,6 @@ sscom_stsoft(struct sscom_softc *sc, struct tty *tp)
 		sscomstatus(sc, "sscom_stsoft");
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 sscomsoft(void *arg)
 {
@@ -1549,9 +1548,6 @@ sscomsoft(void *arg)
 		}
 	}
 }
-#else
-#error sscom needs GENERIC_SOFT_INERRUPTS
-#endif
 
 
 int

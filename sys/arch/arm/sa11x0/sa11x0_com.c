@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.38 2007/03/04 05:59:38 christos Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.38 2007/03/04 05:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.39 2007/07/14 21:48:18 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -157,11 +157,7 @@ int		sacominit(bus_space_tag_t, bus_addr_t, int, tcflag_t,
 int		sacom_is_console(bus_space_tag_t, bus_addr_t,
 				 bus_space_handle_t *);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void 		sacomsoft(void *);
-#else
-void 		sacomsoft(void);
-#endif
 
 static inline void sacom_rxsoft(struct sacom_softc *, struct tty *);
 static inline void sacom_txsoft(struct sacom_softc *, struct tty *);
@@ -340,9 +336,7 @@ sacom_attach_subr(struct sacom_softc *sc)
 	}
 
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, sacomsoft, sc);
-#endif
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -383,10 +377,8 @@ sacom_detach(struct device *self, int flags)
 	tty_detach(sc->sc_tty);
 	ttyfree(sc->sc_tty);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	/* Unhook the soft interrupt handler. */
 	softintr_disestablish(sc->sc_si);
-#endif
 
 #if NRND > 0 && defined(RND_COM)
 	/* Unhook the entropy source. */
@@ -797,11 +789,7 @@ sacom_schedrx(struct sacom_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-	setsoftserial();
-#endif
 }
 
 void
@@ -1254,7 +1242,6 @@ sacom_stsoft(struct sacom_softc *sc, struct tty *tp)
 {
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 sacomsoft(void *arg)
 {
@@ -1264,55 +1251,23 @@ sacomsoft(void *arg)
 	if (COM_ISALIVE(sc) == 0)
 		return;
 
-	{
-#else
-void
-sacomsoft(void)
-{
-	struct sacom_softc	*sc;
-	struct tty	*tp;
-	int	unit;
-
-	for (unit = 0; unit < sacom_cd.cd_ndevs; unit++) {
-		sc = device_lookup(&sacom_cd, unit);
-		if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
-			continue;
-
-		if (COM_ISALIVE(sc) == 0)
-			continue;
-
-		tp = sc->sc_tty;
-		if (tp == NULL)
-			continue;
-		if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0)
-			continue;
-#endif
-		tp = sc->sc_tty;
+	tp = sc->sc_tty;
 		
-		if (sc->sc_rx_ready) {
-			sc->sc_rx_ready = 0;
-			sacom_rxsoft(sc, tp);
-		}
-
-		if (sc->sc_st_check) {
-			sc->sc_st_check = 0;
-			sacom_stsoft(sc, tp);
-		}
-
-		if (sc->sc_tx_done) {
-			sc->sc_tx_done = 0;
-			sacom_txsoft(sc, tp);
-		}
+	if (sc->sc_rx_ready) {
+		sc->sc_rx_ready = 0;
+		sacom_rxsoft(sc, tp);
 	}
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#endif
-}
+	if (sc->sc_st_check) {
+		sc->sc_st_check = 0;
+		sacom_stsoft(sc, tp);
+	}
 
-#ifdef __ALIGN_BRACKET_LEVEL_FOR_CTAGS
-	/* there has got to be a better way to do comsoft() */
-}}
-#endif
+	if (sc->sc_tx_done) {
+		sc->sc_tx_done = 0;
+		sacom_txsoft(sc, tp);
+	}
+}
 
 int
 sacomintr(void *arg)
@@ -1453,11 +1408,7 @@ sacomintr(void *arg)
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_schedule(sc->sc_si);
-#else
-	setsoftserial();
-#endif
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);

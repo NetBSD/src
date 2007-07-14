@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.3 2006/03/07 23:32:53 he Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.4 2007/07/14 21:48:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -145,11 +145,3 @@ void plcom_attach_subr	(struct plcom_softc *);
 int  plcom_detach	(struct device *, int);
 int  plcom_activate	(struct device *, enum devact);
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-#define	IPL_SERIAL	IPL_TTY
-#define	splserial()	spltty()
-#define	IPL_SOFTSERIAL	IPL_TTY
-#define	splsoftserial()	spltty()
-#endif
-#endif
