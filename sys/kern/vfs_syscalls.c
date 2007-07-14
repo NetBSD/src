@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.320 2007/07/12 19:35:37 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.321 2007/07/14 15:41:31 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.320 2007/07/12 19:35:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.321 2007/07/14 15:41:31 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -390,11 +390,12 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	return (error);
 }
 
+#ifdef COMPAT_40
 /* ARGSUSED */
 int
-sys_mount(struct lwp *l, void *v, register_t *retval)
+compat_40_sys_mount(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_mount_args /* {
+	struct compat_40_sys_mount_args /* {
 		syscallarg(const char *) type;
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
@@ -404,6 +405,23 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 
 	return do_sys_mount(l, NULL, SCARG(uap, type), SCARG(uap, path),
 	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE, 0, &dummy);
+}
+#endif
+
+int
+sys___mount50(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys___mount50_args /* {
+		syscallarg(const char *) type;
+		syscallarg(const char *) path;
+		syscallarg(int) flags;
+		syscallarg(void *) data;
+		syscallarg(size_t) data_len;
+	} */ *uap = v;
+
+	return do_sys_mount(l, NULL, SCARG(uap, type), SCARG(uap, path),
+	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE,
+	    SCARG(uap, data_len), retval);
 }
 
 int
