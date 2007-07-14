@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.56 2007/07/07 21:13:42 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.57 2007/07/14 16:02:14 dsl Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.56 2007/07/07 21:13:42 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.57 2007/07/14 16:02:14 dsl Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -316,7 +316,9 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 #endif
 
 	pu->pu_kargs.pa_root_cookie = cookie;
-	if (mount(MOUNT_PUFFS, dir, mntflags, &pu->pu_kargs) == -1)
+	if (mount(MOUNT_PUFFS, dir, mntflags, &pu->pu_kargs, sizeof pu->pu_kargs) == -1)
+		return -1;
+	if (mount(MOUNT_PUFFS, dir, MNT_GETARGS, &pu->pu_kargs, sizeof pu->pu_kargs) == -1)
 		return -1;
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
