@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.74 2007/05/03 00:26:53 joerg Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.75 2007/07/14 22:53:27 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.74 2007/05/03 00:26:53 joerg Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.75 2007/07/14 22:53:27 joerg Exp $");
 #endif
 
 /*-
@@ -655,7 +655,7 @@ ftp_expand_URL(const char *base, char *pattern)
 	char *s, buf[MaxPathSize];
 	char tmpname[MaxPathSize];
 	char best[MaxPathSize];
-	int rc, tfd, retry_tbz;
+	int rc, got_list, tfd, retry_tbz;
 
 	retry_tbz = 0;
 	best[0]='\0';
@@ -700,12 +700,10 @@ retry_with_tbz:
 	}
 
 	rc = ftp_cmd(buf, "\n(550|450|226).*\n"); /* catch errors */
-	if (rc != 226) {
-		if (Verbose)
-			warnx("nlist failed!");
-		unlink(tmpname);	/* remove clutter */
-		return NULL;
-	}
+	if (rc != 226)
+		got_list = 0;
+	else
+		got_list = 1;
 
 	/* Sync - don't remove */
 	rc = ftp_cmd("cd .\n", "\n(550|250|257).*\n");
@@ -715,7 +713,7 @@ retry_with_tbz:
 		return NULL;
 	}
 	
-	if (access(tmpname, R_OK)==0) {
+	if (got_list == 1 && access(tmpname, R_OK)==0) {
 		int matches;
 		FILE *f;
 		char filename[MaxPathSize];
