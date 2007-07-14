@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.38 2007/07/12 19:41:58 dsl Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.39 2007/07/14 17:11:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.38 2007/07/12 19:41:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.39 2007/07/14 17:11:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 	int error;
 	int otype = SCARG(uap, type);
 	char fsname[MFSNAMELEN];
-	char *native_fstype;
+	register_t dummy;
 	int nflags;
 
 	nflags = 0;
@@ -368,7 +368,6 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 #ifdef later
 	parse ultrix mount option string and set NetBSD flags
 #endif
-	path) = SCARG(uap, dir);
 
 	if (otype == ULTRIX_FSTYPE_NFS) {
 		struct ultrix_nfs_args una;
@@ -392,7 +391,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		/* XXXX teach nfs how to do the above */
 #endif
 		na.version = NFS_ARGSVERSION;
-		na.addr = una.addr;
+		na.addr = (void *)una.addr;
 		na.addrlen = sizeof (struct sockaddr_in);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
@@ -426,7 +425,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		 * and if so, set MNT_UPDATE so we can mount / read-write.
 		 */
 		fsname[0] = 0;
-		if ((error = copyinstr(SCARG(&nuap, path), fsname,
+		if ((error = copyinstr(SCARG(uap, dir), fsname,
 				      sizeof fsname, NULL)) != 0)
 			return(error);
 		if (strcmp(fsname, "/") == 0) {
@@ -435,7 +434,7 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 			    fsname);
 		}
 		return do_sys_mount(l, vfs_getopsbyname("ffs"), NULL,
-		    SCARG(uap, root), nflags, &ua, UIO_SYSSPACE, sizeof ua,
+		    SCARG(uap, dir), nflags, &ua, UIO_SYSSPACE, sizeof ua,
 		    &dummy);
 	}
 
