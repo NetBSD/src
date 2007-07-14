@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.43 2007/06/10 00:59:34 ad Exp $
+$NetBSD: README,v 1.44 2007/07/14 21:00:40 ad Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -78,4 +78,3 @@ Single port cpu families
 alpha:		Digital Equipment Alpha processor
 m88k:		Motorola 88xxx CPU based platform files
 ns32k:		National Semiconductor NS 32532 processor
-pdp10:		Digital Equipment PDP 10 processor
