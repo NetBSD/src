@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.44 2007/07/12 07:13:07 xtraeme Exp $
+# $NetBSD: postinstall,v 1.45 2007/07/14 21:20:33 ad Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -863,7 +863,7 @@ do_rc()
 		bootconf.sh bootparams btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
-		fixsb fsck ftpd \
+		fsck ftpd \
 		hostapd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \
@@ -885,8 +885,8 @@ do_rc()
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
-	for f in NETWORK btcontrol fsck.sh kerberos nfsiod servers systemfs \
-	    daemon gated login portmap sunndd xntpd; do
+	for f in NETWORK btcontrol fsck.sh fixsb kerberos nfsiod servers \
+	    systemfs daemon gated login portmap sunndd xntpd; do
 		fd=/etc/rc.d/${f}
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
 	done | obsolete_paths ${op}
@@ -897,6 +897,7 @@ do_rc()
 		btcontrol btcontrol_devices \
 		critical_filesystems critical_filesystems_beforenet \
 		defcorename \
+		fixsb \
 		ip6forwarding \
 		mountcritlocal mountcritremote \
 		network nfsiod_flags \
