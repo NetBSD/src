@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.22 2007/04/22 08:29:55 dsl Exp $ */
+/*	$NetBSD: compat_file.c,v 1.23 2007/07/14 15:47:27 dsl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.22 2007/04/22 08:29:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.23 2007/07/14 15:47:27 dsl Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -190,14 +190,14 @@ bsd_sys_mount(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_mount_args /* {
+	struct compat_40_sys_mount_args /* {
 		syscallarg(char *) type;
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(void *) data;
 	} */ *uap = v;
 
-	return sys_mount(l, uap, retval);
+	return compat_40_sys_mount(l, uap, retval);
 }
 
 int

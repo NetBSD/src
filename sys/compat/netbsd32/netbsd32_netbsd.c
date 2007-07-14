@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.124 2007/06/30 15:31:50 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.125 2007/07/14 15:47:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.124 2007/06/30 15:31:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.125 2007/07/14 15:47:27 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -411,13 +411,13 @@ netbsd32_mount(l, v, retval)
 		syscallarg(int) flags;
 		syscallarg(netbsd32_voidp) data;
 	} */ *uap = v;
-	struct sys_mount_args ua;
+	struct compat_40_sys_mount_args ua;
 
 	NETBSD32TOP_UAP(type, const char);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TOP_UAP(data, void);
-	return (sys_mount(l, &ua, retval));
+	return (compat_40_sys_mount(l, &ua, retval));
 }
 
 int
