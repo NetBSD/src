@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.38 2007/03/29 16:29:37 pooka Exp $
+.\"	$NetBSD: malloc.9,v 1.39 2007/07/14 10:52:49 ad Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -189,7 +189,7 @@ will never return
 By default,
 .Fn malloc
 may call
-.Xr tsleep 9
+.Xr cv_wait 9
 to wait for resources to be released by other processes, and this
 flag represents this behaviour.
 Note that

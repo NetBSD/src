@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.21 2007/02/08 08:04:00 dillo Exp $
+.\"     $NetBSD: buffercache.9,v 1.22 2007/07/14 10:52:48 ad Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -295,7 +295,7 @@ needs to sleep,
 and
 .Fa slptimeo
 are used as arguments for
-.Fn ltsleep .
+.Fn cv_timedwait .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn geteblk "size"
 Allocate an empty, disassociated block of a given size

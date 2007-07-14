@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmover.9,v 1.10 2005/12/24 21:27:22 perry Exp $
+.\"	$NetBSD: dmover.9,v 1.11 2007/07/14 10:52:48 ad Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -229,7 +229,7 @@ Once a command is running, it cannot be cancelled, and must run to completion.
 If set by the client,
 .Fn dmover_process
 will wait for the request to complete using
-.Xr tsleep 9 .
+.Xr cv_wait 9 .
 This flag may only be used if the caller has a valid thread context.
 If this flag is set, a callback may not be used.
 .El

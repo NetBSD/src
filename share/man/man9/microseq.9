@@ -1,4 +1,4 @@
-.\" $NetBSD: microseq.9,v 1.4 2004/10/04 19:12:52 rumble Exp $
+.\" $NetBSD: microseq.9,v 1.5 2007/07/14 10:52:49 ad Exp $
 .\"
 .\" Copyright (c) 1998, 1999, Nicolas Souchu
 .\" All rights reserved.
@@ -316,11 +316,8 @@ calls.
 Predefined macro: MS_PTR(ptr)
 .Ss MS_OP_ADELAY - do an Asynchronous DELAY
 is used to make a
-.Xr tsleep 9
+.Xr cv_timedwait 9
 during microsequence execution.
-The
-.Xr tsleep 9
-is executed at PPBPRI level.
 .Pp
 Parameter:
 .Bl -enum -offset indent
