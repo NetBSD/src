@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2007/03/04 06:01:12 christos Exp $
+	$NetBSD: syscalls.master,v 1.24 2007/07/14 15:45:48 dsl Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -102,7 +102,7 @@
 19	EXCL		compat_43_sys_lseek
 #endif
 20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
-21	NOARGS		{ int sys_mount(const char *type, \
+21	NOARGS		{ int compat_40_sys_mount(const char *type, \
 			    const char *path, int flags, void *data); }
 22	NOARGS		{ int sys_unmount(const char *path, int flags); }
 23	NOARGS		{ int sys_setuid(uid_t uid); }
