@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.34 2007/02/08 21:36:58 drochner Exp $	 */
+/* $NetBSD: main.c,v 1.35 2007/07/14 15:57:24 dsl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -307,7 +307,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 			if (flags & MNT_RDONLY) {
 				args.fspec = 0;
 				flags |= MNT_UPDATE | MNT_RELOAD;
-				ret = mount(MOUNT_LFS, "/", flags, &args);
+				ret = mount(MOUNT_LFS, "/", flags, &args, sizeof args);
 				if (ret == 0)
 					return (0);
 			}

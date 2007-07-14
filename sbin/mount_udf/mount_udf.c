@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.9 2007/03/10 00:30:37 hubertf Exp $ */
+/* $NetBSD: mount_udf.c,v 1.10 2007/07/14 15:57:27 dsl Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.9 2007/03/10 00:30:37 hubertf Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.10 2007/07/14 15:57:27 dsl Exp $");
 #endif /* not lint */
 
 
@@ -189,7 +189,7 @@ mount_udf(int argc, char **argv)
 	args.sector_size = sector_size;		/* invalid */
 
 	/* mount it! :) */
-	if (mount(MOUNT_UDF, dir, mntflags, &args) == -1)
+	if (mount(MOUNT_UDF, dir, mntflags, &args, sizeof args) == -1)
 		err(EXIT_FAILURE, "Cannot mount %s on %s", dev, dir);
 
 	if (mntflags & MNT_GETARGS) {

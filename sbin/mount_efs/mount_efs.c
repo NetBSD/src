@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_efs.c,v 1.1 2007/06/29 23:30:20 rumble Exp $	*/
+/*	$NetBSD: mount_efs.c,v 1.2 2007/07/14 15:57:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -90,7 +90,7 @@ mount_efs(int argc, char **argv)
 
 	args.fspec = special;
 	args.version = EFS_MNT_VERSION;
-	if (mount(MOUNT_EFS, node, mntflags, &args) < 0)
+	if (mount(MOUNT_EFS, node, mntflags, &args, sizeof args) < 0)
 		err(EXIT_FAILURE, "%s on %s", special, node);
 
 	return (0);

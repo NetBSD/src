@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.25 2007/03/10 00:30:36 hubertf Exp $ */
+/* $NetBSD: mount_ados.c,v 1.26 2007/07/14 15:57:24 dsl Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.25 2007/03/10 00:30:36 hubertf Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.26 2007/07/14 15:57:24 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -147,7 +147,7 @@ mount_ados(int argc, char **argv)
 			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) >= 0)
+	if (mount(MOUNT_ADOSFS, dir, mntflags, &args, sizeof args) >= 0)
 		exit (0);
 
 	if (errno != EROFS)
@@ -155,7 +155,7 @@ mount_ados(int argc, char **argv)
 
 	mntflags |= MNT_RDONLY;
 
-	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) == -1)
+	if (mount(MOUNT_ADOSFS, dir, mntflags, &args, sizeof args) == -1)
 		err(1, "%s on %s", dev, dir);
 
 	if (mntflags & MNT_GETARGS)
