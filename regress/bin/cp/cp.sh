@@ -1,6 +1,6 @@
-# /bin/sh
+#! /bin/sh
 #
-# $Id: cp.sh,v 1.3 2006/08/15 23:01:22 jschauma Exp $
+# $Id: cp.sh,v 1.4 2007/07/15 09:23:53 jmmv Exp $
 #
 # Test cp(1)
 
