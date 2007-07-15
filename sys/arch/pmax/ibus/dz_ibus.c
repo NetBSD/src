@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.4 2007/03/04 06:00:33 christos Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.4.2.1 2007/07/15 22:17:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.4 2007/03/04 06:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.4.2.1 2007/07/15 22:17:49 ad Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"
@@ -293,14 +293,17 @@ dz_ibus_cnattach(int line)
 	/* Disable scanning until init is done. */
 	dzcn->csr = 0;
 	wbflush();
+	DELAY(1000);
 
 	/* Turn on transmitter for the console. */
 	dzcn->tcr = (1 << line);
 	wbflush();
+	DELAY(1000);
 
 	/* Turn scanning back on. */
 	dzcn->csr = 0x20;
 	wbflush();
+	DELAY(1000);
 
 	/*
 	 * Point the console at the DZ-11.
@@ -323,6 +326,7 @@ dz_ibus_cngetc(dev_t dev)
 	do {
 		while ((dzcn->csr & DZ_CSR_RX_DONE) == 0)
 			DELAY(10);
+		DELAY(10);
 		rbuf = dzcn->rbuf;
 		if (((rbuf >> 8) & 3) != line)
 			continue;
@@ -350,24 +354,29 @@ dz_ibus_cnputc(dev_t dev, int ch)
 	tcr = dzcn->tcr;
 	dzcn->tcr = (1 << minor(dev));
 	wbflush();
+	DELAY(10);
 
 	/* Wait until ready */
 	while ((dzcn->csr & 0x8000) == 0)
 		if (--timeout < 0)
 			break;
+	DELAY(10);
 
 	/* Put the character */
 	dzcn->tdr = ch;
 	timeout = 1 << 15;
 	wbflush();
+	DELAY(10);
 
 	/* Wait until ready */
 	while ((dzcn->csr & 0x8000) == 0)
 		if (--timeout < 0)
 			break;
 
+	DELAY(10);
 	dzcn->tcr = tcr;
 	wbflush();
+	DELAY(10);
 	splx(s);
 }
 
@@ -412,7 +421,9 @@ dzgetc(struct dz_linestate *ls)
 	for (;;) {
 		while ((dzr->csr & DZ_CSR_RX_DONE) == 0)
 			DELAY(10);
+		DELAY(10);
 		rbuf = dzr->rbuf;
+		DELAY(10);
 		if (((rbuf >> 8) & 3) == line)
 			return (rbuf & 0xff);
 	}
@@ -440,6 +451,7 @@ dzputc(struct dz_linestate *ls, int ch)
 		if ((tcr & (1 << line)) == 0) {
 			dzr->tcr = tcr | (1 << line);
 			wbflush();
+			DELAY(10);
 		}
 		dzxint(ls->dz_sc);
 		splx(s);

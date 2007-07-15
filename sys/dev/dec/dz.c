@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.25.2.2 2007/07/15 13:21:09 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.25.2.3 2007/07/15 22:17:48 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.25.2.2 2007/07/15 13:21:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.25.2.3 2007/07/15 22:17:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,18 +91,55 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.25.2.2 2007/07/15 13:21:09 ad Exp $");
 
 #include <dev/cons.h>
 
-#define	DZ_READ_BYTE(adr) \
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr)
-#define	DZ_READ_WORD(adr) \
-	bus_space_read_2(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr)
-#define	DZ_WRITE_BYTE(adr, val) \
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
-#define	DZ_WRITE_WORD(adr, val) \
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, sc->sc_dr.adr, val)
-#define	DZ_BARRIER() \
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_dr.dr_firstreg, \
-	    sc->sc_dr.dr_winsize, \
-	    BUS_SPACE_BARRIER_WRITE | BUS_SPACE_BARRIER_READ)
+#ifdef __mips__
+#define	DZ_DELAY(x)	DELAY(x)
+#define control		__attribute ((noinline))
+#else	/* presumably vax */
+#define	DZ_DELAY(x)	/* nothing */
+#define	control		inline
+#endif
+
+static control uint
+dz_read1(struct dz_softc *sc, u_int off)
+{
+	u_int rv;
+
+	rv = bus_space_read_1(sc->sc_iot, sc->sc_ioh, off);
+	DZ_DELAY(1);
+	return rv;
+}
+
+static control u_int
+dz_read2(struct dz_softc *sc, u_int off)
+{
+	u_int rv;
+
+	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, off);
+	DZ_DELAY(1);
+	return rv;
+}
+
+static control void
+dz_write1(struct dz_softc *sc, u_int off, u_int val)
+{
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, off, val);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_dr.dr_firstreg,
+	    sc->sc_dr.dr_winsize, BUS_SPACE_BARRIER_WRITE |
+	    BUS_SPACE_BARRIER_READ);
+	DZ_DELAY(10);
+}
+
+static control void
+dz_write2(struct dz_softc *sc, u_int off, u_int val)
+{
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, val);
+	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_dr.dr_firstreg,
+	    sc->sc_dr.dr_winsize, BUS_SPACE_BARRIER_WRITE |
+	    BUS_SPACE_BARRIER_READ);
+	DZ_DELAY(10);
+}
 
 #include "ioconf.h"
 
@@ -171,11 +208,10 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	sc->sc_consline = consline;
 
 	sc->sc_dr.dr_tcrw = sc->sc_dr.dr_tcr;
-	DZ_WRITE_WORD(dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
-	DZ_WRITE_BYTE(dr_dtr, 0);
-	DZ_WRITE_BYTE(dr_break, 0);
-	DZ_BARRIER();
-	DELAY(50000);
+	dz_write2(sc, sc->sc_dr.dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
+	dz_write1(sc, sc->sc_dr.dr_dtr, 0);
+	dz_write1(sc, sc->sc_dr.dr_break, 0);
+	DELAY(10000);
 
 	/* Initialize our softc structure. Should be done in open? */
 
@@ -186,9 +222,9 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	}
 
 	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, parent_evcnt,
-		sc->sc_dev.dv_xname, "rintr");
+	    sc->sc_dev.dv_xname, "rintr");
 	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, parent_evcnt,
-		sc->sc_dev.dv_xname, "tintr");
+	    sc->sc_dev.dv_xname, "tintr");
 
 	/* Console magic keys */
 	cn_init_magic(&dz_cnm_state);
@@ -196,7 +232,6 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 				  /* VAX will change it in MD code */
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
-
 	if (dz_timer == 0) {
 		dz_timer = 1;
 		callout_init(&dzscan_ch, 0);
@@ -218,7 +253,7 @@ dzrint(void *arg)
 
 	sc->sc_rxint++;
 
-	while ((c = DZ_READ_WORD(dr_rbuf)) & DZ_RBUF_DATA_VALID) {
+	while ((c = dz_read2(sc, sc->sc_dr.dr_rbuf)) & DZ_RBUF_DATA_VALID) {
 		cc = c & 0xFF;
 		line = DZ_PORT(c>>8);
 		tp = sc->sc_dz[line].dz_tty;
@@ -284,10 +319,12 @@ dzxint(void *arg)
 	 * Remove the pdma stuff; no great need of it right now.
 	 */
 
-	while (((csr = DZ_READ_WORD(dr_csr)) & DZ_CSR_TX_READY) != 0) {
+	for (;;) {
+		csr = dz_read2(sc, sc->sc_dr.dr_csr);
+		if ((csr & DZ_CSR_TX_READY) == 0)
+			break;
 
-		line = DZ_PORT(csr>>8);
-
+		line = DZ_PORT(csr >> 8);
 		tp = sc->sc_dz[line].dz_tty;
 		cl = &tp->t_outq;
 		tp->t_state &= ~TS_BUSY;
@@ -297,17 +334,16 @@ dzxint(void *arg)
 		if (cl->c_cc) {
 			tp->t_state |= TS_BUSY;
 			ch = getc(cl);
-			DZ_WRITE_BYTE(dr_tbuf, ch);
-			DZ_BARRIER();
+			dz_write1(sc, sc->sc_dr.dr_tbuf, ch);
 			continue;
 		}
+
 		/* Nothing to send; clear the scan bit */
 		/* Clear xmit scanner bit; dzstart may set it again */
-		tcr = DZ_READ_WORD(dr_tcrw);
+		tcr = dz_read2(sc, sc->sc_dr.dr_tcrw);
 		tcr &= 255;
 		tcr &= ~(1 << line);
-		DZ_WRITE_BYTE(dr_tcr, tcr);
-		DZ_BARRIER();
+		dz_write1(sc, sc->sc_dr.dr_tcr, tcr);
 		if (sc->sc_dz[line].dz_catch)
 			continue;
 
@@ -326,7 +362,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int unit, line;
 	struct	dz_softc *sc;
-	int s, error = 0;
+	int error = 0;
 
 	unit = DZ_I2C(minor(dev));
 	line = DZ_PORT(minor(dev));
@@ -364,20 +400,20 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 		(void) dzparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	}
+
 	/* Use DMBIS and *not* DMSET or else we clobber incoming bits */
 	if (dzmctl(sc, line, DML_DTR, DMBIS) & DML_DCD)
 		tp->t_state |= TS_CARR_ON;
-	s = spltty();
+	mutex_spin_enter(&tp->t_lock);
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (void *)&tp->t_rawq,
-				TTIPRI | PCATCH, ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
 		tp->t_wopen--;
 		if (error)
 			break;
 	}
-	(void) splx(s);
+	mutex_spin_exit(&tp->t_lock);
 	if (error)
 		return (error);
 	return ((*tp->t_linesw->l_open)(dev, tp));
@@ -426,11 +462,11 @@ int
 dzwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct tty *tp;
-	struct	dz_softc *sc;
+	struct dz_softc *sc;
 
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
-
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
+
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
@@ -441,11 +477,11 @@ dzpoll(dev, events, l)
 	struct lwp *l;
 {
 	struct tty *tp;
-	struct	dz_softc *sc;
+	struct dz_softc *sc;
 
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
-
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -472,7 +508,6 @@ dzioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return (error);
 
 	switch (cmd) {
-
 	case TIOCSBRK:
 		(void) dzmctl(sc, line, DML_BRK, DMBIS);
 		break;
@@ -514,8 +549,11 @@ dzioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 struct tty *
 dztty(dev_t dev)
 {
-	struct	dz_softc *sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
-        struct tty *tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
+	struct dz_softc *sc;
+	struct tty *tp;
+
+        sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
+        tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
 
         return (tp);
 }
@@ -524,9 +562,9 @@ dztty(dev_t dev)
 void
 dzstop(struct tty *tp, int flag)
 {
-	if (tp->t_state & TS_BUSY)
-		if (!(tp->t_state & TS_TTSTOP))
-			tp->t_state |= TS_FLUSH;
+
+	if ((tp->t_state & (TS_BUSY | TS_TTSTOP)) == TS_BUSY)
+		tp->t_state |= TS_FLUSH;
 }
 
 void
@@ -561,11 +599,9 @@ dzstart(struct tty *tp)
 
 	tp->t_state |= TS_BUSY;
 
-	state = DZ_READ_WORD(dr_tcrw) & 255;
-	if ((state & (1 << line)) == 0) {
-		DZ_WRITE_BYTE(dr_tcr, state | (1 << line));
-		DZ_BARRIER();
-	}
+	state = dz_read2(sc, sc->sc_dr.dr_tcrw) & 255;
+	if ((state & (1 << line)) == 0)
+		dz_write1(sc, sc->sc_dr.dr_tcr, state | (1 << line));
 	dzxint(sc);
 	splx(s);
 }
@@ -627,8 +663,7 @@ dzparam(struct tty *tp, struct termios *t)
 	if (cflag & CSTOPB)
 		lpr |= DZ_LPR_2_STOP;
 
-	DZ_WRITE_WORD(dr_lpr, lpr);
-	DZ_BARRIER();
+	dz_write2(sc, sc->sc_dr.dr_lpr, lpr);
 	(void) splx(s);
 	DELAY(10000);
 
@@ -644,30 +679,21 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 	int s;
 
 	s = spltty();
-
 	mbits = 0;
-
 	bit = (1 << line);
 
 	/* external signals as seen from the port */
-
-	status = DZ_READ_BYTE(dr_dcd) | sc->sc_dsr;
-
+	status = dz_read1(sc, sc->sc_dr.dr_dcd) | sc->sc_dsr;
 	if (status & bit)
 		mbits |= DML_DCD;
-
-	status = DZ_READ_BYTE(dr_ring);
-
+	status = dz_read1(sc, sc->sc_dr.dr_ring);
 	if (status & bit)
 		mbits |= DML_RI;
 
 	/* internal signals/state delivered to port */
-
-	status = DZ_READ_BYTE(dr_dtr);
-
+	status = dz_read1(sc, sc->sc_dr.dr_dtr);
 	if (status & bit)
 		mbits |= DML_DTR;
-
 	if (sc->sc_brk & bit)
 		mbits |= DML_BRK;
 
@@ -691,22 +717,19 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 	}
 
 	if (mbits & DML_DTR) {
-		DZ_WRITE_BYTE(dr_dtr, DZ_READ_BYTE(dr_dtr) | bit);
+		dz_write1(sc, sc->sc_dr.dr_dtr, dz_read1(sc, sc->sc_dr.dr_dtr) | bit);
 	} else {
-		DZ_WRITE_BYTE(dr_dtr, DZ_READ_BYTE(dr_dtr) & ~bit);
+		dz_write1(sc, sc->sc_dr.dr_dtr, dz_read1(sc, sc->sc_dr.dr_dtr) & ~bit);
 	}
-
-	DZ_BARRIER();
 
 	if (mbits & DML_BRK) {
 		sc->sc_brk |= bit;
-		DZ_WRITE_BYTE(dr_break, sc->sc_brk);
+		dz_write1(sc, sc->sc_dr.dr_break, sc->sc_brk);
 	} else {
 		sc->sc_brk &= ~bit;
-		DZ_WRITE_BYTE(dr_break, sc->sc_brk);
+		dz_write1(sc, sc->sc_dr.dr_break, sc->sc_brk);
 	}
 
-	DZ_BARRIER();
 	(void) splx(s);
 
 	return (mbits);
@@ -722,31 +745,25 @@ dzscan(void *arg)
 	struct dz_softc *sc;
 	struct tty *tp;
 	int n, bit, port;
-	unsigned csr;
+	unsigned csr, tmp;
 	int s;
 
 	s = spltty();
-
 	for (n = 0; n < dz_cd.cd_ndevs; n++) {
-
-		if (dz_cd.cd_devs[n] == NULL)
+		if ((sc = dz_cd.cd_devs[n]) == NULL)
 			continue;
 
-		sc = dz_cd.cd_devs[n];
-
 		for (port = 0; port < sc->sc_type; port++) {
-
 			tp = sc->sc_dz[port].dz_tty;
 			bit = (1 << port);
 
-			if ((DZ_READ_BYTE(dr_dcd) | sc->sc_dsr) & bit) {
+			if ((dz_read1(sc, sc->sc_dr.dr_dcd) | sc->sc_dsr) & bit) {
 				if (!(tp->t_state & TS_CARR_ON))
 					(*tp->t_linesw->l_modem) (tp, 1);
 			} else if ((tp->t_state & TS_CARR_ON) &&
 			    (*tp->t_linesw->l_modem)(tp, 0) == 0) {
-				DZ_WRITE_BYTE(dr_tcr,
-				    (DZ_READ_WORD(dr_tcrw) & 255) & ~bit);
-				DZ_BARRIER();
+			    	tmp = dz_read2(sc, sc->sc_dr.dr_tcrw) & 255;
+				dz_write1(sc, sc->sc_dr.dr_tcr, tmp & ~bit);
 			}
 	    	}
 
@@ -758,18 +775,18 @@ dzscan(void *arg)
 		 *  Avoid oscillating SA on and off by not turning
 		 *  if off unless the rate is appropriately low.
 		 */
-
-		csr = DZ_READ_WORD(dr_csr);
-
-		if (sc->sc_rxint > (16*10)) {
-			if ((csr & DZ_CSR_SAE) == 0)
-				DZ_WRITE_WORD(dr_csr, csr | DZ_CSR_SAE);
-	    	} else if ((csr & DZ_CSR_SAE) != 0)
-			if (sc->sc_rxint < 10)
-				DZ_WRITE_WORD(dr_csr, csr & ~(DZ_CSR_SAE));
-
-		DZ_BARRIER();
+		csr = dz_read2(sc, sc->sc_dr.dr_csr);
+		tmp = csr;
+		if (sc->sc_rxint > 16*10)
+			csr |= DZ_CSR_SAE;
+		else if (sc->sc_rxint < 10)
+	    		csr &= ~DZ_CSR_SAE;
+		if (csr != tmp)
+			dz_write2(sc, sc->sc_dr.dr_csr, csr);
 		sc->sc_rxint = 0;
+
+		dzxint(sc);
+		dzrint(sc);
 	}
 	(void) splx(s);
 	callout_reset(&dzscan_ch, hz, dzscan, NULL);
