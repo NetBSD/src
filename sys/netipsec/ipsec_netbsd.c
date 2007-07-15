@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.24.2.2 2007/06/08 14:18:00 ad Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.24.2.3 2007/07/15 13:28:02 ad Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24.2.2 2007/06/08 14:18:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24.2.3 2007/07/15 13:28:02 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -89,10 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24.2.2 2007/06/08 14:18:00 ad Exp
 
 /* assumes that ip header and ah header are contiguous on mbuf */
 void*
-ah4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct ah *ah;
@@ -112,7 +109,7 @@ ah4_ctlinput(cmd, sa, v)
 		 */
 		ah = (struct ah *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
-					   	IPPROTO_AH, ah->ah_spi);
+					   	IPPROTO_AH, ah->ah_spi, 0, 0);
 
 		if (sav) {
         	if (sav->state == SADB_SASTATE_MATURE ||
@@ -140,10 +137,7 @@ ah4_ctlinput(cmd, sa, v)
 
 /* assumes that ip header and esp header are contiguous on mbuf */
 void*
-esp4_ctlinput(cmd, sa, v)
-	int cmd;
-	const struct sockaddr *sa;
-	void *v;
+esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct esp *esp;
@@ -163,7 +157,7 @@ esp4_ctlinput(cmd, sa, v)
 		 */
 		esp = (struct esp *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
-					   	IPPROTO_ESP, esp->esp_spi);
+					   	IPPROTO_ESP, esp->esp_spi, 0, 0);
 
 		if (sav) {
         	if (sav->state == SADB_SASTATE_MATURE ||
@@ -190,10 +184,7 @@ esp4_ctlinput(cmd, sa, v)
 
 #ifdef INET6
 void
-ah6_ctlinput(cmd, sa, d)
-       int cmd;
-       const struct sockaddr *sa;
-       void *d;
+ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
        const struct newah *ahp;
        struct newah ah;
@@ -249,7 +240,7 @@ ah6_ctlinput(cmd, sa, d)
                         * to the address in the ICMP message payload.
                         */
                        sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
-                                         IPPROTO_AH, ahp->ah_spi);
+                                         IPPROTO_AH, ahp->ah_spi, 0, 0);
 
                        if (sav) {
                                if (sav->state == SADB_SASTATE_MATURE ||
@@ -279,10 +270,7 @@ ah6_ctlinput(cmd, sa, d)
 
 
 void
-esp6_ctlinput(cmd, sa, d)
-	int cmd;
-	const struct sockaddr *sa;
-	void *d;
+esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newesp *espp;
 	struct newesp esp;
@@ -357,7 +345,7 @@ esp6_ctlinput(cmd, sa, d)
 			 */
 
 			sav = KEY_ALLOCSA((const union sockaddr_union*)sa,
-					  IPPROTO_ESP, espp->esp_spi);
+					  IPPROTO_ESP, espp->esp_spi, 0, 0);
 
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||

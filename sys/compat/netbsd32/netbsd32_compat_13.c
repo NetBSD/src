@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.17.2.2 2007/06/09 23:57:44 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.17.2.3 2007/07/15 13:27:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.17.2.2 2007/06/09 23:57:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.17.2.3 2007/07/15 13:27:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ compat_13_netbsd32_sigaltstack13(l, v, retval)
 	register_t *retval;
 {
 	struct compat_13_netbsd32_sigaltstack13_args *uap = v;
-	compat_sigaltstack(uap, netbsd32_sigaltstack13);
+	compat_sigaltstack(uap, netbsd32_sigaltstack13, SS_ONSTACK, SS_DISABLE);
 }
 
 

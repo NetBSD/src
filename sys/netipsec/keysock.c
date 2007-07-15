@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.13 2007/03/04 21:17:55 degroote Exp $	*/
+/*	$NetBSD: keysock.c,v 1.13.2.1 2007/07/15 13:28:04 ad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.13 2007/03/04 21:17:55 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.13.2.1 2007/07/15 13:28:04 ad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -211,11 +211,8 @@ key_sendup0(
 
 /* XXX this interface should be obsoleted. */
 int
-key_sendup(so, msg, len, target)
-	struct socket *so;
-	struct sadb_msg *msg;
-	u_int len;
-	int target;	/*target of the resulting message*/
+key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
+	   int target)	/*target of the resulting message*/
 {
 	struct mbuf *m, *n, *mprev;
 	int tlen;
@@ -296,10 +293,8 @@ key_sendup(so, msg, len, target)
 
 /* so can be NULL if target != KEY_SENDUP_ONE */
 int
-key_sendup_mbuf(so, m, target /*, sbprio */)
-	struct socket *so;
-	struct mbuf *m;
-	int target;
+key_sendup_mbuf(struct socket *so, struct mbuf *m,
+		int target/*, sbprio */)
 {
 	struct mbuf *n;
 	struct keycb *kp;
@@ -621,11 +616,8 @@ key_sockaddr(struct socket *so, struct sockaddr **nam)
  * derived from net/rtsock.c:route_usrreq()
  */
 int
-key_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam, 
+	   struct mbuf *control, struct lwp *l)
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);

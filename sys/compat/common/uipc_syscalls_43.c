@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.28.2.1 2007/06/09 23:57:42 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.28.2.2 2007/07/15 13:27:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.28.2.1 2007/06/09 23:57:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.28.2.2 2007/07/15 13:27:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,103 +185,67 @@ compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct omsghdr *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct omsghdr omsg;
 	struct msghdr msg;
-	struct iovec aiov[UIO_SMALLIOV], *iov;
+	struct mbuf *from, *control;
 	int error;
 
-	error = copyin((void *)SCARG(uap, msg), (void *)&omsg,
-	    sizeof (struct omsghdr));
+	error = copyin(SCARG(uap, msg), &omsg, sizeof (struct omsghdr));
 	if (error)
 		return (error);
-	if ((u_int)omsg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)omsg.msg_iovlen > IOV_MAX)
-			return (EMSGSIZE);
-		iov = malloc(sizeof(struct iovec) * omsg.msg_iovlen,
-		    M_IOV, M_WAITOK);
-	} else
-		iov = aiov;
 
-	error = copyin((void *)omsg.msg_iov, (void *)iov,
-	    (unsigned)(omsg.msg_iovlen * sizeof (struct iovec)));
-	if (error)
-		goto done;
+	if (omsg.msg_accrights == NULL)
+		omsg.msg_accrightslen = 0;
+	/* it was this way in 4.4BSD */
+	if (omsg.msg_accrightslen > MLEN)
+		return EINVAL;
 
 	msg.msg_name	= omsg.msg_name;
 	msg.msg_namelen = omsg.msg_namelen;
 	msg.msg_iovlen	= omsg.msg_iovlen;
-	msg.msg_iov	= iov;
-	msg.msg_flags	= SCARG(uap, flags);
+	msg.msg_iov	= omsg.msg_iov;
+	msg.msg_flags	= (SCARG(uap, flags) & MSG_USERFLAGS) | MSG_IOVUSRSPACE;
 
-	/*
-	 * If caller passes accrights, arrange things for generic code to
-	 * DTRT.
-	 */
-	if (omsg.msg_accrights && omsg.msg_accrightslen) {
-		void *sg = stackgap_init(p, 0);
-		struct cmsg *ucmsg;
-
-		/* it was this way in 4.4BSD */
-		if ((u_int) omsg.msg_accrightslen > MLEN)
-			return (EINVAL);
-
-		ucmsg = stackgap_alloc(p, &sg, CMSG_SPACE(omsg.msg_accrightslen));
-		if (ucmsg == NULL)
-			return (EMSGSIZE);
-
-		msg.msg_control = ucmsg;
-		msg.msg_controllen = CMSG_SPACE(omsg.msg_accrightslen);
-	} else {
-		msg.msg_control = NULL;
-		msg.msg_controllen = 0;
-	}
-
-	error = recvit(l, SCARG(uap, s), &msg,
-	    (void *)&SCARG(uap, msg)->msg_namelen, retval);
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
+	    omsg.msg_accrights != NULL ? &control : NULL, retval);
+	if (error != 0)
+		return error;
 
 	/*
 	 * If there is any control information and it's SCM_RIGHTS,
 	 * pass it back to the program.
+	 * XXX: maybe there can be more than one chunk of control data?
 	 */
-	if (!error && omsg.msg_accrights && msg.msg_controllen > 0) {
-		struct cmsghdr *cmsg;
+	if (omsg.msg_accrights && control != NULL) {
+		struct cmsghdr *cmsg = mtod(control, void *);
 
-		/* safe - msg.msg_controllen set by kernel */
-		cmsg =  malloc(msg.msg_controllen, M_TEMP, M_WAITOK);
-
-		error = copyin(msg.msg_control, cmsg, msg.msg_controllen);
-		if (error) {
-			free(cmsg, M_TEMP);
-			return (error);
-		}
-
-		if (cmsg->cmsg_level != SOL_SOCKET
-		    || cmsg->cmsg_type != SCM_RIGHTS
-		    || copyout(CMSG_DATA(cmsg), omsg.msg_accrights,
-			    cmsg->cmsg_len)) {
+		if (cmsg->cmsg_level == SOL_SOCKET
+		    && cmsg->cmsg_type == SCM_RIGHTS
+		    && cmsg->cmsg_len < omsg.msg_accrightslen
+		    && copyout(CMSG_DATA(cmsg), omsg.msg_accrights,
+			    cmsg->cmsg_len) == 0) {
+			omsg.msg_accrightslen = cmsg->cmsg_len;
+			free_control_mbuf(l, control, control->m_next);
+		} else {
 			omsg.msg_accrightslen = 0;
+			free_control_mbuf(l, control, control);
 		}
+	} else
+		omsg.msg_accrightslen = 0;
 
-		if (!error) {
-			error = copyout(&cmsg->cmsg_len,
-			    &SCARG(uap, msg)->msg_accrightslen, sizeof(int));
-		}
-		free(cmsg, M_TEMP);
-	}
+	if (from != NULL)
+		/* convert from sockaddr sa_family to osockaddr one here */
+		mtod(from, struct osockaddr *)->sa_family =
+				    mtod(from, struct sockaddr *)->sa_family;
 
-	if (!error && omsg.msg_name) {
-		int namelen;
+	error = copyout_sockname(omsg.msg_name, &omsg.msg_namelen, 0, from);
+	if (from != NULL)
+		m_free(from);
 
-		if ((error = copyin(&SCARG(uap, msg)->msg_namelen, &namelen, sizeof(int)) == 0)
-		    && namelen > 0)
-			error = compat_43_sa_put(omsg.msg_name);
-	}
+	if (error != 0)
+		 error = copyout(&omsg, SCARG(uap, msg), sizeof(omsg));
 
-done:
-	if (iov != aiov)
-		free(iov, M_IOV);
-	return (error);
+	return error;
 }
 
 int
@@ -305,6 +269,44 @@ compat_43_sys_send(struct lwp *l, void *v, register_t *retval)
 	return (sys_sendto(l, &bsa, retval));
 }
 
+int
+compat43_set_accrights(struct msghdr *msg, void *accrights, int accrightslen)
+{
+	struct cmsghdr *cmsg;
+	int error;
+	struct mbuf *ctl;
+	u_int clen;
+
+	if (accrights == NULL || accrightslen == 0) {
+		msg->msg_control = NULL;
+		msg->msg_controllen = 0;
+		return 0;
+	}
+
+	clen = CMSG_SPACE(accrightslen);
+	/* it was (almost) this way in 4.4BSD */
+	if (accrightslen < 0 || clen > MLEN)
+		return EINVAL;
+
+	ctl = m_get(M_WAIT, MT_CONTROL);
+	ctl->m_len = clen;
+	cmsg = mtod(ctl, void *);
+	cmsg->cmsg_len		= CMSG_SPACE(accrightslen);
+	cmsg->cmsg_level	= SOL_SOCKET;
+	cmsg->cmsg_type 	= SCM_RIGHTS;
+
+	error = copyin(accrights, CMSG_DATA(cmsg), accrightslen);
+	if (error) {
+		m_free(ctl);
+		return error;
+	}
+
+	msg->msg_control = ctl;
+	msg->msg_controllen = clen;
+	msg->msg_flags |= MSG_CONTROLMBUF;
+	return 0;
+}
+
 /*
  * Old sendmsg. Arrange necessary structures, call generic code and
  * adjust the results accordingly for old code.
@@ -321,7 +323,6 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 	struct msghdr msg;
 	int error;
 	struct mbuf *nam;
-	struct mbuf *ctl;
 	struct osockaddr *osa;
 	struct sockaddr *sa;
 
@@ -345,37 +346,10 @@ compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 
 	msg.msg_name = nam;
 	msg.msg_namelen = omsg.msg_namelen;
-
-	if (omsg.msg_accrights && omsg.msg_accrightslen != 0) {
-		struct cmsghdr *cmsg;
-		u_int clen;
-
-		clen = CMSG_SPACE(omsg.msg_accrightslen);
-		/* it was (almost) this way in 4.4BSD */
-		if (omsg.msg_accrightslen < 0 || clen > MLEN) {
-			error = EINVAL;
-			goto bad;
-		}
-
-		ctl = m_get(M_WAIT, MT_CONTROL);
-		ctl->m_len = clen;
-		cmsg = mtod(ctl, void *);
-		cmsg->cmsg_len		= CMSG_SPACE(omsg.msg_accrightslen);
-		cmsg->cmsg_level	= SOL_SOCKET;
-		cmsg->cmsg_type 	= SCM_RIGHTS;
-
-		error = copyin(omsg.msg_accrights, CMSG_DATA(cmsg),
-		    omsg.msg_accrightslen);
-		if (error)
-			goto bad;
-
-		msg.msg_control = ctl;
-		msg.msg_controllen = clen;
-		msg.msg_flags |= MSG_CONTROLMBUF;
-	} else {
-		msg.msg_control = NULL;
-		msg.msg_controllen = 0;
-	}
+	error = compat43_set_accrights(&msg, omsg.msg_accrights,
+	    omsg.msg_accrightslen);
+	if (error != 0)
+		goto bad;
 
 	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.136.2.5 2007/06/08 14:17:18 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136.2.6 2007/07/15 13:27:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.5 2007/06/08 14:17:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136.2.6 2007/07/15 13:27:37 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -319,7 +319,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
 	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
+	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_HIGH);
 	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&p2->p_refcv, "drainref");

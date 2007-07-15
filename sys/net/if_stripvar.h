@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.18 2006/06/07 22:33:43 kardel Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.18.16.1 2007/07/15 13:27:54 ad Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -22,9 +22,7 @@ struct strip_softc {
 	u_int	sc_flags;		/* see below */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void	*sc_si;			/* softintr handle */
-#endif
 #ifdef __NetBSD__
 	int	sc_oldbufsize;		/* previous output buffer size */
 	int	sc_oldbufquot;		/* previous output buffer quoting */

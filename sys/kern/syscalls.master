@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.168.2.5 2007/06/08 14:17:26 ad Exp $
+	$NetBSD: syscalls.master,v 1.168.2.6 2007/07/15 13:27:46 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -94,7 +94,7 @@
 #else
 20	STD MPSAFE	{ pid_t sys_getpid(void); }
 #endif
-21	STD		{ int sys_mount(const char *type, const char *path, \
+21	COMPAT_40	{ int sys_mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD		{ int sys_unmount(const char *path, int flags); }
 23	STD 		{ int sys_setuid(uid_t uid); }
@@ -805,3 +805,11 @@
 405	STD		{ int sys_aio_write(struct aiocb *aiocbp); }
 406	STD		{ int sys_lio_listio(int mode, struct aiocb *const *list, \
 			    int nent, struct sigevent *sig); }
+407	UNIMPL
+408	UNIMPL
+409	UNIMPL
+
+; More interface changes
+410	STD		{ int sys___mount50(const char *type, \
+			    const char *path, int flags, void *data, \
+			    size_t data_len); }

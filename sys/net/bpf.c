@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.126.2.3 2007/07/01 21:50:41 ad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.126.2.4 2007/07/15 13:27:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.2.3 2007/07/01 21:50:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.2.4 2007/07/15 13:27:52 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -115,7 +115,7 @@ struct bpf_stat	bpf_gstats;
  * Use a mutex to avoid a race condition between gathering the stats/peers
  * and opening/closing the device.
  */
-struct simplelock bpf_slock;
+static kmutex_t bpf_mtx;
 
 /*
  *  bpf_iflist is the list of interfaces; each corresponds to an ifnet
@@ -371,11 +371,11 @@ bpf_detachd(struct bpf_d *d)
 void
 bpfilterattach(int n)
 {
-	simple_lock_init(&bpf_slock);
+	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	simple_lock(&bpf_slock);
+	mutex_enter(&bpf_mtx);
 	LIST_INIT(&bpf_list);
-	simple_unlock(&bpf_slock);
+	mutex_exit(&bpf_mtx);
 
 	bpf_gstats.bs_recv = 0;
 	bpf_gstats.bs_drop = 0;
@@ -1743,7 +1743,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	if (elem_size < 1 || elem_count < 0)
 		return (EINVAL);
 
-	simple_lock(&bpf_slock);
+	mutex_enter(&bpf_mtx);
 	LIST_FOREACH(dp, &bpf_list, bd_list) {
 		if (len >= elem_size && elem_count > 0) {
 #define BPF_EXT(field)	dpe.bde_ ## field = dp->bd_ ## field
@@ -1778,7 +1778,7 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 				elem_count--;
 		}
 	}
-	simple_unlock(&bpf_slock);
+	mutex_exit(&bpf_mtx);
 
 	*oldlenp = needed;
 

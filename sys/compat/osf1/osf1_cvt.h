@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.10 2005/12/11 12:20:23 christos Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.10.30.1 2007/07/15 13:27:14 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -62,10 +62,6 @@ void	osf1_cvt_sigaction_from_native(const struct sigaction *nsa,
 				       struct osf1_sigaction *osa);
 int	osf1_cvt_sigaction_to_native(const struct osf1_sigaction *osa,
 				     struct sigaction *nsa);
-void	osf1_cvt_sigaltstack_from_native(const struct sigaltstack *nss,
-					 struct osf1_sigaltstack *oss);
-int	osf1_cvt_sigaltstack_to_native(const struct osf1_sigaltstack *oss,
-				       struct sigaltstack *nss);
 void	osf1_cvt_sigset_from_native(const sigset_t *nss, osf1_sigset_t *oss);
 int	osf1_cvt_sigset_to_native(const osf1_sigset_t *oss, sigset_t *nss);
 void	osf1_cvt_stat_from_native(const struct stat *nst,

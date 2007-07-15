@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.37.2.1 2007/03/13 17:50:27 ad Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.37.2.2 2007/07/15 13:27:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.37.2.1 2007/03/13 17:50:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.37.2.2 2007/07/15 13:27:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,92 +346,37 @@ int
 ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_mount_args *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 	int otype = SCARG(uap, type);
 	char fsname[MFSNAMELEN];
-	const char *fstype;
-	struct sys_mount_args nuap;
-	char *native_fstype;
+	register_t dummy;
+	int nflags;
 
-	char *usp = stackgap_init(p, 0);
-
-	memset(&nuap, 0, sizeof(nuap));
-	SCARG(&nuap, flags) = 0;
+	nflags = 0;
 
 	/*
 	 * Translate Ultrix integer mount codes for UFS and NFS to
 	 * NetBSD fstype strings.  Other Ultrix filesystem types
 	 *  (msdos, DEC ods-2) are not supported.
-	 * Copy resulting string out to userspace (on stack)
-	 * so we can pass it to the native mount syscall.
 	 */
-	if (otype == ULTRIX_FSTYPE_ULTRIX)
-		fstype = "ufs";
-	else if (otype == ULTRIX_FSTYPE_NFS)
-		fstype = "nfs";
-	else
-		return (EINVAL);
 
 	/* Translate the Ultrix mount-readonly option parameter */
 	if (SCARG(uap, rdonly))
-		SCARG(&nuap, flags) |= MNT_RDONLY;
+		nflags |= MNT_RDONLY;
 
-	/* Copy string-ified version of mount type back out to user space */
-	native_fstype = (char *)usp;
-	SCARG(&nuap, type) = native_fstype;
-	if ((error = copyout(fstype, native_fstype,
-			    strlen(fstype)+1)) != 0) {
-		return (error);
-	}
-	usp += strlen(fstype)+1;
 
 #ifdef later
 	parse ultrix mount option string and set NetBSD flags
 #endif
-	SCARG(&nuap, path) = SCARG(uap, dir);
 
-	/*
-	 * Translate fstype-dependent mount options from
-	 * Ultrix format to native.
-	 */
-	if (otype == ULTRIX_FSTYPE_ULTRIX) {
-		/* attempt to mount a native, rather than 4.2bsd, ffs */
-		struct ufs_args ua;
-
-		memset(&ua, 0, sizeof(ua));
-		ua.fspec = SCARG(uap, special);
-		SCARG(&nuap, data) = usp;
-
-		if ((error = copyout(&ua, SCARG(&nuap, data),
-				     sizeof ua)) !=0) {
-			return(error);
-		}
-		/*
-		 * Ultrix mount has no MNT_UPDATE flag.
-		 * Attempt to see if this is the root we're mounting,
-		 * and if so, set MNT_UPDATE so we can mount / read-write.
-		 */
-		fsname[0] = 0;
-		if ((error = copyinstr(SCARG(&nuap, path), fsname,
-				      sizeof fsname, NULL)) != 0)
-			return(error);
-		if (strcmp(fsname, "/") == 0) {
-			SCARG(&nuap, flags) |= MNT_UPDATE;
-			printf("COMPAT_ULTRIX: mount with MNT_UPDATE on %s\n",
-			    fsname);
-		}
-	} else if (otype == ULTRIX_FSTYPE_NFS) {
+	if (otype == ULTRIX_FSTYPE_NFS) {
 		struct ultrix_nfs_args una;
 		struct nfs_args na;
-		struct osockaddr_in osa;
-		struct sockaddr_in *sap = (struct sockaddr_in *)& osa;
 
-		memset(&osa, 0, sizeof(osa));
-		memset(&una, 0, sizeof(una));
 		if ((error = copyin(SCARG(uap, data), &una, sizeof una)) !=0) {
 			return (error);
 		}
+#if 0
 		/*
 		 * This is the only syscall boundary the
 		 * address of the server passes, so do backwards
@@ -443,14 +388,11 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		}
 		sap->sin_family = (u_char)osa.sin_family;
 		sap->sin_len = sizeof(*sap);
-		/* allocate space above caller's stack for nfs_args */
-		SCARG(&nuap, data) = usp;
-		usp +=  sizeof (na);
-		/* allocate space above caller's stack for server sockaddr */
+		/* XXXX teach nfs how to do the above */
+#endif
 		na.version = NFS_ARGSVERSION;
-		na.addr = (struct sockaddr *)usp;
-		usp += sizeof(*sap);
-		na.addrlen = sap->sin_len;
+		na.addr = (void *)una.addr;
+		na.addrlen = sizeof (struct sockaddr_in);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
 		na.fh = una.fh;
@@ -461,10 +403,40 @@ ultrix_sys_mount(struct lwp *l, void *v, register_t *retval)
 		na.timeo = una.timeo;
 		na.retrans = una.retrans;
 		na.hostname = una.hostname;
-		if ((error = copyout(sap, na.addr, sizeof (*sap) )) != 0)
-			return (error);
-		if ((error = copyout(&na, SCARG(&nuap, data), sizeof na)) != 0)
-			return (error);
+		return do_sys_mount(l, vfs_getopsbyname("ngs"), NULL,
+		    SCARG(uap, special), nflags, &na, UIO_SYSSPACE,
+		    sizeof na, &dummy);
 	}
-	return (sys_mount(l, &nuap, retval));
+
+	/*
+	 * Translate fstype-dependent mount options from
+	 * Ultrix format to native.
+	 */
+	if (otype == ULTRIX_FSTYPE_ULTRIX) {
+		/* attempt to mount a native, rather than 4.2bsd, ffs */
+		struct ufs_args ua;
+
+		memset(&ua, 0, sizeof(ua));
+		ua.fspec = SCARG(uap, special);
+
+		/*
+		 * Ultrix mount has no MNT_UPDATE flag.
+		 * Attempt to see if this is the root we're mounting,
+		 * and if so, set MNT_UPDATE so we can mount / read-write.
+		 */
+		fsname[0] = 0;
+		if ((error = copyinstr(SCARG(uap, dir), fsname,
+				      sizeof fsname, NULL)) != 0)
+			return(error);
+		if (strcmp(fsname, "/") == 0) {
+			nflags |= MNT_UPDATE;
+			printf("COMPAT_ULTRIX: mount with MNT_UPDATE on %s\n",
+			    fsname);
+		}
+		return do_sys_mount(l, vfs_getopsbyname("ffs"), NULL,
+		    SCARG(uap, dir), nflags, &ua, UIO_SYSSPACE, sizeof ua,
+		    &dummy);
+	}
+
+	return (EINVAL);
 }

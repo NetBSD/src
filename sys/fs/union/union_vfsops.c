@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.43.6.1 2007/04/10 13:26:37 ad Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.43.6.2 2007/07/15 13:27:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.43.6.1 2007/04/10 13:26:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.43.6.2 2007/07/15 13:27:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.43.6.1 2007/04/10 13:26:37 ad Exp
 
 #include <fs/union/union.h>
 
-int union_mount(struct mount *, const char *, void *, struct nameidata *,
-		     struct lwp *);
+int union_mount(struct mount *, const char *, void *, size_t *data_len,
+		struct nameidata *, struct lwp *);
 int union_start(struct mount *, int, struct lwp *);
 int union_unmount(struct mount *, int, struct lwp *);
 int union_root(struct mount *, struct vnode **);
@@ -109,15 +109,16 @@ int union_vget(struct mount *, ino_t, struct vnode **);
  * Mount union filesystem
  */
 int
-union_mount(mp, path, data, ndp, l)
+union_mount(mp, path, data, data_len, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
+	size_t *data_len;
 	struct nameidata *ndp;
 	struct lwp *l;
 {
 	int error = 0;
-	struct union_args args;
+	struct union_args *args = data;
 	struct vnode *lowerrootvp = NULLVP;
 	struct vnode *upperrootvp = NULLVP;
 	struct union_mount *um = 0;
@@ -125,6 +126,9 @@ union_mount(mp, path, data, ndp, l)
 	char *xp;
 	int len;
 	size_t size;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 #ifdef UNION_DIAGNOSTIC
 	printf("union_mount(mp = %p)\n", mp);
@@ -134,9 +138,10 @@ union_mount(mp, path, data, ndp, l)
 		um = MOUNTTOUNIONMOUNT(mp);
 		if (um == NULL)
 			return EIO;
-		args.target = NULL;
-		args.mntflags = um->um_op;
-		return copyout(&args, data, sizeof(args));
+		args->target = NULL;
+		args->mntflags = um->um_op;
+		*data_len = sizeof *args;
+		return 0;
 	}
 	/*
 	 * Update is a no-op
@@ -151,21 +156,13 @@ union_mount(mp, path, data, ndp, l)
 		goto bad;
 	}
 
-	/*
-	 * Get argument
-	 */
-	error = copyin(data, &args, sizeof(struct union_args));
-	if (error)
-		goto bad;
-
 	lowerrootvp = mp->mnt_vnodecovered;
 	VREF(lowerrootvp);
 
 	/*
 	 * Find upper node.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW,
-	       UIO_USERSPACE, args.target, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->target, l);
 
 	if ((error = namei(ndp)) != 0)
 		goto bad;
@@ -189,7 +186,7 @@ union_mount(mp, path, data, ndp, l)
 	 * same as providing a mount under option to the mount syscall.
 	 */
 
-	um->um_op = args.mntflags & UNMNT_OPMASK;
+	um->um_op = args->mntflags & UNMNT_OPMASK;
 	switch (um->um_op) {
 	case UNMNT_ABOVE:
 		um->um_lowervp = lowerrootvp;
@@ -283,7 +280,7 @@ union_mount(mp, path, data, ndp, l)
 	xp = mp->mnt_stat.f_mntfromname + len;
 	len = MNAMELEN - len;
 
-	(void) copyinstr(args.target, xp, len - 1, &size);
+	(void) copyinstr(args->target, xp, len - 1, &size);
 	memset(xp + size, 0, len - size);
 
 #ifdef UNION_DIAGNOSTIC
@@ -533,6 +530,7 @@ const struct vnodeopv_desc * const union_vnodeopv_descs[] = {
 
 struct vfsops union_vfsops = {
 	MOUNT_UNION,
+	sizeof (struct union_args),
 	union_mount,
 	union_start,
 	union_unmount,

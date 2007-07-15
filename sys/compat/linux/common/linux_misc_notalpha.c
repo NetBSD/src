@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.86.2.3 2007/07/01 21:50:37 ad Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.86.2.4 2007/07/15 13:27:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.86.2.3 2007/07/01 21:50:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.86.2.4 2007/07/15 13:27:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.86.2.3 2007/07/01 21:50:37
 #include <sys/mbuf.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/prot.h>
 #include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>

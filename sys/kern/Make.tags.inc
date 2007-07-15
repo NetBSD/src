@@ -1,4 +1,4 @@
-#	$NetBSD: Make.tags.inc,v 1.11.12.2 2007/06/08 14:17:14 ad Exp $
+#	$NetBSD: Make.tags.inc,v 1.11.12.3 2007/07/15 13:27:35 ad Exp $
 #
 #	from: @(#)Make.tags.inc	8.1 (Berkeley) 6/11/93
 
@@ -15,6 +15,7 @@
 # This promises to be easier to maintain, considering how often the directory
 # structure of the kernel sources has been changing recently.
 SYSDIR?= ${.CURDIR:H:H}
-COMM!=	find -H ${SYSDIR} \( -path '*/dist/ipf' -o -name arch \) -prune -o -type f -name "*.[ch]" \( \! -name 'usb_port.h' \! -name 'midway*' \! -name 'if_lmc.[ch]' \) -print | \
+FINDCOMM=	find -H ${SYSDIR} \( -path '*/dist/ipf' -o -name arch \) -prune -o -type f -name "*.[ch]" \( \! -name 'usb_port.h' \! -name 'midway*' \! -name 'if_lmc.[ch]' \) -print | \
     sort -t / -u
+COMM!=	${FINDCOMM}
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.13.2.3 2007/05/13 17:36:46 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.13.2.4 2007/07/15 13:28:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -44,7 +44,6 @@
 #include <sys/pool.h>
 #include <sys/sysctl.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dirhash.h>
@@ -57,7 +56,7 @@
 #define OFSFMT(ip)		((ip)->i_ump->um_maxsymlinklen <= 0)
 #define BLKFREE2IDX(n)		((n) > DH_NFSTATS ? DH_NFSTATS : (n))
 
-static MALLOC_DEFINE(M_DIRHASH, "UFS dirhash", "UFS directory hash tables");
+static MALLOC_JUSTDEFINE(M_DIRHASH, "UFS dirhash", "UFS directory hash tables");
 
 static int ufs_dirhashminblks = 5;
 static int ufs_dirhashmaxmem = 2 * 1024 * 1024;
@@ -73,9 +72,6 @@ static int ufsdirhash_findslot(struct dirhash *dh, const char *name,
 static doff_t ufsdirhash_getprev(struct direct *dp, doff_t offset,
 	   int dirblksiz);
 static int ufsdirhash_recycle(int wanted);
-
-static POOL_INIT(ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
-    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
 
 #define DIRHASHLIST_LOCK()		mutex_enter(&ufsdirhash_lock)
 #define DIRHASHLIST_UNLOCK()		mutex_exit(&ufsdirhash_lock)
@@ -937,6 +933,8 @@ ufsdirhash_findslot(struct dirhash *dh, const char *name, int namelen,
 
 	KASSERT(mutex_owned(&dh->dh_lock));
 
+	KASSERT(mutex_owned(&dh->dh_lock));
+
 	/* Find the entry. */
 	KASSERT(dh->dh_hused < dh->dh_hlen);
 	slot = ufsdirhash_hash(dh, name, namelen);
@@ -958,6 +956,8 @@ static void
 ufsdirhash_delslot(struct dirhash *dh, int slot)
 {
 	int i;
+
+	KASSERT(mutex_owned(&dh->dh_lock));
 
 	KASSERT(mutex_owned(&dh->dh_lock));
 
@@ -1071,10 +1071,8 @@ ufsdirhash_recycle(int wanted)
 void
 ufsdirhash_init()
 {
-#ifdef _LKM
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
 	    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
-#endif
 	mutex_init(&ufsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&ufsdirhash_list);
 }
@@ -1083,9 +1081,7 @@ void
 ufsdirhash_done(void)
 {
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
-#ifdef _LKM
 	pool_destroy(&ufsdirhash_pool);
-#endif
 	mutex_destroy(&ufsdirhash_lock);
 }
 

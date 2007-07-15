@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.25.2.3 2007/06/09 23:58:02 ad Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.25.2.4 2007/07/15 13:27:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -109,7 +109,12 @@ extern int puffsdebug; /* puffs_subr.c */
 #define EXISTSOP(pmp, op) \
  (ALLOPS(pmp) || ((pmp)->pmp_vnopmask[PUFFS_VN_##op]))
 
-#define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
+#define PUFFS_USE_NAMECACHE(pmp)	\
+    (((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE_NAME) == 0)
+#define PUFFS_USE_PAGECACHE(pmp)	\
+    (((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE_PAGE) == 0)
+#define PUFFS_USE_FULLPNBUF(pmp)	\
+    ((pmp)->pmp_flags & PUFFS_KFLAG_LOOKUP_FULLPNBUF)
 
 #define PUFFS_WCACHEINFO(pmp)	0
 
@@ -227,10 +232,11 @@ void	puffs_putvnode(struct vnode *);
 void	puffs_releasenode(struct puffs_node *);
 void	puffs_referencenode(struct puffs_node *);
 
-struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *, int);
-void	puffs_makecn(struct puffs_kcn *, const struct componentname *);
-void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);
-pid_t	puffs_lwp2pid(struct lwp *);
+int	puffs_pnode2vnode(struct puffs_mount *, void *, int, struct vnode **);
+void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
+		     struct puffs_kcid *, const struct componentname *, int);
+void	puffs_credcvt(struct puffs_kcred *, kauth_cred_t);
+void	puffs_cidcvt(struct puffs_kcid *, const struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_req *, void *);
 void	puffs_parkdone_poll(struct puffs_req *, void *);

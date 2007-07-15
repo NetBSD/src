@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.100.6.3 2007/06/17 21:32:11 ad Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.100.6.4 2007/07/15 13:28:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.100.6.3 2007/06/17 21:32:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.100.6.4 2007/07/15 13:28:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -324,9 +324,6 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	struct inode *ip;
 	struct ufs1_dinode *dp;
 	struct ufsmount *ump;
-#ifdef QUOTA
-	int i;
-#endif
 
 	/* Get a pointer to the private mount structure. */
 	ump = VFSTOUFS(mp);
@@ -353,8 +350,7 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	ip->i_lfs_nbtree = 0;
 	LIST_INIT(&ip->i_lfs_segdhd);
 #ifdef QUOTA
-	for (i = 0; i < MAXQUOTAS; i++)
-		ip->i_dquot[i] = NODQUOT;
+	ufsquota_init(ip);
 #endif
 #ifdef DEBUG
 	if (ino == LFS_IFILE_INUM)

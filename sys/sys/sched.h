@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.33.2.4 2007/07/14 22:09:49 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.33.2.5 2007/07/15 13:28:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.

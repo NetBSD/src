@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.47 2007/03/04 06:01:33 christos Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.47.2.1 2007/07/15 13:27:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.47 2007/03/04 06:01:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.47.2.1 2007/07/15 13:27:18 ad Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -91,7 +91,6 @@ const struct cdevsw svr4_net_cdevsw = {
  * Device minor numbers
  */
 enum {
-	dev_ptm			= 10,
 	dev_arp			= 26,
 	dev_icmp		= 27,
 	dev_ip			= 28,
@@ -106,7 +105,6 @@ enum {
 int svr4_netattach __P((int));
 
 int svr4_soo_close __P((struct file *, struct lwp *));
-int svr4_ptm_alloc __P((struct proc *));
 
 static const struct fileops svr4_netops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
@@ -185,10 +183,6 @@ svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 		DPRINTF(("unix-stream, "));
 		break;
 
-	case dev_ptm:
-		DPRINTF(("ptm);\n"));
-		return svr4_ptm_alloc(p);
-
 	default:
 		DPRINTF(("%d);\n", minor(dev)));
 		return EOPNOTSUPP;
@@ -225,62 +219,6 @@ svr4_soo_close(fp, l)
 	svr4_delete_socket(l->l_proc, fp);
 	free(so->so_internal, M_NETADDR);
 	return soo_close(fp, l);
-}
-
-
-int
-svr4_ptm_alloc(p)
-	struct proc *p;
-{
-	/*
-	 * XXX this is very, very ugly.  But I can't find a better
-	 * way that won't duplicate a big amount of code from
-	 * sys_open().  Ho hum...
-	 *
-	 * Fortunately for us, Solaris (at least 2.5.1) makes the
-	 * /dev/ptmx open automatically just open a pty, that (after
-	 * STREAMS I_PUSHes), is just a plain pty.  fstat() is used
-	 * to get the minor device number to map to a tty.
-	 *
-	 * Cycle through the names. If sys_open() returns ENOENT (or
-	 * ENXIO), short circuit the cycle and exit.
-	 */
-	char ptyname[] = "/dev/ptyXX";
-	static const char ttyletters[] = "pqrstuvwxyzPQRST";
-	void *sg = stackgap_init(p, 0);
-	char *path = stackgap_alloc(p, &sg, sizeof(ptyname));
-	struct sys_open_args oa;
-	int l = 0, n = 0;
-	register_t fd = -1;
-	int error;
-
-	SCARG(&oa, path) = path;
-	SCARG(&oa, flags) = O_RDWR;
-	SCARG(&oa, mode) = 0;
-
-	while (fd == -1) {
-		ptyname[8] = ttyletters[l];
-		ptyname[9] = hexdigits[n];
-
-		if ((error = copyout(ptyname, path, sizeof(ptyname))) != 0)
-			return error;
-
-		switch (error = sys_open(curlwp, &oa, &fd)) { /* XXX NJWLWP */
-		case ENOENT:
-		case ENXIO:
-			return error;
-		case 0:
-			curlwp->l_dupfd = fd;
-			return EMOVEFD;
-		default:
-			if (hexdigits[++n] == '\0') {
-				if (ttyletters[++l] == '\0')
-					break;
-				n = 0;
-			}
-		}
-	}
-	return ENOENT;
 }
 
 

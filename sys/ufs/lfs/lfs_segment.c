@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198.2.6 2007/06/23 18:06:06 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.2.7 2007/07/15 13:28:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.6 2007/06/23 18:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.7 2007/07/15 13:28:17 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.6 2007/06/23 18:06:06 ad Exp
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-MALLOC_DEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
+MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
 extern int count_lock_queue(void);
 extern kmutex_t vnode_free_list_lock;		/* XXX */
@@ -2595,7 +2595,7 @@ lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
 	/* reset b_iodone for when this is a single-buf i/o. */
 	bp->b_iodone = aiodone;
 
-	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work);
+	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work, NULL);
 }
 
 static void

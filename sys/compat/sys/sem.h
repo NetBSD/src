@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.3 2005/11/12 00:39:22 simonb Exp $	*/
+/*	$NetBSD: sem.h,v 1.3.34.1 2007/07/15 13:27:20 ad Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -25,6 +25,8 @@ struct semid_ds14 {
 	long		sem_pad2;	/* SVABI/386 says I need this here */
 	long		sem_pad3[4];	/* SVABI/386 says I need this here */
 };
+void	semid_ds14_to_native(struct semid_ds14 *, struct semid_ds *);
+void	native_to_semid_ds14(struct semid_ds *, struct semid_ds14 *);
 
 #else /* !_KERNEL */
 

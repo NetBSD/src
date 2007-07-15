@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.66.2.2 2007/06/09 23:58:15 ad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.66.2.3 2007/07/15 13:28:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -303,6 +303,7 @@ int netexport_check(const fsid_t *, struct mbuf *, struct mount **, int *,
 void netexport_rdlock(void);
 void netexport_rdunlock(void);
 #ifdef COMPAT_30
-int nfs_update_exports_30(struct mount *, const char *, void *, struct lwp *);
+int nfs_update_exports_30(struct mount *, const char *,
+    struct mnt_export_args30 *, struct lwp *);
 #endif
 #endif /* _KERNEL */

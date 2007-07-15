@@ -1,4 +1,4 @@
-/*	$NetBSD: selinfo.h,v 1.2.30.2 2007/04/28 22:40:04 ad Exp $	*/
+/*	$NetBSD: selinfo.h,v 1.2.30.3 2007/07/15 13:28:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,10 @@
 #define	_SYS_SELINFO_H_
 
 #include <sys/event.h>		/* for struct klist */
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 /*
  * Used to maintain information about processes that wish to be

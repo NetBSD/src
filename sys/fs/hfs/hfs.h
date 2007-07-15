@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.2.2.1 2007/04/10 13:26:34 ad Exp $	*/
+/*	$NetBSD: hfs.h,v 1.2.2.2 2007/07/15 13:27:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -184,8 +184,8 @@ uint64_t be64tohp(void**);
 
 
 /* hfs_vfsops.c */
-int hfs_mount (struct mount *, const char *, void *, struct nameidata *,
-	struct lwp *);
+int hfs_mount (struct mount *, const char *, void *, size_t *,
+	struct nameidata *, struct lwp *);
 int hfs_mountfs (struct vnode *, struct mount *, struct lwp *, const char *);
 int hfs_start (struct mount *, int, struct lwp *);
 int hfs_unmount (struct mount *, int, struct lwp *);

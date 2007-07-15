@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.119.2.2 2007/05/27 14:35:19 ad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.119.2.3 2007/07/15 13:27:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.119.2.2 2007/05/27 14:35:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.119.2.3 2007/07/15 13:27:13 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -411,13 +411,13 @@ netbsd32_mount(l, v, retval)
 		syscallarg(int) flags;
 		syscallarg(netbsd32_voidp) data;
 	} */ *uap = v;
-	struct sys_mount_args ua;
+	struct compat_40_sys_mount_args ua;
 
 	NETBSD32TOP_UAP(type, const char);
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TOP_UAP(data, void);
-	return (sys_mount(l, &ua, retval));
+	return (compat_40_sys_mount(l, &ua, retval));
 }
 
 int
@@ -954,28 +954,13 @@ netbsd32_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
-	kauth_cred_t pc = l->l_cred;
-	int ngrp;
-	int error;
-	gid_t *grbuf;
+	struct sys_getgroups_args ua;
 
-	ngrp = SCARG(uap, gidsetsize);
-	if (ngrp == 0) {
-		*retval = kauth_cred_ngroups(pc);
-		return (0);
-	}
-	if (ngrp < kauth_cred_ngroups(pc))
-		return (EINVAL);
-	ngrp = kauth_cred_ngroups(pc);
-	/* Should convert gid_t to netbsd32_gid_t, but they're the same */
-	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
-	kauth_cred_getgroups(pc, grbuf, ngrp);
-	error = copyout(grbuf, SCARG_P32(uap, gidset), ngrp * sizeof(*grbuf));
-	free(grbuf, M_TEMP);
-	if (error)
-		return (error);
-	*retval = ngrp;
-	return (0);
+	/* Since sizeof (gid_t) == sizeof (netbsd32_gid_t) ... */
+
+	NETBSD32TO64_UAP(gidsetsize);
+	NETBSD32TOP_UAP(gidset, gid_t);
+	return (sys_getgroups(l, &ua, retval));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootstatic.c,v 1.4 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: nfs_bootstatic.c,v 1.4.2.1 2007/07/15 13:28:05 ad Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.4 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.4.2.1 2007/07/15 13:28:05 ad Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -77,6 +77,9 @@ nfs_bootstatic(struct nfs_diskless *nd, struct lwp *lwp)
 		flags = (*nfs_bootstatic_callback)(nd);
 	else
 		flags = 0;
+
+	if (flags & NFS_BOOTSTATIC_NOSTATIC)
+		return EOPNOTSUPP;
 
 	if (flags == 0) {
 #ifdef NFS_BOOTSTATIC_MYIP

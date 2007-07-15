@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.105.2.1 2007/06/17 21:31:52 ad Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.105.2.2 2007/07/15 13:27:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.105.2.1 2007/06/17 21:31:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.105.2.2 2007/07/15 13:27:54 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -186,9 +186,6 @@ struct if_clone sl_cloner =
 #define TRANS_FRAME_END		0xdc		/* transposed frame end */
 #define TRANS_FRAME_ESCAPE	0xdd		/* transposed frame esc */
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void	slnetisr(void);
-#endif
 static void	slintr(void *);
 
 static int	slinit(struct sl_softc *);
@@ -707,20 +704,6 @@ newpack:
 
 	return 0;
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void
-slnetisr(void)
-{
-	struct sl_softc *sc;
-
-	LIST_FOREACH(sc, &sl_softc_list, sc_iflist) {
-		if (sc->sc_ttyp == NULL)
-			continue;
-		slintr(sc);
-	}
-}
-#endif
 
 static void
 slintr(void *arg)

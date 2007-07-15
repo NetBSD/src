@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.101 2007/03/09 14:11:25 ad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.101.2.1 2007/07/15 13:27:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.101 2007/03/09 14:11:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.101.2.1 2007/07/15 13:27:40 ad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.101 2007/03/09 14:11:25 ad Exp $");
 #include <sys/timeb.h>
 #include <sys/times.h>
 #include <sys/pool.h>
+#include <sys/prot.h>
 #include <sys/syslog.h>
 #include <sys/resourcevar.h>
 #include <sys/kauth.h>
@@ -60,16 +61,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.101 2007/03/09 14:11:25 ad Exp $");
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <sys/malloc.h>
-
 int	sys_getpid(struct lwp *, void *, register_t *);
 int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
 int	sys_getuid(struct lwp *, void *, register_t *);
 int	sys_getuid_with_euid(struct lwp *, void *, register_t *);
 int	sys_getgid(struct lwp *, void *, register_t *);
 int	sys_getgid_with_egid(struct lwp *, void *, register_t *);
-
-static int grsortu(gid_t *, int);
 
 /* ARGSUSED */
 int
@@ -234,30 +231,15 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(gid_t *) gidset;
 	} */ *uap = v;
-	kauth_cred_t cred = l->l_cred;
-	u_int ngrp;
-	int error;
-	gid_t *grbuf;
 
-	if (SCARG(uap, gidsetsize) == 0) {
-		*retval = kauth_cred_ngroups(cred);
-		return (0);
-	} else if (SCARG(uap, gidsetsize) < 0)
-		return (EINVAL);
-	ngrp = SCARG(uap, gidsetsize);
-	if (ngrp < kauth_cred_ngroups(cred))
-		return (EINVAL);
-	ngrp = kauth_cred_ngroups(cred);
+	*retval = kauth_cred_ngroups(l->l_cred);
+	if (SCARG(uap, gidsetsize) == 0)
+		return 0;
+	if (SCARG(uap, gidsetsize) < *retval)
+		return EINVAL;
 
-	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
-	kauth_cred_getgroups(cred, grbuf, ngrp);
-	error = copyout(grbuf, (void *)SCARG(uap, gidset),
-			ngrp * sizeof(gid_t));
-	free(grbuf, M_TEMP);
-	if (error)
-		return (error);
-	*retval = ngrp;
-	return (0);
+	return kauth_cred_getgroups(l->l_cred, SCARG(uap, gidset), *retval,
+	    UIO_USERSPACE);
 }
 
 /* ARGSUSED */
@@ -569,45 +551,6 @@ sys_issetugid(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
-/*
- * sort -u for groups.
- */
-static int
-grsortu(gid_t *grp, int ngrp)
-{
-	const gid_t *src, *end;
-	gid_t *dst;
-	gid_t group;
-	int i, j;
-
-	/* bubble sort */
-	for (i = 0; i < ngrp; i++)
-		for (j = i + 1; j < ngrp; j++)
-			if (grp[i] > grp[j]) {
-				gid_t tmp = grp[i];
-				grp[i] = grp[j];
-				grp[j] = tmp;
-			}
-
-	/* uniq */
-	end = grp + ngrp;
-	src = grp;
-	dst = grp;
-	while (src < end) {
-		group = *src++;
-		while (src < end && *src == group)
-			src++;
-		*dst++ = group;
-	}
-
-#ifdef DIAGNOSTIC
-	/* zero out the rest of the array */
-	(void)memset(dst, 0, sizeof(*grp) * (end - dst));
-#endif
-
-	return dst - grp;
-}
-
 /* ARGSUSED */
 int
 sys_setgroups(struct lwp *l, void *v, register_t *retval)
@@ -616,41 +559,18 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(const gid_t *) gidset;
 	} */ *uap = v;
-	kauth_cred_t cred, ncred;
-	struct proc *p = l->l_proc;
-	int ngrp;
+	kauth_cred_t ncred;
 	int error;
-	gid_t grp[NGROUPS];
-	size_t grsize;
-
-	ngrp = SCARG(uap, gidsetsize);
-	if ((u_int)ngrp > NGROUPS)
-		return EINVAL;
-
-	grsize = ngrp * sizeof(gid_t);
-	error = copyin(SCARG(uap, gidset), grp, grsize);
-	if (error)
-		return error;
 
 	ncred = kauth_cred_alloc();
-	proc_crmod_enter();
-	cred = p->p_cred;
+	error = kauth_cred_setgroups(ncred, SCARG(uap, gidset),
+	    SCARG(uap, gidsetsize), -1, UIO_USERSPACE);
+	if (error != 0) {
+		kauth_cred_free(ncred);
+		return error;
+	}
 
-	if ((error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
-	    p, NULL, NULL, NULL)) != 0)
-		goto bad;
-
-	ngrp = grsortu(grp, ngrp);
-	kauth_cred_clone(cred, ncred);
-	kauth_cred_setgroups(ncred, grp, ngrp, -1);
-
-	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, cred, true);
-
-	return (0);
-  bad:
-  	proc_crmod_leave(cred, ncred, false); 
-	return (error);
+	return kauth_proc_setgroups(l, ncred);
 }
 
 /*

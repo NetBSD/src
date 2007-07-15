@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.32 2007/02/18 15:20:34 dsl Exp $	*/
+/*	$NetBSD: ucred.h,v 1.32.4.1 2007/07/15 13:28:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,30 +48,5 @@ struct uucred {
 	short		cr_ngroups;		/* number of groups */
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
-
-#ifdef _KERNEL
-
-/*
- * flags that control when do_setres{u,g}id will do anything
- *
- * ID_XXX_EQ_YYY means
- * "allow modifying XXX uid to the given value if the new value of
- * XXX uid (or gid) equals the current value of YYY uid (or gid)."
- */
-
-#define	ID_E_EQ_E	0x001		/* effective equals effective */
-#define	ID_E_EQ_R	0x002		/* effective equals real */
-#define	ID_E_EQ_S	0x004		/* effective equals saved */
-#define	ID_R_EQ_E	0x010		/* real equals effective */
-#define	ID_R_EQ_R	0x020		/* real equals real */
-#define	ID_R_EQ_S	0x040		/* real equals saved */
-#define	ID_S_EQ_E	0x100		/* saved equals effective */
-#define	ID_S_EQ_R	0x200		/* saved equals real */
-#define	ID_S_EQ_S	0x400		/* saved equals saved */
-
-int		do_setresuid(struct lwp *, uid_t, uid_t, uid_t, u_int);
-int		do_setresgid(struct lwp *, gid_t, gid_t, gid_t, u_int);
-
-#endif /* _KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */

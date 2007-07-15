@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.52.2.1 2007/06/08 14:17:37 ad Exp $	*/
+/*	$NetBSD: route.h,v 1.52.2.2 2007/07/15 13:27:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -271,6 +271,10 @@ struct rttimer_queue {
 
 
 #ifdef _KERNEL
+struct rtwalk {
+	int (*rw_f)(struct rtentry *, void *);
+	void *rw_v;
+};
 extern	struct	route_cb route_cb;
 extern	struct	rtstat	rtstat;
 extern	struct	radix_node_head *rt_tables[AF_MAX+1];
@@ -407,6 +411,9 @@ RTFREE(struct rtentry *rt)
 	else
 		rt->rt_refcnt--;
 }
+
+int
+rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
 
 #endif /* _KERNEL */
 #endif /* !_NET_ROUTE_H_ */

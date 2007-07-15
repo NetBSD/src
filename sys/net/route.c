@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.87.2.3 2007/07/01 21:50:46 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.87.2.4 2007/07/15 13:27:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.3 2007/07/01 21:50:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.87.2.4 2007/07/15 13:27:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -148,8 +148,8 @@ static int _rtcache_debug = 0;
 #endif /* RTFLUSH_DEBUG */
 
 static int rtdeletemsg(struct rtentry *);
-static int rtflushclone1(struct radix_node *, void *);
-static void rtflushclone(struct radix_node_head *, struct rtentry *);
+static int rtflushclone1(struct rtentry *, void *);
+static void rtflushclone(sa_family_t family, struct rtentry *);
 
 #ifdef RTFLUSH_DEBUG
 SYSCTL_SETUP(sysctl_net_rtcache_setup, "sysctl net.rtcache.debug setup")
@@ -536,11 +536,10 @@ rtdeletemsg(struct rtentry *rt)
 }
 
 static int
-rtflushclone1(struct radix_node *rn, void *arg)
+rtflushclone1(struct rtentry *rt, void *arg)
 {
-	struct rtentry *rt, *parent;
+	struct rtentry *parent;
 
-	rt = (struct rtentry *)rn;
 	parent = (struct rtentry *)arg;
 	if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent == parent)
 		rtdeletemsg(rt);
@@ -548,16 +547,14 @@ rtflushclone1(struct radix_node *rn, void *arg)
 }
 
 static void
-rtflushclone(struct radix_node_head *rnh, struct rtentry *parent)
+rtflushclone(sa_family_t family, struct rtentry *parent)
 {
 
 #ifdef DIAGNOSTIC
 	if (!parent || (parent->rt_flags & RTF_CLONING) == 0)
 		panic("rtflushclone: called with a non-cloning route");
-	if (!rnh->rnh_walktree)
-		panic("rtflushclone: no rnh_walktree");
 #endif
-	rnh->rnh_walktree(rnh, rtflushclone1, (void *)parent);
+	rt_walktree(family, rtflushclone1, (void *)parent);
 }
 
 /*
@@ -702,7 +699,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		rt = (struct rtentry *)rn;
 		if ((rt->rt_flags & RTF_CLONING) != 0) {
 			/* clean up any cloned children */
-			rtflushclone(rnh, rt);
+			rtflushclone(dst->sa_family, rt);
 		}
 		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh)) == NULL)
 			senderr(ESRCH);
@@ -797,9 +794,19 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		}
 		if ((rt->rt_flags & RTF_CLONING) != 0) {
 			/* clean up any cloned children */
-			rtflushclone(rnh, rt);
+			rtflushclone(dst->sa_family, rt);
 		}
 		rtflushall(dst->sa_family);
+		break;
+	case RTM_GET:
+		rn = rnh->rnh_lookup(dst, netmask, rnh);
+		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
+			senderr(ESRCH);
+		if (ret_nrt != NULL) {
+			rt = (struct rtentry *)rn;
+			*ret_nrt = rt;
+			rt->rt_refcnt++;
+		}
 		break;
 	}
 bad:
@@ -1329,4 +1336,27 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 	if ((ro->ro_sa = sockaddr_dup(sa, PR_NOWAIT)) == NULL)
 		return ENOMEM;
 	return 0;
+}
+
+static int
+rt_walktree_visitor(struct radix_node *rn, void *v)
+{
+	struct rtwalk *rw = (struct rtwalk *)v;
+
+	return (*rw->rw_f)((struct rtentry *)rn, rw->rw_v);
+}
+
+int
+rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
+{
+	struct radix_node_head *rnh = rt_tables[family];
+	struct rtwalk rw;
+
+	if (rnh == NULL)
+		return 0;
+
+	rw.rw_f = f;
+	rw.rw_v = v;
+
+	return rn_walktree(rnh, rt_walktree_visitor, &rw);
 }

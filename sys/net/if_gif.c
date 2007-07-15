@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.67.2.3 2007/06/17 21:31:50 ad Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.67.2.4 2007/07/15 13:27:53 ad Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.3 2007/06/17 21:31:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.4 2007/07/15 13:27:53 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -90,9 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.3 2007/06/17 21:31:50 ad Exp $");
 #include <net/net_osdep.h>
 
 void	gifattach(int);
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-static void	gifnetisr(void);
-#endif
 static void	gifintr(void *);
 #ifdef ISO
 static struct mbuf *gif_eon_encap(struct mbuf *);
@@ -343,17 +340,6 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		ifp->if_oerrors++;
 	return error;
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-static void
-gifnetisr(void)
-{
-	struct gif_softc *sc;
-
-	LIST_FOREACH(sc, &gif_softc_list, gif_list)
-		gifintr(sc);
-}
-#endif
 
 static void
 gifintr(void *arg)

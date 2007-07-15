@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.70.6.1 2007/06/17 21:31:43 ad Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.70.6.2 2007/07/15 13:27:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.70.6.1 2007/06/17 21:31:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.70.6.2 2007/07/15 13:27:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,8 +233,8 @@ portal_lookup(v)
 	memcpy(pt->pt_arg, pname, pt->pt_size);
 	pt->pt_fileid = portal_fileid++;
 
+	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = fvp;
-	VOP_LOCK(fvp, LK_EXCLUSIVE | LK_RETRY);
 	return (0);
 
 bad:;
@@ -389,7 +389,8 @@ portal_open(v)
 	pcred.pcr_uid = kauth_cred_geteuid(ap->a_cred);
 	pcred.pcr_gid = kauth_cred_getegid(ap->a_cred);
 	pcred.pcr_ngroups = kauth_cred_ngroups(ap->a_cred);
-	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups, pcred.pcr_ngroups);
+	kauth_cred_getgroups(ap->a_cred, pcred.pcr_groups, pcred.pcr_ngroups,
+	    UIO_SYSSPACE);
 	aiov[0].iov_base = &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
@@ -535,7 +536,6 @@ portal_getattr(v)
 	vap->va_blocksize = DEV_BSIZE;
 	/* Make all times be current TOD. */
 	getnanotime(&vap->va_ctime);
-	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
 	vap->va_gen = 0;
 	vap->va_flags = 0;

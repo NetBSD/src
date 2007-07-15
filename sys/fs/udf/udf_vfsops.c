@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.22.6.5 2007/06/17 21:31:16 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.22.6.6 2007/07/15 13:27:34 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.22.6.5 2007/06/17 21:31:16 ad Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.22.6.6 2007/07/15 13:27:34 ad Exp $");
 #endif /* not lint */
 
 
@@ -77,14 +77,15 @@ __RCSID("$NetBSD: udf_vfsops.c,v 1.22.6.5 2007/06/17 21:31:16 ad Exp $");
 int udf_verbose = UDF_DEBUGGING;
 
 /* malloc regions */
-MALLOC_DEFINE(M_UDFMNT,   "UDF mount",		"UDF mount structures");
-MALLOC_DEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
-MALLOC_DEFINE(M_UDFTEMP,  "UDF temp",		"UDF scrap space");
+MALLOC_JUSTDEFINE(M_UDFMNT,   "UDF mount",	"UDF mount structures");
+MALLOC_JUSTDEFINE(M_UDFVOLD,  "UDF volspace",	"UDF volume space descriptors");
+MALLOC_JUSTDEFINE(M_UDFTEMP,  "UDF temp",	"UDF scrap space");
 struct pool udf_node_pool;
 
 /* supported functions predefined */
 int udf_mountroot(void);
-int udf_mount(struct mount *, const char *, void *, struct nameidata *, struct lwp *);
+int udf_mount(struct mount *, const char *, void *, size_t *,
+	struct nameidata *, struct lwp *);
 int udf_start(struct mount *, int, struct lwp *);
 int udf_unmount(struct mount *, int, struct lwp *);
 int udf_root(struct mount *, struct vnode **);
@@ -127,6 +128,7 @@ const struct vnodeopv_desc * const udf_vnodeopv_descs[] = {
 /* vfsops descriptor linked in as anchor point for the filingsystem */
 struct vfsops udf_vfsops = {
 	MOUNT_UDF,			/* vfs_name */
+	sizeof (struct udf_args),
 	udf_mount,
 	udf_start,
 	udf_unmount,
@@ -159,11 +161,9 @@ udf_init(void)
 {
 	size_t size;
 
-#ifdef _LKM
 	malloc_type_attach(M_UDFMNT);
 	malloc_type_attach(M_UDFVOLD);
 	malloc_type_attach(M_UDFTEMP);
-#endif
 
 	/* init hashtables and pools */
 	size = sizeof(struct udf_node);
@@ -188,11 +188,9 @@ udf_done(void)
 	/* remove hashtables and pools */
 	pool_destroy(&udf_node_pool);
 
-#ifdef _LKM
 	malloc_type_detach(M_UDFMNT);
 	malloc_type_detach(M_UDFVOLD);
 	malloc_type_detach(M_UDFTEMP);
-#endif
 }
 
 /* --------------------------------------------------------------------- */
@@ -260,21 +258,26 @@ free_udf_mountinfo(struct mount *mp)
 
 int
 udf_mount(struct mount *mp, const char *path,
-	  void *data, struct nameidata *ndp, struct lwp *l)
+	  void *data, size_t *data_len, struct nameidata *ndp, struct lwp *l)
 {
-	struct udf_args args;
+	struct udf_args *args = data;
 	struct udf_mount *ump;
 	struct vnode *devvp;
 	int openflags, accessmode, error;
 
 	DPRINTF(CALL, ("udf_mount called\n"));
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		/* request for the mount arguments */
 		ump = VFSTOUDF(mp);
 		if (ump == NULL)
 			return EINVAL;
-		return copyout(&ump->mount_args, data, sizeof(args));
+		*args = ump->mount_args;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
 	/* handle request for updating mount parameters */
@@ -284,19 +287,16 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* OK, so we are asked to mount the device */
-	error = copyin(data, &args, sizeof(struct udf_args));
-	if (error)
-		return error;
 
 	/* check/translate struct version */
 	/* TODO sanity checking other mount arguments */
-	if (args.version != 1) {
+	if (args->version != 1) {
 		printf("mount_udf: unrecognized argument structure version\n");
 		return EINVAL;
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 	error = namei(ndp);
 	if (error)
 		return error;
@@ -363,7 +363,7 @@ udf_mount(struct mount *mp, const char *path,
 	error = VOP_OPEN(devvp, openflags, FSCRED, l);
 	if (error == 0) {
 		/* opened ok, try mounting */
-		error = udf_mountfs(devvp, mp, l, &args);
+		error = udf_mountfs(devvp, mp, l, args);
 		if (error) {
 			free_udf_mountinfo(mp);
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -383,7 +383,7 @@ udf_mount(struct mount *mp, const char *path,
 	/* successfully mounted */
 	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
 
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 			mp, l);
 }
 

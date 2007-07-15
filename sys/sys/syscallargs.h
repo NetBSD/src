@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.165.2.1 2007/06/08 14:18:13 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.165.2.2 2007/07/15 13:28:13 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -118,7 +118,7 @@ struct compat_43_sys_lseek_args {
 #else
 #endif
 
-struct sys_mount_args {
+struct compat_40_sys_mount_args {
 	syscallarg(const char *) type;
 	syscallarg(const char *) path;
 	syscallarg(int) flags;
@@ -1779,6 +1779,14 @@ struct sys_lio_listio_args {
 	syscallarg(struct sigevent *) sig;
 };
 
+struct sys___mount50_args {
+	syscallarg(const char *) type;
+	syscallarg(const char *) path;
+	syscallarg(int) flags;
+	syscallarg(void *) data;
+	syscallarg(size_t) data_len;
+};
+
 /*
  * System call prototypes.
  */
@@ -1826,7 +1834,7 @@ int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
 int	sys_getpid(struct lwp *, void *, register_t *);
 
 #endif
-int	sys_mount(struct lwp *, void *, register_t *);
+int	compat_40_sys_mount(struct lwp *, void *, register_t *);
 
 int	sys_unmount(struct lwp *, void *, register_t *);
 
@@ -2519,5 +2527,7 @@ int	sys_aio_suspend(struct lwp *, void *, register_t *);
 int	sys_aio_write(struct lwp *, void *, register_t *);
 
 int	sys_lio_listio(struct lwp *, void *, register_t *);
+
+int	sys___mount50(struct lwp *, void *, register_t *);
 
 #endif /* _SYS_SYSCALLARGS_H_ */

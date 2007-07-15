@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.74.2.2 2007/07/01 21:50:45 ad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.74.2.3 2007/07/15 13:27:54 ad Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.74.2.2 2007/07/01 21:50:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.74.2.3 2007/07/15 13:27:54 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -220,9 +220,6 @@ struct if_clone strip_cloner =
 
 #define STRIP_FRAME_END		0x0D		/* carriage return */
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void	stripnetisr(void);
-#endif
 static void	stripintr(void *);
 
 static int	stripinit(struct strip_softc *);
@@ -1084,20 +1081,6 @@ newpack:
 
 	return (0);
 }
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-void
-stripnetisr(void)
-{
-	struct strip_softc *sc;
-
-	LIST_FOREACH(sc, &strip_softc_list, sc_iflist) {
-		if (sc->sc_ttyp == NULL)
-			continue;
-		stripintr(sc);
-	}
-}
-#endif
 
 static void
 stripintr(void *arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.5 2007/02/27 16:11:51 ad Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.5.2.1 2007/07/15 13:27:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.5 2007/02/27 16:11:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.5.2.1 2007/07/15 13:27:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.5 2007/02/27 16:11:51 ad Exp $");
 #include <fs/ntfs/ntfs_inode.h>
 #include <fs/ntfs/ntfs_ihash.h>
 
-MALLOC_DEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
+MALLOC_JUSTDEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
 
 /*
  * Structures associated with inode cacheing.

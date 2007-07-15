@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.19.2.1 2007/04/10 13:26:33 ad Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.19.2.2 2007/07/15 13:27:20 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.19.2.1 2007/04/10 13:26:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.19.2.2 2007/07/15 13:27:20 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.19.2.1 2007/04/10 13:26:33 ad E
 #include <compat/svr4_32/svr4_32_ucontext.h>
 #include <compat/svr4_32/svr4_32_syscallargs.h>
 #include <compat/svr4_32/svr4_32_util.h>
+
+#include <compat/common/compat_sigaltstack.h>
 
 #define	svr4_sigmask(n)		(1 << (((n) - 1) & 31))
 #define	svr4_sigword(n)		(((n) - 1) >> 5)
@@ -314,39 +316,6 @@ native_to_svr4_32_sigaction(bsa, ssa)
 		ssa->svr4_32_sa_flags |= SVR4_SA_NOCLDSTOP;
 }
 
-void
-svr4_32_to_native_sigaltstack(sss, bss)
-	const struct svr4_32_sigaltstack *sss;
-	struct sigaltstack *bss;
-{
-
-	bss->ss_sp = NETBSD32PTR64(sss->ss_sp);
-	bss->ss_size = sss->ss_size;
-	bss->ss_flags = 0;
-	if ((sss->ss_flags & SVR4_SS_DISABLE) != 0)
-		bss->ss_flags |= SS_DISABLE;
-	if ((sss->ss_flags & SVR4_SS_ONSTACK) != 0)
-		bss->ss_flags |= SS_ONSTACK;
-	if ((sss->ss_flags & ~SVR4_SS_ALLBITS) != 0)
-/*XXX*/		printf("svr4_to_native_sigaltstack: extra bits %x ignored\n",
-		    sss->ss_flags & ~SVR4_SS_ALLBITS);
-}
-
-void
-native_to_svr4_32_sigaltstack(bss, sss)
-	const struct sigaltstack *bss;
-	struct svr4_32_sigaltstack *sss;
-{
-
-	NETBSD32PTR32(sss->ss_sp, bss->ss_sp);
-	sss->ss_size = bss->ss_size;
-	sss->ss_flags = 0;
-	if ((bss->ss_flags & SS_DISABLE) != 0)
-		sss->ss_flags |= SVR4_SS_DISABLE;
-	if ((bss->ss_flags & SS_ONSTACK) != 0)
-		sss->ss_flags |= SVR4_SS_ONSTACK;
-}
-
 int
 svr4_32_sys_sigaction(l, v, retval)
 	struct lwp *l;
@@ -392,36 +361,11 @@ svr4_32_sys_sigaltstack(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_32_sys_sigaltstack_args /* {
-		syscallarg(const struct svr4_32_sigaltstack *) nss;
-		syscallarg(struct svr4_32_sigaltstack *) oss;
+		syscallarg(const struct svr4_32_sigaltstack_tp) nss;
+		syscallarg(struct svr4_32_sigaltstack_tp) oss;
 	} */ *uap = v;
-	struct svr4_32_sigaltstack nsss, osss;
-	struct sigaltstack nbss, obss;
-	struct proc *p;
-	int error;
-
-	if (SCARG_P32(uap, nss)) {
-		error = copyin(SCARG_P32(uap, nss),
-			       &nsss, sizeof(nsss));
-		if (error)
-			return (error);
-		p = l->l_proc;
-		mutex_enter(&p->p_smutex);
-		svr4_32_to_native_sigaltstack(&nsss, &nbss);
-		mutex_exit(&p->p_smutex);
-	}
-	error = sigaltstack1(l,
-	    SCARG_P32(uap, nss) ? &nbss : 0, SCARG_P32(uap, oss) ? &obss : 0);
-	if (error)
-		return (error);
-	if (SCARG_P32(uap, oss)) {
-		native_to_svr4_32_sigaltstack(&obss, &osss);
-		error = copyout(&osss, SCARG_P32(uap, oss),
-				sizeof(osss));
-		if (error)
-			return (error);
-	}
-	return (0);
+	compat_sigaltstack(uap, svr4_32_sigaltstack,
+	    SVR4_SS_ONSTACK, SVR4_SS_DISABLE);
 }
 
 /*
@@ -690,8 +634,13 @@ svr4_32_setcontext(l, uc)
 	mutex_enter(&p->p_smutex);
 
 	/* set signal stack */
-	if (uc->uc_flags & SVR4_UC_STACK)
-		svr4_32_to_native_sigaltstack(&uc->uc_stack, &l->l_sigstk);
+	if (uc->uc_flags & SVR4_UC_STACK) {
+		l->l_sigstk.ss_sp = NETBSD32PTR64(uc->uc_stack.ss_sp);
+		l->l_sigstk.ss_size = uc->uc_stack.ss_size;
+		l->l_sigstk.ss_flags =
+		    (uc->uc_stack.ss_flags & SVR4_SS_ONSTACK ? SS_ONSTACK : 0) |
+		    (uc->uc_stack.ss_flags & SVR4_SS_DISABLE ? SS_DISABLE : 0);
+	}
 
 	/* set signal mask */
 	if (uc->uc_flags & SVR4_UC_SIGMASK) {

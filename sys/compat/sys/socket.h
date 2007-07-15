@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.5.2.1 2007/06/09 23:57:47 ad Exp $	*/
+/*	$NetBSD: socket.h,v 1.5.2.2 2007/07/15 13:27:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -75,6 +75,7 @@ __BEGIN_DECLS
 struct socket;
 struct proc;
 int compat_ifioctl(struct socket *, u_long, u_long, void *, struct lwp *);
+int compat43_set_accrights(struct msghdr *, void *, int);
 __END_DECLS
 #else
 int	__socket30(int, int, int);

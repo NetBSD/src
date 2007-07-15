@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.183.2.1 2007/06/08 14:18:13 ad Exp $ */
+/* $NetBSD: syscall.h,v 1.183.2.2 2007/07/15 13:28:13 ad Exp $ */
 
 /*
  * System call numbers.
@@ -77,8 +77,8 @@
 #define	SYS_getpid	20
 
 #endif
-/* syscall: "mount" ret: "int" args: "const char *" "const char *" "int" "void *" */
-#define	SYS_mount	21
+/* syscall: "compat_40_mount" ret: "int" args: "const char *" "const char *" "int" "void *" */
+#define	SYS_compat_40_mount	21
 
 /* syscall: "unmount" ret: "int" args: "const char *" "int" */
 #define	SYS_unmount	22
@@ -1144,6 +1144,9 @@
 /* syscall: "lio_listio" ret: "int" args: "int" "struct aiocb *const *" "int" "struct sigevent *" */
 #define	SYS_lio_listio	406
 
-#define	SYS_MAXSYSCALL	407
+/* syscall: "__mount50" ret: "int" args: "const char *" "const char *" "int" "void *" "size_t" */
+#define	SYS___mount50	410
+
+#define	SYS_MAXSYSCALL	411
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */

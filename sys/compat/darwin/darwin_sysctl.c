@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.50.2.1 2007/05/27 14:34:53 ad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.50.2.2 2007/07/15 13:27:03 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.50.2.1 2007/05/27 14:34:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.50.2.2 2007/07/15 13:27:03 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -817,7 +817,8 @@ darwin_fill_kproc(p, dkp)
 	de->e_ucred.cr_uid = kauth_cred_geteuid(p->p_cred);
 	de->e_ucred.cr_ngroups = kauth_cred_ngroups(p->p_cred);
 	kauth_cred_getgroups(p->p_cred, de->e_ucred.cr_groups,
-	    sizeof(de->e_ucred.cr_groups) / sizeof(de->e_ucred.cr_groups[0]));
+	    sizeof(de->e_ucred.cr_groups) / sizeof(de->e_ucred.cr_groups[0]),
+	    UIO_SYSSPACE);
 	de->e_vm.vm_refcnt = p->p_vmspace->vm_refcnt;
 	de->e_vm.vm_rssize = p->p_vmspace->vm_rssize;
 	de->e_vm.vm_swrss = p->p_vmspace->vm_swrss;

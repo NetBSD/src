@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.35.12.1 2007/06/17 21:31:54 ad Exp $ */
+/* $NetBSD: netisr.h,v 1.35.12.2 2007/07/15 13:27:55 ad Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -54,11 +54,6 @@
 #include "opt_iso.h"
 #include "opt_natm.h"
 #include "arp.h"
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#include "sl.h"
-#include "strip.h"
-#include "ppp.h"
-#endif
 #endif /* !defined(_LKM) */
 
 #if !defined(_LOCORE)
@@ -97,18 +92,6 @@
 #include <netatalk/at_extern.h>
 #endif
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS		/* XXX XXX XXX */
-#if NSL > 0
-extern void slnetisr(void);
-#endif
-#if NSTRIP > 0
-extern void stripnetisr(void);
-#endif
-#if NPPP > 0
-extern void pppnetisr(void);
-#endif
-#endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
-
 #endif /* !defined(_LOCORE) */
 #endif /* defined(_KERNEL) */
 
@@ -129,11 +112,6 @@ extern void pppnetisr(void);
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#define	NETISR_SLIP	29		/* for SLIP processing */
-#define	NETISR_STRIP	30		/* for STRIP processing */
-#define	NETISR_PPP	31		/* for PPP processing */
-#endif
 
 #if !defined(_LOCORE) && defined(_KERNEL)
 /* XXX Legacy netisr support. */

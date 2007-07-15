@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.9 2007/07/01 21:50:39 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.10 2007/07/15 13:27:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.9 2007/07/01 21:50:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.10 2007/07/15 13:27:38 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1429,7 +1429,7 @@ proc_drainrefs(struct proc *p)
 {
 
 	KASSERT(mutex_owned(&p->p_mutex));
-	KASSERT(p->p_refcnt > 0);
+	KASSERT(p->p_refcnt >= 0);
 
 	/*
 	 * The process itself holds the last reference.  Once it's released,
@@ -1437,6 +1437,8 @@ proc_drainrefs(struct proc *p)
 	 * new references (refcnt <= 0), potentially due to a failed exec,
 	 * there is nothing more to do.
 	 */
+	if (p->p_refcnt == 0)
+		return;
 	p->p_refcnt = 1 - p->p_refcnt;
 	while (p->p_refcnt != 0)
 		cv_wait(&p->p_refcv, &p->p_mutex);

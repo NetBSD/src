@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.167.2.3 2007/06/09 23:57:42 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.167.2.4 2007/07/15 13:27:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.167.2.3 2007/06/09 23:57:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.167.2.4 2007/07/15 13:27:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.167.2.3 2007/06/09 23:57:42 ad Exp 
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/prot.h>
 #include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
@@ -1125,52 +1126,40 @@ linux_sys_getgroups16(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(linux_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg;
-	int n, error, i;
-	struct sys_getgroups_args bsa;
-	gid_t *bset, *kbset;
-	linux_gid_t *lset;
-	kauth_cred_t pc = l->l_cred;
+	linux_gid_t lset[16];
+	linux_gid_t *gidset;
+	unsigned int ngrps;
+	int i, n, j;
+	int error;
 
-	n = SCARG(uap, gidsetsize);
-	if (n < 0)
+	ngrps = kauth_cred_ngroups(l->l_cred);
+	*retval = ngrps;
+	if (SCARG(uap, gidsetsize) == 0)
+		return 0;
+	if (SCARG(uap, gidsetsize) < ngrps)
 		return EINVAL;
-	error = 0;
-	bset = kbset = NULL;
-	lset = NULL;
-	if (n > 0) {
-		n = min(kauth_cred_ngroups(pc), n);
-		sg = stackgap_init(p, 0);
-		bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
-		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
-		lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
-		if (bset == NULL || kbset == NULL || lset == NULL)
-		{
-			error = ENOMEM;
-			goto out;
-		}
-		SCARG(&bsa, gidsetsize) = n;
-		SCARG(&bsa, gidset) = bset;
-		error = sys_getgroups(l, &bsa, retval);
+
+	gidset = SCARG(uap, gidset);
+	for (i = 0; i < (n = ngrps); i += n, gidset += n) {
+		n -= i;
+		if (n > __arraycount(lset))
+			n = __arraycount(lset);
+		for (j = 0; j < n; j++)
+			lset[j] = kauth_cred_group(l->l_cred, i + j);
+		error = copyout(lset, gidset, n * sizeof(lset[0]));
 		if (error != 0)
-			goto out;
-		error = copyin(bset, kbset, n * sizeof (gid_t));
-		if (error != 0)
-			goto out;
-		for (i = 0; i < n; i++)
-			lset[i] = (linux_gid_t)kbset[i];
-		error = copyout(lset, SCARG(uap, gidset),
-		    n * sizeof (linux_gid_t));
-	} else
-		*retval = kauth_cred_ngroups(pc);
-out:
-	if (kbset != NULL)
-		free(kbset, M_TEMP);
-	if (lset != NULL)
-		free(lset, M_TEMP);
-	return error;
+			return error;
+	}
+
+	return 0;
 }
+
+/*
+ * It is very unlikly that any problem using 16bit groups is written
+ * to allow for more than 16 of them, so don't bother trying to
+ * support that.
+ */
+#define COMPAT_NGROUPS16 16
 
 int
 linux_sys_setgroups16(l, v, retval)
@@ -1182,45 +1171,30 @@ linux_sys_setgroups16(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(linux_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	void *sg;
-	int n;
-	int error, i;
-	struct sys_setgroups_args bsa;
-	gid_t *bset, *kbset;
-	linux_gid_t *lset;
+	linux_gid_t lset[COMPAT_NGROUPS16];
+	kauth_cred_t ncred;
+	int error;
+	gid_t grbuf[COMPAT_NGROUPS16];
+	unsigned int i, ngroups = SCARG(uap, gidsetsize);
 
-	n = SCARG(uap, gidsetsize);
-	if (n < 0 || n > NGROUPS)
+	if (ngroups > COMPAT_NGROUPS16)
 		return EINVAL;
-	sg = stackgap_init(p, 0);
-	bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
-	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
-	kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
-	if (bset == NULL || kbset == NULL || lset == NULL)
-	{
-		error = ENOMEM;
-		goto out;
+	error = copyin(SCARG(uap, gidset), lset, ngroups);
+	if (error != 0)
+		return error;
+
+	for (i = 0; i < ngroups; i++)
+		grbuf[i] = lset[i];
+
+	ncred = kauth_cred_alloc();
+	error = kauth_cred_setgroups(ncred, grbuf, SCARG(uap, gidsetsize),
+	    -1, UIO_SYSSPACE);
+	if (error != 0) {
+		kauth_cred_free(ncred);
+		return error;
 	}
-	error = copyin(SCARG(uap, gidset), lset, n * sizeof (linux_gid_t));
-	if (error != 0)
-		goto out;
-	for (i = 0; i < n; i++)
-		kbset[i] = (gid_t)lset[i];
-	error = copyout(kbset, bset, n * sizeof (gid_t));
-	if (error != 0)
-		goto out;
-	SCARG(&bsa, gidsetsize) = n;
-	SCARG(&bsa, gidset) = bset;
-	error = sys_setgroups(l, &bsa, retval);
 
-out:
-	if (lset != NULL)
-		free(lset, M_TEMP);
-	if (kbset != NULL)
-		free(kbset, M_TEMP);
-
-	return error;
+	return kauth_proc_setgroups(l, ncred);
 }
 
 #endif /* __i386__ || __m68k__ || COMPAT_LINUX32 */

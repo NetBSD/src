@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.184.2.4 2007/07/01 21:50:59 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.184.2.5 2007/07/15 13:28:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184.2.4 2007/07/01 21:50:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.184.2.5 2007/07/15 13:28:06 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1515,6 +1515,10 @@ nfs_init0(void)
 #ifdef NFSSERVER
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
+	{
+		extern krwlock_t netexport_lock;	/* XXX */
+		rw_init(&netexport_lock);
+	}
 #endif /* NFSSERVER */
 
 #if defined(NFSSERVER) || (defined(NFS) && !defined(NFS_V2_ONLY))

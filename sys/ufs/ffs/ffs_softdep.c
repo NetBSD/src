@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.13 2007/07/07 21:27:06 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.14 2007/07/15 13:28:16 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.13 2007/07/07 21:27:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.14 2007/07/15 13:28:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1119,6 +1119,42 @@ softdep_initialize()
 	mutex_init(&softdep_tb_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&softdep_tb_cv, "softdbuf");
 	callout_init(&pause_timer_ch, CALLOUT_MPSAFE);
+
+	malloc_type_attach(M_PAGEDEP);
+	malloc_type_attach(M_INODEDEP);
+	malloc_type_attach(M_NEWBLK);
+	callout_init(&pause_timer_ch, CALLOUT_MPSAFE);
+
+	pool_init(&sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&pagedep_pool, sizeof(struct pagedep), 0, 0, 0, "pagedeppl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&inodedep_pool, sizeof(struct inodedep), 0, 0, 0,"inodedeppl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&newblk_pool, sizeof(struct newblk), 0, 0, 0, "newblkpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&bmsafemap_pool, sizeof(struct bmsafemap), 0, 0, 0,
+	    "bmsafemappl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&allocdirect_pool, sizeof(struct allocdirect), 0, 0, 0,
+	    "allocdirectpl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&indirdep_pool, sizeof(struct indirdep), 0, 0, 0,"indirdeppl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&allocindir_pool, sizeof(struct allocindir), 0, 0, 0,
+	    "allocindirpl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&freefrag_pool, sizeof(struct freefrag), 0, 0, 0,
+	    "freefragpl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&freeblks_pool, sizeof(struct freeblks), 0, 0, 0,
+	    "freeblkspl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&freefile_pool, sizeof(struct freefile), 0, 0, 0,
+	    "freefilepl", &pool_allocator_nointr, IPL_NONE);
+	pool_init(&diradd_pool, sizeof(struct diradd), 0, 0, 0, "diraddpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&mkdir_pool, sizeof(struct mkdir), 0, 0, 0, "mkdirpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&dirrem_pool, sizeof(struct dirrem), 0, 0, 0, "dirrempl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&newdirblk_pool, sizeof (struct newdirblk), 0, 0, 0,
+	    "newdirblkpl", &pool_allocator_nointr, IPL_NONE);
 
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);

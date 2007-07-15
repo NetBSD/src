@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.76 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.76.6.1 2007/07/15 13:27:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.76 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.76.6.1 2007/07/15 13:27:49 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.76 2007/01/19 14:49:11 hannken E
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
 
-MALLOC_DEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
+MALLOC_JUSTDEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
 
@@ -69,7 +69,7 @@ void	kernfs_init(void);
 void	kernfs_reinit(void);
 void	kernfs_done(void);
 void	kernfs_get_rrootdev(void);
-int	kernfs_mount(struct mount *, const char *, void *,
+int	kernfs_mount(struct mount *, const char *, void *, size_t *,
 	    struct nameidata *, struct lwp *);
 int	kernfs_start(struct mount *, int, struct lwp *);
 int	kernfs_unmount(struct mount *, int, struct lwp *);
@@ -82,9 +82,8 @@ int	kernfs_vget(struct mount *, ino_t, struct vnode **);
 void
 kernfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_KERNFSMNT);
-#endif
 	kernfs_hashinit();
 }
 
@@ -97,10 +96,9 @@ kernfs_reinit()
 void
 kernfs_done()
 {
-#ifdef _LKM
-	malloc_type_detach(M_KERNFSMNT);
-#endif
+
 	kernfs_hashdone();
+	malloc_type_detach(M_KERNFSMNT);
 }
 
 void
@@ -127,7 +125,7 @@ kernfs_get_rrootdev()
  * Mount the Kernel params filesystem
  */
 int
-kernfs_mount(struct mount *mp, const char *path, void *data,
+kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
 	int error = 0;
@@ -138,8 +136,10 @@ kernfs_mount(struct mount *mp, const char *path, void *data,
 		return (EINVAL);
 	}
 
-	if (mp->mnt_flag & MNT_GETARGS)
+	if (mp->mnt_flag & MNT_GETARGS) {
+		*data_len = 0;
 		return 0;
+	}
 	/*
 	 * Update is a no-op
 	 */
@@ -282,6 +282,7 @@ const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 
 struct vfsops kernfs_vfsops = {
 	MOUNT_KERNFS,
+	0,
 	kernfs_mount,
 	kernfs_start,
 	kernfs_unmount,

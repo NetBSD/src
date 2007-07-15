@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.29.30.1 2007/05/27 14:35:02 ad Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.29.30.2 2007/07/15 13:27:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -210,6 +210,10 @@ struct linux_sigframe {
 #define LINUX_IOCTL_MAX_PASS	(LINUX_VMWARE_LAST+8)
 
 #define LINUX_UNAME_ARCH	linux_get_uname_arch()
+#ifdef notyet
+/* We need to implement GDT based TLS first */
+#define LINUX_NPTL
+#endif
 
 #ifdef _KERNEL
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.81.2.6 2007/06/17 21:32:23 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81.2.7 2007/07/15 13:28:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.6 2007/06/17 21:32:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81.2.7 2007/07/15 13:28:22 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -125,7 +125,6 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	struct vnode *vp = arg;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vattr vattr;
-	const struct bdevsw *bdev;
 	int result;
 	struct partinfo pi;
 	voff_t used_vnode_size;
@@ -177,13 +176,8 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 		 *
 		 *	(2) All we want is the size, anyhow.
 		 */
-		bdev = bdevsw_lookup(vp->v_rdev);
-		if (bdev != NULL) {
-			result = (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART,
-						  (void *)&pi, FREAD, curlwp);
-		} else {
-			result = ENXIO;
-		}
+		result = bdev_ioctl(vp->v_rdev, DIOCGPART, (void *)&pi,
+		    FREAD, curlwp);
 		if (result == 0) {
 			/* XXX should remember blocksize */
 			used_vnode_size = (voff_t)pi.disklab->d_secsize *

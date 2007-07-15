@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.107.2.4 2007/06/17 21:32:12 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.107.2.5 2007/07/15 13:28:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.4 2007/06/17 21:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.5 2007/07/15 13:28:17 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -256,10 +256,6 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (lfs_update(ovp, NULL, NULL, 0));
 	}
-#ifdef QUOTA
-	if ((error = getinoquota(oip)) != 0)
-		return (error);
-#endif
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_size;

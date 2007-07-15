@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.59.4.1 2007/06/08 14:17:52 ad Exp $	*/
+/*	$NetBSD: in6.h,v 1.59.4.2 2007/07/15 13:28:00 ad Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -761,6 +761,11 @@ typedef	_BSD_SIZE_T_		size_t;
 
 __BEGIN_DECLS
 struct cmsghdr;
+
+void	in6_sin6_2_sin __P((struct sockaddr_in *, struct sockaddr_in6 *));
+void	in6_sin_2_v4mapsin6 __P((struct sockaddr_in *, struct sockaddr_in6 *));
+void	in6_sin6_2_sin_in_sock __P((struct sockaddr *));
+void	in6_sin_2_v4mapsin6_in_sock __P((struct sockaddr **));
 
 extern int inet6_option_space __P((int));
 extern int inet6_option_init __P((void *, struct cmsghdr **, int));

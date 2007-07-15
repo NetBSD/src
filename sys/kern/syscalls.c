@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.185.2.1 2007/06/08 14:17:26 ad Exp $ */
+/* $NetBSD: syscalls.c,v 1.185.2.2 2007/07/15 13:27:45 ad Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.185.2.1 2007/06/08 14:17:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.185.2.2 2007/07/15 13:27:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -53,7 +53,7 @@ const char *const syscallnames[] = {
 #else
 	"getpid",			/* 20 = getpid */
 #endif
-	"mount",			/* 21 = mount */
+	"compat_40_mount",	/* 21 = compat_40 mount */
 	"unmount",			/* 22 = unmount */
 	"setuid",			/* 23 = setuid */
 #ifdef COMPAT_43
@@ -541,4 +541,8 @@ const char *const syscallnames[] = {
 	"aio_suspend",			/* 404 = aio_suspend */
 	"aio_write",			/* 405 = aio_write */
 	"lio_listio",			/* 406 = lio_listio */
+	"#407 (unimplemented)",		/* 407 = unimplemented */
+	"#408 (unimplemented)",		/* 408 = unimplemented */
+	"#409 (unimplemented)",		/* 409 = unimplemented */
+	"__mount50",			/* 410 = __mount50 */
 };
