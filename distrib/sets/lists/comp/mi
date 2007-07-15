@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1049 2007/07/15 08:33:50 jnemeth Exp $
+#	$NetBSD: mi,v 1.1050 2007/07/15 18:03:11 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6489,6 +6489,8 @@
 ./usr/share/man/cat9/PCI_VENDOR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/PMC_ENABLED.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/RUN_ONCE.0			comp-sys-catman		.cat
+./usr/share/man/cat9/SCHED_LOCK.0		comp-obsolete		obsolete
+./usr/share/man/cat9/SCHED_UNLOCK.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/TC_DENSE_TO_SPARSE.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_PHYS_TO_UNCACHED.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/VATTR_NULL.0		comp-sys-catman		.cat
@@ -7260,7 +7262,10 @@
 ./usr/share/man/cat9/rw_write_held.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rwlock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_4bsd.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sched_lock_idle.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/sched_psignal.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sched_unlock_idle.0	comp-obsolete		obsolete
+./usr/share/man/cat9/scheduler.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/scsipi.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_bsd44.0		comp-sys-catman		.cat
@@ -10826,6 +10831,8 @@
 ./usr/share/man/man9/PCI_VENDOR.9		comp-sys-man		.man
 ./usr/share/man/man9/PMC_ENABLED.9		comp-sys-man		.man
 ./usr/share/man/man9/RUN_ONCE.9			comp-sys-man		.man
+./usr/share/man/man9/SCHED_LOCK.9		comp-obsolete		obsolete
+./usr/share/man/man9/SCHED_UNLOCK.9		comp-obsolete		obsolete
 ./usr/share/man/man9/TC_DENSE_TO_SPARSE.9	comp-sys-man		.man
 ./usr/share/man/man9/TC_PHYS_TO_UNCACHED.9	comp-sys-man		.man
 ./usr/share/man/man9/VATTR_NULL.9		comp-sys-man		.man
@@ -11597,7 +11604,10 @@
 ./usr/share/man/man9/rw_write_held.9		comp-sys-man		.man
 ./usr/share/man/man9/rwlock.9			comp-sys-man		.man
 ./usr/share/man/man9/sched_4bsd.9		comp-sys-man		.man
+./usr/share/man/man9/sched_lock_idle.9		comp-obsolete		obsolete
 ./usr/share/man/man9/sched_psignal.9		comp-sys-man		.man
+./usr/share/man/man9/sched_unlock_idle.9	comp-obsolete		obsolete
+./usr/share/man/man9/scheduler.9		comp-obsolete		obsolete
 ./usr/share/man/man9/scsipi.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel.9			comp-sys-man		.man
 ./usr/share/man/man9/secmodel_bsd44.9		comp-sys-man		.man
