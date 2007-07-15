@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.110.8.1 2007/05/27 14:30:02 ad Exp $ */
+/* $NetBSD: isp.c,v 1.110.8.2 2007/07/15 13:21:14 ad Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -44,7 +44,7 @@
 
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.110.8.1 2007/05/27 14:30:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.110.8.2 2007/07/15 13:21:14 ad Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -815,7 +815,7 @@ isp_reset(ispsoftc_t *isp)
 				}
 				cp = isp->isp_rquest;
 				for (i = 0; i < nw; i++) {
-					cp[i] = ptr[wi++];
+					ISP_IOXPUT_32(isp,  ptr[wi++], &cp[i]);
 					wl--;
 				}
 				MEMORYBARRIER(isp, SYNC_REQUEST,
@@ -878,7 +878,7 @@ isp_reset(ispsoftc_t *isp)
 				}
 				cp = isp->isp_rquest;
 				for (i = 0; i < nw; i++) {
-					cp[i] = ptr[wi++];
+					ISP_IOXPUT_16(isp,  ptr[wi++], &cp[i]);
 					wl--;
 				}
 				MEMORYBARRIER(isp, SYNC_REQUEST,
@@ -1687,10 +1687,12 @@ isp_fibre_init(ispsoftc_t *isp)
 		if (IS_2200(isp)) {
 			if (ISP_FW_NEWER_THAN(isp, 1, 17, 0)) {
 				icbp->icb_xfwoptions |= ICBXOPT_RIO_16BIT;
+				icbp->icb_fwoptions &= ~ICBOPT_FAST_POST;
 				icbp->icb_racctimer = 4;
 				icbp->icb_idelaytimer = 8;
+			} else {
+				icbp->icb_fwoptions |= ICBOPT_FAST_POST;
 			}
-			icbp->icb_fwoptions |= ICBOPT_FAST_POST;
 		} else {
 			/*
 			 * QLogic recommends that FAST Posting be turned
@@ -4265,7 +4267,7 @@ isp_start(XS_T *xs)
 		return (i);
 	}
 	XS_SETERR(xs, HBA_NOERROR);
-	isp_prt(isp, ISP_LOGDEBUG2,
+	isp_prt(isp, ISP_LOGDEBUG0,
 	    "START cmd for %d.%d.%d cmd 0x%x datalen %ld",
 	    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs), XS_CDBP(xs)[0],
 	    (long) XS_XFRLEN(xs));
@@ -4742,7 +4744,7 @@ again:
 		isp_get_hdr(isp, hp, &sp->req_header);
 		etype = sp->req_header.rqs_entry_type;
 
-		if (IS_24XX(isp) && etype == RQSTYPE_T7RQS) {
+		if (IS_24XX(isp) && etype == RQSTYPE_RESPONSE) {
 			isp24xx_statusreq_t *sp2 = (isp24xx_statusreq_t *)qe;
 			isp_get_24xx_response(isp,
 			    (isp24xx_statusreq_t *)hp, sp2);
@@ -4892,7 +4894,7 @@ again:
 		rlen = 0;
 		snsp = NULL;
 		slen = 0;
-		if (IS_24XX(isp) && (scsi_status & RQCS_RV) != 0) {
+		if (IS_24XX(isp) && (scsi_status & (RQCS_RV|RQCS_SV)) != 0) {
 			resp = ((isp24xx_statusreq_t *)sp)->req_rsp_sense;
 			rlen = ((isp24xx_statusreq_t *)sp)->req_response_len;
 		} else if (IS_FC(isp) && (scsi_status & RQCS_RV) != 0) {
@@ -4930,8 +4932,8 @@ again:
 			if (resp && rlen >= 4 &&
 			    resp[FCP_RSPNS_CODE_OFFSET] != 0) {
 				isp_prt(isp, ISP_LOGWARN,
-				    "%d.%d FCP RESPONSE: 0x%x",
-				    XS_TGT(xs), XS_LUN(xs),
+				    "%d.%d.%d FCP RESPONSE: 0x%x",
+				    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs),
 				    resp[FCP_RSPNS_CODE_OFFSET]);
 				XS_SETERR(xs, HBA_BOTCH);
 			}
@@ -5012,13 +5014,14 @@ again:
 
 		/*
 		 * Free any DMA resources. As a side effect, this may
-		 * also do any cache flushing necessary for data coherence.			 */
+		 * also do any cache flushing necessary for data coherence.
+		 */
 		if (XS_XFRLEN(xs)) {
 			ISP_DMAFREE(isp, xs, sp->req_handle);
 		}
 
 		if (((isp->isp_dblev & (ISP_LOGDEBUG2|ISP_LOGDEBUG3))) ||
-		    ((isp->isp_dblev & ISP_LOGDEBUG1) && ((!XS_NOERR(xs)) ||
+		    ((isp->isp_dblev & ISP_LOGDEBUG0) && ((!XS_NOERR(xs)) ||
 		    (*XS_STSP(xs) != SCSI_GOOD)))) {
 			char skey;
 			if (req_state_flags & RQSF_GOT_SENSE) {
@@ -5900,6 +5903,7 @@ static void
 isp_parse_status_24xx(ispsoftc_t *isp, isp24xx_statusreq_t *sp,
     XS_T *xs, long *rp)
 {
+	int ru_marked, sv_marked;
 	switch (sp->req_completion_status) {
 	case RQCS_COMPLETE:
 		if (XS_NOERR(xs)) {
@@ -5946,7 +5950,8 @@ isp_parse_status_24xx(ispsoftc_t *isp, isp24xx_statusreq_t *sp,
 
 	case RQCS_DATA_OVERRUN:
 		XS_RESID(xs) = sp->req_resid;
-		isp_prt(isp, ISP_LOGERR, "data overrun for command on %d.%d.%d",
+		isp_prt(isp, ISP_LOGERR,
+		    "data overrun for command on %d.%d.%d",
 		    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_DATAOVR);
@@ -5971,8 +5976,27 @@ isp_parse_status_24xx(ispsoftc_t *isp, isp24xx_statusreq_t *sp,
 		return;
 
 	case RQCS_DATA_UNDERRUN:
-
+		ru_marked = (sp->req_scsi_status & RQCS_RU) != 0;
+		/*
+		 * We can get an underrun w/o things being marked 
+		 * if we got a non-zero status.
+		 */
+		sv_marked = (sp->req_scsi_status & (RQCS_SV|RQCS_RV)) != 0;
+		if ((ru_marked == 0 && sv_marked == 0) ||
+		    (sp->req_resid > XS_XFRLEN(xs))) {
+			isp_prt(isp, ISP_LOGWARN, bun, XS_TGT(xs),
+			    XS_LUN(xs), XS_XFRLEN(xs), sp->req_resid,
+			    (ru_marked)? "marked" : "not marked");
+			if (XS_NOERR(xs)) {
+				XS_SETERR(xs, HBA_BOTCH);
+			}
+			return;
+		}
 		XS_RESID(xs) = sp->req_resid;
+		isp_prt(isp, ISP_LOGDEBUG0,
+		    "%d.%d.%d data underrun (%d) for command 0x%x",
+		    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs),
+		    sp->req_resid, XS_CDBP(xs)[0] & 0xff);
 		if (XS_NOERR(xs)) {
 			XS_SETERR(xs, HBA_NOERROR);
 		}
@@ -6068,7 +6092,7 @@ isp_fastpost_complete(ispsoftc_t *isp, uint16_t fph)
 	}
 	xs = isp_find_xs(isp, fph);
 	if (xs == NULL) {
-		isp_prt(isp, ISP_LOGWARN,
+		isp_prt(isp, ISP_LOGDEBUG1,
 		    "Command for fast post handle 0x%x not found", fph);
 		return;
 	}
@@ -7415,13 +7439,16 @@ isp_read_nvram_2400(ispsoftc_t *isp)
 	}
 	if (nvram_data[0] != 'I' || nvram_data[1] != 'S' ||
 	    nvram_data[2] != 'P') {
-		isp_prt(isp, ISP_LOGWARN, "invalid NVRAM header");
+		isp_prt(isp, ISP_LOGWARN, "invalid NVRAM header (%x %x %x)",
+		    nvram_data[0], nvram_data[1], nvram_data[2]);
 		retval = -1;
 		goto out;
 	}
 	dptr = (uint32_t *) nvram_data;
 	for (csum = 0, lwrds = 0; lwrds < ISP2400_NVRAM_SIZE >> 2; lwrds++) {
-		csum += dptr[lwrds];
+		uint32_t tmp;
+		ISP_IOXGET_32(isp, &dptr[lwrds], tmp);
+		csum += tmp;
 	}
 	if (csum != 0) {
 		isp_prt(isp, ISP_LOGWARN, "invalid NVRAM checksum");
@@ -7520,8 +7547,8 @@ isp_rd_2400_nvram(ispsoftc_t *isp, uint32_t addr, uint32_t *rp)
 		}
 	}
 	if (tmp & (1U << 31)) {
-		tmp = ISP_READ(isp, BIU2400_FLASH_DATA);
-		*rp = tmp;
+		*rp = ISP_READ(isp, BIU2400_FLASH_DATA);
+		ISP_SWIZZLE_NVRAM_LONG(isp, rp);
 	} else {
 		*rp = 0xffffffff;
 	}

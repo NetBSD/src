@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.76 2007/03/04 05:59:21 christos Exp $ */
+/*	$NetBSD: ite.c,v 1.76.2.1 2007/07/15 13:15:27 ad Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.76 2007/03/04 05:59:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.76.2.1 2007/07/15 13:15:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -152,6 +152,8 @@ static char sample[20] = {
 	0,39,75,103,121,127,121,103,75,39,0,
 	-39,-75,-103,-121,-127,-121,-103,-75,-39
 };
+
+static callout_t repeat_ch;
 
 void iteputchar(int c, struct ite_softc *ip);
 void ite_putstr(const char * s, int len, dev_t dev);
@@ -422,6 +424,8 @@ iteinit(dev_t dev)
 {
 	struct ite_softc *ip;
 	static int kbdmap_loaded = 0;
+
+	callout_init(&repeat_ch, 0);
 
 	ip = getitesp(dev);
 	if (ip->flags & ITE_INITED)
@@ -858,8 +862,6 @@ ite_cnfilter(u_char c, enum caller caller)
 /* these are used to implement repeating keys.. */
 static u_char last_char;
 static u_char tout_pending;
-
-static struct callout repeat_ch = CALLOUT_INITIALIZER;
 
 /*ARGSUSED*/
 static void

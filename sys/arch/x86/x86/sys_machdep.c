@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.6.3 2007/06/09 23:55:32 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.6.4 2007/07/15 13:17:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.6.3 2007/06/09 23:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.6.4 2007/07/15 13:17:17 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -172,27 +172,51 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 	memcpy(cp, lp, num * sizeof(union descriptor));
 	mutex_exit(&pmap->pm_lock);
 
-	error = copyout(cp, ua.desc, num * sizeof(union descriptor));
-	if (error == 0)
-		*retval = num;
-
-	free(cp, M_TEMP);
-	return (error);
-#else
-	return EINVAL;
+	return 0;
 #endif
 }
 
 int
 x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 {
-#ifdef USER_LDT
+#ifndef USER_LDT
+	return EINVAL;
+#else
+	struct x86_set_ldt_args ua;
+	union descriptor *descv;
+	int error;
+
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
+		return (error);
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
+	if (descv == NULL)
+		return ENOMEM;
+
+	error = copyin(ua.desc, descv, sizeof (*descv) * ua.num);
+	if (error == 0)
+		error = x86_set_ldt1(l, &ua, descv);
+	*retval = ua.start;
+
+	free(descv, M_TEMP);
+	return error;
+#endif
+}
+
+int
+x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
+    union descriptor *descv)
+{
+#ifndef USER_LDT
+	return EINVAL;
+#else
 	int error, i, n, sel, free_sel;
 	struct proc *p = l->l_proc;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	struct x86_set_ldt_args ua;
-	union descriptor *descv;
 	size_t old_len, new_len, ldt_len, free_len;
 	union descriptor *old_ldt, *new_ldt, *free_ldt;
 
@@ -201,22 +225,12 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	if (error)
 		return (error);
 
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
-	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
-	    ua.start + ua.num > 8192)
+	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
+	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
-	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
-	if (descv == NULL)
-		return (ENOMEM);
-
-	if ((error = copyin(ua.desc, descv, sizeof (*descv) * ua.num)) != 0)
-		goto out;
-
 	/* Check descriptors for access violations. */
-	for (i = 0; i < ua.num; i++) {
+	for (i = 0; i < ua->num; i++) {
 		union descriptor *desc = &descv[i];
 
 		switch (desc->sd.sd_type) {
@@ -236,8 +250,7 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 			    ((IDXSEL(desc->gd.gd_selector) >= NGDT) ||
 			     (gdt[IDXSEL(desc->gd.gd_selector)].sd.sd_dpl !=
 				 SEL_UPL))) {
-				error = EACCES;
-				goto out;
+				return EACCES;
 			}
 			break;
 		case SDT_MEMEC:
@@ -245,10 +258,8 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 		case SDT_MEMERC:
 		case SDT_MEMERAC:
 			/* Must be "present" if executable and conforming. */
-			if (desc->sd.sd_p == 0) {
-				error = EACCES;
-				goto out;
-			}
+			if (desc->sd.sd_p == 0)
+				return EACCES;
 			break;
 		case SDT_MEMRO:
 		case SDT_MEMROA:
@@ -268,19 +279,15 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 			 * Make sure that unknown descriptor types are
 			 * not marked present.
 			 */
-			if (desc->sd.sd_p != 0) {
-				error = EACCES;
-				goto out;
-			}
+			if (desc->sd.sd_p != 0)
+				return EACCES;
 			break;
 		}
 
 		if (desc->sd.sd_p != 0) {
 			/* Only user (ring-3) descriptors may be present. */
-			if (desc->sd.sd_dpl != SEL_UPL) {
-				error = EACCES;
-				goto out;
-			}
+			if (desc->sd.sd_dpl != SEL_UPL)
+				return EACCES;
 		}
 	}
 
@@ -364,11 +371,8 @@ copy:
 	if (free_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)free_ldt, free_len,
 		    UVM_KMF_WIRED);
-out:
-	free(descv, M_TEMP);
+
 	return (error);
-#else
-	return EINVAL;
 #endif
 }
 

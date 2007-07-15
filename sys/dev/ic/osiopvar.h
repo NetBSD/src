@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.9 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.9.30.1 2007/07/15 13:21:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -96,20 +96,22 @@ typedef struct buf_table {
 } buf_table_t;
 
 struct osiop_ds {
-	uint32_t scsi_addr;		/* SCSI ID & sync */
-	uint32_t pad1;
-	buf_table_t id;			/* Identify message */
-	buf_table_t cmd;		/* SCSI command */
-	buf_table_t status;		/* Status */
-	buf_table_t msg;		/* Message */
-	buf_table_t msgin;		/* Message in */
-	buf_table_t extmsg;		/* Extended message in */
-	buf_table_t synmsg;		/* Sync transfer request */
-	buf_table_t data[OSIOP_NSG];	/* DMA S/G buffers */
-
-	uint8_t msgout[8];
-	uint8_t msgbuf[8];
-	uint8_t stat[8];
+	uint32_t scsi_addr;		/*   0: SCSI ID & sync */
+	uint32_t pad1;			/*   4: padding */
+	buf_table_t id;			/*   8: Identify message */
+	buf_table_t cmd;		/*  16: SCSI command */
+	buf_table_t status;		/*  24: Status */
+	buf_table_t msg;		/*  32: Message */
+	buf_table_t msgin;		/*  40: Message in */
+	buf_table_t extmsg;		/*  48: Extended message in */
+	buf_table_t synmsg;		/*  56: Sync transfer request */
+	buf_table_t data[OSIOP_NSG];	/*  64: DMA S/G buffers */
+					/*      (8 * OSIOP_NSG == 136bytes) */
+	uint8_t scsipi_cmd[16];		/* 200: cmd buf */
+	uint8_t msgout[8];		/* 216: message out buf */
+	uint8_t msgbuf[8];		/* 224: message in buf */
+	uint8_t stat[8];		/* 232: stat buf */
+	uint8_t pad2[16];		/* 240: padding to 256bytes */
 } __attribute__((__packed__));
 
 /* status can hold the SCSI_* status values, and 2 additional values: */
@@ -119,6 +121,7 @@ struct osiop_ds {
 #define MSG_INVALID		0xff	/* dummy value for message buffer */
 
 #define OSIOP_DSOFF(x)		offsetof(struct osiop_ds, x)
+#define OSIOP_DSCMDOFF		OSIOP_DSOFF(scsipi_cmd[0])
 #define OSIOP_DSIDOFF		OSIOP_DSOFF(msgout[0])
 #define OSIOP_DSMSGOFF		OSIOP_DSOFF(msgbuf[0])
 #define OSIOP_DSMSGINOFF	OSIOP_DSOFF(msgbuf[1])
@@ -138,7 +141,6 @@ struct osiop_acb {
 	struct scsipi_xfer *xs;	/* SCSI xfer ctrl block from upper layer */
 	struct osiop_softc *sc;	/* points back to our adapter */
 
-	bus_dmamap_t cmddma;	/* DMA map for SCSI command */
 	bus_dmamap_t datadma;	/* DMA map for data transfer */
 
 	struct osiop_ds *ds;	/* data structure for this acb */

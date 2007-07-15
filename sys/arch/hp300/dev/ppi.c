@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.36 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: ppi.c,v 1.36.2.1 2007/07/15 13:15:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.36 2007/03/04 05:59:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.36.2.1 2007/07/15 13:15:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,8 @@ ppiattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_slave = ha->ha_slave;
 
-	callout_init(&sc->sc_timo_ch);
-	callout_init(&sc->sc_start_ch);
+	callout_init(&sc->sc_timo_ch, 0);
+	callout_init(&sc->sc_start_ch, 0);
 
 	/* Initialize the hpib queue entry. */
 	sc->sc_hq.hq_softc = sc;

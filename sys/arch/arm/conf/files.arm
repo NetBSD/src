@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.83.2.1 2007/05/27 12:27:09 ad Exp $
+#	$NetBSD: files.arm,v 1.83.2.2 2007/07/15 13:15:36 ad Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -46,7 +46,6 @@ file	dev/cons.c
 
 # generic networking files
 file	arch/arm/arm/in_cksum_arm.S		inet
-file	netns/ns_cksum.c			ns
 
 # DDB
 file	arch/arm/arm/db_disasm.c		ddb

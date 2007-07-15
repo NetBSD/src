@@ -1,4 +1,4 @@
-/*	$NetBSD: maplevar.h,v 1.9 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: maplevar.h,v 1.9.30.1 2007/07/15 13:15:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -175,8 +175,8 @@ struct maple_unit {
 struct maple_softc {
 	struct device	sc_dev;
 
-	struct callout	maple_callout_ch;
-	struct proc	*event_thread;
+	callout_t	maple_callout_ch;
+	lwp_t		*event_thread;
 
 	int8_t		sc_port_unit_map[MAPLE_PORTS];
 	int		sc_port_units[MAPLE_PORTS];

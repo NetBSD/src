@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24.4.1 2007/05/27 14:27:07 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.24.4.2 2007/07/15 13:17:19 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -663,6 +663,7 @@ switch_skipsave:
 	 * Switch to newlwp's stack.
 	 */
 
+	CLI(%ebx)
 	movl	L_ADDR(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
@@ -690,6 +691,14 @@ switch_skipsave:
 	jne	check_ras
 
 switch_return:
+	STIC(%ebx)
+	jz 1f
+	call	_C_LABEL(stipending)
+	testl	%eax,%eax
+	jz 1f
+	pushl  CPUVAR(ILEVEL)
+	call	_C_LABEL(Xspllower) # process pending interrupts
+1:
 	movl	%esi,%eax	# return 'oldlwp'
 	popl	%edi
 	popl	%esi
@@ -780,9 +789,29 @@ syscall1:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
-1:	STI(%eax)
-	CHECK_DEFERRED_SWITCH(%eax)
+1:	CHECK_DEFERRED_SWITCH(%eax)
 	jnz	9f
+	STIC(%eax)
+	jz	14f
+	call	_C_LABEL(stipending)
+	testl	%eax,%eax
+	jz	14f
+	/* process pending interrupts */
+	CLI(%eax)
+	movl	CPUVAR(ILEVEL), %ebx
+	movl	$.Lsyscall_resume, %esi # address to resume loop at
+.Lsyscall_resume:
+	movl	%ebx,%eax		# get cpl
+	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
+	andl	CPUVAR(IPENDING),%eax	# any non-masked bits left?
+	jz	17f
+	bsrl	%eax,%eax
+	btrl	%eax,CPUVAR(IPENDING)
+	movl	CPUVAR(ISOURCES)(,%eax,4),%eax
+	jmp	*IS_RESUME(%eax)
+17:	movl	%ebx, CPUVAR(ILEVEL)	#restore cpl
+	jmp	.Lsyscall_checkast
+14:
 #ifndef DIAGNOSTIC
 	INTRFASTEXIT
 #else /* DIAGNOSTIC */
@@ -801,7 +830,8 @@ syscall1:
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
 6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
-9:	call    _C_LABEL(pmap_load)
+9:	STI(%eax)
+	call    _C_LABEL(pmap_load)
 	jmp     .Lsyscall_checkast        /* re-check ASTs */
 
 #if NNPX > 0

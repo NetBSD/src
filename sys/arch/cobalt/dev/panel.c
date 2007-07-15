@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.12 2007/03/04 05:59:43 christos Exp $ */
+/* $NetBSD: panel.c,v 1.12.2.1 2007/07/15 13:15:45 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.12 2007/03/04 05:59:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.12.2.1 2007/07/15 13:15:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 
 	lcdkp_attach_subr(&sc->sc_kp);
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 
 	printf("\n");
 }

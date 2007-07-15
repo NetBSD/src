@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23.2.2 2007/05/27 12:27:25 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23.2.3 2007/07/15 13:16:06 ad Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23.2.2 2007/05/27 12:27:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.23.2.3 2007/07/15 13:16:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,10 +164,9 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->tf_sr0 = tf->tf_sr1 = tf->tf_sr3 = tf->tf_sr2 = 
 	tf->tf_sr4 = tf->tf_sr5 = tf->tf_sr6 = space;
 	tf->tf_iisq_head = tf->tf_iisq_tail = space;
-	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
 
-	/* record the vmspace just in case it changes underneath us. */
-	pmap->pmap_vmspace = p->p_vmspace;
+	/* Load the protection registers */
+	tf->tf_pidr1 = tf->tf_pidr2 = pmap->pmap_pid;
 
 	/*
 	 * theoretically these could be inherited from the father,

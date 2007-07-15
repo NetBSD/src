@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.221.2.1 2007/06/17 21:30:48 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.221.2.2 2007/07/15 13:21:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.221.2.1 2007/06/17 21:30:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.221.2.2 2007/07/15 13:21:05 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -105,7 +105,7 @@ int	audiodebug = AUDIO_DEBUG;
 int	audio_blk_ms = AUDIO_BLK_MS;
 
 int	audiosetinfo(struct audio_softc *, struct audio_info *);
-int	audiogetinfo(struct audio_softc *, struct audio_info *);
+int	audiogetinfo(struct audio_softc *, struct audio_info *, int);
 
 int	audio_open(dev_t, struct audio_softc *, int, int, struct lwp *);
 int	audio_close(struct audio_softc *, int, int, struct lwp *);
@@ -2132,7 +2132,12 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	case AUDIO_GETINFO:
 		DPRINTF(("AUDIO_GETINFO\n"));
-		error = audiogetinfo(sc, (struct audio_info *)addr);
+		error = audiogetinfo(sc, (struct audio_info *)addr, 0);
+		break;
+
+	case AUDIO_GETBUFINFO:
+		DPRINTF(("AUDIO_GETBUFINFO\n"));
+		error = audiogetinfo(sc, (struct audio_info *)addr, 1);
 		break;
 
 	case AUDIO_DRAIN:
@@ -3534,7 +3539,7 @@ cleanup:
 }
 
 int
-audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
+audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int buf_only_mode)
 {
 	struct audio_prinfo *r, *p;
 	const struct audio_hw_if *hw;
@@ -3554,16 +3559,30 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 	p->encoding = sc->sc_pparams.encoding;
 	r->encoding = sc->sc_rparams.encoding;
 
-	r->port = au_get_port(sc, &sc->sc_inports);
-	p->port = au_get_port(sc, &sc->sc_outports);
+	if (buf_only_mode) {
+		r->port = 0;
+		p->port = 0;
 
-	r->avail_ports = sc->sc_inports.allports;
-	p->avail_ports = sc->sc_outports.allports;
+		r->avail_ports = 0;
+		p->avail_ports = 0;
 
-	au_get_gain(sc, &sc->sc_inports,  &r->gain, &r->balance);
-	au_get_gain(sc, &sc->sc_outports, &p->gain, &p->balance);
+		r->gain = 0;
+		r->balance = 0;
 
-	if (sc->sc_monitor_port != -1) {
+		p->gain = 0;
+		p->balance = 0;
+	} else {
+		r->port = au_get_port(sc, &sc->sc_inports);
+		p->port = au_get_port(sc, &sc->sc_outports);
+
+		r->avail_ports = sc->sc_inports.allports;
+		p->avail_ports = sc->sc_outports.allports;
+
+		au_get_gain(sc, &sc->sc_inports,  &r->gain, &r->balance);
+		au_get_gain(sc, &sc->sc_outports, &p->gain, &p->balance);
+	}
+
+	if (sc->sc_monitor_port != -1 && buf_only_mode == 0) {
 		mixer_ctrl_t ct;
 
 		ct.dev = sc->sc_monitor_port;

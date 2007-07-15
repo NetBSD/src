@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.50 2007/02/22 17:09:44 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.50.4.1 2007/07/15 13:16:16 ad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2007/02/22 17:09:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50.4.1 2007/07/15 13:16:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -494,9 +494,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		/*
 		 * Since faultstkadj doesn't set up a valid stack frame,
 		 * we would assume it was the source of the fault. To
-		 * get around this we peek at the fourth argument of
+		 * get around this we peek just past the fourth argument of
 		 * "trap()" (the stack frame at the time of the fault)
-		 * to determine the _real_ value of PC when things wen
+		 * to determine the _real_ value of PC when things went
 		 * wrong.
 		 *
 		 * NOTE: If the argument list for 'trap()' ever changes,
@@ -505,8 +505,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		if (strcmp(___STRING(_C_LABEL(trap)), name) == 0) {
 			int tfp;
 
-			/* Point to 'trap()'s 4th argument (frame structure) */
-			tfp = pos.k_fp + FR_SAVFP + 4 + (4 * 4);
+			/* Point to frame structure just past 'trap()'s 4th argument */
+			tfp = pos.k_fp + FR_SAVFP + 4 + (5 * 4);
 
 			/* Determine if fault was from kernel or user mode */
 			regp = tfp + offsetof(struct frame, f_sr);

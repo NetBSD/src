@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.83.2.2 2007/07/14 22:09:40 ad Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.83.2.3 2007/07/15 13:16:11 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.2 2007/07/14 22:09:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.83.2.3 2007/07/15 13:16:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -439,11 +439,6 @@ svr4_sys_sysarch(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_sysarch_args *uap = v;
-#ifdef USER_LDT
-	struct proc *p = l->l_proc;
-	void *sg = stackgap_init(p, 0);
-	int error;
-#endif
 	*retval = 0;	/* XXX: What to do */
 
 	switch (SCARG(uap, op)) {
@@ -453,20 +448,21 @@ svr4_sys_sysarch(l, v, retval)
 	case SVR4_SYSARCH_DSCR:
 #ifdef USER_LDT
 		{
-			struct x86_set_ldt_args sa, *sap;
-			struct sys_sysarch_args ua;
-
+			struct x86_set_ldt_args sa;
 			struct svr4_ssd ssd;
 			union descriptor bsd;
+			int error;
 
 			if ((error = copyin(SCARG(uap, a1), &ssd,
 					    sizeof(ssd))) != 0) {
-				printf("Cannot copy arg1\n");
+#ifdef DEBUG
+				printf("svr4_sys_sysarch: Cannot copy arg1\n");
+#endif
 				return error;
 			}
 
 #ifdef DEBUG
-			printf("s=%x, b=%x, l=%x, a1=%x a2=%x\n",
+			printf("svr4_sys_sysarch: s=%x, b=%x, l=%x, a1=%x a2=%x\n",
 			       ssd.selector, ssd.base, ssd.limit,
 			       ssd.access1, ssd.access2);
 #endif
@@ -474,7 +470,7 @@ svr4_sys_sysarch(l, v, retval)
 			/* We can only set ldt's for now. */
 			if (!ISLDT(ssd.selector)) {
 #ifdef DEBUG
-				printf("Not an ldt\n");
+				printf("svr4_sys_sysarch: Not an ldt\n");
 #endif
 				return EPERM;
 			}
@@ -498,22 +494,10 @@ svr4_sys_sysarch(l, v, retval)
 			bsd.sd.sd_gran = (ssd.access2 >> 3)& 0x1;
 
 			sa.start = IDXSEL(ssd.selector);
-			sa.desc = stackgap_alloc(p, &sg,
-			    sizeof(union descriptor));
+			sa.desc = NULL;
 			sa.num = 1;
-			sap = stackgap_alloc(p, &sg,
-			     sizeof(struct x86_set_ldt_args));
 
-			if ((error = copyout(&sa, sap, sizeof(sa))) != 0)
-				return error;
-
-			SCARG(&ua, op) = X86_SET_LDT;
-			SCARG(&ua, parms) = (char *) sap;
-
-			if ((error = copyout(&bsd, sa.desc, sizeof(bsd))) != 0)
-				return error;
-
-			return sys_sysarch(l, &ua, retval);
+			return x86_set_ldt1(l, &sa, &bsd);
 		}
 #endif
 

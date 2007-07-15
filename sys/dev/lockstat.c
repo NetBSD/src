@@ -1,7 +1,7 @@
-/*	$NetBSD: lockstat.c,v 1.8 2007/03/04 06:01:42 christos Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.8.2.1 2007/07/15 13:21:07 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8 2007/03/04 06:01:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8.2.1 2007/07/15 13:21:07 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,9 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8 2007/03/04 06:01:42 christos Exp $"
 #define	LOCKSTAT_HASH_SHIFT	2
 #endif
 
-#define	LOCKSTAT_MINBUFS	100
-#define	LOCKSTAT_DEFBUFS	1000
-#define	LOCKSTAT_MAXBUFS	10000
+#define	LOCKSTAT_MINBUFS	1000
+#define	LOCKSTAT_DEFBUFS	10000
+#define	LOCKSTAT_MAXBUFS	50000
 
 #define	LOCKSTAT_HASH_SIZE	64
 #define	LOCKSTAT_HASH_MASK	(LOCKSTAT_HASH_SIZE - 1)
@@ -103,6 +103,7 @@ volatile u_int	lockstat_enabled;
 uintptr_t	lockstat_csstart;
 uintptr_t	lockstat_csend;
 uintptr_t	lockstat_csmask;
+uintptr_t	lockstat_lamask;
 uintptr_t	lockstat_lockstart;
 uintptr_t	lockstat_lockend;
 
@@ -235,6 +236,11 @@ lockstat_start(lsenable_t *le)
 		lockstat_csmask = (uintptr_t)-1LL;
 	else
 		lockstat_csmask = 0;
+
+	if ((le->le_flags & LE_LOCK) != 0)
+		lockstat_lamask = (uintptr_t)-1LL;
+	else
+		lockstat_lamask = 0;
 
 	lockstat_csstart = le->le_csstart;
 	lockstat_csend = le->le_csend;
@@ -373,6 +379,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 		return;
 
 	callsite &= lockstat_csmask;
+	lock &= lockstat_lamask;
 
 	/*
 	 * Find the table for this lock+callsite pair, and try to locate a
@@ -381,7 +388,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 	lc = curcpu()->ci_lockstat;
 	ll = &lc->lc_hash[LOCKSTAT_HASH(lock ^ callsite)];
 	event = (flags & LB_EVENT_MASK) - 1;
-	s = spllock();
+	s = splhigh();
 
 	LIST_FOREACH(lb, ll, lb_chain.list) {
 		if (lb->lb_lock == lock && lb->lb_callsite == callsite)

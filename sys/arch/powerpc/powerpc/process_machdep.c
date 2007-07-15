@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.24 2007/03/04 06:00:38 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.24.2.1 2007/07/15 13:16:50 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24 2007/03/04 06:00:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.24.2.1 2007/07/15 13:16:50 ad Exp $");
 
 #include "opt_altivec.h"
 
@@ -233,7 +233,7 @@ process_machdep_dovecregs(struct lwp *curl, struct lwp *l, struct uio *uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	if (kl < 0)
 		error = EINVAL;
@@ -248,7 +248,7 @@ process_machdep_dovecregs(struct lwp *curl, struct lwp *l, struct uio *uio)
 			error = process_machdep_write_vecregs(l, &r);
 	}
 
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	uio->uio_offset = 0;
 	return (error);

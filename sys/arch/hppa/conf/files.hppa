@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.5.6.1 2007/05/27 12:27:23 ad Exp $
+#	$NetBSD: files.hppa,v 1.5.6.2 2007/07/15 13:16:05 ad Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -25,7 +25,6 @@ file	arch/hppa/hppa/vm_machdep.c
 file	arch/hppa/hppa/in_cksum.c		inet
 file	arch/hppa/hppa/procfs_machdep.c		procfs
 file	netinet/in4_cksum.c			inet
-file	netns/ns_cksum.c			ns
 
 #
 # Compatibility

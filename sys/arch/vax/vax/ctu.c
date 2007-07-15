@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.25 2007/03/04 19:21:55 christos Exp $ */
+/*	$NetBSD: ctu.c,v 1.25.2.1 2007/07/15 13:17:09 ad Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.25 2007/03/04 19:21:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.25.2.1 2007/07/15 13:17:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,11 +110,13 @@ const struct cdevsw ctu_cdevsw = {
 };
 #endif
 
-static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
+static callout_t ctu_watch_ch;
 
 void
 ctuattach()
 {
+
+	callout_init(&ctu_watch_ch, 0);
 	bufq_alloc(&tu_sc.sc_bufq, "fcfs", 0);
 
 	tu_recv = idsptch;

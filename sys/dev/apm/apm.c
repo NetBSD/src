@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.10.2.1 2007/05/13 17:36:22 ad Exp $ */
+/*	$NetBSD: apm.c,v 1.10.2.2 2007/07/15 13:21:08 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10.2.1 2007/05/13 17:36:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10.2.2 2007/07/15 13:21:08 ad Exp $");
 
 #include "opt_apm.h"
 
@@ -108,7 +108,6 @@ int	apmdebug = 0;
 
 static void	apm_event_handle(struct apm_softc *, u_int, u_int);
 static void	apm_periodic_check(struct apm_softc *);
-static void	apm_create_thread(void *);
 static void	apm_thread(void *);
 static void	apm_perror(const char *, int, ...)
 		    __attribute__((__format__(__printf__,1,3)));

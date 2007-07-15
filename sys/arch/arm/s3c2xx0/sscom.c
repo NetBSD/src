@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.22 2007/03/04 05:59:38 christos Exp $ */
+/*	$NetBSD: sscom.c,v 1.22.2.1 2007/07/15 13:15:37 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.22 2007/03/04 05:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.22.2.1 2007/07/15 13:15:37 ad Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -409,7 +409,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 
-	callout_init(&sc->sc_diag_callout);
+	callout_init(&sc->sc_diag_callout, 0);
 #if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(SSCOM_MPLOCK)
 	simple_lock_init(&sc->sc_lock);
 #endif
@@ -1520,7 +1520,6 @@ sscom_stsoft(struct sscom_softc *sc, struct tty *tp)
 		sscomstatus(sc, "sscom_stsoft");
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void
 sscomsoft(void *arg)
 {
@@ -1549,9 +1548,6 @@ sscomsoft(void *arg)
 		}
 	}
 }
-#else
-#error sscom needs GENERIC_SOFT_INERRUPTS
-#endif
 
 
 int

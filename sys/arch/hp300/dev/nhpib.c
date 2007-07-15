@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.35.14.1 2007/07/15 13:15:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.35 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.35.14.1 2007/07/15 13:15:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,8 +250,8 @@ nhpib_common_attach(struct nhpib_softc *sc, const char *desc)
 	sc->sc_regs = (struct nhpibdevice *)bus_space_vaddr(sc->sc_bst,
 	    sc->sc_bsh);
 
-	callout_init(&sc->sc_read_ch);
-	callout_init(&sc->sc_ppwatch_ch);
+	callout_init(&sc->sc_read_ch, 0);
+	callout_init(&sc->sc_ppwatch_ch, 0);
 
 	ha.ha_ops = &nhpib_controller;
 	ha.ha_type = sc->sc_type;			/* XXX */

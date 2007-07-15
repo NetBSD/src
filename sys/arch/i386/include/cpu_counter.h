@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.4 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.4.24.1 2007/07/15 13:16:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 
 #ifdef _KERNEL
 
+#include <x86/cpu_counter.h>
+
 static __inline int
 cpu_hascounter(void)
 {
@@ -69,27 +71,6 @@ cpu_hascounter(void)
 #else
 	return 0;
 #endif
-}
-
-static __inline uint64_t
-cpu_counter(void)
-{
-
-	return (rdtsc());
-}
-
-static __inline uint32_t
-cpu_counter32(void)
-{
-
-	return (rdtsc() & 0xffffffffUL);
-}
-
-static __inline uint64_t
-cpu_frequency(struct cpu_info *ci)
-{
-
-	return (ci->ci_tsc_freq);
 }
 
 #endif /* _KERNEL */

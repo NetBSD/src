@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52.2.2 2007/05/27 12:26:57 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52.2.3 2007/07/15 13:15:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.2 2007/05/27 12:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52.2.3 2007/07/15 13:15:22 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -479,7 +479,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));

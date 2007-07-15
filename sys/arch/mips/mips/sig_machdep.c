@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.12 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.12.6.1 2007/07/15 13:16:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12 2007/02/09 21:55:06 ad Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12.6.1 2007/07/15 13:16:27 ad Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -114,7 +114,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
             | ((l->l_sigstk.ss_flags & SS_ONSTACK)
             ? _UC_SETSTACK : _UC_CLRSTACK);
         uc.uc_sigmask = *mask;
-        uc.uc_link = NULL;
+        uc.uc_link = l->l_ctxlink;
         memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
         ucsz = (char *)&uc.__uc_pad - (char *)&uc;
         sendsig_reset(l, sig);

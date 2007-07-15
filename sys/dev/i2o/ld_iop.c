@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.23.8.2 2007/05/27 00:17:17 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.23.8.3 2007/07/15 13:21:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -43,9 +43,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.23.8.2 2007/05/27 00:17:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.23.8.3 2007/07/15 13:21:13 ad Exp $");
 
-#include "opt_i2o.h"
 #include "rnd.h"
 
 #include <sys/param.h>

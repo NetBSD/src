@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.41 2007/02/17 01:27:07 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.41.6.1 2007/07/15 13:16:31 ad Exp $
 
 #	config for bootable floppy kernel
 #
@@ -45,7 +45,8 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 #options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20		# NetBSD 2.0 binary compatibility
-#options 	COMPAT_30		# NetBSD 3.0 compatibility.
+#options 	COMPAT_30		# NetBSD 3.0 binary compatibility.
+#options 	COMPAT_40		# NetBSD 4.0 binary compatibility.
 options 	COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

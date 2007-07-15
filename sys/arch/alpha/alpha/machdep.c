@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.296.2.1 2007/05/27 12:26:53 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.296.2.2 2007/07/15 13:15:18 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296.2.1 2007/05/27 12:26:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296.2.2 2007/07/15 13:15:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -780,17 +780,14 @@ nobootinfo:
 #endif
 	}
 
-	/*
-	 * Figure out our clock frequency, from RPB fields.
-	 */
-	hz = hwrpb->rpb_intr_freq >> 12;
-	if (!(60 <= hz && hz <= 10240)) {
-		hz = 1024;
 #ifdef DIAGNOSTIC
+	/*
+	 * Check our clock frequency, from RPB fields.
+	 */
+	if ((hwrpb->rpb_intr_freq >> 12) != 1024)
 		printf("WARNING: unbelievable rpb_intr_freq: %ld (%d hz)\n",
 			hwrpb->rpb_intr_freq, hz);
 #endif
-	}
 }
 
 void
@@ -1492,7 +1489,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);

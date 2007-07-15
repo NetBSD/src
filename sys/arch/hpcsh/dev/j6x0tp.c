@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.16.2.1 2007/06/09 23:55:04 ad Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.16.2.2 2007/07/15 13:16:04 ad Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.16.2.1 2007/06/09 23:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.16.2.2 2007/07/15 13:16:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -271,7 +271,7 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 		      (void *)__UNCONST(&j6x0tp_default_calib), 0, 0);
 
 	/* used when in polling mode */
-	callout_init(&sc->sc_touch_ch);
+	callout_init(&sc->sc_touch_ch, 0);
 
 	/* establish interrupt handler, but disable until opened */
 	intc_intr_establish(SH7709_INTEVT2_IRQ3, IST_EDGE, IPL_TTY,

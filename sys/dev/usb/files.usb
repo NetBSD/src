@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.73.6.2 2007/05/27 14:30:29 ad Exp $
+#	$NetBSD: files.usb,v 1.73.6.3 2007/07/15 13:21:46 ad Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -283,3 +283,8 @@ file	dev/usb/utoppy.c		utoppy
 device	xboxcontroller: wsmousedev
 attach	xboxcontroller at usbdevif
 file	dev/usb/xboxcontroller.c	xboxcontroller
+
+# Zydas ZD1211
+device	zyd: ether, ifnet, arp, wlan, firmload
+attach	zyd at usbdevif
+file	dev/usb/if_zyd.c		zyd

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.63 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: extintr.c,v 1.63.6.1 2007/07/15 13:16:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.63 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.63.6.1 2007/07/15 13:16:25 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -899,11 +899,7 @@ again:
 		splsoftserial();
 		mtmsr(emsr);
 		KERNEL_LOCK(1, NULL);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr__run(IPL_SOFTSERIAL);
-#else
-		softserial();
-#endif
 		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
@@ -911,22 +907,11 @@ again:
 		goto again;
 	}
 	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_NET)) {
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		int pisr;
-#endif
 		ci->ci_ipending &= ~(1 << SIR_NET);
 		splsoftnet();
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		pisr = netisr;
-		netisr = 0;
-#endif
 		mtmsr(emsr);
 		KERNEL_LOCK(1, NULL);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr__run(IPL_SOFTNET);
-#else
-		softnet(pisr);
-#endif
 		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
@@ -938,11 +923,7 @@ again:
 		splsoftclock();
 		mtmsr(emsr);
 		KERNEL_LOCK(1, NULL);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softintr__run(IPL_SOFTCLOCK);
-#else
-		softclock(NULL);
-#endif
 		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;

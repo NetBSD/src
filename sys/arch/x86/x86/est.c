@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.1.2.3 2007/06/09 23:55:32 ad Exp $	*/
+/*	$NetBSD: est.c,v 1.1.2.4 2007/07/15 13:17:16 ad Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.1.2.3 2007/06/09 23:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.1.2.4 2007/07/15 13:17:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,6 +765,139 @@ static const uint16_t pm90_n780[] = {
 	ID16( 800,  988, BUS133),
 }; 
 
+/*
+ * VIA C7-M 500 MHz FSB, 400 MHz FSB, and ULV variants.
+ * Data from the "VIA C7-M Processor BIOS Writer's Guide (v2.17)" datasheet.
+ */
+
+/* 1.00GHz Centaur C7-M ULV */
+static const uint16_t C7M_770_ULV[] = {
+	ID16(1000,  844, BUS100),
+	ID16( 800,  796, BUS100),
+	ID16( 600,  796, BUS100),
+	ID16( 400,  796, BUS100),
+};
+
+/* 1.00GHz Centaur C7-M ULV */
+static const uint16_t C7M_779_ULV[] = {
+	ID16(1000,  796, BUS100),
+	ID16( 800,  796, BUS100),
+	ID16( 600,  796, BUS100),
+	ID16( 400,  796, BUS100),
+};
+
+/* 1.20GHz Centaur C7-M ULV */
+static const uint16_t C7M_772_ULV[] = {
+	ID16(1200,  844, BUS100),
+	ID16(1000,  844, BUS100),
+	ID16( 800,  828, BUS100),
+	ID16( 600,  796, BUS100),
+	ID16( 400,  796, BUS100),
+};
+
+/* 1.50GHz Centaur C7-M ULV */
+static const uint16_t C7M_775_ULV[] = {
+	ID16(1500,  956, BUS100),
+	ID16(1400,  940, BUS100),
+	ID16(1000,  860, BUS100),
+	ID16( 800,  828, BUS100),
+	ID16( 600,  796, BUS100),
+	ID16( 400,  796, BUS100),
+};
+
+/* 1.20GHz Centaur C7-M 400 MHz FSB */
+static const uint16_t C7M_771[] = {
+	ID16(1200,  860, BUS100),
+	ID16(1000,  860, BUS100),
+	ID16( 800,  844, BUS100),
+	ID16( 600,  844, BUS100),
+	ID16( 400,  844, BUS100),
+};
+
+/* 1.50GHz Centaur C7-M 400 MHz FSB */
+static const u_int16_t C7M_754[] = {
+	ID16(1500, 1004, BUS100),
+	ID16(1400,  988, BUS100),
+	ID16(1000,  940, BUS100),
+	ID16( 800,  844, BUS100),
+	ID16( 600,  844, BUS100),
+	ID16( 400,  844, BUS100),
+};
+
+/* 1.60GHz Centaur C7-M 400 MHz FSB */
+static const uint16_t C7M_764[] = {
+	ID16(1600, 1084, BUS100),
+	ID16(1400, 1052, BUS100),
+	ID16(1000, 1004, BUS100),
+	ID16( 800,  844, BUS100),
+	ID16( 600,  844, BUS100),
+	ID16( 400,  844, BUS100),
+};
+
+/* 1.80GHz Centaur C7-M 400 MHz FSB */
+static const uint16_t C7M_784[] = {
+	ID16(1800, 1148, BUS100),
+	ID16(1600, 1100, BUS100),
+	ID16(1400, 1052, BUS100),
+	ID16(1000, 1004, BUS100),
+	ID16( 800,  844, BUS100),
+	ID16( 600,  844, BUS100),
+	ID16( 400,  844, BUS100),
+};
+
+/* 2.00GHz Centaur C7-M 400 MHz FSB */
+static const uint16_t C7M_794[] = {
+	ID16(2000, 1148, BUS100),
+	ID16(1800, 1132, BUS100),
+	ID16(1600, 1100, BUS100),
+	ID16(1400, 1052, BUS100),
+	ID16(1000, 1004, BUS100),
+	ID16( 800,  844, BUS100),
+	ID16( 600,  844, BUS100),
+	ID16( 400,  844, BUS100),
+};
+
+/* 1.60GHz Centaur C7-M 533 MHz FSB */
+static const uint16_t C7M_765[] = {
+	ID16(1600, 1084, BUS133),
+	ID16(1467, 1052, BUS133),
+	ID16(1200, 1004, BUS133),
+	ID16( 800,  844, BUS133),
+	ID16( 667,  844, BUS133),
+	ID16( 533,  844, BUS133),
+};
+
+/* 2.00GHz Centaur C7-M 533 MHz FSB */
+static const uint16_t C7M_785[] = {
+	ID16(1867, 1148, BUS133),
+	ID16(1600, 1100, BUS133),
+	ID16(1467, 1052, BUS133),
+	ID16(1200, 1004, BUS133),
+	ID16( 800,  844, BUS133),
+	ID16( 667,  844, BUS133),
+	ID16( 533,  844, BUS133),
+};
+
+/* 2.00GHz Centaur C7-M 533 MHz FSB */
+static const uint16_t C7M_795[] = {
+	ID16(2000, 1148, BUS133),
+	ID16(1867, 1132, BUS133),
+	ID16(1600, 1100, BUS133),
+	ID16(1467, 1052, BUS133),
+	ID16(1200, 1004, BUS133),
+	ID16( 800,  844, BUS133),
+	ID16( 667,  844, BUS133),
+	ID16( 533,  844, BUS133),
+};
+
+/* 1.00GHz VIA Eden 90nm 'Esther' */
+static const uint16_t eden90_1000[] = {
+	ID16(1000,  844, BUS100),
+	ID16( 800,  844, BUS100),
+	ID16( 600,  844, BUS100),
+	ID16( 400,  844, BUS100),
+};
+
 struct fqlist {
 	int vendor;
 	unsigned bus_clk;
@@ -842,7 +975,22 @@ static const struct fqlist est_cpus[] = {
 	ENTRY(INTEL, BUS100, pm90_n765c),
 	ENTRY(INTEL, BUS100, pm90_n765e),
 	ENTRY(INTEL, BUS133, pm90_n770),
-	ENTRY(INTEL, BUS133, pm90_n780)
+	ENTRY(INTEL, BUS133, pm90_n780),
+
+	ENTRY(IDT, BUS100, C7M_770_ULV),
+	ENTRY(IDT, BUS100, C7M_779_ULV),
+	ENTRY(IDT, BUS100, C7M_772_ULV),
+	ENTRY(IDT, BUS100, C7M_771),
+	ENTRY(IDT, BUS100, C7M_775_ULV),
+	ENTRY(IDT, BUS100, C7M_754),
+	ENTRY(IDT, BUS100, C7M_764),
+	ENTRY(IDT, BUS133, C7M_765),
+	ENTRY(IDT, BUS100, C7M_784),
+	ENTRY(IDT, BUS133, C7M_785),
+	ENTRY(IDT, BUS100, C7M_794),
+	ENTRY(IDT, BUS133, C7M_795),
+
+	ENTRY(IDT, BUS100, eden90_1000)
 };
 
 #define MSR2FREQINC(msr)	(((int) (msr) >> 8) & 0xff)
@@ -918,6 +1066,8 @@ est_init(int vendor)
 	int error;
 	static ONCE_DECL(est_initialized);
 
+	lvendor = vendor;
+
 	error = RUN_ONCE(&est_initialized, est_init_once);
 	if (__predict_false(error != 0))
 		return;
@@ -941,15 +1091,17 @@ est_init_main(int vendor)
 
 	if (CPUID2FAMILY(curcpu()->ci_signature) == 15)
 		bus_clock = p4_get_bus_clock(curcpu());
-	else if (CPUID2FAMILY(curcpu()->ci_signature) == 6)
-		bus_clock = p3_get_bus_clock(curcpu());
+	else if (CPUID2FAMILY(curcpu()->ci_signature) == 6) {
+		if (vendor == CPUVENDOR_IDT)
+			bus_clock = via_get_bus_clock(curcpu());
+		else
+			bus_clock = p3_get_bus_clock(curcpu());
+	}
 
 	if (bus_clock == 0) {
 		aprint_normal("%s: unknown system bus clock\n", __func__);
 		return;
 	}
-
-	lvendor = vendor;
 
 	msr = rdmsr(MSR_PERF_STATUS);
 	idhi = (msr >> 32) & 0xffff;

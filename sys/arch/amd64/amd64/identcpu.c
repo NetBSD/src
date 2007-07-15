@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.11.2.3 2007/06/09 23:54:51 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.11.2.4 2007/07/15 13:15:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11.2.3 2007/06/09 23:54:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11.2.4 2007/07/15 13:15:21 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -131,7 +131,8 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_dev->dv_xname, buf);
 	}
 
-	if ((ci->ci_feature_flags & CPUID_MASK4) != 0) {
+	if (vendor == CPUVENDOR_INTEL &&
+	    (ci->ci_feature_flags & CPUID_MASK4) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    CPUID_FLAGS4, buf, sizeof(buf));
 		aprint_verbose("%s: features3: %s\n",

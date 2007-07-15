@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.31 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: promcons.c,v 1.31.2.1 2007/07/15 13:15:19 ad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.31 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.31.2.1 2007/07/15 13:15:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ void	promstart(struct tty *);
 void	promtimeout(void *);
 int	promparam(struct tty *, struct termios *);
 
-struct callout prom_ch = CALLOUT_INITIALIZER;
+struct callout prom_ch;
 
 int
 promopen(dev_t dev, int flag, int mode, struct lwp *l)
@@ -86,6 +86,12 @@ promopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout = 0;
+	static bool callo;
+
+	if (!callo) {
+		callout_init(&prom_ch, 0);
+		callo = true;
+	}
  
 	if (!pmap_uses_prom_console() || unit >= 1)
 		return ENXIO;

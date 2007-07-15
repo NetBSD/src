@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.1.2.3 2007/06/09 23:55:32 ad Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.1.2.4 2007/07/15 13:17:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.1.2.3 2007/06/09 23:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.1.2.4 2007/07/15 13:17:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,34 @@ __KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.1.2.3 2007/06/09 23:55:32 ad Ex
 #include <machine/cpu.h>
 
 #include <x86/cpuvar.h>
+
+int
+via_get_bus_clock(struct cpu_info *ci)
+{
+	uint64_t msr;
+	int bus, bus_clock = 0;
+
+	msr = rdmsr(MSR_EBL_CR_POWERON);
+	bus = (msr >> 18) & 0x3;
+	switch (bus) {
+	case 0:
+		bus_clock = 10000;
+		break;
+	case 1:
+		bus_clock = 13333;
+		break;
+	case 2:
+		bus_clock = 20000;
+		break;
+	case 3:
+		bus_clock = 16667;
+		break;
+	default:
+		break;
+	}
+
+	return bus_clock;
+}
 
 int
 p3_get_bus_clock(struct cpu_info *ci)

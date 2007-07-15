@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.14.2.1 2007/06/09 23:57:50 ad Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.14.2.2 2007/07/15 13:21:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.14.2.1 2007/06/09 23:57:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.14.2.2 2007/07/15 13:21:13 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -910,12 +910,9 @@ sonic_init(struct ifnet *ifp)
 	 * Bring the SONIC into reset state, and program the DCR.
 	 *
 	 * Note: We don't bother optimizing the transmit and receive
-	 * thresholds, here.  We just use the most conservative values:
-	 *
-	 *	- Rx: 4 bytes (RFT0,RFT0 == 0,0)
-	 *	- Tx: 28 bytes (TFT0,TFT1 == 1,1)
+	 * thresholds, here. TFT/RFT values should be set in MD attachments.
 	 */
-	reg = sc->sc_dcr | DCR_TFT0 | DCR_TFT1;
+	reg = sc->sc_dcr;
 	if (sc->sc_32bit)
 		reg |= DCR_DW;
 	CSR_WRITE(sc, SONIC_CR, CR_RST);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.13.2.1 2007/05/27 14:30:28 ad Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.13.2.2 2007/07/15 13:21:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -36,6 +36,9 @@
 #ifndef _DEV_SYSMON_SYSMONVAR_H_
 #define	_DEV_SYSMON_SYSMONVAR_H_
 
+#ifndef _LKM
+#include "opt_compat_netbsd.h"
+#endif
 #include <sys/envsys.h>
 #include <sys/wdog.h>
 #include <sys/power.h>
@@ -55,28 +58,28 @@ struct uio;
  *****************************************************************************/
 
 struct sysmon_envsys {
-	int32_t sme_envsys_version;	/* ENVSYS API version */
+	const char *sme_name;			/* envsys device name */
+	uint32_t sme_nsensors;			/* sensor count, from driver */
+	int sme_flags;				/* additional flags */
+#define SME_FLAG_BUSY 		0x00000001 	/* sme is busy */
+#define SME_FLAG_WANTED 	0x00000002 	/* someone waiting for this */
+#define SME_DISABLE_GTREDATA	0x00000004	/* disable sme_gtredata */
 
+	envsys_data_t *sme_sensor_data;		/* pointer to device data */
+
+	/* linked list for the sysmon envsys devices */
 	LIST_ENTRY(sysmon_envsys) sme_list;
 
-	const struct envsys_range *sme_ranges;
-	struct envsys_basic_info *sme_sensor_info;
-	struct envsys_tre_data *sme_sensor_data;
-	void *sme_cookie;		/* for ENVSYS back-end */
+	void *sme_cookie;			/* for ENVSYS back-end */
 
-	/* Callbacks */
-	int (*sme_gtredata)(struct sysmon_envsys *, struct envsys_tre_data *);
-	int (*sme_streinfo)(struct sysmon_envsys *, struct envsys_basic_info *);
+	/* Function callback to recieve data from device */
+	int (*sme_gtredata)(struct sysmon_envsys *, envsys_data_t *);
 
+#ifdef COMPAT_40
 	u_int sme_fsensor;		/* sensor index base, from sysmon */
-	u_int sme_nsensors;		/* sensor count, from driver */
-	int sme_flags;			/* SME_FLAG_ flags defined below */
+#define SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
+#endif
 };
-
-#define	SME_FLAG_BUSY	0x00000001		/* sme is busy */
-#define	SME_FLAG_WANTED	0x00000002		/* someone waiting for this */
-
-#define	SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
 
 int	sysmonopen_envsys(dev_t, int, int, struct lwp *);
 int	sysmonclose_envsys(dev_t, int, int, struct lwp *);
@@ -84,6 +87,9 @@ int	sysmonioctl_envsys(dev_t, u_long, void *, int, struct lwp *);
 
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
+struct	sysmon_envsys *sysmon_envsys_find(const char *);
+
+void	sysmon_envsys_init(void);
 
 /*****************************************************************************
  * Watchdog timer support
@@ -134,5 +140,8 @@ int	sysmon_pswitch_register(struct sysmon_pswitch *);
 void	sysmon_pswitch_unregister(struct sysmon_pswitch *);
 
 void	sysmon_pswitch_event(struct sysmon_pswitch *, int);
- 
+void	sysmon_penvsys_event(struct penvsys_state *, int);
+
+void	sysmon_power_init(void);
+
 #endif /* _DEV_SYSMON_SYSMONVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sl82c105_reg.h,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: pciide_sl82c105_reg.h,v 1.3.30.1 2007/07/15 13:21:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,13 +54,13 @@
 #define	SYMPH_P0D0CR	0x44		/* port 0 drive 0 control */
 #define	SYMPH_P0D1CR	0x48		/* port 0 drive 1 control */
 #define	SYMPH_P1D0CR	0x4c		/* port 1 drive 0 control */
-#define	SYMPH_P1D1CR	0c50		/* port 1 drive 1 control */
+#define	SYMPH_P1D1CR	0x50		/* port 1 drive 1 control */
 
 #define	IDECR_IDE_IRQB	(1U << 30)	/* IDE_IRQB signal */
 #define	IDECR_IDE_IRQA	(1U << 28)	/* IDE_IRQA signal */
 #define	IDECR_RA_SHIFT	16		/* read-ahead duration */
 #define	IDECR_RA_MASK	(0x7ff << IDECR_RA_SHIFT)
-#define	IDECR_LEGIRQ	(1U << 1)	/* legacy IRQ mode */
+#define	IDECR_LEGIRQ	(1U << 11)	/* don't use legacy IRQ mode */
 #define	IDECR_P1F16	(1U << 5)	/* port 1 fast 16 */
 #define	IDECR_P1EN	(1U << 4)	/* port 1 enable */
 #define	IDECR_P0F16	(1U << 1)	/* port 0 fast 16 */

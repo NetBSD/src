@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.4 2007/03/04 06:02:24 christos Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.4.2.1 2007/07/15 13:21:36 ad Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -80,6 +80,7 @@ struct wpi_tx_ring {
 };
 
 #define WPI_RBUF_COUNT	(WPI_RX_RING_COUNT + 16)
+#define WPI_RBUF_LOW_LIMIT	8
 
 struct wpi_softc;
 
@@ -101,12 +102,26 @@ struct wpi_rx_ring {
 	struct wpi_rx_data	data[WPI_RX_RING_COUNT];
 	struct wpi_rbuf		rbuf[WPI_RBUF_COUNT];
 	SLIST_HEAD(, wpi_rbuf)	freelist;
+	int			nb_free_entries;
 	int			cur;
 };
 
 struct wpi_node {
 	struct	ieee80211_node ni;	/* must be the first */
 	struct	ieee80211_amrr_node	amn;
+};
+
+struct wpi_power_sample {
+	uint8_t	index;
+	int8_t	power;
+};
+
+struct wpi_power_group {
+#define WPI_SAMPLES_COUNT	5
+	struct	wpi_power_sample samples[WPI_SAMPLES_COUNT];
+	uint8_t	chan;
+	int8_t	maxpwr;
+	int16_t	temp;
 };
 
 struct wpi_softc {
@@ -118,14 +133,14 @@ struct wpi_softc {
 
 	struct ieee80211_amrr	amrr;
 
-	uint32_t		flags;
-#define WPI_FLAG_FW_INITED	(1 << 0)
-
 	bus_dma_tag_t		sc_dmat;
 
 	/* shared area */
 	struct wpi_dma_info	shared_dma;
 	struct wpi_shared	*shared;
+
+	/* firmware DMA transfer */
+	struct wpi_dma_info	fw_dma;
 
 	struct wpi_tx_ring	txq[4];
 	struct wpi_tx_ring	cmdq;
@@ -139,11 +154,17 @@ struct wpi_softc {
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
 
-	struct callout	amrr_ch;
+	struct callout		calib_to;
+	int			calib_cnt;	
 
 	struct wpi_config	config;
-	uint16_t		pwr1[14];
-	uint16_t		pwr2[14];
+	int			temp;
+
+	uint8_t			cap;
+	uint16_t		rev;
+	uint8_t			type;
+	struct wpi_power_group	groups[WPI_POWER_GROUPS_COUNT];
+	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
 	void			*powerhook;

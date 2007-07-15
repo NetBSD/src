@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.2.6.2 2007/06/09 21:37:02 ad Exp $ */
+/* $NetBSD: mavb.c,v 1.2.6.3 2007/07/15 13:16:55 ad Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -1139,7 +1139,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_play_rate = 48000;
 	sc->sc_play_format = AD1843_PCM8;
 
-	callout_init(&sc->sc_volume_button_ch);
+	callout_init(&sc->sc_volume_button_ch, 0);
 
 	audio_attach_mi(&mavb_sa_hw_if, sc, &sc->sc_dev);
 

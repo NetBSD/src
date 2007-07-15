@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87.2.2 2007/05/27 12:27:11 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.87.2.3 2007/07/15 13:15:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87.2.2 2007/05/27 12:27:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87.2.3 2007/07/15 13:15:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87.2.2 2007/05/27 12:27:11 ad Exp $");
 extern struct emul emul_sunos;
 #endif
 
-void trap __P((int, u_int, u_int, struct frame));
+void trap __P((struct frame *, int, u_int, u_int));
 
 static void panictrap __P((int, u_int, u_int, struct frame *));
 static void trapcpfault __P((struct lwp *, struct frame *));
@@ -368,10 +368,10 @@ trapcpfault(l, fp)
  */
 /*ARGSUSED*/
 void
-trap(type, code, v, frame)
+trap(fp, type, code, v)
+	struct frame	*fp;
 	int		type;
 	u_int		code, v;
-	struct frame	frame;
 {
 	struct lwp	*l;
 	struct proc	*p;
@@ -394,22 +394,22 @@ trap(type, code, v, frame)
 		panic("trap: no pcb");
 #endif
 
-	if (USERMODE(frame.f_sr)) {
+	if (USERMODE(fp->f_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		l->l_md.md_regs = frame.f_regs;
+		l->l_md.md_regs = fp->f_regs;
 		LWP_CACHE_CREDS(l, p);
 	}
 	switch (type) {
 	default:
-		panictrap(type, code, v, &frame);
+		panictrap(type, code, v, fp);
 	/*
 	 * Kernel Bus error
 	 */
 	case T_BUSERR:
 		if (l->l_addr->u_pcb.pcb_onfault == 0)
-			panictrap(type, code, v, &frame);
-		trapcpfault(l, &frame);
+			panictrap(type, code, v, fp);
+		trapcpfault(l, fp);
 		return;
 	/*
 	 * User Bus/Addr error.
@@ -449,7 +449,7 @@ trap(type, code, v, frame)
 		mutex_exit(&p->p_smutex);
 
 		ksi.ksi_signo = SIGILL;
-		ksi.ksi_addr = (void *)(int)frame.f_format;
+		ksi.ksi_addr = (void *)(int)fp->f_format;
 				/* XXX was ILL_RESAD_FAULT */
 		ksi.ksi_code = (type == T_COPERR) ?
 			ILL_COPROC : ILL_ILLOPC;
@@ -488,9 +488,9 @@ trap(type, code, v, frame)
 	case T_FPEMULI|T_USER:
 	case T_FPEMULD|T_USER:
 #ifdef FPU_EMULATE
-		if (fpu_emulate(&frame, &l->l_addr->u_pcb.pcb_fpregs,
+		if (fpu_emulate(fp, &l->l_addr->u_pcb.pcb_fpregs,
 			&ksi) == 0)
-			; /* XXX - Deal with tracing? (frame.f_sr & PSL_T) */
+			; /* XXX - Deal with tracing? (fp->f_sr & PSL_T) */
 #else
 		uprintf("pid %d killed: no floating point support.\n",
 			p->p_pid);
@@ -508,7 +508,7 @@ trap(type, code, v, frame)
 
 		if (nofault)	/* If we're probing. */
 			longjmp((label_t *) nofault);
-		panictrap(type, code, v, &frame);
+		panictrap(type, code, v, fp);
 	}
 
 	/*
@@ -516,7 +516,7 @@ trap(type, code, v, frame)
 	 */
 	case T_ILLINST|T_USER:
 	case T_PRIVINST|T_USER:
-		ksi.ksi_addr = (void *)(int)frame.f_format;
+		ksi.ksi_addr = (void *)(int)fp->f_format;
 				/* XXX was ILL_PRIVIN_FAULT */
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_code = (type == (T_PRIVINST|T_USER)) ?
@@ -530,7 +530,7 @@ trap(type, code, v, frame)
 		ksi.ksi_code = FPE_FLTDIV;
 	case T_CHKINST|T_USER:
 	case T_TRAPVINST|T_USER:
-		ksi.ksi_addr = (void *)(int)frame.f_format;
+		ksi.ksi_addr = (void *)(int)fp->f_format;
 		ksi.ksi_signo = SIGFPE;
 		break;
 	/*
@@ -550,7 +550,7 @@ trap(type, code, v, frame)
 	 * XXX: because locore.s now gives them special treatment.
 	 */
 	case T_TRAP15:
-		frame.f_sr &= ~PSL_T;
+		fp->f_sr &= ~PSL_T;
 		return;
 
 	case T_TRACE|T_USER:
@@ -568,14 +568,14 @@ trap(type, code, v, frame)
 		/* FALLTHROUGH */
 	case T_TRACE:		/* tracing a trap instruction */
 	case T_TRAP15|T_USER:
-		frame.f_sr &= ~PSL_T;
+		fp->f_sr &= ~PSL_T;
 		ksi.ksi_signo = SIGTRAP;
 		break;
 	/* 
 	 * Kernel AST (should not happen)
 	 */
 	case T_ASTFLT:
-		panictrap(type, code, v, &frame);
+		panictrap(type, code, v, fp);
 	/*
 	 * User AST
 	 */
@@ -624,7 +624,7 @@ trap(type, code, v, frame)
 		 */
 		if (l->l_addr->u_pcb.pcb_onfault == (void *)fubail ||
 		    l->l_addr->u_pcb.pcb_onfault == (void *)subail) {
-			trapcpfault(l, &frame);
+			trapcpfault(l, fp);
 			return;
 		}
 		/*FALLTHROUGH*/
@@ -640,7 +640,7 @@ trap(type, code, v, frame)
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
 		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
-		       p ? p->p_pid : -1, code, v, frame.f_pc, frame.f_sr);
+		       p ? p->p_pid : -1, code, v, fp->f_pc, fp->f_sr);
 #endif
 		/*
 		 * It is only a kernel address space fault iff:
@@ -664,7 +664,7 @@ trap(type, code, v, frame)
 #ifdef DEBUG
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", v);
-			panictrap(type, code, v, &frame);
+			panictrap(type, code, v, fp);
 		}
 #endif
 		rv = uvm_fault(map, va, ftype);
@@ -687,7 +687,7 @@ trap(type, code, v, frame)
 			if (type == T_MMUFLT) {
 #ifdef M68040
 				if (cputype == CPU_68040)
-					(void) writeback(&frame, 1);
+					(void) writeback(fp, 1);
 #endif
 				return;
 			}
@@ -700,14 +700,14 @@ trap(type, code, v, frame)
 			ksi.ksi_code = SEGV_MAPERR;
 		if (type == T_MMUFLT) {
 			if (l->l_addr->u_pcb.pcb_onfault) {
-				trapcpfault(l, &frame);
+				trapcpfault(l, fp);
 				return;
 			}
 			printf("\nvm_fault(%p, %lx, %x) -> %x\n",
 			       map, va, ftype, rv);
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
-			panictrap(type, code, v, &frame);
+			panictrap(type, code, v, fp);
 		}
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
@@ -728,7 +728,7 @@ trap(type, code, v, frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(l, &frame, sticks, v, 1); 
+	userret(l, fp, sticks, v, 1); 
 }
 
 #ifdef M68040

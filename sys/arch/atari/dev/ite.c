@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.54 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.54.2.1 2007/07/15 13:15:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.54 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.54.2.1 2007/07/15 13:15:42 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -919,7 +919,7 @@ enum caller	caller;
 static u_int last_char;
 static u_char tout_pending;
 
-static struct callout repeat_ch = CALLOUT_INITIALIZER;
+static callout_t repeat_ch;
 
 /*ARGSUSED*/
 static void
@@ -942,6 +942,13 @@ enum caller	caller;
 	u_char		code, *str, up, mask;
 	struct key	key;
 	int		s, i;
+	static bool	again;
+
+	if (!again) {
+		/* XXX */
+		callout_init(&repeat_ch, 0);
+		again = true;
+	}
 
 	if(kbd_ite == NULL)
 		return;

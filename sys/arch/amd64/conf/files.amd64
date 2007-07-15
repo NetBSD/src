@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.33.2.2 2007/05/27 12:27:00 ad Exp $
+#	$NetBSD: files.amd64,v 1.33.2.3 2007/07/15 13:15:23 ad Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -45,7 +45,6 @@ file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
 file	arch/amd64/amd64/math_emulate.c	math_emulate
 file	arch/amd64/amd64/mem.c
-file	netns/ns_cksum.c			ns
 file	arch/amd64/amd64/pmap.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
@@ -89,7 +88,7 @@ file	arch/amd64/amd64/bios32.c		bios32 needs-flag
 #
 
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus
+device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus, ipmibus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 

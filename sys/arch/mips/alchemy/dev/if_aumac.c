@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.20 2007/03/06 00:43:50 simonb Exp $ */
+/* $NetBSD: if_aumac.c,v 1.20.2.1 2007/07/15 13:16:25 ad Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.20 2007/03/06 00:43:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.20.2.1 2007/07/15 13:16:25 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -237,7 +237,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	vaddr_t vbufaddr;
 	int i;
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	printf(": Au1X00 10/100 Ethernet\n");
 

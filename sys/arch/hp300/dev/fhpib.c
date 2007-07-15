@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.34.14.1 2007/07/15 13:15:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.34 2006/07/21 18:05:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.34.14.1 2007/07/15 13:15:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,8 +185,8 @@ fhpibattach(struct device *parent, struct device *self, void *aux)
 	/* Establish the interrupt handler. */
 	(void)dio_intr_establish(fhpibintr, sc, da->da_ipl, IPL_BIO);
 
-	callout_init(&sc->sc_dmadone_ch);
-	callout_init(&sc->sc_ppwatch_ch);
+	callout_init(&sc->sc_dmadone_ch, 0);
+	callout_init(&sc->sc_ppwatch_ch, 0);
 
 	ha.ha_ops = &fhpib_controller;
 	ha.ha_type = HPIBC;			/* XXX */

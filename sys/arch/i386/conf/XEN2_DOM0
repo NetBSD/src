@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.23.6.3 2007/06/09 23:55:11 ad Exp $
+# $NetBSD: XEN2_DOM0,v 1.23.6.4 2007/07/15 13:16:10 ad Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -164,7 +164,6 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
@@ -206,16 +205,25 @@ xencons*	at hypervisor?		# Xen virtual console
 #sd*		at hypervisor?		# Xen vbd (sd identity)
 #cd*		at hypervisor?		# Xen vbd (cd identity)
 
+# PCI bus support
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
+
+# PCI bridges
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
+					# SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+# XXX 'puc's aren't really bridges, but there's no better place for them here
+puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 agp* 	at pchb?
 
-# XXX 'puc's aren't really bridges, but there's no better place for them here
-puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
+# ISA bus support
+#isa0	at ichlpcib?
+isa0	at pcib?
+isa0	at hypervisor?
 
 # Serial Devices
 
@@ -452,10 +460,6 @@ ld*	at twa? unit ?
 ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
-
-# ISA bus support
-isa0	at pcib?
-isa0	at hypervisor?
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller

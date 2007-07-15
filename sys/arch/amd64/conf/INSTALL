@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.66.2.2 2007/05/27 12:27:00 ad Exp $
+# $NetBSD: INSTALL,v 1.66.2.3 2007/07/15 13:15:23 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.66.2.2 $"
+#ident 		"INSTALL-$Revision: 1.66.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -121,7 +121,6 @@ options 	INET6		# IPV6
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 

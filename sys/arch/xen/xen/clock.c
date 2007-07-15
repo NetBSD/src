@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34.8.1 2007/05/27 14:27:09 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.34.8.2 2007/07/15 13:17:21 ad Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34.8.1 2007/05/27 14:27:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34.8.2 2007/07/15 13:17:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ static volatile uint64_t xen_clock_bias = 0;
 #ifdef DOM0OPS
 /* If we're dom0, send our time to Xen every minute or so. */
 int xen_timepush_ticks = 0;
-static struct callout xen_timepush_co = CALLOUT_INITIALIZER;
+static callout_t xen_timepush_co;
 #endif
 
 #define NS_PER_TICK (1000000000ULL/hz)
@@ -276,11 +276,32 @@ get_system_time(void)
 	return stime;
 }
 
+static void
+xen_wall_time(struct timespec *wt)
+{
+	uint64_t nsec;
+	int s;
+
+	s = splhigh();
+	get_time_values_from_xen();
+	*wt = shadow_ts;
+	nsec = wt->tv_nsec;
+#ifdef XEN3
+	/* Under Xen3, this is the wall time less system time */
+	nsec += get_system_time();
+	splx(s);
+	wt->tv_sec += nsec / 1000000000L;
+	wt->tv_nsec = nsec % 1000000000L;
+#else
+	/* Under Xen2 , this is the current wall time. */
+	splx(s);
+#endif
+}
+
 void
 inittodr(time_t base)
 {
-	struct timespec sts;
-	int s;
+	struct timespec wt;
 
 	/*
 	 * if the file system time is more than a year older than the
@@ -291,12 +312,8 @@ inittodr(time_t base)
 		base = CONFIG_TIME;
 	}
 
-	s = splhigh();
-	get_time_values_from_xen();
-	sts = shadow_ts;
-	splx(s);
-
-	tc_setclock(&sts); /* XXX what about rtc_offset? */
+	xen_wall_time(&wt);
+	tc_setclock(&wt); /* XXX what about rtc_offset? */
 	
 	if (base != 0 && base < time_second - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
@@ -311,8 +328,8 @@ inittodr(time_t base)
 
 fstime:
 	timeset = 1;
-	sts.tv_sec = base;
-	tc_setclock(&sts);
+	wt.tv_sec = base;
+	tc_setclock(&wt);
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
@@ -427,7 +444,7 @@ xen_delay(int n)
 static void
 xen_timepush(void *arg)
 {
-	struct callout *co = arg;
+	callout_t *co = arg;
 
 	resettodr();
 	if (xen_timepush_ticks > 0)
@@ -481,6 +498,9 @@ xen_initclocks()
 {
 	int evtch;
 
+#ifdef DOM0OPS
+	callout_init(&xen_timepush_co, 0);
+#endif
 	evtch = bind_virq_to_evtch(VIRQ_TIMER);
 	aprint_verbose("Xen clock: using event channel %d\n", evtch);
 
@@ -557,7 +577,7 @@ setstatclockrate(int arg)
 void
 idle_block(void)
 {
-	int s, r;
+	int r;
 
 	/*
 	 * We set the timer to when we expect the next timer
@@ -565,9 +585,9 @@ idle_block(void)
 	 * easily find out when we will have more work (callouts) to
 	 * process from hardclock.
 	 */
-	s = splclock();
 	r = HYPERVISOR_set_timer_op(processed_system_time + NS_PER_TICK);
-	splx(s);
 	if (r == 0)
 		HYPERVISOR_block();
+	else
+		__sti();
 }

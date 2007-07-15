@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.27 2007/03/04 06:01:59 christos Exp $	*/
+/*	$NetBSD: osiop.c,v 1.27.2.1 2007/07/15 13:21:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.27 2007/03/04 06:01:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.27.2.1 2007/07/15 13:21:16 ad Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -277,13 +277,6 @@ osiop_attach(struct osiop_softc *sc)
 	for (i = 0; i < OSIOP_NACB; i++) {
 		bus_addr_t dsa;
 
-		/* XXX How much size is required for each command block? */
-		err = bus_dmamap_create(sc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
-		    0, BUS_DMA_NOWAIT, &acb->cmddma);
-		if (err) {
-			printf(": failed to create cmddma map, err=%d\n", err);
-			return;
-		}
 		err = bus_dmamap_create(sc->sc_dmat, OSIOP_MAX_XFER, OSIOP_NSG,
 		    OSIOP_MAX_XFER, 0, BUS_DMA_NOWAIT, &acb->datadma);
 		if (err) {
@@ -298,6 +291,7 @@ osiop_attach(struct osiop_softc *sc)
 
 		dsa = sc->sc_dsdma->dm_segs[0].ds_addr + acb->dsoffset;
 		acb->ds->id.addr = dsa + OSIOP_DSIDOFF;
+		acb->ds->cmd.addr = dsa + OSIOP_DSCMDOFF;
 		acb->ds->status.count = 1;
 		acb->ds->status.addr = dsa + OSIOP_DSSTATOFF;
 		acb->ds->msg.count = 1;
@@ -410,19 +404,6 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		acb->status = ACB_S_READY;
 		acb->xs = xs;
 
-		/* Setup DMA map for SCSI command buffer */
-		err = bus_dmamap_load(sc->sc_dmat, acb->cmddma,
-		    xs->cmd, xs->cmdlen, NULL, BUS_DMA_NOWAIT);
-		if (err) {
-			printf("%s: unable to load cmd DMA map: %d\n",
-			    sc->sc_dev.dv_xname, err);
-			xs->error = XS_DRIVER_STUFFUP;
-			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
-			scsipi_done(xs);
-			splx(s);
-			return;
-		}
-
 		/* Setup DMA map for data buffer */
 		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 			err = bus_dmamap_load(sc->sc_dmat, acb->datadma,
@@ -435,17 +416,11 @@ osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    sc->sc_dev.dv_xname, err);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
-				bus_dmamap_unload(sc->sc_dmat, acb->cmddma);
 				TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 				splx(s);
 				return;
 			}
-			bus_dmamap_sync(sc->sc_dmat, acb->datadma,
-			    0, xs->datalen, (xs->xs_control & XS_CTL_DATA_IN) ?
-			    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		}
-		bus_dmamap_sync(sc->sc_dmat, acb->cmddma, 0, xs->cmdlen,
-		    BUS_DMASYNC_PREWRITE);
 
 		acb->cmdlen = xs->cmdlen;
 		acb->datalen = xs->datalen;
@@ -569,8 +544,8 @@ osiop_sched(struct osiop_softc *sc)
 		printf("%s: osiop_sched- nexus %p/%d ready %p/%d\n",
 		    sc->sc_dev.dv_xname, sc->sc_nexus,
 		    sc->sc_nexus->xs->xs_periph->periph_target,
-		    sc->ready_list.tqh_first,
-		    sc->ready_list.tqh_first->xs->xs_periph->periph_target);
+		    TAILQ_FIRST(&sc->ready_list),
+		    TAILQ_FIRST(&sc->ready_list)->xs->xs_periph->periph_target);
 		return;
 	}
 #endif
@@ -670,10 +645,6 @@ osiop_scsidone(struct osiop_acb *acb, int status)
 		bus_dmamap_unload(sc->sc_dmat, acb->datadma);
 	}
 
-	bus_dmamap_sync(sc->sc_dmat, acb->cmddma, 0, acb->cmdlen,
-	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, acb->cmddma);
-
 	/*
 	 * Remove the ACB from whatever queue it's on.  We have to do a bit of
 	 * a hack to figure out which queue it's on.  Note that it is *not*
@@ -689,7 +660,7 @@ osiop_scsidone(struct osiop_acb *acb, int status)
 			dosched = 1;	/* start next command */
 		sc->sc_active--;
 		OSIOP_TRACE('d', 'a', status, 0);
-	} else if (sc->ready_list.tqh_last == &acb->chain.tqe_next) {
+	} else if (sc->ready_list.tqh_last == &TAILQ_NEXT(acb, chain)) {
 		TAILQ_REMOVE(&sc->ready_list, acb, chain);
 		OSIOP_TRACE('d', 'r', status, 0);
 	} else {
@@ -704,7 +675,7 @@ osiop_scsidone(struct osiop_acb *acb, int status)
 			}
 		}
 		if (acb2 == NULL) {
-			if (acb->chain.tqe_next != NULL) {
+			if (TAILQ_NEXT(acb, chain) != NULL) {
 				TAILQ_REMOVE(&sc->ready_list, acb, chain);
 				sc->sc_active--;
 			} else {
@@ -953,8 +924,9 @@ osiop_start(struct osiop_softc *sc)
 
 	acb->intstat = 0;
 
+	/* Copy SCSI command to DMA buffer */
+	memcpy(ds->scsipi_cmd, xs->cmd, acb->cmdlen);
 	ds->cmd.count = acb->cmdlen;
-	ds->cmd.addr = acb->cmddma->dm_segs[0].ds_addr;
 
 	ti = &sc->sc_tinfo[target];
 	ds->scsi_addr = ((1 << 16) << target) | (ti->sxfer << 8);
@@ -1014,6 +986,10 @@ osiop_start(struct osiop_softc *sc)
 			ds->data[i].count = datadma->dm_segs[i].ds_len;
 			ds->data[i].addr  = datadma->dm_segs[i].ds_addr;
 		}
+		/* sync xfer data buffer */
+		bus_dmamap_sync(sc->sc_dmat, acb->datadma,
+		    0, acb->datalen, (xs->xs_control & XS_CTL_DATA_IN) ?
+		    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	}
 
 	/* sync script data structure */
@@ -1669,7 +1645,7 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 	 */
 	printf("osiop_chkintr: target %x ds %p\n", target, ds);
 	printf("scripts %lx ds %lx dsp %x dcmd %x\n", scraddr,
-	    sc->sc_dsdma->dm_segs[0].ds_addr + acb->dsoffset,
+	    acb ? sc->sc_dsdma->dm_segs[0].ds_addr + acb->dsoffset : 0,
 	    osiop_read_4(sc, OSIOP_DSP),
 	    osiop_read_4(sc, OSIOP_DBC));
 	printf("osiop_chkintr: istat %x dstat %x sstat0 %x "
@@ -1677,18 +1653,21 @@ osiop_checkintr(struct osiop_softc *sc, uint8_t istat, uint8_t dstat,
 	    istat, dstat, sstat0, intcode,
 	    osiop_read_4(sc, OSIOP_DSA),
 	    osiop_read_1(sc, OSIOP_SBCL),
-	    ds->stat[0], ds->msgbuf[0], ds->msgbuf[1],
+	    ds ? ds->stat[0] : 0,
+	    ds ? ds->msgbuf[0] : 0,
+	    ds ? ds->msgbuf[1] : 0,
 	    osiop_read_1(sc, OSIOP_SFBR));
 #ifdef OSIOP_DEBUG
 	if (osiop_debug & DEBUG_DMA)
 		panic("osiop_chkintr: **** temp ****");
-#endif
 #ifdef DDB
 	Debugger();
 #endif
+#endif
 	osiop_reset(sc);	/* hard reset */
 	*status = SCSI_OSIOP_NOSTATUS;
-	acb->status = ACB_S_DONE;
+	if (acb != NULL)
+		acb->status = ACB_S_DONE;
 	return (0);		/* osiop_reset cleaned up */
 }
 

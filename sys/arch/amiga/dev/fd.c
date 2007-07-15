@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.69 2007/03/05 18:45:10 he Exp $ */
+/*	$NetBSD: fd.c,v 1.69.2.1 2007/07/15 13:15:27 ad Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.69 2007/03/05 18:45:10 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.69.2.1 2007/07/15 13:15:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,8 +399,8 @@ fdattach(struct device *pdp, struct device *dp, void *auxp)
 	sc = (struct fd_softc *)dp;
 
 	bufq_alloc(&sc->bufq, "disksort", BUFQ_SORT_CYLINDER);
-	callout_init(&sc->calibrate_ch);
-	callout_init(&sc->motor_ch);
+	callout_init(&sc->calibrate_ch, 0);
+	callout_init(&sc->motor_ch, 0);
 
 	sc->curcyl = sc->cachetrk = -1;
 	sc->openpart = -1;

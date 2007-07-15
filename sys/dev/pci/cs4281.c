@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.33 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.33.8.1 2007/07/15 13:21:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.33 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.33.8.1 2007/07/15 13:21:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,6 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;
 	char const *intrstr;
-	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char devinfo[256];
 	int error;
@@ -200,6 +199,9 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
+
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pt = pa->pa_tag;
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_BA0,
@@ -241,14 +243,15 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &sc->intrh)) {
 		aprint_error("%s: couldn't map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
+	intrstr = pci_intr_string(pc, sc->intrh);
 
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, cs4281_intr, sc);
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
+	    cs4281_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
@@ -751,6 +754,11 @@ cs4281_power(int why, void *v)
 		/* Stop DMA */
 		BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
 		BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
+
+		pci_conf_capture(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
+		if (sc->sc_ih != NULL)
+			pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+
 		break;
 	case PWR_RESUME:
 		if (sc->sc_suspend == PWR_RESUME) {
@@ -758,6 +766,17 @@ cs4281_power(int why, void *v)
 			sc->sc_suspend = why;
 			return;
 		}
+
+		sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh,
+		    IPL_AUDIO, cs4281_intr, sc);
+		if (sc->sc_ih == NULL) {
+			aprint_error("%s: can't establish interrupt",
+			    sc->sc_dev.dv_xname);
+			/* XXX jmcneill what should we do here? */
+			return;
+		}
+		pci_conf_restore(sc->sc_pc, sc->sc_pt, &sc->sc_pciconf);
+
 		sc->sc_suspend = why;
 		cs4281_init(sc, 0);
 		cs4281_reset_codec(sc);

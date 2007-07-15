@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.4 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.4.6.1 2007/07/15 13:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #define	IOC_LOCKSTAT_GVERSION	_IOR('L', 0, int)
 
-#define	LS_VERSION	3
+#define	LS_VERSION	4
 
 /*
  * Enable request.  We can limit tracing by the call site and by
@@ -72,6 +72,7 @@
 #define LE_CALLSITE	0x01		/* track call sites */
 #define	LE_ONE_CALLSITE	0x02		/* specific call site */
 #define	LE_ONE_LOCK	0x04		/* specific lock */
+#define LE_LOCK		0x08		/* track locks */
 
 typedef struct lsenable {
 	uintptr_t	le_csstart;	/* callsite start */

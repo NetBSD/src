@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.3 2007/03/05 03:22:06 dogcow Exp $	*/
+/*	$NetBSD: bios32.c,v 1.3.2.1 2007/07/15 13:17:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.3 2007/03/05 03:22:06 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.3.2.1 2007/07/15 13:17:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ bios32_init()
 #if NIPMI > 0
 	/* see if we have SMBIOS extentions */
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
-	    p < ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
+	    p < (char *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 		struct smbhdr * sh = (struct smbhdr *)p;
 		u_int8_t chksum;
 		vaddr_t eva;
