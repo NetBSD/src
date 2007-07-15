@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15.2.2 2007/06/09 23:54:50 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.15.2.3 2007/07/15 16:22:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.2 2007/06/09 23:54:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.3 2007/07/15 16:22:52 xtraeme Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -551,10 +551,9 @@ cpu_hatch(void *v)
 	s = splhigh();
 	lcr8(0);
 	enable_intr();
-
-	aprint_debug("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
-	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
+
+	aprint_debug("%s: CPU %u running\n", ci->ci_dev->dv_xname, ci->ci_cpuid);
 }
 
 #if defined(DDB)
