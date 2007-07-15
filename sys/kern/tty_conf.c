@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.53.2.1 2007/03/21 20:11:53 ad Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.53.2.2 2007/07/15 22:16:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.53.2.1 2007/03/21 20:11:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.53.2.2 2007/07/15 22:16:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.53.2.1 2007/03/21 20:11:53 ad Exp $")
 #include <sys/tty.h>
 #include <sys/ttycom.h>
 #include <sys/conf.h>
-#include <sys/once.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 
@@ -171,9 +170,7 @@ ttyerrpoll(struct tty *tp, int events, struct lwp *l)
 	return (POLLERR);
 }
 
-static ONCE_DECL(ttyldisc_init_once);
-
-static int
+void
 ttyldisc_init(void)
 {
 
@@ -183,8 +180,6 @@ ttyldisc_init(void)
 		panic("ttyldisc_init: termios_disc");
 	if (ttyldisc_attach(&ntty_disc) != 0)
 		panic("ttyldisc_init: ntty_disc");
-
-	return 0;
 }
 
 static struct linesw *
@@ -209,8 +204,6 @@ ttyldisc_lookup(const char *name)
 {
 	struct linesw *disc;
 
-	RUN_ONCE(&ttyldisc_init_once, ttyldisc_init);
-
 	mutex_enter(&ttyldisc_list_lock);
 	disc = ttyldisc_lookup_locked(name);
 	if (disc != NULL)
@@ -228,8 +221,6 @@ struct linesw *
 ttyldisc_lookup_bynum(int num)
 {
 	struct linesw *disc;
-
-	RUN_ONCE(&ttyldisc_init_once, ttyldisc_init);
 
 	mutex_enter(&ttyldisc_list_lock);
 
