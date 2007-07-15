@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.45 2007/07/14 21:20:33 ad Exp $
+# $NetBSD: postinstall,v 1.46 2007/07/15 03:04:39 jnemeth Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -447,7 +447,7 @@ obsolete_paths()
 #
 obsolete_libs()
 {
-	[ $# -eq 1 ] || err 2 "USAGE: obsolete_paths dir"
+	[ $# -eq 1 ] || err 2 "USAGE: obsolete_libs dir"
 	dir=$1
 
 	(
