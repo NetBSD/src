@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.601.2.5 2007/06/17 21:30:37 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601.2.6 2007/07/15 15:52:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.5 2007/06/17 21:30:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601.2.6 2007/07/15 15:52:36 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -777,7 +777,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
@@ -1600,6 +1600,13 @@ init386(paddr_t first_avail)
 			case BIM_NVS:
 				break;
 			default:
+				continue;
+			}
+
+			/*
+			 * If the segment is smaller than a page, skip it.
+			 */
+			if (bim->entry[x].size < NBPG) {
 				continue;
 			}
 

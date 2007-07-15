@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.29.6.1 2007/05/27 14:30:04 ad Exp $ */
+/* $NetBSD: isp_target.c,v 1.29.6.2 2007/07/15 15:52:45 ad Exp $ */
 /*-
  * Copyright (c) 1997-2006 by Matthew Jacob
  * All rights reserved.
@@ -30,20 +30,20 @@
  */
 /*
  * Bug fixes gratefully acknowledged from:
- *     Oded Kedem <oded@kashya.com>
+ *	Oded Kedem <oded@kashya.com>
  */
 /*
  * Include header file appropriate for platform we're building on.
  */
 
 #ifdef	__NetBSD__
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.29.6.1 2007/05/27 14:30:04 ad Exp $");
+#include <sys/cdefs.h> 
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.29.6.2 2007/07/15 15:52:45 ad Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD:$");
 #include <dev/isp/isp_freebsd.h>
 #endif
 #ifdef	__OpenBSD__

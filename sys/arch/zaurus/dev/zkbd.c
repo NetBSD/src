@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.3.2.2 2007/07/15 13:17:24 ad Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.3.2.3 2007/07/15 15:52:38 ad Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.3.2.2 2007/07/15 13:17:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.3.2.3 2007/07/15 15:52:38 ad Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -258,8 +258,6 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	a.keymap = &zkbd_keymapdata;
 	a.accessops = &zkbd_accessops;
 	a.accesscookie = sc;
-
-	printf("\n");
 
 	zkbd_hinge(sc);		/* to initialize sc_hinge */
 

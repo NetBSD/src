@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.2 2007/07/15 13:27:34 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.3 2007/07/15 15:52:53 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.2 2007/07/15 13:27:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.3 2007/07/15 15:52:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,11 +62,11 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.2 2007/07/15 13:27:34 ad Exp
 
 #include <fs/tmpfs/tmpfs.h>
 
-MALLOC_DEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
+MALLOC_JUSTDEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
 
 /* --------------------------------------------------------------------- */
 
-static int	tmpfs_mount(struct mount *, const char *, void *,
+static int	tmpfs_mount(struct mount *, const char *, void *, size_t *,
 		    struct nameidata *, struct lwp *);
 static int	tmpfs_start(struct mount *, int, struct lwp *);
 static int	tmpfs_unmount(struct mount *, int, struct lwp *);

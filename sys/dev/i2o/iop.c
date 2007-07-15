@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.64.2.7 2007/07/15 13:21:12 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.64.2.8 2007/07/15 15:52:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.7 2007/07/15 13:21:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.64.2.8 2007/07/15 15:52:43 ad Exp $");
 
 #include "iop.h"
 
@@ -295,10 +295,6 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	mutex_init(&sc->sc_conflock, MUTEX_DRIVER, IPL_NONE);
 	cv_init(&sc->sc_confcv, "iopconf");
 
-	mutex_init(&sc->sc_intrlock, MUTEX_DRIVER, IPL_VM);
-	mutex_init(&sc->sc_conflock, MUTEX_DRIVER, IPL_NONE);
-	cv_init(&sc->sc_confcv, "iopconf");
-
 	if (iop_ictxhashtbl == NULL)
 		iop_ictxhashtbl = hashinit(IOP_ICTXHASH_NBUCKETS, HASH_LIST,
 		    M_DEVBUF, M_NOWAIT, &iop_ictxhash);
@@ -341,9 +337,6 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	/* So that our debug checks don't choke. */
 	sc->sc_framesize = 128;
 #endif
-
-	/* Avoid syncing the reply map until it's set up. */
-	sc->sc_curib = 0x123;
 
 	/* Avoid syncing the reply map until it's set up. */
 	sc->sc_curib = 0x123;
@@ -607,19 +600,16 @@ iop_config_interrupts(struct device *self)
 	if ((rv = iop_reconfigure(sc, 0)) == -1)
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
 
-	if (rv == 0) {
-		rv = kthread_create(PRI_NONE, 0, NULL, iop_reconf_thread, sc,
-		    &sc->sc_reconf_thread, "%s", sc->sc_dv.dv_xname);
- 		if (rv != 0) {
-			printf("%s: unable to create reconfiguration thread (%d)",
- 			    sc->sc_dv.dv_xname, rv);
-			mutex_exit(&sc->sc_conflock);
- 			return;
- 		}
-		sc->sc_flags |= IOP_ONLINE;
-	}
 
+	sc->sc_flags |= IOP_ONLINE;
+	rv = kthread_create(PRI_NONE, 0, NULL, iop_reconf_thread, sc,
+	    &sc->sc_reconf_thread, "%s", sc->sc_dv.dv_xname);
 	mutex_exit(&sc->sc_conflock);
+ 	if (rv != 0) {
+		printf("%s: unable to create reconfiguration thread (%d)",
+ 		    sc->sc_dv.dv_xname, rv);
+ 		return;
+ 	}
 }
 
 /*
@@ -653,7 +643,7 @@ iop_reconf_thread(void *cookie)
 			iop_reconfigure(sc, le32toh(lct.changeindicator));
 			chgind = sc->sc_chgind + 1;
 		}
-		(void)cv_timedwait(&sc->sc_confcv, &sc->sc_conflock, hz * 10);
+		(void)cv_timedwait(&sc->sc_confcv, &sc->sc_conflock, hz * 5);
 		mutex_exit(&sc->sc_conflock);
 	}
 }
@@ -669,8 +659,6 @@ iop_reconfigure(struct iop_softc *sc, u_int chgind)
 	struct i2o_lct_entry *le;
 	struct iop_initiator *ii, *nextii;
 	int rv, tid, i;
-
-	KASSERT(mutex_owned(&sc->sc_conflock));
 
 	KASSERT(mutex_owned(&sc->sc_conflock));
 
@@ -1663,8 +1651,6 @@ iop_handle_reply(struct iop_softc *sc, u_int32_t rmfa)
 	struct i2o_fault_notify *fn;
 	struct iop_initiator *ii;
 	u_int off, ictx, tctx, status, size;
-
-	KASSERT(mutex_owned(&sc->sc_intrlock));
 
 	KASSERT(mutex_owned(&sc->sc_intrlock));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.2 2007/04/09 22:10:09 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.3 2007/07/15 15:53:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.2 2007/04/09 22:10:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.3 2007/07/15 15:53:08 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -866,7 +866,8 @@ uvmpd_scan(void)
 	 * we need to unlock the page queues for this.
 	 */
 
-	if (uvmexp.free < uvmexp.freetarg && uvmexp.nswapdev != 0) {
+	if (uvmexp.free < uvmexp.freetarg && uvmexp.nswapdev != 0 &&
+	    uvm.swapout_enabled) {
 		uvmexp.pdswout++;
 		UVMHIST_LOG(pdhist,"  free %d < target %d: swapout",
 		    uvmexp.free, uvmexp.freetarg, 0, 0);

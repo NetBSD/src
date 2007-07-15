@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.126.2.4 2007/07/15 13:27:52 ad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.126.2.5 2007/07/15 15:52:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.2.4 2007/07/15 13:27:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.126.2.5 2007/07/15 15:52:58 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -404,9 +404,9 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_pid = l->l_proc->p_pid;
 	callout_init(&d->bd_callout, 0);
 
-	simple_lock(&bpf_slock);
+	mutex_enter(&bpf_mtx);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
-	simple_unlock(&bpf_slock);
+	mutex_exit(&bpf_mtx);
 
 	return fdclone(l, fp, fd, flag, &bpf_fileops, d);
 }
@@ -435,9 +435,9 @@ bpf_close(struct file *fp, struct lwp *l)
 		bpf_detachd(d);
 	splx(s);
 	bpf_freed(d);
-	simple_lock(&bpf_slock);
+	mutex_enter(&bpf_mtx);
 	LIST_REMOVE(d, bd_list);
-	simple_unlock(&bpf_slock);
+	mutex_exit(&bpf_mtx);
 	callout_destroy(&d->bd_callout);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;

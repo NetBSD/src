@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.4.2.2 2007/07/15 13:28:14 ad Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.4.2.3 2007/07/15 15:53:05 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -46,8 +46,6 @@ struct work {
 };
 
 struct workqueue;
-
-#define	WQ_MPSAFE	0x01
 
 #define	WQ_MPSAFE	0x01
 #define	WQ_PERCPU	0x02

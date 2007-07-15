@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.196.2.2 2007/07/01 21:49:00 ad Exp $ */
+/*	$NetBSD: st.c,v 1.196.2.3 2007/07/15 15:52:48 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.2 2007/07/01 21:49:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.3 2007/07/15 15:52:48 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -1098,7 +1098,7 @@ ststrategy(struct buf *bp)
 	 */
 	if (st->flags & ST_FIXEDBLOCKS) {
 		if (bp->b_bcount % st->blksize) {
-			printf("%s: done request, must be multiple of %d\n",
+			printf("%s: bad request, must be multiple of %d\n",
 			    st->sc_dev.dv_xname, st->blksize);
 			error = EIO;
 			goto done;

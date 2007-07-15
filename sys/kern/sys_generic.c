@@ -1,40 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.100.2.8 2007/07/15 13:27:45 ad Exp $	*/
-
-/*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: sys_generic.c,v 1.100.2.9 2007/07/15 15:52:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -112,12 +76,8 @@
  * System calls relating to files.
  */
 
-/*
- * System calls relating to files.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.8 2007/07/15 13:27:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.9 2007/07/15 15:52:56 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -134,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.100.2.8 2007/07/15 13:27:45 ad Exp
 #include <sys/stat.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
+#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #ifdef KTRACE
@@ -263,80 +224,95 @@ sys_readv(lwp_t *l, void *v, register_t *retval)
 		syscallarg(const struct iovec *)	iovp;
 		syscallarg(int)				iovcnt;
 	} */ *uap = v;
-	struct filedesc	*fdp;
-	struct file *fp;
-	proc_t *p;
-	int fd;
 
-	fd = SCARG(uap, fd);
-	p = l->l_proc;
-	fdp = p->p_fd;
-
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FREAD) == 0) {
-		mutex_exit(&fp->f_lock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	/* dofilereadv() will unuse the descriptor for us */
-	return (dofilereadv(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+	return do_filereadv(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
 }
 
 int
-dofilereadv(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
-	int iovcnt, off_t *offset, int flags, register_t *retval)
+do_filereadv(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
+    off_t *offset, int flags, register_t *retval)
 {
-	proc_t		*p;
+	struct proc	*p;
 	struct uio	auio;
-	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct iovec	*iov, *needfree = NULL, aiov[UIO_SMALLIOV];
 	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
+	struct file	*fp;
+	struct filedesc	*fdp;
 #ifdef KTRACE
-	struct iovec	*ktriov;
+	struct iovec	*ktriov = NULL;
 #endif
+
+	if (iovcnt == 0)
+		return EINVAL;
 
 	p = l->l_proc;
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		goto out;
+	fdp = p->p_fd;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return EBADF;
+
+	if ((fp->f_flag & FREAD) == 0) {
+		mutex_exit(&fp->f_lock);
+		return EBADF;
 	}
 
-#ifdef KTRACE
-	ktriov = NULL;
-#endif
-	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof(struct iovec);
-	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX) {
-			error = EINVAL;
+	FILE_USE(fp);
+
+	if (offset == NULL)
+		offset = &fp->f_offset;
+	else {
+		struct vnode *vp = fp->f_data;
+		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+			error = ESPIPE;
 			goto out;
 		}
-		iov = kmem_alloc(iovlen, KM_SLEEP);
-		needfree = iov;
-	} else if ((u_int)iovcnt > 0) {
-		iov = aiov;
-		needfree = NULL;
-	} else {
-		error = EINVAL;
+		/*
+		 * Test that the device is seekable ?
+		 * XXX This works because no file systems actually
+		 * XXX take any action on the seek operation.
+		 */
+		error = VOP_SEEK(vp, fp->f_offset, *offset, fp->f_cred);
+		if (error != 0)
+			goto out;
+	}
+
+	error = proc_vmspace_getref(p, &vm);
+	if (error)
 		goto out;
+
+	iovlen = iovcnt * sizeof(struct iovec);
+	if (flags & FOF_IOV_SYSSPACE)
+		iov = __UNCONST(iovp);
+	else {
+		iov = aiov;
+		if ((u_int)iovcnt > UIO_SMALLIOV) {
+			if ((u_int)iovcnt > IOV_MAX) {
+				error = EINVAL;
+				goto out;
+			}
+			iov = kmem_alloc(iovlen, KM_SLEEP);
+			if (iov == NULL) {
+				error = ENOMEM;
+				goto out;
+			}
+			needfree = iov;
+		}
+		error = copyin(iovp, iov, iovlen);
+		if (error)
+			goto done;
 	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
 	auio.uio_vmspace = vm;
-	error = copyin(iovp, iov, iovlen);
-	if (error)
-		goto done;
+
 	auio.uio_resid = 0;
-	for (i = 0; i < iovcnt; i++) {
+	for (i = 0; i < iovcnt; i++, iov++) {
 		auio.uio_resid += iov->iov_len;
 		/*
 		 * Reads return ssize_t because -1 is returned on error.
@@ -347,17 +323,19 @@ dofilereadv(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 			error = EINVAL;
 			goto done;
 		}
-		iov++;
 	}
+
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
-		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
+		if (ktriov != NULL)
+			memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
+
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
 	if (error)
@@ -365,6 +343,8 @@ dofilereadv(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
+	*retval = cnt;
+
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
@@ -372,7 +352,7 @@ dofilereadv(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 		kmem_free(ktriov, iovlen);
 	}
 #endif
-	*retval = cnt;
+
  done:
 	if (needfree)
 		kmem_free(needfree, iovlen);
@@ -493,79 +473,95 @@ sys_writev(lwp_t *l, void *v, register_t *retval)
 		syscallarg(const struct iovec *)	iovp;
 		syscallarg(int)				iovcnt;
 	} */ *uap = v;
-	int		fd;
-	struct file	*fp;
-	proc_t		*p;
-	struct filedesc	*fdp;
 
-	fd = SCARG(uap, fd);
-	p = l->l_proc;
-	fdp = p->p_fd;
-
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FWRITE) == 0) {
-		mutex_exit(&fp->f_lock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	/* dofilewritev() will unuse the descriptor for us */
-	return (dofilewritev(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+	return do_filewritev(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), NULL, FOF_UPDATE_OFFSET, retval);
 }
 
 int
-dofilewritev(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
-	int iovcnt, off_t *offset, int flags, register_t *retval)
+do_filewritev(struct lwp *l, int fd, const struct iovec *iovp, int iovcnt,
+    off_t *offset, int flags, register_t *retval)
 {
-	proc_t		*p;
+	struct proc	*p;
 	struct uio	auio;
-	struct iovec	*iov, *needfree, aiov[UIO_SMALLIOV];
+	struct iovec	*iov, *needfree = NULL, aiov[UIO_SMALLIOV];
 	struct vmspace	*vm;
 	int		i, error;
 	size_t		cnt;
 	u_int		iovlen;
+	struct file	*fp;
+	struct filedesc	*fdp;
 #ifdef KTRACE
-	struct iovec	*ktriov;
+	struct iovec	*ktriov = NULL;
 #endif
 
+	if (iovcnt == 0)
+		return EINVAL;
+
 	p = l->l_proc;
-	error = proc_vmspace_getref(p, &vm);
-	if (error) {
-		goto out;
+	fdp = p->p_fd;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return EBADF;
+
+	if ((fp->f_flag & FWRITE) == 0) {
+		mutex_exit(&fp->f_lock);
+		return EBADF;
 	}
-#ifdef KTRACE
-	ktriov = NULL;
-#endif
-	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = iovcnt * sizeof(struct iovec);
-	if ((u_int)iovcnt > UIO_SMALLIOV) {
-		if ((u_int)iovcnt > IOV_MAX) {
-			error = EINVAL;
+
+	FILE_USE(fp);
+
+	if (offset == NULL)
+		offset = &fp->f_offset;
+	else {
+		struct vnode *vp = fp->f_data;
+		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+			error = ESPIPE;
 			goto out;
 		}
-		iov = kmem_alloc(iovlen, KM_SLEEP);
-		needfree = iov;
-	} else if ((u_int)iovcnt > 0) {
-		iov = aiov;
-		needfree = NULL;
-	} else {
-		error = EINVAL;
+		/*
+		 * Test that the device is seekable ?
+		 * XXX This works because no file systems actually
+		 * XXX take any action on the seek operation.
+		 */
+		error = VOP_SEEK(vp, fp->f_offset, *offset, fp->f_cred);
+		if (error != 0)
+			goto out;
+	}
+
+	error = proc_vmspace_getref(p, &vm);
+	if (error)
 		goto out;
+
+	iovlen = iovcnt * sizeof(struct iovec);
+	if (flags & FOF_IOV_SYSSPACE)
+		iov = __UNCONST(iovp);
+	else {
+		iov = aiov;
+		if ((u_int)iovcnt > UIO_SMALLIOV) {
+			if ((u_int)iovcnt > IOV_MAX) {
+				error = EINVAL;
+				goto out;
+			}
+			iov = kmem_alloc(iovlen, KM_SLEEP);
+			if (iov == NULL) {
+				error = ENOMEM;
+				goto out;
+			}
+			needfree = iov;
+		}
+		error = copyin(iovp, iov, iovlen);
+		if (error)
+			goto done;
 	}
 
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_vmspace = vm;
-	error = copyin(iovp, iov, iovlen);
-	if (error)
-		goto done;
+
 	auio.uio_resid = 0;
-	for (i = 0; i < iovcnt; i++) {
+	for (i = 0; i < iovcnt; i++, iov++) {
 		auio.uio_resid += iov->iov_len;
 		/*
 		 * Writes return ssize_t because -1 is returned on error.
@@ -576,15 +572,16 @@ dofilewritev(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 			error = EINVAL;
 			goto done;
 		}
-		iov++;
 	}
+
 #ifdef KTRACE
 	/*
 	 * if tracing, save a copy of iovec
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = kmem_alloc(iovlen, KM_SLEEP);
-		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
+		if (ktriov != NULL)
+			memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -600,6 +597,8 @@ dofilewritev(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 		}
 	}
 	cnt -= auio.uio_resid;
+	*retval = cnt;
+
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
@@ -607,7 +606,7 @@ dofilewritev(lwp_t *l, int fd, struct file *fp, const struct iovec *iovp,
 		kmem_free(ktriov, iovlen);
 	}
 #endif
-	*retval = cnt;
+
  done:
 	if (needfree)
 		kmem_free(needfree, iovlen);

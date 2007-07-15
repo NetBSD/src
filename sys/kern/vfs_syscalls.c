@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.9 2007/07/15 13:27:48 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.10 2007/07/15 15:52:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.9 2007/07/15 13:27:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.10 2007/07/15 15:52:57 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -143,7 +143,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mp = vp->v_mount;
 	saved_flags = mp->mnt_flag;
 
-	/* We can operate only on VROOT nodes. */
+	/* We can operate only on VV_ROOT nodes. */
 	if ((vp->v_vflag & VV_ROOT) == 0) {
 		error = EINVAL;
 		goto out;
@@ -220,6 +220,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	}
 	vfs_unbusy(mp);
 
+ out:
 	return (error);
 }
 
@@ -328,52 +329,49 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE | MNT_RDONLY);
 
-	error = VFS_MOUNT(mp, path, data, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	/*
 	 * Put the new filesystem on the mount list after root.
 	 */
 	cache_purge(vp);
-	if (!error) {
-		mp->mnt_iflag &= ~IMNT_WANTRDWR;
-		vp->v_mountedhere = mp;
-		mutex_enter(&mountlist_lock);
-		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-		mutex_exit(&mountlist_lock);
-		VOP_UNLOCK(vp, 0);
-		checkdirs(vp);
-		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
-			error = vfs_allocate_syncvnode(mp);
-		vfs_unbusy(mp);
-		(void) VFS_STATVFS(mp, &mp->mnt_stat, l);
-		error = VFS_START(mp, 0, l);
-		if (error)
-			vrele(vp);
-	} else {
+	if (error != 0) {
 		vp->v_mountedhere = NULL;
+		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		vfs_delref(mp->mnt_op);
 		free(mp, M_MOUNT);
-		vput(vp);
+		return error;
 	}
 
- out:
-	return (error);
+	mp->mnt_iflag &= ~IMNT_WANTRDWR;
+	vp->v_mountedhere = mp;
+	mutex_enter(&mountlist_lock);
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	mutex_exit(&mountlist_lock);
+	VOP_UNLOCK(vp, 0);
+	checkdirs(vp);
+	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
+		error = vfs_allocate_syncvnode(mp);
+	vfs_unbusy(mp);
+	(void) VFS_STATVFS(mp, &mp->mnt_stat, l);
+	error = VFS_START(mp, 0, l);
+	if (error)
+		vrele(vp);
+	*vpp = NULL;
+	return error;
 }
 
 static int
 mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
-    void *data, struct nameidata *ndp)
+    void *data, size_t *data_len, struct nameidata *ndp)
 {
 	struct mount *mp;
 	int error;
 
 	/* If MNT_GETARGS is specified, it should be the only flag. */
-	if (flags & ~MNT_GETARGS) {
-		error = EINVAL;
-		goto out;
-	}
+	if (flags & ~MNT_GETARGS)
+		return EINVAL;
 
 	mp = vp->v_mount;
 
@@ -381,47 +379,71 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_GET, mp, data, NULL);
 	if (error)
-		goto out;
+		return error;
 
-	if ((vp->v_vflag & VV_ROOT) == 0) {
-		error = EINVAL;
-		goto out;
-	}
+	if ((vp->v_vflag & VV_ROOT) == 0)
+		return EINVAL;
 
-	if (vfs_busy(mp, LK_NOWAIT, 0)) {
-		error = EPERM;
-		goto out;
-	}
+	if (vfs_busy(mp, LK_NOWAIT, 0))
+		return EPERM;
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= MNT_GETARGS;
-	error = VFS_MOUNT(mp, path, data, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	vfs_unbusy(mp);
- out:
 	return (error);
 }
 
+#ifdef COMPAT_40
 /* ARGSUSED */
 int
-sys_mount(struct lwp *l, void *v, register_t *retval)
+compat_40_sys_mount(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys_mount_args /* {
+	struct compat_40_sys_mount_args /* {
 		syscallarg(const char *) type;
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 		syscallarg(void *) data;
 	} */ *uap = v;
+	register_t dummy;
+
+	return do_sys_mount(l, NULL, SCARG(uap, type), SCARG(uap, path),
+	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE, 0, &dummy);
+}
+#endif
+
+int
+sys___mount50(struct lwp *l, void *v, register_t *retval)
+{
+	struct sys___mount50_args /* {
+		syscallarg(const char *) type;
+		syscallarg(const char *) path;
+		syscallarg(int) flags;
+		syscallarg(void *) data;
+		syscallarg(size_t) data_len;
+	} */ *uap = v;
+
+	return do_sys_mount(l, NULL, SCARG(uap, type), SCARG(uap, path),
+	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE,
+	    SCARG(uap, data_len), retval);
+}
+
+int
+do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
+    const char *path, int flags, void *data, enum uio_seg data_seg,
+    size_t data_len, register_t *retval)
+{
 	struct vnode *vp;
 	struct nameidata nd;
+	void *data_buf = data;
 	int error;
 
 	/*
 	 * Get vnode to be covered
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, path, l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
@@ -2248,45 +2270,9 @@ sys_preadv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) iovcnt;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	off_t offset;
-	int error, fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FREAD) == 0) {
-		mutex_exit(&fp->f_lock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
-	}
-
-	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
-		goto out;
-
-	/* dofilereadv() will unuse the descriptor for us */
-	return (dofilereadv(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &offset, 0, retval));
-
- out:
-	FILE_UNUSE(fp, l);
-	return (error);
+	return do_filereadv(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 
 /*
@@ -2354,45 +2340,9 @@ sys_pwritev(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) iovcnt;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	struct vnode *vp;
-	off_t offset;
-	int error, fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	if ((fp->f_flag & FWRITE) == 0) {
-		mutex_exit(&fp->f_lock);
-		return (EBADF);
-	}
-
-	FILE_USE(fp);
-
-	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		error = ESPIPE;
-		goto out;
-	}
-
-	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
-		goto out;
-
-	/* dofilewritev() will unuse the descriptor for us */
-	return (dofilewritev(l, fd, fp, SCARG(uap, iovp), SCARG(uap, iovcnt),
-	    &offset, 0, retval));
-
- out:
-	FILE_UNUSE(fp, l);
-	return (error);
+	return do_filewritev(l, SCARG(uap, fd), SCARG(uap, iovp),
+	    SCARG(uap, iovcnt), &SCARG(uap, offset), 0, retval);
 }
 
 /*
@@ -3173,11 +3123,8 @@ sys_fsync(struct lwp *l, void *v, register_t *retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0, l);
 	if (error == 0 && bioops.io_fsync != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP)) {
-	    	KERNEL_LOCK(1, l);
+	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
 		(*bioops.io_fsync)(vp, 0);
-		KERNEL_UNLOCK_ONE(l);
-	}
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -3249,11 +3196,8 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e, l);
 
 	if (error == 0 && bioops.io_fsync != NULL &&
-	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP)) {
-	    	KERNEL_LOCK(1, l);
+	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
 		(*bioops.io_fsync)(vp, nflags);
-		KERNEL_UNLOCK_ONE(l);
-	}
 
 	VOP_UNLOCK(vp, 0);
 out:

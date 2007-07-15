@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.8 2007/06/09 23:58:04 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.9 2007/07/15 15:52:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.8 2007/06/09 23:58:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.9 2007/07/15 15:52:54 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -616,6 +616,7 @@ exit_lwps(struct lwp *l)
 	KERNEL_UNLOCK_ALL(l, &nlocks);
 
 	p = l->l_proc;
+	KASSERT(mutex_owned(&p->p_smutex));
 
  retry:
 	/*
@@ -657,7 +658,14 @@ exit_lwps(struct lwp *l)
 		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
 	}
 
-	KERNEL_LOCK(nlocks, l);
+#if defined(MULTIPROCESSOR)
+	if (nlocks > 0) {
+		mutex_exit(&p->p_smutex);
+		KERNEL_LOCK(nlocks, l);
+		mutex_enter(&p->p_smutex);
+	}
+#endif /* defined(MULTIPROCESSOR) */
+	KASSERT(p->p_nlwps == 1);
 }
 
 int
@@ -938,6 +946,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	cred1 = p->p_cred;
 	uid = kauth_cred_getuid(cred1);
 	vp = p->p_textvp;
+
 	l = LIST_FIRST(&p->p_lwps);
 
 	mutex_destroy(&p->p_rasmutex);

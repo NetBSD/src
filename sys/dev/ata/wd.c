@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337.2.5 2007/07/01 21:47:42 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.6 2007/07/15 15:52:42 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.5 2007/07/01 21:47:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.6 2007/07/15 15:52:42 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -1390,18 +1390,33 @@ bad:
 
 		if (atareq->datalen && atareq->flags &
 		    (ATACMD_READ | ATACMD_WRITE)) {
-			wi->wi_iov.iov_base = atareq->databuf;
-			wi->wi_iov.iov_len = atareq->datalen;
+			void *tbuf;
+			if (atareq->datalen < DEV_BSIZE
+			    && atareq->command == WDCC_IDENTIFY) {
+				tbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
+				wi->wi_iov.iov_base = tbuf;
+				wi->wi_iov.iov_len = DEV_BSIZE;
+				UIO_SETUP_SYSSPACE(&wi->wi_uio);
+			} else {
+				tbuf = NULL;
+				wi->wi_iov.iov_base = atareq->databuf;
+				wi->wi_iov.iov_len = atareq->datalen;
+				wi->wi_uio.uio_vmspace = l->l_proc->p_vmspace;
+			}
 			wi->wi_uio.uio_iov = &wi->wi_iov;
 			wi->wi_uio.uio_iovcnt = 1;
 			wi->wi_uio.uio_resid = atareq->datalen;
 			wi->wi_uio.uio_offset = 0;
 			wi->wi_uio.uio_rw =
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE;
-			wi->wi_uio.uio_vmspace = l->l_proc->p_vmspace;
 			error1 = physio(wdioctlstrategy, &wi->wi_bp, dev,
 			    (atareq->flags & ATACMD_READ) ? B_READ : B_WRITE,
 			    minphys, &wi->wi_uio);
+			if (tbuf != NULL && error1 == 0) {
+				error1 = copyout(tbuf, atareq->databuf,
+				    atareq->datalen);
+				free(tbuf, M_TEMP);
+			}
 		} else {
 			/* No need to call physio if we don't have any
 			   user data */

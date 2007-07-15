@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.56.4.5 2007/07/15 13:28:22 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.56.4.6 2007/07/15 15:53:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.5 2007/07/15 13:28:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.6 2007/07/15 15:53:07 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -535,17 +535,17 @@ again_faultbusy:
 
 			KASSERT(pg->uobject == uobj);
 			if (pg->loan_count != 0) {
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&uobj->vmobjlock);
 				if (pg->loan_count != 0) {
 					pg = uvm_loanbreak(pg);
 				}
-				simple_unlock(&uobj->vmobjlock);
+				mutex_exit(&uobj->vmobjlock);
 				if (pg == NULL) {
 					pmap_kremove(va, ubc_winsize);
 					pmap_update(pmap_kernel());
-					simple_lock(&uobj->vmobjlock);
+					mutex_enter(&uobj->vmobjlock);
 					uvm_page_unbusy(pgs, npages);
-					simple_unlock(&uobj->vmobjlock);
+					mutex_exit(&uobj->vmobjlock);
 					uvm_wait("ubc_alloc");
 					goto again_faultbusy;
 				}

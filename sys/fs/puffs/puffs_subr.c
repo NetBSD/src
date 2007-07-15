@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.7 2007/06/17 21:31:10 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.8 2007/07/15 15:52:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.7 2007/06/17 21:31:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.8 2007/07/15 15:52:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,6 +84,9 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	struct puffs_node *pnode;
 	struct puffs_node_hashlist *plist;
 	int error;
+
+	if (type <= VNON || type >= VBAD)
+		return EINVAL;
 
 	pmp = MPTOPUFFSMP(mp);
 
@@ -249,7 +252,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 
-	if ((cnp->cn_flags & MAKEENTRY) && PUFFS_DOCACHE(pmp))
+	if ((cnp->cn_flags & MAKEENTRY) && PUFFS_USE_NAMECACHE(pmp))
 		cache_enter(dvp, vp, cnp);
 
 	return 0;
@@ -339,6 +342,59 @@ puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
 }
 
 /*
+ * Make sure root vnode exists and reference it.  Does NOT lock.
+ */
+static int
+puffs_makeroot(struct puffs_mount *pmp)
+{
+	struct vnode *vp;
+	int rv;
+
+	/*
+	 * pmp_lock must be held if vref()'ing or vrele()'ing the
+	 * root vnode.  the latter is controlled by puffs_inactive().
+	 *
+	 * pmp_root is set here and cleared in puffs_reclaim().
+	 */
+ retry:
+	mutex_enter(&pmp->pmp_lock);
+	vp = pmp->pmp_root;
+	if (vp) {
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&pmp->pmp_lock);
+		if (vget(vp, LK_INTERLOCK) == 0)
+			return 0;
+	} else
+		mutex_exit(&pmp->pmp_lock);
+
+	/*
+	 * So, didn't have the magic root vnode available.
+	 * No matter, grab another an stuff it with the cookie.
+	 */
+	if ((rv = puffs_getvnode(pmp->pmp_mp, pmp->pmp_root_cookie,
+	    pmp->pmp_root_vtype, pmp->pmp_root_vsize, pmp->pmp_root_rdev, &vp)))
+		return rv;
+
+	/*
+	 * Someone magically managed to race us into puffs_getvnode?
+	 * Put our previous new vnode back and retry.
+	 */
+	mutex_enter(&pmp->pmp_lock);
+	if (pmp->pmp_root) {
+		mutex_exit(&pmp->pmp_lock);
+		puffs_putvnode(vp);
+		goto retry;
+	} 
+
+	/* store cache */
+	vp->v_vflag = VV_ROOT;
+	pmp->pmp_root = vp;
+	mutex_exit(&pmp->pmp_lock);
+
+	return 0;
+}
+
+/*
  * Locate the in-kernel vnode based on the cookie received given
  * from userspace.  Returns a vnode, if found, NULL otherwise.
  * The parameter "lock" control whether to lock the possible or
@@ -346,95 +402,106 @@ puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
  * in situations where we want the vnode but don't care for the
  * vnode lock, e.g. file server issued putpages.
  */
-struct vnode *
-puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
+int
+puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock,
+	struct vnode **vpp)
 {
 	struct puffs_node *pnode;
 	struct vnode *vp;
-	int vgetflags;
+	int vgetflags, rv;
 
 	/*
-	 * If we're trying to get the root vnode, return it through
-	 * puffs_root() to get all the right things set.  Lock must
-	 * be set, since VFS_ROOT() always locks the returned vnode.
+	 * Handle root in a special manner, since we want to make sure
+	 * pmp_root is properly set.
 	 */
 	if (cookie == pmp->pmp_root_cookie) {
-		if (!lock)
-			return NULL;
-		if (VFS_ROOT(pmp->pmp_mp, &vp))
-			return NULL;
+		if ((rv = puffs_makeroot(pmp)))
+			return rv;
+		if (lock)
+			vn_lock(pmp->pmp_root, LK_EXCLUSIVE | LK_RETRY);
 
-		return vp;
+		*vpp = pmp->pmp_root;
+		return 0;
 	}
-
-	vgetflags = LK_INTERLOCK;
-	if (lock)
-		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
 
 	mutex_enter(&pmp->pmp_lock);
 	pnode = puffs_cookie2pnode(pmp, cookie);
 
 	if (pnode == NULL) {
 		mutex_exit(&pmp->pmp_lock);
-		return NULL;
+		return ENOENT;
 	}
-	vp = pnode->pn_vp;
 
+	vp = pnode->pn_vp;
 	mutex_enter(&vp->v_interlock);
 	mutex_exit(&pmp->pmp_lock);
 
-	if (vget(vp, vgetflags))
-		return NULL;
+	vgetflags = LK_INTERLOCK;
+	if (lock)
+		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
+	if ((rv = vget(vp, vgetflags)))
+		return rv;
 
-	return vp;
+	*vpp = vp;
+	return 0;
 }
 
 void
-puffs_makecn(struct puffs_kcn *pkcn, const struct componentname *cn)
+puffs_makecn(struct puffs_kcn *pkcn, struct puffs_kcred *pkcr,
+	struct puffs_kcid *pkcid, const struct componentname *cn, int full)
 {
 
 	pkcn->pkcn_nameiop = cn->cn_nameiop;
 	pkcn->pkcn_flags = cn->cn_flags;
-	pkcn->pkcn_pid = cn->cn_lwp->l_proc->p_pid;
-	puffs_credcvt(&pkcn->pkcn_cred, cn->cn_cred);
+	puffs_cidcvt(pkcid, cn->cn_lwp);
 
-	(void)memcpy(&pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
-	pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	if (full) {
+		(void)strcpy(pkcn->pkcn_name, cn->cn_nameptr);
+	} else {
+		(void)memcpy(pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
+		pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	}
 	pkcn->pkcn_namelen = cn->cn_namelen;
+	pkcn->pkcn_consume = 0;
+
+	puffs_credcvt(pkcr, cn->cn_cred);
 }
 
 /*
- * Convert given credentials to struct puffs_cred for userspace.
+ * Convert given credentials to struct puffs_kcred for userspace.
  */
 void
-puffs_credcvt(struct puffs_cred *pcr, const kauth_cred_t cred)
+puffs_credcvt(struct puffs_kcred *pkcr, const kauth_cred_t cred)
 {
 
-	memset(pcr, 0, sizeof(struct puffs_cred));
+	memset(pkcr, 0, sizeof(struct puffs_kcred));
 
 	if (cred == NOCRED || cred == FSCRED) {
-		pcr->pcr_type = PUFFCRED_TYPE_INTERNAL;
+		pkcr->pkcr_type = PUFFCRED_TYPE_INTERNAL;
 		if (cred == NOCRED)
-			pcr->pcr_internal = PUFFCRED_CRED_NOCRED;
+			pkcr->pkcr_internal = PUFFCRED_CRED_NOCRED;
 		if (cred == FSCRED)
-			pcr->pcr_internal = PUFFCRED_CRED_FSCRED;
+			pkcr->pkcr_internal = PUFFCRED_CRED_FSCRED;
  	} else {
-		pcr->pcr_type = PUFFCRED_TYPE_UUC;
-		kauth_cred_to_uucred(&pcr->pcr_uuc, cred);
+		pkcr->pkcr_type = PUFFCRED_TYPE_UUC;
+		kauth_cred_to_uucred(&pkcr->pkcr_uuc, cred);
 	}
 }
 
-/*
- * Return pid.  In case the operation is coming from within the
- * kernel without any process context, borrow the swapper's pid.
- */
-pid_t
-puffs_lwp2pid(struct lwp *l)
+void
+puffs_cidcvt(struct puffs_kcid *pkcid, const struct lwp *l)
 {
 
-	return l ? l->l_proc->p_pid : 0;
+	if (l) {
+		pkcid->pkcid_type = PUFFCID_TYPE_REAL;
+		pkcid->pkcid_pid = l->l_proc->p_pid;
+		pkcid->pkcid_lwpid = l->l_lid;
+	} else {
+		pkcid->pkcid_type = PUFFCID_TYPE_FAKE;
+		pkcid->pkcid_pid = 0;
+		pkcid->pkcid_lwpid = 0;
+	}
 }
-
 
 static void
 puffs_gop_size(struct vnode *vp, off_t size, off_t *eobp,
@@ -505,13 +572,16 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 	struct puffs_vnreq_read *read_argp = (void *)preq;
 	struct buf *bp = arg;
 	size_t moved;
+	int resid;
 
 	if (preq->preq_rv == 0) {
 		moved = bp->b_bcount - read_argp->pvnr_resid;
+		resid = read_argp->pvnr_resid;
 		memcpy(bp->b_data, read_argp->pvnr_data, moved);
-	}
+	} else
+		resid = bp->b_bcount;
 
-	biodone(bp, preq->preq_rv, read_argp->pvnr_resid);
+	biodone(bp, preq->preq_rv, resid);
 	free(preq, M_PUFFS);
 }
 

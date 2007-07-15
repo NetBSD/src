@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.17.2.4 2007/07/15 13:21:46 ad Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.17.2.5 2007/07/15 15:52:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,41 +80,110 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.4 2007/07/15 13:21:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.5 2007/07/15 15:52:49 ad Exp $");
 
+#include "opt_compat_netbsd.h"
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/vnode.h>
-#include <sys/proc.h>
+#include <sys/condvar.h>
+#include <sys/mutex.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
-static LIST_HEAD(, sysmon_pswitch) sysmon_pswitch_list =
-    LIST_HEAD_INITIALIZER(sysmon_pswitch_list);
-static struct simplelock sysmon_pswitch_list_slock =
-    SIMPLELOCK_INITIALIZER;
-
+static kmutex_t sysmon_power_event_queue_mtx;
+static kcondvar_t sysmon_power_event_queue_cv;
 static lwp_t *sysmon_power_daemon;
+static prop_dictionary_t sysmon_power_dict;
 
-#define	SYSMON_MAX_POWER_EVENTS		32
+struct power_event_description {
+	int type;
+	const char *desc;
+};
 
-static struct simplelock sysmon_power_event_queue_slock =
-    SIMPLELOCK_INITIALIZER;
+/*
+ * Available events for power switches.
+ */
+static const struct power_event_description pswitch_event_desc[] = {
+	{ PSWITCH_EVENT_PRESSED, 	"pressed" },
+	{ PSWITCH_EVENT_RELEASED,	"released" },
+	{ -1, NULL }
+};
+
+/*
+ * Available script names for power switches.
+ */
+static const struct power_event_description pswitch_type_desc[] = {
+	{ PSWITCH_TYPE_POWER, 		"power_button" },
+	{ PSWITCH_TYPE_SLEEP, 		"sleep_button" },
+	{ PSWITCH_TYPE_LID, 		"lid_button" },
+	{ PSWITCH_TYPE_RESET, 		"reset_button" },
+	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
+	{ -1, NULL }
+};
+
+/*
+ * Available events for envsys(4).
+ */
+static const struct power_event_description penvsys_event_desc[] = {
+	{ PENVSYS_EVENT_NORMAL, 	"normal" },
+	{ PENVSYS_EVENT_CRITICAL,	"critical" },
+	{ PENVSYS_EVENT_CRITOVER,	"critical-over" },
+	{ PENVSYS_EVENT_CRITUNDER,	"critical-under" },
+	{ PENVSYS_EVENT_WARNOVER,	"warning-over" },
+	{ PENVSYS_EVENT_WARNUNDER,	"warning-under" },
+	{ PENVSYS_EVENT_USER_CRITMAX,	"critical-over" },
+	{ PENVSYS_EVENT_USER_CRITMIN,	"critical-under" },
+	{ PENVSYS_EVENT_BATT_USERCAP,	"user-capacity" },
+	{ PENVSYS_EVENT_DRIVE_STCHANGED,"state-changed" },
+	{ -1, NULL }
+};
+
+/*
+ * Available script names for envsys(4).
+ */
+static const struct power_event_description penvsys_type_desc[] = {
+	{ PENVSYS_TYPE_BATTERY,		"sensor_battery" },
+	{ PENVSYS_TYPE_DRIVE,		"sensor_drive" },
+	{ PENVSYS_TYPE_FAN,		"sensor_fan" },
+	{ PENVSYS_TYPE_INDICATOR,	"sensor_indicator" },
+	{ PENVSYS_TYPE_POWER,		"sensor_power" },
+	{ PENVSYS_TYPE_RESISTANCE,	"sensor_resistance" },
+	{ PENVSYS_TYPE_TEMP,		"sensor_temperature" },
+	{ PENVSYS_TYPE_VOLTAGE,		"sensor_voltage" },
+	{ -1, NULL }
+};
+
+#define SYSMON_MAX_POWER_EVENTS		32
+
 static power_event_t sysmon_power_event_queue[SYSMON_MAX_POWER_EVENTS];
 static int sysmon_power_event_queue_head;
 static int sysmon_power_event_queue_tail;
 static int sysmon_power_event_queue_count;
-static int sysmon_power_event_queue_flags;
 static struct selinfo sysmon_power_event_queue_selinfo;
 
 static char sysmon_power_type[32];
 
-#define	PEVQ_F_WAITING		0x01	/* daemon waiting for event */
+static int sysmon_power_make_dictionary(void *, int, int);
+static int sysmon_power_daemon_task(void *, int);
 
 #define	SYSMON_NEXT_EVENT(x)		(((x) + 1) % SYSMON_MAX_POWER_EVENTS)
+
+/*
+ * sysmon_power_init:
+ *
+ * 	Initializes the mutexes and condition variables in the
+ * 	boot process via init_main.c.
+ */
+void
+sysmon_power_init(void)
+{
+	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DRIVER, IPL_NONE);
+	cv_init(&sysmon_power_event_queue_cv, "smpower");
+}
 
 /*
  * sysmon_queue_power_event:
@@ -126,17 +195,15 @@ static int
 sysmon_queue_power_event(power_event_t *pev)
 {
 
-	KASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
-
 	if (sysmon_power_event_queue_count == SYSMON_MAX_POWER_EVENTS)
-		return (0);
+		return 0;
 
 	sysmon_power_event_queue[sysmon_power_event_queue_head] = *pev;
 	sysmon_power_event_queue_head =
 	    SYSMON_NEXT_EVENT(sysmon_power_event_queue_head);
 	sysmon_power_event_queue_count++;
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -148,18 +215,15 @@ sysmon_queue_power_event(power_event_t *pev)
 static int
 sysmon_get_power_event(power_event_t *pev)
 {
-
-	KASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
-
 	if (sysmon_power_event_queue_count == 0)
-		return (0);
+		return 0;
 
 	*pev = sysmon_power_event_queue[sysmon_power_event_queue_tail];
 	sysmon_power_event_queue_tail =
 	    SYSMON_NEXT_EVENT(sysmon_power_event_queue_tail);
 	sysmon_power_event_queue_count--;
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -273,21 +337,20 @@ out:
  *	Open the system monitor device.
  */
 int
-sysmonopen_power(dev_t dev, int flag, int mode,
-    struct lwp *l)
+sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error = 0;
 
-	simple_lock(&sysmon_power_event_queue_slock);
+	mutex_enter(&sysmon_power_event_queue_mtx);
 	if (sysmon_power_daemon != NULL)
 		error = EBUSY;
 	else {
 		sysmon_power_daemon = l;
 		sysmon_power_event_queue_flush();
 	}
-	simple_unlock(&sysmon_power_event_queue_slock);
+	mutex_exit(&sysmon_power_event_queue_mtx);
 
-	return (error);
+	return error;
 }
 
 /*

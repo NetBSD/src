@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.27.2.1 2007/05/27 00:17:16 ad Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.27.2.2 2007/07/15 15:52:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.27.2.1 2007/05/27 00:17:16 ad Exp $");
-
-#include "opt_i2o.h"
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.27.2.2 2007/07/15 15:52:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

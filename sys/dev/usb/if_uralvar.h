@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralvar.h,v 1.7.2.1 2007/07/01 21:49:02 ad Exp $ */
+/*	$NetBSD: if_uralvar.h,v 1.7.2.2 2007/07/15 15:52:50 ad Exp $ */
 /*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
@@ -104,8 +104,8 @@ struct ural_softc {
 
 	struct ieee80211_beacon_offsets sc_bo;
 
-	callout_t		scan_ch;
-	callout_t		amrr_ch;
+	usb_callout_t		sc_scan_ch;
+	usb_callout_t		sc_amrr_ch;
 
 	int			sc_tx_timer;
 

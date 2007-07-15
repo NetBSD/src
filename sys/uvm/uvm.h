@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.49.4.3 2007/04/28 20:47:03 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.49.4.4 2007/07/15 15:53:07 ad Exp $	*/
 
 /*
  *
@@ -107,7 +107,7 @@ struct uvm {
 	bool swap_running;
 	kcondvar_t scheduler_cv;
 	bool scheduler_kicked;
-
+	int swapout_enabled;
 };
 
 /*

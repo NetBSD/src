@@ -1,4 +1,4 @@
-/*    $NetBSD: svr4_32_stream.c,v 1.20.2.3 2007/06/09 23:57:47 ad Exp $         */
+/*	$NetBSD: svr4_32_stream.c,v 1.20.2.4 2007/07/15 15:52:39 ad Exp $	 */
 
 #define SVR4_32
 

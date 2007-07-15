@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.9.30.2 2007/07/15 13:21:10 ad Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.9.30.3 2007/07/15 15:52:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.9.30.2 2007/07/15 13:21:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.9.30.3 2007/07/15 15:52:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -412,7 +412,6 @@ swdmover_func_xor_process(struct dmover_request *dreq)
 static void
 swdmover_func_copy_process(struct dmover_request *dreq)
 {
-	int error;
 
 	/* XXX Currently, both buffers must be of same type. */
 	if (dreq->dreq_inbuf_type != dreq->dreq_outbuf_type) {
@@ -741,7 +740,7 @@ swdmoverattach(int count)
 	swdmover_backend.dmb_process = swdmover_process;
 
 	error = kthread_create(PRI_NONE, 0, NULL, swdmover_thread,
-	    arg, &swdmover_proc, "swdmover");
+	    &swdmover_backend, &swdmover_lwp, "swdmover");
 	if (error)
 		printf("WARNING: unable to create swdmover thread, "
 		    "error = %d\n", error);

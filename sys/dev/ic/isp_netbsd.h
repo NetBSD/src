@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.58.2.2 2007/05/27 14:30:03 ad Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.58.2.3 2007/07/15 15:52:45 ad Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -275,6 +275,7 @@ default:							\
 #define	ISP_IOXGET_32(isp, s, d)	d = bswap32(*((uint32_t *)s))
 #endif	/* ISP_SBUS_SUPPORTED */
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)	*rp = bswap16(*rp)
+#define	ISP_SWIZZLE_NVRAM_LONG(isp, rp)	*rp = bswap32(*rp)
 
 #define	ISP_IOZGET_8(isp, s, d)		d = (*((uint8_t *)s))
 #define	ISP_IOZGET_16(isp, s, d)	d = (*((uint16_t *)s))
@@ -291,6 +292,7 @@ default:							\
 #define	ISP_IOXGET_16(isp, s, d)	d = *(s)
 #define	ISP_IOXGET_32(isp, s, d)	d = *(s)
 #define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)
+#define	ISP_SWIZZLE_NVRAM_LONG(isp, rp)
 
 #define	ISP_IOZPUT_8(isp, s, d)		*(d) = s
 #define	ISP_IOZPUT_16(isp, s, d)	*(d) = bswap16(s)
@@ -301,6 +303,9 @@ default:							\
 #define	ISP_IOZGET_32(isp, s, d)	d = bswap32(*((uint32_t *)(s)))
 
 #endif
+
+#define	ISP_SWAP16(isp, x)		bswap16(x)
+#define	ISP_SWAP32(isp, x)		bswap32(x)
 
 /*
  * Includes of common header files

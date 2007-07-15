@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.16.6.7 2007/07/01 22:10:14 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.16.6.8 2007/07/15 15:52:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.7 2007/07/01 22:10:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.16.6.8 2007/07/15 15:52:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,12 +151,16 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 void
 kthread_exit(int ecode)
 {
+	const char *name;
 	lwp_t *l = curlwp;
 
 	/* We can't do much with the exit code, so just report it. */
-	if (ecode != 0)
+	if (ecode != 0) {
+		if ((name = l->l_name) == NULL)
+			name = "unnamed";
 		printf("WARNING: kthread `%s' (%d) exits with status %d\n",
-		    l->l_name, l->l_lid, ecode);
+		    name, l->l_lid, ecode);
+	}
 
 	/* And exit.. */
 	lwp_exit(l);
