@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.126.2.1 2007/04/13 20:56:19 ad Exp $	*/
+/*	$NetBSD: conf.h,v 1.126.2.2 2007/07/15 22:16:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -192,6 +192,7 @@ struct linesw {
 };
 
 #ifdef _KERNEL
+void	       ttyldisc_init(void);
 int	       ttyldisc_attach(struct linesw *);
 int	       ttyldisc_detach(struct linesw *);
 struct linesw *ttyldisc_lookup(const char *);

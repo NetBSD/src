@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.16 2007/07/15 15:52:53 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.17 2007/07/15 22:16:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.16 2007/07/15 15:52:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.17 2007/07/15 22:16:34 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -396,6 +396,9 @@ main(void)
 
 	/* Iniitalize the disk wedge subsystem. */
 	dkwedge_init();
+
+	/* Initialize tty line disciplines. */
+	ttyldisc_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
