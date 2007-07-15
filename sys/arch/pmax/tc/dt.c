@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.7 2007/03/04 06:00:33 christos Exp $	*/
+/*	$NetBSD: dt.c,v 1.7.2.1 2007/07/15 22:20:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.7 2007/03/04 06:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.7.2.1 2007/07/15 22:20:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.7 2007/03/04 06:00:33 christos Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/intr.h>
 
 #include <dev/dec/lk201.h>
 
@@ -227,7 +228,7 @@ dt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_sih = softintr_establish(IPL_SOFTSERIAL, dt_dispatch, sc);
+	sc->sc_sih = softint_establish(SOFTINT_SERIAL, dt_dispatch, sc);
 	if (sc->sc_sih == NULL) {
 		printf("%s: memory exhausted\n", sc->sc_dv.dv_xname);
 		free(msg, M_DEVBUF);
@@ -316,7 +317,7 @@ dt_intr(void *cookie)
 	pend = SIMPLEQ_FIRST(&sc->sc_queue);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, msg, chain.simpleq);
 	if (pend == NULL)
-		softintr_schedule(sc->sc_sih);
+		softint_schedule(sc->sc_sih);
 
 	return (1);
 }

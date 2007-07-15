@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.5.2.3 2007/07/15 13:27:44 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.5.2.4 2007/07/15 22:20:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.3 2007/07/15 13:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.4 2007/07/15 22:20:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.3 2007/07/15 13:27:44 ad Ex
 #include <sys/lock.h>
 #include <sys/lockdebug.h>
 #include <sys/sleepq.h>
+#include <sys/cpu.h>
 
 #include <machine/cpu.h>
 

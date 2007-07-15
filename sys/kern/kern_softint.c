@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.6 2007/07/14 22:09:44 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.7 2007/07/15 22:20:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.6 2007/07/14 22:09:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.7 2007/07/15 22:20:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -439,7 +439,6 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 	KASSERT(si->si_lwp == curlwp);
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
-	KASSERT(!TAILQ_EMPTY(&si->si_q));
 	KASSERT(si->si_active);
 
 	while (!TAILQ_EMPTY(&si->si_q)) {
@@ -550,7 +549,7 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
 	softint_t *si;
 
-	*machdep = (lwp_t)l;
+	*machdep = (uintptr_t)l;
 	si = l->l_private;
 
 	lwp_lock(l);

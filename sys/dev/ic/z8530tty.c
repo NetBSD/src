@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.113.2.1 2007/07/15 13:21:18 ad Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.113.2.2 2007/07/15 22:20:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.113.2.1 2007/07/15 13:21:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.113.2.2 2007/07/15 22:20:27 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -343,7 +343,7 @@ zstty_attach(parent, self, aux)
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	struct tty *tp;
-	int channel, s, tty_unit;
+	int channel,  tty_unit;
 	dev_t dev;
 	const char *i, *o;
 	int dtr_on;
@@ -472,13 +472,11 @@ zstty_attach(parent, self, aux)
 		resetbit = (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET;
 	}
 
-	s = splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
 	if (resetbit)
 		zs_write_reg(cs, 9, resetbit);
 	zs_modem(zst, dtr_on);
-	simple_unlock(&cs->cs_lock);
-	splx(s);
+	mutex_spin_exit(&cs->cs_lock);
 }
 
 
@@ -501,10 +499,8 @@ zs_shutdown(zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
-	int s;
 
-	s = splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
 
 	/* If we were asserting flow control, then deassert it. */
 	SET(zst->zst_rx_flags, RX_IBUF_BLOCKED);
@@ -525,8 +521,7 @@ zs_shutdown(zst)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		zs_modem(zst, 0);
-		simple_unlock(&cs->cs_lock);
-		splx(s);
+		mutex_spin_exit(&cs->cs_lock);
 		/*
 		 * XXX -    another process is not prevented from opening
 		 *	    the device during our sleep.
@@ -536,8 +531,7 @@ zs_shutdown(zst)
 		if (ISSET(tp->t_state, TS_ISOPEN) || tp->t_wopen != 0)
 			return;
 
-		s = splzs();
-		simple_lock(&cs->cs_lock);
+		mutex_spin_enter(&cs->cs_lock);
 	}
 
 	/* Turn off interrupts if not the console. */
@@ -556,8 +550,7 @@ zs_shutdown(zst)
 		(*cs->disable)(zst->zst_cs);
 	}
 
-	simple_unlock(&cs->cs_lock);
-	splx(s);
+	mutex_spin_exit(&cs->cs_lock);
 }
 
 /*
@@ -573,7 +566,6 @@ zsopen(dev, flags, mode, l)
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	struct tty *tp;
-	int s, s2;
 	int error;
 
 	zst = device_lookup(&zstty_cd, ZSUNIT(dev));
@@ -590,7 +582,7 @@ zsopen(dev, flags, mode, l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	s = spltty();
+	mutex_spin_enter(&tp->t_lock);
 
 	/*
 	 * Do the following iff this is a first open.
@@ -603,7 +595,7 @@ zsopen(dev, flags, mode, l)
 		/* Call the power management hook. */
 		if (cs->enable) {
 			if ((*cs->enable)(cs)) {
-				splx(s);
+				mutex_spin_exit(&tp->t_lock);
 				printf("%s: device enable failed\n",
 			       	zst->zst_dev.dv_xname);
 				return (EIO);
@@ -626,8 +618,7 @@ zsopen(dev, flags, mode, l)
 		if (ISSET(zst->zst_swflags, TIOCFLAG_MDMBUF))
 			SET(t.c_cflag, MDMBUF);
 
-		s2 = splzs();
-		simple_lock(&cs->cs_lock);
+		mutex_spin_enter(&cs->cs_lock);
 
 		/*
 		 * Turn on receiver and status interrupts.
@@ -647,8 +638,7 @@ zsopen(dev, flags, mode, l)
 		zst->ppsparam.mode = 0;
 #endif /* !__HAVE_TIMECOUNTER */
 
-		simple_unlock(&cs->cs_lock);
-		splx(s2);
+		mutex_spin_exit(&cs->cs_lock);
 
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
@@ -671,8 +661,7 @@ zsopen(dev, flags, mode, l)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		s2 = splzs();
-		simple_lock(&cs->cs_lock);
+		mutex_spin_enter(&cs->cs_lock);
 
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
@@ -690,11 +679,10 @@ zsopen(dev, flags, mode, l)
 		CLR(zst->zst_rx_flags, RX_ANY_BLOCK);
 		zs_hwiflow(zst);
 
-		simple_unlock(&cs->cs_lock);
-		splx(s2);
+		mutex_spin_exit(&cs->cs_lock);
 	}
 
-	splx(s);
+	mutex_spin_exit(&tp->t_lock);
 
 	error = ttyopen(tp, ZSDIALOUT(dev), ISSET(flags, O_NONBLOCK));
 	if (error)
@@ -801,7 +789,6 @@ zsioctl(dev, cmd, data, flag, l)
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 	int error;
-	int s;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -819,8 +806,7 @@ zsioctl(dev, cmd, data, flag, l)
 
 	error = 0;
 
-	s = splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -1045,8 +1031,7 @@ zsioctl(dev, cmd, data, flag, l)
 		break;
 	}
 
-	simple_unlock(&cs->cs_lock);
-	splx(s);
+	mutex_spin_exit(&cs->cs_lock);
 
 	return (error);
 }
@@ -1061,9 +1046,9 @@ zsstart(tp)
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char *tba;
-	int s, tbc;
+	int tbc;
 
-	s = spltty();
+	mutex_spin_enter(&tp->t_lock);
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
 	if (zst->zst_tx_stopped)
@@ -1083,8 +1068,7 @@ zsstart(tp)
 	tba = tp->t_outq.c_cf;
 	tbc = ndqb(&tp->t_outq, 0);
 
-	(void) splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
 
 	zst->zst_tba = tba;
 	zst->zst_tbc = tbc;
@@ -1094,6 +1078,7 @@ zsstart(tp)
 #ifdef ZS_TXDMA
 	if (zst->zst_tbc > 1) {
 		zs_dma_setup(cs, zst->zst_tba, zst->zst_tbc);
+		mutex_spin_exit(&cs->cs_lock);
 		goto out;
 	}
 #endif
@@ -1110,9 +1095,9 @@ zsstart(tp)
 	zst->zst_tbc--;
 	zst->zst_tba++;
 
-	simple_unlock(&cs->cs_lock);
+	mutex_spin_exit(&cs->cs_lock);
 out:
-	splx(s);
+	mutex_spin_exit(&tp->t_lock);
 	return;
 }
 
@@ -1153,7 +1138,7 @@ zsparam(tp, t)
 	int ospeed;
 	tcflag_t cflag;
 	u_char tmp3, tmp4, tmp5;
-	int s, error;
+	int error;
 
 	ospeed = t->c_ospeed;
 	cflag = t->c_cflag;
@@ -1204,8 +1189,7 @@ zsparam(tp, t)
 	 * interrupt enable is handled by zsc.c
 	 *
 	 */
-	s = splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
 
 	/*
 	 * Recalculate which status ints to enable.
@@ -1301,8 +1285,7 @@ zsparam(tp, t)
 	 */
 	zstty_stint(cs, 1);
 
-	simple_unlock(&cs->cs_lock);
-	splx(s);
+	mutex_spin_exit(&cs->cs_lock);
 
 	/*
 	 * If hardware flow control is disabled, unblock any hard flow control
@@ -1468,13 +1451,11 @@ zshwiflow(tp, block)
 {
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
-	int s;
 
 	if (cs->cs_wr5_rts == 0)
 		return (0);
 
-	s = splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
 	if (block) {
 		if (!ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
 			SET(zst->zst_rx_flags, RX_TTY_BLOCKED);
@@ -1491,8 +1472,7 @@ zshwiflow(tp, block)
 			zs_hwiflow(zst);
 		}
 	}
-	simple_unlock(&cs->cs_lock);
-	splx(s);
+	mutex_spin_exit(&cs->cs_lock);
 	return (1);
 }
 
@@ -1790,7 +1770,6 @@ zstty_rxsoft(zst, tp)
 	u_int cc, scc;
 	u_char rr1;
 	int code;
-	int s;
 
 	end = zst->zst_ebuf;
 	get = zst->zst_rbget;
@@ -1861,8 +1840,7 @@ zstty_rxsoft(zst, tp)
 
 	if (cc != scc) {
 		zst->zst_rbget = get;
-		s = splzs();
-		simple_lock(&cs->cs_lock);
+		mutex_spin_enter(&cs->cs_lock);
 		cc = zst->zst_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= zst->zst_r_lowat) {
@@ -1877,8 +1855,7 @@ zstty_rxsoft(zst, tp)
 				zs_hwiflow(zst);
 			}
 		}
-		simple_unlock(&cs->cs_lock);
-		splx(s);
+		mutex_spin_exit(&cs->cs_lock);
 	}
 
 #if 0
@@ -1892,17 +1869,16 @@ zstty_txsoft(zst, tp)
 	struct tty *tp;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
-	int s;
 
-	s = splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&tp->t_lock);
+	mutex_spin_enter(&cs->cs_lock);
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
-	simple_unlock(&cs->cs_lock);
-	splx(s);
+	mutex_spin_exit(&cs->cs_lock);
+	mutex_spin_exit(&tp->t_lock);
 	(*tp->t_linesw->l_start)(tp);
 }
 
@@ -1913,15 +1889,12 @@ zstty_stsoft(zst, tp)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char rr0, delta;
-	int s;
 
-	s = splzs();
-	simple_lock(&cs->cs_lock);
+	mutex_spin_enter(&cs->cs_lock);
 	rr0 = cs->cs_rr0;
 	delta = cs->cs_rr0_delta;
 	cs->cs_rr0_delta = 0;
-	simple_unlock(&cs->cs_lock);
-	splx(s);
+	mutex_spin_exit(&cs->cs_lock);
 
 	if (ISSET(delta, cs->cs_rr0_dcd)) {
 		/*
@@ -1959,9 +1932,8 @@ zstty_softint(cs)
 {
 	struct zstty_softc *zst = cs->cs_private;
 	struct tty *tp = zst->zst_tty;
-	int s;
 
-	s = spltty();
+	mutex_spin_enter(&tp->t_lock);
 
 	if (zst->zst_rx_ready) {
 		zst->zst_rx_ready = 0;
@@ -1978,7 +1950,7 @@ zstty_softint(cs)
 		zstty_txsoft(zst, tp);
 	}
 
-	splx(s);
+	mutex_spin_exit(&tp->t_lock);
 }
 
 struct zsops zsops_tty = {

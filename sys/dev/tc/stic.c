@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.39.2.1 2007/07/01 21:49:01 ad Exp $	*/
+/*	$NetBSD: stic.c,v 1.39.2.2 2007/07/15 22:20:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.39.2.1 2007/07/01 21:49:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.39.2.2 2007/07/15 22:20:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.39.2.1 2007/07/01 21:49:01 ad Exp $");
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/event.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
