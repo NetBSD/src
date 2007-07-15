@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.850 2007/07/14 10:52:14 ad Exp $
+#	$NetBSD: files,v 1.851 2007/07/15 08:40:22 dsl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -233,7 +233,7 @@ defflag	opt_kstack.h		KSTACK_CHECK_MAGIC
 #
 defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
-defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
+defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
 				MEMORY_RBFLAGS
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
