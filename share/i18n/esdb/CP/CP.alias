@@ -1,4 +1,4 @@
-# $NetBSD: CP.alias,v 1.11 2007/06/18 16:19:31 tnozaki Exp $
+# $NetBSD: CP.alias,v 1.12 2007/07/15 14:41:18 tnozaki Exp $
 
 037	cp037 ibm037 ebcdic-cp-us ebcdic-cp-ca ebcdic-cp-wt ebcdic-cp-nl
 038	cp038 ibm038 ebcdic-int
@@ -51,6 +51,7 @@
 904	cp904 ibm904 904
 905	cp905 ibm905 ebcdic-cp-tr
 918	cp918 ibm918 ebcdic-cp-ar2
+922	cp922 ibm922
 932	cp932 mscp932
 936	cp936 mscp936
 949	cp949 mscp949 uhc
