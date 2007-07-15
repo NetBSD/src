@@ -1,4 +1,4 @@
-.\"     $NetBSD: sched_4bsd.9,v 1.1 2007/07/14 21:54:30 dsieger Exp $
+.\"     $NetBSD: sched_4bsd.9,v 1.2 2007/07/15 21:33:12 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@
 .Ft void
 .Fn sched_schedclock "lwp_t *l"
 .Ft void
-.Fn sched_pstats_hook "struct proc *p, int minslp"
+.Fn sched_pstats_hook "struct proc *p" "int minslp"
 .Ft void
 .Fn sched_setrunnable "lwp_t *l"
 .Ft void
@@ -82,9 +82,9 @@ gets called from
 every Hz ticks in order to recompute the priorities of all threads.
 .Pp
 .Fn sched_setrunnable
-checks if an LWP has slept for more than one second. If so, its
-priority is updated by
-.Fn updatepri
+checks if an LWP has slept for more than one second.
+If so, its priority is updated by
+.Fn updatepri .
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
