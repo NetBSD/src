@@ -1,4 +1,4 @@
-#	$NetBSD: files.g42xxeb,v 1.2 2005/12/11 12:17:06 christos Exp $
+#	$NetBSD: files.g42xxeb,v 1.3 2007/07/15 11:56:04 dsl Exp $
 #
 # Genetec corp. G4255EB evaluation board configuration info
 #
@@ -17,7 +17,7 @@ file	arch/evbarm/g42xxeb/obio.c			obio
 # LCD frame buffer
 attach lcd at obio with lcd_obio
 file arch/evbarm/g42xxeb/g42xxeb_lcd.c		lcd_obio
-defflag "opt_g42xxlcd.h"  G4250_LCD_TOSHIBA_LTM035 G4250_LCD_NEC_NL3224BC35
+defflag opt_g42xxlcd.h  G4250_LCD_TOSHIBA_LTM035 G4250_LCD_NEC_NL3224BC35
 
 device	kmkbd: wskbddev
 attach	kmkbd at obio
