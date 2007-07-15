@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.47 2007/07/15 13:02:41 xtraeme Exp $
+# $NetBSD: postinstall,v 1.48 2007/07/15 14:31:08 xtraeme Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -629,6 +629,12 @@ do_envsys()
 	failed=0
 
 	populate_dir $op true ${SRC_DIR}/etc ${DEST_DIR}/etc 644 envsys.conf
+	failed=$(( ${failed} + $? ))
+
+	populate_dir $op true ${SRC_DIR}/etc/powerd/scripts \
+		${DEST_DIR}/etc/powerd/scripts 555 sensor_battery \
+		sensor_drive sensor_fan sensor_indicator sensor_power \
+		sensor_resistance sensor_temperature sensor_voltage
 	failed=$(( ${failed} + $? ))
 
 	return ${failed}
