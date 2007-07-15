@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.20 2007/07/15 15:27:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.19 2007/07/02 15:18:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20 2007/07/15 15:27:53 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -91,12 +91,13 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.19 2007/07/02 15:18:30 xtraeme Ex
 #include <sys/vnode.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
 static kmutex_t sysmon_power_event_queue_mtx;
 static kcondvar_t sysmon_power_event_queue_cv;
-static struct proc *sysmon_power_daemon;
+static struct lwp *sysmon_power_daemon;
 static prop_dictionary_t sysmon_power_dict;
 
 struct power_event_description {
@@ -345,7 +346,7 @@ sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sysmon_power_daemon != NULL)
 		error = EBUSY;
 	else {
-		sysmon_power_daemon = l->l_proc;
+		sysmon_power_daemon = l;
 		sysmon_power_event_queue_flush();
 	}
 	mutex_exit(&sysmon_power_event_queue_mtx);
