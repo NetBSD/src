@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.27 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.27.6.1 2007/07/15 13:21:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.27 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.27.6.1 2007/07/15 13:21:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,6 +301,10 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		}
 		addr = EHCI_CAP_GET_NEXT(cap);
 	}
+
+	/* If the USB legacy capability is not specified, we are done */
+	if (addr == 0)
+		return;
 
 	legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
 	/* Ask BIOS to give up ownership */

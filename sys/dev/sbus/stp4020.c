@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.49.6.2 2007/06/17 21:31:01 ad Exp $ */
+/*	$NetBSD: stp4020.c,v 1.49.6.3 2007/07/15 13:21:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49.6.2 2007/06/17 21:31:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.49.6.3 2007/07/15 13:21:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ struct stp4020_softc {
 	struct sbusdev	sc_sd;		/* SBus device */
 	pcmcia_chipset_tag_t	sc_pct;	/* Chipset methods */
 
-	struct proc	*event_thread;		/* event handling thread */
+	struct lwp	*event_thread;		/* event handling thread */
 	SIMPLEQ_HEAD(, stp4020_event)	events;	/* Pending events for thread */
 
 	struct stp4020_socket sc_socks[STP4020_NSOCK];
@@ -489,6 +489,15 @@ stp4020attach(parent, self, aux)
 	if (kthread_create(PRI_NONE, 0, NULL, stp4020_event_thread, sc,
 	    &sc->event_thread, "%s", name)) {
 		panic("%s: unable to create event thread", name);
+	}
+
+	/*
+	 * Arrange that a kernel thread be created to handle
+	 * insert/removal events.
+	 */
+	if (kthread_create(PRI_NONE, 0, NULL, stp4020_event_thread, sc,
+	    &sc->event_thread, "%s", self->dv_xname)) {
+		panic("%s: unable to create event thread", self->dv_xname);
 	}
 }
 

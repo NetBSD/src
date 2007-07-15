@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.30.2.1 2007/05/27 12:28:11 ad Exp $       */
+/*      $NetBSD: pccons.c,v 1.30.2.2 2007/07/15 13:16:58 ad Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30.2.1 2007/05/27 12:28:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30.2.2 2007/07/15 13:16:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -299,7 +299,7 @@ struct pc_softc
     } vs;
 };
 
-static struct callout async_update_ch = CALLOUT_INITIALIZER;
+static callout_t async_update_ch;
 
 /*
 ** Forward routine declarations
@@ -2044,6 +2044,8 @@ void
 pccninit(struct consdev *cp)
 {
     int                s = splhigh();
+
+    callout_init(&async_update_ch, 0);
 
     actingConsole = true;
     if (I8042_MAP(bootSoftc.kbd.sc_iot, CONKBDADDR, bootSoftc.kbd.sc_ioh))

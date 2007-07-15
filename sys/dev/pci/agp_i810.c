@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.36.2.1 2007/04/10 13:24:23 ad Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.36.2.2 2007/07/15 13:21:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.36.2.1 2007/04/10 13:24:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.36.2.2 2007/07/15 13:21:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,6 +378,18 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		case AGP_I915_GCC1_GMS_STOLEN_8M:
 			isc->stolen = (8192 - 260) * 1024 / 4096;
+			break;
+		case AGP_I915_GCC1_GMS_STOLEN_16M:
+			isc->stolen = (16384 - 260) * 1024 / 4096;
+			break;
+		case AGP_I915_GCC1_GMS_STOLEN_32M:
+			isc->stolen = (32768 - 260) * 1024 / 4096;
+			break;
+		case AGP_I915_GCC1_GMS_STOLEN_48M:
+			isc->stolen = (49152 - 260) * 1024 / 4096;
+			break;
+		case AGP_I915_GCC1_GMS_STOLEN_64M:
+			isc->stolen = (65536 - 260) * 1024 / 4096;
 			break;
 		default:
 			isc->stolen = 0;

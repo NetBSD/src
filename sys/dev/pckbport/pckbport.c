@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.9 2006/09/03 13:23:15 bjh21 Exp $ */
+/* $NetBSD: pckbport.c,v 1.9.12.1 2007/07/15 13:21:41 ad Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.9 2006/09/03 13:23:15 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.9.12.1 2007/07/15 13:21:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,7 @@ pckbport_attach(void *cookie, struct pckbport_accessops const *ops)
 		return &pckbport_cntag;
 	t = malloc(sizeof(struct pckbport_tag), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (t == NULL) return NULL;
+	callout_init(&t->t_cleanup, 0);
 	t->t_cookie = cookie;
 	t->t_ops = ops;
 	return t;
@@ -599,6 +600,7 @@ pckbport_cnattach(void *cookie, struct pckbport_accessops const *ops,
 	int res = 0;
 	pckbport_tag_t t = &pckbport_cntag;
 
+	callout_init(&t->t_cleanup, 0);
 	t->t_cookie = cookie;
 	t->t_ops = ops;
 

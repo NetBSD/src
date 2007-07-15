@@ -1,6 +1,6 @@
-#	$NetBSD: files.gumstix,v 1.3.4.1 2007/05/27 12:27:16 ad Exp $
+#	$NetBSD: files.gumstix,v 1.3.4.2 2007/07/15 13:15:47 ad Exp $
 #
-# Genetec corp. G4255EB evaluation board configuration info
+# Gumstix. Inc. Gumstix boards configuration info
 #
 
 file	arch/evbarm/gumstix/gumstix_machdep.c

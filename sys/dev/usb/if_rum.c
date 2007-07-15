@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.7.2.3 2007/07/01 21:49:02 ad Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.7.2.4 2007/07/15 13:21:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.3 2007/07/01 21:49:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.4 2007/07/15 13:21:47 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -477,12 +477,15 @@ USB_DETACH(rum)
 	struct ifnet *ifp = &sc->sc_if;
 	int s;
 
+	if (!ifp->if_softc)
+		return 0;
+
 	s = splusb();
 
 	rum_stop(ifp, 1);
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, rum_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, rum_amrr_timeout, sc);
 
 	if (sc->amrr_xfer != NULL) {
 		usbd_free_xfer(sc->amrr_xfer);
@@ -700,7 +703,7 @@ rum_task(void *arg)
 
 	case IEEE80211_S_SCAN:
 		rum_set_chan(sc, ic->ic_curchan);
-		callout_reset(&sc->scan_ch, hz / 5, rum_next_scan, sc);
+		usb_callout(sc->sc_scan_ch, hz / 5, rum_next_scan, sc);
 		break;
 
 	case IEEE80211_S_AUTH:
@@ -748,8 +751,8 @@ rum_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct rum_softc *sc = ic->ic_ifp->if_softc;
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
-	callout_stop(&sc->scan_ch);
-	callout_stop(&sc->amrr_ch);
+	usb_uncallout(sc->sc_scan_ch, rum_next_scan, sc);
+	usb_uncallout(sc->sc_amrr_ch, rum_amrr_timeout, sc);
 
 	/* do it in a process context */
 	sc->sc_state = nstate;
@@ -2185,7 +2188,7 @@ rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 	     i--);
 	ni->ni_txrate = i;
 
-	callout_reset(&sc->amrr_ch, hz, rum_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, rum_amrr_timeout, sc);
 }
 
 Static void
@@ -2241,7 +2244,7 @@ rum_amrr_update(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	ieee80211_amrr_choose(&sc->amrr, sc->sc_ic.ic_bss, &sc->amn);
 
-	callout_reset(&sc->amrr_ch, hz, rum_amrr_timeout, sc);
+	usb_callout(sc->sc_amrr_ch, hz, rum_amrr_timeout, sc);
 }
 
 int

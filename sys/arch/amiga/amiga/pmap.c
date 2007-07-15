@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122.2.2 2007/06/09 23:54:54 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.122.2.3 2007/07/15 13:15:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122.2.2 2007/06/09 23:54:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122.2.3 2007/07/15 13:15:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,6 @@ void		pmap_pinit(pmap_t);
 void		pmap_release(pmap_t);
 static void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 
-static void	amiga_protection_init(void);
 void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 
 /* pmap_remove_mapping flags */
@@ -358,135 +357,6 @@ char	*vmmap;
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.attrs[pg_];				\
 })
-
-/*
- *	Bootstrap the system enough to run with virtual memory.
- *	Map the kernel's code and data, and allocate the system page table.
- *
- *	On the HP this is called after mapping has already been enabled
- *	and just syncs the pmap module with what has already been done.
- *	[We can't call it easily with mapping off since the kernel is not
- *	mapped with PA == VA, hence we would have to relocate every address
- *	from the linked base (virtual) address 0 to the actual (physical)
- *	address of 0xFFxxxxxx.]
- */
-void
-pmap_bootstrap(firstaddr, loadaddr)
-	paddr_t firstaddr;
-	paddr_t loadaddr;
-{
-	vaddr_t va;
-	int i;
-	struct boot_memseg *sp, *esp;
-	paddr_t fromads, toads;
-
-	fromads = firstaddr;
-	toads = maxmem << PGSHIFT;
-
-	/* XXX: allow for msgbuf */
-	toads -= m68k_round_page(MSGBUFSIZE);
-	msgbufpa = toads;
-	/*
-	 * first segment of memory is always the one loadbsd found
-	 * for loading the kernel into.
-	 */
-
-	uvmexp.pagesize = NBPG;
-	uvm_setpagesize();
-
-	/*
-	 * May want to check if first segment is Zorro-II?
-	 */
-	uvm_page_physload(atop(fromads), atop(toads),
-	    atop(fromads), atop(toads), VM_FREELIST_DEFAULT);
-
-	sp = memlist->m_seg;
-	esp = sp + memlist->m_nseg;
-	i = 1;
-	for (; noncontig_enable && sp < esp; sp++) {
-		if ((sp->ms_attrib & MEMF_FAST) == 0)
-			continue;		/* skip if not FastMem */
-		if (firstaddr >= sp->ms_start &&
-		    firstaddr < sp->ms_start + sp->ms_size)
-			continue;		/* skip kernel segment */
-		if (sp->ms_size == 0)
-			continue;		/* skip zero size segments */
-		fromads = sp->ms_start;
-		toads = sp->ms_start + sp->ms_size;
-#ifdef DEBUG_A4000
-		/*
-		 * My A4000 doesn't seem to like Zorro II memory - this
-		 * hack is to skip the motherboard memory and use the
-		 * Zorro II memory.  Only for trying to debug the problem.
-		 * Michael L. Hitch
-		 */
-		if (toads == 0x08000000)
-			continue;	/* skip A4000 motherboard mem */
-#endif
-		/*
-		 * Deal with Zorro II memory stolen for DMA bounce buffers.
-		 * This needs to be handled better.
-		 *
-		 * XXX is: disabled. This is handled now in amiga_init.c
-		 * by removing the stolen memory from the memlist.
-		 *
-		 * XXX is: enabled again, but check real size and position.
-		 * We check z2mem_start is in this segment, and set its end
-		 * to the z2mem_start.
-		 *
-		 */
-		if ((fromads <= z2mem_start) && (toads > z2mem_start))
-			toads = z2mem_start;
-
-		uvm_page_physload(atop(fromads), atop(toads),
-		    atop(fromads), atop(toads), (fromads & 0xff000000) ?
-		    VM_FREELIST_DEFAULT : VM_FREELIST_ZORROII);
-		physmem += (toads - fromads) / PAGE_SIZE;
-		++i;
-		if (noncontig_enable == 1)
-			break;		/* Only two segments enabled */
-	}
-
-	mem_size = physmem << PGSHIFT;
-	virtual_end = VM_MAX_KERNEL_ADDRESS;
-
-	/*
-	 * Initialize protection array.
-	 */
-	amiga_protection_init();
-
-	/*
-	 * Kernel page/segment table allocated in locore,
-	 * just initialize pointers.
-	 */
-	pmap_kernel()->pm_stpa = Sysseg_pa;
-	pmap_kernel()->pm_stab = Sysseg;
-	pmap_kernel()->pm_ptab = Sysmap;
-#if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040)
-		pmap_kernel()->pm_stfree = protostfree;
-#endif
-
-	simple_lock_init(&pmap_kernel()->pm_lock);
-	pmap_kernel()->pm_count = 1;
-
-	/*
-	 * Allocate all the submaps we need
-	 */
-#define	SYSMAP(c, v, n)	\
-	v = (c)va; va += ((n)*PAGE_SIZE);
-
-	va = virtual_avail;
-
-	SYSMAP(void *	,CADDR1	 ,1			)
-	SYSMAP(void *	,CADDR2	 ,1			)
-	SYSMAP(void *	,vmmap	 ,1			)
-	SYSMAP(void *	,msgbufaddr ,btoc(MSGBUFSIZE)	)
-
-	DCIS();
-
-	virtual_avail = reserve_dumppages(va);
-}
 
 /*
  *	Initialize the pmap module.
@@ -2280,32 +2150,6 @@ pmap_ptpage_delref(ptpva)
 	rv = --pg->wire_count;
 	simple_unlock(&uvm.kernel_object->vmobjlock);
 	return (rv);
-}
-
-static void
-amiga_protection_init()
-{
-	int *kp, prot;
-
-	kp = protection_codes;
-	for (prot = 0; prot < 8; prot++) {
-		switch (prot) {
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_NONE:
-			*kp++ = 0;
-			break;
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_NONE:
-		case VM_PROT_READ | VM_PROT_NONE | VM_PROT_EXECUTE:
-		case VM_PROT_NONE | VM_PROT_NONE | VM_PROT_EXECUTE:
-			*kp++ = PG_RO;
-			break;
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_NONE:
-		case VM_PROT_NONE | VM_PROT_WRITE | VM_PROT_EXECUTE:
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_NONE:
-		case VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE:
-			*kp++ = PG_RW;
-			break;
-		}
-	}
 }
 
 /* static */

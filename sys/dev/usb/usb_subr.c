@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.143.4.3 2007/05/27 14:30:30 ad Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.143.4.4 2007/07/15 13:21:49 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.143.4.3 2007/05/27 14:30:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.143.4.4 2007/07/15 13:21:49 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1051,7 +1051,7 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 		if (!err)
 			break;
 		usbd_delay_ms(dev, 200);
-		if ((i % 3) == 3) {
+		if ((i & 3) == 3) {
 			DPRINTFN(-1,("usbd_new_device: set address %d "
 			    "failed - trying a port reset\n", addr));
 			usbd_reset_port(up->parent, port, &ps);

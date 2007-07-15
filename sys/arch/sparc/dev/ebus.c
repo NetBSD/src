@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.27 2007/03/04 06:00:43 christos Exp $ */
+/*	$NetBSD: ebus.c,v 1.27.2.1 2007/07/15 13:16:59 ad Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.27 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.27.2.1 2007/07/15 13:16:59 ad Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -79,8 +79,7 @@ int ebus_debug = 0;
 volatile uint32_t *ebus_LED = NULL;
 
 #ifdef BLINK
-static struct callout ebus_blink_ch = CALLOUT_INITIALIZER;
-
+static callout_t ebus_blink_ch;
 static void ebus_blink(void *);
 #endif
 
@@ -252,6 +251,10 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t base14;
 	int node, error;
 	char devinfo[256];
+
+#ifdef BLINK
+	callout_init(&ebus_blink_ch, 0);
+#endif
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s, revision 0x%02x\n",

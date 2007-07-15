@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.10 2007/03/09 06:45:20 thorpej Exp $	*/
+/*	$NetBSD: psl.h,v 1.10.2.1 2007/07/15 13:15:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #ifndef _ARM_PSL_H_
 #define _ARM_PSL_H_
 #include <machine/intr.h>
-#ifndef _LOCORE
+#if (! defined(_LOCORE)) && (! defined(hpcarm))
 #include <arm/softintr.h>
 #endif
 

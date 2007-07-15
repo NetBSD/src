@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.6 2006/06/25 16:46:59 bouyer Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.6.16.1 2007/07/15 13:17:23 ad Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.6 2006/06/25 16:46:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.6.16.1 2007/07/15 13:17:23 ad Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -827,39 +827,24 @@ xenbus_thread(void *unused)
 	}
 }
 
-static void
-xenwatch_create_thread(void *unused)
-{
-	struct proc *p;
-	int err;
-
-	err = kthread_create1(xenwatch_thread, unused, &p, "xenwatch");
-	if (err)
-		printf("kthread_create1(xenwatch): %d\n", err);
-}
-
-static void
-xenbus_create_thread(void *unused)
-{
-	struct proc *p;
-	int err;
-
-	err = kthread_create1(xenbus_thread, unused, &p, "xenbus");
-	if (err)
-		printf("kthread_create1(xenbus): %d\n", err);
-}
-
-
 int
 xs_init(void)
 {
+	int err;
+
 	SIMPLEQ_INIT(&xs_state.reply_list);
 	simple_lock_init(&xs_state.reply_lock);
 	lockinit(&xs_state.xs_lock, IPL_TTY, "xenst", 0, 0);
 
-	kthread_create(xenwatch_create_thread, NULL);
+	err = kthread_create(PRI_NONE, 0, NULL, xenwatch_thread,
+	    NULL, NULL, "xenwatch");
+	if (err)
+		printf("kthread_create(xenwatch): %d\n", err);
 
-	kthread_create(xenbus_create_thread, NULL);
+	err = kthread_create(PRI_NONE, 0, NULL, xenbus_thread,
+	    NULL, NULL, "xenbus");
+	if (err)
+		printf("kthread_create(xenbus): %d\n", err);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.21.6.1 2007/04/10 13:23:22 ad Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.21.6.2 2007/07/15 13:17:20 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -116,7 +116,7 @@ xen_shm_init()
 	xen_shm_arena = vmem_create("xen_shm",
 	    xen_shm_base_address_pg,
 	    (xen_shm_end_address >> PAGE_SHIFT) - 1 - xen_shm_base_address_pg,
-	    1, NULL, NULL, NULL, 1, VM_NOSLEEP);
+	    1, NULL, NULL, NULL, 1, VM_NOSLEEP, IPL_VM);
 	if (xen_shm_arena == NULL) {
 		panic("xen_shm_init no arena");
 	}

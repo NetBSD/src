@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.109.6.1 2007/06/09 23:55:08 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.109.6.2 2007/07/15 13:16:09 ad Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -149,7 +149,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Squeeze...
 options 	NVNODE=50

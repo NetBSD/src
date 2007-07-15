@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.48 2007/03/04 06:00:28 christos Exp $	*/
+/*	$NetBSD: lpt.c,v 1.48.2.1 2007/07/15 13:16:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.48 2007/03/04 06:00:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.48.2.1 2007/07/15 13:16:38 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -277,7 +277,7 @@ lptattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_state = 0;
 	sc->sc_i8255 = i8255;
 
-	callout_init(&sc->sc_out_ch);
+	callout_init(&sc->sc_out_ch, 0);
 
 #if defined(INET) && defined(PLIP)
 	plipattach(sc, device_unit(self));

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.36 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.36.2.1 2007/07/15 13:16:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.36 2007/03/04 06:00:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.36.2.1 2007/07/15 13:16:21 ad Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -461,7 +461,7 @@ fd_attach(struct device *parent, struct device *self, void *auxp)
 	iwm->drives++;
 
 	bufq_alloc(&fd->bufQueue, "disksort", BUFQ_SORT_CYLINDER);
-	callout_init(&fd->motor_ch);
+	callout_init(&fd->motor_ch, 0);
 
 	printf(" drive %d: ", fd->unit);
 

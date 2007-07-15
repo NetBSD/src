@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.37 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: mt.c,v 1.37.2.1 2007/07/15 13:15:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.37 2007/03/04 05:59:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.37.2.1 2007/07/15 13:15:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,8 @@ mtattach(struct device *parent, struct device *self, void *aux)
 	slave = ha->ha_slave;
 
 	bufq_alloc(&sc->sc_tab, "fcfs", 0);
-	callout_init(&sc->sc_start_ch);
-	callout_init(&sc->sc_intr_ch);
+	callout_init(&sc->sc_start_ch, 0);
+	callout_init(&sc->sc_intr_ch, 0);
 
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;

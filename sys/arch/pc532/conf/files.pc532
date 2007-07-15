@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.56 2006/03/11 13:52:58 simonb Exp $
+#	$NetBSD: files.pc532,v 1.56.20.1 2007/07/15 13:16:37 ad Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -70,7 +70,6 @@ file	arch/pc532/pc532/sys_machdep.c
 file	arch/pc532/pc532/syscall.c
 file	arch/pc532/pc532/trap.c
 file	arch/pc532/pc532/vm_machdep.c
-file	netns/ns_cksum.c		ns
 
 #
 # Binary compatibility with previous NetBSD releases.

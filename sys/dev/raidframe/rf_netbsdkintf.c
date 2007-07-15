@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.2 2007/06/09 23:57:56 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.3 2007/07/15 13:21:41 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.2 2007/06/09 23:57:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.3 2007/07/15 13:21:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2774,18 +2774,17 @@ rf_find_raid_components()
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
 			    NOCRED, 0);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			vput(vp);
 			if (error) {
 				printf("RAIDframe: can't get wedge info for "
 				    "dev %s (%d)\n", dv->dv_xname, error);
-out:
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
-				vput(vp);
 				continue;
 			}
 
 			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0)
-				goto out;
+				continue;
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
 			    dv->dv_xname, dkw.dkw_size);

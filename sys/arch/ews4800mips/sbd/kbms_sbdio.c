@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.5 2007/03/04 05:59:47 christos Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.5.2.1 2007/07/15 13:15:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.5 2007/03/04 05:59:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.5.2.1 2007/07/15 13:15:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,9 +466,10 @@ kbd_cnpollc(void *arg, int on)
 
 	if (on && !__polling) {
 		s = splhigh();  /* Disable interrupt driven I/O */
+		__polling = true;
 	} else if (!on && __polling) {
 		__polling = false;
-	splx(s);        /* Enable interrupt driven I/O */
+		splx(s);        /* Enable interrupt driven I/O */
 	}
 }
 

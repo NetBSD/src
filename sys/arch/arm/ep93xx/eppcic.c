@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.1.36.1 2007/07/15 13:15:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.1 2005/11/12 05:33:23 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.1.36.1 2007/07/15 13:15:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ struct eppcic_handle {
 	struct device		*ph_card;
 	int			(*ph_ih_func)(void *);
 	void			*ph_ih_arg;
-	struct proc		*ph_event_thread;
+	lwp_t			*ph_event_thread;
 	int			ph_run;		/* ktread running */
 	int			ph_width;	/* 8 or 16 */
 	int			ph_vcc;		/* 3 or 5 */
@@ -104,7 +104,6 @@ struct eppcic_handle {
 static int eppcic_intr_carddetect(void *);
 static int eppcic_intr_socket(void *);
 static int eppcic_print(void *, const char *);
-static void eppcic_create_event_thread(void *);
 static void eppcic_event_thread(void *);
 void eppcic_shutdown(void *);
 
@@ -268,7 +267,19 @@ eppcic_config_socket(struct eppcic_handle *ph)
 	wait = (pcic->power_ctl)(sc, ph->ph_socket, POWER_OFF);
 	delay(wait);
 
-	kthread_create(eppcic_create_event_thread, ph);
+
+	ph->ph_status[0] = epgpio_read(sc->sc_gpio, ph->ph_port, ph->ph_cd[0]);
+	ph->ph_status[1] = epgpio_read(sc->sc_gpio, ph->ph_port, ph->ph_cd[1]);
+
+	DPRINTFN(1, ("eppcic_config_socket: cd1=%d, cd2=%d\n",ph->ph_status[0],ph->ph_status[1]));
+
+	if (!(ph->ph_status[0] | ph->ph_status[1]))
+		pcmcia_card_attach(ph->ph_card);
+
+	ph->ph_run = 1;
+	kthread_create(PRI_NONE, 0, NULL, eppcic_event_thread, ph,
+	    &ph->ph_event_thread, "%s,%d", sc->sc_dev.dv_xname,
+	    ph->ph_socket);
 }
 
 static int     
@@ -276,25 +287,6 @@ eppcic_print(void *arg, const char *pnp)
 {                       
 	return (UNCONF);
 }       
-
-static void
-eppcic_create_event_thread(void *arg)
-{
-	struct eppcic_handle *ph = arg;
-	struct eppcic_softc *sc = ph->ph_sc;
-
-	ph->ph_status[0] = epgpio_read(sc->sc_gpio, ph->ph_port, ph->ph_cd[0]);
-	ph->ph_status[1] = epgpio_read(sc->sc_gpio, ph->ph_port, ph->ph_cd[1]);
-
-	DPRINTFN(1, ("eppcic_create_event_thread: cd1=%d, cd2=%d\n",ph->ph_status[0],ph->ph_status[1]));
-
-	if (!(ph->ph_status[0] | ph->ph_status[1]))
-		pcmcia_card_attach(ph->ph_card);
-
-	ph->ph_run = 1;
-	kthread_create1(eppcic_event_thread, ph, &ph->ph_event_thread,
-			"%s,%d", sc->sc_dev.dv_xname, ph->ph_socket);
-}
 
 static void
 eppcic_event_thread(void *arg)

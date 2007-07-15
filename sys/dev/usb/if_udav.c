@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.16.2.1 2007/03/13 16:50:33 ad Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.16.2.2 2007/07/15 13:21:47 ad Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.16.2.1 2007/03/13 16:50:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.16.2.2 2007/07/15 13:21:47 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -151,6 +151,8 @@ static const struct udav_type {
 } udav_devs [] = {
 	/* Corega USB-TXC */
 	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TXC }, 0},
+	/* ShanTou ST268 USB NIC */
+	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ST268_USB_NIC }, 0},
 #if 0
 	/* DAVICOM DM9601 Generic? */
 	/*  XXX: The following ids was obtained from the data sheet. */

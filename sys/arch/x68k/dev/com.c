@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.43.2.2 2007/05/27 14:26:58 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.43.2.3 2007/07/15 13:17:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.43.2.2 2007/05/27 14:26:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.43.2.3 2007/07/15 13:17:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,7 +148,7 @@ struct com_softc {
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
 
-struct callout com_poll_ch = CALLOUT_INITIALIZER;
+struct callout com_poll_ch;
 
 int comprobe(struct device *, struct cfdata *, void *);
 void comattach(struct device *, struct device *, void *);
@@ -337,7 +337,8 @@ comattach(struct device *parent, struct device *dev, void *aux)
 
 	com_attached = 1;
 
-	callout_init(&sc->sc_diag_ch);
+	callout_init(&sc->sc_diag_ch, 0);
+	callout_init(&com_poll_ch, 0);
 
 	sc->sc_iobase = iobase;
 	sc->sc_hwflags = 0;

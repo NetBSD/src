@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.305.4.2 2007/06/09 23:55:07 ad Exp $
+#	$NetBSD: INSTALL,v 1.305.4.3 2007/07/15 13:16:08 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -15,6 +15,7 @@ include "arch/i386/conf/std.i386"
 
 makeoptions	CPUFLAGS="-march=i486 -mtune=i486"	# i486 is densest code
 makeoptions	COPTS="-Os"
+makeoptions	USE_SSP="no"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -70,6 +71,9 @@ options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 no options	EXEC_AOUT
+
+no options	RFC2292		# Previous version of Adv. Sockets API for IPv6
+no options	PTRACE		# Include ptrace(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -155,7 +159,6 @@ options 	INET6		# IPv6
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	I2OVERBOSE	# verbose I2O driver messages
 
 #
 # wscons options

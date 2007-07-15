@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.37.2.3 2007/06/09 23:54:51 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.37.2.4 2007/07/15 13:15:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37.2.3 2007/06/09 23:54:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.37.2.4 2007/07/15 13:15:22 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -310,7 +310,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	netbsd32_si_to_si32(&frame.sf_si, (const siginfo_t *)&ksi->ksi_info);
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = 0;
+	frame.sf_uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));

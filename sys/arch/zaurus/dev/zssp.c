@@ -1,3 +1,4 @@
+/*	$NetBSD: zssp.c,v 1.1.12.1 2007/07/15 13:17:24 ad Exp $	*/
 /*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
@@ -17,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.1 2006/12/16 05:23:49 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.1.12.1 2007/07/15 13:17:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -32,15 +33,13 @@ __KERNEL_RCSID(0, "$NetBSD: zssp.c,v 1.1 2006/12/16 05:23:49 ober Exp $");
 #include <zaurus/dev/zsspvar.h>
 #include <zaurus/zaurus/zaurus_var.h>
 
-#include "ioconf.h"
-
 #define GPIO_ADS7846_CS_C3000	14	/* SSP SFRM */
 #define GPIO_MAX1111_CS_C3000	20
 #define GPIO_TG_CS_C3000	53
 
-#define SSCR0_ADS7846_C3000	0x06ab
-#define	SSCR0_LZ9JG18		0x01ab
+#define SSCR0_ADS7846_C3000	0x06ab /* 12bit/Microwire/div by 7 */
 #define SSCR0_MAX1111		0x0387
+#define	SSCR0_LZ9JG18		0x01ab
 
 struct zssp_softc {
 	struct device sc_dev;
@@ -50,15 +49,21 @@ struct zssp_softc {
 
 static int	zssp_match(struct device *, struct cfdata *, void *);
 static void	zssp_attach(struct device *, struct device *, void *);
-static void	zssp_init(void);
-static void	zssp_powerhook(int, void *);
 
 CFATTACH_DECL(zssp, sizeof(struct zssp_softc),
 	zssp_match, zssp_attach, NULL, NULL);
 
+static void	zssp_init(void);
+static void	zssp_powerhook(int, void *);
+
+static struct zssp_softc *zssp_sc;
+
 static int
 zssp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
+	if (zssp_sc != NULL)
+		return 0;
 
 	return 1;
 }
@@ -74,6 +79,8 @@ zssp_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map bus space\n");
 		return;
 	}
+
+	zssp_sc = sc;
 
 	printf("\n");
 
@@ -95,8 +102,8 @@ zssp_init(void)
 {
 	struct zssp_softc *sc;
 
-	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
-	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+	KASSERT(zssp_sc != NULL);
+	sc = zssp_sc;
 
 	pxa2x0_clkman_config(CKEN_SSP, 1);
 
@@ -130,8 +137,8 @@ zssp_ic_start(int ic, uint32_t data)
 {
 	struct zssp_softc *sc;
 
-	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
-	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+	KASSERT(zssp_sc != NULL);
+	sc = zssp_sc;
 
 	/* disable other ICs */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
@@ -171,8 +178,8 @@ zssp_ic_stop(int ic)
 	struct zssp_softc *sc;
 	uint32_t rv;
 
-	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
-	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+	KASSERT(zssp_sc != NULL);
+	sc = zssp_sc;
 
 	switch (ic) {
 	case ZSSP_IC_ADS7846:
@@ -223,12 +230,12 @@ int
 zssp_read_max1111(uint32_t cmd)
 {
 	struct zssp_softc *sc;
-	int	voltage[2];
-	int	i;
-	int	s;
+	int voltage[2];
+	int i;
+	int s;
 
-	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
-	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+	KASSERT(zssp_sc != NULL);
+	sc = zssp_sc;
 
 	s = splhigh();
 
@@ -291,24 +298,22 @@ uint32_t
 zssp_read_ads7846(uint32_t cmd)
 {
 	struct zssp_softc *sc;
-
-	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
 	unsigned int cr0;
-	int s;
 	uint32_t val;
+	int s;
 
-	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
+	if (zssp_sc == NULL) {
 		printf("zssp_read_ads7846: not configured\n");
 		return 0;
 	}
-
-	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+	sc = zssp_sc;
 
 	s = splhigh();
-	if (1) {
-		cr0 =  SSCR0_ADS7846_C3000;
+
+	if (ZAURUS_ISC3000) {
+		cr0 = SSCR0_ADS7846_C3000;
 	} else {
-		cr0 =  0x00ab;
+		cr0 = 0x00ab;
 	}
         bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, cr0);
@@ -331,7 +336,7 @@ zssp_read_ads7846(uint32_t cmd)
 
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
 
-	pxa2x0_gpio_set_bit(GPIO_ADS7846_CS_C3000); /* deselect */
+	pxa2x0_gpio_set_bit(GPIO_ADS7846_CS_C3000);
 
 	splx(s);
 
@@ -341,18 +346,17 @@ zssp_read_ads7846(uint32_t cmd)
 void
 zssp_write_lz9jg18(uint32_t data)
 {
-	int s;
 	int sclk_pin, sclk_fn;
 	int sfrm_pin, sfrm_fn;
 	int txd_pin, txd_fn;
 	int rxd_pin, rxd_fn;
 	int i;
+	int s;
 
 	/* XXX this creates a DAC command from a backlight duty value. */
 	data = 0x40 | (data & 0x1f);
 
 	if (ZAURUS_ISC3000) {
-		/* C3000 */
 		sclk_pin = 19;
 		sfrm_pin = 14;
 		txd_pin = 87;

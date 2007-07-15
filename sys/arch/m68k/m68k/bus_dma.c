@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.22.2.1 2007/06/09 23:55:15 ad Exp $ */
+/* $NetBSD: bus_dma.c,v 1.22.2.2 2007/07/15 13:16:16 ad Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.2.1 2007/06/09 23:55:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.2.2 2007/07/15 13:16:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,7 +494,27 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			e = (pe + CACHELINE_MASK) & ~CACHELINE_MASK;
 
 			/* flush cacheline */
+			while ((p < e) && (p & (CACHELINE_SIZE * 8 - 1)) != 0) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* flush cachelines per 128bytes */
 			while ((p < e) && (p & PAGE_MASK) != 0) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
 				DCFL(p);
 				p += CACHELINE_SIZE;
 			}
@@ -503,6 +523,26 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			while (p + PAGE_SIZE <= e) {
 				DCFP(p);
 				p += PAGE_SIZE;
+			}
+
+			/* flush cachelines per 128bytes */
+			while (p + CACHELINE_SIZE * 8 <= e) {
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
+				DCFL(p);
+				p += CACHELINE_SIZE;
 			}
 
 			/* flush cacheline */
@@ -530,7 +570,27 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			e = pe & ~CACHELINE_MASK;
 
 			/* purge cacheline */
+			while ((p < e) && (p & (CACHELINE_SIZE * 8 - 1)) != 0) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+			}
+
+			/* purge cachelines per 128bytes */
 			while ((p < e) && (p & PAGE_MASK) != 0) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
 				DCPL(p);
 				p += CACHELINE_SIZE;
 			}
@@ -539,6 +599,26 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			while (p + PAGE_SIZE <= e) {
 				DCPP(p);
 				p += PAGE_SIZE;
+			}
+
+			/* purge cachelines per 128bytes */
+			while (p + CACHELINE_SIZE * 8 <= e) {
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
+				DCPL(p);
+				p += CACHELINE_SIZE;
 			}
 
 			/* purge cacheline */

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.44.2.2 2007/07/01 17:35:21 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.44.2.3 2007/07/15 13:21:06 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.2 2007/07/01 17:35:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.3 2007/07/15 13:21:06 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -508,7 +508,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	char	 *inbuf;
 
 	cp = ci->ci_disk;
-	if ((ret = dk_lookup(cp, l, &vp)) != 0)
+	if ((ret = dk_lookup(cp, l, &vp, UIO_USERSPACE)) != 0)
 		return ret;
 
 	inbuf = malloc(MAX_KEYSIZE, M_TEMP, M_WAITOK);

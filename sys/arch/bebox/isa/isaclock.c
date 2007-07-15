@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.14 2006/09/15 08:25:02 gdamore Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.14.10.1 2007/07/15 13:15:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.14 2006/09/15 08:25:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isaclock.c,v 1.14.10.1 2007/07/15 13:15:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,14 @@ void
 sysbeep(pitch, period)
 	int pitch, period;
 {
-	static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
+	static callout_t sysbeep_ch;
+	static bool again;
 	static int last_pitch;
+
+	if (!again) {
+		callout_init(&sysbeep_ch, 0);
+		again = true;
+	}
 
 	if (beeping)
 		callout_stop(&sysbeep_ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.47.2.1 2007/06/17 21:30:58 ad Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.47.2.2 2007/07/15 13:21:17 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.47.2.1 2007/06/17 21:30:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.47.2.2 2007/07/15 13:21:17 ad Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -220,7 +220,7 @@ bah_attach_subr(sc)
 		(void (*)(void *))bah_start, ifp);
 #endif
 
-	callout_init(&sc->sc_recon_ch);
+	callout_init(&sc->sc_recon_ch, 0);
 }
 
 /*

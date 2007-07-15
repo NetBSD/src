@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.39 2007/03/04 05:59:54 christos Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.39.2.1 2007/07/15 13:16:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.39 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.39.2.1 2007/07/15 13:16:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	sc->sc_tpstat = VRPIU_TP_STAT_DISABLE;
 
 	/* initialize touch panel timeout structure	*/
-	callout_init(&sc->sc_tptimeout);
+	callout_init(&sc->sc_tptimeout, 0);
 
 	/* initialize calibration context	*/
 	tpcalib_init(&sc->sc_tpcalib);
@@ -344,7 +344,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	sc->sc_battery.value[1] = -1;
 	sc->sc_battery.value[2] = -1;
 	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
-	callout_init(&sc->sc_adpoll);
+	callout_init(&sc->sc_adpoll, 0);
 	callout_reset(&sc->sc_adpoll, hz, vrpiu_start_powerstate, sc);
 }
 

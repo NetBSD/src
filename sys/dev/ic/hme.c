@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.56.2.1 2007/07/01 21:47:49 ad Exp $	*/
+/*	$NetBSD: hme.c,v 1.56.2.2 2007/07/15 13:21:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.56.2.1 2007/07/01 21:47:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.56.2.2 2007/07/15 13:21:14 ad Exp $");
 
 /* #define HMEDEBUG */
 
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.56.2.1 2007/07/01 21:47:49 ad Exp $");
 #include <dev/ic/hmevar.h>
 
 void		hme_start(struct ifnet *);
-void		hme_stop(struct hme_softc *);
+void		hme_stop(struct hme_softc *,bool);
 int		hme_ioctl(struct ifnet *, u_long, void *);
 void		hme_tick(void *);
 void		hme_watchdog(struct ifnet *);
@@ -169,7 +169,7 @@ hme_config(sc)
 	 */
 
 	/* Make sure the chip is stopped. */
-	hme_stop(sc);
+	hme_stop(sc, true);
 
 
 	/*
@@ -353,15 +353,16 @@ hme_reset(sc)
 }
 
 void
-hme_stop(sc)
-	struct hme_softc *sc;
+hme_stop(struct hme_softc *sc, bool chip_only)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	int n;
 
-	callout_stop(&sc->sc_tick_ch);
-	mii_down(&sc->sc_mii);
+	if (!chip_only) {
+		callout_stop(&sc->sc_tick_ch);
+		mii_down(&sc->sc_mii);
+	}
 
 	/* Mask all interrupts */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK, 0xffffffff);
@@ -482,7 +483,7 @@ hme_init(sc)
 	 */
 
 	/* step 1 & 2. Reset the Ethernet Channel */
-	hme_stop(sc);
+	hme_stop(sc, false);
 
 	/* Re-initialize the MIF */
 	hme_mifinit(sc);
@@ -1463,7 +1464,7 @@ hme_ioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			hme_stop(sc);
+			hme_stop(sc, false);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1531,7 +1532,7 @@ hme_shutdown(arg)
 	void *arg;
 {
 
-	hme_stop((struct hme_softc *)arg);
+	hme_stop((struct hme_softc *)arg, false);
 }
 
 /*

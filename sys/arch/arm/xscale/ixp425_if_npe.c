@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.3 2007/03/04 05:59:38 christos Exp $	*/
+/*	$NetBSD: ixp425_if_npe.c,v 1.3.2.1 2007/07/15 13:15:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.3 2007/03/04 05:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.3.2.1 2007/07/15 13:15:39 ad Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -269,7 +269,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 	memset(&sc->sc_ethercom, 0, sizeof(sc->sc_ethercom));
 	memset(&sc->sc_mii, 0, sizeof(sc->sc_mii));
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	if (npe_activate(sc)) {
 		aprint_error("%s: Failed to activate NPE (missing "

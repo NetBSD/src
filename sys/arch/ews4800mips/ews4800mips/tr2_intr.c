@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.4 2007/02/16 13:27:01 tsutsui Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.4.6.1 2007/07/15 13:15:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.4 2007/02/16 13:27:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.4.6.1 2007/07/15 13:15:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,40 +54,34 @@ __KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.4 2007/02/16 13:27:01 tsutsui Exp $")
 SBD_DECL(tr2);
 
 const uint32_t tr2_sr_bits[_IPL_N] = {
-	0,			/* IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFT */
-
-	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0|
-	MIPS_INT_MASK_2,		/* IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0|
-	MIPS_INT_MASK_2,		/* IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0|
-	MIPS_INT_MASK_2|
-	MIPS_INT_MASK_4,		/* IPL_{TTY,SERIAL} */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0|
-	MIPS_INT_MASK_2|
-	MIPS_INT_MASK_4|
-	MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
+	[IPL_NONE] = 0,
+	[IPL_SOFT] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTCLOCK] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_SOFTSERIAL] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_BIO] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_2,
+	[IPL_NET] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0|
+	    MIPS_INT_MASK_2,
+	[IPL_TTY] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_4,
+	[IPL_CLOCK] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_4 |
+	    MIPS_INT_MASK_5,
 	/* !!! TEST !!! VME INTERRUPT IS NOT MASKED */
 };
 

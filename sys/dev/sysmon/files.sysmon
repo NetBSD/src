@@ -1,19 +1,20 @@
-#	$NetBSD: files.sysmon,v 1.5 2005/12/11 12:23:56 christos Exp $
+#	$NetBSD: files.sysmon,v 1.5.30.1 2007/07/15 13:21:45 ad Exp $
 
-define	sysmon_envsys
-file	dev/sysmon/sysmon_envsys.c	sysmon_envsys		needs-flag
-
-define	sysmon_wdog
-file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
+define	sysmon_taskq
+file	dev/sysmon/sysmon_taskq.c	sysmon_taskq
 
 define	sysmon_power
 file	dev/sysmon/sysmon_power.c	sysmon_power		needs-flag
 
-file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog |
-					    sysmon_power
+define	sysmon_envsys: sysmon_power, sysmon_taskq
+file	dev/sysmon/sysmon_envsys.c	sysmon_envsys	needs-flag
+file	dev/sysmon/sysmon_envsys_events.c	sysmon_envsys
 
-define	sysmon_taskq
-file	dev/sysmon/sysmon_taskq.c	sysmon_taskq
+define	sysmon_wdog
+file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
+
+file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_envsys_events |
+					sysmon_wdog | sysmon_power
 
 defpseudo swwdog: sysmon_wdog
 file    dev/sysmon/swwdog.c            swwdog                needs-count

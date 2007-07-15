@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.59 2007/03/04 05:59:27 christos Exp $ */
+/*	$NetBSD: sbic.c,v 1.59.2.1 2007/07/15 13:15:28 ad Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.59 2007/03/04 05:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.59.2.1 2007/07/15 13:15:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -810,7 +810,7 @@ sbicinit(struct sbic_softc *dev)
 		TAILQ_INIT(&dev->ready_list);
 		TAILQ_INIT(&dev->nexus_list);
 		TAILQ_INIT(&dev->free_list);
-		callout_init(&dev->sc_timo_ch);
+		callout_init(&dev->sc_timo_ch, 0);
 		dev->sc_nexus = NULL;
 		dev->sc_xs = NULL;
 		acb = dev->sc_acb;

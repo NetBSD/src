@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.10.30.1 2007/07/15 13:15:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10.30.1 2007/07/15 13:15:59 ad Exp $");
+
+#define __MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -54,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2005/12/11 12:17:24 christos Exp $");
 #include <hp700/hp700/machdep.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <machine/mutex.h>
 
 /* The priority level masks. */
 int imask[NIPL];
@@ -403,6 +407,33 @@ hppa_intr(struct trapframe *frame)
 	int i;
 	struct hp700_int_reg *int_reg;
 	int hp700_intr_ipending_new(struct hp700_int_reg *, int);
+
+#ifndef LOCKDEBUG
+	extern char mutex_enter_crit_start[];
+	extern char mutex_enter_crit_end[];
+
+	extern char _lock_cas_ras_start[];
+	extern char _lock_cas_ras_end[];
+
+	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&
+	    frame->tf_iioq_head >= (u_int)_lock_cas_ras_start &&
+	    frame->tf_iioq_head <= (u_int)_lock_cas_ras_end) {
+		frame->tf_iioq_head = (u_int)_lock_cas_ras_start;
+		frame->tf_iioq_tail = (u_int)_lock_cas_ras_start + 4;
+	}
+
+	/*
+	 * If we interrupted in the middle of mutex_enter(),
+	 * we must patch up the lock owner value quickly if
+	 * we got the interlock.  If any of the interrupt
+	 * handlers need to aquire the mutex, they could
+	 * deadlock if the owner value is left unset.
+	 */
+	if (frame->tf_iioq_head >= (u_int)mutex_enter_crit_start &&
+	    frame->tf_iioq_head <= (u_int)mutex_enter_crit_end &&
+	    frame->tf_ret0 != 0)
+		((kmutex_t *)frame->tf_arg0)->mtx_owner = (uintptr_t)curlwp;
+#endif
 
 	/*
 	 * Read the CPU interrupt register and acknowledge

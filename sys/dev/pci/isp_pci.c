@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.100.2.1 2007/05/27 14:30:24 ad Exp $ */
+/* $NetBSD: isp_pci.c,v 1.100.2.2 2007/07/15 13:21:36 ad Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.100.2.1 2007/05/27 14:30:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.100.2.2 2007/07/15 13:21:36 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -1199,13 +1199,21 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
 	bus_dma_tag_t dmat = isp->isp_dmatag;
 	bus_dma_segment_t sg;
-	bus_size_t len;
+	bus_size_t len, dbound;
 	fcparam *fcp;
 	int rs, i;
 
 	if (isp->isp_rquest_dma)	/* been here before? */
 		return (0);
 
+	if (isp->isp_type <= ISP_HA_SCSI_1040B) {
+		dbound = 1 << 24;
+	} else {
+		/*
+		 * For 32-bit PCI DMA, the range is 32 bits or zero :-)
+		 */
+		dbound = 0;
+	}
 	len = isp->isp_maxcmds * sizeof (XS_T *);
 	isp->isp_xflist = (XS_T **) malloc(len, M_DEVBUF, M_WAITOK);
 	if (isp->isp_xflist == NULL) {
@@ -1223,7 +1231,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	}
 	for (i = 0; i < isp->isp_maxcmds; i++) {
 		if (bus_dmamap_create(dmat, MAXPHYS, (MAXPHYS / PAGE_SIZE) + 1,
-		    MAXPHYS, 0, BUS_DMA_NOWAIT, &pcs->pci_xfer_dmap[i])) {
+		    MAXPHYS, dbound, BUS_DMA_NOWAIT, &pcs->pci_xfer_dmap[i])) {
 			isp_prt(isp, ISP_LOGERR, "cannot create DMA maps");
 			break;
 		}
@@ -1250,7 +1258,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	    (void *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
-	if (bus_dmamap_create(dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
+	if (bus_dmamap_create(dmat, len, 1, len, dbound, BUS_DMA_NOWAIT,
 	    &isp->isp_rqdmap)) {
 		goto dmafail;
 	}
@@ -1272,7 +1280,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	    (void *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
-	if (bus_dmamap_create(dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
+	if (bus_dmamap_create(dmat, len, 1, len, dbound, BUS_DMA_NOWAIT,
 	    &isp->isp_rsdmap)) {
 		goto dmafail;
 	}
@@ -1299,7 +1307,7 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	    (void *)&fcp->isp_scratch, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
-	if (bus_dmamap_create(dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
+	if (bus_dmamap_create(dmat, len, 1, len, dbound, BUS_DMA_NOWAIT,
 	    &isp->isp_scdmap)) {
 		goto dmafail;
 	}
@@ -1449,7 +1457,13 @@ mbxsync:
 		    (ispextreq_t *)qep);
 		break;
 	case RQSTYPE_T2RQS:
-		isp_put_request_t2(isp, (ispreqt2_t *) rq, (ispreqt2_t *) qep);
+		if (FCPARAM(isp)->isp_2klogin) {
+			isp_put_request_t2e(isp,
+			    (ispreqt2e_t *) rq, (ispreqt2e_t *) qep);
+		} else {
+			isp_put_request_t2(isp,
+			    (ispreqt2_t *) rq, (ispreqt2_t *) qep);
+		}
 		break;
 	}
 	*nxtip = nxti;

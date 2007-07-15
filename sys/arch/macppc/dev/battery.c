@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.1.8.2 2007/05/27 12:27:42 ad Exp $ */
+/*	$NetBSD: battery.c,v 1.1.8.3 2007/07/15 13:16:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.1.8.2 2007/05/27 12:27:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.1.8.3 2007/07/15 13:16:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.1.8.2 2007/05/27 12:27:42 ad Exp $");
 #define BAT_MAX_CHARGE		5
 #define BAT_CHARGE		6
 #define BAT_CHARGING		7
-#define BAT_DISCHARGING		8
-#define BAT_FULL		9
-#define BAT_TEMPERATURE		10
-#define BAT_NSENSORS		11  /* number of sensors */
+#define BAT_FULL		8
+#define BAT_TEMPERATURE		9
+#define BAT_NSENSORS		10  /* number of sensors */
 
 struct battery_softc {
 	struct device sc_dev;
@@ -75,8 +74,7 @@ struct battery_softc {
 	
 	/* envsys stuff */
 	struct sysmon_envsys sc_sysmon;
-	struct envsys_basic_info sc_sinfo[BAT_NSENSORS];
-	struct envsys_tre_data sc_sdata[BAT_NSENSORS];
+	envsys_data_t sc_sensor[BAT_NSENSORS];
 	struct sysmon_pswitch sc_sm_acpower;
 
 	/* battery status */
@@ -97,9 +95,7 @@ static void battery_attach(struct device *, struct device *, void *);
 static int battery_match(struct device *, struct cfdata *, void *);
 static int battery_update(struct battery_softc *, int);
 static void battery_setup_envsys(struct battery_softc *);
-static int battery_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-static int battery_streinfo(struct sysmon_envsys *,
-    struct envsys_basic_info *);
+static int battery_gtredata(struct sysmon_envsys *, envsys_data_t *);
 static void battery_poll(void *);
 
 CFATTACH_DECL(battery, sizeof(struct battery_softc),
@@ -153,6 +149,7 @@ battery_attach(struct device *parent, struct device *self, void *aux)
 	if (sysmon_pswitch_register(&sc->sc_sm_acpower) != 0)
 		printf("%s: unable to register AC power status with sysmon\n",
 		    sc->sc_dev.dv_xname);
+
 }
 
 static int
@@ -233,17 +230,12 @@ battery_update(struct battery_softc *sc, int out)
 	return 0;
 }
 
-#define INITDATA(index, unit, string) \
-	sc->sc_sdata[index].sensor = index;				\
-	sc->sc_sdata[index].units = unit;     				\
-	sc->sc_sdata[index].validflags = ENVSYS_FVALID;			\
-	sc->sc_sdata[index].warnflags = 0;				\
-	sc->sc_sinfo[index].sensor = index;				\
-	sc->sc_sinfo[index].units = unit;     				\
-	sc->sc_sinfo[index].rfact = 1;     				\
-	sc->sc_sinfo[index].validflags = ENVSYS_FVALID;			\
-	snprintf(sc->sc_sinfo[index].desc, sizeof(sc->sc_sinfo[index].desc),	\
-	    "%s", string);
+#define INITDATA(index, unit, string)					\
+	sc->sc_sensor[index].sensor = index;				\
+	sc->sc_sensor[index].units = unit;     				\
+	sc->sc_sensor[index].state = ENVSYS_SVALID;			\
+	snprintf(sc->sc_sensor[index].desc,				\
+	    sizeof(sc->sc_sensor[index].desc), "%s", string);
 
 static void
 battery_setup_envsys(struct battery_softc *sc)
@@ -258,87 +250,71 @@ battery_setup_envsys(struct battery_softc *sc)
 	INITDATA(BAT_CURRENT, ENVSYS_SAMPS, "Battery current");
 	INITDATA(BAT_TEMPERATURE, ENVSYS_STEMP, "Battery temperature");
 	INITDATA(BAT_CHARGING, ENVSYS_INDICATOR, "Battery charging");
-	INITDATA(BAT_DISCHARGING, ENVSYS_INDICATOR, "Battery discharging");
 	INITDATA(BAT_FULL, ENVSYS_INDICATOR, "Battery full");
 #undef INITDATA
 
-	sc->sc_sysmon.sme_sensor_info = sc->sc_sinfo;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_sdata;
+	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sysmon.sme_sensor_data = sc->sc_sensor;
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = battery_gtredata;
-	sc->sc_sysmon.sme_streinfo = battery_streinfo;
 	sc->sc_sysmon.sme_nsensors = BAT_NSENSORS;
-	sc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 }
 
 static int
-battery_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+battery_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct battery_softc *sc = sme->sme_cookie;
-	struct envsys_tre_data *cur;
-	int which = tred->sensor;
+	int which = edata->sensor;
 
 	battery_update(sc, 0);
 
-	cur = &sc->sc_sdata[BAT_CPU_TEMPERATURE];
-	cur->cur.data_s = sc->sc_cpu_temp * 1000000 + 273150000;
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
+	switch (which) {
+	case BAT_CPU_TEMPERATURE:
+		edata->value_cur = sc->sc_cpu_temp * 1000000 + 273150000;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_AC_PRESENT:
+		edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_VOLTAGE:
+		edata->value_cur = sc->sc_voltage * 1000;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_CURRENT:
+		edata->value_cur = sc->sc_current * 1000;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_CHARGE:
+		edata->value_cur = sc->sc_charge;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_MAX_CHARGE:
+		edata->value_cur = 100;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_TEMPERATURE:
+		edata->value_cur = sc->sc_bat_temp * 1000000 + 273150000;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_CHARGING:
+		if ((sc->sc_flags & PMU_PWR_BATT_CHARGING) &&
+		    (sc->sc_flags & PMU_PWR_AC_PRESENT))
+			edata->value_cur = 1;
+		else
+			edata->value_cur = 0;
 
-	cur = &sc->sc_sdata[BAT_AC_PRESENT];
-	cur->cur.data_s = (sc->sc_flags & PMU_PWR_AC_PRESENT);
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_PRESENT];
-	cur->cur.data_s = (sc->sc_flags & PMU_PWR_BATT_PRESENT);
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_VOLTAGE];
-	cur->cur.data_s = sc->sc_voltage * 1000;
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_CURRENT];
-	cur->cur.data_s = sc->sc_current * 1000;
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_CHARGE];
-	cur->cur.data_s = sc->sc_charge;
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_MAX_CHARGE];
-	cur->cur.data_s = 100;
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_TEMPERATURE];
-	cur->cur.data_s = sc->sc_bat_temp * 1000000 + 273150000;
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_CHARGING];
-	cur->cur.data_s = (sc->sc_flags & PMU_PWR_BATT_CHARGING);
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_DISCHARGING];
-	cur->cur.data_s = (!(sc->sc_flags & PMU_PWR_BATT_CHARGING)) && 
-	    (!(sc->sc_flags & PMU_PWR_AC_PRESENT));
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	cur = &sc->sc_sdata[BAT_FULL];
-	cur->cur.data_s = (sc->sc_flags & PMU_PWR_BATT_FULL);
-	cur->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-
-	memcpy(tred, &sc->sc_sdata[which], sizeof(struct envsys_tre_data));
-	return 0;
-}
-
-static int
-battery_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
-{
-
-	/* XXX Not implemented */
-	binfo->validflags = 0;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BAT_FULL:
+		edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_FULL);
+		edata->state = ENVSYS_SVALID;
+		break;
+	}
 
 	return 0;
 }

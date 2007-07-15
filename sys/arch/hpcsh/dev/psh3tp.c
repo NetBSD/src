@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.9 2007/03/04 05:59:54 christos Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.9.2.1 2007/07/15 13:16:04 ad Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -193,7 +193,7 @@ psh3tp_attach(struct device *parent __unused, struct device *self,
 	    (void *)__UNCONST(&psh3tp_default_calib), 0, 0);
 
 	/* used when in polling mode */
-	callout_init(&sc->sc_touch_ch);
+	callout_init(&sc->sc_touch_ch, 0);
 
 	/* establish interrupt handler, but disable until opened */
 	intc_intr_establish(SH7709_INTEVT2_IRQ2,

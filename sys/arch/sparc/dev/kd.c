@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.43 2007/03/04 06:00:44 christos Exp $	*/
+/*	$NetBSD: kd.c,v 1.43.2.1 2007/07/15 13:16:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.43 2007/03/04 06:00:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.43.2.1 2007/07/15 13:16:59 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -472,11 +472,17 @@ static struct cons_channel prom_cons_channel = {
 	NULL			/* will be set by kd driver */
 };
 
-static struct callout prom_cons_callout = CALLOUT_INITIALIZER;
+static struct callout prom_cons_callout;
 
 static int
 kd_rom_iopen(struct cons_channel *cc)
 {
+	static bool callo;
+
+	if (!callo) {
+		callout_init(&prom_cons_callout, 0);
+		callo = true;
+	}
 
 	/* Poll for ROM input 4 times per second */
 	callout_reset(&prom_cons_callout, hz / 4, kd_rom_intr, cc);

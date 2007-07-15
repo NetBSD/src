@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37.2.1 2007/05/27 14:27:08 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37.2.2 2007/07/15 13:17:19 ad Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.2.1 2007/05/27 14:27:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.2.2 2007/07/15 13:17:19 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -680,19 +680,17 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_si._info = ksi->ksi_info;
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
-	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 
-	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
-
-	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
-
 	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);
+	sendsig_reset(l, sig);
 
+	mutex_exit(&p->p_smutex);
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
 	mutex_enter(&p->p_smutex);
 

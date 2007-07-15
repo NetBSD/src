@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.3.10.1 2007/03/13 16:50:16 ad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.3.10.2 2007/07/15 13:17:22 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -1100,7 +1100,7 @@ xbdback_do_io(struct xbdback_io *xbd_io)
 #endif
 	if ((xbd_io->xio_buf.b_flags & B_READ) == 0)
 		xbd_io->xio_buf.b_vp->v_numoutput++;
-	DEV_STRATEGY(&xbd_io->xio_buf);
+	bdev_strategy(&xbd_io->xio_buf);
 }
 
 /* This gets reused by xbdback_io_error to report errors from other sources. */

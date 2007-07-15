@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.37 2007/03/04 05:59:35 christos Exp $	*/
+/*	$NetBSD: isabus.c,v 1.37.2.1 2007/07/15 13:15:34 ad Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.37 2007/03/04 05:59:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.37.2.1 2007/07/15 13:15:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.37 2007/03/04 05:59:35 christos Exp $")
 #include <arc/arc/timervar.h>
 
 static int beeping;
-static struct callout sysbeep_ch = CALLOUT_INITIALIZER;
+static callout_t sysbeep_ch;
 
 static long isa_mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
 static long isa_io_ex_storage[EXTENT_FIXED_STORAGE_SIZE(16) / sizeof(long)];
@@ -182,6 +182,8 @@ void
 isabrattach(struct isabr_softc *sc)
 {
 	struct isabus_attach_args iba;
+
+	callout_init(&sysbeep_ch, 0);
 
 	if (isabr_conf == NULL)
 		panic("isabr_conf isn't initialized");

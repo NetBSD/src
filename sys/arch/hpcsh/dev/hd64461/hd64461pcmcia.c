@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.35 2006/01/03 01:07:54 uwe Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.35.28.1 2007/07/15 13:16:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.35 2006/01/03 01:07:54 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.35.28.1 2007/07/15 13:16:05 ad Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -151,7 +151,7 @@ struct hd64461pcmcia_softc {
 	int sc_shutdown;
 
 	/* CSC event */
-	struct proc *sc_event_thread;
+	lwp_t *sc_event_thread;
 	struct hd64461pcmcia_event sc_event_pool[EVENT_QUEUE_MAX];
 	SIMPLEQ_HEAD (, hd64461pcmcia_event) sc_event_head;
 
@@ -208,7 +208,6 @@ CFATTACH_DECL(hd64461pcmcia, sizeof(struct hd64461pcmcia_softc),
 STATIC void hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *,
     enum controller_channel);
 /* hot plug */
-STATIC void hd64461pcmcia_create_event_thread(void *);
 STATIC void hd64461pcmcia_event_thread(void *);
 STATIC void queue_event(struct hd64461pcmcia_channel *,
     enum hd64461pcmcia_event_type);
@@ -257,6 +256,7 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 	struct hd64461pcmcia_softc *sc = (struct hd64461pcmcia_softc *)self;
+	int error;
 
 	sc->sc_module_id = ha->ha_module_id;
 
@@ -267,7 +267,9 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	/* Channel 0/1 common CSC event queue */
 	SIMPLEQ_INIT (&sc->sc_event_head);
-	kthread_create(hd64461pcmcia_create_event_thread, sc);
+	error = kthread_create(PRI_NONE, 0, NULL, hd64461pcmcia_event_thread,
+	    sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname);
+	KASSERT(error == 0);
 
 #if !defined(HD64461PCMCIA_REORDER_ATTACH)
 	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
@@ -276,18 +278,6 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	hd64461pcmcia_attach_channel(sc, CHANNEL_1);
 	hd64461pcmcia_attach_channel(sc, CHANNEL_0);
 #endif
-}
-
-STATIC void
-hd64461pcmcia_create_event_thread(void *arg)
-{
-	struct hd64461pcmcia_softc *sc = arg;
-	int error;
-
-	error = kthread_create1(hd64461pcmcia_event_thread, sc,
-	    &sc->sc_event_thread, "%s",
-	    sc->sc_dev.dv_xname);
-	KASSERT(error == 0);
 }
 
 STATIC void

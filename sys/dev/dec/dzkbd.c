@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.17 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.17.2.1 2007/07/15 13:21:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.17 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.17.2.1 2007/07/15 13:21:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,8 +174,10 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (!isconsole)
+	if (!isconsole) {
+		DELAY(100000);
 		lk201_init(&dzi->dzi_ks);
+	}
 
 	/* XXX should identify keyboard ID here XXX */
 	/* XXX layout and the number of LED is varying XXX */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.57.2.2 2007/05/27 14:27:06 ad Exp $
+#	$NetBSD: files.xen,v 1.57.2.3 2007/07/15 13:17:18 ad Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -50,7 +50,6 @@ file	arch/xen/i386/identcpu.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	netns/ns_cksum.c		ns
 file	arch/xen/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
@@ -242,9 +241,15 @@ file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 
 # PCI-ISA bridges
-device  pcib: isabus
-attach  pcib at pci
-file    arch/xen/xen/pcib.c            pcib
+device	pcib: isabus
+attach	pcib at pci
+file	arch/xen/xen/pcib.c		pcib | ichlpcib
+
+# PCI-LPC bridges
+device	ichlpcib: isabus, sysmon_wdog
+attach	ichlpcib at pci
+file	arch/i386/pci/ichlpcib.c	ichlpcib
+
 
 # CPUS
 

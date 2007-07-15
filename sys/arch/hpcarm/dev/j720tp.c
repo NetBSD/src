@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.5 2007/03/04 05:59:52 christos Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.5.2.1 2007/07/15 13:16:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.5 2007/03/04 05:59:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.5.2.1 2007/07/15 13:16:01 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_j720tp.h"
@@ -246,7 +246,7 @@ j720tp_attach(struct device *parent, struct device *self, void *aux)
 	    __UNCONST(&j720tp_default_calib), 0, 0);
 
 	j720tp_wsmouse_disable(sc);
-	callout_init(&sc->sc_tpcallout);
+	callout_init(&sc->sc_tpcallout, 0);
 
 	/* On-screen "hard icons" as a keyboard device. */
 	wska.console = 0;

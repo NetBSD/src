@@ -1,4 +1,4 @@
-/*	$NetBSD: itvar.h,v 1.3 2007/01/07 01:39:24 xtraeme Exp $	*/
+/*	$NetBSD: itvar.h,v 1.3.6.1 2007/07/15 13:21:18 ad Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -30,13 +30,13 @@
 #ifndef _DEV_ISA_ITVAR_H
 #define _DEV_ISA_ITVAR_H
 
-#define IT_NUM_SENSORS	9
+#define IT_NUM_SENSORS	15
 
 /* Identification chip registers */
 #define IT_VENDORID	0x58
 #define IT_REV_8705	0x90
 #define IT_COREID	0x5b
-#define IT_REV_8712	0x12
+#define	IT_REV_8712	0x12
 
 /* Control registers */
 #define IT_ADDR 	0x05
@@ -55,6 +55,7 @@
 #define IT_IMR3 	0x09
 #define IT_VID 		0x0a
 #define IT_FAN 		0x0b
+#define IT_FAN16 	0x0c
 
 #define IT_VOLTENABLE 	0x50
 #define IT_TEMPENABLE 	0x51
@@ -63,20 +64,48 @@
 #define IT_FANENABLE	0x13
 
 #define IT_SENSORFANBASE	0x0d	/* Fan from 0x0d to 0x0f */
-#define IT_SENSORVOLTBASE	0x20	/* Fan from 0x20 to 0x28 */
-#define IT_SENSORTEMPBASE	0x29	/* Fan from 0x29 to 0x2b */
+#define IT_SENSORFANEXTBASE 	0x18 	/* Fan (MSB) from 0x18 to 0x1A */
+#define IT_SENSORVOLTBASE 	0x20 	/* Voltage from 0x20 to 0x28 */
+#define IT_SENSORTEMPBASE 	0x29 	/* Temperature from 0x29 to 0x2b */
 
-#define IT_SENSORVCORE0		0x20
-#define IT_SENSORV33		0x22
-#define IT_SENSORV5		0x23
-#define IT_SENSORV12		0x24
-#define IT_SENSORVBAT		0x28
+#define IT_VIN0 		0x20
+#define IT_VIN1 		0x21
+#define IT_VIN2 		0x22
+#define IT_VIN3 		0x23
+#define IT_VIN4 		0x24
+#define IT_VIN5 		0x25
+#define IT_VIN6 		0x26
+#define IT_VIN7 		0x27
+#define IT_VBAT 		0x28
 
-#define IT_VOLTMAXBASE		0x30
-#define IT_VOLTMINBASE		0x31
+#define IT_UPDATEVBAT		0x40 	/* Update VBAT voltage reading */
+#define IT_BEEPEER		0x5c	/* Beep Event Enable Register */
 
-#define IT_TEMPMAXBASE		0x40
-#define IT_TEMPMINBASE		0x41
+/* High and Low limits for voltages */
+#define IT_VIN0_HIGH_LIMIT	0x30
+#define IT_VIN0_LOW_LIMIT	0x31
+#define IT_VIN1_HIGH_LIMIT	0x32
+#define IT_VIN1_LOW_LIMIT	0x33
+#define IT_VIN2_HIGH_LIMIT	0x34
+#define IT_VIN2_LOW_LIMIT	0x35
+#define IT_VIN3_HIGH_LIMIT	0x36
+#define IT_VIN3_LOW_LIMIT	0x37
+#define IT_VIN4_HIGH_LIMIT 	0x38
+#define IT_VIN4_LOW_LIMIT	0x39
+#define IT_VIN5_HIGH_LIMIT	0x3a
+#define IT_VIN5_LOW_LIMIT	0x3b
+#define IT_VIN6_HIGH_LIMIT	0x3c
+#define IT_VIN6_LOW_LIMIT	0x3d
+#define IT_VIN7_HIGH_LIMIT	0x3e
+#define IT_VIN7_LOW_LIMIT	0x3f
+
+/* High and Low limits for temperatures */
+#define IT_TEMP0_HIGH_LIMIT	0x40
+#define IT_TEMP0_LOW_LIMIT	0x41
+#define IT_TEMP1_HIGH_LIMIT	0x42
+#define IT_TEMP1_LOW_LIMIT	0x43
+#define IT_TEMP2_HIGH_LIMIT	0x44
+#define IT_TEMP2_LOW_LIMIT	0x45
 
 /* Reserved registers, used for probing the chip */
 #define IT_RES48		0x48
@@ -86,16 +115,6 @@
 
 #define IT_VREF	(4096) /* Vref = 4.096 V */
 
-static const struct envsys_range it_ranges[] = {
-	{ 0, 2,		ENVSYS_STEMP   },
-	{ 8, 9,		ENVSYS_SFANRPM },
-	{ 1, 0,		ENVSYS_SVOLTS_AC },	/* None */
-	{ 3, 7,		ENVSYS_SVOLTS_DC },
-	{ 1, 0,		ENVSYS_SOHMS },		/* None */
-	{ 1, 0,		ENVSYS_SWATTS },	/* None */
-	{ 1, 0,		ENVSYS_SAMPS }		/* None */
-};
-
 struct it_softc {
 	struct device sc_dev;
 
@@ -103,8 +122,9 @@ struct it_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct sysmon_envsys sc_sysmon;
-	envsys_tre_data_t sc_data[IT_NUM_SENSORS];
-	envsys_basic_info_t sc_info[IT_NUM_SENSORS];
+	envsys_data_t sc_data[IT_NUM_SENSORS];
+
+	uint8_t sc_idr;
 };
 
 #endif /* _DEV_ISA_ITVAR_H_ */

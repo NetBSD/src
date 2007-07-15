@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.2 2001/07/30 10:55:49 rjs Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.2.82.1 2007/07/15 13:15:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ struct sapcic_socket {
 	struct device *pcmcia;
 	struct sapcic_tag *pcictag;
 
-	struct proc *event_thread;
+	struct lwp *event_thread;
 	int event;
 	int laststatus;
 	int shutdown;

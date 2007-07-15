@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.49 2007/03/04 06:01:10 christos Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.49.2.1 2007/07/15 13:17:21 ad Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49 2007/03/04 06:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.49.2.1 2007/07/15 13:17:21 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -1304,9 +1304,12 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
 
-	return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-	    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-	    NFS_BOOTSTATIC_HAS_SERVER);
+	if (nd->nd_myip.s_addr == 0)
+		return NFS_BOOTSTATIC_NOSTATIC;
+	else
+		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
+		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
+		    NFS_BOOTSTATIC_HAS_SERVER);
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 

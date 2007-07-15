@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.9.30.1 2007/05/13 17:36:23 ad Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.9.30.2 2007/07/15 13:21:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.9.30.1 2007/05/13 17:36:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.9.30.2 2007/07/15 13:21:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -64,7 +64,7 @@ struct swdmover_function {
 };
 
 static struct dmover_backend swdmover_backend;
-static struct proc *swdmover_proc;
+static struct lwp *swdmover_lwp;
 static int swdmover_cv;
 
 void	swdmoverattach(int);
@@ -412,6 +412,7 @@ swdmover_func_xor_process(struct dmover_request *dreq)
 static void
 swdmover_func_copy_process(struct dmover_request *dreq)
 {
+	int error;
 
 	/* XXX Currently, both buffers must be of same type. */
 	if (dreq->dreq_inbuf_type != dreq->dreq_outbuf_type) {

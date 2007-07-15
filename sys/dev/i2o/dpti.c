@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.33 2007/03/04 06:01:47 christos Exp $	*/
+/*	$NetBSD: dpti.c,v 1.33.2.1 2007/07/15 13:21:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -64,9 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.33 2007/03/04 06:01:47 christos Exp $");
-
-#include "opt_i2o.h"
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.33.2.1 2007/07/15 13:21:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

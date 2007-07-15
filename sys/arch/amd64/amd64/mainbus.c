@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.15.2.1 2007/06/09 23:54:51 ad Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15.2.2 2007/07/15 13:15:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.2.1 2007/06/09 23:54:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.2.2 2007/07/15 13:15:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.2.1 2007/06/09 23:54:51 ad Exp $");
 #include "isa.h"
 #include "isadma.h"
 #include "acpi.h"
+#include "ipmi.h"
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -59,6 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15.2.1 2007/06/09 23:54:51 ad Exp $");
 
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
+#endif
+
+#if NIPMI > 0
+#include <x86/ipmivar.h>
 #endif
 
 /*
@@ -82,6 +87,9 @@ union mainbus_attach_args {
 	struct acpibus_attach_args mba_acpi;
 #endif
 	struct apic_attach_args aaa_caa;
+#if NIPMI > 0
+	struct ipmi_attach_args mba_ipmi;
+#endif
 };
 
 /*
@@ -208,6 +216,14 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
 		config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 	}
+#endif
+
+#if NIPMI > 0
+	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
+	mba.mba_ipmi.iaa_iot = X86_BUS_SPACE_IO;
+	mba.mba_ipmi.iaa_memt = X86_BUS_SPACE_MEM;
+	if (ipmi_probe(&mba.mba_ipmi))
+		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
 #endif
 
 #if NPCI > 0

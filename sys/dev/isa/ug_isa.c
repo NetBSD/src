@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.1.6.2 2007/06/09 21:37:20 ad Exp $ */
+/* $NetBSD: ug_isa.c,v 1.1.6.3 2007/07/15 13:21:19 ad Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.2 2007/06/09 21:37:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.1.6.3 2007/07/15 13:21:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,21 +148,14 @@ ug_isa_attach(struct device *parent, struct device *self, void *aux)
 	ug_setup_sensors(sc);
 
 	for (i = 0; i < UG_NUM_SENSORS; i++) {
-		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
-		sc->sc_data[i].validflags = (ENVSYS_FVALID|ENVSYS_FCURVALID);
-		sc->sc_info[i].validflags = ENVSYS_FVALID;
-		sc->sc_data[i].warnflags = ENVSYS_WARN_OK;
+		sc->sc_data[i].sensor = i;
+		sc->sc_data[i].state = ENVSYS_SVALID;
 	}
 
-	sc->sc_sysmon.sme_ranges = ug_ranges;
-	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = ug_gtredata;
-	sc->sc_sysmon.sme_streinfo = ug_streinfo_ni;
 	sc->sc_sysmon.sme_nsensors = UG_NUM_SENSORS;
-	sc->sc_sysmon.sme_envsys_version = UG_DRV_VERSION;
-	sc->sc_sysmon.sme_flags = 0;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
 		aprint_error("%s: unable to register with sysmon\n",

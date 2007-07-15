@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.27.2.2 2007/05/27 14:27:01 ad Exp $	*/
+/*	$NetBSD: par.c,v 1.27.2.3 2007/07/15 13:17:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.27.2.2 2007/05/27 14:27:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.27.2.3 2007/07/15 13:17:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -93,7 +93,7 @@ int parmstohz(int);
 int parsendch(struct par_softc *, u_char);
 int parsend(struct par_softc *, u_char *, int);
 
-static struct callout intr_callout = CALLOUT_INITIALIZER;
+static struct callout intr_callout;
 
 #define UNIT(x)		minor(x)
 
@@ -186,8 +186,9 @@ parattach(struct device *pdp, struct device *dp, void *aux)
 	intio_intr_establish(ia->ia_intr, "par",
 			     (intio_intr_handler_t)parintr, (void *)1);
 
-	callout_init(&sc->sc_timo_ch);
-	callout_init(&sc->sc_start_ch);
+	callout_init(&sc->sc_timo_ch, 0);
+	callout_init(&sc->sc_start_ch, 0);
+	callout_init(&intr_callout, 0);
 }
 
 int

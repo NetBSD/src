@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.15.6.1 2007/06/09 23:55:31 ad Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.15.6.2 2007/07/15 13:17:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -146,20 +146,30 @@
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
+#define CPUID_RDTSCP	0x08000000	/* Read TSC Pair Instruction */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
 
 #define CPUID_EXT_FLAGS2	"\20\16PGE\17MCA\20CMOV\21PAT\22PSE36\23PN" \
 				    "\24MPC\25NOX\26B21\27MMXX\30MMX"
-#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34B27\35HTT\36LONG" \
-				    "\0373DNOW2\0403DNOW"
+#define CPUID_EXT_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34RDTSCP\35HTT" \
+				    "\36LONG\0373DNOW2\0403DNOW"
 
 /*
- * "Features" that are copied from elsewhere -- not necessarily tied to
- * a specific CPUID response
+ * Centaur Extended Feature flags
  */
+#define CPUID_VIA_HAS_RNG	0x00000004	/* Random number generator */
+#define CPUID_VIA_DO_RNG	0x00000008
+#define CPUID_VIA_HAS_ACE	0x00000040	/* AES Encryption */
+#define CPUID_VIA_DO_ACE	0x00000080
+#define CPUID_VIA_HAS_ACE2	0x00000100	/* AES+CTR instructions */
+#define CPUID_VIA_DO_ACE2	0x00000200
+#define CPUID_VIA_HAS_PHE	0x00000400	/* SHA1+SHA256 HMAC */
+#define CPUID_VIA_DO_PHE	0x00000800
+#define CPUID_VIA_HAS_PMM	0x00001000	/* RSA Instructions */
+#define CPUID_VIA_DO_PMM	0x00002000
 
-#define CPUID_FEAT_VACE	0x00000002	/* VIA C3 AES Crypto Extension */
+#define CPUID_FLAGS_PADLOCK	"\20\3RNG\7AES\11AES/CTR\13SHA1/SHA256\15RSA"
 
 /*
  * CPUID "features" bits in %ecx

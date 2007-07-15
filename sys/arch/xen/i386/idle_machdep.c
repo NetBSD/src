@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.2.2.2 2007/06/09 21:37:06 ad Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.2.2.3 2007/07/15 13:17:18 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.2.2 2007/06/09 21:37:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.2.3 2007/07/15 13:17:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -40,13 +40,16 @@ cpu_idle(void)
 {
 	struct cpu_info *ci = curcpu();
 
-	if (__predict_false(ci->ci_want_resched)) {
-		return;
+	disable_intr();
+	__insn_barrier();
+	if (!__predict_false(ci->ci_want_resched)) {
+		idle_block();
+	} else {
+		enable_intr();
 	}
-	idle_block();
 	ci->ci_want_resched = 0;
 }
-/*	$NetBSD: idle_machdep.c,v 1.2.2.2 2007/06/09 21:37:06 ad Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.2.2.3 2007/07/15 13:17:18 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -76,7 +79,7 @@ cpu_idle(void)
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.2.2 2007/06/09 21:37:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.2.2.3 2007/07/15 13:17:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

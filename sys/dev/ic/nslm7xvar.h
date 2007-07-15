@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.18.18.1 2007/03/13 16:50:23 ad Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.18.18.2 2007/07/15 13:21:16 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@
 #define WB_CHIPID_W83791SD	0x72
 #define WB_CHIPID_W83792D	0x7a
 #define WB_CHIPID_W83637HF	0x80
+#define WB_CHIPID_W83627EHF_A	0x88 /* early version, only for ASUS MBs */
 #define WB_CHIPID_W83627THF	0x90
 #define WB_CHIPID_W83627EHF	0xa1
 #define WB_CHIPID_W83627DHG	0xc1
@@ -165,12 +166,11 @@ struct lm_softc {
 	int	sc_flags;
 	struct	timeval lastread; /* only allow reads every 1.5 seconds */
 
-	struct envsys_tre_data sensors[WB_MAX_SENSORS];
-	struct envsys_basic_info info[WB_MAX_SENSORS];
+	envsys_data_t sensors[WB_MAX_SENSORS];
 	struct sysmon_envsys sc_sysmon;
 	uint8_t numsensors;
 
-	void (*refresh_sensor_data)(struct lm_softc *);
+	void (*refresh_sensor_data)(struct lm_softc *, int);
 
 	uint8_t (*lm_readreg)(struct lm_softc *, int);
 	void (*lm_writereg)(struct lm_softc *, int, int);

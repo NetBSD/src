@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.80 2007/03/04 12:06:16 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.80.2.1 2007/07/15 13:15:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.80 2007/03/04 12:06:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.80.2.1 2007/07/15 13:15:56 ad Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -388,7 +388,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_slave = ha->ha_slave;
 	sc->sc_punit = ha->ha_punit;
 
-	callout_init(&sc->sc_restart_ch);
+	callout_init(&sc->sc_restart_ch, 0);
 
 	/* Initialize the hpib job queue entry */
 	sc->sc_hq.hq_softc = sc;

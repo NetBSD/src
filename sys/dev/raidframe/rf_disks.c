@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.64.8.1 2007/03/13 16:50:29 ad Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.64.8.2 2007/07/15 13:21:41 ad Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.64.8.1 2007/03/13 16:50:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.64.8.2 2007/07/15 13:21:41 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -602,7 +602,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		return (0);
 	}
 
-	error = dk_lookup(diskPtr->devname, l, &vp);
+	error = dk_lookup(diskPtr->devname, l, &vp, UIO_SYSSPACE);
 	if (error) {
 		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {

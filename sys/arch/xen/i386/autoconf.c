@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22.6.1 2007/05/27 14:27:07 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.6.2 2007/07/15 13:17:18 ad Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.6.1 2007/05/27 14:27:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.6.2 2007/07/15 13:17:18 ad Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -94,7 +94,6 @@ static int match_harddisk(struct device *, struct btinfo_bootdisk *);
 static void matchbiosdisks(void);
 static void findroot(void);
 static int is_valid_disk(struct device *);
-static struct vnode *opendisk(struct device *);
 static void handle_wedges(struct device *, int);
 
 struct disklist *x86_alldisks;
@@ -434,7 +433,7 @@ found:
 
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (is_valid_disk(dv) == 0)
 			continue;
 
@@ -493,6 +492,41 @@ found:
 #include <dev/pci/pcivar.h>
 #endif
 
+
+#if defined(NFS_BOOT_BOOTSTATIC) && defined(DOM0OPS)
+static int
+dom0_bootstatic_callback(struct nfs_diskless *nd)
+{
+#if 0
+	struct ifnet *ifp = nd->nd_ifp;
+#endif
+	union xen_cmdline_parseinfo xcp;
+	struct sockaddr_in *sin;
+
+	memset(&xcp, 0, sizeof(xcp.xcp_netinfo));
+	xcp.xcp_netinfo.xi_ifno = 0; /* XXX first interface hardcoded */
+	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
+	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
+	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
+	nd->nd_mask.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[3]);
+
+	sin = (struct sockaddr_in *) &nd->nd_root.ndm_saddr;
+	memset((void *)sin, 0, sizeof(*sin));
+	sin->sin_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
+
+	if (nd->nd_myip.s_addr == 0)
+		return NFS_BOOTSTATIC_NOSTATIC;
+	else
+		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
+		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
+		    NFS_BOOTSTATIC_HAS_SERVER);
+}
+#endif
+
 void
 device_register(struct device *dev, void *aux)
 {
@@ -501,14 +535,21 @@ device_register(struct device *dev, void *aux)
 	 * not available driver independently later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
-#if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0
+#if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0 || defined(DOM0OPS)
 	if (device_class(dev) == DV_IFNET) {
 		union xen_cmdline_parseinfo xcp;
 
 		xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 		if (strncmp(xcp.xcp_bootdev, dev->dv_xname, 16) == 0) {
 #ifdef NFS_BOOT_BOOTSTATIC
+#ifdef DOM0OPS
+			if (xen_start_info.flags & SIF_PRIVILEGED) {
+				nfs_bootstatic_callback = dom0_bootstatic_callback;
+			} else
+#endif
+#if NXENNET_HYPERVISOR > 0 || NXENNET_XENBUS > 0
 			nfs_bootstatic_callback = xennet_bootstatic_callback;
+#endif
 #endif
 			goto found;
 		}
@@ -568,104 +609,11 @@ found:
 	booted_device = dev;
 }
 
-static struct vnode *
-opendisk(struct device *dv)
-{
-	int bmajor;
-	struct vnode *tmpvn;
-	int error;
-	
-	/*
-	 * Lookup major number for disk block device.
-	 */
-	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
-	if (bmajor == -1)
-		return NULL;
-	
-	/*
-	 * Fake a temporary vnode for the disk, open it, and read
-	 * and hash the sectors.
-	 */
-	if (bdevvp(MAKEDISKDEV(bmajor, device_unit(dv), RAW_PART), &tmpvn))
-		panic("%s: can't alloc vnode for %s", __func__, dv->dv_xname);
-	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
-	if (error) {
-#ifndef DEBUG
-		/*
-		 * Ignore errors caused by missing device, partition,
-		 * or medium.
-		 */
-		if (error != ENXIO && error != ENODEV)
-#endif
-			printf("%s: can't open dev %s (%d)\n",
-			    __func__, dv->dv_xname, error);
-		vput(tmpvn);
-		return NULL;
-	}
-
-	return tmpvn;
-}
-
 static void
 handle_wedges(struct device *dv, int par)
 {
-	struct dkwedge_list wl;
-	struct dkwedge_info *wi;
-	struct vnode *vn;
-	char diskname[16];
-	int i, error;
-
-	if ((vn = opendisk(dv)) == NULL)
-		goto out;
-
-	wl.dkwl_bufsize = sizeof(*wi) * 16;
-	wl.dkwl_buf = wi = malloc(wl.dkwl_bufsize, M_TEMP, M_WAITOK);
-
-	error = VOP_IOCTL(vn, DIOCLWEDGES, &wl, FREAD, NOCRED, 0);
-	vput(vn);
-	if (error) {
-#ifdef DEBUG_WEDGE
-		printf("%s: List wedges returned %d\n", dv->dv_xname, error);
-#endif
-		free(wi, M_TEMP);
-		goto out;
-	}
-
-#ifdef DEBUG_WEDGE
-	printf("%s: Returned %u(%u) wedges\n", dv->dv_xname,
-	    wl.dkwl_nwedges, wl.dkwl_ncopied);
-#endif
-	snprintf(diskname, sizeof(diskname), "%s%c", dv->dv_xname,
-	    par + 'a');
-
-	for (i = 0; i < wl.dkwl_ncopied; i++) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Looking for %s in %s\n", 
-		    dv->dv_xname, diskname, wi[i].dkw_wname);
-#endif
-		if (strcmp(wi[i].dkw_wname, diskname) == 0)
-			break;
-	}
-
-	if (i == wl.dkwl_ncopied) {
-#ifdef DEBUG_WEDGE
-		printf("%s: Cannot find wedge with parent %s\n",
-		    dv->dv_xname, diskname);
-#endif
-		free(wi, M_TEMP);
-		goto out;
-	}
-
-#ifdef DEBUG_WEDGE
-	printf("%s: Setting boot wedge %s (%s) at %llu %llu\n", 
-		dv->dv_xname, wi[i].dkw_devname, wi[i].dkw_wname,
-		(unsigned long long)wi[i].dkw_offset,
-		(unsigned long long)wi[i].dkw_size);
-#endif
-	dkwedge_set_bootwedge(dv, wi[i].dkw_offset, wi[i].dkw_size);
-	free(wi, M_TEMP);
-	return;
-out:
+	if (config_handle_wedges(dv, par) == 0)
+		return;
 	booted_device = dv;
 	booted_partition = par;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.113 2007/03/04 06:02:04 christos Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.113.2.1 2007/07/15 13:21:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.113 2007/03/04 06:02:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.113.2.1 2007/07/15 13:21:18 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -349,7 +349,7 @@ zstty_attach(parent, self, aux)
 	int dtr_on;
 	int resetbit;
 
-	callout_init(&zst->zst_diag_ch);
+	callout_init(&zst->zst_diag_ch, 0);
 	cn_init_magic(&zstty_cnm_state);
 
 	tty_unit = device_unit(&zst->zst_dev);

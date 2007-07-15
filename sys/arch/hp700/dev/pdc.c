@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.20 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: pdc.c,v 1.20.2.1 2007/07/15 13:15:58 ad Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.20 2007/03/04 05:59:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.20.2.1 2007/07/15 13:15:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ pdcattach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&sc->sc_to);
+	callout_init(&sc->sc_to, 0);
 }
 
 int

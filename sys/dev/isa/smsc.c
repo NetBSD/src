@@ -1,4 +1,4 @@
-/*	$NetBSD: smsc.c,v 1.1.2.3 2007/06/09 23:57:53 ad Exp $ */
+/*	$NetBSD: smsc.c,v 1.1.2.4 2007/07/15 13:21:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.3 2007/06/09 23:57:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smsc.c,v 1.1.2.4 2007/07/15 13:21:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,7 @@ static uint8_t smsc_readreg(struct smsc_softc *, int);
 /*static void smsc_writereg(struct smsc_softc *, int, int);*/
 void smsc_setup(struct smsc_softc *);
 
-static int smsc_gtredata(struct sysmon_envsys *, struct envsys_tre_data *);
-static int smsc_streinfo(struct sysmon_envsys *, struct envsys_basic_info *);
-
+static int smsc_gtredata(struct sysmon_envsys *, envsys_data_t *);
 
 CFATTACH_DECL(smsc, sizeof(struct smsc_softc),
     smsc_probe, smsc_attach, NULL, NULL);
@@ -91,7 +89,7 @@ CFATTACH_DECL(smsc, sizeof(struct smsc_softc),
 struct smsc_sysmon {
 	struct sysmon_envsys sme;
 	struct smsc_softc *sc;
-	struct envsys_tre_data smsc_info[];
+	envsys_data_t smsc_sensor[];
 };
 
 /*
@@ -265,9 +263,6 @@ smsc_reg2rpm(unsigned int r)
 #define SMSC_MIN_TEMP_UK ((-127 * 1000000) + 273150000)
 #define SMSC_MAX_TEMP_UK ((127 * 1000000) + 273150000)
 
-struct envsys_range *smsc_ranges;
-struct envsys_basic_info *smsc_info;
-
 /*
  * Set up the environment monitoring framework for all the devices
  * that we monitor.
@@ -278,37 +273,19 @@ smsc_setup(struct smsc_softc *sc)
 	struct smsc_sysmon *datap;
 	int error, i;
 	char label[8];
-	struct envsys_range *cur_r;
-	struct envsys_basic_info *cur_i;
-	struct envsys_tre_data *cur_t;
+	envsys_data_t *edata;
 
 	datap = malloc(sizeof(struct sysmon_envsys) + SMSC_MAX_SENSORS *
-	    sizeof(struct envsys_tre_data) + sizeof(void *),
-	    M_DEVBUF, M_WAITOK | M_ZERO);
-
-	smsc_ranges = malloc (sizeof(struct envsys_range) * SMSC_MAX_SENSORS,
-	    M_DEVBUF, M_WAITOK | M_ZERO);
-
-	smsc_info =
-	    malloc (sizeof(struct envsys_basic_info) * SMSC_MAX_SENSORS,
+	    sizeof(envsys_data_t) + sizeof(void *),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	for (i = 0; i < 4; i++) {
-		cur_r = &smsc_ranges[i];
-		cur_i = &smsc_info[i];
-		cur_t = &datap->smsc_info[i];
+		edata = &datap->smsc_sensor[i];
 		sprintf(label, "Temp-%d", i + 1);
-		strcpy(cur_i->desc, label);
-		cur_i->units = ENVSYS_STEMP;
-		cur_i->sensor = i;
-		cur_r->low = SMSC_MIN_TEMP_UK;
-		cur_r->high = SMSC_MAX_TEMP_UK;
-		cur_r->units = ENVSYS_STEMP;
-		cur_i->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-		cur_t->sensor = i;
-		cur_t->warnflags = ENVSYS_WARN_OK;
-		cur_t->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-		cur_t->units = cur_i->units;
+		strlcpy(edata->desc, label, sizeof(edata->desc));
+		edata->units = ENVSYS_STEMP;
+		edata->sensor = i;
+		edata->state = ENVSYS_SVALID;
 		switch (i) {
 		case 0:
 			sc->regs[i] = SMSC_TEMP1;
@@ -330,21 +307,13 @@ smsc_setup(struct smsc_softc *sc)
 	}
 
 	for (i = 4; i < SMSC_MAX_SENSORS; i++) {
-		cur_r = &smsc_ranges[i];
-		cur_i = &smsc_info[i];
-		cur_t = &datap->smsc_info[i];
+		edata = &datap->smsc_sensor[i];
 		sprintf(label, "Fan-%d", i - 3);
-		strcpy(cur_i->desc, label);
-		cur_i->units = ENVSYS_SFANRPM;
-		cur_i->sensor = i;
-		cur_r->low = 90;
-		cur_r->high = 8000;
-		cur_r->units = ENVSYS_SFANRPM;
-		cur_i->validflags = ENVSYS_FVALID | ENVSYS_FCURVALID;
-		cur_t->sensor = i;
-		cur_t->warnflags = ENVSYS_WARN_OK;
-		cur_t->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
-		cur_t->units = cur_i->units;
+		strlcpy(edata->desc, label, sizeof(edata->desc));
+		edata->units = ENVSYS_SFANRPM;
+		edata->sensor = i;
+		edata->units = ENVSYS_SFANRPM;
+		edata->state = ENVSYS_SVALID;
 
 		switch (i) {
 		case 4:
@@ -369,19 +338,12 @@ smsc_setup(struct smsc_softc *sc)
 		}
 	}
 
-
-
 	sc->smsc_sysmon = &datap->sme;
 	datap->sme.sme_nsensors = SMSC_MAX_SENSORS;
-	datap->sme.sme_envsys_version = 1000;
-	datap->sme.sme_ranges = smsc_ranges;
-	datap->sme.sme_sensor_info = smsc_info;
-	datap->sme.sme_sensor_data = datap->smsc_info;
-
+	datap->sme.sme_sensor_data = datap->smsc_sensor;
+	datap->sme.sme_name = sc->sc_dev.dv_xname;
 	datap->sme.sme_cookie = sc;
 	datap->sme.sme_gtredata = smsc_gtredata;
-	datap->sme.sme_streinfo = smsc_streinfo;
-	datap->sme.sme_flags = 0;
 
 	if ((error = sysmon_envsys_register(&datap->sme)) != 0) {
 		aprint_error("%s: unable to register with sysmon (%d)\n",
@@ -396,21 +358,19 @@ smsc_setup(struct smsc_softc *sc)
  * with the retrieved value.
  */
 static int
-smsc_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
+smsc_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct smsc_softc *sc = sme->sme_cookie;
-	struct envsys_tre_data *cur_tre;
 	int i, reg;
 	unsigned int rpm;
 	uint8_t msb, lsb;
 
-	i = tred->sensor;
-	cur_tre = &sme->sme_sensor_data[i];
+	i = edata->sensor;
 	reg = sc->regs[i];
 
-	switch (cur_tre->units) {
+	switch (edata->units) {
 	case ENVSYS_STEMP:
-		cur_tre->cur.data_s = smsc_temp2muk(smsc_readreg(sc, reg));
+		edata->value_cur = smsc_temp2muk(smsc_readreg(sc, reg));
 		break;
 
 	case ENVSYS_SFANRPM:
@@ -420,22 +380,10 @@ smsc_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 						    assumption that msb is
 						    the next register along */
 		rpm = (msb << 8) | lsb;
-		cur_tre->cur.data_us = smsc_reg2rpm(rpm);
+		edata->value_cur = smsc_reg2rpm(rpm);
 		break;
 	}
 
-	cur_tre->validflags |= ENVSYS_FCURVALID | ENVSYS_FVALID;
-	*tred = sme->sme_sensor_data[i];
+	edata->state = ENVSYS_SVALID;
 	return 0;
-}
-
-/*
- * Set parameters for the monitoring - nothing to do here.
- */
-static int
-smsc_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *binfo)
-{
-
-	/* There is nothing to set here. */
-	return (EINVAL);
 }

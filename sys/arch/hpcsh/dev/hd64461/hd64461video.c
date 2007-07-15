@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.40 2007/03/04 05:59:54 christos Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.40.2.1 2007/07/15 13:16:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.40 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.40.2.1 2007/07/15 13:16:05 ad Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -995,7 +995,7 @@ hd64461video_update_videochip_status(struct hd64461video_chip *hvc)
 		break;
 	}
 
-	callout_init(&hvc->unblank_ch);
+	callout_init(&hvc->unblank_ch, 0);
 	hvc->blanked = 0;
 
 	width = bootinfo->fb_width;
