@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.244 2007/07/14 22:09:57 dsieger Exp $
+#       $NetBSD: Makefile,v 1.245 2007/07/15 02:57:23 jnemeth Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -494,8 +494,6 @@ MAN+=	selrecord.9
 MLINKS+=selrecord.9 selwakeup.9 \
 	selrecord.9 selnotify.9
 MLINKS+=setjmp.9 longjmp.9
-MLINKS+=setrunqueue.9 remrunqueue.9 \
-	setrunqueue.9 nextrunqueue.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=signal.9 siginit.9 \
 	signal.9 sigactsinit.9 \
