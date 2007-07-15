@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.11 2007/07/09 20:52:26 ad Exp $ */
+/* $NetBSD: if_mec.c,v 1.12 2007/07/15 23:24:47 macallan Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.11 2007/07/09 20:52:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.12 2007/07/15 23:24:47 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -554,8 +554,10 @@ mec_mii_readreg(struct device *self, int phy, int reg)
 
 	bus_space_write_8(st, sh, MEC_PHY_ADDRESS,
 	    (phy << MEC_PHY_ADDR_DEVSHIFT) | (reg & MEC_PHY_ADDR_REGISTER));
+	delay(25);
 	bus_space_write_8(st, sh, MEC_PHY_READ_INITIATE, 1);
 	delay(25);
+	mec_mii_wait(sc);
 
 	for (i = 0; i < 20; i++) {
 		delay(30);
@@ -607,8 +609,10 @@ mec_mii_wait(struct mec_softc *sc)
 
 		if ((busy & MEC_PHY_DATA_BUSY) == 0)
 			return 0;
+#if 0
 		if (busy == 0xffff) /* XXX ? */
 			return 0;
+#endif
 	}
 
 	printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
