@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2007/07/14 13:30:44 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2007/07/15 21:24:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.9 2007/07/14 13:30:44 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2007/07/15 21:24:46 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -399,14 +399,14 @@ usage(void)
 	    "%s [options] <command>\n\n"
 	    "-b nbuf\t\tset number of event buffers to allocate\n"
 	    "-c\t\treport percentage of total events by count, not time\n"
-	    "-E evt\t\tdisplay only one type of event\n"
+	    "-E event\t\tdisplay only one type of event\n"
 	    "-e\t\tlist event types\n"
-	    "-f\t\ttrace only by function\n"
 	    "-F func\t\tlimit trace to one function\n"
+	    "-f\t\ttrace only by function\n"
 	    "-L lock\t\tlimit trace to one lock (name, or address)\n"
 	    "-l\t\ttrace only by lock\n"
-	    "-m\t\tmerge call sites within unique functions\n"
 	    "-M\t\tmerge lock addresses within unique objects\n"
+	    "-m\t\tmerge call sites within unique functions\n"
 	    "-N nlist\tspecify name list file\n"
 	    "-o file\t\tsend output to named file, not stdout\n"
 	    "-p\t\tshow average count/time per CPU, not total\n"
