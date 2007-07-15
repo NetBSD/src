@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.715 2007/07/14 20:05:33 adrianp Exp $
+# $NetBSD: mi,v 1.716 2007/07/15 14:41:18 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1652,6 +1652,7 @@
 ./usr/share/i18n/csmapper/CP/CP904%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP905%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP918%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/CP922%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP932EXT%UCS.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/CP/CP932UDA%UCS.mps		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP932VDC@IBM%UCS.mps	base-sysutil-share	nls
@@ -1734,6 +1735,7 @@
 ./usr/share/i18n/csmapper/CP/UCS%CP904.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP905.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP918.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CP/UCS%CP922.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP932EXT.mps	base-obsolete		obsolete
 ./usr/share/i18n/csmapper/CP/UCS%CP932UDA.mps		base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/UCS%CP932VDC@IBM.mps	base-sysutil-share	nls
