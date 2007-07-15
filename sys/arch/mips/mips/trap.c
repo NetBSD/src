@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.209.2.2 2007/06/09 23:55:18 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.209.2.3 2007/07/15 22:20:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.2 2007/06/09 23:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.3 2007/07/15 22:20:25 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -113,8 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.2 2007/06/09 23:55:18 ad Exp $");
 #include <mips/pte.h>
 #include <mips/psl.h>
 #include <mips/userret.h>
-
-#include <net/netisr.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -575,28 +573,6 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		panic("trapsignal");
 	userret(l);
 	return;
-}
-
-/*
- * Software (low priority) network interrupt. i.e. softnet().
- */
-void
-netintr(void)
-{
-#define DONETISR(bit, fn)			\
-	do {					\
-		if (n & (1 << bit))		\
-			fn();			\
-	} while (0)
-
-	int n;
-
-	n = netisr;
-	netisr = 0;
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
 }
 
 /*

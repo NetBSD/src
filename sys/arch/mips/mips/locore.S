@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.165.4.1 2007/05/27 12:27:46 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.165.4.2 2007/07/15 22:20:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -388,7 +388,8 @@ LEAF(_splget)
 	nop
 END(_splget)
 
-LEAF(_setsoftintr)
+#ifdef notyet /* __HAVE_FAST_SOFTINTS stuff */
+LEAF(softint_trigger)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts (2 cycles)
 	COP0_SYNC
@@ -403,7 +404,7 @@ LEAF(_setsoftintr)
 	COP0_SYNC
 	j	ra
 	nop
-END(_setsoftintr)
+END(softint_trigger)
 
 LEAF(_clrsoftintr)
 	mfc0	v1, MIPS_COP_0_STATUS		# save status register
@@ -421,6 +422,7 @@ LEAF(_clrsoftintr)
 	j	ra
 	nop
 END(_clrsoftintr)
+#endif	/* notyet */
 
 LEAF(_splnone)
 	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits

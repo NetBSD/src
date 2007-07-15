@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12.6.1 2007/07/15 22:20:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2006/12/21 15:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.6.1 2007/07/15 22:20:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -52,11 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2006/12/21 15:55:24 yamt Exp $");
 #include <machine/intr.h>
 
 const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTBIO] = MIPS_SOFT_INT_MASK_0,
 	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
 	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
 	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
+
+u_int idepth;
 
 struct evcnt pmax_clock_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
@@ -97,6 +100,7 @@ void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
+	idepth++;
 	uvmexp.intrs++;
 
 	/* device interrupts */
@@ -114,13 +118,16 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 #endif
 	}
 
+	idepth--;
+
+#ifdef notyet
+	/* For __HAVE_FAST_SOFTINTS */
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
-
 	_clrsoftintr(ipending);
-
-	softintr_dispatch(ipending);
+	mips_softint_dispatch(ipending);
+#endif
 
 	return;
 kerneltouchedFPU:
@@ -134,4 +141,11 @@ makeiplcookie(ipl_t ipl)
 {
 
 	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }

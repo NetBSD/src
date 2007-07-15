@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.11 2007/07/14 22:06:17 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.12 2007/07/15 22:20:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.11 2007/07/14 22:06:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.12 2007/07/15 22:20:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.11 2007/07/14 22:06:17 ad Exp $"
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 

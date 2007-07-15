@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.56.3 2007/07/15 15:53:03 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.56.4 2007/07/15 22:20:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -55,5 +55,6 @@ do {						\
 
 lwp_t *cpu_switchto(lwp_t *, lwp_t *, bool);
 bool cpu_ipl_canblock_p(int);
+bool cpu_intr_p(void);
 
 #endif	/* !_SYS_CPU_H_ */

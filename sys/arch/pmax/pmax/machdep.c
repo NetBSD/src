@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218.2.1 2007/05/27 12:27:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218.2.2 2007/07/15 22:20:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218.2.1 2007/05/27 12:27:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218.2.2 2007/07/15 22:20:26 ad Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218.2.1 2007/05/27 12:27:56 ad Exp $")
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

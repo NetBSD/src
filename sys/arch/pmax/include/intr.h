@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28.6.1 2007/07/15 13:16:47 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.28.6.2 2007/07/15 22:20:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -34,7 +34,6 @@
 #define _PMAX_INTR_H_
 
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
@@ -62,17 +61,17 @@
 #define	_IPL_SI1_LAST	IPL_SOFTSERIAL
 
 /* Soft interrupt numbers. */
-#define	SI_SOFT		0	/* generic software interrupts */
-#define	SI_SOFTSERIAL	1	/* serial software interrupts */
-#define	SI_SOFTNET	2	/* network software interrupts */
+#define	SI_SOFTSERIAL	0	/* serial software interrupts */
+#define	SI_SOFTNET	1	/* network software interrupts */
+#define	SI_SOFTBIO	2	/* block software interrupts */
 #define	SI_SOFTCLOCK	3	/* clock software interrupts */
 
 #define	SI_NQUEUES	4
 
 #define	SI_QUEUENAMES {							\
-	"misc",								\
 	"serial",							\
 	"net",								\
+	"block",							\
 	"clock",							\
 }
 
