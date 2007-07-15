@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.5 2007/04/15 20:37:24 jmcneill Exp $ */
+/* $NetBSD: crmfb.c,v 1.6 2007/07/15 05:42:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.5 2007/04/15 20:37:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.6 2007/07/15 05:42:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,28 @@ struct wsdisplay_accessops crmfb_accessops = {
 #define CRMFB_CMAP		0x00050000
 #define CRMFB_CMAP_FIFO		0x00058000
 #define CRMFB_GMAP		0x00060000
-#define CRMFB_CRS_CONTROL	0x00070004
+#define CRMFB_CURSOR_POS	0x00070000
+/*
+ * upper 16 bit are Y, lower 16 bit are X - both signed so there's no need for
+ * a hotspot register
+ */
+#define CRMFB_CURSOR_CONTROL	0x00070004
+	#define CRMFB_CURSOR_ON		0x00000001
+#define CRMFB_CURSOR_CMAP0	0x00070008
+#define CRMFB_CURSOR_CMAP1	0x0007000c
+#define CRMFB_CURSOR_CMAP2	0x00070010
+#define CRMFB_CURSOR_BITMAP	0x00078000
+/* two bit deep cursor image, zero is transparent */
+
+/* rendering engine registers */
+#define CRIME_RE_TLB_A		0x1000
+#define CRIME_RE_TLB_B		0x1200
+#define CRIME_RE_TLB_C		0x1400
+#define CRIME_RE_TEX		0x1600
+#define CRIME_RE_CLIP_IDS	0x16e0
+#define CRIME_RE_LINEAR_A	0x1700
+#define CRIME_RE_LINEAR_B	0x1780
+
 
 static int	crmfb_match(struct device *, struct cfdata *, void *);
 static void	crmfb_attach(struct device *, struct device *, void *);
@@ -167,6 +188,7 @@ struct crmfb_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_space_handle_t	sc_reh;	/* rendering engine registers */
 	bus_dma_tag_t		sc_dmat;
 
 	struct crmfb_dma	sc_dma;
@@ -179,6 +201,13 @@ struct crmfb_softc {
 	uint8_t			*sc_shadowfb;
 
 	int			sc_wsmode;
+
+	/* cursor stuff */
+	int			sc_cur_x;
+	int			sc_cur_y;
+	int			sc_hot_x;
+	int			sc_hot_y;
+
 	u_char			sc_cmap_red[256];
 	u_char			sc_cmap_green[256];
 	u_char			sc_cmap_blue[256];
@@ -188,6 +217,9 @@ static int	crmfb_putcmap(struct crmfb_softc *, struct wsdisplay_cmap *);
 static int	crmfb_getcmap(struct crmfb_softc *, struct wsdisplay_cmap *);
 static void	crmfb_set_palette(struct crmfb_softc *,
 				  int, uint8_t, uint8_t, uint8_t);
+static int	crmfb_set_curpos(struct crmfb_softc *, int, int);
+static int	crmfb_gcursor(struct crmfb_softc *, struct wsdisplay_cursor *);
+static int	crmfb_scursor(struct crmfb_softc *, struct wsdisplay_cursor *);
 
 CFATTACH_DECL(crmfb, sizeof(struct crmfb_softc),
     crmfb_match, crmfb_attach, NULL, NULL);
@@ -224,6 +256,12 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_ioh);
 	if (rv)
 		panic("crmfb_attach: can't map I/O space");
+
+	rv = bus_space_map(SGIMIPS_BUS_SPACE_CRIME, 0x15000000, 0x5000, 0,
+	    &sc->sc_reh);
+	if (rv)
+		panic("%s: unable to map rendering engine registers\n",
+		    __func__);
 
 	/* determine mode configured by firmware */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_VCMAP);
@@ -414,7 +452,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 
 	/* turn off firmware overlay and hardware cursor */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_WIDTH_TILE, 0);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_CRS_CONTROL, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_CURSOR_CONTROL, 0);
 
 	/* enable drawing again */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
@@ -446,6 +484,18 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	aa.accesscookie = &sc->sc_vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+
+	/* fill in RE TLB A */
+	v = (unsigned long)DMAADDR(sc->sc_dma);
+	for (i = 0; i < (sc->sc_fbsize >> 16); i++) {
+		bus_space_write_8(sc->sc_iot, sc->sc_reh,
+		    CRIME_RE_TLB_A + (i << 3), (uint64_t)v + (i << 16));
+	} 
+
+	sc->sc_cur_x = 0;
+	sc->sc_cur_y = 0;
+	sc->sc_hot_x = 0;
+	sc->sc_hot_y = 0;
 
 	return;
 }
@@ -512,8 +562,48 @@ crmfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SVIDEO:
 	case WSDISPLAYIO_GVIDEO:
 		return ENODEV;	/* not supported yet */
-	}
 
+	case WSDISPLAYIO_GCURPOS:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			pos->x = sc->sc_cur_x;
+			pos->y = sc->sc_cur_y;
+		}
+		return 0;
+	case WSDISPLAYIO_SCURPOS:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			crmfb_set_curpos(sc, pos->x, pos->y);
+		}
+		return 0;
+	case WSDISPLAYIO_GCURMAX:
+		{
+			struct wsdisplay_curpos *pos;
+
+			pos = (struct wsdisplay_curpos *)data;
+			pos->x = 32;
+			pos->y = 32;
+		}
+		return 0;
+	case WSDISPLAYIO_GCURSOR:
+		{
+			struct wsdisplay_cursor *cu;
+
+			cu = (struct wsdisplay_cursor *)data;
+			return crmfb_gcursor(sc, cu);
+		}
+	case WSDISPLAYIO_SCURSOR:
+		{
+			struct wsdisplay_cursor *cu;
+
+			cu = (struct wsdisplay_cursor *)data;
+			return crmfb_scursor(sc, cu);
+		}
+	}
 	return EPASSTHROUGH;
 }
 
@@ -669,4 +759,94 @@ crmfb_set_palette(struct crmfb_softc *sc, int reg, uint8_t r, uint8_t g,
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_CMAP + (reg * 4), val);
 
 	return;
+}
+
+static int
+crmfb_set_curpos(struct crmfb_softc *sc, int x, int y)
+{
+	uint32_t val;
+
+	sc->sc_cur_x = x;
+	sc->sc_cur_y = y;
+
+	val = ((x - sc->sc_hot_x) & 0xffff) | ((y - sc->sc_hot_y) << 16);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_CURSOR_POS, val);
+
+	return 0;
+}
+
+static int
+crmfb_gcursor(struct crmfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+	/* do nothing for now */
+	return 0;
+}
+
+static int
+crmfb_scursor(struct crmfb_softc *sc, struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, CRMFB_CURSOR_CONTROL,
+		    cur->enable ? 1 : 0);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		crmfb_set_curpos(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+		uint32_t val;
+	
+		for (i = 0; i < cur->cmap.count; i++) {
+			val = (cur->cmap.red[i] << 24) |
+			      (cur->cmap.green[i] << 16) |
+			      (cur->cmap.blue[i] << 8);
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    CRMFB_CURSOR_CMAP0 + ((i + cur->cmap.index) << 2),
+			    val);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+
+		int i, j, cnt = 0;
+		uint32_t latch = 0, omask;
+		uint8_t imask;
+		for (i = 0; i < 64; i++) {
+			omask = 0x80000000;
+			imask = 0x01;
+			cur->image[cnt] &= cur->mask[cnt];
+			for (j = 0; j < 8; j++) {
+				if (cur->image[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				if (cur->mask[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				imask <<= 1;
+			}
+			cnt++;
+			imask = 0x01;
+			cur->image[cnt] &= cur->mask[cnt];
+			for (j = 0; j < 8; j++) {
+				if (cur->image[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				if (cur->mask[cnt] & imask)
+					latch |= omask;
+				omask >>= 1;
+				imask <<= 1;
+			}
+			cnt++;
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+			    CRMFB_CURSOR_BITMAP + (i << 2), latch);
+			latch = 0;
+		}				
+	}
+	return 0;
 }
