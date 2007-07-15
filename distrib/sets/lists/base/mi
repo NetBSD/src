@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.716 2007/07/15 14:41:18 tnozaki Exp $
+# $NetBSD: mi,v 1.717 2007/07/15 18:23:36 jmmv Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2060,6 +2060,7 @@
 ./usr/share/i18n/esdb/CP/CP904.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP905.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP918.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/CP/CP922.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP932.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP936.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP/CP942.esdb		base-sysutil-share	nls
