@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.114 2007/07/01 18:38:11 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.115 2007/07/15 08:33:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.114 2007/07/01 18:38:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.115 2007/07/15 08:33:38 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -848,6 +848,7 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 #endif
 
 	len = auio.uio_resid;
+	mp->msg_flags &= MSG_USERFLAGS;
 	error = (*so->so_receive)(so, from, &auio, NULL, control,
 			  &mp->msg_flags);
 	len -= auio.uio_resid;
