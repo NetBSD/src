@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.60.2.3 2007/06/09 23:57:44 ad Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.60.2.4 2007/07/15 13:27:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -704,6 +704,9 @@ void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 void	startlwp32(void *);
 int	do_netbsd32___semctl14(struct lwp *, void *, register_t *, void *);
+
+struct iovec *netbsd32_get_iov(struct netbsd32_iovec *, int, struct iovec *,
+	    int);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);

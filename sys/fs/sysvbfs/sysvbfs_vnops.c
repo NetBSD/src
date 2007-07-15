@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.11 2007/02/22 06:37:00 thorpej Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.11.4.1 2007/07/15 13:27:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.11 2007/02/22 06:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.11.4.1 2007/07/15 13:27:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.11 2007/02/22 06:37:00 thorpej E
 #endif
 #define	ROUND_SECTOR(x)		(((x) + 511) & ~511)
 
-MALLOC_DEFINE(M_SYSVBFS_VNODE, "sysvbfs vnode", "sysvbfs vnode structures");
+MALLOC_JUSTDEFINE(M_SYSVBFS_VNODE, "sysvbfs vnode", "sysvbfs vnode structures");
 
 int
 sysvbfs_lookup(void *arg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.30 2007/03/04 06:01:22 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.30.2.1 2007/07/15 13:27:09 ad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30 2007/03/04 06:01:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30.2.1 2007/07/15 13:27:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ linux_sendsig(ksi, mask)
 	 */
 	if (onstack)
 		fp = (struct linux_sigframe *)
-		    ((void *)l->l_sigstk.ss_sp
+		    ((uint8_t *)l->l_sigstk.ss_sp
 		    + l->l_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
@@ -197,7 +197,7 @@ linux_sendsig(ksi, mask)
 	 */
 	fp -= sizeof(struct linux_sigframe);
 	mutex_exit(&p->p_smutex);
-	error = copyout(&sf, fp, sizeof(sf);
+	error = copyout(&sf, fp, sizeof(sf));
 	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {
@@ -337,8 +337,8 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(p, v, retval)
-	struct proc *p;
+linux_machdepioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

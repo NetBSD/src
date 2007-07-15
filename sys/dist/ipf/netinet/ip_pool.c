@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.7.10.1 2007/06/08 14:14:53 ad Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.7.10.2 2007/07/15 13:27:25 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -82,7 +82,7 @@ static int rn_freenode __P((struct radix_node *, void *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.19 2007/02/17 12:41:42 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.20 2007/05/31 12:27:35 darrenr Exp";
 #endif
 
 #ifdef IPFILTER_LOOKUP
@@ -997,13 +997,12 @@ rn_freehead(rnh)
 {
 
 	RADIX_NODE_HEAD_LOCK(rnh);
-	(*rnh->rnh_walktree)(rnh, rn_freenode, rnh);
+	rn_walktree(rnh, rn_freenode, rnh);
 
 	rnh->rnh_addaddr = NULL;
 	rnh->rnh_deladdr = NULL;
 	rnh->rnh_matchaddr = NULL;
 	rnh->rnh_lookup = NULL;
-	rnh->rnh_walktree = NULL;
 	RADIX_NODE_HEAD_UNLOCK(rnh);
 
 	Free(rnh);

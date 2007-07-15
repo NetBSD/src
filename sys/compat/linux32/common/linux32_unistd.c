@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.6.2.2 2007/05/27 14:35:14 ad Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.6.2.3 2007/07/15 13:27:12 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.6.2.2 2007/05/27 14:35:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.6.2.3 2007/07/15 13:27:12 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -199,11 +199,11 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
         fd_set *readfds, *writefds, *exceptfds;
         struct timeval *timeout;
 {   
-	struct timeval tv0, tv1, utv, otv, *tv = NULL;
+	struct timeval tv0, tv1, utv, *tv = NULL;
 	struct netbsd32_timeval utv32;
 	int error;
 
-	timerclear(&otv); /* XXX GCC4 */
+	timerclear(&utv); /* XXX GCC4 */
 
 	/*
 	 * Store current time for computation of the amount of
@@ -214,7 +214,6 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			return error;
 
 		netbsd32_to_timeval(&utv32, &utv);
-		otv = utv;
 
 		if (itimerfix(&utv)) {
 			/*
@@ -257,7 +256,7 @@ linux32_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			 */
 			microtime(&tv1);
 			timersub(&tv1, &tv0, &tv1);
-			timersub(&otv, &tv1, &utv);
+			timersub(&utv, &tv1, &utv);
 			if (utv.tv_sec < 0)
 				timerclear(&utv);
 		} else {

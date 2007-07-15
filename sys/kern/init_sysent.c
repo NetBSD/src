@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.189.2.4 2007/06/08 14:17:16 ad Exp $ */
+/* $NetBSD: init_sysent.c,v 1.189.2.5 2007/07/15 13:27:36 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.189.2.4 2007/06/08 14:17:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.189.2.5 2007/07/15 13:27:36 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -91,6 +91,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.189.2.4 2007/06/08 14:17:16 ad Exp
 #define	compat_30(func) sys_nosys
 #endif
 
+#ifdef COMPAT_40
+#define	compat_40(func) __CONCAT(compat_40_,func)
+#else
+#define	compat_40(func) sys_nosys
+#endif
+
 #define	s(type)	sizeof(type)
 
 struct sysent sysent[] = {
@@ -141,8 +147,8 @@ struct sysent sysent[] = {
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys_getpid },			/* 20 = getpid */
 #endif
-	{ 4, s(struct sys_mount_args), 0,
-	    sys_mount },			/* 21 = mount */
+	{ 4, s(struct compat_40_sys_mount_args), 0,
+	    compat_40(sys_mount) },		/* 21 = compat_40 mount */
 	{ 2, s(struct sys_unmount_args), 0,
 	    sys_unmount },			/* 22 = unmount */
 	{ 1, s(struct sys_setuid_args), 0,
@@ -1064,13 +1070,13 @@ struct sysent sysent[] = {
 	{ 4, s(struct sys_lio_listio_args), 0,
 	    sys_lio_listio },			/* 406 = lio_listio */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 407 = filler */
+	    sys_nosys },			/* 407 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 408 = filler */
+	    sys_nosys },			/* 408 = unimplemented */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 409 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 410 = filler */
+	    sys_nosys },			/* 409 = unimplemented */
+	{ 5, s(struct sys___mount50_args), 0,
+	    sys___mount50 },			/* 410 = __mount50 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 411 = filler */
 	{ 0, 0, 0,

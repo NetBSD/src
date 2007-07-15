@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.5.2.3 2007/06/17 21:31:48 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.5.2.4 2007/07/15 13:27:52 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -214,9 +214,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t ui;
 	int error;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si  = NULL;
-#endif
 	sc->sc_src = NULL;
 	sc->sc_dst = NULL;
 
@@ -595,7 +593,6 @@ etherip_delete_tunnel(struct ifnet *ifp)
 static int
 etherip_init(struct ifnet *ifp)
 {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	struct etherip_softc *sc = ifp->if_softc;
 
 	if (sc->sc_si == NULL)
@@ -603,7 +600,6 @@ etherip_init(struct ifnet *ifp)
 
 	if (sc->sc_si == NULL)
 		return(ENOMEM);
-#endif
 
 	ifp->if_flags |= IFF_RUNNING;
 	etherip_start(ifp);

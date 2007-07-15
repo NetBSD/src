@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.2.2.2 2007/06/17 21:31:07 ad Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.2.2.3 2007/07/15 13:27:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2.2.2 2007/06/17 21:31:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2.2.3 2007/07/15 13:27:29 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2.2.2 2007/06/17 21:31:07 ad Exp $"
 #include <fs/hfs/hfs.h>
 #include <fs/hfs/libhfs.h>
 
-MALLOC_DEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
+MALLOC_JUSTDEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
 extern struct lock hfs_hashlock;
 
@@ -146,6 +146,7 @@ const struct vnodeopv_desc * const hfs_vnodeopv_descs[] = {
 
 struct vfsops hfs_vfsops = {
 	MOUNT_HFS,
+	sizeof (struct hfs_args),
 	hfs_mount,
 	hfs_start,
 	hfs_unmount,
@@ -174,15 +175,18 @@ static const struct genfs_ops hfs_genfsops = {
 };
 
 int
-hfs_mount(struct mount *mp, const char *path, void *data,
+hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
-	struct hfs_args args;
+	struct hfs_args *args = data;
 	struct vnode *devvp;
 	struct hfsmount *hmp;
 	int error;
 	int update;
 	mode_t accessmode;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 #ifdef HFS_DEBUG	
 	printf("vfsop = hfs_mount()\n");
@@ -192,15 +196,13 @@ hfs_mount(struct mount *mp, const char *path, void *data,
 		hmp = VFSTOHFS(mp);
 		if (hmp == NULL)
 			return EIO;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
 	if (data == NULL)
 		return EINVAL;
-
-	if ((error = copyin(data, &args, sizeof (struct hfs_args))) != 0)
-		return error;
 
 /* FIXME: For development ONLY - disallow remounting for now */
 #if 0
@@ -210,11 +212,11 @@ hfs_mount(struct mount *mp, const char *path, void *data,
 #endif
 
 	/* Check arguments */
-	if (args.fspec != NULL) {
+	if (args->fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 		if ((error = namei(ndp)) != 0)
 			return error;
 		devvp = ndp->ni_vp;
@@ -287,10 +289,10 @@ hfs_mount(struct mount *mp, const char *path, void *data,
 		goto error;
 	}
 
-	if ((error = hfs_mountfs(devvp, mp, l, args.fspec)) != 0)
+	if ((error = hfs_mountfs(devvp, mp, l, args->fspec)) != 0)
 		goto error;
 	
-	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 		mp, l);
 
 #ifdef HFS_DEBUG
@@ -676,9 +678,7 @@ hfs_init(void)
 	printf("vfsop = hfs_init()\n");
 #endif /* HFS_DEBUG */
 
-#ifdef _LKM
 	malloc_type_attach(M_HFSMNT);
-#endif
 
 	callbacks.error = hfs_libcb_error;
 	callbacks.allocmem = hfs_libcb_malloc;
@@ -711,9 +711,7 @@ hfs_done(void)
 	printf("vfsop = hfs_done()\n");
 #endif /* HFS_DEBUG */
 
-#ifdef _LKM
 	malloc_type_detach(M_HFSMNT);
-#endif
 
 	hfslib_done();
 	hfs_nhashdone();

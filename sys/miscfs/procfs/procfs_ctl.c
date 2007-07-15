@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.40.2.1 2007/04/05 21:57:51 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.40.2.2 2007/07/15 13:27:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.40.2.1 2007/04/05 21:57:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.40.2.2 2007/07/15 13:27:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.40.2.1 2007/04/05 21:57:51 ad Exp $
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/procfs/procfs.h>
 

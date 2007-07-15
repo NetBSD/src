@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.156.2.4 2007/06/09 23:58:05 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.156.2.5 2007/07/15 13:27:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.4 2007/06/09 23:58:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.5 2007/07/15 13:27:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -105,12 +105,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.4 2007/06/09 23:58:05 ad Exp $
 #include <sys/device.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/queue.h>
 #include <sys/systrace.h>
 #include <sys/ktrace.h>
 #include <sys/ptrace.h>
 #include <sys/fcntl.h>
+#include <sys/kauth.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.4 2007/06/09 23:58:05 ad Exp $
 static struct device *finddevice(const char *);
 static struct device *getdisk(char *, int, int, dev_t *, int);
 static struct device *parsedisk(char *, int, int, dev_t *);
+static const char *getwedgename(const char *, int);
 
 /*
  * A generic linear hook.
@@ -773,6 +777,31 @@ dopowerhooks(int why)
 #endif
 }
 
+static int
+isswap(struct device *dv)
+{
+	struct dkwedge_info wi;
+	struct vnode *vn;
+	int error;
+
+	if (device_class(dv) != DV_DISK || !device_is_a(dv, "dk"))
+		return 0;
+
+	if ((vn = opendisk(dv)) == NULL)
+		return 0;
+
+	error = VOP_IOCTL(vn, DIOCGWEDGEINFO, &wi, FREAD, NOCRED, 0);
+	VOP_CLOSE(vn, FREAD, NOCRED, 0);
+	vput(vn);
+	if (error) {
+#ifdef DEBUG_WEDGE
+		printf("%s: Get wedge info returned %d\n", dv->dv_xname, error);
+#endif
+		return 0;
+	}
+	return strcmp(wi.dkw_ptype, DKW_PTYPE_SWAP) == 0;
+}
+
 /*
  * Determine the root device and, if instructed to, the root file system.
  */
@@ -811,7 +840,7 @@ void
 setroot(struct device *bootdv, int bootpartition)
 {
 	struct device *dv;
-	int len;
+	int len, majdev;
 #ifdef MEMORY_DISK_HOOKS
 	int i;
 #endif
@@ -1014,8 +1043,6 @@ setroot(struct device *bootdv, int bootpartition)
 		}
 
 	} else if (rootspec == NULL) {
-		int majdev;
-
 		/*
 		 * Wildcarded root; use the boot device.
 		 */
@@ -1049,6 +1076,11 @@ setroot(struct device *bootdv, int bootpartition)
 			rootdv = dv;
 			goto haveroot;
 		}
+
+		if (rootdev == NODEV &&
+		    device_class(dv) == DV_DISK && device_is_a(dv, "dk") &&
+		    (majdev = devsw_name2blk(dv->dv_xname, NULL, 0)) >= 0)
+			rootdev = makedev(majdev, device_unit(dv));
 
 		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
@@ -1132,9 +1164,20 @@ setroot(struct device *bootdv, int bootpartition)
 			goto nodumpdev;
 		}
 	} else {				/* (c) */
-		if (DEV_USES_PARTITIONS(rootdv) == 0)
-			goto nodumpdev;
-		else {
+		if (DEV_USES_PARTITIONS(rootdv) == 0) {
+			for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+			    dv = TAILQ_NEXT(dv, dv_list))
+				if (isswap(dv))
+					break;
+			if (dv == NULL)
+				goto nodumpdev;
+
+			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
+			if (majdev < 0)
+				goto nodumpdev;
+			dumpdv = dv;
+			dumpdev = makedev(majdev, device_unit(dumpdv));
+		} else {
 			dumpdv = rootdv;
 			dumpdev = MAKEDISKDEV(major(rootdev),
 			    device_unit(dumpdv), 1);
@@ -1155,25 +1198,27 @@ setroot(struct device *bootdv, int bootpartition)
 static struct device *
 finddevice(const char *name)
 {
+	const char *wname;
 	struct device *dv;
 #if defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
 #endif /* BOOT_FROM_MEMORY_HOOKS */
 
+	if ((wname = getwedgename(name, strlen(name))) != NULL)
+		return dkwedge_find_by_wname(wname);
+
 #ifdef BOOT_FROM_MEMORY_HOOKS
 	for (j = 0; j < NMD; j++) {
-		if (strcmp(name, fakemdrootdev[j].dv_xname) == 0) {
-			dv = &fakemdrootdev[j];
-			return (dv);
-		}
+		if (strcmp(name, fakemdrootdev[j].dv_xname) == 0)
+			return &fakemdrootdev[j];
 	}
 #endif /* BOOT_FROM_MEMORY_HOOKS */
 
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	    dv = TAILQ_NEXT(dv, dv_list))
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (strcmp(dv->dv_xname, name) == 0)
 			break;
-	return (dv);
+	}
+	return dv;
 }
 
 static struct device *
@@ -1201,6 +1246,7 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 			if (isdump == 0 && device_class(dv) == DV_IFNET)
 				printf(" %s", dv->dv_xname);
 		}
+		dkwedge_print_wnames();
 		if (isdump)
 			printf(" none");
 #if defined(DDB)
@@ -1208,13 +1254,26 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 #endif
 		printf(" halt reboot\n");
 	}
-	return (dv);
+	return dv;
+}
+
+static const char *
+getwedgename(const char *name, int namelen)
+{
+	const char *wpfx = "wedge:";
+	const int wpfxlen = strlen(wpfx);
+
+	if (namelen < wpfxlen || strncmp(name, wpfx, wpfxlen) != 0)
+		return NULL;
+
+	return name + wpfxlen;
 }
 
 static struct device *
 parsedisk(char *str, int len, int defpart, dev_t *devp)
 {
 	struct device *dv;
+	const char *wname;
 	char *cp, c;
 	int majdev, part;
 #ifdef MEMORY_DISK_HOOKS
@@ -1234,7 +1293,13 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 
 	cp = str + len - 1;
 	c = *cp;
-	if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
+
+	if ((wname = getwedgename(str, len)) != NULL) {
+		if ((dv = dkwedge_find_by_wname(wname)) == NULL)
+			return NULL;
+		part = defpart;
+		goto gotdisk;
+	} else if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
 		part = c - 'a';
 		*cp = '\0';
 	} else
@@ -1251,9 +1316,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 	dv = finddevice(str);
 	if (dv != NULL) {
 		if (device_class(dv) == DV_DISK) {
-#ifdef MEMORY_DISK_HOOKS
  gotdisk:
-#endif
 			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
 			if (majdev < 0)
 				panic("parsedisk");

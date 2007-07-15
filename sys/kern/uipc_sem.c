@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.20.6.1 2007/03/21 20:10:22 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.20.6.2 2007/07/15 13:27:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.20.6.1 2007/03/21 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.20.6.2 2007/07/15 13:27:46 ad Exp $");
 
 #include "opt_posix.h"
 
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.20.6.1 2007/03/21 20:10:22 ad Exp $")
 #include <sys/ksem.h>
 #include <sys/syscall.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 
@@ -106,8 +106,9 @@ struct ksem {
 	LIST_ENTRY(ksem) ks_hash;	/* hash list entry */
 	kmutex_t ks_interlock;		/* lock on this ksem */
 	kcondvar_t ks_cv;		/* condition variable */
-	char *ks_name;			/* if named, this is the name */
 	unsigned int ks_ref;		/* number of references */
+	char *ks_name;			/* if named, this is the name */
+	size_t ks_namelen;		/* length of name */
 	mode_t ks_mode;			/* protection bits */
 	uid_t ks_uid;			/* creator uid */
 	gid_t ks_gid;			/* creator gid */
@@ -165,7 +166,7 @@ ksem_free(struct ksem *ks)
 		LIST_REMOVE(ks, ks_hash);
 		mutex_exit(&ksem_mutex);
 
-		free(ks, M_SEM);
+		kmem_free(ks, sizeof(*ks));
 		return;
 	}
 	mutex_exit(&ks->ks_interlock);
@@ -198,7 +199,7 @@ ksem_proc_alloc(void)
 {
 	struct ksem_proc *kp;
 
-	kp = malloc(sizeof(*kp), M_SEM, M_WAITOK);
+	kp = kmem_alloc(sizeof(*kp), KM_SLEEP);
 	rw_init(&kp->kp_lock);
 	LIST_INIT(&kp->kp_ksems);
 
@@ -217,13 +218,12 @@ ksem_proc_dtor(void *arg)
 		LIST_REMOVE(ksr, ksr_list);
 		mutex_enter(&ksr->ksr_ksem->ks_interlock);
 		ksem_delref(ksr->ksr_ksem);
-		mutex_exit(&ksr->ksr_ksem->ks_interlock);
-		free(ksr, M_SEM);
+		kmem_free(ksr, sizeof(*ksr));
 	}
 
 	rw_exit(&kp->kp_lock);
 	rw_destroy(&kp->kp_lock);
-	free(kp, M_SEM);
+	kmem_free(kp, sizeof(*kp));
 }
 
 static void
@@ -238,7 +238,7 @@ ksem_add_proc(struct proc *p, struct ksem *ks)
 		proc_setspecific(p, ksem_specificdata_key, kp);
 	}
 
-	ksr = malloc(sizeof(*ksr), M_SEM, M_WAITOK);
+	ksr = kmem_alloc(sizeof(*ksr), KM_SLEEP);
 	ksr->ksr_ksem = ks;
 
 	rw_enter(&kp->kp_lock, RW_WRITER);
@@ -320,19 +320,20 @@ ksem_create(struct lwp *l, const char *name, struct ksem **ksret,
 	uc = l->l_cred;
 	if (value > SEM_VALUE_MAX)
 		return (EINVAL);
-	ret = malloc(sizeof(*ret), M_SEM, M_WAITOK | M_ZERO);
+	ret = kmem_zalloc(sizeof(*ret), KM_SLEEP);
 	if (name != NULL) {
 		len = strlen(name);
 		if (len > SEM_MAX_NAMELEN) {
-			free(ret, M_SEM);
+			kmem_free(ret, sizeof(*ret));
 			return (ENAMETOOLONG);
 		}
 		/* name must start with a '/' but not contain one. */
 		if (*name != '/' || len < 2 || strchr(name + 1, '/') != NULL) {
-			free(ret, M_SEM);
+			kmem_free(ret, sizeof(*ret));
 			return (EINVAL);
 		}
-		ret->ks_name = malloc(len + 1, M_SEM, M_WAITOK);
+		ret->ks_namelen = len + 1;
+		ret->ks_name = kmem_alloc(ret->ks_namelen, KM_SLEEP);
 		strlcpy(ret->ks_name, name, len + 1);
 	} else
 		ret->ks_name = NULL;
@@ -349,8 +350,8 @@ ksem_create(struct lwp *l, const char *name, struct ksem **ksret,
 	if (nsems >= SEM_MAX) {
 		mutex_exit(&ksem_mutex);
 		if (ret->ks_name != NULL)
-			free(ret->ks_name, M_SEM);
-		free(ret, M_SEM);
+			kmem_free(ret->ks_name, ret->ks_namelen);
+		kmem_free(ret, sizeof(*ret));
 		return (ENFILE);
 	}
 	nsems++;
@@ -491,7 +492,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 	id = SEM_TO_ID(ksnew);
 	error = (*docopyout)(&id, idp, sizeof(id));
 	if (error) {
-		free(ksnew->ks_name, M_SEM);
+		kmem_free(ksnew->ks_name, ksnew->ks_namelen);
 		ksnew->ks_name = NULL;
 
 		mutex_enter(&ksnew->ks_interlock);
@@ -509,7 +510,7 @@ do_ksem_open(struct lwp *l, const char *semname, int oflag, mode_t mode,
 			mutex_exit(&ks->ks_interlock);
 			mutex_exit(&ksem_mutex);
 
-			free(ksnew->ks_name, M_SEM);
+			kmem_free(ksnew->ks_name, ksnew->ks_namelen);
 			ksnew->ks_name = NULL;
 
 			mutex_enter(&ksnew->ks_interlock);
@@ -550,7 +551,7 @@ sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 		const char *name;
 	} */ *uap = v;
 	char name[SEM_MAX_NAMELEN + 1], *cp;
-	size_t done;
+	size_t done, len;
 	struct ksem *ks;
 	int error;
 
@@ -578,7 +579,7 @@ sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 	else
 		mutex_exit(&ks->ks_interlock);
 
-	free(cp, M_SEM);
+	kmem_free(cp, len);
 
 	return (0);
 }
@@ -614,7 +615,7 @@ sys__ksem_close(struct lwp *l, void *v, register_t *retval)
 
 	ksr = ksem_drop_proc(kp, ks);
 	rw_exit(&kp->kp_lock);
-	free(ksr, M_SEM);
+	kmem_free(ksr, sizeof(*ksr));
 
 	return (0);
 }
@@ -780,7 +781,7 @@ sys__ksem_destroy(struct lwp *l, void *v, register_t *retval)
 
 	ksr = ksem_drop_proc(kp, ks);
 	rw_exit(&kp->kp_lock);
-	free(ksr, M_SEM);
+	kmem_free(ksr, sizeof(*ksr));
 
 	return (0);
 }
@@ -801,7 +802,7 @@ ksem_forkhook(struct proc *p2, struct proc *p1)
 
 	if (!LIST_EMPTY(&kp1->kp_ksems)) {
 		LIST_FOREACH(ksr, &kp1->kp_ksems, ksr_list) {
-			ksr1 = malloc(sizeof(*ksr), M_SEM, M_WAITOK);
+			ksr1 = kmem_alloc(sizeof(*ksr), KM_SLEEP);
 			ksr1->ksr_ksem = ksr->ksr_ksem;
 			mutex_enter(&ksr->ksr_ksem->ks_interlock);
 			ksem_addref(ksr->ksr_ksem);

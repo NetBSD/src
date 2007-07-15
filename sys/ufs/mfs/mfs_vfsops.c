@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.78.2.1 2007/03/13 17:51:52 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.78.2.2 2007/07/15 13:28:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.78.2.1 2007/03/13 17:51:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.78.2.2 2007/07/15 13:28:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ static	int mfs_minor;	/* used for building internal dev_t */
 
 extern int (**mfs_vnodeop_p)(void *);
 
-MALLOC_DEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
+MALLOC_JUSTDEFINE(M_MFSNODE, "MFS node", "MFS vnode private part");
 
 /*
  * mfs vfs operations.
@@ -86,6 +86,7 @@ const struct vnodeopv_desc * const mfs_vnodeopv_descs[] = {
 
 struct vfsops mfs_vfsops = {
 	MOUNT_MFS,
+	sizeof (struct mfs_args),
 	mfs_mount,
 	mfs_start,
 	ffs_unmount,
@@ -137,9 +138,8 @@ SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
 void
 mfs_init(void)
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_MFSNODE);
-#endif
 	/*
 	 * ffs_init() ensures to initialize necessary resources
 	 * only once.
@@ -161,9 +161,7 @@ mfs_done(void)
 	 * only once, when it's no more needed.
 	 */
 	ffs_done();
-#ifdef _LKM
 	malloc_type_detach(M_MFSNODE);
-#endif
 }
 
 /*
@@ -243,16 +241,19 @@ mfs_initminiroot(void *base)
  */
 /* ARGSUSED */
 int
-mfs_mount(struct mount *mp, const char *path, void *data,
+mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
     struct nameidata *ndp, struct lwp *l)
 {
 	struct vnode *devvp;
-	struct mfs_args args;
+	struct mfs_args *args = data;
 	struct ufsmount *ump;
 	struct fs *fs;
 	struct mfsnode *mfsp;
 	struct proc *p;
-	int flags, error;
+	int flags, error = 0;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	p = l->l_proc;
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -270,10 +271,11 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 		if (mfsp == NULL)
 			return EIO;
 
-		args.fspec = NULL;
-		args.base = mfsp->mfs_baseoff;
-		args.size = mfsp->mfs_size;
-		return copyout(&args, data, sizeof(args));
+		args->fspec = NULL;
+		args->base = mfsp->mfs_baseoff;
+		args->size = mfsp->mfs_size;
+		*data_len = sizeof *args;
+		return 0;
 	}
 	/*
 	 * XXX turn off async to avoid hangs when writing lots of data.
@@ -285,10 +287,6 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	 */
 	mp->mnt_flag &= ~MNT_ASYNC;
 	mp->mnt_flag |= MNT_SYNCHRONOUS;
-
-	error = copyin(data, (void *)&args, sizeof (struct mfs_args));
-	if (error)
-		return (error);
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -307,7 +305,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 		}
 		if (fs->fs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR))
 			fs->fs_ronly = 0;
-		if (args.fspec == NULL)
+		if (args->fspec == NULL)
 			return EINVAL;
 		return (0);
 	}
@@ -320,8 +318,8 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	mfs_minor++;
 	mfsp = (struct mfsnode *)malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
 	devvp->v_data = mfsp;
-	mfsp->mfs_baseoff = args.base;
-	mfsp->mfs_size = args.size;
+	mfsp->mfs_baseoff = args->base;
+	mfsp->mfs_size = args->size;
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_proc = p;
 	mfsp->mfs_shutdown = 0;
@@ -333,7 +331,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp, l);
 	if (error)
 		return error;

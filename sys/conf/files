@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.834.2.4 2007/06/17 21:30:46 ad Exp $
+#	$NetBSD: files,v 1.834.2.5 2007/07/15 13:27:20 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -16,7 +16,6 @@ devclass tty
 # (note, these are case-sensitive)
 #
 defflag				INSECURE
-defflag				KCONT
 defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
@@ -1224,6 +1223,7 @@ file	kern/kern_drvctl.c		drvctl
 include "coda/files.coda"
 include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
+include "fs/efs/files.efs"
 include "fs/filecorefs/files.filecorefs"
 include "fs/hfs/files.hfs"
 include "fs/msdosfs/files.msdosfs"
@@ -1320,7 +1320,6 @@ file	kern/kern_exec.c
 file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_idle.c
-file	kern/kern_kcont.c		kcont
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
 file	kern/kern_ksyms.c		ksyms | ddb | lkm needs-flag

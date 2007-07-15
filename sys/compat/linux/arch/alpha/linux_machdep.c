@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38 2007/03/04 15:42:54 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.38.2.1 2007/07/15 13:27:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38 2007/03/04 15:42:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.1 2007/07/15 13:27:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ void setup_linux_sigframe(tf, sig, mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	memset(&sigframe.sf_sc, 0, sizeof(struct linux_ucontext));
+	memset(&sigframe.sf_sc, 0, sizeof(struct linux_sigcontext));
 	sigframe.sf_sc.sc_onstack = onstack;
 	native_to_linux_old_sigset(&sigframe.sf_sc.sc_mask, mask);
 	sigframe.sf_sc.sc_pc = tf->tf_regs[FRAME_PC];

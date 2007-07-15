@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.6 2007/06/23 18:06:05 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.7 2007/07/15 13:28:15 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,11 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.6 2007/06/23 18:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.7 2007/07/15 13:28:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
-#include "opt_quota.h"
 #endif
 
 #include <sys/param.h>
@@ -188,10 +187,6 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_cred))
 		return EACCES;
 
-#ifdef QUOTA
-	if ((error = getinoquota(VTOI(vp))) != 0)
-		return error;
-#endif
 	if (vp->v_size != 0) {
 		error = ffs_truncate(vp, 0, 0, NOCRED, l);
 		if (error)
@@ -1653,6 +1648,12 @@ ffs_snapshot_mount(struct mount *mp)
 	struct inode *ip, *xp;
 	ufs2_daddr_t snaplistsize, *snapblklist;
 	int i, error, ns, snaploc, loc;
+
+	/*
+	 * No persistent snapshots on apple ufs file systems.
+	 */
+	if (UFS_MPISAPPLEUFS(ump))
+		return;
 
 	ns = UFS_FSNEEDSWAP(fs);
 	/*

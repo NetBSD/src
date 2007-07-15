@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.12.2.5 2007/06/09 23:58:06 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.12.2.6 2007/07/15 13:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.5 2007/06/09 23:58:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12.2.6 2007/07/15 13:27:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,14 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		return error;
 	}
 
+	lid = l2->l_lid;
+	error = copyout(&lid, SCARG(uap, new_lwp), sizeof(lid));
+	if (error) {
+		lwp_exit(l2);
+		pool_put(&lwp_uc_pool, newuc);
+		return error;
+	}
+
 	/*
 	 * Set the new LWP running, unless the caller has requested that
 	 * it be created in suspended state.  If the process is stopping,
@@ -122,7 +130,6 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	 */
 	mutex_enter(&p->p_smutex);
 	lwp_lock(l2);
-	lid = l2->l_lid;
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0 &&
 	    (l->l_flag & (LW_WREBOOT | LW_WSUSPEND | LW_WEXIT)) == 0) {
 	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
@@ -137,10 +144,6 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		l2->l_stat = LSSUSPENDED;
 	lwp_unlock(l2);
 	mutex_exit(&p->p_smutex);
-
-	error = copyout(&lid, SCARG(uap, new_lwp), sizeof(lid));
-	if (error)
-		return error;
 
 	return 0;
 }

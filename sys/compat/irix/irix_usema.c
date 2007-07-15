@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.18.2.1 2007/05/27 14:35:00 ad Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.18.2.2 2007/07/15 13:27:06 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.18.2.1 2007/05/27 14:35:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.18.2.2 2007/07/15 13:27:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/condvar.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -103,7 +104,7 @@ static struct irix_waiting_proc_rec *iur_proc_getfirst
  * at driver attach time, in irix_usemaattach().
  */
 struct vfsops irix_usema_dummy_vfsops = {
-	"usema_dummy",
+	"usema_dummy", 0,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
 	NULL,
@@ -222,8 +223,9 @@ irix_usema_ioctl(v)
 			return EBADF;
 
 		if ((iwpr = iur_proc_getfirst(iur)) != NULL) {
+			extern kcondvar_t select_cv;
 			iur_proc_release(iur, iwpr);
-			wakeup((void *)&selwait);
+			cv_broadcast(&select_cv);
 		}
 		break;
 

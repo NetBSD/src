@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.5.2.2 2007/06/17 21:31:30 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.5.2.3 2007/07/15 13:27:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.2 2007/06/17 21:31:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.3 2007/07/15 13:27:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -125,7 +125,7 @@ lockdebug_lock(lockdebuglk_t *lk)
 {
 	int s;
 	
-	s = spllock();
+	s = splhigh();
 	__cpu_simple_lock(&lk->lk_lock);
 	lk->lk_oldspl = s;
 }

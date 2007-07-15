@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.94 2007/03/05 20:32:43 drochner Exp $ */
+/* $NetBSD: device.h,v 1.94.2.1 2007/07/15 13:28:08 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -118,7 +118,7 @@ struct device {
 	int		dv_unit;	/* device unit number */
 	char		dv_xname[16];	/* external name (name + unit) */
 	device_t	dv_parent;	/* pointer to parent device
-					   (NULL if pesudo- or root node) */
+					   (NULL if pseudo- or root node) */
 	int		dv_flags;	/* misc. flags; see below */
 	int		*dv_locators;	/* our actual locators (optional) */
 	prop_dictionary_t dv_properties;/* properties dictionary */
@@ -306,6 +306,9 @@ extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
 
 extern volatile int config_pending; 	/* semaphore for mountroot */
+
+struct vnode *opendisk(struct device *);
+int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
 void	configure(void);

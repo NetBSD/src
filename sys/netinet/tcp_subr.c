@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.212.2.3 2007/07/01 21:50:51 ad Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.212.2.4 2007/07/15 13:27:58 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.212.2.3 2007/07/01 21:50:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.212.2.4 2007/07/15 13:27:58 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -379,9 +379,6 @@ tcp_init(void)
 {
 	int hlen;
 
-	/* Initialize the TCPCB template. */
-	tcp_tcpcb_template();
-
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
@@ -409,6 +406,9 @@ tcp_init(void)
 
 	/* Initialize the congestion control algorithms. */
 	tcp_congctl_init();
+
+	/* Initialize the TCPCB template. */
+	tcp_tcpcb_template();
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
@@ -964,6 +964,13 @@ tcp_tcpcb_template(void)
 	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << (TCP_RTTVAR_SHIFT + 2 - 1);
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
 	    TCPTV_MIN, TCPTV_REXMTMAX);
+
+	/* Keep Alive */
+	tp->t_keepinit = tcp_keepinit;
+	tp->t_keepidle = tcp_keepidle;
+	tp->t_keepintvl = tcp_keepintvl;
+	tp->t_keepcnt = tcp_keepcnt;
+	tp->t_maxidle = tp->t_keepcnt * tp->t_keepintvl;
 }
 
 /*
@@ -1043,7 +1050,7 @@ tcp_newtcpcb(int family, void *aux)
 	
 	tp->t_congctl = tcp_congctl_global;
 	tp->t_congctl->refcnt++;
-	
+
 	return (tp);
 }
 
@@ -2018,7 +2025,7 @@ tcp_established(struct tcpcb *tp)
 #endif
 
 	tp->t_state = TCPS_ESTABLISHED;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepidle);
 
 #ifdef RTV_RPIPE
 	if (rt != NULL && rt->rt_rmx.rmx_recvpipe != 0)

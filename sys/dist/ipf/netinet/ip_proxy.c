@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.12.2.1 2007/06/08 14:14:54 ad Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.12.2.2 2007/07/15 13:27:26 ad Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.19 2007/04/30 09:07:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.20 2007/05/31 12:27:36 darrenr Exp";
 #endif
 
 #ifdef INET

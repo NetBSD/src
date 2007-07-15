@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.43 2007/03/04 06:03:40 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.43.2.1 2007/07/15 13:28:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
  * Disk device structures.
  */
 
+#include <sys/device.h>
 #include <sys/dkio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -496,7 +497,6 @@ struct disk_strategy {
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */
 
-struct device;
 struct proc;
 
 void	disk_attach(struct disk *);
@@ -515,8 +515,10 @@ int	dkwedge_del(struct dkwedge_info *);
 void	dkwedge_delall(struct disk *);
 int	dkwedge_list(struct disk *, struct dkwedge_list *, struct lwp *);
 void	dkwedge_discover(struct disk *);
-void	dkwedge_set_bootwedge(struct device *, daddr_t, uint64_t);
+void	dkwedge_set_bootwedge(device_t, daddr_t, uint64_t);
 int	dkwedge_read(struct disk *, struct vnode *, daddr_t, void *, size_t);
+device_t dkwedge_find_by_wname(const char *);
+void	dkwedge_print_wnames(void);
 #endif
 
 #endif /* _SYS_DISK_H_ */

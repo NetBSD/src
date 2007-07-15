@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.99 2007/03/10 16:42:04 dsl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.99.2.1 2007/07/15 13:28:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -349,6 +349,7 @@ x(APPLEUFS,22, "Apple UFS", "ffs",   "ffs")   /* Apple UFS */ \
 x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 x(UDF,     24, "UDF",        NULL,   "udf")  /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
+x(EFS,     26, "EFS",        NULL,   "efs")   /* SGI's Extent Filesystem */
 
 #ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
@@ -433,6 +434,8 @@ struct partinfo {
 
 struct disk;
 
+int disk_read_sectors(void (*)(struct buf *), const struct disklabel *,
+    struct buf *, unsigned int, int);
 void	 diskerr(const struct buf *, const char *, const char *, int,
 	    int, const struct disklabel *);
 u_int	 dkcksum(struct disklabel *);
@@ -443,6 +446,8 @@ const char *readdisklabel(dev_t, void (*)(struct buf *),
 	    struct disklabel *, struct cpu_disklabel *);
 int	 writedisklabel(dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *);
+const char *convertdisklabel(struct disklabel *, void (*)(struct buf *),
+    struct buf *, uint32_t);
 int	 bounds_check_with_label(struct disk *, struct buf *, int);
 int	 bounds_check_with_mediasize(struct buf *, int, uint64_t);
 #endif

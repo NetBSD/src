@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.14 2007/07/14 22:09:42 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.15 2007/07/15 13:27:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,10 +71,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.14 2007/07/14 22:09:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.15 2007/07/15 13:27:35 ad Exp $");
 
 #include "opt_ipsec.h"
-#include "opt_kcont.h"
 #include "opt_multiprocessor.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
@@ -87,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.14 2007/07/14 22:09:42 ad Exp 
 #include "opt_pax.h"
 
 #include "rnd.h"
+#include "sysmon_envsys.h"
+#include "sysmon_power.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -97,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.14 2007/07/14 22:09:42 ad Exp 
 #include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/kcont.h>
 #include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -178,6 +178,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.14 2007/07/14 22:09:42 ad Exp 
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
+#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0
+#include <dev/sysmon/sysmonvar.h>
+#endif
 
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -304,11 +307,6 @@ main(void)
 	/* Initialize sockets. */
 	soinit();
 
-#ifdef KCONT
-	/* Initialize kcont. */
-        kcont_init();
-#endif
-
 	/*
 	 * The following things must be done before autoconfiguration.
 	 */
@@ -341,6 +339,9 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
+
+	/* Initialize callouts, part 2. */
+	callout_startup2();
 
 	/* Initialize callouts, part 2. */
 	callout_startup2();
@@ -614,6 +615,8 @@ main(void)
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    uvm_aiodone_worker, NULL, PVM, IPL_NONE, 0))
 		panic("fork aiodoned");
+
+	vmem_rehash_start();
 
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.58 2007/02/09 21:55:24 ad Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.58.6.1 2007/07/15 13:27:19 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.58 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.58.6.1 2007/07/15 13:27:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.58 2007/02/09 21:55:24 ad Exp $");
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
+
+#include <compat/common/compat_sigaltstack.h>
 
 #define	svr4_sigmask(n)		(1 << (((n) - 1) & 31))
 #define	svr4_sigword(n)		(((n) - 1) >> 5)
@@ -178,39 +180,6 @@ native_to_svr4_sigaction(bsa, ssa)
 		ssa->svr4_sa_flags |= SVR4_SA_NOCLDSTOP;
 }
 
-void
-svr4_to_native_sigaltstack(sss, bss)
-	const struct svr4_sigaltstack *sss;
-	struct sigaltstack *bss;
-{
-
-	bss->ss_sp = sss->ss_sp;
-	bss->ss_size = sss->ss_size;
-	bss->ss_flags = 0;
-	if ((sss->ss_flags & SVR4_SS_DISABLE) != 0)
-		bss->ss_flags |= SS_DISABLE;
-	if ((sss->ss_flags & SVR4_SS_ONSTACK) != 0)
-		bss->ss_flags |= SS_ONSTACK;
-	if ((sss->ss_flags & ~SVR4_SS_ALLBITS) != 0)
-/*XXX*/		printf("svr4_to_native_sigaltstack: extra bits %x ignored\n",
-		    sss->ss_flags & ~SVR4_SS_ALLBITS);
-}
-
-void
-native_to_svr4_sigaltstack(bss, sss)
-	const struct sigaltstack *bss;
-	struct svr4_sigaltstack *sss;
-{
-
-	sss->ss_sp = bss->ss_sp;
-	sss->ss_size = bss->ss_size;
-	sss->ss_flags = 0;
-	if ((bss->ss_flags & SS_DISABLE) != 0)
-		sss->ss_flags |= SVR4_SS_DISABLE;
-	if ((bss->ss_flags & SS_ONSTACK) != 0)
-		sss->ss_flags |= SVR4_SS_ONSTACK;
-}
-
 int
 svr4_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
@@ -250,27 +219,8 @@ svr4_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct svr4_sigaltstack *) nss;
 		syscallarg(struct svr4_sigaltstack *) oss;
 	} */ *uap = v;
-	struct svr4_sigaltstack nsss, osss;
-	struct sigaltstack nbss, obss;
-	int error;
-
-	if (SCARG(uap, nss)) {
-		error = copyin(SCARG(uap, nss), &nsss, sizeof(nsss));
-		if (error)
-			return (error);
-		svr4_to_native_sigaltstack(&nsss, &nbss);
-	}
-	error = sigaltstack1(l,
-	    SCARG(uap, nss) ? &nbss : 0, SCARG(uap, oss) ? &obss : 0);
-	if (error)
-		return (error);
-	if (SCARG(uap, oss)) {
-		native_to_svr4_sigaltstack(&obss, &osss);
-		error = copyout(&osss, SCARG(uap, oss), sizeof(osss));
-		if (error)
-			return (error);
-	}
-	return (0);
+	compat_sigaltstack(uap, svr4_sigaltstack,
+	    SVR4_SS_ONSTACK, SVR4_SS_DISABLE);
 }
 
 /*

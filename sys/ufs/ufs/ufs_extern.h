@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.52 2007/03/04 06:03:47 christos Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.52.2.1 2007/07/15 13:28:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -132,23 +132,21 @@ int	ufs_checkpath(struct inode *, struct inode *, kauth_cred_t);
 int	ufs_blkatoff(struct vnode *, off_t, char **, struct buf **);
 
 /* ufs_quota.c */
+/*
+ * Flags to chkdq() and chkiq()
+ */
+#define	FORCE	0x01	/* force usage changes independent of limits */
+void	ufsquota_init(struct inode *);
+void	ufsquota_free(struct inode *);
 int	getinoquota(struct inode *);
 int	chkdq(struct inode *, int64_t, kauth_cred_t, int);
-int	chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
 int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
-int	chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
-void	chkdquot(struct inode *);
 int	quotaon(struct lwp *, struct mount *, int, void *);
 int	quotaoff(struct lwp *, struct mount *, int);
 int	getquota(struct mount *, u_long, int, void *);
 int	setquota(struct mount *, u_long, int, void *);
 int	setuse(struct mount *, u_long, int, void *);
 int	qsync(struct mount *);
-int	dqget(struct vnode *, u_long, struct ufsmount *, int, struct dquot **);
-void	dqref(struct dquot *);
-void	dqrele(struct vnode *, struct dquot *);
-int	dqsync(struct vnode *, struct dquot *);
-void	dqflush(struct vnode *);
 
 /* ufs_vfsops.c */
 void	ufs_init(void);

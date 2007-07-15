@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.26 2006/08/10 14:49:14 reinoud Exp $	*/
+/*	$NetBSD: cdio.h,v 1.26.12.1 2007/07/15 13:28:08 ad Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -167,6 +167,15 @@ struct ioc_read_subchannel {
 };
 #define CDIOCREADSUBCHANNEL _IOWR('c', 3, struct ioc_read_subchannel )
 
+#ifdef _KERNEL
+/* As above, but with the buffer following the request for in-kernel users. */
+struct ioc_read_subchannel_buf {
+	struct ioc_read_subchannel req;
+	struct cd_sub_channel_info info;
+};
+#define CDIOCREADSUBCHANNEL_BUF _IOWR('c', 3, struct ioc_read_subchannel_buf)
+#endif
+
 struct ioc_toc_header {
 	u_short	len;
 	u_char	starting_track;
@@ -183,6 +192,15 @@ struct ioc_read_toc_entry {
 };
 #define CDIOREADTOCENTRIES _IOWR('c', 5, struct ioc_read_toc_entry)
 #define CDIOREADTOCENTRYS CDIOREADTOCENTRIES
+
+#ifdef _KERNEL
+/* As above, but with the buffer following the request for in-kernel users. */
+struct ioc_read_toc_entry_buf {
+	struct ioc_read_toc_entry req;
+	struct cd_toc_entry       entry[100];   /* NB: 8 bytes each */
+};
+#define CDIOREADTOCENTRIES_BUF _IOWR('c', 5, struct ioc_read_toc_entry_buf)
+#endif
 
 /* read LBA start of a given session; 0=last, others not yet supported */
 #define CDIOREADMSADDR _IOWR('c', 6, int)

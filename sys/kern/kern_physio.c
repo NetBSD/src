@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.80.2.3 2007/06/23 17:58:50 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.80.2.4 2007/07/15 13:27:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.3 2007/06/23 17:58:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.4 2007/07/15 13:27:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ physio_biodone(struct buf *bp)
 	KASSERT(bp->b_resid <= bp->b_bcount);
 #endif /* defined(DIAGNOSTIC) */
 
-	workqueue_enqueue(physio_workqueue, &bp->b_work);
+	workqueue_enqueue(physio_workqueue, &bp->b_work, NULL);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.8 2007/06/17 21:31:34 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.9 2007/07/15 13:27:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.8 2007/06/17 21:31:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.9 2007/07/15 13:27:48 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -135,7 +135,7 @@ const int nmountcompatnames = sizeof(mountcompatnames) /
 
 static int
 mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
-    void *data, struct nameidata *ndp)
+    void *data, size_t *data_len, struct nameidata *ndp)
 {
 	struct mount *mp;
 	int error = 0, saved_flags;
@@ -188,10 +188,10 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE);
 
-	error = VFS_MOUNT(mp, path, data, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
 
 #if defined(COMPAT_30) && defined(NFSSERVER)
-	if (error) {
+	if (error && data != NULL) {
 		int error2;
 
 		/* Update failed; let's try and see if it was an
@@ -220,54 +220,16 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	}
 	vfs_unbusy(mp);
 
- out:
 	return (error);
 }
 
 static int
-mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
-    const char *path, int flags, void *data, struct nameidata *ndp)
+mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 {
-	struct mount *mp = NULL;
-	struct vattr va;
 	char fstypename[MFSNAMELEN];
 	int error;
 
-	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
-	    KAUTH_REQ_SYSTEM_MOUNT_NEW, vp, KAUTH_ARG(flags), data);
-	if (error) {
-		vput(vp);
-		goto out;
-	}
-
-	/* Can't make a non-dir a mount-point (from here anyway). */
-	if (vp->v_type != VDIR) {
-		error = ENOTDIR;
-		vput(vp);
-		goto out;
-	}
-
-	/*
-	 * If the user is not root, ensure that they own the directory
-	 * onto which we are attempting to mount.
-	 */
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0 ||
-	    (va.va_uid != kauth_cred_geteuid(l->l_cred) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
-		vput(vp);
-		goto out;
-	}
-
-	if (flags & MNT_EXPORTED) {
-		error = EINVAL;
-		vput(vp);
-		goto out;
-	}
-
-	/*
-	 * Copy file-system type from userspace.
-	 */
+	/* Copy file-system type from userspace.  */
 	error = copyinstr(fstype, fstypename, MFSNAMELEN, NULL);
 	if (error) {
 #if defined(COMPAT_09) || defined(COMPAT_43)
@@ -279,46 +241,70 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		 */
 		u_long fsindex = (u_long)fstype;
 		if (fsindex >= nmountcompatnames ||
-		    mountcompatnames[fsindex] == NULL) {
-			error = ENODEV;
-			vput(vp);
-			goto out;
-		}
+		    mountcompatnames[fsindex] == NULL)
+			return ENODEV;
 		strlcpy(fstypename, mountcompatnames[fsindex], sizeof(fstypename));
 #else
-		vput(vp);
-		goto out;
+		return error;
 #endif
 	}
 
 #ifdef	COMPAT_10
 	/* Accept `ufs' as an alias for `ffs'. */
-	if (strncmp(fstypename, "ufs", MFSNAMELEN) == 0)
-		strlcpy(fstypename, "ffs", sizeof(fstypename));
+	if (strcmp(fstypename, "ufs") == 0)
+		fstypename[0] = 'f';
 #endif
 
-	if ((error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0)) != 0) {
-		vput(vp);
-		goto out;
+	if ((*vfsops = vfs_getopsbyname(fstypename)) == NULL)
+		return ENODEV;
+	return 0;
+}
+
+static int
+mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
+    const char *path, int flags, void *data, size_t *data_len,
+    struct nameidata *ndp)
+{
+	struct mount *mp = NULL;
+	struct vnode *vp = *vpp;
+	struct vattr va;
+	int error;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_NEW, vp, KAUTH_ARG(flags), data);
+	if (error)
+		return error;
+
+	/* Can't make a non-dir a mount-point (from here anyway). */
+	if (vp->v_type != VDIR)
+		return ENOTDIR;
+
+	/*
+	 * If the user is not root, ensure that they own the directory
+	 * onto which we are attempting to mount.
+	 */
+	if ((error = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0 ||
+	    (va.va_uid != kauth_cred_geteuid(l->l_cred) &&
+	    (error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
+		return error;
 	}
+
+	if (flags & MNT_EXPORTED)
+		return EINVAL;
+
+	if ((error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
+		return error;
 
 	/*
 	 * Check if a file-system is not already mounted on this vnode.
 	 */
-	if (vp->v_mountedhere != NULL) {
-		error = EBUSY;
-		vput(vp);
-		goto out;
-	}
+	if (vp->v_mountedhere != NULL)
+		return EBUSY;
 
 	mp = malloc(sizeof(*mp), M_MOUNT, M_WAITOK|M_ZERO);
 
-	if ((mp->mnt_op = vfs_getopsbyname(fstypename)) == NULL) {
-		free(mp, M_MOUNT);
-		error = ENODEV;
-		vput(vp);
-		goto out;
-	}
+	mp->mnt_op = vfsops;
 
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
@@ -445,21 +431,68 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	 * lock this vnode again, so make the lock recursive.
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
-
-	if (SCARG(uap, flags) & MNT_GETARGS) {
-		error = mount_getargs(l, vp, SCARG(uap, path),
-		    SCARG(uap, flags), SCARG(uap, data), &nd);
-		vput(vp);
-	} else if (SCARG(uap, flags) & MNT_UPDATE) {
-		error = mount_update(l, vp, SCARG(uap, path),
-		    SCARG(uap, flags), SCARG(uap, data), &nd);
-		vput(vp);
-	} else {
-		/* Locking is handled internally in mount_domount(). */
-		error = mount_domount(l, vp, SCARG(uap, type),
-		    SCARG(uap, path), SCARG(uap, flags), SCARG(uap, data), &nd);
+  
+	if (vfsops == NULL) {
+		if (flags & (MNT_GETARGS | MNT_UPDATE))
+			vfsops = vp->v_mount->mnt_op;
+		else {
+			/* 'type' is userspace */
+			error = mount_get_vfsops(type, &vfsops);
+			if (error != 0)
+				goto done;
+		}
 	}
 
+	if (data != NULL && data_seg == UIO_USERSPACE) {
+		if (data_len == 0) {
+			/* No length supplied, use default for filesystem */
+			data_len = vfsops->vfs_min_mount_data;
+			if (data_len > VFS_MAX_MOUNT_DATA) {
+				/* maybe a force loaded old LKM */
+				error = EINVAL;
+				goto done;
+			}
+#ifdef COMPAT_30
+			/* Hopefully a longer buffer won't make copyin() fail */
+			if (flags & MNT_UPDATE
+			    && data_len < sizeof (struct mnt_export_args30))
+				data_len = sizeof (struct mnt_export_args30);
+#endif
+		}
+		data_buf = malloc(data_len, M_TEMP, M_WAITOK);
+
+		/* NFS needs the buffer even for mnt_getargs .... */
+		error = copyin(data, data_buf, data_len);
+		if (error != 0)
+			goto done;
+	}
+
+	if (flags & MNT_GETARGS) {
+		if (data_len == 0) {
+			error = EINVAL;
+			goto done;
+		}
+		error = mount_getargs(l, vp, path, flags, data_buf,
+		    &data_len, &nd);
+		if (error != 0)
+			goto done;
+		if (data_seg == UIO_USERSPACE)
+			error = copyout(data_buf, data, data_len);
+		*retval = data_len;
+	} else if (flags & MNT_UPDATE) {
+		error = mount_update(l, vp, path, flags, data_buf, &data_len,
+		    &nd);
+	} else {
+		/* Locking is handled internally in mount_domount(). */
+		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
+		    &data_len, &nd);
+	}
+
+    done:
+	if (vp)
+		vput(vp);
+	if (data_buf != data)
+		free(data_buf, M_TEMP);
 	return (error);
 }
 

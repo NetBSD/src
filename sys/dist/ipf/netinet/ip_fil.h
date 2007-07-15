@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.7.2.2 2007/06/09 23:57:59 ad Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.7.2.3 2007/07/15 13:27:23 ad Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.170.2.43 2007/05/11 13:41:53 darrenr Exp
+ * Id: ip_fil.h,v 2.170.2.45 2007/05/28 11:56:22 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -331,6 +331,7 @@ typedef	struct	fr_info	{
 	void	*fin_nat;
 	void	*fin_state;
 	void	*fin_nattag;
+	void	*fin_exthdr;
 	ip_t	*fin_ip;
 	mb_t	**fin_mp;		/* pointer to pointer to mbuf */
 	mb_t	*fin_m;			/* pointer to mbuf */
@@ -1345,11 +1346,13 @@ extern	int	iplioctl __P((dev_t, u_long, void *, int, struct thread *));
 #      endif /* __FreeBSD_version >= 502116 */
 #     else
 #      if  (__NetBSD_Version__ >= 499001000)
-extern	int	iplioctl __P((dev_t, u_long, void*, int, struct lwp *));
-#      elif  (__NetBSD_Version__ >= 399001400)
+extern	int	iplioctl __P((dev_t, u_long, void *, int, struct lwp *));
+#       else
+#       if  (__NetBSD_Version__ >= 399001400)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
-#      else
+#       else
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+#       endif
 #      endif
 #     endif /* __FreeBSD_version >= 500024 */
 #    else

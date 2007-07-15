@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.44.4.3 2007/06/17 21:31:08 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.44.4.4 2007/07/15 13:27:30 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.3 2007/06/17 21:31:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.4 2007/07/15 13:27:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.3 2007/06/17 21:31:08 ad E
 	(pmp)->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12
 
 int msdosfs_mountroot(void);
-int msdosfs_mount(struct mount *, const char *, void *,
+int msdosfs_mount(struct mount *, const char *, void *, size_t *,
     struct nameidata *, struct lwp *);
 int msdosfs_start(struct mount *, int, struct lwp *);
 int msdosfs_unmount(struct mount *, int, struct lwp *);
@@ -110,8 +110,8 @@ int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
 
 static int update_mp(struct mount *, struct msdosfs_args *);
 
-MALLOC_DEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
-MALLOC_DEFINE(M_MSDOSFSFAT, "MSDOSFS fat", "MSDOS FS fat table");
+MALLOC_JUSTDEFINE(M_MSDOSFSMNT, "MSDOSFS mount", "MSDOS FS mount structure");
+MALLOC_JUSTDEFINE(M_MSDOSFSFAT, "MSDOSFS fat", "MSDOS FS fat table");
 
 #define ROOTNAME "root_device"
 
@@ -124,6 +124,7 @@ const struct vnodeopv_desc * const msdosfs_vnodeopv_descs[] = {
 
 struct vfsops msdosfs_vfsops = {
 	MOUNT_MSDOS,
+	sizeof (struct msdosfs_args),
 	msdosfs_mount,
 	msdosfs_start,
 	msdosfs_unmount,
@@ -246,54 +247,54 @@ msdosfs_mountroot()
  * special file to treat as a filesystem.
  */
 int
-msdosfs_mount(mp, path, data, ndp, l)
+msdosfs_mount(mp, path, data, data_len, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
+	size_t *data_len;
 	struct nameidata *ndp;
 	struct lwp *l;
 {
 	struct vnode *devvp;	  /* vnode for blk device to mount */
-	struct msdosfs_args args; /* will hold data from mount request */
+	struct msdosfs_args *args = data; /* holds data from mount request */
 	/* msdosfs specific mount control block */
 	struct msdosfsmount *pmp = NULL;
 	int error, flags;
 	mode_t accessmode;
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = VFSTOMSDOSFS(mp);
 		if (pmp == NULL)
 			return EIO;
-		args.fspec = NULL;
-		args.uid = pmp->pm_uid;
-		args.gid = pmp->pm_gid;
-		args.mask = pmp->pm_mask;
-		args.flags = pmp->pm_flags;
-		args.version = MSDOSFSMNT_VERSION;
-		args.dirmask = pmp->pm_dirmask;
-		args.gmtoff = pmp->pm_gmtoff;
-		return copyout(&args, data, sizeof(args));
-	}
-	error = copyin(data, &args, sizeof(struct msdosfs_args));
-	if (error) {
-		DPRINTF(("copyin %d\n", error));
-		return (error);
+		args->fspec = NULL;
+		args->uid = pmp->pm_uid;
+		args->gid = pmp->pm_gid;
+		args->mask = pmp->pm_mask;
+		args->flags = pmp->pm_flags;
+		args->version = MSDOSFSMNT_VERSION;
+		args->dirmask = pmp->pm_dirmask;
+		args->gmtoff = pmp->pm_gmtoff;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
 	/*
 	 * If not versioned (i.e. using old mount_msdos(8)), fill in
 	 * the additional structure items with suitable defaults.
 	 */
-	if ((args.flags & MSDOSFSMNT_VERSIONED) == 0) {
-		args.version = 1;
-		args.dirmask = args.mask;
+	if ((args->flags & MSDOSFSMNT_VERSIONED) == 0) {
+		args->version = 1;
+		args->dirmask = args->mask;
 	}
 
 	/*
 	 * Reset GMT offset for pre-v3 mount structure args.
 	 */
-	if (args.version < 3)
-		args.gmtoff = 0;
+	if (args->version < 3)
+		args->gmtoff = 0;
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -333,7 +334,7 @@ msdosfs_mount(mp, path, data, ndp, l)
 			}
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 		}
-		if (args.fspec == NULL) {
+		if (args->fspec == NULL) {
 			DPRINTF(("missing fspec\n"));
 			return EINVAL;
 		}
@@ -342,7 +343,7 @@ msdosfs_mount(mp, path, data, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
 	if ((error = namei(ndp)) != 0) {
 		DPRINTF(("namei %d\n", error));
 		return (error);
@@ -404,7 +405,7 @@ msdosfs_mount(mp, path, data, ndp, l)
 			DPRINTF(("VOP_OPEN %d\n", error));
 			goto fail;
 		}
-		error = msdosfs_mountfs(devvp, mp, l, &args);
+		error = msdosfs_mountfs(devvp, mp, l, args);
 		if (error) {
 			DPRINTF(("msdosfs_mountfs %d\n", error));
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -423,7 +424,7 @@ msdosfs_mount(mp, path, data, ndp, l)
 			return (EINVAL);	/* needs translation */
 		}
 	}
-	if ((error = update_mp(mp, &args)) != 0) {
+	if ((error = update_mp(mp, args)) != 0) {
 		msdosfs_unmount(mp, MNT_FORCE, l);
 		DPRINTF(("update_mp %d\n", error));
 		return error;
@@ -432,7 +433,7 @@ msdosfs_mount(mp, path, data, ndp, l)
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
 #endif
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 	    mp, l);
 
 fail:

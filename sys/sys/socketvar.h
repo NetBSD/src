@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.93.2.2 2007/06/09 23:58:17 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.93.2.3 2007/07/15 13:28:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -228,7 +228,7 @@ do {									\
 #define	sblock(sb, wf)							\
 	((sb)->sb_flags & SB_LOCK ?					\
 	    (((wf) == M_WAITOK) ? sb_lock(sb) : EWOULDBLOCK) :		\
-	    ((sb)->sb_flags |= SB_LOCK), 0)
+	    ((sb)->sb_flags |= SB_LOCK, 0))
 
 /* release lock on sockbuf sb */
 #define	sbunlock(sb)							\
@@ -335,11 +335,19 @@ int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
-int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
-int	recvit(struct lwp *, int, struct msghdr *, void *, register_t *);
+int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
+int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
+void	free_control_mbuf(struct lwp *, struct mbuf *, struct mbuf *);
 
-int     do_sys_bind(struct lwp *, int, struct mbuf *);
-int     do_sys_connect(struct lwp *, int, struct mbuf *);
+
+int	do_sys_getsockname(struct lwp *, int, int, struct mbuf **);
+int	do_sys_sendmsg(struct lwp *, int, struct msghdr *, int, register_t *);
+int	do_sys_recvmsg(struct lwp *, int, struct msghdr *, struct mbuf **,
+	    struct mbuf **, register_t *);
+
+int	do_sys_bind(struct lwp *, int, struct mbuf *);
+int	do_sys_connect(struct lwp *, int, struct mbuf *);
+int	do_sys_accept(struct lwp *, int, struct mbuf **, register_t *);
 
 
 #ifdef SOCKBUF_DEBUG

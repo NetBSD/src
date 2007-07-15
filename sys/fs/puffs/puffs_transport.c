@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.8.6.7 2007/06/09 23:58:02 ad Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.8.6.8 2007/07/15 13:27:32 ad Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.7 2007/06/09 23:58:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8.6.8 2007/07/15 13:27:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -337,8 +337,6 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 		return 0;
 	}
 
-	rv = 0;
-
 	/*
 	 * Get vnode, don't lock it.  Namecache is protected by its own lock
 	 * and we have a reference to protect against premature harvesting.
@@ -348,9 +346,9 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	 * reason we need to eventually bump locking to userspace, as we
 	 * will need to lock the node if we wish to do flushes.
 	 */
-	vp = puffs_pnode2vnode(pmp, pf->pf_cookie, 0);
-	if (vp == NULL)
-		return ENOENT;
+	rv = puffs_pnode2vnode(pmp, pf->pf_cookie, 0, &vp);
+	if (rv)
+		return rv;
 
 	switch (pf->pf_op) {
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.36.2.4 2007/05/27 14:35:19 ad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.36.2.5 2007/07/15 13:27:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36.2.4 2007/05/27 14:35:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.36.2.5 2007/07/15 13:27:13 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -66,6 +66,43 @@ static int dofilereadv32 __P((struct lwp *, int, struct file *, struct netbsd32_
 			      int, off_t *, int, register_t *));
 static int dofilewritev32 __P((struct lwp *, int, struct file *, struct netbsd32_iovec *,
 			       int,  off_t *, int, register_t *));
+
+struct iovec *
+netbsd32_get_iov(struct netbsd32_iovec *iov32, int iovlen, struct iovec *aiov,
+    int aiov_len)
+{
+#define N_IOV32 8
+	struct netbsd32_iovec aiov32[N_IOV32];
+	struct iovec *iov = aiov;
+	struct iovec *iovp;
+	int i, n, j;
+	int error;
+
+	if (iovlen < 0 || iovlen > IOV_MAX)
+		return NULL;
+
+	if (iovlen > aiov_len)
+		iov = malloc(iovlen * sizeof (*iov), M_TEMP, M_WAITOK);
+
+	iovp = iov;
+	for (i = 0; i < iovlen; iov32 += N_IOV32, i += N_IOV32) {
+		n = iovlen - i;
+		if (n > N_IOV32)
+			n = N_IOV32;
+		error = copyin(iov32, aiov32, n * sizeof (*iov32));
+		if (error != 0) {
+			if (iov != aiov)
+				free(iov, M_TEMP);
+			return NULL;
+		}
+		for (j = 0; j < n; iovp++, j++) {
+			iovp->iov_base = NETBSD32PTR64(aiov32[j].iov_base);
+			iovp->iov_len = aiov32[j].iov_len;
+		}
+	}
+	return iov;
+#undef N_IOV32
+}
 
 int
 netbsd32_readv(l, v, retval)
@@ -293,8 +330,11 @@ dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE) {
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE

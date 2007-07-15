@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.37 2007/03/04 06:01:13 christos Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.37.2.1 2007/07/15 13:27:02 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.37 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.37.2.1 2007/07/15 13:27:02 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -642,8 +642,6 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 	mach_io_connect_method_scalari_structi_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_structi_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
-	struct proc *p = args->l->l_proc;
 	int scalar_len;
 	int struct_len;
 	char *struct_data;
@@ -693,7 +691,10 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 		break;
 	}
 
+#if 0	/* comment out stackgap using code - needs to be done another way */
 	case DARWIN_IOFBSETCLUTWITHENTRIES: {
+		struct lwp *l = args->l;
+		struct proc *p = args->l->l_proc;
 		int index;
 		int option;
 		struct darwin_iocolorentry *clut;
@@ -790,6 +791,7 @@ darwin_ioframebuffer_connect_method_scalari_structi(args)
 
 		break;
 	}
+#endif
 
 	default:
 #ifdef DEBUG_DARWIN
