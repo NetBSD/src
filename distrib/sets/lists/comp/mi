@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1048 2007/07/14 22:09:58 dsieger Exp $
+#	$NetBSD: mi,v 1.1049 2007/07/15 08:33:50 jnemeth Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7084,7 +7084,7 @@
 ./usr/share/man/cat9/namecache_print.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namei.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/need_resched.0		comp-obsolete		obsolete
-./usr/share/man/cat9/nextrunqueue.0		comp-sys-catman		.cat
+./usr/share/man/cat9/nextrunqueue.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/old_sysctl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/opencrypto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/optstr.0			comp-sys-catman		.cat
@@ -7232,7 +7232,7 @@
 ./usr/share/man/cat9/readdisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/realloc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/relookup.0			comp-sys-catman		.cat
-./usr/share/man/cat9/remrunqueue.0		comp-sys-catman		.cat
+./usr/share/man/cat9/remrunqueue.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/resettodr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rnd_add_data.0		comp-sys-catman		.cat
@@ -7271,6 +7271,7 @@
 ./usr/share/man/cat9/sendsig.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/setjmp.0			comp-sys-catman		.cat
+./usr/share/man/cat9/setrunqueue.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/shutdownhook_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/shutdownhook_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sigaction1.0		comp-sys-catman		.cat
@@ -11420,7 +11421,7 @@
 ./usr/share/man/man9/namecache_print.9		comp-sys-man		.man
 ./usr/share/man/man9/namei.9			comp-sys-man		.man
 ./usr/share/man/man9/need_resched.9		comp-obsolete		obsolete
-./usr/share/man/man9/nextrunqueue.9		comp-sys-man		.man
+./usr/share/man/man9/nextrunqueue.9		comp-obsolete		obsolete
 ./usr/share/man/man9/old_sysctl.9		comp-sys-man		.man
 ./usr/share/man/man9/opencrypto.9		comp-sys-man		.man
 ./usr/share/man/man9/optstr.9			comp-sys-man		.man
@@ -11568,7 +11569,7 @@
 ./usr/share/man/man9/readdisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/realloc.9			comp-sys-man		.man
 ./usr/share/man/man9/relookup.9			comp-sys-man		.man
-./usr/share/man/man9/remrunqueue.9		comp-sys-man		.man
+./usr/share/man/man9/remrunqueue.9		comp-obsolete		obsolete
 ./usr/share/man/man9/resettodr.9		comp-sys-man		.man
 ./usr/share/man/man9/rnd.9			comp-sys-man		.man
 ./usr/share/man/man9/rnd_add_data.9		comp-sys-man		.man
@@ -11607,6 +11608,7 @@
 ./usr/share/man/man9/sendsig.9			comp-sys-man		.man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/setjmp.9			comp-sys-man		.man
+./usr/share/man/man9/setrunqueue.9		comp-obsolete		obsolete
 ./usr/share/man/man9/shutdownhook_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/shutdownhook_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/sigaction1.9		comp-sys-man		.man
