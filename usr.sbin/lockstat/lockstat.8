@@ -1,4 +1,4 @@
-.\"	$NetBSD: lockstat.8,v 1.6 2007/07/14 13:30:43 ad Exp $
+.\"	$NetBSD: lockstat.8,v 1.7 2007/07/15 21:24:22 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,12 +86,12 @@ option to list valid events.
 List valid event types for the
 .Fl E
 option and exit.
-.It Fl f
-Trace only by calling functions; do not report on individual locks.
 .It Fl F Ar func
 Limit tracing to locking operations performed within the specified function.
 .Ar func
 must be the name of a valid function in the kernel.
+.It Fl f
+Trace only by calling functions; do not report on individual locks.
 .It Fl L Ar lock
 Limit tracing to one lock.
 .Ar lock
@@ -99,10 +99,10 @@ may either be the name of a lock object in the kernel, or a kernel virtual
 address.
 .It Fl l
 Trace only by lock; do not report on calling functions.
-.It Fl m
-Merge call sites within unique functions.
 .It Fl M
 Merge lock addresses within unique objects.
+.It Fl m
+Merge call sites within unique functions.
 .It Fl N Ar nlist
 Extract symbol information from the
 .Ar nlist
@@ -150,7 +150,7 @@ Elapsed time: 10.01 seconds.
 
 Total%  Count   Time/ms          Lock                       Caller
 ------ ------- --------- ---------------------- ------------------------------
-100.00   74941   1545.54 kernel_lock            <all>
+100.00   74941   1545.54 kernel_lock            \*[Lt]all\*[Gt]
  43.54   28467    673.00 kernel_lock            trap+71e
  42.87   34466    662.51 kernel_lock            syscall_plain+111
   7.38    7565    114.14 kernel_lock            uiomove+17a
