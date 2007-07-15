@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.11.2.8 2007/06/08 14:17:20 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.11.2.9 2007/07/15 22:17:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.8 2007/06/08 14:17:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.9 2007/07/15 22:17:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.8 2007/06/08 14:17:20 ad Exp $
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
 #include <sys/kernel.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <dev/lockstat.h>
-
-#include <machine/intr.h>
 
 /*
  * When not running a debug kernel, spin mutexes are not much
@@ -482,6 +482,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	MUTEX_ASSERT(mtx, curthread != 0);
+	MUTEX_ASSERT(mtx, !cpu_intr_p());
 	MUTEX_WANTLOCK(mtx);
 
 #ifdef LOCKDEBUG
