@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.55.2.4 2007/06/17 21:30:46 ad Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.55.2.5 2007/07/15 22:27:59 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.4 2007/06/17 21:30:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.55.2.5 2007/07/15 22:27:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,10 +362,14 @@ svr4_sys_open(l, v, retval)
 		fp = fd_getfile(fdp, *retval);
 
 		/* ignore any error, just give it a try */
-		if (fp != NULL && fp->f_type == DTYPE_VNODE) {
-			FILE_USE(fp);
-			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (void *) 0, l);
-			FILE_UNUSE(fp, l);
+		if (fp != NULL) {
+			if (fp->f_type == DTYPE_VNODE) {
+				FILE_USE(fp);
+				(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY,
+				    (void *) 0, l);
+				FILE_UNUSE(fp, l);
+			} else
+				mutex_exit(&fp->f_lock);
 		}
 	}
 	return 0;
