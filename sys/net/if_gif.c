@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.67.2.4 2007/07/15 13:27:53 ad Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.67.2.5 2007/07/15 15:52:59 ad Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.4 2007/07/15 13:27:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.67.2.5 2007/07/15 15:52:59 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -326,12 +326,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 	splx(s);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softint_schedule(sc->gif_si);
-#else
-	/* XXX bad spl level? */
-	gifnetisr();
-#endif
 	error = 0;
 
   end:
@@ -775,12 +770,10 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
-#endif
 
 	/* XXX we can detach from both, but be polite just in case */
 	if (sc->gif_psrc)
@@ -797,13 +790,11 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 #endif
 		}
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
 	if (sc->gif_si == NULL) {
 		error = ENOMEM;
 		goto bad;
 	}
-#endif
 
 	osrc = sc->gif_psrc;
 	sa = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
@@ -853,12 +844,10 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	return 0;
 
  bad:
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
-#endif
 	if (sc->gif_psrc && sc->gif_pdst)
 		ifp->if_flags |= IFF_RUNNING;
 	else
@@ -876,12 +865,10 @@ gif_delete_tunnel(struct ifnet *ifp)
 
 	s = splsoftnet();
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
-#endif
 	if (sc->gif_psrc) {
 		free((void *)sc->gif_psrc, M_IFADDR);
 		sc->gif_psrc = NULL;

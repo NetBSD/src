@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107.2.9 2007/06/18 13:46:15 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.107.2.10 2007/07/15 15:53:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.9 2007/06/18 13:46:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.10 2007/07/15 15:53:03 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -555,9 +555,12 @@ nfssvc_nfsd(nsd, argp, l)
 				} else
 					nfsd_head_flag &= ~NFSD_CHECKSLP;
 			}
+			KASSERT(nfsd->nfsd_slp == NULL ||
+			    nfsd->nfsd_slp->ns_sref > 0);
 			mutex_exit(&nfsd_lock);
 			if ((slp = nfsd->nfsd_slp) == NULL)
 				continue;
+			KASSERT(slp->ns_sref > 0);
 			if (slp->ns_flag & SLP_VALID) {
 				if (slp->ns_flag & SLP_DISCONN)
 					nfsrv_zapsock(slp);
@@ -585,6 +588,8 @@ nfssvc_nfsd(nsd, argp, l)
 			error = 0;
 			slp = nfsd->nfsd_slp;
 		}
+		KASSERT(slp != NULL);
+		KASSERT(nfsd->nfsd_slp == slp);
 		if (error || (slp->ns_flag & SLP_VALID) == 0) {
 			if (nd) {
 				nfsdreq_free(nd);
@@ -738,6 +743,7 @@ nfssvc_nfsd(nsd, argp, l)
 				if (error == EPIPE)
 					nfsrv_zapsock(slp);
 				if (error == EINTR || error == ERESTART) {
+					nfsd->nfsd_slp = NULL;
 					nfsrv_slpderef(slp);
 					goto done;
 				}
@@ -860,8 +866,13 @@ void
 nfsrv_slpderef(slp)
 	struct nfssvc_sock *slp;
 {
+	uint32_t ref;
 
-	if (--(slp->ns_sref) == 0 && (slp->ns_flag & SLP_VALID) == 0) {
+	mutex_enter(&nfsd_lock);
+	KASSERT(slp->ns_sref > 0);
+	ref = --slp->ns_sref;
+	mutex_exit(&nfsd_lock);
+	if (ref == 0 && (slp->ns_flag & SLP_VALID) == 0) {
 		struct file *fp;
 
 		mutex_enter(&nfsd_lock);
@@ -905,6 +916,8 @@ nfsrv_init(terminating)
 	nfssvc_sockhead_flag |= SLP_INIT;
 
 	if (terminating) {
+		KASSERT(SLIST_EMPTY(&nfsd_idle_head));
+		KASSERT(TAILQ_EMPTY(&nfsd_head));
 		while ((slp = TAILQ_FIRST(&nfssvc_sockhead)) != NULL) {
 			mutex_exit(&nfsd_lock);
 			KASSERT(slp->ns_sref == 0);
@@ -913,6 +926,7 @@ nfsrv_init(terminating)
 			nfsrv_slpderef(slp);
 			mutex_enter(&nfsd_lock);
 		}
+		KASSERT(TAILQ_EMPTY(&nfssvc_sockpending));
 		mutex_exit(&nfsd_lock);
 		nfsrv_cleancache();	/* And clear out server cache */
 	} else {
@@ -1063,11 +1077,17 @@ nfssvc_iod(l)
 	}
 quit:
 	uvm_lwp_rele(l);
-	if (nmp)
+	mutex_enter(&myiod->nid_lock);
+	nmp = myiod->nid_mount;
+	if (nmp) {
+		mutex_enter(&nmp->nm_lock);
 		nmp->nm_bufqiods--;
+		mutex_exit(&nmp->nm_lock);
+	}
 	myiod->nid_want = NULL;
 	myiod->nid_mount = NULL;
 	myiod->nid_proc = NULL;
+	mutex_exit(&myiod->nid_lock);
 	nfs_numasync--;
 
 	return error;

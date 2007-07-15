@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.2.6.2 2007/04/10 12:07:07 ad Exp $ */
+/* $NetBSD: ipmivar.h,v 1.2.6.3 2007/07/15 15:52:37 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -104,8 +104,6 @@ struct ipmi_softc {
 	volatile int		sc_thread_running;
 	struct sysmon_wdog	sc_wdog;
 	struct sysmon_envsys	sc_envsys;
-#define sc_ranges	sc_envsys.sme_ranges
-#define sc_sensor_info	sc_envsys.sme_sensor_info
 #define sc_sensor_data	sc_envsys.sme_sensor_data
 	int 		sc_nsensors; /* total number of sensors */
 	int		sc_nsensors_typ[ENVSYS_NSENSORS]; /* number per type */

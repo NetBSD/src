@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.73.2.6 2007/07/01 21:47:51 ad Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.73.2.7 2007/07/15 15:52:45 ad Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.6 2007/07/01 21:47:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.73.2.7 2007/07/15 15:52:45 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -83,6 +83,7 @@ int isp_change_is_bad = 0;	/* "changed" devices are bad */
 int isp_quickboot_time = 15;	/* don't wait more than N secs for loop up */
 static int isp_fabric_hysteresis = 5;
 #define	isp_change_is_bad	0
+
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -752,6 +753,136 @@ isp_dog(void *arg)
 	ISP_IUNLOCK(isp);
 }
 
+/*
+ * Gone Device Timer Function- when we have decided that a device has gone
+ * away, we wait a specific period of time prior to telling the OS it has
+ * gone away.
+ *
+ * This timer function fires once a second and then scans the port database
+ * for devices that are marked dead but still have a virtual target assigned.
+ * We decrement a counter for that port database entry, and when it hits zero,
+ * we tell the OS the device has gone away.
+ */
+static void
+isp_gdt(void *arg)
+{
+	ispsoftc_t *isp = arg;
+	fcportdb_t *lp;
+	int dbidx, tgt, more_to_do = 0;
+
+	isp_prt(isp, ISP_LOGDEBUG0, "GDT timer expired");
+	ISP_LOCK(isp);
+	for (dbidx = 0; dbidx < MAX_FC_TARG; dbidx++) {
+		lp = &FCPARAM(isp)->portdb[dbidx];
+
+		if (lp->state != FC_PORTDB_STATE_ZOMBIE) {
+			continue;
+		}
+		if (lp->ini_map_idx == 0) {
+			continue;
+		}
+		if (lp->new_reserved == 0) {
+			continue;
+		}
+		lp->new_reserved -= 1;
+		if (lp->new_reserved != 0) {
+			more_to_do++;
+			continue;
+		}
+		tgt = lp->ini_map_idx - 1;
+		FCPARAM(isp)->isp_ini_map[tgt] = 0;
+		lp->ini_map_idx = 0;
+		lp->state = FC_PORTDB_STATE_NIL;
+		isp_prt(isp, ISP_LOGCONFIG, prom3, lp->portid, tgt,
+		    "Gone Device Timeout");
+		isp_make_gone(isp, tgt);
+	}
+	if (more_to_do) {
+		callout_schedule(&isp->isp_osinfo.gdt, hz);
+	} else {
+		isp->isp_osinfo.gdt_running = 0;
+		isp_prt(isp, ISP_LOGSANCFG|ISP_LOGDEBUG0,
+		    "stopping Gone Device Timer");
+	}
+	ISP_UNLOCK(isp);
+}
+
+/*
+ * Loop Down Timer Function- when loop goes down, a timer is started and
+ * and after it expires we come here and take all probational devices that
+ * the OS knows about and the tell the OS that they've gone away.
+ * 
+ * We don't clear the devices out of our port database because, when loop
+ * come back up, we have to do some actual cleanup with the chip at that
+ * point (implicit PLOGO, e.g., to get the chip's port database state right).
+ */
+static void
+isp_ldt(void *arg)
+{
+	ispsoftc_t *isp = arg;
+	fcportdb_t *lp;
+	int dbidx, tgt;
+
+	isp_prt(isp, ISP_LOGSANCFG|ISP_LOGDEBUG0, "Loop Down Timer expired");
+	ISP_LOCK(isp);
+
+	/*
+	 * Notify to the OS all targets who we now consider have departed.
+	 */
+	for (dbidx = 0; dbidx < MAX_FC_TARG; dbidx++) {
+		lp = &FCPARAM(isp)->portdb[dbidx];
+
+		if (lp->state != FC_PORTDB_STATE_PROBATIONAL) {
+			continue;
+		}
+		if (lp->ini_map_idx == 0) {
+			continue;
+		}
+
+		/*
+		 * XXX: CLEAN UP AND COMPLETE ANY PENDING COMMANDS FIRST!
+		 */
+
+		/*
+		 * Mark that we've announced that this device is gone....
+		 */
+		lp->reserved = 1;
+
+		/*
+		 * but *don't* change the state of the entry. Just clear
+		 * any target id stuff and announce to CAM that the
+		 * device is gone. This way any necessary PLOGO stuff
+		 * will happen when loop comes back up.
+		 */
+
+		tgt = lp->ini_map_idx - 1;
+		FCPARAM(isp)->isp_ini_map[tgt] = 0;
+		lp->ini_map_idx = 0;
+		isp_prt(isp, ISP_LOGCONFIG, prom3, lp->portid, tgt,
+		    "Loop Down Timeout");
+		isp_make_gone(isp, tgt);
+	}
+
+	/*
+	 * The loop down timer has expired. Wake up the kthread
+	 * to notice that fact (or make it false).
+	 */
+	isp->isp_osinfo.loop_down_time = isp->isp_osinfo.loop_down_limit+1;
+	wakeup(&isp->isp_osinfo.thread);
+	ISP_UNLOCK(isp);
+}
+
+static void
+isp_make_here(ispsoftc_t *isp, int tgt)
+{
+	isp_prt(isp, ISP_LOGINFO, "target %d has arrived", tgt);
+}
+
+static void
+isp_make_gone(ispsoftc_t *isp, int tgt)
+{
+	isp_prt(isp, ISP_LOGINFO, "target %d has departed", tgt);
+}
 
 static void
 isp_fc_worker(void *arg)
@@ -884,137 +1015,6 @@ isp_uninit(struct ispsoftc *isp)
 	 */
 	ISP_DISABLE_INTS(isp);
 	isp_unlock(isp);
-}
-
-/*
- * Gone Device Timer Function- when we have decided that a device has gone
- * away, we wait a specific period of time prior to telling the OS it has
- * gone away.
- *
- * This timer function fires once a second and then scans the port database
- * for devices that are marked dead but still have a virtual target assigned.
- * We decrement a counter for that port database entry, and when it hits zero,
- * we tell the OS the device has gone away.
- */
-static void
-isp_gdt(void *arg)
-{
-	ispsoftc_t *isp = arg;
-	fcportdb_t *lp;
-	int dbidx, tgt, more_to_do = 0;
-
-	isp_prt(isp, ISP_LOGDEBUG0, "GDT timer expired");
-	ISP_LOCK(isp);
-	for (dbidx = 0; dbidx < MAX_FC_TARG; dbidx++) {
-		lp = &FCPARAM(isp)->portdb[dbidx];
-
-		if (lp->state != FC_PORTDB_STATE_ZOMBIE) {
-			continue;
-		}
-		if (lp->ini_map_idx == 0) {
-			continue;
-		}
-		if (lp->new_reserved == 0) {
-			continue;
-		}
-		lp->new_reserved -= 1;
-		if (lp->new_reserved != 0) {
-			more_to_do++;
-			continue;
-		}
-		tgt = lp->ini_map_idx - 1;
-		FCPARAM(isp)->isp_ini_map[tgt] = 0;
-		lp->ini_map_idx = 0;
-		lp->state = FC_PORTDB_STATE_NIL;
-		isp_prt(isp, ISP_LOGCONFIG, prom3, lp->portid, tgt,
-		    "Gone Device Timeout");
-		isp_make_gone(isp, tgt);
-	}
-	if (more_to_do) {
-		callout_schedule(&isp->isp_osinfo.gdt, hz);
-	} else {
-		isp->isp_osinfo.gdt_running = 0;
-		isp_prt(isp, ISP_LOGSANCFG|ISP_LOGDEBUG0,
-		    "stopping Gone Device Timer");
-	}
-	ISP_UNLOCK(isp);
-}
-
-/*
- * Loop Down Timer Function- when loop goes down, a timer is started and
- * and after it expires we come here and take all probational devices that
- * the OS knows about and the tell the OS that they've gone away.
- * 
- * We don't clear the devices out of our port database because, when loop
- * come back up, we have to do some actual cleanup with the chip at that
- * point (implicit PLOGO, e.g., to get the chip's port database state right).
- */
-static void
-isp_ldt(void *arg)
-{
-	ispsoftc_t *isp = arg;
-	fcportdb_t *lp;
-	int dbidx, tgt;
-
-	isp_prt(isp, ISP_LOGSANCFG|ISP_LOGDEBUG0, "Loop Down Timer expired");
-	ISP_LOCK(isp);
-
-	/*
-	 * Notify to the OS all targets who we now consider have departed.
-	 */
-	for (dbidx = 0; dbidx < MAX_FC_TARG; dbidx++) {
-		lp = &FCPARAM(isp)->portdb[dbidx];
-
-		if (lp->state != FC_PORTDB_STATE_PROBATIONAL) {
-			continue;
-		}
-		if (lp->ini_map_idx == 0) {
-			continue;
-		}
-
-		/*
-		 * XXX: CLEAN UP AND COMPLETE ANY PENDING COMMANDS FIRST!
-		 */
-
-		/*
-		 * Mark that we've announced that this device is gone....
-		 */
-		lp->reserved = 1;
-
-		/*
-		 * but *don't* change the state of the entry. Just clear
-		 * any target id stuff and announce to CAM that the
-		 * device is gone. This way any necessary PLOGO stuff
-		 * will happen when loop comes back up.
-		 */
-
-		tgt = lp->ini_map_idx - 1;
-		FCPARAM(isp)->isp_ini_map[tgt] = 0;
-		lp->ini_map_idx = 0;
-		isp_prt(isp, ISP_LOGCONFIG, prom3, lp->portid, tgt,
-		    "Loop Down Timeout");
-		isp_make_gone(isp, tgt);
-	}
-
-	/*
-	 * The loop down timer has expired. Wake up the kthread
-	 * to notice that fact (or make it false).
-	 */
-	isp->isp_osinfo.loop_down_time = isp->isp_osinfo.loop_down_limit+1;
-	wakeup(&isp->isp_osinfo.thread);
-	ISP_UNLOCK(isp);
-}
-
-static void
-isp_make_here(ispsoftc_t *isp, int tgt)
-{
-	isp_prt(isp, ISP_LOGINFO, "target %d has arrived", tgt);
-}
-
-static void
-isp_make_gone(ispsoftc_t *isp, int tgt)
-{
-	isp_prt(isp, ISP_LOGINFO, "target %d has departed", tgt);
 }
 
 int

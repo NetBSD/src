@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.16.16.1 2007/04/29 00:47:48 ad Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.16.16.2 2007/07/15 15:52:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.16.16.1 2007/04/29 00:47:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.16.16.2 2007/07/15 15:52:55 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -86,7 +86,7 @@ void
 cc_microtime(struct timeval *tvp)
 {
 	static struct timeval lasttime;
-	static __cpu_simple_lock_t microtime_slock = __SIMPLE_UNLOCKED;
+	static __cpu_simple_lock_t microtime_slock = __SIMPLELOCK_UNLOCKED;
 	struct timeval t;
 	struct cpu_info *ci = curcpu();
 	int64_t cc, sec, usec;

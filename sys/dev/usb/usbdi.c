@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119.4.1 2007/07/01 21:49:03 ad Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.4.2 2007/07/15 15:52:51 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.4.1 2007/07/01 21:49:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.4.2 2007/07/15 15:52:51 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -399,9 +399,11 @@ usbd_free_xfer(usbd_xfer_handle xfer)
 	DPRINTFN(5,("usbd_free_xfer: %p\n", xfer));
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		usbd_free_buffer(xfer);
-#if defined(__NetBSD__)
-	callout_stop(&xfer->timeout_handle);
-	callout_destroy(&xfer->timeout_handle);
+#if defined(__NetBSD__) && defined(DIAGNOSTIC)
+	if (callout_pending(&xfer->timeout_handle)) {
+		callout_stop(&xfer->timeout_handle);
+		printf("usbd_free_xfer: timout_handle pending");
+	}
 #endif
 	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
 	return (USBD_NORMAL_COMPLETION);

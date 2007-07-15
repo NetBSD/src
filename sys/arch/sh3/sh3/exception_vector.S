@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.20.8.2 2007/05/27 12:28:08 ad Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.20.8.3 2007/07/15 15:52:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #include "assym.h"
 
 #include <sh3/param.h>
-#include <sh3/asm.h>
 #include <sh3/locore.h>
 #include <sh3/exception.h>
 #include <sh3/ubcreg.h>
@@ -46,11 +45,20 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.20.8.2 2007/05/27 12:28:08 ad Exp $")
+/* 
+ * Align vectors more strictly here (where we don't really care) so
+ * that .align 5 (i.e. 32B cache line) before data block does the
+ * right thing w.r.t. final destinations after vectors are copied.
+ */
+#define _ALIGN_TEXT	.align 5
+#include <sh3/asm.h>
+
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.20.8.3 2007/07/15 15:52:37 ad Exp $")
 
 
 /*
- * Exception vectors. The following routines are copied to vector addreses.
+ * Exception vectors.
+ * The following routines are copied to vector addresses.
  *	sh_vector_generic:	VBR + 0x100
  *	sh_vector_tlbmiss:	VBR + 0x400
  *	sh_vector_interrupt:	VBR + 0x600

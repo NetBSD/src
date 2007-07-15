@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1.6.4 2007/07/15 13:17:17 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.6.5 2007/07/15 15:52:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.6.4 2007/07/15 13:17:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.1.6.5 2007/07/15 15:52:37 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -112,36 +112,82 @@ x86_print_ldt(int i, const struct segment_descriptor *d)
 #endif
 
 int
+x86_get_ldt_len(struct lwp *l)
+{
+#ifndef USER_LDT
+	return -1;
+#else
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	int nldt;
+
+	mutex_enter(&pmap->pm_lock);
+
+	if (pmap->pm_flags & PMF_USER_LDT) {
+		nldt = pmap->pm_ldt_len;
+	} else {
+		nldt = NLDT;
+	}
+	mutex_exit(&pmap->pm_lock);
+	return nldt;
+#endif
+}
+
+
+int
 x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 {
-#ifdef USER_LDT
+#ifndef USER_LDT
+	return EINVAL;
+#else
+	struct x86_get_ldt_args ua;
+	union descriptor *cp;
+	int error;
+
+	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
+		return error;
+
+	if (ua.num < 0 || ua.num > 8192)
+		return EINVAL;
+
+	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
+	if (cp == NULL)
+		return ENOMEM;
+
+	error = x86_get_ldt1(l, &ua, cp);
+	*retval = ua.num;
+	if (error == 0)
+		error = copyout(cp, ua.desc, ua.num * sizeof(*cp));
+
+	free(cp, M_TEMP);
+	return error;
+#endif
+}
+
+int
+x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
+{
+#ifndef USER_LDT
+	return EINVAL;
+#else
 	int error;
 	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int nldt, num;
-	union descriptor *lp, *cp;
-	struct x86_get_ldt_args ua;
+	union descriptor *lp;
 
 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_LDT_GET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
 		return (error);
 
-	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
-		return (error);
-
 #ifdef	LDT_DEBUG
-	printf("x86_get_ldt: start=%d num=%d descs=%p\n", ua.start,
-	    ua.num, ua.desc);
+	printf("x86_get_ldt: start=%d num=%d descs=%p\n", ua->start,
+	    ua->num, ua->desc);
 #endif
 
-	if (ua.start < 0 || ua.num < 0 || ua.start > 8192 || ua.num > 8192 ||
-	    ua.start + ua.num > 8192)
+	if (ua->start < 0 || ua->num < 0 || ua->start > 8192 || ua->num > 8192 ||
+	    ua->start + ua->num > 8192)
 		return (EINVAL);
-
-	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
-	if (cp == NULL)
-		return ENOMEM;
 
 	mutex_enter(&pmap->pm_lock);
 
@@ -153,14 +199,14 @@ x86_get_ldt(struct lwp *l, void *args, register_t *retval)
 		lp = ldt;
 	}
 
-	if (ua.start > nldt) {
+	if (ua->start > nldt) {
 		mutex_exit(&pmap->pm_lock);
-		free(cp, M_TEMP);
 		return (EINVAL);
 	}
 
-	lp += ua.start;
-	num = min(ua.num, nldt - ua.start);
+	lp += ua->start;
+	num = min(ua->num, nldt - ua->start);
+	ua->num = num;
 #ifdef LDT_DEBUG
 	{
 		int i;
@@ -298,12 +344,12 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	free_ldt = NULL;
 	free_len = 0;
 	mutex_enter(&pmap->pm_lock);
-	if (pmap->pm_ldt == 0 || (ua.start + ua.num) > pmap->pm_ldt_len) {
+	if (pmap->pm_ldt == 0 || (ua->start + ua->num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
 		else
 			ldt_len = 512;
-		while ((ua.start + ua.num) > ldt_len)
+		while ((ua->start + ua->num) > ldt_len)
 			ldt_len *= 2;
 		new_len = ldt_len * sizeof(union descriptor);
 
@@ -357,11 +403,10 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	}
 copy:
 	/* Now actually replace the descriptors. */
-	for (i = 0, n = ua.start; i < ua.num; i++, n++)
+	for (i = 0, n = ua->start; i < ua->num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
 
 	mutex_exit(&pmap->pm_lock);
-	*retval = ua.start;
 
 	if (new_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,

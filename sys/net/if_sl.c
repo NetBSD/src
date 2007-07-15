@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.105.2.2 2007/07/15 13:27:54 ad Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.105.2.3 2007/07/15 15:53:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.105.2.2 2007/07/15 13:27:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.105.2.3 2007/07/15 15:53:00 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -313,16 +313,12 @@ slopen(dev_t dev, struct tty *tp)
 
 	LIST_FOREACH(sc, &sl_softc_list, sc_iflist)
 		if (sc->sc_ttyp == NULL) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			sc->sc_si = softint_establish(SOFTINT_NET,
 			    slintr, sc);
 			if (sc->sc_si == NULL)
 				return ENOMEM;
-#endif
 			if (slinit(sc) == 0) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 				softint_disestablish(sc->sc_si);
-#endif
 				return ENOBUFS;
 			}
 			tp->t_sc = (void *)sc;
@@ -350,9 +346,7 @@ slopen(dev_t dev, struct tty *tp)
 				error = clalloc(&tp->t_outq, 2 * SLMAX + 2, 0);
 				if (error) {
 					splx(s);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 					softint_disestablish(sc->sc_si);
-#endif
 					/*
 					 * clalloc() might return -1 which
 					 * is no good, so we need to return
@@ -383,9 +377,7 @@ slclose(struct tty *tp, int flag)
 	sc = tp->t_sc;
 
 	if (sc != NULL) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softint_disestablish(sc->sc_si);
-#endif
 		s = splnet();
 		if_down(&sc->sc_if);
 		IF_PURGE(&sc->sc_fastq);
@@ -550,15 +542,7 @@ slstart(struct tty *tp)
 	 */
 	if (sc == NULL)
 		return 0;
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softint_schedule(sc->sc_si);
-#else
-    {
-	int s = splhigh();
-	schednetisr(NETISR_SLIP);
-	splx(s);
-    }
-#endif
 	return 0;
 }
 
@@ -675,15 +659,7 @@ slinput(int c, struct tty *tp)
 			goto error;
 
 		IF_ENQUEUE(&sc->sc_inq, m);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		softint_schedule(sc->sc_si);
-#else
-	    {
-		int s = splhigh();
-		schednetisr(NETISR_SLIP);
-		splx(s);
-	    }
-#endif
 		goto newpack;
 	}
 	if (sc->sc_mp < sc->sc_ep) {

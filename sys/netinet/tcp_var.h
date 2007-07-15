@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.145.2.2 2007/07/01 21:50:51 ad Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.145.2.3 2007/07/15 15:53:02 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -331,6 +331,14 @@ struct tcpcb {
 	uint8_t t_ecn_retries;		/* # of ECN setup retries */
 	
 	struct tcp_congctl *t_congctl;	/* per TCB congctl algorithm */
+
+	/* Keepalive per socket */
+	u_int	t_keepinit;
+	u_int	t_keepidle;
+	u_int	t_keepintvl;
+	u_int	t_keepcnt;
+	u_int	t_maxidle;		/* t_keepcnt * t_keepintvl */
+
 };
 
 /*
@@ -687,7 +695,8 @@ struct	tcpstat {
 #define	TCPCTL_STATS		30	/* TCP statistics */
 #define	TCPCTL_DEBUG		31	/* TCP debug sockets */
 #define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
-#define	TCPCTL_MAXID		33
+#define	TCPCTL_DROP		33	/* drop tcp connection */
+#define	TCPCTL_MAXID		34
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -723,6 +732,7 @@ struct	tcpstat {
 	{ "stats", CTLTYPE_STRUCT }, \
 	{ "debug", CTLTYPE_STRUCT }, \
 	{ "debx", CTLTYPE_INT }, \
+	{ "drop", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL

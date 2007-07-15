@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.114.2.3 2007/07/15 13:27:53 ad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.114.2.4 2007/07/15 15:52:59 ad Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114.2.3 2007/07/15 13:27:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.114.2.4 2007/07/15 15:52:59 ad Exp $");
 
 #include "ppp.h"
 
@@ -373,13 +373,11 @@ pppalloc(pid_t pid)
     if (sc == NULL)
 	sc = ppp_create(ppp_cloner.ifc_name, -1);
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
     sc->sc_si = softint_establish(SOFTINT_NET, pppintr, sc);
     if (sc->sc_si == NULL) {
 	printf("%s: unable to establish softintr\n", sc->sc_if.if_xname);
 	return (NULL);
     }
-#endif
     sc->sc_flags = 0;
     sc->sc_mru = PPP_MRU;
     sc->sc_relinq = NULL;
@@ -411,9 +409,7 @@ pppdealloc(struct ppp_softc *sc)
 {
     struct mbuf *m;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
     softint_disestablish(sc->sc_si);
-#endif
     if_down(&sc->sc_if);
     sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
     sc->sc_devp = NULL;
@@ -1112,11 +1108,7 @@ ppp_restart(struct ppp_softc *sc)
     int s = splhigh();	/* XXX IMP ME HARDER */
 
     sc->sc_flags &= ~SC_TBUSY;
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
     softint_schedule(sc->sc_si);
-#else
-    schednetisr(NETISR_PPP);
-#endif
     splx(s);
 }
 
@@ -1421,11 +1413,7 @@ ppppktin(struct ppp_softc *sc, struct mbuf *m, int lost)
     if (lost)
 	m->m_flags |= M_ERRMARK;
     IF_ENQUEUE(&sc->sc_rawq, m);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
     softint_schedule(sc->sc_si);
-#else
-    schednetisr(NETISR_PPP);
-#endif
     splx(s);
 }
 

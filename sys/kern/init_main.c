@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.15 2007/07/15 13:27:35 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.16 2007/07/15 15:52:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.15 2007/07/15 13:27:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.16 2007/07/15 15:52:53 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -123,8 +123,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.15 2007/07/15 13:27:35 ad Exp 
 #include <sys/sched.h>
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
+#include <sys/vmem.h>
 #include <sys/uuid.h>
 #include <sys/extent.h>
+#include <sys/disk.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -377,6 +379,13 @@ main(void)
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
 
+#if NSYSMON_ENVSYS > 0
+	sysmon_envsys_init();
+#endif
+#if NSYSMON_POWER > 0
+	sysmon_power_init();
+#endif
+
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
@@ -384,6 +393,9 @@ main(void)
 
 	/* Initialize the device switch tables. */
 	devsw_init();
+
+	/* Iniitalize the disk wedge subsystem. */
+	dkwedge_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.62.2.4 2007/07/15 13:27:19 ad Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.62.2.5 2007/07/15 15:52:39 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.62.2.4 2007/07/15 13:27:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.62.2.5 2007/07/15 15:52:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1619,7 +1619,7 @@ svr4_sys_getmsg(l, v, retval)
 	if (SCARG_PTR(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG_PTR(uap, ctl), &ctl,
 				    sizeof(ctl))) != 0)
-			return error;
+			goto out;
 	} else {
 		ctl.len = -1;
 		ctl.maxlen = 0;
@@ -1628,7 +1628,7 @@ svr4_sys_getmsg(l, v, retval)
 	if (SCARG_PTR(uap, dat) != NULL) {
 	    	if ((error = copyin(SCARG_PTR(uap, dat), &dat,
 				    sizeof(dat))) != 0)
-			return error;
+			goto out;
 	} else {
 		dat.len = -1;
 		dat.maxlen = 0;
@@ -1657,17 +1657,8 @@ svr4_sys_getmsg(l, v, retval)
 	default:
 		DPRINTF(("getmsg: Unsupported address family %d\n",
 			 st->s_family));
-		error = ENOSYS;
 		goto out;
 	}
-
-	sg = stackgap_init(p, 0);
-	sup = stackgap_alloc(p, &sg, sasize);
-	flen = (int *) stackgap_alloc(p, &sg, sizeof(*flen));
-
-	fl = sasize;
-	if ((error = copyout(&fl, flen, sizeof(fl))) != 0)
-		goto out;
 
 	switch (st->s_cmd) {
 	case SVR4_TI_CONNECT_REQUEST:
@@ -1692,17 +1683,12 @@ svr4_sys_getmsg(l, v, retval)
 		 * a connect verification.
 		 */
 
-		SCARG(&ga, fdes) = SCARG(uap, fd);
-		SCARG(&ga, asa) = (void *) sup;
-		SCARG(&ga, alen) = (socklen_t *)flen;
-
-		if ((error = sys_getpeername(l, &ga, retval)) != 0) {
+		error = do_sys_getsockname(l, SCARG(uap, fd), PRU_SOCKADDR,
+		    &name);
+		if (error != 0) {
 			DPRINTF(("getmsg: getpeername failed %d\n", error));
 			goto out;
 		}
-
-		if ((error = copyin(sup, skp, sasize)) != 0)
-			goto out;
 
 		sc.cmd = SVR4_TI_CONNECT_REPLY;
 		sc.pad[0] = 0x4;
@@ -1712,19 +1698,21 @@ svr4_sys_getmsg(l, v, retval)
 
 		switch (st->s_family) {
 		case AF_INET:
-			sc.len = sasize;
-			sockaddr_to_netaddr_in(&sc, &sain);
+			sc.len = sizeof (struct sockaddr_in) + 4;
+			sockaddr_to_netaddr_in(&sc, mtod(name, void *));
 			break;
 
 		case AF_LOCAL:
-			sc.len = sasize + 4;
-			sockaddr_to_netaddr_un(&sc, &saun);
+			sc.len = sizeof (struct sockaddr_un) + 4;
+			sockaddr_to_netaddr_un(&sc, mtod(name, void *));
 			break;
 
 		default:
+			m_free(name);
 			error = ENOSYS;
 			goto out;
 		}
+		m_free(name);
 
 		ctl.len = 40;
 		dat.len = -1;
@@ -1763,9 +1751,6 @@ svr4_sys_getmsg(l, v, retval)
 
 		DPRINTF(("getmsg: Accept fd = %d\n", st->s_afd));
 
-		if ((error = copyin(sup, skp, sasize)) != 0)
-			goto out;
-
 		sc.cmd = SVR4_TI_ACCEPT_REPLY;
 		sc.offs = 0x18;
 		sc.pad[0] = 0x0;
@@ -1783,13 +1768,15 @@ svr4_sys_getmsg(l, v, retval)
 			sc.pad[2] = 0xf6bcdaa0;	/* I don't know what that is */
 			sc.pad[3] = 0x00010000;
 			ctl.len = 134;
-			sc.len = sasize + 4;
+			sc.len = sizeof (struct sockaddr_un) + 4;
 			break;
 
 		default:
+			m_free(name);
 			error = ENOSYS;
 			goto out;
 		}
+		m_free(name);
 
 		dat.len = -1;
 		fl = 0;
@@ -1810,21 +1797,8 @@ svr4_sys_getmsg(l, v, retval)
 		if ((error = copyin(NETBSD32PTR(ctl.buf), &sc, ctl.len)) != 0)
 			goto out;
 
-		switch (st->s_family) {
-		case AF_INET:
-			sockaddr_to_netaddr_in(&sc, &sain);
-			break;
-
-		case AF_LOCAL:
-			sockaddr_to_netaddr_un(&sc, &saun);
-			break;
-
-		default:
-			goto out;
-		}
-
-		msg.msg_name = (void *) sup;
-		msg.msg_namelen = sasize;
+		msg.msg_name = NULL;
+		msg.msg_namelen = 0;
 		msg.msg_iov = &aiov;
 		msg.msg_iovlen = 1;
 		msg.msg_control = 0;
@@ -1832,34 +1806,33 @@ svr4_sys_getmsg(l, v, retval)
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = recvit(l, SCARG(uap, fd), &msg, (void *) flen,
+		error = do_sys_recvmsg(l,  SCARG(uap, fd), &msg, &name, NULL,
 		    retval);
 
 		if (error) {
-			DPRINTF(("getmsg: recvit failed %d\n", error));
+			DPRINTF(("getmsg: do_sys_recvmsg failed %d\n", error));
 			goto out;
 		}
-
-		if ((error = copyin(msg.msg_name, skp, sasize)) != 0)
-			goto out;
 
 		sc.cmd = SVR4_TI_RECVFROM_IND;
 
 		switch (st->s_family) {
 		case AF_INET:
-			sc.len = sasize;
-			sockaddr_to_netaddr_in(&sc, &sain);
+			sc.len = sizeof (struct sockaddr_in);
+			sockaddr_to_netaddr_in(&sc, mtod(name, void *));
 			break;
 
 		case AF_LOCAL:
-			sc.len = sasize + 4;
-			sockaddr_to_netaddr_un(&sc, &saun);
+			sc.len = sizeof (struct sockaddr_un) + 4;
+			sockaddr_to_netaddr_un(&sc, mtod(name, void *));
 			break;
 
 		default:
+			m_free(name);
 			error = ENOSYS;
 			goto out;
 		}
+		m_free(name);
 
 		dat.len = *retval;
 		fl = 0;
@@ -1904,23 +1877,23 @@ svr4_sys_getmsg(l, v, retval)
 		if (ctl.len != -1)
 			if ((error = copyout(&sc, NETBSD32PTR(ctl.buf),
 					     ctl.len)) != 0)
-				return error;
+				goto out;
 
 		if ((error = copyout(&ctl, SCARG_PTR(uap, ctl),
 				     sizeof(ctl))) != 0)
-			return error;
+			goto out;
 	}
 
 	if (SCARG_PTR(uap, dat)) {
 		if ((error = copyout(&dat, SCARG_PTR(uap, dat),
 				     sizeof(dat))) != 0)
-			return error;
+			goto out;
 	}
 
 	if (SCARG_PTR(uap, flags)) { /* XXX: Need translation */
 		if ((error = copyout(&fl, SCARG_PTR(uap, flags),
 				     sizeof(fl))) != 0)
-			return error;
+			goto out;
 	}
 
 	*retval = 0;

@@ -1,11 +1,11 @@
-/*	$NetBSD: uipc_sem.c,v 1.20.6.2 2007/07/15 13:27:46 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.20.6.3 2007/07/15 15:52:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of Wasabi Systems, Inc.
+ * by Jason R. Thorpe of Wasabi Systems, Inc, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.20.6.2 2007/07/15 13:27:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.20.6.3 2007/07/15 15:52:57 ad Exp $");
 
 #include "opt_posix.h"
 
@@ -178,7 +178,7 @@ ksem_addref(struct ksem *ks)
 
 	KASSERT(mutex_owned(&ks->ks_interlock));
 	ks->ks_ref++;
-	KASSERT(ks->ks_ref != 0);	/* XXX KDASSERT */
+	KASSERT(ks->ks_ref != 0);
 }
 
 static inline void
@@ -186,7 +186,7 @@ ksem_delref(struct ksem *ks)
 {
 
 	KASSERT(mutex_owned(&ks->ks_interlock));
-	KASSERT(ks->ks_ref != 0);	/* XXX KDASSERT */
+	KASSERT(ks->ks_ref != 0);
 	if (--ks->ks_ref == 0) {
 		ksem_free(ks);
 		return;
@@ -570,6 +570,7 @@ sys__ksem_unlink(struct lwp *l, void *v, register_t *retval)
 
 	LIST_REMOVE(ks, ks_entry);
 	cp = ks->ks_name;
+	len = ks->ks_namelen;
 	ks->ks_name = NULL;
 
 	mutex_exit(&ksem_mutex);

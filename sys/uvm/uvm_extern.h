@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.128.2.3 2007/06/09 23:58:21 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.128.2.4 2007/07/15 15:53:07 ad Exp $	*/
 
 /*
  *
@@ -594,6 +594,7 @@ int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
 void			uvm_lwp_hold(struct lwp *);
 void			uvm_lwp_rele(struct lwp *);
+
 
 /* uvm_init.c */
 void			uvm_init(void);

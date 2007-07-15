@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.14 2007/07/15 13:28:16 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.15 2007/07/15 15:53:06 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.14 2007/07/15 13:28:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.15 2007/07/15 15:53:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -62,16 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.14 2007/07/15 13:28:16 ad Exp
 
 #include <uvm/uvm.h>
 
-static POOL_INIT(sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
-    &pool_allocator_nointr, IPL_NONE);
-
+static struct pool sdpcpool;
 u_int softdep_lockedbufs;
 
 extern kmutex_t bqueue_lock; /* XXX */
 
-MALLOC_DEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
-MALLOC_DEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
-MALLOC_DEFINE(M_NEWBLK, "newblk", "New block allocation");
+MALLOC_JUSTDEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
+MALLOC_JUSTDEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
+MALLOC_JUSTDEFINE(M_NEWBLK, "newblk", "New block allocation");
 
 /*
  * These definitions need to be adapted to the system to which
@@ -289,34 +287,20 @@ sema_release(semap)
  * Memory management.
  */
 
-static POOL_INIT(pagedep_pool, sizeof(struct pagedep), 0, 0, 0, "pagedeppl",
-    &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(inodedep_pool, sizeof(struct inodedep), 0, 0, 0, "inodedeppl",
-    &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(newblk_pool, sizeof(struct newblk), 0, 0, 0, "newblkpl",
-    &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(bmsafemap_pool, sizeof(struct bmsafemap), 0, 0, 0,
-    "bmsafemappl", &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(allocdirect_pool, sizeof(struct allocdirect), 0, 0, 0,
-    "allocdirectpl", &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(indirdep_pool, sizeof(struct indirdep), 0, 0, 0, "indirdeppl",
-    &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(allocindir_pool, sizeof(struct allocindir), 0, 0, 0,
-    "allocindirpl", &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(freefrag_pool, sizeof(struct freefrag), 0, 0, 0,
-    "freefragpl", &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(freeblks_pool, sizeof(struct freeblks), 0, 0, 0,
-    "freeblkspl", &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(freefile_pool, sizeof(struct freefile), 0, 0, 0,
-    "freefilepl", &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(diradd_pool, sizeof(struct diradd), 0, 0, 0, "diraddpl",
-    &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(mkdir_pool, sizeof(struct mkdir), 0, 0, 0, "mkdirpl",
-    &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(dirrem_pool, sizeof(struct dirrem), 0, 0, 0, "dirrempl",
-    &pool_allocator_nointr, IPL_NONE);
-static POOL_INIT(newdirblk_pool, sizeof (struct newdirblk), 0, 0, 0,
-    "newdirblkpl", &pool_allocator_nointr, IPL_NONE);
+static struct pool pagedep_pool;
+static struct pool inodedep_pool;
+static struct pool newblk_pool;
+static struct pool bmsafemap_pool;
+static struct pool allocdirect_pool;
+static struct pool indirdep_pool;
+static struct pool allocindir_pool;
+static struct pool freefrag_pool;
+static struct pool freeblks_pool;
+static struct pool freefile_pool;
+static struct pool diradd_pool;
+static struct pool mkdir_pool;
+static struct pool dirrem_pool;
+static struct pool newdirblk_pool;
 
 static inline void
 softdep_free(struct worklist *item, int type)
@@ -543,7 +527,7 @@ static int max_softdeps;	/* maximum number of structs before slowdown */
 static int tickdelay = 2;	/* number of ticks to pause during slowdown */
 static int proc_waiting;	/* tracks whether we have a timeout posted */
 static callout_t pause_timer_ch;
-static lwp_t *filesys_syncer;	/* proc of filesystem syncer process */
+static lwp_t *filesys_syncer;	/* filesystem syncer thread */
 static int req_clear_inodedeps;	/* syncer process flush some inodedeps */
 #define FLUSH_INODES	1
 static int req_clear_remove;	/* syncer process flush some freeblks */

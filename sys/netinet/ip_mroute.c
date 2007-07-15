@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.101.2.2 2007/07/01 21:50:49 ad Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.101.2.3 2007/07/15 15:53:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.101.2.2 2007/07/01 21:50:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.101.2.3 2007/07/15 15:53:01 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3304,7 +3304,7 @@ pim_register_send_rp(struct ip *ip, struct vif *vifp,
      */
     ip_outer->ip_tos = ip->ip_tos;
     if (ntohs(ip->ip_off) & IP_DF)
-	ip_outer->ip_off |= IP_DF;
+	ip_outer->ip_off |= htons(IP_DF);
     pimhdr = (struct pim_encap_pimhdr *)((char *)ip_outer
 					 + sizeof(pim_encap_iphdr));
     *pimhdr = pim_encap_pimhdr;

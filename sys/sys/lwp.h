@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.12 2007/07/14 22:09:49 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.13 2007/07/15 15:53:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ struct lwp {
 		struct timespec ts;
 	} l_ktrcsw;			/* !: for ktrace CSW trace XXX */
 	void		*l_private;	/* !: svr4-style lwp-private data */
-	lwp_t		*l_switchto;	/* !: mi_switch: switch to this LWP */
+	struct lwp	*l_switchto;	/* !: mi_switch: switch to this LWP */
 	struct kauth_cred *l_cred;	/* !: cached credentials */
 	void		*l_emuldata;	/* !: kernel lwp-private data */
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
@@ -307,8 +307,6 @@ lwp_lock(lwp_t *l)
 static inline void
 lwp_unlock(lwp_t *l)
 {
-	KASSERT(mutex_owned(l->l_mutex));
-
 	mutex_spin_exit(l->l_mutex);
 }
 

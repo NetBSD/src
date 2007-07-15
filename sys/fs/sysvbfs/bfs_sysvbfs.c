@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.6 2007/02/22 06:37:00 thorpej Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.6.4.1 2007/07/15 15:52:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.6 2007/02/22 06:37:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.6.4.1 2007/07/15 15:52:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,7 +113,7 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 	if (bread(bio->vp, block, DEV_BSIZE, bio->cred, &bp) != 0)
 		goto error_exit;
 	memcpy(buf, bp->b_data, DEV_BSIZE);
-	brelse(bp);
+	brelse(bp, 0);
 
 	return true;
  error_exit:
@@ -121,7 +121,7 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 	    (long long int)block);
 
 	if (bp != NULL)
-		brelse(bp);
+		brelse(bp, 0);
 	return false;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.29.2.1 2007/07/01 19:23:32 ad Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.29.2.2 2007/07/15 15:53:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.29.2.1 2007/07/01 19:23:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.29.2.2 2007/07/15 15:53:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 	l->l_selflag = 1;
  	mutex_exit(&select_lock);
 	error = nb_poll(nbp, events, l);
+ 	mutex_enter(&select_lock);
 	if (error) {
 		error = 0;
 		goto done;
@@ -191,7 +192,6 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		}
 	}
 
-	mutex_enter(&select_lock);
 	if (l->l_selflag != 1 || nselcoll != ncoll)
 		goto retry;
 	l->l_selflag = 2;

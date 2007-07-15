@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.110.8.2 2007/07/15 13:21:14 ad Exp $ */
+/* $NetBSD: isp.c,v 1.110.8.3 2007/07/15 15:52:44 ad Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -41,15 +41,14 @@
 /*
  * Include header file appropriate for platform we're building on.
  */
-
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.110.8.2 2007/07/15 13:21:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.110.8.3 2007/07/15 15:52:44 ad Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
 #include <sys/cdefs.h>
-__FBSDID(0, "$FreeBSD$");
+__FBSDID("$FreeBSD$");
 #include <dev/isp/isp_freebsd.h>
 #endif
 #ifdef	__OpenBSD__

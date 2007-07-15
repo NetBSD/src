@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.5.2.5 2007/07/09 20:33:14 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.5.2.6 2007/07/15 15:52:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5.2.5 2007/07/09 20:33:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5.2.6 2007/07/15 15:52:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -229,7 +229,7 @@ cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 		return sleepq_abort(mtx, 0);
 
 	sq = cv_enter(cv, mtx, l);
-	error = sleepq_block(0, 1);
+	error = sleepq_block(0, true);
 	return cv_exit(cv, mtx, l, error);
 }
 
@@ -253,7 +253,7 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int timo)
 		return sleepq_abort(mtx, 0);
 
 	sq = cv_enter(cv, mtx, l);
-	error = sleepq_block(timo, 0);
+	error = sleepq_block(timo, false);
 	return cv_exit(cv, mtx, l, error);
 }
 
@@ -279,7 +279,7 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
 		return sleepq_abort(mtx, 0);
 
 	sq = cv_enter(cv, mtx, l);
-	error = sleepq_block(timo, 1);
+	error = sleepq_block(timo, true);
 	return cv_exit(cv, mtx, l, error);
 }
 

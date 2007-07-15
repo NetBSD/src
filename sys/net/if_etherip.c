@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.5.2.4 2007/07/15 13:27:52 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.5.2.5 2007/07/15 15:52:58 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -355,12 +355,8 @@ etherip_start(struct ifnet *ifp)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if(sc->sc_si)
 		softint_schedule(sc->sc_si);
-#else
-	etheripintr(sc);
-#endif
 }
 
 static void
@@ -528,12 +524,10 @@ etherip_set_tunnel(struct ifnet *ifp,
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
 		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
-#endif
 
 	ifp->if_flags &= ~IFF_RUNNING;
 
@@ -550,11 +544,9 @@ etherip_set_tunnel(struct ifnet *ifp,
 
 	ifp->if_flags |= IFF_RUNNING;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	sc->sc_si = softint_establish(SOFTINT_NET, etheripintr, sc);
 	if (sc->sc_si == NULL)
 		error = ENOMEM;
-#endif
 
 out:
 	splx(s);
@@ -570,12 +562,10 @@ etherip_delete_tunnel(struct ifnet *ifp)
 
 	s = splsoftnet();
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (sc->sc_si) {
 		softint_disestablish(sc->sc_si);
 		sc->sc_si = NULL;
 	}
-#endif
 
 	if (sc->sc_src) {
 		FREE(sc->sc_src, M_IFADDR);

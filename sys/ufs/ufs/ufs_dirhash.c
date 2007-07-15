@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.13.2.4 2007/07/15 13:28:20 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.13.2.5 2007/07/15 15:53:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -72,6 +72,8 @@ static int ufsdirhash_findslot(struct dirhash *dh, const char *name,
 static doff_t ufsdirhash_getprev(struct direct *dp, doff_t offset,
 	   int dirblksiz);
 static int ufsdirhash_recycle(int wanted);
+
+static struct pool ufsdirhash_pool;
 
 #define DIRHASHLIST_LOCK()		mutex_enter(&ufsdirhash_lock)
 #define DIRHASHLIST_UNLOCK()		mutex_exit(&ufsdirhash_lock)
@@ -933,8 +935,6 @@ ufsdirhash_findslot(struct dirhash *dh, const char *name, int namelen,
 
 	KASSERT(mutex_owned(&dh->dh_lock));
 
-	KASSERT(mutex_owned(&dh->dh_lock));
-
 	/* Find the entry. */
 	KASSERT(dh->dh_hused < dh->dh_hlen);
 	slot = ufsdirhash_hash(dh, name, namelen);
@@ -956,8 +956,6 @@ static void
 ufsdirhash_delslot(struct dirhash *dh, int slot)
 {
 	int i;
-
-	KASSERT(mutex_owned(&dh->dh_lock));
 
 	KASSERT(mutex_owned(&dh->dh_lock));
 
@@ -1071,17 +1069,21 @@ ufsdirhash_recycle(int wanted)
 void
 ufsdirhash_init()
 {
+
+	mutex_init(&ufsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);
+	malloc_type_attach(M_DIRHASH);
 	pool_init(&ufsdirhash_pool, DH_NBLKOFF * sizeof(daddr_t), 0, 0, 0,
 	    "ufsdirhash", &pool_allocator_nointr, IPL_NONE);
-	mutex_init(&ufsdirhash_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&ufsdirhash_list);
 }
 
 void
 ufsdirhash_done(void)
 {
+
 	KASSERT(TAILQ_EMPTY(&ufsdirhash_list));
 	pool_destroy(&ufsdirhash_pool);
+	malloc_type_detach(M_DIRHASH);
 	mutex_destroy(&ufsdirhash_lock);
 }
 

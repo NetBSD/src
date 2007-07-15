@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.97.2.2 2007/07/01 21:48:01 ad Exp $	*/
+/*	$NetBSD: mcd.c,v 1.97.2.3 2007/07/15 15:52:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.97.2.2 2007/07/01 21:48:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.97.2.3 2007/07/15 15:52:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,11 +166,13 @@ int mcd_playmsf(struct mcd_softc *, struct ioc_play_msf *);
 int mcd_playblocks(struct mcd_softc *, struct ioc_play_blocks *);
 int mcd_stop(struct mcd_softc *);
 int mcd_eject(struct mcd_softc *);
-int mcd_read_subchannel(struct mcd_softc *, struct ioc_read_subchannel *);
+int mcd_read_subchannel(struct mcd_softc *, struct ioc_read_subchannel *,
+    struct cd_sub_channel_info *);
 int mcd_pause(struct mcd_softc *);
 int mcd_resume(struct mcd_softc *);
 int mcd_toc_header(struct mcd_softc *, struct ioc_toc_header *);
-int mcd_toc_entries(struct mcd_softc *, struct ioc_read_toc_entry *);
+int mcd_toc_entries(struct mcd_softc *, struct ioc_read_toc_entry *,
+	struct cd_toc_entry *, int *);
 
 int mcd_getreply(struct mcd_softc *);
 int mcd_getstat(struct mcd_softc *);
@@ -601,7 +603,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			lp = &newlabel;
 		} else
 #endif
-		lp = (struct disklabel *)addr;
+		lp = addr;
 
 		if ((error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 			return error;
@@ -622,7 +624,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return EBADF;
 
 	case DIOCGDEFLABEL:
-		mcdgetdefaultlabel(sc, (struct disklabel *)addr);
+		mcdgetdefaultlabel(sc, addr);
 		return 0;
 
 #ifdef __HAVE_OLD_DISKLABEL
@@ -635,17 +637,45 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 
 	case CDIOCPLAYTRACKS:
-		return mcd_playtracks(sc, (struct ioc_play_track *)addr);
+		return mcd_playtracks(sc, addr);
 	case CDIOCPLAYMSF:
-		return mcd_playmsf(sc, (struct ioc_play_msf *)addr);
+		return mcd_playmsf(sc, addr);
 	case CDIOCPLAYBLOCKS:
-		return mcd_playblocks(sc, (struct ioc_play_blocks *)addr);
-	case CDIOCREADSUBCHANNEL:
-		return mcd_read_subchannel(sc, (struct ioc_read_subchannel *)addr);
+		return mcd_playblocks(sc, addr);
+	case CDIOCREADSUBCHANNEL: {
+		struct cd_sub_channel_info info;
+		error = mcd_read_subchannel(sc, addr, &info);
+		if (error != 0) {
+			struct ioc_read_subchannel *ch = addr;
+			error = copyout(&info, ch->data, ch->data_len);
+		}
+		return error;
+	}
+	case CDIOCREADSUBCHANNEL_BUF:
+		return mcd_read_subchannel(sc, addr,
+		    &((struct ioc_read_subchannel_buf *)addr)->info);
 	case CDIOREADTOCHEADER:
-		return mcd_toc_header(sc, (struct ioc_toc_header *)addr);
-	case CDIOREADTOCENTRYS:
-		return mcd_toc_entries(sc, (struct ioc_read_toc_entry *)addr);
+		return mcd_toc_header(sc, addr);
+	case CDIOREADTOCENTRYS: {
+		struct cd_toc_entry entries[MCD_MAXTOCS];
+		struct ioc_read_toc_entry *te = addr;
+		int count;
+		if (te->data_len > sizeof entries)
+			return EINVAL;
+		error = mcd_toc_entries(sc, te, entries, &count);
+		if (error == 0)
+			/* Copy the data back. */
+			error = copyout(entries, te->data, min(te->data_len,
+					count * sizeof(struct cd_toc_entry)));
+		return error;
+	}
+	case CDIOREADTOCENTRIES_BUF: {
+		struct ioc_read_toc_entry_buf *te = addr;
+		int count;
+		if (te->req.data_len > sizeof te->entry)
+			return EINVAL;
+		return mcd_toc_entries(sc, &te->req, te->entry, &count);
+	}
 	case CDIOCSETPATCH:
 	case CDIOCGETVOL:
 	case CDIOCSETVOL:
@@ -1457,69 +1487,66 @@ mcd_read_toc(sc)
 }
 
 int
-mcd_toc_entries(sc, te)
+mcd_toc_entries(sc, te, entries, count)
 	struct mcd_softc *sc;
 	struct ioc_read_toc_entry *te;
+	struct cd_toc_entry *entries;
+	int *count;
 {
 	int len = te->data_len;
-	struct ret_toc {
-		struct ioc_toc_header header;
-		struct cd_toc_entry entries[MCD_MAXTOCS];
-	} data;
+	struct ioc_toc_header header;
 	u_char trk;
 	daddr_t lba;
 	int error, n;
 
-	if (len > sizeof(data.entries) ||
-	    len < sizeof(struct cd_toc_entry))
+	if (len < sizeof(struct cd_toc_entry))
 		return EINVAL;
 	if (te->address_format != CD_MSF_FORMAT &&
 	    te->address_format != CD_LBA_FORMAT)
 		return EINVAL;
 
 	/* Copy the TOC header. */
-	if ((error = mcd_toc_header(sc, &data.header)) != 0)
+	if ((error = mcd_toc_header(sc, &header)) != 0)
 		return error;
 
 	/* Verify starting track. */
 	trk = te->starting_track;
 	if (trk == 0x00)
-		trk = data.header.starting_track;
+		trk = header.starting_track;
 	else if (trk == 0xaa)
-		trk = data.header.ending_track + 1;
-	else if (trk < data.header.starting_track ||
-		 trk > data.header.ending_track + 1)
+		trk = header.ending_track + 1;
+	else if (trk < header.starting_track ||
+		 trk > header.ending_track + 1)
 		return EINVAL;
 
 	/* Copy the TOC data. */
-	for (n = 0; trk <= data.header.ending_track + 1; trk++) {
+	for (n = 0; trk <= header.ending_track + 1; n++, trk++) {
+		if (n * sizeof entries[0] > len)
+			break;
 		if (sc->toc[trk].toc.idx_no == 0x00)
 			continue;
-		data.entries[n].control = sc->toc[trk].toc.control;
-		data.entries[n].addr_type = sc->toc[trk].toc.addr_type;
-		data.entries[n].track = bcd2bin(sc->toc[trk].toc.idx_no);
+		entries[n].control = sc->toc[trk].toc.control;
+		entries[n].addr_type = sc->toc[trk].toc.addr_type;
+		entries[n].track = bcd2bin(sc->toc[trk].toc.idx_no);
 		switch (te->address_format) {
 		case CD_MSF_FORMAT:
-			data.entries[n].addr.addr[0] = 0;
-			data.entries[n].addr.addr[1] = bcd2bin(sc->toc[trk].toc.absolute_pos[0]);
-			data.entries[n].addr.addr[2] = bcd2bin(sc->toc[trk].toc.absolute_pos[1]);
-			data.entries[n].addr.addr[3] = bcd2bin(sc->toc[trk].toc.absolute_pos[2]);
+			entries[n].addr.addr[0] = 0;
+			entries[n].addr.addr[1] = bcd2bin(sc->toc[trk].toc.absolute_pos[0]);
+			entries[n].addr.addr[2] = bcd2bin(sc->toc[trk].toc.absolute_pos[1]);
+			entries[n].addr.addr[3] = bcd2bin(sc->toc[trk].toc.absolute_pos[2]);
 			break;
 		case CD_LBA_FORMAT:
 			lba = msf2hsg(sc->toc[trk].toc.absolute_pos, 0);
-			data.entries[n].addr.addr[0] = lba >> 24;
-			data.entries[n].addr.addr[1] = lba >> 16;
-			data.entries[n].addr.addr[2] = lba >> 8;
-			data.entries[n].addr.addr[3] = lba;
+			entries[n].addr.addr[0] = lba >> 24;
+			entries[n].addr.addr[1] = lba >> 16;
+			entries[n].addr.addr[2] = lba >> 8;
+			entries[n].addr.addr[3] = lba;
 			break;
 		}
-		n++;
 	}
 
-	len = min(len, n * sizeof(struct cd_toc_entry));
-
-	/* Copy the data back. */
-	return copyout(&data.entries[0], te->data, len);
+	*count = n;
+	return 0;
 }
 
 int
@@ -1577,13 +1604,13 @@ mcd_getqchan(sc, q, qchn)
 }
 
 int
-mcd_read_subchannel(sc, ch)
+mcd_read_subchannel(sc, ch, info)
 	struct mcd_softc *sc;
 	struct ioc_read_subchannel *ch;
+	struct cd_sub_channel_info *info;
 {
 	int len = ch->data_len;
 	union mcd_qchninfo q;
-	struct cd_sub_channel_info data;
 	daddr_t lba;
 	int error;
 
@@ -1591,8 +1618,7 @@ mcd_read_subchannel(sc, ch)
 		printf("%s: subchan: af=%d df=%d\n", sc->sc_dev.dv_xname,
 		    ch->address_format, ch->data_format);
 
-	if (len > sizeof(data) ||
-	    len < sizeof(struct cd_sub_channel_header))
+	if (len > sizeof(*info) || len < sizeof(info->header))
 		return EINVAL;
 	if (ch->address_format != CD_MSF_FORMAT &&
 	    ch->address_format != CD_LBA_FORMAT)
@@ -1604,30 +1630,30 @@ mcd_read_subchannel(sc, ch)
 	if ((error = mcd_getqchan(sc, &q, ch->data_format)) != 0)
 		return error;
 
-	data.header.audio_status = sc->audio_status;
-	data.what.media_catalog.data_format = ch->data_format;
+	info->header.audio_status = sc->audio_status;
+	info->what.media_catalog.data_format = ch->data_format;
 
 	switch (ch->data_format) {
 	case CD_MEDIA_CATALOG:
-		data.what.media_catalog.mc_valid = 1;
+		info->what.media_catalog.mc_valid = 1;
 #if 0
-		data.what.media_catalog.mc_number =
+		info->what.media_catalog.mc_number =
 #endif
 		break;
 
 	case CD_CURRENT_POSITION:
-		data.what.position.track_number = bcd2bin(q.current.trk_no);
-		data.what.position.index_number = bcd2bin(q.current.idx_no);
+		info->what.position.track_number = bcd2bin(q.current.trk_no);
+		info->what.position.index_number = bcd2bin(q.current.idx_no);
 		switch (ch->address_format) {
 		case CD_MSF_FORMAT:
-			data.what.position.reladdr.addr[0] = 0;
-			data.what.position.reladdr.addr[1] = bcd2bin(q.current.relative_pos[0]);
-			data.what.position.reladdr.addr[2] = bcd2bin(q.current.relative_pos[1]);
-			data.what.position.reladdr.addr[3] = bcd2bin(q.current.relative_pos[2]);
-			data.what.position.absaddr.addr[0] = 0;
-			data.what.position.absaddr.addr[1] = bcd2bin(q.current.absolute_pos[0]);
-			data.what.position.absaddr.addr[2] = bcd2bin(q.current.absolute_pos[1]);
-			data.what.position.absaddr.addr[3] = bcd2bin(q.current.absolute_pos[2]);
+			info->what.position.reladdr.addr[0] = 0;
+			info->what.position.reladdr.addr[1] = bcd2bin(q.current.relative_pos[0]);
+			info->what.position.reladdr.addr[2] = bcd2bin(q.current.relative_pos[1]);
+			info->what.position.reladdr.addr[3] = bcd2bin(q.current.relative_pos[2]);
+			info->what.position.absaddr.addr[0] = 0;
+			info->what.position.absaddr.addr[1] = bcd2bin(q.current.absolute_pos[0]);
+			info->what.position.absaddr.addr[2] = bcd2bin(q.current.absolute_pos[1]);
+			info->what.position.absaddr.addr[3] = bcd2bin(q.current.absolute_pos[2]);
 			break;
 		case CD_LBA_FORMAT:
 			lba = msf2hsg(q.current.relative_pos, 1);
@@ -1636,23 +1662,23 @@ mcd_read_subchannel(sc, ch)
 			 * address.  Must be converted to negative LBA, per
 			 * SCSI spec.
 			 */
-			if (data.what.position.index_number == 0x00)
+			if (info->what.position.index_number == 0x00)
 				lba = -lba;
-			data.what.position.reladdr.addr[0] = lba >> 24;
-			data.what.position.reladdr.addr[1] = lba >> 16;
-			data.what.position.reladdr.addr[2] = lba >> 8;
-			data.what.position.reladdr.addr[3] = lba;
+			info->what.position.reladdr.addr[0] = lba >> 24;
+			info->what.position.reladdr.addr[1] = lba >> 16;
+			info->what.position.reladdr.addr[2] = lba >> 8;
+			info->what.position.reladdr.addr[3] = lba;
 			lba = msf2hsg(q.current.absolute_pos, 0);
-			data.what.position.absaddr.addr[0] = lba >> 24;
-			data.what.position.absaddr.addr[1] = lba >> 16;
-			data.what.position.absaddr.addr[2] = lba >> 8;
-			data.what.position.absaddr.addr[3] = lba;
+			info->what.position.absaddr.addr[0] = lba >> 24;
+			info->what.position.absaddr.addr[1] = lba >> 16;
+			info->what.position.absaddr.addr[2] = lba >> 8;
+			info->what.position.absaddr.addr[3] = lba;
 			break;
 		}
 		break;
 	}
 
-	return copyout(&data, ch->data, len);
+	return 0;
 }
 
 int

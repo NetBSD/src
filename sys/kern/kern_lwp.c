@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.13 2007/07/01 21:50:39 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.14 2007/07/15 15:52:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.13 2007/07/01 21:50:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.14 2007/07/15 15:52:54 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -733,12 +733,14 @@ lwp_exit(struct lwp *l)
 	 * Release our cached credentials.
 	 */
 	kauth_cred_free(l->l_cred);
+	callout_destroy(&l->l_tsleep_ch);
 
 	/*
 	 * While we can still block, mark the LWP as unswappable to
 	 * prevent conflicts with the with the swapper.
 	 */
-	uvm_lwp_hold(l);
+	if (current)
+		uvm_lwp_hold(l);
 
 	/*
 	 * Remove the LWP from the global list.
@@ -913,7 +915,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	cpu_lwp_free2(l);
 #endif
 	uvm_lwp_exit(l);
-	callout_destroy(&l->l_tsleep_ch);
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
 	sched_lwp_exit(l);

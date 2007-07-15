@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.10.8.2 2007/04/14 11:40:21 ad Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.10.8.3 2007/07/15 15:52:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+ 
 /*
  * Overview
  *
@@ -70,26 +70,29 @@
  *	XXX Currently, the wrapper methods such as cdev_read() verify
  *	that a device driver does in fact exist before calling the
  *	associated driver method.  This should be changed so that
- *	once the device is has been referenced (i.e. opened), calling
- *	the other methods should be valid until that reference is
- *	dropped.
+ *	once the device is has been referenced by a vnode (opened),
+ *	calling	the other methods should be valid until that reference
+ *	is dropped.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.10.8.2 2007/04/14 11:40:21 ad Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.10.8.3 2007/07/15 15:52:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/tty.h>
 #include <sys/poll.h>
+#include <sys/tty.h>
+#include <sys/buf.h>
 
-#define	MAXDEVSW	512	/* the maximum major device number */
+#ifdef DEVSW_DEBUG
+#define	DPRINTF(x)	printf x
+#else /* DEVSW_DEBUG */
+#define	DPRINTF(x)
+#endif /* DEVSW_DEBUG */
+
+#define	MAXDEVSW	512	/* the maximum of major device number */
 #define	BDEVSW_SIZE	(sizeof(struct bdevsw *))
 #define	CDEVSW_SIZE	(sizeof(struct cdevsw *))
 #define	DEVSWCONV_SIZE	(sizeof(struct devsw_conv))
