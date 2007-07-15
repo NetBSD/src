@@ -1,4 +1,4 @@
-Filesystem  1K-blocks     Used     Avail Capacity  Mounted on
+Filesystem  1K-blocks     Used     Avail     %Cap  Mounted on
 filer:/     1202716672   135168 1202581504     0%    /filer
 filer:/     1202716672        0 1202716672     0%    /filer
 filer:/     1202716672 240543334 962173337    20%    /filer
