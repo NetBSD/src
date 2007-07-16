@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.29 2007/07/09 21:11:35 ad Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.30 2007/07/16 13:55:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,6 +60,7 @@ struct mfs_args {
 #include <sys/mutex.h>
 
 #include <ufs/ufs/extattr.h>
+#include <ufs/ufs/quota.h>
 
 struct buf;
 struct inode;
