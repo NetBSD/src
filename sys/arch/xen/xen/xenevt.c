@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.11 2006/09/10 14:34:11 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.11.4.1 2007/07/16 10:11:59 liamjfoy Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -560,7 +560,10 @@ xenevt_fpoll(struct file *fp, int events, struct lwp *l)
 {
 	struct xenevt_d *d = fp->f_data;
 	int revents = events & (POLLOUT | POLLWRNORM); /* we can always write */
+	int s;
 
+	s = splsoftxenevt();
+	simple_lock(&d->lock);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (d->ring_read != d->ring_write) {
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -569,5 +572,7 @@ xenevt_fpoll(struct file *fp, int events, struct lwp *l)
 			selrecord(l, &d->sel);
 		}
 	}
+	simple_unlock(&d->lock);
+	splx(s);
 	return (revents);
 }
