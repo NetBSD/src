@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.37 2006/04/24 19:00:29 snj Exp $ */
+/* $NetBSD: csh.c,v 1.38 2007/07/16 02:26:50 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.37 2006/04/24 19:00:29 snj Exp $");
+__RCSID("$NetBSD: csh.c,v 1.38 2007/07/16 02:26:50 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,15 +81,15 @@ Char *dumphist[] = {STRhistory, STRmh, 0, 0};
 Char *loadhist[] = {STRsource, STRmh, STRtildothist, 0};
 
 int nofile = 0;
-bool batch = 0;
-bool enterhist = 0;
-bool fast = 0;
-bool mflag = 0;
-bool nexececho = 0;
-bool nverbose = 0;
-bool prompt = 1;
-bool quitit = 0;
-bool reenter = 0;
+cshbool batch = 0;
+cshbool enterhist = 0;
+cshbool fast = 0;
+cshbool mflag = 0;
+cshbool nexececho = 0;
+cshbool nverbose = 0;
+cshbool prompt = 1;
+cshbool quitit = 0;
+cshbool reenter = 0;
 
 extern char **environ;
 
@@ -98,9 +98,9 @@ static fpos_t seekf(void *, fpos_t, int);
 static int writef(void *, const char *, int);
 static int closef(void *);
 static int srccat(Char *, Char *);
-static int srcfile(const char *, bool, bool);
+static int srcfile(const char *, cshbool, cshbool);
 static void phup(int);
-static void srcunit(int, bool, bool);
+static void srcunit(int, cshbool, cshbool);
 static void mailchk(void);
 #ifndef _PATH_DEFPATH
 static Char **defaultpath(void);
@@ -645,7 +645,7 @@ srccat(Char *cp, Char *dp)
  * Source to a file putting the file descriptor in a safe place (> 2).
  */
 static int
-srcfile(const char *f, bool onlyown, bool flag)
+srcfile(const char *f, cshbool onlyown, cshbool flag)
 {
     int unit;
 
@@ -665,7 +665,7 @@ srcfile(const char *f, bool onlyown, bool flag)
 int insource;
 
 static void
-srcunit(int unit, bool onlyown, bool hflg)
+srcunit(int unit, cshbool onlyown, cshbool hflg)
 {
     /* We have to push down a lot of state here */
     /* All this could go into a structure */
@@ -676,7 +676,7 @@ srcunit(int unit, bool onlyown, bool hflg)
     Char *oarginp, *oevalp, **oevalvec, *ogointr;
     char OHIST;
     int oSHIN, oinsource, oldintty, oonelflg; 
-    bool oenterhist, otell;      
+    cshbool oenterhist, otell;      
     /* The (few) real local variables */
     int my_reenter;
 
@@ -924,7 +924,7 @@ pintr(int notused)
 }
 
 void
-pintr1(bool wantnl)
+pintr1(cshbool wantnl)
 {
     Char **v;
     sigset_t nsigset, osigset;
@@ -986,7 +986,7 @@ pintr1(bool wantnl)
 static struct command *savet = NULL;
 
 void
-process(bool catch)
+process(cshbool catch)
 {
     struct command *t;
     jmp_buf osetexit;
@@ -1129,7 +1129,7 @@ void
 dosource(Char **v, struct command *t)
 {
     Char buf[BUFSIZE], *f;
-    bool hflg;
+    cshbool hflg;
 
     hflg = 0;
     v++;
@@ -1163,7 +1163,7 @@ mailchk(void)
     Char **vp;
     time_t t;
     int cnt, intvl;
-    bool new;
+    cshbool new;
 
     v = adrof(STRmail);
     if (v == 0)
