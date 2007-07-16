@@ -1,0 +1,144 @@
+PKG_VIEW(1)             NetBSD General Commands Manual             PKG_VIEW(1)
+
+NNAAMMEE
+     ppkkgg__vviieeww -- add and delete instances of depoted packages in views
+
+SSYYNNOOPPSSIISS
+     ppkkgg__vviieeww [--nnVVvv] [--dd _s_t_o_w_d_i_r] [--ii _i_g_n_o_r_e] [--kk _p_k_g___d_b_d_i_r] [--WW _v_i_e_w_b_a_s_e]
+              [--ww _v_i_e_w] _c_o_m_m_a_n_d _p_a_c_k_a_g_e _._._.
+
+DDEESSCCRRIIPPTTIIOONN
+     The ppkkgg__vviieeww command is used to add and delete instances of depoted pack-
+     ages in _s_t_o_w_d_i_r in a _v_i_e_w in the _v_i_e_w_b_a_s_e directory.
+
+WWAARRNNIINNGG
+     _S_i_n_c_e _t_h_e ppkkgg__vviieeww _c_o_m_m_a_n_d _m_a_y _e_x_e_c_u_t_e _s_c_r_i_p_t_s _o_r _p_r_o_g_r_a_m_s _p_r_o_v_i_d_e_d _b_y _a
+     _p_a_c_k_a_g_e _f_i_l_e_, _y_o_u_r _s_y_s_t_e_m _m_a_y _b_e _s_u_s_c_e_p_t_i_b_l_e _t_o _`_`_T_r_o_j_a_n _h_o_r_s_e_s_'_' _o_r
+     _o_t_h_e_r _s_u_b_t_l_e _a_t_t_a_c_k_s _f_r_o_m _m_i_s_c_r_e_a_n_t_s _w_h_o _c_r_e_a_t_e _d_a_n_g_e_r_o_u_s _p_a_c_k_a_g_e _f_i_l_e_s_.
+
+     _Y_o_u _a_r_e _a_d_v_i_s_e_d _t_o _v_e_r_i_f_y _t_h_e _c_o_m_p_e_t_e_n_c_e _a_n_d _i_d_e_n_t_i_t_y _o_f _t_h_o_s_e _w_h_o _p_r_o_-
+     _v_i_d_e _i_n_s_t_a_l_l_a_b_l_e _p_a_c_k_a_g_e _f_i_l_e_s_.  _F_o_r _e_x_t_r_a _p_r_o_t_e_c_t_i_o_n_, _e_x_a_m_i_n_e _a_l_l _t_h_e
+     _p_a_c_k_a_g_e _c_o_n_t_r_o_l _f_i_l_e_s _i_n _t_h_e _p_a_c_k_a_g_e _d_a_t_a_b_a_s_e _d_i_r_e_c_t_o_r_y
+     _(_/_u_s_r_/_p_k_g_/_p_a_c_k_a_g_e_s_/_<_p_k_g_-_n_a_m_e_>_/_)_.  _P_a_y _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y
+     _+_I_N_S_T_A_L_L_, _+_D_E_I_N_S_T_A_L_L_, _+_R_E_Q_U_I_R_E_, _o_r _+_M_T_R_E_E___D_I_R_S _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e
+     _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d
+     @@uunneexxeecc _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r _u_s_e _t_h_e pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e
+     _i_n_s_t_a_l_l_e_d _p_a_c_k_a_g_e _c_o_n_t_r_o_l _f_i_l_e_s_.
+
+OOPPTTIIOONNSS
+     The following command-line options are supported:
+
+     --dd _s_t_o_w_d_i_r
+             Set _s_t_o_w_d_i_r as the directory in which the depoted packages can be
+             found.  If this option isn't specified, then the _s_t_o_w_d_i_r is taken
+             from the value of the environment variable DEPOTBASE if it's set,
+             otherwise the default _s_t_o_w_d_i_r is the path to the _p_a_c_k_a_g_e_s direc-
+             tory under _v_i_e_w_b_a_s_e.
+
+     --ii _i_g_n_o_r_e
+             Add _i_g_n_o_r_e to the list of files in _p_a_c_k_a_g_e that should ignored
+             when adding or removing the package instance from _v_i_e_w.
+
+     --kk _p_k_g___d_b_d_i_r
+             Set _p_k_g___d_b_d_i_r as the package database directory for the default
+             (empty) view.  If this option isn't specified, then the package
+             database directory is taken from the value of the environment
+             variable PKG_DBDIR, otherwise it defaults to _/_v_a_r_/_d_b_/_p_k_g.
+
+     --nn      Don't actually execute the commands for manipulating the package
+             instances.
+
+     --VV      Print the version number and exit.
+
+     --vv      Turn on verbose output.  Specifying --vv multiple times increases
+             the level of verbosity.
+
+     --WW _v_i_e_w_b_a_s_e
+             Set _v_i_e_w_b_a_s_e as the directory in which all the views are managed.
+             The default _v_i_e_w_b_a_s_e directory is _/_u_s_r_/_p_k_g but may be overridden
+             by the LOCALBASE environment variable.
+
+     --ww _v_i_e_w
+             Set _v_i_e_w as the directory in _v_i_e_w_b_a_s_e in which the package
+             instances should be added or deleted.  The default _v_i_e_w is the
+             empty view but may be overridden by the PKG_VIEW environment
+             variable.
+
+     The following commands are supported:
+
+     aadddd     Add the listed package instances into _v_i_e_w.
+
+     cchheecckk   Check whether the listed package instances are present in _v_i_e_w.
+             If they are not present, then return 0, otherwise return 1.
+
+     ddeelleettee  Delete the listed package instances from _v_i_e_w.
+
+EENNVVIIRROONNMMEENNTT
+     DEPOTBASE
+             This is the location of the _s_t_o_w_d_i_r directory inside which all
+             depoted packages are kept.  The default _s_t_o_w_d_i_r is the _p_a_c_k_a_g_e_s
+             directory under _v_i_e_w_b_a_s_e.
+
+     LOCALBASE
+             This is the location of the _v_i_e_w_b_a_s_e directory in which all the
+             views are managed.  The default _v_i_e_w_b_a_s_e directory is _/_u_s_r_/_p_k_g.
+
+     PKG_DBDIR
+             If the --kk flag isn't given, then the value of the environment
+             variable PKG_DBDIR is the package database directory for the
+             default view, otherwise it defaults to _/_v_a_r_/_d_b_/_p_k_g.
+
+     PLIST_IGNORE_FILES
+             This can be used to specify files in _p_a_c_k_a_g_e that should ignored
+             when adding or removing the package instance from _v_i_e_w.
+             PLIST_IGNORE_FILES is a space-separated list of shell glob pat-
+             terns that match files relative to the _p_a_c_k_a_g_e depot directory,
+             and it defaults to "info/dir *[~#] *.OLD *.orig *,v".  This is
+             overridden by any _PLIST_IGNORE_FILES setting in a package's
+             _b_u_i_l_d_-_i_n_f_o_-_f_i_l_e (see pkg_create(1)) if it exists.
+
+     PKG_VIEW
+             The default view can be specified in the PKG_VIEW environment
+             variable.
+
+FFIILLEESS
+     <pkg-dbdir>/<package>/+INSTALL
+             If the package contains an _i_n_s_t_a_l_l script (see pkg_create(1)),
+             then after the package instance is added into a view, the script
+             is executed with the following arguments:
+
+             _p_a_c_k_a_g_e  The name of the package instance being added.
+
+             VVIIEEWW--IINNSSTTAALLLL
+                      Keyword denoting that the script is to perform any
+                      actions needed after the package instance is added to a
+                      view.
+
+             If the _i_n_s_t_a_l_l script exits with a non-zero status code, the
+             installation is terminated.
+
+     <pkg-dbdir>/<package>/+DEINSTALL
+             If the package contains an _d_e_i_n_s_t_a_l_l script (see pkg_create(1)),
+             then before the package instance is deleted from a view, the
+             script is executed with the following arguments:
+
+             _p_a_c_k_a_g_e  The name of the package instance being deleted.
+
+             VVIIEEWW--DDEEIINNSSTTAALLLL
+                      Keyword denoting that the script is to perform any
+                      actions needed before the package instance is deleted
+                      from a view.
+
+             If the _d_e_i_n_s_t_a_l_l script exits with a non-zero status code, the
+             de-installation is terminated.
+
+     The _i_n_s_t_a_l_l and _d_e_i_n_s_t_a_l_l scripts are called with the environment vari-
+     able PKG_PREFIX set to the path to the _v_i_e_w directory.
+
+SSEEEE AALLSSOO
+     linkfarm(1), pkg_delete(1)
+
+AAUUTTHHOORRSS
+     The ppkkgg__vviieeww utility was written by Alistair G. Crooks <agc@NetBSD.org>.
+
+NetBSD 4.0                     September 8, 2003                    NetBSD 4.0
