@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.144 2007/02/04 21:04:37 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.145 2007/07/16 14:36:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.144 2007/02/04 21:04:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.145 2007/07/16 14:36:01 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1368,7 +1368,7 @@ pccbb_power(cardbus_chipset_tag_t ct, int command)
 		sock_ctrl &= ~CB_SOCKET_CTRL_VPPMASK;
 		bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
 		status &= ~CB_SOCKET_STAT_BADVCC;
-		bus_space_write_4(memt, memh, CB_SOCKET_STAT, status);
+		bus_space_write_4(memt, memh, CB_SOCKET_FORCE, status);
 		printf("new status 0x%x\n", bus_space_read_4(memt, memh,
 		    CB_SOCKET_STAT));
 		return 0;
@@ -2835,8 +2835,7 @@ pccbb_pcmcia_poll(void *arg)
 		break;
 	}
 
-	spsr =
-	    bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh,
+	spsr = bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh,
 	    CB_SOCKET_STAT);
 
 #if defined PCCBB_PCMCIA_POLL_ONLY && defined LEVEL2
