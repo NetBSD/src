@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.173 2007/03/12 18:18:25 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.174 2007/07/16 23:48:05 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2007/03/12 18:18:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2007/07/16 23:48:05 macallan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1809,17 +1809,6 @@ pmap_set_modified(paddr_t pa)
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	pg->mdpage.pvh_attrs |= PV_MODIFIED | PV_REFERENCED;
-}
-
-paddr_t
-pmap_phys_address(int ppn)
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_phys_address(%x)\n", ppn);
-#endif
-	return mips_ptob(ppn);
 }
 
 /******************** misc. functions ********************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.50 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.51 2007/07/16 23:48:05 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,6 +149,7 @@ extern struct pmap kernel_pmap_store;
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
 
 #define	pmap_update(pmap)	/* nothing (yet) */
+#define pmap_phys_address(x)	mips_ptob(x)
 
 static __inline void
 pmap_remove_all(struct pmap *pmap)

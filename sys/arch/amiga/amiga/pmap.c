@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 2007/06/09 16:28:15 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.132 2007/07/16 23:48:04 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2007/06/09 16:28:15 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2007/07/16 23:48:04 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1846,7 +1846,7 @@ pmap_is_modified(pg)
 
 paddr_t
 pmap_phys_address(ppn)
-	int ppn;
+	paddr_t ppn;
 {
 	return(m68k_ptob(ppn));
 }
