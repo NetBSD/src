@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.79 2007/03/04 22:12:43 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.80 2007/07/16 16:36:06 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -264,7 +264,7 @@ pmap_t		pmap_create(void);
 void		pmap_destroy(pmap_t);
 void		pmap_init(void);
 vaddr_t		pmap_map(vaddr_t, paddr_t, paddr_t, int);
-paddr_t		pmap_phys_address(int);
+#define		pmap_phys_address(x) (x)
 void		pmap_reference(pmap_t);
 void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
 #define		pmap_update(pmap)		/* nothing (yet) */
