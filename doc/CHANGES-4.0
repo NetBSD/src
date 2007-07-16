@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.202 2007/07/09 10:00:51 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.203 2007/07/16 11:14:44 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -6994,3 +6994,34 @@ sys/dev/pci/ehci_pci.c				1.28
 	clear it anyway by writing to PCI configuration register 0x00.  
 	Instead, if this flag is not set, simply bail out from ehci_get_ownership.
 	[jmcneill, ticket #760]
+
+usr.bin/vacation/vacation.c			1.34
+
+	PR/36644: Edgar Fuss: vacation does not work if homedir not present
+	Don't care about it failing if all paths needed are absolute.
+	[christos, ticket #766]
+
+usr.bin/vacation/vacation.c			1.33
+
+	PR/36643: Edgar Fu: -m missing from getopt.
+	While there:
+	- mark usage noreturn
+	- remove prototype for main
+	[christos, ticket #765]
+
+sys/arch/xen/xen/clock.c			1.37
+
+	Correct regression in xen3 wall-time reading accidentally committed in r1.35.
+	(Discussed on port-xen.)
+	[jld, ticket #764]
+
+crypto/dist/ssh/auth.c				1.26
+
+	PR/36624: Edgar Fu: sshd should not check pw_{expire,change} if UsePam is
+	enabled. This is what the "portable" version of openssh does.
+	[christos, ticket #762]
+
+sys/dist/ipf/netinet/fil.c			1.38
+
+	Avoid use of cached pointers that might be stale due to mbuf operations.
+	[martin, ticket #767]
