@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.31 2007/06/07 15:54:09 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.32 2007/07/16 23:48:05 macallan Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.31 2007/06/07 15:54:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.32 2007/07/16 23:48:05 macallan Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -2019,7 +2019,7 @@ pmap_is_modified(struct vm_page *pg)
  *	Note: no locking is necessary in this function.
  */
 paddr_t
-pmap_phys_address(int ppn)
+pmap_phys_address(paddr_t ppn)
 {
 	return m68k_ptob(ppn);
 }
