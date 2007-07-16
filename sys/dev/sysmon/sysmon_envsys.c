@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.20 2007/07/04 16:30:18 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.21 2007/07/16 17:48:52 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.20 2007/07/04 16:30:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.21 2007/07/16 17:48:52 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -110,7 +110,7 @@ static const struct sme_sensor_type sme_sensor_type[] = {
 	{ ENVSYS_SWATTHOUR,	PENVSYS_TYPE_BATTERY,	"Watt hour" },
 	{ ENVSYS_SAMPHOUR,	PENVSYS_TYPE_BATTERY,	"Ampere hour" },
 	{ ENVSYS_INDICATOR,	PENVSYS_TYPE_INDICATOR,	"Indicator" },
-	{ ENVSYS_INTEGER,	-1, 			"Integer" },
+	{ ENVSYS_INTEGER,	PENVSYS_TYPE_INDICATOR,	"Integer" },
 	{ ENVSYS_DRIVE,		PENVSYS_TYPE_DRIVE,	"Drive" },
 	{ -1,			-1,			NULL }
 };
@@ -716,13 +716,12 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<true/>
 	 *		...
 	 * 
-	 * always false on Drive, Integer and Indicator types, they
+	 * always false on Drive and Indicator types, they
 	 * cannot be monitored.
 	 *
 	 */
 	if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
 	    (edata->units == ENVSYS_INDICATOR) ||
-	    (edata->units == ENVSYS_INTEGER) ||
 	    (edata->units == ENVSYS_DRIVE)) {
 		SENSOR_SBOOL(dict, "monitoring-supported", false);
 	} else {
@@ -748,7 +747,7 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	/*
 	 * Add a new event if a monitoring flag was set.
 	 */
-	if (edata->monitor && edata->units != ENVSYS_INTEGER) {
+	if (edata->monitor) {
 		sme_evdrv_t = kmem_zalloc(sizeof(*sme_evdrv_t), KM_SLEEP);
 
 		sme_evdrv_t->sdict = dict;
@@ -1061,7 +1060,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 != NULL) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->units == ENVSYS_INTEGER ||
 			    edata->flags & ENVSYS_FMONNOTSUPP) {
 				error = ENOTSUP;
 				break;
@@ -1083,7 +1081,6 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (obj2 != NULL) {
 			targetfound = true;
 			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->units == ENVSYS_INTEGER ||
 			    edata->flags & ENVSYS_FMONNOTSUPP) {
 				error = ENOTSUP;
 				break;
