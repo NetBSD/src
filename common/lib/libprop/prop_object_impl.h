@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.12 2007/03/12 18:18:39 ad Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.13 2007/07/16 19:20:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ prop_object_t	_prop_object_internalize_by_tag(
 boolean_t	_prop_object_internalize_decode_string(
 				struct _prop_object_internalize_context *,
 				char *, size_t, size_t *, const char **);
+prop_object_t	_prop_generic_internalize(const char *, const char *);
 
 struct _prop_object_internalize_context *
 		_prop_object_internalize_context_alloc(const char *);
