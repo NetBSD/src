@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.12 2006/10/19 10:10:35 he Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.13 2007/07/16 19:20:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -629,6 +629,58 @@ _prop_object_internalize_by_tag(struct _prop_object_internalize_context *ctx)
 	}
 
 	return (NULL);
+}
+
+prop_object_t
+_prop_generic_internalize(const char *xml, const char *master_tag)
+{
+	prop_object_t obj = NULL;
+	struct _prop_object_internalize_context *ctx;
+
+	ctx = _prop_object_internalize_context_alloc(xml);
+	if (ctx == NULL)
+		return (NULL);
+
+	/* We start with a <plist> tag. */
+	if (_prop_object_internalize_find_tag(ctx, "plist",
+					      _PROP_TAG_TYPE_START) == FALSE)
+		goto out;
+
+	/* Plist elements cannot be empty. */
+	if (ctx->poic_is_empty_element)
+		goto out;
+
+	/*
+	 * We don't understand any plist attributes, but Apple XML
+	 * property lists often have a "version" attribute.  If we
+	 * see that one, we simply ignore it.
+	 */
+	if (ctx->poic_tagattr != NULL &&
+	    !_PROP_TAGATTR_MATCH(ctx, "version"))
+		goto out;
+
+	/* Next we expect to see opening master_tag. */
+	if (_prop_object_internalize_find_tag(ctx, master_tag,
+					      _PROP_TAG_TYPE_START) == FALSE)
+		goto out;
+
+	obj = _prop_object_internalize_by_tag(ctx);
+	if (obj == NULL)
+		goto out;
+
+	/*
+	 * We've advanced past the closing master_tag.
+	 * Now we want </plist>.
+	 */
+	if (_prop_object_internalize_find_tag(ctx, "plist",
+					      _PROP_TAG_TYPE_END) == FALSE) {
+		prop_object_release(obj);
+		obj = NULL;
+	}
+
+ out:
+ 	_prop_object_internalize_context_free(ctx);
+	return (obj);
 }
 
 /*

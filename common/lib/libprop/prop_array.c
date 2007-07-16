@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.7 2006/10/03 15:45:04 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.8 2007/07/16 19:20:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -738,50 +738,7 @@ _prop_array_internalize(struct _prop_object_internalize_context *ctx)
 prop_array_t
 prop_array_internalize(const char *xml)
 {
-	prop_array_t array = NULL;
-	struct _prop_object_internalize_context *ctx;
-
-	ctx = _prop_object_internalize_context_alloc(xml);
-	if (ctx == NULL)
-		return (NULL);
-	
-	/* We start with a <plist> tag. */
-	if (_prop_object_internalize_find_tag(ctx, "plist",
-					      _PROP_TAG_TYPE_START) == FALSE)
-		goto out;
-	
-	/* Plist elements cannot be empty. */
-	if (ctx->poic_is_empty_element)
-		goto out;
-	
-	/*
-	 * We don't understand any plist attributes, but Apple XML
-	 * property lists often have a "version" attribute.  If we
-	 * see that one, we simply ignore it.
-	 */
-	if (ctx->poic_tagattr != NULL &&
-	    !_PROP_TAGATTR_MATCH(ctx, "version"))
-	    	goto out;
-	
-	/* Next we expect to see <array>. */
-	if (_prop_object_internalize_find_tag(ctx, "array",
-					      _PROP_TAG_TYPE_START) == FALSE)
-		goto out;
-	
-	array = _prop_array_internalize(ctx);
-	if (array == NULL)
-		goto out;
-	
-	/* We've advanced past </array>.  Now we want </plist>. */
-	if (_prop_object_internalize_find_tag(ctx, "plist",
-					      _PROP_TAG_TYPE_END) == FALSE) {
-		prop_object_release(array);
-		array = NULL;
-	}
-
- out:
-	_prop_object_internalize_context_free(ctx);
-	return (array);
+	return _prop_generic_internalize(xml, "array");
 }
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)

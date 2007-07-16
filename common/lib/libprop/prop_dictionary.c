@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.16 2006/10/26 05:02:12 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.17 2007/07/16 19:20:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -1151,50 +1151,7 @@ _prop_dictionary_internalize(struct _prop_object_internalize_context *ctx)
 prop_dictionary_t
 prop_dictionary_internalize(const char *xml)
 {
-	prop_dictionary_t dict = NULL;
-	struct _prop_object_internalize_context *ctx;
-
-	ctx = _prop_object_internalize_context_alloc(xml);
-	if (ctx == NULL)
-		return (NULL);
-
-	/* We start with a <plist> tag. */
-	if (_prop_object_internalize_find_tag(ctx, "plist",
-					      _PROP_TAG_TYPE_START) == FALSE)
-		goto out;
-
-	/* Plist elements cannot be empty. */
-	if (ctx->poic_is_empty_element)
-		goto out;
-
-	/*
-	 * We don't understand any plist attributes, but Apple XML
-	 * property lists often have a "version" attribute.  If we
-	 * see that one, we simply ignore it.
-	 */
-	if (ctx->poic_tagattr != NULL &&
-	    !_PROP_TAGATTR_MATCH(ctx, "version"))
-		goto out;
-
-	/* Next we expect to see <dict>. */
-	if (_prop_object_internalize_find_tag(ctx, "dict",
-					      _PROP_TAG_TYPE_START) == FALSE)
-		goto out;
-
-	dict = _prop_dictionary_internalize(ctx);
-	if (dict == NULL)
-		goto out;
-
-	/* We've advanced past </dict>.  Now we want </plist>. */
-	if (_prop_object_internalize_find_tag(ctx, "plist",
-					      _PROP_TAG_TYPE_END) == FALSE) {
-		prop_object_release(dict);
-		dict = NULL;
-	}
-
- out:
- 	_prop_object_internalize_context_free(ctx);
-	return (dict);
+	return _prop_generic_internalize(xml, "dict");
 }
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
