@@ -1,4 +1,4 @@
-/*	$NetBSD: load_file.c,v 1.1.1.1.2.2 2007/05/07 17:04:45 pavel Exp $	*/
+/*	$NetBSD: load_file.c,v 1.1.1.1.2.3 2007/07/16 11:05:03 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2006 by Darren Reed.

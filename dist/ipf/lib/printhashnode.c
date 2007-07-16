@@ -1,4 +1,4 @@
-/*	$NetBSD: printhashnode.c,v 1.1.1.1.18.1 2007/05/07 17:04:54 pavel Exp $	*/
+/*	$NetBSD: printhashnode.c,v 1.1.1.1.18.2 2007/07/16 11:05:13 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.

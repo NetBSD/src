@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.1.1.3.4.1 2007/05/07 17:04:21 pavel Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.1.1.3.4.2 2007/07/16 11:03:52 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.

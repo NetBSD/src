@@ -1,4 +1,4 @@
-/*	$NetBSD: count6bits.c,v 1.1.1.1.18.1 2007/05/07 17:04:32 pavel Exp $	*/
+/*	$NetBSD: count6bits.c,v 1.1.1.1.18.2 2007/07/16 11:04:49 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2000-2001 by Darren Reed.

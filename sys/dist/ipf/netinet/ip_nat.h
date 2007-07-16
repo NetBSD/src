@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.7.12.2 2007/05/22 22:52:07 pavel Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.7.12.3 2007/07/16 11:05:47 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.

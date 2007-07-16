@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.28.2.4 2007/06/08 09:20:06 liamjfoy Exp $	*/
+/*	$NetBSD: fil.c,v 1.28.2.5 2007/07/16 11:05:38 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,10 +154,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.4 2007/06/08 09:20:06 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.5 2007/07/16 11:05:38 liamjfoy Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.104 2007/05/11 13:41:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.109 2007/05/31 12:27:33 darrenr Exp";
 #endif
 #endif
 
@@ -551,7 +551,16 @@ int multiple, proto;
 		return IPPROTO_NONE;
 
 	hdr = fin->fin_dp;
-	shift = 8 + (hdr->ip6e_len << 3);
+	switch (proto)
+	{
+	case IPPROTO_FRAGMENT :
+		shift = 8;
+		break;
+	default :
+		shift = 8 + (hdr->ip6e_len << 3);
+		break;
+	}
+
 	if (shift > fin->fin_dlen) {	/* Nasty extension header length? */
 		fin->fin_flx |= FI_BAD;
 		return IPPROTO_NONE;
@@ -570,6 +579,7 @@ int multiple, proto;
 			break;
 		}
 
+	fin->fin_exthdr = fin->fin_dp;
 	fin->fin_dp = (char *)fin->fin_dp + shift;
 	fin->fin_dlen -= shift;
 
@@ -619,24 +629,22 @@ static INLINE int frpr_routing6(fin)
 fr_info_t *fin;
 {
 	struct ip6_ext *hdr;
-	int shift;
 
 	if (frpr_ipv6exthdr(fin, 0, IPPROTO_ROUTING) == IPPROTO_NONE)
 		return IPPROTO_NONE;
+	hdr = fin->fin_exthdr;
 
-	hdr = fin->fin_dp;
-	shift = 8 + (hdr->ip6e_len << 3);
-	/*
-	 * Nasty extension header length?
-	 */
-	if ((shift < sizeof(struct ip6_hdr)) ||
-	    ((shift - sizeof(struct ip6_hdr)) & 15)) {
+	if ((hdr->ip6e_len & 1) != 0) {
+		/*
+		 * The routing header data is made up of 128 bit IPv6 addresses
+		 * which means it must be a multiple of 2 lots of 8 in length.
+		 */
 		fin->fin_flx |= FI_BAD;
 		/*
 		 * Compensate for the changes made in frpr_ipv6exthdr()
 		 */
-		fin->fin_dlen += shift;
-		fin->fin_dp = (char *)fin->fin_dp - shift;
+		fin->fin_dlen += 8 + (hdr->ip6e_len << 3);
+		fin->fin_dp = hdr;
 		return IPPROTO_NONE;
 	}
 
@@ -662,16 +670,20 @@ static INLINE void frpr_fragment6(fin)
 fr_info_t *fin;
 {
 	struct ip6_frag *frag;
+	int extoff;
 
 	fin->fin_flx |= FI_FRAG;
 
 	if (frpr_ipv6exthdr(fin, 0, IPPROTO_FRAGMENT) == IPPROTO_NONE)
 		return;
 
+	extoff = (char *)fin->fin_exthdr - (char *)fin->fin_dp;
+
 	if (frpr_pullup(fin, sizeof(*frag)) == -1)
 		return;
 
-	frag = fin->fin_dp;
+	fin->fin_exthdr = (char *)fin->fin_dp + extoff;
+	frag = fin->fin_exthdr;
 	/*
 	 * Fragment but no fragmentation info set?  Bad packet...
 	 */
@@ -787,8 +799,13 @@ fr_info_t *fin;
 
 	frpr_short6(fin, sizeof(struct udphdr));
 
-	if (frpr_udpcommon(fin) == 0)
+	if (frpr_udpcommon(fin) == 0) {
+		u_char p = fin->fin_p;
+
+		fin->fin_p = IPPROTO_UDP;
 		fr_checkv6sum(fin);
+		fin->fin_p = p;
+	}
 }
 
 
@@ -807,8 +824,13 @@ fr_info_t *fin;
 
 	frpr_short6(fin, sizeof(struct tcphdr));
 
-	if (frpr_tcpcommon(fin) == 0)
+	if (frpr_tcpcommon(fin) == 0) {
+		u_char p = fin->fin_p;
+
+		fin->fin_p = IPPROTO_TCP;
 		fr_checkv6sum(fin);
+		fin->fin_p = p;
+	}
 }
 
 
@@ -2865,6 +2887,7 @@ int len;
 /*              ip(I)      - pointer to IP header                           */
 /*              l4proto(I) - protocol to caclulate checksum for             */
 /*              l4hdr(I)   - pointer to layer 4 header                      */
+/*              l3len(I)   - length of layer 4 data plus layer 3 header     */
 /*                                                                          */
 /* Calculates the TCP checksum for the packet held in "m", using the data   */
 /* in the IP header "ip" to seed it.                                        */
@@ -2872,6 +2895,8 @@ int len;
 /* NB: This function assumes we've pullup'd enough for all of the IP header */
 /* and the TCP header.  We also assume that data blocks aren't allocated in */
 /* odd sizes.                                                               */
+/*                                                                          */
+/* For IPv6, l3len excludes extension header size.                          */
 /*                                                                          */
 /* Expects ip_len to be in host byte order when called.                     */
 /* ------------------------------------------------------------------------ */
@@ -2916,9 +2941,9 @@ void *l4hdr;
 	} else if (IP_V(ip) == 6) {
 		ip6 = (ip6_t *)ip;
 		hlen = sizeof(*ip6);
-		slen = ntohs(l3len);
+		slen = l3len - hlen;
 		sum = htons((u_short)l4proto);
-		sum += slen;
+		sum += htons(slen);
 		sp = (u_short *)&ip6->ip6_src;
 		sum += *sp++;	/* ip6_src */
 		sum += *sp++;
@@ -3104,6 +3129,12 @@ nodata:
 #  endif /*  defined(BSD) || defined(sun) */
 # endif /* MENTAT */
 #else /* _KERNEL */
+	/*
+	 * Add up IP Header portion
+	 */
+	if (sp != (u_short *)l4hdr)
+		sp = (u_short *)l4hdr;
+
 	for (; slen > 1; slen -= 2)
 	        sum += *sp++;
 	if (slen)
@@ -3150,7 +3181,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.243.2.104 2007/05/11 13:41:51 darrenr Exp
+ * Id: fil.c,v 2.243.2.109 2007/05/31 12:27:33 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -5690,13 +5721,15 @@ fr_info_t *fin;
 		if (csump != NULL)
 			hdrsum = *csump;
 
-		if (dosum)
+		if (dosum) {
 #ifdef INET
 			sum = fr_cksum(fin->fin_m, fin->fin_ip,
-				       fin->fin_p, fin->fin_dp, fin->fin_plen);
+				       fin->fin_p, fin->fin_dp,
+				       fin->fin_dlen + fin->fin_hlen);
 #else
 			return 1;
 #endif
+		}
 #if SOLARIS && defined(_KERNEL) && (SOLARIS2 >= 6) && defined(ICK_VALID)
 	}
 #endif
@@ -5994,7 +6027,7 @@ ipftuneable_t ipf_tuneables[] = {
 		sizeof(ipl_logsize),		0,	NULL },
 #endif
 	{ { NULL },		NULL,			0,	0,
-			0,				0, NULL }
+		0,				0,	NULL }
 };
 
 static ipftuneable_t *ipf_tunelist = NULL;
@@ -6305,6 +6338,8 @@ int fr_initialise()
 {
 	int i;
 
+	bzero(&frstats, sizeof(frstats));
+
 #ifdef IPFILTER_LOG
 	i = fr_loginit();
 	if (i < 0)
@@ -6413,7 +6448,7 @@ void *data;
 		return EFAULT;
 
 	WRITE_ENTER(&ipf_mutex);
-	bzero((char *)frstats, sizeof(*frstats) * 2);
+	bzero(&frstats, sizeof(frstats));
 	RWLOCK_EXIT(&ipf_mutex);
 
 	return 0;
@@ -6564,6 +6599,9 @@ void *ptr;
 /* matches the tuple (type, uid, ptr).  If one cannot be found then one is  */
 /* allocated.  If one is found then it is moved to the top of the list of   */
 /* currently active tokens.                                                 */
+/*                                                                          */
+/* NOTE: It is by design that this function returns holding a read lock on  */
+/*       ipf_tokens.  Callers must make sure they release it!               */
 /* ------------------------------------------------------------------------ */
 ipftoken_t *ipf_findtoken(type, uid, ptr)
 int type, uid;
@@ -6928,7 +6966,8 @@ int mode, uid;
 void *ctx;
 {
 	friostat_t fio;
-	int error = 0, tmp;
+	int error, tmp;
+	SPL_INT(s);
 
 	switch (cmd)
 	{
@@ -6936,7 +6975,12 @@ void *ctx;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
+			error = BCOPYIN((caddr_t)data, (caddr_t)&tmp,
+					sizeof(tmp));
+			if (error != 0) {
+				error = EFAULT;
+				break;
+			}
 
 			RWLOCK_EXIT(&ipf_global);
 			WRITE_ENTER(&ipf_global);
@@ -6972,12 +7016,18 @@ void *ctx;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			BCOPYIN(data, &fr_flags, sizeof(fr_flags));
+			error = BCOPYIN((caddr_t)data, (caddr_t)&fr_flags,
+					sizeof(fr_flags));
+			if (error != 0)
+				error = EFAULT;
 		}
 		break;
 
 	case SIOCGETFF :
-		BCOPYOUT(&fr_flags, data, sizeof(fr_flags));
+		error = BCOPYOUT((caddr_t)&fr_flags, (caddr_t)data,
+				 sizeof(fr_flags));
+		if (error != 0)
+			error = EFAULT;
 		break;
 
 	case SIOCFUNCL :
@@ -7011,8 +7061,12 @@ void *ctx;
 		else {
 			WRITE_ENTER(&ipf_mutex);
 			bzero((char *)frcache, sizeof(frcache[0]) * 2);
-			BCOPYOUT(&fr_active, data, sizeof(fr_active));
-			fr_active = 1 - fr_active;
+			error = BCOPYOUT((caddr_t)&fr_active, (caddr_t)data,
+					 sizeof(fr_active));
+			if (error != 0)
+				error = EFAULT;
+			else
+				fr_active = 1 - fr_active;
 			RWLOCK_EXIT(&ipf_mutex);
 		}
 		break;
@@ -7033,9 +7087,16 @@ void *ctx;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			tmp = frflush(IPL_LOGIPF, 4, tmp);
-			BCOPYOUT(&tmp, data, sizeof(tmp));
+			error = BCOPYIN((caddr_t)data, (caddr_t)&tmp,
+				        sizeof(tmp));
+			if (!error) {
+				tmp = frflush(IPL_LOGIPF, 4, tmp);
+				error = BCOPYOUT((caddr_t)&tmp, (caddr_t)data,
+						 sizeof(tmp));
+				if (error != 0)
+					error = EFAULT;
+			} else
+				error = EFAULT;
 		}
 		break;
 
@@ -7044,19 +7105,29 @@ void *ctx;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			BCOPYIN(data, &tmp, sizeof(tmp));
-			tmp = frflush(IPL_LOGIPF, 6, tmp);
-			BCOPYOUT(&tmp, data, sizeof(tmp));
+			error = BCOPYIN((caddr_t)data, (caddr_t)&tmp,
+				        sizeof(tmp));
+			if (!error) {
+				tmp = frflush(IPL_LOGIPF, 6, tmp);
+				error = BCOPYOUT((caddr_t)&tmp, (caddr_t)data,
+						 sizeof(tmp));
+				if (error != 0)
+					error = EFAULT;
+			} else
+				error = EFAULT;
 		}
 		break;
 #endif
 
 	case SIOCSTLCK :
-		BCOPYIN(data, &tmp, sizeof(tmp));
-		fr_state_lock = tmp;
-		fr_nat_lock = tmp;
-		fr_frag_lock = tmp;
-		fr_auth_lock = tmp;
+		error = BCOPYIN((caddr_t)data, (caddr_t)&tmp, sizeof(tmp));
+		if (error == 0) {
+			fr_state_lock = tmp;
+			fr_nat_lock = tmp;
+			fr_frag_lock = tmp;
+			fr_auth_lock = tmp;
+		} else
+			error = EFAULT;
 		break;
 
 #ifdef	IPFILTER_LOG
@@ -7065,7 +7136,10 @@ void *ctx;
 			error = EPERM;
 		else {
 			tmp = ipflog_clear(IPL_LOGIPF);
-			BCOPYOUT(&tmp, data, sizeof(tmp));
+			error = BCOPYOUT((caddr_t)&tmp, (caddr_t)data,
+					 sizeof(tmp));
+			if (error)
+				error = EFAULT;
 		}
 		break;
 #endif /* IPFILTER_LOG */
@@ -7095,21 +7169,29 @@ void *ctx;
 	case FIONREAD :
 		tmp = (int)iplused[IPL_LOGIPF];
 
-		BCOPYOUT(&tmp, data, sizeof(tmp));
+		error = BCOPYOUT((caddr_t)&tmp, (caddr_t)data, sizeof(tmp));
 		break;
 #endif
 
 	case SIOCIPFITER :
+		SPL_SCHED(s);
 		error = ipf_frruleiter(data, uid, ctx);
+		SPL_X(s);
 		break;
 
 	case SIOCGENITER :
+		SPL_SCHED(s);
 		error = ipf_genericiter(data, uid, ctx);
+		SPL_X(s);
+		break;
 		break;
 
 	case SIOCIPFDELTOK :
-		BCOPYIN(data, &tmp, sizeof(tmp));
-		error = ipf_deltoken(tmp, uid, ctx);
+		SPL_SCHED(s);
+		error = BCOPYIN((caddr_t)data, (caddr_t)&tmp, sizeof(tmp));
+		if (error == 0)
+			error = ipf_deltoken(tmp, uid, ctx);
+		SPL_X(s);
 		break;
 
 	default :

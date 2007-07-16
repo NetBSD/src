@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.4.2 2007/05/22 22:52:09 pavel Exp $
+#	$NetBSD: Makefile,v 1.11.4.3 2007/07/16 11:05:55 liamjfoy Exp $
 #
 # (C)opyright 1993-1996 by Darren Reed.
 #
@@ -38,7 +38,7 @@ logtests: l1
 
 pools: p1 p2 p3 p5 ip1 ip2
 
-ipv6: ipv6.1 ipv6.2 ipv6.3
+ipv6: ipv6.1 ipv6.2 ipv6.3 ipv6.5
 
 bpf: bpf1 bpf-f1
 
@@ -74,7 +74,7 @@ l1:
 	@${HOST_SH} ${.CURDIR}/logtest ${.CURDIR} \
 		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
-ipv6.1 ipv6.2 ipv6.3:
+ipv6.1 ipv6.2 ipv6.3 ipv6.5:
 	@${HOST_SH} ${.CURDIR}/dotest6 ${.CURDIR} \
 		`${AWK} "/^$@ / { print; } " ${.CURDIR}/test.format`
 
@@ -119,7 +119,7 @@ clean:
 	/bin/rm -f in1 in2 in3 in4 in5 in6
 	/bin/rm -f p1 p2 p3 p5 ip1 ip2
 	/bin/rm -f l1
-	/bin/rm -f ipv6.1 ipv6.2 ipv6.3
+	/bin/rm -f ipv6.1 ipv6.2 ipv6.3 ipv6.5
 	/bin/rm -f bpf1 bpf-f1
 	/bin/rm -f results/* logout
 	/bin/rm -rf results
