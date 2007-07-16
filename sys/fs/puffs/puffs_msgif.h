@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.40 2007/07/02 18:25:36 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.41 2007/07/16 16:11:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -113,7 +113,7 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_WTCACHE		0x08	/* write-through page cache */
 #define PUFFS_KFLAG_IAONDEMAND		0x10	/* inactive only on demand  */
 #define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x20	/* full pnbuf in lookup     */
-#define PUFFS_KFLAG_MASK		0x2f
+#define PUFFS_KFLAG_MASK		0x3f
 
 #define PUFFS_FHFLAG_DYNAMIC	0x01
 #define PUFFS_FHFLAG_NFSV2	0x02
