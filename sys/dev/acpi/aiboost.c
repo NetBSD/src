@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.10 2007/07/12 18:50:40 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.11 2007/07/16 16:44:26 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.10 2007/07/12 18:50:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.11 2007/07/16 16:44:26 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,14 +208,19 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 	j = 0;
 	i = edata->sensor; /* sensor number */
 
+#define AIBOOST_INVALIDATE_SENSOR()					\
+	do {								\
+		if (val == -1 || val == 0) {				\
+			edata->state = ENVSYS_SINVALID;			\
+			return;						\
+		}							\
+	} while (/* CONSTCOND */ 0)
+
 	switch (edata->units) {
 	case ENVSYS_STEMP:
 		/* Temperatures */
 		val = aiboost_get_value(h, "RTMP", sc->sc_aitemp->elem[i].id);
-		if (val == -1) {
-			edata->state = ENVSYS_SINVALID;
-			return;
-		}
+		AIBOOST_INVALIDATE_SENSOR();
 		/* envsys(9) wants mK... convert from Celsius. */
 		edata->value_cur = val * 100000 + 273150000;
 		DPRINTF(("%s: temp[%d] value_cur=%d val=%d j=%d\n", __func__,
@@ -225,10 +230,7 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 		/* Voltages */
 		j = i - sc->sc_aitemp->num;
 		val = aiboost_get_value(h, "RVLT", sc->sc_aivolt->elem[j].id);
-		if (val == -1) {
-			edata->state = ENVSYS_SINVALID;
-			return;
-		}
+		AIBOOST_INVALIDATE_SENSOR();
 		/* envsys(4) wants mV... */
 		edata->value_cur = val * 10000;
 		edata->value_cur /= 10;
@@ -239,10 +241,7 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 		/* Fans */
 		j = i - (sc->sc_aitemp->num + sc->sc_aivolt->num);
 		val = aiboost_get_value(h, "RFAN", sc->sc_aifan->elem[j].id);
-		if (val == -1) {
-			edata->state = ENVSYS_SINVALID;
-			return;
-		}
+		AIBOOST_INVALIDATE_SENSOR();
 		edata->value_cur = val;
 		DPRINTF(("%s: fan[%d] val=%d j=%d\n", __func__, i, val, j));
 		break;
