@@ -1,4 +1,4 @@
-/*	$NetBSD: alist_new.c,v 1.1.1.1.2.2 2007/05/07 17:04:30 pavel Exp $	*/
+/*	$NetBSD: alist_new.c,v 1.1.1.1.2.3 2007/07/16 11:04:47 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2006 by Darren Reed.

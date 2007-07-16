@@ -1,4 +1,4 @@
-/*	$NetBSD: v6ionames.c,v 1.5.4.1 2007/05/07 17:05:03 pavel Exp $	*/
+/*	$NetBSD: v6ionames.c,v 1.5.4.2 2007/07/16 11:05:24 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2003-2005 by Darren Reed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.1.1.5.4.1 2007/05/07 17:04:22 pavel Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.1.1.5.4.2 2007/07/16 11:04:03 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -77,7 +77,7 @@ static int rn_freenode __P((struct radix_node *, void *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.19 2007/02/17 12:41:42 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_pool.c,v 2.55.2.20 2007/05/31 12:27:35 darrenr Exp";
 #endif
 
 #ifdef IPFILTER_LOOKUP
@@ -395,9 +395,9 @@ addrfamily_t *addr, *mask;
 /*                                                                          */
 /* Search the pool for a given address and return a search result.          */
 /* ------------------------------------------------------------------------ */
-int ip_pool_search(tptr, version, dptr)
+int ip_pool_search(tptr, ipversion, dptr)
 void *tptr;
-int version;
+int ipversion;
 void *dptr;
 {
 	struct radix_node *rn;
@@ -417,11 +417,11 @@ void *dptr;
 	bzero(&v, sizeof(v));
 	v.adf_len = offsetof(addrfamily_t, adf_addr);
 
-	if (version == 4) {
+	if (ipversion == 4) {
 		v.adf_len += sizeof(addr->in4);
 		v.adf_addr.in4 = addr->in4;
 #ifdef USE_INET6
-	} else if (version == 6) {
+	} else if (ipversion == 6) {
 		v.adf_len += sizeof(addr->in6);
 		v.adf_addr.in6 = addr->in6;
 #endif

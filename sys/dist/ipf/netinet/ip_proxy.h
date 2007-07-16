@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.4.12.1 2007/05/07 17:05:25 pavel Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.4.12.2 2007/07/16 11:05:49 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.

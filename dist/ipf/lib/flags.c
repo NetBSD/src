@@ -1,4 +1,4 @@
-/*	$NetBSD: flags.c,v 1.1.1.1.18.1 2007/05/07 17:04:34 pavel Exp $	*/
+/*	$NetBSD: flags.c,v 1.1.1.1.18.2 2007/07/16 11:04:52 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2001-2002 by Darren Reed.

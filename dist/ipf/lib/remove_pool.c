@@ -1,4 +1,4 @@
-/*	$NetBSD: remove_pool.c,v 1.1.1.1.18.1 2007/05/07 17:05:00 pavel Exp $	*/
+/*	$NetBSD: remove_pool.c,v 1.1.1.1.18.2 2007/07/16 11:05:21 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: printtunable.c,v 1.1.1.1.18.1 2007/05/07 17:04:59 pavel Exp $	*/
+/*	$NetBSD: printtunable.c,v 1.1.1.1.18.2 2007/07/16 11:05:20 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.

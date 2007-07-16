@@ -1,4 +1,4 @@
-/*	$NetBSD: resetlexer.c,v 1.1.1.1.18.1 2007/05/07 17:05:01 pavel Exp $	*/
+/*	$NetBSD: resetlexer.c,v 1.1.1.1.18.2 2007/07/16 11:05:22 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.

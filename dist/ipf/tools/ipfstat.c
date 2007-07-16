@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfstat.c,v 1.12.4.2 2007/05/22 22:54:29 pavel Exp $	*/
+/*	$NetBSD: ipfstat.c,v 1.12.4.3 2007/07/16 11:05:32 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2002-2006 by Darren Reed.
@@ -71,7 +71,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.21 2007/05/11 10:44:16 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipfstat.c,v 1.44.2.23 2007/05/31 13:13:02 darrenr Exp";
 #endif
 
 #ifdef __hpux
@@ -1117,6 +1117,8 @@ ips_stat_t *ipsp;
 
 		PRINTF("\nState table bucket statistics:\n");
 		PRINTF("\t%lu in use\t\n", ipsp->iss_inuse);
+		PRINTF("\t%u%% hash efficiency\n", ipsp->iss_active ?
+			(u_int)(ipsp->iss_inuse * 100 / ipsp->iss_active) : 0);
 
 		minlen = ipsp->iss_max;
 		totallen = 0;

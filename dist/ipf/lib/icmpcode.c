@@ -1,4 +1,4 @@
-/*	$NetBSD: icmpcode.c,v 1.6.4.1 2007/05/07 17:04:37 pavel Exp $	*/
+/*	$NetBSD: icmpcode.c,v 1.6.4.2 2007/07/16 11:04:56 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2000-2006 by Darren Reed.
