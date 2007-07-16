@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.31 2007/07/14 15:57:26 dsl Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.32 2007/07/16 17:06:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.31 2007/07/14 15:57:26 dsl Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.32 2007/07/16 17:06:54 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ main(int argc, char *argv[])
 	args.pa_config = tag;
 
 	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args, sizeof args);
-	if (rc < 0)
+	if (rc == -1)
 		err(1, "mount attempt on %s", mountpt);
 
 	/* mount(2) call succeeded, redirect standard streams to /dev/null */
