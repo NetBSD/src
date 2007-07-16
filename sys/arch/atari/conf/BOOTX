@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.68 2007/06/06 08:21:08 martin Exp $
+# $NetBSD: BOOTX,v 1.69 2007/07/16 06:35:53 he Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.66 2007/06/06 08:20:26 martin Exp $
+#		NetBSD: GENERIC.in,v 1.67 2007/07/16 06:26:54 he Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -35,6 +35,7 @@ options COMPAT_15 # Compatibility with NetBSD 1.5
 options COMPAT_16 # Compatibility with NetBSD 1.6
 options COMPAT_20 # Compatibility with NetBSD 2.0
 options COMPAT_30 # NetBSD 3.0 compatibility.
+options COMPAT_40 # NetBSD 4.0 compatibility.
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
