@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.50 2007/07/05 13:47:47 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.51 2007/07/16 17:54:46 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.50 2007/07/05 13:47:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51 2007/07/16 17:54:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,6 +381,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].value_cur = p2[3].Integer.Value;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].state = ENVSYS_SVALID;
+	sc->sc_data[ACPIBAT_TECHNOLOGY].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_DVOLTAGE].value_cur = p2[4].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DVOLTAGE].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
