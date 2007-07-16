@@ -1,3 +1,6 @@
+2007-07-16  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/grabmyaddr.c: fixed a socket leak.
+
 ---------------------------------------------
 
 	0.7.rc1 released
