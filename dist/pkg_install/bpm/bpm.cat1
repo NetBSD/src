@@ -1,0 +1,61 @@
+BPM(1)                  NetBSD General Commands Manual                  BPM(1)
+
+NNAAMMEE
+     bbppmm -- menu-based binary package manager
+
+SSYYNNOOPPSSIISS
+     bbppmm [--hhnnVVvv] [--bb _b_a_s_e_U_R_L] [--mm _m_a_c_h_i_n_e] [--rr _r_e_l_e_a_s_e] [--ww _s_e_c_o_n_d_s]
+
+DDEESSCCRRIIPPTTIIOONN
+     The bbppmm command is used to locate and install binary packages from any
+     reachable URL.
+
+     The following command-line options are supported:
+
+     --bb _b_a_s_e_U_R_L
+             Specify a base URL from which to download binary packages.  The
+             default URL is _f_t_p_:_/_/_f_t_p_._N_e_t_B_S_D_._o_r_g_/_p_u_b_/_N_e_t_B_S_D_/_p_a_c_k_a_g_e_s.
+
+     --hh      Print a help message and then exit.
+
+     --mm _m_a_c_h_i_n_e
+             Use _m_a_c_h_i_n_e as the machine architecture to be used, instead of
+             that returned by uname(1).
+
+     --nn      Don't actually execute the commands to add the package.
+
+     --rr _r_e_l_e_a_s_e
+             Use _r_e_l_e_a_s_e as the operating system release to be used, instead
+             of that returned by uname(1).
+
+     --VV      Print version number and exit.
+
+     --vv      Turn on verbose output.
+
+     --ww _s_e_c_o_n_d_s
+             The number of _s_e_c_o_n_d_s to wait after displaying an error message
+             and returning to normal menu operations.
+
+     bbppmm provides a menu-based binary package manager for NetBSD.  bbppmm first
+     connects to the URL using ftp(1), and displays a list of categories for
+     which binary packages exist.  If no categories are displayed, it could be
+     that the machine architecture or operating system release string have
+     been wrongly interpreted, and that it will be necessary to override this
+     values by means of the command line options.  Within a category, a list
+     of packages will be displayed, and by selecting one using the number
+     assigned to it, the package will be downloaded automatically, and
+     installed, using the pkg_add(1) utility.  It is also possible to change
+     the category currently being examined, and to quit from the utility, sim-
+     ply by selecting the appropriate choices on the menu.
+
+EENNVVIIRROONNMMEENNTT
+     The environment variables which govern the behaviour of ftp(1) and
+     pkg_add(1) are valid for bbppmm.
+
+SSEEEE AALLSSOO
+     ftp(1), pkg_add(1), uname(1)
+
+AAUUTTHHOORRSS
+     The bbppmm utility was written by Alistair Crooks <agc@NetBSD.org>.
+
+NetBSD 4.0                     December 21, 2003                    NetBSD 4.0
