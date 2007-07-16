@@ -1,4 +1,4 @@
-/*	$NetBSD: proptest.c,v 1.1 2006/05/28 03:57:57 thorpej Exp $	*/
+/*	$NetBSD: proptest.c,v 1.2 2007/07/16 19:04:18 joerg Exp $	*/
 
 /*
  * Test basic proplib functionality.
@@ -15,29 +15,31 @@
 #include <prop/proplib.h>
 
 static const char compare1[] =
+"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+"<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
 "<plist version=\"1.0\">\n"
 "<dict>\n"
 "	<key>false-val</key>\n"
 "	<false/>\n"
 "	<key>one</key>\n"
-"	<integer>0x1</integer>\n"
+"	<integer>1</integer>\n"
 "	<key>three</key>\n"
 "	<array>\n"
 "		<dict>\n"
 "			<key>one</key>\n"
-"			<integer>0x1</integer>\n"
+"			<integer>1</integer>\n"
 "			<key>two</key>\n"
 "			<string>number-two</string>\n"
 "		</dict>\n"
 "		<dict>\n"
 "			<key>one</key>\n"
-"			<integer>0x1</integer>\n"
+"			<integer>1</integer>\n"
 "			<key>two</key>\n"
 "			<string>number-two</string>\n"
 "		</dict>\n"
 "		<dict>\n"
 "			<key>one</key>\n"
-"			<integer>0x1</integer>\n"
+"			<integer>1</integer>\n"
 "			<key>two</key>\n"
 "			<string>number-two</string>\n"
 "		</dict>\n"
@@ -121,7 +123,7 @@ main(int argc, char *argv[])
 
 	for (idx = 0; idx < strlen(ext1); idx++) {
 		if (compare1[idx] != ext1[idx]) {
-			printf("Strings differ at byte %z\n", idx);
+			printf("Strings differ at byte %zu\n", idx);
 			printf("REFERENCE:\n%s\n", &compare1[idx]);
 			printf("GENERATED:\n%s\n", &ext1[idx]);
 			break;
