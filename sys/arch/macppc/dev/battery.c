@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.4 2007/07/05 14:49:59 xtraeme Exp $ */
+/*	$NetBSD: battery.c,v 1.5 2007/07/16 18:24:29 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.4 2007/07/05 14:49:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.5 2007/07/16 18:24:29 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,31 +275,24 @@ battery_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 	switch (which) {
 	case BAT_CPU_TEMPERATURE:
 		edata->value_cur = sc->sc_cpu_temp * 1000000 + 273150000;
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_AC_PRESENT:
 		edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_VOLTAGE:
 		edata->value_cur = sc->sc_voltage * 1000;
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_CURRENT:
 		edata->value_cur = sc->sc_current * 1000;
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_CHARGE:
 		edata->value_cur = sc->sc_charge;
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_MAX_CHARGE:
 		edata->value_cur = 100;
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_TEMPERATURE:
 		edata->value_cur = sc->sc_bat_temp * 1000000 + 273150000;
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_CHARGING:
 		if ((sc->sc_flags & PMU_PWR_BATT_CHARGING) &&
@@ -308,14 +301,13 @@ battery_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 		else
 			edata->value_cur = 0;
 
-		edata->state = ENVSYS_SVALID;
 		break;
 	case BAT_FULL:
 		edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_FULL);
-		edata->state = ENVSYS_SVALID;
 		break;
 	}
 
+	edata->state = ENVSYS_SVALID;
 	return 0;
 }
 
