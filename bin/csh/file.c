@@ -1,4 +1,4 @@
-/* $NetBSD: file.c,v 1.25 2007/07/16 02:26:51 dogcow Exp $ */
+/* $NetBSD: file.c,v 1.26 2007/07/16 14:07:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: file.c,v 1.25 2007/07/16 02:26:51 dogcow Exp $");
+__RCSID("$NetBSD: file.c,v 1.26 2007/07/16 14:07:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ static int ignored(Char *);
  * completion by default.  Filec controls completion, nobeep controls
  * ringing the terminal bell on incomplete expansions.
  */
-cshbool filec = 0;
+cshint filec = 0;
 
 static void
 setup_tty(int on)

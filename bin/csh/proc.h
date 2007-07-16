@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.10 2007/07/16 02:26:52 dogcow Exp $ */
+/* $NetBSD: proc.h,v 1.11 2007/07/16 14:07:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -91,7 +91,7 @@ struct process {
 #define	AREASON		0200
 
 struct process proclist;	/* list head of all processes */
-cshbool pnoprocesses;		/* pchild found nothing to wait for */
+cshint pnoprocesses;		/* pchild found nothing to wait for */
 
 struct process *pholdjob;	/* one level stack of current jobs */
 

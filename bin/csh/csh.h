@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.19 2007/07/16 02:26:51 dogcow Exp $ */
+/* $NetBSD: csh.h,v 1.20 2007/07/16 14:07:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -96,7 +96,7 @@ FILE *cshin, *cshout, *csherr;
 
 #define	isdir(d) (S_ISDIR(d.st_mode))
 
-typedef int cshbool; /* necessary because it holds values other than 0 or 1 */
+typedef int cshint; /* necessary because it holds values other than 0 or 1 */
 
 #define	eq(a, b) (Strcmp(a, b) == 0)
 
@@ -108,25 +108,25 @@ typedef int cshbool; /* necessary because it holds values other than 0 or 1 */
 /*
  * Global flags
  */
-cshbool child;			/* Child shell ... errors cause exit */
-cshbool chkstop;			/* Warned of stopped jobs... allow exit */
-cshbool didfds;			/* Have setup i/o fd's for child */
-cshbool doneinp;			/* EOF indicator after reset from readc */
-cshbool exiterr;			/* Exit if error or non-zero exit status */
-cshbool haderr;			/* Reset was because of an error */
-cshbool havhash;			/* path hashing is available */
-cshbool intact;			/* We are interactive... therefore prompt */
-cshbool intty;			/* Input is a tty */
-cshbool justpr;			/* Just print because of :p hist mod */
-cshbool loginsh;			/* We are a loginsh -> .login/.logout */
-cshbool neednote;			/* Need to pnotify() */
-cshbool noexec;			/* Don't execute, just syntax check */
-cshbool pjobs;			/* want to print jobs if interrupted */
-cshbool setintr;			/* Set interrupts on/off -> Wait intr... */
-cshbool timflg;			/* Time the next waited for command */
+cshint child;			/* Child shell ... errors cause exit */
+cshint chkstop;			/* Warned of stopped jobs... allow exit */
+cshint didfds;			/* Have setup i/o fd's for child */
+cshint doneinp;			/* EOF indicator after reset from readc */
+cshint exiterr;			/* Exit if error or non-zero exit status */
+cshint haderr;			/* Reset was because of an error */
+cshint havhash;			/* path hashing is available */
+cshint intact;			/* We are interactive... therefore prompt */
+cshint intty;			/* Input is a tty */
+cshint justpr;			/* Just print because of :p hist mod */
+cshint loginsh;			/* We are a loginsh -> .login/.logout */
+cshint neednote;			/* Need to pnotify() */
+cshint noexec;			/* Don't execute, just syntax check */
+cshint pjobs;			/* want to print jobs if interrupted */
+cshint setintr;			/* Set interrupts on/off -> Wait intr... */
+cshint timflg;			/* Time the next waited for command */
 
 #ifdef FILEC
-extern cshbool filec;		/* doing filename expansion */
+extern cshint filec;		/* doing filename expansion */
 #endif
 
 /*
@@ -267,7 +267,7 @@ extern int aret;		/* What was the last character returned */
  */
 struct Ain lineloc;
 
-cshbool cantell;			/* Is current source tellable ? */
+cshint cantell;			/* Is current source tellable ? */
 
 /*
  * Input lines are parsed into doubly linked circular

@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.24 2007/07/16 02:26:51 dogcow Exp $ */
+/* $NetBSD: dol.c,v 1.25 2007/07/16 14:07:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.24 2007/07/16 02:26:51 dogcow Exp $");
+__RCSID("$NetBSD: dol.c,v 1.25 2007/07/16 14:07:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ Dword(void)
 {
     Char wbuf[BUFSIZE], *wp;
     int c, c1, i;
-    cshbool dolflg, done, sofar;
+    cshint dolflg, done, sofar;
     
     done = 0;
     i = MAXWLEN;
@@ -389,7 +389,7 @@ Dgetdol(void)
     struct varent *vp;
     Char *np;
     int c, lwb, sc, subscr, upb;
-    cshbool dimen, bitset;
+    cshint dimen, bitset;
     char tnp;
     
     bitset = 0;
@@ -819,7 +819,7 @@ heredoc(Char *term)
     Char *Dv[2], *lbp, *obp, *mbp, **vp;
     char *tmp;
     int c, ocnt, lcnt, mcnt;
-    cshbool quoted;
+    cshint quoted;
 
 again:
     tmp = short2str(shtemp);

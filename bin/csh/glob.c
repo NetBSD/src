@@ -1,4 +1,4 @@
-/* $NetBSD: glob.c,v 1.23 2007/07/16 02:26:52 dogcow Exp $ */
+/* $NetBSD: glob.c,v 1.24 2007/07/16 14:07:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.23 2007/07/16 02:26:52 dogcow Exp $");
+__RCSID("$NetBSD: glob.c,v 1.24 2007/07/16 14:07:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ static void expbrace(Char ***, Char ***, int);
 static int pmatch(Char *, Char *);
 static void pword(void);
 static void psave(int);
-static void backeval(Char *, cshbool);
+static void backeval(Char *, cshint);
 
 static Char *
 globtilde(Char **nv, Char *s)
@@ -583,7 +583,7 @@ tglob(Char **t)
  * words only at newlines.
  */
 Char **
-dobackp(Char *cp, cshbool literal)
+dobackp(Char *cp, cshint literal)
 {
     Char word[MAXPATHLEN], *ep, *lp, *rp;
 
@@ -627,13 +627,13 @@ dobackp(Char *cp, cshbool literal)
 }
 
 static void
-backeval(Char *cp, cshbool literal)
+backeval(Char *cp, cshint literal)
 {
     struct command faket;
     char tibuf[BUFSIZE];
     Char ibuf[BUFSIZE], *fakecom[2], *ip;
     int pvec[2], c, icnt, quoted;
-    cshbool hadnl;
+    cshint hadnl;
 
     hadnl = 0;
     icnt = 0;

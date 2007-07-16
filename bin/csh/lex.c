@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.24 2007/07/16 02:26:52 dogcow Exp $ */
+/* $NetBSD: lex.c,v 1.25 2007/07/16 14:07:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.24 2007/07/16 02:26:52 dogcow Exp $");
+__RCSID("$NetBSD: lex.c,v 1.25 2007/07/16 14:07:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static Char *word(void);
 static int getC1(int);
 static void getdol(void);
 static void getexcl(int);
-static struct Hist *findev(Char *, cshbool);
+static struct Hist *findev(Char *, cshint);
 static void setexclp(Char *);
 static int bgetc(void);
 static void bfree(void);
@@ -69,8 +69,8 @@ static struct wordent *gethent(int);
 static int matchs(Char *, Char *);
 static int getsel(int *, int *, int);
 static struct wordent *getsub(struct wordent *);
-static Char *subword(Char *, int, cshbool *);
-static struct wordent *dosub(int, struct wordent *, cshbool);
+static Char *subword(Char *, int, cshint *);
+static struct wordent *dosub(int, struct wordent *, cshint);
 
 /*
  * Peekc is a peek character for getC, peekread for readc.
@@ -121,7 +121,7 @@ static Char labuf[BUFSIZE];
  * when called by the alias routine to determine whether to keep the
  * argument list.
  */
-static cshbool hadhist = 0;
+static cshint hadhist = 0;
 
 /*
  * Avoid alias expansion recursion via \!#
@@ -229,7 +229,7 @@ word(void)
     Char wbuf[BUFSIZE], *wp;
     int i;
     Char c, c1;
-    cshbool dolflg;
+    cshint dolflg;
 
     wp = wbuf;
     i = BUFSIZE - 4;
@@ -406,7 +406,7 @@ getdol(void)
 {
     Char name[4*MAXVARLEN+1], *ep, *np;
     int c, sc;
-    cshbool special, toolong;
+    cshint special, toolong;
 
     special = 0;
     np = name, *np++ = '$';
@@ -710,7 +710,7 @@ getsub(struct wordent *en)
     Char orhsb[sizeof(rhsb) / sizeof(Char)];
     Char *cp;
     int c, delim, sc;
-    cshbool global;
+    cshint global;
 
     do {
 	exclnxt = 0;
@@ -835,11 +835,11 @@ getsub(struct wordent *en)
 }
 
 static struct wordent *
-dosub(int sc, struct wordent *en, cshbool global)
+dosub(int sc, struct wordent *en, cshint global)
 {
     struct wordent lexi, *hp, *wdp;
     int i;
-    cshbool didone, didsub;
+    cshint didone, didsub;
 
     didone = 0;
     didsub = 0;
@@ -888,7 +888,7 @@ dosub(int sc, struct wordent *en, cshbool global)
 }
 
 static Char *
-subword(Char *cp, int type, cshbool *adid)
+subword(Char *cp, int type, cshint *adid)
 {
     Char wbuf[BUFSIZE];
     Char *mp, *np, *wp;
@@ -1009,7 +1009,7 @@ static int
 getsel(int *al, int *ar, int dol)
 {
     int c, i;
-    cshbool first;
+    cshint first;
 
     c = getC(0);
     first = *al < 0;
@@ -1092,7 +1092,7 @@ gethent(int sc)
     Char *np;
     char *str;
     int c, event;
-    cshbool back;
+    cshint back;
 
     back = 0;
     c = sc == HISTSUB ? HIST : getC(0);
@@ -1201,7 +1201,7 @@ gethent(int sc)
 }
 
 static struct Hist *
-findev(Char *cp, cshbool anyarg)
+findev(Char *cp, cshint anyarg)
 {
     struct Hist *hp;
 
@@ -1267,7 +1267,7 @@ unreadc(int c)
 }
 
 int
-readc(cshbool wanteof)
+readc(cshint wanteof)
 {
     static int sincereal;
     int c;
