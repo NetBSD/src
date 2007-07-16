@@ -1,5 +1,6 @@
 2007-07-16  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/proposal.c: indentation
+	* src/racoon/grabmyaddr.c: fixed a socket leak.
 	
 2007-06-07  Emmanuel Dreyfus <manu@netbsd.org>
 	From Paul Winder <Paul.Winder@tadpole.com>:
