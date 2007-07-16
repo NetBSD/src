@@ -1,8 +1,8 @@
 #!/bin/sh -
 #
-#	$NetBSD: sensor_indicator,v 1.1 2007/07/02 15:26:18 xtraeme Exp $
+#	$NetBSD: sensor_indicator,v 1.2 2007/07/16 17:51:09 xtraeme Exp $
 #
-# Generic script for indicator sensors.
+# Generic script for indicator and integer sensors.
 #
 # Arguments passed by powerd(8):
 #
