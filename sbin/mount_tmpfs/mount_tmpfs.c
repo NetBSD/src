@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.17 2007/07/16 17:06:54 pooka Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.18 2007/07/16 17:12:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.17 2007/07/16 17:06:54 pooka Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.18 2007/07/16 17:12:03 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -199,25 +199,25 @@ mount_tmpfs(int argc, char *argv[])
 		struct passwd *pw;
 		struct group *gr;
 
-		(void)printf("version=%d\n", args.ta_version);
-		(void)printf("size_max=%" PRIuMAX "\n",
+		(void)printf("version=%d, ", args.ta_version);
+		(void)printf("size_max=%" PRIuMAX ", ",
 		    (uintmax_t)args.ta_size_max);
-		(void)printf("nodes_max=%" PRIuMAX "\n",
+		(void)printf("nodes_max=%" PRIuMAX ", ",
 		    (uintmax_t)args.ta_nodes_max);
 
 		pw = getpwuid(args.ta_root_uid);
 		if (pw == NULL)
-			(void)printf("root_uid=%" PRIuMAX "\n",
+			(void)printf("root_uid=%" PRIuMAX ", ",
 			    (uintmax_t)args.ta_root_uid);
 		else
-			(void)printf("root_uid=%s\n", pw->pw_name);
+			(void)printf("root_uid=%s, ", pw->pw_name);
 
 		gr = getgrgid(args.ta_root_gid);
 		if (gr == NULL)
-			(void)printf("root_gid=%" PRIuMAX "\n",
+			(void)printf("root_gid=%" PRIuMAX ", ",
 			    (uintmax_t)args.ta_root_gid);
 		else
-			(void)printf("root_gid=%s\n", gr->gr_name);
+			(void)printf("root_gid=%s, ", gr->gr_name);
 
 		(void)printf("root_mode=%o\n", args.ta_root_mode);
 	}
