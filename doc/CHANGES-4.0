@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.205 2007/07/16 12:15:46 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.206 2007/07/16 14:49:39 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7044,3 +7044,9 @@ sys/kern/vfs_subr.c				1.289
 
 	per discussion with Bill Stouder-Studenmund on tech-kern
 	[pooka, ticket #768]
+
+crypto/dist/ssh/auth.c				1.25
+
+	PR/36623: Edgar Fu: ssh publickey authentification fails if homedir not present
+	Removed extra realpath check that was introduced by a bogus merge.
+	[christos, ticket #761]
