@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_emul.c,v 1.1.1.1.18.1 2007/05/07 17:05:01 pavel Exp $	*/
+/*	$NetBSD: rwlock_emul.c,v 1.1.1.1.18.2 2007/07/16 11:05:23 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.

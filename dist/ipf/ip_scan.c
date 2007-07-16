@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.1.1.4.4.1 2007/05/07 17:04:24 pavel Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.1.1.4.4.2 2007/07/16 11:04:12 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -576,7 +576,7 @@ int mode, uid;
 void *ctx;
 {
 	ipscanstat_t ipscs;
-	int err = 0;
+	int err;
 
 	switch (cmd)
 	{
@@ -589,7 +589,7 @@ void *ctx;
 	case SIOCGSCST :
 		bcopy((char *)&ipsc_stat, (char *)&ipscs, sizeof(ipscs));
 		ipscs.iscs_list = ipsc_list;
-		BCOPYOUT(&ipscs, data, sizeof(ipscs));
+		err = BCOPYOUT(&ipscs, data, sizeof(ipscs));
 		break;
 	default :
 		err = EINVAL;

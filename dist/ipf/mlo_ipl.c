@@ -1,4 +1,4 @@
-/*	$NetBSD: mlo_ipl.c,v 1.1.1.2.12.1 2007/05/07 17:04:26 pavel Exp $	*/
+/*	$NetBSD: mlo_ipl.c,v 1.1.1.2.12.2 2007/07/16 11:04:26 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.

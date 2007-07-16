@@ -1,4 +1,4 @@
-/*	$NetBSD: getport.c,v 1.5.4.1 2007/05/07 17:04:35 pavel Exp $	*/
+/*	$NetBSD: getport.c,v 1.5.4.2 2007/07/16 11:04:54 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfcomp.c,v 1.2.4.2 2007/05/22 22:54:29 pavel Exp $	*/
+/*	$NetBSD: ipfcomp.c,v 1.2.4.3 2007/07/16 11:05:31 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2001-2005 by Darren Reed.

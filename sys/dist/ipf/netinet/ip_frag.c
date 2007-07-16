@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.5.2.1 2007/05/07 17:05:20 pavel Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.5.2.2 2007/07/16 11:05:42 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -103,10 +103,10 @@ extern struct timeout fr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.5.2.1 2007/05/07 17:05:20 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.5.2.2 2007/07/16 11:05:42 liamjfoy Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.8 2006/09/01 14:09:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77.2.9 2007/05/27 11:13:44 darrenr Exp";
 #endif
 #endif
 
@@ -715,6 +715,14 @@ ipfr_t *fra, ***tail;
 }
 
 
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_fragfree                                                 */
+/* Returns:     Nil                                                         */
+/* Parameters:  fra - pointer to frag structure to free                     */
+/*                                                                          */
+/* Take care of the details associated with deleting an entry from the frag */
+/* cache.  Currently this just means bumping stats correctly after freeing  */
+/* ------------------------------------------------------------------------ */
 static void fr_fragfree(fra)
 ipfr_t *fra;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.20.2.1 2007/05/07 17:05:12 pavel Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.20.2.2 2007/07/16 11:05:30 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.

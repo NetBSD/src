@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsyncs.c,v 1.1.1.3.4.1 2007/05/07 17:05:16 pavel Exp $	*/
+/*	$NetBSD: ipsyncs.c,v 1.1.1.3.4.2 2007/07/16 11:05:37 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.

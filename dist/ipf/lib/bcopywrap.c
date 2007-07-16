@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopywrap.c,v 1.1.1.1.18.1 2007/05/07 17:04:30 pavel Exp $	*/
+/*	$NetBSD: bcopywrap.c,v 1.1.1.1.18.2 2007/07/16 11:04:47 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.

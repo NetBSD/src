@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.7.4.3 2007/06/08 09:20:05 liamjfoy Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.7.4.4 2007/07/16 11:03:52 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.15 2007/05/01 22:14:59 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.16 2007/05/28 11:56:22 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -461,7 +461,7 @@ int v;
 		ifp->if_unit = -1;
 	}
 #endif
-	ifp->if_output = no_output;
+	ifp->if_output = (void *)no_output;
 
 	if (addr != NULL) {
 		fr_setifpaddr(ifp, addr);
@@ -497,7 +497,7 @@ void init_ifp()
     (defined(OpenBSD) && (OpenBSD >= 199603)) || defined(linux) || \
     (defined(__FreeBSD__) && (__FreeBSD_version >= 501113))
 	for (ifpp = ifneta; ifpp && (ifp = *ifpp); ifpp++) {
-		ifp->if_output = write_output;
+		ifp->if_output = (void *)write_output;
 		sprintf(fname, "/tmp/%s", ifp->if_xname);
 		fd = open(fname, O_WRONLY|O_CREAT|O_EXCL|O_TRUNC, 0600);
 		if (fd == -1)

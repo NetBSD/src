@@ -1,4 +1,4 @@
-/*	$NetBSD: printtqtable.c,v 1.1.1.1.2.2 2007/05/22 22:54:27 pavel Exp $	*/
+/*	$NetBSD: printtqtable.c,v 1.1.1.1.2.3 2007/07/16 11:05:20 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2007 by Darren Reed.

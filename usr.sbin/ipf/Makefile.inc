@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.17 2005/12/28 11:58:23 martti Exp $
+#	$NetBSD: Makefile.inc,v 1.17.4.1 2007/07/16 11:05:54 liamjfoy Exp $
 
 .include <bsd.own.mk>
+
+USE_FORT?= yes	# network client/server
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf
 CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/tools

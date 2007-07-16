@@ -1,4 +1,4 @@
-/*	$NetBSD: load_hashnode.c,v 1.1.1.1.18.1 2007/05/07 17:04:45 pavel Exp $	*/
+/*	$NetBSD: load_hashnode.c,v 1.1.1.1.18.2 2007/07/16 11:05:03 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2003-2005 by Darren Reed.

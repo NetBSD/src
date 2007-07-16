@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.15.2.4 2007/05/25 07:19:30 pavel Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.15.2.5 2007/07/16 11:05:52 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,10 +114,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.15.2.4 2007/05/25 07:19:30 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.15.2.5 2007/07/16 11:05:52 liamjfoy Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.66 2007/05/13 00:08:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.69 2007/05/26 13:05:14 darrenr Exp";
 #endif
 #endif
 
@@ -445,6 +445,7 @@ int mode, uid;
 void *ctx;
 {
 	int arg, ret, error = 0;
+	SPL_INT(s);
 
 	switch (cmd)
 	{
@@ -459,20 +460,32 @@ void *ctx;
 	 * Flush the state table
 	 */
 	case SIOCIPFFL :
-		BCOPYIN(data, (char *)&arg, sizeof(arg));
-		WRITE_ENTER(&ipf_state);
-		ret = fr_state_flush(arg, 4);
-		RWLOCK_EXIT(&ipf_state);
-		BCOPYOUT((char *)&ret, data, sizeof(ret));
+		error = BCOPYIN(data, (char *)&arg, sizeof(arg));
+		if (error != 0) {
+			error = EFAULT;
+		} else {
+			WRITE_ENTER(&ipf_state);
+			ret = fr_state_flush(arg, 4);
+			RWLOCK_EXIT(&ipf_state);
+			error = BCOPYOUT((char *)&ret, data, sizeof(ret));
+			if (error != 0)
+				error = EFAULT;
+		}
 		break;
 
 #ifdef	USE_INET6
 	case SIOCIPFL6 :
-		BCOPYIN(data, (char *)&arg, sizeof(arg));
-		WRITE_ENTER(&ipf_state);
-		ret = fr_state_flush(arg, 6);
-		RWLOCK_EXIT(&ipf_state);
-		BCOPYOUT((char *)&ret, data, sizeof(ret));
+		error = BCOPYIN(data, (char *)&arg, sizeof(arg));
+		if (error != 0) {
+			error = EFAULT;
+		} else {
+			WRITE_ENTER(&ipf_state);
+			ret = fr_state_flush(arg, 6);
+			RWLOCK_EXIT(&ipf_state);
+			error = BCOPYOUT((char *)&ret, data, sizeof(ret));
+			if (error != 0)
+				error = EFAULT;
+		}
 		break;
 #endif
 #ifdef	IPFILTER_LOG
@@ -486,7 +499,9 @@ void *ctx;
 			int tmp;
 
 			tmp = ipflog_clear(IPL_LOGSTATE);
-			BCOPYOUT((char *)&tmp, data, sizeof(tmp));
+			error = BCOPYOUT((char *)&tmp, data, sizeof(tmp));
+			if (error != 0)
+				error = EFAULT;
 		}
 		break;
 
@@ -497,8 +512,10 @@ void *ctx;
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
-			BCOPYIN((char *)data, (char *)&ipstate_logging,
+			error = BCOPYIN((char *)data, (char *)&ipstate_logging,
 					sizeof(ipstate_logging));
+			if (error != 0)
+				error = EFAULT;
 		}
 		break;
 
@@ -506,8 +523,10 @@ void *ctx;
 	 * Return the current state of logging.
 	 */
 	case SIOCGETLG :
-		BCOPYOUT((char *)&ipstate_logging, (char *)data,
+		error = BCOPYOUT((char *)&ipstate_logging, (char *)data,
 				 sizeof(ipstate_logging));
+		if (error != 0)
+			error = EFAULT;
 		break;
 
 	/*
@@ -515,7 +534,9 @@ void *ctx;
 	 */
 	case FIONREAD :
 		arg = iplused[IPL_LOGSTATE];	/* returned in an int */
-		BCOPYOUT((char *)&arg, data, sizeof(arg));
+		error = BCOPYOUT((char *)&arg, data, sizeof(arg));
+		if (error != 0)
+			error = EFAULT;
 		break;
 #endif
 
@@ -564,8 +585,10 @@ void *ctx;
 	 * Return a copy of the hash table bucket lengths
 	 */
 	case SIOCSTAT1 :
-		BCOPYOUT(ips_stats.iss_bucketlen, data,
+		error = BCOPYOUT(ips_stats.iss_bucketlen, data,
 				 fr_statesize * sizeof(u_long));
+		if (error != 0)
+			error = EFAULT;
 		break;
 
 	case SIOCGENITER :
@@ -577,12 +600,14 @@ void *ctx;
 		if (error != 0)
 			break;
 
+		SPL_SCHED(s);
 		token = ipf_findtoken(IPFGENITER_STATE, uid, ctx);
 		if (token != NULL)
 			error = fr_stateiter(token, &iter);
 		else
 			error = ESRCH;
 		RWLOCK_EXIT(&ipf_tokens);
+		SPL_X(s);
 		break;
 	    }
 
@@ -591,8 +616,14 @@ void *ctx;
 		break;
 
 	case SIOCIPFDELTOK :
-		BCOPYIN(data, (char *)&arg, sizeof(arg));
-		error = ipf_deltoken(arg, uid, ctx);
+		error = BCOPYIN(data, (char *)&arg, sizeof(arg));
+		if (error != 0) {
+			error = EFAULT;
+		} else {
+			SPL_SCHED(s);
+			error = ipf_deltoken(arg, uid, ctx);
+			SPL_X(s);
+		}
 		break;
 
 	case SIOCGTQTAB :

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.5.12.2 2007/05/22 22:52:08 pavel Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.5.12.3 2007/07/16 11:05:52 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.

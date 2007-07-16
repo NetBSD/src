@@ -1,4 +1,4 @@
-/*	$NetBSD: portname.c,v 1.1.1.1.18.1 2007/05/07 17:04:50 pavel Exp $	*/
+/*	$NetBSD: portname.c,v 1.1.1.1.18.2 2007/07/16 11:05:09 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 by Darren Reed.
