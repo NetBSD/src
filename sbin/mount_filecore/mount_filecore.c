@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.16 2007/07/14 15:57:25 dsl Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.17 2007/07/16 17:06:53 pooka Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -193,7 +193,7 @@ mount_filecore(int argc, char **argv)
 	args.fspec = dev;
 	args.flags = opts;
 
-	if (mount(MOUNT_FILECORE, dir, mntflags, &args, sizeof args) < 0)
+	if (mount(MOUNT_FILECORE, dir, mntflags, &args, sizeof args) == -1)
 		err(1, "%s on %s", dev, dir);
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];

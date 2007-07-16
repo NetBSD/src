@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.18 2007/07/14 15:57:26 dsl Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.19 2007/07/16 17:06:53 pooka Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.18 2007/07/14 15:57:26 dsl Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.19 2007/07/16 17:06:53 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -152,7 +152,7 @@ mount_ntfs(int argc, char **argv)
 			args.mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_NTFS, dir, mntflags, &args, sizeof args) < 0)
+	if (mount(MOUNT_NTFS, dir, mntflags, &args, sizeof args) == -1)
 		err(EX_OSERR, "%s on %s", dev, dir);
 
 	if (mntflags & MNT_GETARGS) {
