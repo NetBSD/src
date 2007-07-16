@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.5 2007/07/09 20:52:31 ad Exp $ */
+/*	$NetBSD: envctrl.c,v 1.6 2007/07/16 17:57:41 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.5 2007/07/09 20:52:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.6 2007/07/16 17:57:41 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,8 +172,10 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 	for (i = 8; i < 10; i++)
 		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
 
-	for (i = 10; i < 12; i++)
+	for (i = 10; i < 12; i++) {
 		sc->sc_sensor[i].units = ENVSYS_INTEGER;
+		sc->sc_sensor[i].flags = ENVSYS_FMONNOTSUPP;
+	}
 
 	sprintf(sc->sc_sensor[7].desc, "ambient");
 	sprintf(sc->sc_sensor[8].desc, "cpufan voltage");
