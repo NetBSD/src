@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.28 2007/07/16 14:07:00 christos Exp $ */
+/* $NetBSD: dir.c,v 1.29 2007/07/16 18:26:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.28 2007/07/16 14:07:00 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.29 2007/07/16 18:26:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -614,7 +614,7 @@ dcanon(Char *cp, Char *p)
     Char *newcp, *sp;
     Char *p1, *p2;	/* general purpose */
     int cc;
-    cshint slash;
+    int slash;
 
     /*
      * christos: if the path given does not start with a slash prepend cwd. If

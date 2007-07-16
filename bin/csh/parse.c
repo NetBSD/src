@@ -1,4 +1,4 @@
-/* $NetBSD: parse.c,v 1.16 2007/07/16 14:07:01 christos Exp $ */
+/* $NetBSD: parse.c,v 1.17 2007/07/16 18:26:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.16 2007/07/16 14:07:01 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.17 2007/07/16 18:26:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ asyn3(struct wordent *p1, struct wordent *p2)
 {
     struct varent *ap;
     struct wordent alout;
-    cshint redid;
+    int redid;
 
     if (p1 == p2)
 	return;
@@ -450,7 +450,7 @@ syn3(struct wordent *p1, struct wordent *p2, int flags)
     struct command *t;
     Char **av;
     int c, l, n;
-    cshint specp;
+    int specp;
 
     specp = 0;
     if (p1 != p2) {

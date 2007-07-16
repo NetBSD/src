@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.33 2007/07/16 14:07:01 christos Exp $ */
+/* $NetBSD: proc.c,v 1.34 2007/07/16 18:26:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.33 2007/07/16 14:07:01 christos Exp $");
+__RCSID("$NetBSD: proc.c,v 1.34 2007/07/16 18:26:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -642,7 +642,7 @@ pprint(struct process *pp, int flag)
     struct process *tp;
     const char *format;
     int jobflags, pstatus, reason, status;
-    cshint hadnl;
+    int hadnl;
 
     hadnl = 1; /* did we just have a newline */
     (void)fpurge(cshout);
@@ -1115,7 +1115,7 @@ pstart(struct process *pp, int foregnd)
 }
 
 void
-panystop(cshint neednl)
+panystop(int neednl)
 {
     struct process *pp;
 
@@ -1224,7 +1224,7 @@ pfork(struct command *t /* command we are forking for */, int wanttty)
 {
     int pgrp, pid;
     sigset_t osigset, nsigset;
-    cshint ignint;
+    int ignint;
 
     ignint = 0;
     /*
