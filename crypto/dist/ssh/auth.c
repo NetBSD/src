@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.24.2.1 2007/07/16 10:26:07 liamjfoy Exp $	*/
+/*	$NetBSD: auth.c,v 1.24.2.2 2007/07/16 10:32:49 liamjfoy Exp $	*/
 /* $OpenBSD: auth.c,v 1.75 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.24.2.1 2007/07/16 10:26:07 liamjfoy Exp $");
+__RCSID("$NetBSD: auth.c,v 1.24.2.2 2007/07/16 10:32:49 liamjfoy Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -460,11 +460,6 @@ secure_filename(FILE *f, const char *file, struct passwd *pw,
 
 	if (realpath(file, buf) == NULL) {
 		snprintf(err, errlen, "realpath %s failed: %s", file,
-		    strerror(errno));
-		return -1;
-	}
-	if (realpath(pw->pw_dir, homedir) == NULL) {
-		snprintf(err, errlen, "realpath %s failed: %s", pw->pw_dir,
 		    strerror(errno));
 		return -1;
 	}
