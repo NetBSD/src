@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.26 2007/03/13 13:51:54 drochner Exp $ */
+/*	$NetBSD: if_atu.c,v 1.27 2007/07/16 15:55:38 dyoung Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.26 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.27 2007/07/16 15:55:38 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -497,8 +497,8 @@ atu_start_scan(struct atu_softc *sc)
 
 #ifdef ATU_DEBUG
 	if (atudebug) {
-		DPRINTFN(20, ("%s: scan cmd len=%02lx\n",
-		    USBDEVNAME(sc->atu_dev), (unsigned long)sizeof(Scan)));
+		DPRINTFN(20, ("%s: scan cmd len=%02zx\n",
+		    USBDEVNAME(sc->atu_dev), sizeof(Scan)));
 	}
 #endif /* ATU_DEBUG */
 
@@ -660,8 +660,8 @@ atu_initial_config(struct atu_softc *sc)
 
 #ifdef ATU_DEBUG
 	if (atudebug) {
-		DPRINTFN(20, ("%s: configlen=%02lx\n", USBDEVNAME(sc->atu_dev),
-		    (unsigned long)sizeof(cmd)));
+		DPRINTFN(20, ("%s: configlen=%02zx\n", USBDEVNAME(sc->atu_dev),
+		    sizeof(cmd)));
 	}
 #endif /* ATU_DEBUG */
 
@@ -819,7 +819,7 @@ atu_internal_firmware(struct device *arg)
 	 */
 
 	/* Choose the right firmware for the device */
-	for (i = 0; i < sizeof(atu_radfirm)/sizeof(atu_radfirm[0]); i++)
+	for (i = 0; i < __arraycount(atu_radfirm); i++)
 		if (sc->atu_radio == atu_radfirm[i].atur_type) {
 			firm = atu_radfirm[i].atur_internal;
 			bytes_left = atu_radfirm[i].atur_internal_sz;
@@ -921,7 +921,7 @@ atu_external_firmware(struct device *arg)
 	int	block_size, block = 0, err, i;
 	size_t	bytes_left = 0;
 
-	for (i = 0; i < sizeof(atu_radfirm)/sizeof(atu_radfirm[0]); i++)
+	for (i = 0; i < __arraycount(atu_radfirm); i++)
 		if (sc->atu_radio == atu_radfirm[i].atur_type) {
 			firm = atu_radfirm[i].atur_external;
 			bytes_left = atu_radfirm[i].atur_external_sz;
@@ -1024,7 +1024,7 @@ USB_MATCH(atu)
 	USB_MATCH_START(atu, uaa);
 	int			i;
 
-	for (i = 0; i < sizeof(atu_devs)/sizeof(atu_devs[0]); i++) {
+	for (i = 0; i < __arraycount(atu_devs); i++) {
 		struct atu_type *t = &atu_devs[i];
 
 		if (uaa->vendor == t->atu_vid &&
@@ -1199,7 +1199,7 @@ USB_ATTACH(atu)
 	 * look up the radio_type for the device
 	 * basically does the same as USB_MATCH
 	 */
-	for (i = 0; i < sizeof(atu_devs)/sizeof(atu_devs[0]); i++) {
+	for (i = 0; i < __arraycount(atu_devs); i++) {
 		struct atu_type *t = &atu_devs[i];
 
 		if (uaa->vendor == t->atu_vid &&
@@ -1318,8 +1318,7 @@ atu_complete_attach(struct atu_softc *sc)
 
 #ifdef ATU_DEBUG
 	/* DEBUG : try to get firmware version */
-	err = atu_get_mib(sc, MIB_FW_VERSION, sizeof(fw), 0,
-	    (u_int8_t *)&fw);
+	err = atu_get_mib(sc, MIB_FW_VERSION, sizeof(fw), 0, (u_int8_t *)&fw);
 	if (!err) {
 		DPRINTFN(15, ("%s: firmware: maj:%d min:%d patch:%d "
 		    "build:%d\n", USBDEVNAME(sc->atu_dev), fw.major, fw.minor,
