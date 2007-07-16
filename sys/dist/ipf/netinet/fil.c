@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.28.2.5 2007/07/16 11:05:38 liamjfoy Exp $	*/
+/*	$NetBSD: fil.c,v 1.28.2.6 2007/07/16 11:08:45 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -154,7 +154,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.5 2007/07/16 11:05:38 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.28.2.6 2007/07/16 11:08:45 liamjfoy Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.109 2007/05/31 12:27:33 darrenr Exp";
@@ -768,6 +768,7 @@ fr_info_t *fin;
 			 * source of the original packet then this packet is
 			 * not correct.
 			 */
+			icmp6 = fin->fin_dp;
 			ip6 = (ip6_t *)((char *)icmp6 + ICMPERR_ICMPHLEN);
 			if (IP6_NEQ(&fin->fin_fi.fi_dst,
 				    (i6addr_t *)&ip6->ip6_src))
@@ -1002,6 +1003,9 @@ fr_info_t *fin;
 
 		fin->fin_data[0] = *(u_short *)icmp;
 
+		if (fin->fin_dlen >= 6)				/* ID field */
+			fin->fin_data[1] = icmp->icmp_id;
+
 		switch (icmp->icmp_type)
 		{
 		case ICMP_ECHOREPLY :
@@ -1072,9 +1076,6 @@ fr_info_t *fin;
 		default :
 			break;
 		}
-
-		if (fin->fin_dlen >= 6)				/* ID field */
-			fin->fin_data[1] = icmp->icmp_id;
 	}
 
 	frpr_short(fin, minicmpsz);
