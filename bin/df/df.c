@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.74 2007/07/03 14:39:47 christos Exp $ */
+/*	$NetBSD: df.c,v 1.75 2007/07/16 14:39:53 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.74 2007/07/03 14:39:47 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.75 2007/07/16 14:39:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: df.c,v 1.74 2007/07/03 14:39:47 christos Exp $");
 #include <sys/stat.h>
 #include <sys/mount.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -140,6 +141,8 @@ main(int argc, char *argv[])
 		errx(1, "only one of -g and -P or -i may be specified");
 	if (Pflag && iflag)
 		errx(1, "only one of -P and -i may be specified");
+	if (Pflag && (hflag || (usize != 1024 && usize != 512)))
+		errx(1, "non-standard block size incompatible with -P");
 
 	argc -= optind;
 	argv += optind;
@@ -356,10 +359,10 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		/*
 		 * From SunOS-5.6:
 		 *
-		 * /var		      (/dev/dsk/c0t0d0s3 ):	    8192 block size	     1024 frag size  
-		 *   984242 total blocks     860692 free blocks	  859708 available	   249984 total files
-		 *   248691 free files	    8388611 filesys id	
-		 *	ufs fstype	 0x00000004 flag	     255 filename length
+		 * /var               (/dev/dsk/c0t0d0s3 ):         8192 block size          1024 frag size  
+		 *   984242 total blocks     860692 free blocks   859708 available         249984 total files
+		 *   248691 free files      8388611 filesys id  
+		 *      ufs fstype       0x00000004 flag             255 filename length
 		 *
 		 */
 		(void)printf("%10s (%-12s): %7ld block size %12ld frag size\n",
@@ -379,11 +382,11 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		    " free blocks  %10" PRId64 " available\n",
 		    (uint64_t)sfsp->f_blocks, (uint64_t)sfsp->f_bfree,
 		    (uint64_t)sfsp->f_bavail);
-		(void)printf("%10" PRId64 " total files	 %10" PRId64
+		(void)printf("%10" PRId64 " total files  %10" PRId64
 		    " free files %12lx filesys id\n",
 		    (uint64_t)sfsp->f_ffree, (uint64_t)sfsp->f_files,
 		    sfsp->f_fsid);
-		(void)printf("%10s fstype  %#15lx flag	%17ld filename "
+		(void)printf("%10s fstype  %#15lx flag  %17ld filename "
 		    "length\n", sfsp->f_fstypename, sfsp->f_flag,
 		    sfsp->f_namemax);
 		(void)printf("%10lu owner %17" PRId64 " syncwrites %12" PRId64
@@ -405,16 +408,16 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 			headerlen = strlen(header);
 			break;
 		case 1024 * 1024:
-			header = Pflag ? "1048576-blocks" : "1M-blocks";
+			header = "1M-blocks";
 			headerlen = strlen(header);
 			break;
 		case 1024 * 1024 * 1024:
-			header = Pflag ? "1073741824-blocks" : "1G-blocks";
+			header = "1G-blocks";
 			headerlen = strlen(header);
 			break;
 		default:
 			if (hflag) {
-				header = "  Size";
+				header = "Size";
 				headerlen = strlen(header);
 			} else
 				header = getbsize(&headerlen, &blocksize);
@@ -422,8 +425,10 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		}
 		if (Pflag) {
 			/*
-			 * "Filesystem {1024,512}-blocks Used Available 
-			 * Capacity Mounted on\n"
+			 * either:
+			 *  "Filesystem 1024-blocks Used Available Capacity Mounted on\n"
+			 * or:
+			 *  "Filesystem 512-blocks Used Available Capacity Mounted on\n"
 			 */
 			(void)printf("Filesystem %s Used Available Capacity "
 			    "Mounted on\n", header);
@@ -441,6 +446,8 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 	bavail = sfsp->f_bfree - sfsp->f_bresvd;
 	availblks = bavail + used;
 	if (Pflag) {
+		assert(hflag == 0);
+		assert(blocksize > 0);
 		/*
 		 * "%s %d %d %d %s %s\n", <file system name>, <total space>,
 		 * <space used>, <space free>, <percentage used>,
@@ -491,7 +498,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-aGghklmn] [-i|-p] [-t type] [file | "
+	    "Usage: %s [-aGgln] [-hkm|-ihkm|-Pk] [-t type] [file | "
 	    "file_system ...]\n",
 	    getprogname());
 	exit(1);
