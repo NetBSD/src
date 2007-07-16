@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.32 2007/04/29 20:23:34 msaitoh Exp $ */
+/* $NetBSD: func.c,v 1.33 2007/07/16 02:26:51 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.32 2007/04/29 20:23:34 msaitoh Exp $");
+__RCSID("$NetBSD: func.c,v 1.33 2007/07/16 02:26:51 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,7 +433,7 @@ void
 dowhile(Char **v, struct command *t)
 {
     int status;
-    bool again;
+    cshbool again;
 
     again = whyles != 0 && SEEKEQ(&whyles->w_start, &lineloc) &&
         whyles->w_fename == 0;
