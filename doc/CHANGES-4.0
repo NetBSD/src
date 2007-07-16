@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.204 2007/07/16 12:11:42 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.205 2007/07/16 12:15:46 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7031,3 +7031,16 @@ sys/arch/xen/xen/xenevt.c			1.14
 	Add needed locking in xenevt_fpoll; this fixes at least a lost-wakeup bug.
 	OK'ed by bouyer@.
 	[jld, ticket #763]
+
+sys/kern/vfs_subr.c				1.289
+
+	Don't drain a vnode's lock when we are cleaning it out.  It still
+	might be used by upper layers in the vnode stack due to exported
+	lock pointers.  This introduces no difference to the normal case
+	and works around a problem where a lower layer vnode is cleaned
+	out before the upper layer due to forced unmount or revoke.  And
+	for cosmetics, set a vnode's lock export to NULL when it is cleaned
+	out.
+
+	per discussion with Bill Stouder-Studenmund on tech-kern
+	[pooka, ticket #768]
