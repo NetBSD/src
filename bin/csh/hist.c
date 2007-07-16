@@ -1,4 +1,4 @@
-/* $NetBSD: hist.c,v 1.16 2007/07/16 02:26:52 dogcow Exp $ */
+/* $NetBSD: hist.c,v 1.17 2007/07/16 14:07:01 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.16 2007/07/16 02:26:52 dogcow Exp $");
+__RCSID("$NetBSD: hist.c,v 1.17 2007/07/16 14:07:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ savehist(struct wordent *sp)
 }
 
 struct Hist *
-enthist(int event, struct wordent *lp, cshbool docopy)
+enthist(int event, struct wordent *lp, cshint docopy)
 {
     struct Hist *np;
 
@@ -156,7 +156,7 @@ dohist(Char **v, struct command *t)
 static void
 dohist1(struct Hist *hp, int *np, int rflg, int hflg)
 {
-    cshbool print;
+    cshint print;
 
     print = (*np) > 0;
 
