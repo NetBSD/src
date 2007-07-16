@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.479 2007/07/16 06:56:23 nisimura Exp $
+$NetBSD: usbdevs,v 1.480 2007/07/16 07:05:27 nisimura Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -366,6 +366,7 @@ vendor CSR		0x0a12	Cambridge Silicon Radio
 vendor TREK		0x0a16	Trek Technology
 vendor ASAHIOPTICAL	0x0a17	Asahi Optical
 vendor BOCASYSTEMS	0x0a43	Boca Systems
+vendor SHANTOU		0x0a46  ShanTou
 vendor MEDIAGEAR	0x0a48	MediaGear
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
@@ -1921,6 +1922,9 @@ product SENAO NUB8301		0x2000	NUB-8301
 
 /* SGI products */
 product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
+
+/* ShanTou products */
+product SHANTOU ST268_USB_NIC	0x0268  ST268 USB NIC
 
 /* Shark products */
 product SHARK PA		0x0400	Pocket Adapter
