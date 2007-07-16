@@ -16,6 +16,9 @@
 /* Define to 1 if you have the `dbopen' function. */
 #define HAVE_DBOPEN 1
 
+/* Define to 1 if you have the <db_185.h> header file. */
+/* #undef HAVE_DB_185_H */
+
 /* Define to 1 if you have the <db.h> header file. */
 #define HAVE_DB_H 1
 
@@ -43,8 +46,8 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
-/* Define to 1 if you have the `db1' library (-ldb1). */
-/* #undef HAVE_LIBDB1 */
+/* Define to 1 if you have the `db' library (-ldb). */
+/* #undef HAVE_LIBDB */
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -157,6 +160,9 @@
 /* Define to 1 if you have the <vis.h> header file. */
 #define HAVE_VIS_H 1
 
+/* Define to 1 if you have the `__db185_open' function. */
+/* #undef HAVE___DB185_OPEN */
+
 /* Defined when PRIu64 is missing or broken */
 /* #undef NEED_PRI_MACRO */
 
@@ -170,13 +176,13 @@
 #define PACKAGE_NAME "pkg_install"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pkg_install 20050607"
+#define PACKAGE_STRING "pkg_install 20070416"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pkg_install"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20050607"
+#define PACKAGE_VERSION "20070416"
 
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4

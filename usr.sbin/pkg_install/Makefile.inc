@@ -1,12 +1,14 @@
-# $NetBSD: Makefile.inc,v 1.27 2007/05/28 12:06:39 tls Exp $
+# $NetBSD: Makefile.inc,v 1.28 2007/07/16 19:33:02 joerg Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
 
+DIST=	${NETBSDSRCDIR}/dist/pkg_install
+
 USE_FORT?=yes	# network client
 
 LIBINSTALL != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
-CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
+CPPFLAGS+=-I${DIST}/lib -I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
 CPPFLAGS+=-DHAVE_CONFIG_H
 
 # UNDER NO CIRCUMSTANCES SHOULD THIS MAKEFILE TEST THE OUTPUT OF uname!!
