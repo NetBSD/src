@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.20 2007/07/16 14:07:00 christos Exp $ */
+/* $NetBSD: extern.h,v 1.21 2007/07/16 18:26:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,9 +46,9 @@ void goodbye(void);
 void importpath(Char *);
 void initdesc(void);
 void pintr(int);
-void pintr1(cshint) __attribute__((noreturn));
+void pintr1(int) __attribute__((noreturn));
 void printprompt(void);
-void process(cshint);
+void process(int);
 void rechist(void);
 void untty(void);
 int vis_fputc(int, FILE *);
@@ -102,7 +102,7 @@ void xechoit(Char **);
  * exp.c
  */
 int expr(Char ***);
-int exp0(Char ***, cshint);
+int exp0(Char ***, int);
 
 /*
  * file.c
@@ -154,7 +154,7 @@ void wfree(void);
 /*
  * glob.c
  */
-Char **dobackp(Char *, cshint);
+Char **dobackp(Char *, int);
 void Gcat(Char *, Char *);
 Char *globone(Char *, int);
 int  Gmatch(Char *, Char *);
@@ -171,7 +171,7 @@ int sortscmp(const ptr_t, const ptr_t);
  * hist.c
  */
 void dohist(Char **, struct command *);
-struct Hist *enthist(int, struct wordent *, cshint);
+struct Hist *enthist(int, struct wordent *, int);
 void savehist(struct wordent *);
 
 /*
@@ -186,7 +186,7 @@ Char *domod(Char *, int);
 void freelex(struct wordent *);
 int lex(struct wordent *);
 void prlex(FILE *, struct wordent *);
-int readc(cshint);
+int readc(int);
 void settell(void);
 void unreadc(int);
 
@@ -245,7 +245,7 @@ void donotify(Char **, struct command *);
 void dostop(Char **, struct command *);
 void dowait(Char **, struct command *);
 void palloc(int, struct command *);
-void panystop(cshint);
+void panystop(int);
 void pchild(int);
 void pendjob(void);
 struct process *pfind(Char *);
