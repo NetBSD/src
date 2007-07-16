@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.223 2007/05/17 14:51:12 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.224 2007/07/16 23:48:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.223 2007/05/17 14:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224 2007/07/16 23:48:04 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2534,7 +2534,7 @@ pmap_clear_reference(struct vm_page *pg)
  *	Note: no locking is necessary in this function.
  */
 paddr_t
-pmap_phys_address(int ppn)
+pmap_phys_address(paddr_t ppn)
 {
 
 	return (alpha_ptob(ppn));
