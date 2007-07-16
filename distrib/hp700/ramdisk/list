@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2007/05/10 23:22:30 dogcow Exp $
+#	$NetBSD: list,v 1.6 2007/07/16 13:56:50 skrll Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -24,6 +24,8 @@ PROG	bin/sync
 
 PROG	sbin/disklabel
 PROG	sbin/dmesg
+PROG	sbin/fsck
+PROG	sbin/fsck_ffs
 PROG	sbin/ifconfig
 PROG	sbin/init
 PROG	sbin/mknod
