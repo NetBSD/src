@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.24 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.24.2.1 2007/07/16 10:26:07 liamjfoy Exp $	*/
 /* $OpenBSD: auth.c,v 1.75 2006/08/03 03:34:41 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.24 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.24.2.1 2007/07/16 10:26:07 liamjfoy Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -167,6 +167,9 @@ allowed_user(struct passwd * pw)
 	login_close(lc);
 #endif
 
+#ifdef USE_PAM
+	if (!options.use_pam) {
+#endif
 	/*
 	 * password/account expiration.
 	 */
@@ -197,6 +200,9 @@ allowed_user(struct passwd * pw)
 			}
 		}
 	}
+#ifdef USE_PAM
+	}
+#endif
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is
