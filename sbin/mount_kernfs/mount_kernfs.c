@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.20 2007/07/14 15:57:25 dsl Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.21 2007/07/16 17:06:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_kernfs.c,v 1.20 2007/07/14 15:57:25 dsl Exp $");
+__RCSID("$NetBSD: mount_kernfs.c,v 1.21 2007/07/16 17:06:53 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ mount_kernfs(int argc, char *argv[])
 		warnx("using \"%s\" instead.", canon_dir);
 	}
 
-	if (mount(MOUNT_KERNFS, canon_dir, mntflags, NULL, 0))
+	if (mount(MOUNT_KERNFS, canon_dir, mntflags, NULL, 0) == -1)
 		err(1, "kernfs on %s", argv[1]);
 	exit(0);
 }

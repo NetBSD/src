@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.29 2007/07/14 15:57:25 dsl Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.30 2007/07/16 17:06:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.29 2007/07/14 15:57:25 dsl Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.30 2007/07/16 17:06:53 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ mount_lfs(int argc, char *argv[])
 		}
 	}
 
-	if (mount(MOUNT_LFS, fs_name, mntflags, &args, sizeof args)) {
+	if (mount(MOUNT_LFS, fs_name, mntflags, &args, sizeof args) == -1) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";

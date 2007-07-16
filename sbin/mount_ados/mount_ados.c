@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.26 2007/07/14 15:57:24 dsl Exp $ */
+/* $NetBSD: mount_ados.c,v 1.27 2007/07/16 17:06:52 pooka Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,12 +36,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.26 2007/07/14 15:57:24 dsl Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.27 2007/07/16 17:06:52 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include <err.h>
 #include <grp.h>
 #include <pwd.h>
@@ -147,20 +148,20 @@ mount_ados(int argc, char **argv)
 			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_ADOSFS, dir, mntflags, &args, sizeof args) >= 0)
-		exit (0);
-
-	if (errno != EROFS)
-		err(1, "%s on %s", dev, dir);
-
-	mntflags |= MNT_RDONLY;
-
 	if (mount(MOUNT_ADOSFS, dir, mntflags, &args, sizeof args) == -1)
-		err(1, "%s on %s", dev, dir);
+		if (errno != EROFS)
+			err(1, "%s on %s", dev, dir);
 
-	if (mntflags & MNT_GETARGS)
+	if (mntflags & MNT_GETARGS) {
+		assert(errno != EROFS);
 		printf("uid=%d, gid=%d, mask=0%o\n", args.uid, args.gid,
 		    args.mask);
+		exit(0);
+	}
+
+	mntflags |= MNT_RDONLY;
+	if (mount(MOUNT_ADOSFS, dir, mntflags, &args, sizeof args) == -1)
+		err(1, "%s on %s", dev, dir);
 
 	exit (0);
 }

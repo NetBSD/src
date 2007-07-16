@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2007/07/14 15:57:24 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.66 2007/07/16 17:06:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.65 2007/07/14 15:57:24 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.66 2007/07/16 17:06:52 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -437,7 +437,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 			if (flags & MNT_RDONLY) {
 				args.fspec = 0;
 				flags |= MNT_UPDATE | MNT_RELOAD;
-				ret = mount(MOUNT_FFS, "/", flags, &args, sizeof args);
+				ret = mount(MOUNT_FFS, "/", flags,
+				    &args, sizeof args);
 				if (ret == 0)
 					return(0);
 			}

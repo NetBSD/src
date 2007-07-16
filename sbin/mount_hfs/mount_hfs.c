@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_hfs.c,v 1.4 2007/07/14 15:57:25 dsl Exp $	*/
+/*	$NetBSD: mount_hfs.c,v 1.5 2007/07/16 17:06:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_hfs.c,v 1.4 2007/07/14 15:57:25 dsl Exp $");
+__RCSID("$NetBSD: mount_hfs.c,v 1.5 2007/07/16 17:06:53 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ mount_hfs(argc, argv)
 	fs_name = argv[1];		/* The mount point. */
 
 
-	if (mount(MOUNT_HFS, fs_name, mntflags, &args, sizeof args))
+	if (mount(MOUNT_HFS, fs_name, mntflags, &args, sizeof args) == -1)
 		err(1, "%s on %s", args.fspec, fs_name);
 
 	exit(0);

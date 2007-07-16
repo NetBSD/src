@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ext2fs.c,v 1.18 2007/07/14 15:57:25 dsl Exp $	*/
+/*	$NetBSD: mount_ext2fs.c,v 1.19 2007/07/16 17:06:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ext2fs.c,v 1.18 2007/07/14 15:57:25 dsl Exp $");
+__RCSID("$NetBSD: mount_ext2fs.c,v 1.19 2007/07/16 17:06:52 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ mount_ext2fs(int argc, char *argv[])
 		warnx("using \"%s\" instead.", fs_name);
 	}
 
-	if (mount(MOUNT_EXT2FS, fs_name, mntflags, &args, sizeof args) < 0) {
+	if (mount(MOUNT_EXT2FS, fs_name, mntflags, &args, sizeof args) == -1) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";
