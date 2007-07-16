@@ -1,4 +1,4 @@
-/* $NetBSD: exp.c,v 1.16 2006/05/13 21:18:57 christos Exp $ */
+/* $NetBSD: exp.c,v 1.17 2007/07/16 02:26:51 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.16 2006/05/13 21:18:57 christos Exp $");
+__RCSID("$NetBSD: exp.c,v 1.17 2007/07/16 02:26:51 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,16 +69,16 @@ __RCSID("$NetBSD: exp.c,v 1.16 2006/05/13 21:18:57 christos Exp $");
 #define EQMATCH 7
 #define NOTEQMATCH 8
 
-static int exp1(Char ***, bool);
-static int csh_exp2(Char ***, bool);
-static int exp2a(Char ***, bool);
-static int exp2b(Char ***, bool);
-static int exp2c(Char ***, bool);
-static Char *exp3(Char ***, bool);
-static Char *exp3a(Char ***, bool);
-static Char *exp4(Char ***, bool);
-static Char *exp5(Char ***, bool);
-static Char *exp6(Char ***, bool);
+static int exp1(Char ***, cshbool);
+static int csh_exp2(Char ***, cshbool);
+static int exp2a(Char ***, cshbool);
+static int exp2b(Char ***, cshbool);
+static int exp2c(Char ***, cshbool);
+static Char *exp3(Char ***, cshbool);
+static Char *exp3a(Char ***, cshbool);
+static Char *exp4(Char ***, cshbool);
+static Char *exp5(Char ***, cshbool);
+static Char *exp6(Char ***, cshbool);
 static void evalav(Char **);
 static int isa(Char *, int);
 static int egetn(Char *);
@@ -95,7 +95,7 @@ expr(Char ***vp)
 }
 
 int
-exp0(Char ***vp, bool ignore)
+exp0(Char ***vp, cshbool ignore)
 {
     int p1;
 
@@ -117,7 +117,7 @@ exp0(Char ***vp, bool ignore)
 }
 
 static int
-exp1(Char ***vp, bool ignore)
+exp1(Char ***vp, cshbool ignore)
 {
     int p1;
 
@@ -139,7 +139,7 @@ exp1(Char ***vp, bool ignore)
 }
 
 static int
-csh_exp2(Char ***vp, bool ignore)
+csh_exp2(Char ***vp, cshbool ignore)
 {
     int p1;
 
@@ -161,7 +161,7 @@ csh_exp2(Char ***vp, bool ignore)
 }
 
 static int
-exp2a(Char ***vp, bool ignore)
+exp2a(Char ***vp, cshbool ignore)
 {
     int p1;
 
@@ -183,7 +183,7 @@ exp2a(Char ***vp, bool ignore)
 }
 
 static int
-exp2b(Char ***vp, bool ignore)
+exp2b(Char ***vp, cshbool ignore)
 {
     int p1;
 
@@ -205,7 +205,7 @@ exp2b(Char ***vp, bool ignore)
 }
 
 static int
-exp2c(Char ***vp, bool ignore)
+exp2c(Char ***vp, cshbool ignore)
 {
     Char *p1, *p2;
     int i;
@@ -247,7 +247,7 @@ exp2c(Char ***vp, bool ignore)
 }
 
 static Char *
-exp3(Char ***vp, bool ignore)
+exp3(Char ***vp, cshbool ignore)
 {
     Char *p1, *p2;
     int i;
@@ -287,7 +287,7 @@ exp3(Char ***vp, bool ignore)
 }
 
 static Char *
-exp3a(Char ***vp, bool ignore)
+exp3a(Char ***vp, cshbool ignore)
 {
     Char *op, *p1, *p2;
     int i;
@@ -315,7 +315,7 @@ exp3a(Char ***vp, bool ignore)
 }
 
 static Char *
-exp4(Char ***vp, bool ignore)
+exp4(Char ***vp, cshbool ignore)
 {
     Char *p1, *p2;
     int i;
@@ -350,7 +350,7 @@ exp4(Char ***vp, bool ignore)
 }
 
 static Char *
-exp5(Char ***vp, bool ignore)
+exp5(Char ***vp, cshbool ignore)
 {
     Char *p1, *p2;
     int i;
@@ -394,7 +394,7 @@ exp5(Char ***vp, bool ignore)
 }
 
 static Char *
-exp6(Char ***vp, bool ignore)
+exp6(Char ***vp, cshbool ignore)
 {
     Char *cp, *dp, *ep;
     int ccode, i;
