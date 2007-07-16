@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.5 2007/03/15 14:12:12 vanhu Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.6 2007/07/16 15:05:10 vanhu Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -461,6 +461,7 @@ grab_myaddrs()
 	ifconf.ifc_req = iflist;
 	ifconf.ifc_len = len;
 	if (ioctl(s, SIOCGIFCONF, &ifconf) < 0) {
+		close(s);
 		plog(LLV_ERROR, LOCATION, NULL,
 			"ioctl(SIOCGIFCONF) failed: %s\n",
 			strerror(errno));
