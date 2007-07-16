@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_union.c,v 1.18 2007/07/14 15:57:27 dsl Exp $	*/
+/*	$NetBSD: mount_union.c,v 1.19 2007/07/16 17:06:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_union.c,v 1.18 2007/07/14 15:57:27 dsl Exp $");
+__RCSID("$NetBSD: mount_union.c,v 1.19 2007/07/16 17:06:55 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ mount_union(int argc, char *argv[])
 
 	args.target = target;
 
-	if (mount(MOUNT_UNION, canon_dir, mntflags, &args, sizeof args))
+	if (mount(MOUNT_UNION, canon_dir, mntflags, &args, sizeof args) == -1)
 		err(1, "%s on %s", target, canon_dir);
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_sysvbfs.c,v 1.4 2007/07/14 15:57:27 dsl Exp $	*/
+/*	$NetBSD: mount_sysvbfs.c,v 1.5 2007/07/16 17:06:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_sysvbfs.c,v 1.4 2007/07/14 15:57:27 dsl Exp $");
+__RCSID("$NetBSD: mount_sysvbfs.c,v 1.5 2007/07/16 17:06:54 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -116,7 +116,7 @@ mount_sysvbfs(int argc, char *argv[])
 		warnx("using \"%s\" instead.", fs_name);
 	}
 
-	if (mount(MOUNT_SYSVBFS, fs_name, mntflags, &args, sizeof args) < 0) {
+	if (mount(MOUNT_SYSVBFS, fs_name, mntflags, &args, sizeof args) == -1) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";
