@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34.2.1 2007/06/10 20:48:42 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.34.2.2 2007/07/16 10:07:26 liamjfoy Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34.2.1 2007/06/10 20:48:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34.2.2 2007/07/16 10:07:26 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,11 +276,32 @@ get_system_time(void)
 	return stime;
 }
 
+static void
+xen_wall_time(struct timespec *wt)
+{
+	uint64_t nsec;
+	int s;
+
+	s = splhigh();
+	get_time_values_from_xen();
+	*wt = shadow_ts;
+	nsec = wt->tv_nsec;
+#ifdef XEN3
+	/* Under Xen3, this is the wall time less system time */
+	nsec += get_system_time();
+	splx(s);
+	wt->tv_sec += nsec / 1000000000L;
+	wt->tv_nsec = nsec % 1000000000L;
+#else
+	/* Under Xen2 , this is the current wall time. */
+	splx(s);
+#endif
+}
+
 void
 inittodr(time_t base)
 {
-	struct timespec sts;
-	int s;
+	struct timespec wt;
 
 	/*
 	 * if the file system time is more than a year older than the
@@ -291,12 +312,8 @@ inittodr(time_t base)
 		base = CONFIG_TIME;
 	}
 
-	s = splhigh();
-	get_time_values_from_xen();
-	sts = shadow_ts;
-	splx(s);
-
-	tc_setclock(&sts); /* XXX what about rtc_offset? */
+	xen_wall_time(&wt);
+	tc_setclock(&wt); /* XXX what about rtc_offset? */
 	
 	if (base != 0 && base < time_second - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
@@ -311,8 +328,8 @@ inittodr(time_t base)
 
 fstime:
 	timeset = 1;
-	sts.tv_sec = base;
-	tc_setclock(&sts);
+	wt.tv_sec = base;
+	tc_setclock(&wt);
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
 
