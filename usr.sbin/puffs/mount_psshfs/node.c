@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.33 2007/07/02 10:26:50 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.34 2007/07/16 09:36:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.33 2007/07/02 10:26:50 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.34 2007/07/16 09:36:06 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -402,30 +402,59 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 	PSSHFSRETURN(rv);
 }
 
+static int
+doremove(struct puffs_cc *pcc, struct puffs_node *pn_dir,
+	struct puffs_node *pn, const char *name)
+{
+	PSSHFSAUTOVAR(pcc);
+	int op;
+
+	if (pn->pn_va.va_type == VDIR)
+		op = SSH_FXP_RMDIR;
+	else
+		op = SSH_FXP_REMOVE;
+
+	psbuf_req_str(pb, op, reqid, PNPATH(pn));
+	GETRESPONSE(pb);
+
+	rv = psbuf_expect_status(pb);
+	if (rv == 0)
+		nukenode(pn, name, 0);
+
+ out:
+	PSSHFSRETURN(rv);
+}
+
 int
 psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
-	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn_targ = targ;
+	int rv;
 
-	if (pn_targ->pn_va.va_type == VDIR) {
-		rv = EPERM;
-		goto out;
-	}
+	assert(pn_targ->pn_va.va_type != VDIR);
 
-	psbuf_req_str(pb, SSH_FXP_REMOVE, reqid, PNPATH(pn_targ));
-	GETRESPONSE(pb);
-
-	rv = psbuf_expect_status(pb);
-
-	if (rv == 0) {
-		nukenode(pn_targ, pcn->pcn_name, 0);
+	rv = doremove(pcc, opc, targ, pcn->pcn_name);
+	if (rv == 0)
 		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
-	}
 
- out:
-	PSSHFSRETURN(rv);
+	return rv;
+}
+
+int
+psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
+	const struct puffs_cn *pcn)
+{
+	struct puffs_node *pn_targ = targ;
+	int rv;
+
+	assert(pn_targ->pn_va.va_type == VDIR);
+
+	rv = doremove(pcc, opc, targ, pcn->pcn_name);
+	if (rv == 0)
+		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+
+	return rv;
 }
 
 int
@@ -453,26 +482,6 @@ psshfs_node_mkdir(struct puffs_cc *pcc, void *opc,  struct puffs_newinfo *pni,
 		puffs_newinfo_setcookie(pni, pn_new);
 	else
 		nukenode(pn_new, pcn->pcn_name, 1);
-
- out:
-	PSSHFSRETURN(rv);
-}
-
-int
-psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
-	const struct puffs_cn *pcn)
-{
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_node *pn_targ = targ;
-
-	psbuf_req_str(pb, SSH_FXP_RMDIR, reqid, PNPATH(pn_targ));
-	GETRESPONSE(pb);
-
-	rv = psbuf_expect_status(pb);
-	if (rv == 0) {
-		nukenode(pn_targ, pcn->pcn_name, 0);
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
-	}
 
  out:
 	PSSHFSRETURN(rv);
@@ -533,8 +542,7 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	}
 
 	if (pn_tf) {
-		/* XXX: no backend implementation for now, so call directly */
-		rv = psshfs_node_remove(pcc, targ_dir, pn_tf, pcn_targ);
+		rv = doremove(pcc, targ_dir, pn_tf, pcn_targ->pcn_name);
 		if (rv)
 			goto out;
 	}
