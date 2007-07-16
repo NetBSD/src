@@ -1,0 +1,183 @@
+AUDIT-PACKAGES(1)       NetBSD General Commands Manual       AUDIT-PACKAGES(1)
+
+NNAAMMEE
+     aauuddiitt--ppaacckkaaggeess, ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt -- show vulnerabilities in
+     installed packages
+
+SSYYNNOOPPSSIISS
+     aauuddiitt--ppaacckkaaggeess [--ddeessVVvv] [--cc _c_o_n_f_i_g___f_i_l_e] [--gg _f_i_l_e] [--hh _f_i_l_e]
+                    [--KK _p_k_g___d_b_d_i_r] [--nn _p_a_c_k_a_g_e] [--pp _p_a_c_k_a_g_e] [--QQ _v_a_r_n_a_m_e]
+                    [--tt _t_y_p_e]
+     ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt [--hhss] [--cc _c_o_n_f_i_g___f_i_l_e]
+
+DDEESSCCRRIIPPTTIIOONN
+     The aauuddiitt--ppaacckkaaggeess program compares the installed packages with the
+     _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s file and reports any known security issues to stan-
+     dard output.  This output contains the name and version of the package,
+     the type of vulnerability, and an URL for further information for each
+     vulnerable package.
+
+     The following flags are supported:
+
+     --dd            Attempt to download the vulnerabilities file using the
+                   _d_o_w_n_l_o_a_d_-_v_u_l_n_e_r_a_b_i_l_i_t_y_-_l_i_s_t script before scanning the
+                   installed packages for vulnerabilities.
+
+     --ee            Check for end-of-life (eol) packages.
+
+     --ss            Verify the signature of the current _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s
+                   file.  The key used to sign the file is available from:
+                   _f_t_p_._n_e_t_b_s_d_._o_r_g_/_p_u_b_/_N_e_t_B_S_D_/_s_e_c_u_r_i_t_y_/_P_G_P_/_p_k_g_s_r_c_-_s_e_c_u_r_i_t_y_@_N_e_t_B_S_D_._o_r_g_._a_s_c
+
+                   In order for this to function correctly the above key must
+                   be added to the gpg keyring of the user who runs
+                   _a_u_d_i_t_-_p_a_c_k_a_g_e_s _-_s and/or _d_o_w_n_l_o_a_d_-_v_u_l_n_e_r_a_b_i_l_i_t_y_-_l_i_s_t _-_s.
+                   In addition to this the gpg binary must be installed on
+                   your system.  The path to the gpg binary can be set in
+                   audit-packages.conf(5).
+
+                   The requirement for GnuPG may go away in the future when a
+                   suitable replacement is implemented.
+
+     --VV            Display the version number and exit.
+
+     --vv            Be more verbose. Specify multiple -v flags to increase ver-
+                   bosity.  Currently a maximum level of three is supported.
+
+     --cc _c_o_n_f___f_i_l_e  Specify a custom _c_o_n_f___f_i_l_e configuration file to use.
+
+     --gg _f_i_l_e       Compute the SHA512 hash on _f_i_l_e.
+
+     --hh _f_i_l_e       Check the SHA512 hash of a _f_i_l_e against the internally
+                   stored value.
+
+     --KK _p_k_g___d_b_d_i_r  Use package database directory _p_k_g___d_b_d_i_r.
+
+     --nn _p_a_c_k_a_g_e    Check only the package _p_a_c_k_a_g_e for vulnerabilities.
+
+     --pp _p_a_c_k_a_g_e    Check only the installed package _p_a_c_k_a_g_e for vulnerabili-
+                   ties.
+
+     --QQ _v_a_r_n_a_m_e    Display the current value of _v_a_r_n_a_m_e and exit.  Currently
+                   supported _v_a_r_n_a_m_e are GPG, PKGVULNDIR and IGNORE_URLS.
+
+     --tt _t_y_p_e       Only check for the specified _t_y_p_e of vulnerability.
+
+     The ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt program downloads the _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s
+     file from _f_t_p_._N_e_t_B_S_D_._o_r_g using ftp(1) by default.  This vulnerabilities
+     file documents all known security issues in pkgsrc packages and is kept
+     up-to-date by the NetBSD pkgsrc-security team.
+
+     The following flags are supported:
+
+     --hh            Display program usage.
+
+     --ss            Verify the signature of the current _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s
+                   file.  In order for this to function correctly you will
+                   need to add the pkgsrc Security Team key to your gpg
+                   keyring and trust it.  The key is available from:
+                   _f_t_p_._n_e_t_b_s_d_._o_r_g_/_p_u_b_/_N_e_t_B_S_D_/_s_e_c_u_r_i_t_y_/_P_G_P_/_p_k_g_s_r_c_-_s_e_c_u_r_i_t_y_@_N_e_t_B_S_D_._o_r_g_._a_s_c
+                   In addition to this the gpg binary must be installed on
+                   your system.  The path to the gpg binary can be set in
+                   audit-packages.conf(5).
+
+     --cc _c_o_n_f___f_i_l_e  Specify a custom _c_o_n_f___f_i_l_e configuration file to use.
+
+     By default ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt will download a compressed version
+     of _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s from ftp.netbsd.org.  The default file downloaded
+     is compressed using gzip(1).  The compression tool used can set in
+     audit-packages.conf(5).  Currently only gzcat(1) and bzcat(1) are sup-
+     ported.
+
+     Each line lists the package and vulnerable versions, the type of exploit,
+     and an Internet address for further information:
+
+     <package pattern> <type> <url>
+
+     The type of exploit can be any text, although some common types of
+     exploits listed are:
+           ··   cross-site-html
+           ··   cross-site-scripting
+           ··   denial-of-service
+           ··   eol
+           ··   file-permissions
+           ··   local-access
+           ··   local-code-execution
+           ··   local-file-read
+           ··   local-file-removal
+           ··   local-file-write
+           ··   local-root-file-view
+           ··   local-root-shell
+           ··   local-symlink-race
+           ··   local-user-file-view
+           ··   local-user-shell
+           ··   privacy-leak
+           ··   remote-code-execution
+           ··   remote-command-inject
+           ··   remote-file-creation
+           ··   remote-file-read
+           ··   remote-file-view
+           ··   remote-file-write
+           ··   remote-key-theft
+           ··   remote-root-access
+           ··   remote-root-shell
+           ··   remote-script-inject
+           ··   remote-server-admin
+           ··   remote-use-of-secret
+           ··   remote-user-access
+           ··   remote-user-file-view
+           ··   remote-user-shell
+           ··   unknown
+           ··   weak-authentication
+           ··   weak-encryption
+           ··   weak-ssl-authentication
+
+     The type _e_o_l implies that the package is no longer maintained by the
+     software vendor but is provided by the pkgsrc team for your convenience
+     only.  It may contain any number of the above mentioned vulnerabilities.
+     Any packages of type eol are not reported by default. Run aauuddiitt--ppaacckkaaggeess
+     --ee to also report on eol packages.
+
+     By default, the vulnerabilities file is stored in the PKG_DBDIR direc-
+     tory.  On a standard installation this will be set to @pkgdbdir@.  If you
+     have installed pkgsrc on a supported platform this will be what ever you
+     specifed when bootstrapping pkgsrc i.e. --pkgdbdir <pkgdbdir>.  The path
+     to the _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s file can be set in audit-packages.conf(5).
+
+EEXXIITT SSTTAATTUUSS
+     The aauuddiitt--ppaacckkaaggeess utility exits 0 on success, and >0 if an error occurs.
+
+FFIILLEESS
+     @pkgdbdir@/pkg-vulnerabilities
+
+     @sysconfdir@/audit-packages.conf
+
+EEXXAAMMPPLLEESS
+     The ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt command can be run via cron(8) to update
+     the _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s file daily.  And aauuddiitt--ppaacckkaaggeess can be run via
+     cron(8) (or with NetBSD's _/_e_t_c_/_s_e_c_u_r_i_t_y_._l_o_c_a_l daily security script).
+
+     The ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt command can be forced to use IPv4 with
+     the following setting in @sysconfdir@/audit-packages.conf:
+
+     FETCH_ARGS="-4"
+
+     The ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt command can be forced to use http to
+     download the _p_k_g_-_v_u_l_n_e_r_a_b_i_l_i_t_i_e_s file with the following setting in
+     @sysconfdir@/audit-packages.conf:
+
+     FETCH_PROTO="http"
+
+SSEEEE AALLSSOO
+     pkg_info(1), audit-packages.conf(5), mk.conf(5), pkgsrc(7), _D_o_c_u_m_e_n_t_a_t_i_o_n
+     _o_n _t_h_e _N_e_t_B_S_D _P_a_c_k_a_g_e _S_y_s_t_e_m
+
+HHIISSTTOORRYY
+     The aauuddiitt--ppaacckkaaggeess and ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt commands were origi-
+     nally implemented and added to NetBSD's pkgsrc by Alistair Crooks on
+     September 19, 2000.  During April 2007 aauuddiitt--ppaacckkaaggeess was re-written by
+     Adrian Portelli and support was added for compressed files and checking
+     signatures on downloaded files.  The original idea came from Roland
+     Dowdeswell and Bill Sommerfeld.
+
+NetBSD 4.0                       July 07, 2007                      NetBSD 4.0

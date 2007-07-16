@@ -1,0 +1,20 @@
+# $NetBSD: Makefile.in,v 1.1.1.1 2007/07/16 13:01:43 joerg Exp $
+
+SUBDIRS=	lib add admin create delete info view audit-packages
+
+all:
+	@for dir in $(SUBDIRS); do \
+		( cd $$dir && $(MAKE) $@ ) || exit 1; \
+	done
+
+install clean:
+	@for dir in $(SUBDIRS); do \
+		( cd $$dir && $(MAKE) $@ ) || exit 1; \
+	done
+
+distclean: clean
+	rm -f config.log config.status configure.lineno
+	rm -f Makefile */Makefile
+	rm -f lib/config.h
+	rm -f view/linkfarm.sh
+	rm -f view/pkg_view.sh
