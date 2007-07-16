@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 2007/05/12 06:31:19 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 2007/07/16 07:29:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2007/05/12 06:31:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2007/07/16 07:29:59 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2007/05/12 06:31:19 isaki Exp $");
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/malloc.h>
 #include <machine/cpu.h>
 #include <x68k/x68k/iodevice.h>
 #include <machine/bootinfo.h>
@@ -62,8 +61,6 @@ static struct device *scsi_find(dev_t);
 static struct device *find_dev_byname(const char *);
 
 int x68k_realconfig;
-
-#include <sys/kernel.h>
 
 /*
  * called at boot time, configure all devices on system
