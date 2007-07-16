@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.23 2007/03/04 05:59:43 christos Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.24 2007/07/16 12:46:03 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.23 2007/03/04 05:59:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.24 2007/07/16 12:46:03 marcus Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -306,7 +306,7 @@ mkbd_cngetc(void *v, u_int *type, int *data)
 	polledkey = -1;
 	maple_polling = 1;
 	while (polledkey == -1) {
-		if (mkbd_console_softc != NULL ||
+		if (mkbd_console_softc != NULL &&
 		    mkbd_console_softc->sc_parent != NULL) {
 			int t;
 			for (t = 0; t < 1000000; t++);
