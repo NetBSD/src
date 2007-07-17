@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.23 2007/07/17 16:47:58 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.24 2007/07/17 17:56:04 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.23 2007/07/17 16:47:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.24 2007/07/17 17:56:04 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -700,6 +700,9 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		if (strcmp(edata->desc, nedata->desc) == 0) {
 			edata->flags |= ENVSYS_FDUPDESC;
 			mutex_exit(&sme_mtx);
+			DPRINTF(("%s: dupdesc=%s sensor=%d dev=%s\n",
+			    __func__, edata->desc, edata->sensor,
+			    sme->sme_name));
 			return EEXIST;
 		}
 	}
@@ -849,8 +852,10 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 
 	/* retrieve the array of dictionaries in device. */
 	array = prop_dictionary_get(sme_propd, sme->sme_name);
-	if (prop_object_type(array) != PROP_TYPE_ARRAY)
+	if (prop_object_type(array) != PROP_TYPE_ARRAY) {
+		DPRINTF(("%s: not an array (%s)\n", __func__, sme->sme_name));
 		return EINVAL;
+	}
 
 	/* 
 	 * - iterate over all sensors.
@@ -862,8 +867,12 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		edata = &sme->sme_sensor_data[i];
 
 		/* skip sensors with a duplicate description */
-		if (edata->flags & ENVSYS_FDUPDESC)
+		if (edata->flags & ENVSYS_FDUPDESC) {
+			DPRINTF(("%s: dupdesc=%s sensor=%d dev=%s\n",
+			    __func__, edata->desc, edata->sensor,
+			    sme->sme_name));
 			continue;
+		}
 
 		/* 
 		 * refresh sensor data via sme_gtredata only if the
@@ -880,8 +889,11 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 
 		/* retrieve sensor's dictionary. */
 		dict = prop_array_get(array, i);
-		if (prop_object_type(dict) != PROP_TYPE_DICTIONARY)
+		if (prop_object_type(dict) != PROP_TYPE_DICTIONARY) {
+			DPRINTF(("%s: not a dictionary (%d:%s)\n",
+			    __func__, edata->sensor, sme->sme_name));
 			return EINVAL;
+		}
 
 		/* update state sensor. */
 		for (j = 0; ess[j].type != -1; j++)
@@ -1001,12 +1013,9 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 				nedata = &sme->sme_sensor_data[i];
 				if (strcmp(blah, nedata->desc) == 0) {
 					error = EEXIST;
-					break;
+					goto out;
 				}
 			}
-
-			if (error)
-				goto out;
 
 			SENSOR_UPSTRING(dict, "description", blah);
 			(void)strlcpy(edata->desc, blah, sizeof(edata->desc));
