@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.13 2007/07/14 00:48:56 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.14 2007/07/17 17:56:04 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.13 2007/07/14 00:48:56 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.14 2007/07/17 17:56:04 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -468,7 +468,7 @@ sme_events_check(void *arg)
 	sme_event_t *see;
 
 	LIST_FOREACH(see, &sme_events_list, see_list) {
-		DPRINTF(("%s: dev=%s sensor=%s type=%d\n",
+		DPRINTFOBJ(("%s: dev=%s sensor=%s type=%d\n",
 		    __func__,
 		    see->pes.pes_dvname,
 		    see->pes.pes_sensname,
@@ -522,7 +522,7 @@ sme_events_worker(struct work *wk, void *arg)
 		}
 	}
 
-	DPRINTF(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
+	DPRINTFOBJ(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
 	    __func__, edata->desc, edata->sensor,
 	    edata->units, edata->value_cur));
 
