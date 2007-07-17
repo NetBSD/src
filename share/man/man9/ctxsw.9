@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctxsw.9,v 1.20 2007/07/14 10:52:48 ad Exp $
+.\"	$NetBSD: ctxsw.9,v 1.21 2007/07/17 20:56:22 dsieger Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,18 +120,17 @@ Finally, the new LWP is checked to see if it was previously
 preempted while inside a restartable atomic sequence
 .Pq see Xr ras 9 .
 .Pp
-These functions must be called with the scheduler lock held
-(see
-.Xr SCHED_LOCK 9 )
-and at the
+.Fn mi_switch
+has to be called with the LWP lock held
+(through calling 
+.Fn lwp_lock
+first) and at the
 .Xr splsched 9
-interrupt protection level.
-Both functions return with the scheduler lock released.
+interrupt protection level. It returns with the LWP lock released.
 .Sh RETURN VALUES
-These functions return 1 if a context switch was performed to a different
-LWP, 0 otherwise.
+These functions return 1 if a context switch was performed to a
+different LWP, 0 otherwise.
 .Sh SEE ALSO
-.Xr SCHED_LOCK 9 ,
 .Xr condvar 9 ,
 .Xr pmap 9 ,
 .Xr ras 9 ,
