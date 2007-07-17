@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.82 2006/10/16 02:54:23 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.83 2007/07/17 20:13:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.82 2006/10/16 02:54:23 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.83 2007/07/17 20:13:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -395,13 +395,13 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 			 */
 			if (strncmp(name, sfp[i].f_mntonname, MNAMELEN) == 0 &&
 			    strncmp(vfstype, sfp[i].f_fstypename,
-				MFSNAMELEN) == 0) {
+				sizeof(sfp[i].f_fstypename)) == 0) {
 				if (verbose)
 					(void)printf("%s on %s type %.*s: "
 					    "%s\n",
 					    sfp[i].f_mntfromname,
 					    sfp[i].f_mntonname,
-					    MFSNAMELEN,
+					    sizeof(sfp[i].f_fstypename),
 					    sfp[i].f_fstypename,
 					    "already mounted");
 				return (0);
@@ -548,7 +548,7 @@ prmount(struct statvfs *sfp)
 	int f;
 
 	(void)printf("%s on %s type %.*s", sfp->f_mntfromname,
-	    sfp->f_mntonname, MFSNAMELEN, sfp->f_fstypename);
+	    sfp->f_mntonname, sizeof(sfp->f_fstypename), sfp->f_fstypename);
 
 	flags = sfp->f_flag & MNT_VISFLAGMASK;
 	for (f = 0, o = optnames; flags && o < 
