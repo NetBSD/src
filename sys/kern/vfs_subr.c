@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.290 2007/07/17 11:19:34 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.291 2007/07/17 21:14:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.290 2007/07/17 11:19:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.291 2007/07/17 21:14:05 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -350,7 +350,8 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	struct mount *mp;
 
 	LIST_FOREACH(vfsp, &vfs_list, vfs_list)
-		if (!strncmp(vfsp->vfs_name, fstypename, MFSNAMELEN))
+		if (!strncmp(vfsp->vfs_name, fstypename, 
+		    sizeof(mp->mnt_stat.f_fstypename)))
 			break;
 
 	if (vfsp == NULL)
@@ -365,9 +366,14 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_vnodecovered = NULLVP;
 	vfsp->vfs_refcount++;
-	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name, MFSNAMELEN);
+	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name,
+	    sizeof(mp->mnt_stat.f_fstypename));
 	mp->mnt_stat.f_mntonname[0] = '/';
-	(void) copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 0);
+	mp->mnt_stat.f_mntonname[1] = '\0';
+	mp->mnt_stat.f_mntfromname[sizeof(mp->mnt_stat.f_mntfromname) - 1] =
+	    '\0';
+	(void)copystr(devname, mp->mnt_stat.f_mntfromname,
+	    sizeof(mp->mnt_stat.f_mntfromname) - 1, 0);
 	mount_initspecific(mp);
 	*mpp = mp;
 	return (0);
@@ -1903,7 +1909,7 @@ printlockedvnodes(void)
 static int
 sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 {
-	char bf[MFSNAMELEN];
+	char bf[sizeof(((struct statvfs *)NULL)->f_fstypename)];
 	char *where = oldp;
 	struct vfsops *v;
 	size_t needed, left, slen;
@@ -2472,7 +2478,7 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	struct statvfs *sfs = &mp->mnt_stat;
 	int (*fun)(const void *, void *, size_t, size_t *);
 
-	(void)strncpy(mp->mnt_stat.f_fstypename, vfsname,
+	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsname,
 	    sizeof(mp->mnt_stat.f_fstypename));
 
 	if (onp) {
