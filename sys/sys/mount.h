@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.161 2007/07/14 15:41:30 dsl Exp $	*/
+/*	$NetBSD: mount.h,v 1.162 2007/07/17 22:17:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -51,7 +51,6 @@
  * file system statistics
  */
 
-#define	MFSNAMELEN	16	/* length of fs type name, including nul */
 #define	MNAMELEN	90	/* length of buffer for returned name */
 
 /*
