@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.29 2007/07/01 22:59:09 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.30 2007/07/17 11:34:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -35,6 +35,7 @@
 
 #include <err.h>
 #include <mntopts.h>
+#include <paths.h>
 #include <puffs.h>
 #include <signal.h>
 #include <stdio.h>
@@ -60,8 +61,9 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-bsdft] [-c hashbuckets] [-o mntopt] "
-	    "[-o puffsopt]\n    [-r rootnodetype] mountpath", getprogname());
+	errx(1, "usage: %s [-bsdft] [-c hashbuckets] [-n typename] "
+	    "[-o mntopt]\n    [-o puffsopt] [-r rootnodetype] mountpath",
+	    getprogname());
 }
 
 /*
@@ -109,6 +111,7 @@ main(int argc, char *argv[])
 	struct puffs_pathobj *po_root;
 	struct puffs_ops *pops;
 	struct timespec ts;
+	const char *typename;
 	char *rtstr;
 	mntoptparse_t mp;
 	int pflags, lflags, mntflags;
@@ -121,7 +124,8 @@ main(int argc, char *argv[])
 	lflags = mntflags = 0;
 	khashbuckets = 256;
 	pflags = PUFFS_KFLAG_IAONDEMAND;
-	while ((ch = getopt(argc, argv, "bc:dfio:r:st")) != -1) {
+	typename = FSNAME;
+	while ((ch = getopt(argc, argv, "bc:dfin:o:r:st")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
@@ -137,6 +141,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			pflags &= ~PUFFS_KFLAG_IAONDEMAND;
+			break;
+		case 'n':
+			typename = optarg;
 			break;
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
@@ -196,7 +203,7 @@ main(int argc, char *argv[])
 
 	srandom(time(NULL)); /* for random generation numbers */
 
-	pu = puffs_init(pops, FSNAME, &gdtm, pflags);
+	pu = puffs_init(pops, _PATH_PUFFS, typename, &gdtm, pflags);
 	if (pu == NULL)
 		err(1, "init");
 	gpu = pu;
