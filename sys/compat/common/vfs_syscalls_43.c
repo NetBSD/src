@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.38 2007/04/22 08:29:55 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.39 2007/07/17 20:31:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.38 2007/04/22 08:29:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.39 2007/07/17 20:31:03 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -528,7 +528,7 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 		return (EOPNOTSUPP);
 
 	vfc.vfc_vfsops = vfsp;
-	strncpy(vfc.vfc_name, vfsp->vfs_name, MFSNAMELEN);
+	strncpy(vfc.vfc_name, vfsp->vfs_name, sizeof(vfc.vfc_name));
 	vfc.vfc_typenum = vfsnum;
 	vfc.vfc_refcount = vfsp->vfs_refcount;
 	vfc.vfc_flags = 0;
