@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.174 2007/07/16 23:48:05 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.175 2007/07/17 04:01:34 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.174 2007/07/16 23:48:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2007/07/17 04:01:34 macallan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1120,6 +1120,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	u_int npte;
 	struct vm_page *pg, *mem;
 	unsigned asid;
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+	int cached = 1;
+#endif
 	bool wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
@@ -1147,6 +1150,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pa & 0x80000000)	/* this is not error in general. */
 		panic("pmap_enter: pa");
 #endif
+
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+	if (pa & PMAP_NOCACHE) {
+		cached = 0;
+		pa &= ~PMAP_NOCACHE;
+	}
+#endif
+
 	if (!(prot & VM_PROT_READ))
 		panic("pmap_enter: prot");
 #endif
@@ -1170,11 +1181,23 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 */
 			npte = mips_pg_ropage_bit();
 		else {
-			if (*attrs & PV_MODIFIED) {
-				npte = mips_pg_rwpage_bit();
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+			if (cached == 0) {
+				if (*attrs & PV_MODIFIED) {
+					npte = mips_pg_rwncpage_bit();
+				} else {
+					npte = mips_pg_cwncpage_bit();
+				}
 			} else {
-				npte = mips_pg_cwpage_bit();
+#endif
+				if (*attrs & PV_MODIFIED) {
+					npte = mips_pg_rwpage_bit();
+				} else {
+					npte = mips_pg_cwpage_bit();
+				}
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 			}
+#endif
 		}
 #ifdef DEBUG
 		enter_stats.managed++;
