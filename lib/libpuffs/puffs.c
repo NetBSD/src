@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.57 2007/07/14 16:02:14 dsl Exp $	*/
+/*	$NetBSD: puffs.c,v 1.58 2007/07/17 11:34:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.57 2007/07/14 16:02:14 dsl Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.58 2007/07/17 11:34:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: puffs.c,v 1.57 2007/07/14 16:02:14 dsl Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <mntopts.h>
+#include <paths.h>
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -326,8 +327,8 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 }
 
 struct puffs_usermount *
-_puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
-	void *priv, uint32_t pflags)
+_puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
+	const char *puffsname, void *priv, uint32_t pflags)
 {
 	struct puffs_usermount *pu;
 	struct puffs_kargs *pargs;
@@ -340,9 +341,9 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
 		return NULL;
 	}
 
-	fd = open("/dev/puffs", O_RDONLY);
+	fd = open(_PATH_PUFFS, O_RDONLY);
 	if (fd == -1) {
-		warnx("puffs_init: cannot open /dev/puffs");
+		warnx("puffs_init: cannot open %s", _PATH_PUFFS);
 		return NULL;
 	}
 	if (fd <= 2)
@@ -359,7 +360,10 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *puffsname,
 	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
 	pargs->pa_fd = fd;
 	fillvnopmask(pops, pargs->pa_vnopmask);
-	(void)strlcpy(pargs->pa_name, puffsname, sizeof(pargs->pa_name));
+	(void)strlcpy(pargs->pa_typename, puffsname,
+	    sizeof(pargs->pa_typename));
+	(void)strlcpy(pargs->pa_mntfromname, mntfromname,
+	    sizeof(pargs->pa_mntfromname));
 
 	puffs_zerostatvfs(&pargs->pa_svfsb);
 	pargs->pa_root_cookie = NULL;
