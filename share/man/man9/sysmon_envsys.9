@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.4 2007/07/16 17:37:10 xtraeme Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.5 2007/07/17 17:10:58 xtraeme Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 16, 2007
+.Dd July 17, 2007
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -234,6 +234,9 @@ flags were enabled in the
 member.
 .It Fa desc
 Used to set the description string.
+.Em NOTE
+.Em that the description string must be unique in a device, and sensors with
+.Em duplicate description will simply be ignored.
 .El
 .Pp
 Users of this framework must take care about the following points:
