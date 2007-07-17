@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.4 2007/07/01 17:23:44 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.5 2007/07/17 10:06:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,9 +27,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.4 2007/07/01 17:23:44 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.5 2007/07/17 10:06:03 pooka Exp $");
 #endif /* !lint */
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <puffs.h>
@@ -48,7 +49,8 @@ __RCSID("$NetBSD: fs.c,v 1.4 2007/07/01 17:23:44 pooka Exp $");
 	if (rv || a4 == 0) errx(1, "p9p_handshake_ io failed %d, %d", rv, *a4) 
 
 struct puffs_node *
-p9p_handshake(struct puffs_usermount *pu, const char *username)
+p9p_handshake(struct puffs_usermount *pu,
+	const char *username, const char *path)
 {
 	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
@@ -57,8 +59,10 @@ p9p_handshake(struct puffs_usermount *pu, const char *username)
 	uint32_t maxreq;
 	uint16_t dummy;
 	p9ptag_t tagid, rtagid;
+	p9pfid_t curfid;
+	const char *p;
 	uint8_t type;
-	int rv, done, x = 1;
+	int rv, done, x = 1, ncomp;
 
 	/* send initial handshake */
 	pb = p9pbuf_makeout();
@@ -74,7 +78,7 @@ p9p_handshake(struct puffs_usermount *pu, const char *username)
 	if ((type = p9pbuf_get_type(pb)) != P9PROTO_R_VERSION)
 		errx(1, "server invalid response to Tversion: %d", type);
 	if ((rtagid = p9pbuf_get_tag(pb)) != P9PROTO_NOTAG) {
-		errx(1, "server invalid tag: %d vs. %d\n",
+		errx(1, "server invalid tag: %d vs. %d",
 		    P9PROTO_NOTAG, rtagid);
 		return NULL;
 	}
@@ -102,7 +106,7 @@ p9p_handshake(struct puffs_usermount *pu, const char *username)
 	if (p9pbuf_get_type(pb) != P9PROTO_R_ERROR)
 		errx(1, "mount_9p supports only NO auth");
 	if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
-		errx(1, "server invalid tag: %d vs. %d\n", tagid, rtagid);
+		errx(1, "server invalid tag: %d vs. %d", tagid, rtagid);
 
 	/* build attach message */
 	p9pbuf_recycleout(pb);
@@ -121,14 +125,83 @@ p9p_handshake(struct puffs_usermount *pu, const char *username)
 	if ((type = p9pbuf_get_type(pb)) != P9PROTO_R_ATTACH)
 		errx(1, "Rattach not received, got %d", type);
 	if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
-		errx(1, "server invalid tag: %d vs. %d\n", tagid, rtagid);
+		errx(1, "server invalid tag: %d vs. %d", tagid, rtagid);
 
-	/* finally, stat the rootnode */
+	/* just walk away rootfid, you won't see me follow you back home */
+
+#define EATSLASH(p) while (*(p) == '/') p++
+	assert(*path == '/');
+	p = path;
+	EATSLASH(p);
+	for (ncomp = 0; p && *p; ncomp++) {
+		EATSLASH(p);
+		if (!*p)
+			break;
+		p = strchr(p, '/');
+	}
+
+	if (ncomp == 0) {
+		curfid = P9P_ROOTFID;
+	} else {
+		uint16_t walked;
+
+		p9pbuf_recycleout(pb);
+		tagid = NEXTTAG(p9p);
+		curfid = NEXTFID(p9p);
+		p9pbuf_put_1(pb, P9PROTO_T_WALK);
+		p9pbuf_put_2(pb, tagid);
+		p9pbuf_put_4(pb, P9P_ROOTFID);
+		p9pbuf_put_4(pb, curfid);
+		p9pbuf_put_2(pb, ncomp);
+
+		p = path;
+		while (p && *p) {
+			char *p2;
+
+			EATSLASH(p);
+			if (!*p)
+				break;
+			if ((p2 = strchr(p, '/')) == NULL)
+				p2 = strchr(p, '\0');
+			p9pbuf_put_data(pb, p, p2-p);
+			p = p2;
+		}
+
+		DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
+
+		puffs_framebuf_recycle(pb);
+		DO_IO(p9pbuf_read, pu, pb, p9p->servsock, &done, rv);
+
+		if ((type = p9pbuf_get_type(pb)) != P9PROTO_R_WALK)
+			errx(1, "Rwalk not received for rnode, got %d", type);
+		if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
+			errx(1, "server invalid tag: %d vs. %d",
+			    tagid, rtagid);
+		if (p9pbuf_get_2(pb, &walked) == -1)
+			errx(1, "can't get number of walked qids");
+		if (walked != ncomp)
+			errx(1, "can't locate rootpath %s, only %d/%d "
+			    "components found", path, walked, ncomp);
+		
+		/* curfid is alive, clunk P9P_ROOTFID */
+		p9pbuf_recycleout(pb);
+		tagid = NEXTTAG(p9p);
+		p9pbuf_put_1(pb, P9PROTO_T_CLUNK);
+		p9pbuf_put_2(pb, tagid);
+		p9pbuf_put_4(pb, P9P_ROOTFID);
+
+		DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
+		puffs_framebuf_recycle(pb);
+		DO_IO(p9pbuf_read, pu, pb, p9p->servsock, &done, rv);
+		/* wedontcare */
+	}
+
+	/* finally, stat the node */
 	p9pbuf_recycleout(pb);
 	tagid = NEXTTAG(p9p);
 	p9pbuf_put_1(pb, P9PROTO_T_STAT);
 	p9pbuf_put_2(pb, tagid);
-	p9pbuf_put_4(pb, P9P_ROOTFID);
+	p9pbuf_put_4(pb, curfid);
 	DO_IO(p9pbuf_write, pu, pb, p9p->servsock, &done, rv);
 
 	puffs_framebuf_recycle(pb);
@@ -137,7 +210,7 @@ p9p_handshake(struct puffs_usermount *pu, const char *username)
 	if ((type = p9pbuf_get_type(pb)) != P9PROTO_R_STAT)
 		errx(1, "Rstat not received, got %d", type);
 	if ((rtagid = p9pbuf_get_tag(pb)) != tagid)
-		errx(1, "server invalid tag: %d vs. %d\n", tagid, rtagid);
+		errx(1, "server invalid tag: %d vs. %d", tagid, rtagid);
 	if (p9pbuf_get_2(pb, &dummy))
 		errx(1, "couldn't get stat len parameter");
 	if (proto_getstat(pb, &rootva, NULL, NULL))
@@ -145,7 +218,7 @@ p9p_handshake(struct puffs_usermount *pu, const char *username)
 	puffs_framebuf_destroy(pb);
 
 	rootva.va_nlink = 0156; /* guess, will be fixed with first readdir */
-	pn = newp9pnode_va(pu, &rootva, P9P_ROOTFID);
+	pn = newp9pnode_va(pu, &rootva, curfid);
 
 	if (ioctl(p9p->servsock, FIONBIO, &x) == -1)
 		err(1, "cannot set socket in nonblocking mode");
