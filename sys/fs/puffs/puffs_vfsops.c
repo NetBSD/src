@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.50 2007/07/17 11:19:33 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.51 2007/07/17 11:29:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.50 2007/07/17 11:19:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.51 2007/07/17 11:29:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -69,7 +69,8 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 {
 	struct puffs_mount *pmp = NULL;
 	struct puffs_kargs *args;
-	char namebuf[PUFFSNAMESIZE+sizeof(PUFFS_NAMEPREFIX)+1]; /* spooky */
+	char fstype[_VFS_NAMELEN];
+	char *p;
 	int error = 0, i;
 
 	if (*data_len < sizeof *args)
@@ -139,16 +140,27 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		}
 	}
 
+	/* don't allow non-printing characters (like my sweet umlauts.. snif) */
+	args->pa_typename[sizeof(args->pa_typename)-1] = '\0';
+	for (p = args->pa_typename; *p; p++)
+		if (*p < ' ' || *p > '~')
+			*p = '.';
+
+	args->pa_mntfromname[sizeof(args->pa_mntfromname)-1] = '\0';
+	for (p = args->pa_mntfromname; *p; p++)
+		if (*p < ' ' || *p > '~')
+			*p = '.';
+
 	/* build real name */
-	(void)strlcpy(namebuf, PUFFS_NAMEPREFIX, sizeof(namebuf));
-	(void)strlcat(namebuf, args->pa_name, sizeof(namebuf));
+	(void)strlcpy(fstype, PUFFS_TYPEPREFIX, sizeof(fstype));
+	(void)strlcat(fstype, args->pa_typename, sizeof(fstype));
 
 	/* inform user server if it got the max request size it wanted */
 	if (args->pa_maxreqlen == 0 || args->pa_maxreqlen > PUFFS_REQ_MAXSIZE)
 		args->pa_maxreqlen = PUFFS_REQ_MAXSIZE;
 	else if (args->pa_maxreqlen < PUFFS_REQSTRUCT_MAX)
 		args->pa_maxreqlen = PUFFS_REQSTRUCT_MAX;
-	(void)strlcpy(args->pa_name, namebuf, sizeof(args->pa_name));
+	(void)strlcpy(args->pa_typename, fstype, sizeof(args->pa_typename));
 
 	if (args->pa_nhashbuckets == 0)
 		args->pa_nhashbuckets = puffs_pnodebuckets_default;
@@ -161,8 +173,8 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		    puffs_maxpnodebuckets);
 	}
 
-	error = set_statvfs_info(path, UIO_USERSPACE, namebuf,
-	    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l);
+	error = set_statvfs_info(path, UIO_USERSPACE, args->pa_mntfromname,
+	    UIO_SYSSPACE, fstype, mp, l);
 	if (error)
 		goto out;
 	mp->mnt_stat.f_iosize = DEV_BSIZE;
