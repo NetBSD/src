@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.30 2007/07/16 17:06:53 pooka Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.31 2007/07/17 12:39:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.30 2007/07/16 17:06:53 pooka Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.31 2007/07/17 12:39:24 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,8 @@ mount_lfs(int argc, char *argv[])
 	}
 
 	/* Not mounting fresh or upgrading to r/w; don't start the cleaner */
-	if (!(oldflags & MNT_RDONLY) || (mntflags & MNT_RDONLY))
+	if (!(oldflags & MNT_RDONLY) || (mntflags & MNT_RDONLY)
+	    || (mntflags & MNT_GETARGS))
 		noclean = 1;
 	if (!noclean)
 		invoke_cleaner(fs_name);
