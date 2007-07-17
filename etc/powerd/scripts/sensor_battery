@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sensor_battery,v 1.1 2007/07/01 07:55:53 xtraeme Exp $
+#	$NetBSD: sensor_battery,v 1.2 2007/07/17 13:56:25 xtraeme Exp $
 #
 # Generic script for battery sensors.
 #
@@ -14,8 +14,7 @@ normal)
 	exit 0
 	;;
 critical)
-	/sbin/shutdown -p now \
-	    "${0}: ${3}: CRITICAL: capacity dropped below low limit! (${1}) shutting down." >&1
+	logger -p warning "${0}: ${3}: CRITICAL: capacity dropped below limit! (${1})" >&1
 	exit 0
 	;;
 warning-under)
