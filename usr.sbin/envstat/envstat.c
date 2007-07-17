@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.35 2007/07/17 13:12:46 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.36 2007/07/17 15:43:08 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -265,6 +265,9 @@ send_dictionary(int fd)
 
 	/* we know the type of the sensor now, release kernel dict */
 	prop_object_release(dict);
+	/* we don't need the rdonly fd */
+	(void)close(fd);
+
 
 	/* 
 	 * part 2: userland dictionary.
@@ -474,6 +477,12 @@ do {									\
 	printf("%s", prop_dictionary_externalize(udict));
 	return error;
 #endif
+
+	if ((fd = open(_PATH_DEV_SYSMON, O_RDWR)) == -1) {
+		error = errno;
+		warnx("%s", strerror(errno));
+		goto out;
+	}
 
 	/* all done? send our dictionary now */
 	error = prop_dictionary_send_ioctl(udict, fd, ENVSYS_SETDICTIONARY);
