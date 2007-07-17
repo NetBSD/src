@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.12 2007/04/22 08:29:58 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.13 2007/07/17 20:39:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.12 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.13 2007/07/17 20:39:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,18 @@ compat_20_netbsd32_from_statvfs(sbp, sb32p)
 	sb32p->f_spare[3] = 0;
 #if 1
 	/* May as well do the whole batch in one go */
-	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN+MNAMELEN+MNAMELEN);
+	(void)memcpy(sb32p->f_fstypename, sbp->f_fstypename,
+	    sizeof(sb32p->f_fstypename) +
+	    sizeof(sb32p->f_mntonname) +
+	    sizeof(sb32p->f_mnfromname));
 #else
 	/* If we want to be careful */
-	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN);
-	memcpy(sb32p->f_mntonname, sbp->f_mntonname, MNAMELEN);
-	memcpy(sb32p->f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+	(void)memcpy(sb32p->f_fstypename, sbp->f_fstypename,
+	    sizeof(sb32p->f_fstypename));
+	(void)memcpy(sb32p->f_mntonname, sbp->f_mntonname,
+	    sizeof(sb32p->f_mntonname));
+	(void)memcpy(sb32p->f_mntfromname, sbp->f_mntfromname,
+	    sizeof(sb32p->f_mntfromname));
 #endif
 }
 
