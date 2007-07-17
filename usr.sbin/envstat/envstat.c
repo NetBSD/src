@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.37 2007/07/17 17:40:59 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.38 2007/07/17 18:15:02 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -170,11 +170,13 @@ int main(int argc, char **argv)
 		err(EXIT_FAILURE, "open");
 
 	if (!interval && (flags & ENVSYS_XFLAG)) {
-		if (prop_dictionary_recv_ioctl(fd,
-		    			       ENVSYS_GETDICTIONARY,
-					       &dict)) {
-			(void)close(fd);
-			err(EINVAL, "recv_ioctl");
+		rval = prop_dictionary_recv_ioctl(fd,
+		    			          ENVSYS_GETDICTIONARY,
+					          &dict);
+		if (rval) {
+			(void)printf("%s: %s\n", getprogname(),
+			    strerror(rval));
+			goto out;
 		}
 	}
 
