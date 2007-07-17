@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.50 2007/07/12 19:41:58 dsl Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.51 2007/07/17 20:53:49 christos Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.50 2007/07/12 19:41:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.51 2007/07/17 20:53:49 christos Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -133,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.50 2007/07/12 19:41:58 dsl Exp $"
 #include <compat/sunos32/sunos32_dirent.h>
 #include <compat/sunos32/sunos32_syscallargs.h>
 #include <compat/common/compat_util.h>
+#include <compat/sys/mount.h>
 
 #include <netinet/in.h>
 
