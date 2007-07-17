@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.30 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: quota.c,v 1.31 2007/07/17 21:36:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.30 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: quota.c,v 1.31 2007/07/17 21:36:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -478,11 +478,12 @@ getprivs(id, quotatype)
 			    (struct quotause *)malloc(sizeof *qup)) == NULL)
 				errx(2, "out of memory");
 		}
-		if (strncmp(fst[i].f_fstypename, "nfs", MFSNAMELEN) == 0) {
+		if (strncmp(fst[i].f_fstypename, "nfs", 
+		    sizeof(fst[i].f_fstypename)) == 0) {
 			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
 				continue;
 		} else if (strncmp(fst[i].f_fstypename, "ffs",
-		    MFSNAMELEN) == 0) {
+		    sizeof(fst[i].f_fstypename)) == 0) {
 			/*
 			 * XXX
 			 * UFS filesystems must be in /etc/fstab, and must
