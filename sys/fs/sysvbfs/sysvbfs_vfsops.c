@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.12 2007/07/12 19:35:34 dsl Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.13 2007/07/17 11:19:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.12 2007/07/12 19:35:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.13 2007/07/17 11:19:33 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -161,7 +161,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	}
 
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 int

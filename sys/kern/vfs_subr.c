@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.289 2007/07/09 11:35:20 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.290 2007/07/17 11:19:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.289 2007/07/09 11:35:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.290 2007/07/17 11:19:34 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2465,14 +2465,14 @@ copy_statvfs_info(struct statvfs *sbp, const struct mount *mp)
 
 int
 set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
-    struct mount *mp, struct lwp *l)
+    const char *vfsname, struct mount *mp, struct lwp *l)
 {
 	int error;
 	size_t size;
 	struct statvfs *sfs = &mp->mnt_stat;
 	int (*fun)(const void *, void *, size_t, size_t *);
 
-	(void)strncpy(mp->mnt_stat.f_fstypename, mp->mnt_op->vfs_name,
+	(void)strncpy(mp->mnt_stat.f_fstypename, vfsname,
 	    sizeof(mp->mnt_stat.f_fstypename));
 
 	if (onp) {

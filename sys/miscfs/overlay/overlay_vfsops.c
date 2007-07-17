@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.40 2007/07/12 19:35:35 dsl Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.41 2007/07/17 11:19:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.40 2007/07/12 19:35:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.41 2007/07/17 11:19:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	nmp->ovm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);

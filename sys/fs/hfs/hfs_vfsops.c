@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.6 2007/07/12 19:35:33 dsl Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.7 2007/07/17 11:19:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.6 2007/07/12 19:35:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.7 2007/07/17 11:19:32 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -293,7 +293,7 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		goto error;
 	
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-		mp, l);
+		mp->mnt_op->vfs_name, mp, l);
 
 #ifdef HFS_DEBUG
 	if(!update) {
