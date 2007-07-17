@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.101 2007/05/16 19:11:37 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.102 2007/07/17 21:20:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.101 2007/05/16 19:11:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.102 2007/07/17 21:20:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,8 +587,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
-			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
-			    MFSNAMELEN) == 0) {
+			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
+			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				tfs = VFSTOUFS(mp)->um_lfs;
 				simple_lock(&tfs->lfs_interlock);
 				lfs_flush_fs(tfs, flags);
