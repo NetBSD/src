@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.51 2007/07/16 23:48:05 macallan Exp $	*/
+/*	$NetBSD: pmap.h,v 1.52 2007/07/17 04:01:34 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,6 +195,10 @@ paddr_t mips_pmap_unmap_poolpage(vaddr_t);
  * Select CCA to use for unmanaged pages.
  */
 #define	PMAP_CCA_FOR_PA(pa)	2		/* uncached */
+
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+#define PMAP_NOCACHE	0x4000000000000000ULL
+#endif
 
 #endif	/* _KERNEL */
 #endif	/* _MIPS_PMAP_H_ */
