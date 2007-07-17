@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.182 2007/07/04 21:59:16 dsl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.183 2007/07/17 17:42:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.182 2007/07/04 21:59:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.183 2007/07/17 17:42:08 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -553,7 +553,7 @@ linux_sys_mremap(l, v, retval)
 		}
 #if 0 /* notyet */
 		newva = SCARG(uap, new_address);
-		uvmflags = UVM_MREMAP_FIXED;
+		uvmflags = MAP_FIXED;
 #else /* notyet */
 		error = EOPNOTSUPP;
 		goto done;
@@ -562,7 +562,7 @@ linux_sys_mremap(l, v, retval)
 		uvmflags = 0;
 	} else {
 		newva = oldva;
-		uvmflags = UVM_MREMAP_FIXED;
+		uvmflags = MAP_FIXED;
 	}
 	p = l->l_proc;
 	map = &p->p_vmspace->vm_map;

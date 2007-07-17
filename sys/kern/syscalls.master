@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.170 2007/07/14 15:38:40 dsl Exp $
+	$NetBSD: syscalls.master,v 1.171 2007/07/17 17:42:07 joerg Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -805,11 +805,13 @@
 405	STD		{ int sys_aio_write(struct aiocb *aiocbp); }
 406	STD		{ int sys_lio_listio(int mode, struct aiocb *const *list, \
 			    int nent, struct sigevent *sig); }
+
 407	UNIMPL
 408	UNIMPL
 409	UNIMPL
 
-; More interface changes
 410	STD		{ int sys___mount50(const char *type, \
 			    const char *path, int flags, void *data, \
 			    size_t data_len); }
+411	STD		{ void *sys_mremap(void *old_address, size_t old_size, \
+			    void *new_address, size_t new_size, int flags); }
