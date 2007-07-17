@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.131 2007/07/09 21:11:36 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.132 2007/07/17 17:42:08 joerg Exp $	*/
 
 /*
  *
@@ -662,7 +662,6 @@ vaddr_t			uvm_default_mapaddr(struct proc *, vaddr_t, vsize_t);
 int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 			    struct vm_map *, vaddr_t *, vsize_t,
 			    struct proc *, int);
-#define	UVM_MREMAP_FIXED	1
 
 /* uvm_object.c */
 int			uobj_wirepages(struct uvm_object *uobj, off_t start,
