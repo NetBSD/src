@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.21 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.22 2007/07/17 03:53:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,8 +142,15 @@ struct tlb {
 /* Not wr-prot not clean */
 #define	MIPS3_PG_RWPAGE	(MIPS3_PG_V | MIPS3_PG_D | MIPS3_PG_CACHED)
 
+/* Not wr-prot not clean not cached */
+#define	MIPS3_PG_RWNCPAGE	(MIPS3_PG_V | MIPS3_PG_D | MIPS3_PG_UNCACHED)
+
 /* Not wr-prot but clean */
 #define	MIPS3_PG_CWPAGE	(MIPS3_PG_V | MIPS3_PG_CACHED)
+
+/* Not wr-prot but clean not cached*/
+#define	MIPS3_PG_CWNCPAGE	(MIPS3_PG_V | MIPS3_PG_UNCACHED)
+
 #define	MIPS3_PG_IOPAGE(cca) \
 	(MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D | MIPS3_CCA_TO_PG(cca))
 #define	MIPS3_PG_FRAME	0x3fffffc0
