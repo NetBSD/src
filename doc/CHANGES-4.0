@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.206 2007/07/16 14:49:39 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.207 2007/07/17 10:42:50 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7050,3 +7050,23 @@ crypto/dist/ssh/auth.c				1.25
 	PR/36623: Edgar Fu: ssh publickey authentification fails if homedir not present
 	Removed extra realpath check that was introduced by a bogus merge.
 	[christos, ticket #761]
+
+sbin/shutdown/Makefile				1.9
+sbin/shutdown/shutdown.c			1.47
+sbin/shutdown/shutdown.c			1.48
+
+	- sprinkle static
+	- pass WARNS=4 and lint
+	- use size_t/time_t where appropriate
+	- get/setprogname()
+	- before executing rc.shutdown, set the real user id to 0, because shutdown
+	  scripts may depend on it (for example su depends on being root).
+	- use warn instead of perror, and make sure we use the right errno.
+
+	PR/36626 - Jukka Salmi -- fails to compile if DEBUG is defined
+	[jnemeth, ticket #771]
+
+distrib/hp700/ramdisk/list			1.6
+
+	Add fsck(,_ffs} to the install ramdisk.
+	[skrll, ticket #769]
