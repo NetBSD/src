@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.31 2006/05/17 20:36:50 christos Exp $	*/
+/*	$NetBSD: opendir.c,v 1.32 2007/07/17 20:05:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.31 2006/05/17 20:36:50 christos Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.32 2007/07/17 20:05:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,11 +112,11 @@ __opendir2(const char *name, int flags)
 
 	if (flags & DTF_NODUP)
 		unionstack = !(strncmp(sfb.f_fstypename, MOUNT_UNION,
-		    MFSNAMELEN)) || (sfb.f_flag & MNT_UNION);
+		    sizeof(sfb.f_fstypename))) || (sfb.f_flag & MNT_UNION);
 	else
 		unionstack = 0;
 
-	nfsdir = !(strncmp(sfb.f_fstypename, MOUNT_NFS, MFSNAMELEN));
+	nfsdir = !(strncmp(sfb.f_fstypename, MOUNT_NFS, sizeof(sfb.f_fstypename)));
 
 	if (unionstack || nfsdir) {
 		size_t len;
