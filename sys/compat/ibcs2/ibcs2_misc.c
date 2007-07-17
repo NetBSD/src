@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.93 2007/07/04 22:02:16 dsl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.93 2007/07/04 22:02:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.93 2007/07/04 22:02:16 dsl Exp $");
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_sysi86.h>
 #include <compat/ibcs2/ibcs2_exec.h>
+
+#include <compat/sys/mount.h>
 
 int
 ibcs2_sys_ulimit(l, v, retval)
