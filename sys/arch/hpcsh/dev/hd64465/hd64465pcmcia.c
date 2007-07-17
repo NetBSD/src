@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.21 2006/03/04 02:26:33 uwe Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.22 2007/07/17 11:16:14 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.21 2006/03/04 02:26:33 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.22 2007/07/17 11:16:14 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ struct hd64465pcmcia_softc {
 	vaddr_t sc_area6;
 
 	/* CSC event */
-	struct proc *sc_event_thread;
+	lwp_t *sc_event_thread;
 	struct hd64465pcmcia_event sc_event_pool[EVENT_QUEUE_MAX];
 	SIMPLEQ_HEAD (, hd64465pcmcia_event) sc_event_head;
 
@@ -191,7 +191,6 @@ CFATTACH_DECL(hd64465pcmcia, sizeof(struct hd64465pcmcia_softc),
 
 STATIC void hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *, int);
 /* hot plug */
-STATIC void hd64465pcmcia_create_event_thread(void *);
 STATIC void hd64465pcmcia_event_thread(void *);
 STATIC void __queue_event(struct hd64465pcmcia_channel *,
     enum hd64465pcmcia_event_type);
@@ -221,6 +220,7 @@ hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hd64465_attach_args *ha = aux;
 	struct hd64465pcmcia_softc *sc = (struct hd64465pcmcia_softc *)self;
+	int error;
 
 	sc->sc_module_id = ha->ha_module_id;
 
@@ -243,22 +243,13 @@ hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Channel 0/1 common CSC event queue */
 	SIMPLEQ_INIT (&sc->sc_event_head);
-	kthread_create(hd64465pcmcia_create_event_thread, sc);
+
+	error = kthread_create(PRI_NONE, 0, NULL, hd64465pcmcia_event_thread,
+		sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname);
+	KASSERT(error == 0);
 
 	hd64465pcmcia_attach_channel(sc, 0);
 	hd64465pcmcia_attach_channel(sc, 1);
-}
-
-void
-hd64465pcmcia_create_event_thread(void *arg)
-{
-	struct hd64465pcmcia_softc *sc = arg;
-	int error;
-
-	error = kthread_create1(hd64465pcmcia_event_thread, sc,
-	    &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname);
-
-	KASSERT(error == 0);
 }
 
 void
