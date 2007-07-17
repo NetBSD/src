@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.158 2007/07/12 18:29:43 rmind Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.159 2007/07/17 10:23:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.158 2007/07/12 18:29:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.159 2007/07/17 10:23:33 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -833,7 +833,7 @@ again:
 
 			/*
 			 * We might have lost our iod while sleeping,
-			 * so check and loop if nescessary.
+			 * so check and loop if necessary.
 			 */
 
 			if (nmp->nm_bufqiods == 0) {
