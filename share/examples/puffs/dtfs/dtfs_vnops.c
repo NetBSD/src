@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.33 2007/07/17 16:00:56 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.34 2007/07/17 16:33:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -327,6 +327,7 @@ dtfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	/* update name */
 	free(dfd_src->dfd_name);
 	dfd_src->dfd_name = estrndup(pcn_targ->pcn_name,pcn_targ->pcn_namelen);
+	dfd_src->dfd_namelen = strlen(dfd_src->dfd_name);
 
 	dtfs_updatetimes(src, 0, 1, 0);
 
