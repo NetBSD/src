@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.26 2005/08/20 15:00:27 kent Exp $	*/
+/*	$NetBSD: quot.c,v 1.27 2007/07/17 22:00:46 christos Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.26 2005/08/20 15:00:27 kent Exp $");
+__RCSID("$NetBSD: quot.c,v 1.27 2007/07/17 22:00:46 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -666,7 +666,8 @@ main(argc, argv)
 	if (all) {
 		cnt = getmntinfo(&mp, MNT_NOWAIT);
 		for (; --cnt >= 0; mp++) {
-			if (!strncmp(mp->f_fstypename, MOUNT_FFS, MFSNAMELEN)) {
+			if (!strncmp(mp->f_fstypename, MOUNT_FFS,
+			    sizeof(mp->f_fstypename))) {
 				if ((nm =
 				    strrchr(mp->f_mntfromname, '/')) != NULL) {
 					sprintf(dev, "/dev/r%s", nm + 1);
