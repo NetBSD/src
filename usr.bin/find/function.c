@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.62 2007/02/06 13:25:01 elad Exp $	*/
+/*	$NetBSD: function.c,v 1.63 2007/07/17 21:35:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.62 2007/02/06 13:25:01 elad Exp $");
+__RCSID("$NetBSD: function.c,v 1.63 2007/07/17 21:35:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -957,7 +957,7 @@ f_fstype(PLAN *plan, FTSENT *entry)
 	static int first = 1;
 	struct statvfs sb;
 	static short val;
-	static char fstype[MFSNAMELEN];
+	static char fstype[sizeof(sb.f_fstypename)];
 	char *p, save[2];
 
 	memset(&save, 0, sizeof save);	/* XXX gcc */
@@ -1005,7 +1005,7 @@ f_fstype(PLAN *plan, FTSENT *entry)
 	case F_MTFLAG:
 		return (val & plan->mt_data);
 	case F_MTTYPE:
-		return (strncmp(fstype, plan->c_data, MFSNAMELEN) == 0);
+		return (strncmp(fstype, plan->c_data, sizeof(fstype)) == 0);
 	default:
 		abort();
 	}
