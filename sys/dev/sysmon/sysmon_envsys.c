@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.22 2007/07/17 15:43:08 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.23 2007/07/17 16:47:58 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.22 2007/07/17 15:43:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.23 2007/07/17 16:47:58 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -628,9 +628,11 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 		}
 
 		error = sme_make_dictionary(sme, array, edata);
-		if (error) {
-			DPRINTF(("%s: sme_make_dictionary[%d]\n", __func__, i));
+		if (error && error != EEXIST)
 			goto out;
+		else {
+			error = 0;
+			continue;
 		}
 	}
 
@@ -653,9 +655,10 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	prop_dictionary_t dict;
-	int i, j, k;
+	envsys_data_t *nedata = NULL;
+	int i, j, k, l;
 
-	i = j = k = 0;
+	i = j = k = l = 0;
 
 	/*
 	 * <array>
@@ -685,6 +688,22 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	SENSOR_SSTRING(dict, "type", est[i].desc);
+
+	/*
+	 * Check if description was already assigned in other sensor.
+	 */
+	for (l = 0; l < sme->sme_nsensors; l++) {
+		/* skip the same sensor */
+		if (l == edata->sensor)
+			continue;
+		nedata = &sme->sme_sensor_data[l];
+		if (strcmp(edata->desc, nedata->desc) == 0) {
+			edata->flags |= ENVSYS_FDUPDESC;
+			mutex_exit(&sme_mtx);
+			return EEXIST;
+		}
+	}
+
 	SENSOR_SSTRING(dict, "description", edata->desc);
 
 	/*
@@ -842,6 +861,10 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	for (i = 0; i < sme->sme_nsensors; i++) {
 		edata = &sme->sme_sensor_data[i];
 
+		/* skip sensors with a duplicate description */
+		if (edata->flags & ENVSYS_FDUPDESC)
+			continue;
+
 		/* 
 		 * refresh sensor data via sme_gtredata only if the
 		 * flag is not set.
@@ -936,7 +959,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		       prop_array_t array)
 {
 	const struct sme_sensor_type *sst = sme_sensor_type;
-	envsys_data_t *edata;
+	envsys_data_t *edata, *nedata;
 	prop_dictionary_t dict;
 	prop_object_t obj, obj1, obj2;
 	int32_t critval;
@@ -970,7 +993,24 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if ((obj2 = prop_dictionary_get(udict, "new-description"))) {
 			targetfound = true;
 			blah = prop_string_cstring_nocopy(obj2);
+			
+			for (i = 0; i < sme->sme_nsensors; i++) {
+				if (i == edata->sensor)
+					continue;
+
+				nedata = &sme->sme_sensor_data[i];
+				if (strcmp(blah, nedata->desc) == 0) {
+					error = EEXIST;
+					break;
+				}
+			}
+
+			if (error)
+				goto out;
+
 			SENSOR_UPSTRING(dict, "description", blah);
+			(void)strlcpy(edata->desc, blah, sizeof(edata->desc));
+
 			break;
 		}
 
