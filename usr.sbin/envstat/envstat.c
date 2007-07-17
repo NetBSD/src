@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.36 2007/07/17 15:43:08 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.37 2007/07/17 17:40:59 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -241,8 +241,9 @@ send_dictionary(int fd)
 	 * know what type of sensor are we trying to set
 	 * a critical condition.
 	 */
-	if (prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict))
-		return EINVAL;
+	error = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict);
+	if (error)
+		return error;
 
 	if (mydevname) {
 		obj = prop_dictionary_get(dict, mydevname);
@@ -505,8 +506,9 @@ parse_dictionary(int fd)
 	int rval = 0;
 
 	/* receive dictionary from kernel */
-	if (prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict))
-		return EINVAL;
+	rval = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict);
+	if (rval)
+		return rval;
 
 	if (mydevname) {
 		obj = prop_dictionary_get(dict, mydevname);
@@ -613,10 +615,13 @@ find_sensors(prop_array_t array)
 
 		/* description string */
 		desc = prop_dictionary_get(obj, "description");
-		/* copy description */
-		(void)strlcpy(gesen[gnelems].desc,
-		    prop_string_cstring_nocopy(desc),
-		    sizeof(gesen[gnelems].desc));
+		if (desc != NULL) {
+			/* copy description */
+			(void)strlcpy(gesen[gnelems].desc,
+			    prop_string_cstring_nocopy(desc),
+		    	    sizeof(gesen[gnelems].desc));
+		} else
+			continue;
 
 		/* type string */
 		obj1  = prop_dictionary_get(obj, "type");
