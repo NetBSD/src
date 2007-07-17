@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.208 2007/07/17 12:29:17 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.209 2007/07/17 13:33:42 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7269,3 +7269,8 @@ doc/3RDPARTY					1.531
 
 	We have now IPF 4.1.23
 	[martti, ticket #732]
+
+sys/arch/hp700/gsc/harmony.c			1.8
+
+	Initialise the callout before use.
+	[skrll, ticket #772]
