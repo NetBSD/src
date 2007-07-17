@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.159 2007/07/17 10:23:33 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.160 2007/07/17 10:24:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.159 2007/07/17 10:23:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.160 2007/07/17 10:24:10 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -811,7 +811,6 @@ again:
 		 */
 		if (curlwp == uvm.pagedaemon_lwp) {
 	  		/* Enque for later, to avoid free-page deadlock */
-			  (void) 0;
 		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {
 			if (catch) {
 				error = cv_timedwait_sig(&nmp->nm_aiocv, 
