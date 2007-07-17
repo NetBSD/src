@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.5 2007/07/09 09:28:21 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.6 2007/07/17 11:34:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,7 @@
 #include <err.h>
 #include <errno.h>
 #include <mntopts.h>
+#include <paths.h>
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -413,7 +414,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, portal, node, inactive);
 	PUFFSOP_SET(pops, portal, node, reclaim);
 
-	pu = puffs_init(pops, "portal", NULL, pflags);
+	pu = puffs_init(pops, _PATH_PUFFS, "portal", NULL, pflags);
 	if (pu == NULL)
 		err(1, "init");
 
