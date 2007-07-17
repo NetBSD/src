@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.12 2007/06/24 18:43:30 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.13 2007/07/17 11:34:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 	PUFFSOP_INIT(pops);
 	puffs_null_setops(pops);
 
-	if ((pu = puffs_init(pops, "pnullfs", NULL, pflags)) == NULL)
+	if ((pu = puffs_init(pops, argv[0], "pnullfs", NULL, pflags)) == NULL)
 		err(1, "init");
 
 	pn_root = puffs_pn_new(pu, NULL);

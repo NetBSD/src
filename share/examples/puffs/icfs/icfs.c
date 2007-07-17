@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.4 2007/06/24 22:18:38 pooka Exp $	*/
+/*	$NetBSD: icfs.c,v 1.5 2007/07/17 11:34:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -192,7 +192,7 @@ main(int argc, char *argv[])
 
 	PUFFSOP_SET(pops, ic, node, readdir);
 
-	if ((pu = puffs_init(pops, "ic", NULL, pflags)) == NULL)
+	if ((pu = puffs_init(pops, argv[0], "ic", NULL, pflags)) == NULL)
 		err(1, "mount");
 
 	pn_root = puffs_pn_new(pu, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.32 2007/07/07 22:06:09 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.33 2007/07/17 11:34:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.32 2007/07/07 22:06:09 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.33 2007/07/17 11:34:54 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -171,6 +171,10 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, psshfs, node, write);
 	PUFFSOP_SET(pops, psshfs, node, reclaim);
 
+	pu = puffs_init(pops, argv[0], "psshfs", &pctx, pflags);
+	if (pu == NULL)
+		err(1, "puffs_init");
+
 	memset(&pctx, 0, sizeof(pctx));
 	pctx.mounttime = time(NULL);
 
@@ -184,10 +188,6 @@ main(int argc, char *argv[])
 
 	add_ssharg(&sshargs, &nargs, argv[0]);
 	add_ssharg(&sshargs, &nargs, "sftp");
-
-	pu = puffs_init(pops, "psshfs", &pctx, pflags);
-	if (pu == NULL)
-		err(1, "puffs_init");
 
 	pssh_connect(&pctx, sshargs);
 

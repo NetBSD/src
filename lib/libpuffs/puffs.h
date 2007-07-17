@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.74 2007/07/09 09:28:48 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.75 2007/07/17 11:34:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -386,8 +386,8 @@ enum {
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
 #define PUFFS_DEVEL_LIBVERSION 24
-#define puffs_init(a,b,c,d) \
-    _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d)
+#define puffs_init(a,b,c,d,e) \
+    _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e)
 
 
 #define PNPATH(pnode)	((pnode)->pn_po.po_path)
@@ -429,8 +429,8 @@ typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 
 __BEGIN_DECLS
 
-struct puffs_usermount *_puffs_init(int, struct puffs_ops *pops, const char *,
-				    void *, uint32_t);
+struct puffs_usermount *_puffs_init(int, struct puffs_ops *, const char *,
+				    const char *, void *, uint32_t);
 int		puffs_mount(struct puffs_usermount *, const char *, int, void*);
 int		puffs_exit(struct puffs_usermount *, int);
 int		puffs_mainloop(struct puffs_usermount *, int);
