@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.13 2007/07/16 19:20:17 joerg Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.14 2007/07/17 20:36:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -105,7 +105,8 @@ struct _prop_object_internalize_context {
 
 #define	_PROP_EOF(c)		((c) == '\0')
 #define	_PROP_ISSPACE(c)	\
-	((c) == ' ' || (c) == '\t' || (c) == '\n' || _PROP_EOF(c))
+	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || \
+	 _PROP_EOF(c))
 
 #define	_PROP_TAG_MATCH(ctx, t)					\
 	_prop_object_internalize_match((ctx)->poic_tagname,	\
