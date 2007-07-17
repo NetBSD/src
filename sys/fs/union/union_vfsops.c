@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.45 2007/07/12 19:35:34 dsl Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.46 2007/07/17 11:19:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.45 2007/07/12 19:35:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.46 2007/07/17 11:19:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ union_mount(mp, path, data, data_len, ndp, l)
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		goto bad;
 
