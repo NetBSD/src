@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.34 2007/07/13 00:42:57 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.35 2007/07/17 13:12:46 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "Dd:fi:lm:s:w:x")) != -1) {
+	while ((c = getopt(argc, argv, "Dd:fi:lm:rs:w:x")) != -1) {
 		switch (c) {
 		case 'd':	/* show sensors of a specific device */
 			mydevname = strdup(optarg);
@@ -142,6 +142,12 @@ int main(int argc, char **argv)
 			break;
 		case 'x':	/* print the dictionary in raw format */
 			flags |= ENVSYS_XFLAG;
+			break;
+		case 'r':
+			/* 
+			 * This flag doesn't do anything... it's only here for
+			 * compatibility with the old implementation.
+			 */
 			break;
 		case 's':	/* only show specified sensors */
 			sensors = strdup(optarg);
@@ -896,7 +902,7 @@ do {								\
 static int
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-Dflx] ", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-Dflrx] ", getprogname());
 	(void)fprintf(stderr, "[-m ...] [-s s1,s2 ] [-w num] ");
 	(void)fprintf(stderr, "[-i num] [-d ...]\n");
 	exit(EXIT_FAILURE);
