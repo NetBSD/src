@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.207 2007/07/17 10:42:50 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.208 2007/07/17 12:29:17 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7070,3 +7070,202 @@ distrib/hp700/ramdisk/list			1.6
 
 	Add fsck(,_ffs} to the install ramdisk.
 	[skrll, ticket #769]
+
+dist/ipf/HISTORY				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_fil.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_htable.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_htable.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_irc_pxy.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_lookup.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_lookup.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_pool.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_pool.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_pptp_pxy.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_rpcb_pxy.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_scan.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_scan.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_sync.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ip_sync.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/ipf.h					sync with ipfilter-4-1-23-pullup
+dist/ipf/ml_ipl.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/mlfk_ipl.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/mlo_ipl.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/radix_ipf.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/iplang/iplang_y.y			sync with ipfilter-4-1-23-pullup
+dist/ipf/ipsend/44arp.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ipsend/arp.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ipsend/ip.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ipsend/iptests.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/ipsend/resend.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/ipsend/sdlpi.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/ipsend/sock.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/addicmp.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/addipopt.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/alist_free.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/alist_new.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/bcopywrap.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/binprint.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/buildopts.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/checkrev.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/count4bits.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/count6bits.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/debug.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/facpri.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/facpri.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/fill6bits.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/flags.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/gethost.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/getifname.c			sync with ipfilter-4-1-23-pullup	
+dist/ipf/lib/getnattype.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/getport.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/getportproto.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/getproto.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/getsumd.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/hostname.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/icmpcode.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/initparse.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ionames.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipf_dotuning.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipft_ef.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipft_hx.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipft_pc.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipft_sn.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipft_td.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipft_tx.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ipoptsec.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/kmem.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/kmem.h				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/kmemcpywrap.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/kvatoname.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/load_file.c			sync with ipfilter-4-1-23-pullup	
+dist/ipf/lib/load_hash.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/load_hashnode.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/load_http.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/load_pool.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/load_poolnode.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/load_url.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/mutex_emul.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/nametokva.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/nat_setgroupmap.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/ntomask.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/optname.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/optprint.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/optprintv6.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/optvalue.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/portname.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/print_toif.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printactivenat.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printaps.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printbuf.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printfr.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printfraginfo.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printhash.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printhash_live.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printhashdata.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printhashnode.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printhostmap.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printhostmask.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printifname.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printip.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printlog.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printmask.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printnat.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printpacket.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printpacket6.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printpool.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printpool_live.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printpooldata.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printpoolnode.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printportcmp.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printproto.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printsbuf.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printstate.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printtqtable.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/printtunable.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/remove_hash.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/remove_hashnode.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/remove_pool.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/remove_poolnode.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/resetlexer.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/rwlock_emul.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/tcp_flags.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/tcpflags.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/tcpoptnames.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/v6ionames.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/v6optvalue.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/var.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/lib/verbose.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/man/ipf.8				sync with ipfilter-4-1-23-pullup
+dist/ipf/man/ipfstat.8				sync with ipfilter-4-1-23-pullup
+dist/ipf/man/ipmon.8				sync with ipfilter-4-1-23-pullup
+dist/ipf/test/test.format			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipf.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipf_y.y				sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipfcomp.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipfs.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipfstat.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipftest.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipmon.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipmon_y.y			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipnat.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipnat_y.y			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ippool.c				sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ippool_y.y			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipscan_y.y			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipsyncm.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/ipsyncs.c			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/lex_var.h			sync with ipfilter-4-1-23-pullup
+dist/ipf/tools/lexer.h				sync with ipfilter-4-1-23-pullup
+regress/sys/kern/ipf/Makefile			sync with ipfilter-4-1-23-pullup
+regress/sys/kern/ipf/natipftest			sync with ipfilter-4-1-23-pullup
+regress/sys/kern/ipf/test.format		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/fil.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_auth.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_auth.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_compat.h		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_fil.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_fil_netbsd.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_frag.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_frag.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_ftp_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_h323_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_htable.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_htable.h		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_ipsec_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_irc_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_log.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_lookup.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_lookup.h		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_nat.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_nat.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_pool.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_pool.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_pptp_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_proxy.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_proxy.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_raudio_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_rcmd_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_rpcb_pxy.c		sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_scan.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_scan.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_state.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_state.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_sync.c			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ip_sync.h			sync with ipfilter-4-1-23-pullup
+sys/dist/ipf/netinet/ipl.h			sync with ipfilter-4-1-23-pullup
+usr.sbin/ipf/Makefile.inc			sync with ipfilter-4-1-23-pullup
+usr.sbin/ipf/libipf/Makefile			sync with ipfilter-4-1-23-pullup
+dist/ipf/test/expected/ipv6.5			new file
+dist/ipf/test/input/ipv6.5			new file
+dist/ipf/test/regress/ipv6.5			new file
+regress/sys/kern/ipf/expected/ipv6.5		new file
+regress/sys/kern/ipf/input/ipv6.5		new file
+regress/sys/kern/ipf/regress/ipv6.5		new file
+
+	Import IPFilter 4.1.23
+	[martin, ticket #732]
+
+doc/3RDPARTY					1.531
+
+	We have now IPF 4.1.23
+	[martti, ticket #732]
