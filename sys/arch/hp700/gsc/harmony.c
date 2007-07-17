@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.5 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: harmony.c,v 1.5.24.1 2007/07/17 13:31:44 liamjfoy Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -285,6 +285,7 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
 	    RND_TYPE_UNKNOWN, 0);
 
+	callout_init(&sc->sc_acc_tmo);
 	callout_setfunc(&sc->sc_acc_tmo, harmony_acc_tmo, sc);
 	sc->sc_acc_num = 0xa5a5a5a5;
 #endif
