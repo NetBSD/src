@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.4 2007/07/12 19:35:32 dsl Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.5 2007/07/17 11:19:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.4 2007/07/12 19:35:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.5 2007/07/17 11:19:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 	efs_statvfs(mp, &mp->mnt_stat, l);
 
 	err = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (err)
 		free(emp, M_EFSMNT);
 

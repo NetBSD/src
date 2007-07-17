@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.178 2007/07/12 19:35:35 dsl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.179 2007/07/17 11:19:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.178 2007/07/12 19:35:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.179 2007/07/17 11:19:35 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -756,7 +756,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
 	nmp->nm_deadthresh = NFS_DEFDEADTHRESH;
-	error = set_statvfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, l);
+	error = set_statvfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE,
+	    mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		goto bad;
 	nmp->nm_nam = nam;
