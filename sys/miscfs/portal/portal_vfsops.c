@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.62 2007/07/12 19:35:35 dsl Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.63 2007/07/17 11:19:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.62 2007/07/12 19:35:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.63 2007/07/17 11:19:34 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -164,7 +164,7 @@ portal_mount(
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, args->pa_config,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 }
 
 int

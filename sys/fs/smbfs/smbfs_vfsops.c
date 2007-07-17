@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.66 2007/07/12 19:35:33 dsl Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.67 2007/07/17 11:19:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.66 2007/07/12 19:35:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.67 2007/07/17 11:19:33 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -206,7 +206,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFDIR;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		goto bad;
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);

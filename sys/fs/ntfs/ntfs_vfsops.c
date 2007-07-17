@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.51 2007/07/12 19:35:33 dsl Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.52 2007/07/17 11:19:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.51 2007/07/12 19:35:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.52 2007/07/17 11:19:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ ntfs_mount (
 		 * Update device name only on success
 		 */
 		err = set_statvfs_info(NULL, UIO_USERSPACE, args->fspec,
-		    UIO_USERSPACE, mp, p);
+		    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, p);
 		if (err)
 			goto fail;
 
@@ -356,7 +356,7 @@ ntfs_mount (
 
 		/* Save "last mounted on" info for mount point (NULL pad)*/
 		err = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-		    UIO_USERSPACE, mp, l);
+		    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 		if (err)
 			goto fail;
 

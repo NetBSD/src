@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.71 2007/07/12 19:35:35 dsl Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.72 2007/07/17 11:19:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.71 2007/07/12 19:35:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.72 2007/07/17 11:19:35 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -167,7 +167,7 @@ procfs_mount(
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "procfs", UIO_SYSSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
 	if (*data_len >= sizeof *args)
 		pmnt->pmnt_flags = args->flags;

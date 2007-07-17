@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.37 2007/07/12 19:35:32 dsl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.38 2007/07/17 11:19:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.37 2007/07/12 19:35:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.38 2007/07/17 11:19:32 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -169,7 +169,7 @@ adosfs_mount(mp, path, data, data_len, ndp, l)
 	amp->gid = args->gid;
 	amp->mask = args->mask;
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 int

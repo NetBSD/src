@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.113 2007/07/12 19:35:36 dsl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.114 2007/07/17 11:19:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.113 2007/07/12 19:35:36 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.114 2007/07/17 11:19:35 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -422,7 +422,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
 	    sizeof(fs->e2fs_fsmnt) - 1, &size);
 	memset(fs->e2fs_fsmnt + size, 0, sizeof(fs->e2fs_fsmnt) - size);

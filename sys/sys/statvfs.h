@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.11 2006/07/31 16:34:44 martin Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.12 2007/07/17 11:19:35 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ struct mount;
 struct lwp;
 
 int	set_statvfs_info(const char *, int, const char *, int,
-    struct mount *, struct lwp *);
+    const char *, struct mount *, struct lwp *);
 void	copy_statvfs_info(struct statvfs *, const struct mount *);
 int	dostatvfs(struct mount *, struct statvfs *, struct lwp *, int, int);
 #else

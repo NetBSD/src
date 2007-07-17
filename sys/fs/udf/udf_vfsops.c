@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.26 2007/07/12 19:35:34 dsl Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.27 2007/07/17 11:19:33 pooka Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.26 2007/07/12 19:35:34 dsl Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.27 2007/07/17 11:19:33 pooka Exp $");
 #endif /* not lint */
 
 
@@ -382,7 +382,7 @@ udf_mount(struct mount *mp, const char *path,
 	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
 
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-			mp, l);
+			mp->mnt_op->vfs_name, mp, l);
 }
 
 /* --------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.36 2007/07/12 19:35:32 dsl Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.37 2007/07/17 11:19:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.36 2007/07/12 19:35:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.37 2007/07/17 11:19:32 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -265,7 +265,7 @@ filecore_mount(mp, path, data, data_len, ndp, l)
 	}
 	fcmp = VFSTOFILECORE(mp);
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 /*

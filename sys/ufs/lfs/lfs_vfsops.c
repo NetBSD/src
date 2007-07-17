@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.238 2007/07/12 19:35:36 dsl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.239 2007/07/17 11:19:40 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.238 2007/07/12 19:35:36 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.239 2007/07/17 11:19:40 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -513,7 +513,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error == 0)
 		(void)strncpy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname,
 			      sizeof(fs->lfs_fsmnt));

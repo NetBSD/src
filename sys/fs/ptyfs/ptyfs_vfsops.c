@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.25 2007/07/12 19:35:33 dsl Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.26 2007/07/17 11:19:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.25 2007/07/12 19:35:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.26 2007/07/17 11:19:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	vfs_getnewfsid(mp);
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "ptyfs",
-	    UIO_SYSSPACE, mp, l)) != 0) {
+	    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l)) != 0) {
 		free(pmnt, M_UFSMNT);
 		return error;
 	}

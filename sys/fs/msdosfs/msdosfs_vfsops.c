@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.46 2007/07/12 19:35:33 dsl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.47 2007/07/17 11:19:32 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.46 2007/07/12 19:35:33 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.47 2007/07/17 11:19:32 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -434,7 +434,7 @@ msdosfs_mount(mp, path, data, data_len, ndp, l)
 	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
 #endif
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 
 fail:
 	vrele(devvp);
