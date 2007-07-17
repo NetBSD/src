@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.83 2007/04/17 22:01:43 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.84 2007/07/17 01:26:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.83 2007/04/17 22:01:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84 2007/07/17 01:26:17 dyoung Exp $");
 #endif
 
 /*
@@ -1252,6 +1252,7 @@ ath_txfrag_cleanup(struct ath_softc *sc,
 	while ((bf = STAILQ_FIRST(frags)) != NULL) {
 		STAILQ_REMOVE_HEAD(frags, bf_list);
 		STAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
+		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		ieee80211_node_decref(ni);
 	}
 }
@@ -1272,6 +1273,9 @@ ath_txfrag_setup(struct ath_softc *sc, ath_bufhead *frags,
 	for (m = m0->m_nextpkt; m != NULL; m = m->m_nextpkt) {
 		bf = STAILQ_FIRST(&sc->sc_txbuf);
 		if (bf == NULL) {       /* out of buffers, cleanup */
+			DPRINTF(sc, ATH_DEBUG_XMIT, "%s: out of xmit buffers\n",
+				__func__);
+			sc->sc_if.if_flags |= IFF_OACTIVE;
 			ath_txfrag_cleanup(sc, frags, ni);
 			break;
 		}
@@ -1461,7 +1465,6 @@ ath_start(struct ifnet *ifp)
 			goto nextfrag;
 		}
 
-		sc->sc_tx_timer = 5;
 		ifp->if_timer = 1;
 	}
 }
@@ -4102,6 +4105,7 @@ ath_tx_processq(struct ath_softc *sc, struct ath_txq *txq)
 
 		ATH_TXBUF_LOCK(sc);
 		STAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
+		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		ATH_TXBUF_UNLOCK(sc);
 	}
 	return nacked;
@@ -4127,8 +4131,6 @@ ath_tx_proc_q0(void *arg, int npending)
 
 	if (txqactive(sc->sc_ah, 0) && ath_tx_processq(sc, &sc->sc_txq[0]) > 0){
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
-		ifp->if_flags &= ~IFF_OACTIVE;
-		sc->sc_tx_timer = 0;
 	}
 	if (txqactive(sc->sc_ah, sc->sc_cabq->axq_qnum))
 		ath_tx_processq(sc, sc->sc_cabq);
@@ -4166,8 +4168,6 @@ ath_tx_proc_q0123(void *arg, int npending)
 		ath_tx_processq(sc, sc->sc_cabq);
 	if (nacked) {
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
-		ifp->if_flags &= ~IFF_OACTIVE;
-		sc->sc_tx_timer = 0;
 	}
 	ath_tx_processq(sc, sc->sc_cabq);
 
@@ -4196,9 +4196,6 @@ ath_tx_proc(void *arg, int npending)
 			nacked += ath_tx_processq(sc, &sc->sc_txq[i]);
 	if (nacked) {
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
-
-		ifp->if_flags &= ~IFF_OACTIVE;
-		sc->sc_tx_timer = 0;
 	}
 
 	if (sc->sc_softled)
@@ -4246,6 +4243,7 @@ ath_tx_draintxq(struct ath_softc *sc, struct ath_txq *txq)
 		}
 		ATH_TXBUF_LOCK(sc);
 		STAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
+		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		ATH_TXBUF_UNLOCK(sc);
 	}
 }
@@ -4269,7 +4267,6 @@ static void
 ath_draintxq(struct ath_softc *sc)
 {
 	struct ath_hal *ah = sc->sc_ah;
-	struct ifnet *ifp = &sc->sc_if;
 	int i;
 
 	/* XXX return value */
@@ -4286,8 +4283,6 @@ ath_draintxq(struct ath_softc *sc)
 	for (i = 0; i < HAL_NUM_TX_QUEUES; i++)
 		if (ATH_TXQ_SETUP(sc, i))
 			ath_tx_draintxq(sc, &sc->sc_txq[i]);
-	ifp->if_flags &= ~IFF_OACTIVE;
-	sc->sc_tx_timer = 0;
 }
 
 /*
@@ -5143,18 +5138,29 @@ ath_watchdog(struct ifnet *ifp)
 {
 	struct ath_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ath_txq *axq;
+	int i;
 
 	ifp->if_timer = 0;
 	if ((ifp->if_flags & IFF_RUNNING) == 0 || sc->sc_invalid)
 		return;
-	if (sc->sc_tx_timer) {
-		if (--sc->sc_tx_timer == 0) {
-			if_printf(ifp, "device timeout\n");
+	for (i = 0; i < HAL_NUM_TX_QUEUES; i++) {
+		if (!ATH_TXQ_SETUP(sc, i))
+			continue;
+		axq = &sc->sc_txq[i];
+		ATH_TXQ_LOCK(axq);
+		if (axq->axq_timer == 0)
+			;
+		else if (--axq->axq_timer == 0) {
+			ATH_TXQ_UNLOCK(axq);
+			if_printf(ifp, "device timeout (txq %d)\n", i);
 			ath_reset(ifp);
 			ifp->if_oerrors++;
 			sc->sc_stats.ast_watchdog++;
+			break;
 		} else
 			ifp->if_timer = 1;
+		ATH_TXQ_UNLOCK(axq);
 	}
 	ieee80211_watchdog(ic);
 }

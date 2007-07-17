@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.20 2007/03/04 06:01:50 christos Exp $	*/
+/*	$NetBSD: athvar.h,v 1.21 2007/07/17 01:26:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -148,15 +148,18 @@ struct ath_txq {
 	 * State for patching up CTS when bursting.
 	 */
 	struct	ath_buf		*axq_linkbuf;	/* va of last buffer */
+	u_int			axq_timer;	/* transmit timeout */
 };
 
 #define ATH_TXQ_INSERT_TAIL(_tq, _elm, _field) do { \
 	STAILQ_INSERT_TAIL(&(_tq)->axq_q, (_elm), _field); \
 	(_tq)->axq_depth++; \
+	(_tq)->axq_timer = 5; \
 } while (0)
 #define ATH_TXQ_REMOVE_HEAD(_tq, _field) do { \
 	STAILQ_REMOVE_HEAD(&(_tq)->axq_q, _field); \
-	(_tq)->axq_depth--; \
+	if (--(_tq)->axq_depth == 0) \
+		(_tq)->axq_timer = 0; \
 } while (0)
 
 struct taskqueue;
@@ -260,7 +263,6 @@ struct ath_softc {
 	struct ath_descdma	sc_txdma;	/* TX descriptors */
 	ath_bufhead		sc_txbuf;	/* transmit buffer */
 	ath_txbuf_lock_t	sc_txbuflock;	/* txbuf lock */
-	int			sc_tx_timer;	/* transmit timeout */
 	u_int			sc_txqsetup;	/* h/w queues setup */
 	u_int			sc_txintrperiod;/* tx interrupt batching */
 	struct ath_txq		sc_txq[HAL_NUM_TX_QUEUES];
