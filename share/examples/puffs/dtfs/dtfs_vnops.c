@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.32 2007/07/01 22:59:10 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.33 2007/07/17 16:00:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -47,8 +47,6 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	struct dtfs_file *df = DTFS_CTOF(opc);
 	struct dtfs_dirent *dfd;
 	int rv;
-
-	printf("%s\n", pcn->pcn_name);
 
 	/* parent dir? */
 	if (PCNISDOTDOT(pcn)) {
