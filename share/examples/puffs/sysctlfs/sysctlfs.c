@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.28 2007/07/17 11:34:54 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.29 2007/07/17 12:03:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -259,7 +259,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, sysctlfs, node, write);
 	PUFFSOP_SET(pops, puffs_genfs, node, reclaim);
 
-	pu = puffs_init(pops, _PATH_PUFFS, argv[0], NULL, pflags);
+	pu = puffs_init(pops, _PATH_PUFFS, "sysctlfs", NULL, pflags);
 	if (pu == NULL)
 		err(1, "puffs_init");
 
