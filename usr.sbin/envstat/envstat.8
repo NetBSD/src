@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.20 2007/07/05 20:17:43 xtraeme Exp $
+.\"	$NetBSD: envstat.8,v 1.21 2007/07/17 13:12:46 xtraeme Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,6 +107,10 @@ and
 See the
 .Sx EXAMPLES
 section for more information.
+.It Fl r
+This flag is only used for compatibility reasons and there's no need
+to use it. In the previous implementation, it was used to enable the
+row mode; this mode is enabled by default.
 .It Fl s
 Restrict the display to the named sensors.
 The sensor names must be supplied as a comma separated list.
