@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.99 2007/03/04 17:57:20 he Exp $	*/
+/*	$NetBSD: pstat.c,v 1.100 2007/07/17 21:50:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.99 2007/03/04 17:57:20 he Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.100 2007/07/17 21:50:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -307,7 +307,8 @@ vnodemode(void)
 
 #define	ST	mp->mnt_stat
 #define	FSTYPE_IS(mp, name)						\
-	(strncmp((mp)->mnt_stat.f_fstypename, (name), MFSNAMELEN) == 0)
+	(strncmp((mp)->mnt_stat.f_fstypename, (name), 			\
+	sizeof((mp)->mnt_stat.f_fstypename)) == 0)
 	maddr = NULL;
 	vnode_fsprint = NULL;
 	for (evp = e_vnodebase; evp < endvnode; evp += VPTRSZ + VNODESZ) {
