@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.21 2007/07/16 17:48:52 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.22 2007/07/17 15:43:08 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,12 +75,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.21 2007/07/16 17:48:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.22 2007/07/17 15:43:08 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
+#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -249,6 +250,9 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		prop_dictionary_t udict;
 		prop_object_t obj;
 		const char *devname = NULL;
+
+		if ((flag & FWRITE) == 0)
+			return EPERM;
 
 		/*
 		 * Get dictionary from userland.
