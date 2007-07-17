@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.30 2004/12/11 06:01:33 christos Exp $	*/
+/*	$NetBSD: paths.h,v 1.31 2007/07/17 10:14:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -80,6 +80,7 @@
 #define	_PATH_MIXER	"/dev/mixer"
 #define	_PATH_MIXER0	"/dev/mixer0"
 #define	_PATH_NOLOGIN	"/etc/nologin"
+#define	_PATH_PUFFS	"/dev/puffs"
 #define	_PATH_RANDOM	"/dev/random"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHELLS	"/etc/shells"
