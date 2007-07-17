@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.15 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.16 2007/07/17 03:53:56 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,6 +123,8 @@ unsigned int	pg_prot:2,		/* SW: access control */
 #define	MIPS1_PG_ROPAGE	MIPS1_PG_V
 #define	MIPS1_PG_RWPAGE	MIPS1_PG_D
 #define	MIPS1_PG_CWPAGE	0
+#define	MIPS1_PG_RWNCPAGE	(MIPS1_PG_D | MIPS1_PG_N)
+#define	MIPS1_PG_CWNCPAGE	MIPS1_PG_N
 #define	MIPS1_PG_IOPAGE	(MIPS1_PG_D | MIPS1_PG_N)
 
 #define	mips1_tlbpfn_to_paddr(x)	((x) & MIPS1_PG_FRAME)
