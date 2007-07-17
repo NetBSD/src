@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.321 2007/07/14 15:41:31 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.322 2007/07/17 21:15:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.321 2007/07/14 15:41:31 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.322 2007/07/17 21:15:41 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -220,11 +220,11 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 static int
 mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 {
-	char fstypename[MFSNAMELEN];
+	char fstypename[sizeof(((struct statvfs *)NULL)->f_fstypename)];
 	int error;
 
 	/* Copy file-system type from userspace.  */
-	error = copyinstr(fstype, fstypename, MFSNAMELEN, NULL);
+	error = copyinstr(fstype, fstypename, sizeof(fstypename), NULL);
 	if (error) {
 #if defined(COMPAT_09) || defined(COMPAT_43)
 		/*
