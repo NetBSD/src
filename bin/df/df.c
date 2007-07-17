@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.75 2007/07/16 14:39:53 christos Exp $ */
+/*	$NetBSD: df.c,v 1.76 2007/07/17 20:03:10 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.75 2007/07/16 14:39:53 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.76 2007/07/17 20:03:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ int	 main(int, char *[]);
 int	 bread(off_t, void *, int);
 char	*getmntpt(char *);
 void	 prtstat(struct statvfs *, int);
-int	 selected(const char *);
+int	 selected(const char *, size_t);
 void	 maketypelist(char *);
 long	 regetmntinfo(struct statvfs **, long);
 void	 usage(void);
@@ -178,7 +178,8 @@ main(int argc, char *argv[])
 					warnx("Warning: %s is not a local %s",
 					    *argv, "file system");
 				else if
-				    (!selected(mntbuf[mntsize].f_fstypename))
+				    (!selected(mntbuf[mntsize].f_fstypename,
+					sizeof(mntbuf[mntsize].f_fstypename)))
 					warnx("Warning: %s mounted as a %s %s",
 					    *argv,
 					    mntbuf[mntsize].f_fstypename,
@@ -219,7 +220,7 @@ getmntpt(char *name)
 static enum { IN_LIST, NOT_IN_LIST } which;
 
 int
-selected(const char *type)
+selected(const char *type, size_t len)
 {
 	char **av;
 
@@ -227,7 +228,7 @@ selected(const char *type)
 	if (typelist == NULL)
 		return (1);
 	for (av = typelist; *av != NULL; ++av)
-		if (!strncmp(type, *av, MFSNAMELEN))
+		if (!strncmp(type, *av, len))
 			return (which == IN_LIST ? 1 : 0);
 	return (which == IN_LIST ? 0 : 1);
 }
@@ -291,7 +292,8 @@ regetmntinfo(struct statvfs **mntbufp, long mntsize)
 			continue;
 		if (lflag && (mntbuf[i].f_flag & MNT_LOCAL) == 0)
 			continue;
-		if (!selected(mntbuf[i].f_fstypename))
+		if (!selected(mntbuf[i].f_fstypename,
+		    sizeof(mntbuf[i].f_fstypename)))
 			continue;
 		if (nflag)
 			mntbuf[j] = mntbuf[i];

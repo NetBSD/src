@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.45 2006/12/13 16:08:26 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.46 2007/07/17 20:12:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.45 2006/12/13 16:08:26 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.46 2007/07/17 20:12:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -379,7 +379,7 @@ selected(const char *type)
 
 	/* If no type specified, it's always selected. */
 	TAILQ_FOREACH(e, &selhead, entries)
-		if (!strncmp(e->type, type, MFSNAMELEN))
+		if (!strcmp(e->type, type))
 			return which == IN_LIST ? 1 : 0;
 
 	return which == IN_LIST ? 0 : 1;
@@ -392,7 +392,7 @@ getoptions(const char *type)
 	struct entry *e;
 
 	TAILQ_FOREACH(e, &opthead, entries)
-		if (!strncmp(e->type, type, MFSNAMELEN))
+		if (!strcmp(e->type, type))
 			return e->options;
 	return "";
 }
@@ -410,7 +410,7 @@ addoption(char *optstr)
 	*newoptions++ = '\0';
 
 	TAILQ_FOREACH(e, &opthead, entries)
-		if (!strncmp(e->type, optstr, MFSNAMELEN)) {
+		if (!strcmp(e->type, optstr)) {
 			catopt(&e->options, newoptions);
 			return;
 		}
