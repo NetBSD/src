@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.2 2007/07/08 16:29:29 pooka Exp $
+.\"	$NetBSD: mount_9p.8,v 1.3 2007/07/17 10:06:03 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -33,9 +33,8 @@
 .Nm
 .Op Fl o Ar mntopts
 .Op Fl p Ar port
-.Op Fl u Ar user
 .Op Fl s
-.Ar file_server
+.Ar [user@]host[:path]
 .Ar mount_point
 .Sh DESCRIPTION
 The
@@ -43,11 +42,15 @@ The
 program is used to mount a file hierarchy served with the Plan9
 file sharing protocol: 9P.
 After the file system is mounted, the files on the remote
-.Ar file_server
+.Ar host
 will be accessed using the credentials of the user named
 .Ar user
-(default "glenda") and whatever uid the user happens to have
-on the remote server.
+and whatever uid the user happens to have on the remote server.
+If
+.Ar path
+is supplied, it is used as the mount rootpath on the remote host.
+.Ar path
+must be an absolute path.
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs 4 ,
