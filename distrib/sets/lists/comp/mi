@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1050 2007/07/15 18:03:11 he Exp $
+#	$NetBSD: mi,v 1.1051 2007/07/17 17:42:09 joerg Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3453,6 +3453,7 @@
 ./usr/share/man/cat2/mmap.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mount.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mprotect.0			comp-c-catman		.cat
+./usr/share/man/cat2/mremap.0			comp-c-catman		.cat
 ./usr/share/man/cat2/msgctl.0			comp-c-catman		.cat
 ./usr/share/man/cat2/msgget.0			comp-c-catman		.cat
 ./usr/share/man/cat2/msgrcv.0			comp-c-catman		.cat
@@ -7801,6 +7802,7 @@
 ./usr/share/man/man2/mmap.2			comp-c-man		.man
 ./usr/share/man/man2/mount.2			comp-c-man		.man
 ./usr/share/man/man2/mprotect.2			comp-c-man		.man
+./usr/share/man/man2/mremap.2			comp-c-man		.man
 ./usr/share/man/man2/msgctl.2			comp-c-man		.man
 ./usr/share/man/man2/msgget.2			comp-c-man		.man
 ./usr/share/man/man2/msgrcv.2			comp-c-man		.man
