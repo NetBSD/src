@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.45 2007/07/01 22:54:16 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.46 2007/07/17 11:29:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -54,7 +54,7 @@ extern const struct vnodeopv_desc puffs_msgop_opv_desc;
 
 extern struct pool puffs_pnpool;
 
-#define PUFFS_NAMEPREFIX "puffs:"
+#define PUFFS_TYPEPREFIX "puffs|"
 
 #define PUFFS_SIZEOPREQ_UIO_IN 1
 #define PUFFS_SIZEOPREQ_UIO_OUT 2
