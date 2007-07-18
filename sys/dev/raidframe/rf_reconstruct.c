@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.97 2007/07/09 21:01:20 ad Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.98 2007/07/18 19:04:58 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.97 2007/07/09 21:01:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.98 2007/07/18 19:04:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -412,7 +412,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return (EINVAL);
 	}
 #endif
-	lwp = LIST_FIRST(&raidPtr->engine_thread->p_lwps);
+	lwp = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the
 	   first time. Close it before trying to open it again.. */

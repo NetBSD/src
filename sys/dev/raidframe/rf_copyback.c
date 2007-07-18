@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.38 2007/06/26 15:22:24 cube Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.39 2007/07/18 19:04:58 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.38 2007/06/26 15:22:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.39 2007/07/18 19:04:58 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -116,7 +116,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 	badDisk = &raidPtr->Disks[fcol];
 
-	l = LIST_FIRST(&raidPtr->engine_thread->p_lwps);
+	l = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the first time. Close
 	 * it before trying to open it again.. */
