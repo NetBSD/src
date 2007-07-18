@@ -1,3 +1,6 @@
+2007-07-18  Matthew Grooms  <mgrooms@shrew.net>
+	* src/racoon/racoon.conf.5: various man page updates
+
 2007-07-18  Yvan Vanhullebus  <vanhu@netasq.com>
 	* configure.ac	
 	src/libipsec/ipsec_dump_policy.c
@@ -30,7 +33,6 @@
 	src/setkey/setkey.c
 	src/setkey/token.l:
 	use a single PATH_IPSEC_H to fix some path_to_ipsec.h issues.
-
 
 2007-07-16  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/proposal.c: indentation
