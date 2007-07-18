@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.56 2007/07/07 05:13:16 tsutsui Exp $
+#	$NetBSD: files.mips,v 1.56.2.1 2007/07/18 01:50:25 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -34,6 +34,7 @@ file	arch/mips/mips/pmap.c
 file	arch/mips/mips/trap.c			# trap handlers
 file	arch/mips/mips/syscall.c		# syscall entries
 file	arch/mips/mips/mips_machdep.c
+file	arch/mips/mips/netbsd32_machdep.c	netbsd32
 file	arch/mips/mips/sig_machdep.c		# signal delivery
 file	arch/mips/mips/sys_machdep.c
 file	arch/mips/mips/vm_machdep.c
