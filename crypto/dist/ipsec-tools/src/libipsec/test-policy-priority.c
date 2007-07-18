@@ -1,4 +1,4 @@
-/*	$NetBSD: test-policy-priority.c,v 1.3 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: test-policy-priority.c,v 1.4 2007/07/18 12:07:51 vanhu Exp $	*/
 
 /*	$KAME: test-policy.c,v 1.16 2003/08/26 03:24:08 itojun Exp $	*/
 
@@ -41,11 +41,7 @@
 
 #include <netinet/in.h>
 #include <net/pfkeyv2.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else 
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.7 2007/07/18 12:07:50 vanhu Exp $	*/
 
 /*	$KAME: ipsec_get_policylen.c,v 1.5 2000/05/07 05:25:03 itojun Exp $	*/
 
@@ -39,11 +39,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <net/pfkeyv2.h>
 

@@ -1,3 +1,37 @@
+2007-07-18  Yvan Vanhullebus  <vanhu@netasq.com>
+	* configure.ac	
+	src/libipsec/ipsec_dump_policy.c
+	src/libipsec/ipsec_get_policylen.c
+	src/libipsec/ipsec_strerror.c
+	src/libipsec/key_debug.c
+	src/libipsec/libpfkey.h
+	src/libipsec/pfkey.c
+	src/libipsec/pfkey_dump.c
+	src/libipsec/policy_parse.y
+	src/libipsec/policy_token.l
+	src/libipsec/test-policy-priority.c
+	src/racoon/admin.c
+	src/racoon/backupsa.c
+	src/racoon/cfparse.y
+	src/racoon/cftoken.l
+	src/racoon/ipsec_doi.c
+	src/racoon/isakmp.c
+	src/racoon/isakmp_inf.c
+	src/racoon/isakmp_quick.c
+	src/racoon/pfkey.c
+	src/racoon/policy.c
+	src/racoon/proposal.c
+	src/racoon/remoteconf.c
+	src/racoon/sainfo.c
+	src/racoon/session.c
+	src/racoon/sockmisc.c
+	src/racoon/strnames.c
+	src/setkey/parse.y
+	src/setkey/setkey.c
+	src/setkey/token.l:
+	use a single PATH_IPSEC_H to fix some path_to_ipsec.h issues.
+
+
 2007-07-16  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/proposal.c: indentation
 	* src/racoon/grabmyaddr.c: fixed a socket leak.
