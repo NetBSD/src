@@ -23,6 +23,10 @@
 #ifndef OPENSSL_NO_RFC3779
 # define OPENSSL_NO_RFC3779
 #endif
+#else
+#ifndef OPENSSL_THREADS
+#define OPENSSL_THREADS
+#endif
 #endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
