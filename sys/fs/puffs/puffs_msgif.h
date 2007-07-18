@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.42 2007/07/17 11:29:43 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.43 2007/07/18 21:08:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -86,8 +86,8 @@ enum {
 #define PUFFSVERSION	15
 #define PUFFSNAMESIZE	32
 
-#define PUFFS_TYPELEN (MFSNAMELEN - sizeof(PUFFS_TYPEPREFIX))
-#define PUFFS_NAMELEN _VFS_MNAMELEN
+#define PUFFS_TYPELEN (_VFS_NAMELEN - (sizeof(PUFFS_TYPEPREFIX)+1))
+#define PUFFS_NAMELEN (_VFS_MNAMELEN-1)
 
 struct puffs_kargs {
 	unsigned int	pa_vers;
@@ -107,7 +107,7 @@ struct puffs_kargs {
 
 	struct statvfs	pa_svfsb;
 	
-	char		pa_typename[_VFS_NAMELEN]; /* max PUFFS_TYPELEN chars */
+	char		pa_typename[_VFS_NAMELEN];
 	char		pa_mntfromname[_VFS_MNAMELEN];
 
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
