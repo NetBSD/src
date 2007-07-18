@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.11 2004/07/09 11:33:13 wiz Exp $	*/
+/*	$NetBSD: panic.c,v 1.12 2007/07/18 01:06:08 lukem Exp $	*/
 
 /*
  * panic.c - terminate fast in case of error
@@ -45,7 +45,7 @@
 #if 0
 static char rcsid[] = "$OpenBSD: panic.c,v 1.4 1997/03/01 23:40:09 millert Exp $";
 #else
-__RCSID("$NetBSD: panic.c,v 1.11 2004/07/09 11:33:13 wiz Exp $");
+__RCSID("$NetBSD: panic.c,v 1.12 2007/07/18 01:06:08 lukem Exp $");
 #endif
 #endif
 
@@ -66,7 +66,7 @@ panic(char *a)
 		PRIV_END
 	}
 
-	errx(EXIT_FAILURE, "%s: %s", namep, a);
+	errx(EXIT_FAILURE, "%s", a);
 }
 
 void
