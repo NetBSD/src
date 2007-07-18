@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.3 2007/07/05 23:48:22 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.4 2007/07/18 20:09:49 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,8 +77,6 @@ do {									\
 do {									\
 	if (!prop_dictionary_set_ ## d((a), (b), (c))) {		\
 		SENSOR_DICTSETFAILED((b), (c));				\
-		if ((a)) 						\
-			prop_object_release((a));			\
 		goto out;						\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -91,8 +89,6 @@ do {									\
 	if (!prop_dictionary_set_cstring_nocopy((a), (b), (c))) {	\
 		DPRINTF(("%s: set_cstring (%s) failed.\n",		\
 		    __func__, (c)));					\
-		if ((a))						\
-			prop_object_release((a));			\
 		goto out;						\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -128,13 +124,8 @@ do {									\
 /* struct used by a sysmon envsys event */
 typedef struct sme_event {
 	/* to add works into our workqueue */
-	union {
-		struct work u_work;
-		TAILQ_ENTRY(sme_event) u_q;
-	} see_u;
-#define see_wk	see_u.u_work
-#define see_q	see_u.u_q
-	LIST_ENTRY(sme_event)	see_list;
+	struct work see_wk;
+	LIST_ENTRY(sme_event) see_list;
 	struct penvsys_state	pes;		/* our power envsys */
 	int32_t			critval;	/* critical value set */
 	int			type;		/* type of the event */
