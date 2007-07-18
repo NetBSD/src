@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.117 2007/05/17 14:51:25 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.118 2007/07/18 13:46:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.117 2007/05/17 14:51:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.118 2007/07/18 13:46:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
 	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
-	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
 #endif
@@ -195,7 +194,6 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
 	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
 	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;	/* RA */
-	pcb->pcb_context[11] |= PSL_LOWIPL;			/* SR */
 #ifdef IPL_ICU_MASK
 	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
 #endif
