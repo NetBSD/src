@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.25 2007/07/18 20:23:10 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.26 2007/07/18 20:31:41 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.25 2007/07/18 20:23:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.26 2007/07/18 20:31:41 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -158,6 +158,7 @@ static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
 static void sysmon_envsys_release(struct sysmon_envsys *);
 
 kmutex_t sme_mtx, sme_event_mtx;
+kcondvar_t sme_event_cv;
 
 /*
  * sysmon_envsys_init:
@@ -174,6 +175,7 @@ sysmon_envsys_init(void)
 	mutex_init(&sme_event_mtx, MUTEX_DRIVER, IPL_NONE);
 	mutex_init(&sme_event_init_mtx, MUTEX_DRIVER, IPL_NONE);
 	cv_init(&sme_list_cv, "smefind");
+	cv_init(&sme_event_cv, "smeevent");
 	sme_propd = prop_dictionary_create();
 }
 
