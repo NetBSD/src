@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.7 2007/07/12 19:31:02 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.7.4.1 2007/07/18 14:21:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -104,8 +104,10 @@ LEAF_ENTRY(mutex_exit)
 	 */
 
 	ldi	1,%t2				/* unlocked = 1 */
+	ldo	(MTX_LOCK + 16 - 1)(%arg0), %t3
+	depi	0, 31, 4, %t3
 	stw	%t1,MTX_OWNER(%arg0)
-	stw	%t2,MTX_LOCK(%arg0)
+	stw	%t2,0(%t3)			/* %t3 is 16 byte aligned */
 	sync
 
 	/*	
@@ -166,7 +168,9 @@ LEAF_ENTRY(mutex_enter)
 	 * else can acquire the mutex while the lock is held.
 	 */
 .Lmutexunowned:
-	ldcw	MTX_LOCK(%arg0), %ret0
+	ldo	(MTX_LOCK + 16 - 1)(%arg0), %t1
+	depi	0, 31, 4, %t1
+	ldcw	0(%t1), %ret0
 
 mutex_enter_crit_start:
 	comib,=	0,%ret0,.Lenter_slowpath
