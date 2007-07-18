@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.31 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.31.16.1 2007/07/18 02:29:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.31 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.31.16.1 2007/07/18 02:29:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.31 2007/02/09 21:55:06 ad Exp $");
 #endif
 
 void	EMULNAME(syscall_intern)(struct proc *);
-void	EMULNAME(syscall_plain)(struct lwp *, u_int, u_int, u_int);
-void	EMULNAME(syscall_fancy)(struct lwp *, u_int, u_int, u_int);
+void	EMULNAME(syscall_plain)(struct lwp *, u_int, u_int, vaddr_t);
+void	EMULNAME(syscall_fancy)(struct lwp *, u_int, u_int, vaddr_t);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, u_int, int);
 
@@ -169,7 +169,7 @@ EMULNAME(syscall_intern)(struct proc *p)
  */
 
 void
-EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
+EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 {
 	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
@@ -311,7 +311,7 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 }
 
 void
-EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
+EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 {
 	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
