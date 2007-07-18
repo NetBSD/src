@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.16 2007/07/11 17:51:07 degroote Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17 2007/07/18 18:49:16 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.16 2007/07/11 17:51:07 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17 2007/07/18 18:49:16 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -121,9 +121,10 @@ static void wpi_mem_lock(struct wpi_softc *);
 static void wpi_mem_unlock(struct wpi_softc *);
 static uint32_t wpi_mem_read(struct wpi_softc *, uint16_t);
 static void wpi_mem_write(struct wpi_softc *, uint16_t, uint32_t);
+static void wpi_mem_write_region_4(struct wpi_softc *, uint16_t, 
+								   const uint32_t *, int);
 static int  wpi_read_prom_data(struct wpi_softc *, uint32_t, void *, int);
-static int  wpi_load_segment(struct wpi_softc *, uint32_t, const uint8_t *,
-			     int);
+static int  wpi_load_microcode(struct wpi_softc *,  const uint8_t *, int);
 static int  wpi_load_firmware(struct wpi_softc *);
 static void wpi_calib_timeout(void *);
 static void wpi_iter_func(void *, struct ieee80211_node *);
@@ -1036,6 +1037,15 @@ wpi_mem_write(struct wpi_softc *sc, uint16_t addr, uint32_t data)
 	WPI_WRITE(sc, WPI_WRITE_MEM_DATA, data);
 }
 
+static void
+wpi_mem_write_region_4(struct wpi_softc *sc, uint16_t addr,
+						const uint32_t *data, int wlen)
+{
+	for (; wlen > 0; wlen--, data++, addr += 4)
+		wpi_mem_write(sc, addr, *data);
+}
+ 	 
+
 /*
  * Read `len' bytes from the EEPROM.  We access the EEPROM through the MAC
  * instead of using the traditional bit-bang method.
@@ -1071,55 +1081,47 @@ wpi_read_prom_data(struct wpi_softc *sc, uint32_t addr, void *data, int len)
 	return 0;
 }
 
-static int
-wpi_load_segment(struct wpi_softc *sc, uint32_t target, const uint8_t *data,
-		 int len)
+/*
+ * The firmware boot code is small and is intended to be copied directly into
+ * the NIC internal memory.
+ */
+int
+wpi_load_microcode(struct wpi_softc *sc, const uint8_t *ucode, int size)
 {
-	struct wpi_dma_info *dma = &sc->fw_dma;
-	struct wpi_tx_desc desc;
-	int ntries, error = 0;
+	int ntries;
 
-	DPRINTFN(2, ("loading firmware segment target=%x len=%d\n", target,
-	    len));
+	size /= sizeof (uint32_t);
 
-	/* copy data to pre-allocated DMA-safe memory */
-	memcpy(dma->vaddr, data, len);
-	bus_dmamap_sync(dma->tag, dma->map, 0, len, BUS_DMASYNC_PREWRITE);
+	wpi_mem_lock(sc);
 
-	/* setup Tx descriptor */
-	memset(&desc, 0, sizeof desc);
-	desc.flags = htole32(WPI_PAD32(len) << 28 | 1 << 24);
-	desc.segs[0].addr = htole32(dma->paddr);
-	desc.segs[0].len  = htole32(len);
+	/* copy microcode image into NIC memory */
+	wpi_mem_write_region_4(sc, WPI_MEM_UCODE_BASE,
+	    (const uint32_t *)ucode, size);
 
-	/* tell adapter where to copy data in its internal memory */
-	WPI_WRITE(sc, WPI_FW_TARGET, target);
+	wpi_mem_write(sc, WPI_MEM_UCODE_SRC, 0);
+	wpi_mem_write(sc, WPI_MEM_UCODE_DST, WPI_FW_TEXT);
+	wpi_mem_write(sc, WPI_MEM_UCODE_SIZE, size);
 
-	WPI_WRITE(sc, WPI_TX_CONFIG(6), 0);
+	/* run microcode */
+	wpi_mem_write(sc, WPI_MEM_UCODE_CTL, WPI_UC_RUN);
 
-	/* copy Tx descriptor into NIC memory */
-	WPI_WRITE_REGION_4(sc, WPI_TX_DESC(6), (uint32_t *)&desc,
-	    sizeof desc / sizeof (uint32_t));
-
-	WPI_WRITE(sc, WPI_TX_CREDIT(6), 0xfffff);
-	WPI_WRITE(sc, WPI_TX_STATE(6), 0x4001);
-	WPI_WRITE(sc, WPI_TX_CONFIG(6), 0x80000001);
-
-	/* wait while the adapter transfers the block */
-	for (ntries = 0; ntries < 100; ntries++) {
-		if (WPI_READ(sc, WPI_TX_STATUS) & WPI_TX_IDLE(6))
+	/* wait for transfer to complete */
+	for (ntries = 0; ntries < 1000; ntries++) {
+		if (!(wpi_mem_read(sc, WPI_MEM_UCODE_CTL) & WPI_UC_RUN))
 			break;
-		DELAY(1000);
+		DELAY(10);
 	}
-	if (ntries == 100) {
-		aprint_error("%s: timeout transferring firmware segment\n",
+	if (ntries == 1000) {
+		wpi_mem_unlock(sc);
+		printf("%s: could not load boot firmware\n",
 		    sc->sc_dev.dv_xname);
-		error = ETIMEDOUT;
+		return ETIMEDOUT;
 	}
+	wpi_mem_write(sc, WPI_MEM_UCODE_CTL, WPI_UC_ENABLE);
 
-	WPI_WRITE(sc, WPI_TX_CREDIT(6), 0);
+	wpi_mem_unlock(sc);
 
-	return error;
+	return 0;
 }
 
 static int
@@ -1127,12 +1129,13 @@ wpi_load_firmware(struct wpi_softc *sc)
 {
 	struct wpi_dma_info *dma = &sc->fw_dma;
 	struct wpi_firmware_hdr hdr;
-	const uint8_t *boot_text, *boot_data, *main_text, *main_data;
-	uint32_t main_textsz, main_datasz, boot_textsz, boot_datasz;
+	const uint8_t *init_text, *init_data, *main_text, *main_data;
+	const uint8_t *boot_text;
+	uint32_t init_textsz, init_datasz, main_textsz, main_datasz;
+	uint32_t boot_textsz;
 	firmware_handle_t fw;
 	u_char *dfw;
 	size_t size;
-	uint32_t tmp;
 	int error;
 
 	/* load firmware image from disk */
@@ -1161,38 +1164,25 @@ wpi_load_firmware(struct wpi_softc *sc)
 
 	main_textsz = le32toh(hdr.main_textsz);
 	main_datasz = le32toh(hdr.main_datasz);
+	init_textsz = le32toh(hdr.init_textsz);
+	init_datasz = le32toh(hdr.init_datasz);
 	boot_textsz = le32toh(hdr.boot_textsz);
-	boot_datasz = le32toh(hdr.boot_datasz);
 
-	/* sanity-check firmware header */
-	if (main_textsz > WPI_FW_MAIN_TEXT_MAXSZ) {
-		aprint_error("%s: main .text segment too large: %u bytes\n",
-		    sc->sc_dev.dv_xname, main_textsz);
-		error = EINVAL;
-		goto fail2;
-	}
-	if (main_datasz > WPI_FW_MAIN_DATA_MAXSZ) {
-		aprint_error("%s: main .data segment too large: %u bytes\n",
-		    sc->sc_dev.dv_xname, main_datasz);
-		error = EINVAL;
-		goto fail2;
-	}
-	if (boot_textsz > WPI_FW_BOOT_TEXT_MAXSZ) {
-		aprint_error("%s: boot .text segment too large: %u bytes\n",
-		    sc->sc_dev.dv_xname, boot_textsz);
-		error = EINVAL;
-		goto fail2;
-	}
-	if (boot_datasz > WPI_FW_BOOT_DATA_MAXSZ) {
-		aprint_error("%s: boot .data segment too large: %u bytes\n",
-		    sc->sc_dev.dv_xname, boot_datasz);
+	/* sanity-check firmware segments sizes */
+	if (main_textsz > WPI_FW_MAIN_TEXT_MAXSZ ||
+	    main_datasz > WPI_FW_MAIN_DATA_MAXSZ ||
+	    init_textsz > WPI_FW_INIT_TEXT_MAXSZ ||
+	    init_datasz > WPI_FW_INIT_DATA_MAXSZ ||
+	    boot_textsz > WPI_FW_BOOT_TEXT_MAXSZ ||
+	    (boot_textsz & 3) != 0) {
+		printf("%s: invalid firmware header\n", sc->sc_dev.dv_xname);
 		error = EINVAL;
 		goto fail2;
 	}
 
 	/* check that all firmware segments are present */
 	if (size < sizeof (struct wpi_firmware_hdr) + main_textsz +
-	    main_datasz + boot_textsz + boot_datasz) {
+		main_datasz + init_textsz + init_datasz + boot_textsz) {
 		aprint_error("%s: firmware file too short: %zu bytes\n",
 		    sc->sc_dev.dv_xname, size);
 		error = EINVAL;
@@ -1216,43 +1206,32 @@ wpi_load_firmware(struct wpi_softc *sc)
 	/* get pointers to firmware segments */
 	main_text = dfw + sizeof (struct wpi_firmware_hdr);
 	main_data = main_text + main_textsz;
-	boot_text = main_data + main_datasz;
-	boot_data = boot_text + boot_textsz;
+	init_text = main_data + main_datasz;
+	init_data = init_text + init_textsz;
+	boot_text = init_data + init_datasz;
 
-	/* load firmware boot .data segment into NIC */
-	error = wpi_load_segment(sc, WPI_FW_DATA, boot_data, boot_datasz);
-	if (error != 0) {
-		aprint_error("%s: could not load firmware boot .data segment\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
+	/* copy initialization images into pre-allocated DMA-safe memory */
+	memcpy(dma->vaddr, init_data, init_datasz);
+	memcpy((char*)dma->vaddr + WPI_FW_INIT_DATA_MAXSZ, init_text, init_textsz);
 
-	/* load firmware boot .text segment into NIC */
-	error = wpi_load_segment(sc, WPI_FW_TEXT, boot_text, boot_textsz);
-	if (error != 0) {
-		aprint_error("%s: could not load firmware boot .text segment\n",
-		    sc->sc_dev.dv_xname);
-		goto fail3;
-	}
-
-	/* copy firmware runtime into pre-allocated DMA-safe memory */
-	memcpy(dma->vaddr, main_text, main_textsz);
-	memcpy((uint8_t*)dma->vaddr + main_textsz, main_data, main_datasz);
-	bus_dmamap_sync(dma->tag, dma->map, 0, main_textsz + main_datasz,
-	    BUS_DMASYNC_PREWRITE);
-
-	/* tell adapter where to find firmware runtime */
+	/* tell adapter where to find initialization images */
 	wpi_mem_lock(sc);
-	wpi_mem_write(sc, WPI_MEM_MAIN_TEXT_BASE, dma->paddr);
-	wpi_mem_write(sc, WPI_MEM_MAIN_TEXT_SIZE, main_textsz);
-	wpi_mem_write(sc, WPI_MEM_MAIN_DATA_BASE, dma->paddr + main_textsz);
-	wpi_mem_write(sc, WPI_MEM_MAIN_DATA_SIZE, main_datasz);
+	wpi_mem_write(sc, WPI_MEM_DATA_BASE, dma->paddr);
+	wpi_mem_write(sc, WPI_MEM_DATA_SIZE, init_datasz);
+	wpi_mem_write(sc, WPI_MEM_TEXT_BASE,
+	    dma->paddr + WPI_FW_INIT_DATA_MAXSZ);
+	wpi_mem_write(sc, WPI_MEM_TEXT_SIZE, init_textsz);
 	wpi_mem_unlock(sc);
 
+	/* load firmware boot code */
+	if ((error = wpi_load_microcode(sc, boot_text, boot_textsz)) != 0) {
+		printf("%s: could not load boot firmware\n",
+		    sc->sc_dev.dv_xname);
+		goto fail3;
+	}
+
 	/* now press "execute" ;-) */
-	tmp = WPI_READ(sc, WPI_RESET);
-	tmp &= ~(WPI_MASTER_DISABLED | WPI_STOP_MASTER | WPI_NEVO_RESET);
-	WPI_WRITE(sc, WPI_RESET, tmp);
+	WPI_WRITE(sc, WPI_RESET, 0);
 
 	/* ..and wait at most one second for adapter to initialize */
 	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
@@ -1260,6 +1239,27 @@ wpi_load_firmware(struct wpi_softc *sc)
 		aprint_error("%s: timeout waiting for adapter to initialize\n",
 		    sc->sc_dev.dv_xname);
 	}
+
+	/* copy runtime images into pre-allocated DMA-safe memory */
+	memcpy(dma->vaddr, main_data, main_datasz);
+	memcpy((char*)dma->vaddr + WPI_FW_MAIN_DATA_MAXSZ, main_text, main_textsz);
+
+	/* tell adapter where to find runtime images */
+	wpi_mem_lock(sc);
+	wpi_mem_write(sc, WPI_MEM_DATA_BASE, dma->paddr);
+	wpi_mem_write(sc, WPI_MEM_DATA_SIZE, main_datasz);
+	wpi_mem_write(sc, WPI_MEM_TEXT_BASE,
+	    dma->paddr + WPI_FW_MAIN_DATA_MAXSZ);
+	wpi_mem_write(sc, WPI_MEM_TEXT_SIZE, WPI_FW_UPDATED | main_textsz);
+	wpi_mem_unlock(sc);
+
+	/* wait at most one second for second alive notification */
+	if ((error = tsleep(sc, PCATCH, "wpiinit", hz)) != 0) {
+		/* this isn't what was supposed to happen.. */
+		printf("%s: timeout waiting for adapter to initialize\n",
+		    sc->sc_dev.dv_xname);
+	}
+
 
 fail3: 	firmware_free(dfw,size);
 fail2:	firmware_close(fw);
@@ -2696,17 +2696,9 @@ wpi_scan(struct wpi_softc *sc, uint16_t flags)
 
 	frm = (uint8_t *)(wh + 1);
 
-#ifdef old_code
-	/* add essid IE */
-	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = ic->ic_des_esslen;
-	memcpy(frm, ic->ic_des_essid, ic->ic_des_esslen);
-	frm += ic->ic_des_esslen;
-#else
 	/* add empty essid IE (firmware generates it for directed scans) */
 	*frm++ = IEEE80211_ELEMID_SSID;
 	*frm++ = 0;
-#endif
 
 	mode = ieee80211_chan2mode(ic, ic->ic_ibss_chan);
 	rs = &ic->ic_sup_rates[mode];
