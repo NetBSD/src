@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.4 2007/07/18 20:09:49 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.5 2007/07/18 20:31:48 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ typedef struct sme_event {
 	int			type;		/* type of the event */
 	int			snum;		/* sensor number */
 	int			evsent;		/* event already sent */
+	int 			see_flags;	/* see above */
+#define SME_EVENT_WORKING	0x0001	/* This event is busy */
 } sme_event_t;
 
 /* struct by a sysmon envsys event set by a driver */
@@ -145,6 +147,7 @@ typedef struct sme_event_drv {
 extern	kmutex_t sme_mtx;	/* mutex for the sysmon envsys devices */
 extern	kmutex_t sme_event_mtx;	/* mutex for the sysmon envsys events */
 extern	kmutex_t sme_event_init_mtx;	/* mutex to initialize/destroy see */
+extern	kcondvar_t sme_event_cv;
 
 /* linked list for the sysmon envsys devices */
 LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
