@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctxsw.9,v 1.21 2007/07/17 20:56:22 dsieger Exp $
+.\"	$NetBSD: ctxsw.9,v 1.22 2007/07/18 12:43:12 dsieger Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,20 +34,17 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 8, 2006
+.Dd July 18, 2007
 .Dt CTXSW 9
 .Os
 .Sh NAME
 .Nm mi_switch ,
-.Nm cpu_switch ,
 .Nm cpu_switchto
 .Nd switch to another light weight process
 .Sh SYNOPSIS
 .Ft int
-.Fn mi_switch "struct lwp *cur" "struct lwp *newl"
-.Ft int
-.Fn cpu_switch "struct lwp *cur" "struct lwp *newl"
-.Ft int
+.Fn mi_switch "struct lwp *l"
+.Ft lwp_t
 .Fn cpu_switchto "struct lwp *cur" "struct lwp *newl"
 .Sh DESCRIPTION
 The
@@ -87,14 +84,15 @@ Exceeding the soft limit results in a
 signal to be posted to the LWP, while exceeding the hard limit will
 cause a
 .Dv SIGKILL .
-If
-.Fa newl
-is
+.Pp
+Unless
+.Fa l->l_switchto
+is not
 .Dv NULL ,
 .Fn mi_switch
-will hand over control to the machine-dependent function
-.Fn cpu_switch
-to select a new LWP from the system run queue.
+will call
+.Fn sched_nextlwp
+to select a new LWP from the scheduler's runqueue structures.
 If a new LWP is specified,
 .Fn mi_switch
 will hand over control to the machine-dependent function
@@ -104,11 +102,8 @@ If the new LWP is the same as the current LWP, then control is
 returned immediately to the LWP, avoiding any unnecessary overhead
 associated with switching in a new LWP.
 .Pp
-The
-.Fn cpu_switch
-and
 .Fn cpu_switchto
-functions switch the new LWP onto the CPU.
+switches the new LWP onto the CPU.
 This procedure is performed by saving the LWP context of the current
 LWP in its process control block (PCB) and restoring the LWP
 context of the new LWP.
@@ -128,10 +123,16 @@ first) and at the
 .Xr splsched 9
 interrupt protection level. It returns with the LWP lock released.
 .Sh RETURN VALUES
-These functions return 1 if a context switch was performed to a
+.Fn mi_switch
+returns 1 if a context switch was performed to a
 different LWP, 0 otherwise.
+.Pp
+.Fn cpu_switchto
+returns the previously run LWP.
 .Sh SEE ALSO
 .Xr condvar 9 ,
+.Xr csf 9 ,
 .Xr pmap 9 ,
 .Xr ras 9 ,
+.Xr sched_4bsd 9 ,
 .Xr splsched 9
