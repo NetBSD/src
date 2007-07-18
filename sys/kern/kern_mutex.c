@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.15 2007/07/09 21:10:53 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.15.2.1 2007/07/18 13:36:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15 2007/07/09 21:10:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.15.2.1 2007/07/18 13:36:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -357,7 +357,7 @@ mutex_destroy(kmutex_t *mtx)
 		MUTEX_ASSERT(mtx, !MUTEX_OWNED(mtx->mtx_owner) &&
 		    !MUTEX_HAS_WAITERS(mtx));
 	} else {
-		MUTEX_ASSERT(mtx, mtx->mtx_lock != __SIMPLELOCK_LOCKED);
+		MUTEX_ASSERT(mtx, !__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock));
 	}
 
 	LOCKDEBUG_FREE(mtx, MUTEX_GETID(mtx));
@@ -457,7 +457,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		do {
 			if (panicstr != NULL)
 				break;
-			while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
+			while (__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock)) {
 				SPINLOCK_BACKOFF(count); 
 #ifdef LOCKDEBUG
 				if (SPINLOCK_SPINOUT(spins))
@@ -690,7 +690,7 @@ mutex_vector_exit(kmutex_t *mtx)
 
 	if (MUTEX_SPIN_P(mtx)) {
 #ifdef FULL
-		if (mtx->mtx_lock != __SIMPLELOCK_LOCKED)
+		if (!__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock))
 			MUTEX_ABORT(mtx, "exiting unheld spin mutex");
 		MUTEX_UNLOCKED(mtx);
 		__cpu_simple_unlock(&mtx->mtx_lock);
@@ -781,7 +781,7 @@ mutex_owned(kmutex_t *mtx)
 	if (MUTEX_ADAPTIVE_P(mtx))
 		return MUTEX_OWNER(mtx->mtx_owner) == (uintptr_t)curlwp;
 #ifdef FULL
-	return mtx->mtx_lock == __SIMPLELOCK_LOCKED;
+	return __SIMPLELOCK_LOCKED_P(&mtx->mtx_lock);
 #else
 	return 1;
 #endif
@@ -875,7 +875,7 @@ mutex_spin_retry(kmutex_t *mtx)
 	do {
 		if (panicstr != NULL)
 			break;
-		while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
+		while (__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock)) {
 			SPINLOCK_BACKOFF(count); 
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins))

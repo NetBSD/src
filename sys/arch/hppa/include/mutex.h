@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5 2007/05/15 18:00:34 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5.4.1 2007/07/18 13:36:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -54,23 +54,22 @@
 struct kmutex {
 	union {
 		/*
-		 * Only the low 4 bytes of the lock will be used by
-		 * __cpu_simple_lock(), but it must be aligned on a
-		 * 16-byte boundary.  See hppa/lock.h
+		 * Only the 16 bytes aligned word of __cpu_simple_lock_t will
+		 * be used. It's 16 bytes to simplify the allocation.
+		 * See hppa/lock.h
 		 */
 #ifdef __MUTEX_PRIVATE
-		__cpu_simple_lock_t	mtxu_lock;		/* 0-15 */
 		struct {
-			volatile uint32_t	mtxs_lockword;	/* 0-3 */
-			volatile uint32_t	mtxs_owner;	/* 4-7 */
-			ipl_cookie_t		mtxs_ipl;	/* 8-11 */
-			volatile uint8_t	mtxs_waiters;	/* 12 */
+			__cpu_simple_lock_t	mtxu_lock;	/* 0-15 */
+			volatile uint32_t	mtxs_owner;	/* 16-19 */
+			ipl_cookie_t		mtxs_ipl;	/* 20-23 */
+			volatile uint8_t	mtxs_waiters;	/* 24 */
 
 			/* For LOCKDEBUG */
-			uint8_t			mtxs_id[3];	/* 13-15 */
+			uint8_t			mtxs_id[3];	/* 25-27 */
 		} s;
 #endif
-		uint8_t			mtxu_pad[16];		/* 0-15 */
+		uint8_t			mtxu_pad[32];	/* 0 - 32 */
 	} u;
 } __aligned (16);
 #endif
@@ -79,7 +78,7 @@ struct kmutex {
 
 #define	__HAVE_MUTEX_STUBS	1
 
-#define	mtx_lock	u.mtxu_lock
+#define	mtx_lock	u.s.mtxu_lock
 #define	mtx_owner	u.s.mtxs_owner
 #define	mtx_ipl		u.s.mtxs_ipl
 #define	mtx_waiters	u.s.mtxs_waiters

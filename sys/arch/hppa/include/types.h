@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.14 2007/05/17 14:51:20 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.14.4.1 2007/07/18 13:36:18 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -36,6 +36,7 @@
 #ifndef	_HPPA_TYPES_H_
 #define	_HPPA_TYPES_H_
 
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 
 #if defined(_NETBSD_SOURCE)
@@ -63,10 +64,13 @@ typedef unsigned long vm_size_t;
 /*
  * Semaphores must be aligned on 16-byte boundaries on the PA-RISC.
  */
-typedef volatile unsigned long __cpu_simple_lock_t;
+typedef volatile struct {
+	volatile unsigned long csl_lock[4];
+} __cpu_simple_lock_t;
 
-#define __SIMPLELOCK_LOCKED	0
-#define __SIMPLELOCK_UNLOCKED	1
+
+#define __SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0} }
+#define __SIMPLELOCK_UNLOCKED	{ { 1, 1, 1, 1} }
 
 typedef int			register_t;
 
