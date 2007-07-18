@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.26 2007/05/04 09:09:47 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.27 2007/07/18 12:07:51 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -41,11 +41,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else 
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>

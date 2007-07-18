@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.8 2007/06/06 09:47:29 vanhu Exp $	*/
+/*	$NetBSD: session.c,v 1.9 2007/07/18 12:07:52 vanhu Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -47,11 +47,7 @@
 # define WIFEXITED(s)	(((s) & 255) == 0)
 #endif
 
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>

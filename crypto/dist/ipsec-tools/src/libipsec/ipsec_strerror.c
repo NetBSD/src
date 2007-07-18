@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: ipsec_strerror.c,v 1.5 2007/07/18 12:07:50 vanhu Exp $	*/
 
 /*	$KAME: ipsec_strerror.c,v 1.7 2000/07/30 00:45:12 itojun Exp $	*/
 
@@ -39,11 +39,7 @@
 #include <sys/param.h>
 
 #include <string.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include "ipsec_strerror.h"
 

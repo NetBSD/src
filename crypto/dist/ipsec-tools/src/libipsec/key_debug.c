@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.7 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.8 2007/07/18 12:07:50 vanhu Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -60,11 +60,7 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #ifndef _KERNEL
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.30 2007/04/04 13:09:36 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.31 2007/07/18 12:07:51 vanhu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -39,11 +39,7 @@
 
 #include <netinet/in.h>
 
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>

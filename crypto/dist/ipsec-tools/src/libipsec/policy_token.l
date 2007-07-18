@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.l,v 1.6 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.7 2007/07/18 12:07:50 vanhu Exp $	*/
 
 /* Id: policy_token.l,v 1.12 2005/05/05 12:32:18 manubsd Exp */
 
@@ -41,11 +41,7 @@
 #include <sys/socket.h>
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <limits.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.9 2006/09/09 16:22:37 manu Exp $	*/
+/*	$NetBSD: parse.y,v 1.10 2007/07/18 12:07:52 vanhu Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -42,11 +42,7 @@
 
 #include <netinet/in.h>
 #include <net/pfkeyv2.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else 
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 #include <arpa/inet.h>
 
 #include <string.h>
