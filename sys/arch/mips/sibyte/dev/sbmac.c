@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.25 2007/07/09 20:52:23 ad Exp $ */
+/* $NetBSD: sbmac.c,v 1.25.2.1 2007/07/18 01:51:00 matt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.25 2007/07/09 20:52:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.25.2.1 2007/07/18 01:51:00 matt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -628,7 +628,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		d->sbdma_dscrtable[dsc].dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_A_SIZE((m->m_len +
-		      (mtod(m,unsigned int) & 0x0000001F))) |
+		      (mtod(m,uintptr_t) & 0x0000001F))) |
 		    V_DMA_DSCRB_PKT_SIZE_MSB((m->m_pkthdr.len & 0xc000) >> 14) |
 		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len & 0x3fff);
 
