@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.3 1998/06/27 21:15:07 christos Exp $	*/
+/*	$NetBSD: at.h,v 1.4 2007/07/18 01:06:08 lukem Exp $	*/
 
 /*
  *  at.h -  header for at(1)
@@ -28,7 +28,6 @@
  */
 
 extern int fcreated;
-extern char *namep;
 extern char atfile[];
 extern char atverify;
 
