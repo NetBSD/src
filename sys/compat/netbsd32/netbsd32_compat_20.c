@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.13 2007/07/17 20:39:42 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.14 2007/07/18 13:53:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.13 2007/07/17 20:39:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.14 2007/07/18 13:53:34 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ compat_20_netbsd32_from_statvfs(sbp, sb32p)
 	(void)memcpy(sb32p->f_fstypename, sbp->f_fstypename,
 	    sizeof(sb32p->f_fstypename) +
 	    sizeof(sb32p->f_mntonname) +
-	    sizeof(sb32p->f_mnfromname));
+	    sizeof(sb32p->f_mntfromname));
 #else
 	/* If we want to be careful */
 	(void)memcpy(sb32p->f_fstypename, sbp->f_fstypename,
