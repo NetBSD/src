@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.8 2007/07/18 10:13:59 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.9 2007/07/18 10:28:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.8 2007/07/18 10:13:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.9 2007/07/18 10:28:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -464,33 +464,19 @@ static inline void
 softint_execute(softint_t *si, lwp_t *l, int s)
 {
 	softhand_t *sh;
-	lwp_t *l2;
 
 	KASSERT(si->si_lwp == curlwp);
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
 	KASSERT(si->si_active);
 
-	while (!SIMPLEQ_EMPTY(&si->si_q)) {
-		/*
-		 * If any interrupted LWP has higher priority then we
-		 * must yield immediatley.  Note that IPL_HIGH may be
-		 * above IPL_SCHED, so we have to drop the interrupt
-		 * priority level before yielding.
-		 *
-		 * XXXAD Optimise this away.
-		 */
-		for (l2 = l->l_switchto; l2 != NULL; l2 = l2->l_switchto) {
-			if (lwp_eprio(l2) > l->l_priority)
-				break;
-		}
-		if (l2 != NULL) {
-			splx(s);
-			yield();
-			(void)splhigh();
-			continue;
-		}
+	/*
+	 * Note: due to priority inheritance we may have interrupted a
+	 * higher priority LWP.  Since since the soft interrupt must be
+	 * quick and is non-preemptable, we don't bother yielding.
+	 */
 
+	while (!SIMPLEQ_EMPTY(&si->si_q)) {
 		/*
 		 * Pick the longest waiting handler to run.  We block
 		 * interrupts but do not lock in order to do this, as
