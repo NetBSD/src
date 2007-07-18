@@ -1,3 +1,6 @@
+2007-07-18  Matthew Grooms  <mgrooms@shrew.net>
+	* src/racoon/racoon.conf.5: various man page updates
+
 2007-07-16  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/grabmyaddr.c: fixed a socket leak.
 
