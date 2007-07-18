@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.7 2007/07/05 22:37:52 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.8 2007/07/18 21:24:40 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 5, 2007
+.Dd July 18, 2007
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -35,12 +35,12 @@
 .In puffs.h
 .Ft int
 .Fo puffs_fs_statvfs
-.Fa "struct puffs_cc *pcc" "struct statvfs *sbp" "struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "struct statvfs *sbp" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_fs_sync
 .Fa "struct puffs_cc *pcc" "int waitfor" "const struct puffs_cred *pcr"
-.Fa "struct puffs_cid *pcid"
+.Fa "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_fs_fhtonode 
@@ -54,7 +54,9 @@
 .Ft void
 .Fn puffs_fs_suspend "struct puffs_cc *pcc" "int status"
 .Ft int
-.Fn puffs_fs_unmount "struct puffs_cc *pcc" "int flags" "struct puffs_cid *pcid"
+.Fo puffs_fs_unmount
+.Fa "struct puffs_cc *pcc" "int flags" "const struct puffs_cid *pcid"
+.Fc
 .Ft int
 .Fo puffs_node_lookup
 .Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_newinfo *pni"
@@ -73,46 +75,47 @@
 .Ft int
 .Fo puffs_node_open
 .Fa "struct puffs_cc *pcc" "void *opc" "int mode"
-.Fa "const struct puffs_cred *pcr" "struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_close
 .Fa "struct puffs_cc *pcc" "void *opc" "int flags"
-.Fa "const struct puffs_cred *pcr" "struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_access
 .Fa "struct puffs_cc *pcc" "void *opc" "int mode"
-.Fa "const struct puffs_cred *pcr" "struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_getattr
 .Fa "struct puffs_cc *pcc" "void *opc" "struct vattr *va"
-.Fa "const struct puffs_cred *pcr" "struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_setattr
 .Fa "struct puffs_cc *pcc" "void *opc" "const struct vattr *va"
-.Fa "const struct puffs_cred *pcr" "struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_poll
-.Fa "struct puffs_cc *pcc" "void *opc" "int *events" "struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "void *opc" "int *events"
+.Fa "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_mmap
 .Fa "struct puffs_cc *pcc" "void *opc" "int flags"
-.Fa "const struct puffs_cred *pcr" "struct puffs_cid *pcid"
+.Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_fsync
 .Fa "struct puffs_cc *pcc" "void *opc" "int flags" "off_t offlo"
-.Fa "off_t offhi" "struct puffs_cid *pcid"
+.Fa "off_t offhi" "const struct puffs_cid *pcid"
 .Fc
 .\".Ft int
 .\".Fo puffs_node_seek
 .\".Fa "struct puffs_cc *pcc" "void *opc" "off_t oldoff" "off_t "newoff"
-.\".Fa "struct puffs_cid *pcid"
+.\".Fa "const struct puffs_cid *pcid"
 .\".Fc
 .Ft int
 .Fo puffs_node_remove
@@ -171,11 +174,11 @@
 .Fn puffs_node_print "struct puffs_cc *pcc" "void *opc"
 .Ft int
 .Fo puffs_node_reclaim
-.Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_inactive
-.Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cid *pcid"
 .Fc
 .Ft void
 .Fn puffs_setback "struct puffs_cc *pcc" "int op"
