@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.9 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.10 2007/07/18 12:07:50 vanhu Exp $	*/
 
 /*	$KAME: policy_parse.y,v 1.21 2003/12/12 08:01:26 itojun Exp $	*/
 
@@ -72,11 +72,7 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>
