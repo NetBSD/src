@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.31 2007/04/12 21:36:06 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.31.2.1 2007/07/18 13:36:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.31 2007/04/12 21:36:06 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.31.2.1 2007/07/18 13:36:19 skrll Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/lock.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -107,7 +108,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 	pthread__error(EPERM, "Mutex not locked in condition wait",
-	    mutex->ptm_lock == __SIMPLELOCK_LOCKED);
+	    __SIMPLELOCK_LOCKED_P(&mutex->ptm_lock));
 
 	self = pthread__self();
 	PTHREADD_ADD(PTHREADD_COND_WAIT);
@@ -166,7 +167,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 	pthread__error(EPERM, "Mutex not locked in condition wait",
-	    mutex->ptm_lock == __SIMPLELOCK_LOCKED);
+	    __SIMPLELOCK_LOCKED_P(&mutex->ptm_lock));
 	pthread__error(EINVAL, "Invalid wait time", 
 	    (abstime->tv_sec >= 0) &&
 	    (abstime->tv_nsec >= 0) && (abstime->tv_nsec < 1000000000));

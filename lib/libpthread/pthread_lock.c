@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.20 2007/03/24 18:52:00 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.20.2.1 2007/07/18 13:36:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.20 2007/03/24 18:52:00 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.20.2.1 2007/07/18 13:36:19 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -77,23 +77,24 @@ pthread__simple_lock_init(__cpu_simple_lock_t *alp)
 		return;
 	}
 
-	*alp = __SIMPLELOCK_UNLOCKED;
+	__cpu_simple_lock_clear(alp);
 }
 
 int
 pthread__simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	__cpu_simple_lock_t old;
+	__cpu_simple_lock_t locked = __SIMPLELOCK_LOCKED;
 
 	if (pthread__atomic)
 		return __cpu_simple_lock_try(alp);
 
 	RAS_START(pthread__lock);
 	old = *alp;
-	*alp = __SIMPLELOCK_LOCKED;
+	*alp = locked;
 	RAS_END(pthread__lock);
 
-	return old == __SIMPLELOCK_UNLOCKED;
+	return __SIMPLELOCK_UNLOCKED_P(&old);
 }
 
 inline void
@@ -105,7 +106,7 @@ pthread__simple_unlock(__cpu_simple_lock_t *alp)
 		return;
 	}
 
-	*alp = __SIMPLELOCK_UNLOCKED;
+	__cpu_simple_lock_clear(alp);
 }
 
 /*
@@ -241,7 +242,7 @@ pthread_spin_destroy(pthread_spinlock_t *lock)
 #ifdef ERRORCHECK
 	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
 		return EINVAL;
-	if (lock->pts_spin != __SIMPLELOCK_UNLOCKED)
+	if (!__SIMPLELOCK_UNLOCKED_P(&lock->pts_spin))
 		return EBUSY;
 #endif
 
