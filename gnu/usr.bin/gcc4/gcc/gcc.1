@@ -6272,13 +6272,20 @@ Instead of the normal output, generate a list of \fB#define\fR
 directives for all the macros defined during the execution of the
 preprocessor, including predefined macros.  This gives you a way of
 finding out what is predefined in your version of the preprocessor.
-Assuming you have no file \fIfoo.h\fR, the command
+The following command:
 .Sp
 .Vb 1
-\&        touch foo.h; cpp -dM foo.h
+\&        cpp -dM < /dev/null | sort
 .Ve
 .Sp
-will show all the predefined macros.
+will show all the predefined macros and their values.  Alternately to be
+sure the exact same built-in preprocessor code is running you can use
+this command:
+.Sp
+.Vb 1
+\&        gcc -dM -E - < /dev/null | sort
+.Ve
+.Sp
 .IP "\fBD\fR" 4
 .IX Item "D"
 Like \fBM\fR except in two respects: it does \fInot\fR include the
