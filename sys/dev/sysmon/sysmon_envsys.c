@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.24 2007/07/17 17:56:04 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.25 2007/07/18 20:23:10 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.24 2007/07/17 17:56:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.25 2007/07/18 20:23:10 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -670,6 +670,7 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	mutex_enter(&sme_mtx);
 	if (!prop_array_add(array, dict)) {
 		mutex_exit(&sme_mtx);
+		prop_object_release(dict);
 		DPRINTF(("%s: prop_array_add\n", __func__));
 		return EINVAL;
 	}
