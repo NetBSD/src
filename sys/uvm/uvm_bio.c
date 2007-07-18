@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.56.4.6 2007/07/15 15:53:07 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.56.4.7 2007/07/18 21:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.6 2007/07/15 15:53:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56.4.7 2007/07/18 21:39:23 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -301,7 +301,7 @@ again:
 	    0);
 
 	if (error == EAGAIN) {
-		kpause("ubc_fault", false, 0, NULL);
+		kpause("ubc_fault", false, hz, NULL);
 		goto again;
 	}
 	if (error) {
@@ -460,7 +460,7 @@ again:
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
 			mutex_exit(&ubc_object.uobj.vmobjlock);
-			kpause("ubc_alloc", false, 0, NULL);
+			kpause("ubc_alloc", false, hz, NULL);
 			goto again;
 		}
 
