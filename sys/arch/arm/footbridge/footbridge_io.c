@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.12 2005/11/24 13:08:32 yamt Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.13 2007/07/18 09:47:49 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.12 2005/11/24 13:08:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.13 2007/07/18 09:47:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
 bs_map_proto(footbridge_mem);
 bs_unmap_proto(footbridge_mem);
+bs_mmap_proto(footbridge_mem);
 
 /* Declare the footbridge bus space tag */
 
@@ -151,6 +152,7 @@ void footbridge_create_mem_bs_tag(t, cookie)
 	*t = footbridge_bs_tag;
 	t->bs_map = footbridge_mem_bs_map;
 	t->bs_unmap = footbridge_mem_bs_unmap;
+	t->bs_mmap = footbridge_mem_bs_mmap;
 	t->bs_cookie = cookie;
 }
 
@@ -329,3 +331,21 @@ footbridge_bs_barrier(t, bsh, offset, len, flags)
 	int flags;
 {
 }	
+
+
+paddr_t
+footbridge_mem_bs_mmap(void *t, bus_addr_t addr, off_t offset,
+		       int prot, int flags)
+{
+	paddr_t pa;
+
+	if (addr >= DC21285_PCI_MEM_SIZE
+	    || offset < 0
+	    || offset >= DC21285_PCI_MEM_SIZE
+	    || addr >= DC21285_PCI_MEM_SIZE - offset)
+		return -1;
+
+	pa = DC21285_PCI_MEM_BASE + addr + offset;
+
+	return arm_ptob(pa);
+}
