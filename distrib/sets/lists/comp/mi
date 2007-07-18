@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1051 2007/07/17 17:42:09 joerg Exp $
+#	$NetBSD: mi,v 1.1052 2007/07/18 12:19:44 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6998,6 +6998,7 @@
 ./usr/share/man/cat9/kmem_free.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman		.cat
@@ -11341,6 +11342,7 @@
 ./usr/share/man/man9/kmem_free.9		comp-sys-man		.man
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
+./usr/share/man/man9/kpause.9			comp-sys-man		.man
 ./usr/share/man/man9/kprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man		.man
