@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/07/08 14:27:48 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2007/07/18 22:38:59 pooka Exp $
 #
 
 NOMAN= should challenge wizd
@@ -15,7 +15,5 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/sbin/mount_portal
 
 DPADD+=${LIBUTIL} ${LIBPUFFS}
 LDADD+=-lutil -lpuffs
-
-DBG=-g -O0
 
 .include <bsd.prog.mk>
