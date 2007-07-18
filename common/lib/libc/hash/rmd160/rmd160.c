@@ -1,4 +1,4 @@
-/* 	$NetBSD: rmd160.c,v 1.2 2006/11/01 11:29:08 he Exp $ */
+/* 	$NetBSD: rmd160.c,v 1.2.4.1 2007/07/18 20:20:28 liamjfoy Exp $ */
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -33,14 +33,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2 2006/11/01 11:29:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2.4.1 2007/07/18 20:20:28 liamjfoy Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rmd160.c,v 1.2 2006/11/01 11:29:08 he Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.2.4.1 2007/07/18 20:20:28 liamjfoy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -193,7 +193,7 @@ RMD160Transform(u_int32_t state[5], const u_char block[64])
 	int i;
 
 	for (i = 0; i < 16; i++)
-		x[i] = le32toh(*(const u_int32_t*)(block+i*4));
+		x[i] = le32dec(block+i*4);
 #endif
 
 	a = state[0];
