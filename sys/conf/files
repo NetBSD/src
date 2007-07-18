@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.851 2007/07/15 08:40:22 dsl Exp $
+#	$NetBSD: files,v 1.852 2007/07/18 06:29:26 he Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -123,7 +123,7 @@ defflag				COMPAT_SUNOS: COMPAT_30
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
 defflag				COMPAT_ULTRIX
 defflag				COMPAT_NETBSD32
-defflag				COMPAT_AOUT_M68K
+defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
 defflag				COMPAT_MACH
 defflag				COMPAT_DARWIN
