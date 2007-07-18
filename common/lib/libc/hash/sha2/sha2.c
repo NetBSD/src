@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.5 2007/07/18 13:57:54 joerg Exp $ */
+/* $NetBSD: sha2.c,v 1.6 2007/07/18 16:58:14 drochner Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.5 2007/07/18 13:57:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.6 2007/07/18 16:58:14 drochner Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.5 2007/07/18 13:57:54 joerg Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.6 2007/07/18 16:58:14 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -887,7 +887,7 @@ void SHA512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 		while (len >= SHA512_BLOCK_LENGTH) {
 			memcpy(context->buffer, data, SHA512_BLOCK_LENGTH);
 			SHA512_Transform(context,
-			    (const sha2_word64*)context->buffer);
+			    (const void *)context->buffer);
 			ADDINC128(context->bitcount, SHA512_BLOCK_LENGTH << 3);
 			len -= SHA512_BLOCK_LENGTH;
 			data += SHA512_BLOCK_LENGTH;
