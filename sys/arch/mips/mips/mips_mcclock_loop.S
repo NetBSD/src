@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock_loop.S,v 1.2 2005/12/11 12:18:09 christos Exp $ */
+/* $NetBSD: mips_mcclock_loop.S,v 1.2.42.1 2007/07/18 02:33:42 matt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 
 LEAF_NOPROFILE(mips_mcclock_loop_with_clock)
 	subu	sp, CALLFRAME_SIZ
-	sw	s0, 0(sp)
-	sw	ra, CALLFRAME_RA(sp)
+	REG_S	s0, 0(sp)
+	REG_S	ra, CALLFRAME_RA(sp)
 	j	2f
 	 move	s0, zero		# iters = 0;
 1:
@@ -70,16 +70,16 @@ LEAF_NOPROFILE(mips_mcclock_loop_with_clock)
 	and	v0, a0			# v0 &= clockmask;
 	beqz	v0, 1b			# if zero then repeat
 	 move	v0, s0			# return iters
-	lw	ra, CALLFRAME_RA(sp)
-	lw	s0, 0(sp)
+	REG_L	ra, CALLFRAME_RA(sp)
+	REG_L	s0, 0(sp)
 	j	ra
 	 addu	sp, CALLFRAME_SIZ
 END(mips_mcclock_loop_with_clock)
 
 LEAF_NOPROFILE(mips_mcclock_loop_without_clock)
 	subu	sp, CALLFRAME_SIZ
-	sw	s0, 0(sp)
-	sw	ra, CALLFRAME_RA(sp)
+	REG_S	s0, 0(sp)
+	REG_S	ra, CALLFRAME_RA(sp)
 	j	2f
 	 move	s0, zero		# iters = 0;
 1:
@@ -95,8 +95,8 @@ LEAF_NOPROFILE(mips_mcclock_loop_without_clock)
 	and	v0, a0			# v0 &= clockmask;
 	beqz	v0, 1b			# if zero then repeat
 	 move	v0, s0			# return iters
-	lw	ra, CALLFRAME_RA(sp)
-	lw	s0, 0(sp)
+	REG_L	ra, CALLFRAME_RA(sp)
+	REG_L	s0, 0(sp)
 	j	ra
 	 addu	sp, CALLFRAME_SIZ
 END(mips_mcclock_loop_without_clock)
