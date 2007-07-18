@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.50.12.1 2007/07/18 02:20:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.50.12.1 2007/07/18 02:20:09 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -308,3 +308,81 @@ mips_elf_makecmds (l, epp)
 
 	return 0;
 }
+
+#if EXEC_ELF32
+int
+mips_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
+	char *idt, vaddr_t *entry_p)
+{
+	struct proc * const p = l->l_proc;
+	const Elf32_Ehdr * const eh = eh0;
+
+	if (eh->e_flags & EF_MIPS_ABI2) {
+		p->p_md.md_abi = _MIPS_BSD_API_N32;
+		return 0;
+	}
+	switch (eh->e_flags & EF_MIPS_ARCH) {
+	case 0:
+	case E_MIPS_ABI_O32:
+		p->p_md.md_abi = _MIPS_BSD_API_LP32;
+		return 0;
+	default:
+		return ENOEXEC;
+	}
+}
+
+void
+coredump_elf32_setup(struct lwp *l, void *eh0)
+{
+	struct proc * const p = l->l_proc;
+	Elf32_Ehdr * const eh = eh0;
+
+	switch (p->p_md.md_abi) {
+	case _MIPS_BSD_API_N32:
+		eh->e_flags |= EF_MIPS_ABI2;
+		break;
+	case _MIPS_BSD_API_LP32:
+		eh->e_flags |= E_MIPS_ABI_O32;
+		break;
+	}
+}
+#endif
+
+#if EXEC_ELF64
+int
+mips_netbsd_elf64_probe(struct lwp *l, struct exec_package *epp, void *eh0,
+	char *idt, vaddr_t *entry_p)
+{
+	struct proc * const p = l->l_proc;
+	const Elf64_Ehdr * const eh = eh0;
+
+	if (eh->e_flags & EF_MIPS_ABI2) {
+		p->p_md.md_abi = _MIPS_BSD_API_LP64;
+		return 0;
+	}
+	switch (eh->e_flags & EF_MIPS_ARCH) {
+	case 0:
+	case E_MIPS_ABI_O64:
+		p->p_md.md_abi = _MIPS_BSD_API_LP32_64CLEAN;
+		return 0;
+	default:
+		return ENOEXEC;
+	}
+}
+
+void
+coredump_elf64_setup(struct lwp *l, void *eh0)
+{
+	struct proc * const p = l->l_proc;
+	Elf32_Ehdr * const eh = eh0;
+
+	switch (p->p_md.md_abi) {
+	case _MIPS_BSD_API_LP64:
+		eh->e_flags |= EF_MIPS_ABI2;
+		break;
+	case _MIPS_BSD_API_LP32_64CLEAN:
+		eh->e_flags |= E_MIPS_ABI_O64;
+		break;
+	}
+}
+#endif
