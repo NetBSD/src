@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.228 2007/06/24 21:38:21 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.229 2007/07/18 19:04:58 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.228 2007/06/24 21:38:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.229 2007/07/18 19:04:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2526,11 +2526,9 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 void
 rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
-	struct proc *p;
 	struct lwp *l;
 
-	p = raidPtr->engine_thread;
-	l = LIST_FIRST(&p->p_lwps);
+	l = curlwp;
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2539,7 +2537,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+			(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		}
 	}
 }

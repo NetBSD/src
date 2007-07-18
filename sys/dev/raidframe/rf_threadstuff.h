@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.22 2007/07/09 21:01:20 ad Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.23 2007/07/18 19:04:59 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@
 
 #define decl_simple_lock_data(a,b) a struct simplelock b;
 
-typedef struct proc *RF_Thread_t;
+typedef struct lwp *RF_Thread_t;
 typedef void *RF_ThreadArg_t;
 
 #define RF_DECLARE_MUTEX(_m_)           decl_simple_lock_data(,(_m_))
@@ -88,11 +88,11 @@ typedef void *RF_ThreadArg_t;
 #define RF_BROADCAST_COND(_c_)         wakeup(&(_c_))
 #define	RF_CREATE_THREAD(_handle_, _func_, _arg_, _name_) \
 	kthread_create(PRI_NONE, 0, NULL, (void (*)(void *))(_func_), \
-	    (void *)(_arg_), (struct lwp **)&(_handle_), _name_)
+	    (void *)(_arg_), &(_handle_), _name_)
 
 #define	RF_CREATE_ENGINE_THREAD(_handle_, _func_, _arg_, _fmt_, _fmt_arg_) \
 	kthread_create(PRI_NONE, 0, NULL, (void (*)(void *))(_func_), \
-	    (void *)(_arg_), (struct lwp **)&(_handle_), _fmt_, _fmt_arg_)
+	    (void *)(_arg_), &(_handle_), _fmt_, _fmt_arg_)
 
 #define rf_mutex_init(m) simple_lock_init(m)
 
