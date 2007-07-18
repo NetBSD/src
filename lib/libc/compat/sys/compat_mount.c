@@ -1,9 +1,9 @@
-/*	$NetBSD: compat_mount.c,v 1.1 2007/07/14 15:53:04 dsl Exp $	*/
+/*	$NetBSD: compat_mount.c,v 1.2 2007/07/18 20:10:47 dsl Exp $	*/
 
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_mount.c,v 1.1 2007/07/14 15:53:04 dsl Exp $");
+__RCSID("$NetBSD: compat_mount.c,v 1.2 2007/07/18 20:10:47 dsl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -20,9 +20,10 @@ int	__mount50(const char *, const char *, int, void *, size_t);
 /*
  * Convert old mount() call to new calling convention
  * The kernel will treat length 0 as 'default for the fs'.
+ * We need to throw away the +ve response for MNT_GETARGS.
  */
 int
 mount(const char *type, const char *dir, int flags, void *data)
 {
-	return __mount50(type, dir, flags, data, 0);
+	return __mount50(type, dir, flags, data, 0) == -1 ? -1 : 0;
 }
