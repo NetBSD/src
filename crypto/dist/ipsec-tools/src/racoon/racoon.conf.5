@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.38 2007/03/23 09:57:29 vanhu Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.39 2007/07/18 22:50:48 mgrooms Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -129,7 +129,7 @@ is one of following:
 .Ss Privilege separation
 .Bl -tag -width Ds -compact
 .It Ic privsep { Ar statements Ic }
-specifies privilege separation parameters.
+Specifies privilege separation parameters.
 When enabled, these enable
 .Xr racoon 8
 to operate with an unprivileged instance doing most of the work, while
@@ -179,21 +179,21 @@ tree.
 .El
 .El
 .Ss Path Specification
-This section specify various paths used by racoon.
+This section specifies various paths used by racoon.
 When running in privilege separation mode,
 .Ic certificate
 and
 .Ic script
-paths are mandatory, and you need a to restart
+paths are mandatory. A
 .Xr racoon 8
-if you want to change them.
+restart is required if you want path changes to be taken into account.
 .Bl -tag -width Ds -compact
 .It Ic path include Ar path ;
-specifies a path to include a file.
+Specifies a path to include a file.
 See
 .Sx File Inclusion .
 .It Ic path pre_shared_key Ar file ;
-specifies a file containing pre-shared key(s) for various ID(s).
+Specifies a file containing pre-shared key(s) for various ID(s).
 See
 .Sx Pre-shared key File .
 .It Ic path certificate Ar path ;
@@ -203,7 +203,7 @@ If you run with privilege separation,
 .Xr racoon 8
 will refuse to use a certificate stored outside of this directory.
 .It Ic path backupsa Ar file ;
-specifies a file to which SA information which is negotiated by
+Specifies a file to which SA information negotiated by
 racoon should be stored.
 .Xr racoon 8
 will install SA(s) from the file when started with the
@@ -220,12 +220,11 @@ If you run with privilege separation,
 .Xr racoon 8
 will refuse to execute a script stored outside of this directory.
 .It Ic path pidfile Ar file ;
-specifies file where to store PID of process.
+Specifies file where to store PID of process.
 If path starts with
 .Pa /
-it is treated as
-an absolute path, otherwise relative to VARRUN directory specified at
-compilation time.
+it is treated as an absolute path. Otherwise, it is treated as a relative 
+path to the VARRUN directory specified at compilation time.
 Default is
 .Pa racoon.pid .
 .El
@@ -233,7 +232,7 @@ Default is
 .Ss File Inclusion
 .Bl -tag -width Ds -compact
 .It Ic include Ar file
-other configuration files can be included.
+Specifies other configuration files to be included.
 .El
 .\"
 .Ss Identifier Specification
@@ -245,26 +244,26 @@ directive.
 .Ss Timer Specification
 .Bl -tag -width Ds -compact
 .It Ic timer { Ar statements Ic }
-specifies various timer values.
+This section specifies various timer values used by racoon.
 .Pp
 .Bl -tag -width Ds -compact
 .It Ic counter Ar number ;
-the maximum number of retries to send.
+The maximum number of retries to send.
 The default is 5.
 .It Ic interval Ar number Ar timeunit ;
-the interval to resend, in seconds.
+The interval to resend, in seconds.
 The default time is 10 seconds.
 .It Ic persend Ar number ;
-the number of packets per send.
+The number of packets per send.
 The default is 1.
 .It Ic phase1 Ar number Ar timeunit ;
-the maximum time it should take to complete phase 1.
+The maximum time it should take to complete phase 1.
 The default time is 15 seconds.
 .It Ic phase2 Ar number Ar timeunit ;
-the maximum time it should take to complete phase 2.
+The maximum time it should take to complete phase 2.
 The default time is 10 seconds.
 .It Ic natt_keepalive Ar number Ar timeunit ;
-interval between sending NAT-Traversal keep-alive packets.
+The interval between sending NAT-Traversal keep-alive packets.
 The default time is 20 seconds.
 Set to 0s to disable keep-alive packets.
 .El
@@ -287,7 +286,7 @@ The following is the list of valid statements:
 .It Ic isakmp Ar address Bq Bq Ar port ;
 If this is specified,
 .Xr racoon 8
-will only listen on
+will only listen on the defined
 .Ar address .
 The default port is 500, which is specified by IANA.
 You can provide more than one address definition.
@@ -300,8 +299,8 @@ If you plan to use NAT-T, you should provide at least one address
 with port 4500, which is specified by IANA.
 There is no default.
 .It Ic strict_address ;
-require that all addresses for ISAKMP must be bound.
-This statement will be ignored if you do not specify any address.
+Requires that all addresses for ISAKMP be bound.
+This statement will be ignored if you do not specify address definitions.
 .El
 When running in privilege separation mode, you need to restart
 .Xr racoon 8
@@ -311,20 +310,21 @@ section taken into account.
 .Pp
 The
 .Ar listen
-section can also be used to specify the admin socket mode and ownership,
+section can also be used to specify the admin socket mode and ownership
 if racoon was built with support for admin port.
 .Bl -tag -width Ds -compact
 .It Ic adminsock Ar path Op Ar owner\ group\ mode ;
+The
 .Ar path ,
 .Ar owner ,
 and
 .Ar group
-are the socket path, owner, and group; they must be quoted.
-Defaults are
+values specify the socket path, owner, and group. They must be quoted.
+The defaults are
 .Pa /var/racoon/racoon.sock ,
 UID 0, and GID 0.
 .Ar mode
-is the access mode in octal, default is 0600.
+is the access mode in octal. The default is 0600.
 .It Ic adminsock disabled ;
 This directive tells racoon to not listen on the admin socket.
 .El
@@ -368,12 +368,12 @@ This is the encoding used by older versions of
 .Bq Ic inherit Ar parent
 .Ic { Ar statements Ic }
 .Xc
-specifies the parameters for IKE phase 1 for each remote node.
+Specifies the IKE phase 1 parameters for each remote node.
 The default port is 500.
 If
 .Ic anonymous
-is specified, the statements apply to all peers which do not match
-any other
+is specified, the statements will apply to any peer that does not match a
+more specific
 .Ic remote
 directive.
 .Pp
@@ -385,7 +385,7 @@ is either
 .Ar address
 or a keyword
 .Ic anonymous )
-have all values predefined to those of a given
+that have all values predefined to those of a given
 .Ar parent .
 In these sections it is enough to redefine only the changed parameters.
 .Pp
@@ -394,37 +394,36 @@ The following are valid statements.
 .Bl -tag -width Ds -compact
 .\"
 .It Ic exchange_mode ( main | aggressive | base ) ;
-defines the exchange mode for phase 1 when racoon is the initiator.
-It also means the acceptable exchange mode when racoon is responder.
+Defines the exchange mode for phase 1 when racoon is the initiator.
+It also means the acceptable exchange mode when racoon is the responder.
 More than one mode can be specified by separating them with a comma.
 All of the modes are acceptable.
 The first exchange mode is what racoon uses when it is the initiator.
 .\"
 .It Ic doi Ic ipsec_doi ;
-means to use IPsec DOI as specified in RFC 2407.
+Means to use IPsec DOI as specified in RFC 2407.
 You can omit this statement.
 .\"
 .It Ic situation Ic identity_only ;
-means to use SIT_IDENTITY_ONLY as specified in RFC 2407.
+Means to use SIT_IDENTITY_ONLY as specified in RFC 2407.
 You can omit this statement.
 .\"
 .It Ic identifier Ar idtype ;
-is obsolete.
-Instead, use
+This statment is obsolete. Instead, use
 .Ic my_identifier .
 .\"
 .It Xo
 .Ic my_identifier Bq Ar qualifier
 .Ar idtype ... ;
 .Xc
-specifies the identifier sent to the remote host
+Specifies the identifier sent to the remote host
 and the type to use in the phase 1 negotiation.
 .Ic address, fqdn , user_fqdn , keyid ,
 and
 .Ic asn1dn
 can be used as an
-.Ar idtype ;
-the
+.Ar idtype .
+The
 .Ar qualifier
 is currently only used for
 .Ic keyid ,
@@ -435,21 +434,21 @@ or
 The possible values are :
 .Bl -tag -width Ds -compact
 .It Ic my_identifier Ic address Bq Ar address ;
-the type is the IP address.
+The type is the IP address.
 This is the default type if you do not specify an identifier to use.
 .It Ic my_identifier Ic user_fqdn Ar string ;
-the type is a USER_FQDN (user fully-qualified domain name).
+The type is a USER_FQDN (user fully-qualified domain name).
 .It Ic my_identifier Ic fqdn Ar string ;
-the type is a FQDN (fully-qualified domain name).
+The type is a FQDN (fully-qualified domain name).
 .It Xo
 .Ic my_identifier Ic keyid Bq Ic file
 .Ar file ;
 .Xc
-the type is a KEY_ID, read from the file.
+The type is a KEY_ID, read from the file.
 .It Ic my_identifier Ic keyid Ic tag Ar string ;
-the type is a KEY_ID, specified in the quoted string.
+The type is a KEY_ID, specified in the quoted string.
 .It Ic my_identifier Ic asn1dn Bq Ar string ;
-the type is an ASN.1 distinguished name.
+The type is an ASN.1 distinguished name.
 If
 .Ar string
 is omitted,
@@ -458,7 +457,7 @@ will get the DN from the Subject field in the certificate.
 .El
 .\"
 .It Ic xauth_login Bq Ar string ;
-specifies the login to use in client-side Hybrid authentication.
+Specifies the login to use in client-side Hybrid authentication.
 It is available only if
 .Xr racoon 8
 has been built with this option.
@@ -468,7 +467,7 @@ using the login
 as the key id.
 .\"
 .It Ic peers_identifier Ar idtype ... ;
-specifies the peer's identifier to be received.
+Specifies the peer's identifier to be received.
 If it is not defined then
 .Xr racoon 8
 will not verify the peer's identifier in ID payload transmitted from the peer.
@@ -493,11 +492,11 @@ set this to on.
 In this case, if the value defined by
 .Ic peers_identifier
 is not the same as the peer's identifier in the ID payload,
-the negotiation will failed.
+the negotiation will fail.
 The default is off.
 .\"
 .It Ic certificate_type Ar certspec ;
-specifies a certificate specification.
+Specifies a certificate specification.
 .Ar certspec
 is one of followings:
 .Bl -tag -width Ds -compact
@@ -516,7 +515,7 @@ Required
 for RSA authentication.
 .El
 .It Ic ca_type Ar cacertspec ;
-specifies a root certificate authority specification.
+Specifies a root certificate authority specification.
 .Ar cacertspec
 is one of followings:
 .Bl -tag -width Ds -compact
@@ -532,10 +531,10 @@ Gather network information through ISAKMP mode configuration.
 Default is off.
 .\"
 .It Ic weak_phase1_check (on | off) ;
-Tells racoon to act on unencrypted deletion messages on phase 1.
+Tells racoon to act on unencrypted deletion messages during phase 1.
 This is a small security risk, so the default is off, meaning that
 racoon will keep on trying to establish a connection even if the
-user credentials ar wrong, for instance.
+user credentials are wrong, for instance.
 .\"
 .It Ic peers_certfile ( dnssec | Ar certfile | Ic plain_rsa Ar pubkeyfile ) ;
 If
@@ -613,11 +612,11 @@ The DNS default domain name obtained by ISAKMP mode config.
 .\"
 .\"
 .It Ic send_cert (on | off) ;
-If you do not want to send a certificate for some reason, set this to off.
+If you do not want to send a certificate, set this to off.
 The default is on.
 .\"
 .It Ic send_cr (on | off) ;
-If you do not want to send a certificate request for some reason, set this to off.
+If you do not want to send a certificate request, set this to off.
 The default is on.
 .\"
 .It Ic verify_cert (on | off) ;
@@ -633,18 +632,18 @@ e.g. "C=XX, O=YY, ...".
 The certificate's subjectAltName is compared with the identifier.
 .El
 If the two do not match the negotiation will fail.
-If you do not want to verify the identifier using the peer's certificate
-for some reason, set this to off.
+If you do not want to verify the identifier using the peer's certificate,
+set this to off.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
 Define a lifetime of a certain time
 which will be proposed in the phase 1 negotiations.
-Any proposal will be accepted, and the attribute(s) will be not proposed to
+Any proposal will be accepted, and the attribute(s) will not be proposed to
 the peer if you do not specify it (them).
 They can be individually specified in each proposal.
 .\"
 .It Ic ike_frag (on | off | force) ;
-Enable receiver-side IKE fragmentation, if
+Enable receiver-side IKE fragmentation if
 .Xr racoon 8
 has been built with this feature.
 If set to on, racoon will advertise
@@ -669,23 +668,24 @@ is the maximum size of the fragments.
 552 should work anywhere,
 but the higher
 .Ar fraglen
-is, the better is the performance.
+is, the better the performance.
 .Pp
 Note that because PMTU discovery is broken on many sites, you will
 have to use MSS clamping if you want TCP to work correctly.
 .\"
 .It Ic initial_contact (on | off) ;
-enable this to send an INITIAL-CONTACT message.
+Enable this to send an INITIAL-CONTACT message.
 The default value is
 .Ic on .
-This message is useful only when
-the implementation of the responder chooses an old SA when there are multiple
-SAs with different established time, and the initiator reboots.
+This message is useful only when the responder implementation chooses an
+old SA when there are multiple SAs with different established time and the
+initiator reboots.
 If racoon did not send the message,
 the responder would use an old SA even when a new SA was established.
-The KAME stack has the switch in the system wide value
-net.key.preferred_oldsa.
-when the value is zero, the stack always uses a new SA.
+For systems that use a KAME derived IPSEC stack, the
+.Xr sysctl 8
+variable net.key.preferred_oldsa can be used to control this preference.
+When the value is zero, the stack always uses a new SA.
 .\"
 .It Ic passive (on | off) ;
 If you do not want to initiate the negotiation, set this to on.
@@ -694,7 +694,7 @@ The default value is
 It is useful for a server.
 .\"
 .It Ic proposal_check Ar level ;
-specifies the action of lifetime length, key length, and PFS of the phase 2
+Specifies the action of lifetime length, key length, and PFS of the phase 2
 selection on the responder side, and the action of lifetime check in
 phase 1.
 The default level is
@@ -704,30 +704,29 @@ If the
 is:
 .Bl -tag -width Ds -compact
 .It Ic obey
-the responder will obey the initiator anytime.
+The responder will obey the initiator anytime.
 .It Ic strict
-If the responder's lifetime length is longer than the initiator's one,
-or if responder's key length is shorter than the initiator's one, the
-responder uses the initiator's one.
-Otherwise it rejects the proposal.
+If the responder's lifetime length is longer than the initiator's or
+the responder's key length is shorter than the initiator's,
+the responder will use the initiator's value.
+Otherwise, the proposal will be rejected.
 If PFS is not required by the responder, the responder will obey the proposal.
-If PFS is required by both sides and if the responder's group is not equal to
-the initiator's one, then the responder will reject the proposal.
+If PFS is required by both sides and the responder's group is not equal to
+the initiator's, then the responder will reject the proposal.
 .It Ic claim
-If the responder's length is longer than the initiator's one,
-or if responder's key length is shorter than the initiator's one, the
-responder will use the initiator's one.
-If the responder's length is
-shorter than the initiator's one, the responder uses its own length
-AND sends a RESPONDER-LIFETIME notify message to an initiator in the
-case of lifetime (phase 2 only).
+If the responder's lifetime length is longer than the initiator's or
+the responder's key length is shorter than the initiator's,
+the responder will use the initiator's value.
+If the responder's lifetime length is shorter than the initiator's,
+the responder uses its own length AND sends a RESPONDER-LIFETIME notify
+message to an initiator in the case of lifetime (phase 2 only).
 For PFS, this directive behaves the same as
 .Ic strict .
 .It Ic exact
-If the initiator's lifetime or key length is not equal to the responder's one,
+If the initiator's lifetime or key length is not equal to the responder's,
 the responder will reject the proposal.
-If PFS is required by both sides and if the responder's group is not equal to
-the initiator's one, then the responder will reject the proposal.
+If PFS is required by both sides and the responder's group is not equal to
+the initiator's, then the responder will reject the proposal.
 .El
 .\"
 .It Ic support_proxy (on | off) ;
@@ -757,10 +756,10 @@ due to a policy mismatch between the initiator and the responder.
 .Ic on
 and
 .Ic require
-values means the same thing (generate a require policy).
+values mean the same thing (generate a require policy).
 .Ic unique
 tells racoon to set up unique policies, with a monotoning increasing
-reqid number between 1 and IPSEC_MANUAL_REQID_MAX).
+reqid number (between 1 and IPSEC_MANUAL_REQID_MAX).
 This directive is ignored in the initiator case.
 The default value is
 .Ic off .
@@ -771,10 +770,10 @@ This directive enables use of the NAT-Traversal IPsec extension
 (NAT-T).
 NAT-T allows one or both peers to reside behind a NAT gateway (i.e.,
 doing address- or port-translation).
-Presence of NAT gateways along the path
-is discovered during phase 1 handshake and if found, NAT-T is negotiated.
-When NAT-T is in charge, all ESP and AH packets of a given connection
-are encapsulated into UDP datagrams (port 4500, by default).
+If a NAT gateway is detected during the phase 1 handshake, racoon will
+attempt to negotiate the use of NAT-T with the remote peer.
+If the negotiation succeeds, all ESP and AH packets for the given connection
+will be encapsulated into UDP datagrams (port 4500, by default).
 Possible values are:
 .Bl -tag -width Ds -compact
 .It Ic on
@@ -783,7 +782,8 @@ NAT-T is used when a NAT gateway is detected between the peers.
 NAT-T is not proposed/accepted.
 This is the default.
 .It Ic force
-NAT-T is used regardless if a NAT is detected between the peers or not.
+NAT-T is used regardless of whether a NAT gateway is detected between the
+peers or not.
 .El
 Please note that NAT-T support is a compile-time option.
 Although it is enabled in the source distribution by default, it
@@ -793,7 +793,7 @@ warning when using any NAT-T related config options.
 .\"
 .It Ic dpd_delay Ar delay ;
 This option activates the DPD and sets the time (in seconds) allowed
-between 2 proof of liveness requests.
+between 2 proof of liveliness requests.
 The default value is
 .Ic 0 ,
 which disables DPD monitoring, but still negotiates DPD support.
@@ -802,14 +802,14 @@ which disables DPD monitoring, but still negotiates DPD support.
 If
 .Ic dpd_delay
 is set, this sets the delay (in seconds) to wait for a proof of
-liveness before considering it as failed and send another request.
+liveliness before considering it as failed and send another request.
 The default value is
 .Ic 5 .
 .\"
 .It Ic dpd_maxfail Ar number ;
 If
 .Ic dpd_delay
-is set, this sets the maximum number of proof of liveness to request
+is set, this sets the maximum number of liveliness proofs to request
 (without reply) before considering the peer is dead.
 The default value is
 .Ic 5 .
@@ -831,7 +831,7 @@ Defaults to 0.
 .Bl -tag -width Ds -compact
 .\"
 .It Ic encryption_algorithm Ar algorithm ;
-specify the encryption algorithm used for the phase 1 negotiation.
+Specifies the encryption algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
@@ -841,7 +841,7 @@ for Oakley.
 For other transforms, this statement should not be used.
 .\"
 .It Ic hash_algorithm Ar algorithm ;
-define the hash algorithm used for the phase 1 negotiation.
+Defines the hash algorithm used for the phase 1 negotiation.
 This directive must be defined.
 .Ar algorithm
 is one of following:
@@ -849,7 +849,7 @@ is one of following:
 for Oakley.
 .\"
 .It Ic authentication_method Ar type ;
-defines the authentication method used for the phase 1 negotiation.
+Defines the authentication method used for the phase 1 negotiation.
 This directive must be defined.
 .Ar type
 is one of:
@@ -861,7 +861,7 @@ or
 .Ic xauth_psk_client .
 .\"
 .It Ic dh_group Ar group ;
-define the group used for the Diffie-Hellman exponentiations.
+Defines the group used for the Diffie-Hellman exponentiations.
 This directive must be defined.
 .Ar group
 is one of following:
@@ -872,14 +872,14 @@ Or you can define 1, 2, 5, 14, 15, 16, 17, or 18 as the DH group number.
 When you want to use aggressive mode,
 you must define the same DH group in each proposal.
 .It Ic lifetime time Ar number Ar timeunit ;
-define lifetime of the phase 1 SA proposal.
+Defines the lifetime of the phase 1 SA proposal.
 Refer to the description of the
 .Ic lifetime
 directive defined in the
 .Ic remote
 directive.
 .It Ic gss_id Ar string ;
-define the GSS-API endpoint name, to be included as an attribute in the SA,
+Defines the GSS-API endpoint name, to be included as an attribute in the SA,
 if the
 .Ic gssapi_krb
 authentication method is used.
@@ -931,25 +931,28 @@ or
 .Pp
 .Ar idtype Ar string
 .Pp
-It means exactly the content of ID payload (source is the local end,
-destination is the remote end).
+An id string should be expressed to match the exact value of an ID payload
+(source is the local end, destination is the remote end).
 This is not like a filter rule.
 For example, if you define 3ffe:501:4819::/48 as
 .Ar source_id .
 3ffe:501:4819:1000:/64 will not match.
 .Pp
-In case of longest prefix (selecting single host)
+In the case of a longest prefix (selecting a single host),
 .Ar address
-instructs to send ID type of ADDRESS, while
+instructs to send ID type of ADDRESS while
 .Ar subnet
 instructs to send ID type of SUBNET.
-Otherwise these instructions are identical.
+Otherwise, these instructions are identical.
 .Pp
-The group keyword allows an xauth group membership check to be performed
+The group keyword allows an XAuth group membership check to be performed
 for this sainfo section.
-When the mode_cfg auth source is set to system
-or ldap, the xauth user is verified to be a member of the specified group
-before allowing a matching sa to be negotiated.
+When the mode_cfg auth source is set to
+.Ic system
+or
+.Ic ldap ,
+the XAuth user is verified to be a member of the specified group
+before allowing a matching SA to be negotiated.
 .Pp
 .Bl -tag -width Ds -compact
 .\"
@@ -1032,7 +1035,7 @@ Note that the kernel may not support the algorithm you have specified.
 .Ss Logging level
 .Bl -tag -width Ds -compact
 .It Ic log Ar level ;
-define logging level.
+Defines the logging level.
 .Ar level
 is one of following:
 .Ic error , warning , notify , info , debug
@@ -1044,30 +1047,30 @@ If you set the logging level too high on slower machines,
 IKE negotiation can fail due to timing constraint changes.
 .El
 .\"
-.Ss Specifying the way to pad
+.Ss Specifies the way to pad
 .Bl -tag -width Ds -compact
 .It Ic padding { Ar statements Ic }
-specified padding format.
+specifies the padding format.
 The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic randomize (on | off) ;
-enable using a randomized value for padding.
+Enables the use of a randomized value for padding.
 The default is on.
 .It Ic randomize_length (on | off) ;
-the pad length is random.
+The pad length will be random.
 The default is off.
 .It Ic maximum_length Ar number ;
-define a maximum padding length.
+Defines a maximum padding length.
 If
 .Ic randomize_length
 is off, this is ignored.
 The default is 20 bytes.
 .It Ic exclusive_tail (on | off) ;
-means to put the number of pad bytes minus one into the last part
+Means to put the number of pad bytes minus one into the last part
 of the padding.
 The default is on.
 .It Ic strict_check (on | off) ;
-means to constrain the peer to set the number of pad bytes.
+Means to constrain the peer to set the number of pad bytes.
 The default is off.
 .El
 .El
@@ -1082,7 +1085,7 @@ authenticating through Xauth.
 The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic auth_source (system | radius | pam | ldap) ;
-Specify the source for authentication of users through Xauth.
+Specifies the source for authentication of users through Xauth.
 .Ar system
 means to use the Unix user database.
 This is the default.
@@ -1090,27 +1093,27 @@ This is the default.
 means to use a RADIUS server.
 It works only if
 .Xr racoon 8
-was built with libradius support, and the configuration is done in
+was built with libradius support. Radius configuration is hanlded by
 .Xr radius.conf 5 .
 .Ar pam
 means to use PAM.
 It works only if
 .Xr racoon 8
-was build with libpam support.
+was built with libpam support.
 .Ar ldap
 means to use LDAP.
 It works only if
 .Xr racoon 8
-was build with libldap support, and the configuration is handled by
-adding statements to the
+was built with libldap support. LDAP configuration is handled by
+statements in the
 .Ic ldapcfg
 section.
 .It Ic auth_groups Ar "group1", ... ;
-Specify the group memberships for Xauth, in quoted group name strings.
+Specifies the group memberships for Xauth in quoted group name strings.
 When defined, the authenticating user must be a member of at least one
 group for Xauth to succeed.
 .It Ic group_source (system | ldap) ;
-Specify the source for group validataion of users through Xauth.
+Specifies the source for group validataion of users through Xauth.
 .Ar system
 means to use the Unix user database.
 This is the default.
@@ -1118,57 +1121,59 @@ This is the default.
 means to use LDAP.
 It works only if
 .Xr racoon 8
-was build with libldap support, and the configuration is handled by
-adding statements to the
+was built with libldap support and requires LDAP authentication.
+LDAP configuration is handled by statements in the
 .Ic ldapcfg
 section.
 .It Ic conf_source (local | radius | ldap) ;
-Specify the source for IP addresses and netmask allocated through ISAKMP
+Specifies the source for IP addresses and netmask allocated through ISAKMP
 mode config.
 .Ar local
 means to use the local IP pool defined by the
 .Ic network4
 and
 .Ic pool_size
-keywords.
+statements.
 This is the default.
 .Ar radius
 means to use a RADIUS server.
 It works only if
 .Xr racoon 8
-was build with libradius support, and the configuration is done in
+was built with libradius support and requires RADIUS authentiation.
+RADIUS configuration is handled by
 .Xr radius.conf 5 .
-RADIUS configuration requires RADIUS authentication.
 .Ar ldap
 means to use an LDAP server.
 It works only if
 .Xr racoon 8
-was build with libldap support, and the configuration is done in the
+was built with libldap support and requires LDAP authentication.
+LDAP configuration is handled by
+statements in the
 .Ic ldapcfg
 section.
-LDAP configuration requires LDAP authentication.
 .It Ic accounting (none | system | radius | pam) ;
-Enable or disable accounting for Xauth logins and logouts.
-Default is
-.Ar none ,
+Enables or disables accounting for Xauth logins and logouts.
+The default is
+.Ar none
 which disable accounting.
+Specifying
 .Ar system
-enable system accounting through
+enables system accounting through
 .Xr utmp 5 .
+Specifying
 .Ar radius
-enable RADIUS accounting.
+enables RADIUS accounting.
 It works only if
 .Xr racoon 8
-was build with libradius support, and the configuration is done in
+was built with libradius support and requires RADIUS authentication.
+RADIUS configuration is handled by
 .Xr radius.conf 5 .
-RADIUS accounting require RADIUS authentication.
+Specifying
 .Ar pam
-enable PAM accounting.
+enables PAM accounting.
 It works only if
 .Xr racoon 8
-was build with libpam support.
-PAM accounting require
-PAM authentication.
+was build with libpam support and requires PAM authentication.
 .It Ic pool_size Ar size
 Specify the size of the IP address pool, either local or allocated
 through RADIUS.
@@ -1217,9 +1222,9 @@ The path of a file displayed on the client at connection time.
 Default is
 .Ar /etc/motd .
 .It Ic auth_throttle Ar delay ;
-On each failed Xauth authentication attempt, refuse new attempts for
+On each failed Xauth authentication attempt, refuse new attempts for a set
 .Ar delay
-more seconds.
+of seconds.
 This is to avoid dictionary attacks on Xauth passwords.
 Default is one second.
 Set to zero to disable authentication delay.
