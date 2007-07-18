@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2007/06/04 08:55:23 martin Exp $
+# $NetBSD: GENERIC,v 1.99 2007/07/18 15:19:07 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 maxusers	16
 
@@ -72,7 +72,8 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 options 	COMPAT_15	# NetBSD 1.5 binary compatibility
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0 binary compatibility
+options 	COMPAT_40	# NetBSD 4.0 binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	EXEC_AOUT	# exec a.out binaries
 #options 	EXEC_ECOFF	# exec ecoff binaries

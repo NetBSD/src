@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.24 2006/09/27 21:42:05 manu Exp $
+# 	$NetBSD: DEJIKO,v 1.25 2007/07/18 15:19:07 tsutsui Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -42,7 +42,8 @@ options 	COMPAT_14		# NetBSD 1.4 binary compatibility
 options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 options 	COMPAT_20		# NetBSD 2.0 binary compatibility
-options 	COMPAT_30		# NetBSD 3.0 compatibility.
+options 	COMPAT_30		# NetBSD 3.0 binary compatibility
+options 	COMPAT_40		# NetBSD 4.0 binary compatibility
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # wscons options
