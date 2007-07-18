@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.197 2007/07/17 19:42:40 matt Exp $
+#	$NetBSD: BRANCHES,v 1.198 2007/07/18 13:28:20 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -367,6 +367,16 @@ Notes:		As per the newlock branch, however given the amount of time
 		- Implement new locking primitives on most-used ports.
 		- Minor locking improvements.
 		- Remove spinlockmgr().
+
+Branch:		nick-csl-alignment
+Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
+Status:		Active
+Start Date:	2007-07-18
+End Date:
+Base Tag:	nick-csl-alignment-base
+Maintainer:	Nick Hudson <skrll@NetBSD.org>
+Scope:		sys and lib/libpthread
+Notes:	
 
 Branch:	  	pkgviews
 Description:  	package views, enabling multiple conflicting packages to co-exist
