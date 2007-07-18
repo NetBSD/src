@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.15 2007/07/13 07:21:31 rmind Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.16 2007/07/18 18:17:03 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.15 2007/07/13 07:21:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.16 2007/07/18 18:17:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,8 +274,8 @@ workqueue_destroy(struct workqueue *wq)
 	struct workqueue_queue *q;
 
 	while ((q = SLIST_FIRST(&wq->wq_queue)) != NULL) {
-		workqueue_finiqueue(wq, q);
 		SLIST_REMOVE_HEAD(&wq->wq_queue, q_list);
+		workqueue_finiqueue(wq, q);
 	}
 	kmem_free(wq, sizeof(*wq));
 }
