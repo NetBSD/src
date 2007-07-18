@@ -1,17 +1,28 @@
-/*	$NetBSD: elf_machdep.h,v 1.10 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.10.42.1 2007/07/18 01:46:19 matt Exp $	*/
 
+#if defined(ELFSIZE)
+#if ELFSIZE == 32
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_MIPS:						\
 			break;
 
+#define	ELF32_MACHDEP_ID		EM_MIPS
+#endif
+#if ELFSIZE == 64
 #define	ELF64_MACHDEP_ID_CASES						\
-		/* no 64-bit ELF machine types supported */
+		case EM_MIPS:						\
+			break;
+
+#define	ELF64_MACHDEP_ID		EM_MIPS
+#endif
+#endif /* ELFSIZE */
 
 
-#define	ELF32_MACHDEP_ID	EM_MIPS
-#define	ELF64_MACHDEP_ID	EM_MIPS
-
+#ifdef _LP64
+#define ARCH_ELFSIZE		64	/* MD native binary size */
+#else
 #define ARCH_ELFSIZE		32	/* MD native binary size */
+#endif
 
 /* mips relocs.  */
 
@@ -86,6 +97,25 @@
 #define DT_MIPS_HIPAGENO	0x70000014
 #define	DT_MIPS_RLD_MAP		0x70000016	/* address of loader map */
 
+/* mips flags */
+
+#define	EF_MIPS_ABI2		0x00000020	/* N32/N64 */
+#define EF_MIPS_ABI		0x0000f000	/* 4 bit MIPS abi field */
+#define	E_MIPS_ABI_O32		0x00001000	/* O32 */
+#define	E_MIPS_ABI_O64		0x00002000	/* O64 */
+#define	E_MIPS_ABI_EABI32	0x00003000	/* EABI32 */
+#define	E_MIPS_ABI_EABI64	0x00004000	/* EABI64 */
+#define	EF_MIPS_ARCH		0xf0000000	/* 4 bit MIPS arch field */
+#define	E_MIPS_ARCH_1		0x00000000	/* -mips1 code */
+#define	E_MIPS_ARCH_2		0x10000000	/* -mips2 code */
+#define	E_MIPS_ARCH_3		0x20000000	/* -mips3 code */
+#define	E_MIPS_ARCH_4		0x30000000	/* -mips4 code */
+#define	E_MIPS_ARCH_5		0x40000000	/* -mips5 code */
+#define	E_MIPS_ARCH_32		0x50000000	/* -mips32 code */
+#define	E_MIPS_ARCH_64		0x60000000	/* -mips64 code */
+#define	E_MIPS_ARCH_32R2	0x70000000	/* -mips32r2 code */
+#define	E_MIPS_ARCH_64R2	0x80000000	/* -mips64r2 code */
+
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -98,4 +128,20 @@
  */
 #define ELF_INTERP_NON_RELOCATABLE
 #endif /* COMPAT_16 */
+
+/*
+ * We need to be able to include the ELF header so we can pick out the
+ * ABI being used.
+ */
+#ifdef ELFSIZE
+#define	ELF_MD_PROBE_FUNC	ELFNAME2(mips_netbsd,probe)
+#define	ELF_MD_COREDUMP_SETUP	ELFNAME2(coredump,setup)
+#endif
+int mips_netbsd_elf32_probe(struct lwp *, struct exec_package *, void *, char *,
+	vaddr_t *);
+int mips_netbsd_elf64_probe(struct lwp *, struct exec_package *, void *, char *,
+	vaddr_t *);
+
+void coredump_elf32_setup(struct lwp *, void *);
+void coredump_elf64_setup(struct lwp *, void *);
 #endif /* _KERNEL */
