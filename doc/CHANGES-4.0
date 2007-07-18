@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.209 2007/07/17 13:33:42 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.210 2007/07/18 21:46:23 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7274,3 +7274,22 @@ sys/arch/hp700/gsc/harmony.c			1.8
 
 	Initialise the callout before use.
 	[skrll, ticket #772]
+
+sys/sys/queue.h					1.47
+
+	A number of queue(3) macros use NULL, so ensure that it is present.
+	[joerg, ticket #775]
+
+common/lib/libc/hash/sha2/sha2.c		1.5
+common/lib/libc/hash/sha2/sha2.c		1.6
+common/lib/libc/hash/rmd160/rmd160.c		1.3
+
+	Fix SIGBUS issues on strict alignment issues. Use le32dec in RMD160
+	as the data pointer to RMD160_Update doesn't have to be aligned.
+
+	In SHA256_Update and SHA512_Update, only operate directly on the passed
+	in data if no left-over in the context exists and the data is correctly
+	aligned. The problem was exposed by the audit-packages rewrite in C
+	and reported for the libnbcompat version in PR pkg/36662.
+	cast to void* to avoid a fatal warning
+	[joerg, ticket #776]
