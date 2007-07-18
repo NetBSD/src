@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.8 2007/07/18 21:24:40 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.9 2007/07/18 21:41:06 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -112,11 +112,11 @@
 .Fa "struct puffs_cc *pcc" "void *opc" "int flags" "off_t offlo"
 .Fa "off_t offhi" "const struct puffs_cid *pcid"
 .Fc
-.\".Ft int
-.\".Fo puffs_node_seek
-.\".Fa "struct puffs_cc *pcc" "void *opc" "off_t oldoff" "off_t "newoff"
-.\".Fa "const struct puffs_cid *pcid"
-.\".Fc
+.Ft int
+.Fo puffs_node_seek
+.Fa "struct puffs_cc *pcc" "void *opc" "off_t oldoff" "off_t newoff"
+.Fa "const struct puffs_cred *pcred"
+.Fc
 .Ft int
 .Fo puffs_node_remove
 .Fa "struct puffs_cc *pcc" "void *opc" "void *targ"
