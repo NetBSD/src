@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.39 2007/05/17 14:51:22 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.39.2.1 2007/07/18 01:39:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,13 +250,13 @@ _C_LABEL(x):
  * Macros to panic and printf from assembly language.
  */
 #define PANIC(msg)			\
-	la	a0, 9f;			\
+	ADDR_L	a0, 9f;			\
 	jal	_C_LABEL(panic);	\
 	nop;				\
 	MSG(msg)
 
 #define	PRINTF(msg)			\
-	la	a0, 9f;			\
+	ADDR_L	a0, 9f;			\
 	jal	_C_LABEL(printf);	\
 	nop;				\
 	MSG(msg)
@@ -285,9 +285,9 @@ _C_LABEL(x):
  *  	register_t cf_ra;		return address
  *  };
  */
-#define	CALLFRAME_SIZ	(4 * (4 + 2))
-#define	CALLFRAME_SP	(4 * 4)
-#define	CALLFRAME_RA	(4 * 5)
+#define	CALLFRAME_SIZ	(SZPTR * (4 + 2))
+#define	CALLFRAME_SP	(SZPTR * 4)
+#define	CALLFRAME_RA	(SZPTR * 5)
 
 /*
  * While it would be nice to be compatible with the SGI
@@ -298,7 +298,6 @@ _C_LABEL(x):
  * assembler to prevent the assembler from generating 64-bit style
  * ABI calls.
  */
-
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
 #define	REG_L	lw
 #define REG_S	sw
@@ -306,6 +305,11 @@ _C_LABEL(x):
 #define	REG_PROLOGUE	.set push
 #define	REG_EPILOGUE	.set pop
 #define SZREG	4
+#define SZPTR	4
+#define PTR_L	lw
+#define PTR_S	sw
+#define	REGADD	addiu
+#define	ADDR_L	la
 #else
 #define	REG_L	ld
 #define REG_S	sd
@@ -313,7 +317,20 @@ _C_LABEL(x):
 #define	REG_PROLOGUE	.set push ; .set mips3
 #define	REG_EPILOGUE	.set pop
 #define SZREG	8
-#endif	/* _MIPS_BSD_API */
+#if _MIPS_BSD_ABI_N32
+#define PTR_L	lw
+#define PTR_S	sw
+#define SZPTR	4
+#define	REGADD	addiu
+#define	ADDR_L	la
+#else
+#define PTR_L	ld
+#define PTR_S	sd
+#define SZPTR	8
+#define	REGADD	daddiu
+#define	ADDR_L	dla
+#endif
+#endif /* _MIPS_BSD_ABI */
 
 /*
  * The DYNAMIC_STATUS_MASK option adds an additional masking operation
