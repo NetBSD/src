@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2007/05/17 14:51:23 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.82.2.1 2007/07/18 01:42:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -164,8 +164,12 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	curcpu()		(curlwp->l_cpu)
 #define	curpcb			((struct pcb *)curlwp->l_addr)
 #define	fpcurlwp		(curcpu()->ci_fpcurlwp)
+#ifdef MULTIPROCESSOR
+#error cpu_number to be redefined when MULTIPROCESSOR is defined
+#else
 #define	cpu_number()		(0)
-#define	cpu_proc_fork(p1, p2)
+#endif
+#define	cpu_proc_fork(p1, p2)	((p2)->p_md = (p1)->p_md)
 
 /* XXX simonb
  * Should the following be in a cpu_info type structure?
