@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.116 2007/06/18 21:37:32 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.116.2.1 2007/07/18 13:36:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.116 2007/06/18 21:37:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.116.2.1 2007/07/18 13:36:18 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1150,7 +1150,7 @@ simple_lock_init(volatile struct simplelock *alp)
 #if defined(MULTIPROCESSOR) /* { */
 	__cpu_simple_lock_init(&alp->lock_data);
 #else
-	alp->lock_data = __SIMPLELOCK_UNLOCKED;
+	__cpu_simple_lock_clear(&alp->lock_data);
 #endif /* } */
 	alp->lock_file = NULL;
 	alp->lock_line = 0;
@@ -1171,7 +1171,7 @@ _simple_lock(volatile struct simplelock *alp, const char *id, int l)
 	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
 	 * don't take any action, and just fall into the normal spin case.
 	 */
-	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
+	if (__SIMPLELOCK_LOCKED_P(&alp->lock_data)) {
 #if defined(MULTIPROCESSOR) /* { */
 		if (alp->lock_holder == cpu_num) {
 			SLOCK_WHERE("simple_lock: locking against myself\n",
@@ -1190,7 +1190,7 @@ _simple_lock(volatile struct simplelock *alp, const char *id, int l)
 	__cpu_simple_lock(&alp->lock_data);
 	s = splhigh();
 #else
-	alp->lock_data = __SIMPLELOCK_LOCKED;
+	__cpu_simple_lock_set(&alp->lock_data);
 #endif /* } */
 
 	if (alp->lock_holder != LK_NOCPU) {
@@ -1227,7 +1227,7 @@ _simple_lock_held(volatile struct simplelock *alp)
 	else
 		__cpu_simple_unlock(&alp->lock_data);
 #else
-	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
+	if (__SIMPLELOCK_LOCKED_P(&alp->lock_data)) {
 		locked = 1;
 		KASSERT(alp->lock_holder == cpu_num);
 	}
@@ -1258,11 +1258,11 @@ _simple_lock_try(volatile struct simplelock *alp, const char *id, int l)
 		goto out;
 	}
 #else
-	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
+	if (__SIMPLELOCK_LOCKED_P(&alp->lock_data)) {
 		SLOCK_WHERE("simple_lock_try: lock held\n", alp, id, l);
 		goto out;
 	}
-	alp->lock_data = __SIMPLELOCK_LOCKED;
+	__cpu_simple_lock_set(&alp->lock_data);
 #endif /* MULTIPROCESSOR */ /* } */
 
 	/*
@@ -1297,7 +1297,7 @@ _simple_unlock(volatile struct simplelock *alp, const char *id, int l)
 	 * MULTIPROCESSOR case: This is `safe' because we think we hold
 	 * the lock, and if we don't, we don't take any action.
 	 */
-	if (alp->lock_data == __SIMPLELOCK_UNLOCKED) {
+	if (__SIMPLELOCK_UNLOCKED_P(&alp->lock_data)) {
 		SLOCK_WHERE("simple_unlock: lock not held\n",
 		    alp, id, l);
 		goto out;
@@ -1320,7 +1320,7 @@ _simple_unlock(volatile struct simplelock *alp, const char *id, int l)
 	/* Now that we've modified all fields, release the lock. */
 	__cpu_simple_unlock(&alp->lock_data);
 #else
-	alp->lock_data = __SIMPLELOCK_UNLOCKED;
+	__cpu_simple_lock_clear(&alp->lock_data);
 	KASSERT(alp->lock_holder == cpu_number());
 	alp->lock_holder = LK_NOCPU;
 #endif /* } */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.35 2007/03/14 21:09:01 skrll Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.35.2.1 2007/07/18 13:36:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.35 2007/03/14 21:09:01 skrll Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.35.2.1 2007/07/18 13:36:19 skrll Exp $");
 
 #define __EXPOSE_STACK 1
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/lock.h>
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -465,7 +466,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		    s->addr + offsetof(struct __pthread_mutex_st, ptm_lock),
 		    (void *)&slock, sizeof(slock))) != 0)
 			return val;
-		if (slock == __SIMPLELOCK_LOCKED) {
+		if (__SIMPLELOCK_LOCKED_P(&slock)) {
 			info->sync_data.mutex.locked = 1;
 			if ((val = READ(proc, 
 			    s->addr + offsetof(struct __pthread_mutex_st, 
@@ -497,7 +498,7 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 		    s->addr + offsetof(struct __pthread_spinlock_st, pts_spin),
 		    (void *)&slock, sizeof(slock))) != 0)
 			return val;
-		if (slock == __SIMPLELOCK_LOCKED)
+		if (__SIMPLELOCK_LOCKED_P(&slock))
 			info->sync_data.spin.locked = 1;
 		else
 			info->sync_data.spin.locked = 0;
