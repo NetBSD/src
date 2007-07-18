@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.66 2007/06/26 15:22:24 cube Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.67 2007/07/18 19:04:58 ad Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.66 2007/06/26 15:22:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.67 2007/07/18 19:04:58 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -587,7 +587,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	}
 	(void) strcpy(diskPtr->devname, p);
 
-	l = LIST_FIRST(&raidPtr->engine_thread->p_lwps);
+	l = raidPtr->engine_thread;
 
 	/* Let's start by claiming the component is fine and well... */
 	diskPtr->status = rf_ds_optimal;
