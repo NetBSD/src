@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.2.4.2 2007/02/19 13:56:01 tron Exp $ */
+/* $NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.2 2007/02/19 13:56:01 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.2.4.2 2007/02/19 13:56:01 tron Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -560,12 +560,30 @@ void SHA256_Update(SHA256_CTX* context, const sha2_byte *data, size_t len) {
 			return;
 		}
 	}
-	while (len >= SHA256_BLOCK_LENGTH) {
-		/* Process as many complete blocks as we can */
-		SHA256_Transform(context, (const sha2_word32*)(const void *)data);
-		context->bitcount += SHA256_BLOCK_LENGTH << 3;
-		len -= SHA256_BLOCK_LENGTH;
-		data += SHA256_BLOCK_LENGTH;
+	/*
+	 * Process as many complete blocks as possible.
+	 *
+	 * Check alignment of the data pointer. If it is 32bit aligned,
+	 * SHA256_Transform can be called directly on the data stream,
+	 * otherwise enforce the alignment by copy into the buffer.
+	 */
+	if ((uintptr_t)data % 4 == 0) {
+		while (len >= SHA256_BLOCK_LENGTH) {
+			SHA256_Transform(context,
+			    (const sha2_word32 *)(const void *)data);
+			context->bitcount += SHA256_BLOCK_LENGTH << 3;
+			len -= SHA256_BLOCK_LENGTH;
+			data += SHA256_BLOCK_LENGTH;
+		}
+	} else {
+		while (len >= SHA256_BLOCK_LENGTH) {
+			memcpy(context->buffer, data, SHA256_BLOCK_LENGTH);
+			SHA256_Transform(context,
+			    (const sha2_word32 *)(const void *)context->buffer);
+			context->bitcount += SHA256_BLOCK_LENGTH << 3;
+			len -= SHA256_BLOCK_LENGTH;
+			data += SHA256_BLOCK_LENGTH;
+		}
 	}
 	if (len > 0) {
 		/* There's left-overs, so save 'em */
@@ -850,12 +868,30 @@ void SHA512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 			return;
 		}
 	}
-	while (len >= SHA512_BLOCK_LENGTH) {
-		/* Process as many complete blocks as we can */
-		SHA512_Transform(context, (const sha2_word64*)(const void *)data);
-		ADDINC128(context->bitcount, SHA512_BLOCK_LENGTH << 3);
-		len -= SHA512_BLOCK_LENGTH;
-		data += SHA512_BLOCK_LENGTH;
+	/*
+	 * Process as many complete blocks as possible.
+	 *
+	 * Check alignment of the data pointer. If it is 64bit aligned,
+	 * SHA512_Transform can be called directly on the data stream,
+	 * otherwise enforce the alignment by copy into the buffer.
+	 */
+	if ((uintptr_t)data % 8 == 0) {
+		while (len >= SHA512_BLOCK_LENGTH) {
+			SHA512_Transform(context,
+			    (const sha2_word64*)(const void *)data);
+			ADDINC128(context->bitcount, SHA512_BLOCK_LENGTH << 3);
+			len -= SHA512_BLOCK_LENGTH;
+			data += SHA512_BLOCK_LENGTH;
+		}
+	} else {
+		while (len >= SHA512_BLOCK_LENGTH) {
+			memcpy(context->buffer, data, SHA512_BLOCK_LENGTH);
+			SHA512_Transform(context,
+			    (const void *)context->buffer);
+			ADDINC128(context->bitcount, SHA512_BLOCK_LENGTH << 3);
+			len -= SHA512_BLOCK_LENGTH;
+			data += SHA512_BLOCK_LENGTH;
+		}
 	}
 	if (len > 0) {
 		/* There's left-overs, so save 'em */
