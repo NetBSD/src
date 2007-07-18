@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.20 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.20.16.1 2007/07/18 01:43:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,9 @@ struct mdlwp {
 
 struct mdproc {
 					/* syscall entry for this process */
-	void	(*md_syscall)(struct lwp *, u_int, u_int, u_int);
+	void	(*md_syscall)(struct lwp *, u_int, u_int, vaddr_t);
+	int	md_fancy;		/* are we doing fancy syscalls? */
+	int	md_abi;			/* what ABI is this process? */
 };
 
 /* md_flags */
