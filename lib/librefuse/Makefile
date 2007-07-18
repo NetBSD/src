@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2007/05/28 12:06:21 tls Exp $
+# $NetBSD: Makefile,v 1.6 2007/07/18 22:38:59 pooka Exp $
 
 USE_FORT?=	yes	# data driven bugs?
 
@@ -16,6 +16,5 @@ MAN=		refuse.3
 WARNS=		4
 INCS=           fuse.h fuse_opt.h
 INCSDIR=        /usr/include
-#DBG=		-g -O0
 
 .include <bsd.lib.mk>

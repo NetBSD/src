@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2007/05/28 12:06:20 tls Exp $
+#	$NetBSD: Makefile,v 1.20 2007/07/18 22:38:58 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -17,6 +17,5 @@ MAN=		puffs.3 puffs_cc.3 puffs_cred.3 puffs_flush.3		\
 INCS=		puffs.h puffsdump.h
 INCSDIR=	/usr/include
 LINTFLAGS+=-S -w
-#DBG=-O0 -g
 
 .include <bsd.lib.mk>
