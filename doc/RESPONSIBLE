@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.71 2006/09/08 23:35:48 agc Exp $
+#	$NetBSD: RESPONSIBLE,v 1.71.2.1 2007/07/19 14:38:17 liamjfoy Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -217,7 +217,6 @@ evbarm		thorpej
 evbmips		simonb
 evbppc		simonb, eeh
 evbsh3		itojun
-evbsh5		scw
 hp300		tsutsui
 hp700		fredette
 hpcarm		ichiro, toshii

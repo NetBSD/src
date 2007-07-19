@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.330.2.1 2007/03/04 14:17:09 bouyer Exp $
+#	$NetBSD: NetBSD.dist,v 1.330.2.2 2007/07/19 14:38:22 liamjfoy Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -743,7 +743,6 @@
 ./usr/share/man/cat8/evbmips
 ./usr/share/man/cat8/evbppc
 ./usr/share/man/cat8/evbsh3
-./usr/share/man/cat8/evbsh5
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp700
 ./usr/share/man/cat8/hpcarm
@@ -851,7 +850,6 @@
 ./usr/share/man/man8/evbmips
 ./usr/share/man/man8/evbppc
 ./usr/share/man/man8/evbsh3
-./usr/share/man/man8/evbsh5
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hp700
 ./usr/share/man/man8/hpcarm
@@ -959,7 +957,6 @@
 ./usr/share/man/html8/evbmips
 ./usr/share/man/html8/evbppc
 ./usr/share/man/html8/evbsh3
-./usr/share/man/html8/evbsh5
 ./usr/share/man/html8/hp300
 ./usr/share/man/html8/hp700
 ./usr/share/man/html8/hpcarm

@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320.2.1 2007/03/04 12:03:46 bouyer Exp $
+.\"	$NetBSD: main,v 1.320.2.2 2007/07/19 14:38:14 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
 .as MACHINE_LIST " bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
-.as MACHINE_LIST " evbsh3 evbsh5 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh
+.as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh
 .as MACHINE_LIST " hppa i386 ibmnws iyonix luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
 .as MACHINE_LIST " pc532 pdp10 playstation2 pmax pmppc prep sandpoint sbmips
@@ -1136,7 +1136,6 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Simon Burge                    Ta Mt    simonb@NetBSD.org Ta Sy evbppc
 .It Ta Simon Burge                    Ta Mt    simonb@NetBSD.org Ta Sy pmax
 .It Ta Simon Burge                    Ta Mt    simonb@NetBSD.org Ta Sy sbmips
-.It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy evbsh5
 .It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy mvme68k
 .It Ta Steve Woodford                 Ta Mt       scw@NetBSD.org Ta Sy mvmeppc
 .It Ta Takayoshi Kochi                Ta Mt     kochi@NetBSD.org Ta Sy ia64

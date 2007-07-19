@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.489 2006/11/29 21:49:39 dsl Exp $
+#	$NetBSD: bsd.own.mk,v 1.489.2.1 2007/07/19 14:38:18 liamjfoy Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -9,7 +9,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:C/sh5e[bl]/sh5/:S/m68000/m68k/:S/armeb/arm/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
@@ -124,7 +124,7 @@ USETOOLS?=	no
 
 
 .if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "mips64" || \
-    ${MACHINE_ARCH} == "sh3" || ${MACHINE_ARCH} == "sh5"
+    ${MACHINE_ARCH} == "sh3"
 .BEGIN:
 	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
 	@false
@@ -424,15 +424,6 @@ MKGCC:= no
 .endif
 
 #
-# gcc3 and gdb on sh5 are not ready for prime-time.
-#
-.if ${MACHINE_CPU} == "sh5"
-NOPROFILE=	# defined
-NOPIC=		# defined
-MKGDB=no
-.endif
-
-#
 # The m68000 port is incomplete.
 #
 .if ${MACHINE_ARCH} == "m68000"
@@ -502,8 +493,6 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
-GNU_ARCH.sh5eb=sh5
-GNU_ARCH.sh5el=sh5le
 GNU_ARCH.mips64eb=mips64
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 

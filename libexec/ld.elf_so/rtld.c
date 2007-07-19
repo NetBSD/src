@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.111 2006/11/22 21:46:36 christos Exp $	 */
+/*	$NetBSD: rtld.c,v 1.111.2.1 2007/07/19 14:38:16 liamjfoy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.111 2006/11/22 21:46:36 christos Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.111.2.1 2007/07/19 14:38:16 liamjfoy Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -101,7 +101,7 @@ char           *__progname;
 char          **environ;
 
 #if defined(RTLD_DEBUG)
-#if !(defined(__sh__) && !defined(__SH5__))
+#ifndef __sh__
 extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
 #else  /* 32-bit SuperH */
 register Elf_Addr *_GLOBAL_OFFSET_TABLE_ asm("r12");

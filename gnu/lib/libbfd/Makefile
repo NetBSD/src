@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2006/02/03 16:29:34 christos Exp $
+#	$NetBSD: Makefile,v 1.41.4.1 2007/07/19 14:38:24 liamjfoy Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -45,12 +45,6 @@ INFOFLAGS=	-I${DIST}/bfd/doc
 
 .include <bsd.lib.mk>
 .include <bsd.info.mk>
-
-# XXX
-.if ${MACHINE_CPU} == "sh5"
-COPTS.elf32.c=                -O1
-COPTS.elf64.c=                -O1
-.endif
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
 targets.o targets.so: targmatch.h Makefile
