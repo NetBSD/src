@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.27 2007/07/19 00:12:47 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.28 2007/07/19 09:29:48 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.27 2007/07/19 00:12:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.28 2007/07/19 09:29:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -689,6 +689,7 @@ sme_register_sensorname(envsys_data_t *edata)
 					mutex_exit(&sme_mtx);
 					DPRINTF(("%s: duplicate name "
 					    "(%s)\n", __func__, edata->desc));
+					kmem_free(snames, sizeof(*snames));
 					return EEXIST;
 				}
 		}
