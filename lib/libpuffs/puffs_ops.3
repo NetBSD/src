@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.9 2007/07/18 21:41:06 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.10 2007/07/19 08:32:06 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 18, 2007
+.Dd July 19, 2007
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -510,6 +510,18 @@ specify the data offsets requiring to be synced.
 A high offset of 0 means sync from
 .Fa offlo
 to the end of the file.
+.It Fn puffs_node_seek pcc opc oldoff newoff pcred
+Test if the node
+.Ar opc
+is seekable to the location
+.Ar newoff .
+The argument
+.Ar oldoff
+specifies the offset we are starting the seek from.
+Most file systems dealing only with regular will choose to not
+implement this.
+However, it is useful for example in cases where files are
+unseekable streams.
 .It Fn puffs_node_remove "pcc" "opc" "targ" "pcn"
 .It Fn puffs_node_rmdir "pcc" "opc" "targ" "pcn"
 Remove the node
