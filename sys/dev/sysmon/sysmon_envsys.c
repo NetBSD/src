@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.26 2007/07/18 20:31:41 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.27 2007/07/19 00:12:47 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.26 2007/07/18 20:31:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.27 2007/07/19 00:12:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -146,6 +146,13 @@ static const struct sme_sensor_state sme_sensor_drive_state[] = {
 	{ -1,				"unknown" }
 };
 
+struct sme_sensor_names {
+	SLIST_ENTRY(sme_sensor_names) sme_names;
+	int	assigned;
+	char	desc[ENVSYS_DESCLEN];
+};
+
+static SLIST_HEAD(, sme_sensor_names) sme_names_list;
 static prop_dictionary_t sme_propd;
 static kmutex_t sme_list_mtx;
 static kcondvar_t sme_list_cv;
@@ -472,6 +479,10 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		       goto out;
 	       }
 	}
+
+	/* initialize the singly linked list for sensor descriptions */
+	SLIST_INIT(&sme_names_list);
+
 #ifdef COMPAT_40
 	sme->sme_fsensor = sysmon_envsys_next_sensor_index;
 	sysmon_envsys_next_sensor_index += sme->sme_nsensors;
@@ -498,6 +509,7 @@ out:
 void
 sysmon_envsys_unregister(struct sysmon_envsys *sme)
 {
+	struct sme_sensor_names *snames;
 	sme_event_t *see;
 
 	mutex_enter(&sme_list_mtx);
@@ -506,10 +518,21 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 		cv_wait(&sme_list_cv, &sme_list_mtx);
 	}
 	prop_dictionary_remove(sme_propd, sme->sme_name);
+	/*
+	 * Unregister all events associated with this device.
+	 */
 	LIST_FOREACH(see, &sme_events_list, see_list) {
 		if (strcmp(see->pes.pes_dvname, sme->sme_name) == 0)
 			sme_event_unregister(see->pes.pes_sensname,
 			    see->type);
+	}
+	/*
+	 * Remove all elements from the sensor names singly linked list.
+	 */
+	while (!SLIST_EMPTY(&sme_names_list)) {
+		snames = SLIST_FIRST(&sme_names_list);
+		SLIST_REMOVE_HEAD(&sme_names_list, sme_names);
+		kmem_free(snames, sizeof(*snames));
 	}
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_list_mtx);
@@ -630,9 +653,9 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 		}
 
 		error = sme_make_dictionary(sme, array, edata);
-		if (error && error != EEXIST)
+		if (error == EINVAL) 
 			goto out;
-		else {
+		else if (error == EEXIST) {
 			error = 0;
 			continue;
 		}
@@ -641,6 +664,45 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 out:
 	prop_object_release(array);
 	return error;
+}
+
+/*
+ * sme_register_sensorname:
+ *
+ * 	+ Registers a sensor name into the list maintained per device.
+ */
+static int
+sme_register_sensorname(envsys_data_t *edata)
+{
+	struct sme_sensor_names *snames, *snames2 = NULL;
+
+	snames = kmem_zalloc(sizeof(*snames), KM_SLEEP);
+
+	mutex_enter(&sme_mtx);
+	if (SLIST_EMPTY(&sme_names_list))
+		goto insert;
+	else {
+		SLIST_FOREACH(snames2, &sme_names_list, sme_names) {
+			if (strcmp(snames2->desc, edata->desc) == 0)
+				if (snames2->assigned) {
+					edata->flags |= ENVSYS_FDUPDESC;
+					mutex_exit(&sme_mtx);
+					DPRINTF(("%s: duplicate name "
+					    "(%s)\n", __func__, edata->desc));
+					return EEXIST;
+				}
+		}
+		goto insert;
+	}
+
+insert:
+	snames->assigned = true;
+	(void)strlcpy(snames->desc, edata->desc, sizeof(snames->desc));
+	DPRINTF(("%s: registering sensor name=%s\n", __func__, edata->desc));
+	SLIST_INSERT_HEAD(&sme_names_list, snames, sme_names);
+	mutex_exit(&sme_mtx);
+
+	return 0;
 }
 
 /*
@@ -657,10 +719,15 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	prop_dictionary_t dict;
-	envsys_data_t *nedata = NULL;
-	int i, j, k, l;
+	int i, j, k;
 
-	i = j = k = l = 0;
+	i = j = k = 0;
+
+	/*
+	 * Check if description was already assigned in other sensor.
+	 */
+	if (sme_register_sensorname(edata))
+		return EEXIST;
 
 	/*
 	 * <array>
@@ -691,25 +758,6 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	SENSOR_SSTRING(dict, "type", est[i].desc);
-
-	/*
-	 * Check if description was already assigned in other sensor.
-	 */
-	for (l = 0; l < sme->sme_nsensors; l++) {
-		/* skip the same sensor */
-		if (l == edata->sensor)
-			continue;
-		nedata = &sme->sme_sensor_data[l];
-		if (strcmp(edata->desc, nedata->desc) == 0) {
-			edata->flags |= ENVSYS_FDUPDESC;
-			mutex_exit(&sme_mtx);
-			DPRINTF(("%s: dupdesc=%s sensor=%d dev=%s\n",
-			    __func__, edata->desc, edata->sensor,
-			    sme->sme_name));
-			return EEXIST;
-		}
-	}
-
 	SENSOR_SSTRING(dict, "description", edata->desc);
 
 	/*
@@ -868,12 +916,9 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	 */
 	for (i = 0; i < sme->sme_nsensors; i++) {
 		edata = &sme->sme_sensor_data[i];
-
-		/* skip sensors with a duplicate description */
 		if (edata->flags & ENVSYS_FDUPDESC) {
-			DPRINTF(("%s: dupdesc=%s sensor=%d dev=%s\n",
-			    __func__, edata->desc, edata->sensor,
-			    sme->sme_name));
+			--sme->sme_nsensors;
+			--i;
 			continue;
 		}
 
@@ -994,6 +1039,11 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	/* iterate over the sensors to find the right one */
 	for (i = 0; i < sme->sme_nsensors; i++) {
 		edata = &sme->sme_sensor_data[i];
+
+		/* duplicate description? skip it */
+		if (edata->flags & ENVSYS_FDUPDESC)
+			continue;
+
 		dict = prop_array_get(array, i);
 		obj1 = prop_dictionary_get(dict, "description");
 
