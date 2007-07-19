@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.28 2007/07/19 09:29:48 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.29 2007/07/19 17:06:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.28 2007/07/19 09:29:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.29 2007/07/19 17:06:25 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -532,7 +532,9 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	while (!SLIST_EMPTY(&sme_names_list)) {
 		snames = SLIST_FIRST(&sme_names_list);
 		SLIST_REMOVE_HEAD(&sme_names_list, sme_names);
+		mutex_exit(&sme_list_mtx);
 		kmem_free(snames, sizeof(*snames));
+		mutex_enter(&sme_list_mtx);
 	}
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_list_mtx);
