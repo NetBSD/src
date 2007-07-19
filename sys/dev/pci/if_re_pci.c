@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.27 2007/03/21 12:17:31 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.28 2007/07/19 22:04:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -44,6 +44,8 @@
  * NetBSD bus-specific frontends for written by
  * Jonathan Stone <jonathan@netbsd.org>
  */
+
+#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 #include "vlan.h"
