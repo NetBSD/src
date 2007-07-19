@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.29 2007/07/17 12:03:46 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.30 2007/07/19 10:14:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -543,8 +543,8 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
  again:
 	if (*readoff == DENT_DOT || *readoff == DENT_DOTDOT) {
 		puffs_gendotdent(&dent, sfs_dir->myid, *readoff, reslen);
-		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		(*readoff)++;
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		goto again;
 	}
 
@@ -561,9 +561,7 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	po.po_path = sname;
 	po.po_len = PNPLEN(pn_dir)+1;
 
-	for (i = DENT_ADJ(*readoff);
-	    i < sl / sizeof(struct sysctlnode);
-	    i++, (*readoff)++) {
+	for (i = DENT_ADJ(*readoff); i < sl / sizeof(struct sysctlnode); i++) {
 		if (SYSCTL_TYPE(sn[i].sysctl_flags) == CTLTYPE_NODE)
 			vt = VDIR;
 		else
@@ -585,6 +583,8 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		if (!puffs_nextdent(&dent, sn[i].sysctl_name, id,
 		    puffs_vtype2dt(vt), reslen))
 			return 0;
+
+		(*readoff)++;
 		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 	}
 

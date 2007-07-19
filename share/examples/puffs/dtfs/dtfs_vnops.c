@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.34 2007/07/17 16:33:27 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.35 2007/07/19 10:14:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -246,8 +246,8 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
  again:
 	if (*readoff == DENT_DOT || *readoff == DENT_DOTDOT) {
 		puffs_gendotdent(&dent, pn->pn_va.va_fileid, *readoff, reslen);
-		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		(*readoff)++;
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		goto again;
 	}
 
@@ -265,8 +265,8 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 		    reslen))
 			break;
 
-		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 		(*readoff)++;
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *readoff);
 	}
 
 	return 0;
