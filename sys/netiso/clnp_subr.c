@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.28 2007/05/02 20:40:28 dyoung Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.29 2007/07/19 20:48:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.28 2007/05/02 20:40:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.29 2007/07/19 20:48:59 dyoung Exp $");
 
 #include "opt_iso.h"
 
@@ -644,7 +644,7 @@ clnp_badmtu(
 	    rt, line, file);
 #ifdef ARGO_DEBUG
 	printf("route dst is ");
-	dump_isoaddr((struct sockaddr_iso *) rt_key(rt));
+	dump_isoaddr(satocsiso(rt_getkey(rt)));
 #endif
 	return ifp->if_mtu;
 }

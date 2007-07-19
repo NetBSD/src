@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.46 2007/07/09 21:11:14 ad Exp $	*/
+/*	$NetBSD: esis.c,v 1.47 2007/07/19 20:48:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.46 2007/07/09 21:11:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.47 2007/07/19 20:48:59 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -361,13 +361,13 @@ esis_rdoutput(
 	struct sockaddr_iso siso;
 	struct ifnet   *ifp = inbound_shp->snh_ifp;
 	struct sockaddr_dl *sdl;
-	struct iso_addr *rd_gwnsap;
+	const struct iso_addr *rd_gwnsap;
 
 	if (rt->rt_flags & RTF_GATEWAY) {
 		rd_gwnsap = &satosiso(rt->rt_gateway)->siso_addr;
 		rt = rtalloc1(rt->rt_gateway, 0);
 	} else
-		rd_gwnsap = &satosiso(rt_key(rt))->siso_addr;
+		rd_gwnsap = &satocsiso(rt_getkey(rt))->siso_addr;
 	if (rt == 0 || (sdl = (struct sockaddr_dl *) rt->rt_gateway) == 0 ||
 	    sdl->sdl_family != AF_LINK) {
 		/*
@@ -518,15 +518,14 @@ int
 esis_insert_addr(
 	void **bufv,		/* ptr to buffer to put address into */
 	int     *len,		/* ptr to length of buffer so far */
-	struct iso_addr *isoa,	/* ptr to address */
+	const struct iso_addr *isoa,	/* ptr to address */
 	struct mbuf *m,		/* determine if there remains space */
 	int     nsellen)
 {
 	char *buf = *bufv;
 	int    newlen, result = 0;
 
-	isoa->isoa_len -= nsellen;
-	newlen = isoa->isoa_len + 1;
+	newlen = isoa->isoa_len - nsellen + 1;
 	if (newlen <= M_TRAILINGSPACE(m)) {
 		memcpy(buf, isoa, newlen);
 		*len += newlen;
@@ -534,7 +533,6 @@ esis_insert_addr(
 		m->m_len += newlen;
 		result = 1;
 	}
-	isoa->isoa_len += nsellen;
 	*bufv = buf;
 	return (result);
 }

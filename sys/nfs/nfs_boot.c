@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.67 2007/06/09 02:32:34 dyoung Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.68 2007/07/19 20:49:00 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.67 2007/06/09 02:32:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.68 2007/07/19 20:49:00 dyoung Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -98,7 +98,7 @@ int nfs_boot_bootstatic = 1; /* BOOTSTATIC enabled (default) */
 static int md_mount(struct sockaddr_in *mdsin, char *path,
 	struct nfs_args *argp, struct lwp *l);
 
-static int nfs_boot_delroute(struct radix_node *, void *);
+static int nfs_boot_delroute(struct rtentry *, void *);
 static void nfs_boot_defrt(struct in_addr *);
 static  int nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *);
 
@@ -536,26 +536,26 @@ nfs_boot_defrt(gw_ip)
 }
 
 static int
-nfs_boot_delroute(struct radix_node *rn, void *w)
+nfs_boot_delroute(struct rtentry *rt, void *w)
 {
-	struct rtentry *rt = (struct rtentry *)rn;
 	int error;
 
-	if (rt->rt_ifp != (struct ifnet *)w)
-		return (0);
+	if ((void *)rt->rt_ifp != w)
+		return 0;
 
-	error = rtrequest(RTM_DELETE, rt_key(rt), NULL, rt_mask(rt), 0, NULL);
-	if (error)
-		printf("nfs_boot: del route, error=%d\n", error);
+	error = rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0,
+	    NULL);
+	if (error != 0)
+		printf("%s: del route, error=%d\n", __func__, error);
 
-	return (0);
+	return 0;
 }
 
 void
 nfs_boot_flushrt(struct ifnet *ifp)
 {
 
-	rn_walktree(rt_tables[AF_INET], nfs_boot_delroute, ifp);
+	rt_walktree(AF_INET, nfs_boot_delroute, ifp);
 }
 
 /*

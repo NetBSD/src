@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.124 2007/07/09 21:11:11 ad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.125 2007/07/19 20:48:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.124 2007/07/09 21:11:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.125 2007/07/19 20:48:53 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -370,7 +370,7 @@ arptimer(void *arg)
 			 */
 			arprequest(rt->rt_ifp,
 			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
-			    &satocsin(rt_key(rt))->sin_addr,
+			    &satocsin(rt_getkey(rt))->sin_addr,
 			    LLADDR(rt->rt_ifp->if_sadl));
 		} else if (rt->rt_expire <= time_second)
 			arptfree(la); /* timer has expired; clear */
@@ -462,14 +462,13 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * restore cloning bit.
 		 */
 		if ((rt->rt_flags & RTF_HOST) == 0 &&
-		    SIN(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
+		    satocsin(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
 			rt->rt_flags |= RTF_CLONING;
 		if (rt->rt_flags & RTF_CLONING) {
 			/*
 			 * Case 1: This route should come from a route to iface.
 			 */
-			rt_setgate(rt, rt_key(rt),
-			    (const struct sockaddr *)&null_sdl);
+			rt_setgate(rt, (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
@@ -515,8 +514,8 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			arprequest(rt->rt_ifp,
-			    &satocsin(rt_key(rt))->sin_addr,
-			    &satocsin(rt_key(rt))->sin_addr,
+			    &satocsin(rt_getkey(rt))->sin_addr,
+			    &satocsin(rt_getkey(rt))->sin_addr,
 			    (u_char *)LLADDR(SDL(gate)));
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
@@ -554,7 +553,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
 
-		INADDR_TO_IA(satocsin(rt_key(rt))->sin_addr, ia);
+		INADDR_TO_IA(satocsin(rt_getkey(rt))->sin_addr, ia);
 		while (ia && ia->ia_ifp != rt->rt_ifp)
 			NEXT_IA_WITH_SAME_ADDR(ia);
 		if (ia) {
@@ -570,7 +569,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * traffic out to the hardware.
 			 *
 			 * In 4.4BSD, the above "if" statement checked
-			 * rt->rt_ifa against rt_key(rt).  It was changed
+			 * rt->rt_ifa against rt_getkey(rt).  It was changed
 			 * to the current form so that we can provide a
 			 * better support for multiple IPv4 addresses on a
 			 * interface.
@@ -1083,7 +1082,7 @@ in_arpinput(struct mbuf *m)
 
 		if (mold) {
 			arpstat.as_dfrsent++;
-			(*ifp->if_output)(ifp, mold, rt_key(rt), rt);
+			(*ifp->if_output)(ifp, mold, rt_getkey(rt), rt);
 		}
 	}
 reply:
@@ -1163,8 +1162,7 @@ static void arptfree(struct llinfo_arp *la)
 		rt->rt_flags &= ~RTF_REJECT;
 		return;
 	}
-	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0, rt_mask(rt),
-	    0, (struct rtentry **)0);
+	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, NULL);
 }
 
 /*
@@ -1208,7 +1206,7 @@ arplookup(struct mbuf *m, const struct in_addr *addr, int create, int proxy)
 		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
 		    (ifp) ? ifp->if_xname : 0, why);
 		if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_CLONED) != 0) {
-			rtrequest(RTM_DELETE, (struct sockaddr *)rt_key(rt),
+			rtrequest(RTM_DELETE, rt_getkey(rt),
 		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 		}
 	}
@@ -1475,7 +1473,7 @@ db_show_rtentry(struct rtentry *rt, void *w)
 			  rt->rt_flags, rt->rt_refcnt,
 			  rt->rt_use, rt->rt_expire);
 
-	db_printf(" key="); db_print_sa(rt_key(rt));
+	db_printf(" key="); db_print_sa(rt_getkey(rt));
 	db_printf(" mask="); db_print_sa(rt_mask(rt));
 	db_printf(" gw="); db_print_sa(rt->rt_gateway);
 
@@ -1487,8 +1485,6 @@ db_show_rtentry(struct rtentry *rt, void *w)
 
 	db_printf(" ifa=%p\n", rt->rt_ifa);
 	db_print_ifa(rt->rt_ifa);
-
-	db_printf(" genmask="); db_print_sa(rt->rt_genmask);
 
 	db_printf(" gwroute=%p llinfo=%p\n",
 			  rt->rt_gwroute, rt->rt_llinfo);
