@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.51 2007/07/17 11:29:43 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.52 2007/07/19 09:26:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.51 2007/07/17 11:29:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.52 2007/07/19 09:26:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -158,8 +158,8 @@ puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	/* inform user server if it got the max request size it wanted */
 	if (args->pa_maxreqlen == 0 || args->pa_maxreqlen > PUFFS_REQ_MAXSIZE)
 		args->pa_maxreqlen = PUFFS_REQ_MAXSIZE;
-	else if (args->pa_maxreqlen < PUFFS_REQSTRUCT_MAX)
-		args->pa_maxreqlen = PUFFS_REQSTRUCT_MAX;
+	else if (args->pa_maxreqlen < 2*PUFFS_REQSTRUCT_MAX)
+		args->pa_maxreqlen = 2*PUFFS_REQSTRUCT_MAX;
 	(void)strlcpy(args->pa_typename, fstype, sizeof(args->pa_typename));
 
 	if (args->pa_nhashbuckets == 0)
