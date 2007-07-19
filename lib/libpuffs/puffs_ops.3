@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.10 2007/07/19 08:32:06 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.11 2007/07/19 19:25:09 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Fa "const struct puffs_cid *pcid"
 .Fc
 .Ft int
-.Fo puffs_fs_fhtonode 
+.Fo puffs_fs_fhtonode
 .Fa "struct puffs_cc *pcc" "void *fid" "size_t fidsize"
 .Fa "struct puffs_newinfo *pni"
 .Fc
@@ -227,7 +227,7 @@ need to be filled:
  * fsblkcnt_t     f_bfree;     free blocks avail in file system
  * fsblkcnt_t     f_bavail;    free blocks avail to non-root
  * fsblkcnt_t     f_bresvd;    blocks reserved for root
- 
+
  * fsfilcnt_t     f_files;     total file nodes in file system
  * fsfilcnt_t     f_ffree;     free file nodes in file system
  * fsfilcnt_t     f_favail;    free file nodes avail to non-root
@@ -352,7 +352,7 @@ the dev_t for the entry should be set using
 .Fn puffs_newinfo_setrdev .
 .Pp
 The type of operation is found from
-.Va pcn->pcn_nameiop :
+.Va pcn-\*[Gt]pcn_nameiop :
 .Bl -tag -width XPUFFSLOOKUP_LOOKUPX
 .It Dv PUFFSLOOKUP_LOOKUP
 Normal lookup operation.
@@ -363,13 +363,13 @@ Lookup for node deletion.
 .It Dv PUFFSLOOKUP_RENAME
 Lookup for the target of a rename operation (source will be looked
 up using
-.Dv PUFFSLOOKUP_DELETE ).
+.Dv PUFFSLOOKUP_DELETE ) .
 .El
 .Pp
 The final component from a pathname lookup usually requires special
 treatment.
 It can be identified by looking at the
-.Va pcn->pcn_flags
+.Va pcn-\*[Gt]pcn_flags
 fields for the flag
 .Dv PUFFSLOOKUP_ISLASTCN .
 For example, in most cases the lookup operation will want to check if
@@ -390,21 +390,21 @@ error code, for example
 .Pp
 Usually a null-terminated string for the next pathname component is
 provided in
-.Ar pcn->pcn_name .
+.Ar pcn-\*[Gt]pcn_name .
 In case the file system is using the option
 .Dv PUFFS_KFLAG_LOOKUP_FULLPNBUF ,
 the remainder of the complete pathname under lookup is found in
 the same location.
-.Ar pcn->pcn_namelen
+.Ar pcn-\*[Gt]pcn_namelen
 always specifies the length of the next component.
 If operating with a full path, the file system is allowed to consume
 more than the next component's length in node lookup.
 This is done by setting
-.Ar pcn->pcn_consume
+.Ar pcn-\*[Gt]pcn_consume
 to indicate the amount of
 .Em extra
 characters in addition to
-.Ar pcn->pcn_namelen
+.Ar pcn-\*[Gt]pcn_namelen
 processed.
 .It Fn puffs_node_create "pcc" "opc" "pni" "pcn" "va"
 .It Fn puffs_node_mkdir "pcc" "opc" "pni" "pcn" "va"
@@ -563,7 +563,7 @@ and
 .Fa pcn_targ ,
 respectively.
 .B If
-the target node already exists, it is specified by 
+the target node already exists, it is specified by
 .Fa targ
 and must be replaced atomically.
 Otherwise
@@ -748,7 +748,7 @@ and
 .Fn fhtovp .
 .It Fn puffs_newinfo_setrdev pni rdev
 Set the type of the newly located node to
-.Ar vtype.
+.Ar vtype .
 This call is valid only for
 .Fn lookup
 and
