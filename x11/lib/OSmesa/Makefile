@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2005/09/24 13:51:46 chs Exp $
+#	$NetBSD: Makefile,v 1.19.4.1 2007/07/19 14:38:20 liamjfoy Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -85,10 +85,6 @@ CPPFLAGS+=	-DUSE_X86_ASM -DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
 COMPILE.S=	${COMPILE.s}		# XXX don't want -traditional-cpp
 AFLAGS+=	-DUSE_MMX_ASM -DUSE_3DNOW_ASM -DUSE_SSE_ASM
 AFLAGS+=	-DUSE_GAS -I. -I${X11SRCDIR.xc}/extras/Mesa/src/mesa/x86
-.endif
-
-.if ${MACHINE_CPU} == "sh5"
-COPTS.s_triangle.c=	-O0
 .endif
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
