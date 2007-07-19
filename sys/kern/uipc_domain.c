@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.66 2007/07/09 21:10:57 ad Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.67 2007/07/19 20:48:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.66 2007/07/09 21:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.67 2007/07/19 20:48:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -117,6 +117,12 @@ domain_attach(struct domain *dp)
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
 		if (pr->pr_init)
 			(*pr->pr_init)();
+	}
+
+	if (dp->dom_sa_pool != NULL) {
+		pool_setlowat(dp->dom_sa_pool, 32);
+		if (pool_prime(dp->dom_sa_pool, 32) != 0)
+			printf("%s: pool_prime failed\n", __func__);
 	}
 
 	if (max_linkhdr < 16)		/* XXX */
