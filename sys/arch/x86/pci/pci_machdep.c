@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 2007/07/19 13:31:26 mjf Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.25 2007/07/19 14:07:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2007/07/19 13:31:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2007/07/19 14:07:10 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -247,7 +247,7 @@ pci_attach_hook(struct device *parent, struct device *self,
 {
 
 	if (pba->pba_bus == 0)
-		aprintf_normal(": configuration mode %d\n", pci_mode);
+		aprint_normal(": configuration mode %d\n", pci_mode);
 #ifdef MPBIOS
 	mpbios_pci_attach_hook(parent, self, pba);
 #endif
