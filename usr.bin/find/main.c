@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2006/11/09 20:50:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2007/07/19 07:49:30 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.26 2006/11/09 20:50:53 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2007/07/19 07:49:30 daniel Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ int isdepth;			/* do directories on post-order visit */
 int isoutput;			/* user specified output operator */
 int issort;			/* sort directory entries */
 int isxargs;			/* don't permit xargs delimiting chars */
+int regcomp_flags = REG_BASIC;	/* regex compilation flags */
 
 int main(int, char **);
 static void usage(void);
@@ -93,7 +94,7 @@ main(int argc, char *argv[])
 		err(1, NULL);
 
 	ftsoptions = FTS_NOSTAT | FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPXdf:hsx")) != -1)
+	while ((ch = getopt(argc, argv, "HLPdEf:hsXx")) != -1)
 		switch (ch) {
 		case 'H':
 			ftsoptions &= ~FTS_LOGICAL;
@@ -107,11 +108,11 @@ main(int argc, char *argv[])
 			ftsoptions &= ~(FTS_COMFOLLOW|FTS_LOGICAL);
 			ftsoptions |= FTS_PHYSICAL;
 			break;
-		case 'X':
-			isxargs = 1;
-			break;
 		case 'd':
 			isdepth = 1;
+			break;
+		case 'E':
+			regcomp_flags = REG_EXTENDED;
 			break;
 		case 'f':
 			*p++ = optarg;
@@ -122,6 +123,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			issort = 1;
+			break;
+		case 'X':
+			isxargs = 1;
 			break;
 		case 'x':
 			ftsoptions |= FTS_XDEV;
@@ -164,6 +168,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-"usage: find [-H | -L | -P] [-Xdhsx] [-f file] file [file ...] [expression]\n");
+"usage: find [-H | -L | -P] [-dEhsXx] [-f file] file [file ...] [expression]\n");
 	exit(1);
 }

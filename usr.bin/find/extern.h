@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2007/02/06 13:25:01 elad Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2007/07/19 07:49:30 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -95,4 +95,5 @@ PLAN	*c_not(char ***, int);
 PLAN	*c_or(char ***, int);
 PLAN	*c_null(char ***, int);
 
-extern int ftsoptions, isdeprecated, isdepth, isoutput, issort, isxargs;
+extern int ftsoptions, isdeprecated, isdepth, isoutput, issort, isxargs,
+	regcomp_flags;

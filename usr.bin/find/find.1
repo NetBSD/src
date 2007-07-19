@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.65 2007/03/08 21:23:00 wiz Exp $
+.\"	$NetBSD: find.1,v 1.66 2007/07/19 07:49:30 daniel Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd February 8, 2007
+.Dd July 19, 2007
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -41,13 +41,13 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl H | Fl L | Fl P
-.Op Fl dhsXx
+.Op Fl dEhsXx
 .Ar file
 .Op Ar file ...
 .Op Ar expression
 .Nm
 .Op Fl H | Fl L | Fl P
-.Op Fl dhsXx
+.Op Fl dEhsXx
 .Fl f Ar file
 .Op Ar file ...
 .Op Ar expression
@@ -107,6 +107,14 @@ visits directories in pre-order, i.e., before their contents.
 Note, the default is
 .Ar not
 a breadth-first traversal.
+.It Fl E
+The
+.Fl E
+option causes
+.Ar regexp
+arguments to primaries to be interpreted as extended regular
+expressions (see
+.Xr re_format 7 ) .
 .It Fl f
 The
 .Fl f
