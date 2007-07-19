@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.68 2006/08/26 15:33:20 matt Exp $	*/
+/*	$NetBSD: route.c,v 1.69 2007/07/19 20:51:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.68 2006/08/26 15:33:20 matt Exp $");
+__RCSID("$NetBSD: route.c,v 1.69 2007/07/19 20:51:04 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ struct	rtentry rtentry;
 struct	radix_node rnode;
 struct	radix_mask rmask;
 
-static struct sockaddr *kgetsa(struct sockaddr *);
+static struct sockaddr *kgetsa(const struct sockaddr *);
 static void p_tree(struct radix_node *);
 static void p_rtnode(void);
 static void p_krtentry(struct rtentry *);
@@ -145,8 +145,7 @@ routepr(rtree)
 }
 
 static struct sockaddr *
-kgetsa(dst)
-	struct sockaddr *dst;
+kgetsa(const struct sockaddr *dst)
 {
 
 	kget(dst, pt_u.u_sa);
@@ -268,7 +267,7 @@ p_krtentry(rt)
 
 	memset(&addr_un, 0, sizeof(addr_un));
 	memset(&mask_un, 0, sizeof(mask_un));
-	addr = sockcopy(kgetsa(rt_key(rt)), &addr_un);
+	addr = sockcopy(kgetsa(rt_getkey(rt)), &addr_un);
 	af = addr->sa_family;
 	if (rt_mask(rt))
 		mask = sockcopy(kgetsa(rt_mask(rt)), &mask_un);
