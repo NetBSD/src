@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.45 2007/07/09 21:10:47 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.46 2007/07/19 21:54:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -36,10 +36,10 @@
  * data structures and functions used by the kernel (proc, callout).
  */
 
-#include "opt_kgdb.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.45 2007/07/09 21:10:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.46 2007/07/19 21:54:51 dsl Exp $");
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
