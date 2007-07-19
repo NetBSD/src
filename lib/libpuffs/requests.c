@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.8 2007/06/06 01:55:01 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.9 2007/07/19 12:52:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.8 2007/06/06 01:55:01 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.9 2007/07/19 12:52:28 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -76,8 +76,7 @@ puffs_req_loadget(struct puffs_getreq *pgr)
 	/* reset */
 	pgr->pgr_phg = pgr->pgr_phg_orig;
 
-	if (ioctl(pgr->pgr_pu->pu_kargs.pa_fd,
-	    PUFFSGETOP, &pgr->pgr_phg) == -1)
+	if (ioctl(pgr->pgr_pu->pu_fd, PUFFSGETOP, &pgr->pgr_phg) == -1)
 		return -1;
 
 	pgr->pgr_nextpreq = pgr->pgr_phg.phg_buf;
@@ -183,8 +182,7 @@ puffs_req_putput(struct puffs_putreq *ppr)
 {
 
 	if (ppr->ppr_php.php_nops)
-		if (ioctl(ppr->ppr_pu->pu_kargs.pa_fd,
-		    PUFFSPUTOP, &ppr->ppr_php) == -1)
+		if (ioctl(ppr->ppr_pu->pu_fd, PUFFSPUTOP, &ppr->ppr_php) == -1)
 			return -1;
 
 	return 0;

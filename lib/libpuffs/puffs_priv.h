@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.17 2007/07/07 21:13:42 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.18 2007/07/19 12:52:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -85,7 +85,9 @@ struct puffs_fctrl_io {
  */
 struct puffs_usermount {
 	struct puffs_ops	pu_ops;
-	struct puffs_kargs	pu_kargs;
+
+	int			pu_fd;
+	size_t			pu_maxreqlen;
 
 	uint32_t		pu_flags;
 	size_t			pu_cc_stacksize;
@@ -116,6 +118,8 @@ struct puffs_usermount {
 	puffs_ml_loop_fn	pu_ml_lfn;
 	struct timespec		pu_ml_timeout;
 	struct timespec		*pu_ml_timep;
+
+	struct puffs_kargs	*pu_kargp;
 
 	void			*pu_privdata;
 };
