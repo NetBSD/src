@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.58 2007/07/17 11:34:51 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.59 2007/07/19 07:54:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.58 2007/07/17 11:34:51 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.59 2007/07/19 07:54:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -317,9 +317,11 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 #endif
 
 	pu->pu_kargs.pa_root_cookie = cookie;
-	if (mount(MOUNT_PUFFS, dir, mntflags, &pu->pu_kargs, sizeof pu->pu_kargs) == -1)
+	if (mount(MOUNT_PUFFS, dir, mntflags,
+	    &pu->pu_kargs, sizeof(struct puffs_kargs)) == -1)
 		return -1;
-	if (mount(MOUNT_PUFFS, dir, MNT_GETARGS, &pu->pu_kargs, sizeof pu->pu_kargs) == -1)
+	if (ioctl(pu->pu_kargs.pa_fd, PUFFSREQSIZEOP,
+	    &pu->pu_kargs.pa_maxreqlen) == -1)
 		return -1;
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
@@ -370,6 +372,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	pargs->pa_root_vtype = VDIR;
 	pargs->pa_root_vsize = 0;
 	pargs->pa_root_rdev = 0;
+	pargs->pa_maxreqlen = 0;
 
 	pu->pu_flags = pflags;
 	pu->pu_ops = *pops;
