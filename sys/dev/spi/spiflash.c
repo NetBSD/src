@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.4 2007/07/09 21:01:23 ad Exp $ */
+/* $NetBSD: spiflash.c,v 1.5 2007/07/19 00:00:09 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.4 2007/07/09 21:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.5 2007/07/19 00:00:09 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ struct spiflash_softc {
 	struct bufq_state	*sc_waitq;
 	struct bufq_state	*sc_workq;
 	struct bufq_state	*sc_doneq;
-	struct proc		*sc_thread;
+	lwp_t			*sc_thread;
 };
 
 #define	sc_getname	sc_hw.sf_getname
@@ -237,7 +237,7 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	disk_attach(&sc->sc_dk);
 
 	/* arrange to allocate the kthread */
-	kthread_create(PRI_NONE, 0, NULL, spiflash_thread, arg,
+	kthread_create(PRI_NONE, 0, NULL, spiflash_thread, sc,
 	    &sc->sc_thread, "spiflash");
 }
 
