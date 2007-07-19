@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.9 2003/08/07 11:13:36 agc Exp $	*/
+/*	$NetBSD: error.h,v 1.10 2007/07/19 05:43:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -117,6 +117,7 @@ int	inquire(char *, ...);	/* inquire for yes/no */
 /* 
  *	codes for inquire() to return
  */
+#define	Q_error	-1			/* an error occurred */
 #define	Q_NO	1			/* 'N' */
 #define	Q_no	2			/* 'n' */
 #define	Q_YES	3			/* 'Y' */

@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.14 2003/08/07 11:13:38 agc Exp $	*/
+/*	$NetBSD: touch.c,v 1.15 2007/07/19 05:43:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.14 2003/08/07 11:13:38 agc Exp $");
+__RCSID("$NetBSD: touch.c,v 1.15 2007/07/19 05:43:23 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -323,6 +323,7 @@ preview(char *name, int nerrors, Eptr **files, int ix)
 			}
 			if (!terse)
 				fprintf(stdout, "\n");
+		case Q_error:
 		default:
 			break;
 		}
@@ -336,14 +337,17 @@ settotouch(char *name)
 	int	dest = TOSTDOUT;
 
 	if (query){
-		switch(touchstatus = inquire(terse
+		switch(inquire(terse
 			? "Touch? "
 			: "Do you want to touch file \"%s\"? ",
 			name)){
 		case Q_NO:
 		case Q_no:
+		case Q_error:
+			touchstatus = Q_NO;
 			return(dest);
 		default:
+			touchstatus = Q_YES;
 			break;
 		}
 	}
@@ -676,6 +680,7 @@ mustwrite(char *base, int n, FILE *preciousfile)
 	case Q_NO:
 	case Q_no:
 		switch(inquire("Are you sure? ")){
+		case Q_error:
 		case Q_YES:
 		case Q_yes:
 			return(0);
@@ -684,6 +689,7 @@ mustwrite(char *base, int n, FILE *preciousfile)
 			mustwrite(base + nwrote, n - nwrote, preciousfile);
 			return(1);
 		}
+	case Q_error:
 	default:
 		return(0);
 	}
@@ -699,6 +705,7 @@ onintr(int dummy)
 	case Q_yes:
 		signal(SIGINT, onintr);
 		return;
+	case Q_error:
 	default:
 		if (tempfileopen){
 			/*
@@ -730,15 +737,15 @@ inquire(char *fmt, ...)
 	char	buffer[128];
 
 	if (queryfile == NULL)
-		return(0);
+		return(Q_error);
 	for(;;){
-		do{
-			fflush(stdout);
-			va_start(ap, fmt);
-			vfprintf(stderr, fmt, ap);
-			va_end(ap);
-			fflush(stderr);
-		} while (fgets(buffer, 127, queryfile) == NULL);
+		fflush(stdout);
+		va_start(ap, fmt);
+		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+		fflush(stderr);
+		if (fgets(buffer, 127, queryfile) == NULL)
+			return(Q_error);
 		switch(buffer[0]){
 		case 'Y':	return(Q_YES);
 		case 'y':	return(Q_yes);
