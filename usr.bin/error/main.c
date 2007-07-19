@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2004/02/13 17:56:17 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2007/07/19 05:43:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.9 2004/02/13 17:56:17 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2007/07/19 05:43:23 lukem Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -233,6 +233,7 @@ forkvi(int argc, char **argv)
 		switch(inquire(terse
 		    ? "Edit? "
 		    : "Do you still want to edit the files you touched? ")){
+		case Q_error:
 		case Q_NO:
 		case Q_no:
 			return;
