@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.63 2007/07/17 21:35:29 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.63 2007/07/17 21:35:29 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.64 2007/07/19 07:49:30 daniel Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: function.c,v 1.63 2007/07/17 21:35:29 christos Exp $");
 #include <inttypes.h>
 #include <limits.h>
 #include <pwd.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -119,7 +120,7 @@ static	void	run_f_exec(PLAN *);
 	int	f_user(PLAN *, FTSENT *);
 	int	f_not(PLAN *, FTSENT *);
 	int	f_or(PLAN *, FTSENT *);
-static	PLAN   *c_regex_common(char ***, int, enum ntype, int);
+static	PLAN   *c_regex_common(char ***, int, enum ntype, bool);
 static	PLAN   *palloc(enum ntype, int (*)(PLAN *, FTSENT *));
 
 extern int dotfd;
@@ -1559,7 +1560,7 @@ f_regex(PLAN *plan, FTSENT *entry)
 }
 
 static PLAN *
-c_regex_common(char ***argvp, int isok, enum ntype type, int regcomp_flags)
+c_regex_common(char ***argvp, int isok, enum ntype type, bool icase)
 {
 	char errbuf[LINE_MAX];
 	regex_t reg;
@@ -1578,7 +1579,8 @@ c_regex_common(char ***argvp, int isok, enum ntype type, int regcomp_flags)
 	snprintf(lineregexp, len, "^%s(%s%s)$",
 	    (regcomp_flags & REG_EXTENDED) ? "" : "\\", regexp,
 	    (regcomp_flags & REG_EXTENDED) ? "" : "\\");
-	rv = regcomp(&reg, lineregexp, REG_NOSUB|regcomp_flags);
+	rv = regcomp(&reg, lineregexp, REG_NOSUB|regcomp_flags|
+	    (icase ? REG_ICASE : 0));
 	free(lineregexp);
 	if (rv != 0) {
 		regerror(rv, &reg, errbuf, sizeof errbuf);
@@ -1594,14 +1596,14 @@ PLAN *
 c_regex(char ***argvp, int isok)
 {
 
-	return (c_regex_common(argvp, isok, N_REGEX, REG_BASIC));
+	return (c_regex_common(argvp, isok, N_REGEX, false));
 }
 
 PLAN *
 c_iregex(char ***argvp, int isok)
 {
 
-	return (c_regex_common(argvp, isok, N_IREGEX, REG_BASIC|REG_ICASE));
+	return (c_regex_common(argvp, isok, N_IREGEX, true));
 }
 
 /*
