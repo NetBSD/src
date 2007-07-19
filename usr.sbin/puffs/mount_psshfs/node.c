@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.34 2007/07/16 09:36:06 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.35 2007/07/19 10:14:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.34 2007/07/16 09:36:06 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.35 2007/07/19 10:14:53 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -289,15 +289,31 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	if (rv)
 		return rv;
 
-	for (i = *readoff; i < psn->dentnext; i++) {
+	/* find next dirent */
+	for (i = *readoff;;i++) {
+		if (i == psn->dentnext)
+			goto out;
 		pd = &psn->dir[i];
-		if (pd->valid == 0)
-			continue;
+		if (pd->valid)
+			break;
+	}
+
+	for (;;) {
+		*readoff = i;
 		if (!puffs_nextdent(&dent, pd->entryname,
 		    pd->va.va_fileid, puffs_vtype2dt(pd->va.va_type), reslen))
-			break;
+			return 0;
+
+		/* find next entry, store possible nfs key */
+		do {
+			if (++i == psn->dentnext)
+				goto out;
+			pd = &psn->dir[i];
+		} while (pd->valid == 0);
 		PUFFS_STORE_DCOOKIE(cookies, ncookies, (off_t)i);
 	}
+
+ out:
 	if (i == psn->dentnext)
 		*eofflag = 1;
 
