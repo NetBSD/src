@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.9 2007/07/09 21:00:54 ad Exp $ */
+/* $NetBSD: if_msk.c,v 1.10 2007/07/19 22:04:22 dsl Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 #include "rnd.h"
