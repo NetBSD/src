@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.6 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.7 2007/07/19 20:48:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.6 2007/04/21 06:15:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.7 2007/07/19 20:48:51 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -339,11 +339,11 @@ hci_event_num_compl_pkts(struct hci_unit *unit, struct mbuf *m)
 	m_adj(m, sizeof(ep));
 
 	while (ep.num_con_handles--) {
-		m_copydata(m, 0, sizeof(handle), (void *)&handle);
+		m_copydata(m, 0, sizeof(handle), &handle);
 		m_adj(m, sizeof(handle));
 		handle = le16toh(handle);
 
-		m_copydata(m, 0, sizeof(num), (void *)&num);
+		m_copydata(m, 0, sizeof(num), &num);
 		m_adj(m, sizeof(num));
 		num = le16toh(num);
 
@@ -413,7 +413,7 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 				(ep.num_responses == 1 ? "" : "s"));
 
 	while(ep.num_responses--) {
-		m_copydata(m, 0, sizeof(bdaddr_t), (void *)&bdaddr);
+		m_copydata(m, 0, sizeof(bdaddr_t), &bdaddr);
 
 		DPRINTFN(1, "bdaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
 			bdaddr.b[5], bdaddr.b[4], bdaddr.b[3],
@@ -432,8 +432,7 @@ hci_event_inquiry_result(struct hci_unit *unit, struct mbuf *m)
 		}
 
 		microtime(&memo->time);
-		m_copydata(m, 0, sizeof(hci_inquiry_response),
-			(void *)&memo->response);
+		m_copydata(m, 0, sizeof(hci_inquiry_response), &memo->response);
 		m_adj(m, sizeof(hci_inquiry_response));
 
 		memo->response.clock_offset =
