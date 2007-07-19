@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.5 2007/07/18 20:31:48 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.6 2007/07/19 00:28:47 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -124,15 +124,15 @@ do {									\
 /* struct used by a sysmon envsys event */
 typedef struct sme_event {
 	/* to add works into our workqueue */
-	struct work see_wk;
-	LIST_ENTRY(sme_event) see_list;
+	struct work 		see_wk;
+	LIST_ENTRY(sme_event) 	see_list;
 	struct penvsys_state	pes;		/* our power envsys */
 	int32_t			critval;	/* critical value set */
 	int			type;		/* type of the event */
 	int			snum;		/* sensor number */
 	int			evsent;		/* event already sent */
 	int 			see_flags;	/* see above */
-#define SME_EVENT_WORKING	0x0001	/* This event is busy */
+#define SME_EVENT_WORKING	0x0001 		/* This event is busy */
 } sme_event_t;
 
 /* struct by a sysmon envsys event set by a driver */
