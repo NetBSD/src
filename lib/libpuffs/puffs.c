@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.59 2007/07/19 07:54:46 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.60 2007/07/19 12:52:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.59 2007/07/19 07:54:46 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.60 2007/07/19 12:52:28 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -106,7 +106,7 @@ int
 puffs_getselectable(struct puffs_usermount *pu)
 {
 
-	return pu->pu_kargs.pa_fd;
+	return pu->pu_fd;
 }
 
 int
@@ -120,7 +120,7 @@ puffs_setblockingmode(struct puffs_usermount *pu, int mode)
 	}
 
 	x = mode;
-	rv = ioctl(pu->pu_kargs.pa_fd, FIONBIO, &x);
+	rv = ioctl(pu->pu_fd, FIONBIO, &x);
 
 	if (rv == 0) {
 		if (mode == PUFFSDEV_BLOCK)
@@ -178,11 +178,13 @@ void
 puffs_setrootinfo(struct puffs_usermount *pu, enum vtype vt,
 	vsize_t vsize, dev_t rdev)
 {
-	struct puffs_kargs *pargs = &pu->pu_kargs;
+	struct puffs_kargs *pargs = pu->pu_kargp;
 
-	if (puffs_getstate(pu) != PUFFS_STATE_BEFOREMOUNT)
+	if (puffs_getstate(pu) != PUFFS_STATE_BEFOREMOUNT) {
 		warnx("puffs_setrootinfo: call has effect only "
 		    "before mount\n");
+		return;
+	}
 
 	pargs->pa_root_vtype = vt;
 	pargs->pa_root_vsize = vsize;
@@ -200,7 +202,7 @@ size_t
 puffs_getmaxreqlen(struct puffs_usermount *pu)
 {
 
-	return pu->pu_kargs.pa_maxreqlen;
+	return pu->pu_maxreqlen;
 }
 
 void
@@ -211,7 +213,7 @@ puffs_setmaxreqlen(struct puffs_usermount *pu, size_t reqlen)
 		warnx("puffs_setmaxreqlen: call has effect only "
 		    "before mount\n");
 
-	pu->pu_kargs.pa_maxreqlen = reqlen;
+	pu->pu_kargp->pa_maxreqlen = reqlen;
 }
 
 void
@@ -221,8 +223,8 @@ puffs_setfhsize(struct puffs_usermount *pu, size_t fhsize, int flags)
 	if (puffs_getstate(pu) != PUFFS_STATE_BEFOREMOUNT)
 		warnx("puffs_setfhsize: call has effect only before mount\n");
 
-	pu->pu_kargs.pa_fhsize = fhsize;
-	pu->pu_kargs.pa_fhflags = flags;
+	pu->pu_kargp->pa_fhsize = fhsize;
+	pu->pu_kargp->pa_fhflags = flags;
 }
 
 void
@@ -232,7 +234,7 @@ puffs_setncookiehash(struct puffs_usermount *pu, int nhash)
 	if (puffs_getstate(pu) != PUFFS_STATE_BEFOREMOUNT)
 		warnx("puffs_setfhsize: call has effect only before mount\n");
 
-	pu->pu_kargs.pa_nhashbuckets = nhash;
+	pu->pu_kargp->pa_nhashbuckets = nhash;
 }
 
 void
@@ -308,6 +310,7 @@ int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	void *cookie)
 {
+	int rv;
 
 #if 1
 	/* XXXkludgehere */
@@ -316,16 +319,19 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 		mntflags |= MNT_NOSUID | MNT_NODEV;
 #endif
 
-	pu->pu_kargs.pa_root_cookie = cookie;
-	if (mount(MOUNT_PUFFS, dir, mntflags,
-	    &pu->pu_kargs, sizeof(struct puffs_kargs)) == -1)
-		return -1;
-	if (ioctl(pu->pu_kargs.pa_fd, PUFFSREQSIZEOP,
-	    &pu->pu_kargs.pa_maxreqlen) == -1)
-		return -1;
+	pu->pu_kargp->pa_root_cookie = cookie;
+	if ((rv = mount(MOUNT_PUFFS, dir, mntflags,
+	    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
+		goto out;
+	if ((rv = ioctl(pu->pu_fd, PUFFSREQSIZEOP, &pu->pu_maxreqlen)) == -1)
+		goto out;
 	PU_SETSTATE(pu, PUFFS_STATE_RUNNING);
 
-	return 0;
+ out:
+	free(pu->pu_kargp);
+	pu->pu_kargp = NULL;
+
+	return rv;
 }
 
 struct puffs_usermount *
@@ -334,7 +340,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 {
 	struct puffs_usermount *pu;
 	struct puffs_kargs *pargs;
-	int fd;
+	int sverrno, fd;
 
 	if (develv != PUFFS_DEVEL_LIBVERSION) {
 		warnx("puffs_init: mounting with lib version %d, need %d",
@@ -357,10 +363,14 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 		goto failfree;
 	memset(pu, 0, sizeof(struct puffs_usermount));
 
-	pargs = &pu->pu_kargs;
+	pargs = pu->pu_kargp = malloc(sizeof(struct puffs_kargs));
+	if (pargs == NULL)
+		goto failfree;
+	memset(pargs, 0, sizeof(struct puffs_kargs));
+
 	pargs->pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
 	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
-	pargs->pa_fd = fd;
+	pargs->pa_fd = pu->pu_fd = fd;
 	fillvnopmask(pops, pargs->pa_vnopmask);
 	(void)strlcpy(pargs->pa_typename, puffsname,
 	    sizeof(pargs->pa_typename));
@@ -399,8 +409,10 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 
  failfree:
 	/* can't unmount() from here for obvious reasons */
+	sverrno = errno;
 	close(fd);
 	free(pu);
+	errno = sverrno;
 	return NULL;
 }
 
@@ -416,8 +428,8 @@ puffs_exit(struct puffs_usermount *pu, int force)
 
 	force = 1; /* currently */
 
-	if (pu->pu_kargs.pa_fd)
-		close(pu->pu_kargs.pa_fd);
+	if (pu->pu_fd)
+		close(pu->pu_fd);
 
 	while ((pn = LIST_FIRST(&pu->pu_pnodelst)) != NULL)
 		puffs_pn_put(pn);
