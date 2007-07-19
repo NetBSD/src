@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.88 2007/07/09 21:55:10 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.89 2007/07/19 09:38:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.88 2007/07/09 21:55:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.89 2007/07/19 09:38:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -939,27 +939,48 @@ puffs_readdir(void *v)
 	struct puffs_vnreq_readdir *readdir_argp;
 	size_t argsize, tomove, cookiemem, cookiesmax;
 	struct uio *uio = ap->a_uio;
-	size_t howmuch;
+	size_t howmuch, resid;
 	int error;
+
+	/*
+	 * ok, so we need: resid + cookiemem = maxreq
+	 * => resid + cookiesize * (resid/minsize) = maxreq
+	 * => resid + cookiesize/minsize * resid = maxreq
+	 * => (cookiesize/minsize + 1) * resid = maxreq
+	 * => resid = maxreq / (cookiesize/minsize + 1)
+	 * 
+	 * Since cookiesize <= minsize and we're not very big on floats,
+	 * we approximate that to be 1.  Therefore:
+	 * 
+	 * resid = maxreq / 2;
+	 *
+	 * Well, at least we didn't have to use differential equations
+	 * or the Gram-Schmidt process.
+	 *
+	 * (yes, I'm very afraid of this)
+	 */
+	KASSERT(CSIZE <= _DIRENT_MINSIZE((struct dirent *)0));
 
 	if (ap->a_cookies) {
 		KASSERT(ap->a_ncookies != NULL);
 		if (pmp->pmp_args.pa_fhsize == 0)
 			return EOPNOTSUPP;
-		cookiesmax = uio->uio_resid/_DIRENT_MINSIZE((struct dirent *)0);
+		resid = PUFFS_TOMOVE(uio->uio_resid, pmp) / 2;
+		cookiesmax = resid/_DIRENT_MINSIZE((struct dirent *)0);
 		cookiemem = ALIGN(cookiesmax*CSIZE); /* play safe */
 	} else {
+		resid = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		cookiesmax = 0;
 		cookiemem = 0;
 	}
 
 	argsize = sizeof(struct puffs_vnreq_readdir);
-	tomove = uio->uio_resid + cookiemem;
+	tomove = resid + cookiemem;
 	readdir_argp = malloc(argsize + tomove, M_PUFFS, M_ZERO | M_WAITOK);
 
 	puffs_credcvt(&readdir_argp->pvnr_cred, ap->a_cred);
 	readdir_argp->pvnr_offset = uio->uio_offset;
-	readdir_argp->pvnr_resid = uio->uio_resid;
+	readdir_argp->pvnr_resid = resid;
 	readdir_argp->pvnr_ncookies = cookiesmax;
 	readdir_argp->pvnr_eofflag = 0;
 	readdir_argp->pvnr_dentoff = cookiemem;
@@ -971,7 +992,7 @@ puffs_readdir(void *v)
 		goto out;
 
 	/* userspace is cheating? */
-	if (readdir_argp->pvnr_resid > uio->uio_resid
+	if (readdir_argp->pvnr_resid > resid
 	    || readdir_argp->pvnr_ncookies > cookiesmax)
 		ERROUT(EINVAL);
 
@@ -980,7 +1001,7 @@ puffs_readdir(void *v)
 		*ap->a_eofflag = 1;
 
 	/* bouncy-wouncy with the directory data */
-	howmuch = uio->uio_resid - readdir_argp->pvnr_resid;
+	howmuch = resid - readdir_argp->pvnr_resid;
 
 	/* force eof if no data was returned (getcwd() needs this) */
 	if (howmuch == 0) {
