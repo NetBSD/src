@@ -1,4 +1,4 @@
-.\"	$NetBSD: usbhid.3,v 1.10 2004/06/10 14:01:45 uebayasi Exp $
+.\"	$NetBSD: usbhid.3,v 1.10.10.1 2007/07/19 16:04:21 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .Ft report_desc_t
 .Fn hid_get_report_desc "int file"
 .Ft report_desc_t
-.Fn hid_use_report_desc "unsigned char *data" "unsigned int size"
+.Fn hid_use_report_desc "const uint8_t *data" "unsigned int size"
 .Ft void
 .Fn hid_dispose_report_desc "report_desc_t d"
 .Ft hid_data_t

@@ -1,4 +1,4 @@
-.\" $NetBSD: bthidev.4,v 1.7 2006/10/04 19:29:25 wiz Exp $
+.\" $NetBSD: bthidev.4,v 1.7.2.1 2007/07/19 16:04:23 liamjfoy Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 4, 2006
+.Dd April 10, 2007
 .Dt BTHIDEV 4
 .Os
 .Sh NAME
@@ -88,6 +88,13 @@ If this boolean value is set, and is true, then the
 .Nm
 driver will initiate reconnections to the remote device when no
 connection is present.
+.It link-mode
+This optional string represents the link mode of the baseband link, and
+may be one of
+.Sq auth ,
+.Sq encrypt
+or
+.Sq secure .
 .El
 .Pp
 When the

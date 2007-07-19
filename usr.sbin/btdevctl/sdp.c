@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.1 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.1.4.1 2007/07/19 16:04:21 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.1 2006/09/10 15:45:56 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.1.4.1 2007/07/19 16:04:21 liamjfoy Exp $");
 
 #include <sys/types.h>
 
@@ -213,6 +213,7 @@ config_hid(prop_dictionary_t dict)
 		reconnect_initiate, battery_power,
 		normally_connectable, hid_length;
 	uint8_t *hid_descriptor;
+	const char *mode;
 	int i;
 
 	control_psm = -1;
@@ -268,22 +269,39 @@ config_hid(prop_dictionary_t dict)
 	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_number_create_integer(control_psm);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVcontrolpsm, obj))
 		return errno;
+
+	prop_object_release(obj);
 
 	obj = prop_number_create_integer(interrupt_psm);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVinterruptpsm, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_data_create_data(hid_descriptor, hid_length);
 	if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVdescriptor, obj))
 		return errno;
+
+	mode = hid_mode(obj);
+	prop_object_release(obj);
+
+	obj = prop_string_create_cstring_nocopy(mode);
+	if (obj == NULL || !prop_dictionary_set(dict, BTDEVmode, obj))
+		return errno;
+
+	prop_object_release(obj);
 
 	if (!reconnect_initiate) {
 		obj = prop_bool_create(TRUE);
 		if (obj == NULL || !prop_dictionary_set(dict, BTHIDEVreconnect, obj))
 			return errno;
+
+		prop_object_release(obj);
 	}
 
 	return 0;
@@ -319,9 +337,13 @@ config_hset(prop_dictionary_t dict)
 	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_number_create_integer(channel);
 	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
 		return errno;
+
+	prop_object_release(obj);
 
 	return 0;
 }
@@ -356,13 +378,19 @@ config_hf(prop_dictionary_t dict)
 	if (obj == NULL || !prop_dictionary_set(dict, BTDEVtype, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_bool_create(TRUE);
 	if (obj == NULL || !prop_dictionary_set(dict, BTSCOlisten, obj))
 		return errno;
 
+	prop_object_release(obj);
+
 	obj = prop_number_create_integer(channel);
 	if (obj == NULL || !prop_dictionary_set(dict, BTSCOchannel, obj))
 		return errno;
+
+	prop_object_release(obj);
 
 	return 0;
 }
@@ -743,4 +771,38 @@ parse_rfcomm_channel(sdp_attr_t *a)
 	SDP_GET8(channel, ptr);
 
 	return (channel);
+}
+
+/*
+ * return appropriate mode for HID descriptor
+ */
+const char *
+hid_mode(prop_data_t desc)
+{
+	report_desc_t r;
+	hid_data_t d;
+	struct hid_item h;
+	const char *mode;
+
+	hid_init(NULL);
+
+	mode = BTDEVauth;	/* default */
+
+	r = hid_use_report_desc(prop_data_data_nocopy(desc),
+				prop_data_size(desc));
+	if (r == NULL)
+		err(EXIT_FAILURE, "hid_use_report_desc");
+
+	d = hid_start_parse(r, ~0, -1);
+	while (hid_get_item(d, &h) > 0) {
+		if (h.kind == hid_collection
+		    && HID_PAGE(h.usage) == HUP_GENERIC_DESKTOP
+		    && HID_USAGE(h.usage) == HUG_KEYBOARD)
+			mode = BTDEVencrypt;
+	}
+
+	hid_end_parse(d);
+	hid_dispose_report_desc(r);
+
+	return mode;
 }

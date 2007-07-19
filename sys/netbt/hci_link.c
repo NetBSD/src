@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.8 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.8.2.1 2007/07/19 16:04:18 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.8 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.8.2.1 2007/07/19 16:04:18 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -114,6 +114,9 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 		break;
 
 	case HCI_LINK_WAIT_CONNECT:
+	case HCI_LINK_WAIT_AUTH:
+	case HCI_LINK_WAIT_ENCRYPT:
+	case HCI_LINK_WAIT_SECURE:
 		/*
 		 * somebody else already trying to connect, we just
 		 * sit on the bench with them..
@@ -211,6 +214,9 @@ hci_acl_timeout(void *arg)
 		hci_link_free(link, ECONNRESET);
 		break;
 
+	case HCI_LINK_WAIT_AUTH:
+	case HCI_LINK_WAIT_ENCRYPT:
+	case HCI_LINK_WAIT_SECURE:
 	case HCI_LINK_OPEN:
 		cp.con_handle = htole16(link->hl_handle);
 		cp.reason = 0x13; /* "Remote User Terminated Connection" */
@@ -232,6 +238,168 @@ hci_acl_timeout(void *arg)
 
 out:
 	splx(s);
+}
+
+/*
+ * Initiate any Link Mode change requests.
+ */
+int
+hci_acl_setmode(struct hci_link *link)
+{
+	int err;
+
+	KASSERT(link != NULL);
+	KASSERT(link->hl_unit != NULL);
+
+	if (link->hl_state != HCI_LINK_OPEN)
+		return EINPROGRESS;
+
+	if ((link->hl_flags & HCI_LINK_AUTH_REQ)
+	    && !(link->hl_flags & HCI_LINK_AUTH)) {
+		hci_auth_req_cp cp;
+
+		DPRINTF("requesting auth for handle #%d\n",
+			link->hl_handle);
+
+		link->hl_state = HCI_LINK_WAIT_AUTH;
+		cp.con_handle = htole16(link->hl_handle);
+		err = hci_send_cmd(link->hl_unit, HCI_CMD_AUTH_REQ,
+				   &cp, sizeof(cp));
+
+		return (err == 0 ? EINPROGRESS : err);
+	}
+
+	if ((link->hl_flags & HCI_LINK_ENCRYPT_REQ)
+	    && !(link->hl_flags & HCI_LINK_ENCRYPT)) {
+		hci_set_con_encryption_cp cp;
+
+		/* XXX we should check features for encryption capability */
+
+		DPRINTF("requesting encryption for handle #%d\n",
+			link->hl_handle);
+
+		link->hl_state = HCI_LINK_WAIT_ENCRYPT;
+		cp.con_handle = htole16(link->hl_handle);
+		cp.encryption_enable = 0x01;
+
+		err = hci_send_cmd(link->hl_unit, HCI_CMD_SET_CON_ENCRYPTION,
+				   &cp, sizeof(cp));
+
+		return (err == 0 ? EINPROGRESS : err);
+	}
+
+	if ((link->hl_flags & HCI_LINK_SECURE_REQ)) {
+		hci_change_con_link_key_cp cp;
+
+		/* always change link key for SECURE requests */
+		link->hl_flags &= ~HCI_LINK_SECURE;
+
+		DPRINTF("changing link key for handle #%d\n",
+			link->hl_handle);
+
+		link->hl_state = HCI_LINK_WAIT_SECURE;
+		cp.con_handle = htole16(link->hl_handle);
+
+		err = hci_send_cmd(link->hl_unit, HCI_CMD_CHANGE_CON_LINK_KEY,
+				   &cp, sizeof(cp));
+
+		return (err == 0 ? EINPROGRESS : err);
+	}
+
+	return 0;
+}
+
+/*
+ * Link Mode changed.
+ *
+ * This is called from event handlers when the mode change
+ * is complete. We notify upstream and restart the link.
+ */
+void
+hci_acl_linkmode(struct hci_link *link)
+{
+	struct l2cap_channel *chan, *next;
+	int err, mode = 0;
+
+	DPRINTF("handle #%d, auth %s, encrypt %s, secure %s\n",
+		link->hl_handle,
+		(link->hl_flags & HCI_LINK_AUTH ? "on" : "off"),
+		(link->hl_flags & HCI_LINK_ENCRYPT ? "on" : "off"),
+		(link->hl_flags & HCI_LINK_SECURE ? "on" : "off"));
+
+	if (link->hl_flags & HCI_LINK_AUTH)
+		mode |= L2CAP_LM_AUTH;
+
+	if (link->hl_flags & HCI_LINK_ENCRYPT)
+		mode |= L2CAP_LM_ENCRYPT;
+
+	if (link->hl_flags & HCI_LINK_SECURE)
+		mode |= L2CAP_LM_SECURE;
+
+	/*
+	 * The link state will only be OPEN here if the mode change
+	 * was successful. So, we can proceed with L2CAP connections,
+	 * or notify already establshed channels, to allow any that
+	 * are dissatisfied to disconnect before we restart.
+	 */
+	next = LIST_FIRST(&l2cap_active_list);
+	while ((chan = next) != NULL) {
+		next = LIST_NEXT(chan, lc_ncid);
+
+		if (chan->lc_link != link)
+			continue;
+
+		switch(chan->lc_state) {
+		case L2CAP_WAIT_SEND_CONNECT_REQ: /* we are connecting */
+			if ((mode & chan->lc_mode) != chan->lc_mode) {
+				l2cap_close(chan, ECONNABORTED);
+				break;
+			}
+
+			chan->lc_state = L2CAP_WAIT_RECV_CONNECT_RSP;
+			err = l2cap_send_connect_req(chan);
+			if (err) {
+				l2cap_close(chan, err);
+				break;
+			}
+			break;
+
+		case L2CAP_WAIT_SEND_CONNECT_RSP: /* they are connecting */
+			if ((mode & chan->lc_mode) != chan->lc_mode) {
+				l2cap_send_connect_rsp(link, chan->lc_ident,
+							0, chan->lc_rcid,
+							L2CAP_SECURITY_BLOCK);
+
+				l2cap_close(chan, ECONNABORTED);
+				break;
+			}
+
+			l2cap_send_connect_rsp(link, chan->lc_ident,
+						chan->lc_lcid, chan->lc_rcid,
+						L2CAP_SUCCESS);
+
+			chan->lc_state = L2CAP_WAIT_CONFIG;
+			chan->lc_flags |= (L2CAP_WAIT_CONFIG_RSP | L2CAP_WAIT_CONFIG_REQ);
+			err = l2cap_send_config_req(chan);
+			if (err) {
+				l2cap_close(chan, err);
+				break;
+			}
+			break;
+
+		case L2CAP_WAIT_RECV_CONNECT_RSP:
+		case L2CAP_WAIT_CONFIG:
+		case L2CAP_OPEN: /* already established */
+			(*chan->lc_proto->linkmode)(chan->lc_upper, mode);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	link->hl_state = HCI_LINK_OPEN;
+	hci_acl_start(link);
 }
 
 /*
@@ -426,12 +594,13 @@ nomem:
 /*
  * Start sending ACL data on link.
  *
+ *	This is called when the queue may need restarting: as new data
+ * is queued, after link mode changes have completed, or when device
+ * buffers have cleared.
+ *
  *	We may use all the available packet slots. The reason that we add
  * the ACL encapsulation here rather than in hci_acl_send() is that L2CAP
  * signal packets may be queued before the handle is given to us..
- *
- * this is called from hci_acl_send() above, and the event processing
- * code (for CON_COMPL and NUM_COMPL_PKTS)
  */
 void
 hci_acl_start(struct hci_link *link)

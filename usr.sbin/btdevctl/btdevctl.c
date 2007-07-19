@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.c,v 1.3 2006/09/11 18:30:27 plunky Exp $	*/
+/*	$NetBSD: btdevctl.c,v 1.3.2.1 2007/07/19 16:04:21 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btdevctl.c,v 1.3 2006/09/11 18:30:27 plunky Exp $");
+__RCSID("$NetBSD: btdevctl.c,v 1.3.2.1 2007/07/19 16:04:21 liamjfoy Exp $");
 
 #include <prop/proplib.h>
 #include <sys/ioctl.h>
@@ -64,18 +64,21 @@ main(int argc, char *argv[])
 	prop_dictionary_t dev;
 	prop_object_t obj;
 	bdaddr_t laddr, raddr;
-	const char *service;
-	int ch, query, verbose, attach, detach;
+	const char *service, *mode;
+	int ch, query, verbose, attach, detach, set, none;
 
 	bdaddr_copy(&laddr, BDADDR_ANY);
 	bdaddr_copy(&raddr, BDADDR_ANY);
 	service = NULL;
+	mode = NULL;
 	query = FALSE;
 	verbose = FALSE;
 	attach = FALSE;
 	detach = FALSE;
+	set = FALSE;
+	none = FALSE;
 
-	while ((ch = getopt(argc, argv, "Aa:Dd:hqs:v")) != -1) {
+	while ((ch = getopt(argc, argv, "Aa:Dd:hm:qs:v")) != -1) {
 		switch (ch) {
 		case 'A': /* Attach device */
 			attach = TRUE;
@@ -100,6 +103,20 @@ main(int argc, char *argv[])
 		case 'd': /* local device address */
 			if (!bt_devaddr(optarg, &laddr))
 				err(EXIT_FAILURE, "%s", optarg);
+
+			break;
+
+		case 'm': /* link mode */
+			if (strcasecmp(optarg, "none") == 0)
+				none = TRUE;
+			else if (strcasecmp(optarg, BTDEVauth) == 0)
+				mode = BTDEVauth;
+			else if (strcasecmp(optarg, BTDEVencrypt) == 0)
+				mode = BTDEVencrypt;
+			else if (strcasecmp(optarg, BTDEVsecure) == 0)
+				mode = BTDEVsecure;
+			else
+				errx(EXIT_FAILURE, "%s: unknown mode", mode);
 
 			break;
 
@@ -143,9 +160,25 @@ main(int argc, char *argv[])
 		if (dev == NULL)
 			errx(EXIT_FAILURE, "%s/%s not found", bt_ntoa(&raddr, NULL), service);
 
-		if (!db_set(dev, &laddr, &raddr, service))
-			errx(EXIT_FAILURE, "service store failed");
+		set = TRUE;
 	}
+
+	if (mode != NULL) {
+		obj = prop_string_create_cstring_nocopy(mode);
+		if (obj == NULL || !prop_dictionary_set(dev, BTDEVmode, obj))
+			errx(EXIT_FAILURE, "proplib failure (%s)", BTDEVmode);
+
+		prop_object_release(obj);
+		set = TRUE;
+	}
+
+	if (none == TRUE) {
+		prop_dictionary_remove(dev, BTDEVmode);
+		set = TRUE;
+	}
+
+	if (set == TRUE && !db_set(dev, &laddr, &raddr, service))
+		errx(EXIT_FAILURE, "service store failed");
 
 	/* add binary local-bdaddr */
 	obj = prop_data_create_data(&laddr, sizeof(laddr));
@@ -185,12 +218,13 @@ usage(void)
 {
 
 	fprintf(stderr,
-		"usage: %s [-A | -D] [-qv] -a address -d device -s service\n"
+		"usage: %s [-A | -D] [-qv] [-m mode] -a address -d device -s service\n"
 		"Where:\n"
 		"\t-A           attach device\n"
 		"\t-a address   remote device address\n"
 		"\t-D           detach device\n"
 		"\t-d device    local device address\n"
+		"\t-m mode      link mode\n"
 		"\t-q           force SDP query\n"
 		"\t-s service   remote service\n"
 		"\t-v           verbose\n"

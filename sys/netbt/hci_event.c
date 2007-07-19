@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.2 2006/09/11 22:12:39 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.2.4.1 2007/07/19 16:04:20 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.2 2006/09/11 22:12:39 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.2.4.1 2007/07/19 16:04:20 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,6 +51,9 @@ static void hci_event_con_compl(struct hci_unit *, struct mbuf *);
 static void hci_event_discon_compl(struct hci_unit *, struct mbuf *);
 static void hci_event_con_req(struct hci_unit *, struct mbuf *);
 static void hci_event_num_compl_pkts(struct hci_unit *, struct mbuf *);
+static void hci_event_auth_compl(struct hci_unit *, struct mbuf *);
+static void hci_event_encryption_change(struct hci_unit *, struct mbuf *);
+static void hci_event_change_con_link_key_compl(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_bdaddr(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_buffer_size(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
@@ -174,12 +177,21 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 		hci_event_con_req(unit, m);
 		break;
 
+	case HCI_EVENT_AUTH_COMPL:
+		hci_event_auth_compl(unit, m);
+		break;
+
+	case HCI_EVENT_ENCRYPTION_CHANGE:
+		hci_event_encryption_change(unit, m);
+		break;
+
+	case HCI_EVENT_CHANGE_CON_LINK_KEY_COMPL:
+		hci_event_change_con_link_key_compl(unit, m);
+		break;
+
 	case HCI_EVENT_SCO_CON_COMPL:
 	case HCI_EVENT_INQUIRY_COMPL:
-	case HCI_EVENT_AUTH_COMPL:
 	case HCI_EVENT_REMOTE_NAME_REQ_COMPL:
-	case HCI_EVENT_ENCRYPTION_CHANGE:
-	case HCI_EVENT_CHANGE_CON_LINK_KEY_COMPL:
 	case HCI_EVENT_MASTER_LINK_KEY_COMPL:
 	case HCI_EVENT_READ_REMOTE_FEATURES_COMPL:
 	case HCI_EVENT_READ_REMOTE_VER_INFO_COMPL:
@@ -231,9 +243,10 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
-	DPRINTFN(1, "(%s) opcode (%03x|%04x) num_cmd_pkts = %d\n",
+	DPRINTFN(1, "(%s) opcode (%03x|%04x) status = 0x%x num_cmd_pkts = %d\n",
 		unit->hci_devname,
 		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
+		ep.status,
 		ep.num_cmd_pkts);
 
 	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
@@ -493,6 +506,11 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 		return;
 	}
 
+	/* XXX could check auth_enable here */
+
+	if (ep.encryption_mode)
+		link->hl_flags |= (HCI_LINK_AUTH | HCI_LINK_ENCRYPT);
+
 	link->hl_state = HCI_LINK_OPEN;
 	link->hl_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
 
@@ -505,7 +523,11 @@ hci_event_con_compl(struct hci_unit *unit, struct mbuf *m)
 			printf("%s: Warning, could not write link policy\n",
 				unit->hci_devname);
 
-		hci_acl_start(link);
+		err = hci_acl_setmode(link);
+		if (err == EINPROGRESS)
+			return;
+
+		hci_acl_linkmode(link);
 	} else {
 		(*link->hl_sco->sp_proto->connected)(link->hl_sco->sp_upper);
 	}
@@ -582,6 +604,133 @@ hci_event_con_req(struct hci_unit *unit, struct mbuf *m)
 
 		hci_send_cmd(unit, HCI_CMD_ACCEPT_CON, &ap, sizeof(ap));
 	}
+}
+
+/*
+ * Auth Complete
+ *
+ * Authentication has been completed on an ACL link. We can notify the
+ * upper layer protocols unless further mode changes are pending.
+ */
+static void
+hci_event_auth_compl(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_auth_compl_ep ep;
+	struct hci_link *link;
+	int err;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	m_copydata(m, 0, sizeof(ep), &ep);
+	m_adj(m, sizeof(ep));
+
+	ep.con_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
+
+	DPRINTFN(1, "handle #%d, status=0x%x\n", ep.con_handle, ep.status);
+
+	link = hci_link_lookup_handle(unit, ep.con_handle);
+	if (link == NULL || link->hl_type != HCI_LINK_ACL)
+		return;
+
+	if (ep.status == 0) {
+		link->hl_flags |= HCI_LINK_AUTH;
+
+		if (link->hl_state == HCI_LINK_WAIT_AUTH)
+			link->hl_state = HCI_LINK_OPEN;
+
+		err = hci_acl_setmode(link);
+		if (err == EINPROGRESS)
+			return;
+	}
+
+	hci_acl_linkmode(link);
+}
+
+/*
+ * Encryption Change
+ *
+ * The encryption status has changed. Basically, we note the change
+ * then notify the upper layer protocol unless further mode changes
+ * are pending.
+ * Note that if encryption gets disabled when it has been requested,
+ * we will attempt to enable it again.. (its a feature not a bug :)
+ */
+static void
+hci_event_encryption_change(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_encryption_change_ep ep;
+	struct hci_link *link;
+	int err;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	m_copydata(m, 0, sizeof(ep), &ep);
+	m_adj(m, sizeof(ep));
+
+	ep.con_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
+
+	DPRINTFN(1, "handle #%d, status=0x%x, encryption_enable=0x%x\n",
+		 ep.con_handle, ep.status, ep.encryption_enable);
+
+	link = hci_link_lookup_handle(unit, ep.con_handle);
+	if (link == NULL || link->hl_type != HCI_LINK_ACL)
+		return;
+
+	if (ep.status == 0) {
+		if (ep.encryption_enable == 0)
+			link->hl_flags &= ~HCI_LINK_ENCRYPT;
+		else
+			link->hl_flags |= (HCI_LINK_AUTH | HCI_LINK_ENCRYPT);
+
+		if (link->hl_state == HCI_LINK_WAIT_ENCRYPT)
+			link->hl_state = HCI_LINK_OPEN;
+
+		err = hci_acl_setmode(link);
+		if (err == EINPROGRESS)
+			return;
+	}
+
+	hci_acl_linkmode(link);
+}
+
+/*
+ * Change Connection Link Key Complete
+ *
+ * Link keys are handled in userland but if we are waiting to secure
+ * this link, we should notify the upper protocols. A SECURE request
+ * only needs a single key change, so we can cancel the request.
+ */
+static void
+hci_event_change_con_link_key_compl(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_change_con_link_key_compl_ep ep;
+	struct hci_link *link;
+	int err;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(ep));
+	m_copydata(m, 0, sizeof(ep), &ep);
+	m_adj(m, sizeof(ep));
+
+	ep.con_handle = HCI_CON_HANDLE(le16toh(ep.con_handle));
+
+	DPRINTFN(1, "handle #%d, status=0x%x\n", ep.con_handle, ep.status);
+
+	link = hci_link_lookup_handle(unit, ep.con_handle);
+	if (link == NULL || link->hl_type != HCI_LINK_ACL)
+		return;
+
+	link->hl_flags &= ~HCI_LINK_SECURE_REQ;
+
+	if (ep.status == 0) {
+		link->hl_flags |= (HCI_LINK_AUTH | HCI_LINK_SECURE);
+
+		if (link->hl_state == HCI_LINK_WAIT_SECURE)
+			link->hl_state = HCI_LINK_OPEN;
+
+		err = hci_acl_setmode(link);
+		if (err == EINPROGRESS)
+			return;
+	}
+
+	hci_acl_linkmode(link);
 }
 
 /*

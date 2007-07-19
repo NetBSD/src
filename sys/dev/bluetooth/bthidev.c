@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.7 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.7.2.1 2007/07/19 16:04:20 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.7 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.7.2.1 2007/07/19 16:04:20 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -72,6 +72,7 @@ struct bthidev_softc {
 
 	bdaddr_t		sc_laddr;	/* local address */
 	bdaddr_t		sc_raddr;	/* remote address */
+	int			sc_mode;	/* link mode */
 
 	uint16_t		sc_ctlpsm;	/* control PSM */
 	struct l2cap_channel	*sc_ctl;	/* control channel */
@@ -125,6 +126,7 @@ static void  bthidev_int_disconnected(void *, int);
 static void *bthidev_ctl_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void *bthidev_int_newconn(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 static void  bthidev_complete(void *, int);
+static void  bthidev_linkmode(void *, int);
 static void  bthidev_input(void *, struct mbuf *);
 
 static const struct btproto bthidev_ctl_proto = {
@@ -133,6 +135,7 @@ static const struct btproto bthidev_ctl_proto = {
 	bthidev_ctl_disconnected,
 	bthidev_ctl_newconn,
 	bthidev_complete,
+	bthidev_linkmode,
 	bthidev_input,
 };
 
@@ -142,6 +145,7 @@ static const struct btproto bthidev_int_proto = {
 	bthidev_int_disconnected,
 	bthidev_int_newconn,
 	bthidev_complete,
+	bthidev_linkmode,
 	bthidev_input,
 };
 
@@ -197,6 +201,23 @@ bthidev_attach(struct device *parent, struct device *self, void *aux)
 
 	obj = prop_dictionary_get(dict, BTDEVraddr);
 	bdaddr_copy(&sc->sc_raddr, prop_data_data_nocopy(obj));
+
+	obj = prop_dictionary_get(dict, BTDEVmode);
+	if (prop_object_type(obj) == PROP_TYPE_STRING) {
+		if (prop_string_equals_cstring(obj, BTDEVauth))
+			sc->sc_mode = L2CAP_LM_AUTH;
+		else if (prop_string_equals_cstring(obj, BTDEVencrypt))
+			sc->sc_mode = L2CAP_LM_ENCRYPT;
+		else if (prop_string_equals_cstring(obj, BTDEVsecure))
+			sc->sc_mode = L2CAP_LM_SECURE;
+		else  {
+			aprint_error(" unknown %s\n", BTDEVmode);
+			return;
+		}
+
+		aprint_verbose(" %s %s", BTDEVmode,
+					 prop_string_cstring_nocopy(obj));
+	}
 
 	obj = prop_dictionary_get(dict, BTHIDEVcontrolpsm);
 	if (prop_object_type(obj) == PROP_TYPE_NUMBER) {
@@ -435,6 +456,10 @@ bthidev_listen(struct bthidev_softc *sc)
 	if (err)
 		return err;
 
+	err = l2cap_setopt(sc->sc_ctl_l, SO_L2CAP_LM, &sc->sc_mode);
+	if (err)
+		return err;
+
 	sa.bt_psm = sc->sc_ctlpsm;
 	err = l2cap_bind(sc->sc_ctl_l, &sa);
 	if (err)
@@ -448,6 +473,10 @@ bthidev_listen(struct bthidev_softc *sc)
 	 * Listen on interrupt PSM
 	 */
 	err = l2cap_attach(&sc->sc_int_l, &bthidev_int_proto, sc);
+	if (err)
+		return err;
+
+	err = l2cap_setopt(sc->sc_int_l, SO_L2CAP_LM, &sc->sc_mode);
 	if (err)
 		return err;
 
@@ -487,6 +516,10 @@ bthidev_connect(struct bthidev_softc *sc)
 			device_xname((struct device *)sc), err);
 		return err;
 	}
+
+	err = l2cap_setopt(sc->sc_ctl, SO_L2CAP_LM, &sc->sc_mode);
+	if (err)
+		return err;
 
 	bdaddr_copy(&sa.bt_bdaddr, &sc->sc_laddr);
 	err = l2cap_bind(sc->sc_ctl, &sa);
@@ -540,6 +573,10 @@ bthidev_ctl_connected(void *arg)
 	if (sc->sc_flags & BTHID_CONNECTING) {
 		/* initiate connect on interrupt PSM */
 		err = l2cap_attach(&sc->sc_int, &bthidev_int_proto, sc);
+		if (err)
+			goto fail;
+
+		err = l2cap_setopt(sc->sc_int, SO_L2CAP_LM, &sc->sc_mode);
 		if (err)
 			goto fail;
 
@@ -705,6 +742,27 @@ bthidev_complete(void *arg, int count)
 {
 
 	/* dont care */
+}
+
+static void
+bthidev_linkmode(void *arg, int new)
+{
+	struct bthidev_softc *sc = arg;
+
+	if ((sc->sc_mode & L2CAP_LM_AUTH) && !(new & L2CAP_LM_AUTH))
+		printf("%s: auth failed\n", device_xname((struct device *)sc));
+	else if ((sc->sc_mode & L2CAP_LM_ENCRYPT) && !(new & L2CAP_LM_ENCRYPT))
+		printf("%s: encrypt off\n", device_xname((struct device *)sc));
+	else if ((sc->sc_mode & L2CAP_LM_SECURE) && !(new & L2CAP_LM_SECURE))
+		printf("%s: insecure\n", device_xname((struct device *)sc));
+	else
+		return;
+
+	if (sc->sc_int != NULL)
+		l2cap_disconnect(sc->sc_int, 0);
+
+	if (sc->sc_ctl != NULL)
+		l2cap_disconnect(sc->sc_ctl, 0);
 }
 
 /*
