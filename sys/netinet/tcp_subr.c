@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.216 2007/07/09 21:11:12 ad Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.217 2007/07/19 20:48:55 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.216 2007/07/09 21:11:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.217 2007/07/19 20:48:55 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1171,7 +1171,7 @@ tcp_close(struct tcpcb *tp)
 	 */
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
 	    ro && (rt = ro->ro_rt) &&
-	    !in_nullhost(satosin(rt_key(rt))->sin_addr)) {
+	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr)) {
 		u_long i = 0;
 
 		if ((rt->rt_rmx.rmx_locks & RTV_RTT) == 0) {

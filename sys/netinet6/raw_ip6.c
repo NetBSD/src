@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.85 2007/05/23 17:15:04 christos Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.86 2007/07/19 20:48:58 dyoung Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.85 2007/05/23 17:15:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.86 2007/07/19 20:48:58 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -103,8 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.85 2007/05/23 17:15:04 christos Exp $"
 #include <netipsec/ipsec_var.h> /* XXX ipsecstat namespace */
 #include <netipsec/ipsec6.h>
 #endif
-
-#include <machine/stdarg.h>
 
 #include "faith.h"
 #if defined(NFAITH) && 0 < NFAITH
@@ -388,17 +386,9 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
  * Tack on options user may have setup with control call.
  */
 int
-#if __STDC__
-rip6_output(struct mbuf *m, ...)
-#else
-rip6_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
+rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
+    struct mbuf *control)
 {
-	struct socket *so;
-	struct sockaddr_in6 *dstsock;
-	struct mbuf *control;
 	struct in6_addr *dst;
 	struct ip6_hdr *ip6;
 	struct in6pcb *in6p;
@@ -410,13 +400,6 @@ rip6_output(m, va_alist)
 	int priv = 0;
 	int scope_ambiguous = 0;
 	struct in6_addr *in6a;
-	va_list ap;
-
-	va_start(ap, m);
-	so = va_arg(ap, struct socket *);
-	dstsock = va_arg(ap, struct sockaddr_in6 *);
-	control = va_arg(ap, struct mbuf *);
-	va_end(ap);
 
 	in6p = sotoin6pcb(so);
 

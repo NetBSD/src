@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.193 2007/07/09 21:10:59 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.194 2007/07/19 20:48:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.193 2007/07/09 21:10:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.194 2007/07/19 20:48:52 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -745,7 +745,7 @@ if_rt_walktree(struct rtentry *rt, void *v)
 
 	/* Delete the entry. */
 	++rt->rt_refcnt;
-	error = rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+	error = rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
 	    rt_mask(rt), rt->rt_flags, NULL);
 	KASSERT((rt->rt_flags & RTF_UP) == 0);
 	rt->rt_ifp = NULL;
@@ -897,6 +897,12 @@ if_clone_list(struct if_clonereq *ifcr)
 	return error;
 }
 
+static inline int
+equal(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	return sockaddr_cmp(sa1, sa2) == 0;
+}
+
 /*
  * Locate an interface based on a complete address.
  */
@@ -906,9 +912,6 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-
-#define	equal(a1, a2) \
-  (memcmp((a1), (a2), ((const struct sockaddr *)(a1))->sa_len) == 0)
 
 	IFNET_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
@@ -1113,11 +1116,11 @@ void
 link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct ifaddr *ifa;
-	struct sockaddr *dst;
+	const struct sockaddr *dst;
 	struct ifnet *ifp;
 
 	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == NULL) ||
-	    ((ifp = ifa->ifa_ifp) == NULL) || ((dst = rt_key(rt)) == NULL))
+	    ((ifp = ifa->ifa_ifp) == NULL) || ((dst = rt_getkey(rt)) == NULL))
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		rt_replace_ifa(rt, ifa);

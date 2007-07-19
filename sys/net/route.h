@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.56 2007/06/09 03:07:22 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.57 2007/07/19 20:48:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -95,10 +95,7 @@ struct rt_metrics {
 #endif
 struct rtentry {
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */
-/*XXXUNCONST*/
-#define	rt_key(r)	((struct sockaddr *)__UNCONST((r)->rt_nodes->rn_key))
-/*XXXUNCONST*/
-#define	rt_mask(r)	((struct sockaddr *)__UNCONST((r)->rt_nodes->rn_mask))
+#define	rt_mask(r)	((const struct sockaddr *)((r)->rt_nodes->rn_mask))
 	struct	sockaddr *rt_gateway;	/* value */
 	int	rt_flags;		/* up/down?, host/net */
 	int	rt_refcnt;		/* # held references */
@@ -106,13 +103,19 @@ struct rtentry {
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
 	uint32_t rt_ifa_seqno;
-	const struct sockaddr *rt_genmask; /* for generation of cloned routes */
 	void *	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	struct	rtentry *rt_parent;	/* parent of cloned route */
+	struct sockaddr *_rt_key;
 };
+
+static inline const struct sockaddr *
+rt_getkey(const struct rtentry *rt)
+{
+	return rt->_rt_key;
+}
 
 /*
  * Following structure necessary for 4.3 compatibility;
@@ -271,6 +274,12 @@ struct rttimer_queue {
 
 
 #ifdef _KERNEL
+#if 0
+#define	RT_DPRINTF(__fmt, ...)	do { } while (/*CONSTCOND*/0)
+#else
+#define	RT_DPRINTF(__fmt, ...)	/* do nothing */
+#endif
+
 struct rtwalk {
 	int (*rw_f)(struct rtentry *, void *);
 	void *rw_v;
@@ -292,8 +301,7 @@ void	 rt_maskedcopy(const struct sockaddr *,
 	    struct sockaddr *, const struct sockaddr *);
 void	 rt_missmsg(int, struct rt_addrinfo *, int, int);
 void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
-int	 rt_setgate(struct rtentry *,
-	    const struct sockaddr *, const struct sockaddr *);
+int	 rt_setgate(struct rtentry *, const struct sockaddr *);
 void	 rt_setmetrics(u_long, const struct rt_metrics *, struct rt_metrics *);
 int      rt_timer_add(struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
@@ -328,6 +336,31 @@ int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 
 struct ifaddr	*rt_get_ifa(struct rtentry *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
+
+static inline void
+rt_destroy(struct rtentry *rt)
+{
+	if (rt->_rt_key != NULL)
+		sockaddr_free(rt->_rt_key);
+	if (rt->rt_gateway != NULL)
+		sockaddr_free(rt->rt_gateway);
+	rt->_rt_key = rt->rt_gateway = NULL;
+}
+
+static inline const struct sockaddr *
+rt_setkey(struct rtentry *rt, const struct sockaddr *key, int flags)
+{
+	if (rt->_rt_key == key)
+		goto out;
+
+	if (rt->_rt_key != NULL)
+		sockaddr_free(rt->_rt_key);
+	rt->_rt_key = sockaddr_dup(key, flags);
+out:
+	KASSERT(rt->_rt_key != NULL);
+	rt->rt_nodes->rn_key = (const char *)rt->_rt_key;
+	return rt->_rt_key;
+}
 
 struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 
