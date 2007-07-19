@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.13 2007/07/09 21:11:11 ad Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.14 2007/07/19 20:48:54 dyoung Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -344,11 +344,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET: {
 			int count = 0;
-			struct sockaddr sa;
 			struct rtentry *rt;
-			struct radix_node_head *rnh =
-			    rt_tables[ifa->ifa_addr->sa_family];
-			struct radix_node *rn;
 			int hr_otherif, nr_ourif;
 
 			/*
@@ -371,18 +367,21 @@ carp_setroute(struct carp_softc *sc, int cmd)
 			    ifa->ifa_addr, ifa->ifa_netmask,
 			    RTF_HOST, NULL);
 
-			/* Check for our address on another interface */
-			rn = rnh->rnh_matchaddr(ifa->ifa_addr, rnh);
-			rt = (struct rtentry *)rn;
+			rt = NULL;
+			(void)rtrequest(RTM_GET, ifa->ifa_addr, ifa->ifa_addr,
+			    ifa->ifa_netmask, RTF_HOST, &rt);
 			hr_otherif = (rt && rt->rt_ifp != &sc->sc_if &&
 			    rt->rt_flags & (RTF_CLONING|RTF_CLONED));
+			if (rt != NULL) {
+				RTFREE(rt);
+				rt = NULL;
+			}
 
 			/* Check for a network route on our interface */
-			bcopy(ifa->ifa_addr, &sa, sizeof(sa));
-			satosin(&sa)->sin_addr.s_addr = satosin(ifa->ifa_netmask
-			    )->sin_addr.s_addr & satosin(&sa)->sin_addr.s_addr;
-			rn = rnh->rnh_lookup(&sa, ifa->ifa_netmask, rnh);
-			rt = (struct rtentry *)rn;
+
+			rt = NULL;
+			(void)rtrequest(RTM_GET, ifa->ifa_addr, ifa->ifa_addr,
+			    ifa->ifa_netmask, 0, &rt);
 			nr_ourif = (rt && rt->rt_ifp == &sc->sc_if);
 
 			switch (cmd) {
@@ -398,7 +397,8 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				if (!hr_otherif || nr_ourif || !rt) {
 					if (nr_ourif && !(rt->rt_flags &
 					    RTF_CLONING))
-						rtrequest(RTM_DELETE, &sa,
+						rtrequest(RTM_DELETE,
+						    ifa->ifa_addr,
 						    ifa->ifa_addr,
 						    ifa->ifa_netmask, 0, NULL);
 
@@ -415,6 +415,10 @@ carp_setroute(struct carp_softc *sc, int cmd)
 				break;
 			default:
 				break;
+			}
+			if (rt != NULL) {
+				RTFREE(rt);
+				rt = NULL;
 			}
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.76 2007/07/09 21:11:13 ad Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.77 2007/07/19 20:48:58 dyoung Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.76 2007/07/09 21:11:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.77 2007/07/19 20:48:58 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -775,10 +775,10 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * update the Destination Cache entries.
 			 */
 			struct nd_defrouter *dr;
-			struct in6_addr *in6;
+			const struct in6_addr *in6;
 			int s;
 
-			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
+			in6 = &satocsin6(rt_getkey(rt))->sin6_addr;
 
 			/*
 			 * Lock to protect the default router list.

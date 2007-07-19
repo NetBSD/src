@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.65 2007/06/09 03:25:32 dyoung Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.66 2007/07/19 20:48:58 dyoung Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.65 2007/06/09 03:25:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.66 2007/07/19 20:48:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,7 @@ nd6_rtmsg(int cmd, struct rtentry *rt)
 	struct rt_addrinfo info;
 
 	bzero((void *)&info, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_DST] = rt_getkey(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	if (rt->rt_ifp) {
@@ -477,18 +477,16 @@ defrouter_addreq(struct nd_defrouter *new)
 }
 
 struct nd_defrouter *
-defrouter_lookup(struct in6_addr *addr, struct ifnet *ifp)
+defrouter_lookup(const struct in6_addr *addr, struct ifnet *ifp)
 {
 	struct nd_defrouter *dr;
 
-	for (dr = TAILQ_FIRST(&nd_defrouter); dr;
-	     dr = TAILQ_NEXT(dr, dr_entry)) {
-		if (dr->ifp == ifp && IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr)) {
-			return (dr);
-		}
+	TAILQ_FOREACH(dr, &nd_defrouter, dr_entry) {
+		if (dr->ifp == ifp && IN6_ARE_ADDR_EQUAL(addr, &dr->rtaddr))
+			break;
 	}
 
-	return (NULL);		/* search failed */
+	return dr;		/* search failed */
 }
 
 void
@@ -2076,7 +2074,7 @@ rt6_deleteroute(struct rtentry *rt, void *arg)
 	if ((rt->rt_flags & RTF_HOST) == 0)
 		return (0);
 
-	return (rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+	return (rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
 	    rt_mask(rt), rt->rt_flags, 0));
 #undef SIN6
 }

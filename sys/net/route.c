@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.93 2007/07/09 21:11:01 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.94 2007/07/19 20:48:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.93 2007/07/09 21:11:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.94 2007/07/19 20:48:53 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -187,7 +187,7 @@ rt_get_ifa(struct rtentry *rt)
 		return ifa;
 #endif
 	else {
-		ifa = (*ifa->ifa_getifa)(ifa, rt_key(rt));
+		ifa = (*ifa->ifa_getifa)(ifa, rt_getkey(rt));
 		rt_replace_ifa(rt, ifa);
 		return ifa;
 	}
@@ -334,7 +334,7 @@ rtalloc1(const struct sockaddr *dst, int report)
 			}
 			/* Inform listeners of the new route */
 			memset(&info, 0, sizeof(info));
-			info.rti_info[RTAX_DST] = rt_key(rt);
+			info.rti_info[RTAX_DST] = rt_getkey(rt);
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			if (rt->rt_ifp != NULL) {
@@ -378,7 +378,7 @@ rtfree(struct rtentry *rt)
 		rt->rt_ifa = NULL;
 		IFAFREE(ifa);
 		rt->rt_ifp = NULL;
-		Free(rt_key(rt));
+		rt_destroy(rt);
 		pool_put(&rtentry_pool, rt);
 	}
 }
@@ -397,6 +397,12 @@ ifafree(struct ifaddr *ifa)
 	printf("ifafree: freeing ifaddr %p\n", ifa);
 #endif
 	free(ifa, M_IFADDR);
+}
+
+static inline int
+equal(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	return sockaddr_cmp(sa1, sa2) == 0;
 }
 
 /*
@@ -430,9 +436,6 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 	 * we have a routing loop, perhaps as a result of an interface
 	 * going down recently.
 	 */
-#define	equal(a1, a2) \
-	((a1)->sa_len == (a2)->sa_len && \
-	 memcmp((a1), (a2), (a1)->sa_len) == 0)
 	if (!(flags & RTF_DONE) && rt &&
 	     (!equal(src, rt->rt_gateway) || rt->rt_ifa != ifa))
 		error = EINVAL;
@@ -480,7 +483,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			rt->rt_flags |= RTF_MODIFIED;
 			flags |= RTF_MODIFIED;
 			stat = &rtstat.rts_newgateway;
-			rt_setgate(rt, rt_key(rt), gateway);
+			rt_setgate(rt, gateway);
 		}
 	} else
 		error = EHOSTUNREACH;
@@ -519,7 +522,7 @@ rtdeletemsg(struct rtentry *rt)
 	 * be accurate (and consistent with route_output()).
 	 */
 	memset((void *)&info, 0, sizeof(info));
-	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_DST] = rt_getkey(rt);
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
@@ -677,7 +680,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	struct radix_node *rn;
 	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
-	struct sockaddr_storage deldst;
+	struct sockaddr_storage maskeddst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
 	const struct sockaddr *netmask = info->rti_info[RTAX_NETMASK];
@@ -691,8 +694,9 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	switch (req) {
 	case RTM_DELETE:
 		if (netmask) {
-			rt_maskedcopy(dst, (struct sockaddr *)&deldst, netmask);
-			dst = (struct sockaddr *)&deldst;
+			rt_maskedcopy(dst, (struct sockaddr *)&maskeddst,
+			    netmask);
+			dst = (struct sockaddr *)&maskeddst;
 		}
 		if ((rn = rnh->rnh_lookup(dst, netmask, rnh)) == NULL)
 			senderr(ESRCH);
@@ -735,8 +739,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		flags = rt->rt_flags & ~(RTF_CLONING | RTF_STATIC);
 		flags |= RTF_CLONED;
 		gateway = rt->rt_gateway;
-		if ((netmask = rt->rt_genmask) == NULL)
-			flags |= RTF_HOST;
+		flags |= RTF_HOST;
 		goto makeroute;
 
 	case RTM_ADD:
@@ -751,43 +754,70 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		Bzero(rt, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
 		LIST_INIT(&rt->rt_timer);
-		if (rt_setgate(rt, dst, gateway)) {
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__, __LINE__,
+		    (void *)rt->_rt_key);
+		if (rt_setkey(rt, dst, PR_NOWAIT) == NULL ||
+		    rt_setgate(rt, gateway) != 0) {
 			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
 		}
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__, __LINE__,
+		    (void *)rt->_rt_key);
 		if (netmask) {
-			rt_maskedcopy(dst, rt_key(rt), netmask);
-		} else
-			Bcopy(dst, rt_key(rt), dst->sa_len);
+			rt_maskedcopy(dst, (struct sockaddr *)&maskeddst,
+			    netmask);
+			rt_setkey(rt, (struct sockaddr *)&maskeddst, PR_NOWAIT);
+			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+			    __LINE__, (void *)rt->_rt_key);
+		} else {
+			rt_setkey(rt, dst, PR_NOWAIT);
+			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+			    __LINE__, (void *)rt->_rt_key);
+		}
 		rt_set_ifa(rt, ifa);
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 			rt->rt_parent = *ret_nrt;
 			rt->rt_parent->rt_refcnt++;
 		}
-		rn = rnh->rnh_addaddr(rt_key(rt), netmask, rnh, rt->rt_nodes);
-		if (rn == NULL && (crt = rtalloc1(rt_key(rt), 0)) != NULL) {
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
+		rn = rnh->rnh_addaddr(rt_getkey(rt), netmask, rnh,
+		    rt->rt_nodes);
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
+		if (rn == NULL && (crt = rtalloc1(rt_getkey(rt), 0)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
 				rtdeletemsg(crt);
-				rn = rnh->rnh_addaddr(rt_key(rt),
+				rn = rnh->rnh_addaddr(rt_getkey(rt),
 				    netmask, rnh, rt->rt_nodes);
 			}
 			RTFREE(crt);
+			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+			    __LINE__, (void *)rt->_rt_key);
 		}
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
 		if (rn == NULL) {
 			IFAFREE(ifa);
 			if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent)
 				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
-			Free(rt_key(rt));
+			rt_destroy(rt);
 			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, info);
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
@@ -799,6 +829,11 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		rtflushall(dst->sa_family);
 		break;
 	case RTM_GET:
+		if (netmask != NULL) {
+			rt_maskedcopy(dst, (struct sockaddr *)&maskeddst,
+			    netmask);
+			dst = (struct sockaddr *)&maskeddst;
+		}
 		rn = rnh->rnh_lookup(dst, netmask, rnh);
 		if (rn == NULL || (rn->rn_flags & RNF_ROOT) != 0)
 			senderr(ESRCH);
@@ -815,34 +850,36 @@ bad:
 }
 
 int
-rt_setgate( struct rtentry *rt0, const struct sockaddr *dst,
-	const struct sockaddr *gate)
+rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 {
-	char *new, *old;
-	u_int dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
-	struct rtentry *rt = rt0;
+	KASSERT(rt != rt->rt_gwroute);
 
-	if (rt->rt_gateway == NULL || glen > ROUNDUP(rt->rt_gateway->sa_len)) {
-		old = (void *)rt_key(rt);
-		R_Malloc(new, void *, dlen + glen);
-		if (new == NULL)
-			return 1;
-		Bzero(new, dlen + glen);
-		rt->rt_nodes->rn_key = new;
-	} else {
-		new = __UNCONST(rt->rt_nodes->rn_key); /*XXXUNCONST*/
-		old = NULL;
-	}
-	Bcopy(gate, (rt->rt_gateway = (struct sockaddr *)(new + dlen)), glen);
-	if (old) {
-		Bcopy(dst, new, dlen);
-		Free(old);
-	}
+	KASSERT(rt->_rt_key != NULL);
+	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+	    __LINE__, (void *)rt->_rt_key);
+
 	if (rt->rt_gwroute) {
 		RTFREE(rt->rt_gwroute);
 		rt->rt_gwroute = NULL;
 	}
+	KASSERT(rt->_rt_key != NULL);
+	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+	    __LINE__, (void *)rt->_rt_key);
+	if (rt->rt_gateway != NULL)
+		sockaddr_free(rt->rt_gateway);
+	KASSERT(rt->_rt_key != NULL);
+	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+	    __LINE__, (void *)rt->_rt_key);
+	if ((rt->rt_gateway = sockaddr_dup(gate, PR_NOWAIT)) == NULL)
+		return ENOMEM;
+	KASSERT(rt->_rt_key != NULL);
+	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+	    __LINE__, (void *)rt->_rt_key);
+
 	if (rt->rt_flags & RTF_GATEWAY) {
+		KASSERT(rt->_rt_key != NULL);
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
 		rt->rt_gwroute = rtalloc1(gate, 1);
 		/*
 		 * If we switched gateways, grab the MTU from the new
@@ -851,6 +888,9 @@ rt_setgate( struct rtentry *rt0, const struct sockaddr *dst,
 		 * Note that, if the MTU of gateway is 0, we will reset the
 		 * MTU of the route to run PMTUD again from scratch. XXX
 		 */
+		KASSERT(rt->_rt_key != NULL);
+		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+		    __LINE__, (void *)rt->_rt_key);
 		if (rt->rt_gwroute
 		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)
 		    && rt->rt_rmx.rmx_mtu
@@ -858,6 +898,9 @@ rt_setgate( struct rtentry *rt0, const struct sockaddr *dst,
 			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
 		}
 	}
+	KASSERT(rt->_rt_key != NULL);
+	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
+	    __LINE__, (void *)rt->_rt_key);
 	return 0;
 }
 
@@ -865,20 +908,19 @@ void
 rt_maskedcopy(const struct sockaddr *src, struct sockaddr *dst,
 	const struct sockaddr *netmask)
 {
-	const u_char *cp1 = (const u_char *)src;
-	u_char *cp2 = (u_char *)dst;
-	const u_char *cp3 = (const u_char *)netmask;
-	u_char *cplim = cp2 + *cp3;
-	u_char *cplim2 = cp2 + *cp1;
+	const char *netmaskp = &netmask->sa_data[0],
+	           *srcp = &src->sa_data[0];
+	char *dstp = &dst->sa_data[0];
+	const char *maskend = dstp + MIN(netmask->sa_len, src->sa_len);
+	const char *srcend = dstp + src->sa_len;
 
-	*cp2++ = *cp1++; *cp2++ = *cp1++; /* copies sa_len & sa_family */
-	cp3 += 2;
-	if (cplim > cplim2)
-		cplim = cplim2;
-	while (cp2 < cplim)
-		*cp2++ = *cp1++ & *cp3++;
-	if (cp2 < cplim2)
-		memset(cp2, 0, (unsigned)(cplim2 - cp2));
+	dst->sa_len = src->sa_len;
+	dst->sa_family = src->sa_family;
+
+	while (dstp < maskend)
+		*dstp++ = *srcp++ & *netmaskp++;
+	if (dstp < srcend)
+		memset(dstp, 0, (size_t)(srcend - dstp));
 }
 
 /*
@@ -890,7 +932,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 {
 	struct rtentry *rt;
 	struct sockaddr *dst, *odst;
-	struct sockaddr_storage deldst;
+	struct sockaddr_storage maskeddst;
 	struct rtentry *nrt = NULL;
 	int error;
 	struct rt_addrinfo info;
@@ -900,7 +942,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		if ((flags & RTF_HOST) == 0 && ifa->ifa_netmask) {
 			/* Delete subnet route for this interface */
 			odst = dst;
-			dst = (struct sockaddr *)&deldst;
+			dst = (struct sockaddr *)&maskeddst;
 			rt_maskedcopy(odst, dst, ifa->ifa_netmask);
 		}
 		if ((rt = rtalloc1(dst, 0)) != NULL) {
@@ -964,7 +1006,7 @@ static int rt_init_done = 0;
 			(*r->rtt_func)(r->rtt_rt, r);			\
 		} else {						\
 			rtrequest((int) RTM_DELETE,			\
-				  (struct sockaddr *)rt_key(r->rtt_rt),	\
+				  rt_getkey(r->rtt_rt),			\
 				  0, 0, 0, 0);				\
 		}							\
 	} while (/*CONSTCOND*/0)
