@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.852 2007/07/18 06:29:26 he Exp $
+#	$NetBSD: files,v 1.853 2007/07/19 20:48:51 dyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1402,6 +1402,9 @@ file	kern/tty_tty.c
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
+file	net/link_proto.c		ether | fddi | netatalk | token |
+						wlan | inet | inet6 | iso |
+						natm | bluetooth
 file	kern/uipc_proto.c
 file	kern/uipc_sem.c			p1003_1b_semaphore
 file	kern/uipc_socket.c
