@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.13 2007/06/16 10:52:27 martin Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.14 2007/07/19 14:04:34 gdt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -158,14 +158,15 @@ typedef	union	i6addr	{
 #define	iplookupptr	vptr[0]
 #define	iplookupfunc	lptr[1]
 
-#define	I60(x)	(((i6addr_t *)(x))->i6[0])
-#define	I61(x)	(((i6addr_t *)(x))->i6[1])
-#define	I62(x)	(((i6addr_t *)(x))->i6[2])
-#define	I63(x)	(((i6addr_t *)(x))->i6[3])
-#define	HI60(x)	ntohl(((i6addr_t *)(x))->i6[0])
-#define	HI61(x)	ntohl(((i6addr_t *)(x))->i6[1])
-#define	HI62(x)	ntohl(((i6addr_t *)(x))->i6[2])
-#define	HI63(x)	ntohl(((i6addr_t *)(x))->i6[3])
+/* Avoid casting to a type presuming 64-bit alignment. */
+#define	I60(x)	(((u_32_t *)(x))[0])
+#define	I61(x)	(((u_32_t *)(x))[1])
+#define	I62(x)	(((u_32_t *)(x))[2])
+#define	I63(x)	(((u_32_t *)(x))[3])
+#define	HI60(x)	ntohl(((u_32_t *)(x))[0])
+#define	HI61(x)	ntohl(((u_32_t *)(x))[1])
+#define	HI62(x)	ntohl(((u_32_t *)(x))[2])
+#define	HI63(x)	ntohl(((u_32_t *)(x))[3])
 
 #define	IP6_EQ(a,b)	((I63(a) == I63(b)) && (I62(a) == I62(b)) && \
 			 (I61(a) == I61(b)) && (I60(a) == I60(b)))
