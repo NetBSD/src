@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.30 2007/07/17 11:34:54 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.31 2007/07/19 07:58:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@
 #else
 #define FSNAME "dt"
 #endif
+#define MAXREQMAGIC -37
 
 static struct puffs_usermount *gpu;
 static struct dtfs_mount gdtm;
@@ -61,9 +62,9 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-bsdft] [-c hashbuckets] [-n typename] "
-	    "[-o mntopt]\n    [-o puffsopt] [-r rootnodetype] mountpath",
-	    getprogname());
+	errx(1, "usage: %s [-bsdft] [-c hashbuckets] [-m maxreqsize] "
+	    "[-n typename]\n    [-o mntopt] [-o puffsopt] [-r rootnodetype]"
+	    " mountpath", getprogname());
 }
 
 /*
@@ -117,6 +118,7 @@ main(int argc, char *argv[])
 	int pflags, lflags, mntflags;
 	int ch;
 	int khashbuckets;
+	int maxreqsize;
 
 	setprogname(argv[0]);
 
@@ -125,7 +127,8 @@ main(int argc, char *argv[])
 	khashbuckets = 256;
 	pflags = PUFFS_KFLAG_IAONDEMAND;
 	typename = FSNAME;
-	while ((ch = getopt(argc, argv, "bc:dfin:o:r:st")) != -1) {
+	maxreqsize = MAXREQMAGIC;
+	while ((ch = getopt(argc, argv, "bc:dfim:n:o:r:st")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
@@ -141,6 +144,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			pflags &= ~PUFFS_KFLAG_IAONDEMAND;
+			break;
+		case 'm':
+			maxreqsize = atoi(optarg);
 			break;
 		case 'n':
 			typename = optarg;
@@ -231,6 +237,9 @@ main(int argc, char *argv[])
 	ts.tv_nsec = 0;
 	puffs_ml_setloopfn(pu, loopfun);
 	puffs_ml_settimeout(pu, &ts);
+
+	if (maxreqsize != MAXREQMAGIC)
+		puffs_setmaxreqlen(pu, maxreqsize);
 
 	if (puffs_mount(pu,  argv[0], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "mount");
