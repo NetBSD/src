@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.130 2007/06/28 21:03:47 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.131 2007/07/19 20:48:56 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.130 2007/06/28 21:03:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.131 2007/07/19 20:48:56 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1153,7 +1153,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		rt = rtalloc1((struct sockaddr *)&mltaddr, 0);
 		if (rt) {
 			if (memcmp(&mltaddr.sin6_addr,
-			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
+			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    MLTMASK_LEN)) {
 				RTFREE(rt);
 				rt = NULL;
@@ -1163,8 +1163,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				    __func__, rt->rt_ifp, ifp, ifp->if_xname,
 				    ntohs(mltaddr.sin6_addr.s6_addr16[0]),
 				    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
-				    ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr.s6_addr16[0],
-				    ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr.s6_addr16[1]);
+				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
+				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
 				rt_replace_ifa(rt, &ia->ia_ifa);
 				rt->rt_ifp = ifp;
 			}
@@ -1238,7 +1238,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		if (rt) {
 			/* 32bit came from "mltmask" */
 			if (memcmp(&mltaddr.sin6_addr,
-			    &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
+			    &satocsin6(rt_getkey(rt))->sin6_addr,
 			    32 / NBBY)) {
 				RTFREE(rt);
 				rt = NULL;
@@ -1248,8 +1248,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 				    __func__, rt->rt_ifp, ifp, ifp->if_xname,
 				    ntohs(mltaddr.sin6_addr.s6_addr16[0]),
 				    ntohs(mltaddr.sin6_addr.s6_addr16[1]),
-				    ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr.s6_addr16[0],
-				    ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr.s6_addr16[1]);
+				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[0],
+				    satocsin6(rt_getkey(rt))->sin6_addr.s6_addr16[1]);
 				rt_replace_ifa(rt, &ia->ia_ifa);
 				rt->rt_ifp = ifp;
 			}

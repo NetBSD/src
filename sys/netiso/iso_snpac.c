@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.43 2007/03/04 06:03:32 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.44 2007/07/19 20:48:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.43 2007/03/04 06:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.44 2007/07/19 20:48:59 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -208,8 +208,8 @@ llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 */
 			if (rt->rt_flags & RTF_CLONING) {
 				iso_setmcasts(ifp, req);
-				rt_setgate(rt, rt_key(rt),
-					   (struct sockaddr *) & blank_dl);
+				rt_setgate(rt,
+				    (const struct sockaddr *)&blank_dl);
 				return;
 			}
 			if (lc != 0)
@@ -391,8 +391,8 @@ snpac_free(
 	if (rt && (rt->rt_flags & RTF_UP) &&
 	    (rt->rt_flags & (RTF_DYNAMIC | RTF_MODIFIED))) {
 		RTFREE(rt);
-		rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway, rt_mask(rt),
-			  rt->rt_flags, (struct rtentry **) 0);
+		rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
+		    rt_mask(rt), rt->rt_flags, NULL);
 		RTFREE(rt);
 	}
 }
@@ -602,13 +602,13 @@ snpac_logdefis(struct rtentry *sc)
 	known_is = sc;
 	sc->rt_refcnt++;
 	rt = rtalloc1((struct sockaddr *) & zsi, 0);
-	if (rt == 0)
-		rtrequest(RTM_ADD, sisotosa(&zsi), rt_key(sc), sisotosa(&zmk),
-			  RTF_DYNAMIC | RTF_GATEWAY, 0);
-	else {
+	if (rt == 0) {
+		rtrequest(RTM_ADD, sisotosa(&zsi), rt_getkey(sc),
+		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, 0);
+	} else {
 		if ((rt->rt_flags & RTF_DYNAMIC) &&
 		    (rt->rt_flags & RTF_GATEWAY) && rt_mask(rt)->sa_len == 0)
-			rt_setgate(rt, rt_key(rt), rt_key(sc));
+			rt_setgate(rt, rt_getkey(sc));
 	}
 }
 

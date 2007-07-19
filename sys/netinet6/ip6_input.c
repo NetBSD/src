@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.108 2007/07/09 21:11:12 ad Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.109 2007/07/19 20:48:56 dyoung Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.108 2007/07/09 21:11:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.109 2007/07/19 20:48:56 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -490,7 +490,7 @@ ip6_input(struct mbuf *m)
 	else
 		ip6stat.ip6s_forward_cachemiss++;
 
-#define rt6_key(r) ((struct sockaddr_in6 *)((r)->rt_nodes->rn_key))
+#define rt6_getkey(__rt) satocsin6(rt_getkey(__rt))
 
 	/*
 	 * Accept the packet if the forwarding interface to the destination
@@ -510,7 +510,7 @@ ip6_input(struct mbuf *m)
 	     * the destination and the key of the rtentry has
 	     * already done through looking up the routing table.
 	     */
-	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &rt6_key(rt)->sin6_addr) &&
+	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &rt6_getkey(rt)->sin6_addr) &&
 #endif
 	    rt->rt_ifp->if_type == IFT_LOOP) {
 		struct in6_ifaddr *ia6 = (struct in6_ifaddr *)rt->rt_ifa;

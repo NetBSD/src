@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.23 2007/03/04 06:03:20 christos Exp $       */
+/*      $NetBSD: if_atm.c,v 1.24 2007/07/19 20:48:54 dyoung Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.23 2007/03/04 06:03:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.24 2007/07/19 20:48:54 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -87,7 +87,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	struct sockaddr *gate = rt->rt_gateway;
 	struct atm_pseudoioctl api;
 #ifdef NATM
-	struct sockaddr_in *sin;
+	const struct sockaddr_in *sin;
 	struct natmpcb *npcb = NULL;
 	struct atm_pseudohdr *aph;
 #endif
@@ -115,8 +115,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 */
 
 		if ((rt->rt_flags & RTF_HOST) == 0) {
-			rt_setgate(rt, rt_key(rt),
-			    (const struct sockaddr *)&null_sdl);
+			rt_setgate(rt, (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
 			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
 			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
@@ -142,7 +141,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * let native ATM know we are using this VCI/VPI
 		 * (i.e. reserve it)
 		 */
-		sin = (struct sockaddr_in *) rt_key(rt);
+		sin = satocsin(rt_getkey(rt));
 		if (sin->sin_family != AF_INET)
 			goto failed;
 		aph = (struct atm_pseudohdr *) LLADDR(SDL(gate));
@@ -180,8 +179,8 @@ failed:
 			rt->rt_flags &= ~RTF_LLINFO;
 		}
 #endif
-		rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
-			rt_mask(rt), 0, (struct rtentry **) 0);
+		rtrequest(RTM_DELETE, rt_getkey(rt), NULL,
+			rt_mask(rt), 0, NULL);
 		break;
 
 	case RTM_DELETE:
