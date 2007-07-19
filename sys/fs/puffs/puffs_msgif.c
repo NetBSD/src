@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.39 2007/07/09 21:10:48 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.40 2007/07/19 22:05:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.39 2007/07/09 21:10:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.40 2007/07/19 22:05:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -811,6 +811,8 @@ puffs_putop(struct puffs_mount *pmp, struct puffs_reqh_put *php)
 			park->park_preq->preq_rv = error;
 
 		if (park->park_flags & PARKFLAG_CALL) {
+			DPRINTF(("puffsputopt: call for %p, arg %p\n",
+			    park->park_preq, park->park_donearg));
 			park->park_done(park->park_preq, park->park_donearg);
 			release = 1;
 		}
