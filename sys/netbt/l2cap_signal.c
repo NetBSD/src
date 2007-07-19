@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.2.4.2 2007/05/23 21:20:20 pavel Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.2.4.3 2007/07/19 16:04:19 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.2.4.2 2007/05/23 21:20:20 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.2.4.3 2007/07/19 16:04:19 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -238,7 +238,6 @@ l2cap_recv_connect_req(struct mbuf *m, struct hci_link *link)
 	struct l2cap_channel *chan, *new;
 	l2cap_cmd_hdr_t cmd;
 	l2cap_con_req_cp cp;
-	l2cap_con_rsp_cp rp;
 	int err;
 
 	/* extract cmd */
@@ -249,20 +248,19 @@ l2cap_recv_connect_req(struct mbuf *m, struct hci_link *link)
 	m_copydata(m, 0, sizeof(cp), &cp);
 	m_adj(m, sizeof(cp));
 
-	/* init response */
-	memset(&rp, 0, sizeof(rp));
-	rp.scid = cp.scid;
+	cp.scid = le16toh(cp.scid);
+	cp.psm = le16toh(cp.psm);
 
 	memset(&laddr, 0, sizeof(struct sockaddr_bt));
 	laddr.bt_len = sizeof(struct sockaddr_bt);
 	laddr.bt_family = AF_BLUETOOTH;
-	laddr.bt_psm = le16toh(cp.psm);
+	laddr.bt_psm = cp.psm;
 	bdaddr_copy(&laddr.bt_bdaddr, &link->hl_unit->hci_bdaddr);
 
 	memset(&raddr, 0, sizeof(struct sockaddr_bt));
 	raddr.bt_len = sizeof(struct sockaddr_bt);
 	raddr.bt_family = AF_BLUETOOTH;
-	raddr.bt_psm = le16toh(cp.psm);
+	raddr.bt_psm = cp.psm;
 	bdaddr_copy(&raddr.bt_bdaddr, &link->hl_bdaddr);
 
 	LIST_FOREACH(chan, &l2cap_listen_list, lc_ncid) {
@@ -280,9 +278,10 @@ l2cap_recv_connect_req(struct mbuf *m, struct hci_link *link)
 
 		err = l2cap_cid_alloc(new);
 		if (err) {
-			rp.result = htole16(L2CAP_NO_RESOURCES);
-			l2cap_send_signal(link, L2CAP_CONNECT_RSP,
-						cmd.ident, sizeof(rp), &rp);
+			l2cap_send_connect_rsp(link, cmd.ident,
+						0, cp.scid,
+						L2CAP_NO_RESOURCES);
+
 			(*new->lc_proto->disconnected)(new->lc_upper, err);
 			return;
 		}
@@ -290,23 +289,53 @@ l2cap_recv_connect_req(struct mbuf *m, struct hci_link *link)
 		new->lc_link = hci_acl_open(link->hl_unit, &link->hl_bdaddr);
 		KASSERT(new->lc_link == link);
 
-		new->lc_rcid = le16toh(cp.scid);
+		new->lc_rcid = cp.scid;
+		new->lc_ident = cmd.ident;
 
 		memcpy(&new->lc_laddr, &laddr, sizeof(struct sockaddr_bt));
 		memcpy(&new->lc_raddr, &raddr, sizeof(struct sockaddr_bt));
 
-		rp.dcid = htole16(new->lc_lcid);
-		rp.result = htole16(L2CAP_SUCCESS);
-		l2cap_send_signal(link, L2CAP_CONNECT_RSP, cmd.ident,
-						sizeof(rp), &rp);
+		new->lc_mode = chan->lc_mode;
 
-		new->lc_state = L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP;
-		l2cap_send_config_req(new);
+		err = l2cap_setmode(new);
+		if (err == EINPROGRESS) {
+			new->lc_state = L2CAP_WAIT_SEND_CONNECT_RSP;
+			(*new->lc_proto->connecting)(new->lc_upper);
+			return;
+		}
+		if (err) {
+			new->lc_state = L2CAP_CLOSED;
+			hci_acl_close(link, err);
+			new->lc_link = NULL;
+
+			l2cap_send_connect_rsp(link, cmd.ident,
+						0, cp.scid,
+						L2CAP_NO_RESOURCES);
+
+			(*new->lc_proto->disconnected)(new->lc_upper, err);
+			return;
+		}
+
+		err = l2cap_send_connect_rsp(link, cmd.ident,
+					      new->lc_lcid, new->lc_rcid,
+					      L2CAP_SUCCESS);
+		if (err) {
+			l2cap_close(new, err);
+			return;
+		}
+
+		new->lc_state = L2CAP_WAIT_CONFIG;
+		new->lc_flags |= (L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP);
+		err = l2cap_send_config_req(new);
+		if (err)
+			l2cap_close(new, err);
+
 		return;
 	}
 
-	rp.result = htole16(L2CAP_PSM_NOT_SUPPORTED);
-	l2cap_send_signal(link, L2CAP_CONNECT_RSP, cmd.ident, sizeof(rp), &rp);
+	l2cap_send_connect_rsp(link, cmd.ident,
+				0, cp.scid,
+				L2CAP_PSM_NOT_SUPPORTED);
 }
 
 /*
@@ -338,7 +367,7 @@ l2cap_recv_connect_rsp(struct mbuf *m, struct hci_link *link)
 	if (chan != NULL && chan->lc_lcid != cp.scid)
 		return;
 
-	if (chan == NULL || chan->lc_state != L2CAP_WAIT_CONNECT_RSP) {
+	if (chan == NULL || chan->lc_state != L2CAP_WAIT_RECV_CONNECT_RSP) {
 		l2cap_request_free(req);
 		return;
 	}
@@ -355,7 +384,8 @@ l2cap_recv_connect_rsp(struct mbuf *m, struct hci_link *link)
 		 */
 		l2cap_request_free(req);
 		chan->lc_rcid = cp.dcid;
-		chan->lc_state = L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP;
+		chan->lc_state = L2CAP_WAIT_CONFIG;
+		chan->lc_flags |= (L2CAP_WAIT_CONFIG_REQ | L2CAP_WAIT_CONFIG_RSP);
 		l2cap_send_config_req(chan);
 		break;
 
@@ -404,7 +434,10 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 	cp.flags = le16toh(cp.flags);
 
 	chan = l2cap_cid_lookup(cp.dcid);
-	if (chan == NULL || (chan->lc_state & L2CAP_WAIT_CONFIG_REQ) == 0) {
+	if (chan == NULL || chan->lc_link != link
+	    || chan->lc_state != L2CAP_WAIT_CONFIG
+	    || (chan->lc_flags & L2CAP_WAIT_CONFIG_REQ) == 0) {
+		/* XXX we should really accept reconfiguration requests */
 		l2cap_send_command_rej(link, cmd.ident, L2CAP_REJ_INVALID_CID,
 					L2CAP_NULL_CID, cp.dcid);
 		goto out;
@@ -521,9 +554,9 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 	if ((cp.flags & L2CAP_OPT_CFLAG_BIT) == 0
 	    && rp.result == le16toh(L2CAP_SUCCESS)) {
 
-		chan->lc_state &= ~L2CAP_WAIT_CONFIG_REQ;
+		chan->lc_flags &= ~L2CAP_WAIT_CONFIG_REQ;
 
-		if ((chan->lc_state & L2CAP_WAIT_CONFIG_RSP) == 0) {
+		if ((chan->lc_flags & L2CAP_WAIT_CONFIG_RSP) == 0) {
 			chan->lc_state = L2CAP_OPEN;
 			// XXX how to distinguish REconfiguration?
 			(*chan->lc_proto->connected)(chan->lc_upper);
@@ -576,7 +609,8 @@ l2cap_recv_config_rsp(struct mbuf *m, struct hci_link *link)
 
 	l2cap_request_free(req);
 
-	if (chan == NULL || (chan->lc_state & L2CAP_WAIT_CONFIG_RSP) == 0)
+	if (chan == NULL || chan->lc_state != L2CAP_WAIT_CONFIG
+	    || (chan->lc_flags & L2CAP_WAIT_CONFIG_RSP) == 0)
 		goto out;
 
 	if ((cp.flags & L2CAP_OPT_CFLAG_BIT)) {
@@ -608,9 +642,9 @@ l2cap_recv_config_rsp(struct mbuf *m, struct hci_link *link)
 		 * ignore those..
 		 */
 		if ((cp.flags & L2CAP_OPT_CFLAG_BIT) == 0) {
-			chan->lc_state &= ~L2CAP_WAIT_CONFIG_RSP;
+			chan->lc_flags &= ~L2CAP_WAIT_CONFIG_RSP;
 
-			if ((chan->lc_state & L2CAP_WAIT_CONFIG_REQ) == 0) {
+			if ((chan->lc_flags & L2CAP_WAIT_CONFIG_REQ) == 0) {
 				chan->lc_state = L2CAP_OPEN;
 				// XXX how to distinguish REconfiguration?
 				(*chan->lc_proto->connected)(chan->lc_upper);
@@ -767,7 +801,7 @@ l2cap_recv_disconnect_req(struct mbuf *m, struct hci_link *link)
 	cp.dcid = le16toh(cp.dcid);
 
 	chan = l2cap_cid_lookup(cp.dcid);
-	if (chan == NULL || chan->lc_rcid != cp.scid) {
+	if (chan == NULL || chan->lc_link != link || chan->lc_rcid != cp.scid) {
 		l2cap_send_command_rej(link, cmd.ident, L2CAP_REJ_INVALID_CID,
 					cp.dcid, cp.scid);
 		return;
@@ -1054,4 +1088,20 @@ l2cap_send_disconnect_req(struct l2cap_channel *chan)
 
 	return l2cap_send_signal(chan->lc_link, L2CAP_DISCONNECT_REQ,
 				    chan->lc_link->hl_lastid, sizeof(cp), &cp);
+}
+
+/*
+ * Send Connect Response
+ */
+int
+l2cap_send_connect_rsp(struct hci_link *link, uint8_t ident, uint16_t dcid, uint16_t scid, uint16_t result)
+{
+	l2cap_con_rsp_cp cp;
+
+	memset(&cp, 0, sizeof(cp));
+	cp.dcid = htole16(dcid);
+	cp.scid = htole16(scid);
+	cp.result = htole16(result);
+
+	return l2cap_send_signal(link, L2CAP_CONNECT_RSP, ident, sizeof(cp), &cp);
 }

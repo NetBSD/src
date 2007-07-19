@@ -1,4 +1,4 @@
-.\" $NetBSD: btdevctl.8,v 1.3 2006/09/10 15:45:56 plunky Exp $
+.\" $NetBSD: btdevctl.8,v 1.3.2.1 2007/07/19 16:04:21 liamjfoy Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,10 +51,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: btdevctl.8,v 1.3 2006/09/10 15:45:56 plunky Exp $
+.\" $Id: btdevctl.8,v 1.3.2.1 2007/07/19 16:04:21 liamjfoy Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/bthidcontrol/bthidcontrol.8,v 1.3 2005/01/18 20:02:30 ru Exp $
 .\"
-.Dd September 9, 2006
+.Dd April 10, 2007
 .Dt BTDEVCTL 8
 .Os
 .Sh NAME
@@ -64,6 +64,7 @@
 .Nm
 .Op Fl A | Fl D
 .Op Fl qv
+.Op Fl m Ar mode
 .Fl a Ar address
 .Fl d Ar device
 .Fl s Ar service
@@ -99,6 +100,29 @@ Detach device
 .It Fl d Ar device
 Local device address.
 May be given as BDADDR or device name.
+.It Fl m Ar mode
+Connection link mode.
+The following modes are supported:
+.Pp
+.Bl -tag -compact
+.It none
+clear previously set mode.
+.It auth
+require devices be paired, see
+.Xr btpin 1 .
+.It encrypt
+auth, plus enable encryption.
+.It secure
+encryption, plus change of link key.
+.El
+.Pp
+When configuring the HID service,
+.Nm
+will set
+.Sq auth 
+by default, or
+.Sq encrypt
+for keyboard devices.
 .It Fl q
 Ignore any cached data and perform a SDP query for the given
 .Ar service .
@@ -136,6 +160,7 @@ to YES.
 .It Pa /var/db/btdevctl.plist
 .El
 .Sh SEE ALSO
+.Xr btpin 1 ,
 .Xr bthidev 4 ,
 .Xr bthub 4 ,
 .Xr btsco 4 ,

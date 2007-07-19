@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.1.4.2 2007/03/26 21:14:24 jdc Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.1.4.3 2007/07/19 16:04:22 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert\n"
 	    "@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.1.4.2 2007/03/26 21:14:24 jdc Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.1.4.3 2007/07/19 16:04:22 liamjfoy Exp $");
 
 #include <bluetooth.h>
 #include <ctype.h>
@@ -82,13 +82,15 @@ __RCSID("$NetBSD: rfcomm_sppd.c,v 1.1.4.2 2007/03/26 21:14:24 jdc Exp $");
 #include <termios.h>
 #include <unistd.h>
 
+#include <netbt/rfcomm.h>
+
 #include "rfcomm_sdp.h"
 
 #define max(a, b)	((a) > (b) ? (a) : (b))
 
 int open_tty(const char *);
-int open_client(bdaddr_t *, bdaddr_t *, const char *);
-int open_server(bdaddr_t *, uint8_t, const char *);
+int open_client(bdaddr_t *, bdaddr_t *, int, const char *);
+int open_server(bdaddr_t *, uint8_t, int, const char *);
 void copy_data(int, int);
 void sighandler(int);
 void usage(void);
@@ -115,7 +117,10 @@ struct service {
 	  SDP_SERVICE_CLASS_SERIAL_PORT,
 	  sizeof(struct sdp_sp_profile)
 	},
-	{ NULL }
+	{ NULL,		NULL,
+	  0,
+	  0
+	}
 };
 
 int
@@ -124,8 +129,9 @@ main(int argc, char *argv[])
 	struct termios		t;
 	bdaddr_t		laddr, raddr;
 	fd_set			rdset;
-	char			*ep, *service, *tty;
-	int			n, rfcomm, tty_in, tty_out;
+	const char		*service;
+	char			*ep, *tty;
+	int			lm, n, rfcomm, tty_in, tty_out;
 	uint8_t			channel;
 
 	bdaddr_copy(&laddr, BDADDR_ANY);
@@ -133,9 +139,10 @@ main(int argc, char *argv[])
 	service = "SP";
 	tty = NULL;
 	channel = 0;
+	lm = 0;
 
 	/* Parse command line options */
-	while ((n = getopt(argc, argv, "a:c:d:hs:t:")) != -1) {
+	while ((n = getopt(argc, argv, "a:c:d:hm:s:t:")) != -1) {
 		switch (n) {
 		case 'a': /* remote device address */
 			if (!bt_aton(optarg, &raddr)) {
@@ -159,6 +166,18 @@ main(int argc, char *argv[])
 		case 'd': /* local device address */
 			if (!bt_devaddr(optarg, &laddr))
 				err(EXIT_FAILURE, "%s", optarg);
+
+			break;
+
+		case 'm': /* Link Mode */
+			if (strcasecmp(optarg, "auth") == 0)
+				lm = RFCOMM_LM_AUTH;
+			else if (strcasecmp(optarg, "encrypt") == 0)
+				lm = RFCOMM_LM_ENCRYPT;
+			else if (strcasecmp(optarg, "secure") == 0)
+				lm = RFCOMM_LM_SECURE;
+			else
+				errx(EXIT_FAILURE, "%s: unknown mode", optarg);
 
 			break;
 
@@ -202,9 +221,9 @@ main(int argc, char *argv[])
 
 	/* open RFCOMM */
 	if (channel == 0)
-		rfcomm = open_client(&laddr, &raddr, service);
+		rfcomm = open_client(&laddr, &raddr, lm, service);
 	else
-		rfcomm = open_server(&laddr, channel, service);
+		rfcomm = open_server(&laddr, channel, lm, service);
 
 	/*
 	 * now we are ready to go, so either detach or maybe turn
@@ -310,7 +329,7 @@ open_tty(const char *tty)
 }
 
 int
-open_client(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
+open_client(bdaddr_t *laddr, bdaddr_t *raddr, int lm, const char *service)
 {
 	struct sockaddr_bt sa;
 	struct service *s;
@@ -354,6 +373,9 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 	if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &l, sizeof(l)) < 0)
 		err(EXIT_FAILURE, "linger()");
 
+	if (setsockopt(fd, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) < 0)
+		err(EXIT_FAILURE, "link mode");
+
 	sa.bt_channel = channel;
 	bdaddr_copy(&sa.bt_bdaddr, raddr);
 
@@ -373,7 +395,7 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 #define pdu_len		sizeof(struct sdp_lan_profile)
 
 int
-open_server(bdaddr_t *laddr, uint8_t channel, const char *service)
+open_server(bdaddr_t *laddr, uint8_t channel, int lm, const char *service)
 {
 	struct sockaddr_bt sa;
 	struct linger l;
@@ -395,6 +417,9 @@ open_server(bdaddr_t *laddr, uint8_t channel, const char *service)
 	if (bind(sv, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		err(EXIT_FAILURE, "bind(%s, %d)", bt_ntoa(laddr, NULL),
 						  channel);
+
+	if (setsockopt(sv, BTPROTO_RFCOMM, SO_RFCOMM_LM, &lm, sizeof(lm)) < 0)
+		err(EXIT_FAILURE, "link mode");
 
 	if (listen(sv, 1) < 0)
 		err(EXIT_FAILURE, "listen()");
@@ -477,17 +502,20 @@ reset_tio(void)
 void
 usage(void)
 {
+	const char *cmd = getprogname();
 	struct service *s;
 
-	fprintf(stderr, "Usage: %s  [-d device] [-s service] [-t tty] -a bdaddr | -c channel\n"
+	fprintf(stderr, "Usage: %s [-d device] [-m mode] [-s service] [-t tty]\n"
+			"       %*s {-a bdaddr | -c channel}\n"
 			"\n"
 			"Where:\n"
 			"\t-a bdaddr    remote device address\n"
 			"\t-c channel   local RFCOMM channel\n"
 			"\t-d device    local device address\n"
+			"\t-m mode      link mode\n"
 			"\t-s service   service class\n"
 			"\t-t tty       run in background using pty\n"
-			"\n", getprogname());
+			"\n", cmd, (int)strlen(cmd), "");
 
 	fprintf(stderr, "Known service classes:\n");
 	for (s = services ; s->name != NULL ; s++)

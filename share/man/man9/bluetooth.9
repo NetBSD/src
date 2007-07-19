@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.9,v 1.1 2006/06/19 15:44:44 gdamore Exp $
+.\"	$NetBSD: bluetooth.9,v 1.1.4.1 2007/07/19 16:04:22 liamjfoy Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 4, 2006
+.Dd April 10, 2007
 .Dt BLUETOOTH 9
 .Os
 .Sh NAME
@@ -143,6 +143,7 @@ struct btproto {
 	void (*disconnected)(void *, int);
 	void *(*newconn)(void *, struct sockaddr_bt *, struct sockaddr_bt *);
 	void (*complete)(void *, int);
+	void (*linkmode)(void *, int);
 	void (*input)(void *, struct mbuf *);
 };
 .Ed
@@ -347,6 +348,11 @@ amount of data can be removed from the socket buffer. The units of the
 .Ar count
 value will be dependent on the protocol being used (eg RFCOMM is bytes,
 but L2CAP is packets)
+.It Fn "(*linkmode)" "ref" "mode"
+This function will be called for established connections, when the link mode
+of the baseband link has changed.
+.Ar mode
+is the new mode.
 .It Fn "(*input)" "ref" "mbuf"
 This function is called to supply new data on the connection described by
 .Ar ref .
