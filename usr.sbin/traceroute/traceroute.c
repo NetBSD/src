@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.68 2006/10/07 17:27:57 elad Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.68.2.1 2007/07/19 14:38:19 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.68 2006/10/07 17:27:57 elad Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.68.2.1 2007/07/19 14:38:19 liamjfoy Exp $");
 #endif
 #endif
 
@@ -1319,8 +1319,7 @@ again:
 			outudp->uh_sum = 0;
 			sum = in_cksum2(0, (u_int16_t *)&phdr, sizeof(phdr));
 			sum = in_cksum2(sum, (u_int16_t *)outudp, ntohs(outudp->uh_ulen));
-			sum = ~sum;	/** XXXSCW: Quell SuperH Compiler Bug */
-			outudp->uh_sum = sum;
+			outudp->uh_sum = ~sum;
 			if (outudp->uh_sum == 0)
 				outudp->uh_sum = 0xffff;
 		}
