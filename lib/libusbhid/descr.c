@@ -1,4 +1,4 @@
-/*	$NetBSD: descr.c,v 1.4 2003/07/26 19:25:08 salo Exp $	*/
+/*	$NetBSD: descr.c,v 1.4.16.1 2007/07/19 16:04:21 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: descr.c,v 1.4 2003/07/26 19:25:08 salo Exp $");
+__RCSID("$NetBSD: descr.c,v 1.4.16.1 2007/07/19 16:04:21 liamjfoy Exp $");
 
 #include <sys/types.h>
 
@@ -58,7 +58,7 @@ hid_get_report_desc(int fd)
 }
 
 report_desc_t
-hid_use_report_desc(unsigned char *data, unsigned int size)
+hid_use_report_desc(const uint8_t *data, unsigned int size)
 {
 	report_desc_t r;
 

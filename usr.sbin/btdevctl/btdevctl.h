@@ -1,4 +1,4 @@
-/*	$NetBSD: btdevctl.h,v 1.2 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: btdevctl.h,v 1.2.2.1 2007/07/19 16:04:21 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -43,5 +43,6 @@ void cfg_print(prop_dictionary_t);
 
 /* sdp.c */
 prop_dictionary_t cfg_query(bdaddr_t *, bdaddr_t *, const char *);
+const char *hid_mode(prop_data_t);
 
 #endif /* __BTDEVCTL_H__ */

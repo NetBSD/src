@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.1.18.1 2007/07/19 16:04:17 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.18.1 2007/07/19 16:04:17 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1 2006/06/19 15:44:45 gdamore Exp 
  * Config failed
  * Other end reported invalid CID
  * Normal disconnection
+ * Change link mode failed
  */
 void
 l2cap_close(struct l2cap_channel *chan, int err)
@@ -135,7 +136,8 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 	}
 
 	chan = l2cap_cid_lookup(hdr.dcid);
-	if (chan) {
+	if (chan != NULL && chan->lc_link == link
+	    && chan->lc_state == L2CAP_OPEN) {
 		(*chan->lc_proto->input)(chan->lc_upper, m);
 		return;
 	}
