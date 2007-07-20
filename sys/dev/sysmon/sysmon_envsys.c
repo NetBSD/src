@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.31 2007/07/20 10:47:25 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.32 2007/07/20 14:59:58 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.31 2007/07/20 10:47:25 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.32 2007/07/20 14:59:58 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1079,6 +1079,8 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 						    dict,
 						    "drive-state",
 						    esds[j].desc);
+			if (error)
+				break;
 		}
 	}
 
