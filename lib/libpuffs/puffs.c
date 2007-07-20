@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.60 2007/07/19 12:52:28 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.61 2007/07/20 13:14:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.60 2007/07/19 12:52:28 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.61 2007/07/20 13:14:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -574,6 +574,8 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 
 		/* iterate over the results */
 		for (curev = pfctrl->evs; ndone--; curev++) {
+			int what;
+
 			/* get & possibly dispatch events from kernel */
 			if (curev->ident == puffsfd) {
 				if (puffs_req_handle(pgr, ppr, 0) == -1)
@@ -589,14 +591,22 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 				/* XXX: how to know if it's a transient error */
 				puffs_framev_writeclose(pu, fio,
 				    (int)curev->data);
+				puffs_framev_notify(fio, PUFFS_FBIO_ERROR);
 				continue;
 			}
 
-			if (curev->filter == EVFILT_READ)
+			what = 0;
+			if (curev->filter == EVFILT_READ) {
 				puffs_framev_input(pu, pfctrl, fio, ppr);
+				what |= PUFFS_FBIO_READ;
+			}
 
-			else if (curev->filter == EVFILT_WRITE)
+			else if (curev->filter == EVFILT_WRITE) {
 				puffs_framev_output(pu, pfctrl, fio, ppr);
+				what |= PUFFS_FBIO_WRITE;
+			}
+			if (what)
+				puffs_framev_notify(fio, what);
 		}
 
 		/*
