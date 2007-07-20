@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.30 2007/07/20 10:40:07 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.31 2007/07/20 10:47:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.30 2007/07/20 10:40:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.31 2007/07/20 10:47:25 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1146,6 +1146,9 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 					break;
 				}
 			}
+
+			if (error)
+				break;
 
 			error = sme_sensor_upstring(obj,
 						    dict,
