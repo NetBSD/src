@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.29 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: EXPLORA451,v 1.30 2007/07/20 13:39:58 hannken Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -56,7 +56,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=330000
+options 	SYMTAB_SPACE=350000
 
 # Compatibility options
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
