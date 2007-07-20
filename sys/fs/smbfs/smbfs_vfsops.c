@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.67 2007/07/17 11:19:33 pooka Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.68 2007/07/20 16:46:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.67 2007/07/17 11:19:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.68 2007/07/20 16:46:44 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -461,7 +461,7 @@ loop:
 			
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0) {
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
