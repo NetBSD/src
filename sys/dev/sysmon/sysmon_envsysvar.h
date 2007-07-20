@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.7 2007/07/20 10:40:08 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.8 2007/07/20 14:10:22 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/systm.h>
 #include <sys/mutex.h>
 #include <sys/workqueue.h>
+#include <sys/condvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
@@ -67,120 +68,6 @@
 do {									\
 	DPRINTFOBJ(("%s: obj (%s:%d) updated\n", __func__, (a), (b)));	\
 } while (/* CONSTCOND */ 0)
-
-/*
- * Functions to create objects in a dictionary if they do not exist, or
- * for updating its value it value provided doesn't match with the value
- * in dictionary.
- */
-static inline int
-sme_sensor_upbool(prop_object_t obj, prop_dictionary_t dict,
-		  const char *key, bool val)
-{
-	KASSERT(dict != NULL);
-
-	obj = prop_dictionary_get(dict, key);
-	if (obj) {
-		if (prop_bool_true(obj) != val) {
-			if (!prop_dictionary_set_bool(dict, key, val)) {
-				DPRINTF(("%s: (up) set_bool %s:%d\n",
-				    __func__, key, val));
-				return EINVAL;
-			}
-			SENSOR_OBJUPDATED(key, val);
-		}
-	} else {
-		if (!prop_dictionary_set_bool(dict, key, val)) {
-			DPRINTF(("%s: (set) set_bool %s:%d\n",
-			    __func__, key, val));
-			return EINVAL;
-		}
-	}
-
-	return 0;
-}
-
-static inline int
-sme_sensor_upint32(prop_object_t obj, prop_dictionary_t dict,
-		   const char *key, int32_t val)
-{
-	KASSERT(dict != NULL);
-
-	obj = prop_dictionary_get(dict, key);
-	if (obj) {
-		if (!prop_number_equals_integer(obj, val)) {
-			if (!prop_dictionary_set_int32(dict, key, val)) {
-				DPRINTF(("%s: (up) set_int32 %s:%d\n",
-				    __func__, key, val));
-				return EINVAL;
-			}
-			SENSOR_OBJUPDATED(key, val);
-		}
-	} else {
-		if (!prop_dictionary_set_int32(dict, key, val)) {
-			DPRINTF(("%s: (set) set_int32 %s:%d\n",
-			    __func__, key, val));
-			return EINVAL;
-		}
-	}
-
-	return 0;
-}
-
-static inline int
-sme_sensor_upuint32(prop_object_t obj, prop_dictionary_t dict,
-		    const char *key, uint32_t val)
-{
-	KASSERT(dict != NULL);
-
-	obj = prop_dictionary_get(dict, key);
-	if (obj) {
-		if (!prop_number_equals_unsigned_integer(obj, val)) {
-			if (!prop_dictionary_set_uint32(dict, key, val)) {
-				DPRINTF(("%s: (up) set_uint32 %s:%d\n",
-				    __func__, key, val));
-				return EINVAL;
-			}
-			SENSOR_OBJUPDATED(key, val);
-		}
-	} else {
-		if (!prop_dictionary_set_uint32(dict, key, val)) {
-			DPRINTF(("%s: (set) set_uint32 %s:%d\n",
-			    __func__, key, val));
-			return EINVAL;
-		}
-	}
-
-	return 0;
-}
-
-static inline int
-sme_sensor_upstring(prop_object_t obj, prop_dictionary_t dict,
-		    const char *key, const char *str)
-{
-	KASSERT(dict != NULL);
-
-	obj = prop_dictionary_get(dict, key);
-	if (obj == NULL) {
-		if (!prop_dictionary_set_cstring_nocopy(dict, key, str)) {
-			DPRINTF(("%s: (up) set_cstring %s:%s\n",
-			    __func__, key, str));
-			return EINVAL;
-		}
-	} else {
-		if (!prop_string_equals_cstring(obj, str)) {
-			if (!prop_dictionary_set_cstring_nocopy(dict,
-								key,
-								str)) {
-				DPRINTF(("%s: (set) set_cstring %s:%s\n",
-				    __func__, key, str));
-				return EINVAL;
-			}
-		}
-	}
-
-	return 0;
-}
 
 /* struct used by a sysmon envsys event */
 typedef struct sme_event {
@@ -233,5 +120,15 @@ int	sme_event_add(prop_dictionary_t, envsys_data_t *,
 int	sme_events_init(void);
 void	sme_events_check(void *);
 void	sme_events_worker(struct work *, void *);
+
+/* common functions to create/update objects in a dictionary */
+int	sme_sensor_upbool(prop_object_t, prop_dictionary_t,
+			  const char *, bool);
+int	sme_sensor_upint32(prop_object_t, prop_dictionary_t,
+			   const char *, int32_t);
+int	sme_sensor_upuint32(prop_object_t, prop_dictionary_t,
+			    const char *, uint32_t);
+int	sme_sensor_upstring(prop_object_t, prop_dictionary_t,
+			    const char *, const char *);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */
