@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.22 2006/12/20 16:33:34 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.23 2007/07/20 18:58:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -400,7 +400,9 @@ main(int argc, char **argv)
 					logerr("Can't stat supfile %s",
 					    supfname);
 				else if (sfmtime != sbuf.st_mtime ||
+#ifndef __CYGWIN__	/* Cygwin's inodes are not constant */
 					    sfino != sbuf.st_ino ||
+#endif
 				    sfdev != sbuf.st_dev) {
 					restart = 1;
 					break;
