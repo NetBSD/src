@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.25 2007/01/27 03:57:44 cbiere Exp $	*/
+/*	$NetBSD: endian.h,v 1.26 2007/07/20 15:07:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -232,8 +232,8 @@ be16enc(void *buf, uint16_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
 
-	p[0] = ((unsigned)u >> 8) & 0xff;
-	p[1] = u & 0xff;
+	p[0] = (uint8_t)(((unsigned)u >> 8) & 0xff);
+	p[1] = (uint8_t)(u & 0xff);
 }
 
 static __inline void __unused
@@ -241,8 +241,8 @@ le16enc(void *buf, uint16_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
 
-	p[0] = u & 0xff;
-	p[1] = ((unsigned)u >> 8) & 0xff;
+	p[0] = (uint8_t)(u & 0xff);
+	p[1] = (uint8_t)(((unsigned)u >> 8) & 0xff);
 }
 
 static __inline uint16_t __unused
@@ -250,7 +250,7 @@ be16dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
 
-	return ((p[0] << 8) | p[1]);
+	return (uint16_t)((p[0] << 8) | p[1]);
 }
 
 static __inline uint16_t __unused
@@ -258,7 +258,7 @@ le16dec(const void *buf)
 {
 	const uint8_t *p = (const uint8_t *)buf;
 
-	return ((p[1] << 8) | p[0]);
+	return (uint16_t)((p[1] << 8) | p[0]);
 }
 
 static __inline void __unused
@@ -266,10 +266,10 @@ be32enc(void *buf, uint32_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
 
-	p[0] = (u >> 24) & 0xff;
-	p[1] = (u >> 16) & 0xff;
-	p[2] = (u >> 8) & 0xff;
-	p[3] = u & 0xff;
+	p[0] = (uint8_t)((u >> 24) & 0xff);
+	p[1] = (uint8_t)((u >> 16) & 0xff);
+	p[2] = (uint8_t)((u >> 8) & 0xff);
+	p[3] = (uint8_t)(u & 0xff);
 }
 
 static __inline void __unused
@@ -277,10 +277,10 @@ le32enc(void *buf, uint32_t u)
 {
 	uint8_t *p = (uint8_t *)buf;
 
-	p[0] = u & 0xff;
-	p[1] = (u >> 8) & 0xff;
-	p[2] = (u >> 16) & 0xff;
-	p[3] = (u >> 24) & 0xff;
+	p[0] = (uint8_t)(u & 0xff);
+	p[1] = (uint8_t)((u >> 8) & 0xff);
+	p[2] = (uint8_t)((u >> 16) & 0xff);
+	p[3] = (uint8_t)((u >> 24) & 0xff);
 }
 
 static __inline uint32_t __unused
