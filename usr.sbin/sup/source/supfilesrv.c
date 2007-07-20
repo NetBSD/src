@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.37 2006/12/20 16:33:34 christos Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.38 2007/07/20 16:39:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -571,9 +571,11 @@ init(int argc, char **argv)
 		case '4':
 			af = AF_INET;
 			break;
+#ifdef AF_INET6
 		case '6':
 			af = AF_INET6;
 			break;
+#endif
 		default:
 			fprintf(stderr, "Unknown flag %s ignored\n", argv[0]);
 			break;

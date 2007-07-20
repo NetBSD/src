@@ -1,4 +1,4 @@
-/*	$NetBSD: ffilecopy.c,v 1.6 2003/04/03 17:14:24 christos Exp $	*/
+/*	$NetBSD: ffilecopy.c,v 1.7 2007/07/20 16:39:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -61,7 +61,7 @@ ffilecopy(FILE * here, FILE * there)
 	if (fflush(there) == EOF)	/* flush pending output */
 		return (EOF);
 
-#if	defined(__386BSD__) || defined(__NetBSD__)
+#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__CYGWIN__)
 	if ((here->_r) > 0) {	/* flush buffered input */
 		i = write(therefile, here->_p, here->_r);
 		if (i != here->_r)
@@ -84,7 +84,7 @@ ffilecopy(FILE * here, FILE * there)
 	if (i < 0)
 		return (EOF);
 
-#if	defined(__386BSD__) || defined(__NetBSD__)
+#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__CYGWIN__)
 	(here->_flags) |= __SEOF;	/* indicate EOF */
 #else
 #ifndef __linux__

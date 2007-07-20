@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.23 2006/05/09 20:18:10 mrg Exp $	*/
+/*	$NetBSD: scm.c,v 1.24 2007/07/20 16:39:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -173,10 +173,17 @@
 #include <net/if.h>
 #include <netdb.h>
 #include <stdarg.h>
-#ifndef __linux__
+#if !defined(__linux__)
+#if !defined(__CYGWIN__)
 #include <ifaddrs.h>
 #else
+#include "ifaddrs.h"
+#endif
+#else
 #include <sys/ioctl.h>
+#endif
+#ifdef __CYGWIN__
+#include "getaddrinfo.h"
 #endif
 #include "supcdefs.h"
 #include "supextern.h"
