@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.12 2007/07/07 05:27:22 xtraeme Exp $	*/
+/*	$NetBSD: it.c,v 1.13 2007/07/20 07:23:47 xtraeme Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.12 2007/07/07 05:27:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.13 2007/07/20 07:23:47 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ it_setup_sensors(struct it_softc *sc)
 	/* voltages */
 	for (i = IT_VOLTSTART_IDX; i < IT_FANSTART_IDX; i++) {
 		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
-		sc->sc_data[i].rfact = ENVSYS_FCHANGERFACT;
+		sc->sc_data[i].flags = ENVSYS_FCHANGERFACT;
 	}
 
 	COPYDESCR(sc->sc_data[3].desc, "VCORE_A");
