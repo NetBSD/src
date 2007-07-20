@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.17 2007/07/20 13:14:55 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.18 2007/07/20 14:55:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.17 2007/07/20 13:14:55 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.18 2007/07/20 14:55:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -682,7 +682,7 @@ int
 puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	struct puffs_fctrl_io *fio, struct puffs_putreq *ppr)
 {
-	struct puffs_framebuf *pufbuf, *pufbuf_next;
+	struct puffs_framebuf *pufbuf;
 	int rv, complete, done;
 
 	if (fio->stat & FIO_DEAD)
@@ -690,9 +690,8 @@ puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 
 	for (pufbuf = TAILQ_FIRST(&fio->snd_qing), done = 0;
 	    pufbuf && (fio->stat & FIO_DEAD) == 0 && fio->stat & FIO_ENABLE_W;
-	    pufbuf = pufbuf_next) {
+	    pufbuf = TAILQ_FIRST(&fio->snd_qing)) {
 		complete = 0;
-		pufbuf_next = TAILQ_NEXT(pufbuf, pfb_entries);
 		rv = fctrl->wfb(pu, pufbuf, fio->io_fd, &complete);
 
 		if (rv) {
