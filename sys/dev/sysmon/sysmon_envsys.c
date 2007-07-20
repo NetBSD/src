@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.29 2007/07/19 17:06:25 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.30 2007/07/20 10:40:07 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.29 2007/07/19 17:06:25 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.30 2007/07/20 10:40:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -722,6 +722,7 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	prop_dictionary_t dict;
+	prop_object_t obj = NULL;
 	int i, j, k;
 
 	i = j = k = 0;
@@ -760,8 +761,12 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<string>blah blah</string>
 	 * 		...
 	 */
-	SENSOR_SSTRING(dict, "type", est[i].desc);
-	SENSOR_SSTRING(dict, "description", edata->desc);
+	if (sme_sensor_upstring(obj, dict, "type", est[i].desc))
+		goto out;
+
+	if (sme_sensor_upstring(obj, dict, "description", edata->desc))
+		goto out;
+
 
 	/*
 	 * Add sensor's state description.
@@ -775,7 +780,8 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		if (ess[j].type == edata->state) 
 			break;
 
-	SENSOR_SSTRING(dict, "state", ess[j].desc);
+	if (sme_sensor_upstring(obj, dict, "state", ess[j].desc))
+		goto out;
 
 	/*
 	 * add the percentage boolean object:
@@ -786,7 +792,8 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	if (edata->flags & ENVSYS_FPERCENT)
-		SENSOR_SBOOL(dict, "want-percentage", true);
+		if (sme_sensor_upbool(obj, dict, "want-percentage", true))
+			goto out;
 
 	/*
 	 * Add the monitoring boolean object:
@@ -803,9 +810,11 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
 	    (edata->units == ENVSYS_INDICATOR) ||
 	    (edata->units == ENVSYS_DRIVE)) {
-		SENSOR_SBOOL(dict, "monitoring-supported", false);
+		if (sme_sensor_upbool(obj, dict, "monitoring-supported", false))
+			goto out;
 	} else {
-		SENSOR_SBOOL(dict, "monitoring-supported", true);
+		if (sme_sensor_upbool(obj, dict, "monitoring-supported", true))
+			goto out;
 	}
 
 	/*
@@ -820,7 +829,9 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		for (k = 0; esds[k].type != -1; k++)
 			if (esds[k].type == edata->value_cur)
 				break;
-		SENSOR_SSTRING(dict, "drive-state", esds[k].desc);
+
+		if (sme_sensor_upstring(obj, dict, "drive-state", esds[k].desc))
+			goto out;
 	}
 
 	mutex_exit(&sme_mtx);
@@ -859,23 +870,45 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		 * </dict>
 		 */
 		if ((edata->units == ENVSYS_SFANRPM) && edata->rpms)
-			SENSOR_SUINT32(dict, "rpms", edata->rpms);
+			if (sme_sensor_upuint32(obj, dict, "rpms", edata->rpms))
+				goto out;
 
 		if ((edata->units == ENVSYS_SVOLTS_AC ||
 		    edata->units == ENVSYS_SVOLTS_DC) && edata->rfact)
-			SENSOR_SINT32(dict, "rfact", edata->rfact);
+			if (sme_sensor_upint32(obj, dict, "rfact", edata->rfact))
+				goto out;
 
-		if (edata->value_cur)
-			SENSOR_SINT32(dict, "cur-value", edata->value_cur);
+		if (edata->value_cur) {
+			if (sme_sensor_upint32(obj,
+					       dict,
+					       "cur-value",
+					       edata->value_cur))
+				goto out;
+		}
 
-		if ((edata->flags & ENVSYS_FVALID_MIN) && edata->value_min)
-			SENSOR_SINT32(dict, "min-value", edata->value_min);
+		if ((edata->flags & ENVSYS_FVALID_MIN) && edata->value_min) {
+			if (sme_sensor_upint32(obj,
+					       dict,
+					       "min-value",
+					       edata->value_min))
+				goto out;
+		}
 
-		if ((edata->flags & ENVSYS_FVALID_MAX) && edata->value_max)
-			SENSOR_SINT32(dict, "max-value", edata->value_max);
+		if ((edata->flags & ENVSYS_FVALID_MAX) && edata->value_max) {
+			if (sme_sensor_upint32(obj,
+					       dict,
+					       "max-value",
+					       edata->value_max))
+				goto out;
+		}
 
-		if ((edata->flags & ENVSYS_FVALID_AVG) && edata->value_avg)
-			SENSOR_SINT32(dict, "avg-value", edata->value_avg);
+		if ((edata->flags & ENVSYS_FVALID_AVG) && edata->value_avg) {
+			if (sme_sensor_upint32(obj,
+					       dict,
+					       "avg-value",
+					       edata->value_avg))
+				goto out;
+		}
 	}
 
 	/*
@@ -901,8 +934,10 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	const struct sme_sensor_state *ess = sme_sensor_state;
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
 	envsys_data_t *edata = NULL;
-	prop_object_t array, obj, dict = NULL;
+	prop_object_t array, obj, dict;
 	int i, j, error = 0;
+
+	array = obj = dict = NULL;
 
 	/* retrieve the array of dictionaries in device. */
 	array = prop_dictionary_get(sme_propd, sme->sme_name);
@@ -956,10 +991,17 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		    ess[j].type, edata->flags, edata->units, edata->sensor));
 
 		/* update sensor state */
-		SENSOR_UPSTRING(dict, "state", ess[j].desc);
+		error = sme_sensor_upstring(obj, dict, "state", ess[j].desc);
+		if (error)
+			break;
 
 		/* update sensor current value */
-		SENSOR_UPINT32(dict, "cur-value", edata->value_cur);
+		error = sme_sensor_upint32(obj,
+					   dict,
+					   "cur-value",
+					   edata->value_cur);
+		if (error)
+			break;
 
 		/*
 		 * Integer and Indicator types do not the following
@@ -970,31 +1012,61 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			continue;
 
 		/* update sensor flags */
-		if (edata->flags & ENVSYS_FPERCENT)
-			SENSOR_SBOOL(dict, "want-percentage", true);
-		else {
-			obj = prop_dictionary_get(dict, "want-percentage");
-			if (obj)
-				SENSOR_SBOOL(dict, "want-percentage", false);
+		if (edata->flags & ENVSYS_FPERCENT) {
+			error = sme_sensor_upbool(obj,
+						  dict,
+						  "want-percentage",
+						  true);
+			if (error)
+				break;
 		}
 
-		if (edata->flags & ENVSYS_FVALID_MAX)
-			SENSOR_UPINT32(dict, "max-value", edata->value_max);
+		if (edata->flags & ENVSYS_FVALID_MAX) {
+			error = sme_sensor_upint32(obj,
+						   dict,
+						   "max-value",
+						   edata->value_max);
+			if (error)
+				break;
+		}
+						   
+		if (edata->flags & ENVSYS_FVALID_MIN) {
+			error = sme_sensor_upint32(obj,
+						   dict,
+						   "min-value",
+						   edata->value_min);
+			if (error)
+				break;
+		}
 
-		if (edata->flags & ENVSYS_FVALID_MIN)
-			SENSOR_UPINT32(dict, "min-value", edata->value_min);
-
-		if (edata->flags & ENVSYS_FVALID_AVG)
-			SENSOR_UPINT32(dict, "avg-value", edata->value_avg);
+		if (edata->flags & ENVSYS_FVALID_AVG) {
+			error = sme_sensor_upint32(obj,
+						   dict,
+						   "avg-value",
+						   edata->value_avg);
+			if (error)
+				break;
+		}
 
 		/* update 'rpms' only in ENVSYS_SFANRPM. */
-		if (edata->units == ENVSYS_SFANRPM)
-			SENSOR_UPUINT32(dict, "rpms", edata->rpms);
+		if (edata->units == ENVSYS_SFANRPM) {
+			error = sme_sensor_upuint32(obj,
+						    dict,
+						    "rpms",
+						    edata->rpms);
+			if (error)
+				break;
+		}
 
 		/* update 'rfact' only in ENVSYS_SVOLTS_[AD]C. */
 		if (edata->units == ENVSYS_SVOLTS_AC ||
 		    edata->units == ENVSYS_SVOLTS_DC) {
-			SENSOR_UPINT32(dict, "rfact", edata->rfact);
+			error = sme_sensor_upint32(obj,
+						   dict,
+						   "rfact",
+						   edata->rfact);
+			if (error)
+				break;
 		}
 		
 		/* update 'drive-state' only in ENVSYS_DRIVE. */
@@ -1003,11 +1075,13 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 				if (esds[j].type == edata->value_cur)
 					break;
 
-			SENSOR_UPSTRING(dict, "drive-state", esds[j].desc);
+			error = sme_sensor_upstring(obj,
+						    dict,
+						    "drive-state",
+						    esds[j].desc);
 		}
 	}
 
-out:
 	return error;
 }
 
@@ -1069,13 +1143,14 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 				nedata = &sme->sme_sensor_data[i];
 				if (strcmp(blah, nedata->desc) == 0) {
 					error = EEXIST;
-					goto out;
+					break;
 				}
 			}
 
-			SENSOR_UPSTRING(dict, "description", blah);
-			(void)strlcpy(edata->desc, blah, sizeof(edata->desc));
-
+			error = sme_sensor_upstring(obj,
+						    dict,
+						    "description",
+						    blah);
 			break;
 		}
 
@@ -1211,6 +1286,5 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	if (!targetfound)
 		error = EINVAL;
 
-out:
 	return error;
 }

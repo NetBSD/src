@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.15 2007/07/18 20:31:48 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.16 2007/07/20 10:40:08 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.15 2007/07/18 20:31:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.16 2007/07/20 10:40:08 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -420,7 +420,7 @@ out:
 	/* update the object in the dictionary */
 	if (objkey && critval) {
 		mutex_enter(&sme_event_mtx);
-		SENSOR_UPINT32(sdict, objkey, critval);
+		error = sme_sensor_upint32(obj, sdict, objkey, critval);
 		mutex_exit(&sme_event_mtx);
 	}
 
