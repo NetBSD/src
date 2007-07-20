@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.14 2007/07/12 22:58:50 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.15 2007/07/20 22:21:51 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.14 2007/07/12 22:58:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.15 2007/07/20 22:21:51 macallan Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.14 2007/07/12 22:58:50 macallan Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/kernel.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -286,7 +287,7 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = sa->sa_bustag;
 	sc->sc_dmat = sa->sa_dmatag;
-	sc->sc_powerstate = PWR_RESUME;
+	sc->sc_powerstate = 1;
 
 	pwr = prom_getpropint(sa->sa_node,"pwr-on-auxio",0);
 	aprint_normal(": rev %s\n", ver);
@@ -422,6 +423,7 @@ dbri_bring_up(struct dbri_softc *sc)
 
 	if (sc->sc_have_powerctl == 0)
 		return;
+
 	if (sc->sc_powerstate == 1)
 		return;
 
@@ -767,6 +769,7 @@ mmcodec_init(struct dbri_softc *sc)
 	if (reg2 & DBRI_PIO0) {
 		aprint_normal("%s: speakerbox detected\n",
 		    sc->sc_dev.dv_xname);
+		bus_space_write_4(iot, ioh, DBRI_REG2, DBRI_PIO2_ENABLE);
 		sc->sc_mm.onboard = 0;
 	}
 
@@ -958,6 +961,7 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t val;
 	u_int32_t tmp;
+	int bail = 0;
 #if DBRI_SPIN
 	int i;
 #endif
@@ -967,6 +971,9 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	 * happens. This avoids clicking noises.
 	 */
 	mmcodec_setgain(sc, 1);
+	delay(125);
+
+	bus_space_write_4(iot, ioh, DBRI_REG2, 0);
 	delay(125);
 
 	/* enable control mode */
@@ -1017,11 +1024,18 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 		return (-1);
 	}
 #else
-	while ((sc->sc_mm.status & 0xe4) != 0x20) {
+	while (((sc->sc_mm.status & 0xe4) != 0x20) && (bail < 10)) {
 		DPRINTF("%s: tsleep %p\n", sc->sc_dev.dv_xname, sc);
-		tsleep(sc, PCATCH | PZERO, "dbrifxdt", 0);
+		tsleep(sc, PCATCH | PZERO, "dbrifxdt", hz);
+		bail++;
 	}
 #endif
+	if (bail >= 10) {
+		DPRINTF("%s: switching to control mode timed out (%x %x)\n",
+		    sc->sc_dev.dv_xname, sc->sc_mm.status,
+		    bus_space_read_4(iot, ioh, DBRI_REG2));
+		return -1;
+	}
 
 	/* copy the version information before it becomes unreadable again */
 	sc->sc_version = sc->sc_mm.version;
@@ -1638,7 +1652,7 @@ dbri_set_params(void *hdl, int setmode, int usemode,
 	    p->sample_rate, p->precision, p->channels); 
 		if (auconv_set_converter(dbri_formats, DBRI_NFORMATS,
 					 mode, p, true, fil) < 0) {
-			aprint_error("dbri_set_params: auconv_set_converter failed\n");
+			aprint_debug("dbri_set_params: auconv_set_converter failed\n");
 			return EINVAL;
 		}
 		if (fil->req_size > 0)
@@ -1958,7 +1972,8 @@ dbri_trigger_output(void *hdl, void *start, void *end, int blksize,
 
 	if (sc->sc_recording == 0) {
 		/* do not muck with the codec when it's already in use */
-		mmcodec_setcontrol(sc);
+		if (mmcodec_setcontrol(sc) != 0)
+			return -1;
 		mmcodec_init_data(sc);
 	}
 
@@ -2165,7 +2180,6 @@ dbri_powerhook(int why, void *cookie)
 				break;
 			aprint_verbose("resume: %d\n", sc->sc_refcount);
 			sc->sc_pmgrstate = PWR_RESUME;
-			dbri_bring_up(sc);
 			if (sc->sc_playing) {
 				volatile u_int32_t *cmd;
 				int s;
