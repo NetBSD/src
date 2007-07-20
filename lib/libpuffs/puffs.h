@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.75 2007/07/17 11:34:52 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.76 2007/07/20 13:14:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -423,6 +423,7 @@ typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 				void *, int);
 #define PUFFS_FBIO_READ		0x01
 #define PUFFS_FBIO_WRITE	0x02
+#define PUFFS_FBIO_ERROR	0x04
 
 #define PUFFS_FBQUEUE_URGENT	0x01
 
@@ -667,6 +668,7 @@ int	puffs_framev_enqueue_directreceive(struct puffs_cc *, int,
 					   struct puffs_framebuf *, int);
 int	puffs_framev_enqueue_directsend(struct puffs_cc *, int,
 					   struct puffs_framebuf *, int);
+int	puffs_framev_enqueue_waitevent(struct puffs_cc *, int, int *);
 int	puffs_framev_framebuf_ccpromote(struct puffs_framebuf *,
 					struct puffs_cc *);
 
