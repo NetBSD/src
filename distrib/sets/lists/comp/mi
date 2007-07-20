@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1052 2007/07/18 12:19:44 yamt Exp $
+#	$NetBSD: mi,v 1.1053 2007/07/20 12:45:46 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2804,6 +2804,7 @@
 ./usr/libdata/debug/usr/sbin/amd.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/amq.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/sbin/arp.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/audit-packages.debug	comp-pkgutil-debug	debug
 ./usr/libdata/debug/usr/sbin/authpf.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/sbin/bootpd.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootpef.debug	comp-bootserver-debug	debug
