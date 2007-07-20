@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.6 2007/07/17 11:34:53 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.7 2007/07/20 13:18:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,7 @@
 #include <errno.h>
 #include <mntopts.h>
 #include <paths.h>
+#include <poll.h>
 #include <puffs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -411,6 +412,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, portal, node, read);
 	PUFFSOP_SET(pops, portal, node, write);
 	PUFFSOP_SET(pops, portal, node, seek);
+	PUFFSOP_SET(pops, portal, node, poll);
 	PUFFSOP_SET(pops, portal, node, inactive);
 	PUFFSOP_SET(pops, portal, node, reclaim);
 
@@ -686,6 +688,39 @@ portal_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
 
 	if (lseek(portn->fd, newoff, SEEK_SET) == -1)
 		return errno;
+	return 0;
+}
+
+int
+portal_node_poll(struct puffs_cc *pcc, void *opc, int *events,
+	const struct puffs_cid *pcid)
+{
+	struct portal_node *portn = opc;
+	int what;
+	int rv;
+
+	what = 0;
+	if (*events & POLLIN)
+		what |= PUFFS_FBIO_READ;
+	if (*events & POLLOUT)
+		what |= PUFFS_FBIO_WRITE;
+	if (*events & POLLERR)
+		what |= PUFFS_FBIO_ERROR;
+
+	rv = puffs_framev_enqueue_waitevent(pcc, portn->fd, &what);
+	if (rv) {
+		*events = POLLERR;
+		return rv;
+	}
+
+	*events = 0;
+	if (what & PUFFS_FBIO_READ)
+		*events |= POLLIN;
+	if (what & PUFFS_FBIO_WRITE)
+		*events |= POLLOUT;
+	if (what & PUFFS_FBIO_ERROR)
+		*events |= POLLERR;
+
 	return 0;
 }
 
