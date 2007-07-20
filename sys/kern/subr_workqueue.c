@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.16 2007/07/18 18:17:03 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.17 2007/07/20 12:43:26 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.16 2007/07/18 18:17:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.17 2007/07/20 12:43:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,8 +37,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.16 2007/07/18 18:17:03 ad Exp $
 #include <sys/workqueue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/queue.h>
 
-SIMPLEQ_HEAD(workqhead, work);
+typedef struct work_impl {
+	SIMPLEQ_ENTRY(work_impl) wk_entry;
+} work_impl_t;
+
+SIMPLEQ_HEAD(workqhead, work_impl);
 
 struct workqueue_queue {
 	kmutex_t q_mutex;
@@ -75,8 +80,8 @@ workqueue_queue_lookup(struct workqueue *wq, struct cpu_info *ci)
 static void
 workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 {
-	struct work *wk;
-	struct work *next;
+	work_impl_t *wk;
+	work_impl_t *next;
 
 	/*
 	 * note that "list" is not a complete SIMPLEQ.
@@ -84,7 +89,7 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 
 	for (wk = SIMPLEQ_FIRST(list); wk != NULL; wk = next) {
 		next = SIMPLEQ_NEXT(wk, wk_entry);
-		(*wq->wq_func)(wk, wq->wq_arg);
+		(*wq->wq_func)((void *)wk, wq->wq_arg);
 	}
 }
 
@@ -177,7 +182,7 @@ workqueue_initqueue(struct workqueue *wq, int ipl,
 }
 
 struct workqueue_exitargs {
-	struct work wqe_wk;
+	work_impl_t wqe_wk;
 	struct workqueue_queue *wqe_q;
 };
 
@@ -231,6 +236,8 @@ workqueue_create(struct workqueue **wqp, const char *name,
 	struct workqueue *wq;
 	int error = 0;
 
+	KASSERT(sizeof(work_impl_t) <= sizeof(struct work));
+
 	wq = kmem_alloc(sizeof(*wq), KM_SLEEP);
 
 	workqueue_init(wq, name, callback_func, callback_arg, prio, ipl);
@@ -281,9 +288,10 @@ workqueue_destroy(struct workqueue *wq)
 }
 
 void
-workqueue_enqueue(struct workqueue *wq, struct work *wk, struct cpu_info *ci)
+workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 {
 	struct workqueue_queue *q;
+	work_impl_t *wk = (void *)wk0;
 
 	q = workqueue_queue_lookup(wq, ci);
 	KASSERT(q != NULL);

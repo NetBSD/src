@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.7 2007/07/13 07:21:37 rmind Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.8 2007/07/20 12:43:25 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -29,8 +29,6 @@
 #ifndef _SYS_WORKQUEUE_H_
 #define	_SYS_WORKQUEUE_H_
 
-#include <sys/queue.h>
-
 #include <machine/cpu.h>
 
 /*
@@ -42,7 +40,7 @@
  */
 
 struct work {
-	SIMPLEQ_ENTRY(work) wk_entry;
+	void *wk_dummy;
 };
 
 struct workqueue;
