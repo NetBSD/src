@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.15 2004/10/30 15:48:20 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.16 2007/07/20 16:39:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -182,7 +182,7 @@ matchdir(char *pattern)
 	if (dirp == NULL)
 		return;
 	while ((dp = readdir(dirp)) != NULL) {
-#if defined(HAS_POSIX_DIR) && !defined(__SVR4)
+#if defined(HAS_POSIX_DIR) && !defined(__SVR4) && !defined(__CYGWIN__)
 		if (dp->d_fileno == 0)
 			continue;
 #else
