@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2007/03/04 05:59:46 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2007/07/20 13:41:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2007/03/04 05:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2007/07/20 13:41:53 hannken Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -364,6 +364,8 @@ cpu_startup(void)
 				pn) == false)
 		panic("setting processor-frequency");
 	prop_object_release(pn);
+
+	intr_init();
 }
 
 int
