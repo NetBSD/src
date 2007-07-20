@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2006/04/02 01:39:48 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2007/07/20 16:39:05 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -48,8 +48,9 @@
 #SITE			= SOLARIS
 #SITE			= NETBSD
 #SITE			= CMUCS
-SITE1			!= uname -s | tr '[a-z]' '[A-Z]'
-SITE2			=$(shell uname -s | tr '[a-z]' '[A-Z]')
+SITE1			!= uname -s | tr '[a-z]' '[A-Z]' | sed -e s/_.*//g
+SITE2			= $(shell uname -s | tr '[a-z]' '[A-Z]' \
+			    | sed -e s/_.*//g)
 SITE			= ${SITE1}${SITE2}
 TARDIR			= sup-0.0
 
@@ -62,6 +63,7 @@ OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF \
 			    -DVAR_TMP
 SUNOS_DEFINES		= -UMACH -D_BSD -DNEED_VSNPRINTF -DVAR_TMP \
 			    -DHAS_POSIX_DIR -DHAS_DAEMON -DNEED_DAEMON
+CYGWIN_DEFINES	= -UMACH -DVAR_TMP -DHAS_POSIX_DIR
 CMUCS_DEFINES		= -DMACH -DDOPRINT_VA -DNEED_VPRINTF
 NON_MACH_DEFINES	= -UMACH
 
@@ -91,6 +93,7 @@ AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -
 
 NETBSD_LIBS		= -lcrypt
 LINUX_LIBS		= -lcrypt
+CYGWIN_LIBS		= -lcrypt
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
 EXTRALIBS		= libextra.a
