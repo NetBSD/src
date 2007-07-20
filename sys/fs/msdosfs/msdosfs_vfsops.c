@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.47 2007/07/17 11:19:32 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.48 2007/07/20 16:46:43 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.47 2007/07/17 11:19:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.48 2007/07/20 16:46:43 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -994,7 +994,7 @@ loop:
 		    (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		      vp->v_uobj.uo_npages == 0))) {
+		      UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}

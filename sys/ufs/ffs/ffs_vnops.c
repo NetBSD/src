@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.88 2007/06/05 12:31:34 yamt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.89 2007/07/20 16:46:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.88 2007/06/05 12:31:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.89 2007/07/20 16:46:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ ffs_full_fsync(void *v)
 		softdep_fsync_mountdev(vp);
 
 	inodedeps_only = DOINGSOFTDEP(vp) && (ap->a_flags & FSYNC_RECLAIM)
-	    && vp->v_uobj.uo_npages == 0 && LIST_EMPTY(&vp->v_dirtyblkhd);
+	    && UVM_OBJ_IS_CLEAN(&vp->v_uobj) && LIST_EMPTY(&vp->v_dirtyblkhd);
 
 	/*
 	 * Flush all dirty data associated with a vnode.

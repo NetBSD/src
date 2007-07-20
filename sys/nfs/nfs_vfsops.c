@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.179 2007/07/17 11:19:35 pooka Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.180 2007/07/20 16:46:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.179 2007/07/17 11:19:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.180 2007/07/20 16:46:44 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -969,7 +969,7 @@ loop:
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.205 2007/07/17 11:19:39 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.206 2007/07/20 16:46:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.205 2007/07/17 11:19:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.206 2007/07/20 16:46:45 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1335,7 +1335,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
