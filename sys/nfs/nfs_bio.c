@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.160 2007/07/17 10:24:10 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.161 2007/07/20 15:36:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.160 2007/07/17 10:24:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.161 2007/07/20 15:36:41 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -768,7 +768,7 @@ again:
 			 * Found one, so wake it up and tell it which
 			 * mount to process.
 			 */
-			iod->nid_want = NULL;
+			iod->nid_want = false;
 			iod->nid_mount = nmp;
 			cv_signal(&iod->nid_cv);
 			mutex_enter(&nmp->nm_lock);
