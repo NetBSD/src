@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.538 2007/07/16 13:11:42 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.539 2007/07/20 08:15:34 heinz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -658,7 +658,7 @@ Version:	20070715
 Current Vers.:	20070715
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org
-Mailing List:	tech-pkg@netbsd.org
+Mailing List:	tech-pkg@NetBSD.org
 Responsible:	joerg
 License:	BSD
 Notes:
