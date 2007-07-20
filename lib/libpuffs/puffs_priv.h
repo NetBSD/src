@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.18 2007/07/19 12:52:28 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.19 2007/07/20 13:14:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -56,10 +56,14 @@ struct puffs_fctrl_io {
 	int io_fd;
 	int stat;
 
+	int rwait;
+	int wwait;
+
 	struct puffs_framebuf *cur_in;
 
 	TAILQ_HEAD(, puffs_framebuf) snd_qing;	/* queueing to be sent */
 	TAILQ_HEAD(, puffs_framebuf) res_qing;	/* q'ing for rescue */
+	LIST_HEAD(, puffs_fbevent) ev_qing;	/* q'ing for events */
 
 	LIST_ENTRY(puffs_fctrl_io) fio_entries;
 };
@@ -70,15 +74,17 @@ struct puffs_fctrl_io {
 #define FIO_ENABLE_R	0x10
 #define FIO_ENABLE_W	0x20
 
-#define FIO_EN_WRITE(fio)			\
-    (!(fio->stat & FIO_WR)			\
-      && !TAILQ_EMPTY(&fio->snd_qing)		\
-      && (fio->stat & FIO_ENABLE_W))
+#define FIO_EN_WRITE(fio)				\
+    (!(fio->stat & FIO_WR)				\
+      && ((!TAILQ_EMPTY(&fio->snd_qing)			\
+            && (fio->stat & FIO_ENABLE_W))		\
+         || fio->wwait))
 
 #define FIO_RM_WRITE(fio)			\
     ((fio->stat & FIO_WR)			\
-      && (TAILQ_EMPTY(&fio->snd_qing)		\
-        || ((fio->stat & FIO_ENABLE_W) == 0)))
+      && (((TAILQ_EMPTY(&fio->snd_qing)		\
+        || (fio->stat & FIO_ENABLE_W) == 0))	\
+	&& (fio->wwait == 0)))
 
 /*
  * usermount: describes one file system instance
@@ -228,6 +234,7 @@ void	puffs_framev_readclose(struct puffs_usermount *,
 			       struct puffs_fctrl_io *, int);
 void	puffs_framev_writeclose(struct puffs_usermount *,
 				struct puffs_fctrl_io *, int);
+void	puffs_framev_notify(struct puffs_fctrl_io *, int);
 
 void	puffs_goto(struct puffs_cc *);
 
