@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.308 2007/07/20 22:15:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.308 2007/07/20 22:15:47 tsutsui Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -340,9 +340,6 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
-
-	/* Initialize callouts, part 2. */
-	callout_startup2();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
