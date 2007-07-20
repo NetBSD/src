@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.6 2007/07/19 00:28:47 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.7 2007/07/20 10:40:08 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -68,58 +68,119 @@ do {									\
 	DPRINTFOBJ(("%s: obj (%s:%d) updated\n", __func__, (a), (b)));	\
 } while (/* CONSTCOND */ 0)
 
-#define SENSOR_DICTSETFAILED(a, b)					\
-do {									\
-	DPRINTF(("%s: dict_set (%s:%d) failed\n", __func__, (a), (b)));	\
-} while (/* CONSTCOND */ 0)
+/*
+ * Functions to create objects in a dictionary if they do not exist, or
+ * for updating its value it value provided doesn't match with the value
+ * in dictionary.
+ */
+static inline int
+sme_sensor_upbool(prop_object_t obj, prop_dictionary_t dict,
+		  const char *key, bool val)
+{
+	KASSERT(dict != NULL);
 
-#define SENSOR_SETTYPE(a, b, c, d)					\
-do {									\
-	if (!prop_dictionary_set_ ## d((a), (b), (c))) {		\
-		SENSOR_DICTSETFAILED((b), (c));				\
-		goto out;						\
-	}								\
-} while (/* CONSTCOND */ 0)
+	obj = prop_dictionary_get(dict, key);
+	if (obj) {
+		if (prop_bool_true(obj) != val) {
+			if (!prop_dictionary_set_bool(dict, key, val)) {
+				DPRINTF(("%s: (up) set_bool %s:%d\n",
+				    __func__, key, val));
+				return EINVAL;
+			}
+			SENSOR_OBJUPDATED(key, val);
+		}
+	} else {
+		if (!prop_dictionary_set_bool(dict, key, val)) {
+			DPRINTF(("%s: (set) set_bool %s:%d\n",
+			    __func__, key, val));
+			return EINVAL;
+		}
+	}
 
-#define SENSOR_SINT32(a, b, c)	SENSOR_SETTYPE(a, b, c, int32)
-#define SENSOR_SUINT32(a, b, c)	SENSOR_SETTYPE(a, b, c, uint32)
-#define SENSOR_SBOOL(a, b, c)	SENSOR_SETTYPE(a, b, c, bool)
-#define SENSOR_SSTRING(a, b, c)						\
-do {									\
-	if (!prop_dictionary_set_cstring_nocopy((a), (b), (c))) {	\
-		DPRINTF(("%s: set_cstring (%s) failed.\n",		\
-		    __func__, (c)));					\
-		goto out;						\
-	}								\
-} while (/* CONSTCOND */ 0)
+	return 0;
+}
 
-#define SENSOR_UPTYPE(a, b, c, d, e)					\
-do {									\
-	obj = prop_dictionary_get((a), (b));				\
-	if (!prop_number_equals_ ## e(obj, (c))) {			\
-		if (!prop_dictionary_set_ ## d((a), (b), (c))) { 	\
-			SENSOR_DICTSETFAILED((b), (c));			\
-			return EINVAL;					\
-		}							\
-		SENSOR_OBJUPDATED((b), (c));				\
-	}								\
-} while (/* CONSTCOND */ 0)
+static inline int
+sme_sensor_upint32(prop_object_t obj, prop_dictionary_t dict,
+		   const char *key, int32_t val)
+{
+	KASSERT(dict != NULL);
 
-#define SENSOR_UPINT32(a, b, c)		\
-	SENSOR_UPTYPE(a, b, c, int32, integer)
-#define SENSOR_UPUINT32(a, b, c)	\
-	SENSOR_UPTYPE(a, b, c, uint32, unsigned_integer)
-#define SENSOR_UPSTRING(a, b, c)					\
-do {									\
-	obj = prop_dictionary_get((a), (b));				\
-	if (obj == NULL) {						\
-		SENSOR_SSTRING((a), (b), (c));				\
-	} else {							\
-		if (!prop_string_equals_cstring((obj), (c))) {		\
-			SENSOR_SSTRING((a), (b), (c));			\
-		}							\
-	}								\
-} while (/* CONSTCOND */ 0)
+	obj = prop_dictionary_get(dict, key);
+	if (obj) {
+		if (!prop_number_equals_integer(obj, val)) {
+			if (!prop_dictionary_set_int32(dict, key, val)) {
+				DPRINTF(("%s: (up) set_int32 %s:%d\n",
+				    __func__, key, val));
+				return EINVAL;
+			}
+			SENSOR_OBJUPDATED(key, val);
+		}
+	} else {
+		if (!prop_dictionary_set_int32(dict, key, val)) {
+			DPRINTF(("%s: (set) set_int32 %s:%d\n",
+			    __func__, key, val));
+			return EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+static inline int
+sme_sensor_upuint32(prop_object_t obj, prop_dictionary_t dict,
+		    const char *key, uint32_t val)
+{
+	KASSERT(dict != NULL);
+
+	obj = prop_dictionary_get(dict, key);
+	if (obj) {
+		if (!prop_number_equals_unsigned_integer(obj, val)) {
+			if (!prop_dictionary_set_uint32(dict, key, val)) {
+				DPRINTF(("%s: (up) set_uint32 %s:%d\n",
+				    __func__, key, val));
+				return EINVAL;
+			}
+			SENSOR_OBJUPDATED(key, val);
+		}
+	} else {
+		if (!prop_dictionary_set_uint32(dict, key, val)) {
+			DPRINTF(("%s: (set) set_uint32 %s:%d\n",
+			    __func__, key, val));
+			return EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+static inline int
+sme_sensor_upstring(prop_object_t obj, prop_dictionary_t dict,
+		    const char *key, const char *str)
+{
+	KASSERT(dict != NULL);
+
+	obj = prop_dictionary_get(dict, key);
+	if (obj == NULL) {
+		if (!prop_dictionary_set_cstring_nocopy(dict, key, str)) {
+			DPRINTF(("%s: (up) set_cstring %s:%s\n",
+			    __func__, key, str));
+			return EINVAL;
+		}
+	} else {
+		if (!prop_string_equals_cstring(obj, str)) {
+			if (!prop_dictionary_set_cstring_nocopy(dict,
+								key,
+								str)) {
+				DPRINTF(("%s: (set) set_cstring %s:%s\n",
+				    __func__, key, str));
+				return EINVAL;
+			}
+		}
+	}
+
+	return 0;
+}
 
 /* struct used by a sysmon envsys event */
 typedef struct sme_event {
