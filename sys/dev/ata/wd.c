@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.340 2007/07/09 21:00:31 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.341 2007/07/21 19:51:47 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.340 2007/07/09 21:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.341 2007/07/21 19:51:47 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -904,8 +904,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	part = WDPART(dev);
 
-	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&wd->sc_dk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -965,14 +964,14 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&wd->sc_dk.dk_openlock);
 	return 0;
 
  bad2:
 	if (wd->sc_dk.dk_openmask == 0)
 		wd->atabus->ata_delref(wd->drvp);
  bad1:
-	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&wd->sc_dk.dk_openlock);
 	return error;
 }
 
@@ -981,12 +980,10 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
-	int error;
 
 	ATADEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
 
-	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return error;
+	mutex_enter(&wd->sc_dk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -1008,7 +1005,7 @@ wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		wd->atabus->ata_delref(wd->drvp);
 	}
 
-	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&wd->sc_dk.dk_openlock);
 	return 0;
 }
 
@@ -1279,9 +1276,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE,
-				     NULL)) != 0)
-			goto bad;
+		mutex_enter(&wd->sc_dk.dk_openlock);
 		wd->sc_flags |= WDF_LABELLING;
 
 		error = setdisklabel(wd->sc_dk.dk_label,
@@ -1304,8 +1299,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		}
 
 		wd->sc_flags &= ~WDF_LABELLING;
-		(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
-bad:
+		mutex_exit(&wd->sc_dk.dk_openlock);
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
 			free(newlabel, M_TEMP);

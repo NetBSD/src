@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.35 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.36 2007/07/21 19:51:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.35 2007/03/04 06:02:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.36 2007/07/21 19:51:48 ad Exp $");
 
 #include "rnd.h"
 
@@ -297,8 +297,7 @@ edmcaopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	part = DISKPART(dev);
 
-	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&wd->sc_dk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -354,11 +353,9 @@ edmcaopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	wd->sc_dk.dk_openmask =
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
-	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
-	return 0;
-
+	error = 0;
  bad1:
-	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&wd->sc_dk.dk_openlock);
 	return (error);
 }
 
@@ -367,12 +364,10 @@ edmcaclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct ed_softc *wd = device_lookup(&ed_cd, DISKUNIT(dev));
 	int part = DISKPART(dev);
-	int error;
 
 	ATADEBUG_PRINT(("edmcaclose\n"), DEBUG_FUNCS);
 
-	if ((error = lockmgr(&wd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&wd->sc_dk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -395,7 +390,7 @@ edmcaclose(dev_t dev, int flag, int fmt, struct lwp *l)
 			wd->sc_flags &= ~WDF_LOADED;
 	}
 
-	(void) lockmgr(&wd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&wd->sc_dk.dk_openlock);
 
 	return 0;
 }
@@ -510,9 +505,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if ((error = lockmgr(&ed->sc_dk.dk_openlock, LK_EXCLUSIVE,
-				     NULL)) != 0)
-			return (error);
+		mutex_enter(&ed->sc_dk.dk_openlock);
 		ed->sc_flags |= WDF_LABELLING;
 
 		error = setdisklabel(ed->sc_dk.dk_label,
@@ -530,7 +523,7 @@ edmcaioctl(dev, xfer, addr, flag, l)
 		}
 
 		ed->sc_flags &= ~WDF_LABELLING;
-		(void) lockmgr(&ed->sc_dk.dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&ed->sc_dk.dk_openlock);
 		return (error);
 	}
 

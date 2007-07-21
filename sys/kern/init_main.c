@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.308 2007/07/20 22:15:47 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.309 2007/07/21 19:51:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.308 2007/07/20 22:15:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.309 2007/07/21 19:51:49 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.308 2007/07/20 22:15:47 tsutsui Exp 
 #include <sys/vmem.h>
 #include <sys/uuid.h>
 #include <sys/extent.h>
+#include <sys/disk.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -382,6 +383,9 @@ main(void)
 
 	/* Initialize the device switch tables. */
 	devsw_init();
+
+	/* Initialize the disk wedge subsystem. */
+	dkwedge_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
