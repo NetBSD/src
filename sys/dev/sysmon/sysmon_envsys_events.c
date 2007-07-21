@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.17 2007/07/21 12:11:27 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.18 2007/07/21 15:16:58 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.17 2007/07/21 12:11:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.18 2007/07/21 15:16:58 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -208,6 +208,54 @@ sme_event_register(sme_event_t *see)
 }
 
 /*
+ * sme_event_unregister_all:
+ *
+ * 	+ Unregisters all sysmon envsys events associated with a
+ * 	  sysmon envsys device.
+ */
+void
+sme_event_unregister_all(struct sysmon_envsys *sme)
+{
+	sme_event_t *see;
+	int evcounter = 0;
+
+	KASSERT(sme != NULL);
+
+	mutex_enter(&sme_event_mtx);
+	LIST_FOREACH(see, &sme_events_list, see_list) {
+		if (strcmp(see->pes.pes_dvname, sme->sme_name) == 0)
+			evcounter++;
+	}
+
+	DPRINTF(("%s: total events %d (%s)\n", __func__,
+	    evcounter, sme->sme_name));
+
+	while ((see = LIST_FIRST(&sme_events_list)) != NULL) {
+		if (evcounter == 0)
+			break;
+
+		if (strcmp(see->pes.pes_dvname, sme->sme_name) == 0) {
+			DPRINTF(("%s: event %s %d removed (%s)\n", __func__,
+			    see->pes.pes_sensname, see->type, sme->sme_name));
+
+			while (see->see_flags & SME_EVENT_WORKING)
+				cv_wait(&sme_event_cv, &sme_event_mtx);
+
+			LIST_REMOVE(see, see_list);
+			mutex_exit(&sme_event_mtx);
+			kmem_free(see, sizeof(*see));
+			mutex_enter(&sme_event_mtx);
+			evcounter--;
+		}
+	}
+
+	if (LIST_EMPTY(&sme_events_list))
+		sme_events_destroy();
+
+	mutex_exit(&sme_event_mtx);
+}
+
+/*
  * sme_event_unregister:
  *
  * 	+ Unregisters a sysmon envsys event.
@@ -251,15 +299,8 @@ sme_event_unregister(const char *sensor, int type)
 	 * 	- destroy the workqueue.
 	 */
 	mutex_enter(&sme_event_mtx);
-	if (LIST_EMPTY(&sme_events_list)) {
-		mutex_enter(&sme_event_init_mtx);
-		callout_stop(&seeco);
-		callout_destroy(&seeco);
-		workqueue_destroy(seewq);
-		sme_events_initialized = false;
-		DPRINTF(("%s: events framework destroyed\n", __func__));
-		mutex_exit(&sme_event_init_mtx);
-	}
+	if (LIST_EMPTY(&sme_events_list))
+		sme_events_destroy();
 	mutex_exit(&sme_event_mtx);
 
 	return 0;
@@ -430,8 +471,7 @@ out:
 /*
  * sme_events_init:
  *
- * 	+ Initializes the callout and the workqueue to handle
- * 	  the sysmon envsys events.
+ * 	+ Initializes the events framework.
  */
 int
 sme_events_init(void)
@@ -451,6 +491,25 @@ sme_events_init(void)
 
 out:
 	return error;
+}
+
+/*
+ * sme_events_destroy:
+ *
+ * 	+ Destroys the events framework: the workqueue and the
+ * 	  callout are stopped and destroyed because there are not
+ * 	  events in the queue.
+ */
+void
+sme_events_destroy(void)
+{
+	mutex_enter(&sme_event_init_mtx);
+	callout_stop(&seeco);
+	callout_destroy(&seeco);
+	workqueue_destroy(seewq);
+	sme_events_initialized = false;
+	DPRINTF(("%s: events framework destroyed\n", __func__));
+	mutex_exit(&sme_event_init_mtx);
 }
 
 /*
@@ -524,7 +583,7 @@ sme_events_worker(struct work *wk, void *arg)
 	}
 	mutex_exit(&sme_mtx);
 
-	DPRINTF(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
+	DPRINTFOBJ(("%s: desc=%s sensor=%d units=%d value_cur=%d\n",
 	    __func__, edata->desc, edata->sensor,
 	    edata->units, edata->value_cur));
 
