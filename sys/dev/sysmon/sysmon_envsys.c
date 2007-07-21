@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.33 2007/07/21 00:05:54 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.34 2007/07/21 12:11:27 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.33 2007/07/21 00:05:54 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.34 2007/07/21 12:11:27 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -616,6 +616,8 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 
 	/* create the sysmon envsys device array. */
 	array = prop_array_create();
+	if (array == NULL)
+		return EINVAL;
 
 	/*
 	 * <dict>
@@ -681,20 +683,16 @@ sme_register_sensorname(envsys_data_t *edata)
 	snames = kmem_zalloc(sizeof(*snames), KM_SLEEP);
 
 	mutex_enter(&sme_mtx);
-	if (SLIST_EMPTY(&sme_names_list))
-		goto insert;
-	else {
-		SLIST_FOREACH(snames2, &sme_names_list, sme_names) {
-			if (strcmp(snames2->desc, edata->desc) == 0)
-				if (snames2->assigned) {
-					edata->flags |= ENVSYS_FDUPDESC;
-					mutex_exit(&sme_mtx);
-					DPRINTF(("%s: duplicate name "
-					    "(%s)\n", __func__, edata->desc));
-					kmem_free(snames, sizeof(*snames));
-					return EEXIST;
-				}
-		}
+	SLIST_FOREACH(snames2, &sme_names_list, sme_names) {
+		if (strcmp(snames2->desc, edata->desc) == 0)
+			if (snames2->assigned) {
+				edata->flags |= ENVSYS_FDUPDESC;
+				mutex_exit(&sme_mtx);
+				DPRINTF(("%s: duplicate name "
+				    "(%s)\n", __func__, edata->desc));
+				kmem_free(snames, sizeof(*snames));
+				return EEXIST;
+			}
 		goto insert;
 	}
 
@@ -722,7 +720,6 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	prop_dictionary_t dict;
-	prop_object_t obj = NULL;
 	int i, j, k;
 
 	i = j = k = 0;
@@ -739,6 +736,8 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	dict = prop_dictionary_create();
+	if (dict == NULL)
+		return EINVAL;
 
 	mutex_enter(&sme_mtx);
 	if (!prop_array_add(array, dict)) {
@@ -761,10 +760,10 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<string>blah blah</string>
 	 * 		...
 	 */
-	if (sme_sensor_upstring(obj, dict, "type", est[i].desc))
+	if (sme_sensor_upstring(dict, "type", est[i].desc))
 		goto out;
 
-	if (sme_sensor_upstring(obj, dict, "description", edata->desc))
+	if (sme_sensor_upstring(dict, "description", edata->desc))
 		goto out;
 
 
@@ -780,7 +779,7 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		if (ess[j].type == edata->state) 
 			break;
 
-	if (sme_sensor_upstring(obj, dict, "state", ess[j].desc))
+	if (sme_sensor_upstring(dict, "state", ess[j].desc))
 		goto out;
 
 	/*
@@ -792,7 +791,7 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		...
 	 */
 	if (edata->flags & ENVSYS_FPERCENT)
-		if (sme_sensor_upbool(obj, dict, "want-percentage", true))
+		if (sme_sensor_upbool(dict, "want-percentage", true))
 			goto out;
 
 	/*
@@ -810,10 +809,10 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
 	    (edata->units == ENVSYS_INDICATOR) ||
 	    (edata->units == ENVSYS_DRIVE)) {
-		if (sme_sensor_upbool(obj, dict, "monitoring-supported", false))
+		if (sme_sensor_upbool(dict, "monitoring-supported", false))
 			goto out;
 	} else {
-		if (sme_sensor_upbool(obj, dict, "monitoring-supported", true))
+		if (sme_sensor_upbool(dict, "monitoring-supported", true))
 			goto out;
 	}
 
@@ -830,7 +829,7 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			if (esds[k].type == edata->value_cur)
 				break;
 
-		if (sme_sensor_upstring(obj, dict, "drive-state", esds[k].desc))
+		if (sme_sensor_upstring(dict, "drive-state", esds[k].desc))
 			goto out;
 	}
 
@@ -870,41 +869,37 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		 * </dict>
 		 */
 		if ((edata->units == ENVSYS_SFANRPM) && edata->rpms)
-			if (sme_sensor_upuint32(obj, dict, "rpms", edata->rpms))
+			if (sme_sensor_upuint32(dict, "rpms", edata->rpms))
 				goto out;
 
 		if ((edata->units == ENVSYS_SVOLTS_AC ||
 		    edata->units == ENVSYS_SVOLTS_DC) && edata->rfact)
-			if (sme_sensor_upint32(obj, dict, "rfact", edata->rfact))
+			if (sme_sensor_upint32(dict, "rfact", edata->rfact))
 				goto out;
 
 		if (edata->value_cur) {
-			if (sme_sensor_upint32(obj,
-					       dict,
+			if (sme_sensor_upint32(dict,
 					       "cur-value",
 					       edata->value_cur))
 				goto out;
 		}
 
 		if ((edata->flags & ENVSYS_FVALID_MIN) && edata->value_min) {
-			if (sme_sensor_upint32(obj,
-					       dict,
+			if (sme_sensor_upint32(dict,
 					       "min-value",
 					       edata->value_min))
 				goto out;
 		}
 
 		if ((edata->flags & ENVSYS_FVALID_MAX) && edata->value_max) {
-			if (sme_sensor_upint32(obj,
-					       dict,
+			if (sme_sensor_upint32(dict,
 					       "max-value",
 					       edata->value_max))
 				goto out;
 		}
 
 		if ((edata->flags & ENVSYS_FVALID_AVG) && edata->value_avg) {
-			if (sme_sensor_upint32(obj,
-					       dict,
+			if (sme_sensor_upint32(dict,
 					       "avg-value",
 					       edata->value_avg))
 				goto out;
@@ -934,10 +929,10 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	const struct sme_sensor_state *ess = sme_sensor_state;
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
 	envsys_data_t *edata = NULL;
-	prop_object_t array, obj, dict;
+	prop_object_t array, dict;
 	int i, j, error = 0;
 
-	array = obj = dict = NULL;
+	array = dict = NULL;
 
 	/* retrieve the array of dictionaries in device. */
 	array = prop_dictionary_get(sme_propd, sme->sme_name);
@@ -991,13 +986,12 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		    ess[j].type, edata->flags, edata->units, edata->sensor));
 
 		/* update sensor state */
-		error = sme_sensor_upstring(obj, dict, "state", ess[j].desc);
+		error = sme_sensor_upstring(dict, "state", ess[j].desc);
 		if (error)
 			break;
 
 		/* update sensor current value */
-		error = sme_sensor_upint32(obj,
-					   dict,
+		error = sme_sensor_upint32(dict,
 					   "cur-value",
 					   edata->value_cur);
 		if (error)
@@ -1013,8 +1007,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 
 		/* update sensor flags */
 		if (edata->flags & ENVSYS_FPERCENT) {
-			error = sme_sensor_upbool(obj,
-						  dict,
+			error = sme_sensor_upbool(dict,
 						  "want-percentage",
 						  true);
 			if (error)
@@ -1022,8 +1015,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		}
 
 		if (edata->flags & ENVSYS_FVALID_MAX) {
-			error = sme_sensor_upint32(obj,
-						   dict,
+			error = sme_sensor_upint32(dict,
 						   "max-value",
 						   edata->value_max);
 			if (error)
@@ -1031,8 +1023,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		}
 						   
 		if (edata->flags & ENVSYS_FVALID_MIN) {
-			error = sme_sensor_upint32(obj,
-						   dict,
+			error = sme_sensor_upint32(dict,
 						   "min-value",
 						   edata->value_min);
 			if (error)
@@ -1040,8 +1031,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		}
 
 		if (edata->flags & ENVSYS_FVALID_AVG) {
-			error = sme_sensor_upint32(obj,
-						   dict,
+			error = sme_sensor_upint32(dict,
 						   "avg-value",
 						   edata->value_avg);
 			if (error)
@@ -1050,8 +1040,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 
 		/* update 'rpms' only in ENVSYS_SFANRPM. */
 		if (edata->units == ENVSYS_SFANRPM) {
-			error = sme_sensor_upuint32(obj,
-						    dict,
+			error = sme_sensor_upuint32(dict,
 						    "rpms",
 						    edata->rpms);
 			if (error)
@@ -1061,8 +1050,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		/* update 'rfact' only in ENVSYS_SVOLTS_[AD]C. */
 		if (edata->units == ENVSYS_SVOLTS_AC ||
 		    edata->units == ENVSYS_SVOLTS_DC) {
-			error = sme_sensor_upint32(obj,
-						   dict,
+			error = sme_sensor_upint32(dict,
 						   "rfact",
 						   edata->rfact);
 			if (error)
@@ -1075,8 +1063,7 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 				if (esds[j].type == edata->value_cur)
 					break;
 
-			error = sme_sensor_upstring(obj,
-						    dict,
+			error = sme_sensor_upstring(dict,
 						    "drive-state",
 						    esds[j].desc);
 			if (error)
@@ -1152,8 +1139,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			if (error)
 				break;
 
-			error = sme_sensor_upstring(obj,
-						    dict,
+			error = sme_sensor_upstring(dict,
 						    "description",
 						    blah);
 			if (!error)
