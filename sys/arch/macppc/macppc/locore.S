@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57 2006/08/23 05:58:39 sanjayl Exp $	*/
+/*	$NetBSD: locore.S,v 1.58 2007/07/21 19:12:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -148,9 +148,7 @@ ENTRY(cpu_spinup_trampoline)
 	lwz	1,_C_LABEL(cpu_hatch_stack)@l(3)
 
 	bl	_C_LABEL(cpu_hatch)
-	bl      _C_LABEL(sched_lock_idle)
-	li      30,0
-	b       _ASM_LABEL(Idle)
+	b       _C_LABEL(idle_loop)
 #endif
 
 #if defined (PPC_OEA64_BRIDGE)
