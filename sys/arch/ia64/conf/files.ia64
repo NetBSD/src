@@ -1,4 +1,4 @@
-#	$NetBSD: files.ia64,v 1.2 2006/07/02 17:23:59 cherry Exp $
+#	$NetBSD: files.ia64,v 1.3 2007/07/21 12:15:05 tsutsui Exp $
 #
 # new style config file for ia64 architecture
 #
@@ -44,7 +44,7 @@ file	arch/ia64/ia64/pal.S
 file	dev/cons.c
 file	dev/cninit.c
 
-# XXX: TODO: file	kern/kern_microtime.c
+# XXX: TODO: file	kern/kern_cctr.c
 
 #
 # System bus types
