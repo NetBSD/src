@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.3 2007/03/18 21:38:32 dsl Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.4 2007/07/21 23:39:46 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,12 +33,13 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.3 2007/03/18 21:38:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.4 2007/07/21 23:39:46 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/dirent.h>
+#include <sys/proc.h>
 
 #include <sys/syscallargs.h>
 
