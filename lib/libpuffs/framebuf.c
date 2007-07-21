@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.18 2007/07/20 14:55:42 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.19 2007/07/21 09:29:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.18 2007/07/20 14:55:42 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.19 2007/07/21 09:29:07 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -555,12 +555,16 @@ puffs_framev_enqueue_waitevent(struct puffs_cc *pcc, int fd, int *what)
 	if (*what & PUFFS_FBIO_WRITE)
 		fio->wwait--;
 
-	if (feb.rv == 0)
+	if (feb.rv == 0) {
 		*what = feb.what;
-	else
-		*what = POLLERR;
+		rv = 0;
+	} else {
+		*what = PUFFS_FBIO_ERROR;
+		errno = feb.rv;
+		rv = -1;
+	}
 
-	return feb.rv;
+	return rv;
 }
 
 void
