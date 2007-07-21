@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.3 2007/07/09 21:10:52 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.3 2007/07/09 21:10:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4 2007/07/21 19:06:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.3 2007/07/09 21:10:52 ad Exp $");
 #include <sys/lwp.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>

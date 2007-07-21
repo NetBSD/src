@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.58 2007/07/16 22:17:03 macallan Exp $	*/
+/*	$NetBSD: ofb.c,v 1.59 2007/07/21 19:06:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.58 2007/07/16 22:17:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.59 2007/07/21 19:06:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.58 2007/07/16 22:17:03 macallan Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 #include <uvm/uvm_extern.h>
 
