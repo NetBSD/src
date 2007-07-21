@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.39 2007/07/21 10:59:57 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.40 2007/07/21 11:11:10 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -183,8 +183,8 @@ int main(int argc, char **argv)
 	if (argc == 1) {
 		rval = parse_dictionary(fd);
 
-	} else if (userreq || sensors) {
-		if (!mydevname) {
+	} else if (userreq) {
+		if (!sensors || !mydevname) {
 			(void)fprintf(stderr, "%s: -m cannot be used without "
 			    "-s and -d\n", getprogname());
 			return EINVAL;
@@ -195,6 +195,13 @@ int main(int argc, char **argv)
 
 	} else if (interval) {
 		for (;;) {
+			if (sensors && !mydevname) {
+				(void)fprintf(stderr, "%s: -s cannot be used "
+				    "without -d\n", getprogname());
+				rval = EINVAL;
+				goto out;
+			}
+
 			rval = parse_dictionary(fd);
 			if (rval)
 				goto out;
@@ -205,8 +212,15 @@ int main(int argc, char **argv)
 	} else if (!interval) {
 		if (flags & ENVSYS_XFLAG)
 			(void)printf("%s", prop_dictionary_externalize(dict));
-		else
+		else {
+			if (sensors && !mydevname) {
+				(void)fprintf(stderr, "%s: -s cannot be used "
+				    "without -d\n", getprogname());
+				rval = EINVAL;
+				goto out;
+			}
 			rval = parse_dictionary(fd);
+		}
 
 	} else
 		usage();
