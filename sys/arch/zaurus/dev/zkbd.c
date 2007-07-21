@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.5 2007/07/09 20:52:41 ad Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.6 2007/07/21 01:47:58 nonaka Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.5 2007/07/09 20:52:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.6 2007/07/21 01:47:58 nonaka Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -188,6 +188,13 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_rawkbd = 0;
 #endif
 
+	callout_init(&sc->sc_roll_to, 0);
+	callout_setfunc(&sc->sc_roll_to, zkbd_poll, sc);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	callout_init(&sc->sc_rawrepeat_ch, 0);
+	callout_setfunc(&sc->sc_rawrepeat_ch, zkbd_rawrepeat, sc);
+#endif
+
 	if (ZAURUS_ISC3000) {
 		sc->sc_sense_array = gpio_sense_pins_c3000;
 		sc->sc_strobe_array = gpio_strobe_pins_c3000;
@@ -262,12 +269,6 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	zkbd_hinge(sc);		/* to initialize sc_hinge */
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-
-	callout_init(&sc->sc_roll_to, 0);
-	callout_setfunc(&sc->sc_roll_to, zkbd_poll, sc);
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	callout_setfunc(&sc->sc_rawrepeat_ch, zkbd_rawrepeat, sc);
-#endif
 }
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
