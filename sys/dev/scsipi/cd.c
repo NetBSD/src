@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.265 2007/07/09 21:01:21 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.266 2007/07/21 19:51:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.265 2007/07/09 21:01:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.266 2007/07/21 19:51:48 ad Exp $");
 
 #include "rnd.h"
 
@@ -242,7 +242,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
-	lockinit(&cd->sc_lock, PRIBIO | PCATCH, "cdlock", 0, 0);
+	mutex_init(&cd->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
 	    periph->periph_version == 0)
@@ -312,7 +312,6 @@ cddetach(struct device *self, int flags)
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
 	cmaj = cdevsw_lookup_major(&cd_cdevsw);
-
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		mn = CDMINOR(device_unit(self), i);
@@ -335,7 +334,7 @@ cddetach(struct device *self, int flags)
 
 	splx(s);
 
-	lockmgr(&cd->sc_lock, LK_DRAIN, 0);
+	mutex_destroy(&cd->sc_lock);
 
 	/* Detach from the disk list. */
 	disk_detach(&cd->sc_dk);
@@ -390,8 +389,7 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	    (error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		goto bad4;
+	mutex_enter(&cd->sc_lock);
 
 	rawpart = (part == RAW_PART && fmt == S_IFCHR);
 	if ((periph->periph_flags & PERIPH_OPEN) != 0) {
@@ -495,7 +493,7 @@ out:	/* Insure only one open at a time. */
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&cd->sc_lock);
 	return (0);
 
 	periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
@@ -508,8 +506,7 @@ bad:
 	}
 
 bad3:
-	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
-bad4:
+	mutex_exit(&cd->sc_lock);
 	if (cd->sc_dk.dk_openmask == 0)
 		scsipi_adapter_delref(adapt);
 	return (error);
@@ -526,10 +523,8 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = CDPART(dev);
-	int error;
 
-	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&cd->sc_lock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -555,7 +550,7 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		scsipi_adapter_delref(adapt);
 	}
 
-	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&cd->sc_lock);
 	return (0);
 }
 
@@ -1335,8 +1330,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 		lp = addr;
 
-		if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-			goto bad;
+		mutex_enter(&cd->sc_lock);
 		cd->flags |= CDF_LABELLING;
 
 		error = setdisklabel(cd->sc_dk.dk_label,
@@ -1347,8 +1341,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 
 		cd->flags &= ~CDF_LABELLING;
-		lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
-bad:
+		mutex_exit(&cd->sc_lock);
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
 			free(newlabel, M_TEMP);
