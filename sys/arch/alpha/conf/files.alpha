@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.173 2007/07/07 05:13:14 tsutsui Exp $
+# $NetBSD: files.alpha,v 1.174 2007/07/21 11:59:56 tsutsui Exp $
 #
 # alpha-specific configuration info
 
@@ -392,7 +392,7 @@ file	arch/alpha/a12/a12dc.c	a12dc		needs-flag
 # Devices that can live on multiple busses
 #
 
-device	mcclock
+device	mcclock: mc146818
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
 attach	mcclock at gbus with mcclock_tlsb
@@ -415,7 +415,6 @@ file	arch/alpha/alpha/ipifuncs.c		multiprocessor
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
-file	kern/kern_microtime.c
 file	arch/alpha/alpha/pmap.c
 file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/procfs_machdep.c	procfs
@@ -429,6 +428,7 @@ file	arch/alpha/alpha/disksubr.c
 file	arch/alpha/common/bus_dma.c
 file	arch/alpha/common/comlogout.c
 file	dev/cons.c
+file	kern/kern_cctr.c
 
 # Network protocol checksum routines
 file	arch/alpha/alpha/in_cksum.c		inet

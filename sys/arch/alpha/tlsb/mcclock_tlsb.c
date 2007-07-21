@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.12 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.13 2007/07/21 11:59:57 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.12 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.13 2007/07/21 11:59:57 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,14 +41,18 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.12 2007/03/04 05:59:12 christos E
 
 #include <machine/bus.h>
 
-#include <dev/dec/clockvar.h>
-#include <dev/dec/mcclockvar.h>
-
 #include <alpha/tlsb/gbusvar.h>
 
 #include <alpha/tlsb/tlsbreg.h>		/* XXX */
 
+#include <dev/clock_subr.h>
+
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/mc146818var.h>
+
+#include <alpha/alpha/mcclockvar.h>
+
+#include "ioconf.h"
 
 #define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 /*
@@ -57,69 +61,62 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.12 2007/03/04 05:59:12 christos E
 #define	REGSHIFT	6
 
 struct mcclock_tlsb_softc {
-	struct mcclock_softc	sc_mcclock;
+	struct mc146818_softc	sc_mc146818;
 	unsigned long regbase;
 };
 
-int	mcclock_tlsb_match __P((struct device *, struct cfdata *, void *));
-void	mcclock_tlsb_attach __P((struct device *, struct device *, void *));
+int	mcclock_tlsb_match(struct device *, struct cfdata *, void *);
+void	mcclock_tlsb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mcclock_tlsb, sizeof (struct mcclock_tlsb_softc),
     mcclock_tlsb_match, mcclock_tlsb_attach, NULL, NULL);
 
-extern struct cfdriver mcclock_cd;
+static void	mcclock_tlsb_write(struct mc146818_softc *, u_int, u_int);
+static u_int	mcclock_tlsb_read(struct mc146818_softc *, u_int);
 
-static void	mcclock_tlsb_write __P((struct mcclock_softc *, u_int, u_int));
-static u_int	mcclock_tlsb_read __P((struct mcclock_softc *, u_int));
-
-const struct mcclock_busfns mcclock_tlsb_busfns = {
-	mcclock_tlsb_write, mcclock_tlsb_read,
-};
 
 int
-mcclock_tlsb_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mcclock_tlsb_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct gbus_attach_args *ga = aux;
+
 	if (strcmp(ga->ga_name, mcclock_cd.cd_name))
 		return (0);
 	return (1);
 }
 
 void
-mcclock_tlsb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mcclock_tlsb_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mcclock_tlsb_softc *sc = (struct mcclock_tlsb_softc *)self;
 	struct gbus_attach_args *ga = aux;
+	struct mcclock_tlsb_softc *tsc = (void *)self;
+	struct mc146818_softc *sc = &tsc->sc_mc146818;
 
 	/* XXX Should be bus.h'd, so we can accommodate the kn7aa. */
-	sc->regbase = TLSB_GBUS_BASE + ga->ga_offset;
+	tsc->regbase = TLSB_GBUS_BASE + ga->ga_offset;
 
-	mcclock_attach(&sc->sc_mcclock, &mcclock_tlsb_busfns);
+	sc->sc_mcread  = mcclock_tlsb_read;
+	sc->sc_mcwrite = mcclock_tlsb_write;
+
+	mcclock_attach(sc);
 }
 
 static void
-mcclock_tlsb_write(mcsc, reg, val)
-	struct mcclock_softc *mcsc;
-	u_int reg, val;
+mcclock_tlsb_write(struct mc146818_softc *sc, u_int reg, u_int val)
 {
-	struct mcclock_tlsb_softc *sc = (struct mcclock_tlsb_softc *)mcsc;
+	struct mcclock_tlsb_softc *tsc = (void *)sc;
 	unsigned char *ptr = (unsigned char *)
-		KV(sc->regbase + (reg << REGSHIFT));
+		KV(tsc->regbase + (reg << REGSHIFT));
+
 	*ptr = val;
 }
 
 static u_int
-mcclock_tlsb_read(mcsc, reg)
-	struct mcclock_softc *mcsc;
-	u_int reg;
+mcclock_tlsb_read(struct mc146818_softc *sc, u_int reg)
 {
-	struct mcclock_tlsb_softc *sc = (struct mcclock_tlsb_softc *)mcsc;
+	struct mcclock_tlsb_softc *tsc = (void *)sc;
 	unsigned char *ptr = (unsigned char *)
-		KV(sc->regbase + (reg << REGSHIFT));
+		KV(tsc->regbase + (reg << REGSHIFT));
+
 	return *ptr;
 }

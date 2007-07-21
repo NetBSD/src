@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.70 2007/05/19 17:09:35 mhitch Exp $ */
+/* $NetBSD: cpu.h,v 1.71 2007/07/21 11:59:56 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@
 
 #ifdef _KERNEL
 #include <sys/cpu_data.h>
-#include <sys/cc_microtime.h>
+#include <sys/cctr.h>
 #include <machine/frame.h>
 
 /*
@@ -152,7 +152,7 @@ struct cpu_info {
 	 */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
+	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 	int ci_mtx_count;
 	int ci_mtx_oldspl;
@@ -166,6 +166,7 @@ struct cpu_info {
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
+	uint64_t ci_pcc_freq;		/* cpu cycles/second */
 
 #if defined(MULTIPROCESSOR)
 	volatile u_long ci_flags;	/* flags; see below */
@@ -296,7 +297,6 @@ struct rpb;
 struct trapframe;
 
 int	badaddr(void *, size_t);
-#define microtime(tv)	cc_microtime(tv)
 
 #define	cpu_idle()	/* nothing */
 
