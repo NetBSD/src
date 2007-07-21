@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2007/06/29 23:30:33 rumble Exp $ */
+/*	$NetBSD: pmap.c,v 1.37 2007/07/21 20:54:12 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.36 2007/06/29 23:30:33 rumble Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.37 2007/07/21 20:54:12 ad Exp $");
 #endif
 
 #include <string.h>
@@ -156,12 +156,10 @@ PMAPFUNC(dump_vm_map,VERSION)(kvm_t *kd, struct kinfo_proc2 *proc,
 		       D(vm_map, vm_map)->hint);
 		printf("%*s    first_free = %p,", indent(2), "",
 		       D(vm_map, vm_map)->first_free);
-		printf(" flags = %x <%s%s%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
+		printf(" flags = %x <%s%s%s%s%s >,\n", D(vm_map, vm_map)->flags,
 		       D(vm_map, vm_map)->flags & VM_MAP_PAGEABLE ? " PAGEABLE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_BUSY ? " BUSY" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
 #ifdef VM_MAP_DYING
 		       D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" :
 #endif
