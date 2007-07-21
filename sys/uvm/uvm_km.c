@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.94 2007/03/12 18:18:39 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.95 2007/07/21 19:21:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.94 2007/03/12 18:18:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.95 2007/07/21 19:21:54 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -297,7 +297,7 @@ uvm_km_init(vaddr_t start, vaddr_t end)
 
 	/* kernel_object: for pageable anonymous kernel memory */
 	uao_init();
-	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
+	uvm_kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
 	/*
@@ -408,7 +408,7 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *vmin /* IN/OUT */,
 void
 uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 {
-	struct uvm_object * const uobj = uvm.kernel_object;
+	struct uvm_object * const uobj = uvm_kernel_object;
 	const voff_t start = startva - vm_map_min(kernel_map);
 	const voff_t end = endva - vm_map_min(kernel_map);
 	struct vm_page *pg;
@@ -452,10 +452,10 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	simple_unlock(&uobj->vmobjlock);
 
 	if (swpgonlydelta > 0) {
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 	}
 }
 
@@ -556,7 +556,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 
 	kva = vm_map_min(map);	/* hint */
 	size = round_page(size);
-	obj = (flags & UVM_KMF_PAGEABLE) ? uvm.kernel_object : NULL;
+	obj = (flags & UVM_KMF_PAGEABLE) ? uvm_kernel_object : NULL;
 	UVMHIST_LOG(maphist,"  (map=0x%x, obj=0x%x, size=0x%x, flags=%d)",
 		    map, obj, size, flags);
 
