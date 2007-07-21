@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.211 2007/07/21 12:47:19 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.212 2007/07/21 13:00:35 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7765,3 +7765,21 @@ sys/netbt/l2cap_lower.c				1.4
 	  keyboards (which are required to support it)
 	- ALSO INCLUDES OTHER MINOR FIXES
 	[plunky, ticket #744]
+
+tools/compat/sys/null.h				1.1
+
+	sys/queue.h now requires sys/null.h, so add a compatibility header file.
+	Fixes build of tools under, e.g. Mac OS X.
+	[jmmv, ticket #778]
+
+sys/dist/ipf/netinet/fil.c			1.39
+sys/dist/ipf/netinet/ip_fil.h			1.14
+
+	Avoid casting to "i6addr_t *", because that type requires 64-bit
+	alignment and nothing guarantees that IPv6 packets in mbufs are 8-byte
+	aligned.  gcc was coalescing adjacent 32-bit compares into "ldx" on
+	sparc64, leading to alignment faults when processing icmp6 arriving on
+	gif with IPv4 outer addresses.
+
+	Fix mostly from darrenr@.  Discussed extensively on port-sparc64.
+	[gdt, ticket #779]
