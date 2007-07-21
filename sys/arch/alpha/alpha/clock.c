@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.36 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: clock.c,v 1.37 2007/07/21 11:59:55 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,95 +76,50 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "opt_multiprocessor.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2007/07/21 11:59:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/sched.h>
-
-#include <dev/clock_subr.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpuconf.h>
+#include <machine/cpu_counter.h>
 
-#include <dev/dec/clockvar.h>
+#include <alpha/alpha/clockvar.h>
 
-#include "opt_clock_compat_osf1.h"
-#include "opt_ntp.h"
+#define PCC_QUAL	1000
 
-#define MINYEAR 1998 /* "today" */
-#ifdef CLOCK_COMPAT_OSF1
-/*
- * According to OSF/1's /usr/sys/include/arch/alpha/clock.h,
- * the console adjusts the RTC years 13..19 to 93..99 and
- * 20..40 to 00..20. (historical reasons?)
- * DEC Unix uses an offset to the year to stay outside
- * the dangerous area for the next couple of years.
- */
-#define UNIX_YEAR_OFFSET 52 /* 41=>1993, 12=>2064 */
-#else
-#define UNIX_YEAR_OFFSET 0
-#endif
-
-struct device *clockdev;
-const struct clockfns *clockfns;
-int clockinitted;
+void (*clock_init)(void *);
+void *clockdev;
 
 void
-clockattach(dev, fns)
-	struct device *dev;
-	const struct clockfns *fns;
+clockattach(void (*fns)(void *), void *dev)
 {
 
 	/*
 	 * Just bookkeeping.
 	 */
-	printf("\n");
-
-	if (clockfns != NULL)
+	if (clock_init != NULL)
 		panic("clockattach: multiple clocks");
+	clock_init = fns;
 	clockdev = dev;
-	clockfns = fns;
 }
-
-/*
- * Machine-dependent clock routines.
- *
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.  Its primary function is to use some file
- * system information in case the hardware clock lost state.
- *
- * Resettodr restores the time of day hardware after a time change.
- */
 
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
-	if (clockfns == NULL)
+        uint64_t pcc_freq;
+
+	if (clock_init == NULL)
 		panic("cpu_initclocks: no clock attached");
-
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-        }
 
 	/*
 	 * Establish the clock interrupt; it's a special case.
@@ -182,9 +137,15 @@ cpu_initclocks()
 	schedhz = 16;
 
 	/*
+	 * Initialize PCC timecounter.
+	 */
+        pcc_freq = cpu_frequency(curcpu());
+        cc_init(pcc_freq, "PCC", PCC_QUAL);
+
+	/*
 	 * Get the clock started.
 	 */
-	(*clockfns->cf_init)(clockdev);
+	(*clock_init)(clockdev);
 }
 
 /*
@@ -198,124 +159,4 @@ setstatclockrate(newhz)
 {
 
 	/* nothing we can do */
-}
-
-/*
- * Initialize the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
- */
-void
-inittodr(base)
-	time_t base;
-{
-	struct clocktime ct;
-	int year;
-	struct clock_ymdhms dt;
-	time_t deltat;
-	int badbase;
-
-	if (base < (MINYEAR-1970)*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = (MINYEAR-1970)*SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	(*clockfns->cf_get)(clockdev, base, &ct);
-#ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d", ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
-#endif
-	clockinitted = 1;
-
-	year = 1900 + UNIX_YEAR_OFFSET + ct.year;
-	if (year < 1970)
-		year += 100;
-	/* simple sanity checks (2037 = time_t overflow) */
-	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
-	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		time.tv_sec = base;
-		if (!badbase) {
-			printf("WARNING: preposterous clock chip time\n");
-			resettodr();
-		}
-		goto bad;
-	}
-
-	dt.dt_year = year;
-	dt.dt_mon = ct.mon;
-	dt.dt_day = ct.day;
-	dt.dt_hour = ct.hour;
-	dt.dt_min = ct.min;
-	dt.dt_sec = ct.sec;
-	time.tv_sec = clock_ymdhms_to_secs(&dt);
-#ifdef DEBUG
-	printf("=>%ld (%d)\n", time.tv_sec, base);
-#endif
-	cc_microset_time = time;
-	cc_microset(curcpu());
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days;
-		 * if so, assume something is amiss.
-		 */
-		deltat = time.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained",
-		    (long)deltat / SECDAY);
-	}
-bad:
-	printf(" -- CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
- */
-void
-resettodr()
-{
-	struct clock_ymdhms dt;
-	struct clocktime ct;
-
-	if (!clockinitted)
-		return;
-
-	cc_microset_time = time;
-#if defined(MULTIPROCESSOR)
-	alpha_multicast_ipi(cpus_running, ALPHA_IPI_MICROSET);
-#endif	
-	cc_microset(curcpu());
-	
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-
-	/* rt clock wants 2 digits */
-	ct.year = (dt.dt_year - UNIX_YEAR_OFFSET) % 100;
-	ct.mon = dt.dt_mon;
-	ct.day = dt.dt_day;
-	ct.hour = dt.dt_hour;
-	ct.min = dt.dt_min;
-	ct.sec = dt.dt_sec;
-	ct.dow = dt.dt_wday;
-#ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
-#endif
-
-	(*clockfns->cf_set)(clockdev, &ct);
 }
