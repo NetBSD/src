@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.48 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.48.2.1 2007/07/21 19:30:14 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.48 2006/11/16 01:33:09 christos Exp $");
+	"$NetBSD: machfb.c,v 1.48.2.1 2007/07/21 19:30:14 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RAGE_IIC_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_IIC_AGP_B, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_IIC_AGP_P, 230000 },
+#if 0
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP, 230000 },
@@ -185,6 +186,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOBILITY, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO, 230000 },
+#endif
 	{ PCI_PRODUCT_ATI_MACH64_VT, 170000 },
 	{ PCI_PRODUCT_ATI_MACH64_VTB, 200000 },
 	{ PCI_PRODUCT_ATI_MACH64_VT4, 230000 }
