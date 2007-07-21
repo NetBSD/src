@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.262 2007/07/09 21:01:22 ad Exp $	*/
+/*	$NetBSD: sd.c,v 1.263 2007/07/21 19:51:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.262 2007/07/09 21:01:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.263 2007/07/21 19:51:48 ad Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -426,8 +426,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	part = SDPART(dev);
 
-	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&sd->sc_dk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -568,7 +567,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (0);
 
  bad3:
@@ -586,7 +585,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		scsipi_adapter_delref(adapt);
 
  bad1:
-	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (error);
 }
 
@@ -601,11 +600,8 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = SDPART(dev);
-	int error;
 
-	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
-
+	mutex_enter(&sd->sc_dk.dk_openlock);
 	switch (fmt) {
 	case S_IFCHR:
 		sd->sc_dk.dk_copenmask &= ~(1 << part);
@@ -645,7 +641,7 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		scsipi_adapter_delref(adapt);
 	}
 
-	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (0);
 }
 
@@ -1099,9 +1095,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = lockmgr(&sd->sc_dk.dk_openlock,
-				     LK_EXCLUSIVE, NULL)) != 0)
-			goto bad;
+		mutex_enter(&sd->sc_dk.dk_openlock);
 		sd->flags |= SDF_LABELLING;
 
 		error = setdisklabel(sd->sc_dk.dk_label,
@@ -1119,8 +1113,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 
 		sd->flags &= ~SDF_LABELLING;
-		(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
-bad:
+		mutex_exit(&sd->sc_dk.dk_openlock);
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
 			free(newlabel, M_TEMP);

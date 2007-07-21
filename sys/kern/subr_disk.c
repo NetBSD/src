@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.86 2007/06/24 01:43:35 dyoung Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.87 2007/07/21 19:51:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.86 2007/06/24 01:43:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.87 2007/07/21 19:51:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -191,8 +191,8 @@ disk_init0(struct disk *diskp)
 	/*
 	 * Initialize the wedge-related locks and other fields.
 	 */
-	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
-	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
+	mutex_init(&diskp->dk_rawlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&diskp->dk_openlock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&diskp->dk_wedges);
 	diskp->dk_nwedges = 0;
 	diskp->dk_labelsector = LABELSECTOR;
@@ -265,8 +265,8 @@ void
 disk_detach(struct disk *diskp)
 {
 
-	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
-	(void) lockmgr(&diskp->dk_rawlock, LK_DRAIN, NULL);
+	mutex_destroy(&diskp->dk_openlock);
+	mutex_destroy(&diskp->dk_rawlock);
 	disk_detach0(diskp);
 }
 
