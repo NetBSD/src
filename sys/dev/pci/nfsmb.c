@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.1 2007/07/11 07:53:29 kiyohara Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.2 2007/07/21 12:14:27 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.1 2007/07/11 07:53:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.2 2007/07/21 12:14:27 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -291,21 +291,19 @@ nfsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 static int
 nfsmb_check_done(struct nfsmb_softc *sc)
 {
+	int us;
 	uint8_t stat;
 
+	us = 10 * 1000;	/* XXXX: wait maximum 10 msec */
+	do {
+		delay(10);
+		us -= 10;
+		if (us <= 0)
+			return -1;
+	} while (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+	    NFORCE_SMB_PROTOCOL) != 0);
+
 	stat = bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_STATUS);
-
-	if (~stat & NFORCE_SMB_STATUS_DONE) {
-		delay(500);
-		stat =
-		    bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_STATUS);
-	}
-	if (~stat & NFORCE_SMB_STATUS_DONE) {
-		tsleep(sc, PCATCH, "nfsmb", hz / 100);
-		stat =
-		    bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_STATUS);
-	}
-
 	if ((stat & NFORCE_SMB_STATUS_DONE) &&
 	    !(stat & NFORCE_SMB_STATUS_STATUS))
 		return 0;
