@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1053 2007/07/20 12:45:46 yamt Exp $
+#	$NetBSD: mi,v 1.1054 2007/07/21 08:51:32 dsieger Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7071,7 +7071,7 @@
 ./usr/share/man/cat9/memmove.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/memoryallocators.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/memset.0			comp-sys-catman		.cat
-./usr/share/man/cat9/mi_switch.0		comp-obsolete		obsolete
+./usr/share/man/cat9/mi_switch.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/microtime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/microuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mono_time.0		comp-obsolete		obsolete
@@ -11415,7 +11415,7 @@
 ./usr/share/man/man9/memmove.9			comp-sys-man		.man
 ./usr/share/man/man9/memoryallocators.9		comp-sys-man		.man
 ./usr/share/man/man9/memset.9			comp-sys-man		.man
-./usr/share/man/man9/mi_switch.9		comp-obsolete		obsolete
+./usr/share/man/man9/mi_switch.9		comp-sys-man		.man
 ./usr/share/man/man9/microtime.9		comp-sys-man		.man
 ./usr/share/man/man9/microuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/mono_time.9		comp-obsolete		obsolete
