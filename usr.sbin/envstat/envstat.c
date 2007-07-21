@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.38 2007/07/17 18:15:02 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.39 2007/07/21 10:59:57 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -183,8 +183,8 @@ int main(int argc, char **argv)
 	if (argc == 1) {
 		rval = parse_dictionary(fd);
 
-	} else if (userreq) {
-		if (!sensors || !mydevname) {
+	} else if (userreq || sensors) {
+		if (!mydevname) {
 			(void)fprintf(stderr, "%s: -m cannot be used without "
 			    "-s and -d\n", getprogname());
 			return EINVAL;
