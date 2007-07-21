@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.50 2007/03/04 06:03:43 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.51 2007/07/21 19:06:22 ad Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.50 2007/03/04 06:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.51 2007/07/21 19:06:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.50 2007/03/04 06:03:43 christos 
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
