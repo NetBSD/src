@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.13 2007/07/17 11:19:33 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.14 2007/07/21 19:06:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.13 2007/07/17 11:19:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.14 2007/07/21 19:06:22 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
-
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
@@ -51,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.13 2007/07/17 11:19:33 pooka Ex
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/proc.h>
 
 /* v-node */
 #include <sys/namei.h>
