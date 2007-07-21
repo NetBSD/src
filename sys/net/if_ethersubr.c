@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.150 2007/07/14 21:02:39 ad Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.151 2007/07/21 02:24:11 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.150 2007/07/14 21:02:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.151 2007/07/21 02:24:11 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -204,7 +204,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
  	uint8_t esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
-	struct mbuf *mcopy = (struct mbuf *)0;
+	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
 	struct ifnet *ifp = ifp0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
