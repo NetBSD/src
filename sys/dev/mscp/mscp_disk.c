@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.54 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.55 2007/07/21 19:51:48 ad Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.54 2007/03/04 06:02:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.55 2007/07/21 19:51:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -245,9 +245,7 @@ raopen(dev, flag, fmt, l)
 
 	part = DISKPART(dev);
 
-	if ((error = lockmgr(&ra->ra_disk.dk_openlock, LK_EXCLUSIVE,
-			     NULL)) != 0)
-		return (error);
+	mutex_enter(&ra->ra_disk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -301,11 +299,9 @@ raopen(dev, flag, fmt, l)
 		break;
 	}
 	ra->ra_disk.dk_openmask |= mask;
-	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
-	return 0;
-
+	error = 0;
  bad1:
-	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&ra->ra_disk.dk_openlock);
 	return (error);
 }
 
@@ -318,11 +314,9 @@ raclose(dev, flags, fmt, l)
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
-	int error, mask = (1 << DISKPART(dev));
+	int mask = (1 << DISKPART(dev));
 
-	if ((error = lockmgr(&ra->ra_disk.dk_openlock, LK_EXCLUSIVE,
-			     NULL)) != 0)
-		return (error);
+	mutex_enter(&ra->ra_disk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -350,7 +344,7 @@ raclose(dev, flags, fmt, l)
 		ra->ra_wlabel = 0;
 	}
 #endif
-	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&ra->ra_disk.dk_openlock);
 	return (0);
 }
 
@@ -489,9 +483,7 @@ raioctl(dev, cmd, data, flag, l)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
-			if ((error = lockmgr(&ra->ra_disk.dk_openlock,
-					     LK_EXCLUSIVE, NULL)) != 0)
-				break;
+			mutex_enter(&ra->ra_disk.dk_openlock);
 			error = setdisklabel(lp, tp, 0, 0);
 			if ((error == 0) && (cmd == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
@@ -503,8 +495,7 @@ raioctl(dev, cmd, data, flag, l)
 				error = writedisklabel(dev, rastrategy, lp,0);
 				ra->ra_wlabel = 0;
 			}
-			(void) lockmgr(&ra->ra_disk.dk_openlock,
-				       LK_RELEASE, NULL);
+			mutex_exit(&ra->ra_disk.dk_openlock);
 		}
 		break;
 
