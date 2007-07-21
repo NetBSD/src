@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.90 2007/07/21 19:21:54 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.91 2007/07/21 22:14:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.90 2007/07/21 19:21:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.91 2007/07/21 22:14:42 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -647,9 +647,9 @@ uao_detach_locked(struct uvm_object *uobj)
  	 * remove the aobj from the global list.
  	 */
 
-	mutex_enter(&uao_list_lock);
+	/* XXXSMP mutex_enter(&uao_list_lock); */
 	LIST_REMOVE(aobj, u_list);
-	mutex_exit(&uao_list_lock);
+	/* XXXSMP mutex_exit(&uao_list_lock); */
 
 	/*
  	 * free all the pages left in the aobj.  for each page,
@@ -1560,10 +1560,10 @@ uao_dropswap_range1(struct uvm_aobj *aobj, voff_t start, voff_t end)
 	 */
 
 	if (swpgonlydelta > 0) {
-		mutex_enter(&uvm_swap_data_lock);
+		/* XXXSMP mutex_enter(&uvm_swap_data_lock); */ 
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		mutex_exit(&uvm_swap_data_lock);
+		/* XXXSMP mutex_exit(&uvm_swap_data_lock); */
 	}
 }
 
