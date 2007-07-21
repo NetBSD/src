@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.126 2007/07/09 21:10:56 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.127 2007/07/21 19:21:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.126 2007/07/09 21:10:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.127 2007/07/21 19:21:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -891,12 +891,12 @@ process_domem(struct lwp *curl /*tracer*/,
 
 	vm = p->p_vmspace;
 
-	simple_lock(&vm->vm_map.ref_lock);
+	mutex_enter(&vm->vm_map.misc_lock);
 	if ((l->l_flag & LW_WEXIT) || vm->vm_refcnt < 1)
 		error = EFAULT;
 	if (error == 0)
 		p->p_vmspace->vm_refcnt++;  /* XXX */
-	simple_unlock(&vm->vm_map.ref_lock);
+	mutex_exit(&vm->vm_map.misc_lock);
 	if (error != 0)
 		return (error);
 	error = uvm_io(&vm->vm_map, uio);

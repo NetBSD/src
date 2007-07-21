@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.83 2007/07/12 20:39:57 rmind Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.84 2007/07/21 19:21:55 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.83 2007/07/12 20:39:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.84 2007/07/21 19:21:55 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -71,7 +71,7 @@ struct uvm_pagerops * const uvmpagerops[] = {
  */
 
 struct vm_map *pager_map;		/* XXX */
-struct simplelock pager_map_wanted_lock;
+kmutex_t pager_map_wanted_lock;
 bool pager_map_wanted;	/* locked by pager map */
 static vaddr_t emergva;
 static bool emerginuse;
@@ -93,7 +93,7 @@ uvm_pager_init(void)
 	sva = 0;
 	pager_map = uvm_km_suballoc(kernel_map, &sva, &eva, PAGER_MAP_SIZE, 0,
 	    false, NULL);
-	simple_lock_init(&pager_map_wanted_lock);
+	mutex_init(&pager_map_wanted_lock, MUTEX_DEFAULT, IPL_NONE);
 	pager_map_wanted = false;
 	emergva = uvm_km_alloc(kernel_map, round_page(MAXPHYS), 0,
 	    UVM_KMF_VAONLY);
@@ -155,15 +155,14 @@ ReStart:
 	if (uvm_map(pager_map, &kva, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_FLAG_NOMERGE | (pdaemon ? UVM_FLAG_NOWAIT : 0)) != 0) {
 		if (pdaemon) {
-			simple_lock(&pager_map_wanted_lock);
+			mutex_enter(&pager_map_wanted_lock);
 			if (emerginuse) {
-				UVM_UNLOCK_AND_WAIT(&emergva,
-				    &pager_map_wanted_lock, false,
-				    "emergva", 0);
+				mtsleep(&emergva, PVM | PNORELOCK, "emergva",
+				    0, &pager_map_wanted_lock);
 				goto ReStart;
 			}
 			emerginuse = true;
-			simple_unlock(&pager_map_wanted_lock);
+			mutex_exit(&pager_map_wanted_lock);
 			kva = emergva;
 			/* The shift implicitly truncates to PAGE_SIZE */
 			KASSERT(npages <= (MAXPHYS >> PAGE_SHIFT));
@@ -173,11 +172,11 @@ ReStart:
 			UVMHIST_LOG(maphist,"<- NOWAIT failed", 0,0,0,0);
 			return(0);
 		}
-		simple_lock(&pager_map_wanted_lock);
+		mutex_enter(&pager_map_wanted_lock);
 		pager_map_wanted = true;
 		UVMHIST_LOG(maphist, "  SLEEPING on pager_map",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(pager_map, &pager_map_wanted_lock, false,
-		    "pager_map", 0);
+		mtsleep(pager_map, PVM | PNORELOCK, "pager_map", 0,
+		    &pager_map_wanted_lock);
 		goto ReStart;
 	}
 
@@ -217,21 +216,21 @@ uvm_pagermapout(vaddr_t kva, int npages)
 
 	pmap_kremove(kva, npages << PAGE_SHIFT);
 	if (kva == emergva) {
-		simple_lock(&pager_map_wanted_lock);
+		mutex_enter(&pager_map_wanted_lock);
 		emerginuse = false;
 		wakeup(&emergva);
-		simple_unlock(&pager_map_wanted_lock);
+		mutex_exit(&pager_map_wanted_lock);
 		return;
 	}
 
 	vm_map_lock(pager_map);
 	uvm_unmap_remove(pager_map, kva, kva + size, &entries, NULL, 0);
-	simple_lock(&pager_map_wanted_lock);
+	mutex_enter(&pager_map_wanted_lock);
 	if (pager_map_wanted) {
 		pager_map_wanted = false;
 		wakeup(pager_map);
 	}
-	simple_unlock(&pager_map_wanted_lock);
+	mutex_exit(&pager_map_wanted_lock);
 	vm_map_unlock(pager_map);
 	if (entries)
 		uvm_unmap_detach(entries, 0);
@@ -456,11 +455,11 @@ uvm_aio_aiodone(struct buf *bp)
 		KASSERT(write);
 
 		/* these pages are now only in swap. */
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
 		if (error != ENOMEM)
 			uvmexp.swpgonly += npages;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm_swap_data_lock);
 		if (error) {
 			if (error != ENOMEM)
 				uvm_swap_markbad(swslot, npages);
