@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_envsys2.c,v 1.1 2007/07/20 14:21:00 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_envsys2.c,v 1.2 2007/07/21 22:30:21 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.1 2007/07/20 14:21:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.2 2007/07/21 22:30:21 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.1 2007/07/20 14:21:00 xtraeme 
 #include <sys/errno.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#define MAXSENSORS	15
+#define MAXSENSORS	16
 
 struct envsys2_softc {
 	struct sysmon_envsys sc_sysmon;
@@ -107,88 +107,89 @@ envsys2_initsensors(struct envsys2_softc *sc)
 		sc->sc_sensor[i].state = ENVSYS_SVALID;
 	}
 
-	/* In a LKM, the first sensor must be dummy. */
-	sc->sc_sensor[0].units = 0;
-	COPYDESCR(sc->sc_sensor[0].desc, "Unused");
-
 	/*
 	 * Assign units and description, note that description must be
 	 * unique in a device, and sensors with a duplicate description
 	 * will be simply ignored.
 	 */
-	sc->sc_sensor[1].units = ENVSYS_STEMP;
-	COPYDESCR(sc->sc_sensor[1].desc, "CPU Temp");
+	sc->sc_sensor[0].units = ENVSYS_STEMP;
+	COPYDESCR(sc->sc_sensor[0].desc, "CPU Temp");
 	/*
 	 * We want to monitor for critical state in the CPU Temp sensor.
 	 */
-	sc->sc_sensor[1].monitor = true;
-	sc->sc_sensor[1].flags = ENVSYS_FMONCRITICAL;
+	sc->sc_sensor[0].monitor = true;
+	sc->sc_sensor[0].flags = ENVSYS_FMONCRITICAL;
 
-	sc->sc_sensor[2].units = ENVSYS_SFANRPM;
-	COPYDESCR(sc->sc_sensor[2].desc, "CPU Fan");
+	sc->sc_sensor[1].units = ENVSYS_SFANRPM;
+	COPYDESCR(sc->sc_sensor[1].desc, "CPU Fan");
 	/*
 	 * We want to monitor for a critical under state in the CPU Fan
 	 * sensor, so that we know if the fan is not working or stopped.
 	 */
-	sc->sc_sensor[2].monitor = true;
-	sc->sc_sensor[2].flags = ENVSYS_FMONCRITUNDER;
+	sc->sc_sensor[1].monitor = true;
+	sc->sc_sensor[1].flags = ENVSYS_FMONCRITUNDER;
 
-	sc->sc_sensor[3].units = ENVSYS_SVOLTS_DC;
-	COPYDESCR(sc->sc_sensor[3].desc, "VCore");
+	sc->sc_sensor[2].units = ENVSYS_SVOLTS_DC;
+	COPYDESCR(sc->sc_sensor[2].desc, "VCore");
 	/*
 	 * We want to monitor for a critical over state in the VCore
 	 * sensor, so that we know if there's overvolt on it.
 	 */
-	sc->sc_sensor[3].monitor = true;
-	sc->sc_sensor[3].flags = ENVSYS_FMONCRITOVER;
+	sc->sc_sensor[2].monitor = true;
+	sc->sc_sensor[2].flags = ENVSYS_FMONCRITOVER;
 
-	sc->sc_sensor[4].units = ENVSYS_SVOLTS_AC;
-	COPYDESCR(sc->sc_sensor[4].desc, "External Voltage");
+	sc->sc_sensor[3].units = ENVSYS_SVOLTS_AC;
+	COPYDESCR(sc->sc_sensor[3].desc, "External Voltage");
 
-	sc->sc_sensor[5].units = ENVSYS_SOHMS;
-	COPYDESCR(sc->sc_sensor[5].desc, "VCore Resistance");
+	sc->sc_sensor[4].units = ENVSYS_SOHMS;
+	COPYDESCR(sc->sc_sensor[4].desc, "VCore Resistance");
 
-	sc->sc_sensor[6].units = ENVSYS_SWATTS;
-	COPYDESCR(sc->sc_sensor[6].desc, "Current power");
+	sc->sc_sensor[5].units = ENVSYS_SWATTS;
+	COPYDESCR(sc->sc_sensor[5].desc, "Current power");
 
-	sc->sc_sensor[7].units = ENVSYS_SAMPS;
-	COPYDESCR(sc->sc_sensor[7].desc, "Current potency");
+	sc->sc_sensor[6].units = ENVSYS_SAMPS;
+	COPYDESCR(sc->sc_sensor[6].desc, "Current potency");
 
-	sc->sc_sensor[8].units = ENVSYS_SWATTHOUR;
-	COPYDESCR(sc->sc_sensor[8].desc, "Battery0 capacity");
+	sc->sc_sensor[7].units = ENVSYS_SWATTHOUR;
+	COPYDESCR(sc->sc_sensor[7].desc, "Battery0 capacity");
 
-	sc->sc_sensor[9].units = ENVSYS_SAMPHOUR;
-	COPYDESCR(sc->sc_sensor[9].desc, "Battery1 capacity");
+	sc->sc_sensor[8].units = ENVSYS_SAMPHOUR;
+	COPYDESCR(sc->sc_sensor[8].desc, "Battery1 capacity");
 
-	sc->sc_sensor[10].units = ENVSYS_INDICATOR;
-	COPYDESCR(sc->sc_sensor[10].desc, "Power Led");
+	sc->sc_sensor[9].units = ENVSYS_INDICATOR;
+	COPYDESCR(sc->sc_sensor[9].desc, "Power Led");
 
-	sc->sc_sensor[11].units = ENVSYS_INTEGER;
-	COPYDESCR(sc->sc_sensor[11].desc, "Technology");
+	sc->sc_sensor[10].units = ENVSYS_INTEGER;
+	COPYDESCR(sc->sc_sensor[10].desc, "Technology");
 	/*
 	 * We don't want to be able to set a critical limit in userland,
 	 * so we must disable the monitoring flag in the sensor.
 	 */
-	sc->sc_sensor[11].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_sensor[10].flags = ENVSYS_FMONNOTSUPP;
 
-	sc->sc_sensor[12].units = ENVSYS_DRIVE;
-	COPYDESCR(sc->sc_sensor[12].desc, "Master disk");
+	sc->sc_sensor[11].units = ENVSYS_DRIVE;
+	COPYDESCR(sc->sc_sensor[11].desc, "Master disk");
 	/* 
 	 * We want to monitor the state in the drive sensor, so
 	 * that we know if it's not online or in normal operation.
 	 */
-	sc->sc_sensor[12].monitor = true;
-	sc->sc_sensor[12].flags = ENVSYS_FMONDRVSTATE;
+	sc->sc_sensor[11].monitor = true;
+	sc->sc_sensor[11].flags = ENVSYS_FMONDRVSTATE;
 
 	/*
 	 * Let's add two sensors with duplicate descriptions.
 	 */
-	sc->sc_sensor[13].units = ENVSYS_SWATTS;
-	COPYDESCR(sc->sc_sensor[13].desc, "CPU Temp");
+	sc->sc_sensor[12].units = ENVSYS_SWATTS;
+	COPYDESCR(sc->sc_sensor[12].desc, "CPU Temp");
 
-	sc->sc_sensor[14].units = ENVSYS_INTEGER;
-	COPYDESCR(sc->sc_sensor[14].desc, "Technology");
+	sc->sc_sensor[13].units = ENVSYS_INTEGER;
+	COPYDESCR(sc->sc_sensor[13].desc, "Technology");
 
+	sc->sc_sensor[14].units = ENVSYS_STEMP;
+	COPYDESCR(sc->sc_sensor[14].desc, "Another Temp");
+
+	sc->sc_sensor[15].units = ENVSYS_SFANRPM;
+	COPYDESCR(sc->sc_sensor[15].desc, "Another Fan");
 }
 
 /*
@@ -203,46 +204,36 @@ static void
 envsys2_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 
-	/* 
-	 * Hack for the LKM, the first sensor has the number of
-	 * edata structures allocated in kernel, so invalidate the sensor
-	 * for now.
-	 */
-	if (edata->sensor > MAXSENSORS) {
-		edata->state = ENVSYS_SINVALID;
-		return;
-	}
-
 	switch (edata->sensor) {
-	case 1:
+	case 0:
 		/* CPU Temp, use 38C */
 		edata->value_cur = 38 * 1000000 + 273150000;
 		break;
-	case 2:
+	case 1:
 		/* CPU Fan, use 2560 RPM */
 		edata->value_cur = 2560;
 		break;
-	case 3:
+	case 2:
 		/* Vcore in DC, use 1.232V */
 		edata->value_cur = 1232 * 1000;
 		break;
-	case 4:
+	case 3:
 		/* External Voltage in AC, use 223.2V */
 		edata->value_cur = 2232 * 100000;
 		break;
-	case 5:
+	case 4:
 		/* VCore resistance, use 12 Ohms */
 		edata->value_cur = 1200 * 10000;
 		break;
-	case 6:
+	case 5:
 		/* Current power, use 30W */
 		edata->value_cur = 30000000;
 		break;
-	case 7:
+	case 6:
 		/* Current potency, use 0.500A */
 		edata->value_cur = 500 * 1000;
 		break;
-	case 8:
+	case 7:
 		/* 
 		 * Battery0 in Wh.
 		 *
@@ -259,28 +250,32 @@ envsys2_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* enable percentage display */
 		edata->flags |= ENVSYS_FPERCENT;
 		break;
-	case 9:
+	case 8:
 		/* Battery1 in Ah */
 		edata->value_cur = 1890000;
 		edata->value_max= 4000000;
 		edata->flags |= ENVSYS_FVALID_MAX;
 		edata->flags |= ENVSYS_FPERCENT;
 		break;
-	case 10:
+	case 9:
 		/*
 		 * sensor with indicator units, only need to be marked
 		 * as valid and use a value of 1 or 0.
 		 */
 		edata->value_cur = 1;
 		break;
-	case 11:
+	case 10:
 		/* Technology, no comments */
 		edata->value_cur = 2007;
 		break;
-	case 12:
+	case 11:
 		/* Master disk, use the common DRIVE_ONLINE. */
 		edata->value_cur = ENVSYS_DRIVE_ONLINE;
 		break;
+	default:
+		edata->value_cur = 0;
+		edata->state = ENVSYS_SINVALID;
+		return;
 
 	}
 
