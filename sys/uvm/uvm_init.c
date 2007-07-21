@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.27 2007/07/09 21:11:36 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.28 2007/07/21 19:21:54 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.27 2007/07/09 21:11:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.28 2007/07/21 19:21:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,12 +55,18 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.27 2007/07/09 21:11:36 ad Exp $");
 #include <uvm/uvm_pdpolicy.h>
 
 /*
- * struct uvm: we store all global vars in this structure to make them
+ * struct uvm: we store most global vars in this structure to make them
  * easier to spot...
  */
 
 struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
+struct uvm_object *uvm_kernel_object;
+
+kmutex_t uvm_fpageqlock;
+kmutex_t uvm_pagedaemon_lock;
+kmutex_t uvm_kentry_lock;
+kmutex_t uvm_swap_data_lock;
 kmutex_t uvm_scheduler_mutex;
 
 /*
@@ -93,6 +99,7 @@ uvm_init(void)
 	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
 	mutex_init(&uvm_uareas_lock, MUTEX_DEFAULT, IPL_NONE);
+	uvm_amap_init();
 
 	/*
 	 * step 2: init the page sub-system.  this includes allocating the

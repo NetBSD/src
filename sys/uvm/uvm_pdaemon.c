@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.86 2007/07/09 21:11:37 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.87 2007/07/21 19:21:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.86 2007/07/09 21:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.87 2007/07/21 19:21:55 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -152,10 +152,10 @@ uvm_wait(const char *wmsg)
 #endif
 	}
 
-	simple_lock(&uvm.pagedaemon_lock);
+	mutex_enter(&uvm_pagedaemon_lock);
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, false, wmsg,
-	    timo);
+	mtsleep(&uvmexp.free, PVM, wmsg, timo, &uvm_pagedaemon_lock);
+	mutex_exit(&uvm_pagedaemon_lock);
 
 	splx(s);
 }
@@ -239,11 +239,11 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
-		simple_lock(&uvm.pagedaemon_lock);
+		mutex_enter(&uvm_pagedaemon_lock);
 
 		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-		    &uvm.pagedaemon_lock, false, "pgdaemon", 0);
+		mtsleep(&uvm.pagedaemon, PVM | PNORELOCK, "pgdaemon", 0,
+		    &uvm_pagedaemon_lock);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
@@ -321,7 +321,7 @@ uvm_pageout(void *arg)
 void
 uvm_aiodone_worker(struct work *wk, void *dummy)
 {
-	int s, free;
+	int free;
 	struct buf *bp = (void *)wk;
 
 	KASSERT(&bp->b_work == wk);
@@ -333,13 +333,13 @@ uvm_aiodone_worker(struct work *wk, void *dummy)
 	free = uvmexp.free;
 	(*bp->b_iodone)(bp);
 	if (free <= uvmexp.reserve_kernel) {
-		s = uvm_lock_fpageq();
+		mutex_spin_enter(&uvm_fpageqlock);
 		wakeup(&uvm.pagedaemon);
-		uvm_unlock_fpageq(s);
+		mutex_spin_exit(&uvm_fpageqlock);
 	} else {
-		simple_lock(&uvm.pagedaemon_lock);
+		mutex_enter(&uvm_pagedaemon_lock);
 		wakeup(&uvmexp.free);
-		simple_unlock(&uvm.pagedaemon_lock);
+		mutex_exit(&uvm_pagedaemon_lock);
 	}
 }
 
@@ -736,10 +736,10 @@ uvmpd_scan_queue(void)
 
 			if (slot > 0) {
 				/* this page is now only in swap. */
-				simple_lock(&uvm.swap_data_lock);
+				mutex_enter(&uvm_swap_data_lock);
 				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
 				uvmexp.swpgonly++;
-				simple_unlock(&uvm.swap_data_lock);
+				mutex_exit(&uvm_swap_data_lock);
 			}
 			continue;
 		}

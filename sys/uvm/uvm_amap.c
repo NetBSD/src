@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.81 2007/07/09 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.82 2007/07/21 19:21:53 ad Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.81 2007/07/09 21:11:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.82 2007/07/21 19:21:53 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.81 2007/07/09 21:11:35 ad Exp $");
 POOL_INIT(uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0, "amappl",
     &pool_allocator_nointr, IPL_NONE);
 
-static struct simplelock amap_list_lock = SIMPLELOCK_INITIALIZER;
+static kmutex_t amap_list_lock;
 static LIST_HEAD(, vm_amap) amap_list;
 
 /*
@@ -77,18 +77,18 @@ static inline void
 amap_list_insert(struct vm_amap *amap)
 {
 
-	simple_lock(&amap_list_lock);
+	mutex_enter(&amap_list_lock);
 	LIST_INSERT_HEAD(&amap_list, amap, am_list);
-	simple_unlock(&amap_list_lock);
+	mutex_exit(&amap_list_lock);
 }
 
 static inline void
 amap_list_remove(struct vm_amap *amap)
 {
 
-	simple_lock(&amap_list_lock);
+	mutex_enter(&amap_list_lock);
 	LIST_REMOVE(amap, am_list);
-	simple_unlock(&amap_list_lock);
+	mutex_exit(&amap_list_lock);
 }
 
 static int
@@ -189,7 +189,7 @@ amap_alloc1(int slots, int padslots, int waitf)
 
 	kmflags = ((waitf & UVM_FLAG_NOWAIT) != 0) ? KM_NOSLEEP : KM_SLEEP;
 	totalslots = amap_roundup_slots(slots + padslots);
-	simple_lock_init(&amap->am_l);
+	mutex_init(&amap->am_l, MUTEX_DEFAULT, IPL_NONE);
 	amap->am_ref = 1;
 	amap->am_flags = 0;
 #ifdef UVM_AMAP_PPREF
@@ -219,6 +219,7 @@ fail3:
 fail2:
 	kmem_free(amap->am_slots, totalslots * sizeof(int));
 fail1:
+	mutex_destroy(&amap->am_l);
 	pool_put(&uvm_amap_pool, amap);
 
 	/*
@@ -263,6 +264,15 @@ amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 	return(amap);
 }
 
+/*
+ * uvm_amap_init: initialize the amap system.
+ */
+void
+uvm_amap_init(void)
+{
+
+	mutex_init(&amap_list_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
 /*
  * amap_free: free an amap
@@ -279,7 +289,7 @@ amap_free(struct vm_amap *amap)
 
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
-	LOCK_ASSERT(!simple_lock_held(&amap->am_l));
+	KASSERT(!mutex_owned(&amap->am_l));
 	slots = amap->am_maxslot;
 	kmem_free(amap->am_slots, slots * sizeof(*amap->am_slots));
 	kmem_free(amap->am_bckptr, slots * sizeof(*amap->am_bckptr));
@@ -288,6 +298,7 @@ amap_free(struct vm_amap *amap)
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		kmem_free(amap->am_ppref, slots * sizeof(*amap->am_ppref));
 #endif
+	mutex_destroy(&amap->am_l);
 	pool_put(&uvm_amap_pool, amap);
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
 }
@@ -629,7 +640,7 @@ amap_share_protect(struct vm_map_entry *entry, vm_prot_t prot)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slots, lcv, slot, stop;
 
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	KASSERT(mutex_owned(&amap->am_l));
 
 	AMAP_B2SLOT(slots, (entry->end - entry->start));
 	stop = entry->aref.ar_pageoff + slots;
@@ -1286,7 +1297,7 @@ amap_swap_off(int startslot, int endslot)
 #endif /* defined(DIAGNOSTIC) */
 
 	uvm_lwp_hold(l);
-	simple_lock(&amap_list_lock);
+	mutex_enter(&amap_list_lock);
 	for (am = LIST_FIRST(&amap_list); am != NULL && !rv; am = am_next) {
 		int i;
 
@@ -1294,9 +1305,9 @@ amap_swap_off(int startslot, int endslot)
 		LIST_INSERT_AFTER(am, &marker_next, am_list);
 
 		if (!amap_lock_try(am)) {
-			simple_unlock(&amap_list_lock);
+			mutex_exit(&amap_list_lock);
 			preempt();
-			simple_lock(&amap_list_lock);
+			mutex_enter(&amap_list_lock);
 			am_next = LIST_NEXT(&marker_prev, am_list);
 			if (am_next == &marker_next) {
 				am_next = LIST_NEXT(am_next, am_list);
@@ -1309,7 +1320,7 @@ amap_swap_off(int startslot, int endslot)
 			continue;
 		}
 
-		simple_unlock(&amap_list_lock);
+		mutex_exit(&amap_list_lock);
 
 		if (am->am_nused <= 0) {
 			amap_unlock(am);
@@ -1354,7 +1365,7 @@ amap_swap_off(int startslot, int endslot)
 		}
 		
 next:
-		simple_lock(&amap_list_lock);
+		mutex_enter(&amap_list_lock);
 		KASSERT(LIST_NEXT(&marker_prev, am_list) == &marker_next ||
 		    LIST_NEXT(LIST_NEXT(&marker_prev, am_list), am_list) ==
 		    &marker_next);
@@ -1362,7 +1373,7 @@ next:
 		LIST_REMOVE(&marker_prev, am_list);
 		LIST_REMOVE(&marker_next, am_list);
 	}
-	simple_unlock(&amap_list_lock);
+	mutex_exit(&amap_list_lock);
 	uvm_lwp_rele(l);
 
 	return rv;
@@ -1381,7 +1392,7 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_lookup"); UVMHIST_CALLED(maphist);
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	KASSERT(mutex_owned(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -1407,7 +1418,7 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset, struct vm_anon **anons,
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_lookups"); UVMHIST_CALLED(maphist);
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	KASSERT(mutex_owned(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -1438,7 +1449,7 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_add"); UVMHIST_CALLED(maphist);
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	KASSERT(mutex_owned(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -1483,7 +1494,7 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 	int ptr, slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	KASSERT(mutex_owned(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
