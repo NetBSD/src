@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.35 2007/07/21 15:16:58 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.36 2007/07/21 15:30:04 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.35 2007/07/21 15:16:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.36 2007/07/21 15:30:04 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -339,6 +339,12 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		edata = &sme->sme_sensor_data[tred->sensor];
 
+		if (edata->flags & ENVSYS_FDUPDESC) {
+			tred->validflags &= ~ENVSYS_FCURVALID;
+			tred->cur.data_s = tred->cur.data_us = 0;
+			goto out;
+		}
+
 		if (tred->sensor < sme->sme_nsensors) {
 			if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
 				error = (*sme->sme_gtredata)(sme, edata);
@@ -381,6 +387,8 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    " tred->sensor=%d\n", __func__, tred->validflags,
 			    tred->units, tred->sensor));
 		}
+
+out:
 		tred->sensor = oidx;
 		mutex_exit(&sme_mtx);
 
