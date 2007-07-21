@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.16 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: a12c.c,v 1.17 2007/07/21 11:59:57 tsutsui Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.16 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.17 2007/07/21 11:59:57 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.16 2005/12/11 12:16:17 christos Exp $");
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <dev/dec/clockvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+
+#include <alpha/alpha/clockvar.h>
 
 #include <alpha/pci/a12creg.h>
 #include <alpha/pci/a12cvar.h>
@@ -127,7 +128,6 @@ a12cattach(parent, self, aux)
 	struct a12c_softc *sc = (struct a12c_softc *)self;
 	struct a12c_config *ccp;
 	struct pcibus_attach_args pba;
-	extern const struct clockfns *clockfns;	/* XXX? */
 
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12cfound = 1;
@@ -141,11 +141,11 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.16 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.17 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);
-	clockfns = &noclock_fns;	/* XXX? */
+	clockattach(noclock_init, NULL);	/* XXX? */
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_iot = 0;
@@ -167,19 +167,8 @@ a12cattach(parent, self, aux)
 	config_found_ia(self, "a12c_a12dc", &pba, NULL);
 }
 
-static void noclock_init(struct device *dev) {
-	dev = dev;
-}
-
-static void
-noclock_get(struct device *dev, time_t t, struct clocktime *ct)
+static void noclock_init(void (*)(void *), void *)
 {
-	*ct = zeroct;
-}
 
-static void
-noclock_set(struct device *dev, struct clocktime *ct)
-{
-	if(dev!=NULL)
-		*ct = *ct;
+	/* nothing */
 }
