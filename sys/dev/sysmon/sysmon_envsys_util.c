@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_util.c,v 1.1 2007/07/20 14:10:22 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_util.c,v 1.2 2007/07/21 12:11:27 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.1 2007/07/20 14:10:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2 2007/07/21 12:11:27 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,9 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.1 2007/07/20 14:10:22 xtrae
  * in dictionary.
  */
 int
-sme_sensor_upbool(prop_object_t obj, prop_dictionary_t dict,
-		  const char *key, bool val)
+sme_sensor_upbool(prop_dictionary_t dict, const char *key, bool val)
 {
+	prop_object_t obj;
+
 	KASSERT(dict != NULL);
 
 	obj = prop_dictionary_get(dict, key);
@@ -81,9 +82,10 @@ sme_sensor_upbool(prop_object_t obj, prop_dictionary_t dict,
 }
 
 int
-sme_sensor_upint32(prop_object_t obj, prop_dictionary_t dict,
-		   const char *key, int32_t val)
+sme_sensor_upint32(prop_dictionary_t dict, const char *key, int32_t val)
 {
+	prop_object_t obj;
+
 	KASSERT(dict != NULL);
 
 	obj = prop_dictionary_get(dict, key);
@@ -108,9 +110,10 @@ sme_sensor_upint32(prop_object_t obj, prop_dictionary_t dict,
 }
 
 int
-sme_sensor_upuint32(prop_object_t obj, prop_dictionary_t dict,
-		    const char *key, uint32_t val)
+sme_sensor_upuint32(prop_dictionary_t dict, const char *key, uint32_t val)
 {
+	prop_object_t obj;
+
 	KASSERT(dict != NULL);
 
 	obj = prop_dictionary_get(dict, key);
@@ -135,9 +138,10 @@ sme_sensor_upuint32(prop_object_t obj, prop_dictionary_t dict,
 }
 
 int
-sme_sensor_upstring(prop_object_t obj, prop_dictionary_t dict,
-		    const char *key, const char *str)
+sme_sensor_upstring(prop_dictionary_t dict, const char *key, const char *str)
 {
+	prop_object_t obj;
+
 	KASSERT(dict != NULL);
 
 	obj = prop_dictionary_get(dict, key);
