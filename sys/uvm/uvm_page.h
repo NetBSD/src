@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.48 2007/04/14 07:01:33 perseant Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.49 2007/07/21 19:21:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -261,9 +261,6 @@ bool uvm_page_physget(paddr_t *);
 void uvm_page_rehash(void);
 void uvm_page_recolor(int);
 void uvm_pageidlezero(void);
-
-int uvm_lock_fpageq(void);
-void uvm_unlock_fpageq(int);
 
 void uvm_pageactivate(struct vm_page *);
 vaddr_t uvm_pageboot_alloc(vsize_t);
