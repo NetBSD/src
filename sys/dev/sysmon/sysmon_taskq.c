@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.9 2007/07/09 21:01:24 ad Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.10 2007/07/21 23:15:16 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.9 2007/07/09 21:01:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.10 2007/07/21 23:15:16 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -62,29 +62,24 @@ struct sysmon_task {
 
 static TAILQ_HEAD(, sysmon_task) sysmon_task_queue =
     TAILQ_HEAD_INITIALIZER(sysmon_task_queue);
-struct simplelock sysmon_task_queue_slock = SIMPLELOCK_INITIALIZER;
 
-#define	SYSMON_TASK_QUEUE_LOCK(s)					\
-do {									\
-	s = splsched();							\
-	simple_lock(&sysmon_task_queue_slock);				\
-} while (/*CONSTCOND*/0)
+static kmutex_t sysmon_task_queue_mtx;
+static kmutex_t sysmon_task_queue_init_mtx;
+static kcondvar_t sysmon_task_queue_cv;
 
-#define	SYSMON_TASK_QUEUE_UNLOCK(s)					\
-do {									\
-	simple_unlock(&sysmon_task_queue_slock);			\
-	splx((s));							\
-} while (/*CONSTCOND*/0)
-
+static int sysmon_task_queue_initialized;
 static int sysmon_task_queue_cleanup_sem;
-
 static struct lwp *sysmon_task_queue_lwp;
-
 static void sysmon_task_queue_thread(void *);
 
-static struct simplelock sysmon_task_queue_initialized_slock =
-    SIMPLELOCK_INITIALIZER;
-static int sysmon_task_queue_initialized;
+void
+sysmon_task_queue_preinit(void)
+{
+	mutex_init(&sysmon_task_queue_mtx, MUTEX_SPIN, IPL_VM);
+	mutex_init(&sysmon_task_queue_init_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sysmon_task_queue_cv, "smtaskq");
+}
+
 
 /*
  * sysmon_task_queue_init:
@@ -96,14 +91,14 @@ sysmon_task_queue_init(void)
 {
 	int error;
 
-	simple_lock(&sysmon_task_queue_initialized_slock);
+	mutex_enter(&sysmon_task_queue_init_mtx);
 	if (sysmon_task_queue_initialized) {
-		simple_unlock(&sysmon_task_queue_initialized_slock);
+		mutex_exit(&sysmon_task_queue_init_mtx);
 		return;
 	}
 
 	sysmon_task_queue_initialized = 1;
-	simple_unlock(&sysmon_task_queue_initialized_slock);
+	mutex_exit(&sysmon_task_queue_init_mtx);
 
 	error = kthread_create(PRI_NONE, 0, NULL, sysmon_task_queue_thread,
 	    NULL, &sysmon_task_queue_lwp, "sysmon");
@@ -122,19 +117,17 @@ sysmon_task_queue_init(void)
 void
 sysmon_task_queue_fini(void)
 {
-	int s;
 
-	SYSMON_TASK_QUEUE_LOCK(s);
+	mutex_enter(&sysmon_task_queue_mtx);
 
 	sysmon_task_queue_cleanup_sem = 1;
-	wakeup(&sysmon_task_queue);
+	cv_signal(&sysmon_task_queue_cv);
 
-	while (sysmon_task_queue_cleanup_sem != 0) {
-		(void)ltsleep(&sysmon_task_queue_cleanup_sem,
-		    PVM, "stfini", 0, &sysmon_task_queue_slock);
-	}
+	while (sysmon_task_queue_cleanup_sem != 0)
+		cv_wait(&sysmon_task_queue_cv,
+			&sysmon_task_queue_mtx);
 
-	SYSMON_TASK_QUEUE_UNLOCK(s);
+	mutex_exit(&sysmon_task_queue_mtx);
 }
 
 /*
@@ -147,7 +140,6 @@ static void
 sysmon_task_queue_thread(void *arg)
 {
 	struct sysmon_task *st;
-	int s;
 
 	/*
 	 * Run through all the tasks before we check for the exit
@@ -155,24 +147,23 @@ sysmon_task_queue_thread(void *arg)
 	 * all the tasks before we exit.
 	 */
 	for (;;) {
-		SYSMON_TASK_QUEUE_LOCK(s);
+		mutex_enter(&sysmon_task_queue_mtx);
 		st = TAILQ_FIRST(&sysmon_task_queue);
 		if (st == NULL) {
 			/* Check for the exit condition. */
 			if (sysmon_task_queue_cleanup_sem != 0) {
 				/* Time to die. */
 				sysmon_task_queue_cleanup_sem = 0;
-				wakeup(&sysmon_task_queue_cleanup_sem);
-				SYSMON_TASK_QUEUE_UNLOCK(s);
+				cv_broadcast(&sysmon_task_queue_cv);
+				mutex_exit(&sysmon_task_queue_mtx);
 				kthread_exit(0);
 			}
-			(void) ltsleep(&sysmon_task_queue, PVM,
-			    "smtaskq", 0, &sysmon_task_queue_slock);
-			SYSMON_TASK_QUEUE_UNLOCK(s);
+			cv_wait(&sysmon_task_queue_cv, &sysmon_task_queue_mtx);
+			mutex_exit(&sysmon_task_queue_mtx);
 			continue;
 		}
 		TAILQ_REMOVE(&sysmon_task_queue, st, st_list);
-		SYSMON_TASK_QUEUE_UNLOCK(s);
+		mutex_exit(&sysmon_task_queue_mtx);
 
 		(*st->st_func)(st->st_arg);
 		free(st, M_TEMP);
@@ -189,34 +180,35 @@ int
 sysmon_task_queue_sched(u_int pri, void (*func)(void *), void *arg)
 {
 	struct sysmon_task *st, *lst;
-	int s;
 
 	if (sysmon_task_queue_lwp == NULL)
 		aprint_debug("WARNING: Callback scheduled before sysmon "
 		    "task queue thread present\n");
 
 	if (func == NULL)
-		return (EINVAL);
+		return EINVAL;
 
 	st = malloc(sizeof(*st), M_TEMP, M_NOWAIT);
 	if (st == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	st->st_func = func;
 	st->st_arg = arg;
 	st->st_pri = pri;
 
-	SYSMON_TASK_QUEUE_LOCK(s);
+	mutex_enter(&sysmon_task_queue_mtx);
 	TAILQ_FOREACH(lst, &sysmon_task_queue, st_list) {
 		if (st->st_pri > lst->st_pri) {
 			TAILQ_INSERT_BEFORE(lst, st, st_list);
 			break;
 		}
 	}
+
 	if (lst == NULL)
 		TAILQ_INSERT_TAIL(&sysmon_task_queue, st, st_list);
-	wakeup(&sysmon_task_queue);
-	SYSMON_TASK_QUEUE_UNLOCK(s);
 
-	return (0);
+	cv_broadcast(&sysmon_task_queue_cv);
+	mutex_exit(&sysmon_task_queue_mtx);
+
+	return 0;
 }

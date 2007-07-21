@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.309 2007/07/21 19:51:49 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.310 2007/07/21 23:15:16 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.309 2007/07/21 19:51:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.310 2007/07/21 23:15:16 xtraeme Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.309 2007/07/21 19:51:49 ad Exp $");
 #include "opt_ktrace.h"
 #include "opt_pax.h"
 
+#include "sysmon_taskq.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
@@ -179,7 +180,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.309 2007/07/21 19:51:49 ad Exp $");
 
 #include <uvm/uvm.h>
 
+#if NSYSMON_TASKQ > 0
+#include <dev/sysmon/sysmon_taskq.h>
+#endif
+
 #include <dev/cons.h>
+
 #if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0
 #include <dev/sysmon/sysmonvar.h>
 #endif
@@ -370,9 +376,14 @@ main(void)
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
 
+#if NSYSMON_TASKQ > 0
+	sysmon_task_queue_preinit();
+#endif
+
 #if NSYSMON_ENVSYS > 0
 	sysmon_envsys_init();
 #endif
+
 #if NSYSMON_POWER > 0
 	sysmon_power_init();
 #endif
