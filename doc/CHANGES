@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.890 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.891 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -167,3 +167,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	nfsmb(4): Add support for NVIDIA nForce 2/3/4 SMBus controller and
 		SMBus driver. [kiyohara 20070711]
 	dbri(4): Added support for audio input. [macallan 20070712]
+	alpha: Add timecounter(9) support and switch to MI todr(9)
+		with MI mc146818 driver. [tsutsui 20070721]
