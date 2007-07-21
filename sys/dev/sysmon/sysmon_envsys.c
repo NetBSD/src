@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.38 2007/07/21 16:16:59 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.39 2007/07/21 17:18:00 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.38 2007/07/21 16:16:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.39 2007/07/21 17:18:00 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -233,20 +233,23 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * new data if it's different than we have currently
 		 * in the dictionary.
 		 */		
-		mutex_enter(&sme_mtx);
+		mutex_enter(&sme_list_mtx);
 		LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
 			if (sme == NULL)
 				continue;
 
+			mutex_enter(&sme_mtx);
 			error = sme_update_dictionary(sme);
 			if (error) {
 				DPRINTF(("%s: sme_update_dictionary, "
 				    "error=%d\n", __func__, error));
+				mutex_exit(&sme_list_mtx);
 				mutex_exit(&sme_mtx);
 				return error;
 			}
+			mutex_exit(&sme_mtx);
 		}
-		mutex_exit(&sme_mtx);
+		mutex_exit(&sme_list_mtx);
 		/*
 		 * Copy global dictionary to userland.
 		 */
