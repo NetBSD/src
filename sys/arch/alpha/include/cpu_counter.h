@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_counter.h,v 1.3 2006/02/16 20:17:13 perry Exp $ */
+/* $NetBSD: cpu_counter.h,v 1.4 2007/07/21 11:59:56 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,9 @@
 #include <machine/cpu.h>
 #include <machine/rpb.h>
 
+#define cc_calibrate_mp(ci)	\
+	alpha_multicast_ipi(cpus_running, ALPHA_IPI_MICROSET)
+
 /* Process Cycle Counter is always available. */
 #define cpu_hascounter()	(1)
 #define cpu_counter()		cpu_counter32()
@@ -68,7 +71,7 @@ static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
 
-	return (hwrpb->rpb_cc_freq);
+	return (ci->ci_pcc_freq);
 }
 
 #endif /* _KERNEL */

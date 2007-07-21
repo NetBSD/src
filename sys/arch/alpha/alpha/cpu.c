@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.75 2007/05/18 02:45:18 mhitch Exp $ */
+/* $NetBSD: cpu.c,v 1.76 2007/07/21 11:59:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2007/05/18 02:45:18 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.76 2007/07/21 11:59:55 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -284,6 +284,7 @@ recognized:
 #endif
 	ci->ci_cpuid = ma->ma_slot;
 	ci->ci_softc = sc;
+	ci->ci_pcc_freq = hwrpb->rpb_cc_freq;
 
 	/*
 	 * Though we could (should?) attach the LCA cpus' PCI
@@ -562,7 +563,7 @@ cpu_hatch(struct cpu_info *ci)
 	ALPHA_TBIA();
 	alpha_pal_imb();
 
-	cc_microset(ci);
+	cc_calibrate_cpu(ci);
 
 	/* Initialize our base "runtime". */
 	microtime(&ci->ci_schedstate.spc_runtime);
