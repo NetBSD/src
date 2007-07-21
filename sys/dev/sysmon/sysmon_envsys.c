@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.37 2007/07/21 15:45:12 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.38 2007/07/21 16:16:59 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.37 2007/07/21 15:45:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.38 2007/07/21 16:16:59 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -971,7 +971,6 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		edata = &sme->sme_sensor_data[i];
 		if (edata->flags & ENVSYS_FDUPDESC) {
 			--sme->sme_nsensors;
-			--i;
 			continue;
 		}
 
