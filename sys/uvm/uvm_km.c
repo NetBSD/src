@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.95 2007/07/21 19:21:54 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.96 2007/07/21 20:52:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.95 2007/07/21 19:21:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.96 2007/07/21 20:52:59 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -511,10 +511,10 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, bool intrsafe)
 		if (!intrsafe) {
 			const struct vm_page *pg;
 
-			simple_lock(&uvm.kernel_object->vmobjlock);
-			pg = uvm_pagelookup(uvm.kernel_object,
+			simple_lock(&uvm_kernel_object->vmobjlock);
+			pg = uvm_pagelookup(uvm_kernel_object,
 			    va - vm_map_min(kernel_map));
-			simple_unlock(&uvm.kernel_object->vmobjlock);
+			simple_unlock(&uvm_kernel_object->vmobjlock);
 			if (pg) {
 				panic("uvm_km_check_empty: "
 				    "has page hashed at %p", (const void *)va);
