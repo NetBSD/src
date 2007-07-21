@@ -1,7 +1,7 @@
-#	$NetBSD: files.sysmon,v 1.7 2007/07/20 14:10:22 xtraeme Exp $
+#	$NetBSD: files.sysmon,v 1.8 2007/07/21 23:15:17 xtraeme Exp $
 
 define	sysmon_taskq
-file	dev/sysmon/sysmon_taskq.c	sysmon_taskq
+file	dev/sysmon/sysmon_taskq.c	sysmon_taskq 		needs-flag
 
 define	sysmon_power
 file	dev/sysmon/sysmon_power.c	sysmon_power		needs-flag
