@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.8 2007/07/20 14:10:22 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.9 2007/07/21 12:11:27 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -122,13 +122,9 @@ void	sme_events_check(void *);
 void	sme_events_worker(struct work *, void *);
 
 /* common functions to create/update objects in a dictionary */
-int	sme_sensor_upbool(prop_object_t, prop_dictionary_t,
-			  const char *, bool);
-int	sme_sensor_upint32(prop_object_t, prop_dictionary_t,
-			   const char *, int32_t);
-int	sme_sensor_upuint32(prop_object_t, prop_dictionary_t,
-			    const char *, uint32_t);
-int	sme_sensor_upstring(prop_object_t, prop_dictionary_t,
-			    const char *, const char *);
+int	sme_sensor_upbool(prop_dictionary_t, const char *, bool);
+int	sme_sensor_upint32(prop_dictionary_t, const char *, int32_t);
+int	sme_sensor_upuint32(prop_dictionary_t, const char *, uint32_t);
+int	sme_sensor_upstring(prop_dictionary_t, const char *, const char *);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */
