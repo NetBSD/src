@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.h,v 1.7 2000/08/11 00:43:20 thorpej Exp $ */
+/* $NetBSD: eisa_machdep.h,v 1.8 2007/07/22 02:14:39 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -78,7 +78,7 @@ int	eisa_conf_read_io(eisa_chipset_tag_t, int, int, int,
  * Internal functions, NOT TO BE USED BY MACHINE-INDEPENDENT CODE!
  */
 
-void	eisa_init(void);
+void	eisa_init(eisa_chipset_tag_t);
 
 extern bus_size_t eisa_config_stride;
 extern paddr_t eisa_config_addr;

@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.13 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: jensenio.c,v 1.14 2007/07/22 02:14:39 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.13 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.14 2007/07/22 02:14:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ jensenio_eisa_attach_hook(struct device *parent, struct device *self,
 	 */
 	eisa_config_stride = 0x200;
 	eisa_config_addr = JENSEN_FEPROM1;
-	eisa_init();
+	eisa_init(eba->eba_ec);
 #endif
 }
 
@@ -252,7 +252,7 @@ int
 jensenio_eisa_maxslots(void *v)
 {
 
-	return (16);	/* as good a number as any.  only 8, maybe? */
+	return (8);	/* jensen seems to have only 8 valid slots */
 }
 
 void
