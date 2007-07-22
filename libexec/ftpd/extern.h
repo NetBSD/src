@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.55 2006/02/01 14:20:12 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.56 2007/07/22 05:06:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -200,8 +200,8 @@ int	ftpd_logoutx(const char *, int, int);
 #include <netinet/in.h>
 
 #if defined(__NetBSD__)
-# define HAVE_SETPROCTITLE	1
-# define HAVE_SOCKADDR_SA_LEN	1
+# define HAVE_SETPROCTITLE		1
+# define HAVE_STRUCT_SOCKADDR_SA_LEN	1
 #endif
 
 struct sockinet {
@@ -211,12 +211,12 @@ struct sockinet {
 		struct sockaddr_in6 su_sin6;
 #endif
 	} si_su;
-#if !HAVE_SOCKADDR_SA_LEN
+#if !defined(HAVE_STRUCT_SOCKADDR_SA_LEN)
 	int	si_len;
 #endif
 };
 
-#if !HAVE_SOCKADDR_SA_LEN
+#if !defined(HAVE_STRUCT_SOCKADDR_SA_LEN)
 # define su_len		si_len
 #else
 # define su_len		si_su.su_sin.sin_len
@@ -332,7 +332,7 @@ GLOBAL	krb5_context	kcontext;
 GLOBAL	int		logged_in;
 GLOBAL	int		logging;
 GLOBAL	int		pdata;			/* for passive mode */
-#if HAVE_SETPROCTITLE
+#if defined(HAVE_SETPROCTITLE)
 GLOBAL	char		proctitle[BUFSIZ];	/* initial part of title */
 #endif
 GLOBAL	struct passwd  *pw;
