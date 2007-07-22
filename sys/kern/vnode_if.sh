@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.43 2006/11/30 21:06:29 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.44 2007/07/22 21:26:53 pooka Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -93,6 +93,7 @@ awk_parser='
 /^vop_/	{
 	name=$1;
 	argc=0;
+	willmake=-1;
 	next;
 }
 # Last line of description
@@ -127,6 +128,12 @@ awk_parser='
 		i++;
 	} else
 		willrele[argc] = 0;
+
+	if ($2 == "WILLMAKE") {
+		willmake=argc;
+		i++;
+	}
+
 	argtype[argc] = $i; i++;
 	while (i < NF) {
 		argtype[argc] = argtype[argc]" "$i;
@@ -346,6 +353,7 @@ function doit() {
 	}
 	printf(")\n");
 	printf("{\n\tstruct %s_args a;\n", name);
+	printf("\tint rv;\n");
 	printf("#ifdef VNODE_LOCKDEBUG\n");
 	for (i=0; i<argc; i++) {
 		if (lockstate[i] != -1)
@@ -365,13 +373,23 @@ function doit() {
 			printf("#endif\n");
 		}
 	}
-	printf("\treturn (VCALL(%s%s, VOFFSET(%s), &a));\n}\n",
+	printf("\n\trv = VCALL(%s%s, VOFFSET(%s), &a);\n",
 		argname[0], arg0special, name);
+	if (willmake != -1) {
+		printf("#ifdef DIAGNOSTIC\n");
+		printf("\tif (rv == 0)\n"				\
+		    "\t\tKASSERT((*%s)->v_size != VSIZENOTSET\n"	\
+		    "\t\t    && (*%s)->v_writesize != VSIZENOTSET);\n",
+		    argname[willmake], argname[willmake]);
+		printf("#endif /* DIAGNOSTIC */\n");
+	}
+	printf("\treturn (rv);\n}\n");
 }
 BEGIN	{
 	printf("\n/* Special cases: */\n");
 	# start from 1 (vop_default is at 0)
 	argc=1;
+	willmake=-1;
 	argdir[0]="IN";
 	argtype[0]="struct buf *";
 	argname[0]="bp";
