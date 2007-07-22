@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.83 2007/07/09 21:11:37 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.84 2007/07/22 19:16:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.83 2007/07/09 21:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.84 2007/07/22 19:16:06 pooka Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -103,118 +103,6 @@ struct uvm_pagerops uvm_vnodeops = {
 /*
  * the ops!
  */
-
-/*
- * uvn_attach
- *
- * attach a vnode structure to a VM object.  if the vnode is already
- * attached, then just bump the reference count by one and return the
- * VM object.   if not already attached, attach and return the new VM obj.
- * the "accessprot" tells the max access the attaching thread wants to
- * our pages.
- *
- * => caller must _not_ already be holding the lock on the uvm_object.
- * => in fact, nothing should be locked so that we can sleep here.
- * => note that uvm_object is first thing in vnode structure, so their
- *    pointers are equiv.
- */
-
-struct uvm_object *
-uvn_attach(void *arg, vm_prot_t accessprot)
-{
-	struct vnode *vp = arg;
-	struct uvm_object *uobj = &vp->v_uobj;
-	struct vattr vattr;
-	int result;
-	struct partinfo pi;
-	voff_t used_vnode_size;
-	UVMHIST_FUNC("uvn_attach"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(vn=0x%x)", arg,0,0,0);
-	used_vnode_size = (voff_t)0;
-
-	/*
-	 * first get a lock on the uobj.
-	 */
-
-	simple_lock(&uobj->vmobjlock);
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(uobj, &uobj->vmobjlock, false,
-		    "uvn_attach", 0);
-		simple_lock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
-	}
-
-	/*
-	 * if we're mapping a BLK device, make sure it is a disk.
-	 */
-	if (vp->v_type == VBLK) {
-		if (bdev_type(vp->v_rdev) != D_DISK) {
-			simple_unlock(&uobj->vmobjlock);
-			UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)",
-				    0,0,0,0);
-			return(NULL);
-		}
-	}
-	KASSERT(vp->v_type == VREG || vp->v_type == VBLK);
-
-	/*
-	 * set up our idea of the size
-	 * if this hasn't been done already.
-	 */
-	if (vp->v_size == VSIZENOTSET) {
-
-
-	vp->v_flag |= VXLOCK;
-	simple_unlock(&uobj->vmobjlock); /* drop lock in case we sleep */
-		/* XXX: curproc? */
-	if (vp->v_type == VBLK) {
-		/*
-		 * We could implement this as a specfs getattr call, but:
-		 *
-		 *	(1) VOP_GETATTR() would get the file system
-		 *	    vnode operation, not the specfs operation.
-		 *
-		 *	(2) All we want is the size, anyhow.
-		 */
-		result = bdev_ioctl(vp->v_rdev, DIOCGPART, (void *)&pi,
-		    FREAD, curlwp);
-		if (result == 0) {
-			/* XXX should remember blocksize */
-			used_vnode_size = (voff_t)pi.disklab->d_secsize *
-			    (voff_t)pi.part->p_size;
-		}
-	} else {
-		result = VOP_GETATTR(vp, &vattr, curlwp->l_cred, curlwp);
-		if (result == 0)
-			used_vnode_size = vattr.va_size;
-	}
-
-	/* relock object */
-	simple_lock(&uobj->vmobjlock);
-
-	if (vp->v_flag & VXWANT) {
-		wakeup(vp);
-	}
-	vp->v_flag &= ~(VXLOCK|VXWANT);
-
-	if (result != 0) {
-		simple_unlock(&uobj->vmobjlock);
-		UVMHIST_LOG(maphist,"<- done (VOP_GETATTR FAILED!)", 0,0,0,0);
-		return(NULL);
-	}
-	vp->v_size = vp->v_writesize = used_vnode_size;
-
-	}
-
-	simple_unlock(&uobj->vmobjlock);
-	UVMHIST_LOG(maphist,"<- done, refcnt=%d", vp->v_usecount,
-	    0, 0, 0);
-	return uobj;
-}
-
 
 /*
  * uvn_reference
