@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_envsys2.c,v 1.2 2007/07/21 22:30:21 xtraeme Exp $	*/
+/*	$NetBSD: lkminit_envsys2.c,v 1.3 2007/07/22 18:24:48 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.2 2007/07/21 22:30:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_envsys2.c,v 1.3 2007/07/22 18:24:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,12 +72,12 @@ static struct envsys2_softc e2_sc;
 static int
 envsys2_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
-	printf("%s: edata->sensor=%d\n", __func__, edata->sensor);
 	/* 
 	 * refresh data in the sensor X via edata->sensor, which is
 	 * the index used to find the sensor.
 	 */
 	envsys2_refresh_sensor(sme, edata);
+
 	/* we must always return 0 to signal envsys2 that is ok. */
 	return 0;
 }
@@ -112,8 +112,10 @@ envsys2_initsensors(struct envsys2_softc *sc)
 	 * unique in a device, and sensors with a duplicate description
 	 * will be simply ignored.
 	 */
+
 	sc->sc_sensor[0].units = ENVSYS_STEMP;
 	COPYDESCR(sc->sc_sensor[0].desc, "CPU Temp");
+
 	/*
 	 * We want to monitor for critical state in the CPU Temp sensor.
 	 */
@@ -177,7 +179,9 @@ envsys2_initsensors(struct envsys2_softc *sc)
 	sc->sc_sensor[11].flags = ENVSYS_FMONDRVSTATE;
 
 	/*
-	 * Let's add two sensors with duplicate descriptions.
+	 * Let's add two sensors with duplicate descriptions
+	 * (they will be ignored and reported with debug output).
+	 *
 	 */
 	sc->sc_sensor[12].units = ENVSYS_SWATTS;
 	COPYDESCR(sc->sc_sensor[12].desc, "CPU Temp");
@@ -185,11 +189,20 @@ envsys2_initsensors(struct envsys2_softc *sc)
 	sc->sc_sensor[13].units = ENVSYS_INTEGER;
 	COPYDESCR(sc->sc_sensor[13].desc, "Technology");
 
+	/* 
+	 * Let's try to add a sensor with empty description
+	 * (it will be ignored and reported with debug output).
+	 */
 	sc->sc_sensor[14].units = ENVSYS_STEMP;
-	COPYDESCR(sc->sc_sensor[14].desc, "Another Temp");
+	/* COPYDESCR(sc->sc_sensor[14].desc, "Another Temp"); */
 
+	/*
+	 * Now we will test a sensor with an unsupported state
+	 * (it will be ignored and reported with debug output).
+	 */
 	sc->sc_sensor[15].units = ENVSYS_SFANRPM;
 	COPYDESCR(sc->sc_sensor[15].desc, "Another Fan");
+	sc->sc_sensor[15].state = -1;
 }
 
 /*
@@ -272,17 +285,30 @@ envsys2_refresh_sensor(struct sysmon_envsys *sme, envsys_data_t *edata)
 		/* Master disk, use the common DRIVE_ONLINE. */
 		edata->value_cur = ENVSYS_DRIVE_ONLINE;
 		break;
-	default:
-		edata->value_cur = 0;
+	case 12:
+	case 13:
+	case 14:
+		/*
+		 * These sensors are to test the framework
+		 * work as expected, and they have duplicate
+		 * or empty description.
+		 */
 		edata->state = ENVSYS_SINVALID;
 		return;
-
+	default:
+		/*
+		 * The last sensor is to test the framework
+		 * works as expected, and this sensor must not
+		 * have any state set.
+		 */
+		return;
 	}
 
 	/* 
 	 * If we changed the state previously in a sensor and the value
 	 * returned is acceptable, its state must be updated.
 	 */
+
 	edata->state = ENVSYS_SVALID;
 }
 
