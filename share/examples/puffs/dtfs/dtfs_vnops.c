@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.35 2007/07/19 10:14:53 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.36 2007/07/22 12:26:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -344,6 +344,7 @@ dtfs_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 	dfd = emalloc(sizeof(struct dtfs_dirent));
 	dfd->dfd_node = targ;
 	dfd->dfd_name = estrndup(pcn->pcn_name, pcn->pcn_namelen);
+	dfd->dfd_namelen = strlen(dfd->dfd_name);
 	dtfs_adddent(pn_dir, dfd);
 
 	dtfs_updatetimes(targ, 0, 1, 0);
