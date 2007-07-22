@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.132 2007/07/17 17:42:08 joerg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.133 2007/07/22 19:16:06 pooka Exp $	*/
 
 /*
  *
@@ -713,7 +713,6 @@ void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 void			uvm_vnp_sync(struct mount *);
-struct uvm_object	*uvn_attach(void *, vm_prot_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);
