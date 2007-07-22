@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.52 2007/04/09 14:58:28 gdt Exp $
+#	$NetBSD: vnode_if.src,v 1.53 2007/07/22 21:26:53 pooka Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@
 #
 vop_lookup {
 	IN struct vnode *dvp;
-	INOUT struct vnode **vpp;
+	INOUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 };
 
@@ -94,7 +94,7 @@ vop_lookup {
 #
 vop_create {
 	IN LOCKED=YES WILLPUT struct vnode *dvp;
-	OUT struct vnode **vpp;
+	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 };
@@ -107,7 +107,7 @@ vop_create {
 #
 vop_mknod {
 	IN LOCKED=YES WILLPUT struct vnode *dvp;
-	OUT struct vnode **vpp;
+	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 };
@@ -316,7 +316,7 @@ vop_rename {
 #
 vop_mkdir {
 	IN LOCKED=YES WILLPUT struct vnode *dvp;
-	OUT struct vnode **vpp;
+	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 };
@@ -341,7 +341,7 @@ vop_rmdir {
 #
 vop_symlink {
 	IN LOCKED=YES WILLPUT struct vnode *dvp;
-	OUT struct vnode **vpp;
+	OUT WILLMAKE struct vnode **vpp;
 	IN struct componentname *cnp;
 	IN struct vattr *vap;
 	IN char *target;
