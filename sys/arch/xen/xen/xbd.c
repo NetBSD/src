@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.37 2007/03/04 06:01:10 christos Exp $ */
+/* $NetBSD: xbd.c,v 1.38 2007/07/22 08:50:27 ad Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.37 2007/03/04 06:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.38 2007/07/22 08:50:27 ad Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1252,7 +1252,6 @@ xbdstrategy(struct buf *bp)
 	    (long)bp->b_bcount));
 
 	if (xs == NULL || xs->sc_shutdown) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		biodone(bp);
 		return;
@@ -1394,11 +1393,9 @@ xbdresume(void)
 		    pxr, pxr->xr_bp));
 		bp = pxr->xr_bp;
 		xs = getxbd_softc(bp->b_dev);
-		if (xs == NULL || xs->sc_shutdown) {
-			bp->b_flags |= B_ERROR;
+		if (xs == NULL || xs->sc_shutdown)
 			bp->b_error = EIO;
-		}
-		if (bp->b_flags & B_ERROR) {
+		if (bp->b_error != 0) {
 			pxr->xr_bdone -= pxr->xr_bqueue;
 			pxr->xr_bqueue = 0;
 			if (pxr->xr_bdone == 0) {
@@ -1450,7 +1447,6 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 
 	xs = getxbd_softc(bp->b_dev);
 	if (xs == NULL || xs->sc_shutdown) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		biodone(bp);
 		return 0;
@@ -1550,10 +1546,8 @@ xbd_response_handler(void *arg)
 			DIAGCONDPANIC(pxr->xr_bdone < 0,
 			    ("xbd_response_handler: pxr->xr_bdone < 0"));
 
-			if (__predict_false(ring_resp->status)) {
-				pxr->xr_bp->b_flags |= B_ERROR;
+			if (__predict_false(ring_resp->status))
 				pxr->xr_bp->b_error = EIO;
-			}
 
 			if (xr != pxr) {
 				PUT_XBDREQ(xr);
@@ -1565,12 +1559,11 @@ xbd_response_handler(void *arg)
 				bp = pxr->xr_bp;
 				xs = getxbd_softc(bp->b_dev);
 				if (xs == NULL) { /* don't fail bp if we're shutdown */
-					bp->b_flags |= B_ERROR;
 					bp->b_error = EIO;
 				}
 				DPRINTF(XBDB_IO, ("xbd_response_handler(%d): "
 					    "completed bp %p\n", i, bp));
-				if (bp->b_flags & B_ERROR)
+				if (bp->b_error != 0)
 					bp->b_resid = bp->b_bcount;
 				else
 					bp->b_resid = 0;
