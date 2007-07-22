@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.10 2007/07/21 15:16:58 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.11 2007/07/22 18:17:03 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ LIST_HEAD(, sme_event) sme_events_list;
 
 /* functions to handle sysmon envsys devices */
 int	sysmon_envsys_createplist(struct sysmon_envsys *);
-int	sme_make_dictionary(struct sysmon_envsys *, prop_array_t,
+void	sme_make_dictionary(struct sysmon_envsys *, prop_array_t,
 			    envsys_data_t *);
 int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
