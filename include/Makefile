@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.125 2006/10/30 20:22:54 christos Exp $
+#	$NetBSD: Makefile,v 1.125.2.1 2007/07/22 18:44:37 liamjfoy Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -30,6 +30,8 @@ INCS+=	protocols/dumprestore.h protocols/routed.h protocols/rwhod.h \
 INCS+=	hesiod.h
 
 INCS+=	rpcsvc/yp_prot.h rpcsvc/ypclnt.h
+
+INCS+=	ssp/ssp.h ssp/stdio.h ssp/string.h ssp/strings.h ssp/unistd.h
 
 .if (${MACHINE_ARCH} != "vax")
 INCS+=	ieeefp.h
