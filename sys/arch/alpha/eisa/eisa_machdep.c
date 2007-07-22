@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.5 2002/06/01 23:50:53 lukem Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.6 2007/07/22 02:14:39 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.5 2002/06/01 23:50:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.6 2007/07/22 02:14:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.5 2002/06/01 23:50:53 lukem Exp $
 #define	ECUF_IRQ_ENTRY_CNT	7
 #define	ECUF_DMA_ENTRY_CNT	4
 #define	ECUF_IO_ENTRY_CNT	20
+
+#define	CBUFSIZE		512
 
 /*
  * EISA configuration space, as set up by the ECU, may be sparse.
@@ -162,7 +164,9 @@ eisa_parse_mem(struct ecu_func *ecuf, u_int8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_MEM_ENTRY_CNT; i++) {
-		ecum = malloc(sizeof(*ecum), M_DEVBUF, M_WAITOK);
+		ecum = malloc(sizeof(*ecum), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecum == NULL)
+			panic("%s: can't allocate memory for ecum", __func__);
 
 		ecum->ecum_mem.ecm_isram = dp[0] & 0x1;
 		ecum->ecum_mem.ecm_unitsize = dp[1] & 0x3;
@@ -174,7 +178,7 @@ eisa_parse_mem(struct ecu_func *ecuf, u_int8_t *dp)
 			ecum->ecum_mem.ecm_size = (1 << 26);
 		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_mem, ecum, ecum_list);
 
-#if 0
+#ifdef EISA_DEBUG
 		printf("MEM 0x%lx 0x%lx %d %d %d\n",
 		    ecum->ecum_mem.ecm_addr, ecum->ecum_mem.ecm_size,
 		    ecum->ecum_mem.ecm_isram, ecum->ecum_mem.ecm_unitsize,
@@ -194,17 +198,19 @@ eisa_parse_irq(struct ecu_func *ecuf, u_int8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_IRQ_ENTRY_CNT; i++) {
-		ecui = malloc(sizeof(*ecui), M_DEVBUF, M_WAITOK);
+		ecui = malloc(sizeof(*ecui), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecui == NULL)
+			panic("%s: can't allocate memory for ecui", __func__);
 
 		ecui->ecui_irq.eci_irq = dp[0] & 0xf;
 		ecui->ecui_irq.eci_ist = (dp[0] & 0x20) ? IST_LEVEL : IST_EDGE;
 		ecui->ecui_irq.eci_shared = (dp[0] & 0x40) ? 1 : 0;
 		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_irq, ecui, ecui_list);
 
-#if 0
-		printf("IRQ %d %s%s\n", ecui->eci_irq.ecui_irq,
-		    ecui->eci_irq.ecui_ist == IST_LEVEL ? "level" : "edge",
-		    ecui->eci_irq.ecui_shared ? " shared" : "");
+#ifdef EISA_DEBUG
+		printf("IRQ %d %s%s\n", ecui->ecui_irq.eci_irq,
+		    ecui->ecui_irq.eci_ist == IST_LEVEL ? "level" : "edge",
+		    ecui->ecui_irq.eci_shared ? " shared" : "");
 #endif
 
 		if ((dp[0] & 0x80) == 0)
@@ -220,7 +226,9 @@ eisa_parse_dma(struct ecu_func *ecuf, u_int8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_DMA_ENTRY_CNT; i++) {
-		ecud = malloc(sizeof(*ecud), M_DEVBUF, M_WAITOK);
+		ecud = malloc(sizeof(*ecud), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecud == NULL)
+			panic("%s: can't allocate memory for ecud", __func__);
 
 		ecud->ecud_dma.ecd_drq = dp[0] & 0x7;
 		ecud->ecud_dma.ecd_shared = dp[0] & 0x40;
@@ -228,7 +236,7 @@ eisa_parse_dma(struct ecu_func *ecuf, u_int8_t *dp)
 		ecud->ecud_dma.ecd_timing = (dp[1] >> 4) & 0x3;
 		SIMPLEQ_INSERT_TAIL(&ecuf->ecuf_dma, ecud, ecud_list);
 
-#if 0
+#ifdef EISA_DEBUG
 		printf("DRQ %d%s %d %d\n", ecud->ecud_dma.ecd_drq,
 		    ecud->ecud_dma.ecd_shared ? " shared" : "",
 		    ecud->ecud_dma.ecd_size, ecud->ecud_dma.ecd_timing);
@@ -247,13 +255,15 @@ eisa_parse_io(struct ecu_func *ecuf, u_int8_t *dp)
 	int i;
 
 	for (i = 0; i < ECUF_IO_ENTRY_CNT; i++) {
-		ecuio = malloc(sizeof(*ecuio), M_DEVBUF, M_WAITOK);
+		ecuio = malloc(sizeof(*ecuio), M_DEVBUF, M_ZERO|M_WAITOK);
+		if (ecuio == NULL)
+			panic("%s: can't allocate memory for ecuio", __func__);
 
 		ecuio->ecuio_io.ecio_addr = dp[1] | (dp[2] << 8);
 		ecuio->ecuio_io.ecio_size = (dp[0] & 0x1f) + 1;
 		ecuio->ecuio_io.ecio_shared = (dp[0] & 0x40) ? 1 : 0;
 
-#if 0
+#ifdef EISA_DEBUG
 		printf("IO 0x%lx 0x%lx%s\n", ecuio->ecuio_io.ecio_addr,
 		    ecuio->ecuio_io.ecio_size,
 		    ecuio->ecuio_io.ecio_shared ? " shared" : "");
@@ -285,7 +295,7 @@ eisa_read_config_word(paddr_t addr, u_int32_t *valp)
 	int i;
 
 	for (i = 0; i < sizeof(val); i++) {
-		val |= (u_int)(*src << (i * 8));
+		val |= (uint32_t)*src << (i * 8);
 		src += eisa_config_stride;
 	}
 
@@ -314,7 +324,7 @@ eisa_uncompress(void *cbufp, void *ucbufp, size_t count)
 }
 
 void
-eisa_init()
+eisa_init(eisa_chipset_tag_t ec)
 {
 	struct ecu_data *ecud;
 	paddr_t cfgaddr;
@@ -340,30 +350,36 @@ eisa_init()
 	}
 
 	eisa_config_header_addr = hwrpb->rpb_condat_off;
-#if 0
-	printf("\nEISA config header at 0x%lx\n", eisa_config_header_addr);
-#endif
 	if (eisa_config_stride == 0)
 		eisa_config_stride = 1;
+
+#ifdef EISA_DEBUG
+	printf("\nEISA config header at 0x%lx\n", eisa_config_header_addr);
+	printf("EISA config at 0x%lx\n", eisa_config_addr);
+	printf("EISA config stride: %ld\n", eisa_config_stride);
+#endif
 
 	/*
 	 * Read the slot headers, and allocate config structures for
 	 * valid slots.
 	 */
-	for (cfgaddr = eisa_config_header_addr, i = 0; i < 16 /* XXX */; i++) {
+	for (cfgaddr = eisa_config_header_addr, i = 0;
+	    i < eisa_maxslots(ec); i++) {
 		eisa_read_config_bytes(cfgaddr, eisaid, sizeof(eisaid));
 		eisaid[EISA_IDSTRINGLEN - 1] = '\0';	/* sanity */
 		cfgaddr += sizeof(eisaid) * eisa_config_stride;
 		eisa_read_config_word(cfgaddr, &offset);
 		cfgaddr += sizeof(offset) * eisa_config_stride;
 
-		if (offset != 0) {
-#if 0
+		if (offset != 0 && offset != 0xffffffff) {
+#ifdef EISA_DEBUG
 			printf("SLOT %d: offset 0x%08x eisaid %s\n",
 			    i, offset, eisaid);
 #endif
-			ecud = malloc(sizeof(*ecud), M_DEVBUF, M_WAITOK);
-			memset(ecud, 0, sizeof(*ecud));
+			ecud = malloc(sizeof(*ecud), M_DEVBUF, M_ZERO|M_WAITOK);
+			if (ecud == NULL)
+				panic("%s: can't allocate memory for ecud",
+				    __func__);
 
 			SIMPLEQ_INIT(&ecud->ecud_funcs);
 
@@ -378,22 +394,42 @@ eisa_init()
 	 * Now traverse the valid slots and read the info.
 	 */
 
-	cdata = malloc(512, M_TEMP, M_WAITOK);
-	data = malloc(512, M_TEMP, M_WAITOK);
+	cdata = malloc(CBUFSIZE, M_TEMP, M_ZERO|M_WAITOK);
+	if (cdata == NULL)
+		panic("%s: can't allocate memory for cdata", __func__);
+	data = malloc(CBUFSIZE, M_TEMP, M_ZERO|M_WAITOK);
+	if (data == NULL)
+		panic("%s: can't allocate memory for data", __func__);
 
 	SIMPLEQ_FOREACH(ecud, &ecu_data_list, ecud_list) {
 		cfgaddr = eisa_config_addr + ecud->ecud_offset;
+#ifdef EISA_DEBUG
+		printf("Checking SLOT %d\n", ecud->ecud_slot);
+		printf("Reading config bytes at 0x%lx to cdata[0]\n", cfgaddr);
+#endif
 		eisa_read_config_bytes(cfgaddr, &cdata[0], 1);
 		cfgaddr += eisa_config_stride;
 
-		for (i = 1; ; cfgaddr += eisa_config_stride, i++) {
+		for (i = 1; i < CBUFSIZE; cfgaddr += eisa_config_stride, i++) {
+#ifdef EISA_DEBUG
+			printf("Reading config bytes at 0x%lx to cdata[%d]\n",
+			    cfgaddr, i);
+#endif
 			eisa_read_config_bytes(cfgaddr, &cdata[i], 1);
 			if (cdata[i - 1] == 0 && cdata[i] == 0)
 				break;
 		}
+		if (i == CBUFSIZE) {
+			/* assume this compressed data invalid */
+#ifdef EISA_DEBUG
+			printf("SLOT %d has invalid config\n", ecud->ecud_slot);
+#endif
+			continue;
+		}
+
 		i++;	/* index -> length */
 
-#if 0
+#ifdef EISA_DEBUG
 		printf("SLOT %d compressed data length %d:",
 		    ecud->ecud_slot, i);
 		{
@@ -413,7 +449,7 @@ eisa_init()
 
 		/* Uncompress the slot header. */
 		cdp += eisa_uncompress(cdp, dp, EISA_SLOT_HEADER_SIZE);
-#if 0
+#ifdef EISA_DEBUG
 		printf("SLOT %d uncompressed header data:",
 		    ecud->ecud_slot);
 		{
@@ -439,7 +475,7 @@ eisa_init()
 		memcpy(&ecud->ecud_comp_id, dp, sizeof(ecud->ecud_comp_id));
 		dp += sizeof(ecud->ecud_comp_id);
 
-#if 0
+#ifdef EISA_DEBUG
 		printf("SLOT %d: ndevfuncs %d\n", ecud->ecud_slot,
 		    ecud->ecud_ndevfuncs);
 #endif
@@ -447,7 +483,7 @@ eisa_init()
 		for (func = 0; func < ecud->ecud_ndevfuncs; func++) {
 			dp = data;
 			cdp += eisa_uncompress(cdp, dp, EISA_CONFIG_BLOCK_SIZE);
-#if 0
+#ifdef EISA_DEBUG
 			printf("SLOT %d:%d uncompressed data:",
 			    ecud->ecud_slot, func);
 			{
@@ -464,7 +500,7 @@ eisa_init()
 
 			/* Skip disabled functions. */
 			if (dp[EISA_FUNC_INFO_OFFSET] & ECUF_DISABLED) {
-#if 0
+#ifdef EISA_DEBUG
 				printf("SLOT %d:%d disabled\n",
 				    ecud->ecud_slot, func);
 #endif
@@ -472,6 +508,9 @@ eisa_init()
 			}
 
 			ecuf = malloc(sizeof(*ecuf), M_DEVBUF, M_WAITOK);
+			if (ecuf == NULL)
+				panic("%s: can't allocate memory for ecuf",
+				    __func__);
 			ecuf_init(ecuf);
 			ecuf->ecuf_funcno = func;
 			SIMPLEQ_INSERT_TAIL(&ecud->ecud_funcs, ecuf,

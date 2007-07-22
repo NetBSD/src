@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.40 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: sio.c,v 1.41 2007/07/22 02:14:39 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.40 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.41 2007/07/22 02:14:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ sio_eisa_attach_hook(parent, self, eba)
 {
 
 #if NEISA > 0
-	eisa_init();
+	eisa_init(eba->eba_ec);
 #endif
 }
 
