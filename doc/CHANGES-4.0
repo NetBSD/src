@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.213 2007/07/21 19:34:15 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.214 2007/07/22 19:40:49 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7789,3 +7789,146 @@ sys/dev/pci/machfb.c				patch
 	This keeps machfb from matching Rage Mobility chips which we don't
 	support properly, mainly for lack of hardware in the right hands.
 	[macallan, ticket #781]
+
+sys/arch/sun3/sun3x/locore.s			1.56
+
+	Sync with sun3/locore.s rev 1.88:
+	Pass a frame pointer to trap() rather than the 'entire frame' trick.  Gcc4
+	was optimizing away modifications to the frame contents (it's not nice to
+	trick gcc).  Pass the pointer as the first argument to reduce the number
+	of places that would be changed otherwise.  Fixes the getcwd regression
+	test on most m68k ports.
+	Fixes MMU fault panic in trap() on sun3x.
+
+	This should be pulled up to netbsd-4 too.
+	[tsutsui, ticket #782]
+
+distrib/sets/lists/base/shl.elf			patch
+distrib/sets/lists/base/shl.mi			patch
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/comp/shl.mi			patch
+include/Makefile				patch
+include/stdio.h					patch
+include/string.h				patch
+include/strings.h				patch
+include/unistd.h				patch
+lib/Makefile					patch
+lib/libc/Makefile				patch
+regress/lib/Makefile				patch
+regress/lib/libc/Makefile			patch
+share/mk/bsd.sys.mk				patch
+include/ssp/ssp.h				new file
+include/ssp/stdio.h				new file
+include/ssp/string.h				new file
+include/ssp/strings.h				new file
+include/ssp/unistd.h				new file
+lib/libc/ssp/Makefile.inc			new file
+lib/libc/ssp/__builtin_object_size.3		new file
+lib/libc/ssp/fgets_chk.c			new file
+lib/libc/ssp/gets_chk.c				new file
+lib/libc/ssp/memcpy_chk.c			new file
+lib/libc/ssp/memmove_chk.c			new file
+lib/libc/ssp/memset_chk.c			new file
+lib/libc/ssp/snprintf_chk.c			new file
+lib/libc/ssp/sprintf_chk.c			new file
+lib/libc/ssp/ssp.3				new file
+lib/libc/ssp/strcat_chk.c			new file
+lib/libc/ssp/strcpy_chk.c			new file
+lib/libc/ssp/strncat_chk.c			new file
+lib/libc/ssp/strncpy_chk.c			new file
+lib/libc/ssp/vsnprintf_chk.c			new file
+lib/libc/ssp/vsprintf_chk.c			new file
+regress/lib/libc/ssp/Makefile			new file
+regress/lib/libc/ssp/Makefile.inc		new file
+regress/lib/libc/ssp/fgets/Makefile		new file
+regress/lib/libc/ssp/fgets/fgets.c		new file
+regress/lib/libc/ssp/getcwd/Makefile		new file
+regress/lib/libc/ssp/getcwd/getcwd.c		new file
+regress/lib/libc/ssp/gets/Makefile		new file
+regress/lib/libc/ssp/gets/gets.c		new file
+regress/lib/libc/ssp/memcpy/Makefile		new file
+regress/lib/libc/ssp/memcpy/memcpy.c		new file
+regress/lib/libc/ssp/memmove/Makefile		new file
+regress/lib/libc/ssp/memmove/memmove.c		new file
+regress/lib/libc/ssp/memset/Makefile		new file
+regress/lib/libc/ssp/memset/memset.c		new file
+regress/lib/libc/ssp/raw/Makefile		new file
+regress/lib/libc/ssp/raw/raw.c			new file
+regress/lib/libc/ssp/read/Makefile		new file
+regress/lib/libc/ssp/read/read.c		new file
+regress/lib/libc/ssp/readlink/Makefile		new file
+regress/lib/libc/ssp/readlink/readlink.c	new file
+regress/lib/libc/ssp/snprintf/Makefile		new file
+regress/lib/libc/ssp/snprintf/snprintf.c	new file
+regress/lib/libc/ssp/sprintf/Makefile		new file
+regress/lib/libc/ssp/sprintf/sprintf.c		new file
+regress/lib/libc/ssp/strcat/Makefile		new file
+regress/lib/libc/ssp/strcat/strcat.c		new file
+regress/lib/libc/ssp/strcpy/Makefile		new file
+regress/lib/libc/ssp/strcpy/strcpy.c		new file
+regress/lib/libc/ssp/strncat/Makefile		new file
+regress/lib/libc/ssp/strncat/strncat.c		new file
+regress/lib/libc/ssp/strncpy/Makefile		new file
+regress/lib/libc/ssp/strncpy/strncpy.c		new file
+regress/lib/libc/ssp/vsnprintf/Makefile		new file
+regress/lib/libc/ssp/vsnprintf/vsnprintf.c	new file
+regress/lib/libc/ssp/vsprintf/Makefile		new file
+regress/lib/libc/ssp/vsprintf/vsprintf.c	new file
+lib/libssp/Makefile				delete
+lib/libssp/fgets_chk.c				delete
+lib/libssp/gets_chk.c				delete
+lib/libssp/memcpy_chk.c				delete
+lib/libssp/memmove_chk.c			delete
+lib/libssp/memset_chk.c				delete
+lib/libssp/shlib_version			delete
+lib/libssp/snprintf_chk.c			delete
+lib/libssp/sprintf_chk.c			delete
+lib/libssp/strcat_chk.c				delete
+lib/libssp/strcpy_chk.c				delete
+lib/libssp/strncat_chk.c			delete
+lib/libssp/strncpy_chk.c			delete
+lib/libssp/vnsprintf_chk.c			delete
+lib/libssp/vsprintf_chk.c			delete
+lib/libssp/ssp/ssp.h				delete
+lib/libssp/ssp/stdio.h				delete
+lib/libssp/ssp/string.h				delete
+lib/libssp/ssp/unistd.h				delete
+regress/lib/libssp/Makefile			delete
+regress/lib/libssp/Makefile.inc			delete
+regress/lib/libssp/fgets/Makefile		delete
+regress/lib/libssp/fgets/fgets.c		delete
+regress/lib/libssp/getcwd/Makefile		delete
+regress/lib/libssp/getcwd/getcwd.c		delete
+regress/lib/libssp/gets/Makefile		delete		
+regress/lib/libssp/gets/gets.c			delete
+regress/lib/libssp/memcpy/Makefile		delete
+regress/lib/libssp/memcpy/memcpy.c		delete
+regress/lib/libssp/memmove/Makefile		delete
+regress/lib/libssp/memmove/memmove.c		delete
+regress/lib/libssp/memset/Makefile		delete
+regress/lib/libssp/memset/memset.c		delete
+regress/lib/libssp/raw/Makefile			delete
+regress/lib/libssp/raw/raw.c			delete
+regress/lib/libssp/read/Makefile		delete
+regress/lib/libssp/read/read.c			delete
+regress/lib/libssp/readlink/Makefile		delete
+regress/lib/libssp/readlink/readlink.c		delete
+regress/lib/libssp/snprintf/Makefile		delete
+regress/lib/libssp/snprintf/snprintf.c		delete
+regress/lib/libssp/sprintf/Makefile		delete
+regress/lib/libssp/sprintf/sprintf.c		delete
+regress/lib/libssp/strcat/Makefile		delete
+regress/lib/libssp/strcat/strcat.c		delete
+regress/lib/libssp/strcpy/Makefile		delete
+regress/lib/libssp/strcpy/strcpy.c		delete
+regress/lib/libssp/strncat/Makefile		delete
+regress/lib/libssp/strncat/strncat.c		delete
+regress/lib/libssp/strncpy/Makefile		delete
+regress/lib/libssp/strncpy/strncpy.c		delete
+regress/lib/libssp/vsnprintf/Makefile		delete
+regress/lib/libssp/vsnprintf/vsnprintf.c	delete
+regress/lib/libssp/vsprintf/Makefile		delete
+regress/lib/libssp/vsprintf/vsprintf.c		delete
+
+	Move libssp to libc.
+	[christos, ticket #773]
