@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.41 2007/07/19 19:04:47 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.42 2007/07/22 18:22:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.41 2007/07/19 19:04:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.42 2007/07/22 18:22:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -200,6 +200,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	vp->v_data = pnode;
 	vp->v_type = type;
 	pnode->pn_vp = vp;
+	pnode->pn_serversize = vsize;
 
 	genfs_node_init(vp, &puffs_genfsops);
 	*vpp = vp;
