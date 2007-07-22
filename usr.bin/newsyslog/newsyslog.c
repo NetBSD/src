@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.48 2004/10/30 21:03:36 dsl Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.49 2007/07/22 17:03:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.48 2004/10/30 21:03:36 dsl Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.49 2007/07/22 17:03:13 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -81,8 +81,10 @@ __RCSID("$NetBSD: newsyslog.c,v 1.48 2004/10/30 21:03:36 dsl Exp $");
 
 #include "pathnames.h"
 
-#define	PRHDRINFO(x)	((void)(verbose ? printf x : 0))
-#define	PRINFO(x)	((void)(verbose ? printf("  ") + printf x : 0))
+#define	PRHDRINFO(x)	\
+    (/*LINTED*/(void)(verbose ? printf x : 0))
+#define	PRINFO(x)	\
+    (/*LINTED*/(void)(verbose ? printf("  ") + printf x : 0))
 
 #define	CE_COMPRESS	0x01	/* Compress the archived log files */
 #define	CE_BINARY	0x02	/* Logfile is a binary file/non-syslog */
@@ -104,27 +106,26 @@ struct conf_entry {
 	char	logfile[MAXPATHLEN];	/* Path to log file */
 };
 
-int	verbose;			/* Be verbose */
-int	noaction;			/* Take no action */
-int	nosignal;			/* Do not send signals */
-char    hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
-uid_t	myeuid;				/* EUID we are running with */
+static int	verbose;			/* Be verbose */
+static int	noaction;			/* Take no action */
+static int	nosignal;			/* Do not send signals */
+static char	hostname[MAXHOSTNAMELEN + 1];	/* Hostname, no domain */
+static uid_t	myeuid;				/* EUID we are running with */
 
-int	getsig(const char *);
-int	isnumber(const char *);
-int	main(int, char **);
-int	parse_cfgline(struct conf_entry *, FILE *, size_t *);
-time_t	parse_iso8601(char *);
-time_t	parse_dwm(char *);
-int	parse_userspec(const char *, struct passwd **, struct group **);
-pid_t	readpidfile(const char *);
-void	usage(void);
+static int	getsig(const char *);
+static int	isnumber(const char *);
+static int	parse_cfgline(struct conf_entry *, FILE *, size_t *);
+static time_t	parse_iso8601(char *);
+static time_t	parse_dwm(char *);
+static int	parse_userspec(const char *, struct passwd **, struct group **);
+static pid_t	readpidfile(const char *);
+static void	usage(void) __attribute__((__noreturn__));
 
-void	log_compress(struct conf_entry *, const char *);
-void	log_create(struct conf_entry *);
-void	log_examine(struct conf_entry *, int);
-void	log_trim(struct conf_entry *);
-void	log_trimmed(struct conf_entry *);
+static void	log_compress(struct conf_entry *, const char *);
+static void	log_create(struct conf_entry *);
+static void	log_examine(struct conf_entry *, int);
+static void	log_trim(struct conf_entry *);
+static void	log_trimmed(struct conf_entry *);
 
 /*
  * Program entry point.
@@ -134,7 +135,8 @@ main(int argc, char **argv)
 {
 	struct conf_entry log;
 	FILE *fd;
-	char *p, *cfile;
+	char *p;
+	const char *cfile;
 	int c, needroot, i, force;
 	size_t lineno;
 
@@ -142,7 +144,7 @@ main(int argc, char **argv)
 	needroot = 1;
 	cfile = _PATH_NEWSYSLOGCONF;
 
-	gethostname(hostname, sizeof(hostname));
+	(void)gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
 
 	/* Truncate domain. */
@@ -205,7 +207,7 @@ main(int argc, char **argv)
 	}
 	
 	if (fd != stdin)
-		fclose(fd);
+		(void)fclose(fd);
 
 	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
@@ -214,7 +216,7 @@ main(int argc, char **argv)
 /*
  * Parse a single line from the configuration file.
  */
-int
+static int
 parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 {
 	char *line, *q, **ap, *argv[10];
@@ -247,11 +249,11 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	if (nf < 6)
 		errx(EXIT_FAILURE, "config line %d: too few fields", lineno);
 	
-	memset(log, 0, sizeof(*log));
+	(void)memset(log, 0, sizeof(*log));
 	
 	/* logfile_name */
 	ap = argv;
-	strlcpy(log->logfile, *ap++, sizeof(log->logfile));
+	(void)strlcpy(log->logfile, *ap++, sizeof(log->logfile));
 	if (log->logfile[0] != '/')
 		errx(EXIT_FAILURE, 
 		    "config line %d: logfile must have a full path", lineno);
@@ -368,7 +370,7 @@ parse_cfgline(struct conf_entry *log, FILE *fd, size_t *_lineno)
 
 	/* path_to_pidfile */
 	if (*ap != NULL && **ap == '/')
-		strlcpy(log->pidfile, *ap++, sizeof(log->pidfile));
+		(void)strlcpy(log->pidfile, *ap++, sizeof(log->pidfile));
 	else
 		log->pidfile[0] = '\0';
 
@@ -392,7 +394,7 @@ bad:
  * Examine a log file.  If the trim conditions are met, call log_trim() to
  * trim the log file.
  */
-void
+static void
 log_examine(struct conf_entry *log, int force)
 {
 	struct stat sb;
@@ -442,10 +444,10 @@ log_examine(struct conf_entry *log, int force)
 	 * Get the age (expressed in hours) of the current log file with
 	 * respect to the newest historical log file.
 	 */
-	strlcpy(tmp, log->logfile, sizeof(tmp));
-	strlcat(tmp, ".0", sizeof(tmp));
+	(void)strlcpy(tmp, log->logfile, sizeof(tmp));
+	(void)strlcat(tmp, ".0", sizeof(tmp));
 	if (stat(tmp, &sb) < 0) {
-		strlcat(tmp, ".gz", sizeof(tmp));
+		(void)strlcat(tmp, ".gz", sizeof(tmp));
 		if (stat(tmp, &sb) < 0)
 			age = -1;
 		else
@@ -490,7 +492,7 @@ log_examine(struct conf_entry *log, int force)
 /*
  * Trim the specified log file.
  */
-void
+static void
 log_trim(struct conf_entry *log)
 {
 	char file1[MAXPATHLEN], file2[MAXPATHLEN];
@@ -500,16 +502,16 @@ log_trim(struct conf_entry *log)
 
 	if (log->numhist != 0) {
 		/* Remove oldest historical log. */
-		snprintf(file1, sizeof(file1), "%s.%d", log->logfile,
+		(void)snprintf(file1, sizeof(file1), "%s.%d", log->logfile,
 		    log->numhist - 1);
 
 		PRINFO(("rm -f %s\n", file1));
 		if (!noaction)
-			unlink(file1);
-		strlcat(file1, ".gz", sizeof(file1));
+			(void)unlink(file1);
+		(void)strlcat(file1, ".gz", sizeof(file1));
 		PRINFO(("rm -f %s\n", file1));
 		if (!noaction)
-			unlink(file1);
+			(void)unlink(file1);
 	}
 
 	/* Move down log files. */
@@ -518,8 +520,8 @@ log_trim(struct conf_entry *log)
 		snprintf(file2, sizeof(file2), "%s.%d", log->logfile, i);
 
 		if (lstat(file1, &st) != 0) {
-			strlcat(file1, ".gz", sizeof(file1));
-			strlcat(file2, ".gz", sizeof(file2));
+			(void)strlcat(file1, ".gz", sizeof(file1));
+			(void)strlcat(file2, ".gz", sizeof(file2));
 			if (lstat(file1, &st) != 0)
 				continue;
 		}
@@ -566,7 +568,7 @@ log_trim(struct conf_entry *log)
 			if (unlink(log->logfile))
 				err(EXIT_FAILURE, "%s", log->logfile);
 	} else {
-		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
+		(void)snprintf(file1, sizeof(file1), "%s.0", log->logfile);
 		PRINFO(("mv %s %s\n", log->logfile, file1));
 		if (!noaction)
 			if (rename(log->logfile, file1))
@@ -605,7 +607,7 @@ log_trim(struct conf_entry *log)
 		snprintf(file1, sizeof(file1), "%s.0", log->logfile);
 		if ((log->flags & CE_NOSIGNAL) == 0) {
 			PRINFO(("sleep for 10 seconds before compressing...\n"));
-			sleep(10);
+			(void)sleep(10);
 		}
 		log_compress(log, file1);
 	}
@@ -614,7 +616,7 @@ log_trim(struct conf_entry *log)
 /* 
  * Write an entry to the log file recording the fact that it was trimmed.
  */
-void
+static void
 log_trimmed(struct conf_entry *log)
 {
 	FILE *fd;
@@ -634,15 +636,15 @@ log_trimmed(struct conf_entry *log)
 	daytime = ctime(&now) + 4;
 	daytime[15] = '\0';
 		
-	fprintf(fd, "%s %s newsyslog[%lu]: log file turned over\n", daytime, 
-	    hostname, (u_long)getpid());
-	fclose(fd);
+	(void)fprintf(fd, "%s %s newsyslog[%lu]: log file turned over\n",
+	    daytime, hostname, (u_long)getpid());
+	(void)fclose(fd);
 }
 
 /*
  * Create a new log file.
  */
-void
+static void
 log_create(struct conf_entry *log)
 {
 	int fd;
@@ -654,7 +656,7 @@ log_create(struct conf_entry *log)
 		err(EXIT_FAILURE, "%s", log->logfile);
 	if (fchown(fd, log->uid, log->gid) < 0)
 		err(EXIT_FAILURE, "%s", log->logfile);
-	close(fd);
+	(void)close(fd);
 }
 
 /*
@@ -662,7 +664,7 @@ log_create(struct conf_entry *log)
  * additional string argument (the name of the file to compress): it is also
  * used to compress historical log files other than the newest.
  */
-void
+static void
 log_compress(struct conf_entry *log, const char *fn)
 {
 	char tmp[MAXPATHLEN];
@@ -675,7 +677,7 @@ log_compress(struct conf_entry *log, const char *fn)
 		if ((pid = vfork()) < 0)
 			err(EXIT_FAILURE, "vfork");
 		else if (pid == 0) {
-			execl(_PATH_GZIP, "gzip", "-f", fn, NULL);
+			(void)execl(_PATH_GZIP, "gzip", "-f", fn, NULL);
 			_exit(EXIT_FAILURE);
 		}
 		while (waitpid(pid, &status, 0) != pid);
@@ -684,7 +686,7 @@ log_compress(struct conf_entry *log, const char *fn)
 			errx(EXIT_FAILURE, "gzip failed");
 	}
 
-	snprintf(tmp, sizeof(tmp), "%s.gz", fn);
+	(void)snprintf(tmp, sizeof(tmp), "%s.gz", fn);
 	PRINFO(("chown %d:%d %s\n", log->uid, log->gid, tmp));
 	if (!noaction)
 		if (chown(tmp, log->uid, log->gid))
@@ -694,32 +696,32 @@ log_compress(struct conf_entry *log, const char *fn)
 /*
  * Display program usage information.
  */
-void
+static void
 usage(void)
 {
 
-	fprintf(stderr, 
-	    "usage: newsyslog [-nrsvF] [-f config-file] [file ...]\n");
+	(void)fprintf(stderr, 
+	    "Usage: %s [-nrsvF] [-f config-file] [file ...]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
 /*
  * Return non-zero if a string represents a decimal value.
  */
-int
+static int
 isnumber(const char *string)
 {
 
 	while (isdigit((unsigned char)*string))
 		string++;
 
-	return (*string == '\0');
+	return *string == '\0';
 }
 
 /* 
  * Given a signal name, attempt to find the corresponding signal number.
  */
-int
+static int
 getsig(const char *sig)
 {
 	char *p;
@@ -728,22 +730,22 @@ getsig(const char *sig)
 	if (isnumber(sig)) {
 		n = (int)strtol(sig, &p, 0);
 		if (p != '\0' || n < 0 || n >= NSIG)
-			return (-1);
-		return (n);
+			return -1;
+		return n;
 	}
 
 	if (strncasecmp(sig, "SIG", 3) == 0)
 		sig += 3;
 	for (n = 1; n < NSIG; n++)
 		if (strcasecmp(sys_signame[n], sig) == 0)
-			return (n);
-	return (-1);
+			return n;
+	return -1;
 }
 
 /*
  * Given a path to a PID file, return the PID contained within.
  */
-pid_t
+static pid_t
 readpidfile(const char *file)
 {
 	FILE *fd;
@@ -752,14 +754,14 @@ readpidfile(const char *file)
 
 #ifdef notyet
 	if (file[0] != '/')
-		snprintf(tmp, sizeof(tmp), "%s%s", _PATH_VARRUN, file);
+		(void)snprintf(tmp, sizeof(tmp), "%s%s", _PATH_VARRUN, file);
 	else
-		strlcpy(tmp, file, sizeof(tmp));
+		(void)strlcpy(tmp, file, sizeof(tmp));
 #endif
 
-	if ((fd = fopen(file, "rt")) == NULL) {
+	if ((fd = fopen(file, "r")) == NULL) {
 		warn("%s", file);
-		return (-1);
+		return (pid_t)-1;
 	}
 	
 	if (fgets(line, sizeof(line) - 1, fd) != NULL) {
@@ -770,8 +772,8 @@ readpidfile(const char *file)
 		pid = (pid_t)-1;
 	}
 
-	fclose(fd);
-	return (pid);
+	(void)fclose(fd);
+	return pid;
 }
 
 /*
@@ -784,7 +786,7 @@ parse_userspec(const char *name, struct passwd **pw, struct group **gr)
 {
 	char buf[MAXLOGNAME * 2 + 2], *group;
 
-	strlcpy(buf, name, sizeof(buf));
+	(void)strlcpy(buf, name, sizeof(buf));
 	*gr = NULL;
 
 	/* 
@@ -814,14 +816,14 @@ parse_userspec(const char *name, struct passwd **pw, struct group **gr)
 	 */
 	if (group == NULL || *group == '\0') {
 		if (*pw == NULL)
-			return (-1);
+			return -1;
 		*gr = getgrgid((*pw)->pw_gid);
 	} else if (isnumber(group))
 		*gr = getgrgid((gid_t)atoi(group));
 	else
 		*gr = getgrnam(group);
 		
-	return (*pw != NULL && *gr != NULL ? 0 : -1);
+	return *pw != NULL && *gr != NULL ? 0 : -1;
 }
 
 /*
@@ -838,7 +840,7 @@ parse_userspec(const char *name, struct passwd **pw, struct group **gr)
  * We don't accept a timezone specification; missing fields are defaulted to
  * the current date but time zero.
  */
-time_t
+static time_t
 parse_dwm(char *s)
 {
 	char *t;
@@ -869,22 +871,22 @@ parse_dwm(char *s)
 		switch (*s) {
 		case 'D':
 			if (dseen)
-				return ((time_t)-1);
+				return (time_t)-1;
 			dseen++;
 			s++;
 			ul = strtoul(s, &t, 10);
-			if (ul < 0 || ul > 23)
-				return ((time_t)-1);
+			if (ul > 23)
+				return (time_t)-1;
 			tm.tm_hour = ul;
 			break;
 
 		case 'W':
 			if (wmseen)
-				return (-1);
+				return (time_t)-1;
 			wmseen++;
 			s++;
 			ul = strtoul(s, &t, 10);
-			if (ul < 0 || ul > 6)
+			if (ul > 6)
 				return (-1);
 			if (ul != tm.tm_wday) {
 				if (ul < tm.tm_wday) {
@@ -903,7 +905,7 @@ parse_dwm(char *s)
 
 		case 'M':
 			if (wmseen)
-				return (-1);
+				return (time_t)-1;
 			wmseen++;
 			s++;
 			if (tolower((unsigned char)*s) == 'l') {
@@ -913,17 +915,16 @@ parse_dwm(char *s)
 			} else {
 				ul = strtoul(s, &t, 10);
 				if (ul < 1 || ul > 31)
-					return (-1);
+					return (time_t)-1;
 
 				if (ul > nd)
-					return (-1);
+					return (time_t)-1;
 				tm.tm_mday = ul;
 			}
 			break;
 
 		default:
-			return (-1);
-			break;
+			return (time_t)-1;
 		}
 
 		if (*t == '\0' || isspace((unsigned char)*t))
@@ -932,7 +933,7 @@ parse_dwm(char *s)
 			s = t;
 	}
 	
-	return (mktime(&tm));
+	return mktime(&tm);
 }
 
 /*
@@ -943,7 +944,7 @@ parse_dwm(char *s)
  * We don't accept a timezone specification; missing fields (including
  * timezone) are defaulted to the current date but time zero.
  */
-time_t
+static time_t
 parse_iso8601(char *s)
 {
 	char *t;
@@ -959,7 +960,7 @@ parse_iso8601(char *s)
 
 	ul = strtoul(s, &t, 10);
 	if (*t != '\0' && *t != 'T')
-		return ((time_t)-1);
+		return (time_t)-1;
 
 	/*
 	 * Now t points either to the end of the string (if no time was
@@ -986,19 +987,19 @@ parse_iso8601(char *s)
 	case 0:
 		break;
 	default:
-		return ((time_t)-1);
+		return (time_t)-1;
 	}
 
 	/* Sanity check */
 	if (tm.tm_year < 70 || tm.tm_mon < 0 || tm.tm_mon > 12 ||
 	    tm.tm_mday < 1 || tm.tm_mday > 31)
-		return ((time_t)-1);
+		return (time_t)-1;
 
 	if (*t != '\0') {
 		s = ++t;
 		ul = strtoul(s, &t, 10);
 		if (*t != '\0' && !isspace((unsigned char)*t))
-			return ((time_t)-1);
+			return (time_t)-1;
 
 		switch (t - s) {
 		case 6:
@@ -1015,14 +1016,14 @@ parse_iso8601(char *s)
 		case 0:
 			break;
 		default:
-			return ((time_t)-1);
+			return (time_t)-1;
 		}
 
 		/* Sanity check */
 		if (tm.tm_sec < 0 || tm.tm_sec > 60 || tm.tm_min < 0 ||
 		    tm.tm_min > 59 || tm.tm_hour < 0 || tm.tm_hour > 23)
-			return ((time_t)-1);
+			return (time_t)-1;
 	}
 	
-	return (mktime(&tm));
+	return mktime(&tm);
 }
