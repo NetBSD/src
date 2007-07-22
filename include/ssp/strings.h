@@ -1,11 +1,11 @@
-/*	$NetBSD: strings.h,v 1.10.10.1 2007/07/22 18:44:38 liamjfoy Exp $	*/
+/*	$NetBSD: strings.h,v 1.2.2.2 2007/07/22 18:44:40 liamjfoy Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,38 +35,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _SSP_STRINGS_H_
+#define _SSP_STRINGS_H_
 
-#ifndef _STRINGS_H_
-#define _STRINGS_H_
+#include <ssp/ssp.h>
 
-#include <machine/ansi.h>
-#include <sys/featuretest.h>
+#if __SSP_FORTIFY_LEVEL > 0
 
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
-#endif
+#define bcopy(src, dst, len) \
+    ((__ssp_bos0(dst) != (size_t)-1) ? \
+    __builtin___memmove_chk(dst, src, len, __ssp_bos0(dst)) : \
+    __memmove_ichk(dst, src, len))
+#define bzero(dst, len) \
+    ((__ssp_bos0(dst) != (size_t)-1) ? \
+    __builtin___memset_chk(dst, 0, len, __ssp_bos0(dst)) : \
+    __memset_ichk(dst, 0, len))
 
-#if defined(_NETBSD_SOURCE)
-#include <sys/null.h>
-#endif
-
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-int	 bcmp(const void *, const void *, size_t);
-void	 bcopy(const void *, void *, size_t);
-void	 bzero(void *, size_t);
-int	 ffs(int);
-char	*index(const char *, int);
-char	*rindex(const char *, int);
-int	 strcasecmp(const char *, const char *);
-int	 strncasecmp(const char *, const char *, size_t);
-__END_DECLS
-
-#if defined(_NETBSD_SOURCE)
-#include <string.h>
-#endif
-
-#include <ssp/strings.h>
-#endif /* !defined(_STRINGS_H_) */
+#endif /* __SSP_FORTIFY_LEVEL > 0 */
+#endif /* _SSP_STRINGS_H_ */
