@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.30 2006/05/14 21:32:21 elad Exp $	*/
+/*	$NetBSD: specdev.h,v 1.31 2007/07/22 19:16:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -118,7 +118,7 @@ int	spec_ioctl(void *);
 int	spec_poll(void *);
 int	spec_kqfilter(void *);
 #define spec_revoke	genfs_revoke
-#define	spec_mmap	genfs_mmap
+int	spec_mmap(void *);
 int	spec_fsync(void *);
 #define	spec_seek	genfs_nullop		/* XXX should query device */
 #define	spec_remove	genfs_badop
