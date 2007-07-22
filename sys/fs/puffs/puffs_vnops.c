@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.90 2007/07/22 18:22:49 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.91 2007/07/22 18:59:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.90 2007/07/22 18:22:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.91 2007/07/22 18:59:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2219,7 +2219,7 @@ puffs_getpages(void *v)
 		simple_unlock(&vp->v_interlock);
 		vattr_null(&va);
 		va.va_size = vp->v_size;
-		error = puffs_dosetattr(vp, &va, FSCRED, 0, 0);
+		error = puffs_dosetattr(vp, &va, FSCRED, NULL, 0);
 		if (error)
 			ERROUT(error);
 		simple_lock(&vp->v_interlock);
