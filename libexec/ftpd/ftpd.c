@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.180 2007/06/10 20:24:31 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.181 2007/07/22 05:06:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.180 2007/06/10 20:24:31 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.181 2007/07/22 05:06:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1576,11 +1576,11 @@ pass(const char *passwd)
 		char *p;
 
 		reply(230, "Guest login ok, access restrictions apply.");
-#if HAVE_SETPROCTITLE
+#if defined(HAVE_SETPROCTITLE)
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: anonymous/%s", remotehost, passwd);
 		setproctitle("%s", proctitle);
-#endif /* HAVE_SETPROCTITLE */
+#endif /* defined(HAVE_SETPROCTITLE) */
 		if (logging)
 			syslog(LOG_INFO,
 			"ANONYMOUS FTP LOGIN FROM %s, %s (class: %s, type: %s)",
@@ -1593,11 +1593,11 @@ pass(const char *passwd)
 				*p = '_';
 	} else {
 		reply(230, "User %s logged in.", pw->pw_name);
-#if HAVE_SETPROCTITLE
+#if defined(HAVE_SETPROCTITLE)
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: %s", remotehost, pw->pw_name);
 		setproctitle("%s", proctitle);
-#endif /* HAVE_SETPROCTITLE */
+#endif /* defined(HAVE_SETPROCTITLE) */
 		if (logging)
 			syslog(LOG_INFO,
 			    "FTP LOGIN FROM %s as %s (class: %s, type: %s)",
@@ -2794,10 +2794,10 @@ logremotehost(struct sockinet *who)
 	    getnameopts))
 		strlcpy(remotehost, "?", sizeof(remotehost));
 
-#if HAVE_SETPROCTITLE
+#if defined(HAVE_SETPROCTITLE)
 	snprintf(proctitle, sizeof(proctitle), "%s: connected", remotehost);
 	setproctitle("%s", proctitle);
-#endif /* HAVE_SETPROCTITLE */
+#endif /* defined(HAVE_SETPROCTITLE) */
 	if (logging)
 		syslog(LOG_INFO, "connection from %s to %s",
 		    remotehost, hostname);
