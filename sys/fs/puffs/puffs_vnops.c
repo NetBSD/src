@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.89 2007/07/19 09:38:01 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.90 2007/07/22 18:22:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.89 2007/07/19 09:38:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.90 2007/07/22 18:22:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -757,26 +757,21 @@ puffs_getattr(void *v)
 		vap->va_size = pn->pn_mc_size;
 	} else {
 		if (rvap->va_size != VNOVAL
-		    && vp->v_type != VBLK && vp->v_type != VCHR)
+		    && vp->v_type != VBLK && vp->v_type != VCHR) {
 			uvm_vnp_setsize(vp, rvap->va_size);
+			pn->pn_serversize = rvap->va_size;
+		}
 	}
 
 	return 0;
 }
 
-int
-puffs_setattr(void *v)
+static int
+puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
+	struct lwp *l, int chsize)
 {
-	struct vop_getattr_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		kauth_cred_t a_cred;
-		struct lwp *a_l;
-	} */ *ap = v;
+	struct puffs_node *pn = vp->v_data;
 	int error;
-	struct vattr *vap = ap->a_vap;
-	struct puffs_node *pn = ap->a_vp->v_data;
 
 	PUFFS_VNREQ(setattr);
 
@@ -803,18 +798,35 @@ puffs_setattr(void *v)
 	}
 
 	(void)memcpy(&setattr_arg.pvnr_va, vap, sizeof(struct vattr));
-	puffs_credcvt(&setattr_arg.pvnr_cred, ap->a_cred);
-	puffs_cidcvt(&setattr_arg.pvnr_cid, ap->a_l);
+	puffs_credcvt(&setattr_arg.pvnr_cred, cred);
+	puffs_cidcvt(&setattr_arg.pvnr_cid, l);
 
-	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_SETATTR,
-	    &setattr_arg, sizeof(setattr_arg), 0, ap->a_vp, NULL);
+	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
+	    &setattr_arg, sizeof(setattr_arg), 0, vp, NULL);
 	if (error)
 		return error;
 
-	if (vap->va_size != VNOVAL)
-		uvm_vnp_setsize(ap->a_vp, vap->va_size);
+	if (vap->va_size != VNOVAL) {
+		pn->pn_serversize = vap->va_size;
+		if (chsize)
+			uvm_vnp_setsize(vp, vap->va_size);
+	}
 
 	return 0;
+}
+
+int
+puffs_setattr(void *v)
+{
+	struct vop_getattr_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+
+	return puffs_dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_l, 1);
 }
 
 int
@@ -2168,6 +2180,7 @@ puffs_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
+	struct puffs_node *pn;
 	struct vnode *vp;
 	struct vm_page **pgs;
 	struct puffs_cacheinfo *pcinfo = NULL;
@@ -2181,12 +2194,36 @@ puffs_getpages(void *v)
 	npages = *ap->a_count;
 	pgs = ap->a_m;
 	vp = ap->a_vp;
+	pn = vp->v_data;
 	locked = (ap->a_flags & PGO_LOCKED) != 0;
 	write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	/* ccg xnaht - gets Wuninitialized wrong */
 	pcrun = NULL;
 	runsizes = 0;
+
+	/*
+	 * Check that we aren't trying to fault in pages which our file
+	 * server doesn't know about.  This happens if we extend a file by
+	 * skipping some pages and later try to fault in pages which
+	 * are between pn_serversize and vp_size.  This check optimizes
+	 * away the common case where a file is being extended.
+	 */
+	if (ap->a_offset >= pn->pn_serversize && ap->a_offset < vp->v_size) {
+		struct vattr va;
+
+		/* try again later when we can block */
+		if (locked)
+			ERROUT(EBUSY);
+
+		simple_unlock(&vp->v_interlock);
+		vattr_null(&va);
+		va.va_size = vp->v_size;
+		error = puffs_dosetattr(vp, &va, FSCRED, 0, 0);
+		if (error)
+			ERROUT(error);
+		simple_lock(&vp->v_interlock);
+	}
 
 	if (write && PUFFS_WCACHEINFO(pmp)) {
 		/* allocate worst-case memory */
