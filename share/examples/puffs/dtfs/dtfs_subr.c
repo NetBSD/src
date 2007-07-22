@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.19 2007/07/17 16:33:27 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.20 2007/07/22 13:19:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -257,9 +257,12 @@ dtfs_setsize(struct puffs_node *pn, off_t newsize)
 		 * if extended, set storage to zero
 		 * to match correct behaviour
 		 */ 
-		if (!shrinks)
-			for (i = df->df_numblocks; i < newblocks; i++)
+		if (!shrinks) {
+			for (i = df->df_numblocks; i < newblocks; i++) {
 				df->df_blocks[i] = emalloc(DTFS_BLOCKSIZE);
+				memset(df->df_blocks[i], 0, DTFS_BLOCKSIZE);
+			}
+		}
 
 		df->df_datalen = newsize;
 		df->df_numblocks = newblocks;
