@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.100 2007/07/09 21:10:59 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.101 2007/07/22 19:16:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.100 2007/07/09 21:10:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.101 2007/07/22 19:16:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -517,6 +517,28 @@ spec_kqfilter(v)
 		 */
 		return (EOPNOTSUPP);
 	}
+}
+
+/*
+ * Allow mapping of only D_DISK.  This is called only for VBLK.
+ */
+int
+spec_mmap(v)
+	void *v;
+{
+	struct vop_mmap_args /* {
+		struct vnode *a_vp;
+		int a_fflags;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	KASSERT(vp->v_type == VBLK);
+	if (bdev_type(vp->v_rdev) != D_DISK)
+		return EINVAL;
+
+	return 0;
 }
 
 /*

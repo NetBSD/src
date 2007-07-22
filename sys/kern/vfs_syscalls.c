@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.322 2007/07/17 21:15:41 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.323 2007/07/22 19:16:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.322 2007/07/17 21:15:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.323 2007/07/22 19:16:05 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1616,11 +1616,6 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	}
 	if ((error = VOP_OPEN(vp, flags, cred, l)) != 0)
 		goto bad;
-	if (vp->v_type == VREG &&
-	    uvn_attach(vp, flags & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
-		error = EIO;
-		goto bad;
-	}
 	if (flags & FWRITE)
 		vp->v_writecount++;
 
