@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.140 2006/11/11 06:28:49 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.140.2.1 2007/07/22 18:45:16 liamjfoy Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -38,8 +38,24 @@ CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 CFLAGS+=	${CWARNFLAGS} ${NOGCCERROR:D:U-Werror}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "hppa") || \
+	(${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
+HAS_SSP=	no
+.else
+HAS_SSP=	yes
+.endif
+
+.if defined(USE_FORT) && (${USE_FORT} != "no")
+USE_SSP?=	yes
+.if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels nor kern modules
+CPPFLAGS+=	-D_FORTIFY_SOURCE=2
+.endif
+.endif
+
 .if defined(USE_SSP) && (${USE_SSP} != "no") && (${BINDIR:Ux} != "/usr/mdec")
+.if ${HAS_SSP} == "yes"
 COPTS+=		-fstack-protector -Wstack-protector --param ssp-buffer-size=1
+.endif
 .endif
 
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
@@ -123,6 +139,7 @@ TOOL_HEXDUMP?=		hexdump
 TOOL_INDXBIB?=		indxbib
 TOOL_INSTALLBOOT?=	installboot
 TOOL_INSTALL_INFO?=	install-info
+TOOL_JOIN?=		join
 TOOL_M4?=		m4
 TOOL_MAKEFS?=		makefs
 TOOL_MAKEINFO?=		makeinfo

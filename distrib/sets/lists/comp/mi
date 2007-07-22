@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.981.2.3 2007/05/25 07:28:11 pavel Exp $
+#	$NetBSD: mi,v 1.981.2.4 2007/07/22 18:44:35 liamjfoy Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1716,6 +1716,7 @@
 ./usr/include/ssp/ssp.h				comp-c-include
 ./usr/include/ssp/stdio.h			comp-c-include
 ./usr/include/ssp/string.h			comp-c-include
+./usr/include/ssp/strings.h			comp-c-include
 ./usr/include/ssp/unistd.h			comp-c-include
 ./usr/include/stab.h				comp-c-include
 ./usr/include/stdarg.h				comp-c-include
@@ -2168,8 +2169,8 @@
 ./usr/lib/libssh_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssl.a				comp-c-lib		crypto
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
-./usr/lib/libssp.a				comp-c-lib
-./usr/lib/libssp_p.a				comp-c-proflib		profile
+./usr/lib/libssp.a				comp-obsolete		obsolete
+./usr/lib/libssp_p.a				comp-obsolete		obsolete
 ./usr/lib/libstdc++.a				comp-cxx-lib
 ./usr/lib/libstdc++_p.a				comp-cxx-proflib	profile
 ./usr/lib/libsupc++.a				comp-cxx-lib
@@ -3038,7 +3039,7 @@
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lssh.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lssl.ln			comp-c-lintlib		lint,crypto
-./usr/libdata/lint/llib-lssp.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-lssp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lstdc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ltelnet.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-ltermcap.ln		comp-c-lintlib		lint
@@ -5920,6 +5921,7 @@
 ./usr/share/man/cat3/srandom.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ssl.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/ssp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/standend.0			comp-c-catman		.cat
 ./usr/share/man/cat3/standout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/start_color.0		comp-c-catman		.cat
@@ -10174,6 +10176,7 @@
 ./usr/share/man/man3/srandom.3			comp-c-man		.man
 ./usr/share/man/man3/sscanf.3			comp-c-man		.man
 ./usr/share/man/man3/ssl.3			comp-c-man		crypto,.man
+./usr/share/man/man3/ssp.3			comp-c-man		.man
 ./usr/share/man/man3/standend.3			comp-c-man		.man
 ./usr/share/man/man3/standout.3			comp-c-man		.man
 ./usr/share/man/man3/start_color.3		comp-c-man		.man

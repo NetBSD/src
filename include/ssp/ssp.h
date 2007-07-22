@@ -1,11 +1,11 @@
-/*	$NetBSD: strings.h,v 1.10.10.1 2007/07/22 18:44:38 liamjfoy Exp $	*/
+/*	$NetBSD: ssp.h,v 1.2.2.2 2007/07/22 18:44:39 liamjfoy Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,38 +35,46 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _STRINGS_H_
-#define _STRINGS_H_
-
-#include <machine/ansi.h>
-#include <sys/featuretest.h>
-
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
-#endif
-
-#if defined(_NETBSD_SOURCE)
-#include <sys/null.h>
-#endif
+#ifndef _SSP_SSP_H_
+#define _SSP_SSP_H_
 
 #include <sys/cdefs.h>
 
-__BEGIN_DECLS
-int	 bcmp(const void *, const void *, size_t);
-void	 bcopy(const void *, void *, size_t);
-void	 bzero(void *, size_t);
-int	 ffs(int);
-char	*index(const char *, int);
-char	*rindex(const char *, int);
-int	 strcasecmp(const char *, const char *);
-int	 strncasecmp(const char *, const char *, size_t);
-__END_DECLS
-
-#if defined(_NETBSD_SOURCE)
-#include <string.h>
+#if !defined(__cplusplus)
+# if _FORTIFY_SOURCE > 0 && __OPTIMIZE__ > 0 && __GNUC_PREREQ__(4, 1)
+#  if _FORTIFY_SOURCE > 1
+#   define __SSP_FORTIFY_LEVEL 2
+#  else
+#   define __SSP_FORTIFY_LEVEL 1
+#  endif
+# endif
 #endif
 
-#include <ssp/strings.h>
-#endif /* !defined(_STRINGS_H_) */
+#define __ssp_alias_name(fun) __ ## fun ## _alias
+#ifdef _NAMESPACE_H_
+#define __ssp_alias_func(fun, args) ___ ## fun ## _alias args
+#else
+#define __ssp_alias_func(fun, args) __ssp_alias_name(fun) args
+#endif
+#define __ssp_inline static __inline __attribute__((__always_inline__))
+#define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
+#define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
+#define __ssp_redirect_raw(rtype, fun, args, call, bos) \
+__ssp_inline rtype __ssp_alias_name(fun) args; \
+__ssp_inline rtype __ssp_alias_name(fun) args { \
+	if (bos(__buf) != (size_t)-1 && __len > bos(__buf)) \
+		__chk_fail(); \
+	return fun call; \
+} 
+
+#define __ssp_redirect(rtype, fun, args, call) \
+    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos)
+#define __ssp_redirect0(rtype, fun, args, call) \
+    __ssp_redirect_raw(rtype, fun, args, call, __ssp_bos0)
+
+__BEGIN_DECLS
+void __stack_chk_fail(void) __attribute__((__noreturn__));
+void __chk_fail(void) __attribute__((__noreturn__));
+__END_DECLS
+
+#endif /* _SSP_SSP_H_ */

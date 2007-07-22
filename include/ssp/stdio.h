@@ -1,11 +1,11 @@
-/*	$NetBSD: strings.h,v 1.10.10.1 2007/07/22 18:44:38 liamjfoy Exp $	*/
+/*	$NetBSD: stdio.h,v 1.2.2.2 2007/07/22 18:44:40 liamjfoy Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,38 +35,45 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _SSP_STDIO_H_
+#define _SSP_STDIO_H_
 
-#ifndef _STRINGS_H_
-#define _STRINGS_H_
-
-#include <machine/ansi.h>
-#include <sys/featuretest.h>
-
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
-#endif
-
-#if defined(_NETBSD_SOURCE)
-#include <sys/null.h>
-#endif
-
-#include <sys/cdefs.h>
+#include <ssp/ssp.h>
 
 __BEGIN_DECLS
-int	 bcmp(const void *, const void *, size_t);
-void	 bcopy(const void *, void *, size_t);
-void	 bzero(void *, size_t);
-int	 ffs(int);
-char	*index(const char *, int);
-char	*rindex(const char *, int);
-int	 strcasecmp(const char *, const char *);
-int	 strncasecmp(const char *, const char *, size_t);
+int __sprintf_chk(char *__restrict, int, size_t, const char *__restrict, ...)
+    __attribute__((__format__(__printf__, 4, 5)));
+int __vsprintf_chk(char *__restrict, int, size_t, const char *__restrict,
+    _BSD_VA_LIST_) __attribute__((__format__(__printf__, 4, 0)));
+int __snprintf_chk(char *__restrict, size_t, int, size_t,
+    const char *__restrict, ...) __attribute__((__format__(__printf__, 5, 6)));
+int __vsnprintf_chk(char *__restrict, size_t, int, size_t,
+     const char *__restrict, _BSD_VA_LIST_)
+     __attribute__((__format__(__printf__, 5, 0)));
+char *__gets_chk(char *, size_t);
+char *__fgets_chk(char *, int, size_t, FILE *);
 __END_DECLS
 
-#if defined(_NETBSD_SOURCE)
-#include <string.h>
-#endif
+#if __SSP_FORTIFY_LEVEL > 0
 
-#include <ssp/strings.h>
-#endif /* !defined(_STRINGS_H_) */
+
+#define sprintf(str, ...) \
+    __builtin___sprintf_chk(str, 0, __ssp_bos(str), __VA_ARGS__)
+
+#define vsprintf(str, fmt, ap) \
+    __builtin___vsprintf_chk(str, 0, __ssp_bos(str), fmt, ap)
+
+#define snprintf(str, len, ...) \
+    __builtin___snprintf_chk(str, len, 0, __ssp_bos(str), __VA_ARGS__)
+
+#define vsnprintf(str, len, fmt, ap) \
+    __builtin___vsnprintf_chk(str, len, 0, __ssp_bos(str), fmt, ap)
+
+#define gets(str) \
+    __gets_chk(str, __ssp_bos(str))
+
+#define fgets(str, len, fp) \
+    __fgets_chk(str, len, __ssp_bos(str), fp)
+#endif /* __SSP_FORTIFY_LEVEL > 0 */
+
+#endif /* _SSP_STDIO_H_ */

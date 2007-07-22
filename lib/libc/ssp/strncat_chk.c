@@ -1,11 +1,11 @@
-/*	$NetBSD: strings.h,v 1.10.10.1 2007/07/22 18:44:38 liamjfoy Exp $	*/
+/*	$NetBSD: strncat_chk.c,v 1.2.2.2 2007/07/22 18:44:48 liamjfoy Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Klaus Klein.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,38 +35,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef _STRINGS_H_
-#define _STRINGS_H_
-
-#include <machine/ansi.h>
-#include <sys/featuretest.h>
-
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
-#endif
-
-#if defined(_NETBSD_SOURCE)
-#include <sys/null.h>
-#endif
-
 #include <sys/cdefs.h>
+__RCSID("$NetBSD: strncat_chk.c,v 1.2.2.2 2007/07/22 18:44:48 liamjfoy Exp $");
 
-__BEGIN_DECLS
-int	 bcmp(const void *, const void *, size_t);
-void	 bcopy(const void *, void *, size_t);
-void	 bzero(void *, size_t);
-int	 ffs(int);
-char	*index(const char *, int);
-char	*rindex(const char *, int);
-int	 strcasecmp(const char *, const char *);
-int	 strncasecmp(const char *, const char *, size_t);
-__END_DECLS
+/*LINTLIBRARY*/
 
-#if defined(_NETBSD_SOURCE)
+#include <ssp/ssp.h>
 #include <string.h>
-#endif
+#include <stdio.h>
 
-#include <ssp/strings.h>
-#endif /* !defined(_STRINGS_H_) */
+char *
+__strncat_chk(char * __restrict dst, char * __restrict src, size_t len,
+    size_t slen)
+{
+	char *d;
+
+	if (len == 0)
+		return dst;
+
+	if (len > slen)
+		__chk_fail();
+
+	for (d = dst; *d; d++) {
+		if (slen-- == 0)
+			__chk_fail();
+	}
+
+	do {
+		if ((*d = *src++) == '\0')
+			break;
+		if (slen-- == 0)
+			__chk_fail();
+		d++;
+	} while (--len != 0);
+
+	if (slen-- == 0)
+		__chk_fail();
+
+	*d = '\0';
+	return dst;
+}
