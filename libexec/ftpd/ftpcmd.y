@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.85 2007/05/10 05:59:30 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.86 2007/07/22 05:06:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.85 2007/05/10 05:59:30 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.86 2007/07/22 05:06:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1486,11 +1486,11 @@ yylex(void)
 		hasyyerrored = 0;
 		if ((cp = strchr(cmdp, '\r'))) {
 			*cp = '\0';
-#if HAVE_SETPROCTITLE
+#if defined(HAVE_SETPROCTITLE)
 			if (strncasecmp(cmdp, "PASS", 4) != 0 &&
 			    strncasecmp(cmdp, "ACCT", 4) != 0)
 				setproctitle("%s: %s", proctitle, cmdp);
-#endif /* HAVE_SETPROCTITLE */
+#endif /* defined(HAVE_SETPROCTITLE) */
 			*cp++ = '\n';
 			*cp = '\0';
 		}
