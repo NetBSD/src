@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.140.2.5 2007/03/31 16:13:18 bouyer Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.140.2.6 2007/07/23 13:30:22 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.140.2.5 2007/03/31 16:13:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.140.2.6 2007/07/23 13:30:22 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,6 +535,18 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 		break;
 	default:
 		return (NULL);
+	}
+
+	/*
+	 * XXX: this horrible kludge avoids locking panics when
+	 * attempting to lookup links that point to within procfs
+	 */
+	if (vp != NULL && vp->v_tag == VT_PROCFS) {
+		if (bpp) {
+			*--bp = '/';
+			*bpp = bp;
+		}
+		return vp;
 	}
 
 	if (rvp == NULL)
@@ -1451,11 +1463,20 @@ procfs_readlink(v)
 			}
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
-			vp = curproc->p_cwdi->cwdi_rdir;
-			if (vp == NULL)
-				vp = rootvnode;
-			error = getcwd_common(vxp, vp, &bp, path,
-			    MAXPATHLEN / 2, 0, curlwp);
+
+ 			/*
+ 			 * XXX: kludge to avoid locking against ourselves
+ 			 * in getcwd()
+ 			 */
+ 			if (vxp->v_tag == VT_PROCFS) {
+ 				*--bp = '/';
+ 			} else {
+ 				vp = curproc->p_cwdi->cwdi_rdir; /* XXXSMP */
+ 				if (vp == NULL)
+ 					vp = rootvnode;
+ 				error = getcwd_common(vxp, vp, &bp, path,
+ 				    MAXPATHLEN / 2, 0, curlwp);
+ 			}
 			FILE_UNUSE(fp, proc_representative_lwp(pown));
 			if (error) {
 				free(path, M_TEMP);
