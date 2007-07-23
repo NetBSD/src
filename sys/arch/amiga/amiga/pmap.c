@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2007/07/16 23:48:04 macallan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.133 2007/07/23 17:32:25 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2007/07/16 23:48:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2007/07/23 17:32:25 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1964,9 +1964,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
-			simple_lock(&uvm.kernel_object->vmobjlock);
+			simple_lock(&uvm_kernel_object->vmobjlock);
 			uvm_pagefree(PHYS_TO_VM_PAGE(_pa));
-			simple_unlock(&uvm.kernel_object->vmobjlock);
+			simple_unlock(&uvm_kernel_object->vmobjlock);
 #ifdef DEBUG
 			if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
 			    printf("remove: PT page 0x%lx (0x%lx) freed\n",
@@ -2127,10 +2127,10 @@ pmap_ptpage_addref(ptpva)
 {
 	struct vm_page *pg;
 
-	simple_lock(&uvm.kernel_object->vmobjlock);
-	pg = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
+	simple_lock(&uvm_kernel_object->vmobjlock);
+	pg = uvm_pagelookup(uvm_kernel_object, ptpva - vm_map_min(kernel_map));
 	pg->wire_count++;
-	simple_unlock(&uvm.kernel_object->vmobjlock);
+	simple_unlock(&uvm_kernel_object->vmobjlock);
 }
 
 /*
@@ -2145,10 +2145,10 @@ pmap_ptpage_delref(ptpva)
 	struct vm_page *pg;
 	int rv;
 
-	simple_lock(&uvm.kernel_object->vmobjlock);
-	pg = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
+	simple_lock(&uvm_kernel_object->vmobjlock);
+	pg = uvm_pagelookup(uvm_kernel_object, ptpva - vm_map_min(kernel_map));
 	rv = --pg->wire_count;
-	simple_unlock(&uvm.kernel_object->vmobjlock);
+	simple_unlock(&uvm_kernel_object->vmobjlock);
 	return (rv);
 }
 
@@ -2443,15 +2443,15 @@ pmap_enter_ptpage(pmap, va, can_fail)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: about to alloc UPT pg at %lx\n", va);
 #endif
-		simple_lock(&uvm.kernel_object->vmobjlock);
-		while ((pg = uvm_pagealloc(uvm.kernel_object,
+		simple_lock(&uvm_kernel_object->vmobjlock);
+		while ((pg = uvm_pagealloc(uvm_kernel_object,
 					   va - vm_map_min(kernel_map),
 					   NULL, UVM_PGA_ZERO)) == NULL) {
-			simple_unlock(&uvm.kernel_object->vmobjlock);
+			simple_unlock(&uvm_kernel_object->vmobjlock);
 			uvm_wait("ptpage");
-			simple_lock(&uvm.kernel_object->vmobjlock);
+			simple_lock(&uvm_kernel_object->vmobjlock);
 		}
-		simple_unlock(&uvm.kernel_object->vmobjlock);
+		simple_unlock(&uvm_kernel_object->vmobjlock);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
