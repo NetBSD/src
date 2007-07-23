@@ -20,6 +20,10 @@
 #ifndef OPENSSL_NO_RC5
 # define OPENSSL_NO_RC5
 #endif
+#else
+#ifndef OPENSSL_THREADS
+#define OPENSSL_THREADS
+#endif
 #endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
