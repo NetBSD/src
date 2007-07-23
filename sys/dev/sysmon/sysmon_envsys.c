@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.42 2007/07/23 08:45:51 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.43 2007/07/23 17:51:16 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.42 2007/07/23 08:45:51 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.43 2007/07/23 17:51:16 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -154,11 +154,10 @@ struct sme_sensor_names {
 
 static SLIST_HEAD(, sme_sensor_names) sme_names_list;
 static prop_dictionary_t sme_propd;
-static kmutex_t sme_list_mtx;
 static kcondvar_t sme_list_cv;
 static int sme_uniqsensors = 0;
 
-kmutex_t sme_mtx, sme_event_mtx;
+kmutex_t sme_mtx, sme_list_mtx, sme_event_mtx;
 kcondvar_t sme_event_cv;
 
 #ifdef COMPAT_40
@@ -297,6 +296,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		sme = sysmon_envsys_find(devname);
 		if (sme == NULL) {
 			DPRINTF(("%s: NULL sme\n", __func__));
+			sysmon_envsys_release(sme);
 			prop_object_release(udict);
 			error = EINVAL;
 			break;
@@ -309,6 +309,7 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		obj = prop_dictionary_get(sme_propd, devname);
 		if (prop_object_type(obj) != PROP_TYPE_ARRAY) {
 			DPRINTF(("%s: array device failed\n", __func__));
+			sysmon_envsys_release(sme);
 			prop_object_release(udict);
 			error = EINVAL;
 			break;
