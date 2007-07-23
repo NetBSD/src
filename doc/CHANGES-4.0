@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.214 2007/07/22 19:40:49 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.215 2007/07/23 13:37:21 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7932,3 +7932,33 @@ regress/lib/libssp/vsprintf/vsprintf.c		delete
 
 	Move libssp to libc.
 	[christos, ticket #773]
+
+sys/arch/arm/footbridge/footbridge_io.c		1.13
+
+	Implement footbridge_mem_bs_mmap.  Needed for mmaping igsfb(4)
+	framebuffer on netwinder.
+	[uwe, ticket #784]
+
+lib/libcrypto/shlib_version			1.12
+distrib/sets/lists/base/shl.mi			1.396
+distrib/sets/lists/base/shl.mi			1.397
+crypto/dist/openssl/crypto/opensslconf.h	1.12
+
+	Bump minor for thread support.
+	PR/36665: Matthias Scheler: Thread support is not enabled in NetBSD's OpenSSL.
+	I enabled it.
+	bump version
+	s/libcrypto.so.3.1/libcrypto.so.3.2/
+	[tron, ticket #783]
+
+sys/miscfs/procfs/procfs_vnops.c		1.158
+
+	Don't allow getcwd() on procfs vnodes and provide "/" as the path
+	instead of the result from getcwd().  The works around locking
+	panics caused by namei calling VOP_READLINK while holding on to a
+	directory lock and getcwd() trying to acquire that lock.  The real
+	fix would be to get rid of getcwd() calls within VOPs (not locking
+	safe), but that's not a viable option in the netbsd-4 timeframe.
+
+	Suggestion for workaround from David Holland.
+	[pooka, ticket #785]
