@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.38 2007/07/09 21:10:50 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.39 2007/07/23 15:41:01 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.38 2007/07/09 21:10:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.39 2007/07/23 15:41:01 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -807,6 +807,7 @@ tmpfs_rename(void *v)
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *fdnode;
 	struct tmpfs_node *fnode;
+	struct tmpfs_node *tnode;
 	struct tmpfs_node *tdnode;
 
 	KASSERT(VOP_ISLOCKED(tdvp));
@@ -816,6 +817,7 @@ tmpfs_rename(void *v)
 
 	fdnode = VP_TO_TMPFS_DIR(fdvp);
 	fnode = VP_TO_TMPFS_NODE(fvp);
+	tnode = (tvp == NULL) ? NULL : VP_TO_TMPFS_NODE(tvp);
 	de = fnode->tn_lookup_dirent;
 
 	/* Disallow cross-device renames.
@@ -842,6 +844,26 @@ tmpfs_rename(void *v)
 		goto out;
 	}
 	KASSERT(de->td_node == fnode);
+
+	/* If replacing an existing entry, ensure we can do the operation. */
+	if (tvp != NULL) {
+		KASSERT(tnode != NULL);
+		if (fnode->tn_type == VDIR && tnode->tn_type == VDIR) {
+			if (tnode->tn_size > 0) {
+				error = ENOTEMPTY;
+				goto out;
+			}
+		} else if (fnode->tn_type == VDIR && tnode->tn_type != VDIR) {
+			error = ENOTDIR;
+			goto out;
+		} else if (fnode->tn_type != VDIR && tnode->tn_type == VDIR) {
+			error = EISDIR;
+			goto out;
+		} else {
+			KASSERT(fnode->tn_type != VDIR &&
+			        tnode->tn_type != VDIR);
+		}
+	}
 
 	/* If we need to move the directory between entries, lock the
 	 * source so that we can safely operate on it. */
@@ -925,12 +947,7 @@ tmpfs_rename(void *v)
 	/* If we are overwriting an entry, we have to remove the old one
 	 * from the target directory. */
 	if (tvp != NULL) {
-		struct tmpfs_node *tnode;
-
-		tnode = VP_TO_TMPFS_NODE(tvp);
-
-		/* The source node cannot be a directory in this case. */
-		KASSERT(fnode->tn_type != VDIR);
+		KASSERT(tnode != NULL);
 
 		/* Remove the old entry from the target directory. */
 		de = tnode->tn_lookup_dirent;
