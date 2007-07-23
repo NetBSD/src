@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.41 2007/07/22 18:17:03 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.42 2007/07/23 08:45:51 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.41 2007/07/22 18:17:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.42 2007/07/23 08:45:51 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -655,8 +655,7 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 		 * flag is not set.
 		 */
 		if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
-			error = (*sme->sme_gtredata)(sme, edata);
-			if (error) {
+			if ((*sme->sme_gtredata)(sme, edata)) {
 				DPRINTF(("%s: sme->sme_gtredata[%d]\n",
 				    __func__, i));
 				mutex_exit(&sme_mtx);
@@ -768,7 +767,8 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			break;
 
 	if (strcmp(est[i].desc, "unknown") == 0) {
-		DPRINTF(("%s: invalid units type\n", __func__));
+		DPRINTF(("%s: invalid units type for sensor=%d\n",
+		    __func__, edata->sensor));
 		goto invalidate_sensor;
 	}
 
@@ -784,7 +784,8 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		goto invalidate_sensor;
 
 	if (strlen(edata->desc) == 0) {
-		DPRINTF(("%s: invalid description\n", __func__));
+		DPRINTF(("%s: invalid description for sensor=%d\n",
+		    __func__, edata->sensor));
 		goto invalidate_sensor;
 	}
 
@@ -810,7 +811,8 @@ sme_make_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			break;
 
 	if (strcmp(ess[j].desc, "unknown") == 0) {
-		DPRINTF(("%s: invalid state\n", __func__));
+		DPRINTF(("%s: invalid state for sensor=%d\n",
+		    __func__, edata->sensor));
 		goto invalidate_sensor;
 	}
 
