@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.9 2006/12/27 22:07:17 dogcow Exp $ */
+/* $NetBSD: bt3c.c,v 1.10 2007/07/23 18:08:20 plunky Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.9 2006/12/27 22:07:17 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.10 2007/07/23 18:08:20 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -511,13 +511,14 @@ bt3c_intr(void *arg)
 /*
  * load firmware for the device
  *
- * The firmware file is a plain ASCII file containing lines in the format:
+ * The firmware file is a plain ASCII file in the Motorola S-Record format,
+ * with lines in the format:
  *
  *	S<Digit><Len><Address><Data1><Data2>...<DataN><Checksum>
  *
- * <Digit>:	0	start ?
- *		3	data line
- *		7	finish ?
+ * <Digit>:	0	header
+ *		3	data record (4 byte address)
+ *		7	boot record (4 byte address)
  *
  * <Len>:	1 byte, and is the number of bytes in the rest of the line
  * <Address>:	4 byte address (only 2 bytes are valid for bt3c I think)
@@ -630,7 +631,7 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 		/* extract relevant data */
 		switch (line[1]) {
 		case '0':
-			/* I dont know what this is */
+			/* we ignore the header */
 			break;
 
 		case '3':
@@ -655,7 +656,11 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 			break;
 
 		case '7':
-			/* I dont know what this is */
+			/*
+			 * for some reason we ignore this record
+			 * and boot from 0x3000 which happens to
+			 * be the first record in the file.
+			 */
 			break;
 
 		default:
