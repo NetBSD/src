@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.14.8 2007/07/08 16:57:23 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.14.9 2007/07/23 22:47:15 ober Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.8 2007/07/08 16:57:23 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.9 2007/07/23 22:47:15 ober Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.14.8 2007/07/08 16:57:23 ober Exp $
 
 #include <dev/cons.h>
 
-#include "pfb.h"
 #include "ksyms.h"
 
 #include "vga.h"
@@ -106,7 +105,7 @@ char bootinfo[BOOTINFO_MAXSIZE];
 paddr_t bebox_mb_reg;		/* BeBox MotherBoard register */
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
-char *bootpath;
+char bootpath[256];
 paddr_t avail_end;			/* XXX temporary */
 struct pic_ops *isa_pic;
 void initppc(u_long, u_long, void *);
@@ -182,10 +181,10 @@ cpu_startup()
 	/*
 	 * BeBox Mother Board's Register Mapping
 	 */
-  /*bebox_mb_reg = (vaddr_t) mapiodev(MOTHER_BOARD_REG, PAGE_SIZE);
+  bebox_mb_reg = (vaddr_t) mapiodev(BEBOX_INTR_REG, PAGE_SIZE);
   if (!bebox_mb_reg)
     panic("cpu_startup: no room for interrupt register");
-  */
+  
   /*
    * Do common VM initialization
    */
@@ -248,6 +247,7 @@ consinit()
 	if (!consinfo)
 		panic("not found console information in bootinfo");
 	
+#if 0
 #if (NPFB > 0)
 	if (!strcmp(consinfo->devname, "be")) {
 		pfb_cnattach(consinfo->addr);
@@ -259,7 +259,7 @@ consinit()
 	return;
 	}
 #endif
-	
+#endif /* if 0 */	
 
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25.14.4 2007/07/08 16:57:24 ober Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.14.5 2007/07/23 22:47:16 ober Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ extern paddr_t bebox_mb_reg;
 #define IRQ_SLAVE       2
 #define LEGAL_IRQ(x)    ((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
 
-#define MVMEPPC_INTR_REG        0xbffff000
+#define BEBOX_INTR_REG        0xbffff000
 #define INTR_VECTOR_REG 0xff0
 
 #endif /* !_LOCORE */
