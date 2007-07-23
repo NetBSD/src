@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.11 2007/07/22 18:17:03 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.12 2007/07/23 17:51:17 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -92,9 +92,14 @@ typedef struct sme_event_drv {
 } sme_event_drv_t;
 
 /* common */
-extern	kmutex_t sme_mtx;	/* mutex for the sysmon envsys devices */
-extern	kmutex_t sme_event_mtx;	/* mutex for the sysmon envsys events */
-extern	kmutex_t sme_event_init_mtx;	/* mutex to initialize/destroy see */
+extern	kmutex_t sme_mtx;	/* mutex to protect the sysmon envsys data */
+extern	kmutex_t sme_list_mtx;	/* mutex to protect the sysmon envsys list */
+extern	kmutex_t sme_event_mtx;	/* mutex to protect the sme event data */
+
+/* mutex to intialize/destroy the sysmon envsys events framework */
+extern	kmutex_t sme_event_init_mtx;
+
+/* condition variable to wait for the worker thread to finish */
 extern	kcondvar_t sme_event_cv;
 
 /* linked list for the sysmon envsys devices */
