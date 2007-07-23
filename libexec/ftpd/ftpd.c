@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.181 2007/07/22 05:06:45 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.182 2007/07/23 10:41:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.181 2007/07/22 05:06:45 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.182 2007/07/23 10:41:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -3660,18 +3660,17 @@ cprintf(FILE *fd, const char *fmt, ...)
  */
 #define COPY_STRING(s) (s ? strdup(s) : NULL)
 
-struct cred_t {
+typedef struct {
 	const char *uname;		/* user name */
 	const char *pass;		/* password */
-};
-typedef struct cred_t cred_t;
+} ftpd_cred_t;
 
 static int
 auth_conv(int num_msg, const struct pam_message **msg,
     struct pam_response **resp, void *appdata)
 {
 	int i;
-	cred_t *cred = (cred_t *) appdata;
+	ftpd_cred_t *cred = (ftpd_cred_t *) appdata;
 	struct pam_response *myreply;
 
 	myreply = calloc(num_msg, sizeof *myreply);
@@ -3719,7 +3718,7 @@ auth_pam(struct passwd **ppw, const char *pwstr)
 	const void *item;
 	int rval;
 	int e;
-	cred_t auth_cred = { (*ppw)->pw_name, pwstr };
+	ftpd_cred_t auth_cred = { (*ppw)->pw_name, pwstr };
 	struct pam_conv conv = { &auth_conv, &auth_cred };
 
 	e = pam_start("ftpd", (*ppw)->pw_name, &conv, &pamh);
