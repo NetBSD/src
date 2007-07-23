@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.48.4.3 2007/07/08 02:28:44 ober Exp $
+#	$NetBSD: files.bebox,v 1.48.4.4 2007/07/23 22:47:16 ober Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -125,9 +125,9 @@ file	arch/bebox/isa/mms.c		mms needs-flag
 include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
-device	pfb: wsemuldisplaydev, wsrasteremulops
-attach	pfb at pci
-file	arch/bebox/pci/pfb.c		pfb needs-flag
+#device	pfb: wsemuldisplaydev, wsrasteremulops
+#attach	pfb at pci
+#file	arch/bebox/pci/pfb.c		pfb needs-flag
 
 include "dev/pckbport/files.pckbport"
 
