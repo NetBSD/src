@@ -1,4 +1,4 @@
-/*	$NetBSD: item.c,v 1.10 2003/09/29 12:32:24 blymn Exp $	*/
+/*	$NetBSD: item.c,v 1.11 2007/07/23 12:12:19 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: item.c,v 1.10 2003/09/29 12:32:24 blymn Exp $");
+__RCSID("$NetBSD: item.c,v 1.11 2007/07/23 12:12:19 blymn Exp $");
 
 #include <menu.h>
 #include <stdlib.h>
 #include <string.h>
+#include "internals.h"
 
 /* the following is defined in menu.c - it is the default menu struct */
 extern MENU _menui_default_menu;
@@ -260,6 +261,7 @@ set_item_value(ITEM *param_item, int flag)
                 return E_REQUEST_DENIED;
 
         item->selected = flag;
+	_menui_draw_item(item->parent, item->index);
         return E_OK;
 }
 
