@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_rename,v 1.5 2006/11/09 16:20:06 jmmv Exp $
+# $NetBSD: t_rename,v 1.6 2007/07/23 12:51:35 jmmv Exp $
 #
 # Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -104,6 +104,32 @@ test_run() {
 	test -f a && die
 	test -f b || die
 	rm b
+
+	test_name "Rename to a override an empty directory works"
+	mkdir a || die
+	touch a/c || die
+	mkdir b || die
+	${Src_Dir}/h_tools rename a b || die
+	test -e a && die
+	test -d b || die
+	test -f b/c || die
+	rm b/c
+	rmdir b
+
+	test_name "Rename to a override a non-empty directory fails"
+	mkdir a || die
+	touch a/c || die
+	mkdir b || die
+	touch b/d || die
+	${Src_Dir}/h_tools rename a b && die
+	test -d a || die
+	test -f a/c || die
+	test -d b || die
+	test -f b/d || die
+	rm a/c
+	rm b/d
+	rmdir a
+	rmdir b
 
 	mkdir dir || die
 	touch dir/a
