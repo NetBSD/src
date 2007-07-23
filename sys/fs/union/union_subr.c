@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.26 2007/07/23 08:21:50 pooka Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.27 2007/07/23 08:52:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.26 2007/07/23 08:21:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.27 2007/07/23 08:52:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,15 +464,9 @@ loop:
 		 * is locked or nil.
 		 */
 
-		uppersz = lowersz = VNOVAL;
-
 		/*
 		 * Save information about the upper layer.
 		 */
-		if (uppervp != NULLVP)
-			if (VOP_GETATTR(uppervp, &va, FSCRED, NULL) == 0)
-				uppersz = va.va_size;
-
 		if (uppervp != un->un_uppervp) {
 			union_newupper(un, uppervp);
 		} else if (uppervp) {
@@ -490,10 +484,6 @@ loop:
 		 * and directory information which union_vn_create
 		 * might need.
 		 */
-		if (lowervp != NULLVP)
-			if (VOP_GETATTR(lowervp, &va, FSCRED, NULL) == 0)
-				lowersz = va.va_size;
-
 		if (lowervp != un->un_lowervp) {
 			union_newlower(un, lowervp);
 			if (cnp && (lowervp != NULLVP)) {
@@ -512,6 +502,14 @@ loop:
 		*vpp = UNIONTOV(un);
 		return (0);
 	}
+
+	uppersz = lowersz = VNOVAL;
+	if (uppervp != NULLVP)
+		if (VOP_GETATTR(uppervp, &va, FSCRED, NULL) == 0)
+			uppersz = va.va_size;
+	if (lowervp != NULLVP)
+		if (VOP_GETATTR(lowervp, &va, FSCRED, NULL) == 0)
+			lowersz = va.va_size;
 
 	if (docache) {
 		/*
