@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.5 2007/03/13 19:26:06 plunky Exp $	*/
+/*	$NetBSD: btuart.c,v 1.6 2007/07/23 03:45:27 kiyohara Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.5 2007/03/13 19:26:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.6 2007/07/23 03:45:27 kiyohara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -370,7 +370,6 @@ init_ericsson(struct btuart_softc *sc)
 		{      B0, 0xff }
 	};
 
-printf("sc_baud=%d, init_speed=%d\n", sc->sc_baud, sc->sc_bth4hci.init_baud);
 	for (i = 0; ericsson_baudtbl[i].baud != sc->sc_baud; i++)
 		if (ericsson_baudtbl[i].baud == B0)
 			return EINVAL;
