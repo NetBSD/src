@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.18 2007/07/21 15:16:58 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.19 2007/07/23 17:51:17 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.18 2007/07/21 15:16:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.19 2007/07/23 17:51:17 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -95,7 +95,7 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 static struct workqueue *seewq;
 static struct callout seeco;
 static bool sme_events_initialized = false;
-kmutex_t sme_mtx, sme_event_mtx, sme_event_init_mtx;
+kmutex_t sme_mtx, sme_list_mtx, sme_event_mtx, sme_event_init_mtx;
 kcondvar_t sme_event_cv;
 
 /* 10 seconds of timeout for the callout */
@@ -559,13 +559,15 @@ sme_events_worker(struct work *wk, void *arg)
 	 * We have to find the sme device by looking
 	 * at the power envsys device name.
 	 */
-	mutex_enter(&sme_mtx);
+	mutex_enter(&sme_list_mtx);
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
 		if (strcmp(sme->sme_name, see->pes.pes_dvname) == 0)
 			break;
+	mutex_exit(&sme_list_mtx);
 
 	KASSERT(sme != NULL);
 
+	mutex_enter(&sme_mtx);
 	/* get the sensor with the index specified in see->snum */
 	edata = &sme->sme_sensor_data[see->snum];
 
