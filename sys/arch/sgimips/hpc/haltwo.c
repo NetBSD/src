@@ -1,4 +1,4 @@
-/* $NetBSD: haltwo.c,v 1.12 2007/03/04 06:00:39 christos Exp $ */
+/* $NetBSD: haltwo.c,v 1.13 2007/07/23 22:28:23 he Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.12 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: haltwo.c,v 1.13 2007/07/23 22:28:23 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,12 +267,12 @@ haltwo_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(haa->ha_name, cf->cf_name))
 		return 0;
 
-	if ( platform.badaddr((void *)(haa->ha_sh + haa->ha_devoff),
+	if ( platform.badaddr((void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff),
 	    sizeof(u_int32_t)) )
 		return 0;
 
 	if ( platform.badaddr(
-	    (void *)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
+	    (void *)(vaddr_t)(haa->ha_sh + haa->ha_devoff + HAL2_REG_CTL_REV),
 	    sizeof(u_int32_t)) )
 		return 0;
 
