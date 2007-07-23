@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.240 2007/07/17 21:26:41 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.241 2007/07/23 09:05:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.240 2007/07/17 21:26:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.241 2007/07/23 09:05:02 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1112,6 +1112,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 			&fs->lfs_interlock);
 	simple_unlock(&fs->lfs_interlock);
 
+retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
@@ -1121,10 +1122,10 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	mutex_enter(&ufs_hashlock);
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+	if (ufs_ihashget(dev, ino, 0) != NULL) {
 		mutex_exit(&ufs_hashlock);
 		ungetnewvnode(vp);
-		return (0);
+		goto retry;
 	}
 
 	/* Translate the inode number to a disk address. */
