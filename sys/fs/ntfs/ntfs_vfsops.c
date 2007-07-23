@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.52 2007/07/17 11:19:32 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.53 2007/07/23 11:27:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.52 2007/07/17 11:19:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.53 2007/07/23 11:27:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -976,6 +976,7 @@ ntfs_vgetex(
 	}
 
 	genfs_node_init(vp, &ntfs_genfsops);
+	uvm_vnp_setsize(vp, 0); /* XXX notused */
 	VREF(ip->i_devvp);
 	*vpp = vp;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.37 2007/07/17 11:19:32 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.38 2007/07/23 11:27:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.37 2007/07/17 11:19:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.38 2007/07/23 11:27:46 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -688,7 +688,7 @@ filecore_vget(mp, ino, vpp)
 	 */
 
 	genfs_node_init(vp, &filecore_genfsops);
-	vp->v_size = ip->i_size;
+	uvm_vnp_setsize(vp, ip->i_size);
 	*vpp = vp;
 	return (0);
 }
