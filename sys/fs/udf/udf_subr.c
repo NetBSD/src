@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.34 2007/04/29 20:23:36 msaitoh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.35 2007/07/23 11:27:46 pooka Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.34 2007/04/29 20:23:36 msaitoh Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.35 2007/07/23 11:27:46 pooka Exp $");
 #endif /* not lint */
 
 
@@ -2194,7 +2194,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	genfs_node_init(nvp, &udf_genfsops);
 
 	/* don't forget to set vnode's v_size */
-	nvp->v_size = file_size;
+	uvm_vnp_setsize(nvp, file_size);
 
 	/* TODO ext attr and streamdir nodes */
 

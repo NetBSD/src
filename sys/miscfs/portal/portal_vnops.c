@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.73 2007/07/02 17:55:33 pooka Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.74 2007/07/23 11:27:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.73 2007/07/02 17:55:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.74 2007/07/23 11:27:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,7 @@ portal_lookup(v)
 	if (error)
 		goto bad;
 	fvp->v_type = VREG;
+	uvm_vnp_setsize(fvp, 0);
 	MALLOC(fvp->v_data, void *, sizeof(struct portalnode), M_TEMP,
 	    M_WAITOK);
 
