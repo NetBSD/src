@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.44 2007/07/17 11:19:32 pooka Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.45 2007/07/23 11:27:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.44 2007/07/17 11:19:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.45 2007/07/23 11:27:46 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -908,6 +908,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		uvm_vnp_setsize(vp, ip->i_size);
 		break;
 	}
+
+	if (vp->v_type != VREG)
+		uvm_vnp_setsize(vp, 0);
 
 	if (ip->iso_extent == imp->root_extent)
 		vp->v_flag |= VROOT;

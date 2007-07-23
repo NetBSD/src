@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.38 2007/07/17 11:19:32 pooka Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.39 2007/07/23 11:27:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.38 2007/07/17 11:19:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.39 2007/07/23 11:27:45 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -599,7 +599,7 @@ adosfs_vget(mp, an, vpp)
 	genfs_node_init(vp, &adosfs_genfsops);
 	*vpp = vp;
 	brelse(bp);
-	vp->v_size = ap->fsize;
+	uvm_vnp_setsize(vp, ap->fsize);
 	return (0);
 }
 
