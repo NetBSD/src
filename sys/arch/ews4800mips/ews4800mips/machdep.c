@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2007/06/02 06:30:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2007/07/23 17:55:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2007/06/02 06:30:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2007/07/23 17:55:39 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
