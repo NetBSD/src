@@ -1,4 +1,4 @@
-/*	$NetBSD: print-fddi.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-fddi.c,v 1.7 2007/07/24 11:53:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-fddi.c,v 1.61.2.2 2003/11/16 08:51:20 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-fddi.c,v 1.64.2.2 2005/11/13 12:12:59 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-fddi.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-fddi.c,v 1.7 2007/07/24 11:53:43 drochner Exp $");
 #endif
 #endif
 
@@ -272,7 +272,6 @@ fddi_print(const u_char *p, u_int length, u_int caplen)
 	caplen -= FDDI_HDRLEN;
 
 	/* Frame Control field determines interpretation of packet */
-	extracted_ethertype = 0;
 	if ((fddip->fddi_fc & FDDIFC_CLFF) == FDDIFC_LLC_ASYNC) {
 		/* Try to print the LLC-layer header & higher layers */
 		if (llc_print(p, length, caplen, ESRC(&ehdr), EDST(&ehdr),
@@ -288,7 +287,7 @@ fddi_print(const u_char *p, u_int length, u_int caplen)
 				printf("(LLC %s) ",
 			etherproto_string(htons(extracted_ethertype)));
 			}
-			if (!xflag && !qflag)
+			if (!suppress_default_print)
 				default_print(p, caplen);
 		}
 	} else if ((fddip->fddi_fc & FDDIFC_CLFF) == FDDIFC_SMT)
@@ -298,7 +297,7 @@ fddi_print(const u_char *p, u_int length, u_int caplen)
 		if (!eflag)
 			fddi_hdr_print(fddip, length + FDDI_HDRLEN, ESRC(&ehdr),
 			    EDST(&ehdr));
-		if (!xflag && !qflag)
+		if (!suppress_default_print)
 			default_print(p, caplen);
 	}
 }
@@ -306,7 +305,7 @@ fddi_print(const u_char *p, u_int length, u_int caplen)
 /*
  * This is the top level routine of the printer.  'p' points
  * to the FDDI header of the packet, 'h->ts' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
 u_int

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-hsrp.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-hsrp.c,v 1.5 2007/07/24 11:53:44 drochner Exp $	*/
 
 /*
  * Copyright (C) 2001 Julian Cowley
@@ -35,9 +35,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-hsrp.c,v 1.7.2.2 2003/11/16 08:51:24 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-hsrp.c,v 1.9.2.1 2005/05/06 07:57:17 guy Exp";
 #else
-__RCSID("$NetBSD: print-hsrp.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-hsrp.c,v 1.5 2007/07/24 11:53:44 drochner Exp $");
 #endif
 #endif
 
@@ -134,7 +134,11 @@ hsrp_print(register const u_int8_t *bp, register u_int len)
 		relts_print(hp->hsrp_holdtime);
 		printf(" priority=%d", hp->hsrp_priority);
 		printf(" auth=\"");
-		fn_printn(hp->hsrp_authdata, sizeof(hp->hsrp_authdata), NULL);
+		if (fn_printn(hp->hsrp_authdata, sizeof(hp->hsrp_authdata),
+		    snapend)) {
+			printf("\"");
+			goto trunc;
+		}
 		printf("\"");
 	}
 	return;

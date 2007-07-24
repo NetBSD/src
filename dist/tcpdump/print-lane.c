@@ -1,4 +1,4 @@
-/*	$NetBSD: print-lane.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-lane.c,v 1.5 2007/07/24 11:53:45 drochner Exp $	*/
 
 /*
  * Marko Kiiskila carnil@cs.tut.fi
@@ -26,9 +26,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-lane.c,v 1.20.2.2 2003/11/16 08:51:31 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-lane.c,v 1.23.2.2 2005/11/13 12:12:59 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-lane.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-lane.c,v 1.5 2007/07/24 11:53:45 drochner Exp $");
 #endif
 #endif
 
@@ -91,7 +91,7 @@ lane_hdr_print(register const u_char *bp, int length)
 /*
  * This is the top level routine of the printer.  'p' points
  * to the LANE header of the packet, 'h->ts' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  *
  * This assumes 802.3, not 802.5, LAN emulation.
@@ -141,7 +141,6 @@ lane_print(const u_char *p, u_int length, u_int caplen)
 	/*
 	 * Is it (gag) an 802.3 encapsulation?
 	 */
-	extracted_ethertype = 0;
 	if (ether_type <= ETHERMTU) {
 		/* Try to print the LLC-layer header & higher layers */
 		if (llc_print(p, length, caplen, ep->h_source, ep->h_dest,
@@ -153,7 +152,7 @@ lane_print(const u_char *p, u_int length, u_int caplen)
 				printf("(LLC %s) ",
 			       etherproto_string(htons(extracted_ethertype)));
 			}
-			if (!xflag && !qflag)
+			if (!suppress_default_print)
 				default_print(p, caplen);
 		}
 	} else if (ether_encap_print(ether_type, p, length, caplen,
@@ -161,7 +160,7 @@ lane_print(const u_char *p, u_int length, u_int caplen)
 		/* ether_type not known, print raw packet */
 		if (!eflag)
 			lane_hdr_print((u_char *)ep, length + sizeof(*ep));
-		if (!xflag && !qflag)
+		if (!suppress_default_print)
 			default_print(p, caplen);
 	}
 }

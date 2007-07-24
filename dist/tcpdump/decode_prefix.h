@@ -1,4 +1,4 @@
-/*	$NetBSD: decode_prefix.h,v 1.1.1.1 2007/07/24 11:43:20 drochner Exp $	*/
+/*	$NetBSD: decode_prefix.h,v 1.2 2007/07/24 11:53:38 drochner Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf6.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-ospf6.c,v 1.4 2007/07/24 11:53:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,9 +27,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ospf6.c,v 1.11.2.2 2003/11/16 08:51:37 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ospf6.c,v 1.13 2003/11/16 09:36:31 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ospf6.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-ospf6.c,v 1.4 2007/07/24 11:53:46 drochner Exp $");
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.h,v 1.1.1.3 2007/07/24 11:42:50 drochner Exp $	*/
+/*	$NetBSD: bootp.h,v 1.2 2007/07/24 11:53:37 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/bootp.h,v 1.15.4.1 2007/01/29 20:56:00 guy Exp (LBL) */
 /*

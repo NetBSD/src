@@ -1,4 +1,4 @@
-/*	$NetBSD: atmuni31.h,v 1.1.1.1 2004/09/27 17:06:30 dyoung Exp $	*/
+/*	$NetBSD: atmuni31.h,v 1.2 2007/07/24 11:53:37 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Yen Yen Lim and North Dakota State University

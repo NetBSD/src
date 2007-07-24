@@ -1,4 +1,4 @@
-/*	$NetBSD: print-olsr.c,v 1.1.1.1 2007/07/24 11:42:51 drochner Exp $	*/
+/*	$NetBSD: print-olsr.c,v 1.2 2007/07/24 11:53:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2007 The TCPDUMP project

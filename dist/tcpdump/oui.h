@@ -1,4 +1,4 @@
-/*	$NetBSD: oui.h,v 1.1.1.2 2007/07/24 11:43:00 drochner Exp $	*/
+/*	$NetBSD: oui.h,v 1.2 2007/07/24 11:53:41 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/oui.h,v 1.3.2.1 2005/04/17 01:20:56 guy Exp (LBL) */
 /* 

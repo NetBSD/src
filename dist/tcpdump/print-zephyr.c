@@ -1,7 +1,9 @@
-/*	$NetBSD: print-zephyr.c,v 1.5 2006/05/10 21:53:15 mrg Exp $	*/
+/*	$NetBSD: print-zephyr.c,v 1.6 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Decode and print Zephyr packets.
+ *
+ *	http://web.mit.edu/zephyr/doc/protocol
  *
  * Copyright (c) 2001 Nickolai Zeldovich <kolya@MIT.EDU>
  * All rights reserved.
@@ -24,9 +26,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.6.2.2 2003/11/16 08:51:56 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.8.2.1 2005/04/21 06:51:24 guy Exp";
 #else
-__RCSID("$NetBSD: print-zephyr.c,v 1.5 2006/05/10 21:53:15 mrg Exp $");
+__RCSID("$NetBSD: print-zephyr.c,v 1.6 2007/07/24 11:53:48 drochner Exp $");
 #endif
 #endif
 

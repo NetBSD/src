@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.7 2006/03/25 11:43:53 rpaulo Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.8 2007/07/24 11:53:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -46,9 +46,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.25.2.2 2003/11/16 08:51:07 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.28.2.1 2007/06/15 19:15:04 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: parsenfsfh.c,v 1.7 2006/03/25 11:43:53 rpaulo Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.8 2007/07/24 11:53:41 drochner Exp $");
 #endif
 #endif
 
@@ -119,7 +119,7 @@ static int is_UCX(const unsigned char *);
 void
 Parse_fh(fh, len, fsidp, inop, osnamep, fsnamep, ourself)
 register const unsigned char *fh;
-int len;
+int len _U_;
 my_fsid *fsidp;
 ino_t *inop;
 const char **osnamep;		/* if non-NULL, return OS name here */
@@ -330,6 +330,10 @@ int ourself;		/* true if file handle was generated on this host */
 
 #ifdef notdef
 	case FHT_SUNOS3:
+	    /*
+	     * XXX - none of the heuristics above return this.
+	     * Are there any SunOS 3.x systems around to care about?
+	     */
 	    if (osnamep)
 		*osnamep = "SUNOS3";
 	    break;

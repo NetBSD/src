@@ -1,4 +1,4 @@
-/*	$NetBSD: dccp.h,v 1.1.1.1 2007/07/24 11:43:03 drochner Exp $	*/
+/*	$NetBSD: dccp.h,v 1.2 2007/07/24 11:53:37 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/dccp.h,v 1.1.2.4 2006/05/12 01:46:17 guy Exp (LBL) */
 /*

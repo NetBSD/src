@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.h,v 1.1.1.2 2004/09/27 17:06:48 dyoung Exp $	*/
+/*	$NetBSD: ipsec_doi.h,v 1.2 2007/07/24 11:53:39 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

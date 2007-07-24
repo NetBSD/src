@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipx.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-ipx.c,v 1.7 2007/07/24 11:53:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -28,9 +28,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.34.2.2 2003/11/16 08:51:28 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.40.2.2 2005/05/06 08:27:00 guy Exp";
 #else
-__RCSID("$NetBSD: print-ipx.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-ipx.c,v 1.7 2007/07/24 11:53:44 drochner Exp $");
 #endif
 #endif
 
@@ -63,12 +63,15 @@ ipx_print(const u_char *p, u_int length)
 {
 	const struct ipxHdr *ipx = (const struct ipxHdr *)p;
 
+	if (!eflag)
+		printf("IPX ");
+
 	TCHECK(ipx->srcSkt);
 	(void)printf("%s.%04x > ",
 		     ipxaddr_string(EXTRACT_32BITS(ipx->srcNet), ipx->srcNode),
 		     EXTRACT_16BITS(&ipx->srcSkt));
 
-	(void)printf("%s.%04x:",
+	(void)printf("%s.%04x: ",
 		     ipxaddr_string(EXTRACT_32BITS(ipx->dstNet), ipx->dstNode),
 		     EXTRACT_16BITS(&ipx->dstSkt));
 
@@ -101,7 +104,7 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
     dstSkt = EXTRACT_16BITS(&ipx->dstSkt);
     switch (dstSkt) {
       case IPX_SKT_NCP:
-	(void)printf(" ipx-ncp %d", length);
+	(void)printf("ipx-ncp %d", length);
 	break;
       case IPX_SKT_SAP:
 	ipx_sap_print((u_short *)datap, length);
@@ -110,25 +113,25 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
 	ipx_rip_print((u_short *)datap, length);
 	break;
       case IPX_SKT_NETBIOS:
-	(void)printf(" ipx-netbios %d", length);
+	(void)printf("ipx-netbios %d", length);
 #ifdef TCPDUMP_DO_SMB
 	ipx_netbios_print(datap, length);
 #endif
 	break;
       case IPX_SKT_DIAGNOSTICS:
-	(void)printf(" ipx-diags %d", length);
+	(void)printf("ipx-diags %d", length);
 	break;
       case IPX_SKT_NWLINK_DGM:
-	(void)printf(" ipx-nwlink-dgm %d", length);
+	(void)printf("ipx-nwlink-dgm %d", length);
 #ifdef TCPDUMP_DO_SMB
 	ipx_netbios_print(datap, length);
 #endif
 	break;
       case IPX_SKT_EIGRP:
-	(void)printf(" ipx-eigrp %d", length);
+	eigrp_print(datap, length);
 	break;
       default:
-	(void)printf(" ipx-#%x %d", dstSkt, length);
+	(void)printf("ipx-#%x %d", dstSkt, length);
 	break;
     }
 }
@@ -163,9 +166,13 @@ ipx_sap_print(const u_short *ipx, u_int length)
 	    (void)printf("ipx-sap-nearest-resp");
 
 	for (i = 0; i < 8 && length > 0; i++) {
-	    TCHECK2(ipx[25], 10);
+	    TCHECK(ipx[0]);
 	    (void)printf(" %s '", ipxsap_string(htons(EXTRACT_16BITS(&ipx[0]))));
-	    fn_print((u_char *)&ipx[1], (u_char *)&ipx[1] + 48);
+	    if (fn_printzp((u_char *)&ipx[1], 48, snapend)) {
+		printf("'");
+		goto trunc;
+	    }
+	    TCHECK2(ipx[25], 10);
 	    printf("' addr %s",
 		ipxaddr_string(EXTRACT_32BITS(&ipx[25]), (u_char *)&ipx[27]));
 	    ipx += 32;

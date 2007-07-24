@@ -1,4 +1,4 @@
-/*	$NetBSD: l2vpn.h,v 1.1.1.1 2007/07/24 11:42:58 drochner Exp $	*/
+/*	$NetBSD: l2vpn.h,v 1.2 2007/07/24 11:53:40 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/l2vpn.h,v 1.1 2004/06/15 09:42:41 hannes Exp (LBL) */
 /* 

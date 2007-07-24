@@ -1,8 +1,10 @@
-/*	$NetBSD: print-tcp.c,v 1.7 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.8 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * Copyright (c) 1999-2004 The tcpdump.org project
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that: (1) source code distributions
@@ -25,9 +27,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.107.2.3 2003/11/19 00:17:02 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.120.2.3 2005/10/16 06:05:46 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.7 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.8 2007/07/24 11:53:48 drochner Exp $");
 #endif
 #endif
 
@@ -36,8 +38,6 @@ __RCSID("$NetBSD: print-tcp.c,v 1.7 2004/09/27 23:04:25 dyoung Exp $");
 #endif
 
 #include <tcpdump-stdinc.h>
-
-#include <rpc/rpc.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,8 +54,21 @@ __RCSID("$NetBSD: print-tcp.c,v 1.7 2004/09/27 23:04:25 dyoung Exp $");
 #include "ip6.h"
 #endif
 #include "ipproto.h"
+#include "rpc_auth.h"
+#include "rpc_msg.h"
 
 #include "nameser.h"
+
+#ifdef HAVE_LIBCRYPTO
+#include <openssl/md5.h>
+
+#define SIGNATURE_VALID		0
+#define SIGNATURE_INVALID	1
+#define CANT_CHECK_SIGNATURE	2
+
+static int tcp_verify_signature(const struct ip *ip, const struct tcphdr *tp,
+    const u_char *data, int length, const u_char *rcvsig);
+#endif
 
 static void print_tcp_rst_data(register const u_char *sp, u_int length);
 
@@ -219,17 +232,18 @@ tcp_print(register const u_char *bp, register u_int length,
 	hlen = TH_OFF(tp) * 4;
 
 	/*
-	 * If data present and NFS port used, assume NFS.
+	 * If data present, header length valid, and NFS port used,
+	 * assume NFS.
 	 * Pass offset of data plus 4 bytes for RPC TCP msg length
 	 * to NFS print routines.
 	 */
-	if (!qflag) {
-		if ((u_char *)tp + 4 + sizeof(struct rpc_msg) <= snapend &&
+	if (!qflag && hlen >= sizeof(*tp) && hlen <= length) {
+		if ((u_char *)tp + 4 + sizeof(struct sunrpc_msg) <= snapend &&
 		    dport == NFS_PORT) {
 			nfsreq_print((u_char *)tp + hlen + 4, length - hlen,
 				     (u_char *)ip);
 			return;
-		} else if ((u_char *)tp + 4 + sizeof(struct rpc_msg)
+		} else if ((u_char *)tp + 4 + sizeof(struct sunrpc_msg)
 			   <= snapend &&
 			   sport == NFS_PORT) {
 			nfsreply_print((u_char *)tp + hlen + 4, length - hlen,
@@ -264,6 +278,12 @@ tcp_print(register const u_char *bp, register u_int length,
 		}
 	}
 
+	if (hlen < sizeof(*tp)) {
+		(void)printf(" tcp %d [bad hdr length %u - too short, < %lu]",
+		    length - hlen, hlen, (unsigned long)sizeof(*tp));
+		return;
+	}
+
 	TCHECK(*tp);
 
 	seq = EXTRACT_32BITS(&tp->th_seq);
@@ -272,7 +292,11 @@ tcp_print(register const u_char *bp, register u_int length,
 	urp = EXTRACT_16BITS(&tp->th_urp);
 
 	if (qflag) {
-		(void)printf("tcp %d", length - TH_OFF(tp) * 4);
+		(void)printf("tcp %d", length - hlen);
+		if (hlen > length) {
+			(void)printf(" [bad hdr length %u - too long, > %u]",
+			    hlen, length);
+		}
 		return;
 	}
 	if ((flags = tp->th_flags) & (TH_SYN|TH_FIN|TH_RST|TH_PUSH|
@@ -398,7 +422,8 @@ tcp_print(register const u_char *bp, register u_int length,
 		thseq = thack = threv = 0;
 	}
 	if (hlen > length) {
-		(void)printf(" [bad hdr length]");
+		(void)printf(" [bad hdr length %u - too long, > %u]",
+		    hlen, length);
 		return;
 	}
 
@@ -406,23 +431,27 @@ tcp_print(register const u_char *bp, register u_int length,
 		u_int16_t sum, tcp_sum;
 		if (TTEST2(tp->th_sport, length)) {
 			sum = tcp_cksum(ip, tp, length);
+
+                        (void)printf(", cksum 0x%04x",EXTRACT_16BITS(&tp->th_sum));
 			if (sum != 0) {
 				tcp_sum = EXTRACT_16BITS(&tp->th_sum);
-				(void)printf(" [bad tcp cksum %x (->%x)!]",
-				    tcp_sum, in_cksum_shouldbe(tcp_sum, sum));
+				(void)printf(" (incorrect (-> 0x%04x),",in_cksum_shouldbe(tcp_sum, sum));
 			} else
-				(void)printf(" [tcp sum ok]");
+				(void)printf(" (correct),");
 		}
 	}
 #ifdef INET6
 	if (IP_V(ip) == 6 && ip6->ip6_plen && vflag && !fragmented) {
-		int sum;
+		u_int16_t sum,tcp_sum;
 		if (TTEST2(tp->th_sport, length)) {
 			sum = tcp6_cksum(ip6, tp, length);
-			if (sum != 0)
-				(void)printf(" [bad tcp cksum %x!]", sum);
-			else
-				(void)printf(" [tcp sum ok]");
+                        (void)printf(", cksum 0x%04x",EXTRACT_16BITS(&tp->th_sum));
+			if (sum != 0) {
+				tcp_sum = EXTRACT_16BITS(&tp->th_sum);
+				(void)printf(" (incorrect (-> 0x%04x),",in_cksum_shouldbe(tcp_sum, sum));
+			} else
+				(void)printf(" (correct),");
+
 		}
 	}
 #endif
@@ -498,14 +527,13 @@ tcp_print(register const u_char *bp, register u_int length,
 				break;
 
 			case TCPOPT_SACK:
-				(void)printf("sack");
 				datalen = len - 2;
 				if (datalen % 8 != 0) {
-					(void)printf(" malformed sack ");
+					(void)printf("malformed sack");
 				} else {
 					u_int32_t s, e;
 
-					(void)printf(" sack %d ", datalen / 8);
+					(void)printf("sack %d ", datalen / 8);
 					for (i = 0; i < datalen; i += 8) {
 						LENCHECK(i + 4);
 						s = EXTRACT_32BITS(cp + i);
@@ -520,7 +548,6 @@ tcp_print(register const u_char *bp, register u_int length,
 						}
 						(void)printf("{%u:%u}", s, e);
 					}
-					(void)printf(" ");
 				}
 				break;
 
@@ -569,12 +596,31 @@ tcp_print(register const u_char *bp, register u_int length,
 				break;
 
 			case TCPOPT_SIGNATURE:
-				(void)printf("tcpmd5:");
-				datalen = len - 2;
-				for (i = 0; i < datalen; i++) {
-					LENCHECK(i);
-					(void)printf("%02x", cp[i]);
+				(void)printf("md5:");
+				datalen = TCP_SIGLEN;
+				LENCHECK(datalen);
+#ifdef HAVE_LIBCRYPTO
+				switch (tcp_verify_signature(ip, tp,
+				    bp + TH_OFF(tp) * 4, length, cp)) {
+
+				case SIGNATURE_VALID:
+					(void)printf("valid");
+					break;
+
+				case SIGNATURE_INVALID:
+					(void)printf("invalid");
+					break;
+
+				case CANT_CHECK_SIGNATURE:
+					(void)printf("can't check - ");
+					for (i = 0; i < TCP_SIGLEN; ++i)
+						(void)printf("%02x", cp[i]);
+					break;
 				}
+#else
+				for (i = 0; i < TCP_SIGLEN; ++i)
+					(void)printf("%02x", cp[i]);
+#endif
 				break;
 
 			default:
@@ -639,8 +685,9 @@ tcp_print(register const u_char *bp, register u_int length,
 		} else if (sport == MSDP_PORT || dport == MSDP_PORT) {
 			msdp_print(bp, length);
 		}
-                else if (sport == LDP_PORT || dport == LDP_PORT)
-                        printf(": LDP, length: %u", length);
+                else if (length > 0 && (sport == LDP_PORT || dport == LDP_PORT)) {
+                        ldp_print(bp, length);
+		}
 	}
 	return;
 bad:
@@ -689,3 +736,79 @@ print_tcp_rst_data(register const u_char *sp, u_int length)
 	}
 	putchar(']');
 }
+
+#ifdef HAVE_LIBCRYPTO
+static int
+tcp_verify_signature(const struct ip *ip, const struct tcphdr *tp,
+    const u_char *data, int length, const u_char *rcvsig)
+{
+        struct tcphdr tp1;
+	u_char sig[TCP_SIGLEN];
+	char zero_proto = 0;
+	MD5_CTX ctx;
+	u_int16_t savecsum, tlen;
+#ifdef INET6
+	struct ip6_hdr *ip6;
+#endif
+	u_int32_t len32;
+	u_int8_t nxt;
+
+	tp1 = *tp;
+
+	if (tcpmd5secret == NULL)
+		return (CANT_CHECK_SIGNATURE);
+
+	MD5_Init(&ctx);
+	/*
+	 * Step 1: Update MD5 hash with IP pseudo-header.
+	 */
+	if (IP_V(ip) == 4) {
+		MD5_Update(&ctx, (char *)&ip->ip_src, sizeof(ip->ip_src));
+		MD5_Update(&ctx, (char *)&ip->ip_dst, sizeof(ip->ip_dst));
+		MD5_Update(&ctx, (char *)&zero_proto, sizeof(zero_proto));
+		MD5_Update(&ctx, (char *)&ip->ip_p, sizeof(ip->ip_p));
+		tlen = EXTRACT_16BITS(&ip->ip_len) - IP_HL(ip) * 4;
+		tlen = htons(tlen);
+		MD5_Update(&ctx, (char *)&tlen, sizeof(tlen));
+#ifdef INET6
+	} else if (IP_V(ip) == 6) {
+		ip6 = (struct ip6_hdr *)ip;
+		MD5_Update(&ctx, (char *)&ip6->ip6_src, sizeof(ip6->ip6_src));
+		MD5_Update(&ctx, (char *)&ip6->ip6_dst, sizeof(ip6->ip6_dst));
+		len32 = htonl(ntohs(ip6->ip6_plen));
+		MD5_Update(&ctx, (char *)&len32, sizeof(len32));
+		nxt = 0;
+		MD5_Update(&ctx, (char *)&nxt, sizeof(nxt));
+		MD5_Update(&ctx, (char *)&nxt, sizeof(nxt));
+		MD5_Update(&ctx, (char *)&nxt, sizeof(nxt));
+		nxt = IPPROTO_TCP;
+		MD5_Update(&ctx, (char *)&nxt, sizeof(nxt));
+#endif
+	} else
+		return (CANT_CHECK_SIGNATURE);
+
+	/*
+	 * Step 2: Update MD5 hash with TCP header, excluding options.
+	 * The TCP checksum must be set to zero.
+	 */
+	savecsum = tp1.th_sum;
+	tp1.th_sum = 0;
+	MD5_Update(&ctx, (char *)&tp1, sizeof(struct tcphdr));
+	tp1.th_sum = savecsum;
+	/*
+	 * Step 3: Update MD5 hash with TCP segment data, if present.
+	 */
+	if (length > 0)
+		MD5_Update(&ctx, data, length);
+	/*
+	 * Step 4: Update MD5 hash with shared secret.
+	 */
+	MD5_Update(&ctx, tcpmd5secret, strlen(tcpmd5secret));
+	MD5_Final(sig, &ctx);
+
+	if (memcmp(rcvsig, sig, TCP_SIGLEN) == 0)
+		return (SIGNATURE_VALID);
+	else
+		return (SIGNATURE_INVALID);
+}
+#endif /* HAVE_LIBCRYPTO */

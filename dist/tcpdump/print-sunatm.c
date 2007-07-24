@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sunatm.c,v 1.1.1.2 2007/07/24 11:42:54 drochner Exp $	*/
+/*	$NetBSD: print-sunatm.c,v 1.2 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Yen Yen Lim and North Dakota State University
@@ -31,9 +31,14 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-sunatm.c,v 1.8 2004/03/17 23:24:38 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-sunatm.c,v 1.2 2007/07/24 11:53:48 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

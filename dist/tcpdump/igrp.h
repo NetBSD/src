@@ -1,4 +1,4 @@
-/*	$NetBSD: igrp.h,v 1.1.1.2 2004/09/27 17:06:46 dyoung Exp $	*/
+/*	$NetBSD: igrp.h,v 1.2 2007/07/24 11:53:39 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/igrp.h,v 1.6 2002/12/11 07:13:52 guy Exp (LBL) */
 /* Cisco IGRP definitions */

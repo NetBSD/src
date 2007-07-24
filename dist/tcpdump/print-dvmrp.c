@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dvmrp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-dvmrp.c,v 1.4 2007/07/24 11:53:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-dvmrp.c,v 1.24.2.3 2003/11/19 09:41:28 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-dvmrp.c,v 1.27 2003/11/19 09:42:04 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-dvmrp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-dvmrp.c,v 1.4 2007/07/24 11:53:43 drochner Exp $");
 #endif
 #endif
 

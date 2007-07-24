@@ -1,4 +1,4 @@
-/*	$NetBSD: chdlc.h,v 1.1.1.1 2001/06/25 19:26:29 itojun Exp $	*/
+/*	$NetBSD: chdlc.h,v 1.2 2007/07/24 11:53:37 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/chdlc.h,v 1.1 2000/09/18 05:11:43 guy Exp (LBL) */
 /*

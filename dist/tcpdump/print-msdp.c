@@ -1,4 +1,4 @@
-/*	$NetBSD: print-msdp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-msdp.c,v 1.4 2007/07/24 11:53:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 William C. Fenner.
@@ -17,14 +17,13 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  */
-
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-msdp.c,v 1.4.2.2 2003/11/16 08:51:34 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-msdp.c,v 1.7 2005/04/06 21:32:41 mcr Exp";
 #else
-__RCSID("$NetBSD: print-msdp.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-msdp.c,v 1.4 2007/07/24 11:53:46 drochner Exp $");
 #endif
 #endif
 
@@ -78,7 +77,7 @@ msdp_print(const unsigned char *sp, u_int length)
 				(void)printf(" [w/data]");
 				if (vflag > 1) {
 					(void)printf(" ");
-					ip_print(sp + *sp * 12 + 8 - 3,
+					ip_print(gndo, sp + *sp * 12 + 8 - 3,
 					         len - (*sp * 12 + 8));
 				}
 			}
@@ -107,3 +106,10 @@ msdp_print(const unsigned char *sp, u_int length)
 trunc:
 	(void)printf(" [|msdp]");
 }
+
+/*
+ * Local Variables:
+ * c-style: whitesmith
+ * c-basic-offset: 8
+ * End:
+ */

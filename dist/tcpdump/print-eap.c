@@ -1,4 +1,4 @@
-/*	$NetBSD: print-eap.c,v 1.1.1.1 2007/07/24 11:42:50 drochner Exp $	*/
+/*	$NetBSD: print-eap.c,v 1.2 2007/07/24 11:53:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 - Michael Richardson <mcr@xelerance.com>
@@ -22,9 +22,14 @@
  * Format and print bootp packets.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-eap.c,v 1.3 2004/04/23 19:03:39 mcr Exp";
+#else
+__RCSID("$NetBSD: print-eap.c,v 1.2 2007/07/24 11:53:43 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

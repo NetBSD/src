@@ -1,4 +1,4 @@
-/*	$NetBSD: sctpConstants.h,v 1.1.1.3 2004/09/27 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: sctpConstants.h,v 1.2 2007/07/24 11:53:49 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/sctpConstants.h,v 1.4 2003/06/03 23:49:23 guy Exp (LBL) */
 

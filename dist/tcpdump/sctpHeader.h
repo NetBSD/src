@@ -1,4 +1,4 @@
-/*	$NetBSD: sctpHeader.h,v 1.1.1.3 2004/09/27 17:07:34 dyoung Exp $	*/
+/*	$NetBSD: sctpHeader.h,v 1.2 2007/07/24 11:53:49 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/sctpHeader.h,v 1.6 2002/12/11 07:14:11 guy Exp (LBL) */
 

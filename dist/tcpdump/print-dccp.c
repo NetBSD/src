@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dccp.c,v 1.1.1.1 2007/07/24 11:43:03 drochner Exp $	*/
+/*	$NetBSD: print-dccp.c,v 1.2 2007/07/24 11:53:43 drochner Exp $	*/
 
 /*
  * Copyright (C) Arnaldo Carvalho de Melo 2004
@@ -9,9 +9,14 @@
  * BSD-style license that accompanies tcpdump or the GNU GPL version 2
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-dccp.c,v 1.1.2.6 2006/02/19 05:08:44 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-dccp.c,v 1.2 2007/07/24 11:53:43 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

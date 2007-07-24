@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pgm.c,v 1.1.1.1 2007/07/24 11:43:01 drochner Exp $	*/
+/*	$NetBSD: print-pgm.c,v 1.2 2007/07/24 11:53:46 drochner Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -15,9 +15,14 @@
  * Original code by Andy Heffernan (ahh@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pgm.c,v 1.1.2.5 2005/06/07 22:06:16 guy Exp";
+#else
+__RCSID("$NetBSD: print-pgm.c,v 1.2 2007/07/24 11:53:46 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

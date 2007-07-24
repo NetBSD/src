@@ -1,4 +1,4 @@
-/*	$NetBSD: print-enc.c,v 1.1.1.2 2007/07/24 11:42:59 drochner Exp $	*/
+/*	$NetBSD: print-enc.c,v 1.2 2007/07/24 11:53:43 drochner Exp $	*/
 
 /*	$OpenBSD: print-enc.c,v 1.7 2002/02/19 19:39:40 millert Exp $	*/
 
@@ -23,9 +23,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-enc.c,v 1.4 2005/04/06 21:32:39 mcr Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-enc.c,v 1.2 2007/07/24 11:53:43 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

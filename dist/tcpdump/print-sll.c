@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sll.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-sll.c,v 1.5 2007/07/24 11:53:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,9 +24,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.12.2.2 2003/11/16 08:51:44 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.16.2.3 2005/11/13 12:13:00 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-sll.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.5 2007/07/24 11:53:47 drochner Exp $");
 #endif
 #endif
 
@@ -43,60 +43,79 @@ __RCSID("$NetBSD: print-sll.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $");
 #include "interface.h"
 #include "addrtoname.h"
 #include "ethertype.h"
+#include "extract.h"
 
 #include "ether.h"
 #include "sll.h"
 
+const struct tok sll_pkttype_values[] = {
+    { LINUX_SLL_HOST, "In" },
+    { LINUX_SLL_BROADCAST, "B" },
+    { LINUX_SLL_MULTICAST, "M" },
+    { LINUX_SLL_OTHERHOST, "P" },
+    { LINUX_SLL_OUTGOING, "Out" },
+    { 0, NULL}
+};
+
 static inline void
 sll_print(register const struct sll_header *sllp, u_int length)
 {
-	u_short halen;
+	u_short ether_type;
 
-	switch (ntohs(sllp->sll_pkttype)) {
-
-	case LINUX_SLL_HOST:
-		(void)printf("< ");
-		break;
-
-	case LINUX_SLL_BROADCAST:
-		(void)printf("B ");
-		break;
-
-	case LINUX_SLL_MULTICAST:
-		(void)printf("M ");
-		break;
-
-	case LINUX_SLL_OTHERHOST:
-		(void)printf("P ");
-		break;
-
-	case LINUX_SLL_OUTGOING:
-		(void)printf("> ");
-		break;
-
-	default:
-		(void)printf("? ");
-		break;
-	}
+        printf("%3s ",tok2str(sll_pkttype_values,"?",EXTRACT_16BITS(&sllp->sll_pkttype)));
 
 	/*
 	 * XXX - check the link-layer address type value?
 	 * For now, we just assume 6 means Ethernet.
 	 * XXX - print others as strings of hex?
 	 */
-	halen = ntohs(sllp->sll_halen);
-	if (halen == 6)
+	if (EXTRACT_16BITS(&sllp->sll_halen) == 6)
 		(void)printf("%s ", etheraddr_string(sllp->sll_addr));
 
-	if (!qflag)
-		(void)printf("%s ", etherproto_string(sllp->sll_protocol));
-	(void)printf("%d: ", length);
+	if (!qflag) {
+		ether_type = EXTRACT_16BITS(&sllp->sll_protocol);
+	
+		if (ether_type <= ETHERMTU) {
+			/*
+			 * Not an Ethernet type; what type is it?
+			 */
+			switch (ether_type) {
+
+			case LINUX_SLL_P_802_3:
+				/*
+				 * Ethernet_802.3 IPX frame.
+				 */
+				(void)printf("802.3");
+				break;
+
+			case LINUX_SLL_P_802_2:
+				/*
+				 * 802.2.
+				 */
+				(void)printf("802.3");
+				break;
+
+			default:
+				/*
+				 * What is it?
+				 */
+				(void)printf("ethertype Unknown (0x%04x)",
+				    ether_type);
+				break;
+			}
+		} else {
+			(void)printf("ethertype %s (0x%04x)",
+			    tok2str(ethertype_values, "Unknown", ether_type),
+			    ether_type);
+		}
+		(void)printf(", length %u: ", length);
+	}
 }
 
 /*
  * This is the top level routine of the printer.  'p' points to the
  * Linux "cooked capture" header of the packet, 'h->ts' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
 u_int
@@ -136,7 +155,6 @@ sll_if_print(const struct pcap_pkthdr *h, const u_char *p)
 	 * Is it (gag) an 802.3 encapsulation, or some non-Ethernet
 	 * packet type?
 	 */
-	extracted_ethertype = 0;
 	if (ether_type <= ETHERMTU) {
 		/*
 		 * Yes - what type is it?
@@ -161,6 +179,9 @@ sll_if_print(const struct pcap_pkthdr *h, const u_char *p)
 			break;
 
 		default:
+			extracted_ethertype = 0;
+			/*FALLTHROUGH*/
+
 		unknown:
 			/* ether_type not known, print raw packet */
 			if (!eflag)
@@ -169,7 +190,7 @@ sll_if_print(const struct pcap_pkthdr *h, const u_char *p)
 				printf("(LLC %s) ",
 			       etherproto_string(htons(extracted_ethertype)));
 			}
-			if (!xflag && !qflag)
+			if (!suppress_default_print)
 				default_print(p, caplen);
 			break;
 		}
@@ -178,7 +199,7 @@ sll_if_print(const struct pcap_pkthdr *h, const u_char *p)
 		/* ether_type not known, print raw packet */
 		if (!eflag)
 			sll_print(sllp, length + SLL_HDR_LEN);
-		if (!xflag && !qflag)
+		if (!suppress_default_print)
 			default_print(p, caplen);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: af.h,v 1.1.1.1 2007/07/24 11:42:54 drochner Exp $	*/
+/*	$NetBSD: af.h,v 1.2 2007/07/24 11:53:36 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/af.h,v 1.3.2.1 2007/02/26 13:33:17 hannes Exp (LBL) */
 

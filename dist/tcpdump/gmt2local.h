@@ -1,4 +1,4 @@
-/*	$NetBSD: gmt2local.h,v 1.1.1.1 2001/06/25 19:26:31 itojun Exp $	*/
+/*	$NetBSD: gmt2local.h,v 1.2 2007/07/24 11:53:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997

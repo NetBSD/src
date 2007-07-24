@@ -1,6 +1,6 @@
-/*	$NetBSD: tcp.h,v 1.4 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: tcp.h,v 1.5 2007/07/24 11:53:49 drochner Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/tcp.h,v 1.10 2002/12/11 07:14:11 guy Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/tcp.h,v 1.11.2.1 2005/11/29 09:09:26 hannes Exp (LBL) */
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,10 @@ struct tcphdr {
 #define TCPOPT_CC		11	/* T/TCP CC options (rfc1644) */
 #define TCPOPT_CCNEW		12	/* T/TCP CC options (rfc1644) */
 #define TCPOPT_CCECHO		13	/* T/TCP CC options (rfc1644) */
-#define TCPOPT_SIGNATURE	19	/* TCP MD5 signature */
+#define TCPOPT_SIGNATURE	19	/* Keyed MD5 (rfc2385) */
+#define    TCPOLEN_SIGNATURE		18
+#define TCP_SIGLEN 16			/* length of an option 19 digest */
+#define TCPOPT_AUTH             20      /* Enhanced AUTH option */
 
 #define TCPOPT_TSTAMP_HDR	\
     (TCPOPT_NOP<<24|TCPOPT_NOP<<16|TCPOPT_TIMESTAMP<<8|TCPOLEN_TIMESTAMP)

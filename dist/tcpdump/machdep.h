@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.1.1 2001/06/25 19:26:32 itojun Exp $	*/
+/*	$NetBSD: machdep.h,v 1.2 2007/07/24 11:53:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996

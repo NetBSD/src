@@ -1,4 +1,4 @@
-/*	$NetBSD: ipproto.c,v 1.1.1.1 2007/07/24 11:43:13 drochner Exp $	*/
+/*	$NetBSD: ipproto.c,v 1.2 2007/07/24 11:53:39 drochner Exp $	*/
 
 /* 
  * Redistribution and use in source and binary forms, with or without
@@ -15,9 +15,14 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/ipproto.c,v 1.3.2.3 2005/09/20 06:05:37 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: ipproto.c,v 1.2 2007/07/24 11:53:39 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

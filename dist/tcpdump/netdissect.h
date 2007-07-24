@@ -1,4 +1,4 @@
-/*	$NetBSD: netdissect.h,v 1.1.1.1 2007/07/24 11:42:56 drochner Exp $	*/
+/*	$NetBSD: netdissect.h,v 1.2 2007/07/24 11:53:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988-1997

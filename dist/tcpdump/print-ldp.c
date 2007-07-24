@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ldp.c,v 1.1.1.2 2007/07/24 11:43:14 drochner Exp $	*/
+/*	$NetBSD: print-ldp.c,v 1.2 2007/07/24 11:53:45 drochner Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -16,9 +16,14 @@
  *  and Steinar Haug (sthaug@nethelp.no)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ldp.c,v 1.8.2.10 2007/02/26 13:31:33 hannes Exp";
+#else
+__RCSID("$NetBSD: print-ldp.c,v 1.2 2007/07/24 11:53:45 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

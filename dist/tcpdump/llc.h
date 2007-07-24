@@ -1,4 +1,4 @@
-/*	$NetBSD: llc.h,v 1.1.1.4 2007/07/24 11:42:58 drochner Exp $	*/
+/*	$NetBSD: llc.h,v 1.2 2007/07/24 11:53:40 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1997

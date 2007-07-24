@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.h,v 1.1.1.2 2002/02/18 09:07:00 itojun Exp $	*/
+/*	$NetBSD: addrtoname.h,v 1.2 2007/07/24 11:53:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993, 1994, 1995, 1996, 1997

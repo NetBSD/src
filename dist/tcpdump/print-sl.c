@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sl.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-sl.c,v 1.5 2007/07/24 11:53:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-sl.c,v 1.62.2.2 2003/11/16 08:51:44 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-sl.c,v 1.65 2005/04/06 21:32:42 mcr Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-sl.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-sl.c,v 1.5 2007/07/24 11:53:47 drochner Exp $");
 #endif
 #endif
 
@@ -76,7 +76,7 @@ sl_if_print(const struct pcap_pkthdr *h, const u_char *p)
 
 	switch (IP_V(ip)) {
 	case 4:
-		ip_print((u_char *)ip, length);
+	        ip_print(gndo, (u_char *)ip, length);
 		break;
 #ifdef INET6
 	case 6:
@@ -111,7 +111,7 @@ sl_bsdos_if_print(const struct pcap_pkthdr *h, const u_char *p)
 		sliplink_print(p, ip, length);
 #endif
 
-	ip_print((u_char *)ip, length);
+	ip_print(gndo, (u_char *)ip, length);
 
 	return (SLIP_HDRLEN);
 }

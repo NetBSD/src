@@ -1,4 +1,4 @@
-/*	$NetBSD: print-bfd.c,v 1.1.1.2 2007/07/24 11:43:01 drochner Exp $	*/
+/*	$NetBSD: print-bfd.c,v 1.2 2007/07/24 11:53:42 drochner Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -15,9 +15,14 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-bfd.c,v 1.5.2.5 2006/02/02 06:36:37 hannes Exp";
+#else
+__RCSID("$NetBSD: print-bfd.c,v 1.2 2007/07/24 11:53:42 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
