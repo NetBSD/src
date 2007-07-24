@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.981.2.4 2007/07/22 18:44:35 liamjfoy Exp $
+#	$NetBSD: mi,v 1.981.2.5 2007/07/24 17:31:03 liamjfoy Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3930,6 +3930,7 @@
 ./usr/share/man/cat3/__SHIFTIN.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTOUT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTOUT_MASK.0		comp-c-catman		.cat
+./usr/share/man/cat3/__builtin_object_size.0	comp-c-catman		.cat
 ./usr/share/man/cat3/__svc_getcallercreds.0	comp-c-catman		.cat
 ./usr/share/man/cat3/_longjmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/_lwp_makecontext.0		comp-c-catman		.cat
@@ -8189,6 +8190,7 @@
 ./usr/share/man/man3/__SHIFTIN.3		comp-c-man		.man
 ./usr/share/man/man3/__SHIFTOUT.3		comp-c-man		.man
 ./usr/share/man/man3/__SHIFTOUT_MASK.3		comp-c-man		.man
+./usr/share/man/man3/__builtin_object_size.3	comp-c-man		.man
 ./usr/share/man/man3/__svc_getcallercreds.3	comp-c-man		.man
 ./usr/share/man/man3/_longjmp.3			comp-c-man		.man
 ./usr/share/man/man3/_lwp_makecontext.3		comp-c-man		.man
