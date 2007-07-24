@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.540 2007/07/23 23:47:22 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.541 2007/07/24 12:02:28 drochner Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -781,8 +781,8 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	tcpdump
-Version:	3.8.3
-Current Vers:	3.9.5
+Version:	3.9.7
+Current Vers:	3.9.7
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
