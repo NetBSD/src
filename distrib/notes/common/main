@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.342 2007/07/23 22:22:13 pavel Exp $
+.\"	$NetBSD: main,v 1.343 2007/07/24 10:04:58 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -706,6 +706,7 @@ socket based access to the HCI, L2CAP, RFCOMM and SCO protocols
 pseudo drivers for integrating services on remote Bluetooth devices such as Keyboards, Mice and SCO Audio into the NetBSD device framework.
 .bullet)
 .
+.Pp
 See
 .Xr bluetooth 4 ,
 .Xr bthset 1
