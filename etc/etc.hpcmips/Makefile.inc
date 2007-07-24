@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/12/02 13:31:19 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2007/07/24 10:49:25 pavel Exp $
 #
 #	etc.hpcmips/Makefile.inc -- hpcmips-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC TX3912
 
