@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.215 2007/07/23 13:37:21 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.216 2007/07/24 10:29:39 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -7962,3 +7962,47 @@ sys/miscfs/procfs/procfs_vnops.c		1.158
 
 	Suggestion for workaround from David Holland.
 	[pooka, ticket #785]
+
+regress/sys/fs/tmpfs/h_tools.c			1.8
+regress/sys/fs/tmpfs/t_rename			1.6
+regress/sys/fs/tmpfs/t_rename			1.7
+sys/fs/tmpfs/tmpfs_vnops.c			1.39
+
+	Add test cases to ensure that:
+	1) Renaming a directory to an empty directory works by replacing
+	the target directory.
+	2) Renaming a directory to a non-empty directory fails.
+	This is all by calling rename(2) directly, not mv(1).
+	tmpfs currently fails those tests, raising an assertion if
+	DIAGNOSTIC is
+	enabled.  A fix will hopefully follow soon.
+	Found by pooka@.
+
+	Add some more tests to ensure that renaming a file to a directory
+	and a directory to a file fails with the appropriate error codes.
+	tmpfs still fails these tests, but the fix is almost ready to go in.
+
+	Multiple fixes for tmpfs' rename operation:
+	- Raise an error if renaming a file to a directory.
+	- Raise an error if renaming a directory to a file.
+	- Raise an error if renaming a directory to a non-empty directory.
+	- Properly allow renaming a directory to an empty directory.
+	The system could previously crash if the kernel had DIAGNOSTIC
+	enabled as this triggered a bogus assertion.
+	Problem found by Geoff Wing.
+	[jmmv, ticket #786]
+
+etc/motd.beta					1.3
+etc/motd.current				1.4
+etc/motd.rc					1.3
+etc/motd.stable					1.3
+
+	Fix the URL to the send-pr form as it now lives in another
+	address. Not critical since the server has redirections to
+	make the old URL work, but these may disappear.
+	[jmmv, ticket #787]
+
+sys/dev/usb/usb_subr.c				1.148
+
+	Fix typo that prevents port reset after several retries.
+	[mlelstv, ticket #780]
