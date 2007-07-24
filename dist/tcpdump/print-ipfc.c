@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipfc.c,v 1.1.1.1 2004/09/27 17:07:07 dyoung Exp $	*/
+/*	$NetBSD: print-ipfc.c,v 1.1.1.2 2007/07/24 11:42:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ipfc.c,v 1.4.2.2 2003/11/16 08:51:28 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ipfc.c,v 1.7.2.2 2005/11/13 12:12:59 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -103,8 +103,6 @@ ipfc_print(const u_char *p, u_int length, u_int caplen)
 	p += IPFC_HDRLEN;
 	caplen -= IPFC_HDRLEN;
 
-	/* Frame Control field determines interpretation of packet */
-	extracted_ethertype = 0;
 	/* Try to print the LLC-layer header & higher layers */
 	if (llc_print(p, length, caplen, ESRC(&ehdr), EDST(&ehdr),
 	    &extracted_ethertype) == 0) {
@@ -119,7 +117,7 @@ ipfc_print(const u_char *p, u_int length, u_int caplen)
 			printf("(LLC %s) ",
 		etherproto_string(htons(extracted_ethertype)));
 		}
-		if (!xflag && !qflag)
+		if (!suppress_default_print)
 			default_print(p, caplen);
 	}
 }
@@ -127,7 +125,7 @@ ipfc_print(const u_char *p, u_int length, u_int caplen)
 /*
  * This is the top level routine of the printer.  'p' points
  * to the Network_Header of the packet, 'h->ts' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
 u_int
