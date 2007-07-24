@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.50 2007/05/17 01:50:49 hubertf Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2007/07/24 10:28:05 pavel Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=	GENERIC
 KERNEL_SETS+=	GENERIC_LAPTOP
