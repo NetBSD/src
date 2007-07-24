@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.h,v 1.1.1.1 2004/09/27 17:06:52 dyoung Exp $	*/
+/*	$NetBSD: pf.h,v 1.1.1.2 2007/07/24 11:43:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -28,7 +28,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/pf.h,v 1.1.2.1 2004/03/28 21:25:03 fenner Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/pf.h,v 1.2 2004/04/02 06:36:25 guy Exp (LBL)
  */
 
 /*	from $OpenBSD: pfvar.h,v 1.170 2003/08/22 21:50:34 david Exp $ */
@@ -66,7 +66,7 @@ enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2, PF_NAT=3, PF_NONAT=4,
 
 struct pfloghdr {
 	u_int8_t	length;
-	sa_family_t	af;
+	u_int8_t	af;
 	u_int8_t	action;
 	u_int8_t	reason;
 	char		ifname[IFNAMSIZ];

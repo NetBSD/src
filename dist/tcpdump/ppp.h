@@ -1,6 +1,6 @@
-/*	$NetBSD: ppp.h,v 1.1.1.2 2004/09/27 17:06:52 dyoung Exp $	*/
+/*	$NetBSD: ppp.h,v 1.1.1.3 2007/07/24 11:42:58 drochner Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/ppp.h,v 1.14 2003/05/22 15:29:22 hannes Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/ppp.h,v 1.16 2004/10/20 16:14:16 hannes Exp (LBL) */
 /*
  * Point to Point Protocol (PPP) RFC1331
  *
@@ -22,6 +22,9 @@
 #define PPP_ADDRESS	0xff	/* The address byte value */
 #define PPP_CONTROL	0x03	/* The control byte value */
 
+#define PPP_WITHDIRECTION_IN  0x00 /* non-standard for DLT_PPP_WITHDIRECTION */
+#define PPP_WITHDIRECTION_OUT 0x01 /* non-standard for DLT_PPP_WITHDIRECTION */
+
 /* Protocol numbers */
 #define PPP_IP		0x0021	/* Raw IP */
 #define PPP_OSI		0x0023	/* OSI Network Layer */
@@ -34,6 +37,7 @@
 #define PPP_BRPDU	0x0031	/* Bridging PDU */
 #define PPP_STII	0x0033	/* Stream Protocol (ST-II) */
 #define PPP_VINES	0x0035	/* Banyan Vines */
+#define PPP_ML          0x003d  /* Multi-Link PPP */
 #define PPP_IPV6	0x0057	/* IPv6 */
 #define	PPP_COMP	0x00fd	/* Compressed Datagram */
 
@@ -62,7 +66,7 @@
 #define PPP_CHAP	0xc223	/* Challenge Handshake Authentication Protocol */
 #define PPP_BACP	0xc02b	/* Bandwidth Allocation Control Protocol */
 #define PPP_BAP		0xc02d	/* BAP */
-#define PPP_MP		0xc03d	/* Multi-Link */
+#define PPP_MPCP		0xc03d	/* Multi-Link */
 #define PPP_SPAP_OLD    0xc123
 #define PPP_EAP         0xc227
 

@@ -1,6 +1,6 @@
-/*	$NetBSD: smb.h,v 1.1.1.3 2004/09/27 17:07:35 dyoung Exp $	*/
+/*	$NetBSD: smb.h,v 1.1.1.4 2007/07/24 11:42:50 drochner Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/smb.h,v 1.8 2002/06/11 17:09:00 itojun Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/smb.h,v 1.9 2004/12/28 22:29:44 guy Exp (LBL) */
 /*
  * Copyright (C) Andrew Tridgell 1995-1999
  *
@@ -121,4 +121,4 @@
 #define PTR_DIFF(p1, p2) ((size_t)(((char *)(p1)) - (char *)(p2)))
 
 /* some protos */
-const u_char *smb_fdata(const u_char *, const char *, const u_char *);
+const u_char *smb_fdata(const u_char *, const char *, const u_char *, int);

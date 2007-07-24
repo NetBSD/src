@@ -1,4 +1,4 @@
-/*	$NetBSD: appletalk.h,v 1.1.1.2 2004/09/27 17:06:30 dyoung Exp $	*/
+/*	$NetBSD: appletalk.h,v 1.1.1.3 2007/07/24 11:43:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993, 1994, 1995, 1996
@@ -22,7 +22,7 @@
  *
  * AppleTalk protocol formats (courtesy Bill Croft of Stanford/SUMEX).
  *
- * @(#) Header: /tcpdump/master/tcpdump/appletalk.h,v 1.15 2002/12/11 07:13:49 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/appletalk.h,v 1.16 2004/05/01 09:41:50 hannes Exp (LBL)
  */
 
 struct LAP {
@@ -69,6 +69,7 @@ struct atShortDDP {
 #define	ddpECHO		4	/* ECHO type */
 #define	ddpIP		22	/* IP type */
 #define	ddpARP		23	/* ARP type */
+#define ddpEIGRP        88      /* EIGRP over Appletalk */
 #define	ddpKLAP		0x4b	/* Kinetics KLAP type */
 
 

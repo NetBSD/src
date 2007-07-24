@@ -1,3 +1,5 @@
+/*	$NetBSD: cpack.c,v 1.1.1.1 2007/07/24 11:43:13 drochner Exp $	*/
+
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-fr.c,v 1.1.1.1 2004/09/27 17:07:03 dyoung Exp $	*/
+/*	$NetBSD: print-fr.c,v 1.1.1.2 2007/07/24 11:43:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-	"@(#)Header: /tcpdump/master/tcpdump/print-fr.c,v 1.17.2.3 2003/12/15 03:37:45 guy Exp (LBL)";
+	"@(#)Header: /tcpdump/master/tcpdump/print-fr.c,v 1.32.2.15 2006/02/01 14:39:56 hannes Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -39,50 +39,82 @@ static const char rcsid[] _U_ =
 #include "addrtoname.h"
 #include "interface.h"
 #include "ethertype.h"
+#include "nlpid.h"
 #include "extract.h"
+#include "oui.h"
 
-static void lmi_print(const u_char *, u_int);
+static void frf15_print(const u_char *, u_int);
 
-#define NLPID_LMI       0x08   /* ANSI T1.617 Annex D or ITU-T Q.933 Annex A */
-#define NLPID_CISCO_LMI 0x09   /* The original, aka Cisco, aka Gang of Four */
-#define NLPID_SNAP      0x80
-#define NLPID_CLNP      0x81
-#define NLPID_ESIS      0x82
-#define NLPID_ISIS      0x83
-#define NLPID_CONS      0x84
-#define NLPID_IDRP      0x85
-#define NLPID_X25_ESIS  0x8a
-#define NLPID_IPV6      0x8e
-#define NLPID_IP        0xcc
+/*
+ * the frame relay header has a variable length
+ *
+ * the EA bit determines if there is another byte
+ * in the header
+ *
+ * minimum header length is 2 bytes
+ * maximum header length is 4 bytes
+ *
+ *      7    6    5    4    3    2    1    0
+ *    +----+----+----+----+----+----+----+----+
+ *    |        DLCI (6 bits)        | CR | EA |
+ *    +----+----+----+----+----+----+----+----+
+ *    |   DLCI (4 bits)   |FECN|BECN| DE | EA |
+ *    +----+----+----+----+----+----+----+----+
+ *    |           DLCI (7 bits)          | EA |
+ *    +----+----+----+----+----+----+----+----+
+ *    |        DLCI (6 bits)        |SDLC| EA |
+ *    +----+----+----+----+----+----+----+----+
+ */
 
 #define FR_EA_BIT	0x01
 
+#define FR_CR_BIT       0x02000000
+#define FR_DE_BIT	0x00020000
+#define FR_BECN_BIT	0x00040000
+#define FR_FECN_BIT	0x00080000
+#define FR_SDLC_BIT	0x00000002
 
-/* Finds out Q.922 address length, DLCI and flags. Returns 0 on success */
-static int parse_q922_addr(const u_char *p, u_int *dlci, u_int *addr_len,
-			   char **flags_ptr)
+
+struct tok fr_header_flag_values[] = {
+    { FR_CR_BIT, "C!" },
+    { FR_DE_BIT, "DE" },
+    { FR_BECN_BIT, "BECN" },
+    { FR_FECN_BIT, "FECN" },
+    { FR_SDLC_BIT, "sdlcore" },
+    { 0, NULL }
+};
+
+/* FRF.15 / FRF.16 */
+#define MFR_B_BIT 0x80
+#define MFR_E_BIT 0x40
+#define MFR_C_BIT 0x20
+#define MFR_BEC_MASK    (MFR_B_BIT | MFR_E_BIT | MFR_C_BIT)
+#define MFR_CTRL_FRAME  (MFR_B_BIT | MFR_E_BIT | MFR_C_BIT)
+#define MFR_FRAG_FRAME  (MFR_B_BIT | MFR_E_BIT )
+
+struct tok frf_flag_values[] = {
+    { MFR_B_BIT, "Begin" },
+    { MFR_E_BIT, "End" },
+    { MFR_C_BIT, "Control" },
+    { 0, NULL }
+};
+
+/* Finds out Q.922 address length, DLCI and flags. Returns 0 on success
+ * save the flags dep. on address length
+ */
+static int parse_q922_addr(const u_char *p, u_int *dlci, u_int *sdlcore,
+                           u_int *addr_len, u_int8_t *flags)
 {
-	static char flags[32];
-	size_t len;
-
 	if ((p[0] & FR_EA_BIT))
 		return -1;
 
-	*flags_ptr = flags;
 	*addr_len = 2;
 	*dlci = ((p[0] & 0xFC) << 2) | ((p[1] & 0xF0) >> 4);
 
-	strcpy(flags, (p[0] & 0x02) ? "C!, " : "");
-	if (p[1] & 0x08)
-		strcat(flags, "FECN, ");
-	if (p[1] & 0x04)
-		strcat(flags, "BECN, ");
-	if (p[1] & 0x02)
-		strcat(flags, "DE, ");
-
-	len = strlen(flags);
-	if (len > 1)
-		flags[len - 2] = '\x0';	/* delete trailing comma and space */
+        flags[0] = p[0] & 0x02; /* populate the first flag fields */
+        flags[1] = p[1] & 0x0c;
+        flags[2] = 0;           /* clear the rest of the flags */
+        flags[3] = 0;
 
 	if (p[1] & FR_EA_BIT)
 		return 0;	/* 2-byte Q.922 address */
@@ -98,40 +130,14 @@ static int parse_q922_addr(const u_char *p, u_int *dlci, u_int *addr_len,
 	if ((p[0] & FR_EA_BIT) == 0)
 		return -1; /* more than 4 bytes of Q.922 address? */
 
-	if (p[0] & 0x02) {
-		len = strlen(flags);
-		snprintf(flags + len, sizeof(flags) - len,
-			 "%sdlcore %x", len ? ", " : "", p[0] >> 2);
-	} else
+        flags[3] = p[0] & 0x02;
+
+	if (p[0] & 0x02)
+                *sdlcore =  p[0] >> 2;
+	else
 		*dlci = (*dlci << 6) | (p[0] >> 2);
 
 	return 0;
-}
-
-
-static const char *fr_nlpids[256];
-
-static void
-init_fr_nlpids(void)
-{
-	int i;
-	static int fr_nlpid_flag = 0;
-
-	if (!fr_nlpid_flag) {
-		for (i=0; i < 256; i++)
-			fr_nlpids[i] = NULL;
-		fr_nlpids[NLPID_LMI] = "LMI";
-		fr_nlpids[NLPID_CISCO_LMI] = "Cisco LMI";
-		fr_nlpids[NLPID_SNAP] = "SNAP";
-		fr_nlpids[NLPID_CLNP] = "CLNP";
-		fr_nlpids[NLPID_ESIS] = "ESIS";
-		fr_nlpids[NLPID_ISIS] = "ISIS";
-		fr_nlpids[NLPID_CONS] = "CONS";
-		fr_nlpids[NLPID_IDRP] = "IDRP";
-		fr_nlpids[NLPID_X25_ESIS] = "X25_ESIS";
-		fr_nlpids[NLPID_IP] = "IP";
-	}
-	fr_nlpid_flag = 1;
 }
 
 /* Frame Relay packet structure, with flags and CRC removed
@@ -161,39 +167,39 @@ init_fr_nlpids(void)
 */
 
 static u_int
-fr_hdrlen(const u_char *p, u_int addr_len, u_int caplen)
+fr_hdrlen(const u_char *p, u_int addr_len)
 {
-	if ((caplen > addr_len + 1 /* UI */ + 1 /* pad */) &&
-	    !p[addr_len + 1] /* pad exist */)
+	if (!p[addr_len + 1] /* pad exist */)
 		return addr_len + 1 /* UI */ + 1 /* pad */ + 1 /* NLPID */;
 	else 
 		return addr_len + 1 /* UI */ + 1 /* NLPID */;
 }
 
-static const char *
-fr_protostring(u_int8_t proto)
-{
-	static char buf[5+1+2+1];
-
-	init_fr_nlpids();
-
-	if (nflag || fr_nlpids[proto] == NULL) {
-		snprintf(buf, sizeof(buf), "proto %02x", proto);
-		return buf;
-	}
-	return fr_nlpids[proto];
-}
-
 static void
-fr_hdr_print(int length, u_int dlci, char *flags, u_char nlpid)
+fr_hdr_print(int length, u_int addr_len, u_int dlci, u_int8_t *flags, u_int16_t nlpid)
 {
-	if (qflag)
-		(void)printf("DLCI %u, %s%slength %d: ",
-			     dlci, flags, *flags ? ", " : "", length);
-	else
-		(void)printf("DLCI %u, %s%s%s, length %d: ",
-			     dlci, flags, *flags ? ", " : "",
-			     fr_protostring(nlpid), length);
+    if (qflag) {
+        (void)printf("Q.922, DLCI %u, length %u: ",
+                     dlci,
+                     length);
+    } else {
+        if (nlpid <= 0xff) /* if its smaller than 256 then its a NLPID */
+            (void)printf("Q.922, hdr-len %u, DLCI %u, Flags [%s], NLPID %s (0x%02x), length %u: ",
+                         addr_len,
+                         dlci,
+                         bittok2str(fr_header_flag_values, "none", EXTRACT_32BITS(flags)),
+                         tok2str(nlpid_values,"unknown", nlpid),
+                         nlpid,
+                         length);
+        else /* must be an ethertype */
+            (void)printf("Q.922, hdr-len %u, DLCI %u, Flags [%s], cisco-ethertype %s (0x%04x), length %u: ",
+                         addr_len,
+                         dlci,
+                         bittok2str(fr_header_flag_values, "none", EXTRACT_32BITS(flags)),
+                         tok2str(ethertype_values, "unknown", nlpid),
+                         nlpid,
+                         length);        
+    }
 }
 
 u_int
@@ -201,34 +207,56 @@ fr_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 {
 	register u_int length = h->len;
 	register u_int caplen = h->caplen;
-	u_short extracted_ethertype;
-	u_int32_t orgcode;
-	register u_short et;
+
+        TCHECK2(*p, 4); /* minimum frame header length */
+
+        if ((length = fr_print(p, length)) == 0)
+            return (0);
+        else
+            return length;
+ trunc:
+        printf("[|fr]");
+        return caplen;
+}
+
+u_int
+fr_print(register const u_char *p, u_int length)
+{
+	u_int16_t extracted_ethertype;
 	u_int dlci;
-	int addr_len;
-	u_char nlpid;
+        u_int sdlcore;
+	u_int addr_len;
+	u_int16_t nlpid;
 	u_int hdr_len;
-	char *flags;
+	u_int8_t flags[4];
 
-	if (caplen < 4) {	/* minimum frame header length */
-		printf("[|fr]");
-		return caplen;
+	if (parse_q922_addr(p, &dlci, &sdlcore, &addr_len, flags)) {
+		printf("Q.922, invalid address");
+		return 0;
 	}
 
-	if (parse_q922_addr(p, &dlci, &addr_len, &flags)) {
-		printf("Invalid Q.922 address");
-		return caplen;
-	}
+        TCHECK2(*p,addr_len+1+1);
+	hdr_len = fr_hdrlen(p, addr_len);
+        TCHECK2(*p,hdr_len);
 
-	hdr_len = fr_hdrlen(p, addr_len, caplen);
+	if (p[addr_len] != 0x03 && dlci != 0) {
 
-	if (caplen < hdr_len) {
-		printf("[|fr]");
-		return caplen;
-	}
+                /* lets figure out if we have cisco style encapsulation: */
+                extracted_ethertype = EXTRACT_16BITS(p+addr_len);
 
-	if (p[addr_len] != 0x03)
-		printf("UI %02x! ", p[addr_len]);
+                if (eflag)
+                    fr_hdr_print(length, addr_len, dlci, flags, extracted_ethertype);
+
+                if (ether_encap_print(extracted_ethertype,
+                                      p+addr_len+ETHERTYPE_LEN,
+                                      length-addr_len-ETHERTYPE_LEN,
+                                      length-addr_len-ETHERTYPE_LEN,
+                                      &extracted_ethertype) == 0)
+                    /* ether_type not known, probably it wasn't one */
+                    printf("UI %02x! ", p[addr_len]);
+                else
+                    return hdr_len;
+        }
 
 	if (!p[addr_len + 1]) {	/* pad byte should be used with 3-byte Q.922 */
 		if (addr_len != 3)
@@ -238,61 +266,309 @@ fr_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 
 	nlpid = p[hdr_len - 1];
 
+	if (eflag)
+		fr_hdr_print(length, addr_len, dlci, flags, nlpid);
 	p += hdr_len;
 	length -= hdr_len;
-	caplen -= hdr_len;
-
-	if (eflag)
-		fr_hdr_print(length, dlci, flags, nlpid);
 
 	switch (nlpid) {
 	case NLPID_IP:
-		ip_print(p, length);
+	        ip_print(gndo, p, length);
 		break;
 
 #ifdef INET6
-	case NLPID_IPV6:
+	case NLPID_IP6:
 		ip6_print(p, length);
 		break;
 #endif
 	case NLPID_CLNP:
 	case NLPID_ESIS:
 	case NLPID_ISIS:
-		isoclns_print(p, length, caplen);
+                isoclns_print(p-1, length+1, length+1); /* OSI printers need the NLPID field */
 		break;
 
 	case NLPID_SNAP:
-		orgcode = EXTRACT_24BITS(p);
-		et = EXTRACT_16BITS(p + 3);
-		if (snap_print((const u_char *)(p + 5), length - 5,
-			   caplen - 5, &extracted_ethertype, orgcode, et,
-			   0) == 0) {
+		if (snap_print(p, length, length, &extracted_ethertype, 0) == 0) {
 			/* ether_type not known, print raw packet */
-			if (!eflag)
-				fr_hdr_print(length + hdr_len,
-					     dlci, flags, nlpid);
-			if (extracted_ethertype) {
-				printf("(SNAP %s) ",
-			       etherproto_string(htons(extracted_ethertype)));
-			}
-			if (!xflag && !qflag)
-				default_print(p - hdr_len, caplen + hdr_len);
+                        if (!eflag)
+                            fr_hdr_print(length + hdr_len, hdr_len,
+                                         dlci, flags, nlpid);
+			if (!suppress_default_print)
+                            default_print(p - hdr_len, length + hdr_len);
 		}
 		break;
 
-	case NLPID_LMI:
-		lmi_print(p, length);
+        case NLPID_Q933:
+		q933_print(p, length);
 		break;
+
+        case NLPID_MFR:
+                frf15_print(p, length);
+                break;
+
+        case NLPID_PPP:
+                ppp_print(p, length);
+                break;
 
 	default:
 		if (!eflag)
-			fr_hdr_print(length + hdr_len,
+                    fr_hdr_print(length + hdr_len, addr_len,
 				     dlci, flags, nlpid);
 		if (!xflag)
-			default_print(p, caplen);
+			default_print(p, length);
 	}
 
 	return hdr_len;
+
+ trunc:
+        printf("[|fr]");
+        return 0;
+
+}
+
+u_int
+mfr_if_print(const struct pcap_pkthdr *h, register const u_char *p)
+{
+	register u_int length = h->len;
+	register u_int caplen = h->caplen;
+
+        TCHECK2(*p, 2); /* minimum frame header length */
+
+        if ((length = mfr_print(p, length)) == 0)
+            return (0);
+        else
+            return length;
+ trunc:
+        printf("[|mfr]");
+        return caplen;
+}
+
+
+#define MFR_CTRL_MSG_ADD_LINK        1
+#define MFR_CTRL_MSG_ADD_LINK_ACK    2
+#define MFR_CTRL_MSG_ADD_LINK_REJ    3
+#define MFR_CTRL_MSG_HELLO           4
+#define MFR_CTRL_MSG_HELLO_ACK       5
+#define MFR_CTRL_MSG_REMOVE_LINK     6
+#define MFR_CTRL_MSG_REMOVE_LINK_ACK 7
+
+struct tok mfr_ctrl_msg_values[] = {
+    { MFR_CTRL_MSG_ADD_LINK, "Add Link" },
+    { MFR_CTRL_MSG_ADD_LINK_ACK, "Add Link ACK" },
+    { MFR_CTRL_MSG_ADD_LINK_REJ, "Add Link Reject" },
+    { MFR_CTRL_MSG_HELLO, "Hello" },
+    { MFR_CTRL_MSG_HELLO_ACK, "Hello ACK" },
+    { MFR_CTRL_MSG_REMOVE_LINK, "Remove Link" },
+    { MFR_CTRL_MSG_REMOVE_LINK_ACK, "Remove Link ACK" },
+    { 0, NULL }
+};
+
+#define MFR_CTRL_IE_BUNDLE_ID  1
+#define MFR_CTRL_IE_LINK_ID    2
+#define MFR_CTRL_IE_MAGIC_NUM  3
+#define MFR_CTRL_IE_TIMESTAMP  5
+#define MFR_CTRL_IE_VENDOR_EXT 6
+#define MFR_CTRL_IE_CAUSE      7
+
+struct tok mfr_ctrl_ie_values[] = {
+    { MFR_CTRL_IE_BUNDLE_ID, "Bundle ID"},
+    { MFR_CTRL_IE_LINK_ID, "Link ID"},
+    { MFR_CTRL_IE_MAGIC_NUM, "Magic Number"},
+    { MFR_CTRL_IE_TIMESTAMP, "Timestamp"},
+    { MFR_CTRL_IE_VENDOR_EXT, "Vendor Extension"},
+    { MFR_CTRL_IE_CAUSE, "Cause"},
+    { 0, NULL }
+};
+
+#define MFR_ID_STRING_MAXLEN 50
+
+struct ie_tlv_header_t {
+    u_int8_t ie_type;
+    u_int8_t ie_len;
+};
+
+u_int
+mfr_print(register const u_char *p, u_int length)
+{
+    u_int tlen,idx,hdr_len = 0;
+    u_int16_t sequence_num;
+    u_int8_t ie_type,ie_len;
+    const u_int8_t *tptr;
+
+
+/*
+ * FRF.16 Link Integrity Control Frame
+ * 
+ *      7    6    5    4    3    2    1    0
+ *    +----+----+----+----+----+----+----+----+
+ *    | B  | E  | C=1| 0    0    0    0  | EA |
+ *    +----+----+----+----+----+----+----+----+
+ *    | 0    0    0    0    0    0    0    0  |
+ *    +----+----+----+----+----+----+----+----+
+ *    |              message type             |
+ *    +----+----+----+----+----+----+----+----+
+ */
+
+    TCHECK2(*p, 4); /* minimum frame header length */
+
+    if ((p[0] & MFR_BEC_MASK) == MFR_CTRL_FRAME && p[1] == 0) {
+        printf("FRF.16 Control, Flags [%s], %s, length %u",
+               bittok2str(frf_flag_values,"none",(p[0] & MFR_BEC_MASK)),
+               tok2str(mfr_ctrl_msg_values,"Unknown Message (0x%02x)",p[2]),
+               length);
+        tptr = p + 3;
+        tlen = length -3;
+        hdr_len = 3;
+
+        if (!vflag)
+            return hdr_len;
+
+        while (tlen>sizeof(struct ie_tlv_header_t)) {
+            TCHECK2(*tptr, sizeof(struct ie_tlv_header_t));
+            ie_type=tptr[0];
+            ie_len=tptr[1];
+
+            printf("\n\tIE %s (%u), length %u: ",
+                   tok2str(mfr_ctrl_ie_values,"Unknown",ie_type),
+                   ie_type,
+                   ie_len);
+
+            /* infinite loop check */
+            if (ie_type == 0 || ie_len <= sizeof(struct ie_tlv_header_t))
+                return hdr_len;
+
+            TCHECK2(*tptr,ie_len);
+            tptr+=sizeof(struct ie_tlv_header_t);
+            /* tlv len includes header */
+            ie_len-=sizeof(struct ie_tlv_header_t);
+            tlen-=sizeof(struct ie_tlv_header_t);
+
+            switch (ie_type) {
+
+            case MFR_CTRL_IE_MAGIC_NUM:
+                printf("0x%08x",EXTRACT_32BITS(tptr));
+                break;
+
+            case MFR_CTRL_IE_BUNDLE_ID: /* same message format */
+            case MFR_CTRL_IE_LINK_ID:
+                for (idx = 0; idx < ie_len && idx < MFR_ID_STRING_MAXLEN; idx++) {
+                    if (*(tptr+idx) != 0) /* don't print null termination */
+                        safeputchar(*(tptr+idx));
+                    else
+                        break;
+                }
+                break;
+
+            case MFR_CTRL_IE_TIMESTAMP:
+                if (ie_len == sizeof(struct timeval)) {
+                    ts_print((const struct timeval *)tptr);
+                    break;
+                }
+                /* fall through and hexdump if no unix timestamp */
+
+                /*
+                 * FIXME those are the defined IEs that lack a decoder
+                 * you are welcome to contribute code ;-)
+                 */
+
+            case MFR_CTRL_IE_VENDOR_EXT:
+            case MFR_CTRL_IE_CAUSE:
+
+            default:
+                if (vflag <= 1)
+                    print_unknown_data(tptr,"\n\t  ",ie_len);
+                break;
+            }
+
+            /* do we want to see a hexdump of the IE ? */
+            if (vflag > 1 )
+                print_unknown_data(tptr,"\n\t  ",ie_len);
+            
+            tlen-=ie_len;
+            tptr+=ie_len;
+        }
+        return hdr_len;
+    }
+/*
+ * FRF.16 Fragmentation Frame
+ * 
+ *      7    6    5    4    3    2    1    0
+ *    +----+----+----+----+----+----+----+----+
+ *    | B  | E  | C=0|seq. (high 4 bits) | EA  |
+ *    +----+----+----+----+----+----+----+----+
+ *    |        sequence  (low 8 bits)         |
+ *    +----+----+----+----+----+----+----+----+
+ *    |        DLCI (6 bits)        | CR | EA  |
+ *    +----+----+----+----+----+----+----+----+
+ *    |   DLCI (4 bits)   |FECN|BECN| DE | EA |
+ *    +----+----+----+----+----+----+----+----+
+ */
+
+    sequence_num = (p[0]&0x1e)<<7 | p[1];
+    /* whole packet or first fragment ? */
+    if ((p[0] & MFR_BEC_MASK) == MFR_FRAG_FRAME ||
+        (p[0] & MFR_BEC_MASK) == MFR_B_BIT) {
+        printf("FRF.16 Frag, seq %u, Flags [%s], ",
+               sequence_num,
+               bittok2str(frf_flag_values,"none",(p[0] & MFR_BEC_MASK)));
+        hdr_len = 2;
+        fr_print(p+hdr_len,length-hdr_len);
+        return hdr_len;
+    }
+
+    /* must be a middle or the last fragment */
+    printf("FRF.16 Frag, seq %u, Flags [%s]",
+           sequence_num,
+           bittok2str(frf_flag_values,"none",(p[0] & MFR_BEC_MASK)));
+    print_unknown_data(p,"\n\t",length);
+
+    return hdr_len;
+
+ trunc:
+    printf("[|mfr]");
+    return length;
+}
+
+/* an NLPID of 0xb1 indicates a 2-byte
+ * FRF.15 header
+ * 
+ *      7    6    5    4    3    2    1    0
+ *    +----+----+----+----+----+----+----+----+
+ *    ~              Q.922 header             ~
+ *    +----+----+----+----+----+----+----+----+
+ *    |             NLPID (8 bits)            | NLPID=0xb1
+ *    +----+----+----+----+----+----+----+----+
+ *    | B  | E  | C  |seq. (high 4 bits) | R  |
+ *    +----+----+----+----+----+----+----+----+
+ *    |        sequence  (low 8 bits)         |
+ *    +----+----+----+----+----+----+----+----+
+ */
+
+#define FR_FRF15_FRAGTYPE 0x01
+
+static void
+frf15_print (const u_char *p, u_int length) {
+    
+    u_int16_t sequence_num, flags;
+
+    flags = p[0]&MFR_BEC_MASK;
+    sequence_num = (p[0]&0x1e)<<7 | p[1];
+
+    printf("FRF.15, seq 0x%03x, Flags [%s],%s Fragmentation, length %u",
+           sequence_num,
+           bittok2str(frf_flag_values,"none",flags),
+           p[0]&FR_FRF15_FRAGTYPE ? "Interface" : "End-to-End",
+           length);
+
+/* TODO:
+ * depending on all permutations of the B, E and C bit
+ * dig as deep as we can - e.g. on the first (B) fragment
+ * there is enough payload to print the IP header
+ * on non (B) fragments it depends if the fragmentation
+ * model is end-to-end or interface based wether we want to print
+ * another Q.922 header
+ */
+
 }
 
 /*
@@ -342,148 +618,240 @@ fr_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 #define MSG_TYPE_STATUS           0x7D
 #define MSG_TYPE_STATUS_ENQ       0x75
 
-#define MSG_ANSI_LOCKING_SHIFT	0x95
-#define ONE_BYTE_IE_MASK	0xF0 /* details? */
-
-#define ANSI_REPORT_TYPE_IE	0x01
-#define ANSI_LINK_VERIFY_IE_91	0x19 /* details? */
-#define ANSI_LINK_VERIFY_IE	0x03
-#define ANSI_PVC_STATUS_IE	0x07
-
-#define CCITT_REPORT_TYPE_IE	0x51
-#define CCITT_LINK_VERIFY_IE	0x53
-#define CCITT_PVC_STATUS_IE	0x57
-
-struct common_ie_header {
-    u_int8_t ie_id;
-    u_int8_t ie_len;
+struct tok fr_q933_msg_values[] = {
+    { MSG_TYPE_ESC_TO_NATIONAL, "ESC to National" },
+    { MSG_TYPE_ALERT, "Alert" },
+    { MSG_TYPE_CALL_PROCEEDING, "Call proceeding" },
+    { MSG_TYPE_CONNECT, "Connect" },
+    { MSG_TYPE_CONNECT_ACK, "Connect ACK" },
+    { MSG_TYPE_PROGRESS, "Progress" },
+    { MSG_TYPE_SETUP, "Setup" },
+    { MSG_TYPE_DISCONNECT, "Disconnect" },
+    { MSG_TYPE_RELEASE, "Release" },
+    { MSG_TYPE_RELEASE_COMPLETE, "Release Complete" },
+    { MSG_TYPE_RESTART, "Restart" },
+    { MSG_TYPE_RESTART_ACK, "Restart ACK" },
+    { MSG_TYPE_STATUS, "Status Reply" },
+    { MSG_TYPE_STATUS_ENQ, "Status Enquiry" },
+    { 0, NULL }
 };
 
-#define FULL_STATUS 0
-#define LINK_VERIFY 1
-#define ASYNC_PVC   2
+#define MSG_ANSI_LOCKING_SHIFT	0x95
 
+#define FR_LMI_ANSI_REPORT_TYPE_IE	0x01
+#define FR_LMI_ANSI_LINK_VERIFY_IE_91	0x19 /* details? */
+#define FR_LMI_ANSI_LINK_VERIFY_IE	0x03
+#define FR_LMI_ANSI_PVC_STATUS_IE	0x07
 
-/* Parses DLCI information element. */
-static const char * parse_dlci_ie(const u_char *p, u_int ie_len, char *buffer,
-			    size_t buffer_len)
-{
-	u_int dlci;
+#define FR_LMI_CCITT_REPORT_TYPE_IE	0x51
+#define FR_LMI_CCITT_LINK_VERIFY_IE	0x53
+#define FR_LMI_CCITT_PVC_STATUS_IE	0x57
 
-	if ((ie_len < 3) ||
-	    (p[0] & 0x80) ||
-	    ((ie_len == 3) && !(p[1] & 0x80)) ||
-	    ((ie_len == 4) && ((p[1] & 0x80) || !(p[2] & 0x80))) ||
-	    ((ie_len == 5) && ((p[1] & 0x80) || (p[2] & 0x80) ||
-			       !(p[3] & 0x80))) ||
-	    (ie_len > 5) ||
-	    !(p[ie_len - 1] & 0x80))
-		return "Invalid DLCI IE";
+struct tok fr_q933_ie_values_codeset5[] = {
+    { FR_LMI_ANSI_REPORT_TYPE_IE, "ANSI Report Type" },
+    { FR_LMI_ANSI_LINK_VERIFY_IE_91, "ANSI Link Verify" },
+    { FR_LMI_ANSI_LINK_VERIFY_IE, "ANSI Link Verify" },
+    { FR_LMI_ANSI_PVC_STATUS_IE, "ANSI PVC Status" },
+    { FR_LMI_CCITT_REPORT_TYPE_IE, "CCITT Report Type" },
+    { FR_LMI_CCITT_LINK_VERIFY_IE, "CCITT Link Verify" },
+    { FR_LMI_CCITT_PVC_STATUS_IE, "CCITT PVC Status" },
+    { 0, NULL }
+};
 
-	dlci = ((p[0] & 0x3F) << 4) | ((p[1] & 0x78) >> 3);
-	if (ie_len == 4)
-		dlci = (dlci << 6) | ((p[2] & 0x7E) >> 1);
-	else if (ie_len == 5)
-		dlci = (dlci << 13) | (p[2] & 0x7F) | ((p[3] & 0x7E) >> 1);
+#define FR_LMI_REPORT_TYPE_IE_FULL_STATUS 0
+#define FR_LMI_REPORT_TYPE_IE_LINK_VERIFY 1
+#define FR_LMI_REPORT_TYPE_IE_ASYNC_PVC   2
 
-	snprintf(buffer, buffer_len, "DLCI %d: status %s%s", dlci,
-		 p[ie_len - 1] & 0x8 ? "New, " : "",
-		 p[ie_len - 1] & 0x2 ? "Active" : "Inactive");
+struct tok fr_lmi_report_type_ie_values[] = {
+    { FR_LMI_REPORT_TYPE_IE_FULL_STATUS, "Full Status" },
+    { FR_LMI_REPORT_TYPE_IE_LINK_VERIFY, "Link verify" },
+    { FR_LMI_REPORT_TYPE_IE_ASYNC_PVC, "Async PVC Status" },
+    { 0, NULL }
+};
 
-	return buffer;
-}
+/* array of 16 codepages - currently we only support codepage 1,5 */
+static struct tok *fr_q933_ie_codesets[] = {
+    NULL,
+    fr_q933_ie_values_codeset5,
+    NULL,
+    NULL,
+    NULL,
+    fr_q933_ie_values_codeset5,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
 
+static int fr_q933_print_ie_codeset5(const struct ie_tlv_header_t  *ie_p,
+    const u_char *p);
 
-static void
-lmi_print(const u_char *p, u_int length)
+typedef int (*codeset_pr_func_t)(const struct ie_tlv_header_t  *ie_p,
+    const u_char *p);
+
+/* array of 16 codepages - currently we only support codepage 1,5 */
+static codeset_pr_func_t fr_q933_print_ie_codeset[] = {
+    NULL,
+    fr_q933_print_ie_codeset5,
+    NULL,
+    NULL,
+    NULL,
+    fr_q933_print_ie_codeset5,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+
+void
+q933_print(const u_char *p, u_int length)
 {
 	const u_char *ptemp = p;
-	const char *decode_str;
-	char temp_str[255];
-	struct common_ie_header *ie_p;
+	struct ie_tlv_header_t  *ie_p;
+        int olen;
 	int is_ansi = 0;
+        u_int codeset;
+        u_int ie_is_known = 0;
 
 	if (length < 9) {	/* shortest: Q.933a LINK VERIFY */
-		printf("[|lmi]");
+		printf("[|q.933]");
 		return;
 	}
+
+        codeset = p[2]&0x0f;   /* extract the codeset */
 
 	if (p[2] == MSG_ANSI_LOCKING_SHIFT)
 		is_ansi = 1;
     
+        printf("%s", eflag ? "" : "Q.933, ");
+
 	/* printing out header part */
-	printf(is_ansi ? "ANSI" : "CCITT");
+	printf("%s, codeset %u", is_ansi ? "ANSI" : "CCITT", codeset);
+
 	if (p[0])
-		printf(" Call Ref: %02x!", p[0]);
+		printf(", Call Ref: 0x%02x", p[0]);
 
-	switch(p[1]) {
+        if (vflag)
+            printf(", %s (0x%02x), length %u",
+                   tok2str(fr_q933_msg_values,"unknown message",p[1]),
+                   p[1],
+                   length);
+        else
+            printf(", %s",
+                   tok2str(fr_q933_msg_values,"unknown message 0x%02x",p[1]));            
 
-	case MSG_TYPE_STATUS:
-		printf(" STATUS REPLY\n");
-		break;
-
-	case MSG_TYPE_STATUS_ENQ:
-		printf(" STATUS ENQUIRY\n");
-		break;
-
-	default:
-		printf(" UNKNOWN MSG Type %02x\n", p[1]);
-		break;
-	}
+        olen = length; /* preserve the original length for non verbose mode */
 
 	if (length < (u_int)(2 - is_ansi)) {
-		printf("[|lmi]");
+		printf("[|q.933]");
 		return;
 	}
 	length -= 2 - is_ansi;
 	ptemp += 2 + is_ansi;
 	
 	/* Loop through the rest of IE */
-	while (length > 0) {
-		ie_p = (struct common_ie_header *)ptemp;
-		if (length < sizeof(struct common_ie_header) ||
-		    length < sizeof(struct common_ie_header) + ie_p->ie_len) {
-			printf("[|lmi]");
-			return;
+	while (length > sizeof(struct ie_tlv_header_t )) {
+		ie_p = (struct ie_tlv_header_t  *)ptemp;
+		if (length < sizeof(struct ie_tlv_header_t ) ||
+		    length < sizeof(struct ie_tlv_header_t ) + ie_p->ie_len) {
+                    if (vflag) /* not bark if there is just a trailer */
+                        printf("\n[|q.933]");
+                    else
+                        printf(", length %u",olen);
+                    return;
 		}
 
-		if ((is_ansi && ie_p->ie_id == ANSI_REPORT_TYPE_IE) ||
-		    (!is_ansi && ie_p->ie_id == CCITT_REPORT_TYPE_IE)) {
-			switch(ptemp[2]) {
+                /* lets do the full IE parsing only in verbose mode
+                 * however some IEs (DLCI Status, Link Verify)
+                 * are also intereststing in non-verbose mode */
+                if (vflag)
+                    printf("\n\t%s IE (0x%02x), length %u: ",
+                           tok2str(fr_q933_ie_codesets[codeset],"unknown",ie_p->ie_type),
+                           ie_p->ie_type,
+                           ie_p->ie_len);
+ 
+                /* sanity check */
+                if (ie_p->ie_type == 0 || ie_p->ie_len == 0)
+                    return;
 
-			case FULL_STATUS:
-				decode_str = "FULL STATUS";
-				break;
+                if (fr_q933_print_ie_codeset[codeset] != NULL)
+                    ie_is_known = fr_q933_print_ie_codeset[codeset](ie_p, ptemp);
+               
+                if (vflag >= 1 && !ie_is_known)
+                    print_unknown_data(ptemp+2,"\n\t",ie_p->ie_len);
 
-			case LINK_VERIFY:
-				decode_str = "LINK VERIFY";
-				break;
+                /* do we want to see a hexdump of the IE ? */
+                if (vflag> 1 && ie_is_known)
+                    print_unknown_data(ptemp+2,"\n\t  ",ie_p->ie_len);
 
-			case ASYNC_PVC:
-				decode_str = "Async PVC Status";
-				break;
-
-			default:
-				decode_str = "Reserved Value";
-				break;
-			}
-		} else if ((is_ansi && (ie_p->ie_id == ANSI_LINK_VERIFY_IE_91 ||
-				        ie_p->ie_id == ANSI_LINK_VERIFY_IE)) ||
-			  (!is_ansi && ie_p->ie_id == CCITT_LINK_VERIFY_IE)) {
-			snprintf(temp_str, sizeof(temp_str),
-			     "TX Seq: %3d, RX Seq: %3d",
-			     ptemp[2], ptemp[3]);
-			decode_str = temp_str;
-		} else if ((is_ansi && ie_p->ie_id == ANSI_PVC_STATUS_IE) ||
-			   (!is_ansi && ie_p->ie_id == CCITT_PVC_STATUS_IE)) {
-			decode_str = parse_dlci_ie(ptemp + 2, ie_p->ie_len,
-						   temp_str, sizeof(temp_str));
-		} else
-			decode_str = "Non-decoded Value";		    
-
-		printf("\t\tIE: %02X Len: %d, %s\n",
-		       ie_p->ie_id, ie_p->ie_len, decode_str);
 		length = length - ie_p->ie_len - 2;
 		ptemp = ptemp + ie_p->ie_len + 2;
 	}
+        if (!vflag)
+            printf(", length %u",olen);
+}
+
+static int
+fr_q933_print_ie_codeset5(const struct ie_tlv_header_t  *ie_p, const u_char *p)
+{
+        u_int dlci;
+
+        switch (ie_p->ie_type) {
+
+        case FR_LMI_ANSI_REPORT_TYPE_IE: /* fall through */
+        case FR_LMI_CCITT_REPORT_TYPE_IE:
+            if (vflag)
+                printf("%s (%u)",
+                       tok2str(fr_lmi_report_type_ie_values,"unknown",p[2]),
+                       p[2]);
+            return 1;
+
+        case FR_LMI_ANSI_LINK_VERIFY_IE: /* fall through */
+        case FR_LMI_CCITT_LINK_VERIFY_IE:
+        case FR_LMI_ANSI_LINK_VERIFY_IE_91:
+            if (!vflag)
+                printf(", ");
+            printf("TX Seq: %3d, RX Seq: %3d", p[2], p[3]);
+            return 1;
+
+        case FR_LMI_ANSI_PVC_STATUS_IE: /* fall through */
+        case FR_LMI_CCITT_PVC_STATUS_IE:
+            if (!vflag)
+                printf(", ");
+            /* now parse the DLCI information element. */                    
+            if ((ie_p->ie_len < 3) ||
+                (p[2] & 0x80) ||
+                ((ie_p->ie_len == 3) && !(p[3] & 0x80)) ||
+                ((ie_p->ie_len == 4) && ((p[3] & 0x80) || !(p[4] & 0x80))) ||
+                ((ie_p->ie_len == 5) && ((p[3] & 0x80) || (p[4] & 0x80) ||
+                                   !(p[5] & 0x80))) ||
+                (ie_p->ie_len > 5) ||
+                !(p[ie_p->ie_len + 1] & 0x80))
+                printf("Invalid DLCI IE");
+                    
+            dlci = ((p[2] & 0x3F) << 4) | ((p[3] & 0x78) >> 3);
+            if (ie_p->ie_len == 4)
+                dlci = (dlci << 6) | ((p[4] & 0x7E) >> 1);
+            else if (ie_p->ie_len == 5)
+                dlci = (dlci << 13) | (p[4] & 0x7F) | ((p[5] & 0x7E) >> 1);
+
+            printf("DLCI %u: status %s%s", dlci,
+                    p[ie_p->ie_len + 1] & 0x8 ? "New, " : "",
+                    p[ie_p->ie_len + 1] & 0x2 ? "Active" : "Inactive");
+            return 1;
+	}
+
+        return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-missing.h,v 1.1.1.1 2004/09/27 17:06:52 dyoung Exp $	*/
+/*	$NetBSD: pcap-missing.h,v 1.1.1.2 2007/07/24 11:42:57 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988-2002
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/pcap-missing.h,v 1.1.2.1 2003/11/18 23:12:11 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/pcap-missing.h,v 1.2.2.1 2005/06/03 22:10:16 guy Exp (LBL)
  */
 
 #ifndef tcpdump_pcap_missing_h
@@ -44,6 +44,10 @@ extern const char *pcap_datalink_val_to_name(int);
 
 #ifndef HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION
 extern const char *pcap_datalink_val_to_description(int);
+#endif
+
+#ifndef HAVE_PCAP_DUMP_FTELL
+extern long pcap_dump_ftell(pcap_dumper_t *);
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-enc.c,v 1.1.1.1 2004/09/27 17:07:03 dyoung Exp $	*/
+/*	$NetBSD: print-enc.c,v 1.1.1.2 2007/07/24 11:42:59 drochner Exp $	*/
 
 /*	$OpenBSD: print-enc.c,v 1.7 2002/02/19 19:39:40 millert Exp $	*/
 
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-enc.c,v 1.1.2.2 2003/11/16 08:51:19 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-enc.c,v 1.4 2005/04/06 21:32:39 mcr Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -73,8 +73,16 @@ enc_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 
 	length -= ENC_HDRLEN;
 	/* XXX - use the address family */
-	ip_print(p + ENC_HDRLEN, length);
+	ip_print(gndo, p + ENC_HDRLEN, length);
 
 out:
 	return (ENC_HDRLEN);
 }
+
+
+/*
+ * Local Variables:
+ * c-style: whitesmith
+ * c-basic-offset: 8
+ * End:
+ */

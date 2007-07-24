@@ -1,4 +1,4 @@
-/*	$NetBSD: ipproto.h,v 1.1.1.1 2004/09/27 17:06:28 dyoung Exp $	*/
+/*	$NetBSD: ipproto.h,v 1.1.1.2 2007/07/24 11:42:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,12 +32,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/ipproto.h,v 1.1.2.1 2003/11/24 20:31:22 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/ipproto.h,v 1.4.2.2 2005/09/20 06:05:37 guy Exp (LBL)
  *
  * From:
  *	@(#)in.h	8.3 (Berkeley) 1/3/94
  * $FreeBSD: src/sys/netinet/in.h,v 1.38.2.3 1999/08/29 16:29:34 peter Exp $
  */
+
+extern struct tok ipproto_values[];
 
 #ifndef IPPROTO_IP
 #define	IPPROTO_IP		0		/* dummy for IP */
@@ -60,11 +62,14 @@
 #ifndef IPPROTO_EGP
 #define	IPPROTO_EGP		8		/* exterior gateway protocol */
 #endif
-#ifndef IPPROTO_IGRP
-#define IPPROTO_IGRP		9
+#ifndef IPPROTO_PIGP
+#define IPPROTO_PIGP		9
 #endif
 #ifndef IPPROTO_UDP
 #define	IPPROTO_UDP		17		/* user datagram protocol */
+#endif
+#ifndef IPPROTO_DCCP
+#define	IPPROTO_DCCP		33		/* datagram congestion control protocol */
 #endif
 #ifndef IPPROTO_IPV6
 #define IPPROTO_IPV6		41
@@ -115,8 +120,8 @@
 #ifndef IPPROTO_ND
 #define	IPPROTO_ND		77		/* Sun net disk proto (temp.) */
 #endif
-#ifndef IPPROTO_IGRP
-#define	IPPROTO_IGRP		88		/* Cisco/GXS IGRP */
+#ifndef IPPROTO_EIGRP
+#define	IPPROTO_EIGRP		88		/* Cisco/GXS IGRP */
 #endif
 #ifndef IPPROTO_OSPF
 #define IPPROTO_OSPF		89
@@ -129,6 +134,9 @@
 #endif
 #ifndef IPPROTO_VRRP
 #define IPPROTO_VRRP		112
+#endif
+#ifndef IPPROTO_PGM
+#define IPPROTO_PGM             113
 #endif
 #ifndef IPPROTO_SCTP
 #define IPPROTO_SCTP		132

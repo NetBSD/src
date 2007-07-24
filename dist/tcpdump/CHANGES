@@ -1,4 +1,134 @@
-Header: /tcpdump/master/tcpdump/CHANGES,v 1.84.2.3 2004/03/30 14:36:24 mcr Exp
+Header: /tcpdump/master/tcpdump/CHANGES,v 1.87.2.14 2007/07/24 02:17:13 mcr Exp
+
+Wed.	July 23, 2007.  mcr@xelerance.com.  Summary for 0.9.7 libpcap release
+
+    	NFS: Print unsigned values as such. 
+	RX: parse safely.
+	BGP: fixes for IPv6-less builds.
+	801.1ag: use standard codepoint.
+	use /dev/bpf on systems with such a device.
+	802.11: print QoS data, avoid dissect of no-data frame, ignore padding.
+	smb: make sure that we haven't gone past the end of the captured data.
+	smb: squelch an uninitialized complaint from coverity.
+	NFS: from NetBSD; don't interpret the reply as a possible NFS reply
+		if it got MSG_DENIED.
+	BGP: don't print TLV values that didn't fit, from www.digit-labs.org. 
+	revised INSTALL.txt about libpcap dependancy.
+
+Wed.	April 25, 2007. ken@xelerance.com.  Summary for 3.9.6 tcpdump release
+	Update man page to reflect changes to libpcap
+	Changes to both TCP and IP Printer Output
+	Fix a potential buffer overflow in the 802.11 printer
+	Print basic info about a few more Cisco LAN protocols.
+	mDNS cleanup
+	ICMP MPLS rework of the extension code
+	bugfix: use the correct codepoint for the OSPF simple text auth token
+	 entry, and use safeputs to print the password.
+	Add support in pflog for additional values
+	Add support for OIF RSVP Extensions UNI 1.0 Rev. 2 and additional RSVP objects
+	Add support for the Message-id NACK c-type.
+	Add support for 802.3ah loopback ctrl msg
+	Add support for Multiple-STP as per 802.1s
+	Add support for rapid-SPT as per 802.1w
+	Add support for CFM Link-trace msg, Link-trace-Reply msg, 
+	 Sender-ID tlv, private tlv, port, interface status
+	Add support for unidirectional link detection as per
+	 http://www.ietf.org/internet-drafts/draft-foschiano-udld-02.txt
+	Add support for the olsr protocol as per RFC 3626 plus the LQ 
+	 extensions from olsr.org
+	Add support for variable-length checksum in DCCP, as per section 9 of
+	 RFC 4340.
+	Add support for per-VLAN spanning tree and per-VLAN rapid spanning tree
+	Add support for Multiple-STP as per 802.1s
+	Add support for the cisco propriatry 'dynamic trunking protocol'
+	Add support for the cisco proprietary VTP protocol
+	Update dhcp6 options table as per IETF standardization activities
+
+
+Tue.	September 19, 2006. ken@xelerance.com. Summary for 3.9.5 tcpdump release
+	
+	Fix compiling on AIX (, at end of ENUM)
+	Updated list of DNS RR typecodes
+	Use local Ethernet defs on WIN32
+	Add support for Frame-Relay ARP
+	Fixes for compiling under MSVC++
+	Add support for parsing Juniper .pcap files
+	Add support for FRF.16 Multilink Frame-Relay (DLT_MFR)
+	Rework the OSPFv3 printer
+	Fix printing for 4.4BSD/NetBSD NFS Filehandles
+	Add support for Cisco style NLPID encapsulation
+	Add cisco prop. eigrp related, extended communities
+	Add support for BGP signaled VPLS
+	Cleanup the bootp printer
+	Add support for PPP over Frame-Relay
+	Add some bounds checking to the IP options code, and clean up 
+	 the options output a bit.
+	Add additional modp groups to ISAKMP printer
+	Add support for Address-Withdraw and Label-Withdraw Msgs
+	Add support for the BFD Discriminator TLV
+	Fixes for 64bit compiling
+	Add support for PIMv2 checksum verification
+	Add support for further dissection of the IPCP Compression Option
+	Add support for Cisco's proposed VQP protocol
+	Add basic support for keyed authentication TCP option
+	Lots of minor cosmetic changes to output printers
+
+
+Mon. 	September 19, 2005.  ken@xelerance.com. Summary for 3.9.4 tcpdump release
+	Decoder support for more Juniper link-layer types
+	Fix a potential buffer overflow (although it can't occur in
+		practice).
+	Fix the handling of unknown management frame types in the 802.11
+		printer.
+	Add FRF.16 support, fix various Frame Relay bugs.
+	Add support for RSVP integrity objects, update fast-reroute
+		object printer to latest spec.
+	Clean up documentation of vlan filter expression, document mpls
+		filter expression.
+	Document new pppoed and pppoes filter expressions.
+	Update diffserver-TE codepoints as per RFC 4124.
+	Spelling fixes in ICMPv6.
+	Don't require any fields other than flags to be present in IS-IS
+		restart signaling TLVs, and only print the system ID in
+		those TLVs as system IDs, not as node IDs.
+	Support for DCCP.
+
+Tue. 	July 5, 2005.  ken@xelerance.com. Summary for 3.9.3 tcpdump release
+
+	Option to chroot() when dropping privs
+	Fixes for compiling on nearly every platform,
+		including improved 64bit support
+	Many new testcases
+	Support for sending packets
+	Many compliation fixes on most platforms
+	Fixes for recent version of GCC to eliminate warnings
+	Improved Unicode support
+
+	Decoders & DLT Changes, Updates and New:
+		AES ESP support
+		Juniper ATM, FRF.15, FRF.16, PPPoE,
+			ML-FR, ML-PIC, ML-PPP, PL-PPP, LS-PIC
+			GGSN,ES,MONITOR,SERVICES
+		L2VPN
+		Axent Raptor/Symantec Firewall
+		TCP-MD5 (RFC 2385)
+		ESP-in-UDP (RFC 3948)
+		ATM OAM
+		LMP, LMP Service Discovery
+		IP over FC
+		IP over IEEE 1394
+		BACnet MS/TP
+		SS7
+		LDP over TCP
+		LACP, MARKER as per 802.3ad
+		PGM (RFC 3208)
+		LSP-PING
+		G.7041/Y.1303 Generic Framing Procedure
+		EIGRP-IP, EIGRP-IPX
+		ICMP6
+		Radio - via radiotap
+		DHCPv6
+		HDLC over PPP
 
 Tue.   March 30, 2004. mcr@sandelman.ottawa.on.ca. Summary for 3.8.3 release
 
@@ -29,25 +159,25 @@ Wed.   November 12, 2003. mcr@sandelman.ottawa.on.ca. Summary for 3.8 release
 	changed syntax of -E argument so that multiple SAs can be decrypted
 	fixes for Digital Unix headers and Documentation
 	__attribute__ fixes
-	CDP changes from Terry Kennedy <terry@tmk.com>.	
-	IPv6 mobility updates from Kazushi Sugyo <sugyo@pb.jp.nec.com> 
+	CDP changes from Terry Kennedy <terry@tmk.com>.
+	IPv6 mobility updates from Kazushi Sugyo <sugyo@pb.jp.nec.com>
 	Fixes for ASN.1 decoder for 2.100.3 forms.
 	Added a count of packets received and processed to clarify numbers.
 	Incorporated WinDUMP patches for Win32 builds.
 	PPPoE payload length headers.
 	Fixes for HP C compiler builds.
 	Use new pcap_breakloop() and pcap_findalldevs() if we can.
-	BGP output split into multiple lines.	
+	BGP output split into multiple lines.
 	Fixes to 802.11 decoding.
 	Fixes to PIM decoder.
 	SuperH is a CPU that can't handle unaligned access. Many fixes for
 		unaligned access work.
 	Fixes to Frame-Relay decoder for Q.933/922 frames.
 	Clarified when Solaris can do captures as non-root.
-	Added tests/ subdir for examples/regression tests.	
+	Added tests/ subdir for examples/regression tests.
 	New -U flag.	-flush stdout after every packet
 	New -A flag	-print ascii only
-	support for decoding IS-IS inside Cisco HDLC Frames	
+	support for decoding IS-IS inside Cisco HDLC Frames
 	more verbosity for tftp decoder
 	mDNS decoder
 	new BFD decoder
@@ -55,7 +185,7 @@ Wed.   November 12, 2003. mcr@sandelman.ottawa.on.ca. Summary for 3.8 release
 	RFC 3561 AODV support.
 	UDP/TCP pseudo-checksum properly for source-route options.
 	sanitized all files to modified BSD license
-	Add support for RFC 2625 IP-over-Fibre Channel.	
+	Add support for RFC 2625 IP-over-Fibre Channel.
 	fixes for DECnet support.
 	Support RFC 2684 bridging of Ethernet, 802.5 Token Ring, and FDDI.
 	RFC 2684 encapsulation of BPDUs.
@@ -86,18 +216,18 @@ see http://www.tcpdump.org/cvs-log/2002-01-21.10:16:48.html for commit log.
 	Better OSI/802.2 support on Linux.
 	IEEE 802.11 support, from clenahan@fortresstech.com, achirica@ttd.net.
 	LLC SAP support for FDDI/token ring/RFC-1483 style ATM
-	BXXP protocol was replaced by the BEEP protocol; 
+	BXXP protocol was replaced by the BEEP protocol;
 	improvements to SNAP demux.
 	Changes to "any" interface documentation.
 	Documentation on pcap_stats() counters.
 	Fix a memory leak found by Miklos Szeredi - pcap_ether_aton().
 	Added MPLS encapsulation decoding per RFC3032.
 	DNS dissector handles TKEY, TSIG and IXFR.
-	adaptive SLIP interface patch from Igor Khristophorov <igor@atdot.org> 
-	SMB printing has much improved bounds checks 
+	adaptive SLIP interface patch from Igor Khristophorov <igor@atdot.org>
+	SMB printing has much improved bounds checks
 	OUI 0x0000f8 decoded as encapsulated ethernet for Cisco-custom bridging
 	Zephyr support, from Nickolai Zeldovich <kolya@MIT.EDU>.
-	Solaris - devices with digits in them. Stefan Hudson <hudson@mbay.net> 
+	Solaris - devices with digits in them. Stefan Hudson <hudson@mbay.net>
 	IPX socket 0x85be is for Cisco EIGRP over IPX.
 	Improvements to fragmented ESP handling.
 	SCTP support from Armando L. Caro Jr. <acaro@mail.eecis.udel.edu>
@@ -105,7 +235,7 @@ see http://www.tcpdump.org/cvs-log/2002-01-21.10:16:48.html for commit log.
 	Added a "netbeui" keyword, which selects NetBEUI packets.
 	IPv6 ND improvements, MobileIP dissector, 2292bis-02 for RA option.
 	Handle ARPHDR_HDLC from Marcus Felipe Pereira <marcus@task.com.br>.
-	Handle IPX socket 0x553 -> NetBIOS-over-IPX socket, "nwlink-dgm" 
+	Handle IPX socket 0x553 -> NetBIOS-over-IPX socket, "nwlink-dgm"
 	Better Linux libc5 compat.
 	BIND9 lwres dissector added.
 	MIPS and SPARC get strict alignment macros (affects print-bgp.c)
@@ -123,8 +253,8 @@ see http://www.tcpdump.org/cvs-log/2002-01-21.10:16:48.html for commit log.
 	cjclark@alum.mit.edu: print the IP proto for non-initial fragments.
 	LLC frames with a DSAP and LSAP of 0xe0 are IPX frames.
 	Linux cooked frames with a type value of LINUX_SLL_P_802_3 are IPX.
-	captures on the "any" device won't be done in promiscuous mode	
-	Token Ring support on DLPI - Onno van der Linden <onno@simplex.nl> 
+	captures on the "any" device won't be done in promiscuous mode
+	Token Ring support on DLPI - Onno van der Linden <onno@simplex.nl>
 	ARCNet support, from NetBSD.
 	HSRP dissector, from Julian Cowley <julian@lava.net>.
 	Handle (GRE-encapsulated) PPTP
@@ -155,7 +285,7 @@ Tuesday January 9, 2001. mcr@sandelman.ottawa.on.ca. Summary for 3.6 release
 
 	Updated autoconf stock files.
 
-	IPv6 improvements: dhcp (draft-15), mobile-ip6, ppp, ospf6, 
+	IPv6 improvements: dhcp (draft-15), mobile-ip6, ppp, ospf6,
 
 	Added dissector support for: ISOCLNS, Token Ring, IGMPv3, bxxp,
 		timed, vrrp, radius, chdlc, cnfp, cdp, IEEE802.1d, raw-AppleTalk
@@ -168,7 +298,7 @@ Tuesday January 9, 2001. mcr@sandelman.ottawa.on.ca. Summary for 3.6 release
 	HP-UX 11.0 -- find the right dlpi device.
 	Solaris 8 - IPv6 works
 	Linux - Added support for an "any" device to capture on all interfaces
-	
+
 	Security fixes: buffer overrun audit done. Strcpy replaced with
 		strlcpy, sprintf replaced with snprintf.
 	Look for lex problems, and warn about them.
@@ -483,7 +613,7 @@ v3.1 Thu Jun 13 20:59:32 PDT 1996
 
 - Don't checksum ip header if we don't have all of it. Thanks to John
   Hawkinson (jhawk@mit.edu).
- 
+
 - Print out hostnames if possible in egp printer. Thanks to Jeffrey
   Honig (jhc@bsdi.com)
 
