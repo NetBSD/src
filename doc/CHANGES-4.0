@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.216 2007/07/24 10:29:39 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.217 2007/07/24 17:38:43 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8006,3 +8006,16 @@ sys/dev/usb/usb_subr.c				1.148
 
 	Fix typo that prevents port reset after several retries.
 	[mlelstv, ticket #780]
+
+distrib/sets/lists/comp/mi			1.1029
+
+	add new man pages.
+	[tron, ticket #789]
+
+distrib/notes/common/legal.common		1.45
+distrib/notes/common/legal.common		1.46
+
+	Add myself.
+
+	Move my entry after the ones sorted in alphabetical order.
+	[xtraeme, ticket #788]
