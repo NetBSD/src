@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2007/05/28 12:06:42 tls Exp $	
+#	$NetBSD: Makefile,v 1.45 2007/07/24 12:01:00 drochner Exp $	
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,9 @@ SRCS=	addrtoname.c cpack.c gmpls.c gmt2local.c machdep.c oui.c parsenfsfh.c \
 	print-telnet.c print-tftp.c print-timed.c print-token.c \
 	print-udp.c print-vjc.c print-vrrp.c print-wb.c print-zephyr.c \
 	setsignal.c smbutil.c tcpdump.c util.c
+SRCS+=	print-eigrp.c l2vpn.c print-slow.c print-eap.c nlpid.c print-dccp.c \
+	print-pgm.c ipproto.c print-syslog.c print-sip.c print-lmp.c \
+	print-lspping.c print-symantec.c print-juniper.c af.c print-olsr.c
 
 SRCS+=	bpf_dump.c
 
@@ -65,6 +68,7 @@ CPPFLAGS+= \
 	-DHAVE_PCAP_LIST_DATALINKS=1 -DHAVE_PCAP_DATALINK_NAME_TO_VAL=1 \
 	-DHAVE_PCAP_FINDALLDEVS=1 -DHAVE_PCAP_DUMP_FLUSH=1 \
 	-DHAVE_PCAP_DEBUG=1
+CPPFLAGS+= -DHAVE_STRUCT_ETHER_ADDR
 CPPFLAGS+=-DLBL_ALIGN=1
 CPPFLAGS+=-DTCPDUMP_DO_SMB=1
 CPPFLAGS+=-D_U_="__attribute__((unused))"
