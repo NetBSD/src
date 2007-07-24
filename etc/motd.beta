@@ -1,0 +1,16 @@
+NetBSD ?.? (UNKNOWN)
+
+Welcome to NetBSD!
+
+This system is running a beta release of the NetBSD operating system, aimed
+at stabilizing the next formal release.  It is close to formal release quality,
+but may still contain bugs, even serious ones.  Please bear this in mind and
+use the system with care.
+
+You are encouraged to test this version as thoroughly as possible.  Should you
+encounter any problem, please report it back to the development team using the
+send-pr(1) utility (requires a working MTA).  If yours is not properly set up,
+use the web interface at: http://www.netbsd.org/support/send-pr.html
+
+Thank you for helping us test and improve this beta NetBSD release.
+
