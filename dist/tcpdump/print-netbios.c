@@ -1,4 +1,4 @@
-/*	$NetBSD: print-netbios.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-netbios.c,v 1.4 2007/07/24 11:53:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -28,9 +28,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-netbios.c,v 1.18.2.2 2003/11/16 08:51:35 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-netbios.c,v 1.20 2003/11/16 09:36:29 guy Exp";
 #else
-__RCSID("$NetBSD: print-netbios.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-netbios.c,v 1.4 2007/07/24 11:53:46 drochner Exp $");
 #endif
 #endif
 

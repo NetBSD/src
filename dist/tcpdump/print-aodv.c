@@ -1,4 +1,4 @@
-/*	$NetBSD: print-aodv.c,v 1.1.1.2 2007/07/24 11:42:53 drochner Exp $	*/
+/*	$NetBSD: print-aodv.c,v 1.2 2007/07/24 11:53:42 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Bruce M. Simpson <bms@spc.org>
@@ -32,9 +32,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-aodv.c,v 1.11 2004/03/24 00:30:19 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-aodv.c,v 1.2 2007/07/24 11:53:42 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: gmpls.h,v 1.1.1.2 2007/07/24 11:43:14 drochner Exp $	*/
+/*	$NetBSD: gmpls.h,v 1.2 2007/07/24 11:53:38 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/gmpls.h,v 1.3.2.1 2005/05/19 06:44:03 guy Exp (LBL) */
 /* 

@@ -1,4 +1,4 @@
-/*	$NetBSD: af.c,v 1.1.1.1 2007/07/24 11:43:01 drochner Exp $	*/
+/*	$NetBSD: af.c,v 1.2 2007/07/24 11:53:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2006 The TCPDUMP project
@@ -17,9 +17,14 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/af.c,v 1.3.2.1 2007/02/26 13:33:17 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: af.c,v 1.2 2007/07/24 11:53:36 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

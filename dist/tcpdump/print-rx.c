@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rx.c,v 1.8 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-rx.c,v 1.9 2007/07/24 11:53:47 drochner Exp $	*/
 
 /*
  * Copyright: (c) 2000 United States Government as represented by the
@@ -38,9 +38,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.35.2.2 2003/11/16 08:51:43 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.37.2.2 2007/06/15 19:43:15 guy Exp";
 #else
-__RCSID("$NetBSD: print-rx.c,v 1.8 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.9 2007/07/24 11:53:47 drochner Exp $");
 #endif
 #endif
 
@@ -2309,6 +2309,7 @@ rx_ack_print(register const u_char *bp, int length)
 {
 	struct rx_ackPacket *rxa;
 	int i, start, last;
+	u_int32_t firstPacket;
 
 	if (length < (int)sizeof(struct rx_header))
 		return;
@@ -2337,8 +2338,9 @@ rx_ack_print(register const u_char *bp, int length)
 		       (int) EXTRACT_16BITS(&rxa->bufferSpace),
 		       (int) EXTRACT_16BITS(&rxa->maxSkew));
 
+	firstPacket = EXTRACT_32BITS(&rxa->firstPacket);
 	printf(" first %d serial %d reason %s",
-	       EXTRACT_32BITS(&rxa->firstPacket), EXTRACT_32BITS(&rxa->serial),
+	       firstPacket, EXTRACT_32BITS(&rxa->serial),
 	       tok2str(rx_ack_reasons, "#%d", (int) rxa->reason));
 
 	/*
@@ -2381,7 +2383,7 @@ rx_ack_print(register const u_char *bp, int length)
 
 				if (last == -2) {
 					printf(" acked %d",
-					       rxa->firstPacket + i);
+					       firstPacket + i);
 					start = i;
 				}
 
@@ -2395,7 +2397,7 @@ rx_ack_print(register const u_char *bp, int length)
 				 */
 
 				else if (last != i - 1) {
-					printf(",%d", rxa->firstPacket + i);
+					printf(",%d", firstPacket + i);
 					start = i;
 				}
 
@@ -2421,7 +2423,7 @@ rx_ack_print(register const u_char *bp, int length)
 				 * range.
 				 */
 			} else if (last == i - 1 && start != last)
-				printf("-%d", rxa->firstPacket + i - 1);
+				printf("-%d", firstPacket + i - 1);
 
 		/*
 		 * So, what's going on here?  We ran off the end of the
@@ -2435,7 +2437,7 @@ rx_ack_print(register const u_char *bp, int length)
 		 */
 
 		if (last == i - 1 && start != last)
-			printf("-%d", rxa->firstPacket + i - 1);
+			printf("-%d", firstPacket + i - 1);
 
 		/*
 		 * Same as above, just without comments
@@ -2445,18 +2447,18 @@ rx_ack_print(register const u_char *bp, int length)
 			if (rxa->acks[i] == RX_ACK_TYPE_NACK) {
 				if (last == -2) {
 					printf(" nacked %d",
-					       rxa->firstPacket + i);
+					       firstPacket + i);
 					start = i;
 				} else if (last != i - 1) {
-					printf(",%d", rxa->firstPacket + i);
+					printf(",%d", firstPacket + i);
 					start = i;
 				}
 				last = i;
 			} else if (last == i - 1 && start != last)
-				printf("-%d", rxa->firstPacket + i - 1);
+				printf("-%d", firstPacket + i - 1);
 
 		if (last == i - 1 && start != last)
-			printf("-%d", rxa->firstPacket + i - 1);
+			printf("-%d", firstPacket + i - 1);
 
 		bp += rxa->nAcks;
 	}

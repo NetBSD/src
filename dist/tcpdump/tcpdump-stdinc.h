@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump-stdinc.h,v 1.1.1.2 2007/07/24 11:42:53 drochner Exp $	*/
+/*	$NetBSD: tcpdump-stdinc.h,v 1.2 2007/07/24 11:53:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 - 2003

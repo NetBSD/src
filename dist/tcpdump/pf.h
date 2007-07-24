@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.h,v 1.1.1.2 2007/07/24 11:43:05 drochner Exp $	*/
+/*	$NetBSD: pf.h,v 1.2 2007/07/24 11:53:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier

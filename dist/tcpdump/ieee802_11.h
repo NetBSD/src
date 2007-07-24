@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee802_11.h,v 1.1.1.3 2007/07/24 11:42:52 drochner Exp $	*/
+/*	$NetBSD: ieee802_11.h,v 1.2 2007/07/24 11:53:39 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/ieee802_11.h,v 1.9.4.3 2007/07/22 20:01:16 guy Exp (LBL) */
 /*

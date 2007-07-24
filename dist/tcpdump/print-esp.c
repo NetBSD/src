@@ -1,4 +1,4 @@
-/*	$NetBSD: print-esp.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-esp.c,v 1.7 2007/07/24 11:53:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.44.2.4 2003/11/19 05:36:40 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.55.2.1 2005/04/21 06:44:57 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-esp.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-esp.c,v 1.7 2007/07/24 11:53:43 drochner Exp $");
 #endif
 #endif
 
@@ -55,11 +55,7 @@ __RCSID("$NetBSD: print-esp.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $");
 #include "ip6.h"
 #endif
 
-#if defined(__MINGW32__) || defined(__WATCOMC__)
-extern char *strsep(char **stringp, const char *delim); /* Missing/strsep.c */
-#endif
-
-#include "interface.h"
+#include "netdissect.h"
 #include "addrtoname.h"
 #include "extract.h"
 
@@ -84,14 +80,12 @@ struct sa_list {
 	const EVP_CIPHER *evp;
 	int		ivlen;
 	int		authlen;
-	char		secret[256];  /* is that big enough for all secrets? */
+	u_char		secret[256];  /* is that big enough for all secrets? */
 	int		secretlen;
 };
 
-static struct sa_list *sa_list_head = NULL;
-static struct sa_list *sa_default = NULL;
-
-static void esp_print_addsa(struct sa_list *sa, int sa_def)
+static void esp_print_addsa(netdissect_options *ndo,
+			    struct sa_list *sa, int sa_def)
 {
 	/* copy the "sa" */
 
@@ -99,19 +93,19 @@ static void esp_print_addsa(struct sa_list *sa, int sa_def)
 
 	nsa = (struct sa_list *)malloc(sizeof(struct sa_list));
 	if (nsa == NULL)
-		error("ran out of memory to allocate sa structure");
+		(*ndo->ndo_error)(ndo, "ran out of memory to allocate sa structure");
 
 	*nsa = *sa;
 
 	if (sa_def)
-		sa_default = nsa;
+		ndo->ndo_sa_default = nsa;
 
-	nsa->next = sa_list_head;
-	sa_list_head = nsa;
+	nsa->next = ndo->ndo_sa_list_head;
+	ndo->ndo_sa_list_head = nsa;
 }
 
 
-static int hexdigit(char hex)
+static u_int hexdigit(netdissect_options *ndo, char hex)
 {
 	if (hex >= '0' && hex <= '9')
 		return (hex - '0');
@@ -120,16 +114,16 @@ static int hexdigit(char hex)
 	else if (hex >= 'a' && hex <= 'f')
 		return (hex - 'a' + 10);
 	else {
-		printf("invalid hex digit %c in espsecret\n", hex);
+		(*ndo->ndo_error)(ndo, "invalid hex digit %c in espsecret\n", hex);
 		return 0;
 	}
 }
 
-static int hex2byte(char *hexstring)
+static u_int hex2byte(netdissect_options *ndo, char *hexstring)
 {
-	int byte;
+	u_int byte;
 
-	byte = (hexdigit(hexstring[0]) << 4) + hexdigit(hexstring[1]);
+	byte = (hexdigit(ndo, hexstring[0]) << 4) + hexdigit(ndo, hexstring[1]);
 	return byte;
 }
 
@@ -140,7 +134,7 @@ static int hex2byte(char *hexstring)
  * causes us to go read from this file instead.
  *
  */
-static void esp_print_decode_onesecret(char *line)
+static void esp_print_decode_onesecret(netdissect_options *ndo, char *line)
 {
 	struct sa_list sa1;
 	int sa_def;
@@ -182,7 +176,7 @@ static void esp_print_decode_onesecret(char *line)
 			if (fileline[0] == '#') continue;
 			if (fileline[0] == '\0') continue;
 
-			esp_print_decode_onesecret(fileline);
+			esp_print_decode_onesecret(ndo, fileline);
 		}
 		fclose(secretfile);
 
@@ -201,7 +195,7 @@ static void esp_print_decode_onesecret(char *line)
 
 		spino = strtoul(spistr, &foo, 0);
 		if (spistr == foo || !spikey) {
-			printf("print_esp: failed to decode spi# %s\n", foo);
+			(*ndo->ndo_warning)(ndo, "print_esp: failed to decode spi# %s\n", foo);
 			return;
 		}
 
@@ -223,18 +217,17 @@ static void esp_print_decode_onesecret(char *line)
 #endif
 			sin->sin_family = AF_INET;
 		} else {
-			printf("print_esp: can not decode IP# %s\n", spikey);
+			(*ndo->ndo_warning)(ndo, "print_esp: can not decode IP# %s\n", spikey);
 			return;
 		}
 	}
 
 	if (decode) {
 		char *colon, *p;
-		char  espsecret_key[256];
+		u_char espsecret_key[256];
 		int len;
 		size_t i;
 		const EVP_CIPHER *evp;
-		int ivlen = 8;
 		int authlen = 0;
 
 		/* skip any blank spaces */
@@ -243,7 +236,7 @@ static void esp_print_decode_onesecret(char *line)
 
 		colon = strchr(decode, ':');
 		if (colon == NULL) {
-			printf("failed to decode espsecret: %s\n", decode);
+			(*ndo->ndo_warning)(ndo, "failed to decode espsecret: %s\n", decode);
 			return;
 		}
 		*colon = '\0';
@@ -263,7 +256,7 @@ static void esp_print_decode_onesecret(char *line)
 		}
 		evp = EVP_get_cipherbyname(decode);
 		if (!evp) {
-			printf("failed to find cipher algo %s\n", decode);
+			(*ndo->ndo_warning)(ndo, "failed to find cipher algo %s\n", decode);
 			sa1.evp = NULL;
 			sa1.authlen = 0;
 			sa1.ivlen = 0;
@@ -272,7 +265,7 @@ static void esp_print_decode_onesecret(char *line)
 
 		sa1.evp = evp;
 		sa1.authlen = authlen;
-		sa1.ivlen = ivlen;
+		sa1.ivlen = EVP_CIPHER_iv_length(evp);
 
 		colon++;
 		if (colon[0] == '0' && colon[1] == 'x') {
@@ -281,13 +274,13 @@ static void esp_print_decode_onesecret(char *line)
 			len = strlen(colon) / 2;
 
 			if (len > 256) {
-				printf("secret is too big: %d\n", len);
+				(*ndo->ndo_warning)(ndo, "secret is too big: %d\n", len);
 				return;
 			}
 
 			i = 0;
 			while (colon[0] != '\0' && colon[1]!='\0') {
-				espsecret_key[i] = hex2byte(colon);
+				espsecret_key[i] = hex2byte(ndo, colon);
 				colon += 2;
 				i++;
 			}
@@ -307,28 +300,28 @@ static void esp_print_decode_onesecret(char *line)
 		}
 	}
 
-	esp_print_addsa(&sa1, sa_def);
+	esp_print_addsa(ndo, &sa1, sa_def);
 }
 
-static void esp_print_decodesecret(void)
+static void esp_print_decodesecret(netdissect_options *ndo)
 {
 	char *line;
 	char *p;
 
-	p = espsecret;
+	p = ndo->ndo_espsecret;
 
-	while (espsecret && espsecret[0] != '\0') {
+	while (ndo->ndo_espsecret && ndo->ndo_espsecret[0] != '\0') {
 		/* pick out the first line or first thing until a comma */
-		if ((line = strsep(&espsecret, "\n,")) == NULL) {
-			line = espsecret;
-			espsecret = NULL;
+		if ((line = strsep(&ndo->ndo_espsecret, "\n,")) == NULL) {
+			line = ndo->ndo_espsecret;
+			ndo->ndo_espsecret = NULL;
 		}
 
-		esp_print_decode_onesecret(line);
+		esp_print_decode_onesecret(ndo, line);
 	}
 }
 
-static void esp_init(void)
+static void esp_init(netdissect_options *ndo _U_)
 {
 
 	OpenSSL_add_all_algorithms();
@@ -337,7 +330,8 @@ static void esp_init(void)
 #endif
 
 int
-esp_print(const u_char *bp, const u_char *bp2
+esp_print(netdissect_options *ndo,
+	  const u_char *bp, const int length, const u_char *bp2
 #ifndef HAVE_LIBCRYPTO
 	_U_
 #endif
@@ -364,10 +358,10 @@ esp_print(const u_char *bp, const u_char *bp2
 #endif
 	int advance;
 	int len;
-	char *secret;
+	u_char *secret;
 	int ivlen = 0;
 	u_char *ivoff;
-	const u_char *p;
+	u_char *p;
 	EVP_CIPHER_CTX ctx;
 	int blocksz;
 	static int initialized = 0;
@@ -380,7 +374,7 @@ esp_print(const u_char *bp, const u_char *bp2
 	advance = 0;
 
 	if (!initialized) {
-		esp_init();
+		esp_init(ndo);
 		initialized = 1;
 	}
 #endif
@@ -391,28 +385,28 @@ esp_print(const u_char *bp, const u_char *bp2
 #endif
 
 	/* 'ep' points to the end of available data. */
-	ep = snapend;
+	ep = ndo->ndo_snapend;
 
 	if ((u_char *)(esp + 1) >= ep) {
 		fputs("[|ESP]", stdout);
 		goto fail;
 	}
-	printf("ESP(spi=0x%08x", EXTRACT_32BITS(&esp->esp_spi));
-	printf(",seq=0x%x", EXTRACT_32BITS(&esp->esp_seq));
-	printf(")");
+	(*ndo->ndo_printf)(ndo, "ESP(spi=0x%08x", EXTRACT_32BITS(&esp->esp_spi));
+	(*ndo->ndo_printf)(ndo, ",seq=0x%x)", EXTRACT_32BITS(&esp->esp_seq));
+        (*ndo->ndo_printf)(ndo, ", length %u", length);
 
 #ifndef HAVE_LIBCRYPTO
 	goto fail;
 #else
 	/* initiailize SAs */
-	if (sa_list_head == NULL) {
-		if (!espsecret)
+	if (ndo->ndo_sa_list_head == NULL) {
+		if (!ndo->ndo_espsecret)
 			goto fail;
 
-		esp_print_decodesecret();
+		esp_print_decodesecret(ndo);
 	}
 
-	if (sa_list_head == NULL)
+	if (ndo->ndo_sa_list_head == NULL)
 		goto fail;
 
 	ip = (struct ip *)bp2;
@@ -427,7 +421,7 @@ esp_print(const u_char *bp, const u_char *bp2
 		len = sizeof(struct ip6_hdr) + EXTRACT_16BITS(&ip6->ip6_plen);
 
 		/* see if we can find the SA, and if so, decode it */
-		for (sa = sa_list_head; sa != NULL; sa = sa->next) {
+		for (sa = ndo->ndo_sa_list_head; sa != NULL; sa = sa->next) {
 			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&sa->daddr;
 			if (sa->spi == ntohl(esp->esp_spi) &&
 			    sin6->sin6_family == AF_INET6 &&
@@ -445,7 +439,7 @@ esp_print(const u_char *bp, const u_char *bp2
 		len = EXTRACT_16BITS(&ip->ip_len);
 
 		/* see if we can find the SA, and if so, decode it */
-		for (sa = sa_list_head; sa != NULL; sa = sa->next) {
+		for (sa = ndo->ndo_sa_list_head; sa != NULL; sa = sa->next) {
 			struct sockaddr_in *sin = (struct sockaddr_in *)&sa->daddr;
 			if (sa->spi == ntohl(esp->esp_spi) &&
 			    sin->sin_family == AF_INET &&
@@ -462,7 +456,7 @@ esp_print(const u_char *bp, const u_char *bp2
 	 * an unspecified one.
 	 */
 	if (sa == NULL)
-		sa = sa_default;
+		sa = ndo->ndo_sa_default;
 	
 	/* if not found fail */
 	if (sa == NULL)
@@ -480,11 +474,12 @@ esp_print(const u_char *bp, const u_char *bp2
 	ivlen = sa->ivlen;
 	secret = sa->secret;
 	espsecret_keylen = sa->secretlen;
+	ep = ep - sa->authlen;
 
 	if (sa->evp) {
 		memset(&ctx, 0, sizeof(ctx));
 		if (EVP_CipherInit(&ctx, sa->evp, secret, NULL, 0) < 0)
-			printf("espkey init failed");
+			(*ndo->ndo_warning)(ndo, "espkey init failed");
 
 		blocksz = EVP_CIPHER_CTX_block_size(&ctx);
 
@@ -496,7 +491,6 @@ esp_print(const u_char *bp, const u_char *bp2
 	} else
 		advance = sizeof(struct newesp);
 
-	ep = ep - sa->authlen;
 	/* sanity check for pad length */
 	if (ep - bp < *(ep - 2))
 		goto fail;
@@ -507,10 +501,17 @@ esp_print(const u_char *bp, const u_char *bp2
 	if (nhdr)
 		*nhdr = *(ep - 1);
 
-	printf(": ");
+	(ndo->ndo_printf)(ndo, ": ");
 	return advance;
 #endif
 
 fail:
 	return -1;
 }
+
+/*
+ * Local Variables:
+ * c-style: whitesmith
+ * c-basic-offset: 8
+ * End:
+ */

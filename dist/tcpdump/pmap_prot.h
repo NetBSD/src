@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot.h,v 1.1.1.1 2007/07/24 11:42:50 drochner Exp $	*/
+/*	$NetBSD: pmap_prot.h,v 1.2 2007/07/24 11:53:41 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/pmap_prot.h,v 1.1.2.2 2005/04/27 21:44:06 guy Exp (LBL) */
 /*

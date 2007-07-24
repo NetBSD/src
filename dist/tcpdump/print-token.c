@@ -1,4 +1,4 @@
-/*	$NetBSD: print-token.c,v 1.5 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-token.c,v 1.6 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -29,9 +29,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.22.2.2 2003/11/16 08:51:51 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.25.2.2 2005/11/13 12:13:01 guy Exp";
 #else
-__RCSID("$NetBSD: print-token.c,v 1.5 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-token.c,v 1.6 2007/07/24 11:53:48 drochner Exp $");
 #endif
 #endif
 
@@ -160,7 +160,6 @@ token_print(const u_char *p, u_int length, u_int caplen)
 	caplen -= hdr_len;
 
 	/* Frame Control field determines interpretation of packet */
-	extracted_ethertype = 0;
 	if (FRAME_TYPE(trp) == TOKEN_FC_LLC) {
 		/* Try to print the LLC-layer header & higher layers */
 		if (llc_print(p, length, caplen, ESRC(&ehdr), EDST(&ehdr),
@@ -174,7 +173,7 @@ token_print(const u_char *p, u_int length, u_int caplen)
 				printf("(LLC %s) ",
 			etherproto_string(htons(extracted_ethertype)));
 			}
-			if (!xflag && !qflag)
+			if (!suppress_default_print)
 				default_print(p, caplen);
 		}
 	} else {
@@ -183,7 +182,7 @@ token_print(const u_char *p, u_int length, u_int caplen)
 		if (!eflag)
 			token_hdr_print(trp, length + TOKEN_HDRLEN + route_len,
 			    ESRC(&ehdr), EDST(&ehdr));
-		if (!xflag && !qflag)
+		if (!suppress_default_print)
 			default_print(p, caplen);
 	}
 	return (hdr_len);
@@ -192,7 +191,7 @@ token_print(const u_char *p, u_int length, u_int caplen)
 /*
  * This is the top level routine of the printer.  'p' points
  * to the TR header of the packet, 'h->ts' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
 u_int

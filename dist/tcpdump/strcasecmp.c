@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.4 2007/07/24 11:53:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -20,9 +20,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/strcasecmp.c,v 1.4.2.2 2003/11/16 08:51:57 guy Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/strcasecmp.c,v 1.6 2003/11/16 09:36:43 guy Exp";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.4 2007/07/24 11:53:49 drochner Exp $");
 #endif
 #endif
 

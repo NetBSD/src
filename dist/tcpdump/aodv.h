@@ -1,4 +1,4 @@
-/*	$NetBSD: aodv.h,v 1.1.1.1 2004/09/27 17:06:30 dyoung Exp $	*/
+/*	$NetBSD: aodv.h,v 1.2 2007/07/24 11:53:36 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/aodv.h,v 1.3 2003/09/13 01:34:42 guy Exp (LBL) */
 /*

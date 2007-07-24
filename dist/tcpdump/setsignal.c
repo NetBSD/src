@@ -1,4 +1,4 @@
-/*	$NetBSD: setsignal.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: setsignal.c,v 1.4 2007/07/24 11:53:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/setsignal.c,v 1.9.2.2 2003/11/16 08:51:56 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/setsignal.c,v 1.11 2003/11/16 09:36:42 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: setsignal.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: setsignal.c,v 1.4 2007/07/24 11:53:49 drochner Exp $");
 #endif
 #endif
 

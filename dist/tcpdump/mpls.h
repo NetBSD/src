@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls.h,v 1.1.1.1 2007/07/24 11:43:10 drochner Exp $	*/
+/*	$NetBSD: mpls.h,v 1.2 2007/07/24 11:53:40 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/mpls.h,v 1.1 2004/06/14 14:47:58 hannes Exp (LBL)
  * Copyright (C) 2001 WIDE Project.  All rights reserved.

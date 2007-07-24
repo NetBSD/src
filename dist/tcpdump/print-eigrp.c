@@ -1,4 +1,4 @@
-/*	$NetBSD: print-eigrp.c,v 1.1.1.1 2007/07/24 11:43:20 drochner Exp $	*/
+/*	$NetBSD: print-eigrp.c,v 1.2 2007/07/24 11:53:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2004  Hannes Gredler <hannes@tcpdump.org>
@@ -16,9 +16,14 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-eigrp.c,v 1.5.2.2 2005/05/06 02:53:41 guy Exp";
+#else
+__RCSID("$NetBSD: print-eigrp.c,v 1.2 2007/07/24 11:53:43 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

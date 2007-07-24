@@ -1,4 +1,4 @@
-/*	$NetBSD: rx.h,v 1.4 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: rx.h,v 1.5 2007/07/24 11:53:49 drochner Exp $	*/
 
 /*
  * Copyright: (c) 2000 United States Government as represented by the

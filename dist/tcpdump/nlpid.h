@@ -1,4 +1,4 @@
-/*	$NetBSD: nlpid.h,v 1.1.1.1 2007/07/24 11:42:51 drochner Exp $	*/
+/*	$NetBSD: nlpid.h,v 1.2 2007/07/24 11:53:41 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/nlpid.h,v 1.4 2004/10/19 15:27:55 hannes Exp (LBL) */
 /* 

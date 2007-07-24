@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.1.1.1 2007/07/24 11:42:54 drochner Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.2 2007/07/24 11:53:49 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/rpc_msg.h,v 1.1.2.1 2005/04/27 21:44:07 guy Exp (LBL) */
 /*

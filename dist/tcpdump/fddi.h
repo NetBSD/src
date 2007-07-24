@@ -1,4 +1,4 @@
-/*	$NetBSD: fddi.h,v 1.1.1.2 2004/09/27 17:06:46 dyoung Exp $	*/
+/*	$NetBSD: fddi.h,v 1.2 2007/07/24 11:53:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996

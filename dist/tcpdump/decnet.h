@@ -1,4 +1,4 @@
-/*	$NetBSD: decnet.h,v 1.1.1.2 2004/09/27 17:06:44 dyoung Exp $	*/
+/*	$NetBSD: decnet.h,v 1.2 2007/07/24 11:53:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1994, 1996

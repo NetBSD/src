@@ -1,4 +1,4 @@
-/*	$NetBSD: print-lwres.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-lwres.c,v 1.5 2007/07/24 11:53:45 drochner Exp $	*/
 
 /*
  * Copyright (C) 2001 WIDE Project.
@@ -33,9 +33,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-lwres.c,v 1.10.2.3 2004/03/24 01:54:58 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-lwres.c,v 1.13 2004/03/24 01:54:29 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-lwres.c,v 1.4 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-lwres.c,v 1.5 2007/07/24 11:53:45 drochner Exp $");
 #endif
 #endif
 
