@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ap1394.c,v 1.1.1.1 2004/09/27 17:06:54 dyoung Exp $	*/
+/*	$NetBSD: print-ap1394.c,v 1.1.1.2 2007/07/24 11:42:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ap1394.c,v 1.1.2.1 2004/03/17 22:15:53 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ap1394.c,v 1.3.2.1 2005/07/07 01:24:33 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -79,7 +79,7 @@ ap1394_hdr_print(register const u_char *bp, u_int length)
 /*
  * This is the top level routine of the printer.  'p' points
  * to the ether header of the packet, 'h->ts' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
 u_int
@@ -113,7 +113,7 @@ ap1394_if_print(const struct pcap_pkthdr *h, const u_char *p)
 		if (!eflag)
 			ap1394_hdr_print((u_char *)fp, length + FIREWIRE_HDRLEN);
 
-		if (!xflag && !qflag)
+		if (!suppress_default_print)
 			default_print(p, caplen);
 	} 
 

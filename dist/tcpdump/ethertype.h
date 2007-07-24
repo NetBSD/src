@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertype.h,v 1.1.1.2 2004/09/27 17:06:44 dyoung Exp $	*/
+/*	$NetBSD: ethertype.h,v 1.1.1.3 2007/07/24 11:43:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/ethertype.h,v 1.20 2003/07/01 19:10:26 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/ethertype.h,v 1.24.2.1 2005/07/10 14:51:10 hannes Exp (LBL)
  */
 
 /*
@@ -35,6 +35,13 @@
  * <netinet/if_ether.h> if all it needs are ETHERTYPE_ values.
  */
 
+#ifndef ETHERTYPE_LEN
+#define ETHERTYPE_LEN           2
+#endif
+
+#ifndef ETHERTYPE_GRE_ISO
+#define ETHERTYPE_GRE_ISO       0x00FE  /* not really an ethertype only used in GRE */
+#endif
 #ifndef ETHERTYPE_PUP
 #define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
 #endif
@@ -104,6 +111,9 @@
 #ifndef ETHERTYPE_PPP
 #define	ETHERTYPE_PPP		0x880b
 #endif
+#ifndef ETHERTYPE_SLOW
+#define	ETHERTYPE_SLOW		0x8809
+#endif
 #ifndef	ETHERTYPE_MPLS
 #define	ETHERTYPE_MPLS		0x8847
 #endif
@@ -115,6 +125,12 @@
 #endif
 #ifndef ETHERTYPE_PPPOES
 #define ETHERTYPE_PPPOES	0x8864
+#endif
+#ifndef ETHERTYPE_JUMBO
+#define ETHERTYPE_JUMBO         0x8870
+#endif
+#ifndef ETHERTYPE_EAPOL
+#define ETHERTYPE_EAPOL  	0x888e
 #endif
 #ifndef	ETHERTYPE_LOOPBACK
 #define	ETHERTYPE_LOOPBACK	0x9000
