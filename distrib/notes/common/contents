@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.125 2007/05/26 20:45:12 bouyer Exp $
+.\"	$NetBSD: contents,v 1.126 2007/07/24 10:22:02 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,29 +118,13 @@ A version of
 .Li GENERIC
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
-.			It Pa netbsd-GENERIC_TINY.gz
-A version of
-.Li GENERIC
-intended to run on machines with less than 8 MB.
-.			It Pa netbsd-GENERIC_PS2TINY.gz
-A version of
-.Li GENERIC
-intended to run on IBM PS/2 machines.
 .
 .			It Pa netbsd-INSTALL.gz
-A somewhat smaller kernel, which you can use to boot the system
+A somewhat smaller installation kernel, which you can use to boot the system
 on memory-tight systems.
 This is the same kernel as present on the miniroot and on many
 install floppies.
 .
-.			It Pa netbsd-INSTALL_TINY.gz
-A version of
-.Li INSTALL
-intended to run on machines with less than 8 MB.
-.			It Pa netbsd-INSTALL_SMALL.gz
-A version of
-.Li INSTALL
-intended to fit on 5.25"/1.2 MB diskettes.
 .			It Pa netbsd-INSTALL_LAPTOP.gz
 A version of
 .Li INSTALL
@@ -152,10 +136,6 @@ A version of
 that has ACPI and some large disk and network driver, to allow installing
 on the newest machines.
 This is the default boot kernel from the ISO images.
-.			It Pa netbsd-INSTALL_PS2.gz
-A version of
-.Li INSTALL
-that has MCA stuff enabled to allow installing on IBM PS/2 machines.
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
