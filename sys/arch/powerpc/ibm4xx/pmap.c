@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2007/03/12 18:18:26 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2007/07/24 15:19:09 hannken Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2007/03/12 18:18:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2007/07/24 15:19:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -181,7 +181,7 @@ static inline char *pa_to_attr(paddr_t);
 static inline volatile u_int *pte_find(struct pmap *, vaddr_t);
 static inline int pte_enter(struct pmap *, vaddr_t, u_int);
 
-static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, bool);
+static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, int);
 static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
 
 static int ppc4xx_tlb_size_mask(size_t, int *, int *);
@@ -717,10 +717,10 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 }
 
 /*
- * This returns whether this is the first mapping of a page.
+ * This returns != 0 on success.
  */
 static inline int
-pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, bool wired)
+pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, int flags)
 {
 	struct pv_entry *pv, *npv = NULL;
 	int s;
@@ -742,14 +742,20 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, bool wired)
 		 * There is at least one other VA mapping this page.
 		 * Place this entry after the header.
 		 */
-		npv = pool_get(&pv_pool, PR_WAITOK);
+		npv = pool_get(&pv_pool, PR_NOWAIT);
+		if (npv == NULL) {
+			if ((flags & PMAP_CANFAIL) == 0)
+				panic("pmap_enter_pv: failed");
+			splx(s);
+			return 0;
+		}
 		npv->pv_va = va;
 		npv->pv_pm = pm;
 		npv->pv_next = pv->pv_next;
 		pv->pv_next = npv;
 		pv = npv;
 	}
-	if (wired) {
+	if (flags & PMAP_WIRED) {
 		PV_WIRE(pv);
 		pm->pm_stats.wired_count++;
 	}
@@ -858,7 +864,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pmap_initialized && managed) {
 		char *attr;
 
-		if (!pmap_enter_pv(pm, va, pa, flags & PMAP_WIRED)) {
+		if (!pmap_enter_pv(pm, va, pa, flags)) {
 			/* Could not enter pv on a managed page */
 			return 1;
 		}
