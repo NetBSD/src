@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.2 2006/01/14 23:05:28 is Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2007/07/24 10:49:24 pavel Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=			
 

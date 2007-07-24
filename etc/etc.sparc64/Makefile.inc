@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.26 2004/01/03 13:58:26 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2007/07/24 10:49:28 pavel Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
 # Specify whether or not to build 32-bit libs.
 MK32BITLIBS?=no
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC
 

@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.5 2006/01/22 14:44:16 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2007/07/24 10:49:27 pavel Exp $
 #
 #	etc.newsmips/Makefile.inc -- newsmips-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC
 

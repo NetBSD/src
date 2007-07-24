@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.8 2004/05/21 15:32:29 he Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2007/07/24 10:49:26 pavel Exp $
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC VME147 VME162 VME167 VME172 VME177
 

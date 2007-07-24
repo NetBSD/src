@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.16 2002/12/17 15:55:01 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2007/07/24 10:49:28 pavel Exp $
 #
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC GENERIC3X DISKLESS DISKLESS3X
 

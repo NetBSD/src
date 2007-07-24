@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.7 2007/03/06 21:47:46 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2007/07/24 10:49:23 pavel Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC GENERIC.MP
 

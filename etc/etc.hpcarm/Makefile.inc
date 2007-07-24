@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.5 2005/12/30 11:37:06 rjs Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2007/07/24 10:49:25 pavel Exp $
 #
 #	etc.hpcarm/Makefile.inc -- hpcarm-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		IPAQ JORNADA720 INSTALL_IPAQ

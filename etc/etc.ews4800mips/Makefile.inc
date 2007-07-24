@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.2 2006/01/09 01:36:29 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2007/07/24 10:49:25 pavel Exp $
 #
 #	etc.ews4800mips/Makefile.inc --
 #		ews4800mips-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC
 

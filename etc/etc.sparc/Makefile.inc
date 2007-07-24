@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.39 2003/12/15 19:36:16 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.40 2007/07/24 10:49:28 pavel Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC GENERIC_SCSI3 GENERIC_SUN4U GENERIC.MP	\
 			MRCOFFEE_OFW MRCOFFEE KRUPS

@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.18 2007/03/06 21:59:40 bouyer Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2007/07/24 10:49:26 pavel Exp $
 #
 #	etc.mac68k/Makefile.inc -- mac68k-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC GENERICSBC
 

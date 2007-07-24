@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.8 2003/03/01 15:36:22 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2007/07/24 10:49:23 pavel Exp $
 #
 #	etc.acorn26/Makefile.inc -- acorn26-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC FOURMEG
 

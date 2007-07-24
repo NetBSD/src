@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.5 2003/01/03 15:34:39 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2007/07/24 10:49:27 pavel Exp $
 #
 #	etc.next68k/Makefile.inc -- next68k-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC
 

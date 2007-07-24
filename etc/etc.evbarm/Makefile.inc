@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.20 2006/11/09 00:34:49 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2007/07/24 10:49:24 pavel Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms

@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.14 2005/08/07 00:21:38 chris Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2007/07/24 10:49:24 pavel Exp $
 #
 #	etc.cats/Makefile.inc -- cats-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC GENERIC.ABLE
 KERNEL_SUFFIXES=	aout
