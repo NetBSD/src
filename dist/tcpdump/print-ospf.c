@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf.c,v 1.5 2007/07/24 11:53:46 drochner Exp $	*/
+/*	$NetBSD: print-ospf.c,v 1.6 2007/07/24 11:55:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ospf.c,v 1.56.2.4 2006/12/13 08:24:27 hannes Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ospf.c,v 1.5 2007/07/24 11:53:46 drochner Exp $");
+__RCSID("$NetBSD: print-ospf.c,v 1.6 2007/07/24 11:55:13 drochner Exp $");
 #endif
 #endif
 
@@ -940,7 +940,7 @@ ospf_print(register const u_char *bp, register u_int length,
 
 		case OSPF_AUTH_SIMPLE:
                         printf("\n\tSimple text password: ");
-                        safeputs(op->ospf_authdata, OSPF_AUTH_SIMPLE_LEN);
+                        safeputs((char *)(op->ospf_authdata), OSPF_AUTH_SIMPLE_LEN);
 			break;
 
 		case OSPF_AUTH_MD5:
