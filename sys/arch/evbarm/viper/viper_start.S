@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_start.S,v 1.3 2006/04/17 20:44:30 pooka Exp $	*/
+/*	$NetBSD: viper_start.S,v 1.4 2007/07/24 14:41:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005 Antti Kantee.  All Rights Reserved.
@@ -11,11 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by The NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. The name of the company nor the name of the author may be used to
+ * 3. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *

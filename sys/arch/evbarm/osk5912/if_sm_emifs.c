@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_emifs.c,v 1.1 2007/01/06 08:16:26 christos Exp $	*/
+/*	$NetBSD: if_sm_emifs.c,v 1.2 2007/07/24 14:41:29 pooka Exp $	*/
 
 /*
  * OSK5912 SMC91Cxx wrapper, based on sys/arch/evbarm/viper/if_sm_pxaip.c
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by The NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. The name of the company nor the name of the author may be used to
+ * 3. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
@@ -35,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_emifs.c,v 1.1 2007/01/06 08:16:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_emifs.c,v 1.2 2007/07/24 14:41:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
