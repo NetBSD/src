@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_snprintf.c,v 1.7 2006/12/09 20:18:43 dyoung Exp $	*/
+/*	$NetBSD: sockaddr_snprintf.c,v 1.8 2007/07/24 08:45:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.7 2006/12/09 20:18:43 dyoung Exp $");
+__RCSID("$NetBSD: sockaddr_snprintf.c,v 1.8 2007/07/24 08:45:45 dyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -55,13 +55,13 @@ __RCSID("$NetBSD: sockaddr_snprintf.c,v 1.7 2006/12/09 20:18:43 dyoung Exp $");
 #include <netdb.h>
 
 int
-sockaddr_snprintf(char *buf, size_t len, const char *fmt,
-    const struct sockaddr *sa)
+sockaddr_snprintf(char * const sbuf, const size_t len, const char * const fmt,
+    const struct sockaddr * const sa)
 {
 	const void *a = NULL;
 	char abuf[1024], nbuf[1024], *addr = NULL, *w = NULL;
 	char Abuf[1024], pbuf[32], *name = NULL, *port = NULL;
-	char *ebuf = &buf[len - 1], *sbuf = buf;
+	char *ebuf = &sbuf[len - 1], *buf = sbuf;
 	const char *ptr, *s;
 	int p = -1;
 	const struct sockaddr_at *sat = NULL;
@@ -72,8 +72,6 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 	int na = 1;
 
 #define ADDC(c) do { if (buf < ebuf) *buf++ = c; else buf++; } \
-	while (/*CONSTCOND*/0)
-#define ADDN()	do { if (buf < ebuf) *buf = '\0'; else buf[len - 1] = '\0'; } \
 	while (/*CONSTCOND*/0)
 #define ADDS(p) do { for (s = p; *s; s++) ADDC(*s); } \
 	while (/*CONSTCOND*/0)
@@ -230,6 +228,9 @@ sockaddr_snprintf(char *buf, size_t len, const char *fmt,
 		na = 1;
 	}
 done:
-	ADDN();
+	if (buf < ebuf)
+		*buf = '\0';
+	else if (len != 0)
+		sbuf[len - 1] = '\0';
 	return (int)(buf - sbuf);
 }
