@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.15 2003/01/03 15:34:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2007/07/24 10:49:24 pavel Exp $
 #
 #	etc.atari/Makefile.inc -- atari-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		BOOT HADES MILAN-ISAIDE MILAN-PCIIDE
 
