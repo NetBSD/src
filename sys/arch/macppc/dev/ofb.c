@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.59 2007/07/21 19:06:20 ad Exp $	*/
+/*	$NetBSD: ofb.c,v 1.60 2007/07/24 20:09:57 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.59 2007/07/21 19:06:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.60 2007/07/24 20:09:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -282,6 +282,11 @@ ofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			return 0;
 		} else
 			return ENODEV;
+	case WSDISPLAYIO_LINEBYTES:
+		{
+			*(int *)data = ms->scr_ri.ri_stride;
+			return 0;
+		}
 	case WSDISPLAYIO_SMODE:
 		{
 			int new_mode = *(int*)data;
