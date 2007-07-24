@@ -1,7 +1,7 @@
-.\"	$NetBSD: tcpdump.8,v 1.15 2007/07/24 11:53:50 drochner Exp $
+.\"	$NetBSD: tcpdump.8,v 1.16 2007/07/24 12:41:07 drochner Exp $
 .\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1,v 1.167.2.11 2007/06/15 20:13:49 guy Exp (LBL)
 .\"
-.\"	$NetBSD: tcpdump.8,v 1.15 2007/07/24 11:53:50 drochner Exp $
+.\"	$NetBSD: tcpdump.8,v 1.16 2007/07/24 12:41:07 drochner Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,86 +165,88 @@ it will be reported as 0).
 On platforms that support the SIGINFO signal, such as most BSDs
 (including Mac OS X) and Digital/Tru64 UNIX, it will report those counts
 when it receives a SIGINFO signal (generated, for example, by typing
-your ``status'' character, typically control-T, although on some
-platforms, such as Mac OS X, the ``status'' character is not set by
-default, so you must set it with
-.BR stty (1)
-in order to use it) and will continue capturing packets.
+your ``status'' character, typically control-T) and will continue
+capturing packets.
+.\" , although on some
+.\" platforms, such as Mac OS X, the ``status'' character is not set by
+.\" default, so you must set it with
+.\" .BR stty (1)
+.\" in order to use it
 .LP
 Reading packets from a network interface may require that you have
 special privileges:
-.TP
-.B Under SunOS 3.x or 4.x with NIT or BPF:
+\" .TP
+\" .B Under SunOS 3.x or 4.x with NIT or BPF:
+\" You must have read access to
+\" .I /dev/nit
+\" or
+\" .IR /dev/bpf* .
+\" .TP
+\" .B Under Solaris with DLPI:
+\" You must have read/write access to the network pseudo device, e.g.
+\" .IR /dev/le .
+\" On at least some versions of Solaris, however, this is not sufficient to
+\" allow
+\" .I tcpdump
+\" to capture in promiscuous mode; on those versions of Solaris, you must
+\" be root, or
+\" .I tcpdump
+\" must be installed setuid to root, in order to capture in promiscuous
+\" mode.  Note that, on many (perhaps all) interfaces, if you don't capture
+\" in promiscuous mode, you will not see any outgoing packets, so a capture
+\" not done in promiscuous mode may not be very useful.
+\" .TP
+\" .B Under HP-UX with DLPI:
+\" You must be root or
+\" .I tcpdump
+\" must be installed setuid to root.
+\" .TP
+\" .B Under IRIX with snoop:
+\" You must be root or
+\" .I tcpdump
+\" must be installed setuid to root.
+\" .TP
+\" .B Under Linux:
+\" You must be root or
+\" .I tcpdump
+\" must be installed setuid to root (unless your distribution has a kernel
+\" that supports capability bits such as CAP_NET_RAW and code to allow
+\" those capability bits to be given to particular accounts and to cause
+\" those bits to be set on a user's initial processes when they log in, in
+\" which case you  must have CAP_NET_RAW in order to capture and
+\" CAP_NET_ADMIN to enumerate network devices with, for example, the
+\" .B \-D
+\" flag).
+\" .TP
+\" .B Under ULTRIX and Digital UNIX/Tru64 UNIX:
+\" Any user may capture network traffic with
+\" .IR tcpdump .
+\" However, no user (not even the super-user) can capture in promiscuous
+\" mode on an interface unless the super-user has enabled promiscuous-mode
+\" operation on that interface using
+\" .IR pfconfig (8),
+\" and no user (not even the super-user) can capture unicast traffic
+\" received by or sent by the machine on an interface unless the super-user
+\" has enabled copy-all-mode operation on that interface using
+\" .IR pfconfig ,
+\" so
+\" .I useful
+\" packet capture on an interface probably requires that either
+\" promiscuous-mode or copy-all-mode operation, or both modes of
+\" operation, be enabled on that interface.
+\" .TP
+\" .B Under BSD (this includes Mac OS X):
 You must have read access to
-.I /dev/nit
-or
-.IR /dev/bpf* .
-.TP
-.B Under Solaris with DLPI:
-You must have read/write access to the network pseudo device, e.g.
-.IR /dev/le .
-On at least some versions of Solaris, however, this is not sufficient to
-allow
-.I tcpdump
-to capture in promiscuous mode; on those versions of Solaris, you must
-be root, or
-.I tcpdump
-must be installed setuid to root, in order to capture in promiscuous
-mode.  Note that, on many (perhaps all) interfaces, if you don't capture
-in promiscuous mode, you will not see any outgoing packets, so a capture
-not done in promiscuous mode may not be very useful.
-.TP
-.B Under HP-UX with DLPI:
-You must be root or
-.I tcpdump
-must be installed setuid to root.
-.TP
-.B Under IRIX with snoop:
-You must be root or
-.I tcpdump
-must be installed setuid to root.
-.TP
-.B Under Linux:
-You must be root or
-.I tcpdump
-must be installed setuid to root (unless your distribution has a kernel
-that supports capability bits such as CAP_NET_RAW and code to allow
-those capability bits to be given to particular accounts and to cause
-those bits to be set on a user's initial processes when they log in, in
-which case you  must have CAP_NET_RAW in order to capture and
-CAP_NET_ADMIN to enumerate network devices with, for example, the
-.B \-D
-flag).
-.TP
-.B Under ULTRIX and Digital UNIX/Tru64 UNIX:
-Any user may capture network traffic with
-.IR tcpdump .
-However, no user (not even the super-user) can capture in promiscuous
-mode on an interface unless the super-user has enabled promiscuous-mode
-operation on that interface using
-.IR pfconfig (8),
-and no user (not even the super-user) can capture unicast traffic
-received by or sent by the machine on an interface unless the super-user
-has enabled copy-all-mode operation on that interface using
-.IR pfconfig ,
-so
-.I useful
-packet capture on an interface probably requires that either
-promiscuous-mode or copy-all-mode operation, or both modes of
-operation, be enabled on that interface.
-.TP
-.B Under BSD (this includes Mac OS X):
-You must have read access to
-.I /dev/bpf*
-on systems that don't have a cloning BPF device, or to
-.I /dev/bpf
-on systems that do.
-On BSDs with a devfs (this includes Mac OS X), this might involve more
-than just having somebody with super-user access setting the ownership
-or permissions on the BPF devices - it might involve configuring devfs
-to set the ownership or permissions every time the system is booted,
-if the system even supports that; if it doesn't support that, you might
-have to find some other way to make that happen at boot time.
+\" .I /dev/bpf*
+\" on systems that don't have a cloning BPF device, or to
+.I /dev/bpf .
+\" on systems that do.
+\" On BSDs with a devfs (this includes Mac OS X), this might involve more
+\" than just having somebody with super-user access setting the ownership
+\" or permissions on the BPF devices - it might involve configuring devfs
+\" to set the ownership or permissions every time the system is booted,
+\" if the system even supports that; if it doesn't support that, you might
+\" have to find some other way to make that happen at boot time.
 .LP
 Reading a saved packet file doesn't require special privileges.
 .SH OPTIONS
@@ -252,6 +254,9 @@ Reading a saved packet file doesn't require special privileges.
 .B \-A
 Print each packet (minus its link level header) in ASCII.  Handy for
 capturing web pages.
+.TP
+.B \-a
+Attempt to convert network and broadcast addresses to names.
 .TP
 .B \-c
 Exit after receiving \fIcount\fP packets.
@@ -327,7 +332,7 @@ The ability to decrypt packets is only present if \fItcpdump\fP was compiled
 with cryptography enabled.
 .IP
 \fIsecret\fP is the ASCII text for ESP secret key. 
-If preceeded by 0x, then a hex value will be read.
+If preceded by 0x, then a hex value will be read.
 .IP
 The option assumes RFC2406 ESP, not RFC1827 ESP.
 The option is only for debugging purposes, and
@@ -365,12 +370,12 @@ Listen on \fIinterface\fP.
 If unspecified, \fItcpdump\fP searches the system interface list for the
 lowest numbered, configured up interface (excluding loopback).
 Ties are broken by choosing the earliest match.
-.IP
-On Linux systems with 2.2 or later kernels, an
-.I interface
-argument of ``any'' can be used to capture packets from all interfaces.
-Note that captures on the ``any'' device will not be done in promiscuous
-mode.
+.\" .IP
+.\" On Linux systems with 2.2 or later kernels, an
+.\" .I interface
+.\" argument of ``any'' can be used to capture packets from all interfaces.
+.\" Note that captures on the ``any'' device will not be done in promiscuous
+.\" mode.
 .IP
 If the
 .B \-D
@@ -582,6 +587,7 @@ its link level header, in hex and ASCII.
 .TP
 .B \-y
 Set the data link type to use while capturing packets to \fIdatalinktype\fP.
+The available data link types may be found using the \-L option.
 .TP
 .B \-Z
 Drops privileges (if root) and changes user ID to
@@ -2273,7 +2279,7 @@ is made to account for the time lag between when the
 Ethernet interface removed the packet from the wire and when the kernel
 serviced the `new packet' interrupt.
 .SH "SEE ALSO"
-stty(1), pcap(3), bpf(4), nit(4P), pfconfig(8)
+bpf(4), pcap(3)
 .SH AUTHORS
 The original authors are:
 .LP
@@ -2310,27 +2316,27 @@ Please send source code contributions, etc. to:
 .RS
 patches@tcpdump.org
 .RE
-.LP
-NIT doesn't let you watch your own outbound traffic, BPF will.
-We recommend that you use the latter.
-.LP
-On Linux systems with 2.0[.x] kernels:
-.IP
-packets on the loopback device will be seen twice;
-.IP
-packet filtering cannot be done in the kernel, so that all packets must
-be copied from the kernel in order to be filtered in user mode;
-.IP
-all of a packet, not just the part that's within the snapshot length,
-will be copied from the kernel (the 2.0[.x] packet capture mechanism, if
-asked to copy only part of a packet to userland, will not report the
-true length of the packet; this would cause most IP packets to get an
-error from
-.BR tcpdump );
-.IP
-capturing on some PPP devices won't work correctly.
-.LP
-We recommend that you upgrade to a 2.2 or later kernel.
+.\" .LP
+.\" NIT doesn't let you watch your own outbound traffic, BPF will.
+.\" We recommend that you use the latter.
+.\" .LP
+.\" On Linux systems with 2.0[.x] kernels:
+.\" .IP
+.\" packets on the loopback device will be seen twice;
+.\" .IP
+.\" packet filtering cannot be done in the kernel, so that all packets must
+.\" be copied from the kernel in order to be filtered in user mode;
+.\" .IP
+.\" all of a packet, not just the part that's within the snapshot length,
+.\" will be copied from the kernel (the 2.0[.x] packet capture mechanism, if
+.\" asked to copy only part of a packet to userland, will not report the
+.\" true length of the packet; this would cause most IP packets to get an
+.\" error from
+.\" .BR tcpdump );
+.\" .IP
+.\" capturing on some PPP devices won't work correctly.
+.\" .LP
+.\" We recommend that you upgrade to a 2.2 or later kernel.
 .LP
 Some attempt should be made to reassemble IP fragments or, at least
 to compute the right length for the higher level protocol.
