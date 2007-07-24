@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.19 2006/01/22 14:46:45 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2007/07/24 10:49:25 pavel Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC
 

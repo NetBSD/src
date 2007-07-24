@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.11 2006/08/16 19:33:52 he Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2007/07/24 10:49:23 pavel Exp $
 #
 #	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
+
+# If you change the list of distributed kernels, don't forget
+# to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC NC
 
