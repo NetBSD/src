@@ -1,4 +1,4 @@
-/*	$NetBSD: ipx.h,v 1.1.1.3 2004/09/27 17:06:48 dyoung Exp $	*/
+/*	$NetBSD: ipx.h,v 1.2 2007/07/24 11:53:39 drochner Exp $	*/
 
 /*
  * IPX protocol formats

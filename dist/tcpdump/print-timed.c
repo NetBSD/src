@@ -1,4 +1,4 @@
-/*	$NetBSD: print-timed.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-timed.c,v 1.4 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Smithurst <ben@scientia.demon.co.uk>
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-timed.c,v 1.7.2.2 2003/11/16 08:51:51 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-timed.c,v 1.9 2003/11/16 09:36:40 guy Exp";
 #else
-__RCSID("$NetBSD: print-timed.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-timed.c,v 1.4 2007/07/24 11:53:48 drochner Exp $");
 #endif
 #endif
 

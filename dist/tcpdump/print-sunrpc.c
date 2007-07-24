@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sunrpc.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-sunrpc.c,v 1.4 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-sunrpc.c,v 1.43.2.2 2003/11/16 08:51:47 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-sunrpc.c,v 1.46.2.1 2005/04/27 21:44:06 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-sunrpc.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-sunrpc.c,v 1.4 2007/07/24 11:53:48 drochner Exp $");
 #endif
 #endif
 
@@ -37,13 +37,12 @@ __RCSID("$NetBSD: print-sunrpc.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
 
 #include <tcpdump-stdinc.h>
 
+#ifdef HAVE_GETRPCBYNUMBER
 #include <rpc/rpc.h>
 #ifdef HAVE_RPC_RPCENT_H
 #include <rpc/rpcent.h>
-#endif
-#ifndef WIN32
-#include <rpc/pmap_prot.h>
-#endif /* WIN32 */
+#endif /* HAVE_RPC_RPCENT_H */
+#endif /* HAVE_GETRPCBYNUMBER */
 
 #include <stdio.h>
 #include <string.h>
@@ -57,14 +56,18 @@ __RCSID("$NetBSD: print-sunrpc.c,v 1.3 2004/09/27 23:04:25 dyoung Exp $");
 #include "ip6.h"
 #endif
 
+#include "rpc_auth.h"
+#include "rpc_msg.h"
+#include "pmap_prot.h"
+
 static struct tok proc2str[] = {
-	{ PMAPPROC_NULL,	"null" },
-	{ PMAPPROC_SET,		"set" },
-	{ PMAPPROC_UNSET,	"unset" },
-	{ PMAPPROC_GETPORT,	"getport" },
-	{ PMAPPROC_DUMP,	"dump" },
-	{ PMAPPROC_CALLIT,	"call" },
-	{ 0,			NULL }
+	{ SUNRPC_PMAPPROC_NULL,		"null" },
+	{ SUNRPC_PMAPPROC_SET,		"set" },
+	{ SUNRPC_PMAPPROC_UNSET,	"unset" },
+	{ SUNRPC_PMAPPROC_GETPORT,	"getport" },
+	{ SUNRPC_PMAPPROC_DUMP,		"dump" },
+	{ SUNRPC_PMAPPROC_CALLIT,	"call" },
+	{ 0,				NULL }
 };
 
 /* Forwards */
@@ -74,7 +77,7 @@ void
 sunrpcrequest_print(register const u_char *bp, register u_int length,
 		    register const u_char *bp2)
 {
-	register const struct rpc_msg *rp;
+	register const struct sunrpc_msg *rp;
 	register const struct ip *ip;
 #ifdef INET6
 	register const struct ip6_hdr *ip6;
@@ -82,7 +85,7 @@ sunrpcrequest_print(register const u_char *bp, register u_int length,
 	u_int32_t x;
 	char srcid[20], dstid[20];	/*fits 32bit*/
 
-	rp = (struct rpc_msg *)bp;
+	rp = (struct sunrpc_msg *)bp;
 
 	if (!nflag) {
 		snprintf(srcid, sizeof(srcid), "0x%x",
@@ -91,7 +94,7 @@ sunrpcrequest_print(register const u_char *bp, register u_int length,
 	} else {
 		snprintf(srcid, sizeof(srcid), "0x%x",
 		    EXTRACT_32BITS(&rp->rm_xid));
-		snprintf(dstid, sizeof(dstid), "0x%x", PMAPPORT);
+		snprintf(dstid, sizeof(dstid), "0x%x", SUNRPC_PMAPPORT);
 	}
 
 	switch (IP_V((struct ip *)bp2)) {
@@ -122,10 +125,10 @@ sunrpcrequest_print(register const u_char *bp, register u_int length,
 
 	switch (EXTRACT_32BITS(&rp->rm_call.cb_proc)) {
 
-	case PMAPPROC_SET:
-	case PMAPPROC_UNSET:
-	case PMAPPROC_GETPORT:
-	case PMAPPROC_CALLIT:
+	case SUNRPC_PMAPPROC_SET:
+	case SUNRPC_PMAPPROC_UNSET:
+	case SUNRPC_PMAPPROC_GETPORT:
+	case SUNRPC_PMAPPROC_CALLIT:
 		x = EXTRACT_32BITS(&rp->rm_call.cb_prog);
 		if (!nflag)
 			printf(" %s", progstr(x));
@@ -140,7 +143,7 @@ static char *
 progstr(prog)
 	u_int32_t prog;
 {
-#ifndef WIN32
+#ifdef HAVE_GETRPCBYNUMBER
 	register struct rpcent *rp;
 #endif
 	static char buf[32];
@@ -148,12 +151,12 @@ progstr(prog)
 
 	if (lastprog != 0 && prog == lastprog)
 		return (buf);
-#ifndef WIN32
+#ifdef HAVE_GETRPCBYNUMBER
 	rp = getrpcbynumber(prog);
 	if (rp == NULL)
-#endif /* WIN32 */
+#endif
 		(void) snprintf(buf, sizeof(buf), "#%u", prog);
-#ifndef WIN32
+#ifdef HAVE_GETRPCBYNUMBER
 	else
 		strlcpy(buf, rp->r_name, sizeof(buf));
 #endif

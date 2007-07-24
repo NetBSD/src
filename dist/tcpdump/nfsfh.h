@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsfh.h,v 1.1.1.3 2002/05/31 09:28:21 itojun Exp $	*/
+/*	$NetBSD: nfsfh.h,v 1.2 2007/07/24 11:53:40 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/nfsfh.h,v 1.13 2002/04/24 06:27:05 guy Exp (LBL) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-syslog.c,v 1.1.1.1 2007/07/24 11:43:14 drochner Exp $	*/
+/*	$NetBSD: print-syslog.c,v 1.2 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2004  Hannes Gredler <hannes@tcpdump.org>
@@ -16,9 +16,14 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-syslog.c,v 1.1 2004/10/29 11:42:53 hannes Exp";
+#else
+__RCSID("$NetBSD: print-syslog.c,v 1.2 2007/07/24 11:53:48 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

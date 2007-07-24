@@ -1,4 +1,4 @@
-/*	$NetBSD: enc.h,v 1.1.1.1 2004/09/27 17:06:44 dyoung Exp $	*/
+/*	$NetBSD: enc.h,v 1.2 2007/07/24 11:53:38 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/enc.h,v 1.1 2003/03/08 08:55:33 guy Exp (LBL) */
 /* From $OpenBSD: if_enc.h,v 1.8 2001/06/25 05:14:00 angelos Exp $ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-slow.c,v 1.1.1.1 2007/07/24 11:42:58 drochner Exp $	*/
+/*	$NetBSD: print-slow.c,v 1.2 2007/07/24 11:53:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The TCPDUMP project
@@ -19,9 +19,14 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-slow.c,v 1.1.2.1 2005/07/10 14:47:56 hannes Exp";
+#else
+__RCSID("$NetBSD: print-slow.c,v 1.2 2007/07/24 11:53:47 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

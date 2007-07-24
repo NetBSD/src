@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipfc.c,v 1.1.1.2 2007/07/24 11:42:59 drochner Exp $	*/
+/*	$NetBSD: print-ipfc.c,v 1.2 2007/07/24 11:53:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ipfc.c,v 1.7.2.2 2005/11/13 12:12:59 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-ipfc.c,v 1.2 2007/07/24 11:53:44 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

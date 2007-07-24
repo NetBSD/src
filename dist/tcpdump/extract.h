@@ -1,4 +1,4 @@
-/*	$NetBSD: extract.h,v 1.2 2004/09/28 00:01:02 dyoung Exp $	*/
+/*	$NetBSD: extract.h,v 1.3 2007/07/24 11:53:38 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/extract.h,v 1.19 2002/12/11 07:13:51 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/extract.h,v 1.24 2005/01/15 02:06:50 guy Exp (LBL)
  */
 
 /*
@@ -75,7 +75,7 @@ typedef struct {
 		     (u_int32_t)*((const u_int8_t *)(p) + 1) << 16 | \
 		     (u_int32_t)*((const u_int8_t *)(p) + 2) << 8 | \
 		     (u_int32_t)*((const u_int8_t *)(p) + 3)))
-#define EXTRACT_LE_64BITS(p) \
+#define EXTRACT_64BITS(p) \
 	((u_int64_t)((u_int64_t)*((const u_int8_t *)(p) + 0) << 56 | \
 		     (u_int64_t)*((const u_int8_t *)(p) + 1) << 48 | \
 		     (u_int64_t)*((const u_int8_t *)(p) + 2) << 40 | \

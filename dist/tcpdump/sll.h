@@ -1,4 +1,4 @@
-/*	$NetBSD: sll.h,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: sll.h,v 1.4 2007/07/24 11:53:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997

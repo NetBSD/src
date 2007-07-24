@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.h,v 1.3 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: timed.h,v 1.4 2007/07/24 11:53:50 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/timed.h,v 1.5 2002/12/11 07:14:12 guy Exp (LBL) */
 /*

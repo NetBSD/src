@@ -1,4 +1,4 @@
-/*	$NetBSD: appletalk.h,v 1.1.1.3 2007/07/24 11:43:00 drochner Exp $	*/
+/*	$NetBSD: appletalk.h,v 1.2 2007/07/24 11:53:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993, 1994, 1995, 1996

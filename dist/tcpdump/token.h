@@ -1,4 +1,4 @@
-/*	$NetBSD: token.h,v 1.1.1.2 2004/09/27 17:07:36 dyoung Exp $	*/
+/*	$NetBSD: token.h,v 1.2 2007/07/24 11:53:50 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/token.h,v 1.6 2002/12/11 07:14:12 guy Exp (LBL) */
 /*

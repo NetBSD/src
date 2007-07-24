@@ -1,4 +1,4 @@
-/*	$NetBSD: cpack.h,v 1.1.1.1 2007/07/24 11:42:50 drochner Exp $	*/
+/*	$NetBSD: cpack.h,v 1.2 2007/07/24 11:53:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.

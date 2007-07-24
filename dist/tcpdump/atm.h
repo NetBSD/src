@@ -1,4 +1,4 @@
-/*	$NetBSD: atm.h,v 1.1.1.2 2007/07/24 11:42:59 drochner Exp $	*/
+/*	$NetBSD: atm.h,v 1.2 2007/07/24 11:53:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 2002 Guy Harris.

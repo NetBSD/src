@@ -1,4 +1,4 @@
-/*	$NetBSD: arcnet.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: arcnet.h,v 1.4 2007/07/24 11:53:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
