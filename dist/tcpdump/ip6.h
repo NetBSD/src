@@ -1,7 +1,7 @@
-/*	$NetBSD: ip6.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: ip6.h,v 1.4 2007/07/24 11:53:39 drochner Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/ip6.h,v 1.6 2002/12/11 22:29:21 guy Exp (LBL) */
-/*	$NetBSD: ip6.h,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/* @(#) Header: /tcpdump/master/tcpdump/ip6.h,v 1.6.4.1 2005/04/20 10:04:37 guy Exp (LBL) */
+/*	NetBSD: ip6.h,v 1.9 2000/07/13 05:34:21 itojun Exp	*/
 /*	$KAME: ip6.h,v 1.9 2000/07/02 21:01:32 itojun Exp $	*/
 
 /*
@@ -92,9 +92,6 @@ struct ip6_hdr {
 #define ip6_nxt		ip6_ctlun.ip6_un1.ip6_un1_nxt
 #define ip6_hlim	ip6_ctlun.ip6_un1.ip6_un1_hlim
 #define ip6_hops	ip6_ctlun.ip6_un1.ip6_un1_hlim
-
-#define IPV6_VERSION		0x60
-#define IPV6_VERSION_MASK	0xf0
 
 /* in network endian */
 #define IPV6_FLOWINFO_MASK	((u_int32_t)htonl(0x0fffffff))	/* flow info (28 bits) */

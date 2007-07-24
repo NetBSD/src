@@ -1,4 +1,4 @@
-/*	$NetBSD: print-mpls.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-mpls.c,v 1.6 2007/07/24 11:53:45 drochner Exp $	*/
 
 /*
  * Copyright (C) 2001 WIDE Project.  All rights reserved.
@@ -32,9 +32,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-mpls.c,v 1.8.2.2 2003/11/16 08:51:34 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-mpls.c,v 1.13.2.1 2005/07/05 09:39:29 hannes Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-mpls.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-mpls.c,v 1.6 2007/07/24 11:53:45 drochner Exp $");
 #endif
 #endif
 
@@ -51,20 +51,7 @@ __RCSID("$NetBSD: print-mpls.c,v 1.5 2004/09/27 23:04:24 dyoung Exp $");
 #include "addrtoname.h"
 #include "interface.h"
 #include "extract.h"			/* must come after interface.h */
-
-#define LABEL_MASK	0xfffff000
-#define LABEL_SHIFT	12
-#define	EXP_MASK	0x00000e00
-#define EXP_SHIFT	9
-#define	STACK_MASK	0x00000100
-#define STACK_SHIFT	8
-#define TTL_MASK	0x000000ff
-#define TTL_SHIFT	0
-
-#define MPLS_LABEL(x)	(((x) & LABEL_MASK) >> LABEL_SHIFT)
-#define MPLS_EXP(x)	(((x) & EXP_MASK) >> EXP_SHIFT)
-#define MPLS_STACK(x)	(((x) & STACK_MASK) >> STACK_SHIFT)
-#define MPLS_TTL(x)	(((x) & TTL_MASK) >> TTL_SHIFT)
+#include "mpls.h"
 
 static const char *mpls_labelname[] = {
 /*0*/	"IPv4 explicit NULL", "router alert", "IPv6 explicit NULL",
@@ -81,36 +68,45 @@ void
 mpls_print(const u_char *bp, u_int length)
 {
 	const u_char *p;
-	u_int32_t v;
+	u_int32_t label_entry;
+        u_int16_t label_stack_depth = 0;
 
 	p = bp;
 	printf("MPLS");
 	do {
-		TCHECK2(*p, sizeof(v));
-		v = EXTRACT_32BITS(p);
-		printf(" (");	/*)*/
-		printf("label %u", MPLS_LABEL(v));
+		TCHECK2(*p, sizeof(label_entry));
+		label_entry = EXTRACT_32BITS(p);
+		printf("%s(label %u",
+                       label_stack_depth ? "\n\t" : " ",
+                       MPLS_LABEL(label_entry));
+                label_stack_depth++;
 		if (vflag &&
-		    MPLS_LABEL(v) < sizeof(mpls_labelname) / sizeof(mpls_labelname[0]))
-			printf(" (%s)", mpls_labelname[MPLS_LABEL(v)]);
-		printf(", exp %u", MPLS_EXP(v));
-		if (MPLS_STACK(v))
+		    MPLS_LABEL(label_entry) < sizeof(mpls_labelname) / sizeof(mpls_labelname[0]))
+			printf(" (%s)", mpls_labelname[MPLS_LABEL(label_entry)]);
+		printf(", exp %u", MPLS_EXP(label_entry));
+		if (MPLS_STACK(label_entry))
 			printf(", [S]");
-		printf(", ttl %u", MPLS_TTL(v));
-		/*(*/
-		printf(")");
+		printf(", ttl %u)", MPLS_TTL(label_entry));
 
-		p += sizeof(v);
-	} while (!MPLS_STACK(v));
+		p += sizeof(label_entry);
+	} while (!MPLS_STACK(label_entry));
 
-	switch (MPLS_LABEL(v)) {
+	switch (MPLS_LABEL(label_entry)) {
 	case 0:	/* IPv4 explicit NULL label */
         case 3:	/* IPv4 implicit NULL label */
-		ip_print(p, length - (p - bp));
+                if (vflag>0) {
+                        printf("\n\t");
+                        ip_print(gndo, p, length - (p - bp));
+                }
+                else printf(", IP, length: %u",length);
 		break;
 #ifdef INET6
 	case 2:	/* IPv6 explicit NULL label */
-		ip6_print(p, length - (p - bp));
+                if (vflag>0) {
+                        printf("\n\t");
+                        ip6_print(p, length - (p - bp));
+                }
+                else printf(", IPv6, length: %u",length);
 		break;
 #endif
 	default:
@@ -127,7 +123,7 @@ mpls_print(const u_char *bp, u_int length)
                  * which cisco by default sends MPLS encapsulated
 		 */
 
-                if (MPLS_STACK(v)) { /* only do this if the stack bit is set */
+                if (MPLS_STACK(label_entry)) { /* only do this if the stack bit is set */
                     switch(*p) {
                     case 0x45:
                     case 0x46:
@@ -142,7 +138,7 @@ mpls_print(const u_char *bp, u_int length)
                     case 0x4f:
 		        if (vflag>0) {
                             printf("\n\t");
-                            ip_print(p, length - (p - bp));
+                            ip_print(gndo, p, length - (p - bp));
 			    }
                         else printf(", IP, length: %u",length);
                         break;
@@ -191,13 +187,10 @@ trunc:
 	printf("[|MPLS]");
 }
 
+
 /*
- * draft-ietf-mpls-lsp-ping-02.txt
+ * Local Variables:
+ * c-style: whitesmith
+ * c-basic-offset: 8
+ * End:
  */
-void
-mpls_lsp_ping_print(const u_char *pptr, u_int length)
-{
-    printf("UDP, LSP-PING, length: %u", length);
-    if (vflag >1)
-	print_unknown_data(pptr,"\n\t  ", length);
-}

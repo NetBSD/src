@@ -1,4 +1,4 @@
-/*	$NetBSD: oui.c,v 1.1.1.2 2007/07/24 11:42:51 drochner Exp $	*/
+/*	$NetBSD: oui.c,v 1.2 2007/07/24 11:53:41 drochner Exp $	*/
 
 /* 
  * Redistribution and use in source and binary forms, with or without
@@ -15,9 +15,14 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/oui.c,v 1.4.2.1 2005/04/17 01:20:56 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: oui.c,v 1.2 2007/07/24 11:53:41 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

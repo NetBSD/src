@@ -1,4 +1,4 @@
-/*	$NetBSD: l2tp.h,v 1.1.1.2 2002/02/18 09:07:36 itojun Exp $	*/
+/*	$NetBSD: l2tp.h,v 1.2 2007/07/24 11:53:40 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/l2tp.h,v 1.5 2001/11/05 10:03:27 guy Exp (LBL) */
 /*

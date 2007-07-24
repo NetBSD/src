@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.h,v 1.1.1.2 2004/09/27 17:06:51 dyoung Exp $	*/
+/*	$NetBSD: oakley.h,v 1.2 2007/07/24 11:53:41 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.

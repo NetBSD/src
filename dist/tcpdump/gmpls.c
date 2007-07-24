@@ -1,4 +1,4 @@
-/*	$NetBSD: gmpls.c,v 1.1.1.2 2007/07/24 11:43:00 drochner Exp $	*/
+/*	$NetBSD: gmpls.c,v 1.2 2007/07/24 11:53:38 drochner Exp $	*/
 
 /* 
  * Redistribution and use in source and binary forms, with or without
@@ -15,9 +15,14 @@
  * Original code by Hannes Gredler (hannes@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/gmpls.c,v 1.5.2.1 2005/05/19 06:44:02 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: gmpls.c,v 1.2 2007/07/24 11:53:38 drochner Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

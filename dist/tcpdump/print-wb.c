@@ -1,4 +1,4 @@
-/*	$NetBSD: print-wb.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-wb.c,v 1.5 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-wb.c,v 1.30.2.3 2004/03/24 04:06:52 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-wb.c,v 1.33 2004/03/24 04:06:28 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-wb.c,v 1.4 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-wb.c,v 1.5 2007/07/24 11:53:48 drochner Exp $");
 #endif
 #endif
 

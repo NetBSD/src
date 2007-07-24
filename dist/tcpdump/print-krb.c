@@ -1,4 +1,4 @@
-/*	$NetBSD: print-krb.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-krb.c,v 1.4 2007/07/24 11:53:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -27,9 +27,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-krb.c,v 1.21.2.2 2003/11/16 08:51:30 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-krb.c,v 1.23 2003/11/16 09:36:26 guy Exp";
 #else
-__RCSID("$NetBSD: print-krb.c,v 1.3 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-krb.c,v 1.4 2007/07/24 11:53:45 drochner Exp $");
 #endif
 #endif
 

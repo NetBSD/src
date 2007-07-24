@@ -1,4 +1,4 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.5 2007/07/24 11:42:59 drochner Exp $	*/
+/*	$NetBSD: acconfig.h,v 1.2 2007/07/24 11:53:36 drochner Exp $	*/
 
 /* "generated automatically" means DO NOT MAKE CHANGES TO config.h.in --
  * make them to acconfig.h and rerun autoheader */

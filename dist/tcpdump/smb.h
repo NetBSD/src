@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.1.1.4 2007/07/24 11:42:50 drochner Exp $	*/
+/*	$NetBSD: smb.h,v 1.2 2007/07/24 11:53:49 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/smb.h,v 1.9 2004/12/28 22:29:44 guy Exp (LBL) */
 /*

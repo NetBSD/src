@@ -1,4 +1,4 @@
-/*	$NetBSD: print-vrrp.c,v 1.5 2004/09/27 23:04:25 dyoung Exp $	*/
+/*	$NetBSD: print-vrrp.c,v 1.6 2007/07/24 11:53:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 William C. Fenner.
@@ -29,9 +29,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-vrrp.c,v 1.7.2.2 2003/11/16 08:51:55 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-vrrp.c,v 1.9.2.1 2005/05/06 07:57:20 guy Exp";
 #else
-__RCSID("$NetBSD: print-vrrp.c,v 1.5 2004/09/27 23:04:25 dyoung Exp $");
+__RCSID("$NetBSD: print-vrrp.c,v 1.6 2007/07/24 11:53:48 drochner Exp $");
 #endif
 #endif
 
@@ -135,7 +135,10 @@ vrrp_print(register const u_char *bp, register u_int len, int ttl)
 		if (auth_type == VRRP_AUTH_SIMPLE) { /* simple text password */
 			TCHECK(bp[7]);
 			printf(" auth \"");
-			fn_printn(bp, 8, NULL);
+			if (fn_printn(bp, 8, snapend)) {
+				printf("\"");
+				goto trunc;
+			}
 			printf("\"");
 		}
 	}

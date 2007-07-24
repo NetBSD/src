@@ -1,6 +1,8 @@
+/*	$NetBSD: ieee802_11_radio.h,v 1.3 2007/07/24 11:53:39 drochner Exp $	*/
+
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: ieee802_11_radio.h,v 1.2 2006/02/26 03:04:03 dyoung Exp $ */
-/* $Header: /cvsroot/src/dist/tcpdump/Attic/ieee802_11_radio.h,v 1.2 2006/02/26 03:04:03 dyoung Exp $ */
+/* NetBSD: ieee802_11_radio.h,v 1.2 2006/02/26 03:04:03 dyoung Exp */
+/* Header: /tcpdump/master/tcpdump/ieee802_11_radio.h,v 1.1.2.1 2006/06/13 22:24:45 guy Exp */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -52,11 +54,6 @@
 #define	DLT_IEEE802_11_RADIO	127	/* 802.11 plus WLAN header */
 #endif
 #endif /* defined(__KERNEL__) || defined(_KERNEL) */
-
-/* XXX tcpdump/libpcap do not tolerate variable-length headers,
- * yet, so we pad every radiotap header to 64 bytes. Ugh.
- */
-#define IEEE80211_RADIOTAP_HDRLEN	64
 
 /* The radio capture header precedes the 802.11 header. */
 struct ieee80211_radiotap_header {
@@ -179,7 +176,7 @@ enum ieee80211_radiotap_type {
 	IEEE80211_RADIOTAP_ANTENNA = 11,
 	IEEE80211_RADIOTAP_DB_ANTSIGNAL = 12,
 	IEEE80211_RADIOTAP_DB_ANTNOISE = 13,
-	IEEE80211_RADIOTAP_EXT = 31,
+	IEEE80211_RADIOTAP_EXT = 31
 };
 
 #ifndef _KERNEL

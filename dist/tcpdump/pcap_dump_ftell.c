@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap_dump_ftell.c,v 1.1.1.1 2007/07/24 11:42:54 drochner Exp $	*/
+/*	$NetBSD: pcap_dump_ftell.c,v 1.2 2007/07/24 11:53:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/pcap_dump_ftell.c,v 1.1.2.1 2005/06/03 22:10:17 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: pcap_dump_ftell.c,v 1.2 2007/07/24 11:53:41 drochner Exp $");
+#endif
 #endif
 
 #include <stdio.h>
