@@ -1,0 +1,979 @@
+.\"	$NetBSD: afterboot.8,v 1.32.6.2 2007/07/24 09:19:53 jmmv Exp $
+.\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
+.\"
+.\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
+.\" Adapted to NetBSD by Julio Merino -- 2002-05-10, jmmv@NetBSD.org
+.\"
+.\"
+.\" Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the NetBSD
+.\"	Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" Copyright (c) 1997 Marshall M. Midden
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Marshall M. Midden.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 2, 2007
+.Dt AFTERBOOT 8
+.Os
+.Sh NAME
+.Nm afterboot
+.Nd things to check after the first complete boot
+.Sh DESCRIPTION
+.Ss Starting Out
+This document attempts to list items for the system administrator
+to check and set up after the installation and first complete boot of the
+system.
+The idea is to create a list of items that can be checked off so that you have
+a warm fuzzy feeling that something obvious has not been missed.
+A basic knowledge of
+.Ux
+is assumed.
+.Pp
+Complete instructions for correcting and fixing items is not provided.
+There are manual pages and other methodologies available for doing that.
+For example, to view the man page for the
+.Xr ls 1
+command, type:
+.Bd -literal -offset indent
+.Ic man 1 ls
+.Ed
+.Pp
+Administrators will rapidly become more familiar with
+.Nx
+if they get used to using the manual pages.
+.Ss Security alerts
+By the time that you have installed your system, it is quite likely that
+bugs in the release have been found.
+All significant and easily fixed problems will be reported at
+.Pa http://www.NetBSD.org/Security/ .
+It is recommended that you check this page regularly.
+.Ss Login
+Login as
+.Dq Ic root .
+You can do so on the console, or over the network using
+.Xr ssh 1 .
+If you have enabled the ssh daemon and wish to allow root logins over
+the network, edit the
+.Pa /etc/ssh/sshd_config
+file and set
+.Cm PermitRootLogin
+to
+.Dq yes
+(see
+.Xr sshd 8 ) .
+The default is to not permit root logins over the network
+after fresh install in
+.Nx .
+.Pp
+Upon successful login on the console, you may see the message
+.Dq We recommend creating a non-root account... .
+For security reasons, it is bad practice to login as root during
+regular use and maintenance of the system.
+In fact, the system will only let you login as root on a secure
+terminal.
+By default, only the console is considered to be a secure terminal.
+Instead, administrators are encouraged to add a
+.Dq regular
+user, add said user to the
+.Dq wheel
+group, then use the
+.Xr su 1
+command when root privileges are required.
+This process is described in more detail later.
+.Ss Root password
+Change the password for the root user.
+(Note that throughout the documentation, the term
+.Dq superuser
+is a synonym for the root user.)
+Choose a password that has numbers, digits, and special characters (not space)
+as well as from the upper and lower case alphabet.
+Do not choose any word in any language.
+It is common for an intruder to use dictionary attacks.
+Type the command
+.Ic /usr/bin/passwd
+to change it.
+.Pp
+It is a good idea to always specify the full path name for both the
+.Xr passwd 1
+and
+.Xr su 1
+commands as this inhibits the possibility of files placed in your execution
+.Ev PATH
+for most shells.
+Furthermore, the superuser's
+.Ev PATH
+should never contain the current directory
+.Po Dq \&.
+.Pc .
+.Ss System date
+Check the system date with the
+.Xr date 1
+command.
+If needed, change the date, and/or change the symbolic link of
+.Pa /etc/localtime
+to the correct time zone in the
+.Pa /usr/share/zoneinfo
+directory.
+.Pp
+Examples:
+.Bl -tag -width date
+.It Cm date 200205101820
+Set the current date to May 10th, 2002 6:20pm.
+.It Cm ln -fs /usr/share/zoneinfo/Europe/Helsinki /etc/localtime
+Set the time zone to Eastern Europe Summer Time.
+.El
+.Ss Console settings
+One of the first things you will likely need to do is to set up your
+keyboard map (and maybe some other aspects about the system console).
+To change your keyboard encoding, edit the
+.Dq Va encoding
+variable found in
+.Pa /etc/wscons.conf .
+.Pp
+.Xr wscons.conf 5
+contains more information about this file.
+.Ss Check hostname
+Use the
+.Ic hostname
+command to verify that the name of your machine is correct.
+See the man page for
+.Xr hostname 1
+if it needs to be changed.
+You will also need to change the contents of the
+.Dq Va hostname
+variable in
+.Pa /etc/rc.conf
+or edit the
+.Pa /etc/myname
+file to have it stick around for the next reboot.
+Note that hostname is supposed include a domainname, and that this should
+not be confused with YP (NIS)
+.Xr domainname 1 .
+.Ss Verify network interface configuration
+The first thing to do is an
+.Ic ifconfig -a
+to see if the network interfaces are properly configured.
+Correct by editing
+.Pa /etc/ifconfig. Ns Ar interface
+or the corresponding
+.Dq Va ifconfig_ Ns Ar interface
+variable in
+.Xr rc.conf 5
+(where
+.Ar interface
+is the interface name, e.g.,
+.Dq le0 )
+and then using
+.Xr ifconfig 8
+to manually configure it
+if you do not wish to reboot.
+.Pp
+You can add new
+.Dq virtual interfaces
+by adding the required entries to
+.Pa /etc/ifconfig. Ns Ar interface .
+Read the
+.Xr ifconfig.if 5
+man page for more information on the format of
+.Pa /etc/ifconfig. Ns Ar interface
+files.
+The loopback interface will look something like:
+.Bd -literal -offset indent
+lo0: flags=8009\*[Lt]UP,LOOPBACK,MULTICAST\*[Gt] mtu 32972
+	inet 127.0.0.1 netmask 0xff000000
+	inet6 fe80::1%lo0 prefixlen 64 scopeid 0x3
+	inet6 ::1 prefixlen 128
+.Ed
+.Pp
+an Ethernet interface something like:
+.Bd -literal -offset indent
+le0: flags=9863\*[Lt]UP,BROADCAST,NOTRAILERS,RUNNING,SIMPLEX,MULTICAST\*[Gt]
+	inet 192.168.4.52 netmask 0xffffff00 broadcast 192.168.4.255
+	inet6 fe80::5ef0:f0f0%le0 prefixlen 64 scopeid 0x1
+.Ed
+.Pp
+and a PPP interface something like:
+.Bd -literal -offset indent
+ppp0: flags=8051\*[Lt]UP,POINTOPOINT,RUNNING,MULTICAST\*[Gt]
+        inet 203.3.131.108 --\*[Gt] 198.181.0.253 netmask 0xffff0000
+.Ed
+.Pp
+See
+.Xr mrouted 8
+for instructions on configuring multicast routing.
+.Pp
+See
+.Xr dhcpd 8
+for instructions on configuring interfaces with DHCP.
+.Ss Check routing tables
+Issue a
+.Ic netstat -rn
+command.
+The output will look something like:
+.Bd -literal -offset indent
+Routing tables
+
+Internet:
+Destination    Gateway           Flags  Refs     Use  Mtu  Interface
+default        192.168.4.254     UGS      0 11098028    -  le0
+127            127.0.0.1         UGRS     0        0    -  lo0
+127.0.0.1      127.0.0.1         UH       3       24    -  lo0
+192.168.4      link#1            UC       0        0    -  le0
+192.168.4.52   8:0:20:73:b8:4a   UHL      1     6707    -  le0
+192.168.4.254  0:60:3e:99:67:ea  UHL      1        0    -  le0
+
+Internet6:
+Destination        Gateway       Flags  Refs  Use     Mtu  Interface
+::/96              ::1           UGRS     0     0   32972  lo0 =\*[Gt]
+::1                ::1           UH       4     0   32972  lo0
+::ffff:0.0.0.0/96  ::1           UGRS     0     0   32972  lo0
+fc80::/10          ::1           UGRS     0     0   32972  lo0
+fe80::/10          ::1           UGRS     0     0   32972  lo0
+fe80::%le0/64      link#1        UC       0     0    1500  le0
+fe80::%lo0/64      fe80::1%lo0   U        0     0   32972  lo0
+ff01::/32          ::1           U        0     0   32972  lo0
+ff02::%le0/32      link#1        UC       0     0    1500  le0
+ff02::%lo0/32      fe80::1%lo0   UC       0     0   32972  lo0
+.Ed
+.Pp
+The default gateway address is stored in the
+.Dq Va defaultroute
+variable in
+.Pa /etc/rc.conf ,
+or in the file
+.Pa /etc/mygate .
+If you need to edit this file, a painless way to reconfigure the network
+afterwards is to issue
+.Bd -literal -offset indent
+.Ic /etc/rc.d/network restart
+.Ed
+.Pp
+Or, you may prefer to manually configure using a series of
+.Ic route add
+and
+.Ic route delete
+commands (see
+.Xr route 8 ) .
+If you run
+.Xr dhclient 8
+you will have to kill it by running
+.Bd -literal -offset indent
+.Ic /etc/rc.d/dhclient stop
+.Pp
+.Ed
+after you flush the routes.
+.Pp
+If you wish to route packets between interfaces, add one or both
+of the following directives (depending on whether IPv4 or IPv6 routing
+is required) to
+.Pa /etc/sysctl.conf :
+.Pp
+.Dl net.inet.ip.forwarding=1
+.Dl net.inet6.ip6.forwarding=1
+.Pp
+As an alternative, compile a new kernel with the
+.Cm GATEWAY
+option.
+Packets are not forwarded by default, due to RFC requirements.
+.Ss Secure Shell (ssh)
+By default, all services are disabled in a fresh
+.Nx
+installation, and ssh is no exception.
+You may wish to enable it so you can remotely control your system.
+Set
+.Dq Va sshd=yes
+in
+.Pa /etc/rc.conf
+and then starting the server with the command
+.Bd -literal -offset indent
+.Ic /etc/rc.d/sshd start
+.Ed
+.Pp
+The first time the server is started, it will generate a new keypair,
+which will be stored inside the directory
+.Pa /etc/ssh .
+.Ss BIND Name Server (DNS)
+If you are using the BIND Name Server, check the
+.Pa /etc/resolv.conf
+file.
+It may look something like:
+.Bd -literal -offset indent
+domain some.thing.dom
+nameserver 192.168.0.1
+nameserver 192.168.4.55
+search some.thing.dom. thing.dom.
+.Ed
+.Pp
+For further details, see
+.Xr resolv.conf 5 .
+Note the name service lookup order is set via
+.Xr nsswitch.conf 5
+mechanism.
+.Pp
+If using a caching name server add the line "nameserver 127.0.0.1" first.
+To get a local caching name server to run
+you will need to set "named=yes" in
+.Pa /etc/rc.conf
+and create the
+.Pa named.conf
+file in the appropriate place for
+.Xr named 8 ,
+usually in
+.Pa /etc/namedb .
+The same holds true if the machine is going to be a
+name server for your domain.
+In both these cases, make sure that
+.Xr named 8
+is running
+(otherwise there are long waits for resolver timeouts).
+.Ss RPC-based network services
+Several services depend on the RPC portmapper
+.Xr rpcbind 8
+- formerly known as
+.Ic portmap
+- being running for proper operation.
+This includes YP (NIS) and NFS exports, among other services.
+To get the RPC portmapper to start automatically on boot,
+you will need to have this line in
+.Pa /etc/rc.conf :
+.Pp
+.Dl rpcbind=YES
+.Ss YP (NIS) Setup
+Check the YP domain name with the
+.Xr domainname 1
+command.
+If necessary, correct it by editing the
+.Pa /etc/defaultdomain
+file or by setting the
+.Dq Va domainname
+variable in
+.Pa /etc/rc.conf .
+The
+.Pa /etc/rc.d/network
+script reads this file on bootup to determine and set the domain name.
+You may also set the running system's domain name with the
+.Xr domainname 1
+command.
+To start YP client services, simply run
+.Ic ypbind ,
+then perform the remaining
+YP activation as described in
+.Xr passwd 5
+and
+.Xr group 5 .
+.Pp
+In particular, to enable YP passwd support, you'll need to update
+.Pa /etc/nsswitch.conf
+to include
+.Dq nis
+for the
+.Dq passwd
+and
+.Dq group
+entries.
+A traditional way to accomplish the same thing is to
+add following entry to local passwd database via
+.Xr vipw 8 :
+.Bd -literal -offset indent
+.Li +:*::::::::
+.Pp
+.Ed
+Note this entry has to be the very last one.
+This traditional way works with the default
+.Xr nsswitch.conf 5
+setting of
+.Dq passwd ,
+which is
+.Dq compat .
+.Pp
+There are many more YP man pages available to help you.
+You can find more information by starting with
+.Xr yp 8 .
+.Ss Check disk mounts
+Check that the disks are mounted correctly by
+comparing the
+.Pa /etc/fstab
+file against the output of the
+.Xr mount 8
+and
+.Xr df 1
+commands.
+Example:
+.Bd -literal -offset indent
+.Li # Ic cat /etc/fstab
+/dev/sd0a / ffs     rw              1 1
+/dev/sd0b none swap sw
+/dev/sd0e /usr ffs  rw              1 2
+/dev/sd0f /var ffs  rw              1 3
+/dev/sd0g /tmp ffs  rw              1 4
+/dev/sd0h /home ffs rw              1 5
+
+.Li # Ic mount
+/dev/sd0a on / type ffs (local)
+/dev/sd0e on /usr type ffs (local)
+/dev/sd0f on /var type ffs (local)
+/dev/sd0g on /tmp type ffs (local)
+/dev/sd0h on /home type ffs (local)
+
+.Li # Ic df
+Filesystem  1024-blocks     Used    Avail Capacity  Mounted on
+/dev/sd0a         22311    14589     6606    69%    /
+/dev/sd0e        203399   150221    43008    78%    /usr
+/dev/sd0f         10447      682     9242     7%    /var
+/dev/sd0g         18823        2    17879     0%    /tmp
+/dev/sd0h          7519     5255     1888    74%    /home
+
+.Li # Ic pstat -s
+Device      512-blocks     Used    Avail Capacity  Priority
+/dev/sd0b       131072    84656    46416    65%    0
+.Ed
+.Pp
+Edit
+.Pa /etc/fstab
+and use the
+.Xr mount 8
+and
+.Xr umount 8
+commands as appropriate.
+Refer to the above example and
+.Xr fstab 5
+for information on the format of this file.
+.Pp
+You may wish to do NFS mounts now too, or you can do them later.
+.Ss Concatenated disks (ccd)
+If you are using
+.Xr ccd 4
+concatenated disks, edit
+.Pa /etc/ccd.conf .
+You may wish to take a look to
+.Xr ccdconfig 8
+for more information about this file.
+Use the
+.Ic ccdconfig -U
+command to unload and the
+.Ic ccdconfig -C
+command to create tables internal to the kernel for the concatenated disks.
+You then
+.Xr mount 8 ,
+.Xr umount 8 ,
+and edit
+.Pa /etc/fstab
+as needed.
+.Ss Automounter daemon (AMD)
+To use the
+.Xr amd 8
+automounter, create the
+.Pa /etc/amd
+directory, copy example config files from
+.Pa /usr/share/examples/amd
+to
+.Pa /etc/amd
+and customize them as needed.
+Alternatively, you can get your maps with YP.
+.Ss Clock synchronization
+In order to make sure the system clock is synchronized
+to that of a publicly accessible NTP server,
+make sure that
+.Pa /etc/rc.conf
+contains the following:
+.Pp
+.Dl ntpdate=yes
+.Dl ntpd=yes
+.Pp
+See
+.Xr date 1 ,
+.Xr ntpdate 8 ,
+.Xr ntpd 8 ,
+.Xr rdate 8 ,
+and
+.Xr timed 8
+for more information on setting the system's date.
+.Sh CHANGING /etc FILES
+The system should be usable now, but you may wish to do more customizing,
+such as adding users, etc.
+Many of the following sections may be skipped
+if you are not using that package (for example, skip the
+.Sx Kerberos
+section if you won't be using Kerberos).
+We suggest that you
+.Ic cd /etc
+and edit most of the files in that directory.
+.Pp
+Note that the
+.Pa /etc/motd
+file is modified by
+.Pa /etc/rc.d/motd
+whenever the system is booted.
+To keep any custom message intact, ensure that you leave two blank lines
+at the top, or your message will be overwritten.
+.Ss Add new users
+To add new users and groups, there are
+.Xr useradd 8
+and
+.Xr groupadd 8 ,
+see also
+.Xr user 8
+for further programs for user and group manipulation.
+You may use
+.Xr vipw 8
+to add users to the
+.Pa /etc/passwd
+file
+and edit
+.Pa /etc/group
+by hand to add new groups.
+The manual page for
+.Xr su 1 ,
+tells you to make sure to put people in
+the
+.Sq wheel
+group if they need root access (non-Kerberos).
+For example:
+.Bd -literal -offset indent
+wheel:*:0:root,myself
+.Ed
+.Pp
+Follow instructions for
+.Xr kerberos 8
+if using
+Kerberos
+for authentication.
+.Ss System boot scripts and /etc/rc.local
+.Pa /etc/rc
+and the
+.Pa /etc/rc.d/*
+scripts are invoked at boot time after single user mode has exited,
+and at shutdown.
+The whole process is controlled by the master script
+.Pa /etc/rc .
+This script should not be changed by administrators.
+.Pp
+The directory
+.Pa /etc/rc.d
+contains a serie of scripts used at startup/shutdown, called by
+.Pa /etc/rc .
+.Pa /etc/rc
+is in turn influenced by the configuration variables present in
+.Pa /etc/rc.conf .
+.Pp
+The script
+.Pa /etc/rc.local
+is run as the last thing during multiuser boot, and is provided
+to allow any other local hooks necessary for the system.
+.Ss rc.conf
+To enable or disable various services on system startup,
+corresponding entries can be made in
+.Pa /etc/rc.conf .
+You can take a look at
+.Pa /etc/defaults/rc.conf
+to see a list of default system variables, which you can override in
+.Pa /etc/rc.conf .
+Note you are
+.Em not
+supposed to change
+.Pa /etc/defaults/rc.conf
+directly, edit only
+.Pa /etc/rc.conf .
+See
+.Xr rc.conf 5
+for further information.
+.Pp
+If you've installed X, you may want to turn on
+.Xr xdm 1 ,
+the X Display Manager.
+To do this, set the variable
+.Dq xdm
+to yes in
+.Pa /etc/rc.conf ,
+i.e.:
+.Dq xdm=yes
+.Ss Printers
+Edit
+.Pa /etc/printcap
+and
+.Pa /etc/hosts.lpd
+to get any printers set up.
+Consult
+.Xr lpd 8
+and
+.Xr printcap 5
+if needed.
+.Ss Tighten up security
+In
+.Pa /etc/inetd.conf
+comment out any extra entries you do not need, and only add things
+that are really needed.
+Note that by default all services are disabled for security reasons.
+.Ss Kerberos
+If you are going to use Kerberos for authentication,
+see
+.Xr kerberos 8
+and
+.Dq info heimdal
+for more information.
+If you already have a Kerberos master, change directory to
+.Pa /etc/kerberosV
+and configure.
+Remember to get a
+.Pa srvtab
+from the master so that the remote commands work.
+.Ss Mail Aliases
+Check
+.Pa /etc/mail/aliases
+and update appropriately if you want e-mail to be routed
+to non-local address or to different users.
+.Pp
+Run
+.Xr newaliases 1
+after changes.
+.Ss Postfix
+.Nx
+comes also with Postfix in the base system.
+You may wish to set it up in favor of sendmail.
+Take a look to
+.Pa /etc/postfix/main.cf
+and enable the daemon in
+.Pa /etc/rc.conf
+using "postfix=yes".
+It is very important to configure
+.Pa /etc/mailer.conf
+to point to Postfix binaries.
+.Ss DHCP server
+If this is a
+DHCP
+server, edit
+.Pa /etc/dhcpd.conf
+and
+.Pa /etc/dhcpd.interfaces
+as needed.
+You will have to make sure
+.Pa /etc/rc.conf
+has "dhcpd=yes"
+or run
+.Xr dhcpd 8
+manually.
+.Ss Bootparam server
+If this is a
+Bootparam
+server, edit
+.Pa /etc/bootparams
+as needed.
+You will have to turn it on in
+.Pa /etc/rc.conf
+by adding "bootparamd=yes".
+.Ss NFS server
+If this is an NFS server, make sure
+.Pa /etc/rc.conf
+has:
+.Bd -literal -offset indent
+nfs_server=yes
+mountd=yes
+rpcbind=yes
+.Ed
+.Pp
+Edit
+.Pa /etc/exports
+and get it correct.
+After this, you can start the server by issuing:
+.Bd -literal -offset indent
+.Ic /etc/rc.d/rpcbind start
+.Ic /etc/rc.d/mountd start
+.Ic /etc/rc.d/nfsd start
+.Ed
+which will also start dependencies.
+.Ss HP remote boot server
+Edit
+.Pa /etc/rbootd.conf
+if needed for remote booting.
+If you do not have HP computers doing remote booting, do not enable this.
+.Ss Daily, weekly, monthly scripts
+Look at and possibly edit the
+.Pa /etc/daily.conf , /etc/weekly.conf ,
+and
+.Pa /etc/monthly.conf
+configuration files.
+You can check which values you can set by looking
+to their matching files in
+.Pa /etc/defaults .
+Your site specific things should go into
+.Pa /etc/daily.local , /etc/weekly.local ,
+and
+.Pa /etc/monthly.local .
+.Pp
+These scripts have been limited so as to keep the system running without
+filling up disk space from normal running processes and database updates.
+(You probably do not need to understand them.)
+.Ss Other files in /etc
+Look at the other files in
+.Pa /etc
+and edit them as needed.
+(Do not edit files ending in
+.Pa .db
+\(em like
+.Pa pwd.db , spwd.db ,
+nor
+.Pa localtime ,
+nor
+.Pa rmt ,
+nor any directories.)
+.Ss Crontab (background running processes)
+Check what is running by typing
+.Ic crontab -l
+as root
+and see if anything unexpected is present.
+Do you need anything else?
+Do you wish to change things?
+For example, if you do not
+like root getting standard output of the daily scripts, and want only
+the security scripts that are mailed internally, you can type
+.Ic crontab -e
+and change some of the lines to read:
+.Bd -literal -offset indent
+30  1  *  *  *   /bin/sh /etc/daily 2\*[Gt]\*[Am]1 \*[Gt] /var/log/daily.out
+30  3  *  *  6   /bin/sh /etc/weekly 2\*[Gt]\*[Am]1 \*[Gt] /var/log/weekly.out
+30  5  1  *  *   /bin/sh /etc/monthly 2\*[Gt]\*[Am]1 \*[Gt] /var/log/monthly.out
+.Ed
+.Pp
+See
+.Xr crontab 5 .
+.Ss Next day cleanup
+After the first night's security run, change ownerships and permissions
+on files, directories, and devices; root should have received mail
+with subject: "\*[Lt]hostname\*[Gt] daily insecurity output.".
+This mail contains
+a set of security recommendations, presented as a list looking like this:
+.Bd -literal -offset indent
+var/mail:
+        permissions (0755, 0775)
+etc/daily:
+        user (0, 3)
+.Ed
+.Pp
+The best bet is to follow the advice in that list.
+The recommended setting is the first item in parentheses, while
+the current setting is the second one.
+This list is generated by
+.Xr mtree 8
+using
+.Pa /etc/mtree/special .
+Use
+.Xr chmod 1 ,
+.Xr chgrp 1 ,
+and
+.Xr chown 8
+as needed.
+.Ss Packages
+Install your own packages.
+The
+.Nx
+packages collection, pkgsrc, includes a large set of third-party software.
+A lot of it is available as binary packages that you can download from
+.Pa ftp://ftp.NetBSD.org/pub/NetBSD/packages/
+or a mirror, and install using
+.Xr pkg_add 1 .
+See
+.Pa http://www.NetBSD.org/Documentation/pkgsrc/
+and
+.Pa pkgsrc/doc/pkgsrc.txt
+for more details.
+.Pp
+Copy vendor binaries and install them.
+You will need to install any shared libraries, etc.
+(Hint:
+.Ic man -k compat
+to find out how to install and use compatibility mode.)
+.Pp
+There is also other third-party software that is available
+in source form only, either because it has not been ported to
+.Nx
+yet, because licensing restrictions make binary redistribution
+impossible, or simply because you want to build your own binaries.
+Sometimes checking the mailing lists for
+past problems that people have encountered will result in a fix posted.
+.Ss Check the running system
+You can use
+.Xr ps 1 ,
+.Xr netstat 1 ,
+and
+.Xr fstat 1
+to check on running processes, network connections, and opened files,
+respectively.
+Other tools you may find useful are
+.Xr systat 1
+and
+.Xr top 1 .
+.Sh COMPILING A KERNEL
+Note:
+The standard
+.Nx
+kernel configuration (GENERIC) is suitable for most purposes.
+.Pp
+First, review the system message buffer in
+.Pa /var/run/dmesg.boot
+and by using the
+.Xr dmesg 8
+command to find out information on your system's devices as probed by the
+kernel at boot.
+In particular, note which devices were not configured.
+This information will prove useful when editing kernel configuration files.
+.Pp
+To compile a kernel inside a writable source tree, do the following:
+.Bd -literal -offset indent
+$ cd /usr/src/sys/arch/SOMEARCH/conf
+$ cp GENERIC SOMEFILE (only the first time)
+$ vi SOMEFILE (adapt to your needs)
+$ config SOMEFILE
+$ cd ../compile/SOMEFILE
+$ make depend
+$ make
+.Ed
+.Pp
+where
+.Ar SOMEARCH
+is the architecture (e.g., i386), and
+.Ar SOMEFILE
+should be a name indicative of a particular configuration (often
+that of the hostname).
+.Pp
+If you are building your kernel again, before you do a
+.Ic make
+you should do a
+.Ic make clean
+after making changes to your kernel options.
+.Pp
+After either of these two methods, you can place the new kernel (called
+.Pa netbsd )
+in
+.Pa /
+(i.e.,
+.Pa /netbsd )
+by issuing
+.Ic make install
+and the system will boot it next time.
+The old kernel is stored as
+.Pa /onetbsd
+so you can boot it in case of failure.
+.Pp
+If you are using toolchain to build your kernel, you will also need to
+build a new set of toolchain binaries.
+You can do it by changing into
+.Pa /usr/src
+and issuing:
+.Bd -literal -offset indent
+$ cd /usr/src
+$ K=sys/arch/`uname -m`/conf
+$ cp $K/GENERIC $K/SOMEFILE
+$ vi $K/SOMEFILE (adapt to your needs)
+$ ./build.sh tools
+$ ./build.sh kernel=SOMEFILE
+.Ed
+.Sh SEE ALSO
+.Xr chgrp 1 ,
+.Xr chmod 1 ,
+.Xr config 1 ,
+.Xr crontab 1 ,
+.Xr date 1 ,
+.Xr df 1 ,
+.Xr domainname 1 ,
+.Xr hostname 1 ,
+.Xr make 1 ,
+.Xr man 1 ,
+.Xr netstat 1 ,
+.Xr newaliases 1 ,
+.Xr passwd 1 ,
+.Xr su 1 ,
+.Xr ccd 4 ,
+.Xr aliases 5 ,
+.Xr crontab 5 ,
+.Xr exports 5 ,
+.Xr fstab 5 ,
+.Xr group 5 ,
+.Xr krb.conf 5 ,
+.Xr krb.realms 5 ,
+.Xr mailer.conf 5 ,
+.Xr passwd 5 ,
+.Xr rc.conf 5 ,
+.Xr resolv.conf 5 ,
+.Xr hostname 7 ,
+.Xr pkgsrc 7 ,
+.Xr adduser 8 ,
+.Xr amd 8 ,
+.Xr bootparamd 8 ,
+.Xr ccdconfig 8 ,
+.Xr chown 8 ,
+.Xr dhcpd 8 ,
+.Xr ifconfig 8 ,
+.Xr inetd 8 ,
+.Xr kerberos 8 ,
+.Xr mount 8 ,
+.Xr mrouted 8 ,
+.Xr mtree 8 ,
+.Xr named 8 ,
+.Xr rbootd 8 ,
+.Xr rc 8 ,
+.Xr rmt 8 ,
+.Xr route 8 ,
+.Xr umount 8 ,
+.Xr vipw 8 ,
+.Xr ypbind 8
+.Sh HISTORY
+This document first appeared in
+.Ox 2.2 .
+It has been adapted to
+.Nx
+and first appeared in
+.Nx 2.0 .
