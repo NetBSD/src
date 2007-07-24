@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.2 2004/09/27 17:07:35 dyoung Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.1.1.3 2007/07/24 11:43:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -18,7 +18,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/strcasecmp.c,v 1.4.2.2 2003/11/16 08:51:57 guy Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/strcasecmp.c,v 1.6 2003/11/16 09:36:43 guy Exp";
 #endif
 
 #include <tcpdump-stdinc.h>

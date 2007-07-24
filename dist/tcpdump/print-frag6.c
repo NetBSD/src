@@ -1,4 +1,4 @@
-/*	$NetBSD: print-frag6.c,v 1.1.1.3 2004/09/27 17:07:03 dyoung Exp $	*/
+/*	$NetBSD: print-frag6.c,v 1.1.1.4 2007/07/24 11:42:54 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-frag6.c,v 1.16.2.3 2003/11/19 00:35:43 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-frag6.c,v 1.19.2.1 2005/04/20 22:33:21 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -47,13 +47,9 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 {
 	register const struct ip6_frag *dp;
 	register const struct ip6_hdr *ip6;
-	register const u_char *ep;
 
 	dp = (const struct ip6_frag *)bp;
 	ip6 = (const struct ip6_hdr *)bp2;
-
-	/* 'ep' points to the end of available data. */
-	ep = snapend;
 
 	TCHECK(dp->ip6f_offlg);
 

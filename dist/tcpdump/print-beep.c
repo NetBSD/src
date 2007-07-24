@@ -1,4 +1,4 @@
-/*	$NetBSD: print-beep.c,v 1.1.1.2 2004/09/27 17:06:55 dyoung Exp $	*/
+/*	$NetBSD: print-beep.c,v 1.1.1.3 2007/07/24 11:42:50 drochner Exp $	*/
 
 /*
  * Copyright (C) 2000, Richard Sharpe
@@ -13,7 +13,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-  "@(#) Header: /tcpdump/master/tcpdump/print-beep.c,v 1.4.2.2 2003/11/16 08:51:12 guy Exp";
+  "@(#) Header: /tcpdump/master/tcpdump/print-beep.c,v 1.6 2003/11/16 09:36:13 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H

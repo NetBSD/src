@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.1.1.4 2004/09/27 17:07:17 dyoung Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.1.1.5 2007/07/24 11:43:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.99.2.2 2003/11/16 08:51:35 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.106.2.4 2007/06/15 23:17:40 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -31,8 +31,6 @@ static const char rcsid[] _U_ =
 #endif
 
 #include <tcpdump-stdinc.h>
-
-#include <rpc/rpc.h>
 
 #include <pcap.h>
 #include <stdio.h>
@@ -49,15 +47,16 @@ static const char rcsid[] _U_ =
 #ifdef INET6
 #include "ip6.h"
 #endif
+#include "rpc_auth.h"
+#include "rpc_msg.h"
 
 static void nfs_printfh(const u_int32_t *, const u_int);
-static void xid_map_enter(const struct rpc_msg *, const u_char *);
-static int32_t xid_map_find(const struct rpc_msg *, const u_char *,
+static void xid_map_enter(const struct sunrpc_msg *, const u_char *);
+static int32_t xid_map_find(const struct sunrpc_msg *, const u_char *,
 			    u_int32_t *, u_int32_t *);
-static void interp_reply(const struct rpc_msg *, u_int32_t, u_int32_t, int);
+static void interp_reply(const struct sunrpc_msg *, u_int32_t, u_int32_t, int);
 static const u_int32_t *parse_post_op_attr(const u_int32_t *, int);
 static void print_sattr3(const struct nfsv3_sattr *sa3, int verbose);
-static int print_int64(const u_int32_t *dp, int how);
 static void print_nfsaddr(const u_char *, const char *, const char *);
 
 /*
@@ -158,59 +157,6 @@ static struct tok type2str[] = {
 	{ NFFIFO,	"FIFO" },
 	{ 0,		NULL }
 };
-
-/*
- * Print out a 64-bit integer. This appears to be different on each system,
- * try to make the best of it. The integer stored as 2 consecutive XDR
- * encoded 32-bit integers, to which a pointer is passed.
- *
- * Assume that a system that has INT64_FORMAT defined, has a 64-bit
- * integer datatype and can print it.
- */
-
-#define UNSIGNED 0
-#define SIGNED   1
-#define HEX      2
-
-static int print_int64(const u_int32_t *dp, int how)
-{
-#ifdef INT64_FORMAT
-	u_int64_t res;
-
-	res = ((u_int64_t)EXTRACT_32BITS(&dp[0]) << 32) | (u_int64_t)EXTRACT_32BITS(&dp[1]);
-	switch (how) {
-	case SIGNED:
-		printf(INT64_FORMAT, res);
-		break;
-	case UNSIGNED:
-		printf(U_INT64_FORMAT, res);
-		break;
-	case HEX:
-		printf(HEX_INT64_FORMAT, res);
-		break;
-	default:
-		return (0);
-	}
-#else
-	u_int32_t high;
-
-	high = EXTRACT_32BITS(&dp[0]);
-
-	switch (how) {
-	case SIGNED:
-	case UNSIGNED:
-	case HEX:
-		if (high != 0)
-			printf("0x%x%08x", high, EXTRACT_32BITS(&dp[1]));
-		else
-			printf("0x%x", EXTRACT_32BITS(&dp[1]));
-		break;
-	default:
-		return (0);
-	}
-#endif
-	return 1;
-}
 
 static void
 print_nfsaddr(const u_char *bp, const char *s, const char *d)
@@ -342,12 +288,16 @@ void
 nfsreply_print(register const u_char *bp, u_int length,
 	       register const u_char *bp2)
 {
-	register const struct rpc_msg *rp;
-	u_int32_t proc, vers;
+	register const struct sunrpc_msg *rp;
+	u_int32_t proc, vers, reply_stat;
 	char srcid[20], dstid[20];	/*fits 32bit*/
+	enum sunrpc_reject_stat rstat;
+	u_int32_t rlow;
+	u_int32_t rhigh;
+	enum sunrpc_auth_stat rwhy;
 
 	nfserr = 0;		/* assume no error */
-	rp = (const struct rpc_msg *)bp;
+	rp = (const struct sunrpc_msg *)bp;
 
 	if (!nflag) {
 		strlcpy(srcid, "nfs", sizeof(srcid));
@@ -359,13 +309,83 @@ nfsreply_print(register const u_char *bp, u_int length,
 		    EXTRACT_32BITS(&rp->rm_xid));
 	}
 	print_nfsaddr(bp2, srcid, dstid);
-	(void)printf("reply %s %d",
-		     EXTRACT_32BITS(&rp->rm_reply.rp_stat) == MSG_ACCEPTED?
-			     "ok":"ERR",
-			     length);
+	reply_stat = EXTRACT_32BITS(&rp->rm_reply.rp_stat);
+	switch (reply_stat) {
 
-	if (xid_map_find(rp, bp2, &proc, &vers) >= 0)
-		interp_reply(rp, proc, vers, length);
+	case SUNRPC_MSG_ACCEPTED:
+		(void)printf("reply ok %u", length);
+		if (xid_map_find(rp, bp2, &proc, &vers) >= 0)
+			interp_reply(rp, proc, vers, length);
+		break;
+
+	case SUNRPC_MSG_DENIED:
+		(void)printf("reply ERR %u: ", length);
+		rstat = EXTRACT_32BITS(&rp->rm_reply.rp_reject.rj_stat);
+		switch (rstat) {
+
+		case SUNRPC_RPC_MISMATCH:
+			rlow = EXTRACT_32BITS(&rp->rm_reply.rp_reject.rj_vers.low);
+			rhigh = EXTRACT_32BITS(&rp->rm_reply.rp_reject.rj_vers.high);
+			(void)printf("RPC Version mismatch (%u-%u)",
+			    rlow, rhigh);
+			break;
+
+		case SUNRPC_AUTH_ERROR:
+			rwhy = EXTRACT_32BITS(&rp->rm_reply.rp_reject.rj_why);
+			(void)printf("Auth ");
+			switch (rwhy) {
+
+			case SUNRPC_AUTH_OK:
+				(void)printf("OK");
+				break;
+
+			case SUNRPC_AUTH_BADCRED:
+				(void)printf("Bogus Credentials (seal broken)");
+				break;
+
+			case SUNRPC_AUTH_REJECTEDCRED:
+				(void)printf("Rejected Credentials (client should begin new session)");
+				break;
+
+			case SUNRPC_AUTH_BADVERF:
+				(void)printf("Bogus Verifier (seal broken)");
+				break;
+
+			case SUNRPC_AUTH_REJECTEDVERF:
+				(void)printf("Verifier expired or was replayed");
+				break;
+
+			case SUNRPC_AUTH_TOOWEAK:
+				(void)printf("Credentials are too weak");
+				break;
+
+			case SUNRPC_AUTH_INVALIDRESP:
+				(void)printf("Bogus response verifier");
+				break;
+
+			case SUNRPC_AUTH_FAILED:
+				(void)printf("Unknown failure");
+				break;
+
+			default:
+				(void)printf("Invalid failure code %u",
+				    (unsigned int)rwhy);
+				break;
+			}
+			break;
+
+		default:
+			(void)printf("Unknown reason for rejecting rpc message %u",
+			    (unsigned int)rstat);
+			break;
+		}
+		break;
+
+	default:
+		(void)printf("reply Unknown rpc response code=%u %u",
+		    reply_stat, length);
+		break;
+	}
 }
 
 /*
@@ -373,7 +393,7 @@ nfsreply_print(register const u_char *bp, u_int length,
  * If the packet was truncated, return 0.
  */
 static const u_int32_t *
-parsereq(register const struct rpc_msg *rp, register u_int length)
+parsereq(register const struct sunrpc_msg *rp, register u_int length)
 {
 	register const u_int32_t *dp;
 	register u_int len;
@@ -444,9 +464,11 @@ parsefn(register const u_int32_t *dp)
 	cp = (u_char *)dp;
 	/* Update 32-bit pointer (NFS filenames padded to 32-bit boundaries) */
 	dp += ((len + 3) & ~3) / sizeof(*dp);
-	/* XXX seems like we should be checking the length */
 	putchar('"');
-	(void) fn_printn(cp, len, NULL);
+	if (fn_printn(cp, len, snapend)) {
+		putchar('"');
+		goto trunc;
+	}
 	putchar('"');
 
 	return (dp);
@@ -473,7 +495,7 @@ void
 nfsreq_print(register const u_char *bp, u_int length,
     register const u_char *bp2)
 {
-	register const struct rpc_msg *rp;
+	register const struct sunrpc_msg *rp;
 	register const u_int32_t *dp;
 	nfs_type type;
 	int v3;
@@ -482,7 +504,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 	char srcid[20], dstid[20];	/*fits 32bit*/
 
 	nfserr = 0;		/* assume no error */
-	rp = (const struct rpc_msg *)bp;
+	rp = (const struct sunrpc_msg *)bp;
 	if (!nflag) {
 		snprintf(srcid, sizeof(srcid), "%u",
 		    EXTRACT_32BITS(&rp->rm_xid));
@@ -555,9 +577,9 @@ nfsreq_print(register const u_char *bp, u_int length,
 		    (dp = parsefh(dp, v3)) != NULL) {
 			if (v3) {
 				TCHECK(dp[2]);
-				printf(" %u bytes @ ",
-				       EXTRACT_32BITS(&dp[2]));
-				print_int64(dp, UNSIGNED);
+				printf(" %u bytes @ %" PRIu64,
+				       EXTRACT_32BITS(&dp[2]),
+				       EXTRACT_64BITS(&dp[0]));
 			} else {
 				TCHECK(dp[1]);
 				printf(" %u bytes @ %u",
@@ -573,10 +595,11 @@ nfsreq_print(register const u_char *bp, u_int length,
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
 			if (v3) {
-				TCHECK(dp[4]);
-				printf(" %u bytes @ ",
-						EXTRACT_32BITS(&dp[4]));
-				print_int64(dp, UNSIGNED);
+				TCHECK(dp[2]);
+				printf(" %u (%u) bytes @ %" PRIu64,
+						EXTRACT_32BITS(&dp[4]),
+						EXTRACT_32BITS(&dp[2]),
+						EXTRACT_64BITS(&dp[0]));
 				if (vflag) {
 					dp += 3;
 					TCHECK(dp[0]);
@@ -691,9 +714,9 @@ nfsreq_print(register const u_char *bp, u_int length,
 				 * We shouldn't really try to interpret the
 				 * offset cookie here.
 				 */
-				printf(" %u bytes @ ",
-				    EXTRACT_32BITS(&dp[4]));
-				print_int64(dp, SIGNED);
+				printf(" %u bytes @ %" PRId64,
+				    EXTRACT_32BITS(&dp[4]),
+				    EXTRACT_64BITS(&dp[0]));
 				if (vflag)
 					printf(" verf %08x%08x", dp[2],
 					       dp[3]);
@@ -720,11 +743,14 @@ nfsreq_print(register const u_char *bp, u_int length,
 			 * We don't try to interpret the offset
 			 * cookie here.
 			 */
-			printf(" %u bytes @ ", EXTRACT_32BITS(&dp[4]));
-			print_int64(dp, SIGNED);
-			if (vflag)
+			printf(" %u bytes @ %" PRId64,
+				EXTRACT_32BITS(&dp[4]),
+				EXTRACT_64BITS(&dp[0]));
+			if (vflag) {
+				TCHECK(dp[5]);
 				printf(" max %u verf %08x%08x",
 				       EXTRACT_32BITS(&dp[5]), dp[2], dp[3]);
+			}
 			return;
 		}
 		break;
@@ -754,8 +780,10 @@ nfsreq_print(register const u_char *bp, u_int length,
 		printf(" commit");
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
-			printf(" %u bytes @ ", EXTRACT_32BITS(&dp[2]));
-			print_int64(dp, UNSIGNED);
+			TCHECK(dp[2]);
+			printf(" %u bytes @ %" PRIu64,
+				EXTRACT_32BITS(&dp[2]),
+				EXTRACT_64BITS(&dp[0]));
 			return;
 		}
 		break;
@@ -861,7 +889,7 @@ int	xid_map_next = 0;
 int	xid_map_hint = 0;
 
 static void
-xid_map_enter(const struct rpc_msg *rp, const u_char *bp)
+xid_map_enter(const struct sunrpc_msg *rp, const u_char *bp)
 {
 	struct ip *ip = NULL;
 #ifdef INET6
@@ -909,7 +937,7 @@ xid_map_enter(const struct rpc_msg *rp, const u_char *bp)
  * version in vers return, or returns -1 on failure
  */
 static int
-xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
+xid_map_find(const struct sunrpc_msg *rp, const u_char *bp, u_int32_t *proc,
 	     u_int32_t *vers)
 {
 	int i;
@@ -976,11 +1004,11 @@ xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
  * If the packet was truncated, return 0.
  */
 static const u_int32_t *
-parserep(register const struct rpc_msg *rp, register u_int length)
+parserep(register const struct sunrpc_msg *rp, register u_int length)
 {
 	register const u_int32_t *dp;
 	u_int len;
-	enum accept_stat astat;
+	enum sunrpc_accept_stat astat;
 
 	/*
 	 * Portability note:
@@ -1011,33 +1039,33 @@ parserep(register const struct rpc_msg *rp, register u_int length)
 	/*
 	 * now we can check the ar_stat field
 	 */
-	astat = EXTRACT_32BITS(dp);
+	astat = (enum sunrpc_accept_stat) EXTRACT_32BITS(dp);
 	switch (astat) {
 
-	case SUCCESS:
+	case SUNRPC_SUCCESS:
 		break;
 
-	case PROG_UNAVAIL:
+	case SUNRPC_PROG_UNAVAIL:
 		printf(" PROG_UNAVAIL");
 		nfserr = 1;		/* suppress trunc string */
 		return (NULL);
 
-	case PROG_MISMATCH:
+	case SUNRPC_PROG_MISMATCH:
 		printf(" PROG_MISMATCH");
 		nfserr = 1;		/* suppress trunc string */
 		return (NULL);
 
-	case PROC_UNAVAIL:
+	case SUNRPC_PROC_UNAVAIL:
 		printf(" PROC_UNAVAIL");
 		nfserr = 1;		/* suppress trunc string */
 		return (NULL);
 
-	case GARBAGE_ARGS:
+	case SUNRPC_GARBAGE_ARGS:
 		printf(" GARBAGE_ARGS");
 		nfserr = 1;		/* suppress trunc string */
 		return (NULL);
 
-	case SYSTEM_ERR:
+	case SUNRPC_SYSTEM_ERR:
 		printf(" SYSTEM_ERR");
 		nfserr = 1;		/* suppress trunc string */
 		return (NULL);
@@ -1091,8 +1119,8 @@ parsefattr(const u_int32_t *dp, int verbose, int v3)
 		    EXTRACT_32BITS(&fap->fa_gid));
 		if (v3) {
 			TCHECK(fap->fa3_size);
-			printf(" sz ");
-			print_int64((u_int32_t *)&fap->fa3_size, UNSIGNED);
+			printf(" sz %" PRIu64,
+				EXTRACT_64BITS((u_int32_t *)&fap->fa3_size));
 		} else {
 			TCHECK(fap->fa2_size);
 			printf(" sz %d", EXTRACT_32BITS(&fap->fa2_size));
@@ -1106,10 +1134,10 @@ parsefattr(const u_int32_t *dp, int verbose, int v3)
 			       EXTRACT_32BITS(&fap->fa_nlink),
 			       EXTRACT_32BITS(&fap->fa3_rdev.specdata1),
 			       EXTRACT_32BITS(&fap->fa3_rdev.specdata2));
-			printf(" fsid ");
-			print_int64((u_int32_t *)&fap->fa3_fsid, HEX);
-			printf(" fileid ");
-			print_int64((u_int32_t *)&fap->fa3_fileid, HEX);
+			printf(" fsid %" PRIx64,
+				EXTRACT_64BITS((u_int32_t *)&fap->fa3_fsid));
+			printf(" fileid %" PRIx64,
+				EXTRACT_64BITS((u_int32_t *)&fap->fa3_fileid));
 			printf(" a/m/ctime %u.%06u",
 			       EXTRACT_32BITS(&fap->fa3_atime.nfsv3_sec),
 			       EXTRACT_32BITS(&fap->fa3_atime.nfsv3_nsec));
@@ -1217,20 +1245,15 @@ parsestatfs(const u_int32_t *dp, int v3)
 	sfsp = (const struct nfs_statfs *)dp;
 
 	if (v3) {
-		printf(" tbytes ");
-		print_int64((u_int32_t *)&sfsp->sf_tbytes, UNSIGNED);
-		printf(" fbytes ");
-		print_int64((u_int32_t *)&sfsp->sf_fbytes, UNSIGNED);
-		printf(" abytes ");
-		print_int64((u_int32_t *)&sfsp->sf_abytes, UNSIGNED);
+		printf(" tbytes %" PRIu64 " fbytes %" PRIu64 " abytes %" PRIu64,
+			EXTRACT_64BITS((u_int32_t *)&sfsp->sf_tbytes),
+			EXTRACT_64BITS((u_int32_t *)&sfsp->sf_fbytes),
+			EXTRACT_64BITS((u_int32_t *)&sfsp->sf_abytes));
 		if (vflag) {
-			printf(" tfiles ");
-			print_int64((u_int32_t *)&sfsp->sf_tfiles, UNSIGNED);
-			printf(" ffiles ");
-			print_int64((u_int32_t *)&sfsp->sf_ffiles, UNSIGNED);
-			printf(" afiles ");
-			print_int64((u_int32_t *)&sfsp->sf_afiles, UNSIGNED);
-			printf(" invar %u",
+			printf(" tfiles %" PRIu64 " ffiles %" PRIu64 " afiles %" PRIu64 " invar %u",
+			       EXTRACT_64BITS((u_int32_t *)&sfsp->sf_tfiles),
+			       EXTRACT_64BITS((u_int32_t *)&sfsp->sf_ffiles),
+			       EXTRACT_64BITS((u_int32_t *)&sfsp->sf_afiles),
 			       EXTRACT_32BITS(&sfsp->sf_invarsec));
 		}
 	} else {
@@ -1274,8 +1297,7 @@ trunc:
 static const u_int32_t *
 parse_wcc_attr(const u_int32_t *dp)
 {
-	printf(" sz ");
-	print_int64(dp, UNSIGNED);
+	printf(" sz %" PRIu64, EXTRACT_64BITS(&dp[0]));
 	printf(" mtime %u.%06u ctime %u.%06u",
 	       EXTRACT_32BITS(&dp[2]), EXTRACT_32BITS(&dp[3]),
 	       EXTRACT_32BITS(&dp[4]), EXTRACT_32BITS(&dp[5]));
@@ -1421,10 +1443,10 @@ parsefsinfo(const u_int32_t *dp)
 	       EXTRACT_32BITS(&sfp->fs_wtpref),
 	       EXTRACT_32BITS(&sfp->fs_dtpref));
 	if (vflag) {
-		printf(" rtmult %u wtmult %u maxfsz ",
+		printf(" rtmult %u wtmult %u maxfsz %" PRIu64,
 		       EXTRACT_32BITS(&sfp->fs_rtmult),
-		       EXTRACT_32BITS(&sfp->fs_wtmult));
-		print_int64((u_int32_t *)&sfp->fs_maxfilesize, UNSIGNED);
+		       EXTRACT_32BITS(&sfp->fs_wtmult),
+		       EXTRACT_64BITS((u_int32_t *)&sfp->fs_maxfilesize));
 		printf(" delta %u.%06u ",
 		       EXTRACT_32BITS(&sfp->fs_timedelta.nfsv3_sec),
 		       EXTRACT_32BITS(&sfp->fs_timedelta.nfsv3_nsec));
@@ -1465,7 +1487,7 @@ trunc:
 }
 
 static void
-interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int length)
+interp_reply(const struct sunrpc_msg *rp, u_int32_t proc, u_int32_t vers, int length)
 {
 	register const u_int32_t *dp;
 	register int v3;

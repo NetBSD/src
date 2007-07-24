@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tftp.c,v 1.1.1.2 2004/09/27 17:07:31 dyoung Exp $	*/
+/*	$NetBSD: print-tftp.c,v 1.1.1.3 2007/07/24 11:42:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.35.2.2 2003/11/16 08:51:50 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-tftp.c,v 1.37 2003/11/16 09:36:40 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

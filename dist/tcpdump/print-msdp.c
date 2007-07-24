@@ -1,4 +1,4 @@
-/*	$NetBSD: print-msdp.c,v 1.1.1.2 2004/09/27 17:07:14 dyoung Exp $	*/
+/*	$NetBSD: print-msdp.c,v 1.1.1.3 2007/07/24 11:42:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 William C. Fenner.
@@ -19,7 +19,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-msdp.c,v 1.4.2.2 2003/11/16 08:51:34 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-msdp.c,v 1.7 2005/04/06 21:32:41 mcr Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -72,7 +72,7 @@ msdp_print(const unsigned char *sp, u_int length)
 				(void)printf(" [w/data]");
 				if (vflag > 1) {
 					(void)printf(" ");
-					ip_print(sp + *sp * 12 + 8 - 3,
+					ip_print(gndo, sp + *sp * 12 + 8 - 3,
 					         len - (*sp * 12 + 8));
 				}
 			}
@@ -101,3 +101,10 @@ msdp_print(const unsigned char *sp, u_int length)
 trunc:
 	(void)printf(" [|msdp]");
 }
+
+/*
+ * Local Variables:
+ * c-style: whitesmith
+ * c-basic-offset: 8
+ * End:
+ */

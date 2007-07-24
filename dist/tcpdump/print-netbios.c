@@ -1,4 +1,4 @@
-/*	$NetBSD: print-netbios.c,v 1.1.1.2 2004/09/27 17:07:14 dyoung Exp $	*/
+/*	$NetBSD: print-netbios.c,v 1.1.1.3 2007/07/24 11:42:54 drochner Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-netbios.c,v 1.18.2.2 2003/11/16 08:51:35 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-netbios.c,v 1.20 2003/11/16 09:36:29 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H

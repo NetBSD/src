@@ -1,4 +1,4 @@
-/*	$NetBSD: gmt2local.c,v 1.1.1.2 2004/09/27 17:06:46 dyoung Exp $	*/
+/*	$NetBSD: gmt2local.c,v 1.1.1.3 2007/07/24 11:42:54 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/gmt2local.c,v 1.7.2.2 2003/11/16 08:51:06 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/gmt2local.c,v 1.9 2003/11/16 09:36:09 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

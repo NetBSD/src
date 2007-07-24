@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_dump.c,v 1.1.1.2 2004/09/27 17:06:30 dyoung Exp $	*/
+/*	$NetBSD: bpf_dump.c,v 1.1.1.3 2007/07/24 11:43:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/bpf_dump.c,v 1.14.2.2 2003/11/16 08:51:04 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/bpf_dump.c,v 1.16 2003/11/16 09:36:08 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

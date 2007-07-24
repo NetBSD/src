@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf6.c,v 1.1.1.2 2004/09/27 17:07:18 dyoung Exp $	*/
+/*	$NetBSD: print-ospf6.c,v 1.1.1.3 2007/07/24 11:43:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ospf6.c,v 1.11.2.2 2003/11/16 08:51:37 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ospf6.c,v 1.13 2003/11/16 09:36:31 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

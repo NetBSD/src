@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pppoe.c,v 1.1.1.4 2004/09/27 17:07:20 dyoung Exp $	*/
+/*	$NetBSD: print-pppoe.c,v 1.1.1.5 2007/07/24 11:42:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.24.2.4 2004/03/24 03:04:22 guy Exp (LBL)";
+"@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.30.2.1 2005/04/26 19:48:56 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -103,9 +103,15 @@ pppoe_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 u_int
 pppoe_print(register const u_char *bp, u_int length)
 {
-	u_short pppoe_ver, pppoe_type, pppoe_code, pppoe_sessionid, pppoe_length;
+	u_int16_t pppoe_ver, pppoe_type, pppoe_code, pppoe_sessionid;
+	u_int pppoe_length;
 	const u_char *pppoe_packet, *pppoe_payload;
 
+	if (length < PPPOE_HDRLEN) {
+		(void)printf("truncated-pppoe %u", length);
+		return (length);
+	}
+	length -= PPPOE_HDRLEN;
 	pppoe_packet = bp;
 	TCHECK2(*pppoe_packet, PPPOE_HDRLEN);
 	pppoe_ver  = (pppoe_packet[0] & 0xF0) >> 4;
@@ -114,11 +120,6 @@ pppoe_print(register const u_char *bp, u_int length)
 	pppoe_sessionid = EXTRACT_16BITS(pppoe_packet + 2);
 	pppoe_length    = EXTRACT_16BITS(pppoe_packet + 4);
 	pppoe_payload = pppoe_packet + PPPOE_HDRLEN;
-
-	if (snapend < pppoe_payload) {
-		printf(" truncated PPPoE");
-		return (PPPOE_HDRLEN);
-	}
 
 	if (pppoe_ver != 1) {
 		printf(" [ver %d]",pppoe_ver);
@@ -129,25 +130,14 @@ pppoe_print(register const u_char *bp, u_int length)
 
 	printf("PPPoE %s", tok2str(pppoecode2str, "PAD-%x", pppoe_code));
 	if (pppoe_code == PPPOE_PADI && pppoe_length > 1484 - PPPOE_HDRLEN) {
-		printf(" [len %d!]",pppoe_length);
+		printf(" [len %u!]",pppoe_length);
+	}
+	if (pppoe_length > length) {
+		printf(" [len %u > %u!]", pppoe_length, length);
+		pppoe_length = length;
 	}
 	if (pppoe_sessionid) {
 		printf(" [ses 0x%x]", pppoe_sessionid);
-	}
-
-	if (pppoe_payload + pppoe_length < snapend && snapend-pppoe_payload+14 > 64) {
-		/* (small packets are probably just padded up to the ethernet
-		   minimum of 64 bytes) */
-		printf(" [length %d (%d extra bytes)]",
-		    pppoe_length, snapend - pppoe_payload - pppoe_length);
-#if RESPECT_PAYLOAD_LENGTH
-		snapend = pppoe_payload+pppoe_length;
-#else
-		/* Actual PPPoE implementations appear to ignore the payload
-		   length and use the full ethernet frame anyways */
-		pppoe_length = snapend-pppoe_payload;
-#endif
-		
 	}
 
 	if (pppoe_code) {
@@ -157,11 +147,11 @@ pppoe_print(register const u_char *bp, u_int length)
 
 		/*
 		 * loop invariant:
-		 * p points to next tag,
+		 * p points to current tag,
 		 * tag_type is previous tag or 0xffff for first iteration
 		 */
-		while (tag_type && p + 4 < pppoe_payload + length &&
-		    p + 4 < snapend) {
+		while (tag_type && p < pppoe_payload + pppoe_length) {
+			TCHECK2(*p, 4);
 			tag_type = EXTRACT_16BITS(p);
 			tag_len = EXTRACT_16BITS(p + 2);
 			p += 4;
@@ -174,6 +164,7 @@ pppoe_print(register const u_char *bp, u_int length)
 				unsigned tag_str_len = 0;
 
 				/* TODO print UTF-8 decoded text */
+				TCHECK2(*p, tag_len);
 				for (v = p; v < p + tag_len && tag_str_len < MAXTAGPRINT-1; v++)
 					if (*v >= 32 && *v < 127) {
 						tag_str[tag_str_len++] = *v;

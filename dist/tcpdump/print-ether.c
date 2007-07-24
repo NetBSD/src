@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ether.c,v 1.1.1.4 2004/09/27 17:07:03 dyoung Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.1.1.5 2007/07/24 11:43:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ether.c,v 1.82.2.3 2003/12/29 22:42:21 hannes Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ether.c,v 1.95.2.6 2006/02/20 18:15:03 hannes Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -40,8 +40,6 @@ static const char rcsid[] _U_ =
 
 #include "ether.h"
 
-const u_char *snapend;
-
 const struct tok ethertype_values[] = { 
     { ETHERTYPE_IP,		"IPv4" },
     { ETHERTYPE_MPLS,		"MPLS unicast" },
@@ -51,7 +49,7 @@ const struct tok ethertype_values[] = {
     { ETHERTYPE_VMAN,		"VMAN" },
     { ETHERTYPE_PUP,            "PUP" },
     { ETHERTYPE_ARP,            "ARP"},
-    { ETHERTYPE_REVARP ,        "Reverse ARP"},
+    { ETHERTYPE_REVARP,         "Reverse ARP"},
     { ETHERTYPE_NS,             "NS" },
     { ETHERTYPE_SPRITE,         "Sprite" },
     { ETHERTYPE_TRAIL,          "Trail" },
@@ -69,9 +67,14 @@ const struct tok ethertype_values[] = {
     { ETHERTYPE_AARP,           "Appletalk ARP" },
     { ETHERTYPE_IPX,            "IPX" },
     { ETHERTYPE_PPP,            "PPP" },
+    { ETHERTYPE_SLOW,           "Slow Protocols" },
     { ETHERTYPE_PPPOED,         "PPPoE D" },
     { ETHERTYPE_PPPOES,         "PPPoE S" },
+    { ETHERTYPE_EAPOL,          "EAPOL" },
+    { ETHERTYPE_JUMBO,          "Jumbo" },
     { ETHERTYPE_LOOPBACK,       "Loopback" },
+    { ETHERTYPE_ISO,            "OSI" },
+    { ETHERTYPE_GRE_ISO,        "GRE-OSI" },
     { 0, NULL}
 };
 
@@ -127,7 +130,6 @@ ether_print(const u_char *p, u_int length, u_int caplen)
 	/*
 	 * Is it (gag) an 802.3 encapsulation?
 	 */
-	extracted_ether_type = 0;
 	if (ether_type <= ETHERMTU) {
 		/* Try to print the LLC-layer header & higher layers */
 		if (llc_print(p, length, caplen, ESRC(ep), EDST(ep),
@@ -136,7 +138,7 @@ ether_print(const u_char *p, u_int length, u_int caplen)
 			if (!eflag)
 				ether_hdr_print((u_char *)ep, length + ETHER_HDRLEN);
 
-			if (!xflag && !qflag)
+			if (!suppress_default_print)
 				default_print(p, caplen);
 		}
 	} else if (ether_encap_print(ether_type, p, length, caplen,
@@ -145,7 +147,7 @@ ether_print(const u_char *p, u_int length, u_int caplen)
 		if (!eflag)
 			ether_hdr_print((u_char *)ep, length + ETHER_HDRLEN);
 
-		if (!xflag && !qflag)
+		if (!suppress_default_print)
 			default_print(p, caplen);
 	} 
 }
@@ -153,7 +155,7 @@ ether_print(const u_char *p, u_int length, u_int caplen)
 /*
  * This is the top level routine of the printer.  'p' points
  * to the ether header of the packet, 'h->ts' is the timestamp,
- * 'h->length' is the length of the packet off the wire, and 'h->caplen'
+ * 'h->len' is the length of the packet off the wire, and 'h->caplen'
  * is the number of bytes actually captured.
  */
 u_int
@@ -186,7 +188,7 @@ ether_encap_print(u_short ether_type, const u_char *p,
 	switch (ether_type) {
 
 	case ETHERTYPE_IP:
-		ip_print(p, length);
+	        ip_print(gndo, p, length);
 		return (1);
 
 #ifdef INET6
@@ -197,7 +199,7 @@ ether_encap_print(u_short ether_type, const u_char *p,
 
 	case ETHERTYPE_ARP:
 	case ETHERTYPE_REVARP:
-		arp_print(p, length, caplen);
+  	        arp_print(gndo, p, length, caplen);
 		return (1);
 
 	case ETHERTYPE_DN:
@@ -242,17 +244,53 @@ ether_encap_print(u_short ether_type, const u_char *p,
 
 		if (llc_print(p, length, caplen, p - 18, p - 12,
 		    extracted_ether_type) == 0) {
-				ether_hdr_print(p - 18, length + 4);
+                        ether_hdr_print(p - 18, length + 4);
+
+                        if (!suppress_default_print) {
+                                default_print(p - 18, caplen + 4);
+                        }
 		}
 
-		if (!xflag && !qflag)
-		        default_print(p - 18, caplen + 4);
 
 		return (1);
+
+        case ETHERTYPE_JUMBO:
+                ether_type = ntohs(*(u_int16_t *)(p));
+                p += 2;
+                length -= 2;      
+                caplen -= 2;
+
+                if (ether_type > ETHERMTU) {
+                    if (eflag)
+                        printf("ethertype %s, ",
+                               tok2str(ethertype_values,"0x%04x", ether_type));
+                    goto recurse;
+                }
+
+                *extracted_ether_type = 0;
+
+                if (llc_print(p, length, caplen, p - 16, p - 10,
+                              extracted_ether_type) == 0) {
+                    ether_hdr_print(p - 16, length + 2);
+
+                    if (!suppress_default_print) {
+                            default_print(p - 16, caplen + 2);
+                    }
+                }
+
+                return (1);
+
+        case ETHERTYPE_ISO:
+                isoclns_print(p+1, length-1, length-1);
+                return(1);
 
 	case ETHERTYPE_PPPOED:
 	case ETHERTYPE_PPPOES:
 		pppoe_print(p, length);
+		return (1);
+
+	case ETHERTYPE_EAPOL:
+	        eap_print(gndo, p, length);
 		return (1);
 
 	case ETHERTYPE_PPP:
@@ -262,8 +300,12 @@ ether_encap_print(u_short ether_type, const u_char *p,
 		}
 		return (1);
 
+	case ETHERTYPE_SLOW:
+	        slow_print(p, length);
+		return (1);
+
         case ETHERTYPE_LOOPBACK:
-                return (0);
+                return (1);
 
 	case ETHERTYPE_MPLS:
 	case ETHERTYPE_MPLS_MULTI:
@@ -279,3 +321,12 @@ ether_encap_print(u_short ether_type, const u_char *p,
 		return (0);
 	}
 }
+
+
+/*
+ * Local Variables:
+ * c-style: whitesmith
+ * c-basic-offset: 8
+ * End:
+ */
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.3 2004/09/27 17:06:49 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.1.4 2007/07/24 11:42:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/machdep.c,v 1.10.2.3 2003/12/15 03:53:42 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/machdep.c,v 1.13 2003/12/15 03:53:21 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

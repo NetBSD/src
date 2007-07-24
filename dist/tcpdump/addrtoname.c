@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.1.1.4 2004/09/27 17:06:29 dyoung Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.1.1.5 2007/07/24 11:43:02 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.96.2.6 2004/03/24 04:14:31 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.108.2.8 2006/02/27 07:27:16 hannes Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -41,9 +41,19 @@ struct rtentry;		/* declarations in <net/if.h> */
 #include <net/if.h>	/* for "struct ifnet" in "struct arpcom" on Solaris */
 #include <netinet/if_ether.h>
 #endif /* HAVE_NETINET_IF_ETHER_H */
-#ifdef HAVE_NETINET_ETHER_H
-#include <netinet/ether.h>  /* ether_ntohost on linux */
-#endif /* HAVE_NETINET_ETHER_H */
+#ifdef NETINET_ETHER_H_DECLARES_ETHER_NTOHOST
+#include <netinet/ether.h>
+#endif /* NETINET_ETHER_H_DECLARES_ETHER_NTOHOST */
+
+#if !defined(HAVE_DECL_ETHER_NTOHOST) || !HAVE_DECL_ETHER_NTOHOST
+#ifndef HAVE_STRUCT_ETHER_ADDR
+struct ether_addr {
+	unsigned char ether_addr_octet[6];
+};
+#endif
+extern int ether_ntohost(char *, const struct ether_addr *);
+#endif
+
 #endif /* USE_ETHER_NTOHOST */
 
 #include <pcap.h>
@@ -57,6 +67,12 @@ struct rtentry;		/* declarations in <net/if.h> */
 #include "addrtoname.h"
 #include "llc.h"
 #include "setsignal.h"
+#include "extract.h"
+#include "oui.h"
+
+#ifndef ETHER_ADDR_LEN
+#include "ether.h"
+#endif
 
 /*
  * hash tables for whatever-to-name translations
@@ -65,6 +81,7 @@ struct rtentry;		/* declarations in <net/if.h> */
  */
 
 #define HASHNAMESIZE 4096
+#define BUFSIZE 128
 
 struct hnamemem {
 	u_int32_t addr;
@@ -77,7 +94,6 @@ struct hnamemem tporttable[HASHNAMESIZE];
 struct hnamemem uporttable[HASHNAMESIZE];
 struct hnamemem eprototable[HASHNAMESIZE];
 struct hnamemem dnaddrtable[HASHNAMESIZE];
-struct hnamemem llcsaptable[HASHNAMESIZE];
 struct hnamemem ipxsaptable[HASHNAMESIZE];
 
 #if defined(INET6) && defined(WIN32)
@@ -105,25 +121,20 @@ win32_gethostbyaddr(const char *addr, int len, int type)
 		memset(&addr6, 0, sizeof(addr6));
 		addr6.sin6_family = AF_INET6;
 		memcpy(&addr6.sin6_addr, addr, len);
-#ifdef __MINGW32__
-		/* MinGW doesn't provide getnameinfo */
-		return NULL;
-#else
 		if (getnameinfo((struct sockaddr *)&addr6, sizeof(addr6),
-			hname, sizeof(hname), NULL, 0, 0)) {
-		    return NULL;
+		    hname, sizeof(hname), NULL, 0, 0)) {
+			return NULL;
 		} else {
 			strcpy(host.h_name, hname);
 			return &host;
 		}
-#endif /* __MINGW32__ */
 		break;
 	default:
 		return NULL;
 	}
 }
 #define gethostbyaddr win32_gethostbyaddr
-#endif /* INET6 & WIN32*/
+#endif /* INET6 & WIN32 */
 
 #ifdef INET6
 struct h6namemem {
@@ -170,7 +181,7 @@ intoa(u_int32_t addr)
 	static char buf[sizeof(".xxx.xxx.xxx.xxx")];
 
 	NTOHL(addr);
-	cp = &buf[sizeof buf];
+	cp = buf + sizeof(buf);
 	*--cp = '\0';
 
 	n = 4;
@@ -455,32 +466,46 @@ lookup_protoid(const u_char *pi)
 const char *
 etheraddr_string(register const u_char *ep)
 {
-	register u_int i;
+	register int i;
 	register char *cp;
 	register struct enamemem *tp;
-	char buf[sizeof("00:00:00:00:00:00")];
+	int oui;
+	char buf[BUFSIZE];
 
 	tp = lookup_emem(ep);
 	if (tp->e_name)
 		return (tp->e_name);
 #ifdef USE_ETHER_NTOHOST
 	if (!nflag) {
-		char buf2[128];
-		if (ether_ntohost(buf2, (const struct ether_addr *)ep) == 0) {
+		char buf2[BUFSIZE];
+
+		/*
+		 * We don't cast it to "const struct ether_addr *"
+		 * because some systems fail to declare the second
+		 * argument as a "const" pointer, even though they
+		 * don't modify what it points to.
+		 */
+		if (ether_ntohost(buf2, (struct ether_addr *)ep) == 0) {
 			tp->e_name = strdup(buf2);
 			return (tp->e_name);
 		}
 	}
 #endif
 	cp = buf;
-        *cp++ = hex[*ep >> 4 ];
+	oui = EXTRACT_24BITS(ep);
+	*cp++ = hex[*ep >> 4 ];
 	*cp++ = hex[*ep++ & 0xf];
-	for (i = 5; (int)--i >= 0;) {
+	for (i = 5; --i >= 0;) {
 		*cp++ = ':';
-                *cp++ = hex[*ep >> 4 ];
+		*cp++ = hex[*ep >> 4 ];
 		*cp++ = hex[*ep++ & 0xf];
 	}
-	*cp = '\0';
+
+	if (!nflag) {
+		snprintf(cp, BUFSIZE - (2 + 5*3), " (oui %s)",
+		    tok2str(oui_values, "Unknown", oui));
+	} else
+		*cp = '\0';
 	tp->e_name = strdup(buf);
 	return (tp->e_name);
 }
@@ -488,7 +513,7 @@ etheraddr_string(register const u_char *ep)
 const char *
 linkaddr_string(const u_char *ep, const unsigned int len)
 {
-	register u_int i, j;
+	register u_int i;
 	register char *cp;
 	register struct enamemem *tp;
 
@@ -502,13 +527,11 @@ linkaddr_string(const u_char *ep, const unsigned int len)
 	tp->e_name = cp = (char *)malloc(len*3);
 	if (tp->e_name == NULL)
 		error("linkaddr_string: malloc");
-	if ((j = *ep >> 4) != 0)
-		*cp++ = hex[j];
+	*cp++ = hex[*ep >> 4];
 	*cp++ = hex[*ep++ & 0xf];
 	for (i = len-1; i > 0 ; --i) {
 		*cp++ = ':';
-		if ((j = *ep >> 4) != 0)
-			*cp++ = hex[j];
+		*cp++ = hex[*ep >> 4];
 		*cp++ = hex[*ep++ & 0xf];
 	}
 	*cp = '\0';
@@ -568,45 +591,32 @@ protoid_string(register const u_char *pi)
 	return (tp->p_name);
 }
 
+#define ISONSAP_MAX_LENGTH 20
 const char *
-llcsap_string(u_char sap)
+isonsap_string(const u_char *nsap, register u_int nsap_length)
 {
-	register struct hnamemem *tp;
-	register u_int32_t i = sap;
-	char buf[sizeof("sap 00")];
-
-	for (tp = &llcsaptable[i & (HASHNAMESIZE-1)]; tp->nxt; tp = tp->nxt)
-		if (tp->addr == i)
-			return (tp->name);
-
-	tp->addr = i;
-	tp->nxt = newhnamemem();
-
-	snprintf(buf, sizeof(buf), "sap %02x", sap & 0xff);
-	tp->name = strdup(buf);
-	return (tp->name);
-}
-
-const char *
-isonsap_string(const u_char *nsap)
-{
-	register u_int i, nlen = nsap[0];
+	register u_int nsap_idx;
 	register char *cp;
 	register struct enamemem *tp;
+
+	if (nsap_length < 1 || nsap_length > ISONSAP_MAX_LENGTH)
+		return ("isonsap_string: illegal length");
 
 	tp = lookup_nsap(nsap);
 	if (tp->e_name)
 		return tp->e_name;
 
-	tp->e_name = cp = (char *)malloc(nlen * 2 + 2);
+	tp->e_name = cp = (char *)malloc(sizeof("xx.xxxx.xxxx.xxxx.xxxx.xxxx.xxxx.xxxx.xxxx.xxxx.xx"));
 	if (cp == NULL)
 		error("isonsap_string: malloc");
 
-	nsap++;
-	*cp++ = '/';
-	for (i = nlen; (int)--i >= 0;) {
+	for (nsap_idx = 0; nsap_idx < nsap_length; nsap_idx++) {
 		*cp++ = hex[*nsap >> 4];
 		*cp++ = hex[*nsap++ & 0xf];
+		if (((nsap_idx & 1) == 0) &&
+		     (nsap_idx + 1 < nsap_length)) {
+		     	*cp++ = '.';
+		}
 	}
 	*cp = '\0';
 	return (tp->e_name);
@@ -707,13 +717,14 @@ init_servarray(void)
 	endservent();
 }
 
-/*XXX from libbpfc.a */
-#ifndef WIN32
-extern struct eproto {
+/* in libpcap.a (nametoaddr.c) */
+#if defined(WIN32) && !defined(USE_STATIC_LIBPCAP)
+__declspec(dllimport)
 #else
-__declspec( dllimport) struct eproto {
+extern
 #endif
-	char *s;
+const struct eproto {
+	const char *s;
 	u_short p;
 } eproto_db[];
 
@@ -831,47 +842,20 @@ init_etherarray(void)
 			continue;
 
 #ifdef USE_ETHER_NTOHOST
-                /* Use yp/nis version of name if available */
-                if (ether_ntohost(name, (const struct ether_addr *)el->addr) == 0) {
-                        tp->e_name = strdup(name);
+		/*
+		 * Use YP/NIS version of name if available.
+		 *
+		 * We don't cast it to "const struct ether_addr *"
+		 * because some systems don't modify the Ethernet
+		 * address but fail to declare the second argument
+		 * as a "const" pointer.
+		 */
+		if (ether_ntohost(name, (struct ether_addr *)el->addr) == 0) {
+			tp->e_name = strdup(name);
 			continue;
 		}
 #endif
 		tp->e_name = el->name;
-	}
-}
-
-static struct tok llcsap_db[] = {
-	{ LLCSAP_NULL,		"null" },
-	{ LLCSAP_8021B_I,	"802.1b-gsap" },
-	{ LLCSAP_8021B_G,	"802.1b-isap" },
-	{ LLCSAP_IP,		"ip-sap" },
-	{ LLCSAP_PROWAYNM,	"proway-nm" },
-	{ LLCSAP_8021D,		"802.1d" },
-	{ LLCSAP_RS511,		"eia-rs511" },
-	{ LLCSAP_ISO8208,	"x.25/llc2" },
-	{ LLCSAP_PROWAY,	"proway" },
-	{ LLCSAP_SNAP,		"snap" },
-	{ LLCSAP_IPX,		"IPX" },
-	{ LLCSAP_NETBEUI,	"netbeui" },
-	{ LLCSAP_ISONS,		"iso-clns" },
-	{ LLCSAP_GLOBAL,	"global" },
-	{ 0,			NULL }
-};
-
-static void
-init_llcsaparray(void)
-{
-	register int i;
-	register struct hnamemem *table;
-
-	for (i = 0; llcsap_db[i].s != NULL; i++) {
-		table = &llcsaptable[llcsap_db[i].v];
-		while (table->name)
-			table = table->nxt;
-		table->name = llcsap_db[i].s;
-		table->addr = llcsap_db[i].v;
-		table->nxt = newhnamemem();
 	}
 }
 
@@ -1131,7 +1115,6 @@ init_addrtoname(u_int32_t localnet, u_int32_t mask)
 	init_etherarray();
 	init_servarray();
 	init_eprotoarray();
-	init_llcsaparray();
 	init_protoidarray();
 	init_ipxsaparray();
 }

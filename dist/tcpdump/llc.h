@@ -1,4 +1,4 @@
-/*	$NetBSD: llc.h,v 1.1.1.3 2004/09/27 17:06:49 dyoung Exp $	*/
+/*	$NetBSD: llc.h,v 1.1.1.4 2007/07/24 11:42:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1997
@@ -20,46 +20,16 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/llc.h,v 1.16 2002/12/11 07:13:54 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/llc.h,v 1.17.2.4 2007/02/08 07:07:51 guy Exp (LBL)
  */
 
 /*
- * This stuff should come from a system header file, but there's no
- * obviously portable way to do that and it's not really going
- * to change from system to system.
+ * Definitions for information in the LLC header.
  */
-
-/*
- * A somewhat abstracted view of the LLC header
- */
-
-struct llc {
-	u_int8_t dsap;
-	u_int8_t ssap;
-	union {
-		u_int8_t u_ctl;
-		u_int16_t is_ctl;
-		struct {
-			u_int8_t snap_ui;
-			u_int8_t snap_pi[5];
-		} snap;
-		struct {
-			u_int8_t snap_ui;
-			u_int8_t snap_orgcode[3];
-			u_int8_t snap_ethertype[2];
-		} snap_ether;
-	} ctl;
-};
-
-#define	llcui		ctl.snap.snap_ui
-#define	llcpi		ctl.snap.snap_pi
-#define	llc_orgcode	ctl.snap_ether.snap_orgcode
-#define	llc_ethertype	ctl.snap_ether.snap_ethertype
-#define	llcis		ctl.is_ctl
-#define	llcu		ctl.u_ctl
 
 #define	LLC_U_FMT	3
 #define	LLC_GSAP	1
+#define	LLC_IG	        1 /* Individual / Group */
 #define LLC_S_FMT	1
 
 #define	LLC_U_POLL	0x10
@@ -76,7 +46,7 @@ struct llc {
 #define	LLC_XID		0xaf
 #define	LLC_FRMR	0x87
 
-#define	LLC_S_CMD(is)	(((is) >> 1) & 0x03)
+#define	LLC_S_CMD(is)	(((is) >> 2) & 0x03)
 #define	LLC_RR		0x0001
 #define	LLC_RNR		0x0005
 #define	LLC_REJ		0x0009
@@ -95,6 +65,9 @@ struct llc {
 #endif
 #ifndef LLCSAP_8021B_G
 #define	LLCSAP_8021B_G		0x03
+#endif
+#ifndef LLCSAP_SNA
+#define	LLCSAP_SNA		0x04
 #endif
 #ifndef LLCSAP_IP
 #define	LLCSAP_IP		0x06
@@ -127,16 +100,12 @@ struct llc {
 #define	LLCSAP_ISONS		0xfe
 #endif
 
-#define	OUI_ENCAP_ETHER	0x000000	/* encapsulated Ethernet */
-#define	OUI_CISCO	0x00000c	/* Cisco protocols */
-#define	OUI_CISCO_90	0x0000f8	/* Cisco bridging */
-#define OUI_RFC2684	0x0080c2	/* RFC 2684 bridged Ethernet */
-#define	OUI_APPLETALK	0x080007	/* Appletalk */
-
 /*
  * PIDs for use with OUI_CISCO.
  */
 #define	PID_CISCO_CDP		0x2000	/* Cisco Discovery Protocol */
+#define	PID_CISCO_VTP		0x2003	/* Cisco VLAN Trunk Protocol */
+#define	PID_CISCO_DTP		0x2004	/* Cisco Dynamic Trunk Protocol */
 
 /*
  * PIDs for use with OUI_RFC2684.
@@ -152,4 +121,3 @@ struct llc {
 #define PID_RFC2684_802_6_FCS	0x0005	/* 802.6, with FCS */
 #define PID_RFC2684_802_6_NOFCS	0x000b	/* 802.6, without FCS */
 #define PID_RFC2684_BPDU	0x000e	/* BPDUs */
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.1.1.4 2004/09/27 17:06:52 dyoung Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.1.1.5 2007/07/24 11:42:50 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -44,7 +44,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.25.2.2 2003/11/16 08:51:07 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.28.2.1 2007/06/15 19:15:04 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -81,6 +81,7 @@ static const char rcsid[] _U_ =
 #define	FHT_SUNOS5	9
 #define	FHT_AIX32	10
 #define	FHT_HPUX9	11
+#define	FHT_BSD44	12
 
 #ifdef	ultrix
 /* Nasty hack to keep the Ultrix C compiler from emitting bogus warnings */
@@ -113,7 +114,7 @@ static int is_UCX(const unsigned char *);
 void
 Parse_fh(fh, len, fsidp, inop, osnamep, fsnamep, ourself)
 register const unsigned char *fh;
-int len;
+int len _U_;
 my_fsid *fsidp;
 ino_t *inop;
 const char **osnamep;		/* if non-NULL, return OS name here */
@@ -147,6 +148,10 @@ int ourself;		/* true if file handle was generated on this host */
 #endif
 #if	defined(__osf__)
 	    fhtype = FHT_DECOSF;
+#endif
+#if	defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) \
+     || defined(__OpenBSD__)
+	    fhtype = FHT_BSD44;
 #endif
 	}
 	/*
@@ -198,8 +203,11 @@ int ourself;		/* true if file handle was generated on this host */
 		 * could be Ultrix, IRIX5, AIX, or SUNOS5
 		 * might be HP-UX (depends on their values for minor devs)
 		 */
+		if ((fhp[6] == 0) && (fhp[7] == 0)) {
+		    fhtype = FHT_BSD44;
+		}
 		/*XXX we probably only need to test of these two bytes */
-		if ((fhp[21] == 0) && (fhp[23] == 0)) {
+		else if ((fhp[21] == 0) && (fhp[23] == 0)) {
 		    fhtype = FHT_ULTRIX;
 		}
 		else {
@@ -265,6 +273,18 @@ int ourself;		/* true if file handle was generated on this host */
 		*osnamep = "Auspex";
 	    break;
 
+	case FHT_BSD44:
+	    fsidp->Fsid_dev.Minor = fhp[0];
+	    fsidp->Fsid_dev.Major = fhp[1];
+	    fsidp->fsid_code = 0;
+
+	    temp = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
+	    *inop = temp;
+
+	    if (osnamep)
+		*osnamep = "BSD 4.4";
+	    break;
+
 	case FHT_DECOSF:
 	    fsidp->fsid_code = make_uint32(fhp[7], fhp[6], fhp[5], fhp[4]);
 			/* XXX could ignore 3 high-order bytes */
@@ -303,10 +323,16 @@ int ourself;		/* true if file handle was generated on this host */
 		*osnamep = "IRIX5";
 	    break;
 
+#ifdef notdef
 	case FHT_SUNOS3:
+	    /*
+	     * XXX - none of the heuristics above return this.
+	     * Are there any SunOS 3.x systems around to care about?
+	     */
 	    if (osnamep)
 		*osnamep = "SUNOS3";
 	    break;
+#endif
 
 	case FHT_SUNOS4:
 	    fsidp->Fsid_dev.Minor = fhp[3];

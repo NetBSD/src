@@ -1,4 +1,4 @@
-/*	$NetBSD: print-wb.c,v 1.1.1.3 2004/09/27 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: print-wb.c,v 1.1.1.4 2007/07/24 11:43:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-wb.c,v 1.30.2.3 2004/03/24 04:06:52 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-wb.c,v 1.33 2004/03/24 04:06:28 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H

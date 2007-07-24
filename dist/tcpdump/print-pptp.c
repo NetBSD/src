@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pptp.c,v 1.1.1.3 2004/09/27 17:07:20 dyoung Exp $	*/
+/*	$NetBSD: print-pptp.c,v 1.1.1.4 2007/07/24 11:43:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-     "@(#) Header: /tcpdump/master/tcpdump/print-pptp.c,v 1.9.2.2 2003/11/16 08:51:39 guy Exp";
+     "@(#) Header: /tcpdump/master/tcpdump/print-pptp.c,v 1.11.2.1 2006/06/23 02:07:27 hannes Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -41,14 +41,6 @@ static const char rcsid[] _U_ =
 #include "extract.h"
 
 static char tstr[] = " [|pptp]";
-
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-#ifndef FALSE
-#define FALSE 0
-#endif
 
 #define PPTP_MSG_TYPE_CTRL	1	/* Control Message */
 #define PPTP_MSG_TYPE_MGMT	2	/* Management Message (currently not used */

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-vjc.c,v 1.1.1.2 2004/09/27 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: print-vjc.c,v 1.1.1.3 2007/07/24 11:43:10 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-vjc.c,v 1.11.2.3 2003/11/19 01:09:12 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-vjc.c,v 1.15 2004/03/25 03:31:17 mcr Exp (LBL)";
 #endif
 
 #include <tcpdump-stdinc.h>
@@ -84,7 +84,7 @@ static const char rcsid[] _U_ =
  * unused argument remind us that we should fix this some day.
  */
 int
-vjc_print(register const char *bp, u_short proto)
+vjc_print(register const char *bp, u_short proto _U_)
 {
 	int i;
 

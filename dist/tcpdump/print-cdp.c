@@ -1,4 +1,4 @@
-/*	$NetBSD: print-cdp.c,v 1.1.1.4 2004/09/27 17:06:59 dyoung Exp $	*/
+/*	$NetBSD: print-cdp.c,v 1.1.1.5 2007/07/24 11:43:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.19.2.5 2004/03/24 06:00:51 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004/10/07 14:53:11 hannes Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -43,6 +43,7 @@ static const char rcsid[] _U_ =
 #include "interface.h"
 #include "addrtoname.h"
 #include "extract.h"			/* must come after interface.h */
+#include "nlpid.h"
 
 #define CDP_HEADER_LEN  4
 
@@ -262,7 +263,7 @@ cdp_print_addr(const u_char * p, int l)
 			goto trunc;
 		al = EXTRACT_16BITS(&p[pl]);	/* address length */
 
-		if (pt == PT_NLPID && pl == 1 && *p == 0xcc && al == 4) {
+		if (pt == PT_NLPID && pl == 1 && *p == NLPID_IP && al == 4) {
 			/*
 			 * IPv4: protocol type = NLPID, protocol length = 1
 			 * (1-byte NLPID), protocol = 0xcc (NLPID for IPv4),

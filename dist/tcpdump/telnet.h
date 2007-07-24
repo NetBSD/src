@@ -1,8 +1,8 @@
-/*	$NetBSD: telnet.h,v 1.1.1.2 2004/09/27 17:07:36 dyoung Exp $	*/
+/*	$NetBSD: telnet.h,v 1.1.1.3 2007/07/24 11:43:04 drochner Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/telnet.h,v 1.4 2002/06/11 17:09:01 itojun Exp (LBL) */
 
-/*	$NetBSD: telnet.h,v 1.1.1.2 2004/09/27 17:07:36 dyoung Exp $	*/
+/*	NetBSD: telnet.h,v 1.9 2001/06/11 01:50:50 wiz Exp	*/
 
 /*
  * Copyright (c) 1983, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rt6.c,v 1.1.1.2 2004/09/27 17:07:24 dyoung Exp $	*/
+/*	$NetBSD: print-rt6.c,v 1.1.1.3 2007/07/24 11:42:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-rt6.c,v 1.23.2.3 2003/11/19 00:35:45 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-rt6.c,v 1.26.2.1 2005/04/20 22:35:11 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -43,17 +43,15 @@ static const char rcsid[] _U_ =
 #include "extract.h"
 
 int
-rt6_print(register const u_char *bp, register const u_char *bp2)
+rt6_print(register const u_char *bp, const u_char *bp2 _U_)
 {
 	register const struct ip6_rthdr *dp;
 	register const struct ip6_rthdr0 *dp0;
-	register const struct ip6_hdr *ip;
 	register const u_char *ep;
 	int i, len;
 	register const struct in6_addr *addr;
 
 	dp = (struct ip6_rthdr *)bp;
-	ip = (struct ip6_hdr *)bp2;
 	len = dp->ip6r_len;
 
 	/* 'ep' points to the end of available data. */

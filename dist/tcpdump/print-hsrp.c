@@ -1,4 +1,4 @@
-/*	$NetBSD: print-hsrp.c,v 1.1.1.3 2004/09/27 17:07:06 dyoung Exp $	*/
+/*	$NetBSD: print-hsrp.c,v 1.1.1.4 2007/07/24 11:42:49 drochner Exp $	*/
 
 /*
  * Copyright (C) 2001 Julian Cowley
@@ -33,7 +33,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) Header: /tcpdump/master/tcpdump/print-hsrp.c,v 1.7.2.2 2003/11/16 08:51:24 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-hsrp.c,v 1.9.2.1 2005/05/06 07:57:17 guy Exp";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -129,7 +129,11 @@ hsrp_print(register const u_int8_t *bp, register u_int len)
 		relts_print(hp->hsrp_holdtime);
 		printf(" priority=%d", hp->hsrp_priority);
 		printf(" auth=\"");
-		fn_printn(hp->hsrp_authdata, sizeof(hp->hsrp_authdata), NULL);
+		if (fn_printn(hp->hsrp_authdata, sizeof(hp->hsrp_authdata),
+		    snapend)) {
+			printf("\"");
+			goto trunc;
+		}
 		printf("\"");
 	}
 	return;
