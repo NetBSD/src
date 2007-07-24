@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.127 2007/07/21 19:21:55 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.128 2007/07/24 19:59:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.127 2007/07/21 19:21:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.128 2007/07/24 19:59:35 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -263,7 +263,8 @@ uvm_swap_init(void)
 	uvmexp.nswapdev = 0;
 	rw_init(&swap_syscall_lock);
 	cv_init(&uvm.scheduler_cv, "schedule");
-	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
+	/* XXXSMP should be adaptive, but needs vmobjlock replaced */
+	mutex_init(&uvm_swap_data_lock, MUTEX_SPIN, IPL_NONE);
 
 	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
 	mutex_init(&uvm_scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
