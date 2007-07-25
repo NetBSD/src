@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.343 2007/07/24 10:04:58 pavel Exp $
+.\"	$NetBSD: main,v 1.344 2007/07/25 22:10:14 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1393,7 +1393,7 @@ backup CVS and backup server.
 SSH Communications Security in Finland for operating
 the backup server. 
 .It
-The many organisations that provide
+The many organizations that provide
 .Nx
 mirror sites.
 .It
