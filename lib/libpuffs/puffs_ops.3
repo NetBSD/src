@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.13 2007/07/25 08:31:19 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.14 2007/07/25 09:10:26 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 20, 2007
+.Dd July 25, 2007
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -65,12 +65,12 @@
 .Ft int
 .Fo puffs_node_create
 .Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn" "const struct vattr *va"
+.Fa "const struct puffs_cn *pcn" "const struct vattr *vap"
 .Fc
 .Ft int
 .Fo puffs_node_mknod
 .Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn" "const struct vattr *va"
+.Fa "const struct puffs_cn *pcn" "const struct vattr *vap"
 .Fc
 .Ft int
 .Fo puffs_node_open
@@ -89,12 +89,12 @@
 .Fc
 .Ft int
 .Fo puffs_node_getattr
-.Fa "struct puffs_cc *pcc" "void *opc" "struct vattr *va"
+.Fa "struct puffs_cc *pcc" "void *opc" "struct vattr *vap"
 .Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_setattr
-.Fa "struct puffs_cc *pcc" "void *opc" "const struct vattr *va"
+.Fa "struct puffs_cc *pcc" "void *opc" "const struct vattr *vap"
 .Fa "const struct puffs_cred *pcr" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
@@ -109,8 +109,8 @@
 .Fc
 .Ft int
 .Fo puffs_node_fsync
-.Fa "struct puffs_cc *pcc" "void *opc" "int flags" "off_t offlo"
-.Fa "off_t offhi" "const struct puffs_cid *pcid"
+.Fa "struct puffs_cc *pcc" "void *opc" "const struct puffs_cred *pcr"
+.Fa "int flags" "off_t offlo" "off_t offhi" "const struct puffs_cid *pcid"
 .Fc
 .Ft int
 .Fo puffs_node_seek
@@ -136,7 +136,7 @@
 .Ft int
 .Fo puffs_node_mkdir
 .Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn" "const struct vattr *va"
+.Fa "const struct puffs_cn *pcn" "const struct vattr *vap"
 .Fc
 .Ft int
 .Fo puffs_node_rmdir
@@ -152,7 +152,7 @@
 .Ft int
 .Fo puffs_node_symlink
 .Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn_src" "const struct vattr *va"
+.Fa "const struct puffs_cn *pcn_src" "const struct vattr *vap"
 .Fa "const char *link_target"
 .Fc
 .Ft int
@@ -503,7 +503,7 @@ Called when a regular file is being memory mapped by
 .Xr mmap 2 .
 .Fa flags
 is currently always 0.
-.It Fn puffs_node_fsync "pcc" "opc" "flags" "offlo" "offhi" "pcid"
+.It Fn puffs_node_fsync "pcc" "opc" "pcr" "flags" "offlo" "offhi" "pcid"
 Sychronize a node's contents onto stable storage.
 This is necessary only if the file server caches some information
 before committing it.
