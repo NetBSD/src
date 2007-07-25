@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.62 2006/10/30 18:36:44 hubertf Exp $
+.\"	$NetBSD: postinstall,v 1.63 2007/07/25 22:01:13 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -391,13 +391,13 @@ A list of available packages suitable for browsing is at
 Precompiled binaries can be found at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/ ,
 usually in the
-.Pa \*V/\*P/All
+.Pa \*V/\*M/All
 subdir.
 You can install them with the following commands under
 .Xr sh 1 :
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*P/All
+.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
 .Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v bash
@@ -413,7 +413,7 @@ If you are using
 then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*P/All
+.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
 \&...
 .Ed
 .Pp
