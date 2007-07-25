@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.12 2007/07/20 10:01:24 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.13 2007/07/25 08:31:19 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -115,7 +115,7 @@
 .Ft int
 .Fo puffs_node_seek
 .Fa "struct puffs_cc *pcc" "void *opc" "off_t oldoff" "off_t newoff"
-.Fa "const struct puffs_cred *pcred"
+.Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_remove
@@ -144,16 +144,16 @@
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
-.Fo puffs_node_symlink
-.Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn_src" "const struct vattr *va"
-.Fa "const char *link_target"
-.Fc
-.Ft int
 .Fo puffs_node_readdir
 .Fa "struct puffs_cc *pcc" "void *opc" "struct dirent *dent"
 .Fa "off_t *readoff" "size_t *reslen" "const struct puffs_cred *pcr"
 .Fa "int *eofflag" "off_t *cookies" "size_t *ncookies"
+.Fc
+.Ft int
+.Fo puffs_node_symlink
+.Fa "struct puffs_cc *pcc" "void *opc" "struct puffs_newinfo *pni"
+.Fa "const struct puffs_cn *pcn_src" "const struct vattr *va"
+.Fa "const char *link_target"
 .Fc
 .Ft int
 .Fo puffs_node_readlink
@@ -519,7 +519,7 @@ specify the data offsets requiring to be synced.
 A high offset of 0 means sync from
 .Fa offlo
 to the end of the file.
-.It Fn puffs_node_seek pcc opc oldoff newoff pcred
+.It Fn puffs_node_seek pcc opc oldoff newoff pcr
 Test if the node
 .Ar opc
 is seekable to the location
@@ -590,17 +590,6 @@ In case a rename between incompatible types is attempted, the errors
 or
 .Er EISDIR
 should be returned, depending on the target type.
-.It Fn puffs_node_symlink "pcc" "opc" "pni" "pcn_src" "va" "link_target"
-Create a symbolic link into the directory
-.Fa opc
-with the name in
-.Fa pcn_src
-and the initial attributes in
-.Fa va .
-The link's target is
-.Fa link_target
-and the created node cookie should be set in
-.Fa pni .
 .It Fn puffs_node_readdir "pcc" "opc" "dent" "readoff" "reslen" "pcr" "eofflag" "cookies" "ncookies"
 To read directory entries,
 .Fn puffs_node_readdir
@@ -659,6 +648,17 @@ Note that
 .Fa ncookies
 must be initialized to zero before the first call to
 .Fn PUFFS_STORE_DCOOKIE .
+.It Fn puffs_node_symlink "pcc" "opc" "pni" "pcn_src" "va" "link_target"
+Create a symbolic link into the directory
+.Fa opc
+with the name in
+.Fa pcn_src
+and the initial attributes in
+.Fa va .
+The link's target is
+.Fa link_target
+and the created node cookie should be set in
+.Fa pni .
 .It Fn puffs_node_readlink "pcc" "opc" "pcr" "link" "linklen"
 Read the target of a symbolic link
 .Fa opc .
