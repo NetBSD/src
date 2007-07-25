@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: envsys,v 1.1 2007/07/01 08:01:29 xtraeme Exp $
+# $NetBSD: envsys,v 1.2 2007/07/25 12:47:44 xtraeme Exp $
 #
 
 # PROVIDE: envsys
@@ -34,6 +34,23 @@ do_envsys()
 		case "${value}" in
 		*degF)
 			add_arg="-f"
+			;;
+		esac
+
+		case "$1" in
+		start)
+			case "${target}" in
+			*desc)
+				continue
+				;;
+			esac
+			;;
+		stop)
+			case "${target}" in
+			*desc|*rfact)
+				continue
+				;;
+			esac
 			;;
 		esac
 
