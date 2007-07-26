@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2006/09/26 13:11:59 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.8 2007/07/26 14:54:09 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,10 +132,10 @@
 #endif
 #endif
 
-#include <machine/intr.h>
-
 #ifdef _KERNEL
 #ifndef _LOCORE
+
+#include <machine/intr.h>
 
 extern void delay __P((int n));
 extern int cpuspeed;
