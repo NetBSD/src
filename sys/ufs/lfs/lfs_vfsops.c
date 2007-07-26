@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.241 2007/07/23 09:05:02 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.242 2007/07/26 22:59:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.241 2007/07/23 09:05:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.242 2007/07/26 22:59:58 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -157,7 +157,7 @@ struct vfsops lfs_vfsops = {
 	lfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,	/* vfs_suspendctl */
 	lfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

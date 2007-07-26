@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.27 2007/07/17 11:19:33 pooka Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.28 2007/07/26 22:57:38 pooka Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.27 2007/07/17 11:19:33 pooka Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.28 2007/07/26 22:57:38 pooka Exp $");
 #endif /* not lint */
 
 
@@ -145,7 +145,7 @@ struct vfsops udf_vfsops = {
 	udf_mountroot,
 	udf_snapshot,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	udf_vnodeopv_descs,
 	0, /* int vfs_refcount   */
 	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
