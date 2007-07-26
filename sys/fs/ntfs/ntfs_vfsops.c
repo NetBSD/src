@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.53 2007/07/23 11:27:46 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.54 2007/07/26 18:43:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.53 2007/07/23 11:27:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.54 2007/07/26 18:43:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,8 +643,7 @@ ntfs_unmount(
 	/* vflush system vnodes */
 	error = vflush(mp,NULLVP,flags);
 	if (error) {
-		/* XXX should this be panic() ? */
-		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
+		panic("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
 	}
 
 	/* Check if the type of device node isn't VBAD before
@@ -660,6 +659,7 @@ ntfs_unmount(
 	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, l);
+	KASSERT(error == 0);
 	VOP_UNLOCK(ntmp->ntm_devvp, 0);
 
 	vrele(ntmp->ntm_devvp);
@@ -672,7 +672,7 @@ ntfs_unmount(
 	mp->mnt_flag &= ~MNT_LOCAL;
 	free(ntmp->ntm_ad, M_NTFSMNT);
 	FREE(ntmp, M_NTFSMNT);
-	return (error);
+	return (0);
 }
 
 static int
