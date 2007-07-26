@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.217 2007/07/24 17:38:43 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.218 2007/07/26 10:42:37 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8019,3 +8019,13 @@ distrib/notes/common/legal.common		1.46
 
 	Move my entry after the ones sorted in alphabetical order.
 	[xtraeme, ticket #788]
+
+distrib/notes/sparc64/hardware			1.22
+
+	fixup fdc entry
+	[jnemeth, ticket #791]
+
+lib/libutil/sockaddr_snprintf.c			1.7
+
+	Render the format %% as %.
+	[dyoung, ticket #792]
