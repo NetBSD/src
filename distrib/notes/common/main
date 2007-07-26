@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.346 2007/07/25 23:19:48 jnemeth Exp $
+.\"	$NetBSD: main,v 1.347 2007/07/26 02:19:00 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1170,7 +1170,7 @@ following problems and compatibility issues in mind when upgrading to
 .Nx
 \*V .
 .
-.Ss2 Issues affecting an upgrade from NetBSD 3.1 and older releases.
+.Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
 It is
 .Ic very important
 that you populate the directory
@@ -1226,20 +1226,13 @@ These include:
 The following issues need to be resolved manually:
 .
 .(bullet -offset indent
-The users
-.Sq _pflogd ,
-.Sq _proxy ,
+The user
+.Sq _pflogd
+ and the groups
+.Sq _pflogd
 and
-.Sq _rwhod
-and the groups
-.Sq authpf ,
-.Sq _pflogd ,
-.Sq _proxy ,
-and
-.Sq _rwhod
-need to be created and the user
-.Sq uucp
-needs to be updated.
+.Sq authpf 
+need to be created.
 .bullet)
 .
 .
