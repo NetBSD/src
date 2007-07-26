@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.85 2007/04/11 04:09:10 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.86 2007/07/26 01:59:07 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -309,6 +309,7 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_XILFB 	43 	/* Xilinx TFT cores */
 #define WSDISPLAY_TYPE_LIGHT	44	/* SGI Light (a.k.a. Entry/Starter) */
 #define WSDISPLAY_TYPE_GENFB	45	/* generic nondescript framebuffer */
+#define WSDISPLAY_TYPE_CRIME	46	/* SGI O2 */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
