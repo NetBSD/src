@@ -31,7 +31,7 @@
 
 #
 # Usage:
-# 1) lynx -dump http://www.netbsd.org/People/port-maintainers.html \
+# 1) lynx -dump http://www.netbsd.org/people/port-maintainers.html \
 #    | perl list-portmasters.pl
 #    >x
 # 2) Sort: sort +1 x >xx ; mv xx x
