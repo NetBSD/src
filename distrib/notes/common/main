@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.348 2007/07/26 05:02:18 jnemeth Exp $
+.\"	$NetBSD: main,v 1.349 2007/07/26 11:29:05 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 24, 2007
+.Dd July 26, 2007
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -1171,6 +1171,8 @@ following problems and compatibility issues in mind when upgrading to
 \*V .
 .
 .Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
+See the section below on upgrading from NetBSD 3.x as well.
+.Pp
 It is
 .Ic very important
 that you populate the directory
@@ -1234,6 +1236,74 @@ and the groups
 and
 .Sq authpf 
 need to be created.
+.bullet)
+.
+.Ss2 Issues affecting an upgrade from NetBSD 3.x releases.
+
+The following issues can generally be resolved by extracting the
+.Sy etc
+set into a temporary directory and running
+.Em postinstall :
+.(disp
+postinstall -s /path/to/etc.tgz check
+postinstall -s /path/to/etc.tgz fix
+.disp)
+.Pp
+Issues fixed by
+.Em postinstall :
+.(bullet -offset indent
+Various files in
+.Pa /etc
+need upgrading.
+These include:
+.(bullet -compact -offset indent
+.Pa /etc/defaults/*
+.It
+.Pa /etc/mtree/*
+.It
+.Pa /etc/daily
+.It
+.Pa /etc/weekly
+.It
+.Pa /etc/monthly
+.It
+.Pa /etc/security
+.It
+.Pa /etc/rc.subr
+.It
+.Pa /etc/rc
+.It
+.Pa /etc/rc.shutdown
+.It
+.Pa /etc/rc.d/*
+.It
+.Pa /etc/envsys.conf
+.bullet)
+.bullet)
+.
+.Pp
+The following issues need to be resolved manually:
+.
+.(bullet -offset indent
+The users
+.Sq _proxy
+and
+.Sq authpf
+and the groups
+.Sq _proxy
+and
+.Sq rwhod 
+need to be created and the user
+.Sq uucp
+needs to be updated.
+.It
+A number of things have been removed from the
+.Nx
+\*V release
+including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
+NETNS, Sendmail, Sushi, UUCP, and Vinum.  If you were using any of these,
+then please see the "Components removed from NetBSD" section near the
+beginning of this document.
 .bullet)
 .
 .
