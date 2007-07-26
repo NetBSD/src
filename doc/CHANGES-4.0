@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.222 2007/07/26 13:27:30 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.223 2007/07/26 15:12:53 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8055,3 +8055,15 @@ sys/dev/usb/usbdevs.h				regen
 	Add support for I-O DATA USB-RSAQ5 to uplcom, update the man page.
 	[hira, ticket #735]
 
+sys/arch/cobalt/stand/boot/start.S		1.4
+sys/arch/cobalt/stand/boot/version		1.2
+
+
+	Flush all cache data at the beginning of the bootloader.
+
+	Fixes silent hangs after loading 4.0_BETA2 GENERIC kernel
+	on Qube2 (and RaQ2) with 256MB RAM, reported and tested
+	by James Hartley on port-cobalt.
+
+	Obviously this should be pulled up to netbsd-4.
+	[tsutsui, ticket #793]
