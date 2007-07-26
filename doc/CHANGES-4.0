@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.218 2007/07/26 10:42:37 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.219 2007/07/26 12:32:19 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8029,3 +8029,12 @@ lib/libutil/sockaddr_snprintf.c			1.7
 
 	Render the format %% as %.
 	[dyoung, ticket #792]
+
+sys/netinet6/ipsec.c				1.121
+
+	ipsec4_splithdr: If m_len is too short, printf and drop it instead of
+	panicing.  Perhaps should be a pullup instead.  This happens very
+	occasionally on an ultrasparc with tunnel-mode ESP.
+
+	fix printf format.
+	[gdt, ticket #790]
