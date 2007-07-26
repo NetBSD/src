@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.6 2007/06/24 19:26:58 rumble Exp $
+.\"     $NetBSD: fstrans.9,v 1.7 2007/07/26 08:42:17 pooka Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,17 +50,17 @@
 .In sys/mount.h
 .In sys/fstrans.h
 .Ft int
-.Fn fstrans_setstate "struct mount *" "enum fstrans_state"
+.Fn fstrans_setstate "struct mount *mp" "enum fstrans_state"
 .Ft "enum fstrans_state"
-.Fn fstrans_getstate "struct mount *"
+.Fn fstrans_getstate "struct mount *mp"
 .Ft void
-.Fn fstrans_start "struct mount *" "enum fstrans_lock_type"
+.Fn fstrans_start "struct mount *mp" "enum fstrans_lock_type"
 .Ft int
-.Fn fstrans_start_nowait "struct mount *" "enum fstrans_lock_type"
+.Fn fstrans_start_nowait "struct mount *mp" "enum fstrans_lock_type"
 .Ft void
-.Fn fstrans_done "struct mount *"
+.Fn fstrans_done "struct mount *mp"
 .Ft int
-.Fn fstrans_is_owner "struct mount *"
+.Fn fstrans_is_owner "struct mount *mp"
 .Sh DESCRIPTION
 The
 .Nm
