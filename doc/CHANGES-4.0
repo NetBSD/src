@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.219 2007/07/26 12:32:19 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.220 2007/07/26 12:59:19 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8038,3 +8038,10 @@ sys/netinet6/ipsec.c				1.121
 
 	fix printf format.
 	[gdt, ticket #790]
+
+sys/arch/amiga/amiga/trap.c			1.115
+sys/arch/atari/atari/trap.c			1.91
+sys/arch/hp300/hp300/trap.c			1.131
+
+	Fix trap handling on m68k ports to pass the getcwd regression test.
+	[mhitch, ticket #729]
