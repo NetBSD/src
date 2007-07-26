@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.8 2007/07/24 11:53:48 drochner Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.9 2007/07/26 18:15:12 plunky Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-tcp.c,v 1.120.2.3 2005/10/16 06:05:46 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.8 2007/07/24 11:53:48 drochner Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.9 2007/07/26 18:15:12 plunky Exp $");
 #endif
 #endif
 
@@ -749,9 +749,9 @@ tcp_verify_signature(const struct ip *ip, const struct tcphdr *tp,
 	u_int16_t savecsum, tlen;
 #ifdef INET6
 	struct ip6_hdr *ip6;
-#endif
 	u_int32_t len32;
 	u_int8_t nxt;
+#endif
 
 	tp1 = *tp;
 
