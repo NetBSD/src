@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.21 2007/05/08 19:53:20 jnemeth Exp $
+.\"	$NetBSD: hardware,v 1.22 2007/07/26 03:27:16 jnemeth Exp $
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -195,9 +195,10 @@ Most IDE and ATAPI disk/tape/CD-ROM devices should work
 .bullet)
 .It
 Floppy drives
-.(bullet -offset indent
-.Em fdc ;
-floppy disk drive (SBus based machines only for now).
+.(bullet -compact
+On-board Floppy Disk Controller -- SBus machines only for now
+.Pq Em fdc
+.bullet)
 .It
 Serial devices
 .(bullet -compact
@@ -222,7 +223,7 @@ On-board PCI/Ebus parallel ports
 .It
 Audio devices
 .(bullet -compact
-On-board, PCI, and SBUS based CS4231-based 44 KHz, 16 bit, stereo, PCM audio
+On-board, PCI, and SBus based CS4231-based 44 KHz, 16 bit, stereo, PCM audio
 .Pq Em audiocs
 .bullet)
 .bullet)
