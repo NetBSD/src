@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.24 2007/06/28 15:09:14 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.25 2007/07/26 12:17:37 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.24 2007/06/28 15:09:14 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.25 2007/07/26 12:17:37 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -829,7 +829,7 @@ pxa2x0_lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(int *)data = WSDISPLAY_TYPE_UNKNOWN;	/* XXX */
+		*(int *)data = WSDISPLAY_TYPE_PXALCD;
 		return 0;
 
 	case WSDISPLAYIO_GINFO:
