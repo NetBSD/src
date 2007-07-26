@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.347 2007/07/26 02:19:00 jnemeth Exp $
+.\"	$NetBSD: main,v 1.348 2007/07/26 05:02:18 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1221,6 +1221,7 @@ These include:
 .It
 .Pa /etc/rc.d/*
 .bullet)
+.bullet)
 .
 .Pp
 The following issues need to be resolved manually:
@@ -1228,7 +1229,7 @@ The following issues need to be resolved manually:
 .(bullet -offset indent
 The user
 .Sq _pflogd
- and the groups
+and the groups
 .Sq _pflogd
 and
 .Sq authpf 
