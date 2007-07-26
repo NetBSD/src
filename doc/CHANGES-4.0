@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.221 2007/07/26 13:22:40 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.222 2007/07/26 13:27:30 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8045,3 +8045,13 @@ sys/arch/hp300/hp300/trap.c			1.131 via patch
 
 	Fix trap handling on m68k ports to pass the getcwd regression test.
 	[mhitch, ticket #729]
+
+sys/dev/usb/uplcom.c				1.55-1.56 via patch
+sys/dev/usb/usbdevs				1.469
+share/man/man4/uplcom.4				1.17
+sys/dev/usb/usbdevs_data.h			regen
+sys/dev/usb/usbdevs.h				regen
+
+	Add support for I-O DATA USB-RSAQ5 to uplcom, update the man page.
+	[hira, ticket #735]
+
