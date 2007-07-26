@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.48 2007/07/20 16:46:43 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.49 2007/07/26 22:57:38 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.48 2007/07/20 16:46:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.49 2007/07/26 22:57:38 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -141,7 +141,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	msdosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

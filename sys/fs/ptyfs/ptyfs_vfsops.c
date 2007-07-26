@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.26 2007/07/17 11:19:33 pooka Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.27 2007/07/26 22:57:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.26 2007/07/17 11:19:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.27 2007/07/26 22:57:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ struct vfsops ptyfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *))eopnotsupp,
 	(int (*)(struct mount *, int, struct vnode *, int, const char *,
 	    struct lwp *))eopnotsupp,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	ptyfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

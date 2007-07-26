@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.162 2007/07/17 22:17:06 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.163 2007/07/26 22:57:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -325,7 +325,6 @@ struct vfsops *vfs_getopsbyname(const char *);
 
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *, struct lwp *);
-int	vfs_stdsuspendctl(struct mount *, int);
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
