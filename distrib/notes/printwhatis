@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ -f whatis ]; then
+    cat - whatis <<EOF
+.Ss2 \*M specific
+EOF
+fi

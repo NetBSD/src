@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.350 2007/07/26 11:43:57 jnemeth Exp $
+.\"	$NetBSD: main,v 1.351 2007/07/26 15:26:37 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -886,8 +886,7 @@ The evbsh5 port has been removed from NetBSD due to lack of interest, compounded
 .bullet)
 .
 .\" END from htdocs/releases/formal-4/NetBSD-4.0.xml#major-changes }
-.Ss2 \*M specific
-.so whatis -----------------------------------------------
+.pso ../printwhatis
 .\} \" \n[FOR_RELEASE]
 .
 .Ss "The Future of NetBSD"
