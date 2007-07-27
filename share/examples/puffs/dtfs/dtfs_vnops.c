@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.36 2007/07/22 12:26:58 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.37 2007/07/27 08:29:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -290,6 +290,18 @@ dtfs_node_poll(struct puffs_cc *pcc, void *opc, int *events,
 	puffs_cc_yield(pcc);
 
 	*events = *events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM);
+	return 0;
+}
+
+int
+dtfs_node_mmap(struct puffs_cc *pcc, void *opc, vm_prot_t prot,
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+{
+	struct dtfs_mount *dtm = puffs_cc_getspecific(pcc);
+
+	if ((dtm->dtm_allowprot & prot) != prot)
+		return EACCES;
+
 	return 0;
 }
 
