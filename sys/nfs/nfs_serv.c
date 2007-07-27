@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.128 2007/04/06 14:28:28 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.129 2007/07/27 10:03:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.128 2007/04/06 14:28:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.129 2007/07/27 10:03:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1287,6 +1287,7 @@ loop1:
 		splx(s);
 		goto loop1;
 	}
+	nfs_timer_start();
 	splx(s);
 
 	/*
