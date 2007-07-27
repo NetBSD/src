@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.162 2007/07/27 09:50:37 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.163 2007/07/27 10:00:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.162 2007/07/27 09:50:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.163 2007/07/27 10:00:43 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -151,8 +151,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		advice = IO_ADV_DECODE(ioflag);
 		error = 0;
 		while (uio->uio_resid > 0) {
-			void *win;
-			int flags;
 			vsize_t bytelen;
 
 			nfs_delayedtruncate(vp);
@@ -161,11 +159,9 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			}
 			bytelen =
 			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-			ubc_release(win, flags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+			    advice, UBC_READ | UBC_PARTIALOK |
+			    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
 			if (error) {
 				/*
 				 * XXXkludge
