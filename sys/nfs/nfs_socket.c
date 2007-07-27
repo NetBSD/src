@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.160 2007/07/09 21:11:30 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.161 2007/07/27 10:03:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.160 2007/07/09 21:11:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.161 2007/07/27 10:03:58 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.160 2007/07/09 21:11:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/evcnt.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
@@ -166,7 +167,10 @@ static const int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
 struct nfsreqhead nfs_reqq;
-callout_t nfs_timer_ch;
+static callout_t nfs_timer_ch;
+static struct evcnt nfs_timer_ev;
+static struct evcnt nfs_timer_start_ev;
+static struct evcnt nfs_timer_stop_ev;
 
 static int nfs_sndlock(struct nfsmount *, struct nfsreq *);
 static void nfs_sndunlock(struct nfsmount *);
@@ -1122,6 +1126,7 @@ tryagain:
 	 */
 	s = splsoftnet();
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
+	nfs_timer_start();
 
 	/*
 	 * If backing off another request or avoiding congestion, don't
@@ -1563,6 +1568,38 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 	return (0);
 }
 
+static void
+nfs_timer_schedule(void)
+{
+
+	callout_schedule(&nfs_timer_ch, nfs_ticks);
+}
+
+void
+nfs_timer_start(void)
+{
+
+	if (callout_pending(&nfs_timer_ch))
+		return;
+
+	nfs_timer_start_ev.ev_count++;
+	nfs_timer_schedule();
+}
+
+void
+nfs_timer_init(void)
+{
+
+	callout_init(&nfs_timer_ch, 0);
+	callout_setfunc(&nfs_timer_ch, nfs_timer, NULL);
+	evcnt_attach_dynamic(&nfs_timer_ev, EVCNT_TYPE_MISC, NULL,
+	    "nfs", "timer");
+	evcnt_attach_dynamic(&nfs_timer_start_ev, EVCNT_TYPE_MISC, NULL,
+	    "nfs", "timer start");
+	evcnt_attach_dynamic(&nfs_timer_stop_ev, EVCNT_TYPE_MISC, NULL,
+	    "nfs", "timer stop");
+}
+
 /*
  * Nfs timer routine
  * Scan the nfsreq list and retranmit any requests that have timed out
@@ -1579,19 +1616,18 @@ nfs_timer(void *arg)
 	struct nfsmount *nmp;
 	int timeo;
 	int s, error;
+	bool more = false;
 #ifdef NFSSERVER
 	struct timeval tv;
 	struct nfssvc_sock *slp;
 	u_quad_t cur_usec;
 #endif
 
-	if (arg != NULL) {
-		callout_init(&nfs_timer_ch, 0);
-		callout_setfunc(&nfs_timer_ch, nfs_timer, NULL);
-	}
+	nfs_timer_ev.ev_count++;
 
 	s = splsoftnet();
 	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
+		more = true;
 		nmp = rep->r_nmp;
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))
 			continue;
@@ -1692,13 +1728,20 @@ nfs_timer(void *arg)
 	getmicrotime(&tv);
 	cur_usec = (u_quad_t)tv.tv_sec * 1000000 + (u_quad_t)tv.tv_usec;
 	TAILQ_FOREACH(slp, &nfssvc_sockhead, ns_chain) {
-	    if (LIST_FIRST(&slp->ns_tq) &&
-		LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec)
-		nfsrv_wakenfsd(slp);
+		if (LIST_FIRST(&slp->ns_tq)) {
+			if (LIST_FIRST(&slp->ns_tq)->nd_time <= cur_usec) {
+				nfsrv_wakenfsd(slp);
+			}
+			more = true;
+		}
 	}
 #endif /* NFSSERVER */
 	splx(s);
-	callout_schedule(&nfs_timer_ch, nfs_ticks);
+	if (more) {
+		nfs_timer_schedule();
+	} else {
+		nfs_timer_stop_ev.ev_count++;
+	}
 }
 
 /*
