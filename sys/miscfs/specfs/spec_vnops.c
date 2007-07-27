@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.101 2007/07/22 19:16:05 pooka Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.102 2007/07/27 08:32:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.101 2007/07/22 19:16:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.102 2007/07/27 08:32:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -528,7 +528,7 @@ spec_mmap(v)
 {
 	struct vop_mmap_args /* {
 		struct vnode *a_vp;
-		int a_fflags;
+		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
