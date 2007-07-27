@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.190 2007/07/09 21:29:09 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.191 2007/07/27 10:03:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.190 2007/07/09 21:29:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.191 2007/07/27 10:03:58 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1526,7 +1526,7 @@ nfs_init0(void)
 	 * Initialize reply list and start timer
 	 */
 	TAILQ_INIT(&nfs_reqq);
-	nfs_timer(nfs_timer);
+	nfs_timer_init();
 	MOWNER_ATTACH(&nfs_mowner);
 
 #ifdef NFS
