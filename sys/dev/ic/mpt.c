@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.8 2007/03/04 06:01:58 christos Exp $	*/
+/*	$NetBSD: mpt.c,v 1.9 2007/07/27 13:06:51 tron Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -28,6 +28,7 @@
  * Additional Copyright (c) 2002 by Matthew Jacob under same license.
  */
 
+
 /*
  * mpt.c:
  *
@@ -35,10 +36,12 @@
  *
  * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
+ *
+ * Additional contributions by Garrett D'Amore on behalf of TELES AG.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.8 2007/03/04 06:01:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.9 2007/07/27 13:06:51 tron Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -167,13 +170,10 @@ mpt_soft_reset(mpt_softc_t *mpt)
 void
 mpt_hard_reset(mpt_softc_t *mpt)
 {
-	/* This extra read comes for the Linux source
-	 * released by LSI. It's function is undocumented!
-	 */
 	if (mpt->verbose) {
 		mpt_prt(mpt, "hard reset");
 	}
-	mpt_read(mpt, MPT_OFFSET_FUBAR);
+	mpt_write(mpt, MPT_OFFSET_SEQUENCE, 0xff);
 
 	/* Enable diagnostic registers */
 	mpt_write(mpt, MPT_OFFSET_SEQUENCE, MPT_DIAG_SEQUENCE_1);
@@ -189,17 +189,6 @@ mpt_hard_reset(mpt_softc_t *mpt)
 
 	/* Disable Diagnostic Register */
 	mpt_write(mpt, MPT_OFFSET_SEQUENCE, 0xFF);
-
-	/* Restore the config register values */
-	/*   Hard resets are known to screw up the BAR for diagnostic
-	     memory accesses (Mem1). */
-	mpt_set_config_regs(mpt);
-	if (mpt->mpt2 != NULL) {
-		mpt_set_config_regs(mpt->mpt2);
-	}
-
-	/* Note that if there is no valid firmware to run, the doorbell will
-	   remain in the reset state (0x00000000) */
 }
 
 /*
@@ -487,11 +476,7 @@ mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
 	bzero(&init, sizeof init);
 	init.WhoInit = who;
 	init.Function = MPI_FUNCTION_IOC_INIT;
-	if (mpt->is_fc) {
-		init.MaxDevices = 255;
-	} else {
-		init.MaxDevices = 16;
-	}
+	init.MaxDevices = mpt->mpt_max_devices;
 	init.MaxBuses = 1;
 	init.ReplyFrameSize = MPT_REPLY_SIZE;
 	init.MsgContext = 0x12071941;
@@ -1022,6 +1007,40 @@ mpt_disable_ints(mpt_softc_t *mpt)
 
 /* (Re)Initialize the chip for use */
 int
+mpt_hw_init(mpt_softc_t *mpt)
+{
+	u_int32_t	db;
+	int		try;
+
+	/*
+	 * Start by making sure we're not at FAULT or RESET state
+	 */
+	for (try = 0; try < MPT_MAX_TRYS; try++) {
+
+		db = mpt_rd_db(mpt);
+
+		switch (MPT_STATE(db)) {
+		case MPT_DB_STATE_READY:
+			return (0);
+
+		default:
+			/* if peer has already reset us, don't do it again! */
+			if (MPT_WHO(db) == MPT_DB_INIT_PCIPEER)
+				return (0);
+			/*FALLTHRU*/
+		case MPT_DB_STATE_RESET:
+		case MPT_DB_STATE_FAULT:
+			if (mpt_reset(mpt) != MPT_OK) {
+				DELAY(10000);
+				continue;
+			}
+			break;
+		}
+	}
+	return (EIO);
+}
+
+int
 mpt_init(mpt_softc_t *mpt, u_int32_t who)
 {
         int try;
@@ -1044,33 +1063,13 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 	/*
 	 * Start by making sure we're not at FAULT or RESET state
 	 */
-	switch (mpt_rd_db(mpt) & MPT_DB_STATE_MASK) {
-	case MPT_DB_STATE_RESET:
-	case MPT_DB_STATE_FAULT:
-		if (mpt_reset(mpt) != MPT_OK) {
-			return (EIO);
-		}
-	default:
-		break;
-	}
+	if (mpt_hw_init(mpt) != 0)
+		return (EIO);
 
 	for (try = 0; try < MPT_MAX_TRYS; try++) {
 		/*
 		 * No need to reset if the IOC is already in the READY state.
-		 *
-		 * Force reset if initialization failed previously.
-		 * Note that a hard_reset of the second channel of a '929
-		 * will stop operation of the first channel.  Hopefully, if the
-		 * first channel is ok, the second will not require a hard
-		 * reset.
 		 */
-		if ((mpt_rd_db(mpt) & MPT_DB_STATE_MASK) !=
-		    MPT_DB_STATE_READY) {
-			if (mpt_reset(mpt) != MPT_OK) {
-				DELAY(10000);
-				continue;
-			}
-		}
 
 		if (mpt_get_iocfacts(mpt, &facts) != MPT_OK) {
 			mpt_prt(mpt, "mpt_get_iocfacts failed");
@@ -1083,6 +1082,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 			    "Request Frame Size %u\n", facts.GlobalCredits,
 			    facts.BlockSize, facts.RequestFrameSize);
 		}
+		mpt->mpt_max_devices = facts.MaxDevices;
 		mpt->mpt_global_credits = facts.GlobalCredits;
 		mpt->request_frame_size = facts.RequestFrameSize;
 
@@ -1098,21 +1098,29 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 			    pfp.MaxDevices);
 		}
 
-		if (pfp.PortType != MPI_PORTFACTS_PORTTYPE_SCSI &&
-		    pfp.PortType != MPI_PORTFACTS_PORTTYPE_FC) {
-			mpt_prt(mpt, "Unsupported Port Type (%x)",
-			    pfp.PortType);
-			return (ENXIO);
-		}
 		if (!(pfp.ProtocolFlags & MPI_PORTFACTS_PROTOCOL_INITIATOR)) {
 			mpt_prt(mpt, "initiator role unsupported");
 			return (ENXIO);
 		}
-		if (pfp.PortType == MPI_PORTFACTS_PORTTYPE_FC) {
+
+		switch (pfp.PortType) {
+		case MPI_PORTFACTS_PORTTYPE_FC:
 			mpt->is_fc = 1;
-		} else {
-			mpt->is_fc = 0;
+			break;
+		case MPI_PORTFACTS_PORTTYPE_SCSI:
+			mpt->is_scsi = 1;
+			/* some SPI controllers (VMWare, Sun) lie */
+			mpt->mpt_max_devices = 16;
+			break;
+		case MPI_PORTFACTS_PORTTYPE_SAS:
+			mpt->is_sas = 1;
+			break;
+		default:
+			mpt_prt(mpt, "Unsupported Port Type (%x)",
+			    pfp.PortType);
+			return (ENXIO);
 		}
+
 		mpt->mpt_ini_id = pfp.PortSCSIID;
 
 		if (mpt_send_ioc_init(mpt, who) != MPT_OK) {
@@ -1156,7 +1164,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		 * (SPI only for now)
 		 */
 
-		if (mpt->is_fc == 0) {
+		if (mpt->is_scsi) {
 			if (mpt_read_config_info_spi(mpt)) {
 				return (EIO);
 			}
