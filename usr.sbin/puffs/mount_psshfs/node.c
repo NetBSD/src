@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.35 2007/07/19 10:14:53 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.36 2007/07/27 09:46:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.35 2007/07/19 10:14:53 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.36 2007/07/27 09:46:27 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -201,6 +201,21 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
+psshfs_node_mmap(struct puffs_cc* pcc, void *opc, vm_prot_t prot,
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+{
+	struct puffs_node *pn = opc;
+	struct psshfs_node *psn = pn->pn_data;
+
+	if (prot & (VM_PROT_READ | VM_PROT_EXECUTE))
+		psn->stat |= PSN_READMAP;
+	if (prot & VM_PROT_WRITE)
+		psn->stat |= PSN_WRITEMAP;
+
+	return 0;
+}
+
+int
 psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
@@ -237,22 +252,22 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	}
 
  out:
+	if (rv == 0)
+		psn->opencount++;
+
 	PSSHFSRETURN(rv);
 }
 
-int
-psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+static int
+closehandles(struct puffs_cc *pcc, struct psshfs_node *psn)
 {
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
-	uint32_t reqid = NEXTREQ(pctx);
+	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
 	struct puffs_framebuf *pb1, *pb2;
+	uint32_t reqid = NEXTREQ(pctx);
 	int rv;
 
-	if (psn->fhand_r) {
+	if ((psn->stat & PSN_READMAP) == 0 && psn->fhand_r) {
 		pb1 = psbuf_makeout();
 		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
 		    psn->fhand_r, psn->fhand_r_len);
@@ -260,7 +275,7 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
 		free(psn->fhand_r);
 		psn->fhand_r = NULL;
 	}
-	if (psn->fhand_w) {
+	if ((psn->stat & PSN_WRITEMAP) == 0 && psn->fhand_w) {
 		pb2 = psbuf_makeout();
 		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
 		    psn->fhand_w, psn->fhand_w_len);
@@ -270,6 +285,34 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
 	}
 
  out:
+	return rv;
+}
+
+int
+psshfs_node_close(struct puffs_cc *pcc, void *opc, int flags,
+	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+{
+	struct puffs_node *pn = opc;
+	struct psshfs_node *psn = pn->pn_data;
+
+	assert(psn->opencount != 0);
+	if (--psn->opencount == 0)
+		closehandles(pcc, psn);
+
+	return 0;
+}
+
+int
+psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cid *pcid)
+{
+	struct puffs_node *pn = opc;
+	struct psshfs_node *psn = pn->pn_data;
+
+	assert(psn->opencount == 0);
+	psn->stat &= ~(PSN_READMAP | PSN_WRITEMAP);
+	closehandles(pcc, psn);
+
 	return 0;
 }
 
