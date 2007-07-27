@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.9 2007/07/27 13:06:51 tron Exp $	*/
+/*	$NetBSD: mpt.c,v 1.10 2007/07/27 18:38:13 tron Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.9 2007/07/27 13:06:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.10 2007/07/27 18:38:13 tron Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -1106,6 +1106,7 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 		switch (pfp.PortType) {
 		case MPI_PORTFACTS_PORTTYPE_FC:
 			mpt->is_fc = 1;
+			mpt->mpt_max_devices = 255;
 			break;
 		case MPI_PORTFACTS_PORTTYPE_SCSI:
 			mpt->is_scsi = 1;
