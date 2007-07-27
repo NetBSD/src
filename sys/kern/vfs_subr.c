@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.291 2007/07/17 21:14:05 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.292 2007/07/27 14:25:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.291 2007/07/17 21:14:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.292 2007/07/27 14:25:21 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -146,8 +146,6 @@ struct freelst vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_hold_list);
 
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
-struct vfs_list_head vfs_list =			/* vfs list */
-    LIST_HEAD_INITIALIZER(vfs_list);
 
 struct simplelock mountlist_slock = SIMPLELOCK_INITIALIZER;
 static struct simplelock mntid_slock = SIMPLELOCK_INITIALIZER;
@@ -2346,101 +2344,6 @@ vfs_getopsbyname(const char *name)
 	}
 
 	return (v);
-}
-
-/*
- * Establish a file system and initialize it.
- */
-int
-vfs_attach(struct vfsops *vfs)
-{
-	struct vfsops *v;
-	int error = 0;
-
-
-	/*
-	 * Make sure this file system doesn't already exist.
-	 */
-	LIST_FOREACH(v, &vfs_list, vfs_list) {
-		if (strcmp(vfs->vfs_name, v->vfs_name) == 0) {
-			error = EEXIST;
-			goto out;
-		}
-	}
-
-	/*
-	 * Initialize the vnode operations for this file system.
-	 */
-	vfs_opv_init(vfs->vfs_opv_descs);
-
-	/*
-	 * Now initialize the file system itself.
-	 */
-	(*vfs->vfs_init)();
-
-	/*
-	 * ...and link it into the kernel's list.
-	 */
-	LIST_INSERT_HEAD(&vfs_list, vfs, vfs_list);
-
-	/*
-	 * Sanity: make sure the reference count is 0.
-	 */
-	vfs->vfs_refcount = 0;
-
- out:
-	return (error);
-}
-
-/*
- * Remove a file system from the kernel.
- */
-int
-vfs_detach(struct vfsops *vfs)
-{
-	struct vfsops *v;
-
-	/*
-	 * Make sure no one is using the filesystem.
-	 */
-	if (vfs->vfs_refcount != 0)
-		return (EBUSY);
-
-	/*
-	 * ...and remove it from the kernel's list.
-	 */
-	LIST_FOREACH(v, &vfs_list, vfs_list) {
-		if (v == vfs) {
-			LIST_REMOVE(v, vfs_list);
-			break;
-		}
-	}
-
-	if (v == NULL)
-		return (ESRCH);
-
-	/*
-	 * Now run the file system-specific cleanups.
-	 */
-	(*vfs->vfs_done)();
-
-	/*
-	 * Free the vnode operations vector.
-	 */
-	vfs_opv_free(vfs->vfs_opv_descs);
-	return (0);
-}
-
-void
-vfs_reinit(void)
-{
-	struct vfsops *vfs;
-
-	LIST_FOREACH(vfs, &vfs_list, vfs_list) {
-		if (vfs->vfs_reinit) {
-			(*vfs->vfs_reinit)();
-		}
-	}
 }
 
 void
