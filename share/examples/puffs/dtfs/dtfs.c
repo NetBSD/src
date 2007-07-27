@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.31 2007/07/19 07:58:56 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.32 2007/07/27 08:29:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -63,8 +63,8 @@ usage()
 {
 
 	errx(1, "usage: %s [-bsdft] [-c hashbuckets] [-m maxreqsize] "
-	    "[-n typename]\n    [-o mntopt] [-o puffsopt] [-r rootnodetype]"
-	    " mountpath", getprogname());
+	    "[-n typename]\n    [-o mntopt] [-o puffsopt] [-p prot] "
+	    "[-r rootnodetype] mountpath", getprogname());
 }
 
 /*
@@ -128,7 +128,8 @@ main(int argc, char *argv[])
 	pflags = PUFFS_KFLAG_IAONDEMAND;
 	typename = FSNAME;
 	maxreqsize = MAXREQMAGIC;
-	while ((ch = getopt(argc, argv, "bc:dfim:n:o:r:st")) != -1) {
+	gdtm.dtm_allowprot = VM_PROT_ALL;
+	while ((ch = getopt(argc, argv, "bc:dfim:n:o:p:r:st")) != -1) {
 		switch (ch) {
 		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
@@ -156,6 +157,11 @@ main(int argc, char *argv[])
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
+			break;
+		case 'p':
+			gdtm.dtm_allowprot = atoi(optarg);
+			if ((gdtm.dtm_allowprot | VM_PROT_ALL) != VM_PROT_ALL)
+				usage();
 			break;
 		case 'r':
 			rtstr = optarg;
@@ -196,6 +202,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, dtfs, node, remove);
 	PUFFSOP_SET(pops, dtfs, node, readdir);
 	PUFFSOP_SET(pops, dtfs, node, poll);
+	PUFFSOP_SET(pops, dtfs, node, mmap);
 	PUFFSOP_SET(pops, dtfs, node, mkdir);
 	PUFFSOP_SET(pops, dtfs, node, rmdir);
 	PUFFSOP_SET(pops, dtfs, node, rename);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.h,v 1.19 2007/07/17 16:33:27 pooka Exp $	*/
+/*	$NetBSD: dtfs.h,v 1.20 2007/07/27 08:29:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@ struct dtfs_mount {
 
 	LIST_HEAD(, dtfs_poll) dtm_pollent;
 	int		dtm_needwakeup;
+	vm_prot_t	dtm_allowprot;
 };
 
 struct dtfs_file {
