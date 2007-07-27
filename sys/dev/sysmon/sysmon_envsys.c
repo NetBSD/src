@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.43 2007/07/23 17:51:16 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.44 2007/07/27 11:59:09 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.43 2007/07/23 17:51:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.44 2007/07/27 11:59:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -483,7 +483,6 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	mutex_enter(&sme_list_mtx);
 	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
 	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
-		       mutex_exit(&sme_list_mtx);
 		       error = EEXIST;
 		       goto out;
 	       }
@@ -496,16 +495,14 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	sme->sme_fsensor = sysmon_envsys_next_sensor_index;
 	sysmon_envsys_next_sensor_index += sme->sme_nsensors;
 #endif
-	mutex_exit(&sme_list_mtx);
 	error = sysmon_envsys_createplist(sme);
 	if (!error) {
-		mutex_enter(&sme_list_mtx);
 		LIST_INSERT_HEAD(&sysmon_envsys_list, sme, sme_list);
 		sme_uniqsensors = 0;
-		mutex_exit(&sme_list_mtx);
 	}
 
 out:
+	mutex_exit(&sme_list_mtx);
 	return error;
 }
 
@@ -626,6 +623,9 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 
 	nsens = error = 0;
 
+	KASSERT(mutex_owned(&sme_list_mtx));
+	mutex_exit(&sme_list_mtx);
+
 	/* create the sysmon envsys device array. */
 	array = prop_array_create();
 	if (array == NULL)
@@ -688,6 +688,7 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 
 
 	prop_object_release(array);
+	mutex_enter(&sme_list_mtx);
 	return error;
 }
 
