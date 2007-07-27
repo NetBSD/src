@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.10 2007/07/02 10:24:17 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.11 2007/07/27 08:28:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.10 2007/07/02 10:24:17 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.11 2007/07/27 08:28:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -463,7 +463,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			error = pops->puffs_node_mmap(pcc,
-			    opcookie, auxt->pvnr_fflags, pcr, pcid);
+			    opcookie, auxt->pvnr_prot, pcr, pcid);
 			break;
 		}
 
