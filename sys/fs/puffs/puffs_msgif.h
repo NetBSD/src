@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.45 2007/07/27 08:26:39 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.46 2007/07/27 09:18:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,8 @@
 #include <sys/statvfs.h>
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
+
+#include <uvm/uvm_prot.h>
 
 #define PUFFSOP_VFS	1
 #define PUFFSOP_VN	2
