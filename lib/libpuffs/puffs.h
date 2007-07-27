@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.76 2007/07/20 13:14:55 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.77 2007/07/27 08:28:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -189,7 +189,8 @@ struct puffs_ops {
 	int (*puffs_node_poll)(struct puffs_cc *, void *, int *,
 	    const struct puffs_cid *);
 	int (*puffs_node_mmap)(struct puffs_cc *,
-	    void *, int, const struct puffs_cred *, const struct puffs_cid *);
+	    void *, vm_prot_t, const struct puffs_cred *,
+	    const struct puffs_cid *);
 	int (*puffs_node_fsync)(struct puffs_cc *,
 	    void *, const struct puffs_cred *, int, off_t, off_t,
 	    const struct puffs_cid *);
@@ -324,7 +325,7 @@ enum {
 	int fsname##_node_poll(struct puffs_cc *, void *, int *,	\
 	    const struct puffs_cid *);					\
 	int fsname##_node_mmap(struct puffs_cc *,			\
-	    void *, int, const struct puffs_cred *,			\
+	    void *, vm_prot_t, const struct puffs_cred *,		\
 	    const struct puffs_cid *);					\
 	int fsname##_node_fsync(struct puffs_cc *,			\
 	    void *, const struct puffs_cred *, int, off_t, off_t,	\
@@ -385,7 +386,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 24
+#define PUFFS_DEVEL_LIBVERSION 25
 #define puffs_init(a,b,c,d,e) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e)
 
