@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.61 2007/07/27 09:33:58 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.62 2007/07/27 09:50:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.61 2007/07/27 09:33:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.62 2007/07/27 09:50:37 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -658,7 +658,8 @@ ubc_release(void *va, int flags)
  */
 
 int
-ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int flags)
+ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
+    int flags)
 {
 	voff_t off;
 	const bool overwrite = (flags & UBC_FAULTBUSY) != 0;
@@ -674,7 +675,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int flags)
 		vsize_t bytelen = todo;
 		void *win;
 
-		win = ubc_alloc(uobj, off, &bytelen, UVM_ADV_NORMAL, flags);
+		win = ubc_alloc(uobj, off, &bytelen, advice, flags);
 		if (error == 0) {
 			error = uiomove(win, bytelen, uio);
 		}

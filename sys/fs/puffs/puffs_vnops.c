@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.92 2007/07/27 08:26:39 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.93 2007/07/27 09:50:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.92 2007/07/27 08:26:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.93 2007/07/27 09:50:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1654,7 +1654,7 @@ puffs_write(void *v)
 				uvm_vnp_setwritesize(vp, newoff);
 			}
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
-			    ubcflags);
+			    UVM_ADV_RANDOM, ubcflags);
 
 			/*
 			 * In case of a ubc_uiomove() error,
