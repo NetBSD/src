@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.79 2007/06/05 12:31:35 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.80 2007/07/27 09:50:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.79 2007/06/05 12:31:35 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.80 2007/07/27 09:50:36 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -386,7 +386,8 @@ WRITE(void *v)
 		 */
 
 		ubc_flags |= UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		error = ubc_uiomove(&vp->v_uobj, uio, bytelen, ubc_flags);
+		error = ubc_uiomove(&vp->v_uobj, uio, bytelen, UVM_ADV_RANDOM,
+		    ubc_flags);
 
 		/*
 		 * update UVM's notion of the size now that we've
