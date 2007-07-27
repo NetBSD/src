@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.133 2007/07/22 19:16:06 pooka Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.134 2007/07/27 09:50:37 yamt Exp $	*/
 
 /*
  *
@@ -562,7 +562,7 @@ void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
-			    int);
+			    int, int);
 
 /* uvm_fault.c */
 #define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.161 2007/07/20 15:36:41 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.162 2007/07/27 09:50:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.161 2007/07/20 15:36:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.162 2007/07/27 09:50:37 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -537,7 +537,7 @@ nfs_write(v)
 			uvm_vnp_setwritesize(vp, uio->uio_offset + bytelen);
 		}
 		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
-		    UBC_WRITE | UBC_PARTIALOK |
+		    UVM_ADV_RANDOM, UBC_WRITE | UBC_PARTIALOK |
 		    (overwrite ? UBC_FAULTBUSY : 0) |
 		    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
 		if (error) {
