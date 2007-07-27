@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.223 2007/07/26 15:12:53 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.224 2007/07/27 11:53:19 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8067,3 +8067,55 @@ sys/arch/cobalt/stand/boot/version		1.2
 
 	Obviously this should be pulled up to netbsd-4.
 	[tsutsui, ticket #793]
+
+etc/rc.d/btdevctl				1.4
+
+	add requirement for bthcid since devices may need to authenticate
+	[plunky, ticket #796]
+
+lib/libutil/sockaddr_snprintf.c			1.8
+
+	In sockaddr_snprintf(sbuf, len, fmt, sa), do not write the terminating
+	null character outside of the byte region [sbuf, sbuf + len).
+
+	1) If the length of the buffer is 0, do not write a null character
+   	at all.  Previously, sockaddr_snprintf() may have been able to
+   	overwrite sbuf[-1] if len was 0.
+
+	2) If the length of the buffer, len, is greater than 0, then write
+   	the null at sbuf[len - 1].  Previously, sockaddr_snprintf()
+   	wrote the null at buf[len - 1], where `buf' was a "cursor" that
+   	did not necessarily equal `sbuf', the start of the buffer.  Now,
+   	sockaddr_snprintf() always writes the null at sbuf[len - 1].
+	[dyoung, ticket #794]
+
+sys/dev/pci/if_wpi.c				patch
+sys/dev/pci/if_wpireg.h				patch
+sys/dev/pci/if_wpivar.h				patch
+
+	Rewrite of the rbuf management
+	Sync with the last OpenBSD driver 
+	Use the last firmware available from Intel (2.4.14).
+	Use legal limitations and Tx regulation embedded in the eeprom.
+	Rewrite the way we handle the firmware
+	[degroote, ticket #795]
+
+
+src/share/man/man4/wpi.4			patch
+
+	Insert "+1" at the front of a North American telephone number.
+	Refer to pkgsrc/sysutils/wpi-firmware - rev 1.3
+
+	Add xref to firmload(9). Prompted by dillo. - rev 1.4
+
+	Update the man page to reference the use of a new firmware for wpi.
+	- rev 1.5
+
+	Note that you need the 2.14.4 firmware now - rev 1.6
+	All via patch
+	[degroote, #795]
+
+src/sys/arch/amd64/conf/GENERIC			patch
+
+	Add wpi(4).
+	[degroote, ticket #795]
