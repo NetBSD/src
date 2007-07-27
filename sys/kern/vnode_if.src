@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.53 2007/07/22 21:26:53 pooka Exp $
+#	$NetBSD: vnode_if.src,v 1.54 2007/07/27 08:26:38 pooka Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -236,7 +236,7 @@ vop_revoke {
 #
 vop_mmap {
 	IN struct vnode *vp;
-	IN int fflags;
+	IN vm_prot_t prot;
 	IN kauth_cred_t cred;
 	IN struct lwp *l;
 };

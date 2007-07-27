@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.91 2007/07/22 18:59:00 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.92 2007/07/27 08:26:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.91 2007/07/22 18:59:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.92 2007/07/27 08:26:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2092,7 +2092,7 @@ puffs_mmap(void *v)
 	struct vop_mmap_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		int a_fflags;
+		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
@@ -2107,7 +2107,7 @@ puffs_mmap(void *v)
 		return genfs_eopnotsupp(v);
 
 	if (EXISTSOP(pmp, MMAP)) {
-		mmap_arg.pvnr_fflags = ap->a_fflags;
+		mmap_arg.pvnr_prot = ap->a_prot;
 		puffs_credcvt(&mmap_arg.pvnr_cred, ap->a_cred);
 		puffs_cidcvt(&mmap_arg.pvnr_cid, ap->a_l);
 
