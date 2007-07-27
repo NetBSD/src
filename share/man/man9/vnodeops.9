@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.65 2007/06/28 02:54:23 rumble Exp $
+.\"     $NetBSD: vnodeops.9,v 1.66 2007/07/27 08:31:30 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 13, 2007
+.Dd July 27, 2007
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -140,7 +140,7 @@
 .Ft int
 .Fn VOP_REVOKE "struct vnode *vp" "int flags"
 .Ft int
-.Fn VOP_MMAP "struct vnode *vp" "int fflags" \
+.Fn VOP_MMAP "struct vnode *vp" "vm_prot_t prot" \
 "kauth_cred_t cred" "struct lwp *l"
 .Ft int
 .Fn VOP_FSYNC "struct vnode *vp" "kauth_cred_t cred" "int flags" \
@@ -763,13 +763,13 @@ all vnodes aliased to the vnode
 are also eliminated.
 If the operation is successful zero is returned, otherwise an
 appropriate error is returned.
-.It Fn VOP_MMAP "vp" "fflags" "cred" "l"
+.It Fn VOP_MMAP "vp" "prot" "cred" "l"
 Inform file system that
 .Fa vp
 is in the process of being memory mapped.
 The argument
-.Fa fflags
-is a set of flags.
+.Fa prot
+specifies the vm access protection the vnode is going to be mapped with.
 The argument
 .Fa cred
 is the caller's credentials and
