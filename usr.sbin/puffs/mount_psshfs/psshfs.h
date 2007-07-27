@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.21 2007/07/07 21:14:27 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.22 2007/07/27 09:46:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -115,6 +115,7 @@ struct psshfs_node {
 	int childcount;
 
 	int stat;
+	int opencount;
 
 	time_t attrread;
 	struct puffs_framebuf *getattr_pb;
@@ -126,6 +127,8 @@ struct psshfs_node {
 };
 #define PSN_RECLAIMED	0x01
 #define PSN_HASFH	0x02
+#define PSN_READMAP	0x04
+#define PSN_WRITEMAP	0x08
 
 struct psshfs_ctx {
 	int sshfd;
