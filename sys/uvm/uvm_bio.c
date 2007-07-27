@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.60 2007/07/21 19:21:54 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.61 2007/07/27 09:33:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.60 2007/07/21 19:21:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.61 2007/07/27 09:33:58 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -684,7 +684,6 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int flags)
 			 * do it now.  it's safe to use memset here
 			 * because we just mapped the pages above.
 			 */
-			printf("%s: error=%d\n", __func__, error);
 			memset(win, 0, bytelen);
 		}
 		ubc_release(win, flags);
