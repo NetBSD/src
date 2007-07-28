@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.893 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.894 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -171,3 +171,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		with MI mc146818 driver. [tsutsui 20070721]
 	bind: import 9.4.1-P1 [christos 20070724]
 	mpt(4): Add support for newer SAS and similar devices. [tron 20070727]
+	ichsmb(4): Add support for Intel ICH SMBus controller.
+		[kiyohara 20070728]
