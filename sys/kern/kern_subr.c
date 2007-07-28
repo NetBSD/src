@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.160 2007/06/24 20:12:34 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.161 2007/07/28 12:53:52 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.160 2007/06/24 20:12:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.161 2007/07/28 12:53:52 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -385,72 +385,6 @@ ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len)
 		return kcopy(src, dst, len);
 	return copyout(src, dst, len);
 }
-
-/*
- * General routine to allocate a hash table.
- * Allocate enough memory to hold at least `elements' list-head pointers.
- * Return a pointer to the allocated space and set *hashmask to a pattern
- * suitable for masking a value to use as an index into the returned array.
- */
-void *
-hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
-    int mflags, u_long *hashmask)
-{
-	u_long hashsize, i;
-	LIST_HEAD(, generic) *hashtbl_list;
-	TAILQ_HEAD(, generic) *hashtbl_tailq;
-	size_t esize;
-	void *p;
-
-	if (elements == 0)
-		panic("hashinit: bad cnt");
-	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
-		continue;
-
-	switch (htype) {
-	case HASH_LIST:
-		esize = sizeof(*hashtbl_list);
-		break;
-	case HASH_TAILQ:
-		esize = sizeof(*hashtbl_tailq);
-		break;
-	default:
-#ifdef DIAGNOSTIC
-		panic("hashinit: invalid table type");
-#else
-		return NULL;
-#endif
-	}
-
-	if ((p = malloc(hashsize * esize, mtype, mflags)) == NULL)
-		return (NULL);
-
-	switch (htype) {
-	case HASH_LIST:
-		hashtbl_list = p;
-		for (i = 0; i < hashsize; i++)
-			LIST_INIT(&hashtbl_list[i]);
-		break;
-	case HASH_TAILQ:
-		hashtbl_tailq = p;
-		for (i = 0; i < hashsize; i++)
-			TAILQ_INIT(&hashtbl_tailq[i]);
-		break;
-	}
-	*hashmask = hashsize - 1;
-	return (p);
-}
-
-/*
- * Free memory from hash table previosly allocated via hashinit().
- */
-void
-hashdone(void *hashtbl, struct malloc_type *mtype)
-{
-
-	free(hashtbl, mtype);
-}
-
 
 static void *
 hook_establish(hook_list_t *list, void (*fn)(void *), void *arg)
