@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.55 2007/02/02 02:10:24 ober Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.56 2007/07/28 20:28:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.55 2007/02/02 02:10:24 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.56 2007/07/28 20:28:57 mjf Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -436,6 +436,10 @@ rasops_allocattr_color(void *cookie, int fg, int bg, int flg,
     long *attr)
 {
 	int swap;
+
+	if (__predict_false((unsigned int)fg >= sizeof(rasops_isgray) ||
+	    (unsigned int)bg >= sizeof(rasops_isgray)))
+		return (EINVAL);
 
 #ifdef RASOPS_CLIPPING
 	fg &= 7;
@@ -1256,6 +1260,14 @@ rasops_putchar_rotated(cookie, row, col, uc, attr)
 	int height;
 
 	ri = (struct rasops_info *)cookie;
+
+	if (__predict_false((unsigned int)row > ri->ri_rows ||
+	    (unsigned int)col > ri->ri_cols))
+		return;
+
+	/* Avoid underflow */
+	if ((ri->ri_rows - row - 1) < 0)
+		return;
 
 	/* Do rotated char sans (side)underline */
 	ri->ri_real_ops.putchar(cookie, col, ri->ri_rows - row - 1, uc,
