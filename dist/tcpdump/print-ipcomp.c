@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipcomp.c,v 1.4 2007/07/24 11:53:44 drochner Exp $	*/
+/*	$NetBSD: print-ipcomp.c,v 1.5 2007/07/28 16:02:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ipcomp.c,v 1.20 2003/11/19 00:36:08 guy Exp";
 #else
-__RCSID("$NetBSD: print-ipcomp.c,v 1.4 2007/07/24 11:53:44 drochner Exp $");
+__RCSID("$NetBSD: print-ipcomp.c,v 1.5 2007/07/28 16:02:18 drochner Exp $");
 #endif
 #endif
 
@@ -55,7 +55,7 @@ struct ipcomp {
 #include "extract.h"
 
 int
-ipcomp_print(register const u_char *bp, int *nhdr)
+ipcomp_print(register const u_char *bp, int *nhdr _U_)
 {
 	register const struct ipcomp *ipcomp;
 	register const u_char *ep;

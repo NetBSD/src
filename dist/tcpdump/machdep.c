@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2007/07/24 11:53:40 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2007/07/28 16:02:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/machdep.c,v 1.13 2003/12/15 03:53:21 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.5 2007/07/24 11:53:40 drochner Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.6 2007/07/28 16:02:17 drochner Exp $");
 #endif
 #endif
 
@@ -60,7 +60,7 @@ int snprintf(char *, size_t, const char *, ...)
 #include "machdep.h"
 
 int
-abort_on_misalignment(char *ebuf, size_t ebufsiz)
+abort_on_misalignment(char *ebuf _U_, size_t ebufsiz _U_)
 {
 #ifdef __osf__
 	static int buf[2] = { SSIN_UACPROC, UAC_SIGBUS };
