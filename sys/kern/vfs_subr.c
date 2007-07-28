@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.292 2007/07/27 14:25:21 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.293 2007/07/28 08:19:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.292 2007/07/27 14:25:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.293 2007/07/28 08:19:36 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -100,15 +100,12 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.292 2007/07/27 14:25:21 pooka Exp $")
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-#include <sys/domain.h>
-#include <sys/mbuf.h>
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 
 #include <miscfs/specfs/specdev.h>
-#include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
 #include <uvm/uvm.h>
