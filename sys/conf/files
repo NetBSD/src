@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.853 2007/07/19 20:48:51 dyoung Exp $
+#	$NetBSD: files,v 1.854 2007/07/28 12:53:53 pooka Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1364,6 +1364,7 @@ file	kern/subr_disk.c
 file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_extent.c
+file	kern/subr_hash.c
 file	kern/subr_kmem.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
