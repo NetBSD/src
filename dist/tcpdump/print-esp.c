@@ -1,4 +1,4 @@
-/*	$NetBSD: print-esp.c,v 1.7 2007/07/24 11:53:43 drochner Exp $	*/
+/*	$NetBSD: print-esp.c,v 1.8 2007/07/28 16:04:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-esp.c,v 1.55.2.1 2005/04/21 06:44:57 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-esp.c,v 1.7 2007/07/24 11:53:43 drochner Exp $");
+__RCSID("$NetBSD: print-esp.c,v 1.8 2007/07/28 16:04:44 drochner Exp $");
 #endif
 #endif
 
@@ -485,7 +485,7 @@ esp_print(netdissect_options *ndo,
 
 		p = ivoff;
 		EVP_CipherInit(&ctx, NULL, NULL, p, 0);
-		EVP_Cipher(&ctx, (void *)(p + ivlen), p + ivlen,
+		EVP_Cipher(&ctx, p + ivlen, p + ivlen,
 		    ep - (p + ivlen));
 		advance = ivoff - (u_char *)esp + ivlen;
 	} else
