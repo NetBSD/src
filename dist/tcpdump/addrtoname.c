@@ -1,4 +1,4 @@
-/*	$NetBSD: addrtoname.c,v 1.8 2007/07/24 11:53:36 drochner Exp $	*/
+/*	$NetBSD: addrtoname.c,v 1.9 2007/07/28 15:59:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.108.2.8 2006/02/27 07:27:16 hannes Exp (LBL)";
 #else
-__RCSID("$NetBSD: addrtoname.c,v 1.8 2007/07/24 11:53:36 drochner Exp $");
+__RCSID("$NetBSD: addrtoname.c,v 1.9 2007/07/28 15:59:39 drochner Exp $");
 #endif
 #endif
 
@@ -67,10 +67,6 @@ extern int ether_ntohost(char *, const struct ether_addr *);
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
 
 #include "interface.h"
 #include "addrtoname.h"
