@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.6.3 2007/07/07 11:56:10 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.6.4 2007/07/28 14:23:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
+
 #include <machine/asm.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
@@ -45,30 +46,7 @@
 
 #include "assym.h"
 
-	.data
-	.globl	_C_LABEL(netisr)
 	.text
-
-#if 0
-#if defined(PROF) || defined(GPROF)
-/*
- * XXXX TODO
- */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	$IPL_HIGH,%eax
-	xchgl	%eax,CPUVAR(ILEVEL)
-	ret
-
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movl	4(%esp),%ecx
-	SPLLOWER(_C_LABEL(Xspllower))
-	/* ret */
-#endif /* PROF || GPROF */
-#endif
 
 /*
  * int splraise(int s);
