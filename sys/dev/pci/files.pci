@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.294 2007/07/11 07:53:29 kiyohara Exp $
+#	$NetBSD: files.pci,v 1.295 2007/07/28 10:51:57 kiyohara Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -902,3 +902,8 @@ attach	nfsmbc at pci
 device	nfsmb: i2cbus
 attach	nfsmb at nfsmbc
 file	dev/pci/nfsmb.c			nfsmbc | nfsmb
+
+# Intel ICH SMBus controller
+device	ichsmb: i2cbus
+attach	ichsmb at pci
+file	dev/pci/ichsmb.c		ichsmb
