@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.65 2007/07/09 21:10:52 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.66 2007/07/28 00:12:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -39,16 +39,16 @@
 /*
  * Overview
  *
- *	Lightweight processes (LWPs) are the basic unit (or thread) of
+ *	Lightweight processes (LWPs) are the basic unit or thread of
  *	execution within the kernel.  The core state of an LWP is described
- *	by "struct lwp".
+ *	by "struct lwp", also known as lwp_t.
  *
  *	Each LWP is contained within a process (described by "struct proc"),
  *	Every process contains at least one LWP, but may contain more.  The
  *	process describes attributes shared among all of its LWPs such as a
  *	private address space, global execution state (stopped, active,
  *	zombie, ...), signal disposition and so on.  On a multiprocessor
- *	machine, multiple LWPs be executing in kernel simultaneously.
+ *	machine, multiple LWPs be executing concurrently in the kernel.
  *
  * Execution states
  *
@@ -72,9 +72,9 @@
  * 
  * 	LSIDL
  * 
- * 		Idle: the LWP has been created but has not yet executed. 
- * 		Whoever created the new LWP can be expected to set it to
- * 		another state shortly.
+ * 		Idle: the LWP has been created but has not yet executed,
+ *		or it has ceased executing a unit of work and is waiting
+ *		to be started again.
  * 
  * 	LSSUSPENDED:
  * 
@@ -85,41 +85,45 @@
  *
  *	The second set represent a "statement of intent" on behalf of the
  *	LWP.  The LWP may in fact be executing on a processor, may be
- *	sleeping, idle, or on a run queue. It is expected to take the
- *	necessary action to stop executing or become "running" again within
- *	a short timeframe.
+ *	sleeping or idle. It is expected to take the necessary action to
+ *	stop executing or become "running" again within	a short timeframe.
+ *	The LW_RUNNING flag in lwp::l_flag indicates that an LWP is running.
+ *	Importantly, in indicates that its state is tied to a CPU.
  * 
  * 	LSZOMB:
  * 
- * 		Dead: the LWP has released most of its resources and is
- * 		about to switch away into oblivion.  When it switches away,
- * 		its few remaining resources will be collected.
+ * 		Dead or dying: the LWP has released most of its resources
+ *		and is a) about to switch away into oblivion b) has already
+ *		switched away.  When it switches away, its few remaining
+ *		resources can be collected.
  * 
  * 	LSSLEEP:
  * 
  * 		Sleeping: the LWP has entered itself onto a sleep queue, and
- * 		will switch away shortly to allow other LWPs to run on the
- * 		CPU.
+ * 		has switched away or will switch away shortly to allow other
+ *		LWPs to run on the CPU.
  * 
  * 	LSSTOP:
  * 
  * 		Stopped: the LWP has been stopped as a result of a job
  * 		control signal, or as a result of the ptrace() interface. 
+ *
  * 		Stopped LWPs may run briefly within the kernel to handle
  * 		signals that they receive, but will not return to user space
  * 		until their process' state is changed away from stopped. 
+ *
  * 		Single LWPs within a process can not be set stopped
  * 		selectively: all actions that can stop or continue LWPs
  * 		occur at the process level.
  * 
  * State transitions
  *
- *	Note that the LSSTOP and LSSUSPENDED states may only be set
- *	when returning to user space in userret(), or when sleeping
- *	interruptably.  Before setting those states, we try to ensure
- *	that the LWPs will release all kernel locks that they hold,
- *	and at a minimum try to ensure that the LWP can be set runnable
- *	again by a signal.
+ *	Note that the LSSTOP state may only be set when returning to
+ *	user space in userret(), or when sleeping interruptably.  The
+ *	LSSUSPENDED state may only be set in userret().  Before setting
+ *	those states, we try to ensure that the LWPs will release all
+ *	locks that they hold, and at a minimum try to ensure that the
+ *	LWP can be set runnable again by a signal.
  *
  *	LWPs may transition states in the following ways:
  *
@@ -137,23 +141,20 @@
  *		    > STOPPED                       > STOPPED
  *		    > SUSPENDED
  *
+ *	Other state transitions are possible with kernel threads (eg
+ *	ONPROC -> IDL), but only happen under tightly controlled
+ *	circumstances the side effects are understood.
+ *
  * Locking
  *
  *	The majority of fields in 'struct lwp' are covered by a single,
- *	general spin mutex pointed to by lwp::l_mutex.  The locks covering
+ *	general spin lock pointed to by lwp::l_mutex.  The locks covering
  *	each field are documented in sys/lwp.h.
  *
- *	State transitions must be made with the LWP's general lock held.  In
- *	a multiprocessor kernel, state transitions may cause the LWP's lock
- *	pointer to change.  On uniprocessor kernels, most scheduler and
- *	synchronisation objects such as sleep queues and LWPs are protected
- *	by only one mutex (spc_mutex on single CPU).  In this case, LWPs' lock
- *	pointers will never change and will always reference spc_mutex.
- *	Please note that in a multiprocessor kernel each CPU has own spc_mutex.
- *	(spc_mutex here refers to l->l_cpu->ci_schedstate.spc_mutex).
- *
- *	Manipulation of the general lock is not performed directly, but
- *	through calls to lwp_lock(), lwp_relock() and similar.
+ *	State transitions must be made with the LWP's general lock held,
+ * 	and may cause the LWP's lock pointer to change. Manipulation of
+ *	the general lock is not performed directly, but through calls to
+ *	lwp_lock(), lwp_relock() and similar.
  *
  *	States and their associated locks:
  *
@@ -169,15 +170,15 @@
  *
  *	LSSLEEP:
  *
- *		Covered by a mutex associated with the sleep queue that the
+ *		Covered by a lock associated with the sleep queue that the
  *		LWP resides on, indirectly referenced by l_sleepq->sq_mutex.
  *
  *	LSSTOP, LSSUSPENDED:
  *	
  *		If the LWP was previously sleeping (l_wchan != NULL), then
- *		l_mutex references the sleep queue mutex.  If the LWP was
+ *		l_mutex references the sleep queue lock.  If the LWP was
  *		runnable or on the CPU when halted, or has been removed from
- *		the sleep queue since halted, then the mutex is spc_lwplock.
+ *		the sleep queue since halted, then the lock is spc_lwplock.
  *
  *	The lock order is as follows:
  *
@@ -186,7 +187,7 @@
  *			tschain_t::tc_mutex ->
  *			    spc::spc_mutex
  *
- *	Each process has an scheduler state mutex (proc::p_smutex), and a
+ *	Each process has an scheduler state lock (proc::p_smutex), and a
  *	number of counters on LWPs and their states: p_nzlwps, p_nrlwps, and
  *	so on.  When an LWP is to be entered into or removed from one of the
  *	following states, p_mutex must be held and the process wide counters
@@ -204,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.65 2007/07/09 21:10:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.66 2007/07/28 00:12:26 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
