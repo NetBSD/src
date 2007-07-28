@@ -1,4 +1,4 @@
-/*	$NetBSD: print-fddi.c,v 1.7 2007/07/24 11:53:43 drochner Exp $	*/
+/*	$NetBSD: print-fddi.c,v 1.8 2007/07/28 16:07:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-fddi.c,v 1.64.2.2 2005/11/13 12:12:59 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-fddi.c,v 1.7 2007/07/24 11:53:43 drochner Exp $");
+__RCSID("$NetBSD: print-fddi.c,v 1.8 2007/07/28 16:07:32 drochner Exp $");
 #endif
 #endif
 
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: print-fddi.c,v 1.7 2007/07/24 11:53:43 drochner Exp $");
 #include <tcpdump-stdinc.h>
 
 #include <pcap.h>
-#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -311,15 +310,8 @@ fddi_print(const u_char *p, u_int length, u_int caplen)
 u_int
 fddi_if_print(const struct pcap_pkthdr *h, register const u_char *p)
 {
-	u_int caplen = h->caplen;
-	u_int length = h->len;
 
-#ifdef __NetBSD__
-	p += offsetof(struct fddi_header, fddi_fc);
-	caplen -= offsetof(struct fddi_header, fddi_fc);
-#endif
-
-	fddi_print(p, length, caplen);
+	fddi_print(p, h->len, h->caplen);
 
 	return (FDDI_HDRLEN);
 }
