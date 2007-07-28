@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.99 2007/02/17 22:49:57 pavel Exp $	*/
+/*	$NetBSD: print.c,v 1.100 2007/07/28 17:05:50 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.99 2007/02/17 22:49:57 pavel Exp $");
+__RCSID("$NetBSD: print.c,v 1.100 2007/07/28 17:05:50 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1019,28 +1019,25 @@ cputime(void *arg, VARENT *ve, int mode)
 
 	k = arg;
 	v = ve->var;
-	if (P_ZOMBIE(k) || k->p_uvalid == 0) {
-		secs = 0;
-		psecs = 0;
-	} else {
-		/*
-		 * This counts time spent handling interrupts.  We could
-		 * fix this, but it is not 100% trivial (and interrupt
-		 * time fractions only work on the sparc anyway).	XXX
-		 */
-		secs = k->p_rtime_sec;
-		psecs = k->p_rtime_usec;
-		if (sumrusage) {
-			secs += k->p_uctime_sec;
-			psecs += k->p_uctime_usec;
-		}
-		/*
-		 * round and scale to 100's
-		 */
-		psecs = (psecs + 5000) / 10000;
-		secs += psecs / 100;
-		psecs = psecs % 100;
+
+	/*
+	 * This counts time spent handling interrupts.  We could
+	 * fix this, but it is not 100% trivial (and interrupt
+	 * time fractions only work on the sparc anyway).	XXX
+	 */
+	secs = k->p_rtime_sec;
+	psecs = k->p_rtime_usec;
+	if (sumrusage) {
+		secs += k->p_uctime_sec;
+		psecs += k->p_uctime_usec;
 	}
+	/*
+	 * round and scale to 100's
+	 */
+	psecs = (psecs + 5000) / 10000;
+	secs += psecs / 100;
+	psecs = psecs % 100;
+
 	if (mode == WIDTHMODE) {
 		/*
 		 * Ugg, this is the only field where a value of 0 is longer
@@ -1080,7 +1077,7 @@ getpcpu(k)
 
 	/* XXX - I don't like this */
 	if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
-	    k->p_stat == SZOMB)
+	    k->p_realstat == SZOMB)
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(k->p_pctcpu));
