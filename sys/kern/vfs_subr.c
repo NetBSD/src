@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.11 2007/07/15 13:27:47 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.12 2007/07/29 11:37:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.11 2007/07/15 13:27:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.12 2007/07/29 11:37:10 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -218,6 +218,7 @@ vfs_drainvnodes(long target, struct lwp *l)
 			return EBUSY; /* give up */
 		mutex_destroy(&vp->v_interlock);
 		cv_destroy(&vp->v_cv);
+		lockdestroy(&vp->v_lock);
 		pool_put(&vnode_pool, vp);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
@@ -380,6 +381,19 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	mount_initspecific(mp);
 	*mpp = mp;
 	return (0);
+}
+
+/*
+ * Free a mount structure.
+ */
+void
+vfs_destroy(struct mount *mp)
+{
+
+	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
+	mutex_destroy(&mp->mnt_mutex);
+	lockdestroy(&mp->mnt_lock);
+	free(mp, M_MOUNT);
 }
 
 /*
@@ -595,7 +609,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	insmntque(vp, mp);
 	*vpp = vp;
 	vp->v_data = 0;
-	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&vp->v_cv, "vnode");
 
 	/*
@@ -1799,6 +1812,7 @@ vgonel(struct vnode *vp, struct lwp *l)
 		if (dofree) {
 			mutex_destroy(&vp->v_interlock);
 			cv_destroy(&vp->v_cv);
+			lockdestroy(&vp->v_lock);
 			pool_put(&vnode_pool, vp);
 		}
 	}
@@ -2661,17 +2675,6 @@ mount_initspecific(struct mount *mp)
 	error = specificdata_init(mount_specificdata_domain,
 				  &mp->mnt_specdataref);
 	KASSERT(error == 0);
-}
-
-/*
- * mount_finispecific --
- *	Finalize a mount's specificdata container.
- */
-void
-mount_finispecific(struct mount *mp)
-{
-
-	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
 }
 
 /*

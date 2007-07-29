@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.78.2.2 2007/07/15 13:28:19 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.78.2.3 2007/07/29 11:37:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.78.2.2 2007/07/15 13:28:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.78.2.3 2007/07/29 11:37:12 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -197,7 +197,7 @@ mfs_mountroot(void)
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		bufq_free(mfsp->mfs_buflist);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		free(mfsp, M_MFSNODE);
 		return (error);
 	}

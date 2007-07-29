@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.4 2007/07/15 13:27:31 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.5 2007/07/29 11:37:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.4 2007/07/15 13:27:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.5 2007/07/29 11:37:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ ntfs_mountroot()
 	if ((error = ntfs_mountfs(rootvp, mp, &args, l)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 
