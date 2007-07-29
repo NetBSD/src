@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.108.2.3 2007/06/08 14:17:20 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.108.2.4 2007/07/29 11:34:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.108.2.3 2007/06/08 14:17:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.108.2.4 2007/07/29 11:34:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.108.2.3 2007/06/08 14:17:20 ad Exp
 #include <sys/systm.h>
 #include <sys/debug.h>
 #include <sys/mutex.h>
+#include <sys/lockdebug.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -538,7 +539,6 @@ free(void *addr, struct malloc_type *ksp)
 #endif
 
 	FREECHECK_IN(&malloc_freecheck, addr);
-
 #ifdef MALLOC_DEBUG
 	if (debug_free(addr, ksp))
 		return;
@@ -558,6 +558,9 @@ free(void *addr, struct malloc_type *ksp)
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &kmembuckets[kup->ku_indx];
+
+	LOCKDEBUG_MEM_CHECK(addr, size);
+
 	mutex_enter(&malloc_lock);
 #ifdef MALLOCLOG
 	domlog(addr, 0, ksp, 2, file, line);
