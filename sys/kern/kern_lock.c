@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.116 2007/06/18 21:37:32 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.117 2007/07/29 11:45:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.116 2007/06/18 21:37:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.117 2007/07/29 11:45:21 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -400,7 +400,6 @@ lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 	    "*10*", "*11*", "*12*", "*13*", "*14*", "*15*"
 	};
 #endif
-
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(s, sizeof(s), fmt, ap);
@@ -521,6 +520,9 @@ spinlock_switchcheck(void)
 {
 	u_long cnt;
 	int s;
+
+	if (panicstr != NULL)
+		return;
 
 	s = splhigh();
 #if defined(MULTIPROCESSOR)
@@ -1433,7 +1435,7 @@ _simple_lock_assert_locked(volatile struct simplelock *alp,
 		slock_assert_will_panic = 1;
 		lock_printf("%s lock not held\n", lockname);
 		SLOCK_WHERE("lock not held", alp, id, l);
-		if (slock_assert_will_panic)
+		if (slock_assert_will_panic && panicstr == NULL)
 			panic("%s: not locked", lockname);
 	}
 }
@@ -1446,7 +1448,7 @@ _simple_lock_assert_unlocked(volatile struct simplelock *alp,
 		slock_assert_will_panic = 1;
 		lock_printf("%s lock held\n", lockname);
 		SLOCK_WHERE("lock held", alp, id, l);
-		if (slock_assert_will_panic)
+		if (slock_assert_will_panic && panicstr == NULL)
 			panic("%s: locked", lockname);
 	}
 }
@@ -1455,6 +1457,8 @@ void
 assert_sleepable(struct simplelock *interlock, const char *msg)
 {
 
+	if (panicstr != NULL)
+		return;
 	if (CURCPU_IDLE_P()) {
 		panic("assert_sleepable: idle");
 	}
