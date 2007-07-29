@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2007/05/10 23:22:32 dogcow Exp $
+#	$NetBSD: Makefile,v 1.12 2007/07/29 13:59:39 jmmv Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,13 +14,14 @@ CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
-MAKEDEVTARGETS=	ramdisk
+MAKEDEVTARGETS=	ramdisk bpf
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
 		${DESTDIR}/usr/share/misc/termcap \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
-		${NETBSDSRCDIR}/distrib/common/services
+		${NETBSDSRCDIR}/distrib/common/services \
+		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
