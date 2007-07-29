@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.39 2007/03/04 19:21:56 christos Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.40 2007/07/29 12:15:42 ad Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.39 2007/03/04 19:21:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.40 2007/07/29 12:15:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,6 @@ hdcintr(void *arg)
 		hdc_readregs(sc);
 		for (i = 0; i < 10; i++)
 			printf("%i: %x\n", i, g[i]);
-		bp->b_flags |= B_ERROR;
 		bp->b_error = ENXIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -442,7 +441,6 @@ rdstrategy(struct buf *bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > rd_cd.cd_ndevs || (rd = rd_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	sc = (void *)device_parent(&rd->sc_dev);

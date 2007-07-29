@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.71 2007/07/09 21:01:26 ad Exp $	*/
+/*	$NetBSD: xy.c,v 1.72 2007/07/29 12:15:44 ad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.71 2007/07/09 21:01:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.72 2007/07/29 12:15:44 ad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -1176,7 +1176,7 @@ xystrategy(bp)
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	/* do we need to attach the drive? */
 
@@ -1187,13 +1187,13 @@ xystrategy(bp)
 		xyattach((struct device *)xy->parent, (struct device *)xy, &xa);
 		if (xy->state == XY_DRIVE_UNKNOWN) {
 			bp->b_error = EIO;
-			goto bad;
+			goto done;
 		}
 	}
 	if (xy->state != XY_DRIVE_ONLINE && DISKPART(bp->b_dev) != RAW_PART) {
 		/* no I/O to unlabeled disks, unless raw partition */
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	/* short circuit zero length request */
 
@@ -1238,8 +1238,6 @@ xystrategy(bp)
 	splx(s);
 	return;
 
-bad:				/* tells upper layers we have an error */
-	bp->b_flags |= B_ERROR;
 done:				/* tells upper layers we are done with this
 				 * buf */
 	bp->b_resid = bp->b_bcount;
@@ -1835,7 +1833,6 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 			switch (XY_STATE(iorq->mode)) {
 			case XY_SUB_NORM:
 			    iorq->buf->b_error = EIO;
-			    iorq->buf->b_flags |= B_ERROR;
 			    iorq->buf->b_resid = iorq->sectcnt * XYFM_BPS;
 
 			    bus_dmamap_sync(xycsc->dmatag, iorq->dmamap, 0,
@@ -2017,7 +2014,6 @@ xyc_remove_iorq(xycsc)
 			bp = iorq->buf;
 			if (errs) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = iorq->sectcnt * XYFM_BPS;
 			} else {
 				bp->b_resid = 0;	/* done */

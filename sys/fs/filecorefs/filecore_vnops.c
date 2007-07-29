@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.19 2007/03/04 21:36:38 jnemeth Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.20 2007/07/29 12:15:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.19 2007/03/04 21:36:38 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.20 2007/07/29 12:15:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,6 @@ filecore_strategy(v)
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return (error);
 		}

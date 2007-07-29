@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.32 2007/03/04 06:00:57 christos Exp $ */
+/*	$NetBSD: ts.c,v 1.33 2007/07/29 12:15:40 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.32 2007/03/04 06:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.33 2007/07/29 12:15:40 ad Exp $");
 
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
@@ -416,7 +416,7 @@ tscommand (dev, cmd, count)
 	biowait (bp);
 	if (bp->b_flags & B_WANTED)
 		wakeup ((void *)bp);
-	bp->b_flags &= B_ERROR;
+	bp->b_error = 0;
 }
 
 /*
@@ -444,7 +444,7 @@ tsstart (sc, bp)
 
 		/* bertram: ubarelse ??? */
 		ts_wtab[ctlr] = NULL;
-		dp->b_flags |= B_ERROR;
+		dp->b_error = EIO;
 		biodone (dp);
 
 		if (tsreg->tssr & TS_SC) {	/* Special Condition; Error */
@@ -1083,7 +1083,7 @@ tsintr(ctlr)
 			    (int *)&bp->b_ubinfo);
 
 		if ((sr & TS_TC) != TS_TC_NORM)
-			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
 
 		debug (("resid:%d, count:%d, rbpcr:%d\n",
 			bp->b_resid, bp->b_bcount, tsmsgp->rbpcr));
@@ -1285,14 +1285,13 @@ tsioctl (dev, cmd, data, flag, p)
 				debug (("spaceop didn't complete\n"));
 				return (EIO);
 			}
-			if (bp->b_flags & B_ERROR) {
+			if (bp->b_error != 0) {
 				debug (("error in ioctl %d\n", mtop->mt_op));
 				break;
 			}
 		} while (--callcount > 0);
-		if (bp->b_flags & B_ERROR) 
-			if ((error = bp->b_error) == 0)
-				return (EIO);
+		if (bp->b_error) 
+			return (bp->b_error);
 		return (error);		
 
 	case MTIOCGET:			/* get tape status */

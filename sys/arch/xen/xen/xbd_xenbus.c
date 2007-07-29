@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.19 2007/07/22 20:39:22 he Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.20 2007/07/29 12:15:42 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.19 2007/07/22 20:39:22 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.20 2007/07/29 12:15:42 ad Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -503,13 +503,11 @@ again:
 		    rep->operation != BLKIF_OP_WRITE) {
 			printf("%s: bad operation %d from backend\n",
 			     sc->sc_dev.dv_xname, rep->operation);
-				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				goto next;
 		}
 		if (rep->status != BLKIF_RSP_OKAY) {
-				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				goto next;
@@ -569,14 +567,12 @@ xbdstrategy(struct buf *bp)
 	    (long)bp->b_bcount));
 
 	if (sc == NULL || sc->sc_shutdown) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		biodone(bp);
 		return;
 	}
 	if (__predict_false((sc->sc_info & VDISK_READONLY) &&
 	    (bp->b_flags & B_READ) == 0)) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EROFS;
 		biodone(bp);
 		return;
@@ -781,7 +777,6 @@ out:
 	return ret;
 
 err:
-	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 	return 0;

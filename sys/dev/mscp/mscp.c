@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.25 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: mscp.c,v 1.26 2007/07/29 12:15:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.25 2007/03/04 06:02:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.26 2007/07/29 12:15:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -369,10 +369,7 @@ rwend:
 		 * WHAT STATUS WILL THESE HAVE?	 IT SURE WOULD BE NICE
 		 * IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
 		 */
-		if (error) {
-			bp->b_flags |= B_ERROR;
-			bp->b_error = error;
-		}
+		bp->b_error = error;
 		if (st == M_ST_OFFLINE || st == M_ST_AVAILABLE) {
 #ifdef notyet
 			(*md->md_offline)(ui, mp);

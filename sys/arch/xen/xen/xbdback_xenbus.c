@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.5 2007/07/09 20:52:40 ad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.6 2007/07/29 12:15:43 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -1069,7 +1069,6 @@ xbdback_co_flush_done(struct xbdback_instance *xbdi, void *obj)
 static void
 xbdback_io_error(struct xbdback_io *xbd_io, int error)
 {
-	xbd_io->xio_buf.b_flags |= B_ERROR;
 	xbd_io->xio_buf.b_error = error;
 	xbdback_iodone(&xbd_io->xio_buf);
 }
@@ -1120,7 +1119,7 @@ xbdback_iodone(struct buf *bp)
 	if (xbd_io->xio_mapped)
 		xbdback_unmap_shm(xbd_io);
 
-	if (bp->b_flags & B_ERROR) {
+	if (bp->b_error != 0) {
 		printf("xbd IO domain %d: error %d\n",
 		       xbdi->xbdi_domid, bp->b_error);
 		errp = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.30 2007/03/04 06:02:14 christos Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.31 2007/07/29 12:15:43 ad Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.30 2007/03/04 06:02:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.31 2007/07/29 12:15:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -277,16 +277,13 @@ mtstrategy(bp)
 	unit = mtunit(bp->b_dev);
 	if (unit > mt_cd.cd_ndevs || (mt = mt_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		goto bad;
+		biodone(bp);
+		return;
 	}
 
 	mt->mt_waswrite = bp->b_flags & B_READ ? 0 : 1;
 	mscp_strategy(bp, device_parent(&mt->mt_dev));
 	return;
-
-bad:
-	bp->b_flags |= B_ERROR;
-	biodone(bp);
 }
 
 int
@@ -424,7 +421,6 @@ mtioerror(usc, mp, bp)
 			    mt_ioerrs[st-1]);
 		else
 			printf("%s: error %d\n", mt->mt_dev.dv_xname, st);
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EROFS;
 	}
 

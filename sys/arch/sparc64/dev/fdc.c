@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.13 2007/07/09 20:52:31 ad Exp $	*/
+/*	$NetBSD: fdc.c,v 1.14 2007/07/29 12:15:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.13 2007/07/09 20:52:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.14 2007/07/29 12:15:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1009,7 +1009,7 @@ fdstrategy(struct buf *bp)
 	      (bp->b_blkno * DEV_BSIZE) % FD_BSIZE(fd) != 0) &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -1029,7 +1029,7 @@ fdstrategy(struct buf *bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -1064,8 +1064,6 @@ fdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	biodone(bp);
@@ -2087,7 +2085,6 @@ fdcretry(struct fdc_softc *fdc)
 		}
 
 	failsilent:
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 		fdfinish(fd, bp);
 	}

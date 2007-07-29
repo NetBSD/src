@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.23 2007/03/04 15:41:02 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.24 2007/07/29 12:15:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.23 2007/03/04 15:41:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.24 2007/07/29 12:15:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -390,7 +390,7 @@ adosfs_strategy(v)
 #endif
 	bp = sp->a_bp;
 	if (bp->b_vp == NULL) {
-		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
 		biodone(bp);
 		error = EIO;
 		goto reterr;
@@ -400,7 +400,7 @@ adosfs_strategy(v)
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
-			bp->b_flags |= B_ERROR;
+			bp->b_flags = error;
 			biodone(bp);
 			goto reterr;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.56 2007/07/09 20:52:33 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.57 2007/07/29 12:15:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2007/07/09 20:52:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.57 2007/07/29 12:15:39 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -628,7 +628,7 @@ fdstrategy(struct buf *bp			/* IO operation to perform */)
 	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -647,7 +647,7 @@ fdstrategy(struct buf *bp			/* IO operation to perform */)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -680,8 +680,6 @@ fdstrategy(struct buf *bp			/* IO operation to perform */)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	biodone(bp);
@@ -1522,7 +1520,6 @@ fdcretry(struct fdc_softc *fdc)
 				fdc->sc_status[5]);
 		}
 
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}
@@ -1812,10 +1809,8 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 		/* timed out */
 		rv = EIO;
 		biodone(bp);
-	}
-	if (bp->b_flags & B_ERROR) {
+	} else if (bp->b_error != 0)
 		rv = bp->b_error;
-	}
 	free(bp, M_TEMP);
 	return (rv);
 }

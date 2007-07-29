@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.13 2007/03/04 06:00:57 christos Exp $	*/
+/*	$NetBSD: cfl.c,v 1.14 2007/07/29 12:15:41 ad Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.13 2007/03/04 06:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.14 2007/07/29 12:15:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,8 @@ cflrw(dev, uio, flag)
 		while ((bp->b_flags & B_DONE) == 0)
 			(void) tsleep(bp, PRIBIO, "cflrw", 0);
 		splx(s);
-		if (bp->b_flags & B_ERROR) {
-			error = EIO;
+		if (bp->b_error != 0) {
+			error = bp->b_error;
 			break;
 		}
 		if (uio->uio_rw == UIO_READ) {

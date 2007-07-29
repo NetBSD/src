@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.16 2007/07/09 21:00:32 ad Exp $ */
+/*	$NetBSD: rd.c,v 1.17 2007/07/29 12:15:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.16 2007/07/09 21:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.17 2007/07/29 12:15:43 ad Exp $");
 
 #include "rnd.h"
 
@@ -644,7 +644,7 @@ rdstrategy(bp)
 			}
 			if (sz < 0) {
 				bp->b_error = EINVAL;
-				goto bad;
+				goto done;
 			}
 			bp->b_bcount = dbtob(sz);
 		}
@@ -657,7 +657,7 @@ rdstrategy(bp)
 #endif
 		    !(bp->b_flags & B_READ) && !(sc->sc_flags & RDF_WLABEL)) {
 			bp->b_error = EROFS;
-			goto bad;
+			goto done;
 		}
 	}
 	bp->b_rawblkno = bn + offset;
@@ -669,8 +669,6 @@ rdstrategy(bp)
 	}
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	biodone(bp);
 }
@@ -808,7 +806,6 @@ again:
 	printf("%s: rdstart err: cmd 0x%x sect %uld blk %" PRId64 " len %d\n",
 	       sc->sc_dev.dv_xname, sc->sc_ioc.c_cmd, sc->sc_ioc.c_addr,
 	       bp->b_blkno, sc->sc_resid);
-	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
 	bp = rdfinish(sc, bp);
 	if (bp) {
@@ -866,7 +863,6 @@ rdintr(sc)
 				rdstart(sc);
 			return;
 		}
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 	}
 	if (rdfinish(sc, bp) != NULL)

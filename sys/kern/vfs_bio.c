@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.173 2007/07/09 21:10:57 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.174 2007/07/29 12:15:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.173 2007/07/09 21:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.174 2007/07/29 12:15:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -730,7 +730,8 @@ bwrite(struct buf *bp)
 
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 
-	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
+	CLR(bp->b_flags, (B_READ | B_DONE | B_DELWRI));
+	bp->b_error = 0;
 
 	/*
 	 * Pay for the I/O operation and make sure the buf is on the correct
@@ -898,11 +899,11 @@ brelse(struct buf *bp)
 	 */
 
 	/* If it's locked, don't report an error; try again later. */
-	if (ISSET(bp->b_flags, (B_LOCKED|B_ERROR)) == (B_LOCKED|B_ERROR))
-		CLR(bp->b_flags, B_ERROR);
+	if (ISSET(bp->b_flags, B_LOCKED) && bp->b_error != 0)
+		bp->b_error = 0;
 
 	/* If it's not cacheable, or an error, mark it invalid. */
-	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
+	if (ISSET(bp->b_flags, B_NOCACHE) || bp->b_error != 0)
 		SET(bp->b_flags, B_INVAL);
 
 	if (ISSET(bp->b_flags, B_VFLUSH)) {
@@ -913,7 +914,8 @@ brelse(struct buf *bp)
 		 * otherwise leave it in its current position.
 		 */
 		CLR(bp->b_flags, B_VFLUSH);
-		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE)) {
+		if (!ISSET(bp->b_flags, B_INVAL|B_LOCKED|B_AGE) &&
+		    bp->b_error == 0) {
 			KDASSERT(!debug_verify_freelist || checkfreelist(bp, &bufqueues[BQ_LRU]));
 			goto already_queued;
 		} else {
@@ -1349,10 +1351,9 @@ biowait(struct buf *bp)
 		ltsleep(bp, PRIBIO + 1, "biowait", 0, &bp->b_interlock);
 
 	/* check errors. */
-	if (ISSET(bp->b_flags, B_ERROR))
-		error = bp->b_error ? bp->b_error : EIO;
-	else
-		error = 0;
+	if (ISSET(bp->b_flags, B_ERROR) && bp->b_error == 0)
+		bp->b_error = EIO;
+	error = bp->b_error;
 
 	simple_unlock(&bp->b_interlock);
 	splx(s);
@@ -1786,11 +1787,8 @@ nestiobuf_iodone(struct buf *bp)
 	KASSERT(mbp != bp);
 
 	error = 0;
-	if ((bp->b_flags & B_ERROR) != 0) {
-		error = EIO;
-		/* check if an error code was returned */
-		if (bp->b_error)
-			error = bp->b_error;
+	if (bp->b_error != 0) {
+		error = bp->b_error;
 	} else if ((bp->b_bcount < bp->b_bufsize) || (bp->b_resid > 0)) {
 		/*
 		 * Not all got transfered, raise an error. We have no way to
@@ -1856,12 +1854,11 @@ nestiobuf_done(struct buf *mbp, int donebytes, int error)
 	s = splbio();
 	KASSERT(mbp->b_resid >= donebytes);
 	if (error) {
-		mbp->b_flags |= B_ERROR;
 		mbp->b_error = error;
 	}
 	mbp->b_resid -= donebytes;
 	if (mbp->b_resid == 0) {
-		if ((mbp->b_flags & B_ERROR) != 0) {
+		if (mbp->b_error != 0) {
 			mbp->b_resid = mbp->b_bcount; /* be conservative */
 		}
 		biodone(mbp);

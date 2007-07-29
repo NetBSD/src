@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.10 2007/07/09 21:00:32 ad Exp $ */
+/*	$NetBSD: mt.c,v 1.11 2007/07/29 12:15:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.10 2007/07/09 21:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.11 2007/07/29 12:15:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,7 @@ mtcommand(dev, cmd, cnt)
 		bp->b_flags = B_BUSY | B_CMD;
 		mtstrategy(bp);
 		biowait(bp);
-		if (bp->b_flags & B_ERROR) {
+		if (bp->b_error != 0) {
 			error = (int) (unsigned) bp->b_error;
 			break;
 		}
@@ -581,7 +581,6 @@ mtstrategy(bp)
 #if 0 /* XXX see above */
 	    error:
 #endif
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			biodone(bp);
 			return;
@@ -693,7 +692,7 @@ mtstart(sc)
 		    case 2:
 			if (bp->b_cmd != MTNOP || !(bp->b_flags & B_CMD)) {
 				bp->b_error = EBUSY;
-				goto errdone;
+				goto done;
 			}
 			goto done;
 
@@ -708,7 +707,7 @@ mtstart(sc)
 			    case MTWEOF:
 			    case MTFSR:
 				bp->b_error = ENOSPC;
-				goto errdone;
+				goto done;
 
 			    case MTBSF:
 			    case MTOFFL:
@@ -812,7 +811,7 @@ mtstart(sc)
 	} else {
 		if (sc->sc_flags & MTF_PASTEOT) {
 			bp->b_error = ENOSPC;
-			goto errdone;
+			goto done;
 		}
 		if (bp->b_flags & B_READ) {
 			sc->sc_flags |= MTF_IO;
@@ -839,8 +838,6 @@ fatalerror:
 	 */
 	sc->sc_flags &= MTF_EXISTS | MTF_OPEN | MTF_REW;
 	bp->b_error = EIO;
-errdone:
-	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	(void)BUFQ_GET(sc->sc_tab);
@@ -958,7 +955,6 @@ mtintr(sc)
 		if (sc->sc_flags & MTF_ATEOT)
 			sc->sc_flags |= MTF_PASTEOT;
 		else {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = ENOSPC;
 			sc->sc_flags |= MTF_ATEOT;
 		}
@@ -1000,7 +996,6 @@ mtintr(sc)
 error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
 		}
 	}
 	/*

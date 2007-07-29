@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 2007/03/04 10:21:25 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 2007/07/29 12:15:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2007/03/04 10:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2007/07/29 12:15:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ readdisklabel(dev, strat, lp, osdep)
 				} else
 					msg = "bad sector table corrupted";
 			}
-		} while ((bp->b_flags & B_ERROR) && (i += 2) < 10 &&
+		} while (bp->b_error != 0 && (i += 2) < 10 &&
 			i < lp->d_nsectors);
 	}
 
