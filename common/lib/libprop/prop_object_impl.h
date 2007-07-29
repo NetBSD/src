@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.14 2007/07/17 20:36:38 joerg Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.15 2007/07/29 11:25:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -206,6 +206,7 @@ struct _prop_object_iterator {
 #include <sys/pool.h>
 #include <sys/systm.h>
 #include <sys/lock.h>
+#include <sys/rwlock.h>
 
 #define	_PROP_ASSERT(x)		KASSERT(x)
 
@@ -228,12 +229,12 @@ struct _prop_object_iterator {
 #define	_PROP_MUTEX_LOCK(x)	simple_lock(&(x))
 #define	_PROP_MUTEX_UNLOCK(x)	simple_unlock(&(x))
 
-#define	_PROP_RWLOCK_DECL(x)	struct lock x ;
-#define	_PROP_RWLOCK_INIT(x)	lockinit(&(x), PZERO, "proprwlk", 0, 0)
-#define	_PROP_RWLOCK_RDLOCK(x)	lockmgr(&(x), LK_SHARED, NULL)
-#define	_PROP_RWLOCK_WRLOCK(x)	lockmgr(&(x), LK_EXCLUSIVE, NULL)
-#define	_PROP_RWLOCK_UNLOCK(x)	lockmgr(&(x), LK_RELEASE, NULL)
-#define	_PROP_RWLOCK_DESTROY(x)	lockmgr(&(x), LK_DRAIN, NULL)
+#define	_PROP_RWLOCK_DECL(x)	krwlock_t x ;
+#define	_PROP_RWLOCK_INIT(x)	rw_init(&(x))
+#define	_PROP_RWLOCK_RDLOCK(x)	rw_enter(&(x), RW_READER)
+#define	_PROP_RWLOCK_WRLOCK(x)	rw_enter(&(x), RW_WRITER)
+#define	_PROP_RWLOCK_UNLOCK(x)	rw_exit(&(x))
+#define	_PROP_RWLOCK_DESTROY(x)	rw_destroy(&(x))
 
 #elif defined(_STANDALONE)
 
