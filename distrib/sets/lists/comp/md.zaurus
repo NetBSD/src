@@ -1,7 +1,8 @@
-# $NetBSD: md.zaurus,v 1.2 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.zaurus,v 1.3 2007/07/29 14:32:18 nonaka Exp $
 ./usr/include/zaurus				comp-c-include
 ./usr/include/zaurus/ansi.h			comp-c-include
 ./usr/include/zaurus/aout_machdep.h		comp-c-include
+./usr/include/zaurus/apmvar.h			comp-c-include
 ./usr/include/zaurus/asm.h			comp-c-include
 ./usr/include/zaurus/bswap.h			comp-c-include
 ./usr/include/zaurus/bus.h			comp-c-include
