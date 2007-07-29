@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.117 2007/07/29 11:45:21 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.118 2007/07/29 12:40:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.117 2007/07/29 11:45:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.118 2007/07/29 12:40:37 pooka Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -919,7 +919,9 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		    RETURN_ADDRESS);
 		if (error)
 			break;
-		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
+		lkp->lk_flags |= LK_HAVE_EXCL;
+		if ((extflags & LK_RESURRECT) == 0)
+			lkp->lk_flags |= LK_DRAINING;
 		SETHOLDER(lkp, pid, lid, cpu_num);
 #if defined(LOCKDEBUG)
 		lkp->lk_lock_file = file;

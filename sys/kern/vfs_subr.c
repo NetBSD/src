@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.294 2007/07/29 10:00:15 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.295 2007/07/29 12:40:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.294 2007/07/29 10:00:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.295 2007/07/29 12:40:37 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1527,10 +1527,14 @@ vclean(struct vnode *vp, int flags, struct lwp *l)
 	 * active vnodes, it ensures that no other activity can
 	 * occur while the underlying object is being cleaned out.
 	 *
-	 * We don't drain the lock because it might have been exported
-	 * to upper layers by this vnode and could still be in use.
+	 * We drain the lock to make sure we are the last one trying to
+	 * get it and immediately resurrect the lock.  Future accesses
+	 * for locking this _vnode_ will be protected by VXLOCK.  However,
+	 * upper layers might be using the _lock_ in case the file system
+	 * exported it and might access it while the vnode lingers in
+	 * deadfs.
 	 */
-	VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+	VOP_LOCK(vp, LK_DRAIN | LK_RESURRECT | LK_INTERLOCK);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
