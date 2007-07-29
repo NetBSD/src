@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.9 2007/06/08 14:18:21 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.10 2007/07/29 11:32:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.9 2007/06/08 14:18:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.10 2007/07/29 11:32:20 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -147,13 +147,18 @@ vaddr_t uvm_zerocheckkva;
 #endif /* DEBUG */
 
 /*
- * locks on the hash table.
+ * locks on the hash table.  allocated in 32 byte chunks to try
+ * and reduce cache traffic between CPUs.
  */
 
 #define	UVM_HASHLOCK_CNT	32
-#define	uvm_hashlock(hash)	(&uvm_hashlocks[(hash) & (UVM_HASHLOCK_CNT - 1)])
+#define	uvm_hashlock(hash)	\
+    (&uvm_hashlocks[(hash) & (UVM_HASHLOCK_CNT - 1)].lock)
 
-static kmutex_t uvm_hashlocks[UVM_HASHLOCK_CNT];
+static union {
+	kmutex_t	lock;
+	uint8_t		pad[32];
+} uvm_hashlocks[UVM_HASHLOCK_CNT] __aligned(32);
 
 /*
  * local prototypes
@@ -331,7 +336,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_init(&uvm_hashlocks[i], MUTEX_SPIN, IPL_VM);
+		mutex_init(&uvm_hashlocks[i].lock, MUTEX_SPIN, IPL_VM);
 
 	/*
 	 * allocate vm_page structures.
@@ -897,7 +902,7 @@ uvm_page_rehash(void)
 	 */
 
 	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_spin_enter(&uvm_hashlocks[i]);
+		mutex_spin_enter(&uvm_hashlocks[i].lock);
 
 	uvm.page_hash = newbuckets;
 	uvm.page_nhash = bucketcount;
@@ -914,7 +919,7 @@ uvm_page_rehash(void)
 	}
 
 	for (i = 0; i < UVM_HASHLOCK_CNT; i++)
-		mutex_spin_exit(&uvm_hashlocks[i]);
+		mutex_spin_exit(&uvm_hashlocks[i].lock);
 
 	/*
 	 * free old bucket array if is not the boot-time table
