@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.15 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.15.8.1 2007/07/29 10:08:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.15 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.15.8.1 2007/07/29 10:08:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,8 +156,9 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 	switch (sc->sc_type) {
 	case NPX_INTERRUPT:
 		lcr0(rcr0() & ~CR0_NE);
+		/* NPX interrupt must not be below (threaded) soft intrs. */ 
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-		    IST_EDGE, IPL_NONE, (int (*)(void *))npxintr, 0);
+		    IST_EDGE, IPL_SOFTSERIAL, (int (*)(void *))npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
 		/*FALLTHROUGH*/
