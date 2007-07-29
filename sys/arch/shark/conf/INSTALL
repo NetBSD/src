@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.30 2006/10/02 03:28:31 chs Exp $
+#	$NetBSD: INSTALL,v 1.31 2007/07/29 15:14:08 jmmv Exp $
 #
 #	Shark installation kernel
 #
@@ -175,7 +175,7 @@ ofisapc*	at ofbus?
 pc*		at ofisapc?
 
 # PS/2 Mouse
-opms0		at spckbd? irq 12
+#opms0		at spckbd? irq 12
 
 # CS8900 Ethernet@OFW
 cs*		at ofisa?
