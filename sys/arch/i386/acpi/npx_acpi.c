@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.16 2006/11/16 01:32:38 christos Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.16.8.1 2007/07/29 10:08:15 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.16 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.16.8.1 2007/07/29 10:08:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,9 +126,10 @@ npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 	switch (sc->sc_type) {
 	case NPX_INTERRUPT:
 		lcr0(rcr0() & ~CR0_NE);
+		/* NPX interrupt must not be below (threaded) soft intrs. */
 		sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
 		    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE:IST_LEVEL,
-		    IPL_NONE, (int (*)(void *))npxintr, NULL);
+		    IPL_SOFTSERIAL, (int (*)(void *))npxintr, NULL);
 		break;
 	case NPX_EXCEPTION:
 		/*FALLTHROUGH*/
