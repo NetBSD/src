@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.36 2007/07/27 09:46:27 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.37 2007/07/29 17:50:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.36 2007/07/27 09:46:27 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.37 2007/07/29 17:50:22 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -258,14 +258,14 @@ psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	PSSHFSRETURN(rv);
 }
 
-static int
+static void
 closehandles(struct puffs_cc *pcc, struct psshfs_node *psn)
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
 	struct puffs_framebuf *pb1, *pb2;
 	uint32_t reqid = NEXTREQ(pctx);
-	int rv;
+	int rv; /* macro magic */
 
 	if ((psn->stat & PSN_READMAP) == 0 && psn->fhand_r) {
 		pb1 = psbuf_makeout();
@@ -285,7 +285,7 @@ closehandles(struct puffs_cc *pcc, struct psshfs_node *psn)
 	}
 
  out:
-	return rv;
+	return;
 }
 
 int
