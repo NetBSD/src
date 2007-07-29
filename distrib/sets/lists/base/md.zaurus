@@ -1,4 +1,5 @@
-# $NetBSD: md.zaurus,v 1.1 2007/07/29 14:35:55 nonaka Exp $
+# $NetBSD: md.zaurus,v 1.2 2007/07/29 14:37:53 nonaka Exp $
 ./usr/sbin/apm					base-sysutil-bin
 ./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/tpctl				base-sysutil-bin
 ./usr/sbin/zzz					base-sysutil-bin
