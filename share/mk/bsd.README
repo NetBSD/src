@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.195 2007/06/06 06:18:39 rillig Exp $
+#	$NetBSD: bsd.README,v 1.196 2007/07/29 17:06:01 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -1014,6 +1014,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		The following libraries are predefined for DPADD:
 
 		LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
+		LIBARCHIVE?=	${DESTDIR}/usr/lib/libarchive.a
 		LIBASN1?=	${DESTDIR}/usr/lib/libasn1.a
 		LIBBLUETOOTH?=	${DESTDIR}/usr/lib/libbluetooth.a
 		LIBBSDMALLOC?=	${DESTDIR}/usr/lib/libbsdmalloc.a

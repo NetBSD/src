@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.220 2007/01/25 23:04:28 perry Exp $
+#	$NetBSD: bsd.prog.mk,v 1.221 2007/07/29 17:06:02 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -65,8 +65,8 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 #	etc..
 
 .for _lib in \
-	asn1 bluetooth bsdmalloc bz2 c c_pic cdk com_err compat crypt \
-	crypto crypto_idea crypto_mdc2 crypto_rc5 \
+	archive asn1 bluetooth bsdmalloc bz2 c c_pic cdk com_err compat \
+	crypt crypto crypto_idea crypto_mdc2 crypto_rc5 \
 	curses dbm des edit event \
 	form fl g2c gcc gnumalloc gssapi hdb intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l \
