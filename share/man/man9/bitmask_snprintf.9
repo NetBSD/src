@@ -1,4 +1,4 @@
-.\"     $NetBSD: bitmask_snprintf.9,v 1.8 2004/10/27 00:56:17 wiz Exp $
+.\"     $NetBSD: bitmask_snprintf.9,v 1.9 2007/07/29 09:40:54 pooka Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 26, 2004
+.Dd July 29, 2007
 .Dt BITMASK_SNPRINTF 9
 .Os
 .Sh NAME
@@ -225,7 +225,7 @@ will still return the buffer, containing a truncated string.
 .Sh SEE ALSO
 .Xr printf 9
 .Sh CODE REFERENCES
-.Pa sys/kern/subr_prf.c
+.Pa sys/kern/subr_prf_bitmask.c
 .Sh HISTORY
 The
 .Fn bitmask_snprintf
