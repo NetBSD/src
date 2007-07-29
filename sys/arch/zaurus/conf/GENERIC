@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 2007/06/26 13:57:18 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.7 2007/07/29 14:31:23 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -177,6 +177,10 @@ pxagpio0 at pxaip?	# GPIO
 pxadmac0 at pxaip?	# DMA controller
 pxartc0 at pxaip?	# RTC
 
+# Power management
+zapm0 at pxaip?		# power management
+apmdev0 at zapm0	# APM
+
 # PCMCIA/CF socket and GPIO controllers
 scoop0 at pxaip?
 scoop1 at pxaip?
@@ -316,4 +320,4 @@ pseudo-device	ksyms			# /dev/ksyms
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
-pseudo-device   bpfilter                # Berkeley packet filter#
+pseudo-device   bpfilter                # Berkeley packet filter
