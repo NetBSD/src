@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.39 2007/04/19 11:05:14 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.40 2007/07/29 21:17:41 rumble Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.39 2007/04/19 11:05:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.40 2007/07/29 21:17:41 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1469,7 +1469,7 @@ msdosfs_readdir(v)
 	uio_off = uio->uio_offset;
 
 	if (ap->a_ncookies) {
-		nc = uio->uio_resid / 16;
+		nc = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(nc * sizeof (off_t), M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
