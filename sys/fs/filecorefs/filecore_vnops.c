@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.20 2007/07/29 12:15:45 ad Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.21 2007/07/29 21:17:41 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.20 2007/07/29 12:15:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.21 2007/07/29 21:17:41 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ filecore_readdir(v)
 		cookies = NULL;
 	else {
 		*ap->a_ncookies = 0;
-		ncookies = uio->uio_resid/16;
+		ncookies = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 	}
 
