@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.32 2007/07/09 20:52:28 ad Exp $       */
+/*      $NetBSD: pccons.c,v 1.33 2007/07/29 18:01:11 jmmv Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.32 2007/07/09 20:52:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.33 2007/07/29 18:01:11 jmmv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -2765,9 +2765,8 @@ sput(struct pc_softc   *sc,
                     else if (cx > nrow)
                         cx = nrow;
                     if (cx < nrow)
-                        bcopy(crtAt + sc->vs.ncol * cx,
-                              crtAt, sc->vs.ncol * (nrow -
-                                                cx) * CHR);
+                        memmove(crtAt, crtAt + sc->vs.ncol * cx,
+                                sc->vs.ncol * (nrow - cx) * CHR);
                     fillw((sc->vs.at << 8) | ' ',
                           crtAt + sc->vs.ncol * (nrow - cx),
                           sc->vs.ncol * cx);
@@ -2781,9 +2780,8 @@ sput(struct pc_softc   *sc,
                     else if (cx > sc->vs.nrow)
                         cx = sc->vs.nrow;
                     if (cx < sc->vs.nrow)
-                        bcopy(Crtat + sc->vs.ncol * cx,
-                              Crtat, sc->vs.ncol * (sc->vs.nrow -
-                                                cx) * CHR);
+                        memmove(Crtat, Crtat + sc->vs.ncol * cx,
+                                sc->vs.ncol * (sc->vs.nrow - cx) * CHR);
                     fillw((sc->vs.at << 8) | ' ',
                           Crtat + sc->vs.ncol * (sc->vs.nrow - cx),
                           sc->vs.ncol * cx);
@@ -2803,10 +2801,8 @@ sput(struct pc_softc   *sc,
                     else if (cx > nrow)
                         cx = nrow;
                     if (cx < nrow)
-                        bcopy(crtAt,
-                              crtAt + sc->vs.ncol * cx,
-                              sc->vs.ncol * (nrow - cx) *
-                              CHR);
+                        memmove(crtAt + sc->vs.ncol * cx, crtAt,
+                                sc->vs.ncol * (nrow - cx) * CHR);
                     fillw((sc->vs.at << 8) | ' ', 
                           crtAt, sc->vs.ncol * cx);
                     sc->vs.state = 0;
@@ -2819,10 +2815,8 @@ sput(struct pc_softc   *sc,
                     else if (cx > sc->vs.nrow)
                         cx = sc->vs.nrow;
                     if (cx < sc->vs.nrow)
-                        bcopy(Crtat,
-                              Crtat + sc->vs.ncol * cx,
-                              sc->vs.ncol * (sc->vs.nrow - cx) *
-                              CHR);
+                        memmove(Crtat + sc->vs.ncol * cx, Crtat,
+                                sc->vs.ncol * (sc->vs.nrow - cx) * CHR);
                     fillw((sc->vs.at << 8) | ' ', 
                           Crtat, sc->vs.ncol * cx);
 #if 0
@@ -2894,8 +2888,8 @@ sput(struct pc_softc   *sc,
                                PUSER, "pcputc", 0);
                     splx(s);
                 }
-                bcopy(Crtat + sc->vs.ncol, Crtat,
-                      (sc->vs.nchr - sc->vs.ncol) * CHR);
+                memmove(Crtat, Crtat + sc->vs.ncol,
+                        (sc->vs.nchr - sc->vs.ncol) * CHR);
                 fillw((sc->vs.at << 8) | ' ',
                       Crtat + sc->vs.nchr - sc->vs.ncol,
                       sc->vs.ncol);
@@ -4323,7 +4317,7 @@ cga_save_restore(int mode)
 	     * Copy text from screen.
 	     */
 	    textInfo = (char *)malloc(16384, M_DEVBUF, M_NOWAIT);
-	    bcopy(Crtat, textInfo, TEXT_LENGTH);			
+	    memcpy(textInfo, Crtat, TEXT_LENGTH);
 	    
 	    /*
 	     ** Save the registers before we change them
@@ -4373,7 +4367,7 @@ cga_save_restore(int mode)
 	    /*
 	     * Copy font information
 	     */
-	    bcopy(Crtat, fontInfo, FONT_LENGTH);			
+	    memcpy(fontInfo, Crtat, FONT_LENGTH);
 	    /*
              * Restore registers in case the X Server wants to save
 	     * the text too.
@@ -4415,7 +4409,7 @@ cga_save_restore(int mode)
 	    /*
 	     ** Restore font information 
 	     */
-	    bcopy(fontInfo, Crtat, FONT_LENGTH);
+	    memcpy(Crtat, fontInfo, FONT_LENGTH);
 	    
 	    /*
 	     ** Put registers back the way they were for text.
@@ -4436,7 +4430,7 @@ cga_save_restore(int mode)
 	    /*
 	     ** Restore text information
 	     */
-	    bcopy(textInfo, Crtat, TEXT_LENGTH);
+	    memcpy(Crtat, textInfo, TEXT_LENGTH);
 	   
 	    break;
 	
