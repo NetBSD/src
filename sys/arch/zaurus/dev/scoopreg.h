@@ -1,4 +1,4 @@
-/*	$NetBSD: scoopreg.h,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: scoopreg.h,v 1.3 2007/07/29 14:29:38 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_scoopreg.h,v 1.7 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
@@ -35,9 +35,10 @@
 #define  SCP_CSR_PWR		0x0080
 #define SCOOP_CPR		0x0c	/* card power register */
 #define  SCP_CPR_OFF		0x0000
-#define  SCP_CPR_3V		0x0001
-#define  SCP_CPR_5V		0x0002
-#define  SCP_CPR_SD		0x0004
+#define  SCP_CPR_3V		0x0001	/* 3V for CF card */
+#define  SCP_CPR_5V		0x0002	/* 5V for CF card */
+#define  SCP_CPR_SD_3V		0x0004	/* 3.3V for SD/MMC card */
+#define  SCP_CPR_VOLTAGE_MSK	0x0007
 #define  SCP_CPR_PWR		0x0080
 #define SCOOP_CCR		0x10	/* card control register */
 #define  SCP_CCR_RESET		0x0080
