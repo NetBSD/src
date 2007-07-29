@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.99 2007/07/09 21:00:49 ad Exp $	*/
+/*	$NetBSD: mcd.c,v 1.100 2007/07/29 12:50:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.99 2007/07/09 21:00:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.100 2007/07/29 12:50:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,14 +440,14 @@ mcdstrategy(bp)
 		printf("%s: strategy: blkno = %" PRId64 " bcount = %d\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((sc->flags & MCDF_LOADED) == 0) {
 		MCD_TRACE("strategy: drive not valid%s", "\n");
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	/* No data to read. */
@@ -481,8 +481,6 @@ mcdstrategy(bp)
 		mcdstart(sc);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -513,7 +511,6 @@ loop:
 	if ((sc->flags & MCDF_LOADED) == 0) {
 		MCD_TRACE("start: drive not valid%s", "\n");
 		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		goto loop;
 	}
@@ -1324,7 +1321,7 @@ readerr:
 
 changed:
 	/* Invalidate the buffer. */
-	bp->b_flags |= B_ERROR;
+	bp->b_error = EIO;
 	bp->b_resid = bp->b_bcount - mbx->skip;
 	disk_unbusy(&sc->sc_dk, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));

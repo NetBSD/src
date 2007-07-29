@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.168 2007/07/09 21:00:29 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.169 2007/07/29 12:50:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.168 2007/07/09 21:00:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.169 2007/07/29 12:50:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -454,7 +454,7 @@ vndstrategy(struct buf *bp)
 
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
-		goto bad;
+		goto done;
 	}
 
 	/*
@@ -462,7 +462,7 @@ vndstrategy(struct buf *bp)
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/*
@@ -470,7 +470,7 @@ vndstrategy(struct buf *bp)
 	 */
 	if ((vnd->sc_flags & VNF_READONLY) && !(bp->b_flags & B_READ)) {
 		bp->b_error = EACCES;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a nil transfer, wake up the top half now. */
@@ -520,8 +520,6 @@ vndstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -579,7 +577,6 @@ vndthread(void *arg)
 
 		if (vnd->sc_vp->v_mount == NULL) {
 			obp->b_error = ENXIO;
-			obp->b_flags |= B_ERROR;
 			goto done;
 		}
 #ifdef VND_COMPRESSION
@@ -701,10 +698,6 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	    vp, bp->b_data, bp->b_bcount, offset,
 	    UIO_SYSSPACE, 0, vnd->sc_cred, &resid, NULL);
 	bp->b_resid = resid;
-	if (bp->b_error != 0)
-		bp->b_flags |= B_ERROR;
-	else
-		KASSERT(!(bp->b_flags & B_ERROR));
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
@@ -827,7 +820,7 @@ vndiodone(struct buf *bp)
 #ifdef DEBUG
 	if (vnddebug & VDB_IO) {
 		printf("vndiodone1: bp %p iodone: error %d\n",
-		    bp, (bp->b_flags & B_ERROR) != 0 ? bp->b_error : 0);
+		    bp, bp->b_error);
 	}
 #endif
 	disk_unbusy(&vnd->sc_dkdev, bp->b_bcount - bp->b_resid,
@@ -836,7 +829,6 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
-	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	VND_PUTXFER(vnd, vnx);
@@ -1750,7 +1742,6 @@ compstrategy(struct buf *bp, off_t bn)
 		/* check for good block number */
 		if (comp_block >= vnd->sc_comp_numoffs) {
 			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
 			splx(s);
 			return;
 		}
@@ -1765,7 +1756,6 @@ compstrategy(struct buf *bp, off_t bn)
 			    UIO_SYSSPACE, IO_UNIT, vnd->sc_cred, NULL, NULL);
 			if (error) {
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				VOP_UNLOCK(vnd->sc_vp, 0);
 				splx(s);
 				return;
@@ -1783,7 +1773,6 @@ compstrategy(struct buf *bp, off_t bn)
 					    vnd->sc_dev.dv_xname,
 					    vnd->sc_comp_stream.msg);
 				bp->b_error = EBADMSG;
-				bp->b_flags |= B_ERROR;
 				VOP_UNLOCK(vnd->sc_vp, 0);
 				splx(s);
 				return;
@@ -1807,7 +1796,6 @@ compstrategy(struct buf *bp, off_t bn)
 		    length_in_buffer, &auio);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			splx(s);
 			return;
 		}

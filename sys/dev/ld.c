@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.48 2007/07/21 19:51:47 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.49 2007/07/29 12:50:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.48 2007/07/21 19:51:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.49 2007/07/29 12:50:18 ad Exp $");
 
 #include "rnd.h"
 
@@ -551,7 +551,7 @@ ldstrategy(struct buf *bp)
 
 	if ((sc->sc_flags & LDF_DETACH) != 0) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	lp = sc->sc_dk.dk_label;
@@ -562,7 +562,7 @@ ldstrategy(struct buf *bp)
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0 || bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -600,8 +600,6 @@ ldstrategy(struct buf *bp)
 	splx(s);
 	return;
 
- bad:
-	bp->b_flags |= B_ERROR;
  done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -647,7 +645,6 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 			} else {
 				(void) BUFQ_GET(sc->sc_bufq);
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 				mutex_exit(&sc->sc_mutex);
 				biodone(bp);
@@ -663,7 +660,7 @@ void
 lddone(struct ld_softc *sc, struct buf *bp)
 {
 
-	if ((bp->b_flags & B_ERROR) != 0) {
+	if (bp->b_error != 0) {
 		diskerr(bp, "ld", "error", LOG_PRINTF, 0, sc->sc_dk.dk_label);
 		printf("\n");
 	}
