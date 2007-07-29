@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.44 2007/07/27 11:59:09 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.45 2007/07/29 14:02:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.44 2007/07/27 11:59:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.45 2007/07/29 14:02:29 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -636,7 +636,6 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 	 * values specified by the sysmon envsys driver.
 	 */
 	for (i = 0; i < sme->sme_nsensors; i++) {
-		mutex_enter(&sme_mtx);
 		/*
 		 * XXX:
 		 *
@@ -647,23 +646,10 @@ sysmon_envsys_createplist(struct sysmon_envsys *sme)
 		 *
 		 * For now, overwrite its index to 0.
 		 */
-			if (i == 0)
-				sme->sme_sensor_data[0].sensor = 0;
+		if (i == 0)
+			sme->sme_sensor_data[0].sensor = 0;
 
 		edata = &sme->sme_sensor_data[i];
-		/* 
-		 * refresh sensor data via sme_gtredata only if the
-		 * flag is not set.
-		 */
-		if ((sme->sme_flags & SME_DISABLE_GTREDATA) == 0) {
-			if ((*sme->sme_gtredata)(sme, edata)) {
-				DPRINTF(("%s: sme->sme_gtredata[%d]\n",
-				    __func__, i));
-				mutex_exit(&sme_mtx);
-				continue;
-			}
-		}
-		mutex_exit(&sme_mtx);
 		sme_make_dictionary(sme, array, edata);
 	}
 
@@ -976,6 +962,7 @@ invalidate_sensor:
 int
 sme_update_dictionary(struct sysmon_envsys *sme)
 {
+	const struct sme_sensor_type *est = sme_sensor_type;
 	const struct sme_sensor_state *ess = sme_sensor_state;
 	const struct sme_sensor_state *esds = sme_sensor_drive_state;
 	envsys_data_t *edata = NULL;
@@ -1027,7 +1014,6 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 			return EINVAL;
 		}
 
-		/* update state sensor. */
 		for (j = 0; ess[j].type != -1; j++)
 			if (ess[j].type == edata->state)
 				break;
@@ -1038,6 +1024,15 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 
 		/* update sensor state */
 		error = sme_sensor_upstring(dict, "state", ess[j].desc);
+		if (error)
+			break;
+
+		for (j = 0; est[j].type != -1; j++)
+			if (est[j].type == edata->units)
+				break;
+
+		/* update sensor type */
+		error = sme_sensor_upstring(dict, "type", est[j].desc);
 		if (error)
 			break;
 
