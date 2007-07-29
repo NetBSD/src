@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.11 2007/07/16 16:44:26 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.12 2007/07/29 15:44:24 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.11 2007/07/16 16:44:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.12 2007/07/29 15:44:24 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static ACPI_STATUS aiboost_getcomp(ACPI_HANDLE *,
 				   struct aiboost_comp **);
 static int	aiboost_get_value(ACPI_HANDLE, const char *, UINT32);
 
-/* envsys(9) glue */
+/* sysmon_envsys(9) glue */
 static void	aiboost_setup_sensors(struct aiboost_softc *);
 static int	aiboost_gtredata(struct sysmon_envsys *, envsys_data_t *);
 static void	aiboost_refresh_sensors(struct aiboost_softc *,
@@ -221,7 +221,7 @@ aiboost_refresh_sensors(struct aiboost_softc *sc, envsys_data_t *edata)
 		/* Temperatures */
 		val = aiboost_get_value(h, "RTMP", sc->sc_aitemp->elem[i].id);
 		AIBOOST_INVALIDATE_SENSOR();
-		/* envsys(9) wants mK... convert from Celsius. */
+		/* envsys(4) wants mK... convert from Celsius. */
 		edata->value_cur = val * 100000 + 273150000;
 		DPRINTF(("%s: temp[%d] value_cur=%d val=%d j=%d\n", __func__,
 		    i, edata->value_cur, val, j));
