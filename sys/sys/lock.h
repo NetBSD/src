@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.69.2.3 2007/04/06 12:27:21 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.69.2.4 2007/07/29 11:33:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -235,6 +235,7 @@ struct lock {
 struct proc;
 
 void	lockinit(struct lock *, pri_t, const char *, int, int);
+void	lockdestroy(struct lock *);
 #if defined(LOCKDEBUG)
 int	_lockmgr(volatile struct lock *, u_int, kmutex_t *,
 	    const char *, int);
