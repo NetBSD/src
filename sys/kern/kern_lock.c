@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.8 2007/07/09 20:33:14 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.9 2007/07/29 11:33:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.8 2007/07/09 20:33:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.9 2007/07/29 11:33:05 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -321,6 +321,13 @@ lockinit(struct lock *lkp, pri_t prio, const char *wmesg, int timo, int flags)
 	lkp->lk_lock_file = NULL;
 	lkp->lk_unlock_file = NULL;
 #endif
+}
+
+void
+lockdestroy(struct lock *lkp)
+{
+
+	mutex_destroy(&lkp->lk_interlock);
 }
 
 /*
