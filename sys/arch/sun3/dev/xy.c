@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.60 2007/07/09 20:52:34 ad Exp $	*/
+/*	$NetBSD: xy.c,v 1.61 2007/07/29 12:15:40 ad Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.60 2007/07/09 20:52:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.61 2007/07/29 12:15:40 ad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -964,18 +964,18 @@ xystrategy(struct buf *bp)
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* There should always be an open first. */
 	if (xy->state == XY_DRIVE_UNKNOWN) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	if (xy->state != XY_DRIVE_ONLINE && DISKPART(bp->b_dev) != RAW_PART) {
 		/* no I/O to unlabeled disks, unless raw partition */
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	/* short circuit zero length request */
 
@@ -1021,8 +1021,6 @@ xystrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:				/* tells upper layers we have an error */
-	bp->b_flags |= B_ERROR;
 done:				/* tells upper layers we are done with this
 				 * buf */
 	bp->b_resid = bp->b_bcount;
@@ -1574,7 +1572,6 @@ xyc_reset(struct xyc_softc *xycsc, int quiet, struct xy_iorq *blastmode,
 			switch (XY_STATE(iorq->mode)) {
 			case XY_SUB_NORM:
 			    iorq->buf->b_error = EIO;
-			    iorq->buf->b_flags |= B_ERROR;
 			    iorq->buf->b_resid =
 			       iorq->sectcnt * XYFM_BPS;
 				/* Sun3: map/unmap regardless of B_PHYS */
@@ -1745,7 +1742,6 @@ xyc_remove_iorq(struct xyc_softc *xycsc)
 			bp = iorq->buf;
 			if (errs) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = iorq->sectcnt * XYFM_BPS;
 			} else {
 				bp->b_resid = 0;	/* done */

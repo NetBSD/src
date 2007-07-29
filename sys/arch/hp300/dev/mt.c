@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.38 2007/07/12 20:39:01 he Exp $	*/
+/*	$NetBSD: mt.c,v 1.39 2007/07/29 12:15:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.38 2007/07/12 20:39:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.39 2007/07/29 12:15:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,8 +444,8 @@ mtcommand(dev_t dev, int cmd, int cnt)
 		bp->b_flags = B_BUSY | B_CMD;
 		mtstrategy(bp);
 		biowait(bp);
-		if (bp->b_flags & B_ERROR) {
-			error = (int) (unsigned) bp->b_error;
+		if (bp->b_error != 0) {
+			error = bp->b_error;
 			break;
 		}
 	} while (--cnt > 0);
@@ -500,7 +500,6 @@ mtstrategy(struct buf *bp)
 #if 0 /* XXX see above */
 	    error:
 #endif
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			biodone(bp);
 			return;
@@ -585,7 +584,7 @@ mtstart(void *arg)
 		    case 2:
 			if (bp->b_cmd != MTNOP || !(bp->b_flags & B_CMD)) {
 				bp->b_error = EBUSY;
-				goto errdone;
+				goto done;
 			}
 			goto done;
 
@@ -600,7 +599,7 @@ mtstart(void *arg)
 			    case MTWEOF:
 			    case MTFSR:
 				bp->b_error = ENOSPC;
-				goto errdone;
+				goto done;
 
 			    case MTBSF:
 			    case MTOFFL:
@@ -704,7 +703,7 @@ mtstart(void *arg)
 	} else {
 		if (sc->sc_flags & MTF_PASTEOT) {
 			bp->b_error = ENOSPC;
-			goto errdone;
+			goto done;
 		}
 		if (bp->b_flags & B_READ) {
 			sc->sc_flags |= MTF_IO;
@@ -731,8 +730,6 @@ fatalerror:
 	 */
 	sc->sc_flags &= MTF_EXISTS | MTF_OPEN | MTF_REW;
 	bp->b_error = EIO;
-errdone:
-	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	(void)BUFQ_GET(sc->sc_tab);
@@ -866,7 +863,6 @@ mtintr(void *arg)
 		if (sc->sc_flags & MTF_ATEOT)
 			sc->sc_flags |= MTF_PASTEOT;
 		else {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = ENOSPC;
 			sc->sc_flags |= MTF_ATEOT;
 		}
@@ -908,7 +904,6 @@ mtintr(void *arg)
  error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
 		}
 	}
 	/*

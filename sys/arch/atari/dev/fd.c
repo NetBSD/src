@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.57 2007/07/09 20:52:07 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.58 2007/07/29 12:15:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.57 2007/07/09 20:52:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58 2007/07/29 12:15:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,11 +603,11 @@ struct buf	*bp;
 	lp = sc->dkdev.dk_label;
 	if ((sc->flags & FLPF_HAVELAB) == 0) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	if (bp->b_blkno < 0 || (bp->b_bcount % SECTOR_SIZE)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	if (bp->b_bcount == 0)
 		goto done;
@@ -620,7 +620,7 @@ struct buf	*bp;
 			goto done;
 		if (sz < 0) { /* Past EndOfDisk */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Trucate it */
 		if (bp->b_flags & B_RAW)
@@ -646,8 +646,6 @@ struct buf	*bp;
 	splx(sps);
 
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -1009,7 +1007,6 @@ struct fd_softc	*sc;
 			bp = BUFQ_PEEK(sc->bufq);
 
 			bp->b_error  = EIO;
-			bp->b_flags |= B_ERROR;
 			fd_state     = FLP_MON;
 
 			break;

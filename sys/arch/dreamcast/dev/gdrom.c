@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.21 2007/03/12 14:03:47 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.22 2007/07/29 12:15:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.21 2007/03/12 14:03:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.22 2007/07/29 12:15:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,10 +496,8 @@ gdromstrategy(struct buf *bp)
 	splx(s);
 
 	if ((error = gdrom_read_sectors(sc, bp->b_data, bp->b_rawblkno,
-	    bp->b_bcount >> 11))) {
+	    bp->b_bcount >> 11)))
 		bp->b_error = error;
-		bp->b_flags |= B_ERROR;
-	}
 
 	sc->is_busy = 0;
 	wakeup(&sc->is_busy);

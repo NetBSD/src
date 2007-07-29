@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.37 2007/07/09 20:52:20 ad Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.38 2007/07/29 12:15:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.37 2007/07/09 20:52:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.38 2007/07/29 12:15:38 ad Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -1090,10 +1090,8 @@ fdstrategy(struct buf *bp)
 		if (TRACE_STRAT)
 			printf(" fdstrategy() finished early, err = %d.\n",
 			    err);
-		if (err) {
+		if (err)
 			bp->b_error = err;
-			bp->b_flags |= B_ERROR;
-		}
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
@@ -1592,8 +1590,6 @@ fdstart_Exit(fd_softc_t *fd)
 
 	bp->b_resid = fd->bytesLeft;
 	bp->b_error = (0 == fd->iwmErr) ? 0 : EIO;
-	if (fd->iwmErr)
-		bp->b_flags |= B_ERROR;
 
 	if (TRACE_STRAT) {
 		printf(" fdstart() finished job; fd->iwmErr = %d, b_error = %d",
