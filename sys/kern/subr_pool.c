@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.128.2.4 2007/03/22 12:30:29 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.128.2.5 2007/07/29 11:34:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.4 2007/03/22 12:30:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.5 2007/07/29 11:34:47 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.128.2.4 2007/03/22 12:30:29 ad Exp $
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/debug.h>
+#include <sys/lockdebug.h>
 
 #include <uvm/uvm.h>
 
@@ -1148,6 +1149,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 
 	KASSERT(mutex_owned(&pp->pr_lock));
 	FREECHECK_IN(&pp->pr_freecheck, v);
+	LOCKDEBUG_MEM_CHECK(v, pp->pr_size);
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(pp->pr_nout == 0)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.3.2.1 2007/06/08 14:18:10 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.3.2.2 2007/07/29 11:34:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ void	lockdebug_wantlock(u_int, uintptr_t, int);
 void	lockdebug_locked(u_int, uintptr_t, int);
 void	lockdebug_unlocked(u_int, uintptr_t, int);
 void	lockdebug_barrier(volatile void *, int);
+void	lockdebug_mem_check(const char *, void *, size_t);
 
 #define	LOCKDEBUG_ALLOC(lock, ops)		lockdebug_alloc(lock, ops)
 #define	LOCKDEBUG_FREE(lock, id)		lockdebug_free(lock, id)
@@ -75,6 +76,8 @@ void	lockdebug_barrier(volatile void *, int);
 #define	LOCKDEBUG_LOCKED(id, where, s)		lockdebug_locked(id, where, s)
 #define	LOCKDEBUG_UNLOCKED(id, where, s)	lockdebug_unlocked(id, where, s)
 #define	LOCKDEBUG_BARRIER(lk, slp)		lockdebug_barrier(lk, slp)
+#define	LOCKDEBUG_MEM_CHECK(base, sz)	\
+    lockdebug_mem_check(__FUNCTION__, base, sz)
 
 #else	/* LOCKDEBUG */
 
@@ -84,6 +87,7 @@ void	lockdebug_barrier(volatile void *, int);
 #define	LOCKDEBUG_LOCKED(id, where, s)		/* nothing */
 #define	LOCKDEBUG_UNLOCKED(id, where, s)	/* nothing */
 #define	LOCKDEBUG_BARRIER(lk, slp)		/* nothing */
+#define	LOCKDEBUG_MEM_CHECK(base, sz)		/* nothing */
 
 #endif	/* LOCKDEBUG */
 
