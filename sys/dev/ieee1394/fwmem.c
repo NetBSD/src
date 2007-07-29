@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.4 2007/04/21 15:27:43 kiyohara Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.5 2007/07/29 13:31:08 ad Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -456,7 +456,6 @@ fwmem_biodone(struct fw_xfer *xfer)
 	if (bp->bio_error != 0) {
 		if (fwmem_debug)
 			printf("%s: err=%d\n", __func__, bp->bio_error);
-		bp->bio_flags |= BIO_ERROR;
 		bp->bio_resid = bp->bio_bcount;
 	}
 
@@ -527,7 +526,6 @@ error:
 		if (fwmem_debug)
 			printf("%s: err=%d\n", __func__, err);
 		bp->bio_error = err;
-		bp->bio_flags |= BIO_ERROR;
 		bp->bio_resid = bp->bio_bcount;
 		biodone(bp);
 	}

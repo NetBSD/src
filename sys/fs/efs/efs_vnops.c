@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.4 2007/07/29 13:31:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3 2007/07/04 19:24:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.4 2007/07/29 13:31:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ efs_strategy(void *v)
 	int error;
 
 	if (vp == NULL) {
-		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
 		biodone(bp);
 		return (EIO);
 	}
@@ -637,7 +637,7 @@ efs_strategy(void *v)
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
-			bp->b_flags |= B_ERROR;
+			bp->b_error = error;
 			biodone(bp);
 			return (error);
 		}

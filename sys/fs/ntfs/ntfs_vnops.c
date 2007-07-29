@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.34 2007/07/26 18:15:42 pooka Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.35 2007/07/29 13:31:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.34 2007/07/26 18:15:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.35 2007/07/29 13:31:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,7 +371,6 @@ ntfs_strategy(void *v)
 			if (error) {
 				printf("ntfs_strategy: ntfs_readattr failed\n");
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 			}
 
 			memset((char *)bp->b_data + toread, 0,
@@ -384,7 +383,6 @@ ntfs_strategy(void *v)
 		if (ntfs_cntob(bp->b_blkno) + bp->b_bcount >= fp->f_size) {
 			printf("ntfs_strategy: CAN'T EXTEND FILE\n");
 			bp->b_error = error = EFBIG;
-			bp->b_flags |= B_ERROR;
 		} else {
 			towrite = MIN(bp->b_bcount,
 				fp->f_size - ntfs_cntob(bp->b_blkno));
@@ -398,7 +396,6 @@ ntfs_strategy(void *v)
 			if (error) {
 				printf("ntfs_strategy: ntfs_writeattr fail\n");
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 			}
 		}
 	}
