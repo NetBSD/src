@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.6.4 2007/07/28 14:23:29 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.6.5 2007/07/29 10:18:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -72,16 +72,15 @@ ENTRY(splraise)
 	.align 64
 
 ENTRY(spllower)
-	movl	CPUVAR(SELF150), %eax
 	movl	4(%esp), %ecx
-	cmpl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
+	cmpl	CPUVAR(ILEVEL), %ecx
 	jae	1f
-	movl	(CPU_INFO_IUNMASK-0x150)(%eax,%ecx,4), %edx
+	movl	CPUVAR(IUNMASK)(,%ecx,4), %edx
 	pushf
 	cli
-	testl	(CPU_INFO_IPENDING-0x150)(%eax), %edx
+	testl	CPUVAR(IPENDING), %edx
 	jnz	2f
-	movl	%ecx, (CPU_INFO_ILEVEL-0x150)(%eax)
+	movl	%ecx, CPUVAR(ILEVEL)
 	popf
 1:
 	ret

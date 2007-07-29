@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89.4.1 2007/04/28 21:05:55 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.4.2 2007/07/29 10:18:50 ad Exp $	*/
 
 /*
  *
@@ -354,9 +354,8 @@ void		pmap_load(void);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, int32_t *);
-void	pmap_tlb_shootnow(int32_t);
-void	pmap_do_tlb_shootdown(struct cpu_info *);
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
+void	pmap_tlb_shootwait(void);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
@@ -499,11 +498,26 @@ vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
 void	pmap_ldt_cleanup(struct lwp *);
 void	pmap_cpu_init_early(struct cpu_info *);
 void	pmap_cpu_init_late(struct cpu_info *);
+void	sse2_zero_page(void *);
+void	sse2_copy_page(void *, void *);
 
 /*
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+/*
+ * TLB shootdown mailbox.
+ */
+
+struct pmap_mbox {
+	volatile void		*mb_pointer;
+	volatile uintptr_t	mb_addr1;
+	volatile uintptr_t	mb_addr2;
+	volatile uintptr_t	mb_head;
+	volatile uintptr_t	mb_tail;
+	volatile uintptr_t	mb_global;
+};
 
 #endif /* _KERNEL */
 #endif	/* _I386_PMAP_H_ */

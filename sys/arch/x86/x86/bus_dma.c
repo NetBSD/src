@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.35 2007/03/04 06:01:08 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.35.2.1 2007/07/29 10:18:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2007/03/04 06:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.1 2007/07/29 10:18:51 ad Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1015,15 +1015,13 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
-	int32_t cpumask;
 	int nocache;
 	int marked;
-	pt_entry_t *pte;
+	pt_entry_t *pte, opte;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	size = round_page(size);
-	cpumask = 0;
 	nocache = (flags & BUS_DMA_NOCACHE) != 0 && pmap_cpu_has_pg_n();
 	marked = 0;
 
@@ -1048,17 +1046,18 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			 */
 			if (nocache) {
 				pte = kvtopte(va);
-				if ((*pte & PG_N) == 0) {
+				opte = *pte;
+				if ((opte & PG_N) == 0) {
 					*pte |= PG_N;
-					pmap_tlb_shootdown(pmap_kernel(), va,
-					    *pte, &cpumask);
+					pmap_tlb_shootdown(pmap_kernel(),
+					    va, 0, opte);
 					marked = 1;
 				}
 			}
 		}
 	}
 	if (marked)
-		pmap_tlb_shootnow(cpumask);
+		pmap_tlb_shootwait();
 	pmap_update(pmap_kernel());
 
 	return (0);
@@ -1072,12 +1071,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 void
 _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
-	pt_entry_t *pte;
+	pt_entry_t *pte, opte;
 	vaddr_t va, endva;
-	int cpumask;
 	int marked;
 
-	cpumask = 0;
 	marked = 0;
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
@@ -1091,14 +1088,15 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	for (va = (vaddr_t)kva, endva = (vaddr_t)kva + size;
 	     va < endva; va += PAGE_SIZE) {
 		pte = kvtopte(va);
-		if ((*pte & PG_N) != 0) {
+		opte = *pte;
+		if ((opte & PG_N) != 0) {
 			*pte &= ~PG_N;
-			pmap_tlb_shootdown(pmap_kernel(), va, *pte, &cpumask);
+			pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
 			marked = 1;
 		}
 	}
 	if (marked)
-		pmap_tlb_shootnow(cpumask);
+		pmap_tlb_shootwait();
 
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
 	pmap_update(pmap_kernel());
