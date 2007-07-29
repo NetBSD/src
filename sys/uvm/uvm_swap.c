@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.128 2007/07/24 19:59:35 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.129 2007/07/29 13:31:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.128 2007/07/24 19:59:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.129 2007/07/29 13:31:18 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1085,7 +1085,6 @@ swstrategy(struct buf *bp)
 	mutex_exit(&uvm_swap_data_lock);
 	if (sdp == NULL) {
 		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		UVMHIST_LOG(pdhist, "  failed to get swap device", 0, 0, 0, 0);
 		return;
@@ -1323,10 +1322,8 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 out: /* Arrive here at splbio */
 	vnx->vx_flags &= ~VX_BUSY;
 	if (vnx->vx_pending == 0) {
-		if (vnx->vx_error != 0) {
+		if (vnx->vx_error != 0)
 			bp->b_error = vnx->vx_error;
-			bp->b_flags |= B_ERROR;
-		}
 		putvndxfer(vnx);
 		biodone(bp);
 	}
@@ -1396,9 +1393,9 @@ sw_reg_iodone(struct buf *bp)
 	pbp->b_resid -= resid;
 	vnx->vx_pending--;
 
-	if (vbp->vb_buf.b_flags & B_ERROR) {
+	if (vbp->vb_buf.b_error != 0) {
 		/* pass error upward */
-		error = vbp->vb_buf.b_error ? vbp->vb_buf.b_error : EIO;
+		error = vbp->vb_buf.b_error;
 		UVMHIST_LOG(pdhist, "  got error=%d !", error, 0, 0, 0);
 		vnx->vx_error = error;
 	}
@@ -1414,7 +1411,6 @@ sw_reg_iodone(struct buf *bp)
 	 */
 	if (vnx->vx_error != 0) {
 		/* pass error upward */
-		pbp->b_flags |= B_ERROR;
 		pbp->b_error = vnx->vx_error;
 		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
 			putvndxfer(vnx);

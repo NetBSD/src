@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.42 2007/07/22 18:22:49 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.43 2007/07/29 13:31:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.42 2007/07/22 18:22:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.43 2007/07/29 13:31:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -578,8 +578,6 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 		bp->b_resid = read_argp->pvnr_resid;
 
 		memcpy(bp->b_data, read_argp->pvnr_data, moved);
-	} else {
-		bp->b_flags |= B_ERROR;
 	}
 
 	biodone(bp);

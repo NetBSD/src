@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.202 2007/07/12 20:39:57 rmind Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.203 2007/07/29 13:31:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.202 2007/07/12 20:39:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.203 2007/07/29 13:31:14 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -323,9 +323,10 @@ lfs_vflush(struct vnode *vp)
 			} else {
 				bremfree(bp);
 				LFS_UNLOCK_BUF(bp);
-				bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI |
-					 B_GATHERED);
+				bp->b_flags &=
+				    ~(B_READ | B_DELWRI | B_GATHERED);
 				bp->b_flags |= B_DONE;
+				bp->b_error = 0;
 				reassignbuf(bp, vp);
 				brelse(bp);
 			}
@@ -2102,7 +2103,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				      " bp = %p newbp = %p\n", changed, bp,
 				      newbp));
 				*bpp = newbp;
-				bp->b_flags &= ~(B_ERROR | B_GATHERED);
+				bp->b_flags &= ~B_GATHERED;
+				bp->b_error = 0;
 				if (bp->b_flags & B_CALL) {
 					DLOG((DLOG_SEG, "lfs_writeseg: "
 					      "indir bp should not be B_CALL\n"));
@@ -2275,7 +2277,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			cbp->b_bcount += bp->b_bcount;
 			cl->bufsize += bp->b_bcount;
 
-			bp->b_flags &= ~(B_ERROR | B_READ | B_DELWRI | B_DONE);
+			bp->b_flags &= ~(B_READ | B_DELWRI | B_DONE);
+			bp->b_error = 0;
 			cl->bpp[cl->bufcount++] = bp;
 			vp = bp->b_vp;
 			s = splbio();
@@ -2351,7 +2354,8 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
 
 	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
-	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ | B_DELWRI);
+	bp->b_flags &= ~(B_DONE | B_READ | B_DELWRI);
+	bp->b_error = 0;
 	bp->b_iodone = lfs_supercallback;
 
 	if (fs->lfs_sp != NULL && fs->lfs_sp->seg_flags & SEGM_SYNC)
@@ -2462,11 +2466,9 @@ lfs_cluster_aiodone(struct buf *bp)
 	struct buf *tbp, *fbp;
 	struct vnode *vp, *devvp;
 	struct inode *ip;
-	int s, error=0;
+	int s, error;
 
-	if (bp->b_flags & B_ERROR)
-		error = bp->b_error;
-
+	error = bp->b_error;
 	cl = bp->b_private;
 	fs = cl->fs;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
@@ -2477,7 +2479,6 @@ lfs_cluster_aiodone(struct buf *bp)
 		tbp = cl->bpp[cl->bufcount];
 		KASSERT(tbp->b_flags & B_BUSY);
 		if (error) {
-			tbp->b_flags |= B_ERROR;
 			tbp->b_error = error;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.209 2007/07/27 08:26:39 pooka Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.210 2007/07/29 13:31:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.209 2007/07/27 08:26:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.210 2007/07/29 13:31:15 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1176,7 +1176,6 @@ lfs_strategy(void *v)
 				 NULL);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return (error);
 		}

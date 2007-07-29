@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.154 2007/07/10 09:50:09 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.155 2007/07/29 13:31:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.154 2007/07/10 09:50:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.155 2007/07/29 13:31:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1797,7 +1797,6 @@ ufs_strategy(void *v)
 				 NULL);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return (error);
 		}

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.35 2007/07/23 11:27:46 pooka Exp $ */
+/* $NetBSD: udf_subr.c,v 1.36 2007/07/29 13:31:11 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.35 2007/07/23 11:27:46 pooka Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.36 2007/07/29 13:31:11 ad Exp $");
 #endif /* not lint */
 
 
@@ -2773,7 +2773,6 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	if (sectors > FILEBUFSECT) {
 		printf("udf_read_filebuf: implementation limit on bufsize\n");
 		buf->b_error  = EIO;
-		buf->b_flags |= B_ERROR;
 		biodone(buf);
 		return;
 	}
@@ -2785,7 +2784,6 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	error = udf_translate_file_extent(node, from, sectors, mapping);
 	if (error) {
 		buf->b_error  = error;
-		buf->b_flags |= B_ERROR;
 		biodone(buf);
 		goto out;
 	}
@@ -2796,7 +2794,6 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		error = udf_read_internal(node, (uint8_t *) buf->b_data);
 		if (error) {
 			buf->b_error  = error;
-			buf->b_flags |= B_ERROR;
 		}
 		biodone(buf);
 		goto out;

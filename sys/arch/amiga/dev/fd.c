@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.71 2007/07/29 12:15:35 ad Exp $ */
+/*	$NetBSD: fd.c,v 1.72 2007/07/29 13:31:07 ad Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.71 2007/07/29 12:15:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2007/07/29 13:31:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1212,7 +1212,6 @@ printf("fdstart: disk changed\n");
 		sc->flags &= ~FDF_HAVELABEL;
 		for (;;) {
 			bp = BUFQ_GET(sc->bufq);
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			if (BUFQ_PEEK(sc->bufq) == NULL)
 				break;

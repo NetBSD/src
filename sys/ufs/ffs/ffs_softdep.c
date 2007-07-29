@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.95 2007/07/10 10:47:07 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.96 2007/07/29 13:31:13 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.95 2007/07/10 10:47:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96 2007/07/29 13:31:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3924,7 +3924,7 @@ softdep_disk_write_complete(bp)
 	 * If an error occurred while doing the write, then the data
 	 * has not hit the disk and the dependencies cannot be unrolled.
 	 */
-	if ((bp->b_flags & B_ERROR) != 0 && (bp->b_flags & B_INVAL) == 0)
+	if (bp->b_error != 0 && (bp->b_flags & B_INVAL) == 0)
 		return;
 
 #ifdef DEBUG
@@ -5750,7 +5750,7 @@ softdep_deallocate_dependencies(bp)
 	struct buf *bp;
 {
 
-	if ((bp->b_flags & B_ERROR) == 0)
+	if (bp->b_error == 0)
 		panic("softdep_deallocate_dependencies: dangling deps");
 	softdep_error(bp->b_vp->v_mount->mnt_stat.f_mntonname, bp->b_error);
 	panic("softdep_deallocate_dependencies: unrecovered I/O error");
