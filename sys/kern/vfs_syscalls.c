@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.10 2007/07/15 15:52:57 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.11 2007/07/29 11:37:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.10 2007/07/15 15:52:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.11 2007/07/29 11:37:11 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -340,7 +340,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 		vp->v_mountedhere = NULL;
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return error;
 	}
 
@@ -713,7 +713,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_lock);
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
-	mount_finispecific(mp);
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
 	mutex_enter(&mp->mnt_mutex);
@@ -725,7 +724,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	vfs_hooks_unmount(mp);
 	mutex_destroy(&mp->mnt_mutex);
 	vfs_delref(mp->mnt_op);
-	free(mp, M_MOUNT);
+	vfs_destroy(mp);
 	return (0);
 }
 
