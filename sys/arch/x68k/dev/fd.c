@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.76 2007/07/09 20:52:35 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.77 2007/07/29 12:15:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.76 2007/07/09 20:52:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.77 2007/07/29 12:15:42 ad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -639,7 +639,7 @@ fdstrategy(struct buf *bp)
 			 "bcount=%d\n", unit,
 			 bp->b_blkno, bp->b_bcount));
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -660,7 +660,7 @@ fdstrategy(struct buf *bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -691,8 +691,6 @@ fdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	biodone(bp);
@@ -1498,7 +1496,6 @@ fdcretry(struct fdc_softc *fdc)
 		       fdc->sc_status[4],
 		       fdc->sc_status[5]);
 
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}

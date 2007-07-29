@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30 2007/07/09 20:52:04 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.31 2007/07/29 12:15:35 ad Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30 2007/07/09 20:52:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.31 2007/07/29 12:15:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ fdstrategy(struct buf *bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -476,8 +476,6 @@ fdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
@@ -1056,7 +1054,6 @@ fdcretry(struct fdc_softc *fdc)
 		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.36 2007/07/21 19:51:48 ad Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.37 2007/07/29 12:15:43 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.36 2007/07/21 19:51:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.37 2007/07/29 12:15:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -301,7 +301,6 @@ ofdisk_strategy(struct buf *bp)
 
 	if (read < 0) {
 		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 	} else
 		bp->b_resid = bp->b_bcount - read;

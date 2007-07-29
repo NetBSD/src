@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.5 2007/07/19 00:00:09 dyoung Exp $ */
+/* $NetBSD: spiflash.c,v 1.6 2007/07/29 12:15:44 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.5 2007/07/19 00:00:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.6 2007/07/29 12:15:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -309,7 +309,6 @@ spiflash_strategy(struct buf *bp)
 	sc = device_lookup(&spiflash_cd, DISKUNIT(bp->b_dev));
 	if (sc == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
@@ -317,7 +316,6 @@ spiflash_strategy(struct buf *bp)
 	if (((bp->b_bcount % sc->sc_write_size) != 0) ||
 	    (bp->b_blkno < 0)) {
 		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
@@ -352,9 +350,7 @@ spiflash_process_done(spiflash_handle_t sc, int err)
 
 	while ((bp = BUFQ_GET(sc->sc_doneq)) != NULL) {
 		flag = bp->b_flags & B_READ;
-		if ((bp->b_error = err) != 0)
-			bp->b_flags |= B_ERROR;
-		else
+		if ((bp->b_error = err) == 0)
 			bp->b_resid = 0;
 		cnt += bp->b_bcount - bp->b_resid;
 		biodone(bp);
