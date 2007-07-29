@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.37 2007/03/04 06:02:29 christos Exp $	*/
+/*	$NetBSD: qd.c,v 1.38 2007/07/29 12:15:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.37 2007/03/04 06:02:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.38 2007/07/29 12:15:44 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1759,7 +1759,7 @@ panic("qd_strategy");
 	dga->csr &= ~DMA_IE;
 	dga->csr &= ~0x0600;		/* halt DMA (reset fifo) */
 	dga->csr |= DMA_ERR;		/* clear error condition */
-	bp->b_flags |= B_ERROR;		/* flag an error to physio() */
+	bp->b_error = EIO;		/* flag an error to physio() */
 
 	/*
 	 * if DMA was running, flush spurious intrpt

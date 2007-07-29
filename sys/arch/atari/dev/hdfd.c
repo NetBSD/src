@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.56 2007/07/09 20:52:07 ad Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.57 2007/07/29 12:15:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.56 2007/07/09 20:52:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.57 2007/07/29 12:15:36 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -614,7 +614,7 @@ fdstrategy(bp)
 	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -632,7 +632,7 @@ fdstrategy(bp)
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			goto done;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -665,8 +665,6 @@ fdstrategy(bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
@@ -1324,7 +1322,6 @@ fdcretry(fdc)
 			       fdc->sc_status[4],
 			       fdc->sc_status[5]);
 		}
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}
@@ -1573,8 +1570,7 @@ fdformat(dev, finfo, p)
 		/* timed out */
 		rv = EIO;
 		biodone(bp);
-	}
-	if(bp->b_flags & B_ERROR) {
+	} else if (bp->b_error != 0) {
 		rv = bp->b_error;
 	}
 	free(bp, M_TEMP);

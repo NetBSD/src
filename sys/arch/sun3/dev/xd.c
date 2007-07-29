@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.57 2007/07/09 20:52:33 ad Exp $	*/
+/*	$NetBSD: xd.c,v 1.58 2007/07/29 12:15:40 ad Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.57 2007/07/09 20:52:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.58 2007/07/29 12:15:40 ad Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1009,19 +1009,19 @@ xdstrategy(struct buf *bp)
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xd->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* There should always be an open first. */
 	if (xd->state == XD_DRIVE_UNKNOWN) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	if (xd->state != XD_DRIVE_ONLINE && DISKPART(bp->b_dev) != RAW_PART) {
 		/* no I/O to unlabeled disks, unless raw partition */
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	/* short circuit zero length request */
 
@@ -1073,8 +1073,6 @@ xdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:				/* tells upper layers we have an error */
-	bp->b_flags |= B_ERROR;
 done:				/* tells upper layers we are done with this
 				 * buf */
 	bp->b_resid = bp->b_bcount;
@@ -1645,7 +1643,6 @@ xdc_reset(struct xdc_softc *xdcsc, int quiet, int blastmode, int error,
 			switch (XD_STATE(iorq->mode)) {
 			case XD_SUB_NORM:
 			    iorq->buf->b_error = EIO;
-			    iorq->buf->b_flags |= B_ERROR;
 			    iorq->buf->b_resid =
 			       iorq->sectcnt * XDFM_BPS;
 				/* Sun3: map/unmap regardless of B_PHYS */
@@ -1844,7 +1841,6 @@ xdc_remove_iorq(struct xdc_softc *xdcsc)
 			bp = iorq->buf;
 			if (errs) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = iorq->sectcnt * XDFM_BPS;
 			} else {
 				bp->b_resid = 0;	/* done */

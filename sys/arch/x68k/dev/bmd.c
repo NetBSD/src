@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.8 2007/03/11 08:09:23 isaki Exp $	*/
+/*	$NetBSD: bmd.c,v 1.9 2007/07/29 12:15:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.8 2007/03/11 08:09:23 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.9 2007/07/29 12:15:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,13 +260,13 @@ bmdstrategy(struct buf *bp)
 
 	if (unit >= bmd_cd.cd_ndevs) {
 		bp->b_error = ENXIO;
-		goto bad;
+		goto done;
 	}
 
 	sc = bmd_cd.cd_devs[unit];
 	if (sc == NULL) {
 		bp->b_error = ENXIO;
-		goto bad;
+		goto done;
 	}
 
 	DPRINTF(("bmdstrategy: %s blkno %d bcount %ld:",
@@ -281,7 +281,7 @@ bmdstrategy(struct buf *bp)
 		if (bp->b_flags & B_READ)
 			goto done;
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	resid = bp->b_resid;
@@ -318,11 +318,6 @@ bmdstrategy(struct buf *bp)
 
  done:
 	biodone(bp);
-	return;
-
- bad:
-	bp->b_flags |= B_ERROR;
-	goto done;
 }
 
 int

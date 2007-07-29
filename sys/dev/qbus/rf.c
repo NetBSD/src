@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.14 2007/03/08 23:56:45 he Exp $	*/
+/*	$NetBSD: rf.c,v 1.15 2007/07/29 12:15:44 ad Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.14 2007/03/08 23:56:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.15 2007/07/29 12:15:44 ad Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -565,7 +565,6 @@ rfstrategy(struct buf *buf)
 
 	i = DISKUNIT(buf->b_dev);
 	if (i >= rf_cd.cd_ndevs || (rf_sc = rf_cd.cd_devs[i]) == NULL) {
-		buf->b_flags |= B_ERROR;
 		buf->b_error = ENXIO;
 		biodone(buf);
 		return;
@@ -701,7 +700,7 @@ rfc_intr(void *intarg)
 				 * can only handle blocks that are a multiple
 				 * of the physical block size
 				 */
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			RFS_SETCMD(rf_sc->sc_state, (rfc_sc->sc_curbuf->b_flags
 			    & B_READ) != 0 ? RFS_RSEC : RFS_FBUF);
@@ -715,7 +714,7 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error reading secotr: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES) );
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			RFS_SETCMD(rf_sc->sc_state, RFS_EBUF);
 			break;
@@ -730,7 +729,7 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error writing secotr: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES) );
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			if (rfc_sc->sc_bytesleft > i) {
@@ -757,7 +756,7 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error while DMA: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES));
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			RFS_SETCMD(rf_sc->sc_state, RFS_WSEC);
 			break;
@@ -773,7 +772,7 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error while DMA: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES));
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			if (rfc_sc->sc_bytesleft > i) {
@@ -799,7 +798,7 @@ rfc_intr(void *intarg)
 			panic("Impossible state in rfc_intr(1).\n");
 		}
 
-		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
+		if (rfc_sc->sc_curbuf->b_error != 0) {
 			/*
 			 * An error occurred while processing this buffer.
 			 * Finish it and try to get a new buffer to process.
@@ -828,7 +827,7 @@ rfc_intr(void *intarg)
 			if (i != 0) {
 				printf("rfc_intr: Error loading dmamap: %d\n",
 				i);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -840,7 +839,7 @@ rfc_intr(void *intarg)
 			    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
 			    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 1);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				bus_dmamap_unload(rfc_sc->sc_dmat,
 				rfc_sc->sc_dmam);
 			}
@@ -853,7 +852,7 @@ rfc_intr(void *intarg)
 			if (i != 0) {
 				printf("rfc_intr: Error loading dmamap: %d\n",
 				    i);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -865,7 +864,7 @@ rfc_intr(void *intarg)
 			    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
 			    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 0);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				bus_dmamap_unload(rfc_sc->sc_dmat,
 				    rfc_sc->sc_dmam);
 			}
@@ -876,7 +875,7 @@ rfc_intr(void *intarg)
 			    ((rf_sc->sc_state & RFS_DENS) == 0
 			    ? RX2_BYTE_SD : RX2_BYTE_DD);
 			if (i > RX2_TRACKS * RX2_SECTORS) {
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -885,7 +884,7 @@ rfc_intr(void *intarg)
 			    | ((rf_sc->sc_state& RFS_DENS) == 0 ? 0 : RX2CS_DD),
 			    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 0);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			break;
 		case RFS_RSEC:	/* Read Sector */
@@ -894,7 +893,7 @@ rfc_intr(void *intarg)
 			    ((rf_sc->sc_state & RFS_DENS) == 0
 			    ? RX2_BYTE_SD : RX2_BYTE_DD);
 			if (i > RX2_TRACKS * RX2_SECTORS) {
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -903,7 +902,7 @@ rfc_intr(void *intarg)
 			    | ((rf_sc->sc_state& RFS_DENS) == 0 ? 0 : RX2CS_DD),
 			    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 1);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			break;
 		case RFS_NOTINIT: /* Device is not open */
@@ -917,7 +916,7 @@ rfc_intr(void *intarg)
 			panic("Impossible state in rfc_intr(2).\n");
 		}
 
-		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
+		if (rfc_sc->sc_curbuf->b_error != 0) {
 			/*
 			 * An error occurred while processing this buffer.
 			 * Finish it and try to get a new buffer to process.

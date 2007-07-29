@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.22 2007/03/06 14:15:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.23 2007/07/29 12:15:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,6 +232,7 @@ struct read_info	*rsp;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = rsp->chunk;
 		bp->b_data   = rsp->bufp;
+		bp->b_error  = 0;
 
 		/* Initiate read */
 		(*rsp->strat)(bp);
@@ -240,9 +241,8 @@ struct read_info	*rsp;
 		s = splbio();
 		while ((bp->b_flags & B_DONE) == 0)
 			tsleep((void *) bp, PRIBIO + 1, "ramd_norm_read", 0);
-		if (bp->b_flags & B_ERROR)
-			error = (bp->b_error ? bp->b_error : EIO);
 		splx(s);
+		error = bp->b_error;
 
 		/* Dot counter */
 		printf(".");
@@ -315,6 +315,7 @@ int			nbyte;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = min(rsp->chunk, nbyte);
 		bp->b_data   = buf;
+		bp->b_error  = 0;
 
 		/* Initiate read */
 		(*rsp->strat)(bp);
@@ -323,8 +324,7 @@ int			nbyte;
 		s = splbio();
 		while ((bp->b_flags & B_DONE) == 0)
 			tsleep((void *) bp, PRIBIO + 1, "ramd_norm_read", 0);
-		if (bp->b_flags & B_ERROR)
-			error = (bp->b_error ? bp->b_error : EIO);
+		error = bp->b_error;
 		splx(s);
 
 		/* Dot counter */
