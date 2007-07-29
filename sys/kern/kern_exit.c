@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169.2.9 2007/07/15 15:52:54 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.169.2.10 2007/07/29 11:28:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.9 2007/07/15 15:52:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169.2.10 2007/07/29 11:28:08 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -692,11 +692,8 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 		*was_zombie = 1;
 		if (options & WNOWAIT)
 			mutex_exit(&proclist_lock);
-		else {
-			KERNEL_LOCK(1, l);		/* XXXSMP */
+		else
 			proc_free(child, ru);
-			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
-		}
 	} else {
 		/* Child state must have been SSTOP. */
 		*was_zombie = 0;
