@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.5 2007/07/29 20:15:20 rumble Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.6 2007/07/29 20:58:10 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.5 2007/07/29 20:15:20 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6 2007/07/29 20:58:10 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,9 +317,9 @@ efs_readdir(void *v)
 
 	if (ap->a_ncookies != NULL) {
 		ncookies = 0;
-		maxcookies = uio->uio_resid / 16;
+		maxcookies =
+		    uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(maxcookies * sizeof(off_t), M_TEMP, M_WAITOK);
-		*ap->a_cookies = cookies;
  	}
 
 	offset = 0;
