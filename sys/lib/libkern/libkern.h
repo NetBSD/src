@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.69 2007/04/09 17:39:37 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.70 2007/07/29 11:46:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -285,8 +285,7 @@ int	 ffs __P((int));
 #define	ffs(x)		__builtin_ffs(x)
 #endif
 
-void	 __assert __P((const char *, const char *, int, const char *))
-	    __attribute__((__noreturn__));
+void	 __assert __P((const char *, const char *, int, const char *));
 unsigned int
 	bcdtobin __P((unsigned int));
 unsigned int
