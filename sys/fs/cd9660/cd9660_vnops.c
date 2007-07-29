@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.26 2007/03/04 06:02:59 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.27 2007/07/29 13:31:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26 2007/03/04 06:02:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.27 2007/07/29 13:31:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,6 @@ cd9660_strategy(v)
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return (error);
 		}

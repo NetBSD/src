@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.84 2007/07/21 19:21:55 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.85 2007/07/29 13:31:17 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.84 2007/07/21 19:21:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.85 2007/07/29 13:31:17 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -250,10 +250,8 @@ uvm_aio_biodone1(struct buf *bp)
 	struct buf *mbp = bp->b_private;
 
 	KASSERT(mbp != bp);
-	if (bp->b_flags & B_ERROR) {
-		mbp->b_flags |= B_ERROR;
+	if (bp->b_error != 0)
 		mbp->b_error = bp->b_error;
-	}
 	mbp->b_resid -= bp->b_bcount;
 	putiobuf(bp);
 	if (mbp->b_resid == 0) {
@@ -294,7 +292,7 @@ uvm_aio_aiodone(struct buf *bp)
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
-	error = (bp->b_flags & B_ERROR) ? (bp->b_error ? bp->b_error : EIO) : 0;
+	error = bp->b_error;
 	write = (bp->b_flags & B_READ) == 0;
 	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
 	if (write && !(bp->b_flags & B_NOCACHE) && bioops.io_pageiodone) {

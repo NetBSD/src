@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.11 2007/07/29 12:15:37 ad Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.12 2007/07/29 13:31:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.11 2007/07/29 12:15:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.12 2007/07/29 13:31:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -872,7 +872,6 @@ mmemdone(struct mmem_softc *sc, struct mmem_pt *pt, int err)
 		/* raise error if no block is read */
 		if (bcnt == 0) {
 			bp->b_error = err;
-			bp->b_flags |= B_ERROR;
 		}
 		goto term_xfer;
 	}

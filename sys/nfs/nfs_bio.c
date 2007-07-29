@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.163 2007/07/27 10:00:43 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.164 2007/07/29 13:31:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.163 2007/07/27 10:00:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.164 2007/07/29 13:31:12 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -930,7 +930,6 @@ nfs_doio_read(bp, uiop)
 		break;
 	}
 	if (error) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 	}
 	return error;
@@ -1072,7 +1071,6 @@ again:
 			goto again;
 		}
 		if (error) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = np->n_error = error;
 			np->n_flag |= NWRITEERR;
 		}
@@ -1136,7 +1134,6 @@ again:
 		/*
 		 * we got an error.
 		 */
-		bp->b_flags |= B_ERROR;
 		bp->b_error = np->n_error = error;
 		np->n_flag |= NWRITEERR;
 	}
@@ -1180,7 +1177,6 @@ nfs_doio_phys(bp, uiop)
 		}
 	}
 	if (error) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 	}
 	return error;
