@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.174 2007/07/29 12:15:45 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.175 2007/07/29 13:53:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.174 2007/07/29 12:15:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.175 2007/07/29 13:53:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1349,12 +1349,7 @@ biowait(struct buf *bp)
 	simple_lock(&bp->b_interlock);
 	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))
 		ltsleep(bp, PRIBIO + 1, "biowait", 0, &bp->b_interlock);
-
-	/* check errors. */
-	if (ISSET(bp->b_flags, B_ERROR) && bp->b_error == 0)
-		bp->b_error = EIO;
 	error = bp->b_error;
-
 	simple_unlock(&bp->b_interlock);
 	splx(s);
 	return (error);
