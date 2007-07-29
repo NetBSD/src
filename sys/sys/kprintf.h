@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.7 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.8 2007/07/29 09:38:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -45,6 +45,9 @@
  * allows other subsystems to implement precisely the printf semantics
  * they need.
  */
+
+/* max size buffer kprintf needs to print quad_t [size in base 8 + \0] */
+#define KPRINTF_BUFSIZE         (sizeof(quad_t) * NBBY / 3 + 2)
 
 #if defined(MULTIPROCESSOR)
 
