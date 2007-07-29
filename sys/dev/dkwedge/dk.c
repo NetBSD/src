@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.27 2007/07/21 19:51:47 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.28 2007/07/29 12:50:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.27 2007/07/21 19:51:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.28 2007/07/29 12:50:20 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -999,7 +999,6 @@ dkstrategy(struct buf *bp)
 
 	if (sc->sc_state != DKW_STATE_RUNNING) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 
@@ -1048,7 +1047,6 @@ dkstart(struct dkwedge_softc *sc)
 				wakeup(&sc->sc_iopend);
 			}
 			bp->b_error = ENXIO;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 		}
@@ -1100,10 +1098,8 @@ dkiodone(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
 
-	if (bp->b_flags & B_ERROR) {
-		obp->b_flags |= B_ERROR;
+	if (bp->b_error != 0)
 		obp->b_error = bp->b_error;
-	}
 	obp->b_resid = bp->b_resid;
 	putiobuf(bp);
 

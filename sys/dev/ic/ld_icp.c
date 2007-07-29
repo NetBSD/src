@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.16 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.17 2007/07/29 12:50:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.16 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.17 2007/07/29 12:50:20 ad Exp $");
 
 #include "rnd.h"
 
@@ -316,7 +316,6 @@ ld_icp_intr(struct icp_ccb *ic)
 	if (ic->ic_status != ICP_S_OK) {
 		printf("%s: request failed; status=0x%04x\n",
 		    ic->ic_dv->dv_xname, ic->ic_status);
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.76 2007/07/09 21:00:50 ad Exp $	*/
+/*	$NetBSD: wt.c,v 1.77 2007/07/29 12:50:21 ad Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.76 2007/07/09 21:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.77 2007/07/29 12:50:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,7 +648,6 @@ wtstrategy(struct buf *bp)
 
 	if (sc->flags & TPEXCEP) {
 errxit:
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 	}
 xit:

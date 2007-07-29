@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.15 2007/06/05 04:04:14 briggs Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.16 2007/07/29 12:50:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.15 2007/06/05 04:04:14 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.16 2007/07/29 12:50:20 ad Exp $");
 
 #include "rnd.h"
 
@@ -330,7 +330,6 @@ ld_aac_intr(struct aac_ccb *ac)
 	aac_ccb_free(aac, ac);
 
 	if (status != ST_OK) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 

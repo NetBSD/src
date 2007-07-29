@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.49 2007/07/15 08:40:22 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.50 2007/07/29 12:50:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.49 2007/07/15 08:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.50 2007/07/29 12:50:18 ad Exp $");
 
 #include "opt_md.h"
 
@@ -319,7 +319,6 @@ mdstrategy(struct buf *bp)
 
 	if (sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 
@@ -359,7 +358,6 @@ mdstrategy(struct buf *bp)
 		bp->b_resid = bp->b_bcount;
 	set_eio:
 		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
 		break;
 	}
  done:
@@ -508,7 +506,6 @@ md_server_loop(struct md_softc *sc)
 	done:
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 		}
 		biodone(bp);
 	}
