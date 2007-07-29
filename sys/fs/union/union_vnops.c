@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.20 2007/04/16 05:14:54 chs Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.21 2007/07/29 13:12:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.20 2007/04/16 05:14:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.21 2007/07/29 13:12:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1112,7 +1112,7 @@ union_mmap(v)
 {
 	struct vop_mmap_args /* {
 		struct vnode *a_vp;
-		int  a_fflags;
+		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
