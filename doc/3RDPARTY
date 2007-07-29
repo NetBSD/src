@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.542 2007/07/25 09:07:27 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.543 2007/07/29 16:43:59 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -449,6 +449,18 @@ for importation.  Run ./configure before hand to generate "defines.h".
 Talk to mrg before importing any new version.  (less 381's configure
 does not detect NetBSD has a sigset_t due to a bad test; this is fixed
 by hand in defines.h.)
+
+Package:	libarchive
+Version:	2.2.5
+Current Ves.:	2.2.5
+Maintainer:	kientzle@freebsd.org
+Archive Site:	http://people.freebsd.org/~kientzle/libarchive/
+Home Page: 	http://people.freebsd.org/~kientzle/libarchive/
+Responsible:	joerg
+License:	BSD
+Notes:
+Distribution is stripped down to the relevant part. cpio is currently
+not usable, so it was left out.
 
 Package:	libcdk
 Version:	4.9.9-20000407-myc3
