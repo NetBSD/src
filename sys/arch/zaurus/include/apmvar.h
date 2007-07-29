@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.1 2007/07/29 14:31:24 nonaka Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,55 +32,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef __ZAURUS_APMVAR_H__
+#define __ZAURUS_APMVAR_H__
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2007/07/29 14:31:24 nonaka Exp $");
+#include <dev/apm/apmbios.h>
+#include <dev/apm/apmio.h>
 
-#include "opt_md.h"
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/reboot.h>
-#include <sys/disklabel.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-
-#include <machine/intr.h>
-#include <machine/bootconfig.h>
-#include <machine/config_hook.h>
-
-void
-cpu_rootconf(void)
-{
-
-	aprint_normal("boot device: %s\n",
-	    (booted_device != NULL) ? booted_device->dv_xname : "<unknown>");
-	setroot(booted_device, booted_partition);
-}
-
-void
-cpu_configure(void)
-{
-
-	splhigh();
-	splserial();
-
-	softintr_init();
-
-	config_hook_init();
-
-	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("no mainbus found");
-
-	/* Configuration is finished, turn on interrupts. */
-	spl0();
-}
-
-void
-device_register(struct device *dev, void *aux)
-{
-
-	/* Nothing to do */
-}
+#endif /* __ZAURUS_APMVAR_H__ */
