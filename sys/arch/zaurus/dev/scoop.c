@@ -1,4 +1,4 @@
-/*	$NetBSD: scoop.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: scoop.c,v 1.3 2007/07/29 14:29:38 nonaka Exp $	*/
 /*	$OpenBSD: zaurus_scoop.c,v 1.12 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scoop.c,v 1.3 2007/07/29 14:29:38 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,13 @@ static int	scoop_gpio_pin_read(struct scoop_softc *sc, int);
 #endif
 static void	scoop_gpio_pin_write(struct scoop_softc *sc, int, int);
 static void	scoop_gpio_pin_ctl(struct scoop_softc *sc, int, int);
+
+enum scoop_card {
+	SD_CARD,
+	CF_CARD		/* socket 0 (external) */
+};
+
+static void	scoop0_set_card_power(enum scoop_card card, int new_cpr);
 
 static int
 scoopmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -280,37 +287,58 @@ scoop_discharge_battery(int enable)
 	}
 }
 
+/*
+ * Enable or disable 3.3V power to the SD/MMC card slot.
+ */
 void
-scoop_set_sd_power(int enable)
+scoop_set_sdmmc_power(int on)
+{
+
+	scoop0_set_card_power(SD_CARD, on ? SCP_CPR_SD_3V : SCP_CPR_OFF);
+}
+
+/*
+ * The Card Power Register of the first SCOOP unit controls the power
+ * for the first CompactFlash slot and the SD/MMC card slot as well.
+ */
+void
+scoop0_set_card_power(enum scoop_card card, int new_cpr)
 {
 	struct scoop_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	uint16_t v;
+	uint16_t cpr;
 
-	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL) {
-		sc = scoop_cd.cd_devs[0];
-		iot = sc->sc_iot;
-		ioh = sc->sc_ioh;
+	if (scoop_cd.cd_ndevs <= 0 || scoop_cd.cd_devs[0] == NULL)
+		return;
 
-		if (enable) {
-			v = bus_space_read_2(iot, ioh, SCOOP_GPWR);
-			v |= (1 << SCOOP0_CF_POWER_C3000);
-			bus_space_write_2(iot, ioh, SCOOP_GPWR, v);
+	sc = scoop_cd.cd_devs[0];
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 
-			v = bus_space_read_2(iot, ioh, SCOOP_CPR);
-			v |= (1 << SCP_CPR_SD);
-			bus_space_write_2(iot, ioh, SCOOP_CPR, v);
-		} else {
-			v = bus_space_read_2(iot, ioh, SCOOP_CPR);
-			v &= ~(1 << SCP_CPR_SD);
-			bus_space_write_2(iot, ioh, SCOOP_CPR, v);
-#if 0	/* XXX */
-			v = bus_space_read_2(iot, ioh, SCOOP_GPWR);
-			v &= ~(1 << SCOOP0_CF_POWER_C3000);
-			bus_space_write_2(iot, ioh, SCOOP_GPWR, v);
-#endif	/* XXX */
-		}
+	cpr = bus_space_read_2(iot, ioh, SCOOP_CPR);
+	if (new_cpr & SCP_CPR_VOLTAGE_MSK) {
+		if (card == CF_CARD)
+			cpr |= SCP_CPR_5V;
+		else if (card == SD_CARD)
+			cpr |= SCP_CPR_SD_3V;
+
+		scoop_gpio_pin_write(sc, SCOOP0_CF_POWER_C3000, 1);
+		if (!ISSET(cpr, SCP_CPR_5V) && !ISSET(cpr, SCP_CPR_SD_3V))
+			delay(5000);
+		bus_space_write_2(iot, ioh, SCOOP_CPR, cpr | new_cpr);
+	} else {
+		if (card == CF_CARD)
+			cpr &= ~SCP_CPR_5V;
+		else if (card == SD_CARD)
+			cpr &= ~SCP_CPR_SD_3V;
+
+		if (!ISSET(cpr, SCP_CPR_5V) && !ISSET(cpr, SCP_CPR_SD_3V)) {
+			bus_space_write_2(iot, ioh, SCOOP_CPR, SCP_CPR_OFF);
+			delay(1000);
+			scoop_gpio_pin_write(sc, SCOOP0_CF_POWER_C3000, 0);
+		} else
+			bus_space_write_2(iot, ioh, SCOOP_CPR, cpr | new_cpr);
 	}
 }
 
