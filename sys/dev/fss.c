@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.33 2007/07/09 21:00:28 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.34 2007/07/29 12:50:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.33 2007/07/09 21:00:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.34 2007/07/29 12:50:18 ad Exp $");
 
 #include "fss.h"
 
@@ -236,7 +236,6 @@ fss_strategy(struct buf *bp)
 		FSS_UNLOCK(sc, s);
 
 		bp->b_error = (sc == NULL ? ENODEV : EROFS);
-		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
@@ -823,7 +822,7 @@ fss_cluster_iodone(struct buf *bp)
 
 	FSS_LOCK(scp->fc_softc, s);
 
-	if (bp->b_flags & B_ERROR)
+	if (bp->b_error != 0)
 		fss_error(scp->fc_softc, "fs read error %d", bp->b_error);
 
 	if (--scp->fc_xfercount == 0)
@@ -1084,7 +1083,6 @@ fss_bs_thread(void *arg)
 
 			if (error) {
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 			} else
 				bp->b_resid = 0;
@@ -1139,7 +1137,6 @@ fss_bs_thread(void *arg)
 
 		if (!FSS_ISVALID(sc)) {
 			bp->b_error = ENXIO;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			continue;
@@ -1169,7 +1166,6 @@ fss_bs_thread(void *arg)
 		if (biowait(nbp) != 0) {
 			bp->b_resid = bp->b_bcount;
 			bp->b_error = nbp->b_error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			FSS_LOCK(sc, s);
 			continue;
@@ -1227,7 +1223,6 @@ fss_bs_thread(void *arg)
 			    off, len, addr)) != 0) {
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				FSS_LOCK(sc, s);
 				break;
 			}

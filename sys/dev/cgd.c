@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.45 2007/06/26 15:22:24 cube Exp $ */
+/* $NetBSD: cgd.c,v 1.46 2007/07/29 12:50:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.45 2007/06/26 15:22:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.46 2007/07/29 12:50:18 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -364,10 +364,8 @@ cgdiodone(struct buf *nbp)
 	DPRINTF(CGDB_IO, (" dev 0x%x, nbp %p bn %" PRId64 " addr %p bcnt %d\n",
 	    nbp->b_dev, nbp, nbp->b_blkno, nbp->b_data,
 	    nbp->b_bcount));
-	if (nbp->b_flags & B_ERROR) {
-		obp->b_flags |= B_ERROR;
-		obp->b_error  = nbp->b_error ? nbp->b_error : EIO;
-
+	if (nbp->b_error != 0) {
+		obp->b_error = nbp->b_error;
 		printf("%s: error %d\n", dksc->sc_xname, obp->b_error);
 	}
 
@@ -389,7 +387,7 @@ cgdiodone(struct buf *nbp)
 
 	/* Request is complete for whatever reason */
 	obp->b_resid = 0;
-	if (obp->b_flags & B_ERROR)
+	if (obp->b_error != 0)
 		obp->b_resid = obp->b_bcount;
 	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
 	    (obp->b_flags & B_READ));

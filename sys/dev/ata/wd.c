@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.341 2007/07/21 19:51:47 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.342 2007/07/29 12:50:19 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.341 2007/07/21 19:51:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.342 2007/07/29 12:50:19 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -522,13 +522,13 @@ wdstrategy(struct buf *bp)
 	    (bp->b_bcount % lp->d_secsize) != 0 ||
 	    (bp->b_bcount / lp->d_secsize) >= (1 << NBBY)) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((wd->sc_flags & WDF_LOADED) == 0) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -591,8 +591,6 @@ wdstrategy(struct buf *bp)
 	wdstart(wd);
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
@@ -632,7 +630,7 @@ wd_split_mod15_write(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	struct wd_softc *sc = wd_cd.cd_devs[DISKUNIT(obp->b_dev)];
 
-	if (__predict_false(bp->b_flags & B_ERROR) != 0) {
+	if (__predict_false(bp->b_error != 0)) {
 		/*
 		 * Propagate the error.  If this was the first half of
 		 * the original transfer, make sure to account for that
@@ -661,7 +659,6 @@ wd_split_mod15_write(struct buf *bp)
 	return;
 
  done:
-	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	putiobuf(bp);
@@ -693,7 +690,6 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		if (__predict_false(nbp == NULL)) {
 			/* No memory -- fail the iop. */
 			bp->b_error = ENOMEM;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			wd->openings++;
@@ -829,7 +825,6 @@ retry2:
 			wd->sc_bscount++;
 		}
 #endif
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
 	case NOERROR:
@@ -838,7 +833,6 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 			    wd->sc_dev.dv_xname);
 		break;
 	case ERR_NODEV:
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
 	}
@@ -2005,7 +1999,7 @@ wdioctlstrategy(struct buf *bp)
 		printf("wdioctlstrategy: "
 		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	memset(&ata_c, 0, sizeof(ata_c));
@@ -2017,7 +2011,7 @@ wdioctlstrategy(struct buf *bp)
 	if (bp->b_bcount != wi->wi_atareq.datalen) {
 		printf("physio split wd ioctl request... cannot proceed\n");
 		error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	/*
@@ -2029,7 +2023,7 @@ wdioctlstrategy(struct buf *bp)
 	    (bp->b_bcount / wi->wi_softc->sc_dk.dk_label->d_secsize) >=
 	     (1 << NBBY)) {
 		error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/*
@@ -2038,7 +2032,7 @@ wdioctlstrategy(struct buf *bp)
 
 	if (wi->wi_atareq.timeout == 0) {
 		error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	if (wi->wi_atareq.flags & ATACMD_READ)
@@ -2066,7 +2060,8 @@ wdioctlstrategy(struct buf *bp)
 	if (wi->wi_softc->atabus->ata_exec_command(wi->wi_softc->drvp, &ata_c)
 	    != ATACMD_COMPLETE) {
 		wi->wi_atareq.retsts = ATACMD_ERROR;
-		goto bad;
+		error = EIO;
+		goto done;
 	}
 
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
@@ -2089,11 +2084,7 @@ wdioctlstrategy(struct buf *bp)
 		}
 	}
 
-	bp->b_error = 0;
-	biodone(bp);
-	return;
-bad:
-	bp->b_flags |= B_ERROR;
+done:
 	bp->b_error = error;
 	biodone(bp);
 }

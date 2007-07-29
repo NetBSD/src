@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.197 2007/07/09 21:01:22 ad Exp $ */
+/*	$NetBSD: st.c,v 1.198 2007/07/29 12:50:23 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.197 2007/07/09 21:01:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.198 2007/07/29 12:50:23 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -1090,7 +1090,7 @@ ststrategy(struct buf *bp)
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/*
@@ -1101,7 +1101,7 @@ ststrategy(struct buf *bp)
 			printf("%s: bad request, must be multiple of %d\n",
 			    st->sc_dev.dv_xname, st->blksize);
 			bp->b_error = EIO;
-			goto bad;
+			goto done;
 		}
 	}
 	/*
@@ -1112,7 +1112,7 @@ ststrategy(struct buf *bp)
 		printf("%s: bad request, must be between %d and %d\n",
 		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	s = splbio();
 
@@ -1132,8 +1132,6 @@ ststrategy(struct buf *bp)
 
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
@@ -1188,7 +1186,6 @@ ststart(struct scsipi_periph *periph)
 			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
@@ -1221,7 +1218,6 @@ ststart(struct scsipi_periph *periph)
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
 						BUFQ_GET(st->buf_queue);
-						bp->b_flags |= B_ERROR;
 						bp->b_error = EIO;
 						biodone(bp);
 						continue;
@@ -1230,7 +1226,6 @@ ststart(struct scsipi_periph *periph)
 					BUFQ_GET(st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
-					bp->b_flags &= ~B_ERROR;
 					st->flags &= ~ST_AT_FILEMARK;
 					biodone(bp);
 					continue;	/* seek more work */
@@ -1244,10 +1239,8 @@ ststart(struct scsipi_periph *periph)
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
 			BUFQ_GET(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
-			if (st->flags & ST_EIO_PENDING) {
+			if (st->flags & ST_EIO_PENDING)
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
-			}
 			st->flags &= ~(ST_EOM_PENDING|ST_EIO_PENDING);
 			biodone(bp);
 			continue;	/* seek more work */
@@ -1333,8 +1326,6 @@ stdone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
-			bp->b_flags |= B_ERROR;
 
 		if ((bp->b_flags & B_READ) == B_WRITE)
 			st->flags |= ST_WRITTEN;

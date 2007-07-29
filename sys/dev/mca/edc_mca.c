@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.36 2007/07/09 21:00:51 ad Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.37 2007/07/29 12:50:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.36 2007/07/09 21:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.37 2007/07/29 12:50:21 ad Exp $");
 
 #include "rnd.h"
 
@@ -845,7 +845,6 @@ edcworker(void *arg)
 
 			if (error) {
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 			} else {
 				/* Set resid, most commonly to zero. */
 				bp->b_resid = sc->sc_resblk * DEV_BSIZE;

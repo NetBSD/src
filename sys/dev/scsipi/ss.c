@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.71 2007/07/09 21:01:22 ad Exp $	*/
+/*	$NetBSD: ss.c,v 1.72 2007/07/29 12:50:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.71 2007/07/09 21:01:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72 2007/07/29 12:50:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,7 +411,6 @@ ssstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if (!device_is_active(&ss->sc_dev)) {
-		bp->b_flags |= B_ERROR;
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
@@ -421,7 +420,6 @@ ssstrategy(struct buf *bp)
 
 	/* If negative offset, error */
 	if (bp->b_blkno < 0) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EINVAL;
 		goto done;
 	}
@@ -525,8 +523,6 @@ ssdone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
-			bp->b_flags |= B_ERROR;
 		biodone(bp);
 	}
 }

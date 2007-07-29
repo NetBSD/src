@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.20 2007/03/12 18:18:30 ad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.21 2007/07/29 12:50:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.20 2007/03/12 18:18:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.21 2007/07/29 12:50:19 ad Exp $");
 
 #include "rnd.h"
 
@@ -456,7 +456,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		/* You are alone */
 		other_cbp->cb_other = NULL;
 
-	if (cbp->cb_buf.b_flags & B_ERROR) {
+	if (cbp->cb_buf.b_error != 0) {
 		/*
 		 * Mark this component broken.
 		 */
@@ -471,14 +471,14 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		 * If we didn't see an error yet and we are reading
 		 * RAID1 disk, try another component.
 		 */
-		if ((bp->b_flags & B_ERROR) == 0 &&
+		if (bp->b_error == 0 &&
 		    (cbp->cb_buf.b_flags & B_READ) != 0 &&
 		    (aai->aai_level & AAI_L_RAID1) != 0 &&
 		    cbp->cb_comp < aai->aai_width) {
 			cbp->cb_comp += aai->aai_width;
 			adi = &aai->aai_disks[cbp->cb_comp];
 			if (adi->adi_status & ADI_S_ONLINE) {
-				cbp->cb_buf.b_flags &= ~B_ERROR;
+				cbp->cb_buf.b_error = 0;
 				VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 				goto out;
 			}
@@ -492,7 +492,6 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 			 */
 			;
 		else {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = cbp->cb_buf.b_error ?
 			    cbp->cb_buf.b_error : EIO;
 		}

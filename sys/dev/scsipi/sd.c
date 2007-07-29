@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.263 2007/07/21 19:51:48 ad Exp $	*/
+/*	$NetBSD: sd.c,v 1.264 2007/07/29 12:50:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.263 2007/07/21 19:51:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.264 2007/07/29 12:50:23 ad Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -672,7 +672,7 @@ sdstrategy(struct buf *bp)
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
-		goto bad;
+		goto done;
 	}
 
 	lp = sd->sc_dk.dk_label;
@@ -688,7 +688,7 @@ sdstrategy(struct buf *bp)
 	}
 	if (!sector_aligned || bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	/*
 	 * If it's a null transfer, return immediatly
@@ -745,8 +745,6 @@ sdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
@@ -809,7 +807,6 @@ sdstart(struct scsipi_periph *periph)
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
 			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
 				continue;
@@ -944,8 +941,7 @@ sddone(struct scsipi_xfer *xs, int error)
 		bp->b_resid = xs->resid;
 		if (error) {
 			/* on a read/write error bp->b_resid is zero, so fix */
-			bp->b_resid  =bp->b_bcount;
-			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 		}
 
 		disk_unbusy(&sd->sc_dk, bp->b_bcount - bp->b_resid,
