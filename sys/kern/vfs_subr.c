@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.293 2007/07/28 08:19:36 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.294 2007/07/29 10:00:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.293 2007/07/28 08:19:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.294 2007/07/29 10:00:15 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1856,9 +1856,8 @@ vprint(const char *label, struct vnode *vp)
 	    "refcount %ld,", ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf));
-	if (bf[0] != '\0')
-		printf(" flags (%s)", &bf[1]);
+	printf(" flags (%s)",
+	    bitmask_snprintf(vp->v_flag, vnode_flagbits, bf, sizeof(bf)));
 	if (vp->v_data == NULL) {
 		printf("\n");
 	} else {
