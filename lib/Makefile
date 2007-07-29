@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.116 2007/05/30 01:13:14 tls Exp $
+#	$NetBSD: Makefile,v 1.117 2007/07/29 17:06:00 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -55,6 +55,8 @@ SUBDIR+=	i18n_module
 #
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+SUBDIR+=	libarchive	# depends on libbz2 and libz
 
 SUBDIR+=	libedit		# depends on libterm
 
