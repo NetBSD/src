@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.27 2007/07/21 19:06:21 ad Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.28 2007/07/29 12:50:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.27 2007/07/21 19:06:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.28 2007/07/29 12:50:22 ad Exp $");
 
 #include "rnd.h"
 
@@ -264,7 +264,6 @@ ld_twe_handler(struct twe_ccb *ccb, int error)
 	twe_ccb_free(twe, ccb);
 
 	if (error) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 		bp->b_resid = bp->b_bcount;
 	} else

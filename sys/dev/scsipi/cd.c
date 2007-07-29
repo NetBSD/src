@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.266 2007/07/21 19:51:48 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.267 2007/07/29 12:50:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.266 2007/07/21 19:51:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.267 2007/07/29 12:50:22 ad Exp $");
 
 #include "rnd.h"
 
@@ -580,7 +580,7 @@ cdstrategy(struct buf *bp)
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
-		goto bad;
+		goto done;
 	}
 
 	lp = cd->sc_dk.dk_label;
@@ -592,7 +592,7 @@ cdstrategy(struct buf *bp)
 	if ((bp->b_bcount % lp->d_secsize) != 0 ||
 	    bp->b_blkno < 0 ) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	/*
 	 * If it's a null transfer, return immediately
@@ -644,7 +644,7 @@ cdstrategy(struct buf *bp)
 
 				/* XXXX We don't support bouncing writes. */
 				bp->b_error = EACCES;
-				goto bad;
+				goto done;
 			}
 			count = ((blkno * lp->d_secsize) % cd->params.blksize);
 			/* XXX Store starting offset in bp->b_rawblkno */
@@ -658,14 +658,14 @@ cdstrategy(struct buf *bp)
 			if (!nbp) {
 				/* No memory -- fail the iop. */
 				bp->b_error = ENOMEM;
-				goto bad;
+				goto done;
 			}
 			bounce = malloc(count, M_DEVBUF, M_NOWAIT);
 			if (!bounce) {
 				/* No memory -- fail the iop. */
 				putiobuf(nbp);
 				bp->b_error = ENOMEM;
-				goto bad;
+				goto done;
 			}
 
 			/* Set up the IOP to the bounce buffer. */
@@ -715,8 +715,6 @@ cdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
@@ -777,7 +775,6 @@ cdstart(struct scsipi_periph *periph)
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
 			if ((bp = BUFQ_GET(cd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
 				continue;
@@ -894,7 +891,6 @@ cddone(struct scsipi_xfer *xs, int error)
 		if (error) {
 			/* on a read/write error bp->b_resid is zero, so fix */
 			bp->b_resid = bp->b_bcount;
-			bp->b_flags |= B_ERROR;
 		}
 
 		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
@@ -912,7 +908,7 @@ cdbounce(struct buf *bp)
 {
 	struct buf *obp = (struct buf *)bp->b_private;
 
-	if (bp->b_flags & B_ERROR) {
+	if (bp->b_error != 0) {
 		/* EEK propagate the error and free the memory */
 		goto done;
 	}
@@ -938,7 +934,6 @@ cdbounce(struct buf *bp)
 			nbp = getiobuf_nowait();
 			if (!nbp) {
 				/* No buf available. */
-				bp->b_flags |= B_ERROR;
 				bp->b_error = ENOMEM;
 				bp->b_resid = bp->b_bcount;
 				goto done;
@@ -985,7 +980,6 @@ cdbounce(struct buf *bp)
 		}
 	}
 done:
-	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	free(bp->b_data, M_DEVBUF);
