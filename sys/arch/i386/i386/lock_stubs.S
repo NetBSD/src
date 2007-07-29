@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.8.1 2007/05/27 12:27:30 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.2 2007/07/29 10:18:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,10 +57,6 @@
 #include <machine/cputypes.h>
 
 #include "assym.h"
-
-#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define	FULL
-#endif
 
 #if defined(I386_CPU)
 #define	STUB(name, alternate)					\
@@ -206,22 +202,20 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
 	ALIGN64
 
 STUB(mutex_spin_enter, mutex_vector_enter)	/* 0x00c0, 51 bytes */
-	movl	CPUVAR(SELF150), %eax
-	movl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
-	subl	$1, (CPU_INFO_MTX_COUNT-0x150)(%eax)/* decl does not set CF */
+	movl	CPUVAR(SELF), %eax
+	movl	CPU_INFO_ILEVEL(%eax), %ecx
+	subl	$1, CPU_INFO_MTX_COUNT(%eax)	/* decl does not set CF */
 	jnc	1f
-	movl	%ecx, (CPU_INFO_MTX_OLDSPL-0x150)(%eax)
+	movl	%ecx, CPU_INFO_MTX_OLDSPL(%eax)
 1:	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
 	jg,pn	2f
-	movb	%ch, (CPU_INFO_ILEVEL-0x150)(%eax)/* splraiseipl() */
+	movb	%ch, CPU_INFO_ILEVEL(%eax)	/* splraiseipl() */
 2:
-#if defined(FULL)
 	mov	$0x0100, %eax			/* new + expected value */
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
 	jnz,pn	_C_LABEL(mutex_spin_retry)
-#endif
 	ret
 
 	ALIGN64
@@ -235,25 +229,21 @@ LABEL(mutex_spin_enter_end)
 	ALIGN64
 
 STUB(mutex_spin_exit, mutex_vector_exit)	/* 0x0100, 50 bytes */
-#if defined(DIAGNOSTIC)
 	movl	$0x0001, %eax			/* new + expected value */
 	cmpxchgb %ah, MTX_LOCK(%edx)
 	jnz,pn	_C_LABEL(mutex_vector_exit)
-#elif defined(MULTIPROCESSOR)
-	movb	$0x00,MTX_LOCK(%edx)
-#endif
-	movl	CPUVAR(SELF150), %eax
-	movl	(CPU_INFO_MTX_OLDSPL-0x150)(%eax), %ecx
-	incl	(CPU_INFO_MTX_COUNT-0x150)(%eax)
+	movl	CPUVAR(SELF), %eax
+	movl	CPU_INFO_MTX_OLDSPL(%eax), %ecx
+	incl	CPU_INFO_MTX_COUNT(%eax)
 	jnz	1f
-	cmpl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
+	cmpl	CPU_INFO_ILEVEL(%eax), %ecx
 	movl    %ecx, 4(%esp)
 	jae	1f
-	movl	(CPU_INFO_IUNMASK-0x150)(%eax,%ecx,4), %edx
+	movl	CPU_INFO_IUNMASK(%eax,%ecx,4), %edx
 	cli
-	testl	(CPU_INFO_IPENDING-0x150)(%eax), %edx
+	testl	CPU_INFO_IPENDING(%eax), %edx
 	jnz	_C_LABEL(Xspllower)		/* does sti */
-	movl	%ecx, (CPU_INFO_ILEVEL-0x150)(%eax)
+	movl	%ecx, CPU_INFO_ILEVEL(%eax)
 	sti
 1:	ret
 
@@ -268,30 +258,29 @@ LABEL(mutex_spin_exit_end)
  */
 	ALIGN64
 
-ENTRY(i686_mutex_spin_exit)			/* 64 bytes */
+ENTRY(i686_mutex_spin_exit)
 	mov	4(%esp),%edx
-	xorl	%eax,%eax
 	pushl	%edi
 	fs
-	movl	(CPU_INFO_SELF150)(%eax), %edi	/* now splx() */
+	movl	CPUVAR(SELF), %edi		/* now splx() */
 	pushl	%ebx
-	movl	(CPU_INFO_MTX_OLDSPL-0x150)(%edi), %ecx
-	incl	(CPU_INFO_MTX_COUNT-0x150)(%edi)
-	movb	%al, MTX_LOCK(%edx)		/* zero */
-	movl	(CPU_INFO_ILEVEL-0x150)(%edi), %edx
+	movl	CPU_INFO_MTX_OLDSPL(%edi), %ecx
+	incl	CPU_INFO_MTX_COUNT(%edi)
+	movb	$0, MTX_LOCK(%edx)		/* zero */
+	movl	CPU_INFO_ILEVEL(%edi), %edx
 	jnz	1f
 	cmpl	%edx, %ecx			/* new level is lower? */
 	jae,pn	1f
 0:
-	movl	(CPU_INFO_IPENDING-0x150)(%edi), %eax
-	testl	%eax,(CPU_INFO_IUNMASK-0x150)(%edi,%ecx,4)
+	movl	CPU_INFO_IPENDING(%edi), %eax
+	testl	%eax,CPU_INFO_IUNMASK(%edi,%ecx,4)
 	movl	%eax, %ebx
 	/*
 	 * On a P4 this jump is cheaper than patching in junk using
 	 * cmovnz.  Is cmpxchg expensive if it fails?
 	 */
 	jnz,pn	2f
-	cmpxchg8b (CPU_INFO_ISTATE-0x150)(%edi)	/* swap in new ilevel */
+	cmpxchg8b CPU_INFO_ISTATE(%edi)		/* swap in new ilevel */
 	jnz,pn	0b
 1:
 	popl	%ebx

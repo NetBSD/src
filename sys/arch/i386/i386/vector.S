@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.6.1 2007/06/17 21:30:39 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.6.2 2007/07/29 10:18:50 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -72,7 +72,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_multiprocessor.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 
@@ -92,9 +91,6 @@
 
 #include "npx.h"
 #include "assym.h"
-
-#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX */
-
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -147,7 +143,9 @@
 	orl	%edx,%eax
 
 #if NLAPIC > 0
-#ifdef MULTIPROCESSOR
+/*
+ * General purpose IPI handler.
+ */
 IDTVEC(recurse_lapic_ipi)
 	pushfl
 	pushl	%cs
@@ -177,6 +175,134 @@ IDTVEC(resume_lapic_ipi)
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
 	INTRFASTEXIT
 
+/*
+ * Multicast TLB shootdown handler for !kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_mcast)
+	/*
+	 * Save state, ack interrupt and count it.  Count locally
+	 * so other CPUs don't have to touch the counter's line.
+	 */
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ds
+	pushl	%fs
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	$GSEL(GCPU_SEL, SEL_KPL), %edx
+	movl	%eax, %ds
+	movl	%edx, %fs
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	addl	$1,CPUVAR(TLB_EVCNT)+EV_COUNT
+	adcl	$0,CPUVAR(TLB_EVCNT)+EV_COUNT+4
+	/*
+	 * Find out what we need to invalidate, clear the mailbox
+	 * lock and notify the waiter of completion.  The 'xchgl'
+	 * below provides a load fence.
+	 */
+	movl	CPUVAR(PMAP_CPU),%ecx
+	movl	MB_ADDR1(%ecx), %eax
+	movl	MB_ADDR2(%ecx), %edx
+	xorl	%ebx, %ebx
+	xchgl	MB_POINTER(%ecx), %ebx
+	lock
+	incl	(%ebx)
+	cmpl	$-1, %eax
+	je	4f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%eax)
+	addl	$PAGE_SIZE, %eax
+	cmpl	%edx, %eax
+	jb	1b
+2:
+	/*
+	 * Check the current TLB state.  If we don't want further
+	 * invalidations for this pmap, then take the CPU out of
+	 * the pmap's bitmask.
+	 */
+	cmpl	$TLBSTATE_LAZY,CPUVAR(TLBSTATE)
+	jne	3f
+	movl	CPUVAR(PMAP),%edx
+	movl	CPUVAR(CPUID),%ecx
+	lock
+	btrl	%ecx, PM_CPUS(%edx)
+	movl	$TLBSTATE_STALE,CPUVAR(TLBSTATE)
+3:
+	/* Restore state and return. */
+	popl	%fs
+	popl	%ds
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
+	iret
+4:
+	/* Invalidate all user pages. */
+	movl	%cr3,%eax
+	movl	%eax,%cr3
+	jmp	2b
+
+/*
+ * Broadcast TLB shootdown handler for kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_bcast)
+	/* Save state and ack the interrupt. */
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ds
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	%eax, %ds
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	/*
+	 * Find out what we need to invalidate and notify the waiter
+	 * of completion.  If this is the last CPU to process the 
+	 * IPI, the mailbox becomes unlocked.  The 'lock' prefix below
+	 * provides a load fence.
+	 */
+	movl	$_C_LABEL(pmap_mbox),%ecx
+	movl	MB_ADDR1(%ecx), %eax
+	movl	MB_ADDR2(%ecx), %edx
+	movl	MB_GLOBAL(%ecx), %ebx
+	lock
+	incl	MB_TAIL(%ecx)
+	cmpl	$-1, %eax
+	je,pn	3f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%eax)
+	addl	$PAGE_SIZE, %eax
+	cmpl	%edx, %eax
+	jb	1b
+2:
+	/* Restore state & return */
+	popl	%ds
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
+	iret
+3:
+	testl	%ebx, %ebx
+	jz	4f
+	/*
+	 * If the CPU understands global pages and we have been asked
+	 * to invalidate the entire TLB we arrive here.
+	 */
+	movl	%cr4,%eax
+	leal	-CR4_PGE(%eax),%edx
+	movl	%edx,%cr4
+	movl	%eax,%cr4
+	jmp	2b
+4:
+	/* Invalidate user TLB entries. */
+	movl	%cr3,%eax
+	movl	%eax,%cr3
+	jmp	2b
+
 #if defined(DDB)
 IDTVEC(intrddbipi)
 1:
@@ -194,7 +320,6 @@ IDTVEC(intrddbipi)
 	iret
 	jmp	1b
 #endif /* DDB */
-#endif /* MULTIPROCESSOR */
 	
 	/*
 	 * Interrupt from the local APIC timer.

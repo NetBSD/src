@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.4.3 2007/07/07 11:56:10 ad Exp $
+#	$NetBSD: genassym.cf,v 1.48.4.4 2007/07/29 10:18:48 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -280,15 +280,20 @@ define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
 
-define	CPU_INFO_SELF150	offsetof(struct cpu_info, ci_self150)
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
+define	CPU_INFO_PMAP_CPU	offsetof(struct cpu_info, ci_pmap_cpu)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
+define	TLBSTATE_LAZY		TLBSTATE_LAZY
+define	TLBSTATE_STALE		TLBSTATE_STALE
+define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
+define	CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
@@ -379,3 +384,14 @@ define	RW_HAS_WAITERS		RW_HAS_WAITERS
 define	RW_THREAD		RW_THREAD
 define	RW_READER		RW_READER
 define	RW_WRITER		RW_WRITER
+
+define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
+define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)
+define	MB_ADDR1		offsetof(struct pmap_mbox, mb_addr1)
+define	MB_ADDR2		offsetof(struct pmap_mbox, mb_addr2)
+define	MB_HEAD			offsetof(struct pmap_mbox, mb_head)
+define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
+
+define	PM_CPUS			offsetof(struct pmap, pm_cpus)
+
+define	EV_COUNT		offsetof(struct evcnt, ev_count)

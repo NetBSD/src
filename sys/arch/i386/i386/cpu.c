@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.35.2.5 2007/07/14 22:09:28 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.35.2.6 2007/07/29 10:18:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.5 2007/07/14 22:09:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.6 2007/07/29 10:18:48 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -144,7 +144,6 @@ struct tlog tlog_primary;
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
-	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
 	.ci_idepth = -1,
 #ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
@@ -188,6 +187,7 @@ cpu_init_first()
 		cpu_info[cpunum] = &cpu_info_primary;
 	}
 
+	cpu_info_primary.ci_cpuid = cpunum;
 	cpu_copy_trampoline();
 }
 #endif
@@ -280,7 +280,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ci->ci_self = ci;
-	ci->ci_self150 = (uint8_t *)ci + 0x150;
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
@@ -322,6 +321,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
 		break;
 
 	case CPU_ROLE_BP:
@@ -331,7 +331,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
-
+		pmap_cpu_init_late(ci);
 #if NLAPIC > 0
 		/*
 		 * Enable local apic
@@ -354,6 +354,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_early(ci);
+		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			identifycpu(ci);
@@ -461,6 +463,8 @@ cpu_init(ci)
 
 
 #ifdef MULTIPROCESSOR
+bool x86_mp_online;
+
 void
 cpu_boot_secondary_processors()
 {
@@ -479,6 +483,8 @@ cpu_boot_secondary_processors()
 			continue;
 		cpu_boot_secondary(ci);
 	}
+
+	x86_mp_online = true;
 }
 
 static void
@@ -519,8 +525,6 @@ cpu_start_secondary(ci)
 	mp_pdirpa = kpm->pm_pdirpa; /* XXX move elsewhere, not per CPU. */
 
 	ci->ci_flags |= CPUF_AP;
-	pmap_cpu_init_early(ci);
-	pmap_cpu_init_late(ci);
 
 	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 

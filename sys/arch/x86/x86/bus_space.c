@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8 2007/03/04 06:01:09 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.1 2007/07/29 10:18:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2007/03/04 06:01:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.1 2007/07/29 10:18:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 {
 	u_long pa, endpa;
 	vaddr_t va;
-	pt_entry_t *pte;
-	int32_t cpumask = 0;
+	pt_entry_t *pte, opte;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
@@ -309,16 +308,16 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 */
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
+			opte = *pte;
 			if (cacheable)
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
-			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
-			    &cpumask);
+			pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
 		}
 	}
 
-	pmap_tlb_shootnow(cpumask);
+	pmap_tlb_shootwait();
 	pmap_update(pmap_kernel());
 
 	return 0;

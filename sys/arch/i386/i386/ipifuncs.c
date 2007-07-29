@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.14.6.3 2007/05/27 12:27:30 ad Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.14.6.4 2007/07/29 10:18:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14.6.3 2007/05/27 12:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14.6.4 2007/07/29 10:18:48 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -94,7 +94,6 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 #endif
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
-	pmap_do_tlb_shootdown,
 	i386_reload_mtrr,
 	gdt_reload_cpu,
 	msr_write_ipi

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.135.2.8 2007/06/17 21:30:40 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.135.2.9 2007/07/29 10:18:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,15 +71,17 @@ struct pmap;
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
-	void	*ci_self150;		/* self + 0x150, see lock_stubs.S */
 	void	*ci_tlog_base;		/* Trap log base */
 	int32_t ci_tlog_offset;		/* Trap log current offset */
-	struct cpu_info *ci_next;	/* next cpu */
 
 	/*
-	 * Public members.
+	 * Will be accessed by other CPUs.
 	 */
+	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
+	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
+	int	ci_fpsaving;		/* save in progress */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	u_int ci_apicid;		/* our APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */
@@ -88,13 +90,8 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
-	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
-	int	ci_fpsaving;		/* save in progress */
-
-	volatile uint32_t	ci_tlb_ipi_mask;
-
+	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
-	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
 	int ci_want_pmapload;		/* pmap_load() is needed */
 	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
@@ -114,9 +111,9 @@ struct cpu_info {
 #define	ci_ilevel	ci_istate.ilevel
 
 	int		ci_idepth;
+	void *		ci_intrstack;
 	uint32_t	ci_imask[NIPL];
 	uint32_t	ci_iunmask[NIPL];
-	void *		ci_intrstack;
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	uint32_t ci_flags;		/* flags; see below */
