@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.11.2.9 2007/07/15 22:17:08 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.11.2.10 2007/07/29 11:43:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,10 +46,10 @@
 
 #include "opt_multiprocessor.h"
 
-#define	__MUTEX_PRIVATE
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.9 2007/07/15 22:17:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.10 2007/07/29 11:43:23 ad Exp $");
+
+#define	__MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,15 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.9 2007/07/15 22:17:08 ad Exp $
 #include <sys/cpu.h>
 
 #include <dev/lockstat.h>
-
-/*
- * When not running a debug kernel, spin mutexes are not much
- * more than an splraiseipl() and splx() pair.
- */
-
-#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define	FULL
-#endif
 
 /*
  * Debugging support.
@@ -218,6 +209,27 @@ MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
 #endif	/* __HAVE_SIMPLE_MUTEXES */
 
 /*
+ * Avoid interlocked accesses where completel unnecessary.
+ */
+ 
+#ifdef MULTIPROCESSOR
+static bool
+MUTEX_SPIN_LOCK(kmutex_t *mtx)
+{
+	return __cpu_simple_lock_try(&mtx->mtx_lock);
+}
+#else
+static bool
+MUTEX_SPIN_LOCK(kmutex_t *mtx)
+{
+	if (mtx->mtx_lock == __SIMPLELOCK_LOCKED)
+		return false;
+	mtx->mtx_lock = __SIMPLELOCK_LOCKED;
+	return true;
+}
+#endif
+
+/*
  * Patch in stubs via strong alias where they are not available.
  */
 
@@ -236,9 +248,9 @@ __strong_alias(mutex_spin_enter,mutex_vector_enter);
 __strong_alias(mutex_spin_exit,mutex_vector_exit);
 #endif
 
-void	mutex_abort(kmutex_t *, const char *, const char *);
-void	mutex_dump(volatile void *);
-int	mutex_onproc(uintptr_t, struct cpu_info **);
+static void	mutex_dump(volatile void *);
+static int	mutex_onproc(uintptr_t, struct cpu_info **);
+static void	mutex_abort(kmutex_t *, const char *, const char *);
 static struct lwp *mutex_owner(wchan_t);
 
 lockops_t mutex_spin_lockops = {
@@ -266,7 +278,7 @@ syncobj_t mutex_syncobj = {
  *
  *	Dump the contents of a mutex structure.
  */
-void
+static void
 mutex_dump(volatile void *cookie)
 {
 	volatile kmutex_t *mtx = cookie;
@@ -283,13 +295,15 @@ mutex_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-
 #if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline)) __attribute ((noreturn))
+__attribute ((noinline))
 #endif
-void
+static void
 mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 {
+
+	if (panicstr != NULL)
+		return;
 
 	LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, (MUTEX_SPIN_P(mtx) ?
 	    &mutex_spin_lockops : &mutex_adaptive_lockops), func, msg);
@@ -375,7 +389,6 @@ mutex_destroy(kmutex_t *mtx)
  *	don't have full control over the timing of our execution, and so the
  *	pointer could be completely invalid by the time we dereference it.
  */
-#ifdef MULTIPROCESSOR
 int
 mutex_onproc(uintptr_t owner, struct cpu_info **cip)
 {
@@ -403,7 +416,53 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
  	*cip = ci;
 	return ci->ci_biglock_wanted != l;
 }
-#endif	/* MULTIPROCESSOR */
+
+/*
+ * mutex_spin_retry:
+ *
+ *	Support routine for mutex_spin_enter().  Assumes that the caller
+ *	has already raised the SPL, and adjusted counters.
+ */
+inline void
+mutex_spin_retry(kmutex_t *mtx)
+{
+	u_int count;
+	LOCKSTAT_TIMER(spintime);
+	LOCKSTAT_FLAG(lsflag);
+#ifdef LOCKDEBUG
+	u_int spins = 0;
+#endif	/* LOCKDEBUG */
+
+	MUTEX_WANTLOCK(mtx);
+
+	if (ncpu == 1) 
+		MUTEX_ABORT(mtx, "locking against myself");
+
+	LOCKSTAT_ENTER(lsflag);
+	LOCKSTAT_START_TIMER(lsflag, spintime);
+	count = SPINLOCK_BACKOFF_MIN;
+
+	/*
+	 * Spin testing the lock word and do exponential backoff
+	 * to reduce cache line ping-ponging between CPUs.
+	 */
+	do {
+		if (panicstr != NULL)
+			break;
+		while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
+			SPINLOCK_BACKOFF(count); 
+#ifdef LOCKDEBUG
+			if (SPINLOCK_SPINOUT(spins))
+				MUTEX_ABORT(mtx, "spinout");
+#endif	/* LOCKDEBUG */
+		}
+	} while (!MUTEX_SPIN_LOCK(mtx));
+
+	LOCKSTAT_STOP_TIMER(lsflag, spintime);
+	LOCKSTAT_EVENT(lsflag, mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
+	LOCKSTAT_EXIT(lsflag);
+	MUTEX_LOCKED(mtx);
+}
 
 /*
  * mutex_vector_enter:
@@ -418,10 +477,8 @@ mutex_vector_enter(kmutex_t *mtx)
 {
 	uintptr_t owner, curthread;
 	turnstile_t *ts;
-#ifdef MULTIPROCESSOR
 	struct cpu_info *ci = NULL;
 	u_int count;
-#endif
 	LOCKSTAT_COUNTER(spincnt);
 	LOCKSTAT_COUNTER(slpcnt);
 	LOCKSTAT_TIMER(spintime);
@@ -432,49 +489,13 @@ mutex_vector_enter(kmutex_t *mtx)
 	 * Handle spin mutexes.
 	 */
 	if (MUTEX_SPIN_P(mtx)) {
-#if defined(LOCKDEBUG) && defined(MULTIPROCESSOR)
-		u_int spins = 0;
-#endif
 		MUTEX_SPIN_SPLRAISE(mtx);
 		MUTEX_WANTLOCK(mtx);
-#ifdef FULL
-		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
+		if (MUTEX_SPIN_LOCK(mtx)) {
 			MUTEX_LOCKED(mtx);
 			return;
 		}
-#if !defined(MULTIPROCESSOR)
-		MUTEX_ABORT(mtx, "locking against myself");
-#else /* !MULTIPROCESSOR */
-
-		LOCKSTAT_ENTER(lsflag);
-		LOCKSTAT_START_TIMER(lsflag, spintime);
-		count = SPINLOCK_BACKOFF_MIN;
-
-		/*
-		 * Spin testing the lock word and do exponential backoff
-		 * to reduce cache line ping-ponging between CPUs.
-		 */
-		do {
-			if (panicstr != NULL)
-				break;
-			while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
-				SPINLOCK_BACKOFF(count); 
-#ifdef LOCKDEBUG
-				if (SPINLOCK_SPINOUT(spins))
-					MUTEX_ABORT(mtx, "spinout");
-#endif	/* LOCKDEBUG */
-			}
-		} while (!__cpu_simple_lock_try(&mtx->mtx_lock));
-
-		if (count != SPINLOCK_BACKOFF_MIN) {
-			LOCKSTAT_STOP_TIMER(lsflag, spintime);
-			LOCKSTAT_EVENT(lsflag, mtx,
-			    LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
-		}
-		LOCKSTAT_EXIT(lsflag);
-#endif	/* !MULTIPROCESSOR */
-#endif	/* FULL */
-		MUTEX_LOCKED(mtx);
+		mutex_spin_retry(mtx);
 		return;
 	}
 
@@ -485,15 +506,9 @@ mutex_vector_enter(kmutex_t *mtx)
 	MUTEX_ASSERT(mtx, !cpu_intr_p());
 	MUTEX_WANTLOCK(mtx);
 
-#ifdef LOCKDEBUG
 	if (panicstr == NULL) {
-#ifdef MULTIPROCESSOR
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
-#else
-		LOCKDEBUG_BARRIER(NULL, 1);
-#endif
 	}
-#endif
 
 	LOCKSTAT_ENTER(lsflag);
 
@@ -524,7 +539,6 @@ mutex_vector_enter(kmutex_t *mtx)
 		if (MUTEX_OWNER(owner) == curthread)
 			MUTEX_ABORT(mtx, "locking against myself");
 
-#ifdef MULTIPROCESSOR
 		/*
 		 * Check to see if the owner is running on a processor.
 		 * If so, then we should just spin, as the owner will
@@ -544,7 +558,6 @@ mutex_vector_enter(kmutex_t *mtx)
 			if (!MUTEX_OWNED(owner))
 				continue;
 		}
-#endif
 
 		ts = turnstile_lookup(mtx);
 
@@ -558,7 +571,6 @@ mutex_vector_enter(kmutex_t *mtx)
 			continue;
 		}
 
-#ifdef MULTIPROCESSOR
 		/*
 		 * mutex_exit() is permitted to release the mutex without
 		 * any interlocking instructions, and the following can
@@ -657,7 +669,6 @@ mutex_vector_enter(kmutex_t *mtx)
 			turnstile_exit(mtx);
 			continue;
 		}
-#endif	/* MULTIPROCESSOR */
 
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
@@ -689,12 +700,9 @@ mutex_vector_exit(kmutex_t *mtx)
 	uintptr_t curthread;
 
 	if (MUTEX_SPIN_P(mtx)) {
-#ifdef FULL
-		if (mtx->mtx_lock != __SIMPLELOCK_LOCKED)
-			MUTEX_ABORT(mtx, "exiting unheld spin mutex");
+		MUTEX_ASSERT(mtx, mtx->mtx_lock == __SIMPLELOCK_LOCKED);
 		MUTEX_UNLOCKED(mtx);
-		__cpu_simple_unlock(&mtx->mtx_lock);
-#endif
+		MUTEX_SPIN_LOCK(mtx);
 		MUTEX_SPIN_SPLRESTORE(mtx);
 		return;
 	}
@@ -745,7 +753,6 @@ mutex_vector_exit(kmutex_t *mtx)
 	}
 }
 
-#ifndef __HAVE_SIMPLE_MUTEXES
 /*
  * mutex_wakeup:
  *
@@ -766,7 +773,6 @@ mutex_wakeup(kmutex_t *mtx)
 	MUTEX_CLEAR_WAITERS(mtx);
 	turnstile_wakeup(ts, TS_WRITER_Q, TS_WAITERS(ts, TS_WRITER_Q), NULL);
 }
-#endif	/* !__HAVE_SIMPLE_MUTEXES */
 
 /*
  * mutex_owned:
@@ -780,11 +786,7 @@ mutex_owned(kmutex_t *mtx)
 
 	if (MUTEX_ADAPTIVE_P(mtx))
 		return MUTEX_OWNER(mtx->mtx_owner) == (uintptr_t)curlwp;
-#ifdef FULL
 	return mtx->mtx_lock == __SIMPLELOCK_LOCKED;
-#else
-	return 1;
-#endif
 }
 
 /*
@@ -817,80 +819,22 @@ mutex_tryenter(kmutex_t *mtx)
 	 */
 	if (MUTEX_SPIN_P(mtx)) {
 		MUTEX_SPIN_SPLRAISE(mtx);
-#ifdef FULL
-		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
+		if (MUTEX_SPIN_LOCK(mtx)) {
 			MUTEX_WANTLOCK(mtx);
 			MUTEX_LOCKED(mtx);
 			return 1;
 		}
 		MUTEX_SPIN_SPLRESTORE(mtx);
-#else
-		MUTEX_WANTLOCK(mtx);
-		MUTEX_LOCKED(mtx);
-		return 1;
-#endif
-	} else {
-		curthread = (uintptr_t)curlwp;
-		MUTEX_ASSERT(mtx, curthread != 0);
-		if (MUTEX_ACQUIRE(mtx, curthread)) {
-			MUTEX_WANTLOCK(mtx);
-			MUTEX_LOCKED(mtx);
-			MUTEX_DASSERT(mtx,
-			    MUTEX_OWNER(mtx->mtx_owner) == curthread);
-			return 1;
-		}
+		return 0;
 	}
 
+	curthread = (uintptr_t)curlwp;
+	MUTEX_ASSERT(mtx, curthread != 0);
+	if (MUTEX_ACQUIRE(mtx, curthread)) {
+		MUTEX_WANTLOCK(mtx);
+		MUTEX_LOCKED(mtx);
+		MUTEX_DASSERT(mtx, MUTEX_OWNER(mtx->mtx_owner) == curthread);
+		return 1;
+	}
 	return 0;
 }
-
-#if defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL)
-/*
- * mutex_spin_retry:
- *
- *	Support routine for mutex_spin_enter().  Assumes that the caller
- *	has already raised the SPL, and adjusted counters.
- */
-void
-mutex_spin_retry(kmutex_t *mtx)
-{
-#ifdef MULTIPROCESSOR
-	u_int count;
-	LOCKSTAT_TIMER(spintime);
-	LOCKSTAT_FLAG(lsflag);
-#ifdef LOCKDEBUG
-	u_int spins = 0;
-#endif	/* LOCKDEBUG */
-
-	MUTEX_WANTLOCK(mtx);
-
-	LOCKSTAT_ENTER(lsflag);
-	LOCKSTAT_START_TIMER(lsflag, spintime);
-	count = SPINLOCK_BACKOFF_MIN;
-
-	/*
-	 * Spin testing the lock word and do exponential backoff
-	 * to reduce cache line ping-ponging between CPUs.
-	 */
-	do {
-		if (panicstr != NULL)
-			break;
-		while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
-			SPINLOCK_BACKOFF(count); 
-#ifdef LOCKDEBUG
-			if (SPINLOCK_SPINOUT(spins))
-				MUTEX_ABORT(mtx, "spinout");
-#endif	/* LOCKDEBUG */
-		}
-	} while (!__cpu_simple_lock_try(&mtx->mtx_lock));
-
-	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKSTAT_EVENT(lsflag, mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
-	LOCKSTAT_EXIT(lsflag);
-
-	MUTEX_LOCKED(mtx);
-#else	/* MULTIPROCESSOR */
-	MUTEX_ABORT(mtx, "locking against myself");
-#endif	/* MULTIPROCESSOR */
-}
-#endif	/* defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL) */
