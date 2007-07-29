@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.242 2007/07/26 22:59:58 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.243 2007/07/29 13:31:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.242 2007/07/26 22:59:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.243 2007/07/29 13:31:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1756,7 +1756,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
 		s = splbio();
 		if (error) {
-			mbp->b_flags |= B_ERROR;
 			mbp->b_error = error;
 		}
 		mbp->b_resid -= skipbytes;
