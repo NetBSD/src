@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.18 2006/10/13 21:06:51 wiz Exp $
+.\"     $NetBSD: driver.9,v 1.19 2007/07/30 22:48:46 alc Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -135,7 +135,7 @@ const struct cdevsw foo_cdevsw {
 	int (*d_close)(dev_t, int, int, struct lwp *);
 	int (*d_read)(dev_t, struct uio *, int);
 	int (*d_write)(dev_t, struct uio *, int);
-	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
+	int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
 	void (*d_stop)(struct tty *, int);
 	struct tty *(*d_tty)(dev_t);
 	int (*d_poll)(dev_t, int, struct lwp *);
@@ -167,8 +167,8 @@ const struct bdevsw foo_bdevsw {
 	int (*d_open)(dev_t, int, int, struct lwp *);
 	int (*d_close)(dev_t, int, int, struct lwp *);
 	void (*d_strategy)(struct buf *);
-	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
-	int (*d_dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
+	int (*d_dump)(dev_t, daddr_t, void *, size_t);
 	int (*d_psize)(dev_t);
 	int d_type;
 };

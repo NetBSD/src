@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.44 2007/03/07 00:41:17 dogcow Exp $
+.\"	$NetBSD: mbuf.9,v 1.45 2007/07/30 22:48:47 alc Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,7 @@
 .Ft void
 .Fn m_adj "struct mbuf *mp" "int req_len"
 .Ft int
-.Fn m_apply "struct mbuf *m" "int off" "int len" "int *f(void *, caddr_t, unsigned int)" "void *arg"
+.Fn m_apply "struct mbuf *m" "int off" "int len" "int *f(void *, void *, unsigned int)" "void *arg"
 .Ft struct mbuf *
 .Fn m_free "struct mbuf *m"
 .Ft void
@@ -127,7 +127,7 @@
 .Ft void
 .Fn MEXTMALLOC "struct mbuf *m" "int len" "int how"
 .Ft void
-.Fn MEXTADD "struct mbuf *m" "void *buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
+.Fn MEXTADD "struct mbuf *m" "void *buf" "int size" "int type" "void (*free)(struct mbuf *, void *, size_t, void *)" "void *arg"
 .Ft void
 .Fn MCLGET "struct mbuf *m" "int how"
 .Ft void
@@ -452,9 +452,9 @@ The return value points to an mbuf in the middle of the mbuf chain
 If we call the return value
 .Fa n ,
 the contiguous data region is available at
-.Li "mtod(n, caddr_t) + *offp" ,
+.Li "mtod(n, void *) + *offp" ,
 or
-.Li "mtod(n, caddr_t)"
+.Li "mtod(n, void *)"
 if
 .Fa offp
 is
@@ -515,7 +515,7 @@ from the back (and if it is zero, the mbuf will stay bearded).
 This function does not move data in any way, but is used to manipulate the
 data area pointer and data length variable of the mbuf in a non-clobbering
 way.
-.It Fn m_apply "struct mbuf *m" "int off" "int len" "int (*f)(void *, caddr_t, unsigned int)" "void *arg"
+.It Fn m_apply "struct mbuf *m" "int off" "int len" "int (*f)(void *, void *, unsigned int)" "void *arg"
 Apply function
 .Fa f
 to the data in an mbuf chain starting
@@ -586,7 +586,7 @@ The flag
 .Dv M_EXT
 is set upon success.
 Implemented as a macro.
-.It Fn MEXTADD "struct mbuf *m" "void *buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
+.It Fn MEXTADD "struct mbuf *m" "void *buf" "int size" "int type" "void (*free)(struct mbuf *, void *, size_t, void *)" "void *arg"
 Adds pre-allocated external storage
 .Fa buf
 to a normal mbuf
