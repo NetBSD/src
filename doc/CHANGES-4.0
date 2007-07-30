@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.226 2007/07/30 20:07:16 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.227 2007/07/30 23:07:42 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8180,3 +8180,81 @@ sys/dev/ic/mpt.c				1.10
 	Use the appropriate number of maximum devices for Fibre Channel.
 	Problem Jarle Greipsland on "current-users" mailing list.
 	[tron, ticket #797]
+
+lib/Makefile					1.114
+
+	insert .WAIT between libcom_err and libasn1.
+	[pavel, ticket #802]
+
+sys/dev/pci/pccbb.c				1.139
+sys/dev/pci/pccbb.c				1.140
+sys/dev/pci/pccbb.c				1.141
+sys/dev/pci/pccbb.c				1.142
+sys/dev/pci/pccbb.c				1.143
+sys/dev/pci/pccbb.c				1.144
+sys/dev/pci/pccbbvar.h				1.28
+sys/dev/pci/pcireg.h				1.53
+
+	#Define PCI_PMCSR_PME_EN
+
+	Name magic numbers PCI_PMCSR_PME_EN and PCI_PMCSR.
+
+	Fix grammar in comment.  From Patrick Welche.
+
+	Use the right subroutine name for the debug message.
+
+	Convert the rather long and backslash-ridden DELAY_MS macro to a
+	much shorter static subroutine, delay_ms().
+
+	Cosmetic: KNF indentation, curly braces, and argument declarations.
+
+	sc_pwrcycle is shared between the interrupt handler and Cardbus
+	event thread, so make it volatile.
+
+	Fix a bug in Cardbus power activation.
+
+	Most Cardbus bridges supported by pccbb(4) fire a power-cycle
+	interrupt when the power state of a cardslot changes from 'off' to
+	'on'.  TI bridges fire a power-cycle interrupt on both on->off and
+	off->on changes.
+
+	When pccbb_power() powered-down a cardslot, it did not wait around
+	for the power-cycle interrupt.  When pccbb_power() powered-up a
+	cardslot, it did wait for the interrupt.  If a pccbb_power(UP)
+	followed a pccbb_power(DOWN) very closely, pccbb_power() used to
+	interpret the power-cycle interrupt for the up->down transition as
+	"power-up complete," read the power-state bit and, finding that
+	power had NOT been activated, complain, "cbb0:  power on failed?"
+	Then pccbb_power() exited before power-activation was complete,
+	falsely indicating that the power-activation *was* complete.  After
+	that, a driver attach/enable routine would blithely configure a
+	card that was not fully powered-up.  An operator who ran a command
+	such as 'ifconfig rtw0 down up' or 'ifconfig ath0 down up' would
+	read 'cbb0: power on failed?' in the system log, and their NIC
+	would misbehave.
+
+	This excerpt from a comment in the source should suffice to explain
+	how I fixed the bug,
+
+	/*
+	 * Wait as long as 200ms for a power-cycle interrupt.  If
+	 * interrupts are enabled, but the socket has already
+	 * changed to the desired status, keep waiting for the
+	 * interrupt.  "Consuming" the interrupt in this way keeps
+	 * the interrupt from prematurely waking some subsequent
+	 * pccbb_power call.
+
+	And this explains why this patch will work for Ricoh bridges that
+	do not fire an interrupt on the on->off transition:
+
+	 * XXX Not every bridge interrupts on the ->OFF transition.
+	 * XXX That's ok, we will time-out after 200ms.
+	 *
+	 * XXX The power cycle event will never happen when attaching
+	 * XXX a 16-bit card.  That's ok, we will time-out after
+	 * XXX 200ms.
+	 */
+
+	M. Warner Losh and Charles M. Hannum provided valuable input on
+	this patch.
+	[dyoung, ticket #739]
