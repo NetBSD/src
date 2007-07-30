@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.39 2007/07/14 10:52:49 ad Exp $
+.\"	$NetBSD: malloc.9,v 1.40 2007/07/30 22:48:47 alc Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,7 +142,7 @@ and the
 .Fn FREE
 macro variant is equivalent to
 .Bd -literal -offset indent
-free((caddr_t)(addr), type)
+free((void *)(addr), type)
 .Ed
 .Pp
 The
