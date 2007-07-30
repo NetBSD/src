@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.1 2007/07/29 14:44:09 pooka Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.2 2007/07/30 08:45:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.1 2007/07/29 14:44:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.2 2007/07/30 08:45:26 pooka Exp $");
 
 #include "opt_ddb.h"
 
@@ -478,6 +478,13 @@ vfs_timestamp(struct timespec *ts)
 {
 
 	nanotime(ts);
+}
+
+time_t	rootfstime;			/* recorded root fs time, if known */
+void
+setrootfstime(time_t t)
+{
+	rootfstime = t;
 }
 
 #ifdef DDB
