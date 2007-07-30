@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.224 2007/07/27 11:53:19 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.225 2007/07/30 12:53:15 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8119,3 +8119,41 @@ src/sys/arch/amd64/conf/GENERIC			patch
 
 	Add wpi(4).
 	[degroote, ticket #795]
+
+sys/arch/shark/shark/pccons.c			1.33
+
+	Replace usages of bcopy:
+	 - Use memmove to copy memory blocks that are likely to overlap.  Fixes
+	   some rendering problems in programs that use, for example, the  
+	 "insert
+	   rows" feature.  This was reproducible with sysinst as explained  
+	 here:
+	   http://mail-index.netbsd.org/tech-install/2007/07/29/0000.html
+	 - Use memcpy in situations where the blocks cannot overlap.
+	[jmmv, ticket #800]
+
+sys/dev/ic/pcdisplay_subr.c			1.33
+sys/dev/ic/vga.c				1.95
+sys/dev/ic/vga_raster.c				1.29
+sys/dev/isa/ega.c				1.23
+sys/dev/pci/chipsfb.c				1.10
+sys/dev/rasops/rasops.c				1.56
+sys/dev/wscons/wsdisplay_vcons.c		1.12
+sys/dev/wscons/wsdisplay_vcons.c		1.13
+
+	Implement bounds checking in some places in display driver code to avoid
+	the possibility of a local user panic.
+
+
+	Set the 'ri' pointer before use.
+	[mjf, ticket #799]
+
+bin/ps/print.c					1.100
+
+	Don't call P_ZOMBIE(struct kinfo_proc2), it's p_stat field contains
+	lwp states, not process states!
+	Since the times are filled with zeros for zombie processes the check
+	before assuming teh process time is zero is moot - delete it.
+	Fix the other chact to test the p_realstat.
+	Fixer PR kern/36295
+	[dsl, ticket #798]
