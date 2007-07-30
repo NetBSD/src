@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.19 2006/10/24 18:30:25 cbiere Exp $
+.\" $NetBSD: ksh.Man,v 1.20 2007/07/30 18:01:42 mjf Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -439,7 +439,7 @@ or greater than, their second string operand, respectively.
 .IP \ \ \(bu
 The single argument form
 of \fBtest\fP, which tests if the argument has non-zero length, is not valid
-- explicit operators must be always be used, \fIe.g.\fP, instead of
+- explicit operators must always be used, \fIe.g.\fP, instead of
 .ce
 \fB[\fP \fIstr\fP \fB]\fP
 use
