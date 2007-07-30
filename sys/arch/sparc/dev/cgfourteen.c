@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.49 2007/07/30 18:20:09 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.50 2007/07/30 23:28:13 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -149,6 +149,9 @@ static void cg14_init_cmap(struct cgfourteen_softc *);
 static int  cg14_putcmap(struct cgfourteen_softc *, struct wsdisplay_cmap *);
 static int  cg14_getcmap(struct cgfourteen_softc *, struct wsdisplay_cmap *);
 static void cg14_set_depth(struct cgfourteen_softc *, int);
+static void cg14_move_cursor(struct cgfourteen_softc *, int, int);
+static int  cg14_do_cursor(struct cgfourteen_softc *,
+                           struct wsdisplay_cursor *);
 #endif
 
 #if defined(RASTERCONSOLE) && (NWSDISPLAY > 0)
@@ -493,8 +496,17 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 static void
 cgfourteenunblank(struct device *dev)
 {
+	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)dev;
 
-	cg14_set_video((struct cgfourteen_softc *)dev, 1);
+	cg14_set_video(sc, 1);
+#if NWSDISPLAY > 0
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) {
+		cg14_set_depth(sc, 8);
+		cg14_init_cmap(sc);
+		vcons_redraw_screen(sc->sc_vd.active);
+		sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	}
+#endif	
 }
 
 /*
@@ -938,6 +950,9 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+						bus_space_write_1(sc->sc_bustag,
+						    sc->sc_regh,
+						    CG14_CURSOR_CONTROL, 0);
 						cg14_set_depth(sc, 8);
 						cg14_init_cmap(sc);
 						vcons_redraw_screen(ms);
@@ -946,6 +961,41 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+		case WSDISPLAYIO_SVIDEO:
+			cg14_set_video(sc, *(int *)data);
+			return 0;
+		case WSDISPLAYIO_GVIDEO:
+			return cg14_get_video(sc) ? 
+			    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
+		case WSDISPLAYIO_GCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = sc->sc_cursor.cc_pos.x;
+				cp->y = sc->sc_cursor.cc_pos.y;
+			}
+			return 0;
+		case WSDISPLAYIO_SCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cg14_move_cursor(sc, cp->x, cp->y);
+			}
+			return 0;
+		case WSDISPLAYIO_GCURMAX:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = 32;
+				cp->y = 32;
+			}
+			return 0;
+		case WSDISPLAYIO_SCURSOR:
+			{
+				struct wsdisplay_cursor *cursor = (void *)data;
+
+				return cg14_do_cursor(sc, cursor);
+			}
 	}
 	return EPASSTHROUGH;
 }
@@ -1025,5 +1075,100 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 			printf("%s: can't change to depth %d\n",
 			    sc->sc_dev.dv_xname, depth);
 	}
+}
+
+static void
+cg14_move_cursor(struct cgfourteen_softc *sc, int x, int y)
+{
+	uint32_t pos;
+
+	sc->sc_cursor.cc_pos.x = x;
+	sc->sc_cursor.cc_pos.y = y;
+	pos = ((sc->sc_cursor.cc_pos.x - sc->sc_cursor.cc_hot.x ) << 16) |
+	      ((sc->sc_cursor.cc_pos.y - sc->sc_cursor.cc_hot.y ) & 0xffff);
+	bus_space_write_4(sc->sc_bustag, sc->sc_regh, CG14_CURSOR_X, pos);
+}
+
+static int
+cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		bus_space_write_1(sc->sc_bustag, sc->sc_regh,
+		    CG14_CURSOR_CONTROL, cur->enable ? CG14_CRSR_ENABLE : 0);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_cursor.cc_hot.x = cur->hot.x;
+		sc->sc_cursor.cc_hot.y = cur->hot.y;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		cg14_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+		uint32_t val;
+	
+		for (i = 0; i < cur->cmap.count; i++) {
+			val = (cur->cmap.red[i] ) |
+			      (cur->cmap.green[i] << 8) |
+			      (cur->cmap.blue[i] << 16);
+			bus_space_write_4(sc->sc_bustag, sc->sc_regh,
+			    CG14_CURSOR_COLOR1 + ((i + cur->cmap.index) << 2),
+			    val);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		uint32_t buffer[32], latch, tmp;
+		int i;
+
+		memcpy(buffer, cur->mask, 128);
+		for (i = 0; i < 32; i++) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			bus_space_write_4(sc->sc_bustag, sc->sc_regh,
+			    CG14_CURSOR_PLANE0 + (i << 2), latch);
+		}
+		memcpy(buffer, cur->image, 128);
+		for (i = 0; i < 32; i++) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			bus_space_write_4(sc->sc_bustag, sc->sc_regh,
+			    CG14_CURSOR_PLANE1 + (i << 2), latch);
+		}
+	}
+	return 0;
 }
 #endif
