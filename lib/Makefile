@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111.2.2 2007/07/22 18:44:41 liamjfoy Exp $
+#	$NetBSD: Makefile,v 1.111.2.3 2007/07/30 22:50:24 liamjfoy Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -36,7 +36,7 @@ SUBDIR+= libcrypto_rc5
 
 .if (${MKKERBEROS} != "no")
 # Heimdal Kerberos 5 libraries
-SUBDIR+= .WAIT libroken libvers libcom_err libasn1
+SUBDIR+= .WAIT libroken libvers libcom_err .WAIT libasn1
 
 .endif	# MKKERBEROS != no
 
