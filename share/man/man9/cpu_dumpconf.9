@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_dumpconf.9,v 1.4 2003/04/16 13:35:26 wiz Exp $
+.\"     $NetBSD: cpu_dumpconf.9,v 1.5 2007/07/30 22:48:46 alc Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@
 .Ft void
 .Fn cpu_dumpconf "void"
 .Ft int
-.Fn cpu_dump "int (*dump)(dev_t, daddr_t, caddr_t, size_t)" "daddr_t *blknop"
+.Fn cpu_dump "int (*dump)(dev_t, daddr_t, void *, size_t)" "daddr_t *blknop"
 .Ft int
 .Fn cpu_dumpsize "void"
 .Ft void
