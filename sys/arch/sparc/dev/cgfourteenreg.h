@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenreg.h,v 1.4 2007/07/30 18:20:09 macallan Exp $ */
+/*	$NetBSD: cgfourteenreg.h,v 1.5 2007/07/30 23:28:13 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -45,6 +45,18 @@
 #define CG14_OFFSET_CLUT2	0x5000
 #define CG14_OFFSET_CLUT3	0x6000
 #define CG14_OFFSET_CLUTINCR	0xf000
+
+/* cursor registers */
+#define CG14_CURSOR_PLANE0	0x1000
+#define CG14_CURSOR_PLANE1	0x1080
+#define CG14_CURSOR_CONTROL	0x1100
+	#define CG14_CRSR_ENABLE	0x04
+	#define CG14_CRSR_DBLBUFFER	0x02
+#define CG14_CURSOR_X		0x1104
+#define CG14_CURSOR_Y		0x1106
+#define CG14_CURSOR_COLOR1	0x1108
+#define CG14_CURSOR_COLOR2	0x110c
+#define CG14_CURSOR_COLOR3	0x1110
 
 /* ranges in framebuffer space */
 #define CG14_FB_VRAM		0x00000000
