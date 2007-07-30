@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_mpilib.h,v 1.2 2003/04/16 23:24:01 thorpej Exp $	*/
+/*	$NetBSD: mpt_mpilib.h,v 1.2.54.1 2007/07/30 20:02:31 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by LSI Logic Corporation
@@ -3152,6 +3152,8 @@ typedef struct _MSG_PORT_FACTS_REPLY
 #define MPI_PORTFACTS_PORTTYPE_INACTIVE         (0x00)
 #define MPI_PORTFACTS_PORTTYPE_SCSI             (0x01)
 #define MPI_PORTFACTS_PORTTYPE_FC               (0x10)
+#define	MPI_PORTFACTS_PORTTYPE_ISCSI		(0x20)
+#define	MPI_PORTFACTS_PORTTYPE_SAS		(0x30)
 
 /* ProtocolFlags values */
 
@@ -3285,6 +3287,15 @@ typedef struct _MSG_EVENT_ACK_REPLY
 #define MPI_EVENT_INTEGRATED_RAID           (0x0000000B)
 #define MPI_EVENT_SCSI_DEVICE_STATUS_CHANGE (0x0000000C)
 #define MPI_EVENT_ON_BUS_TIMER_EXPIRED      (0x0000000D)
+#define	MPI_EVENT_QUEUE_FULL                (0x0000000E)
+#define	MPI_EVENT_SAS_DEVICE_STATUS_CHANGE  (0x0000000F)
+#define	MPI_EVENT_SAS_SES                   (0x00000010)
+#define	MPI_EVENT_PERSISTENT_TABLE_FULL     (0x00000011)
+#define MPI_EVENT_SAS_PHY_LINK_STATUS       (0x00000012)
+#define MPI_EVENT_SAS_DISCOVERY_ERROR       (0x00000013)
+#define MPI_EVENT_IR_RESYNC_UPDATE          (0x00000014)
+#define MPI_EVENT_IR2                       (0x00000015)
+#define	MPI_EVENT_SAS_DISCOVERY		    (0x00000016)
 
 /* AckRequired field values */
 
@@ -3406,6 +3417,28 @@ typedef struct _EVENT_DATA_RAID
 #define MPI_EVENT_RAID_RC_SMART_DATA                    (0x0A)
 #define MPI_EVENT_RAID_RC_REPLACE_ACTION_STARTED        (0x0B)
 
+/* MPI SAS Phy Link Event data */
+
+typedef struct _EVENT_DATA_SAS_PHY_LINK_STATUS
+{
+    U8                      PhyNum;                     /* 00h */
+    U8                      LinkRates;                  /* 01h */
+    U16                     DevHandle;                  /* 02h */
+    U64                     SASAddress;                 /* 04h */
+} EVENT_DATA_SAS_PHY_LINK_STATUS,
+  MPI_POINTER PTR_EVENT_DATA_SAS_PHY_LINK_STATUS,
+  EventDataSASPhyLinkStatus_t, MPI_POINTER pEventDataSASPhyLinkStatus_t;
+
+#define MPI_EVENT_SAS_PLS_LR_CURRENT_MASK               (0xF0)
+#define MPI_EVENT_SAS_PLS_LR_CURRENT_SHIFT              (4)
+#define MPI_EVENT_SAS_PLS_LR_PREVIOUS_MASK              (0x0F)
+#define MPI_EVENT_SAS_PLS_LR_PREVIOUS_SHIFT             (0)
+#define MPI_EVENT_SAS_PLS_LR_RATE_UNKNOWN               (0x00)
+#define MPI_EVENT_SAS_PLS_LR_RATE_PHY_DISABLED          (0x01)
+#define MPI_EVENT_SAS_PLS_LR_RATE_FAILED_SPEED_NEG      (0x02)
+#define MPI_EVENT_SAS_PLS_LR_RATE_SATA_OOB_COMPLETE     (0x03)
+#define MPI_EVENT_SAS_PLS_LR_RATE_1_5                   (0x08)
+#define MPI_EVENT_SAS_PLS_LR_RATE_3_0                   (0x09)
 
 /*****************************************************************************
 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.5 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mpt.h,v 1.5.24.1 2007/07/30 20:02:31 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -164,6 +164,7 @@ void mpt_free_reply(mpt_softc_t *, u_int32_t);
 void mpt_enable_ints(mpt_softc_t *);
 void mpt_disable_ints(mpt_softc_t *);
 u_int32_t mpt_pop_reply_queue(mpt_softc_t *);
+int mpt_hw_init(mpt_softc_t *);
 int mpt_init(mpt_softc_t *, u_int32_t);
 int mpt_reset(mpt_softc_t *);
 int mpt_send_handshake_cmd(mpt_softc_t *, size_t, void *);
