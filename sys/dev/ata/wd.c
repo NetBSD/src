@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.342 2007/07/29 12:50:19 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.343 2007/07/30 06:59:13 taca Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.342 2007/07/29 12:50:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343 2007/07/30 06:59:13 taca Exp $");
 
 #include "opt_ata.h"
 
@@ -580,7 +580,7 @@ wdstrategy(struct buf *bp)
 			if ((dbs->dbs_min <= blkno && blkno <= dbs->dbs_max) ||
 			    (dbs->dbs_min <= maxblk && maxblk <= dbs->dbs_max)){
 				bp->b_error = EIO;
-				goto bad;
+				goto done;
 			}
 	}
 #endif
