@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.9 2006/11/16 01:33:31 christos Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.9.2.1 2007/07/30 12:40:49 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.9 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.9.2.1 2007/07/30 12:40:49 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -665,6 +665,10 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 
 	ri = &scr->scr_ri;
 	
+	if (__predict_false((unsigned int)wsc->col > ri->ri_cols ||
+	    (unsigned int)wsc->row > ri->ri_rows))
+			return (EINVAL);
+
 	ri->ri_ops.allocattr(ri, wsc->foreground, wsc->background,
 	    wsc->flags, &attr);
 	vcons_putchar(ri, wsc->row, wsc->col, wsc->letter, attr);
