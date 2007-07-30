@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.38 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.39 2007/07/30 13:02:01 jmmv Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.38 2007/03/08 20:48:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.39 2007/07/30 13:02:01 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,9 @@ static vaddr_t  virt_freeptr;
 
 int ofw_callbacks = 0;		/* debugging counter */
 
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if defined(SHARK) && (NPC > 0)
+/* For consistency with the conditionals used in this file. */
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 int console_ihandle = 0;
 static void reset_screen(void);
 #endif
@@ -2009,7 +2011,9 @@ ofw_initallocator(void)
     
 }
 
-#if (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
+#if defined(SHARK) && (NPC > 0)
+/* For consistency with the conditionals used in this file. */
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 static void
 reset_screen()
 {

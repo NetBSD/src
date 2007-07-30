@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.9 2007/01/25 02:20:23 macallan Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.10 2007/07/30 13:02:01 jmmv Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.9 2007/01/25 02:20:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.10 2007/07/30 13:02:01 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,11 @@ struct vga_ofbus_softc {
 	int sc_phandle;
 };
 
+#if defined(SHARK) && (NPC > 0)
+/* For consistency with the conditionals used in ofw.c. */
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 extern int console_ihandle;
+#endif
 
 int	vga_ofbus_match (struct device *, struct cfdata *, void *);
 void	vga_ofbus_attach (struct device *, struct device *, void *);
@@ -131,8 +135,12 @@ vga_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 	}
 
 	ret = vga_cnattach(iot, memt, WSDISPLAY_TYPE_ISAVGA, 1);
+#if defined(SHARK) && (NPC > 0)
+/* For consistency with the conditionals used in ofw.c. */
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 	if (ret == 0)
 		console_ihandle = stdout_ihandle;
+#endif
 
 	return ret;
 }
