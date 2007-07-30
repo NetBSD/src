@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.94 2007/07/29 13:31:10 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.95 2007/07/30 14:49:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.94 2007/07/29 13:31:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.95 2007/07/30 14:49:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1633,7 +1633,7 @@ puffs_write(void *v)
 	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
 		ubcflags = UBC_WRITE | UBC_PARTIALOK;
 		if (UBC_WANT_UNMAP(vp))
-			ubcflags = UBC_UNMAP;
+			ubcflags |= UBC_UNMAP;
 
 		/*
 		 * userspace *should* be allowed to control this,
