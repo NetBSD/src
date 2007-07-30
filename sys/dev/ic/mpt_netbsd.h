@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.4 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.4.24.1 2007/07/30 20:02:32 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -70,6 +70,8 @@
  *
  * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
+ *
+ * Additional contributions by Garrett D'Amore on behalf of TELES AG.
  */
 
 #ifndef _DEV_IC_MPT_NETBSD_H_
@@ -168,8 +170,10 @@ typedef struct mpt_softc {
 	int		verbose : 3,
 			mpt_locksetup : 1,
 			is_fc : 1,
+			is_scsi : 1,
+			is_sas : 1,
 			bus : 1,
-			: 26;
+			: 23;
 
 	/* IOC facts */
 	uint16_t	mpt_global_credits;
@@ -234,9 +238,6 @@ typedef struct mpt_softc {
 	uint32_t		sequence;	/* sequence number */
 	uint32_t		timeouts;	/* timeout count */
 	uint32_t		success;	/* success after timeout */
-
-	/* Companion part in a 929 or 1030, or NULL. */
-	struct mpt_softc	*mpt2;
 
 	/* To restore configuration after hard reset. */
 	void			(*sc_set_config_regs)(struct mpt_softc *);

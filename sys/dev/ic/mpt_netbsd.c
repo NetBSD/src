@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.10 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.10.24.1 2007/07/30 20:02:31 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -72,10 +72,12 @@
  *
  * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
+ *
+ * Additional contributions by Garrett D'Amore on behalf of TELES AG.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.10 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.10.24.1 2007/07/30 20:02:31 liamjfoy Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -122,13 +124,8 @@ mpt_scsipi_attach(mpt_softc_t *mpt)
 	chan->chan_channel = 0;
 	chan->chan_flags = 0;
 	chan->chan_nluns = 8;
-	if (mpt->is_fc) {
-		chan->chan_ntargets = 256;
-		chan->chan_id = 256;
-	} else {
-		chan->chan_ntargets = 16;
-		chan->chan_id = mpt->mpt_ini_id;
-	}
+	chan->chan_ntargets = mpt->mpt_max_devices;
+	chan->chan_id = mpt->mpt_ini_id;
 
 	(void) config_found(&mpt->sc_dev, &mpt->sc_channel, scsiprint);
 }
@@ -702,7 +699,7 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsipi_xfer *xs)
 		mpt_req->Control = MPI_SCSIIO_CONTROL_NODATATRANSFER;
 
 	/* Set the queue behavior. */
-	if (__predict_true(mpt->is_fc ||
+	if (__predict_true((!mpt->is_scsi) ||
 			   (mpt->mpt_tag_enable &
 			    (1 << periph->periph_target)))) {
 		switch (XS_CTL_TAGTYPE(xs)) {
@@ -725,16 +722,16 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsipi_xfer *xs)
 			break;
 
 		default:
-			if (mpt->is_fc)
-				mpt_req->Control |= MPI_SCSIIO_CONTROL_SIMPLEQ;
-			else
+			if (mpt->is_scsi)
 				mpt_req->Control |= MPI_SCSIIO_CONTROL_UNTAGGED;
+			else
+				mpt_req->Control |= MPI_SCSIIO_CONTROL_SIMPLEQ;
 			break;
 		}
 	} else
 		mpt_req->Control |= MPI_SCSIIO_CONTROL_UNTAGGED;
 
-	if (__predict_false(mpt->is_fc == 0 &&
+	if (__predict_false(mpt->is_scsi &&
 			    (mpt->mpt_disc_enable &
 			     (1 << periph->periph_target)) == 0))
 		mpt_req->Control |= MPI_SCSIIO_CONTROL_NO_DISCONNECT;
@@ -937,7 +934,7 @@ mpt_set_xfer_mode(mpt_softc_t *mpt, struct scsipi_xfer_mode *xm)
 {
 	fCONFIG_PAGE_SCSI_DEVICE_1 tmp;
 
-	if (mpt->is_fc) {
+	if (!mpt->is_scsi) {
 		/*
 		 * SCSI transport settings don't make any sense for
 		 * Fibre Channel; silently ignore the request.
@@ -1252,6 +1249,44 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		 * This is just an acknowledgement of our
 		 * mpt_send_event_request().
 		 */
+		break;
+
+	case MPI_EVENT_SAS_PHY_LINK_STATUS:
+		switch((msg->Data[0] >> 12) & 0x0f) {
+		case 0x00:
+			mpt_prt(mpt, "Phy %d: Link Status Unknown",
+			    msg->Data[0] & 0xff);
+			break;
+		case 0x01:
+			mpt_prt(mpt, "Phy %d: Link Disabled",
+			    msg->Data[0] & 0xff);
+			break;
+		case 0x02:
+			mpt_prt(mpt, "Phy %d: Failed Speed Negotiation",
+			    msg->Data[0] & 0xff);
+			break;
+		case 0x03:
+			mpt_prt(mpt, "Phy %d: SATA OOB Complete",
+			    msg->Data[0] & 0xff);
+			break;
+		case 0x08:
+			mpt_prt(mpt, "Phy %d: Link Rate 1.5 Gbps",
+			    msg->Data[0] & 0xff);
+			break;
+		case 0x09:
+			mpt_prt(mpt, "Phy %d: Link Rate 3.0 Gbps",
+			    msg->Data[0] & 0xff);
+			break;
+                default:
+			mpt_prt(mpt, "Phy %d: SAS Phy Link Status Event: "
+			    "Unknown event (%0x)",
+			    msg->Data[0] & 0xff, (msg->Data[0] >> 8) & 0xff);
+		}
+		break;
+
+	case MPI_EVENT_SAS_DEVICE_STATUS_CHANGE:
+	case MPI_EVENT_SAS_DISCOVERY:
+		/* ignore these events for now */
 		break;
 
 	default:

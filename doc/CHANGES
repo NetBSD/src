@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.19 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.20 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -637,3 +637,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	xen: Add timecounter support. [jld 20070512]
 	ipf(8): Updated to version 4.1.22. [martin 20070515]
 	postfix(1): Updated to 2.4.1 [heas 20070519]
+	mpt(4): Add support for newer SAS and similar devices. [tron 20070727]
