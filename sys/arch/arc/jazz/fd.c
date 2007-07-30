@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.31 2007/07/29 12:15:35 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.32 2007/07/30 14:32:40 he Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.31 2007/07/29 12:15:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.32 2007/07/30 14:32:40 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ fdstrategy(struct buf *bp)
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
