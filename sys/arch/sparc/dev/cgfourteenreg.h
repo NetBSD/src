@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenreg.h,v 1.3 2006/01/17 04:22:09 christos Exp $ */
+/*	$NetBSD: cgfourteenreg.h,v 1.4 2007/07/30 18:20:09 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -46,9 +46,16 @@
 #define CG14_OFFSET_CLUT3	0x6000
 #define CG14_OFFSET_CLUTINCR	0xf000
 
+/* ranges in framebuffer space */
+#define CG14_FB_VRAM		0x00000000
+#define CG14_FB_CBGR		0x01000000
+#define CG14_FB_PX32		0x03000000
+#define CG14_FB_PG32		0x03800000
+
 /* Main control register set */
 struct cg14ctl {
 	volatile uint8_t	ctl_mctl;	/* main control register */
+#define CG14_MCTL	0x00000000
 #define CG14_MCTL_ENABLEINTR	0x80		/* interrupts */
 #define CG14_MCTL_ENABLEVID	0x40		/* enable video */
 #define CG14_MCTL_PIXMODE_MASK	0x30
