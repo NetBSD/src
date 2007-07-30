@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.48 2007/03/04 06:00:43 christos Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.49 2007/07/30 18:20:09 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -94,8 +94,17 @@
 #include <machine/cpu.h>
 #include <dev/sbus/sbusvar.h>
 
+#include "wsdisplay.h"
+#include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+
+#include <dev/wscons/wsdisplay_vconsvar.h>
+
 #include <sparc/dev/cgfourteenreg.h>
 #include <sparc/dev/cgfourteenvar.h>
+
+#include "opt_wsemul.h"
 
 /* autoconfiguration driver */
 static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
@@ -133,6 +142,18 @@ static int  cg14_put_cmap(struct fbcmap *, union cg14cmap *, int);
 static void cg14_load_hwcmap(struct cgfourteen_softc *, int, int);
 static void cg14_init(struct cgfourteen_softc *);
 static void cg14_reset(struct cgfourteen_softc *);
+
+#if NWSDISPLAY > 0
+static void cg14_setup_wsdisplay(struct cgfourteen_softc *, int);
+static void cg14_init_cmap(struct cgfourteen_softc *);
+static int  cg14_putcmap(struct cgfourteen_softc *, struct wsdisplay_cmap *);
+static int  cg14_getcmap(struct cgfourteen_softc *, struct wsdisplay_cmap *);
+static void cg14_set_depth(struct cgfourteen_softc *, int);
+#endif
+
+#if defined(RASTERCONSOLE) && (NWSDISPLAY > 0)
+#error You can't have it both ways - either RASTERCONSOLE or wsdisplay
+#endif
 
 /*
  * Match a cgfourteen.
@@ -176,6 +197,24 @@ static void cg14_set_rcons_luts(struct cgfourteen_softc *sc)
 	sc->sc_clut2->clut_lut[255] = 0;
 }
 #endif /* RASTERCONSOLE */
+
+#if NWSDISPLAY > 0
+static int	cg14_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t	cg14_mmap(void *, void *, off_t, int);
+static void	cg14_init_screen(void *, struct vcons_screen *, int, long *);
+
+
+struct wsdisplay_accessops cg14_accessops = {
+	cg14_ioctl,
+	cg14_mmap,
+	NULL,	/* alloc_screen */
+	NULL,	/* free_screen */
+	NULL,	/* show_screen */
+	NULL, 	/* load_font */
+	NULL,	/* pollc */
+	NULL	/* scroll */
+};
+#endif
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
@@ -227,6 +266,9 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 	bcopy(sa->sa_reg, sc->sc_physadr,
 	      sa->sa_nreg * sizeof(struct sbus_reg));
 
+	sc->sc_vramsize = sc->sc_physadr[CG14_PXL_IDX].sbr_size;
+
+	printf(": %d MB VRAM", (uint32_t)(sc->sc_vramsize >> 20));
 	/*
 	 * Now map in the 8 useful pages of registers
 	 */
@@ -244,6 +286,7 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 		printf("%s: cannot map control registers\n", self->dv_xname);
 		return;
 	}
+	sc->sc_regh = bh;
 
 	sc->sc_ctl   = (struct cg14ctl  *) (bh);
 	sc->sc_hwc   = (struct cg14curs *) (bh + CG14_OFFSET_CURS);
@@ -279,32 +322,55 @@ cgfourteenattach(struct device *parent, struct device *self, void *aux)
 	/* See if we're the console */
         isconsole = fb_is_console(node);
 
+#if defined(RASTERCONSOLE)
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RASTERCONSOLE
 		/* *sbus*_bus_map?  but that's how we map the regs... */
 		if (sbus_bus_map( sc->sc_bustag,
 				  sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
-				  sc->sc_physadr[CG14_PXL_IDX].sbr_offset+0x03800000,
-				  1152*900, BUS_SPACE_MAP_LINEAR,
+				  sc->sc_physadr[CG14_PXL_IDX].sbr_offset +
+				    0x03800000,
+				  1152 * 900, BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
 			printf("%s: cannot map pixels\n",&sc->sc_dev.dv_xname[0]);
-		} else {
-			sc->sc_rcfb = sc->sc_fb;
-			sc->sc_rcfb.fb_type.fb_type = FBTYPE_SUN3COLOR;
-			sc->sc_rcfb.fb_type.fb_depth = 8;
-			sc->sc_rcfb.fb_linebytes = 1152;
-			sc->sc_rcfb.fb_type.fb_size = roundup(1152*900,NBPG);
-			sc->sc_rcfb.fb_pixels = (void *)bh;
-			printf("vram at %p\n",(void *)bh);
-			for (i=0;i<1152*900;i++) ((unsigned char *)bh)[i] = 0;
-			fbrcons_init(&sc->sc_rcfb);
-			cg14_set_rcons_luts(sc);
-			sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL;
+			return;
 		}
-#endif
+		sc->sc_rcfb = sc->sc_fb;
+		sc->sc_rcfb.fb_type.fb_type = FBTYPE_SUN3COLOR;
+		sc->sc_rcfb.fb_type.fb_depth = 8;
+		sc->sc_rcfb.fb_linebytes = 1152;
+		sc->sc_rcfb.fb_type.fb_size = roundup(1152*900,NBPG);
+		sc->sc_rcfb.fb_pixels = (void *)bh;
+
+		printf("vram at %p\n",(void *)bh);
+		/* XXX should use actual screen size */
+
+		for (i = 0; i < 1152 * 900; i++)
+		    ((unsigned char *)bh)[i] = 0;
+		fbrcons_init(&sc->sc_rcfb);
+		cg14_set_rcons_luts(sc);
+		sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | 
+		    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL;
 	} else
 		printf("\n");
+#endif
+
+#if NWSDISPLAY > 0
+	if (sbus_bus_map( sc->sc_bustag,
+	    sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
+	    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
+	    ramsize, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+		printf("%s: cannot map pixels\n",&sc->sc_dev.dv_xname[0]);
+		return;
+	}
+
+	sc->sc_fb.fb_pixels = bus_space_vaddr(sc->sc_bustag, bh);
+	if (isconsole)
+		printf(" (console)\n");
+
+	sc->sc_depth = 8;
+	cg14_setup_wsdisplay(sc, isconsole);
+#endif
 
 	/* Attach to /dev/fb */
 	fb_attach(&sc->sc_fb, isconsole);
@@ -699,3 +765,265 @@ cg14_load_hwcmap(struct cgfourteen_softc *sc, int start, int ncolors)
 	while (--ncolors >= 0)
 		*lutp++ = *colp++;
 }
+
+#if NWSDISPLAY > 0
+static void
+cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
+{
+	struct wsemuldisplaydev_attach_args aa;
+	struct rasops_info *ri;
+	long defattr;
+
+ 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
+		"default",
+		0, 0,
+		NULL,
+		8, 16,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+		NULL
+	};
+	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
+	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	vcons_init(&sc->sc_vd, sc, &sc->sc_defaultscreen_descr,
+	    &cg14_accessops);
+	sc->sc_vd.init_screen = cg14_init_screen;
+
+	ri = &sc->sc_console_screen.scr_ri;
+
+	if (is_cons) {
+		vcons_init_screen(&sc->sc_vd, &sc->sc_console_screen, 1,
+		    &defattr);
+		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+
+		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
+		    defattr);
+	} else {
+		/*
+		 * since we're not the console we can postpone the rest
+		 * until someone actually allocates a screen for us
+		 */
+	}
+
+	cg14_init_cmap(sc);
+
+	aa.console = is_cons;
+	aa.scrdata = &sc->sc_screenlist;
+	aa.accessops = &cg14_accessops;
+	aa.accesscookie = &sc->sc_vd;
+
+	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+}
+
+static void
+cg14_init_cmap(struct cgfourteen_softc *sc)
+{
+	int i, j = 0;
+
+	for (i = 0; i < 256; i++) {
+
+		sc->sc_cmap.cm_map[i][3] = rasops_cmap[j];
+		sc->sc_cmap.cm_map[i][2] = rasops_cmap[j + 1];
+		sc->sc_cmap.cm_map[i][1] = rasops_cmap[j + 2];
+		j += 3;
+	}
+	cg14_load_hwcmap(sc, 0, 256);
+}
+
+static int
+cg14_putcmap(struct cgfourteen_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+	u_char rbuf[256], gbuf[256], bbuf[256];
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &rbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &gbuf[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &bbuf[index], count);
+	if (error)
+		return error;
+
+	for (i = 0; i < count; i++) {
+		sc->sc_cmap.cm_map[index][3] = rbuf[index];
+		sc->sc_cmap.cm_map[index][2] = gbuf[index];
+		sc->sc_cmap.cm_map[index][1] = bbuf[index];
+		
+		index++;
+	}
+	cg14_load_hwcmap(sc, 0, 256);
+	return 0;
+}
+
+static int
+cg14_getcmap(struct cgfourteen_softc *sc, struct wsdisplay_cmap *cm)
+{
+	uint8_t rbuf[256], gbuf[256], bbuf[256];
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error, i;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+
+
+	for (i = 0; i < count; i++) {
+		rbuf[i] = sc->sc_cmap.cm_map[index][3];
+		gbuf[i] = sc->sc_cmap.cm_map[index][2];
+		bbuf[i] = sc->sc_cmap.cm_map[index][1];
+		
+		index++;
+	}
+	error = copyout(rbuf,   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(gbuf, cm->green, count);
+	if (error)
+		return error;
+	error = copyout(bbuf,  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
+}
+static int
+cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
+	struct lwp *l)
+{
+	struct vcons_data *vd = v;
+	struct cgfourteen_softc *sc = vd->cookie;
+	struct wsdisplay_fbinfo *wdf;
+	struct vcons_screen *ms = vd->active;
+
+	switch (cmd) {
+
+		case WSDISPLAYIO_GTYPE:
+			*(uint32_t *)data = WSDISPLAY_TYPE_SUNCG14;
+			return 0;
+
+		case WSDISPLAYIO_GINFO:
+			wdf = (void *)data;
+			wdf->height = ms->scr_ri.ri_height;
+			wdf->width = ms->scr_ri.ri_width;
+			wdf->depth = 32;
+			wdf->cmsize = 256;
+			return 0;
+
+		case WSDISPLAYIO_GETCMAP:
+			return cg14_getcmap(sc,
+			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_PUTCMAP:
+			return cg14_putcmap(sc,
+			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_LINEBYTES:
+			*(u_int *)data = ms->scr_ri.ri_width << 2;
+			return 0;
+
+		case WSDISPLAYIO_SMODE:
+			{
+				int new_mode = *(int*)data;
+				if (new_mode != sc->sc_mode) {
+					sc->sc_mode = new_mode;
+					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+						cg14_set_depth(sc, 8);
+						cg14_init_cmap(sc);
+						vcons_redraw_screen(ms);
+					} else
+						cg14_set_depth(sc, 32);
+				}
+			}
+			return 0;
+	}
+	return EPASSTHROUGH;
+}
+
+static paddr_t
+cg14_mmap(void *v, void *vs, off_t offset, int prot)
+{
+	struct vcons_data *vd = v;
+	struct cgfourteen_softc *sc = vd->cookie;
+
+	/* allow mmap()ing the full framebuffer, not just what we use */
+	if (offset < sc->sc_vramsize)
+		return bus_space_mmap(sc->sc_bustag,
+		    BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
+		      sc->sc_physadr[CG14_PXL_IDX].sbr_offset),
+		    offset + CG14_FB_CBGR, prot, BUS_SPACE_MAP_LINEAR);
+
+	return -1;
+}
+
+static void
+cg14_init_screen(void *cookie, struct vcons_screen *scr,
+    int existing, long *defattr)
+{
+	struct cgfourteen_softc *sc = cookie;
+	struct rasops_info *ri = &scr->scr_ri;
+
+	ri->ri_depth = 8;
+	ri->ri_width = sc->sc_fb.fb_type.fb_width;
+	ri->ri_height = sc->sc_fb.fb_type.fb_height;
+	ri->ri_stride = ri->ri_width;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+
+	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
+
+	if (existing) {
+		ri->ri_flg |= RI_CLEAR;
+	}
+
+	rasops_init(ri, sc->sc_fb.fb_type.fb_height / 8,
+	     sc->sc_fb.fb_type.fb_width / 8);
+	ri->ri_caps = WSSCREEN_WSCOLORS;
+
+	rasops_reconfig(ri,
+	    sc->sc_fb.fb_type.fb_height / ri->ri_font->fontheight,
+	    sc->sc_fb.fb_type.fb_width / ri->ri_font->fontwidth);
+
+	ri->ri_hw = scr;
+}
+
+static void
+cg14_set_depth(struct cgfourteen_softc *sc, int depth)
+{
+	int i;
+
+	if (sc->sc_depth == depth)
+		return;
+	switch (depth) {
+		case 8:
+			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
+			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
+			    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL);
+			sc->sc_depth = 8;
+			/* everything is CLUT1 */
+			for (i = 0; i < CG14_CLUT_SIZE; i++)
+			     sc->sc_xlut->xlut_lut[i] = 0;
+			break;
+		case 32:
+			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
+			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
+			    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL);
+			sc->sc_depth = 32;
+			for (i = 0; i < CG14_CLUT_SIZE; i++)
+			     sc->sc_xlut->xlut_lut[i] = 0;
+			break;
+		default:
+			printf("%s: can't change to depth %d\n",
+			    sc->sc_dev.dv_xname, depth);
+	}
+}
+#endif

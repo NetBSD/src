@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.140 2007/07/07 05:13:17 tsutsui Exp $
+#	$NetBSD: files.sparc,v 1.141 2007/07/30 18:20:08 macallan Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -252,7 +252,7 @@ device cgeight: bt_dac, fb, rasops24, pfour
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
 
-device cgfourteen: fb, rasops32
+device cgfourteen: fb, rasops32, rasops8, wsemuldisplaydev
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 

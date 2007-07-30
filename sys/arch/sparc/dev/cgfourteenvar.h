@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.6 2006/01/17 04:22:09 christos Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.7 2007/07/30 18:20:09 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -77,12 +77,24 @@ struct cgfourteen_softc {
 #endif
 	bus_space_tag_t	sc_bustag;
 	struct sbus_reg	sc_physadr[2];	/* phys addrs of h/w */
+	bus_space_handle_t sc_regh;	/* register space */
 #define CG14_CTL_IDX	0
 #define CG14_PXL_IDX	1
 
 	union	cg14cmap sc_cmap;	/* current colormap */
 	struct	cg14_cursor sc_cursor;	/* Hardware cursor state */
 	union 	cg14cmap sc_saveclut; 	/* a place to stash PROM state */
+	size_t	sc_vramsize;
+#if NWSDISPLAY > 0
+	struct  vcons_data sc_vd;
+	struct vcons_screen sc_console_screen;
+	struct wsscreen_descr sc_defaultscreen_descr;
+	const struct wsscreen_descr *sc_screens[1];
+	struct wsscreen_list sc_screenlist;
+	int sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
+	int sc_depth;	/* current colour depth */
+#endif
+
 	uint8_t	sc_savexlut[256];
 	uint8_t	sc_savectl;
 	uint8_t	sc_savehwc;
