@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.310 2007/07/21 23:15:16 xtraeme Exp $	*/
+/*	$NetBSD: init_main.c,v 1.311 2007/07/30 08:45:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.310 2007/07/21 23:15:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311 2007/07/30 08:45:26 pooka Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -198,6 +198,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.310 2007/07/21 23:15:16 xtraeme Exp 
 extern struct proc proc0;
 extern struct lwp lwp0;
 extern struct cwdinfo cwdi0;
+extern time_t rootfstime;
 
 #ifndef curlwp
 struct	lwp *curlwp = &lwp0;
@@ -208,7 +209,6 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
-time_t	rootfstime;			/* recorded root fs time, if known */
 int	ncpu = 0;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
@@ -645,12 +645,6 @@ main(void)
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */
-}
-
-void
-setrootfstime(time_t t)
-{
-	rootfstime = t;
 }
 
 static void
