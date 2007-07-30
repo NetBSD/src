@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.91 2006/11/16 01:32:52 christos Exp $ */
+/* $NetBSD: vga.c,v 1.91.2.1 2007/07/30 12:40:49 liamjfoy Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 #include "opt_wsmsgattrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.91 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.91.2.1 2007/07/30 12:40:49 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1103,6 +1103,10 @@ vga_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	struct vgascreen *scr = id;
 	struct vga_config *vc = scr->cfg;
+
+	if (__predict_false((unsigned int)fg >= sizeof(fgansitopc) || 
+	    (unsigned int)bg >= sizeof(bgansitopc)))
+		return (EINVAL);
 
 	if (vc->hdl.vh_mono) {
 		if (flags & WSATTR_WSCOLORS)
