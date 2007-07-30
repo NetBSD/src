@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.225 2007/07/30 12:53:15 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.226 2007/07/30 20:07:16 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8157,3 +8157,26 @@ bin/ps/print.c					1.100
 	Fix the other chact to test the p_realstat.
 	Fixer PR kern/36295
 	[dsl, ticket #798]
+
+doc/CHANGES					1.893
+sys/dev/ic/mpt.c				1.9
+sys/dev/ic/mpt.h				1.6
+sys/dev/ic/mpt_mpilib.h				1.3
+sys/dev/ic/mpt_netbsd.c				1.12
+sys/dev/ic/mpt_netbsd.h				1.6
+sys/dev/pci/mpt_pci.c				1.11
+
+	Add support for newer SAS and similar devices to mpt(4). Tested with
+	the LSI SAS1064 in a Sun x4200 server.
+
+	These enhancements were developed by Garrett D'Amore and contributed
+	to NetBSD by the TELES AG.
+
+	Mention support for new hardware in mpt(4).
+	[tron, ticket #797]
+
+sys/dev/ic/mpt.c				1.10
+
+	Use the appropriate number of maximum devices for Fibre Channel.
+	Problem Jarle Greipsland on "current-users" mailing list.
+	[tron, ticket #797]
