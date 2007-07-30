@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 2007/07/30 12:25:14 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2007/03/08 20:48:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9 2007/07/30 12:25:14 jmmv Exp $");
 
 #include "opt_md.h"
 
@@ -195,15 +195,15 @@ cpu_configure()
 	ofrootfound();
 #endif
 
+#if defined(DEBUG)
 	/* Debugging information */
-#ifndef TERSE
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_VM]);
 	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
 	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_HIGH],
 	    irqmasks[IPL_SERIAL]);
-#endif
+#endif /* defined(DEBUG) */
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();
