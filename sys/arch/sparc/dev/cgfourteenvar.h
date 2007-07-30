@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.7 2007/07/30 18:20:09 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.8 2007/07/30 23:28:14 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -57,7 +57,7 @@ union cg14cursor_cmap {		/* colormap, like bt_cmap, but tiny */
  * cg14 hardware cursor status
  */
 struct cg14_cursor {		/* cg14 hardware cursor status */
-	short	cc_enable;		/* cursor is enabled */
+	int	cc_enable;		/* cursor is enabled */
 	struct	fbcurpos cc_pos;	/* position */
 	struct	fbcurpos cc_hot;	/* hot-spot */
 	struct	fbcurpos cc_size;	/* size of mask & image fields */
