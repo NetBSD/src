@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.66 2007/07/27 08:31:30 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.67 2007/07/30 03:25:50 rumble Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 27, 2007
+.Dd July 29, 2007
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -1003,7 +1003,11 @@ should be
 .Dv NULL
 if they aren't required to be returned by
 .Fn VOP_READDIR .
-The directory contents are read into struct dirent structures.
+The directory contents are read into struct dirent structures and
+.Fa uio->uio_offset
+is set to the offset of the next unread directory entry.
+This offset may be used in a following invocation to continue a
+sequential read of the directory contents.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Pp
@@ -1027,8 +1031,20 @@ reading.
 The directory seek cookies are returned to the NFS client and may be
 used later to restart a directory read part way through the directory.
 There should be one cookie returned per directory entry.
-The value of the cookie should be the offset within the directory
-where the on-disk version of the appropriate directory entry starts.
+The value of the cookie for each directory entry should be the offset
+within the directory where the on-disk version of the following
+directory entry starts.
+That is, for each directory entry
+.Fa i ,
+the corresponding cookie should refer to the offset of directory entry
+.Fa i + 1 .
+.Pp
+Note that the
+.Fa cookies
+array must be allocated by the callee using the M_TEMP malloc type as
+callers of
+.Fn VOP_READDIR
+must be able to free the allocation.
 .It Fn VOP_READLINK "vp" "uio" "cred"
 Read the contents of a symbolic link.
 The argument
