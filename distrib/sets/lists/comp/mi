@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1055 2007/07/29 17:06:01 joerg Exp $
+#	$NetBSD: mi,v 1.1056 2007/07/30 06:58:18 taca Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3034,6 +3034,7 @@
 ./usr/libdata/debug/usr/sbin/ypxfr.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
+./usr/libdata/lint/llib-larchive.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbluetooth.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbsdmalloc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lbz2.ln			comp-c-lintlib		lint
