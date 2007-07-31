@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.164 2007/07/27 13:43:05 pooka Exp $	*/
+/*	$NetBSD: mount.h,v 1.165 2007/07/31 21:14:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -185,7 +185,7 @@ struct vfsops {
 	const char *vfs_name;
 	size_t	vfs_min_mount_data;
 	int	(*vfs_mount)	(struct mount *, const char *, void *,
-				    size_t *, struct nameidata *, struct lwp *);
+				    size_t *, struct lwp *);
 	int	(*vfs_start)	(struct mount *, int, struct lwp *);
 	int	(*vfs_unmount)	(struct mount *, int, struct lwp *);
 	int	(*vfs_root)	(struct mount *, struct vnode **);
@@ -214,8 +214,8 @@ struct vfsops {
 	LIST_ENTRY(vfsops) vfs_list;
 };
 
-#define VFS_MOUNT(MP, PATH, DATA, DATA_LEN, NDP, L) \
-	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, DATA_LEN, NDP, L)
+#define VFS_MOUNT(MP, PATH, DATA, DATA_LEN, L) \
+	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, DATA_LEN, L)
 #define VFS_START(MP, FLAGS, L)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, L)
 #define VFS_UNMOUNT(MP, FORCE, L) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, L)
 #define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
@@ -243,7 +243,7 @@ struct kauth_cred;
 
 #define VFS_PROTOS(fsname)						\
 int	fsname##_mount(struct mount *, const char *, void *,		\
-		size_t *, struct nameidata *, struct lwp *);		\
+		size_t *, struct lwp *);				\
 int	fsname##_start(struct mount *, int, struct lwp *);		\
 int	fsname##_unmount(struct mount *, int, struct lwp *);		\
 int	fsname##_root(struct mount *, struct vnode **);			\
@@ -264,7 +264,7 @@ int	fsname##_snapshot(struct mount *, struct vnode *,		\
 		struct timespec *);					\
 int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
 		const char *, struct lwp *);				\
-int	fsname##_suspendctl(struct mount *, int);
+int	fsname##_suspendctl(struct mount *, int)
 
 #define	VFS_ATTACH(vfs)		__link_set_add_data(vfsops, vfs)
 

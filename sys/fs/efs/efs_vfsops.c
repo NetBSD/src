@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.7 2007/07/26 22:57:37 pooka Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.8 2007/07/31 21:14:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.7 2007/07/26 22:57:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8 2007/07/31 21:14:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
  */
 static int
 efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	struct efs_args *args = data;
 	struct nameidata devndp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.67 2007/07/26 22:57:39 pooka Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.68 2007/07/31 21:14:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.67 2007/07/26 22:57:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.68 2007/07/31 21:14:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,22 +89,20 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.67 2007/07/26 22:57:39 pooka Exp $
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	nullfs_mount(struct mount *, const char *, void *, size_t *,
-	    struct nameidata *, struct lwp *);
-int	nullfs_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(nullfs);
 
 /*
  * Mount null layer
  */
 int
-nullfs_mount(mp, path, data, data_len, ndp, l)
+nullfs_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct null_args *args = data;
 	struct vnode *lowerrootvp, *vp;
 	struct null_mount *nmp;
@@ -136,15 +134,15 @@ nullfs_mount(mp, path, data, data_len, ndp, l)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
 		UIO_USERSPACE, args->la.target, l);
-	if ((error = namei(ndp)) != 0)
+	if ((error = namei(&nd)) != 0)
 		return (error);
 
 	/*
 	 * Sanity check on lower vnode
 	 */
-	lowerrootvp = ndp->ni_vp;
+	lowerrootvp = nd.ni_vp;
 
 	/*
 	 * First cut at fixing up upper mount point
