@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.4.4.1 2007/05/17 00:35:14 jdc Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.4.4.2 2007/07/31 13:44:14 ghen Exp $	*/
 
 /*
  * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.c,v 1.419.18.49 2006/12/07 05:24:19 marka Exp */
+/* Id: server.c,v 1.419.18.49.12.2 2007/07/09 02:23:16 marka Exp */
 
 /*! \file */
 
@@ -1437,12 +1437,12 @@ configure_view(dns_view_t *view, const cfg_obj_t *config,
 		view->additionalfromcache = ISC_TRUE;
 	}
 
+	/*
+	 * Set "allow-query-cache" and "allow-recursion" acls if
+	 * configured in named.conf.
+	 */
 	CHECK(configure_view_acl(vconfig, config, "allow-query-cache",
 				 actx, ns_g_mctx, &view->queryacl));
-	if (view->queryacl == NULL)
-		CHECK(configure_view_acl(NULL, ns_g_defaults,
-					 "allow-query-cache", actx,
-					 ns_g_mctx, &view->queryacl));
 
 	if (strcmp(view->name, "_bind") != 0)
 		CHECK(configure_view_acl(vconfig, config, "allow-recursion",
@@ -1462,11 +1462,29 @@ configure_view(dns_view_t *view, const cfg_obj_t *config,
 			      "active%s%s", forview, viewname);
 
 	/*
-	 * Set default "allow-recursion" acl.
+	 * "allow-query-cache" inherits from "allow-recursion" if set,
+	 * otherwise from "allow-query" if set.
+	 * "allow-recursion" inherits from "allow-query-cache" if set,
+	 * otherwise from "allow-query" if set.
+	 */
+	if (view->queryacl == NULL && view->recursionacl != NULL)
+		dns_acl_attach(view->recursionacl, &view->queryacl);
+	if (view->queryacl == NULL)
+		CHECK(configure_view_acl(vconfig, config, "allow-query",
+					 actx, ns_g_mctx, &view->queryacl));
+	if (view->recursionacl == NULL && view->queryacl != NULL)
+		dns_acl_attach(view->queryacl, &view->recursionacl);
+
+	/*
+	 * Set default "allow-recursion" and "allow-query-cache" acls.
 	 */
 	if (view->recursionacl == NULL && view->recursion)
-		CHECK(configure_view_acl(NULL, ns_g_defaults, "allow-recursion",
+		CHECK(configure_view_acl(NULL, ns_g_config, "allow-recursion",
 					 actx, ns_g_mctx, &view->recursionacl));
+	if (view->queryacl == NULL)
+		CHECK(configure_view_acl(NULL, ns_g_config,
+					 "allow-query-cache", actx,
+					 ns_g_mctx, &view->queryacl));
 
 	CHECK(configure_view_acl(vconfig, config, "sortlist",
 				 actx, ns_g_mctx, &view->sortlist));
