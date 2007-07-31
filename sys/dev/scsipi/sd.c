@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.258 2006/11/30 17:59:35 christos Exp $	*/
+/*	$NetBSD: sd.c,v 1.258.2.1 2007/07/31 21:47:15 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.258 2006/11/30 17:59:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.258.2.1 2007/07/31 21:47:15 liamjfoy Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.258 2006/11/30 17:59:35 christos Exp $");
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/sdvar.h>
+
+#include <prop/proplib.h>
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDPART(dev)			DISKPART(dev)
@@ -131,6 +133,7 @@ static int	sdmatch(struct device *, struct cfdata *, void *);
 static void	sdattach(struct device *, struct device *, void *);
 static int	sdactivate(struct device *, enum devact);
 static int	sddetach(struct device *, int);
+static void	sd_set_properties(struct sd_softc *);
 
 CFATTACH_DECL(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
     sdactivate);
@@ -327,6 +330,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&sd->sc_dk);
+
+	sd_set_properties(sd);
 }
 
 static int
@@ -2229,4 +2234,45 @@ sd_setcache(struct sd_softc *sd, int bits)
 	return (sd_mode_select(sd, byte2|SMS_PF, &scsipi_sense,
 	    sizeof(struct scsi_mode_page_header) +
 	    pages->caching_params.pg_length, 0, big));
+}
+
+static void
+sd_set_properties(struct sd_softc *sd)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    sd->params.disksize);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    sd->params.blksize);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+	    sd->params.sectors);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+	    sd->params.heads);
+
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    sd->params.cyls);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&sd->sc_dev),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = sd->sc_dk.dk_info;
+	sd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
 }
