@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.198 2007/07/18 13:28:20 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.199 2007/07/31 15:51:15 rjs Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -278,6 +278,16 @@ Base Tag:	gmcgarry_ucred_base
 Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
 Scope:		kernel
 Notes:		merge pcred and ucred and poolify
+
+Branch:		hpcarm-cleanup
+Description:	Fix build problems for hpcarm
+Status:		Active
+Start Date:	31 July 2007
+End Date:
+Base Tag:	hpcarm-cleanup-base
+Maintainer:	Robert Swindells <rjs@NetBSD.org>
+Scope:		kernel
+Notes:		Modify SA11x0 interrupt code to match PXA2x0 equivalent.
 
 Branch:		itohy-usb1
 Description:	USB stack overhaul, mostly DMA related
