@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 2007/07/01 16:04:57 toshii Exp $	*/
+/*	$NetBSD: psl.h,v 1.11.6.1 2007/07/31 15:17:16 rjs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #ifndef _ARM_PSL_H_
 #define _ARM_PSL_H_
 #include <machine/intr.h>
-#if (! defined(_LOCORE)) && (! defined(hpcarm))
+#ifndef _LOCORE
 #include <arm/softintr.h>
 #endif
 
@@ -94,9 +94,9 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-int raisespl	__P((int));
-int lowerspl	__P((int));
-int splx	__P((int));
+int raisespl(int);
+int lowerspl(int);
+int splx(int);
 
 void _setsoftintr	(int si);
 
