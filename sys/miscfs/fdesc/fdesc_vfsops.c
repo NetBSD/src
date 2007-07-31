@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.68 2007/07/26 22:57:39 pooka Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.69 2007/07/31 21:14:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.68 2007/07/26 22:57:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.69 2007/07/31 21:14:15 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -63,22 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.68 2007/07/26 22:57:39 pooka Exp 
 
 #include <miscfs/fdesc/fdesc.h>
 
-int	fdesc_mount(struct mount *, const char *, void *, size_t *,
-			 struct nameidata *, struct lwp *);
-int	fdesc_start(struct mount *, int, struct lwp *);
-int	fdesc_unmount(struct mount *, int, struct lwp *);
-int	fdesc_quotactl(struct mount *, int, uid_t, void *,
-			    struct lwp *);
-int	fdesc_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	fdesc_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int	fdesc_vget(struct mount *, ino_t, struct vnode **);
+VFS_PROTOS(fdesc);
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
 fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error = 0;
 	struct fdescmount *fmp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.323 2007/07/22 19:16:05 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.324 2007/07/31 21:14:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.323 2007/07/22 19:16:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.324 2007/07/31 21:14:21 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -135,7 +135,7 @@ const int nmountcompatnames = sizeof(mountcompatnames) /
 
 static int
 mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
-    void *data, size_t *data_len, struct nameidata *ndp)
+    void *data, size_t *data_len)
 {
 	struct mount *mp;
 	int error = 0, saved_flags;
@@ -182,7 +182,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE);
 
-	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, l);
 
 #if defined(COMPAT_30) && defined(NFSSERVER)
 	if (error && data != NULL) {
@@ -256,8 +256,7 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
-    const char *path, int flags, void *data, size_t *data_len,
-    struct nameidata *ndp)
+    const char *path, int flags, void *data, size_t *data_len)
 {
 	struct mount *mp = NULL;
 	struct vnode *vp = *vpp;
@@ -323,7 +322,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE | MNT_RDONLY);
 
-	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, l);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	/*
@@ -358,7 +357,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 
 static int
 mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
-    void *data, size_t *data_len, struct nameidata *ndp)
+    void *data, size_t *data_len)
 {
 	struct mount *mp;
 	int error;
@@ -383,7 +382,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= MNT_GETARGS;
-	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, l);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	vfs_unbusy(mp);
@@ -488,20 +487,18 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			error = EINVAL;
 			goto done;
 		}
-		error = mount_getargs(l, vp, path, flags, data_buf,
-		    &data_len, &nd);
+		error = mount_getargs(l, vp, path, flags, data_buf, &data_len);
 		if (error != 0)
 			goto done;
 		if (data_seg == UIO_USERSPACE)
 			error = copyout(data_buf, data, data_len);
 		*retval = data_len;
 	} else if (flags & MNT_UPDATE) {
-		error = mount_update(l, vp, path, flags, data_buf, &data_len,
-		    &nd);
+		error = mount_update(l, vp, path, flags, data_buf, &data_len);
 	} else {
 		/* Locking is handled internally in mount_domount(). */
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
-		    &data_len, &nd);
+		    &data_len);
 	}
 
     done:

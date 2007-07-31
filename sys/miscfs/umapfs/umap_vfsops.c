@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.68 2007/07/26 22:57:40 pooka Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.69 2007/07/31 21:14:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.68 2007/07/26 22:57:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.69 2007/07/31 21:14:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,22 +57,20 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.68 2007/07/26 22:57:40 pooka Exp $
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umapfs_mount(struct mount *, const char *, void *, size_t *,
-			  struct nameidata *, struct lwp *);
-int	umapfs_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(umapfs);
 
 /*
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, data_len, ndp, l)
+umapfs_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct umap_args *args = data;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
@@ -113,15 +111,15 @@ umapfs_mount(mp, path, data, data_len, ndp, l)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
 		UIO_USERSPACE, args->umap_target, l);
-	if ((error = namei(ndp)) != 0)
+	if ((error = namei(&nd)) != 0)
 		return (error);
 
 	/*
 	 * Sanity check on lower vnode
 	 */
-	lowerrootvp = ndp->ni_vp;
+	lowerrootvp = nd.ni_vp;
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("vp = %p, check for VDIR...\n", lowerrootvp);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.47 2007/07/26 22:57:39 pooka Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.48 2007/07/31 21:14:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.47 2007/07/26 22:57:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.48 2007/07/31 21:14:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,28 +95,20 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.47 2007/07/26 22:57:39 pooka Exp 
 
 #include <fs/union/union.h>
 
-int union_mount(struct mount *, const char *, void *, size_t *data_len,
-		struct nameidata *, struct lwp *);
-int union_start(struct mount *, int, struct lwp *);
-int union_unmount(struct mount *, int, struct lwp *);
-int union_root(struct mount *, struct vnode **);
-int union_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
-int union_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int union_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int union_vget(struct mount *, ino_t, struct vnode **);
+VFS_PROTOS(union);
 
 /*
  * Mount union filesystem
  */
 int
-union_mount(mp, path, data, data_len, ndp, l)
+union_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	int error = 0;
 	struct union_args *args = data;
 	struct vnode *lowerrootvp = NULLVP;
@@ -162,12 +154,12 @@ union_mount(mp, path, data, data_len, ndp, l)
 	/*
 	 * Find upper node.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->target, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->target, l);
 
-	if ((error = namei(ndp)) != 0)
+	if ((error = namei(&nd)) != 0)
 		goto bad;
 
-	upperrootvp = ndp->ni_vp;
+	upperrootvp = nd.ni_vp;
 
 	if (upperrootvp->v_type != VDIR) {
 		error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.181 2007/07/26 22:57:36 pooka Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.182 2007/07/31 21:14:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.181 2007/07/26 22:57:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.182 2007/07/31 21:14:19 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -579,7 +579,7 @@ nfs_decode_args(nmp, argp, l)
 /* ARGSUSED */
 int
 nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error;
 	struct nfs_args *args = data;
