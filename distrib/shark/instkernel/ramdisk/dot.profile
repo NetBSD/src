@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2007/03/12 14:47:15 jmmv Exp $
+# $NetBSD: dot.profile,v 1.4 2007/07/31 19:51:58 jmmv Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -55,7 +55,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# get the terminal type
 	case ${_consdev} in
 		tty[Ev]*)
-			TERM=pc3
+			TERM=wsvt25
 			;;
 
 		*)
@@ -64,9 +64,9 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 				echo "" >& 2
 				echo "Setting terminal type.  Options:" >& 2
 				echo "" >& 2
-				echo "  pc3    for graphics console" >& 2
-				echo "  vt100  for dumb serial terminal" >& 2
-				echo "  xterm  for xterm." >& 2
+				echo "  vt100   for dumb serial terminal" >& 2
+				echo "  wsvt25  for graphics console" >& 2
+				echo "  xterm   for xterm" >& 2
 				echo "" >& 2
 				eval `tset -s -m ":?$TERM"`
 				if [ "X${TERM}" != X"unknown" ]; then

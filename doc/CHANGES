@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.896 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.897 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -176,4 +176,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	shark: Add dhclient(8) to the install disk image to be able to
 		configure network interfaces through DHCP.  [jmmv 20070729]
 	sparc: The cgfourteen driver now supports wscons. [macallan 20070730]
-
+	shark: Switched the installation disk to use wscons instead of
+		pccons.  [jmmv 20070731]
