@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.66 2007/07/28 00:12:26 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.67 2007/07/31 00:52:04 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.66 2007/07/28 00:12:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.67 2007/07/31 00:52:04 tnn Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -951,7 +951,7 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 	if (p->p_nlwps == 1) {
 		l = LIST_FIRST(&p->p_lwps);
 		if (nrlwps)
-			*nrlwps = (l->l_stat == LSONPROC || LSRUN);
+			*nrlwps = (l->l_stat & (LSONPROC | LSRUN)) ? 1 : 0;
 		return l;
 	}
 
@@ -1004,10 +1004,6 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 			l = suspended;
 		else
 			break;
-		return l;
-		if (nrlwps)
-			*nrlwps = 0;
-		l = LIST_FIRST(&p->p_lwps);
 		return l;
 #ifdef DIAGNOSTIC
 	case SIDL:
