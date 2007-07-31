@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.35 2007/03/10 22:52:05 christos Exp $	*/
+/*	$NetBSD: channels.c,v 1.36 2007/07/31 03:09:49 taca Exp $	*/
 /* $OpenBSD: channels.c,v 1.268 2007/01/03 03:01:40 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.35 2007/03/10 22:52:05 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.36 2007/07/31 03:09:49 taca Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -1445,12 +1445,12 @@ static int
 channel_handle_rfd(Channel *c, fd_set *readset, fd_set *writeset)
 {
 	char buf[CHAN_RBUF];
-	int len;
+	int len, force;
 
-	if (c->rfd != -1 &&
-	    FD_ISSET(c->rfd, readset)) {
+	force = c->isatty && c->detach_close && c->istate != CHAN_INPUT_CLOSED;
+	if (c->rfd != -1 && (force || FD_ISSET(c->rfd, readset))) {
 		len = read(c->rfd, buf, sizeof(buf));
-		if (len < 0 && (errno == EINTR || errno == EAGAIN))
+		if (len < 0 && (errno == EINTR || (errno == EAGAIN && !force)))
 			return 1;
 		if (len <= 0) {
 			debug2("channel %d: read<=0 rfd %d len %d",
