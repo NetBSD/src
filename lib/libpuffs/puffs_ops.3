@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.14 2007/07/25 09:10:26 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.15 2007/07/31 21:48:18 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 25, 2007
+.Dd July 31, 2007
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -629,8 +629,12 @@ and
 .Fa ncookies
 must be filled out.
 .Fa cookies
-is a vector for offsets corresponding to the read offsets.
+is a vector for offsets corresponding to read offsets.
 One cookie should be filled out for each directory entry.
+The value of the cookie should equal the offset of the
+.Em next
+directory entry, i.e. which offset should be passed to readdir for
+the first entry read to be the entry following the current one.
 .Fa ncookies
 is the number of slots for cookies in the cookie vector upon entry to
 the function and must be set to the amount of cookies stored in the
