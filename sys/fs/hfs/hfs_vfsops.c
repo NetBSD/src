@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.8 2007/07/26 22:57:37 pooka Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.9 2007/07/31 21:14:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.8 2007/07/26 22:57:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.9 2007/07/31 21:14:17 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -176,8 +176,9 @@ static const struct genfs_ops hfs_genfsops = {
 
 int
 hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
+	struct nameidata nd;
 	struct hfs_args *args = data;
 	struct vnode *devvp;
 	struct hfsmount *hmp;
@@ -216,10 +217,10 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return error;
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 	
 		if (!update) {
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.25 2007/07/26 22:57:38 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.26 2007/07/31 21:14:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.25 2007/07/26 22:57:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.26 2007/07/31 21:14:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,7 +67,7 @@ MALLOC_JUSTDEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
 /* --------------------------------------------------------------------- */
 
 static int	tmpfs_mount(struct mount *, const char *, void *, size_t *,
-		    struct nameidata *, struct lwp *);
+		    struct lwp *);
 static int	tmpfs_start(struct mount *, int, struct lwp *);
 static int	tmpfs_unmount(struct mount *, int, struct lwp *);
 static int	tmpfs_root(struct mount *, struct vnode **);
@@ -87,7 +87,7 @@ static int	tmpfs_snapshot(struct mount *, struct vnode *,
 
 static int
 tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error;
 	ino_t nodes;

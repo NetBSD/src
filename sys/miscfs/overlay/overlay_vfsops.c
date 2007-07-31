@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.42 2007/07/26 22:57:39 pooka Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.43 2007/07/31 21:14:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.42 2007/07/26 22:57:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.43 2007/07/31 21:14:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.42 2007/07/26 22:57:39 pooka Ex
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	ov_mount(struct mount *, const char *, void *, size_t *,
-			  struct nameidata *, struct lwp *);
-int	ov_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(ov);
 
 #define	NOVERLAYNODECACHE	16
 
@@ -99,7 +97,7 @@ int	ov_unmount(struct mount *, int, struct lwp *);
  */
 int
 ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error = 0;
 	struct overlay_args *args = data;
