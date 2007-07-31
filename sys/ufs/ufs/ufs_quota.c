@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.49 2007/07/19 09:33:04 hannken Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.50 2007/07/31 09:29:52 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.49 2007/07/19 09:33:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.50 2007/07/31 09:29:52 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,14 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.49 2007/07/19 09:33:04 hannken Exp $
  * filesystem for the current user or group. A cache is kept of recently
  * used entries.
  * Field markings and the corresponding locks:
- * h:	dqhashtbl_mtx
+ * h:	dqlock
  * d:	dq_interlock
  *
- * Lock order is: dq_interlock -> dqhashtbl_mtx
+ * Lock order is: dq_interlock -> dqlock
+ *                dq_interlock -> dqvp
  */
 struct dquot {
 	LIST_ENTRY(dquot) dq_hash;	/* h: hash list */
-	TAILQ_ENTRY(dquot) dq_freelist;	/* free list */
 	u_int16_t dq_flags;		/* d: flags, see below */
 	u_int16_t dq_type;		/* d: quota type of this dquot */
 	u_int32_t dq_cnt;		/* h: count of active references */
@@ -102,13 +102,17 @@ struct dquot {
 
 static int chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
 static int chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
+#ifdef DIAGNOSTIC
 static void dqflush(struct vnode *);
+#endif
 static int dqget(struct vnode *, u_long, struct ufsmount *, int,
 		 struct dquot **);
 static void dqref(struct dquot *);
 static void dqrele(struct vnode *, struct dquot *); 
 static int dqsync(struct vnode *, struct dquot *);
 
+static kmutex_t dqlock;
+static kcondvar_t dqcv;
 /*
  * Quota name to error message mapping.
  */
@@ -250,6 +254,7 @@ chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 	struct dquot *dq = ip->i_dquot[type];
 	long ncurblocks = dq->dq_curblocks + change;
 
+	KASSERT(mutex_owned(&dq->dq_interlock));
 	/*
 	 * If user would exceed their hard limit, disallow space allocation.
 	 */
@@ -354,6 +359,7 @@ chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 	struct dquot *dq = ip->i_dquot[type];
 	long ncurinodes = dq->dq_curinodes + change;
 
+	KASSERT(mutex_owned(&dq->dq_interlock));
 	/*
 	 * If user would exceed their hard limit, disallow inode allocation.
 	 */
@@ -424,7 +430,11 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	}
 	if (*vpp != vp)
 		quotaoff(l, mp, type);
+	mutex_enter(&dqlock);
+	while ((ump->um_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
+		cv_wait(&dqcv, &dqlock);
 	ump->um_qflags[type] |= QTF_OPENING;
+	mutex_exit(&dqlock);
 	mp->mnt_flag |= MNT_QUOTA;
 	vp->v_flag |= VSYSTEM;
 	*vpp = vp;
@@ -466,7 +476,10 @@ again:
 		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
 			goto again;
 	}
+	mutex_enter(&dqlock);
 	ump->um_qflags[type] &= ~QTF_OPENING;
+	cv_broadcast(&dqcv);
+	mutex_exit(&dqlock);
 	if (error)
 		quotaoff(l, mp, type);
 	return (error);
@@ -483,11 +496,18 @@ quotaoff(struct lwp *l, struct mount *mp, int type)
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct dquot *dq;
 	struct inode *ip;
-	int error;
+	kauth_cred_t cred;
+	int i, error;
 
-	if ((qvp = ump->um_quotas[type]) == NULLVP)
+	mutex_enter(&dqlock);
+	while ((ump->um_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
+		cv_wait(&dqcv, &dqlock);
+	if ((qvp = ump->um_quotas[type]) == NULLVP) {
+		mutex_exit(&dqlock);
 		return (0);
+	}
 	ump->um_qflags[type] |= QTF_CLOSING;
+	mutex_exit(&dqlock);
 	/*
 	 * Search vnodes associated with this mount point,
 	 * deleting any references to quota file being closed.
@@ -510,17 +530,23 @@ again:
 		if (TAILQ_NEXT(vp, v_mntvnodes) != nextvp)
 			goto again;
 	}
+#ifdef DIAGNOSTIC
 	dqflush(qvp);
+#endif
 	qvp->v_flag &= ~VSYSTEM;
 	error = vn_close(qvp, FREAD|FWRITE, l->l_cred, l);
+	mutex_enter(&dqlock);
 	ump->um_quotas[type] = NULLVP;
-	kauth_cred_free(ump->um_cred[type]);
+	cred = ump->um_cred[type];
 	ump->um_cred[type] = NOCRED;
-	ump->um_qflags[type] &= ~QTF_CLOSING;
-	for (type = 0; type < MAXQUOTAS; type++)
-		if (ump->um_quotas[type] != NULLVP)
+	for (i = 0; i < MAXQUOTAS; i++)
+		if (ump->um_quotas[i] != NULLVP)
 			break;
-	if (type == MAXQUOTAS)
+	ump->um_qflags[type] &= ~QTF_CLOSING;
+	cv_broadcast(&dqcv);
+	mutex_exit(&dqlock);
+	kauth_cred_free(cred);
+	if (i == MAXQUOTAS)
 		mp->mnt_flag &= ~MNT_QUOTA;
 	return (error);
 }
@@ -679,8 +705,12 @@ again:
 		}
 		for (i = 0; i < MAXQUOTAS; i++) {
 			dq = VTOI(vp)->i_dquot[i];
-			if (dq != NODQUOT && (dq->dq_flags & DQ_MOD))
+			if (dq == NODQUOT)
+				continue;
+			mutex_enter(&dq->dq_interlock);
+			if (dq->dq_flags & DQ_MOD)
 				dqsync(vp, dq);
+			mutex_exit(&dq->dq_interlock);
 		}
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -699,14 +729,7 @@ again:
 	(((((long)(dqvp)) >> 8) + id) & dqhash)
 static LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
 static u_long dqhash;
-static kmutex_t dqhashtbl_mtx;
-
-/*
- * Dquot free list.
- */
-#define	DQUOTINC	5	/* minimum free dquots desired */
-static TAILQ_HEAD(dqfreelist, dquot) dqfreelist;
-static long numdquot, desireddquot = DQUOTINC;
+static struct pool dquot_pool;
 
 MALLOC_JUSTDEFINE(M_DQUOT, "UFS quota", "UFS quota entries");
 
@@ -717,11 +740,13 @@ void
 dqinit(void)
 {
 
-	mutex_init(&dqhashtbl_mtx, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&dqlock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&dqcv, "quota");
 	malloc_type_attach(M_DQUOT);
 	dqhashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &dqhash);
-	TAILQ_INIT(&dqfreelist);
+	pool_init(&dquot_pool, sizeof(struct dquot), 0, 0, 0, "ufsdqpl",
+	    &pool_allocator_nointr, IPL_NONE);
 }
 
 void
@@ -734,6 +759,7 @@ dqreinit(void)
 	int i;
 
 	hash = hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &mask);
+	mutex_enter(&dqlock);
 	oldhash = dqhashtbl;
 	oldmask = dqhash;
 	dqhashtbl = hash;
@@ -746,6 +772,7 @@ dqreinit(void)
 			LIST_INSERT_HEAD(&dqhashtbl[hashval], dq, dq_hash);
 		}
 	}
+	mutex_exit(&dqlock);
 	hashdone(oldhash, M_DQUOT);
 }
 
@@ -756,9 +783,11 @@ void
 dqdone(void)
 {
 
+	pool_destroy(&dquot_pool);
 	hashdone(dqhashtbl, M_DQUOT);
 	malloc_type_detach(M_DQUOT);
-	mutex_destroy(&dqhashtbl_mtx);
+	cv_destroy(&dqcv);
+	mutex_destroy(&dqlock);
 }
 
 /*
@@ -769,79 +798,72 @@ static int
 dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
     struct dquot **dqp)
 {
-	struct dquot *dq;
+	struct dquot *dq, *ndq;
 	struct dqhashhead *dqh;
 	struct vnode *dqvp;
 	struct iovec aiov;
 	struct uio auio;
 	int error;
 
+	/* Lock to see an up to date value for QTF_CLOSING. */
+	mutex_enter(&dqlock);
 	dqvp = ump->um_quotas[type];
 	if (dqvp == NULLVP || (ump->um_qflags[type] & QTF_CLOSING)) {
+		mutex_exit(&dqlock);
 		*dqp = NODQUOT;
 		return (EINVAL);
 	}
+	KASSERT(dqvp != vp);
 	/*
 	 * Check the cache first.
 	 */
-	mutex_enter(&dqhashtbl_mtx);
 	dqh = &dqhashtbl[DQHASH(dqvp, id)];
 	LIST_FOREACH(dq, dqh, dq_hash) {
 		if (dq->dq_id != id ||
 		    dq->dq_ump->um_quotas[dq->dq_type] != dqvp)
 			continue;
-		/*
-		 * Cache hit with no references.  Take
-		 * the structure off the free list.
-		 */
-		if (dq->dq_cnt == 0)
-			TAILQ_REMOVE(&dqfreelist, dq, dq_freelist);
+		KASSERT(dq->dq_cnt > 0);
 		dqref(dq);
-		mutex_exit(&dqhashtbl_mtx);
+		mutex_exit(&dqlock);
 		*dqp = dq;
 		return (0);
 	}
 	/*
 	 * Not in cache, allocate a new one.
 	 */
-	if (dqfreelist.tqh_first == NODQUOT &&
-	    numdquot < MAXQUOTAS * desiredvnodes)
-		desireddquot += DQUOTINC;
-	if (numdquot < desireddquot) {
-		mutex_exit(&dqhashtbl_mtx);
-		dq = (struct dquot *)malloc(sizeof *dq, M_DQUOT, M_WAITOK);
-		memset((char *)dq, 0, sizeof *dq);
-		mutex_init(&dq->dq_interlock, MUTEX_DEFAULT, IPL_NONE);
-		numdquot++;
-	} else {
-		if ((dq = dqfreelist.tqh_first) == NULL) {
-			mutex_exit(&dqhashtbl_mtx);
-			tablefull("dquot",
-			    "increase kern.maxvnodes or NVNODE");
-			*dqp = NODQUOT;
-			return (EUSERS);
-		}
-		if (dq->dq_cnt || (dq->dq_flags & DQ_MOD))
-			panic("free dquot isn't");
-		TAILQ_REMOVE(&dqfreelist, dq, dq_freelist);
-		LIST_REMOVE(dq, dq_hash);
-		mutex_exit(&dqhashtbl_mtx);
-	}
+	mutex_exit(&dqlock);
+	ndq = pool_get(&dquot_pool, PR_WAITOK);
 	/*
 	 * Initialize the contents of the dquot structure.
 	 */
-	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
-	mutex_enter(&dq->dq_interlock);
-	mutex_enter(&dqhashtbl_mtx);
+	memset((char *)ndq, 0, sizeof *ndq);
+	ndq->dq_flags = 0;
+	ndq->dq_id = id;
+	ndq->dq_ump = ump;
+	ndq->dq_type = type;
+	mutex_init(&ndq->dq_interlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_enter(&dqlock);
 	dqh = &dqhashtbl[DQHASH(dqvp, id)];
+	LIST_FOREACH(dq, dqh, dq_hash) {
+		if (dq->dq_id != id ||
+		    dq->dq_ump->um_quotas[dq->dq_type] != dqvp)
+			continue;
+		/*
+		 * Another thread beat us allocating this dquot.
+		 */
+		KASSERT(dq->dq_cnt > 0);
+		dqref(dq);
+		mutex_exit(&dqlock);
+		pool_put(&dquot_pool, ndq);
+		*dqp = dq;
+		return 0;
+	}
+	dq = ndq;
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
 	dqref(dq);
-	mutex_exit(&dqhashtbl_mtx);
-	dq->dq_flags = 0;
-	dq->dq_id = id;
-	dq->dq_ump = ump;
-	dq->dq_type = type;
+	mutex_enter(&dq->dq_interlock);
+	mutex_exit(&dqlock);
+	vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	aiov.iov_base = (void *)&dq->dq_dqb;
@@ -853,16 +875,15 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset((void *)&dq->dq_dqb, 0, sizeof(struct dqblk));
-	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, 0);
+	VOP_UNLOCK(dqvp, 0);
 	/*
 	 * I/O error in reading quota file, release
 	 * quota structure and reflect problem to caller.
 	 */
 	if (error) {
-		mutex_enter(&dqhashtbl_mtx);
+		mutex_enter(&dqlock);
 		LIST_REMOVE(dq, dq_hash);
-		mutex_exit(&dqhashtbl_mtx);
+		mutex_exit(&dqlock);
 		mutex_exit(&dq->dq_interlock);
 		dqrele(vp, dq);
 		*dqp = NODQUOT;
@@ -893,6 +914,7 @@ static void
 dqref(struct dquot *dq)
 {
 
+	KASSERT(mutex_owned(&dqlock));
 	dq->dq_cnt++;
 	KASSERT(dq->dq_cnt > 0);
 }
@@ -906,15 +928,26 @@ dqrele(struct vnode *vp, struct dquot *dq)
 
 	if (dq == NODQUOT)
 		return;
-	if (dq->dq_cnt > 1) {
-		dq->dq_cnt--;
-		return;
-	}
-	if (dq->dq_flags & DQ_MOD)
+	mutex_enter(&dq->dq_interlock);
+	for (;;) {
+		mutex_enter(&dqlock);
+		if (dq->dq_cnt > 1) {
+			dq->dq_cnt--;
+			mutex_exit(&dqlock);
+			mutex_exit(&dq->dq_interlock);
+			return;
+		}
+		if ((dq->dq_flags & DQ_MOD) == 0)
+			break;
+		mutex_exit(&dqlock);
 		(void) dqsync(vp, dq);
-	if (--dq->dq_cnt > 0)
-		return;
-	TAILQ_INSERT_TAIL(&dqfreelist, dq, dq_freelist);
+	}
+	KASSERT(dq->dq_cnt == 1 && (dq->dq_flags & DQ_MOD) == 0);
+	LIST_REMOVE(dq, dq_hash);
+	mutex_exit(&dqlock);
+	mutex_exit(&dq->dq_interlock);
+	mutex_destroy(&dq->dq_interlock);
+	pool_put(&dquot_pool, dq);
 }
 
 /*
@@ -930,19 +963,13 @@ dqsync(struct vnode *vp, struct dquot *dq)
 
 	if (dq == NODQUOT)
 		panic("dqsync: dquot");
+	KASSERT(mutex_owned(&dq->dq_interlock));
 	if ((dq->dq_flags & DQ_MOD) == 0)
 		return (0);
 	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
 		panic("dqsync: file");
-	if (vp != dqvp)
-		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
-	mutex_enter(&dq->dq_interlock);
-	if ((dq->dq_flags & DQ_MOD) == 0) {
-		mutex_exit(&dq->dq_interlock);
-		if (vp != dqvp)
-			VOP_UNLOCK(dqvp, 0);
-		return (0);
-	}
+	KASSERT(dqvp != vp);
+	vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
 	aiov.iov_base = (void *)&dq->dq_dqb;
@@ -955,37 +982,24 @@ dqsync(struct vnode *vp, struct dquot *dq)
 	if (auio.uio_resid && error == 0)
 		error = EIO;
 	dq->dq_flags &= ~DQ_MOD;
-	mutex_exit(&dq->dq_interlock);
-	if (vp != dqvp)
-		VOP_UNLOCK(dqvp, 0);
+	VOP_UNLOCK(dqvp, 0);
 	return (error);
 }
 
+#ifdef DIAGNOSTIC
 /*
- * Flush all entries from the cache for a particular vnode.
+ * Check the hash chains for stray dquot's.
  */
 static void
 dqflush(struct vnode *vp)
 {
-	struct dquot *dq, *nextdq;
-	struct dqhashhead *dqh;
+	struct dquot *dq;
+	int i;
 
-	/*
-	 * Move all dquot's that used to refer to this quota
-	 * file off their hash chains (they will eventually
-	 * fall off the head of the free list and be re-used).
-	 */
-	mutex_enter(&dqhashtbl_mtx);
-	for (dqh = &dqhashtbl[dqhash]; dqh >= dqhashtbl; dqh--) {
-		for (dq = LIST_FIRST(dqh); dq; dq = nextdq) {
-			nextdq = LIST_NEXT(dq, dq_hash);
-			if (dq->dq_ump->um_quotas[dq->dq_type] != vp)
-				continue;
-			if (dq->dq_cnt)
-				panic("dqflush: stray dquot");
-			LIST_REMOVE(dq, dq_hash);
-			dq->dq_ump = NULL;
-		}
-	}
-	mutex_exit(&dqhashtbl_mtx);
+	mutex_enter(&dqlock);
+	for (i = 0; i <= dqhash; i++)
+		LIST_FOREACH(dq, &dqhashtbl[i], dq_hash)
+			KASSERT(dq->dq_ump->um_quotas[dq->dq_type] != vp);
+	mutex_exit(&dqlock);
 }
+#endif
