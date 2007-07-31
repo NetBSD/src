@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.227 2007/07/30 23:07:42 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.228 2007/07/31 13:46:14 ghen Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8258,3 +8258,9 @@ sys/dev/pci/pcireg.h				1.53
 	M. Warner Losh and Charles M. Hannum provided valuable input on
 	this patch.
 	[dyoung, ticket #739]
+
+dist/bind/*					via patch
+
+	Update BIND to version 9.4.1-P1 (security update).
+	[adrianp, ticket #801]
+
