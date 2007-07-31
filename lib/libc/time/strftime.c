@@ -1,11 +1,11 @@
-/*	$NetBSD: strftime.c,v 1.17 2006/03/22 00:11:28 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.18 2007/07/31 20:19:16 ginsbach Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char	elsieid[] = "@(#)strftime.c	7.64";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.17 2006/03/22 00:11:28 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.18 2007/07/31 20:19:16 ginsbach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -277,7 +277,8 @@ label:
 				pt = _fmt("%H:%M", t, pt, ptlim, warnp);
 				continue;
 			case 'r':
-				pt = _fmt("%I:%M:%S %p", t, pt, ptlim, warnp);
+				pt = _fmt(Locale->t_fmt_ampm, t, pt, ptlim,
+				       	warnp);
 				continue;
 			case 'S':
 				pt = _conv(t->tm_sec, "%02d", pt, ptlim);
