@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.228 2007/07/31 13:46:14 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.229 2007/07/31 22:02:25 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8264,3 +8264,18 @@ dist/bind/*					via patch
 	Update BIND to version 9.4.1-P1 (security update).
 	[adrianp, ticket #801]
 
+sys/dev/scsipi/sd.c				1.260
+
+	add support devctl properties
+	[jnemeth, ticket #803]
+
+sbin/drvctl/drvctl.8				1.4
+
+	drvctl 4 does not exist.
+	[jnemeth, ticket #805]
+
+crypto/dist/ssh/channels.c			1.36
+
+	Apply a patch from https://bugzilla.mindrot.org/show_bug.cgi?id=1306.
+	Fix nasty "error: channel 0: chan_read_failed for istate 3" message.
+	[taca, ticket #804]
