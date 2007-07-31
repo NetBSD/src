@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.203 2007/05/28 21:24:17 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.204 2007/07/31 05:21:47 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.203 2007/05/28 21:24:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.204 2007/07/31 05:21:47 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1723,9 +1723,11 @@ static	int mxcc = -1;
 		else
 			sc->flags |= CPUFLG_CACHEPAGETABLES;
 	} else {
-		sc->cache_flush = viking_cache_flush;
+#ifdef MULTIPROCESSOR
+		if (sparc_ncpus > 1)
+			sc->cache_flush = srmmu_cache_flush;
+#endif
 	}
-
 	/* Check all modules have the same MXCC configuration */
 	if (mxcc != -1 && sc->mxcc != mxcc)
 		panic("MXCC module mismatch");
