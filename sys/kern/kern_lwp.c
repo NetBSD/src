@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.67 2007/07/31 00:52:04 tnn Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.68 2007/07/31 09:56:31 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.67 2007/07/31 00:52:04 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.68 2007/07/31 09:56:31 tnn Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -951,7 +951,7 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 	if (p->p_nlwps == 1) {
 		l = LIST_FIRST(&p->p_lwps);
 		if (nrlwps)
-			*nrlwps = (l->l_stat & (LSONPROC | LSRUN)) ? 1 : 0;
+			*nrlwps = (l->l_stat == LSONPROC || l->l_stat == LSRUN);
 		return l;
 	}
 
