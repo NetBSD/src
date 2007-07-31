@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.52 2007/07/19 09:26:12 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.53 2007/07/31 21:14:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.52 2007/07/19 09:26:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.53 2007/07/31 21:14:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -65,7 +65,7 @@ int puffs_maxpnodebuckets = PUFFS_MAXPNODEBUCKETS;
 
 int
 puffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-	    struct nameidata *ndp, struct lwp *l)
+	    struct lwp *l)
 {
 	struct puffs_mount *pmp = NULL;
 	struct puffs_kargs *args;

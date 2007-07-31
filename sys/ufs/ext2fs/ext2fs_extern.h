@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.35 2007/07/12 19:35:36 dsl Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.36 2007/07/31 21:14:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -137,21 +137,10 @@ void ext2fs_itimes(struct inode *, const struct timespec *,
     const struct timespec *, const struct timespec *);
 
 /* ext2fs_vfsops.c */
-void ext2fs_init(void);
-void ext2fs_reinit(void);
-void ext2fs_done(void);
-int ext2fs_mountroot(void);
-int ext2fs_mount(struct mount *, const char *, void *, size_t *,
-		   struct nameidata *, struct lwp *);
+VFS_PROTOS(ext2fs);
 int ext2fs_reload(struct mount *, kauth_cred_t, struct lwp *);
 int ext2fs_mountfs(struct vnode *, struct mount *, struct lwp *);
-int ext2fs_unmount(struct mount *, int, struct lwp *);
 int ext2fs_flushfiles(struct mount *, int, struct lwp *);
-int ext2fs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int ext2fs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int ext2fs_vget(struct mount *, ino_t, struct vnode **);
-int ext2fs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int ext2fs_vptofh(struct vnode *, struct fid *, size_t *);
 int ext2fs_sbupdate(struct ufsmount *, int);
 int ext2fs_cgupdate(struct ufsmount *, int);
 

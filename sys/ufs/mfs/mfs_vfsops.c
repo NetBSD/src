@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.82 2007/07/26 22:59:59 pooka Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.83 2007/07/31 21:14:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.82 2007/07/26 22:59:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.83 2007/07/31 21:14:20 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -242,7 +242,7 @@ mfs_initminiroot(void *base)
 /* ARGSUSED */
 int
 mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	struct vnode *devvp;
 	struct mfs_args *args = data;

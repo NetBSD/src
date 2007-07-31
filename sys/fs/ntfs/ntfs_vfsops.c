@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.55 2007/07/26 22:57:38 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.56 2007/07/31 21:14:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.55 2007/07/26 22:57:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.56 2007/07/31 21:14:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ static int	ntfs_mount(struct mount *, char *, void *,
 				struct nameidata *, struct proc *);
 #else
 static int	ntfs_mount(struct mount *, const char *, void *, size_t *,
-				struct nameidata *, struct lwp *);
+				struct lwp *);
 #endif
 static int	ntfs_quotactl(struct mount *, int, uid_t, void *,
 				   struct lwp *);
@@ -94,17 +94,17 @@ static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct sockaddr *, struct vnode **,
 				 int *, struct ucred **);
 #elif defined(__NetBSD__)
-static void	ntfs_init(void);
-static void	ntfs_reinit(void);
-static void	ntfs_done(void);
-static int	ntfs_fhtovp(struct mount *, struct fid *,
-				 struct vnode **);
-static int	ntfs_mountroot(void);
+static void     ntfs_init(void);
+static void     ntfs_reinit(void);
+static void     ntfs_done(void);
+static int      ntfs_fhtovp(struct mount *, struct fid *,
+				struct vnode **);
+static int      ntfs_mountroot(void);
 #else
-static int	ntfs_init(void);
-static int	ntfs_fhtovp(struct mount *, struct fid *,
-				 struct mbuf *, struct vnode **,
-				 int *, kauth_cred_t *);
+static int      ntfs_init(void);
+static int      ntfs_fhtovp(struct mount *, struct fid *,
+				struct mbuf *, struct vnode **,
+				int *, kauth_cred_t *);
 #endif
 
 static const struct genfs_ops ntfs_genfsops = {
@@ -227,18 +227,19 @@ ntfs_mount (
 #if defined(__FreeBSD__)
 	char *path,
 	void *data,
+	struct nameidata *ndp,
+	struct proc *p )
 #else
 	const char *path,
 	void *data,
 	size_t *data_len,
-#endif
-	struct nameidata *ndp,
-#if defined(__FreeBSD__)
-	struct proc *p )
-#else
 	struct lwp *l )
 #endif
 {
+	struct nameidata nd;
+#ifdef __NetBSD__
+	struct nameidata *ndp = &nd;
+#endif
 	int		err = 0, flags;
 	struct vnode	*devvp;
 #if defined(__FreeBSD__)

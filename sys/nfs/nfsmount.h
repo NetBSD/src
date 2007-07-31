@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.45 2007/07/12 19:35:36 dsl Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.46 2007/07/31 21:14:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -183,27 +183,16 @@ struct	nfsmount {
 /*
  * Prototypes for NFS mount operations
  */
-int	nfs_mount __P((struct mount *mp, const char *path, void *data, size_t *,
-		struct nameidata *ndp, struct lwp *l));
+VFS_PROTOS(nfs);
+
 int	mountnfs __P((struct nfs_args *argp, struct mount *mp,
 		struct mbuf *nam, const char *pth, const char *hst,
 		struct vnode **vpp, struct lwp *p));
-int	nfs_mountroot __P((void));
 void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *,
 		struct lwp *l));
-int	nfs_start __P((struct mount *mp, int flags, struct lwp *l));
-int	nfs_unmount __P((struct mount *mp, int mntflags, struct lwp *l));
-int	nfs_root __P((struct mount *mp, struct vnode **vpp));
-int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, void *arg,
-		struct lwp *l));
-int	nfs_statvfs __P((struct mount *mp, struct statvfs *sbp, struct lwp *l));
-int	nfs_sync __P((struct mount *mp, int waitfor, kauth_cred_t cred,
-		struct lwp *p));
-int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nfs_fhtovp __P((struct mount *mp, struct fid *fhp, struct vnode **vpp));
-int	nfs_vptofh __P((struct vnode *vp, struct fid *fhp, size_t *fh_size));
 int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, kauth_cred_t,
 			struct lwp *));
+
 void	nfs_vfs_init __P((void));
 void	nfs_vfs_reinit __P((void));
 void	nfs_vfs_done __P((void));

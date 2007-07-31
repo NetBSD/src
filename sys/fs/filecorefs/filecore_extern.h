@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.15 2007/07/12 19:35:32 dsl Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.16 2007/07/31 21:14:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -107,22 +107,7 @@ struct filecore_mnt {
 
 extern struct pool filecore_node_pool;
 
-int filecore_mount __P((struct mount *, const char *, void *, size_t *,
-	    struct nameidata *, struct lwp *));
-int filecore_start __P((struct mount *, int, struct lwp *));
-int filecore_unmount __P((struct mount *, int, struct lwp *));
-int filecore_root __P((struct mount *, struct vnode **));
-int filecore_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
-int filecore_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int filecore_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
-int filecore_vget __P((struct mount *, ino_t, struct vnode **));
-int filecore_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int filecore_checkexp __P((struct mount *, struct mbuf *, int *,
-	    kauth_cred_t *));
-int filecore_vptofh __P((struct vnode *, struct fid *, size_t *));
-void filecore_init __P((void));
-void filecore_reinit __P((void));
-void filecore_done __P((void));
+VFS_PROTOS(filecore);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_filecore_setup);

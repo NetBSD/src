@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.40 2007/07/26 22:57:37 pooka Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.41 2007/07/31 21:14:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.40 2007/07/26 22:57:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.41 2007/07/31 21:14:16 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,20 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.40 2007/07/26 22:57:37 pooka Exp $");
 #include <sys/kauth.h>
 #include <fs/adosfs/adosfs.h>
 
-void adosfs_init __P((void));
-void adosfs_reinit __P((void));
-void adosfs_done __P((void));
-int adosfs_mount __P((struct mount *, const char *, void *, size_t *,
-		struct nameidata *, struct lwp *));
-int adosfs_start __P((struct mount *, int, struct lwp *));
-int adosfs_unmount __P((struct mount *, int, struct lwp *));
-int adosfs_root __P((struct mount *, struct vnode **));
-int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
-int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int adosfs_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
-int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int adosfs_vptofh __P((struct vnode *, struct fid *, size_t *));
+VFS_PROTOS(adosfs);
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
 int adosfs_loadbitmap __P((struct adosfsmount *));
@@ -91,14 +78,14 @@ static const struct genfs_ops adosfs_genfsops = {
 int (**adosfs_vnodeop_p) __P((void *));
 
 int
-adosfs_mount(mp, path, data, data_len, ndp, l)
+adosfs_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct vnode *devvp;
 	struct adosfs_args *args = data;
 	struct adosfsmount *amp;
@@ -130,10 +117,10 @@ adosfs_mount(mp, path, data, data_len, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-	if ((error = namei(ndp)) != 0)
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-	devvp = ndp->ni_vp;
+	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);

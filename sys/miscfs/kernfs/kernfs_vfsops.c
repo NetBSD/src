@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.80 2007/07/26 22:57:39 pooka Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.81 2007/07/31 21:14:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.80 2007/07/26 22:57:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.81 2007/07/31 21:14:16 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -65,19 +65,9 @@ MALLOC_JUSTDEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
 
-void	kernfs_init(void);
-void	kernfs_reinit(void);
-void	kernfs_done(void);
+VFS_PROTOS(kernfs);
+
 void	kernfs_get_rrootdev(void);
-int	kernfs_mount(struct mount *, const char *, void *, size_t *,
-	    struct nameidata *, struct lwp *);
-int	kernfs_start(struct mount *, int, struct lwp *);
-int	kernfs_unmount(struct mount *, int, struct lwp *);
-int	kernfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	kernfs_quotactl(struct mount *, int, uid_t, void *,
-			     struct lwp *);
-int	kernfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int	kernfs_vget(struct mount *, ino_t, struct vnode **);
 
 void
 kernfs_init()
@@ -126,7 +116,7 @@ kernfs_get_rrootdev()
  */
 int
 kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error = 0;
 	struct kernfs_mount *fmp;

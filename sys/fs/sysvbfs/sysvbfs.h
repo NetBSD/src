@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.h,v 1.5 2007/07/12 19:35:34 dsl Exp $	*/
+/*	$NetBSD: sysvbfs.h,v 1.6 2007/07/31 21:14:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -96,20 +96,7 @@ int sysvbfs_advlock(void *);
 int sysvbfs_pathconf(void *);
 
 /* vfs ops. */
-int sysvbfs_mount(struct mount *, const char *, void *, size_t *,
-    struct nameidata *, struct lwp *);
-int sysvbfs_start(struct mount *, int, struct lwp *);
-int sysvbfs_unmount(struct mount *, int, struct lwp *);
-int sysvbfs_root(struct mount *, struct vnode **);
-int sysvbfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
-int sysvbfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int sysvbfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int sysvbfs_vget(struct mount *, ino_t, struct vnode **);
-int sysvbfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int sysvbfs_vptofh(struct vnode *, struct fid *, size_t *);
-void sysvbfs_init(void);
-void sysvbfs_reinit(void);
-void sysvbfs_done(void);
+VFS_PROTOS(sysvbfs);
 
 extern int (**sysvbfs_vnodeop_p)(void *);
 
