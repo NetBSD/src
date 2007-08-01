@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2007/03/12 11:19:37 jmmv Exp $	*/
+/*	$NetBSD: md.c,v 1.21 2007/08/01 14:49:42 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -189,6 +189,13 @@ md_cleanup_install(void)
 {
 #ifndef DEBUG
 	enable_rc_conf();
+
+	add_rc_conf("wscons=YES\n");
+
+	/* Configure a single screen. */
+	run_program(RUN_CHROOT,
+		    "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
+		    "H;$!d;g;w /etc/wscons.conf' /etc/wscons.conf");
 
 	run_program(0, "rm -f %s", target_expand("/sysinst"));
 	run_program(0, "rm -f %s", target_expand("/.termcap"));
