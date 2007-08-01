@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_union.8,v 1.16 2005/01/31 05:19:19 erh Exp $
+.\"	$NetBSD: mount_union.8,v 1.17 2007/08/01 08:52:07 pooka Exp $
 .\"
 .\" Copyright (c) 1994
 .\" The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)mount_union.8	8.7 (Berkeley) 5/1/95
 .\"
-.Dd May 6, 2003
+.Dd August 1, 2007
 .Dt MOUNT_UNION 8
 .Os
 .Sh NAME
@@ -90,14 +90,6 @@ man page for possible options and their meanings.
 Hide the lower layer completely in the same way as mounting with
 .Xr mount_null 8 .
 .El
-.Pp
-To enforce filesystem security, the user mounting the filesystem
-must be superuser or else have write permission on the mounted-on
-directory.
-In addition, the
-.Em vfs.generic.usermount
-.Xr sysctl 3
-variable must be set to 1 to permit file system mounting by ordinary users.
 .Pp
 Filenames are looked up in the upper layer and then in the
 lower layer.
