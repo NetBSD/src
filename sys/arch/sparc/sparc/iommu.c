@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.87 2007/07/31 05:21:47 macallan Exp $ */
+/*	$NetBSD: iommu.c,v 1.88 2007/08/01 00:06:32 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.87 2007/07/31 05:21:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.88 2007/08/01 00:06:32 macallan Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -580,7 +580,7 @@ iommu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 		return (error);
 
 	if ((sc->sc_cachecoherent == 0) || 
-	    (curcpu()->cpu_type == CPUTYP_SS1_MBUS_NOMXCC))
+	    (curcpu()->cacheinfo.ec_totalsize == 0))
 		cache_flush(buf, buflen); /* XXX - move to bus_dma_sync? */
 
 	/*
