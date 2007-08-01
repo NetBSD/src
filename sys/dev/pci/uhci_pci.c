@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.35 2006/12/10 05:14:42 uwe Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.36 2007/08/01 10:39:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.35 2006/12/10 05:14:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36 2007/08/01 10:39:43 christos Exp $");
 
 #include "ehci.h"
 
@@ -174,6 +174,15 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 
+	/*
+	 * Establish our powerhook before uhci_init() does its powerhook.
+	 */
+	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc.sc_bus.bdev),
+	    uhci_pci_powerhook, sc);
+	if (sc->sc_powerhook == NULL)
+		aprint_error("%s: couldn't establish powerhook\n",
+		    devname);
+
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error("%s: init failed, error=%d\n", devname, r);
@@ -183,12 +192,6 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 #if NEHCI > 0
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
-
-	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc.sc_bus.bdev),
-	    uhci_pci_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: couldn't establish powerhook\n",
-		    devname);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
