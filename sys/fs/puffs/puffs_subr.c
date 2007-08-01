@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.43 2007/07/29 13:31:09 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.44 2007/08/01 14:20:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.43 2007/07/29 13:31:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.44 2007/08/01 14:20:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -584,6 +584,7 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 	free(preq, M_PUFFS);
 }
 
+/* XXX: userspace can leak kernel resources */
 void
 puffs_parkdone_poll(struct puffs_req *preq, void *arg)
 {
