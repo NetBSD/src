@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.57 2007/01/06 14:43:27 elad Exp $
+.\"	$NetBSD: mount.8,v 1.58 2007/08/01 08:51:24 pooka Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd January 6, 2007
+.Dd August 1, 2007
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -92,12 +92,17 @@ point
 and has access to the
 .Ar special
 device (at least read permissions).
-In addition, the
+Also, the
 .Em vfs.generic.usermount
 .Xr sysctl 3
-must be set to 1 to permit file system mounting by ordinary users.
-See also
+must be set to 1 to permit file system mounting by ordinary users,
+see
 .Xr sysctl 8 .
+Finally, the flags
+.Cm nosuid
+and
+.Cm nodev
+must be given for non-superuser mounts.
 .Pp
 The system maintains a list of currently mounted file systems.
 If no arguments are given to
