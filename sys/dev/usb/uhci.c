@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.208 2007/02/26 13:26:46 drochner Exp $	*/
+/*	$NetBSD: uhci.c,v 1.209 2007/08/01 22:40:16 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208 2007/02/26 13:26:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209 2007/08/01 22:40:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -764,6 +764,7 @@ uhci_power(int why, void *v)
 			    sc->sc_intr_xfer);
 		sc->sc_bus.use_polling++;
 		uhci_run(sc, 0); /* stop the controller */
+		cmd &= ~UHCI_CMD_RS;
 
 		/* save some state if BIOS doesn't */
 		sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
