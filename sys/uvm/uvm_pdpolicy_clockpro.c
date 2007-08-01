@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9 2007/08/01 14:49:55 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9 2007/08/01 14:49:55 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -89,7 +89,8 @@ int clockpro_hashfactor = CLOCKPRO_HASHFACTOR;
 
 PDPOL_EVCNT_DEFINE(nresrecordobj)
 PDPOL_EVCNT_DEFINE(nresrecordanon)
-PDPOL_EVCNT_DEFINE(nreslookup)
+PDPOL_EVCNT_DEFINE(nreslookupobj)
+PDPOL_EVCNT_DEFINE(nreslookupanon)
 PDPOL_EVCNT_DEFINE(nresfoundobj)
 PDPOL_EVCNT_DEFINE(nresfoundanon)
 PDPOL_EVCNT_DEFINE(nresanonfree)
@@ -502,7 +503,11 @@ nonresident_pagelookupremove(struct vm_page *pg)
 {
 	bool found = nonresident_lookupremove(pageobj(pg), pageidx(pg));
 
-	PDPOL_EVCNT_INCR(nreslookup);
+	if (pg->uobject) {
+		PDPOL_EVCNT_INCR(nreslookupobj);
+	} else {
+		PDPOL_EVCNT_INCR(nreslookupanon);
+	}
 	if (found) {
 		if (pg->uobject) {
 			PDPOL_EVCNT_INCR(nresfoundobj);
