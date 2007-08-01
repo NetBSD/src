@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.7 2007/03/12 11:19:37 jmmv Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.8 2007/08/01 14:20:40 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,6 +44,9 @@ message md_hello
 {If you booted from a floppy, you may now remove the disk.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {}
 
 message fullpart
 {We are now going to install NetBSD on the disk %s.  You may

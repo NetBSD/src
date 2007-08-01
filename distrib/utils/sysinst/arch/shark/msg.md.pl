@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.6 2007/03/12 11:19:38 jmmv Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.7 2007/08/01 14:20:40 jmmv Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -46,6 +46,9 @@ message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 
 }
+
+message Keyboard_type {Keyboard type}
+message kb_default {pl}
 
 message fullpart
 {Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac czy chcesz
