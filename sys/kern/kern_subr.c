@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.161 2007/07/28 12:53:52 pooka Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.162 2007/08/01 10:57:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.161 2007/07/28 12:53:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.162 2007/08/01 10:57:07 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -669,45 +669,29 @@ dopowerhooks(int why)
 	struct powerhook_desc *dp;
 
 #ifdef POWERHOOK_DEBUG
-	printf("dopowerhooks ");
-	switch (why) {
-	case PWR_RESUME:
-		printf("resume");
-		break;
-	case PWR_SOFTRESUME:
-		printf("softresume");
-		break;
-	case PWR_SUSPEND:
-		printf("suspend");
-		break;
-	case PWR_SOFTSUSPEND:
-		printf("softsuspend");
-		break;
-	case PWR_STANDBY:
-		printf("standby");
-		break;
-	}
-	printf(":");
+	const char *why_name;
+	static const char pwr_names[] = {PWR_NAMES};
+	why_name = why < __arraysize(pwr_names) ? pwr_names[why] : "???";
 #endif
 
 	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
 		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
 #ifdef POWERHOOK_DEBUG
-			printf(" %s", dp->sfd_name);
+			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
 #endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	} else {
 		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
 #ifdef POWERHOOK_DEBUG
-			printf(" %s", dp->sfd_name);
+			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
 #endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	}
 
 #ifdef POWERHOOK_DEBUG
-	printf(".\n");
+	printf("dopowerhooks: %s done\n", why_name);
 #endif
 }
 
