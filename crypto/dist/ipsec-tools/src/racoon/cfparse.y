@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.18.4.2 2007/03/22 10:26:53 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.18.4.3 2007/08/01 11:52:19 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -40,11 +40,7 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #ifdef ENABLE_HYBRID
 #include <arpa/inet.h>
