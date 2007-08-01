@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.10 2007/08/01 20:30:38 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.11 2007/08/01 23:21:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.10 2007/08/01 20:30:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.11 2007/08/01 23:21:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -333,6 +333,27 @@ cv_broadcast(kcondvar_t *cv)
 
 	if (cv->cv_waiters == 0)
 		return;
+
+	sq = sleeptab_lookup(&sleeptab, cv);
+	if ((cnt = cv->cv_waiters) != 0) {
+		cv->cv_waiters = 0;
+		sleepq_wake(sq, cv, cnt);
+	} else
+		sleepq_unlock(sq);
+}
+
+/*
+ * cv_wakeup:
+ *
+ *	Wake all LWPs waiting on a condition variable.  For cases
+ *	where the address may be waited on by mtsleep()/tsleep().
+ *	Not a documented call.
+ */
+void
+cv_wakeup(kcondvar_t *cv)
+{
+	sleepq_t *sq;
+	u_int cnt;
 
 	sq = sleeptab_lookup(&sleeptab, cv);
 	if ((cnt = cv->cv_waiters) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.190 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.191 2007/08/01 23:21:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.190 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.191 2007/08/01 23:21:15 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -908,7 +908,7 @@ sched_pstats(void *arg)
 	}
 	mutex_exit(&proclist_mutex);
 	uvm_meter();
-	cv_broadcast(&lbolt);
+	cv_wakeup(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);
 }
 
