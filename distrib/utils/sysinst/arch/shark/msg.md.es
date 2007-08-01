@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2007/03/12 11:19:37 jmmv Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.4 2007/08/01 14:20:40 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,6 +44,9 @@ message md_hello
 {Si ha iniciado desde disquette, ahora debería retirar el disco.
 
 }
+
+message Keyboard_type {Tipo de teclado}
+message kb_default {es}
 
 message fullpart
 {Ahora vamos a instalar NetBSD en el disco %s. Debería escoger

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.5 2007/03/12 11:19:37 jmmv Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.6 2007/08/01 14:20:40 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,6 +45,9 @@ message md_hello
 enfernen.
 
 }
+
+message Keyboard_type {Tastaturschema}
+message kb_default {de}
 
 message fullpart
 {NetBSD wird nun auf die Festplatte %s installiert. Möchten Sie die ganze
