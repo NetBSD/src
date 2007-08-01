@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.27 2006/10/23 04:21:51 mrg Exp $	*/
+/*	$NetBSD: dump.c,v 1.28 2007/08/01 21:39:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.27 2006/10/23 04:21:51 mrg Exp $");
+__RCSID("$NetBSD: dump.c,v 1.28 2007/08/01 21:39:36 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -198,11 +198,12 @@ getrecord(FILE *fp)
 	return (kte);
 }
 
-/* XXX: lwp. */
 #define	KTE_TYPE(kte)		((kte)->kte_kth.ktr_type)
 #define	KTE_PID(kte)		((kte)->kte_kth.ktr_pid)
-#define	KTE_MATCH(kte, type, pid)				\
-	(KTE_TYPE(kte) == (type) && KTE_PID(kte) == (pid))
+#define	KTE_LID(kte)		((kte)->kte_kth.ktr_lid)
+#define	KTE_MATCH(kte, type, pid, lid)				\
+	(KTE_TYPE(kte) == (type) && KTE_PID(kte) == (pid) &&	\
+	KTE_LID(kte) == (lid))
 
 void
 putpendq(struct ktr_entry *kte)
@@ -230,13 +231,13 @@ struct ktr_entry *
 getpendq(struct ktr_header *us, int type, struct kteq *kteq)
 {
 	struct ktr_entry *kte, *kte_next;
-	int pid = us->ktr_pid;
+	int pid = us->ktr_pid, lid = us->ktr_lid;
 
 	if (kteq != NULL)
 		TAILQ_INIT(kteq);
 	for (kte = TAILQ_FIRST(&ktependq); kte != NULL; kte = kte_next) {
 		kte_next = TAILQ_NEXT(kte, kte_list);
-		if (KTE_MATCH(kte, type, pid)) {
+		if (KTE_MATCH(kte, type, pid, lid)) {
 			TAILQ_REMOVE(&ktependq, kte, kte_list);
 			if (kteq != NULL)
 				TAILQ_INSERT_TAIL(kteq, kte, kte_list);
@@ -629,13 +630,13 @@ ktrsysret(struct ktr_entry *kte)
 
 	/* Print syscall name and arguments. */
 	syscall_ent = getpendq(kth, KTR_SYSCALL, NULL);
-	if (syscall_ent == NULL)
+	if (syscall_ent == NULL) {
 		/*
 		 * Possibilly a child of fork/vfork, or tracing of
 		 * process started during system call.
 		 */
 		syscallnameprint(ktr->ktr_code);
-	else {
+	} else {
 		syscallprint(&syscall_ent->kte_kth);
 		free(syscall_ent);
 	}
@@ -649,7 +650,9 @@ ktrsysret(struct ktr_entry *kte)
 		free(genio);
 	}
 
+#if 0 /* Why? */
 	flushpendq(kte);
+#endif
 	free(kte);
 }
 
