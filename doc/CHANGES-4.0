@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.229 2007/07/31 22:02:25 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.230 2007/08/01 14:51:26 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8279,3 +8279,34 @@ crypto/dist/ssh/channels.c			1.36
 	Apply a patch from https://bugzilla.mindrot.org/show_bug.cgi?id=1306.
 	Fix nasty "error: channel 0: chan_read_failed for istate 3" message.
 	[taca, ticket #804]
+
+sbin/mount/mount.8				1.58
+
+	Explain that nosuid,nodev is also needed for non-privileged mounts.
+	[pooka, ticket #806]
+
+sbin/mount_union/mount_union.8			1.17
+
+	Don't re-explain vfs.generic.usermount & friends here.
+	[pooka, ticket #807]
+
+sys/kern/kern_lock.c				1.118
+sys/kern/vfs_subr.c				1.295
+sys/sys/lock.h					1.72
+
+	Define a new lockmgr flag LK_RESURRECT which can be used in
+	conjunction with LK_DRAIN.  This has the same effect as LK_DRAIN
+	except it atomically does NOT mark the lock as drained.  This
+	guarantees that when we got the lock, we were the last one currently
+	waiting for the lock.
+
+	Use LK_DRAIN|LK_RESURRECT in vclean() to make sure there are no
+	waiters for the lock.  This should fix behaviour theoretized to be
+	caused by vfs_subr.c 1.289 which caused vclean() to run into
+	completion and free the vnode before all lock-waiters had been
+	processed.  Should therefore fix the "simple_lock: unitialized lock"
+	problems seen recently.
+
+	thanks to Juergen Hannken-Illjes for some analysis of the problem
+	and Erik Bertelsen for testing
+	[pooka, ticket #808]
