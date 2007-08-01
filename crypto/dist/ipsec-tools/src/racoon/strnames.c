@@ -1,4 +1,4 @@
-/*	$NetBSD: strnames.c,v 1.7 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: strnames.c,v 1.7.6.1 2007/08/01 11:52:22 vanhu Exp $	*/
 
 /*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
@@ -38,11 +38,7 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h> 
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else 
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 #include <netinet/in.h>
 
 #include <stdio.h>

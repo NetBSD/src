@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.11 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.11.4.1 2007/08/01 11:52:21 vanhu Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -57,11 +57,7 @@
 #include <resolv.h>
 #endif
 
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include "var.h"
 #include "vmbuf.h"

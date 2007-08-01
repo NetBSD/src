@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.17 2006/10/03 20:43:10 manu Exp $	*/
+/*	$NetBSD: admin.c,v 1.17.6.1 2007/08/01 11:52:19 vanhu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -43,11 +43,7 @@
 #include <net/pfkeyv2.h>
 
 #include <netinet/in.h>
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else 
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 
 #include <stdlib.h>
