@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14.4.7 2007/05/04 09:12:07 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14.4.8 2007/08/01 11:52:20 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -40,11 +40,7 @@
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
 #include <sys/queue.h>
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>

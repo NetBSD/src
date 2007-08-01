@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.11 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.11.4.1 2007/08/01 11:52:20 vanhu Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -39,11 +39,7 @@
 #include <sys/socket.h>
 
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC 
-#  include <netinet6/ipsec.h>
-#else 
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>

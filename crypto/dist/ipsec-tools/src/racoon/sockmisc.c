@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.8 2006/10/31 00:17:21 cbiere Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.8.6.1 2007/08/01 11:52:22 vanhu Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -39,11 +39,7 @@
 #include <sys/uio.h>
 
 #include <netinet/in.h>
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #if defined(INET6) && !defined(INET6_ADVAPI) && \
 	defined(IP_RECVDSTADDR) && !defined(IPV6_RECVDSTADDR)

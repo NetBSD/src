@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.12 2006/12/10 18:46:39 manu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.12.4.1 2007/08/01 11:52:18 vanhu Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -55,11 +55,7 @@ struct sadb_alg;
 
 /* Accomodate different prototypes in <netinet6/ipsec.h> */
 #include <sys/types.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else 
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #ifndef HAVE_IPSEC_POLICY_T
 typedef caddr_t ipsec_policy_t;

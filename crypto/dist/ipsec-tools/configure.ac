@@ -43,11 +43,25 @@ esac
 AC_CHECK_HEADER(net/pfkeyv2.h, [have_net_pfkey=yes], [have_net_pfkey=no])
 AC_CHECK_HEADER(netinet/ipsec.h, [have_netinet_ipsec=yes], [have_netinet_ipsec=no])
 AC_CHECK_HEADER(netinet6/ipsec.h, [have_netinet6_ipsec=yes], [have_netinet6_ipsec=no])
+AC_CHECK_HEADER(netipsec/ipsec.h, [have_netipsec_ipsec=yes], [have_netipsec_ipsec=no])
 
+# FreeBSD >=7 has only <netipsec/ipsec.h>
 # NetBSD has <netinet6/ipsec.h> but not <netinet/ipsec.h>
-if test "$have_netinet_ipsec$have_netinet6_ipsec" = noyes; then
+# XXX some *BSD still have both <netinet6/ipsec.h> and <netipsec/ipsec.h>,
+# we can't decide which one to use (actually <netinet6/ipsec.h>)
+
+
+if test "$have_netinet_ipsec$have_netinet6_ipsec$have_netipsec_ipsec" = nonoyes; then
     have_netinet_ipsec=yes
-    AC_DEFINE(HAVE_NETINET6_IPSEC, [], [Use <netinet6/ipsec.h>])
+    AC_DEFINE(PATH_IPSEC_H, [<netipsec/ipsec.h>], [Path to ipsec.h])
+else
+	if test "$have_netinet_ipsec$have_netinet6_ipsec" = noyes; then
+    	have_netinet_ipsec=yes
+	    AC_DEFINE(PATH_IPSEC_H, [<netinet6/ipsec.h>], [Path to ipsec.h])
+	else
+		# have_netinet_ipsec will be checked a few lines below
+	    AC_DEFINE(PATH_IPSEC_H, [<netinet/ipsec.h>], [Path to ipsec.h])
+	fi
 fi
 
 case "$host_os" in

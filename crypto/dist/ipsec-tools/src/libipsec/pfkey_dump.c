@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.15 2006/10/06 12:02:27 manu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.15.6.1 2007/08/01 11:52:18 vanhu Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -38,11 +38,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 #include <net/pfkeyv2.h>
 
 #include <netinet/in.h>

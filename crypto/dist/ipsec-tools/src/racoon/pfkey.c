@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.18.4.3 2007/05/04 09:11:57 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.18.4.4 2007/08/01 11:52:21 vanhu Exp $	*/
 
-/* $Id: pfkey.c,v 1.18.4.3 2007/05/04 09:11:57 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.18.4.4 2007/08/01 11:52:21 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,11 +65,7 @@
 #include <net/pfkeyv2.h>
 
 #include <netinet/in.h>
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 #include <fcntl.h>
 
 #include "libpfkey.h"
