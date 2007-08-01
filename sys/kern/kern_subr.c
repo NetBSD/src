@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.162 2007/08/01 10:57:07 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.163 2007/08/01 19:50:24 degroote Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.162 2007/08/01 10:57:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.163 2007/08/01 19:50:24 degroote Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -670,8 +670,8 @@ dopowerhooks(int why)
 
 #ifdef POWERHOOK_DEBUG
 	const char *why_name;
-	static const char pwr_names[] = {PWR_NAMES};
-	why_name = why < __arraysize(pwr_names) ? pwr_names[why] : "???";
+	static const char * pwr_names[] = {PWR_NAMES};
+	why_name = why < __arraycount(pwr_names) ? pwr_names[why] : "???";
 #endif
 
 	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
