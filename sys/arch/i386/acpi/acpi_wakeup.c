@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.37 2007/08/01 22:41:59 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38 2007/08/02 11:23:35 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.37 2007/08/01 22:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2007/08/02 11:23:35 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -81,6 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.37 2007/08/01 22:41:59 jmcneill Ex
 #include "lapic.h"
 #include "ioapic.h"
 
+#if NLAPIC > 0
+#include <machine/i82489var.h>
+#endif
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #endif
