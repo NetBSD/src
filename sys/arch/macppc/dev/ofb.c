@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.57 2007/03/25 23:37:06 macallan Exp $	*/
+/*	$NetBSD: ofb.c,v 1.57.4.1 2007/08/02 05:34:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.57 2007/03/25 23:37:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.57.4.1 2007/08/02 05:34:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.57 2007/03/25 23:37:06 macallan Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -192,7 +193,7 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_fbaddr = 0;
 	if (OF_getprop(sc->sc_node, "address", &sc->sc_fbaddr, 4) != 4)
-		OF_interpret("frame-buffer-adr", 1, 1, &sc->sc_fbaddr);
+		OF_interpret("frame-buffer-adr", 0, 1, &sc->sc_fbaddr);
 	if (sc->sc_fbaddr == 0) {
 		printf("%s: Unable to find the framebuffer address.\n",
 		    sc->sc_dev.dv_xname);
@@ -281,6 +282,11 @@ ofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			return 0;
 		} else
 			return ENODEV;
+	case WSDISPLAYIO_LINEBYTES:
+		{
+			*(int *)data = ms->scr_ri.ri_stride;
+			return 0;
+		}
 	case WSDISPLAYIO_SMODE:
 		{
 			int new_mode = *(int*)data;

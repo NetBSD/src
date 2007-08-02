@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.3.22.1 2007/06/26 18:13:26 garbled Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.3.22.2 2007/08/02 05:34:21 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

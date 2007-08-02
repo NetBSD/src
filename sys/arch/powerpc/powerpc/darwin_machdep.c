@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.21 2007/04/25 03:12:56 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.21.2.1 2007/08/02 05:34:21 macallan Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.21 2007/04/25 03:12:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.21.2.1 2007/08/02 05:34:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ darwin_sendsig(ksi, mask)
 	sf.duc.uctx.uc_stack.ss_size = stack_size;
 	if (onstack)
 		sf.duc.uctx.uc_stack.ss_flags |= SS_ONSTACK;
-	sf.duc.uctx.uc_link = NULL;
+	sf.duc.uctx.uc_link = l->l_ctxlink;
 	sf.duc.uctx.uc_mcsize = sizeof(sf.dmc);
 	sf.duc.uctx.uc_mcontext = (struct darwin_mcontext *)&sfp->dmc;
 

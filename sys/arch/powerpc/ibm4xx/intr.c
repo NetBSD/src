@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 2007/02/15 15:14:57 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.16.14.1 2007/08/02 05:34:14 macallan Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16 2007/02/15 15:14:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16.14.1 2007/08/02 05:34:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -255,6 +255,8 @@ ext_intr(void)
 			disable_irq(i);
  		} else {
 			splraise(intrs[i].is_mask);
+			if (intrs[i].is_type == IST_LEVEL)
+				disable_irq(i);
 			wrteei(1);
 
 			KERNEL_LOCK(1, NULL);
@@ -266,6 +268,8 @@ ext_intr(void)
 			KERNEL_UNLOCK_ONE(NULL);
 
 			mtmsr(msr);
+			if (intrs[i].is_type == IST_LEVEL)
+				enable_irq(i);
 			ci->ci_cpl = pcpl;
 			uvmexp.intrs++;
 			intrs[i].is_evcnt.ev_count++;
@@ -554,7 +558,8 @@ do_pending_int(void)
   again:
 	while ((hwpend = ci->ci_ipending & ~pcpl & MASK_HARDINTR) != 0) {
 		irq = IRQ_OF_MASK(hwpend);
-		enable_irq(irq);
+		if (intrs[irq].is_type != IST_LEVEL)
+			enable_irq(irq);
 
 		ci->ci_ipending &= ~IRQ_TO_MASK(irq);
 
@@ -570,6 +575,8 @@ do_pending_int(void)
 		KERNEL_UNLOCK_ONE(NULL);
 
 		wrteei(0);
+		if (intrs[irq].is_type == IST_LEVEL)
+			enable_irq(irq);
 		ci->ci_cpl = pcpl;
 		intrs[irq].is_evcnt.ev_count++;
 	}

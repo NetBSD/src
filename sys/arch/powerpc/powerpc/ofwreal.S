@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.9.14.1 2007/05/22 17:27:22 matt Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.9.14.2 2007/08/02 05:34:22 macallan Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.

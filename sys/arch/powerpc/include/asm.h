@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.23.22.1 2007/05/22 17:27:20 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.23.22.2 2007/08/02 05:34:15 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

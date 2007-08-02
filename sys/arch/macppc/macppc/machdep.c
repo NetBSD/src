@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.14.6 2007/06/07 20:30:46 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.14.7 2007/08/02 05:34:36 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.6 2007/06/07 20:30:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.14.7 2007/08/02 05:34:36 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"

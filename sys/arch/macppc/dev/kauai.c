@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.19.36.2 2007/06/26 18:12:59 garbled Exp $	*/
+/*	$NetBSD: kauai.c,v 1.19.36.3 2007/08/02 05:34:32 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.36.2 2007/06/26 18:12:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.36.3 2007/08/02 05:34:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
