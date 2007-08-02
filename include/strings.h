@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.11 2007/05/30 21:14:37 tls Exp $	*/
+/*	$NetBSD: strings.h,v 1.12 2007/08/02 21:49:10 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,5 +68,7 @@ __END_DECLS
 #include <string.h>
 #endif
 
+#if _FORTIFY_SOURCE > 0
 #include <ssp/strings.h>
+#endif
 #endif /* !defined(_STRINGS_H_) */

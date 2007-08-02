@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.69 2007/05/30 21:14:37 tls Exp $	*/
+/*	$NetBSD: stdio.h,v 1.70 2007/08/02 21:49:09 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -476,6 +476,8 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define putchar_unlocked(x)	putc_unlocked(x, stdout)
 #endif /* _POSIX_C_SOURCE >= 199506 || _XOPEN_SOURCE >= 500 || _REENTRANT... */
 
+#if _FORTIFY_SOURCE > 0
 #include <ssp/stdio.h>
+#endif
 
 #endif /* _STDIO_H_ */
