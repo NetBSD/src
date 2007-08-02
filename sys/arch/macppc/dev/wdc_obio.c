@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46.16.3 2007/06/19 23:17:00 matt Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.4 2007/08/02 05:33:03 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.3 2007/06/19 23:17:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.4 2007/08/02 05:33:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -69,12 +70,16 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.3 2007/06/19 23:17:00 matt Exp 
  * XXX This code currently doesn't even try to allow 32-bit data port use.
  */
 
+u_int8_t bsr1_s(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+
+
 struct wdc_obio_softc {
 	struct wdc_softc sc_wdcdev;
 	struct ata_channel *sc_chanptr;
 	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
+	struct powerpc_bus_space sc_bus_space;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
@@ -159,17 +164,34 @@ wdc_obio_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	wdr->cmd_iot = wdr->ctl_iot = ca->ca_tag;
-	if (bus_space_map(wdr->cmd_iot, ca->ca_reg, WDC_REG_NPORTS*4, 0,
+#if 0
+	wdr->cmd_iot = wdr->ctl_iot =
+		macppc_make_bus_space_tag(ca->ca_baseaddr + ca->ca_reg[0], 4);
+#endif
+	wdr->cmd_iot = wdr->ctl_iot = &sc->sc_bus_space;
+	sc->sc_bus_space.pbs_flags =
+	    ca->ca_tag->pbs_flags & ~_BUS_SPACE_STRIDE_MASK;
+	sc->sc_bus_space.pbs_flags |= 4;
+	sc->sc_bus_space.pbs_offset = ca->ca_baseaddr + ca->ca_reg[0];
+	sc->sc_bus_space.pbs_base = 0;
+	sc->sc_bus_space.pbs_limit = 0x100000;
+	sc->sc_bus_space.pbs_extent = extent_create("wdc_obio", 0, 0x100000,
+	    M_DEVBUF, NULL, 0, EX_WAITOK);
+
+	if (bus_space_init(&sc->sc_bus_space, NULL, NULL, 0))
+		panic("bus_space_init failed");
+
+	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
 	    &wdr->cmd_baseioh) ||
-	    bus_space_map(wdr->cmd_iot, ca->ca_reg + WDC_AUXREG_OFFSET*4, 1,
-		          &wdr->ctl_ioh)) {
+	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
 			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
+
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i * 4,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    WDC_REG_NPORTS);
@@ -183,7 +205,7 @@ wdc_obio_attach(parent, self, aux)
 	wdr->data32ioh = wdr->cmd_ioh;
 #endif
 
-	sc->sc_ih = intr_establish(intr, IST_EDGE, IPL_BIO, wdcintr, chp);
+	sc->sc_ih = intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
@@ -233,11 +255,11 @@ wdc_obio_attach(parent, self, aux)
 	memset(path, 0, sizeof(path));
 	OF_package_to_path(ca->ca_node, path, sizeof(path));
 	if (strcmp(path, "/bandit@F2000000/ohare@10/ata@21000") == 0) {
-		uint32_t x;
+		u_int x;
 
-		x = in32rb((volatile uint32_t *)OHARE_FEATURE_REG);
+		x = in32rb(OHARE_FEATURE_REG);
 		x |= 8;
-		out32rb((volatile uint32_t *)OHARE_FEATURE_REG, x);
+		out32rb(OHARE_FEATURE_REG, x);
 	}
 
 	wdcattach(chp);
@@ -248,20 +270,20 @@ struct ide_timings {
 	int cycle;	/* minimum cycle time [ns] */
 	int active;	/* minimum command active time [ns] */
 };
-static const struct ide_timings pio_timing[5] = {
+static struct ide_timings pio_timing[5] = {
 	{ 600, 180 },    /* Mode 0 */
 	{ 390, 150 },    /*      1 */
 	{ 240, 105 },    /*      2 */
 	{ 180,  90 },    /*      3 */
 	{ 120,  75 }     /*      4 */
 };
-static const struct ide_timings dma_timing[3] = {
+static struct ide_timings dma_timing[3] = {
 	{ 480, 240 },	/* Mode 0 */
 	{ 165,  90 },	/* Mode 1 */
 	{ 120,  75 }	/* Mode 2 */
 };
 
-static const struct ide_timings udma_timing[5] = {
+static struct ide_timings udma_timing[5] = {
 	{120, 180},	/* Mode 0 */
 	{ 90, 150},	/* Mode 1 */
 	{ 60, 120},	/* Mode 2 */
