@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.160 2007/08/02 02:42:41 rmind Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.161 2007/08/02 13:12:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.160 2007/08/02 02:42:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.161 2007/08/02 13:12:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1178,7 +1178,7 @@ send:
 
 		/* Set receive buffer autosizing timestamp. */
 		if (tp->rfbuf_ts == 0 && (so->so_rcv.sb_flags & SB_AUTOSIZE))
-			tp->rfbuf_ts = tcp_now;
+			tp->rfbuf_ts = TCP_TIMESTAMP(tp);
 	}
 
 	/*
