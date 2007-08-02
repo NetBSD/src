@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.118 2007/07/20 15:36:42 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.119 2007/08/02 12:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.118 2007/07/20 15:36:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.119 2007/08/02 12:40:36 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -562,11 +562,12 @@ nfssvc_nfsd(nsd, argp, l)
 				continue;
 			KASSERT(slp->ns_sref > 0);
 			if (slp->ns_flag & SLP_VALID) {
-				if (slp->ns_flag & SLP_DISCONN)
-					nfsrv_zapsock(slp);
-				else if ((slp->ns_flag & SLP_NEEDQ) != 0) {
+				if ((slp->ns_flag & SLP_NEEDQ) != 0) {
 					nfsrv_rcv(slp->ns_so, (void *)slp,
 					    M_WAIT);
+				}
+				if ((slp->ns_flag & SLP_DISCONN) != 0) {
+					nfsrv_zapsock(slp);
 				}
 				error = nfsrv_dorec(slp, nfsd, &nd);
 				getmicrotime(&tv);
