@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out_recipient.c,v 1.1.1.7 2006/07/19 01:17:19 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_out_recipient.c,v 1.1.1.8 2007/08/02 08:05:05 heas Exp $	*/
 
 /*++
 /* NAME
@@ -129,13 +129,20 @@ void    cleanup_out_recipient(CLEANUP_STATE *state,
      * Distinguish between different original recipient addresses that map
      * onto the same mailbox. The recipient will use our original recipient
      * message header to figure things out.
+     * 
+     * Postfix 2.2 compatibility: when ignoring differences in Postfix original
+     * recipient information, also ignore differences in DSN attributes. We
+     * do, however, keep the DSN attributes of the recipient that survives
+     * duplicate elimination.
      */
 #define STREQ(x, y) (strcmp((x), (y)) == 0)
 
     if ((state->flags & CLEANUP_FLAG_MAP_OK) == 0
 	|| cleanup_virt_alias_maps == 0) {
-	if (been_here(state->dups, "%s\n%d\n%s\n%s",
-		      dsn_orcpt, dsn_notify, orcpt, recip) == 0) {
+	if ((var_enable_orcpt ?
+	     been_here(state->dups, "%s\n%d\n%s\n%s",
+		       dsn_orcpt, dsn_notify, orcpt, recip) :
+	     been_here_fixed(state->dups, recip)) == 0) {
 	    if (dsn_notify)
 		cleanup_out_format(state, REC_TYPE_ATTR, "%s=%d",
 				   MAIL_ATTR_DSN_NOTIFY, dsn_notify);
@@ -183,6 +190,11 @@ void    cleanup_out_recipient(CLEANUP_STATE *state,
      * notifications. The queue manager will flush the trace (and bounce)
      * logfile, possibly after it has generated its own success or failure
      * notification records.
+     * 
+     * Postfix 2.2 compatibility: when ignoring differences in Postfix original
+     * recipient information, also ignore differences in DSN attributes. We
+     * do, however, keep the DSN attributes of the recipient that survives
+     * duplicate elimination.
      */
     else {
 	RECIPIENT rcpt;
@@ -200,8 +212,10 @@ void    cleanup_out_recipient(CLEANUP_STATE *state,
 			  dsn_notify & ~DSN_NOTIFY_SUCCESS);
 	}
 	for (cpp = argv->argv; *cpp; cpp++) {
-	    if (been_here(state->dups, "%s\n%d\n%s\n%s",
-			  dsn_orcpt, dsn_notify, orcpt, *cpp) == 0) {
+	    if ((var_enable_orcpt ?
+		 been_here(state->dups, "%s\n%d\n%s\n%s",
+			   dsn_orcpt, dsn_notify, orcpt, *cpp) :
+		 been_here_fixed(state->dups, *cpp)) == 0) {
 		if (dsn_notify)
 		    cleanup_out_format(state, REC_TYPE_ATTR, "%s=%d",
 				       MAIL_ATTR_DSN_NOTIFY, dsn_notify);

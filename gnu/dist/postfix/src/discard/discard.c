@@ -1,4 +1,4 @@
-/*	$NetBSD: discard.c,v 1.1.1.3 2007/05/19 16:28:07 heas Exp $	*/
+/*	$NetBSD: discard.c,v 1.1.1.4 2007/08/02 08:05:06 heas Exp $	*/
 
 /*++
 /* NAME
@@ -176,13 +176,11 @@ static int deliver_message(DELIVER_REQUEST *request)
     (void) DSN_SIMPLE(&dsn, DSN_STATUS(dp.dsn), dp.text);
     for (nrcpt = 0; nrcpt < request->rcpt_list.len; nrcpt++) {
 	rcpt = request->rcpt_list.info + nrcpt;
-	if (rcpt->offset >= 0) {
-	    status = sent(BOUNCE_FLAGS(request), request->queue_id,
-			  &request->msg_stats, rcpt, "none", &dsn);
-	    if (status == 0 && (request->flags & DEL_REQ_FLAG_SUCCESS))
-		deliver_completed(src, rcpt->offset);
-	    result |= status;
-	}
+	status = sent(BOUNCE_FLAGS(request), request->queue_id,
+		      &request->msg_stats, rcpt, "none", &dsn);
+	if (status == 0 && (request->flags & DEL_REQ_FLAG_SUCCESS))
+	    deliver_completed(src, rcpt->offset);
+	result |= status;
     }
 
     /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.9 2007/05/19 16:28:26 heas Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.10 2007/08/02 08:05:21 heas Exp $	*/
 
 /*++
 /* NAME
@@ -440,9 +440,11 @@ int     main(int argc, char **argv)
 	if (REC_PUT_BUF(dst->stream, rec_type, buf) < 0) {
 	    /* rec_get() errors must not clobber errno. */
 	    saved_errno = errno;
-	    while (rec_get_raw(VSTREAM_IN, buf, var_line_limit,
-			       REC_FLAG_NONE) > 0)
-		 /* void */ ;
+	    while ((rec_type = rec_get_raw(VSTREAM_IN, buf, var_line_limit,
+					   REC_FLAG_NONE)) != REC_TYPE_END
+		   && rec_type != REC_TYPE_EOF)
+		if (rec_type == REC_TYPE_ERROR)
+		    msg_fatal("uid=%ld: malformed input", (long) uid);
 	    errno = saved_errno;
 	    break;
 	}

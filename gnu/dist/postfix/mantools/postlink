@@ -364,6 +364,7 @@ while (<>) {
     s;\bresolve_dequoted_address\b;<a href="postconf.5.html#resolve_dequoted_address">$&</a>;g;
     s;\brewrite_service_name\b;<a href="postconf.5.html#rewrite_service_name">$&</a>;g;
     s;\bsample_directory\b;<a href="postconf.5.html#sample_directory">$&</a>;g;
+    s;\bsend_cyrus_sasl_authzid\b;<a href="postconf.5.html#send_cyrus_sasl_authzid">$&</a>;g;
     s;\bsender_based_routing\b;<a href="postconf.5.html#sender_based_routing">$&</a>;g;
     s;\bsender_bcc_maps\b;<a href="postconf.5.html#sender_bcc_maps">$&</a>;g;
     s;\bsender_canonical_classes\b;<a href="postconf.5.html#sender_canonical_classes">$&</a>;g;
