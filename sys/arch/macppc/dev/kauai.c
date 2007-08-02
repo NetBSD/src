@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.19.36.3 2007/08/02 05:34:32 macallan Exp $	*/
+/*	$NetBSD: kauai.c,v 1.19.36.4 2007/08/02 17:40:24 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.36.3 2007/08/02 05:34:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.36.4 2007/08/02 17:40:24 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ kauai_attach(parent, self, aux)
 
 	node = getnodebypci(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
-		printf(": cannot find gmac node\n");
+		printf(": cannot find kauai node\n");
 		return;
 	}
 
@@ -158,13 +158,13 @@ kauai_attach(parent, self, aux)
 
 	sc->sc_iot.pbs_offset = regbase;
 	sc->sc_iot.pbs_base = 0;
-	sc->sc_iot.pbs_limit = WDC_REG_NPORTS;
+	sc->sc_iot.pbs_limit = WDC_REG_NPORTS << 4;
 	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN |  4;
 	bus_space_init(&sc->sc_iot, "kauai io", NULL, 0);
 
 	wdr->cmd_iot = wdr->ctl_iot = &sc->sc_iot;
 
-	if (bus_space_map(wdr->cmd_iot, regbase, WDC_REG_NPORTS, 0,
+	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
 	    &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
