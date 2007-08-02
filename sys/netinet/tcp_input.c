@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.269 2007/08/02 02:42:40 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.270 2007/08/02 13:06:30 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.269 2007/08/02 02:42:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.270 2007/08/02 13:06:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1823,7 +1823,7 @@ after_listen:
 			    opti.ts_ecr &&
 			    (so->so_rcv.sb_flags & SB_AUTOSIZE)) {
 				if (opti.ts_ecr > tp->rfbuf_ts &&
-				    opti.ts_ecr - tp->rfbuf_ts < hz) {
+				    opti.ts_ecr - tp->rfbuf_ts < PR_SLOWHZ) {
 					if (tp->rfbuf_cnt >
 					    (so->so_rcv.sb_hiwat / 8 * 7) &&
 					    so->so_rcv.sb_hiwat <
