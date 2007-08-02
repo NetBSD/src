@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46.16.4 2007/08/02 05:33:03 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.5 2007/08/02 22:14:12 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.4 2007/08/02 05:33:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.5 2007/08/02 22:14:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ wdc_obio_attach(parent, self, aux)
 	sc->sc_bus_space.pbs_flags |= 4;
 	sc->sc_bus_space.pbs_offset = ca->ca_baseaddr + ca->ca_reg[0];
 	sc->sc_bus_space.pbs_base = 0;
-	sc->sc_bus_space.pbs_limit = 0x100000;
+	sc->sc_bus_space.pbs_limit = WDC_REG_NPORTS << 4;
 	sc->sc_bus_space.pbs_extent = extent_create("wdc_obio", 0, 0x100000,
 	    M_DEVBUF, NULL, 0, EX_WAITOK);
 
