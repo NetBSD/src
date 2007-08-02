@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.40.22.1 2007/06/26 18:13:25 garbled Exp $	*/
+/*	$NetBSD: spr.h,v 1.40.22.2 2007/08/02 05:34:16 macallan Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
