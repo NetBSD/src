@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.149 2007/07/09 21:11:12 ad Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.150 2007/08/02 02:42:42 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -262,6 +262,10 @@ struct tcpcb {
 					 * for slow start exponential to
 					 * linear switch
 					 */
+/* auto-sizing variables */
+	u_int rfbuf_cnt;		/* recv buffer autoscaling byte count */
+	uint32_t rfbuf_ts;		/* recv buffer autoscaling timestamp */
+
 /*
  * transmit timing stuff.  See below for scale of srtt and rttvar.
  * "Variance" is actually smoothed difference.
@@ -744,6 +748,7 @@ extern	int tcp_do_sack;	/* SACK enabled/disabled? */
 extern	int tcp_do_win_scale;	/* RFC1323 window scaling enabled/disabled? */
 extern	int tcp_do_timestamps;	/* RFC1323 timestamps enabled/disabled? */
 extern	int tcp_mssdflt;	/* default seg size */
+extern	int tcp_minmss;		/* minimal seg size */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_init_win_local;	/* initial window for local nets */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
@@ -781,6 +786,14 @@ extern	struct mowner tcp_sock_rx_mowner;
 extern	struct mowner tcp_sock_tx_mowner;
 extern	struct mowner tcp_mowner;
 #endif
+
+extern int tcp_do_autorcvbuf;
+extern int tcp_autorcvbuf_inc;
+extern int tcp_autorcvbuf_max;
+extern int tcp_do_autosndbuf;
+extern int tcp_autosndbuf_inc;
+extern int tcp_autosndbuf_max;
+
 
 #define	TCPCTL_VARIABLES { \
 	{ 0 },					\
