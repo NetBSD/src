@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.159 2007/05/18 21:48:43 riz Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.160 2007/08/02 02:42:41 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.159 2007/05/18 21:48:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.160 2007/08/02 02:42:41 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -220,6 +220,10 @@ extern struct mbuf *m_copypack();
  */
 int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
+
+int	tcp_do_autosndbuf = 0;
+int	tcp_autosndbuf_inc = 8 * 1024;
+int	tcp_autosndbuf_max = 256 * 1024;
 
 #ifdef TCP_OUTPUT_COUNTERS
 #include <sys/device.h>
@@ -906,6 +910,49 @@ again:
 				tcp_setpersist(tp);
 		}
 	}
+
+	/*
+	 * Automatic sizing enables the performance of large buffers
+	 * and most of the efficiency of small ones by only allocating
+	 * space when it is needed.
+	 *
+	 * The criteria to step up the send buffer one notch are:
+	 *  1. receive window of remote host is larger than send buffer
+	 *     (with a fudge factor of 5/4th);
+	 *  2. send buffer is filled to 7/8th with data (so we actually
+	 *     have data to make use of it);
+	 *  3. send buffer fill has not hit maximal automatic size;
+	 *  4. our send window (slow start and cogestion controlled) is
+	 *     larger than sent but unacknowledged data in send buffer.
+	 *
+	 * The remote host receive window scaling factor may limit the
+	 * growing of the send buffer before it reaches its allowed
+	 * maximum.
+	 *
+	 * It scales directly with slow start or congestion window
+	 * and does at most one step per received ACK.  This fast
+	 * scaling has the drawback of growing the send buffer beyond
+	 * what is strictly necessary to make full use of a given
+	 * delay*bandwith product.  However testing has shown this not
+	 * to be much of an problem.  At worst we are trading wasting
+	 * of available bandwith (the non-use of it) for wasting some
+	 * socket buffer memory.
+	 *
+	 * TODO: Shrink send buffer during idle periods together
+	 * with congestion window.  Requires another timer.
+	 */
+	if (tcp_do_autosndbuf && so->so_snd.sb_flags & SB_AUTOSIZE) {
+		if ((tp->snd_wnd / 4 * 5) >= so->so_snd.sb_hiwat &&
+		    so->so_snd.sb_cc >= (so->so_snd.sb_hiwat / 8 * 7) &&
+		    so->so_snd.sb_cc < tcp_autosndbuf_max &&
+		    win >= (so->so_snd.sb_cc - (tp->snd_nxt - tp->snd_una))) {
+			if (!sbreserve(&so->so_snd,
+			    min(so->so_snd.sb_hiwat + tcp_autosndbuf_inc,
+			     tcp_autosndbuf_max), so))
+				so->so_snd.sb_flags &= ~SB_AUTOSIZE;
+		}
+	}
+
 	if (len > txsegsize) {
 		if (use_tso) {
 			/*
@@ -1128,6 +1175,10 @@ send:
 		*lp++ = htonl(TCP_TIMESTAMP(tp));
 		*lp   = htonl(tp->ts_recent);
 		optlen += TCPOLEN_TSTAMP_APPA;
+
+		/* Set receive buffer autosizing timestamp. */
+		if (tp->rfbuf_ts == 0 && (so->so_rcv.sb_flags & SB_AUTOSIZE))
+			tp->rfbuf_ts = tcp_now;
 	}
 
 	/*

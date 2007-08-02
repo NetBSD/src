@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.217 2007/07/19 20:48:55 dyoung Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.218 2007/08/02 02:42:41 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.217 2007/07/19 20:48:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.218 2007/08/02 02:42:41 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -175,6 +175,7 @@ u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 
 /* patchable/settable parameters for tcp */
 int 	tcp_mssdflt = TCP_MSS;
+int	tcp_minmss = TCP_MINMSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;	/* window scaling / timestamps (obsolete) */
 #if NRND > 0

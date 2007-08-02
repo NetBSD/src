@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.268 2007/07/09 21:11:11 ad Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.269 2007/08/02 02:42:40 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.268 2007/07/09 21:11:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.269 2007/08/02 02:42:40 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -241,6 +241,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.268 2007/07/09 21:11:11 ad Exp $");
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
+
+int	tcp_do_autorcvbuf = 0;
+int	tcp_autorcvbuf_inc = 16 * 1024;
+int	tcp_autorcvbuf_max = 256 * 1024;
 
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
@@ -1771,6 +1775,8 @@ after_listen:
 		} else if (th->th_ack == tp->snd_una &&
 		    TAILQ_FIRST(&tp->segq) == NULL &&
 		    tlen <= sbspace(&so->so_rcv)) {
+			int newsize = 0;	/* automatic sockbuf scaling */
+
 			/*
 			 * this is a pure, in-sequence data packet
 			 * with nothing on the reassembly queue and
@@ -1781,6 +1787,59 @@ after_listen:
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
+
+		/*
+		 * Automatic sizing enables the performance of large buffers
+		 * and most of the efficiency of small ones by only allocating
+		 * space when it is needed.
+		 *
+		 * On the receive side the socket buffer memory is only rarely
+		 * used to any significant extent.  This allows us to be much
+		 * more aggressive in scaling the receive socket buffer.  For
+		 * the case that the buffer space is actually used to a large
+		 * extent and we run out of kernel memory we can simply drop
+		 * the new segments; TCP on the sender will just retransmit it
+		 * later.  Setting the buffer size too big may only consume too
+		 * much kernel memory if the application doesn't read() from
+		 * the socket or packet loss or reordering makes use of the
+		 * reassembly queue.
+		 *
+		 * The criteria to step up the receive buffer one notch are:
+		 *  1. the number of bytes received during the time it takes
+		 *     one timestamp to be reflected back to us (the RTT);
+		 *  2. received bytes per RTT is within seven eighth of the
+		 *     current socket buffer size;
+		 *  3. receive buffer size has not hit maximal automatic size;
+		 *
+		 * This algorithm does one step per RTT at most and only if
+		 * we receive a bulk stream w/o packet losses or reorderings.
+		 * Shrinking the buffer during idle times is not necessary as
+		 * it doesn't consume any memory when idle.
+		 *
+		 * TODO: Only step up if the application is actually serving
+		 * the buffer to better manage the socket buffer resources.
+		 */
+			if (tcp_do_autorcvbuf &&
+			    opti.ts_ecr &&
+			    (so->so_rcv.sb_flags & SB_AUTOSIZE)) {
+				if (opti.ts_ecr > tp->rfbuf_ts &&
+				    opti.ts_ecr - tp->rfbuf_ts < hz) {
+					if (tp->rfbuf_cnt >
+					    (so->so_rcv.sb_hiwat / 8 * 7) &&
+					    so->so_rcv.sb_hiwat <
+					    tcp_autorcvbuf_max) {
+						newsize =
+						    min(so->so_rcv.sb_hiwat +
+						    tcp_autorcvbuf_inc,
+						    tcp_autorcvbuf_max);
+					}
+					/* Start over with next RTT. */
+					tp->rfbuf_ts = 0;
+					tp->rfbuf_cnt = 0;
+				} else
+					tp->rfbuf_cnt += tlen;	/* add up */
+			}
+
 			/*
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
@@ -1788,6 +1847,14 @@ after_listen:
 			if (so->so_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
+				/*
+				 * Set new socket buffer size.
+				 * Give up when limit is reached.
+				 */
+				if (newsize)
+					if (!sbreserve(&so->so_rcv,
+					    newsize, so))
+						so->so_rcv.sb_flags &= ~SB_AUTOSIZE;
 				m_adj(m, toff + off);
 				sbappendstream(&so->so_rcv, m);
 			}
@@ -1819,6 +1886,10 @@ after_listen:
 		win = 0;
 	tp->rcv_wnd = imax(win, (int)(tp->rcv_adv - tp->rcv_nxt));
 	}
+
+	/* Reset receive buffer auto scaling when not in bulk receive mode. */
+	tp->rfbuf_ts = 0;
+	tp->rfbuf_cnt = 0;
 
 	switch (tp->t_state) {
 	/*
@@ -4014,9 +4085,18 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 		sc->sc_requested_s_scale = tb.requested_s_scale;
 		sc->sc_request_r_scale = 0;
+		/*
+		 * Compute proper scaling value from buffer space.
+		 * Leave enough room for the socket buffer to grow
+		 * with auto sizing.  This allows us to scale the
+		 * receive buffer over a wide range while not losing
+		 * any efficiency or fine granularity.
+		 *
+		 * RFC1323: The Window field in a SYN (i.e., a <SYN>
+		 * or <SYN,ACK>) segment itself is never scaled.
+		 */
 		while (sc->sc_request_r_scale < TCP_MAX_WINSHIFT &&
-		    TCP_MAXWIN << sc->sc_request_r_scale <
-		    so->so_rcv.sb_hiwat)
+		    (0x1 << sc->sc_request_r_scale) < tcp_minmss)
 			sc->sc_request_r_scale++;
 	} else {
 		sc->sc_requested_s_scale = 15;
