@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.5 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.6 2007/08/02 12:34:23 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.5 2007/03/04 06:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.6 2007/08/02 12:34:23 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -233,7 +233,7 @@ static int
 agrport_mc_del_callback(struct agr_port *port, void *arg)
 {
 
-	return agrport_ioctl(port, SIOCADDMULTI, arg);
+	return agrport_ioctl(port, SIOCDELMULTI, arg);
 }
 
 int
