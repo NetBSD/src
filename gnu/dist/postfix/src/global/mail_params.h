@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.14 2007/05/19 17:49:48 heas Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.15 2007/08/02 08:26:18 heas Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -43,9 +43,12 @@ extern bool var_show_unk_rcpt_table;
   * What problem classes should be reported to the postmaster via email.
   * Default is bad problems only. See mail_error(3). Even when mail notices
   * are disabled, problems are still logged to the syslog daemon.
+  * 
+  * Do not add "protocol" to the default setting. It gives Postfix a bad
+  * reputation: people get mail whenever spam software makes a mistake.
   */
 #define VAR_NOTIFY_CLASSES	"notify_classes"
-#define DEF_NOTIFY_CLASSES	"resource, software"
+#define DEF_NOTIFY_CLASSES	"resource, software"	/* Not: "protocol" */
 extern char *var_notify_classes;
 
  /*
@@ -1533,6 +1536,10 @@ extern char *var_lmtp_sasl_path;
   * SASL-based relay etc. control.
   */
 #define PERMIT_SASL_AUTH	"permit_sasl_authenticated"
+
+#define VAR_CYRUS_SASL_AUTHZID	"send_cyrus_sasl_authzid"
+#define DEF_CYRUS_SASL_AUTHZID	0
+extern int var_cyrus_sasl_authzid;
 
  /*
   * LMTP client. Timeouts inspired by RFC 1123. The LMTP recipient limit
