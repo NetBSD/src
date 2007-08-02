@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.3.16.1 2007/05/11 00:19:26 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.3.16.2 2007/08/02 07:21:12 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.3.16.1 2007/05/11 00:19:26 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.3.16.2 2007/08/02 07:21:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.3.16.1 2007/05/11 00:19:26 macallan Exp $
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/pio.h>
 #include <dev/clock_subr.h>
 #include <dev/i2c/i2cvar.h>
 
