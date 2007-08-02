@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.121 2007/08/02 12:44:18 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.122 2007/08/02 12:46:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.121 2007/08/02 12:44:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.122 2007/08/02 12:46:03 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -877,6 +877,7 @@ nfsrv_slpderef(slp)
 		struct file *fp;
 
 		mutex_enter(&nfsd_lock);
+		KASSERT((slp->ns_flag & SLP_DOREC) == 0);
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
 		mutex_exit(&nfsd_lock);
 
