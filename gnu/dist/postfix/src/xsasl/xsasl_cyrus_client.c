@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.2 2007/05/19 16:28:51 heas Exp $	*/
+/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.3 2007/08/02 08:05:41 heas Exp $	*/
 
 /*++
 /* NAME
@@ -66,6 +66,11 @@
 #include <msg.h>
 #include <mymalloc.h>
 #include <stringops.h>
+
+ /*
+  * Global library
+  */
+#include <mail_params.h>
 
  /*
   * Application-specific
@@ -331,7 +336,8 @@ XSASL_CLIENT *xsasl_cyrus_client_create(XSASL_CLIENT_IMPL *unused_impl,
 
     if ((sasl_status = SASL_CLIENT_NEW(service, server,
 				       NULL_CLIENT_ADDR, NULL_SERVER_ADDR,
-				       custom_callbacks, NULL_SECFLAGS,
+				 var_cyrus_sasl_authzid ? custom_callbacks :
+				       custom_callbacks + 1, NULL_SECFLAGS,
 				       &sasl_conn)) != SASL_OK) {
 	msg_warn("per-session SASL client initialization: %s",
 		 xsasl_cyrus_strerror(sasl_status));

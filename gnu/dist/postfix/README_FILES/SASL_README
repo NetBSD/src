@@ -356,20 +356,20 @@ bold font.
     250-ETRN
     250-AUTH DIGEST-MD5 PLAIN CRAM-MD5
     250 8BITMIME
-    AAUUTTHH PPLLAAIINN ddGGVVzzddAABB00ZZXXNN00AAHHRRllcc33RRwwYYXXNNzz
+    AAUUTTHH PPLLAAIINN AAHHRRllcc33QQAAddGGVVzzddHHBBhhcc33MM==
     235 Authentication successful
 
-Instead of dGVzdAB0ZXN0AHRlc3RwYXNz, specify the base64 encoded form of
-username\0username\0password (the \0 is a null byte). The example above is for
-a user named `test' with password `testpass'.
+Instead of AHRlc3QAdGVzdHBhc3M=, specify the base64 encoded form of
+\0username\0password (the \0 is a null byte). The example above is for a user
+named `test' with password `testpass'.
 
 In order to generate base64 encoded authentication information you can use one
 of the following commands:
 
-    % printf 'username\0username\0password' | mmencode
+    % printf '\0username\0password' | mmencode
 
     % perl -MMIME::Base64 -e \
-        'print encode_base64("username\0username\0password");'
+        'print encode_base64("\0username\0password");'
 
 The mmencode command is part of the metamail software. MIME::Base64 is
 available from http://www.cpan.org/.

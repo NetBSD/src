@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqp-source.c,v 1.1.1.7 2007/05/19 16:28:41 heas Exp $	*/
+/*	$NetBSD: qmqp-source.c,v 1.1.1.8 2007/08/02 08:05:31 heas Exp $	*/
 
 /*++
 /* NAME
@@ -358,6 +358,13 @@ static void connect_done(int unused_event, char *context)
 	dequeue_connect(session);
 	non_blocking(fd, BLOCKING);
 	event_disable_readwrite(fd);
+	/* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
+	if (sa->sa_family == AF_INET
+#ifdef AF_INET6
+	    || sa->sa_family == AF_INET6
+#endif
+	    )
+	    vstream_tweak_tcp(session->stream);
 	send_data(session);
     }
 }

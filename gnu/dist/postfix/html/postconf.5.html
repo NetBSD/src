@@ -53,6 +53,8 @@ recursively replaced by the value of the named parameter. </p>
 "$name" is empty. This form is supported with Postfix version 2.2
 and later.  </p>
 
+<li> <p> Specify "$$" to produce a single "$" character. </p>
+
 </ul>
 
 <li> <p> When the same parameter is defined multiple times, only
@@ -6682,6 +6684,24 @@ This feature is available in Postfix 2.0 and later.
 <p>
 The name of the directory with example Postfix configuration files.
 </p>
+
+
+</DD>
+
+<DT><b><a name="send_cyrus_sasl_authzid">send_cyrus_sasl_authzid</a>
+(default: no)</b></DT><DD>
+
+<p> When authenticating to a remote SMTP or LMTP server with the
+default setting "no", send no SASL authoriZation ID (authzid); send
+only the SASL authentiCation ID (authcid) plus the authcid's password.
+</p>
+
+<p> The non-default setting "yes" enables the behavior of older
+Postfix versions.  These always send a SASL authzid that is equal
+to the SASL authcid, but this causes inter-operability problems
+with some SMTP servers. </p>
+
+<p> This feature is available in Postfix 2.4.4 and later. </p>
 
 
 </DD>
