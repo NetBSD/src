@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.12 2007/05/19 17:49:42 heas Exp $
+.\"	$NetBSD: postconf.5,v 1.13 2007/08/02 08:26:18 heas Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -44,6 +44,8 @@ version 2.2 and later.
 The expression "${name:value}" expands to "value" when
 "$name" is empty. This form is supported with Postfix
 version 2.2 and later.
+.IP \(bu
+Specify "$$" to produce a single "$" character.
 .RE
 .IP \(bu
 When the same parameter is defined multiple times, only the last
@@ -3711,6 +3713,17 @@ next-hop host, recipient) triple.
 This feature is available in Postfix 2.0 and later.
 .SH sample_directory (default: /etc/postfix)
 The name of the directory with example Postfix configuration files.
+.SH send_cyrus_sasl_authzid (default: no)
+When authenticating to a remote SMTP or LMTP server with the
+default setting "no", send no SASL authoriZation ID (authzid); send
+only the SASL authentiCation ID (authcid) plus the authcid's password.
+.PP
+The non-default setting "yes" enables the behavior of older
+Postfix versions.  These always send a SASL authzid that is equal
+to the SASL authcid, but this causes inter-operability problems
+with some SMTP servers.
+.PP
+This feature is available in Postfix 2.4.4 and later.
 .SH sender_based_routing (default: no)
 This parameter should not be used. It was replaced by sender_dependent_relayhost_maps
 in Postfix version 2.3.
