@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_version.h,v 1.1.1.29 2007/05/19 16:28:14 heas Exp $	*/
+/*	$NetBSD: mail_version.h,v 1.1.1.30 2007/08/02 08:05:11 heas Exp $	*/
 
 #ifndef _MAIL_VERSION_H_INCLUDED_
 #define _MAIL_VERSION_H_INCLUDED_
@@ -22,8 +22,8 @@
   * Patches change both the patchlevel and the release date. Snapshots have no
   * patchlevel; they change the release date only.
   */
-#define MAIL_RELEASE_DATE	"20070423"
-#define MAIL_VERSION_NUMBER	"2.4.1"
+#define MAIL_RELEASE_DATE	"20070731"
+#define MAIL_VERSION_NUMBER	"2.4.5"
 
 #ifdef SNAPSHOT
 # define MAIL_VERSION_DATE	"-" MAIL_RELEASE_DATE

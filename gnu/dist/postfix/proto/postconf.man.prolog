@@ -42,6 +42,8 @@ version 2.2 and later.
 The expression "${name:value}" expands to "value" when
 "$name" is empty. This form is supported with Postfix
 version 2.2 and later.
+.IP \(bu
+Specify "$$" to produce a single "$" character.
 .RE
 .IP \(bu
 When the same parameter is defined multiple times, only the last

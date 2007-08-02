@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.1.1.5 2007/05/19 16:28:23 heas Exp $	*/
+/*	$NetBSD: milter8.c,v 1.1.1.6 2007/08/02 08:05:19 heas Exp $	*/
 
 /*++
 /* NAME
@@ -65,6 +65,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+
+#ifndef SHUT_RDWR
+#define SHUT_RDWR	2
+#endif
 
 /* Sendmail 8 Milter protocol. */
 
@@ -439,7 +443,16 @@ static int milter8_conf_error(MILTER8 *milter)
 {
     const char *reply;
 
+    /*
+     * XXX When the cleanup server closes its end of the Milter socket while
+     * editing a queue file, the SMTP server is left out of sync with the
+     * Milter. Sending an ABORT to the Milters will not restore
+     * synchronization, because there may be any number of Milter replies
+     * already in flight. Workaround: poison the socket and force the SMTP
+     * server to abandon it.
+     */
     if (milter->fp != 0) {
+	(void) shutdown(vstream_fileno(milter->fp), SHUT_RDWR);
 	(void) vstream_fclose(milter->fp);
 	milter->fp = 0;
     }
@@ -458,7 +471,16 @@ static int milter8_comm_error(MILTER8 *milter)
 {
     const char *reply;
 
+    /*
+     * XXX When the cleanup server closes its end of the Milter socket while
+     * editing a queue file, the SMTP server is left out of sync with the
+     * Milter. Sending an ABORT to the Milters will not restore
+     * synchronization, because there may be any number of Milter replies
+     * already in flight. Workaround: poison the socket and force the SMTP
+     * server to abandon it.
+     */
     if (milter->fp != 0) {
+	(void) shutdown(vstream_fileno(milter->fp), SHUT_RDWR);
 	(void) vstream_fclose(milter->fp);
 	milter->fp = 0;
     }
@@ -875,6 +897,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
     const char *retval = 0;
     VSTRING *body_line_buf = 0;
     int     done = 0;
+    int     body_edit_lockout = 0;
 
 #define DONT_SKIP_REPLY	0
 
@@ -976,10 +999,21 @@ static const char *milter8_event(MILTER8 *milter, int event,
     /*
      * Receive the reply or replies.
      * 
-     * Intercept all loop exits so that we can do post body replacement
+     * Intercept all loop exits so that we can do post header/body edit
      * processing.
      * 
      * XXX Bound the loop iteration count.
+     * 
+     * In the end-of-body stage, the Milter may reply with one or more queue
+     * file edit requests before it replies with its final decision: accept,
+     * reject, etc. After a local queue file edit error (file too big, media
+     * write error), do not close the Milter socket in the cleanup server.
+     * Instead skip all further Milter replies until the final decision. This
+     * way the Postfix SMTP server stays in sync with the Milter, and Postfix
+     * doesn't have to lose the ability to handle multiple deliveries within
+     * the same SMTP session. This requires that the Postfix SMTP server uses
+     * something other than CLEANUP_STAT_WRITE when it loses contact with the
+     * cleanup server.
      */
 #define IN_CONNECT_EVENT(e) ((e) == SMFIC_CONNECT || (e) == SMFIC_HELO)
 
@@ -1004,6 +1038,32 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    msg_info("reply: %s data %ld bytes",
 		     (smfir_name = str_name_code(smfir_table, cmd)) != 0 ?
 		     smfir_name : "unknown", (long) data_size);
+
+	/*
+	 * Handle unfinished message body replacement first.
+	 * 
+	 * XXX When SMFIR_REPLBODY is followed by some different request, we
+	 * assume that the body replacement operation is complete. The queue
+	 * file editing implementation currently does not support sending
+	 * part 1 of the body replacement text, doing some other queue file
+	 * updates, and then sending part 2 of the body replacement text. To
+	 * avoid loss of data, we log an error when SMFIR_REPLBODY requests
+	 * are alternated with other requests.
+	 */
+	if (body_line_buf != 0 && cmd != SMFIR_REPLBODY) {
+	    /* In case the last body replacement line didn't end in CRLF. */
+	    if (edit_resp == 0 && LEN(body_line_buf) > 0)
+		edit_resp = parent->repl_body(parent->chg_context,
+					      MILTER_BODY_LINE,
+					      body_line_buf);
+	    if (edit_resp == 0)
+		edit_resp = parent->repl_body(parent->chg_context,
+					      MILTER_BODY_END,
+					      (VSTRING *) 0);
+	    body_edit_lockout = 1;
+	    vstring_free(body_line_buf);
+	    body_line_buf = 0;
+	}
 	switch (cmd) {
 
 	    /*
@@ -1054,7 +1114,6 @@ static const char *milter8_event(MILTER8 *milter, int event,
 	    if (IN_CONNECT_EVENT(event)) {
 		msg_warn("milter %s: DISCARD action is not allowed "
 			 "for connect or helo", milter->m.name);
-		milter8_conf_error(milter);
 		MILTER8_EVENT_BREAK(milter->def_reply);
 	    } else {
 		/* No more events for this message. */
@@ -1190,6 +1249,9 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->body,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
+		    /* Skip to the next request after previous edit error. */
+		    if (edit_resp)
+			continue;
 		    /* XXX Sendmail 8 compatibility. */
 		    if (index == 0)
 			index = 1;
@@ -1214,8 +1276,6 @@ static const char *milter8_event(MILTER8 *milter, int event,
 			edit_resp = parent->del_header(parent->chg_context,
 						       (ssize_t) index,
 						       STR(milter->buf));
-		    if (edit_resp)
-			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 #endif
 
@@ -1228,11 +1288,12 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->body,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
+		    /* Skip to the next request after previous edit error. */
+		    if (edit_resp)
+			continue;
 		    edit_resp = parent->add_header(parent->chg_context,
 						   STR(milter->buf),
 						   STR(milter->body));
-		    if (edit_resp)
-			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 
 		    /*
@@ -1249,6 +1310,9 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->body,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
+		    /* Skip to the next request after previous edit error. */
+		    if (edit_resp)
+			continue;
 		    if ((ssize_t) index + 1 < 1) {
 			msg_warn("milter %s: bad insert header index: %ld",
 				 milter->m.name, (long) index);
@@ -1259,8 +1323,6 @@ static const char *milter8_event(MILTER8 *milter, int event,
 						   (ssize_t) index + 1,
 						   STR(milter->buf),
 						   STR(milter->body));
-		    if (edit_resp)
-			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 #endif
 
@@ -1272,10 +1334,11 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
+		    /* Skip to the next request after previous edit error. */
+		    if (edit_resp)
+			continue;
 		    edit_resp = parent->add_rcpt(parent->chg_context,
 						 STR(milter->buf));
-		    if (edit_resp)
-			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 
 		    /*
@@ -1286,10 +1349,11 @@ static const char *milter8_event(MILTER8 *milter, int event,
 					  MILTER8_DATA_STRING, milter->buf,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
+		    /* Skip to the next request after previous edit error. */
+		    if (edit_resp)
+			continue;
 		    edit_resp = parent->del_rcpt(parent->chg_context,
 						 STR(milter->buf));
-		    if (edit_resp)
-			MILTER8_EVENT_BREAK(edit_resp);
 		    continue;
 
 		    /*
@@ -1297,10 +1361,20 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		     * update the message size.
 		     */
 		case SMFIR_REPLBODY:
+		    if (body_edit_lockout) {
+			msg_warn("milter %s: body replacement requests can't "
+				 "currently be mixed with other requests",
+				 milter->m.name);
+			milter8_conf_error(milter);
+			MILTER8_EVENT_BREAK(milter->def_reply);
+		    }
 		    if (milter8_read_data(milter, data_size,
 					  MILTER8_DATA_BUFFER, milter->body,
 					  MILTER8_DATA_END) != 0)
 			MILTER8_EVENT_BREAK(milter->def_reply);
+		    /* Skip to the next request after previous edit error. */
+		    if (edit_resp)
+			continue;
 		    /* Start body replacement. */
 		    if (body_line_buf == 0) {
 			body_line_buf = vstring_alloc(var_line_limit);
@@ -1350,35 +1424,20 @@ static const char *milter8_event(MILTER8 *milter, int event,
     }
 
     /*
-     * Finish message body replacement.
+     * Clean up after aborted message body replacement.
      */
-    if (body_line_buf != 0) {
-	if (edit_resp == 0) {
-	    /* In case the last body replacement line didn't end in CRLF. */
-	    if (LEN(body_line_buf) > 0)
-		edit_resp = parent->repl_body(parent->chg_context,
-					      MILTER_BODY_LINE,
-					      body_line_buf);
-	    if (edit_resp == 0)
-		edit_resp = parent->repl_body(parent->chg_context,
-					      MILTER_BODY_END,
-					      (VSTRING *) 0);
-	}
+    if (body_line_buf)
 	vstring_free(body_line_buf);
 
-	/*
-	 * Override a non-reject/discard result value after body replacement
-	 * failure.
-	 * 
-	 * XXX Some cleanup clients ask the cleanup server to bounce mail for
-	 * them. In that case we must override a hard reject retval result
-	 * after queue file update failure. This is not a big problem; the
-	 * odds are small that a Milter application sends a hard reject after
-	 * replacing the message body.
-	 */
-	if (edit_resp && (retval == 0 || strchr("DS4", retval[0]) == 0))
-	    retval = edit_resp;
-    }
+    /*
+     * XXX Some cleanup clients ask the cleanup server to bounce mail for
+     * them. In that case we must override a hard reject retval result after
+     * queue file update failure. This is not a big problem; the odds are
+     * small that a Milter application sends a hard reject after replacing
+     * the message body.
+     */
+    if (edit_resp && (retval == 0 || strchr("DS4", retval[0]) == 0))
+	retval = edit_resp;
     return (retval);
 }
 
@@ -1534,6 +1593,9 @@ static void milter8_connect(MILTER8 *milter)
 		    VSTREAM_CTL_DOUBLE,
 		    VSTREAM_CTL_TIMEOUT, milter->cmd_timeout,
 		    VSTREAM_CTL_END);
+    /* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
+    if (connect_fn == inet_connect)
+	vstream_tweak_tcp(milter->fp);
 
     /*
      * Open the negotiations by sending what actions the Milter may request
@@ -2436,6 +2498,8 @@ MILTER *milter8_receive(VSTREAM *stream, MILTERS *parent)
 			    msg_timeout, NO_PROTOCOL, STR(act_buf), parent);
 	milter->fp = vstream_fdopen(fd, O_RDWR);
 	vstream_control(milter->fp, VSTREAM_CTL_DOUBLE, VSTREAM_CTL_END);
+	/* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
+	vstream_tweak_sock(milter->fp);
 	milter->version = version;
 	milter->rq_mask = rq_mask;
 	milter->ev_mask = ev_mask;
