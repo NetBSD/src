@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.120 2007/08/02 12:42:17 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.121 2007/08/02 12:44:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.120 2007/08/02 12:42:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.121 2007/08/02 12:44:18 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -544,9 +544,8 @@ nfssvc_nfsd(nsd, argp, l)
 			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
 				slp = TAILQ_FIRST(&nfssvc_sockpending);
 				if (slp) {
-					KASSERT((slp->ns_flag &
-					    (SLP_VALID | SLP_DOREC))
-					    == (SLP_VALID | SLP_DOREC));
+					KASSERT((slp->ns_flag & SLP_DOREC)
+					    != 0);
 					TAILQ_REMOVE(&nfssvc_sockpending, slp,
 					    ns_pending);
 					slp->ns_flag &= ~SLP_DOREC;
