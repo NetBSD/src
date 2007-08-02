@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.31.10.3 2007/08/02 05:34:32 macallan Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.31.10.4 2007/08/02 16:10:13 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.10.3 2007/08/02 05:34:32 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31.10.4 2007/08/02 16:10:13 macallan Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -201,8 +201,8 @@ bmac_attach(struct device *parent, struct device *self, void *aux)
 	ca->ca_reg[4] += ca->ca_baseaddr;
 
 	sc->sc_iot = ca->ca_tag;
-	if (!bus_space_map(sc->sc_iot, ca->ca_reg[0], PAGE_SIZE, 0,
-	    &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, ca->ca_reg[0], ca->ca_reg[1], 0,
+	    &sc->sc_ioh) != 0) {
 		aprint_error(": couldn't map %#x", ca->ca_reg[0]);
 		return;
 	}
