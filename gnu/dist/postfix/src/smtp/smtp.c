@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.13 2007/05/19 16:28:33 heas Exp $	*/
+/*	$NetBSD: smtp.c,v 1.1.1.14 2007/08/02 08:05:26 heas Exp $	*/
 
 /*++
 /* NAME
@@ -206,6 +206,12 @@
 /*	A case insensitive list of LHLO keywords (pipelining, starttls,
 /*	auth, etc.) that the LMTP client will ignore in the LHLO response
 /*	from a remote LMTP server.
+/* .PP
+/*	Available in Postfix version 2.4.4 and later:
+/* .IP "\fBsend_cyrus_sasl_authzid (no)\fR"
+/*	When authenticating to a remote SMTP or LMTP server with the
+/*	default setting "no", send no SASL authoriZation ID (authzid); send
+/*	only the SASL authentiCation ID (authcid) plus the authcid's password.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
