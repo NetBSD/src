@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.161 2007/07/27 10:03:58 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.162 2007/08/02 12:45:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.161 2007/07/27 10:03:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.162 2007/08/02 12:45:37 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2362,6 +2362,7 @@ nfsdsock_unlock(struct nfssvc_sock *slp)
 
 	mutex_enter(&slp->ns_lock);
 	KASSERT((slp->ns_flag & SLP_BUSY) != 0);
+	KASSERT((slp->ns_flag & SLP_VALID) != 0);
 	cv_broadcast(&slp->ns_cv);
 	slp->ns_flag &= ~SLP_BUSY;
 	mutex_exit(&slp->ns_lock);
