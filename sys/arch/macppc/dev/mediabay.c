@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.12.14.2 2007/06/20 03:08:03 macallan Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.12.14.3 2007/08/02 05:34:32 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.2 2007/06/20 03:08:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mediabay.c,v 1.12.14.3 2007/08/02 05:34:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,7 @@ struct mediabay_softc {
 	u_int *sc_fcr;
 	u_int sc_baseaddr;
 	struct device *sc_content;
-	struct proc *sc_kthread;
+	lwp_t *sc_kthread;
 };
 
 void mediabay_attach __P((struct device *, struct device *, void *));
@@ -58,7 +58,6 @@ int mediabay_match __P((struct device *, struct cfdata *, void *));
 int mediabay_print __P((void *, const char *));
 void mediabay_attach_content __P((struct mediabay_softc *));
 int mediabay_intr __P((void *));
-void mediabay_create_kthread __P((void *));
 void mediabay_kthread __P((void *));
 
 CFATTACH_DECL(mediabay, sizeof(struct mediabay_softc),
@@ -124,12 +123,13 @@ mediabay_attach(parent, self, aux)
 
 	intr_establish(irq, itype, IPL_BIO, mediabay_intr, sc);
 
-	kthread_create(mediabay_create_kthread, sc);
-
 	sc->sc_content = NULL;
 
 	if (MEDIABAY_ID(in32rb(sc->sc_addr)) != MEDIABAY_ID_NONE)
 		mediabay_attach_content(sc);
+
+	kthread_create(PRI_NONE, 0, NULL, mediabay_kthread, sc,
+	    &sc->sc_kthread, "media-bay");
 }
 
 void
@@ -220,15 +220,6 @@ mediabay_intr(v)
 	wakeup(&sc->sc_kthread);
 
 	return 1;
-}
-
-void
-mediabay_create_kthread(v)
-	void *v;
-{
-	struct mediabay_softc *sc = v;
-
-	kthread_create1(mediabay_kthread, sc, &sc->sc_kthread, "media-bay");
 }
 
 void

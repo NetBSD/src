@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.5.10.1 2007/06/26 18:12:59 garbled Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.5.10.2 2007/08/02 05:34:34 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5.10.1 2007/06/26 18:12:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.5.10.2 2007/08/02 05:34:34 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.30.14.2 2007/05/22 17:27:22 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.30.14.3 2007/08/02 05:34:22 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -273,7 +273,7 @@ ENTRY_NOPROFILE(emptyidlespin)
  */
 	.globl	_C_LABEL(cpu_lwp_bootstrap)
 _C_LABEL(cpu_lwp_bootstrap):
-#if defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) && 0
 	mr	%r28,%r3
 	mr	%r29,%r4
 	bl	_C_LABEL(proc_trampoline_mp)
@@ -284,6 +284,7 @@ _C_LABEL(cpu_lwp_bootstrap):
 	 * r3 (old lwp) and r4 (new lwp) are setup in cpu_switchto.
 	 */
 	bl	_C_LABEL(lwp_startup)
+
 	mtlr	%r31
 	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */

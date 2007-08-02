@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55.10.2 2007/06/26 18:13:25 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55.10.3 2007/08/02 05:34:16 macallan Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
