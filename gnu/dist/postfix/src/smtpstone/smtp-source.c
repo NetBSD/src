@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp-source.c,v 1.1.1.9 2007/05/19 16:28:41 heas Exp $	*/
+/*	$NetBSD: smtp-source.c,v 1.1.1.10 2007/08/02 08:05:32 heas Exp $	*/
 
 /*++
 /* NAME
@@ -474,6 +474,13 @@ static void connect_done(int unused_event, char *context)
 	event_disable_readwrite(fd);
 	event_enable_read(fd, read_banner, (char *) session);
 	dequeue_connect(session);
+	/* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
+	if (sa->sa_family == AF_INET
+#ifdef AF_INET6
+	    || sa->sa_family == AF_INET6
+#endif
+	    )
+	    vstream_tweak_tcp(session->stream);
     }
 }
 

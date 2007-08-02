@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.h,v 1.1.1.7 2007/05/19 16:28:50 heas Exp $	*/
+/*	$NetBSD: vstream.h,v 1.1.1.8 2007/08/02 08:05:40 heas Exp $	*/
 
 #ifndef _VSTREAM_H_INCLUDED_
 #define _VSTREAM_H_INCLUDED_
@@ -154,6 +154,12 @@ extern ssize_t vstream_peek(VSTREAM *);
   */
 #define vstream_setjmp(stream)		setjmp((stream)->jbuf[0])
 #define vstream_longjmp(stream, val)	longjmp((stream)->jbuf[0], (val))
+
+ /*
+  * Tweaks and workarounds.
+  */
+extern int vstream_tweak_sock(VSTREAM *);
+extern int vstream_tweak_tcp(VSTREAM *);
 
 /* LICENSE
 /* .ad

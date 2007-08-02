@@ -10572,3 +10572,17 @@ configuration parameter.  See there for details. </p>
 configuration parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.4 and later. </p>
+
+%PARAM send_cyrus_sasl_authzid no
+
+<p> When authenticating to a remote SMTP or LMTP server with the
+default setting "no", send no SASL authoriZation ID (authzid); send
+only the SASL authentiCation ID (authcid) plus the authcid's password.
+</p>
+
+<p> The non-default setting "yes" enables the behavior of older
+Postfix versions.  These always send a SASL authzid that is equal   
+to the SASL authcid, but this causes inter-operability problems
+with some SMTP servers. </p>
+
+<p> This feature is available in Postfix 2.4.4 and later. </p>

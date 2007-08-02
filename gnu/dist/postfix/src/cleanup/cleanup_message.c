@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.14 2007/05/19 16:28:06 heas Exp $	*/
+/*	$NetBSD: cleanup_message.c,v 1.1.1.15 2007/08/02 08:05:04 heas Exp $	*/
 
 /*++
 /* NAME
@@ -517,7 +517,7 @@ static void cleanup_header_callback(void *context, int header_class,
     if (hdr_opts->type == HDR_CONTENT_TRANSFER_ENCODING) {
 	for (cmp = code_map; cmp->name != 0; cmp++) {
 	    if (strcasecmp(hdrval, cmp->name) == 0) {
-		if (strcmp(cmp->encoding, MAIL_ATTR_ENC_8BIT) == 0)
+		if (strcasecmp(cmp->encoding, MAIL_ATTR_ENC_8BIT) == 0)
 		    nvtable_update(state->attr, MAIL_ATTR_ENCODING,
 				   cmp->encoding);
 		break;

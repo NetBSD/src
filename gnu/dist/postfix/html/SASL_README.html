@@ -537,13 +537,13 @@ client is shown in bold font. </p>
 250-ETRN
 250-AUTH DIGEST-MD5 PLAIN CRAM-MD5
 250 8BITMIME
-<b>AUTH PLAIN dGVzdAB0ZXN0AHRlc3RwYXNz</b>
+<b>AUTH PLAIN AHRlc3QAdGVzdHBhc3M=</b>
 235 Authentication successful
 </pre>
 </blockquote>
 
-<p> Instead of dGVzdAB0ZXN0AHRlc3RwYXNz, specify the base64 encoded
-form of username\0username\0password (the \0 is a null byte). The
+<p> Instead of AHRlc3QAdGVzdHBhc3M=, specify the base64 encoded
+form of \0username\0password (the \0 is a null byte). The
 example above is for a user named `test' with password `testpass'.
 </p>
 
@@ -552,14 +552,14 @@ you can use one of the following commands: </p>
 
 <blockquote>
 <pre>
-% printf 'username\0username\0password' | mmencode 
+% printf '\0username\0password' | mmencode 
 </pre>
 </blockquote>
 
 <blockquote>
 <pre>
 % perl -MMIME::Base64 -e \
-    'print encode_base64("username\0username\0password");'
+    'print encode_base64("\0username\0password");'
 </pre>
 </blockquote>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_hostname.c,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+/*	$NetBSD: get_hostname.c,v 1.1.1.3 2007/08/02 08:05:36 heas Exp $	*/
 
 /*++
 /* NAME
@@ -63,13 +63,23 @@ const char *get_hostname(void)
      * part of the socket interface library. We avoid the more politically-
      * correct uname() routine because that has no portable way of dealing
      * with long (FQDN) hostnames.
+     * 
+     * DO NOT CALL GETHOSTBYNAME FROM THIS FUNCTION. IT BREAKS MAILDIR DELIVERY
+     * AND OTHER THINGS WHEN THE MACHINE NAME IS NOT FOUND IN /ETC/HOSTS OR
+     * CAUSES PROCESSES TO HANG WHEN THE NETWORK IS DISCONNECTED.
+     * 
+     * POSTFIX NO LONGER NEEDS A FULLY QUALIFIED HOSTNAME. INSTEAD POSTFIX WILL
+     * USE A DEFAULT DOMAIN NAME "LOCALDOMAIN".
      */
     if (my_host_name == 0) {
+	/* DO NOT CALL GETHOSTBYNAME FROM THIS FUNCTION */
 	if (gethostname(namebuf, sizeof(namebuf)) < 0)
 	    msg_fatal("gethostname: %m");
 	namebuf[MAXHOSTNAMELEN] = 0;
+	/* DO NOT CALL GETHOSTBYNAME FROM THIS FUNCTION */
 	if (valid_hostname(namebuf, DO_GRIPE) == 0)
 	    msg_fatal("unable to use my own hostname");
+	/* DO NOT CALL GETHOSTBYNAME FROM THIS FUNCTION */
 	my_host_name = mystrdup(namebuf);
     }
     return (my_host_name);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.7 2007/05/19 16:28:07 heas Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.8 2007/08/02 08:05:05 heas Exp $	*/
 
 /*++
 /* NAME
@@ -1316,6 +1316,8 @@ static const char *cleanup_milter_eval(const char *name, void *ptr)
 
 void    cleanup_milter_receive(CLEANUP_STATE *state, int count)
 {
+    if (state->milters)
+	milter_free(state->milters);
     state->milters = milter_receive(state->src, count);
     milter_macro_callback(state->milters, cleanup_milter_eval, (void *) state);
     milter_edit_callback(state->milters,

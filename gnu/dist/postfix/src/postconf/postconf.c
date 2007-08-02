@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.10 2007/05/19 16:28:26 heas Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.11 2007/08/02 08:05:20 heas Exp $	*/
 
 /*++
 /* NAME
@@ -148,7 +148,7 @@
 /* .IP "\fBtcp\fR (read-only)"
 /*	Perform lookups using a simple request-reply protocol that is
 /*	described in \fBtcp_table\fR(5).
-/*	This feature is not included with Postfix 2.2.
+/*	This feature is not included with the stable Postfix release.
 /* .IP "\fBunix\fR (read-only)"
 /*	A limited way to query the UNIX authentication database. The
 /*	following tables are implemented:
