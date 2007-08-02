@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.10 2007/07/28 20:28:57 mjf Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.11 2007/08/02 06:56:43 macallan Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.10 2007/07/28 20:28:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.11 2007/08/02 06:56:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* IO-mapped registers */
-	if (bus_space_map(sc->sc_iot, 0x0, PAGE_SIZE, 0, &sc->sc_ioregh) != 0) {
+	if (bus_space_map(sc->sc_iot, 0x0, 0x400, 0, &sc->sc_ioregh) != 0) {
 		aprint_error("%s: failed to map IO registers.\n",
 		    sc->sc_dev.dv_xname);
 	}
