@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12.4.1 2007/08/02 05:26:12 macallan Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12.4.2 2007/08/02 21:59:35 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.4.1 2007/08/02 05:26:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.4.2 2007/08/02 21:59:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.4.1 2007/08/02 05:26:12 macallan 
 #include <powerpc/oea/sr_601.h>
 #include <powerpc/spr.h>
 #endif
+
+#define DEBUG
 
 /* read_N */
 u_int8_t bsr1(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -499,8 +501,17 @@ bus_space_mallocok(void)
 paddr_t
 memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
+	paddr_t ret;
 	/* XXX what about stride? */
-	return (trunc_page(bpa + offset));
+	ret = trunc_page(t->pbs_offset + bpa + offset);
+#ifdef DEBUG
+	if (ret == 0) {
+		printf("%s: [%08x, %08x %08x] mmaps to 0?!\n", __func__,
+		    (uint32_t)t->pbs_offset, (uint32_t)bpa, (uint32_t)offset);
+		return -1;
+	}
+#endif
+	return ret;
 }
 
 int
@@ -517,6 +528,7 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 #ifdef DEBUG
 		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		    t, t->pbs_base, t->pbs_limit, bpa, size);
+		 
 #endif
 		return (EINVAL);
 	}
@@ -525,8 +537,9 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * Can't map I/O space as linear.
 	 */
 	if ((flags & BUS_SPACE_MAP_LINEAR) &&
-	    (t->pbs_flags & _BUS_SPACE_IO_TYPE))
+	    (t->pbs_flags & _BUS_SPACE_IO_TYPE)) {
 		return (EOPNOTSUPP);
+	}
 
 #ifdef PPC_IBM4XX
 	/*
