@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.6 2007/08/02 12:34:23 yamt Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.7 2007/08/02 12:37:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.6 2007/08/02 12:34:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.7 2007/08/02 12:37:47 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -74,7 +74,7 @@ agr_mc_purgeall(struct agr_softc *sc, struct agr_multiaddrs *ama)
 			/* XXX XXX */
 			printf("%s: error %d\n", __func__, error);
 		}
-		
+		TAILQ_REMOVE(&ama->ama_addrs, ame, ame_q);
 		free(ame, M_DEVBUF);
 	}
 
@@ -147,6 +147,7 @@ agr_mc_add(struct agr_multiaddrs *ama, const struct ifreq *ifr)
 	sa = &ifr->ifr_addr;
 	memcpy(&ame->ame_ifr.ifr_ss, sa, sa->sa_len);
 	ame->ame_refcnt = 1;
+	TAILQ_INSERT_TAIL(&ama->ama_addrs, ame, ame_q);
 
 	return ENETRESET;
 }
@@ -164,6 +165,7 @@ agr_mc_del(struct agr_multiaddrs *ama, const struct ifreq *ifr)
 	if (ame->ame_refcnt > 0)
 		return 0;
 
+	TAILQ_REMOVE(&ama->ama_addrs, ame, ame_q);
 	free(ame, M_DEVBUF);
 
 	return ENETRESET;
