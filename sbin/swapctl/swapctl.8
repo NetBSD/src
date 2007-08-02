@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.38 2006/09/02 23:58:41 wiz Exp $
+.\"	$NetBSD: swapctl.8,v 1.39 2007/08/02 18:53:46 he Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 27, 2006
+.Dd August 2, 2007
 .Dt SWAPCTL 8
 .Os
 .Sh NAME
@@ -101,16 +101,17 @@ to read the
 .Pa /etc/fstab
 file for devices and files with a
 .Dq sw
-and
+or
 .Dq dp
-type, and adds all these entries
-as swap devices, or for a dump device in the case of a
+type, and adds all
+.Dq sw
+type entries as swap devices and sets the last
 .Dq dp
-type.
+type entry as the dump device.
 If no swap devices are configured,
 .Nm
 will exit with an error code.
-If uses together with
+If used together with
 .Fl t Ar auto
 this option will not read
 .Pa /etc/fstab
