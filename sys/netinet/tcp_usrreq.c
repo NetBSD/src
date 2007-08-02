@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.135 2007/06/28 21:11:12 christos Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.136 2007/08/02 02:42:41 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.135 2007/06/28 21:11:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.136 2007/08/02 02:42:41 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -430,9 +430,13 @@ tcp_usrreq(struct socket *so, int req,
 			error = ENOBUFS;
 			break;
 		}
-		/* Compute window scaling to request.  */
+		/*
+		 * Compute window scaling to request:
+		 * XXX: This should be moved to tcp_output(),
+		 * and should be based on the actual MSS.
+		 */
 		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-		    (TCP_MAXWIN << tp->request_r_scale) < so->so_rcv.sb_hiwat)
+		    (0x1 << tp->request_r_scale) < tcp_minmss)
 			tp->request_r_scale++;
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
@@ -866,6 +870,10 @@ tcp_attach(struct socket *so)
 		if (error)
 			return (error);
 	}
+
+	so->so_rcv.sb_flags |= SB_AUTOSIZE;
+	so->so_snd.sb_flags |= SB_AUTOSIZE;
+
 	switch (family) {
 #ifdef INET
 	case PF_INET:
@@ -1670,6 +1678,12 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSSDFLT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "minmss",
+		       SYSCTL_DESCR("Lower limit for TCP maximum segment size"),
+		       NULL, 0, &tcp_minmss, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "syn_cache_limit",
 		       SYSCTL_DESCR("Maximum number of entries in the TCP "
 				    "compressed state engine"),
@@ -1855,6 +1869,49 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLTYPE_INT, "keepinit",
 		       SYSCTL_DESCR("Ticks before initial tcp connection times out"),
 		       sysctl_tcp_keep, 0, &tcp_keepinit, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+
+	/* TCP socket buffers auto-sizing nodes */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "recvbuf_auto",
+		       SYSCTL_DESCR("Enable automatic receive "
+		           "buffer sizing (experimental)"),
+		       NULL, 0, &tcp_do_autorcvbuf, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "recvbuf_inc",
+		       SYSCTL_DESCR("Incrementor step size of "
+		           "automatic receive buffer"),
+		       NULL, 0, &tcp_autorcvbuf_inc, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "recvbuf_max",
+		       SYSCTL_DESCR("Max size of automatic receive buffer"),
+		       NULL, 0, &tcp_autorcvbuf_max, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sendbuf_auto",
+		       SYSCTL_DESCR("Enable automatic send "
+		           "buffer sizing (experimental)"),
+		       NULL, 0, &tcp_do_autosndbuf, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sendbuf_inc",
+		       SYSCTL_DESCR("Incrementor step size of "
+		           "automatic send buffer"),
+		       NULL, 0, &tcp_autosndbuf_inc, 0,
+		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "sendbuf_max",
+		       SYSCTL_DESCR("Max size of automatic send buffer"),
+		       NULL, 0, &tcp_autosndbuf_max, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE, CTL_EOL);
 
 	/* ECN subtree */
