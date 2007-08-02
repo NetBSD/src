@@ -1,4 +1,4 @@
-.\"	$NetBSD: read.2,v 1.30 2006/10/13 20:58:50 wiz Exp $
+.\"	$NetBSD: read.2,v 1.31 2007/08/02 23:46:39 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)read.2	8.4 (Berkeley) 2/26/94
 .\"
-.Dd October 11, 2006
+.Dd August 2, 2007
 .Dt READ 2
 .Os
 .Sh NAME
@@ -98,17 +98,17 @@ to the next.
 On objects capable of seeking, the
 .Fn read
 starts at a position
-given by the pointer associated with
+given by the file pointer associated with
 .Fa d
 (see
 .Xr lseek 2 ) .
 Upon return from
 .Fn read ,
-the pointer is incremented by the number of bytes actually read.
+the file pointer is incremented by the number of bytes actually read.
 .Pp
 Objects that are not capable of seeking always read from the current
 position.
-The value of the pointer associated with such an object is undefined.
+The value of the file pointer associated with such an object is undefined.
 .Pp
 Upon successful completion,
 .Fn read ,
@@ -153,7 +153,7 @@ See
 for more information on the interaction between signals and system
 calls.
 .It Bq Er EINVAL
-The pointer associated with
+The file pointer associated with
 .Fa d
 was negative.
 .It Bq Er EINVAL
