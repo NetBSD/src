@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12 2007/04/09 17:43:40 garbled Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.12.4.1 2007/08/02 05:26:12 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2007/04/09 17:43:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.4.1 2007/08/02 05:26:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,6 +499,7 @@ bus_space_mallocok(void)
 paddr_t
 memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
+	/* XXX what about stride? */
 	return (trunc_page(bpa + offset));
 }
 
@@ -510,6 +511,7 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	paddr_t pa;
 
 	size = _BUS_SPACE_STRIDE(t, size);
+	bpa = _BUS_SPACE_STRIDE(t, bpa);
 
 	if (bpa + size > t->pbs_limit) {
 #ifdef DEBUG
@@ -662,6 +664,7 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	int error;
 
 	size = _BUS_SPACE_STRIDE(t, size);
+	rstart = _BUS_SPACE_STRIDE(t, rstart);
 
 	if (rstart + size > t->pbs_limit)
 		return (EINVAL);
