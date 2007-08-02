@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.26 2007/07/31 21:14:20 pooka Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.27 2007/08/02 12:53:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,8 @@
 #ifndef _UFS_MFS_MFS_EXTERN_H_
 #define _UFS_MFS_MFS_EXTERN_H_
 
+#include <sys/param.h>
+#include <sys/mount.h>
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_MFSNODE);
 
