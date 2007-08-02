@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.68 2007/07/31 09:56:31 tnn Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.69 2007/08/02 01:48:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.68 2007/07/31 09:56:31 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69 2007/08/02 01:48:44 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -318,16 +318,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 		break;
 	}
 
-	/*
-	 * XXXLWP Wait for:
-	 *
-	 * o process exiting
-	 * o target LWP suspended
-	 * o target LWP not suspended and L_WSUSPEND clear
-	 * o target LWP exited
-	 */
-
-	 return (error);
+	return (error);
 }
 
 /*
