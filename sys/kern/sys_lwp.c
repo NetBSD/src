@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.22 2007/08/01 23:24:26 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.23 2007/08/02 01:48:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.22 2007/08/01 23:24:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.23 2007/08/02 01:48:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,32 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	 * Suspension of the current LWP will happen on return to userspace.
 	 */
 	error = lwp_suspend(l, t);
+	if (error) {
+		mutex_exit(&p->p_smutex);
+		return error;
+	}
+
+	/*
+	 * Wait for:
+	 *  o process exiting
+	 *  o target LWP suspended
+	 *  o target LWP not suspended and L_WSUSPEND clear
+	 *  o target LWP exited
+	 */
+	for (;;) {
+		error = cv_wait_sig(&p->p_lwpcv, &p->p_smutex);
+		if (error) {
+			error = ERESTART;
+			break;
+		}
+		if ((l->l_flag | t->l_flag) & (LW_WCORE | LW_WEXIT)) {
+			error = ERESTART;
+			break;
+		}
+		if (t->l_stat == LSSUSPENDED ||
+		    (t->l_flag & LW_WSUSPEND) == 0)
+			break;
+	}
 	mutex_exit(&p->p_smutex);
 
 	return error;

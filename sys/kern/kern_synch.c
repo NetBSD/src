@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.191 2007/08/01 23:21:15 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192 2007/08/02 01:48:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.191 2007/08/01 23:21:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192 2007/08/02 01:48:44 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -545,6 +545,7 @@ setrunnable(struct lwp *l)
 	case LSSUSPENDED:
 		l->l_flag &= ~LW_WSUSPEND;
 		p->p_nrlwps++;
+		cv_broadcast(&p->p_lwpcv);
 		break;
 	case LSSLEEP:
 		KASSERT(l->l_wchan != NULL);
