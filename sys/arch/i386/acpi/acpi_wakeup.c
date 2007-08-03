@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38 2007/08/02 11:23:35 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.2.1 2007/08/03 22:17:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2007/08/02 11:23:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.2.1 2007/08/03 22:17:06 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2007/08/02 11:23:35 jmcneill Ex
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
-#include "lapic.h"
 #include "ioapic.h"
+#include "lapic.h"
 
 #if NLAPIC > 0
 #include <machine/i82489var.h>
@@ -435,17 +435,17 @@ acpi_md_sleep(int state)
 
 		for (;;) ;
 	} else {
-		printf("acpi0: good morning!\n");
 		/* Execute Wakeup */
 
 		npxinit(&cpu_info_primary);
 		i8259_reinit();
-#if NIOAPIC > 0
-		ioapic_enable();
-#endif
 #if NLAPIC > 0
 		lapic_enable();
 		lapic_initclocks();
+#endif
+#if NIOAPIC > 0
+		ioapic_enable();
+		lapic_set_lvt();
 #endif
 
 		initrtclock(TIMER_FREQ);

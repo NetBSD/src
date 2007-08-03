@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.1 2007/08/03 22:17:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.1 2007/08/03 22:17:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,11 @@ struct ppb_softc {
 	struct device sc_dev;		/* generic device glue */
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
 	pcitag_t sc_tag;		/* ...and tag. */
+
+	struct pci_conf_state sc_pciconf;
 };
+
+static pnp_status_t	ppb_power(device_t, pnp_request_t, void *);
 
 static int
 ppbmatch(struct device *parent, struct cfdata *match,
@@ -104,6 +108,10 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 		    pa->pa_bus, PPB_BUSINFO_PRIMARY(busdata));
 #endif
 
+	if (pnp_register(self, ppb_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+
 	/*
 	 * Attach the PCI bus than hangs off of it.
 	 *
@@ -122,6 +130,45 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_intrtag = pa->pa_intrtag;
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+static pnp_status_t
+ppb_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct ppb_softc *sc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+
+	sc = (struct ppb_softc *)dv;
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			pci_conf_restore(sc->sc_pc, sc->sc_tag,
+			    &sc->sc_pciconf);
+			break;
+		case PNP_STATE_D3:
+			pci_conf_capture(sc->sc_pc, sc->sc_tag,
+			    &sc->sc_pciconf);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }
 
 CFATTACH_DECL(ppb, sizeof(struct ppb_softc),

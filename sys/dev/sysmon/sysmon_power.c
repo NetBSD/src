@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.20 2007/07/15 15:27:53 ad Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.20.6.1 2007/08/03 22:17:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20 2007/07/15 15:27:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.20.6.1 2007/08/03 22:17:24 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -788,6 +788,24 @@ sysmon_pswitch_unregister(struct sysmon_pswitch *smpsw)
 void
 sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 {
+
+	/*
+	 * For pnp specific events, we don't care if the power daemon
+	 * is running or not
+	 */
+	if (smpsw->smpsw_type == PSWITCH_TYPE_LID) {
+		switch (event) {
+		case PSWITCH_EVENT_PRESSED:
+			pnp_power_display(NULL, PNP_ACTION_LID_CLOSE);
+			break;
+		case PSWITCH_EVENT_RELEASED:
+			/* pnp_power_display(NULL, PNP_ACTION_LID_OPEN); */
+			break;
+		default:
+			break;
+		}
+	}
+
 	mutex_enter(&sysmon_power_event_queue_mtx);
 	if (sysmon_power_daemon != NULL)
 		if (sysmon_power_daemon_task(smpsw, event) == 0)

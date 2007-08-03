@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.95 2007/07/28 20:28:56 mjf Exp $ */
+/* $NetBSD: vga.c,v 1.95.4.1 2007/08/03 22:17:17 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95 2007/07/28 20:28:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95.4.1 2007/08/03 22:17:17 jmcneill Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -1488,3 +1488,40 @@ vga_setborder(struct vga_config *vc, u_int value)
 	return (0);
 }
 #endif /* WSDISPLAY_CUSTOM_BORDER */
+
+pnp_status_t
+vga_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct vga_softc *sc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+
+	sc = (struct vga_softc *)dv;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			vga_initregs(&sc->sc_vc->hdl);
+			break;
+		case PNP_STATE_D3:
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
+}

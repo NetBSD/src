@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.1 2007/08/03 22:17:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.1 2007/08/03 22:17:11 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -84,6 +84,14 @@ static void 	lapic_map(paddr_t);
 static void lapic_hwmask(struct pic *, int);
 static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
+
+static const struct lapic_state {
+	uint32_t	id,
+			tpri,
+			ldr,
+			dfr,
+			svr;
+} lapic_state;
 
 extern char idt_allocmap[];
 
@@ -138,6 +146,11 @@ void
 lapic_enable()
 {
 	i82489_writereg(LAPIC_SVR, LAPIC_SVR_ENABLE | LAPIC_SPURIOUS_VECTOR);
+}
+
+void
+lapic_suspend()
+{
 }
 
 void

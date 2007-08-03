@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41 2007/06/26 22:36:16 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.1 2007/08/03 22:17:14 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41 2007/06/26 22:36:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.1 2007/08/03 22:17:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -881,9 +881,9 @@ EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event)
 	 * Wait For Event:
 	 * ---------------
 	 * Poll the EC status register to detect completion of the last
-	 * command.  Wait up to 100ms (in 100us chunks) for this to occur.
+	 * command.  Wait up to 500ms (in 100us chunks) for this to occur.
 	 */
-	for (i = 0; i < 1000; i++) {
+	for (i = 0; i < 5000; i++) {
 		EcStatus = EC_CSR_READ(sc);
 
 		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
@@ -928,13 +928,6 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 
 	EcLock(sc);
 
-	/*
-	 * Perform the transaction, and make sure GPE is enabled before
-	 * doing so.
-	 */
-	rv = AcpiEnableGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
-	if (ACPI_FAILURE(rv))
-		return rv;
 	switch (EcRequest->Command) {
 	case EC_COMMAND_READ:
 		rv = EcRead(sc, EcRequest->Address, &(EcRequest->Data));
