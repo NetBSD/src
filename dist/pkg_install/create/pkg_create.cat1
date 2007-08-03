@@ -5,11 +5,11 @@ NNAAMMEE
 
 SSYYNNOOPPSSIISS
      ppkkgg__ccrreeaattee [--EEllOORRUUVVvv] [--BB _b_u_i_l_d_-_i_n_f_o_-_f_i_l_e] [--bb _b_u_i_l_d_-_v_e_r_s_i_o_n_-_f_i_l_e]
-                [--CC _c_p_k_g_s] [--DD _d_i_s_p_l_a_y_f_i_l_e] [--II _r_e_a_l_p_r_e_f_i_x] [--ii _i_s_c_r_i_p_t]
-                [--KK _p_k_g___d_b_d_i_r] [--kk _d_s_c_r_i_p_t] [--LL _S_r_c_D_i_r] [--mm _m_t_r_e_e_f_i_l_e]
+                [--CC _c_p_k_g_s] [--DD _d_i_s_p_l_a_y_f_i_l_e] [--gg _g_r_o_u_p] [--II _r_e_a_l_p_r_e_f_i_x]
+                [--ii _i_s_c_r_i_p_t] [--KK _p_k_g___d_b_d_i_r] [--kk _d_s_c_r_i_p_t] [--LL _S_r_c_D_i_r]
                 [--nn _p_r_e_s_e_r_v_e_-_f_i_l_e] [--PP _d_p_k_g_s] [--TT _b_u_i_l_d_p_k_g_s] [--pp _p_r_e_f_i_x]
-                [--SS _s_i_z_e_-_a_l_l_-_f_i_l_e] [--ss _s_i_z_e_-_p_k_g_-_f_i_l_e] [--tt _t_e_m_p_l_a_t_e] --cc _c_o_m_m_e_n_t
-                --dd _d_e_s_c_r_i_p_t_i_o_n --ff _p_a_c_k_l_i_s_t _p_k_g_-_n_a_m_e
+                [--SS _s_i_z_e_-_a_l_l_-_f_i_l_e] [--ss _s_i_z_e_-_p_k_g_-_f_i_l_e] [--tt _t_e_m_p_l_a_t_e] [--uu _o_w_n_e_r]
+                --cc _c_o_m_m_e_n_t --dd _d_e_s_c_r_i_p_t_i_o_n --ff _p_a_c_k_l_i_s_t _p_k_g_-_n_a_m_e
 
 DDEESSCCRRIIPPTTIIOONN
      The ppkkgg__ccrreeaattee command is used to create packages that will subsequently
@@ -65,6 +65,10 @@ OOPPTTIIOONNSS
              Fetch (packing list) for package from the file _p_a_c_k_l_i_s_t or ssttddiinn
              if _p_a_c_k_l_i_s_t is a -- (dash).
 
+     --gg _g_r_o_u_p
+             Make _g_r_o_u_p the default group ownership instead of extracting it
+             from the file system.
+
      --II _r_e_a_l_p_r_e_f_i_x
              Provide the real prefix, as opposed to the staging prefix, for
              use in staged installations of packages.
@@ -94,12 +98,6 @@ OOPPTTIIOONNSS
              age are relative to the current prefix.  This means using
              unlink(2) and symlink(2) to remove and re-link any symbolic links
              which are targeted at full path names.
-
-     --mm _m_t_r_e_e_f_i_l_e
-             Run mtree(8) with input from mtreefile before the package is
-             installed.  Mtree is invoked as mmttrreeee --uu --ff _m_t_r_e_e_f_i_l_e --dd --ee --pp
-             _p_r_e_f_i_x, where _p_r_e_f_i_x is the name of the first directory named by
-             a @@ccwwdd directive.
 
      --nn _p_r_e_s_e_r_v_e_-_f_i_l_e
              The file is used to denote that the package should not be
@@ -156,6 +154,10 @@ OOPPTTIIOONNSS
 
      --UU      Do not update the package file database with any file informa-
              tion.
+
+     --uu _o_w_n_e_r
+             Make _o_w_n_e_r the default owner instead of extracting it from the
+             file system.
 
      --VV      Print version number and exit.
 
@@ -257,9 +259,6 @@ PPAACCKKIINNGG LLIISSTT DDEETTAAIILLSS
              at the end of the package list.  If more than one @@ddiirrrrmm direc-
              tives are used, the directories are removed in the order speci-
              fied.  The _n_a_m_e directory will not be removed unless it is empty.
-     @@mmttrreeee _n_a_m_e
-             Declare _n_a_m_e as an mtree(8) input file to be used at install time
-             (see --mm above).  Only the first @@mmttrreeee directive is honored.
      @@ddiissppllaayy _n_a_m_e
              Declare _n_a_m_e as the file to be displayed at install time (see --DD
              above).
@@ -301,4 +300,4 @@ BBUUGGSS
      invocations due to exec argument-space limitations (this depends on the
      value returned by ssyyssccoonnff(___S_C___A_R_G___M_A_X)).
 
-NetBSD 4.0                       May 19, 2007                       NetBSD 4.0
+NetBSD 4.0                      August 2, 2007                      NetBSD 4.0

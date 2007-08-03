@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $
+.\" $NetBSD: pkg_delete.1,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -57,11 +57,9 @@ package record directory
 .Pa ( /var/db/pkg/\*[Lt]pkg-name\*[Gt]/ ) .
 Pay particular
 attention to any
-.Pa +INSTALL ,
-.Pa +DEINSTALL ,
-.Pa +REQUIRE ,
+.Pa +INSTALL
 or
-.Pa +MTREE_DIRS
+.Pa +DEINSTALL
 files, and inspect the
 .Pa +CONTENTS
 file for
@@ -110,7 +108,7 @@ That way, packages can be deleted by giving a filename
 instead of the package-name.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
-deinstall or require script fails.
+deinstall script fails.
 .It Fl K Ar pkg_dbdir
 Set
 .Ar pkg_dbdir
@@ -195,26 +193,6 @@ The filename needs to be absolute, see the output produced by the pkg_info
 .Fl aF
 command.
 .Pp
-If the package contains a
-.Ar require
-file (see
-.Xr pkg_create 1 ) ,
-then this is executed first as
-.Bd -filled -offset indent -compact
-.Cm require
-.Aq Ar pkg-name
-.Ar DEINSTALL
-.Ed
-(where
-.Ar pkg-name
-is the name of the package in question and
-.Ar DEINSTALL
-is a keyword denoting that this is a deinstallation)
-to see whether or not deinstallation should continue.
-A non-zero exit status means no, unless the
-.Fl f
-option is specified.
-.Pp
 If a
 .Cm deinstall
 script exists for the package, it is executed before and after
@@ -296,8 +274,7 @@ appended to the path, e.g.
 .Xr pkg_create 1 ,
 .Xr pkg_info 1 ,
 .Xr mktemp 3 ,
-.Xr pkgsrc 7 ,
-.Xr mtree 8
+.Xr pkgsrc 7
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"

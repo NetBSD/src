@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $	*/
+/*	$NetBSD: str.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $");
+__RCSID("$NetBSD: str.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $");
 #endif
 #endif
 
@@ -118,102 +118,6 @@ str_lowercase(unsigned char *s)
 }
 
 /*
- * Perform alternate match on "pkg" against "pattern",
- * calling pmatch (recursively) to resolve any other patterns.
- * Return 1 on match, 0 otherwise
- */
-static int
-alternate_match(const char *pattern, const char *pkg)
-{
-	char   *sep;
-	char    buf[MaxPathSize];
-	char   *last;
-	char   *alt;
-	char   *cp;
-	int     cnt;
-	int     found;
-
-	if ((sep = strchr(pattern, '{')) == (char *) NULL) {
-		errx(EXIT_FAILURE, "alternate_match(): '{' expected in `%s'", pattern);
-	}
-	(void) strncpy(buf, pattern, (size_t) (sep - pattern));
-	alt = &buf[sep - pattern];
-	last = (char *) NULL;
-	for (cnt = 0, cp = sep; *cp && last == (char *) NULL; cp++) {
-		if (*cp == '{') {
-			cnt++;
-		} else if (*cp == '}' && --cnt == 0 && last == (char *) NULL) {
-			last = cp + 1;
-		}
-	}
-	if (cnt != 0) {
-		errx(EXIT_FAILURE, "Malformed alternate `%s'", pattern);
-	}
-	for (found = 0, cp = sep + 1; *sep != '}'; cp = sep + 1) {
-		for (cnt = 0, sep = cp; cnt > 0 || (cnt == 0 && *sep != '}' && *sep != ','); sep++) {
-			if (*sep == '{') {
-				cnt++;
-			} else if (*sep == '}') {
-				cnt--;
-			}
-		}
-		(void) snprintf(alt, sizeof(buf) - (alt - buf), "%.*s%s", (int) (sep - cp), cp, last);
-		if (pmatch(buf, pkg) == 1) {
-			found = 1;
-		}
-	}
-	return found;
-}
-
-/*
- * Perform glob match on "pkg" against "pattern".
- * Return 1 on match, 0 otherwise
- */
-static int
-glob_match(const char *pattern, const char *pkg)
-{
-	return fnmatch(pattern, pkg, FNM_PERIOD) == 0;
-}
-
-/*
- * Perform simple match on "pkg" against "pattern". 
- * Return 1 on match, 0 otherwise
- */
-static int
-simple_match(const char *pattern, const char *pkg)
-{
-	return strcmp(pattern, pkg) == 0;
-}
-
-/*
- * Match pkg against pattern, return 1 if matching, 0 else
- */
-int
-pmatch(const char *pattern, const char *pkg)
-{
-	if (strchr(pattern, '{') != (char *) NULL) {
-		/* emulate csh-type alternates */
-		return alternate_match(pattern, pkg);
-	}
-	if (strpbrk(pattern, "<>") != (char *) NULL) {
-		int ret;
-
-		/* perform relational dewey match on version number */
-		ret = dewey_match(pattern, pkg);
-		if (ret < 0)
-			errx(EXIT_FAILURE, "dewey_match returned error");
-		return ret;
-	}
-	if (strpbrk(pattern, "*?[]") != (char *) NULL) {
-		/* glob match */
-		return glob_match(pattern, pkg);
-	}
-	
-	/* no alternate, dewey or glob match -> simple compare */
-	return simple_match(pattern, pkg);
-}
-
-/*
  * Search dir for pattern, calling match(pkg_found, data) for every match.
  * Returns -1 on error, 1 if found, 0 otherwise.
  */
@@ -255,10 +159,10 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, void *data
 		/* we need to match pattern and suffix separately, in case
 		 * each is a different pattern class (e.g. dewey and
 		 * character class (.t[bg]z)) */
-		if (pmatch(tmp_pattern, tmp_file)
-		    && (pat_sfx[0] == '\0' || pmatch(pat_sfx, file_sfx))) {
+		if (pkg_match(tmp_pattern, tmp_file)
+		    && (pat_sfx[0] == '\0' || pkg_match(pat_sfx, file_sfx))) {
 			if (match) {
-				match(dp->d_name, data);
+				match(pattern, dp->d_name, data);
 				/* return value ignored for now */
 			}
 			found = 1;
@@ -283,7 +187,7 @@ ispkgpattern(const char *pkg)
  * Also called for FTP matching
  */
 int
-findbestmatchingname_fn(const char *found, void *vp)
+findbestmatchingname_fn(const char *pattern, const char *found, void *vp)
 {
 	char *best = vp;
 	char *found_version, *best_version;
@@ -326,8 +230,8 @@ findbestmatchingname_fn(const char *found, void *vp)
 		/* if best_version==NULL only if best==NULL
 		 * (or best[0]='\0') */
 		if (best != NULL) {
-			if (best[0] == '\0'
-			    || dewey_cmp(found_version, DEWEY_GT, best_version)) {
+			if (best[0] == '\0' ||
+			    pkg_order(pattern, found_no_sfx, best) == 1) {
 				/* found pkg(version) is bigger than current "best"
 				 * version - remember! */
 				strcpy(best, found);
@@ -403,7 +307,7 @@ strip_txz(char *buf, char *sfx, const char *fname)
  * note found version in "note".
  */
 int
-note_whats_installed(const char *found, void *vp)
+note_whats_installed(const char *pattern, const char *found, void *vp)
 {
 	char *note = vp;
 
@@ -415,7 +319,7 @@ note_whats_installed(const char *found, void *vp)
  * alloc lpkg for pkg and add it to list.
  */
 int
-add_to_list_fn(const char *pkg, void *vp)
+add_to_list_fn(const char *pattern, const char *pkg, void *vp)
 {
 	lpkg_head_t *pkgs = vp;
 	lpkg_t *lpp;

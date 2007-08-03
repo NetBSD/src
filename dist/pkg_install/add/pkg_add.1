@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.1 2007/07/16 13:01:45 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd March 2, 2007
+.Dd August 2, 2007
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for installing and upgrading software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl AfILMnRSuVv
+.Op Fl AfILnRuVv
 .Op Fl K Ar pkg_dbdir
 .Op Fl p Ar prefix
 .Op Fl s Ar verification-type
@@ -65,11 +65,9 @@ option), or, failing that, use the
 flag to extract the package file, and inspect its contents and scripts
 to ensure it poses no danger to your system's integrity.
 Pay particular attention to any
-.Pa +INSTALL ,
-.Pa +DEINSTALL ,
-.Pa +REQUIRE ,
+.Pa +INSTALL
 or
-.Pa +MTREE_DIRS
+.Pa +DEINSTALL
 files, and inspect the
 .Pa +CONTENTS
 file for
@@ -118,7 +116,7 @@ after it had already been automatically installed, the mark is
 removed.
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
-installed or the requirements script fails.
+installed or the install script fails.
 Although
 .Nm
 will still try to find and auto-install missing prerequisite packages,
@@ -138,28 +136,6 @@ if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
 .It Fl L
 Don't add the package to any views after installation.
-.It Fl M
-Run in
-.Cm MASTER
-mode.
-This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm SLAVE
-mode.
-When run in this mode,
-.Nm
-does no work beyond extracting the package into a temporary staging
-area (see the
-.Fl t
-option), reading in the packing list, and then dumping it (prefaced by
-the current staging area) to stdout where it may be filtered by a
-program such as
-.Xr sed 1 .
-When used in conjunction with
-.Cm SLAVE
-mode, it allows you to make radical changes to the package structure
-before acting on its contents.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
@@ -175,37 +151,13 @@ directive will be replaced, since
 .Nm
 has no way of knowing which directory settings are relative and
 which are absolute.
-It is rare in any case to see more than one directory transition made,
-but when such does happen and you wish to have control over *all* directory
-transitions, then you may then wish to look into the use of
-.Cm MASTER
-and
-.Cm SLAVE
-modes (see the
-.Fl M
-and
-.Fl S
-options).
+Only one directory transition is supported and the second one is expected to go
+into
+.Ar pkgdb .
 .It Fl R
 Do not record the installation of a package.
 This means that you cannot deinstall it later, so only use this option if
 you know what you are doing!
-.It Fl S
-Run in
-.Cm SLAVE
-mode.
-This is a very specialized mode for running
-.Nm
-and is meant to be run in conjunction with
-.Cm MASTER
-mode.
-When run in this mode,
-.Nm
-expects the release contents to be already extracted and waiting
-in the staging area, the location of which is read as a string
-from stdin.
-The complete packing list is also read from stdin,
-and the contents then acted on as normal.
 .It Fl s Ar verification-type
 Use a callout to an external program to verify the binary package
 being installed against an existing detached signature file.
@@ -295,7 +247,7 @@ URL pointing at a file available on an ftp or web site.
 Thus you may extract files directly from their anonymous ftp or WWW
 locations (e.g.,
 .Nm
-ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/shells/bash-3.0nb1.tgz
+ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/shells/bash-3.2.9.tgz
 or
 .Nm
 http://www.example.org/packages/screen-4.0.tbz).
@@ -407,24 +359,6 @@ is then checked for
 If the package was built with ABI dependency recommendations ignored,
 a warning will be issued.
 .It
-If the package contains a
-.Ar require
-script (see
-.Xr pkg_create 1 ) ,
-it is executed with the following arguments:
-.Bl -tag -width indentindent
-.It Ar pkg-name
-The name of the package being installed
-.It Cm INSTALL
-Keyword denoting to the script that it is to run an installation requirements
-check.
-(The keyword is useful only to scripts which serve multiple functions).
-.El
-.Pp
-If the
-.Ar require
-script exits with a non-zero status code, the installation is terminated.
-.It
 If the package contains an
 .Ar install
 script, it is executed with the following arguments:
@@ -445,31 +379,6 @@ If
 is not present in the packing list,
 then it is used as a guide for moving (or copying, as necessary) files from
 the staging area into their final locations.
-.It
-If the package contains an
-.Ar mtreefile
-file (see
-.Xr pkg_create 1 ) ,
-then mtree is invoked as:
-.Bd -filled -offset indent -compact
-.Cm mtree
-.Fl u
-.Fl f
-.Ar mtreefile
-.Fl d
-.Fl e
-.Fl p
-.Pa prefix
-.Ed
-where
-.Pa prefix
-is either the prefix specified with the
-.Fl p
-flag or, if no
-.Fl p
-flag was specified, the name of the first directory named by a
-.Cm @cwd
-directive within this package.
 .It
 If an
 .Ar install
@@ -508,9 +417,7 @@ back into place.
 .Pp
 The
 .Ar install
-and
-.Ar require
-scripts are called with the environment variable
+script is called with the environment variable
 .Ev PKG_PREFIX
 set to the installation prefix (see the
 .Fl p
@@ -599,9 +506,9 @@ a URL.
 The URL can be put into an environment variable,
 .Ev PKG_PATH .
 .Bd -literal
-# pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All/firefox-1.0.3.tgz
+# pkg_add -v ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/firefox-2.0.0.4.tgz
 
-# export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All
+# export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/
 # pkg_add -v firefox
 .Ed
 .Pp
@@ -619,7 +526,7 @@ directory to your
 .Ev PKG_PATH
 like this:
 .Bd -literal
-# export PKG_PATH="ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All;ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/vulnerable"
+# export PKG_PATH="ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/;ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/vulnerable/"
 .Ed
 .Pp
 (The quotes are needed because semicolon
@@ -636,8 +543,7 @@ package and running it after every
 .Xr pkg_info 1 ,
 .Xr mktemp 3 ,
 .Xr sysconf 3 ,
-.Xr pkgsrc 7 ,
-.Xr mtree 8
+.Xr pkgsrc 7
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"

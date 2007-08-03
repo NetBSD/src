@@ -1,6 +1,12 @@
-# $NetBSD: Makefile.in,v 1.1.1.1 2007/07/16 13:01:43 joerg Exp $
+# $NetBSD: Makefile.in,v 1.1.1.2 2007/08/03 13:58:16 joerg Exp $
 
+BOOTSTRAP=	@bootstrap@
+
+.if empty(BOOTSTRAP)
 SUBDIRS=	lib add admin create delete info view audit-packages
+.else
+SUBDIRS=	lib admin create info
+.endif
 
 all:
 	@for dir in $(SUBDIRS); do \

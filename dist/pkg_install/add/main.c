@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:45 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:45 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $");
 #endif
 #endif
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:45 joerg Exp $");
 #include "add.h"
 #include "verify.h"
 
-static char Options[] = "AIK:LMRSVW:fhnp:s:t:uvw:";
+static char Options[] = "AIK:LRVW:fhnp:s:t:uvw:";
 
 char   *Prefix = NULL;
 char   *View = NULL;
@@ -65,14 +65,13 @@ char   *Group = NULL;
 char   *PkgName = NULL;
 char   *Directory = NULL;
 char    FirstPen[MaxPathSize];
-add_mode_t AddMode = NORMAL;
 int     Replace = 0;
 
 static void
 usage(void)
 {
 	(void) fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: pkg_add [-AfhILMnRSuVv] [-K pkg_dbdir] [-p prefix]",
+	    "usage: pkg_add [-AfhILnRuVv] [-K pkg_dbdir] [-p prefix]",
 	    "               [-s verification-type] [-t template] [-W viewbase] [-w view]",
 	    "               [[ftp|http]://[user[:password]@]host[:port]][/path/]pkg-name ...");
 	exit(1);
@@ -109,10 +108,6 @@ main(int argc, char **argv)
 			NoView = TRUE;
 			break;
 
-		case 'M':
-			AddMode = MASTER;
-			break;
-
 		case 'R':
 			NoRecord = TRUE;
 			break;
@@ -124,10 +119,6 @@ main(int argc, char **argv)
 
 		case 'p':
 			Prefix = optarg;
-			break;
-
-		case 'S':
-			AddMode = SLAVE;
 			break;
 
 		case 's':
@@ -171,25 +162,21 @@ main(int argc, char **argv)
 	path_create(getenv("PKG_PATH"));
 	TAILQ_INIT(&pkgs);
 
-	if (AddMode != SLAVE) {
-		/* Get all the remaining package names, if any */
-		for (ch = 0; *argv; ch++, argv++) {
-			lpkg_t *lpp;
+	/* Get all the remaining package names, if any */
+	for (ch = 0; *argv; ch++, argv++) {
+		lpkg_t *lpp;
 
-			if (IS_STDIN(*argv))
-				lpp = alloc_lpkg("-");
-			else
-				lpp = alloc_lpkg(*argv);
+		if (IS_STDIN(*argv))
+			lpp = alloc_lpkg("-");
+		else
+			lpp = alloc_lpkg(*argv);
 
-			TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
-		}
+		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	}
 
-		if (!ch)
-			/* If no packages, yelp */
-			warnx("missing package name(s)"), usage();
-		else if (ch > 1 && AddMode == MASTER)
-			warnx("only one package name may be specified with master mode"),
-				usage();
+	if (!ch) {
+		/* If no packages, yelp */
+		warnx("missing package name(s)"), usage();
 	}
 	
 	/* Increase # of max. open file descriptors as high as possible */
