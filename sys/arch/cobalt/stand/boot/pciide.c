@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6 2007/08/03 13:15:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,11 +43,9 @@
 #define COBALT_IO_SPACE_BASE	0x10000000	/* XXX VT82C586 ISA I/O space */
 
 int
-pciide_init(chp, unit)
-	struct wdc_channel *chp;
-	u_int *unit;
+pciide_init(struct wdc_channel *chp, u_int *unit)
 {
-	u_int32_t cmdreg, ctlreg;
+	uint32_t cmdreg, ctlreg;
 	int i, compatchan = 0;
 
 	/*
@@ -69,15 +67,15 @@ pciide_init(chp, unit)
 	    PCIIDE_COMPAT_CTL_BASE(compatchan));
 
 	/* set up cmd regsiters */
-	chp->c_cmdbase = (u_int8_t *)cmdreg;
-	chp->c_data = (u_int16_t *)(cmdreg + wd_data);
+	chp->c_cmdbase = (uint8_t *)cmdreg;
+	chp->c_data = (uint16_t *)(cmdreg + wd_data);
 	for (i = 0; i < WDC_NPORTS; i++)
 		chp->c_cmdreg[i] = chp->c_cmdbase + i;
 	/* set up shadow registers */
 	chp->c_cmdreg[wd_status]   = chp->c_cmdreg[wd_command];
 	chp->c_cmdreg[wd_features] = chp->c_cmdreg[wd_precomp];
 	/* set up ctl registers */
-	chp->c_ctlbase = (u_int8_t *)ctlreg;
+	chp->c_ctlbase = (uint8_t *)ctlreg;
 
-	return (0);
+	return 0;
 }
