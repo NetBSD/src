@@ -1,4 +1,4 @@
-/* $NetBSD: dewey.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $ */
+/* $NetBSD: dewey.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $ */
 
 /*
  * Copyright © 2002 Alistair G. Crooks.  All rights reserved.
@@ -44,7 +44,6 @@
 #include "dewey.h"
 
 #define PKG_PATTERN_MAX 1024
-typedef int (*matchfn) (const char *, void *);
 
 /* do not modify these values, or things will NOT work */
 enum {
