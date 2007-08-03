@@ -1,5 +1,0 @@
-This test fails if you use the build.sh generated make wrapper, i.e.
-${TOOLDIR}/bin/nbmake-${ARCH}. This wrapper passes -de to make, which alters
-the output, so it does not match the expected output any more.
-
-Using ${TOOLDIR}/bin/bnmake itself works, though.
