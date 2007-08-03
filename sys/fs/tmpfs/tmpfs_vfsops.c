@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.26 2007/07/31 21:14:18 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.27 2007/08/03 13:00:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.26 2007/07/31 21:14:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27 2007/08/03 13:00:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -178,6 +178,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	mp->mnt_data = tmp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_fs_bshift = PAGE_SHIFT;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
