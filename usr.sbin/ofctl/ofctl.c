@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.5 2007/06/06 23:43:56 rjs Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.6 2007/08/03 15:34:00 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ main(int argc, char **argv)
 		}
 	}
 	if (errflag)
-		errx(1, "usage: ofctl [-pl] [-f file] [-r propfile] [-w propfile] [node...]\n");
+		errx(1, "usage: ofctl [-pl] [-f file] [-r propfile] [-w propfile] [node...]");
 
 	if (propfilein != NULL) {
 		of_proplib = prop_dictionary_internalize_from_file(propfilein);
