@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.15 2007/07/09 21:00:57 ad Exp $ */
+/* $NetBSD: radeonfb.c,v 1.16 2007/08/03 05:02:23 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.15 2007/07/09 21:00:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.16 2007/08/03 05:02:23 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -447,6 +447,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 
 	KASSERT(radeonfb_devices[i].devid != 0);
 	sc->sc_pt = pa->pa_tag;
+	sc->sc_iot = pa->pa_iot;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_family = radeonfb_devices[i].family;
 	sc->sc_flags = radeonfb_devices[i].flags;
@@ -507,12 +508,6 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		&sc->sc_regsz) != 0) {
 		aprint_error("%s: unable to map registers!\n", XNAME(sc));
 		goto error;
-	}
-
-	if (pci_mapreg_map(pa, RADEON_MAPREG_IO, PCI_MAPREG_TYPE_IO,	0,
-		&sc->sc_iot, &sc->sc_ioh, &sc->sc_ioaddr,
-		&sc->sc_iosz) != 0) {
-		aprint_error("%s: unable to map IO registers!\n", XNAME(sc));
 	}
 
 	/* scratch register test... */
@@ -1088,8 +1083,8 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 #ifdef macppc
 	/* allow mapping of IO space */
 	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot, 
+		    0);	
 		return pa;
 	}	
 #endif /* macppc */
