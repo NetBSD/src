@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.2 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.3 2007/08/03 13:15:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -47,12 +47,13 @@ static char *bootinfo = NULL;
 static char *bi_next;
 static int bi_size;
 
-char* bi_init(void)
+char *
+bi_init(void)
 {
 	struct btinfo_common *bi;
 	struct btinfo_magic bi_magic;
 
-	if ( (bootinfo = (char*)alloc(BOOTINFO_SIZE)) != NULL) {
+	if ((bootinfo = (char *)alloc(BOOTINFO_SIZE)) != NULL) {
 		bi = (struct btinfo_common *)bootinfo;
 		bi->next = bi->type = 0;
 		bi_next = bootinfo;
@@ -62,12 +63,10 @@ char* bi_init(void)
 		bi_add(&bi_magic, BTINFO_MAGIC, sizeof(bi_magic));
 	}
 
-	return (bootinfo);
+	return bootinfo;
 }
 
-void bi_add(new, type, size)
-	void *new;
-	int type, size;
+void bi_add(void *new, int type, int size)
 {
 	struct btinfo_common *bi;
 

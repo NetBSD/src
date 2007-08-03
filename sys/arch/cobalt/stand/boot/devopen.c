@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2007/08/03 13:15:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -48,8 +48,8 @@
  *  [device:][filename]
  */
 int
-devparse(const char *fname, int *dev, u_int8_t *unit,
-		u_int8_t *part, const char **file)
+devparse(const char *fname, int *dev, uint8_t *unit, uint8_t *part,
+    const char **file)
 {
 	const char *col;
 
@@ -59,17 +59,17 @@ devparse(const char *fname, int *dev, u_int8_t *unit,
 	*file = DEFKERNELNAME;
 
 	if (fname == NULL)
-		return (0);
+		return 0;
 
-	if ( (col = strchr(fname, ':')) != NULL) {
+	if ((col = strchr(fname, ':')) != NULL) {
 		int devlen;
-		u_int8_t i, u, p;
+		uint8_t i, u, p;
 		struct devsw *dp;
 		char devname[MAXDEVNAME];
 
 		devlen = col - fname;
 		if (devlen > MAXDEVNAME)
-			return (EINVAL);
+			return EINVAL;
 
 #define isnum(c)	(((c) >= '0') && ((c) <= '9'))
 #define isalpha(c)	(((c) >= 'a') && ((c) <= 'z'))
@@ -80,21 +80,21 @@ devparse(const char *fname, int *dev, u_int8_t *unit,
 		devname[i] = 0;
 
 		if (!isnum(fname[i]))
-			return (EUNIT);
+			return EUNIT;
 
 		/* device number */
 		for (u = 0; isnum(fname[i]) && (i < devlen); i++)
 			u = u * 10 + (fname[i] - '0');
 
 		if (!isalpha(fname[i]))
-			return (EPART);
+			return EPART;
 
 		/* partition number */
 		if (i < devlen)
 			p = fname[i++] - 'a';
 
 		if (i != devlen)
-			return (ENXIO);
+			return ENXIO;
 
 		/* check device name */
 		for (dp = devsw, i = 0; i < ndevs; dp++, i++) {
@@ -103,7 +103,7 @@ devparse(const char *fname, int *dev, u_int8_t *unit,
 		}
 
 		if (i >= ndevs)
-			return (ENXIO);
+			return ENXIO;
 
 		*unit = u;
 		*part = p;
@@ -114,31 +114,31 @@ devparse(const char *fname, int *dev, u_int8_t *unit,
 	if (*fname)
 		*file = fname;
 
-	return (0);
+	return 0;
 }
 
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
-    struct devsw *dp;
-    u_int8_t unit, part;
-    int dev, error;
+	struct devsw *dp;
+	uint8_t unit, part;
+	int dev, error;
 
-    DPRINTF(("devopen(%s)\n", fname));
+	DPRINTF(("devopen(%s)\n", fname));
 
-    if ( (error = devparse(fname, &dev, &unit, &part,
-				    (const char **)file)) != 0)
-	    return error;
+	if ((error = devparse(fname, &dev, &unit, &part,
+	    (const char **)file)) != 0)
+		return error;
 
-    dp = &devsw[dev];
-    if ((void *)dp->dv_open == (void *)nodev)
+	dp = &devsw[dev];
+	if ((void *)dp->dv_open == (void *)nodev)
 	return ENXIO;
 
-    f->f_dev = dp;
+	f->f_dev = dp;
     
-    if ( (error = (*dp->dv_open)(f, unit, part)) != 0)
+	if ((error = (*dp->dv_open)(f, unit, part)) != 0)
 	printf("%s%d%c: %d = %s\n", devsw[dev].dv_name,
-	       unit, 'a' + part, error, strerror(error));
+	    unit, 'a' + part, error, strerror(error));
 
-    return error;
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.4 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.5 2007/08/03 13:15:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -70,8 +70,7 @@
 #define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 
 int
-comspeed(speed)
-	long speed;
+comspeed(long speed)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
@@ -79,16 +78,16 @@ comspeed(speed)
 	long frequency = COM_FREQ * 10;
 
 	if (speed <= 0)
-		return (-1);
+		return -1;
 	x = divrnd((frequency / 16), speed);
 	if (x <= 0)
-		return (-1);
+		return -1;
 	err = divrnd(((quad_t)frequency) * 1000 / 16, speed * x) - 1000;
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
-		return (-1);
-	return (x);
+		return -1;
+	return x;
 
 #undef	divrnd
 }

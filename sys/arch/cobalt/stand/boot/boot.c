@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 2005/11/25 13:37:58 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 2007/08/03 13:15:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -122,25 +122,25 @@ int main(unsigned int memsize);
  * Perform CPU reboot.
  */
 int
-cpu_reboot()
+cpu_reboot(void)
 {
 	printf("rebooting...\n\n");
 
-	*(volatile char *)MIPS_PHYS_TO_KSEG1(LED_ADDR) = LED_RESET;
+	*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(LED_ADDR) = LED_RESET;
 	printf("WARNING: reboot failed!\n");
 
-	for (;;);
+	for (;;)
+		;
 }
 
 /*
  * Substitute root value with NetBSD root partition name.
  */
 int
-patch_bootstring(bootspec)
-	char *bootspec;
+patch_bootstring(char *bootspec)
 {
 	char *sp = bootstring;
-	u_int8_t unit, part;
+	uint8_t unit, part;
 	int dev, error;
 	char *file;
 
@@ -153,7 +153,7 @@ patch_bootstring(bootspec)
 	DPRINTF(("patch_bootstring: %d, %d\n", unit, part));
 
 	/* take out the 'root=xxx' parameter */
-	if ( (sp = strstr(bootstring, "root=")) != NULL) {
+	if ((sp = strstr(bootstring, "root=")) != NULL) {
 		const char *end;
 		
 		end = strchr(sp, ' ');
@@ -184,16 +184,14 @@ patch_bootstring(bootspec)
 	}
 
 	DPRINTF(("patch_bootstring: -> %s\n", bootstring));
-	return (0);
+	return 0;
 }
 
 /*
  * Extract NetBSD boot specification
  */
 static int
-get_bsdbootname(dev, kname)
-	char **dev;
-	char **kname;
+get_bsdbootname(char **dev, char **kname)
 {
 	int len, error;
 	char *bootstr_dev, *bootstr_kname;
@@ -280,11 +278,7 @@ get_bsdbootname(dev, kname)
 }
 
 static int
-parse_bootname(spec, len, dev, kname)
-	char *spec;
-	int len;
-	char **dev;
-	char **kname;
+parse_bootname(char *spec, int len, char **dev, char **kname)
 {
 	char *bootname, *ptr;
 
@@ -310,9 +304,9 @@ parse_bootname(spec, len, dev, kname)
  * Get the bootstring from PROM.
  */
 int
-prominit(memsize)
-	unsigned int memsize;
+prominit(unsigned int memsize)
 {
+
 	bootstring = (char *)(memsize - 512);
 	bootstring[511] = '\0';
 }
@@ -321,9 +315,9 @@ prominit(memsize)
  * Print boot message.
  */
 int
-print_banner(memsize)
-	unsigned int memsize;
+print_banner(unsigned int memsize)
 {
+
 	printf("\n");
 	printf(">> %s " NETBSD_VERS " Bootloader, Revision %s [@%p]\n",
 			bootprog_name, bootprog_rev, (void*)&start);
@@ -337,14 +331,13 @@ print_banner(memsize)
  * Parse PROM boot string, load the kernel and jump into it
  */
 int
-main(memsize)
-	unsigned int memsize;
+main(unsigned int memsize)
 {
 	char **namep, *dev, *kernel, *bi_addr;
 	char bootpath[PATH_MAX];
 	int win;
 	u_long marks[MARK_MAX];
-	void (*entry) __P((unsigned int, u_int, char*));
+	void (*entry)(unsigned int, u_int, char *);
 
 	struct btinfo_flags bi_flags;
 	struct btinfo_symtab bi_syms;
@@ -393,7 +386,7 @@ main(memsize)
 		strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
 		bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
-		entry = (void *) marks[MARK_ENTRY];
+		entry = (void *)marks[MARK_ENTRY];
 		bi_syms.nsym = marks[MARK_NSYM];
 		bi_syms.ssym = marks[MARK_SYM];
 		bi_syms.esym = marks[MARK_END];
@@ -401,7 +394,7 @@ main(memsize)
 
 		bi_add(&bi_flags, BTINFO_FLAGS, sizeof(bi_flags));
 
-		entry = (void *) marks[MARK_ENTRY];
+		entry = (void *)marks[MARK_ENTRY];
 
 		DPRINTF(("Bootinfo @ 0x%x\n", bi_addr));
 		printf("Starting at 0x%x\n\n", (u_int)entry);
@@ -409,5 +402,5 @@ main(memsize)
 	}
 
 	(void)printf("Boot failed! Rebooting...\n");
-	return (0);
+	return 0;
 }
