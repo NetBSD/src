@@ -1,0 +1,349 @@
+PKG_ADD(1)              NetBSD General Commands Manual              PKG_ADD(1)
+
+NNAAMMEE
+     ppkkgg__aadddd -- a utility for installing and upgrading software package dis-
+     tributions
+
+SSYYNNOOPPSSIISS
+     ppkkgg__aadddd [--AAffIILLnnRRuuVVvv] [--KK _p_k_g___d_b_d_i_r] [--pp _p_r_e_f_i_x] [--ss _v_e_r_i_f_i_c_a_t_i_o_n_-_t_y_p_e]
+             [--tt _t_e_m_p_l_a_t_e] [--WW _v_i_e_w_b_a_s_e] [--ww _v_i_e_w]
+             [[ftp|http]://[_u_s_e_r[:_p_a_s_s_w_o_r_d_]@]_h_o_s_t[:_p_o_r_t]][/_p_a_t_h_/]pkg-name ...
+
+DDEESSCCRRIIPPTTIIOONN
+     The ppkkgg__aadddd command is used to extract and upgrade packages that have
+     been previously created with the pkg_create(1) command.  Packages are
+     prepared collections of pre-built binaries, documentation, configura-
+     tions, installation instructions and/or other files.  ppkkgg__aadddd can recur-
+     sively install other packages that the current package depends on or
+     requires from both local disk and via FTP or HTTP.
+
+WWAARRNNIINNGG
+     _S_i_n_c_e _t_h_e ppkkgg__aadddd _c_o_m_m_a_n_d _m_a_y _e_x_e_c_u_t_e _s_c_r_i_p_t_s _o_r _p_r_o_g_r_a_m_s _c_o_n_t_a_i_n_e_d
+     _w_i_t_h_i_n _a _p_a_c_k_a_g_e _f_i_l_e_, _y_o_u_r _s_y_s_t_e_m _m_a_y _b_e _s_u_s_c_e_p_t_i_b_l_e _t_o _`_`_T_r_o_j_a_n
+     _h_o_r_s_e_s_'_' _o_r _o_t_h_e_r _s_u_b_t_l_e _a_t_t_a_c_k_s _f_r_o_m _m_i_s_c_r_e_a_n_t_s _w_h_o _c_r_e_a_t_e _d_a_n_g_e_r_o_u_s
+     _p_a_c_k_a_g_e _f_i_l_e_s_.
+
+     _Y_o_u _a_r_e _a_d_v_i_s_e_d _t_o _v_e_r_i_f_y _t_h_e _c_o_m_p_e_t_e_n_c_e _a_n_d _i_d_e_n_t_i_t_y _o_f _t_h_o_s_e _w_h_o _p_r_o_-
+     _v_i_d_e _i_n_s_t_a_l_l_a_b_l_e _p_a_c_k_a_g_e _f_i_l_e_s_.  _F_o_r _e_x_t_r_a _p_r_o_t_e_c_t_i_o_n_, _u_s_e _t_h_e _d_i_g_i_t_a_l
+     _s_i_g_n_a_t_u_r_e_s _p_r_o_v_i_d_e_d _w_h_e_r_e _p_o_s_s_i_b_l_e _(_s_e_e _t_h_e --ss _o_p_t_i_o_n_)_, _o_r_, _f_a_i_l_i_n_g _t_h_a_t_,
+     _u_s_e _t_h_e --MM _f_l_a_g _t_o _e_x_t_r_a_c_t _t_h_e _p_a_c_k_a_g_e _f_i_l_e_, _a_n_d _i_n_s_p_e_c_t _i_t_s _c_o_n_t_e_n_t_s _a_n_d
+     _s_c_r_i_p_t_s _t_o _e_n_s_u_r_e _i_t _p_o_s_e_s _n_o _d_a_n_g_e_r _t_o _y_o_u_r _s_y_s_t_e_m_'_s _i_n_t_e_g_r_i_t_y_.  _P_a_y
+     _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y _+_I_N_S_T_A_L_L _o_r _+_D_E_I_N_S_T_A_L_L _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e
+     _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d
+     @@uunneexxeecc _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r _u_s_e _t_h_e pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e
+     _p_a_c_k_a_g_e _f_i_l_e_.
+
+OOPPTTIIOONNSS
+     The following command line arguments are supported:
+
+     _p_k_g_-_n_a_m_e [_._._.]
+             The named packages are installed.  _p_k_g_-_n_a_m_e may be either a URL
+             or a local pathname, a package name of "-" will cause ppkkgg__aadddd to
+             read from stdin.  If the packages are not found in the current
+             working directory, ppkkgg__aadddd will search them in each directory
+             named by the PKG_PATH environment variable.  Any dependencies
+             required by the installed package will be searched in the same
+             location that the original package was installed from.
+
+     --AA      Mark package as installed automatically, as dependency of another
+             package.  You can use
+                   ppkkgg__aaddmmiinn sseett aauuttoommaattiicc==YYEESS
+             to mark packages this way after installation, and
+                   ppkkgg__aaddmmiinn uunnsseett aauuttoommaattiicc
+             to remove the mark.  If you ppkkgg__aadddd a package without specifying
+             --AA after it had already been automatically installed, the mark is
+             removed.
+
+     --ff      Force installation to proceed even if prerequisite packages are
+             not installed or the install script fails.  Although ppkkgg__aadddd will
+             still try to find and auto-install missing prerequisite packages,
+             a failure to find one will not be fatal.  This flag also over-
+             rides the fatal error when the operating system or architecture
+             the package was built on differ from that of the host.
+
+     --II      If an installation script exists for a given package, do not exe-
+             cute it.
+
+     --KK _p_k_g___d_b_d_i_r
+             Set _p_k_g___d_b_d_i_r as the package database directory.  If this option
+             isn't specified, then the package database directory is taken
+             from the value of the environment variable PKG_DBDIR if it's set,
+             otherwise it defaults to _/_v_a_r_/_d_b_/_p_k_g.
+
+     --LL      Don't add the package to any views after installation.
+
+     --nn      Don't actually install a package, just report the steps that
+             would be taken if it was.
+
+     --pp _p_r_e_f_i_x
+             Set _p_r_e_f_i_x as the directory in which to extract files from a
+             package.  If a package has set its default directory, it will be
+             overridden by this flag.  Note that only the first @@ccwwdd directive
+             will be replaced, since ppkkgg__aadddd has no way of knowing which
+             directory settings are relative and which are absolute.  Only one
+             directory transition is supported and the second one is expected
+             to go into _p_k_g_d_b.
+
+     --RR      Do not record the installation of a package.  This means that you
+             cannot deinstall it later, so only use this option if you know
+             what you are doing!
+
+     --ss _v_e_r_i_f_i_c_a_t_i_o_n_-_t_y_p_e
+             Use a callout to an external program to verify the binary package
+             being installed against an existing detached signature file.  The
+             signature file must reside in the same directory as the binary
+             package.  At the present time, the following verification types
+             are defined: none, gpg and pgp5.  The signature will be verified
+             at install time, and the results will be displayed.  If the sig-
+             nature type is anything other than none, the user will be asked
+             if ppkkgg__aadddd should proceed to install the binary package.  The
+             user must then take the decision whether to proceed or not,
+             depending upon the amount of trust that is placed in the signa-
+             tory of the binary package.  Please note that, at the current
+             time, it is not possible to use the verification feature when
+             using ppkkgg__aadddd to add a binary package via a URL - the package,
+             and the related detached signature file, must be local for the
+             verification to work.
+
+     --tt _t_e_m_p_l_a_t_e
+             Use _t_e_m_p_l_a_t_e as the input to mktemp(3) when creating a ``staging
+             area''.  By default, this is the string _/_v_a_r_/_t_m_p_/_i_n_s_t_m_p_._X_X_X_X_X_X,
+             but it may be necessary to override it in the situation where
+             space in your _/_v_a_r_/_t_m_p directory is limited.  Be sure to leave
+             some number of `X' characters for mktemp(3) to fill in with a
+             unique ID.
+
+             You can get a performance boost by setting the staging area
+             _t_e_m_p_l_a_t_e to reside on the same disk partition as target directo-
+             ries for package file installation; often this is _/_u_s_r.
+
+     --uu      If the package that's being installed is already installed,
+             either in the same or a different version, an update is per-
+             formed.  If this is specified twice, then any dependant packages
+             that are too old will also be updated to fulfill the dependency.
+             See below for a more detailed description of the process.
+
+     --VV      Print version number and exit.
+
+     --vv      Turn on verbose output.
+
+     --WW _v_i_e_w_b_a_s_e
+             Set _v_i_e_w_b_a_s_e as the base directory for the managed views.  The
+             default _v_i_e_w_b_a_s_e directory is set by pkg_view(1).  This value
+             also may be set from the LOCALBASE environment variable.
+
+     --ww _v_i_e_w
+             Set the _v_i_e_w to which packages should be added after installa-
+             tion.  The default _v_i_e_w is set by pkg_view(1).  This value also
+             may be set from the PKG_VIEW environment variable.
+
+     One or more _p_k_g_-_n_a_m_e arguments may be specified, each being either a file
+     containing the package (these usually ending with the ``.tgz'' suffix) or
+     a URL pointing at a file available on an ftp or web site.  Thus you may
+     extract files directly from their anonymous ftp or WWW locations (e.g.,
+     ppkkgg__aadddd ftp://ftp.NetBSD.org/pub/pkgsrc/pack-
+     ages/NetBSD-3.1/i386/shells/bash-3.2.9.tgz or ppkkgg__aadddd http://www.exam-
+     ple.org/packages/screen-4.0.tbz).  Note:  For ftp transfers, if you wish
+     to use _p_a_s_s_i_v_e _m_o_d_e ftp in such transfers, set the variable _F_T_P___P_A_S_-
+     _S_I_V_E___M_O_D_E to some value in your environment.  Otherwise, the more stan-
+     dard ACTIVE mode may be used.  If ppkkgg__aadddd consistently fails to fetch a
+     package from a site known to work, it may be because you have a firewall
+     that demands the usage of _p_a_s_s_i_v_e _m_o_d_e ftp.
+
+TTEECCHHNNIICCAALL DDEETTAAIILLSS
+     ppkkgg__aadddd extracts each package's ``packing list'' into a special staging
+     directory in /var/tmp (or $PKG_TMPDIR if set) and then runs through the
+     following sequence to fully extract the contents of the package:
+
+           1.   A check is made to determine if the package or another version
+                of it is already recorded as installed.  If it is, installa-
+                tion is terminated if the --uu option is not given.
+
+                If the --uu option is given, it's assumed the package should be
+                replaced by the new version instead.  Before doing so, all
+                packages that depend on the pkg being upgraded are checked if
+                they also work with the new version.  If that test is success-
+                ful, replacing is prepared by moving an existing _+_R_E_Q_U_I_R_E_D___B_Y
+                file aside (if it exists), and running pkg_delete(1) on the
+                installed package.  Installation then proceeds as if the pack-
+                age was not installed, and restores the _+_R_E_Q_U_I_R_E_D___B_Y file
+                afterwards.
+
+           2.   A check is made to determine if the package conflicts (from
+                @@ppkkggccffll directives, see pkg_create(1)) with an already
+                recorded as installed package.  If it is, installation is ter-
+                minated.
+
+           3.   All package dependencies (from @@ppkkggddeepp directives, see
+                pkg_create(1)) are read from the packing list.  If any of
+                these required packages are not currently installed, an
+                attempt is made to find and install it; if the missing package
+                cannot be found or installed, the installation is terminated.
+                If the --uu option was specified twice, any required packages
+                that are installed, but which have a version number that is
+                considered to be too old, are also updated.  The dependant
+                packages are found according to the normal PKG_PATH rules.
+
+           4.   A search is made for any @@ooppttiioonn directives which control how
+                the package is added to the system.  The only currently imple-
+                mented option is @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee, which causes the
+                package to be extracted directly into its prefix directory
+                rather than moving it through a staging area in _/_v_a_r_/_t_m_p.
+
+           5.   If @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee is enabled, the package is now
+                extracted directly into its final location, otherwise it is
+                extracted into the staging area.
+
+           6.   The package build information is extracted from the
+                _+_B_U_I_L_D___I_N_F_O file and compared against the result of uname(3).
+                If the operating system or architecture of the package differ
+                from that of the host, installation is aborted.  This behavior
+                is overridable with the --ff flag.
+
+           7.   The package build information from _+_B_U_I_L_D___I_N_F_O is then checked
+                for USE_ABI_DEPENDS=NO (or IGNORE_RECOMMENDED).  If the pack-
+                age was built with ABI dependency recommendations ignored, a
+                warning will be issued.
+
+           8.   If the package contains an _i_n_s_t_a_l_l script, it is executed with
+                the following arguments:
+
+                _p_k_g_-_n_a_m_e      The name of the package being installed.
+
+                PPRREE--IINNSSTTAALLLL   Keyword denoting that the script is to perform
+                              any actions needed before the package is
+                              installed.
+
+                If the _i_n_s_t_a_l_l script exits with a non-zero status code, the
+                installation is terminated.
+
+           9.   If @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee is not present in the packing
+                list, then it is used as a guide for moving (or copying, as
+                necessary) files from the staging area into their final loca-
+                tions.
+
+           10.  If an _i_n_s_t_a_l_l script exists for the package, it is executed
+                with the following arguments:
+
+                _p_k_g___n_a_m_e      The name of the package being installed.
+
+                PPOOSSTT--IINNSSTTAALLLL  Keyword denoting that the script is to perform
+                              any actions needed after the package has been
+                              installed.
+
+           11.  After installation is complete, a copy of the packing list,
+                _d_e_i_n_s_t_a_l_l script, description, and display files are copied
+                into _/_v_a_r_/_d_b_/_p_k_g_/_<_p_k_g_-_n_a_m_e_> for subsequent possible use by
+                pkg_delete(1).  Any package dependencies are recorded in the
+                other packages' _/_v_a_r_/_d_b_/_p_k_g_/_<_o_t_h_e_r_-_p_k_g_>_/_+_R_E_Q_U_I_R_E_D___B_Y file (if
+                an alternate package database directory is specified, then it
+                overrides the _/_v_a_r_/_d_b_/_p_k_g path shown above).
+
+           12.  If the package is a depoted package, then add it to the
+                default view.
+
+           13.  The staging area is deleted and the program terminates.
+
+           14.  Finally, if we were upgrading a package, any _+_R_E_Q_U_I_R_E_D___B_Y file
+                that was moved aside before upgrading was started is now moved
+                back into place.
+
+     The _i_n_s_t_a_l_l script is called with the environment variable PKG_PREFIX set
+     to the installation prefix (see the --pp option above).  This allows a
+     package author to write a script that reliably performs some action on
+     the directory where the package is installed, even if the user might
+     change it with the --pp flag to ppkkgg__aadddd.  The scripts are also called with
+     the PKG_METADATA_DIR environment variable set to the location of the _+_*
+     meta-data files, and with the PKG_REFCOUNT_DBDIR environment variable set
+     to the location of the package reference counts database directory.
+
+EENNVVIIRROONNMMEENNTT
+     LOCALBASE   This is the location of the _v_i_e_w_b_a_s_e directory in which all
+                 the views are managed.  The default _v_i_e_w_b_a_s_e directory is
+                 _/_u_s_r_/_p_k_g.
+
+     PKG_DBDIR   If the --KK flag isn't given, then PKG_DBDIR is the location of
+                 the package database directory.  The default package database
+                 directory is _/_v_a_r_/_d_b_/_p_k_g.
+
+     PKG_PATH    The value of the PKG_PATH is used if a given package can't be
+                 found, it's usually set to _/_u_s_r_/_p_k_g_s_r_c_/_p_a_c_k_a_g_e_s_/_A_l_l.  The
+                 environment variable should be a series of entries separated
+                 by semicolons.  Each entry consists of a directory name or
+                 URL.  The current directory may be indicated implicitly by an
+                 empty directory name, or explicitly by a single period.  FTP
+                 URLs may not end with a slash.
+
+     PKG_REFCOUNT_DBDIR
+                 Location of the package reference counts database directory.
+                 The default location is the path to the package database
+                 directory with ``.refcount'' appended to the path, e.g.
+                 _/_v_a_r_/_d_b_/_p_k_g_._r_e_f_c_o_u_n_t.
+
+     PKG_TMPDIR  Staging directory for installing packages, defaults to
+                 /var/tmp.  Set to directory with lots of free disk if you run
+                 out of space when installing a binary package.
+
+     PKG_VIEW    The default view can be specified in the PKG_VIEW environment
+                 variable.
+
+EEXXAAMMPPLLEESS
+     In all cases, ppkkgg__aadddd will try to install binary packages listed in
+     dependencies list.
+
+     You can specify a compiled binary package explicitly on the command line.
+
+     # pkg_add /usr/pkgsrc/packages/All/tcsh-6.14.00.tgz
+
+     If you omit the version number, ppkkgg__aadddd will install the latest version
+     available.  With --vv, ppkkgg__aadddd emits more messages to terminal.
+
+     # pkg_add -v /usr/pkgsrc/packages/All/unzip
+
+     You can grab a compiled binary package from remote location by specifying
+     a URL.  The URL can be put into an environment variable, PKG_PATH.
+
+     # pkg_add -v ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/firefox-2.0.0.4.tgz
+
+     # export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/
+     # pkg_add -v firefox
+
+     Over time, as problems are found in packages, they will be moved from the
+     _A_l_l subdirectory into the _v_u_l_n_e_r_a_b_l_e subdirectory.  If you want to accept
+     vulnerable packages by default (and know what you are doing), you can add
+     the _v_u_l_n_e_r_a_b_l_e directory to your PKG_PATH like this:
+
+     # export PKG_PATH="ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/;ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/vulnerable/"
+
+     (The quotes are needed because semicolon (`;') is a shell meta-charac-
+     ter.)  If you do this, consider installing and using the
+     _s_e_c_u_r_i_t_y_/_a_u_d_i_t_-_p_a_c_k_a_g_e_s package and running it after every ppkkgg__aadddd.
+
+SSEEEE AALLSSOO
+     pkg_admin(1), pkg_create(1), pkg_delete(1), pkg_info(1), mktemp(3),
+     sysconf(3), pkgsrc(7)
+
+AAUUTTHHOORRSS
+     Jordan Hubbard
+             Initial work and ongoing development.
+     John Kohl
+             NetBSD refinements.
+     Hubert Feyrer
+             NetBSD wildcard dependency processing, pkgdb, upgrading, etc.
+     Thomas Klausner
+             HTTP support.
+
+BBUUGGSS
+     Hard links between files in a distribution are only preserved if either
+     (1) the staging area is on the same file system as the target directory
+     of all the links to the file, or (2) all the links to the file are brack-
+     eted by @@ccwwdd directives in the contents file, _a_n_d and the link names are
+     extracted with a single ttaarr command (not split between invocations due to
+     exec argument-space limitations--this depends on the value returned by
+     ssyyssccoonnff(___S_C___A_R_G___M_A_X)).
+
+     Package upgrading needs a lot more work to be really universal.
+
+     Sure to be others.
+
+NetBSD 4.0                      August 2, 2007                      NetBSD 4.0
