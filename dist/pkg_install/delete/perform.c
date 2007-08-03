@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $");
 #endif
 #endif
 
@@ -83,7 +83,7 @@ static int require_find_recursive_down(lpkg_t *, package_t *);
 static int require_find(char *, rec_find_t);
 static int require_delete(char *, int);
 static void require_print(void);
-static int undepend(const char *, void *);
+static int undepend(const char *, const char *, void *);
 
 static char LogDir[MaxPathSize];
 static char linebuf[MaxPathSize];
@@ -118,7 +118,7 @@ cleanup(int sig)
  * findmatchingname(), deppkgname is expanded from a (possible) pattern.
  */
 static int
-undepend(const char *deppkgname, void *vp)
+undepend(const char *pattern, const char *deppkgname, void *vp)
 {
 	char   *pkg2delname = vp;
 	char    fname[MaxPathSize], ftmp[MaxPathSize];
@@ -740,17 +740,6 @@ pkg_do(char *pkg)
 	}
 	setenv(PKG_PREFIX_VNAME, p->name, 1);
 	setenv(PKG_METADATA_DIR_VNAME, LogDir, 1);
-	if (fexists(REQUIRE_FNAME)) {
-		if (Verbose)
-			printf("Executing 'require' script.\n");
-		(void) fexec(CHMOD_CMD, "+x", REQUIRE_FNAME, NULL);	/* be sure */
-		if (fexec("./" REQUIRE_FNAME, pkg, "DEINSTALL", NULL)) {
-			warnx("package %s fails requirements %s", pkg,
-			    Force ? "" : "- not deleted");
-			if (!Force)
-				return 1;
-		}
-	}
 	/*
 	 * Ensure that we don't do VIEW-DEINSTALL action for old packages
 	 * or for the package in its depot directory.

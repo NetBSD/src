@@ -19,11 +19,10 @@ WWAARRNNIINNGG
      _Y_o_u _a_r_e _a_d_v_i_s_e_d _t_o _v_e_r_i_f_y _t_h_e _c_o_m_p_e_t_e_n_c_e _a_n_d _i_d_e_n_t_i_t_y _o_f _t_h_o_s_e _w_h_o _p_r_o_-
      _v_i_d_e _i_n_s_t_a_l_l_a_b_l_e _p_a_c_k_a_g_e _f_i_l_e_s_.  _F_o_r _e_x_t_r_a _p_r_o_t_e_c_t_i_o_n_, _e_x_a_m_i_n_e _a_l_l _t_h_e
      _p_a_c_k_a_g_e _c_o_n_t_r_o_l _f_i_l_e_s _i_n _t_h_e _p_a_c_k_a_g_e _r_e_c_o_r_d _d_i_r_e_c_t_o_r_y
-     _(_/_v_a_r_/_d_b_/_p_k_g_/_<_p_k_g_-_n_a_m_e_>_/_)_.  _P_a_y _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y _+_I_N_S_T_A_L_L_,
-     _+_D_E_I_N_S_T_A_L_L_, _+_R_E_Q_U_I_R_E_, _o_r _+_M_T_R_E_E___D_I_R_S _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e _+_C_O_N_T_E_N_T_S
-     _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d @@uunneexxeecc
-     _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r _u_s_e _t_h_e pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e _i_n_s_t_a_l_l_e_d
-     _p_a_c_k_a_g_e _c_o_n_t_r_o_l _f_i_l_e_s_.
+     _(_/_v_a_r_/_d_b_/_p_k_g_/_<_p_k_g_-_n_a_m_e_>_/_)_.  _P_a_y _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y _+_I_N_S_T_A_L_L _o_r
+     _+_D_E_I_N_S_T_A_L_L _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k
+     _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d @@uunneexxeecc _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r _u_s_e _t_h_e
+     pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e _i_n_s_t_a_l_l_e_d _p_a_c_k_a_g_e _c_o_n_t_r_o_l _f_i_l_e_s_.
 
 OOPPTTIIOONNSS
      The following command line options are supported:
@@ -52,7 +51,7 @@ OOPPTTIIOONNSS
              instead of the package-name.
 
      --ff      Force removal of the package, even if a dependency is recorded or
-             the deinstall or require script fails.
+             the deinstall script fails.
 
      --KK _p_k_g___d_b_d_i_r
              Set _p_k_g___d_b_d_i_r as the package database directory.  If this option
@@ -112,14 +111,6 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
      filename needs to be absolute, see the output produced by the pkg_info
      --aaFF command.
 
-     If the package contains a _r_e_q_u_i_r_e file (see pkg_create(1)), then this is
-     executed first as
-           rreeqquuiirree <_p_k_g_-_n_a_m_e> _D_E_I_N_S_T_A_L_L
-     (where _p_k_g_-_n_a_m_e is the name of the package in question and _D_E_I_N_S_T_A_L_L is a
-     keyword denoting that this is a deinstallation) to see whether or not
-     deinstallation should continue.  A non-zero exit status means no, unless
-     the --ff option is specified.
-
      If a ddeeiinnssttaallll script exists for the package, it is executed before and
      after any files are removed.  It is this script's responsibility to clean
      up any additional messy details around the package's installation, since
@@ -157,7 +148,7 @@ EENNVVIIRROONNMMEENNTT
 
 SSEEEE AALLSSOO
      pkg_add(1), pkg_admin(1), pkg_create(1), pkg_info(1), mktemp(3),
-     pkgsrc(7), mtree(8)
+     pkgsrc(7)
 
 AAUUTTHHOORRSS
      Jordan Hubbard
