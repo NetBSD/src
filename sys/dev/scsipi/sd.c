@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.264 2007/07/29 12:50:23 ad Exp $	*/
+/*	$NetBSD: sd.c,v 1.265 2007/08/03 13:56:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.264 2007/07/29 12:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265 2007/08/03 13:56:37 tsutsui Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -1678,24 +1678,37 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	union {
 		struct scsipi_read_capacity_10_data data;
 		struct scsipi_read_capacity_16_data data16;
-	} data;
+	} *datap;
+	uint64_t rv;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd.opcode = READ_CAPACITY_10;
 
 	/*
+	 * Don't allocate data buffer on stack;
+	 * The lower driver layer might use the same stack and
+	 * if it uses region which is in the same cacheline,
+	 * cache flush ops against the data buffer won't work properly.
+	 */
+	datap = malloc(sizeof(*datap), M_TEMP, M_WAITOK);
+	if (datap == NULL)
+		return 0;
+
+	/*
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	memset(&data.data, 0, sizeof(data.data));
+	rv = 0;
+	memset(datap, 0, sizeof(datap->data));
 	if (scsipi_command(periph, (void *)&cmd.cmd, sizeof(cmd.cmd),
-	    (void *)&data.data, sizeof(data.data), SCSIPIRETRIES, 20000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
-		return (0);
+	    (void *)datap, sizeof(datap->data), SCSIPIRETRIES, 20000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT) != 0)
+		goto out;
 
-	if (_4btol(data.data.addr) != 0xffffffff) {
-		*blksize = _4btol(data.data.length);
-		return (_4btol(data.data.addr) + 1);
+	if (_4btol(datap->data.addr) != 0xffffffff) {
+		*blksize = _4btol(datap->data.length);
+		rv = _4btol(datap->data.addr) + 1;
+		goto out;
 	}
 
 	/*
@@ -1706,17 +1719,20 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd16.opcode = READ_CAPACITY_16;
 	cmd.cmd16.byte2 = SRC16_SERVICE_ACTION;
-	_lto4b(sizeof(data.data16), cmd.cmd16.len);
+	_lto4b(sizeof(datap->data16), cmd.cmd16.len);
 
-	memset(&data.data16, 0, sizeof(data.data16));
+	memset(datap, 0, sizeof(datap->data16));
 	if (scsipi_command(periph, (void *)&cmd.cmd16, sizeof(cmd.cmd16),
-	    (void *)&data.data16, sizeof(data.data16), SCSIPIRETRIES, 20000,
-	    NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
-		return (0);
+	    (void *)datap, sizeof(datap->data16), SCSIPIRETRIES, 20000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT) != 0)
+		goto out;
 
-	*blksize = _4btol(data.data16.length);
-	return (_8btol(data.data16.addr) + 1);
+	*blksize = _4btol(datap->data16.length);
+	rv = _8btol(datap->data16.addr) + 1;
+
+ out:
+	free(datap, M_TEMP);
+	return rv;
 }
 
 static int
