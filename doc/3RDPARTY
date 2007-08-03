@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.545 2007/08/02 08:30:43 heas Exp $
+#	$NetBSD: 3RDPARTY,v 1.546 2007/08/03 14:26:37 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -666,8 +666,8 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20070715
-Current Vers.:	20070715
+Version:	20070802
+Current Vers.:	20070802
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org
 Mailing List:	tech-pkg@NetBSD.org
