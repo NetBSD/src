@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.1 2007/08/03 22:17:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.1 2007/08/03 22:17:10 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19 2007/05/17 14:51:35 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 
 #include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
@@ -449,11 +450,15 @@ ioapic_enable(void)
 	int p;
 	struct ioapic_softc *sc;
 	struct ioapic_pin *ip;
+	struct cpu_info *ci;
 
 	ioapic_cold = 0;
 
 	if (ioapics == NULL)
 		return;
+
+	printf("APICBASE %" PRIx64 "\n", rdmsr(0x1b));
+	ci = &cpu_info_primary;
 
 	if (ioapics->sc_flags & IOAPIC_PICMODE) {
 		aprint_debug("%s: writing to IMCR to disable pics\n",
@@ -463,13 +468,23 @@ ioapic_enable(void)
 	}
 			
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		aprint_debug("%s: enabling\n", sc->sc_pic.pic_dev.dv_xname);
+		char *xname = sc->sc_pic.pic_dev.dv_xname;
+
+		aprint_debug("%s: enabling\n", xname);
 
 		for (p = 0; p < sc->sc_apic_sz; p++) {
 			ip = &sc->sc_pins[p];
-			if (ip->ip_type != IST_NONE)
+			if (ip->ip_type != IST_NONE) {
 				apic_set_redir(sc, p, ip->ip_vector,
 				    ip->ip_cpu);
+				if (!cold) {
+					printf("%s: reroute pin %d vec %d type %d\n", xname, p, ip->ip_vector, ip->ip_type);
+					ioapic_hwmask(&sc->sc_pic, p);
+					ioapic_addroute(&sc->sc_pic, ci, p,
+					    ip->ip_vector, ip->ip_type);
+					ioapic_hwunmask(&sc->sc_pic, p);
+				}
+			}
 		}
 	}
 }

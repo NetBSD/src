@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.29 2007/08/01 10:39:43 christos Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.29.2.1 2007/08/03 22:17:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.29 2007/08/01 10:39:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.29.2.1 2007/08/03 22:17:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ extern int ehcidebug;
 
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 			       pcitag_t tag);
-static void ehci_pci_powerhook(int, void *);
+static pnp_status_t ehci_pci_power(device_t, pnp_request_t, void *);
 
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
@@ -77,7 +77,6 @@ struct ehci_pci_softc {
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
 
-	void			*sc_powerhook;
 	struct pci_conf_state	sc_pciconf;
 };
 
@@ -104,6 +103,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
+	pnp_status_t status;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
@@ -203,20 +203,16 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	ehci_get_ownership(&sc->sc, pc, tag);
 
-	/*
-	 * Establish our powerhook before ehci_init() does its powerhook.
-	 */
-	sc->sc_powerhook = powerhook_establish(
-	    USBDEVNAME(sc->sc.sc_bus.bdev) , ehci_pci_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: couldn't establish powerhook\n",
-		    devname);
-
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error("%s: init failed, error=%d\n", devname, r);
 		return;
 	}
+
+	status = pnp_register(self, ehci_pci_power);
+	if (status != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    devname);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -228,9 +224,6 @@ ehci_pci_detach(device_ptr_t self, int flags)
 {
 	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
 	int rv;
-
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	rv = ehci_detach(&sc->sc, flags);
 	if (rv)
@@ -329,27 +322,75 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 	}
 }
 
-static void
-ehci_pci_powerhook(int why, void *opaque)
+static pnp_status_t
+ehci_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	struct ehci_pci_softc *sc;
+	pnp_status_t status;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
+	pcireg_t val;
+	int off, s;
 
-	sc = (struct ehci_pci_softc *)opaque;
+	sc = (struct ehci_pci_softc *)dv;
 	pc = sc->sc_pc;
 	tag = sc->sc_tag;
 
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+
+		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
+			return PNP_STATUS_UNSUPPORTED;
+		pcaps->state = pci_pnp_capabilities(val);
+		status = ehci_power(dv, req, opaque);
 		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		ehci_get_ownership(&sc->sc, pc, tag);
+
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
+		*pstate = pci_pnp_powerstate(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			s = splhardusb();
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			splx(s);
+			status = ehci_power(dv, req, opaque);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		status = PNP_STATUS_SUCCESS;
+		if (pci_set_powerstate(pc, tag, val) == 0) {
+			if (*pstate != PNP_STATE_D0)
+				break;
+
+			s = splhardusb();
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			ehci_get_ownership(&sc->sc, pc, tag);
+			splx(s);
+
+			status = ehci_power(dv, req, opaque);
+		}
+		break;
+
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
 		break;
 	}
 
-	return;
+	return status;
 }

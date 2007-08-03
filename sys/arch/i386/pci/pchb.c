@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.64 2007/01/27 23:10:21 he Exp $	*/
+/*	$NetBSD: pchb.c,v 1.64.22.1 2007/08/03 22:17:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.64 2007/01/27 23:10:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.64.22.1 2007/08/03 22:17:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.64 2007/01/27 23:10:21 he Exp $");
 int	pchbmatch(struct device *, struct cfdata *, void *);
 void	pchbattach(struct device *, struct device *, void *);
 
+static pnp_status_t pchb_power(device_t, pnp_request_t, void *);
+
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, NULL, NULL);
 
@@ -101,9 +103,7 @@ pchbmatch(struct device *parent, struct cfdata *match,
 void
 pchbattach(struct device *parent, struct device *self, void *aux)
 {
-#if NRND > 0
 	struct pchb_softc *sc = (void *) self;
-#endif
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
@@ -119,6 +119,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	doattach = 0;
 	has_agp = 0;
 	attachflags = pa->pa_flags;
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -338,6 +340,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pchb_attach_rnd(sc, pa);
 #endif
 
+	if (pnp_register(self, pchb_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+
 	/*
 	 * If we haven't detected AGP yet (via a product ID),
 	 * then check for AGP capability on the device.
@@ -363,4 +369,53 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
 		config_found_ia(self, "pcibus", &pba, pcibusprint);
 	}
+}
+
+static pnp_status_t
+pchb_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct pchb_softc *sc;
+	pnp_state_t *pstate;
+	pnp_capabilities_t *pcaps;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int off;
+
+	sc = (struct pchb_softc *)dv;
+	pc = sc->sc_pc;
+	tag = sc->sc_tag;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			for (off = 0x40; off <= 0xff; off += 4)
+				pci_conf_write(pc, tag, off,
+				    sc->sc_pciconfext[(off - 0x40) / 4]);
+			break;
+		case PNP_STATE_D3:
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			for (off = 0x40; off <= 0xff; off += 4)
+				sc->sc_pciconfext[(off - 0x40) / 4] =
+				    pci_conf_read(pc, tag, off); 
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }

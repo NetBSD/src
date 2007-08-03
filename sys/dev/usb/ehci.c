@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123 2007/02/26 13:26:45 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.18.1 2007/08/03 22:17:25 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123 2007/02/26 13:26:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.1 2007/08/03 22:17:25 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -128,7 +128,6 @@ struct ehci_pipe {
 };
 
 Static void		ehci_shutdown(void *);
-Static void		ehci_power(int, void *);
 
 Static usbd_status	ehci_open(usbd_pipe_handle);
 Static void		ehci_poll(struct usbd_bus *);
@@ -415,8 +414,6 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
 
-	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc_bus.bdev),
-	    ehci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ehci_shutdown, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
@@ -924,8 +921,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	usb_uncallout(sc->sc_tmo_intrlist, ehci_intrlist_timeout, sc);
 
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
 	if (sc->sc_shutdownhook != NULL)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
 
@@ -962,95 +957,108 @@ ehci_activate(device_ptr_t self, enum devact act)
  * We need to switch to polling mode here, because this routine is
  * called from an interrupt context.  This is all right since we
  * are almost suspended anyway.
+ *
+ * Note that this power handler isn't to be registered directly; the
+ * bus glue needs to call out to it.
  */
-void
-ehci_power(int why, void *v)
+pnp_status_t
+ehci_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	ehci_softc_t *sc = v;
+	ehci_softc_t *sc = (ehci_softc_t *)dv;
+	pnp_state_t *pstate;
+	pnp_capabilities_t *pcaps;
 	u_int32_t cmd, hcr;
 	int s, i;
 
 #ifdef EHCI_DEBUG
-	DPRINTF(("ehci_power: sc=%p, why=%d\n", sc, why));
+	DPRINTF(("ehci_power: sc=%p, req=%d, opaque=%p\n", sc, req, opaque));
 	if (ehcidebug > 0)
 		ehci_dump_regs(sc);
 #endif
 
 	s = splhardusb();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		sc->sc_bus.use_polling++;
-
-		sc->sc_cmd = EOREAD4(sc, EHCI_USBCMD);
-
-		cmd = sc->sc_cmd & ~(EHCI_CMD_ASE | EHCI_CMD_PSE);
-		EOWRITE4(sc, EHCI_USBCMD, cmd);
-
-		for (i = 0; i < 100; i++) {
-			hcr = EOREAD4(sc, EHCI_USBSTS) &
-			    (EHCI_STS_ASS | EHCI_STS_PSS);
-			if (hcr == 0)
-				break;
-
-			usb_delay_ms(&sc->sc_bus, 1);
-		}
-		if (hcr != 0) {
-			printf("%s: reset timeout\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
-		}
-
-		cmd &= ~EHCI_CMD_RS;
-		EOWRITE4(sc, EHCI_USBCMD, cmd);
-
-		for (i = 0; i < 100; i++) {
-			hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
-			if (hcr == EHCI_STS_HCH)
-				break;
-
-			usb_delay_ms(&sc->sc_bus, 1);
-		}
-		if (hcr != EHCI_STS_HCH) {
-			printf("%s: config timeout\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
-		}
-
-		sc->sc_bus.use_polling--;
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state |= PNP_STATE_D0 | PNP_STATE_D3;
 		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D3:
+			sc->sc_bus.use_polling++;
 
-	case PWR_RESUME:
-		sc->sc_bus.use_polling++;
+			sc->sc_cmd = EOREAD4(sc, EHCI_USBCMD);
 
-		/* restore things in case the bios sucks */
-		EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
-		EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
-		EOWRITE4(sc, EHCI_ASYNCLISTADDR,
-		    sc->sc_async_head->physaddr | EHCI_LINK_QH);
-		EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
+			cmd = sc->sc_cmd & ~(EHCI_CMD_ASE | EHCI_CMD_PSE);
+			EOWRITE4(sc, EHCI_USBCMD, cmd);
 
-		EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+			for (i = 0; i < 100; i++) {
+				hcr = EOREAD4(sc, EHCI_USBSTS) &
+				    (EHCI_STS_ASS | EHCI_STS_PSS);
+				if (hcr == 0)
+					break;
+	
+				usb_delay_ms(&sc->sc_bus, 1);
+			}
+			if (hcr != 0)
+				printf("%s: reset timeout\n",
+				    USBDEVNAME(sc->sc_bus.bdev));
 
-		for (i = 0; i < 100; i++) {
-			hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
+			cmd &= ~EHCI_CMD_RS;
+			EOWRITE4(sc, EHCI_USBCMD, cmd);
+
+			for (i = 0; i < 100; i++) {
+				hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
+				if (hcr == EHCI_STS_HCH)
+					break;
+
+				usb_delay_ms(&sc->sc_bus, 1);
+			}
 			if (hcr != EHCI_STS_HCH)
-				break;
+				printf("%s: config timeout\n",
+				    USBDEVNAME(sc->sc_bus.bdev));
 
-			usb_delay_ms(&sc->sc_bus, 1);
+			sc->sc_bus.use_polling--;
+			break;
+
+		case PNP_STATE_D0:
+			sc->sc_bus.use_polling++;
+
+			/* restore things in case the bios sucks */
+			EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
+			EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
+			EOWRITE4(sc, EHCI_ASYNCLISTADDR,
+			    sc->sc_async_head->physaddr | EHCI_LINK_QH);
+			EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
+
+			EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+
+			for (i = 0; i < 100; i++) {
+				hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
+				if (hcr != EHCI_STS_HCH)
+					break;
+
+				usb_delay_ms(&sc->sc_bus, 1);
+			}
+			if (hcr == EHCI_STS_HCH) {
+				printf("%s: config timeout\n",
+				    USBDEVNAME(sc->sc_bus.bdev));
+			}
+
+			usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+
+			sc->sc_bus.use_polling--;
+			break;
+		default:
+			break;
 		}
-		if (hcr == EHCI_STS_HCH) {
-			printf("%s: config timeout\n",
-			    USBDEVNAME(sc->sc_bus.bdev));
-		}
 
-		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-
-		sc->sc_bus.use_polling--;
 		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
+	default:
 		break;
 	}
+
 	splx(s);
 
 #ifdef EHCI_DEBUG
@@ -1058,6 +1066,8 @@ ehci_power(int why, void *v)
 	if (ehcidebug > 0)
 		ehci_dump_regs(sc);
 #endif
+
+	return PNP_STATUS_SUCCESS;
 }
 
 /*

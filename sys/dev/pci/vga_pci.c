@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.32 2007/03/20 18:05:31 drochner Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.32.8.1 2007/08/03 22:17:22 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32 2007/03/20 18:05:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.1 2007/08/03 22:17:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,13 @@ struct vga_pci_softc {
 
 	struct vga_bar sc_bars[NBARS];
 	struct vga_bar sc_rom;
+
+	struct pci_conf_state sc_pciconf;
 };
 
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
 static void	vga_pci_attach(struct device *, struct device *, void *);
+static pnp_status_t vga_pci_power(device_t, pnp_request_t, void *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
 
 CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
@@ -167,6 +170,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct vga_pci_softc *psc = (void *) self;
 	struct vga_softc *sc = &psc->sc_vga;
 	struct pci_attach_args *pa = aux;
+	pnp_status_t status;
 	char devinfo[256];
 	int bar, reg;
 
@@ -215,7 +219,54 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
 
+	status = pnp_register(self, vga_pci_power);
+	if (status != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 	config_found_ia(self, "drm", aux, vga_drm_print);
+}
+
+static pnp_status_t
+vga_pci_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct vga_pci_softc *sc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+
+	sc = (struct vga_pci_softc *)dv;
+	pc = sc->sc_pc;
+	tag = sc->sc_pcitag;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			return vga_power(dv, req, opaque);
+			break;
+		case PNP_STATE_D3:
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }
 
 int

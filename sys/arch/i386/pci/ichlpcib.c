@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.19 2006/11/27 19:58:20 drochner Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.19.26.1 2007/08/03 22:17:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19 2006/11/27 19:58:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19.26.1 2007/08/03 22:17:08 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,15 +76,16 @@ struct lpcib_softc {
 	bus_space_handle_t	sc_ioh;
 
 	/* Power management */
-	void			*sc_powerhook;
 	struct pci_conf_state	sc_pciconf;
 	pcireg_t		sc_pirq[8];
+	pcireg_t		sc_pmcon;
+	pcireg_t		sc_fwhsel2;
 };
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
 
-static void lpcib_powerhook(int, void *);
+static pnp_status_t lpcib_power(device_t, pnp_request_t, void *);
 
 static void tcotimer_configure(struct lpcib_softc *, struct pci_attach_args *);
 static int tcotimer_setmode(struct sysmon_wdog *);
@@ -146,6 +147,7 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	struct lpcib_softc *sc = (void*) self;
+	pnp_status_t status;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -158,60 +160,119 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	/* Set up SpeedStep. */
 	speedstep_configure(sc, pa);
 
-	/* Install powerhook */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    lpcib_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+	/* Install power handler */
+	status = pnp_register(self, lpcib_power);
+	if (status != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 	return;
 }
 
-static void
-lpcib_powerhook(int why, void *opaque)
+static pnp_status_t
+lpcib_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	struct lpcib_softc *sc;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
+	pcireg_t val;
+	int off;
 
-	sc = (struct lpcib_softc *)opaque;
+	sc = (struct lpcib_softc *)dv;
 	pc = sc->sc_pc;
 	tag = sc->sc_pcitag;
 
-	switch (why) {
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-
-		/* capture PIRQ routing control registers */
-		sc->sc_pirq[0] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQA_ROUT);
-		sc->sc_pirq[1] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQB_ROUT);
-		sc->sc_pirq[2] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQC_ROUT);
-		sc->sc_pirq[3] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQD_ROUT);
-		sc->sc_pirq[4] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQE_ROUT);
-		sc->sc_pirq[5] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQF_ROUT);
-		sc->sc_pirq[6] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQG_ROUT);
-		sc->sc_pirq[7] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQH_ROUT);
-
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = (pnp_capabilities_t *)opaque;
+		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
+			caps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		else
+			caps->state = pci_pnp_capabilities(val);
 		break;
+	case PNP_REQUEST_GET_STATE:
+		state = (pnp_state_t *)opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			*state = PNP_STATE_D0;
+		else
+			*state = pci_pnp_powerstate(val);
+		break;
+	case PNP_REQUEST_SET_STATE:
+		state = (pnp_state_t *)opaque;
 
-	case PWR_RESUME:
+		switch (*state) {
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+
+			/* capture PIRQ routing control registers */
+			sc->sc_pirq[0] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQA_ROUT);
+			sc->sc_pirq[1] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQB_ROUT);
+			sc->sc_pirq[2] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQC_ROUT);
+			sc->sc_pirq[3] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQD_ROUT);
+			sc->sc_pirq[4] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQE_ROUT);
+			sc->sc_pirq[5] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQF_ROUT);
+			sc->sc_pirq[6] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQG_ROUT);
+			sc->sc_pirq[7] = pci_conf_read(pc, tag,
+			    LPCIB_PCI_PIRQH_ROUT);
+
+			sc->sc_pmcon = pci_conf_read(pc, tag,
+			    LPCIB_PCI_GEN_PMCON_1);
+			sc->sc_fwhsel2 = pci_conf_read(pc, tag,
+			    LPCIB_PCI_GEN_STA);
+
+			break;
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		(void)pci_set_powerstate(pc, tag, val);
+
+		if (*state != PNP_STATE_D0)
+			break;
+		
 		pci_conf_restore(pc, tag, &sc->sc_pciconf);
 
 		/* restore PIRQ routing control registers */
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT, sc->sc_pirq[0]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQB_ROUT, sc->sc_pirq[1]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQC_ROUT, sc->sc_pirq[2]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQD_ROUT, sc->sc_pirq[3]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT, sc->sc_pirq[4]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQF_ROUT, sc->sc_pirq[5]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQG_ROUT, sc->sc_pirq[6]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQH_ROUT, sc->sc_pirq[7]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT,
+		    sc->sc_pirq[0]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQB_ROUT,
+		    sc->sc_pirq[1]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQC_ROUT,
+		    sc->sc_pirq[2]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQD_ROUT,
+		    sc->sc_pirq[3]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT,
+		    sc->sc_pirq[4]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQF_ROUT,
+		    sc->sc_pirq[5]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQG_ROUT,
+		    sc->sc_pirq[6]);
+		pci_conf_write(pc, tag, LPCIB_PCI_PIRQH_ROUT,
+		    sc->sc_pirq[7]);
 
+		pci_conf_write(pc, tag, LPCIB_PCI_GEN_PMCON_1, sc->sc_pmcon);
+		pci_conf_write(pc, tag, LPCIB_PCI_GEN_STA, sc->sc_fwhsel2);
+	
 		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
 	}
 
-	return;
+	return PNP_STATUS_SUCCESS;
 }
 
 /*

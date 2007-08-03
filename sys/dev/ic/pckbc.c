@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.37 2007/07/09 21:00:38 ad Exp $ */
+/* $NetBSD: pckbc.c,v 1.37.6.1 2007/08/03 22:17:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.37 2007/07/09 21:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.37.6.1 2007/08/03 22:17:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -713,4 +713,48 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 	}
 
 	return (res);
+}
+
+pnp_status_t
+pckbc_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct pckbc_softc *sc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+	struct pckbc_internal *t;
+
+	sc = (struct pckbc_softc *)dv;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			t = sc->id;
+			(void)pckbc_poll_data1(t, PCKBC_KBD_SLOT);
+			if (!pckbc_send_cmd(t->t_iot, t->t_ioh_c, KBC_SELFTEST))
+				return PNP_STATUS_BUSY;
+			(void)pckbc_poll_data1(t, PCKBC_KBD_SLOT);
+			(void)pckbc_put8042cmd(t);
+			pckbcintr(t->t_sc);
+			break;
+		case PNP_STATE_D3:
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }

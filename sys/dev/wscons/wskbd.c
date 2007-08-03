@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.104 2007/07/09 21:01:26 ad Exp $ */
+/* $NetBSD: wskbd.c,v 1.104.6.1 2007/08/03 22:17:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104 2007/07/09 21:01:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104.6.1 2007/08/03 22:17:26 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -616,6 +616,9 @@ wskbd_input(struct device *dev, u_int type, int value)
 		callout_stop(&sc->sc_repeat_ch);
 	}
 
+	/* notify power management framework */
+	pnp_power_input(dev, PNP_ACTION_KEYBOARD);
+
 #if NWSDISPLAY > 0
 	/*
 	 * If /dev/wskbdN is not connected in event mode translate and
@@ -687,7 +690,7 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 		return;
 	}
 #endif
-	
+
 	event.type = type;
 	event.value = value;
 	if (wsevent_inject(evar, &event, 1) != 0)
@@ -1439,6 +1442,18 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	u_int state = 0;
 #endif
 	switch (ksym) {
+	case KS_Cmd_VolumeToggle:
+		if (*type == WSCONS_EVENT_KEY_DOWN)
+			pnp_power_audio(NULL, PNP_ACTION_VOLUME_MUTE);
+		break;
+	case KS_Cmd_VolumeUp:
+		if (*type == WSCONS_EVENT_KEY_DOWN)
+			pnp_power_audio(NULL, PNP_ACTION_VOLUME_UP);
+		break;
+	case KS_Cmd_VolumeDown:
+		if (*type == WSCONS_EVENT_KEY_DOWN)
+			pnp_power_audio(NULL, PNP_ACTION_VOLUME_DOWN);
+		break;
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	case KS_Cmd_ScrollFastUp:
 	case KS_Cmd_ScrollFastDown:

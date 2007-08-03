@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.163 2007/08/01 19:50:24 degroote Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.163.2.1 2007/08/03 22:17:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.163 2007/08/01 19:50:24 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.163.2.1 2007/08/03 22:17:28 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -639,6 +639,8 @@ powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
 	strlcpy(ndp->sfd_name, name, sizeof(ndp->sfd_name));
 	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
+	aprint_error("%s: WARNING: powerhook_establish is deprecated; please "
+	    "see devpm(4)\n", name);
 	return (ndp);
 }
 

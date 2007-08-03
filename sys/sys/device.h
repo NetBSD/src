@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.96 2007/07/09 11:46:21 tsutsui Exp $ */
+/* $NetBSD: device.h,v 1.96.6.1 2007/08/03 22:17:29 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -80,6 +80,9 @@
 #include <sys/evcnt.h>
 #include <sys/queue.h>
 
+typedef struct device *device_t;
+#include <sys/pnp.h>
+
 #include <prop/proplib.h>
 
 /*
@@ -92,7 +95,10 @@ typedef enum devclass {
 	DV_DISK,		/* disk drive (label, etc) */
 	DV_IFNET,		/* network interface */
 	DV_TAPE,		/* tape device */
-	DV_TTY			/* serial line interface (?) */
+	DV_TTY,			/* serial line interface (?) */
+	DV_AUDIODEV,		/* audio device */
+	DV_DISPLAYDEV,		/* display device */
+	DV_BUS			/* bus device */
 } devclass_t;
 
 /*
@@ -106,7 +112,6 @@ typedef enum devact {
 typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
-typedef struct device *device_t;
 
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
@@ -121,6 +126,7 @@ struct device {
 					   (NULL if pseudo- or root node) */
 	int		dv_flags;	/* misc. flags; see below */
 	int		*dv_locators;	/* our actual locators (optional) */
+	pnp_device_t	dv_pnp;		/* device pnp messaging */
 	prop_dictionary_t dv_properties;/* properties dictionary */
 };
 
@@ -368,6 +374,7 @@ const char	*device_xname(device_t);
 device_t	device_parent(device_t);
 bool		device_is_active(device_t);
 int		device_locator(device_t, u_int);
+pnp_device_t	*device_pnp(device_t);
 void		*device_private(device_t);
 prop_dictionary_t device_properties(device_t);
 
