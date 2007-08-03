@@ -1,4 +1,4 @@
-/*	$NetBSD: plist.c,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $	*/
+/*	$NetBSD: plist.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $");
+__RCSID("$NetBSD: plist.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $");
 #endif
 #endif
 
@@ -327,6 +327,81 @@ write_plist(package_t *pkg, FILE * fp, char *realprefix)
 			    (p->name) ? p->name : "");
 		}
 	}
+}
+
+/*
+ * Like write_plist, but compute memory string.
+ */
+void
+stringify_plist(package_t *pkg, char **real_buf, size_t *real_len, char *realprefix)
+{
+	plist_t *p;
+	const cmd_t *cmdp;
+	char *buf;
+	size_t len;
+	int item_len;
+
+	/* Pass One: compute output size only. */
+	len = 0;
+
+	for (p = pkg->head; p; p = p->next) {
+		if (p->type == PLIST_FILE) {
+			len += strlen(p->name) + 1;
+			continue;
+		}
+		for (cmdp = cmdv; cmdp->c_type != FAIL && cmdp->c_type != p->type; cmdp++) {
+		}
+		if (cmdp->c_type == FAIL)
+			continue;
+		if (cmdp->c_argc == 0)
+			len += 1 + strlen(cmdp->c_s) + 1;
+		else if (cmdp->c_subst && realprefix)
+			len += 1 + strlen(cmdp->c_s) + 1 + strlen(realprefix) + 1;
+		else
+			len += 1 + strlen(cmdp->c_s) + 1 + strlen(p->name ? p->name : "") + 1;
+	}
+
+	/* Pass Two: build actual string. */
+	if ((buf = malloc(len + 1)) == NULL)
+		err(2, "malloc failed");
+	*real_buf = buf;
+	*real_len = len;
+	++len;
+
+#define	UPDATE_LEN							\
+do {									\
+	if (item_len < 0 || item_len > len)				\
+		errx(2, "Size computation failed, aborted.");		\
+	buf += item_len;						\
+	len -= item_len;						\
+} while (0)
+
+	for (p = pkg->head; p; p = p->next) {
+		if (p->type == PLIST_FILE) {
+			/* Fast-track files - these are the most common */
+			item_len = snprintf(buf, len, "%s\n", p->name);
+			UPDATE_LEN;
+			continue;
+		}
+		for (cmdp = cmdv; cmdp->c_type != FAIL && cmdp->c_type != p->type; cmdp++) {
+		}
+		if (cmdp->c_type == FAIL) {
+			warnx("Unknown PLIST command type %d (%s)", p->type, p->name);
+		} else if (cmdp->c_argc == 0) {
+			item_len = snprintf(buf, len, "%c%s\n", CMD_CHAR, cmdp->c_s);
+			UPDATE_LEN;
+		} else if (cmdp->c_subst && realprefix) {
+			item_len = snprintf(buf, len, "%c%s %s\n", CMD_CHAR, cmdp->c_s, realprefix);
+			UPDATE_LEN;
+		} else {
+			item_len = snprintf(buf, len, "%c%s %s\n", CMD_CHAR, cmdp->c_s,
+			    (p->name) ? p->name : "");
+			UPDATE_LEN;
+		}
+	}
+
+	if (len != 1)
+		errx(2, "Size computation failed, aborted.");
 }
 
 /*

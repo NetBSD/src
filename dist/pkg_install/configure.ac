@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.52)
-AC_INIT([pkg_install], [20070416], [grant@NetBSD.org])
+AC_INIT([pkg_install], [20070725], [joerg@NetBSD.org])
 AC_CONFIG_SRCDIR([lib/plist.c])
 AC_CONFIG_HEADER(lib/config.h)
 
@@ -61,11 +61,11 @@ AC_ARG_WITH(pax,
 [ pax='$(prefix)/bin/pax' ])
 AC_SUBST(pax)
 
-AC_ARG_WITH(mtree,
-[  --with-mtree=path       Path to mtree (PREFIX/sbin/mtree)],
-[ mtree="$with_mtree" ],
-[ mtree='$(sbindir)/mtree' ])
-AC_SUBST(mtree)
+AC_ARG_ENABLE([bootstrap],
+    [AS_HELP_STRING([--enable-bootstrap], [build minimal version of pkg_install])],
+    [bootstrap=yes], [bootstrap=])
+
+AC_SUBST(bootstrap)
 
 dnl Checks for libraries.
 AC_CHECK_LIB(db, __db185_open, , AC_SEARCH_LIBS(dbopen, [db db1]))
@@ -85,6 +85,12 @@ AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/ioctl.h sys/mount.h sys/param.h \
 # Checks for library functions.
 AC_CHECK_FUNCS([chflags dbopen __db185_open tgetent vfork])
 AC_CHECK_FUNCS([getrlimit setrlimit])
+
+dnl Check for types
+AC_TYPE_UINT8_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
 
 need_priu64=no
 AC_MSG_CHECKING([for a working PRIu64])

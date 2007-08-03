@@ -1,4 +1,4 @@
-/*	$NetBSD: pl.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $	*/
+/*	$NetBSD: pl.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $");
+__RCSID("$NetBSD: pl.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $");
 #endif
 #endif
 
@@ -118,7 +118,7 @@ reorder(package_t *pkg, int dirc)
  * Check a list for files that require preconversion
  */
 void
-check_list(char *home, package_t *pkg, const char *PkgName)
+check_list(package_t *pkg, const char *PkgName)
 {
 	struct stat st;
 	plist_t *tmp;
@@ -126,16 +126,14 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 	char    buf[ChecksumHeaderLen + LegibleChecksumLen];
 	char    target[MaxPathSize + SymlinkHeaderLen];
 	char    name[MaxPathSize];
-	char   *cwd = home;
+	char   *cwd = NULL;
 	char   *srcdir = NULL;
 	int     dirc;
 	int	cc;
 
 	/* Open Package Database for writing */
-	if (update_pkgdb && !pkgdb_open(ReadWrite)) {
-		cleanup(0);
+	if (update_pkgdb && !pkgdb_open(ReadWrite))
 		err(EXIT_FAILURE, "can't open pkgdb");
-	}
 
 	for (dirc = 0, p = pkg->head; p; p = p->next) {
 		switch (p->type) {
@@ -158,6 +156,8 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			 * but as they are present before pkg_create
 			 * starts, it's ok to do this somewhere here
 			 */
+			if (cwd == NULL)
+				errx(2, "file without preceding @cwd found");
 			if (update_pkgdb) {
 				char   *s, t[MaxPathSize];
 
@@ -181,17 +181,11 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 				}
 			}
 
-			if (cwd == home) {
-				/* no @cwd yet */
-				(void) snprintf(name, sizeof(name), "%s/%s", srcdir ? srcdir : cwd, p->name);
-			} else {
-				/* after @cwd */
-				/* prepend DESTDIR if set?  - HF */
-				(void) snprintf(name, sizeof(name), "%s%s%s",
-					cwd,
-					(strcmp(cwd, "/") == 0) ? "" : "/",
-					p->name);
-			}
+			/* prepend DESTDIR if set?  - HF */
+			(void) snprintf(name, sizeof(name), "%s%s%s",
+				cwd,
+				(strcmp(cwd, "/") == 0) ? "" : "/",
+				p->name);
 			if (lstat(name, &st) < 0) {
 				warnx("can't stat `%s'", name);
 				continue;

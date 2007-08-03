@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -128,14 +128,6 @@
 #define CHGRP_CMD "chgrp"
 #endif
 
-#ifndef MTREE_CMD
-# ifdef BINDIR
-#  define MTREE_CMD BINDIR "/mtree"
-# else
-#  define MTREE_CMD "mtree"
-# endif
-#endif
-
 /* some operating systems don't have this */
 #ifndef MAXPATHLEN
 #define MAXPATHLEN	1024
@@ -151,7 +143,6 @@ enum {
 #define DESC_FNAME		"+DESC"
 #define INSTALL_FNAME		"+INSTALL"
 #define DEINSTALL_FNAME		"+DEINSTALL"
-#define REQUIRE_FNAME		"+REQUIRE"
 #define REQUIRED_BY_FNAME	"+REQUIRED_BY"
 #define DISPLAY_FNAME		"+DISPLAY"
 #define MTREE_FNAME		"+MTREE_DIRS"
@@ -284,7 +275,7 @@ typedef struct _lpkg_head_t lpkg_head_t;
 
 /* Type of function to be handed to findmatchingname; return value of this
  * is currently ignored */
-typedef int (*matchfn) (const char *, void *);
+typedef int (*matchfn) (const char *, const char *, void *);
 
 /* This structure describes a pipe to a child process */
 typedef struct {
@@ -335,16 +326,17 @@ void    str_lowercase(unsigned char *);
 const char *basename_of(const char *);
 const char *dirname_of(const char *);
 const char *suffix_of(const char *);
-int     pmatch(const char *, const char *);
+int     pkg_match(const char *, const char *);
+int	pkg_order(const char *, const char *, const char *);
 int     findmatchingname(const char *, const char *, matchfn, void *); /* doesn't really belong to "strings" */
 char   *findbestmatchingname(const char *, const char *);	/* neither */
 int     ispkgpattern(const char *);
 void	strip_txz(char *, char *, const char *);
 
 /* callback functions for findmatchingname */
-int     findbestmatchingname_fn(const char *, void *);	/* neither */
-int     note_whats_installed(const char *, void *);
-int     add_to_list_fn(const char *, void *);
+int     findbestmatchingname_fn(const char *, const char *, void *);	/* neither */
+int     note_whats_installed(const char *, const char *, void *);
+int     add_to_list_fn(const char *, const char *, void *);
 
 
 /* File */
@@ -391,6 +383,7 @@ void    add_plist(package_t *, pl_ent_t, const char *);
 void    add_plist_top(package_t *, pl_ent_t, const char *);
 void    delete_plist(package_t *, Boolean, pl_ent_t, char *);
 void    write_plist(package_t *, FILE *, char *);
+void	stringify_plist(package_t *, char **, size_t *, char *);
 void    read_plist(package_t *, FILE *);
 int     plist_cmd(unsigned char *, char **);
 int     delete_package(Boolean, Boolean, package_t *, Boolean);
@@ -412,9 +405,6 @@ void	_pkgdb_setPKGDB_DIR(const char *);
 lpkg_t *alloc_lpkg(const char *);
 lpkg_t *find_on_queue(lpkg_head_t *, const char *);
 void    free_lpkg(lpkg_t *);
-
-/* For all */
-int     pkg_perform(lpkg_head_t *);
 
 /* Externs */
 extern Boolean Verbose;

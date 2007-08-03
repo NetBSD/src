@@ -1,4 +1,4 @@
-.\" $NetBSD: audit-packages.conf.5.in,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $
+.\" $NetBSD: audit-packages.conf.5.in,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $
 .\"
 .\" Copyright (c) 2007 Adrian Portelli.  All rights reserved.
 .\"
@@ -108,7 +108,7 @@ vulnerability.
 .%T "Documentation on the NetBSD Package System"
 .Sh HISTORY
 The
-.Nm
+.Nm audit-packages
 and
 .Nm download-vulnerability-list
 commands were originally implemented and added to
@@ -116,8 +116,7 @@ commands were originally implemented and added to
 pkgsrc by
 .An Alistair Crooks
 on September 19, 2000.  During April 2007 
-.Nm 
-was re-written by Adrian Portelli
-and support was added for compressed files and checking signatures on downloaded
-files.
-The original idea came from Roland Dowdeswell and Bill Sommerfeld.
+.Nm audit-packages 
+was re-written by Adrian Portelli and support was added for compressed 
+files and checking signatures on downloaded files.  The original idea 
+came from Roland Dowdeswell and Bill Sommerfeld.

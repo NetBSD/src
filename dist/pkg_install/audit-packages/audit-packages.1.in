@@ -1,4 +1,4 @@
-.\" $NetBSD: audit-packages.1.in,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $
+.\" $NetBSD: audit-packages.1.in,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $
 .\"
 .\" Copyright (c) 2003 Jeremy C. Reed.  All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 07, 2007
+.Dd July 7, 2007
 .Os
 .Dt AUDIT-PACKAGES 1
 .Sh NAME
@@ -63,41 +63,18 @@ vulnerable package.
 .Pp
 The following flags are supported:
 .Bl -tag -width Ar
+.It Fl c Ar config_file
+Specify a custom
+.Ar config_file
+configuration file to use.
 .It Fl d
-Attempt to download the vulnerabilities
-file using the
-.Pa download-vulnerability-list
+Attempt to download the vulnerabilities file using the
+.Nm download-vulnerability-list
 script before scanning the installed packages for vulnerabilities.
 .It Fl e
 Check for end-of-life (eol) packages.
-.It Fl s
-Verify the signature of the current
-.Pa pkg-vulnerabilities
-file.  The key used to sign the file is available from:
-.Pa ftp.netbsd.org/pub/NetBSD/security/PGP/pkgsrc-security@NetBSD.org.asc
-.Pp
-In order for this to function correctly the above key must be
-added to the gpg keyring of the user who runs 
-.Pa audit-packages -s 
-and/or
-.Pa download-vulnerability-list -s .
-In addition to this the gpg binary must be installed on your system.
-The path to the gpg binary can be set in
-.Xr audit-packages.conf 5 .
-.Pp
-The requirement for GnuPG may go away in the future when a suitable
-replacement is implemented.
-.It Fl V
-Display the version number and exit.
-.It Fl v
-Be more verbose. Specify multiple -v flags to increase verbosity.
-Currently a maximum level of three is supported.
-.It Fl c Ar conf_file
-Specify a custom
-.Ar conf_file
-configuration file to use.
 .It Fl g Ar file
-Compute the SHA512 hash on 
+Compute the SHA512 hash on
 .Ar file .
 .It Fl h Ar file
 Check the SHA512 hash of a
@@ -117,13 +94,44 @@ for vulnerabilities.
 .It Fl Q Ar varname
 Display the current value of
 .Ar varname
-and exit.  Currently supported
+and exit.
+Currently supported
 .Ar varname
-are GPG, PKGVULNDIR and IGNORE_URLS.
+are
+.Dv GPG ,
+.Dv PKGVULNDIR ,
+and
+.Dv IGNORE_URLS .
+.It Fl s
+Verify the signature of the current
+.Pa pkg-vulnerabilities
+file.
+The key used to sign the file is available from:
+.Pa ftp://ftp.netbsd.org/pub/NetBSD/security/PGP/pkgsrc-security@NetBSD.org.asc
+.Pp
+In order for this to function correctly the above key must be
+added to the gpg keyring of the user who runs
+.Ic audit-packages -s
+and/or
+.Ic download-vulnerability-list -s .
+In addition to this the gpg binary must be installed on your system.
+The path to the gpg binary can be set in
+.Xr audit-packages.conf 5 .
+.Pp
+The requirement for GnuPG may go away in the future when a suitable
+replacement is implemented.
 .It Fl t Ar type
 Only check for the specified
 .Ar type
 of vulnerability.
+.It Fl V
+Display the version number and exit.
+.It Fl v
+Be more verbose.
+Specify multiple
+.Fl v
+flags to increase verbosity.
+Currently a maximum level of three is supported.
 .El
 .Pp
 The
@@ -134,36 +142,39 @@ file from
 .Pa ftp.NetBSD.org
 using
 .Xr ftp 1
-by default.  This vulnerabilities file documents all known security issues in
+by default.
+This vulnerabilities file documents all known security issues in
 pkgsrc packages and is kept up-to-date by the
 .Nx
 pkgsrc-security team.
 .Pp
 The following flags are supported:
 .Bl -tag -width Ar
+.It Fl c Ar config_file
+Specify a custom
+.Ar config_file
+configuration file to use.
 .It Fl h
 Display program usage.
 .It Fl s
 Verify the signature of the current
 .Pa pkg-vulnerabilities
-file.  In order for this to function correctly you will need to add the
-pkgsrc Security Team key to your gpg keyring and trust it.  The key is
-available from:
-.Pa ftp.netbsd.org/pub/NetBSD/security/PGP/pkgsrc-security@NetBSD.org.asc
+file.
+In order for this to function correctly you will need to add the
+pkgsrc Security Team key to your gpg keyring and trust it.
+The key is available from:
+.Pa ftp://ftp.netbsd.org/pub/NetBSD/security/PGP/pkgsrc-security@NetBSD.org.asc
 In addition to this the gpg binary must be installed on your system.
 The path to the gpg binary can be set in
 .Xr audit-packages.conf 5 .
-.It Fl c Ar conf_file
-Specify a custom
-.Ar conf_file
-configuration file to use.
 .El
 .Pp
 By default
 .Nm download-vulnerability-list
 will download a compressed version of
 .Pa pkg-vulnerabilities
-from ftp.netbsd.org.  The default file downloaded is compressed using
+from ftp.netbsd.org.
+The default file downloaded is compressed using
 .Xr gzip 1 .
 The compression tool used can set in
 .Xr audit-packages.conf 5 .
@@ -260,17 +271,20 @@ weak-ssl-authentication
 The type
 .Pa eol
 implies that the package is no longer maintained by the software vendor but
-is provided by the pkgsrc team for your convenience only.  It may contain any
-number of the above mentioned vulnerabilities.  Any packages of type eol
-are not reported by default. Run
+is provided by the pkgsrc team for your convenience only.
+It may contain any number of the above mentioned vulnerabilities.
+Any packages of type eol are not reported by default.
+Run
 .Nm Fl e
 to also report on eol packages.
 .Pp
 By default, the vulnerabilities file is stored in the
-PKG_DBDIR
-directory.  On a standard installation this will be set to @pkgdbdir@.
+.Dv PKG_DBDIR
+directory.
+On a standard installation this will be set to @pkgdbdir@.
 If you have installed pkgsrc on a supported platform this will be what
-ever you specifed when bootstrapping pkgsrc i.e. --pkgdbdir <pkgdbdir>.
+ever you specifed when bootstrapping pkgsrc i.e.,
+.Fl -pkgdbdir Aq Ar pkgdbdir .
 The path to the
 .Pa pkg-vulnerabilities
 file can be set in
@@ -289,7 +303,6 @@ command can be run via
 to update the
 .Pa pkg-vulnerabilities
 file daily.
-And
 .Nm
 can be run via
 .Xr cron 8
@@ -318,8 +331,11 @@ FETCH_PROTO="http"
 .Xr audit-packages.conf 5 ,
 .Xr mk.conf 5 ,
 .Xr pkgsrc 7 ,
+.Rs
 .%T "Documentation on the NetBSD Package System"
+.Re
 .Sh HISTORY
+.An -nosplit
 The
 .Nm
 and
@@ -328,9 +344,11 @@ commands were originally implemented and added to
 .Nx Ap s
 pkgsrc by
 .An Alistair Crooks
-on September 19, 2000.  During April 2007
+on September 19, 2000.
+During April 2007
 .Nm
-was re-written by Adrian Portelli
-and support was added for compressed files and checking signatures on downloaded
-files.
+was re-written by
+.An Adrian Portelli
+and support was added for compressed files and checking signatures
+on downloaded files.
 The original idea came from Roland Dowdeswell and Bill Sommerfeld.

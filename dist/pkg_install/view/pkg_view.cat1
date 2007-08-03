@@ -20,10 +20,10 @@ WWAARRNNIINNGG
      _v_i_d_e _i_n_s_t_a_l_l_a_b_l_e _p_a_c_k_a_g_e _f_i_l_e_s_.  _F_o_r _e_x_t_r_a _p_r_o_t_e_c_t_i_o_n_, _e_x_a_m_i_n_e _a_l_l _t_h_e
      _p_a_c_k_a_g_e _c_o_n_t_r_o_l _f_i_l_e_s _i_n _t_h_e _p_a_c_k_a_g_e _d_a_t_a_b_a_s_e _d_i_r_e_c_t_o_r_y
      _(_/_u_s_r_/_p_k_g_/_p_a_c_k_a_g_e_s_/_<_p_k_g_-_n_a_m_e_>_/_)_.  _P_a_y _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y
-     _+_I_N_S_T_A_L_L_, _+_D_E_I_N_S_T_A_L_L_, _+_R_E_Q_U_I_R_E_, _o_r _+_M_T_R_E_E___D_I_R_S _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e
-     _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d
-     @@uunneexxeecc _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r _u_s_e _t_h_e pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e
-     _i_n_s_t_a_l_l_e_d _p_a_c_k_a_g_e _c_o_n_t_r_o_l _f_i_l_e_s_.
+     _+_I_N_S_T_A_L_L _o_r _+_D_E_I_N_S_T_A_L_L _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_,
+     @@mmooddee _(_c_h_e_c_k _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d @@uunneexxeecc _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r
+     _u_s_e _t_h_e pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e _i_n_s_t_a_l_l_e_d _p_a_c_k_a_g_e _c_o_n_t_r_o_l
+     _f_i_l_e_s_.
 
 OOPPTTIIOONNSS
      The following command-line options are supported:

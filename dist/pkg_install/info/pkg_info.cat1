@@ -99,8 +99,6 @@ DDEESSCCRRIIPPTTIIOONN
 
      --RR      For each package, show the packages that require it.
 
-     --rr      Show the requirements script (if any) for each package.
-
      --SS      Show the size of this package and all the packages it requires,
              in bytes.
 

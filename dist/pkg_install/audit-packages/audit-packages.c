@@ -1,4 +1,4 @@
-/* $NetBSD: audit-packages.c,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $ */
+/* $NetBSD: audit-packages.c,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Adrian Portelli <adrianp@NetBSD.org>.
@@ -35,13 +35,21 @@
 #include "config.h"
 #endif
 
+#include <nbcompat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#if defined(HAVE_ERR_H) || !defined(PKGSRC)
 #include <err.h>
+#else
+#include <nbcompat/err.h>
+#endif
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -105,7 +113,7 @@ Boolean eol = FALSE;				/* don't check eol */
 int main(int, char **);
 void *safe_calloc(size_t, size_t);
 char *ap_fixpkgname(char *);
-static int foundpkg(const char *, void *);
+static int foundpkg(const char *, const char *, void *);
 static int checkforpkg(char *);
 void usage(void);
 int dvl(void);
@@ -293,10 +301,6 @@ main(int argc, char **argv)
 		}
 	}
 
-	/* tell the user where we are reading the config file from */
-	if (verbose >= 1)
-		fprintf(stderr, "Reading settings from: %s\n", conf_file);
-
 	/* get the config file values */
 	retval = get_confvalues();
 
@@ -308,7 +312,12 @@ main(int argc, char **argv)
 		fprintf(stderr, "debug2: Using PKGDB_DIR: %s\n", _pkgdb_getPKGDB_DIR());
 		fprintf(stderr, "debug2: Using pkg-vulnerabilities file: %s\n", pvfile);
 		fprintf(stderr, "debug2: Using verify tool: %s\n", verify_bin);
-		fprintf(stderr, "debug2: Using ignore directives: %s\n", ignore);
+
+		if (ignore != NULL) {
+			fprintf(stderr, "debug2: Using ignore directives: %s\n", ignore);
+		} else {
+			fprintf(stderr, "debug2: No ignore directives found.\n");
+		}
 	}
 
 	/* now that we have read in the config file we can show the info */
@@ -325,14 +334,14 @@ main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 	}
 
-	/* check for an old vulnerabilities file if we're being verbose */
-	if ((verbose >= 1) && (download == FALSE))
-		old_pvfile();
-
 	/* open pvfile */
 	if ((pv = fopen(pvfile, "r")) == NULL) {
 		errx(EXIT_FAILURE, "Unable to open: %s", pvfile);
 	}
+
+	/* check for an old vulnerabilities file if we're being verbose */
+	if ((verbose >= 1) && (download == FALSE))
+		old_pvfile();
 
 	/* check the #FORMAT from the pkg-vulnerabilities file */
 	pv_format(pv);
@@ -460,12 +469,12 @@ main(int argc, char **argv)
 			/*
 			 * if we're checking for just one package (i.e.
 			 * check_one) regardless if it's installed or not
-			 * (i.e. -n and -p) then use pmatch
+			 * (i.e. -n and -p) then use pkg_match
 			 * to see if we have a hit using pattern
 			 * matching.
 			 */
 
-			if ((pmatch(pv_entry[0], one_package)) == 1) {
+			if ((pkg_match(pv_entry[0], one_package)) == 1) {
 
 				/* flag to indicate we have found something */
 				vuln_found = TRUE;
@@ -600,9 +609,12 @@ get_confvalues(void)
 	char *retval = NULL;
 
 	if ((conf = fopen(conf_file, "r")) == NULL) {
-		if (verbose >= 1)
-			fprintf(stderr, "Unable to open specified configuration file: %s\n", conf_file);
+		if (verbose >= 2)
+			fprintf(stderr, "debug2: No configuration file found.\n");
 		return 0;
+	} else {
+		if (verbose >= 1)
+			fprintf(stderr, "Using configuration file: %s\n", conf_file);
 	}
 
 	line = safe_calloc(MAXLINELEN, sizeof(char));
@@ -645,7 +657,7 @@ get_confvalues(void)
 
 /* called by checkforpkg to see if a package exists */
 static int
-foundpkg(const char *found, void *vp)
+foundpkg(const char *pattern, const char *found, void *vp)
 {
 	char *data = vp;
 	char *buf;
@@ -756,7 +768,8 @@ void
 old_pvfile(void)
 {
 	float t_diff;
-	int long t_current, t_pvfile;
+	int long t_current;
+	time_t t_pvfile;
 	struct stat pvstat;
 	struct timeval now_time = {0, 0};
 
@@ -768,7 +781,7 @@ old_pvfile(void)
 	} else {
 		/* difference between the file and now */
 		t_current = now_time.tv_sec;
-		t_pvfile = pvstat.st_ctimespec.tv_sec;
+		t_pvfile = pvstat.st_ctime;
 		t_diff = (((((float) t_current - (float) t_pvfile) / 60) / 60) / 24);
 
 		if (t_diff >= 7)
@@ -918,12 +931,12 @@ gen_hash(char *hash_input)
 	int i = 0;
 
 	FILE *hash_in;
+	SHA512_CTX hash_ctx;
 
 	if ((hash_in = fopen(hash_input, "r")) == NULL) {
 		errx(EXIT_FAILURE, "Unable to open: %s", hash_input);
 	}
 
-	SHA512_CTX hash_ctx;
 	SHA512_Init(&hash_ctx);
 
 	line = safe_calloc(MAXLINELEN, sizeof(char));

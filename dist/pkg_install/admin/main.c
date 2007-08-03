@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $");
 #endif
 
 /*
@@ -83,7 +83,7 @@ int     pkgcnt;
 
 static int	quiet;
 
-static int checkpattern_fn(const char *, void *);
+static int checkpattern_fn(const char *, const char *, void *);
 static void set_unset_variable(char **, Boolean);
 
 /* print usage message and exit */
@@ -414,7 +414,7 @@ checkall(void)
 }
 
 static int
-checkpattern_fn(const char *pkg, void *vp)
+checkpattern_fn(const char *pattern, const char *pkg, void *vp)
 {
 	int     rc;
 
@@ -433,7 +433,7 @@ checkpattern_fn(const char *pkg, void *vp)
 }
 
 static int
-lspattern_fn(const char *pkg, void *vp)
+lspattern_fn(const char *pattern, const char *pkg, void *vp)
 {
 	char *data = vp;
 	printf("%s/%s\n", data, pkg);
@@ -441,7 +441,7 @@ lspattern_fn(const char *pkg, void *vp)
 }
 
 static int
-lsbasepattern_fn(const char *pkg, void *vp)
+lsbasepattern_fn(const char *pattern, const char *pkg, void *vp)
 {
 	printf("%s\n", pkg);
 	return 0;
@@ -523,7 +523,7 @@ main(int argc, char *argv[])
 		pattern = argv[0];
 		pkg = argv[1];
 
-		if (pmatch(pattern, pkg)){
+		if (pkg_match(pattern, pkg)){
 			return 0;
 		} else {
 			return 1;
@@ -757,7 +757,7 @@ struct varval {
 };
 
 static int
-set_installed_info_var(const char *name, void *ud)
+set_installed_info_var(const char *pattern, const char *name, void *ud)
 {
 	char filename[BUFSIZ];
 	struct varval *varval;
@@ -823,7 +823,7 @@ set_unset_variable(char **argv, Boolean unset)
 				ret++;
 			}
 		} else if (isdir(*argv) || islinktodir(*argv))
-			set_installed_info_var(*argv, &varval);
+			set_installed_info_var(NULL, *argv, &varval);
 		else {
 			/* try 'pkg-[0-9]*' */
 			char try[MaxPathSize];

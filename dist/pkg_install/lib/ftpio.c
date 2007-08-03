@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $");
 #endif
 
 /*-
@@ -686,7 +686,7 @@ ftp_expand_URL(const char *base, char *pattern)
 		/* replace possible version(wildcard) given with "-*".
 		 * we can't use the pkg wildcards here as dewey compare
 		 * and alternates won't be handled by ftp(1); sort
-		 * out later, using pmatch() */
+		 * out later, using pkg_match() */
 		if (retry_tbz) {
 retry_with_tbz:
 			(void) snprintf(buf,  sizeof(buf), "nlist %.*s*.tbz %s\n",
@@ -742,11 +742,11 @@ retry_with_tbz:
 			strip_txz(s_filename, NULL, filename);
 			strip_txz(s_pattern, NULL, pattern);
 
-			if (pmatch(s_pattern, s_filename)) {
+			if (pkg_match(s_pattern, s_filename)) {
 				matches++;
 
 				/* compare findbestmatchingname() */
-				findbestmatchingname_fn(filename, best);
+				findbestmatchingname_fn(pattern, filename, best);
 			}
 		}
 		(void) fclose(f);
@@ -828,10 +828,10 @@ http_expand_URL(const char *base, char *pattern)
 				offset += len;
 				strip_txz(s_filename, NULL, filename);
 
-				if (pmatch(s_pattern, s_filename)) {
+				if (pkg_match(s_pattern, s_filename)) {
 					/* compare findbestmatchingname() */
-					findbestmatchingname_fn(filename,
-								best);
+					findbestmatchingname_fn(pattern,
+					    filename, best);
 				}
 			}
 		}

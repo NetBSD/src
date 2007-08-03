@@ -5,7 +5,7 @@ NNAAMMEE
      tributions
 
 SSYYNNOOPPSSIISS
-     ppkkgg__aadddd [--AAffIILLMMnnRRSSuuVVvv] [--KK _p_k_g___d_b_d_i_r] [--pp _p_r_e_f_i_x] [--ss _v_e_r_i_f_i_c_a_t_i_o_n_-_t_y_p_e]
+     ppkkgg__aadddd [--AAffIILLnnRRuuVVvv] [--KK _p_k_g___d_b_d_i_r] [--pp _p_r_e_f_i_x] [--ss _v_e_r_i_f_i_c_a_t_i_o_n_-_t_y_p_e]
              [--tt _t_e_m_p_l_a_t_e] [--WW _v_i_e_w_b_a_s_e] [--ww _v_i_e_w]
              [[ftp|http]://[_u_s_e_r[:_p_a_s_s_w_o_r_d_]@]_h_o_s_t[:_p_o_r_t]][/_p_a_t_h_/]pkg-name ...
 
@@ -28,10 +28,10 @@ WWAARRNNIINNGG
      _s_i_g_n_a_t_u_r_e_s _p_r_o_v_i_d_e_d _w_h_e_r_e _p_o_s_s_i_b_l_e _(_s_e_e _t_h_e --ss _o_p_t_i_o_n_)_, _o_r_, _f_a_i_l_i_n_g _t_h_a_t_,
      _u_s_e _t_h_e --MM _f_l_a_g _t_o _e_x_t_r_a_c_t _t_h_e _p_a_c_k_a_g_e _f_i_l_e_, _a_n_d _i_n_s_p_e_c_t _i_t_s _c_o_n_t_e_n_t_s _a_n_d
      _s_c_r_i_p_t_s _t_o _e_n_s_u_r_e _i_t _p_o_s_e_s _n_o _d_a_n_g_e_r _t_o _y_o_u_r _s_y_s_t_e_m_'_s _i_n_t_e_g_r_i_t_y_.  _P_a_y
-     _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y _+_I_N_S_T_A_L_L_, _+_D_E_I_N_S_T_A_L_L_, _+_R_E_Q_U_I_R_E_, _o_r
-     _+_M_T_R_E_E___D_I_R_S _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k
-     _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d @@uunneexxeecc _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r _u_s_e _t_h_e
-     pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e _p_a_c_k_a_g_e _f_i_l_e_.
+     _p_a_r_t_i_c_u_l_a_r _a_t_t_e_n_t_i_o_n _t_o _a_n_y _+_I_N_S_T_A_L_L _o_r _+_D_E_I_N_S_T_A_L_L _f_i_l_e_s_, _a_n_d _i_n_s_p_e_c_t _t_h_e
+     _+_C_O_N_T_E_N_T_S _f_i_l_e _f_o_r @@ccwwdd_, @@mmooddee _(_c_h_e_c_k _f_o_r _s_e_t_u_i_d_)_, @@ddiirrrrmm_, @@eexxeecc_, _a_n_d
+     @@uunneexxeecc _d_i_r_e_c_t_i_v_e_s_, _a_n_d_/_o_r _u_s_e _t_h_e pkg_info(_1) _c_o_m_m_a_n_d _t_o _e_x_a_m_i_n_e _t_h_e
+     _p_a_c_k_a_g_e _f_i_l_e_.
 
 OOPPTTIIOONNSS
      The following command line arguments are supported:
@@ -55,12 +55,11 @@ OOPPTTIIOONNSS
              removed.
 
      --ff      Force installation to proceed even if prerequisite packages are
-             not installed or the requirements script fails.  Although ppkkgg__aadddd
-             will still try to find and auto-install missing prerequisite
-             packages, a failure to find one will not be fatal.  This flag
-             also overrides the fatal error when the operating system or
-             architecture the package was built on differ from that of the
-             host.
+             not installed or the install script fails.  Although ppkkgg__aadddd will
+             still try to find and auto-install missing prerequisite packages,
+             a failure to find one will not be fatal.  This flag also over-
+             rides the fatal error when the operating system or architecture
+             the package was built on differ from that of the host.
 
      --II      If an installation script exists for a given package, do not exe-
              cute it.
@@ -73,16 +72,6 @@ OOPPTTIIOONNSS
 
      --LL      Don't add the package to any views after installation.
 
-     --MM      Run in MMAASSTTEERR mode.  This is a very specialized mode for running
-             ppkkgg__aadddd and is meant to be run in conjunction with SSLLAAVVEE mode.
-             When run in this mode, ppkkgg__aadddd does no work beyond extracting the
-             package into a temporary staging area (see the --tt option), read-
-             ing in the packing list, and then dumping it (prefaced by the
-             current staging area) to stdout where it may be filtered by a
-             program such as sed(1).  When used in conjunction with SSLLAAVVEE
-             mode, it allows you to make radical changes to the package struc-
-             ture before acting on its contents.
-
      --nn      Don't actually install a package, just report the steps that
              would be taken if it was.
 
@@ -91,23 +80,13 @@ OOPPTTIIOONNSS
              package.  If a package has set its default directory, it will be
              overridden by this flag.  Note that only the first @@ccwwdd directive
              will be replaced, since ppkkgg__aadddd has no way of knowing which
-             directory settings are relative and which are absolute.  It is
-             rare in any case to see more than one directory transition made,
-             but when such does happen and you wish to have control over *all*
-             directory transitions, then you may then wish to look into the
-             use of MMAASSTTEERR and SSLLAAVVEE modes (see the --MM and --SS options).
+             directory settings are relative and which are absolute.  Only one
+             directory transition is supported and the second one is expected
+             to go into _p_k_g_d_b.
 
      --RR      Do not record the installation of a package.  This means that you
              cannot deinstall it later, so only use this option if you know
              what you are doing!
-
-     --SS      Run in SSLLAAVVEE mode.  This is a very specialized mode for running
-             ppkkgg__aadddd and is meant to be run in conjunction with MMAASSTTEERR mode.
-             When run in this mode, ppkkgg__aadddd expects the release contents to be
-             already extracted and waiting in the staging area, the location
-             of which is read as a string from stdin.  The complete packing
-             list is also read from stdin, and the contents then acted on as
-             normal.
 
      --ss _v_e_r_i_f_i_c_a_t_i_o_n_-_t_y_p_e
              Use a callout to an external program to verify the binary package
@@ -162,8 +141,8 @@ OOPPTTIIOONNSS
      containing the package (these usually ending with the ``.tgz'' suffix) or
      a URL pointing at a file available on an ftp or web site.  Thus you may
      extract files directly from their anonymous ftp or WWW locations (e.g.,
-     ppkkgg__aadddd ftp://ftp.NetBSD.org/pub/NetBSD/pack-
-     ages/2.0/i386/shells/bash-3.0nb1.tgz or ppkkgg__aadddd http://www.exam-
+     ppkkgg__aadddd ftp://ftp.NetBSD.org/pub/pkgsrc/pack-
+     ages/NetBSD-3.1/i386/shells/bash-3.2.9.tgz or ppkkgg__aadddd http://www.exam-
      ple.org/packages/screen-4.0.tbz).  Note:  For ftp transfers, if you wish
      to use _p_a_s_s_i_v_e _m_o_d_e ftp in such transfers, set the variable _F_T_P___P_A_S_-
      _S_I_V_E___M_O_D_E to some value in your environment.  Otherwise, the more stan-
@@ -226,20 +205,7 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
                 age was built with ABI dependency recommendations ignored, a
                 warning will be issued.
 
-           8.   If the package contains a _r_e_q_u_i_r_e script (see pkg_create(1)),
-                it is executed with the following arguments:
-
-                _p_k_g_-_n_a_m_e      The name of the package being installed
-
-                IINNSSTTAALLLL       Keyword denoting to the script that it is to run
-                              an installation requirements check.  (The key-
-                              word is useful only to scripts which serve mul-
-                              tiple functions).
-
-                If the _r_e_q_u_i_r_e script exits with a non-zero status code, the
-                installation is terminated.
-
-           9.   If the package contains an _i_n_s_t_a_l_l script, it is executed with
+           8.   If the package contains an _i_n_s_t_a_l_l script, it is executed with
                 the following arguments:
 
                 _p_k_g_-_n_a_m_e      The name of the package being installed.
@@ -251,19 +217,12 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
                 If the _i_n_s_t_a_l_l script exits with a non-zero status code, the
                 installation is terminated.
 
-           10.  If @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee is not present in the packing
+           9.   If @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee is not present in the packing
                 list, then it is used as a guide for moving (or copying, as
                 necessary) files from the staging area into their final loca-
                 tions.
 
-           11.  If the package contains an _m_t_r_e_e_f_i_l_e file (see pkg_create(1)),
-                then mtree is invoked as:
-                      mmttrreeee --uu --ff _m_t_r_e_e_f_i_l_e --dd --ee --pp _p_r_e_f_i_x
-                where _p_r_e_f_i_x is either the prefix specified with the --pp flag
-                or, if no --pp flag was specified, the name of the first direc-
-                tory named by a @@ccwwdd directive within this package.
-
-           12.  If an _i_n_s_t_a_l_l script exists for the package, it is executed
+           10.  If an _i_n_s_t_a_l_l script exists for the package, it is executed
                 with the following arguments:
 
                 _p_k_g___n_a_m_e      The name of the package being installed.
@@ -272,7 +231,7 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
                               any actions needed after the package has been
                               installed.
 
-           13.  After installation is complete, a copy of the packing list,
+           11.  After installation is complete, a copy of the packing list,
                 _d_e_i_n_s_t_a_l_l script, description, and display files are copied
                 into _/_v_a_r_/_d_b_/_p_k_g_/_<_p_k_g_-_n_a_m_e_> for subsequent possible use by
                 pkg_delete(1).  Any package dependencies are recorded in the
@@ -280,24 +239,23 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
                 an alternate package database directory is specified, then it
                 overrides the _/_v_a_r_/_d_b_/_p_k_g path shown above).
 
-           14.  If the package is a depoted package, then add it to the
+           12.  If the package is a depoted package, then add it to the
                 default view.
 
-           15.  The staging area is deleted and the program terminates.
+           13.  The staging area is deleted and the program terminates.
 
-           16.  Finally, if we were upgrading a package, any _+_R_E_Q_U_I_R_E_D___B_Y file
+           14.  Finally, if we were upgrading a package, any _+_R_E_Q_U_I_R_E_D___B_Y file
                 that was moved aside before upgrading was started is now moved
                 back into place.
 
-     The _i_n_s_t_a_l_l and _r_e_q_u_i_r_e scripts are called with the environment variable
-     PKG_PREFIX set to the installation prefix (see the --pp option above).
-     This allows a package author to write a script that reliably performs
-     some action on the directory where the package is installed, even if the
-     user might change it with the --pp flag to ppkkgg__aadddd.  The scripts are also
-     called with the PKG_METADATA_DIR environment variable set to the location
-     of the _+_* meta-data files, and with the PKG_REFCOUNT_DBDIR environment
-     variable set to the location of the package reference counts database
-     directory.
+     The _i_n_s_t_a_l_l script is called with the environment variable PKG_PREFIX set
+     to the installation prefix (see the --pp option above).  This allows a
+     package author to write a script that reliably performs some action on
+     the directory where the package is installed, even if the user might
+     change it with the --pp flag to ppkkgg__aadddd.  The scripts are also called with
+     the PKG_METADATA_DIR environment variable set to the location of the _+_*
+     meta-data files, and with the PKG_REFCOUNT_DBDIR environment variable set
+     to the location of the package reference counts database directory.
 
 EENNVVIIRROONNMMEENNTT
      LOCALBASE   This is the location of the _v_i_e_w_b_a_s_e directory in which all
@@ -345,9 +303,9 @@ EEXXAAMMPPLLEESS
      You can grab a compiled binary package from remote location by specifying
      a URL.  The URL can be put into an environment variable, PKG_PATH.
 
-     # pkg_add -v ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All/firefox-1.0.3.tgz
+     # pkg_add -v ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/firefox-2.0.0.4.tgz
 
-     # export PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All
+     # export PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/
      # pkg_add -v firefox
 
      Over time, as problems are found in packages, they will be moved from the
@@ -355,7 +313,7 @@ EEXXAAMMPPLLEESS
      vulnerable packages by default (and know what you are doing), you can add
      the _v_u_l_n_e_r_a_b_l_e directory to your PKG_PATH like this:
 
-     # export PKG_PATH="ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/All;ftp://ftp.NetBSD.org/pub/NetBSD/packages/2.0/i386/vulnerable"
+     # export PKG_PATH="ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/All/;ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD-3.1/i386/vulnerable/"
 
      (The quotes are needed because semicolon (`;') is a shell meta-charac-
      ter.)  If you do this, consider installing and using the
@@ -363,7 +321,7 @@ EEXXAAMMPPLLEESS
 
 SSEEEE AALLSSOO
      pkg_admin(1), pkg_create(1), pkg_delete(1), pkg_info(1), mktemp(3),
-     sysconf(3), pkgsrc(7), mtree(8)
+     sysconf(3), pkgsrc(7)
 
 AAUUTTHHOORRSS
      Jordan Hubbard
@@ -388,4 +346,4 @@ BBUUGGSS
 
      Sure to be others.
 
-NetBSD 4.0                       March 2, 2007                      NetBSD 4.0
+NetBSD 4.0                      August 2, 2007                      NetBSD 4.0

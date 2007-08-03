@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $ */
+/* $NetBSD: info.h,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -38,7 +38,6 @@
 #define SHOW_PLIST		0x00004
 #define SHOW_INSTALL		0x00008
 #define SHOW_DEINSTALL		0x00010
-#define SHOW_REQUIRE		0x00020
 #define SHOW_PREFIX		0x00040
 #define SHOW_INDEX		0x00080
 #define SHOW_FILES		0x00100
@@ -80,5 +79,7 @@ extern void show_depends(char *, package_t *);
 extern void show_bld_depends(char *, package_t *);
 extern void show_index(char *, char *, char *);
 extern void show_summary(package_t *, const char *);
+
+int     pkg_perform(lpkg_head_t *);
 
 #endif				/* _INST_INFO_H_INCLUDE */

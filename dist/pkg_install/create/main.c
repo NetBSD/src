@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $");
 #endif
 #endif
 
@@ -32,7 +32,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "B:C:D:EFI:K:L:OP:RS:T:UVb:c:d:f:i:k:lm:n:p:r:s:t:v";
+static const char Options[] = "B:C:D:EFI:K:L:OP:RS:T:UVb:c:d:f:g:i:k:ln:p:r:s:u:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -41,7 +41,6 @@ char   *Display = NULL;
 char   *Install = NULL;
 char   *DeInstall = NULL;
 char   *Contents = NULL;
-char   *Mtree = NULL;
 char   *Pkgdeps = NULL;
 char   *BuildPkgdeps = NULL;
 char   *Pkgcfl = NULL;
@@ -51,6 +50,8 @@ char   *SizePkg = NULL;
 char   *SizeAll = NULL;
 char   *Preserve = NULL;
 char   *SrcDir = NULL;
+char   *DefaultOwner = NULL;
+char   *DefaultGroup = NULL;
 char   *realprefix = NULL;
 char    PlayPen[MaxPathSize];
 size_t  PlayPenSize = sizeof(PlayPen);
@@ -67,20 +68,24 @@ usage(void)
 	fprintf(stderr,
 	    "usage: pkg_create [-ElORUVv] [-B build-info-file] [-b build-version-file]\n"
             "                  [-C cpkgs] [-D displayfile] [-I realprefix] [-i iscript]\n"
-            "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir] [-m mtreefile]\n"
+            "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir]\n"
             "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
-            "                  [-S size-all-file] [-s size-pkg-file] [-t template]\n"
-            "                  [-T buildpkgs] -c comment -d description -f packlist\n"
+            "                  [-S size-all-file] [-s size-pkg-file]\n"
+	    "                  [-T buildpkgs] [-u owner] [-g group]\n"
+            "                  -c comment -d description -f packlist\n"
             "                  pkg-name\n");
 	exit(1);
+}
+
+void
+cleanup(int in_signal)
+{
 }
 
 int
 main(int argc, char **argv)
 {
 	int     ch;
-	lpkg_head_t pkgs;
-	lpkg_t *lpp;
 
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1)
@@ -133,6 +138,10 @@ main(int argc, char **argv)
 			Desc = optarg;
 			break;
 
+		case 'g':
+			DefaultGroup = optarg;
+			break;
+
 		case 'i':
 			Install = optarg;
 			break;
@@ -153,16 +162,12 @@ main(int argc, char **argv)
 			SrcDir = optarg;
 			break;
 
-		case 't':
-			strlcpy(PlayPen, optarg, sizeof(PlayPen));
+		case 'u':
+			DefaultOwner = optarg;
 			break;
 
 		case 'D':
 			Display = optarg;
-			break;
-
-		case 'm':
-			Mtree = optarg;
 			break;
 
 		case 'n':
@@ -202,28 +207,22 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	TAILQ_INIT(&pkgs);
-
-	/* Get all the remaining package names, if any */
-	while (*argv) {
-		lpp = alloc_lpkg(*argv);
-		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
-		argv++;
+	if (argc == 0) {
+		warnx("missing package name");
+		usage();
+	}
+	if (argc != 1) {
+		warnx("only one package name allowed");
+		usage();
 	}
 
-	/* If no packages, yelp */
-	lpp = TAILQ_FIRST(&pkgs);
-	if (lpp == NULL)
-		warnx("missing package name"), usage();
-	lpp = TAILQ_NEXT(lpp, lp_link);
-	if (lpp != NULL)
-		warnx("only one package name allowed ('%s' extraneous)",
-		    lpp->lp_name),
-		    usage();
-	if (!pkg_perform(&pkgs)) {
-		if (Verbose)
-			warnx("package creation failed");
-		return 1;
-	} else
+	if (pkg_perform(*argv))
 		return 0;
+	if (Verbose) {
+		if (PlistOnly)
+			warnx("package registration failed");
+		else
+			warnx("package creation failed");
+	}
+	return 1;
 }

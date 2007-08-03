@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.in,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $
+# $NetBSD: Makefile.in,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -15,12 +15,7 @@ cat5dir = $(mandir)/cat5
 cat1dir = $(mandir)/cat1
 sharedir = $(prefix)/share/examples/pkg_install
 
-do_subst = 	sed -e 's,_pkgdbdir_,$(pkgdbdir),g' \
-		-e 's,_sysconfdir_,$(sysconfdir),g' \
-		-e 's,_prefix_,$(prefix),g' \
-		-e 's,_pprefix_,$(pprefix),g' \
-		-e 's,_ftp_,@ftp@,g' \
-		-e 's,_gzcat_,@gzcat@,g'
+do_subst = 	sed -e 's,@gzcat@,_gzcat_,g'
 
 CC = @CC@
 CCLD= $(CC)
@@ -28,9 +23,9 @@ LIBS= -linstall @LIBS@
 CPPFLAGS=	@CPPFLAGS@ -I. -I../lib -DHOST=\"$(CANONICAL_HOST)\" -DPKGSRC
 CPPFLAGS+=	-DPREFIX=\"$(prefix)\" -DSYSCONFDIR=\"$(sysconfdir)\"
 DEFS= @DEFS@
-CFLAGS= @CFLAGS@ -Wall
+CFLAGS= @CFLAGS@
 LDFLAGS= @LDFLAGS@ -L../lib
-SUBST_FILES= audit-packages.1 download-vulnerability-list.1 audit-packages.conf audit-packages.conf.5 audit-packages.conf.cat5
+SUBST_FILES= audit-packages.conf.5 audit-packages.conf.cat5 audit-packages.conf download-vulnerability-list.sh
 
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -46,7 +41,7 @@ audit-packages_OBJS = audit-packages.o
 .c.o:
 	$(COMPILE) -c $< -o $@
 
-all: audit-packages
+all: subst audit-packages
 
 audit-packages: $(audit-packages_OBJS)
 	$(LINK) $(audit-packages_OBJS) $(LIBS)

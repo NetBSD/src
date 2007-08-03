@@ -14,7 +14,7 @@ DDEESSCCRRIIPPTTIIOONN
 
      --bb _b_a_s_e_U_R_L
              Specify a base URL from which to download binary packages.  The
-             default URL is _f_t_p_:_/_/_f_t_p_._N_e_t_B_S_D_._o_r_g_/_p_u_b_/_N_e_t_B_S_D_/_p_a_c_k_a_g_e_s.
+             default URL is _f_t_p_:_/_/_f_t_p_._N_e_t_B_S_D_._o_r_g_/_p_u_b_/_p_k_g_s_r_c_/_p_a_c_k_a_g_e_s.
 
      --hh      Print a help message and then exit.
 
@@ -58,4 +58,4 @@ SSEEEE AALLSSOO
 AAUUTTHHOORRSS
      The bbppmm utility was written by Alistair Crooks <agc@NetBSD.org>.
 
-NetBSD 4.0                     December 21, 2003                    NetBSD 4.0
+NetBSD 4.0                      August 3, 2007                      NetBSD 4.0
