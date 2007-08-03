@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.1 2007/07/16 13:01:46 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd May 19, 2007
+.Dd August 2, 2007
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -44,6 +44,8 @@
 .Ek
 .Bk -words
 .Op Fl D Ar displayfile
+.Bk -words
+.Op Fl g Ar group
 .Ek
 .Bk -words
 .Op Fl I Ar realprefix
@@ -59,9 +61,6 @@
 .Ek
 .Bk -words
 .Op Fl L Ar SrcDir
-.Ek
-.Bk -words
-.Op Fl m Ar mtreefile
 .Ek
 .Bk -words
 .Op Fl n Ar preserve-file
@@ -84,6 +83,8 @@
 .Bk -words
 .Op Fl t Ar template
 .Ek
+.Bk -words
+.Op Fl u Ar owner
 .Bk -words
 .Fl c Ar comment
 .Ek
@@ -169,6 +170,10 @@ if
 is a
 .Cm -
 (dash).
+.It Fl g Ar group
+Make
+.Ar group
+the default group ownership instead of extracting it from the file system.
 .It Fl I Ar realprefix
 Provide the real prefix, as opposed to the staging prefix, for use in
 staged installations of packages.
@@ -206,24 +211,6 @@ and
 .Xr symlink 2
 to remove and re-link
 any symbolic links which are targeted at full path names.
-.It Fl m Ar mtreefile
-Run
-.Xr mtree 8
-with input from mtreefile before the package is installed.
-Mtree is invoked as
-.Cm mtree
-.Fl u
-.Fl f
-.Ar mtreefile
-.Fl d
-.Fl e
-.Fl p
-.Pa prefix ,
-where
-.Pa prefix
-is the name of the first directory named by a
-.Cm @cwd
-directive.
 .It Fl n Ar preserve-file
 The file is used to denote that the package should not be deleted.
 This is intended for use where the deletion of packages may present
@@ -304,6 +291,10 @@ characters for
 to fill in with a unique ID.
 .It Fl U
 Do not update the package file database with any file information.
+.It Fl u Ar owner
+Make
+.Ar owner
+the default owner instead of extracting it from the file system.
 .It Fl V
 Print version number and exit.
 .It Fl v
@@ -469,17 +460,6 @@ directives are used, the directories are removed in the order specified.
 The
 .Pa name
 directory will not be removed unless it is empty.
-.It Cm @mtree Ar name
-Declare
-.Pa name
-as an
-.Xr mtree 8
-input file to be used at install time (see
-.Fl m
-above).
-Only the first
-.Cm @mtree
-directive is honored.
 .It Cm @display Ar name
 Declare
 .Pa name

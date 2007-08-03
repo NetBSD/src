@@ -60,11 +60,11 @@ SSEEEE AALLSSOO
      _o_n _t_h_e _N_e_t_B_S_D _P_a_c_k_a_g_e _S_y_s_t_e_m
 
 HHIISSTTOORRYY
-     The aauuddiitt--ppaacckkaaggeess..ccoonnff and ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt commands were
-     originally implemented and added to NetBSD's pkgsrc by Alistair Crooks on
-     September 19, 2000.  During April 2007 aauuddiitt--ppaacckkaaggeess..ccoonnff was re-written
-     by Adrian Portelli and support was added for compressed files and check-
-     ing signatures on downloaded files.  The original idea came from Roland
+     The aauuddiitt--ppaacckkaaggeess and ddoowwnnllooaadd--vvuullnneerraabbiilliittyy--lliisstt commands were origi-
+     nally implemented and added to NetBSD's pkgsrc by Alistair Crooks on
+     September 19, 2000.  During April 2007 aauuddiitt--ppaacckkaaggeess was re-written by
+     Adrian Portelli and support was added for compressed files and checking
+     signatures on downloaded files.  The original idea came from Roland
      Dowdeswell and Bill Sommerfeld.
 
-NetBSD 4.0                       July 07, 2007                      NetBSD 4.0
+NetBSD 3.1                       July 07, 2007                      NetBSD 3.1

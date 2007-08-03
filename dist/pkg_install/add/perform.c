@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.1 2007/07/16 13:01:45 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.1 2007/07/16 13:01:45 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $");
 #endif
 #endif
 
@@ -376,13 +376,6 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		/* Check for sanity */
 		if (sanity_check(pkg))
 			goto bomb;
-
-		/* If we're running in MASTER mode, just output the plist and return */
-		if (AddMode == MASTER) {
-			printf("%s\n", where_playpen());
-			write_plist(&Plist, stdout, NULL);
-			return 0;
-		}
 	}
 
 	/* Read the OS, version and architecture from BUILD_INFO file */
@@ -583,7 +576,7 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 							
 							/* 
 							 * step into pkg2chk, read it's +CONTENTS file and see if
-							 * all @pkgdep lines agree with PkgName (using pmatch()) 
+							 * all @pkgdep lines agree with PkgName (using pkg_match()) 
 							 */
 							snprintf(depC, sizeof(depC), "%s/%s/%s", dbdir, pkg2chk, CONTENTS_FNAME);
 							depf = fopen(depC , "r");
@@ -630,7 +623,7 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 								}
 								if (strcmp(base_new, base_exist) == 0) {
 									/* Same pkg, so do the interesting compare */
-									if (pmatch(depp->name, PkgName)) {
+									if (pkg_match(depp->name, PkgName)) {
 										if (Verbose)
 											printf("@pkgdep check: %s is ok for %s (in %s pkg)\n",
 											       PkgName, depp->name, pkg2chk);
@@ -823,22 +816,6 @@ ignore_replace_depends_check:
 	if (errc != 0)
 		goto bomb;
 
-	/* Look for the requirements file */
-	if (fexists(REQUIRE_FNAME)) {
-		warnx("package %s uses obsoleted require scripts", PkgName);
-		(void) fexec(CHMOD_CMD, "+x", REQUIRE_FNAME, NULL);	/* be sure */
-		if (Verbose)
-			printf("Running requirements file first for %s.\n", PkgName);
-		if (!Fake && fexec("./" REQUIRE_FNAME, PkgName, "INSTALL", NULL)) {
-			warnx("package %s fails requirements %s", pkg,
-			    Force ? "installing anyway" : "- not installed");
-			if (!Force) {
-				errc = 1;
-				goto success;	/* close enough for government work */
-			}
-		}
-	}
-	
 	/* If we're really installing, and have an installation file, run it */
 	if (!NoInstall && fexists(INSTALL_FNAME)) {
 		(void) fexec(CHMOD_CMD, "+x", INSTALL_FNAME, NULL);	/* make sure */
@@ -865,17 +842,7 @@ ignore_replace_depends_check:
 	}
 
 	if (!Fake && fexists(MTREE_FNAME)) {
-		if (Verbose)
-			printf("Running mtree for %s.\n", PkgName);
-		p = find_plist(&Plist, PLIST_CWD);
-		if (Verbose)
-			printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
-		if (!Fake) {
-			if (fexec(MTREE_CMD, "-U", "-f", MTREE_FNAME, "-d", "-e", "-p",
-				  p ? p->name : "/", NULL))
-				warnx("mtree returned a non-zero status - continuing");
-		}
-		unlink(MTREE_FNAME); /* remove this line to tar up pkg later  - HF */
+		warnx("Mtree file ignored for package %s", PkgName);
 	}
 
 	/* Run the installation script one last time? */
@@ -1079,16 +1046,12 @@ pkg_perform(lpkg_head_t *pkgs)
 
 	TAILQ_INIT(&files);
 
-	if (AddMode == SLAVE)
-		err_cnt = pkg_do(NULL, NULL);
-	else {
-		while ((lpp = TAILQ_FIRST(pkgs)) != NULL) {
-			path_prepend_from_pkgname(lpp->lp_name);
-			err_cnt += pkg_do(lpp->lp_name, pkgs);
-			path_prepend_clear();
-			TAILQ_REMOVE(pkgs, lpp, lp_link);
-			free_lpkg(lpp);
-		}
+	while ((lpp = TAILQ_FIRST(pkgs)) != NULL) {
+		path_prepend_from_pkgname(lpp->lp_name);
+		err_cnt += pkg_do(lpp->lp_name, pkgs);
+		path_prepend_clear();
+		TAILQ_REMOVE(pkgs, lpp, lp_link);
+		free_lpkg(lpp);
 	}
 	
 	ftp_stop();
