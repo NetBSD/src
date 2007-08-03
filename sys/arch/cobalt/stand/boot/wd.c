@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.5 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: wd.c,v 1.6 2007/08/03 12:57:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 #include <machine/param.h>
 #include <machine/stdarg.h>
+#include <dev/raidframe/raidframevar.h>		/* For RF_PROTECTED_SECTORS */
 
 #include "boot.h"
 #include "wdvar.h"
@@ -254,7 +255,8 @@ wdstrategy(f, rw, dblk, size, buf, rsize)
 {
 	int i, nsect;
 	daddr_t blkno;
-	struct wd_softc *wd = f;
+	struct wd_softc *wd;
+	struct partition *pp;
 
 	if (size == 0)
 		return (0);
@@ -262,8 +264,13 @@ wdstrategy(f, rw, dblk, size, buf, rsize)
 	if (rw != F_READ)
 		return EOPNOTSUPP;
 
+	wd = f;
+	pp = &wd->sc_label.d_partitions[wd->sc_part];
+
 	nsect = howmany(size, wd->sc_label.d_secsize);
-	blkno = dblk + wd->sc_label.d_partitions[wd->sc_part].p_offset;
+	blkno = dblk + pp->p_offset;
+	if (pp->p_fstype == FS_RAID)
+		blkno += RF_PROTECTED_SECTORS;
 
 	for (i = 0; i < nsect; i++, blkno++) {
 		int error;
