@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
+/*	$NetBSD: prf.c,v 1.2 2007/08/03 13:15:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -39,14 +39,15 @@
 #include <lib/libsa/stand.h>
 
 void
-putchar(c)
-	unsigned char c;
+putchar(int c)
 {
+
 	cnputc(c);
 }
 
 int
-getchar()
+getchar(void)
 {
-	return (cngetc());
+
+	return cngetc();
 }

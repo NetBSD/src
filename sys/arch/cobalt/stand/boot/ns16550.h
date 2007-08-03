@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.h,v 1.1 2003/06/25 17:24:22 cdi Exp $	*/
+/*	$NetBSD: ns16550.h,v 1.2 2007/08/03 13:15:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -34,17 +34,16 @@
  * NS16550 Serial Port
  */
 
-struct NS16550
-	{
-		volatile unsigned char rbr;  /* 0 */
-		volatile unsigned char ier;  /* 1 */
-		volatile unsigned char fcr;  /* 2 */
-		volatile unsigned char lcr;  /* 3 */
-		volatile unsigned char mcr;  /* 4 */
-		volatile unsigned char lsr;  /* 5 */
-		volatile unsigned char msr;  /* 6 */
-		volatile unsigned char scr;  /* 7 */
-	};
+struct NS16550 {
+		volatile uint8_t rbr;  /* 0 */
+		volatile uint8_t ier;  /* 1 */
+		volatile uint8_t fcr;  /* 2 */
+		volatile uint8_t lcr;  /* 3 */
+		volatile uint8_t mcr;  /* 4 */
+		volatile uint8_t lsr;  /* 5 */
+		volatile uint8_t msr;  /* 6 */
+		volatile uint8_t scr;  /* 7 */
+};
 
 #define thr rbr
 #define iir fcr
@@ -71,8 +70,8 @@ struct NS16550
 #define COMPROBE 0xa020001c
 #endif
 
-extern volatile struct NS16550 *NS16550_init __P((int, int));
-extern void NS16550_putc __P((volatile struct NS16550 *, int));
-extern int NS16550_getc __P((volatile struct NS16550 *));
-extern int NS16550_scankbd __P((volatile struct NS16550 *));
-extern int NS16550_test __P((volatile struct NS16550 *));
+volatile struct NS16550 *NS16550_init(int, int);
+void NS16550_putc(volatile struct NS16550 *, int);
+int NS16550_getc(volatile struct NS16550 *);
+int NS16550_scankbd(volatile struct NS16550 *);
+int NS16550_test(volatile struct NS16550 *);
