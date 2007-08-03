@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa_machdep.c,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: ofisa_machdep.c,v 1.5 2007/08/03 16:02:17 jmmv Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa_machdep.c,v 1.4 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa_machdep.c,v 1.5 2007/08/03 16:02:17 jmmv Exp $");
 
 #include "opt_compat_old_ofw.h"
 
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofisa_machdep.c,v 1.4 2005/12/11 12:19:05 christos E
 #include <dev/isa/isavar.h>
 #include <dev/ofisa/ofisavar.h>
 
+#include "isadma.h"
+
 int
 ofisa_get_isabus_data(phandle, iba)
 	int phandle;
@@ -56,7 +58,9 @@ ofisa_get_isabus_data(phandle, iba)
 
 	iba->iba_iot = &isa_io_bs_tag;
 	iba->iba_memt = &isa_mem_bs_tag;
+#if (NISADMA > 0)
 	iba->iba_dmat = &isa_bus_dma_tag;
+#endif
 	iba->iba_ic = &isa_chipset_tag;
 
 	return (0);
