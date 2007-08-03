@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.7 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: wdc.c,v 1.8 2007/08/03 13:15:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -58,12 +58,10 @@ static int  __wdcwait_reset(struct wdc_channel *chp, int drv_mask);
  * Reset the controller.
  */
 static int
-__wdcwait_reset(chp, drv_mask)
-	struct wdc_channel *chp;
-	int drv_mask;
+__wdcwait_reset(struct wdc_channel *chp, int drv_mask)
 {
 	int timeout;
-	u_int8_t st0, st1;
+	uint8_t st0, st1;
 
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST; timeout++) {
@@ -102,8 +100,8 @@ __wdcwait_reset(chp, drv_mask)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 
-end:
-	return (drv_mask);
+ end:
+	return drv_mask;
 }
 
 /* Test to see controller with at last one attached drive is there.
@@ -118,12 +116,11 @@ end:
  *   If timeout -> return.
  */
 static int
-wdcprobe(chp)
-	struct wdc_channel *chp;
+wdcprobe(struct wdc_channel *chp)
 {
-	u_int8_t st0, st1, sc, sn, cl, ch;
-	u_int8_t ret_value = 0x03;
-	u_int8_t drive;
+	uint8_t st0, st1, sc, sn, cl, ch;
+	uint8_t ret_value = 0x03;
+	uint8_t drive;
 	int found;
 
 	/*
@@ -141,7 +138,7 @@ wdcprobe(chp)
 	if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
 		ret_value &= ~0x02;
 	if (ret_value == 0)
-		return (ENXIO);
+		return ENXIO;
 
 	/* assert SRST, wait for reset to complete */
 	WDC_WRITE_REG(chp, wd_sdh, WDSD_IBM);
@@ -158,7 +155,7 @@ wdcprobe(chp)
 
 	/* if reset failed, there's nothing here */
 	if (ret_value == 0)
-		return (ENXIO);
+		return ENXIO;
 
 	/*
 	 * Test presence of drives. First test register signatures looking for
@@ -170,79 +167,74 @@ wdcprobe(chp)
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
-		return (0);
+		return 0;
 	}
-	return (ENXIO);	
+	return ENXIO;	
 }
 
 /*
  * Initialize the device.
  */
 int
-wdc_init(sc, unit)
-	struct wd_softc *sc;
-	u_int *unit;
+wdc_init(struct wd_softc *sc, u_int *unit)
 {
+
 	if (pciide_init(&sc->sc_channel, unit) != 0)
-		return (ENXIO);
+		return ENXIO;
 	if (wdcprobe(&sc->sc_channel) != 0)
-		return (ENXIO);
-	return (0);
+		return ENXIO;
+	return 0;
 }
 
 /*
  * Wait until the device is ready.
  */
 int
-wdc_wait_for_ready(chp)
-	struct wdc_channel *chp;
+wdc_wait_for_ready(struct wdc_channel *chp)
 {
 	u_int timeout;
+
 	for (timeout = WDC_TIMEOUT; timeout > 0; --timeout) {
 		if ((WDC_READ_REG(chp, wd_status) & (WDCS_BSY | WDCS_DRDY))
 				== WDCS_DRDY)
-			return (0);
+			return 0;
 	}
-	return (ENXIO);
+	return ENXIO;
 }
 
 /*
  * Read one block off the device.
  */
 int
-wdc_read_block(sc, wd_c)
-	struct wd_softc *sc;
-	struct wdc_command *wd_c;
+wdc_read_block(struct wd_softc *sc, struct wdc_command *wd_c)
 {
 	int i;
 	struct wdc_channel *chp = &sc->sc_channel;
-	u_int16_t *ptr = (u_int16_t*)wd_c->data;
+	uint16_t *ptr = (uint16_t *)wd_c->data;
 
 	if (ptr == NULL)
-		return (0);
+		return 0;
 
-	for (i = wd_c->bcount; i > 0; i -= sizeof(u_int16_t))
+	for (i = wd_c->bcount; i > 0; i -= sizeof(uint16_t))
 		*ptr++ = WDC_READ_DATA(chp);
 
-	return (0);
+	return 0;
 }
 
 /*
  * Send a command to the device (CHS and LBA addressing).
  */
 int
-wdccommand(sc, wd_c)
-	struct wd_softc *sc;
-	struct wdc_command *wd_c;
+wdccommand(struct wd_softc *sc, struct wdc_command *wd_c)
 {
-	u_int8_t err;
+	uint8_t err;
 	struct wdc_channel *chp = &sc->sc_channel;
 
 #if 0
 	DPRINTF(("wdccommand(%d, %d, %d, %d, %d, %d, %d)\n",
-				wd_c->drive, wd_c->r_command, wd_c->r_cyl,
-				wd_c->r_head, wd_c->r_sector, wd_c->bcount,
-				wd_c->r_precomp));
+	    wd_c->drive, wd_c->r_command, wd_c->r_cyl,
+	    wd_c->r_head, wd_c->r_sector, wd_c->bcount,
+	    wd_c->r_precomp));
 #endif
 
 	WDC_WRITE_REG(chp, wd_precomp, wd_c->r_precomp);
@@ -255,26 +247,24 @@ wdccommand(sc, wd_c)
 	WDC_WRITE_REG(chp, wd_command, wd_c->r_command);
 
 	if (wdc_wait_for_ready(chp) != 0)
-		return (ENXIO);
+		return ENXIO;
 
 	if (WDC_READ_REG(chp, wd_status) & WDCS_ERR) {
 		printf("wd%d: error %x\n", chp->compatchan,
-				WDC_READ_REG(chp, wd_error));
-		return (ENXIO);
+		    WDC_READ_REG(chp, wd_error));
+		return ENXIO;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
  * Send a command to the device (LBA48 addressing).
  */
 int
-wdccommandext(wd, wd_c)
-	struct wd_softc *wd;
-	struct wdc_command *wd_c;
+wdccommandext(struct wd_softc *wd, struct wdc_command *wd_c)
 {
-	u_int8_t err;
+	uint8_t err;
 	struct wdc_channel *chp = &wd->sc_channel;
 
 	/* Select drive, head, and addressing mode. */
@@ -298,24 +288,22 @@ wdccommandext(wd, wd_c)
 	WDC_WRITE_REG(chp, wd_command, wd_c->r_command);
 
 	if (wdc_wait_for_ready(chp) != 0)
-		return (ENXIO);
+		return ENXIO;
 
 	if (WDC_READ_REG(chp, wd_status) & WDCS_ERR) {
 		printf("wd%d: error %x\n", chp->compatchan,
-				WDC_READ_REG(chp, wd_error));
-		return (ENXIO);
+		    WDC_READ_REG(chp, wd_error));
+		return ENXIO;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
  * Issue 'device identify' command.
  */
 int
-wdc_exec_identify(wd, data)
-	struct wd_softc *wd;
-	void *data;
+wdc_exec_identify(struct wd_softc *wd, void *data)
 {
 	int error;
 	struct wdc_command wd_c;
@@ -327,8 +315,8 @@ wdc_exec_identify(wd, data)
 	wd_c.bcount = DEV_BSIZE;
 	wd_c.data = data;
 
-	if ( (error = wdccommand(wd, &wd_c)) != 0)
-		return (error);
+	if ((error = wdccommand(wd, &wd_c)) != 0)
+		return error;
 
 	return wdc_read_block(wd, &wd_c);
 }
@@ -337,11 +325,7 @@ wdc_exec_identify(wd, data)
  * Issue 'read' command.
  */
 int
-wdc_exec_read(wd, cmd, blkno, data)
-	struct wd_softc *wd;
-	u_int8_t cmd;
-	daddr_t blkno;
-	void *data;
+wdc_exec_read(struct wd_softc *wd, uint8_t cmd, daddr_t blkno, void *data)
 {
 	int error;
 	struct wdc_command wd_c;

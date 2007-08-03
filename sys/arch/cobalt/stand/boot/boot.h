@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.3 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: boot.h,v 1.4 2007/08/03 13:15:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -48,15 +48,15 @@ extern char *kernelnames[];
 /*
  * com
  */
-int comspeed	__P((long));
+int comspeed(long);
 
 /*
  * console
  */
-char* cninit	__P((int *, int *));
-int   cngetc	__P((void));
-void  cnputc	__P((int));
-int   cnscan	__P((void));
+char *cninit(int *, int *);
+int   cngetc(void);
+void  cnputc(int);
+int   cnscan(void);
 
 /*
  * clock
@@ -66,14 +66,13 @@ void delay(int);
 /*
  * wd
  */
-int wdstrategy	__P((void *, int, daddr_t, size_t, void *, size_t *));
-int wdopen	__P((struct open_file *, ...));
-int wdclose	__P((struct open_file *));
+int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int wdopen(struct open_file *, ...);
+int wdclose(struct open_file *);
 
 /*
  * devopen
  */
-int devparse (const char *fname, int *dev, u_int8_t *unit,
-			u_int8_t *part, const char **file);
+int devparse(const char *, int *, uint8_t *, uint8_t *, const char **);
 
 int tgets(char *);
