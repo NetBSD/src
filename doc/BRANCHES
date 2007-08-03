@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.199 2007/07/31 15:51:15 rjs Exp $
+#	$NetBSD: BRANCHES,v 1.200 2007/08/03 22:20:48 jmcneill Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -302,6 +302,15 @@ Notes:		To check out the kernel source tree,
 			cvs checkout -ritohy-usb1 src/sys/dev/usb/filelist
 		2. update files in the branch
 			sh -e src/sys/dev/usb/filelist
+
+Branch:		jmcneill-pm
+Description:	Power management framework overhaul, ACPI improvements
+Status:		Active
+Start Date:	3 Aug 2007
+End Date:	
+Base Tag:	jmcneill-pm-base
+Scope:		kernel
+Notes:		
 
 Branch:		kame
 Description:	KAME Project
