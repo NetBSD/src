@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41 2007/06/20 08:17:12 sborrill Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.1 2007/08/03 22:17:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41 2007/06/20 08:17:12 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.1 2007/08/03 22:17:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ struct agp_i810_softc {
 	bus_space_handle_t gtt_bsh;	/* GTT bus_space handle */
 	struct pci_attach_args vga_pa;
 
-	void *sc_powerhook;
 	struct pci_conf_state sc_pciconf;
 };
 
@@ -104,7 +103,7 @@ static struct agp_memory *agp_i810_alloc_memory(struct agp_softc *, int,
 static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
-static void agp_i810_powerhook(int, void *);
+static pnp_status_t agp_i810_power(device_t, pnp_request_t, void *);
 
 static struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
@@ -154,6 +153,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_softc *sc = (void *)self;
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
+	pnp_status_t status;
 	int error, apbase;
 	bus_size_t mmadrsize;
 
@@ -416,11 +416,10 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	agp_flush_cache();
 
-	isc->sc_powerhook = powerhook_establish(sc->as_dev.dv_xname,
-	    agp_i810_powerhook, sc);
-	if (isc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish PCI power hook\n",
-		    sc->as_dev.dv_xname);
+	status = pnp_register(self, agp_i810_power);
+	if (status != PNP_STATUS_SUCCESS)
+		printf("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 #if 0
 	/*      
@@ -792,17 +791,61 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	return 0;
 }
 
-static void
-agp_i810_powerhook(int why, void *arg)
+static pnp_status_t
+agp_i810_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	struct agp_softc *sc = (struct agp_softc *)arg;
+	struct agp_softc *sc = (struct agp_softc *)dv;
 	struct agp_i810_softc *isc = sc->as_chipc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+	pcireg_t val;
+	int off;
 
-	if (why == PWR_RESUME) {
-		pci_conf_restore(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+
+		pci_get_capability(sc->as_pc, sc->as_tag, PCI_CAP_PWRMGMT,
+		    &off, &val);
+		pcaps->state = pci_pnp_capabilities(val);
+		pcaps->state |= PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		if (pci_get_powerstate(sc->as_pc, sc->as_tag, &val) != 0)
+			*pstate = PNP_STATE_D0;
+		else
+			*pstate = pci_pnp_powerstate(val);
+		break;
+
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			pci_conf_capture(sc->as_pc, sc->as_tag,
+			    &isc->sc_pciconf);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		(void)pci_set_powerstate(sc->as_pc, sc->as_tag, val);
+		if (*pstate != PNP_STATE_D0)
+			break;
+
+		pci_conf_restore(sc->as_pc, sc->as_tag,
+		    &isc->sc_pciconf);
 		agp_flush_cache();
-	} else if ((why == PWR_STANDBY) || (why == PWR_SUSPEND))
-		pci_conf_capture(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+		break;
 
-	return;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }

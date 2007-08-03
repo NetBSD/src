@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101 2007/02/19 22:31:05 ad Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.1 2007/08/03 22:17:14 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101 2007/02/19 22:31:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.1 2007/08/03 22:17:14 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1087,32 +1087,33 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			    sc->sc_dev.dv_xname, state);
 			break;
 		}
+
+		if (state != ACPI_STATE_S1)
+			pnp_global_transition(PNP_STATE_D3);
+
 		ret = AcpiEnterSleepStatePrep(state);
 		if (ACPI_FAILURE(ret)) {
 			aprint_error("%s: failed preparing to sleep (%s)\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(ret));
 			break;
 		}
+
+		DELAY(1000000);
 		acpi_sleepstate = state;
 		if (state == ACPI_STATE_S1) {
 			/* just enter the state */
 			acpi_md_OsDisableInterrupt();
 			AcpiEnterSleepState((UINT8)state);
 		} else {
-			/* XXX: powerhooks(9) framework is too poor to
-			 * support ACPI sleep state...
-			 */
-			dopowerhooks(PWR_SOFTSUSPEND);
 			s = splhigh();
-			dopowerhooks(PWR_SUSPEND);
 			acpi_md_sleep(state);
-			dopowerhooks(PWR_RESUME);
 			splx(s);
-			dopowerhooks(PWR_SOFTRESUME);
-			if (state==ACPI_STATE_S4)
+			pnp_global_transition(PNP_STATE_D0);
+			if (state == ACPI_STATE_S4)
 				AcpiEnable();
 		}
 		AcpiLeaveSleepState((UINT8)state);
+
 		break;
 	case ACPI_STATE_S5:
 		ret = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
@@ -1121,6 +1122,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			       sc->sc_dev.dv_xname, AcpiFormatException(ret));
 			break;
 		}
+		DELAY(1000000);
 		acpi_sleepstate = state;
 		acpi_md_OsDisableInterrupt();
 		AcpiEnterSleepState(ACPI_STATE_S5);
@@ -1130,6 +1132,8 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	}
 
 	aprint_normal("%s: resuming\n", sc->sc_dev.dv_xname);
+	pnp_global_transition(PNP_STATE_D0);
+
 	acpi_sleepstate = ACPI_STATE_S0;
 	return ret;
 }

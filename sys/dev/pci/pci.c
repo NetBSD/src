@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.1 2007/08/03 22:17:20 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.1 2007/08/03 22:17:20 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -126,7 +126,7 @@ pcimatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pci_power_devices(struct pci_softc *sc, int why)
+pci_power_devices(struct pci_softc *sc, pnp_state_t newstate)
 {
 	pci_chipset_tag_t pc;
 	int device, function, nfunctions;
@@ -139,14 +139,14 @@ pci_power_devices(struct pci_softc *sc, int why)
 #endif
 
 	pc = sc->sc_pc;
-	switch (why) {
-	case PWR_STANDBY:
+	switch (newstate) {
+	case PNP_STATE_D1:
 		state = PCI_PMCSR_STATE_D1;
 		break;
-	case PWR_SUSPEND:
+	case PNP_STATE_D3:
 		state = PCI_PMCSR_STATE_D3;
 		break;
-	case PWR_RESUME:
+	case PNP_STATE_D0:
 		state = PCI_PMCSR_STATE_D0;
 		break;
 	default:
@@ -187,22 +187,44 @@ pci_power_devices(struct pci_softc *sc, int why)
 	return;
 }
 
-static void
-pci_powerhook(int why, void *aux)
+static pnp_status_t
+pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	struct pci_softc *sc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
 
-	sc = (struct pci_softc *)aux;
+	sc = (struct pci_softc *)dv;
 
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-	case PWR_RESUME:
-		pci_power_devices(sc, why);
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state |= PNP_STATE_D0 | PNP_STATE_D3;
 		break;
+
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
+		break;
+
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+
+		if (*pstate == PNP_STATE_D2)
+			return PNP_STATUS_UNSUPPORTED;
+
+		pci_power_devices(sc, req);
+		break;
+
+	case PNP_REQUEST_NOTIFY:
+		/* XXX TODO */
+		break;
+
+	default:
+		return PNP_STATUS_UNSUPPORTED;
 	}
 
-	return;
+	return PNP_STATUS_SUCCESS;
 }
 
 static void
@@ -211,6 +233,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args *pba = aux;
 	struct pci_softc *sc = (struct pci_softc *)self;
 	int io_enabled, mem_enabled, mrl_enabled, mrm_enabled, mwi_enabled;
+	pnp_status_t status;
 	const char *sep = "";
 	static const int wildcard[PCICF_NLOCS] = {
 		PCICF_DEV_DEFAULT, PCICF_FUNCTION_DEFAULT
@@ -272,11 +295,10 @@ do {									\
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    pci_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+	status = pnp_register(self, pci_power);
+	if (status != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 	pcirescan(&sc->sc_dev, "pci", wildcard);
 }
@@ -694,7 +716,7 @@ pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
 {
 	int off;
 
-	for (off = 0; off < 16; off++)
+	for (off = 15; off >= 0; off--)
 		pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
 
 	return;
@@ -772,6 +794,49 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
 	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
 	DELAY(1000);
 	return 0;
+}
+
+pnp_state_t
+pci_pnp_powerstate(pcireg_t reg)
+{
+	pnp_state_t state;
+
+	switch (reg) {
+	case PCI_PMCSR_STATE_D0:
+		state = PNP_STATE_D0;
+		break;
+	case PCI_PMCSR_STATE_D1:
+		state = PNP_STATE_D1;
+		break;
+	case PCI_PMCSR_STATE_D2:
+		state = PNP_STATE_D2;
+		break;
+	case PCI_PMCSR_STATE_D3:
+		state = PNP_STATE_D3;
+		break;
+	default:
+		state = PNP_STATE_UNKNOWN;
+		break;
+	}
+
+	return state;
+}
+
+pnp_state_t
+pci_pnp_capabilities(pcireg_t reg)
+{
+	pnp_state_t state;
+	pcireg_t cap;
+
+	cap = reg >> PCI_PMCR_SHIFT;
+
+	state = PNP_STATE_D0 | PNP_STATE_D3;
+	if (cap & PCI_PMCR_D1SUPP)
+		state |= PNP_STATE_D1;
+	if (cap & PCI_PMCR_D2SUPP)
+		state |= PNP_STATE_D2;
+
+	return state;
 }
 
 int

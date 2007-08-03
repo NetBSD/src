@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.90 2007/07/09 21:00:30 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.90.6.1 2007/08/03 22:17:15 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90 2007/07/09 21:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.90.6.1 2007/08/03 22:17:15 jmcneill Exp $");
 
 #include "opt_ata.h"
 
@@ -106,7 +106,7 @@ const struct cdevsw atabus_cdevsw = {
 
 extern struct cfdriver atabus_cd;
 
-static void atabus_powerhook(int, void *);
+static pnp_status_t atabus_power(device_t, pnp_request_t, void *);
 
 /*
  * atabusprint:
@@ -396,6 +396,7 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	struct atabus_softc *sc = (void *) self;
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
+	pnp_status_t status;
 	int error;
 
 	sc->sc_chan = chp;
@@ -416,11 +417,11 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    atabus_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+	sc->sc_pmstate = PNP_STATE_D0;
+	status = pnp_register(self, atabus_power);
+	if (status != PNP_STATUS_SUCCESS)
+		printf("%s: couldn't establish power handler\n",
+		    device_xname(self));
 }
 
 /*
@@ -501,10 +502,6 @@ atabus_detach(struct device *self, int flags)
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
 		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
-
-	/* power hook */
-	if (sc->sc_powerhook)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	/*
 	 * Detach atapibus and its children.
@@ -1475,33 +1472,56 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	return (error);
 };
 
-static void
-atabus_powerhook(int why, void *hdl)
+static pnp_status_t
+atabus_power(device_t dv, pnp_request_t req, void *hdl)
 {
-	struct atabus_softc *sc = (struct atabus_softc *)hdl;
+	struct atabus_softc *sc = (struct atabus_softc *)dv;
 	struct ata_channel *chp = sc->sc_chan;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
 	int s;
 
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-		/* freeze the queue and wait for the controller to be idle */
-		ata_queue_idle(chp->ch_queue);
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = (pnp_capabilities_t *)hdl;
+		caps->state = PNP_STATE_D0 | PNP_STATE_D1 | PNP_STATE_D3;
 		break;
-	case PWR_RESUME:
-		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
-		s = splbio();
-		KASSERT(chp->ch_queue->queue_freeze > 0);
-		/* unfreeze the queue and reset drives (to wake them up) */
-		chp->ch_queue->queue_freeze--;
-		ata_reset_channel(chp, AT_WAIT);
-		splx(s);
+	case PNP_REQUEST_GET_STATE:
+		state = (pnp_state_t *)hdl;
+		*state = sc->sc_pmstate;
 		break;
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-	case PWR_SOFTRESUME:
+	case PNP_REQUEST_SET_STATE:
+		state = (pnp_state_t *)hdl;
+
+		if (*state == sc->sc_pmstate)
+			break;
+
+		switch (*state) {
+		case PNP_STATE_D1:
+		case PNP_STATE_D3:
+			/*
+			 * freeze the queue and wait for the controller
+			 * to be idle
+			 */
+			ata_queue_idle(chp->ch_queue);
+			sc->sc_pmstate = *state;
+			break;
+		case PNP_STATE_D0:
+			s = splbio();
+			KASSERT(chp->ch_queue->queue_freeze > 0);
+			/* unfreeze the queue and reset drives */
+			chp->ch_queue->queue_freeze--;
+			ata_reset_channel(chp, AT_WAIT);
+			splx(s);
+			sc->sc_pmstate = *state;
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
 		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
 	}
 
-	return;
+	return PNP_STATUS_SUCCESS;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119 2007/07/20 22:15:47 tsutsui Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.119.4.1 2007/08/03 22:17:29 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119 2007/07/20 22:15:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.4.1 2007/08/03 22:17:29 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119 2007/07/20 22:15:47 tsutsui 
 #include <sys/unistd.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+#include <sys/callout.h>
 
 #include <sys/disk.h>
 
@@ -1076,6 +1077,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	char num[10];
 	device_t dev;
 	const struct cfiattrdata *ia;
+	pnp_device_t *pnp;
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
@@ -1118,11 +1120,15 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 			       M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
 	if (!dev)
 		panic("config_devalloc: memory allocation for device softc failed");
+
+	pnp = device_pnp(dev);
+
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
 	dev->dv_cfdriver = cd;
 	dev->dv_cfattach = ca;
 	dev->dv_unit = myunit;
+	callout_init(&pnp->pnp_idle, 0);
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
@@ -1162,6 +1168,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	const int *locs, void *aux, cfprint_t print)
 {
 	device_t dev;
+	pnp_device_t *pnp;
 	struct cftable *ct;
 	const char *drvname;
 
@@ -1230,6 +1237,7 @@ config_attach_loc(device_t parent, cfdata_t cf,
 #ifdef __HAVE_DEVICE_REGISTER
 	device_register(dev, aux);
 #endif
+
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 	if (splash_progress_state)
 		splash_progress_update(splash_progress_state);
@@ -1239,6 +1247,12 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	if (splash_progress_state)
 		splash_progress_update(splash_progress_state);
 #endif
+
+	pnp = device_pnp(dev);
+	if (pnp->pnp_power == NULL)
+		aprint_error("%s: WARNING: power management not supported\n",
+		    device_xname(dev));
+
 	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
 }
@@ -1669,6 +1683,13 @@ device_parent(device_t dev)
 {
 
 	return (dev->dv_parent);
+}
+
+pnp_device_t *
+device_pnp(device_t dev)
+{
+
+	return (&dev->dv_pnp);
 }
 
 bool

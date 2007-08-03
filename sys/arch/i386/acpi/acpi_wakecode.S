@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.9 2007/04/28 14:03:00 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.9.10.1 2007/08/03 22:17:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ wakeup_16:
 	movw	%ax,%ss
 
 	/* Small call stack */
-	movw	$0x1000,%sp
+	mov	$0x1000,%sp
 
 	/* Clear flags */
 	pushl	$0

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.312 2007/07/08 01:13:26 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.312.8.1 2007/08/03 22:17:07 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -143,7 +143,8 @@ define vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
+	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus,
+	bioscall
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -515,7 +516,7 @@ attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
 
 # Sony Misc (brightness etc.)
-device	sony
+device	sony: wskbddev
 attach	sony at acpinodebus with sony_acpi
 file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
@@ -530,7 +531,7 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
+device vesafb: displaydev, wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
 defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH

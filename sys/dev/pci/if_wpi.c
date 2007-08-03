@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17 2007/07/18 18:49:16 degroote Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.1 2007/08/03 22:17:19 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17 2007/07/18 18:49:16 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.1 2007/08/03 22:17:19 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -94,7 +94,7 @@ static const struct ieee80211_rateset wpi_rateset_11g =
 static int  wpi_match(struct device *, struct cfdata *, void *);
 static void wpi_attach(struct device *, struct device *, void *);
 static int  wpi_detach(struct device*, int);
-static void wpi_power(int, void *);
+static pnp_status_t wpi_power(device_t, pnp_request_t, void *);
 static int  wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
 	void **, bus_size_t, bus_size_t, int);
 static void wpi_dma_contig_free(struct wpi_dma_info *);
@@ -358,8 +358,10 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
-	/* set powerhook */
-	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname, wpi_power, sc);
+	/* set power handler */
+	if (pnp_register(self, wpi_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -423,30 +425,59 @@ wpi_detach(struct device* self, int flags __unused)
 	return 0;
 }
 
-static void
-wpi_power(int why, void *arg)
+static pnp_status_t
+wpi_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	struct wpi_softc *sc = arg;
+	struct wpi_softc *sc = (struct wpi_softc *)dv;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
 	struct ifnet *ifp;
 	pcireg_t data;
 	int s;
 
-	if (why != PWR_RESUME)
-		return;
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			/* clear device specific PCI conf reg 0x41 */
+			data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
+			data &= ~0x0000ff00;
+			pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
-
-	s = splnet();
-	ifp = sc->sc_ic.ic_ifp;
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
+			pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0xe8,
+			    sc->sc_pmstate_e8);
+	
+			s = splnet();
+			ifp = sc->sc_ic.ic_ifp;
+			if (ifp->if_flags & IFF_UP) {
+				ifp->if_init(ifp);
+				if (ifp->if_flags & IFF_RUNNING)
+					ifp->if_start(ifp);
+			}
+			splx(s);
+			break;
+		case PNP_STATE_D3:
+			sc->sc_pmstate_e8 = pci_conf_read(
+			    sc->sc_pct, sc->sc_pcitag, 0xe8);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
 	}
-	splx(s);
+
+	return PNP_STATUS_SUCCESS;
 }
 
 static int

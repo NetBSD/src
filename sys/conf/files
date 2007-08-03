@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.856 2007/07/29 14:44:09 pooka Exp $
+#	$NetBSD: files,v 1.856.4.1 2007/08/03 22:17:12 jmcneill Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -11,6 +11,9 @@ devclass disk
 devclass tape
 devclass ifnet
 devclass tty
+devclass audiodev
+devclass displaydev
+devclass bus
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
@@ -272,7 +275,7 @@ define	aurateconv
 
 # audio and midi devices, attaches to audio hardware driver
 #
-device	audio
+device	audio: audiodev
 attach	audio at audiobus
 device	midi
 attach	midi at midibus
@@ -1016,7 +1019,7 @@ defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 defflag opt_vga.h		VGA_RASTERCONSOLE
 defflag opt_vga.h		VGA_RESET
-device	vga: wsemuldisplaydev, pcdisplayops, drm
+device	vga: displaydev, wsemuldisplaydev, pcdisplayops, drm
 file	dev/ic/vga.c		vga & !vga_rasterconsole	needs-flag
 file	dev/ic/vga_raster.c	vga_rasterconsole		needs-flag
 file	dev/ic/vga_subr.c	vga | vga_rasterconsole
@@ -1333,6 +1336,7 @@ file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect | pax_segvguard
 file	kern/kern_physio.c
+file	kern/kern_pnp.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
