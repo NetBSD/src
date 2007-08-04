@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.12 2007/03/24 18:52:00 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.13 2007/08/04 13:37:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.12 2007/03/24 18:52:00 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.13 2007/08/04 13:37:49 ad Exp $");
 
 #include <errno.h>
 
@@ -180,11 +180,13 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &barrier->ptb_waiters;
+		pthread_spinunlock(self, &barrier->ptb_lock);
 		(void)pthread__park(self, &barrier->ptb_lock,
 		    &barrier->ptb_waiters, NULL, 0,
 		    &barrier->ptb_waiters);
 		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
 		    self, barrier));
+		pthread_spinlock(self, &barrier->ptb_lock);
 	}
 	pthread_spinunlock(self, &barrier->ptb_lock);
 
