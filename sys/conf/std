@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.8 2007/05/17 14:51:37 yamt Exp $
+# $NetBSD: std,v 1.9 2007/08/04 11:03:00 ad Exp $
 #
 # standard MI 'options'
 #
@@ -23,3 +23,5 @@ options secmodel_bsd44	# Traditional 4.4BSD security model
 # Scheduling algorithm
 #
 options	SCHED_4BSD
+
+pseudo-device	cpuctl

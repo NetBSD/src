@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1056 2007/07/30 06:58:18 taca Exp $
+#	$NetBSD: mi,v 1.1057 2007/08/04 11:02:58 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1769,6 +1769,7 @@
 ./usr/include/sys/conf.h			comp-c-include
 ./usr/include/sys/core.h			comp-c-include
 ./usr/include/sys/cpu_data.h			comp-obsolete		obsolete
+./usr/include/sys/cpuio.h			comp-c-include
 ./usr/include/sys/device.h			comp-c-include
 ./usr/include/sys/dir.h				comp-c-include
 ./usr/include/sys/dirent.h			comp-c-include

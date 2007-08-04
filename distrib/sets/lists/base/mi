@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.717 2007/07/15 18:23:36 jmmv Exp $
+# $NetBSD: mi,v 1.718 2007/08/04 11:02:56 ad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1036,6 +1036,7 @@
 ./usr/sbin/chroot				base-sysutil-bin
 ./usr/sbin/chrtbl				base-sysutil-bin
 ./usr/sbin/cnwctl				base-netutil-bin
+./usr/sbin/cpuctl				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-isdn-bin
 ./usr/sbin/dbsym				base-sysutil-bin	bfd

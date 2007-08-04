@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.34 2007/05/01 17:18:55 bouyer Exp $
+# $NetBSD: majors,v 1.35 2007/08/04 11:03:00 ad Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -32,3 +32,4 @@ device-major	srt		char 179		srt
 device-major	drm		char 180		drmbase
 device-major	bio		char 181		bio
 device-major	twa		char 187		twa
+device-major	cpuctl		char 188
