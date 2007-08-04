@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.28 2007/03/24 18:52:00 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.29 2007/08/04 13:37:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.28 2007/03/24 18:52:00 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.29 2007/08/04 13:37:49 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -189,15 +189,26 @@ static int
 pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 {
 	extern int pthread__started;
+	struct mutex_private *mp;
+	sigset_t ss;
+	int count;
 
 	pthread__error(EINVAL, "Invalid mutex",
 	    mutex->ptm_magic == _PT_MUTEX_MAGIC);
 
 	PTHREADD_ADD(PTHREADD_MUTEX_LOCK_SLOW);
-	while (/*CONSTCOND*/1) {
-		if (pthread__simple_lock_try(&mutex->ptm_lock))
-			break; /* got it! */
-		
+
+	for (;;) {
+		/* Spin for a while. */
+		count = pthread__nspins;
+		while (mutex->ptm_lock == __SIMPLELOCK_LOCKED && --count > 0)
+			pthread__smt_pause();
+		if (count > 0) {
+			if (pthread__simple_lock_try(&mutex->ptm_lock) != 0)
+				break;
+			continue;
+		}
+
 		/* Okay, didn't look free. Get the interlock... */
 		pthread_spinlock(self, &mutex->ptm_interlock);
 
@@ -209,71 +220,60 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 		 * again.
 		 */
 		PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
-		if (mutex->ptm_lock == __SIMPLELOCK_LOCKED) {
-			struct mutex_private *mp;
-
-			GET_MUTEX_PRIVATE(mutex, mp);
-
-			if (mutex->ptm_owner == self) {
-				switch (mp->type) {
-				case PTHREAD_MUTEX_ERRORCHECK:
-					PTQ_REMOVE(&mutex->ptm_blocked, self,
-					    pt_sleep);
-					pthread_spinunlock(self,
-					    &mutex->ptm_interlock);
-					return EDEADLK;
-
-				case PTHREAD_MUTEX_RECURSIVE:
-					/*
-					 * It's safe to do this without
-					 * holding the interlock, because
-					 * we only modify it if we know we
-					 * own the mutex.
-					 */
-					PTQ_REMOVE(&mutex->ptm_blocked, self,
-					    pt_sleep);
-					pthread_spinunlock(self,
-					    &mutex->ptm_interlock);
-					if (mp->recursecount == INT_MAX)
-						return EAGAIN;
-					mp->recursecount++;
-					return 0;
-				}
-			}
-
-			if (pthread__started == 0) {
-				sigset_t ss;
-
-				/*
-				 * The spec says we must deadlock, so...
-				 */
-				pthread__assert(mp->type ==
-						PTHREAD_MUTEX_NORMAL);
-				(void) sigprocmask(SIG_SETMASK, NULL, &ss);
-				for (;;) {
-					sigsuspend(&ss);
-				}
-				/*NOTREACHED*/
-			}
-
-			/*
-			 * Locking a mutex is not a cancellation
-			 * point, so we don't need to do the
-			 * test-cancellation dance. We may get woken
-			 * up spuriously by pthread_cancel or signals,
-			 * but it's okay since we're just going to
-			 * retry.
-			 */
-			self->pt_sleeponq = 1;
-			self->pt_sleepobj = &mutex->ptm_blocked;
-			(void)pthread__park(self, &mutex->ptm_interlock,
-			    &mutex->ptm_blocked, NULL, 0, &mutex->ptm_blocked);
-			pthread_spinunlock(self, &mutex->ptm_interlock);
-		} else {
+		if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
 			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
 			pthread_spinunlock(self, &mutex->ptm_interlock);
+			continue;
 		}
-		/* Go around for another try. */
+
+		GET_MUTEX_PRIVATE(mutex, mp);
+
+		if (mutex->ptm_owner == self) {
+			switch (mp->type) {
+			case PTHREAD_MUTEX_ERRORCHECK:
+				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
+				pthread_spinunlock(self, &mutex->ptm_interlock);
+				return EDEADLK;
+
+			case PTHREAD_MUTEX_RECURSIVE:
+				/*
+				 * It's safe to do this without
+				 * holding the interlock, because
+				 * we only modify it if we know we
+				 * own the mutex.
+				 */
+				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
+				pthread_spinunlock(self, &mutex->ptm_interlock);
+				if (mp->recursecount == INT_MAX)
+					return EAGAIN;
+				mp->recursecount++;
+				return 0;
+			}
+		}
+
+		if (pthread__started == 0) {
+			/* The spec says we must deadlock, so... */
+			pthread__assert(mp->type == PTHREAD_MUTEX_NORMAL);
+			(void) sigprocmask(SIG_SETMASK, NULL, &ss);
+			for (;;) {
+				sigsuspend(&ss);
+			}
+			/*NOTREACHED*/
+		}
+
+		/*
+		 * Locking a mutex is not a cancellation
+		 * point, so we don't need to do the
+		 * test-cancellation dance. We may get woken
+		 * up spuriously by pthread_cancel or signals,
+		 * but it's okay since we're just going to
+		 * retry.
+		 */
+		self->pt_sleeponq = 1;
+		self->pt_sleepobj = &mutex->ptm_blocked;
+		pthread_spinunlock(self, &mutex->ptm_interlock);
+		(void)pthread__park(self, &mutex->ptm_interlock,
+		    &mutex->ptm_blocked, NULL, 0, &mutex->ptm_blocked);
 	}
 
 	return 0;
