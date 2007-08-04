@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2007/05/21 16:37:04 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2007/08/04 12:53:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -105,6 +105,7 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	cpuid_t	ci_cpuid;
 	int	ci_mtx_count;
         int	ci_mtx_oldspl;
 	int	ci_want_resched;
