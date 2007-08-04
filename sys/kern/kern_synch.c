@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.192 2007/08/02 01:48:44 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192.2.1 2007/08/04 12:33:14 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192 2007/08/02 01:48:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.1 2007/08/04 12:33:14 jmcneill Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -394,13 +394,13 @@ mi_switch(struct lwp *l)
 		pmc_save_context(l->l_proc);
 	}
 #endif
-	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	updatertime(l, spc);
 
 	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
 	mutex_spin_enter(spc->spc_mutex);
+	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	KASSERT(l->l_stat != LSRUN);
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, &spc->spc_lwplock));

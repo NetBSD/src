@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.885 2007/07/07 20:30:47 jklos Exp $
+$NetBSD: pcidevs,v 1.885.6.1 2007/08/04 12:33:11 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -760,6 +760,7 @@ product ALI M1533	0x1533	M1533 PCI-ISA Bridge
 product ALI M1541	0x1541	M1541 Host-PCI Bridge
 product ALI M1543	0x1533	M1543 PCI-ISA Bridge
 product ALI M1563	0x1563	M1563 PCI-ISA Bridge
+product ALI M1689	0x1689	M1689 Host-PCI Bridge
 product ALI M3309	0x3309	M3309 MPEG Decoder
 product ALI M4803	0x5215	M4803
 product ALI M5257	0x5257	M5257 PCI Software Modem
@@ -2772,8 +2773,9 @@ product NVIDIA	NFORCE2_400_MCPT_AC	0x008a	nForce2 Ultra 400 AC-97
 product NVIDIA	NFORCE2_400_PPB		0x008b	nForce2 Ultra 400 PCI-PCI bridge
 product NVIDIA	NFORCE2_400_LAN2	0x008c	nForce2 Ultra 400 Ethernet
 product NVIDIA	NFORCE2_400_SATA	0x008e	nForce2 Ultra 400 Serial ATA Controller
-product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
 product NVIDIA	NFORCE3_PCIB	0x00d0	nForce3 PCI-ISA bridge
+product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
+product NVIDIA	NFORCE3_PPB2	0x00d2	nForce3 PCI-PCI
 product NVIDIA	NFORCE3_SMBUS	0x00d4	nForce3 SMBus controller
 product NVIDIA	NFORCE3_ATA133	0x00d5	nForce3 ATA133 IDE
 product NVIDIA	NFORCE3_LAN1	0x00d6	nForce3 Ethernet
@@ -3578,7 +3580,10 @@ product V3 V96DPC	0xc960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
 product VIATECH VT6305		0x0130	VT6305 IEEE 1394 Host Controller
+product VIATECH K8M800_0	0x0204	K8M800 Host
+product VIATECH K8T890_0	0x0238	K8T890 Host
 product VIATECH KT880		0x0269	KT880 CPU to PCI Bridge
+product VIATECH K8HTB_0		0x0282	K8HTB Host
 product VIATECH VT8363_HB	0x0305	VT8363 (Apollo KT133) Host Bridge
 product VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 (Apollo MVP4) Host Bridge
@@ -3624,6 +3629,7 @@ product VIATECH VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
 product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
+product VIATECH K8HTB		0x3188	K8HTB Host
 product	VIATECH VT3314_IG	0x3344	VT3314 CN900 UniChrome Integrated Graphics
 product VIATECH VT8237R_SATA	0x3349	VT8237R Integrated SATA Controller
 product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
@@ -3649,6 +3655,7 @@ product VIATECH VT8605AGP	0x8605	VT8605 (Apollo ProMedia 133) Host-AGP Bridge
 product VIATECH VT8633AGP	0xb091	VT8633 (Apollo Pro 266) CPU-AGP Bridge
 product VIATECH VT8366AGP	0xb099	VT8366 (Apollo KT266) CPU-AGP Bridge
 product VIATECH VT8377AGP	0xb168	VT8377 CPU-AGP Bridge
+product VIATECH K8HTB_AGP	0xb188	K8HTB AGP
 product VIATECH VT8377CEAGP	0xb198	VT8377CE CPU-AGP Bridge
 
 /* Vortex Computer Systems products */
