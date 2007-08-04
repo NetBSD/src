@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.14 2007/03/06 01:09:42 xtraeme Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.15 2007/08/04 09:33:05 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -181,6 +181,7 @@ int agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
 
 /* The vendor has already been matched when these functions are called */
 int agp_amd_match(const struct pci_attach_args *);
+int agp_amd64_match(const struct pci_attach_args *);
 
 int agp_ali_attach(struct device *, struct device *, void *);
 int agp_amd_attach(struct device *, struct device *, void *);
@@ -188,6 +189,7 @@ int agp_i810_attach(struct device *, struct device *, void *);
 int agp_intel_attach(struct device *, struct device *, void *);
 int agp_via_attach(struct device *, struct device *, void *);
 int agp_sis_attach(struct device *, struct device *, void *);
+int agp_amd64_attach(struct device *, struct device *, void *);
 
 int agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *, void **,
 		     bus_addr_t *, bus_dma_segment_t *, int, int *);
