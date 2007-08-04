@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.1.12.1 2007/08/04 18:20:51 he Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.12.1 2007/08/04 18:20:51 he Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp 
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/disklabel.h>
+#include <sys/pnp.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -48,10 +49,21 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp 
 #include <dev/pci/pciidevar.h>
 #include <dev/ic/ahcisatavar.h>
 
+struct ahci_pci_softc {
+	struct ahci_softc ah_sc; /* must come first, struct device */
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pcitag;
+	struct pci_conf_state sc_pciconf;
+};
+
+
 static int  ahci_pci_match(struct device *, struct cfdata *, void *);
 static void ahci_pci_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(ahcisata_pci, sizeof(struct ahci_softc),
+static pnp_status_t ahci_pci_power(device_t, pnp_request_t, void *);
+
+
+CFATTACH_DECL(ahcisata_pci, sizeof(struct ahci_pci_softc),
     ahci_pci_match, ahci_pci_attach, NULL, NULL);
 
 static int
@@ -85,7 +97,8 @@ static void
 ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct ahci_softc *sc = (struct ahci_softc *)self;
+	struct ahci_pci_softc *psc = (struct ahci_pci_softc *)self;
+	struct ahci_softc *sc = &psc->ah_sc;
 	bus_size_t size;
 	char devinfo[256];
 	const char *intrstr;
@@ -98,6 +111,9 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: can't map ahci registers\n", AHCINAME(sc));
 		return;
 	}
+	psc->sc_pc = pa->pa_pc;
+	psc->sc_pcitag = pa->pa_tag;
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_naive(": AHCI disk controller\n");
 	aprint_normal(": %s\n", devinfo);
@@ -116,4 +132,79 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	    intrstr ? intrstr : "unknown interrupt");
 	sc->sc_dmat = pa->pa_dmat;
 	ahci_attach(sc);
+
+	/* register device power management */
+	pnp_register(self, ahci_pci_power);
+}
+
+static pnp_status_t
+ahci_pci_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct ahci_pci_softc *psc = (struct ahci_pci_softc *)dv;
+	struct ahci_softc *sc = &psc->ah_sc;
+	pnp_status_t status;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
+	pci_chipset_tag_t pc;
+	pcireg_t val;
+	pcitag_t tag;
+	int off, s;
+
+	status = PNP_STATUS_UNSUPPORTED;
+	pc = psc->sc_pc;
+	tag = psc->sc_pcitag;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
+
+		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
+			return PNP_STATUS_UNSUPPORTED;
+		caps->state = pci_pnp_capabilities(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		state = opaque;
+		switch (*state) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			s = splbio();
+			pci_conf_capture(pc, tag, &psc->sc_pciconf);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		if (pci_set_powerstate(pc, tag, val) == 0) {
+			status = PNP_STATUS_SUCCESS;
+			if (*state != PNP_STATE_D0)
+				break;
+
+			s = splbio();
+			pci_conf_restore(pc, tag, &psc->sc_pciconf);
+
+			ahci_reset(sc);
+			ahci_setup_ports(sc);
+			ahci_reprobe_drives(sc);
+			ahci_enable_intrs(sc);
+
+			splx(s);
+		}
+	case PNP_REQUEST_GET_STATE:
+		state = opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
+
+		*state = pci_pnp_powerstate(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
+		break;
+	}
+	return status;
 }

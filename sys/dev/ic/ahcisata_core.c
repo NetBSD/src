@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.4 2007/07/09 21:00:34 ad Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.4.8.1 2007/08/04 18:20:50 he Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4 2007/07/09 21:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.8.1 2007/08/04 18:20:50 he Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -91,6 +91,97 @@ const struct ata_bustype ahci_ata_bustype = {
 
 void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
 
+static void ahci_setup_port(struct ahci_softc *sc, int i);
+
+
+int
+ahci_reset(struct ahci_softc *sc)
+{
+	int i;
+
+	/* reset controller */
+	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_HR);
+	delay(1000);
+	/* wait up to 1s for reset to complete */
+	for (i = 0; i < 1000; i++) {
+		if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR) == 0)
+			break;
+	}
+	if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR)) {
+		aprint_error("%s: reset failed\n", AHCINAME(sc));
+		return -1;
+	}
+	/* enable ahci mode */
+	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_AE);
+	return 0;
+}
+
+void
+ahci_setup_ports(struct ahci_softc *sc)
+{
+	u_int32_t ahci_ports;
+	int i, port;
+	
+	ahci_ports = AHCI_READ(sc, AHCI_PI);
+	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
+		if ((ahci_ports & (1 << i)) == 0)
+			continue;
+		if (port >= sc->sc_atac.atac_nchannels) {
+			aprint_error("%s: more ports than announced\n",
+			    AHCINAME(sc));
+			break;
+		}
+		ahci_setup_port(sc, i);
+	}
+}
+
+void
+ahci_reprobe_drives(struct ahci_softc *sc)
+{
+	u_int32_t ahci_ports;
+	int i, port;
+	struct ahci_channel *achp;
+	struct ata_channel *chp;
+
+	ahci_ports = AHCI_READ(sc, AHCI_PI);
+	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
+		if ((ahci_ports & (1 << i)) == 0)
+			continue;
+		if (port >= sc->sc_atac.atac_nchannels) {
+			aprint_error("%s: more ports than announced\n",
+			    AHCINAME(sc));
+			break;
+		}
+		achp = &sc->sc_channels[i];
+		chp = &achp->ata_channel;
+
+		ahci_probe_drive(chp);
+	}
+}
+
+static void
+ahci_setup_port(struct ahci_softc *sc, int i)
+{
+	struct ahci_channel *achp;
+
+	achp = &sc->sc_channels[i];
+
+	AHCI_WRITE(sc, AHCI_P_CLB(i), achp->ahcic_bus_cmdh);
+	AHCI_WRITE(sc, AHCI_P_CLBU(i), 0);
+	AHCI_WRITE(sc, AHCI_P_FB(i), achp->ahcic_bus_rfis);
+	AHCI_WRITE(sc, AHCI_P_FBU(i), 0);
+}
+
+void
+ahci_enable_intrs(struct ahci_softc *sc)
+{
+
+	/* clear interrupts */
+	AHCI_WRITE(sc, AHCI_IS, AHCI_READ(sc, AHCI_IS));
+	/* enable interrupts */
+	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+}
+
 void
 ahci_attach(struct ahci_softc *sc)
 {
@@ -105,21 +196,8 @@ ahci_attach(struct ahci_softc *sc)
 	void *cmdhp;
 	void *cmdtblp;
 
-	/* reset controller */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_HR);
-	delay(1000);
-	/* wait up to 1s for reset to complete */
-	for (i = 0; i < 1000; i++) {
-		if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR) == 0)
-			break;
-	}
-	if ((AHCI_READ(sc, AHCI_GHC) & AHCI_GHC_HR)) {
-		aprint_error("%s: reset failed\n", AHCINAME(sc));
+	if (ahci_reset(sc) != 0)
 		return;
-	}
-	/* enable ahci mode */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_GHC_AE);
-
 
 	ahci_cap = AHCI_READ(sc, AHCI_CAP);
 	sc->sc_atac.atac_nchannels = (ahci_cap & AHCI_CAP_NPMASK) + 1;
@@ -183,10 +261,7 @@ ahci_attach(struct ahci_softc *sc)
 	}
 	sc->sc_cmd_hdr = cmdhp;
 
-	/* clear interrupts */
-	AHCI_WRITE(sc, AHCI_IS, AHCI_READ(sc, AHCI_IS));
-	/* enable interrupts */
-	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+	ahci_enable_intrs(sc);
 
 	ahci_ports = AHCI_READ(sc, AHCI_PI);
 	for (i = 0, port = 0; i < AHCI_MAX_PORTS; i++) {
@@ -277,10 +352,7 @@ ahci_attach(struct ahci_softc *sc)
 				goto end;
 			}
 		}
-		AHCI_WRITE(sc, AHCI_P_CLB(i), achp->ahcic_bus_cmdh);
-		AHCI_WRITE(sc, AHCI_P_CLBU(i), 0);
-		AHCI_WRITE(sc, AHCI_P_FB(i), achp->ahcic_bus_rfis);
-		AHCI_WRITE(sc, AHCI_P_FBU(i), 0);
+		ahci_setup_port(sc, i);
 		chp->ch_ndrive = 1;
 		if (bus_space_subregion(sc->sc_ahcit, sc->sc_ahcih,
 		    AHCI_P_SSTS(i), 1,  &achp->ahcic_sstatus) != 0) {
