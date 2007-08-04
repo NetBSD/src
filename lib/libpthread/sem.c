@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.14 2007/03/24 18:52:00 ad Exp $	*/
+/*	$NetBSD: sem.c,v 1.15 2007/08/04 13:37:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.14 2007/03/24 18:52:00 ad Exp $");
+__RCSID("$NetBSD: sem.c,v 1.15 2007/08/04 13:37:50 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -92,7 +92,7 @@ struct _sem_st {
 	/* Protects data below. */
 	pthread_spin_t	usem_interlock;
 
-	struct pthread_queue_t usem_waiters;
+	pthread_queue_t usem_waiters;
 	unsigned int	usem_count;
 };
 
@@ -287,7 +287,7 @@ sem_wait(sem_t *sem)
 {
 	pthread_t self;
 	extern int pthread__started;
-	struct pthread_queue_t *queue;
+	pthread_queue_t *queue;
 
 #ifdef ERRORCHECK
 	if (sem == NULL || *sem == NULL || (*sem)->usem_magic != USEM_MAGIC) {
@@ -333,8 +333,10 @@ sem_wait(sem_t *sem)
 		PTQ_INSERT_TAIL(queue, self, pt_sleep);
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = queue,
+		pthread_spinunlock(self, &(*sem)->usem_interlock);
 		(void)pthread__park(self, &(*sem)->usem_interlock,
 		    queue, NULL, 1, queue);
+		pthread_spinlock(self, &(*sem)->usem_interlock);
 	}
 	(*sem)->usem_count--;
 	pthread_spinunlock(self, &(*sem)->usem_interlock);

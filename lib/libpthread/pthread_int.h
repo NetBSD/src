@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.42 2007/04/12 21:36:06 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.43 2007/08/04 13:37:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -71,35 +71,15 @@ struct pthread_attr_private {
 };
 
 struct	__pthread_st {
-	unsigned int	pt_magic;
-	/* Identifier, for debugging and for preventing recycling. */
-	int		pt_num;
-
-	lwpid_t	pt_lid;		/* LWP ID */
-	int	pt_state;	/* running, blocked, etc. */
-	pthread_spin_t pt_statelock;	/* lock on pt_state */
-	int	pt_flags;	/* see PT_FLAG_* below */
-	pthread_spin_t pt_flaglock;	/* lock on pt_flag */
-	int	pt_cancel;	/* Deferred cancellation */
-	int	pt_spinlocks;	/* Number of spinlocks held. */
-	void	*pt_mutexhint;	/* Last mutex held. */
-	int	pt_sleeponq;	/* on a sleep queue */
-	int	pt_errno;	/* Thread-specific errno. */
-	int	pt_signalled;	/* Received pthread_cond_signal() */
-
-	/* Entry on the list of all threads */
-	PTQ_ENTRY(__pthread_st)	pt_allq;
-	/* Entry on the sleep queue (xxx should be same as run queue?) */
-	PTQ_ENTRY(__pthread_st)	pt_sleep;
-	/*
-	 * Object we're sleeping on.  For 1:1 threads (!SA), this is
-	 * protected by the interlock on the object that the thread is
-	 * sleeping on.
-	 */
-	void			*pt_sleepobj;
-	/* Queue we're sleeping on */
-	struct pthread_queue_t	*pt_sleepq;
-
+	unsigned int	pt_magic;	/* Magic number */
+	int		pt_num;		/* ID XXX should die */
+	int		pt_state;	/* running, blocked, etc. */
+	pthread_spin_t	pt_lock;	/* lock on state */
+	int		pt_flags;	/* see PT_FLAG_* below */
+	int		pt_cancel;	/* Deferred cancellation */
+	int		pt_spinlocks;	/* Number of spinlocks held. */
+	void		*pt_mutexhint;	/* Last mutex held. */
+	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
 	void		*pt_exitval;	/* Read by pthread_join() */
@@ -108,15 +88,24 @@ struct	__pthread_st {
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
 
-	/* Other threads trying to pthread_join() us. */
-	struct pthread_queue_t	pt_joiners;
-	/* Lock for above, and for changing pt_state to ZOMBIE or DEAD,
-	 * and for setting the DETACHED flag.  Also protects pt_name.
-	 */
-	pthread_spin_t	pt_join_lock;
-
 	/* Thread-specific data */
-	void*		pt_specific[PTHREAD_KEYS_MAX];
+	void		*pt_specific[PTHREAD_KEYS_MAX];
+
+	/* LWP ID and entry on the list of all threads. */
+	lwpid_t		pt_lid;
+	PTQ_ENTRY(__pthread_st)	pt_allq;
+
+	/*
+	 * General synchronization data.  We try to align, as threads
+	 * on other CPUs will access this data frequently.
+	 */
+	int		pt_dummy1 __aligned(128);
+	int		pt_sleeponq;	/* on a sleep queue */
+	int		pt_signalled;	/* Received pthread_cond_signal() */
+	void		*pt_sleepobj;	/* object slept on */
+	pthread_queue_t	*pt_sleepq;	/* sleep queue */
+	PTQ_ENTRY(__pthread_st)	pt_sleep;
+	int		pt_dummy2 __aligned(128);
 };
 
 /* Thread states */
@@ -169,17 +158,15 @@ void	pthread_init(void)  __attribute__ ((__constructor__));
 
 /* Utility functions */
 
-/* Set up/clean up a thread's basic state. */
-void	pthread__initthread(pthread_t self, pthread_t t);
 /* Get offset from stack start to struct sa_stackinfo */
 ssize_t	pthread__stackinfo_offset(void);
 
 void	pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
-			    struct pthread_queue_t *threadq);
+			    pthread_queue_t *threadq);
 void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
-			struct pthread_queue_t *queue, pthread_t target);
+			pthread_queue_t *queue, pthread_t target);
 int	pthread__park(pthread_t self, pthread_spin_t *lock,
-		      struct pthread_queue_t *threadq,
+		      pthread_queue_t *threadq,
 		      const struct timespec *abs_timeout,
 		      int cancelpt, const void *hint);
 
@@ -257,5 +244,13 @@ void	pthread__assertfunc(const char *file, int line, const char *function,
 		const char *expr);
 void	pthread__errorfunc(const char *file, int line, const char *function,
 		const char *msg);
+
+#if defined(i386) || defined(__x86_64__)
+#define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#else
+#define	pthread__smt_pause()	/* nothing */
+#endif
+
+extern int pthread__nspins;
 
 #endif /* _LIB_PTHREAD_INT_H */
