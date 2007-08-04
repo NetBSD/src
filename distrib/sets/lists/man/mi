@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1017 2007/07/28 15:01:25 kiyohara Exp $
+# $NetBSD: mi,v 1.1018 2007/08/04 11:02:57 ad Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1888,6 +1888,7 @@
 ./usr/share/man/cat8/compat_win32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/compat_xenix.0		man-sys-catman		.cat
 ./usr/share/man/cat8/comsat.0			man-man-catman		.cat
+./usr/share/man/cat8/cpuctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/cron.0			man-cron-catman		.cat
 ./usr/share/man/cat8/dbsym.0			man-sysutil-catman	bfd,.cat
 ./usr/share/man/cat8/defer.0			man-postfix-catman	postfix,.cat
@@ -4366,6 +4367,7 @@
 ./usr/share/man/man8/compat_win32.8		man-sys-man		.man
 ./usr/share/man/man8/compat_xenix.8		man-sys-man		.man
 ./usr/share/man/man8/comsat.8			man-man-man		.man
+./usr/share/man/man8/cpuctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/cron.8			man-cron-man		.man
 ./usr/share/man/man8/dbsym.8			man-sysutil-man		bfd,.man
 ./usr/share/man/man8/defer.8			man-postfix-man		postfix,.man
