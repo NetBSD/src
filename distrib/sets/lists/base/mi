@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.718 2007/08/04 11:02:56 ad Exp $
+# $NetBSD: mi,v 1.719 2007/08/04 12:41:59 jnemeth Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3373,7 +3373,7 @@
 ./usr/share/wscons/keymaps/pckbd.br.abnt2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.de_CH.iso8859-2	base-obsolete	obsolete
-./usr/share/wscons/keymaps/pckbd.fr_CA.iso8859-1	base-util-share
+./usr/share/wscons/keymaps/pckbd.fr_CA.iso8859-1	base-util-share 	share
 ./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-1	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.fr_CH.iso8859-2	base-obsolete	obsolete
 ./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share		share
