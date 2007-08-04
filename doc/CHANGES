@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.898 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.899 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -180,3 +180,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		pccons.  [jmmv 20070731]
 	agp(4): Add support agp_amd64. Imported from FreeBSD.
 		[kiyohara 20070804]
+	cpuctl(8): a new utility which allows setting CPUs online/offline.
+		[ad 20070804]
