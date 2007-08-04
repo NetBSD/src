@@ -1,4 +1,4 @@
-#	$NetBSD: files.agp,v 1.5 2007/03/25 23:32:40 macallan Exp $
+#	$NetBSD: files.agp,v 1.6 2007/08/04 09:34:43 kiyohara Exp $
 
 define	agpbus { }
 
@@ -28,3 +28,6 @@ file	dev/pci/agp_sis.c	agp_sis & agp		needs-flag
 
 define	agp_via
 file	dev/pci/agp_via.c	agp_via & agp		needs-flag
+
+define	agp_amd64
+file	dev/pci/agp_amd64.c	agp_amd64 & agp		needs-flag
