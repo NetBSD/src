@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf_chk.c,v 1.3 2007/06/03 17:34:36 christos Exp $	*/
+/*	$NetBSD: sprintf_chk.c,v 1.4 2007/08/04 19:37:52 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sprintf_chk.c,v 1.3 2007/06/03 17:34:36 christos Exp $");
+__RCSID("$NetBSD: sprintf_chk.c,v 1.4 2007/08/04 19:37:52 kristerw Exp $");
 
 /*LINTLIBRARY*/
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: sprintf_chk.c,v 1.3 2007/06/03 17:34:36 christos Exp $");
 #include <stdio.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <ssp/stdio.h>
 
 #undef vsnprintf
 #undef vsprintf

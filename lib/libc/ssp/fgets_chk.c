@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets_chk.c,v 1.3 2007/06/03 17:34:35 christos Exp $	*/
+/*	$NetBSD: fgets_chk.c,v 1.4 2007/08/04 19:37:52 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fgets_chk.c,v 1.3 2007/06/03 17:34:35 christos Exp $");
+__RCSID("$NetBSD: fgets_chk.c,v 1.4 2007/08/04 19:37:52 kristerw Exp $");
 
 /*LINTLIBRARY*/
 
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: fgets_chk.c,v 1.3 2007/06/03 17:34:35 christos Exp $");
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <ssp/stdio.h>
 
 #undef fgets
 
