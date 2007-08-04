@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.12 2007/07/27 13:06:51 tron Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.13 2007/08/04 22:01:06 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.12 2007/07/27 13:06:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.13 2007/08/04 22:01:06 tron Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -1252,7 +1252,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 		break;
 
 	case MPI_EVENT_SAS_PHY_LINK_STATUS:
-		switch((msg->Data[0] >> 12) & 0x0f) {
+		switch ((msg->Data[0] >> 12) & 0x0f) {
 		case 0x00:
 			mpt_prt(mpt, "Phy %d: Link Status Unknown",
 			    msg->Data[0] & 0xff);
@@ -1277,7 +1277,7 @@ mpt_event_notify_reply(mpt_softc_t *mpt, MSG_EVENT_NOTIFY_REPLY *msg)
 			mpt_prt(mpt, "Phy %d: Link Rate 3.0 Gbps",
 			    msg->Data[0] & 0xff);
 			break;
-                default:
+		default:
 			mpt_prt(mpt, "Phy %d: SAS Phy Link Status Event: "
 			    "Unknown event (%0x)",
 			    msg->Data[0] & 0xff, (msg->Data[0] >> 8) & 0xff);
