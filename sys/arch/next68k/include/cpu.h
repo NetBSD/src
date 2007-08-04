@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2007/08/04 12:53:31 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2007/08/04 13:00:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -107,7 +107,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	cpuid_t	ci_cpuid;
 	int	ci_mtx_count;
-        int	ci_mtx_oldspl;
+	int	ci_mtx_oldspl;
 	int	ci_want_resched;
 };
 
@@ -186,7 +186,7 @@ int	suline(void *, void *);
 void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));
-int   	nmihand(void *);
+int	nmihand(void *);
 
 /* clock.c functions */
 void	next68k_calibrate_delay(void);
@@ -209,7 +209,7 @@ void	next68k_calibrate_delay(void);
 #else
 #define	NEXT_SLOT_ID_BMAP	0x00100000
 #endif
-#define NEXT_SLOT_ID            0x0
+#define NEXT_SLOT_ID		0x0
 #endif	/* M68040 */
 
 /****************************************************************/
@@ -331,11 +331,11 @@ void	next68k_calibrate_delay(void);
 #define	NEXT_I_ENETX_DMA	NEXT_I(6,1,28)
 #define	NEXT_I_ENETR_DMA	NEXT_I(6,2,27)
 #define	NEXT_I_SCSI_DMA		NEXT_I(6,3,26)
-#define	NEXT_I_DISK_DMA	        NEXT_I(6,4,25)
+#define	NEXT_I_DISK_DMA		NEXT_I(6,4,25)
 #define	NEXT_I_PRINTER_DMA	NEXT_I(6,5,24)
 #define	NEXT_I_SOUND_OUT_DMA	NEXT_I(6,6,23)
 #define	NEXT_I_SOUND_IN_DMA	NEXT_I(6,7,22)
-#define	NEXT_I_SCC_DMA	        NEXT_I(6,8,21)
+#define	NEXT_I_SCC_DMA		NEXT_I(6,8,21)
 #define	NEXT_I_DSP_DMA		NEXT_I(6,9,20)
 #define	NEXT_I_M2R_DMA		NEXT_I(6,10,19)
 #define	NEXT_I_R2M_DMA		NEXT_I(6,11,18)
@@ -383,11 +383,11 @@ void	next68k_calibrate_delay(void);
 
 #define	INTIOBASE	(0x02000000)
 #define	INTIOTOP	(0x02120000)
-#define MONOBASE        (0x0b000000)
-#define MONOTOP         (0x0b03a800)
+#define MONOBASE	(0x0b000000)
+#define MONOTOP		(0x0b03a800)
 #define COLORBASE	(0x2c000000)
 #define COLORTOP	(0x2c1D4000)
-                                     
+
 #define NEXT_INTR_BITS \
 "\20\40NMI\37PFAIL\36TIMER\35ENETX_DMA\34ENETR_DMA\33SCSI_DMA\32DISK_DMA\31PRINTER_DMA\30SOUND_OUT_DMA\27SOUND_IN_DMA\26SCC_DMA\25DSP_DMA\24M2R_DMA\23R2M_DMA\22SCC\21REMOTE\20BUS\17DSP_4\16DISK|C16_VIDEO\15SCSI\14PRINTER\13ENETX\12ENETR\11SOUND_OVRUN\10PHONE\07DSP_3\06VIDEO\05MONITOR\04KYBD_MOUSE\03POWER\02SOFTINT1\01SOFTINT0"
 
