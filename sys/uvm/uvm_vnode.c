@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.84 2007/07/22 19:16:06 pooka Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.84.4.1 2007/08/04 12:33:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.84 2007/07/22 19:16:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.84.4.1 2007/08/04 12:33:17 jmcneill Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -350,15 +350,15 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 * toss some pages...
 	 */
 
-	if (vp->v_writesize != VSIZENOTSET) {
-		KASSERT(vp->v_size <= vp->v_writesize);
-		KASSERT(vp->v_size == vp->v_writesize ||
-		    newsize == vp->v_writesize || newsize <= vp->v_size);
-		oldsize = vp->v_writesize;
-	} else {
-		oldsize = vp->v_size;
-	}
-	if (oldsize > pgend && oldsize != VSIZENOTSET) {
+	KASSERT(newsize != VSIZENOTSET);
+	KASSERT(vp->v_size <= vp->v_writesize);
+	KASSERT(vp->v_size == vp->v_writesize ||
+	    newsize == vp->v_writesize || newsize <= vp->v_size);
+
+	oldsize = vp->v_writesize;
+	KASSERT(oldsize != VSIZENOTSET || pgend > oldsize);
+
+	if (oldsize > pgend) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
 		simple_lock(&uobj->vmobjlock);
 	}
@@ -371,6 +371,7 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 {
 
 	simple_lock(&vp->v_interlock);
+	KASSERT(newsize != VSIZENOTSET);
 	KASSERT(vp->v_size != VSIZENOTSET);
 	KASSERT(vp->v_writesize != VSIZENOTSET);
 	KASSERT(vp->v_size <= vp->v_writesize);
