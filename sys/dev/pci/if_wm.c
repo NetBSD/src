@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.1 2007/08/04 17:12:11 he Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.2 2007/08/04 19:47:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.1 2007/08/04 17:12:11 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.2 2007/08/04 19:47:59 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.1 2007/08/04 17:12:11 he Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/php.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
