@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.1 2007/08/03 22:17:14 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.2 2007/08/04 19:39:06 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.1 2007/08/03 22:17:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.2 2007/08/04 19:39:06 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1088,9 +1088,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
-		if (state != ACPI_STATE_S1)
-			pnp_global_transition(PNP_STATE_D3);
-
 		ret = AcpiEnterSleepStatePrep(state);
 		if (ACPI_FAILURE(ret)) {
 			aprint_error("%s: failed preparing to sleep (%s)\n",
@@ -1105,6 +1102,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			acpi_md_OsDisableInterrupt();
 			AcpiEnterSleepState((UINT8)state);
 		} else {
+			pnp_global_transition(PNP_STATE_D3);
 			s = splhigh();
 			acpi_md_sleep(state);
 			splx(s);
@@ -1130,9 +1128,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		    sc->sc_dev.dv_xname);
 		break;
 	}
-
-	aprint_normal("%s: resuming\n", sc->sc_dev.dv_xname);
-	pnp_global_transition(PNP_STATE_D0);
 
 	acpi_sleepstate = ACPI_STATE_S0;
 	return ret;
