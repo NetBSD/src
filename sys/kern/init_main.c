@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.311 2007/07/30 08:45:26 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.312 2007/08/04 11:03:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.311 2007/07/30 08:45:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312 2007/08/04 11:03:00 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -256,6 +256,8 @@ main(void)
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 
 	/*
 	 * Initialize the current LWP pointer (curlwp) before
@@ -340,6 +342,7 @@ main(void)
 	(void)chgproccnt(0, 1);
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
+	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
@@ -610,6 +613,10 @@ main(void)
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_schedstate.spc_lastmod = time_second;
+	}
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();

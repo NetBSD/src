@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.35 2007/07/09 21:11:33 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.36 2007/08/04 11:03:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -122,24 +122,27 @@ struct sched_param {
  * s:	splsched, may only be safely accessed by the CPU itself
  * m:	spc_mutex
  * (:	unlocked, stable
+ * c:	cpu_lock
  */
 struct schedstate_percpu {
 	void		*spc_sched_info;/* (: scheduler-specific structure */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	spc_lwplock;	/* (: general purpose lock for LWPs */
 	struct timeval	spc_runtime;	/* s: time curlwp started running */
-	volatile int	spc_flags;	/* s: flags; see below */
+	volatile int	spc_flags;	/* m: flags; see below */
 	u_int		spc_schedticks;	/* s: ticks for schedclock() */
 	uint64_t	spc_cp_time[CPUSTATES];/* s: CPU state statistics */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	int		spc_ticks;	/* s: ticks until sched_tick() */
 	int		spc_pscnt;	/* s: prof/stat counter */
 	int		spc_psdiv;	/* s: prof/stat divisor */
+	time_t		spc_lastmod;	/* c: time of last cpu state change */
 };
 
 /* spc_flags */
 #define	SPCF_SEENRR		0x0001	/* process has seen roundrobin() */
 #define	SPCF_SHOULDYIELD	0x0002	/* process should yield the CPU */
+#define	SPCF_OFFLINE		0x0004	/* CPU marked offline */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 

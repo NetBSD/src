@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.86 2007/05/16 13:06:03 martti Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.87 2007/08/04 11:03:04 ad Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -234,6 +234,7 @@
 #	ch*	SCSI media changer
 #	cir*	Consumer IR
 #	clockctl clock control for non root users
+#	cpuctl	CPU control
 #	crypto	hardware crypto access driver
 #	dmoverio hardware-assisted data movers
 #	dpt*	DPT/Adaptec EATA RAID management interface
@@ -521,7 +522,7 @@ all)
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random systrace
-	makedev lkm lockstat clockctl
+	makedev lkm lockstat clockctl cpuctl
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
@@ -1056,6 +1057,10 @@ lkm)
 
 lockstat)
 	mkdev lockstat c %lockstat_chr% 0
+	;;
+
+cpuctl)
+	mkdev cpuctl c %cpuctl_chr% 0 666
 	;;
 
 audio*)
