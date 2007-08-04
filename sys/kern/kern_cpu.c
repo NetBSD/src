@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.3 2007/08/04 11:03:01 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.4 2007/08/04 11:57:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.3 2007/08/04 11:03:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.4 2007/08/04 11:57:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,11 @@ cpu_setonline(struct cpu_info *ci, bool online)
 		spc_unlock(ci);
 		do {
 			kpause("cpu", false, 1, NULL);
+#ifdef MULTIPROCESOR
 		} while (ci->ci_curlwp != ci->ci_data.cpu_idlelwp);
+#else
+		} while (0);
+#endif
 		spc->spc_lastmod = time_second;
 	}
 
