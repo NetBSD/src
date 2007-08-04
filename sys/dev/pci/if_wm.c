@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142 2007/07/09 21:00:56 ad Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.1 2007/08/04 17:12:11 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142 2007/07/09 21:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.1 2007/08/04 17:12:11 he Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142 2007/07/09 21:00:56 ad Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/php.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
@@ -268,7 +269,6 @@ struct wm_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power hook */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 	struct pci_conf_state sc_pciconf;
@@ -523,7 +523,7 @@ static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
 
 static void	wm_shutdown(void *);
-static void	wm_powerhook(int, void *);
+static pnp_status_t wm_pci_power(device_t, pnp_request_t, void*);
 
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
@@ -1608,11 +1608,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    wm_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+	/* register device power management hooks */
+	pnp_register(self, wm_pci_power);
+
 	return;
 
 	/*
@@ -1656,33 +1654,74 @@ wm_shutdown(void *arg)
 	wm_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
-static void
-wm_powerhook(int why, void *arg)
+static pnp_status_t
+wm_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	struct wm_softc *sc = arg;
+	struct wm_softc *sc = (struct wm_softc *)dv;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t tag = sc->sc_pcitag;
+	pnp_status_t status;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
+	pci_chipset_tag_t pc;
+	pcireg_t val;
+	pcitag_t tag;
+	int off, s;
 
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-		wm_shutdown(sc);
+	status = PNP_STATUS_UNSUPPORTED;
+	pc = sc->sc_pc;
+	tag = sc->sc_pcitag;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
+
+		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
+			return PNP_STATUS_UNSUPPORTED;
+		caps->state = pci_pnp_capabilities(val);
+		status = PNP_STATUS_SUCCESS;
 		break;
-	case PWR_SOFTRESUME:
-		ifp->if_flags &= ~IFF_RUNNING;
-		wm_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			wm_start(ifp);
+	case PNP_REQUEST_SET_STATE:
+		state = opaque;
+		switch (*state) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			s = splnet();
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		if (pci_set_powerstate(pc, tag, val) == 0) {
+			status = PNP_STATUS_SUCCESS;
+			if (*state != PNP_STATE_D0)
+				break;
+
+			s = splnet();
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			ifp->if_flags &= ~IFF_RUNNING;
+			wm_init(ifp);
+			if (ifp->if_flags & IFF_RUNNING)
+				wm_start(ifp);
+			splx(s);
+		}
+	case PNP_REQUEST_GET_STATE:
+		state = opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
+
+		*state = pci_pnp_powerstate(val);
+		status = PNP_STATUS_SUCCESS;
 		break;
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
 		break;
 	}
-
-	return;
+	return status;
 }
 
 /*
