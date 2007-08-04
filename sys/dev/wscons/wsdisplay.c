@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.108 2007/03/05 16:06:52 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.108.14.1 2007/08/04 19:39:52 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.108 2007/03/05 16:06:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.108.14.1 2007/08/04 19:39:52 jmcneill Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -108,6 +108,7 @@ static void wsdisplay_shutdownhook(void *);
 static void wsdisplay_addscreen_print(struct wsdisplay_softc *, int, int);
 static void wsdisplay_closescreen(struct wsdisplay_softc *, struct wsscreen *);
 int wsdisplay_delscreen(struct wsdisplay_softc *, int, int);
+static void wsdisplay_switchto(int);
 
 #define WSDISPLAY_MAXSCREEN 8
 
@@ -134,6 +135,10 @@ struct wsdisplay_softc {
 #define SC_SWITCHPENDING 1
 	int sc_screenwanted, sc_oldscreen; /* valid with SC_SWITCHPENDING */
 
+	struct wsdisplay_pmstate {
+		int screen;
+	} sc_pmstate;
+
 #if NWSKBD > 0
 	struct wsevsrc *sc_input;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -158,6 +163,7 @@ static int wsdisplay_emul_match(struct device *, struct cfdata *, void *);
 static void wsdisplay_emul_attach(struct device *, struct device *, void *);
 static int wsdisplay_noemul_match(struct device *, struct cfdata *, void *);
 static void wsdisplay_noemul_attach(struct device *, struct device *, void *);
+static pnp_status_t wsdisplay_power(device_t, pnp_request_t, void *);
 
 CFATTACH_DECL(wsdisplay_emul, sizeof (struct wsdisplay_softc),
     wsdisplay_emul_match, wsdisplay_emul_attach, NULL, NULL);
@@ -594,6 +600,48 @@ wsdisplay_noemul_attach(struct device *parent, struct device *self,
 	    ap->accessops, ap->accesscookie);
 }
 
+static pnp_status_t
+wsdisplay_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct wsdisplay_softc *sc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+
+	sc = (struct wsdisplay_softc *)dv;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			wsdisplay_switchto(sc->sc_pmstate.screen);
+			break;
+		case PNP_STATE_D3:
+			if (sc->sc_focus != NULL)
+				sc->sc_pmstate.screen = sc->sc_focusidx;
+			else
+				sc->sc_pmstate.screen = 0;
+			wsdisplay_switchto(0);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
+}
+
 /* Print function (for parent devices). */
 int
 wsdisplaydevprint(void *aux, const char *pnp)
@@ -691,6 +739,10 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 
 	if (i > start)
 		wsdisplay_addscreen_print(sc, start, i-start);
+
+	if (pnp_register(&sc->sc_dv, wsdisplay_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(&sc->sc_dv));
 
 	if (hookset == 0)
 		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
@@ -2018,23 +2070,29 @@ wsdisplay_unset_cons_kbd(void)
 	wsdisplay_cons_kbd_pollc = 0;
 }
 
-/*
- * Switch the console display to it's first screen.
- */
-void
-wsdisplay_switchtoconsole(void)
+static void
+wsdisplay_switchto(int no)
 {
 	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
 
 	if (wsdisplay_console_device != NULL) {
 		sc = wsdisplay_console_device;
-		if ((scr = sc->sc_scr[0]) == NULL)
+		if ((scr = sc->sc_scr[no]) == NULL)
 			return;
 		(*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
 						 scr->scr_dconf->emulcookie,
 						 0, NULL, NULL);
 	}
+}
+
+/*
+ * Switch the console display to it's first screen.
+ */
+void
+wsdisplay_switchtoconsole(void)
+{
+	wsdisplay_switchto(0);
 }
 
 /*
