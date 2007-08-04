@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.29 2007/08/01 10:39:43 christos Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.30 2007/08/04 10:36:06 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.29 2007/08/01 10:39:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.30 2007/08/04 10:36:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,15 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 
 	/* Enable workaround for dropped interrupts as required */
-	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
+	switch (sc->sc.sc_id_vendor) {
+	case PCI_VENDOR_ATI:
+	case PCI_VENDOR_VIATECH:
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
+		aprint_normal("%s: dropped intr workaround enabled\n", devname);
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * Find companion controllers.  According to the spec they always
