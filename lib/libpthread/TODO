@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.8 2007/03/02 18:53:51 ad Exp $
+$NetBSD: TODO,v 1.9 2007/08/04 13:46:04 ad Exp $
 
 Bugs to fix:
 
@@ -14,19 +14,9 @@ Interfaces/features to implement:
 - system integration
    - some macros and prototypes belong in headers other than pthread.h
 
-Features that need more/better regression tests:
-
- - pthread_cond_broadcast()
- - pthread_once()
- - pthread_get/setspecific()
- - signals
-
 Ideas to play with:
 
 - Explore the trapcontext vs. usercontext distinction in ucontext_t.
-
-- Get rid of thread structures when too many accumulate (is this
-  actually a good idea?)
 
 - Currently, each thread uses two real pages of memory: one at the top
   of the stack for actual stack data, and one at the bottom for the
@@ -43,18 +33,13 @@ Ideas to play with:
 
 - Figure out what to do with changing stack sizes.
 
-- Stress testing, particularly with multiple CPUs.
-
 - A race between pthread_exit() and pthread_create() for detached LWPs,
   where the stack (and pthread structure) could be reclaimed before the
   thread has a chance to call _lwp_exit(), is currently prevented by
   checking the return of _lwp_kill(target, 0).  It could be done more
   efficiently.  (See shared page item.)
 
-- Adaptive mutexes and spinlocks (see shared page item). These need
-  to implement exponential backoff to reduce bus contention. On x86 we
-  need to issue the 'pause' instruction while spinning, perhaps on other
-  SMT processors too.
+- Adaptive mutexes and spinlocks (see shared page item).
 
 - Have a shared page that:
 
@@ -97,7 +82,5 @@ Ideas to play with:
   better, and user space tools like top(1) and ps(1) need to be changed to
   report correctly.  Tied into that is the need for a mechanism to impose
   limits on various aspects of LWPs.
-
-- Streamlining of the park/unpark path.
 
 - Priority inheritance and similar nasties.
