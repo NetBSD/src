@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.69 2007/08/04 13:37:48 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.70 2007/08/04 13:43:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.69 2007/08/04 13:37:48 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.70 2007/08/04 13:43:46 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -291,25 +291,31 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 				return ENOMEM;
 
 	self = pthread__self();
+	newthread = NULL;
 
-	pthread_spinlock(self, &pthread__queue_lock);
-	newthread = PTQ_FIRST(&pthread__deadqueue);
-	if (newthread != NULL) {
-		if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0) {
+	if (!PTQ_EMPTY(&pthread__deadqueue)) {
+		pthread_spinlock(self, &pthread__queue_lock);
+		newthread = PTQ_FIRST(&pthread__deadqueue);
+		if (newthread != NULL) {
 			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_allq);
 			pthread_spinunlock(self, &pthread__queue_lock);
-			if (_lwp_kill(newthread->pt_lid, 0) == 0 ||
-			    errno != ESRCH) {
-				pthread_spinlock(self, &pthread__queue_lock);
-				PTQ_INSERT_TAIL(&pthread__deadqueue,
-				    newthread, pt_allq);
-				pthread_spinunlock(self, &pthread__queue_lock);
-				newthread = NULL;
+			if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0) {
+				/* Still running? */
+				if (_lwp_kill(newthread->pt_lid, 0) == 0 ||
+				    errno != ESRCH) {
+					pthread_spinlock(self,
+					    &pthread__queue_lock);
+					PTQ_INSERT_TAIL(&pthread__deadqueue,
+					    newthread, pt_allq);
+					pthread_spinunlock(self,
+					    &pthread__queue_lock);
+					newthread = NULL;
+				}
 			}
 		} else
-			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_allq);
+			pthread_spinunlock(self, &pthread__queue_lock);
 	}
-	pthread_spinunlock(self, &pthread__queue_lock);
+
 	if (newthread == NULL) {
 		/* Set up a stack and allocate space for a pthread_st. */
 		ret = pthread__stackalloc(&newthread);
