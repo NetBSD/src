@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.1 2007/08/03 22:17:28 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.2 2007/08/04 19:42:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.1 2007/08/03 22:17:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.2 2007/08/04 19:42:07 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -689,7 +689,8 @@ pnp_global_transition(pnp_state_t newstate)
 
 		curdepth = maxdepth;
 		while (curdepth >= 0) {
-			TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+			TAILQ_FOREACH_REVERSE(curdev, &alldevs, devicelist,
+			    dv_list) {
 				pnp = device_pnp(curdev);
 				if (pnp->pnp_power == NULL)
 					continue;
