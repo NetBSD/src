@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.95.4.1 2007/08/03 22:17:17 jmcneill Exp $ */
+/* $NetBSD: vga.c,v 1.95.4.2 2007/08/04 19:37:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95.4.1 2007/08/03 22:17:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.95.4.2 2007/08/04 19:37:34 jmcneill Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -1511,7 +1511,9 @@ vga_power(device_t dv, pnp_request_t req, void *opaque)
 		pstate = opaque;
 		switch (*pstate) {
 		case PNP_STATE_D0:
+#ifdef VGA_RESET_ON_RESUME
 			vga_initregs(&sc->sc_vc->hdl);
+#endif
 			break;
 		case PNP_STATE_D3:
 			break;
