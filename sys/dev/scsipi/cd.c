@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.267 2007/07/29 12:50:22 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.268 2007/08/04 02:58:59 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.267 2007/07/29 12:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.268 2007/08/04 02:58:59 rumble Exp $");
 
 #include "rnd.h"
 
@@ -117,6 +117,14 @@ struct cd_formatted_toc {
 	struct ioc_toc_header header;
 	struct cd_toc_entry entries[MAXTRACK+1]; /* One extra for the */
 						 /* leadout */
+};
+
+struct cdbounce {
+	struct buf     *obp;			/* original buf */
+	int		doff;			/* byte offset in orig. buf */
+	int		soff;			/* byte offset in bounce buf */
+	int		resid;			/* residual i/o in orig. buf */
+	int		bcount;			/* actual obp bytes in bounce */
 };
 
 static void	cdstart(struct scsipi_periph *);
@@ -636,8 +644,8 @@ cdstrategy(struct buf *bp)
 		 */
 		if ((bp->b_bcount % cd->params.blksize) != 0 ||
 			((blkno * lp->d_secsize) % cd->params.blksize) != 0) {
+			struct cdbounce *bounce;
 			struct buf *nbp;
-			void *bounce = NULL;
 			long count;
 
 			if ((bp->b_flags & B_READ) == 0) {
@@ -646,23 +654,39 @@ cdstrategy(struct buf *bp)
 				bp->b_error = EACCES;
 				goto done;
 			}
-			count = ((blkno * lp->d_secsize) % cd->params.blksize);
-			/* XXX Store starting offset in bp->b_rawblkno */
-			bp->b_rawblkno = count;
 
+			bounce = malloc(sizeof(*bounce), M_DEVBUF, M_NOWAIT);
+			if (!bounce) {
+				/* No memory -- fail the iop. */
+				bp->b_error = ENOMEM;
+				goto done;
+			}
+
+			bounce->obp = bp;
+			bounce->resid = bp->b_bcount;
+			bounce->doff = 0;
+			count = ((blkno * lp->d_secsize) % cd->params.blksize);
+			bounce->soff = count;
 			count += bp->b_bcount;
 			count = roundup(count, cd->params.blksize);
+			bounce->bcount = bounce->resid;
+			if (count > MAXPHYS) {
+				bounce->bcount = MAXPHYS - bounce->soff;
+				count = MAXPHYS;
+			}
 
 			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
 			nbp = getiobuf_nowait();
 			if (!nbp) {
 				/* No memory -- fail the iop. */
+				free(bounce, M_DEVBUF);
 				bp->b_error = ENOMEM;
 				goto done;
 			}
-			bounce = malloc(count, M_DEVBUF, M_NOWAIT);
-			if (!bounce) {
+			nbp->b_data = malloc(count, M_DEVBUF, M_NOWAIT);
+			if (!nbp->b_data) {
 				/* No memory -- fail the iop. */
+				free(bounce, M_DEVBUF);
 				putiobuf(nbp);
 				bp->b_error = ENOMEM;
 				goto done;
@@ -675,16 +699,14 @@ cdstrategy(struct buf *bp)
 
 			nbp->b_bcount = count;
 			nbp->b_bufsize = count;
-			nbp->b_data = bounce;
 
 			nbp->b_rawblkno = blkno;
 
-			/* We need to do a read-modify-write operation */
 			nbp->b_flags = bp->b_flags | B_READ | B_CALL;
 			nbp->b_iodone = cdbounce;
 
-			/* Put ptr to orig buf in b_private and use new buf */
-			nbp->b_private = bp;
+			/* store bounce state in b_private and use new buf */
+			nbp->b_private = bounce;
 
 			BIO_COPYPRIO(nbp, bp);
 
@@ -906,83 +928,90 @@ cddone(struct scsipi_xfer *xs, int error)
 static void
 cdbounce(struct buf *bp)
 {
-	struct buf *obp = (struct buf *)bp->b_private;
+	struct cdbounce *bounce = (struct cdbounce *)bp->b_private;
+	struct buf *obp = bounce->obp;
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(obp->b_dev)];
+	struct disklabel *lp = cd->sc_dk.dk_label;
 
 	if (bp->b_error != 0) {
 		/* EEK propagate the error and free the memory */
 		goto done;
 	}
-	if (obp->b_flags & B_READ) {
-		/* Copy data to the final destination and free the buf. */
-		memcpy(obp->b_data, (char *)bp->b_data+obp->b_rawblkno,
-			obp->b_bcount);
-	} else {
-		/*
-		 * XXXX This is a CD-ROM -- READ ONLY -- why do we bother with
-		 * XXXX any of this write stuff?
-		 */
-		if (bp->b_flags & B_READ) {
-			struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
-			struct buf *nbp;
-			int s;
 
-			/* Read part of RMW complete. */
-			memcpy((char *)bp->b_data+obp->b_rawblkno, obp->b_data,
-				obp->b_bcount);
+	KASSERT(obp->b_flags & B_READ);
 
-			/* We need to alloc a new buf. */
-			nbp = getiobuf_nowait();
-			if (!nbp) {
-				/* No buf available. */
-				bp->b_error = ENOMEM;
-				bp->b_resid = bp->b_bcount;
-				goto done;
-			}
+	/* copy bounce buffer to final destination */
+	memcpy((char *)obp->b_data + bounce->doff,
+	    (char *)bp->b_data + bounce->soff, bounce->bcount);
 
-			/* Set up the IOP to the bounce buffer. */
-			nbp->b_error = 0;
-			nbp->b_proc = bp->b_proc;
-			nbp->b_vp = NULLVP;
+	/* check if we need more I/O, i.e. bounce put us over MAXPHYS */
+	KASSERT(bounce->resid >= bounce->bcount);
+	bounce->resid -= bounce->bcount;
+	if (bounce->resid > 0) {
+		struct buf *nbp;
+		daddr_t blkno;
+		long count;
+		int s;
 
-			nbp->b_bcount = bp->b_bcount;
-			nbp->b_bufsize = bp->b_bufsize;
-			nbp->b_data = bp->b_data;
-
-			nbp->b_rawblkno = bp->b_rawblkno;
-
-			/* We need to do a read-modify-write operation */
-			nbp->b_flags = obp->b_flags | B_CALL;
-			nbp->b_iodone = cdbounce;
-
-			/* Put ptr to orig buf in b_private and use new buf */
-			nbp->b_private = obp;
-
-			s = splbio();
-			/*
-			 * Place it in the queue of disk activities for this
-			 * disk.
-			 *
-			 * XXX Only do disksort() if the current operating mode
-			 * XXX does not include tagged queueing.
-			 */
-			BUFQ_PUT(cd->buf_queue, nbp);
-
-			/*
-			 * Tell the device to get going on the transfer if it's
-			 * not doing anything, otherwise just wait for
-			 * completion
-			 */
-			cdstart(cd->sc_periph);
-
-			splx(s);
-			return;
-
+		blkno = obp->b_rawblkno +
+		    ((obp->b_bcount - bounce->resid) / lp->d_secsize);
+		count = ((blkno * lp->d_secsize) % cd->params.blksize);
+		blkno = (blkno * lp->d_secsize) / cd->params.blksize;
+		bounce->soff = count;
+		bounce->doff += bounce->bcount;
+		count += bounce->resid;
+		count = roundup(count, cd->params.blksize);
+		bounce->bcount = bounce->resid;
+		if (count > MAXPHYS) {
+			bounce->bcount = MAXPHYS - bounce->soff;
+			count = MAXPHYS;
 		}
+
+		nbp = getiobuf_nowait();
+		if (!nbp) {
+			/* No memory -- fail the iop. */
+			bp->b_error = ENOMEM;
+			goto done;
+		}
+
+		/* Set up the IOP to the bounce buffer. */
+		nbp->b_error = 0;
+		nbp->b_proc = obp->b_proc;
+		nbp->b_vp = NULLVP;
+
+		nbp->b_bcount = count;
+		nbp->b_bufsize = count;
+		nbp->b_data = bp->b_data;
+
+		nbp->b_rawblkno = blkno;
+
+		nbp->b_flags = obp->b_flags | B_READ | B_CALL;
+		nbp->b_iodone = cdbounce;
+
+		/* store bounce state in b_private and use new buf */
+		nbp->b_private = bounce;
+
+		BIO_COPYPRIO(nbp, obp);
+
+		bp->b_data = NULL;
+		putiobuf(bp);
+
+		/* enqueue the request and return */
+		s = splbio();
+		BUFQ_PUT(cd->buf_queue, nbp);
+		cdstart(cd->sc_periph);
+		splx(s);
+
+		return;
 	}
+
 done:
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	free(bp->b_data, M_DEVBUF);
+	free(bounce, M_DEVBUF);
+	bp->b_data = NULL;
+	putiobuf(bp);
 	biodone(obp);
 }
 
