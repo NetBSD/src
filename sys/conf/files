@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.856.4.1 2007/08/03 22:17:12 jmcneill Exp $
+#	$NetBSD: files,v 1.856.4.2 2007/08/04 12:33:08 jmcneill Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1219,6 +1219,9 @@ defpseudo fwiso:	ieee1394
 # driver attach / detach user interface
 defpseudo drvctl
 file	kern/kern_drvctl.c		drvctl
+
+# cpu control
+defpseudo cpuctl
 
 #
 # File systems

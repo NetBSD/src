@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.46 2007/03/06 01:09:42 xtraeme Exp $	*/
+/*	$NetBSD: agp.c,v 1.46.14.1 2007/08/04 12:33:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46 2007/03/06 01:09:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46.14.1 2007/08/04 12:33:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ static int agpdev_match(struct pci_attach_args *);
 #include "agp_intel.h"
 #include "agp_sis.h"
 #include "agp_via.h"
+#include "agp_amd64.h"
 
 const struct agp_product {
 	uint32_t	ap_vendor;
@@ -169,6 +170,27 @@ const struct agp_product {
 #if NAGP_VIA > 0
 	{ PCI_VENDOR_VIATECH,	-1,
 	  NULL,			agp_via_attach },
+#endif
+
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_AGP8151_DEV,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_755,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_760,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8M800_0,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8T890_0,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8HTB_0,
+	  agp_amd64_match,	agp_amd64_attach },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_K8HTB,
+	  agp_amd64_match,	agp_amd64_attach },
 #endif
 
 	{ 0,			0,
