@@ -1,4 +1,4 @@
-/*	$NetBSD: keyname.c,v 1.3 2007/05/28 15:01:56 blymn Exp $	*/
+/*	$NetBSD: keyname.c,v 1.4 2007/08/04 08:36:49 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keyname.c,v 1.3 2007/05/28 15:01:56 blymn Exp $");
+__RCSID("$NetBSD: keyname.c,v 1.4 2007/08/04 08:36:49 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -481,9 +481,12 @@ keyname(int key)
 		strncpy(name, "KEY_MOUSE\0", KEYNAMEMAX);
 		return name;
 	}
-	free(name);
+	if (key == 0x200) {
+		strncpy(name, "KEY_RESIZE\0", KEYNAMEMAX);
+		return name;
+	}
 	/* No more names. */
-    strncpy(name, "UNKOWN KEY\0", KEYNAMEMAX);
+	strncpy(name, "UNKOWN KEY\0", KEYNAMEMAX);
 	return name;
 #endif
 }
