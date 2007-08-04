@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.37 2007/07/09 20:52:15 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.37.8.1 2007/08/04 19:43:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2007/07/09 20:52:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37.8.1 2007/08/04 19:43:14 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2007/07/09 20:52:15 ad Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -121,9 +122,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2007/07/09 20:52:15 ad Exp $");
 int     cpu_match(struct device *, struct cfdata *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
 
+static pnp_status_t cpu_power(device_t, pnp_request_t, void *);
+
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
+	pnp_state_t sc_pmstate;		/* power management state */
 };
 
 int mp_cpu_start(struct cpu_info *); 
@@ -378,6 +382,11 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 	cpus_attached |= (1 << ci->ci_cpuid);
 
+	sc->sc_pmstate = PNP_STATE_D0;
+	if (pnp_register(self, cpu_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
@@ -386,6 +395,45 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, l, l->l_addr->u_pcb.pcb_esp);
 	}
 #endif
+}
+
+static pnp_status_t
+cpu_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct cpu_softc *sc;
+	struct cpu_info *ci;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+	int err;
+
+	sc = (struct cpu_softc *)dv;
+	ci = sc->sc_info;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = sc->sc_pmstate;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		if (*pstate != PNP_STATE_D0 && *pstate != PNP_STATE_D3)
+			return PNP_STATUS_UNSUPPORTED;
+		if (ci->ci_flags & CPUF_PRIMARY)
+			return PNP_STATUS_SUCCESS;
+		err = cpu_setonline(ci, *pstate == PNP_STATE_D0 ? true : false);
+		if (err)
+			return PNP_STATUS_BUSY;
+		sc->sc_pmstate = *pstate;
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }
 
 /*
