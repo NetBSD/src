@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.2 2007/08/04 19:42:07 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.3 2007/08/04 20:21:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.2 2007/08/04 19:42:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.3 2007/08/04 20:21:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -412,9 +412,11 @@ pnp_power_audio(device_t dv, pnp_action_t act)
 	switch (act) {
 	case PNP_ACTION_VOLUME_UP:
 		vol = PNP_AUDIO_VOLUME_UP;
+		/* FALLTHROUGH */
 	case PNP_ACTION_VOLUME_DOWN:
 		if (vol == PNP_AUDIO_VOLUME_UNKNOWN)
 			vol = PNP_AUDIO_VOLUME_DOWN;
+		/* FALLTHROUGH */
 	case PNP_ACTION_VOLUME_MUTE:
 		if (vol == PNP_AUDIO_VOLUME_UNKNOWN)
 			vol = PNP_AUDIO_VOLUME_TOGGLE;
@@ -445,8 +447,6 @@ pnp_power_audio(device_t dv, pnp_action_t act)
 	case PNP_ACTION_OPEN:
 		callout_stop(c);
 		state = PNP_STATE_D0;
-		pnp_power(device_parent(dv), PNP_REQUEST_SET_STATE,
-		    &state);
 		break;
 	case PNP_ACTION_CLOSE:
 		callout_stop(c);
