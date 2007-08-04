@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.43 2007/08/04 13:37:49 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.44 2007/08/04 18:54:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -90,6 +90,10 @@ struct	__pthread_st {
 
 	/* Thread-specific data */
 	void		*pt_specific[PTHREAD_KEYS_MAX];
+
+	/* For debugger: LWPs waiting to join. */
+	pthread_queue_t	pt_joiners;
+	PTQ_ENTRY(__pthread_st) pt_joinq;
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
