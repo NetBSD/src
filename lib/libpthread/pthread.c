@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.70 2007/08/04 13:43:46 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.71 2007/08/04 18:54:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.70 2007/08/04 13:43:46 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.71 2007/08/04 18:54:12 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -250,6 +250,7 @@ pthread__initthread(pthread_t t)
 
 	pthread_lockinit(&t->pt_lock);
 	PTQ_INIT(&t->pt_cleanup_stack);
+	PTQ_INIT(&t->pt_joiners);
 	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
 	t->pt_name = NULL;
 }

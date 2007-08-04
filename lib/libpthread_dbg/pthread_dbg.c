@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.35 2007/03/14 21:09:01 skrll Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.36 2007/08/04 18:54:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.35 2007/03/14 21:09:01 skrll Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.36 2007/08/04 18:54:13 ad Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -200,7 +200,7 @@ td_thr_iter(td_proc_t *proc, int (*call)(td_thread_t *, void *), void *callarg)
 {
 	int val;
 	caddr_t next;
-	struct pthread_queue_t allq;
+	pthread_queue_t allq;
 	td_thread_t *thread;
 
 	val = READ(proc, proc->allqaddr, &allq, sizeof(allq));
@@ -229,7 +229,7 @@ int
 td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 {
 	int tmp, val;
-	struct pthread_queue_t queue;
+	pthread_queue_t queue;
 
 	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
 	if (val != 0)
@@ -403,7 +403,7 @@ td_thr_join_iter(td_thread_t *thread, int (*call)(td_thread_t *, void *),
 	int val;
 	caddr_t next;
 	td_thread_t *thread2;
-	struct pthread_queue_t queue;
+	pthread_queue_t queue;
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_joiners),
@@ -433,7 +433,7 @@ int
 td_sync_info(td_sync_t *s, td_sync_info_t *info)
 {
 	int val, magic, n;
-	struct pthread_queue_t queue;
+	pthread_queue_t queue;
 	pthread_spin_t slock;
 	pthread_t taddr;
 	td_proc_t *proc = s->proc;
@@ -568,7 +568,7 @@ td_sync_waiters_iter(td_sync_t *s, int (*call)(td_thread_t *, void *),
 {
 	int val, magic;
 	caddr_t next;
-	struct pthread_queue_t queue;
+	pthread_queue_t queue;
 	td_thread_t *thread;
 
 	val = READ(s->proc, s->addr, &magic, sizeof(magic));
@@ -666,7 +666,7 @@ td_map_id2thr(td_proc_t *proc, int threadid, td_thread_t **threadp)
 {
 	int val, num;
 	caddr_t next;
-	struct pthread_queue_t allq;
+	pthread_queue_t allq;
 	td_thread_t *thread;
 
 
@@ -837,7 +837,7 @@ td_thr_sleepinfo(td_thread_t *thread, td_sync_t **s)
 			return _val;					\
 	} else {							\
 		_val = WRITE(thread->proc, (head) +			\
-		    offsetof(struct pthread_queue_t, ptqh_last),	\
+		    offsetof(pthread_queue_t, ptqh_last),	\
 		    &_qent.ptqe_prev, sizeof(_qent.ptqe_prev));		\
 		if (_val != 0)						\
 			return _val;					\
@@ -850,7 +850,7 @@ td_thr_sleepinfo(td_thread_t *thread, td_sync_t **s)
 
 #define DPTQ_INSERT_TAIL(head, elm, field) do {				\
 	int _val;							\
-	struct pthread_queue_t _qhead;					\
+	pthread_queue_t _qhead;					\
 	PTQ_ENTRY(__pthread_st) _qent;					\
 									\
 	/* if ((head)->ptqh_last == NULL)			*/	\
@@ -885,7 +885,7 @@ td_thr_sleepinfo(td_thread_t *thread, td_sync_t **s)
 	if (_val != 0)							\
 		return _val;						\
 	_val = WRITE(thread->proc,					\
-	    (head) + offsetof(struct pthread_queue_t, ptqh_last),	\
+	    (head) + offsetof(pthread_queue_t, ptqh_last),	\
 	    &_qhead.ptqh_last, sizeof(_qhead.ptqh_last));		\
 	if (_val != 0)							\
 		return _val;						\
