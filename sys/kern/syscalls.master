@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.171 2007/07/17 17:42:07 joerg Exp $
+	$NetBSD: syscalls.master,v 1.172 2007/08/04 10:52:58 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -335,7 +335,7 @@
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
 #if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
-169	COMPAT_10	{ int sys_semsys(int which, int a2, int a3, int a4, \
+169	COMPAT_10 MPSAFE	{ int sys_semsys(int which, int a2, int a3, int a4, \
 			    int a5); } osemsys
 #else
 169	EXCL		1.0 semsys
@@ -451,12 +451,12 @@
 #endif	/* !LKM */
 ; System calls 220-300 are reserved for use by NetBSD
 #if defined(SYSVSEM) || !defined(_KERNEL)
-220	COMPAT_14	{ int sys___semctl(int semid, int semnum, int cmd, \
+220	COMPAT_14 MPSAFE	{ int sys___semctl(int semid, int semnum, int cmd, \
 			    union __semun *arg); }
-221	STD		{ int sys_semget(key_t key, int nsems, int semflg); }
-222	STD		{ int sys_semop(int semid, struct sembuf *sops, \
+221	STD MPSAFE	{ int sys_semget(key_t key, int nsems, int semflg); }
+222	STD MPSAFE	{ int sys_semop(int semid, struct sembuf *sops, \
 			    size_t nsops); }
-223	STD		{ int sys_semconfig(int flag); }
+223	STD MPSAFE	{ int sys_semconfig(int flag); }
 #else
 220	EXCL		compat_14_semctl
 221	EXCL		semget
@@ -615,7 +615,7 @@
 300	COMPAT_20	{ int sys_fhstatfs(const struct compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
-301	STD		{ int sys_____semctl13(int semid, int semnum, int cmd, \
+301	STD MPSAFE	{ int sys_____semctl13(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
 #else
 301	EXCL		____semctl13

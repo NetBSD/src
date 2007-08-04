@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.192 2007/07/17 18:03:09 joerg Exp $ */
+/* $NetBSD: init_sysent.c,v 1.193 2007/08/04 10:52:57 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.192 2007/07/17 18:03:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.193 2007/08/04 10:52:57 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -464,7 +464,7 @@ struct sysent sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 168 = unimplemented */
 #if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64)
-	{ 5, s(struct compat_10_sys_semsys_args), 0,
+	{ 5, s(struct compat_10_sys_semsys_args), SYCALL_MPSAFE | 0,
 	    compat_10(sys_semsys) },		/* 169 = compat_10 osemsys */
 #else
 	{ 0, 0, 0,
@@ -620,13 +620,13 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 219 = excluded lkmnosys */
 #endif	/* !LKM */
 #if defined(SYSVSEM) || !defined(_KERNEL)
-	{ 4, s(struct compat_14_sys___semctl_args), 0,
+	{ 4, s(struct compat_14_sys___semctl_args), SYCALL_MPSAFE | 0,
 	    compat_14(sys___semctl) },		/* 220 = compat_14 __semctl */
-	{ 3, s(struct sys_semget_args), 0,
+	{ 3, s(struct sys_semget_args), SYCALL_MPSAFE | 0,
 	    sys_semget },			/* 221 = semget */
-	{ 3, s(struct sys_semop_args), 0,
+	{ 3, s(struct sys_semop_args), SYCALL_MPSAFE | 0,
 	    sys_semop },			/* 222 = semop */
-	{ 1, s(struct sys_semconfig_args), 0,
+	{ 1, s(struct sys_semconfig_args), SYCALL_MPSAFE | 0,
 	    sys_semconfig },			/* 223 = semconfig */
 #else
 	{ 0, 0, 0,
@@ -843,7 +843,7 @@ struct sysent sysent[] = {
 	{ 2, s(struct compat_20_sys_fhstatfs_args), 0,
 	    compat_20(sys_fhstatfs) },		/* 300 = compat_20 fhstatfs */
 #if defined(SYSVSEM) || !defined(_KERNEL)
-	{ 4, s(struct sys_____semctl13_args), 0,
+	{ 4, s(struct sys_____semctl13_args), SYCALL_MPSAFE | 0,
 	    sys_____semctl13 },			/* 301 = ____semctl13 */
 #else
 	{ 0, 0, 0,
