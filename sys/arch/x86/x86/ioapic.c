@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.1 2007/08/03 22:17:10 jmcneill Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.2 2007/08/05 17:04:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.1 2007/08/03 22:17:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.2 2007/08/05 17:04:19 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -457,7 +457,7 @@ ioapic_enable(void)
 	if (ioapics == NULL)
 		return;
 
-	printf("APICBASE %" PRIx64 "\n", rdmsr(0x1b));
+	printf("ioapic0: APICBASE 0x%" PRIx64 "\n", rdmsr(0x1b));
 	ci = &cpu_info_primary;
 
 	if (ioapics->sc_flags & IOAPIC_PICMODE) {
@@ -478,7 +478,6 @@ ioapic_enable(void)
 				apic_set_redir(sc, p, ip->ip_vector,
 				    ip->ip_cpu);
 				if (!cold) {
-					printf("%s: reroute pin %d vec %d type %d\n", xname, p, ip->ip_vector, ip->ip_type);
 					ioapic_hwmask(&sc->sc_pic, p);
 					ioapic_addroute(&sc->sc_pic, ci, p,
 					    ip->ip_vector, ip->ip_type);
