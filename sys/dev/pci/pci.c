@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.1 2007/08/03 22:17:20 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.2 2007/08/05 19:33:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.1 2007/08/03 22:17:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.2 2007/08/05 19:33:02 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -715,9 +715,13 @@ pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
 		  struct pci_conf_state *pcs)
 {
 	int off;
+	pcireg_t val;
 
-	for (off = 15; off >= 0; off--)
-		pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
+	for (off = 15; off >= 0; off--) {
+		val = pci_conf_read(pc, tag, (off * 4));
+		if (val != pcs->reg[off])
+			pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
+	}
 
 	return;
 }
