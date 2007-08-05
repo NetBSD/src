@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.104 2007/03/14 12:27:24 drochner Exp $
+#	$NetBSD: INSTALL,v 1.104.6.1 2007/08/05 03:15:19 macallan Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -94,7 +94,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+#ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+genfb*	at pci? dev ? function ?
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
@@ -157,7 +158,8 @@ zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
 
-wsdisplay0 at ofb? console ?
+wsdisplay0 at wsemuldisplaydev? console 1
+wsdisplay* at wsemuldisplaydev? console 0
 wskbd0	at akbd? console ?
 
 scsibus* at scsi?
