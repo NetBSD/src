@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.903 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.904 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -184,3 +184,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	libpthread: Make some significant performance improvements around
 		thread synchronization, and fix a minor problem with
 		detaching running threads. [ad 20070804]
+	rump: Add the Runnable Userspace Meta Program framework to sys/rump.
+		These are programs which compile in a part from the standard
+		kernel sources and run in userspace.  Their main use is
+		testing/debugging.  Currently supported are a number of
+		file systems (e.g. ffs) through puffs(3). [pooka 20070805]
