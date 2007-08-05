@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.182 2007/07/31 21:14:19 pooka Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.183 2007/08/05 09:40:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.182 2007/07/31 21:14:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.183 2007/08/05 09:40:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -561,8 +561,7 @@ nfs_decode_args(nmp, argp, l)
 		if (nmp->nm_sotype == SOCK_DGRAM)
 			while (nfs_connect(nmp, (struct nfsreq *)0, l)) {
 				printf("nfs_args: retrying connect\n");
-				(void) tsleep((void *)&lbolt,
-					      PSOCK, "nfscn3", 0);
+				kpause("nfscn3", false, hz, NULL);
 			}
 	}
 }

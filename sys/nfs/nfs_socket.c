@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.162 2007/08/02 12:45:37 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.163 2007/08/05 09:40:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.162 2007/08/02 12:45:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.163 2007/08/05 09:40:39 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -377,7 +377,7 @@ nfs_reconnect(rep, l)
 	while ((error = nfs_connect(nmp, rep, l)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
-		(void) tsleep((void *)&lbolt, PSOCK, "nfscn2", 0);
+		kpause("nfscn2", false, hz, NULL);
 	}
 
 	/*
@@ -1369,7 +1369,7 @@ tryagain:
 				error = 0;
 				waituntil = time_second + trylater_delay;
 				while (time_second < waituntil) {
-					tsleep(&lbolt, PSOCK, "nfstrylater", 0);
+					kpause("nfstrylater", false, hz, NULL);
 				}
 				trylater_delay *= NFS_TRYLATERDELMUL;
 				if (trylater_delay > NFS_TRYLATERDELMAX)
