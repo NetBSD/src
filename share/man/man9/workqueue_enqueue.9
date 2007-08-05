@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue_enqueue.9,v 1.1 2005/11/24 08:20:51 yamt Exp $
+.\"	$NetBSD: workqueue_enqueue.9,v 1.2 2007/08/05 17:57:38 rmind Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -38,13 +38,27 @@
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn workqueue_enqueue \
-"struct workqueue *wq" "struct work *wk"
+"struct workqueue *wq" "struct work *wk" "struct cpu_info *ci"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 Enqueue the work
 .Fa wk
 into the workqueue
 .Fa wq .
+.Pp
+If
+.Dv WQ_PERCPU
+flag on workqueue creation was set, the
+.Fa ci
+argument may be used to specify the CPU on which the work should
+be enqueued.
+Also it may be NULL, then work will be enqueued on the current CPU.
+If
+.Dv WQ_PERCPU
+flag was not set,
+.Fa ci
+must be NULL.
+.Pp
 The enqueued work will be processed in a thread context.
 A work must not be enqueued again until the callback is called by
 the

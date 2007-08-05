@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue_create.9,v 1.7 2007/05/13 20:24:57 xtraeme Exp $
+.\"	$NetBSD: workqueue_create.9,v 1.8 2007/08/05 17:57:37 rmind Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -62,7 +62,15 @@ The process priority to be used when sleeping to wait requests.
 .It Fa ipl
 The highest IPL at which this workqueue is used.
 .It Fa flags
-Should be 0.
+The value of 0 indicates a standard create operation, however the following
+flags may be bitwise ORed together:
+.Bl -tag -width WQ_MPSAFE
+.It WQ_MPSAFE
+Specifies that the workqueue is multiprocessor safe and does its own locking,
+otherwise the kernel lock will be held while works will be proceeded.
+.It WQ_PERCPU
+Specifies that the workqueue should have a separate queue for each CPU,
+thus the work could be enqueued on concrete CPU.
 .El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
