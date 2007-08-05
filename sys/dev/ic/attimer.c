@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.2 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: attimer.c,v 1.2.44.1 2007/08/05 19:01:03 jmcneill Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.2 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.2.44.1 2007/08/05 19:01:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ void
 attimer_attach(struct attimer_softc *sc)
 {
 	sc->sc_flags |= ATT_CONFIGURED;
+
+	(void)pnp_register(&sc->sc_dev, pnp_generic_power);
 }
 
 /*

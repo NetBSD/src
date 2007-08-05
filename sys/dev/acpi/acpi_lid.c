@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.21 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.21.22.1 2007/08/05 19:01:01 jmcneill Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.21 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.21.22.1 2007/08/05 19:01:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,8 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	acpi_set_wake_gpe(sc->sc_node->ad_handle);
+
+	(void)pnp_register(self, pnp_generic_power);
 }
 
 /*

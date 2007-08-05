@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pnp.c,v 1.1.2.3 2007/08/04 20:21:10 jmcneill Exp $ */
+/* $NetBSD: kern_pnp.c,v 1.1.2.4 2007/08/05 19:01:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.3 2007/08/04 20:21:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pnp.c,v 1.1.2.4 2007/08/05 19:01:05 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -382,6 +382,36 @@ pnp_deregister(device_t dv)
 	default:
 		/* nothing to do yet */
 		break;
+	}
+
+	return PNP_STATUS_SUCCESS;
+}
+
+/*
+ * Null power management handler.
+ *
+ * DO NOT USE THIS UNLESS YOU ARE ABSOLUTELY SURE THAT YOUR DEVICE
+ * DRIVER DOES NOT REQUIRE POWER MANAGEMENT SUPPORT.
+ */
+pnp_status_t
+pnp_generic_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
 	}
 
 	return PNP_STATUS_SUCCESS;

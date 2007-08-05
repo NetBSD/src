@@ -1,4 +1,4 @@
-/* $NetBSD: pnp.h,v 1.1.2.1 2007/08/03 22:17:30 jmcneill Exp $ */
+/* $NetBSD: pnp.h,v 1.1.2.2 2007/08/05 19:01:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -113,6 +113,7 @@ pnp_status_t		pnp_notify(device_t);
 pnp_status_t	pnp_register(device_t,
 		    pnp_status_t (*)(device_t, pnp_request_t, void *));
 pnp_status_t	pnp_deregister(device_t);
+pnp_status_t	pnp_generic_power(device_t, pnp_request_t, void *);
 
 pnp_status_t	pnp_power(device_t, pnp_request_t, void *);
 

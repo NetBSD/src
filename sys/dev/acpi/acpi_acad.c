@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.25 2007/07/05 13:47:46 xtraeme Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.25.6.1 2007/08/05 19:00:59 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25 2007/07/05 13:47:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.25.6.1 2007/08/05 19:00:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,8 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	/* Display the current state. */
 	sc->sc_flags = AACAD_F_VERBOSE;
 #endif
+
+	(void)pnp_register(self, pnp_generic_power);
 
 	acpiacad_init_envsys(sc);
 }

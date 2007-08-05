@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.52 2007/07/09 21:01:26 ad Exp $ */
+/* $NetBSD: wsmouse.c,v 1.52.6.1 2007/08/05 19:01:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.52 2007/07/09 21:01:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.52.6.1 2007/08/05 19:01:04 jmcneill Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -273,6 +273,8 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	printf("\n");
+
+	(void)pnp_register(self, pnp_generic_power);
 }
 
 int

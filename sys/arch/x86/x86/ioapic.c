@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.19.8.2 2007/08/05 17:04:19 jmcneill Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.19.8.3 2007/08/05 19:00:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.2 2007/08/05 17:04:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.19.8.3 2007/08/05 19:00:59 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -377,6 +377,9 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_pic.pic_apicid);
 		}
 	}
+
+	(void)pnp_register(self, pnp_generic_power);
+
 #if 0
 	/* output of this was boring. */
 	if (mp_verbose)
