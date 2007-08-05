@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.3 2007/08/05 16:49:27 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.4 2007/08/05 19:27:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.3 2007/08/05 16:49:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.4 2007/08/05 19:27:52 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -339,6 +339,11 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic = aa->aa_ic;
 
 	acpi_softc = sc;
+
+	/*
+	 * Register null power management handler
+	 */
+	(void)pnp_register(self, pnp_generic_power);
 
 	/*
 	 * Bring ACPI on-line.
