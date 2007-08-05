@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.9 2007/03/10 00:30:37 hubertf Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.10 2007/08/05 22:09:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.9 2007/03/10 00:30:37 hubertf Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.10 2007/08/05 22:09:12 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ tryagain:
 				clnt_pcreateerror(
 				    "mount_nfs: rpcbind to nfs on server");
 		} else {
-			pertry.tv_sec = 10;
+			pertry.tv_sec = 30;
 			pertry.tv_usec = 0;
 			/*
 			 * XXX relies on clnt_tcp_create to bind to a reserved
@@ -235,7 +235,7 @@ tryagain:
 				CLNT_CONTROL(clp, CLSET_RETRY_TIMEOUT,
 				    (char *)&pertry);
 				clp->cl_auth = authsys_create_default();
-				try.tv_sec = 10;
+				try.tv_sec = 30;
 				try.tv_usec = 0;
 				nfhret.auth = RPCAUTH_UNIX;
 				nfhret.vers = mntvers;
