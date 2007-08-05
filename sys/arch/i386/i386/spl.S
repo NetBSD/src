@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.16 2007/05/17 14:51:21 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.17 2007/08/05 10:50:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
+
 #include <machine/asm.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
@@ -45,36 +46,11 @@
 
 #include "assym.h"
 
-	.data
-	.globl	_C_LABEL(netisr)
 	.text
-
-#if 0
-#if defined(PROF) || defined(GPROF)
-/*
- * XXXX TODO
- */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	$IPL_HIGH,%eax
-	xchgl	%eax,CPUVAR(ILEVEL)
-	ret
-
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movl	4(%esp),%ecx
-	SPLLOWER(_C_LABEL(Xspllower))
-	/* ret */
-#endif /* PROF || GPROF */
-#endif
 
 /*
  * int splraise(int s);
  */
-	.align	32
-
 ENTRY(splraise)
 	movl	4(%esp),%edx
 	movl	CPUVAR(ILEVEL),%eax
@@ -89,8 +65,6 @@ ENTRY(splraise)
  *
  * Software interrupt registration.
  */
-	.align	32
-
 ENTRY(softintr)
 	movl	4(%esp),%ecx
 	movl	$1,%eax
@@ -105,26 +79,23 @@ ENTRY(softintr)
  * i686_spllower().  This must use pushf/cli/popf as it is used
  * early in boot where interrupts are disabled via eflags/IE.
  */
-	.align 64
-
 ENTRY(spllower)
-	movl	CPUVAR(SELF150), %eax
 	movl	4(%esp), %ecx
-	cmpl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
+	cmpl	CPUVAR(ILEVEL), %ecx
 	jae	1f
-	movl	(CPU_INFO_IUNMASK-0x150)(%eax,%ecx,4), %edx
+	movl	CPUVAR(IUNMASK)(,%ecx,4), %edx
 	pushf
 	cli
-	testl	(CPU_INFO_IPENDING-0x150)(%eax), %edx
+	testl	CPUVAR(IPENDING), %edx
 	jnz	2f
-	movl	%ecx, (CPU_INFO_ILEVEL-0x150)(%eax)
+	movl	%ecx, CPUVAR(ILEVEL)
 	popf
 1:
 	ret
 2:
 	popf
 	jmp	_C_LABEL(Xspllower)
-	.align	64
+	.align	32
 LABEL(spllower_end)
 
 /*
@@ -140,8 +111,6 @@ LABEL(spllower_end)
  * edx : eax = old level / old ipending 
  * ecx : ebx = new level / old ipending
  */
-	.align	64
-
 ENTRY(i686_spllower)
 	movl	4(%esp),%ecx
 	movl	CPUVAR(ILEVEL),%edx
@@ -166,7 +135,7 @@ ENTRY(i686_spllower)
 	popl	%ebx
 LABEL(i686_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
-	.align	64
+	.align	32
 LABEL(i686_spllower_end)
 
 /*
@@ -187,8 +156,7 @@ LABEL(i686_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
-	nop
-	.align	4	/* Don't get confused with i686_spllower_end */
+	nop	/* Don't get confused with i686_spllower_end */
 
 IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)
