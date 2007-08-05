@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.2 2007/08/05 22:48:36 xtraeme Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.3 2007/08/05 23:05:02 xtraeme Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	uint8_t ctl = 0, st;
 	int retries;
 
-	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zd, len %d, "
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %d, "
 	    "flags 0x%02x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
 	    len, flags));
 
