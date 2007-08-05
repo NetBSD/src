@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.42.26.1 2007/08/05 16:38:54 jmcneill Exp $	*/
+/*	$NetBSD: pcib.c,v 1.42.26.2 2007/08/05 17:59:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.42.26.1 2007/08/05 16:38:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.42.26.2 2007/08/05 17:59:48 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -199,6 +199,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcib_softc *sc = (struct pcib_softc *)self;
 	struct pci_attach_args *pa = aux;
+	pnp_device_t *pnp;
 	char devinfo[256];
 
 	aprint_naive("\n");
@@ -215,9 +216,16 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
-	if (pnp_register(self, pcib_power) != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
+	pnp = device_pnp(self);
+
+	/* If a more specific pcib implementation has already registered a
+	 * power handler, don't overwrite it.
+	 */
+	if (pnp->pnp_power == NULL) {
+		if (pnp_register(self, pcib_power) != PNP_STATUS_SUCCESS)
+			aprint_error("%s: couldn't establish power handler\n",
+			    device_xname(self));
+	}
 
 	config_defer(self, pcib_callback);
 }
