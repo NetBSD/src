@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.48.4.4 2007/07/23 22:47:16 ober Exp $
+#	$NetBSD: files.bebox,v 1.48.4.5 2007/08/05 18:54:37 ober Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -97,7 +97,7 @@ file    arch/powerpc/isa/isadma_machdep.c       isa
 #file	arch/bebox/isa/isadma_machdep.c	isa
 
 # PC clock
-file	arch/bebox/isa/isaclock.c		isa
+#file	arch/bebox/isa/isaclock.c		isa
 
 device	mcclock: mc146818
 attach	mcclock at isa with mcclock_isa
