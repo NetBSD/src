@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.57 2007/01/12 19:34:33 uwe Exp $
+#	$NetBSD: POWERMAC,v 1.57.14.1 2007/08/05 03:15:20 macallan Exp $
 #
 # POWERMAC config file
 #
@@ -82,7 +82,12 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
-ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+genfb*	at pci?
+wsdisplay0 at wsemuldisplaydev? console 1
+wsdisplay* at wsemuldisplaydev? console 0
+
+# ofb is deprecated, use genfb instead
+#ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
 obio*	at pci? dev ? function ?
 
@@ -99,7 +104,6 @@ nvram*	at obio?			# nvram
 zsc*	at obio?
 zstty*	at zsc? channel ?
 
-wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
 wsmouse0 at ams?
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.255.6.5 2007/08/02 05:34:27 macallan Exp $
+# $NetBSD: GENERIC,v 1.255.6.6 2007/08/05 03:15:19 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.255.6.5 $"
+#ident 		"GENERIC-$Revision: 1.255.6.6 $"
 
 maxusers	32
 
@@ -279,7 +279,7 @@ siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # Display devices
-ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+# ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 # OFB_ENABLE_CACHE speeds up the console on many machines, but should
 # not be enabled on some older machines, such as the rev. A-D iMacs or any
 # O'Hare based machine that uses external cache like the PowerBook 3400c
@@ -292,6 +292,7 @@ radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
 options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
+genfb*		at pci? function ?
 
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
