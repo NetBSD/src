@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.19.26.1 2007/08/03 22:17:08 jmcneill Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.19.26.2 2007/08/05 17:59:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19.26.1 2007/08/03 22:17:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19.26.2 2007/08/05 17:59:47 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,6 +152,12 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
+	/* Install power handler */
+	status = pnp_register(self, lpcib_power);
+	if (status != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+
 	pcibattach(parent, self, aux);
 
 	/* Set up the TCO (watchdog). */
@@ -159,12 +165,6 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up SpeedStep. */
 	speedstep_configure(sc, pa);
-
-	/* Install power handler */
-	status = pnp_register(self, lpcib_power);
-	if (status != PNP_STATUS_SUCCESS)
-		aprint_error("%s: couldn't establish power handler\n",
-		    device_xname(self));
 
 	return;
 }
