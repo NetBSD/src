@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.45 2007/07/29 14:02:29 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.46 2007/08/05 23:16:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.45 2007/07/29 14:02:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.46 2007/08/05 23:16:25 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -296,7 +296,6 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		sme = sysmon_envsys_find(devname);
 		if (sme == NULL) {
 			DPRINTF(("%s: NULL sme\n", __func__));
-			sysmon_envsys_release(sme);
 			prop_object_release(udict);
 			error = EINVAL;
 			break;
