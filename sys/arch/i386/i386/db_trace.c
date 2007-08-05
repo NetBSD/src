@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.56 2007/03/07 21:43:43 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.57 2007/08/05 19:27:45 ad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.56 2007/03/07 21:43:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57 2007/08/05 19:27:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,12 @@ db_nextframe(
 			break;
 		case INTERRUPT:
 			(*pr)("--- interrupt ---\n");
-			tf = (struct trapframe *)argp;
+			/*
+			 * Get intrframe address as saved when switching
+			 * to interrupt stack, and convert to trapframe
+			 * (add 4).  See frame.h.
+			 */
+			tf = (struct trapframe *)(*(argp - 1) + 4);
 			break;
 		}
 		*ip = (db_addr_t)tf->tf_eip;
@@ -385,7 +390,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	int *retaddr, *arg0;
 	int		*argp;
 	db_addr_t	callpc;
-	int		is_trap;
+	int		is_trap = NONE;
 	bool		kernel_only = true;
 	bool		trace_thread = false;
 	bool		lwpaddr = false;
