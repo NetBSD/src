@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.42 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.42.26.1 2007/08/05 16:38:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.42 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.42.26.1 2007/08/05 16:38:54 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,10 +55,19 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.42 2006/11/16 01:32:39 christos Exp $");
 
 #include "isa.h"
 
+struct pcib_softc {
+	struct device		sc_dev;
+	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
+	struct pci_conf_state	sc_pciconf;
+};
+
 int	pcibmatch(struct device *, struct cfdata *, void *);
 void	pcibattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(pcib, sizeof(struct device),
+static pnp_status_t	pcib_power(device_t, pnp_request_t, void *);
+
+CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
 
 void	pcib_callback(struct device *);
@@ -188,6 +197,7 @@ pcibmatch(struct device *parent, struct cfdata *match,
 void
 pcibattach(struct device *parent, struct device *self, void *aux)
 {
+	struct pcib_softc *sc = (struct pcib_softc *)self;
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
@@ -202,7 +212,56 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
+
+	if (pnp_register(self, pcib_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+
 	config_defer(self, pcib_callback);
+}
+
+static pnp_status_t
+pcib_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct pcib_softc *sc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+
+	sc = (struct pcib_softc *)dv;
+	pc = sc->sc_pc;
+	tag = sc->sc_tag;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			break;
+		case PNP_STATE_D3:
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }
 
 void
