@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.20.6.1 2007/08/03 22:17:15 jmcneill Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.20.6.2 2007/08/05 19:01:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.20.6.1 2007/08/03 22:17:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.20.6.2 2007/08/05 19:01:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,8 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 		first->sc_pckbc.intr_establish = pckbc_acpi_intr_establish;
 		config_defer(&first->sc_pckbc.sc_dv,
 			     (void(*)(struct device *))pckbc_attach);
-	}
+	} else
+		(void)pnp_register(self, pnp_generic_power);
  out:
 	acpi_resource_cleanup(&res);
 }

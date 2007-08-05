@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.104.6.1 2007/08/03 22:17:26 jmcneill Exp $ */
+/* $NetBSD: wskbd.c,v 1.104.6.2 2007/08/05 19:01:03 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104.6.1 2007/08/03 22:17:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.104.6.2 2007/08/05 19:01:03 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -462,6 +462,8 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_base.me_dv.dv_xname, error);
 	}
 #endif
+
+	(void)pnp_register(self, pnp_generic_power);
 }
 
 void

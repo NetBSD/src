@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.51 2007/07/16 17:54:46 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.51.6.1 2007/08/05 19:01:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51 2007/07/16 17:54:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.51.6.1 2007/08/05 19:01:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,8 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 #ifdef ACPI_BAT_DEBUG
 	ABAT_SET(sc, ABAT_F_VERBOSE);
 #endif
+
+	(void)pnp_register(self, pnp_generic_power);
 
 	acpibat_init_envsys(sc);
 }

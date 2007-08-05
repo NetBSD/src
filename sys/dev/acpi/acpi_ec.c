@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.6.1 2007/08/03 22:17:14 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.41.6.2 2007/08/05 19:01:01 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.1 2007/08/03 22:17:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.6.2 2007/08/05 19:01:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -630,6 +630,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		goto out2;
 	}
+
+	(void)pnp_register(self, pnp_generic_power);
 
 	return_VOID;
  out2:
