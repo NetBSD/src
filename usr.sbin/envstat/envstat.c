@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.40 2007/07/21 11:11:10 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.41 2007/08/05 23:20:44 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 {
 	prop_dictionary_t dict;
 	int c, fd, rval;
-	char *endptr;
+	char *buf, *endptr;
 
 	rval = flags = interval = width = 0;
 	newsize = gnelems = 0;
@@ -210,9 +210,11 @@ int main(int argc, char **argv)
 		}
 
 	} else if (!interval) {
-		if (flags & ENVSYS_XFLAG)
-			(void)printf("%s", prop_dictionary_externalize(dict));
-		else {
+		if (flags & ENVSYS_XFLAG) {
+			buf = prop_dictionary_externalize(dict);
+			(void)printf("%s", buf);
+			free(buf);
+		} else {
 			if (sensors && !mydevname) {
 				(void)fprintf(stderr, "%s: -s cannot be used "
 				    "without -d\n", getprogname());
