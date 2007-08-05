@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.3 2007/05/17 14:51:20 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.4 2007/08/05 10:56:53 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -957,4 +957,80 @@ ENTRY(subyte)
 	movb	%al,(%edx)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
+	ret
+
+/*
+ * copyin() optimised for bringing in syscall arguments.
+ */
+ENTRY(x86_copyargs)
+	pushl	%esi
+	GET_CURPCB(%eax)
+	pushl	$0
+	movl	$_C_LABEL(x86_copyargs_fault),PCB_ONFAULT(%eax)
+
+	movl	12(%esp),%esi
+	movl	16(%esp),%edx
+	movl	20(%esp),%ecx
+
+	/*
+	 * We check that the end of the destination buffer is not past the end
+	 * of the user's address space.  If it's not, then we only need to
+	 * check that each page is readable, and the CPU will do that for us.
+	 */
+	movl	%esi,%eax
+	addl	%ecx,%eax
+	jc	_C_LABEL(x86_copyargs_efault)
+	cmpl	$VM_MAXUSER_ADDRESS,%eax
+	ja	_C_LABEL(x86_copyargs_efault)
+1:
+	movl	(%esi),%eax
+	cmpl	$4,%ecx
+	movl	%eax,(%edx)
+	je	2f
+	movl	4(%esi),%eax
+	cmpl	$8,%ecx
+	movl	%eax,4(%edx)
+	je	2f
+	movl	8(%esi),%eax
+	cmpl	$12,%ecx
+	movl	%eax,8(%edx)
+	je	2f
+	movl	12(%esi),%eax
+	cmpl	$16,%ecx
+	movl	%eax,12(%edx)
+	je	2f
+	movl	16(%esi),%eax
+	cmpl	$20,%ecx
+	movl	%eax,16(%edx)
+	je	2f
+	movl	20(%esi),%eax
+	cmpl	$24,%ecx
+	movl	%eax,20(%edx)
+	je	2f
+	movl	24(%esi),%eax
+	cmpl	$28,%ecx
+	movl	%eax,24(%edx)
+	je	2f
+	movl	28(%esi),%eax
+	addl	$32,%esi
+	movl	%eax,28(%edx)
+	addl	$32,%edx
+	subl	$32,%ecx
+	jnz	1b
+2:
+	GET_CURPCB(%edx)
+	popl	PCB_ONFAULT(%edx)
+	popl	%esi
+	xorl	%eax,%eax
+	ret
+
+/* LINTSTUB: Ignore */
+NENTRY(x86_copyargs_efault)
+	movl	$EFAULT,%eax
+
+/* LINTSTUB: Ignore */
+NENTRY(x86_copyargs_fault)
+	GET_CURPCB(%edx)
+	popl	PCB_ONFAULT(%edx)
+	popl	%esi
 	ret

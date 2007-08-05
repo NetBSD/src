@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.44 2007/03/04 05:59:58 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.45 2007/08/05 10:56:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2007/03/04 05:59:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2007/08/05 10:56:52 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2007/03/04 05:59:58 christos Exp $"
 #include <sys/syscall.h>
 #include <sys/syscall_stats.h>
 
-
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -62,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2007/03/04 05:59:58 christos Exp $"
 
 void syscall_plain(struct trapframe *);
 void syscall_fancy(struct trapframe *);
+int x86_copyargs(void *, void *, size_t);
 #ifdef VM86
 void syscall_vm86(struct trapframe *);
 #endif
@@ -131,7 +131,7 @@ syscall_plain(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (void *)args, argsize);
+		error = x86_copyargs(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -230,16 +230,13 @@ syscall_fancy(frame)
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (void *)args, argsize);
+		error = x86_copyargs(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
 
-	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0) {
-		KERNEL_UNLOCK_LAST(l);
+	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
 		goto out;
-	}
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -247,9 +244,9 @@ syscall_fancy(frame)
 	KASSERT(l->l_holdcnt == 0);
 
 	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_UNLOCK_LAST(l);
 		error = (*callp->sy_call)(l, args, rval);
 	} else {
+		KERNEL_LOCK(1, l);
 		error = (*callp->sy_call)(l, args, rval);
 		KERNEL_UNLOCK_LAST(l);
 	}
@@ -331,10 +328,7 @@ child_return(arg)
 
 	userret(l);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK(1, l);
+	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_UNLOCK_LAST(l);
-	}
 #endif
 }
