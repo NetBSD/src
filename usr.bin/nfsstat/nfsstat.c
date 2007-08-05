@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.20 2006/12/27 21:53:58 dogcow Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.21 2007/08/05 22:06:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.20 2006/12/27 21:53:58 dogcow Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.21 2007/08/05 22:06:14 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,14 +260,11 @@ intpr()
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_READDIRPLUS]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_FSSTAT]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_FSINFO]));
-		printf("%10s  %14s  %14s  %14s  %14s\n",
-		    "pathconf", "commit", "getlease", "vacated", "evicted");
+		printf("%10s  %14s\n",
+		    "pathconf", "commit");
 		printf("%10d %2d%%  %10d %2d%%\n",
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_PATHCONF]),
 		    RPCSTAT(nfsstats.rpccnt[NFSPROC_COMMIT]));
-		printf("%10s\n", "noop");
-		printf("%10d %2d%%\n",
-		    RPCSTAT(nfsstats.rpccnt[NFSPROC_NOOP]));
 
 		printf("RPC Info:\n");
 		printf("%10s  %14s  %14s  %14s  %14s\n",
@@ -350,14 +347,11 @@ intpr()
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_READDIRPLUS]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_FSSTAT]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_FSINFO]));
-		printf("%10s  %14s  %14s  %14s  %14s\n",
-		    "pathconf", "commit", "getlease", "vacated", "evicted");
+		printf("%10s  %14s\n",
+		    "pathconf", "commit");
 		printf("%10d %2d%%  %10d %2d%%\n",
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_PATHCONF]),
 		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_COMMIT]));
-		printf("%10s\n", "noop");
-		printf("%10d %2d%%\n",
-		    RPCSTAT(nfsstats.srvrpccnt[NFSPROC_NOOP]));
 
 		printf("Server Errors:\n");
 		printf("%10s  %14s\n",
