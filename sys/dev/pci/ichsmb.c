@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.1 2007/07/28 10:51:57 kiyohara Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.2 2007/08/05 22:48:36 xtraeme Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	printf("%s: exec: op %d, addr 0x%02x, cmdlen %zd, len %d, "
+	printf("%s: exec: op %d, addr 0x%02x, cmdlen %zd, len %zd, "
 	    "flags 0x%02x: timeout, status 0x%02x\n",
 	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags,
 	    st);
