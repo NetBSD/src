@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.23.6.1 2007/08/03 22:17:14 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.23.6.2 2007/08/05 19:01:02 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.1 2007/08/03 22:17:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.23.6.2 2007/08/05 19:01:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,6 +196,8 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	    acpitz_tick, sc);
 
 	acpitz_init_envsys(sc);
+
+	(void)pnp_register(self, pnp_generic_power);
 }
 
 static void

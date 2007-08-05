@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.12.6.1 2007/08/04 01:29:10 jmcneill Exp $ */
+/*	$NetBSD: apm.c,v 1.12.6.2 2007/08/05 19:01:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12.6.1 2007/08/04 01:29:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12.6.2 2007/08/05 19:01:02 jmcneill Exp $");
 
 #include "opt_apm.h"
 
@@ -694,6 +694,8 @@ apm_attach(struct apm_softc *sc)
 		    "kernel APM support disabled\n",
 		    sc->sc_dev.dv_xname);
 	}
+
+	(void)pnp_register(&sc->sc_dev, pnp_generic_power);
 }
 
 void

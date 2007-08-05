@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.116 2006/12/08 15:05:18 yamt Exp $	*/
+/*	$NetBSD: npx.c,v 1.116.22.1 2007/08/05 19:00:58 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.116 2006/12/08 15:05:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.116.22.1 2007/08/05 19:00:58 jmcneill Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -327,6 +327,8 @@ npxattach(struct npx_softc *sc)
 	else
 #endif /* I686_CPU */
 		npxdna_func = npxdna_s87;
+
+	(void)pnp_register(&sc->sc_dev, pnp_generic_power);
 }
 
 /*
