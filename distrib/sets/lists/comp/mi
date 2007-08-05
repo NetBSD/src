@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1058 2007/08/05 12:46:02 yamt Exp $
+#	$NetBSD: mi,v 1.1059 2007/08/05 21:50:32 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -12254,6 +12254,7 @@
 ./usr/share/mk/bsd.init.mk			comp-util-share		share
 ./usr/share/mk/bsd.kernobj.mk			comp-util-share		share
 ./usr/share/mk/bsd.kinc.mk			comp-util-share		share
+./usr/share/mk/bsd.klinks.mk			comp-util-share		share
 ./usr/share/mk/bsd.kmod.mk			comp-util-share		share
 ./usr/share/mk/bsd.lib.mk			comp-util-share		share
 ./usr/share/mk/bsd.links.mk			comp-util-share		share
