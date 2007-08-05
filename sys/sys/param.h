@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.269 2007/07/31 21:18:20 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.270 2007/08/05 01:19:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -158,6 +158,13 @@
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
 /*
+ * CPU cache values
+ */
+#ifndef CACHE_LINE_SIZE
+#define	CACHE_LINE_SIZE		64
+#endif
+
+/*
  * Stack macros.  On most architectures, the stack grows down,
  * towards lower addresses; it is the rare architecture where
  * it grows up, towards higher addresses.
@@ -260,7 +267,8 @@
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
-#define rounddown(x,y)	(((x)/(y))*(y))
+#define	rounddown(x,y)	(((x)/(y))*(y))
+#define	roundup2(x, m)	(((x) + m - 1) & ~(m - 1))
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */
