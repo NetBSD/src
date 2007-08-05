@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.5 2007/08/04 23:51:37 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.6 2007/08/05 03:23:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.5 2007/08/04 23:51:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.6 2007/08/05 03:23:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ genfb_init(struct genfb_softc *sc)
 
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
-	sc->sc_fbsize = sc->sc_width * sc->sc_stride;
+	sc->sc_fbsize = sc->sc_height * sc->sc_stride;
 
 	/* optional colour map callback */
 	sc->sc_cmcb = NULL;
@@ -198,6 +198,8 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	switch (cmd) {
 
 		case WSDISPLAYIO_GINFO:
+			if (ms == NULL)
+				return ENODEV;
 			wdf = (void *)data;
 			wdf->height = ms->scr_ri.ri_height;
 			wdf->width = ms->scr_ri.ri_width;

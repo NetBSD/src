@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.1 2007/04/11 04:45:45 macallan Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.2 2007/08/05 03:23:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -32,7 +32,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.1 2007/04/11 04:45:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.2 2007/08/05 03:23:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ genfb_attach_sbus(struct device *parent, struct device *self, void *args)
 	sc->sc_gen.sc_depth = prom_getpropint(sa->sa_node, "depth", 8);
 	sc->sc_gen.sc_stride = prom_getpropint(sa->sa_node, "linebytes",
 	    (sc->sc_gen.sc_width * sc->sc_gen.sc_depth + 7) >> 3 );
-	sc->sc_gen.sc_fbsize = sc->sc_gen.sc_width * sc->sc_gen.sc_stride;
+	sc->sc_gen.sc_fbsize = sc->sc_gen.sc_height * sc->sc_gen.sc_stride;
 	fbva = (uint32_t)prom_getpropint(sa->sa_node, "address", 0);
 	if (fbva == 0)
 		panic("this fb has no address property\n");
