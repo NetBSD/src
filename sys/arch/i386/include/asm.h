@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.32 2007/08/05 09:56:48 ad Exp $	*/
+/*	$NetBSD: asm.h,v 1.33 2007/08/05 14:56:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,9 @@
 
 /* let kernels and others override entrypoint alignment */
 #if !defined(_ALIGN_TEXT) && !defined(_KERNEL)
-# ifdef __ELF__
+# ifdef _STANDALONE
+#  define _ALIGN_TEXT .align 4
+# elif defined __ELF__
 #  define _ALIGN_TEXT .align 32
 # else
 #  define _ALIGN_TEXT .align 5
@@ -119,7 +121,11 @@
 #endif /* __STDC__ */
 #endif /* __ELF__ */
 
-#ifdef __ELF__
+#ifdef _STANDALONE
+#define ALIGN_DATA	.align	4
+#define ALIGN_TEXT	.align	4	/* 4-byte boundaries */
+#define SUPERALIGN_TEXT	.align	32	/* 32-byte boundaries */
+#elif defined __ELF__
 #define ALIGN_DATA	.align	4
 #define ALIGN_TEXT	.align	32	/* 32-byte boundaries */
 #define SUPERALIGN_TEXT	.align	32	/* 32-byte boundaries */
