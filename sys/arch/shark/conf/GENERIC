@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.70 2007/07/31 19:35:37 jmmv Exp $
+#	$NetBSD: GENERIC,v 1.71 2007/08/05 13:37:31 jmmv Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.70 $"
+#ident		"GENERIC-$Revision: 1.71 $"
 
 # estimated number of users
 maxusers	32
@@ -208,8 +208,6 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
-# the font to be used by vga(4); the hardware built-in font is broken
-options 	FONT_VT220L8x16
 
 config		netbsd		root on ? type ?
 

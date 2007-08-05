@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.32 2007/07/31 19:51:58 jmmv Exp $
+#	$NetBSD: INSTALL,v 1.33 2007/08/05 13:37:31 jmmv Exp $
 #
 #	Shark installation kernel
 #
@@ -178,8 +178,6 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
-# the font to be used by vga(4); the hardware built-in font is broken
-options 	FONT_VT220L8x16
 
 config		netbsd		root on ? type ffs	# root on miniroot
 
