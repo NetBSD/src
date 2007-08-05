@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.26.1 2007/08/03 22:17:06 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.26.2 2007/08/05 18:59:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.1 2007/08/03 22:17:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.2 2007/08/05 18:59:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,10 @@ struct sony_acpi_softc {
 	struct acpi_devnode *sc_node;
 
 	struct device *sc_wskbddev;
+
+	struct sony_acpi_pmstate {
+		ACPI_INTEGER	brt;
+	} sc_pmstate;
 };
 
 static int	sony_acpi_wskbd_enable(void *, int);
@@ -418,13 +422,13 @@ sony_acpi_power(device_t dv, pnp_request_t req, void *opaque)
 		pstate = opaque;
 		switch (*pstate) {
 		case PNP_STATE_D0:
+			sony_acpi_eval_set_integer(sc->sc_node->ad_handle,
+			    "SBRT", sc->sc_pmstate.brt, NULL);
 			sony_acpi_quirk_setup(sc);
-			sony_acpi_eval_set_integer(sc->sc_node->ad_handle,
-			    "SBRT", 0x08, NULL);
-			sony_acpi_eval_set_integer(sc->sc_node->ad_handle,
-	    		    "SDDI", 0x08, NULL);
 			break;
 		case PNP_STATE_D3:
+			acpi_eval_integer(sc->sc_node->ad_handle, "GBRT",
+			    &sc->sc_pmstate.brt);
 			break;
 		default:
 			return PNP_STATUS_UNSUPPORTED;
