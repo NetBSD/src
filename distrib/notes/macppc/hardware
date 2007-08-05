@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.42 2004/11/01 01:02:09 mbw Exp $
+.\"$NetBSD: hardware,v 1.43 2007/08/05 16:25:03 macallan Exp $
 .
 Currently,
 .Nx*M
@@ -125,7 +125,8 @@ Apple original eMac and eMac (ATI Graphics)
 Apple PowerBook (G3 Series (bronze keyboard) and G3 (FireWire))
 .It
 Apple PowerBook (G4 (Titanium), G4 (Gigabit Ethernet), G4 (DVI), 
-G4 (12-inch), G4 (17-inch), G4 (12-inch DVI))
+G4 (12-inch), G4 (17-inch), G4 (12-inch DVI), PowerBook G4
+(15-inch FW 800), PowerBook G4 (17-inch 1.33GHz/1.5GHz))
 .It
 Apple PowerMacintosh G3 (Blue and White)
 .It
@@ -133,7 +134,18 @@ Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
 (Digital Audio), G4 (Quicksilver), G4 (Quicksilver 2002), 
 G4 (Mirrored Drive Doors), G4 (FW 800), and G4 Cube)
 .It
+Apple Mac Mini G4 (1.25GHz/1.42GHz/1.5GHz)
+.It
 Apple original Xserve and Xserve (Slot Load)
+.(Note
+Some newer G4 models may not run at their full CPU speed, due to
+the fact Open Firmware starts the CPU at a reduced frequency.
+.Note)
+.It
+Apple iMac G5, PowerMacintosh G5, Xserve G5
+.(Note
+G5 models are supported as a 32-bit port in bridge mode only.
+.Note)
 .bullet)
 .tag)
 .
@@ -141,8 +153,6 @@ Apple original Xserve and Xserve (Slot Load)
 .(bullet -compact -offset indent
 Systems with Open Firmware, but using a PPC 601 microprocessor
 (PowerMacintosh 7200 and 7500 (without CPU upgrade))
-.It
-Systems with Open Firmware, but using a PPC G5 microprocessor
 .It
 Systems with a PowerPC microprocessor, but lacking Open Firmware
 .(bullet -compact
@@ -163,15 +173,6 @@ Systems with a Motorola 68k microprocessor (these systems are supported by
 .It
 Systems upgraded from any of the above (unless the motherboard is replaced as
 part of the upgrade)
-.It
-Systems released in late 2004 and later (future releases of
-.Nx*M
-will support these systems)
-.It
-Systems released before late 2004, but not listed
-above.
-These models might work, but have not been tested as of the release of
-.Nx \*V .
 .bullet)
 .
 .Ss2 Supported devices
@@ -191,13 +192,13 @@ See the FAQ entry
 Ethernet
 .(bullet -compact
 On-board 79C950-based MACE Ethernet interface
-.Pq Em mc0
+.Pq Em mc
 .It
 On-board bmac Ethernet interface
-.Pq Em bm0
+.Pq Em bm
 .It
 On-board gmac Ethernet interface
-.Pq Em gem0
+.Pq Em gem
 .It
 Apple PCI Ethernet Card (option for Apple Network Server)
 .Pq Em tlp
@@ -359,17 +360,23 @@ systems is reported to have the same problem.
 .It
 PCI frame buffers which have Open Firmware support
 (ATI, IMS, Matrox, and NVIDIA have several models which work)
+.It
+Full wscons capabilities, such as virtual terminals and color text are
+available.  (Note however that switching between virtual terminals
+while running an X session is not supported at present.)
 .bullet)
 .It
 Audio
 .(bullet -compact
 On-board audio on most models
-.Pq Em awacs
+.Pq Em awacs No or Em snapper
 .(Note
-This driver has only recently been introduced and is considered
-.Dq experimental
-meaning that it may cause your system to crash and/or is lacking some
-features you may expect.
+The
+.Pq Em awacs
+driver is considered
+.Dq experimental No ,
+meaning that it may cause your system to crash and/or is lacking
+some features you may expect.
 Due to interrupt conflicts with some G4 models, this driver is disabled
 by default and you will need to build a kernel with it enabled.
 .Note)
@@ -386,7 +393,8 @@ has been thoroughly tested
 .It
 Serial ports
 .br
-.Nx*M refers to the on-board serial ports as 
+.Nx*M
+refers to the on-board serial ports as 
 .Pq Em tty00
 and
 .Pq Em tty01 .
@@ -490,16 +498,15 @@ can boot from a floppy, there is no kernel support yet
 .Note)
 .Pp
 .It
-FireWire (IEEE 1394)
-.It
 Advanced power management (cannot put system to
 .Sq sleep )
-.It
-Full wscons capabilities, such as virtual terminals and color text
 .It
 On-board video capture
 .It
 AirPort Extreme
+.It
+On-board SATA controller on G5 systems (these machines must be
+netbooted)
 .bullet)
 .
 .Ss2 Supported boot devices and media
