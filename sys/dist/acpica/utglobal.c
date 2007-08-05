@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.1 2006/03/23 13:36:32 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utglobal.c,v 1.1.44.1 2007/08/05 22:46:58 jmcneill Exp $");
 
 #define __UTGLOBAL_C__
 #define DEFINE_ACPI_GLOBALS
@@ -286,12 +286,14 @@ const char                  *AcpiGbl_ValidOsiStrings[ACPI_NUM_OSI_STRINGS] =
     "Linux",
     "Windows 2000",
     "Windows 2001",
-    "Windows 2001.1",
     "Windows 2001 SP0",
     "Windows 2001 SP1",
     "Windows 2001 SP2",
     "Windows 2001 SP3",
     "Windows 2001 SP4",
+    "Windows 2001.1",
+    "Windows 2001.1 SP1",
+    "Windows 2006",
 
     /* Feature Group Strings */
 
