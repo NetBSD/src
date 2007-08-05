@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.17 2007/07/20 12:43:26 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.18 2007/08/05 01:19:17 rmind Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.17 2007/07/20 12:43:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.18 2007/08/05 01:19:17 rmind Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/systm.h>
 #include <sys/kthread.h>
 #include <sys/kmem.h>
@@ -50,31 +51,40 @@ struct workqueue_queue {
 	kcondvar_t q_cv;
 	struct workqhead q_queue;
 	struct lwp *q_worker;
-	struct cpu_info *q_ci;
 	SLIST_ENTRY(workqueue_queue) q_list;
 };
 
 struct workqueue {
-	SLIST_HEAD(, workqueue_queue) wq_queue;
 	void (*wq_func)(struct work *, void *);
 	void *wq_arg;
 	const char *wq_name;
 	pri_t wq_prio;
+	int wq_flags;
+	void *wq_ptr;
 	ipl_cookie_t wq_ipl;
 };
+
+#ifdef MULTIPROCESSOR
+#define	CPU_ALIGN_SIZE		CACHE_LINE_SIZE
+#else
+#define	CPU_ALIGN_SIZE		(ALIGNBYTES + 1)
+#endif
+
+#define	WQ_SIZE		(roundup2(sizeof(struct workqueue), CPU_ALIGN_SIZE))
+#define	WQ_QUEUE_SIZE	(roundup2(sizeof(struct workqueue_queue), CPU_ALIGN_SIZE))
 
 #define	POISON	0xaabbccdd
 
 static struct workqueue_queue *
 workqueue_queue_lookup(struct workqueue *wq, struct cpu_info *ci)
 {
-	struct workqueue_queue *q;
+	u_int idx = 0;
 
-	SLIST_FOREACH(q, &wq->wq_queue, q_list)
-		if (q->q_ci == ci)
-			return q;
+	if (wq->wq_flags & WQ_PERCPU) {
+		idx = ci ? cpu_index(ci) : cpu_index(curcpu());
+	}
 
-	return SLIST_FIRST(&wq->wq_queue);
+	return (void *)((intptr_t)(wq) + WQ_SIZE + (idx * WQ_QUEUE_SIZE));
 }
 
 static void
@@ -100,7 +110,6 @@ workqueue_run(struct workqueue *wq)
 
 	/* find the workqueue of this kthread */
 	q = workqueue_queue_lookup(wq, curlwp->l_cpu);
-	KASSERT(q != NULL);
 
 	for (;;) {
 		struct workqhead tmp;
@@ -150,33 +159,26 @@ workqueue_init(struct workqueue *wq, const char *name,
 	wq->wq_name = name;
 	wq->wq_func = callback_func;
 	wq->wq_arg = callback_arg;
-	SLIST_INIT(&wq->wq_queue);
 }
 
 static int
-workqueue_initqueue(struct workqueue *wq, int ipl,
-    int flags, struct cpu_info *ci)
+workqueue_initqueue(struct workqueue *wq, struct workqueue_queue *q,
+    int ipl, struct cpu_info *ci)
 {
-	struct workqueue_queue *q;
 	int error, ktf;
-	cpuid_t cpuid;
-
-#ifdef MULTIPROCESSOR
-	cpuid = ci->ci_cpuid;
-#else
-	cpuid = 0;
-#endif
-
-	q = kmem_alloc(sizeof(struct workqueue_queue), KM_SLEEP);
-	SLIST_INSERT_HEAD(&wq->wq_queue, q, q_list);
-	q->q_ci = ci;
 
 	mutex_init(&q->q_mutex, MUTEX_DRIVER, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
+	q->q_worker = NULL;
 	SIMPLEQ_INIT(&q->q_queue);
-	ktf = ((flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
-	error = kthread_create(wq->wq_prio, ktf, ci, workqueue_worker,
-	    wq, &q->q_worker, "%s/%d", wq->wq_name, (int)cpuid);
+	ktf = ((wq->wq_flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
+	if (ci) {
+		error = kthread_create(wq->wq_prio, ktf, ci, workqueue_worker,
+		    wq, &q->q_worker, "%s/%lu", wq->wq_name, cpu_index(ci));
+	} else {
+		error = kthread_create(wq->wq_prio, ktf, ci, workqueue_worker,
+		    wq, &q->q_worker, "%s", wq->wq_name);
+	}
 
 	return error;
 }
@@ -223,7 +225,6 @@ workqueue_finiqueue(struct workqueue *wq, struct workqueue_queue *q)
 	mutex_exit(&q->q_mutex);
 	mutex_destroy(&q->q_mutex);
 	cv_destroy(&q->q_cv);
-	kmem_free(q, sizeof(struct workqueue_queue));
 }
 
 /* --- */
@@ -234,42 +235,61 @@ workqueue_create(struct workqueue **wqp, const char *name,
     pri_t prio, int ipl, int flags)
 {
 	struct workqueue *wq;
-	int error = 0;
+	struct workqueue_queue *q;
+	void *ptr;
+	int i, error = 0;
+	size_t size;
 
 	KASSERT(sizeof(work_impl_t) <= sizeof(struct work));
 
-	wq = kmem_alloc(sizeof(*wq), KM_SLEEP);
+	i = (flags & WQ_PERCPU) ? ncpu : 1;
+	if (ncpu == 1) {
+		flags &= ~WQ_PERCPU;
+	}
+
+	size = WQ_SIZE + (i * WQ_QUEUE_SIZE) + CPU_ALIGN_SIZE;
+	ptr = kmem_alloc(size, KM_SLEEP);
+
+	wq = (void *)roundup2((intptr_t)ptr, CPU_ALIGN_SIZE);
+	wq->wq_ptr = ptr;
+	wq->wq_flags = flags;
+	q = (void *)((intptr_t)(wq) + WQ_SIZE);
 
 	workqueue_init(wq, name, callback_func, callback_arg, prio, ipl);
+	i = 0;
 
-#ifdef MULTIPROCESSOR   
 	if (flags & WQ_PERCPU) {
+#ifdef MULTIPROCESSOR
 		struct cpu_info *ci;
 		CPU_INFO_ITERATOR cii;
 
 		/* create the work-queue for each CPU */
 		for (CPU_INFO_FOREACH(cii, ci)) {
-			error = workqueue_initqueue(wq, ipl, flags, ci);
-			if (error)
+			error = workqueue_initqueue(wq, q, ipl, ci);
+			if (error) {
 				break;
+			}
+			q = (void *)((intptr_t)(q) + WQ_QUEUE_SIZE);
+			i++;
 		}
-		if (error)
-			workqueue_destroy(wq);
-
+#endif
 	} else {
-		error = workqueue_initqueue(wq, ipl, flags, curcpu());
-		if (error) {
-			kmem_free(wq, sizeof(*wq));
-			return error;
-		}
+		/* initialize a work-queue */
+		error = workqueue_initqueue(wq, q, ipl, NULL);
 	}
-#else
-	error = workqueue_initqueue(wq, ipl, flags, curcpu());
+
 	if (error) {
-		kmem_free(wq, sizeof(*wq));
+		/*
+		 * workqueue_finiqueue() should be
+		 * called for the failing one too.
+		 */
+		do {
+			workqueue_finiqueue(wq, q);
+			q = (void *)((intptr_t)(q) - WQ_QUEUE_SIZE);
+		} while(i--);
+		kmem_free(ptr, size);
 		return error;
 	}
-#endif
 
 	*wqp = wq;
 	return 0;
@@ -279,12 +299,25 @@ void
 workqueue_destroy(struct workqueue *wq)
 {
 	struct workqueue_queue *q;
+	u_int i = 1;
 
-	while ((q = SLIST_FIRST(&wq->wq_queue)) != NULL) {
-		SLIST_REMOVE_HEAD(&wq->wq_queue, q_list);
+	if (wq->wq_flags & WQ_PERCPU) {
+#ifdef MULTIPROCESSOR
+		struct cpu_info *ci;
+		CPU_INFO_ITERATOR cii;
+
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			q = workqueue_queue_lookup(wq, ci);
+			workqueue_finiqueue(wq, q);
+		}
+		i = ncpu;
+#endif
+	} else {
+		q = workqueue_queue_lookup(wq, NULL);
 		workqueue_finiqueue(wq, q);
 	}
-	kmem_free(wq, sizeof(*wq));
+
+	kmem_free(wq->wq_ptr, WQ_SIZE + (i * WQ_QUEUE_SIZE) + CPU_ALIGN_SIZE);
 }
 
 void
@@ -293,8 +326,8 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 	struct workqueue_queue *q;
 	work_impl_t *wk = (void *)wk0;
 
+	KASSERT(wq->wq_flags & WQ_PERCPU || ci == NULL);
 	q = workqueue_queue_lookup(wq, ci);
-	KASSERT(q != NULL);
 
 	mutex_enter(&q->q_mutex);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, wk, wk_entry);

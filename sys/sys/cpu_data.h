@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.9 2007/07/09 21:11:32 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.10 2007/08/05 01:19:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ struct lwp;
 struct cpu_data {
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 	struct lwp *cpu_idlelwp;	/* idle lwp */
+	cpuid_t cpu_index;		/* CPU index */
 
 	u_int		cpu_biglock_count;
 	struct lwp	*cpu_biglock_wanted;
@@ -80,6 +81,7 @@ struct cpu_data {
 
 /* compat definitions */
 #define	ci_schedstate		ci_data.cpu_schedstate
+#define	ci_index		ci_data.cpu_index
 #define	ci_biglock_count	ci_data.cpu_biglock_count
 #define	ci_biglock_wanted	ci_data.cpu_biglock_wanted
 #define	ci_spin_locks		ci_data.cpu_spin_locks

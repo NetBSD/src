@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.4 2007/08/04 11:57:54 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.5 2007/08/05 01:19:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.4 2007/08/04 11:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.5 2007/08/05 01:19:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,8 @@ mi_cpu_attach(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int error;
+
+	ci->ci_index = ncpu;
 
 	mutex_init(&spc->spc_lwplock, MUTEX_SPIN, IPL_SCHED);
 	sched_cpuattach(ci);
