@@ -1,0 +1,23 @@
+#	$NetBSD: Makefile.rump,v 1.1.2.2 2007/08/05 22:28:02 pooka Exp $
+#
+
+.include <bsd.own.mk>
+
+MKPRIVATELIB=	yes
+NOMAN=		wizd
+MKLINT?=	no
+MKPIC?=		no
+
+WARNS?=		4
+DBG=		-g -O0
+
+CPPFLAGS+=	-I${.CURDIR} -I. 
+
+.if "${RUMPKERNEL}" != "no"
+CFLAGS+=	-ffreestanding
+CPPFLAGS:=	-I${NETBSDSRCDIR}/sys/rump/include ${CPPFLAGS}
+CPPFLAGS+=	-D_KERNEL
+CPPFLAGS+=	-nostdinc -I${NETBSDSRCDIR}/sys
+.endif
+
+LIBRUMPDIR != cd ${NETBSDSRCDIR}/sys/rump/librump/rumpkern && ${PRINTOBJDIR}
