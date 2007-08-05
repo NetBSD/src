@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3 2007/05/17 14:51:20 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4 2007/08/05 10:51:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,8 +112,6 @@ STUB(mutex_enter, mutex_vector_enter)		/* 0x0000, 20 bytes */
  * on multiprocessor systems, and comments in arch/x86/include/lock.h about
  * memory ordering on Intel x86 systems.
  */
-	ALIGN32
-
 STUB(mutex_exit, mutex_vector_exit)		/* 0x0020, 19 bytes */
 	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
@@ -126,8 +124,6 @@ STUB(mutex_exit, mutex_vector_exit)		/* 0x0020, 19 bytes */
  *
  * Acquire one hold on a RW lock.
  */
-	ALIGN64
-
 STUB(rw_enter, rw_vector_enter)			/* 0x0040, 60 bytes */
 	cmpl	$RW_READER, 8(%esp)
 	jne	2f
@@ -160,8 +156,6 @@ STUB(rw_enter, rw_vector_enter)			/* 0x0040, 60 bytes */
  *
  * Release one hold on a RW lock.
  */
-	ALIGN64
-
 STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
 	movl	RW_OWNER(%edx), %eax
 	testb	$RW_WRITE_LOCKED, %al
@@ -203,20 +197,18 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
  *
  * Acquire a spin mutex and post a load fence.
  */
-	ALIGN64
-
-STUB(mutex_spin_enter, mutex_vector_enter)	/* 0x00c0, 51 bytes */
-	movl	CPUVAR(SELF150), %eax
-	movl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
-	subl	$1, (CPU_INFO_MTX_COUNT-0x150)(%eax)/* decl does not set CF */
+STUB(mutex_spin_enter, mutex_vector_enter)
+	movl	CPUVAR(SELF), %eax
+	movl	CPU_INFO_ILEVEL(%eax), %ecx
+	subl	$1, CPU_INFO_MTX_COUNT(%eax)	/* decl does not set CF */
 	jnc	1f
-	movl	%ecx, (CPU_INFO_MTX_OLDSPL-0x150)(%eax)
+	movl	%ecx, CPU_INFO_MTX_OLDSPL(%eax)
 1:	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
 	jg,pn	2f
-	movb	%ch, (CPU_INFO_ILEVEL-0x150)(%eax)/* splraiseipl() */
+	movb	%ch, CPU_INFO_ILEVEL(%eax)	/* splraiseipl() */
 2:
-#if defined(FULL)
+#ifdef FULL
 	mov	$0x0100, %eax			/* new + expected value */
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
@@ -232,66 +224,57 @@ LABEL(mutex_spin_enter_end)
  *
  * Release a spin mutex and post a store fence.
  */
-	ALIGN64
-
-STUB(mutex_spin_exit, mutex_vector_exit)	/* 0x0100, 50 bytes */
-#if defined(DIAGNOSTIC)
+STUB(mutex_spin_exit, mutex_vector_exit)
+#ifdef FULL
 	movl	$0x0001, %eax			/* new + expected value */
 	cmpxchgb %ah, MTX_LOCK(%edx)
 	jnz,pn	_C_LABEL(mutex_vector_exit)
-#elif defined(MULTIPROCESSOR)
-	movb	$0x00,MTX_LOCK(%edx)
 #endif
-	movl	CPUVAR(SELF150), %eax
-	movl	(CPU_INFO_MTX_OLDSPL-0x150)(%eax), %ecx
-	incl	(CPU_INFO_MTX_COUNT-0x150)(%eax)
+	movl	CPUVAR(SELF), %eax
+	movl	CPU_INFO_MTX_OLDSPL(%eax), %ecx
+	incl	CPU_INFO_MTX_COUNT(%eax)
 	jnz	1f
-	cmpl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
+	cmpl	CPU_INFO_ILEVEL(%eax), %ecx
 	movl    %ecx, 4(%esp)
 	jae	1f
-	movl	(CPU_INFO_IUNMASK-0x150)(%eax,%ecx,4), %edx
+	movl	CPU_INFO_IUNMASK(%eax,%ecx,4), %edx
 	cli
-	testl	(CPU_INFO_IPENDING-0x150)(%eax), %edx
+	testl	CPU_INFO_IPENDING(%eax), %edx
 	jnz	_C_LABEL(Xspllower)		/* does sti */
-	movl	%ecx, (CPU_INFO_ILEVEL-0x150)(%eax)
+	movl	%ecx, CPU_INFO_ILEVEL(%eax)
 	sti
 1:	ret
-
-	ALIGN64
+	nop					/* XXX round up */
+	.align	32
 LABEL(mutex_spin_exit_end)
-
-#if !defined(I386_CPU) && defined(I686_CPU) && !defined(DIAGNOSTIC)
 
 /*
  * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
  * Must be the same size as mutex_spin_exit().
  */
-	ALIGN64
-
-ENTRY(i686_mutex_spin_exit)			/* 64 bytes */
+ENTRY(i686_mutex_spin_exit)
 	mov	4(%esp),%edx
-	xorl	%eax,%eax
 	pushl	%edi
 	fs
-	movl	(CPU_INFO_SELF150)(%eax), %edi	/* now splx() */
+	movl	CPUVAR(SELF), %edi		/* now splx() */
 	pushl	%ebx
-	movl	(CPU_INFO_MTX_OLDSPL-0x150)(%edi), %ecx
-	incl	(CPU_INFO_MTX_COUNT-0x150)(%edi)
-	movb	%al, MTX_LOCK(%edx)		/* zero */
-	movl	(CPU_INFO_ILEVEL-0x150)(%edi), %edx
+	movl	CPU_INFO_MTX_OLDSPL(%edi), %ecx
+	incl	CPU_INFO_MTX_COUNT(%edi)
+	movb	$0, MTX_LOCK(%edx)		/* zero */
+	movl	CPU_INFO_ILEVEL(%edi), %edx
 	jnz	1f
 	cmpl	%edx, %ecx			/* new level is lower? */
 	jae,pn	1f
 0:
-	movl	(CPU_INFO_IPENDING-0x150)(%edi), %eax
-	testl	%eax,(CPU_INFO_IUNMASK-0x150)(%edi,%ecx,4)
+	movl	CPU_INFO_IPENDING(%edi), %eax
+	testl	%eax,CPU_INFO_IUNMASK(%edi,%ecx,4)
 	movl	%eax, %ebx
 	/*
 	 * On a P4 this jump is cheaper than patching in junk using
 	 * cmovnz.  Is cmpxchg expensive if it fails?
 	 */
 	jnz,pn	2f
-	cmpxchg8b (CPU_INFO_ISTATE-0x150)(%edi)	/* swap in new ilevel */
+	cmpxchg8b CPU_INFO_ISTATE(%edi)		/* swap in new ilevel */
 	jnz,pn	0b
 1:
 	popl	%ebx
@@ -303,10 +286,8 @@ ENTRY(i686_mutex_spin_exit)			/* 64 bytes */
 	movl	%ecx,4(%esp)
 LABEL(i686_mutex_spin_exit_patch)
 	jmp	_C_LABEL(Xspllower)
-	ALIGN64
+	.align	32
 LABEL(i686_mutex_spin_exit_end)
-
-#endif	/* !defined(I386_CPU) && defined(I686_CPU) && !defined(DIAGNOSTIC) */
 
 #else	/* !__XEN__ */
 
@@ -326,9 +307,7 @@ NENTRY(mutex_spin_exit)
  *
  * Perform an atomic compare-and-set operation.
  */
-	ALIGN64
-
-STUB(_lock_cas, _80386_lock_cas)		/* 32 bytes */
+STUB(_lock_cas, _80386_lock_cas)
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
 	LOCK
@@ -382,7 +361,6 @@ NENTRY(mb_memory)
 	ret
 END(mb_memory_end, 8)
 
-#ifdef I686_CPU
 NENTRY(sse2_mb_read)
 	lfence
 	ret
@@ -392,7 +370,6 @@ NENTRY(sse2_mb_memory)
 	mfence
 	ret
 END(sse2_mb_memory_end, 8)
-#endif	/* I686_CPU */
 
 /*
  * Make sure code after the ret is properly encoded with nopness
