@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.1 2007/08/05 22:28:05 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.2 2007/08/06 22:20:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -62,8 +62,8 @@ struct p2k {
 };
 
 struct p2k *
-p2k_init(struct vfsops *vfsops, const char *mountpath, int mntflags,
-	void *arg, size_t alen)
+p2k_init(struct vfsops *vfsops, const char *devpath, const char *mountpath,
+	int mntflags, void *arg, size_t alen)
 {
 	struct p2k *p2k;
 	struct mount *mp;
@@ -79,12 +79,14 @@ p2k_init(struct vfsops *vfsops, const char *mountpath, int mntflags,
 
 	mp->mnt_flag = mntflags;
 
+	rump_fakeblk_register(devpath);
 	rv = VFS_MOUNT(mp, mountpath, arg, &alen, curlwp);
 	if (rv) {
 		warnx("VFS_MOUNT %d", rv);
 		goto out;
 	}
 	p2k->p2k_mp = mp;
+	rump_fakeblk_deregister(devpath);
 
 	rv = VFS_STATVFS(mp, &mp->mnt_stat, NULL);
 	if (rv) {
@@ -138,7 +140,7 @@ p2k_run_fs(struct vfsops *vfsops, const char *devpath, const char *mountpath,
 	extern int puffs_fakecc;
 	int rv, sverrno;
 
-	p2k = p2k_init(vfsops, mountpath, mntflags, arg, alen);
+	p2k = p2k_init(vfsops, devpath, mountpath, mntflags, arg, alen);
 	if (p2k == NULL)
 		return -1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.1 2007/08/05 22:28:09 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.2 2007/08/06 22:20:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -66,6 +66,10 @@ int	rump_recyclenode(struct vnode *);
 
 int	rump_ubc_magic_uiomove(size_t, struct uio *);
 int 	rump_vopwrite_fault(struct vnode *, voff_t, size_t, kauth_cred_t);
+
+int	rump_fakeblk_register(const char *);
+int	rump_fakeblk_find(const char *);
+void	rump_fakeblk_deregister(const char *);
 
 void		rumpvm_init(void);
 struct vm_page	*rumpvm_findpage(struct uvm_object *, voff_t);

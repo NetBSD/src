@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.h,v 1.1 2007/08/05 22:28:05 pooka Exp $	*/
+/*	$NetBSD: p2k.h,v 1.2 2007/08/06 22:20:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,8 @@ struct p2k;
 #define P2K_MAKECN(p)	\
   rump_makecn(p->pcn_nameiop, p->pcn_flags, p->pcn_name, p->pcn_namelen,curlwp);
 
-struct p2k	*p2k_init(struct vfsops *, const char *, int, void *, size_t);
+struct p2k	*p2k_init(struct vfsops *, const char *, const char *,
+			  int, void *, size_t);
 void		p2k_destroy(struct p2k *, int);
 
 int p2k_run_fs(struct vfsops *, const char *, const char *, int,
