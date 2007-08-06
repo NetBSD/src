@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.86 2007/06/28 11:44:24 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.87 2007/08/06 11:22:36 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3354,4 +3354,14 @@ sys/sys/param.h					patch
 	Bump kernel version as LKM's depending on UFS internals will have to be
 	recompiled after this change (discussed and approved on tech-kern).
 	[hannken, ticket #1807]
+
+sys/dev/ic/pcdisplay_subr.c			1.33 via patch
+sys/dev/ic/vga.c				1.95 via patch
+sys/dev/ic/vga_raster.c				1.29 via patch
+sys/dev/isa/ega.c				1.23 via patch
+sys/dev/rasops/rasops.c				1.56 via patch
+
+	Implement bounds checking in some places in display driver code to
+	avoid the possibility of a local user panic.
+	[mjf, ticket #1815]
 
