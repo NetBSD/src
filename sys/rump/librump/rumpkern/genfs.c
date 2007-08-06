@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.1 2007/08/05 22:28:08 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.2 2007/08/06 20:46:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,7 +70,6 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 	panic("%s: not implemented", __func__);
 }
 
-/* XXXXX: blocksize < PAGE_SIZE? */
 int
 genfs_getpages(void *v)
 {
@@ -87,10 +86,11 @@ genfs_getpages(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf buf;
 	struct vm_page *pg;
-	voff_t startoff, curoff, endoff;
+	voff_t curoff, endoff;
 	size_t remain, bufoff, xfersize;
 	uint8_t *tmpbuf;
 	int bshift = vp->v_mount->mnt_fs_bshift;
+	int bsize = 1<<bshift;
 	int count = *ap->a_count;
 	int i, error;
 
@@ -102,8 +102,6 @@ genfs_getpages(void *v)
 
 	if (ap->a_centeridx != 0)
 		panic("%s: centeridx != not supported", __func__);
-
-	assert((ap->a_offset & PAGE_MASK) == 0);
 
 	curoff = ap->a_offset & ~PAGE_MASK;
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
@@ -124,11 +122,11 @@ genfs_getpages(void *v)
 
 	/* align to boundaries */
 	endoff = ap->a_offset + (count << PAGE_SHIFT);
-	endoff = (endoff + PAGE_MASK) & ~PAGE_MASK;
-	curoff = startoff = ap->a_offset & ~((1<<bshift)-1);
+	endoff = MIN(round_page(endoff), ((vp->v_writesize+bsize)&~(bsize-1)));
+	curoff = ap->a_offset & ~(MAX(bsize,PAGE_SIZE)-1);
 	remain = endoff - curoff;
 
-	printf("a_offset: %x, startoff: 0x%x, endoff 0x%x\n", (int)ap->a_offset, (int)startoff, (int)endoff);
+	printf("a_offset: %x, startoff: 0x%x, endoff 0x%x\n", (int)ap->a_offset, (int)curoff, (int)endoff);
 
 	/* read everything into a buffer */
 	tmpbuf = rumpuser_malloc(remain, 0);
@@ -159,7 +157,7 @@ genfs_getpages(void *v)
 
 	/* skip to beginning of pages we're interested in */
 	bufoff = 0;
-	while (round_page(curoff + bufoff) < ap->a_offset)
+	while (round_page(curoff + bufoff) < trunc_page(ap->a_offset))
 		bufoff += PAGE_SIZE;
 
 	printf("first page offset 0x%x\n", (int)(curoff + bufoff));
