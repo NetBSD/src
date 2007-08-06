@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.140 2007/05/02 20:40:23 dyoung Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.141 2007/08/06 11:41:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.140 2007/05/02 20:40:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.141 2007/08/06 11:41:52 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1403,6 +1403,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 	int		error;
 	struct mbuf	*m;
 	struct linger	*l;
+	struct sockbuf	*sb;
 
 	error = 0;
 	m = m0;
@@ -1477,12 +1478,13 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 
 			case SO_SNDBUF:
 			case SO_RCVBUF:
-				if (sbreserve(optname == SO_SNDBUF ?
-				    &so->so_snd : &so->so_rcv,
-				    (u_long) optval, so) == 0) {
+				sb = (optname == SO_SNDBUF) ?
+				    &so->so_snd : &so->so_rcv;
+				if (sbreserve(sb, (u_long)optval, so) == 0) {
 					error = ENOBUFS;
 					goto bad;
 				}
+				sb->sb_flags &= ~SB_AUTOSIZE;
 				break;
 
 			/*
