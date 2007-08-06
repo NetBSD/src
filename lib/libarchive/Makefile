@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/07/29 17:06:02 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2007/08/06 12:31:16 joerg Exp $
 
 USE_FORT?=	yes # complex string handling
 
@@ -214,7 +214,7 @@ MLINKS+=	archive_write_disk.3 archive_write_disk_set_standard_lookup.3
 MLINKS+=	archive_write_disk.3 archive_write_disk_set_user_lookup.3
 MLINKS+=	libarchive.3 archive.3
 
-ARCHIVE_VERSION= 		2.2.5
+ARCHIVE_VERSION= 		2.2.6
 ARCHIVE_API_MAJOR=	${ARCHIVE_VERSION:C/([0-9]*).*/\1/}
 ARCHIVE_API_MINOR=	${ARCHIVE_VERSION:C/[0-9]*\.([0-9]*).*/\1/}
 ARCHIVE_API_REV=	${ARCHIVE_VERSION:C/[0-9]*\.[0-9]*\.([0-9]*).*/\1/}
