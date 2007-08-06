@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.13 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.14 2007/07/15 19:13:59 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -302,7 +302,8 @@ zip_read_file_header(struct archive_read *a, struct archive_entry *entry,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_FATAL);
 	}
-	archive_string_ensure(&zip->pathname, zip->filename_length);
+	if (archive_string_ensure(&zip->pathname, zip->filename_length) == NULL)
+		__archive_errx(1, "Out of memory");
 	archive_strncpy(&zip->pathname, (const char *)h, zip->filename_length);
 	(a->decompressor->consume)(a, zip->filename_length);
 	archive_entry_set_pathname(entry, zip->pathname.s);
@@ -756,8 +757,8 @@ process_extra(const void* extra, struct zip* zip)
 			if (flags & 0x01)
 			{
 #ifdef DEBUG
-				fprintf(stderr, "mtime: %d -> %d\n",
-				    zip->mtime, i4(p + offset));
+				fprintf(stderr, "mtime: %lld -> %d\n",
+				    (long long)zip->mtime, i4(p + offset));
 #endif
 				if (datasize < 4)
 					break;

@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.43 2007/05/29 01:00:18 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.44 2007/07/15 19:10:34 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -652,6 +652,12 @@ archive_entry_set_gname(struct archive_entry *entry, const char *name)
 }
 
 void
+archive_entry_copy_gname(struct archive_entry *entry, const char *name)
+{
+	aes_copy_mbs(&entry->ae_gname, name);
+}
+
+void
 archive_entry_copy_gname_w(struct archive_entry *entry, const wchar_t *name)
 {
 	aes_copy_wcs(&entry->ae_gname, name);
@@ -833,6 +839,12 @@ void
 archive_entry_set_uname(struct archive_entry *entry, const char *name)
 {
 	aes_set_mbs(&entry->ae_uname, name);
+}
+
+void
+archive_entry_copy_uname(struct archive_entry *entry, const char *name)
+{
+	aes_copy_mbs(&entry->ae_uname, name);
 }
 
 void

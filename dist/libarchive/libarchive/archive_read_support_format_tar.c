@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_tar.c,v 1.58 2007/07/12 15:00:28 cperciva Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_tar.c,v 1.60 2007/07/15 19:13:59 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -895,8 +895,14 @@ read_body_to_string(struct archive_read *a, struct tar *tar,
 		return (ARCHIVE_FATAL);
 	}
 
+	/* Fail if we can't make our buffer big enough. */
+	if (archive_string_ensure(as, size+1) == NULL) {
+		archive_set_error(&a->archive, ENOMEM,
+		    "No memory");
+		return (ARCHIVE_FATAL);
+	}
+
 	/* Read the body into the string. */
-	archive_string_ensure(as, size+1);
 	padded_size = (size + 511) & ~ 511;
 	dest = as->s;
 	while (padded_size > 0) {
@@ -2020,7 +2026,11 @@ readline(struct archive_read *a, struct tar *tar, const char **start)
 	}
 	/* Otherwise, we need to accumulate in a line buffer. */
 	for (;;) {
-		archive_string_ensure(&tar->line, total_size + bytes_read);
+		if (archive_string_ensure(&tar->line, total_size + bytes_read) == NULL) {
+			archive_set_error(&a->archive, ENOMEM,
+			    "Can't allocate working buffer");
+			return (ARCHIVE_FATAL);
+		}
 		memcpy(tar->line.s + total_size, t, bytes_read);
 		(a->decompressor->consume)(a, bytes_read);
 		total_size += bytes_read;
