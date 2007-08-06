@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.1 2007/08/05 22:28:10 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.2 2007/08/06 22:20:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -294,10 +294,9 @@ makevnode(struct stat *sb, const char *path)
 	vp = rumpuser_malloc(sizeof(struct vnode), 0);
 	vp->v_size = vp->v_writesize = sb->st_size;
 	vp->v_type = mode2vt(sb->st_mode);
-	if (vp->v_type != VBLK) {
-		printf("faking \"%s\" as a block device\n", path);
-		vp->v_type = VBLK;
-	}
+	if (vp->v_type != VBLK)
+		if (rump_fakeblk_find(path))
+			vp->v_type = VBLK;
 
 	if (vp->v_type != VBLK)
 		panic("namei: only VBLK results supported currently");

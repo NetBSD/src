@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.1 2007/08/05 22:28:11 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.2 2007/08/06 22:20:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -58,5 +58,7 @@ uint32_t rumpuser_bswap32(uint32_t);
 uint64_t rumpuser_bswap64(uint64_t);
 
 int rumpuser_gethostname(char *, size_t, int *);
+
+char *rumpuser_realpath(const char *, char *);
 
 #endif /* _SYS_RUMPUSER_H_ */

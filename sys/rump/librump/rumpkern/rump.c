@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.1 2007/08/05 22:28:09 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.2 2007/08/06 22:20:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,13 @@ struct pstats rump_stats;
 struct plimit rump_limits;
 kauth_cred_t rump_cred;
 struct cpu_info rump_cpu;
+
+struct fakeblk {
+	char path[MAXPATHLEN];
+	LIST_ENTRY(fakeblk) entries;
+};
+
+static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
 void
 rump_init()
@@ -132,4 +139,58 @@ rump_recyclenode(struct vnode *vp)
 {
 
 	return vrecycle(vp, NULL, curlwp);
+}
+
+static struct fakeblk *
+_rump_fakeblk_find(const char *path)
+{
+	char buf[MAXPATHLEN];
+	struct fakeblk *fblk;
+
+	rumpuser_realpath(path, buf);
+
+	LIST_FOREACH(fblk, &fakeblks, entries)
+		if (strcmp(fblk->path, buf) == 0)
+			return fblk;
+
+	return NULL;
+}
+
+int
+rump_fakeblk_register(const char *path)
+{
+	char buf[MAXPATHLEN];
+	struct fakeblk *fblk;
+
+	if (_rump_fakeblk_find(path))
+		return EEXIST;
+
+	fblk = rumpuser_malloc(sizeof(struct fakeblk), 1);
+	if (fblk == NULL)
+		return ENOMEM;
+
+	strlcpy(fblk->path, rumpuser_realpath(path, buf), MAXPATHLEN);
+	LIST_INSERT_HEAD(&fakeblks, fblk, entries);
+
+	return 0;
+}
+
+int
+rump_fakeblk_find(const char *path)
+{
+
+	return _rump_fakeblk_find(path) != NULL;
+}
+
+void
+rump_fakeblk_deregister(const char *path)
+{
+	struct fakeblk *fblk;
+
+	fblk = _rump_fakeblk_find(path);
+	if (fblk == NULL)
+		panic("%s: invalid path \"%s\"", __func__, path);
+
+	LIST_REMOVE(fblk, entries);
+	rumpuser_free(fblk);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.1 2007/08/05 22:28:10 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.2 2007/08/06 22:20:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -167,4 +168,11 @@ rumpuser_bswap64(uint64_t value)
 {
 
 	return bswap64(value);
+}
+
+char *
+rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN])
+{
+
+	return realpath(path, resolvedname);
 }
