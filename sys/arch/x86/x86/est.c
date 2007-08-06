@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.2 2007/07/01 20:12:35 xtraeme Exp $	*/
+/*	$NetBSD: est.c,v 1.3 2007/08/06 03:38:49 simonb Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.2 2007/07/01 20:12:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.3 2007/08/06 03:38:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,8 +999,8 @@ static const struct fqlist est_cpus[] = {
 #define MSR2MHZ(msr, bus)	((MSR2FREQINC((msr)) * (bus) + 50) / 100)
 #define MSR2MV(msr)		(MSR2VOLTINC(msr) * 16 + 700)
 
-static const struct 	fqlist *est_fqlist; /* not NULL if functional */
-static uint16_t         fake_table[3];      /* guessed est_cpu table */
+static const struct 	fqlist *est_fqlist;	/* not NULL if functional */
+static uint16_t		*fake_table;		/* guessed est_cpu table */
 static struct fqlist    fake_fqlist;
 static int 		est_node_target, est_node_current;
 static const char 	est_desc[] = "Enhanced SpeedStep";
@@ -1159,6 +1159,9 @@ est_init_main(int vendor)
 #endif
 
 	if (est_fqlist == NULL) {
+		int j, tablesize, freq, volt;
+		int minfreq, minvolt, maxfreq, maxvolt, freqinc, voltinc;
+
                 aprint_normal("%s: unknown Enhanced SpeedStep CPU.\n",
                     cpuname);
 
@@ -1168,24 +1171,64 @@ est_init_main(int vendor)
 		 */
 		if (idhi == idlo)
 			return;
+
+#ifdef EST_DEBUG
+		printf("%s: bus_clock = %d\n", __FUNCTION__, bus_clock);
+		printf("%s: idlo = 0x%x\n", __FUNCTION__, idlo);
+		printf("%s: lo  %4d mV, %4d MHz\n", __FUNCTION__,
+		    MSR2MV(idlo), MSR2MHZ(idlo, bus_clock));
+		printf("%s: raw %4d   , %4d    \n", __FUNCTION__,
+		    (idlo & 0xff), ((idlo >> 8) & 0xff));
+		printf("%s: idhi = 0x%x\n", __FUNCTION__, idhi);
+		printf("%s: hi  %4d mV, %4d MHz\n", __FUNCTION__,
+		    MSR2MV(idhi), MSR2MHZ(idhi, bus_clock));
+		printf("%s: raw %4d   , %4d    \n", __FUNCTION__,
+		    (idhi & 0xff), ((idhi >> 8) & 0xff));
+		printf("%s: cur  = 0x%x\n", __FUNCTION__, cur);
+#endif
+
                 /*
-                 * Generate a fake table with the power states we know.
+                 * Generate a fake table with the power states we know,
+		 * interpolating the voltages and frequencies between the
+		 * high and low values.  The (milli)voltages are always
+		 * rounded up when computing the table.
                  */
-                fake_table[0] = idhi;
-                if (cur == idhi || cur == idlo) {
-                        aprint_normal("%s: using only highest and lowest "
-                            "power states.\n", cpuname);
+		minfreq = MSR2FREQINC(idlo);
+		maxfreq = MSR2FREQINC(idhi);
+		minvolt = MSR2VOLTINC(idlo);
+		maxvolt = MSR2VOLTINC(idhi);
+		freqinc = maxfreq - minfreq;
+		voltinc = maxvolt - minvolt;
+		if (freqinc < voltinc) {
+			tablesize = maxfreq - minfreq + 1;
+			voltinc = voltinc * 100 / freqinc - 1;
+			freqinc = 100;
+		} else {
+			tablesize = maxvolt - minvolt + 1;
+			freqinc = freqinc * 100 / voltinc - 1;
+			voltinc = 100;
+		}
 
-                        fake_table[1] = idlo;
-                        fake_fqlist.n = 2;
-                } else {
-                        aprint_normal("%s: using only highest, current "
-                            "and lowest power states.\n", cpuname);
+		fake_table = malloc(tablesize * sizeof(uint16_t), M_DEVBUF,
+		    M_WAITOK);
+		fake_fqlist.n = tablesize;
 
-                        fake_table[1] = cur;
-                        fake_table[2] = idlo;
-                        fake_fqlist.n = 3;
-                }
+		/* The frequency/voltage table is highest frequency first */
+		freq = maxfreq * 100;
+		volt = maxvolt * 100;
+		for (j = 0; j < tablesize; j++) {
+			fake_table[j] = (((freq + 99) / 100) << 8) +
+			    (volt + 99) / 100;
+#ifdef EST_DEBUG
+			printf("%s: fake entry %d: %4d mV, %4d MHz  "
+			    "MSR*100 mV = %4d freq = %4d\n",
+			    __FUNCTION__, j, MSR2MV(fake_table[j]),
+			    MSR2MHZ(fake_table[j], bus_clock),
+			    freq, volt);
+#endif /* EST_DEBUG */
+			freq -= freqinc;
+			volt -= voltinc;
+		}
 		fake_fqlist.vendor = vendor;
 		fake_fqlist.table = fake_table;
 		est_fqlist = &fake_fqlist;
