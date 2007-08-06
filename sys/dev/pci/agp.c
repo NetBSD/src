@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.46.14.1 2007/08/04 12:33:09 jmcneill Exp $	*/
+/*	$NetBSD: agp.c,v 1.46.14.2 2007/08/06 19:49:34 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46.14.1 2007/08/04 12:33:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.46.14.2 2007/08/06 19:49:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,6 +269,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 	struct agp_softc *sc = (void *)self;
+	pnp_device_t *pnp;
 	const struct agp_product *ap;
 	int memsize, i, ret;
 
@@ -313,6 +314,12 @@ agpattach(struct device *parent, struct device *self, void *aux)
 		    (unsigned long)AGP_GET_APERTURE(sc));
 	else
 		sc->as_chipc = NULL;
+
+	pnp = device_pnp(self);
+	if (pnp->pnp_power == NULL)
+		if (pnp_register(self, agp_power) != PNP_STATUS_SUCCESS)
+			aprint_error("%s: couldn't establish power handler\n",
+			    device_xname(self));
 }
 
 CFATTACH_DECL(agp, sizeof(struct agp_softc),
@@ -1060,4 +1067,62 @@ agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
 	bus_dmamap_destroy(tag, map);
 	bus_dmamem_unmap(tag, vaddr, size);
 	bus_dmamem_free(tag, seg, nseg);
+}
+
+pnp_status_t
+agp_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct agp_softc *as = (struct agp_softc *)dv;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+	pcireg_t val;
+	int off;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+
+		pci_get_capability(as->as_pc, as->as_tag, PCI_CAP_PWRMGMT,
+		    &off, &val);
+		pcaps->state = pci_pnp_capabilities(val);
+		pcaps->state |= PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		if (pci_get_powerstate(as->as_pc, as->as_tag, &val) != 0)
+			*pstate = PNP_STATE_D0;
+		else
+			*pstate = pci_pnp_powerstate(val);
+		break;
+
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			pci_conf_capture(as->as_pc, as->as_tag,
+			    &as->as_pciconf);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		(void)pci_set_powerstate(as->as_pc, as->as_tag, val);
+		if (*pstate != PNP_STATE_D0)
+			break;
+
+		pci_conf_restore(as->as_pc, as->as_tag,
+		    &as->as_pciconf);
+		agp_flush_cache();
+		break;
+
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
 }
