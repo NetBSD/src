@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.13 2007/03/04 06:02:25 christos Exp $ */
+/* $NetBSD: piixpm.c,v 1.14 2007/08/06 22:41:22 martin Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -118,6 +118,14 @@ piixpm_match(struct device *parent, struct cfdata *match,
 			return 1;
 		}
 		break;
+	case PCI_VENDOR_SERVERWORKS:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_SERVERWORKS_OSB4:
+		case PCI_PRODUCT_SERVERWORKS_CSB5:
+		case PCI_PRODUCT_SERVERWORKS_CSB6:
+		case PCI_PRODUCT_SERVERWORKS_HT1000SB:
+			return 1;
+		}
 	}
 
 	return 0;
