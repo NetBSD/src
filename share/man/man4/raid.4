@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.32 2005/10/08 18:30:27 oster Exp $
+.\"     $NetBSD: raid.4,v 1.33 2007/08/06 19:44:16 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd October 8, 2005
+.Dd August 6, 2007
 .Dt RAID 4
 .Os
 .Sh NAME
@@ -133,7 +133,15 @@ contains important information about the component, including a
 user-specified serial number, the row and column of that component in
 the RAID set, and whether the data (and parity) on the component is
 .Sq clean .
-If the driver determines that the labels are very inconsistent with
+The component label currently lives at the half-way point of the a
+.Sq reserved section
+located at the beginning of each component.
+This
+.Sq reserved section
+is RF_PROTECTED_SECTORS in length (64 blocks or 32Kbytes) and the
+component label is currently 1Kbyte in size.
+.Pp
+If the driver determines that the component labels are very inconsistent with
 respect to each other (e.g. two or more serial numbers do not match)
 or that the component label is not consistent with its assigned place
 in the set (e.g. the component label claims the component should be

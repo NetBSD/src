@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.49 2005/02/28 22:03:05 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.50 2007/08/06 19:44:16 oster Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd February 28, 2005
+.Dd August 6, 2007
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -734,6 +734,15 @@ After configuration, this set can be used normally, but will be operating
 in degraded mode.
 Once a second physical component is obtained, it can be hot-added,
 the existing data mirrored, and normal operation resumed.
+.Pp
+The size of the resulting RAID set will depend on the number of data
+components in the set.
+Space is automatically reserved for the component labels, and 
+the actual amount of space used
+for data on a component will be rounded down to the largest possible
+multiple of the sectors per stripe unit (sectPerSU) value.
+Thus, the amount of space provided by the RAID set will be less
+than the sum of the size of the components.
 .Ss Maintenance of the RAID set
 After the parity has been initialized for the first time, the command:
 .Bd -literal -offset indent
