@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.14 2007/01/24 13:17:42 hubertf Exp $
+#	$NetBSD: wtf,v 1.15 2007/08/06 21:14:36 hubertf Exp $
 #
 # Public domain
 #
@@ -75,6 +75,15 @@ while [ $# -gt 0 ] ; do
 	if [ $? -eq 0 ] ; then
 		echo "$1: $ans"
 		shift ; continue
+	fi
+
+	# Try querying pkgsrc's help facility next
+	if [ -f ../../mk/bsd.pkg.mk ] ; then
+		ans=`make help topic="$1"`
+		if [ $? -eq 0 ] ; then
+			echo "$1: $ans"
+			shift ; continue
+		fi
 	fi
 
 	# Give up!
