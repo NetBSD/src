@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.886 2007/08/04 09:34:07 kiyohara Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.887 2007/08/06 22:40:07 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.886 2007/08/04 09:33:05 kiyohara Exp
+ *	NetBSD: pcidevs,v 1.887 2007/08/06 22:39:31 martin Exp
  */
 
 /*
@@ -3203,6 +3203,7 @@
 #define	PCI_PRODUCT_SERVERWORKS_OSB4	0x0200		/* OSB4 southbridge */
 #define	PCI_PRODUCT_SERVERWORKS_CSB5	0x0201		/* CSB5 southbridge */
 #define	PCI_PRODUCT_SERVERWORKS_CSB6	0x0203		/* CSB6 southbridge */
+#define	PCI_PRODUCT_SERVERWORKS_HT1000SB	0x0205		/* HT1000SB southbridge */
 #define	PCI_PRODUCT_SERVERWORKS_OSB4_IDE	0x0211		/* OSB4 IDE */
 #define	PCI_PRODUCT_SERVERWORKS_CSB5_IDE	0x0212		/* CSB5 IDE */
 #define	PCI_PRODUCT_SERVERWORKS_CSB6_RAID	0x0213		/* CSB6 IDE/RAID */

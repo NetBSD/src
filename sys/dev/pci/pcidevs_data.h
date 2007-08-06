@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.885 2007/08/04 09:34:07 kiyohara Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.886 2007/08/06 22:40:08 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.886 2007/08/04 09:33:05 kiyohara Exp
+ *	NetBSD: pcidevs,v 1.887 2007/08/06 22:39:31 martin Exp
  */
 
 /*
@@ -11020,6 +11020,10 @@ static const struct pci_product pci_products[] = {
 	    "CSB6 southbridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000SB,
+	    "HT1000SB southbridge",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
 	    "OSB4 IDE",
 	},
@@ -13056,4 +13060,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2668;
+const int pci_nproducts = 2669;
