@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.546 2007/08/03 14:26:37 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.547 2007/08/06 12:34:13 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -451,8 +451,8 @@ does not detect NetBSD has a sigset_t due to a bad test; this is fixed
 by hand in defines.h.)
 
 Package:	libarchive
-Version:	2.2.5
-Current Ves.:	2.2.5
+Version:	2.2.6
+Current Ves.:	2.2.6
 Maintainer:	kientzle@freebsd.org
 Archive Site:	http://people.freebsd.org/~kientzle/libarchive/
 Home Page: 	http://people.freebsd.org/~kientzle/libarchive/
