@@ -1,8 +1,8 @@
-.\"	$NetBSD: wtf.6,v 1.11 2006/06/17 04:58:14 reed Exp $
+.\"	$NetBSD: wtf.6,v 1.12 2007/08/06 21:14:37 hubertf Exp $
 .\"
 .\" Public Domain
 .\"
-.Dd June 22, 2005
+.Dd July 27, 2007
 .Dt WTF 6
 .Os
 .Sh NAME
@@ -20,11 +20,11 @@ utility displays the expansion of the acronyms
 specified on the command line.
 If the acronym is not in any of the acronyms databases,
 .Nm
-will check to see if the acronym is known by the
-.Xr whatis 1
-or the
-.Xr pkg_info 1
-commands.
+will check to see if the acronym is known by 
+.Xr whatis 1 ,
+.Xr pkg_info 1 ,
+or via pkgsrc's internal help mechanism,
+.Dq make help topic=XXX .
 .Pp
 If
 .Dq is
@@ -58,6 +58,7 @@ default acronym database.
 computer-related acronym database.
 .El
 .Sh SEE ALSO
+.Xr make 1 ,
 .Xr pkg_info 1 ,
 .Xr whatis 1
 .Sh HISTORY
