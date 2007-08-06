@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.22 2007/05/29 01:00:18 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.23 2007/07/15 19:10:34 kientzle Exp $
  */
 
 #ifndef ARCHIVE_ENTRY_H_INCLUDED
@@ -135,6 +135,7 @@ const wchar_t *archive_entry_copy_fflags_text_w(struct archive_entry *,
 	    const wchar_t *);
 void	archive_entry_set_gid(struct archive_entry *, gid_t);
 void	archive_entry_set_gname(struct archive_entry *, const char *);
+void	archive_entry_copy_gname(struct archive_entry *, const char *);
 void	archive_entry_copy_gname_w(struct archive_entry *, const wchar_t *);
 void	archive_entry_set_hardlink(struct archive_entry *, const char *);
 void	archive_entry_copy_hardlink(struct archive_entry *, const char *);
@@ -156,6 +157,7 @@ void	archive_entry_copy_symlink(struct archive_entry *, const char *);
 void	archive_entry_copy_symlink_w(struct archive_entry *, const wchar_t *);
 void	archive_entry_set_uid(struct archive_entry *, uid_t);
 void	archive_entry_set_uname(struct archive_entry *, const char *);
+void	archive_entry_copy_uname(struct archive_entry *, const char *);
 void	archive_entry_copy_uname_w(struct archive_entry *, const wchar_t *);
 
 /*
