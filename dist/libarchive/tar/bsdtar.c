@@ -78,6 +78,14 @@ struct option {
 
 #include "bsdtar.h"
 
+#if !HAVE_DECL_OPTARG
+extern int optarg;
+#endif
+
+#if !HAVE_DECL_OPTIND
+extern int optind;
+#endif
+
 /*
  * Per POSIX.1-1988, tar defaults to reading/writing archives to/from
  * the default tape device for the system.  Pick something reasonable here.
@@ -911,6 +919,10 @@ bsdtar_getopt(struct bsdtar *bsdtar, const char *optstring,
 				    "(matches both %s and %s)",
 				    p, (*poption)->name, option->name);
 
+			if ((*poption)->has_arg == required_argument
+			    && optarg == NULL)
+				bsdtar_errc(bsdtar, 1, 0,
+				    "Option \"%s\" requires argument", p);
 		} else {
 			opt = '?';
 			/* TODO: Set up a fake 'struct option' for
