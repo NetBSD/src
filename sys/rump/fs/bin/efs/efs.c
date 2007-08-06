@@ -1,4 +1,4 @@
-/*	$NetBSD: efs.c,v 1.1 2007/08/05 22:28:02 pooka Exp $	*/
+/*	$NetBSD: efs.c,v 1.2 2007/08/06 22:22:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	args.fspec = argv[0];
 
 	rv = p2k_run_fs(&efs_vfsops, argv[0], argv[1], mntflags | MNT_FORCE, 
-		&args, sizeof(args), pflags | PUFFS_KFLAG_NOCACHE_PAGE);
+		&args, sizeof(args), pflags);
 	if (rv)
 		err(1, "mount");
 
