@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.33 2007/03/13 06:41:52 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.34 2007/08/06 12:16:33 markd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.33 2007/03/13 06:41:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.34 2007/08/06 12:16:33 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ static void	brgphy_5703_reset(struct mii_softc *);
 static void	brgphy_5704_reset(struct mii_softc *);
 static void	brgphy_5705_reset(struct mii_softc *);
 static void	brgphy_5750_reset(struct mii_softc *);
+static void	brgphy_5755_reset(struct mii_softc *);
 
 static const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, mii_phy_reset,
@@ -136,6 +137,10 @@ static const struct mii_phy_funcs brgphy_5705_funcs = {
 
 const struct mii_phy_funcs brgphy_5750_funcs = {
 	brgphy_service, brgphy_status, brgphy_5750_reset,
+};
+
+const struct mii_phy_funcs brgphy_5755_funcs = {
+	brgphy_service, brgphy_status, brgphy_5755_reset,
 };
 
 
@@ -176,6 +181,12 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5780,
 	  MII_STR_BROADCOM_BCM5780 },
 
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5755,
+	  MII_STR_BROADCOM2_BCM5755 },
+
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5754,
+	  MII_STR_BROADCOM2_BCM5754 },
+
 	{ 0,				0,
 	  NULL },
 };
@@ -185,6 +196,7 @@ static void bcm5411_load_dspcode(struct mii_softc *);
 static void bcm5703_load_dspcode(struct mii_softc *);
 static void bcm5704_load_dspcode(struct mii_softc *);
 static void bcm5750_load_dspcode(struct mii_softc *);
+static void bcm5755_load_dspcode(struct mii_softc *);
 
 static int
 brgphymatch(struct device *parent, struct cfdata *match,
@@ -262,6 +274,11 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	case MII_MODEL_BROADCOM_BCM5750:
 	case MII_MODEL_BROADCOM_BCM5752:
 		sc->mii_funcs = &brgphy_5750_funcs;
+		break;
+
+	case MII_MODEL_BROADCOM2_BCM5754:
+	case MII_MODEL_BROADCOM2_BCM5755:
+		sc->mii_funcs = &brgphy_5755_funcs;
 		break;
 
 	default:
@@ -570,6 +587,13 @@ brgphy_5750_reset(struct mii_softc *sc)
 	bcm5750_load_dspcode(sc);
 }
 
+static void
+brgphy_5755_reset(struct mii_softc *sc)
+{
+	mii_phy_reset(sc);
+	bcm5755_load_dspcode(sc);
+}
+
 /* Turn off tap power management on 5401. */
 static void
 bcm5401_load_dspcode(struct mii_softc *sc)
@@ -665,6 +689,26 @@ bcm5750_load_dspcode(struct mii_softc *sc)
 		{ BRGPHY_MII_DSP_RW_PORT,	0x9506 },
 		{ BRGPHY_MII_DSP_ADDR_REG,	0x401f },
 		{ BRGPHY_MII_DSP_RW_PORT,	0x14e2 },
+		{ BRGPHY_MII_AUXCTL,		0x0400 },
+		{ 0,				0 },
+	};
+	int i;
+
+	for (i = 0; dspcode[i].reg != 0; i++)
+		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+static void
+bcm5755_load_dspcode(struct mii_softc *sc)
+{
+	static const struct {
+		int		reg;
+		uint16_t	val;
+	} dspcode[] = {
+		{ BRGPHY_MII_AUXCTL,		0x0c00 },
+		{ BRGPHY_MII_DSP_ADDR_REG,	0x000a },
+		{ BRGPHY_MII_DSP_RW_PORT,	0x010b },
+
 		{ BRGPHY_MII_AUXCTL,		0x0400 },
 		{ 0,				0 },
 	};
