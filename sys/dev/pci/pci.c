@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.2 2007/08/05 19:33:02 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.3 2007/08/06 04:15:35 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.2 2007/08/05 19:33:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.3 2007/08/06 04:15:35 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -153,7 +153,7 @@ pci_power_devices(struct pci_softc *sc, pnp_state_t newstate)
 		/* we should never be called here */
 #ifdef DIAGNOSTIC
 		panic("pci_power_devices called with invalid reason %d\n",
-		    why);
+		    newstate);
 		/* NOTREACHED */
 #endif
 		return;
