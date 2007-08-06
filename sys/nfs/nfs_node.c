@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.94 2007/06/12 09:33:25 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.95 2007/08/06 11:55:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.94 2007/06/12 09:33:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.95 2007/08/06 11:55:08 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -269,9 +269,11 @@ nfs_inactive(v)
 		error = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_CANRECURSE);
 		if (error || sp->s_dvp->v_data == NULL) {
 			/* XXX should recover */
-			panic("%s: vp=%p error=%d", __func__, sp->s_dvp, error);
+			printf("%s: vp=%p error=%d\n",
+			    __func__, sp->s_dvp, error);
+		} else {
+			nfs_removeit(sp);
 		}
-		nfs_removeit(sp);
 		kauth_cred_free(sp->s_cred);
 		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
