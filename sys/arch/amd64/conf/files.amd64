@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.40 2007/07/07 05:13:14 tsutsui Exp $
+#	$NetBSD: files.amd64,v 1.41 2007/08/06 06:40:41 kiyohara Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -110,7 +110,7 @@ include "dev/pci/files.agp"
 file	arch/x86/pci/agp_machdep.c	agp
 
 # PCI-Host bridge chipsets
-device	pchb: pcibus, agpbus, agp_i810, agp_intel, agp_sis, agp_via, agp_amd, agp_ali 
+device	pchb: pcibus, agpbus, agp_i810, agp_intel, agp_sis, agp_via, agp_amd, agp_ali, agp_amd64
 attach	pchb at pci
 file	arch/amd64/pci/pchb.c			pchb		needs-flag
 file	arch/x86/pci/pchb_rnd.c			pchb & rnd
