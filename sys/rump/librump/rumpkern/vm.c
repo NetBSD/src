@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.1 2007/08/05 22:28:10 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.2 2007/08/06 16:09:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -355,11 +355,32 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 void
 uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 {
+	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
+	struct vm_page *pgs[maxpages];
+	struct uvm_object *uobj = &vp->v_uobj;
+	int rv, npages, i;
 
-	/*
-	 * XXX: we really really should implement this.
-	 * do VOP_GETPAGES + memset
-	 */
+	while (len) {
+		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
+		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
+		assert(npages > 0);
+
+		for (i = 0; i < npages; i++) {
+			uint8_t *start;
+			size_t chunkoff, chunklen;
+
+			chunkoff = off & PAGE_MASK;
+			chunklen = MIN(PAGE_SIZE - chunkoff, len);
+			start = (uint8_t *)pgs[i]->uobject + chunkoff;
+
+			memset(start, 0, chunklen);
+			pgs[i]->flags &= PG_CLEAN;
+
+			off += chunklen;
+			len -= chunklen;
+		}
+	}
+
 	return;
 }
 
