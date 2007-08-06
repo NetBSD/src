@@ -1,4 +1,4 @@
-# $NetBSD: files.wscons,v 1.39 2006/10/09 10:33:42 peter Exp $
+# $NetBSD: files.wscons,v 1.40 2007/08/06 03:11:32 macallan Exp $
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & keyboard,
@@ -33,6 +33,7 @@ defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_USL
 				WSKBD_EVENT_AUTOREPEAT
 defparam opt_wsdisplay_compat.h	WSCOMPAT_USL_SYNCTIMEOUT
 				WSDISPLAY_DEFAULTSCREENS
+defparam opt_wsdisplay_compat.h WSDISPLAY_SCROLLBACK_LINES=100
 
 # this loses, but there's no way to define attributes which have attributes
 device	wsdisplay #tty?
@@ -73,3 +74,4 @@ defflag opt_tpcalib.h		TPCALIBDEBUG
 
 # generic virtual console support on bitmapped framebuffers
 file	dev/wscons/wsdisplay_vcons.c		vcons
+defflag	opt_vcons.h		VCONS_SWITCH_ASYNC

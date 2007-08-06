@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.7 2007/07/09 21:01:26 ad Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.8 2007/08/06 03:11:32 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -36,6 +36,9 @@
 #ifndef _WSDISPLAY_VCONS_H_
 #define _WSDISPLAY_VCONS_H_
 
+#include "opt_wsdisplay_compat.h"
+#include "opt_vcons.h"
+
 struct vcons_data;
 
 struct vcons_screen {
@@ -62,6 +65,13 @@ struct vcons_screen {
 #define VCONS_IS_VISIBLE	1	/* this screen is currently visible */
 	/* non zero when some rasops operation is in progress */
 	int scr_busy;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	int scr_lines_in_buffer;
+	int scr_current_line;
+	int scr_line_wanted;
+	int scr_offset_to_zero;
+	int scr_current_offset;
+#endif
 };
 
 #define SCREEN_IS_VISIBLE(scr) (((scr)->scr_status & VCONS_IS_VISIBLE) != 0)
@@ -73,6 +83,7 @@ struct vcons_screen {
 #define SCREEN_INVISIBLE(scr) ((scr)->scr_status &= ~VCONS_IS_VISIBLE)
 #define SCREEN_DISABLE_DRAWING(scr) ((scr)->scr_flags |= VCONS_DONT_DRAW)
 #define SCREEN_ENABLE_DRAWING(scr) ((scr)->scr_flags &= ~VCONS_DONT_DRAW)
+
 struct vcons_data {
 	/* usually the drivers softc */
 	void *cookie;
@@ -95,12 +106,16 @@ struct vcons_data {
 	void (*eraserows)(void *, int, int, long);
 	void (*putchar)(void *, int, int, u_int, long);
 	void (*cursor)(void *, int, int, int);
-	/* called before cvons_redraw_screen */
+	/* called before vcons_redraw_screen */
 	void (*show_screen_cb)(struct vcons_screen *);
 	/* virtual screen management stuff */
 	void (*switch_cb)(void *, int, int);
 	void *switch_cb_arg;
-	callout_t switch_callout;
+#ifdef VCONS_SWITCH_ASYNC
+	lwp_t *redraw_thread;
+	int start_drawing, done_drawing;	/* for the drawing thread */
+#endif
+	struct callout switch_callout;
 	uint32_t switch_pending;
 	LIST_HEAD(, vcons_screen) screens;
 	struct vcons_screen *active, *wanted;
