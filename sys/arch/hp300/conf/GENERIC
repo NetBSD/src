@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.140 2007/06/25 13:26:06 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.141 2007/08/06 21:26:55 adrianp Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.140 $"
+#ident 		"GENERIC-$Revision: 1.141 $"
 
 maxusers	32		# estimated number of users
 
@@ -143,7 +143,7 @@ options 	INET6		# IPV6
 options 	GATEWAY		# IP forwarding + larger mb_map
 options 	MROUTING	# Multicast routing
 options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
