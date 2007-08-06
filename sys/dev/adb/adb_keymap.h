@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_keymap.h,v 1.1 2007/01/17 23:20:16 macallan Exp $	*/
+/*	$NetBSD: adb_keymap.h,v 1.2 2007/08/06 03:40:10 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,9 +103,8 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(58),  KS_Cmd1,				/* Option */
     KC(59),			KS_Left,
     KC(60),			KS_Right,
-    KC(61),			KS_Down,
-    KC(62),			KS_Up,
-
+    KC(61), KS_Cmd_ScrollSlowDown, KS_Down,
+    KC(62), KS_Cmd_ScrollSlowUp, KS_Up,
     KC(65),			KS_KP_Decimal,
     KC(67),			KS_KP_Multiply,
     KC(69),			KS_KP_Add,
@@ -117,15 +116,15 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(81),			KS_KP_Equal,
     KC(82),			KS_KP_Insert,	KS_KP_0,
     KC(83),			KS_KP_End,	KS_KP_1,
-    KC(84),			KS_KP_Down,	KS_KP_2,
-    KC(85),			KS_KP_Next,	KS_KP_3,
+    KC(84), KS_Cmd_ScrollSlowUp, KS_KP_Down,	KS_KP_2,
+    KC(85), KS_Cmd_ScrollFastDown, KS_KP_Next,	KS_KP_3,
     KC(86),			KS_KP_Left,	KS_KP_4,
     KC(87),			KS_KP_Begin,	KS_KP_5,
     KC(88),			KS_KP_Right,	KS_KP_6,
     KC(89),			KS_KP_Home,	KS_KP_7,
 
-    KC(91),			KS_KP_Up,	KS_KP_8,
-    KC(92),			KS_KP_Prior,	KS_KP_9,
+    KC(91), KS_Cmd_ScrollSlowUp, KS_KP_Up,	KS_KP_8,
+    KC(92), KS_Cmd_ScrollFastUp, KS_KP_Prior,	KS_KP_9,
 
     KC(95),			KS_KP_Delete,	KS_KP_Decimal,
     KC(96),	KS_Cmd_Screen4,		KS_f5,
@@ -149,12 +148,12 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(113),			KS_Pause,
     KC(114),			KS_Insert,
     KC(115),			KS_Home,
-    KC(116),			KS_Prior,
+    KC(116), KS_Cmd_ScrollFastUp, KS_Prior,
     KC(117),			KS_Delete,	/* BackSpace */
     KC(118),KS_Cmd_Screen3,	KS_f4,
     KC(119),			KS_End,
     KC(120),KS_Cmd_Screen1,	KS_f2,
-    KC(121),			KS_Next,
+    KC(121),KS_Cmd_ScrollFastDown, KS_Next,
     KC(122),KS_Cmd_Screen0,	KS_f1,
 
     KC(127),  KS_Cmd_Debugger,
