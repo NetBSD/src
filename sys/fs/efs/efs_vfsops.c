@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.8 2007/07/31 21:14:17 pooka Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.9 2007/08/06 21:10:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.8 2007/07/31 21:14:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.9 2007/08/06 21:10:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,7 @@ struct vfsops efs_vfsops = {
 	.vfs_root	= efs_root,
 	.vfs_quotactl	= (void *)eopnotsupp,
 	.vfs_statvfs	= efs_statvfs,
-	.vfs_sync	= (void *)eopnotsupp,
+	.vfs_sync	= (void *)nullop,
 	.vfs_vget	= efs_vget,
 	.vfs_fhtovp	= efs_fhtovp,
 	.vfs_vptofh	= efs_vptofh,
