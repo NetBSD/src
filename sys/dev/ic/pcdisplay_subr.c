@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.28 2005/02/27 00:27:02 perry Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.28.14.1 2007/08/06 11:41:49 ghen Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.28 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.28.14.1 2007/08/06 11:41:49 ghen Exp $");
 
 #include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
@@ -168,9 +168,13 @@ pcdisplay_putchar(id, row, col, c, attr)
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
-	int off;
+	size_t off;
 
 	off = row * scr->type->ncols + col;
+
+	/* check for bogus row and column sizes */
+	if (__predict_false(off >= (scr->type->ncols * scr->type->nrows)))
+		return;
 
 	if (scr->active)
 		bus_space_write_2(memt, memh, scr->dispoffset + off * 2,

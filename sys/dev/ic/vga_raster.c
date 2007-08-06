@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.16 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.16.8.1 2007/08/06 11:41:49 ghen Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.16 2005/02/27 00:27:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.16.8.1 2007/08/06 11:41:49 ghen Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -1092,11 +1092,14 @@ void
 vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 {
 	struct vgascreen *scr = id;
-	int off;
+	size_t off;
 	struct vga_raster_font *fs;
 	u_int tmp_ch;
 
 	off = row * scr->type->ncols + col;
+
+	if (__predict_false(off >= (scr->type->ncols * scr->type->nrows)))
+		return;
 
 	LIST_FOREACH(fs, &scr->fontset, next) {
 		if ((scr->encoding == fs->font->encoding) &&
@@ -1367,6 +1370,10 @@ vga_raster_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	struct vgascreen *scr = id;
 	struct vga_config *vc = scr->cfg;
+
+	if (__predict_false((unsigned int)fg >= sizeof(fgansitopc) || 
+	    (unsigned int)bg >= sizeof(bgansitopc)))
+	    	return (EINVAL);
 
 	if (vc->hdl.vh_mono) {
 		if (flags & WSATTR_WSCOLORS)
