@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.230 2007/08/01 14:51:26 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.231 2007/08/06 11:07:21 ghen Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8310,3 +8310,62 @@ sys/sys/lock.h					1.72
 	thanks to Juergen Hannken-Illjes for some analysis of the problem
 	and Erik Bertelsen for testing
 	[pooka, ticket #808]
+
+doc/3RDPARTY					patch
+doc/CHANGES					patch
+gnu/dist/postfix/HISTORY			patch
+gnu/dist/postfix/README_FILES/RELEASE_NOTES	patch
+gnu/dist/postfix/README_FILES/SASL_README	patch
+gnu/dist/postfix/README_FILES/SMTPD_POLICY_README patch
+gnu/dist/postfix/RELEASE_NOTES			patch
+gnu/dist/postfix/examples/chroot-setup/Solaris10 patch
+gnu/dist/postfix/examples/chroot-setup/Solaris8 patch
+gnu/dist/postfix/html/SASL_README.html		patch
+gnu/dist/postfix/html/SMTPD_POLICY_README.html	patch
+gnu/dist/postfix/html/error.8.html		patch
+gnu/dist/postfix/html/lmtp.8.html		patch
+gnu/dist/postfix/html/postconf.1.html		patch
+gnu/dist/postfix/html/postconf.5.html		patch
+gnu/dist/postfix/html/smtp.8.html		patch
+gnu/dist/postfix/man/man1/postconf.1		patch
+gnu/dist/postfix/man/man5/postconf.5		patch
+gnu/dist/postfix/man/man8/smtp.8		patch
+gnu/dist/postfix/mantools/postlink		patch
+gnu/dist/postfix/proto/SASL_README.html		patch
+gnu/dist/postfix/proto/SMTPD_POLICY_README.html patch
+gnu/dist/postfix/proto/postconf.html.prolog	patch
+gnu/dist/postfix/proto/postconf.man.prolog	patch
+gnu/dist/postfix/proto/postconf.proto		patch
+gnu/dist/postfix/src/cleanup/cleanup_envelope.c patch
+gnu/dist/postfix/src/cleanup/cleanup_message.c	patch
+gnu/dist/postfix/src/cleanup/cleanup_milter.c	patch
+gnu/dist/postfix/src/cleanup/cleanup_out_recipient.c patch
+gnu/dist/postfix/src/discard/discard.c		patch
+gnu/dist/postfix/src/error/error.c		patch
+gnu/dist/postfix/src/global/mail_params.c	patch
+gnu/dist/postfix/src/global/mail_params.h	patch
+gnu/dist/postfix/src/global/mail_version.h	patch
+gnu/dist/postfix/src/local/mailbox.c		patch
+gnu/dist/postfix/src/local/unknown.c		patch
+gnu/dist/postfix/src/milter/milter.c		patch
+gnu/dist/postfix/src/milter/milter.h		patch
+gnu/dist/postfix/src/milter/milter8.c		patch
+gnu/dist/postfix/src/postconf/postconf.c	patch
+gnu/dist/postfix/src/postdrop/postdrop.c	patch
+gnu/dist/postfix/src/qmqpd/qmqpd_peer.c		patch
+gnu/dist/postfix/src/smtp/smtp.c		patch
+gnu/dist/postfix/src/smtp/smtp_connect.c	patch
+gnu/dist/postfix/src/smtpd/smtpd.c		patch
+gnu/dist/postfix/src/smtpd/smtpd_peer.c		patch
+gnu/dist/postfix/src/smtpstone/qmqp-source.c	patch
+gnu/dist/postfix/src/smtpstone/smtp-source.c	patch
+gnu/dist/postfix/src/util/Makefile.in		patch
+gnu/dist/postfix/src/util/get_hostname.c	patch
+gnu/dist/postfix/src/util/vstream.h		patch
+gnu/dist/postfix/src/util/vstream_tweak.c	new file
+gnu/dist/postfix/src/xsasl/xsasl_cyrus_client.c patch
+gnu/usr.sbin/postfix/util/Makefile		patch
+
+	Update Postfix to version 2.4.5.
+	[heas, ticket #813]
+
