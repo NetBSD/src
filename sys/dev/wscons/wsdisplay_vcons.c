@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.13 2007/07/28 22:35:56 rumble Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.14 2007/08/06 03:11:32 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.13 2007/07/28 22:35:56 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.14 2007/08/06 03:11:32 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.13 2007/07/28 22:35:56 rumble 
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#include "opt_wsemul.h"
+#include "opt_wsdisplay_compat.h"
+#include "opt_vcons.h"
+
 static void vcons_dummy_init_screen(void *, struct vcons_screen *, int, 
 	    long *);
 
@@ -66,6 +70,11 @@ static int  vcons_alloc_screen(void *, const struct wsscreen_descr *, void **,
 static void vcons_free_screen(void *, void *);
 static int  vcons_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+static void vcons_scroll(void *, void *, int);
+static void vcons_do_scroll(struct vcons_screen *);
+#endif
 
 static void vcons_do_switch(struct vcons_data *);
 
@@ -87,13 +96,16 @@ static void vcons_eraserows(void *, int, int, long);
 static void vcons_putchar(void *, int, int, u_int, long);
 static void vcons_cursor(void *, int, int, int);
 
-/* support for readin/writing text buffers. For wsmoused */
+/* support for reading/writing text buffers. For wsmoused */
 static int  vcons_putwschar(struct vcons_screen *, struct wsdisplay_char *);
 static int  vcons_getwschar(struct vcons_screen *, struct wsdisplay_char *);
 
 static void vcons_lock(struct vcons_screen *);
 static void vcons_unlock(struct vcons_screen *);
 
+#ifdef VCONS_SWITCH_ASYNC
+static void vcons_kthread(void *);
+#endif
 
 int
 vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
@@ -117,6 +129,9 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	ao->alloc_screen = vcons_alloc_screen;
 	ao->free_screen = vcons_free_screen;
 	ao->show_screen = vcons_show_screen;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	ao->scroll = vcons_scroll;
+#endif
 
 	LIST_INIT(&vd->screens);
 	vd->active = NULL;
@@ -131,6 +146,10 @@ vcons_init(struct vcons_data *vd, void *cookie, struct wsscreen_descr *def,
 	 */
 #ifdef DIAGNOSTIC
 	vd->switch_poll_count = 0;
+#endif
+#ifdef VCONS_SWITCH_ASYNC
+	kthread_create(PRI_NONE, 0, NULL, vcons_kthread, vd,
+	    &vd->redraw_thread, "vcons_draw");
 #endif
 	return 0;
 }
@@ -161,6 +180,9 @@ vcons_unlock(struct vcons_screen *scr)
 #ifdef VCONS_PARANOIA
 	splx(s);
 #endif
+#ifdef VCONS_SWITCH_ASYNC
+	wakeup(&scr->scr_vd->done_drawing);
+#endif
 }
 
 static void
@@ -187,7 +209,7 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 
 	scr->scr_cookie = vd->cookie;
 	scr->scr_vd = scr->scr_origvd = vd;
-	SCREEN_IDLE(scr);
+	scr->scr_busy = 0;
 	
 	/*
 	 * call the driver-supplied init_screen function which is expected
@@ -218,7 +240,16 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	 * we allocate both chars and attributes in one chunk, attributes first 
 	 * because they have the (potentially) bigger alignment 
 	 */
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	cnt = (ri->ri_rows + WSDISPLAY_SCROLLBACK_LINES) * ri->ri_cols;
+	scr->scr_lines_in_buffer = WSDISPLAY_SCROLLBACK_LINES;
+	scr->scr_current_line = 0;
+	scr->scr_line_wanted = 0;
+	scr->scr_offset_to_zero = ri->ri_cols * WSDISPLAY_SCROLLBACK_LINES;
+	scr->scr_current_offset = scr->scr_offset_to_zero;
+#else
 	cnt = ri->ri_rows * ri->ri_cols;
+#endif
 	scr->scr_attrs = (long *)malloc(cnt * (sizeof(long) + 
 	    sizeof(uint16_t)), M_DEVBUF, M_WAITOK);
 	if (scr->scr_attrs == NULL)
@@ -301,7 +332,7 @@ vcons_do_switch(struct vcons_data *vd)
 
 #ifdef DIAGNOSTIC
 	if (SCREEN_IS_VISIBLE(scr))
-		panic("vcons_switch_screen: already active");
+		printf("vcons_switch_screen: already active");
 #endif
 
 #ifdef notyet
@@ -346,7 +377,11 @@ vcons_redraw_screen(struct vcons_screen *scr)
 		}
 
 		/* redraw the screen */
+#ifdef WSDISPLAY_SCROLLSUPPORT
+		offset = scr->scr_current_offset;
+#else
 		offset = 0;
+#endif
 		for (i = 0; i < ri->ri_rows; i++) {
 			for (j = 0; j < ri->ri_cols; j++) {
 				/*
@@ -473,6 +508,10 @@ vcons_show_screen(void *v, void *cookie, int waitok,
 	vd->wanted = scr;
 	vd->switch_cb = cb;
 	vd->switch_cb_arg = cb_arg;
+#ifdef VCONS_SWITCH_ASYNC
+	wakeup(&vd->start_drawing);
+	return EAGAIN;
+#else
 	if (cb) {
 		callout_reset(&vd->switch_callout, 0,
 		    (void(*)(void *))vcons_do_switch, vd);
@@ -481,6 +520,7 @@ vcons_show_screen(void *v, void *cookie, int waitok,
 
 	vcons_do_switch(vd);
 	return 0;
+#endif
 }
 
 /* wrappers for rasops_info methods */
@@ -493,10 +533,20 @@ vcons_copycols_buffer(void *cookie, int row, int srccol, int dstcol, int ncols)
 	int from = srccol + row * ri->ri_cols;
 	int to = dstcol + row * ri->ri_cols;
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	int offset;
+	offset = scr->scr_offset_to_zero;
+
+	memmove(&scr->scr_attrs[offset + to], &scr->scr_attrs[offset + from],
+	    ncols * sizeof(long));
+	memmove(&scr->scr_chars[offset + to], &scr->scr_chars[offset + from],
+	    ncols * sizeof(uint16_t));
+#else
 	memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
 	    ncols * sizeof(long));
 	memmove(&scr->scr_chars[to], &scr->scr_chars[from],
 	    ncols * sizeof(uint16_t));
+#endif
 }
 
 static void
@@ -522,10 +572,20 @@ vcons_erasecols_buffer(void *cookie, int row, int startcol, int ncols, long fill
 	int start = startcol + row * ri->ri_cols;
 	int end = start + ncols, i;
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	int offset;
+	offset = scr->scr_offset_to_zero;
+
+	for (i = start; i < end; i++) {
+		scr->scr_attrs[offset + i] = fillattr;
+		scr->scr_chars[offset + i] = 0x20;
+	}
+#else
 	for (i = start; i < end; i++) {
 		scr->scr_attrs[i] = fillattr;
 		scr->scr_chars[i] = 0x20;
 	}
+#endif
 }
 
 static void
@@ -551,10 +611,29 @@ vcons_copyrows_buffer(void *cookie, int srcrow, int dstrow, int nrows)
 	struct vcons_screen *scr = ri->ri_hw;
 	int from, to, len;
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	int offset;
+	offset = scr->scr_offset_to_zero;
+
+	/* do we need to scroll the back buffer? */
+	if (dstrow == 0) {
+		from = ri->ri_cols * srcrow;
+		to = ri->ri_cols * dstrow;
+
+		memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
+		    scr->scr_offset_to_zero * sizeof(long));
+		memmove(&scr->scr_chars[to], &scr->scr_chars[from],
+		    scr->scr_offset_to_zero * sizeof(uint16_t));
+	}
+	from = ri->ri_cols * srcrow + offset;
+	to = ri->ri_cols * dstrow + offset;
+	len = ri->ri_cols * nrows;		
+		
+#else
 	from = ri->ri_cols * srcrow;
 	to = ri->ri_cols * dstrow;
 	len = ri->ri_cols * nrows;
-
+#endif
 	memmove(&scr->scr_attrs[to], &scr->scr_attrs[from],
 	    len * sizeof(long));
 	memmove(&scr->scr_chars[to], &scr->scr_chars[from],
@@ -583,8 +662,16 @@ vcons_eraserows_buffer(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	int start, end, i;
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	int offset;
+	offset = scr->scr_offset_to_zero;
+
+	start = ri->ri_cols * row + offset;
+	end = ri->ri_cols * (row + nrows) + offset;
+#else
 	start = ri->ri_cols * row;
 	end = ri->ri_cols * (row + nrows);
+#endif
 
 	for (i = start; i < end; i++) {
 		scr->scr_attrs[i] = fillattr;
@@ -614,12 +701,24 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	int pos;
 	
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	int offset;
+	offset = scr->scr_offset_to_zero;
+
+	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) && 
+	     (col < ri->ri_cols)) {
+		pos = col + row * ri->ri_cols;
+		scr->scr_attrs[pos + offset] = attr;
+		scr->scr_chars[pos + offset] = c;
+	}
+#else
 	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) && 
 	     (col < ri->ri_cols)) {
 		pos = col + row * ri->ri_cols;
 		scr->scr_attrs[pos] = attr;
 		scr->scr_chars[pos] = c;
 	}
+#endif
 }
 
 static void
@@ -669,10 +768,19 @@ vcons_putwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	    (unsigned int)wsc->row > ri->ri_rows))
 			return (EINVAL);
 	
-	ri->ri_ops.allocattr(ri, wsc->foreground, wsc->background,
-	    wsc->flags, &attr);
-	vcons_putchar(ri, wsc->row, wsc->col, wsc->letter, attr);
-	return 0;
+	if ((wsc->row >= 0) && (wsc->row < ri->ri_rows) && (wsc->col >= 0) && 
+	     (wsc->col < ri->ri_cols)) {
+
+		ri->ri_ops.allocattr(ri, wsc->foreground, wsc->background,
+		    wsc->flags, &attr);
+		vcons_putchar(ri, wsc->row, wsc->col, wsc->letter, attr);
+#ifdef VCONS_DEBUG
+		printf("vcons_putwschar(%d, %d, %x, %lx\n", wsc->row, wsc->col,
+		    wsc->letter, attr);
+#endif
+		return 0;
+	} else
+		return EINVAL;
 }
 
 static int
@@ -685,17 +793,153 @@ vcons_getwschar(struct vcons_screen *scr, struct wsdisplay_char *wsc)
 	KASSERT(scr != NULL && wsc != NULL);
 
 	ri = &scr->scr_ri;
-	offset = ri->ri_cols * wsc->row + wsc->col;
-	wsc->letter = scr->scr_chars[offset];
-	attr = scr->scr_attrs[offset];
 
-	/* 
-	 * this is ugly. We need to break up an attribute into colours and
-	 * flags but there's no rasops method to do that so we must rely on
-	 * the 'canonical' encoding.
-	 */
-	wsc->foreground = (attr & 0xff000000) >> 24;
-	wsc->background = (attr & 0x00ff0000) >> 16;
-	wsc->flags      = (attr & 0x0000ff00) >> 8;
-	return 0;
+	if ((wsc->row >= 0) && (wsc->row < ri->ri_rows) && (wsc->col >= 0) && 
+	     (wsc->col < ri->ri_cols)) {
+
+		offset = ri->ri_cols * wsc->row + wsc->col;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+		offset += scr->scr_offset_to_zero;
+#endif
+		wsc->letter = scr->scr_chars[offset];
+		attr = scr->scr_attrs[offset];
+
+		/* 
+		 * this is ugly. We need to break up an attribute into colours and
+		 * flags but there's no rasops method to do that so we must rely on
+		 * the 'canonical' encoding.
+		 */
+#ifdef VCONS_DEBUG
+		printf("vcons_getwschar: %d, %d, %x, %lx\n", wsc->row,
+		    wsc->col, wsc->letter, attr);
+#endif
+		wsc->foreground = (attr >> 24) & 0xff;
+		wsc->background = (attr >> 16) & 0xff;
+		wsc->flags      = attr & 0xff;
+		return 0;
+	} else
+		return EINVAL;
 }
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+
+static void
+vcons_scroll(void *cookie, void *vs, int where)
+{
+	struct vcons_screen *scr = vs;
+
+	if (where == 0) {
+		scr->scr_line_wanted = 0;
+	} else {
+		scr->scr_line_wanted = scr->scr_line_wanted - where;
+		if (scr->scr_line_wanted < 0)
+			scr->scr_line_wanted = 0;
+		if (scr->scr_line_wanted > scr->scr_lines_in_buffer)
+			scr->scr_line_wanted = scr->scr_lines_in_buffer;
+	}
+
+	if (scr->scr_line_wanted != scr->scr_current_line) {
+
+		vcons_do_scroll(scr);
+	}
+}
+
+static void
+vcons_do_scroll(struct vcons_screen *scr)
+{
+	int dist, from, to, num;
+	int r_offset, r_start;
+	int i, j;
+
+	if (scr->scr_line_wanted == scr->scr_current_line)
+		return;
+	dist = scr->scr_line_wanted - scr->scr_current_line;
+	scr->scr_current_line = scr->scr_line_wanted;
+	scr->scr_current_offset = scr->scr_ri.ri_cols *
+	    (scr->scr_lines_in_buffer - scr->scr_current_line);
+	if (abs(dist) >= scr->scr_ri.ri_rows) {
+		vcons_redraw_screen(scr);
+		return;
+	}
+	/* scroll and redraw only what we really have to */
+	if (dist > 0) {
+		/* we scroll down */
+		from = 0;
+		to = dist;
+		num = scr->scr_ri.ri_rows - dist;
+		/* now the redraw parameters */
+		r_offset = scr->scr_current_offset;
+		r_start = 0;
+	} else {
+		/* scrolling up */
+		to = 0;
+		from = -dist;
+		num = scr->scr_ri.ri_rows + dist;
+		r_offset = scr->scr_current_offset + num * scr->scr_ri.ri_cols;
+		r_start = num;
+	}
+	scr->scr_vd->copyrows(scr, from, to, num);
+	for (i = 0; i < abs(dist); i++) {
+		for (j = 0; j < scr->scr_ri.ri_cols; j++) {
+			scr->scr_vd->putchar(scr, i + r_start, j,
+			    scr->scr_chars[r_offset],
+			    scr->scr_attrs[r_offset]);
+			r_offset++;
+		}
+	}
+
+	if (scr->scr_line_wanted == 0) {
+		/* this was a reset - need to draw the cursor */
+		scr->scr_ri.ri_flg &= ~RI_CURSOR;
+		scr->scr_vd->cursor(scr, 1, scr->scr_ri.ri_crow,
+		    scr->scr_ri.ri_ccol);
+	}
+}
+
+#endif /* WSDISPLAY_SCROLLSUPPORT */
+
+/* async drawing using a kernel thread */
+
+#ifdef VCONS_SWITCH_ASYNC
+static void
+vcons_kthread(void *cookie)
+{
+	struct vcons_data *vd = cookie;
+	struct vcons_screen *scr;
+	int sec = hz;
+
+	while (1) {
+
+		tsleep(&vd->start_drawing, 0, "vc_idle", sec);
+		if ((vd->wanted != vd->active) && (vd->wanted != NULL)) {
+			/*
+			 * we need to switch screens
+			 * so first we mark the active screen as invisible
+			 * and wait until it's idle
+			 */
+			scr = vd->wanted;
+			SCREEN_INVISIBLE(vd->active);
+			while (SCREEN_IS_BUSY(vd->active)) {
+
+				tsleep(&vd->done_drawing, 0, "vc_wait", sec);
+			}
+			/*
+			 * now we mark the wanted screen busy so nobody
+			 * messes around while we redraw it
+			 */
+			vd->active = scr;
+			vd->wanted = NULL;
+			SCREEN_VISIBLE(scr);
+
+			if (vd->show_screen_cb != NULL)
+				vd->show_screen_cb(scr);
+
+			if ((scr->scr_flags & VCONS_NO_REDRAW) == 0)
+				vcons_redraw_screen(scr);
+
+			if (vd->switch_cb)
+				vd->switch_cb(vd->switch_cb_arg, 0, 0);
+		}	
+	}
+}
+#endif /* VCONS_SWITCH_ASYNC */
