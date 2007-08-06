@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.46.2.1 2005/06/03 15:11:54 riz Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.46.2.1.2.1 2007/08/06 11:40:57 ghen Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.46.2.1 2005/06/03 15:11:54 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.46.2.1.2.1 2007/08/06 11:40:57 ghen Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -389,6 +389,10 @@ rasops_allocattr_color(cookie, fg, bg, flg, attr)
 	long *attr;
 {
 	int swap;
+
+	if (__predict_false((unsigned int)fg >= sizeof(rasops_isgray) ||
+	    (unsigned int)bg >= sizeof(rasops_isgray)))
+		return (EINVAL);
 
 #ifdef RASOPS_CLIPPING
 	fg &= 7;
