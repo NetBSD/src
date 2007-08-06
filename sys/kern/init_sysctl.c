@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.103 2007/07/09 21:10:50 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.104 2007/08/06 11:51:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.103 2007/07/09 21:10:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.104 2007/08/06 11:51:46 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.103 2007/07/09 21:10:50 ad Exp $")
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -176,11 +177,6 @@ dcopyout(l, kaddr, uaddr, len)
 #else /* !KTRACE */
 #define dcopyout(l, kaddr, uaddr, len) copyout(kaddr, uaddr, len)
 #endif /* KTRACE */
-
-#ifndef CPU_INFO_FOREACH
-#define CPU_INFO_ITERATOR int
-#define CPU_INFO_FOREACH(cii, ci) cii = 0, ci = curcpu(); ci != NULL; ci = NULL
-#endif
 
 #ifdef DIAGNOSTIC
 static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
