@@ -11,6 +11,20 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Incompatibility with Postfix 2.4.4
+==================================
+
+By default, the Postfix Cyrus SASL client no longer sends a SASL
+authoriZation ID (authzid); it sends only the SASL authentiCation
+ID (authcid) plus the authcid's password. Specify "send_cyrus_sasl_authzid
+= yes" to get the old behavior, which is to send the (authzid,
+authcid, password), with the authzid equal to the authcid. This
+workaround for non-Cyrus SASL servers is back-ported from Postfix
+2.5.
+
+Release notes for Postfix 2.4.0
+===============================
+
 Major changes - critical
 ------------------------
 

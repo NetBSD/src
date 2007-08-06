@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.17.2.1 2007/06/16 17:01:14 snj Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.17.2.2 2007/08/06 11:06:27 ghen Exp $	*/
 
 /*++
 /* NAME
@@ -306,6 +306,16 @@ static SMTP_SESSION *smtp_connect_sock(int sock, struct sockaddr * sa,
     stream = vstream_fdopen(sock, O_RDWR);
 
     /*
+     * Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE.
+     */
+    if (sa->sa_family == AF_INET
+#ifdef AF_INET6
+	|| sa->sa_family == AF_INET6
+#endif
+	)
+	vstream_tweak_tcp(stream);
+
+    /*
      * Bundle up what we have into a nice SMTP_SESSION object.
      */
     return (smtp_session_alloc(stream, destination, name, addr,
@@ -382,7 +392,7 @@ static void smtp_cleanup_session(SMTP_STATE *state)
     if (THIS_SESSION_IS_EXPIRED)
 	smtp_quit(state);			/* also disables caching */
     if (THIS_SESSION_IS_CACHED
-	/* Redundant tests for safety... */
+    /* Redundant tests for safety... */
 	&& vstream_ferror(session->stream) == 0
 	&& vstream_feof(session->stream) == 0) {
 	smtp_save_session(state);

@@ -53,6 +53,8 @@ recursively replaced by the value of the named parameter. </p>
 "$name" is empty. This form is supported with Postfix version 2.2
 and later.  </p>
 
+<li> <p> Specify "$$" to produce a single "$" character. </p>
+
 </ul>
 
 <li> <p> When the same parameter is defined multiple times, only

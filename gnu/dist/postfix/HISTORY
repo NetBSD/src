@@ -13422,3 +13422,121 @@ Apologies for any names omitted.
 	with deadlock, "postfix stop" now forcefully stops all the
 	processes in the master's process group, not just the master
 	process alone.  File: conf/postfix-script.
+
+20070425
+
+	Bugfix: don't falsely report "lost connection from
+	localhost[127.0.0.1]" when Postfix is being portscanned.
+	Files: smtpd/smtpd_peer.c, qmqpd/qmqpd_peer.c.
+
+20070430
+
+	Robustness: recommend a "0" process limit for policy servers
+	to avoid "connection refused" problems when the smtpd process
+	limit exceeds the default process limit.  File:
+	proto/SMTPD_POLICY_README.html.
+
+20070501
+
+	Safety: when IPv6 (or IPv4) is turned off, don't treat an
+	IPv6 (or IPv4) connection from e.g. inetd as if it comes
+	from localhost[127.0.0.1].  Files: smtpd/smtpd_peer.c,
+	qmqpd/qmqpd_peer.c.
+
+20070508
+
+	Bugfix: Content-Transfer-Encoding: attribute values are
+	case insensitive. File: src/cleanup/cleanup_message.c.
+
+20070514
+
+	Bugfix: mailbox_transport(_maps) and fallback_transport(_maps)
+	were broken when used with the error(8) or discard(8)
+	transports. Cause: insufficient documentation.  Files:
+	error/error.c, discard/discard.c.
+
+20070520
+
+	Bugfix (problem introduced Postfix 2.3): when DSN support
+	was introduced it broke "agressive" recipient duplicate
+	elimination with "enable_original_recipient = no".  File:
+	cleanup/cleanup_out_recipient.c.
+
+20070529
+
+	Bugfix (introduced Postfix 2.3): the sendmail/postdrop
+	commands would hang when trying to submit a message larger
+	than the per-message size limit. File: postdrop/postdrop.c.
+
+20070530
+
+	Sabotage the saboteur who insists on breaking Postfix by
+	adding gethostbyname() calls that cause maildir delivery
+	to fail when the machine name is not found in /etc/hosts,
+	or that cause Postfix processes to hang when the network
+	is down.
+
+20070531
+
+	Portability: Victor helpfully pointed out that change
+	20070425 broke on non-IPv6 systems. Files: smtpd/smtpd_peer.c,
+	qmqpd/qmqpd_peer.c.
+
+20070613
+
+	Bugfix: the Milter client assumed that a Milter application
+	does not modify the message header or envelope, after that
+	same Milter application has modified the message body of
+	that same email message. This is not a problem with updates
+	by different Milter applications.  Problem was triggered
+	by Jose-Marcio Martins da Cruz. Also simplified the handling
+	of queue file update errors. File: milter/milter8.c.
+
+20070614
+
+	Workaround: some non-Cyrus SASL SMTP servers require SASL
+	login without authzid (authoriZation ID), i.e. the client
+	must send only the authcid (authentiCation ID) + the authcid's
+	password.  In this case the server is supposed to derive
+	the authzid from the authcid. This works as expected when
+	authenticating to a Cyrus SASL SMTP server.  To get the old
+	behavior specify "send_cyrus_sasl_authzid = yes", in which
+	case Postfix sends the (authzid, authcid, password), with
+	the authzid equal to the authcid. File: xsasl/xsasl_cyrus_client.c.
+
+20070619
+
+	Portability: /dev/poll support for Solaris chroot jail setup
+	scripts. Files: examples/chroot-setup/Solaris8,
+	examples/chroot-setup/Solaris10.
+
+20070719
+
+	Cleanup: Milter client error handling, so that the (Postfix
+	SMTP server's Milter client) does not get out of sync with
+	Milter applications after the (cleanup server's Milter
+	client) encounters some non-recoverable problem.  Files:
+	milter/milter8.c, smtpd/smtpd.c.
+
+20070729
+
+	Performance: workaround for poor TCP performance on loopback
+	(127.0.0.1) connections. Problem reported by Mark Martinec.
+	Files: util/vstream_tweak.c, milter/milter8.c, smtp/smtp_connect.c,
+	smtpstone/*source.c.
+
+20070730
+
+	Bugfix: when a milter replied with ACCEPT at or before the
+	first RCPT command, the cleanup server would apply the
+	non_smtpd_milters setting as if the message was a local
+	submission. Problem reported by Jukka Salmi. Also, the
+	cleanup server would get out of sync with the milter when
+	a milter replied with ACCEPT at the DATA command. Files:
+	cleanup/cleanup_envelope.c, smtpd/smtpd.c, milter/milters.c.
+
+20070731
+
+	Bugfix: the loopback TCP performance workaround was ineffective
+	due to a wetware bit-flip during code cleanup.  File:
+	util/vstream_tweak.c.

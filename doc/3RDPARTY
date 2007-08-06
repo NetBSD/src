@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.486.2.6 2007/07/17 10:39:31 liamjfoy Exp $
+#	$NetBSD: 3RDPARTY,v 1.486.2.7 2007/08/06 11:06:31 ghen Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -668,8 +668,8 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
-Version:	2.4.1
-Current Vers:	2.4.1
+Version:	2.4.5
+Current Vers:	2.4.5
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
