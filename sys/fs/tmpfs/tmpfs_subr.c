@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.35 2007/07/09 21:10:50 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.36 2007/08/06 16:08:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.35 2007/07/09 21:10:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36 2007/08/06 16:08:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -908,11 +908,6 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		goto out;
 	}
 
-	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
-
-	tmp->tm_pages_used += (newpages - oldpages);
-	node->tn_size = newsize;
-	uvm_vnp_setsize(vp, newsize);
 	if (newsize < oldsize) {
 		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
 
@@ -936,6 +931,12 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 
 		uvm_vnp_zerorange(vp, newsize, zerolen);
 	}
+
+	node->tn_spec.tn_reg.tn_aobj_pages = newpages;
+	node->tn_size = newsize;
+	uvm_vnp_setsize(vp, newsize);
+
+	tmp->tm_pages_used += (newpages - oldpages);
 
 	error = 0;
 
