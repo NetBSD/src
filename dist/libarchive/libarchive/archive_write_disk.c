@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.12 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.13 2007/07/15 19:13:59 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -610,7 +610,10 @@ archive_write_disk_new(void)
 	a->lookup_uid = trivial_lookup_uid;
 	a->lookup_gid = trivial_lookup_gid;
 	a->user_uid = geteuid();
-	archive_string_ensure(&a->path_safe, 64);
+	if (archive_string_ensure(&a->path_safe, 512) == NULL) {
+		free(a);
+		return (NULL);
+	}
 	return (&a->archive);
 }
 

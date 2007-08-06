@@ -1,4 +1,10 @@
 
+Aug 05, 2007: libarchive 2.2.6 released
+
+Aug 05, 2007: New configure option --disable-bsdtar, thanks to Joerg
+	Sonnenberger.
+Aug 05, 2007: Several bug fixes from FreeBSD CVS repo.
+
 Jul 13, 2007: libarchive 2.2.5 released
 
 Jul 12, 2007: libarchive 2.2.4 released

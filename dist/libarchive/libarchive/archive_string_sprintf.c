@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_string_sprintf.c,v 1.8 2007/01/09 08:05:55 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_string_sprintf.c,v 1.9 2007/07/15 19:13:59 kientzle Exp $");
 
 /*
  * The use of printf()-family functions can be troublesome
@@ -42,6 +42,7 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_string_sprintf.c,v 1.8 2007/01/09
 #include <stdio.h>
 
 #include "archive_string.h"
+#include "archive_private.h"
 
 /*
  * Like 'vsprintf', but ensures the target is big enough, resizing if
@@ -56,7 +57,8 @@ __archive_string_vsprintf(struct archive_string *as, const char *fmt,
 	uintmax_t u; /* Unsigned integer temp. */
 	const char *p, *p2;
 
-	__archive_string_ensure(as, 64);
+	if (__archive_string_ensure(as, 64) == NULL)
+		__archive_errx(1, "Out of memory");
 
 	if (fmt == NULL) {
 		as->s[0] = 0;
