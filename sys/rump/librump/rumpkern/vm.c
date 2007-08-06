@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.2 2007/08/06 16:09:33 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.3 2007/08/06 20:46:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -240,7 +240,7 @@ rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 	if (ubc_winvalid == 0)
 		panic("%s: ubc window not allocated", __func__);
 
-	rv = ubc_uobj->pgops->pgo_get(ubc_uobj, ubc_offset & ~PAGE_MASK,
+	rv = ubc_uobj->pgops->pgo_get(ubc_uobj, ubc_offset,
 	    pgs, &npages, 0, 0, 0, 0);
 	if (rv)
 		return rv;
