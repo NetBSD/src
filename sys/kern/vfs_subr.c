@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.296 2007/07/29 14:44:08 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.297 2007/08/06 17:09:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.296 2007/07/29 14:44:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.297 2007/08/06 17:09:11 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -927,6 +927,7 @@ getdevvp(dev_t dev, struct vnode **vpp, enum vtype type)
 	}
 	vp = nvp;
 	vp->v_type = type;
+	uvm_vnp_setsize(vp, 0);
 	if ((nvp = checkalias(vp, dev, NULL)) != 0) {
 		vput(vp);
 		vp = nvp;
