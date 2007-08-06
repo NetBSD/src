@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.65 2007/07/17 00:26:57 macallan Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.66 2007/08/06 21:26:56 adrianp Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.65 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.66 $"
 
 maxusers	32
 
@@ -131,7 +131,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
