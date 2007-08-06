@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.h,v 1.1.1.1.6.1 2007/06/16 17:00:20 snj Exp $	*/
+/*	$NetBSD: milter.h,v 1.1.1.1.6.2 2007/08/06 11:06:25 ghen Exp $	*/
 
 #ifndef _MILTER_H_INCLUDED_
 #define _MILTER_H_INCLUDED_
@@ -101,6 +101,7 @@ extern const char *milter_unknown_event(MILTERS *, const char *);
 extern const char *milter_other_event(MILTERS *);
 extern void milter_abort(MILTERS *);
 extern void milter_disc_event(MILTERS *);
+extern int milter_dummy(MILTERS *, VSTREAM *);
 extern int milter_send(MILTERS *, VSTREAM *);
 extern MILTERS *milter_receive(VSTREAM *, int);
 extern void milter_free(MILTERS *);

@@ -43,6 +43,7 @@ terminated by an empty line.
 Here is an example of all the attributes that the Postfix SMTP server sends in
 a delegated SMTPD access policy request:
 
+    PPoossttffiixx vveerrssiioonn 22..11 aanndd llaatteerr::
     request=smtpd_access_policy
     protocol_state=RCPT
     protocol_name=SMTP
@@ -170,7 +171,7 @@ To create a policy service that listens on a UNIX-domain socket called
 use something like this:
 
      1 /etc/postfix/master.cf:
-     2     policy  unix  -       n       n       -       -       spawn
+     2     policy  unix  -       n       n       -       0       spawn
      3       user=nobody argv=/some/where/policy-server
      4
      5 /etc/postfix/main.cf:
@@ -190,13 +191,17 @@ NOTES:
     "policy_time_limit" setting. The name of the parameter is the name of the
     master.cf entry ("policy") concatenated with the "_time_limit" suffix.
 
+  * Line 2: specify a "0" process limit instead of the default "-", to avoid
+    "connection refused" and other problems when the smtpd process limit
+    exceeds the default_process_limit setting.
+
   * Lines 8, 9: always specify "check_policy_service" AFTER
     "reject_unauth_destination" or else your system could become an open relay.
 
   * Solaris UNIX-domain sockets do not work reliably. Use TCP sockets instead:
 
      1 /etc/postfix/master.cf:
-     2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
+     2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
      3       user=nobody argv=/some/where/policy-server
      4
      5 /etc/postfix/main.cf:
@@ -264,7 +269,7 @@ daemon. For example, to run the script as user "nobody", using a UNIX-domain
 socket that is accessible by Postfix processes only:
 
     1 /etc/postfix/master.cf:
-    2     policy  unix  -       n       n       -       -       spawn
+    2     policy  unix  -       n       n       -       0       spawn
     3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
     4
     5 /etc/postfix/main.cf:
@@ -282,11 +287,15 @@ Notes:
     "policy_time_limit" setting. The name of the parameter is the name of the
     master.cf entry ("policy") concatenated with the "_time_limit" suffix.
 
+  * Line 2: specify a "0" process limit instead of the default "-", to avoid
+    "connection refused" and other problems when the smtpd process limit
+    exceeds the default_process_limit setting.
+
 On Solaris you must use inet: style sockets instead of unix: style, as detailed
 in the "Policy client/server configuration" section above.
 
     1 /etc/postfix/master.cf:
-    2     127.0.0.1:9998  inet  n       n       n       -       -       spawn
+    2     127.0.0.1:9998  inet  n       n       n       -       0       spawn
     3       user=nobody argv=/usr/bin/perl /usr/libexec/postfix/greylist.pl
     4
     5 /etc/postfix/main.cf:

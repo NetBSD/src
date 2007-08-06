@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.9.4.1 2007/06/16 16:58:54 snj Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.9.4.2 2007/08/06 11:06:21 ghen Exp $	*/
 
 /*++
 /* NAME
@@ -150,13 +150,7 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type,
 #endif
     if (type == REC_TYPE_MILT_COUNT) {
 	/* Not part of queue file format. */
-	if (state->milters != 0) {
-	    msg_warn("%s: message rejected: too many milter instances",
-		     state->queue_id);
-	    state->errs |= CLEANUP_STAT_BAD;
-	    return;
-	}
-	if ((milter_count = atoi(buf)) > 0)
+	if ((milter_count = atoi(buf)) >= 0)
 	    cleanup_milter_receive(state, milter_count);
 	return;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.6.4.1 2007/06/16 16:59:51 snj Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.6.4.2 2007/08/06 11:06:23 ghen Exp $	*/
 
 /*++
 /* NAME
@@ -183,13 +183,11 @@ static int deliver_message(DELIVER_REQUEST *request, const char *def_dsn,
     (void) DSN_SIMPLE(&dsn, DSN_STATUS(dp.dsn), dp.text);
     for (nrcpt = 0; nrcpt < request->rcpt_list.len; nrcpt++) {
 	rcpt = request->rcpt_list.info + nrcpt;
-	if (rcpt->offset >= 0) {
-	    status = append(BOUNCE_FLAGS(request), request->queue_id,
-			    &request->msg_stats, rcpt, "none", &dsn);
-	    if (status == 0)
-		deliver_completed(src, rcpt->offset);
-	    result |= status;
-	}
+	status = append(BOUNCE_FLAGS(request), request->queue_id,
+			&request->msg_stats, rcpt, "none", &dsn);
+	if (status == 0)
+	    deliver_completed(src, rcpt->offset);
+	result |= status;
     }
 
     /*
