@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.14.14.1 2007/08/04 12:33:10 jmcneill Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.14.14.2 2007/08/06 19:49:35 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -150,6 +150,8 @@ struct agp_softc {
 	pci_chipset_tag_t	as_pc;
 	pcitag_t		as_tag;
 	pcireg_t		as_id;
+
+	struct pci_conf_state	as_pciconf;
 };
 
 struct agp_gatt {
@@ -178,6 +180,7 @@ struct agp_memory *agp_generic_alloc_memory(struct agp_softc *, int, vsize_t);
 int agp_generic_free_memory(struct agp_softc *, struct agp_memory *);
 int agp_generic_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 int agp_generic_unbind_memory(struct agp_softc *, struct agp_memory *);
+pnp_status_t agp_power(device_t, pnp_request_t, void *);
 
 /* The vendor has already been matched when these functions are called */
 int agp_amd_match(const struct pci_attach_args *);
