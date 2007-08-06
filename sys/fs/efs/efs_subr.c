@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.4 2007/07/29 00:56:04 rumble Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.5 2007/08/06 23:25:27 rumble Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.4 2007/07/29 00:56:04 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.5 2007/08/06 23:25:27 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -89,7 +89,7 @@ efs_sb_validate(struct efs_sb *esb, const char **why)
 	*why = NULL;
 
 	if (be32toh(esb->sb_magic) != EFS_SB_MAGIC &&
-	    be32toh(esb->sb_magic != EFS_SB_NEWMAGIC)) {
+	    be32toh(esb->sb_magic) != EFS_SB_NEWMAGIC) {
 		*why = "sb_magic invalid";
 		return (1);
 	}
