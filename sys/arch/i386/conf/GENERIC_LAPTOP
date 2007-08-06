@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.238 2007/07/21 02:24:03 agc Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.239 2007/08/06 21:26:55 adrianp Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.238 $"
+#ident 		"GENERIC-$Revision: 1.239 $"
 
 maxusers	32		# estimated number of users
 
@@ -171,7 +171,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

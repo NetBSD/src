@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.79 2007/06/04 08:55:19 martin Exp $
+# 	$NetBSD: GENERIC,v 1.80 2007/08/06 21:26:53 adrianp Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.79 $"
+#ident		"GENERIC-$Revision: 1.80 $"
 
 # estimated number of users
 maxusers	32
@@ -87,7 +87,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks

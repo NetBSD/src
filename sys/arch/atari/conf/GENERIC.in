@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.67 2007/07/16 06:26:54 he Exp $
+#	$NetBSD: GENERIC.in,v 1.68 2007/08/06 21:26:54 adrianp Exp $
 #
 # Generic atari
 #
@@ -62,7 +62,7 @@ options 	INET6		# IPV6
 #options 	GATEWAY		# packet forwarding
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 #ifndef NO_PHYS_NETWORK
 options 	NETATALK	# AppleTalk networking protocols

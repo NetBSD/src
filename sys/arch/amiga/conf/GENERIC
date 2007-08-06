@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.247 2007/07/16 06:23:58 he Exp $
+# $NetBSD: GENERIC,v 1.248 2007/08/06 21:26:54 adrianp Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.247 $"
+#ident 		"GENERIC-$Revision: 1.248 $"
 
 
 maxusers	8
@@ -70,7 +70,7 @@ options 	INET6		# IPV6
 
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.199 2007/06/04 08:55:24 martin Exp $
+# $NetBSD: GENERIC,v 1.200 2007/08/06 21:26:56 adrianp Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.199 $"
+#ident 		"GENERIC-$Revision: 1.200 $"
 
 maxusers	32
 
@@ -213,7 +213,7 @@ options 	INET6		# IPV6
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
-options 	ISO,TPIP	# OSI networking
+#options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
