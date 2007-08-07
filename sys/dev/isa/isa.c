@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.128 2007/01/02 02:23:51 isaki Exp $	*/
+/*	$NetBSD: isa.c,v 1.128.18.1 2007/08/07 02:20:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128 2007/01/02 02:23:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.128.18.1 2007/08/07 02:20:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,8 @@ isaattach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach all indrect-config children. */
 	isarescan(self, "isa", wildcard);
+
+	(void)pnp_register(self, pnp_generic_power);
 }
 
 int
