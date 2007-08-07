@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.20 2007/08/07 10:42:22 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.21 2007/08/07 12:50:26 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.20 2007/08/07 10:42:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.21 2007/08/07 12:50:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -112,8 +112,9 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 }
 
 static void
-workqueue_run(struct workqueue *wq)
+workqueue_worker(void *cookie)
 {
+	struct workqueue *wq = cookie;
 	struct workqueue_queue *q;
 
 	/* find the workqueue of this kthread */
@@ -139,21 +140,6 @@ workqueue_run(struct workqueue *wq)
 
 		workqueue_runlist(wq, &tmp);
 	}
-}
-
-static void
-workqueue_worker(void *arg)
-{
-	struct workqueue *wq = arg;
-	struct lwp *l;
-
-	l = curlwp;
-	lwp_lock(l);
-	l->l_priority = wq->wq_prio;
-	l->l_usrpri = wq->wq_prio;
-	lwp_unlock(l);
-
-	workqueue_run(wq);
 }
 
 static void
