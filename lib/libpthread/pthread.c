@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.72 2007/08/07 19:04:21 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.73 2007/08/07 19:58:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.72 2007/08/07 19:04:21 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.73 2007/08/07 19:58:30 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -89,7 +89,7 @@ static int pthread__diagassert = DIAGASSERT_ABORT | DIAGASSERT_STDERR;
 
 int pthread__concurrency, pthread__maxconcurrency, pthread__nspins;
 int pthread__unpark_max = PTHREAD__UNPARK_MAX;
-int pthread__osrevision;
+int pthread__osrev;
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
