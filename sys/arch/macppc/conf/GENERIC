@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.255.6.6 2007/08/05 03:15:19 macallan Exp $
+# $NetBSD: GENERIC,v 1.255.6.7 2007/08/07 19:18:41 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.255.6.6 $"
+#ident 		"GENERIC-$Revision: 1.255.6.7 $"
 
 maxusers	32
 
@@ -362,13 +362,22 @@ nvram*	at obio?			# nvram
 
 # the traditional ADB subsystem
 
-adb*	at obio?			# Apple Desktop Bus
-apm0	at adb?				# APM emulation
-aed*	at adb?				# ADB Event Device
-akbd*	at adb?				# ADB keyboard
-ams*	at adb?				# ADB mouse
-abtn*	at adb?
-wskbd0	at akbd? console ?
+#adb*	at obio?			# Apple Desktop Bus
+#apm0	at adb?				# APM emulation
+#aed*	at adb?				# ADB Event Device
+#akbd*	at adb?				# ADB keyboard
+#ams*	at adb?				# ADB mouse
+#abtn*	at adb?
+
+cuda*	at obio?			# Apple CUDA
+pmu*	at obio?			# Apple CUDA
+nadb*	at adb_bus?				# new ADB Bus abstraction
+adbkbd* at nadb?			# ADB keyboard
+adbms*	at nadb?			# ADB mice and touchpads
+adbbt*	at nadb?			# button device found on *Books
+
+wskbd*		at wskbddev? console ?
+wsmouse*	at wsmousedev?
 
 # the new, improved, experimental ADB subsystem
 

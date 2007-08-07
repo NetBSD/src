@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.57.14.1 2007/08/05 03:15:20 macallan Exp $
+#	$NetBSD: POWERMAC,v 1.57.14.2 2007/08/07 19:18:42 macallan Exp $
 #
 # POWERMAC config file
 #
@@ -97,15 +97,26 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x0		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
-adb*	at obio?			# Apple Desktop Bus
-akbd*	at adb?				# ADB keyboard
-ams*	at adb?				# ADB mouse
+#adb*	at obio?			# Apple Desktop Bus
+#akbd*	at adb?				# ADB keyboard
+#ams*	at adb?				# ADB mouse
 nvram*	at obio?			# nvram
 zsc*	at obio?
 zstty*	at zsc? channel ?
 
-wskbd0	at akbd? console ?
-wsmouse0 at ams?
+cuda*	at obio?			# Apple CUDA
+#options	CUDA_DEBUG
+iic0	at cuda0
+sgsmix0 at iic0	addr 0x8a		# additional mixer found in beige G3
+#options	SGSMIX_DEBUG
+nadb*	at cuda?			# new ADB Bus abstraction
+adbkbd* at nadb?			# ADB keyboard
+#options	ADB_DEBUG
+#options ADBKBD_DEBUG
+adbms*	at nadb?
+
+wskbd*	at wskbddev? console ?
+wsmouse* at wsmousedev?
 
 scsibus* at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disks
