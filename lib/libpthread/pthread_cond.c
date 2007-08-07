@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.32 2007/08/04 13:37:49 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.33 2007/08/07 19:04:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.32 2007/08/04 13:37:49 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.33 2007/08/07 19:04:21 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -134,7 +134,14 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_spinunlock(self, &cond->ptc_lock);
 
-	/* Once recorded as a waiter release the mutex and sleep. */
+ 	/*
+ 	 * Before releasing the mutex, note that this thread is
+ 	 * about to block by setting the willpark flag.  If there
+ 	 * is a single waiter on the mutex, setting the flag will
+ 	 * defer restarting it until calling into the kernel to
+ 	 * park, saving a syscall & involuntary context switch.
+ 	 */
+	self->pt_willpark = 1;
 	pthread_mutex_unlock(mutex);
 	(void)pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
 	    NULL, 1, &mutex->ptm_blocked);
@@ -217,7 +224,14 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_spinunlock(self, &cond->ptc_lock);
 
-	/* Once recorded as a waiter release the mutex and sleep. */
+ 	/*
+ 	 * Before releasing the mutex, note that this thread is
+ 	 * about to block by setting the willpark flag.  If there
+ 	 * is a single waiter on the mutex, setting the flag will
+ 	 * defer restarting it until calling into the kernel to
+ 	 * park, saving a syscall & involuntary context switch.
+ 	 */
+	self->pt_willpark = 1;
 	pthread_mutex_unlock(mutex);
 	retval = pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
 	    abstime, 1, &mutex->ptm_blocked);
