@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.104.6.1 2007/08/05 03:15:19 macallan Exp $
+#	$NetBSD: INSTALL,v 1.104.6.2 2007/08/07 19:18:41 macallan Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -151,8 +151,14 @@ wi*	at obio?			# AirMac
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
-adb*	at obio?			# Apple Desktop Bus
-akbd*	at adb?				# ADB keyboard
+#adb*	at obio?			# Apple Desktop Bus
+#akbd*	at adb?				# ADB keyboard
+cuda*	at obio?			# Apple CUDA
+pmu*	at obio?			# Apple CUDA
+nadb*	at cuda?			# new ADB Bus abstraction
+nadb*	at pmu?				# new ADB Bus abstraction
+adbkbd* at nadb?			# ADB keyboard
+
 zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
@@ -160,7 +166,7 @@ wdc*	at mediabay? flags 0
 
 wsdisplay0 at wsemuldisplaydev? console 1
 wsdisplay* at wsemuldisplaydev? console 0
-wskbd0	at akbd? console ?
+wskbd*	at wskbddev?
 
 scsibus* at scsi?
 
@@ -181,7 +187,6 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 uhidev* 	at uhub? port ? configuration ? interface ?
 ukbd* 	at uhidev? reportid ?
-wskbd*	at ukbd? console ?
 
 pseudo-device	md		1	# memory disk
 #pseudo-device	fss		4	# file system snapshot device
