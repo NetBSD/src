@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.19 2007/08/07 04:06:20 dyoung Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.20 2007/08/07 04:59:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -71,7 +71,7 @@ struct sockaddr_dl {
 	u_char	    sdl_alen;	/* link level address length */
 	u_char	    sdl_slen;	/* link layer selector length */
 	/* sdl_data contains both if name and ll address */
-	char	    sdl_data[IFNAMSIZ + 16];
+	char	    sdl_data[32];
 };
 
 #define	satosdl(__sa)	((struct sockaddr_dl *)(__sa))
