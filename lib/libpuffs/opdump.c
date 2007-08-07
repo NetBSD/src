@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.11 2007/06/30 12:42:25 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.12 2007/08/07 13:44:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.11 2007/06/30 12:42:25 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.12 2007/08/07 13:44:27 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -122,6 +122,7 @@ puffsdump_req(struct puffs_req *preq)
 	static struct timeval tv_prev;
 	struct timeval tv_now, tv;
 	const char **map;
+	int isvn = 0;
 
 	map = NULL; /* yes, we are all interested in your opinion, gcc */
 	switch (PUFFSOP_OPCLASS(preq->preq_opclass)) {
@@ -130,6 +131,7 @@ puffsdump_req(struct puffs_req *preq)
 		break;
 	case PUFFSOP_VN:
 		map = vnop_revmap;
+		isvn = 1;
 		break;
 	case PUFFSOP_CACHE:
 		map = cacheop_revmap;
@@ -142,6 +144,17 @@ puffsdump_req(struct puffs_req *preq)
 	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
 	    map[preq->preq_optype], preq->preq_cookie,
 	    preq->preq_buf, preq->preq_buflen);
+
+	if (isvn) {
+		switch (preq->preq_optype) {
+		case PUFFS_VN_READ:
+		case PUFFS_VN_WRITE:
+			puffsdump_readwrite(preq);
+			break;
+		default:
+			break;
+		}
+	}
 	
 	gettimeofday(&tv_now, NULL);
 	timersub(&tv_now, &tv_prev, &tv);
@@ -184,6 +197,15 @@ puffsdump_cn(struct puffs_cn *pcn)
 	*/
 }
 #endif
+
+void
+puffsdump_readwrite(struct puffs_req *preq)
+{
+	struct puffs_vnreq_readwrite *rw_vnreq = (void *)preq;
+
+	printf("\t\toffset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
+	    rw_vnreq->pvnr_offset, rw_vnreq->pvnr_resid, rw_vnreq->pvnr_ioflag);
+}
 
 void
 /*ARGSUSED*/
