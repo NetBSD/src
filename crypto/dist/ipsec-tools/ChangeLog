@@ -1,3 +1,7 @@
+2007-08-07  Emmanuel Dreyfus  <manu@netbsd.org>
+	* src/racoon/isakmp_xauth.c: Don't mix up RADIUS authentication and
+	  authorization ports. Allow interoperability with freeradius
+
 2007-07-18  Matthew Grooms  <mgrooms@shrew.net>
 	* src/racoon/racoon.conf.5: various man page updates
 
