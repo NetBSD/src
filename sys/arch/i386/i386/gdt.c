@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.39 2007/08/07 11:30:20 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.40 2007/08/07 12:00:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.39 2007/08/07 11:30:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.40 2007/08/07 12:00:25 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -234,7 +234,7 @@ gdt_grow()
 		}
 	}
 
-	pmap_update(pmap_kernel()));
+	pmap_update(pmap_kernel());
 }
 
 /*
