@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.62 2007/08/07 07:47:51 apb Exp $
+#	$NetBSD: configure.ac,v 1.63 2007/08/07 08:22:04 apb Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -22,7 +22,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.62 2007/08/07 07:47:51 apb Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.63 2007/08/07 08:22:04 apb Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -155,6 +155,8 @@ AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
 AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [#include <sys/types.h>])
 
 AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [#include <machine/bswap.h>])
+
+AC_CHECK_DECLS([be16enc, le16enc, be16dec, le16dec, be32enc, le32enc, be32dec, le32dec, be64enc, le64enc, be64dec, le64dec],,, [#include <sys/endian.h>])
 
 AC_CHECK_DECLS([fstatvfs],,, [#include <sys/statvfs.h>])
 
