@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_cancel.3,v 1.2 2007/05/05 19:16:01 ad Exp $
+.\" $NetBSD: aio_cancel.3,v 1.3 2007/08/07 20:45:03 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Softweyr LLC.
 .\" All rights reserved.
@@ -63,7 +63,7 @@ for file descriptors associated with raw disk devices.
 .Sh RETURN VALUES
 The
 .Fn aio_cancel
-system call returns -1 to indicate an error, or one of the following:
+system call returns \-1 to indicate an error, or one of the following:
 .Bl -tag -width Dv
 .It Bq Dv AIO_CANCELED
 All outstanding requests meeting the criteria specified were cancelled.
@@ -82,8 +82,7 @@ indicates:
 .It Bq Er EBADF
 The
 .Fa fildes
-argument
-is an invalid file descriptor.
+argument is an invalid file descriptor.
 .El
 .Sh SEE ALSO
 .Xr aio_error 3 ,
