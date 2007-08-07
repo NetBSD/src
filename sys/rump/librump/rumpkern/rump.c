@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.2 2007/08/06 22:20:57 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.3 2007/08/07 20:40:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -146,8 +146,10 @@ _rump_fakeblk_find(const char *path)
 {
 	char buf[MAXPATHLEN];
 	struct fakeblk *fblk;
+	int error;
 
-	rumpuser_realpath(path, buf);
+	if (rumpuser_realpath(path, buf, &error) == NULL)
+		return NULL;
 
 	LIST_FOREACH(fblk, &fakeblks, entries)
 		if (strcmp(fblk->path, buf) == 0)
@@ -161,15 +163,19 @@ rump_fakeblk_register(const char *path)
 {
 	char buf[MAXPATHLEN];
 	struct fakeblk *fblk;
+	int error;
 
 	if (_rump_fakeblk_find(path))
 		return EEXIST;
+
+	if (rumpuser_realpath(path, buf, &error) == NULL)
+		return error;
 
 	fblk = rumpuser_malloc(sizeof(struct fakeblk), 1);
 	if (fblk == NULL)
 		return ENOMEM;
 
-	strlcpy(fblk->path, rumpuser_realpath(path, buf), MAXPATHLEN);
+	strlcpy(fblk->path, buf, MAXPATHLEN);
 	LIST_INSERT_HEAD(&fakeblks, fblk, entries);
 
 	return 0;
@@ -189,7 +195,7 @@ rump_fakeblk_deregister(const char *path)
 
 	fblk = _rump_fakeblk_find(path);
 	if (fblk == NULL)
-		panic("%s: invalid path \"%s\"", __func__, path);
+		return;
 
 	LIST_REMOVE(fblk, entries);
 	rumpuser_free(fblk);
