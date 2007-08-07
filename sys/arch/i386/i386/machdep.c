@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.606 2007/07/09 20:52:15 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.607 2007/08/07 11:30:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.606 2007/07/09 20:52:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.607 2007/08/07 11:30:20 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1144,6 +1144,7 @@ dumpsys()
 			for (m = 0; m < n; m += NBPG)
 				pmap_kenter_pa(dumpspace + m, maddr + m,
 				    VM_PROT_READ);
+			pmap_update(pmap_kernel());
 
 			error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 			if (error)
@@ -1965,9 +1966,9 @@ init386(paddr_t first_avail)
 	idt = (struct gate_descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ);
+	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
-	pmap_update(pmap_kernel());
 
 	tgdt = gdt;
 	gdt = (union descriptor *)
