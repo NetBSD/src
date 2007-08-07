@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.5 2007/08/07 19:37:05 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.6 2007/08/07 19:40:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -90,7 +90,7 @@ rumpvm_findpage(struct uvm_object *uobj, voff_t off)
 }
 
 struct vm_page *
-rumpvm_makepage(struct uvm_object *uobj, voff_t off, int allocstorage)
+rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
 
@@ -100,11 +100,9 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off, int allocstorage)
 	pg->offset = off;
 	pg->uobject = uobj;
 
-	if (allocstorage) {
-		pg->uanon = (void *)rumpuser_malloc(PAGE_SIZE, 0);
-		memset((void *)pg->uanon, 0, PAGE_SIZE);
-		pg->flags = PG_CLEAN;
-	}
+	pg->uanon = (void *)rumpuser_malloc(PAGE_SIZE, 0);
+	memset((void *)pg->uanon, 0, PAGE_SIZE);
+	pg->flags = PG_CLEAN;
 
 	return pg;
 }
@@ -184,7 +182,7 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 		if (pg) {
 			pgs[i] = pg;
 		} else {
-			pg = rumpvm_makepage(uobj, off + (i << PAGE_SHIFT), 1);
+			pg = rumpvm_makepage(uobj, off + (i << PAGE_SHIFT));
 			pgs[i] = pg;
 		}
 	}
