@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.3 2007/08/07 09:03:43 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.4 2007/08/07 19:37:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -167,8 +167,8 @@ genfs_getpages(void *v)
 		printf("got page %p (off 0x%x)\n", pg, (int)(curoff+bufoff));
 		if (pg == NULL) {
 			pg = rumpvm_makepage(&vp->v_uobj, curoff + bufoff, 1);
-			memcpy((void *)pg->uobject, tmpbuf+bufoff, PAGE_SIZE);
-			pg->flags = PG_CLEAN;
+			memcpy((void *)pg->uanon, tmpbuf+bufoff, PAGE_SIZE);
+			RUMPVM_CLEANPAGE(pg);
 		}
 		ap->a_m[i] = pg;
 	}
@@ -205,7 +205,7 @@ genfs_putpages(void *v)
 	for (pg = TAILQ_FIRST(&uobj->memq); pg; pg = pg_next) {
 		pg_next = TAILQ_NEXT(pg, listq);
 		if (pg->flags & PG_CLEAN) {
-			rumpvm_freepage(uobj, pg);
+			rumpvm_freepage(pg);
 			continue;
 		}
 
@@ -225,8 +225,8 @@ genfs_putpages(void *v)
 		if (pg == NULL)
 			break;
 		memcpy(databuf + (curoff-smallest),
-		    (void *)pg->uobject, PAGE_SIZE);
-		pg->flags |= PG_CLEAN;
+		    (void *)pg->uanon, PAGE_SIZE);
+		RUMPVM_CLEANPAGE(pg);
 	}
 	assert(curoff > smallest);
 
