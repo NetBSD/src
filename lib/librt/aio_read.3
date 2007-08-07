@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_read.3,v 1.2 2007/05/05 19:16:01 ad Exp $
+.\" $NetBSD: aio_read.3,v 1.3 2007/08/07 20:45:04 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Terry Lambert
 .\" All rights reserved.
@@ -42,24 +42,26 @@
 The
 .Fn aio_read
 system call allows the calling process to read
-.Fa aiocbp->aio_nbytes
+.Fa aiocbp-\*[Gt]aio_nbytes
 from the descriptor
-.Fa aiocbp->aio_fildes
+.Fa aiocbp-\*[Gt]aio_fildes
 beginning at the offset
-.Fa aiocbp->aio_offset
+.Fa aiocbp-\*[Gt]aio_offset
 into the buffer pointed to by
-.Fa aiocbp->aio_buf .
+.Fa aiocbp-\*[Gt]aio_buf .
 The call returns immediately after the read request has
 been enqueued to the descriptor; the read may or may not have
 completed at the time the call returns.
 .Pp
-If _POSIX_PRIORITIZED_IO is defined, and the descriptor supports it,
+If
+.Dv _POSIX_PRIORITIZED_IO
+is defined, and the descriptor supports it,
 then the enqueued operation is submitted at a priority equal to that
 of the calling process minus
-.Fa aiocbp->aio_reqprio .
+.Fa aiocbp-\*[Gt]aio_reqprio .
 .Pp
 The
-.Fa aiocbp->aio_lio_opcode
+.Fa aiocbp-\*[Gt]aio_lio_opcode
 argument
 is ignored by the
 .Fn aio_read
@@ -78,14 +80,14 @@ If the request could not be enqueued (generally due to invalid arguments),
 then the call returns without having enqueued the request.
 .Pp
 If the request is successfully enqueued, the value of
-.Fa aiocbp->aio_offset
+.Fa aiocbp-\*[Gt]aio_offset
 can be modified during the request as context, so this value must
 not be referenced after the request is enqueued.
 .Sh RESTRICTIONS
 The Asynchronous I/O Control Block structure pointed to by
 .Fa aiocbp
 and the buffer that the
-.Fa aiocbp->aio_buf
+.Fa aiocbp-\*[Gt]aio_buf
 member of that structure references must remain valid until the
 operation has completed.
 For this reason, use of auto (stack) variables
@@ -102,9 +104,9 @@ buffer contents after the request has been enqueued, but before the
 request has completed, are not allowed.
 .Pp
 If the file offset in
-.Fa aiocbp->aio_offset
+.Fa aiocbp-\*[Gt]aio_offset
 is past the offset maximum for
-.Fa aiocbp->aio_fildes ,
+.Fa aiocbp-\*[Gt]aio_fildes ,
 no I/O will occur.
 .Sh RETURN VALUES
 .Rv -std aio_read
@@ -125,11 +127,11 @@ system call is made, or asynchronously, at any time thereafter.
 If they
 are detected at call time,
 .Fn aio_read
-returns -1 and sets
+returns \-1 and sets
 .Va errno
 appropriately; otherwise the
 .Fn aio_return
-system call must be called, and will return -1, and
+system call must be called, and will return \-1, and
 .Fn aio_error
 must be called to determine the actual value that would have been
 returned in
@@ -138,24 +140,24 @@ returned in
 .Bl -tag -width Er
 .It Bq Er EBADF
 The
-.Fa aiocbp->aio_fildes
+.Fa aiocbp-\*[Gt]aio_fildes
 argument
 is invalid.
 .It Bq Er EINVAL
 The offset
-.Fa aiocbp->aio_offset
+.Fa aiocbp-\*[Gt]aio_offset
 is not valid, the priority specified by
-.Fa aiocbp->aio_reqprio
+.Fa aiocbp-\*[Gt]aio_reqprio
 is not a valid priority, or the number of bytes specified by
-.Fa aiocbp->aio_nbytes
+.Fa aiocbp-\*[Gt]aio_nbytes
 is not valid.
 .It Bq Er EOVERFLOW
 The file is a regular file,
-.Fa aiocbp->aio_nbytes
+.Fa aiocbp-\*[Gt]aio_nbytes
 is greater than zero, the starting offset in
-.Fa aiocbp->aio_offset
+.Fa aiocbp-\*[Gt]aio_offset
 is before the end of the file, but is at or beyond the
-.Fa aiocbp->aio_fildes
+.Fa aiocbp-\*[Gt]aio_fildes
 offset maximum.
 .El
 .Pp
@@ -172,7 +174,7 @@ system call, or one of:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The
-.Fa aiocbp->aio_fildes
+.Fa aiocbp-\*[Gt]aio_fildes
 argument
 is invalid for reading.
 .It Bq Er ECANCELED
@@ -180,7 +182,7 @@ The request was explicitly cancelled via a call to
 .Fn aio_cancel .
 .It Bq Er EINVAL
 The offset
-.Fa aiocbp->aio_offset
+.Fa aiocbp-\*[Gt]aio_offset
 would be invalid.
 .El
 .Sh SEE ALSO
