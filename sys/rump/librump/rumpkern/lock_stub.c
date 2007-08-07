@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.1 2007/08/05 22:28:08 pooka Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.2 2007/08/07 17:55:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -94,4 +94,11 @@ mutex_exit(kmutex_t *mtx)
 {
 
 	return;
+}
+
+int
+mutex_owned(kmutex_t *mtx)
+{
+
+	return 1;
 }
