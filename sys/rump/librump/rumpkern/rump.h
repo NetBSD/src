@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.3 2007/08/07 19:37:05 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.4 2007/08/07 19:40:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -73,7 +73,7 @@ void	rump_fakeblk_deregister(const char *);
 
 void		rumpvm_init(void);
 struct vm_page	*rumpvm_findpage(struct uvm_object *, voff_t);
-struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t, int);
+struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 void		rumpvm_freepage(struct vm_page *);
 
 #define RUMPVM_CLEANPAGE(page)						\
