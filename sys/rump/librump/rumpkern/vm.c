@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.4 2007/08/07 19:14:51 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.5 2007/08/07 19:37:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
  */
 
 /*
- * XXX: we abuse pg->uobject for the virtual address of the storage
+ * XXX: we abuse pg->uanon for the virtual address of the storage
  * for each page.  phys_addr would fit the job description better,
  * except that it will create unnecessary lossage on some platforms
  * due to not being a pointer type.
@@ -98,21 +98,24 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off, int allocstorage)
 	memset(pg, 0, sizeof(struct vm_page));
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq);
 	pg->offset = off;
+	pg->uobject = uobj;
 
 	if (allocstorage) {
-		pg->uobject = (void *)rumpuser_malloc(PAGE_SIZE, 0);
-		memset((void *)pg->uobject, 0, PAGE_SIZE);
+		pg->uanon = (void *)rumpuser_malloc(PAGE_SIZE, 0);
+		memset((void *)pg->uanon, 0, PAGE_SIZE);
+		pg->flags = PG_CLEAN;
 	}
 
 	return pg;
 }
 
 void
-rumpvm_freepage(struct uvm_object *uobj, struct vm_page *pg)
+rumpvm_freepage(struct vm_page *pg)
 {
+	struct uvm_object *uobj = pg->uobject;
 
 	TAILQ_REMOVE(&uobj->memq, pg, listq);
-	rumpuser_free((void *)pg->uobject);
+	rumpuser_free((void *)pg->uanon);
 	rumpuser_free(pg);
 }
 
@@ -200,7 +203,7 @@ ao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		return 0;
 
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL)
-		rumpvm_freepage(uobj, pg);
+		rumpvm_freepage(pg);
 
 	return 0;
 }
@@ -251,9 +254,9 @@ rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 
 		pageoff = uio->uio_offset & PAGE_MASK;
 		xfersize = MIN(MIN(n, PAGE_SIZE), PAGE_SIZE-pageoff);
-		uiomove((uint8_t *)pgs[i]->uobject + pageoff, xfersize, uio);
+		uiomove((uint8_t *)pgs[i]->uanon + pageoff, xfersize, uio);
 		if (uio->uio_rw == UIO_WRITE)
-			pgs[i]->flags &= ~PG_CLEAN;
+			RUMPVM_SOILPAGE(pgs[i]);
 		ubc_offset += xfersize;
 		n -= xfersize;
 	}
@@ -371,7 +374,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 
 			chunkoff = off & PAGE_MASK;
 			chunklen = MIN(PAGE_SIZE - chunkoff, len);
-			start = (uint8_t *)pgs[i]->uobject + chunkoff;
+			start = (uint8_t *)pgs[i]->uanon + chunkoff;
 
 			memset(start, 0, chunklen);
 			pgs[i]->flags &= PG_CLEAN;
@@ -388,5 +391,8 @@ bool
 uvn_clean_p(struct uvm_object *uobj)
 {
 
-	return true;
+	printf("pages %d\n", (int)uobj->uo_npages);
+	if (uobj->uo_npages < 0)
+		panic("%s: uo_npages < 0", __func__);
+	return uobj->uo_npages == 0;
 }
