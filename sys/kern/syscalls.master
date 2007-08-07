@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.172 2007/08/04 10:52:58 ad Exp $
+	$NetBSD: syscalls.master,v 1.173 2007/08/07 09:46:24 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -248,7 +248,7 @@
 114	COMPAT_43	{ int sys_sendmsg(int s, void *msg, int flags); } \
 			    osendmsg
 115	OBSOL		vtrace
-116	STD		{ int sys_gettimeofday(struct timeval *tp, \
+116	STD MPSAFE	{ int sys_gettimeofday(struct timeval *tp, \
 			    void *tzp); }
 117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
