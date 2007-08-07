@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.18.1 2007/08/03 22:17:25 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.18.2 2007/08/07 01:02:14 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.1 2007/08/03 22:17:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.2 2007/08/07 01:02:14 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -988,6 +988,14 @@ ehci_power(device_t dv, pnp_request_t req, void *opaque)
 		case PNP_STATE_D3:
 			sc->sc_bus.use_polling++;
 
+			for (i = 1; i <= sc->sc_noport; i++) {
+				cmd = EOREAD4(sc, EHCI_PORTSC(i));
+				if ((cmd & EHCI_PS_PO) == 0 &&
+				    (cmd & EHCI_PS_PE) == EHCI_PS_PE)
+					EOWRITE4(sc, EHCI_PORTSC(i),
+					    cmd | EHCI_PS_SUSP);
+			}
+
 			sc->sc_cmd = EOREAD4(sc, EHCI_USBCMD);
 
 			cmd = sc->sc_cmd & ~(EHCI_CMD_ASE | EHCI_CMD_PSE);
@@ -1033,6 +1041,32 @@ ehci_power(device_t dv, pnp_request_t req, void *opaque)
 			EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
 			EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+
+			hcr = 0;
+			for (i = 1; i <= sc->sc_noport; i++) {
+				cmd = EOREAD4(sc, EHCI_PORTSC(i));
+				if ((cmd & EHCI_PS_PO) == 0 &&
+				    (cmd & EHCI_PS_SUSP) == EHCI_PS_SUSP) {
+					EOWRITE4(sc, EHCI_PORTSC(i),
+					    cmd | EHCI_PS_FPR);
+					hcr = 1;
+				}
+			}
+
+			if (hcr) {
+				usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+
+				for (i = 1; i <= sc->sc_noport; i++) {
+					cmd = EOREAD4(sc, EHCI_PORTSC(i));
+					if ((cmd & EHCI_PS_PO) == 0 &&
+					    (cmd & EHCI_PS_SUSP) == EHCI_PS_SUSP)
+						EOWRITE4(sc, EHCI_PORTSC(i),
+						    cmd & ~EHCI_PS_FPR);
+				}
+			}
+
+			EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+					
 
 			for (i = 0; i < 100; i++) {
 				hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
