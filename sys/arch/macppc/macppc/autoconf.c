@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57.2.1 2007/06/07 20:30:45 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57.2.2 2007/08/07 19:17:37 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57.2.1 2007/06/07 20:30:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57.2.2 2007/08/07 19:17:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -553,7 +553,14 @@ copyprops(int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "height", temp);
 	}
 	OF_to_intprop(dict, console_node, "linebytes", "linebytes");
-	OF_to_intprop(dict, console_node, "depth", "depth");
+	if (!OF_to_intprop(dict, console_node, "depth", "depth")) {
+		/*
+		 * XXX we should check linebytes vs. width but those
+		 * FBs that don't have a depth property ( /chaos/control... )
+		 * won't have linebytes either
+		 */
+		prop_dictionary_set_uint32(dict, "depth", 8);
+	}
 	if (!OF_to_intprop(dict, console_node, "address", "address")) {
 		uint32_t fbaddr = 0;
 			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
