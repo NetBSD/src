@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.1 2007/07/19 20:48:52 dyoung Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.2 2007/08/07 04:06:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.1 2007/07/19 20:48:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.2 2007/08/07 04:06:20 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -68,8 +68,6 @@ struct domain linkdomain = {
 	.dom_sa_len = sizeof(struct sockaddr_dl),
 	.dom_sockaddr_cmp = sockaddr_dl_cmp
 };
-
-#define	satocsdl(__sa)	((const struct sockaddr_dl *)(__sa))
 
 /* Compare the field at byte offsets [fieldstart, fieldend) in
  * two memory regions, [l, l + llen) and [r, r + llen).
@@ -108,6 +106,31 @@ submemcmp(const void *l, const void *r,
 		return llen - rlen;
 	/* Fields are full-length and equal.  The fields are equal. */
 	return 0;
+}
+
+uint8_t
+sockaddr_dl_measure(uint8_t namelen, uint8_t addrlen)
+{
+	return offsetof(struct sockaddr_dl, sdl_data[namelen + addrlen]);
+}
+
+void
+sockaddr_dl_init(struct sockaddr_dl *sdl, uint16_t ifindex, uint8_t type,
+    const void *name, uint8_t namelen, const void *addr, uint8_t addrlen)
+{
+	sdl->sdl_family = AF_LINK;
+	sdl->sdl_slen = 0;
+	sdl->sdl_len = sockaddr_dl_measure(namelen, addrlen);
+	KASSERT(sdl->sdl_len <= sizeof(*sdl));
+	sdl->sdl_index = ifindex;
+	sdl->sdl_type = type;
+	memset(&sdl->sdl_data[0], 0, sizeof(sdl->sdl_data));
+	if (name != NULL)
+		memcpy(&sdl->sdl_data[0], name, namelen);
+	sdl->sdl_nlen = namelen;
+	if (addr != NULL)
+		memcpy(&sdl->sdl_data[sdl->sdl_nlen], addr, addrlen);
+	sdl->sdl_alen = addrlen;
 }
 
 static int
@@ -157,4 +180,22 @@ sockaddr_dl_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
 		return sdl1->sdl_slen - sdl2->sdl_slen;
 
 	return sdl1->sdl_len - sdl2->sdl_len;
+}
+
+struct sockaddr_dl *
+sockaddr_dl_setaddr(struct sockaddr_dl *sdl, const void *addr, uint8_t addrlen)
+{
+	uint_fast8_t endofs;
+
+	endofs =
+	    offsetof(struct sockaddr_dl, sdl_data[sdl->sdl_nlen + addrlen]);
+
+	if (endofs > sizeof(struct sockaddr_dl)) {
+		printf("%s: too long: %" PRIu8 " bytes\n", __func__, addrlen);
+		sdl->sdl_alen = 0;
+		return NULL;
+	}
+	memcpy(&sdl->sdl_data[sdl->sdl_nlen], addr, addrlen);
+	sdl->sdl_alen = addrlen;
+	return sdl;
 }
