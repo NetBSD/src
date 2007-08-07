@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.2 2007/08/06 22:20:57 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.3 2007/08/07 21:23:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -177,7 +177,8 @@ void
 vflushbuf(struct vnode *vp, int sync)
 {
 
-	return;
+	(void) VOP_PUTPAGES(vp, 0, 0,
+	    PGO_CLEANIT | PGO_ALLPAGES | sync ? PGO_SYNCIO : 0);
 }
 
 int
