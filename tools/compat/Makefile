@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2007/07/03 12:11:09 nakayama Exp $
+#	$NetBSD: Makefile,v 1.50 2007/08/07 07:47:50 apb Exp $
 
 HOSTLIB=	nbcompat
 
@@ -66,9 +66,11 @@ config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
 defs.mk: config.cache
 	@touch ${.TARGET}
 
-# Run by hand, then "configure" script committed:
+# Run "${TOOLDIR}/bin/nbmake-${MACHINE} regen" by hand after editing
+# configure.ac.  See more detailed instructions in configure.ac.
 regen:
 	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoconf
+	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoheader
 
 include/.stamp:
 	mkdir -p include/sys include/machine include/rpc
