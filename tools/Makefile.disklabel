@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.disklabel,v 1.10 2007/02/07 17:49:23 cbiere Exp $
+#	$NetBSD: Makefile.disklabel,v 1.11 2007/08/07 12:44:39 yamt Exp $
 
 _ARCHDIR=	${.CURDIR}/../../sys/arch
 _INCDIR=	${.CURDIR}/../../include
@@ -7,8 +7,7 @@ _UFSDIR=	${.CURDIR}/../../sys/ufs
 _SUBDIR!=	cd ${_ARCHDIR} && ${MAKE} -V SUBDIR
 
 _UFS_INCS!=	cd ${_UFSDIR} && find ffs ufs -name '*.h'
-_ARCH_INCS!=	cd ${_ARCHDIR} && find . -name disklabel.h -o \
-		    -name elf_machdep.h
+_ARCH_INCS!=	sed -e 's/^\#.*//' ${.CURDIR}/../headerlist
 
 _ARCH_INCS+=	ews4800mips/include/pdinfo.h ews4800mips/include/vtoc.h
 
