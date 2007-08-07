@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.133 2007/08/06 12:29:36 markd Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.134 2007/08/07 01:13:56 markd Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.133 2007/08/06 12:29:36 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.134 2007/08/07 01:13:56 markd Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2812,7 +2812,9 @@ bge_reset(struct bge_softc *sc)
 	 * Disable the firmware fastboot feature on 5752 ASIC
 	 * to avoid firmware timeout.
 	 */
-	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5755 ||
+	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5787)
 		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	val = BGE_MISCCFG_RESET_CORE_CLOCKS | (65<<1);
