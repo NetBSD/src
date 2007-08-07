@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.63 2007/08/07 08:22:04 apb Exp $
+#	$NetBSD: configure.ac,v 1.64 2007/08/07 08:27:41 apb Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -14,7 +14,9 @@
 #        mv ${TOOLDIR} ${TOOLDIR}.bak
 #        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
 # 4. cvs commit files that you edited.
-# 5. cvs commit files that were generated.
+# 5. Regen again, to pick up changed RCS IDs from the above commit:
+#        cd ${SRCDIR}/tools/compat && ${TOOLDIR}/bin/nbmake-${MACHINE} regen
+# 6. cvs commit files that were generated.
 #
 
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
@@ -22,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.63 2007/08/07 08:22:04 apb Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.64 2007/08/07 08:27:41 apb Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
