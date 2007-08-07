@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.70 2007/07/09 20:52:00 ad Exp $ */
+/*	$NetBSD: fd.c,v 1.70.2.1 2007/08/07 18:04:58 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70 2007/07/09 20:52:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70.2.1 2007/08/07 18:04:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,7 +663,7 @@ fdstrategy(struct buf *bp)
 	lp = sc->dkdev.dk_label;
 	if ((sc->flags & FDF_HAVELABEL) == 0) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	if (bounds_check_with_label(&sc->dkdev, bp, sc->wlabel) <= 0)
 		goto done;
@@ -685,8 +685,6 @@ fdstrategy(struct buf *bp)
 	fdstart(sc);
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -1214,7 +1212,6 @@ printf("fdstart: disk changed\n");
 		sc->flags &= ~FDF_HAVELABEL;
 		for (;;) {
 			bp = BUFQ_GET(sc->bufq);
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			if (BUFQ_PEEK(sc->bufq) == NULL)
 				break;
@@ -1245,7 +1242,7 @@ printf("fdstart: disk changed\n");
 		write = 1;
 	else {
 		error = EPERM;
-		goto bad;
+		goto done;
 	}
 
 	/*
@@ -1282,8 +1279,7 @@ printf("fdstart: disk changed\n");
 	 */
 	fddmastart(sc, trk);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
+done:
 	bp->b_error = error;
 	fddone(sc);
 }
@@ -1547,9 +1543,8 @@ fddone(struct fd_softc *sc)
 	 */
 	if (sc->cachetrk == -1) {
 		sc->retried = 0;
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
-	} else if ((bp->b_flags & B_ERROR) == 0) {
+	} else if (bp->b_error == 0) {
 		data = sc->cachep;
 		/*
 		 * get offset of data in track cache and limit
