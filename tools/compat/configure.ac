@@ -1,6 +1,20 @@
-#	$NetBSD: configure.ac,v 1.61 2007/07/03 12:11:10 nakayama Exp $
+#	$NetBSD: configure.ac,v 1.62 2007/08/07 07:47:51 apb Exp $
 #
 # Autoconf definition file for libnbcompat.
+#
+# When you edit configure.ac:
+# 0. Create the tools versions of autoconf and autoheader:
+#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+#    (This might not work if you try it after editing configure.ac.)
+# 1. edit configure.ac
+# 2. Regenerate "configure" and "nbtool_config.h.in" from "configure.ac":
+#        cd ${SRCDIR}/tools/compat && ${TOOLDIR}/bin/nbmake-${MACHINE} regen
+#    (Please don't use a non-tools version of autoconf or autoheader.)
+# 3. Test that the tools still build:
+#        mv ${TOOLDIR} ${TOOLDIR}.bak
+#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+# 4. cvs commit files that you edited.
+# 5. cvs commit files that were generated.
 #
 
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
@@ -8,7 +22,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.61 2007/07/03 12:11:10 nakayama Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.62 2007/08/07 07:47:51 apb Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
