@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.13 2007/03/04 05:59:56 christos Exp $	*/
+/*	$NetBSD: bios32.c,v 1.14 2007/08/07 11:30:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.13 2007/03/04 05:59:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.14 2007/08/07 11:30:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,7 @@ bios32_init()
 
 		break;
 	}
+	pmap_update(pmap_kernel());
 #endif
 
 }
