@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.5 2007/08/07 19:40:17 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.6 2007/08/07 19:43:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -180,6 +180,8 @@ genfs_getpages(void *v)
 
 /*
  * simplesimplesimple: we put all pages every time.
+ *
+ * ayh: I don't even want to think about bsize < PAGE_SIZE
  */
 int
 genfs_putpages(void *v)
@@ -199,6 +201,7 @@ genfs_putpages(void *v)
 	voff_t curoff, bufoff;
 	size_t xfersize;
 	int bshift = vp->v_mount->mnt_fs_bshift;
+	int bsize = 1 << bshift;
 
  restart:
 	/* check if all pages are clean */
@@ -249,9 +252,18 @@ genfs_putpages(void *v)
 		if (smallest + bufoff + xfersize > vp->v_writesize)
 			buf.b_bcount -= (smallest+bufoff+xfersize)
 			    - vp->v_writesize;
+		buf.b_bcount = (buf.b_bcount + DEV_BSIZE-1) & ~(DEV_BSIZE-1);
+
+		KASSERT(buf.b_bcount > 0);
+		KASSERT(smallest >= 0);
+
+		printf("putpages writing from %x to %x (vp size %x)\n",
+		    (int)(smallest + bufoff),
+		    (int)(smallest + bufoff + buf.b_bcount),
+		    (int)vp->v_writesize);
 
 		buf.b_lblkno = 0;
-		buf.b_blkno = bn;
+		buf.b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
 		buf.b_data = databuf + bufoff;
 		buf.b_flags = B_WRITE;
 
