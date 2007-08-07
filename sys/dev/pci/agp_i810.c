@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.41.6.2 2007/08/06 19:49:35 jmcneill Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.41.6.3 2007/08/07 02:11:27 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.2 2007/08/06 19:49:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.41.6.3 2007/08/07 02:11:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ struct agp_i810_softc {
 	bus_space_handle_t gtt_bsh;	/* GTT bus_space handle */
 	struct pci_attach_args vga_pa;
 
-	struct pci_conf_state sc_pciconf;
+	u_int32_t pgtblctl;
 };
 
 static u_int32_t agp_i810_get_aperture(struct agp_softc *);
@@ -103,6 +103,9 @@ static struct agp_memory *agp_i810_alloc_memory(struct agp_softc *, int,
 static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
+
+static pnp_status_t agp_i810_power(device_t, pnp_request_t, void *);
+static int agp_i810_init(struct agp_softc *);
 
 static struct agp_methods agp_i810_methods = {
 	agp_i810_get_aperture,
@@ -255,6 +258,21 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
+	if (pnp_register(self, agp_i810_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(&sc->as_dev));
+
+	return agp_i810_init(sc);
+}
+
+static int agp_i810_init(struct agp_softc *sc)
+{
+	struct agp_i810_softc *isc;
+	struct agp_gatt *gatt;
+
+	isc = sc->as_chipc;
+	gatt = isc->gatt;
+
 	if (isc->chiptype == CHIP_I810) {
 		void *virtual;
 		int dummyseg;
@@ -274,7 +292,6 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			return ENOMEM;
 		}
 		gatt->ag_virtual = (uint32_t *)virtual;
-
 		gatt->ag_size = gatt->ag_entries * sizeof(u_int32_t);
 		memset(gatt->ag_virtual, 0, gatt->ag_size);
 
@@ -306,6 +323,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 			agp_generic_detach(sc);
 			return EINVAL;
 		}
+
 		if (isc->stolen > 0) {
 			aprint_error(": detected %dk stolen memory\n%s",
 			    isc->stolen * 4, sc->as_dev.dv_xname);
@@ -782,4 +800,40 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 		WRITEGTT(i, 0);
 	mem->am_is_bound = 0;
 	return 0;
+}
+
+static pnp_status_t
+agp_i810_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct agp_softc *sc;
+	struct agp_i810_softc *isc;
+	pnp_state_t *pstate;
+
+	sc = (struct agp_softc *)dv;
+	isc = sc->as_chipc;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+	case PNP_REQUEST_GET_STATE:
+		return agp_power(dv, req, opaque);
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			agp_power(dv, req, opaque);
+			WRITE4(AGP_I810_PGTBL_CTL, isc->pgtblctl);
+			break;
+		case PNP_STATE_D3:
+			isc->pgtblctl = READ4(AGP_I810_PGTBL_CTL);
+			agp_power(dv, req, opaque);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return agp_power(dv, req, opaque);
+	}
+
+	return PNP_STATUS_SUCCESS;
 }
