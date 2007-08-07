@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.14 2007/03/04 06:02:59 christos Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.15 2007/08/07 10:02:40 yamt Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -1608,20 +1608,6 @@ int pfil_ifaddr_wrapper(void *, struct mbuf **, struct ifnet *, int);
 #define	PRIu32	"u"	/* XXX */
 #endif
 #if !defined(__OpenBSD__)
-#if !defined(__NetBSD__)
-#include <sys/kernel.h> /* mono_time */
-static __inline void getmicrouptime(struct timeval *);
-static __inline void
-getmicrouptime(struct timeval *tvp)
-{
-	int s;
-
-	s = splclock();
-	*tvp = mono_time;
-	splx(s);
-}
-#define	time_second	time.tv_sec
-#endif /* !__NetBSD__ */
 #define	m_copym2	m_dup
 #define	pool_allocator_oldnointr	pool_allocator_nointr
 #endif /* !__OpenBSD__ */
