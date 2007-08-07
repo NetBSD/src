@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_suspend.3,v 1.2 2007/05/05 19:16:01 ad Exp $
+.\" $NetBSD: aio_suspend.3,v 1.3 2007/08/07 20:45:04 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Softweyr LLC.
 .\" All rights reserved.
@@ -71,7 +71,7 @@ If one or more of the specified asynchronous I/O requests have
 completed,
 .Fn aio_suspend
 returns 0.
-Otherwise it returns -1 and sets
+Otherwise it returns \-1 and sets
 .Va errno
 to indicate the error, as enumerated below.
 .Sh ERRORS
@@ -80,9 +80,11 @@ The
 system call will fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
-the
+The
 .Fa timeout
 expired before any I/O requests completed.
+.It Bq Er EINTR
+The suspend was interrupted by a signal.
 .It Bq Er EINVAL
 The
 .Fa list
@@ -91,8 +93,6 @@ contains more than
 .Dv AIO_LISTIO_MAX
 asynchronous I/O requests, or at least one of the requests is not
 valid.
-.It Bq Er EINTR
-the suspend was interrupted by a signal.
 .El
 .Sh SEE ALSO
 .Xr aio_cancel 3 ,

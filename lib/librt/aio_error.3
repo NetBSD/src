@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_error.3,v 1.2 2007/05/05 19:16:01 ad Exp $
+.\" $NetBSD: aio_error.3,v 1.3 2007/08/07 20:45:03 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Softweyr LLC.
 .\" All rights reserved.
@@ -59,10 +59,8 @@ or
 .Xr fsync 2 .
 On failure,
 .Fn aio_error
-returns
-.Dv -1
-and sets
-.Dv errno
+returns \-1 and sets
+.Va errno
 to indicate the error condition.
 .Sh ERRORS
 The

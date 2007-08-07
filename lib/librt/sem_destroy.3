@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_destroy.3,v 1.1 2003/01/24 01:52:44 thorpej Exp $
+.\" $NetBSD: sem_destroy.3,v 1.2 2007/08/07 20:45:05 wiz Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -55,13 +55,13 @@ is unusable until re-initialized by another call to
 .Fn sem_destroy
 will fail if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-.Fa sem
-points to an invalid semaphore.
 .It Bq Er EBUSY
 There are currently threads blocked on the semaphore that
 .Fa sem
 points to.
+.It Bq Er EINVAL
+.Fa sem
+points to an invalid semaphore.
 .El
 .Sh SEE ALSO
 .Xr sem_init 3

@@ -1,4 +1,4 @@
-.\" $NetBSD: lio_listio.3,v 1.1 2007/05/04 22:37:36 rmind Exp $
+.\" $NetBSD: lio_listio.3,v 1.2 2007/08/07 20:45:04 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Tim J. Robbins
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm lio_listio
-.Nd "list directed I/O (REALTIME)"
+.Nd list directed I/O (REALTIME)
 .Sh LIBRARY
 .Lb librt
 .Sh SYNOPSIS
@@ -125,6 +125,8 @@ There are not enough resources to enqueue the requests.
 The request would cause the system-wide limit
 .Dv AIO_MAX
 to be exceeded.
+.It Bq Er EINTR
+A signal interrupted the system call before it could be completed.
 .It Bq Er EINVAL
 The
 .Fa mode
@@ -136,8 +138,6 @@ or
 .Fa nent
 is greater than
 .Dv AIO_LISTIO_MAX .
-.It Bq Er EINTR
-A signal interrupted the system call before it could be completed.
 .It Bq Er EIO
 One or more requests failed.
 .El
@@ -166,7 +166,7 @@ structure individually by calling
 .Xr write 2 ,
 .Xr aio_error 3 ,
 .Xr aio_read 3 ,
-.Xr aio_write 3 ,
+.Xr aio_write 3
 .Sh STANDARDS
 The
 .Fn lio_listio
