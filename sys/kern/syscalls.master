@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.174 2007/08/07 12:48:30 ad Exp $
+	$NetBSD: syscalls.master,v 1.175 2007/08/07 19:00:42 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -490,11 +490,11 @@
 230	EXCL		shmdt
 231	EXCL		shmget
 #endif
-232	STD		{ int sys_clock_gettime(clockid_t clock_id, \
+232	STD MPSAFE	{ int sys_clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
 233	STD		{ int sys_clock_settime(clockid_t clock_id, \
 			    const struct timespec *tp); }
-234	STD		{ int sys_clock_getres(clockid_t clock_id, \
+234	STD MPSAFE	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
 235	STD		{ int sys_timer_create(clockid_t clock_id, \
 			    struct sigevent *evp, timer_t *timerid); }
@@ -652,7 +652,8 @@
 318	STD		{ int sys__lwp_kill(lwpid_t target, int signo); }
 319	STD MPSAFE	{ int sys__lwp_detach(lwpid_t target); }
 320	STD MPSAFE	{ int sys__lwp_park(const struct timespec *ts, \
-				struct __ucontext *ucp, const void *hint); }
+				lwpid_t unpark, const void *hint, \
+				const void *unparkhint); }
 321	STD MPSAFE	{ int sys__lwp_unpark(lwpid_t target, const void *hint); }
 322	STD MPSAFE	{ ssize_t sys__lwp_unpark_all(const lwpid_t *targets, \
 				size_t ntargets, const void *hint); }
