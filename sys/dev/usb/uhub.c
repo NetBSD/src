@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.89.8.1 2007/08/07 01:00:22 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.89.8.2 2007/08/07 01:00:59 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.89.8.1 2007/08/07 01:00:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.89.8.2 2007/08/07 01:00:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,7 +443,6 @@ uhub_explore(usbd_device_handle dev)
 		}
 
 		/* XXX handle overcurrent and resume events! */
-		printf("%s: change = %x\n", USBDEVNAME(sc->sc_dev), change);
 
 		if (!(change & UPS_C_CONNECT_STATUS))
 			continue;
