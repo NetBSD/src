@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.2 2007/08/06 22:20:58 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.3 2007/08/07 21:24:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "rump.h"
 #include "p2k.h"
@@ -83,6 +84,12 @@ p2k_init(struct vfsops *vfsops, const char *devpath, const char *mountpath,
 	rv = VFS_MOUNT(mp, mountpath, arg, &alen, curlwp);
 	if (rv) {
 		warnx("VFS_MOUNT %d", rv);
+		goto out;
+	}
+	if ((1<<mp->mnt_fs_bshift) < getpagesize()
+	    && (mntflags & MNT_RDONLY) == 0) {
+		rv = EOPNOTSUPP;
+		warnx("Sorry, fs bsize < PAGE_SIZE not yet supported for rw");
 		goto out;
 	}
 	p2k->p2k_mp = mp;
@@ -470,13 +477,13 @@ p2k_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 
 int
 p2k_node_readlink(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cred *pcr, char *link, size_t *linklen)
+	const struct puffs_cred *pcr, char *linkname, size_t *linklen)
 {
 	struct uio uio;
 	struct iovec iov;
 	int rv;
 
-	iov.iov_base = link;
+	iov.iov_base = linkname;
 	iov.iov_len = *linklen;
 
 	uio.uio_iov = &iov;
