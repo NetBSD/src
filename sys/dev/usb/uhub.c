@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.89.8.2 2007/08/07 01:00:59 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.89.8.3 2007/08/07 01:32:28 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.89.8.2 2007/08/07 01:00:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.89.8.3 2007/08/07 01:32:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,6 @@ struct uhub_softc {
 #define PORTSTAT_ISSET(sc, port) \
 	((sc)->sc_status[(port) / 8] & (1 << ((port) % 8)))
 
-Static pnp_status_t uhub_power(device_t, pnp_request_t, void *);
 Static usbd_status uhub_explore(usbd_device_handle hub);
 Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
 
@@ -355,7 +354,7 @@ USB_ATTACH(uhub)
 
 	sc->sc_running = 1;
 
-	if (pnp_register(&sc->sc_dev, uhub_power) != PNP_STATUS_SUCCESS)
+	if (pnp_register(&sc->sc_dev, pnp_generic_power) != PNP_STATUS_SUCCESS)
 		aprint_error("%s: couldn't establish power handler\n",
 		    device_xname(self));
 
@@ -688,44 +687,6 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	if (status == USBD_NORMAL_COMPLETION && sc->sc_explorepending &&
       !strcmp(sc->sc_dev.dv_parent->dv_parent->dv_cfdriver->cd_name, "ehci"))
 		usb_needs_explore(sc->sc_hub);
-}
-
-Static pnp_status_t
-uhub_power(device_t dv, pnp_request_t req, void *opaque)
-{
-	struct uhub_softc *sc;
-	pnp_capabilities_t *pcaps;
-	pnp_state_t *pstate;
-
-	sc = (struct uhub_softc *)dv;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		pcaps = opaque;
-		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_GET_STATE:
-		pstate = opaque;
-		*pstate = sc->sc_running == 1 ? PNP_STATE_D0 : PNP_STATE_D3;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		pstate = opaque;
-		switch (*pstate) {
-		case PNP_STATE_D0:
-			sc->sc_running = 1;
-			break;
-		case PNP_STATE_D3:
-			sc->sc_running = 0;
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-		break;
-	default:
-		return PNP_STATUS_UNSUPPORTED;
-	}
-
-	return PNP_STATUS_SUCCESS;
 }
 
 #if defined(__FreeBSD__)
