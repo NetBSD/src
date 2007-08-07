@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.66 2007/07/19 20:48:58 dyoung Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.67 2007/08/07 02:17:21 dyoung Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.66 2007/07/19 20:48:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.67 2007/08/07 02:17:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.66 2007/07/19 20:48:58 dyoung Exp $");
 #include <netinet6/scope6_var.h>
 
 #include <net/net_osdep.h>
-
-#define SDL(s)	((struct sockaddr_dl *)s)
 
 static int rtpref __P((struct nd_defrouter *));
 static struct nd_defrouter *defrtrlist_update __P((struct nd_defrouter *));
@@ -117,17 +115,8 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_solicit *nd_rs;
 	struct in6_addr saddr6 = ip6->ip6_src;
-#if 0
-	struct in6_addr daddr6 = ip6->ip6_dst;
-#endif
 	char *lladdr = NULL;
 	int lladdrlen = 0;
-#if 0
-	struct sockaddr_dl *sdl = (struct sockaddr_dl *)NULL;
-	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)NULL;
-	struct rtentry *rt = NULL;
-	int is_newentry;
-#endif
 	union nd_opts ndopts;
 
 	/* If I'm not a router, ignore it. */
