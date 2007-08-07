@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_workqueue.c,v 1.19 2007/08/05 13:47:25 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.20 2007/08/07 10:42:22 yamt Exp $	*/
 
 /*-
- * Copyright (c)2002, 2005 YAMAMOTO Takashi,
+ * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.19 2007/08/05 13:47:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.20 2007/08/07 10:42:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -51,17 +51,16 @@ struct workqueue_queue {
 	kcondvar_t q_cv;
 	struct workqhead q_queue;
 	struct lwp *q_worker;
-	SLIST_ENTRY(workqueue_queue) q_list;
 };
 
 struct workqueue {
 	void (*wq_func)(struct work *, void *);
 	void *wq_arg;
+	int wq_flags;
+
 	const char *wq_name;
 	pri_t wq_prio;
-	int wq_flags;
 	void *wq_ptr;
-	ipl_cookie_t wq_ipl;
 };
 
 #ifdef MULTIPROCESSOR
@@ -74,6 +73,15 @@ struct workqueue {
 #define	WQ_QUEUE_SIZE	(roundup2(sizeof(struct workqueue_queue), CPU_ALIGN_SIZE))
 
 #define	POISON	0xaabbccdd
+
+static size_t
+workqueue_size(int flags)
+{
+
+	return WQ_SIZE
+	    + ((flags & WQ_PERCPU) != 0 ? ncpu : 1) * WQ_QUEUE_SIZE
+	    + CPU_ALIGN_SIZE;
+}
 
 static struct workqueue_queue *
 workqueue_queue_lookup(struct workqueue *wq, struct cpu_info *ci)
@@ -154,7 +162,6 @@ workqueue_init(struct workqueue *wq, const char *name,
     pri_t prio, int ipl)
 {
 
-	wq->wq_ipl = makeiplcookie(ipl);
 	wq->wq_prio = prio;
 	wq->wq_name = name;
 	wq->wq_func = callback_func;
@@ -167,9 +174,10 @@ workqueue_initqueue(struct workqueue *wq, struct workqueue_queue *q,
 {
 	int error, ktf;
 
+	KASSERT(q->q_worker == NULL);
+
 	mutex_init(&q->q_mutex, MUTEX_DRIVER, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
-	q->q_worker = NULL;
 	SIMPLEQ_INIT(&q->q_queue);
 	ktf = ((wq->wq_flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
 	if (ci) {
@@ -179,7 +187,11 @@ workqueue_initqueue(struct workqueue *wq, struct workqueue_queue *q,
 		error = kthread_create(wq->wq_prio, ktf, ci, workqueue_worker,
 		    wq, &q->q_worker, "%s", wq->wq_name);
 	}
-
+	if (error != 0) {
+		mutex_destroy(&q->q_mutex);
+		cv_destroy(&q->q_cv);
+		KASSERT(q->q_worker == NULL);
+	}
 	return error;
 }
 
@@ -199,6 +211,7 @@ workqueue_exit(struct work *wk, void *arg)
 	 */
 
 	KASSERT(q->q_worker == curlwp);
+	KASSERT(SIMPLEQ_EMPTY(&q->q_queue));
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
 	cv_signal(&q->q_cv);
@@ -211,7 +224,7 @@ workqueue_finiqueue(struct workqueue *wq, struct workqueue_queue *q)
 {
 	struct workqueue_exitargs wqe;
 
-	wq->wq_func = workqueue_exit;
+	KASSERT(wq->wq_func == workqueue_exit);
 
 	wqe.wqe_q = q;
 	KASSERT(SIMPLEQ_EMPTY(&q->q_queue));
@@ -237,87 +250,59 @@ workqueue_create(struct workqueue **wqp, const char *name,
 	struct workqueue *wq;
 	struct workqueue_queue *q;
 	void *ptr;
-	int i, error = 0;
-	size_t size;
+	int error = 0;
 
 	KASSERT(sizeof(work_impl_t) <= sizeof(struct work));
 
-	i = (flags & WQ_PERCPU) ? ncpu : 1;
-	if (ncpu == 1) {
-		flags &= ~WQ_PERCPU;
-	}
-
-	size = WQ_SIZE + (i * WQ_QUEUE_SIZE) + CPU_ALIGN_SIZE;
-	ptr = kmem_alloc(size, KM_SLEEP);
-
+	ptr = kmem_zalloc(workqueue_size(flags), KM_SLEEP);
 	wq = (void *)roundup2((intptr_t)ptr, CPU_ALIGN_SIZE);
 	wq->wq_ptr = ptr;
 	wq->wq_flags = flags;
-	q = (void *)((intptr_t)(wq) + WQ_SIZE);
 
 	workqueue_init(wq, name, callback_func, callback_arg, prio, ipl);
-	i = 0;
 
 	if (flags & WQ_PERCPU) {
-#ifdef MULTIPROCESSOR
 		struct cpu_info *ci;
 		CPU_INFO_ITERATOR cii;
 
 		/* create the work-queue for each CPU */
 		for (CPU_INFO_FOREACH(cii, ci)) {
+			q = workqueue_queue_lookup(wq, ci);
 			error = workqueue_initqueue(wq, q, ipl, ci);
 			if (error) {
 				break;
 			}
-			q = (void *)((intptr_t)(q) + WQ_QUEUE_SIZE);
-			i++;
 		}
-#endif
 	} else {
 		/* initialize a work-queue */
+		q = workqueue_queue_lookup(wq, NULL);
 		error = workqueue_initqueue(wq, q, ipl, NULL);
 	}
 
-	if (error) {
-		/*
-		 * workqueue_finiqueue() should be
-		 * called for the failing one too.
-		 */
-		do {
-			workqueue_finiqueue(wq, q);
-			q = (void *)((intptr_t)(q) - WQ_QUEUE_SIZE);
-		} while(i--);
-		kmem_free(ptr, size);
-		return error;
+	if (error != 0) {
+		workqueue_destroy(wq);
+	} else {
+		*wqp = wq;
 	}
 
-	*wqp = wq;
-	return 0;
+	return error;
 }
 
 void
 workqueue_destroy(struct workqueue *wq)
 {
 	struct workqueue_queue *q;
-	u_int i = 1;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
 
-	if (wq->wq_flags & WQ_PERCPU) {
-#ifdef MULTIPROCESSOR
-		struct cpu_info *ci;
-		CPU_INFO_ITERATOR cii;
-
-		for (CPU_INFO_FOREACH(cii, ci)) {
-			q = workqueue_queue_lookup(wq, ci);
+	wq->wq_func = workqueue_exit;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		q = workqueue_queue_lookup(wq, ci);
+		if (q->q_worker != NULL) {
 			workqueue_finiqueue(wq, q);
 		}
-		i = ncpu;
-#endif
-	} else {
-		q = workqueue_queue_lookup(wq, NULL);
-		workqueue_finiqueue(wq, q);
 	}
-
-	kmem_free(wq->wq_ptr, WQ_SIZE + (i * WQ_QUEUE_SIZE) + CPU_ALIGN_SIZE);
+	kmem_free(wq->wq_ptr, workqueue_size(wq->wq_flags));
 }
 
 void
