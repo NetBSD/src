@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.2 2007/08/06 22:20:57 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.3 2007/08/07 16:55:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,8 @@ do {									\
 	rv = call;							\
 	if (rv == -1)							\
 		*error = errno;						\
+	else								\
+		*error = 0;						\
 	return rv;							\
 } while (/*CONSTCOND*/0)
 
