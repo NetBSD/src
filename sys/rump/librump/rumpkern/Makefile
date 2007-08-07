@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/05 22:28:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2007/08/07 10:13:31 pooka Exp $
 #
 
-.include "${NETBSDSRCDIR}/sys/rump/Makefile.rump"
 .include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/sys/rump/Makefile.rump"
 
 LIB=	rump
 
