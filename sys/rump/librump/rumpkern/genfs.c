@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.2 2007/08/06 20:46:28 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.3 2007/08/07 09:03:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -121,8 +121,8 @@ genfs_getpages(void *v)
 	 */
 
 	/* align to boundaries */
-	endoff = ap->a_offset + (count << PAGE_SHIFT);
-	endoff = MIN(round_page(endoff), ((vp->v_writesize+bsize)&~(bsize-1)));
+	endoff = trunc_page(ap->a_offset) + (count << PAGE_SHIFT);
+	endoff = MIN(endoff, ((vp->v_writesize+bsize-1) & ~(bsize-1)));
 	curoff = ap->a_offset & ~(MAX(bsize,PAGE_SIZE)-1);
 	remain = endoff - curoff;
 
