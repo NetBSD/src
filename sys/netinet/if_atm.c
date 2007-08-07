@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.24 2007/07/19 20:48:54 dyoung Exp $       */
+/*      $NetBSD: if_atm.c,v 1.25 2007/08/07 04:37:04 dyoung Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.24 2007/07/19 20:48:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.25 2007/08/07 04:37:04 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.24 2007/07/19 20:48:54 dyoung Exp $");
 #include <netnatm/natm.h>
 #endif
 
-
-#define SDL(s) ((struct sockaddr_dl *)s)
 
 /*
  * atm_rtrequest: handle ATM rt request (in support of generic code)
@@ -117,8 +115,8 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		if ((rt->rt_flags & RTF_HOST) == 0) {
 			rt_setgate(rt, (const struct sockaddr *)&null_sdl);
 			gate = rt->rt_gateway;
-			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
-			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
+			satosdl(gate)->sdl_type = rt->rt_ifp->if_type;
+			satosdl(gate)->sdl_index = rt->rt_ifp->if_index;
 			break;
 		}
 
@@ -144,7 +142,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		sin = satocsin(rt_getkey(rt));
 		if (sin->sin_family != AF_INET)
 			goto failed;
-		aph = (struct atm_pseudohdr *) LLADDR(SDL(gate));
+		aph = (struct atm_pseudohdr *) LLADDR(satosdl(gate));
 		npcb = npcb_add(NULL, rt->rt_ifp, ATM_PH_VCI(aph),
 						ATM_PH_VPI(aph));
 		if (npcb == NULL)
@@ -158,7 +156,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		/*
 		 * let the lower level know this circuit is active
 		 */
-		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
+		bcopy(CLLADDR(satocsdl(gate)), &api.aph, sizeof(api.aph));
 		api.rxhand = NULL;
 		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA,
 							(void *)&api) != 0) {
@@ -166,8 +164,8 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			goto failed;
 		}
 
-		SDL(gate)->sdl_type = rt->rt_ifp->if_type;
-		SDL(gate)->sdl_index = rt->rt_ifp->if_index;
+		satosdl(gate)->sdl_type = rt->rt_ifp->if_type;
+		satosdl(gate)->sdl_index = rt->rt_ifp->if_index;
 
 		break;
 
@@ -201,7 +199,7 @@ failed:
 		 * tell the lower layer to disable this circuit
 		 */
 
-		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
+		bcopy(CLLADDR(satocsdl(gate)), &api.aph, sizeof(api.aph));
 		api.rxhand = NULL;
 		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS,
 							(void *)&api);
@@ -230,7 +228,7 @@ int
 atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
     struct atm_pseudohdr *desten /* OUT */)
 {
-	struct sockaddr_dl *sdl;
+	const struct sockaddr_dl *sdl;
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
 		log(LOG_INFO, "atmresolve: BCAST/MCAST packet detected/dumped");
@@ -256,7 +254,7 @@ atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
 	 * ATM ARP [c.f. if_ether.c]).
 	 */
 
-	sdl = SDL(rt->rt_gateway);
+	sdl = satocsdl(rt->rt_gateway);
 
 	/*
 	 * Check the address family and length is valid, the address
@@ -265,7 +263,7 @@ atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
 
 
 	if (sdl->sdl_family == AF_LINK && sdl->sdl_alen == sizeof(*desten)) {
-		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
+		bcopy(CLLADDR(sdl), desten, sdl->sdl_alen);
 		return (1);	/* ok, go for it! */
 	}
 
