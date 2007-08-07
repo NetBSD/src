@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.126 2007/08/07 11:39:18 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.127 2007/08/07 11:43:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.126 2007/08/07 11:39:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.127 2007/08/07 11:43:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1315,7 +1315,6 @@ itimerfix(struct timeval *tv)
 	return (0);
 }
 
-#ifdef __HAVE_TIMECOUNTER
 int
 itimespecfix(struct timespec *ts)
 {
@@ -1326,7 +1325,6 @@ itimespecfix(struct timespec *ts)
 		ts->tv_nsec = tick * 1000;
 	return (0);
 }
-#endif /* __HAVE_TIMECOUNTER */
 
 /*
  * Decrement an interval timer by a specified number
