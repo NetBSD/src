@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.21 2007/08/07 11:28:26 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.21 2007/08/07 11:28:26 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -576,10 +576,13 @@ x86_ipi(vec,target,dl)
 	i82489_writereg(LAPIC_ICRLO,
 	    (target & LAPIC_DEST_MASK) | vec | dl | LAPIC_LVL_ASSERT);
 
+#ifdef DIAGNOSTIC
 	i82489_icr_wait();
-
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
-
+#else
+	/* Don't wait - if it doesn't go, we're in big trouble anyway. */
+        result = 0;
+#endif
 	splx(s);
 
 	return result;
