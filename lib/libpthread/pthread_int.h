@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.44 2007/08/04 18:54:13 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.45 2007/08/07 19:04:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@ struct	__pthread_st {
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
 	void		*pt_exitval;	/* Read by pthread_join() */
 	char		*pt_name;	/* Thread's name, set by the app. */
+	int		pt_willpark;	/* About to park */
+	lwpid_t		pt_unpark;	/* Unpark this when parking */
+	void		*pt_unparkhint;	/* Hint for the above */
 
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
@@ -256,5 +259,6 @@ void	pthread__errorfunc(const char *file, int line, const char *function,
 #endif
 
 extern int pthread__nspins;
+extern int pthread__osrev;
 
 #endif /* _LIB_PTHREAD_INT_H */

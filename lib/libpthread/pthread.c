@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.71 2007/08/04 18:54:12 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.72 2007/08/07 19:04:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.71 2007/08/04 18:54:12 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.72 2007/08/07 19:04:21 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -89,6 +89,7 @@ static int pthread__diagassert = DIAGASSERT_ABORT | DIAGASSERT_STDERR;
 
 int pthread__concurrency, pthread__maxconcurrency, pthread__nspins;
 int pthread__unpark_max = PTHREAD__UNPARK_MAX;
+int pthread__osrevision;
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
@@ -135,6 +136,13 @@ pthread_init(void)
 	len = sizeof(ncpu);
 	if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1)
 		err(1, "sysctl(hw.ncpu");
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_OSREV; 
+
+	len = sizeof(pthread__osrev);
+	if (sysctl(mib, 2, &pthread__osrev, &len, NULL, 0) == -1)
+		err(1, "sysctl(hw.osrevision");
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init(ncpu);
@@ -241,18 +249,24 @@ pthread__initthread(pthread_t t)
 {
 
 	t->pt_magic = PT_MAGIC;
+	t->pt_state = PT_STATE_RUNNING;
 	t->pt_spinlocks = 0;
 	t->pt_exitval = NULL;
 	t->pt_flags = 0;
 	t->pt_cancel = 0;
 	t->pt_errno = 0;
-	t->pt_state = PT_STATE_RUNNING;
+	t->pt_name = NULL;
+	t->pt_willpark = 0;
+	t->pt_unpark = 0;
+	t->pt_sleeponq = 0;
+	t->pt_sleepobj = NULL;
+	t->pt_signalled = 0;
+	t->pt_sleepq = NULL;
 
 	pthread_lockinit(&t->pt_lock);
 	PTQ_INIT(&t->pt_cleanup_stack);
 	PTQ_INIT(&t->pt_joiners);
 	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
-	t->pt_name = NULL;
 }
 
 
@@ -926,9 +940,25 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	      pthread_queue_t *queue, const struct timespec *abstime,
 	      int cancelpt, const void *hint)
 {
-	int rv;
+	int rv, error;
 
 	SDPRINTF(("(pthread__park %p) queue %p enter\n", self, queue));
+
+	/* Clear the willpark flag, since we're about to block. */
+	self->pt_willpark = 0;
+
+	/* 
+	 * Kernels before 4.99.27 can't park and unpark in one step,
+	 * so take care of it now if on an old kernel.
+	 *
+	 * XXX Remove this check before NetBSD 5.0 is released.
+	 * It's for compatibility with recent -current only.
+	 */
+	if (__predict_false(pthread__osrev < 499002700) &&
+	    self->pt_unpark != 0) {
+		_lwp_unpark(self->pt_unpark, self->pt_unparkhint);
+		self->pt_unpark = 0;
+	}
 
 	/*
 	 * Wait until we are awoken by a pending unpark operation,
@@ -952,10 +982,23 @@ pthread__park(pthread_t self, pthread_spin_t *lock,
 	 *   this means that modification of pt_sleepobj/onq by another
 	 *   thread will become globally visible before that thread
 	 *   schedules an unpark operation on this thread.
+	 *
+	 * Note: the test in the while() statement dodges the park op if
+	 * we have already been awoken, unless there is another thread to
+	 * awaken.  This saves a syscall - if we were already awakened,
+	 * the next call to _lwp_park() would need to return early in order
+	 * to eat the previous wakeup.
 	 */
 	rv = 0;
-	while (self->pt_sleepobj != NULL && rv == 0) {
-		if (_lwp_park(abstime, NULL, hint) != 0) {
+	while ((self->pt_sleepobj != NULL || self->pt_unpark != 0) && rv == 0) {
+		/*
+		 * If we deferred unparking a thread, arrange to
+		 * have _lwp_park() restart it before blocking.
+		 */
+		error = _lwp_park(abstime, self->pt_unpark, hint,
+		    self->pt_unparkhint);
+		self->pt_unpark = 0;
+		if (error != 0) {
 			switch (rv = errno) {
 			case EINTR:
 			case EALREADY:
@@ -1032,12 +1075,21 @@ pthread__unpark(pthread_t self, pthread_spin_t *lock,
 	 * operation is set in motion.
 	 */
 	pthread_spinunlock(self, lock);
-	rv = _lwp_unpark(target->pt_lid, queue);
 
-	if (rv != 0 && errno != EALREADY && errno != EINTR) {
-		SDPRINTF(("(pthread__unpark %p) syscall rv=%d\n",
-		    self, rv));
-		OOPS("_lwp_unpark failed");
+	/*
+	 * If the calling thread is about to block, defer
+	 * unparking the target until _lwp_park() is called.
+	 */
+	if (self->pt_willpark && self->pt_unpark == 0) {
+		self->pt_unpark = target->pt_lid;
+		self->pt_unparkhint = queue;
+	} else {
+		rv = _lwp_unpark(target->pt_lid, queue);
+		if (rv != 0 && errno != EALREADY && errno != EINTR) {
+			SDPRINTF(("(pthread__unpark %p) syscall rv=%d\n",
+			    self, rv));
+			OOPS("_lwp_unpark failed");
+		}
 	}
 }
 
@@ -1105,6 +1157,16 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 		case 0:
 			return;
 		case 1:
+			/*
+			 * If the calling thread is about to block,
+			 * defer unparking the target until _lwp_park()
+			 * is called.
+			 */
+			if (self->pt_willpark && self->pt_unpark == 0) {
+				self->pt_unpark = waiters[0];
+				self->pt_unparkhint = queue;
+				return;
+			}
 			rv = (ssize_t)_lwp_unpark(waiters[0], queue);
 			if (rv != 0 && errno != EALREADY && errno != EINTR) {
 				OOPS("_lwp_unpark failed");
