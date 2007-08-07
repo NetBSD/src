@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.117 2007/07/19 20:48:57 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.118 2007/08/07 04:35:42 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.117 2007/07/19 20:48:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.118 2007/08/07 04:35:42 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -74,9 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.117 2007/07/19 20:48:57 dyoung Exp $");
 
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
-
-#define SIN6(s) ((const struct sockaddr_in6 *)s)
-#define SDL(s) ((struct sockaddr_dl *)s)
 
 /* timer values */
 int	nd6_prune	= 1;	/* walk list every 1 seconds */
@@ -773,13 +770,13 @@ nd6_purge(struct ifnet *ifp)
 	ln = llinfo_nd6.ln_next;
 	while (ln && ln != &llinfo_nd6) {
 		struct rtentry *rt;
-		struct sockaddr_dl *sdl;
+		const struct sockaddr_dl *sdl;
 
 		nln = ln->ln_next;
 		rt = ln->ln_rt;
 		if (rt && rt->rt_gateway &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
-			sdl = (struct sockaddr_dl *)rt->rt_gateway;
+			sdl = satocsdl(rt->rt_gateway);
 			if (sdl->sdl_index == ifp->if_index)
 				nln = nd6_free(rt, 0);
 		}
@@ -1191,8 +1188,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 			    __LINE__, (void *)rt->_rt_key);
 			gate = rt->rt_gateway;
-			SDL(gate)->sdl_type = ifp->if_type;
-			SDL(gate)->sdl_index = ifp->if_index;
+			satosdl(gate)->sdl_type = ifp->if_type;
+			satosdl(gate)->sdl_index = ifp->if_index;
 			if (ln)
 				nd6_llinfo_settimer(ln, 0);
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
@@ -1224,8 +1221,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		/* XXX it does not work */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			nd6_na_output(ifp,
-			      &SIN6(rt_getkey(rt))->sin6_addr,
-			      &SIN6(rt_getkey(rt))->sin6_addr,
+			      &satocsin6(rt_getkey(rt))->sin6_addr,
+			      &satocsin6(rt_getkey(rt))->sin6_addr,
 			      ip6_forwarding ? ND_NA_FLAG_ROUTER : 0,
 			      1, NULL);
 #endif
@@ -1245,8 +1242,8 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 				    if_name(ifp));
 				break;
 			}
-			SDL(gate)->sdl_type = ifp->if_type;
-			SDL(gate)->sdl_index = ifp->if_index;
+			satosdl(gate)->sdl_type = ifp->if_type;
+			satosdl(gate)->sdl_index = ifp->if_index;
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 			    __LINE__, (void *)rt->_rt_key);
 		}
@@ -1305,7 +1302,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * to the interface.
 		 */
 		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(rt->rt_ifp,
-		    &SIN6(rt_getkey(rt))->sin6_addr);
+		    &satocsin6(rt_getkey(rt))->sin6_addr);
 		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 		    __LINE__, (void *)rt->_rt_key);
 		if (ifa) {
@@ -1314,8 +1311,9 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 			if (macp) {
-				bcopy(macp, LLADDR(SDL(gate)), ifp->if_addrlen);
-				SDL(gate)->sdl_alen = ifp->if_addrlen;
+				/* XXX check for error */
+				(void)sockaddr_dl_setaddr(satosdl(gate), macp,
+				    ifp->if_addrlen);
 			}
 			if (nd6_useloopback) {
 				rt->rt_ifp = lo0ifp;	/* XXX */
@@ -1341,7 +1339,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 				struct in6_addr llsol;
 				int error;
 
-				llsol = SIN6(rt_getkey(rt))->sin6_addr;
+				llsol = satocsin6(rt_getkey(rt))->sin6_addr;
 				llsol.s6_addr32[0] = htonl(0xff020000);
 				llsol.s6_addr32[1] = 0;
 				llsol.s6_addr32[2] = htonl(1);
@@ -1366,7 +1364,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			struct in6_addr llsol;
 			struct in6_multi *in6m;
 
-			llsol = SIN6(rt_getkey(rt))->sin6_addr;
+			llsol = satocsin6(rt_getkey(rt))->sin6_addr;
 			llsol.s6_addr32[0] = htonl(0xff020000);
 			llsol.s6_addr32[1] = 0;
 			llsol.s6_addr32[2] = htonl(1);
@@ -1711,11 +1709,11 @@ fail:
 		goto fail;
 	if (rt->rt_gateway->sa_family != AF_LINK)
 		goto fail;
-	sdl = SDL(rt->rt_gateway);
+	sdl = satosdl(rt->rt_gateway);
 
 	olladdr = (sdl->sdl_alen) ? 1 : 0;
 	if (olladdr && lladdr) {
-		if (bcmp(lladdr, LLADDR(sdl), ifp->if_addrlen))
+		if (memcmp(lladdr, CLLADDR(sdl), ifp->if_addrlen))
 			llchange = 1;
 		else
 			llchange = 0;
@@ -1738,8 +1736,8 @@ fail:
 		 * Record source link-layer address
 		 * XXX is it dependent to ifp->if_type?
 		 */
-		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy(lladdr, LLADDR(sdl), ifp->if_addrlen);
+		/* XXX check for error */
+		(void)sockaddr_dl_setaddr(sdl, lladdr, ifp->if_addrlen);
 	}
 
 	if (!is_newentry) {
@@ -2127,10 +2125,12 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 		switch (ifp->if_type) {
 		case IFT_ETHER:
 		case IFT_FDDI:
-			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr, lldst);
+			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
+			    lldst);
 			return 1;
 		case IFT_IEEE1394:
-			bcopy(ifp->if_broadcastaddr, lldst, ifp->if_addrlen);
+			memcpy(lldst, ifp->if_broadcastaddr,
+			    MIN(dstsize, ifp->if_addrlen));
 			return 1;
 		case IFT_ARCNET:
 			*lldst = 0;
@@ -2151,11 +2151,11 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 		m_freem(m);
 		return 0;
 	}
-	sdl = SDL(rt->rt_gateway);
+	sdl = satocsdl(rt->rt_gateway);
 	if (sdl->sdl_alen == 0 || sdl->sdl_alen > dstsize) {
 		/* this should be impossible, but we bark here for debugging */
 		printf("%s: sdl_alen == 0, dst=%s, if=%s\n", __func__,
-		    ip6_sprintf(&SIN6(dst)->sin6_addr), if_name(ifp));
+		    ip6_sprintf(&satocsin6(dst)->sin6_addr), if_name(ifp));
 		m_freem(m);
 		return 0;
 	}
