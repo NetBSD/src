@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.16 2007/07/07 21:04:29 tsutsui Exp $ */
+/* $NetBSD: if_xb.c,v 1.16.2.1 2007/08/07 18:04:50 matt Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.16 2007/07/07 21:04:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.16.2.1 2007/08/07 18:04:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.16 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.16.2.1 $", xbi.if_mtu);
 }
 
 static void
@@ -489,10 +489,10 @@ xb_output(ifp, m0, dst, rt0)
 {
 	int	i,s;
 	struct	mbuf *m = m0;
-	char	*lladdr;
+	const char	*lladdr;
 	char	*xbh;
 	long	xbo_framesize;
-	struct	sockaddr_dl *llsa;
+	const struct	sockaddr_dl *llsa;
 	int	xbaddr;
 
 #ifdef DIAGNOSTIC
@@ -508,7 +508,7 @@ xb_output(ifp, m0, dst, rt0)
 	 */
 	if (rt0 == NULL
 	|| (rt0->rt_flags & (RTF_GATEWAY | RTF_LLINFO))
-	|| (llsa = (struct sockaddr_dl *)rt0->rt_gateway) == NULL
+	|| (llsa = satocsdl(rt0->rt_gateway)) == NULL
 	||  llsa->sdl_family != AF_LINK
 	||  llsa->sdl_slen   != 0) {
 	      ++ifp->if_oerrors;
@@ -533,7 +533,7 @@ xb_output(ifp, m0, dst, rt0)
 	 * to emerge on. The address word is eaten by the switch and the
 	 * rest of the packet is routed through.
 	 */
-	lladdr = LLADDR(llsa);
+	lladdr = CLLADDR(llsa);
 	if (llsa->sdl_alen != 1)			/* XXX */
 		DIE();	/* OK someday, but totally unexpected right now */
 	/*

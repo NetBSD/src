@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.166 2007/05/17 14:51:23 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.166.2.1 2007/08/07 18:05:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,7 @@ _C_LABEL(kernel_text):
 /*
  * Initialize stack and call machine startup.
  */
-	la	v1, start
+	ADDR_L	v1, start
 	slt	v0, v1, sp
 	bne	v0, zero, 1f
 	addu	v0, v1, -CALLFRAME_SIZ
@@ -96,7 +96,7 @@ _C_LABEL(kernel_text):
 	move	sp, v0
 2:
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL(_gp)
+	ADDR_L	gp, _C_LABEL(_gp)
 #endif
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
@@ -131,14 +131,14 @@ _C_LABEL(kernel_text):
 #endif
 	sw	t0, _C_LABEL(cpu_id)		# save PRID register
 	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
-	la	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp, curcpu
-	la	t0, _C_LABEL(cpu_info_store)
-	sw	MIPS_CURLWP, CPU_INFO_CURLWP(t0)
-	sw	t0, L_CPU(MIPS_CURLWP) 
+	ADDR_L	MIPS_CURLWP, _C_LABEL(lwp0)	# set curlwp, curcpu
+	ADDR_L	t0, _C_LABEL(cpu_info_store)
+	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t0)
+	PTR_S	t0, L_CPU(MIPS_CURLWP) 
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
 	nop
 
-	lw	sp, _C_LABEL(proc0paddr)	# switch to proc0 stack
+	PTR_L	sp, _C_LABEL(proc0paddr)	# switch to proc0 stack
 	nop
 	addu	sp, sp, USPACE - FRAME_SIZ - CALLFRAME_SIZ
 	jal	_C_LABEL(main)			# main(void)
@@ -163,7 +163,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
  */
 	beq	a0, zero, 1f
 	nop
-	lw	a2, L_ADDR(a0)			# a2 = l->l_addr
+	PTR_L	a2, L_ADDR(a0)			# a2 = l->l_addr
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
 	REG_S	s0, U_PCB_CONTEXT+SF_REG_S0(a2)
@@ -187,7 +187,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	move	s6, a0				# s6 = old lwp
 	move	MIPS_CURLWP, a1			# s7 = new lwp
 	subu	sp, sp, CALLFRAME_SIZ
-	sw	ra, CALLFRAME_RA(sp)
+	PTR_S	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
 /*
  * Switch to new context.
@@ -199,16 +199,16 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	sw	MIPS_CURLWP, CPUVAR(CURLWP)
 
 	/* Check for restartable atomic sequences (RAS) */
-	lw	t1, L_PROC(MIPS_CURLWP)
-	lw	a0, L_ADDR(MIPS_CURLWP)
-	lw	v1, P_RASLIST(t1)
+	PTR_L	t1, L_PROC(MIPS_CURLWP)
+	PTR_L	a0, L_ADDR(MIPS_CURLWP)
+	PTR_L	v1, P_RASLIST(t1)
 	addu	t0, a0, USPACE - FRAME_SIZ
 	beq	v1, zero, 1f
 	nop
 	move	a0, t1
 	jal	_C_LABEL(ras_lookup)
-	lw	a1, FRAME_EPC(t0)
-	lw	a0, L_ADDR(MIPS_CURLWP)
+	PTR_L	a1, FRAME_EPC(t0)
+	PTR_L	a0, L_ADDR(MIPS_CURLWP)
 	li	v1, -1
 	beq	v1, v0, 1f
 	addu	t0, a0, USPACE - FRAME_SIZ
@@ -217,13 +217,13 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	/* New context is now active */
 #ifdef IPL_ICU_MASK
 	# restore ICU state
-	lw	a0, L_ADDR(MIPS_CURLWP)
+	PTR_L	a0, L_ADDR(MIPS_CURLWP)
 	lw	t0, U_PCB_PPL(a0)
 	sw	t0, _C_LABEL(md_imask)
 	jal	_C_LABEL(md_imask_update)
 	nop
 #endif /* IPL_ICU_MASK */
-	lw	a0, L_ADDR(MIPS_CURLWP)
+	PTR_L	a0, L_ADDR(MIPS_CURLWP)
 	move	v0, s6				# Save return value
 	REG_PROLOGUE
 	REG_L	t0, U_PCB_CONTEXT+SF_REG_SR(a0)
@@ -619,7 +619,7 @@ XNESTED(MachFPTrap)
  */
 FPReturn:
 	mfc0	t0, MIPS_COP_0_STATUS
-	lw	ra, CALLFRAME_RA(sp)
+	PTR_L	ra, CALLFRAME_RA(sp)
 	and	t0, t0, ~MIPS_SR_COP_1_BIT
 	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
@@ -747,7 +747,7 @@ XNESTED(logstacktrace)
 	addu	t1, sp, CALLFRAME_SIZ+24	# compute caller's SP
 	move	t2, s8				# non-virtual frame pointer
 
-	la	v0, _C_LABEL(printf)
+	ADDR_L	v0, _C_LABEL(printf)
 
 	sw	ra, 36(sp)			# save return address
 
@@ -759,7 +759,7 @@ XNESTED(logstacktrace)
 	jal	_C_LABEL(stacktrace_subr)
 	sw	v0, 32(sp)			# push printf
 
-	lw	ra, 36(sp)
+	PTR_L	ra, 36(sp)
 	addu	sp, sp, CALLFRAME_SIZ+24
 	j	ra
 	nop

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.10 2007/03/06 23:50:20 he Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.10.12.1 2007/08/07 18:05:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.10 2007/03/06 23:50:20 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.10.12.1 2007/08/07 18:05:12 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -320,13 +320,11 @@ mmemdetach(struct device *self, int flags)
 	 */
 	if ((bp = sc->sc_bp) != NULL) {
 		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
 	while ((bp = BUFQ_GET(sc->sc_q)) != NULL) {
 		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}
@@ -701,7 +699,7 @@ mmemstrategy(struct buf *bp)
 			goto inval;		/* no read */
 	} else if (sc->sc_wacc == 0) {
 		bp->b_error = EROFS;		/* no write */
-		goto bad;
+		goto done;
 	}
 
 	if (bp->b_blkno & ~(~(daddr_t)0 >> (DEV_BSHIFT + 1 /* sign bit */))
@@ -746,7 +744,6 @@ mmemstrategy(struct buf *bp)
 	return;
 
 inval:	bp->b_error = EINVAL;
-bad:	bp->b_flags |= B_ERROR;
 done:	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
@@ -875,7 +872,6 @@ mmemdone(struct mmem_softc *sc, struct mmem_pt *pt, int err)
 		/* raise error if no block is read */
 		if (bcnt == 0) {
 			bp->b_error = err;
-			bp->b_flags |= B_ERROR;
 		}
 		goto term_xfer;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.12 2007/03/04 06:00:39 christos Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.12.12.1 2007/08/07 18:05:39 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.12 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.12.12.1 2007/08/07 18:05:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ hpcdma_init(struct hpc_attach_args *haa, struct hpc_dma_softc *sc, int ndesc)
 		return;
 	}
 
-	sc->sc_desc_pa = (void *) sc->sc_dmamap->dm_segs[0].ds_addr;
+	sc->sc_desc_pa = (void *) (vaddr_t)sc->sc_dmamap->dm_segs[0].ds_addr;
 }
 
 

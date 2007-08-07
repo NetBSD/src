@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.92 2007/06/27 08:16:58 uebayasi Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.92.2.1 2007/08/07 18:05:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -348,11 +348,6 @@ LEAF(mips3_cp0_pg_mask_write)
 	nop
 END(mips3_cp0_pg_mask_write)
 
-#if defined(_MIPS_BSD_API) && \
-    (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
-#error mips3_ld and mips3_sd should be adjusted for N32 or LP64
-#endif
-
 LEAF(mips3_ld)
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
 	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
@@ -365,6 +360,7 @@ LEAF(mips3_ld)
 #endif
 
 	ld	v0, 0(a0)
+#if _MIPS_BSD_ABI != _MIPS_BSD_API_N32 && _MIPS_BSD_API != _MIPS_BSD_API_LP64
 #if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	v1, v0, 32
 	dsra	v1, v1, 32			# low word in v1
@@ -373,6 +369,7 @@ LEAF(mips3_ld)
 	dsra	v1, v0, 32			# high word in v1
 	dsll	v0, v0, 32
 	dsra	v0, v0, 32			# low word in v0
+#endif
 #endif
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
@@ -398,6 +395,7 @@ LEAF(mips3_sd)
 
 	# NOTE: a1 is padding!
 
+#if _MIPS_BSD_ABI != _MIPS_BSD_API_N32 && _MIPS_BSD_API != _MIPS_BSD_API_LP64
 #if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	a2, a2, 32			# high word in a2
 	dsll	a3, a3, 32			# low word in a3
@@ -408,6 +406,7 @@ LEAF(mips3_sd)
 	dsll	a3, a3, 32			# high word in a3
 #endif
 	or	a1, a2, a3
+#endif
 	sd	a1, 0(a0)
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
@@ -427,8 +426,8 @@ END(mips3_sd)
  */
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
 LEAF(badaddr64)
-	lw	v1, L_ADDR(MIPS_CURLWP)
-	la	v0, _C_LABEL(baderr64)
+	PTR_L	v1, L_ADDR(MIPS_CURLWP)
+	ADDR_L	v0, _C_LABEL(baderr64)
 
 	/* Enable KX */
 	mfc0	t0, MIPS_COP_0_STATUS
@@ -436,6 +435,7 @@ LEAF(badaddr64)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
 
+#if _MIPS_BSD_ABI != _MIPS_BSD_API_N32 && _MIPS_BSD_API != _MIPS_BSD_API_LP64
 #if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	a0, a0, 32			# high word in a0
 	dsll	a1, a1, 32			# low word in a1
@@ -446,9 +446,12 @@ LEAF(badaddr64)
 	dsll	a1, a1, 32			# high word in a3
 #endif
 	or	a0, a0, a1
+#else
+	move	a2, a1				# take the easy way out
+#endif
 
 	bne	a2, 1, 2f
-	sw	v0, U_PCB_ONFAULT(v1)
+	PTR_S	v0, U_PCB_ONFAULT(v1)
 	b	9f
 	lbu	v0, (a0)
 2:
@@ -466,7 +469,7 @@ LEAF(badaddr64)
 9:
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
 	COP0_SYNC
-	sw	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# made it w/o errors
 END(badaddr64)
@@ -474,7 +477,7 @@ END(badaddr64)
 LEAF(baderr64)
 	mtc0	t0, MIPS_COP_0_STATUS		# Restore KX
 	COP0_SYNC
-	sw	zero, U_PCB_ONFAULT(v1)
+	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, -1
 END(baderr64)

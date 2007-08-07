@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.24 2007/05/27 13:57:30 tsutsui Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.24.2.1 2007/08/07 18:05:30 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -407,7 +407,7 @@ _VECTOR_END(MIPSX(XTLBMiss))
  * Vector to real handler in KSEG1.
  */
 VECTOR(MIPSX(cache), unknown)
-	la	k0, _C_LABEL(MIPSX(cacheException))
+	ADDR_L	k0, _C_LABEL(MIPSX(cacheException))
 	li	k1, MIPS_PHYS_MASK
 	and	k0, k1
 	li	k1, MIPS_KSEG1_START
@@ -420,7 +420,7 @@ _VECTOR_END(MIPSX(cache))
  * Handle MIPS32/MIPS64 style interrupt exception vector.
  */
 VECTOR(MIPSX(intr), unknown)
-	la	k0, MIPSX(KernIntr)
+	ADDR_L	k0, MIPSX(KernIntr)
 	j	k0
 	nop
 _VECTOR_END(MIPSX(intr))
@@ -452,13 +452,13 @@ VECTOR(MIPSX(exception), unknown)
 	and	k1, k1, MIPS3_CR_EXC_CODE	#04: mask out the cause bits.
 	or	k1, k1, k0			#05: change index to user table
 1:
-	la	k0, MIPSX(excpt_sw)		#06: get base of the jump table
+	ADDR_L	k0, MIPSX(excpt_sw)		#06: get base of the jump table
 	addu	k0, k0, k1			#07: get the address of the
 						#     function entry.  Note that
 						#     the cause is already
 						#     shifted left by 2 bits so
 						#     we dont have to shift.
-	lw	k0, 0(k0)			#08: get the function address
+	PTR_L	k0, 0(k0)			#08: get the function address
 	#nop					#    -slip-
 
 	j	k0				#09: jump to the function
@@ -520,7 +520,7 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
 #if defined(DDB) || defined(KGDB)
-	la	k0, _C_LABEL(kdbaux)
+	ADDR_L	k0, _C_LABEL(kdbaux)
 	REG_S	s0, SF_REG_S0(k0)
 	REG_S	s1, SF_REG_S1(k0)
 	REG_S	s2, SF_REG_S2(k0)
@@ -649,7 +649,7 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
 #ifdef DDBnotyet
-	la	k0, _C_LABEL(kdbaux)
+	ADDR_L	k0, _C_LABEL(kdbaux)
 	REG_L	s0, SF_REG_S0(k0)
 	REG_L	s1, SF_REG_S1(k0)
 	REG_L	s2, SF_REG_S2(k0)
@@ -680,8 +680,8 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 /*
  * Save all of the registers except for the kernel temporaries in u_pcb.
  */
-	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_ADDR(k1)
+	ADDR_L	k1, CPUVAR(CURLWP)
+	ADDR_L	k1, L_ADDR(k1)
 	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -730,7 +730,7 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 #endif
 	addu	sp, k1, -CALLFRAME_SIZ	# switch to kernel SP
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+	ADDR_L	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 /*
  * Turn off fpu and enter kernel mode
@@ -841,8 +841,8 @@ END(MIPSX(UserGenException))
 NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_ADDR(k1)
+	ADDR_L	k1, CPUVAR(CURLWP)
+	ADDR_L	k1, L_ADDR(k1)
 	#nop					# -slip-
 	addu	k1, k1, USPACE - FRAME_SIZ
 	#REG_S	AT, FRAME_AST(k1)
@@ -853,7 +853,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_S	a1, FRAME_A1(k1)
 	REG_S	a2, FRAME_A2(k1)
 	REG_S	a3, FRAME_A3(k1)
-	lw	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
+	ADDR_L	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
 	mfhi	v1
 	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
 	#REG_S	t1, FRAME_T1(k1)
@@ -890,22 +890,22 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	sw	t0, FRAME_PPL(k1)
 	.set noat
 #endif
-	lw	t0, L_PROC(a0)			# curlwp->l_proc (used below)
+	PTR_L	t0, L_PROC(a0)			# curlwp->l_proc (used below)
 	move	MIPS_CURLWP, a0			# set curlwp reg
 	addu	sp, k1, -CALLFRAME_SIZ
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+	ADDR_L	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 /*
  * Turn off fpu and enter kernel mode
  */
 	.set	at
-	lw	t1, P_MD_SYSCALL(t0)		# t1 = syscall
+	PTR_L	t1, P_MD_SYSCALL(t0)		# t1 = syscall
 	and	t0, a1, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	move	ra, a3
-	sw	ra, CALLFRAME_RA(sp)
+	REG_S	ra, CALLFRAME_RA(sp)
 #endif
 /*
  * Call the system call handler.
@@ -924,7 +924,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
  * We have pending asynchronous traps; all the state is already saved.
  */
 	jal	_C_LABEL(ast)
-	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+	REG_L	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
 1:
 /*
  * Restore user registers and return.
@@ -1017,8 +1017,8 @@ NESTED_NOPROFILE(MIPSX(cacheException), KERNFRAME_SIZ, ra)
 	eret
 	nop
 #endif
-	la	k0, panic			# return to panic
-	la	a0, 9f				# panicstr
+	ADDR_L	k0, panic			# return to panic
+	ADDR_L	a0, 9f				# panicstr
 	_MFC0	a1, MIPS_COP_0_ERROR_PC
 	mfc0	a2, MIPS_COP_0_ECC
 	mfc0	a3, MIPS_COP_0_CACHE_ERR
@@ -1193,8 +1193,8 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
  * Save the relevant user registers into the u_pcb.
  * We don't need to save s0 - s8 because the compiler does it for us.
  */
-	lw	k1, CPUVAR(CURLWP)
-	lw	k1, L_ADDR(k1)
+	ADDR_L	k1, CPUVAR(CURLWP)
+	ADDR_L	k1, L_ADDR(k1)
 	addu	k1, k1, USPACE - FRAME_SIZ
 	REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)
@@ -1233,10 +1233,10 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 #endif
 	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
-	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+	ADDR_L	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
-	sw	MIPS_CURLWP, MIPS_CURLWP_FRAME(k1)# save curlwp reg
-	lw	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
+	PTR_S	MIPS_CURLWP, MIPS_CURLWP_FRAME(k1)# save curlwp reg
+	PTR_L	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
 /*
  * Turn off fpu and enter kernel mode
  */
@@ -1278,7 +1278,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
  * Check pending asynchronous traps.
  */
 	beq	v0, zero, 1f			# if no, skip ast processing
-	lw	MIPS_CURLWP, MIPS_CURLWP_FRAME(a1)# restore curlwp reg
+	PTR_L	MIPS_CURLWP, MIPS_CURLWP_FRAME(a1)# restore curlwp reg
 /*
  * We have pending asynchronous traps; save remaining user state in u_pcb.
  */
@@ -1292,7 +1292,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	REG_S	s7, FRAME_S7(a1)
 	REG_S	s8, FRAME_S8(a1)
 	REG_L	a0, FRAME_EPC(a1)		# argument is interrupted PC
-	lw	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
+	PTR_L	MIPS_CURLWP, CPUVAR(CURLWP)	# set curlwp reg
 #ifdef IPL_ICU_MASK
 	jal	_C_LABEL(spllowersofthigh);
 	nop
@@ -1421,12 +1421,12 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	bgez	k0, _C_LABEL(MIPSX(KernGenException))	# full trap processing
 	subu	k0, k0, k1
-	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
+	ADDR_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 	beq	k1, zero, outofworld		# No. Failing beyond. . .
 	nop					# - delay slot -
-	lw	k1, _C_LABEL(Sysmap)
+	ADDR_L	k1, _C_LABEL(Sysmap)
 
 	sll	k0, k0, 2			# compute offset from index
 	addu	k1, k1, k0
@@ -1522,7 +1522,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address
 	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
 	subu	k0, k0, k1
-	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
+	ADDR_L	k1, _C_LABEL(Sysmapsize)	# index within range?
 	srl	k0, k0, PGSHIFT
 	sltu	k1, k0, k1
 #ifdef newsmips
@@ -1536,7 +1536,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	beq	k1, zero, outofworld		# No. Failing beyond. . .
 	nop					# - delay slot -
 #endif
-	lw	k1, _C_LABEL(Sysmap)
+	ADDR_L	k1, _C_LABEL(Sysmap)
 	srl	k0, k0, 1
 	sll	k0, k0, 3			# compute offset from index
 	addu	k1, k1, k0
@@ -1563,7 +1563,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 
 outofworld:
 	/* eret to panic so shutdown can use K2.  Try to ensure valid $sp. */
-	la	a0, _C_LABEL(panic)
+	ADDR_L	a0, _C_LABEL(panic)
 	_MFC0	a2, MIPS_COP_0_EXC_PC
 	move	a1, sp
 	sll	k0, k0, PGSHIFT
@@ -1575,8 +1575,8 @@ outofworld:
 	bltz	sp, 1f				# for ddb try to keep frame
 	nop
 #endif
-	la	sp, start			# set sp to a valid place
-1:	la	a0, 9f				# string
+	ADDR_L	sp, start			# set sp to a valid place
+1:	ADDR_L	a0, 9f				# string
 	eret
 
 	.set	at
@@ -1859,12 +1859,12 @@ LEAF_NOPROFILE(MIPSX(VCED))
 	cache	(CACHE_R4K_D | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
 	mfc0	k0, MIPS_COP_0_BAD_VADDR
-	la	k1, VCED_vaddr
+	ADDR_L	k1, VCED_vaddr
 	sw	k0, 0(k1)
 	mfc0	k0, MIPS_COP_0_EXC_PC
-	la	k1, VCED_epc
+	ADDR_L	k1, VCED_epc
 	sw	k0, 0(k1)
-	la	k1, VCED_count		# count number of exceptions
+	ADDR_L	k1, VCED_count		# count number of exceptions
 	srl	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
 	add	k1, k0			# get address of count table
@@ -1897,9 +1897,9 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 	cache	(CACHE_R4K_I | CACHEOP_R4K_HIT_INV), 0(k0)
 #ifdef DEBUG
 	mfc0	k0, MIPS_COP_0_BAD_VADDR
-	la	k1, VCEI_vaddr
-	sw	k0, 0(k1)
-	la	k1, VCEI_count		# count number of exceptions
+	ADDR_L	k1, VCEI_vaddr
+	REG_S	k0, 0(k1)
+	ADDR_L	k1, VCEI_count		# count number of exceptions
 	srl	k0, k0, 26		# position upper 4 bits of VA
 	and	k0, k0, 0x3c		# mask it off
 	add	k1, k0			# get address of count table
@@ -1934,7 +1934,7 @@ LEAF(MIPSX(lwp_trampoline))
 	addu	sp, sp, -CALLFRAME_SIZ
 
 	# Call lwp_startup(), with args from cpu_switchto()/cpu_setfunc()
-	la	t0, _C_LABEL(lwp_startup)
+	ADDR_L	t0, _C_LABEL(lwp_startup)
 	move	a0, v0
 	jal	ra, t0
 	move	a1, s7
@@ -2030,7 +2030,7 @@ END(MIPSX(lwp_trampoline))
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	lw	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 	lw	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
-	lw	v0, L_ADDR(a0)			# va = l->l_addr
+	ADDR_L	v0, L_ADDR(a0)			# va = l->l_addr
 	li	s0, MIPS_KSEG2_START
 	blt	v0, s0, resume
 	nop
@@ -2054,7 +2054,7 @@ entry0:
 	nop
 	bltz	s0, entry0set
 	sll	s0, s0, 13			# PAGE_SHIFT + 1
-	la	s0, MIPS_KSEG0_START(s0)
+	ADDR_L	s0, MIPS_KSEG0_START(s0)
 	_MTC0	s0, MIPS_COP_0_TLB_HI
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0

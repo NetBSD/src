@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.17 2007/06/12 18:53:52 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.17.2.1 2007/08/07 18:05:55 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.17 2007/06/12 18:53:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.17.2.1 2007/08/07 18:05:55 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.17 2007/06/12 18:53:52 bouyer Exp $");
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
