@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.48.4.5 2007/08/05 18:54:37 ober Exp $
+#	$NetBSD: files.bebox,v 1.48.4.6 2007/08/08 23:21:18 ober Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -54,6 +54,7 @@ attach	mainbus at root
 
 device	cpu
 attach	cpu at mainbus
+file	arch/bebox/bebox/cpu.c
 
 file	arch/bebox/bebox/mainbus.c	mainbus|cpu needs-flag
 
