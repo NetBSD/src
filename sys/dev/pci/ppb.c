@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34.22.1 2007/08/03 22:17:21 jmcneill Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.2 2007/08/08 11:53:25 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.1 2007/08/03 22:17:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.2 2007/08/08 11:53:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ struct ppb_softc {
 	pcitag_t sc_tag;		/* ...and tag. */
 
 	struct pci_conf_state sc_pciconf;
+	pcireg_t sc_pciconfext[48];
 };
 
 static pnp_status_t	ppb_power(device_t, pnp_request_t, void *);
@@ -138,6 +139,8 @@ ppb_power(device_t dv, pnp_request_t req, void *opaque)
 	struct ppb_softc *sc;
 	pnp_capabilities_t *pcaps;
 	pnp_state_t *pstate;
+	pcireg_t val;
+	int off;
 
 	sc = (struct ppb_softc *)dv;
 	switch (req) {
@@ -155,10 +158,20 @@ ppb_power(device_t dv, pnp_request_t req, void *opaque)
 		case PNP_STATE_D0:
 			pci_conf_restore(sc->sc_pc, sc->sc_tag,
 			    &sc->sc_pciconf);
+                        for (off = 0x40; off <= 0xff; off += 4) {
+				val = pci_conf_read(sc->sc_pc, sc->sc_tag, off);
+				if (val != sc->sc_pciconfext[(off - 0x40) / 4])
+					pci_conf_write(sc->sc_pc, sc->sc_tag,
+					    off,
+					    sc->sc_pciconfext[(off - 0x40)/4]);
+			}
 			break;
 		case PNP_STATE_D3:
 			pci_conf_capture(sc->sc_pc, sc->sc_tag,
 			    &sc->sc_pciconf);
+			for (off = 0x40; off <= 0xff; off += 4)
+				sc->sc_pciconfext[(off - 0x40) / 4] =
+				    pci_conf_read(sc->sc_pc, sc->sc_tag, off);
 			break;
 		default:
 			return PNP_STATUS_UNSUPPORTED;
