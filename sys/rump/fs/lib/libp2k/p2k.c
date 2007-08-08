@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.4 2007/08/08 14:09:07 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.5 2007/08/08 22:45:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -191,7 +191,7 @@ p2k_run_fs(struct vfsops *vfsops, const char *devpath, const char *mountpath,
 	puffs_setroot(pu, pn_root);
 	puffs_fakecc = 1;
 
-	if ((rv = puffs_mount(pu, mountpath, 0, p2k->p2k_rvp)) == -1)
+	if ((rv = puffs_mount(pu, mountpath, mntflags, p2k->p2k_rvp)) == -1)
 		goto out;
 	if ((rv = puffs_mainloop(pu, PUFFSLOOP_NODAEMON)) == -1)
 		goto out;
