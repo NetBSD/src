@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.92 2007/06/01 19:05:50 dsl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.93 2007/08/08 20:28:11 agc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.92 2007/06/01 19:05:50 dsl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.93 2007/08/08 20:28:11 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -768,7 +768,7 @@ visdump_buf(const void *vdp, int datalen, int col)
 	col++;
 	for (; datalen > 0; datalen--, dp++) {
 		(void)svis(visbuf, *dp, VIS_CSTYLE,
-		    datalen > 1 ? *(dp + 1) : 0, "\"");
+		    datalen > 1 ? *(dp + 1) : 0, "\"\n");
 		cp = visbuf;
 		/*
 		 * Keep track of printables and
