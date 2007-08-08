@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.52)
-AC_INIT([pkg_install], [20070725], [joerg@NetBSD.org])
+AC_INIT([pkg_install], [20070804], [joerg@NetBSD.org])
 AC_CONFIG_SRCDIR([lib/plist.c])
 AC_CONFIG_HEADER(lib/config.h)
 
@@ -73,9 +73,10 @@ AC_SEARCH_LIBS(tgetent, [termcap termlib curses ncurses])
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([assert.h ctype.h dirent.h err.h errno.h fnctl.h fnmatch.h \
-	glob.h inttypes.h limits.h md5.h netdb.h pwd.h regex.h signal.h stdarg.h \
-	stdio.h stdlib.h string.h termcap.h termios.h time.h unistd.h vis.h])
+AC_CHECK_HEADERS([assert.h ctype.h dirent.h err.h errno.h fnctl.h \
+	fnmatch.h glob.h grp.h inttypes.h limits.h md5.h netdb.h \
+	pwd.h regex.h signal.h stdarg.h stdio.h stdlib.h string.h \
+	termcap.h termios.h time.h unistd.h vis.h])
 AC_CHECK_HEADERS([db1/db.h db_185.h db.h])
 AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/ioctl.h sys/mount.h sys/param.h \
 	sys/poll.h sys/queue.h sys/resource.h sys/signal.h sys/stat.h \
