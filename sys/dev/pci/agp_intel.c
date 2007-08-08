@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.22 2007/03/26 22:42:39 hubertf Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.22.8.1 2007/08/08 11:51:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22 2007/03/26 22:42:39 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.22.8.1 2007/08/08 11:51:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,6 @@ struct agp_intel_softc {
 #define	CHIP_I850	0x4
 #define	CHIP_I865	0x5
 
-	void			*sc_powerhook;
-	struct pci_conf_state	sc_pciconf;
 };
 
 static u_int32_t agp_intel_get_aperture(struct agp_softc *);
@@ -73,7 +71,8 @@ static int agp_intel_set_aperture(struct agp_softc *, u_int32_t);
 static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
 static int agp_intel_unbind_page(struct agp_softc *, off_t);
 static void agp_intel_flush_tlb(struct agp_softc *);
-static void agp_intel_powerhook(int, void *);
+static pnp_status_t agp_intel_power(device_t, pnp_request_t, void *);
+static int agp_intel_init(struct agp_softc *);
 
 static struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -114,7 +113,6 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa= aux;
 	struct agp_intel_softc *isc;
 	struct agp_gatt *gatt;
-	pcireg_t reg;
 	u_int32_t value;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
@@ -190,6 +188,20 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 	}
 	isc->gatt = gatt;
 
+	if (pnp_register(self, agp_intel_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
+
+	return agp_intel_init(sc);
+}
+
+static int
+agp_intel_init(struct agp_softc *sc)
+{
+	struct agp_intel_softc *isc = sc->as_chipc;
+	struct agp_gatt *gatt = isc->gatt;
+	pcireg_t reg;
+
 	/* Install the gatt. */
 	pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ATTBASE,
 	    gatt->ag_physical);
@@ -257,12 +269,6 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 			AGP_INTEL_ERRSTS, 0x70);
 	}
 
-	isc->sc_powerhook = powerhook_establish(sc->as_dev.dv_xname,
-	    agp_intel_powerhook, sc);
-	if (isc->sc_powerhook == NULL)
-		aprint_error("%s: couldn't establish powerhook\n",
-		    sc->as_dev.dv_xname);
-
 	return (0);
 }
 
@@ -273,9 +279,6 @@ agp_intel_detach(struct agp_softc *sc)
 	int error;
 	pcireg_t reg;
 	struct agp_intel_softc *isc = sc->as_chipc;
-
-	if (isc->sc_powerhook)
-		powerhook_disestablish(isc->sc_powerhook);
 
 	error = agp_generic_detach(sc);
 	if (error)
@@ -392,29 +395,42 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 	}
 }
 
-static void
-agp_intel_powerhook(int why, void *opaque)
+static pnp_status_t
+agp_intel_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	struct agp_softc *sc;
-	struct agp_intel_softc *isc;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
 
-	sc = (struct agp_softc *)opaque;
-	isc = (struct agp_intel_softc *)sc->as_chipc;
+	sc = (struct agp_softc *)dv;
 
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
 		break;
-	case PWR_RESUME:
-		pci_conf_restore(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
-		agp_flush_cache();
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
 		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			(void)agp_power(dv, req, opaque);
+			agp_intel_init(sc);
+			agp_flush_cache();
+			break;
+		case PNP_STATE_D3:
+			(void)agp_power(dv, req, opaque);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
 		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
 	}
 
-	return;
+	return PNP_STATUS_SUCCESS;
 }
