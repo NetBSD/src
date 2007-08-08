@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.122 2007/08/02 12:46:03 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.123 2007/08/08 12:27:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.122 2007/08/02 12:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.123 2007/08/08 12:27:56 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -118,6 +118,7 @@ int nfsd_head_flag;
 MALLOC_DEFINE(M_NFSUID, "NFS uid", "Nfs uid mapping structure");
 
 #ifdef NFS
+kmutex_t nfs_iodlist_lock;
 struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 int nfs_niothreads = -1; /* == "0, and has never been set" */
 #endif
@@ -1017,17 +1018,20 @@ nfssvc_iod(void *arg)
 	 * Assign my position or return error if too many already running
 	 */
 	myiod = NULL;
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
+	mutex_enter(&nfs_iodlist_lock);
+	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		if (nfs_asyncdaemon[i].nid_lwp == NULL) {
 			myiod = &nfs_asyncdaemon[i];
+			myiod->nid_lwp = l;
+			nfs_numasync++;
 			break;
 		}
+	}
+	mutex_exit(&nfs_iodlist_lock);
 	if (myiod == NULL) {
 		goto quit;
 	}
-	myiod->nid_lwp = l;
 	myiod->nid_exiting = false;
-	nfs_numasync++;
 
 	for (;;) {
 		mutex_enter(&myiod->nid_lock);
@@ -1054,11 +1058,13 @@ nfssvc_iod(void *arg)
 			/* Take one off the front of the list */
 			TAILQ_REMOVE(&nmp->nm_bufq, bp, b_freelist);
 			nmp->nm_bufqlen--;
-			if (nmp->nm_bufqlen < 2 * nfs_numasync) {
+			if (nmp->nm_bufqlen < 2 * nmp->nm_bufqiods) {
 				cv_broadcast(&nmp->nm_aiocv);
 			}
 			mutex_exit(&nmp->nm_lock);
+			KERNEL_LOCK(1, l);
 			(void)nfs_doio(bp);
+			KERNEL_UNLOCK_ONE(l);
 			mutex_enter(&nmp->nm_lock);
 			/*
 			 * If there are more than one iod on this mount, 
@@ -1079,9 +1085,11 @@ quit:
 		KASSERT(myiod->nid_mount == NULL);
 		myiod->nid_want = false;
 		myiod->nid_mount = NULL;
-		myiod->nid_lwp = NULL;
 		mutex_exit(&myiod->nid_lock);
+		mutex_enter(&nfs_iodlist_lock);
+		myiod->nid_lwp = NULL;
 		nfs_numasync--;
+		mutex_exit(&nfs_iodlist_lock);
 	}
 
 	kthread_exit(0);
@@ -1092,6 +1100,7 @@ nfs_iodinit()
 {
 	int i;
 
+	mutex_init(&nfs_iodlist_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		struct nfs_iod *nid = &nfs_asyncdaemon[i];
 		mutex_init(&nid->nid_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -1105,6 +1114,7 @@ nfs_getset_niothreads(set)
 {
 	int i, have, start;
 
+	mutex_enter(&nfs_iodlist_lock);
 	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
 		if (nfs_asyncdaemon[i].nid_lwp != NULL)
 			have++;
@@ -1116,8 +1126,8 @@ nfs_getset_niothreads(set)
 		start = nfs_niothreads - have;
 
 		while (start > 0) {
-			kthread_create(PRI_NONE, 0, NULL, nfssvc_iod, NULL,
-			    NULL, "nfsio");
+			kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+			    nfssvc_iod, NULL, NULL, "nfsio");
 			start--;
 		}
 
@@ -1136,6 +1146,7 @@ nfs_getset_niothreads(set)
 		if (nfs_niothreads >= 0)
 			nfs_niothreads = have;
 	}
+	mutex_exit(&nfs_iodlist_lock);
 }
 
 /*
