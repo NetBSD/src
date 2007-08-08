@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46.16.5 2007/08/02 22:14:12 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.6 2007/08/08 04:19:10 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.5 2007/08/02 22:14:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.6 2007/08/08 04:19:10 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ struct wdc_obio_softc {
 	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
 	struct wdc_regs sc_wdc_regs;
-	struct powerpc_bus_space sc_bus_space;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_dmaconf[2];	/* per target value of CONFIG_REG */
@@ -168,33 +167,22 @@ wdc_obio_attach(parent, self, aux)
 	wdr->cmd_iot = wdr->ctl_iot =
 		macppc_make_bus_space_tag(ca->ca_baseaddr + ca->ca_reg[0], 4);
 #endif
-	wdr->cmd_iot = wdr->ctl_iot = &sc->sc_bus_space;
-	sc->sc_bus_space.pbs_flags =
-	    ca->ca_tag->pbs_flags & ~_BUS_SPACE_STRIDE_MASK;
-	sc->sc_bus_space.pbs_flags |= 4;
-	sc->sc_bus_space.pbs_offset = ca->ca_baseaddr + ca->ca_reg[0];
-	sc->sc_bus_space.pbs_base = 0;
-	sc->sc_bus_space.pbs_limit = WDC_REG_NPORTS << 4;
-	sc->sc_bus_space.pbs_extent = extent_create("wdc_obio", 0, 0x100000,
-	    M_DEVBUF, NULL, 0, EX_WAITOK);
+	wdr->cmd_iot = wdr->ctl_iot = ca->ca_tag;
 
-	if (bus_space_init(&sc->sc_bus_space, NULL, NULL, 0))
-		panic("bus_space_init failed");
-
-	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
-	    &wdr->cmd_baseioh) ||
+	if (bus_space_map(wdr->cmd_iot, ca->ca_baseaddr + ca->ca_reg[0],
+	    WDC_REG_NPORTS << 4, 0, &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
+			WDC_AUXREG_OFFSET << 4, 1, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
 			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i << 4,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-			    WDC_REG_NPORTS);
+			    WDC_REG_NPORTS << 4);
 			printf("%s: couldn't subregion registers\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
@@ -205,7 +193,7 @@ wdc_obio_attach(parent, self, aux)
 	wdr->data32ioh = wdr->cmd_ioh;
 #endif
 
-	sc->sc_ih = intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
+	sc->sc_ih = intr_establish(intr, IST_EDGE, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
@@ -464,7 +452,7 @@ wdc_obio_detach(self, flags)
 
 	/* Unmap our i/o space. */
 	bus_space_unmap(sc->sc_wdcdev.regs->cmd_iot,
-			sc->sc_wdcdev.regs->cmd_baseioh, WDC_REG_NPORTS);
+			sc->sc_wdcdev.regs->cmd_baseioh, WDC_REG_NPORTS << 4);
 
 	/* Unmap DMA registers. */
 	/* XXX unmapiodev(sc->sc_dmareg); */
