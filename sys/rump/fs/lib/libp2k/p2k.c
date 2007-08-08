@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.3 2007/08/07 21:24:40 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.4 2007/08/08 14:09:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -240,7 +240,9 @@ p2k_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 {
 	struct componentname *cn;
 	struct vnode *vp;
-	struct vattr va;
+	enum vtype vtype;
+	voff_t vsize;
+	dev_t rdev;
 	int rv;
 
 	cn = P2K_MAKECN(pcn);
@@ -252,17 +254,11 @@ p2k_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		return rv;
 	}
 
-	rv = VOP_GETATTR(vp, &va, NULL, curlwp);
-	/* XXX: "unlookup" */
-	if (rv) {
-		warn("%s: lookup succesful but failed GETATTR", __func__);
-		abort();
-	}
-
 	puffs_newinfo_setcookie(pni, vp);
-	puffs_newinfo_setvtype(pni, va.va_type);
-	puffs_newinfo_setsize(pni, va.va_size);
-	puffs_newinfo_setrdev(pni, va.va_rdev);
+	rump_getvninfo(vp, &vtype, &vsize, &rdev);
+	puffs_newinfo_setvtype(pni, vtype);
+	puffs_newinfo_setsize(pni, vsize);
+	puffs_newinfo_setrdev(pni, rdev);
 
 	return 0;
 }
