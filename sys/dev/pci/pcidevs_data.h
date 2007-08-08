@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.886 2007/08/06 22:40:08 martin Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.887 2007/08/08 12:53:05 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.887 2007/08/06 22:39:31 martin Exp
+ *	NetBSD: pcidevs,v 1.888 2007/08/08 12:52:41 tron Exp
  */
 
 /*
@@ -2240,6 +2240,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Ralink Technologies",
 	},
 	{
+	    PCI_VENDOR_ATTANSIC,
+	    "Attansic Technologies",
+	},
+	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs (2nd PCI Vendor ID)",
 	},
@@ -2380,7 +2384,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 585;
+const int pci_nvendors = 586;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -3578,6 +3582,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
 	    "ISDN",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA,
+	    "L1 Gigabit Ethernet Adapter",
+	},
+	{
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_100,
+	    "L2 100 Mbit Ethernet Adapter",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3150,
@@ -12280,6 +12292,10 @@ static const struct pci_product pci_products[] = {
 	    "VT8363 (Apollo KT133) Host Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_0351,
+	    "VT3351 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
 	    "VT8371 (Apollo KX133) Host Bridge",
 	},
@@ -12364,6 +12380,10 @@ static const struct pci_product pci_products[] = {
 	    "KT880 CPU to PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_1351,
+	    "VT3351 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	    "VT82C586 IDE Controller",
 	},
@@ -12374,6 +12394,26 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_2,
 	    "KT880 CPU to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_2351,
+	    "VT3351 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PPB_287A,
+	    "VT8251 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PCIE1,
+	    "VT8251 PCIE Root Port1",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PCIE2,
+	    "VT8251 PCIE Root Port2",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_VLINK,
+	    "VT8251 Ultra VLINK Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
@@ -12460,6 +12500,10 @@ static const struct pci_product pci_products[] = {
 	    "K8HTB Host",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID,
+	    "VT6421 Serial RAID Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3314_IG,
 	    "VT3314 CN900 UniChrome Integrated Graphics",
 	},
@@ -12468,8 +12512,8 @@ static const struct pci_product pci_products[] = {
 	    "VT8237R Integrated SATA Controller",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID,
-	    "VT6421 Serial RAID Controller",
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_3351,
+	    "VT3351 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_3,
@@ -12500,8 +12544,28 @@ static const struct pci_product pci_products[] = {
 	    "VT8237A/VT82C586A PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237S_ISA,
+	    "VT8237S PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_PPB,
+	    "VT8237A PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HB,
+	    "VT8237A Host Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4,
 	    "KT880 CPU to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_4351,
+	    "VT3351 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC,
+	    "VT3351 I/O APIC Interrupt Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
@@ -12514,6 +12578,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_5,
 	    "KT880 CPU to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_7351,
+	    "VT3351 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
@@ -12548,6 +12616,10 @@ static const struct pci_product pci_products[] = {
 	    "VT8605 (Apollo ProMedia 133) Host-AGP Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_A238,
+	    "K8T890 PCI-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633AGP,
 	    "VT8633 (Apollo Pro 266) CPU-AGP Bridge",
 	},
@@ -12566,6 +12638,26 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP,
 	    "VT8377CE CPU-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3237_PPB,
+	    "K8T890 North / VT8237 South PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_C238,
+	    "K8T890 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_D238,
+	    "K8T890 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_E238,
+	    "K8T890 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_F238,
+	    "K8T890 PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
@@ -13060,4 +13152,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2669;
+const int pci_nproducts = 2691;
