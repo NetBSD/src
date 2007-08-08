@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.3 2007/08/08 09:06:11 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.4 2007/08/08 13:12:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -205,33 +205,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 {
 
 	panic("%s: not implemented", __func__);
-}
-
-/*
- * XXX: ok, this is stupid
- */
-#undef bswap16
-uint16_t
-bswap16(uint16_t val)
-{
-
-	return rumpuser_bswap16(val);
-}
-
-#undef bswap32
-uint32_t
-bswap32(uint32_t value)
-{
-
-	return rumpuser_bswap32(value);
-}
-
-#undef bswap64
-uint64_t
-bswap64(uint64_t value)
-{
-
-	return rumpuser_bswap64(value);
 }
 
 void
