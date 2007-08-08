@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.33 2007/06/24 19:26:58 rumble Exp $
+.\"	$NetBSD: pmap.9,v 1.34 2007/08/08 21:36:43 pooka Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 18, 2006
+.Dd August 9, 2007
 .Dt PMAP 9
 .Os
 .Sh NAME
@@ -76,7 +76,7 @@
 .Fn "pmap_protect" "pmap_t pmap" "vaddr_t sva" "vaddr_t eva" "vm_prot_t prot"
 .Ft void
 .Fn "pmap_unwire" "pmap_t pmap" "vaddr_t va"
-.Ft boolean_t
+.Ft bool
 .Fn "pmap_extract" "pmap_t pmap" "vaddr_t va" "paddr_t *pap"
 .Ft void
 .Fn "pmap_kenter_pa" "vaddr_t va" "paddr_t pa" "vm_prot_t prot"
@@ -99,13 +99,13 @@
 .Fn "pmap_copy_page" "paddr_t src" "paddr_t dst"
 .Ft void
 .Fn "pmap_page_protect" "struct vm_page *pg" "vm_prot_t prot"
-.Ft boolean_t
+.Ft bool
 .Fn "pmap_clear_modify" "struct vm_page *pg"
-.Ft boolean_t
+.Ft bool
 .Fn "pmap_clear_reference" "struct vm_page *pg"
-.Ft boolean_t
+.Ft bool
 .Fn "pmap_is_modified" "struct vm_page *pg"
-.Ft boolean_t
+.Ft bool
 .Fn "pmap_is_referenced" "struct vm_page *pg"
 .Ft paddr_t
 .Fn "pmap_phys_address" "int cookie"
@@ -586,7 +586,7 @@ Clear the
 .Dq wired
 attribute on the mapping for virtual address
 .Fa va .
-.It boolean_t Fn "pmap_extract" "pmap_t pmap" "vaddr_t va" "paddr_t *pap"
+.It bool Fn "pmap_extract" "pmap_t pmap" "vaddr_t va" "paddr_t *pap"
 This function extracts a mapping from the specified physical map.
 It serves two purposes: to determine if a mapping exists for the specified
 virtual address, and to determine what physical address is mapped at the
@@ -814,7 +814,7 @@ no bits set in
 .Fa prot ) .
 Access permissions must never be added to a page as a result of
 this call.
-.It boolean_t Fn "pmap_clear_modify" "struct vm_page *pg"
+.It bool Fn "pmap_clear_modify" "struct vm_page *pg"
 Clear the
 .Dq modified
 attribute on the page
@@ -831,7 +831,7 @@ indicating whether or not the
 attribute was set on the page before it was cleared.
 .Pp
 Note that this function may be provided as a C pre-processor macro.
-.It boolean_t Fn "pmap_clear_reference" "struct vm_page *pg"
+.It bool Fn "pmap_clear_reference" "struct vm_page *pg"
 Clear the
 .Dq referenced
 attribute on the page
@@ -848,14 +848,14 @@ indicating whether or not the
 attribute was set on the page before it was cleared.
 .Pp
 Note that this function may be provided as a C pre-processor macro.
-.It boolean_t Fn "pmap_is_modified" "struct vm_page *pg"
+.It bool Fn "pmap_is_modified" "struct vm_page *pg"
 Test whether or not the
 .Dq modified
 attribute is set on page
 .Fa pg .
 .Pp
 Note that this function may be provided as a C pre-processor macro.
-.It boolean_t Fn "pmap_is_referenced" "struct vm_page *pg"
+.It bool Fn "pmap_is_referenced" "struct vm_page *pg"
 Test whether or not the
 .Dq referenced
 attribute is set on page
