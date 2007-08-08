@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.18 2007/08/08 00:51:18 kristerw Exp $	*/
+/*	$NetBSD: atexit.c,v 1.19 2007/08/08 01:05:34 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.18 2007/08/08 00:51:18 kristerw Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.19 2007/08/08 01:05:34 kristerw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -191,9 +191,11 @@ __cxa_finalize(void *dso)
 	 * When the depth 1 caller sees those, it will simply unlink them
 	 * for us.
 	 */
+again:
 	for (prevp = &atexit_handler_stack; (ah = (*prevp)) != NULL;) {
 		if (dso == NULL || dso == ah->ah_dso || ah->ah_atexit == NULL) {
 			if (ah->ah_atexit != NULL) {
+				void *p = atexit_handler_stack;
 				if (ah->ah_dso != NULL) {
 					cxa_func = ah->ah_cxa_atexit;
 					ah->ah_cxa_atexit = NULL;
@@ -203,6 +205,9 @@ __cxa_finalize(void *dso)
 					ah->ah_atexit = NULL;
 					(*atexit_func)();
 				}
+				/* Restart if new atexit handler was added. */
+				if (p != atexit_handler_stack)
+					goto again;
 			}
 
 			if (call_depth == 1) {
