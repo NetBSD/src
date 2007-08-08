@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.20.4.1 2007/06/07 20:30:44 garbled Exp $	*/
+/*	$NetBSD: snapper.c,v 1.20.4.2 2007/08/08 05:41:20 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
@@ -670,10 +670,10 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_tag = ca->ca_tag;
-	bus_space_map(sc->sc_tag, ca->ca_reg[0], PAGE_SIZE, 0, &sc->sc_bsh);
-	bus_space_map(sc->sc_tag, ca->ca_reg[2], PAGE_SIZE,
+	bus_space_map(sc->sc_tag, ca->ca_reg[0], ca->ca_reg[1], 0, &sc->sc_bsh);
+	bus_space_map(sc->sc_tag, ca->ca_reg[2], ca->ca_reg[3],
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_odmah);
-	bus_space_map(sc->sc_tag, ca->ca_reg[4], PAGE_SIZE,
+	bus_space_map(sc->sc_tag, ca->ca_reg[4], ca->ca_reg[5],
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_idmah);
 	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
 	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
