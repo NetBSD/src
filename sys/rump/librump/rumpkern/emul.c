@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.2 2007/08/08 07:50:33 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.3 2007/08/08 09:06:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,8 +46,6 @@
 #include "rump.h"
 #include "rumpuser.h"
 
-#define MAXUSERS 32
-int desiredvnodes = NVNODE;
 time_t time_second = 1;
 
 kmutex_t proclist_mutex;
