@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.17 2005/06/12 05:21:28 lukem Exp $	*/
+/*	$NetBSD: atexit.c,v 1.18 2007/08/08 00:51:18 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.17 2005/06/12 05:21:28 lukem Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.18 2007/08/08 00:51:18 kristerw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -101,7 +101,7 @@ atexit_handler_alloc(void *dso)
 	if (dso == NULL) {
 		for (i = 0; i < NSTATIC_HANDLERS; i++) {
 			ah = &atexit_handler0[i];
-			if (ah->ah_atexit == NULL) {
+			if (ah->ah_atexit == NULL && ah->ah_next == NULL) {
 				/* Slot is free. */
 				return (ah);
 			}
@@ -207,7 +207,9 @@ __cxa_finalize(void *dso)
 
 			if (call_depth == 1) {
 				*prevp = ah->ah_next;
-				if (! STATIC_HANDLER_P(ah)) {
+				if (STATIC_HANDLER_P(ah))
+					ah->ah_next = NULL;
+				else {
 					ah->ah_next = dead_handlers;
 					dead_handlers = ah;
 				}
