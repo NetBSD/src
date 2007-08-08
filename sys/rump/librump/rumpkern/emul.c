@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.1 2007/08/05 22:28:07 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.2 2007/08/08 07:50:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -265,6 +265,13 @@ getnanotime(struct timespec *ts)
 {
 
 	nanotime(ts);
+}
+
+void
+microtime(struct timeval *tv)
+{
+
+	rumpuser_gettimeofday(tv);
 }
 
 void
