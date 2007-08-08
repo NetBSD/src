@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.3 2007/08/07 21:23:19 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.4 2007/08/08 14:09:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -96,6 +96,8 @@ void
 rump_putnode(struct vnode *vp)
 {
 
+	if (vp->v_specinfo)
+		rumpuser_free(vp->v_specinfo);
 	rumpuser_free(vp);
 }
 
@@ -405,10 +407,13 @@ vfs_unbusy(struct mount *mp)
 }
 
 struct vnode *
-checkalias(struct vnode *nvp, dev_t ndvp_rdev, struct mount *mp)
+checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 {
 
 	/* Can this cause any funnies? */
+
+	nvp->v_specinfo = rumpuser_malloc(sizeof(struct specinfo), 0);
+	nvp->v_rdev = nvp_rdev;
 	return NULLVP;
 }
 
