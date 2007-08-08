@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.46.16.6 2007/08/08 04:19:10 macallan Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.46.16.7 2007/08/08 06:13:09 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.6 2007/08/08 04:19:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.46.16.7 2007/08/08 06:13:09 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ wdc_obio_attach(parent, self, aux)
 	struct wdc_regs *wdr;
 	struct confargs *ca = aux;
 	struct ata_channel *chp = &sc->sc_channel;
-	int intr, i;
+	int intr, i, type = IST_EDGE;
 	int use_dma = 0;
 	char path[80], compat[32];
 
@@ -148,6 +148,10 @@ wdc_obio_attach(parent, self, aux)
 	if (ca->ca_nintr >= 4 && ca->ca_nreg >= 8) {
 		intr = ca->ca_intr[0];
 		printf(" irq %d", intr);
+		if (ca->ca_nintr > 8) {
+			type = ca->ca_intr[1] ? IST_LEVEL : IST_EDGE;
+		}
+		printf(", %s triggered", (type == IST_EDGE) ? "edge" : "level");
 	} else if (ca->ca_nintr == -1) {
 		intr = WDC_DEFAULT_PIO_IRQ;
 		printf(" irq property not found; using %d", intr);
@@ -193,7 +197,7 @@ wdc_obio_attach(parent, self, aux)
 	wdr->data32ioh = wdr->cmd_ioh;
 #endif
 
-	sc->sc_ih = intr_establish(intr, IST_EDGE, IPL_BIO, wdcintr, chp);
+	sc->sc_ih = intr_establish(intr, type, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
