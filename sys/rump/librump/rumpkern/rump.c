@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.3 2007/08/07 20:40:53 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.4 2007/08/08 14:09:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,6 +37,8 @@
 #include <sys/vnode.h>
 
 #include <machine/cpu.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include "rump.h"
 #include "rumpuser.h"
@@ -199,4 +201,16 @@ rump_fakeblk_deregister(const char *path)
 
 	LIST_REMOVE(fblk, entries);
 	rumpuser_free(fblk);
+}
+
+void
+rump_getvninfo(struct vnode *vp, enum vtype *vtype, voff_t *vsize, dev_t *vdev)
+{
+
+	*vtype = vp->v_type;
+	*vsize = vp->v_size;
+	if (vp->v_specinfo)
+		*vdev = vp->v_rdev;
+	else
+		*vdev = 0;
 }
