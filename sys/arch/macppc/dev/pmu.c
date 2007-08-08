@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.5.4.5 2007/08/02 05:34:33 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.5.4.6 2007/08/08 22:11:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.5 2007/08/02 05:34:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.5.4.6 2007/08/08 22:11:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,6 +356,13 @@ next:
 		printf("%s: enabling ohare backlight control\n",
 		    device_xname(dev));
 		sc->sc_flags |= PMU_HAS_BACKLIGHT_CONTROL;
+		cmd[0] = 0;
+		cmd[1] = 0;
+		memset(resp, 0, 6);
+		if (pmu_send(sc, PMU_READ_BRIGHTNESS, 1, cmd, 16, resp) > 1) {
+			sc->sc_brightness_wanted = resp[1];
+			pmu_update_brightness(sc);
+		}
 	}
 
 	/* attach batteries */
@@ -965,9 +972,7 @@ pmu_thread(void *cookie)
 					pmu_eject_card(sc, i);
 			}
 		}
-#if NLWPM > 0
-		lwpm_poll();
-#endif
+
 		/* see if we need to update brightness */
 		if (sc->sc_brightness_wanted != sc->sc_brightness) {
 			pmu_update_brightness(sc);
@@ -975,7 +980,9 @@ pmu_thread(void *cookie)
 
 		/* see if we need to update audio volume */
 		if (sc->sc_volume_wanted != sc->sc_volume) {
-			//set_volume(sc->sc_volume_wanted);
+#if 0
+			set_volume(sc->sc_volume_wanted);
+#endif
 			sc->sc_volume = sc->sc_volume_wanted;
 		}
 
