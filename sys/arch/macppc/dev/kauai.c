@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.19.36.4 2007/08/02 17:40:24 macallan Exp $	*/
+/*	$NetBSD: kauai.c,v 1.19.36.5 2007/08/08 05:39:26 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.36.4 2007/08/02 17:40:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.19.36.5 2007/08/08 05:39:26 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ struct kauai_softc {
 	struct ata_channel sc_channel;
 	struct wdc_regs sc_wdc_regs;
 	struct ata_queue sc_queue;
-	struct powerpc_bus_space sc_iot;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
 	u_int sc_piotiming_r[2];
@@ -156,26 +155,20 @@ kauai_attach(parent, self, aux)
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
-	sc->sc_iot.pbs_offset = regbase;
-	sc->sc_iot.pbs_base = 0;
-	sc->sc_iot.pbs_limit = WDC_REG_NPORTS << 4;
-	sc->sc_iot.pbs_flags = _BUS_SPACE_LITTLE_ENDIAN |  4;
-	bus_space_init(&sc->sc_iot, "kauai io", NULL, 0);
+	wdr->cmd_iot = wdr->ctl_iot = pa->pa_memt;
 
-	wdr->cmd_iot = wdr->ctl_iot = &sc->sc_iot;
-
-	if (bus_space_map(wdr->cmd_iot, 0, WDC_REG_NPORTS, 0,
+	if (bus_space_map(wdr->cmd_iot, regbase, WDC_REG_NPORTS << 4, 0,
 	    &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-			WDC_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
+			WDC_AUXREG_OFFSET << 4, 1, &wdr->ctl_ioh)) {
 		printf("%s: couldn't map registers\n", self->dv_xname);
 		return;
 	}
 	for (i = 0; i < WDC_NREG; i++) {
-		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
+		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i << 4,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-			    WDC_REG_NPORTS);
+			    WDC_REG_NPORTS << 4);
 			printf("%s: couldn't subregion registers\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
