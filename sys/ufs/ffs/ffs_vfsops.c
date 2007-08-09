@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.207 2007/07/31 21:14:20 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.208 2007/08/09 07:34:28 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.207 2007/07/31 21:14:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.208 2007/08/09 07:34:28 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -822,7 +822,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
-	TAILQ_INIT(&ump->um_snapshots);
 	ump->um_fs = fs;
 	ump->um_ops = &ffs_ufsops;
 
@@ -1598,6 +1597,7 @@ ffs_init(void)
 	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
 		  "dino2pl", &pool_allocator_nointr, IPL_NONE);
 	softdep_initialize();
+	ffs_snapshot_init();
 	ufs_init();
 }
 
@@ -1615,6 +1615,7 @@ ffs_done(void)
 		return;
 
 	/* XXX softdep cleanup ? */
+	ffs_snapshot_fini();
 	ufs_done();
 	pool_destroy(&ffs_dinode2_pool);
 	pool_destroy(&ffs_dinode1_pool);

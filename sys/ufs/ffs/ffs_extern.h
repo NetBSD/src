@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.58 2007/07/31 21:14:20 pooka Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.59 2007/08/09 07:34:27 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -136,6 +136,8 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
 /*
  * Snapshot function prototypes.
  */
+void	ffs_snapshot_init(void);
+void	ffs_snapshot_fini(void);
 int	ffs_snapblkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
 void	ffs_snapremove(struct vnode *);
 int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);
