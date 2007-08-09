@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.1 2007/08/09 22:01:26 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.2 2007/08/09 22:03:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,11 @@
  * modify of nodes in the sysctl namespace in addition to namespace
  * traversal.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: sysctlfs.c,v 1.2 2007/08/09 22:03:20 pooka Exp $");
+#endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/sysctl.h>

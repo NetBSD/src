@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.7 2007/07/20 13:18:09 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.8 2007/08/09 22:03:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: puffs_portal.c,v 1.8 2007/08/09 22:03:20 pooka Exp $");
+#endif /* !lint */
 
 #include <sys/types.h>
 #include <sys/wait.h>
