@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.8 2007/08/09 13:53:36 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.9 2007/08/09 20:57:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,7 @@
  *  + anon objects & pager
  *  + vnode objects & pager
  *  + misc support routines
+ *  + kmem
  */
 
 /*
@@ -46,6 +47,7 @@
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_prot.h>
@@ -445,4 +447,34 @@ uvn_clean_p(struct uvm_object *uobj)
 	if (uobj->uo_npages < 0)
 		panic("%s: uo_npages < 0", __func__);
 	return uobj->uo_npages == 0;
+}
+
+/*
+ * Kmem
+ */
+
+void *
+kmem_alloc(size_t size, km_flag_t kmflag)
+{
+
+	return rumpuser_malloc(size, kmflag == KM_NOSLEEP);
+}
+
+void *
+kmem_zalloc(size_t size, km_flag_t kmflag)
+{
+	void *rv;
+
+	rv = kmem_alloc(size, kmflag);
+	if (rv)
+		memset(rv, 0, size);
+
+	return rv;
+}
+
+void
+kmem_free(void *p, size_t size)
+{
+
+	rumpuser_free(p);
 }
