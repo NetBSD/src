@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.71 2006/08/26 16:11:05 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.72 2007/08/09 15:23:02 he Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
 .PATH: ${ARCHDIR}/net ${.CURDIR}/net
 
 SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
-	getnetnamadr.c getnetent.c \
+	getnetnamadr.c getnetent.c getpeereid.c \
 	getprotobyname.c getprotobynumber.c getprotoent.c \
 	getprotobyname_r.c getprotobynumber_r.c getprotoent_r.c \
 	getservbyname.c getservbyport.c getservent.c \
@@ -42,7 +42,7 @@ nslexer.c: nslexer.l nsparser.h
 .include "${ARCHDIR}/net/Makefile.inc"
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getifaddrs.3 \
-	getnetent.3 getprotoent.3 \
+	getnetent.3 getprotoent.3 getpeereid.3 \
 	getservent.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 \
 	nsdispatch.3 rcmd.3 resolver.3 sockatmark.3
 
