@@ -1,4 +1,4 @@
-/*	$NetBSD: buffercache.c,v 1.2 2007/08/09 08:56:44 pooka Exp $	*/
+/*	$NetBSD: buffercache.c,v 1.3 2007/08/09 09:11:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -53,6 +53,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, struct kauth_cred *cred,
 	bp = getblk(vp, blkno, size, 0, 0);
 	bp->b_flags = B_READ;
 	VOP_STRATEGY(vp, bp);
+	bp->b_flags = B_BUSY;
 
 	*bpp = bp;
 	return 0;

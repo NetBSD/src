@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.7 2007/08/09 08:56:44 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.8 2007/08/09 09:11:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,16 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 {
 
 	panic("%s: not implemented", __func__);
+}
+
+int
+genfs_islocked(void *v)
+{
+	struct vop_islocked_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+
+	return lockstatus(ap->a_vp->v_vnlock);
 }
 
 int
