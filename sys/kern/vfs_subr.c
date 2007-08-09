@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.298 2007/08/09 08:51:21 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.299 2007/08/09 20:55:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.298 2007/08/09 08:51:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.299 2007/08/09 20:55:30 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -144,27 +144,10 @@ MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
  * Local declarations.
  */
 
-static specificdata_domain_t mount_specificdata_domain;
-
 static void insmntque(struct vnode *, struct mount *);
 static int getdevvp(dev_t, struct vnode **, enum vtype);
 static void vclean(struct vnode *, int, struct lwp *);
 static struct vnode *getcleanvnode(struct lwp *);
-
-/*
- * Initialize the vnode management data structures.
- */
-void
-vntblinit(void)
-{
-
-	mount_specificdata_domain = specificdata_domain_create();
-
-	/*
-	 * Initialize the filesystem syncer.
-	 */
-	vn_initialize_syncerd();
-}
 
 int
 vfs_drainvnodes(long target, struct lwp *l)
@@ -2097,75 +2080,4 @@ done:
 		vrele(rootvp);
 	}
 	return (error);
-}
-
-/*
- * mount_specific_key_create --
- *	Create a key for subsystem mount-specific data.
- */
-int
-mount_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
-{
-
-	return (specificdata_key_create(mount_specificdata_domain, keyp, dtor));
-}
-
-/*
- * mount_specific_key_delete --
- *	Delete a key for subsystem mount-specific data.
- */
-void
-mount_specific_key_delete(specificdata_key_t key)
-{
-
-	specificdata_key_delete(mount_specificdata_domain, key);
-}
-
-/*
- * mount_initspecific --
- *	Initialize a mount's specificdata container.
- */
-void
-mount_initspecific(struct mount *mp)
-{
-	int error;
-
-	error = specificdata_init(mount_specificdata_domain,
-				  &mp->mnt_specdataref);
-	KASSERT(error == 0);
-}
-
-/*
- * mount_finispecific --
- *	Finalize a mount's specificdata container.
- */
-void
-mount_finispecific(struct mount *mp)
-{
-
-	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
-}
-
-/*
- * mount_getspecific --
- *	Return mount-specific data corresponding to the specified key.
- */
-void *
-mount_getspecific(struct mount *mp, specificdata_key_t key)
-{
-
-	return (specificdata_getspecific(mount_specificdata_domain,
-					 &mp->mnt_specdataref, key));
-}
-
-/*
- * mount_setspecific --
- *	Set mount-specific data corresponding to the specified key.
- */
-void
-mount_setspecific(struct mount *mp, specificdata_key_t key, void *data)
-{
-
-	specificdata_setspecific(mount_specificdata_domain,
-				 &mp->mnt_specdataref, key, data);
 }

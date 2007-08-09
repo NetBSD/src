@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.2 2007/07/30 08:45:26 pooka Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.3 2007/08/09 20:55:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.2 2007/07/30 08:45:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.3 2007/08/09 20:55:30 pooka Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.2 2007/07/30 08:45:26 pooka Exp $");
 #include <sys/systm.h>
 #include <sys/vnode.h>
 
+#include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_ddb.h>
@@ -124,6 +125,8 @@ struct simplelock global_v_numoutput_slock = SIMPLELOCK_INITIALIZER;
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
 
+static specificdata_domain_t mount_specificdata_domain;
+
 /*
  * These define the root filesystem and device.
  */
@@ -135,6 +138,21 @@ void printlockedvnodes(void);
 #endif
 
 long numvnodes;
+
+/*
+ * Initialize the vnode management data structures.
+ */
+void
+vntblinit(void)
+{
+
+	mount_specificdata_domain = specificdata_domain_create();
+
+	/*
+	 * Initialize the filesystem syncer.
+	 */
+	vn_initialize_syncerd();
+}
 
 /*
  * Lookup a mount point by filesystem identifier.
@@ -485,6 +503,77 @@ void
 setrootfstime(time_t t)
 {
 	rootfstime = t;
+}
+
+/*
+ * mount_specific_key_create --
+ *	Create a key for subsystem mount-specific data.
+ */
+int
+mount_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
+{
+
+	return (specificdata_key_create(mount_specificdata_domain, keyp, dtor));
+}
+
+/*
+ * mount_specific_key_delete --
+ *	Delete a key for subsystem mount-specific data.
+ */
+void
+mount_specific_key_delete(specificdata_key_t key)
+{
+
+	specificdata_key_delete(mount_specificdata_domain, key);
+}
+
+/*
+ * mount_initspecific --
+ *	Initialize a mount's specificdata container.
+ */
+void
+mount_initspecific(struct mount *mp)
+{
+	int error;
+
+	error = specificdata_init(mount_specificdata_domain,
+				  &mp->mnt_specdataref);
+	KASSERT(error == 0);
+}
+
+/*
+ * mount_finispecific --
+ *	Finalize a mount's specificdata container.
+ */
+void
+mount_finispecific(struct mount *mp)
+{
+
+	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
+}
+
+/*
+ * mount_getspecific --
+ *	Return mount-specific data corresponding to the specified key.
+ */
+void *
+mount_getspecific(struct mount *mp, specificdata_key_t key)
+{
+
+	return (specificdata_getspecific(mount_specificdata_domain,
+					 &mp->mnt_specdataref, key));
+}
+
+/*
+ * mount_setspecific --
+ *	Set mount-specific data corresponding to the specified key.
+ */
+void
+mount_setspecific(struct mount *mp, specificdata_key_t key, void *data)
+{
+
+	specificdata_setspecific(mount_specificdata_domain,
+				 &mp->mnt_specdataref, key, data);
 }
 
 #ifdef DDB
