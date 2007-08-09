@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.7 2007/08/09 08:56:45 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.8 2007/08/09 13:53:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -136,8 +136,6 @@ rump_vopwrite_fault(struct vnode *vp, voff_t offset, size_t len,
 	rv = VOP_GETPAGES(vp, trunc_page(offset), pgs, &npages, 0, 0, 0, 0);
 	if (rv)
 		return rv;
-
-	assert(npages == len2npages(offset, len));
 
 	return 0;
 }

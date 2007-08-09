@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.10 2007/08/09 11:59:16 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.11 2007/08/09 13:53:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -197,6 +197,8 @@ genfs_getpages(void *v)
 	printf("first page offset 0x%x\n", (int)(curoff + bufoff));
 
 	for (i = 0; i < count; i++, bufoff += PAGE_SIZE) {
+		if (curoff + bufoff >= endoff)
+			break;
 		pg = rumpvm_findpage(&vp->v_uobj, curoff + bufoff);
 		printf("got page %p (off 0x%x)\n", pg, (int)(curoff+bufoff));
 		if (pg == NULL) {
@@ -206,6 +208,7 @@ genfs_getpages(void *v)
 		}
 		ap->a_m[i] = pg;
 	}
+	*ap->a_count = i;
 
 	rumpuser_free(tmpbuf);
 
@@ -239,7 +242,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	struct buf buf;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, *pg_next;
-	voff_t smallest = -1;
+	voff_t smallest;
 	voff_t curoff, bufoff;
 	size_t xfersize;
 	int bshift = vp->v_mount->mnt_fs_bshift;
@@ -247,6 +250,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
  restart:
 	/* check if all pages are clean */
+	smallest = -1;
 	for (pg = TAILQ_FIRST(&uobj->memq); pg; pg = pg_next) {
 		pg_next = TAILQ_NEXT(pg, listq);
 		if (pg->flags & PG_CLEAN) {
