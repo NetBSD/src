@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.297 2007/08/06 17:09:11 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.298 2007/08/09 08:51:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.297 2007/08/06 17:09:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.298 2007/08/09 08:51:21 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1129,8 +1129,8 @@ vput(struct vnode *vp)
  * Vnode release.
  * If count drops to zero, call inactive routine and return to freelist.
  */
-void
-vrele(struct vnode *vp)
+static void
+do_vrele(struct vnode *vp, int doinactive, int onhead)
 {
 	struct lwp *l = curlwp;		/* XXX */
 
@@ -1154,18 +1154,41 @@ vrele(struct vnode *vp)
 	 * Insert at tail of LRU list.
 	 */
 	simple_lock(&vnode_free_list_slock);
-	if (vp->v_holdcnt > 0)
+	if (vp->v_holdcnt > 0) {
 		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-	else
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	} else {
+		if (onhead)
+			TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+		else
+			TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	}
 	simple_unlock(&vnode_free_list_slock);
 	if (vp->v_flag & VEXECMAP) {
 		uvmexp.execpages -= vp->v_uobj.uo_npages;
 		uvmexp.filepages += vp->v_uobj.uo_npages;
 	}
 	vp->v_flag &= ~(VTEXT|VEXECMAP|VWRITEMAP|VMAPPED);
-	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
-		VOP_INACTIVE(vp, l);
+
+	if (doinactive) {
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
+			VOP_INACTIVE(vp, l);
+	} else {
+		simple_unlock(&vp->v_interlock);
+	}
+}
+
+void
+vrele(struct vnode *vp)
+{
+
+	do_vrele(vp, 1, 0);
+}
+
+void
+vrele2(struct vnode *vp, int onhead)
+{
+
+	do_vrele(vp, 0, onhead);
 }
 
 /*
