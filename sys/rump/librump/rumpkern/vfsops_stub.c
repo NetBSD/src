@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.3 2007/08/09 09:11:57 pooka Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.4 2007/08/09 11:59:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -75,8 +75,6 @@ VFSSTUB(genfs_poll)
 VFSSTUB(genfs_revoke)
 VFSSTUB(genfs_kqfilter)
 VFSSTUB(genfs_lease_check)
-VFSSTUB(genfs_mmap)
-VFSSTUB(genfs_seek)
 VFSSTUB(genfs_compat_getpages)
 
 VFSSTUB_RV(genfs_lock, 0)
@@ -86,3 +84,4 @@ VFSSTUB_RV(genfs_eopnotsupp, EOPNOTSUPP)
 VFSSTUB_RV(genfs_enoioctl, EPASSTHROUGH)
 VFSSTUB_RV(genfs_badop, EOPNOTSUPP)
 VFSSTUB_RV(genfs_einval, EINVAL)
+VFSSTUB_RV(genfs_mmap, 0)
