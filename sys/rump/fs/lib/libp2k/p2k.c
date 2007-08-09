@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.5 2007/08/08 22:45:51 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.6 2007/08/09 09:54:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -546,10 +546,6 @@ p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	if (rv == 0)
 		*resid = uio.uio_resid;
 
-	/* XXX: should do this */
-#if 0
-	return VOP_PUTPAGES(opc, 0, 0, PGO_ALLPAGES);
-#endif
 	return rv;
 }
 
@@ -566,10 +562,10 @@ p2k_node_reclaim(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
 int
 p2k_node_inactive(struct puffs_cc *pcc, void *opc, const struct puffs_cid *pcid)
 {
-	struct vnode *vp;
+	struct vnode *vp = opc;
 	int rv;
 
-	vp = opc;
+	(void) VOP_PUTPAGES(opc, 0, 0, PGO_ALLPAGES);
 	rv = VOP_INACTIVE(vp, curlwp);
 	if (vp->v_data == (void *)1)
 		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N1);
