@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.6 2007/08/07 19:40:17 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.7 2007/08/09 08:56:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,7 @@ static int ubc_flags;
 struct uvm_pagerops uvm_vnodeops;
 struct uvm_pagerops aobj_pager;
 struct uvmexp uvmexp;
+struct uvm uvm;
 
 struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
@@ -322,7 +323,9 @@ rumpvm_init()
 	uvm_vnodeops.pgo_put = vn_put;
 	aobj_pager.pgo_get = ao_get;
 	aobj_pager.pgo_put = ao_put;
+
 	uvmexp.free = 1024*1024; /* XXX */
+	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
 }
 
 void
@@ -337,6 +340,57 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 
 	/* nada */
+}
+
+void
+uvm_pagewire(struct vm_page *pg)
+{
+
+	/* nada */
+}
+
+void
+uvm_pageunwire(struct vm_page *pg)
+{
+
+	/* nada */
+}
+
+vaddr_t
+uvm_pagermapin(struct vm_page **pps, int npages, int flags)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+struct vm_page *
+uvm_pagelookup(struct uvm_object *uobj, voff_t off)
+{
+
+	return rumpvm_findpage(uobj, off);
+}
+
+void
+uvm_estimatepageable(int *active, int *inactive)
+{
+
+	*active = 0;
+	*inactive = 0;
+	panic("%s: unimplemented", __func__);
+}
+
+void
+uvm_aio_biodone1(struct buf *bp)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+uvm_aio_biodone(struct buf *bp)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.1 2007/08/05 22:28:08 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.2 2007/08/09 08:56:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,4 +63,11 @@ sysctl_notavail(SYSCTLFN_ARGS)
 {
 
 	return EOPNOTSUPP;
+}
+
+int
+sysctl_lookup(SYSCTLFN_ARGS)
+{
+
+	return ENOSYS;
 }
