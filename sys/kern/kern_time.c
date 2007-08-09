@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.127 2007/08/07 11:43:35 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.128 2007/08/09 07:36:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.127 2007/08/07 11:43:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.128 2007/08/09 07:36:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1296,34 +1296,6 @@ timers_free(struct proc *p, int which)
 			pool_put(&ptimers_pool, pts);
 		}
 	}
-}
-
-/*
- * Check that a proposed value to load into the .it_value or
- * .it_interval part of an interval timer is acceptable, and
- * fix it to have at least minimal value (i.e. if it is less
- * than the resolution of the clock, round it up.)
- */
-int
-itimerfix(struct timeval *tv)
-{
-
-	if (tv->tv_sec < 0 || tv->tv_usec < 0 || tv->tv_usec >= 1000000)
-		return (EINVAL);
-	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
-		tv->tv_usec = tick;
-	return (0);
-}
-
-int
-itimespecfix(struct timespec *ts)
-{
-
-	if (ts->tv_sec < 0 || ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return (EINVAL);
-	if (ts->tv_sec == 0 && ts->tv_nsec != 0 && ts->tv_nsec < tick * 1000)
-		ts->tv_nsec = tick * 1000;
-	return (0);
 }
 
 /*
