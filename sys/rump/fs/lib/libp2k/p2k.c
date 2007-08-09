@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.6 2007/08/09 09:54:36 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.7 2007/08/09 11:59:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -165,8 +165,10 @@ p2k_run_fs(struct vfsops *vfsops, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, access);
 	PUFFSOP_SET(pops, p2k, node, getattr);
 	PUFFSOP_SET(pops, p2k, node, setattr);
+#if 0
 	PUFFSOP_SET(pops, p2k, node, poll);
 	PUFFSOP_SET(pops, p2k, node, mmap);
+#endif
 	PUFFSOP_SET(pops, p2k, node, fsync);
 	PUFFSOP_SET(pops, p2k, node, seek);
 	PUFFSOP_SET(pops, p2k, node, remove);
@@ -302,7 +304,7 @@ p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 
-	return 0;
+	return VOP_OPEN(opc, mode, NULL, curlwp);
 }
 
 int
@@ -310,7 +312,7 @@ p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 
-	return 0;
+	return VOP_CLOSE(opc, flags, NULL, curlwp);
 }
 
 int
@@ -318,7 +320,7 @@ p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 
-	return 0;
+	return VOP_ACCESS(opc, mode, NULL, curlwp);
 }
 
 int
@@ -338,22 +340,6 @@ p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
 }
 
 int
-p2k_node_poll(struct puffs_cc *pcc, void *opc, int *events,
-	const struct puffs_cid *pcid)
-{
-
-	return 0;
-}
-
-int
-p2k_node_mmap(struct puffs_cc *pcc, void *opc, int flags,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
-{
-
-	return 0;
-}
-
-int
 p2k_node_fsync(struct puffs_cc *pcc, void *opc, const struct puffs_cred *pcr,
 	int flags, off_t offlo, off_t offhi, const struct puffs_cid *pcid)
 {
@@ -366,7 +352,7 @@ p2k_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
 	const struct puffs_cred *pcr)
 {
 
-	return 0;
+	return VOP_SEEK(opc, oldoff, newoff, NULL);
 }
 
 int
@@ -437,9 +423,15 @@ p2k_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	const char *link_target)
 {
 	struct componentname *cn;
+	struct vnode *vp;
 	int rv;
 
 	cn = P2K_MAKECN(pcn_src);
+	rv = VOP_SYMLINK(opc, &vp, cn, __UNCONST(vap), __UNCONST(link_target));
+	rump_freecn(cn, 0);
+	if (rv == 0)
+		puffs_newinfo_setcookie(pni, vp);
+
 	return rv;
 }
 

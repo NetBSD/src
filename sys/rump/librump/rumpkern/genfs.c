@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.9 2007/08/09 11:18:13 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.10 2007/08/09 11:59:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -78,6 +78,22 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 
 	return lockstatus(ap->a_vp->v_vnlock);
+}
+
+int
+genfs_seek(void *v)
+{
+	struct vop_seek_args /* {
+		struct vnode *a_vp;
+		off_t a_oldoff;
+		off_t a_newoff;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+
+	if (ap->a_newoff < 0)
+		return EINVAL;
+
+	return 0;
 }
 
 int
