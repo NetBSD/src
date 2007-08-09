@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.28 2007/07/19 22:04:22 dsl Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.28.4.1 2007/08/09 02:37:11 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -278,7 +278,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	/*
-	 * No power/enable/disable machinery for PCI attac;
+	 * No power/enable/disable machinery for PCI attach;
 	 * mark the card enabled now.
 	 */
 	sc->sc_flags |= RTK_ENABLED;

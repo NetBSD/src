@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.64 2007/07/20 15:36:42 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.64.4.1 2007/08/09 02:37:28 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -227,6 +227,7 @@ struct nfs_iod {
 	bool nid_exiting;
 };
 
+extern kmutex_t nfs_iodlist_lock;
 extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 extern u_long nfsdirhashmask;
 

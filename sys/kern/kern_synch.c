@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.192.2.1 2007/08/04 12:33:14 jmcneill Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.192.2.2 2007/08/09 02:37:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.1 2007/08/04 12:33:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.192.2.2 2007/08/09 02:37:19 jmcneill Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -607,10 +607,8 @@ setrunnable(struct lwp *l)
 void
 suspendsched(void)
 {
-#ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-#endif
 	struct lwp *l;
 	struct proc *p;
 
@@ -661,12 +659,8 @@ suspendsched(void)
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
 	 * They'll trap into the kernel and suspend themselves in userret().
 	 */
-#ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
 		cpu_need_resched(ci, 0);
-#else
-	cpu_need_resched(curcpu(), 0);
-#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.36 2007/03/05 10:47:06 tsutsui Exp $	*/
+/*	$NetBSD: akbd.c,v 1.36.18.1 2007/08/09 02:36:59 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.36 2007/03/05 10:47:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.36.18.1 2007/08/09 02:36:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,13 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.36 2007/03/05 10:47:06 tsutsui Exp $");
 #include <dev/wscons/wsksymvar.h>
 #include <dev/ofw/openfirm.h>
 
+#include <dev/adb/adb_keymap.h>
+
 #include <machine/autoconf.h>
 #define KEYBOARD_ARRAY
 #include <machine/keyboard.h>
 
 #include <macppc/dev/adbvar.h>
 #include <macppc/dev/aedvar.h>
-#include <macppc/dev/akbdmap.h>
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/pm_direct.h>
 

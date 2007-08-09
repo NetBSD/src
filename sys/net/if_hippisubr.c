@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.28 2007/03/04 06:03:16 christos Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.28.14.1 2007/08/09 02:37:23 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.28 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.28.14.1 2007/08/09 02:37:23 jmcneill Exp $");
 
 #include "opt_inet.h"
 
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.28 2007/03/04 06:03:16 christos E
 #endif
 
 #define senderr(e) { error = (e); goto bad;}
-
-#define SDL(x) ((const struct sockaddr_dl *)x)
 
 #ifndef llc_snap
 #define	llc_snap	llc_un.type_snap
@@ -151,9 +149,9 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_INET:
 		if (rt) {
 			const struct sockaddr_dl *sdl =
-				(const struct sockaddr_dl *)SDL(rt->rt_gateway);
+			    satocsdl(rt->rt_gateway);
 			if (sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0)
-				bcopy(CLLADDR(sdl), &ifield, sizeof(ifield));
+				memcpy(&ifield, CLLADDR(sdl), sizeof(ifield));
 		}
 		if (!ifield)  /* XXX:  bogus check, but helps us get going */
 			senderr(EHOSTUNREACH);
@@ -165,9 +163,9 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_INET6:
 		if (rt) {
 			const struct sockaddr_dl *sdl =
-				(const struct sockaddr_dl *)SDL(rt->rt_gateway);
+			    satocsdl(rt->rt_gateway);
 			if (sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0)
-				bcopy(CLLADDR(sdl), &ifield, sizeof(ifield));
+				memcpy(&ifield, CLLADDR(sdl), sizeof(ifield));
 		}
 		if (!ifield)  /* XXX:  bogus check, but helps us get going */
 			senderr(EHOSTUNREACH);
