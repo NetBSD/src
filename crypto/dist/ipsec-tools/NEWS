@@ -1,6 +1,6 @@
 Version history:
 ----------------
-0.7???	- ??
+0.7	- 09 August 2007
 	o Xauth with pre-shared key PSK
 	o Xauth with certificates
 	o SHA2 support
