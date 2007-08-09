@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.1 2007/08/05 22:28:09 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.2 2007/08/09 11:59:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -139,17 +139,22 @@ rump_specstrategy(void *v)
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
 	ssize_t rv;
+	off_t off;
 	int error;
 
 	assert(vp->v_type == VBLK);
 	sp = vp->v_data;
 
+	off = bp->b_blkno << DEV_BSHIFT;
+	printf("specfs: %x bytes %s offset %x (%x - %x)\n", (int)bp->b_bcount,
+	    bp->b_flags & B_READ ? "READ" : "WRITE", (int)off, (int)off,
+	    (int)(off + bp->b_bcount));
 	if (bp->b_flags & B_READ)
 		rv = rumpuser_pread(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    bp->b_blkno << DEV_BSHIFT, &error);
+		    off, &error);
 	else
 		rv = rumpuser_pwrite(sp->rsp_fd, bp->b_data, bp->b_bcount,
-		    bp->b_blkno << DEV_BSHIFT, &error);
+		    off, &error);
 
 	bp->b_error = 0;
 	if (rv == -1)
