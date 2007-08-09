@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.5 2007/08/09 08:56:45 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.6 2007/08/09 09:06:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -135,7 +135,7 @@ vrele(struct vnode *vp)
 }
 
 void
-vrele2(struct vnode *vp)
+vrele2(struct vnode *vp, int onhead)
 {
 
 }
