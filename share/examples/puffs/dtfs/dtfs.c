@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.32 2007/07/27 08:29:10 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.33 2007/08/09 21:54:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -62,9 +62,10 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-bsdft] [-c hashbuckets] [-m maxreqsize] "
-	    "[-n typename]\n    [-o mntopt] [-o puffsopt] [-p prot] "
-	    "[-r rootnodetype] mountpath", getprogname());
+	fprintf(stderr, "usage: %s detrempe [-bsdft] [-c hashbuckets] "
+	    "[-m maxreqsize]\n       [-n typename] [-o mntopt] [-o puffsopt] "
+	    "[-p prot] [-r rootnodetype]\n       mountpath\n", getprogname());
+	exit(1);
 }
 
 /*
@@ -182,7 +183,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
+	if (argc != 2)
 		usage();
 
 	PUFFSOP_INIT(pops);
@@ -248,7 +249,7 @@ main(int argc, char *argv[])
 	if (maxreqsize != MAXREQMAGIC)
 		puffs_setmaxreqlen(pu, maxreqsize);
 
-	if (puffs_mount(pu,  argv[0], mntflags, puffs_getroot(pu)) == -1)
+	if (puffs_mount(pu,  argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "mount");
 	if (puffs_mainloop(pu, lflags) == -1)
 		err(1, "mainloop");
