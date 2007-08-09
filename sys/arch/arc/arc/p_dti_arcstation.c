@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.10 2007/06/26 12:03:31 tsutsui Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.10.8.1 2007/08/09 02:36:51 jmcneill Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.10 2007/06/26 12:03:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.10.8.1 2007/08/09 02:36:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.10 2007/06/26 12:03:31 tsutsu
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/platform.h>
+#include <machine/wired_map.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -251,6 +252,17 @@ p_dti_arcstation_init(void)
 {
 
 	/*
+	 * Initialize interrupt priority
+	 */
+	/*
+	 * XXX
+	 *	- rewrite spl handling to allow ISA clock > bio|tty|net
+	 * or
+	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
+	 */
+	ipl_sr_bits = dti_arcstation_ipl_sr_bits;
+
+	/*
 	 * XXX - should be enabled, if tested.
 	 *
 	 * We use safe default for now, because this platform is untested.
@@ -269,18 +281,8 @@ p_dti_arcstation_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
+	arc_init_wired_map();
 	/* no need to initialize wired TLB */
-
-	/*
-	 * Initialize interrupt priority
-	 */
-	/*
-	 * XXX
-	 *	- rewrite spl handling to allow ISA clock > bio|tty|net
-	 * or
-	 *	- use MIP3_INTERNAL_TIMER_INTERRUPT for clock
-	 */
-	ipl_sr_bits = dti_arcstation_ipl_sr_bits;
 
 	/*
 	 * common configuration for DTI platforms
