@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.31 2007/08/09 21:54:16 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.1 2007/08/09 22:01:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
