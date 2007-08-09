@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.38 2007/04/16 17:24:19 ad Exp $	*/
+/*	$NetBSD: gdt.c,v 1.38.10.1 2007/08/09 02:36:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.38 2007/04/16 17:24:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.38.10.1 2007/08/09 02:36:56 jmcneill Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -136,6 +136,7 @@ gdt_init()
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    VM_PROT_READ | VM_PROT_WRITE);
 	}
+	pmap_update(pmap_kernel());
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 	ci->ci_gdt = gdt;
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
@@ -166,6 +167,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
 		    VM_PROT_READ | VM_PROT_WRITE);
 	}
+	pmap_update(pmap_kernel());
 	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdt, gdt_count * sizeof(gdt[0]));
 	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
@@ -231,6 +233,8 @@ gdt_grow()
 			    VM_PROT_READ | VM_PROT_WRITE);
 		}
 	}
+
+	pmap_update(pmap_kernel());
 }
 
 /*

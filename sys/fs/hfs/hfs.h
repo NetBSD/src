@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.5 2007/07/31 21:14:17 pooka Exp $	*/
+/*	$NetBSD: hfs.h,v 1.5.2.1 2007/08/09 02:37:17 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 #define HFS_DEFAULT_GID	0
 #define HFS_DEFAULT_DIR_MODE	0755
 #define HFS_DEFAULT_FILE_MODE	0755
-
-MALLOC_DECLARE(M_HFSMNT);	/* defined in hfs_vfsops.c */
 
 struct hfs_args {
 	char *fspec;		/* block special device to mount */
@@ -118,6 +116,10 @@ typedef struct {
 	kauth_cred_t cred;
 	struct lwp *l;
 } hfs_libcb_argsread;
+
+#ifdef _KERNEL
+
+MALLOC_DECLARE(M_HFSMNT);	/* defined in hfs_vfsops.c */
 
 /*
  * Convenience macros
@@ -191,5 +193,7 @@ int hfs_vget_internal(struct mount *, ino_t, uint8_t, struct vnode **);
 
 /* hfs_vnops.c */
 extern int (**hfs_vnodeop_p) (void *);
+
+#endif /* _KERNEL */
 
 #endif /* !_FS_HFS_HFS_H_ */

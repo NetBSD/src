@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.48 2007/07/19 20:48:57 dyoung Exp $	*/
+/*	$NetBSD: nd6.h,v 1.48.4.1 2007/08/09 02:37:25 jmcneill Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ void nd6_llinfo_release_pkts(struct llinfo_nd6 *, struct ifnet *,
 /* nd6_nbr.c */
 void nd6_na_input(struct mbuf *, int, int);
 void nd6_na_output(struct ifnet *, const struct in6_addr *,
-	const struct in6_addr *, u_long, int, struct sockaddr *);
+	const struct in6_addr *, u_long, int, const struct sockaddr *);
 void nd6_ns_input(struct mbuf *, int, int);
 void nd6_ns_output(struct ifnet *, const struct in6_addr *,
 	const struct in6_addr *, struct llinfo_nd6 *, int);

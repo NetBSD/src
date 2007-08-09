@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.125 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.125.6.1 2007/08/09 02:37:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.125 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.125.6.1 2007/08/09 02:37:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -95,10 +95,6 @@ POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
     &pool_allocator_nointr, IPL_NONE);
-
-#ifdef __HAVE_TIMECOUNTER
-static int itimespecfix(struct timespec *);		/* XXX move itimerfix to timespecs */
-#endif /* __HAVE_TIMECOUNTER */
 
 /* Time of day and interval timer support.
  *
@@ -1319,7 +1315,6 @@ itimerfix(struct timeval *tv)
 	return (0);
 }
 
-#ifdef __HAVE_TIMECOUNTER
 int
 itimespecfix(struct timespec *ts)
 {
@@ -1330,7 +1325,6 @@ itimespecfix(struct timespec *ts)
 		ts->tv_nsec = tick * 1000;
 	return (0);
 }
-#endif /* __HAVE_TIMECOUNTER */
 
 /*
  * Decrement an interval timer by a specified number

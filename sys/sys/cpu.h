@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8.8.1 2007/08/04 12:33:16 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8.8.2 2007/08/09 02:37:28 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -64,5 +64,11 @@ struct	cpu_info *cpu_lookup(cpuid_t);
 int	cpu_setonline(struct cpu_info *, bool);
 
 extern kmutex_t cpu_lock;
+
+static inline u_int
+cpu_index(struct cpu_info *ci)
+{
+	return ci->ci_index;
+}
 
 #endif	/* !_SYS_CPU_H_ */

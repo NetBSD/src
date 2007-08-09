@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.164 2007/07/29 13:31:12 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.164.4.1 2007/08/09 02:37:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.164 2007/07/29 13:31:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.164.4.1 2007/08/09 02:37:26 jmcneill Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -755,6 +755,7 @@ again:
 	 * Find a free iod to process this request.
 	 */
 
+	mutex_enter(&nfs_iodlist_lock);
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		struct nfs_iod *iod = &nfs_asyncdaemon[i];
 
@@ -770,11 +771,15 @@ again:
 			mutex_enter(&nmp->nm_lock);
 			mutex_exit(&iod->nid_lock);
 			nmp->nm_bufqiods++;
+			if (nmp->nm_bufqlen < 2 * nmp->nm_bufqiods) {
+				cv_broadcast(&nmp->nm_aiocv);
+			}
 			gotiod = true;
 			break;
 		}
 		mutex_exit(&iod->nid_lock);
 	}
+	mutex_exit(&nfs_iodlist_lock);
 
 	/*
 	 * If none are free, we may already have an iod working on this mount
@@ -807,7 +812,7 @@ again:
 		 */
 		if (curlwp == uvm.pagedaemon_lwp) {
 	  		/* Enque for later, to avoid free-page deadlock */
-		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {
+		} else while (nmp->nm_bufqlen >= 2 * nmp->nm_bufqiods) {
 			if (catch) {
 				error = cv_timedwait_sig(&nmp->nm_aiocv, 
 				    &nmp->nm_lock, slptimeo);
