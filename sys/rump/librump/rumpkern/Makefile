@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2007/08/08 09:06:11 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2007/08/09 07:42:07 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -13,11 +13,12 @@ LIB=	rump
 SRCS=	rump.c buffercache.c emul.c vfs.c genfs.c vm.c pool.c specfs.c
 
 # just stubs
-SRCS+=	fstrans_stub.c kauth_stub.c lock_stub.c misc_stub.c vfsops_stub.c
+SRCS+=	fstrans_stub.c kauth_stub.c lock_stub.c misc_stub.c		\
+	pmap_stub.c vfsops_stub.c
 
 # sys/kern
-SRCS+=	subr_hash.c subr_prf_bitmask.c subr_xxx.c vfs_init.c		\
-	vfs_cache.c vfs_subr2.c vnode_if.c param.c
+SRCS+=	subr_hash.c subr_prf_bitmask.c subr_time.c subr_xxx.c		\
+	vfs_init.c vfs_cache.c vfs_subr2.c vnode_if.c param.c
 
 # src/lib/libkern
 SRCS+=	scanc.c skpc.c
