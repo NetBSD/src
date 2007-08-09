@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.4 2007/08/08 14:09:07 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.5 2007/08/09 08:56:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -130,6 +130,12 @@ vget(struct vnode *vp, int lockflag)
 
 void
 vrele(struct vnode *vp)
+{
+
+}
+
+void
+vrele2(struct vnode *vp)
 {
 
 }
@@ -397,6 +403,13 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 {
 
 	panic("%s: not supported", __func__);
+}
+
+int
+vfs_busy(struct mount *mp, int flags, struct simplelock *interlck)
+{
+
+	return 0;
 }
 
 void
