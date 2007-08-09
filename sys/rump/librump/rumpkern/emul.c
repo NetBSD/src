@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.4 2007/08/08 13:12:08 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.5 2007/08/09 08:56:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/filedesc.h>
+#include <sys/kthread.h>
 
 #include <machine/cpu.h>
 #include <machine/stdarg.h>
@@ -52,6 +53,7 @@ kmutex_t proclist_mutex;
 struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
+dev_t rootdev;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
@@ -63,6 +65,12 @@ struct lwp *curlwp;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
+
+u_long	bufmem_valimit;
+u_long	bufmem_hiwater;
+u_long	bufmem_lowater;
+u_long	bufmem;
+u_int	nbuf;
 
 void
 panic(const char *fmt, ...)
@@ -208,6 +216,13 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 }
 
 void
+wakeup(wchan_t ident)
+{
+
+	printf("%s: not implemented\n", __func__);
+}
+
+void
 malloc_type_attach(struct malloc_type *type)
 {
 
@@ -246,8 +261,36 @@ microtime(struct timeval *tv)
 }
 
 void
+getmicrotime(struct timeval *tv)
+{
+
+	rumpuser_gettimeofday(tv);
+}
+
+void
 bdev_strategy(struct buf *bp)
 {
 
 	panic("%s: not supported", __func__);
+}
+
+void
+vn_syncer_remove_from_worklist(struct vnode *vp)
+{
+
+	/* nada */
+}
+
+int
+kthread_create(pri_t pri, int flags, struct cpu_info *ci,
+	void (*func)(void *), void *arg, lwp_t **newlp, const char *fmt, ...)
+{
+
+	return 0;
+}
+
+void
+workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
+{
+
 }

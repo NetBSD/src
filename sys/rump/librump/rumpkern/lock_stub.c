@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.2 2007/08/07 17:55:49 pooka Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.3 2007/08/09 08:56:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,7 @@
 #include <sys/param.h>
 #include <sys/lock.h>
 #include <sys/mutex.h>
+#include <sys/rwlock.h>
 
 /* oh sweet crackmgr, what would I do without you? */
 int
@@ -101,4 +102,28 @@ mutex_owned(kmutex_t *mtx)
 {
 
 	return 1;
+}
+
+void
+rw_init(krwlock_t *rw)
+{
+
+}
+
+void
+rw_destroy(krwlock_t *rw)
+{
+
+}
+
+void
+rw_enter(krwlock_t *rw, const krw_t op)
+{
+
+}
+
+void
+rw_exit(krwlock_t *rw)
+{
+
 }

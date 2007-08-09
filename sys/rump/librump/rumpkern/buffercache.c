@@ -1,4 +1,4 @@
-/*	$NetBSD: buffercache.c,v 1.1 2007/08/05 22:28:07 pooka Exp $	*/
+/*	$NetBSD: buffercache.c,v 1.2 2007/08/09 08:56:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,8 +34,15 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/queue.h>
 
 #include "rumpuser.h"
+
+#define BQUEUES 3
+struct bqueue {
+	TAILQ_HEAD(,buf) bq_queue;
+	uint64_t	bq_bytes;
+} bufqueues[BQUEUES];
 
 int
 bread(struct vnode *vp, daddr_t blkno, int size, struct kauth_cred *cred,
@@ -141,18 +148,52 @@ struct buf *
 getiobuf()
 {
 
-	panic("%s: not implemented", __func__);
+	return rumpuser_malloc(sizeof(struct buf), 0);
 }
 
 struct buf *
 getiobuf_nowait()
 {
 
-	panic("%s: not implemented", __func__);
+	return rumpuser_malloc(sizeof(struct buf), 1);
 }
 
 void
 putiobuf(struct buf *bp)
+{
+
+	rumpuser_free(bp);
+}
+
+void
+bgetvp(struct vnode *vp, struct buf *bp)
+{
+
+	if (bp->b_vp)
+		panic("%s: vp already set", __func__);
+
+	bp->b_vp = vp;
+}
+
+void
+bremfree(struct buf *bp)
+{
+
+	return;
+}
+
+void
+brelvp(struct buf *bp)
+{
+
+	if (bp->b_vp == NULL)
+		panic("%s: vp not set", __func__);
+
+	bp->b_vp = NULL;
+}
+
+void
+reassignbuf(struct buf *bp, struct vnode *vp)
 {
 
 	panic("%s: not implemented", __func__);
