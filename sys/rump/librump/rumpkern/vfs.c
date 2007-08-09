@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.6 2007/08/09 09:06:44 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.7 2007/08/09 20:57:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,7 @@
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/syncfs/syncfs.h>
 
 #include "rump.h"
 #include "rumpuser.h"
@@ -445,7 +446,7 @@ vfs_mountedon(struct vnode *vp)
 }
 
 void
-vntblinit()
+vn_initialize_syncerd()
 {
 
 	return;
