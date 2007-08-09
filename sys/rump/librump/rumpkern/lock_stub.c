@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.3 2007/08/09 08:56:45 pooka Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.4 2007/08/09 09:11:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@ int
 lockstatus(struct lock *lock)
 {
 
-	return 0;
+	return LK_EXCLUSIVE;
 }
 
 void
