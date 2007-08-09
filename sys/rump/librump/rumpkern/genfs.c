@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.8 2007/08/09 09:11:57 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.9 2007/08/09 11:18:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -152,8 +152,16 @@ genfs_getpages(void *v)
 		if (error)
 			panic("%s: VOP_BMAP & lazy bum: %d", __func__, error);
 
-		printf("lbn %d run %d foo %d\n", (int)lbn, run, (int)(curoff+bufoff));
+		printf("lbn %d (off %d) -> bn %d run %d\n", (int)lbn,
+		    (int)(curoff+bufoff), (int)bn, run);
 		xfersize = MIN(((lbn+1+run)<<bshift)-(curoff+bufoff), remain);
+
+		/* hole? */
+		if (bn == -1) {
+			memset(tmpbuf + bufoff, 0, xfersize);
+			continue;
+		}
+
 		buf.b_data = tmpbuf + bufoff;
 		buf.b_bcount = xfersize;
 		buf.b_blkno = bn;
