@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1059 2007/08/05 21:50:32 pooka Exp $
+#	$NetBSD: mi,v 1.1060 2007/08/09 15:23:03 he Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4787,6 +4787,7 @@
 ./usr/share/man/cat3/getpary.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getparyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getpass.0			comp-c-catman		.cat
+./usr/share/man/cat3/getpeereid.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getprogname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getprotobyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getprotobynumber.0		comp-c-catman		.cat
@@ -9280,6 +9281,7 @@
 ./usr/share/man/man3/getpary.3			comp-c-man		.man
 ./usr/share/man/man3/getparyx.3			comp-c-man		.man
 ./usr/share/man/man3/getpass.3			comp-c-man		.man
+./usr/share/man/man3/getpeereid.3		comp-c-man		.man
 ./usr/share/man/man3/getprogname.3		comp-c-man		.man
 ./usr/share/man/man3/getprotobyname.3		comp-c-man		.man
 ./usr/share/man/man3/getprotobynumber.3		comp-c-man		.man
