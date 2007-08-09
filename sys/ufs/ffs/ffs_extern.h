@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.59 2007/08/09 07:34:27 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.60 2007/08/09 09:22:34 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -128,6 +128,9 @@ int	ffs_getextattr(void *);
 int	ffs_setextattr(void *);
 int	ffs_listextattr(void *);
 int	ffs_deleteextattr(void *);
+int	ffs_lock(void *);
+int	ffs_unlock(void *);
+int	ffs_islocked(void *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.155 2007/07/29 13:31:16 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.156 2007/08/09 09:22:34 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.155 2007/07/29 13:31:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.156 2007/08/09 09:22:34 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2272,71 +2272,4 @@ ufs_gop_markupdate(struct vnode *vp, int flags)
 
 		ip->i_flag |= mask;
 	}
-}
-
-/*
- * Lock the node.
- */
-int
-ufs_lock(void *v)
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
-
-	/*
-	 * Fake lock during file system suspension.
-	 */
-	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
-	    fstrans_is_owner(mp) &&
-	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((ap->a_flags & LK_INTERLOCK) != 0)
-			simple_unlock(&vp->v_interlock);
-		return 0;
-	}
-	return (lockmgr(vp->v_vnlock, ap->a_flags, &vp->v_interlock));
-}
-
-/*
- * Unlock the node.
- */
-int
-ufs_unlock(void *v)
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct mount *mp = vp->v_mount;
-
-	/*
-	 * Fake unlock during file system suspension.
-	 */
-	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
-	    fstrans_is_owner(mp) &&
-	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((ap->a_flags & LK_INTERLOCK) != 0)
-			simple_unlock(&vp->v_interlock);
-		return 0;
-	}
-	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock));
-}
-
-/*
- * Return whether or not the node is locked.
- */
-int
-ufs_islocked(void *v)
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	return (lockstatus(vp->v_vnlock));
 }
