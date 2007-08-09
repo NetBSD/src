@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.3 2007/08/05 23:05:02 xtraeme Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.4 2007/08/09 16:54:21 kiyohara Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -203,6 +203,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	const uint8_t *b;
 	uint8_t ctl = 0, st;
 	int retries;
+	char fbuf[64];
 
 	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %d, "
 	    "flags 0x%02x\n", sc->sc_dev.dv_xname, op, addr, cmdlen,
@@ -215,7 +216,10 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			break;
 		DELAY(ICHIIC_DELAY);
 	}
-	DPRINTF(("%s: exec: st 0x%02x\n", sc->sc_dev.dv_xname, st));
+#ifdef ICHIIC_DEBUG
+	bitmask_snprintf(st, ICH_SMB_HS_BITS, fbuf, sizeof(fbuf));
+	printf("%s: exec: st 0x%s\n", sc->sc_dev.dv_xname, fbuf);
+#endif
 	if (st & ICH_SMB_HS_BUSY)
 		return (1);
 
@@ -296,17 +300,19 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
+	bitmask_snprintf(st, ICH_SMB_HS_BITS, fbuf, sizeof(fbuf));
 	printf("%s: exec: op %d, addr 0x%02x, cmdlen %zd, len %zd, "
-	    "flags 0x%02x: timeout, status 0x%02x\n",
-	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags,
-	    st);
+	    "flags 0x%02x: timeout, status 0x%s\n",
+	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags, fbuf);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HC,
 	    ICH_SMB_HC_KILL);
 	DELAY(ICHIIC_DELAY);
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS);
-	if ((st & ICH_SMB_HS_FAILED) == 0)
-		printf("%s: abort failed, status 0x%02x\n",
-		    sc->sc_dev.dv_xname, st);
+	if ((st & ICH_SMB_HS_FAILED) == 0) {
+		bitmask_snprintf(st, ICH_SMB_HS_BITS, fbuf, sizeof(fbuf));
+		printf("%s: abort failed, status 0x%s\n",
+		    sc->sc_dev.dv_xname, fbuf);
+	}
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS, st);
 	return (1);
 }
@@ -318,6 +324,9 @@ ichsmb_intr(void *arg)
 	uint8_t st;
 	uint8_t *b;
 	size_t len;
+#ifdef ICHIIC_DEBUG
+	char fbuf[64];
+#endif
 
 	/* Read status */
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS);
@@ -327,7 +336,10 @@ ichsmb_intr(void *arg)
 		/* Interrupt was not for us */
 		return (0);
 
-	DPRINTF(("%s: intr st 0x%02x\n", sc->sc_dev.dv_xname, st));
+#ifdef ICHIIC_DEBUG
+	bitmask_snprintf(st, ICH_SMB_HS_BITS, fbuf, sizeof(fbuf));
+	printf("%s: intr st 0x%s\n", sc->sc_dev.dv_xname, fbuf);
+#endif
 
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ICH_SMB_HS, st);
