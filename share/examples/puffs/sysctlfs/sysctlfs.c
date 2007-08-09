@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.30 2007/07/19 10:14:53 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.31 2007/08/09 21:54:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -217,7 +217,8 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	if (argc < 2)
-		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
+		errx(1, "usage: %s sysctlfs [-o mntopts] mountpath",
+		    getprogname());
 
 	mntflags = pflags = lflags = 0;
 	while ((ch = getopt(argc, argv, "o:s")) != -1) {
@@ -240,7 +241,7 @@ main(int argc, char *argv[])
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		lflags |= PUFFSLOOP_NODAEMON;
 
-	if (argc != 1)
+	if (argc != 2)
 		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
 
 	PUFFSOP_INIT(pops);
@@ -273,7 +274,7 @@ main(int argc, char *argv[])
 	if (sysctlfs_domount(pu) != 0)
 		errx(1, "domount");
 
-	if (puffs_mount(pu, argv[0], mntflags, puffs_getroot(pu)) == -1)
+	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");
 
 	if (puffs_mainloop(pu, lflags) == -1)
@@ -631,6 +632,9 @@ sysctlfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	struct sfsnode *sfs = pn->pn_data;
 	long long ll;
 	int i, rv;
+
+	if (puffs_cred_isjuggernaut(cred) == 0)
+		return EACCES;
 
 	if (ISADIR(sfs))
 		return EISDIR;
