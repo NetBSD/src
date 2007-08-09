@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.6 2007/08/07 19:43:56 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.7 2007/08/09 08:56:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -192,9 +192,17 @@ genfs_putpages(void *v)
 		voff_t a_offhi;
 		int a_flags;
 	} */ *ap = v;
+
+	return genfs_do_putpages(ap->a_vp, ap->a_offlo, ap->a_offhi,
+	    ap->a_flags, NULL);
+}
+
+int
+genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
+	struct vm_page **busypg)
+{
 	char databuf[MAXPHYS];
 	struct buf buf;
-	struct vnode *vp = ap->a_vp;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct vm_page *pg, *pg_next;
 	voff_t smallest = -1;
