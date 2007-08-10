@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/09 22:01:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2007/08/10 07:59:32 pooka Exp $
 
 PROG=	mount_sysctlfs
 SRCS=	sysctlfs.c
 
-LDADD+= -lpuffs -lutil
+DPAPP+=	${LIBPUFFS} ${LIBUTIL}
+LDADD+=	-lpuffs -lutil
+WARNS=	4
 
-WARNS=	3
-NOMAN=	1
+MAN=	mount_sysctlfs.8
 
 .include <bsd.prog.mk>
