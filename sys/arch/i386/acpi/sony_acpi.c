@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.26.3 2007/08/10 21:19:59 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.26.4 2007/08/10 21:35:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.3 2007/08/10 21:19:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.4 2007/08/10 21:35:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,9 @@ struct sony_acpi_softc {
 	struct acpi_devnode *sc_node;
 
 	struct device *sc_wskbddev;
+
+	struct sysmon_pswitch sc_smpsw;
+	int sc_smpsw_valid;
 
 	struct sony_acpi_pmstate {
 		ACPI_INTEGER	brt;
@@ -279,6 +282,17 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sony_acpi_quirk_setup(sc);
 
+	/* Configure suspend button */
+	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
+	sc->sc_smpsw_valid = 1;
+
+	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
+		aprint_error("%s: couldn't register with sysmon\n",
+		    device_xname(self));
+		sc->sc_smpsw_valid = 0;
+	}
+
 	/* Install notify handler */
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, sony_acpi_notify_handler, sc);
@@ -377,12 +391,17 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	case SONY_NOTIFY_BrightnessDownReleased:
 	case SONY_NOTIFY_BrightnessUpReleased:
 		break;
+	case SONY_NOTIFY_SuspendPressed:
+		if (!sc->sc_smpsw_valid)
+			break;
+		sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
+		break;
+	case SONY_NOTIFY_SuspendReleased:
+		break;
 	case SONY_NOTIFY_DisplaySwitchPressed:
 	case SONY_NOTIFY_DisplaySwitchReleased:
 	case SONY_NOTIFY_ZoomPressed:
 	case SONY_NOTIFY_ZoomReleased:
-	case SONY_NOTIFY_SuspendPressed:
-	case SONY_NOTIFY_SuspendReleased:
 		if (sc->sc_wskbddev == NULL)
 			break;
 		wskbd_input(sc->sc_wskbddev,
