@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2007/08/10 16:48:24 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2007/08/10 16:59:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2007/08/10 16:48:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2007/08/10 16:59:41 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -780,7 +780,7 @@ decode_bootstring(void)
 	char *equ;
 	int i;
 
-	/* break apart bootstring on ' ' boundries  and itterate*/
+	/* break apart bootstring on ' ' boundries and itterate */
 	work = strtok_light(bootstring, ' ');
 	while (work != '\0') {
 		/* if starts with '-', we got options, walk its decode */
@@ -793,12 +793,12 @@ decode_bootstring(void)
 		} else
 
 		/* if it has a '=' its an assignment, switch and set */
-		if ((equ = strchr(work,'=')) != '\0') {
-			if(0 == memcmp("nfsroot=", work, 8)) {
-				nfsroot_bstr = (equ +1);
+		if ((equ = strchr(work, '=')) != '\0') {
+			if (memcmp("nfsroot=", work, 8) == 0) {
+				nfsroot_bstr = (equ + 1);
 			} else
-			if(0 == memcmp("root=", work, 5)) {
-				root_bstr = (equ +1);
+			if (memcmp("root=", work, 5) == 0) {
+				root_bstr = (equ + 1);
 			}
 		} else
 
@@ -840,11 +840,11 @@ strtok_light(char *str, const char sep)
 
 	head = proc;
 
-	work = strchr (proc, sep);
+	work = strchr(proc, sep);
 	if (work == NULL) {  /* we hit the end */
 		proc = work;
 	} else {
-		proc = (work +1 );
+		proc = (work + 1);
 		*work = '\0';
 	}
 
