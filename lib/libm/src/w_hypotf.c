@@ -15,16 +15,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_hypotf.c,v 1.6 2002/05/26 22:02:01 wiz Exp $");
+__RCSID("$NetBSD: w_hypotf.c,v 1.7 2007/08/10 21:20:36 drochner Exp $");
 #endif
 
 /*
  * wrapper hypotf(x,y)
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 
+#ifdef __weak_alias
+__weak_alias(hypotf, _hypotf)
+#endif
 
 float
 hypotf(float x, float y)	/* wrapper hypotf */
