@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2007/08/10 16:59:41 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2007/08/10 17:44:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2007/08/10 16:59:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2007/08/10 17:44:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -118,8 +118,8 @@ char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
 
-char *	nfsroot_bstr = NULL;
-char *	root_bstr = NULL;
+char	*nfsroot_bstr = NULL;
+char	*root_bstr = NULL;
 int	bootunit = -1;
 int	bootpart = -1;
 
@@ -143,7 +143,7 @@ int mem_cluster_cnt;
 
 void	mach_init(unsigned int, u_int, char*);
 void	decode_bootstring(void);
-static char *	strtok_light(char *, const char);
+static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
 
 /*
@@ -338,7 +338,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	proc0paddr->u_pcb.pcb_context[11] =
-	   MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 /*
@@ -694,7 +694,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		/* call the common MIPS3 clock interrupt handler */ 
+		/* call the common MIPS3 clock interrupt handler */
 		cf.pc = pc;
 		cf.sr = status;
 		mips3_clockintr(&cf);
@@ -817,7 +817,7 @@ decode_bootstring(void)
 	if (root_bstr != NULL) {
 		/* this should be of the form "/dev/hda1" */
 		/* [abcd][1234]    drive partition  linux probe order */
-		if ((memcmp("/dev/hd",root_bstr,7) == 0) &&
+		if ((memcmp("/dev/hd", root_bstr, 7) == 0) &&
 		    (strlen(root_bstr) == 9) ){
 			bootunit = root_bstr[7] - 'a';
 			bootpart = root_bstr[8] - '1';
@@ -835,13 +835,13 @@ strtok_light(char *str, const char sep)
 
 	if (str != NULL)
 		proc = str;
-	if (proc == NULL)  /* end of string return NULL */
+	if (proc == NULL)	/* end of string return NULL */
 		return proc;
 
 	head = proc;
 
 	work = strchr(proc, sep);
-	if (work == NULL) {  /* we hit the end */
+	if (work == NULL) {	/* we hit the end */
 		proc = work;
 	} else {
 		proc = (work + 1);
@@ -880,7 +880,7 @@ lookup_bootinfo(int type)
 
 /*
  * Get board ID of cobalt models.
- * 
+ *
  * The board ID info is stored at the PCI config register
  * on the PCI-ISA bridge part of the VIA VT82C586 chipset.
  * We can't use pci_conf_read(9) yet here, so read it directly.
@@ -906,7 +906,7 @@ read_board_id(void)
 	reg = *pcicfg_data;
 	*pcicfg_addr = 0;
 
-	return COBALT_BOARD_ID(reg); 
+	return COBALT_BOARD_ID(reg);
 }
 
 static const int ipl2spl_table[] = {
