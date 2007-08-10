@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.2 2007/08/09 22:03:20 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.3 2007/08/10 08:13:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.2 2007/08/09 22:03:20 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.3 2007/08/10 08:13:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -68,11 +68,14 @@ struct sfsfid {
 	SfsName path;
 };
 
-struct sfsnode rn;
-SfsName sname_root;
-struct timespec fstime;
+static struct sfsnode rn;
+static SfsName sname_root;
+static struct timespec fstime;
 
-ino_t nextid = 3;
+static ino_t nextid = 3;
+static mode_t fileperms;
+static uid_t fileuid;
+static gid_t filegid;
 
 #define ISADIR(a) ((SYSCTL_TYPE(a->sysctl_flags) == CTLTYPE_NODE))
 #define SFS_MAXFILE 8192
@@ -309,6 +312,14 @@ sysctlfs_domount(struct puffs_usermount *pu)
 	po_root->po_path = &sname_root;
 	po_root->po_len = 0;
 
+	fileuid = geteuid();
+	filegid = getegid();
+
+	if (fileuid == 0)
+		fileperms = 0755;
+	else
+		fileperms = 0555;
+
 	return 0;
 }
 
@@ -498,11 +509,13 @@ sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 
 	if (ISADIR(sfs)) {
 		va->va_type = VDIR;
-		va->va_mode = 0777;
+		va->va_mode = 0555;
 	} else {
 		va->va_type = VREG;
-		va->va_mode = 0666;
+		va->va_mode = fileperms;
 	}
+	va->va_uid = fileuid;
+	va->va_gid = filegid;
 	va->va_nlink = getlinks(sfs, &pn->pn_po);
 	va->va_fileid = sfs->myid;
 	va->va_size = getsize(sfs, &pn->pn_po);
@@ -523,6 +536,7 @@ sysctlfs_node_setattr(struct puffs_cc *pcc, void *opc,
 {
 
 	/* dummy, but required for write */
+	/* XXX: we could return EOPNOTSUPP or something */
 	return 0;
 }
 
