@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.2 2007/08/04 19:47:59 jmcneill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.3 2007/08/10 20:50:52 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.2 2007/08/04 19:47:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.3 2007/08/10 20:50:52 he Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1708,6 +1708,7 @@ wm_pci_power(device_t dv, pnp_request_t req, void *opaque)
 				wm_start(ifp);
 			splx(s);
 		}
+		break;
 	case PNP_REQUEST_GET_STATE:
 		state = opaque;
 		if (pci_get_powerstate(pc, tag, &val) != 0)
