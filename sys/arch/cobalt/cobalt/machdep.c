@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2007/07/03 10:31:57 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2007/08/10 16:48:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2007/07/03 10:31:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2007/08/10 16:48:24 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,6 +172,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	char *ssym = 0;
 	struct btinfo_symtab *bi_syms;
 #endif
+	struct btinfo_howto *bi_howto;
 
 	/*
 	 * Clear the BSS segment (if needed).
@@ -234,6 +235,10 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 		kernend = (void *)mips_round_page(esym);
 	}
 #endif
+
+	bi_howto = lookup_bootinfo(BTINFO_HOWTO);
+	if (bi_howto != NULL)
+		boothowto = bi_howto->bi_howto;
 
 	cobalt_id = read_board_id();
 	if (cobalt_id >= COBALT_MODELS || cobalt_model[cobalt_id] == NULL)
