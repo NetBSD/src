@@ -12,16 +12,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_hypot.c,v 1.9 2002/05/26 22:02:01 wiz Exp $");
+__RCSID("$NetBSD: w_hypot.c,v 1.10 2007/08/10 21:20:36 drochner Exp $");
 #endif
 
 /*
  * wrapper hypot(x,y)
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 
+#ifdef __weak_alias
+__weak_alias(hypot, _hypot)
+#endif
 
 double
 hypot(double x, double y)/* wrapper hypot */

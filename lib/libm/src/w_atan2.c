@@ -12,16 +12,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_atan2.c,v 1.9 2002/05/26 22:01:59 wiz Exp $");
+__RCSID("$NetBSD: w_atan2.c,v 1.10 2007/08/10 21:20:36 drochner Exp $");
 #endif
 
 /*
  * wrapper atan2(y,x)
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 
+#ifdef __weak_alias
+__weak_alias(atan2, _atan2)
+#endif
 
 double
 atan2(double y, double x)	/* wrapper atan2 */
