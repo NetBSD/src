@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.26.2 2007/08/05 18:59:19 jmcneill Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.26.3 2007/08/10 21:19:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.2 2007/08/05 18:59:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.26.3 2007/08/10 21:19:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,9 +350,6 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 
 	sc = (struct sony_acpi_softc *)opaque;
 
-	if (sc->sc_wskbddev == NULL)
-		return;
-
 	if (notify == SONY_NOTIFY_FnKeyEvent) {
 		rv = sony_acpi_eval_set_integer(hdl, "SN07", 0x202, &arg);
 		if (ACPI_FAILURE(rv))
@@ -386,9 +383,11 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	case SONY_NOTIFY_ZoomReleased:
 	case SONY_NOTIFY_SuspendPressed:
 	case SONY_NOTIFY_SuspendReleased:
+		if (sc->sc_wskbddev == NULL)
+			break;
 		wskbd_input(sc->sc_wskbddev,
 		    notify & 0x80 ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
-		    notify);
+		    notify); /* XXX */
 		break;
 	default:
 		printf("%s: unknown notify event 0x%x\n",
