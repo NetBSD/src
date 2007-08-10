@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2007/08/03 13:15:56 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2007/08/10 16:47:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ void start(void);
 static char *bootstring;
 
 static int patch_bootstring	(char *bootspec);
-static int get_bsdbootname(char **, char **);
+static int get_bsdbootname(char **, char **, int *);
 static int parse_bootname(char *, int, char **, char **);
 static int prominit		(unsigned int memsize);
 static int print_banner		(unsigned int memsize);
@@ -191,7 +191,7 @@ patch_bootstring(char *bootspec)
  * Extract NetBSD boot specification
  */
 static int
-get_bsdbootname(char **dev, char **kname)
+get_bsdbootname(char **dev, char **kname, int *howtop)
 {
 	int len, error;
 	char *bootstr_dev, *bootstr_kname;
@@ -237,10 +237,7 @@ get_bsdbootname(char **dev, char **kname)
 			break;
 		if (c == '-') {
 			while ((c = *++ptr) && c != ' ')
-				;
-#if notyet
-			BOOT_FLAG(c, boothowto);
-#endif
+				BOOT_FLAG(c, *howtop);
 		} else {
 			spec = ptr;
 			while ((c = *++ptr) && c != ' ')
@@ -342,10 +339,12 @@ main(unsigned int memsize)
 	struct btinfo_flags bi_flags;
 	struct btinfo_symtab bi_syms;
 	struct btinfo_bootpath bi_bpath;
+	struct btinfo_howto bi_howto;
 
-	int addr, speed;
+	int addr, speed, howto;
 
 	/* Initialize boot info early */
+	howto = 0x0;
 	bi_flags.bi_flags = 0x0;
 	bi_addr = bi_init();
 
@@ -356,7 +355,7 @@ main(unsigned int memsize)
 	print_banner(memsize);
 
 	memset(marks, 0, sizeof marks);
-	get_bsdbootname(&dev, &kernel);
+	get_bsdbootname(&dev, &kernel, &howto);
 
 	if (kernel != NULL) {
 		DPRINTF(("kernel: %s\n", kernel));
@@ -377,7 +376,10 @@ main(unsigned int memsize)
 		strcat(bootpath, ":");
 		strcat(bootpath, kernel);
 
-		printf("Loading: %s\n", bootpath);
+		printf("Loading: %s", bootpath);
+		if (howto)
+			printf(" (howto 0x%x)", howto);
+		printf("\n");
 		patch_bootstring(bootpath);
 		win = (loadfile(bootpath, marks, LOAD_ALL) != -1);
 	}
@@ -393,6 +395,9 @@ main(unsigned int memsize)
 		bi_add(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
 
 		bi_add(&bi_flags, BTINFO_FLAGS, sizeof(bi_flags));
+
+		bi_howto.bi_howto = howto;
+		bi_add(&bi_howto, BTINFO_HOWTO, sizeof(bi_howto));
 
 		entry = (void *)marks[MARK_ENTRY];
 
