@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.71 2007/07/27 10:03:58 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.72 2007/08/10 15:12:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ void nfsrv_zapsock(struct nfssvc_sock *);
 void nfsrv_slpderef(struct nfssvc_sock *);
 void nfsrv_init(int);
 void nfs_iodinit(void);
-void nfs_getset_niothreads(int);
+int nfs_set_niothreads(int);
 int nfs_getauth(struct nfsmount *, struct nfsreq *, kauth_cred_t, char **,
 	int *, char *, int *, NFSKERBKEY_T);
 int nfs_getnickauth(struct nfsmount *, kauth_cred_t, char **, int *, char *,

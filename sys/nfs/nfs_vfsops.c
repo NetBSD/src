@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.183 2007/08/05 09:40:40 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.184 2007/08/10 15:12:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.183 2007/08/05 09:40:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.184 2007/08/10 15:12:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -707,8 +707,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	 */
 
 	if (nfs_niothreads < 0) {
-		nfs_niothreads = NFS_DEFAULT_NIOTHREADS;
-		nfs_getset_niothreads(true);
+		nfs_set_niothreads(NFS_DEFAULT_NIOTHREADS);
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {
@@ -999,15 +998,18 @@ nfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 static int
 sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
+	int val;
 	int error;
 
-	nfs_getset_niothreads(0);
-        error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	val = nfs_niothreads;
+	node = *rnode;
+	node.sysctl_data = &val;
+        error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
-	nfs_getset_niothreads(1);
+		return error;
 
-	return (0);
+	return nfs_set_niothreads(val);
 }
 
 SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
@@ -1040,7 +1042,7 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iothreads",
 		       SYSCTL_DESCR("Number of NFS client processes desired"),
-		       sysctl_vfs_nfs_iothreads, 0, &nfs_niothreads, 0,
+		       sysctl_vfs_nfs_iothreads, 0, NULL, 0,
 		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
 }
 
