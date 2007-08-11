@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.200 2007/08/03 22:20:48 jmcneill Exp $
+#	$NetBSD: BRANCHES,v 1.201 2007/08/11 19:10:07 chris Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -253,6 +253,18 @@ Scope:		sys/arch/arm sys/arch/acorn32
 Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
+
+Branch:		chris-arm-intr-rework
+Description:	Rework arm interrupt handling code
+Status:		Active
+Start Date:	11 Aug 2007
+End Date:
+Base Tag:	chris-arm-intr-rework-base
+Maintainer:	Chris Gilbert <chrisNetBSD.org>
+Scope:		sys/arch/arm sys/arch/cats (other arm archs to follow)
+Notes:		Rework arm interrupt code to provide a shared set of interrupt
+		routines, and allow improvements to be shared across all arm
+		based hardware.
 
 Branch:		gmcgarry_ctxsw
 Description:	Separate scheduler from context-switch code
