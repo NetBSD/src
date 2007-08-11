@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.888 2007/08/08 12:53:05 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.889 2007/08/11 02:06:12 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.888 2007/08/08 12:52:41 tron Exp
+ *	NetBSD: pcidevs,v 1.889 2007/08/11 02:05:11 jnemeth Exp
  */
 
 /*
@@ -880,31 +880,53 @@
 #define	PCI_PRODUCT_ALTIMA_AC9100	0x03ea		/* AC9100 Gigabit Ethernet */
 
 /* AMD products */
-#define	PCI_PRODUCT_AMD_AMD64_HT	0x1100		/* AMD64 HyperTransport configuration */
-#define	PCI_PRODUCT_AMD_AMD64_ADDR	0x1101		/* AMD64 Address Map configuration */
-#define	PCI_PRODUCT_AMD_AMD64_DRAM	0x1102		/* AMD64 DRAM configuration */
-#define	PCI_PRODUCT_AMD_AMD64_MISC	0x1103		/* AMD64 Miscellaneous configuration */
+#define	PCI_PRODUCT_AMD_AMD64_HT	0x1100		/* K8 AMD64 HyperTransport configuration */
+#define	PCI_PRODUCT_AMD_AMD64_ADDR	0x1101		/* K8 AMD64 Address Map configuration */
+#define	PCI_PRODUCT_AMD_AMD64_DRAM	0x1102		/* K8 AMD64 DRAM configuration */
+#define	PCI_PRODUCT_AMD_AMD64_MISC	0x1103		/* K8 AMD64 Miscellaneous configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F10_HT	0x1200		/* AMD64 Family10h HyperTransport configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F10_ADDR	0x1201		/* AMD64 Family10h Address Map configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F10_DRAM	0x1202		/* AMD64 Family10h DRAM configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F10_MISC	0x1203		/* AMD64 Family10h Miscellaneous configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F10_LINK	0x1204		/* AMD64 Family10h Link configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F11_HT	0x1300		/* AMD64 Family11h HyperTransport configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F11_ADDR	0x1301		/* AMD64 Family11h Address Map configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F11_DRAM	0x1302		/* AMD64 Family11h DRAM configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous configuration */
+#define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link configuration */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
+#define	PCI_PRODUCT_AMD_AM_1771_MBW	0x2003		/* Alchemy AM 1771 MBW */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* PCscsi-PCI SCSI */
 #define	PCI_PRODUCT_AMD_GEODELX_PCHB	0x2080		/* Geode LX Host-PCI Bridge */
 #define	PCI_PRODUCT_AMD_GEODELX_VGA	0x2081		/* Geode LX VGA Controller */
 #define	PCI_PRODUCT_AMD_GEODELX_AES	0x2082		/* Geode LX AES Security Block */
+#define	PCI_PRODUCT_AMD_CS5536_PCISB	0x208f		/* CS5536 GeodeLink PCI South Bridge */
 #define	PCI_PRODUCT_AMD_CS5536_PCIB	0x2090		/* CS5536 PCI-ISA Bridge */
+#define	PCI_PRODUCT_AMD_CS5536_FLASH	0x2091		/* CS5536 Flash */
+#define	PCI_PRODUCT_AMD_CS5536_AUDIO	0x2093		/* CS5536 Audio */
 #define	PCI_PRODUCT_AMD_CS5536_OHCI	0x2094		/* CS5536 OHCI USB Controller */
 #define	PCI_PRODUCT_AMD_CS5536_EHCI	0x2095		/* CS5536 EHCI USB Controller */
+#define	PCI_PRODUCT_AMD_CS5536_UDC	0x2096		/* CS5536 UDC */
+#define	PCI_PRODUCT_AMD_CS5536_UOC	0x2097		/* CS5536 UOC */
 #define	PCI_PRODUCT_AMD_CS5536_IDE	0x209a		/* CS5536 IDE Controller */
 #define	PCI_PRODUCT_AMD_SC520_SC	0x3000		/* Elan SC520 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-PCI Bridge */
-#define	PCI_PRODUCT_AMD_PBC756_ISA	0x7408		/* AMD756 PCI-ISA Bridge */
-#define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* AMD756 IDE controller */
-#define	PCI_PRODUCT_AMD_PBC756_PMC	0x740b		/* AMD756 Power Management Controller */
-#define	PCI_PRODUCT_AMD_PBC756_USB	0x740c		/* AMD756 USB Host Controller */
+#define	PCI_PRODUCT_AMD_IGR4_AGP	0x700a		/* AMD IGR4 AGP Bridge */
+#define	PCI_PRODUCT_AMD_IGR4_PPB	0x700b		/* AMD IGR4 PCI-PCI Bridge */
 #define	PCI_PRODUCT_AMD_SC762_NB	0x700c		/* AMD762 Northbridge */
 #define	PCI_PRODUCT_AMD_SC762_PPB	0x700d		/* AMD762 AGP Bridge */
 #define	PCI_PRODUCT_AMD_SC761_SC	0x700e		/* AMD761 System Controller */
 #define	PCI_PRODUCT_AMD_SC761_PPB	0x700f		/* AMD761 PCI-PCI Bridge */
+#define	PCI_PRODUCT_AMD_PBC755_ISA	0x7400		/* AMD755 PCI-ISA Bridge */
+#define	PCI_PRODUCT_AMD_PBC755_IDE	0x7401		/* AMD755 IDE controller */
+#define	PCI_PRODUCT_AMD_PBC755_PMC	0x7403		/* AMD755 ACPI controller */
+#define	PCI_PRODUCT_AMD_PBC755_USB	0x7404		/* AMD755 USB Host controller */
+#define	PCI_PRODUCT_AMD_PBC756_ISA	0x7408		/* AMD756 PCI-ISA Bridge */
+#define	PCI_PRODUCT_AMD_PBC756_IDE	0x7409		/* AMD756 IDE controller */
+#define	PCI_PRODUCT_AMD_PBC756_PMC	0x740b		/* AMD756 Power Management Controller */
+#define	PCI_PRODUCT_AMD_PBC756_USB	0x740c		/* AMD756 USB Host Controller */
 #define	PCI_PRODUCT_AMD_PBC766_ISA	0x7410		/* AMD766 Southbridge */
 #define	PCI_PRODUCT_AMD_PBC766_IDE	0x7411		/* AMD766 IDE controller */
 #define	PCI_PRODUCT_AMD_PBC766_PMC	0x7413		/* AMD766 Power Management Controller */
@@ -920,14 +942,19 @@
 #define	PCI_PRODUCT_AMD_PCIX8131_APIC	0x7451		/* AMD8131 IO Apic */
 #define	PCI_PRODUCT_AMD_AGP8151_DEV	0x7454		/* AMD8151 AGP Device */
 #define	PCI_PRODUCT_AMD_AGP8151_PPB	0x7455		/* AMD8151 AGP Bridge */
-#define	PCI_PRODUCT_AMD_PCIX_APIC	0x7459		/* AMD PCI-X IOAPIC */
+#define	PCI_PRODUCT_AMD_PCIX_PPB	0x7458		/* AMD8123 PCI-X Bridge */
+#define	PCI_PRODUCT_AMD_PCIX_APIC	0x7459		/* AMD8132 PCI-X IOAPIC */
 #define	PCI_PRODUCT_AMD_PBC8111	0x7460		/* AMD8111 I/O Hub */
+#define	PCI_PRODUCT_AMD_PBC8111_USB_7461	0x7461		/* AMD8111 7461 USB Host Controller */
+#define	PCI_PRODUCT_AMD_PBC8111_ETHER	0x7462		/* AMD8111 Ethernet */
 #define	PCI_PRODUCT_AMD_PBC8111_USB	0x7464		/* AMD8111 USB Host Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_LPC	0x7468		/* AMD8111 LPC Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_IDE	0x7469		/* AMD8111 IDE Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_SMB	0x746a		/* AMD8111 SMBus Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_ACPI	0x746b		/* AMD8111 ACPI Controller */
 #define	PCI_PRODUCT_AMD_PBC8111_AC	0x746d		/* AMD8111 AC97 Audio */
+#define	PCI_PRODUCT_AMD_PBC8111_MC97	0x746e		/* AMD8111 MC97 Modem */
+#define	PCI_PRODUCT_AMD_PBC8111_AC_756b	0x756b		/* AMD8111 756b ACPI Controller */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
