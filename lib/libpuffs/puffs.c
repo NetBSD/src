@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.61 2007/07/20 13:14:55 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.62 2007/08/11 18:04:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.61 2007/07/20 13:14:55 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.62 2007/08/11 18:04:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -310,6 +310,7 @@ int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	void *cookie)
 {
+	char rp[MAXPATHLEN];
 	int rv;
 
 #if 1
@@ -319,8 +320,16 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 		mntflags |= MNT_NOSUID | MNT_NODEV;
 #endif
 
+	if (realpath(dir, rp) == NULL)
+		return -1;
+
+	if (strcmp(dir, rp) != 0) {
+		warnx("puffs_mount: \"%s\" is a relative path.", dir);
+		warnx("puffs_mount: using \"%s\" instead.", rp);
+	}
+
 	pu->pu_kargp->pa_root_cookie = cookie;
-	if ((rv = mount(MOUNT_PUFFS, dir, mntflags,
+	if ((rv = mount(MOUNT_PUFFS, rp, mntflags,
 	    pu->pu_kargp, sizeof(struct puffs_kargs))) == -1)
 		goto out;
 	if ((rv = ioctl(pu->pu_fd, PUFFSREQSIZEOP, &pu->pu_maxreqlen)) == -1)
