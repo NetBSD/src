@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.112 2007/08/11 14:14:53 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.113 2007/08/11 14:51:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1239,4 +1239,38 @@ sys/sys/ucred.h					1.29 via patch
 
 	This needs <sys/param.h> for NGROUPS, fix kde3 build.
 	[he, ticket #11353]
+
+sys/arch/acorn32/conf/GENERIC			1.80 via patch
+sys/arch/amd64/conf/GENERIC			1.154 via patch
+sys/arch/amiga/conf/GENERIC.in			1.61 via patch
+sys/arch/amiga/conf/AMIGA			regen
+sys/arch/amiga/conf/DRACO			regen
+sys/arch/amiga/conf/GENERIC			regen
+sys/arch/amiga/conf/INSTALL			regen
+sys/arch/amiga/conf/WSCONS			regen
+sys/arch/arc/conf/GENERIC			1.148 via patch
+sys/arch/atari/conf/GENERIC.in			1.68 via patch
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/BOOT			regen
+sys/arch/atari/conf/BOOTX			regen
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+sys/arch/cats/conf/GENERIC			1.116 via patch
+sys/arch/hp300/conf/GENERIC			1.141 via patch
+sys/arch/hp700/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC			1.840 via patch
+sys/arch/i386/conf/GENERIC_LAPTOP		1.239 via patch
+sys/arch/i386/conf/GENERIC.MPACPI		patch
+sys/arch/mac68k/conf/GENERIC			1.182 via patch
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.68 via patch
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.66 via patch
+sys/arch/sparc/conf/GENERIC			1.200 via patch
+sys/arch/sparc64/conf/GENERIC32			patch
+sys/arch/xen/conf/GENERIC			patch
+
+	Remove iso(4) from GENERIC kernels, as discussed on tech-net@
+	Ok'ed by core@
+	[adrianp, ticket #11356]
 
