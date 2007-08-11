@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.114 2007/08/11 14:57:41 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.115 2007/08/11 15:10:14 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1284,4 +1284,19 @@ sys/dev/rasops/rasops.c				1.56 via patch
 	the possibility of a local user panic.
 	Set the 'ri' pointer before use.
 	[mjf, ticket #11348]
+
+distrib/utils/sysinst/arch/mac68k/md.c		1.49 via patch
+
+	Apply patch from Hauke Fath to solve port-mac68k/29049: sysinst did not
+	newfs and mount the target filesystem.
+	[hauke, ticket #11332]
+
+sys/ufs/ufs/quota.h				1.24
+sys/ufs/ufs/ufs_quota.c				1.46
+
+	If a quota-enabled file system has 65536 active vnodes for one uid
+	the reference counter of the corresponding struct dquot will overflow.
+	Change the type of the reference counter from u_int16_t to u_int32_t
+	and add an assertion to check for overflow.
+	[hannken, ticket #11334]
 
