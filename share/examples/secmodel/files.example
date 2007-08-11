@@ -1,3 +1,0 @@
-# $NetBSD: files.example,v 1.1 2006/09/15 15:49:29 elad Exp $
-
-file	secmodel/example/secmodel_example.c	secmodel_example

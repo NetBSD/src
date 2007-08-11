@@ -1,6 +1,0 @@
-CPP=clmips.exe
-# ADD BASE CPP /nologo /M$(CECrtDebug) /W3 /GX- /Zi /Od %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_MBCS" /D "_LIB" /YX %%% CPPDEFS %%% /QMRWCE   /c
-# ADD CPP /nologo /M$(CECrtDebug) /W3 /GX- /Zi /Od %%% INCDIRS %%% /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_MBCS" /D "_LIB" /YX %%% CPPDEFS %%% /QMRWCE   /c
-LIB32=link.exe -lib
-# ADD BASE LIB32 /nologo
-# ADD LIB32 /nologo

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2007/08/04 09:49:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.2.1 2007/08/11 21:14:51 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -82,7 +82,6 @@
 
 #include <arm/cpuconf.h>
 
-#include <machine/intr.h>
 #ifndef _LOCORE
 #include <sys/user.h>
 #include <machine/frame.h>
@@ -222,6 +221,10 @@ struct cpu_info {
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
 #endif
+#ifdef __HAVE_GENERIC_ARM_INTERRUPTS
+	uint32_t ci_ipls_pending;
+	volatile int ci_current_ipl_level;
+#endif
 };
 
 #ifndef MULTIPROCESSOR
@@ -229,6 +232,14 @@ extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
 #endif
+#define _ARM_CPU_INFO_
+
+#endif	/* !_LOCORE */
+
+/* intr.h depends on cpu_info in some cases */
+#include <machine/intr.h>
+
+#ifndef _LOCORE
 
 #ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);
