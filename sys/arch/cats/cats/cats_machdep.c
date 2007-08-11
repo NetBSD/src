@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.58.28.1 2007/08/11 21:14:53 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.58.28.1 2007/08/11 21:14:53 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -884,7 +884,7 @@ initarm(void *arm_bootargs)
 
 	/* Setup the IRQ system */
 	printf("irq ");
-	footbridge_intr_init();
+	arm_intr_init();
 	printf("done.\n");
 
 #ifdef IPKDB

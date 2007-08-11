@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.17 2007/01/06 16:18:18 christos Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.17.24.1 2007/08/11 21:14:49 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.17 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.17.24.1 2007/08/11 21:14:49 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,9 @@ footbridge_attach(parent, self, aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IRQ_ENABLE_CLEAR, 0xffffffff);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, FIQ_ENABLE_CLEAR, 0xffffffff);
 
+	/* setup footbridge irqs */
+	footbridge_intr_init();
+	
 /*	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x18, 0x40000000);*/
 
 	/* Install a generic handler to catch a load of system interrupts */
