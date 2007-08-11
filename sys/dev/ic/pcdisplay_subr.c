@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.25.8.1 2004/06/07 09:37:44 tron Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.25.8.1.2.1 2007/08/11 14:56:58 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25.8.1 2004/06/07 09:37:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25.8.1.2.1 2007/08/11 14:56:58 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,9 +167,13 @@ pcdisplay_putchar(id, row, col, c, attr)
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
-	int off;
+	size_t off;
 
 	off = row * scr->type->ncols + col;
+
+	/* check for bogus row and column sizes */
+	if (__predict_false(off >= (scr->type->ncols * scr->type->nrows)))
+		return;
 
 	if (scr->active)
 		bus_space_write_2(memt, memh, scr->dispoffset + off * 2,
