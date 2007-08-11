@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61.2.3 2004/07/15 20:18:53 he Exp $
+# $NetBSD: GENERIC,v 1.61.2.4 2007/08/11 14:49:06 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -88,7 +88,7 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking
