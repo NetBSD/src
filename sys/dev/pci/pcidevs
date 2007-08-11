@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.888 2007/08/08 12:52:41 tron Exp $
+$NetBSD: pcidevs,v 1.889 2007/08/11 02:05:11 jnemeth Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -873,31 +873,53 @@ product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
 product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 
 /* AMD products */
-product AMD AMD64_HT	0x1100	AMD64 HyperTransport configuration
-product AMD AMD64_ADDR	0x1101	AMD64 Address Map configuration
-product AMD AMD64_DRAM	0x1102	AMD64 DRAM configuration
-product AMD AMD64_MISC	0x1103	AMD64 Miscellaneous configuration
+product AMD AMD64_HT	0x1100	K8 AMD64 HyperTransport configuration
+product AMD AMD64_ADDR	0x1101	K8 AMD64 Address Map configuration
+product AMD AMD64_DRAM	0x1102	K8 AMD64 DRAM configuration
+product AMD AMD64_MISC	0x1103	K8 AMD64 Miscellaneous configuration
+product AMD AMD64_F10_HT	0x1200	AMD64 Family10h HyperTransport configuration
+product AMD AMD64_F10_ADDR	0x1201	AMD64 Family10h Address Map configuration
+product AMD AMD64_F10_DRAM	0x1202	AMD64 Family10h DRAM configuration
+product AMD AMD64_F10_MISC	0x1203	AMD64 Family10h Miscellaneous configuration
+product AMD AMD64_F10_LINK	0x1204	AMD64 Family10h Link configuration
+product AMD AMD64_F11_HT	0x1300	AMD64 Family11h HyperTransport configuration
+product AMD AMD64_F11_ADDR	0x1301	AMD64 Family11h Address Map configuration
+product AMD AMD64_F11_DRAM	0x1302	AMD64 Family11h DRAM configuration
+product AMD AMD64_F11_MISC	0x1303	AMD64 Family11h Miscellaneous configuration
+product AMD AMD64_F11_LINK	0x1304	AMD64 Family11h Link configuration
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
+product AMD AM_1771_MBW	0x2003	Alchemy AM 1771 MBW
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
 product AMD GEODELX_PCHB	0x2080	Geode LX Host-PCI Bridge
 product AMD GEODELX_VGA 	0x2081	Geode LX VGA Controller
 product AMD GEODELX_AES 	0x2082	Geode LX AES Security Block
+product	AMD CS5536_PCISB	0x208f	CS5536 GeodeLink PCI South Bridge
 product AMD CS5536_PCIB	0x2090	CS5536 PCI-ISA Bridge
+product AMD CS5536_FLASH	0x2091	CS5536 Flash
+product AMD CS5536_AUDIO	0x2093	CS5536 Audio
 product AMD CS5536_OHCI	0x2094	CS5536 OHCI USB Controller
 product AMD CS5536_EHCI	0x2095	CS5536 EHCI USB Controller
+product AMD CS5536_UDC	0x2096	CS5536 UDC
+product AMD CS5536_UOC	0x2097	CS5536 UOC
 product AMD CS5536_IDE	0x209a	CS5536 IDE Controller
 product AMD SC520_SC	0x3000	Elan SC520 System Controller
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-PCI Bridge
-product AMD PBC756_ISA	0x7408	AMD756 PCI-ISA Bridge
-product AMD PBC756_IDE	0x7409	AMD756 IDE controller
-product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
-product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
+product AMD IGR4_AGP	0x700a	AMD IGR4 AGP Bridge
+product AMD IGR4_PPB	0x700b	AMD IGR4 PCI-PCI Bridge
 product AMD SC762_NB	0x700c	AMD762 Northbridge
 product AMD SC762_PPB	0x700d	AMD762 AGP Bridge
 product AMD SC761_SC	0x700e	AMD761 System Controller
 product AMD SC761_PPB	0x700f	AMD761 PCI-PCI Bridge
+product AMD PBC755_ISA	0x7400	AMD755 PCI-ISA Bridge
+product AMD PBC755_IDE	0x7401	AMD755 IDE controller
+product AMD PBC755_PMC	0x7403	AMD755 ACPI controller
+product AMD PBC755_USB	0x7404	AMD755 USB Host controller
+product AMD PBC756_ISA	0x7408	AMD756 PCI-ISA Bridge
+product AMD PBC756_IDE	0x7409	AMD756 IDE controller
+product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
+product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
 product AMD PBC766_ISA	0x7410	AMD766 Southbridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
@@ -913,14 +935,19 @@ product AMD PCIX8131_PPB	0x7450	AMD8131 PCI-X Tunnel
 product AMD PCIX8131_APIC	0x7451	AMD8131 IO Apic
 product AMD AGP8151_DEV	0x7454	AMD8151 AGP Device
 product AMD AGP8151_PPB	0x7455	AMD8151 AGP Bridge
-product	AMD PCIX_APIC	0x7459	AMD PCI-X IOAPIC
+product AMD PCIX_PPB	0x7458	AMD8123 PCI-X Bridge
+product	AMD PCIX_APIC	0x7459	AMD8132 PCI-X IOAPIC
 product AMD PBC8111	0x7460	AMD8111 I/O Hub
+product AMD PBC8111_USB_7461	0x7461	AMD8111 7461 USB Host Controller
+product AMD PBC8111_ETHER	0x7462	AMD8111 Ethernet
 product AMD PBC8111_USB		0x7464	AMD8111 USB Host Controller
 product AMD PBC8111_LPC		0x7468	AMD8111 LPC Controller
 product AMD PBC8111_IDE		0x7469	AMD8111 IDE Controller
 product AMD PBC8111_SMB		0x746a	AMD8111 SMBus Controller
 product AMD PBC8111_ACPI	0x746b	AMD8111 ACPI Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
+product AMD PBC8111_MC97	0x746e	AMD8111 MC97 Modem
+product AMD PBC8111_AC_756b	0x756b	AMD8111 756b ACPI Controller
 
 /* American Megatrends products */
 product AMI MEGARAID		0x9010	MegaRAID
