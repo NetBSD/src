@@ -1,9 +1,9 @@
-# $NetBSD: WSCONS,v 1.20.2.3 2004/07/15 20:41:35 he Exp $
+# $NetBSD: WSCONS,v 1.20.2.3.4.1 2007/08/11 14:40:57 bouyer Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD$
+# Created from: # NetBSD: GENERIC.in,v 1.18.2.3.4.1 2007/08/11 14:40:04 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20.2.3 $"
+#ident 		"GENERIC-$Revision: 1.20.2.3.4.1 $"
 
 
 maxusers	8
@@ -70,7 +70,7 @@ options 	INET6		# IPV6
 #options 	MROUTING	# Multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
