@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.75.2.1 2004/08/23 05:59:27 tron Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.75.2.1.2.1 2007/08/11 14:03:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.75.2.1 2004/08/23 05:59:27 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.75.2.1.2.1 2007/08/11 14:03:48 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -821,7 +821,9 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		    LK_SHARE_NONZERO | LK_WAIT_NONZERO);
 		if (error)
 			break;
-		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
+		lkp->lk_flags |= LK_HAVE_EXCL;
+		if ((extflags & LK_RESURRECT) == 0)
+			lkp->lk_flags |= LK_DRAINING;
 		SETHOLDER(lkp, pid, lid, cpu_id);
 #if defined(LOCKDEBUG)
 		lkp->lk_lock_file = file;
