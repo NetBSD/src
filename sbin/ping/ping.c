@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.75.4.1 2007/08/11 14:08:43 bouyer Exp $	*/
+/*	$NetBSD: ping.c,v 1.75.4.2 2007/08/11 14:10:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.75.4.1 2007/08/11 14:08:43 bouyer Exp $");
+__RCSID("$NetBSD: ping.c,v 1.75.4.2 2007/08/11 14:10:48 bouyer Exp $");
 #endif
 
 #include <stdio.h>
@@ -264,6 +264,14 @@ main(int argc, char *argv[])
 #endif
   
 
+	if ((s = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+		err(1, "Cannot create socket");
+	if ((sloop = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+		err(1, "Cannot create socket");
+
+	if (setuid(getuid()) == -1)
+		err(1, "setuid");
+
 	setprogname(argv[0]);
 
 #ifndef IPSEC
@@ -463,8 +471,6 @@ main(int argc, char *argv[])
 
 	ident = htons(getpid()) & 0xFFFF;
 
-	if ((s = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-		err(1, "Cannot create socket");
 	if (options & SO_DEBUG) {
 		if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
 			       (char *)&on, sizeof(on)) == -1)
@@ -476,8 +482,6 @@ main(int argc, char *argv[])
 			warn("SO_DONTROUTE");
 	}
 
-	if ((sloop = cap_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
-		err(1, "Cannot create socket");
 	if (options & SO_DEBUG) {
 		if (setsockopt(sloop, SOL_SOCKET, SO_DEBUG,
 			       (char *)&on, sizeof(on)) == -1)
