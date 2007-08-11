@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.7 2007/08/09 11:59:17 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.8 2007/08/11 17:52:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -531,9 +531,6 @@ p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_vmspace = UIO_VMSPACE_SYS;
 
-	rv = rump_vopwrite_fault(opc, offset, *resid, NULL);
-	if (rv)
-		return rv;
 	rv = VOP_WRITE(opc, &uio, ioflag, NULL);
 	if (rv == 0)
 		*resid = uio.uio_resid;

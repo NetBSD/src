@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.9 2007/08/09 20:57:23 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.10 2007/08/11 17:52:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -79,19 +79,6 @@ struct vm_map rump_vmmap;
  * vm pages 
  */
 
-/* XXX: we could be smarter about this */
-struct vm_page *
-rumpvm_findpage(struct uvm_object *uobj, voff_t off)
-{
-	struct vm_page *pg;
-
-	TAILQ_FOREACH(pg, &uobj->memq, listq)
-		if (pg->offset == off)
-			return pg;
-
-	return NULL;
-}
-
 struct vm_page *
 rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 {
@@ -123,24 +110,6 @@ rumpvm_freepage(struct vm_page *pg)
 /*
  * vnode pager
  */
-
-int
-rump_vopwrite_fault(struct vnode *vp, voff_t offset, size_t len,
-	kauth_cred_t cred)
-{
-	int npages = len2npages(offset, len);
-	struct vm_page *pgs[npages];
-	int rv;
-
-	if (trunc_page(offset) >= vp->v_size)
-		return 0;
-
-	rv = VOP_GETPAGES(vp, trunc_page(offset), pgs, &npages, 0, 0, 0, 0);
-	if (rv)
-		return rv;
-
-	return 0;
-}
 
 static int
 vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
@@ -179,7 +148,7 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 	/* loop over pages */
 	off = trunc_page(off);
 	for (i = 0; i < *npages; i++) {
-		pg = rumpvm_findpage(uobj, off + (i << PAGE_SHIFT));
+		pg = uvm_pagelookup(uobj, off + (i << PAGE_SHIFT));
 		if (pg) {
 			pgs[i] = pg;
 		} else {
@@ -242,6 +211,7 @@ rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 	if (ubc_winvalid == 0)
 		panic("%s: ubc window not allocated", __func__);
 
+	memset(pgs, 0, sizeof(pgs));
 	rv = ubc_uobj->pgops->pgo_get(ubc_uobj, ubc_offset,
 	    pgs, &npages, 0, 0, 0, 0);
 	if (rv)
@@ -255,7 +225,7 @@ rump_ubc_magic_uiomove(size_t n, struct uio *uio)
 		xfersize = MIN(MIN(n, PAGE_SIZE), PAGE_SIZE-pageoff);
 		uiomove((uint8_t *)pgs[i]->uanon + pageoff, xfersize, uio);
 		if (uio->uio_rw == UIO_WRITE)
-			RUMPVM_SOILPAGE(pgs[i]);
+			pgs[i]->flags &= ~PG_CLEAN;
 		ubc_offset += xfersize;
 		n -= xfersize;
 	}
@@ -366,8 +336,13 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 struct vm_page *
 uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
+	struct vm_page *pg;
 
-	return rumpvm_findpage(uobj, off);
+	TAILQ_FOREACH(pg, &uobj->memq, listq)
+		if (pg->offset == off)
+			return pg;
+
+	return NULL;
 }
 
 void
@@ -417,6 +392,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
+		memset(pgs, 0, npages * sizeof(struct vm_page *));
 		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
 		assert(npages > 0);
 
@@ -442,11 +418,9 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 bool
 uvn_clean_p(struct uvm_object *uobj)
 {
+	struct vnode *vp = (void *)uobj;
 
-	printf("pages %d\n", (int)uobj->uo_npages);
-	if (uobj->uo_npages < 0)
-		panic("%s: uo_npages < 0", __func__);
-	return uobj->uo_npages == 0;
+	return (vp->v_flag & VONWORKLST) == 0;
 }
 
 /*

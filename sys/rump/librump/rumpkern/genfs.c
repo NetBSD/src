@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.11 2007/08/09 13:53:36 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.12 2007/08/11 17:52:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -120,18 +120,15 @@ genfs_getpages(void *v)
 	int count = *ap->a_count;
 	int i, error;
 
-	/* we'll allocate pages using other means */
-	if (ap->a_flags & PGO_NOBLOCKALLOC) {
-		*ap->a_count = 0;
-		return 0;
-	}
-
 	if (ap->a_centeridx != 0)
 		panic("%s: centeridx != not supported", __func__);
 
+	if (ap->a_access_type & VM_PROT_WRITE)
+		vp->v_flag |= VONWORKLST;
+
 	curoff = ap->a_offset & ~PAGE_MASK;
 	for (i = 0; i < count; i++, curoff += PAGE_SIZE) {
-		pg = rumpvm_findpage(&vp->v_uobj, curoff);
+		pg = uvm_pagelookup(&vp->v_uobj, curoff);
 		if (pg == NULL)
 			break;
 		ap->a_m[i] = pg;
@@ -197,14 +194,16 @@ genfs_getpages(void *v)
 	printf("first page offset 0x%x\n", (int)(curoff + bufoff));
 
 	for (i = 0; i < count; i++, bufoff += PAGE_SIZE) {
+		/* past our prime? */
 		if (curoff + bufoff >= endoff)
 			break;
-		pg = rumpvm_findpage(&vp->v_uobj, curoff + bufoff);
+
+		pg = uvm_pagelookup(&vp->v_uobj, curoff + bufoff);
 		printf("got page %p (off 0x%x)\n", pg, (int)(curoff+bufoff));
 		if (pg == NULL) {
 			pg = rumpvm_makepage(&vp->v_uobj, curoff + bufoff);
 			memcpy((void *)pg->uanon, tmpbuf+bufoff, PAGE_SIZE);
-			RUMPVM_CLEANPAGE(pg);
+			pg->flags |= PG_CLEAN;
 		}
 		ap->a_m[i] = pg;
 	}
@@ -244,9 +243,12 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	struct vm_page *pg, *pg_next;
 	voff_t smallest;
 	voff_t curoff, bufoff;
+	off_t eof;
 	size_t xfersize;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
+
+	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
 
  restart:
 	/* check if all pages are clean */
@@ -263,19 +265,21 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	}
 
 	/* all done? */
-	if (TAILQ_EMPTY(&uobj->memq))
+	if (TAILQ_EMPTY(&uobj->memq)) {
+		vp->v_flag &= ~VONWORKLST;
 		return 0;
+	}
 
 	/* we need to flush */
-	for (curoff = smallest; curoff < vp->v_writesize; curoff += PAGE_SIZE) {
-		if (curoff - smallest > MAXPHYS)
+	for (curoff = smallest; curoff < eof; curoff += PAGE_SIZE) {
+		if (curoff - smallest >= MAXPHYS)
 			break;
-		pg = rumpvm_findpage(uobj, curoff);
+		pg = uvm_pagelookup(uobj, curoff);
 		if (pg == NULL)
 			break;
 		memcpy(databuf + (curoff-smallest),
 		    (void *)pg->uanon, PAGE_SIZE);
-		RUMPVM_CLEANPAGE(pg);
+		pg->flags |= PG_CLEAN;
 	}
 	assert(curoff > smallest);
 
@@ -295,9 +299,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 		/* only write max what we are allowed to write */
 		buf.b_bcount = xfersize;
-		if (smallest + bufoff + xfersize > vp->v_writesize)
-			buf.b_bcount -= (smallest+bufoff+xfersize)
-			    - vp->v_writesize;
+		if (smallest + bufoff + xfersize > eof)
+			buf.b_bcount -= (smallest+bufoff+xfersize) - eof;
 		buf.b_bcount = (buf.b_bcount + DEV_BSIZE-1) & ~(DEV_BSIZE-1);
 
 		KASSERT(buf.b_bcount > 0);
@@ -306,7 +309,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		printf("putpages writing from %x to %x (vp size %x)\n",
 		    (int)(smallest + bufoff),
 		    (int)(smallest + bufoff + buf.b_bcount),
-		    (int)vp->v_writesize);
+		    (int)eof);
 
 		buf.b_lblkno = 0;
 		buf.b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
