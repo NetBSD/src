@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.146 2007/08/11 00:31:04 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.147 2007/08/11 00:45:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.146 2007/08/11 00:31:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.147 2007/08/11 00:45:35 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -701,14 +701,14 @@ pccbb_pci_callback(struct device *self)
 #endif
 
 		cba.cba_cacheline = PCI_CACHELINE(bhlc);
-		cba.cba_lattimer = PCI_CB_LATENCY(busreg);
+		cba.cba_lattimer = PCI_LATTIMER(bhlc);
 
 		if (bootverbose) {
 			printf("%s: cacheline 0x%x lattimer 0x%x\n",
 			    sc->sc_dev.dv_xname, cba.cba_cacheline,
 			    cba.cba_lattimer);
-			printf("%s: bhlc 0x%x lscp 0x%x\n",
-			    sc->sc_dev.dv_xname, bhlc, busreg);
+			printf("%s: bhlc 0x%x\n",
+			    device_xname(&sc->sc_dev), bhlc);
 		}
 #if defined SHOW_REGS
 		cb_show_regs(sc->sc_pc, sc->sc_tag, sc->sc_base_memt,
