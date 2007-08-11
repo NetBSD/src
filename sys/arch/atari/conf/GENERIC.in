@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.33.2.3 2004/07/15 20:18:24 he Exp $
+#	$NetBSD: GENERIC.in,v 1.33.2.4 2007/08/11 14:49:05 bouyer Exp $
 #
 # Generic atari
 #
@@ -61,7 +61,7 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 #ifndef NO_PHYS_NETWORK

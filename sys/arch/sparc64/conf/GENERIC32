@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.79.2.3 2004/08/30 09:52:44 tron Exp $
+# 	$NetBSD: GENERIC32,v 1.79.2.4 2007/08/11 14:49:09 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.79.2.3 $"
+#ident 		"GENERIC-$Revision: 1.79.2.4 $"
 
 maxusers	64
 
@@ -185,8 +185,8 @@ options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
-options 	ISO,TPIP	# OSI networking
-options 	EON		# OSI tunneling over IP
+#options 	ISO,TPIP	# OSI networking
+#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
