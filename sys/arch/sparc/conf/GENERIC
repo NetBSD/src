@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149.2.4 2004/07/15 20:31:06 he Exp $
+# $NetBSD: GENERIC,v 1.149.2.4.2.1 2007/08/11 14:46:23 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149.2.4 $"
+#ident 		"GENERIC-$Revision: 1.149.2.4.2.1 $"
 
 maxusers	32
 
@@ -201,7 +201,7 @@ options 	INET6		# IPV6
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
-options 	ISO,TPIP	# OSI networking
+#options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
