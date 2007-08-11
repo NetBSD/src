@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.111 2007/06/04 19:27:14 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.112 2007/08/11 14:14:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1197,4 +1197,46 @@ sbin/sysctl/sysctl.8: patch
 	Information from:
 		http://www.secdev.org/conf/IPv6_RH_security-csw07.pdf
 	[adrianp, ticket #11330]
+
+sys/kern/vfs_subr.c				1.289
+
+	Don't drain a vnode's lock when we are cleaning it out.  It still
+	might be used by upper layers in the vnode stack due to exported
+	lock pointers.  This introduces no difference to the normal case
+	and works around a problem where a lower layer vnode is cleaned
+	out before the upper layer due to forced unmount or revoke.  And
+	for cosmetics, set a vnode's lock export to NULL when it is cleaned
+	out.
+	per discussion with Bill Stouder-Studenmund on tech-kern
+	[pooka, ticket #11340]
+
+sys/kern/kern_lock.c				1.118 via patch
+sys/kern/vfs_subr.c				1.295
+sys/sys/lock.h					1.72
+
+	Define a new lockmgr flag LK_RESURRECT which can be used in
+	conjunction with LK_DRAIN.  This has the same effect as LK_DRAIN
+	except it atomically does NOT mark the lock as drained.  This
+	guarantees that when we got the lock, we were the last one currently
+	waiting for the lock.
+	Use LK_DRAIN|LK_RESURRECT in vclean() to make sure there are no
+	waiters for the lock when the vnode is freed.
+	[pooka, ticket #11349]
+
+sbin/ping/ping.c				1.79, 1.80
+
+	because it tries to set the tty not to print kerninfo. Change it
+	to only only play with the tty when ping is running in the foreground.
+	[ghen, ticket #11351]
+
+sbin/ping/ping.c				1.83 - 1.85
+
+	PR/28741: Michael Santos: ping does [not] drop root privileges
+	Moved socket calls way up, and called setuid(getuid()).
+	[ghen, ticket #11352]
+
+sys/sys/ucred.h					1.29 via patch
+
+	This needs <sys/param.h> for NGROUPS, fix kde3 build.
+	[he, ticket #11353]
 
