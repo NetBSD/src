@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.84 2007/06/24 19:26:59 rumble Exp $
+.\"	$NetBSD: uvm.9,v 1.85 2007/08/11 19:16:21 pooka Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 6, 2007
+.Dd August 11, 2007
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -120,15 +120,15 @@ initialises the swap sub-system.
 .Pp
 .Ft int
 .br
-.Fn uvm_map_pageable "struct vm_map *map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable" "int lockflags" ;
+.Fn uvm_map_pageable "struct vm_map *map" "vaddr_t start" "vaddr_t end" "bool new_pageable" "int lockflags" ;
 .Pp
-.Ft boolean_t
+.Ft bool
 .br
 .Fn uvm_map_checkprot "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection" ;
 .Pp
 .Ft int
 .br
-.Fn uvm_map_protect "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max" ;
+.Fn uvm_map_protect "struct vm_map *map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "bool set_max" ;
 .Pp
 .Ft int
 .br
@@ -158,7 +158,7 @@ initialises the swap sub-system.
 .br
 .Fn uvmspace_unshare "struct lwp *l" ;
 .Pp
-.Ft boolean_t
+.Ft bool
 .br
 .Fn uvm_uarea_alloc "vaddr_t *uaddrp" ;
 .Pp
@@ -535,7 +535,7 @@ on the memory described in
 .Pp
 .Ft struct vm_map *
 .br
-.Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" "vsize_t size" "boolean_t pageable" "boolean_t fixed" "struct vm_map *submap" ;
+.Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" "vsize_t size" "bool pageable" "bool fixed" "struct vm_map *submap" ;
 .Pp
 .Fn uvm_km_alloc
 allocates
@@ -878,7 +878,7 @@ and should match what was used for previous call to
 .br
 .Fn uao_reference "struct uvm_object *uobj" ;
 .Pp
-.Ft boolean_t
+.Ft bool
 .br
 .Fn uvm_chgkprot "void *addr" "size_t len" "int rw" ;
 .Pp
@@ -900,7 +900,7 @@ and should match what was used for previous call to
 .Pp
 .Ft void
 .br
-.Fn uvm_fork "struct lwp *l1" "struct lwp *l2" "boolean_t shared" ;
+.Fn uvm_fork "struct lwp *l1" "struct lwp *l2" "bool shared" ;
 .Pp
 .Ft int
 .br
