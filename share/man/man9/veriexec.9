@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexec.9,v 1.16 2007/06/24 19:26:59 rumble Exp $
+.\" $NetBSD: veriexec.9,v 1.17 2007/08/11 19:16:21 pooka Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2006 Brett Lymn <blymn@NetBSD.org>
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 19, 2007
+.Dd August 11, 2007
 .Dt VERIEXEC 9
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ Initialize the
 .Em Veriexec
 subsystem.
 Called only once during system startup.
-.It Ft "boolean_t" Fn veriexec_lookup "struct vnode *vp"
+.It Ft "bool" Fn veriexec_lookup "struct vnode *vp"
 Check if
 .Ar vp
 is monitored by
@@ -66,7 +66,7 @@ if it is, or
 .Dv false
 otherwise.
 .It Ft int Fn veriexec_verify "struct lwp *l" "struct vnode *vp" \
-"const u_char *name" "int flag" "boolean_t *found"
+"const u_char *name" "int flag" "bool *found"
 Verifies the digital fingerprint of
 .Ar vp .
 .Ar name
