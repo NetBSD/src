@@ -1,8 +1,0 @@
-#	$NetBSD: files.ofw,v 1.5 2000/11/15 00:39:32 matt Exp $
-
-file	arch/powerpc/powerpc/ofw_machdep.c
-file	arch/powerpc/powerpc/ofwmagic.S
-file	arch/powerpc/powerpc/openfirm.c
-
-# Firmworks OpenFirmware Bug Workarounds
-file	arch/powerpc/powerpc/ofwreal.S		firmworksbugs

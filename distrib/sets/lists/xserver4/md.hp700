@@ -1,3 +1,0 @@
-# $NetBSD: md.hp700,v 1.1 2004/07/24 19:14:29 chs Exp $
-./usr/X11R6/bin/Xvfb
-./usr/X11R6/man/cat1/Xvfb.0

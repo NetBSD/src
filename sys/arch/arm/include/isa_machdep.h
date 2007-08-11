@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4 2003/05/09 23:51:26 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.4.80.1 2007/08/11 21:14:51 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,9 @@
  */
 struct arm32_isa_chipset {
 	struct isa_dma_state ic_dmastate;
+#ifdef __HAVE_GENERIC_ARM_INTERRUPTS
+	irqgroup_t	ic_irqgroup;
+#endif
 };
 
 typedef struct arm32_isa_chipset *isa_chipset_tag_t;

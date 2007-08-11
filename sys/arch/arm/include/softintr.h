@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.3 2007/02/22 04:38:03 matt Exp $	*/
+/*	$NetBSD: softintr.h,v 1.3.22.1 2007/08/11 21:14:51 chris Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -79,7 +79,9 @@ struct soft_intrq {
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
 void	softintr_init(void);
+#ifndef __HAVE_GENERIC_ARM_INTERRUPTS
 void	softintr_dispatch(int);
+#endif
 
 #define	softintr_schedule(arg)						\
 do {									\

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2007/07/30 12:25:14 jmmv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.6.1 2007/08/11 21:14:52 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2007/07/30 12:25:14 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.6.1 2007/08/11 21:14:52 chris Exp $");
 
 #include "opt_md.h"
 
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2007/07/30 12:25:14 jmmv Exp $");
 #include <machine/intr.h>
 
 #include "isa.h"
-
-void isa_intr_init(void);
 
 static void get_device(const char *name);
 static void set_root_device(void);
@@ -133,35 +131,22 @@ cpu_rootconf(void)
  * Configure all the root devices
  * The root devices are expected to configure their own children
  */
-extern int footbridge_imask[NIPL];
 
 void
 cpu_configure(void)
 {
 	softintr_init();
-	/*
-	 * Since various PCI interrupts could be routed via the ICU
-	 * (for PCI devices in the bridge) we need to set up the ICU
-	 * now so that these interrupts can be established correctly
-	 * i.e. This is a hack.
-	 */
-	isa_intr_init();
 
 
 	config_rootfound("mainbus", NULL);
 
 #if defined(DEBUG)
 	/* Debugging information */
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
-	    footbridge_imask[IPL_BIO], footbridge_imask[IPL_NET],
-	    footbridge_imask[IPL_TTY], footbridge_imask[IPL_VM]);
-	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
-	    footbridge_imask[IPL_AUDIO], footbridge_imask[IPL_CLOCK],
-	    footbridge_imask[IPL_HIGH], footbridge_imask[IPL_SERIAL]);
+	arm_intr_print_all_masks();
 #endif /* defined(DEBUG) */
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
-	(void)spl0();
+	arm_intr_enable_irqs();
 }
 
 void
