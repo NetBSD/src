@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.21.2.3 2004/07/15 20:16:56 he Exp $
+# $NetBSD: GENERIC,v 1.21.2.3.4.1 2007/08/11 14:40:07 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.21.2.3 $"
+#ident 		"GENERIC-$Revision: 1.21.2.3.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -126,7 +126,7 @@ options 	INET6		# IPV6
 #options 	MROUTING	# IP multicast routing
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
