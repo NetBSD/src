@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.18 2003/08/07 16:34:21 agc Exp $	*/
+/*	$NetBSD: ucred.h,v 1.18.4.1 2007/08/11 14:13:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _SYS_UCRED_H_
 #define	_SYS_UCRED_H_
+
+#include <sys/param.h>
 
 /*
  * Credentials.
