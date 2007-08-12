@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.16 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: ega.c,v 1.16.2.1 2007/08/12 19:52:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.16 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.16.2.1 2007/08/12 19:52:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -848,6 +848,10 @@ ega_allocattr(id, fg, bg, flags, attrp)
 {
 	struct egascreen *scr = id;
 	struct ega_config *vc = scr->cfg;
+
+	if (__predict_false((unsigned int)fg >= sizeof(fgansitopc) ||
+	    (unsigned int)bg >= sizeof(bgansitopc)))
+		return (EINVAL);
 
 	if (vc->hdl.vh_mono) {
 		if (flags & WSATTR_WSCOLORS)
