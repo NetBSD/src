@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.5 2007/08/09 02:37:07 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.6 2007/08/12 04:23:29 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.5 2007/08/09 02:37:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.6 2007/08/12 04:23:29 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -534,13 +534,6 @@ acpi_build_tree(struct acpi_softc *sc)
 				    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
 				     ACPI_STA_DEV_OK))
 					continue;
-
-				/*
-				 * XXX Same problem as above...
-				 */
-				if ((ad->ad_devinfo->Valid & ACPI_VALID_HID)
-				    == 0)
-					continue;
 			}
 
 			ad->ad_device = config_found_ia(&sc->sc_dev,
@@ -727,13 +720,15 @@ acpi_print(void *aux, const char *pnp)
 			}
 
 #endif
-		} else {
+			aprint_normal("at %s", pnp);
+		} else if (aa->aa_node->ad_devinfo->Type != ACPI_TYPE_DEVICE) {
 			aprint_normal("%s (ACPI Object Type '%s' "
 			    "[0x%02x]) ", aa->aa_node->ad_name,
 			     AcpiUtGetTypeName(aa->aa_node->ad_devinfo->Type),
 			     aa->aa_node->ad_devinfo->Type);
-		}
-		aprint_normal("at %s", pnp);
+			aprint_normal("at %s", pnp);
+		} else
+			return 0;
 	} else {
 		aprint_normal(" (%s", aa->aa_node->ad_name);
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
@@ -1111,6 +1106,9 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
+		if (state != ACPI_STATE_S1)
+			pnp_global_transition(PNP_STATE_D3);
+
 		ret = AcpiEnterSleepStatePrep(state);
 		if (ACPI_FAILURE(ret)) {
 			aprint_error("%s: failed preparing to sleep (%s)\n",
@@ -1125,17 +1123,17 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			acpi_md_OsDisableInterrupt();
 			AcpiEnterSleepState((UINT8)state);
 		} else {
-			pnp_global_transition(PNP_STATE_D3);
 			s = splhigh();
 			err = acpi_md_sleep(state);
 			if (err == 0 && state == ACPI_STATE_S3)
 				AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
 			splx(s);
-			pnp_global_transition(PNP_STATE_D0);
 			if (state == ACPI_STATE_S4)
 				AcpiEnable();
 		}
 		AcpiLeaveSleepState((UINT8)state);
+		if (state != ACPI_STATE_S1)
+			pnp_global_transition(PNP_STATE_D0);
 
 		break;
 	case ACPI_STATE_S5:
