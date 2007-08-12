@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.94 2007/08/12 19:31:12 pooka Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.95 2007/08/12 19:42:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.94 2007/08/12 19:31:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.95 2007/08/12 19:42:09 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -890,12 +890,8 @@ terminal:
 	 * Disallow directory write attempts on read-only lookups.
 	 */
 	if (rdonly &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
-
-		/*
-		 * Disallow directory write attempts on read-only
-		 * file systems.
-		 */
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME ||
+	     cnp->cn_nameiop == CREATE)) {
 		error = EROFS;
 		if (dp != ndp->ni_dvp) {
 			vput(dp);
