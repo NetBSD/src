@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.4 2007/08/12 01:44:33 rumble Exp $
+.\"	$NetBSD: boot.8,v 1.5 2007/08/12 03:15:18 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Stephen M. Rumble
 .\" All rights reserved.
@@ -125,6 +125,8 @@ as the TFTP server, this problem may be worked around as follows:
 Another bug exists in some firmware revisions, which precludes the PROM from
 communicating with TFTP servers that employ PMTU (Path MTU) discovery.
 This bug may be worked around by disabling PMTU on the TFTP server.
-This does not presently affect NetBSD servers.
+This does not presently affect
+.Nx
+servers.
 .Pp
 This man page is horribly incomplete.
