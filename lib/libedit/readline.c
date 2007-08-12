@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.71 2007/05/27 19:45:37 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.72 2007/08/12 07:41:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.71 2007/05/27 19:45:37 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.72 2007/08/12 07:41:51 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -111,7 +111,7 @@ Function *rl_completion_entry_function = NULL;
 CPPFunction *rl_attempted_completion_function = NULL;
 Function *rl_pre_input_hook = NULL;
 Function *rl_startup1_hook = NULL;
-Function *rl_getc_function = NULL;
+int (*rl_getc_function)(FILE *) = NULL;
 char *rl_terminal_name = NULL;
 int rl_already_prompted = 0;
 int rl_filename_completion_desired = 0;
@@ -213,7 +213,7 @@ _getc_function(EditLine *el, char *c)
 {
 	int i;
 
-	i = (*rl_getc_function)(NULL, 0);
+	i = (*rl_getc_function)(NULL);
 	if (i == -1)
 		return 0;
 	*c = i;
@@ -1168,7 +1168,7 @@ history_get(int num)
 		return (NULL);	/* error */
 
 	/* look backwards for event matching specified offset */
-	if (history(h, &ev, H_NEXT_EVENT, num))
+	if (history(h, &ev, H_NEXT_EVENT, num + 1))
 		return (NULL);
 
 	she.line = ev.str;
@@ -1677,7 +1677,7 @@ rl_callback_read_char()
 }
 
 void 
-rl_callback_handler_install (const char *prompt, VCPFunction *linefunc)
+rl_callback_handler_install(const char *prompt, VCPFunction *linefunc)
 {
 	if (e == NULL) {
 		rl_initialize();
@@ -1693,6 +1693,7 @@ void
 rl_callback_handler_remove(void)
 {
 	el_set(e, EL_UNBUFFERED, 0);
+	rl_linefunc = NULL;
 }
 
 void
