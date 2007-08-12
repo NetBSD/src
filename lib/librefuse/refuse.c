@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.73 2007/07/18 22:05:41 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.74 2007/08/12 15:32:39 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.73 2007/07/18 22:05:41 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.74 2007/08/12 15:32:39 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -418,9 +418,12 @@ fuse_getattr(struct fuse *fuse, struct puffs_node *pn, const char *path,
 	}
 
 	/* wrap up return code */
+	memset(&st, 0, sizeof(st));
 	ret = (*fuse->op.getattr)(path, &st);
 
 	if (ret == 0) {
+		if (st.st_blksize == 0)
+			st.st_blksize = DEV_BSIZE;
 		puffs_stat2vattr(va, &st);
 	}
 
