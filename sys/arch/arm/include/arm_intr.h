@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.1 2007/08/11 21:14:50 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.2 2007/08/12 13:28:40 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -204,10 +204,11 @@ irqgroup_t
 arm_intr_register_irq_provider(const char *name, int nirqs, 
 		void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled),
 		uint32_t (*fetch_irq_hardware_status)(irq_hardware_cookie_t),
+		void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type),
 		irq_hardware_cookie_t, bool primary_irq_group);
 
 irqhandler_t
-arm_intr_claim(irqgroup_t, int irq, int ipl, const char *name, int (*func)(void *), void *arg);
+arm_intr_claim(irqgroup_t, int irq, int type, int ipl, const char *name, int (*func)(void *), void *arg);
 void arm_intr_disestablish(irqgroup_t, irqhandler_t cookie);
 
 void arm_intr_schedule(irqgroup_t, irqhandler_t);
@@ -216,7 +217,7 @@ const struct evcnt * arm_intr_evcnt(irqgroup_t, int ih);
 
 void arm_intr_soft_enable_irq(irqgroup_t, int irq);
 void arm_intr_soft_disable_irq(irqgroup_t, int irq);
-void arm_intr_queue_irqs(irqgroup_t);
+void arm_intr_queue_irqs(irqgroup_t, uint32_t);
 void arm_intr_process_pending_ipls(struct clockframe *frame, int target_ipl_level);
 
 
@@ -247,6 +248,11 @@ struct intrhand {
 };
 
 #define	IRQNAMESIZE	sizeof("abcdefghijklmnopqrstuvwxyz irq 31")
+#define	IST_UNUSABLE	-1      /* interrupt cannot be used */
+#define	IST_NONE	0       /* none (dummy) */
+#define	IST_PULSE	1       /* pulsed */
+#define	IST_EDGE	2       /* edge-triggered */
+#define	IST_LEVEL	3       /* level-triggered */
 
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
@@ -292,6 +298,7 @@ struct irq_group
 	void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled);
 	uint32_t (*fetch_irq_hardware_status)(irq_hardware_cookie_t);
 	irq_hardware_cookie_t irq_hardware_cookie;
+	void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type);
 
 	const char *group_name;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.3 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: icu.h,v 1.3.50.1 2007/08/12 13:28:39 chris Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -47,7 +47,7 @@
 /*
  * Interrupt "level" mechanism variables, masks, and macros
  */
-extern	unsigned imen;		/* interrupt mask enable */
+extern	uint32_t imen;		/* interrupt mask enable */
 
 #define SET_ICUS()	{		\
 	outb(IO_ICU1 + 1, imen);	\
