@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.4 2007/08/09 09:11:57 pooka Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.5 2007/08/12 13:34:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,33 @@
 int
 lockmgr(volatile struct lock *lock, u_int flags, struct simplelock *slock)
 {
+	u_int lktype = flags & LK_TYPE_MASK;
+
+	switch (lktype) {
+	case LK_SHARED:
+	case LK_EXCLUSIVE:
+		lock->lk_flags = lktype;
+		break;
+
+	case LK_RELEASE:
+		lock->lk_flags = 0;
+		break;
+
+	case LK_UPGRADE:
+	case LK_EXCLUPGRADE:
+		assert(lock->lk_flags == LK_SHARED);
+		lock->lk_flags = LK_EXCLUSIVE;
+		break;
+
+	case LK_DOWNGRADE:
+		assert(lock->lk_flags == LK_EXCLUSIVE);
+		lock->lk_flags = LK_SHARED;
+		break;
+
+	case LK_DRAIN:
+		lock->lk_flags = LK_EXCLUSIVE;
+		break;
+	}
 
 	return 0;
 }
@@ -45,14 +72,14 @@ lockinit(struct lock *lock, pri_t prio, const char *wmesg, int timo,
 	int flags)
 {
 
-	return;
+	lock->lk_flags = 0;
 }
 
 int
 lockstatus(struct lock *lock)
 {
 
-	return LK_EXCLUSIVE;
+	return lock->lk_flags;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.7 2007/08/09 20:57:23 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.8 2007/08/12 13:34:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -82,6 +82,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	vp->v_mount = mp;
 	vp->v_tag = tag;
 	vp->v_op = vops;
+	vp->v_vnlock = &vp->v_lock;
 	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 
 	uobj = &vp->v_uobj;
