@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.20 2007/05/27 19:45:37 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.21 2007/08/12 07:41:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ extern KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
 			emacs_ctlx_keymap;
 extern int		rl_filename_completion_desired;
 extern int		rl_ignore_completion_duplicates;
-extern Function		*rl_getc_function;
+extern int		(*rl_getc_function)(FILE *);
 extern VFunction	*rl_redisplay_function;
 extern VFunction	*rl_completion_display_matches_hook;
 extern VFunction	*rl_prep_term_function;
