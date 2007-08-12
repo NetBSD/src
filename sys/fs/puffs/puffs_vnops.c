@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.95 2007/07/30 14:49:01 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.96 2007/08/12 19:44:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.95 2007/07/30 14:49:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.96 2007/08/12 19:44:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -434,6 +434,13 @@ puffs_lookup(void *v)
 	if (error)
 		return error;
 
+	/* r/o fs? */
+	if ((cnp->cn_flags & ISLASTCN)
+	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
+	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME ||
+		cnp->cn_nameiop == CREATE))
+		return EROFS;
+
 	isdot = cnp->cn_namelen == 1 && *cnp->cn_nameptr == '.';
 
 	DPRINTF(("puffs_lookup: \"%s\", parent vnode %p, op: %lx\n",
@@ -684,8 +691,19 @@ puffs_access(void *v)
 
 	PUFFS_VNREQ(access);
 
-	if (vp->v_type == VREG && mode & VWRITE && !EXISTSOP(pmp, WRITE))
-		return EROFS;
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			if ((vp->v_mount->mnt_flag & MNT_RDONLY)
+			    || !EXISTSOP(pmp, WRITE))
+				return EROFS;
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (!EXISTSOP(pmp, ACCESS))
 		return 0;
@@ -774,6 +792,16 @@ puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
 	int error;
 
 	PUFFS_VNREQ(setattr);
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL
+	    || vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL
+	    || vap->va_mode != (mode_t)VNOVAL))
+		return EROFS;
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY)
+	    && vp->v_type == VREG && vap->va_size != VNOVAL)
+		return EROFS;
 
 	/*
 	 * Flush metacache first.  If we are called with some explicit
