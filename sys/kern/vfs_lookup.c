@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.93 2007/07/09 21:10:57 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.94 2007/08/12 19:31:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.93 2007/07/09 21:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.94 2007/08/12 19:31:12 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -887,7 +887,7 @@ terminal:
 	}
 
 	/*
-	 * Disallow directory write attempts on read-only file systems.
+	 * Disallow directory write attempts on read-only lookups.
 	 */
 	if (rdonly &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
@@ -993,7 +993,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 #endif
 
 	/*
-	 * Check for read-only file systems.
+	 * Check for read-only lookups.
 	 */
 	if (rdonly && cnp->cn_nameiop != LOOKUP) {
 		error = EROFS;
