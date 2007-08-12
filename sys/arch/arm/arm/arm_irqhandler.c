@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_irqhandler.c,v 1.1.2.1 2007/08/11 21:14:47 chris Exp $	*/
+/*	$NetBSD: arm_irqhandler.c,v 1.1.2.2 2007/08/12 13:28:38 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -66,7 +66,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.1 2007/08/11 21:14:47 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.2 2007/08/12 13:28:38 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -277,6 +277,7 @@ irqgroup_t
 arm_intr_register_irq_provider(const char *name, int nirqs, 
 		void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled),
 		uint32_t (*fetch_irq_hardware_status)(irq_hardware_cookie_t),
+		void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type),
 		irq_hardware_cookie_t cookie, bool primary_irq_group)
 {
 	struct irq_group *irqg;
@@ -304,6 +305,7 @@ arm_intr_register_irq_provider(const char *name, int nirqs,
 	irqg->intr_soft_enabled = 0xffffffff;
 	irqg->set_irq_hardware_mask = set_irq_hardware_mask;
 	irqg->fetch_irq_hardware_status = fetch_irq_hardware_status;
+	irqg->set_irq_hardware_type = set_irq_hardware_type;
 	irqg->irq_hardware_cookie = cookie;
 	irqg->group_name = name;
 
@@ -315,7 +317,7 @@ arm_intr_register_irq_provider(const char *name, int nirqs,
             evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
                                      NULL, irqg->group_name, iq->iq_name);
 			iq->iq_ipl = IPL_NONE;
-			iq->iq_ist = 0;
+			iq->iq_ist = IST_NONE;
 			iq->iq_irq = i;
 			iq->iq_mask = 0;
 			iq->iq_group = irqg;
@@ -334,7 +336,7 @@ arm_intr_register_irq_provider(const char *name, int nirqs,
 }
 
 irqhandler_t
-arm_intr_claim(irqgroup_t cookie, int irq, int ipl, const char *name,
+arm_intr_claim(irqgroup_t cookie, int irq, int type, int ipl, const char *name,
 		int (*func)(void *), void *arg)
 {
 	struct irq_group *irqg = cookie;
@@ -351,13 +353,32 @@ arm_intr_claim(irqgroup_t cookie, int irq, int ipl, const char *name,
 		printf("No memory for irq %d, group %s", irq, irqg->group_name);
 		return (NULL);
 	}
-		
+
+	iq = &(irqg->irqs[irq]);
+	switch (iq->iq_ist)
+	{
+		case IST_NONE:
+			iq->iq_ist = type;
+			if (irqg->set_irq_hardware_type)
+			{
+				irqg->set_irq_hardware_type(irqg->irq_hardware_cookie, irq, type);
+			}
+			break;
+		case IST_EDGE:
+		case IST_LEVEL:
+			if (iq->iq_ist == type)
+				break;
+		case IST_PULSE:
+			if (type != IST_NONE)
+				panic("Can't share irq type %d with %d",
+						iq->iq_ist, type);
+			break;
+	}
+
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;
 	ih->ih_irq = irq;
-
-	iq = &(irqg->irqs[irq]);
 
 	oldirqstate = disable_interrupts(I32_bit);
 
@@ -365,10 +386,17 @@ arm_intr_claim(irqgroup_t cookie, int irq, int ipl, const char *name,
 
 	arm_intr_calculate_masks(irqg);
 
-	/* detach the existing event counter and add the new name */
-	evcnt_detach(&iq->iq_ev);
-	evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-			NULL, irqg->group_name, name);
+	if (name != NULL)
+	{
+		/* detach the existing event counter and add the new name */
+		evcnt_detach(&iq->iq_ev);
+		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+				NULL, irqg->group_name, name);
+	}
+	else
+	{
+		iq->iq_ev.ev_count = 0;
+	}
 	
 	restore_interrupts(oldirqstate);
 	
@@ -386,6 +414,17 @@ arm_intr_disestablish(irqgroup_t group_cookie, irqhandler_t cookie)
 	oldirqstate = disable_interrupts(I32_bit);
 
 	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
+	
+	/* reset the IST type */
+	if (TAILQ_EMPTY(&iq->iq_list))
+	{
+		iq->iq_ist = IST_NONE;
+		if (irqg->set_irq_hardware_type)
+		{
+			irqg->set_irq_hardware_type(irqg->irq_hardware_cookie,
+				       	ih->ih_irq, IST_NONE);
+		}
+	}
 
 	arm_intr_calculate_masks(irqg);
 
@@ -529,29 +568,27 @@ arm_intr_dispatch(struct clockframe *frame)
 {
 	struct irq_group *irqg;
 	int ipl_level_at_entry = current_ipl_level;
+	uint32_t hwpend;
 
 	irqg = TAILQ_FIRST(&irq_groups_list);
 #ifdef DIAGNOSTIC
 	if (irqg == NULL)
 		panic("dispatch interrupts with no interrupt groups");
 #endif
-	arm_intr_queue_irqs(irqg);
+	hwpend = irqg->fetch_irq_hardware_status(irqg->irq_hardware_cookie);
+	arm_intr_queue_irqs(irqg, hwpend);
 
 	/*
 	 * we only need to process ipls if they are of a higher priority than our current level
 	 */
 	if (ipls_pending > (1 << ipl_level_at_entry))
 		arm_intr_process_pending_ipls(frame, ipl_level_at_entry);
-
 }
 
 void
-arm_intr_queue_irqs(irqgroup_t group_cookie)
+arm_intr_queue_irqs(irqgroup_t group_cookie, uint32_t hwpend)
 {
 	struct irq_group *irqg = group_cookie;
-	uint32_t hwpend;
-
-	hwpend = irqg->fetch_irq_hardware_status(irqg->irq_hardware_cookie);
 
 	if (__predict_true(hwpend != 0))
 	{

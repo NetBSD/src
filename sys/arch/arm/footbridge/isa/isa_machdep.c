@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6.50.1 2007/08/12 13:28:39 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2005/12/11 12:16:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.50.1 2007/08/12 13:28:39 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2005/12/11 12:16:46 christos Exp
 #include <arm/footbridge/isa/icu.h>
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/dc21285mem.h>
+#include <dev/ic/i8259reg.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -111,12 +112,16 @@ struct arm32_isa_chipset isa_chipset_tag;
 
 void isa_strayintr __P((int));
 void intr_calculatemasks __P((void));
-int fakeintr __P((void *));
 
 int isa_irqdispatch __P((void *arg));
 
-u_int imask[NIPL];
-unsigned imen;
+uint32_t imen;
+
+static irqgroup_t isa_irq_group;
+static void isa_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled);
+static uint32_t isa_irq_status(irq_hardware_cookie_t cookie);
+static void isa_set_irq_hardware_type(irq_hardware_cookie_t cookie, int irq, int type);
+
 
 #define AUTO_EOI_1
 #define AUTO_EOI_2
@@ -128,33 +133,53 @@ unsigned imen;
 static void
 isa_icu_init(void)
 {
-	/* initialize 8259's */
-	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
-	outb(IO_ICU1+1, 1 << IRQ_SLAVE);	/* slave on line 2 */
+	/* reset; program device, four bytes */
+	outb(IO_ICU1 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
+
+	/* starting at this vector index */
+	outb(IO_ICU1 + PIC_ICW2, ICU_OFFSET);
+	/* slave on line 2 */
+	outb(IO_ICU1 + PIC_ICW3, ICW3_CASCADE(IRQ_SLAVE));
+
 #ifdef AUTO_EOI_1
-	outb(IO_ICU1+1, 2 | 1);		/* auto EOI, 8086 mode */
+	/* auto EOI, 8086 mode */
+	outb(IO_ICU1 + PIC_ICW4, ICW4_AEOI | ICW4_8086);
 #else
-	outb(IO_ICU1+1, 1);			/* 8086 mode */
+	/* 8086 mode */
+	outb(IO_ICU1 + PIC_ICW4, ICW4_8086);
 #endif
-	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x68);		/* special mask mode (if available) */
-	outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
+	/* leave interrupts masked */
+	outb(IO_ICU1 + PIC_OCW1, 0xff);
+	/* special mask mode (if available) */
+	outb(IO_ICU1 + PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+	/* Read IRR by default. */
+	outb(IO_ICU1 + PIC_OCW3, OCW3_SELECT | OCW3_RR);
 #ifdef REORDER_IRQ
-	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
+	/* pri order 3-7, 0-2 (com2 first) */
+	outb(IO_ICU1 + PIC_OCW2, OCW2_SELECT | OCW2_R | OCW2_SL |
+		OCW2_ILS(3 - 1));
 #endif
 
-	outb(IO_ICU2, 0x11);		/* reset; program device, four bytes */
-	outb(IO_ICU2+1, ICU_OFFSET+8);	/* staring at this vector index */
-	outb(IO_ICU2+1, IRQ_SLAVE);
+	/* reset; program device, four bytes */
+	outb(IO_ICU2 + PIC_ICW1, ICW1_SELECT | ICW1_IC4);
+
+	/* staring at this vector index */
+	outb(IO_ICU2 + PIC_ICW2, ICU_OFFSET + 8);
+	/* slave connected to line 2 of master */
+	outb(IO_ICU2 + PIC_ICW3, ICW3_SIC(IRQ_SLAVE));
 #ifdef AUTO_EOI_2
-	outb(IO_ICU2+1, 2 | 1);		/* auto EOI, 8086 mode */
+	/* auto EOI, 8086 mode */
+	outb(IO_ICU2 + PIC_ICW4, ICW4_AEOI | ICW4_8086);
 #else
-	outb(IO_ICU2+1, 1);			/* 8086 mode */
+	/* 8086 mode */
+	outb(IO_ICU2 + PIC_ICW4, ICW4_8086);
 #endif
-	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
-	outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
+	/* leave interrupts masked */
+	outb(IO_ICU2 + PIC_OCW1, 0xff);
+        /* special mask mode (if available) */
+	outb(IO_ICU2 + PIC_OCW3, OCW3_SELECT | OCW3_SSMM | OCW3_SMM);
+        /* Read IRR by default. */
+	outb(IO_ICU2 + PIC_OCW3, OCW3_SELECT | OCW3_RR);
 }
 
 /*
@@ -175,123 +200,6 @@ isa_strayintr(irq)
 	if (++strays <= 5)
 		log(LOG_ERR, "stray interrupt %d%s\n", irq,
 		    strays >= 5 ? "; stopped logging" : "");
-}
-
-static struct intrq isa_intrq[ICU_LEN];
-
-/*
- * Recalculate the interrupt masks from scratch.
- * We could code special registry and deregistry versions of this function that
- * would be faster, but the code would be nastier, and we don't expect this to
- * happen very much anyway.
- */
-void
-intr_calculatemasks()
-{
-	int irq, level;
-	struct intrq *iq;
-	struct intrhand *ih;
-
-	/* First, figure out which levels each IRQ uses. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		int levels = 0;
-		iq = &isa_intrq[irq];
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-			ih = TAILQ_NEXT(ih, ih_list))
-			levels |= (1U << ih->ih_ipl);
-		iq->iq_levels = levels;
-	}
-
-	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < NIPL; level++) {
-		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (isa_intrq[irq].iq_levels & (1U << level))
-				irqs |= (1U << irq);
-		imask[level] = irqs;
-	}
-
-	/*
-	 * IPL_NONE is used for hardware interrupts that are never blocked,
-	 * and do not block anything else.
-	 */
-	imask[IPL_NONE] = 0;
-
-	imask[IPL_SOFT] |= imask[IPL_NONE];
-	imask[IPL_SOFTCLOCK] |= imask[IPL_SOFT];
-	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
-
-	/*
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	imask[IPL_BIO] |= imask[IPL_SOFTCLOCK];
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 */
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_AUDIO] |= imask[IPL_VM];
-
-	/*
-	 * Since run queues may be manipulated by both the statclock and tty,
-	 * network, and disk drivers, clock > imp.
-	 */
-	imask[IPL_CLOCK] |= imask[IPL_VM];
-	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
-
-	/*
-	 * IPL_HIGH must block everything that can manipulate a run queue.
-	 */
-	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
-
-	/*
-	 * We need serial drivers to run at the absolute highest priority to
-	 * avoid overruns, so serial > high.
-	 */
-	imask[IPL_SERIAL] |= imask[IPL_HIGH];
-
-	/* And eventually calculate the complete masks. */
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		int irqs = 1 << irq;
-		iq = &isa_intrq[irq];
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-			ih = TAILQ_NEXT(ih, ih_list))
-			irqs |= imask[ih->ih_ipl];
-		iq->iq_mask = irqs;
-	}
-
-	/* Lastly, determine which IRQs are actually in use. */
-	{
-		int irqs = 0;
-		for (irq = 0; irq < ICU_LEN; irq++)
-			if (!TAILQ_EMPTY(&isa_intrq[irq].iq_list))
-				irqs |= (1U << irq);
-		if (irqs >= 0x100) /* any IRQs >= 8 in use */
-			irqs |= 1 << IRQ_SLAVE;
-		imen = ~irqs;
-		SET_ICUS();
-	}
-#if 0
-	printf("type\tmask\tlevel\thand\n");
-	for (irq = 0; irq < ICU_LEN; irq++) {
-		printf("%x\t%04x\t%x\t%p\n", intrtype[irq], intrmask[irq],
-		intrlevel[irq], intrhand[irq]);
-	}
-	for (level = 0; level < IPL_LEVELS; ++level)
-		printf("%d: %08x\n", level, imask[level]);
-#endif
-}
-
-int
-fakeintr(arg)
-	void *arg;
-{
-
-	return 0;
 }
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
@@ -326,7 +234,8 @@ isa_intr_alloc(ic, mask, type, irq)
 		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
 			continue;
 		
-		iq = &isa_intrq[i];
+		/* XXX shouldn't expose internals of arm_intr here */
+		iq = &(isa_irq_group->irqs[i]);
 		switch(iq->iq_ist) {
 		case IST_NONE:
 			/*
@@ -374,7 +283,7 @@ isa_intr_alloc(ic, mask, type, irq)
 const struct evcnt *
 isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
-    return &isa_intrq[irq].iq_ev;
+    return arm_intr_evcnt(isa_irq_group, irq);
 }
 
 /*
@@ -390,65 +299,10 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
-    	struct intrq *iq;
-	struct intrhand *ih;
-	u_int oldirqstate;
-
-#if 0
-	printf("isa_intr_establish(%d, %d, %d)\n", irq, type, level);
-#endif
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-	    return (NULL);
-
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
 
-	iq = &isa_intrq[irq];
-
-	switch (iq->iq_ist) {
-	case IST_NONE:
-		iq->iq_ist = type;
-#if 0
-		printf("Setting irq %d to type %d - ", irq, type);
-#endif
-		if (irq < 8) {
-			outb(0x4d0, (inb(0x4d0) & ~(1 << irq))
-			    | ((type == IST_LEVEL) ? (1 << irq) : 0));
-/*			printf("%02x\n", inb(0x4d0));*/
-		} else {
-			outb(0x4d1, (inb(0x4d1) & ~(1 << irq))
-			    | ((type == IST_LEVEL) ? (1 << irq) : 0));
-/*			printf("%02x\n", inb(0x4d1));*/
-		}
-		break;
-	case IST_EDGE:
-	case IST_LEVEL:
-		if (iq->iq_ist == type)
-			break;
-	case IST_PULSE:
-		if (type != IST_NONE)
-			panic("intr_establish: can't share %s with %s",
-			    isa_intr_typename(iq->iq_ist),
-			    isa_intr_typename(type));
-		break;
-	}
-
-	ih->ih_func = ih_fun;
-	ih->ih_arg = ih_arg;
-	ih->ih_ipl = level;
-	ih->ih_irq = irq;
-
-	/* do not stop us */
-	oldirqstate = disable_interrupts(I32_bit);
-	
-	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
-
-	intr_calculatemasks();
-	restore_interrupts(oldirqstate);	
-	
-	return (ih);
+	return arm_intr_claim(isa_irq_group, irq, type, level, NULL, ih_fun, ih_arg);
 }
 
 /*
@@ -459,28 +313,37 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-	struct intrhand *ih = arg;
-	struct intrq *iq = &isa_intrq[ih->ih_irq];
-	int irq = ih->ih_irq;
-	u_int oldirqstate;
-	
-	if (!LEGAL_IRQ(irq))
-		panic("intr_disestablish: bogus irq");
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
-
-	intr_calculatemasks();
-
-	restore_interrupts(oldirqstate);
-
-	free(ih, M_DEVBUF);
-
-	if (TAILQ_EMPTY(&(iq->iq_list)))
-		iq->iq_ist = IST_NONE;
+	return arm_intr_disestablish(isa_irq_group, arg);
 }
 
+static void
+isa_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled)
+{
+	/* slave is always enabled */
+	imen = ~(intr_enabled | (1 << IRQ_SLAVE));
+	imen &=0xffff;
+	SET_ICUS();
+}
+
+static uint32_t
+isa_irq_status(irq_hardware_cookie_t cookie)
+{
+	return 0;
+}
+
+static void
+isa_set_irq_hardware_type(irq_hardware_cookie_t cookie, int irq, int type)
+{
+	/* irq trigger types are setup in the m1543 */
+	if (irq < 8) {
+		outb(0x4d0, (inb(0x4d0) & ~(1 << irq))
+    				| ((type == IST_LEVEL) ? (1 << irq) : 0));
+	} else {
+		outb(0x4d1, (inb(0x4d1) & ~(1 << irq))
+    				| ((type == IST_LEVEL) ? (1 << irq) : 0));
+	}
+}
+		
 /*
  * isa_intr_init()
  *
@@ -491,29 +354,20 @@ void
 isa_intr_init(void)
 {
 	static void *isa_ih;
- 	struct intrq *iq;
- 	int i;
  
- 	/* 
- 	 * should get the parent here, but initialisation order being so
- 	 * strange I need to check if it's available
- 	 */
- 	for (i = 0; i < ICU_LEN; i++) {
- 		iq = &isa_intrq[i];
- 		TAILQ_INIT(&iq->iq_list);
-  
- 		sprintf(iq->iq_name, "irq %d", i);
- 		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
- 		    NULL, "isa", iq->iq_name);
- 	}
-	
 	isa_icu_init();
-	intr_calculatemasks();
+
+	isa_irq_group = arm_intr_register_irq_provider("isa", ICU_LEN,
+			isa_set_irq_mask,
+			isa_irq_status,
+			isa_set_irq_hardware_type,
+			NULL, false);
+	
 	/* something to break the build in an informative way */
 #ifndef ISA_FOOTBRIDGE_IRQ 
 #warning Before using isa with footbridge you must define ISA_FOOTBRIDGE_IRQ
 #endif
-	isa_ih = footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
+	isa_ih = footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_IRQBUS, "isabus",
 	    isa_irqdispatch, NULL);
 	
 }
@@ -562,28 +416,20 @@ int
 isa_irqdispatch(arg)
 	void *arg;
 {
-	struct clockframe *frame = arg;
-	int irq;
-	struct intrq *iq;
-	struct intrhand *ih;
-	u_int iack;
-	int res = 0;
+	uint32_t ipendingmask;
 
-	iack = *((u_int *)(DC21285_PCI_IACK_VBASE));
-	iack &= 0xff;
-	if (iack < 0x20 || iack > 0x2f) {
-		printf("isa_irqdispatch: %x\n", iack);
-		return(0);
-	}
+	/* read from the isa registers */
+	ipendingmask = inb(IO_ICU1);
 
-	irq = iack & 0x0f;
-	iq = &isa_intrq[irq];
-	iq->iq_ev.ev_count++;
-	for (ih = TAILQ_FIRST(&iq->iq_list); res != 1 && ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list)) {
-		res = (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+	if (ipendingmask & (1 << IRQ_SLAVE))
+	{
+		ipendingmask &= ~(1 << IRQ_SLAVE);
+		ipendingmask |= inb(IO_ICU2) << 8;
 	}
-	return res;
+	/* setup the interupts into the ipl lists */
+	arm_intr_queue_irqs(isa_irq_group, ipendingmask);
+
+	return 1;
 }
 
 

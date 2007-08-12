@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.1 2007/08/11 21:14:50 chris Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.2 2007/08/12 13:28:39 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.1 2007/08/11 21:14:50 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.2 2007/08/12 13:28:39 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -85,6 +85,7 @@ footbridge_intr_init(void)
 	footbridge_irq_group = arm_intr_register_irq_provider("footbridge", FOOTBRIDGE_NIRQ,
 		   	footbridge_set_irq_mask,
 			footbridge_irq_status,
+			NULL,
 			NULL, true);
 
 	/*
@@ -113,10 +114,10 @@ footbridge_irq_status(irq_hardware_cookie_t cookie)
 void *
 footbridge_intr_claim(int irq, int ipl, const char *name, int (*func)(void *), void *arg)
 {
-	if (irq < 0 || irq > FOOTBRIDGE_NIRQ)
+	if (irq < 0 || irq >= FOOTBRIDGE_NIRQ)
 		panic("footbridge_intr_establish: IRQ %d out of range", irq);
 
-	return arm_intr_claim(footbridge_irq_group, irq, ipl, name, func, arg);
+	return arm_intr_claim(footbridge_irq_group, irq, IST_LEVEL, ipl, name, func, arg);
 }
 
 void
