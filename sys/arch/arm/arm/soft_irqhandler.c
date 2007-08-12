@@ -1,4 +1,4 @@
-/*	$NetBSD: soft_irqhandler.c,v 1.1.2.1 2007/08/11 21:14:48 chris Exp $	*/
+/*	$NetBSD: soft_irqhandler.c,v 1.1.2.2 2007/08/12 13:28:39 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soft_irqhandler.c,v 1.1.2.1 2007/08/11 21:14:48 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soft_irqhandler.c,v 1.1.2.2 2007/08/12 13:28:39 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -111,6 +111,7 @@ softintr_init(void)
 	softintr_irq_group = arm_intr_register_irq_provider("softintr", SI_NQUEUES,
 		   	softintr_set_irq_mask,
 			softintr_irq_status,
+			NULL,
 			NULL, false);
 
 	for (i = 0; i < SI_NQUEUES; i++)
@@ -121,7 +122,9 @@ softintr_init(void)
 		    NULL, "soft", softintr_names[i]);
 		siq->siq_si = i;
 
-		softintr_irq_handlers[i] = arm_intr_claim(softintr_irq_group, i, si_to_ipl[i],
+		softintr_irq_handlers[i] = arm_intr_claim(softintr_irq_group,
+				i, IST_NONE,
+				si_to_ipl[i],
 				softintr_names[i], softintr_dispatch,
 				&soft_intrq[i]);
 		if (softintr_irq_handlers[i] == NULL)
