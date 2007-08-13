@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.17 2007/07/15 22:16:34 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.18 2007/08/13 10:00:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.17 2007/07/15 22:16:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.18 2007/08/13 10:00:12 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -341,9 +341,6 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
-
-	/* Initialize callouts, part 2. */
-	callout_startup2();
 
 	/* Initialize callouts, part 2. */
 	callout_startup2();
