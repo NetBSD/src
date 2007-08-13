@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.2 2007/08/09 11:59:17 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.3 2007/08/13 13:51:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,8 @@
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 
+#include <miscfs/genfs/genfs.h>
+
 #include <uvm/uvm_extern.h>
 
 #include "rump.h"
@@ -49,6 +51,8 @@ static int rump_specstrategy(void *);
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_open_desc, rump_specopen },		/* open */
 	{ &vop_close_desc, rump_specclose },		/* close */
 	{ &vop_ioctl_desc, rump_specioctl },		/* ioctl */

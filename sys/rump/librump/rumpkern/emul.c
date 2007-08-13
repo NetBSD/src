@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.6 2007/08/13 10:52:15 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.7 2007/08/13 13:51:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@
 time_t time_second = 1;
 
 kmutex_t proclist_mutex;
+kmutex_t proclist_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
