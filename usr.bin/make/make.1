@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.130 2007/01/23 22:23:48 wiz Exp $
+.\"	$NetBSD: make.1,v 1.131 2007/08/13 06:14:08 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1424,7 +1424,7 @@ option.
 .It Ic .PRECIOUS
 When
 .Nm
-is interrupted, it removes any partially made targets.
+is interrupted, it normally removes any partially made targets.
 This source prevents the target from being removed.
 .It Ic .RECURSIVE
 Synonym for
