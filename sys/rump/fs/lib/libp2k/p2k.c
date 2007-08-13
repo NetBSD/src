@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.9 2007/08/13 12:20:55 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.10 2007/08/13 13:52:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -241,6 +241,7 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 #define VLE(a) VOP_LOCK(a, LK_EXCLUSIVE)
 #define VLS(a) VOP_LOCK(a, LK_SHARED)
 #define VUL(a) VOP_UNLOCK(a, 0);
+#define AUL(a) assert(VOP_ISLOCKED(a) == 0)
 
 int
 p2k_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
@@ -285,6 +286,7 @@ p2k_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	cn = P2K_MAKECN(pcn);
 	VLE(opc);
 	rv = VOP_CREATE(opc, &vp, cn, __UNCONST(vap));
+	AUL(opc);
 	rump_freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
@@ -305,6 +307,7 @@ p2k_node_mknod(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	cn = P2K_MAKECN(pcn);
 	VLE(opc);
 	rv = VOP_MKNOD(opc, &vp, cn, __UNCONST(vap));
+	AUL(opc);
 	rump_freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
@@ -416,6 +419,8 @@ p2k_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	VLE(opc);
 	VLE(targ);
 	rv = VOP_REMOVE(opc, targ, cn);
+	AUL(opc);
+	AUL(targ);
 	rump_freecn(cn, 0);
 
 	return rv;
@@ -435,6 +440,9 @@ p2k_node_rename(struct puffs_cc *pcc, void *src_dir, void *src,
 	if (targ)
 		VLE(targ);
 	rv = VOP_RENAME(src_dir, src, cn_src, targ_dir, targ, cn_targ);
+	AUL(targ_dir);
+	if (targ)
+		AUL(targ);
 	rump_freecn(cn_src, 0);
 	rump_freecn(cn_targ, 0);
 
@@ -452,6 +460,7 @@ p2k_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	cn = P2K_MAKECN(pcn);
 	VLE(opc);
 	rv = VOP_MKDIR(opc, &vp, cn, __UNCONST(vap));
+	AUL(opc);
 	rump_freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
@@ -489,6 +498,7 @@ p2k_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	cn = P2K_MAKECN(pcn_src);
 	VLE(opc);
 	rv = VOP_SYMLINK(opc, &vp, cn, __UNCONST(vap), __UNCONST(link_target));
+	AUL(opc);
 	rump_freecn(cn, 0);
 	if (rv == 0) {
 		VUL(vp);
