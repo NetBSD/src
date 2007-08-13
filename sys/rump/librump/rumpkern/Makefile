@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2007/08/09 20:57:22 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2007/08/13 10:52:15 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SRCS+=	subr_hash.c subr_prf_bitmask.c subr_specificdata.c subr_time.c	\
 	subr_xxx.c vfs_init.c vfs_cache.c vfs_subr2.c vnode_if.c param.c
 
 # src/lib/libkern
-SRCS+=	scanc.c skpc.c
+SRCS+=	__assert.c scanc.c skpc.c
 
 RUMUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
 OBJS+=	${RUMUSEROBJDIR}/rumpuser.o
