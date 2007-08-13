@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.9 2007/07/18 10:28:36 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.10 2007/08/13 10:01:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.9 2007/07/18 10:28:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.10 2007/08/13 10:01:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -472,8 +472,8 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 
 	/*
 	 * Note: due to priority inheritance we may have interrupted a
-	 * higher priority LWP.  Since since the soft interrupt must be
-	 * quick and is non-preemptable, we don't bother yielding.
+	 * higher priority LWP.  Since the soft interrupt must be quick
+	 * and is non-preemptable, we don't bother yielding.
 	 */
 
 	while (!SIMPLEQ_EMPTY(&si->si_q)) {
