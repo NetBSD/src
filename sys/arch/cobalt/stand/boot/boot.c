@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2007/08/10 16:47:07 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2007/08/13 02:09:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -194,15 +194,40 @@ static int
 get_bsdbootname(char **dev, char **kname, int *howtop)
 {
 	int len, error;
+	int bootunit, bootpart;
 	char *bootstr_dev, *bootstr_kname;
 	char *prompt_dev, *prompt_kname;
 	char *ptr, *spec;
 	char c, namebuf[PATH_MAX];
+	static char bootdev[] = "wd0a";
 
 	bootstr_dev = prompt_dev = NULL;
 	bootstr_kname = prompt_kname = NULL;
 
-	/* first, get bootname from bootstrings */
+	/* first, get root device specified by the firmware */
+	spec = bootstring;
+	/* assume the last one is valid */
+	while ((spec = strstr(spec, "root=")) != NULL) {
+		spec += 5;	/* skip 'root=' */
+		ptr = strchr(spec, ' ');
+		len = (ptr == NULL) ? strlen(spec) : ptr - spec;
+		/* decode unit and part from "/dev/hd[ab][1-4]" strings */
+		if (len == 9 && memcmp("/dev/hd", spec, 7) == 0) {
+			bootunit = spec[7] - 'a';
+			bootpart = spec[8] - '1';
+			if (bootunit >= 0 && bootunit < 2 &&
+			    bootpart >= 0 && bootpart < 4) {
+				bootdev[sizeof(bootdev) - 3] = '0' + bootunit;
+#if 0				/* bootpart is fdisk partition of Linux root */
+				bootdev[sizeof(bootdev) - 2] = 'a' + bootpart;
+#endif
+				bootstr_dev = bootdev;
+			}
+		}
+		spec += len;
+	}
+
+	/* second, get bootname from bootstrings */
 	if ((spec = strstr(bootstring, "nbsd=")) != NULL) {
 		ptr = strchr(spec, ' ');
 		spec += 5; 	/* skip 'nbsd=' */
