@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.96 2007/08/12 19:44:15 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.97 2007/08/13 09:48:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.96 2007/08/12 19:44:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.97 2007/08/13 09:48:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -429,16 +429,10 @@ puffs_lookup(void *v)
 	dvp = ap->a_dvp;
 	*ap->a_vpp = NULL;
 
-	/* first things first: check access */
-	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
-	if (error)
-		return error;
-
-	/* r/o fs? */
+	/* r/o fs?  we check create later to handle EEXIST */
 	if ((cnp->cn_flags & ISLASTCN)
 	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
-	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME ||
-		cnp->cn_nameiop == CREATE))
+	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return EROFS;
 
 	isdot = cnp->cn_namelen == 1 && *cnp->cn_nameptr == '.';
@@ -482,17 +476,25 @@ puffs_lookup(void *v)
 	 */
 	if (error) {
 		if (error == ENOENT) {
-			if ((cnp->cn_flags & ISLASTCN)
+			/* don't allow to create files on r/o fs */
+			if ((dvp->v_mount->mnt_flag & MNT_RDONLY)
+			    && cnp->cn_nameiop == CREATE) {
+				error = EROFS;
+
+			/* adjust values if we are creating */
+			} else if ((cnp->cn_flags & ISLASTCN)
 			    && (cnp->cn_nameiop == CREATE
 			      || cnp->cn_nameiop == RENAME)) {
 				cnp->cn_flags |= SAVENAME;
 				error = EJUSTRETURN;
+
+			/* save negative cache entry */
 			} else {
 				if ((cnp->cn_flags & MAKEENTRY)
 				    && PUFFS_USE_NAMECACHE(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
-		} else if (error < 0) {
+		} else if (error < 0 || error > ELAST) {
 			error = EINVAL;
 		}
 		goto out;
@@ -535,7 +537,7 @@ puffs_lookup(void *v)
  out:
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	
+
 	DPRINTF(("puffs_lookup: returning %d %p\n", error, *ap->a_vpp));
 	return error;
 }
@@ -1728,7 +1730,7 @@ puffs_write(void *v)
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
 
-		/* write though page cache? */
+		/* write through page cache? */
 		} else if (error == 0 && pmp->pmp_flags & PUFFS_KFLAG_WTCACHE) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
