@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.5 2007/08/09 08:56:44 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.6 2007/08/13 10:52:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -71,6 +71,8 @@ u_long	bufmem_hiwater;
 u_long	bufmem_lowater;
 u_long	bufmem;
 u_int	nbuf;
+
+const char *panicstr;
 
 void
 panic(const char *fmt, ...)
