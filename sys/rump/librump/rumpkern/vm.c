@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.10 2007/08/11 17:52:12 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.11 2007/08/13 13:51:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -51,6 +51,7 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_prot.h>
+#include <uvm/uvm_readahead.h>
 
 #include <machine/pmap.h>
 
@@ -411,6 +412,20 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			len -= chunklen;
 		}
 	}
+
+	return;
+}
+
+struct uvm_ractx *
+uvm_ra_allocctx()
+{
+
+	return NULL;
+}
+
+void
+uvm_ra_freectx(struct uvm_ractx *ra)
+{
 
 	return;
 }

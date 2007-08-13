@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.8 2007/08/12 13:34:11 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.9 2007/08/13 13:51:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -127,6 +127,7 @@ int
 vget(struct vnode *vp, int lockflag)
 {
 
+	vn_lock(vp, lockflag & LK_TYPE_MASK);
 	return 0;
 }
 
@@ -146,6 +147,7 @@ void
 vput(struct vnode *vp)
 {
 
+	VOP_UNLOCK(vp, 0);
 }
 
 void
@@ -212,61 +214,9 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 	int attrnamespace, const char *attrname, struct lwp *l)
 {
 
+	if (vp != NULL)
+		VOP_UNLOCK(vp, 0);
 	return EOPNOTSUPP;
-}
-
-int
-vn_cow_establish(struct vnode *vp, int (*f)(void *, struct buf *),
-	void *cookie)
-{
-
-	return 0;
-}
-
-int
-vn_cow_disestablish(struct vnode *vp, int (*f)(void *, struct buf *),
-	void *cookie)
-{
-
-	return 0;
-}
-
-int
-vn_lock(struct vnode *vp, int flags)
-{
-
-	return 0;
-}
-
-int
-vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
-	enum uio_seg segflg, int ioflg, kauth_cred_t cred, size_t *reslen,
-	struct lwp *l)
-{
-	struct uio uio;
-	struct iovec iov;
-	int rv;
-
-	iov.iov_base = base;
-	iov.iov_len = len;
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_resid = len;
-	uio.uio_offset = offset;
-	uio.uio_rw = rw;
-	uio.uio_vmspace = UIO_VMSPACE_SYS;
-
-	if (uio.uio_rw == UIO_READ)
-		rv = VOP_READ(vp, &uio, ioflg, cred);
-	else
-		rv = VOP_WRITE(vp, &uio, ioflg, cred);
-
-	if (reslen)
-		*reslen = uio.uio_resid;
-	else if (uio.uio_resid && rv == 0)
-		rv = EIO;
-
-	return rv;
 }
 
 struct mount mnt_dummy;
@@ -319,6 +269,7 @@ makevnode(struct stat *sb, const char *path)
 	vp->v_data = sp;
 	vp->v_op = spec_vnodeop_p;
 	vp->v_mount = &mnt_dummy;
+	vp->v_vnlock = &vp->v_lock;
 
 	return vp;
 }
