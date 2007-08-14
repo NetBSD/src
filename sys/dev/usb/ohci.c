@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.182 2007/02/26 13:26:46 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.182.18.1 2007/08/14 20:59:19 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182 2007/02/26 13:26:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182.18.1 2007/08/14 20:59:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,8 @@ int ohcidebug = 0;
 
 struct ohci_pipe;
 
+pnp_status_t		ohci_power(device_t, pnp_request_t, void *);
+
 Static ohci_soft_ed_t  *ohci_alloc_sed(ohci_softc_t *);
 Static void		ohci_free_sed(ohci_softc_t *, ohci_soft_ed_t *);
 
@@ -137,7 +139,6 @@ Static usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
 			    ohci_soft_td_t *, ohci_soft_td_t **);
 
 Static void		ohci_shutdown(void *v);
-Static void		ohci_power(int, void *);
 Static usbd_status	ohci_open(usbd_pipe_handle);
 Static void		ohci_poll(struct usbd_bus *);
 Static void		ohci_softintr(void *);
@@ -396,7 +397,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	powerhook_disestablish(sc->sc_powerhook);
 	shutdownhook_disestablish(sc->sc_shutdownhook);
 #endif
 
@@ -904,8 +904,6 @@ ohci_init(ohci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_control = sc->sc_intre = 0;
-	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc_bus.bdev),
-	    ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
 
@@ -1024,10 +1022,12 @@ ohci_shutdown(void *v)
  * called from an interupt context.  This is all right since we
  * are almost suspended anyway.
  */
-void
-ohci_power(int why, void *v)
+pnp_status_t
+ohci_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	ohci_softc_t *sc = v;
+	ohci_softc_t *sc = (ohci_softc_t *)dv;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
 	u_int32_t ctl;
 	int s;
 
@@ -1036,53 +1036,73 @@ ohci_power(int why, void *v)
 	ohci_dumpregs(sc);
 #endif
 
-	s = splhardusb();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		sc->sc_bus.use_polling++;
-		ctl = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
-		if (sc->sc_control == 0) {
-			/*
-			 * Preserve register values, in case that APM BIOS
-			 * does not recover them.
-			 */
-			sc->sc_control = ctl;
-			sc->sc_intre = OREAD4(sc, OHCI_INTERRUPT_ENABLE);
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		*pstate = PNP_STATE_D0; /* XXX */
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D3:
+			s = splhardusb();
+			sc->sc_bus.use_polling++;
+			ctl = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
+			if (sc->sc_control == 0) {
+				/*
+				 * Preserve register values, in case that BIOS
+				 * does not recover them.
+				 */
+				sc->sc_control = ctl;
+				sc->sc_intre = OREAD4(sc,
+				    OHCI_INTERRUPT_ENABLE);
+			}
+			ctl |= OHCI_HCFS_SUSPEND;
+			OWRITE4(sc, OHCI_CONTROL, ctl);
+			usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+			sc->sc_bus.use_polling--;
+			splx(s);
+			break;
+		case PNP_STATE_D0:
+			s = splhardusb();
+			sc->sc_bus.use_polling++;
+			/* Some broken BIOSes do not recover these values */
+			OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma, 0));
+			OWRITE4(sc, OHCI_CONTROL_HEAD_ED,
+			    sc->sc_ctrl_head->physaddr);
+			OWRITE4(sc, OHCI_BULK_HEAD_ED,
+			    sc->sc_bulk_head->physaddr);
+			if (sc->sc_intre)
+				OWRITE4(sc, OHCI_INTERRUPT_ENABLE,
+					sc->sc_intre &
+					(OHCI_ALL_INTRS | OHCI_MIE));
+			if (sc->sc_control)
+				ctl = sc->sc_control;
+			else
+				ctl = OREAD4(sc, OHCI_CONTROL);
+			ctl |= OHCI_HCFS_RESUME;
+			OWRITE4(sc, OHCI_CONTROL, ctl);
+			usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
+			ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
+			OWRITE4(sc, OHCI_CONTROL, ctl);
+			usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+			sc->sc_control = sc->sc_intre = 0;
+			sc->sc_bus.use_polling--;
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
 		}
-		ctl |= OHCI_HCFS_SUSPEND;
-		OWRITE4(sc, OHCI_CONTROL, ctl);
-		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-		sc->sc_bus.use_polling--;
 		break;
-	case PWR_RESUME:
-		sc->sc_bus.use_polling++;
-		/* Some broken BIOSes do not recover these values */
-		OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma, 0));
-		OWRITE4(sc, OHCI_CONTROL_HEAD_ED, sc->sc_ctrl_head->physaddr);
-		OWRITE4(sc, OHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
-		if (sc->sc_intre)
-			OWRITE4(sc, OHCI_INTERRUPT_ENABLE,
-				sc->sc_intre & (OHCI_ALL_INTRS | OHCI_MIE));
-		if (sc->sc_control)
-			ctl = sc->sc_control;
-		else
-			ctl = OREAD4(sc, OHCI_CONTROL);
-		ctl |= OHCI_HCFS_RESUME;
-		OWRITE4(sc, OHCI_CONTROL, ctl);
-		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
-		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
-		OWRITE4(sc, OHCI_CONTROL, ctl);
-		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
-		sc->sc_control = sc->sc_intre = 0;
-		sc->sc_bus.use_polling--;
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
 	}
-	splx(s);
+
+	return PNP_STATUS_SUCCESS;
 }
 
 #ifdef OHCI_DEBUG
