@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.889 2007/08/11 02:06:12 jnemeth Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.890 2007/08/14 16:14:21 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.889 2007/08/11 02:05:11 jnemeth Exp
+ *	NetBSD: pcidevs,v 1.890 2007/08/14 16:13:38 jnemeth Exp
  */
 
 /*
@@ -1869,6 +1869,10 @@
 #define	PCI_PRODUCT_MARVELL_88SX5081	0x5081		/* 88SX5081 SATA */
 #define	PCI_PRODUCT_MARVELL_88SX6041	0x6041		/* 88SX6041 SATA */
 #define	PCI_PRODUCT_MARVELL_88SX6081	0x6081		/* 88SX6041 SATA */
+#define	PCI_PRODUCT_MARVELL_88SE6101	0x6101		/* 88SE6101 single-port PATA133 Controller */
+#define	PCI_PRODUCT_MARVELL_88SE6121	0x6121		/* 88SE6121 SATA II Controller */
+#define	PCI_PRODUCT_MARVELL_88SE614X	0x6141		/* 88SE614X SATA II PCI-E Controller */
+#define	PCI_PRODUCT_MARVELL_88SE6145	0x6145		/* 88SE6145 SATA II PCI-E Controller */
 #define	PCI_PRODUCT_MARVELL_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_MARVELL_GT64260	0x6430		/* GT-64260 System Controller */
 #define	PCI_PRODUCT_MARVELL_GT64360	0x6460		/* MV6436x System Controller */
