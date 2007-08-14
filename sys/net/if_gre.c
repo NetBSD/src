@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.98 2007/07/09 21:11:00 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.99 2007/08/14 13:36:50 seanb Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98 2007/07/09 21:11:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.99 2007/08/14 13:36:50 seanb Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -608,7 +608,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	u_int16_t etype = 0;
 	struct mobile_h mob_h;
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == 0 ||
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING) ||
 	    sc->g_src.s_addr == INADDR_ANY || sc->g_dst.s_addr == INADDR_ANY) {
 		m_freem(m);
 		error = ENETDOWN;
