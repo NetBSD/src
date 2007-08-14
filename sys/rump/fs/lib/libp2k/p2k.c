@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.10 2007/08/13 13:52:45 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.11 2007/08/14 15:56:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,101 +55,25 @@
 
 #include "rump.h"
 #include "p2k.h"
+#include "ukfs.h"
 
 PUFFSOP_PROTOS(p2k)
 
-struct p2k {
-	struct mount *p2k_mp;
-	struct vnode *p2k_rvp;
-};
-
-struct p2k *
-p2k_init(struct vfsops *vfsops, const char *devpath, const char *mountpath,
-	int mntflags, void *arg, size_t alen)
-{
-	struct p2k *p2k;
-	struct mount *mp;
-	int rv = 0;
-
-	p2k = malloc(sizeof(struct p2k));
-	if (p2k == NULL)
-		return NULL;
-	memset(p2k, 0, sizeof(struct p2k));
-
-	rump_init();
-	rump_mountinit(&mp, vfsops);
-
-	mp->mnt_flag = mntflags;
-
-	rump_fakeblk_register(devpath);
-	rv = VFS_MOUNT(mp, mountpath, arg, &alen, curlwp);
-	if (rv) {
-		warnx("VFS_MOUNT %d", rv);
-		goto out;
-	}
-	if ((1<<mp->mnt_fs_bshift) < getpagesize()
-	    && (mntflags & MNT_RDONLY) == 0) {
-		rv = EOPNOTSUPP;
-		warnx("Sorry, fs bsize < PAGE_SIZE not yet supported for rw");
-		goto out;
-	}
-	p2k->p2k_mp = mp;
-	rump_fakeblk_deregister(devpath);
-
-	rv = VFS_STATVFS(mp, &mp->mnt_stat, NULL);
-	if (rv) {
-		warnx("VFS_STATVFS %d", rv);
-		goto out;
-	}
-
-	rv = VFS_ROOT(mp, &p2k->p2k_rvp);
-	if (rv) {
-		warnx("VFS_ROOT %d", rv);
-		goto out;
-	}
-
- out:
-	if (rv) {
-		if (p2k->p2k_mp)
-			rump_mountdestroy(p2k->p2k_mp);
-		free(p2k);
-		errno = rv;
-		p2k = NULL;
-	}
-
-	return p2k;
-}
-
-void
-p2k_destroy(struct p2k *p2k, int dounmount)
-{
-	int rv;
-
-	if (dounmount) {
-		rv = VFS_SYNC(p2k->p2k_mp, MNT_WAIT, rump_cred, curlwp);
-		rv += VFS_UNMOUNT(p2k->p2k_mp, 0, curlwp);
-		assert(rv == 0);
-	}
-
-	rump_mountdestroy(p2k->p2k_mp);
-
-	free(p2k);
-}
-
 int
-p2k_run_fs(struct vfsops *vfsops, const char *devpath, const char *mountpath,
+p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen, uint32_t puffs_flags)
 {
 	char typebuf[PUFFS_TYPELEN];
-	struct p2k *p2k;
 	struct puffs_ops *pops;
 	struct puffs_usermount *pu;
 	struct puffs_node *pn_root;
+	struct ukfs *ukfs;
 	extern int puffs_fakecc;
 	int rv, sverrno;
 
-	p2k = p2k_init(vfsops, devpath, mountpath, mntflags, arg, alen);
-	if (p2k == NULL)
+	ukfs_init();
+	ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags, arg, alen);
+	if (ukfs == NULL)
 		return -1;
 
 	PUFFSOP_INIT(pops);
@@ -186,15 +110,15 @@ p2k_run_fs(struct vfsops *vfsops, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, reclaim);
 
 	strcpy(typebuf, "p2k|");
-	strlcat(typebuf, vfsops->vfs_name, sizeof(typebuf));
+	strlcat(typebuf, vfsname, sizeof(typebuf));
 
-	pu = puffs_init(pops, devpath, typebuf, p2k->p2k_mp, puffs_flags);
+	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
 
-	pn_root = puffs_pn_new(pu, p2k->p2k_rvp);
+	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
 	puffs_fakecc = 1;
 
-	if ((rv = puffs_mount(pu, mountpath, mntflags, p2k->p2k_rvp)) == -1)
+	if ((rv = puffs_mount(pu, mountpath, mntflags, ukfs_getrvp(ukfs)))== -1)
 		goto out;
 	if ((rv = puffs_mainloop(pu, PUFFSLOOP_NODAEMON)) == -1)
 		goto out;
@@ -202,7 +126,7 @@ p2k_run_fs(struct vfsops *vfsops, const char *devpath, const char *mountpath,
  out:
 	if (rv)
 		sverrno = errno;
-	p2k_destroy(p2k, rv);
+	ukfs_unmount(ukfs, rv);
 	if (rv) {
 		errno = sverrno;
 		rv = -1;
