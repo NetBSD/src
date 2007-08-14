@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.11 2007/08/13 13:51:39 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.12 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -466,4 +466,35 @@ kmem_free(void *p, size_t size)
 {
 
 	rumpuser_free(p);
+}
+
+/*
+ * UVM km
+ */
+
+vaddr_t
+uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
+{
+	void *rv;
+
+	rv = rumpuser_malloc(size, flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT));
+	if (rv && flags & UVM_KMF_ZERO)
+		memset(rv, 0, size);
+
+	return (vaddr_t)rv;
+}
+
+void
+uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
+{
+
+	rumpuser_free((void *)vaddr);
+}
+
+struct vm_map *
+uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
+	vsize_t size, int pageable, bool fixed, struct vm_map_kernel *submap)
+{
+
+	return (struct vm_map *)417416;
 }

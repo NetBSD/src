@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.9 2007/08/13 13:51:39 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.10 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -156,6 +156,18 @@ vgone(struct vnode *vp)
 
 }
 
+void
+vholdl(struct vnode *vp)
+{
+
+}
+
+void
+holdrelel(struct vnode *vp)
+{
+
+}
+
 int
 vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 {
@@ -168,37 +180,6 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 	}
 
 	return 0;
-}
-
-int
-vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
-	int slpflag, int slptimeo)
-{
-
-	return 0;
-}
-
-int
-vtruncbuf(struct vnode *vp, daddr_t lbn, int splflag, int slptimeo)
-{
-
-	return 0;
-}
-
-void
-vflushbuf(struct vnode *vp, int sync)
-{
-
-	(void) VOP_PUTPAGES(vp, 0, 0,
-	    PGO_CLEANIT | PGO_ALLPAGES | sync ? PGO_SYNCIO : 0);
-}
-
-int
-vn_bwrite(void *v)
-{
-	struct vop_bwrite_args *ap = v;
-
-	return bwrite(ap->a_bp);
 }
 
 int
@@ -395,11 +376,4 @@ vfs_mountedon(struct vnode *vp)
 {
 
 	return 0;
-}
-
-void
-vn_initialize_syncerd()
-{
-
-	return;
 }

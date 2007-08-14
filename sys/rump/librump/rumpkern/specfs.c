@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.4 2007/08/14 13:24:07 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.5 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,17 +46,20 @@ static int rump_specopen(void *);
 static int rump_specioctl(void *);
 static int rump_specclose(void *);
 static int rump_specfsync(void *);
+static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_open_desc, rump_specopen },		/* open */
 	{ &vop_close_desc, rump_specclose },		/* close */
 	{ &vop_ioctl_desc, rump_specioctl },		/* ioctl */
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
+	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
 	{ NULL, NULL }
 };
@@ -150,6 +153,25 @@ rump_specclose(void *v)
 int
 rump_specfsync(void *v)
 {
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		kauth_cred_t a_cred;
+		int a_flags;
+		off_t a_offlo;
+		off_t a_offhi;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	assert(vp->v_type == VBLK);
+	vflushbuf(vp, 1);
+
+	return 0;
+}
+
+int
+rump_specputpages(void *v)
+{
 
 	return 0;
 }
@@ -187,6 +209,7 @@ rump_specstrategy(void *v)
 		bp->b_error = error;
 	else
 		bp->b_resid = bp->b_bcount - rv;
+	biodone(bp);
 
 	return error;
 }

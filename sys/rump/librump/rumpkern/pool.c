@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.1 2007/08/05 22:28:09 pooka Exp $	*/
+/*	$NetBSD: pool.c,v 1.2 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -107,6 +107,20 @@ pool_put(struct pool *pp, void *item)
 {
 
 	rumpuser_free(item);
+}
+
+void
+pool_sethiwat(struct pool *pp, int n)
+{
+
+	return;
+}
+
+void
+pool_setlowat(struct pool *pp, int n)
+{
+
+	return;
 }
 
 /* XXX: for tmpfs, shouldn't be here */
