@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.3 2007/08/08 22:38:49 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.4 2007/08/14 22:59:50 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/08 22:38:49 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.4 2007/08/14 22:59:50 joerg Exp $");
 #endif
 #endif
 
@@ -56,13 +56,46 @@ sanity_check(void)
 		errx(2, "required package contents list is missing (-f [-]file)");
 }
 
+static void
+register_depends(package_t *plist, char *deps, int build_only)
+{
+	char *cp;
+
+	if (Verbose && !PlistOnly) {
+		if (build_only)
+			printf("Registering build depends:");
+		else
+			printf("Registering depends:");
+	}
+	while (deps) {
+		cp = strsep(&deps, " \t\n");
+		if (*cp) {
+			char *best_installed;
+			best_installed = find_best_matching_installed_pkg(cp);
+			if (best_installed != NULL) {
+				add_plist(plist, PLIST_BLDDEP, best_installed);
+				if (Verbose && !PlistOnly && build_only)
+					printf(" %s", cp);
+			} else
+				warnx("No matching package installed for %s", cp);
+			free(best_installed);
+			if (!build_only) {
+				add_plist(plist, PLIST_PKGDEP, cp);
+				if (Verbose && !PlistOnly)
+					printf(" %s", cp);
+			}
+		}
+	}
+	if (Verbose && !PlistOnly)
+		printf(".\n");
+}
+
 int
 pkg_perform(const char *pkg)
 {
 	char   *cp;
 	FILE   *pkg_in;
 	package_t plist;
-	char	installed[MaxPathSize];
 	const char *full_pkg, *suffix;
 	char *allocated_pkg;
 	int retval;
@@ -105,44 +138,15 @@ pkg_perform(const char *pkg)
 	}
 
 	/* Stick the dependencies, if any, at the top */
-	if (Pkgdeps) {
-		if (Verbose && !PlistOnly)
-			printf("Registering depends:");
-		while (Pkgdeps) {
-			cp = strsep(&Pkgdeps, " \t\n");
-			if (*cp) {
-				if (findmatchingname(_pkgdb_getPKGDB_DIR(), cp, note_whats_installed, installed) > 0) {
-					add_plist(&plist, PLIST_BLDDEP, installed);
-				}
-				add_plist(&plist, PLIST_PKGDEP, cp);
-				if (Verbose && !PlistOnly)
-					printf(" %s", cp);
-			}
-		}
-		if (Verbose && !PlistOnly)
-			printf(".\n");
-	}
+	if (Pkgdeps)
+		register_depends(&plist, Pkgdeps, 0);
 
 	/*
 	 * Put the build dependencies after the dependencies.
 	 * This works due to the evaluation order in pkg_add.
 	 */
-	if (BuildPkgdeps) {
-		if (Verbose && !PlistOnly)
-			printf("Registering build depends:");
-		while (BuildPkgdeps) {
-			cp = strsep(&BuildPkgdeps, " \t\n");
-			if (*cp) {
-				if (findmatchingname(_pkgdb_getPKGDB_DIR(), cp, note_whats_installed, installed) > 0) {
-					add_plist(&plist, PLIST_BLDDEP, installed);
-					if (Verbose && !PlistOnly)
-						printf(" %s", cp);
-				}
-			}
-		}
-		if (Verbose && !PlistOnly)
-			printf(".\n");
-	}
+	if (BuildPkgdeps)
+		register_depends(&plist, BuildPkgdeps, 1);
 
 	/* Put the conflicts directly after the dependencies, if any */
 	if (Pkgcfl) {

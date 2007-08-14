@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $ */
+/* $NetBSD: add.h,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -29,6 +29,7 @@ typedef enum {
 	NORMAL, MASTER, SLAVE
 }       add_mode_t;
 
+extern char *OverrideMachine;
 extern char *Prefix;
 extern char *View;
 extern char *Viewbase;
