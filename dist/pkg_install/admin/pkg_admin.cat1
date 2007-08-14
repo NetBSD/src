@@ -121,6 +121,14 @@ OOPPTTIIOONNSS
 
              Needs to be run as root.
 
+     rreebbuuiilldd--ttrreeee
+             Rebuild the +REQUIRED_BY files from scratch by reresolving all
+             dependencies.
+
+             This option is intended to be used for fixing inconsistencies
+             between the records of depending and depended-on packages, such
+             as can arise by the use of ppkkgg__ddeelleettee --ff.
+
      sseett _v_a_r_i_a_b_l_e_=_v_a_l_u_e _p_k_g _._._.
              Set variable with information about the installed package.  Use
              uunnsseett to remove a variable.
@@ -151,4 +159,4 @@ HHIISSTTOORRYY
 AAUUTTHHOORRSS
      The ppkkgg__aaddmmiinn command was written by Hubert Feyrer.
 
-NetBSD 4.0                       March 2, 2007                      NetBSD 4.0
+NetBSD 4.0                      March 10, 2007                      NetBSD 4.0

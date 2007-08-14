@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd August 2, 2007
+.Dd August 10, 2007
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Nm
 .Op Fl AfILnRuVv
 .Op Fl K Ar pkg_dbdir
+.Op Fl m Ar machine
 .Op Fl p Ar prefix
 .Op Fl s Ar verification-type
 .Op Fl t Ar template
@@ -136,6 +137,9 @@ if it's set, otherwise it defaults to
 .Pa /var/db/pkg .
 .It Fl L
 Don't add the package to any views after installation.
+.It Fl m
+Override the machine architecture returned by uname with
+.Ar machine .
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
@@ -330,15 +334,10 @@ A search is made for any
 .Cm @option
 directives which control how the package is added to the system.
 The only currently implemented option is
-.Cm @option extract-in-place ,
-which causes the package to be extracted directly into its
-prefix directory rather than moving it through a staging area in
-.Pa /var/tmp .
-.It
-If
-.Cm @option extract-in-place
-is enabled, the package is now extracted directly into its
-final location, otherwise it is extracted into the staging area.
+.Cm @option preserve ,
+which tells pkg_add to move any existing files out of the way,
+preserving the previous contents (which are also resurrected on
+pkg_delete, so caveat emptor).
 .It
 The package build information is extracted from the
 .Pa +BUILD_INFO
@@ -374,10 +373,7 @@ If the
 .Ar install
 script exits with a non-zero status code, the installation is terminated.
 .It
-If
-.Cm @option extract-in-place
-is not present in the packing list,
-then it is used as a guide for moving (or copying, as necessary) files from
+It is used as a guide for moving (or copying, as necessary) files from
 the staging area into their final locations.
 .It
 If an

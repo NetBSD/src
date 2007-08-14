@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
 #endif
 #endif
 
@@ -83,7 +83,7 @@ static int require_find_recursive_down(lpkg_t *, package_t *);
 static int require_find(char *, rec_find_t);
 static int require_delete(char *, int);
 static void require_print(void);
-static int undepend(const char *, const char *, void *);
+static int undepend(const char *, void *);
 
 static char LogDir[MaxPathSize];
 static char linebuf[MaxPathSize];
@@ -115,10 +115,10 @@ cleanup(int sig)
 /*
  * deppkgname is the pkg from which's +REQUIRED_BY file we are
  * about to remove pkg2delname. This function is called from
- * findmatchingname(), deppkgname is expanded from a (possible) pattern.
+ * match_installed_pkgs(), deppkgname is expanded from a (possible) pattern.
  */
 static int
-undepend(const char *pattern, const char *deppkgname, void *vp)
+undepend(const char *deppkgname, void *vp)
 {
 	char   *pkg2delname = vp;
 	char    fname[MaxPathSize], ftmp[MaxPathSize];
@@ -266,6 +266,7 @@ unview(const char *pkgname)
 int
 require_delete(char *home, int tryall)
 {
+	char *best_installed;
 	lpkg_t *lpp;
 	int     rv, fail;
 	int     oldcwd;
@@ -277,12 +278,14 @@ require_delete(char *home, int tryall)
 
 	(void) snprintf(pkgdir, sizeof(pkgdir), "%s", _pkgdb_getPKGDB_DIR());
 
+	best_installed = NULL;
+
 	/* walk list of things to delete */
 	fail = 0;
 	lpp = TAILQ_FIRST(&lpdelq);
 	for (; lpp; lpp = TAILQ_NEXT(lpp, lp_link)) {
-		int rm_installed;                /* delete expanded pkg, not @pkgdep value */
-		char installed[MaxPathSize];
+		free(best_installed);
+		best_installed = NULL;
 		
 		/* go to the db dir */
 		if (chdir(pkgdir) == FAIL) {
@@ -293,13 +296,13 @@ require_delete(char *home, int tryall)
 		}
 
 		/* look to see if package was already deleted */
-		rm_installed = 0;
 		if (ispkgpattern(lpp->lp_name)) {
-			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
+
+			best_installed = find_best_matching_installed_pkg(lpp->lp_name);
+			if (best_installed == NULL) {
 				warnx("%s appears to have been deleted", lpp->lp_name);
 				continue;
 			}
-			rm_installed = 1;
 		} else {
 			if (!fexists(lpp->lp_name)) {
 				warnx("%s appears to have been deleted", lpp->lp_name);
@@ -315,7 +318,7 @@ require_delete(char *home, int tryall)
 		}
 
 		if (Verbose)
-			printf("deinstalling %s\n", rm_installed?installed:lpp->lp_name);
+			printf("deinstalling %s\n", best_installed ? best_installed : lpp->lp_name);
 
 		/* delete the package */
 		if (Fake)
@@ -330,17 +333,19 @@ require_delete(char *home, int tryall)
 					     NoDeleteFiles ? "-N" : "",
 					     CleanDirs ? "-d" : "",
 					     Fake ? "-n" : "",
-					     rm_installed ? installed : lpp->lp_name, NULL);
+					     best_installed ? best_installed : lpp->lp_name, NULL);
 
 		/* check for delete failure */
 		if (rv && !tryall) {
 			fail = 1;
-			warnx("had problem removing %s%s", rm_installed?installed:lpp->lp_name,
+			warnx("had problem removing %s%s", best_installed?best_installed:lpp->lp_name,
 			    Force ? ", continuing" : "");
 			if (!Force)
 				break;
 		}
 	}
+
+	free(best_installed);
 
 	/* cleanup list */
 	while ((lpp = TAILQ_FIRST(&lpdelq))) {
@@ -494,18 +499,23 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		/* prepare for recursion */
 		chdir(_pkgdb_getPKGDB_DIR());
 		if (ispkgpattern(lpp->lp_name)) {
-			char installed[MaxPathSize];
-			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
+			char *best_installed;
+
+			best_installed = find_best_matching_installed_pkg(lpp->lp_name);
+
+			if (best_installed == NULL) {
 				warnx("cannot remove dependency for pkg-pattern %s", lpp->lp_name);
 				fail = 1;
 				goto fail; 
 			}
-			if (chdir(installed) == -1) {
-				warnx("can't chdir to %s", installed);
+			if (chdir(best_installed) == -1) {
+				warnx("can't chdir to %s", best_installed);
+				free(best_installed);
 				fail = 1;
 				goto fail;
 			}
-			sanity_check(installed);
+			sanity_check(best_installed);
+			free(best_installed);
 		} else {
 			if (chdir(lpp->lp_name) == -1) {
 				warnx("cannot remove dependency from %s", lpp->lp_name);
@@ -621,17 +631,18 @@ pkg_do(char *pkg)
 	if (!fexists(LogDir) || !(isdir(LogDir) || islinktodir(LogDir))) {
 		/* Check if the given package name matches something
 		 * with 'pkg-[0-9]*' */
-		char	        try[MaxPathSize];
 		lpkg_head_t     trypkgs;
 		lpkg_t	       *lpp;
 		int		qlen = 0;
 
 		TAILQ_INIT(&trypkgs);
-		snprintf(try, MaxPathSize, "%s-[0-9]*", pkg);
-		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-			add_to_list_fn, &trypkgs) == 0) {
+
+		switch (add_installed_pkgs_by_basename(pkg, &trypkgs)) {
+		case 0:
 			warnx("package '%s' not installed", pkg);
 			return 1;
+		case -1:
+			errx(EXIT_FAILURE, "Error during search in pkgdb for %s", pkg);
 		}
 
 		TAILQ_FOREACH(lpp, &trypkgs, lp_link)
@@ -796,8 +807,7 @@ pkg_do(char *pkg)
 			if (Verbose)
 				printf("Attempting to remove dependency on package `%s'\n", p->name);
 			if (!Fake)
-				findmatchingname(_pkgdb_getPKGDB_DIR(),
-				    p->name, undepend, pkg);
+				match_installed_pkgs(p->name, undepend, pkg);
 		}
 	}
 	if (Recurse_down) {
