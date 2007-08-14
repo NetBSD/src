@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.59 2007/03/04 06:02:02 christos Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.60 2007/08/14 15:04:44 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.59 2007/03/04 06:02:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.60 2007/08/14 15:04:44 kiyohara Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -369,6 +369,8 @@ smc91cxx_attach(sc, myea)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET, 0);
 #endif
+
+	callout_init(&sc->sc_mii_callout, 0);
 
 	/* The attach is successful. */
 	sc->sc_flags |= SMC_FLAGS_ATTACHED;
