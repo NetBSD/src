@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $
+.\" $NetBSD: pkg_delete.1,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -109,6 +109,11 @@ instead of the package-name.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
 deinstall script fails.
+.It Fl ff
+Force removal of the package, even if the package is marked as a
+.Cm preserved
+package.
+Note that this is a dangerous operation.
 .It Fl K Ar pkg_dbdir
 Set
 .Ar pkg_dbdir

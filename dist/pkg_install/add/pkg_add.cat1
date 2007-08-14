@@ -5,8 +5,8 @@ NNAAMMEE
      tributions
 
 SSYYNNOOPPSSIISS
-     ppkkgg__aadddd [--AAffIILLnnRRuuVVvv] [--KK _p_k_g___d_b_d_i_r] [--pp _p_r_e_f_i_x] [--ss _v_e_r_i_f_i_c_a_t_i_o_n_-_t_y_p_e]
-             [--tt _t_e_m_p_l_a_t_e] [--WW _v_i_e_w_b_a_s_e] [--ww _v_i_e_w]
+     ppkkgg__aadddd [--AAffIILLnnRRuuVVvv] [--KK _p_k_g___d_b_d_i_r] [--mm _m_a_c_h_i_n_e] [--pp _p_r_e_f_i_x]
+             [--ss _v_e_r_i_f_i_c_a_t_i_o_n_-_t_y_p_e] [--tt _t_e_m_p_l_a_t_e] [--WW _v_i_e_w_b_a_s_e] [--ww _v_i_e_w]
              [[ftp|http]://[_u_s_e_r[:_p_a_s_s_w_o_r_d_]@]_h_o_s_t[:_p_o_r_t]][/_p_a_t_h_/]pkg-name ...
 
 DDEESSCCRRIIPPTTIIOONN
@@ -71,6 +71,8 @@ OOPPTTIIOONNSS
              otherwise it defaults to _/_v_a_r_/_d_b_/_p_k_g.
 
      --LL      Don't add the package to any views after installation.
+
+     --mm      Override the machine architecture returned by uname with _m_a_c_h_i_n_e.
 
      --nn      Don't actually install a package, just report the steps that
              would be taken if it was.
@@ -186,26 +188,23 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
 
            4.   A search is made for any @@ooppttiioonn directives which control how
                 the package is added to the system.  The only currently imple-
-                mented option is @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee, which causes the
-                package to be extracted directly into its prefix directory
-                rather than moving it through a staging area in _/_v_a_r_/_t_m_p.
+                mented option is @@ooppttiioonn pprreesseerrvvee, which tells pkg_add to move
+                any existing files out of the way, preserving the previous
+                contents (which are also resurrected on pkg_delete, so caveat
+                emptor).
 
-           5.   If @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee is enabled, the package is now
-                extracted directly into its final location, otherwise it is
-                extracted into the staging area.
-
-           6.   The package build information is extracted from the
+           5.   The package build information is extracted from the
                 _+_B_U_I_L_D___I_N_F_O file and compared against the result of uname(3).
                 If the operating system or architecture of the package differ
                 from that of the host, installation is aborted.  This behavior
                 is overridable with the --ff flag.
 
-           7.   The package build information from _+_B_U_I_L_D___I_N_F_O is then checked
+           6.   The package build information from _+_B_U_I_L_D___I_N_F_O is then checked
                 for USE_ABI_DEPENDS=NO (or IGNORE_RECOMMENDED).  If the pack-
                 age was built with ABI dependency recommendations ignored, a
                 warning will be issued.
 
-           8.   If the package contains an _i_n_s_t_a_l_l script, it is executed with
+           7.   If the package contains an _i_n_s_t_a_l_l script, it is executed with
                 the following arguments:
 
                 _p_k_g_-_n_a_m_e      The name of the package being installed.
@@ -217,12 +216,10 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
                 If the _i_n_s_t_a_l_l script exits with a non-zero status code, the
                 installation is terminated.
 
-           9.   If @@ooppttiioonn eexxttrraacctt--iinn--ppllaaccee is not present in the packing
-                list, then it is used as a guide for moving (or copying, as
-                necessary) files from the staging area into their final loca-
-                tions.
+           8.   It is used as a guide for moving (or copying, as necessary)
+                files from the staging area into their final locations.
 
-           10.  If an _i_n_s_t_a_l_l script exists for the package, it is executed
+           9.   If an _i_n_s_t_a_l_l script exists for the package, it is executed
                 with the following arguments:
 
                 _p_k_g___n_a_m_e      The name of the package being installed.
@@ -231,7 +228,7 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
                               any actions needed after the package has been
                               installed.
 
-           11.  After installation is complete, a copy of the packing list,
+           10.  After installation is complete, a copy of the packing list,
                 _d_e_i_n_s_t_a_l_l script, description, and display files are copied
                 into _/_v_a_r_/_d_b_/_p_k_g_/_<_p_k_g_-_n_a_m_e_> for subsequent possible use by
                 pkg_delete(1).  Any package dependencies are recorded in the
@@ -239,12 +236,12 @@ TTEECCHHNNIICCAALL DDEETTAAIILLSS
                 an alternate package database directory is specified, then it
                 overrides the _/_v_a_r_/_d_b_/_p_k_g path shown above).
 
-           12.  If the package is a depoted package, then add it to the
+           11.  If the package is a depoted package, then add it to the
                 default view.
 
-           13.  The staging area is deleted and the program terminates.
+           12.  The staging area is deleted and the program terminates.
 
-           14.  Finally, if we were upgrading a package, any _+_R_E_Q_U_I_R_E_D___B_Y file
+           13.  Finally, if we were upgrading a package, any _+_R_E_Q_U_I_R_E_D___B_Y file
                 that was moved aside before upgrading was started is now moved
                 back into place.
 
@@ -346,4 +343,4 @@ BBUUGGSS
 
      Sure to be others.
 
-NetBSD 4.0                      August 2, 2007                      NetBSD 4.0
+NetBSD 4.0                      August 10, 2007                     NetBSD 4.0
