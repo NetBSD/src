@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.2 2007/08/06 11:43:01 ghen Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.3 2007/08/14 10:35:38 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -20,4 +20,12 @@ sys/dev/rasops/rasops.c				1.56 via patch
 	Implement bounds checking in some places in display driver code to
 	avoid the possibility of a local user panic.
 	[mjf, ticket #1815]
+
+dist/bind/bin/named/client.c			1.1.1.6 via patch
+dist/bind/lib/dns/dispatch.c			1.1.1.7 via patch
+dist/bind/lib/dns/include/dns/dispatch.h	1.1.1.5 via patch
+
+	Fix for a security issue in BIND 9.3.x (CVE-2007-2926):
+	Query id generation was cryptographically weak.
+	[adrianp, ticket #1829]
 
