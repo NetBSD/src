@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.25 2006/03/17 16:58:09 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.26 2007/08/14 03:39:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.25 2006/03/17 16:58:09 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.26 2007/08/14 03:39:19 dyoung Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -749,7 +749,7 @@ ifinit(void)
 			continue;	/* just ignore compat message */
 #endif
 		if (ifam->ifam_type == RTM_IFINFO) {
-			struct sockaddr_dl *sdl;
+			const struct sockaddr_dl *sdl;
 
 			ifm = (struct if_msghdr *)ifam;
 			/* make prototype structure for the IP aliases
@@ -769,10 +769,10 @@ ifinit(void)
 #ifdef sgi
 			ifs0.int_data.odrops = ifm->ifm_data.ifi_odrops;
 #endif
-			sdl = (struct sockaddr_dl *)(ifm + 1);
-			sdl->sdl_data[sdl->sdl_nlen] = 0;
-			strncpy(ifs0.int_name, sdl->sdl_data,
-				MIN(sizeof(ifs0.int_name), sdl->sdl_nlen));
+			sdl = (const struct sockaddr_dl *)(ifm + 1);
+			/* NUL-termination by memset, above. */
+			memcpy(ifs0.int_name, sdl->sdl_data,
+				MIN(sizeof(ifs0.int_name) - 1, sdl->sdl_nlen));
 			continue;
 		}
 		if (ifam->ifam_type != RTM_NEWADDR) {
