@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2007/08/05 22:28:06 pooka Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2007/08/14 14:06:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,9 +32,13 @@
 
 #define spllower(x) ((void)0)
 #define splraise(x) 0
+#define splsoftnet() 0
 #define splbio() 0
-#define splx(x) ((void)0)
+#define splvm() 0
+#define splx(x) ((void)x)
 
 #define IPL_NONE 0
+#define IPL_BIO 0
+#define IPL_VM 0
 
 #endif /* _SYS_RUMP_INTR_H_ */
