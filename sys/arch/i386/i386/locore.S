@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47.4.3 2007/07/29 10:18:49 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.47.4.4 2007/08/14 10:49:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -978,11 +978,12 @@ ENTRY(sse2_zero_page)
  */
 ENTRY(sse2_copy_page)
 	pushl	%ebp
+	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-	movl	16(%esp), %esi
-	movl	20(%esp), %edi
-	movl	$4096, %ebp
+	movl	20(%esp), %esi
+	movl	24(%esp), %edi
+	movl	$PAGE_SIZE, %ebp
 	.align	16
 1:
 	movl	0(%esi), %eax
@@ -1000,5 +1001,6 @@ ENTRY(sse2_copy_page)
 	sfence
 	popl	%edi
 	popl	%esi
+	popl	%ebx
 	popl	%ebp
 	ret
