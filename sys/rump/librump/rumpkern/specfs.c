@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.3 2007/08/13 13:51:39 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.4 2007/08/14 13:24:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -74,11 +74,27 @@ rump_specopen(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct rump_specpriv *sp = vp->v_data;
+	struct stat sb;
 	int fd, error;
 
 	fd = rumpuser_open(sp->rsp_path, OFLAGS(ap->a_mode), &error);
 	if (fd == -1)
 		return error;
+
+	/* XXX uh */
+	if (rumpuser_ioctl(fd, DIOCGDINFO, &sp->rsp_dl, &error) == -1) {
+		memset(&sp->rsp_dl, 0, sizeof(sp->rsp_dl));
+
+		if (rumpuser_stat(sp->rsp_path, &sb, &error) == -1) {
+			rumpuser_close(fd);
+			return error;
+		}
+		sp->rsp_pi.p_size = sb.st_size >> DEV_BSHIFT;
+		sp->rsp_dl.d_secsize = DEV_BSIZE;
+		sp->rsp_curpi = &sp->rsp_pi;
+	} else {
+		sp->rsp_curpi = &sp->rsp_dl.d_partitions[0]; /* XXX */
+	}
 
 	sp->rsp_fd = fd;
 	return 0;
@@ -99,8 +115,14 @@ rump_specioctl(void *v)
 	struct rump_specpriv *sp = vp->v_data;
 	int rv, error;
 
-	if (ap->a_command == DIOCGPART)
-		return EOPNOTSUPP;
+	if (ap->a_command == DIOCGPART) {
+		struct partinfo *pi = (struct partinfo *)ap->a_data;
+
+		pi->part = sp->rsp_curpi;
+		pi->disklab = &sp->rsp_dl;
+
+		return 0;
+	}
 
 	rv = rumpuser_ioctl(sp->rsp_fd, ap->a_command, ap->a_data, &error);
 	if (rv == -1)
