@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.2.4.1 2007/02/10 19:20:36 tron Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.2.4.2 2007/08/14 10:34:16 ghen Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -1272,6 +1272,14 @@ client_request(isc_task_t *task, isc_event_t *event) {
 			goto cleanup;
 		}
 	}
+
+	/*
+	 * Hash the incoming request here as it is after
+	 * dns_dispatch_importrecv().
+	 */
+	dns_dispatch_hash(&client->now, sizeof(client->now));
+	dns_dispatch_hash(isc_buffer_base(buffer),
+			  isc_buffer_usedlength(buffer));
 
 	/*
 	 * It's a request.  Parse it.
