@@ -1,4 +1,4 @@
-/* $NetBSD: ausmbus_psc.c,v 1.6 2006/06/26 18:21:38 drochner Exp $ */
+/* $NetBSD: ausmbus_psc.c,v 1.7 2007/08/14 14:10:52 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.6 2006/06/26 18:21:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ausmbus_psc.c,v 1.7 2007/08/14 14:10:52 kiyohara Exp $");
 
 #include "locators.h"
 
@@ -132,7 +132,7 @@ ausmbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = ausmbus_exec;
 	sc->sc_smbus_timeout = 10;
-	
+
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
@@ -249,7 +249,7 @@ ausmbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	}
 
 	/*
-	 * XXX: TODO Please Support other protocols defined in SMBus 2.0 
+	 * XXX: TODO Please Support other protocols defined in SMBus 2.0
 	 * - Quick Command
 	 * - Process call
 	 * - Block write/read
@@ -492,7 +492,7 @@ ausmbus_initiate_xfer(void *arg, i2c_addr_t addr, int flags)
 
 	/* Tx/Rx Slave Address */
 	v = (addr << 1) & SMBUS_TXRX_ADDRDATA;
-	if ((flags & I2C_F_READ) != 0) 
+	if ((flags & I2C_F_READ) != 0)
 		v |= 1;
 	ausmbus_reg_write(sc, AUPSC_SMBTXRX, v);
 
