@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.1.1.1 2007/07/16 13:01:47 joerg Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $");
 #endif
 
 /*
@@ -189,7 +189,7 @@ pkgdb_retrieve(const char *key)
 }
 
 /* dump contents of the database to stdout */
-void
+int
 pkgdb_dump(void)
 {
 	DBT     key;
@@ -203,8 +203,9 @@ pkgdb_dump(void)
 				(int) val.size, (char *) val.data);
 		}
 		pkgdb_close();
-	}
-
+		return 0;
+	} else
+		return -1;
 }
 
 /*
@@ -278,7 +279,7 @@ int	pkgdb_open(int mode) { return 1; }
 void	pkgdb_close(void) {}
 int	pkgdb_store(const char *key, const char *val) { return 0; }
 char   *pkgdb_retrieve(const char *key) { return NULL; }
-void	pkgdb_dump(void) {}
+int	pkgdb_dump(void) { return 0; }
 int	pkgdb_remove(const char *key) { return 0; }
 int	pkgdb_remove_pkg(const char *pkg) { return 1; }
 

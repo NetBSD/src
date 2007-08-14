@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
 #endif
 #endif
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $");
 #include "lib.h"
 #include "info.h"
 
-static const char Options[] = ".aBbcDde:fFhIiK:kLl:mNnpQ:qRsSuvVX";
+static const char Options[] = ".aBbcDde:E:fFhIiK:kLl:mNnpQ:qRsSuvVX";
 
 int     Flags = 0;
 enum which Which = WHICH_LIST;
@@ -60,7 +60,6 @@ char   *InfoPrefix = "";
 char   *BuildInfoVariable = "";
 char    PlayPen[MaxPathSize];
 size_t  PlayPenSize = sizeof(PlayPen);
-char   *CheckPkg = NULL;
 size_t  termwidth = 0;
 lpkg_head_t pkgs;
 
@@ -78,6 +77,8 @@ usage(void)
 int
 main(int argc, char **argv)
 {
+	char *CheckPkg = NULL;
+	char *BestCheckPkg = NULL;
 	lpkg_t *lpp;
 	int     ch;
 	int	rc;
@@ -110,6 +111,10 @@ main(int argc, char **argv)
 
 		case 'd':
 			Flags |= SHOW_DESC;
+			break;
+
+		case 'E':
+			BestCheckPkg = optarg;
 			break;
 
 		case 'e':
@@ -223,6 +228,21 @@ main(int argc, char **argv)
 			Which = WHICH_ALL;
 	}
 
+	if (CheckPkg != NULL && BestCheckPkg != NULL) {
+		warnx("-E and -e are mutally exlusive");
+		usage();
+	}
+
+	if (argc != 0 && CheckPkg != NULL) {
+		warnx("can't give any additional arguments to -e");
+		usage();
+	}
+
+	if (argc != 0 && BestCheckPkg != NULL) {
+		warnx("can't give any additional arguments to -E");
+		usage();
+	}
+
 	if (argc != 0 && Which != WHICH_LIST) {
 		warnx("can't use both -a/-u and package name");
 		usage();
@@ -242,22 +262,28 @@ main(int argc, char **argv)
 			| SHOW_DEPENDS | SHOW_DISPLAY;
 
 	/* -Fe /filename -> change CheckPkg to real packagename */
-	if (CheckPkg && File2Pkg) {
-		char   *s;
+	if (CheckPkg) {
+		if (File2Pkg) {
+			char   *s;
 
-		if (!pkgdb_open(ReadOnly))
-			err(EXIT_FAILURE, "cannot open pkgdb");
+			if (!pkgdb_open(ReadOnly))
+				err(EXIT_FAILURE, "cannot open pkgdb");
 
-		s = pkgdb_retrieve(CheckPkg);
+			s = pkgdb_retrieve(CheckPkg);
 
-		if (s) {
-			CheckPkg = strdup(s);
-		} else {
-			errx(EXIT_FAILURE, "No matching pkg for %s.", CheckPkg);
+			if (s) {
+				CheckPkg = strdup(s);
+			} else {
+				errx(EXIT_FAILURE, "No matching pkg for %s.", CheckPkg);
+			}
+
+			pkgdb_close();
 		}
-
-		pkgdb_close();
+		return CheckForPkg(CheckPkg);
 	}
+
+	if (BestCheckPkg)
+		return CheckForBestPkg(BestCheckPkg);
 
 	TAILQ_INIT(&pkgs);
 
@@ -282,8 +308,12 @@ main(int argc, char **argv)
 				errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 		} else {
 			if (ispkgpattern(*argv)) {
-				if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, add_to_list_fn, &pkgs) <= 0)
+				switch (add_installed_pkgs_by_pattern(*argv, &pkgs)) {
+				case 0:
 					errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
+				case -1:
+					errx(EXIT_FAILURE, "Error during search in pkgdb for %s", *argv);
+				}
 			} else {
 				char   *dbdir;
 

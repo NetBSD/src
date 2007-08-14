@@ -53,6 +53,9 @@ OOPPTTIIOONNSS
      --ff      Force removal of the package, even if a dependency is recorded or
              the deinstall script fails.
 
+     --ffff     Force removal of the package, even if the package is marked as a
+             pprreesseerrvveedd package.  Note that this is a dangerous operation.
+
      --KK _p_k_g___d_b_d_i_r
              Set _p_k_g___d_b_d_i_r as the package database directory.  If this option
              isn't specified, then the package database directory is taken

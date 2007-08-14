@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
 #endif
 #endif
 
@@ -49,8 +49,9 @@ __RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $");
 #include "add.h"
 #include "verify.h"
 
-static char Options[] = "AIK:LRVW:fhnp:s:t:uvw:";
+static char Options[] = "AIK:LRVW:fhm:np:s:t:uvw:";
 
+char   *OverrideMachine = NULL;
 char   *Prefix = NULL;
 char   *View = NULL;
 char   *Viewbase = NULL;
@@ -71,7 +72,7 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: pkg_add [-AfhILnRuVv] [-K pkg_dbdir] [-p prefix]",
+	    "usage: pkg_add [-AfhILnRuVv] [-K pkg_dbdir] [-m machine] [-p prefix]",
 	    "               [-s verification-type] [-t template] [-W viewbase] [-w view]",
 	    "               [[ftp|http]://[user[:password]@]host[:port]][/path/]pkg-name ...");
 	exit(1);
@@ -110,6 +111,10 @@ main(int argc, char **argv)
 
 		case 'R':
 			NoRecord = TRUE;
+			break;
+
+		case 'm':
+			OverrideMachine = optarg;
 			break;
 
 		case 'n':
@@ -162,8 +167,14 @@ main(int argc, char **argv)
 	path_create(getenv("PKG_PATH"));
 	TAILQ_INIT(&pkgs);
 
+	if (argc == 0) {
+		/* If no packages, yelp */
+		warnx("missing package name(s)");
+		usage();
+	}
+
 	/* Get all the remaining package names, if any */
-	for (ch = 0; *argv; ch++, argv++) {
+	for (; argc > 0; --argc, ++argv) {
 		lpkg_t *lpp;
 
 		if (IS_STDIN(*argv))
@@ -172,11 +183,6 @@ main(int argc, char **argv)
 			lpp = alloc_lpkg(*argv);
 
 		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
-	}
-
-	if (!ch) {
-		/* If no packages, yelp */
-		warnx("missing package name(s)"), usage();
 	}
 	
 	/* Increase # of max. open file descriptors as high as possible */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpio.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
 #endif
 
 /*-
@@ -655,10 +655,12 @@ ftp_expand_URL(const char *base, char *pattern)
 	char *s, buf[MaxPathSize];
 	char tmpname[MaxPathSize];
 	char best[MaxPathSize];
+	char s_best[MaxPathSize];
 	int rc, got_list, tfd, retry_tbz;
 
 	retry_tbz = 0;
 	best[0]='\0';
+	s_best[0]='\0';
 
 	rc = ftp_start(base);
 	if (rc == -1) {
@@ -714,7 +716,6 @@ retry_with_tbz:
 	}
 	
 	if (got_list == 1 && access(tmpname, R_OK)==0) {
-		int matches;
 		FILE *f;
 		char filename[MaxPathSize];
 
@@ -724,7 +725,6 @@ retry_with_tbz:
 			unlink(tmpname);	/* remove clutter */
 			return NULL;
 		}
-		matches=0;
 		/* The following loop is basically the same as the readdir() loop
 		 * in findmatchingname() */
 		while (fgets(filename, sizeof(filename), f)) {
@@ -742,21 +742,20 @@ retry_with_tbz:
 			strip_txz(s_filename, NULL, filename);
 			strip_txz(s_pattern, NULL, pattern);
 
-			if (pkg_match(s_pattern, s_filename)) {
-				matches++;
-
-				/* compare findbestmatchingname() */
-				findbestmatchingname_fn(pattern, filename, best);
+			if (pkg_order(s_pattern, s_filename,
+				      s_best[0] != '\0' ? s_best : NULL) == 1) {
+				strlcpy(s_best, s_filename, sizeof(s_best));
+				strlcpy(best, filename, sizeof(best));
 			}
 		}
 		(void) fclose(f);
-
-		if (matches == 0 && Verbose)
-			warnx("nothing appropriate found");
 	}
 
 	if (retry_tbz)
 		goto retry_with_tbz;
+
+	if (best[0] == '\0' && Verbose)
+		warnx("nothing appropriate found");
 
 	unlink(tmpname);
 
@@ -771,6 +770,7 @@ static char *
 http_expand_URL(const char *base, char *pattern)
 {
 	char    best[MaxPathSize];
+	char    s_best[MaxPathSize];
 	char    line[BUFSIZ];
 	char    filename[MaxPathSize];
 	FILE   *fp;
@@ -779,6 +779,7 @@ http_expand_URL(const char *base, char *pattern)
 	pid_t   pid;
 
 	*best = '\0';
+	*s_best = '\0';
 
 	/* Set up a pipe for getting the file list */
 	if (pipe(pipefds) == -1) {
@@ -828,10 +829,10 @@ http_expand_URL(const char *base, char *pattern)
 				offset += len;
 				strip_txz(s_filename, NULL, filename);
 
-				if (pkg_match(s_pattern, s_filename)) {
-					/* compare findbestmatchingname() */
-					findbestmatchingname_fn(pattern,
-					    filename, best);
+				if (pkg_order(s_pattern, s_filename,
+					      *s_best != '\0' ? s_best : NULL) == 1) {
+					strlcpy(best, filename, sizeof(best));
+					strlcpy(s_best, s_filename, sizeof(best));
 				}
 			}
 		}

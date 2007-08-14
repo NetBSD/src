@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.1.1.1 2007/07/16 13:01:48 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $");
 #endif
 
 #if HAVE_SYS_STAT_H
@@ -168,23 +168,29 @@ var_set(const char *fname, const char *variable, const char *value)
 		return 0;
 
 	fp = fopen(fname, "r");
-	if (!fp && errno != ENOENT) {
-		warn("var_set: can't open '%s' for reading", fname);
-		return -1;
+	if (fp == NULL) {
+		if (errno != ENOENT) {
+			warn("var_set: can't open '%s' for reading", fname);
+			return -1;
+		}
+		if (value == NULL)
+			return 0; /* Nothing to do */
 	}
 
 	tmpname = malloc(strlen(fname)+8);
 	sprintf(tmpname, "%s.XXXXXX", fname);
 	if ((fd=mkstemp(tmpname)) < 0) {
 		free(tmpname);
-		fclose(fp);
+		if (fp != NULL)
+			fclose(fp);
 		warn("var_set: can't open temp file for '%s' for writing",
 		      fname);
 		return -1;
 	}
 	if (chmod(tmpname, 0644) < 0) {
 		close(fd);
-		fclose(fp);
+		if (fp != NULL)
+			fclose(fp);
 		free(tmpname);
 		warn("var_set: can't set permissions for temp file for '%s'",
 		      fname);
@@ -194,7 +200,8 @@ var_set(const char *fname, const char *variable, const char *value)
 		close(fd);
 		remove(tmpname);
 		free(tmpname);
-		fclose(fp);
+		if (fp != NULL)
+			fclose(fp);
 		warn("var_set: can't open temp file for '%s' for writing",
 		      fname);
 		return -1;

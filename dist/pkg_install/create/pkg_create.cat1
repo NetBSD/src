@@ -215,14 +215,10 @@ PPAACCKKIINNGG LLIISSTT DDEETTAAIILLSS
              surprise).  Use without an arg to set back to default (extrac-
              tion) permissions.
      @@ooppttiioonn _o_p_t_i_o_n
-             Set internal package options, the only two currently supported
-             ones being _e_x_t_r_a_c_t_-_i_n_-_p_l_a_c_e, which tells the pkg_add command not
-             to extract the package's tarball into a staging area but rather
-             directly into the target hierarchy (this is typically meant to be
-             used only by distributions or other special package types), and
-             _p_r_e_s_e_r_v_e, which tells pkg_add to move any existing files out of
-             the way, preserving the previous contents (which are also resur-
-             rected on pkg_delete, so caveat emptor).
+             Set internal package options, the only currently supported one
+             being _p_r_e_s_e_r_v_e, which tells pkg_add to move any existing files
+             out of the way, preserving the previous contents (which are also
+             resurrected on pkg_delete, so caveat emptor).
      @@oowwnneerr _u_s_e_r
              Set default ownership for all subsequently extracted files to
              _u_s_e_r.  Use without an arg to set back to default (extraction)
@@ -300,4 +296,4 @@ BBUUGGSS
      invocations due to exec argument-space limitations (this depends on the
      value returned by ssyyssccoonnff(___S_C___A_R_G___M_A_X)).
 
-NetBSD 4.0                      August 2, 2007                      NetBSD 4.0
+NetBSD 4.0                      August 10, 2007                     NetBSD 4.0
