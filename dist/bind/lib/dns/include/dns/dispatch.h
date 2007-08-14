@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.1.4.1 2007/02/10 19:20:55 tron Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.1.1.1.4.2 2007/08/14 10:34:17 ghen Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -437,6 +437,13 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event);
  * Requires:
  * 	disp is valid, and the attribute DNS_DISPATCHATTR_NOLISTEN is set.
  * 	event != NULL
+ */
+
+void
+dns_dispatch_hash(void *data, size_t len);
+/*%<
+ * Feed 'data' to the dispatch query id generator where 'len' is the size
+ * of 'data'.
  */
 
 ISC_LANG_ENDDECLS
