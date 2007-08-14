@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.7 2007/08/13 13:51:39 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.8 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,8 @@
 #include <machine/cpu.h>
 #include <machine/stdarg.h>
 
+#include <uvm/uvm_map.h>
+
 #include "rump.h"
 #include "rumpuser.h"
 
@@ -55,6 +57,8 @@ struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
+struct vm_map *kernel_map;
+int physmem;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
@@ -277,11 +281,11 @@ bdev_strategy(struct buf *bp)
 	panic("%s: not supported", __func__);
 }
 
-void
-vn_syncer_remove_from_worklist(struct vnode *vp)
+int
+bdev_type(dev_t dev)
 {
 
-	/* nada */
+	return D_DISK;
 }
 
 int

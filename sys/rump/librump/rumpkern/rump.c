@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.4 2007/08/08 14:09:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.5 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,7 @@ rump_init()
 	rump_proc.p_limit = &rump_limits;
 
 	vfsinit();
+	bufinit();
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);

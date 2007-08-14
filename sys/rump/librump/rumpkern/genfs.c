@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.13 2007/08/13 13:51:39 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.14 2007/08/14 13:54:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -192,11 +192,13 @@ genfs_getpages(void *v)
 			continue;
 		}
 
+		memset(&buf, 0, sizeof(buf));
 		buf.b_data = tmpbuf + bufoff;
 		buf.b_bcount = xfersize;
 		buf.b_blkno = bn;
 		buf.b_lblkno = 0;
 		buf.b_flags = B_READ;
+		buf.b_vp = vp;
 
 		VOP_STRATEGY(devvp, &buf);
 		if (buf.b_error)
@@ -265,8 +267,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
 
-	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
-
  restart:
 	/* check if all pages are clean */
 	smallest = -1;
@@ -287,6 +287,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		return 0;
 	}
 
+	GOP_SIZE(vp, vp->v_writesize, &eof, 0);
+
 	/* we need to flush */
 	for (curoff = smallest; curoff < eof; curoff += PAGE_SIZE) {
 		if (curoff - smallest >= MAXPHYS)
@@ -305,6 +307,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		struct vnode *devvp;
 		daddr_t bn, lbn;
 		int run, error;
+
+		memset(&buf, 0, sizeof(buf));
 
 		lbn = (smallest + bufoff) >> bshift;
 		error = VOP_BMAP(vp, lbn, &devvp, &bn, &run);
@@ -332,7 +336,9 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		buf.b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
 		buf.b_data = databuf + bufoff;
 		buf.b_flags = B_WRITE;
+		buf.b_vp = vp;
 
+		vp->v_numoutput++;
 		VOP_STRATEGY(devvp, &buf);
 		if (buf.b_error)
 			panic("%s: VOP_STRATEGY lazy bum %d",
