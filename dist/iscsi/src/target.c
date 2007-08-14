@@ -1586,7 +1586,7 @@ target_listen(globals_t *gp)
 	gp->listener_listening++;
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "listener thread started\n");
 
-	if (!iscsi_socks_establish(gp->sockv, gp->famv, &gp->sockc, gp->address_family)) {
+	if (!iscsi_socks_establish(gp->sockv, gp->famv, &gp->sockc, gp->address_family, gp->port)) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_establish() failed\n");
 		goto done;
 	}
@@ -1610,7 +1610,7 @@ target_listen(globals_t *gp)
 		/* Accept connection, spawn session thread, and */
 		/* clean up old threads */
 
-		i = iscsi_waitfor_connection(gp->sockv, gp->sockc, gp->config_file, &newconn);
+		sess->d = i = iscsi_waitfor_connection(gp->sockv, gp->sockc, gp->config_file, &newconn);
 
 		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "waiting for %s connection on port %hd\n",
 			iscsi_address_family(gp->famv[i]),

@@ -148,9 +148,10 @@ static int      wait_callback_i(void *);
 /* from the input configuration file, and populates the */
 /* g_target data structure  fields. */
 static int 
-get_target_config(const char *hostname)
+get_target_config(const char *hostname, int port)
 {
 	(void) strlcpy(g_target[0].name, hostname, sizeof(g_target[0].name));
+	g_target[0].port = port;
 	return 0;
 }
 
@@ -678,7 +679,7 @@ full_feature_phase(initiator_session_t * sess)
 }
 
 int 
-initiator_init(const char *hostname, int address_family, const char *user, int auth_type, int mutual_auth, int digest_type)
+initiator_init(const char *hostname, int port, int address_family, const char *user, int auth_type, int mutual_auth, int digest_type)
 {
 	int             i;
 	initiator_session_t *sess = NULL;
@@ -687,7 +688,7 @@ initiator_init(const char *hostname, int address_family, const char *user, int a
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "initializing initiator\n");
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "target config filename to read from:%s\n", gfilename);
-	if (get_target_config(hostname) != 0) {
+	if (get_target_config(hostname, port) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "Error getting target configuration from config file\n");
 		return -1;
 	}
