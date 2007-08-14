@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.13 2007/02/15 18:18:21 ad Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.13.22.1 2007/08/14 21:08:54 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13 2007/02/15 18:18:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.1 2007/08/14 21:08:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,14 +118,10 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	int irq, pin, trigger;
 	struct acpi_intr_defer *aip;
 #if NIOAPIC > 0
-#if NACPI > 0
 	int i, h;
-#endif
 	struct ioapic_softc *sc;
 #endif
-#if NACPI > 0 || NIOAPIC > 0
 	struct mp_intr_map *mip = NULL;
-#endif
 
 	if (acpi_intrcold) {
 		aip = malloc(sizeof(struct acpi_intr_defer), M_TEMP, M_WAITOK);
@@ -142,7 +138,7 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 
 	trigger = IST_LEVEL;
 
-#if NACPI > 0 && NIOAPIC > 0
+#if NIOAPIC > 0
 	/*
 	 * Can only match on ACPI global interrupt numbers if the ACPI
 	 * interrupt info was extracted, which is in the ACPI case.
@@ -198,11 +194,10 @@ nomap:
 		irq = pin = (int)InterruptNumber;
 	}
 
-#if NACPI > 0 && NIOAPIC > 0
+#if NIOAPIC > 0
 found:
 #endif
 
-#if NACPI > 0 || NIOAPIC > 0
 	/*
 	 * If there was no ACPI interrupt source override,
 	 * mark the SCI interrupt as level-triggered, active low
@@ -214,7 +209,6 @@ found:
 		mip->flags |= MPS_INTPO_ACTLO;
 		mip->redir |= IOAPIC_REDLO_ACTLO;
 	}
-#endif
 
 	/*
 	 * XXX probably, IPL_BIO is enough.
@@ -336,12 +330,10 @@ acpi_md_callback(struct device *acpi)
 {
 	struct acpi_intr_defer *aip;
 
-#if NACPI > 0
 #ifdef MPBIOS
 	if (!mpbios_scanned)
 #endif
 	mpacpi_find_interrupts(acpi);
-#endif
 	acpi_intrcold = 0;
 
 	/* Proces deferred interrupt handler establish calls. */
