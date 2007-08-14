@@ -557,12 +557,13 @@ iscsi_sock_listen(iscsi_socket_t sock)
 #endif
 
 int
-iscsi_socks_establish(iscsi_socket_t *sockv, int *famv, int *sockc, int family)
+iscsi_socks_establish(iscsi_socket_t *sockv, int *famv, int *sockc, int family, int port)
 {
 	struct addrinfo		hints;
 	struct addrinfo		*res;
 	struct addrinfo		*res0;
 	const char		*cause = NULL;
+	char			 portnum[31];
 	int			one = 1;
 	int			error;
 
@@ -570,7 +571,11 @@ iscsi_socks_establish(iscsi_socket_t *sockv, int *famv, int *sockc, int family)
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
-	if ((error = getaddrinfo(NULL, "iscsi", &hints, &res0)) != 0) {
+	(void) snprintf(portnum, sizeof(portnum), "%d", port);
+	if ((error = getaddrinfo(NULL, portnum, &hints, &res0)) != 0 ||
+	    (error = getaddrinfo(NULL, "iscsi-target", &hints, &res0)) != 0 ||
+	    (error = getaddrinfo(NULL, "iscsi", &hints, &res0)) != 0 ||
+	    (error = getaddrinfo(NULL, "3260", &hints, &res0)) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo: %s", gai_strerror(error));
 		return 0;
 	}
@@ -616,6 +621,7 @@ iscsi_address_family(int fam)
 }
 
 /* wait for a connection to come in on a socket */
+/* ARGSUSED2 */
 int
 iscsi_waitfor_connection(iscsi_socket_t *sockv, int sockc, const char *cf, iscsi_socket_t *sock)
 {
@@ -629,7 +635,7 @@ iscsi_waitfor_connection(iscsi_socket_t *sockv, int sockc, const char *cf, iscsi
 			socks[i].events = POLLIN;
 			socks[i].revents = 0;
 		}
-		switch(poll(socks, sockc, INFTIM)) {
+		switch(poll(socks, (unsigned)sockc, INFTIM)) {
 		case -1:
 			/* interrupted system call */
 			continue;
@@ -740,21 +746,25 @@ iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 {
 	struct addrinfo	hints;
 	struct addrinfo	*res;
+	char		portstr[32];
 	int             rc = 0;
 	int             i;
 
 	(void) memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	(void) snprintf(portstr, sizeof(portstr), "%d", port);
 
 	for (i = 0; i < ISCSI_SOCK_CONNECT_TIMEOUT; i++) {
 
 		/* Attempt connection */
 
-		rc = getaddrinfo(hostname, "iscsi", &hints, &res);
-		if (rc != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo() failed");
-			return -1;
+		if ((rc = getaddrinfo(hostname, portstr, &hints, &res)) != 0 ||
+		    (rc = getaddrinfo(hostname, "iscsi-target", &hints, &res)) != 0 ||
+		    (rc = getaddrinfo(hostname, "iscsi", &hints, &res)) != 0 ||
+		    (rc = getaddrinfo(hostname, "3260", &hints, &res)) != 0) {
+			iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo: %s", gai_strerror(rc));
+			return 0;
 		}
 
 #if ISCSI_SOCK_CONNECT_NONBLOCK == 1
@@ -1232,7 +1242,7 @@ cdb2lba(uint32_t *lba, uint16_t *len, uint8_t *cdb)
 	/* work here. */
 	int	indian = 1;
 
-	if (*(char *) &indian) {
+	if (*(char *) (void *) &indian) {
 		/* little endian */
 		((uint8_t *) (void *) lba)[0] = cdb[5];
 		((uint8_t *) (void *) lba)[1] = cdb[4];
@@ -1258,21 +1268,21 @@ lba2cdb(uint8_t *cdb, uint32_t *lba, uint16_t *len)
 	/* work here. */
 	int	indian = 1;
 
-	if (*(char *) &indian) {
+	if (*(char *) (void *) &indian) {
 		/* little endian */
-		cdb[2] = ((uint8_t *) lba)[3];
-		cdb[3] = ((uint8_t *) lba)[2];
-		cdb[4] = ((uint8_t *) lba)[1];
-		cdb[5] = ((uint8_t *) lba)[0];
-		cdb[7] = ((uint8_t *) len)[1];
-		cdb[8] = ((uint8_t *) len)[0];
+		cdb[2] = ((uint8_t *) (void *)lba)[3];
+		cdb[3] = ((uint8_t *) (void *)lba)[2];
+		cdb[4] = ((uint8_t *) (void *)lba)[1];
+		cdb[5] = ((uint8_t *) (void *)lba)[0];
+		cdb[7] = ((uint8_t *) (void *)len)[1];
+		cdb[8] = ((uint8_t *) (void *)len)[0];
 	} else {
 		/* big endian */
-		cdb[2] = ((uint8_t *) lba)[2];
-		cdb[3] = ((uint8_t *) lba)[3];
-		cdb[4] = ((uint8_t *) lba)[0];
-		cdb[5] = ((uint8_t *) lba)[1];
-		cdb[7] = ((uint8_t *) len)[0];
-		cdb[8] = ((uint8_t *) len)[1];
+		cdb[2] = ((uint8_t *) (void *)lba)[2];
+		cdb[3] = ((uint8_t *) (void *)lba)[3];
+		cdb[4] = ((uint8_t *) (void *)lba)[0];
+		cdb[5] = ((uint8_t *) (void *)lba)[1];
+		cdb[7] = ((uint8_t *) (void *)len)[0];
+		cdb[8] = ((uint8_t *) (void *)len)[1];
 	}
 }

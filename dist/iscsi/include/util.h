@@ -292,7 +292,7 @@ typedef int     iscsi_socket_t;
 #define ISCSI_SOCK_MSG_BYTE_ALIGN    4
 
 int             iscsi_sock_create(iscsi_socket_t * );
-int             iscsi_socks_establish(iscsi_socket_t *, int *, int *, int);
+int             iscsi_socks_establish(iscsi_socket_t *, int *, int *, int, int);
 int		iscsi_waitfor_connection(iscsi_socket_t *, int, const char *cf, iscsi_socket_t *);
 const char	*iscsi_address_family(int);
 int             iscsi_sock_setsockopt(iscsi_socket_t * , int , int , void *, unsigned  );

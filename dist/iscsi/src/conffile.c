@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.5 2007/01/08 21:44:47 agc Exp $ */
+/* $NetBSD: conffile.c,v 1.6 2007/08/14 18:52:48 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -106,7 +106,7 @@ conffile_split(conffile_t *sp, ent_t *ep, char *from)
 			if (*to == '\\') {
 				if (*(to + 1) == '\n') {
 					cc = (int)(to - ep->buf);
-					if (fgets(&ep->buf[cc], sizeof(ep->buf) - cc, fp) != NULL) {
+					if (fgets(&ep->buf[cc], (int)(sizeof(ep->buf) - cc), fp) != NULL) {
 						if (sp != NULL) {
 							sp->lineno += 1;
 						}
@@ -184,7 +184,7 @@ conffile_get_by_field(conffile_t *sp, ent_t *ep, int f, char *val)
 
 /* check that we wrote `cc' chars of `buf' to `fp' */
 static int
-safe_write(FILE *fp, char *buf, int cc)
+safe_write(FILE *fp, char *buf, unsigned cc)
 {
 	return fwrite(buf, sizeof(char), cc, fp) == cc;
 }
