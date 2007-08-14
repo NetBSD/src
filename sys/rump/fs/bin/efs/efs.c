@@ -1,4 +1,4 @@
-/*	$NetBSD: efs.c,v 1.3 2007/08/09 08:33:25 pooka Exp $	*/
+/*	$NetBSD: efs.c,v 1.4 2007/08/14 15:56:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,6 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	extern struct vfsops efs_vfsops;
 	struct efs_args args;
 	mntoptparse_t mp;
 	int mntflags, pflags;
@@ -79,7 +78,7 @@ main(int argc, char *argv[])
 	memset(&args, 0, sizeof(args));
 	args.fspec = argv[0];
 
-	rv = p2k_run_fs(&efs_vfsops, argv[0], argv[1], mntflags | MNT_RDONLY, 
+	rv = p2k_run_fs(MOUNT_EFS, argv[0], argv[1], mntflags | MNT_RDONLY, 
 		&args, sizeof(args), pflags);
 	if (rv)
 		err(1, "mount");

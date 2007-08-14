@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/05 22:28:05 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2007/08/14 15:56:16 pooka Exp $
 #
 
 LIB=		p2k
@@ -6,6 +6,7 @@ LIB=		p2k
 SRCS=		p2k.c
 
 RUMPKERNEL=	no
-CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/rump/librump/rumpkern
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/rump/librump/rumpkern		\
+		-I${NETBSDSRCDIR}/sys/rump/fs/lib/libukfs
 
 .include <bsd.lib.mk>

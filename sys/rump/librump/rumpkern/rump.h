@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.8 2007/08/14 13:24:07 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.9 2007/08/14 15:56:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,8 +32,9 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/mount.h>
 #include <sys/disklabel.h>
+#include <sys/mount.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_object.h>
@@ -81,5 +82,8 @@ void	rump_fakeblk_deregister(const char *);
 void		rumpvm_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 void		rumpvm_freepage(struct vm_page *);
+
+struct vfsops	*rump_vfslist_iterate(struct vfsops *);
+struct vfsops	*rump_vfs_getopsbyname(const char *);
 
 #endif /* _SYS_RUMP_H_ */

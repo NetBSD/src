@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.1 2007/08/05 22:28:03 pooka Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.2 2007/08/14 15:56:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,6 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	extern struct vfsops tmpfs_vfsops;
 	struct tmpfs_args args;
 	mntoptparse_t mp;
 	int mntflags, pflags;
@@ -79,7 +78,7 @@ main(int argc, char *argv[])
 	memset(&args, 0, sizeof(args));
 	args.ta_version = TMPFS_ARGS_VERSION;
 
-	rv = p2k_run_fs(&tmpfs_vfsops, argv[0], argv[1], mntflags,
+	rv = p2k_run_fs(MOUNT_TMPFS, argv[0], argv[1], mntflags,
 		&args, sizeof(args), pflags | PUFFS_KFLAG_NOCACHE_PAGE);
 	if (rv)
 		err(1, "mount");

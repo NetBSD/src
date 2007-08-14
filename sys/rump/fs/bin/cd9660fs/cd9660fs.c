@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660fs.c,v 1.1 2007/08/05 22:28:02 pooka Exp $	*/
+/*	$NetBSD: cd9660fs.c,v 1.2 2007/08/14 15:56:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,6 @@
 int
 main(int argc, char *argv[])
 {
-	extern struct vfsops cd9660_vfsops;
 	struct iso_args args;
 	int rv;
 
@@ -53,7 +52,7 @@ main(int argc, char *argv[])
 	memset(&args, 0, sizeof(args));
 	args.fspec = argv[1];
 
-	rv = p2k_run_fs(&cd9660_vfsops, argv[1], argv[2], MNT_RDONLY,
+	rv = p2k_run_fs(MOUNT_CD9660, argv[1], argv[2], MNT_RDONLY,
 	    &args, sizeof(args), 0);
 	if (rv)
 		err(1, "mount");

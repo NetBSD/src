@@ -1,9 +1,10 @@
-/*	$NetBSD: hfs.c,v 1.2 2007/08/14 15:56:16 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.1 2007/08/14 15:56:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by the
+ * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,61 +28,24 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _SYS_RUMPFS_UKFS_H_
+#define _SYS_RUMPFS_UKFS_H_
+
 #include <sys/types.h>
-#include <sys/mount.h>
+#include <sys/stat.h>
+#include <sys/vnode.h>
 
-#include <fs/hfs/hfs.h>
+struct ukfs;
 
-#include <err.h>
-#include <puffs.h>
-#include <stdlib.h>
-#include <unistd.h>
+int		ukfs_init(void);
+struct ukfs	*ukfs_mount(const char *, const char *, const char *,
+			  int, void *, size_t);
+void		ukfs_unmount(struct ukfs *, int);
 
-#include "p2k.h"
+int		ukfs_getdents(struct ukfs *, const char *, off_t,
+			      char *, size_t);
 
-static void
-usage(void)
-{
+struct mount	*ukfs_getmp(struct ukfs *);
+struct vnode	*ukfs_getrvp(struct ukfs *);
 
-	errx(1, "usage: %s [-o opts] dev mountpath", getprogname());
-}
-
-int
-main(int argc, char *argv[])
-{
-	struct hfs_args args;
-	mntoptparse_t mp;
-	int mntflags, pflags;
-	int rv, ch;
-
-	setprogname(argv[0]);
-
-	mntflags = pflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != -1) {
-		switch (ch) {
-		case 'o':
-			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
-			if (mp == NULL)
-				err(1, "getmntops");
-			freemntopts(mp);
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
-	if (argc != 2)
-		usage();
-
-	memset(&args, 0, sizeof(args));
-	args.fspec = argv[0];
-
-	rv = p2k_run_fs(MOUNT_HFS, argv[0], argv[1], mntflags, 
-		&args, sizeof(args), pflags);
-	if (rv)
-		err(1, "mount");
-
-	return 0;
-}
+#endif /* _SYS_RUMPFS_UKFS_H_ */
