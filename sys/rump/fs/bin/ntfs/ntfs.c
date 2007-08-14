@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.1 2007/08/05 22:28:03 pooka Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.2 2007/08/14 15:56:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,6 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	extern struct vfsops ntfs_vfsops;
 	struct ntfs_args args;
 	mntoptparse_t mp;
 	int mntflags, pflags;
@@ -78,7 +77,7 @@ main(int argc, char *argv[])
 
 	memset(&args, 0, sizeof(args));
 	args.fspec = argv[0];
-	rv = p2k_run_fs(&ntfs_vfsops, argv[0], argv[1], mntflags,
+	rv = p2k_run_fs(MOUNT_NTFS, argv[0], argv[1], mntflags,
 	    &args, sizeof(args), pflags);
 	if (rv)
 		err(1, "mount");
