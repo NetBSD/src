@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.13.22.1 2007/08/14 21:08:54 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.13.22.2 2007/08/14 22:25:07 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.1 2007/08/14 21:08:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.2 2007/08/14 22:25:07 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,19 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.1 2007/08/14 21:08:54 joerg
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 
-static int acpi_intrcold = 1;
-
-struct acpi_intr_defer {
-	UINT32	number;
-	ACPI_OSD_HANDLER function;
-	void *context;
-	void *ih;
-	LIST_ENTRY(acpi_intr_defer) list;
-};
-
-static LIST_HEAD(, acpi_intr_defer) acpi_intr_deferq =
-    LIST_HEAD_INITIALIZER(acpi_intr_deferq);
-
 ACPI_STATUS
 acpi_md_OsInitialize(void)
 {
@@ -116,25 +103,11 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	void *ih;
 	struct pic *pic;
 	int irq, pin, trigger;
-	struct acpi_intr_defer *aip;
 #if NIOAPIC > 0
 	int i, h;
 	struct ioapic_softc *sc;
 #endif
 	struct mp_intr_map *mip = NULL;
-
-	if (acpi_intrcold) {
-		aip = malloc(sizeof(struct acpi_intr_defer), M_TEMP, M_WAITOK);
-		aip->number = InterruptNumber;
-		aip->function = ServiceRoutine;
-		aip->context = Context;
-		aip->ih = NULL;
-
-		LIST_INSERT_HEAD(&acpi_intr_deferq, aip, list);
-
-		*cookiep = (void *)aip;
-		return AE_OK;
-	}
 
 	trigger = IST_LEVEL;
 
@@ -224,16 +197,6 @@ found:
 void
 acpi_md_OsRemoveInterruptHandler(void *cookie)
 {
-	struct acpi_intr_defer *aip;
-
-	LIST_FOREACH(aip, &acpi_intr_deferq, list) {
-		if (aip == cookie) {
-			if (aip->ih != NULL)
-				intr_disestablish(aip->ih);
-			return;
-		}
-	}
-
 	intr_disestablish(cookie);
 }
 
@@ -328,17 +291,8 @@ acpi_md_OsDisableInterrupt(void)
 void
 acpi_md_callback(struct device *acpi)
 {
-	struct acpi_intr_defer *aip;
-
 #ifdef MPBIOS
 	if (!mpbios_scanned)
 #endif
 	mpacpi_find_interrupts(acpi);
-	acpi_intrcold = 0;
-
-	/* Proces deferred interrupt handler establish calls. */
-	LIST_FOREACH(aip, &acpi_intr_deferq, list) {
-		acpi_md_OsInstallInterruptHandler(aip->number, aip->function,
-		    aip->context, &aip->ih);
-	}
 }

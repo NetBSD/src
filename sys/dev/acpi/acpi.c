@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.6 2007/08/12 04:23:29 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.7 2007/08/14 22:25:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.6 2007/08/12 04:23:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.7 2007/08/14 22:25:07 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -353,6 +353,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		acpi_osd_debugger();
 #endif
 
+	/* Show SCI interrupt. */
+	if (AcpiGbl_FADT != NULL)
+		aprint_verbose("%s: SCI interrupting at int %d\n",
+		    sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
+
+	acpi_md_callback((struct device *)sc);
+
 	rv = AcpiEnableSubsystem(0);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error("%s: unable to enable ACPI: %s\n",
@@ -375,11 +382,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Our current state is "awake". */
 	sc->sc_sleepstate = ACPI_STATE_S0;
-
-	/* Show SCI interrupt. */
-	if (AcpiGbl_FADT != NULL)
-		aprint_verbose("%s: SCI interrupting at int %d\n",
-		    sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
 	/*
 	 * Check for fixed-hardware features.
 	 */
@@ -393,7 +395,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
 		acpi_osd_debugger();
 #endif
-	acpi_md_callback((struct device *)sc);
 	acpi_build_tree(sc);
 
 	if (acpi_root_pointer != 0 && acpi_node != CTL_EOL) {
