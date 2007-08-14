@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.7 2007/08/13 15:59:47 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.8 2007/08/14 13:24:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,9 @@
 #define _SYS_RUMP_H_
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/disklabel.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_object.h>
@@ -47,6 +49,10 @@ extern struct vmspace rump_vmspace;
 struct rump_specpriv {
 	char	rsp_path[MAXPATHLEN+1];
 	int	rsp_fd;
+
+	struct partition *rsp_curpi;
+	struct partition rsp_pi;
+	struct disklabel rsp_dl;
 };
 
 #define RUMP_UBC_MAGIC_WINDOW (void *)0x37
