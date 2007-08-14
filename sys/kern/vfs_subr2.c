@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.3 2007/08/09 20:55:30 pooka Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.4 2007/08/14 13:51:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.3 2007/08/09 20:55:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4 2007/08/14 13:51:31 pooka Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,6 +110,15 @@ const int	vttoif_tab[9] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK,
 	S_IFSOCK, S_IFIFO, S_IFMT,
 };
+
+/*
+ * Insq/Remq for the vnode usage lists.
+ */
+#define	bufinsvn(bp, dp)	LIST_INSERT_HEAD(dp, bp, b_vnbufs)
+#define	bufremvn(bp) {							\
+	LIST_REMOVE(bp, b_vnbufs);					\
+	(bp)->b_vnbufs.le_next = NOLIST;				\
+}
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
@@ -172,6 +181,357 @@ vfs_getvfs(fsid_t *fsid)
 	}
 	simple_unlock(&mountlist_slock);
 	return ((struct mount *)0);
+}
+
+/*
+ * Update outstanding I/O count and do wakeup if requested.
+ */
+void
+vwakeup(struct buf *bp)
+{
+	struct vnode *vp;
+
+	if ((vp = bp->b_vp) != NULL) {
+		/* XXX global lock hack
+		 * can't use v_interlock here since this is called
+		 * in interrupt context from biodone().
+		 */
+		simple_lock(&global_v_numoutput_slock);
+		if (--vp->v_numoutput < 0)
+			panic("vwakeup: neg numoutput, vp %p", vp);
+		if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
+			vp->v_flag &= ~VBWAIT;
+			wakeup((void *)&vp->v_numoutput);
+		}
+		simple_unlock(&global_v_numoutput_slock);
+	}
+}
+
+/*
+ * Flush out and invalidate all buffers associated with a vnode.
+ * Called with the underlying vnode locked, which should prevent new dirty
+ * buffers from being queued.
+ */
+int
+vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
+    int slpflag, int slptimeo)
+{
+	struct buf *bp, *nbp;
+	int s, error;
+	int flushflags = PGO_ALLPAGES | PGO_FREE | PGO_SYNCIO |
+		(flags & V_SAVE ? PGO_CLEANIT | PGO_RECLAIM : 0);
+
+	/* XXXUBC this doesn't look at flags or slp* */
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
+	if (error) {
+		return error;
+	}
+
+	if (flags & V_SAVE) {
+		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, 0, 0, l);
+		if (error)
+		        return (error);
+#ifdef DIAGNOSTIC
+		s = splbio();
+		if (vp->v_numoutput > 0 || !LIST_EMPTY(&vp->v_dirtyblkhd))
+		        panic("vinvalbuf: dirty bufs, vp %p", vp);
+		splx(s);
+#endif
+	}
+
+	s = splbio();
+
+restart:
+	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		simple_lock(&bp->b_interlock);
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = ltsleep((void *)bp,
+				    slpflag | (PRIBIO + 1) | PNORELOCK,
+				    "vinvalbuf", slptimeo, &bp->b_interlock);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			goto restart;
+		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
+		brelse(bp);
+	}
+
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		simple_lock(&bp->b_interlock);
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = ltsleep((void *)bp,
+				    slpflag | (PRIBIO + 1) | PNORELOCK,
+				    "vinvalbuf", slptimeo, &bp->b_interlock);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			goto restart;
+		}
+		/*
+		 * XXX Since there are no node locks for NFS, I believe
+		 * there is a slight chance that a delayed write will
+		 * occur while sleeping just above, so check for it.
+		 */
+		if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
+#ifdef DEBUG
+			printf("buffer still DELWRI\n");
+#endif
+			bp->b_flags |= B_BUSY | B_VFLUSH;
+			simple_unlock(&bp->b_interlock);
+			VOP_BWRITE(bp);
+			goto restart;
+		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
+		brelse(bp);
+	}
+
+#ifdef DIAGNOSTIC
+	if (!LIST_EMPTY(&vp->v_cleanblkhd) || !LIST_EMPTY(&vp->v_dirtyblkhd))
+		panic("vinvalbuf: flush failed, vp %p", vp);
+#endif
+
+	splx(s);
+
+	return (0);
+}
+
+/*
+ * Destroy any in core blocks past the truncation length.
+ * Called with the underlying vnode locked, which should prevent new dirty
+ * buffers from being queued.
+ */
+int
+vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
+{
+	struct buf *bp, *nbp;
+	int s, error;
+	voff_t off;
+
+	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
+	simple_lock(&vp->v_interlock);
+	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
+	if (error) {
+		return error;
+	}
+
+	s = splbio();
+
+restart:
+	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_lblkno < lbn)
+			continue;
+		simple_lock(&bp->b_interlock);
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
+			    "vtruncbuf", slptimeo, &bp->b_interlock);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			goto restart;
+		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
+		brelse(bp);
+	}
+
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		if (bp->b_lblkno < lbn)
+			continue;
+		simple_lock(&bp->b_interlock);
+		if (bp->b_flags & B_BUSY) {
+			bp->b_flags |= B_WANTED;
+			error = ltsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
+			    "vtruncbuf", slptimeo, &bp->b_interlock);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+			goto restart;
+		}
+		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
+		brelse(bp);
+	}
+
+	splx(s);
+
+	return (0);
+}
+
+void
+vflushbuf(struct vnode *vp, int sync)
+{
+	struct buf *bp, *nbp;
+	int flags = PGO_CLEANIT | PGO_ALLPAGES | (sync ? PGO_SYNCIO : 0);
+	int s;
+
+	simple_lock(&vp->v_interlock);
+	(void) VOP_PUTPAGES(vp, 0, 0, flags);
+
+loop:
+	s = splbio();
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
+		nbp = LIST_NEXT(bp, b_vnbufs);
+		simple_lock(&bp->b_interlock);
+		if ((bp->b_flags & B_BUSY)) {
+			simple_unlock(&bp->b_interlock);
+			continue;
+		}
+		if ((bp->b_flags & B_DELWRI) == 0)
+			panic("vflushbuf: not dirty, bp %p", bp);
+		bp->b_flags |= B_BUSY | B_VFLUSH;
+		simple_unlock(&bp->b_interlock);
+		splx(s);
+		/*
+		 * Wait for I/O associated with indirect blocks to complete,
+		 * since there is no way to quickly wait for them below.
+		 */
+		if (bp->b_vp == vp || sync == 0)
+			(void) bawrite(bp);
+		else
+			(void) bwrite(bp);
+		goto loop;
+	}
+	if (sync == 0) {
+		splx(s);
+		return;
+	}
+	simple_lock(&global_v_numoutput_slock);
+	while (vp->v_numoutput) {
+		vp->v_flag |= VBWAIT;
+		ltsleep((void *)&vp->v_numoutput, PRIBIO + 1, "vflushbuf", 0,
+			&global_v_numoutput_slock);
+	}
+	simple_unlock(&global_v_numoutput_slock);
+	splx(s);
+	if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
+		vprint("vflushbuf: dirty", vp);
+		goto loop;
+	}
+}
+
+/*
+ * Associate a buffer with a vnode.
+ */
+void
+bgetvp(struct vnode *vp, struct buf *bp)
+{
+	int s;
+
+	if (bp->b_vp)
+		panic("bgetvp: not free, bp %p", bp);
+	VHOLD(vp);
+	s = splbio();
+	bp->b_vp = vp;
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		bp->b_dev = vp->v_rdev;
+	else
+		bp->b_dev = NODEV;
+	/*
+	 * Insert onto list for new vnode.
+	 */
+	bufinsvn(bp, &vp->v_cleanblkhd);
+	splx(s);
+}
+
+/*
+ * Disassociate a buffer from a vnode.
+ */
+void
+brelvp(struct buf *bp)
+{
+	struct vnode *vp;
+	int s;
+
+	if (bp->b_vp == NULL)
+		panic("brelvp: vp NULL, bp %p", bp);
+
+	s = splbio();
+	vp = bp->b_vp;
+	/*
+	 * Delete from old vnode list, if on one.
+	 */
+	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
+		bufremvn(bp);
+
+	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_flag & VONWORKLST) &&
+	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+		vp->v_flag &= ~VWRITEMAPDIRTY;
+		vn_syncer_remove_from_worklist(vp);
+	}
+
+	bp->b_vp = NULL;
+	HOLDRELE(vp);
+	splx(s);
+}
+
+/*
+ * Reassign a buffer from one vnode to another.
+ * Used to assign file specific control information
+ * (indirect blocks) to the vnode to which they belong.
+ *
+ * This function must be called at splbio().
+ */
+void
+reassignbuf(struct buf *bp, struct vnode *newvp)
+{
+	struct buflists *listheadp;
+	int delayx;
+
+	/*
+	 * Delete from old vnode list, if on one.
+	 */
+	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
+		bufremvn(bp);
+	/*
+	 * If dirty, put on list of dirty buffers;
+	 * otherwise insert onto list of clean buffers.
+	 */
+	if ((bp->b_flags & B_DELWRI) == 0) {
+		listheadp = &newvp->v_cleanblkhd;
+		if (TAILQ_EMPTY(&newvp->v_uobj.memq) &&
+		    (newvp->v_flag & VONWORKLST) &&
+		    LIST_FIRST(&newvp->v_dirtyblkhd) == NULL) {
+			newvp->v_flag &= ~VWRITEMAPDIRTY;
+			vn_syncer_remove_from_worklist(newvp);
+		}
+	} else {
+		listheadp = &newvp->v_dirtyblkhd;
+		if ((newvp->v_flag & VONWORKLST) == 0) {
+			switch (newvp->v_type) {
+			case VDIR:
+				delayx = dirdelay;
+				break;
+			case VBLK:
+				if (newvp->v_specmountpoint != NULL) {
+					delayx = metadelay;
+					break;
+				}
+				/* fall through */
+			default:
+				delayx = filedelay;
+				break;
+			}
+			if (!newvp->v_mount ||
+			    (newvp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+				vn_syncer_add_to_worklist(newvp, delayx);
+		}
+	}
+	bufinsvn(bp, listheadp);
 }
 
 /*
