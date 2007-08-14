@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.222 2007/06/11 13:05:46 joerg Exp $	*/
+/*	$NetBSD: audio.c,v 1.223 2007/08/14 21:34:03 uwe Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.222 2007/06/11 13:05:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.223 2007/08/14 21:34:03 uwe Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -576,8 +576,9 @@ au_setup_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
 				    au_portof(sc, mi->un.e.member[j].label.name,
 				    mi->mixer_class);
 				if (ports->mixerout != -1 &&
-				    ports->miport[ports->nports++] != -1)
+				    ports->miport[ports->nports] != -1)
 					ports->isdual = true;
+				++ports->nports;
 			}
 	} else if (mi->type == AUDIO_MIXER_SET) {
 		for(i = 0; tbl[i].name; i++)
@@ -588,9 +589,10 @@ au_setup_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
 				ports->aumask[ports->nports] = tbl[i].mask;
 				ports->misel[ports->nports] =
 				    mi->un.s.member[j].mask;
-				ports->miport[ports->nports++] =
+				ports->miport[ports->nports] =
 				    au_portof(sc, mi->un.s.member[j].label.name,
 				    mi->mixer_class);
+				++ports->nports;
 			}
 	}
 }
