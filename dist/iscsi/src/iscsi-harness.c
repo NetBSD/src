@@ -73,6 +73,7 @@ main(int argc, char **argv)
 	char		       *host;
 	char		       *user;
 	int			address_family;
+	int			port;
 	int             	tgtlo = 0;
 	int             	tgthi = CONFIG_INITIATOR_NUM_TARGETS;
 	int             	target = -1;
@@ -91,6 +92,7 @@ main(int argc, char **argv)
 	digest_type = DigestNone;
 	auth_type = AuthNone;
 	address_family = ISCSI_UNSPEC;
+	port = ISCSI_PORT;
 	mutual_auth = 0;
 
 	while ((i = getopt(argc, argv, "46a:d:h:l:n:t:u:V")) != -1) {
@@ -127,6 +129,9 @@ main(int argc, char **argv)
 			break;
 		case 'n':
 			iterations = atoi(optarg);
+			break;
+		case 'p':
+			port = atoi(optarg);
 			break;
 		case 't':
 			target = atoi(optarg);
@@ -173,7 +178,7 @@ main(int argc, char **argv)
 		sigaction(SIGPIPE, &act, NULL);
 
 		/* Initialize Initiator */
-		if (initiator_init(host, address_family, user, auth_type, mutual_auth, digest_type) == -1) {
+		if (initiator_init(host, port, address_family, user, auth_type, mutual_auth, digest_type) == -1) {
 			iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
 			return -1;
 		}

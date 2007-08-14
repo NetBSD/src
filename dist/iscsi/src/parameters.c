@@ -394,8 +394,8 @@ find_credentials(iscsi_cred_t *cred, char *user, const char *auth)
 {
 	conffile_t	 conf;
 	const char	*authtype;
+	unsigned	 cc;
 	ent_t	 	 e;
-	int	 	 cc;
 
 	(void) memset(&conf, 0x0, sizeof(conf));
 	(void) memset(&e, 0x0, sizeof(e));
@@ -406,7 +406,7 @@ find_credentials(iscsi_cred_t *cred, char *user, const char *auth)
 	}
 	while (conffile_getent(&conf, &e)) {
 		if (strcasecmp(e.sv.v[0], user) == 0) {
-			authtype = (e.sv.c == 1) ? "none" : __UNCONST(e.sv.v[1]);
+			authtype = (e.sv.c == 1) ? "none" : e.sv.v[1];
 			cc = strlen(authtype);
 			if (auth == NULL || (strncasecmp(authtype, auth, cc) == 0 && cc == strlen(auth))) {
 				cred->user = strdup(e.sv.v[0]);

@@ -126,7 +126,7 @@ enum {
  * Public *
  **********/
 
-int             initiator_init(const char *, int, const char *, int, int, int);
+int             initiator_init(const char *, int, int, const char *, int, int, int);
 int             initiator_info(char *, int, int);
 int             initiator_command(initiator_cmd_t *);
 int             initiator_enqueue(initiator_cmd_t *);
