@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/03 13:58:19 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
 #endif
 
 /*
@@ -83,7 +83,7 @@ int     pkgcnt;
 
 static int	quiet;
 
-static int checkpattern_fn(const char *, const char *, void *);
+static int checkpattern_fn(const char *, void *);
 static void set_unset_variable(char **, Boolean);
 
 /* print usage message and exit */
@@ -414,9 +414,9 @@ checkall(void)
 }
 
 static int
-checkpattern_fn(const char *pattern, const char *pkg, void *vp)
+checkpattern_fn(const char *pkg, void *vp)
 {
-	int     rc;
+	int *got_match, rc;
 
 	rc = chdir(pkg);
 	if (rc == -1)
@@ -429,22 +429,109 @@ checkpattern_fn(const char *pattern, const char *pkg, void *vp)
 
 	chdir("..");
 
+	got_match = vp;
+	*got_match = 1;
+
 	return 0;
 }
 
 static int
-lspattern_fn(const char *pattern, const char *pkg, void *vp)
+lspattern(const char *pkg, void *vp)
 {
-	char *data = vp;
-	printf("%s/%s\n", data, pkg);
+	const char *dir = vp;
+	printf("%s/%s\n", dir, pkg);
 	return 0;
 }
 
 static int
-lsbasepattern_fn(const char *pattern, const char *pkg, void *vp)
+lsbasepattern(const char *pkg, void *vp)
 {
-	printf("%s\n", pkg);
+	puts(pkg);
 	return 0;
+}
+
+static int
+remove_required_by(const char *pkgname, void *cookie)
+{
+	char *path;
+
+	if (asprintf(&path, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkgname,
+		     REQUIRED_BY_FNAME) == -1)
+		errx(EXIT_FAILURE, "asprintf failed");
+
+	if (unlink(path) == -1 && errno != ENOENT)
+		err(EXIT_FAILURE, "Cannot remove %s", path);
+
+	free(path);
+
+	return 0;
+}
+
+static void
+add_required_by(const char *pattern, const char *required_by)
+{
+	char *best_installed, *path;
+	int fd;
+	size_t len;
+
+	best_installed = find_best_matching_installed_pkg(pattern);
+	if (best_installed == NULL) {
+		warnx("Dependency %s of %s unresolved", pattern, required_by);
+		return;
+	}
+
+	if (asprintf(&path, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), best_installed,
+		     REQUIRED_BY_FNAME) == -1)
+		errx(EXIT_FAILURE, "asprintf failed");
+	free(best_installed);
+
+	if ((fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0644)) == -1)
+		errx(EXIT_FAILURE, "Cannot write to %s", path);
+	free(path);
+	
+	len = strlen(required_by);
+	if (write(fd, required_by, len) != len ||
+	    write(fd, "\n", 1) != 1 ||
+	    close(fd) == -1)
+		errx(EXIT_FAILURE, "Cannot write to %s", path);
+}
+
+
+static int
+add_depends_of(const char *pkgname, void *cookie)
+{
+	FILE *fp;
+	plist_t *p;
+	package_t plist;
+	char *path;
+
+	if (asprintf(&path, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkgname,
+		     CONTENTS_FNAME) == -1)
+		errx(EXIT_FAILURE, "asprintf failed");
+	if ((fp = fopen(path, "r")) == NULL)
+		errx(EXIT_FAILURE, "Cannot read %s of package %s",
+		    CONTENTS_FNAME, pkgname);
+	free(path);
+	read_plist(&plist, fp);
+	fclose(fp);
+
+	for (p = plist.head; p; p = p->next) {
+		if (p->type == PLIST_PKGDEP)
+			add_required_by(p->name, pkgname);
+	}
+
+	free_plist(&plist);	
+
+	return 0;
+}
+
+static void
+rebuild_tree(void)
+{
+	if (iterate_pkg_db(remove_required_by, NULL) == -1)
+		errx(EXIT_FAILURE, "cannot iterate pkgdb");
+	if (iterate_pkg_db(add_depends_of, NULL) == -1)
+		errx(EXIT_FAILURE, "cannot iterate pkgdb");
 }
 
 int 
@@ -534,6 +621,12 @@ main(int argc, char *argv[])
 		rebuild();
 		printf("Done.\n");
 
+	  
+	} else if (strcasecmp(argv[0], "rebuild-tree") == 0) {
+
+		rebuild_tree();
+		printf("Done.\n");
+
 	} else if (strcasecmp(argv[0], "check") == 0) {
 
 		argv++;		/* "check" */
@@ -551,32 +644,26 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
 
 			while (*argv != NULL) {
-				if (ispkgpattern(*argv)) {
-					if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, checkpattern_fn, NULL) <= 0)
+				int got_match;
+
+				got_match = 0;
+				if (match_installed_pkgs(*argv, checkpattern_fn, &got_match) == -1)
+					errx(EXIT_FAILURE, "Cannot process pkdbdb");
+				if (got_match == 0) {
+					char *pattern;
+
+					if (ispkgpattern(*argv))
 						errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
-				} else {
-					rc = chdir(*argv);
-					if (rc == -1) {
-						/* found nothing - try 'pkg-[0-9]*' */
-						char try[MaxPathSize];
-					
-						snprintf(try, sizeof(try), "%s-[0-9]*", *argv);
-						if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-								     checkpattern_fn, NULL) <= 0) {
 
-							errx(EXIT_FAILURE, "cannot find package %s", *argv);
-						} else {
-							/* nothing to do - all the work is/was
-							 * done in checkpattern_fn() */
-						}
-					} else {
-						check1pkg(*argv);
-						if (!quiet) {
-							printf(".");
-						}
+					if (asprintf(&pattern, "%s-[0-9]*", *argv) == -1)
+						errx(EXIT_FAILURE, "asprintf failed");
 
-						chdir("..");
-					}
+					if (match_installed_pkgs(pattern, checkpattern_fn, &got_match) == -1)
+						errx(EXIT_FAILURE, "Cannot process pkdbdb");
+
+					if (got_match == 0)
+						errx(EXIT_FAILURE, "cannot find package %s", *argv);
+					free(pattern);
 				}
 
 				argv++;
@@ -608,11 +695,9 @@ main(int argc, char *argv[])
 			int     rc;
 			const char *basep, *dir;
 			char cwd[MaxPathSize];
-			char base[MaxPathSize];
 
 			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
 			fchdir(saved_wd);
 			rc = chdir(dir);
@@ -623,12 +708,12 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "getcwd");
 
 			if (show_basename_only)
-				rc = findmatchingname(cwd, base, lsbasepattern_fn, cwd);
+				rc = match_local_files(cwd, use_default_sfx, 1, basep, lsbasepattern, NULL);
 			else
-				rc = findmatchingname(cwd, base, lspattern_fn, cwd);
+				rc = match_local_files(cwd, use_default_sfx, 1, basep, lspattern, cwd);
 			if (rc == -1)
-				errx(EXIT_FAILURE, "Error in findmatchingname(\"%s\", \"%s\", ...)",
-				     cwd, base);
+				errx(EXIT_FAILURE, "Error from match_local_files(\"%s\", \"%s\", ...)",
+				     cwd, basep);
 
 			argv++;
 		}
@@ -647,24 +732,22 @@ main(int argc, char *argv[])
 
 		while (*argv != NULL) {
 			/* args specified */
-			int     rc;
 			const char *basep, *dir;
 			char cwd[MaxPathSize];
-			char base[MaxPathSize];
 			char *p;
 
 			dir = lsdirp ? lsdirp : dirname_of(*argv);
 			basep = basename_of(*argv);
-			snprintf(base, sizeof(base), "%s%s", basep, sfx);
 
 			fchdir(saved_wd);
-			rc = chdir(dir);
-			if (rc == -1)
+			if (chdir(dir) == -1)
 				err(EXIT_FAILURE, "Cannot chdir to %s", dir);
 
 			if (getcwd(cwd, sizeof(cwd)) == NULL)
 				err(EXIT_FAILURE, "getcwd");
-			p = findbestmatchingname(cwd, base);
+
+			p = find_best_matching_file(cwd, basep, use_default_sfx, 1);
+
 			if (p) {
 				if (show_basename_only)
 					printf("%s\n", p);
@@ -751,32 +834,38 @@ main(int argc, char *argv[])
 	return 0;
 }
 
-struct varval {
-    char *variable;
-    char *value;
+struct set_installed_info_arg {
+	char *variable;
+	char *value;
+	int got_match;
 };
 
 static int
-set_installed_info_var(const char *pattern, const char *name, void *ud)
+set_installed_info_var(const char *name, void *cookie)
 {
-	char filename[BUFSIZ];
-	struct varval *varval;
+	struct set_installed_info_arg *arg = cookie;
+	char *filename;
+	int retval;
 
-	varval = ud;
+	if (asprintf(&filename, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), name,
+		     INSTALLED_INFO_FNAME) == -1)
+		errx(EXIT_FAILURE, "asprintf failed");
 
-	(void)snprintf(filename, sizeof(filename), "%s/%s", name,
-		       INSTALLED_INFO_FNAME);
+	retval = var_set(filename, arg->variable, arg->value);
 
-	return var_set(filename, varval->variable, varval->value);
+	free(filename);
+	arg->got_match = 1;
+
+	return retval;
 }
 
 static void
 set_unset_variable(char **argv, Boolean unset)
 {
-	struct varval varval;
-	int ret = 0;
+	struct set_installed_info_arg arg;
 	char *eq;
 	char *variable;
+	int ret = 0;
 
 	if (argv[0] == NULL || argv[1] == NULL)
 		usage();
@@ -784,8 +873,8 @@ set_unset_variable(char **argv, Boolean unset)
 	variable = NULL;
 
 	if (unset) {
-		varval.variable = argv[0];
-		varval.value = NULL;
+		arg.variable = argv[0];
+		arg.value = NULL;
 	} else {	
 		eq = NULL;
 		if ((eq=strchr(argv[0], '=')) == NULL)
@@ -794,46 +883,46 @@ set_unset_variable(char **argv, Boolean unset)
 		variable = malloc(eq-argv[0]+1);
 		strlcpy(variable, argv[0], eq-argv[0]+1);
 		
-		varval.variable = variable;
-		varval.value = eq+1;
+		arg.variable = variable;
+		arg.value = eq+1;
 		
 		if (strcmp(variable, AUTOMATIC_VARNAME) == 0 &&
-		    strcasecmp(varval.value, "yes") != 0 &&
-		    strcasecmp(varval.value, "no") != 0) {
+		    strcasecmp(arg.value, "yes") != 0 &&
+		    strcasecmp(arg.value, "no") != 0) {
 			errx(EXIT_FAILURE,
 			     "unknown value `%s' for " AUTOMATIC_VARNAME,
-			     varval.value);
+			     arg.value);
 		}
 	}
-	if (strcspn(varval.variable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	    != strlen(varval.variable)) {
+	if (strpbrk(arg.variable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != NULL) {
 		free(variable);
 		errx(EXIT_FAILURE,
 		     "variable name must not contain uppercase letters");
 	}
 
-	chdir(_pkgdb_getPKGDB_DIR());
 	argv++;
 	while (*argv != NULL) {
-		if (ispkgpattern(*argv)) {
-			if (findmatchingname(_pkgdb_getPKGDB_DIR(),
-					     *argv, set_installed_info_var,
-					     &varval) <= 0) {
+		arg.got_match = 0;
+		if (match_installed_pkgs(*argv, set_installed_info_var, &arg) == -1)
+			errx(EXIT_FAILURE, "Cannot process pkdbdb");
+		if (arg.got_match == 0) {
+			char *pattern;
+
+			if (ispkgpattern(*argv)) {
 				warnx("no matching pkg for `%s'", *argv);
 				ret++;
-			}
-		} else if (isdir(*argv) || islinktodir(*argv))
-			set_installed_info_var(NULL, *argv, &varval);
-		else {
-			/* try 'pkg-[0-9]*' */
-			char try[MaxPathSize];
+			} else {
+				if (asprintf(&pattern, "%s-[0-9]*", *argv) == -1)
+					errx(EXIT_FAILURE, "asprintf failed");
 
-			snprintf(try, sizeof(try), "%s-[0-9]*", *argv);
-			if (findmatchingname(_pkgdb_getPKGDB_DIR(),
-					     try, set_installed_info_var,
-					     &varval) <= 0) {
-				warnx("cannot find package %s", *argv);
-				ret++;
+				if (match_installed_pkgs(pattern, set_installed_info_var, &arg) == -1)
+					errx(EXIT_FAILURE, "Cannot process pkdbdb");
+
+				if (arg.got_match == 0) {
+					warnx("cannot find package %s", *argv);
+					++ret;
+				}
+				free(pattern);
 			}
 		}
 

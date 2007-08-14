@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:18 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
 #endif
 #endif
 
@@ -219,12 +219,12 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	char   *where_to;
 	char   dbdir[MaxPathSize];
 	const char *exact;
+	const char *tmppkg;
 	FILE   *cfile;
 	int     errc, err_prescan;
 	plist_t *p;
 	struct stat sb;
 	struct utsname host_uname;
-	int     inPlace;
 	int	rc;
 	uint64_t needed;
 	Boolean	is_depoted_pkg = FALSE;
@@ -236,147 +236,100 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	LogDir[0] = '\0';
 	strlcpy(playpen, FirstPen, sizeof(playpen));
 	memset(buildinfo, '\0', sizeof(buildinfo));
-	inPlace = 0;
 
 	umask(DEF_UMASK);
 
-	/* Are we coming in for a second pass, everything already extracted?
-	 * (Slave mode) */
-	if (!pkg) {
-		fgets(playpen, MaxPathSize, stdin);
-		playpen[strlen(playpen) - 1] = '\0';	/* remove newline! */
-		if (chdir(playpen) == FAIL) {
-			warnx("add in SLAVE mode can't chdir to %s", playpen);
-			return 1;
-		}
-		read_plist(&Plist, stdin);
-		where_to = playpen;
+	tmppkg = fileFindByPath(pkg);
+	if (tmppkg == NULL) {
+		warnx("no pkg found for '%s', sorry.", pkg);
+		return 1;
 	}
-	/* Nope - do it now */
-	else {
-		const char *tmppkg;
 
-		tmppkg = fileFindByPath(pkg);
-		if (tmppkg == NULL) {
-			warnx("no pkg found for '%s', sorry.", pkg);
-			return 1;
+	pkg = tmppkg;
+
+	if (IS_URL(pkg)) {
+		Home = fileGetURL(pkg);
+		if (Home == NULL) {
+			warnx("unable to fetch `%s' by URL", pkg);
 		}
+		where_to = Home;
 
-		pkg = tmppkg;
-
-		if (IS_URL(pkg)) {
-			Home = fileGetURL(pkg);
-			if (Home == NULL) {
-				warnx("unable to fetch `%s' by URL", pkg);
-			}
-			where_to = Home;
-
-			/* make sure the pkg is verified */
-			if (!verify(pkg)) {
-				warnx("Package %s will not be extracted", pkg);
-				goto bomb;
-			}
-		} else { /* local */
-			if (!IS_STDIN(pkg)) {
-			        /* not stdin */
-				if (!ispkgpattern(pkg)) {
-					if (stat(pkg, &sb) == FAIL) {
-						warnx("can't stat package file '%s'", pkg);
-						goto bomb;
-					}
-					/* make sure the pkg is verified */
-					if (!verify(pkg)) {
-						warnx("Package %s will not be extracted", pkg);
-						goto bomb;
-					}
-				}
-				LFILE_ADD(&files, lfp, CONTENTS_FNAME);
-			} else {
-			        /* some values for stdin */
-				sb.st_size = 100000;	/* Make up a plausible average size */
-			}
-			Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
-			if (!Home)
-				warnx("unable to make playpen for %ld bytes",
-				      (long) (sb.st_size * 4));
-			where_to = Home;
-			result = unpack(pkg, &files);
-			while ((lfp = TAILQ_FIRST(&files)) != NULL) {
-				TAILQ_REMOVE(&files, lfp, lf_link);
-				free(lfp);
-			}
-			if (result) {
-				warnx("unable to extract table of contents file from `%s' - not a package?",
-				      pkg);
-				goto bomb;
-			}
-		}
-
-		cfile = fopen(CONTENTS_FNAME, "r");
-		if (!cfile) {
-			warnx("unable to open table of contents file `%s' - not a package?",
-			      CONTENTS_FNAME);
+		/* make sure the pkg is verified */
+		if (!verify(pkg)) {
+			warnx("Package %s will not be extracted", pkg);
 			goto bomb;
 		}
-		read_plist(&Plist, cfile);
-		fclose(cfile);
-
-		if (!IS_URL(pkg)) {
-			/* Extract directly rather than moving?  Oh goodie! */
-			if (find_plist_option(&Plist, "extract-in-place")) {
-				if (Verbose)
-					printf("Doing in-place extraction for %s\n", pkg);
-				p = find_plist(&Plist, PLIST_CWD);
-				if (p) {
-					if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
-						if (Verbose)
-							printf("Desired prefix of %s does not exist, creating.\n", p->name);
-						(void) fexec("mkdir", "-p", p->name, NULL);
-					}
-					if (chdir(p->name) == -1) {
-						warn("unable to change directory to `%s'", p->name);
-						goto bomb;
-					}
-					where_to = p->name;
-					inPlace = 1;
-				} else {
-					warnx(
-					    "no prefix specified in `%s' - this is a bad package!",
-					    pkg);
+	} else { /* local */
+		if (!IS_STDIN(pkg)) {
+		        /* not stdin */
+			if (!ispkgpattern(pkg)) {
+				if (stat(pkg, &sb) == FAIL) {
+					warnx("can't stat package file '%s'", pkg);
+					goto bomb;
+				}
+				/* make sure the pkg is verified */
+				if (!verify(pkg)) {
+					warnx("Package %s will not be extracted", pkg);
 					goto bomb;
 				}
 			}
+			LFILE_ADD(&files, lfp, CONTENTS_FNAME);
+		} else {
+		        /* some values for stdin */
+			sb.st_size = 100000;	/* Make up a plausible average size */
+		}
+		Home = make_playpen(playpen, sizeof(playpen), sb.st_size * 4);
+		if (!Home)
+			warnx("unable to make playpen for %ld bytes",
+			      (long) (sb.st_size * 4));
+		where_to = Home;
+		result = unpack(pkg, &files);
+		while ((lfp = TAILQ_FIRST(&files)) != NULL) {
+			TAILQ_REMOVE(&files, lfp, lf_link);
+			free(lfp);
+		}
+		if (result) {
+			warnx("unable to extract table of contents file from `%s' - not a package?",
+			      pkg);
+			goto bomb;
+		}
+	}
 
-			/*
-			 * Apply a crude heuristic to see how much space the package will
-			 * take up once it's unpacked.  I've noticed that most packages
-			 * compress an average of 75%, so multiply by 4 for good measure.
-			 */
+	cfile = fopen(CONTENTS_FNAME, "r");
+	if (!cfile) {
+		warnx("unable to open table of contents file `%s' - not a package?",
+		      CONTENTS_FNAME);
+		goto bomb;
+	}
+	read_plist(&Plist, cfile);
+	fclose(cfile);
 
-			needed = 4 * (uint64_t) sb.st_size;
-			if (!inPlace && min_free(playpen) < needed) {
-				warnx("projected size of %" MY_PRIu64 " bytes exceeds available free space\n"
-				    "in %s. Please set your PKG_TMPDIR variable to point\n"
-				    "to a location with more free space and try again.",
-					needed, playpen);
-				goto bomb;
-			}
+	if (!IS_URL(pkg)) {
+		/*
+		 * Apply a crude heuristic to see how much space the package will
+		 * take up once it's unpacked.  I've noticed that most packages
+		 * compress an average of 75%, so multiply by 4 for good measure.
+		 */
 
-			/* If this is a direct extract and we didn't want it, stop now */
-			if (inPlace && Fake)
-				goto success;
-
-			/* Finally unpack the whole mess */
-			if (unpack(pkg, NULL)) {
-				warnx("unable to extract `%s'!", pkg);
-				goto bomb;
-			}
+		needed = 4 * (uint64_t) sb.st_size;
+		if (min_free(playpen) < needed) {
+			warnx("projected size of %" MY_PRIu64 " bytes exceeds available free space\n"
+			    "in %s. Please set your PKG_TMPDIR variable to point\n"
+			    "to a location with more free space and try again.",
+				needed, playpen);
+			goto bomb;
 		}
 
-		/* Check for sanity */
-		if (sanity_check(pkg))
+		/* Finally unpack the whole mess */
+		if (unpack(pkg, NULL)) {
+			warnx("unable to extract `%s'!", pkg);
 			goto bomb;
+		}
 	}
+
+	/* Check for sanity */
+	if (sanity_check(pkg))
+		goto bomb;
 
 	/* Read the OS, version and architecture from BUILD_INFO file */
 	if (!read_buildinfo(buildinfo)) {
@@ -413,21 +366,23 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		}
 
 		if (status == Good) {
+			const char *effective_arch;
+
+			if (OverrideMachine != NULL)
+				effective_arch = OverrideMachine;
+			else
+				effective_arch = MACHINE_ARCH;
+
 			/* If either the OS or arch are different, bomb */
-			if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) != 0 ||
-			    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) != 0) {
+			if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) != 0)
 				status = Fatal;
-			}
+			if (strcmp(effective_arch, buildinfo[BI_MACHINE_ARCH]) != 0)
+				status = Fatal;
 
 			/* If OS and arch are the same, warn if version differs */
-			if (strcmp(OPSYS_NAME, buildinfo[BI_OPSYS]) == 0 &&
-			    strcmp(MACHINE_ARCH, buildinfo[BI_MACHINE_ARCH]) == 0) {
-				if (strcmp(host_uname.release, buildinfo[BI_OS_VERSION]) != 0) {
-					status = Warning;
-				}
-			} else {
-				status = Fatal;
-			}
+			if (status == Good &&
+			    strcmp(host_uname.release, buildinfo[BI_OS_VERSION]) != 0)
+				status = Warning;
 
 			if (status != Good) {
 				warnx("Warning: package `%s' was built for a different version of the OS:", pkg);
@@ -436,7 +391,7 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 				    buildinfo[BI_MACHINE_ARCH],
 				    buildinfo[BI_OS_VERSION],
 				    OPSYS_NAME,
-				    MACHINE_ARCH,
+				    effective_arch,
 				    host_uname.release);
 			}
 		}
@@ -505,9 +460,9 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	}
 
 	/* See if this package (exact version) is already registered */
-	if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
-		if (!Automatic && is_automatic_installed(LogDir)) {
-			if (mark_as_automatic_installed(LogDir, 0) == 0)
+	if (isdir(LogDir) && !Force) {
+		if (!Automatic && is_automatic_installed(PkgName)) {
+			if (mark_as_automatic_installed(PkgName, 0) == 0)
 				warnx("package `%s' was already installed as "
 				      "dependency, now marked as installed "
 				      "manually", PkgName);
@@ -524,7 +479,7 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 
 		if ((s = strrchr(PkgName, '-')) != NULL) {
 			char    buf[MaxPathSize];
-			char    installed[MaxPathSize];
+			char *best_installed;
 
 			/*
 			 * See if the pkg is already installed. If so, we might
@@ -532,18 +487,19 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 			 */
 			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
 				(int)(s - PkgName) + 1, PkgName);
-			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
+			best_installed = find_best_matching_installed_pkg(buf);
+			if (best_installed) {
 				if (Replace && !Fake) {
 					/* XXX Should list the steps in Fake mode */
 					snprintf(replace_from, sizeof(replace_from), "%s/%s/" REQUIRED_BY_FNAME,
-						 dbdir, installed);
+						 dbdir, best_installed);
 					snprintf(replace_via, sizeof(replace_via), "%s/.%s." REQUIRED_BY_FNAME,
-						 dbdir, installed);
+						 dbdir, best_installed);
 					snprintf(replace_to, sizeof(replace_to), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, PkgName);
 
 					if (Verbose)
-						printf("Upgrading %s to %s.\n", installed, PkgName);
+						printf("Upgrading %s to %s.\n", best_installed, PkgName);
 
 					if (fexists(replace_from)) {  /* Are there any dependencies? */
 					  	/*
@@ -658,30 +614,34 @@ ignore_replace_depends_check:
 						printf("%s/pkg_delete -K %s '%s'\n",
 							BINDIR,
 							dbdir,
-							installed);
+							best_installed);
 					}
-					fexec(BINDIR "/pkg_delete", "-K", dbdir, installed, NULL);
+					fexec(BINDIR "/pkg_delete", "-K", dbdir, best_installed, NULL);
 				} else if (!is_depoted_pkg) {
-					warnx("other version '%s' already installed", installed);
+					warnx("other version '%s' already installed", best_installed);
 
 					errc = 1;
 					goto success;	/* close enough for government work */
 				}
+				free(best_installed);
 			}
 		}
 	}
 
 	/* See if there are conflicting packages installed */
 	for (p = Plist.head; p; p = p->next) {
-		char    installed[MaxPathSize];
+		char *best_installed;
 
 		if (p->type != PLIST_PKGCFL)
 			continue;
 		if (Verbose)
 			printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
-		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
+		best_installed = find_best_matching_installed_pkg(p->name);
+		if (best_installed) {
 			warnx("Conflicting package `%s'installed, please use\n"
-			      "\t\"pkg_delete %s\" first to remove it!", installed, installed);
+			      "\t\"pkg_delete %s\" first to remove it!",
+			      best_installed, best_installed);
+			free(best_installed);
 			++errc;
 		}
 	}
@@ -691,13 +651,14 @@ ignore_replace_depends_check:
 	 */
 	err_prescan=0;
 	for (p = Plist.head; p; p = p->next) {
-		char installed[MaxPathSize];
+		char *best_installed;
 		
 		if (p->type != PLIST_PKGDEP)
 			continue;
 		if (Verbose)
 			printf("Depends pre-scan: `%s' required.\n", p->name);
-		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) <= 0) {
+		best_installed = find_best_matching_installed_pkg(p->name);
+		if (best_installed == NULL) {
 			/* 
 			 * required pkg not found. look if it's available with a more liberal
 			 * pattern. If so, this will lead to problems later (check on "some
@@ -729,8 +690,8 @@ ignore_replace_depends_check:
 				(void) snprintf(buf, sizeof(buf),
 				    skip ? "%.*s[0-9]*" : "%.*s-[0-9]*",
 				    (int)(s - p->name) + skip, p->name);
-				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0)
-				{
+				best_installed = find_best_matching_installed_pkg(buf);
+				if (best_installed) {
 					int done = 0;
 
 					if (Replace > 1)
@@ -752,15 +713,18 @@ ignore_replace_depends_check:
 					if (!done)
 					{
 						warnx("pkg `%s' required, but `%s' found installed.",
-							  p->name, installed);
+							  p->name, best_installed);
 						if (Force) {
 							warnx("Proceeding anyway.");
 						} else {
 							err_prescan++;
 						}
 					}
+					free(best_installed);
 				}
 			}
+		} else {
+			free(best_installed);
 		}
 	}
 	if (err_prescan > 0) {
@@ -772,7 +736,7 @@ ignore_replace_depends_check:
 
 	/* Now check the packing list for dependencies */
 	for (exact = NULL, p = Plist.head; p; p = p->next) {
-		char    installed[MaxPathSize];
+		char *best_installed;
 
 		if (p->type == PLIST_BLDDEP) {
 			exact = p->name;
@@ -785,7 +749,9 @@ ignore_replace_depends_check:
 		if (Verbose)
 			printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
 
-		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) != 1) {
+		best_installed = find_best_matching_installed_pkg(p->name);
+
+		if (best_installed == NULL) {
 			/* required pkg not found - need to pull in */
 
 			if (Fake) {
@@ -808,8 +774,10 @@ ignore_replace_depends_check:
 					errc += errc0;
 				}
 			}
-		} else if (Verbose) {
-			printf(" - %s already installed.\n", installed);
+		} else {
+			if (Verbose)
+				printf(" - %s already installed.\n", best_installed);
+			free(best_installed);
 		}
 	}
 
@@ -833,7 +801,7 @@ ignore_replace_depends_check:
 	 * We need to reset the package dbdir so that extract_plist()
 	 * updates the correct pkgdb.byfile.db database.
 	 */
-	if (!inPlace && !Fake) {
+	if (!Fake) {
 		_pkgdb_setPKGDB_DIR(dbdir);
 		if (!extract_plist(".", &Plist)) {
 			errc = 1;
@@ -910,17 +878,14 @@ ignore_replace_depends_check:
 			    basename_of(p->name));
 			if (ispkgpattern(p->name)) {
 				char   *s;
-				s = findbestmatchingname(dirname_of(contents),
-				    basename_of(contents));
-				if (s != NULL) {
-					char   *t;
-					t = strrchr(contents, '/');
-					strcpy(t + 1, s);
-					free(s);
-				} else {
+
+				s = find_best_matching_installed_pkg(p->name);
+
+				if (s == NULL)
 					errx(EXIT_FAILURE, "Where did our dependency go?!");
-					/* this shouldn't happen... X-) */
-				}
+
+				(void) snprintf(contents, sizeof(contents), "%s/%s", dbdir, s);
+				free(s);
 			}
 			strlcat(contents, "/", sizeof(contents));
 			strlcat(contents, REQUIRED_BY_FNAME, sizeof(contents));
@@ -936,7 +901,7 @@ ignore_replace_depends_check:
 			}
 		}
 		if (Automatic)
-			mark_as_automatic_installed(LogDir, 1);
+			mark_as_automatic_installed(PkgName, 1);
 		if (Verbose)
 			printf("Package %s registered in %s\n", PkgName, LogDir);
 	}

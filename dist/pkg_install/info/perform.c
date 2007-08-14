@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.2 2007/08/03 13:58:20 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
 #endif
 #endif
 
@@ -66,7 +66,7 @@ static char *Home;
 static lfile_head_t files;
 
 static int
-pkg_do(char *pkg)
+pkg_do(const char *pkg)
 {
 	Boolean installed = FALSE, isTMP = FALSE;
 	char    log_dir[MaxPathSize];
@@ -179,21 +179,16 @@ pkg_do(char *pkg)
 		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
 		    _pkgdb_getPKGDB_DIR(), pkg);
 		if (!fexists(log_dir) || !(isdir(log_dir) || islinktodir(log_dir))) {
-			{
-				/* Check if the given package name matches
-				 * something with 'pkg-[0-9]*' */
-				char    try[MaxPathSize];
-				snprintf(try, MaxPathSize, "%s-[0-9]*", pkg);
-				if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-					add_to_list_fn, &pkgs) > 0) {
-					return 0;	/* we've just appended some names to the pkgs list,
-							 * they will be processed after this package. */
-				}
+			switch (add_installed_pkgs_by_basename(pkg, &pkgs)) {
+			case 1:
+				return 0;
+			case 0:
+				/* No match */
+				warnx("can't find package `%s'", pkg);
+				return 1;
+			case -1:
+				errx(EXIT_FAILURE, "Error during search in pkgdb for %s", pkg);
 			}
-
-			/* No match */
-			warnx("can't find package `%s'", pkg);
-			return 1;
 		}
 		if (chdir(log_dir) == FAIL) {
 			warnx("can't change directory to '%s'!", log_dir);
@@ -214,9 +209,9 @@ pkg_do(char *pkg)
 	} else if (Flags & SHOW_BI_VAR) {
 		if (strcspn(BuildInfoVariable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 		    == strlen(BuildInfoVariable))
-			show_var(INSTALLED_INFO_FNAME, BuildInfoVariable);
+			show_var(pkg, INSTALLED_INFO_FNAME, BuildInfoVariable);
 		else
-			show_var(BUILD_INFO_FNAME, BuildInfoVariable);
+			show_var(pkg, BUILD_INFO_FNAME, BuildInfoVariable);
 	} else {
 		FILE   *fp;
 		package_t plist;
@@ -321,64 +316,96 @@ bail:
 	return code;
 }
 
-/*
- * Function to be called for pkgs found
- */
+struct print_matching_arg {
+	const char *pattern;
+	int got_match;
+};
+
 static int
-foundpkg(const char *pattern, const char *found, void *vp)
+print_matching_pkg(const char *pkgname, void *cookie)
 {
-	char *data = vp;
-	char buf[MaxPathSize+1];
+	struct print_matching_arg *arg= cookie;
 
-	/* we only want to display this if it really is a directory */
-	snprintf(buf, sizeof(buf), "%s/%s", data, found);
-	if (!(isdir(buf) || islinktodir(buf))) {
-		/* return value seems to be ignored for now */
-		return -1;
-	}
-
-	if (!Quiet) {
-		printf("%s\n", found);
+	if (pkg_match(arg->pattern, pkgname)) {
+		if (!Quiet)
+			puts(pkgname);
+		arg->got_match = 1;
 	}
 
 	return 0;
 }
 
 /*
- * Check if a package "pkgspec" (which can be a pattern) is installed.
- * dbdir contains the return value of _pkgdb_getPKGDB_DIR(), for reading only.
- * Return 0 if found, 1 otherwise (indicating an error).
+ * Returns 0 if at least one package matching pkgname.
+ * Returns 1 otherwise.
+ *
+ * If -q was not specified, print all matching packages to stdout.
  */
-static int
-CheckForPkg(char *pkgspec, char *dbdir)
+int
+CheckForPkg(const char *pkgname)
 {
-	char    buf[MaxPathSize];
-	int     error;
+	struct print_matching_arg arg;
 
-	if (strpbrk(pkgspec, "<>[]?*{")) {
-		/* expensive (pattern) match */
-		error = findmatchingname(dbdir, pkgspec, foundpkg, dbdir);
-		if (error == -1)
+	arg.pattern = pkgname;
+	arg.got_match = 0;
+
+	if (iterate_pkg_db(print_matching_pkg, &arg) == -1) {
+		warnx("cannot iterate pkgdb");
+		return 1;
+	}
+
+	if (arg.got_match == 0 && !ispkgpattern(pkgname)) {
+		char *pattern;
+
+		if (asprintf(&pattern, "%s-[0-9]*", pkgname) == -1)
+			errx(EXIT_FAILURE, "asprintf failed");
+
+		arg.pattern = pattern;
+		arg.got_match = 0;
+
+		if (iterate_pkg_db(print_matching_pkg, &arg) == -1) {
+			free(pattern);
+			warnx("cannot iterate pkgdb");
 			return 1;
-		else
-			return !error;
-	}
-	/* simple match */
-	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
-	error = !(isdir(buf) || islinktodir(buf));
-	if (!error && !Quiet) {
-		printf("%s\n", pkgspec);
-	}
-	if (error) {
-		/* found nothing - try 'pkg-[0-9]*' */
-		
-		char    try[MaxPathSize];
-		snprintf(try, MaxPathSize, "%s-[0-9]*", pkgspec);
-		if (findmatchingname(dbdir, try, foundpkg, dbdir) > 0) {
-			error = 0;
 		}
+		free(pattern);
 	}
-	return error;
+
+	if (arg.got_match)
+		return 0;
+	else
+		return 1;
+}
+
+/*
+ * Returns 0 if at least one package matching pkgname.
+ * Returns 1 otherwise.
+ *
+ * If -q was not specified, print best match to stdout.
+ */
+int
+CheckForBestPkg(const char *pkgname)
+{
+	char *pattern, *best_match;
+
+	best_match = find_best_matching_installed_pkg(pkgname);
+	if (best_match == NULL) {
+		if (ispkgpattern(pkgname))
+			return 1;
+
+		if (asprintf(&pattern, "%s-[0-9]*", pkgname) == -1)
+			errx(EXIT_FAILURE, "asprintf failed");
+
+		best_match = find_best_matching_installed_pkg(pattern);
+		free(pattern);
+	}
+
+	if (best_match == NULL)
+		return 1;
+	if (!Quiet)
+		puts(best_match);
+	free(best_match);
+	return 0;
 }
 
 void
@@ -388,51 +415,34 @@ cleanup(int sig)
 	exit(1);
 }
 
+static int
+perform_single_pkg(const char *pkg, void *cookie)
+{
+	int *err_cnt = cookie;
+
+	if (Which == WHICH_ALL || !is_automatic_installed(pkg))
+		*err_cnt += pkg_do(pkg);
+
+	return 0;
+}
+
 int
 pkg_perform(lpkg_head_t *pkghead)
 {
-	struct dirent *dp;
-	char   *dbdir;
-	DIR    *dirp;
 	int     err_cnt = 0;
 
 	signal(SIGINT, cleanup);
 
 	TAILQ_INIT(&files);
 
-	dbdir = _pkgdb_getPKGDB_DIR();
-
-	/* Overriding action? */
-	if (CheckPkg) {
-		err_cnt += CheckForPkg(CheckPkg, dbdir);
-	} else if (Which != WHICH_LIST) {
-		if (!(isdir(dbdir) || islinktodir(dbdir)))
-			return 1;
-
+	if (Which != WHICH_LIST) {
 		if (File2Pkg) {
 			/* Show all files with the package they belong to */
-			pkgdb_dump();
+			if (pkgdb_dump() == -1)
+				err_cnt = 1;
 		} else {
-			/* Show all packages with description */
-			if ((dirp = opendir(dbdir)) != (DIR *) NULL) {
-				while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-					char    tmp2[MaxPathSize];
-
-					if (strcmp(dp->d_name, ".") == 0 ||
-					    strcmp(dp->d_name, "..") == 0)
-						continue;
-
-					(void) snprintf(tmp2, sizeof(tmp2), "%s/%s",
-					    dbdir, dp->d_name);
-					if (isfile(tmp2))
-						continue;
-
-					if (Which == WHICH_ALL
-					    || !is_automatic_installed(tmp2))
-						err_cnt += pkg_do(dp->d_name);
-				}
-				(void) closedir(dirp);
-			}
+			if (iterate_pkg_db(perform_single_pkg, &err_cnt) == -1)
+				err_cnt = 1;
 		}
 	} else {
 		/* Show info on individual pkg(s) */

@@ -4,8 +4,8 @@ NNAAMMEE
      ppkkgg__iinnffoo -- a utility for displaying information on software packages
 
 SSYYNNOOPPSSIISS
-     ppkkgg__iinnffoo [--BBbbccDDddFFffhhIIiikkLLmmNNnnppqqRRrrSSssVVvvXX] [--ee _p_a_c_k_a_g_e] [--KK _p_k_g___d_b_d_i_r]
-              [--ll _p_r_e_f_i_x] _p_k_g_-_n_a_m_e _._._.
+     ppkkgg__iinnffoo [--BBbbccDDddFFffhhIIiikkLLmmNNnnppqqRRrrSSssVVvvXX] [--ee _p_a_c_k_a_g_e] [--EE _p_a_c_k_a_g_e]
+              [--KK _p_k_g___d_b_d_i_r] [--ll _p_r_e_f_i_x] _p_k_g_-_n_a_m_e _._._.
      ppkkgg__iinnffoo [--aa | --uu] [flags]
      ppkkgg__iinnffoo [--QQ _v_a_r_i_a_b_l_e] _p_k_g_-_n_a_m_e _._._.
 
@@ -42,13 +42,21 @@ DDEESSCCRRIIPPTTIIOONN
 
      --dd      Show the long-description field for each package.
 
-     --ee _p_k_g_-_n_a_m_e
+     --EE _p_k_g_-_n_a_m_e
              This option allows you to test for the existence of a given pack-
-             age.  If the package identified by _p_k_g_-_n_a_m_e is currently
-             installed, return code is 0, otherwise 1.  The names of any pack-
-             age(s) found installed are printed to stdout unless turned off
+             age.  If a package identified by _p_k_g_-_n_a_m_e is currently installed,
+             return code is 0, otherwise 1.  The name of the best matching
+             package found installed is printed to stdout unless turned off
              using the --qq option.  _p_k_g_-_n_a_m_e can contain wildcards (see the
              _P_A_C_K_A_G_E _W_I_L_D_C_A_R_D_S section below).
+
+     --ee _p_k_g_-_n_a_m_e
+             This option allows you to test for the existence of a given pack-
+             age.  If a package identified by _p_k_g_-_n_a_m_e is currently installed,
+             return code is 0, otherwise 1.  The names of any package(s) found
+             installed are printed to stdout unless turned off using the --qq
+             option.  _p_k_g_-_n_a_m_e can contain wildcards (see the _P_A_C_K_A_G_E
+             _W_I_L_D_C_A_R_D_S section below).
 
      --FF      Interpret any pkg-name given as filename, and translate it to a
              package name using the Package Database.  This can be used to

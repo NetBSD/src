@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1.1.2 2007/08/08 22:38:49 joerg Exp $	*/
+/*	$NetBSD: build.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: build.c,v 1.1.1.2 2007/08/08 22:38:49 joerg Exp $");
+__RCSID("$NetBSD: build.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
 #endif
 #endif
 
@@ -80,6 +80,9 @@ __RCSID("$NetBSD: build.c,v 1.1.1.2 2007/08/08 22:38:49 joerg Exp $");
 #endif
 #if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#if HAVE_FCNTL_H
+#include <fcntl.h>
 #endif
 
 #include <archive.h>
