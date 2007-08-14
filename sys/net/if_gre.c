@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.99 2007/08/14 13:36:50 seanb Exp $ */
+/*	$NetBSD: if_gre.c,v 1.100 2007/08/14 16:03:48 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.99 2007/08/14 13:36:50 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.100 2007/08/14 16:03:48 joerg Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -338,6 +338,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 
 	*mtod(m, int *) = ip_gre_ttl;
 	m->m_len = sizeof(int);
+	KASSERT(so->so_proto && so->so_proto->pr_ctloutput);
 	rc = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so, IPPROTO_IP, IP_TTL,
 	    &m);
 	m = NULL;
