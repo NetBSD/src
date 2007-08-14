@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.2.11 2007/07/12 19:11:00 macallan Exp $
+#	$NetBSD: files.macppc,v 1.84.2.12 2007/08/14 21:55:22 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -138,6 +138,7 @@ define obio {}
 device obio: obio
 attach obio at pci
 file arch/macppc/dev/obio.c			obio
+defflag opt_obio.h OBIO_DEBUG OBIO_SPEED_CONTROL
 
 device mediabay: obio
 attach mediabay at obio
