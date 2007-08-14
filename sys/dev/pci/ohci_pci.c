@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.31 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.31.24.1 2007/08/14 20:59:18 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.31.24.1 2007/08/14 20:59:18 jmcneill Exp $");
 
 #include "ehci.h"
 
@@ -68,8 +68,65 @@ struct ohci_pci_softc {
 	struct usb_pci		sc_pci;
 #endif
 	pci_chipset_tag_t	sc_pc;
+	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
+
+	struct pci_conf_state	sc_pciconf;
 };
+
+static pnp_status_t
+ohci_pci_power(device_t dv, pnp_request_t req, void *opaque)
+{
+	struct ohci_pci_softc *sc;
+	pnp_status_t status;
+	pnp_capabilities_t *pcaps;
+	pnp_state_t *pstate;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	pcireg_t val;
+	int s;
+
+	sc = (struct ohci_pci_softc *)dv;
+	pc = sc->sc_pc;
+	tag = sc->sc_tag;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		pcaps = opaque;
+		pcaps->state = PNP_STATE_D0 | PNP_STATE_D3;
+		break;
+	case PNP_REQUEST_GET_STATE:
+		pstate = opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
+		*pstate = pci_pnp_powerstate(val);
+		break;
+	case PNP_REQUEST_SET_STATE:
+		pstate = opaque;
+		switch (*pstate) {
+		case PNP_STATE_D0:
+			s = splusb();
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			splx(s);
+			return ohci_power(dv, req, opaque);
+		case PNP_STATE_D3:
+			status = ohci_power(dv, req, opaque);
+			if (status != PNP_STATUS_SUCCESS)
+				return status;
+			s = splusb();
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+		break;
+	default:
+		return PNP_STATUS_UNSUPPORTED;
+	}
+
+	return PNP_STATUS_SUCCESS;
+}
 
 static int
 ohci_pci_match(struct device *parent, struct cfdata *match,
@@ -115,6 +172,7 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 			  OHCI_ALL_INTRS);
 
 	sc->sc_pc = pc;
+	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
@@ -156,6 +214,10 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 #if NEHCI > 0
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
+
+	if (pnp_register(self, ohci_pci_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
