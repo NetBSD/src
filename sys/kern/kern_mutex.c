@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.11.2.10 2007/07/29 11:43:23 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.11.2.11 2007/08/14 10:18:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.10 2007/07/29 11:43:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11.2.11 2007/08/14 10:18:50 yamt Exp $");
 
 #define	__MUTEX_PRIVATE
 
@@ -218,6 +218,12 @@ MUTEX_SPIN_LOCK(kmutex_t *mtx)
 {
 	return __cpu_simple_lock_try(&mtx->mtx_lock);
 }
+
+static void
+MUTEX_SPIN_UNLOCK(kmutex_t *mtx)
+{
+	__cpu_simple_unlock(&mtx->mtx_lock);
+}
 #else
 static bool
 MUTEX_SPIN_LOCK(kmutex_t *mtx)
@@ -226,6 +232,12 @@ MUTEX_SPIN_LOCK(kmutex_t *mtx)
 		return false;
 	mtx->mtx_lock = __SIMPLELOCK_LOCKED;
 	return true;
+}
+
+static void
+MUTEX_SPIN_UNLOCK(kmutex_t *mtx)
+{
+	mtx->mtx_lock = __SIMPLELOCK_UNLOCKED;
 }
 #endif
 
@@ -702,7 +714,7 @@ mutex_vector_exit(kmutex_t *mtx)
 	if (MUTEX_SPIN_P(mtx)) {
 		MUTEX_ASSERT(mtx, mtx->mtx_lock == __SIMPLELOCK_LOCKED);
 		MUTEX_UNLOCKED(mtx);
-		MUTEX_SPIN_LOCK(mtx);
+		MUTEX_SPIN_UNLOCK(mtx);
 		MUTEX_SPIN_SPLRESTORE(mtx);
 		return;
 	}
