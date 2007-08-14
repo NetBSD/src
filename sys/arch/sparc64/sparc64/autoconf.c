@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.138 2007/06/24 01:43:34 dyoung Exp $ */
+/*	$NetBSD: autoconf.c,v 1.139 2007/08/14 10:42:01 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.138 2007/06/24 01:43:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.139 2007/08/14 10:42:01 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -315,6 +315,10 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 
 	get_ncpus();
 	pmap_bootstrap(KERNBASE, bi_kend->addr);
+
+	/* fixup MD part of lwp0 - might find a better place */
+	lwp0.l_md.md_tf = (struct trapframe *)
+			((long)lwp0.l_addr + USPACE - sizeof(struct trapframe));
 }
 
 /*
