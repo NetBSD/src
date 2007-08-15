@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.4 2007/08/07 20:40:53 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.5 2007/08/15 22:13:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,8 @@
  * SUCH DAMAGE.
  */
 
+#define malloc(a) __real_malloc(a)
+
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,6 +38,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "rumpuser.h"
@@ -75,6 +78,9 @@ _rumpuser_malloc(size_t howmuch, int canfail, const char *func, int line)
 		warn("malloc failed %s (%d)", func, line);
 		abort();
 	}
+
+	if (rv)
+		memset(rv, 0, howmuch);
 
 	return rv;
 }
