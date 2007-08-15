@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.858 2007/08/09 07:36:19 pooka Exp $
+#	$NetBSD: files,v 1.859 2007/08/15 03:53:09 kiyohara Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1070,7 +1070,7 @@ device	ehci: usbus
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
-defflag	opt_slhci.h	SLHCI_DEBUG
+defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
 device	slhci: usbus
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
