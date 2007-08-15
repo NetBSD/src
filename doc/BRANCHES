@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.201 2007/08/11 19:10:07 chris Exp $
+#	$NetBSD: BRANCHES,v 1.202 2007/08/15 10:07:50 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -406,7 +406,7 @@ Start Date:	2007-07-18
 End Date:
 Base Tag:	nick-csl-alignment-base
 Maintainer:	Nick Hudson <skrll@NetBSD.org>
-Scope:		sys and lib/libpthread
+Scope:		sys, lib/libpthread, lib/libpthread_dbg
 Notes:	
 
 Branch:	  	pkgviews
