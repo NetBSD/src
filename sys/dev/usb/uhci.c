@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.209 2007/08/01 22:40:16 jmcneill Exp $	*/
+/*	$NetBSD: uhci.c,v 1.210 2007/08/15 04:00:33 kiyohara Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.209 2007/08/01 22:40:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.210 2007/08/15 04:00:33 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,6 +573,7 @@ uhci_activate(device_ptr_t self, enum devact act)
 		return (EOPNOTSUPP);
 
 	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
 		break;

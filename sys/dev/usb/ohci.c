@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.182 2007/02/26 13:26:46 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.183 2007/08/15 04:00:33 kiyohara Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.182 2007/02/26 13:26:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.183 2007/08/15 04:00:33 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,9 +374,9 @@ ohci_activate(device_ptr_t self, enum devact act)
 		return (EOPNOTSUPP);
 
 	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
-		sc->sc_dying = 1;
 		break;
 	}
 	return (rv);

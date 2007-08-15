@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.98 2007/07/14 21:02:39 ad Exp $	*/
+/*	$NetBSD: usb.c,v 1.99 2007/08/15 04:00:34 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.98 2007/07/14 21:02:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.99 2007/08/15 04:00:34 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -206,7 +206,7 @@ USB_ATTACH(usb)
 
 #ifdef USB_USE_SOFTINTR
 	/* XXX we should have our own level */
-	sc->sc_bus->soft = softintr_establish(IPL_SOFTNET,
+	sc->sc_bus->soft = softintr_establish(IPL_SOFTUSB,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
 		printf("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
@@ -912,20 +912,16 @@ usb_detach(device_ptr_t self, int flags)
 
 	DPRINTF(("usb_detach: start\n"));
 
-	sc->sc_dying = 1;
+	/* Kill off event thread. */
+	while (sc->sc_event_thread != NULL) {
+		wakeup(&sc->sc_bus->needs_explore);
+		tsleep(sc, PWAIT, "usbdet", hz * 60);
+	}
+	DPRINTF(("usb_detach: event thread dead\n"));
 
 	/* Make all devices disconnect. */
 	if (sc->sc_port.device != NULL)
 		usb_disconnect_port(&sc->sc_port, self);
-
-	/* Kill off event thread. */
-	if (sc->sc_event_thread != NULL) {
-		wakeup(&sc->sc_bus->needs_explore);
-		if (tsleep(sc, PWAIT, "usbdet", hz * 60))
-			printf("%s: event thread didn't die\n",
-			       USBDEVNAME(sc->sc_dev));
-		DPRINTF(("usb_detach: event thread dead\n"));
-	}
 
 #ifdef USB_USE_SOFTINTR
 	if (sc->sc_bus->soft != NULL) {
