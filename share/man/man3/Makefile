@@ -1,15 +1,90 @@
-#	$NetBSD: Makefile,v 1.29 2006/08/31 19:24:37 dyoung Exp $
+#	$NetBSD: Makefile,v 1.30 2007/08/15 03:53:09 kiyohara Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
-MAN=	_DIAGASSERT.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 intro.3 \
-	queue.3 \
-	stdarg.3 sysexits.3 tree.3 varargs.3
+MAN=	_DIAGASSERT.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 gcq.3 \
+	intro.3 queue.3 stdarg.3 sysexits.3 tree.3 varargs.3
 MLINKS+=end.3 edata.3 end.3 etext.3
 MLINKS+=bits.3 __BIT.3 \
 	bits.3 __BITS.3 \
 	bits.3 __SHIFTIN.3 \
 	bits.3 __SHIFTOUT.3 \
 	bits.3 __SHIFTOUT_MASK.3
+MLINKS+=gcq.3 GCQ_INIT.3 \
+	gcq.3 GCQ_INIT_HEAD.3 \
+	gcq.3 gcq_init.3 \
+	gcq.3 gcq_init_head.3 \
+	gcq.3 gcq_q.3 \
+	gcq.3 gcq_hq.3 \
+	gcq.3 gcq_head.3 \
+	gcq.3 gcq_remove.3 \
+	gcq.3 gcq_onlist.3 \
+	gcq.3 gcq_empty.3 \
+	gcq.3 gcq_linked.3 \
+	gcq.3 gcq_insert_after.3 \
+	gcq.3 gcq_insert_before.3 \
+	gcq.3 gcq_insert_head.3 \
+	gcq.3 gcq_insert_tail.3 \
+	gcq.3 gcq_tie.3 \
+	gcq.3 gcq_tie_after.3 \
+	gcq.3 gcq_tie_before.3 \
+	gcq.3 gcq_merge.3 \
+	gcq.3 gcq_merge_head.3 \
+	gcq.3 gcq_merge_tail.3 \
+	gcq.3 gcq_clear.3 \
+	gcq.3 gcq_remove_all.3 \
+	gcq.3 GCQ_ITEM.3 \
+	gcq.3 GCQ_GOT_FIRST.3 \
+	gcq.3 GCQ_GOT_LAST.3 \
+	gcq.3 GCQ_GOT_NEXT.3 \
+	gcq.3 GCQ_GOT_PREV.3 \
+	gcq.3 GCQ_DEQUEUED_FIRST.3 \
+	gcq.3 GCQ_DEQUEUED_LAST.3 \
+	gcq.3 GCQ_DEQUEUED_NEXT.3 \
+	gcq.3 GCQ_DEQUEUED_PREV.3 \
+	gcq.3 GCQ_GOT_FIRST_TYPED.3 \
+	gcq.3 GCQ_GOT_LAST_TYPED.3 \
+	gcq.3 GCQ_GOT_NEXT_TYPED.3 \
+	gcq.3 GCQ_GOT_PREV_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_FIRST_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_LAST_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_NEXT_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_PREV_TYPED.3 \
+	gcq.3 GCQ_GOT_FIRST_COND.3 \
+	gcq.3 GCQ_GOT_LAST_COND.3 \
+	gcq.3 GCQ_GOT_NEXT_COND.3 \
+	gcq.3 GCQ_GOT_PREV_COND.3 \
+	gcq.3 GCQ_DEQUEUED_FIRST_COND.3 \
+	gcq.3 GCQ_DEQUEUED_LAST_COND.3 \
+	gcq.3 GCQ_DEQUEUED_NEXT_COND.3 \
+	gcq.3 GCQ_DEQUEUED_PREV_COND.3 \
+	gcq.3 GCQ_GOT_FIRST_COND_TYPED.3 \
+	gcq.3 GCQ_GOT_LAST_COND_TYPED.3 \
+	gcq.3 GCQ_GOT_NEXT_COND_TYPED.3 \
+	gcq.3 GCQ_GOT_PREV_COND_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_FIRST_COND_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_LAST_COND_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_NEXT_COND_TYPED.3 \
+	gcq.3 GCQ_DEQUEUED_PREV_COND_TYPED.3 \
+	gcq.3 GCQ_FOREACH.3 \
+	gcq.3 GCQ_FOREACH_REV.3 \
+	gcq.3 GCQ_FOREACH_NVAR.3 \
+	gcq.3 GCQ_FOREACH_NVAR_REV.3 \
+	gcq.3 GCQ_FOREACH_RO.3 \
+	gcq.3 GCQ_FOREACH_RO_REV.3 \
+	gcq.3 GCQ_FOREACH_DEQUEUED.3 \
+	gcq.3 GCQ_FOREACH_DEQUEUED_REV.3 \
+	gcq.3 GCQ_FOREACH_TYPED.3 \
+	gcq.3 GCQ_FOREACH_REV_TYPED.3 \
+	gcq.3 GCQ_FOREACH_NVAR_TYPED.3 \
+	gcq.3 GCQ_FOREACH_NVAR_REV_TYPED.3 \
+	gcq.3 GCQ_FOREACH_RO_TYPED.3 \
+	gcq.3 GCQ_FOREACH_RO_REV_TYPED.3 \
+	gcq.3 GCQ_FOREACH_DEQUEUED_TYPED.3 \
+	gcq.3 GCQ_FOREACH_DEQUEUED_REV_TYPED.3 \
+	gcq.3 GCQ_FIND.3 \
+	gcq.3 GCQ_FIND_REV.3 \
+	gcq.3 GCQ_FIND_TYPED.3 \
+	gcq.3 GCQ_FIND_REV_TYPED.3
 MLINKS+=queue.3 LIST_HEAD.3 \
 	queue.3 LIST_HEAD_INITIALIZER.3 \
 	queue.3 LIST_ENTRY.3 \
