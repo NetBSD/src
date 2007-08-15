@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.1.2.5 2007/06/18 03:51:33 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.1.2.6 2007/08/15 01:47:42 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.5 2007/06/18 03:51:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.6 2007/08/15 01:47:42 macallan Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.1.2.5 2007/06/18 03:51:33 macal
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
 #include <arch/powerpc/pic/picvar.h>
+
+#include "opt_oea.h"
 
 #include "ksyms.h"
 
@@ -373,7 +375,7 @@ struct powerpc_bus_space genppc_isa_mem_space_tag = {
 /* This gives us a maximum of 6 PCI busses, assuming both io/mem on each.
  * Increase if necc.
  */
-static char ex_storage[EXSTORAGE_MAX][EXTENT_FIXED_STORAGE_SIZE(8)]
+static char ex_storage[EXSTORAGE_MAX][EXTENT_FIXED_STORAGE_SIZE(EXTMAP_RANGES)]
 	__attribute__((aligned(8)));
 
 
