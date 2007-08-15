@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1060 2007/08/09 15:23:03 he Exp $
+#	$NetBSD: mi,v 1.1061 2007/08/15 16:43:10 kiyohara Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4716,6 +4716,7 @@
 ./usr/share/man/cat3/gamma_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gammaf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gammaf_r.0			comp-c-catman		.cat
+./usr/share/man/cat3/gcq.0			comp-c-catman		.cat
 ./usr/share/man/cat3/get_myaddress.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getattrs.0			comp-c-catman		.cat
@@ -9210,6 +9211,7 @@
 ./usr/share/man/man3/gamma_r.3			comp-c-man		.man
 ./usr/share/man/man3/gammaf.3			comp-c-man		.man
 ./usr/share/man/man3/gammaf_r.3			comp-c-man		.man
+./usr/share/man/man3/gcq.3			comp-c-man		.man
 ./usr/share/man/man3/get_myaddress.3		comp-c-man		.man
 ./usr/share/man/man3/getaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/getattrs.3			comp-c-man		.man
