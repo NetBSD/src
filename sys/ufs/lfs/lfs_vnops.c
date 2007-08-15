@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.208 2007/07/10 23:06:24 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.208.2.1 2007/08/15 13:51:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.208 2007/07/10 23:06:24 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.208.2.1 2007/08/15 13:51:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1176,7 +1176,6 @@ lfs_strategy(void *v)
 				 NULL);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return (error);
 		}
@@ -2439,7 +2438,7 @@ lfs_mmap(void *v)
 	struct vop_mmap_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		int a_fflags;
+		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;

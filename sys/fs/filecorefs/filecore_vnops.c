@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.19 2007/03/04 21:36:38 jnemeth Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.19.10.1 2007/08/15 13:48:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.19 2007/03/04 21:36:38 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.19.10.1 2007/08/15 13:48:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ filecore_readdir(v)
 		cookies = NULL;
 	else {
 		*ap->a_ncookies = 0;
-		ncookies = uio->uio_resid/16;
+		ncookies = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 	}
 
@@ -461,7 +461,6 @@ filecore_strategy(v)
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return (error);
 		}

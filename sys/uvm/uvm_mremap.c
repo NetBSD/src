@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.5 2007/07/17 17:42:08 joerg Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.5.2.1 2007/08/15 13:51:23 skrll Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.5 2007/07/17 17:42:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.5.2.1 2007/08/15 13:51:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -267,6 +268,9 @@ sys_mremap(struct lwp *l, void *v, register_t *retval)
 		error = EINVAL;
 		goto done;
 	}
+
+	oldsize = round_page(oldsize);
+	newsize = round_page(newsize);
 
 	p = l->l_proc;
 	map = &p->p_vmspace->vm_map;

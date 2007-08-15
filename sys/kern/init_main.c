@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.307.2.1 2007/08/15 13:49:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307.2.1 2007/08/15 13:49:04 skrll Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $");
 #include "opt_ktrace.h"
 #include "opt_pax.h"
 
+#include "sysmon_taskq.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
@@ -126,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $");
 #include <sys/vmem.h>
 #include <sys/uuid.h>
 #include <sys/extent.h>
+#include <sys/disk.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -178,7 +180,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $");
 
 #include <uvm/uvm.h>
 
+#if NSYSMON_TASKQ > 0
+#include <dev/sysmon/sysmon_taskq.h>
+#endif
+
 #include <dev/cons.h>
+
 #if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0
 #include <dev/sysmon/sysmonvar.h>
 #endif
@@ -191,6 +198,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.307 2007/07/09 21:10:50 ad Exp $");
 extern struct proc proc0;
 extern struct lwp lwp0;
 extern struct cwdinfo cwdi0;
+extern time_t rootfstime;
 
 #ifndef curlwp
 struct	lwp *curlwp = &lwp0;
@@ -201,7 +209,6 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
-time_t	rootfstime;			/* recorded root fs time, if known */
 int	ncpu = 0;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
@@ -249,6 +256,8 @@ main(void)
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 
 	/*
 	 * Initialize the current LWP pointer (curlwp) before
@@ -333,6 +342,7 @@ main(void)
 	(void)chgproccnt(0, 1);
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
+	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
@@ -340,9 +350,6 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
-
-	/* Initialize callouts, part 2. */
-	callout_startup2();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -372,9 +379,14 @@ main(void)
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
 
+#if NSYSMON_TASKQ > 0
+	sysmon_task_queue_preinit();
+#endif
+
 #if NSYSMON_ENVSYS > 0
 	sysmon_envsys_init();
 #endif
+
 #if NSYSMON_POWER > 0
 	sysmon_power_init();
 #endif
@@ -385,6 +397,9 @@ main(void)
 
 	/* Initialize the device switch tables. */
 	devsw_init();
+
+	/* Initialize the disk wedge subsystem. */
+	dkwedge_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
@@ -599,6 +614,10 @@ main(void)
 	}
 	mutex_exit(&proclist_lock);
 
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_schedstate.spc_lastmod = time_second;
+	}
+
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
 	if (kthread_create(PVM, 0, NULL, uvm_pageout,
@@ -633,12 +652,6 @@ main(void)
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */
-}
-
-void
-setrootfstime(time_t t)
-{
-	rootfstime = t;
 }
 
 static void

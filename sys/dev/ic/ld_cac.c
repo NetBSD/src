@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.17 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.17.14.1 2007/08/15 13:48:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.17 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.17.14.1 2007/08/15 13:48:17 skrll Exp $");
 
 #include "rnd.h"
 
@@ -220,7 +220,6 @@ ld_cac_done(struct device *dv, void *context, int error)
 	}
 
 	if (rv) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = rv;
 		bp->b_resid = bp->b_bcount;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.59 2007/06/22 15:15:48 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.59.2.1 2007/08/15 13:51:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.59 2007/06/22 15:15:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.59.2.1 2007/08/15 13:51:20 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.59 2007/06/22 15:15:48 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -300,7 +301,7 @@ again:
 	    0);
 
 	if (error == EAGAIN) {
-		tsleep(&lbolt, PVM, "ubc_fault", 0);
+		kpause("ubc_fault", false, hz, NULL);
 		goto again;
 	}
 	if (error) {
@@ -459,7 +460,7 @@ again:
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
 			simple_unlock(&ubc_object.uobj.vmobjlock);
-			tsleep(&lbolt, PVM, "ubc_alloc", 0);
+			kpause("ubc_alloc", false, hz, NULL);
 			goto again;
 		}
 
@@ -657,7 +658,8 @@ ubc_release(void *va, int flags)
  */
 
 int
-ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int flags)
+ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
+    int flags)
 {
 	voff_t off;
 	const bool overwrite = (flags & UBC_FAULTBUSY) != 0;
@@ -673,7 +675,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int flags)
 		vsize_t bytelen = todo;
 		void *win;
 
-		win = ubc_alloc(uobj, off, &bytelen, UVM_ADV_NORMAL, flags);
+		win = ubc_alloc(uobj, off, &bytelen, advice, flags);
 		if (error == 0) {
 			error = uiomove(win, bytelen, uio);
 		}
@@ -683,7 +685,6 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int flags)
 			 * do it now.  it's safe to use memset here
 			 * because we just mapped the pages above.
 			 */
-			printf("%s: error=%d\n", __func__, error);
 			memset(win, 0, bytelen);
 		}
 		ubc_release(win, flags);

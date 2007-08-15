@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.9 2005/12/11 12:19:10 christos Exp $ */
+/*	$NetBSD: proc.h,v 1.9.44.1 2007/08/15 13:47:46 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,6 @@
 struct mdlwp {
 	struct	trapframe64 *md_tf;	/* trap/syscall registers */
 	struct	fpstate64 *md_fpstate;	/* fpu state, if any; always resident */
-	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
 };
 /*
  * Machine-dependent part of the proc structure for SPARC.

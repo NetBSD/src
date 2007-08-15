@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.9 2007/03/04 06:02:17 christos Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.9.10.1 2007/08/15 13:48:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.9 2007/03/04 06:02:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.9.10.1 2007/08/15 13:48:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* IO-mapped registers */
-	if (bus_space_map(sc->sc_iot, 0x0, PAGE_SIZE, 0, &sc->sc_ioregh) != 0) {
+	if (bus_space_map(sc->sc_iot, 0x0, 0x400, 0, &sc->sc_ioregh) != 0) {
 		aprint_error("%s: failed to map IO registers.\n",
 		    sc->sc_dev.dv_xname);
 	}
@@ -684,6 +684,10 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct chipsfb_softc *sc = scr->scr_cookie;
+
+	if (__predict_false((unsigned int)row > ri->ri_rows ||
+	    (unsigned int)col > ri->ri_cols))
+		return;
 
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		uint8_t *data;

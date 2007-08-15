@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.125 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.125.2.1 2007/08/15 13:49:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.125 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.125.2.1 2007/08/15 13:49:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -95,10 +95,6 @@ POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
     &pool_allocator_nointr, IPL_NONE);
 POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
     &pool_allocator_nointr, IPL_NONE);
-
-#ifdef __HAVE_TIMECOUNTER
-static int itimespecfix(struct timespec *);		/* XXX move itimerfix to timespecs */
-#endif /* __HAVE_TIMECOUNTER */
 
 /* Time of day and interval timer support.
  *
@@ -1301,36 +1297,6 @@ timers_free(struct proc *p, int which)
 		}
 	}
 }
-
-/*
- * Check that a proposed value to load into the .it_value or
- * .it_interval part of an interval timer is acceptable, and
- * fix it to have at least minimal value (i.e. if it is less
- * than the resolution of the clock, round it up.)
- */
-int
-itimerfix(struct timeval *tv)
-{
-
-	if (tv->tv_sec < 0 || tv->tv_usec < 0 || tv->tv_usec >= 1000000)
-		return (EINVAL);
-	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
-		tv->tv_usec = tick;
-	return (0);
-}
-
-#ifdef __HAVE_TIMECOUNTER
-int
-itimespecfix(struct timespec *ts)
-{
-
-	if (ts->tv_sec < 0 || ts->tv_nsec < 0 || ts->tv_nsec >= 1000000000)
-		return (EINVAL);
-	if (ts->tv_sec == 0 && ts->tv_nsec != 0 && ts->tv_nsec < tick * 1000)
-		ts->tv_nsec = tick * 1000;
-	return (0);
-}
-#endif /* __HAVE_TIMECOUNTER */
 
 /*
  * Decrement an interval timer by a specified number

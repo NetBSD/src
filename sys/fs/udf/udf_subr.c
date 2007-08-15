@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.34 2007/04/29 20:23:36 msaitoh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.34.2.1 2007/08/15 13:49:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.34 2007/04/29 20:23:36 msaitoh Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.34.2.1 2007/08/15 13:49:03 skrll Exp $");
 #endif /* not lint */
 
 
@@ -2194,7 +2194,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	genfs_node_init(nvp, &udf_genfsops);
 
 	/* don't forget to set vnode's v_size */
-	nvp->v_size = file_size;
+	uvm_vnp_setsize(nvp, file_size);
 
 	/* TODO ext attr and streamdir nodes */
 
@@ -2773,7 +2773,6 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	if (sectors > FILEBUFSECT) {
 		printf("udf_read_filebuf: implementation limit on bufsize\n");
 		buf->b_error  = EIO;
-		buf->b_flags |= B_ERROR;
 		biodone(buf);
 		return;
 	}
@@ -2785,7 +2784,6 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	error = udf_translate_file_extent(node, from, sectors, mapping);
 	if (error) {
 		buf->b_error  = error;
-		buf->b_flags |= B_ERROR;
 		biodone(buf);
 		goto out;
 	}
@@ -2796,7 +2794,6 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 		error = udf_read_internal(node, (uint8_t *) buf->b_data);
 		if (error) {
 			buf->b_error  = error;
-			buf->b_flags |= B_ERROR;
 		}
 		biodone(buf);
 		goto out;

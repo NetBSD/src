@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.46 2007/03/04 06:03:17 christos Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.46.10.1 2007/08/15 13:49:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.46 2007/03/04 06:03:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.46.10.1 2007/08/15 13:49:41 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -194,12 +194,12 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	u_char edst[ISO88025_ADDR_LEN];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
-	struct mbuf *mcopy = (struct mbuf *)0;
+	struct mbuf *mcopy = NULL;
 	struct token_header *trh;
 #ifdef INET
 	struct arphdr *ah = (struct arphdr *)ifp0;
 #endif /* INET */
-	struct token_rif *rif = (struct  token_rif *)0;
+	struct token_rif *rif = NULL;
 	struct token_rif bcastrif;
 	struct ifnet *ifp = ifp0;
 	size_t riflen = 0;
@@ -348,11 +348,11 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
-		struct sockaddr_dl *sdl;
+		const struct sockaddr_dl *sdl;
 
-		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
+		if (rt && (sdl = satocsdl(rt->rt_gateway)) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			bcopy(LLADDR(sdl), (void *)edst, sizeof(edst));
+			memcpy(edst, CLLADDR(sdl), sizeof(edst));
 		}
 		else if ((error = iso_snparesolve(ifp,
 		    (const struct sockaddr_iso *)dst, (char *)edst, &snpalen)))

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/12/17 16:07:11 peter Exp $
+#	$NetBSD: Makefile,v 1.1.24.1 2007/08/15 13:48:02 skrll Exp $
 
 # Makefile for zaurus tags file and boot blocks
 
@@ -23,6 +23,6 @@ links:
 	-for i in ${DZAURUS}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-SUBDIR=	compile include #stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>

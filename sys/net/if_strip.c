@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.76 2007/07/14 21:02:41 ad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.76.2.1 2007/08/15 13:49:40 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.76 2007/07/14 21:02:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.76.2.1 2007/08/15 13:49:40 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -756,15 +756,13 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		return (EHOSTUNREACH);
 	}
 
-#define SDL(__a)          ((const struct sockaddr_dl *)(__a))
-
 #ifdef DEBUG
 	if (rt) {
 	   	printf("stripout, rt: dst af%d gw af%d",
-		    rt_key(rt)->sa_family, rt->rt_gateway->sa_family);
-		if (rt_key(rt)->sa_family == AF_INET)
+		    rt_getkey(rt)->sa_family, rt->rt_gateway->sa_family);
+		if (rt_getkey(rt)->sa_family == AF_INET)
 		  printf(" dst %x",
-		      satocsin(rt_key(rt))->sin_addr.s_addr);
+		      satocsin(rt_getkey(rt))->sin_addr.s_addr);
 		printf("\n");
 	}
 #endif
@@ -775,19 +773,19 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
                 /* assume rt is never NULL */
                 if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK
-                    || SDL(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
+                    || satocsdl(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
 		  	DPRINTF(("strip: could not arp starmode addr %x\n",
 			 satocsin(dst)->sin_addr.s_addr));
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
-		/*bcopy(LLADDR(SDL(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
-                dldst = CLLADDR(SDL(rt->rt_gateway));
+		/*bcopy(LLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
+                dldst = CLLADDR(satocsdl(rt->rt_gateway));
                 break;
 
 	case AF_LINK:
-		/*bcopy(LLADDR(SDL(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
-		dldst = CLLADDR(SDL(dst));
+		/*bcopy(LLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
+		dldst = CLLADDR(satocsdl(dst));
 		break;
 
 	default:

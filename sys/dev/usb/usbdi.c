@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119 2007/02/26 13:44:40 drochner Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.14.1 2007/08/15 13:48:49 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119 2007/02/26 13:44:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.14.1 2007/08/15 13:48:49 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -271,10 +271,10 @@ usbd_transfer(usbd_xfer_handle xfer)
 	usbd_pipe_handle pipe = xfer->pipe;
 	usb_dma_t *dmap = &xfer->dmabuf;
 	usbd_status err;
-	u_int size;
+	unsigned int size, flags;
 	int s;
 
-	DPRINTFN(5,("usbd_transfer: xfer=%p, flags=%d, pipe=%p, running=%d\n",
+	DPRINTFN(5,("usbd_transfer: xfer=%p, flags=%#x, pipe=%p, running=%d\n",
 		    xfer, xfer->flags, pipe, pipe->running));
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
@@ -300,11 +300,13 @@ usbd_transfer(usbd_xfer_handle xfer)
 		xfer->rqflags |= URQ_AUTO_DMABUF;
 	}
 
+	flags = xfer->flags;
+
 	/* Copy data if going out. */
-	if (!(xfer->flags & USBD_NO_COPY) && size != 0 &&
-	    !usbd_xfer_isread(xfer))
+	if (!(flags & USBD_NO_COPY) && size != 0 && !usbd_xfer_isread(xfer))
 		memcpy(KERNADDR(dmap, 0), xfer->buffer, size);
 
+	/* xfer is not valid after the transfer method unless synchronous */
 	err = pipe->methods->transfer(xfer);
 
 	if (err != USBD_IN_PROGRESS && err) {
@@ -317,7 +319,7 @@ usbd_transfer(usbd_xfer_handle xfer)
 		}
 	}
 
-	if (!(xfer->flags & USBD_SYNCHRONOUS))
+	if (!(flags & USBD_SYNCHRONOUS))
 		return (err);
 
 	/* Sync transfer, wait for completion. */

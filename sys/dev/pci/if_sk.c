@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.41 2007/07/09 21:00:55 ad Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.41.2.1 2007/08/15 13:48:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -120,6 +120,8 @@
  * XMAC registers. This driver takes advantage of these features to allow
  * both XMACs to operate as independent interfaces.
  */
+
+#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 #include "rnd.h"

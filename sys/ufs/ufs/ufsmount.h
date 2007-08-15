@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.30 2007/07/16 13:55:51 pooka Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.30.2.1 2007/08/15 13:51:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -100,8 +100,6 @@ struct ufsmount {
 	time_t	um_itime[MAXQUOTAS];		/* inode quota time limit */
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
 	void	*um_oldfscompat;		/* save 4.2 rotbl */
-	TAILQ_HEAD(inodelst, inode) um_snapshots; /* list of active snapshots */
-	daddr_t	*um_snapblklist;		/* snapshot block hints list */
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
 	u_int64_t um_maxfilesize;

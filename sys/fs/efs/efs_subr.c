@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.3 2007/07/04 20:20:30 rumble Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.3.4.1 2007/08/15 13:48:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.3 2007/07/04 20:20:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.3.4.1 2007/08/15 13:48:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -63,7 +63,7 @@ efs_sb_checksum(struct efs_sb *esb, int new)
 {
 	int i;
 	int32_t cksum;
-	int16_t *sbarray = (int16_t *)esb;
+	uint16_t *sbarray = (uint16_t *)esb;
 
 	KASSERT((EFS_SB_CHECKSUM_SIZE % 2) == 0);
 
@@ -89,7 +89,7 @@ efs_sb_validate(struct efs_sb *esb, const char **why)
 	*why = NULL;
 
 	if (be32toh(esb->sb_magic) != EFS_SB_MAGIC &&
-	    be32toh(esb->sb_magic != EFS_SB_NEWMAGIC)) {
+	    be32toh(esb->sb_magic) != EFS_SB_NEWMAGIC) {
 		*why = "sb_magic invalid";
 		return (1);
 	}

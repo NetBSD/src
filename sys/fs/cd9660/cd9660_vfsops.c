@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.44 2007/07/17 11:19:32 pooka Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.44.2.1 2007/08/15 13:48:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.44 2007/07/17 11:19:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.44.2.1 2007/08/15 13:48:55 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,7 +104,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	cd9660_vnodeopv_descs,
 	0,	/* refcount */
 	{ NULL, NULL } /* list */
@@ -164,14 +164,14 @@ cd9660_mountroot()
  * mount system call
  */
 int
-cd9660_mount(mp, path, data, data_len, ndp, l)
+cd9660_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct vnode *devvp;
 	struct iso_args *args = data;
 	int error;
@@ -199,10 +199,10 @@ cd9660_mount(mp, path, data, data_len, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-	if ((error = namei(ndp)) != 0)
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-	devvp = ndp->ni_vp;
+	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
@@ -908,6 +908,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		uvm_vnp_setsize(vp, ip->i_size);
 		break;
 	}
+
+	if (vp->v_type != VREG)
+		uvm_vnp_setsize(vp, 0);
 
 	if (ip->iso_extent == imp->root_extent)
 		vp->v_flag |= VROOT;
