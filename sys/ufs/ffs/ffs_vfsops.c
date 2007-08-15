@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.205 2007/07/17 11:19:39 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.205.2.1 2007/08/15 13:51:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.205 2007/07/17 11:19:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.205.2.1 2007/08/15 13:51:10 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -186,8 +186,9 @@ ffs_mountroot(void)
  */
 int
 ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
+	struct nameidata nd;
 	struct vnode *devvp = NULL;
 	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
@@ -218,10 +219,10 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return (error);
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*
@@ -821,7 +822,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
-	TAILQ_INIT(&ump->um_snapshots);
 	ump->um_fs = fs;
 	ump->um_ops = &ffs_ufsops;
 
@@ -1335,7 +1335,7 @@ loop:
 		    ((ip->i_flag &
 		      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -1597,6 +1597,7 @@ ffs_init(void)
 	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
 		  "dino2pl", &pool_allocator_nointr, IPL_NONE);
 	softdep_initialize();
+	ffs_snapshot_init();
 	ufs_init();
 }
 
@@ -1614,6 +1615,7 @@ ffs_done(void)
 		return;
 
 	/* XXX softdep cleanup ? */
+	ffs_snapshot_fini();
 	ufs_done();
 	pool_destroy(&ffs_dinode2_pool);
 	pool_destroy(&ffs_dinode1_pool);

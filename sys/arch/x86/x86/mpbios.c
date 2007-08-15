@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.36 2007/04/28 14:51:58 christos Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.36.6.1 2007/08/15 13:47:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36 2007/04/28 14:51:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.36.6.1 2007/08/15 13:47:59 skrll Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -261,10 +261,11 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 	handle->vsize = endpa-pgpa;
 
 	do {
-		pmap_kenter_pa (va, pgpa, VM_PROT_READ);
+		pmap_kenter_pa(va, pgpa, VM_PROT_READ);
 		va += PAGE_SIZE;
 		pgpa += PAGE_SIZE;
 	} while (pgpa < endpa);
+	pmap_update(pmap_kernel());
 
 	return (const void *)retva;
 }
@@ -272,8 +273,9 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 inline static void
 mpbios_unmap(struct mp_map *handle)
 {
-	pmap_kremove (handle->baseva, handle->vsize);
-	uvm_km_free (kernel_map, handle->baseva, handle->vsize, UVM_KMF_VAONLY);
+	pmap_kremove(handle->baseva, handle->vsize);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, handle->baseva, handle->vsize, UVM_KMF_VAONLY);
 }
 
 /*

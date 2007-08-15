@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.15 2007/07/09 21:00:57 ad Exp $ */
+/* $NetBSD: radeonfb.c,v 1.15.2.1 2007/08/15 13:48:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.15 2007/07/09 21:00:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.15.2.1 2007/08/15 13:48:37 skrll Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -194,7 +194,6 @@ int	radeon_debug = 1;
 #ifndef	RADEON_DEFAULT_MODE
 /* any reasonably modern display should handle this */
 #define	RADEON_DEFAULT_MODE	"1024x768x60"
-//#define	RADEON_DEFAULT_MODE	"1280x1024x60"
 #endif
 
 const char	*radeonfb_default_mode = RADEON_DEFAULT_MODE;
@@ -445,8 +444,11 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_devinfo);
 
+	DPRINTF((prop_dictionary_externalize(device_properties(dev))));
+
 	KASSERT(radeonfb_devices[i].devid != 0);
 	sc->sc_pt = pa->pa_tag;
+	sc->sc_iot = pa->pa_iot;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_family = radeonfb_devices[i].family;
 	sc->sc_flags = radeonfb_devices[i].flags;
@@ -492,6 +494,22 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		break;
 	}
 
+	if ((sc->sc_family == RADEON_RV200) ||
+	    (sc->sc_family == RADEON_RV250) ||
+	    (sc->sc_family == RADEON_RV280) ||
+	    (sc->sc_family == RADEON_RV350)) {
+		int inverted = 0;
+		/* backlight level is linear */
+		DPRINTF(("found RV* chip, backlight is supposedly linear\n"));
+		prop_dictionary_get_bool(device_properties(&sc->sc_dev),
+		    "backlight_level_reverted", &inverted);
+		if (inverted) {
+			DPRINTF(("nope, it's inverted\n"));
+			sc->sc_flags |= RFB_INV_BLIGHT;
+		}
+	} else
+		sc->sc_flags |= RFB_INV_BLIGHT;
+
 	/*
 	 * XXX: to support true multihead, this must change.
 	 */
@@ -507,12 +525,6 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		&sc->sc_regsz) != 0) {
 		aprint_error("%s: unable to map registers!\n", XNAME(sc));
 		goto error;
-	}
-
-	if (pci_mapreg_map(pa, RADEON_MAPREG_IO, PCI_MAPREG_TYPE_IO,	0,
-		&sc->sc_iot, &sc->sc_ioh, &sc->sc_ioaddr,
-		&sc->sc_iosz) != 0) {
-		aprint_error("%s: unable to map IO registers!\n", XNAME(sc));
 	}
 
 	/* scratch register test... */
@@ -967,6 +979,8 @@ radeonfb_ioctl(void *v, void *vs,
 			dp->rd_wsmode = *(int *)d;
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
+				radeonfb_engine_init(dp);
+				radeonfb_modeswitch(dp);
 				vcons_redraw_screen(dp->rd_vd.active);
 			}
 		}
@@ -1088,8 +1102,8 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 #ifdef macppc
 	/* allow mapping of IO space */
 	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot, 
+		    0);	
 		return pa;
 	}	
 #endif /* macppc */
@@ -3360,6 +3374,12 @@ radeonfb_pickres(struct radeonfb_display *dp, uint16_t *x, uint16_t *y,
 	}
 }
 
+/*
+ * backlight levels are linear on:
+ * - RV200, RV250, RV280, RV350
+ * - but NOT on PowerBook4,3 6,3 6,5
+ * according to Linux' radeonfb
+ */
 
 /* Get the current backlight level for the display.  */
 
@@ -3379,9 +3399,8 @@ radeonfb_get_backlight(struct radeonfb_display *dp)
 	 * On some chips, we should negate the backlight level. 
 	 * XXX Find out on which chips. 
 	 */
-#ifdef RADEONFB_BACKLIGHT_NEGATED
+	if (dp->rd_softc->sc_flags & RFB_INV_BLIGHT)
 	level = RADEONFB_BACKLIGHT_MAX - level;
-#endif /* RADEONFB_BACKLIGHT_NEGATED */
 
 	splx(s);
 
@@ -3407,11 +3426,10 @@ radeonfb_set_backlight(struct radeonfb_display *dp, int level)
 	sc = dp->rd_softc;
 
 	/* On some chips, we should negate the backlight level. */
-#ifdef RADEONFB_BACKLIGHT_NEGATED
+	if (dp->rd_softc->sc_flags & RFB_INV_BLIGHT) {
 	rlevel = RADEONFB_BACKLIGHT_MAX - level;
-#else
+	} else
 	rlevel = level;
-#endif /* RADEONFB_BACKLIGHT_NEGATED */
 
 	callout_stop(&dp->rd_bl_lvds_co);
 	radeonfb_engine_idle(sc);

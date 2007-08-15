@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.24 2007/06/16 12:32:13 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.24.2.1 2007/08/15 13:48:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.24 2007/06/16 12:32:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.24.2.1 2007/08/15 13:48:16 skrll Exp $");
 
 #include "rnd.h"
 
@@ -505,7 +505,6 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 	}
 
 	if (err) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 	} else

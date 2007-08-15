@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.33 2007/03/10 00:52:46 christos Exp $	*/
+/*	$NetBSD: rl.c,v 1.33.10.1 2007/08/15 13:48:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.33 2007/03/10 00:52:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.33.10.1 2007/08/15 13:48:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -306,9 +306,7 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	part = DISKPART(dev);
 
-	if ((error = lockmgr(&rc->rc_disk.dk_openlock, LK_EXCLUSIVE,
-			     NULL)) != 0)
-		return (error);
+	mutex_enter(&rc->rc_disk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -363,24 +361,20 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		break;
 	}
 	rc->rc_disk.dk_openmask |= mask;
-	(void) lockmgr(&rc->rc_disk.dk_openlock, LK_RELEASE, NULL);
-	return 0;
-
+	error = 0;
  bad1:
-	(void) lockmgr(&rc->rc_disk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&rc->rc_disk.dk_openlock);
 	return (error);
 }
 
 int
 rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	int error, unit = DISKUNIT(dev);
+	int unit = DISKUNIT(dev);
 	struct rl_softc *rc = rl_cd.cd_devs[unit];
 	int mask = (1 << DISKPART(dev));
 
-	if ((error = lockmgr(&rc->rc_disk.dk_openlock, LK_EXCLUSIVE,
-			     NULL)) != 0)
-		return (error);
+	mutex_enter(&rc->rc_disk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -395,7 +389,7 @@ rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	if (rc->rc_disk.dk_openmask == 0)
 		rc->rc_state = DK_CLOSED; /* May change pack */
-	(void) lockmgr(&rc->rc_disk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&rc->rc_disk.dk_openlock);
 	return 0;
 }
 
@@ -412,7 +406,6 @@ rlstrategy(struct buf *bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > rl_cd.cd_ndevs || (rc = rl_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	if (rc->rc_state != DK_OPEN) /* How did we end up here at all? */
@@ -490,9 +483,7 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			err = EBADF;
 		else {
-			if ((err = lockmgr(&rc->rc_disk.dk_openlock,
-					   LK_EXCLUSIVE, NULL)) != 0)
-				break;
+			mutex_enter(&rc->rc_disk.dk_openlock);
 			err = ((
 #ifdef __HAVE_OLD_DISKLABEL
 			       cmd == ODIOCSDINFO ||
@@ -500,8 +491,7 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			       cmd == DIOCSDINFO) ?
 			    setdisklabel(lp, tp, 0, 0) :
 			    writedisklabel(dev, rlstrategy, lp, 0));
-			(void) lockmgr(&rc->rc_disk.dk_openlock,
-				       LK_RELEASE, NULL);
+			mutex_exit(&rc->rc_disk.dk_openlock);
 		}
 		break;
 	}
@@ -620,7 +610,6 @@ rlcintr(void *arg)
 		int error = (cs & RLCS_ERRMSK) >> 10;
 
 		printf("%s: %s\n", sc->sc_dev.dv_xname, rlerr[error]);
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		sc->sc_bytecnt = 0;

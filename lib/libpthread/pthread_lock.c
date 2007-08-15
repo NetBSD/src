@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.20.2.2 2007/08/15 08:25:10 skrll Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.20.2.3 2007/08/15 13:46:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.20.2.2 2007/08/15 08:25:10 skrll Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.20.2.3 2007/08/15 13:46:53 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -56,17 +56,15 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.20.2.2 2007/08/15 08:25:10 skrll Exp $");
 #define SDPRINTF(x)
 #endif
 
-/* This does not belong here. */
-#if defined(i386) || defined(__x86_64__)
-#define	smt_pause()	__asm __volatile("rep; nop" ::: "memory")
-#else
-#define	smt_pause()	/* nothing */
-#endif
-
-extern int pthread__nspins;
 static int pthread__atomic;
 
 RAS_DECL(pthread__lock);
+
+int
+pthread__simple_locked_p(__cpu_simple_lock_t *alp)
+{
+	return __SIMPLELOCK_LOCKED_P(alp);
+}
 
 void
 pthread__simple_lock_init(__cpu_simple_lock_t *alp)
@@ -139,9 +137,8 @@ pthread_lockinit(pthread_spin_t *lock)
 void
 pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 {
-	int count, ret;
+	int count;
 
-	count = pthread__nspins;
 	SDPRINTF(("(pthread_spinlock %p) spinlock %p (count %d)\n",
 	    thread, lock, thread->pt_spinlocks));
 #ifdef PTHREAD_SPIN_DEBUG
@@ -155,13 +152,14 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 	}
 
 	do {
-		while ((ret = pthread__simple_lock_try(lock)) == 0 &&
-		    --count) {
-			smt_pause();
+		count = pthread__nspins;
+		while (pthread__simple_locked_p(lock) && --count > 0)
+			pthread__smt_pause();
+		if (count > 0) {
+			if (pthread__simple_lock_try(lock))
+				break;
+			continue;
 		}
-
-		if (ret == 1)
-			break;
 
 		SDPRINTF(("(pthread_spinlock %p) retrying spinlock %p "
 		    "(count %d)\n", thread, lock,
@@ -170,7 +168,6 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 
 		/* XXXLWP far from ideal */
 		sched_yield();
-		count = pthread__nspins;
 		thread->pt_spinlocks++;
 	} while (/*CONSTCOND*/ 1);
 
@@ -260,7 +257,7 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 #endif
 
 	while (pthread__simple_lock_try(&lock->pts_spin) == 0) {
-		smt_pause();
+		pthread__smt_pause();
 	}
 
 	return 0;

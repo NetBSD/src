@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.4 2007/04/14 19:56:05 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.4.4.1 2007/08/15 13:48:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.4 2007/04/14 19:56:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.4.4.1 2007/08/15 13:48:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.4 2007/04/14 19:56:05 macallan Exp $");
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -102,7 +103,7 @@ genfb_init(struct genfb_softc *sc)
 
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
-	sc->sc_fbsize = sc->sc_width * sc->sc_stride;
+	sc->sc_fbsize = sc->sc_height * sc->sc_stride;
 
 	/* optional colour map callback */
 	sc->sc_cmcb = NULL;
@@ -133,6 +134,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	memcpy(&sc->sc_ops, ops, sizeof(struct genfb_ops));
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+
+	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
 
 	dict = device_properties(&sc->sc_dev);
 
@@ -195,6 +198,8 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	switch (cmd) {
 
 		case WSDISPLAYIO_GINFO:
+			if (ms == NULL)
+				return ENODEV;
 			wdf = (void *)data;
 			wdf->height = ms->scr_ri.ri_height;
 			wdf->width = ms->scr_ri.ri_width;
@@ -259,7 +264,12 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
-	ri->ri_bits = (char *)sc->sc_fbaddr;
+	if (sc->sc_shadowfb != NULL) {
+
+		ri->ri_hwbits = (char *)sc->sc_fbaddr;
+		ri->ri_bits = (char *)sc->sc_shadowfb;
+	} else
+		ri->ri_bits = (char *)sc->sc_fbaddr;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;

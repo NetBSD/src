@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.267 2007/07/17 11:27:11 pooka Exp $	*/
+/*	$NetBSD: param.h,v 1.267.2.1 2007/08/15 13:50:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499002400	/* NetBSD 4.99.24 */
+#define	__NetBSD_Version__	499002800	/* NetBSD 4.99.28 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -156,6 +156,13 @@
 /* bytes to disk blocks */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
+
+/*
+ * CPU cache values
+ */
+#ifndef CACHE_LINE_SIZE
+#define	CACHE_LINE_SIZE		64
+#endif
 
 /*
  * Stack macros.  On most architectures, the stack grows down,
@@ -260,7 +267,8 @@
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
 #endif
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
-#define rounddown(x,y)	(((x)/(y))*(y))
+#define	rounddown(x,y)	(((x)/(y))*(y))
+#define	roundup2(x, m)	(((x) + m - 1) & ~(m - 1))
 #define	powerof2(x)	((((x)-1)&(x))==0)
 
 /* Macros for min/max. */

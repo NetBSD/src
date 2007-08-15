@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2.44.1 2007/08/15 13:47:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,5 +38,5 @@
 
 #include <machine/bootinfo.h>
 
-char*	bi_init __P((void));
-void	bi_add __P((void *, int, int));
+char *bi_init(void);
+void bi_add(void *, int, int);

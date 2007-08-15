@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.66 2007/07/09 21:10:57 ad Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.66.2.1 2007/08/15 13:49:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.66 2007/07/09 21:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.66.2.1 2007/08/15 13:49:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -119,6 +119,12 @@ domain_attach(struct domain *dp)
 			(*pr->pr_init)();
 	}
 
+	if (dp->dom_sa_pool != NULL) {
+		pool_setlowat(dp->dom_sa_pool, 32);
+		if (pool_prime(dp->dom_sa_pool, 32) != 0)
+			printf("%s: pool_prime failed\n", __func__);
+	}
+
 	if (max_linkhdr < 16)		/* XXX */
 		max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
@@ -198,11 +204,28 @@ sockaddr_alloc(sa_family_t af, int flags)
 	return sa;
 }
 
+static void
+sockaddr_fixlen(struct sockaddr *dst, uint8_t deslen)
+{
+	struct domain *dom;
+
+	if ((dom = pffinddomain(dst->sa_family)) == NULL)
+		panic("%s: unknown domain %d", __func__, dst->sa_family);
+	if (dom->dom_sa_len < deslen)
+		panic("%s: source too long, %d bytes", __func__, deslen);
+	dst->sa_len = dom->dom_sa_len;
+}
+
 struct sockaddr *
 sockaddr_copy(struct sockaddr *dst, const struct sockaddr *src)
 {
 	KASSERT(dst->sa_family == src->sa_family);
+
+	if (__predict_false(dst->sa_len < src->sa_len))
+		sockaddr_fixlen(dst, src->sa_len);
+
 	memcpy(dst, src, src->sa_len);
+
 	return dst;
 }
 

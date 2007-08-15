@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.9 2007/07/09 21:10:51 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.9.2.1 2007/08/15 13:49:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.9 2007/07/09 21:10:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.9.2.1 2007/08/15 13:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -57,13 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.9 2007/07/09 21:10:51 ad Exp $");
 static void	cv_unsleep(lwp_t *);
 static void	cv_changepri(lwp_t *, pri_t);
 
-syncobj_t cv_syncobj = {
+static syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	cv_unsleep,
 	cv_changepri,
 	sleepq_lendpri,
 	syncobj_noowner,
 };
+
+static const char deadcv[] = "deadcv";
 
 /*
  * cv_init:
@@ -90,8 +92,9 @@ cv_destroy(kcondvar_t *cv)
 {
 
 #ifdef DIAGNOSTIC
-	KASSERT(cv->cv_waiters == 0 && cv->cv_wmesg != NULL);
-	cv->cv_wmesg = NULL;
+	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
+	KASSERT(cv->cv_waiters == 0);
+	cv->cv_wmesg = deadcv;
 #endif
 }
 
@@ -106,7 +109,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 {
 	sleepq_t *sq;
 
-	KASSERT(cv->cv_wmesg != NULL);
+	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
 	KASSERT((l->l_flag & LW_INTR) == 0);
 
 	l->l_cv_signalled = 0;
@@ -137,6 +140,8 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
 	if (__predict_false(error != 0) && l->l_cv_signalled != 0)
 		cv_signal(cv);
 
+	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
+
 	return error;
 }
 
@@ -151,13 +156,14 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
 static void
 cv_unsleep(lwp_t *l)
 {
-	uintptr_t addr;
+	kcondvar_t *cv;
 
 	KASSERT(l->l_wchan != NULL);
 	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
 
-	addr = (uintptr_t)l->l_wchan;
-	((kcondvar_t *)addr)->cv_waiters--;
+	cv = (kcondvar_t *)(uintptr_t)l->l_wchan;
+	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
+	cv->cv_waiters--;
 
 	sleepq_unsleep(l);
 }
@@ -334,6 +340,23 @@ cv_broadcast(kcondvar_t *cv)
 		sleepq_wake(sq, cv, cnt);
 	} else
 		sleepq_unlock(sq);
+}
+
+/*
+ * cv_wakeup:
+ *
+ *	Wake all LWPs waiting on a condition variable.  For cases
+ *	where the address may be waited on by mtsleep()/tsleep().
+ *	Not a documented call.
+ */
+void
+cv_wakeup(kcondvar_t *cv)
+{
+	sleepq_t *sq;
+
+	sq = sleeptab_lookup(&sleeptab, cv);
+	cv->cv_waiters = 0;
+	sleepq_wake(sq, cv, (u_int)-1);
 }
 
 /*

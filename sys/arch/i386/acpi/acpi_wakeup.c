@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.36 2007/04/28 14:03:00 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.36.6.1 2007/08/15 13:47:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2007/04/28 14:03:00 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36.6.1 2007/08/15 13:47:21 skrll Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -78,8 +78,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.36 2007/04/28 14:03:00 joerg Exp $
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
 
+#include "lapic.h"
 #include "ioapic.h"
 
+#if NLAPIC > 0
+#include <machine/i82489var.h>
+#endif
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #endif
@@ -439,9 +443,10 @@ acpi_md_sleep(int state)
 #if NIOAPIC > 0
 		ioapic_enable();
 #endif
-		/*
-		 * XXX must the local APIC be re-inited?
-		 */
+#if NLAPIC > 0
+		lapic_enable();
+		lapic_initclocks();
+#endif
 
 		initrtclock(TIMER_FREQ);
 		inittodr(time_second);

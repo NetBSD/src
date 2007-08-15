@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.12 2007/06/30 09:37:57 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.12.2.1 2007/08/15 13:49:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.12 2007/06/30 09:37:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.12.2.1 2007/08/15 13:49:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -659,7 +659,6 @@ sysvbfs_strategy(void *arg)
 		error = VOP_BMAP(v, b->b_lblkno, NULL, &b->b_blkno, NULL);
 		if (error) {
 			b->b_error = error;
-			b->b_flags |= B_ERROR;
 			biodone(b);
 			return error;
 		}

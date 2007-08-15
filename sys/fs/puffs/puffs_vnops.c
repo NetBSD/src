@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.88 2007/07/09 21:55:10 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.88.2.1 2007/08/15 13:49:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.88 2007/07/09 21:55:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.88.2.1 2007/08/15 13:49:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -429,10 +429,11 @@ puffs_lookup(void *v)
 	dvp = ap->a_dvp;
 	*ap->a_vpp = NULL;
 
-	/* first things first: check access */
-	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
-	if (error)
-		return error;
+	/* r/o fs?  we check create later to handle EEXIST */
+	if ((cnp->cn_flags & ISLASTCN)
+	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
+	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return EROFS;
 
 	isdot = cnp->cn_namelen == 1 && *cnp->cn_nameptr == '.';
 
@@ -475,17 +476,25 @@ puffs_lookup(void *v)
 	 */
 	if (error) {
 		if (error == ENOENT) {
-			if ((cnp->cn_flags & ISLASTCN)
+			/* don't allow to create files on r/o fs */
+			if ((dvp->v_mount->mnt_flag & MNT_RDONLY)
+			    && cnp->cn_nameiop == CREATE) {
+				error = EROFS;
+
+			/* adjust values if we are creating */
+			} else if ((cnp->cn_flags & ISLASTCN)
 			    && (cnp->cn_nameiop == CREATE
 			      || cnp->cn_nameiop == RENAME)) {
 				cnp->cn_flags |= SAVENAME;
 				error = EJUSTRETURN;
+
+			/* save negative cache entry */
 			} else {
 				if ((cnp->cn_flags & MAKEENTRY)
 				    && PUFFS_USE_NAMECACHE(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
-		} else if (error < 0) {
+		} else if (error < 0 || error > ELAST) {
 			error = EINVAL;
 		}
 		goto out;
@@ -528,7 +537,7 @@ puffs_lookup(void *v)
  out:
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	
+
 	DPRINTF(("puffs_lookup: returning %d %p\n", error, *ap->a_vpp));
 	return error;
 }
@@ -684,8 +693,19 @@ puffs_access(void *v)
 
 	PUFFS_VNREQ(access);
 
-	if (vp->v_type == VREG && mode & VWRITE && !EXISTSOP(pmp, WRITE))
-		return EROFS;
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			if ((vp->v_mount->mnt_flag & MNT_RDONLY)
+			    || !EXISTSOP(pmp, WRITE))
+				return EROFS;
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (!EXISTSOP(pmp, ACCESS))
 		return 0;
@@ -757,28 +777,33 @@ puffs_getattr(void *v)
 		vap->va_size = pn->pn_mc_size;
 	} else {
 		if (rvap->va_size != VNOVAL
-		    && vp->v_type != VBLK && vp->v_type != VCHR)
+		    && vp->v_type != VBLK && vp->v_type != VCHR) {
 			uvm_vnp_setsize(vp, rvap->va_size);
+			pn->pn_serversize = rvap->va_size;
+		}
 	}
 
 	return 0;
 }
 
-int
-puffs_setattr(void *v)
+static int
+puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
+	struct lwp *l, int chsize)
 {
-	struct vop_getattr_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		kauth_cred_t a_cred;
-		struct lwp *a_l;
-	} */ *ap = v;
+	struct puffs_node *pn = vp->v_data;
 	int error;
-	struct vattr *vap = ap->a_vap;
-	struct puffs_node *pn = ap->a_vp->v_data;
 
 	PUFFS_VNREQ(setattr);
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL
+	    || vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL
+	    || vap->va_mode != (mode_t)VNOVAL))
+		return EROFS;
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY)
+	    && vp->v_type == VREG && vap->va_size != VNOVAL)
+		return EROFS;
 
 	/*
 	 * Flush metacache first.  If we are called with some explicit
@@ -803,18 +828,35 @@ puffs_setattr(void *v)
 	}
 
 	(void)memcpy(&setattr_arg.pvnr_va, vap, sizeof(struct vattr));
-	puffs_credcvt(&setattr_arg.pvnr_cred, ap->a_cred);
-	puffs_cidcvt(&setattr_arg.pvnr_cid, ap->a_l);
+	puffs_credcvt(&setattr_arg.pvnr_cred, cred);
+	puffs_cidcvt(&setattr_arg.pvnr_cid, l);
 
-	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_SETATTR,
-	    &setattr_arg, sizeof(setattr_arg), 0, ap->a_vp, NULL);
+	error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
+	    &setattr_arg, sizeof(setattr_arg), 0, vp, NULL);
 	if (error)
 		return error;
 
-	if (vap->va_size != VNOVAL)
-		uvm_vnp_setsize(ap->a_vp, vap->va_size);
+	if (vap->va_size != VNOVAL) {
+		pn->pn_serversize = vap->va_size;
+		if (chsize)
+			uvm_vnp_setsize(vp, vap->va_size);
+	}
 
 	return 0;
+}
+
+int
+puffs_setattr(void *v)
+{
+	struct vop_getattr_args /* {
+		const struct vnodeop_desc *a_desc;
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+
+	return puffs_dosetattr(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_l, 1);
 }
 
 int
@@ -939,27 +981,48 @@ puffs_readdir(void *v)
 	struct puffs_vnreq_readdir *readdir_argp;
 	size_t argsize, tomove, cookiemem, cookiesmax;
 	struct uio *uio = ap->a_uio;
-	size_t howmuch;
+	size_t howmuch, resid;
 	int error;
+
+	/*
+	 * ok, so we need: resid + cookiemem = maxreq
+	 * => resid + cookiesize * (resid/minsize) = maxreq
+	 * => resid + cookiesize/minsize * resid = maxreq
+	 * => (cookiesize/minsize + 1) * resid = maxreq
+	 * => resid = maxreq / (cookiesize/minsize + 1)
+	 * 
+	 * Since cookiesize <= minsize and we're not very big on floats,
+	 * we approximate that to be 1.  Therefore:
+	 * 
+	 * resid = maxreq / 2;
+	 *
+	 * Well, at least we didn't have to use differential equations
+	 * or the Gram-Schmidt process.
+	 *
+	 * (yes, I'm very afraid of this)
+	 */
+	KASSERT(CSIZE <= _DIRENT_MINSIZE((struct dirent *)0));
 
 	if (ap->a_cookies) {
 		KASSERT(ap->a_ncookies != NULL);
 		if (pmp->pmp_args.pa_fhsize == 0)
 			return EOPNOTSUPP;
-		cookiesmax = uio->uio_resid/_DIRENT_MINSIZE((struct dirent *)0);
+		resid = PUFFS_TOMOVE(uio->uio_resid, pmp) / 2;
+		cookiesmax = resid/_DIRENT_MINSIZE((struct dirent *)0);
 		cookiemem = ALIGN(cookiesmax*CSIZE); /* play safe */
 	} else {
+		resid = PUFFS_TOMOVE(uio->uio_resid, pmp);
 		cookiesmax = 0;
 		cookiemem = 0;
 	}
 
 	argsize = sizeof(struct puffs_vnreq_readdir);
-	tomove = uio->uio_resid + cookiemem;
+	tomove = resid + cookiemem;
 	readdir_argp = malloc(argsize + tomove, M_PUFFS, M_ZERO | M_WAITOK);
 
 	puffs_credcvt(&readdir_argp->pvnr_cred, ap->a_cred);
 	readdir_argp->pvnr_offset = uio->uio_offset;
-	readdir_argp->pvnr_resid = uio->uio_resid;
+	readdir_argp->pvnr_resid = resid;
 	readdir_argp->pvnr_ncookies = cookiesmax;
 	readdir_argp->pvnr_eofflag = 0;
 	readdir_argp->pvnr_dentoff = cookiemem;
@@ -971,7 +1034,7 @@ puffs_readdir(void *v)
 		goto out;
 
 	/* userspace is cheating? */
-	if (readdir_argp->pvnr_resid > uio->uio_resid
+	if (readdir_argp->pvnr_resid > resid
 	    || readdir_argp->pvnr_ncookies > cookiesmax)
 		ERROUT(EINVAL);
 
@@ -980,7 +1043,7 @@ puffs_readdir(void *v)
 		*ap->a_eofflag = 1;
 
 	/* bouncy-wouncy with the directory data */
-	howmuch = uio->uio_resid - readdir_argp->pvnr_resid;
+	howmuch = resid - readdir_argp->pvnr_resid;
 
 	/* force eof if no data was returned (getcwd() needs this) */
 	if (howmuch == 0) {
@@ -1600,7 +1663,7 @@ puffs_write(void *v)
 	if (vp->v_type == VREG && PUFFS_USE_PAGECACHE(pmp)) {
 		ubcflags = UBC_WRITE | UBC_PARTIALOK;
 		if (UBC_WANT_UNMAP(vp))
-			ubcflags = UBC_UNMAP;
+			ubcflags |= UBC_UNMAP;
 
 		/*
 		 * userspace *should* be allowed to control this,
@@ -1621,7 +1684,7 @@ puffs_write(void *v)
 				uvm_vnp_setwritesize(vp, newoff);
 			}
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
-			    ubcflags);
+			    UVM_ADV_RANDOM, ubcflags);
 
 			/*
 			 * In case of a ubc_uiomove() error,
@@ -1667,7 +1730,7 @@ puffs_write(void *v)
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
 
-		/* write though page cache? */
+		/* write through page cache? */
 		} else if (error == 0 && pmp->pmp_flags & PUFFS_KFLAG_WTCACHE) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
@@ -2042,10 +2105,8 @@ puffs_strategy(void *v)
 	if (rw_argp && !dofaf)
 		free(rw_argp, M_PUFFS);
 
-	if (error) {
+	if (error)
 		bp->b_error = error;
-		bp->b_flags |= B_ERROR;
-	}
 
 	if (error || !(BIOREAD(bp) && BIOASYNC(bp)))
 		biodone(bp);
@@ -2059,7 +2120,7 @@ puffs_mmap(void *v)
 	struct vop_mmap_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
-		int a_fflags;
+		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
@@ -2074,7 +2135,7 @@ puffs_mmap(void *v)
 		return genfs_eopnotsupp(v);
 
 	if (EXISTSOP(pmp, MMAP)) {
-		mmap_arg.pvnr_fflags = ap->a_fflags;
+		mmap_arg.pvnr_prot = ap->a_prot;
 		puffs_credcvt(&mmap_arg.pvnr_cred, ap->a_cred);
 		puffs_cidcvt(&mmap_arg.pvnr_cid, ap->a_l);
 
@@ -2147,6 +2208,7 @@ puffs_getpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
+	struct puffs_node *pn;
 	struct vnode *vp;
 	struct vm_page **pgs;
 	struct puffs_cacheinfo *pcinfo = NULL;
@@ -2160,12 +2222,36 @@ puffs_getpages(void *v)
 	npages = *ap->a_count;
 	pgs = ap->a_m;
 	vp = ap->a_vp;
+	pn = vp->v_data;
 	locked = (ap->a_flags & PGO_LOCKED) != 0;
 	write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	/* ccg xnaht - gets Wuninitialized wrong */
 	pcrun = NULL;
 	runsizes = 0;
+
+	/*
+	 * Check that we aren't trying to fault in pages which our file
+	 * server doesn't know about.  This happens if we extend a file by
+	 * skipping some pages and later try to fault in pages which
+	 * are between pn_serversize and vp_size.  This check optimizes
+	 * away the common case where a file is being extended.
+	 */
+	if (ap->a_offset >= pn->pn_serversize && ap->a_offset < vp->v_size) {
+		struct vattr va;
+
+		/* try again later when we can block */
+		if (locked)
+			ERROUT(EBUSY);
+
+		simple_unlock(&vp->v_interlock);
+		vattr_null(&va);
+		va.va_size = vp->v_size;
+		error = puffs_dosetattr(vp, &va, FSCRED, NULL, 0);
+		if (error)
+			ERROUT(error);
+		simple_lock(&vp->v_interlock);
+	}
 
 	if (write && PUFFS_WCACHEINFO(pmp)) {
 		/* allocate worst-case memory */

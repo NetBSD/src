@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.252 2007/07/06 07:36:46 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.252.4.1 2007/08/15 13:47:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3789,7 +3789,7 @@ ENTRY(sparc64_ipi_flush_pte)
 #endif
 	 
 	ba,a	ret_from_intr_vector
-	 restore
+	 nop
 
 /*
  * IPI handler to flush single context.
@@ -3812,6 +3812,7 @@ ENTRY(sparc64_ipi_flush_ctx)
 	mov	%o2, %g4
 	mov	%o3, %g5
 	mov	%o4, %g6
+	mov	%o5, %g7
 	call	sp_tlb_flush_ctx
 	 ld	[%g2 + ITA_CTX], %o0
 	! restore %o0 - %o5
@@ -3824,7 +3825,7 @@ ENTRY(sparc64_ipi_flush_ctx)
 #endif
 	 
 	ba,a	ret_from_intr_vector
-	 restore
+	 nop
 
 /*
  * IPI handler to flush the whole TLB.

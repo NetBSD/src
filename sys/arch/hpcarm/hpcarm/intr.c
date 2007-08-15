@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 2007/07/01 16:04:57 toshii Exp $	*/
+/*	$NetBSD: intr.c,v 1.12.4.1 2007/08/15 13:47:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2007/07/01 16:04:57 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12.4.1 2007/08/15 13:47:20 skrll Exp $");
 
 #include "opt_irqstats.h"
 
@@ -229,7 +229,7 @@ dump_spl_masks(void)
 	int loop;
 
 	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
-		printf("spl_mask[%d]=%08x splsmask[%d]=%08x\n", loop,
+		printf("spl_masks[%d]=%08x spl_smasks[%d]=%08x\n", loop,
 		    spl_masks[loop], loop, spl_smasks[loop]);
 	}
 }

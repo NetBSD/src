@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.65 2006/10/24 21:03:13 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.65.22.1 2007/08/15 13:46:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.65 2006/10/24 21:03:13 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.65.22.1 2007/08/15 13:46:54 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -234,7 +234,6 @@ extern void dumpsys(void);
 
 /* NOTE: These variables will be removed, well some of them */
 
-extern u_int spl_mask;
 extern u_int current_mask;
 
 void

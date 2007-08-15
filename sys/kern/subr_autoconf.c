@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.118 2007/06/24 01:43:35 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.118.2.1 2007/08/15 13:49:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.118 2007/06/24 01:43:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.118.2.1 2007/08/15 13:49:11 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -381,6 +381,9 @@ configure(void)
 	 * to be enabled.
 	 */
 	cpu_configure();
+
+	/* Initialize callouts, part 2. */
+	callout_startup2();
 
 	/*
 	 * Now that we've found all the hardware, start the real time
