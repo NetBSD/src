@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.37 2007/07/27 08:29:10 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.38 2007/08/15 14:19:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -66,9 +66,9 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		return 0;
 	}
 
-	if ((pcn->pcn_flags & PUFFSLOOKUP_ISLASTCN)
-	    && (pcn->pcn_nameiop == PUFFSLOOKUP_CREATE ||
-	      pcn->pcn_nameiop == PUFFSLOOKUP_RENAME)) {
+	if ((pcn->pcn_flags & NAMEI_ISLASTCN)
+	    && (pcn->pcn_nameiop == NAMEI_CREATE ||
+	      pcn->pcn_nameiop == NAMEI_RENAME)) {
 		rv = puffs_access(VDIR, pn_dir->pn_va.va_mode,
 		    pn_dir->pn_va.va_uid, pn_dir->pn_va.va_gid,
 		    PUFFS_VWRITE, pcn->pcn_cred);
