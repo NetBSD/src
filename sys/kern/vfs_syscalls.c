@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.11 2007/07/29 11:37:11 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.12 2007/08/15 11:45:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.11 2007/07/29 11:37:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.12 2007/08/15 11:45:39 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -722,7 +722,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	}
 	mutex_exit(&mp->mnt_mutex);
 	vfs_hooks_unmount(mp);
-	mutex_destroy(&mp->mnt_mutex);
 	vfs_delref(mp->mnt_op);
 	vfs_destroy(mp);
 	return (0);
