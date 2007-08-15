@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.57 2007/07/12 19:35:36 dsl Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.57.2.1 2007/08/15 13:51:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -78,6 +78,9 @@ __BEGIN_DECLS
 
 #if defined(_KERNEL)
 
+#include <sys/param.h>
+#include <sys/mount.h>
+
 /* ffs_alloc.c */
 int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, kauth_cred_t,
 		  daddr_t *);
@@ -104,24 +107,11 @@ int	ffs_update(struct vnode *, const struct timespec *,
 int	ffs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
 
 /* ffs_vfsops.c */
-void	ffs_init(void);
-void	ffs_reinit(void);
-void	ffs_done(void);
-int	ffs_mountroot(void);
-int	ffs_mount(struct mount *, const char *, void *, size_t *,
-		struct nameidata *, struct lwp *);
-int	ffs_reload(struct mount *, kauth_cred_t, struct lwp *);
-int	ffs_mountfs(struct vnode *, struct mount *, struct lwp *);
-int	ffs_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(ffs);
+
+int     ffs_reload(struct mount *, kauth_cred_t, struct lwp *);
+int     ffs_mountfs(struct vnode *, struct mount *, struct lwp *);
 int	ffs_flushfiles(struct mount *, int, struct lwp *);
-int	ffs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	ffs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int	ffs_vget(struct mount *, ino_t, struct vnode **);
-int	ffs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int	ffs_vptofh(struct vnode *, struct fid *, size_t *);
-int	ffs_extattrctl(struct mount *, int, struct vnode *, int,
-		       const char *, struct lwp *);
-int	ffs_suspendctl(struct mount *, int);
 int	ffs_sbupdate(struct ufsmount *, int);
 int	ffs_cgupdate(struct ufsmount *, int);
 
@@ -138,6 +128,9 @@ int	ffs_getextattr(void *);
 int	ffs_setextattr(void *);
 int	ffs_listextattr(void *);
 int	ffs_deleteextattr(void *);
+int	ffs_lock(void *);
+int	ffs_unlock(void *);
+int	ffs_islocked(void *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
@@ -146,6 +139,8 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
 /*
  * Snapshot function prototypes.
  */
+void	ffs_snapshot_init(void);
+void	ffs_snapshot_fini(void);
 int	ffs_snapblkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
 void	ffs_snapremove(struct vnode *);
 int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);

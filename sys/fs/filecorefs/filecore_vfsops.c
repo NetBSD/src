@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.37 2007/07/17 11:19:32 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.37.2.1 2007/08/15 13:48:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.37 2007/07/17 11:19:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.37.2.1 2007/08/15 13:48:56 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -123,7 +123,7 @@ struct vfsops filecore_vfsops = {
 	NULL,				/* filecore_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	filecore_vnodeopv_descs,
 	0,
 	{ NULL, NULL }
@@ -187,14 +187,14 @@ filecore_mountroot()
  * mount system call
  */
 int
-filecore_mount(mp, path, data, data_len, ndp, l)
+filecore_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct vnode *devvp;
 	struct filecore_args *args = data;
 	int error;
@@ -225,10 +225,10 @@ filecore_mount(mp, path, data, data_len, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-	if ((error = namei(ndp)) != 0)
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-	devvp = ndp->ni_vp;
+	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
@@ -688,7 +688,7 @@ filecore_vget(mp, ino, vpp)
 	 */
 
 	genfs_node_init(vp, &filecore_genfsops);
-	vp->v_size = ip->i_size;
+	uvm_vnp_setsize(vp, ip->i_size);
 	*vpp = vp;
 	return (0);
 }

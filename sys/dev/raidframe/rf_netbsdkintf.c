@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.228 2007/06/24 21:38:21 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.228.2.1 2007/08/15 13:48:40 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.228 2007/06/24 21:38:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.228.2.1 2007/08/15 13:48:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -747,18 +747,15 @@ raidstrategy(struct buf *bp)
 
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
 		bp->b_error = ENODEV;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	raidPtr = raidPtrs[raidID];
 	if (!raidPtr->valid) {
 		bp->b_error = ENODEV;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	if (bp->b_bcount == 0) {
@@ -1861,7 +1858,6 @@ raidstart(RF_Raid_t *raidPtr)
 		if ((sum > raidPtr->totalSectors) || (sum < raid_addr)
 		    || (sum < num_blocks) || (sum < pb)) {
 			bp->b_error = ENOSPC;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
@@ -1873,7 +1869,6 @@ raidstart(RF_Raid_t *raidPtr)
 
 		if (bp->b_bcount & raidPtr->sectorMask) {
 			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
@@ -1907,7 +1902,6 @@ raidstart(RF_Raid_t *raidPtr)
 
 		if (rc) {
 			bp->b_error = rc;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			/* continue loop */
@@ -2025,10 +2019,10 @@ KernelWakeupFunc(struct buf *bp)
 	}
 #endif
 
-	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go
+	/* XXX Ok, let's get aggressive... If b_error is set, let's go
 	 * ballistic, and mark the component as hosed... */
 
-	if (bp->b_flags & B_ERROR) {
+	if (bp->b_error != 0) {
 		/* Mark the disk as dead */
 		/* but only mark it once... */
 		/* and only if it wouldn't leave this RAID set
@@ -2055,7 +2049,7 @@ KernelWakeupFunc(struct buf *bp)
 
 	/* Fill in the error value */
 
-	req->error = (bp->b_flags & B_ERROR) ? bp->b_error : 0;
+	req->error = bp->b_error;
 
 	simple_lock(&queue->raidPtr->iodone_lock);
 
@@ -2526,11 +2520,9 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 void
 rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
-	struct proc *p;
 	struct lwp *l;
 
-	p = raidPtr->engine_thread;
-	l = LIST_FIRST(&p->p_lwps);
+	l = curlwp;
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2539,7 +2531,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+			(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		}
 	}
 }

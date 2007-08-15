@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.21 2007/07/09 21:10:49 ad Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.21.2.1 2007/08/15 13:48:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.21 2007/07/09 21:10:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.21.2.1 2007/08/15 13:48:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -488,6 +488,15 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		rv = kthread_create(PRI_NONE, 0, NULL, dosuspendresume,
 		    pmp, NULL, "puffsusp");
 		break;
+
+	case PUFFSREQSIZEOP:
+		{
+			size_t *rlenp = data;
+
+			*rlenp = pmp->pmp_req_maxsize;
+			rv = 0;
+			break;
+		}
 
 	default:
 		rv = EINVAL;

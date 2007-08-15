@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.150 2007/07/14 21:02:39 ad Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.150.2.1 2007/08/15 13:49:39 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.150 2007/07/14 21:02:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.150.2.1 2007/08/15 13:49:39 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -204,7 +204,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
  	uint8_t esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
-	struct mbuf *mcopy = (struct mbuf *)0;
+	struct mbuf *mcopy = NULL;
 	struct ether_header *eh;
 	struct ifnet *ifp = ifp0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
@@ -377,11 +377,11 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
-		struct sockaddr_dl *sdl;
+		const struct sockaddr_dl *sdl;
 
-		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
+		if (rt && (sdl = satocsdl(rt->rt_gateway)) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			memcpy(edst, LLADDR(sdl), sizeof(edst));
+			memcpy(edst, CLLADDR(sdl), sizeof(edst));
 		} else {
 			error = iso_snparesolve(ifp,
 			    (const struct sockaddr_iso *)dst,
@@ -1451,8 +1451,7 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_LINK:
 		    {
-			struct sockaddr_dl *sdl =
-			    (struct sockaddr_dl *) ifa->ifa_addr;
+			const struct sockaddr_dl *sdl = satocsdl(ifa->ifa_addr);
 
 			if (sdl->sdl_type != IFT_ETHER ||
 			    sdl->sdl_alen != ifp->if_addrlen) {
@@ -1460,7 +1459,7 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			}
 
-			memcpy(LLADDR(ifp->if_sadl), LLADDR(sdl),
+			memcpy(LLADDR(ifp->if_sadl), CLLADDR(sdl),
 			    ifp->if_addrlen);
 
 			/* Set new address. */

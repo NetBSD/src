@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20 2007/03/05 21:35:42 he Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20.14.1 2007/08/15 13:47:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20 2007/03/05 21:35:42 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20.14.1 2007/08/15 13:47:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ nombrpart:
 				} else
 					msg = "bad sector table corrupted";
 			}
-		} while ((bp->b_flags & B_ERROR) && (i += 2) < 10 &&
+		} while (bp->b_error != 0 && (i += 2) < 10 &&
 			i < lp->d_nsectors);
 	}
 

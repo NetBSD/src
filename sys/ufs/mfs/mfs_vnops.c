@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.44 2007/03/04 06:03:46 christos Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.44.10.1 2007/08/15 13:51:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.44 2007/03/04 06:03:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.44.10.1 2007/08/15 13:51:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,9 +185,7 @@ mfs_doio(struct buf *bp, void *base)
 		bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
 	else
 		bp->b_error = copyout(bp->b_data, base, bp->b_bcount);
-	if (bp->b_error)
-		bp->b_flags |= B_ERROR;
-	else
+	if (bp->b_error == 0)
 		bp->b_resid = 0;
 	biodone(bp);
 }

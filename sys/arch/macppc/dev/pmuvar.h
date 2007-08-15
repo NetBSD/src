@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.4 2007/05/09 00:09:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.4.4.1 2007/08/15 13:47:29 skrll Exp $");
 
 #ifndef PMUVAR_H
 #define PMUVAR_H
@@ -68,6 +68,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.4 2007/05/09 00:09:28 macallan Exp $");
 #define PMU_INT_ACK		0x78	/* Read interrupt bits */
 #define PMU_CPU_SPEED		0x7d	/* Control CPU speed on some models */
 #define PMU_SLEEP		0x7f	/* Put CPU to sleep */
+#define PMU_SET_POLL_MASK	0x86	/*
+					 * 16bit mask enables autopolling per
+					 * device
+					 */
 #define PMU_I2C_CMD		0x9a	/* i2c commands */
 #define PMU_GET_LID_STATE	0xdc	/* Report lid state */
 #define PMU_GET_VERSION		0xea	/* Identify thyself */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.265 2007/07/09 21:01:21 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.265.2.1 2007/08/15 13:48:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.265 2007/07/09 21:01:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.265.2.1 2007/08/15 13:48:43 skrll Exp $");
 
 #include "rnd.h"
 
@@ -117,6 +117,14 @@ struct cd_formatted_toc {
 	struct ioc_toc_header header;
 	struct cd_toc_entry entries[MAXTRACK+1]; /* One extra for the */
 						 /* leadout */
+};
+
+struct cdbounce {
+	struct buf     *obp;			/* original buf */
+	int		doff;			/* byte offset in orig. buf */
+	int		soff;			/* byte offset in bounce buf */
+	int		resid;			/* residual i/o in orig. buf */
+	int		bcount;			/* actual obp bytes in bounce */
 };
 
 static void	cdstart(struct scsipi_periph *);
@@ -242,7 +250,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
-	lockinit(&cd->sc_lock, PRIBIO | PCATCH, "cdlock", 0, 0);
+	mutex_init(&cd->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
 	    periph->periph_version == 0)
@@ -312,7 +320,6 @@ cddetach(struct device *self, int flags)
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
 	cmaj = cdevsw_lookup_major(&cd_cdevsw);
-
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		mn = CDMINOR(device_unit(self), i);
@@ -335,7 +342,7 @@ cddetach(struct device *self, int flags)
 
 	splx(s);
 
-	lockmgr(&cd->sc_lock, LK_DRAIN, 0);
+	mutex_destroy(&cd->sc_lock);
 
 	/* Detach from the disk list. */
 	disk_detach(&cd->sc_dk);
@@ -390,8 +397,7 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	    (error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		goto bad4;
+	mutex_enter(&cd->sc_lock);
 
 	rawpart = (part == RAW_PART && fmt == S_IFCHR);
 	if ((periph->periph_flags & PERIPH_OPEN) != 0) {
@@ -495,7 +501,7 @@ out:	/* Insure only one open at a time. */
 	    cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&cd->sc_lock);
 	return (0);
 
 	periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
@@ -508,8 +514,7 @@ bad:
 	}
 
 bad3:
-	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
-bad4:
+	mutex_exit(&cd->sc_lock);
 	if (cd->sc_dk.dk_openmask == 0)
 		scsipi_adapter_delref(adapt);
 	return (error);
@@ -526,10 +531,8 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = CDPART(dev);
-	int error;
 
-	if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&cd->sc_lock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -555,7 +558,7 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		scsipi_adapter_delref(adapt);
 	}
 
-	lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&cd->sc_lock);
 	return (0);
 }
 
@@ -585,7 +588,7 @@ cdstrategy(struct buf *bp)
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
-		goto bad;
+		goto done;
 	}
 
 	lp = cd->sc_dk.dk_label;
@@ -597,7 +600,7 @@ cdstrategy(struct buf *bp)
 	if ((bp->b_bcount % lp->d_secsize) != 0 ||
 	    bp->b_blkno < 0 ) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	/*
 	 * If it's a null transfer, return immediately
@@ -641,36 +644,52 @@ cdstrategy(struct buf *bp)
 		 */
 		if ((bp->b_bcount % cd->params.blksize) != 0 ||
 			((blkno * lp->d_secsize) % cd->params.blksize) != 0) {
+			struct cdbounce *bounce;
 			struct buf *nbp;
-			void *bounce = NULL;
 			long count;
 
 			if ((bp->b_flags & B_READ) == 0) {
 
 				/* XXXX We don't support bouncing writes. */
 				bp->b_error = EACCES;
-				goto bad;
+				goto done;
 			}
-			count = ((blkno * lp->d_secsize) % cd->params.blksize);
-			/* XXX Store starting offset in bp->b_rawblkno */
-			bp->b_rawblkno = count;
 
+			bounce = malloc(sizeof(*bounce), M_DEVBUF, M_NOWAIT);
+			if (!bounce) {
+				/* No memory -- fail the iop. */
+				bp->b_error = ENOMEM;
+				goto done;
+			}
+
+			bounce->obp = bp;
+			bounce->resid = bp->b_bcount;
+			bounce->doff = 0;
+			count = ((blkno * lp->d_secsize) % cd->params.blksize);
+			bounce->soff = count;
 			count += bp->b_bcount;
 			count = roundup(count, cd->params.blksize);
+			bounce->bcount = bounce->resid;
+			if (count > MAXPHYS) {
+				bounce->bcount = MAXPHYS - bounce->soff;
+				count = MAXPHYS;
+			}
 
 			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
 			nbp = getiobuf_nowait();
 			if (!nbp) {
 				/* No memory -- fail the iop. */
+				free(bounce, M_DEVBUF);
 				bp->b_error = ENOMEM;
-				goto bad;
+				goto done;
 			}
-			bounce = malloc(count, M_DEVBUF, M_NOWAIT);
-			if (!bounce) {
+			nbp->b_data = malloc(count, M_DEVBUF, M_NOWAIT);
+			if (!nbp->b_data) {
 				/* No memory -- fail the iop. */
+				free(bounce, M_DEVBUF);
 				putiobuf(nbp);
 				bp->b_error = ENOMEM;
-				goto bad;
+				goto done;
 			}
 
 			/* Set up the IOP to the bounce buffer. */
@@ -680,16 +699,14 @@ cdstrategy(struct buf *bp)
 
 			nbp->b_bcount = count;
 			nbp->b_bufsize = count;
-			nbp->b_data = bounce;
 
 			nbp->b_rawblkno = blkno;
 
-			/* We need to do a read-modify-write operation */
 			nbp->b_flags = bp->b_flags | B_READ | B_CALL;
 			nbp->b_iodone = cdbounce;
 
-			/* Put ptr to orig buf in b_private and use new buf */
-			nbp->b_private = bp;
+			/* store bounce state in b_private and use new buf */
+			nbp->b_private = bounce;
 
 			BIO_COPYPRIO(nbp, bp);
 
@@ -720,8 +737,6 @@ cdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
@@ -782,7 +797,6 @@ cdstart(struct scsipi_periph *periph)
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
 			if ((bp = BUFQ_GET(cd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
 				continue;
@@ -899,7 +913,6 @@ cddone(struct scsipi_xfer *xs, int error)
 		if (error) {
 			/* on a read/write error bp->b_resid is zero, so fix */
 			bp->b_resid = bp->b_bcount;
-			bp->b_flags |= B_ERROR;
 		}
 
 		disk_unbusy(&cd->sc_dk, bp->b_bcount - bp->b_resid,
@@ -915,85 +928,90 @@ cddone(struct scsipi_xfer *xs, int error)
 static void
 cdbounce(struct buf *bp)
 {
-	struct buf *obp = (struct buf *)bp->b_private;
+	struct cdbounce *bounce = (struct cdbounce *)bp->b_private;
+	struct buf *obp = bounce->obp;
+	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(obp->b_dev)];
+	struct disklabel *lp = cd->sc_dk.dk_label;
 
-	if (bp->b_flags & B_ERROR) {
+	if (bp->b_error != 0) {
 		/* EEK propagate the error and free the memory */
 		goto done;
 	}
-	if (obp->b_flags & B_READ) {
-		/* Copy data to the final destination and free the buf. */
-		memcpy(obp->b_data, (char *)bp->b_data+obp->b_rawblkno,
-			obp->b_bcount);
-	} else {
-		/*
-		 * XXXX This is a CD-ROM -- READ ONLY -- why do we bother with
-		 * XXXX any of this write stuff?
-		 */
-		if (bp->b_flags & B_READ) {
-			struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
-			struct buf *nbp;
-			int s;
 
-			/* Read part of RMW complete. */
-			memcpy((char *)bp->b_data+obp->b_rawblkno, obp->b_data,
-				obp->b_bcount);
+	KASSERT(obp->b_flags & B_READ);
 
-			/* We need to alloc a new buf. */
-			nbp = getiobuf_nowait();
-			if (!nbp) {
-				/* No buf available. */
-				bp->b_flags |= B_ERROR;
-				bp->b_error = ENOMEM;
-				bp->b_resid = bp->b_bcount;
-				goto done;
-			}
+	/* copy bounce buffer to final destination */
+	memcpy((char *)obp->b_data + bounce->doff,
+	    (char *)bp->b_data + bounce->soff, bounce->bcount);
 
-			/* Set up the IOP to the bounce buffer. */
-			nbp->b_error = 0;
-			nbp->b_proc = bp->b_proc;
-			nbp->b_vp = NULLVP;
+	/* check if we need more I/O, i.e. bounce put us over MAXPHYS */
+	KASSERT(bounce->resid >= bounce->bcount);
+	bounce->resid -= bounce->bcount;
+	if (bounce->resid > 0) {
+		struct buf *nbp;
+		daddr_t blkno;
+		long count;
+		int s;
 
-			nbp->b_bcount = bp->b_bcount;
-			nbp->b_bufsize = bp->b_bufsize;
-			nbp->b_data = bp->b_data;
-
-			nbp->b_rawblkno = bp->b_rawblkno;
-
-			/* We need to do a read-modify-write operation */
-			nbp->b_flags = obp->b_flags | B_CALL;
-			nbp->b_iodone = cdbounce;
-
-			/* Put ptr to orig buf in b_private and use new buf */
-			nbp->b_private = obp;
-
-			s = splbio();
-			/*
-			 * Place it in the queue of disk activities for this
-			 * disk.
-			 *
-			 * XXX Only do disksort() if the current operating mode
-			 * XXX does not include tagged queueing.
-			 */
-			BUFQ_PUT(cd->buf_queue, nbp);
-
-			/*
-			 * Tell the device to get going on the transfer if it's
-			 * not doing anything, otherwise just wait for
-			 * completion
-			 */
-			cdstart(cd->sc_periph);
-
-			splx(s);
-			return;
-
+		blkno = obp->b_rawblkno +
+		    ((obp->b_bcount - bounce->resid) / lp->d_secsize);
+		count = ((blkno * lp->d_secsize) % cd->params.blksize);
+		blkno = (blkno * lp->d_secsize) / cd->params.blksize;
+		bounce->soff = count;
+		bounce->doff += bounce->bcount;
+		count += bounce->resid;
+		count = roundup(count, cd->params.blksize);
+		bounce->bcount = bounce->resid;
+		if (count > MAXPHYS) {
+			bounce->bcount = MAXPHYS - bounce->soff;
+			count = MAXPHYS;
 		}
+
+		nbp = getiobuf_nowait();
+		if (!nbp) {
+			/* No memory -- fail the iop. */
+			bp->b_error = ENOMEM;
+			goto done;
+		}
+
+		/* Set up the IOP to the bounce buffer. */
+		nbp->b_error = 0;
+		nbp->b_proc = obp->b_proc;
+		nbp->b_vp = NULLVP;
+
+		nbp->b_bcount = count;
+		nbp->b_bufsize = count;
+		nbp->b_data = bp->b_data;
+
+		nbp->b_rawblkno = blkno;
+
+		nbp->b_flags = obp->b_flags | B_READ | B_CALL;
+		nbp->b_iodone = cdbounce;
+
+		/* store bounce state in b_private and use new buf */
+		nbp->b_private = bounce;
+
+		BIO_COPYPRIO(nbp, obp);
+
+		bp->b_data = NULL;
+		putiobuf(bp);
+
+		/* enqueue the request and return */
+		s = splbio();
+		BUFQ_PUT(cd->buf_queue, nbp);
+		cdstart(cd->sc_periph);
+		splx(s);
+
+		return;
 	}
+
 done:
-	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	free(bp->b_data, M_DEVBUF);
+	free(bounce, M_DEVBUF);
+	bp->b_data = NULL;
+	putiobuf(bp);
 	biodone(obp);
 }
 
@@ -1335,8 +1353,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 		lp = addr;
 
-		if ((error = lockmgr(&cd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-			goto bad;
+		mutex_enter(&cd->sc_lock);
 		cd->flags |= CDF_LABELLING;
 
 		error = setdisklabel(cd->sc_dk.dk_label,
@@ -1347,8 +1364,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		}
 
 		cd->flags &= ~CDF_LABELLING;
-		lockmgr(&cd->sc_lock, LK_RELEASE, NULL);
-bad:
+		mutex_exit(&cd->sc_lock);
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
 			free(newlabel, M_TEMP);

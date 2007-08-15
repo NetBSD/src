@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.160 2007/07/17 10:24:10 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.160.2.1 2007/08/15 13:50:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.160 2007/07/17 10:24:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.160.2.1 2007/08/15 13:50:00 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -151,8 +151,6 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		advice = IO_ADV_DECODE(ioflag);
 		error = 0;
 		while (uio->uio_resid > 0) {
-			void *win;
-			int flags;
 			vsize_t bytelen;
 
 			nfs_delayedtruncate(vp);
@@ -161,11 +159,9 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			}
 			bytelen =
 			    MIN(np->n_size - uio->uio_offset, uio->uio_resid);
-			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
-					&bytelen, advice, UBC_READ);
-			error = uiomove(win, bytelen, uio);
-			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-			ubc_release(win, flags);
+			error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+			    advice, UBC_READ | UBC_PARTIALOK |
+			    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
 			if (error) {
 				/*
 				 * XXXkludge
@@ -537,7 +533,7 @@ nfs_write(v)
 			uvm_vnp_setwritesize(vp, uio->uio_offset + bytelen);
 		}
 		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
-		    UBC_WRITE | UBC_PARTIALOK |
+		    UVM_ADV_RANDOM, UBC_WRITE | UBC_PARTIALOK |
 		    (overwrite ? UBC_FAULTBUSY : 0) |
 		    (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0));
 		if (error) {
@@ -741,9 +737,9 @@ int
 nfs_asyncio(bp)
 	struct buf *bp;
 {
-	int i;
+	struct nfs_iod *iod;
 	struct nfsmount *nmp;
-	int gotiod, slptimeo = 0, error;
+	int slptimeo = 0, error;
 	bool catch = false;
 
 	if (nfs_numasync == 0)
@@ -753,42 +749,33 @@ nfs_asyncio(bp)
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
 		catch = true;
-	gotiod = false;
 
 	/*
 	 * Find a free iod to process this request.
 	 */
 
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		struct nfs_iod *iod = &nfs_asyncdaemon[i];
-
+	mutex_enter(&nfs_iodlist_lock);
+	iod = LIST_FIRST(&nfs_iodlist_idle);
+	if (iod) {
+		/*
+		 * Found one, so wake it up and tell it which
+		 * mount to process.
+		 */
+		LIST_REMOVE(iod, nid_idle);
 		mutex_enter(&iod->nid_lock);
-		if (iod->nid_want) {
-			/*
-			 * Found one, so wake it up and tell it which
-			 * mount to process.
-			 */
-			iod->nid_want = NULL;
-			iod->nid_mount = nmp;
-			cv_signal(&iod->nid_cv);
-			mutex_enter(&nmp->nm_lock);
-			mutex_exit(&iod->nid_lock);
-			nmp->nm_bufqiods++;
-			gotiod = true;
-			break;
-		}
-		mutex_exit(&iod->nid_lock);
-	}
-
-	/*
-	 * If none are free, we may already have an iod working on this mount
-	 * point.  If so, it will process our request.
-	 */
-
-	if (!gotiod) {
+		mutex_exit(&nfs_iodlist_lock);
+		KASSERT(iod->nid_mount == NULL);
+		iod->nid_mount = nmp;
+		cv_signal(&iod->nid_cv);
 		mutex_enter(&nmp->nm_lock);
-		if (nmp->nm_bufqiods > 0)
-			gotiod = true;
+		mutex_exit(&iod->nid_lock);
+		nmp->nm_bufqiods++;
+		if (nmp->nm_bufqlen < 2 * nmp->nm_bufqiods) {
+			cv_broadcast(&nmp->nm_aiocv);
+		}
+	} else {
+		mutex_exit(&nfs_iodlist_lock);
+		mutex_enter(&nmp->nm_lock);
 	}
 
 	KASSERT(mutex_owned(&nmp->nm_lock));
@@ -804,14 +791,14 @@ again:
 	 * XXX: start non-loopback mounts straight away?  If "lots free",
 	 * let pagedaemon start loopback writes anyway?
 	 */
-	if (gotiod) {
+	if (nmp->nm_bufqiods > 0) {
 
 		/*
 		 * Ensure that the queue never grows too large.
 		 */
 		if (curlwp == uvm.pagedaemon_lwp) {
 	  		/* Enque for later, to avoid free-page deadlock */
-		} else while (nmp->nm_bufqlen >= 2*nfs_numasync) {
+		} else while (nmp->nm_bufqlen >= 2 * nmp->nm_bufqiods) {
 			if (catch) {
 				error = cv_timedwait_sig(&nmp->nm_aiocv, 
 				    &nmp->nm_lock, slptimeo);
@@ -934,7 +921,6 @@ nfs_doio_read(bp, uiop)
 		break;
 	}
 	if (error) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 	}
 	return error;
@@ -1076,7 +1062,6 @@ again:
 			goto again;
 		}
 		if (error) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = np->n_error = error;
 			np->n_flag |= NWRITEERR;
 		}
@@ -1140,7 +1125,6 @@ again:
 		/*
 		 * we got an error.
 		 */
-		bp->b_flags |= B_ERROR;
 		bp->b_error = np->n_error = error;
 		np->n_flag |= NWRITEERR;
 	}
@@ -1184,7 +1168,6 @@ nfs_doio_phys(bp, uiop)
 		}
 	}
 	if (error) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = error;
 	}
 	return error;

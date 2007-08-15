@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.32 2007/03/04 14:46:45 yamt Exp $ */
+/* $NetBSD: disksubr.c,v 1.32.14.1 2007/08/15 13:46:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2007/03/04 14:46:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32.14.1 2007/08/15 13:46:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ readdisklabel(dev, strat, lp, clp)
 				} else
 					msg = "bad sector table corrupted";
 			}
-		} while ((bp->b_flags & B_ERROR) && (i += 2) < 10 &&
+		} while (bp->b_error != 0 && (i += 2) < 10 &&
 			i < lp->d_nsectors);
 	}
 

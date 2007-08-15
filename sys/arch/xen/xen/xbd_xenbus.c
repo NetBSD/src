@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.18 2007/03/04 06:01:11 christos Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.18.14.1 2007/08/15 13:48:01 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.18 2007/03/04 06:01:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.18.14.1 2007/08/15 13:48:01 skrll Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.18 2007/03/04 06:01:11 christos Exp
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
@@ -502,13 +503,11 @@ again:
 		    rep->operation != BLKIF_OP_WRITE) {
 			printf("%s: bad operation %d from backend\n",
 			     sc->sc_dev.dv_xname, rep->operation);
-				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				goto next;
 		}
 		if (rep->status != BLKIF_RSP_OKAY) {
-				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				goto next;
@@ -568,14 +567,12 @@ xbdstrategy(struct buf *bp)
 	    (long)bp->b_bcount));
 
 	if (sc == NULL || sc->sc_shutdown) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		biodone(bp);
 		return;
 	}
 	if (__predict_false((sc->sc_info & VDISK_READONLY) &&
 	    (bp->b_flags & B_READ) == 0)) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EROFS;
 		biodone(bp);
 		return;
@@ -780,7 +777,6 @@ out:
 	return ret;
 
 err:
-	bp->b_flags |= B_ERROR;
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 	return 0;

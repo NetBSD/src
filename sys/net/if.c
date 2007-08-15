@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.193 2007/07/09 21:10:59 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.193.2.1 2007/08/15 13:49:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.193 2007/07/09 21:10:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.193.2.1 2007/08/15 13:49:38 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -271,8 +271,8 @@ void
 if_alloc_sadl(struct ifnet *ifp)
 {
 	unsigned socksize, ifasize;
-	int namelen, masklen;
-	struct sockaddr_dl *sdl;
+	int addrlen, namelen;
+	struct sockaddr_dl *mask, *sdl;
 	struct ifaddr *ifa;
 
 	/*
@@ -284,23 +284,23 @@ if_alloc_sadl(struct ifnet *ifp)
 		if_free_sadl(ifp);
 
 	namelen = strlen(ifp->if_xname);
-	masklen = offsetof(struct sockaddr_dl, sdl_data[0]) + namelen;
-	socksize = masklen + ifp->if_addrlen;
-#define ROUNDUP(a) (1 + (((a) - 1) | (sizeof(long) - 1)))
-	if (socksize < sizeof(*sdl))
-		socksize = sizeof(*sdl);
-	socksize = ROUNDUP(socksize);
+	addrlen = ifp->if_addrlen;
+	socksize = roundup(
+	    MAX(sizeof(*sdl),
+	    sockaddr_dl_measure(namelen, addrlen)), sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
-	memset((void *)ifa, 0, ifasize);
+	memset(ifa, 0, ifasize);
+
 	sdl = (struct sockaddr_dl *)(ifa + 1);
-	sdl->sdl_len = socksize;
-	sdl->sdl_family = AF_LINK;
-	memcpy(sdl->sdl_data, ifp->if_xname, namelen);
-	sdl->sdl_nlen = namelen;
-	sdl->sdl_alen = ifp->if_addrlen;
-	sdl->sdl_index = ifp->if_index;
-	sdl->sdl_type = ifp->if_type;
+	mask = (struct sockaddr_dl *)(socksize + (char *)sdl);
+
+	sockaddr_dl_init(sdl, ifp->if_index, ifp->if_type,
+	    ifp->if_xname, namelen, NULL, addrlen);
+	mask->sdl_len = sockaddr_dl_measure(namelen, 0);
+	while (namelen != 0)
+		mask->sdl_data[--namelen] = 0xff;
+
 	ifnet_addrs[ifp->if_index] = ifa;
 	IFAREF(ifa);
 	ifa->ifa_ifp = ifp;
@@ -309,11 +309,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	IFAREF(ifa);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
-	sdl = (struct sockaddr_dl *)(socksize + (char *)sdl);
-	ifa->ifa_netmask = (struct sockaddr *)sdl;
-	sdl->sdl_len = masklen;
-	while (namelen != 0)
-		sdl->sdl_data[--namelen] = 0xff;
+	ifa->ifa_netmask = (struct sockaddr *)mask;
 }
 
 /*
@@ -745,7 +741,7 @@ if_rt_walktree(struct rtentry *rt, void *v)
 
 	/* Delete the entry. */
 	++rt->rt_refcnt;
-	error = rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
+	error = rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
 	    rt_mask(rt), rt->rt_flags, NULL);
 	KASSERT((rt->rt_flags & RTF_UP) == 0);
 	rt->rt_ifp = NULL;
@@ -897,6 +893,12 @@ if_clone_list(struct if_clonereq *ifcr)
 	return error;
 }
 
+static inline int
+equal(const struct sockaddr *sa1, const struct sockaddr *sa2)
+{
+	return sockaddr_cmp(sa1, sa2) == 0;
+}
+
 /*
  * Locate an interface based on a complete address.
  */
@@ -906,9 +908,6 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-
-#define	equal(a1, a2) \
-  (memcmp((a1), (a2), ((const struct sockaddr *)(a1))->sa_len) == 0)
 
 	IFNET_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
@@ -970,7 +969,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	const char *addr_data = addr->sa_data, *cplim;
 
 	if (af == AF_LINK) {
-		sdl = (const struct sockaddr_dl *)addr;
+		sdl = satocsdl(addr);
 		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
 		    ifindex2ifnet[sdl->sdl_index] &&
 		    ifindex2ifnet[sdl->sdl_index]->if_output != if_nulloutput)
@@ -1113,11 +1112,11 @@ void
 link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct ifaddr *ifa;
-	struct sockaddr *dst;
+	const struct sockaddr *dst;
 	struct ifnet *ifp;
 
 	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == NULL) ||
-	    ((ifp = ifa->ifa_ifp) == NULL) || ((dst = rt_key(rt)) == NULL))
+	    ((ifp = ifa->ifa_ifp) == NULL) || ((dst = rt_getkey(rt)) == NULL))
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		rt_replace_ifa(rt, ifa);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.190 2007/07/09 21:10:54 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.190.2.1 2007/08/15 13:49:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.190 2007/07/09 21:10:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.190.2.1 2007/08/15 13:49:10 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -394,13 +394,13 @@ mi_switch(struct lwp *l)
 		pmc_save_context(l->l_proc);
 	}
 #endif
-	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	updatertime(l, spc);
 
 	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
 	mutex_spin_enter(spc->spc_mutex);
+	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	KASSERT(l->l_stat != LSRUN);
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, &spc->spc_lwplock));
@@ -545,6 +545,7 @@ setrunnable(struct lwp *l)
 	case LSSUSPENDED:
 		l->l_flag &= ~LW_WSUSPEND;
 		p->p_nrlwps++;
+		cv_broadcast(&p->p_lwpcv);
 		break;
 	case LSSLEEP:
 		KASSERT(l->l_wchan != NULL);
@@ -606,10 +607,8 @@ setrunnable(struct lwp *l)
 void
 suspendsched(void)
 {
-#ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-#endif
 	struct lwp *l;
 	struct proc *p;
 
@@ -660,12 +659,8 @@ suspendsched(void)
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
 	 * They'll trap into the kernel and suspend themselves in userret().
 	 */
-#ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
 		cpu_need_resched(ci, 0);
-#else
-	cpu_need_resched(curcpu(), 0);
-#endif
 }
 
 /*
@@ -908,7 +903,7 @@ sched_pstats(void *arg)
 	}
 	mutex_exit(&proclist_mutex);
 	uvm_meter();
-	cv_broadcast(&lbolt);
+	cv_wakeup(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);
 }
 

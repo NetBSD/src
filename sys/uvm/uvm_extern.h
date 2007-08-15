@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.132 2007/07/17 17:42:08 joerg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.132.2.1 2007/08/15 13:51:20 skrll Exp $	*/
 
 /*
  *
@@ -562,7 +562,7 @@ void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
-			    int);
+			    int, int);
 
 /* uvm_fault.c */
 #define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)
@@ -713,7 +713,6 @@ void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 void			uvm_vnp_sync(struct mount *);
-struct uvm_object	*uvn_attach(void *, vm_prot_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);

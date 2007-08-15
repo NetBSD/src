@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.6 2007/03/09 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.6.14.1 2007/08/15 13:47:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -347,9 +347,6 @@ exitirq:
 	/* NOT REACHED */
 	b	. - 8
 
-Lspl_mask:
-	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
-
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
 
@@ -361,9 +358,11 @@ ENTRY(irq_setmasks)
 
 	/* Calculate IOMD interrupt mask */
 	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
-	ldr	r2, Lspl_mask		/* Block due to current spl level */
 	ldr	r1, [r1]
+	ldr	r0, Lspl_masks		/* Block due to current spl level */
+	ldr	r2, Lcurrent_spl_level
 	ldr	r2, [r2]
+	ldr	r2, [r0, r2, lsl #2]
 	and	r1, r1, r2
 	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
 	ldr	r2, [r2]

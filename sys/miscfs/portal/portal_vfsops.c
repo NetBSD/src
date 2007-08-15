@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.63 2007/07/17 11:19:34 pooka Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.63.2.1 2007/08/15 13:49:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.63 2007/07/17 11:19:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.63.2.1 2007/08/15 13:49:33 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -68,18 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.63 2007/07/17 11:19:34 pooka Exp
 
 #include <miscfs/portal/portal.h>
 
-void	portal_init(void);
-void	portal_done(void);
-int	portal_mount(struct mount *, const char *, void *, size_t *,
-			  struct nameidata *, struct lwp *);
-int	portal_start(struct mount *, int, struct lwp *);
-int	portal_unmount(struct mount *, int, struct lwp *);
-int	portal_root(struct mount *, struct vnode **);
-int	portal_quotactl(struct mount *, int, uid_t, void *,
-			     struct lwp *);
-int	portal_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	portal_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int	portal_vget(struct mount *, ino_t, struct vnode **);
+VFS_PROTOS(portal);
 
 void
 portal_init()
@@ -100,7 +89,6 @@ portal_mount(
     const char *path,
     void *data,
     size_t *data_len,
-    struct nameidata *ndp,
     struct lwp *l
 )
 {
@@ -326,7 +314,7 @@ struct vfsops portal_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	portal_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

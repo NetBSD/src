@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.25 2007/04/19 11:05:14 yamt Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.25.2.1 2007/08/15 13:49:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.25 2007/04/19 11:05:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.25.2.1 2007/08/15 13:49:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,6 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 	    };
 	    if (error) {
 		bp->b_error = error;
-		bp->b_flags |= B_ERROR;
 	    }
 	} else { /* write */
 		io.iov_len = uiop->uio_resid = bp->b_bcount;

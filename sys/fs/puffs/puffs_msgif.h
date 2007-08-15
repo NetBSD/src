@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.42 2007/07/17 11:29:43 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.42.2.1 2007/08/15 13:48:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,8 @@
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
 
+#include <uvm/uvm_prot.h>
+
 #define PUFFSOP_VFS	1
 #define PUFFSOP_VN	2
 #define PUFFSOP_CACHE	3
@@ -83,11 +85,13 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	15
+#define PUFFSVERSION	16
 #define PUFFSNAMESIZE	32
 
-#define PUFFS_TYPELEN (MFSNAMELEN - sizeof(PUFFS_TYPEPREFIX))
-#define PUFFS_NAMELEN _VFS_MNAMELEN
+#define PUFFS_TYPEPREFIX "puffs|"
+
+#define PUFFS_TYPELEN (_VFS_NAMELEN - (sizeof(PUFFS_TYPEPREFIX)+1))
+#define PUFFS_NAMELEN (_VFS_MNAMELEN-1)
 
 struct puffs_kargs {
 	unsigned int	pa_vers;
@@ -107,7 +111,7 @@ struct puffs_kargs {
 
 	struct statvfs	pa_svfsb;
 	
-	char		pa_typename[_VFS_NAMELEN]; /* max PUFFS_TYPELEN chars */
+	char		pa_typename[_VFS_NAMELEN];
 	char		pa_mntfromname[_VFS_MNAMELEN];
 
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
@@ -306,6 +310,7 @@ struct puffs_flush {
 #define PUFFSFLUSHMULTIOP	_IOW ('p', 5, struct puffs_flushmulti)
 #endif
 #define PUFFSSUSPENDOP		_IO  ('p', 6)
+#define PUFFSREQSIZEOP		_IOR ('p', 7, size_t)
 
 
 /*
@@ -690,7 +695,7 @@ struct puffs_vnreq_advlock {
 struct puffs_vnreq_mmap {
 	struct puffs_req	pvn_pr;
 
-	int			pvnr_fflags;		/* OUT	*/
+	vm_prot_t		pvnr_prot;		/* OUT	*/
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
 	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };

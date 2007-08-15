@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.59 2007/03/04 07:54:09 christos Exp $
+	$NetBSD: syscalls.master,v 1.59.10.1 2007/08/15 13:48:09 skrll Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -503,19 +503,20 @@
 			    netbsd32_u_long flags, netbsd32_lwpidp new_lwp); }
 310	NOARGS		{ int sys__lwp_exit(void); }
 311	NOARGS MPSAFE	{ lwpid_t sys__lwp_self(void); }
-312	STD		{ int netbsd32__lwp_wait(lwpid_t wait_for, \
+312	STD MPSAFE	{ int netbsd32__lwp_wait(lwpid_t wait_for, \
 			    netbsd32_lwpidp departed); }
-313	STD		{ int netbsd32__lwp_suspend(lwpid_t target); }
-314	STD		{ int netbsd32__lwp_continue(lwpid_t target); }
-315	STD		{ int netbsd32__lwp_wakeup(lwpid_t target); }
+313	STD MPSAFE	{ int netbsd32__lwp_suspend(lwpid_t target); }
+314	STD MPSAFE	{ int netbsd32__lwp_continue(lwpid_t target); }
+315	STD MPSAFE	{ int netbsd32__lwp_wakeup(lwpid_t target); }
 316	NOARGS MPSAFE	{ void *sys__lwp_getprivate(void); }
-317	STD		{ void netbsd32__lwp_setprivate(netbsd32_voidp ptr); }
+317	STD MPSAFE	{ void netbsd32__lwp_setprivate(netbsd32_voidp ptr); }
 318	STD		{ int netbsd32__lwp_kill(lwpid_t target, int signo); }
-319	STD		{ int netbsd32__lwp_detach(lwpid_t target); }
-320	STD		{ int netbsd32__lwp_park(const netbsd32_timespecp_t ts, \
-				netbsd32_ucontextp ucp, const netbsd32_voidp hint); }
-321	STD		{ int netbsd32__lwp_unpark(lwpid_t target, const netbsd32_voidp hint); }
-322	STD		{ netbsd32_size_t netbsd32__lwp_unpark_all(const netbsd32_lwpidp targets, \
+319	STD MPSAFE	{ int netbsd32__lwp_detach(lwpid_t target); }
+320	STD MPSAFE	{ int netbsd32__lwp_park(const netbsd32_timespecp_t ts, \
+				lwpid_t unpark, const netbsd32_voidp hint, \
+				const netbsd32_voidp unparkhint); }
+321	STD MPSAFE	{ int netbsd32__lwp_unpark(lwpid_t target, const netbsd32_voidp hint); }
+322	STD MPSAFE	{ netbsd32_size_t netbsd32__lwp_unpark_all(const netbsd32_lwpidp targets, \
 				netbsd32_size_t ntargets, const netbsd32_voidp hint); }
 323	UNIMPL
 324	UNIMPL

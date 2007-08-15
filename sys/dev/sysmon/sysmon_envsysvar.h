@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.3 2007/07/05 23:48:22 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.3.6.1 2007/08/15 13:48:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/systm.h>
 #include <sys/mutex.h>
 #include <sys/workqueue.h>
+#include <sys/condvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
@@ -68,78 +69,18 @@ do {									\
 	DPRINTFOBJ(("%s: obj (%s:%d) updated\n", __func__, (a), (b)));	\
 } while (/* CONSTCOND */ 0)
 
-#define SENSOR_DICTSETFAILED(a, b)					\
-do {									\
-	DPRINTF(("%s: dict_set (%s:%d) failed\n", __func__, (a), (b)));	\
-} while (/* CONSTCOND */ 0)
-
-#define SENSOR_SETTYPE(a, b, c, d)					\
-do {									\
-	if (!prop_dictionary_set_ ## d((a), (b), (c))) {		\
-		SENSOR_DICTSETFAILED((b), (c));				\
-		if ((a)) 						\
-			prop_object_release((a));			\
-		goto out;						\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define SENSOR_SINT32(a, b, c)	SENSOR_SETTYPE(a, b, c, int32)
-#define SENSOR_SUINT32(a, b, c)	SENSOR_SETTYPE(a, b, c, uint32)
-#define SENSOR_SBOOL(a, b, c)	SENSOR_SETTYPE(a, b, c, bool)
-#define SENSOR_SSTRING(a, b, c)						\
-do {									\
-	if (!prop_dictionary_set_cstring_nocopy((a), (b), (c))) {	\
-		DPRINTF(("%s: set_cstring (%s) failed.\n",		\
-		    __func__, (c)));					\
-		if ((a))						\
-			prop_object_release((a));			\
-		goto out;						\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define SENSOR_UPTYPE(a, b, c, d, e)					\
-do {									\
-	obj = prop_dictionary_get((a), (b));				\
-	if (!prop_number_equals_ ## e(obj, (c))) {			\
-		if (!prop_dictionary_set_ ## d((a), (b), (c))) { 	\
-			SENSOR_DICTSETFAILED((b), (c));			\
-			return EINVAL;					\
-		}							\
-		SENSOR_OBJUPDATED((b), (c));				\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define SENSOR_UPINT32(a, b, c)		\
-	SENSOR_UPTYPE(a, b, c, int32, integer)
-#define SENSOR_UPUINT32(a, b, c)	\
-	SENSOR_UPTYPE(a, b, c, uint32, unsigned_integer)
-#define SENSOR_UPSTRING(a, b, c)					\
-do {									\
-	obj = prop_dictionary_get((a), (b));				\
-	if (obj == NULL) {						\
-		SENSOR_SSTRING((a), (b), (c));				\
-	} else {							\
-		if (!prop_string_equals_cstring((obj), (c))) {		\
-			SENSOR_SSTRING((a), (b), (c));			\
-		}							\
-	}								\
-} while (/* CONSTCOND */ 0)
-
 /* struct used by a sysmon envsys event */
 typedef struct sme_event {
 	/* to add works into our workqueue */
-	union {
-		struct work u_work;
-		TAILQ_ENTRY(sme_event) u_q;
-	} see_u;
-#define see_wk	see_u.u_work
-#define see_q	see_u.u_q
-	LIST_ENTRY(sme_event)	see_list;
+	struct work 		see_wk;
+	LIST_ENTRY(sme_event) 	see_list;
 	struct penvsys_state	pes;		/* our power envsys */
 	int32_t			critval;	/* critical value set */
 	int			type;		/* type of the event */
 	int			snum;		/* sensor number */
 	int			evsent;		/* event already sent */
+	int 			see_flags;	/* see above */
+#define SME_EVENT_WORKING	0x0001 		/* This event is busy */
 } sme_event_t;
 
 /* struct by a sysmon envsys event set by a driver */
@@ -151,9 +92,15 @@ typedef struct sme_event_drv {
 } sme_event_drv_t;
 
 /* common */
-extern	kmutex_t sme_mtx;	/* mutex for the sysmon envsys devices */
-extern	kmutex_t sme_event_mtx;	/* mutex for the sysmon envsys events */
-extern	kmutex_t sme_event_init_mtx;	/* mutex to initialize/destroy see */
+extern	kmutex_t sme_mtx;	/* mutex to protect the sysmon envsys data */
+extern	kmutex_t sme_list_mtx;	/* mutex to protect the sysmon envsys list */
+extern	kmutex_t sme_event_mtx;	/* mutex to protect the sme event data */
+
+/* mutex to intialize/destroy the sysmon envsys events framework */
+extern	kmutex_t sme_event_init_mtx;
+
+/* condition variable to wait for the worker thread to finish */
+extern	kcondvar_t sme_event_cv;
 
 /* linked list for the sysmon envsys devices */
 LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
@@ -163,7 +110,7 @@ LIST_HEAD(, sme_event) sme_events_list;
 
 /* functions to handle sysmon envsys devices */
 int	sysmon_envsys_createplist(struct sysmon_envsys *);
-int	sme_make_dictionary(struct sysmon_envsys *, prop_array_t,
+void	sme_make_dictionary(struct sysmon_envsys *, prop_array_t,
 			    envsys_data_t *);
 int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
@@ -172,11 +119,19 @@ int	sme_userset_dictionary(struct sysmon_envsys *,
 /* functions to handle sysmon envsys events */
 int	sme_event_register(struct sme_event *);
 int	sme_event_unregister(const char *, int);
+void	sme_event_unregister_all(struct sysmon_envsys *);
 void	sme_event_drvadd(void *);
 int	sme_event_add(prop_dictionary_t, envsys_data_t *,
 		      const char *, const char *, int32_t, int, int);
 int	sme_events_init(void);
+void	sme_events_destroy(void);
 void	sme_events_check(void *);
 void	sme_events_worker(struct work *, void *);
+
+/* common functions to create/update objects in a dictionary */
+int	sme_sensor_upbool(prop_dictionary_t, const char *, bool);
+int	sme_sensor_upint32(prop_dictionary_t, const char *, int32_t);
+int	sme_sensor_upuint32(prop_dictionary_t, const char *, uint32_t);
+int	sme_sensor_upstring(prop_dictionary_t, const char *, const char *);
 
 #endif /* _DEV_SYSMON_ENVSYSVAR_H_ */
