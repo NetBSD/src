@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.95 2007/08/04 11:03:03 ad Exp $
+#	$NetBSD: Makefile,v 1.96 2007/08/15 14:08:11 pooka Exp $
+
+.include <bsd.sys.mk>
 
 INCSDIR= /usr/include/sys
 
@@ -50,5 +52,8 @@ INCSYMLINKS=\
 	sys/md5.h /usr/include/md5.h
 
 INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
+
+namei: namei.src gennameih.awk
+	${AWK} -f gennameih.awk < namei.src > namei.h
 
 .include <bsd.kinc.mk>
