@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.73 2007/08/07 19:58:30 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.74 2007/08/15 22:48:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.73 2007/08/07 19:58:30 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.74 2007/08/15 22:48:52 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -87,7 +87,8 @@ enum {
 
 static int pthread__diagassert = DIAGASSERT_ABORT | DIAGASSERT_STDERR;
 
-int pthread__concurrency, pthread__maxconcurrency, pthread__nspins;
+int pthread__concurrency;
+int pthread__nspins;
 int pthread__unpark_max = PTHREAD__UNPARK_MAX;
 int pthread__osrev;
 
@@ -514,7 +515,6 @@ pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
 	char *name;
-	int num, retval;
 
 	self = pthread__self();
 	SDPRINTF(("(pthread_join %p) Joining %p.\n", self, thread));
@@ -528,46 +528,41 @@ pthread_join(pthread_t thread, void **valptr)
 	if (thread == self)
 		return EDEADLK;
 
-	retval = 0;
-	name = NULL;
- again:
- 	pthread_spinlock(self, &thread->pt_lock);
-	switch (thread->pt_state) {
-	case PT_STATE_RUNNING:
-		pthread_spinunlock(self, &thread->pt_lock);
-
-		/*
-		 * IEEE Std 1003.1, 2004 Edition:
-		 *
-		 * "The pthread_join() function shall not
-		 * return an error code of [EINTR]."
-		 */
-		if (_lwp_wait(thread->pt_lid, &num) != 0 && errno != EINTR)
+	/*
+	 * IEEE Std 1003.1, 2004 Edition:
+	 *
+	 * "The pthread_join() function shall not return an
+	 * error code of [EINTR]."
+	 */
+	while (_lwp_wait(thread->pt_lid, NULL) != 0) {
+		if (errno != EINTR)
 			return errno;
-		goto again;
-	case PT_STATE_ZOMBIE:
-		if (valptr != NULL)
-			*valptr = thread->pt_exitval;
-		if (retval == 0) {
-			name = thread->pt_name;
-			thread->pt_name = NULL;
-		}
-		thread->pt_state = PT_STATE_DEAD;
-		pthread_spinlock(self, &pthread__queue_lock);
-		PTQ_REMOVE(&pthread__allqueue, thread, pt_allq);
-		PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_allq);
-		pthread_spinunlock(self, &pthread__queue_lock);
-		pthread_spinunlock(self, &thread->pt_lock);
-		SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
-		if (name != NULL)
-			free(name);
-		(void)_lwp_detach(thread->pt_lid);
-		return retval;
-	default:
-		pthread_spinunlock(self, &thread->pt_lock);
-		return EINVAL;
 	}
 
+	/*
+	 * No need to lock - nothing else should (legally) be
+	 * interested in the thread's state at this point.
+	 *
+	 * _lwp_wait() provides a barrier, so the user level
+	 * thread state will be visible to us at this point.
+	 */
+	if (thread->pt_state != PT_STATE_ZOMBIE) {
+		pthread__errorfunc(__FILE__, __LINE__, __func__,
+		    "not a zombie");
+	}
+	if (valptr != NULL)
+		*valptr = thread->pt_exitval;
+	name = thread->pt_name;
+	thread->pt_name = NULL;
+	thread->pt_state = PT_STATE_DEAD;
+	pthread_spinlock(self, &pthread__queue_lock);
+	PTQ_REMOVE(&pthread__allqueue, thread, pt_allq);
+	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_allq);
+	pthread_spinunlock(self, &pthread__queue_lock);
+	SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
+	if (name != NULL)
+		free(name);
+	return 0;
 }
 
 
