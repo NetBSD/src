@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.77 2007/07/27 08:28:16 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.78 2007/08/15 14:19:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/namei.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/time.h>

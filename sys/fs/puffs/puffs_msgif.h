@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.47 2007/07/30 09:04:58 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.48 2007/08/15 14:19:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _PUFFS_MSGIF_H_
-#define _PUFFS_MSGIF_H_
+#ifndef _FS_PUFFS_PUFFS_MSGIF_H_
+#define _FS_PUFFS_PUFFS_MSGIF_H_
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -357,20 +357,6 @@ struct puffs_kcn {
 	long pkcn_namelen;		/* current component length	*/
 	long pkcn_consume;		/* IN: extra chars server ate   */
 };
-
-/*
- * XXX: figure out what to do with these, copied from namei.h for now
- */
-#define	PUFFSLOOKUP_LOOKUP	0	/* perform name lookup only */
-#define PUFFSLOOKUP_CREATE	1	/* setup for file creation */
-#define PUFFSLOOKUP_DELETE	2	/* setup for file deletion */
-#define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
-#define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
-
-#define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
-#define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
-#define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
-#define PUFFSLOOKUP_REQUIREDIR	0x80000 /* must be directory */
 
 
 /*
@@ -740,4 +726,4 @@ struct puffs_vnreq_listextattr { };
 	memset(&a##_arg, 0, sizeof(struct puffs_vnreq_##a))
 #endif
 
-#endif /* _PUFFS_MSGIF_H_ */
+#endif /* _FS_PUFFS_PUFFS_MSGIF_H_ */

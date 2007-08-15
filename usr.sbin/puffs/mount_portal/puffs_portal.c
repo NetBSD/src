@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.8 2007/08/09 22:03:20 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.9 2007/08/15 14:19:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.8 2007/08/09 22:03:20 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.9 2007/08/15 14:19:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -488,15 +488,15 @@ portal_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 
 	assert(opc == PORTAL_ROOT);
 
-	if (pcn->pcn_nameiop != PUFFSLOOKUP_LOOKUP
-	    && pcn->pcn_nameiop != PUFFSLOOKUP_CREATE)
+	if (pcn->pcn_nameiop != NAMEI_LOOKUP
+	    && pcn->pcn_nameiop != NAMEI_CREATE)
 		return EOPNOTSUPP;
 
 	portn = makenode(pcn->pcn_name);
 	puffs_newinfo_setcookie(pni, portn);
 	puffs_newinfo_setvtype(pni, VREG);
 
-	pcn->pcn_flags &= ~PUFFSLOOKUP_REQUIREDIR;
+	pcn->pcn_flags &= ~NAMEI_REQUIREDIR;
 	pcn->pcn_consume = strlen(pcn->pcn_name) - pcn->pcn_namelen;
 
 	return 0;
