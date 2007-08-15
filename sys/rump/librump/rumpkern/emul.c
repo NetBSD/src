@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.8 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.9 2007/08/15 22:13:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#define malloc(a,b,c) __wrap_malloc(a,b,c)
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -241,6 +243,18 @@ malloc_type_detach(struct malloc_type *type)
 {
 
 	return;
+}
+
+void *
+__wrap_malloc(unsigned long size, struct malloc_type *type, int flags)
+{
+	void *rv;
+
+	rv = rumpuser_malloc(size, flags * (M_CANFAIL | M_NOWAIT));
+	if (rv && flags & M_ZERO)
+		memset(rv, 0, size);
+
+	return rv;
 }
 
 void
