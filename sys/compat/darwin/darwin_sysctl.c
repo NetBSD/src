@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.52 2007/06/30 15:31:49 dsl Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.53 2007/08/15 12:07:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,9 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.52 2007/06/30 15:31:49 dsl Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.53 2007/08/15 12:07:28 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.52 2007/06/30 15:31:49 dsl Exp $
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/tty.h>
 #include <sys/kauth.h>
 
@@ -318,10 +314,7 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MIB))
-		ktrmib(l, name, SCARG(uap, namelen));
-#endif
+	ktrmib(name, SCARG(uap, namelen));
 
 	/*
 	 * wire old so that copyout() is less likely to fail?
