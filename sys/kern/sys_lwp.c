@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.24 2007/08/07 19:00:42 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.25 2007/08/15 02:50:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.24 2007/08/07 19:00:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.25 2007/08/15 02:50:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,6 +237,10 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 		error = cv_wait_sig(&p->p_lwpcv, &p->p_smutex);
 		if (error) {
 			error = ERESTART;
+			break;
+		}
+		if (lwp_find(p, SCARG(uap, target)) == NULL) {
+			error = ESRCH;
 			break;
 		}
 		if ((l->l_flag | t->l_flag) & (LW_WCORE | LW_WEXIT)) {
