@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.13 2007/08/04 09:33:05 kiyohara Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.14 2007/08/15 02:26:13 markd Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -230,6 +230,14 @@
 #define 	AGP_I915_GCC1_GMS_STOLEN_64M	0x70
 #define AGP_I915_MSAC			0x62
 #define 	AGP_I915_MSAC_APER_128M		0x02
+
+/*
+ * Config registers for 965G/965Q
+ */
+#define AGP_I965_MMADR			0x10
+#define AGP_I965_GMADR			0x18
+
+#define AGP_I965_GTT			0x80000
 
 /*
  * AMD64 GART registers
