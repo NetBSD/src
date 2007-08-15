@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.859 2007/08/15 03:53:09 kiyohara Exp $
+#	$NetBSD: files,v 1.860 2007/08/15 12:07:32 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1324,7 +1324,7 @@ file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_idle.c
 file	kern/kern_kthread.c
-file	kern/kern_ktrace.c
+file	kern/kern_ktrace.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | lkm needs-flag
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
@@ -1383,7 +1383,6 @@ file	kern/subr_time.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
-file	kern/subr_xxx.c
 file	kern/sys_aio.c
 file	kern/sys_generic.c
 file	kern/sys_lwp.c

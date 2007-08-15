@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.324 2007/07/31 21:14:21 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.325 2007/08/15 12:07:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.324 2007/07/31 21:14:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.325 2007/08/15 12:07:35 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_fileassoc.h"
-#include "opt_ktrace.h"
 #include "fss.h"
 #include "veriexec.h"
 
@@ -63,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.324 2007/07/31 21:14:21 pooka Exp
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
@@ -3450,14 +3447,7 @@ sys___getdents30(struct lwp *l, void *v, register_t *retval)
 	}
 	error = vn_readdir(fp, SCARG(uap, buf), UIO_USERSPACE,
 			SCARG(uap, count), &done, l, 0, 0);
-#ifdef KTRACE
-	if (!error && KTRPOINT(p, KTR_GENIO)) {
-		struct iovec iov;
-		iov.iov_base = SCARG(uap, buf);
-		iov.iov_len = done;
-		ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov, done, 0);
-	}
-#endif
+	ktrgenio(SCARG(uap, fd), UIO_READ, SCARG(uap, buf), done, error);
 	*retval = done;
  out:
 	FILE_UNUSE(fp, l);

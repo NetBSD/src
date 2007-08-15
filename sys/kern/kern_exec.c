@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.246 2007/07/22 19:16:05 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.247 2007/08/15 12:07:32 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.246 2007/07/22 19:16:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.247 2007/08/15 12:07:32 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -549,10 +549,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 				error = E2BIG;
 			goto bad;
 		}
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_EXEC_ARG))
-			ktrkmem(l, KTR_EXEC_ARG, dp, len - 1);
-#endif
+		ktrexecarg(dp, len - 1);
 		dp += len;
 		i++;
 		argc++;
@@ -573,10 +570,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 					error = E2BIG;
 				goto bad;
 			}
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_EXEC_ENV))
-				ktrkmem(l, KTR_EXEC_ENV, dp, len - 1);
-#endif
+			ktrexecenv(dp, len - 1);
 			dp += len;
 			i++;
 			envc++;
@@ -831,10 +825,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * root set it.
 		 */
 		if (p->p_tracep) {
-			mutex_enter(&ktrace_mutex);
+			mutex_enter(&ktrace_lock);
 			if (!(p->p_traceflag & KTRFAC_ROOT))
 				ktrderef(p);
-			mutex_exit(&ktrace_mutex);
+			mutex_exit(&ktrace_lock);
 		}
 #endif
 		if (attr.va_mode & S_ISUID)
@@ -943,10 +937,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(l);
-#endif
+	ktremul();
 
 #ifdef LKM
 	rw_exit(&exec_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.163 2007/08/01 19:50:24 degroote Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.164 2007/08/15 12:07:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.163 2007/08/01 19:50:24 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.164 2007/08/15 12:07:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1362,10 +1362,7 @@ trace_enter(struct lwp *l, register_t code,
 	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(l, code, realcode, callp, args);
-#endif /* KTRACE */
+	ktrsyscall(code, realcode, callp, args);
 
 #ifdef PTRACE
 	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
@@ -1404,10 +1401,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, code, error, rval);
-#endif /* KTRACE */
+	ktrsysret(code, error, rval);
 	
 #ifdef PTRACE
 	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
