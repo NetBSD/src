@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.11 2007/08/14 15:56:16 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.12 2007/08/15 16:56:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -97,6 +97,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, fsync);
 	PUFFSOP_SET(pops, p2k, node, seek);
 	PUFFSOP_SET(pops, p2k, node, remove);
+	PUFFSOP_SET(pops, p2k, node, link);
 	PUFFSOP_SET(pops, p2k, node, rename);
 	PUFFSOP_SET(pops, p2k, node, mkdir);
 	PUFFSOP_SET(pops, p2k, node, rmdir);
@@ -345,6 +346,21 @@ p2k_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	rv = VOP_REMOVE(opc, targ, cn);
 	AUL(opc);
 	AUL(targ);
+	rump_freecn(cn, 0);
+
+	return rv;
+}
+
+int
+p2k_node_link(struct puffs_cc *pcc, void *opc, void *targ,
+	const struct puffs_cn *pcn)
+{
+	struct componentname *cn;
+	int rv;
+
+	cn = P2K_MAKECN(pcn);
+	VLE(opc);
+	rv = VOP_LINK(opc, targ, cn);
 	rump_freecn(cn, 0);
 
 	return rv;
