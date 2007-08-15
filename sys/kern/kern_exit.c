@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.184 2007/08/07 12:45:54 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.185 2007/08/15 12:07:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.184 2007/08/07 12:45:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.185 2007/08/15 12:07:32 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -291,9 +291,9 @@ exit1(struct lwp *l, int rv)
 	 * Release trace file.
 	 */
 	if (p->p_tracep != NULL) {
-		mutex_enter(&ktrace_mutex);
+		mutex_enter(&ktrace_lock);
 		ktrderef(p);
-		mutex_exit(&ktrace_mutex);
+		mutex_exit(&ktrace_lock);
 	}
 #endif
 #ifdef SYSTRACE

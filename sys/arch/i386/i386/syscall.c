@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.45 2007/08/05 10:56:52 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.46 2007/08/15 12:07:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,19 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2007/08/05 10:56:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46 2007/08/15 12:07:24 ad Exp $");
 
 #include "opt_vm86.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/syscall.h>
 #include <sys/syscall_stats.h>
 
@@ -317,9 +314,6 @@ child_return(arg)
 {
 	struct lwp *l = arg;
 	struct trapframe *tf = l->l_md.md_regs;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
@@ -327,8 +321,5 @@ child_return(arg)
 	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }

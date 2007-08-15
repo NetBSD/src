@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.254 2007/07/09 21:10:53 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.255 2007/08/15 12:07:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,9 +73,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.254 2007/07/09 21:10:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.255 2007/08/15 12:07:33 ad Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_compat_sunos.h"
@@ -923,11 +922,8 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		p->p_stats->p_ru.ru_nsignals++;
 		kpsendsig(l, ksi, &l->l_sigmask);
 		mutex_exit(&p->p_smutex);
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(l, signo, SIGACTION_PS(ps, signo).sa_handler,
-			    &l->l_sigmask, ksi);
-#endif
+		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
+		    &l->l_sigmask, ksi);
 	} else {
 		/* XXX for core dump/debugger */
 		p->p_sigctx.ps_lwp = l->l_lid;
@@ -1819,13 +1815,11 @@ postsig(int signo)
 	p->p_stats->p_ru.ru_nsignals++;
 	sigget(l->l_sigpendset, &ksi, signo, NULL);
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_PSIG)) {
+	if (ktrpoint(KTR_PSIG)) {
 		mutex_exit(&p->p_smutex);
-		ktrpsig(l, signo, action, returnmask, NULL);
+		ktrpsig(signo, action, returnmask, NULL);
 		mutex_enter(&p->p_smutex);
 	}
-#endif
 
 	if (action == SIG_DFL) {
 		/*

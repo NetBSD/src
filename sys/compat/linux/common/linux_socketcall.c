@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.34 2007/06/02 13:16:19 yamt Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.35 2007/08/15 12:07:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,11 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.34 2007/06/02 13:16:19 yamt Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif /* defined(_KERNEL_OPT) */
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.35 2007/08/15 12:07:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,9 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.34 2007/06/02 13:16:19 yamt E
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <sys/syscallargs.h>
 
@@ -147,12 +141,8 @@ linux_sys_socketcall(l, v, retval)
 		return error;
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktrkuser(l, linux_socketcall[SCARG(uap, what)].name,
-			&lda, linux_socketcall[SCARG(uap, what)].argsize);
-#endif
-
+	ktrkuser(linux_socketcall[SCARG(uap, what)].name, &lda,
+	    linux_socketcall[SCARG(uap, what)].argsize);
 
 #ifdef DEBUG_LINUX
 	/* dump the passed argument data */

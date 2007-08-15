@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.125 2007/07/14 15:47:27 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.126 2007/08/15 12:07:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,11 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.125 2007/07/14 15:47:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.126 2007/08/15 12:07:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -666,7 +665,6 @@ netbsd32_profil(l, v, retval)
 	return (sys_profil(l, &ua, retval));
 }
 
-#ifdef KTRACE
 int
 netbsd32_ktrace(l, v, retval)
 	struct lwp *l;
@@ -687,7 +685,6 @@ netbsd32_ktrace(l, v, retval)
 	NETBSD32TO64_UAP(pid);
 	return (sys_ktrace(l, &ua, retval));
 }
-#endif /* KTRACE */
 
 int
 netbsd32_utrace(l, v, retval)
@@ -2137,7 +2134,6 @@ netbsd32_getsid(l, v, retval)
 	return (sys_getsid(l, &ua, retval));
 }
 
-#ifdef KTRACE
 int
 netbsd32_fktrace(l, v, retval)
 	struct lwp *l;
@@ -2168,7 +2164,6 @@ netbsd32_fktrace(l, v, retval)
 	NETBSD32TO64_UAP(pid);
 	return (sys_fktrace(l, &ua, retval));
 }
-#endif /* KTRACE */
 
 int netbsd32___sigpending14(l, v, retval)
 	struct lwp *l;

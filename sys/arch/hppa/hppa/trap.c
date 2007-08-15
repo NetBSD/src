@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 2007/05/27 09:41:25 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 2007/08/15 12:07:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,23 +69,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2007/05/27 09:41:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 2007/08/15 12:07:24 ad Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/mutex.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
@@ -927,15 +924,9 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 #ifdef DEBUG
 	frame_sanity_check(0xdead04, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
