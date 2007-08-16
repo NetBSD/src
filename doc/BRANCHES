@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.202 2007/08/15 10:07:50 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.203 2007/08/16 12:16:08 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -404,7 +404,7 @@ Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
 Status:		Active
 Start Date:	2007-07-18
 End Date:
-Base Tag:	nick-csl-alignment-base
+Base Tag:	nick-csl-alignment-base2
 Maintainer:	Nick Hudson <skrll@NetBSD.org>
 Scope:		sys, lib/libpthread, lib/libpthread_dbg
 Notes:	
