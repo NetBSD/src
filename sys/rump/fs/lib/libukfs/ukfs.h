@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.2 2007/08/16 19:37:18 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.3 2007/08/16 19:42:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,7 +70,7 @@ do {									\
 	uio.uio_iovcnt = 1;						\
 	uio.uio_offset = offset;					\
 	uio.uio_resid = bufsize;					\
-	uio.uio_rw = UIO_READ;						\
+	uio.uio_rw = rw;						\
 	uio.uio_vmspace = UIO_VMSPACE_SYS;				\
 } while (/*CONSTCOND*/0)
 
