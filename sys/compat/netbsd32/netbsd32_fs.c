@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.45 2007/06/30 15:31:50 dsl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.45.6.1 2007/08/16 11:02:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,11 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.45 2007/06/30 15:31:50 dsl Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.45.6.1 2007/08/16 11:02:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +147,7 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
 	u_int iovlen;
-#ifdef KTRACE
 	struct iovec *ktriov = NULL;
-#endif
 
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
@@ -193,15 +187,15 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 		}
 		iov++;
 	}
-#ifdef KTRACE
+
 	/*
 	 * if tracing, save a copy of iovec
 	 */
-	if (KTRPOINT(l->l_proc, KTR_GENIO))  {
+	if (ktrpoint(KTR_GENIO)) {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
-#endif
+
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
 	if (error)
@@ -209,14 +203,12 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_GENIO))
-		if (error == 0) {
-			ktrgenio(l, fd, UIO_READ, ktriov, cnt,
-			    error);
+
+	if (ktriov != NULL) {
+		ktrgeniov(fd, UIO_READ, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
-#endif
+
 	*retval = cnt;
 done:
 	if (needfree)
@@ -273,9 +265,7 @@ dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	struct proc *p = l->l_proc;
 	long i, cnt, error = 0;
 	u_int iovlen;
-#ifdef KTRACE
 	struct iovec *ktriov = NULL;
-#endif
 
 	/* note: can't use iovlen until iovcnt is validated */
 	iovlen = iovcnt * sizeof(struct iovec);
@@ -315,15 +305,15 @@ dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 		}
 		iov++;
 	}
-#ifdef KTRACE
+
 	/*
 	 * if tracing, save a copy of iovec
 	 */
-	if (KTRPOINT(p, KTR_GENIO))  {
+	if (ktrpoint(KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
-#endif
+
 	cnt = auio.uio_resid;
 	error = (*fp->f_ops->fo_write)(fp, offset, &auio, fp->f_cred, flags);
 	if (error) {
@@ -337,14 +327,10 @@ dofilewritev32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 		}
 	}
 	cnt -= auio.uio_resid;
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO))
-		if (error == 0) {
-			ktrgenio(l, fd, UIO_WRITE, ktriov, cnt,
-			    error);
+	if (ktriov != NULL) {
+		ktrgenio(fd, UIO_WRITE, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
-#endif
 	*retval = cnt;
 done:
 	if (needfree)

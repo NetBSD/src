@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.203 2007/07/29 13:31:14 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.203.4.1 2007/08/16 11:04:01 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.203 2007/07/29 13:31:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.203.4.1 2007/08/16 11:04:01 jmcneill Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2742,31 +2742,8 @@ lfs_vunref(struct vnode *vp)
 		return;
 	}
 
-	simple_lock(&vp->v_interlock);
-#ifdef DIAGNOSTIC
-	if (vp->v_usecount <= 0) {
-		printf("lfs_vunref: inum is %llu\n", (unsigned long long)
-		    VTOI(vp)->i_number);
-		printf("lfs_vunref: flags are 0x%lx\n", (u_long)vp->v_flag);
-		printf("lfs_vunref: usecount = %ld\n", (long)vp->v_usecount);
-		panic("lfs_vunref: v_usecount < 0");
-	}
-#endif
-	vp->v_usecount--;
-	if (vp->v_usecount > 0) {
-		simple_unlock(&vp->v_interlock);
-		return;
-	}
-	/*
-	 * insert at tail of LRU list
-	 */
-	simple_lock(&vnode_free_list_slock);
-	if (vp->v_holdcnt > 0)
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-	else
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-	simple_unlock(&vnode_free_list_slock);
-	simple_unlock(&vp->v_interlock);
+	/* does not call inactive */
+	vrele2(vp, 0);
 }
 
 /*
@@ -2782,27 +2759,9 @@ lfs_vunref_head(struct vnode *vp)
 {
 
 	ASSERT_SEGLOCK(VTOI(vp)->i_lfs);
-	simple_lock(&vp->v_interlock);
-#ifdef DIAGNOSTIC
-	if (vp->v_usecount == 0) {
-		panic("lfs_vunref: v_usecount<0");
-	}
-#endif
-	vp->v_usecount--;
-	if (vp->v_usecount > 0) {
-		simple_unlock(&vp->v_interlock);
-		return;
-	}
-	/*
-	 * insert at head of LRU list
-	 */
-	simple_lock(&vnode_free_list_slock);
-	if (vp->v_holdcnt > 0)
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-	else
-		TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
-	simple_unlock(&vnode_free_list_slock);
-	simple_unlock(&vp->v_interlock);
+
+	/* does not call inactive, inserts non-held vnode at head of freelist */
+	vrele2(vp, 1);
 }
 
 

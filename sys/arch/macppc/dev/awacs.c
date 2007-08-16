@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.29 2007/07/09 20:52:21 ad Exp $	*/
+/*	$NetBSD: awacs.c,v 1.29.8.1 2007/08/16 11:02:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.29 2007/07/09 20:52:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.29.8.1 2007/08/16 11:02:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -411,6 +411,15 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 
         printf("%s: ", sc->sc_dev.dv_xname);
 
+	/*
+	 * all(?) awacs have GPIOs to detect if there's something plugged into
+	 * the headphone jack. The other GPIOs are either used for other jacks
+	 * ( the PB3400c's microphone jack for instance ) or unused.
+	 * The problem is that there are at least three different ways how
+	 * those GPIOs are wired to the actual jacks.
+	 * For now we bother only with headphone detection
+	 */
+	perch = OF_finddevice("/perch");
 	root_node = OF_finddevice("/");
 	if (of_compatible(root_node, detect_reversed) != -1) {
 
@@ -421,16 +430,15 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		sc->sc_headphones_mask = 0x8;
 		sc->sc_headphones_in = 0x0;
-	} else if (sc->sc_screamer) {
-
+	} else if (perch != -1) {
 		/*
-		 * XXX 
-		 * not sure if that's true for all screamers or just beige G3
+		 * this is for the beige G3's 'personality card' which uses
+		 * yet another wiring of the headphone detect GPIOs
 		 */
 		sc->sc_headphones_mask = 0x04;
 		sc->sc_headphones_in = 0x04;
 	} else {
-		/* while on other machines it's high active as well */
+		/* while on most machines it's high active as well */
 		sc->sc_headphones_mask = 0x8;
 		sc->sc_headphones_in = 0x8;
 	}
@@ -473,7 +481,7 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sgsmix = NULL;
 #endif
 	sc->sc_have_perch = 0;
-	if ((perch = OF_finddevice("/perch")) != -1) {
+	if (perch != -1) {
 
 		len = OF_getprop(perch, "compatible", compat, 255);
 		if (len > 0) {

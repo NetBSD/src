@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 2007/03/04 06:00:29 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.82.18.1 2007/08/16 11:02:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,11 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2007/03/04 06:00:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82.18.1 2007/08/16 11:02:26 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 #include "opt_ns381.h"
 
 #include <sys/param.h>
@@ -93,9 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2007/03/04 06:00:29 christos Exp $");
 #include <sys/signal.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/syscall.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -486,10 +483,7 @@ child_return(void *arg)
 	l->l_md.md_regs->r_psr &= ~PSL_C;
 
 	userret(l, l->l_md.md_regs->r_pc, 0);
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

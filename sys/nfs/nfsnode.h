@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.64.4.1 2007/08/09 02:37:28 jmcneill Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.64.4.2 2007/08/16 11:03:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -221,14 +221,17 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 struct nfs_iod {
 	kmutex_t nid_lock;
 	kcondvar_t nid_cv;
-	lwp_t *nid_lwp;
+	LIST_ENTRY(nfs_iod) nid_idle;
 	struct nfsmount *nid_mount;
-	bool nid_want;
 	bool nid_exiting;
+
+	LIST_ENTRY(nfs_iod) nid_all;
 };
 
+LIST_HEAD(nfs_iodlist, nfs_iod);
 extern kmutex_t nfs_iodlist_lock;
-extern struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+extern struct nfs_iodlist nfs_iodlist_idle;
+extern struct nfs_iodlist nfs_iodlist_all;
 extern u_long nfsdirhashmask;
 
 /*

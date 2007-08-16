@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.3 2007/07/28 12:31:50 kiyohara Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.3.4.1 2007/08/16 11:03:12 jmcneill Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.3 2007/07/28 12:31:50 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.3.4.1 2007/08/16 11:03:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -265,6 +265,7 @@ nfsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 		*p = (uint8_t)rv;
 		return 0;
 	}
+
 	if ((I2C_OP_READ_P(op)) && (cmdlen == 1) && (buflen == 2)) {
 		rv = nfsmb_read_2(sc, *(const uint8_t*)cmd, addr, op, flags);
 		if (rv == -1)
@@ -272,7 +273,6 @@ nfsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 		*p = (uint8_t)rv;
 		return 0;
 	}
-
 
 	if ((I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 1))
 		return nfsmb_send_1(sc, *(uint8_t*)vbuf, addr, op, flags);
@@ -285,7 +285,7 @@ nfsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 		return nfsmb_write_2(sc,
 		    *(const uint8_t*)cmd, *((uint16_t *)vbuf), addr, op, flags);
 
-	return (-1);
+	return -1;
 }
 
 static int
@@ -425,7 +425,7 @@ nfsmb_read_1(struct nfsmb_softc *sc, uint8_t cmd, i2c_addr_t addr, i2c_op_t op,
 
 	/* check for errors */
 	if (nfsmb_check_done(sc) < 0)
-		return (-1);
+		return -1;
 
 	/* read data */
 	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA);
@@ -452,7 +452,7 @@ nfsmb_read_2(struct nfsmb_softc *sc, uint8_t cmd, i2c_addr_t addr, i2c_op_t op,
 
 	/* check for errors */
 	if (nfsmb_check_done(sc) < 0)
-		return (-1);
+		return -1;
 
 	/* read data */
 	low = bus_space_read_1(sc->sc_iot, sc->sc_ioh, NFORCE_SMB_DATA);

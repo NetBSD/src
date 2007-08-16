@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.95 2007/07/30 14:49:01 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.95.4.1 2007/08/16 11:03:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.95 2007/07/30 14:49:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.95.4.1 2007/08/16 11:03:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -429,10 +429,11 @@ puffs_lookup(void *v)
 	dvp = ap->a_dvp;
 	*ap->a_vpp = NULL;
 
-	/* first things first: check access */
-	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_lwp);
-	if (error)
-		return error;
+	/* r/o fs?  we check create later to handle EEXIST */
+	if ((cnp->cn_flags & ISLASTCN)
+	    && (dvp->v_mount->mnt_flag & MNT_RDONLY)
+	    && (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return EROFS;
 
 	isdot = cnp->cn_namelen == 1 && *cnp->cn_nameptr == '.';
 
@@ -475,17 +476,25 @@ puffs_lookup(void *v)
 	 */
 	if (error) {
 		if (error == ENOENT) {
-			if ((cnp->cn_flags & ISLASTCN)
+			/* don't allow to create files on r/o fs */
+			if ((dvp->v_mount->mnt_flag & MNT_RDONLY)
+			    && cnp->cn_nameiop == CREATE) {
+				error = EROFS;
+
+			/* adjust values if we are creating */
+			} else if ((cnp->cn_flags & ISLASTCN)
 			    && (cnp->cn_nameiop == CREATE
 			      || cnp->cn_nameiop == RENAME)) {
 				cnp->cn_flags |= SAVENAME;
 				error = EJUSTRETURN;
+
+			/* save negative cache entry */
 			} else {
 				if ((cnp->cn_flags & MAKEENTRY)
 				    && PUFFS_USE_NAMECACHE(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
-		} else if (error < 0) {
+		} else if (error < 0 || error > ELAST) {
 			error = EINVAL;
 		}
 		goto out;
@@ -528,7 +537,7 @@ puffs_lookup(void *v)
  out:
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-	
+
 	DPRINTF(("puffs_lookup: returning %d %p\n", error, *ap->a_vpp));
 	return error;
 }
@@ -684,8 +693,19 @@ puffs_access(void *v)
 
 	PUFFS_VNREQ(access);
 
-	if (vp->v_type == VREG && mode & VWRITE && !EXISTSOP(pmp, WRITE))
-		return EROFS;
+	if (mode & VWRITE) {
+		switch (vp->v_type) {
+		case VDIR:
+		case VLNK:
+		case VREG:
+			if ((vp->v_mount->mnt_flag & MNT_RDONLY)
+			    || !EXISTSOP(pmp, WRITE))
+				return EROFS;
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (!EXISTSOP(pmp, ACCESS))
 		return 0;
@@ -774,6 +794,16 @@ puffs_dosetattr(struct vnode *vp, struct vattr *vap, kauth_cred_t cred,
 	int error;
 
 	PUFFS_VNREQ(setattr);
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL
+	    || vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL
+	    || vap->va_mode != (mode_t)VNOVAL))
+		return EROFS;
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY)
+	    && vp->v_type == VREG && vap->va_size != VNOVAL)
+		return EROFS;
 
 	/*
 	 * Flush metacache first.  If we are called with some explicit
@@ -1700,7 +1730,7 @@ puffs_write(void *v)
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
 
-		/* write though page cache? */
+		/* write through page cache? */
 		} else if (error == 0 && pmp->pmp_flags & PUFFS_KFLAG_WTCACHE) {
 			simple_lock(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.29 2007/03/04 06:01:15 christos Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.29.14.1 2007/08/16 11:02:45 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,11 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.29 2007/03/04 06:01:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.29.14.1 2007/08/16 11:02:45 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
-#include "opt_ktrace.h"
 #endif
 
 #include <sys/param.h>
@@ -51,9 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.29 2007/03/04 06:01:15 christos E
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <sys/syscallargs.h>
 
@@ -212,19 +209,11 @@ freebsd_sys_sigaction4(struct lwp *l, void *v, register_t *retval)
 int
 freebsd_sys_utrace(struct lwp *l, void *v, register_t *retval)
 {
-#ifdef KTRACE
 	struct freebsd_sys_utrace_args /* {
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
-	if (!KTRPOINT(p, KTR_USER))
-		return 0;
-
-	return ktruser(l, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),
+	return ktruser("FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),
 	    0);
-#else
-	return ENOSYS;
-#endif
 }

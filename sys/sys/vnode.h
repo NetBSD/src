@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.170 2007/06/29 23:30:32 rumble Exp $	*/
+/*	$NetBSD: vnode.h,v 1.170.6.1 2007/08/16 11:03:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -533,6 +533,7 @@ void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, struct simplelock *, struct lwp *);
 void 	vrele(struct vnode *);
+void 	vrele2(struct vnode *, int);
 int	vtruncbuf(struct vnode *, daddr_t, int, int);
 void	vwakeup(struct buf *);
 

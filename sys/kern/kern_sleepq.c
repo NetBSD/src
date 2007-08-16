@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.11 2007/08/01 23:30:54 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.11.2.1 2007/08/16 11:03:33 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.11 2007/08/01 23:30:54 ad Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.11.2.1 2007/08/16 11:03:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -56,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.11 2007/08/01 23:30:54 ad Exp $");
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/sleepq.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -242,10 +238,7 @@ sleepq_block(int timo, bool catch)
 	lwp_t *l = curlwp;
 	bool early = false;
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_CSW))
-		ktrcsw(l, 1, 0);
-#endif
+	ktrcsw(1, 0);
 
 	/*
 	 * If sleeping interruptably, check for pending signals, exits or
@@ -296,10 +289,7 @@ sleepq_block(int timo, bool catch)
 		}
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_CSW))
-		ktrcsw(l, 0, 0);
-#endif
+	ktrcsw(0, 0);
 
 	KERNEL_LOCK(l->l_biglocks, l);
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.72 2007/07/09 21:11:12 ad Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.72.6.1 2007/08/16 11:03:48 jmcneill Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.72 2007/07/09 21:11:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.72.6.1 2007/08/16 11:03:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,8 +324,8 @@ int
 in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	struct ifaddr *ifa;
-	struct sockaddr_dl *sdl;
-	char *addr;
+	const struct sockaddr_dl *sdl;
+	const char *addr;
 	size_t addrlen;
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static u_int8_t allone[8] =
@@ -334,7 +334,7 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+		sdl = satocsdl(ifa->ifa_addr);
 		if (sdl == NULL)
 			continue;
 		if (sdl->sdl_alen == 0)
@@ -346,7 +346,7 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	return -1;
 
 found:
-	addr = LLADDR(sdl);
+	addr = CLLADDR(sdl);
 	addrlen = sdl->sdl_alen;
 
 	switch (ifp->if_type) {
