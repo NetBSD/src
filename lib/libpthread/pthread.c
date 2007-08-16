@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.74 2007/08/15 22:48:52 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.75 2007/08/16 00:41:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.74 2007/08/15 22:48:52 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.75 2007/08/16 00:41:23 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -279,7 +279,8 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	pthread_attr_t nattr;
 	struct pthread_attr_private *p;
 	char * volatile name;
-	int ret, flag;
+	unsigned long flag;
+	int ret;
 
 	PTHREADD_ADD(PTHREADD_CREATE);
 
@@ -340,43 +341,38 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 				free(name);
 			return ret;
 		}
+
+		/*
+		 * Set up state that will not change.  This is used only
+		 * when creating the thread.
+		 */
+		_INITCONTEXT_U(&newthread->pt_uc);
+#ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
+		pthread__uc_id(&newthread->pt_uc) = newthread;
+#endif
+		newthread->pt_uc.uc_stack = newthread->pt_stack;
+		newthread->pt_uc.uc_link = NULL;
 	}
 
-	/* 2. Set up state. */
+	/* Set up state. */
 	pthread__initthread(newthread);
 	newthread->pt_flags = nattr.pta_flags;
-
-	/* 3. Set up misc. attributes. */
 	newthread->pt_name = name;
-
-	/*
-	 * 4. Set up context.
-	 *
-	 * The pt_uc pointer points to a location safely below the
-	 * stack start; this is arranged by pthread__stackalloc().
-	 */
-	_INITCONTEXT_U(newthread->pt_uc);
-#ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
-	pthread__uc_id(newthread->pt_uc) = newthread;
-#endif
-	newthread->pt_uc->uc_stack = newthread->pt_stack;
-	newthread->pt_uc->uc_link = NULL;
-	makecontext(newthread->pt_uc, pthread__create_tramp, 2,
+	makecontext(&newthread->pt_uc, pthread__create_tramp, 2,
 	    startfunc, arg);
 
-	/* 5. Add to list of all threads. */
+	/* Add to list of all threads. */
 	pthread_spinlock(self, &pthread__queue_lock);
 	PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
 	pthread_spinunlock(self, &pthread__queue_lock);
 
-	/* 5a. Create the new LWP. */
-	newthread->pt_sleeponq = 0;
+	/* Create the new LWP. */
 	flag = 0;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
 		flag |= LWP_SUSPENDED;
 	if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0)
 		flag |= LWP_DETACHED;
-	ret = _lwp_create(newthread->pt_uc, (u_long)flag, &newthread->pt_lid);
+	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
 		SDPRINTF(("(pthread_create %p) _lwp_create: %s\n",
 		    strerror(errno)));
