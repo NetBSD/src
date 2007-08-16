@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.36 2007/08/04 18:54:13 ad Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.37 2007/08/16 01:09:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.36 2007/08/04 18:54:13 ad Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.37 2007/08/16 01:09:50 ad Exp $");
 
 #define __EXPOSE_STACK 1
 
@@ -57,10 +57,7 @@ __RCSID("$NetBSD: pthread_dbg.c,v 1.36 2007/08/04 18:54:13 ad Exp $");
 #include <pthread_dbg.h>
 #include <pthread_dbg_int.h>
 
-#ifndef PT_FIXEDSTACKSIZE_LG
-#undef PT_STACKMASK
 #define PT_STACKMASK (proc->stackmask)
-#endif
 
 /* Compensate for debuggers that want a zero ID to be a sentinel */
 #define TN_OFFSET 1
@@ -125,7 +122,7 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 		goto error;
 	}
 
-	val = LOOKUP(proc, "pthread_stacksize_lg", &addr);
+	val = LOOKUP(proc, "pthread__stacksize_lg", &addr);
 	if (val == 0)
 		proc->stacksizeaddr = addr;
 	else
@@ -229,7 +226,6 @@ int
 td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 {
 	int tmp, val;
-	pthread_queue_t queue;
 
 	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
 	if (val != 0)
@@ -275,15 +271,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	    &info->thread_stack, sizeof(stack_t))) != 0)
 		return val;
 
-	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_joiners),
-	    &queue, sizeof(queue))) != 0)
-		return val;
-
-	if (PTQ_EMPTY(&queue))
-		info->thread_hasjoiners = 0;
-	else
-		info->thread_hasjoiners = 1;
+	info->thread_hasjoiners = 0;
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_errno),
