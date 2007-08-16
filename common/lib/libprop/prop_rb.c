@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb.c,v 1.6 2006/10/16 03:21:07 thorpej Exp $	*/
+/*	$NetBSD: prop_rb.c,v 1.7 2007/08/16 16:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,13 +47,6 @@
 #else
 #define	KASSERT(x)	/* nothing */
 #endif
-
-#undef bool
-#define	bool		boolean_t
-#undef true
-#define	true		TRUE
-#undef false
-#define	false		FALSE
 
 #ifndef __predict_false
 #define	__predict_false(x)	(x)
