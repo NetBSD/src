@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.8 2007/07/16 19:20:17 joerg Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.9 2007/08/16 16:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -61,10 +61,10 @@ _PROP_MALLOC_DEFINE(M_PROP_ARRAY, "prop array",
 		    "property array container object")
 
 static void		_prop_array_free(void *);
-static boolean_t	_prop_array_externalize(
+static bool	_prop_array_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_array_equals(void *, void *);
+static bool	_prop_array_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_array = {
 	.pot_type	=	PROP_TYPE_ARRAY,
@@ -110,7 +110,7 @@ _prop_array_free(void *v)
 	_PROP_POOL_PUT(_prop_array_pool, pa);
 }
 
-static boolean_t
+static bool
 _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 			void *v)
 {
@@ -118,7 +118,7 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	struct _prop_object *po;
 	prop_object_iterator_t pi;
 	unsigned int i;
-	boolean_t rv = FALSE;
+	bool rv = false;
 
 	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 
@@ -128,8 +128,8 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	}
 	
 	/* XXXJRT Hint "count" for the internalize step? */
-	if (_prop_object_externalize_start_tag(ctx, "array") == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
+	if (_prop_object_externalize_start_tag(ctx, "array") == false ||
+	    _prop_object_externalize_append_char(ctx, '\n') == false)
 		goto out;
 
 	pi = prop_array_iterator(pa);
@@ -140,7 +140,7 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
 	while ((po = prop_object_iterator_next(pi)) != NULL) {
-		if ((*po->po_type->pot_extern)(ctx, po) == FALSE) {
+		if ((*po->po_type->pot_extern)(ctx, po) == false) {
 			prop_object_iterator_release(pi);
 			goto out;
 		}
@@ -150,33 +150,33 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 
 	ctx->poec_depth--;
 	for (i = 0; i < ctx->poec_depth; i++) {
-		if (_prop_object_externalize_append_char(ctx, '\t') == FALSE)
+		if (_prop_object_externalize_append_char(ctx, '\t') == false)
 			goto out;
 	}
-	if (_prop_object_externalize_end_tag(ctx, "array") == FALSE)
+	if (_prop_object_externalize_end_tag(ctx, "array") == false)
 		goto out;
 
-	rv = TRUE;
+	rv = true;
 	
  out:
  	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 	return (rv);
 }
 
-static boolean_t
+static bool
 _prop_array_equals(void *v1, void *v2)
 {
 	prop_array_t array1 = v1;
 	prop_array_t array2 = v2;
 	unsigned int idx;
-	boolean_t rv = FALSE;
+	bool rv = false;
 
 	if (! (prop_object_is_array(array1) &&
 	       prop_object_is_array(array2)))
-		return (FALSE);
+		return (false);
 
 	if (array1 == array2)
-		return (TRUE);
+		return (true);
 
 	if ((uintptr_t)array1 < (uintptr_t)array2) {
 		_PROP_RWLOCK_RDLOCK(array1->pa_rwlock);
@@ -191,11 +191,11 @@ _prop_array_equals(void *v1, void *v2)
 	
 	for (idx = 0; idx < array1->pa_count; idx++) {
 		if (prop_object_equals(array1->pa_array[idx],
-				       array2->pa_array[idx]) == FALSE)
+				       array2->pa_array[idx]) == false)
 			goto out;
 	}
 
-	rv = TRUE;
+	rv = true;
 
  out:
 	_PROP_RWLOCK_UNLOCK(array1->pa_rwlock);
@@ -236,7 +236,7 @@ _prop_array_alloc(unsigned int capacity)
 	return (pa);
 }
 
-static boolean_t
+static bool
 _prop_array_expand(prop_array_t pa, unsigned int capacity)
 {
 	prop_object_t *array, *oarray;
@@ -249,7 +249,7 @@ _prop_array_expand(prop_array_t pa, unsigned int capacity)
 
 	array = _PROP_CALLOC(capacity * sizeof(*array), M_PROP_ARRAY);
 	if (array == NULL)
-		return (FALSE);
+		return (false);
 	if (oarray != NULL)
 		memcpy(array, oarray, pa->pa_capacity * sizeof(*array));
 	pa->pa_array = array;
@@ -258,7 +258,7 @@ _prop_array_expand(prop_array_t pa, unsigned int capacity)
 	if (oarray != NULL)
 		_PROP_FREE(oarray, M_PROP_ARRAY);
 
-	return (TRUE);
+	return (true);
 }
 
 static prop_object_t
@@ -419,19 +419,19 @@ prop_array_count(prop_array_t pa)
  *	total number of objects (inluding the objects already stored
  *	in the array).
  */
-boolean_t
+bool
 prop_array_ensure_capacity(prop_array_t pa, unsigned int capacity)
 {
-	boolean_t rv;
+	bool rv;
 
 	if (! prop_object_is_array(pa))
-		return (FALSE);
+		return (false);
 
 	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
 	if (capacity > pa->pa_capacity)
 		rv = _prop_array_expand(pa, capacity);
 	else
-		rv = TRUE;
+		rv = true;
 	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 
 	return (rv);
@@ -471,22 +471,22 @@ prop_array_make_immutable(prop_array_t pa)
 {
 
 	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
-	if (prop_array_is_immutable(pa) == FALSE)
+	if (prop_array_is_immutable(pa) == false)
 		pa->pa_flags |= PA_F_IMMUTABLE;
 	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 }
 
 /*
  * prop_array_mutable --
- *	Returns TRUE if the array is mutable.
+ *	Returns true if the array is mutable.
  */
-boolean_t
+bool
 prop_array_mutable(prop_array_t pa)
 {
-	boolean_t rv;
+	bool rv;
 
 	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
-	rv = prop_array_is_immutable(pa) == FALSE;
+	rv = prop_array_is_immutable(pa) == false;
 	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 
 	return (rv);
@@ -514,7 +514,7 @@ prop_array_get(prop_array_t pa, unsigned int idx)
 	return (po);
 }
 
-static boolean_t
+static bool
 _prop_array_add(prop_array_t pa, prop_object_t po)
 {
 
@@ -526,14 +526,14 @@ _prop_array_add(prop_array_t pa, prop_object_t po)
 
 	if (prop_array_is_immutable(pa) ||
 	    (pa->pa_count == pa->pa_capacity &&
-	    _prop_array_expand(pa, pa->pa_capacity + EXPAND_STEP) == FALSE))
-		return (FALSE);
+	    _prop_array_expand(pa, pa->pa_capacity + EXPAND_STEP) == false))
+		return (false);
 
 	prop_object_retain(po);
 	pa->pa_array[pa->pa_count++] = po;
 	pa->pa_version++;
 
-	return (TRUE);
+	return (true);
 }
 
 /*
@@ -543,14 +543,14 @@ _prop_array_add(prop_array_t pa, prop_object_t po)
  *	caller must either be setting the object just beyond the existing
  *	count or replacing an already existing object reference.
  */
-boolean_t
+bool
 prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
 {
 	prop_object_t opo;
-	boolean_t rv = FALSE;
+	bool rv = false;
 
 	if (! prop_object_is_array(pa))
-		return (FALSE);
+		return (false);
 
 	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
 
@@ -573,7 +573,7 @@ prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
 
 	prop_object_release(opo);
 
-	rv = TRUE;
+	rv = true;
 
  out:
 	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
@@ -585,13 +585,13 @@ prop_array_set(prop_array_t pa, unsigned int idx, prop_object_t po)
  *	Add a refrerence to an object to the specified array, appending
  *	to the end and growing the array's capacity, if necessary.
  */
-boolean_t
+bool
 prop_array_add(prop_array_t pa, prop_object_t po)
 {
-	boolean_t rv;
+	bool rv;
 
 	if (! prop_object_is_array(pa))
-		return (FALSE);
+		return (false);
 
 	_PROP_RWLOCK_WRLOCK(pa->pa_rwlock);
 	rv = _prop_array_add(pa, po);
@@ -638,10 +638,10 @@ prop_array_remove(prop_array_t pa, unsigned int idx)
 
 /*
  * prop_array_equals --
- *	Return TRUE if the two arrays are equivalent.  Note we do a
+ *	Return true if the two arrays are equivalent.  Note we do a
  *	by-value comparison of the objects in the array.
  */
-boolean_t
+bool
 prop_array_equals(prop_array_t array1, prop_array_t array2)
 {
 
@@ -664,9 +664,9 @@ prop_array_externalize(prop_array_t pa)
 	if (ctx == NULL)
 		return (NULL);
 	
-	if (_prop_object_externalize_header(ctx) == FALSE ||
-	    (*pa->pa_obj.po_type->pot_extern)(ctx, pa) == FALSE ||
-	    _prop_object_externalize_footer(ctx) == FALSE) {
+	if (_prop_object_externalize_header(ctx) == false ||
+	    (*pa->pa_obj.po_type->pot_extern)(ctx, pa) == false ||
+	    _prop_object_externalize_footer(ctx) == false) {
 		/* We are responsible for releasing the buffer. */
 		_PROP_FREE(ctx->poec_buf, M_TEMP);
 		_prop_object_externalize_context_free(ctx);
@@ -704,7 +704,7 @@ _prop_array_internalize(struct _prop_object_internalize_context *ctx)
 	for (;;) {
 		/* Fetch the next tag. */
 		if (_prop_object_internalize_find_tag(ctx, NULL,
-					_PROP_TAG_TYPE_EITHER) == FALSE)
+					_PROP_TAG_TYPE_EITHER) == false)
 			goto bad;
 
 		/* Check to see if this is the end of the array. */
@@ -717,7 +717,7 @@ _prop_array_internalize(struct _prop_object_internalize_context *ctx)
 		if (obj == NULL)
 			goto bad;
 
-		if (prop_array_add(array, obj) == FALSE) {
+		if (prop_array_add(array, obj) == false) {
 			prop_object_release(obj);
 			goto bad;
 		}
@@ -746,21 +746,21 @@ prop_array_internalize(const char *xml)
  * prop_array_externalize_to_file --
  *	Externalize an array to the specified file.
  */
-boolean_t
+bool
 prop_array_externalize_to_file(prop_array_t array, const char *fname)
 {
 	char *xml;
-	boolean_t rv;
+	bool rv;
 	int save_errno = 0;	/* XXXGCC -Wuninitialized [mips, ...] */
 
 	xml = prop_array_externalize(array);
 	if (xml == NULL)
-		return (FALSE);
+		return (false);
 	rv = _prop_object_externalize_write_file(fname, xml, strlen(xml));
-	if (rv == FALSE)
+	if (rv == false)
 		save_errno = errno;
 	_PROP_FREE(xml, M_TEMP);
-	if (rv == FALSE)
+	if (rv == false)
 		errno = save_errno;
 
 	return (rv);

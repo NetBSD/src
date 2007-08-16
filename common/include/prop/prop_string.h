@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.h,v 1.1 2006/04/27 20:11:27 thorpej Exp $	*/
+/*	$NetBSD: prop_string.h,v 1.2 2007/08/16 16:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,16 +52,16 @@ prop_string_t	prop_string_copy(prop_string_t);
 prop_string_t	prop_string_copy_mutable(prop_string_t);
 
 size_t		prop_string_size(prop_string_t);
-boolean_t	prop_string_mutable(prop_string_t);
+bool		prop_string_mutable(prop_string_t);
 
 char *		prop_string_cstring(prop_string_t);
 const char *	prop_string_cstring_nocopy(prop_string_t);
 
-boolean_t	prop_string_append(prop_string_t, prop_string_t);
-boolean_t	prop_string_append_cstring(prop_string_t, const char *);
+bool		prop_string_append(prop_string_t, prop_string_t);
+bool		prop_string_append_cstring(prop_string_t, const char *);
 
-boolean_t	prop_string_equals(prop_string_t, prop_string_t);
-boolean_t	prop_string_equals_cstring(prop_string_t, const char *);
+bool		prop_string_equals(prop_string_t, prop_string_t);
+bool		prop_string_equals_cstring(prop_string_t, const char *);
 __END_DECLS
 
 #endif /* _PROPLIB_PROP_STRING_H_ */
