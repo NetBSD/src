@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.47 2007/08/16 01:09:35 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.48 2007/08/16 12:01:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _LIB_PTHREAD_INT_H
 #define _LIB_PTHREAD_INT_H
 
-#define PTHREAD__DEBUG
+/* #define PTHREAD__DEBUG */
 #define ERRORCHECK
 
 #include "pthread_types.h"
@@ -90,9 +90,6 @@ struct	__pthread_st {
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
 
-	/* Thread-specific data */
-	void		*pt_specific[PTHREAD_KEYS_MAX];
-
 	/* For debugger: LWPs waiting to join. */
 	pthread_queue_t	pt_joiners;
 	PTQ_ENTRY(__pthread_st) pt_joinq;
@@ -100,6 +97,7 @@ struct	__pthread_st {
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
 	PTQ_ENTRY(__pthread_st)	pt_allq;
+	PTQ_ENTRY(__pthread_st)	pt_deadq;
 
 	/*
 	 * General synchronization data.  We try to align, as threads
@@ -109,9 +107,12 @@ struct	__pthread_st {
 	int		pt_sleeponq;	/* on a sleep queue */
 	int		pt_signalled;	/* Received pthread_cond_signal() */
 	void		*pt_sleepobj;	/* object slept on */
-	pthread_queue_t	*pt_sleepq;	/* sleep queue */
 	PTQ_ENTRY(__pthread_st)	pt_sleep;
 	int		pt_dummy2 __aligned(128);
+
+	/* Thread-specific data.  Large so it sits close to the end. */
+	int		pt_havespecific;
+	void		*pt_specific[PTHREAD_KEYS_MAX];
 
 	/*
 	 * Context for thread creation.  At the end as it's cached
@@ -141,9 +142,12 @@ struct	__pthread_st {
 #define PT_ATTR_MAGIC	0x22220002
 #define PT_ATTR_DEAD	0xDEAD0002
 
-extern	int		pthread__stacksize_lg;
-extern	size_t		pthread__stacksize;
-extern	vaddr_t		pthread__stackmask;
+extern int	pthread__stacksize_lg;
+extern size_t	pthread__stacksize;
+extern vaddr_t	pthread__stackmask;
+extern int	pthread__nspins;
+extern int	pthread__concurrency;
+extern int 	pthread__osrev;
 
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
@@ -165,7 +169,7 @@ int	pthread__park(pthread_t self, pthread_spin_t *lock,
 		      int cancelpt, const void *hint);
 
 /* Internal locking primitives */
-void	pthread__lockprim_init(int ncpu);
+void	pthread__lockprim_init(void);
 void	pthread_lockinit(pthread_spin_t *lock);
 void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
 int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
@@ -241,8 +245,5 @@ void	pthread__errorfunc(const char *file, int line, const char *function,
 #else
 #define	pthread__smt_pause()	/* nothing */
 #endif
-
-extern int pthread__nspins;
-extern int pthread__osrev;
 
 #endif /* _LIB_PTHREAD_INT_H */
