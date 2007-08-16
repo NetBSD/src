@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_specific.c,v 1.10 2003/08/13 18:52:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.11 2007/08/16 12:01:49 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.10 2003/08/13 18:52:01 nathanw Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.11 2007/08/16 12:01:49 ad Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
@@ -61,6 +61,7 @@ pthread_setspecific(pthread_key_t key, const void *value)
 	 */
 	/*LINTED const cast*/
 	self->pt_specific[key] = (void *) value;
+	self->pt_havespecific = 1;
 
 	return 0;
 }
