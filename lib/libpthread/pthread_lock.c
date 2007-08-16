@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.23 2007/08/16 13:54:17 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.24 2007/08/16 23:37:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.23 2007/08/16 13:54:17 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.24 2007/08/16 23:37:08 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -124,13 +124,12 @@ pthread_spinlock(pthread_spin_t *lock)
 	    thread, lock, thread->pt_spinlocks));
 	pthread__assert(thread->pt_spinlocks >= 0);
 	thread->pt_spinlocks++;
+	PTHREADD_ADD(PTHREADD_SPINLOCKS);
 #endif
 
 	if (pthread__atomic) {
-		if (__predict_false(!__cpu_simple_lock_try(lock))) {
-			pthread_spinlock_slow(lock);
+		if (__predict_true(__cpu_simple_lock_try(lock)))
 			return;
-		}
 	} else {
 		__cpu_simple_lock_t old;
 
@@ -139,13 +138,11 @@ pthread_spinlock(pthread_spin_t *lock)
 		*lock = __SIMPLELOCK_LOCKED;
 		RAS_END(pthread__lock2);
 
-		if (__predict_false(old != __SIMPLELOCK_UNLOCKED)) {
-			pthread_spinlock_slow(lock);
+		if (__predict_true(old == __SIMPLELOCK_UNLOCKED))
 			return;
-		}
 	}
-		
-	PTHREADD_ADD(PTHREADD_SPINLOCKS);
+
+	pthread_spinlock_slow(lock);
 }
 
 /*
@@ -186,8 +183,6 @@ pthread_spinlock_slow(pthread_spin_t *lock)
 		sched_yield();
 #endif
 	} while (/*CONSTCOND*/ 1);
-
-	PTHREADD_ADD(PTHREADD_SPINLOCKS);
 }
 
 int
