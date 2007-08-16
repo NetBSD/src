@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.12 2007/08/15 16:56:44 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.13 2007/08/16 16:17:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -419,8 +419,10 @@ p2k_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 	cn = P2K_MAKECN(pcn);
 	VLE(opc);
+	VLE(targ);
 	rv = VOP_RMDIR(opc, targ, cn);
-	VUL(opc);
+	AUL(targ);
+	AUL(opc);
 	rump_freecn(cn, 0);
 
 	return rv;
