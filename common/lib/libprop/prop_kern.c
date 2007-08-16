@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_kern.c,v 1.7 2006/11/28 18:36:26 cube Exp $	*/
+/*	$NetBSD: prop_kern.c,v 1.8 2007/08/16 21:44:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -234,6 +234,9 @@ prop_dictionary_sendrecv_ioctl(prop_dictionary_t dict, int fd,
 
 #include <uvm/uvm.h>
 
+/* Arbitrary limit ioctl input to 64KB */
+unsigned int prop_object_copyin_limit = 65536;
+
 static int
 _prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
 			  const u_long cmd, prop_object_t *objp)
@@ -247,9 +250,12 @@ _prop_object_copyin_ioctl(const struct plistref *pref, const prop_type_t type,
 
 	/*
 	 * Allocate an extra byte so we can guarantee NUL-termination.
-	 * XXX Some sanity check on the size?
+	 *
+	 * Allow malloc to fail in case pmap would be exhausted.
 	 */
-	buf = malloc(pref->pref_len + 1, M_TEMP, M_WAITOK);
+	buf = malloc(pref->pref_len + 1, M_TEMP, M_WAITOK | M_CANFAIL);
+	if (buf == NULL)
+		return (ENOMEM);
 	error = copyin(pref->pref_plist, buf, pref->pref_len);
 	if (error) {
 		free(buf, M_TEMP);

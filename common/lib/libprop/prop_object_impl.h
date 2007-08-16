@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.16 2007/08/16 16:28:18 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.17 2007/08/16 21:44:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #else
 #include <inttypes.h>
 #endif
+
+#include "prop_stack.h"
 
 struct _prop_object_externalize_context {
 	char *		poec_buf;		/* string buffer */
@@ -103,6 +105,12 @@ struct _prop_object_internalize_context {
 	_prop_tag_type_t poic_tag_type;
 };
 
+enum {
+	_PROP_OBJECT_FREE_DONE,
+	_PROP_OBJECT_FREE_RECURSE,
+	_PROP_OBJECT_FREE_FAILED
+};
+
 #define	_PROP_EOF(c)		((c) == '\0')
 #define	_PROP_ISSPACE(c)	\
 	((c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r' || \
@@ -155,28 +163,41 @@ void		_prop_object_internalize_unmap_file(
 				struct _prop_object_internalize_mapped_file *);
 #endif /* !_KERNEL && !_STANDALONE */
 
+typedef bool (*prop_object_internalizer_t)(prop_stack_t, prop_object_t *, 
+    struct _prop_object_internalize_context *);
+typedef bool (*prop_object_internalizer_continue_t)(prop_stack_t, prop_object_t *, 
+    struct _prop_object_internalize_context *, void *, prop_object_t);
+
 	/* These are here because they're required by shared code. */
-prop_object_t	_prop_array_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_bool_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_data_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_dictionary_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_number_internalize(
-				struct _prop_object_internalize_context *);
-prop_object_t	_prop_string_internalize(
-				struct _prop_object_internalize_context *);
+bool	_prop_array_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_bool_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_data_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_dictionary_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_number_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
+bool	_prop_string_internalize(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
 
 struct _prop_object_type {
-	uint32_t	pot_type;		/* type indicator */
-	void		(*pot_free)(void *);	/* func to free object */
-	bool	(*pot_extern)		/* func to externalize object */
-			    (struct _prop_object_externalize_context *,
-			     void *);
-	bool	(*pot_equals)		/* func to test quality */
-			    (void *, void *);
+	/* type indicator */
+	uint32_t	pot_type;
+	/* func to free object */
+	int		(*pot_free)(prop_stack_t, prop_object_t *);
+	/*
+	 * func to free the child returned by pot_free with stack == NULL.
+	 *
+	 * Must be implemented if pot_free can return non-0.
+	 */
+	void	(*pot_emergency_free)(prop_object_t);
+	/* func to externalize object */
+	bool	(*pot_extern)(struct _prop_object_externalize_context *,
+			      void *);
+	/* func to test quality */
+	bool	(*pot_equals)(void *, void *);
 };
 
 struct _prop_object {
