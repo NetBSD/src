@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.29 2007/08/04 13:37:49 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.30 2007/08/16 13:54:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.29 2007/08/04 13:37:49 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.30 2007/08/16 13:54:17 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -210,7 +210,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 		}
 
 		/* Okay, didn't look free. Get the interlock... */
-		pthread_spinlock(self, &mutex->ptm_interlock);
+		pthread_spinlock(&mutex->ptm_interlock);
 
 		/*
 		 * The mutex_unlock routine will get the interlock
@@ -222,7 +222,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 		PTQ_INSERT_HEAD(&mutex->ptm_blocked, self, pt_sleep);
 		if (mutex->ptm_lock != __SIMPLELOCK_LOCKED) {
 			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-			pthread_spinunlock(self, &mutex->ptm_interlock);
+			pthread_spinunlock(&mutex->ptm_interlock);
 			continue;
 		}
 
@@ -232,7 +232,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 			switch (mp->type) {
 			case PTHREAD_MUTEX_ERRORCHECK:
 				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-				pthread_spinunlock(self, &mutex->ptm_interlock);
+				pthread_spinunlock(&mutex->ptm_interlock);
 				return EDEADLK;
 
 			case PTHREAD_MUTEX_RECURSIVE:
@@ -243,7 +243,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 				 * own the mutex.
 				 */
 				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
-				pthread_spinunlock(self, &mutex->ptm_interlock);
+				pthread_spinunlock(&mutex->ptm_interlock);
 				if (mp->recursecount == INT_MAX)
 					return EAGAIN;
 				mp->recursecount++;
@@ -271,7 +271,7 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 		 */
 		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &mutex->ptm_blocked;
-		pthread_spinunlock(self, &mutex->ptm_interlock);
+		pthread_spinunlock(&mutex->ptm_interlock);
 		(void)pthread__park(self, &mutex->ptm_interlock,
 		    &mutex->ptm_blocked, NULL, 0, &mutex->ptm_blocked);
 	}
@@ -380,7 +380,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	if (self->pt_mutexhint == mutex)
 		self->pt_mutexhint = NULL;
 
-	pthread_spinlock(self, &mutex->ptm_interlock);
+	pthread_spinlock(&mutex->ptm_interlock);
 	pthread__unpark_all(self, &mutex->ptm_interlock, &mutex->ptm_blocked);
 
 	return 0;

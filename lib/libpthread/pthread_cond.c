@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.33 2007/08/07 19:04:21 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.34 2007/08/16 13:54:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.33 2007/08/07 19:04:21 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.34 2007/08/16 13:54:16 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -118,7 +118,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	 * performance it's critical that the spinlock is held for
 	 * as short a time as possible - that means no system calls.
 	 */ 
-	pthread_spinlock(self, &cond->ptc_lock);
+	pthread_spinlock(&cond->ptc_lock);
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
 	else {
@@ -132,7 +132,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
-	pthread_spinunlock(self, &cond->ptc_lock);
+	pthread_spinunlock(&cond->ptc_lock);
 
  	/*
  	 * Before releasing the mutex, note that this thread is
@@ -155,10 +155,10 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	 * last issued a wakeup.
 	 */
 	if (PTQ_EMPTY(&cond->ptc_waiters) && cond->ptc_mutex != NULL) {
-		pthread_spinlock(self, &cond->ptc_lock);
+		pthread_spinlock(&cond->ptc_lock);
 		if (PTQ_EMPTY(&cond->ptc_waiters))
 			cond->ptc_mutex = NULL;
-		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_spinunlock(&cond->ptc_lock);
 	}
 
 	/*
@@ -208,7 +208,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	 * performance it's critical that the spinlock is held for
 	 * as short a time as possible - that means no system calls.
 	 */ 
-	pthread_spinlock(self, &cond->ptc_lock);
+	pthread_spinlock(&cond->ptc_lock);
 	if (cond->ptc_mutex == NULL)
 		cond->ptc_mutex = mutex;
 	else {
@@ -222,7 +222,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	self->pt_signalled = 0;
 	self->pt_sleeponq = 1;
 	self->pt_sleepobj = &cond->ptc_waiters;
-	pthread_spinunlock(self, &cond->ptc_lock);
+	pthread_spinunlock(&cond->ptc_lock);
 
  	/*
  	 * Before releasing the mutex, note that this thread is
@@ -245,10 +245,10 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	 * last issued a wakeup.
 	 */
 	if (PTQ_EMPTY(&cond->ptc_waiters) && cond->ptc_mutex != NULL) {
-		pthread_spinlock(self, &cond->ptc_lock);
+		pthread_spinlock(&cond->ptc_lock);
 		if (PTQ_EMPTY(&cond->ptc_waiters))
 			cond->ptc_mutex = NULL;
-		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_spinunlock(&cond->ptc_lock);
 	}
 
 	/*
@@ -281,7 +281,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 		return 0;
 
 	self = pthread__self();
-	pthread_spinlock(self, &cond->ptc_lock);
+	pthread_spinlock(&cond->ptc_lock);
 
 	/*
 	 * Find a thread that is still blocked (no pending wakeup).
@@ -294,7 +294,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 	}
 	if (__predict_false(signaled == NULL)) {
 		cond->ptc_mutex = NULL;
-		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_spinunlock(&cond->ptc_lock);
 		return 0;
 	}
 
@@ -323,10 +323,10 @@ pthread_cond_signal(pthread_cond_t *cond)
 	 * thread) releases the mutex.
 	 */
 	if (self->pt_mutexhint != NULL && self->pt_mutexhint == mutex) {
-		pthread_spinunlock(self, &cond->ptc_lock);
-		pthread_spinlock(self, &mutex->ptm_interlock);
+		pthread_spinunlock(&cond->ptc_lock);
+		pthread_spinlock(&mutex->ptm_interlock);
 		PTQ_INSERT_HEAD(&mutex->ptm_blocked, signaled, pt_sleep);
-		pthread_spinunlock(self, &mutex->ptm_interlock);
+		pthread_spinunlock(&mutex->ptm_interlock);
 	} else {
 		pthread__unpark(self, &cond->ptc_lock,
 		    &cond->ptc_waiters, signaled);
@@ -352,7 +352,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 		return 0;
 
 	self = pthread__self();
-	pthread_spinlock(self, &cond->ptc_lock);
+	pthread_spinlock(&cond->ptc_lock);
 	mutex = cond->ptc_mutex;
 	cond->ptc_mutex = NULL;
 
@@ -362,7 +362,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	 * there is no pending wakeup.
 	 */
 	if (self->pt_mutexhint != NULL && self->pt_mutexhint == mutex) {
-		pthread_spinlock(self, &mutex->ptm_interlock);
+		pthread_spinlock(&mutex->ptm_interlock);
 		for (signaled = PTQ_FIRST(&cond->ptc_waiters);
 		    signaled != NULL;
 		    signaled = next) {	
@@ -373,8 +373,8 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 		    	PTQ_INSERT_HEAD(&mutex->ptm_blocked, signaled,
 		    	    pt_sleep);
 		}
-		pthread_spinunlock(self, &mutex->ptm_interlock);
-		pthread_spinunlock(self, &cond->ptc_lock);
+		pthread_spinunlock(&mutex->ptm_interlock);
+		pthread_spinunlock(&cond->ptc_lock);
 	} else
 		pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
 

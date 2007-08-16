@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_misc.c,v 1.2 2007/08/16 13:54:17 ad Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.1 2007/08/16 13:54:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,76 +36,104 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* 
+ * Public (POSIX-specified) spinlocks.
+ */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.2 2007/08/16 13:54:17 ad Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.1 2007/08/16 13:54:17 ad Exp $");
 
 #include <sys/types.h>
-#include <sys/signal.h>
-#include <sys/time.h>
+#include <sys/lock.h>
+#include <sys/ras.h>
 
 #include <errno.h>
-#include <lwp.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 
-int	_sys___sigprocmask14(int, const sigset_t *, sigset_t *);
-int	_sys_nanosleep(const struct timespec *, struct timespec *);
-
-__strong_alias(_nanosleep, nanosleep)
-__strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
-__strong_alias(__sigprocmask14,pthread_sigmask)
-__strong_alias(__libc_thr_yield,_sys_sched_yield)
-
-/*ARGSUSED*/
 int
-pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
+pthread_spin_init(pthread_spinlock_t *lock, int pshared)
 {
-	if (param == NULL || policy == NULL)
+
+#ifdef ERRORCHECK
+	if (lock == NULL || (pshared != PTHREAD_PROCESS_PRIVATE &&
+	    pshared != PTHREAD_PROCESS_SHARED))
 		return EINVAL;
-	param->sched_priority = 0;
-	*policy = SCHED_RR;
-	return 0;
-}
-
-/*ARGSUSED*/
-int
-pthread_setschedparam(pthread_t thread, int policy, 
-    const struct sched_param *param)
-{
-	if (param == NULL || policy < SCHED_FIFO || policy > SCHED_RR)
-		return EINVAL;
-	if (param->sched_priority > 0 || policy != SCHED_RR)
-		return ENOTSUP;
-	return 0;
-}
-
-int
-pthread_kill(pthread_t thread, int sig)
-{
-
-	if ((sig < 0) || (sig >= _NSIG))
-		return EINVAL;
-	if (pthread__find(thread) != 0)
-		return ESRCH;
-
-	return _lwp_kill(thread->pt_lid, sig);
-}
-
-int
-pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
-{
-
-	return _sys___sigprocmask14(how, set, oset);
-}
-
-int
-nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
-{
+#endif
+	lock->pts_magic = _PT_SPINLOCK_MAGIC;
 
 	/*
-	 * For now, just nanosleep.  In the future, maybe pass a ucontext_t
-	 * to _lwp_nanosleep() and allow it to recycle our kernel stack.
+	 * We don't actually use the pshared flag for anything;
+	 * CPU simple locks have all the process-shared properties 
+	 * that we want anyway.
 	 */
-	return  _sys_nanosleep(rqtp, rmtp);
+	lock->pts_flags = pshared;
+	pthread_lockinit(&lock->pts_spin);
+
+	return 0;
+}
+
+int
+pthread_spin_destroy(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
+		return EINVAL;
+	if (lock->pts_spin != __SIMPLELOCK_UNLOCKED)
+		return EBUSY;
+#endif
+
+	lock->pts_magic = _PT_SPINLOCK_DEAD;
+
+	return 0;
+}
+
+int
+pthread_spin_lock(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
+		return EINVAL;
+#endif
+
+	while (pthread__simple_lock_try(&lock->pts_spin) == 0) {
+		pthread__smt_pause();
+	}
+
+	return 0;
+}
+
+int
+pthread_spin_trylock(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
+		return EINVAL;
+#endif
+
+	if (pthread__simple_lock_try(&lock->pts_spin) == 0)
+		return EBUSY;
+
+	return 0;
+}
+
+int
+pthread_spin_unlock(pthread_spinlock_t *lock)
+{
+
+#ifdef ERRORCHECK
+	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
+		return EINVAL;
+#endif
+
+	pthread__simple_unlock(&lock->pts_spin);
+
+	return 0;
 }
