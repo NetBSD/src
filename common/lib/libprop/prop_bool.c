@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.10 2007/08/16 16:28:17 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.11 2007/08/16 21:44:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ static struct _prop_bool _prop_bool_false;
 _PROP_MUTEX_DECL_STATIC(_prop_bool_initialized_mutex)
 static bool	_prop_bool_initialized;
 
-static void		_prop_bool_free(void *);
+static int		_prop_bool_free(prop_stack_t, prop_object_t *);
 static bool	_prop_bool_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
@@ -66,16 +66,17 @@ static const struct _prop_object_type _prop_object_type_bool = {
 #define	prop_object_is_bool(x)		\
 	((x) != NULL && (x)->pb_obj.po_type == &_prop_object_type_bool)
 
-static void
-/*ARGSUSED*/
-_prop_bool_free(void *v _PROP_ARG_UNUSED)
+/* ARGSUSED */
+static int
+_prop_bool_free(prop_stack_t stack, prop_object_t *obj)
 {
-
 	/*
 	 * This should never happen as we "leak" our initial reference
 	 * count.
 	 */
+
 	/* XXX forced assertion failure? */
+	return (_PROP_OBJECT_FREE_DONE);
 }
 
 static bool
@@ -193,15 +194,18 @@ prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
  *	Parse a <true/> or <false/> and return the object created from
  *	the external representation.
  */
-prop_object_t
-_prop_bool_internalize(struct _prop_object_internalize_context *ctx)
+
+/* ARGSUSED */
+bool
+_prop_bool_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
 {
 	bool val;
 
 	/* No attributes, and it must be an empty element. */
 	if (ctx->poic_tagattr != NULL ||
 	    ctx->poic_is_empty_element == false)
-	    	return (NULL);
+	    	return (true);
 
 	if (_PROP_TAG_MATCH(ctx, "true"))
 		val = true;
@@ -209,6 +213,6 @@ _prop_bool_internalize(struct _prop_object_internalize_context *ctx)
 		_PROP_ASSERT(_PROP_TAG_MATCH(ctx, "false"));
 		val = false;
 	}
-
-	return (prop_bool_create(val));
+	*obj = prop_bool_create(val);
+	return (true);
 }

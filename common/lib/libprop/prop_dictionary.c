@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_dictionary.c,v 1.18 2007/08/16 16:28:17 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.19 2007/08/16 21:44:07 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,20 +111,22 @@ _PROP_POOL_INIT(_prop_dictionary_pool, sizeof(struct _prop_dictionary),
 _PROP_MALLOC_DEFINE(M_PROP_DICT, "prop dictionary",
 		    "property dictionary container object")
 
-static void		_prop_dictionary_free(void *);
+static int		_prop_dictionary_free(prop_stack_t, prop_object_t *);
+static void		_prop_dictionary_emergency_free(prop_object_t);
 static bool	_prop_dictionary_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
 static bool	_prop_dictionary_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_dictionary = {
-	.pot_type	=	PROP_TYPE_DICTIONARY,
-	.pot_free	=	_prop_dictionary_free,
-	.pot_extern	=	_prop_dictionary_externalize,
-	.pot_equals	=	_prop_dictionary_equals,
+	.pot_type		=	PROP_TYPE_DICTIONARY,
+	.pot_free		=	_prop_dictionary_free,
+	.pot_emergency_free	=	_prop_dictionary_emergency_free,
+	.pot_extern		=	_prop_dictionary_externalize,
+	.pot_equals		=	_prop_dictionary_equals,
 };
 
-static void		_prop_dict_keysym_free(void *);
+static int		_prop_dict_keysym_free(prop_stack_t, prop_object_t *);
 static bool	_prop_dict_keysym_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
@@ -200,16 +202,19 @@ _prop_dict_keysym_put(prop_dictionary_keysym_t pdk)
 	}
 }
 
-static void
-_prop_dict_keysym_free(void *v)
+/* ARGSUSED */
+static int
+_prop_dict_keysym_free(prop_stack_t stack, prop_object_t *obj)
 {
-	prop_dictionary_keysym_t pdk = v;
+	prop_dictionary_keysym_t pdk = *obj;
 
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
 	_prop_rb_tree_remove_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 
 	_prop_dict_keysym_put(pdk);
+
+	return _PROP_OBJECT_FREE_DONE;
 }
 
 static bool
@@ -316,33 +321,69 @@ _prop_dict_keysym_alloc(const char *key)
 	return (pdk);
 }
 
-static void
-_prop_dictionary_free(void *v)
+int dont_free = 1;
+
+static int
+_prop_dictionary_free(prop_stack_t stack, prop_object_t *obj)
 {
-	prop_dictionary_t pd = v;
+	prop_dictionary_t pd = *obj;
 	prop_dictionary_keysym_t pdk;
 	prop_object_t po;
-	unsigned int idx;
 
 	_PROP_ASSERT(pd->pd_count <= pd->pd_capacity);
 	_PROP_ASSERT((pd->pd_capacity == 0 && pd->pd_array == NULL) ||
 		     (pd->pd_capacity != 0 && pd->pd_array != NULL));
 
-	for (idx = 0; idx < pd->pd_count; idx++) {
-		pdk = pd->pd_array[idx].pde_key;
-		_PROP_ASSERT(pdk != NULL);
-		prop_object_release(pdk);
-		po = pd->pd_array[idx].pde_objref;
-		_PROP_ASSERT(po != NULL);
-		prop_object_release(po);
+	/* The empty dictorinary is easy, handle that first. */
+	if (pd->pd_count == 0) {
+		if (pd->pd_array != NULL)
+			_PROP_FREE(pd->pd_array, M_PROP_DICT);
+
+		_PROP_RWLOCK_DESTROY(pd->pd_rwlock);
+
+		_PROP_POOL_PUT(_prop_dictionary_pool, pd);
+
+		return (_PROP_OBJECT_FREE_DONE);
 	}
 
-	if (pd->pd_array != NULL)
-		_PROP_FREE(pd->pd_array, M_PROP_DICT);
+	po = pd->pd_array[pd->pd_count - 1].pde_objref;
+	_PROP_ASSERT(po != NULL);
 
-	_PROP_RWLOCK_DESTROY(pd->pd_rwlock);
+	if (stack == NULL) {
+		/*
+		 * If we are in emergency release mode,
+		 * just let caller recurse down.
+		 */
+		*obj = po;
+		return (_PROP_OBJECT_FREE_FAILED);
+	}
 
-	_PROP_POOL_PUT(_prop_dictionary_pool, pd);
+	/* Otherwise, try to push the current object on the stack. */
+	if (!_prop_stack_push(stack, pd, NULL, NULL)) {
+		/* Push failed, entering emergency release mode. */
+		return (_PROP_OBJECT_FREE_FAILED);
+	}
+	/* Object pushed on stack, caller will release it. */
+	--pd->pd_count;
+	pdk = pd->pd_array[pd->pd_count].pde_key;
+	_PROP_ASSERT(pdk != NULL);
+	prop_object_release(pdk);
+	*obj = po;
+	return (_PROP_OBJECT_FREE_RECURSE);
+}
+
+static void
+_prop_dictionary_emergency_free(prop_object_t obj)
+{
+	prop_dictionary_t pd = obj;
+	prop_dictionary_keysym_t pdk;
+
+	_PROP_ASSERT(pd->pd_count != 0);
+	--pd->pd_count;
+
+	pdk = pd->pd_array[pd->pd_count].pde_key;
+	_PROP_ASSERT(pdk != NULL);
+	prop_object_release(pdk);
 }
 
 static bool
@@ -1064,83 +1105,133 @@ prop_dictionary_externalize(prop_dictionary_t pd)
  * _prop_dictionary_internalize --
  *	Parse a <dict>...</dict> and return the object created from the
  *	external representation.
+ *
+ * Internal state in via rec_data is the storage area for the last processed
+ * key.
+ * _prop_dictionary_internalize_body is the upper half of the parse loop.
+ * It is responsible for parsing the key directly and storing it in the area
+ * referenced by rec_data.
+ * _prop_dictionary_internalize_cont is the lower half and called with the value
+ * associated with the key.
  */
-prop_object_t
-_prop_dictionary_internalize(struct _prop_object_internalize_context *ctx)
+static bool _prop_dictionary_internalize_body(prop_stack_t,
+    prop_object_t *, struct _prop_object_internalize_context *, char *);
+
+bool
+_prop_dictionary_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
 {
 	prop_dictionary_t dict;
-	prop_object_t val;
-	size_t keylen;
 	char *tmpkey;
 
 	/* We don't currently understand any attributes. */
 	if (ctx->poic_tagattr != NULL)
-		return (NULL);
+		return (true);
 
 	dict = prop_dictionary_create();
 	if (dict == NULL)
-		return (NULL);
+		return (true);
 
-	if (ctx->poic_is_empty_element)
-		return (dict);
-
-	tmpkey = _PROP_MALLOC(PDK_MAXKEY + 1, M_TEMP);
-	if (tmpkey == NULL)
-		goto bad;
-
-	for (;;) {
-		/* Fetch the next tag. */
-		if (_prop_object_internalize_find_tag(ctx, NULL,
-					_PROP_TAG_TYPE_EITHER) == false)
-			goto bad;
-
-		/* Check to see if this is the end of the dictionary. */
-		if (_PROP_TAG_MATCH(ctx, "dict") &&
-		    ctx->poic_tag_type == _PROP_TAG_TYPE_END)
-			break;
-
-		/* Ok, it must be a non-empty key start tag. */
-		if (!_PROP_TAG_MATCH(ctx, "key") ||
-		    ctx->poic_tag_type != _PROP_TAG_TYPE_START ||
-		    ctx->poic_is_empty_element)
-		    	goto bad;
-
-		if (_prop_object_internalize_decode_string(ctx,
-						tmpkey, PDK_MAXKEY, &keylen,
-						&ctx->poic_cp) == false)
-			goto bad;
-
-		_PROP_ASSERT(keylen <= PDK_MAXKEY);
-		tmpkey[keylen] = '\0';
-
-		if (_prop_object_internalize_find_tag(ctx, "key",
-					_PROP_TAG_TYPE_END) == false)
-			goto bad;
-   
-		/* ..and now the beginning of the value. */
-		if (_prop_object_internalize_find_tag(ctx, NULL,
-					_PROP_TAG_TYPE_START) == false)
-			goto bad;
-
-		val = _prop_object_internalize_by_tag(ctx);
-		if (val == NULL)
-			goto bad;
-
-		if (prop_dictionary_set(dict, tmpkey, val) == false) {
-			prop_object_release(val);
-			goto bad;
-		}
-		prop_object_release(val);
+	if (ctx->poic_is_empty_element) {
+		*obj = dict;
+		return (true);
 	}
 
-	_PROP_FREE(tmpkey, M_TEMP);
-	return (dict);
+	tmpkey = _PROP_MALLOC(PDK_MAXKEY + 1, M_TEMP);
+	if (tmpkey == NULL) {
+		prop_object_release(dict);
+		return (true);
+	}
+
+	*obj = dict;
+	/*
+	 * Opening tag is found, storage for key allocated and
+	 * now continue to the first element.
+	 */
+	return _prop_dictionary_internalize_body(stack, obj, ctx, tmpkey);
+}
+
+static bool
+_prop_dictionary_internalize_continue(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx, void *data, prop_object_t child)
+{
+	prop_dictionary_t dict = *obj;
+	char *tmpkey = data;
+
+	_PROP_ASSERT(tmpkey != NULL);
+
+	if (child == NULL ||
+	    prop_dictionary_set(dict, tmpkey, child) == false) {
+		_PROP_FREE(tmpkey, M_TEMP);
+		if (child != NULL)
+			prop_object_release(child);
+		prop_object_release(dict);
+		*obj = NULL;
+		return (true);
+	}
+
+	prop_object_release(child);
+
+	/*
+	 * key, value was added, now continue looking for the next key
+	 * or the closing tag.
+	 */
+	return _prop_dictionary_internalize_body(stack, obj, ctx, tmpkey);
+}
+
+static bool
+_prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx, char *tmpkey)
+{
+	prop_dictionary_t dict = *obj;
+	size_t keylen;
+
+	/* Fetch the next tag. */
+	if (_prop_object_internalize_find_tag(ctx, NULL, _PROP_TAG_TYPE_EITHER) == false)
+		goto bad;
+
+	/* Check to see if this is the end of the dictionary. */
+	if (_PROP_TAG_MATCH(ctx, "dict") &&
+	    ctx->poic_tag_type == _PROP_TAG_TYPE_END) {
+		_PROP_FREE(tmpkey, M_TEMP);
+		return (true);
+	}
+
+	/* Ok, it must be a non-empty key start tag. */
+	if (!_PROP_TAG_MATCH(ctx, "key") ||
+	    ctx->poic_tag_type != _PROP_TAG_TYPE_START ||
+	    ctx->poic_is_empty_element)
+	    	goto bad;
+
+	if (_prop_object_internalize_decode_string(ctx,
+					tmpkey, PDK_MAXKEY, &keylen,
+					&ctx->poic_cp) == false)
+		goto bad;
+
+	_PROP_ASSERT(keylen <= PDK_MAXKEY);
+	tmpkey[keylen] = '\0';
+
+	if (_prop_object_internalize_find_tag(ctx, "key",
+				_PROP_TAG_TYPE_END) == false)
+		goto bad;
+   
+	/* ..and now the beginning of the value. */
+	if (_prop_object_internalize_find_tag(ctx, NULL,
+				_PROP_TAG_TYPE_START) == false)
+		goto bad;
+
+	/*
+	 * Key is found, now wait for value to be parsed.
+	 */
+	if (_prop_stack_push(stack, *obj, tmpkey,
+			     _prop_dictionary_internalize_continue))
+		return (false);
 
  bad:
-	if (tmpkey != NULL)
-		_PROP_FREE(tmpkey, M_TEMP);
+	_PROP_FREE(tmpkey, M_TEMP);
 	prop_object_release(dict);
-	return (NULL);
+	*obj = NULL;
+	return (true);
 }
 
 /*

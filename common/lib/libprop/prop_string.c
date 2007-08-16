@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.7 2007/08/16 16:28:18 thorpej Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.8 2007/08/16 21:44:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ _PROP_POOL_INIT(_prop_string_pool, sizeof(struct _prop_string), "propstng")
 _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
 
-static void		_prop_string_free(void *);
+static int		_prop_string_free(prop_stack_t, prop_object_t *);
 static bool	_prop_string_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
@@ -75,14 +75,17 @@ static const struct _prop_object_type _prop_object_type_string = {
 	((x) != NULL && (x)->ps_obj.po_type == &_prop_object_type_string)
 #define	prop_string_contents(x)  ((x)->ps_immutable ? (x)->ps_immutable : "")
 
-static void
-_prop_string_free(void *v)
+/* ARGSUSED */
+static int
+_prop_string_free(prop_stack_t stack, prop_object_t *obj)
 {
-	prop_string_t ps = v;
+	prop_string_t ps = *obj;
 
 	if ((ps->ps_flags & PS_F_NOCOPY) == 0 && ps->ps_mutable != NULL)
 	    	_PROP_FREE(ps->ps_mutable, M_PROP_STRING);
-	_PROP_POOL_PUT(_prop_string_pool, v);
+	_PROP_POOL_PUT(_prop_string_pool, ps);
+
+	return (_PROP_OBJECT_FREE_DONE);
 }
 
 static bool
@@ -165,7 +168,7 @@ prop_string_create_cstring(const char *str)
 		len = strlen(str);
 		cp = _PROP_MALLOC(len + 1, M_PROP_STRING);
 		if (cp == NULL) {
-			_prop_string_free(ps);
+			prop_object_release(ps);
 			return (NULL);
 		}
 		strcpy(cp, str);
@@ -216,7 +219,7 @@ prop_string_copy(prop_string_t ops)
 		else {
 			char *cp = _PROP_MALLOC(ps->ps_size + 1, M_PROP_STRING);
 			if (cp == NULL) {
-				_prop_string_free(ps);
+				prop_object_release(ps);
 				return (NULL);
 			}
 			strcpy(cp, prop_string_contents(ops));
@@ -244,7 +247,7 @@ prop_string_copy_mutable(prop_string_t ops)
 		ps->ps_size = ops->ps_size;
 		cp = _PROP_MALLOC(ps->ps_size + 1, M_PROP_STRING);
 		if (cp == NULL) {
-			_prop_string_free(ps);
+			prop_object_release(ps);
 			return (NULL);
 		}
 		strcpy(cp, prop_string_contents(ops));
@@ -413,51 +416,56 @@ prop_string_equals_cstring(prop_string_t ps, const char *cp)
  *	Parse a <string>...</string> and return the object created from the
  *	external representation.
  */
-prop_object_t
-_prop_string_internalize(struct _prop_object_internalize_context *ctx)
+/* ARGSUSED */
+bool
+_prop_string_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
 {
 	prop_string_t string;
 	char *str;
 	size_t len, alen;
 
-	if (ctx->poic_is_empty_element)
-		return (prop_string_create());
+	if (ctx->poic_is_empty_element) {
+		*obj = prop_string_create();
+		return (true);
+	}
 	
 	/* No attributes recognized here. */
 	if (ctx->poic_tagattr != NULL)
-		return (NULL);
+		return (true);
 
 	/* Compute the length of the result. */
 	if (_prop_object_internalize_decode_string(ctx, NULL, 0, &len,
 						   NULL) == false)
-		return (NULL);
+		return (true);
 	
 	str = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (str == NULL)
-		return (NULL);
+		return (true);
 	
 	if (_prop_object_internalize_decode_string(ctx, str, len, &alen,
 						   &ctx->poic_cp) == false ||
 	    alen != len) {
 		_PROP_FREE(str, M_PROP_STRING);
-		return (NULL);
+		return (true);
 	}
 	str[len] = '\0';
 
 	if (_prop_object_internalize_find_tag(ctx, "string",
 					      _PROP_TAG_TYPE_END) == false) {
 		_PROP_FREE(str, M_PROP_STRING);
-		return (NULL);
+		return (true);
 	}
 
 	string = _prop_string_alloc();
 	if (string == NULL) {
 		_PROP_FREE(str, M_PROP_STRING);
-		return (NULL);
+		return (true);
 	}
 
 	string->ps_mutable = str;
 	string->ps_size = len;
+	*obj = string;
 
-	return (string);
+	return (true);
 }

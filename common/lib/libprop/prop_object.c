@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_object.c,v 1.14 2007/08/16 16:28:18 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.15 2007/08/16 21:44:07 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -586,10 +586,9 @@ _prop_object_internalize_match(const char *str1, size_t len1,
 {	t,	sizeof(t) - 1,		f	}
 
 static const struct _prop_object_internalizer {
-	const char	*poi_tag;
-	size_t		poi_taglen;
-	prop_object_t	(*poi_intern)(
-				struct _prop_object_internalize_context *);
+	const char			*poi_tag;
+	size_t				poi_taglen;
+	prop_object_internalizer_t	poi_intern;
 } _prop_object_internalizer_table[] = {
 	INTERNALIZER("array", _prop_array_internalize),
 
@@ -618,17 +617,44 @@ prop_object_t
 _prop_object_internalize_by_tag(struct _prop_object_internalize_context *ctx)
 {
 	const struct _prop_object_internalizer *poi;
+	prop_object_t obj, parent_obj;
+	void *data, *iter;
+	prop_object_internalizer_continue_t iter_func;
+	struct _prop_stack stack;
 
+	_prop_stack_init(&stack);
+
+match_start:
 	for (poi = _prop_object_internalizer_table;
 	     poi->poi_tag != NULL; poi++) {
 		if (_prop_object_internalize_match(ctx->poic_tagname,
 						   ctx->poic_tagname_len,
 						   poi->poi_tag,
 						   poi->poi_taglen))
-			return ((*poi->poi_intern)(ctx));
+			break;
+	}
+	if (poi == NULL) {
+		while (_prop_stack_pop(&stack, &obj, &data, &iter)) {
+			iter_func = (prop_object_internalizer_continue_t)iter;
+			(*iter_func)(&stack, &obj, ctx, data, NULL);
+		}
+
+		return (NULL);
 	}
 
-	return (NULL);
+	obj = NULL;
+	if (!(*poi->poi_intern)(&stack, &obj, ctx))
+		goto match_start;
+
+	parent_obj = obj;
+	while (_prop_stack_pop(&stack, &parent_obj, &data, &iter)) {
+		iter_func = (prop_object_internalizer_continue_t)iter;
+		if (!(*iter_func)(&stack, &parent_obj, ctx, data, obj))
+			goto match_start;
+		obj = parent_obj;
+	}
+
+	return (parent_obj);
 }
 
 prop_object_t
@@ -643,7 +669,7 @@ _prop_generic_internalize(const char *xml, const char *master_tag)
 
 	/* We start with a <plist> tag. */
 	if (_prop_object_internalize_find_tag(ctx, "plist",
-					      _PROP_TAG_TYPE_START) == FALSE)
+					      _PROP_TAG_TYPE_START) == false)
 		goto out;
 
 	/* Plist elements cannot be empty. */
@@ -661,7 +687,7 @@ _prop_generic_internalize(const char *xml, const char *master_tag)
 
 	/* Next we expect to see opening master_tag. */
 	if (_prop_object_internalize_find_tag(ctx, master_tag,
-					      _PROP_TAG_TYPE_START) == FALSE)
+					      _PROP_TAG_TYPE_START) == false)
 		goto out;
 
 	obj = _prop_object_internalize_by_tag(ctx);
@@ -673,7 +699,7 @@ _prop_generic_internalize(const char *xml, const char *master_tag)
 	 * Now we want </plist>.
 	 */
 	if (_prop_object_internalize_find_tag(ctx, "plist",
-					      _PROP_TAG_TYPE_END) == FALSE) {
+					      _PROP_TAG_TYPE_END) == false) {
 		prop_object_release(obj);
 		obj = NULL;
 	}
@@ -991,6 +1017,49 @@ prop_object_retain(prop_object_t obj)
 }
 
 /*
+ * prop_object_release_emergency
+ *	A direct free with prop_object_release failed.
+ *	Walk down the tree until a leaf is found and
+ *	free that. Do not recurse to avoid stack overflows.
+ *
+ *	This is a slow edge condition, but necessary to
+ *	guaranty that an object can always be freed.
+ */
+static void
+prop_object_release_emergency(prop_object_t obj)
+{
+	struct _prop_object *po;
+	prop_object_t parent = NULL;
+	uint32_t ocnt;
+
+	for (;;) {
+		po = obj;
+		_PROP_ASSERT(obj);
+
+		_PROP_REFCNT_LOCK();
+    		ocnt = po->po_refcnt--;
+		_PROP_REFCNT_UNLOCK();
+
+		_PROP_ASSERT(ocnt != 0);
+		if (ocnt != 1)
+			break;
+
+		_PROP_ASSERT(po->po_type);		
+		if ((po->po_type->pot_free)(NULL, &obj) == 0)
+			break;
+
+		parent = po;
+		_PROP_REFCNT_LOCK();
+		++po->po_refcnt;
+		_PROP_REFCNT_UNLOCK();
+	}
+	_PROP_ASSERT(parent);
+	/* One object was just freed. */
+	po = parent;
+	(*po->po_type->pot_emergency_free)(parent);
+}
+
+/*
  * prop_object_release --
  *	Decrement the reference count on an object.
  *
@@ -1000,16 +1069,41 @@ prop_object_retain(prop_object_t obj)
 void
 prop_object_release(prop_object_t obj)
 {
-	struct _prop_object *po = obj;
+	struct _prop_object *po;
+	struct _prop_stack stack;
+	void *dummy1, *dummy2;
+	int ret;
 	uint32_t ocnt;
 
-	_PROP_REFCNT_LOCK();
-	ocnt = po->po_refcnt--;
-	_PROP_REFCNT_UNLOCK();
+	_prop_stack_init(&stack);
 
-	_PROP_ASSERT(ocnt != 0);
-	if (ocnt == 1)
-		(*po->po_type->pot_free)(po);
+	do {
+		do {
+			po = obj;
+			_PROP_ASSERT(obj);
+
+			_PROP_REFCNT_LOCK();
+			ocnt = po->po_refcnt--;
+			_PROP_REFCNT_UNLOCK();
+
+			_PROP_ASSERT(ocnt != 0);
+			if (ocnt != 1) {
+				ret = 0;
+				break;
+			}
+
+			ret = (po->po_type->pot_free)(&stack, &obj);
+
+			if (ret == _PROP_OBJECT_FREE_DONE)
+				break;
+			
+			_PROP_REFCNT_LOCK();
+			++po->po_refcnt;
+			_PROP_REFCNT_UNLOCK();
+		} while (ret == _PROP_OBJECT_FREE_RECURSE);
+		if (ret == _PROP_OBJECT_FREE_FAILED)
+			prop_object_release_emergency(obj);
+	} while (_prop_stack_pop(&stack, &obj, &dummy1, &dummy2));
 }
 
 /*

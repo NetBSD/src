@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.7 2007/08/16 16:28:17 thorpej Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.8 2007/08/16 21:44:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ _PROP_POOL_INIT(_prop_data_pool, sizeof(struct _prop_data), "propdata")
 _PROP_MALLOC_DEFINE(M_PROP_DATA, "prop data",
 		    "property data container object")
 
-static void		_prop_data_free(void *);
+static int		_prop_data_free(prop_stack_t, prop_object_t *);
 static bool	_prop_data_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
@@ -85,14 +85,17 @@ static const struct _prop_object_type _prop_object_type_data = {
 #define	prop_object_is_data(x)		\
 	((x) != NULL && (x)->pd_obj.po_type == &_prop_object_type_data)
 
-static void
-_prop_data_free(void *v)
+/* ARGSUSED */
+static int
+_prop_data_free(prop_stack_t stack, prop_object_t *obj)
 {
-	prop_data_t pd = v;
+	prop_data_t pd = *obj;
 
 	if ((pd->pd_flags & PD_F_NOCOPY) == 0 && pd->pd_mutable != NULL)
 	    	_PROP_FREE(pd->pd_mutable, M_PROP_DATA);
-	_PROP_POOL_PUT(_prop_data_pool, v);
+	_PROP_POOL_PUT(_prop_data_pool, pd);
+
+	return (_PROP_OBJECT_FREE_DONE);
 }
 
 static const char _prop_data_base64[] =
@@ -228,7 +231,7 @@ prop_data_create_data(const void *v, size_t size)
 	if (pd != NULL) {
 		nv = _PROP_MALLOC(size, M_PROP_DATA);
 		if (nv == NULL) {
-			_prop_data_free(pd);
+			prop_object_release(pd);
 			return (NULL);
 		}
 		memcpy(nv, v, size);
@@ -279,7 +282,7 @@ prop_data_copy(prop_data_t opd)
 		else if (opd->pd_size != 0) {
 			void *nv = _PROP_MALLOC(pd->pd_size, M_PROP_DATA);
 			if (nv == NULL) {
-				_prop_data_free(pd);
+				prop_object_release(pd);
 				return (NULL);
 			}
 			memcpy(nv, opd->pd_immutable, opd->pd_size);
@@ -530,8 +533,14 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
  *	Parse a <data>...</data> and return the object created from the
  *	external representation.
  */
-prop_object_t
-_prop_data_internalize(struct _prop_object_internalize_context *ctx)
+
+/* strtoul is used for parsing, enforce. */
+typedef int PROP_DATA_ASSERT[/* CONSTCOND */sizeof(size_t) == sizeof(unsigned long) ? 1 : -1];
+
+/* ARGSUSED */
+bool
+_prop_data_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
 {
 	prop_data_t data;
 	uint8_t *buf;
@@ -539,8 +548,8 @@ _prop_data_internalize(struct _prop_object_internalize_context *ctx)
 
 	/* We don't accept empty elements. */
 	if (ctx->poic_is_empty_element)
-		return (NULL);
-	
+		return (true);
+
 	/*
 	 * If we got a "size" attribute, get the size of the data blob
 	 * from that.  Otherwise, we have to figure it out from the base64.
@@ -550,23 +559,22 @@ _prop_data_internalize(struct _prop_object_internalize_context *ctx)
 
 		if (!_PROP_TAGATTR_MATCH(ctx, "size") ||
 		    ctx->poic_tagattrval_len == 0)
-			return (NULL);
+			return (true);
 
 #ifndef _KERNEL
 		errno = 0;
 #endif
-		/* XXX Assumes size_t and unsigned long are the same size. */
 		len = strtoul(ctx->poic_tagattrval, &cp, 0);
 #ifndef _KERNEL		/* XXX can't check for ERANGE in the kernel */
 		if (len == ULONG_MAX && errno == ERANGE)
-			return (NULL);
+			return (true);
 #endif
 		if (cp != ctx->poic_tagattrval + ctx->poic_tagattrval_len)
-			return (NULL);
+			return (true);
 		_PROP_ASSERT(*cp == '\"');
 	} else if (_prop_data_internalize_decode(ctx, NULL, 0, &len,
 						NULL) == false)
-		return (NULL);
+		return (true);
 
 	/*
 	 * Always allocate one extra in case we don't land on an even byte
@@ -574,32 +582,33 @@ _prop_data_internalize(struct _prop_object_internalize_context *ctx)
 	 */
 	buf = _PROP_MALLOC(len + 1, M_PROP_DATA);
 	if (buf == NULL)
-		return (NULL);
+		return (true);
 	
 	if (_prop_data_internalize_decode(ctx, buf, len + 1, &alen,
 					  &ctx->poic_cp) == false) {
 		_PROP_FREE(buf, M_PROP_DATA);
-		return (NULL);
+		return (true);
 	}
 	if (alen != len) {
 		_PROP_FREE(buf, M_PROP_DATA);
-		return (NULL);
+		return (true);
 	}
 
 	if (_prop_object_internalize_find_tag(ctx, "data",
 					      _PROP_TAG_TYPE_END) == false) {
 		_PROP_FREE(buf, M_PROP_DATA);
-		return (NULL);
+		return (true);
 	}
 
 	data = _prop_data_alloc();
 	if (data == NULL) {
 		_PROP_FREE(buf, M_PROP_DATA);
-		return (NULL);
+		return (true);
 	}
 
 	data->pd_mutable = buf;
 	data->pd_size = len;
 
-	return (data);
+	*obj = data;
+	return (true);
 }
