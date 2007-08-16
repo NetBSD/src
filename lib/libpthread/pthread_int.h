@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.46 2007/08/16 00:41:23 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.47 2007/08/16 01:09:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -141,23 +141,9 @@ struct	__pthread_st {
 #define PT_ATTR_MAGIC	0x22220002
 #define PT_ATTR_DEAD	0xDEAD0002
 
-#ifdef PT_FIXEDSTACKSIZE_LG
-
-#define	PT_STACKSIZE_LG	PT_FIXEDSTACKSIZE_LG 
-#define	PT_STACKSIZE	(1<<(PT_STACKSIZE_LG)) 
-#define	PT_STACKMASK	(PT_STACKSIZE-1)
-
-#else  /* PT_FIXEDSTACKSIZE_LG */
-
-extern	int		pthread_stacksize_lg;
-extern	size_t		pthread_stacksize;
-extern	vaddr_t		pthread_stackmask;
-
-#define	PT_STACKSIZE_LG	pthread_stacksize_lg
-#define	PT_STACKSIZE	pthread_stacksize
-#define	PT_STACKMASK	pthread_stackmask
-
-#endif /* PT_FIXEDSTACKSIZE_LG */
+extern	int		pthread__stacksize_lg;
+extern	size_t		pthread__stacksize;
+extern	vaddr_t		pthread__stackmask;
 
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
@@ -169,10 +155,6 @@ extern	vaddr_t		pthread_stackmask;
 void	pthread_init(void)  __attribute__ ((__constructor__));
 
 /* Utility functions */
-
-/* Get offset from stack start to struct sa_stackinfo */
-ssize_t	pthread__stackinfo_offset(void);
-
 void	pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			    pthread_queue_t *threadq);
 void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
@@ -181,9 +163,6 @@ int	pthread__park(pthread_t self, pthread_spin_t *lock,
 		      pthread_queue_t *threadq,
 		      const struct timespec *abs_timeout,
 		      int cancelpt, const void *hint);
-
-int	pthread__stackalloc(pthread_t *t);
-void	pthread__initmain(pthread_t *t);
 
 /* Internal locking primitives */
 void	pthread__lockprim_init(int ncpu);
@@ -229,7 +208,7 @@ int	pthread__find(pthread_t self, pthread_t target);
 #else
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
-	((pthread_t) (((vaddr_t)(sp)) & ~PT_STACKMASK))
+	((pthread_t) (((vaddr_t)(sp)) & ~pthread__stackmask))
 
 #define pthread__id_reg() pthread__sp()
 #endif

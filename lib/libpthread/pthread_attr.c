@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.5 2005/09/21 15:27:14 tv Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.6 2007/08/16 01:09:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.5 2005/09/21 15:27:14 tv Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.6 2007/08/16 01:09:34 ad Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -299,7 +299,7 @@ pthread_attr_getstack(const pthread_attr_t *attr, void **addr, size_t *size)
 
 	if ((p = attr->pta_private) == NULL) {
 		*addr = NULL;
-		*size = PT_STACKSIZE;
+		*size = pthread__stacksize;
 	} else {
 		*addr = p->ptap_stackaddr;
 		*size = p->ptap_stacksize;
@@ -331,7 +331,7 @@ pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *size)
 	struct pthread_attr_private *p;
 
 	if ((p = attr->pta_private) == NULL)
-		*size = PT_STACKSIZE;
+		*size = pthread__stacksize;
 	else
 		*size = p->ptap_stacksize;
 

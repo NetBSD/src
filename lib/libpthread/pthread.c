@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.75 2007/08/16 00:41:23 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.76 2007/08/16 01:09:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.75 2007/08/16 00:41:23 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.76 2007/08/16 01:09:34 ad Exp $");
+
+#define	__EXPOSE_STACK	1
+
+#include <sys/param.h>
+#include <sys/mman.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -49,10 +55,8 @@ __RCSID("$NetBSD: pthread.c,v 1.75 2007/08/16 00:41:23 ad Exp $");
 #include <syslog.h>
 #include <ucontext.h>
 #include <unistd.h>
-#include <sys/param.h>
-#include <sys/sysctl.h>
-
 #include <sched.h>
+
 #include "pthread.h"
 #include "pthread_int.h"
 
@@ -70,6 +74,9 @@ __RCSID("$NetBSD: pthread.c,v 1.75 2007/08/16 00:41:23 ad Exp $");
 
 static void	pthread__create_tramp(void *(*)(void *), void *);
 static void	pthread__initthread(pthread_t);
+static int	pthread__stackid_setup(void *, size_t, pthread_t *);
+static int	pthread__stackalloc(pthread_t *);
+static void	pthread__initmain(pthread_t *);
 
 int pthread__started;
 
@@ -91,6 +98,19 @@ int pthread__concurrency;
 int pthread__nspins;
 int pthread__unpark_max = PTHREAD__UNPARK_MAX;
 int pthread__osrev;
+
+/* 
+ * We have to initialize the pthread_stack* variables here because
+ * mutexes are used before pthread_init() and thus pthread__initmain()
+ * are called.  Since mutexes only save the stack pointer and not a
+ * pointer to the thread data, it is safe to change the mapping from
+ * stack pointer to thread data afterwards.
+ */
+#define	_STACKSIZE_LG 18
+int	pthread__stacksize_lg = _STACKSIZE_LG;
+size_t	pthread__stacksize = 1 << _STACKSIZE_LG;
+vaddr_t	pthread__stackmask = (1 << _STACKSIZE_LG) - 1;
+#undef	_STACKSIZE_LG
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
@@ -168,6 +188,7 @@ pthread_init(void)
 	pthread_attr_init(&pthread_default_attr);
 	PTQ_INIT(&pthread__allqueue);
 	PTQ_INIT(&pthread__deadqueue);
+
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first);
@@ -1179,3 +1200,112 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 }
 
 #undef	OOPS
+
+/*
+ * Allocate a stack for a thread, and set it up. It needs to be aligned, so 
+ * that a thread can find itself by its stack pointer. 
+ */
+static int
+pthread__stackalloc(pthread_t *newt)
+{
+	void *addr;
+
+	addr = mmap(NULL, pthread__stacksize, PROT_READ|PROT_WRITE,
+	    MAP_ANON|MAP_PRIVATE | MAP_ALIGNED(pthread__stacksize_lg),
+	    -1, (off_t)0);
+
+	if (addr == MAP_FAILED)
+		return ENOMEM;
+
+	pthread__assert(((intptr_t)addr & pthread__stackmask) == 0);
+
+	return pthread__stackid_setup(addr, pthread__stacksize, newt); 
+}
+
+
+/*
+ * Set up the slightly special stack for the "initial" thread, which
+ * runs on the normal system stack, and thus gets slightly different
+ * treatment.
+ */
+static void
+pthread__initmain(pthread_t *newt)
+{
+	struct rlimit slimit;
+	size_t pagesize;
+	pthread_t t;
+	void *base;
+	size_t size;
+	int error, ret;
+	char *value;
+
+	pagesize = (size_t)sysconf(_SC_PAGESIZE);
+	pthread__stacksize = 0;
+	ret = getrlimit(RLIMIT_STACK, &slimit);
+	if (ret == -1)
+		err(1, "Couldn't get stack resource consumption limits");
+	value = getenv("PTHREAD_STACKSIZE");
+	if (value) {
+		pthread__stacksize = atoi(value) * 1024;
+		if (pthread__stacksize > slimit.rlim_cur)
+			pthread__stacksize = (size_t)slimit.rlim_cur;
+	}
+	if (pthread__stacksize == 0)
+		pthread__stacksize = (size_t)slimit.rlim_cur;
+	if (pthread__stacksize < 4 * pagesize)
+		errx(1, "Stacksize limit is too low, minimum %zd kbyte.",
+		    4 * pagesize / 1024);
+
+	pthread__stacksize_lg = -1;
+	while (pthread__stacksize) {
+		pthread__stacksize >>= 1;
+		pthread__stacksize_lg++;
+	}
+
+	pthread__stacksize = (1 << pthread__stacksize_lg);
+	pthread__stackmask = pthread__stacksize - 1;
+
+	base = (void *)(pthread__sp() & ~pthread__stackmask);
+	size = pthread__stacksize;
+
+	error = pthread__stackid_setup(base, size, &t);
+	if (error) {
+		/* XXX */
+		errx(2, "failed to setup main thread: error=%d", error);
+	}
+
+	*newt = t;
+}
+
+static int
+/*ARGSUSED*/
+pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
+{
+	pthread_t t;
+	void *redaddr;
+	size_t pagesize;
+	int ret;
+
+	t = base;
+	pagesize = (size_t)sysconf(_SC_PAGESIZE);
+
+	/*
+	 * Put a pointer to the pthread in the bottom (but
+         * redzone-protected section) of the stack. 
+	 */
+	redaddr = STACK_SHRINK(STACK_MAX(base, size), pagesize);
+	t->pt_stack.ss_size = size - 2 * pagesize;
+#ifdef __MACHINE_STACK_GROWS_UP
+	t->pt_stack.ss_sp = (char *)(void *)base + pagesize;
+#else
+	t->pt_stack.ss_sp = (char *)(void *)base + 2 * pagesize;
+#endif
+
+	/* Protect the next-to-bottom stack page as a red zone. */
+	ret = mprotect(redaddr, pagesize, PROT_NONE);
+	if (ret == -1) {
+		return errno;
+	}
+	*tp = t;
+	return 0;
+}
