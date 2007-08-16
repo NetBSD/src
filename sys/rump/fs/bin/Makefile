@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/05 22:28:01 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2007/08/16 19:48:31 pooka Exp $
 #
 
 .include "${.CURDIR}/../Makefile.rumpfs"
 
-SUBDIR=	${RUMPFSLIST}
+SUBDIR=	${RUMPFSLIST} fsconsole
 
 .include <bsd.subdir.mk>
