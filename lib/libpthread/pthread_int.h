@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.45 2007/08/07 19:04:22 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.46 2007/08/16 00:41:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@ struct	__pthread_st {
 	void		*pt_mutexhint;	/* Last mutex held. */
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
-	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
 	void		*pt_exitval;	/* Read by pthread_join() */
 	char		*pt_name;	/* Thread's name, set by the app. */
 	int		pt_willpark;	/* About to park */
@@ -113,6 +112,12 @@ struct	__pthread_st {
 	pthread_queue_t	*pt_sleepq;	/* sleep queue */
 	PTQ_ENTRY(__pthread_st)	pt_sleep;
 	int		pt_dummy2 __aligned(128);
+
+	/*
+	 * Context for thread creation.  At the end as it's cached
+	 * and then only ever passed to _lwp_create(). 
+	 */
+	ucontext_t	pt_uc;
 };
 
 /* Thread states */
