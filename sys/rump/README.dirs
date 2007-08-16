@@ -1,4 +1,4 @@
-	$NetBSD: README.dirs,v 1.1 2007/08/06 21:03:12 pooka Exp $
+	$NetBSD: README.dirs,v 1.2 2007/08/16 19:53:48 pooka Exp $
 
     Runnable Userspace Meta Programs
 
@@ -16,6 +16,9 @@ Quick rundown of the current directory structure:
 
 /fs - file system rumps
   /lib - libraries used by fs rumps
-    /lib$fs - kernel file system code compiled out of /sys with -D_KERNEL
-    /libp2k - puffs-to-vfs adaption layer, userspace namespace
+    /lib$fs  - kernel file system code compiled out of /sys with -D_KERNEL
+    /libp2k  - puffs-to-vfs adaption layer, userspace namespace
+    /libukfs - user kernel file system, a library to access file system
+	       images (or devices) directly in userspace without going
+	       through a system call and puffs
   /bin - rumps themselves.  link to a) librump b) fs library c) libpuffs
