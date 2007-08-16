@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.40 2007/03/02 18:53:51 ad Exp $
+#	$NetBSD: Makefile,v 1.41 2007/08/16 01:09:34 ad Exp $
 #
 
 WARNS=	4
-
-# Define PT_FIXEDSTACKSIZE_LG to set a fixed stacksize
-#CPPFLAGS+=-DPT_FIXEDSTACKSIZE_LG=18
 
 .include <bsd.own.mk>
 
@@ -59,7 +56,6 @@ SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
 SRCS+=	pthread_rwlock.c
 SRCS+=	pthread_specific.c
-SRCS+=  pthread_stack.c
 SRCS+=	pthread_tsd.c
 SRCS+=  pthread_debug.c
 SRCS+=	res_state.c
