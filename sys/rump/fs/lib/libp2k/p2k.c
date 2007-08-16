@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.13 2007/08/16 16:17:42 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.14 2007/08/16 19:43:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -127,7 +127,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
  out:
 	if (rv)
 		sverrno = errno;
-	ukfs_unmount(ukfs, rv);
+	ukfs_release(ukfs, rv);
 	if (rv) {
 		errno = sverrno;
 		rv = -1;
@@ -459,15 +459,7 @@ p2k_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	struct iovec iov;
 	int rv;
 
-	iov.iov_base = dent;
-	iov.iov_len = *reslen;
-
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = *readoff;
-	uio.uio_resid = *reslen;
-	uio.uio_rw = UIO_READ;
-	uio.uio_vmspace = UIO_VMSPACE_SYS;
+	UKFS_UIOINIT(uio, iov, dent, *reslen, *readoff, UIO_READ);
 
 	VLS(opc);
 	rv = VOP_READDIR(opc, &uio, NULL, eofflag, NULL, NULL);
@@ -488,15 +480,7 @@ p2k_node_readlink(struct puffs_cc *pcc, void *opc,
 	struct iovec iov;
 	int rv;
 
-	iov.iov_base = linkname;
-	iov.iov_len = *linklen;
-
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = 0;
-	uio.uio_resid = *linklen;
-	uio.uio_rw = UIO_READ;
-	uio.uio_vmspace = UIO_VMSPACE_SYS;
+	UKFS_UIOINIT(uio, iov, linkname, *linklen, 0, UIO_READ);
 
 	VLE(opc);
 	rv = VOP_READLINK(opc, &uio, NULL);
@@ -515,15 +499,7 @@ p2k_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	struct iovec iov;
 	int rv;
 
-	iov.iov_base = buf;
-	iov.iov_len = *resid;
-
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = offset;
-	uio.uio_resid = *resid;
-	uio.uio_rw = UIO_READ;
-	uio.uio_vmspace = UIO_VMSPACE_SYS;
+	UKFS_UIOINIT(uio, iov, buf, *resid, offset, UIO_READ);
 
 	VLS(opc);
 	rv = VOP_READ(opc, &uio, ioflag, NULL);
@@ -542,15 +518,7 @@ p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	struct iovec iov;
 	int rv;
 
-	iov.iov_base = buf;
-	iov.iov_len = *resid;
-
-	uio.uio_iov = &iov;
-	uio.uio_iovcnt = 1;
-	uio.uio_offset = offset;
-	uio.uio_resid = *resid;
-	uio.uio_rw = UIO_WRITE;
-	uio.uio_vmspace = UIO_VMSPACE_SYS;
+	UKFS_UIOINIT(uio, iov, buf, *resid, offset, UIO_WRITE);
 
 	VLE(opc);
 	rv = VOP_WRITE(opc, &uio, ioflag, NULL);
