@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.58 2007/07/31 21:14:20 pooka Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.58.2.1 2007/08/16 11:03:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -128,6 +128,9 @@ int	ffs_getextattr(void *);
 int	ffs_setextattr(void *);
 int	ffs_listextattr(void *);
 int	ffs_deleteextattr(void *);
+int	ffs_lock(void *);
+int	ffs_unlock(void *);
+int	ffs_islocked(void *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
@@ -136,6 +139,8 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
 /*
  * Snapshot function prototypes.
  */
+void	ffs_snapshot_init(void);
+void	ffs_snapshot_fini(void);
 int	ffs_snapblkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
 void	ffs_snapremove(struct vnode *);
 int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);

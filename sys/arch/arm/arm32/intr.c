@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21.18.1 2007/08/09 02:36:52 jmcneill Exp $	*/
+/*	$NetBSD: intr.c,v 1.21.18.2 2007/08/16 11:02:11 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.18.1 2007/08/09 02:36:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.18.2 2007/08/16 11:02:11 jmcneill Exp $");
 
 #include "opt_irqstats.h"
 
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.18.1 2007/08/09 02:36:52 jmcneill Exp 
 #include <arm/arm32/machdep.h>
  
 extern int current_spl_level;
-
-extern unsigned spl_mask;
 
 /* Generate soft interrupt counts if IRQSTATS is defined */
 /* Prototypes */

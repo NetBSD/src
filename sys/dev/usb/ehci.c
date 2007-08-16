@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.18.2 2007/08/07 01:02:14 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.18.3 2007/08/16 11:03:19 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.2 2007/08/07 01:02:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.18.3 2007/08/16 11:03:19 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -943,9 +943,9 @@ ehci_activate(device_ptr_t self, enum devact act)
 		return (EOPNOTSUPP);
 
 	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
-		sc->sc_dying = 1;
 		break;
 	}
 	return (rv);

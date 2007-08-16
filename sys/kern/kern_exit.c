@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.183.6.1 2007/08/09 02:37:19 jmcneill Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.183.6.2 2007/08/16 11:03:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.1 2007/08/09 02:37:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.183.6.2 2007/08/16 11:03:30 jmcneill Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -291,9 +291,9 @@ exit1(struct lwp *l, int rv)
 	 * Release trace file.
 	 */
 	if (p->p_tracep != NULL) {
-		mutex_enter(&ktrace_mutex);
+		mutex_enter(&ktrace_lock);
 		ktrderef(p);
-		mutex_exit(&ktrace_mutex);
+		mutex_exit(&ktrace_lock);
 	}
 #endif
 #ifdef SYSTRACE
@@ -956,14 +956,6 @@ proc_free(struct proc *p, struct rusage *ru)
 
 	l = LIST_FIRST(&p->p_lwps);
 
-	mutex_destroy(&p->p_rasmutex);
-	mutex_destroy(&p->p_mutex);
-	mutex_destroy(&p->p_stmutex);
-	mutex_destroy(&p->p_smutex);
-	cv_destroy(&p->p_waitcv);
-	cv_destroy(&p->p_lwpcv);
-	cv_destroy(&p->p_refcv);
-
 	/*
 	 * Delay release until after dropping the proclist lock.
 	 */
@@ -972,9 +964,21 @@ proc_free(struct proc *p, struct rusage *ru)
 	cred2 = l->l_cred;
 
 	/*
-	 * Free the last LWP's resources.
+	 * Free the last LWP's resources.  On a multiprocessor system,
+	 * this may spin waiting for the LWP to come off the CPU.
 	 */
 	lwp_free(l, false, true);
+
+	/*
+	 * Now that it's off the CPU, destroy locks.
+	 */
+	mutex_destroy(&p->p_rasmutex);
+	mutex_destroy(&p->p_mutex);
+	mutex_destroy(&p->p_stmutex);
+	mutex_destroy(&p->p_smutex);
+	cv_destroy(&p->p_waitcv);
+	cv_destroy(&p->p_lwpcv);
+	cv_destroy(&p->p_refcv);
 
 	/*
 	 * Free the proc structure and let pid be reallocated.  This will
