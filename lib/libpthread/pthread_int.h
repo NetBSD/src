@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.48 2007/08/16 12:01:49 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.49 2007/08/16 13:54:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -170,10 +170,10 @@ int	pthread__park(pthread_t self, pthread_spin_t *lock,
 
 /* Internal locking primitives */
 void	pthread__lockprim_init(void);
-void	pthread_lockinit(pthread_spin_t *lock);
-void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
-int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
-void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
+void	pthread_lockinit(pthread_spin_t *);
+void	pthread_spinlock(pthread_spin_t *);
+int	pthread_spintrylock(pthread_spin_t *);
+void	pthread_spinunlock(pthread_spin_t *);
 
 extern const struct pthread_lock_ops *pthread__lock_ops;
 
@@ -191,8 +191,8 @@ int	_setcontext_u(const ucontext_t *);
 int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 #endif
 
-void	pthread__testcancel(pthread_t self);
-int	pthread__find(pthread_t self, pthread_t target);
+void	pthread__testcancel(pthread_t);
+int	pthread__find(pthread_t);
 
 #ifndef PTHREAD_MD_INIT
 #define PTHREAD_MD_INIT
@@ -242,6 +242,7 @@ void	pthread__errorfunc(const char *file, int line, const char *function,
 
 #if defined(i386) || defined(__x86_64__)
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#define	PTHREAD__CHEAP_UNLOCK
 #else
 #define	pthread__smt_pause()	/* nothing */
 #endif

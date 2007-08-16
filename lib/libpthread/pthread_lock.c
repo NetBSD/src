@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.22 2007/08/16 12:01:49 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.23 2007/08/16 13:54:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,8 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * libpthread internal spinlock routines.
+ */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.22 2007/08/16 12:01:49 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.23 2007/08/16 13:54:17 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -60,9 +64,12 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.22 2007/08/16 12:01:49 ad Exp $");
 #define SDPRINTF(x)
 #endif
 
+static void pthread_spinlock_slow(pthread_spin_t *);
+
 static int pthread__atomic;
 
 RAS_DECL(pthread__lock);
+RAS_DECL(pthread__lock2);
 
 void
 pthread__simple_lock_init(__cpu_simple_lock_t *alp)
@@ -96,12 +103,128 @@ inline void
 pthread__simple_unlock(__cpu_simple_lock_t *alp)
 {
 
+#ifdef PTHREAD__CHEAP_UNLOCK
+	__cpu_simple_unlock(alp);
+#else
 	if (pthread__atomic) {
 		__cpu_simple_unlock(alp);
 		return;
 	}
-
 	*alp = __SIMPLELOCK_UNLOCKED;
+#endif
+}
+
+void
+pthread_spinlock(pthread_spin_t *lock)
+{
+#ifdef PTHREAD_SPIN_DEBUG
+	pthread_t thread = pthread__self();
+
+	SDPRINTF(("(pthread_spinlock %p) spinlock %p (count %d)\n",
+	    thread, lock, thread->pt_spinlocks));
+	pthread__assert(thread->pt_spinlocks >= 0);
+	thread->pt_spinlocks++;
+#endif
+
+	if (pthread__atomic) {
+		if (__predict_false(!__cpu_simple_lock_try(lock))) {
+			pthread_spinlock_slow(lock);
+			return;
+		}
+	} else {
+		__cpu_simple_lock_t old;
+
+		RAS_START(pthread__lock2);
+		old = *lock;
+		*lock = __SIMPLELOCK_LOCKED;
+		RAS_END(pthread__lock2);
+
+		if (__predict_false(old != __SIMPLELOCK_UNLOCKED)) {
+			pthread_spinlock_slow(lock);
+			return;
+		}
+	}
+		
+	PTHREADD_ADD(PTHREADD_SPINLOCKS);
+}
+
+/*
+ * Prevent this routine from being inlined.  The common case is no
+ * contention and it's better to not burden the instruction decoder.
+ */
+#if __GNUC_PREREQ__(3, 0)
+__attribute ((noinline))
+#endif
+static void 
+pthread_spinlock_slow(pthread_spin_t *lock)
+{
+	int count;
+#ifdef PTHREAD_SPIN_DEBUG
+	pthread_t thread = pthread__self();
+#endif
+
+	do {
+		count = pthread__nspins;
+		while (*lock == __SIMPLELOCK_LOCKED && --count > 0)
+			pthread__smt_pause();
+		if (count > 0) {
+			if (pthread__simple_lock_try(lock))
+				break;
+			continue;
+		}
+
+#ifdef PTHREAD_SPIN_DEBUG
+		SDPRINTF(("(pthread_spinlock %p) retrying spinlock %p "
+		    "(count %d)\n", thread, lock,
+		    thread->pt_spinlocks));
+		thread->pt_spinlocks--;
+		/* XXXLWP far from ideal */
+		sched_yield();
+		thread->pt_spinlocks++;
+#else
+		/* XXXLWP far from ideal */
+		sched_yield();
+#endif
+	} while (/*CONSTCOND*/ 1);
+
+	PTHREADD_ADD(PTHREADD_SPINLOCKS);
+}
+
+int
+pthread_spintrylock(pthread_spin_t *lock)
+{
+#ifdef PTHREAD_SPIN_DEBUG
+	pthread_t thread = pthread__self();
+	int ret;
+
+	SDPRINTF(("(pthread_spintrylock %p) spinlock %p (count %d)\n",
+	    thread, lock, thread->pt_spinlocks));
+	thread->pt_spinlocks++;
+	ret = pthread__simple_lock_try(lock);
+	if (!ret)
+		thread->pt_spinlocks--;
+	return ret;
+#else
+	return pthread__simple_lock_try(lock);
+#endif
+}
+
+void
+pthread_spinunlock(pthread_spin_t *lock)
+{
+#ifdef PTHREAD_SPIN_DEBUG
+	pthread_t thread = pthread__self();
+
+	SDPRINTF(("(pthread_spinunlock %p) spinlock %p (count %d)\n",
+	    thread, lock, thread->pt_spinlocks));
+
+	pthread__simple_unlock(lock);
+	thread->pt_spinlocks--;
+	pthread__assert(thread->pt_spinlocks >= 0);
+	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
+#else
+	pthread__simple_unlock(lock);
+#endif
 }
 
 /*
@@ -131,6 +254,12 @@ pthread__lockprim_init(void)
 	    	pthread__atomic = 1;
 	    	return;
 	}
+
+	if (rasctl(RAS_ADDR(pthread__lock2), RAS_SIZE(pthread__lock2),
+	    RAS_INSTALL) != 0) {
+	    	pthread__atomic = 1;
+	    	return;
+	}
 }
 
 void
@@ -138,162 +267,4 @@ pthread_lockinit(pthread_spin_t *lock)
 {
 
 	pthread__simple_lock_init(lock);
-}
-
-void
-pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
-{
-	int count;
-
-	SDPRINTF(("(pthread_spinlock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread__assert(thread->pt_spinlocks >= 0);
-#endif
-
-	thread->pt_spinlocks++;
-	if (__predict_true(pthread__simple_lock_try(lock))) {
-		PTHREADD_ADD(PTHREADD_SPINLOCKS);
-		return;
-	}
-
-	do {
-		count = pthread__nspins;
-		while (*lock == __SIMPLELOCK_LOCKED && --count > 0)
-			pthread__smt_pause();
-		if (count > 0) {
-			if (pthread__simple_lock_try(lock))
-				break;
-			continue;
-		}
-
-		SDPRINTF(("(pthread_spinlock %p) retrying spinlock %p "
-		    "(count %d)\n", thread, lock,
-		    thread->pt_spinlocks));
-		thread->pt_spinlocks--;
-
-		/* XXXLWP far from ideal */
-		sched_yield();
-		thread->pt_spinlocks++;
-	} while (/*CONSTCOND*/ 1);
-
-	PTHREADD_ADD(PTHREADD_SPINLOCKS);
-}
-
-int
-pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
-{
-	int ret;
-
-	SDPRINTF(("(pthread_spintrylock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-
-	thread->pt_spinlocks++;
-	ret = pthread__simple_lock_try(lock);
-	if (!ret)
-		thread->pt_spinlocks--;
-
-	return ret;
-}
-
-void
-pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
-{
-
-	SDPRINTF(("(pthread_spinunlock %p) spinlock %p (count %d)\n",
-	    thread, lock, thread->pt_spinlocks));
-
-	pthread__simple_unlock(lock);
-	thread->pt_spinlocks--;
-#ifdef PTHREAD_SPIN_DEBUG
-	pthread__assert(thread->pt_spinlocks >= 0);
-#endif
-	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
-}
-
-
-/* 
- * Public (POSIX-specified) spinlocks.
- */
-int
-pthread_spin_init(pthread_spinlock_t *lock, int pshared)
-{
-
-#ifdef ERRORCHECK
-	if (lock == NULL || (pshared != PTHREAD_PROCESS_PRIVATE &&
-	    pshared != PTHREAD_PROCESS_SHARED))
-		return EINVAL;
-#endif
-	lock->pts_magic = _PT_SPINLOCK_MAGIC;
-
-	/*
-	 * We don't actually use the pshared flag for anything;
-	 * CPU simple locks have all the process-shared properties 
-	 * that we want anyway.
-	 */
-	lock->pts_flags = pshared;
-	pthread_lockinit(&lock->pts_spin);
-
-	return 0;
-}
-
-int
-pthread_spin_destroy(pthread_spinlock_t *lock)
-{
-
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
-	if (lock->pts_spin != __SIMPLELOCK_UNLOCKED)
-		return EBUSY;
-#endif
-
-	lock->pts_magic = _PT_SPINLOCK_DEAD;
-
-	return 0;
-}
-
-int
-pthread_spin_lock(pthread_spinlock_t *lock)
-{
-
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
-#endif
-
-	while (pthread__simple_lock_try(&lock->pts_spin) == 0) {
-		pthread__smt_pause();
-	}
-
-	return 0;
-}
-
-int
-pthread_spin_trylock(pthread_spinlock_t *lock)
-{
-
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
-#endif
-
-	if (pthread__simple_lock_try(&lock->pts_spin) == 0)
-		return EBUSY;
-
-	return 0;
-}
-
-int
-pthread_spin_unlock(pthread_spinlock_t *lock)
-{
-
-#ifdef ERRORCHECK
-	if (lock == NULL || lock->pts_magic != _PT_SPINLOCK_MAGIC)
-		return EINVAL;
-#endif
-
-	pthread__simple_unlock(&lock->pts_spin);
-
-	return 0;
 }
