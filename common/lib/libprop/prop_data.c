@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.6 2007/03/04 22:31:43 dillo Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.7 2007/08/16 16:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -70,10 +70,10 @@ _PROP_MALLOC_DEFINE(M_PROP_DATA, "prop data",
 		    "property data container object")
 
 static void		_prop_data_free(void *);
-static boolean_t	_prop_data_externalize(
+static bool	_prop_data_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_data_equals(void *, void *);
+static bool	_prop_data_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_data = {
 	.pot_type	=	PROP_TYPE_DATA,
@@ -99,7 +99,7 @@ static const char _prop_data_base64[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char _prop_data_pad64 = '=';
 
-static boolean_t
+static bool
 _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 {
 	prop_data_t pd = v;
@@ -111,8 +111,8 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 	if (pd->pd_size == 0)
 		return (_prop_object_externalize_empty_tag(ctx, "data"));
 
-	if (_prop_object_externalize_start_tag(ctx, "data") == FALSE)
-		return (FALSE);
+	if (_prop_object_externalize_start_tag(ctx, "data") == false)
+		return (false);
 
 	for (src = pd->pd_immutable, srclen = pd->pd_size;
 	     srclen > 2; srclen -= 3) {
@@ -132,14 +132,14 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		_PROP_ASSERT(output[3] < 64);
 
 		if (_prop_object_externalize_append_char(ctx,
-				_prop_data_base64[output[0]]) == FALSE ||
+				_prop_data_base64[output[0]]) == false ||
 		    _prop_object_externalize_append_char(ctx,
-		    		_prop_data_base64[output[1]]) == FALSE ||
+		    		_prop_data_base64[output[1]]) == false ||
 		    _prop_object_externalize_append_char(ctx,
-		    		_prop_data_base64[output[2]]) == FALSE ||
+		    		_prop_data_base64[output[2]]) == false ||
 		    _prop_object_externalize_append_char(ctx,
-		    		_prop_data_base64[output[3]]) == FALSE)
-			return (FALSE);
+		    		_prop_data_base64[output[3]]) == false)
+			return (false);
 	}
 
 	if (srclen != 0) {
@@ -157,24 +157,24 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		_PROP_ASSERT(output[2] < 64);
 
 		if (_prop_object_externalize_append_char(ctx,
-				_prop_data_base64[output[0]]) == FALSE ||
+				_prop_data_base64[output[0]]) == false ||
 		    _prop_object_externalize_append_char(ctx,
-		    		_prop_data_base64[output[1]]) == FALSE ||
+		    		_prop_data_base64[output[1]]) == false ||
 		    _prop_object_externalize_append_char(ctx,
 		    		srclen == 1 ? _prop_data_pad64
-				: _prop_data_base64[output[2]]) == FALSE ||
+				: _prop_data_base64[output[2]]) == false ||
 		    _prop_object_externalize_append_char(ctx,
-		    		_prop_data_pad64) == FALSE)
-			return (FALSE);
+		    		_prop_data_pad64) == false)
+			return (false);
 	}
 
-	if (_prop_object_externalize_end_tag(ctx, "data") == FALSE)
-		return (FALSE);
+	if (_prop_object_externalize_end_tag(ctx, "data") == false)
+		return (false);
 	
-	return (TRUE);
+	return (true);
 }
 
-static boolean_t
+static bool
 _prop_data_equals(void *v1, void *v2)
 {
 	prop_data_t pd1 = v1;
@@ -182,16 +182,16 @@ _prop_data_equals(void *v1, void *v2)
 
 	if (! (prop_object_is_data(pd1) &&
 	       prop_object_is_data(pd2)))
-		return (FALSE);
+		return (false);
 
 	if (pd1 == pd2)
-		return (TRUE);
+		return (true);
 	if (pd1->pd_size != pd2->pd_size)
-		return (FALSE);
+		return (false);
 	if (pd1->pd_size == 0) {
 		_PROP_ASSERT(pd1->pd_immutable == NULL);
 		_PROP_ASSERT(pd2->pd_immutable == NULL);
-		return (TRUE);
+		return (true);
 	}
 	return (memcmp(pd1->pd_immutable, pd2->pd_immutable,
 		       pd1->pd_size) == 0);
@@ -351,9 +351,9 @@ prop_data_data_nocopy(prop_data_t pd)
 
 /*
  * prop_data_equals --
- *	Return TRUE if two strings are equivalent.
+ *	Return true if two strings are equivalent.
  */
-boolean_t
+bool
 prop_data_equals(prop_data_t pd1, prop_data_t pd2)
 {
 
@@ -362,22 +362,22 @@ prop_data_equals(prop_data_t pd1, prop_data_t pd2)
 
 /*
  * prop_data_equals_data --
- *	Return TRUE if the contained data is equivalent to the specified
+ *	Return true if the contained data is equivalent to the specified
  *	external data.
  */
-boolean_t
+bool
 prop_data_equals_data(prop_data_t pd, const void *v, size_t size)
 {
 
 	if (! prop_object_is_data(pd))
-		return (FALSE);
+		return (false);
 
 	if (pd->pd_size != size)
-		return (FALSE);
+		return (false);
 	return (memcmp(pd->pd_immutable, v, size) == 0);
 }
 
-static boolean_t
+static bool
 _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			     uint8_t *target, size_t targsize, size_t *sizep,
 			     const char **cpp)
@@ -394,7 +394,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 	for (;;) {
 		ch = (unsigned char) *src++;
 		if (_PROP_EOF(ch))
-			return (FALSE);
+			return (false);
 		if (_PROP_ISSPACE(ch))
 			continue;
 		if (ch == '<') {
@@ -406,13 +406,13 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 
 		pos = strchr(_prop_data_base64, ch);
 		if (pos == NULL)
-			return (FALSE);
+			return (false);
 
 		switch (state) {
 		case 0:
 			if (target) {
 				if (tarindex >= targsize)
-					return (FALSE);
+					return (false);
 				target[tarindex] =
 				    (uint8_t)((pos - _prop_data_base64) << 2);
 			}
@@ -422,7 +422,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 		case 1:
 			if (target) {
 				if (tarindex + 1 >= targsize)
-					return (FALSE);
+					return (false);
 				target[tarindex] |=
 				    (uint32_t)(pos - _prop_data_base64) >> 4;
 				target[tarindex + 1] =
@@ -436,7 +436,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 		case 2:
 			if (target) {
 				if (tarindex + 1 >= targsize)
-					return (FALSE);
+					return (false);
 				target[tarindex] |=
 				    (uint32_t)(pos - _prop_data_base64) >> 2;
 				target[tarindex + 1] =
@@ -450,7 +450,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 		case 3:
 			if (target) {
 				if (tarindex >= targsize)
-					return (FALSE);
+					return (false);
 				target[tarindex] |= (uint8_t)
 				    (pos - _prop_data_base64);
 			}
@@ -471,24 +471,24 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 	if (ch == _prop_data_pad64) {
 		ch = (unsigned char) *src;	/* src already advanced */
 		if (_PROP_EOF(ch))
-			return (FALSE);
+			return (false);
 		switch (state) {
 		case 0:		/* Invalid = in first position */
 		case 1:		/* Invalid = in second position */
-			return (FALSE);
+			return (false);
 
 		case 2:		/* Valid, one byte of info */
 			/* Skip whitespace */
 			for (ch = (unsigned char) *src++;
 			     ch != '<'; ch = (unsigned char) *src++) {
 				if (_PROP_EOF(ch))
-					return (FALSE);
+					return (false);
 				if (!_PROP_ISSPACE(ch))
 					break;
 			}
 			/* Make sure there is another trailing = */
 			if (ch != _prop_data_pad64)
-				return (FALSE);
+				return (false);
 			ch = (unsigned char) *src;
 			/* FALLTHROUGH */
 		
@@ -500,9 +500,9 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			for (ch = (unsigned char) *src++;
 			     ch != '<'; ch = (unsigned char) *src++) {
 				if (_PROP_EOF(ch))
-					return (FALSE);
+					return (false);
 				if (!_PROP_ISSPACE(ch))
-					return (FALSE);
+					return (false);
 			}
 			/* back up to '<' */
 			src--;
@@ -513,7 +513,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 		 * sure there are no partial bytes lying around.
 		 */
 		if (state != 0)
-			return (FALSE);
+			return (false);
 	}
 
 	_PROP_ASSERT(*src == '<');
@@ -522,7 +522,7 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 	if (cpp != NULL)
 		*cpp = src;
 
-	return (TRUE);
+	return (true);
 }
 
 /*
@@ -565,7 +565,7 @@ _prop_data_internalize(struct _prop_object_internalize_context *ctx)
 			return (NULL);
 		_PROP_ASSERT(*cp == '\"');
 	} else if (_prop_data_internalize_decode(ctx, NULL, 0, &len,
-						NULL) == FALSE)
+						NULL) == false)
 		return (NULL);
 
 	/*
@@ -577,7 +577,7 @@ _prop_data_internalize(struct _prop_object_internalize_context *ctx)
 		return (NULL);
 	
 	if (_prop_data_internalize_decode(ctx, buf, len + 1, &alen,
-					  &ctx->poic_cp) == FALSE) {
+					  &ctx->poic_cp) == false) {
 		_PROP_FREE(buf, M_PROP_DATA);
 		return (NULL);
 	}
@@ -587,7 +587,7 @@ _prop_data_internalize(struct _prop_object_internalize_context *ctx)
 	}
 
 	if (_prop_object_internalize_find_tag(ctx, "data",
-					      _PROP_TAG_TYPE_END) == FALSE) {
+					      _PROP_TAG_TYPE_END) == false) {
 		_PROP_FREE(buf, M_PROP_DATA);
 		return (NULL);
 	}

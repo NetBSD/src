@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.h,v 1.4 2006/10/26 18:51:21 thorpej Exp $	*/
+/*	$NetBSD: prop_array.h,v 1.5 2007/08/16 16:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,24 +52,24 @@ prop_array_t	prop_array_copy_mutable(prop_array_t);
 
 unsigned int	prop_array_capacity(prop_array_t);
 unsigned int	prop_array_count(prop_array_t);
-boolean_t	prop_array_ensure_capacity(prop_array_t, unsigned int);
+bool		prop_array_ensure_capacity(prop_array_t, unsigned int);
 
 void		prop_array_make_immutable(prop_array_t);
-boolean_t	prop_array_mutable(prop_array_t);
+bool		prop_array_mutable(prop_array_t);
 
 prop_object_iterator_t prop_array_iterator(prop_array_t);
 
 prop_object_t	prop_array_get(prop_array_t, unsigned int);
-boolean_t	prop_array_set(prop_array_t, unsigned int, prop_object_t);
-boolean_t	prop_array_add(prop_array_t, prop_object_t);
+bool		prop_array_set(prop_array_t, unsigned int, prop_object_t);
+bool		prop_array_add(prop_array_t, prop_object_t);
 void		prop_array_remove(prop_array_t, unsigned int);
 
-boolean_t	prop_array_equals(prop_array_t, prop_array_t);
+bool		prop_array_equals(prop_array_t, prop_array_t);
 
 char *		prop_array_externalize(prop_array_t);
 prop_array_t	prop_array_internalize(const char *);
 
-boolean_t	prop_array_externalize_to_file(prop_array_t, const char *);
+bool		prop_array_externalize_to_file(prop_array_t, const char *);
 prop_array_t	prop_array_internalize_from_file(const char *);
 
 #if defined(__NetBSD__)

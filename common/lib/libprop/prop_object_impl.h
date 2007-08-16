@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.15 2007/07/29 11:25:01 ad Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.16 2007/08/16 16:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -52,27 +52,27 @@ struct _prop_object_externalize_context {
 	unsigned int	poec_depth;		/* nesting depth */
 };
 
-boolean_t	_prop_object_externalize_start_tag(
+bool	_prop_object_externalize_start_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_end_tag(
+bool	_prop_object_externalize_end_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_empty_tag(
+bool	_prop_object_externalize_empty_tag(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_append_cstring(
+bool	_prop_object_externalize_append_cstring(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_append_encoded_cstring(
+bool	_prop_object_externalize_append_encoded_cstring(
 				struct _prop_object_externalize_context *,
 				const char *);
-boolean_t	_prop_object_externalize_append_char(
+bool	_prop_object_externalize_append_char(
 				struct _prop_object_externalize_context *,
 				unsigned char);
-boolean_t	_prop_object_externalize_header(
+bool	_prop_object_externalize_header(
 				struct _prop_object_externalize_context *);
-boolean_t	_prop_object_externalize_footer(
+bool	_prop_object_externalize_footer(
 				struct _prop_object_externalize_context *);
 
 struct _prop_object_externalize_context *
@@ -99,7 +99,7 @@ struct _prop_object_internalize_context {
 	const char *poic_tagattrval;
 	size_t      poic_tagattrval_len;
 
-	boolean_t   poic_is_empty_element;
+	bool   poic_is_empty_element;
 	_prop_tag_type_t poic_tag_type;
 };
 
@@ -123,14 +123,14 @@ struct _prop_object_internalize_context {
 				       (ctx)->poic_tagattrval_len,\
 				       (a), strlen(a))
 
-boolean_t	_prop_object_internalize_find_tag(
+bool	_prop_object_internalize_find_tag(
 				struct _prop_object_internalize_context *,
 				const char *, _prop_tag_type_t);
-boolean_t	_prop_object_internalize_match(const char *, size_t,
+bool	_prop_object_internalize_match(const char *, size_t,
 					       const char *, size_t);
 prop_object_t	_prop_object_internalize_by_tag(
 				struct _prop_object_internalize_context *);
-boolean_t	_prop_object_internalize_decode_string(
+bool	_prop_object_internalize_decode_string(
 				struct _prop_object_internalize_context *,
 				char *, size_t, size_t *, const char **);
 prop_object_t	_prop_generic_internalize(const char *, const char *);
@@ -141,7 +141,7 @@ void		_prop_object_internalize_context_free(
 				struct _prop_object_internalize_context *);
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
-boolean_t	_prop_object_externalize_write_file(const char *,
+bool	_prop_object_externalize_write_file(const char *,
 						    const char *, size_t);
 
 struct _prop_object_internalize_mapped_file {
@@ -172,10 +172,10 @@ prop_object_t	_prop_string_internalize(
 struct _prop_object_type {
 	uint32_t	pot_type;		/* type indicator */
 	void		(*pot_free)(void *);	/* func to free object */
-	boolean_t	(*pot_extern)		/* func to externalize object */
+	bool	(*pot_extern)		/* func to externalize object */
 			    (struct _prop_object_externalize_context *,
 			     void *);
-	boolean_t	(*pot_equals)		/* func to test quality */
+	bool	(*pot_equals)		/* func to test quality */
 			    (void *, void *);
 };
 

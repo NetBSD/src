@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.9 2006/10/16 03:21:07 thorpej Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.10 2007/08/16 16:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,20 +41,20 @@
 
 struct _prop_bool {
 	struct _prop_object	pb_obj;
-	boolean_t		pb_value;
+	bool		pb_value;
 };
 
 static struct _prop_bool _prop_bool_true;
 static struct _prop_bool _prop_bool_false;
 
 _PROP_MUTEX_DECL_STATIC(_prop_bool_initialized_mutex)
-static boolean_t	_prop_bool_initialized;
+static bool	_prop_bool_initialized;
 
 static void		_prop_bool_free(void *);
-static boolean_t	_prop_bool_externalize(
+static bool	_prop_bool_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_bool_equals(void *, void *);
+static bool	_prop_bool_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_bool = {
 	.pot_type	=	PROP_TYPE_BOOL,
@@ -78,7 +78,7 @@ _prop_bool_free(void *v _PROP_ARG_UNUSED)
 	/* XXX forced assertion failure? */
 }
 
-static boolean_t
+static bool
 _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 		       void *v)
 {
@@ -88,7 +88,7 @@ _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 	    pb->pb_value ? "true" : "false"));
 }
 
-static boolean_t
+static bool
 _prop_bool_equals(void *v1, void *v2)
 {
 	prop_bool_t b1 = v1;
@@ -96,7 +96,7 @@ _prop_bool_equals(void *v1, void *v2)
 
 	if (! (prop_object_is_bool(b1) &&
 	       prop_object_is_bool(b2)))
-		return (FALSE);
+		return (false);
 
 	/*
 	 * Since we only ever allocate one true and one false,
@@ -106,7 +106,7 @@ _prop_bool_equals(void *v1, void *v2)
 }
 
 static prop_bool_t
-_prop_bool_alloc(boolean_t val)
+_prop_bool_alloc(bool val)
 {
 	prop_bool_t pb;
 
@@ -115,13 +115,13 @@ _prop_bool_alloc(boolean_t val)
 		if (! _prop_bool_initialized) {
 			_prop_object_init(&_prop_bool_true.pb_obj,
 					  &_prop_object_type_bool);
-			_prop_bool_true.pb_value = TRUE;
+			_prop_bool_true.pb_value = true;
 
 			_prop_object_init(&_prop_bool_false.pb_obj,
 					  &_prop_object_type_bool);
-			_prop_bool_false.pb_value = FALSE;
+			_prop_bool_false.pb_value = false;
 
-			_prop_bool_initialized = TRUE;
+			_prop_bool_initialized = true;
 		}
 		_PROP_MUTEX_UNLOCK(_prop_bool_initialized_mutex);
 	}
@@ -138,7 +138,7 @@ _prop_bool_alloc(boolean_t val)
  *	provided boolean value.
  */
 prop_bool_t
-prop_bool_create(boolean_t val)
+prop_bool_create(bool val)
 {
 
 	return (_prop_bool_alloc(val));
@@ -167,21 +167,21 @@ prop_bool_copy(prop_bool_t opb)
  * prop_bool_true --
  *	Get the value of a prop_bool_t.
  */
-boolean_t
+bool
 prop_bool_true(prop_bool_t pb)
 {
 
 	if (! prop_object_is_bool(pb))
-		return (FALSE);
+		return (false);
 
 	return (pb->pb_value);
 }
 
 /*
  * prop_bool_equals --
- *	Return TRUE if the boolean values are equivalent.
+ *	Return true if the boolean values are equivalent.
  */
-boolean_t
+bool
 prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
 {
 
@@ -196,18 +196,18 @@ prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
 prop_object_t
 _prop_bool_internalize(struct _prop_object_internalize_context *ctx)
 {
-	boolean_t val;
+	bool val;
 
 	/* No attributes, and it must be an empty element. */
 	if (ctx->poic_tagattr != NULL ||
-	    ctx->poic_is_empty_element == FALSE)
+	    ctx->poic_is_empty_element == false)
 	    	return (NULL);
 
 	if (_PROP_TAG_MATCH(ctx, "true"))
-		val = TRUE;
+		val = true;
 	else {
 		_PROP_ASSERT(_PROP_TAG_MATCH(ctx, "false"));
-		val = FALSE;
+		val = false;
 	}
 
 	return (prop_bool_create(val));

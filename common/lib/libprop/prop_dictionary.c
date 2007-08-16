@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.17 2007/07/16 19:20:17 joerg Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.18 2007/08/16 16:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -112,10 +112,10 @@ _PROP_MALLOC_DEFINE(M_PROP_DICT, "prop dictionary",
 		    "property dictionary container object")
 
 static void		_prop_dictionary_free(void *);
-static boolean_t	_prop_dictionary_externalize(
+static bool	_prop_dictionary_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_dictionary_equals(void *, void *);
+static bool	_prop_dictionary_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_type	=	PROP_TYPE_DICTIONARY,
@@ -125,10 +125,10 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 };
 
 static void		_prop_dict_keysym_free(void *);
-static boolean_t	_prop_dict_keysym_externalize(
+static bool	_prop_dict_keysym_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_dict_keysym_equals(void *, void *);
+static bool	_prop_dict_keysym_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_dict_keysym = {
 	.pot_type	=	PROP_TYPE_DICT_KEYSYM,
@@ -182,7 +182,7 @@ static const struct rb_tree_ops _prop_dict_keysym_rb_tree_ops = {
 };
 
 static struct rb_tree _prop_dict_keysym_tree;
-static boolean_t _prop_dict_keysym_tree_initialized;
+static bool _prop_dict_keysym_tree_initialized;
 
 _PROP_MUTEX_DECL_STATIC(_prop_dict_keysym_tree_mutex)
 
@@ -212,7 +212,7 @@ _prop_dict_keysym_free(void *v)
 	_prop_dict_keysym_put(pdk);
 }
 
-static boolean_t
+static bool
 _prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 			     void *v)
 {
@@ -222,16 +222,16 @@ _prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 
 	_PROP_ASSERT(pdk->pdk_key[0] != '\0');
 
-	if (_prop_object_externalize_start_tag(ctx, "string") == FALSE ||
+	if (_prop_object_externalize_start_tag(ctx, "string") == false ||
 	    _prop_object_externalize_append_encoded_cstring(ctx,
-						pdk->pdk_key) == FALSE ||
-	    _prop_object_externalize_end_tag(ctx, "string") == FALSE)
-		return (FALSE);
+						pdk->pdk_key) == false ||
+	    _prop_object_externalize_end_tag(ctx, "string") == false)
+		return (false);
 	
-	return (TRUE);
+	return (true);
 }
 
-static boolean_t
+static bool
 _prop_dict_keysym_equals(void *v1, void *v2)
 {
 	prop_dictionary_keysym_t pdk1 = v1;
@@ -239,7 +239,7 @@ _prop_dict_keysym_equals(void *v1, void *v2)
 
 	if (! (prop_object_is_dictionary_keysym(pdk1) &&
 	       prop_object_is_dictionary_keysym(pdk2)))
-		return (FALSE);
+		return (false);
 
 	/*
 	 * There is only ever one copy of a keysym at any given time,
@@ -263,7 +263,7 @@ _prop_dict_keysym_alloc(const char *key)
 	if (! _prop_dict_keysym_tree_initialized) {
 		_prop_rb_tree_init(&_prop_dict_keysym_tree,
 				   &_prop_dict_keysym_rb_tree_ops);
-		_prop_dict_keysym_tree_initialized = TRUE;
+		_prop_dict_keysym_tree_initialized = true;
 	} else {
 		n = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
 		if (n != NULL) {
@@ -345,7 +345,7 @@ _prop_dictionary_free(void *v)
 	_PROP_POOL_PUT(_prop_dictionary_pool, pd);
 }
 
-static boolean_t
+static bool
 _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 			     void *v)
 {
@@ -354,7 +354,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	struct _prop_object *po;
 	prop_object_iterator_t pi;
 	unsigned int i;
-	boolean_t rv = FALSE;
+	bool rv = false;
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 
@@ -363,8 +363,8 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 		return (_prop_object_externalize_empty_tag(ctx, "dict"));
 	}
 
-	if (_prop_object_externalize_start_tag(ctx, "dict") == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
+	if (_prop_object_externalize_start_tag(ctx, "dict") == false ||
+	    _prop_object_externalize_append_char(ctx, '\n') == false)
 		goto out;
 
 	pi = prop_dictionary_iterator(pd);
@@ -377,11 +377,11 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	while ((pdk = prop_object_iterator_next(pi)) != NULL) {
 		po = prop_dictionary_get_keysym(pd, pdk);
 		if (po == NULL ||
-		    _prop_object_externalize_start_tag(ctx, "key") == FALSE ||
+		    _prop_object_externalize_start_tag(ctx, "key") == false ||
 		    _prop_object_externalize_append_encoded_cstring(ctx,
-						   pdk->pdk_key) == FALSE ||
-		    _prop_object_externalize_end_tag(ctx, "key") == FALSE ||
-		    (*po->po_type->pot_extern)(ctx, po) == FALSE) {
+						   pdk->pdk_key) == false ||
+		    _prop_object_externalize_end_tag(ctx, "key") == false ||
+		    (*po->po_type->pot_extern)(ctx, po) == false) {
 			prop_object_iterator_release(pi);
 			goto out;
 		}
@@ -391,34 +391,34 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 
 	ctx->poec_depth--;
 	for (i = 0; i < ctx->poec_depth; i++) {
-		if (_prop_object_externalize_append_char(ctx, '\t') == FALSE)
+		if (_prop_object_externalize_append_char(ctx, '\t') == false)
 			goto out;
 	}
-	if (_prop_object_externalize_end_tag(ctx, "dict") == FALSE)
+	if (_prop_object_externalize_end_tag(ctx, "dict") == false)
 		goto out;
 	
-	rv = TRUE;
+	rv = true;
 
  out:
 	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 	return (rv);
 }
 
-static boolean_t
+static bool
 _prop_dictionary_equals(void *v1, void *v2)
 {
 	prop_dictionary_t dict1 = v1;
 	prop_dictionary_t dict2 = v2;
 	const struct _prop_dict_entry *pde1, *pde2;
 	unsigned int idx;
-	boolean_t rv = FALSE;
+	bool rv = false;
 
 	if (! (prop_object_is_dictionary(dict1) &&
 	       prop_object_is_dictionary(dict2)))
-		return (FALSE);
+		return (false);
 
 	if (dict1 == dict2)
-		return (TRUE);
+		return (true);
 
 	if ((uintptr_t)dict1 < (uintptr_t)dict2) {
 		_PROP_RWLOCK_RDLOCK(dict1->pd_rwlock);
@@ -436,14 +436,14 @@ _prop_dictionary_equals(void *v1, void *v2)
 		pde2 = &dict2->pd_array[idx];
 
 		if (prop_dictionary_keysym_equals(pde1->pde_key,
-						  pde2->pde_key) == FALSE)
+						  pde2->pde_key) == false)
 			goto out;
 		if (prop_object_equals(pde1->pde_objref,
-				       pde2->pde_objref) == FALSE)
+				       pde2->pde_objref) == false)
 			goto out;
 	}
 
-	rv = TRUE;
+	rv = true;
 
  out:
  	_PROP_RWLOCK_UNLOCK(dict1->pd_rwlock);
@@ -481,7 +481,7 @@ _prop_dictionary_alloc(unsigned int capacity)
 	return (pd);
 }
 
-static boolean_t
+static bool
 _prop_dictionary_expand(prop_dictionary_t pd, unsigned int capacity)
 {
 	struct _prop_dict_entry *array, *oarray;
@@ -494,7 +494,7 @@ _prop_dictionary_expand(prop_dictionary_t pd, unsigned int capacity)
 
 	array = _PROP_CALLOC(capacity * sizeof(*array), M_PROP_DICT);
 	if (array == NULL)
-		return (FALSE);
+		return (false);
 	if (oarray != NULL)
 		memcpy(array, oarray, pd->pd_capacity * sizeof(*array));
 	pd->pd_array = array;
@@ -503,7 +503,7 @@ _prop_dictionary_expand(prop_dictionary_t pd, unsigned int capacity)
 	if (oarray != NULL)
 		_PROP_FREE(oarray, M_PROP_DICT);
 	
-	return (TRUE);
+	return (true);
 }
 
 static prop_object_t
@@ -655,19 +655,19 @@ prop_dictionary_count(prop_dictionary_t pd)
  *	total number of objects (including the objects already stored in
  *	the dictionary).
  */
-boolean_t
+bool
 prop_dictionary_ensure_capacity(prop_dictionary_t pd, unsigned int capacity)
 {
-	boolean_t rv;
+	bool rv;
 
 	if (! prop_object_is_dictionary(pd))
-		return (FALSE);
+		return (false);
 
 	_PROP_RWLOCK_WRLOCK(pd->pd_rwlock);
 	if (capacity > pd->pd_capacity)
 		rv = _prop_dictionary_expand(pd, capacity);
 	else
-		rv = TRUE;
+		rv = true;
 	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 	return (rv);
 }
@@ -707,7 +707,7 @@ prop_dictionary_all_keys(prop_dictionary_t pd)
 {
 	prop_array_t array;
 	unsigned int idx;
-	boolean_t rv = TRUE;
+	bool rv = true;
 
 	if (! prop_object_is_dictionary(pd))
 		return (NULL);
@@ -719,13 +719,13 @@ prop_dictionary_all_keys(prop_dictionary_t pd)
 
 	for (idx = 0; idx < pd->pd_count; idx++) {
 		rv = prop_array_add(array, pd->pd_array[idx].pde_key);
-		if (rv == FALSE)
+		if (rv == false)
 			break;
 	}
 
 	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 
-	if (rv == FALSE) {
+	if (rv == false) {
 		prop_object_release(array);
 		array = NULL;
 	}
@@ -810,21 +810,21 @@ prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
  *	Store a reference to an object at with the specified key.
  *	If the key already exisit, the original object is released.
  */
-boolean_t
+bool
 prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 {
 	struct _prop_dict_entry *pde;
 	prop_dictionary_keysym_t pdk;
 	unsigned int idx;
-	boolean_t rv = FALSE;
+	bool rv = false;
 
 	if (! prop_object_is_dictionary(pd))
-		return (FALSE);
+		return (false);
 
 	_PROP_ASSERT(pd->pd_count <= pd->pd_capacity);
 
 	if (prop_dictionary_is_immutable(pd))
-		return (FALSE);
+		return (false);
 
 	_PROP_RWLOCK_WRLOCK(pd->pd_rwlock);
 
@@ -834,7 +834,7 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 		prop_object_retain(po);
 		pde->pde_objref = po;
 		prop_object_release(opo);
-		rv = TRUE;
+		rv = true;
 		goto out;
 	}
 
@@ -844,7 +844,7 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 
 	if (pd->pd_count == pd->pd_capacity &&
 	    _prop_dictionary_expand(pd,
-	    			    pd->pd_capacity + EXPAND_STEP) == FALSE) {
+	    			    pd->pd_capacity + EXPAND_STEP) == false) {
 		prop_object_release(pdk);
 	    	goto out;
 	}
@@ -857,7 +857,7 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 		pd->pd_array[0].pde_objref = po;
 		pd->pd_count++;
 		pd->pd_version++;
-		rv = TRUE;
+		rv = true;
 		goto out;
 	}
 
@@ -880,7 +880,7 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 			pd->pd_array[0].pde_objref = po;
 			pd->pd_count++;
 			pd->pd_version++;
-			rv = TRUE;
+			rv = true;
 			goto out;
 		}
 		idx--;
@@ -894,7 +894,7 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
 
 	pd->pd_version++;
 
-	rv = TRUE;
+	rv = true;
 
  out:
 	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
@@ -906,14 +906,14 @@ prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
  *	Replace the object in the dictionary at the location encoded by
  *	the keysym.
  */
-boolean_t
+bool
 prop_dictionary_set_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk,
 			   prop_object_t po)
 {
 
 	if (! (prop_object_is_dictionary(pd) &&
 	       prop_object_is_dictionary_keysym(pdk)))
-		return (FALSE);
+		return (false);
 
 	return (prop_dictionary_set(pd, pdk->pdk_key, po));
 }
@@ -992,10 +992,10 @@ prop_dictionary_remove_keysym(prop_dictionary_t pd,
 
 /*
  * prop_dictionary_equals --
- *	Return TRUE if the two dictionaries are equivalent.  Note we do a
+ *	Return true if the two dictionaries are equivalent.  Note we do a
  *	by-value comparison of the objects in the dictionary.
  */
-boolean_t
+bool
 prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
 {
 
@@ -1018,10 +1018,10 @@ prop_dictionary_keysym_cstring_nocopy(prop_dictionary_keysym_t pdk)
 
 /*
  * prop_dictionary_keysym_equals --
- *	Return TRUE if the two dictionary key symbols are equivalent.
+ *	Return true if the two dictionary key symbols are equivalent.
  *	Note: We do not compare the object references.
  */
-boolean_t
+bool
 prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
 			      prop_dictionary_keysym_t pdk2)
 {
@@ -1045,9 +1045,9 @@ prop_dictionary_externalize(prop_dictionary_t pd)
 	if (ctx == NULL)
 		return (NULL);
 
-	if (_prop_object_externalize_header(ctx) == FALSE ||
-	    (*pd->pd_obj.po_type->pot_extern)(ctx, pd) == FALSE ||
-	    _prop_object_externalize_footer(ctx) == FALSE) {
+	if (_prop_object_externalize_header(ctx) == false ||
+	    (*pd->pd_obj.po_type->pot_extern)(ctx, pd) == false ||
+	    _prop_object_externalize_footer(ctx) == false) {
 		/* We are responsible for releasing the buffer. */
 		_PROP_FREE(ctx->poec_buf, M_TEMP);
 		_prop_object_externalize_context_free(ctx);
@@ -1091,7 +1091,7 @@ _prop_dictionary_internalize(struct _prop_object_internalize_context *ctx)
 	for (;;) {
 		/* Fetch the next tag. */
 		if (_prop_object_internalize_find_tag(ctx, NULL,
-					_PROP_TAG_TYPE_EITHER) == FALSE)
+					_PROP_TAG_TYPE_EITHER) == false)
 			goto bad;
 
 		/* Check to see if this is the end of the dictionary. */
@@ -1107,26 +1107,26 @@ _prop_dictionary_internalize(struct _prop_object_internalize_context *ctx)
 
 		if (_prop_object_internalize_decode_string(ctx,
 						tmpkey, PDK_MAXKEY, &keylen,
-						&ctx->poic_cp) == FALSE)
+						&ctx->poic_cp) == false)
 			goto bad;
 
 		_PROP_ASSERT(keylen <= PDK_MAXKEY);
 		tmpkey[keylen] = '\0';
 
 		if (_prop_object_internalize_find_tag(ctx, "key",
-					_PROP_TAG_TYPE_END) == FALSE)
+					_PROP_TAG_TYPE_END) == false)
 			goto bad;
    
 		/* ..and now the beginning of the value. */
 		if (_prop_object_internalize_find_tag(ctx, NULL,
-					_PROP_TAG_TYPE_START) == FALSE)
+					_PROP_TAG_TYPE_START) == false)
 			goto bad;
 
 		val = _prop_object_internalize_by_tag(ctx);
 		if (val == NULL)
 			goto bad;
 
-		if (prop_dictionary_set(dict, tmpkey, val) == FALSE) {
+		if (prop_dictionary_set(dict, tmpkey, val) == false) {
 			prop_object_release(val);
 			goto bad;
 		}
@@ -1159,21 +1159,21 @@ prop_dictionary_internalize(const char *xml)
  * prop_dictionary_externalize_to_file --
  *	Externalize a dictionary to the specified file.
  */
-boolean_t
+bool
 prop_dictionary_externalize_to_file(prop_dictionary_t dict, const char *fname)
 {
 	char *xml;
-	boolean_t rv;
+	bool rv;
 	int save_errno = 0;	/* XXXGCC -Wuninitialized [mips, ...] */
 
 	xml = prop_dictionary_externalize(dict);
 	if (xml == NULL)
-		return (FALSE);
+		return (false);
 	rv = _prop_object_externalize_write_file(fname, xml, strlen(xml));
-	if (rv == FALSE)
+	if (rv == false)
 		save_errno = errno;
 	_PROP_FREE(xml, M_TEMP);
-	if (rv == FALSE)
+	if (rv == false)
 		errno = save_errno;
 
 	return (rv);

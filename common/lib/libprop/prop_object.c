@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.13 2007/07/16 19:20:17 joerg Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.14 2007/08/16 16:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -105,92 +105,92 @@ _prop_object_fini(struct _prop_object *po _PROP_ARG_UNUSED)
  * _prop_object_externalize_start_tag --
  *	Append an XML-style start tag to the externalize buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_start_tag(
     struct _prop_object_externalize_context *ctx, const char *tag)
 {
 	unsigned int i;
 
 	for (i = 0; i < ctx->poec_depth; i++) {
-		if (_prop_object_externalize_append_char(ctx, '\t') == FALSE)
-			return (FALSE);
+		if (_prop_object_externalize_append_char(ctx, '\t') == false)
+			return (false);
 	}
-	if (_prop_object_externalize_append_char(ctx, '<') == FALSE ||
-	    _prop_object_externalize_append_cstring(ctx, tag) == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '>') == FALSE)
-		return (FALSE);
+	if (_prop_object_externalize_append_char(ctx, '<') == false ||
+	    _prop_object_externalize_append_cstring(ctx, tag) == false ||
+	    _prop_object_externalize_append_char(ctx, '>') == false)
+		return (false);
 	
-	return (TRUE);
+	return (true);
 }
 
 /*
  * _prop_object_externalize_end_tag --
  *	Append an XML-style end tag to the externalize buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_end_tag(
     struct _prop_object_externalize_context *ctx, const char *tag)
 {
 
-	if (_prop_object_externalize_append_char(ctx, '<') == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '/') == FALSE ||
-	    _prop_object_externalize_append_cstring(ctx, tag) == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '>') == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
-		return (FALSE);
+	if (_prop_object_externalize_append_char(ctx, '<') == false ||
+	    _prop_object_externalize_append_char(ctx, '/') == false ||
+	    _prop_object_externalize_append_cstring(ctx, tag) == false ||
+	    _prop_object_externalize_append_char(ctx, '>') == false ||
+	    _prop_object_externalize_append_char(ctx, '\n') == false)
+		return (false);
 
-	return (TRUE);
+	return (true);
 }
 
 /*
  * _prop_object_externalize_empty_tag --
  *	Append an XML-style empty tag to the externalize buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_empty_tag(
     struct _prop_object_externalize_context *ctx, const char *tag)
 {
 	unsigned int i;
 
 	for (i = 0; i < ctx->poec_depth; i++) {
-		if (_prop_object_externalize_append_char(ctx, '\t') == FALSE)
-			return (FALSE);
+		if (_prop_object_externalize_append_char(ctx, '\t') == false)
+			return (false);
 	}
 
-	if (_prop_object_externalize_append_char(ctx, '<') == FALSE ||
-	    _prop_object_externalize_append_cstring(ctx, tag) == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '/') == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '>') == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
-	    	return (FALSE);
+	if (_prop_object_externalize_append_char(ctx, '<') == false ||
+	    _prop_object_externalize_append_cstring(ctx, tag) == false ||
+	    _prop_object_externalize_append_char(ctx, '/') == false ||
+	    _prop_object_externalize_append_char(ctx, '>') == false ||
+	    _prop_object_externalize_append_char(ctx, '\n') == false)
+	    	return (false);
 	
-	return (TRUE);
+	return (true);
 }
 
 /*
  * _prop_object_externalize_append_cstring --
  *	Append a C string to the externalize buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_append_cstring(
     struct _prop_object_externalize_context *ctx, const char *cp)
 {
 
 	while (*cp != '\0') {
 		if (_prop_object_externalize_append_char(ctx,
-						(unsigned char) *cp) == FALSE)
-			return (FALSE);
+						(unsigned char) *cp) == false)
+			return (false);
 		cp++;
 	}
 
-	return (TRUE);
+	return (true);
 }
 
 /*
  * _prop_object_externalize_append_encoded_cstring --
  *	Append an encoded C string to the externalize buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_append_encoded_cstring(
     struct _prop_object_externalize_context *ctx, const char *cp)
 {
@@ -199,29 +199,29 @@ _prop_object_externalize_append_encoded_cstring(
 		switch (*cp) {
 		case '<':
 			if (_prop_object_externalize_append_cstring(ctx,
-					"&lt;") == FALSE)
-				return (FALSE);
+					"&lt;") == false)
+				return (false);
 			break;
 		case '>':
 			if (_prop_object_externalize_append_cstring(ctx,
-					"&gt;") == FALSE)
-				return (FALSE);
+					"&gt;") == false)
+				return (false);
 			break;
 		case '&':
 			if (_prop_object_externalize_append_cstring(ctx,
-					"&amp;") == FALSE)
-				return (FALSE);
+					"&amp;") == false)
+				return (false);
 			break;
 		default:
 			if (_prop_object_externalize_append_char(ctx,
-					(unsigned char) *cp) == FALSE)
-				return (FALSE);
+					(unsigned char) *cp) == false)
+				return (false);
 			break;
 		}
 		cp++;
 	}
 
-	return (TRUE);
+	return (true);
 }
 
 #define	BUF_EXPAND		256
@@ -230,7 +230,7 @@ _prop_object_externalize_append_encoded_cstring(
  * _prop_object_externalize_append_char --
  *	Append a single character to the externalize buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_append_char(
     struct _prop_object_externalize_context *ctx, unsigned char c)
 {
@@ -244,21 +244,21 @@ _prop_object_externalize_append_char(
 					 ctx->poec_capacity + BUF_EXPAND,
 					 M_TEMP);
 		if (cp == NULL)
-			return (FALSE);
+			return (false);
 		ctx->poec_capacity = ctx->poec_capacity + BUF_EXPAND;
 		ctx->poec_buf = cp;
 	}
 
 	ctx->poec_buf[ctx->poec_len++] = c;
 
-	return (TRUE);
+	return (true);
 }
 
 /*
  * _prop_object_externalize_header --
  *	Append the standard XML header to the externalize buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_header(struct _prop_object_externalize_context *ctx)
 {
 	static const char _plist_xml_header[] =
@@ -266,13 +266,13 @@ _prop_object_externalize_header(struct _prop_object_externalize_context *ctx)
 "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n";
 
 	if (_prop_object_externalize_append_cstring(ctx,
-						 _plist_xml_header) == FALSE ||
+						 _plist_xml_header) == false ||
 	    _prop_object_externalize_start_tag(ctx,
-				       "plist version=\"1.0\"") == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\n') == FALSE)
-		return (FALSE);
+				       "plist version=\"1.0\"") == false ||
+	    _prop_object_externalize_append_char(ctx, '\n') == false)
+		return (false);
 
-	return (TRUE);
+	return (true);
 }
 
 /*
@@ -280,15 +280,15 @@ _prop_object_externalize_header(struct _prop_object_externalize_context *ctx)
  *	Append the standard XML footer to the externalize buffer.  This
  *	also NUL-terminates the buffer.
  */
-boolean_t
+bool
 _prop_object_externalize_footer(struct _prop_object_externalize_context *ctx)
 {
 
-	if (_prop_object_externalize_end_tag(ctx, "plist") == FALSE ||
-	    _prop_object_externalize_append_char(ctx, '\0') == FALSE)
-		return (FALSE);
+	if (_prop_object_externalize_end_tag(ctx, "plist") == false ||
+	    _prop_object_externalize_append_char(ctx, '\0') == false)
+		return (false);
 
-	return (TRUE);
+	return (true);
 }
 
 /*
@@ -331,7 +331,7 @@ _prop_object_externalize_context_free(
  * _prop_object_internalize_skip_comment --
  *	Skip the body and end tag of a comment.
  */
-static boolean_t
+static bool
 _prop_object_internalize_skip_comment(
 				struct _prop_object_internalize_context *ctx)
 {
@@ -342,22 +342,22 @@ _prop_object_internalize_skip_comment(
 		    cp[1] == '-' &&
 		    cp[2] == '>') {
 			ctx->poic_cp = cp + 3;
-			return (TRUE);
+			return (true);
 		}
 		cp++;
 	}
 
-	return (FALSE);		/* ran out of buffer */
+	return (false);		/* ran out of buffer */
 }
 
 /*
  * _prop_object_internalize_find_tag --
  *	Find the next tag in an XML stream.  Optionally compare the found
  *	tag to an expected tag name.  State of the context is undefined
- *	if this routine returns FALSE.  Upon success, the context points
+ *	if this routine returns false.  Upon success, the context points
  *	to the first octet after the tag.
  */
-boolean_t
+bool
 _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 		      const char *tag, _prop_tag_type_t type)
 {
@@ -378,42 +378,42 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 	while (_PROP_ISSPACE(*cp))
 		cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 
 	if (*cp != '<')
-		return (FALSE);
+		return (false);
 
 	ctx->poic_tag_start = cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 
 	if (*cp == '!') {
 		if (cp[1] != '-' || cp[2] != '-')
-			return (FALSE);
+			return (false);
 		/*
 		 * Comment block -- only allowed if we are allowed to
 		 * return a start tag.
 		 */
 		if (type == _PROP_TAG_TYPE_END)
-			return (FALSE);
+			return (false);
 		ctx->poic_cp = cp + 3;
-		if (_prop_object_internalize_skip_comment(ctx) == FALSE)
-			return (FALSE);
+		if (_prop_object_internalize_skip_comment(ctx) == false)
+			return (false);
 		goto start_over;
 	}
 
 	if (*cp == '/') {
 		if (type != _PROP_TAG_TYPE_END &&
 		    type != _PROP_TAG_TYPE_EITHER)
-			return (FALSE);
+			return (false);
 		cp++;
 		if (_PROP_EOF(*cp))
-			return (FALSE);
+			return (false);
 		ctx->poic_tag_type = _PROP_TAG_TYPE_END;
 	} else {
 		if (type != _PROP_TAG_TYPE_START &&
 		    type != _PROP_TAG_TYPE_EITHER)
-			return (FALSE);
+			return (false);
 		ctx->poic_tag_type = _PROP_TAG_TYPE_START;
 	}
 
@@ -422,7 +422,7 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 	while (!_PROP_ISSPACE(*cp) && *cp != '/' && *cp != '>')
 		cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 
 	ctx->poic_tagname_len = cp - ctx->poic_tagname;
 
@@ -430,18 +430,18 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 	if (tag != NULL &&
 	    (taglen != ctx->poic_tagname_len ||
 	     memcmp(tag, ctx->poic_tagname, taglen) != 0))
-		return (FALSE);
+		return (false);
 	
 	/* Check for empty tag. */
 	if (*cp == '/') {
 		if (ctx->poic_tag_type != _PROP_TAG_TYPE_START)
-			return(FALSE);		/* only valid on start tags */
-		ctx->poic_is_empty_element = TRUE;
+			return(false);		/* only valid on start tags */
+		ctx->poic_is_empty_element = true;
 		cp++;
 		if (_PROP_EOF(*cp) || *cp != '>')
-			return (FALSE);
+			return (false);
 	} else
-		ctx->poic_is_empty_element = FALSE;
+		ctx->poic_is_empty_element = false;
 
 	/* Easy case of no arguments. */
 	if (*cp == '>') {
@@ -450,55 +450,55 @@ _prop_object_internalize_find_tag(struct _prop_object_internalize_context *ctx,
 		ctx->poic_tagattrval = NULL;
 		ctx->poic_tagattrval_len = 0;
 		ctx->poic_cp = cp + 1;
-		return (TRUE);
+		return (true);
 	}
 
 	_PROP_ASSERT(!_PROP_EOF(*cp));
 	cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 
 	while (_PROP_ISSPACE(*cp))
 		cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 
 	ctx->poic_tagattr = cp;
 
 	while (!_PROP_ISSPACE(*cp) && *cp != '=')
 		cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 
 	ctx->poic_tagattr_len = cp - ctx->poic_tagattr;
 	
 	cp++;
 	if (*cp != '\"')
-		return (FALSE);
+		return (false);
 	cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 	
 	ctx->poic_tagattrval = cp;
 	while (*cp != '\"')
 		cp++;
 	if (_PROP_EOF(*cp))
-		return (FALSE);
+		return (false);
 	ctx->poic_tagattrval_len = cp - ctx->poic_tagattrval;
 	
 	cp++;
 	if (*cp != '>')
-		return (FALSE);
+		return (false);
 
 	ctx->poic_cp = cp + 1;
-	return (TRUE);
+	return (true);
 }
 
 /*
  * _prop_object_internalize_decode_string --
  *	Decode an encoded string.
  */
-boolean_t
+bool
 _prop_object_internalize_decode_string(
 				struct _prop_object_internalize_context *ctx,
 				char *target, size_t targsize, size_t *sizep,
@@ -513,7 +513,7 @@ _prop_object_internalize_decode_string(
 
 	for (;;) {
 		if (_PROP_EOF(*src))
-			return (FALSE);
+			return (false);
 		if (*src == '<') {
 			break;
 		}
@@ -550,12 +550,12 @@ _prop_object_internalize_decode_string(
 				c = '\"';
 				src += 6;
 			} else
-				return (FALSE);
+				return (false);
 		} else
 			src++;
 		if (target) {
 			if (tarindex >= targsize)
-				return (FALSE);
+				return (false);
 			target[tarindex] = c;
 		}
 		tarindex++;
@@ -567,14 +567,14 @@ _prop_object_internalize_decode_string(
 	if (cpp != NULL)
 		*cpp = src;
 	
-	return (TRUE);
+	return (true);
 }
 
 /*
  * _prop_object_internalize_match --
  *	Returns true if the two character streams match.
  */
-boolean_t
+bool
 _prop_object_internalize_match(const char *str1, size_t len1,
 			       const char *str2, size_t len2)
 {
@@ -727,7 +727,7 @@ _prop_object_internalize_context_alloc(const char *xml)
 
 		if (MATCH("<!--")) {
 			ctx->poic_cp = xml + 4;
-			if (_prop_object_internalize_skip_comment(ctx) == FALSE)
+			if (_prop_object_internalize_skip_comment(ctx) == false)
 				goto bad;
 			xml = ctx->poic_cp;
 			continue;
@@ -814,7 +814,7 @@ _prop_object_externalize_file_dirname(const char *path, char *result)
  *	The file is written atomically from the caller's perspective,
  *	and the mode set to 0666 modified by the caller's umask.
  */
-boolean_t
+bool
 _prop_object_externalize_write_file(const char *fname, const char *xml,
     size_t len)
 {
@@ -824,7 +824,7 @@ _prop_object_externalize_write_file(const char *fname, const char *xml,
 
 	if (len > SSIZE_MAX) {
 		errno = EFBIG;
-		return (FALSE);
+		return (false);
 	}
 
 	/*
@@ -838,14 +838,14 @@ _prop_object_externalize_write_file(const char *fname, const char *xml,
 	_prop_object_externalize_file_dirname(fname, tname);
 	if (strlcat(tname, "/.plistXXXXXX", sizeof(tname)) >= sizeof(tname)) {
 		errno = ENAMETOOLONG;
-		return (FALSE);
+		return (false);
 	}
 	if (mktemp(tname) == NULL)
-		return (FALSE);
+		return (false);
 	if ((fd = open(tname, O_CREAT|O_RDWR|O_EXCL, 0666)) == -1) {
 		if (errno == EEXIST)
 			goto again;
-		return (FALSE);
+		return (false);
 	}
 
 	if (write(fd, xml, len) != (ssize_t)len)
@@ -860,7 +860,7 @@ _prop_object_externalize_write_file(const char *fname, const char *xml,
 	if (rename(tname, fname) == -1)
 		goto bad;
 
-	return (TRUE);
+	return (true);
 
  bad:
 	save_errno = errno;
@@ -868,7 +868,7 @@ _prop_object_externalize_write_file(const char *fname, const char *xml,
 		(void) close(fd);
 	(void) unlink(tname);
 	errno = save_errno;
-	return (FALSE);
+	return (false);
 }
 
 /*
@@ -882,7 +882,7 @@ _prop_object_internalize_map_file(const char *fname)
 	struct _prop_object_internalize_mapped_file *mf;
 	size_t pgsize = (size_t)sysconf(_SC_PAGESIZE);
 	size_t pgmask = pgsize - 1;
-	boolean_t need_guard = FALSE;
+	bool need_guard = false;
 	int fd;
 
 	mf = _PROP_MALLOC(sizeof(*mf), M_TEMP);
@@ -913,7 +913,7 @@ _prop_object_internalize_map_file(const char *fname)
 	 * necessary NUL-termination of the buffer.
 	 */
 	if ((sb.st_size & pgmask) == 0)
-		need_guard = TRUE;
+		need_guard = true;
 
 	mf->poimf_xml = mmap(NULL, need_guard ? mf->poimf_mapsize + pgsize
 			    		      : mf->poimf_mapsize,
@@ -1029,16 +1029,16 @@ prop_object_type(prop_object_t obj)
 
 /*
  * prop_object_equals --
- *	Returns TRUE if thw two objects are equivalent.
+ *	Returns true if thw two objects are equivalent.
  */
-boolean_t
+bool
 prop_object_equals(prop_object_t obj1, prop_object_t obj2)
 {
 	struct _prop_object *po1 = obj1;
 	struct _prop_object *po2 = obj2;
 
 	if (po1->po_type != po2->po_type)
-		return (FALSE);
+		return (false);
 
 	return ((*po1->po_type->pot_equals)(obj1, obj2));
 }

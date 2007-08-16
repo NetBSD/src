@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.6 2006/10/18 19:15:46 martin Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.7 2007/08/16 16:28:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -59,10 +59,10 @@ _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
 
 static void		_prop_string_free(void *);
-static boolean_t	_prop_string_externalize(
+static bool	_prop_string_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static boolean_t	_prop_string_equals(void *, void *);
+static bool	_prop_string_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_string = {
 	.pot_type	=	PROP_TYPE_STRING,
@@ -85,7 +85,7 @@ _prop_string_free(void *v)
 	_PROP_POOL_PUT(_prop_string_pool, v);
 }
 
-static boolean_t
+static bool
 _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 			 void *v)
 {
@@ -94,16 +94,16 @@ _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 	if (ps->ps_size == 0)
 		return (_prop_object_externalize_empty_tag(ctx, "string"));
 
-	if (_prop_object_externalize_start_tag(ctx, "string") == FALSE ||
+	if (_prop_object_externalize_start_tag(ctx, "string") == false ||
 	    _prop_object_externalize_append_encoded_cstring(ctx,
-	    					ps->ps_immutable) == FALSE ||
-	    _prop_object_externalize_end_tag(ctx, "string") == FALSE)
-		return (FALSE);
+	    					ps->ps_immutable) == false ||
+	    _prop_object_externalize_end_tag(ctx, "string") == false)
+		return (false);
 	
-	return (TRUE);
+	return (true);
 }
 
-static boolean_t
+static bool
 _prop_string_equals(void *v1, void *v2)
 {
 	prop_string_t str1 = v1;
@@ -111,12 +111,12 @@ _prop_string_equals(void *v1, void *v2)
 
 	if (! (prop_object_is_string(str1) &&
 	       prop_object_is_string(str2)))
-		return (FALSE);
+		return (false);
 
 	if (str1 == str2)
-		return (TRUE);
+		return (true);
 	if (str1->ps_size != str2->ps_size)
-		return (FALSE);
+		return (false);
 	return (strcmp(prop_string_contents(str1),
 		       prop_string_contents(str2)) == 0);
 }
@@ -269,14 +269,14 @@ prop_string_size(prop_string_t ps)
 
 /*
  * prop_string_mutable --
- *	Return TRUE if the string is a mutable string.
+ *	Return true if the string is a mutable string.
  */
-boolean_t
+bool
 prop_string_mutable(prop_string_t ps)
 {
 
 	if (! prop_object_is_string(ps))
-		return (FALSE);
+		return (false);
 
 	return ((ps->ps_flags & PS_F_NOCOPY) == 0);
 }
@@ -318,10 +318,10 @@ prop_string_cstring_nocopy(prop_string_t ps)
 
 /*
  * prop_string_append --
- *	Append the contents of one string to another.  Returns TRUE
+ *	Append the contents of one string to another.  Returns true
  *	upon success.  The destination string must be mutable.
  */
-boolean_t
+bool
 prop_string_append(prop_string_t dst, prop_string_t src)
 {
 	char *ocp, *cp;
@@ -329,15 +329,15 @@ prop_string_append(prop_string_t dst, prop_string_t src)
 
 	if (! (prop_object_is_string(dst) &&
 	       prop_object_is_string(src)))
-		return (FALSE);
+		return (false);
 
 	if (dst->ps_flags & PS_F_NOCOPY)
-		return (FALSE);
+		return (false);
 
 	len = dst->ps_size + src->ps_size;
 	cp = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (cp == NULL)
-		return (FALSE);
+		return (false);
 	sprintf(cp, "%s%s", prop_string_contents(dst),
 		prop_string_contents(src));
 	ocp = dst->ps_mutable;
@@ -346,32 +346,32 @@ prop_string_append(prop_string_t dst, prop_string_t src)
 	if (ocp != NULL)
 		_PROP_FREE(ocp, M_PROP_STRING);
 	
-	return (TRUE);
+	return (true);
 }
 
 /*
  * prop_string_append_cstring --
- *	Append a C string to a string.  Returns TRUE upon success.
+ *	Append a C string to a string.  Returns true upon success.
  *	The destination string must be mutable.
  */
-boolean_t
+bool
 prop_string_append_cstring(prop_string_t dst, const char *src)
 {
 	char *ocp, *cp;
 	size_t len;
 
 	if (! prop_object_is_string(dst))
-		return (FALSE);
+		return (false);
 
 	_PROP_ASSERT(src != NULL);
 
 	if (dst->ps_flags & PS_F_NOCOPY)
-		return (FALSE);
+		return (false);
 	
 	len = dst->ps_size + strlen(src);
 	cp = _PROP_MALLOC(len + 1, M_PROP_STRING);
 	if (cp == NULL)
-		return (FALSE);
+		return (false);
 	sprintf(cp, "%s%s", prop_string_contents(dst), src);
 	ocp = dst->ps_mutable;
 	dst->ps_mutable = cp;
@@ -379,14 +379,14 @@ prop_string_append_cstring(prop_string_t dst, const char *src)
 	if (ocp != NULL)
 		_PROP_FREE(ocp, M_PROP_STRING);
 	
-	return (TRUE);
+	return (true);
 }
 
 /*
  * prop_string_equals --
- *	Return TRUE if two strings are equivalent.
+ *	Return true if two strings are equivalent.
  */
-boolean_t
+bool
 prop_string_equals(prop_string_t str1, prop_string_t str2)
 {
 
@@ -395,15 +395,15 @@ prop_string_equals(prop_string_t str1, prop_string_t str2)
 
 /*
  * prop_string_equals_cstring --
- *	Return TRUE if the string is equivalent to the specified
+ *	Return true if the string is equivalent to the specified
  *	C string.
  */
-boolean_t
+bool
 prop_string_equals_cstring(prop_string_t ps, const char *cp)
 {
 
 	if (! prop_object_is_string(ps))
-		return (FALSE);
+		return (false);
 
 	return (strcmp(prop_string_contents(ps), cp) == 0);
 }
@@ -429,7 +429,7 @@ _prop_string_internalize(struct _prop_object_internalize_context *ctx)
 
 	/* Compute the length of the result. */
 	if (_prop_object_internalize_decode_string(ctx, NULL, 0, &len,
-						   NULL) == FALSE)
+						   NULL) == false)
 		return (NULL);
 	
 	str = _PROP_MALLOC(len + 1, M_PROP_STRING);
@@ -437,7 +437,7 @@ _prop_string_internalize(struct _prop_object_internalize_context *ctx)
 		return (NULL);
 	
 	if (_prop_object_internalize_decode_string(ctx, str, len, &alen,
-						   &ctx->poic_cp) == FALSE ||
+						   &ctx->poic_cp) == false ||
 	    alen != len) {
 		_PROP_FREE(str, M_PROP_STRING);
 		return (NULL);
@@ -445,7 +445,7 @@ _prop_string_internalize(struct _prop_object_internalize_context *ctx)
 	str[len] = '\0';
 
 	if (_prop_object_internalize_find_tag(ctx, "string",
-					      _PROP_TAG_TYPE_END) == FALSE) {
+					      _PROP_TAG_TYPE_END) == false) {
 		_PROP_FREE(str, M_PROP_STRING);
 		return (NULL);
 	}
