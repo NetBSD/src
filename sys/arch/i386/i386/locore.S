@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.48 2007/05/17 14:51:21 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.49 2007/08/16 17:00:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -792,7 +792,8 @@ ENTRY(cpu_switchto)
 	addl	$8,%esp
 	cmpl	$-1,%eax
 	je	2b
-	movl	%eax,TF_EIP(%ebx)
+	movl	L_MD_REGS(%edi),%ecx
+	movl	%eax,TF_EIP(%ecx)
 	jmp	2b
 
 /*
