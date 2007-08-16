@@ -1,7 +1,7 @@
-/*	$NetBSD: prop_array.c,v 1.9 2007/08/16 16:28:17 thorpej Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.10 2007/08/16 21:44:07 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,17 +60,19 @@ _PROP_POOL_INIT(_prop_array_pool, sizeof(struct _prop_array), "proparay")
 _PROP_MALLOC_DEFINE(M_PROP_ARRAY, "prop array",
 		    "property array container object")
 
-static void		_prop_array_free(void *);
+static int		_prop_array_free(prop_stack_t, prop_object_t *);
+static void		_prop_array_emergency_free(prop_object_t);
 static bool	_prop_array_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
 static bool	_prop_array_equals(void *, void *);
 
 static const struct _prop_object_type _prop_object_type_array = {
-	.pot_type	=	PROP_TYPE_ARRAY,
-	.pot_free	=	_prop_array_free,
-	.pot_extern	=	_prop_array_externalize,
-	.pot_equals	=	_prop_array_equals,
+	.pot_type		=	PROP_TYPE_ARRAY,
+	.pot_free		=	_prop_array_free,
+	.pot_emergency_free	=	_prop_array_emergency_free,
+	.pot_extern		=	_prop_array_externalize,
+	.pot_equals		=	_prop_array_equals,
 };
 
 #define	prop_object_is_array(x) 	\
@@ -85,29 +87,58 @@ struct _prop_array_iterator {
 
 #define	EXPAND_STEP		16
 
-static void
-_prop_array_free(void *v)
+static int
+_prop_array_free(prop_stack_t stack, prop_object_t *obj)
 {
-	prop_array_t pa = v;
+	prop_array_t pa = *obj;
 	prop_object_t po;
-	unsigned int idx;
 
 	_PROP_ASSERT(pa->pa_count <= pa->pa_capacity);
 	_PROP_ASSERT((pa->pa_capacity == 0 && pa->pa_array == NULL) ||
 		     (pa->pa_capacity != 0 && pa->pa_array != NULL));
 
-	for (idx = 0; idx < pa->pa_count; idx++) {
-		po = pa->pa_array[idx];
-		_PROP_ASSERT(po != NULL);
-		prop_object_release(po);
+	/* The easy case is an empty array, just free and return. */
+	if (pa->pa_count == 0) {
+		if (pa->pa_array != NULL)
+			_PROP_FREE(pa->pa_array, M_PROP_ARRAY);
+
+		_PROP_RWLOCK_DESTROY(pa->pa_rwlock);
+
+		_PROP_POOL_PUT(_prop_array_pool, pa);
+
+		return (_PROP_OBJECT_FREE_DONE);
 	}
 
-	if (pa->pa_array != NULL)
-		_PROP_FREE(pa->pa_array, M_PROP_ARRAY);
+	po = pa->pa_array[pa->pa_count - 1];
+	_PROP_ASSERT(po != NULL);
 
-	_PROP_RWLOCK_DESTROY(pa->pa_rwlock);
+	if (stack == NULL) {
+		/*
+		 * If we are in emergency release mode,
+		 * just let caller recurse down.
+		 */
+		*obj = po;
+		return (_PROP_OBJECT_FREE_FAILED);
+	}
 
-	_PROP_POOL_PUT(_prop_array_pool, pa);
+	/* Otherwise, try to push the current object on the stack. */
+	if (!_prop_stack_push(stack, pa, NULL, NULL)) {
+		/* Push failed, entering emergency release mode. */
+		return (_PROP_OBJECT_FREE_FAILED);
+	}
+	/* Object pushed on stack, caller will release it. */
+	--pa->pa_count;
+	*obj = po;
+	return (_PROP_OBJECT_FREE_RECURSE);
+}
+
+static void
+_prop_array_emergency_free(prop_object_t obj)
+{
+	prop_array_t pa = obj;
+
+	_PROP_ASSERT(pa->pa_count != 0);
+	--pa->pa_count;
 }
 
 static bool
@@ -684,51 +715,90 @@ prop_array_externalize(prop_array_t pa)
  *	Parse an <array>...</array> and return the object created from the
  *	external representation.
  */
-prop_object_t
-_prop_array_internalize(struct _prop_object_internalize_context *ctx)
-{
-	prop_array_t array;
-	prop_object_t obj;
+static bool _prop_array_internalize_body(prop_stack_t, prop_object_t *,
+    struct _prop_object_internalize_context *);
 
+bool
+_prop_array_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
+{
 	/* We don't currently understand any attributes. */
 	if (ctx->poic_tagattr != NULL)
-		return (NULL);
+		return (true);
 	
-	array = prop_array_create();
-	if (array == NULL)
-		return (NULL);
-	
-	if (ctx->poic_is_empty_element)
-		return (array);
-	
-	for (;;) {
-		/* Fetch the next tag. */
-		if (_prop_object_internalize_find_tag(ctx, NULL,
-					_PROP_TAG_TYPE_EITHER) == false)
-			goto bad;
+	*obj = prop_array_create();
+	/*
+	 * We are done if the create failed or no child elements exist.
+	 */
+	if (*obj == NULL || ctx->poic_is_empty_element)
+		return (true);
 
-		/* Check to see if this is the end of the array. */
-		if (_PROP_TAG_MATCH(ctx, "array") &&
-		    ctx->poic_tag_type == _PROP_TAG_TYPE_END)
-		    	break;
+	/*
+	 * Opening tag is found, now continue to the first element.
+	 */
+	return (_prop_array_internalize_body(stack, obj, ctx));
+}
 
-		/* Fetch the object. */
-		obj = _prop_object_internalize_by_tag(ctx);
-		if (obj == NULL)
-			goto bad;
+static bool
+_prop_array_internalize_continue(prop_stack_t stack,
+    prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx,
+    void *data, prop_object_t child)
+{
+	prop_array_t array;
 
-		if (prop_array_add(array, obj) == false) {
-			prop_object_release(obj);
-			goto bad;
-		}
-		prop_object_release(obj);
+	_PROP_ASSERT(data == NULL);
+
+	if (child == NULL)
+		goto bad; /* Element could not be parsed. */
+
+	array = *obj;
+
+	if (prop_array_add(array, child) == false) {
+		prop_object_release(child);
+		goto bad;
+	}
+	prop_object_release(child);
+
+	/*
+	 * Current element is processed and added, look for next.
+	 */
+	return (_prop_array_internalize_body(stack, obj, ctx));
+
+ bad:
+	prop_object_release(*obj);
+	*obj = NULL;
+	return (true);
+}
+
+static bool
+_prop_array_internalize_body(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
+{
+	prop_array_t array = *obj;
+
+	_PROP_ASSERT(array != NULL);
+
+	/* Fetch the next tag. */
+	if (_prop_object_internalize_find_tag(ctx, NULL,
+				_PROP_TAG_TYPE_EITHER) == false)
+		goto bad;
+
+	/* Check to see if this is the end of the array. */
+	if (_PROP_TAG_MATCH(ctx, "array") &&
+	    ctx->poic_tag_type == _PROP_TAG_TYPE_END) {
+		/* It is, so don't iterate any further. */
+		return (true);
 	}
 
-	return (array);
+	if (_prop_stack_push(stack, array, NULL,
+			     _prop_array_internalize_continue))
+		return (false);
 
  bad:
 	prop_object_release(array);
-	return (NULL);
+	*obj = NULL;
+	return (true);
 }
 
 /*

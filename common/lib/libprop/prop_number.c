@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.12 2007/08/16 16:28:18 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.13 2007/08/16 21:44:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct _prop_number {
 
 _PROP_POOL_INIT(_prop_number_pool, sizeof(struct _prop_number), "propnmbr")
 
-static void		_prop_number_free(void *);
+static int		_prop_number_free(prop_stack_t, prop_object_t *);
 static bool	_prop_number_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
@@ -149,16 +149,19 @@ static bool _prop_number_tree_initialized;
 
 _PROP_MUTEX_DECL_STATIC(_prop_number_tree_mutex)
 
-static void
-_prop_number_free(void *v)
+/* ARGSUSED */
+static int
+_prop_number_free(prop_stack_t stack, prop_object_t *obj)
 {
-	prop_number_t pn = v;
+	prop_number_t pn = *obj;
 
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
 	_prop_rb_tree_remove_node(&_prop_number_tree, &pn->pn_link);
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 
 	_PROP_POOL_PUT(_prop_number_pool, pn);
+
+	return (_PROP_OBJECT_FREE_DONE);
 }
 
 static bool
@@ -528,8 +531,10 @@ _prop_number_internalize_signed(struct _prop_object_internalize_context *ctx,
  *	Parse a <number>...</number> and return the object created from
  *	the external representation.
  */
-prop_object_t
-_prop_number_internalize(struct _prop_object_internalize_context *ctx)
+/* ARGSUSED */
+bool
+_prop_number_internalize(prop_stack_t stack, prop_object_t *obj,
+    struct _prop_object_internalize_context *ctx)
 {
 	struct _prop_number_value pnv;
 
@@ -537,7 +542,7 @@ _prop_number_internalize(struct _prop_object_internalize_context *ctx)
 
 	/* No attributes, no empty elements. */
 	if (ctx->poic_tagattr != NULL || ctx->poic_is_empty_element)
-		return (NULL);
+		return (true);
 
 	/*
 	 * If the first character is '-', then we treat as signed.
@@ -548,19 +553,20 @@ _prop_number_internalize(struct _prop_object_internalize_context *ctx)
 	 */
 	if (ctx->poic_cp[0] == '-') {
 		if (_prop_number_internalize_signed(ctx, &pnv) == false)
-			return (NULL);
+			return (true);
 	} else if (ctx->poic_cp[0] == '0' && ctx->poic_cp[1] == 'x') {
 		if (_prop_number_internalize_unsigned(ctx, &pnv) == false)
-			return (NULL);
+			return (true);
 	} else {
 		if (_prop_number_internalize_signed(ctx, &pnv) == false &&
 		    _prop_number_internalize_unsigned(ctx, &pnv) == false)
-		    	return (NULL);
+		    	return (true);
 	}
 
 	if (_prop_object_internalize_find_tag(ctx, "integer",
 					      _PROP_TAG_TYPE_END) == false)
-		return (NULL);
+		return (true);
 
-	return (_prop_number_alloc(&pnv));
+	*obj = _prop_number_alloc(&pnv);
+	return (true);
 }
