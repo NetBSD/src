@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2007/08/16 01:09:34 ad Exp $
+#	$NetBSD: Makefile,v 1.42 2007/08/16 13:54:16 ad Exp $
 #
 
 WARNS=	4
@@ -56,6 +56,7 @@ SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
 SRCS+=	pthread_rwlock.c
 SRCS+=	pthread_specific.c
+SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
 SRCS+=  pthread_debug.c
 SRCS+=	res_state.c
@@ -72,6 +73,13 @@ SRCS+= pthread_md.c
 pthread_specific.po: pthread_specific.o
 	${_MKTARGET_CREATE}
 	cp pthread_specific.o pthread_specific.po
+
+# Internal spinlock routines are performance critical.  Don't profile them,
+# it's incompatibile with -fomit-frame-pointer.
+COPTS.pthread_lock.c+=	-fomit-frame-pointer -falign-functions=32
+pthread_lock.po: pthread_lock.o
+	${_MKTARGET_CREATE}
+	cp pthread_lock.o pthread_lock.po
 
 _context_u.po: _context_u.o
 	${_MKTARGET_CREATE}
