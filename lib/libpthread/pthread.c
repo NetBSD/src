@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.76 2007/08/16 01:09:34 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.77 2007/08/16 12:01:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.76 2007/08/16 01:09:34 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.77 2007/08/16 12:01:49 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -69,18 +69,17 @@ __RCSID("$NetBSD: pthread.c,v 1.76 2007/08/16 01:09:34 ad Exp $");
 /* Maximum number of LWPs to unpark in one operation. */
 #define	PTHREAD__UNPARK_MAX	128
 
-/* How many times to try acquiring spin locks on MP systems. */
-#define	PTHREAD__NSPINS		1024
-
 static void	pthread__create_tramp(void *(*)(void *), void *);
 static void	pthread__initthread(pthread_t);
+static void	pthread__scrubthread(pthread_t, char *, int);
 static int	pthread__stackid_setup(void *, size_t, pthread_t *);
 static int	pthread__stackalloc(pthread_t *);
 static void	pthread__initmain(pthread_t *);
 
 int pthread__started;
 
-pthread_spin_t pthread__queue_lock = __SIMPLELOCK_UNLOCKED;
+pthread_spin_t pthread__allqueue_lock = __SIMPLELOCK_UNLOCKED;
+pthread_spin_t pthread__deadqueue_lock = __SIMPLELOCK_UNLOCKED;
 pthread_queue_t pthread__allqueue;
 pthread_queue_t pthread__deadqueue;
 
@@ -147,15 +146,15 @@ pthread_init(void)
 {
 	pthread_t first;
 	char *p;
-	int i, mib[2], ncpu;
+	int i, mib[2];
 	size_t len;
 	extern int __isthreaded;
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU; 
 
-	len = sizeof(ncpu);
-	if (sysctl(mib, 2, &ncpu, &len, NULL, 0) == -1)
+	len = sizeof(pthread__concurrency);
+	if (sysctl(mib, 2, &pthread__concurrency, &len, NULL, 0) == -1)
 		err(1, "sysctl(hw.ncpu");
 
 	mib[0] = CTL_KERN;
@@ -166,18 +165,9 @@ pthread_init(void)
 		err(1, "sysctl(hw.osrevision");
 
 	/* Initialize locks first; they're needed elsewhere. */
-	pthread__lockprim_init(ncpu);
+	pthread__lockprim_init();
 
-	/*
-	 * Get number of CPUs, and maximum number of LWPs that can be
-	 * unparked at once.
-	 */
-	if ((pthread__concurrency = ncpu) > 1)
-		pthread__nspins = PTHREAD__NSPINS;
-	else
-		pthread__nspins = 1;
-	if ((p = getenv("PTHREAD_NSPINS")) != NULL)
-		pthread__nspins = atoi(p);
+	/* Fetch parameters. */
 	i = (int)_lwp_unpark_all(NULL, 0, NULL);
 	if (i == -1)
 		err(1, "_lwp_unpark_all");
@@ -192,16 +182,14 @@ pthread_init(void)
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first);
+	pthread__scrubthread(first, NULL, 0);
 
-	first->pt_state = PT_STATE_RUNNING;
 	first->pt_lid = _lwp_self();
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 
 	/* Start subsystems */
 	PTHREAD_MD_INIT
-#ifdef PTHREAD__DEBUG
-	pthread__debug_init(ncpu);
-#endif
+	pthread__debug_init();
 
 	for (p = getenv("PTHREAD_DIAGASSERT"); p && *p; p++) {
 		switch (*p) {
@@ -250,9 +238,6 @@ pthread__child_callback(void)
 static void
 pthread__start(void)
 {
-	pthread_t self;
-
-	self = pthread__self(); /* should be the "main()" thread */
 
 	/*
 	 * Per-process timers are cleared by fork(); despite the
@@ -260,7 +245,7 @@ pthread__start(void)
 	 * fork() before creating any threads. 
 	 */
 	pthread_atfork(NULL, NULL, pthread__child_callback);
-	SDPRINTF(("(pthread__start %p) Started.\n", self));
+	SDPRINTF(("(pthread__start %p) Started.\n", pthread__self()));
 }
 
 
@@ -271,24 +256,31 @@ pthread__initthread(pthread_t t)
 {
 
 	t->pt_magic = PT_MAGIC;
-	t->pt_state = PT_STATE_RUNNING;
 	t->pt_spinlocks = 0;
-	t->pt_exitval = NULL;
-	t->pt_flags = 0;
-	t->pt_cancel = 0;
-	t->pt_errno = 0;
-	t->pt_name = NULL;
 	t->pt_willpark = 0;
 	t->pt_unpark = 0;
 	t->pt_sleeponq = 0;
 	t->pt_sleepobj = NULL;
 	t->pt_signalled = 0;
-	t->pt_sleepq = NULL;
+	t->pt_havespecific = 0;
 
 	pthread_lockinit(&t->pt_lock);
 	PTQ_INIT(&t->pt_cleanup_stack);
 	PTQ_INIT(&t->pt_joiners);
 	memset(&t->pt_specific, 0, sizeof(int) * PTHREAD_KEYS_MAX);
+}
+
+static void
+pthread__scrubthread(pthread_t t, char *name, int flags)
+{
+
+	t->pt_state = PT_STATE_RUNNING;
+	t->pt_exitval = NULL;
+	t->pt_flags = flags;
+	t->pt_cancel = 0;
+	t->pt_errno = 0;
+	t->pt_name = name;
+	t->pt_lid = 0;
 }
 
 
@@ -331,31 +323,37 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	self = pthread__self();
 	newthread = NULL;
 
+	/*
+	 * Try to reclaim a dead thread.
+	 */
 	if (!PTQ_EMPTY(&pthread__deadqueue)) {
-		pthread_spinlock(self, &pthread__queue_lock);
+		pthread_spinlock(self, &pthread__deadqueue_lock);
 		newthread = PTQ_FIRST(&pthread__deadqueue);
 		if (newthread != NULL) {
-			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_allq);
-			pthread_spinunlock(self, &pthread__queue_lock);
+			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
+			pthread_spinunlock(self, &pthread__deadqueue_lock);
 			if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0) {
 				/* Still running? */
 				if (_lwp_kill(newthread->pt_lid, 0) == 0 ||
 				    errno != ESRCH) {
 					pthread_spinlock(self,
-					    &pthread__queue_lock);
+					    &pthread__deadqueue_lock);
 					PTQ_INSERT_TAIL(&pthread__deadqueue,
-					    newthread, pt_allq);
+					    newthread, pt_deadq);
 					pthread_spinunlock(self,
-					    &pthread__queue_lock);
+					    &pthread__deadqueue_lock);
 					newthread = NULL;
 				}
 			}
 		} else
-			pthread_spinunlock(self, &pthread__queue_lock);
+			pthread_spinunlock(self, &pthread__deadqueue_lock);
 	}
 
+	/*
+	 * If necessary set up a stack, allocate space for a pthread_st,
+	 * and initialize it.
+	 */
 	if (newthread == NULL) {
-		/* Set up a stack and allocate space for a pthread_st. */
 		ret = pthread__stackalloc(&newthread);
 		if (ret != 0) {
 			if (name)
@@ -363,31 +361,30 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 			return ret;
 		}
 
-		/*
-		 * Set up state that will not change.  This is used only
-		 * when creating the thread.
-		 */
+		/* This is used only when creating the thread. */
 		_INITCONTEXT_U(&newthread->pt_uc);
 #ifdef PTHREAD_MACHINE_HAS_ID_REGISTER
 		pthread__uc_id(&newthread->pt_uc) = newthread;
 #endif
 		newthread->pt_uc.uc_stack = newthread->pt_stack;
 		newthread->pt_uc.uc_link = NULL;
+
+		/* Add to list of all threads. */
+		pthread_spinlock(self, &pthread__allqueue_lock);
+		PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
+		pthread_spinunlock(self, &pthread__allqueue_lock);
+
+		/* Will be reset by the thread upon exit. */
+		pthread__initthread(newthread);
 	}
 
-	/* Set up state. */
-	pthread__initthread(newthread);
-	newthread->pt_flags = nattr.pta_flags;
-	newthread->pt_name = name;
+	/*
+	 * Create the new LWP.
+	 */
+	pthread__scrubthread(newthread, name, nattr.pta_flags);
 	makecontext(&newthread->pt_uc, pthread__create_tramp, 2,
 	    startfunc, arg);
 
-	/* Add to list of all threads. */
-	pthread_spinlock(self, &pthread__queue_lock);
-	PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
-	pthread_spinunlock(self, &pthread__queue_lock);
-
-	/* Create the new LWP. */
 	flag = 0;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
 		flag |= LWP_SUSPENDED;
@@ -398,10 +395,10 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		SDPRINTF(("(pthread_create %p) _lwp_create: %s\n",
 		    strerror(errno)));
 		free(name);
-		pthread_spinlock(self, &pthread__queue_lock);
-		PTQ_REMOVE(&pthread__allqueue, newthread, pt_allq);
-		PTQ_INSERT_HEAD(&pthread__deadqueue, newthread, pt_allq);
-		pthread_spinunlock(self, &pthread__queue_lock);
+		newthread->pt_state = PT_STATE_DEAD;
+		pthread_spinlock(self, &pthread__deadqueue_lock);
+		PTQ_INSERT_HEAD(&pthread__deadqueue, newthread, pt_deadq);
+		pthread_spinunlock(self, &pthread__deadqueue_lock);
 		return ret;
 	}
 
@@ -506,10 +503,9 @@ pthread_exit(void *retval)
 		self->pt_state = PT_STATE_DEAD;
 		name = self->pt_name;
 		self->pt_name = NULL;
-		pthread_spinlock(self, &pthread__queue_lock);
-		PTQ_REMOVE(&pthread__allqueue, self, pt_allq);
-		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_allq);
-		pthread_spinunlock(self, &pthread__queue_lock);
+		pthread_spinlock(self, &pthread__deadqueue_lock);
+		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_deadq);
+		pthread_spinunlock(self, &pthread__deadqueue_lock);
 		pthread_spinunlock(self, &self->pt_lock);
 		if (name != NULL)
 			free(name);
@@ -572,10 +568,9 @@ pthread_join(pthread_t thread, void **valptr)
 	name = thread->pt_name;
 	thread->pt_name = NULL;
 	thread->pt_state = PT_STATE_DEAD;
-	pthread_spinlock(self, &pthread__queue_lock);
-	PTQ_REMOVE(&pthread__allqueue, thread, pt_allq);
-	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_allq);
-	pthread_spinunlock(self, &pthread__queue_lock);
+	pthread_spinlock(self, &pthread__deadqueue_lock);
+	PTQ_INSERT_HEAD(&pthread__deadqueue, thread, pt_deadq);
+	pthread_spinunlock(self, &pthread__deadqueue_lock);
 	SDPRINTF(("(pthread_join %p) Joined %p.\n", self, thread));
 	if (name != NULL)
 		free(name);
@@ -811,13 +806,13 @@ pthread__find(pthread_t self, pthread_t id)
 {
 	pthread_t target;
 
-	pthread_spinlock(self, &pthread__queue_lock);
+	pthread_spinlock(self, &pthread__allqueue_lock);
 	PTQ_FOREACH(target, &pthread__allqueue, pt_allq)
 	    if (target == id)
 		    break;
-	pthread_spinunlock(self, &pthread__queue_lock);
+	pthread_spinunlock(self, &pthread__allqueue_lock);
 
-	if (target == NULL)
+	if (target == NULL || target->pt_state == PT_STATE_DEAD)
 		return ESRCH;
 
 	return 0;

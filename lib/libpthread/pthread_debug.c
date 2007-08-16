@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.12 2007/03/02 18:53:52 ad Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.13 2007/08/16 12:01:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.12 2007/03/02 18:53:52 ad Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.13 2007/08/16 12:01:49 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -70,12 +70,12 @@ static struct linebuf *linebuf;
 static void pthread__debug_printcounters(void);
 static const char *pthread__counternames[] = PTHREADD_INITCOUNTERNAMES;
 
-extern int pthread__maxconcurrency, pthread__started;
+extern int pthread__started;
 
-void pthread__debug_init(int ncpu)
+void
+pthread__debug_init(void)
 {
 	time_t t;
-	int i;
 
 	if (getenv("PTHREAD_DEBUGCOUNTERS") != NULL)
 		atexit(pthread__debug_printcounters);
@@ -83,11 +83,9 @@ void pthread__debug_init(int ncpu)
 	if (getenv("PTHREAD_DEBUGLOG") != NULL) {
 		t = time(NULL);
 		debugbuf = pthread__debuglog_init(0);
-		linebuf = malloc(ncpu * sizeof(struct linebuf));
+		linebuf = calloc(1000, sizeof(struct linebuf));
 		if (linebuf == NULL)
 			err(1, "Couldn't allocate linebuf");
-		for (i = 0; i < ncpu; i++)
-			linebuf[i].len = 0;
 
 		DPRINTF(("Started debugging %s (pid %d) at %s\n", 
 		    getprogname(), getpid(), ctime(&t)));
@@ -164,17 +162,8 @@ pthread__debuglog_printf(const char *fmt, ...)
 	tmpbuf = linebuf[vpid].buf;
 	len = linebuf[vpid].len;
 
-#if defined(PTHREAD_PID_DEBUG) || defined(PTHREAD_VP_DEBUG)
-	if (len == 0) {
-#ifdef PTHREAD_PID_DEBUG
-		len += sprintf(tmpbuf, "[%05d]", getpid());
-#endif
-#ifdef PTHREAD_VP_DEBUG
-		if (pthread__maxconcurrency > 1)
-			len += sprintf(tmpbuf + len, "[%d]", vpid);
-#endif
-	}
-#endif
+	if (len == 0)
+		len += sprintf(tmpbuf, "[%05d.%05d]", getpid(), vpid);
 
 	va_start(ap, fmt);
 	len += vsnprintf(tmpbuf + len, (unsigned int)(MAXLINELEN - len),
@@ -232,5 +221,12 @@ pthread__debuglog_newline(void)
 	return (linebuf[vpid].len == 0);
 }
 
-#endif	/* PTHREAD__DEBUG */
+#else	/* PTHREAD__DEBUG */
 
+void
+pthread__debug_init(void)
+{
+
+}
+
+#endif	/* PTHREAD__DEBUG */

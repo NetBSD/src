@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.21 2007/08/04 13:37:49 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.22 2007/08/16 12:01:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.21 2007/08/04 13:37:49 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.22 2007/08/16 12:01:49 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -46,9 +46,13 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.21 2007/08/04 13:37:49 ad Exp $");
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+/* How many times to try acquiring spin locks on MP systems. */
+#define	PTHREAD__NSPINS		1024
 
 #ifdef PTHREAD_SPIN_DEBUG_PRINT
 #define SDPRINTF(x) DPRINTF(x)
@@ -106,10 +110,18 @@ pthread__simple_unlock(__cpu_simple_lock_t *alp)
  * we fall back onto machine-dependent atomic lock primitives.
  */
 void
-pthread__lockprim_init(int ncpu)
+pthread__lockprim_init(void)
 {
+	char *p;
 
-	if (ncpu != 1) {
+	if ((p = getenv("PTHREAD_NSPINS")) != NULL)
+		pthread__nspins = atoi(p);
+	else if (pthread__concurrency != 1)
+		pthread__nspins = PTHREAD__NSPINS;
+	else
+		pthread__nspins = 1;
+
+	if (pthread__concurrency != 1) {
 		pthread__atomic = 1;
 		return;
 	}
