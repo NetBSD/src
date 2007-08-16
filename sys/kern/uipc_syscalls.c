@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.115 2007/07/15 08:33:38 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.115.6.1 2007/08/16 11:03:41 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.115 2007/07/15 08:33:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.115.6.1 2007/08/16 11:03:41 jmcneill Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_pipe.h"
 
 #include <sys/param.h>
@@ -50,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.115 2007/07/15 08:33:38 dsl Exp 
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/un.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/event.h>
 
 #include <sys/mount.h>
@@ -457,14 +454,12 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 {
 	struct file	*fp;
 	struct uio	auio;
-	int		i, len, error;
+	int		i, len, error, iovlen;
 	struct mbuf	*to, *control;
 	struct socket	*so;
 	struct iovec	*tiov;
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
-#ifdef KTRACE
 	struct iovec	*ktriov;
-#endif
 
 	/* If the caller passed us stuff in mbufs, we must free them */
 	if (mp->msg_flags & MSG_NAMEMBUF)
@@ -494,10 +489,6 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		}
 		mp->msg_iov = iov;
 	}
-
-#ifdef KTRACE
-	ktriov = NULL;
-#endif
 
 	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
@@ -547,14 +538,12 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		}
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_GENIO)) {
-		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
-
+	ktriov = NULL;
+	if (ktrpoint(KTR_GENIO)) {
+		iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
-#endif
 
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0)
@@ -586,13 +575,10 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	if (error == 0)
 		*retsize = len - auio.uio_resid;
 
-#ifdef KTRACE
 	if (ktriov != NULL) {
-		if (error == 0)
-			ktrgenio(l, s, UIO_WRITE, ktriov, *retsize, error);
+		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
 		free(ktriov, M_TEMP);
 	}
-#endif
 
  bad:
 	if (iov != aiov)
@@ -775,18 +761,13 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	struct uio	auio;
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
 	struct iovec	*tiov;
-	int		i, len, error;
+	int		i, len, error, iovlen;
 	struct socket	*so;
-#ifdef KTRACE
 	struct iovec	*ktriov;
-#endif
 
 	*from = NULL;
 	if (control != NULL)
 		*control = NULL;
-#ifdef KTRACE
-	ktriov = NULL;
-#endif
 
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0)
@@ -838,14 +819,13 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 			goto out;
 		}
 	}
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_GENIO)) {
-		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 
+	ktriov = NULL;
+	if (ktrpoint(KTR_GENIO)) {
+		iovlen = auio.uio_iovcnt * sizeof(struct iovec);
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
-#endif
 
 	len = auio.uio_resid;
 	mp->msg_flags &= MSG_USERFLAGS;
@@ -857,13 +837,12 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	    && (error == ERESTART || error == EINTR || error == EWOULDBLOCK))
 		/* Some data transferred */
 		error = 0;
-#ifdef KTRACE
+
 	if (ktriov != NULL) {
-		if (error == 0)
-			ktrgenio(l, s, UIO_READ, ktriov, len, 0);
+		ktrgeniov(s, UIO_READ, ktriov, len, error);
 		free(ktriov, M_TEMP);
 	}
-#endif
+
 	if (error != 0) {
 		m_freem(*from);
 		*from = NULL;

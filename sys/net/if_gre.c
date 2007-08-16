@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.98 2007/07/09 21:11:00 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.98.6.1 2007/08/16 11:03:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98 2007/07/09 21:11:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.98.6.1 2007/08/16 11:03:45 jmcneill Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -338,6 +338,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 
 	*mtod(m, int *) = ip_gre_ttl;
 	m->m_len = sizeof(int);
+	KASSERT(so->so_proto && so->so_proto->pr_ctloutput);
 	rc = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so, IPPROTO_IP, IP_TTL,
 	    &m);
 	m = NULL;
@@ -608,7 +609,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	u_int16_t etype = 0;
 	struct mobile_h mob_h;
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == 0 ||
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING) ||
 	    sc->g_src.s_addr == INADDR_ANY || sc->g_dst.s_addr == INADDR_ANY) {
 		m_freem(m);
 		error = ENETDOWN;

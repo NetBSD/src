@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.164.4.1 2007/08/09 02:37:26 jmcneill Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.164.4.2 2007/08/16 11:03:49 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.164.4.1 2007/08/09 02:37:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.164.4.2 2007/08/16 11:03:49 jmcneill Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -737,9 +737,9 @@ int
 nfs_asyncio(bp)
 	struct buf *bp;
 {
-	int i;
+	struct nfs_iod *iod;
 	struct nfsmount *nmp;
-	int gotiod, slptimeo = 0, error;
+	int slptimeo = 0, error;
 	bool catch = false;
 
 	if (nfs_numasync == 0)
@@ -749,47 +749,33 @@ nfs_asyncio(bp)
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
 		catch = true;
-	gotiod = false;
 
 	/*
 	 * Find a free iod to process this request.
 	 */
 
 	mutex_enter(&nfs_iodlist_lock);
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		struct nfs_iod *iod = &nfs_asyncdaemon[i];
-
+	iod = LIST_FIRST(&nfs_iodlist_idle);
+	if (iod) {
+		/*
+		 * Found one, so wake it up and tell it which
+		 * mount to process.
+		 */
+		LIST_REMOVE(iod, nid_idle);
 		mutex_enter(&iod->nid_lock);
-		if (iod->nid_want) {
-			/*
-			 * Found one, so wake it up and tell it which
-			 * mount to process.
-			 */
-			iod->nid_want = false;
-			iod->nid_mount = nmp;
-			cv_signal(&iod->nid_cv);
-			mutex_enter(&nmp->nm_lock);
-			mutex_exit(&iod->nid_lock);
-			nmp->nm_bufqiods++;
-			if (nmp->nm_bufqlen < 2 * nmp->nm_bufqiods) {
-				cv_broadcast(&nmp->nm_aiocv);
-			}
-			gotiod = true;
-			break;
-		}
-		mutex_exit(&iod->nid_lock);
-	}
-	mutex_exit(&nfs_iodlist_lock);
-
-	/*
-	 * If none are free, we may already have an iod working on this mount
-	 * point.  If so, it will process our request.
-	 */
-
-	if (!gotiod) {
+		mutex_exit(&nfs_iodlist_lock);
+		KASSERT(iod->nid_mount == NULL);
+		iod->nid_mount = nmp;
+		cv_signal(&iod->nid_cv);
 		mutex_enter(&nmp->nm_lock);
-		if (nmp->nm_bufqiods > 0)
-			gotiod = true;
+		mutex_exit(&iod->nid_lock);
+		nmp->nm_bufqiods++;
+		if (nmp->nm_bufqlen < 2 * nmp->nm_bufqiods) {
+			cv_broadcast(&nmp->nm_aiocv);
+		}
+	} else {
+		mutex_exit(&nfs_iodlist_lock);
+		mutex_enter(&nmp->nm_lock);
 	}
 
 	KASSERT(mutex_owned(&nmp->nm_lock));
@@ -805,7 +791,7 @@ again:
 	 * XXX: start non-loopback mounts straight away?  If "lots free",
 	 * let pagedaemon start loopback writes anyway?
 	 */
-	if (gotiod) {
+	if (nmp->nm_bufqiods > 0) {
 
 		/*
 		 * Ensure that the queue never grows too large.

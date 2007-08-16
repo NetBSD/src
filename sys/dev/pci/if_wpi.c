@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.17.4.2 2007/08/09 02:37:11 jmcneill Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.17.4.3 2007/08/16 11:03:11 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.2 2007/08/09 02:37:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.17.4.3 2007/08/16 11:03:11 jmcneill Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -1378,6 +1378,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *mnew;
+	int data_off ; 
 
 	stat = (struct wpi_rx_stat *)(desc + 1);
 
@@ -1406,18 +1407,28 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		return;
 	}
 
-
-
+	/* Compute where are the useful datas */
+	data_off = (char*)(head + 1) - mtod(data->m, char*); 
+			 
 	/* 
 	 * If the number of free entry is too low
 	 * just dup the data->m socket and reuse the same rbuf entry
 	 */
 	if (sc->rxq.nb_free_entries <= WPI_RBUF_LOW_LIMIT) {
 		
-		/* Set length before calling m_dup */
+		/* Prepare the mbuf for the m_dup */
 		data->m->m_pkthdr.len = data->m->m_len = le16toh(head->len);
-		
+		data->m->m_data = (char*) data->m->m_data + data_off;
+
 		m = m_dup(data->m,0,M_COPYALL,M_DONTWAIT);
+
+		/* Restore the m_data pointer for future use */
+		data->m->m_data = (char*) data->m->m_data - data_off;
+
+		if (m == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
 	} else {
 
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
@@ -1439,12 +1450,13 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 		/* update Rx descriptor */
 		ring->desc[ring->cur] = htole32(rbuf->paddr);
+
+		m->m_data = (char*)m->m_data + data_off;
+		m->m_pkthdr.len = m->m_len = le16toh(head->len);
 	}
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_data = (void *)(head + 1);
-	m->m_pkthdr.len = m->m_len = le16toh(head->len);
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {

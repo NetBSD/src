@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.39 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: un.h,v 1.39.28.1 2007/08/16 11:03:57 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,6 +36,7 @@
 
 #include <sys/ansi.h>
 #include <sys/featuretest.h>
+#include <sys/types.h>
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
@@ -57,7 +58,17 @@ struct	sockaddr_un {
 #if defined(_NETBSD_SOURCE)
 #define	LOCAL_CREDS	0x0001		/* pass credentials to receiver */
 #define	LOCAL_CONNWAIT	0x0002		/* connects block until accepted */
+#define	LOCAL_PEEREID	0x0003		/* get peer identification */
 #endif
+
+/*
+ * Data automatically stored inside connect() for use by LOCAL_PEEREID
+ */
+struct unpcbid {
+	pid_t unp_pid;		/* process id */
+	uid_t unp_euid;		/* effective user id */
+	gid_t unp_egid;		/* effective group id */
+};
 
 #ifdef _KERNEL
 struct unpcb;

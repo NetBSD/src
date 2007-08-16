@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.6 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.6.24.1 2007/08/16 11:03:06 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.6 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.6.24.1 2007/08/16 11:03:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,26 +63,25 @@ static int  slhci_isa_match(struct device *, struct cfdata *, void *);
 static void slhci_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(slhci_isa, sizeof(struct slhci_isa_softc),
-    slhci_isa_match, slhci_isa_attach, NULL, NULL);
+    slhci_isa_match, slhci_isa_attach, NULL, slhci_activate);
 
 static int
 slhci_isa_match(struct device *parent, struct cfdata *cf,
     void *aux)
 {
-	struct slhci_softc sc;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	int result = 0;
+	uint8_t sltype;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SL11_PORTSIZE, 0, &ioh))
 		goto out;
 
-	memset(&sc, 0, sizeof(sc));
-	sc.sc_iot = iot;
-	sc.sc_ioh = ioh;
-	if (sl811hs_find(&sc) >= 0)
-		result = 1;
+	bus_space_write_1(iot, ioh, SL11_IDX_ADDR, SL11_REV);
+	sltype = SL11_GET_REV(bus_space_read_1(iot, ioh, SL11_IDX_DATA));
+
+	result = slhci_supported_rev(sltype);
 
 	bus_space_unmap(iot, ioh, SL11_PORTSIZE);
 
@@ -99,33 +98,26 @@ slhci_isa_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 
-	printf("\n");
+	printf("\n"); /* XXX still needed? */
 
 	/* Map I/O space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SL11_PORTSIZE, 0, &ioh)) {
-		printf("%s: can't map I/O space\n",
-			sc->sc_bus.bdev.dv_xname);
+		printf("%s: can't map I/O space\n", SC_NAME(sc));
 		return;
 	}
 
-	/* Initialize sc */
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
-	sc->sc_dmat = ia->ia_dmat;
-	sc->sc_enable_power = NULL;
-	sc->sc_enable_intr  = NULL;
-	sc->sc_arg = isc;
+	/* Initialize sc XXX power value unconfirmed */
+	slhci_preinit(sc, NULL, iot, ioh, 30, SL11_IDX_DATA);
 
 	/* Establish the interrupt handler */
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 					IST_EDGE, IPL_USB, slhci_intr, sc);
 	if (isc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n",
-			sc->sc_bus.bdev.dv_xname);
+		printf("%s: can't establish interrupt\n", SC_NAME(sc));
 		return;
 	}
 
 	/* Attach SL811HS/T */
-	if (slhci_attach(sc, self))
-		return;
+	if (slhci_attach(sc))
+		printf("%s: slhci_attach failed\n", SC_NAME(sc));
 }

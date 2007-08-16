@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.141 2007/07/09 21:10:52 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.141.6.1 2007/08/16 11:03:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.141 2007/07/09 21:10:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.141.6.1 2007/08/16 11:03:30 jmcneill Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -383,11 +383,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * If not inherited, these were zeroed above.
 	 */
 	if (p1->p_traceflag & KTRFAC_INHERIT) {
-		mutex_enter(&ktrace_mutex);
+		mutex_enter(&ktrace_lock);
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			ktradref(p2);
-		mutex_exit(&ktrace_mutex);
+		mutex_exit(&ktrace_lock);
 	}
 #endif
 
@@ -490,10 +490,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (rnewprocp != NULL)
 		*rnewprocp = p2;
 
-#ifdef KTRACE
-	if (KTRPOINT(p2, KTR_EMUL))
+	if (ktrpoint(KTR_EMUL))
 		p2->p_traceflag |= KTRFAC_TRC_EMUL;
-#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue except

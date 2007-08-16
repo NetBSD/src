@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.6 2007/07/23 03:45:27 kiyohara Exp $	*/
+/*	$NetBSD: btuart.c,v 1.6.4.1 2007/08/16 11:03:03 jmcneill Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.6 2007/07/23 03:45:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.6.4.1 2007/08/16 11:03:03 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.6 2007/07/23 03:45:27 kiyohara Exp $");
 
 #include "ioconf.h"
 
-#define BTUART_DEBUG
 #ifdef BTUART_DEBUG
 int btuart_debug = 1;
 #endif

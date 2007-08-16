@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.175 2007/07/29 13:53:46 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.175.4.1 2007/08/16 11:03:42 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.175 2007/07/29 13:53:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.175.4.1 2007/08/16 11:03:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,10 +179,10 @@ int needbuffer;
 struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
 
 /*
- * Buffer pool for I/O buffers.
+ * Buffer pools for I/O buffers.
  */
-static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool bufpool;
+static struct pool bufiopool;
 
 
 /* XXX - somewhat gross.. */
@@ -396,6 +396,11 @@ bufinit(void)
 #ifdef PMAP_MAP_POOLPAGE
 	use_std = 1;
 #endif
+
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&bufiopool, sizeof(struct buf), 0, 0, 0, "biopl",
+	    NULL, IPL_BIO);
 
 	bufmempool_allocator.pa_backingmap = buf_map;
 	for (i = 0; i < NMEMPOOLS; i++) {
@@ -1724,9 +1729,6 @@ vfs_bufstats(void)
 #endif /* DEBUG */
 
 /* ------------------------------ */
-
-static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL,
-    IPL_BIO);
 
 static struct buf *
 getiobuf1(int prflags)

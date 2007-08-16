@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.99 2007/07/16 14:26:08 pooka Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.99.6.1 2007/08/16 11:03:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.99 2007/07/16 14:26:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.99.6.1 2007/08/16 11:03:59 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1519,8 +1519,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		dev = devvp->v_rdev;
 		ump = VFSTOUFS(devvp->v_specmountpoint);
 		cgblkno = fsbtodb(fs, cgtod(fs, cg));
-		if (TAILQ_FIRST(&ump->um_snapshots) != NULL &&
-		    ffs_snapblkfree(fs, devvp, bno, size, inum))
+		if (ffs_snapblkfree(fs, devvp, bno, size, inum))
 			return;
 	}
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||

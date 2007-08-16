@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.24 2007/03/18 21:38:34 dsl Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.24.8.1 2007/08/16 11:02:59 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.24 2007/03/18 21:38:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.24.8.1 2007/08/16 11:02:59 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
 #endif
 
 #include <sys/param.h>
@@ -51,9 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.24 2007/03/18 21:38:34 dsl Exp
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/dirent.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -201,10 +198,7 @@ netbsd32___sysctl(l, v, retval)
         if (error)
                 return (error);
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MIB))
-		ktrmib(l, name, SCARG(uap, namelen));
-#endif
+	ktrmib(name, SCARG(uap, namelen));
 
 	/*
 	 * wire old so that copyout() is less likely to fail?

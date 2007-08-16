@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.856.4.2 2007/08/04 12:33:08 jmcneill Exp $
+#	$NetBSD: files,v 1.856.4.3 2007/08/16 11:03:01 jmcneill Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1073,7 +1073,7 @@ device	ehci: usbus
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
-defflag	opt_slhci.h	SLHCI_DEBUG
+defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
 device	slhci: usbus
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
@@ -1327,7 +1327,7 @@ file	kern/kern_exit.c
 file	kern/kern_fork.c
 file	kern/kern_idle.c
 file	kern/kern_kthread.c
-file	kern/kern_ktrace.c
+file	kern/kern_ktrace.c		ktrace
 file	kern/kern_ksyms.c		ksyms | ddb | lkm needs-flag
 file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
@@ -1377,16 +1377,16 @@ file	kern/subr_lockdebug.c
 file	kern/subr_log.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
-file	kern/subr_prf_bitmask.c
+file	kern/subr_prf2.c
 file	kern/subr_prof.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_specificdata.c
 file	kern/subr_tftproot.c		tftproot
+file	kern/subr_time.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
-file	kern/subr_xxx.c
 file	kern/sys_aio.c
 file	kern/sys_generic.c
 file	kern/sys_lwp.c

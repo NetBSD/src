@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.44 2007/07/19 20:48:59 dyoung Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.44.4.1 2007/08/16 11:03:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.44 2007/07/19 20:48:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.44.4.1 2007/08/16 11:03:48 jmcneill Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -133,7 +133,7 @@ static struct sockaddr_iso
 	   Bcopy(r, &a.siso_addr, 1 + (r)->isoa_len);}
 #define S(x) ((struct sockaddr *)&(x))
 
-static struct sockaddr_dl blank_dl = {
+static const struct sockaddr_dl blank_dl = {
 	.sdl_len = sizeof(blank_dl),
 	.sdl_family = AF_LINK,
 };
@@ -344,9 +344,8 @@ iso_snparesolve(
 	} else if (iso_systype != SNPA_IS && known_is != 0 &&
 		   (sc = (struct llinfo_llc *) known_is->rt_llinfo) &&
 		   (sc->lc_flags & SNPA_VALID)) {
-		struct sockaddr_dl *sdl =
-		(struct sockaddr_dl *) (known_is->rt_gateway);
-		found_snpa = LLADDR(sdl);
+		const struct sockaddr_dl *sdl = satocsdl(known_is->rt_gateway);
+		found_snpa = CLLADDR(sdl);
 		addrlen = sdl->sdl_alen;
 	} else if (ifp->if_flags & IFF_BROADCAST) {
 		/*
@@ -459,7 +458,7 @@ add:
 		rt = mrt;
 		rt->rt_refcnt--;
 	} else {
-		struct sockaddr_dl *sdl = (struct sockaddr_dl *) rt->rt_gateway;
+		struct sockaddr_dl *sdl = satosdl(rt->rt_gateway);
 		rt->rt_refcnt--;
 		if ((rt->rt_flags & RTF_LLINFO) == 0)
 			goto add;

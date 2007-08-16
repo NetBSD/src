@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.111 2007/07/07 05:13:17 tsutsui Exp $
+#	$NetBSD: files.sparc64,v 1.111.8.1 2007/08/16 11:02:30 jmcneill Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -67,7 +67,7 @@ device power
 attach power at sbus, ebus
 file	arch/sparc64/dev/power.c		power
 
-device envctrl: sysmon_envsys, pcf8584
+device envctrl: sysmon_envsys, pcf8584, i2cbus
 attach envctrl at ebus
 file	arch/sparc64/dev/envctrl.c	envctrl
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.218 2007/05/17 14:51:21 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.218.8.1 2007/08/16 11:02:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.218 2007/05/17 14:51:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.218.8.1 2007/08/16 11:02:20 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -162,7 +162,7 @@ const char * const trap_type[] = {
 	"SSE FP exception",			/* 19 T_XMM */
 	"reserved trap",			/* 20 T_RESERVED */
 };
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
+int	trap_types = __arraycount(trap_type);
 
 #ifdef DEBUG
 int	trapdebug = 0;
