@@ -570,14 +570,15 @@ iscsi_socks_establish(iscsi_socket_t *sockv, int *famv, int *sockc, int family, 
 	(void) memset(&hints, 0x0, sizeof(hints));
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+	hints.ai_flags = AI_PASSIVE | AI_NUMERICSERV;
 	(void) snprintf(portnum, sizeof(portnum), "%d", port);
-	if ((error = getaddrinfo(NULL, portnum, &hints, &res0)) != 0 ||
-	    (error = getaddrinfo(NULL, "iscsi-target", &hints, &res0)) != 0 ||
-	    (error = getaddrinfo(NULL, "iscsi", &hints, &res0)) != 0 ||
-	    (error = getaddrinfo(NULL, "3260", &hints, &res0)) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo: %s", gai_strerror(error));
-		return 0;
+	if ((error = getaddrinfo(NULL, portnum, &hints, &res0)) != 0) {
+		hints.ai_flags = AI_PASSIVE;
+		if ((error = getaddrinfo(NULL, "iscsi-target", &hints, &res0)) != 0 ||
+		    (error = getaddrinfo(NULL, "iscsi", &hints, &res0)) != 0) {
+			iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo: %s", gai_strerror(error));
+			return 0;
+		}
 	}
 	*sockc = 0;
 	for (res = res0; res && *sockc < MAXSOCK; res = res->ai_next) {
@@ -758,13 +759,14 @@ iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 	for (i = 0; i < ISCSI_SOCK_CONNECT_TIMEOUT; i++) {
 
 		/* Attempt connection */
-
-		if ((rc = getaddrinfo(hostname, portstr, &hints, &res)) != 0 ||
-		    (rc = getaddrinfo(hostname, "iscsi-target", &hints, &res)) != 0 ||
-		    (rc = getaddrinfo(hostname, "iscsi", &hints, &res)) != 0 ||
-		    (rc = getaddrinfo(hostname, "3260", &hints, &res)) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo: %s", gai_strerror(rc));
-			return 0;
+		hints.ai_flags = AI_NUMERICSERV;
+		if ((rc = getaddrinfo(hostname, portstr, &hints, &res)) != 0) {
+			hints.ai_flags = 0;
+			if ((rc = getaddrinfo(hostname, "iscsi-target", &hints, &res)) != 0 ||
+			    (rc = getaddrinfo(hostname, "iscsi", &hints, &res)) != 0) {
+				iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo: %s", gai_strerror(rc));
+				return 0;
+			    }
 		}
 
 #if ISCSI_SOCK_CONNECT_NONBLOCK == 1
