@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.30 2007/08/16 13:54:17 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.31 2007/08/16 14:53:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.30 2007/08/16 13:54:17 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.31 2007/08/16 14:53:45 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -78,19 +78,6 @@ struct mutexattr_private {
 static const struct mutexattr_private mutexattr_private_default = {
 	PTHREAD_MUTEX_DEFAULT,
 };
-
-/*
- * If the mutex does not already have private data (i.e. was statically
- * initialized), then give it the default.
- */
-#define	GET_MUTEX_PRIVATE(mutex, mp)					\
-do {									\
-	if (__predict_false((mp = (mutex)->ptm_private) == NULL)) {	\
-		/* LINTED cast away const */				\
-		mp = ((mutex)->ptm_private =				\
-		    (void *)&mutex_private_default);			\
-	}								\
-} while (/*CONSTCOND*/0)
 
 int
 pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
@@ -226,9 +213,8 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 			continue;
 		}
 
-		GET_MUTEX_PRIVATE(mutex, mp);
-
-		if (mutex->ptm_owner == self) {
+		mp = mutex->ptm_private;
+		if (mutex->ptm_owner == self && mp != NULL) {
 			switch (mp->type) {
 			case PTHREAD_MUTEX_ERRORCHECK:
 				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
@@ -298,8 +284,8 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		 * interlock because these fields are only modified
 		 * if we know we own the mutex.
 		 */
-		GET_MUTEX_PRIVATE(mutex, mp);
-		if (mp->type == PTHREAD_MUTEX_RECURSIVE &&
+		mp = mutex->ptm_private;
+		if (mp != NULL && mp->type == PTHREAD_MUTEX_RECURSIVE &&
 		    mutex->ptm_owner == self) {
 			if (mp->recursecount == INT_MAX)
 				return EAGAIN;
@@ -329,36 +315,38 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 
 	PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK);
 
-	GET_MUTEX_PRIVATE(mutex, mp);
-
-	self = pthread_self();
 	/*
 	 * These tests can be performed without holding the
 	 * interlock because these fields are only modified
 	 * if we know we own the mutex.
 	 */
+	self = pthread_self();
 	weown = (mutex->ptm_owner == self);
-	switch (mp->type) {
-	case PTHREAD_MUTEX_RECURSIVE:
-		if (!weown)
-			return EPERM;
-		if (mp->recursecount != 0) {
-			mp->recursecount--;
-			return 0;
-		}
-		break;
-	case PTHREAD_MUTEX_ERRORCHECK:
-		if (!weown)
-			return EPERM;
-		/*FALLTHROUGH*/
-	default:
+	mp = mutex->ptm_private;
+
+	if (mp == NULL) {
 		if (__predict_false(!weown)) {
 			pthread__error(EPERM, "Unlocking unlocked mutex",
 			    (mutex->ptm_owner != 0));
 			pthread__error(EPERM,
 			    "Unlocking mutex owned by another thread", weown);
 		}
-		break;
+	} else if (mp->type == PTHREAD_MUTEX_RECURSIVE) {
+		if (!weown)
+			return EPERM;
+		if (mp->recursecount != 0) {
+			mp->recursecount--;
+			return 0;
+		}
+	} else if (mp->type == PTHREAD_MUTEX_ERRORCHECK) {
+		if (!weown)
+			return EPERM;
+		if (__predict_false(!weown)) {
+			pthread__error(EPERM, "Unlocking unlocked mutex",
+			    (mutex->ptm_owner != 0));
+			pthread__error(EPERM,
+			    "Unlocking mutex owned by another thread", weown);
+		}
 	}
 
 	mutex->ptm_owner = NULL;
@@ -381,8 +369,11 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 		self->pt_mutexhint = NULL;
 
 	pthread_spinlock(&mutex->ptm_interlock);
+	if (PTQ_EMPTY(&mutex->ptm_blocked)) {
+		pthread_spinunlock(&mutex->ptm_interlock);
+		return 0;
+	}
 	pthread__unpark_all(self, &mutex->ptm_interlock, &mutex->ptm_blocked);
-
 	return 0;
 }
 
