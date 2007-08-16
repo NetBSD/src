@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.5 2007/08/12 13:34:11 pooka Exp $	*/
+/*	$NetBSD: lock_stub.c,v 1.6 2007/08/16 19:50:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,6 +45,7 @@ lockmgr(volatile struct lock *lock, u_int flags, struct simplelock *slock)
 		break;
 
 	case LK_RELEASE:
+		assert(lock->lk_flags != 0);
 		lock->lk_flags = 0;
 		break;
 

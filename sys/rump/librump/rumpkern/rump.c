@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.6 2007/08/14 15:56:17 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.7 2007/08/16 19:50:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -231,4 +231,11 @@ rump_vfs_getopsbyname(const char *name)
 {
 
 	return vfs_getopsbyname(name);
+}
+
+void
+rump_vattr_null(struct vattr *vap)
+{
+
+	vattr_null(vap);
 }

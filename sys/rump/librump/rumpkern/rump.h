@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.9 2007/08/14 15:56:17 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.10 2007/08/16 19:50:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -85,5 +85,7 @@ void		rumpvm_freepage(struct vm_page *);
 
 struct vfsops	*rump_vfslist_iterate(struct vfsops *);
 struct vfsops	*rump_vfs_getopsbyname(const char *);
+
+void	rump_vattr_null(struct vattr *);
 
 #endif /* _SYS_RUMP_H_ */
