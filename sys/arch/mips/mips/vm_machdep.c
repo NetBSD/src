@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.118 2007/07/18 13:46:46 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.119 2007/08/17 23:58:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.118 2007/07/18 13:46:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.119 2007/08/17 23:58:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct frame *f;
 	pt_entry_t *pte;
 	int i, x;
+
+	l2->l_md.md_ss_addr = 0;
+	l2->l_md.md_ss_instr = 0;
+	l2->l_md.md_astpending = 0;
 
 #ifdef DIAGNOSTIC
 	/*
