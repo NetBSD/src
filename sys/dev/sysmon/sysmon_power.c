@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.21 2007/08/07 14:03:00 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.22 2007/08/17 16:52:52 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.21 2007/08/07 14:03:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22 2007/08/17 16:52:52 pavel Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.21 2007/08/07 14:03:00 xtraeme Ex
 #include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <prop/proplib.h>
 
 static kmutex_t sysmon_power_event_queue_mtx;
 static kcondvar_t sysmon_power_event_queue_cv;
