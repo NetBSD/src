@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.78 2007/08/16 13:54:16 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.79 2007/08/17 14:28:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.78 2007/08/16 13:54:16 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.79 2007/08/17 14:28:31 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -450,7 +450,10 @@ pthread_suspend_np(pthread_t thread)
 #endif
 	SDPRINTF(("(pthread_suspend_np %p) Suspend thread %p.\n",
 	    pthread__self(), thread));
-	return _lwp_suspend(thread->pt_lid);
+
+	if (_lwp_suspend(thread->pt_lid) == 0)
+		return 0;
+	return errno;
 }
 
 int
@@ -463,7 +466,10 @@ pthread_resume_np(pthread_t thread)
 #endif
 	SDPRINTF(("(pthread_resume_np %p) Resume thread %p.\n",
 	    pthread__self(), thread));
-	return _lwp_continue(thread->pt_lid);
+
+	if (_lwp_continue(thread->pt_lid) == 0)
+		return 0;
+	return errno;
 }
 
 void
@@ -601,7 +607,9 @@ pthread_detach(pthread_t thread)
 	thread->pt_flags |= PT_FLAG_DETACHED;
 	pthread_spinunlock(&self->pt_lock);
 
-	return _lwp_detach(thread->pt_lid);
+	if (_lwp_detach(thread->pt_lid) == 0)
+		return 0;
+	return errno;
 }
 
 
