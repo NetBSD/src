@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.78 2007/08/15 14:19:19 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.79 2007/08/17 17:25:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -467,6 +467,11 @@ void			puffs_setback(struct puffs_cc *, int);
 struct puffs_node	*puffs_pn_new(struct puffs_usermount *, void *);
 void			puffs_pn_remove(struct puffs_node *);
 void			puffs_pn_put(struct puffs_node *);
+struct vattr		*puffs_pn_getvap(struct puffs_node *);
+void *			puffs_pn_getpriv(struct puffs_node *);
+void			puffs_pn_setpriv(struct puffs_node *, void *);
+struct puffs_pathobj	*puffs_pn_getpo(struct puffs_node *);
+struct puffs_usermount	*puffs_pn_getmnt(struct puffs_node *);
 
 void	puffs_newinfo_setcookie(struct puffs_newinfo *, void *);
 void	puffs_newinfo_setvtype(struct puffs_newinfo *, enum vtype);
