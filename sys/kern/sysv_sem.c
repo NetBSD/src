@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.72 2007/08/17 23:05:06 skd Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.73 2007/08/17 23:46:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.72 2007/08/17 23:05:06 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.73 2007/08/17 23:46:34 ad Exp $");
 
 #define SYSVSEM
 
@@ -76,11 +76,6 @@ static kmutex_t semlock;
 struct sem_undo *semu_alloc(struct proc *);
 int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
 void semundo_clear(int, int);
-
-/*
- * XXXSMP Once we go MP, there needs to be a lock for the semaphore system.
- * Until then, we're saved by being a non-preemptive kernel.
- */
 
 void
 seminit(void)
