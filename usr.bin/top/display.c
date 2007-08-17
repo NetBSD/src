@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.16 2007/05/24 20:04:04 ad Exp $	*/
+/*	$NetBSD: display.c,v 1.17 2007/08/17 21:49:26 oster Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.16 2007/05/24 20:04:04 ad Exp $");
+__RCSID("$NetBSD: display.c,v 1.17 2007/08/17 21:49:26 oster Exp $");
 #endif
 
 #include "os.h"
@@ -388,7 +388,7 @@ int threads;
 	/* if number of digits differs, rewrite the label */
 	if (digits(total) != digits(ltotal))
 	{
-	    printf("%d %s", total, (threads ? "threads:  " : "processes:"));
+	    fputs((threads ? " threads:  " : " processes:"), stdout);
 	    /* put out enough spaces to get to column 15 */
 	    i = digits(total);
 	    while (i++ < 4)
