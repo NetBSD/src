@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.21 2007/05/15 19:47:47 elad Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.22 2007/08/17 17:59:15 pavel Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -38,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <err.h>
-
+#include <stdbool.h>
 #include <prop/proplib.h>
 
 #include "veriexecctl.h"
@@ -47,7 +47,7 @@ extern int yylex(void);
 extern size_t line;
 extern int verbose, error;
 
-boolean_t keep_filename = FALSE, eval_on_load = FALSE;
+bool keep_filename = false, eval_on_load = false;
 prop_dictionary_t load_params;
 
 %}
