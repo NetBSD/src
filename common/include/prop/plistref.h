@@ -1,4 +1,4 @@
-/*	$NetBSD: proplib.h,v 1.5 2007/08/17 11:05:05 pavel Exp $	*/
+/*	$NetBSD: plistref.h,v 1.1 2007/08/17 11:05:05 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,18 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PROPLIB_PROPLIB_H_
-#define	_PROPLIB_PROPLIB_H_
+#ifndef _PROPLIB_PLISTREF_H_
+#define	_PROPLIB_PLISTREF_H_
 
-#include <prop/prop_array.h>
-#include <prop/prop_bool.h>
-#include <prop/prop_data.h>
-#include <prop/prop_dictionary.h>
-#include <prop/prop_number.h>
-#include <prop/prop_string.h>
+/* for size_t */
+#include <sys/types.h>
 
-#include <prop/prop_ingest.h>
+/*
+ * Property List Reference --
+ *	Used to pass externalized property lists across protection
+ *	boundaries (ioctls, syscalls, etc.).
+ */
+struct plistref {
+	void *pref_plist;		/* plist data */
+	size_t pref_len;		/* total length of plist data */
+};
 
-#include <prop/plistref.h>
-
-#endif /* _PROPLIB_PROPLIB_H_ */
+#endif /* _PROPLIB_PLISTREF_H_ */
