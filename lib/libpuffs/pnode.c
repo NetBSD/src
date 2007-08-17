@@ -1,4 +1,4 @@
-/*	$NetBSD: pnode.c,v 1.8 2007/07/01 18:39:39 pooka Exp $	*/
+/*	$NetBSD: pnode.c,v 1.9 2007/08/17 17:25:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: pnode.c,v 1.8 2007/07/01 18:39:39 pooka Exp $");
+__RCSID("$NetBSD: pnode.c,v 1.9 2007/08/17 17:25:31 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -99,6 +99,41 @@ puffs_pn_nodewalk(struct puffs_usermount *pu, puffs_nodewalk_fn fn, void *arg)
 	}
 
 	return NULL;
+}
+
+struct vattr *
+puffs_pn_getvap(struct puffs_node *pn)
+{
+
+	return &pn->pn_va;
+}
+
+void *
+puffs_pn_getpriv(struct puffs_node *pn)
+{
+
+	return pn->pn_data;
+}
+
+void
+puffs_pn_setpriv(struct puffs_node *pn, void *priv)
+{
+
+	pn->pn_data = priv;
+}
+
+struct puffs_pathobj *
+puffs_pn_getpo(struct puffs_node *pn)
+{
+
+	return &pn->pn_po;
+}
+
+struct puffs_usermount *
+puffs_pn_getmnt(struct puffs_node *pn)
+{
+
+	return pn->pn_mnt;
 }
 
 /* convenience / shortcut */
