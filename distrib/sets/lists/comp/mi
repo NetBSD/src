@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1062 2007/08/16 03:09:01 kiyohara Exp $
+#	$NetBSD: mi,v 1.1063 2007/08/17 11:05:04 pavel Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1631,6 +1631,7 @@
 ./usr/include/prop/prop_object.h		comp-c-include
 ./usr/include/prop/prop_string.h		comp-c-include
 ./usr/include/prop/proplib.h			comp-c-include
+./usr/include/prop/plistref.h			comp-c-include
 ./usr/include/protocols/dumprestore.h		comp-c-include
 ./usr/include/protocols/routed.h		comp-c-include
 ./usr/include/protocols/rwhod.h			comp-c-include
