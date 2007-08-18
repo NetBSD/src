@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.12 2007/08/18 05:56:04 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.13 2007/08/18 05:59:33 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.12 2007/08/18 05:56:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.13 2007/08/18 05:59:33 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -547,8 +547,13 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2)
  	ourpmap = NULL;
 	ci = curcpu();
 	if (ci->ci_want_pmapload &&
-	    vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap)
+	    vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
 		pmap_load();
+		if (l->l_ncsw != ncsw) {
+			crit_exit();
+			goto retry;
+		}
+	}
 	iscurrent = pmap_is_curpmap(pmap);
 
 	/* if curpmap then we are always mapped */
@@ -570,6 +575,9 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2)
 		mutex_enter(&pmap->pm_obj.vmobjlock);
 	}
 
+	if (l->l_ncsw != ncsw)
+		goto unlock_and_retry;
+
 	/* need to load a new alternate pt space into curpmap? */
 	COUNT(apdp_pde_map);
 	opde = *APDP_PDE;
@@ -581,11 +589,13 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2)
 
 	*pmap2 = ourpmap;
 	base = APTE_BASE;
+	KASSERT(l->l_ncsw == ncsw);
  out:
  	/*
  	 * might have blocked, need to retry?
  	 */
 	if (l->l_ncsw != ncsw) {
+ unlock_and_retry:
 		crit_exit();
 	    	if (ourpmap != NULL)
 			mutex_exit(&ourpmap->pm_obj.vmobjlock);
@@ -610,6 +620,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	if (pmap2 == NULL) {
 		mutex_exit(&pmap->pm_obj.vmobjlock);
 	} else {
+		KASSERT(curcpu()->ci_pmap == pmap2);
 #if defined(MULTIPROCESSOR)
 		*APDP_PDE = 0;
 		pmap_apte_flush(pmap2);
