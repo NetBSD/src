@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.110 2007/08/18 00:31:32 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.111 2007/08/18 10:07:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.110 2007/08/18 00:31:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.111 2007/08/18 10:07:55 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -85,10 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.110 2007/08/18 00:31:32 ad Exp $");
 #include <sys/buf.h>
 #include <sys/user.h>
 #include <sys/syncobj.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
-
-#include <machine/cpu.h>
 
 /*
  * local prototypes
