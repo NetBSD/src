@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.79 2007/08/17 17:25:31 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.80 2007/08/18 10:26:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -577,8 +577,6 @@ void			puffs_cc_yield(struct puffs_cc *);
 void			puffs_cc_continue(struct puffs_cc *);
 struct puffs_usermount	*puffs_cc_getusermount(struct puffs_cc *);
 void 			*puffs_cc_getspecific(struct puffs_cc *);
-struct puffs_cc 	*puffs_cc_create(struct puffs_usermount *);
-void			puffs_cc_destroy(struct puffs_cc *);
 
 /*
  * Execute or continue a request
