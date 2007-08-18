@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.98.2.5 2007/07/15 13:27:36 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.98.2.6 2007/08/18 05:38:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.98.2.5 2007/07/15 13:27:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.98.2.6 2007/08/18 05:38:35 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1669,9 +1669,6 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
-				 *
-				 * XXX We should not be holding p_smutex, but
-				 * for now, the buffer is wired.  Fix later.
 				 */
 				error = dcopyout(l, &klwp, dp,
 				    min(sizeof(klwp), elem_size));
@@ -1692,21 +1689,31 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 		mutex_enter(&p->p_smutex);	
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			if (buflen >= elem_size && elem_count > 0) {
+				struct lwp *l3;
+
 				lwp_lock(l2);
 				fill_lwp(l2, &klwp);
 				lwp_unlock(l2);
-
+				mutex_exit(&p->p_smutex);
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
-				 *
-				 * XXX We should not be holding p_smutex, but
-				 * for now, the buffer is wired.  Fix later.
 				 */
 				error = dcopyout(l, &klwp, dp,
 				    min(sizeof(klwp), elem_size));
-				if (error)
+				if (error) {
 					goto cleanup;
+				}
+				mutex_enter(&p->p_smutex);
+				LIST_FOREACH(l3, &p->p_lwps, l_sibling) {
+					if (l2 == l3)
+						break;
+				}
+				if (l2 == NULL) {
+					mutex_exit(&p->p_smutex);
+					error = EAGAIN;
+					goto cleanup;
+				}
 				dp += elem_size;
 				buflen -= elem_size;
 				elem_count--;
@@ -1727,6 +1734,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	}
 	return (0);
  cleanup:
+	mutex_exit(&proclist_lock);
 	return (error);
 }
 
