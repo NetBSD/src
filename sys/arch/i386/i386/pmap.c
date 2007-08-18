@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.11 2007/08/18 05:50:59 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.12 2007/08/18 05:56:04 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.11 2007/08/18 05:50:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.12 2007/08/18 05:56:04 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1896,11 +1896,10 @@ pmap_load(void)
 	uint64_t ncsw;
 
 	crit_enter();
+	KASSERT(curcpu()->ci_want_pmapload);
  retry:
 	ci = curcpu();
 	cpumask = 1U << ci->ci_cpuid;
-
-	KASSERT(ci->ci_want_pmapload);
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI); 
