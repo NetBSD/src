@@ -1,4 +1,4 @@
-/* $NetBSD: sleep.c,v 1.20 2005/10/17 10:11:46 elad Exp $ */
+/* $NetBSD: sleep.c,v 1.21 2007/08/18 00:41:52 hubertf Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.20 2005/10/17 10:11:46 elad Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.21 2007/08/18 00:41:52 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: sleep.c,v 1.20 2005/10/17 10:11:46 elad Exp $");
 #include <time.h>
 #include <unistd.h>
 
-void alarmhandle(int);
-void usage(void);
+static void alarmhandle(int);
+static void usage(void);
 int main(int, char *[]);
 
 int
@@ -72,7 +72,6 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
-		case '?':
 		default:
 			usage();
 		}
@@ -109,17 +108,17 @@ main(int argc, char *argv[])
 		ntime.tv_sec = ival;
 		ntime.tv_nsec = fval;
 	}
-	else{
+	else {
 		ntime.tv_sec = atol(arg);
 		if (ntime.tv_sec <= 0)
-			exit(0);
+			return EXIT_SUCCESS;
 		ntime.tv_nsec = 0;
 	}
 
 	if (nanosleep(&ntime, NULL) == -1)
-		err(1, "nanosleep failed");
+		err(EXIT_FAILURE, "nanosleep failed");
 
-	exit(0);
+	return EXIT_SUCCESS;
 	/* NOTREACHED */
 }
 
@@ -127,7 +126,7 @@ void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s seconds\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
 
@@ -135,6 +134,6 @@ usage(void)
 void
 alarmhandle(int i)
 {
-	_exit(0);
+	_exit(EXIT_SUCCESS);
 	/* NOTREACHED */
 }
