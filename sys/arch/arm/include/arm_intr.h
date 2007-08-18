@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.2 2007/08/12 13:28:40 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.3 2007/08/18 12:12:13 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -81,7 +81,7 @@
 #define	IPL_LPT		IPL_TTY
 #define IPL_VM		8	/* memory allocation */
 #define IPL_AUDIO	9	/* audio */
-#define IPL_IRQBUS  10	/* this irq collates other irq */
+#define IPL_IRQBUS	10	/* this irq collates other irq */
 #define IPL_CLOCK	11	/* clock */
 #define IPL_STATCLOCK	12	/* statclock */
 #define IPL_HIGH	13	/* everything */
@@ -92,8 +92,6 @@
 #define NIPL		15
 
 #define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
-
-#define	ARM_IRQ_HANDLER	_C_LABEL(arm_intr_dispatch)
 
 #ifndef _LOCORE
 #include <arm/cpufunc.h>
@@ -203,9 +201,8 @@ void arm_intr_enable_irqs(void);
 irqgroup_t
 arm_intr_register_irq_provider(const char *name, int nirqs, 
 		void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled),
-		uint32_t (*fetch_irq_hardware_status)(irq_hardware_cookie_t),
 		void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type),
-		irq_hardware_cookie_t, bool primary_irq_group);
+		irq_hardware_cookie_t);
 
 irqhandler_t
 arm_intr_claim(irqgroup_t, int irq, int type, int ipl, const char *name, int (*func)(void *), void *arg);
@@ -296,7 +293,6 @@ struct irq_group
 
 	/* used to set and retrieve the hardware irq status */
 	void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled);
-	uint32_t (*fetch_irq_hardware_status)(irq_hardware_cookie_t);
 	irq_hardware_cookie_t irq_hardware_cookie;
 	void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type);
 

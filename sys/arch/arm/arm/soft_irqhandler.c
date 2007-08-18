@@ -1,4 +1,4 @@
-/*	$NetBSD: soft_irqhandler.c,v 1.1.2.2 2007/08/12 13:28:39 chris Exp $	*/
+/*	$NetBSD: soft_irqhandler.c,v 1.1.2.3 2007/08/18 12:12:12 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soft_irqhandler.c,v 1.1.2.2 2007/08/12 13:28:39 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soft_irqhandler.c,v 1.1.2.3 2007/08/18 12:12:12 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -94,7 +94,6 @@ static irqgroup_t softintr_irq_group;
 static const char * const softintr_names[] = SI_QUEUENAMES;
 
 static void softintr_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled) { }
-static uint32_t softintr_irq_status(irq_hardware_cookie_t cookie) {	return 0; }
 
 static int softintr_dispatch(void *);
 
@@ -110,9 +109,8 @@ softintr_init(void)
 	int i;
 	softintr_irq_group = arm_intr_register_irq_provider("softintr", SI_NQUEUES,
 		   	softintr_set_irq_mask,
-			softintr_irq_status,
 			NULL,
-			NULL, false);
+			NULL);
 
 	for (i = 0; i < SI_NQUEUES; i++)
 	{
