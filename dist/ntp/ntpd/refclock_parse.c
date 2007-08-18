@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.8 2007/01/06 19:45:23 kardel Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.9 2007/08/18 09:56:13 kardel Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.78 2006/12/22 20:08:27 kardel RELEASE_20061222_A
@@ -2635,12 +2635,15 @@ parse_shutdown(
 	}
 	
 	/*
+	 * cleanup before leaving this world
+	 */
+	if (parse->binding)
+	    PARSE_END(parse);
+
+	/*
 	 * Tell the I/O module to turn us off.  We're history.
 	 */
 	io_closeclock(&parse->generic->io);
-
-	if (parse->binding)
-	    PARSE_END(parse);
 
 	free_varlist(parse->kv);
   
