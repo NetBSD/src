@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.15 2007/08/18 05:40:53 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.16 2007/08/18 05:41:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.15 2007/08/18 05:40:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.16 2007/08/18 05:41:49 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1309,6 +1309,8 @@ lwp_delref(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	mutex_enter(&p->p_smutex);
+	KASSERT(l->l_stat != LSZOMB);
+	KASSERT(l->l_refcnt > 0);
 	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_refcv);
 	mutex_exit(&p->p_smutex);
