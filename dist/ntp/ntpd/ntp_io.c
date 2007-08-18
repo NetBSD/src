@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.24 2007/06/24 16:55:14 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.25 2007/08/18 09:56:14 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -3591,7 +3591,7 @@ kill_asyncio(int startfd)
  */
 static void
 add_fd_to_list(SOCKET fd, enum desc_type type) {
-	vsock_t *lsock = (vsock_t *)malloc(sizeof(vsock_t));
+	vsock_t *lsock = (vsock_t *)emalloc(sizeof(vsock_t));
 	lsock->fd = fd;
 	lsock->type = type;
 

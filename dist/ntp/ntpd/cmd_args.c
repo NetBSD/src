@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_args.c,v 1.4 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: cmd_args.c,v 1.5 2007/08/18 09:56:14 kardel Exp $	*/
 
 /*
  * cmd_args.c = command-line argument processing
@@ -25,7 +25,7 @@
  */
 extern char const *progname;
 extern const char *specific_interface;
-extern int default_ai_family;
+extern short default_ai_family;
 
 #ifdef HAVE_NETINFO
 extern int	check_netinfo;
@@ -128,7 +128,7 @@ getCmdOpts(
 			const char* p = *pp++;
 
 			tkey = (int)atol(p);
-			if (tkey <= 0 || tkey > NTP_MAXKEY) {
+			if (tkey == 0 || tkey > NTP_MAXKEY) {
 				msyslog(LOG_ERR,
 				    "command line trusted key %s is invalid",
 				    p);
