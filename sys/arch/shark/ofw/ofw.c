@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.39 2007/07/30 13:02:01 jmmv Exp $	*/
+/*	$NetBSD: ofw.c,v 1.39.6.1 2007/08/18 13:46:43 chris Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.39 2007/07/30 13:02:01 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.39.6.1 2007/08/18 13:46:43 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ extern BootConfig bootconfig;	/* temporary, I hope */
 
 #ifdef	DIAGNOSTIC
 /* NOTE: These variables will be removed, well some of them */
-extern u_int spl_mask;
 extern u_int current_mask;
 #endif
 
@@ -338,7 +337,7 @@ ofw_boot(howto, bootstr)
 
 #ifdef DIAGNOSTIC
 	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
-	printf("current_mask=%08x spl_mask=%08x\n", current_mask, spl_mask);
+	printf("current_mask=%08x\n", current_mask);
 
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
