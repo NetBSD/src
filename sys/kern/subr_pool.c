@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.130 2007/08/18 00:33:38 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.131 2007/08/18 00:37:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.130 2007/08/18 00:33:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.131 2007/08/18 00:37:14 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -1624,6 +1624,8 @@ pool_reclaim(struct pool *pp)
  * Drain pools, one at a time.
  *
  * Note, we must never be called from an interrupt context.
+ *
+ * XXX Pool can disappear while draining.
  */
 void
 pool_drain(void *arg)
