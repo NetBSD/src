@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.123.2.4 2007/06/08 14:17:25 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.123.2.5 2007/08/18 05:36:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.4 2007/06/08 14:17:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123.2.5 2007/08/18 05:36:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,6 +632,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			}
 			lt = LIST_NEXT(lt, l_sibling);
 		}
+		while (lt != NULL && lt->l_stat == LSZOMB)
+			lt = LIST_NEXT(lt, l_sibling);
 		pl.pl_lwpid = 0;
 		pl.pl_event = 0;
 		if (lt) {
