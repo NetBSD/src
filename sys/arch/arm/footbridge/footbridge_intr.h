@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.10.20.2 2007/08/12 13:28:39 chris Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.10.20.3 2007/08/18 12:12:13 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,5 +41,6 @@
 #define _FOOTBRIDGE_INTR_H_
 
 #define	FOOTBRIDGE_NIRQ	32	/* 32bits in the irq mask */
+#define ARM_IRQ_HANDLER _C_LABEL(footbridge_intr_dispatch)
 
 #endif	/* _FOOTBRIDGE_INTR_H */

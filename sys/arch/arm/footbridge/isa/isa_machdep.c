@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6.50.1 2007/08/12 13:28:39 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6.50.2 2007/08/18 12:12:13 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.50.1 2007/08/12 13:28:39 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.50.2 2007/08/18 12:12:13 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -119,7 +119,6 @@ uint32_t imen;
 
 static irqgroup_t isa_irq_group;
 static void isa_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled);
-static uint32_t isa_irq_status(irq_hardware_cookie_t cookie);
 static void isa_set_irq_hardware_type(irq_hardware_cookie_t cookie, int irq, int type);
 
 
@@ -319,16 +318,14 @@ isa_intr_disestablish(ic, arg)
 static void
 isa_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled)
 {
+	uint32_t oldirqstate;
+
+	oldirqstate = disable_interrupts(I32_bit);
 	/* slave is always enabled */
 	imen = ~(intr_enabled | (1 << IRQ_SLAVE));
 	imen &=0xffff;
 	SET_ICUS();
-}
-
-static uint32_t
-isa_irq_status(irq_hardware_cookie_t cookie)
-{
-	return 0;
+	restore_interrupts(oldirqstate);
 }
 
 static void
@@ -359,9 +356,8 @@ isa_intr_init(void)
 
 	isa_irq_group = arm_intr_register_irq_provider("isa", ICU_LEN,
 			isa_set_irq_mask,
-			isa_irq_status,
 			isa_set_irq_hardware_type,
-			NULL, false);
+			NULL);
 	
 	/* something to break the build in an informative way */
 #ifndef ISA_FOOTBRIDGE_IRQ 
@@ -417,7 +413,13 @@ isa_irqdispatch(arg)
 	void *arg;
 {
 	uint32_t ipendingmask;
+	uint32_t oldirqstate;
 
+	/* disable irqs while reading from the ICUs
+	 * Note that this could be an splhigh, except that serial ports
+	 * attach to isa, and so they wouldn't be blocked */
+	oldirqstate = disable_interrupts(I32_bit);
+	
 	/* read from the isa registers */
 	ipendingmask = inb(IO_ICU1);
 
@@ -426,6 +428,8 @@ isa_irqdispatch(arg)
 		ipendingmask &= ~(1 << IRQ_SLAVE);
 		ipendingmask |= inb(IO_ICU2) << 8;
 	}
+	restore_interrupts(oldirqstate);
+	
 	/* setup the interupts into the ipl lists */
 	arm_intr_queue_irqs(isa_irq_group, ipendingmask);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.2 2007/08/12 13:28:39 chris Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.3 2007/08/18 12:12:13 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.2 2007/08/12 13:28:39 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.3 2007/08/18 12:12:13 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -63,7 +63,7 @@ extern void isa_intr_init(void);
 static irqgroup_t footbridge_irq_group;
 
 static void footbridge_set_irq_mask(irq_hardware_cookie_t, uint32_t intr_enabled);
-static uint32_t footbridge_irq_status(irq_hardware_cookie_t);
+static uint32_t footbridge_irq_status(void);
 
 const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
 
@@ -84,9 +84,8 @@ footbridge_intr_init(void)
 {
 	footbridge_irq_group = arm_intr_register_irq_provider("footbridge", FOOTBRIDGE_NIRQ,
 		   	footbridge_set_irq_mask,
-			footbridge_irq_status,
 			NULL,
-			NULL, true);
+			NULL);
 
 	/*
 	 * Since various PCI interrupts could be routed via the ICU
@@ -95,7 +94,6 @@ footbridge_intr_init(void)
 	 * i.e. This is a hack.
 	 */
 	isa_intr_init();
-
 }
 
 static void
@@ -106,7 +104,7 @@ footbridge_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled)
 }
 
 static uint32_t
-footbridge_irq_status(irq_hardware_cookie_t cookie)
+footbridge_irq_status(void)
 {
 	    return ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_STATUS>>2];
 }
@@ -125,3 +123,19 @@ footbridge_intr_disestablish(void *cookie)
 {
 	return arm_intr_disestablish(footbridge_irq_group, cookie);
 }
+
+void
+footbridge_intr_dispatch(struct clockframe * frame)
+{
+	uint32_t hwpend;
+
+	/* fetch bitmask of pending interrupts */
+	hwpend = footbridge_irq_status();
+
+	/* queue up the interrupts for processing */
+	arm_intr_queue_irqs(footbridge_irq_group, hwpend);
+
+	/* process interrupts */
+	arm_intr_process_pending_ipls(frame, current_ipl_level);
+}
+

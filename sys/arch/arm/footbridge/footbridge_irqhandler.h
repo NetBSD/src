@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.h,v 1.5 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.h,v 1.5.50.1 2007/08/18 12:12:13 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -52,6 +52,7 @@ void	footbridge_intr_disestablish(void *);
 void *footbridge_intr_claim(int irq, int ipl, const char *name, int (*func)(void *), void *arg);
 void footbridge_intr_init(void);
 void footbridge_intr_disestablish(void *cookie);
+void	footbridge_intr_dispatch(struct clockframe *);
 #endif	/* _KERNEL */
 
 #endif	/* _FOOTBRIDGE_IRQHANDLER_H_ */
