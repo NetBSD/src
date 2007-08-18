@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.9 2007/07/29 10:18:49 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.10 2007/08/18 05:47:38 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.9 2007/07/29 10:18:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.10 2007/08/18 05:47:38 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2257,6 +2257,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		/* atomically save the old PTE and zap! it */
 		opte = x86_atomic_testset_ul(pte, 0);
 		pmap_exec_account(pmap, startva, opte, 0);
+		KASSERT(pmap_valid_entry(opte));
 
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
@@ -2342,6 +2343,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	/* atomically save the old PTE and zap! it */
 	opte = x86_atomic_testset_ul(pte, 0);
 	pmap_exec_account(pmap, va, opte, 0);
+	KASSERT(pmap_valid_entry(opte));
 
 	if (opte & PG_W)
 		pmap->pm_stats.wired_count--;
@@ -2471,9 +2473,12 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			 */
 
 			if (result && ptp && ptp->wire_count <= 1) {
+				KASSERT(ptp->wire_count == 1);
 				/* zap! */
 				opte = x86_atomic_testset_ul(
 				    &pmap->pm_pdir[pdei(va)], 0);
+				KDASSERT((opte & PG_FRAME) ==
+				    VM_PAGE_TO_PHYS(ptp));
 #if defined(MULTIPROCESSOR)
 				/*
 				 * XXXthorpej Redundant shootdown can happen
@@ -2558,9 +2563,11 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
+			KASSERT(ptp->wire_count == 1);
 			/* zap! */
 			opte = x86_atomic_testset_ul(
 			    &pmap->pm_pdir[pdei(va)], 0);
+			KDASSERT((opte & PG_FRAME) == VM_PAGE_TO_PHYS(ptp));
 #if defined(MULTIPROCESSOR)
 			/*
 			 * XXXthorpej Redundant shootdown can happen here
@@ -2662,6 +2669,8 @@ pmap_page_remove(struct vm_page *pg)
 
 		/* atomically save the old PTE and zap! it */
 		opte = x86_atomic_testset_ul(&ptes[x86_btop(pve->pv_va)], 0);
+		KASSERT(pmap_valid_entry(opte));
+		KDASSERT((opte & PG_FRAME) == VM_PAGE_TO_PHYS(pg));
 
 		if (opte & PG_W)
 			pve->pv_pmap->pm_stats.wired_count--;
@@ -2678,6 +2687,7 @@ pmap_page_remove(struct vm_page *pg)
 		if (pve->pv_ptp) {
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
+				KASSERT(pve->pv_ptp->wire_count == 1);
 				/*
 				 * Do we have to shootdown the page just to
 				 * get the pte out of the TLB ?
@@ -2690,6 +2700,8 @@ pmap_page_remove(struct vm_page *pg)
 				opte = x86_atomic_testset_ul(
 				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
 				    0);
+				KDASSERT((opte & PG_FRAME) ==
+				    VM_PAGE_TO_PHYS(pve->pv_ptp));
 				tva = (vaddr_t)ptes + pve->pv_ptp->offset;
 				pmap_tlb_shootdown(curcpu()->ci_pmap, tva,
 				    0, opte);
@@ -2843,6 +2855,8 @@ pmap_clear_attrs(struct vm_page *pg, int clearbits)
 		ptes = pmap_map_ptes(pve->pv_pmap, &pmap2);  /* locks pmap */
 		ptep = &ptes[x86_btop(pve->pv_va)];
 		opte = *ptep;
+		KASSERT(pmap_valid_entry(opte));
+		KDASSERT((opte & PG_FRAME) == VM_PAGE_TO_PHYS(pg));
 		if (opte & clearbits) {
 			/* We need to do something */
 			if (clearbits == PG_RW) {
