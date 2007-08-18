@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.3 2007/08/18 12:12:13 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.4 2007/08/18 23:45:45 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -138,15 +138,16 @@ extern void arm_intr_splx_lifter(int newspl);
 static inline void __attribute__((__unused__))
 arm_intr_splx(int newspl)
 {
-    uint32_t iplvalue = (1 << newspl);
+    /* look for interrupts at the next ipl or higher */
+    uint32_t iplvalue = (2 << newspl);
 
     /* Don't let the compiler re-order this code with preceding code */
     __insn_barrier();
-    current_ipl_level = newspl;
 
-    if (ipls_pending > iplvalue)
+    if (ipls_pending >= iplvalue)
         arm_intr_splx_lifter(newspl);
 
+    current_ipl_level = newspl;
     return;
 }
 
@@ -156,7 +157,8 @@ arm_intr_splraise(int ipl)
 	int	old;
 
 	old = current_ipl_level;
-	current_ipl_level = ipl;
+	if (ipl > current_ipl_level)
+		current_ipl_level = ipl;
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();

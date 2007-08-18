@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_irqhandler.c,v 1.1.2.3 2007/08/18 12:12:12 chris Exp $	*/
+/*	$NetBSD: arm_irqhandler.c,v 1.1.2.4 2007/08/18 23:45:45 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -66,7 +66,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.3 2007/08/18 12:12:12 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.4 2007/08/18 23:45:45 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.3 2007/08/18 12:12:12 chris 
 
 /* ipl queues */
 static struct iplq arm_iplq[NIPL];
-
 
 TAILQ_HEAD(, irq_group) irq_groups_list;	/* groups list */
 
@@ -440,7 +439,7 @@ void arm_intr_schedule(irqgroup_t group_cookie, irqhandler_t cookie)
 
 	restore_interrupts(oldirqstate);
 
-	if (current_ipl_level > iq->iq_ipl)
+	if (current_ipl_level < iq->iq_ipl)
 		arm_intr_splx_lifter(iq->iq_ipl);
 }
 
@@ -474,6 +473,7 @@ void
 arm_intr_print_pending_irq_details()
 {
 	int ipl;
+	struct irq_group *irqg;
 
 	printf("ipls_pending: 0x%0x\n", ipls_pending);
 
@@ -489,12 +489,20 @@ arm_intr_print_pending_irq_details()
 		{
 			if (iplq->iq_pending)
 			{
-				struct irq_group *irqg = iplq->iq_group;
+				irqg = iplq->iq_group;
 				printf("%s (%s irq %d) ->", iplq->iq_name, irqg->group_name, iplq->iq_irq);
 			}
 		}
 		printf("\n");
 	}
+
+	TAILQ_FOREACH(irqg, &irq_groups_list, irq_groups_list)
+	{
+		printf("%s: enabled: 0x%0x, soft_enabled = 0x%08x\n", irqg->group_name,
+				irqg->intr_enabled, 
+				irqg->intr_soft_enabled);
+	}
+	
 }
 
 
@@ -539,6 +547,11 @@ arm_intr_run_handlers_for_ipl(int ipl_level, struct clockframe *frame)
 	}
 }
 
+#if 0
+int panic_ipl_level;
+int panic_target_ipl_level;
+int panic_ipls_pending;
+#endif
 
 void
 arm_intr_process_pending_ipls(struct clockframe *frame, int target_ipl_level)
@@ -546,12 +559,20 @@ arm_intr_process_pending_ipls(struct clockframe *frame, int target_ipl_level)
 	int ipl_level;
 
 	/* check that there are ipls we can process */
-	while ((ipls_pending > (1 << target_ipl_level))
-		&&
-		((ipl_level = arm_intr_fls(ipls_pending)) > (target_ipl_level + 1)))
+	while (ipls_pending >= (2 << target_ipl_level))
 	{
+		ipl_level = arm_intr_fls(ipls_pending);
 		--ipl_level;
 		current_ipl_level = ipl_level;
+#if 0
+		if (ipl_level <= target_ipl_level)
+		{
+			panic_ipl_level = ipl_level;
+			panic_target_ipl_level = target_ipl_level;
+			panic_ipls_pending = ipls_pending;
+			Debugger();
+		}
+#endif
 		ipls_pending &= ~(1<<ipl_level);
 		arm_intr_run_handlers_for_ipl(ipl_level, frame);
 	}
