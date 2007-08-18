@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89.4.2 2007/07/29 10:18:50 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.4.3 2007/08/18 06:04:12 yamt Exp $	*/
 
 /*
  *
@@ -254,6 +254,8 @@ struct pmap {
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
+	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
+					 of pmap */
 };
 
 /* pm_flags */

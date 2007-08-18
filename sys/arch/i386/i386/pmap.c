@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.13 2007/08/18 05:59:33 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.14 2007/08/18 06:04:11 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.13 2007/08/18 05:59:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.14 2007/08/18 06:04:11 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -454,7 +454,7 @@ static void		 pmap_free_pv_doit(struct pmap *,
 static void		 pmap_free_pvpage(struct pmap_cpu *);
 static struct vm_page	*pmap_get_ptp(struct pmap *, int);
 static bool		 pmap_is_curpmap(struct pmap *);
-static bool		 pmap_is_active(struct pmap *, int);
+static bool		 pmap_is_active(struct pmap *, int, bool);
 static pt_entry_t	*pmap_map_ptes(struct pmap *, struct pmap **);
 static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					vaddr_t);
@@ -494,11 +494,12 @@ pmap_is_curpmap(struct pmap *pmap)
  */
 
 inline static bool
-pmap_is_active(struct pmap *pmap, int cpu_id)
+pmap_is_active(struct pmap *pmap, int cpu_id, bool kernel)
 {
 
 	return (pmap == pmap_kernel() ||
-	    (pmap->pm_cpus & (1U << cpu_id)) != 0);
+	    (pmap->pm_cpus & (1U << cpu_id)) != 0 ||
+	    (kernel && (pmap->pm_kernel_cpus & (1U << cpu_id)) != 0));
 }
 
 
@@ -1191,6 +1192,8 @@ pmap_alloc_pvpage(struct pmap_cpu *pc, struct pmap *pmap, int mode)
 	mutex_exit(&pc->pc_pv_lock);
 	pvpage = (struct pv_page *)uvm_km_alloc(kmem_map, PAGE_SIZE, 0,
 	    UVM_KMF_TRYLOCK|UVM_KMF_NOWAIT|UVM_KMF_WIRED);
+	if (pvpage == NULL)
+		printf("%s: fail\n", __func__);
 	mutex_enter(&pc->pc_pv_lock);
 
 	if (pvpage == NULL)
@@ -1567,6 +1570,7 @@ pmap_create(void)
 	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
 	pmap->pm_cpus = 0;
+	pmap->pm_kernel_cpus = 0;
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
@@ -1881,6 +1885,7 @@ pmap_reactivate(struct pmap *pmap)
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	oldcpus = pmap->pm_cpus;
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	KASSERT((pmap->pm_kernel_cpus & cpumask) != 0);
 	if (oldcpus & cpumask) {
 		/* got it */
 		result = true;
@@ -1960,9 +1965,11 @@ pmap_load(void)
 	 */
 
 	x86_atomic_clearbits_l(&oldpmap->pm_cpus, cpumask);
+	x86_atomic_clearbits_l(&oldpmap->pm_kernel_cpus, cpumask);
 
 	KASSERT(oldpmap->pm_pdirpa == rcr3());
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
+	KASSERT((pmap->pm_kernel_cpus & cpumask) == 0);
 
 	/*
 	 * mark the pmap in use by this processor.  again we must
@@ -1973,6 +1980,7 @@ pmap_load(void)
 
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	x86_atomic_setbits_l(&pmap->pm_cpus, cpumask);
+	x86_atomic_setbits_l(&pmap->pm_kernel_cpus, cpumask);
 	ci->ci_pmap = pmap;
 
 	/*
@@ -3473,6 +3481,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 	uintptr_t head;
 	u_int count;
 	int s;
+	bool kernel;
 
 	KASSERT(eva == 0 || eva >= sva);
 
@@ -3482,6 +3491,15 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 #endif
 	pte &= PG_G;
 	self = curcpu();
+
+	if (sva == (vaddr_t)-1LL) {
+		kernel = true;
+	} else {
+		if (eva == 0)
+			eva = sva + PAGE_SIZE;
+		kernel = sva >= VM_MAXUSER_ADDRESS;
+		KASSERT(kernel == (eva > VM_MAXUSER_ADDRESS));
+	}
 
 	/*
 	 * If the range is larger than 32 pages, then invalidate
@@ -3546,7 +3564,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			 */
 			for (CPU_INFO_FOREACH(cii, ci)) {
 				if (ci == self ||
-				    !pmap_is_active(pm, ci->ci_cpuid) ||
+				    !pmap_is_active(pm, ci->ci_cpuid, kernel) ||
 				    !(ci->ci_flags & CPUF_RUNNING))
 					continue;
 				selfmb->mb_head++;
@@ -3572,7 +3590,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 	}
 
 	/* Update the current CPU before waiting for others. */
-	if (!pmap_is_active(pm, self->ci_cpuid))
+	if (!pmap_is_active(pm, self->ci_cpuid, kernel))
 		return;
 
 	if (sva == (vaddr_t)-1LL) {
