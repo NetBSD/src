@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.14 2007/07/15 15:52:54 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.15 2007/08/18 05:40:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.14 2007/07/15 15:52:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.15 2007/08/18 05:40:53 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -768,6 +768,8 @@ lwp_exit(struct lwp *l)
 			p->p_zomblwp = NULL;
 			lwp_free(l2, false, false);/* releases proc mutex */
 			mutex_enter(&p->p_smutex);
+			l->l_refcnt++;
+			lwp_drainrefs(l);
 		}
 		p->p_zomblwp = l;
 	}
