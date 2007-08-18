@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.109 2007/08/18 00:21:11 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.110 2007/08/18 00:31:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.109 2007/08/18 00:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.110 2007/08/18 00:31:32 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -358,7 +358,7 @@ uvm_uarea_drain(bool empty)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	vaddr_t uaddr;
+	vaddr_t uaddr, nuaddr;
 	int count;
 
 	if (empty) {
@@ -371,9 +371,10 @@ uvm_uarea_drain(bool empty)
 			mutex_exit(&ci->ci_data.cpu_uarea_lock);
 
 			while (count != 0) {
+				nuaddr = UAREA_NEXTFREE(uaddr);
 				uvm_km_free(kernel_map, uaddr, USPACE,
 				    UVM_KMF_PAGEABLE);
-				uaddr = UAREA_NEXTFREE(uaddr);
+				uaddr = nuaddr;
 				count--;
 			}
 		}
