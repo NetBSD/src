@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.10 2007/08/18 05:47:38 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.11 2007/08/18 05:50:59 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.10 2007/08/18 05:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.11 2007/08/18 05:50:59 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3055,7 +3055,7 @@ pmap_collect(struct pmap *pmap)
 	 * for its entire address space.
 	 */
 
-	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
+	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS,
 	    PMAP_REMOVE_SKIPWIRED);
 }
 
