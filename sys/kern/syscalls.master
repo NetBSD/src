@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.168.2.6 2007/07/15 13:27:46 ad Exp $
+	$NetBSD: syscalls.master,v 1.168.2.7 2007/08/19 19:22:12 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -271,7 +271,7 @@
 129	COMPAT_43 MPSAFE	{ int sys_truncate(const char *path, long length); } \
 			    otruncate
 130	COMPAT_43 MPSAFE	{ int sys_ftruncate(int fd, long length); } oftruncate
-131	STD		{ int sys_flock(int fd, int how); }
+131	STD MPSAFE	{ int sys_flock(int fd, int how); }
 132	STD MPSAFE	{ int sys_mkfifo(const char *path, mode_t mode); }
 133	STD		{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
