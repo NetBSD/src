@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.35.2.6 2007/07/29 10:18:48 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.35.2.7 2007/08/19 23:27:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.6 2007/07/29 10:18:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35.2.7 2007/08/19 23:27:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -461,10 +461,9 @@ cpu_init(ci)
 #endif
 }
 
-
-#ifdef MULTIPROCESSOR
 bool x86_mp_online;
 
+#ifdef MULTIPROCESSOR
 void
 cpu_boot_secondary_processors()
 {
