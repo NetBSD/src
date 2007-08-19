@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.436 2007/08/18 11:26:36 tnn Exp $
+#	$NetBSD: Makefile,v 1.437 2007/08/19 18:58:36 tnn Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
@@ -40,7 +40,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
 	satalink.4 sbus.4 scc.4 scsi.4 sd.4 se.4 sem.4 ses.4 sf.4 sfb.4 \
 	sgsmix.4 shb.4 \
 	shpcic.4 siop.4 sip.4 siside.4 sk.4 sl.4 slide.4 \
-	sm.4 sn.4 spc.4 spdmem.4 speaker.4 spif.4 sqphy.4 ss.4 \
+	sm.4 sn.4 spc.4 speaker.4 spif.4 sqphy.4 ss.4 \
 	st.4 ste.4 stge.4 sti.4 stpcide.4 sv.4 strip.4 \
 	svwsata.4 swwdog.4 systrace.4 \
 	tap.4 tc.4 tcds.4 tcp.4 termios.4 tfb.4 ti.4 \
@@ -101,7 +101,7 @@ MAN+=	sc.4 si.4
 MAN+=	fwohci.4 fwip.4 sbp.4
 
 # machine-independent I2C devices
-MAN+=	lmtemp.4
+MAN+=	lmtemp.4 spdmem.4
 
 # machine-independent SPI devices
 MAN +=	m25p.4 tm121temp.4
