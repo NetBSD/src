@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.86 2007/07/09 21:00:38 ad Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.87 2007/08/19 16:11:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1600,10 +1600,10 @@ re_start(struct ifnet *ifp)
 		}
 
 		nsegs = map->dm_nsegs;
-		pad = FALSE;
+		pad = false;
 		if (__predict_false(m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
 		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0)) {
-			pad = TRUE;
+			pad = true;
 			nsegs++;
 		}
 
