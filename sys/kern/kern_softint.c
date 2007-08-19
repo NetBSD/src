@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.10 2007/08/13 10:01:01 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.11 2007/08/19 23:28:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.10 2007/08/13 10:01:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.11 2007/08/19 23:28:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -464,11 +464,14 @@ static inline void
 softint_execute(softint_t *si, lwp_t *l, int s)
 {
 	softhand_t *sh;
+	bool havelock;
 
 	KASSERT(si->si_lwp == curlwp);
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);
 	KASSERT(si->si_active);
+
+	havelock = false;
 
 	/*
 	 * Note: due to priority inheritance we may have interrupted a
@@ -488,15 +491,17 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		splx(s);
 
 		/* Run the handler. */
-		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0) {
+		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0 && !havelock) {
 			KERNEL_LOCK(1, l);
+			havelock = true;
 		}
 		(*sh->sh_func)(sh->sh_arg);
-		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0) {
-			KERNEL_UNLOCK_ONE(l);
-		}
 	
 		(void)splhigh();
+	}
+
+	if (havelock) {
+		KERNEL_UNLOCK_ONE(l);
 	}
 
 	/*
