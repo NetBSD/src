@@ -1,3 +1,4 @@
+/* $NetBSD: gcq.h,v 1.2 2007/08/19 07:35:32 kiyohara Exp $ */
 /*
  * Not (c) 2007 Matthew Orgass
  * This file is public domain, meaning anyone can make any use of part or all 
