@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.3 2007/08/19 15:57:39 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.4 2007/08/19 21:24:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -163,10 +163,10 @@ ukfs_release(struct ukfs *fs, int dounmount)
 }
 
 /* don't need vn_lock(), since we don't have VXLOCK */
-#define VLE(a) VOP_LOCK(a, LK_EXCLUSIVE)
-#define VLS(a) VOP_LOCK(a, LK_SHARED)
-#define VUL(a) VOP_UNLOCK(a, 0);
-#define AUL(a) assert(VOP_ISLOCKED(a) == 0)
+#define VLE(a) RUMP_VOP_LOCK(a, LK_EXCLUSIVE)
+#define VLS(a) RUMP_VOP_LOCK(a, LK_SHARED)
+#define VUL(a) RUMP_VOP_UNLOCK(a, 0);
+#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
 
 static void
 recycle(struct vnode *vp)
@@ -177,8 +177,8 @@ recycle(struct vnode *vp)
 		return;
 
 	VLE(vp);
-	VOP_FSYNC(vp, NULL, 0, 0, 0, curlwp);
-	VOP_INACTIVE(vp, curlwp);
+	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0, curlwp);
+	RUMP_VOP_INACTIVE(vp, curlwp);
 	rump_recyclenode(vp);
 	rump_putnode(vp);
 }
@@ -235,30 +235,30 @@ ukfs_namei(struct vnode *rvp, const char **pnp, u_long op,
 		p_next = strchr(pn, '/');
 		if (p_next == NULL || p_next == p_end) {
 			p_next = p_end;
-			flags |= NAMEI_ISLASTCN;
+			flags |= RUMP_NAMEI_ISLASTCN;
 		}
 		pnlen = p_next - pn;
 
 		if (pnlen == 2 && strcmp(pn, "..") == 0)
-			flags |= NAMEI_ISDOTDOT;
+			flags |= RUMP_NAMEI_ISDOTDOT;
 
 		VLE(dvp);
 		cnp = rump_makecn(op, flags, pn, pnlen, curlwp);
-		rv = VOP_LOOKUP(dvp, &vp, cnp);
+		rv = RUMP_VOP_LOOKUP(dvp, &vp, cnp);
 		rump_freecn(cnp, 1);
 		VUL(dvp);
 		if (rv == 0)
 			VUL(vp);
 
-		if (!((flags & NAMEI_ISLASTCN) && dvpp))
+		if (!((flags & RUMP_NAMEI_ISLASTCN) && dvpp))
 			recycle(dvp);
 
-		if (rv || (flags & NAMEI_ISLASTCN))
+		if (rv || (flags & RUMP_NAMEI_ISLASTCN))
 			break;
 
 		pn += pnlen;
 	}
-	assert(flags & NAMEI_ISLASTCN);
+	assert(flags & RUMP_NAMEI_ISLASTCN);
 	if (vp && vpp == NULL)
 		recycle(vp);
 
@@ -282,12 +282,13 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t off,
 
 	UKFS_UIOINIT(uio, iov, buf, bufsize, off, UIO_READ);
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &dirname, NAMEI_LOOKUP, NULL, &vp);
+	rv = ukfs_namei(ukfs_getrvp(ukfs), &dirname, RUMP_NAMEI_LOOKUP,
+	    NULL, &vp);
 	if (rv)
 		goto out;
 		
 	VLE(vp);
-	rv = VOP_READDIR(vp, &uio, NULL, &eofflag, NULL, NULL);
+	rv = RUMP_VOP_READDIR(vp, &uio, NULL, &eofflag, NULL, NULL);
 	VUL(vp);
 
  out:
@@ -314,20 +315,21 @@ readwrite(struct ukfs *ukfs, const char *filename, off_t off,
 
 	UKFS_UIOINIT(uio, iov, buf, bufsize, off, rw);
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_LOOKUP, NULL, &vp);
+	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_LOOKUP,
+	    NULL, &vp);
 	if (rv)
 		goto out;
 
 	VLS(vp);
 	switch (ukrw) {
 	case UKFS_READ:
-		rv = VOP_READ(vp, &uio, 0, NULL);
+		rv = RUMP_VOP_READ(vp, &uio, 0, NULL);
 		break;
 	case UKFS_WRITE:
-		rv = VOP_WRITE(vp, &uio, 0, NULL);
+		rv = RUMP_VOP_WRITE(vp, &uio, 0, NULL);
 		break;
 	case UKFS_READLINK:
-		rv = VOP_READLINK(vp, &uio, NULL);
+		rv = RUMP_VOP_READLINK(vp, &uio, NULL);
 		break;
 	}
 	VUL(vp);
@@ -372,7 +374,8 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 	int (*do_fn)(struct vnode *, struct vnode **,
 		     struct componentname *, struct vattr *);
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_CREATE, &dvp, NULL);
+	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_CREATE,
+	    &dvp, NULL);
 	if (rv == 0)
 		rv = EEXIST;
 	if (rv != EJUSTRETURN)
@@ -385,22 +388,23 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 
 	switch (vt) {
 	case VDIR:
-		do_fn = VOP_MKDIR;
+		do_fn = RUMP_VOP_MKDIR;
 		break;
 	case VREG:
 	case VSOCK:
-		do_fn = VOP_CREATE;
+		do_fn = RUMP_VOP_CREATE;
 		break;
 	case VBLK:
 	case VCHR:
-		do_fn = VOP_MKNOD;
+		do_fn = RUMP_VOP_MKNOD;
 		break;
 	default:
 		rv = EINVAL;
 		goto out;
 	}
 
-	cnp = rump_makecn(NAMEI_CREATE, NAMEI_HASBUF|NAMEI_SAVENAME, filename,
+	cnp = rump_makecn(RUMP_NAMEI_CREATE,
+	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
 	    strlen(filename), curlwp);
 	VLE(dvp);
 	rv = do_fn(dvp, &vp, cnp, &va);
@@ -473,11 +477,13 @@ doremove(struct ukfs *ukfs, const char *filename,
 	struct vnode *dvp = NULL, *vp = NULL;
 	int rv;
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_DELETE, &dvp, &vp);
+	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_DELETE,
+	    &dvp, &vp);
 	if (rv)
 		goto out;
 
-	cnp = rump_makecn(NAMEI_DELETE, 0, filename, strlen(filename), curlwp);
+	cnp = rump_makecn(RUMP_NAMEI_DELETE, 0, filename,
+	    strlen(filename), curlwp);
 	VLE(dvp);
 	VLE(vp);
 	rv = do_fn(dvp, vp, cnp);
@@ -499,14 +505,14 @@ int
 ukfs_remove(struct ukfs *ukfs, const char *filename)
 {
 
-	return doremove(ukfs, filename, VOP_REMOVE);
+	return doremove(ukfs, filename, RUMP_VOP_REMOVE);
 }
 
 int
 ukfs_rmdir(struct ukfs *ukfs, const char *filename)
 {
 
-	return doremove(ukfs, filename, VOP_RMDIR);
+	return doremove(ukfs, filename, RUMP_VOP_RMDIR);
 }
 
 int
@@ -516,12 +522,14 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 	struct componentname *cnp;
 	int rv;
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_LOOKUP, NULL, &vp);
+	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_LOOKUP,
+	    NULL, &vp);
 	if (rv)
 		goto out;
 
 	vp->v_usecount = 1; /* XXX kludge of the year */
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &f_create, NAMEI_CREATE, &dvp, NULL);
+	rv = ukfs_namei(ukfs_getrvp(ukfs), &f_create, RUMP_NAMEI_CREATE,
+	    &dvp, NULL);
 	vp->v_usecount = 0; /* XXX */
 
 	if (rv == 0)
@@ -529,10 +537,11 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 	if (rv != EJUSTRETURN)
 		goto out;
 
-	cnp = rump_makecn(NAMEI_CREATE, NAMEI_HASBUF | NAMEI_SAVENAME,
+	cnp = rump_makecn(RUMP_NAMEI_CREATE,
+	    RUMP_NAMEI_HASBUF | RUMP_NAMEI_SAVENAME,
 	    f_create, strlen(f_create), curlwp);
 	VLE(dvp);
-	rv = VOP_LINK(dvp, vp, cnp);
+	rv = RUMP_VOP_LINK(dvp, vp, cnp);
 	rump_freecn(cnp, 0);
 
  out:
@@ -555,7 +564,8 @@ ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
 	struct vattr va;
 	int rv;
 
-	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, NAMEI_CREATE, &dvp, NULL);
+	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_CREATE,
+	    &dvp, NULL);
 	if (rv == 0)
 		rv = EEXIST;
 	if (rv != EJUSTRETURN)
@@ -565,10 +575,11 @@ ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
 	va.va_mode = UKFS_MODE_DEFAULT;
 	va.va_type = VLNK;
 
-	cnp = rump_makecn(NAMEI_CREATE, NAMEI_HASBUF|NAMEI_SAVENAME, filename,
+	cnp = rump_makecn(RUMP_NAMEI_CREATE,
+	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
 	    strlen(filename), curlwp);
 	VLE(dvp);
-	rv = VOP_SYMLINK(dvp, &vp, cnp, &va, linkname);
+	rv = RUMP_VOP_SYMLINK(dvp, &vp, cnp, &va, linkname);
 	if (rv == 0)
 		VUL(vp);
 	rump_freecn(cnp, 0);
