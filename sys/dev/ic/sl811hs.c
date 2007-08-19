@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.12 2007/08/15 03:53:09 kiyohara Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.13 2007/08/19 07:42:04 kiyohara Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.12 2007/08/15 03:53:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.13 2007/08/19 07:42:04 kiyohara Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -1212,9 +1212,9 @@ slhci_detach(struct slhci_softc *sc, int flags)
 
 	KASSERT(!(t->flags & F_ACTIVE));
 
-	/* It is not sufficient for MP to cancel callouts and soft interrupts 
-	 * and assume they are dead since the code could already be running 
-	 * or about to run.  Wait until they are known to be done.  */
+	/* To be MPSAFE is not sufficient to cancel callouts and soft
+	 * interrupts and assume they are dead since the code could already be
+	 * running or about to run.  Wait until they are known to be done.  */
 	while (t->flags & (F_RESET|F_CALLBACK))
 		tsleep(&sc, PPAUSE, "slhci_detach", hz);
 
@@ -2657,7 +2657,7 @@ slhci_do_attach(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
 		return USBD_INVAL;
 	}
 
-	callout_init(&sc->sc_timer, 0);
+	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timer, slhci_reset_entry, sc);
 
 	/* It is not safe to call the soft interrupt directly as 
