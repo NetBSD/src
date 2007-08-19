@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.12 2006/06/14 16:05:38 liamjfoy Exp $	*/
+/*	$NetBSD: script.c,v 1.13 2007/08/19 10:31:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.12 2006/06/14 16:05:38 liamjfoy Exp $");
+__RCSID("$NetBSD: script.c,v 1.13 2007/08/19 10:31:13 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -317,23 +317,30 @@ playback(FILE *fscript)
 {
 	struct timespec tsi, tso;
 	struct stamp stamp;
-	struct stat playback_stat;
+	struct stat pst;
 	char buf[DEF_BUF];
 	off_t nread, save_len;
 	size_t l;
 	time_t clock;
+	int reg;
 
-	if (fstat(fileno(fscript), &playback_stat) == -1)
+	if (fstat(fileno(fscript), &pst) == -1)
 		err(1, "fstat failed");	
 
-	for (nread = 0; nread < playback_stat.st_size; nread += save_len) {
-		if (fread(&stamp, sizeof(stamp), 1, fscript) != 1)
-			err(1, "reading playback header");
+	reg = S_ISREG(pst.st_mode);
+
+	for (nread = 0; !reg || nread < pst.st_size; nread += save_len) {
+		if (fread(&stamp, sizeof(stamp), 1, fscript) != 1) {
+			if (reg)
+				err(1, "reading playback header");
+			else
+				break;
+		}
 		swapstamp(stamp);
 		save_len = sizeof(stamp);
 
-		if (stamp.scr_len >
-		    (uint64_t)(playback_stat.st_size - save_len) - nread)
+		if (reg && stamp.scr_len >
+		    (uint64_t)(pst.st_size - save_len) - nread)
 			err(1, "invalid stamp");
 
 		save_len += stamp.scr_len;
