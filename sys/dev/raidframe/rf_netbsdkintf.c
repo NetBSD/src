@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.4 2007/08/19 19:24:32 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.5 2007/08/19 23:30:20 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.4 2007/08/19 19:24:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.5 2007/08/19 23:30:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2308,7 +2308,7 @@ raidread_component_label(dev_t dev, struct vnode *b_vp,
 		       sizeof(RF_ComponentLabel_t));
 	}
 
-	brelse(bp);
+	brelse(bp, 0);
 	return(error);
 }
 /* ARGSUSED */
@@ -2339,7 +2339,7 @@ raidwrite_component_label(dev_t dev, struct vnode *b_vp,
 		return (ENXIO);
 	(*bdev->d_strategy)(bp);
 	error = biowait(bp);
-	brelse(bp);
+	brelse(bp, 0);
 	if (error) {
 #if 1
 		printf("Failed to write RAID component info!\n");
