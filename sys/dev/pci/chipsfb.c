@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.11 2007/08/02 06:56:43 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.12 2007/08/19 15:57:24 he Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.11 2007/08/02 06:56:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.12 2007/08/19 15:57:24 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,8 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	prop_dictionary_t dict;
 	pcireg_t screg;
 	ulong defattr;
-	int console = 0, width, height, i, j;
+	bool console = false;
+	int width, height, i, j;
 	uint32_t bg, fg, ul;
 
 	dict = device_properties(self);
