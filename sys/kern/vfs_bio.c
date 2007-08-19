@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.12 2007/07/15 22:20:28 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.13 2007/08/19 19:24:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.12 2007/07/15 22:20:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.13 2007/08/19 19:24:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,11 +756,9 @@ bwrite(struct buf *bp)
 	}
 
 	mutex_enter(&bp->b_interlock);
-
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
-
-	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
-
+	CLR(bp->b_flags, (B_READ | B_DONE | B_DELWRI));
+	bp->b_error = 0;
 	mutex_exit(&bp->b_interlock);
 
 	/*
@@ -931,13 +929,11 @@ brelse(struct buf *bp, int set)
 	 */
 
 	/* If it's locked, don't report an error; try again later. */
-	if (ISSET(bp->b_flags, (B_LOCKED|B_ERROR)) == (B_LOCKED|B_ERROR)) {
-		CLR(bp->b_flags, B_ERROR);
+	if (ISSET(bp->b_flags, B_LOCKED))
 		bp->b_error = 0;
-	}
 
 	/* If it's not cacheable, or an error, mark it invalid. */
-	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
+	if (ISSET(bp->b_flags, B_NOCACHE) || bp->b_error != 0)
 		SET(bp->b_flags, B_INVAL);
 
 	if (ISSET(bp->b_flags, B_VFLUSH)) {
@@ -948,7 +944,8 @@ brelse(struct buf *bp, int set)
 		 * otherwise leave it in its current position.
 		 */
 		CLR(bp->b_flags, B_VFLUSH);
-		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE)) {
+		if (!ISSET(bp->b_flags, B_INVAL|B_LOCKED|B_AGE) &&
+		    bp->b_error == 0) {
 			KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU]));
 			goto already_queued;
 		} else {
@@ -1413,23 +1410,13 @@ buf_drain(int n)
 int
 biowait(struct buf *bp)
 {
-	int error;
 
 	mutex_enter(&bp->b_interlock);
 	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))
 		cv_wait(&bp->b_cv, &bp->b_interlock);
-
-	/* check errors. */
-	if (ISSET(bp->b_flags, B_ERROR)) {
-		KASSERT(bp->b_error != 0);
-		error = bp->b_error;
-	} else {
-		KASSERT(bp->b_error == 0);
-		error = 0;
-	}
-
 	mutex_exit(&bp->b_interlock);
-	return (error);
+
+	return bp->b_error;
 }
 
 /*
@@ -1449,17 +1436,11 @@ biowait(struct buf *bp)
  * for the vn device, that puts malloc'd buffers on the free lists!)
  */
 void
-biodone(struct buf *bp, int error, int resid)
+biodone(struct buf *bp)
 {
 	int s;
 
 	KASSERT(!ISSET(bp->b_flags, B_DONE));
-
-	bp->b_error = error;
-	if (error)
-		bp->b_resid = bp->b_bcount;
-	else
-		bp->b_resid = resid;
 
 	if (cpu_intr_p()) {
 		/* From interrupt mode: defer to a soft interrupt. */
@@ -1478,10 +1459,6 @@ biodone2(struct buf *bp)
 {
 
 	mutex_enter(&bp->b_interlock);
-	if (bp->b_error)
-		SET(bp->b_flags, B_ERROR);
-	else
-		CLR(bp->b_flags, B_ERROR);
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone2 already");
 	SET(bp->b_flags, B_DONE);	/* note that it's done */
@@ -1923,10 +1900,8 @@ nestiobuf_iodone(struct buf *bp)
 	KASSERT(mbp != bp);
 
 	error = 0;
-	if ((bp->b_flags & B_ERROR) != 0) {
-		KASSERT(bp->b_error != 0);
-		error = bp->b_error;
-	} else if ((bp->b_bcount < bp->b_bufsize) || (bp->b_resid > 0)) {
+	if (bp->b_error == 0 &&
+	    (bp->b_bcount < bp->b_bufsize || bp->b_resid > 0)) {
 		/*
 		 * Not all got transfered, raise an error. We have no way to
 		 * propagate these conditions to mbp.
@@ -1988,9 +1963,10 @@ nestiobuf_done(struct buf *mbp, int donebytes, int error)
 	mutex_enter(&mbp->b_interlock);
 	KASSERT(mbp->b_resid >= donebytes);
 	mbp->b_resid -= donebytes;
+	mbp->b_error = error;
 	if (mbp->b_resid == 0) {
 		mutex_exit(&mbp->b_interlock);
-		biodone(mbp, error, mbp->b_resid);
+		biodone(mbp);
 	} else
 		mutex_exit(&mbp->b_interlock);
 }

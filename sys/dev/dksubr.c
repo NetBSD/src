@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.28.2.2 2007/07/15 13:21:06 ad Exp $ */
+/* $NetBSD: dksubr.c,v 1.28.2.3 2007/08/19 19:24:20 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.28.2.2 2007/07/15 13:21:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.28.2.3 2007/08/19 19:24:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,22 +195,25 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 
 	if (!(dksc->sc_flags & DKF_INITED)) {
 		DPRINTF_FOLLOW(("dk_strategy: not inited\n"));
-		biodone(bp, ENXIO, bp->b_bcount);
+		bp->b_error  = ENXIO;
+		biodone(bp);
 		return;
 	}
 
 	/* XXX look for some more errors, c.f. ld.c */
 
+	bp->b_resid = bp->b_bcount;
+
 	/* If there is nothing to do, then we are done */
 	if (bp->b_bcount == 0) {
-		biodone(bp, 0, bp->b_bcount);
+		biodone(bp);
 		return;
 	}
 
 	wlabel = dksc->sc_flags & (DKF_WLABEL|DKF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART &&
 	    bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0) {
-		biodone(bp, 0, bp->b_bcount);
+		biodone(bp);
 		return;
 	}
 

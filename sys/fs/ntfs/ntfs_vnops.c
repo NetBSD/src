@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.33.2.1 2007/05/13 17:36:32 ad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.33.2.2 2007/08/19 19:24:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.33.2.1 2007/05/13 17:36:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.33.2.2 2007/08/19 19:24:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,10 +394,11 @@ ntfs_strategy(void *v)
 
 			if (error) {
 				printf("ntfs_strategy: ntfs_writeattr fail\n");
+				bp->b_error = error;
 			}
 		}
 	}
-	biodone(bp, error, bp->b_resid);
+	biodone(bp);
 	return (error);
 }
 

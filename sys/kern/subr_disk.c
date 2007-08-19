@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.85.2.1 2007/07/15 13:27:43 ad Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.85.2.2 2007/08/19 19:24:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.85.2.1 2007/07/15 13:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.85.2.2 2007/08/19 19:24:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -227,6 +227,9 @@ static void
 disk_detach0(struct disk *diskp)
 {
 
+	lockdestroy(&diskp->dk_openlock);
+	lockdestroy(&diskp->dk_rawlock);
+
 	/*
 	 * Remove from the drivelist.
 	 */
@@ -349,23 +352,18 @@ bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-			goto done;
+			return 0;
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			return 0;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	return 1;
-
-bad:
-	bp->b_flags |= B_ERROR;
-done:
-	return 0;
 }
 
 /*
@@ -384,7 +382,7 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 	/* Protect against division by zero. XXX: Should never happen?!?! */
 	if (lp->d_secpercyl == 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		return -1;
 	}
 
 	p_size = p->p_size << dk->dk_blkshift;
@@ -402,12 +400,12 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-			return (0);
+			return 0;
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-			goto bad;
+			return -1;
 		}
 		/* Otherwise, truncate request. */
 		bp->b_bcount = sz << DEV_BSHIFT;
@@ -418,17 +416,13 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 	    bp->b_blkno + p_offset + sz > labelsector &&
 	    (bp->b_flags & B_READ) == 0 && !wlabel) {
 		bp->b_error = EROFS;
-		goto bad;
+		return -1;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
 	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
-	return (1);
-
-bad:
-	bp->b_flags |= B_ERROR;
-	return (-1);
+	return 1;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.13.8.1 2007/05/13 17:36:25 ad Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.13.8.2 2007/08/19 19:24:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.13.8.1 2007/05/13 17:36:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.13.8.2 2007/08/19 19:24:26 ad Exp $");
 
 #include "rnd.h"
 
@@ -230,7 +230,6 @@ ld_mlx_handler(struct mlx_ccb *mc)
 	struct mlx_context *mx;
 	struct ld_mlx_softc *sc;
 	struct mlx_softc *mlx;
-	int error;
 
 	mx = &mc->mc_mx;
 	bp = mx->mx_context;
@@ -238,7 +237,8 @@ ld_mlx_handler(struct mlx_ccb *mc)
 	mlx = (struct mlx_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	if (mc->mc_status != MLX_STATUS_OK) {
-		error = EIO;
+		bp->b_error = EIO;
+		bp->b_resid = bp->b_bcount;
 
 		if (mc->mc_status == MLX_STATUS_RDWROFFLINE)
 			printf("%s: drive offline\n",
@@ -248,11 +248,11 @@ ld_mlx_handler(struct mlx_ccb *mc)
 			    sc->sc_ld.sc_dv.dv_xname,
 			    mlx_ccb_diagnose(mc));
 	} else
-		error = 0;
+		bp->b_resid = 0;
 
 	mlx_ccb_unmap(mlx, mc);
 	mlx_ccb_free(mlx, mc);
-	lddone(&sc->sc_ld, bp, error);
+	lddone(&sc->sc_ld, bp);
 }
 
 static int

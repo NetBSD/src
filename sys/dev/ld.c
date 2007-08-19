@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.46.2.2 2007/05/27 14:29:57 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.46.2.3 2007/08/19 19:24:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.46.2.2 2007/05/27 14:29:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.46.2.3 2007/08/19 19:24:21 ad Exp $");
 
 #include "rnd.h"
 
@@ -550,14 +550,13 @@ ldstrategy(struct buf *bp)
 	struct ld_softc *sc;
 	struct disklabel *lp;
 	daddr_t blkno;
-	int s, part, error;
+	int s, part;
 
 	sc = device_lookup(&ld_cd, DISKUNIT(bp->b_dev));
 	part = DISKPART(bp->b_dev);
-	error = 0;
 
 	if ((sc->sc_flags & LDF_DETACH) != 0) {
-		error = EIO;
+		bp->b_error = EIO;
 		goto done;
 	}
 
@@ -568,7 +567,7 @@ ldstrategy(struct buf *bp)
 	 * not be negative.
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0 || bp->b_blkno < 0) {
-		error = EINVAL;
+		bp->b_error = EINVAL;
 		goto done;
 	}
 
@@ -608,7 +607,8 @@ ldstrategy(struct buf *bp)
 	return;
 
  done:
-	biodone(bp, error, 0);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 
 static void
@@ -650,8 +650,10 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 				break;
 			} else {
 				(void) BUFQ_GET(sc->sc_bufq);
+				bp->b_error = error;
+				bp->b_resid = bp->b_bcount;
 				mutex_exit(&sc->sc_mutex);
-				biodone(bp, error, 0);
+				biodone(bp);
 				mutex_enter(&sc->sc_mutex);
 			}
 		}
@@ -661,19 +663,20 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 }
 
 void
-lddone(struct ld_softc *sc, struct buf *bp, int error)
+lddone(struct ld_softc *sc, struct buf *bp)
 {
 
-	if (error != 0) {
+	if (bp->b_error != 0) {
 		diskerr(bp, "ld", "error", LOG_PRINTF, 0, sc->sc_dk.dk_label);
 		printf("\n");
 	}
 
-	disk_unbusy(&sc->sc_dk, bp->b_bcount, (bp->b_flags & B_READ));
+	disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
+	    (bp->b_flags & B_READ));
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
 #endif
-	biodone(bp, error, 0);
+	biodone(bp);
 
 	mutex_enter(&sc->sc_mutex);
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.35.2.1 2007/05/13 17:36:26 ad Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.35.2.2 2007/08/19 19:24:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.35.2.1 2007/05/13 17:36:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.35.2.2 2007/08/19 19:24:29 ad Exp $");
 
 #include "rnd.h"
 
@@ -208,7 +208,6 @@ edmcastrategy(bp)
 	struct ed_softc *ed = device_lookup(&ed_cd, DISKUNIT(bp->b_dev));
 	struct disklabel *lp = ed->sc_dk.dk_label;
 	daddr_t blkno;
-	int error = 0;
 
 	ATADEBUG_PRINT(("edmcastrategy (%s)\n", ed->sc_dev.dv_xname),
 	    DEBUG_XFERS);
@@ -217,13 +216,13 @@ edmcastrategy(bp)
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % lp->d_secsize) != 0 ||
 	    (bp->b_bcount / lp->d_secsize) >= (1 << NBBY)) {
-		error = EINVAL;
+		bp->b_error = EINVAL;
 		goto done;
 	}
 
 	/* If device invalidated (e.g. media change, door open), error. */
 	if ((ed->sc_flags & WDF_LOADED) == 0) {
-		error = EIO;
+		bp->b_error = EIO;
 		goto done;
 	}
 
@@ -265,7 +264,8 @@ edmcastrategy(bp)
 	return;
 done:
 	/* Toss transfer; we're done early. */
-	biodone(bp, error, bp->b_bcount);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 
 int

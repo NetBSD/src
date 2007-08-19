@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.3 2007/07/15 13:21:41 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.4 2007/08/19 19:24:32 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.3 2007/07/15 13:21:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.4 2007/08/19 19:24:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -738,7 +738,7 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 void
 raidstrategy(struct buf *bp)
 {
-	int s, error = 0;
+	int s;
 
 	unsigned int raidID = raidunit(bp->b_dev);
 	RF_Raid_t *raidPtr;
@@ -746,16 +746,16 @@ raidstrategy(struct buf *bp)
 	int     wlabel;
 
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
-		error = ENXIO;
+		bp->b_error = ENXIO;
 		goto done;
 	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
-		error = ENODEV;
+		bp->b_error = ENODEV;
 		goto done;
 	}
 	raidPtr = raidPtrs[raidID];
 	if (!raidPtr->valid) {
-		error = ENODEV;
+		bp->b_error = ENODEV;
 		goto done;
 	}
 	if (bp->b_bcount == 0) {
@@ -803,7 +803,8 @@ raidstrategy(struct buf *bp)
 	return;
 
 done:
-	biodone(bp, error, bp->b_bcount);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 /* ARGSUSED */
 int
@@ -1856,7 +1857,9 @@ raidstart(RF_Raid_t *raidPtr)
 		}
 		if ((sum > raidPtr->totalSectors) || (sum < raid_addr)
 		    || (sum < num_blocks) || (sum < pb)) {
-			biodone(bp, ENOSPC, bp->b_bcount);
+			bp->b_error = ENOSPC;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
 			continue;
 		}
@@ -1865,7 +1868,9 @@ raidstart(RF_Raid_t *raidPtr)
 		 */
 
 		if (bp->b_bcount & raidPtr->sectorMask) {
-			biodone(bp, EINVAL, bp->b_bcount);
+			bp->b_error = EINVAL;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
 			continue;
 
@@ -1896,7 +1901,9 @@ raidstart(RF_Raid_t *raidPtr)
 				 bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
 
 		if (rc) {
-			biodone(bp, rc, bp->b_bcount);
+			bp->b_error = rc;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
 			/* continue loop */
 		}
 
@@ -2012,10 +2019,10 @@ KernelWakeupFunc(struct buf *bp)
 	}
 #endif
 
-	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go
+	/* XXX Ok, let's get aggressive... If b_error is set, let's go
 	 * ballistic, and mark the component as hosed... */
 
-	if (bp->b_flags & B_ERROR) {
+	if (bp->b_error != 0) {
 		/* Mark the disk as dead */
 		/* but only mark it once... */
 		/* and only if it wouldn't leave this RAID set
@@ -2042,7 +2049,7 @@ KernelWakeupFunc(struct buf *bp)
 
 	/* Fill in the error value */
 
-	req->error = (bp->b_flags & B_ERROR) ? bp->b_error : 0;
+	req->error = bp->b_error;
 
 	simple_lock(&queue->raidPtr->iodone_lock);
 
@@ -2301,7 +2308,7 @@ raidread_component_label(dev_t dev, struct vnode *b_vp,
 		       sizeof(RF_ComponentLabel_t));
 	}
 
-	brelse(bp, 0);
+	brelse(bp);
 	return(error);
 }
 /* ARGSUSED */
@@ -2332,7 +2339,7 @@ raidwrite_component_label(dev_t dev, struct vnode *b_vp,
 		return (ENXIO);
 	(*bdev->d_strategy)(bp);
 	error = biowait(bp);
-	brelse(bp, 0);
+	brelse(bp);
 	if (error) {
 #if 1
 		printf("Failed to write RAID component info!\n");

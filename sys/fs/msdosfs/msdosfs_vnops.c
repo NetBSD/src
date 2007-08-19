@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.38.2.3 2007/06/08 14:15:00 ad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.38.2.4 2007/08/19 19:24:50 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.38.2.3 2007/06/08 14:15:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.38.2.4 2007/08/19 19:24:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1756,7 +1756,7 @@ msdosfs_strategy(v)
 			bp->b_blkno = de_bn2kb(dep->de_pmp, bp->b_blkno);
 	}
 	if (bp->b_blkno == -1) {
-		biodone(bp, bp->b_error, bp->b_resid);
+		biodone(bp);
 		return (error);
 	}
 

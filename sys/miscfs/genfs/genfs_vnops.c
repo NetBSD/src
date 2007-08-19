@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.9 2007/06/23 18:06:03 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.10 2007/08/19 19:24:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.9 2007/06/23 18:06:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.10 2007/08/19 19:24:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1783,10 +1783,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	bp->b_bcount = npages << PAGE_SHIFT;
 	bp->b_bufsize = npages << PAGE_SHIFT;
 	bp->b_resid = 0;
-	if (error) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = error;
-	}
+	bp->b_error = error;
 	uvm_aio_aiodone(bp);
 	return (error);
 }

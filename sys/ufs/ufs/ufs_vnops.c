@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.152.2.5 2007/07/15 13:28:21 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.152.2.6 2007/08/19 19:25:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152.2.5 2007/07/15 13:28:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.152.2.6 2007/08/19 19:25:03 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1796,14 +1796,15 @@ ufs_strategy(void *v)
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		if (error) {
-			biodone(bp, error, 0);
+			bp->b_error = error;
+			biodone(bp);
 			return (error);
 		}
 		if (bp->b_blkno == -1) /* no valid data */
 			clrbuf(bp);
 	}
 	if (bp->b_blkno < 0) { /* block is not on disk */
-		biodone(bp, 0, bp->b_resid);
+		biodone(bp);
 		return (0);
 	}
 	vp = ip->i_devvp;

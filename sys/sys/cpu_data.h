@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.7.6.3 2007/07/01 21:50:59 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.7.6.4 2007/08/19 19:24:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@ struct cpu_data {
 	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
 	void		*cpu_callout;		/* running callout */
 	void		*cpu_callout_cancel;	/* callout to be cancelled */
-	
 };
 
 /* compat definitions */

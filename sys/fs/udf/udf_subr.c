@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.32.4.4 2007/06/17 21:31:15 ad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.32.4.5 2007/08/19 19:24:52 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.32.4.4 2007/06/17 21:31:15 ad Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.32.4.5 2007/08/19 19:24:52 ad Exp $");
 #endif /* not lint */
 
 
@@ -2773,7 +2773,8 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 
 	if (sectors > FILEBUFSECT) {
 		printf("udf_read_filebuf: implementation limit on bufsize\n");
-		biodone(buf, EIO, 0);
+		buf->b_error  = EIO;
+		biodone(buf);
 		return;
 	}
 
@@ -2783,7 +2784,8 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	DPRINTF(READ, ("\ttranslate %d-%d\n", from, sectors));
 	error = udf_translate_file_extent(node, from, sectors, mapping);
 	if (error) {
-		biodone(buf, error, 0);
+		buf->b_error  = error;
+		biodone(buf);
 		goto out;
 	}
 	DPRINTF(READ, ("\ttranslate extent went OK\n"));
@@ -2791,7 +2793,10 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 	/* pre-check if internal or parts are zero */
 	if (*mapping == UDF_TRANS_INTERN) {
 		error = udf_read_internal(node, (uint8_t *) buf->b_data);
-		biodone(buf, error, buf->b_resid);
+		if (error) {
+			buf->b_error  = error;
+		}
+		biodone(buf);
 		goto out;
 	}
 	DPRINTF(READ, ("\tnot intern\n"));

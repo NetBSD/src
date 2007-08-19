@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.52.4.7 2007/07/15 15:52:51 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52.4.8 2007/08/19 19:24:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.7 2007/07/15 15:52:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52.4.8 2007/08/19 19:24:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2042,8 +2042,12 @@ puffs_strategy(void *v)
 	if (rw_argp && !dofaf)
 		free(rw_argp, M_PUFFS);
 
+	if (error) {
+		bp->b_error = error;
+	}
+
 	if (error || !(BIOREAD(bp) && BIOASYNC(bp)))
-		biodone(bp, error, bp->b_resid);
+		biodone(bp);
 
 	return error;
 }

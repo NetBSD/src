@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.73.2.2 2007/07/01 21:48:00 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.73.2.3 2007/08/19 19:24:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.2.2 2007/07/01 21:48:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73.2.3 2007/08/19 19:24:28 ad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -253,7 +253,7 @@ void fdcstatus(struct device *dv, int n, const char *s);
 void fdctimeout(void *arg);
 void fdcpseudointr(void *arg);
 void fdcretry(struct fdc_softc *fdc);
-void fdfinish(struct fd_softc *fd, struct buf *bp, int);
+void fdfinish(struct fd_softc *fd, struct buf *bp);
 inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 static void fd_set_properties(struct fd_softc *fd);
@@ -582,13 +582,14 @@ fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(bp->b_dev));
-	int sz, s, error = 0;
+	int sz;
+ 	int s;
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
 	    ((bp->b_bcount % FDC_BSIZE) != 0 &&
 	     (bp->b_flags & B_FORMAT) == 0)) {
-		error = EINVAL;
+		bp->b_error = EINVAL;
 		goto done;
 	}
 
@@ -606,7 +607,7 @@ fdstrategy(bp)
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
-			error = EINVAL;
+			bp->b_error = EINVAL;
 			goto done;
 		}
 		/* Otherwise, truncate request. */
@@ -643,7 +644,8 @@ fdstrategy(bp)
 
 done:
 	/* Toss transfer; we're done early. */
-	biodone(bp, error, 0);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 
 void
@@ -663,10 +665,9 @@ fdstart(fd)
 }
 
 void
-fdfinish(fd, bp, error)
+fdfinish(fd, bp)
 	struct fd_softc *fd;
 	struct buf *bp;
-	int error;
 {
 	struct fdc_softc *fdc = (void *)device_parent(&fd->sc_dev);
 
@@ -685,13 +686,14 @@ fdfinish(fd, bp, error)
 		else
 			fd->sc_active = 0;
 	}
+	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 
 #if NRND > 0
 	rnd_add_uint32(&fd->rnd_source, bp->b_blkno);
 #endif
 
-	biodone(bp, error, fd->sc_bcount);
+	biodone(bp);
 	/* turn off motor 5s from now */
 	callout_reset(&fd->sc_motoroff_ch, 5 * hz, fd_motor_off, fd);
 	fdc->sc_state = DEVIDLE;
@@ -1173,7 +1175,7 @@ loop:
 			bp->b_cylinder = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
-		fdfinish(fd, bp, 0);
+		fdfinish(fd, bp);
 		goto loop;
 
 	case DORESET:
@@ -1290,7 +1292,8 @@ fdcretry(fdc)
 			       fdc->sc_status[5]);
 		}
 
-		fdfinish(fd, bp, EIO);
+		bp->b_error = EIO;
+		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
 }

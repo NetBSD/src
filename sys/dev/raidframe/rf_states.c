@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.40.30.1 2007/06/09 23:57:57 ad Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.40.30.2 2007/08/19 19:24:33 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.40.30.1 2007/06/09 23:57:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.40.30.2 2007/08/19 19:24:33 ad Exp $");
 
 #include <sys/errno.h>
 
@@ -238,8 +238,7 @@ rf_State_LastState(RF_RaidAccessDesc_t *desc)
 	wakeup(&(desc->raidPtr->iodone));
 
 	/* printf("Calling biodone on 0x%x\n",desc->bp); */
-	/* access came through ioctl */
-	biodone(desc->bp, desc->bp->b_error, desc->bp->b_resid);
+	biodone(desc->bp);	/* access came through ioctl */
 
 	if (callbackFunc)
 		callbackFunc(callbackArg);
@@ -529,7 +528,6 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 		/* skip straight to rf_State_Cleanup() */
 		desc->state = rf_CleanupState;
 		bp = (struct buf *)desc->bp;
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 	} else {
 		/* bind dags to desc */

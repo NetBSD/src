@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.231.4.8 2007/07/15 13:28:18 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.231.4.9 2007/08/19 19:25:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.8 2007/07/15 13:28:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.9 2007/08/19 19:25:01 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -350,7 +350,7 @@ lfs_mountroot()
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
-		free(mp, M_MOUNT);
+		vfs_destroy(mp);
 		return (error);
 	}
 	mutex_enter(&mountlist_lock);
@@ -1758,12 +1758,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		UVMHIST_LOG(ubchist, "skipbytes %d", skipbytes, 0,0,0);
 		s = splbio();
 		if (error) {
-			biodone(mbp, error, 0);
-		} else {
-			mbp->b_resid -= skipbytes;
-			if (mbp->b_resid == 0) {
-				biodone(mbp, 0, 0);
-			}
+			mbp->b_error = error;
+		}
+		mbp->b_resid -= skipbytes;
+		if (mbp->b_resid == 0) {
+			biodone(mbp);
 		}
 		splx(s);
 	}

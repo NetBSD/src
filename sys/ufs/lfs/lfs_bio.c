@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.98.8.4 2007/06/23 18:06:06 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.98.8.5 2007/08/19 19:25:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.8.4 2007/06/23 18:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.8.5 2007/08/19 19:25:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,7 +463,8 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * In particular the cleaner can't write blocks either.
 	 */
 	if (fs->lfs_ronly || (fs->lfs_pflags & LFS_PF_CLEAN)) {
-		bp->b_flags &= ~(B_DELWRI | B_READ | B_ERROR);
+		bp->b_flags &= ~(B_DELWRI | B_READ);
+		bp->b_error = 0;
 		LFS_UNLOCK_BUF(bp);
 		if (LFS_IS_MALLOC_BUF(bp))
 			bp->b_flags &= ~B_BUSY;
@@ -501,7 +502,8 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		bp->b_flags |= B_DELWRI;
 
 		LFS_LOCK_BUF(bp);
-		bp->b_flags &= ~(B_READ | B_DONE | B_ERROR);
+		bp->b_flags &= ~(B_READ | B_DONE);
+		bp->b_error = 0;
 		mutex_enter(&vp->v_interlock);
 		reassignbuf(bp, bp->b_vp);
 		mutex_exit(&vp->v_interlock);

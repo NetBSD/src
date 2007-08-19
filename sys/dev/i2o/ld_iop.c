@@ -1,7 +1,7 @@
-/*	$NetBSD: ld_iop.c,v 1.23.8.3 2007/07/15 13:21:13 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.23.8.4 2007/08/19 19:24:25 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.23.8.3 2007/07/15 13:21:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.23.8.4 2007/08/19 19:24:25 ad Exp $");
 
 #include "rnd.h"
 
@@ -504,9 +504,15 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 		err = 1;
 	}
 
+	if (err) {
+		bp->b_error = EIO;
+		bp->b_resid = bp->b_bcount;
+	} else
+		bp->b_resid = bp->b_bcount - le32toh(rb->transfercount);
+
 	iop_msg_unmap(iop, im);
 	iop_msg_free(iop, im);
-	lddone(&sc->sc_ld, bp, (err ? EIO : 0));
+	lddone(&sc->sc_ld, bp);
 }
 
 static void

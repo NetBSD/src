@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.33 2007/03/10 00:52:46 christos Exp $	*/
+/*	$NetBSD: rl.c,v 1.33.2.1 2007/08/19 19:24:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.33 2007/03/10 00:52:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.33.2.1 2007/08/19 19:24:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -412,7 +412,6 @@ rlstrategy(struct buf *bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > rl_cd.cd_ndevs || (rc = rl_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	if (rc->rc_state != DK_OPEN) /* How did we end up here at all? */
@@ -620,7 +619,6 @@ rlcintr(void *arg)
 		int error = (cs & RLCS_ERRMSK) >> 10;
 
 		printf("%s: %s\n", sc->sc_dev.dv_xname, rlerr[error]);
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		sc->sc_bytecnt = 0;
