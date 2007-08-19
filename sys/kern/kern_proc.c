@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.107.2.11 2007/07/15 15:52:55 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.107.2.12 2007/08/19 22:10:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.11 2007/07/15 15:52:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.107.2.12 2007/08/19 22:10:14 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -672,12 +672,12 @@ proc_alloc(void)
 }
 
 /*
- * Free last resources of a process - called from proc_free (in kern_exit.c)
+ * Free a process id - called from proc_free (in kern_exit.c)
  *
- * Called with the proclist_lock held, and releases upon exit.
+ * Called with the proclist_lock held.
  */
 void
-proc_free_mem(struct proc *p)
+proc_free_pid(struct proc *p)
 {
 	pid_t pid = p->p_pid;
 	struct pid_table *pt;
@@ -705,9 +705,6 @@ proc_free_mem(struct proc *p)
 	mutex_exit(&proclist_mutex);
 
 	nprocs--;
-	mutex_exit(&proclist_lock);
-
-	pool_put(&proc_pool, p);
 }
 
 /*
