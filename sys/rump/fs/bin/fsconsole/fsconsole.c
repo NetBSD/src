@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.2 2007/08/19 15:57:38 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.3 2007/08/19 20:06:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "rump.h"
 #include "ukfs.h"
 
 int
