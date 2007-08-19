@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.889 2007/08/14 16:14:22 jnemeth Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.890 2007/08/19 00:40:39 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.890 2007/08/14 16:13:38 jnemeth Exp
+ *	NetBSD: pcidevs,v 1.891 2007/08/19 00:39:46 riz Exp
  */
 
 /*
@@ -8272,6 +8272,106 @@ static const struct pci_product pci_products[] = {
 	    "82801H Thermal Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IH_LPC,
+	    "82801IH LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IR_LPC,
+	    "82801IR LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IB_LPC,
+	    "82801IB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_1,
+	    "82801I SATA Controller with 4 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_2,
+	    "82801I SATA Controller with 2 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_AHCI6,
+	    "82801I AHCI SATA Controller with 6 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_AHCI4,
+	    "82801I AHCI SATA Controller with 4 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_3,
+	    "82801I SATA Controller with 2 ports",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SMB,
+	    "82801I SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_THERMAL,
+	    "82801I Thermal Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_1,
+	    "82801I USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_2,
+	    "82801I USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_3,
+	    "82801I USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_4,
+	    "82801I USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_5,
+	    "82801I USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_6,
+	    "82801I USB UHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EHCI_1,
+	    "82801I USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EHCI_2,
+	    "82801I USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_HDA,
+	    "82801I High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_1,
+	    "82801I PCI Express Port #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_2,
+	    "82801I PCI Express Port #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_3,
+	    "82801I PCI Express Port #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_4,
+	    "82801I PCI Express Port #4",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_5,
+	    "82801I PCI Express Port #5",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_6,
+	    "82801I PCI Express Port #6",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
 	    "82965Q Host Bridge",
 	},
@@ -8286,6 +8386,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_IGD_1,
 	    "82965Q Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_LAN,
+	    "82801I LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
@@ -13276,4 +13380,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2722;
+const int pci_nproducts = 2748;
