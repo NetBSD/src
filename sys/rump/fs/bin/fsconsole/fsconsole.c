@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.1 2007/08/16 19:48:31 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.2 2007/08/19 15:57:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@ main(int argc, char *argv[])
 	struct ukfs *fs;
 	struct ufs_args args;
 	struct dirent *dent;
+	char *p;
 	int rv;
 
 	ukfs_init();
@@ -100,6 +101,19 @@ main(int argc, char *argv[])
 	rv = ukfs_link(fs, "/lopinaa", "/etc/LUSIKKAPUOLI");
 	if (rv == -1)
 		warn("link rv %d", rv);
+
+	/* XXX */
+	p = strdup("jonnekin/aivan/muualle");
+	rv = ukfs_symlink(fs, "/mihis_haluat_menna_tanaan", p);
+	free(p);
+	if (rv == -1)
+		warn("symlink %d", rv);
+
+	rv = ukfs_readlink(fs, "/mihis_haluat_menna_tanaan",
+	    (char *)buf, sizeof(buf));
+	if (rv > 0)
+		buf[rv] = '\0';
+	printf("readlink rv %d result \"%s\"\n", rv, buf);
 
 	rv = ukfs_getdents(fs, "/etc", 0, buf, sizeof(buf));
 	printf("rv %d\n", rv);
