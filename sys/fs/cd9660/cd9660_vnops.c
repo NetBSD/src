@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.26.2.1 2007/05/13 17:36:31 ad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.26.2.2 2007/08/19 19:24:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26.2.1 2007/05/13 17:36:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26.2.2 2007/08/19 19:24:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -766,14 +766,15 @@ cd9660_strategy(v)
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
-			biodone(bp, error, 0);
+			bp->b_error = error;
+			biodone(bp);
 			return (error);
 		}
 		if ((long)bp->b_blkno == -1)
 			clrbuf(bp);
 	}
 	if ((long)bp->b_blkno == -1) {
-		biodone(bp, 0, bp->b_resid);
+		biodone(bp);
 		return (0);
 	}
 	vp = ip->i_devvp;

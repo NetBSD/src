@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.196.2.3 2007/07/15 15:52:48 ad Exp $ */
+/*	$NetBSD: st.c,v 1.196.2.4 2007/08/19 19:24:35 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.3 2007/07/15 15:52:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196.2.4 2007/08/19 19:24:35 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -1077,7 +1077,7 @@ static void
 ststrategy(struct buf *bp)
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
-	int s, error = 0;
+	int s;
 
 	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
 	    ("ststrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
@@ -1089,7 +1089,7 @@ ststrategy(struct buf *bp)
 
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
-		error = EINVAL;
+		bp->b_error = EINVAL;
 		goto done;
 	}
 
@@ -1100,7 +1100,7 @@ ststrategy(struct buf *bp)
 		if (bp->b_bcount % st->blksize) {
 			printf("%s: bad request, must be multiple of %d\n",
 			    st->sc_dev.dv_xname, st->blksize);
-			error = EIO;
+			bp->b_error = EIO;
 			goto done;
 		}
 	}
@@ -1111,7 +1111,7 @@ ststrategy(struct buf *bp)
 	    (st->blkmax && bp->b_bcount > st->blkmax)) {
 		printf("%s: bad request, must be between %d and %d\n",
 		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
-		error = EIO;
+		bp->b_error = EIO;
 		goto done;
 	}
 	s = splbio();
@@ -1136,7 +1136,8 @@ done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
-	biodone(bp, error, 0);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 	return;
 }
 
@@ -1185,7 +1186,9 @@ ststart(struct scsipi_periph *periph)
 			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-				biodone(bp, EIO, 0);
+				bp->b_error = EIO;
+				bp->b_resid = bp->b_bcount;
+				biodone(bp);
 				continue;
 			} else {
 				return;
@@ -1215,13 +1218,16 @@ ststart(struct scsipi_periph *periph)
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
 						BUFQ_GET(st->buf_queue);
-						biodone(bp, EIO, 0);
+						bp->b_error = EIO;
+						biodone(bp);
 						continue;
 					}
 				} else {
 					BUFQ_GET(st->buf_queue);
+					bp->b_resid = bp->b_bcount;
+					bp->b_error = 0;
 					st->flags &= ~ST_AT_FILEMARK;
-					biodone(bp, 0, bp->b_bcount);
+					biodone(bp);
 					continue;	/* seek more work */
 				}
 			}
@@ -1233,9 +1239,11 @@ ststart(struct scsipi_periph *periph)
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
 			BUFQ_GET(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
-			error = ((st->flags & ST_EIO_PENDING) ? EIO : 0);
+			if (st->flags & ST_EIO_PENDING) {
+				bp->b_error = EIO;
+			}
 			st->flags &= ~(ST_EOM_PENDING|ST_EIO_PENDING);
-			biodone(bp, error, 0);
+			biodone(bp);
 			continue;	/* seek more work */
 		}
 
@@ -1317,15 +1325,21 @@ stdone(struct scsipi_xfer *xs, int error)
 	struct buf *bp = xs->bp;
 
 	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+
 		if ((bp->b_flags & B_READ) == B_WRITE)
 			st->flags |= ST_WRITTEN;
 		else
 			st->flags &= ~ST_WRITTEN;
+
 		iostat_unbusy(st->stats, bp->b_bcount,
 			     ((bp->b_flags & B_READ) == B_READ));
+
 #if NRND > 0
 		rnd_add_uint32(&st->rnd_source, bp->b_blkno);
 #endif
+
 		if ((st->flags & ST_POSUPDATED) == 0) {
 			if (error) {
 				st->fileno = st->blkno = -1;
@@ -1337,7 +1351,8 @@ stdone(struct scsipi_xfer *xs, int error)
 					st->blkno++;
 			}
 		}
-		biodone(bp, error, xs->resid);
+
+		biodone(bp);
 	}
 }
 

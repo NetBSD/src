@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.7 2007/06/17 21:30:50 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.8 2007/08/19 19:24:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.7 2007/06/17 21:30:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.8 2007/08/19 19:24:20 ad Exp $");
 
 #include "fss.h"
 
@@ -234,7 +234,10 @@ fss_strategy(struct buf *bp)
 	    sc == NULL || !FSS_ISVALID(sc)) {
 
 		FSS_UNLOCK(sc, s);
-		biodone(bp, (sc == NULL ? ENODEV : EROFS), 0);
+
+		bp->b_error = (sc == NULL ? ENODEV : EROFS);
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
 		return;
 	}
 
@@ -819,7 +822,7 @@ fss_cluster_iodone(struct buf *bp)
 
 	FSS_LOCK(scp->fc_softc, s);
 
-	if (bp->b_flags & B_ERROR)
+	if (bp->b_error != 0)
 		fss_error(scp->fc_softc, "fs read error %d", bp->b_error);
 
 	if (--scp->fc_xfercount == 0)
@@ -1006,7 +1009,7 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 static void
 fss_bs_thread(void *arg)
 {
-	int error = 0, len, nfreed, nio, s;
+	int error, len, nfreed, nio, s;
 	long off;
 	char *addr;
 	u_int32_t c, cl, ch, *indirp;
@@ -1078,7 +1081,14 @@ fss_bs_thread(void *arg)
 			} else
 				error = ENXIO;
 
-			biodone(bp, error, bp->b_resid);
+			if (error) {
+				bp->b_error = error;
+				bp->b_resid = bp->b_bcount;
+			} else
+				bp->b_resid = 0;
+
+			biodone(bp);
+
 			continue;
 		}
 
@@ -1126,7 +1136,9 @@ fss_bs_thread(void *arg)
 		nio++;
 
 		if (!FSS_ISVALID(sc)) {
-			biodone(bp, ENXIO, 0);
+			bp->b_error = ENXIO;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
 			continue;
 		}
 
@@ -1152,7 +1164,9 @@ fss_bs_thread(void *arg)
 		bdev_strategy(nbp);
 
 		if (biowait(nbp) != 0) {
-			biodone(bp, nbp->b_error, 0);
+			bp->b_resid = bp->b_bcount;
+			bp->b_error = nbp->b_error;
+			biodone(bp);
 			FSS_LOCK(sc, s);
 			continue;
 		}
@@ -1207,6 +1221,8 @@ fss_bs_thread(void *arg)
 
 			if ((error = fss_bs_io(sc, FSS_READ, *indirp,
 			    off, len, addr)) != 0) {
+				bp->b_resid = bp->b_bcount;
+				bp->b_error = error;
 				FSS_LOCK(sc, s);
 				break;
 			}
@@ -1215,6 +1231,6 @@ fss_bs_thread(void *arg)
 
 		}
 
-		biodone(bp, error, 0);
+		biodone(bp);
 	}
 }

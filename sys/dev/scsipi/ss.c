@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.70.2.2 2007/07/01 21:48:59 ad Exp $	*/
+/*	$NetBSD: ss.c,v 1.70.2.3 2007/08/19 19:24:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.70.2.2 2007/07/01 21:48:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.70.2.3 2007/08/19 19:24:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -402,7 +402,7 @@ ssstrategy(struct buf *bp)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
-	int s, error = 0;
+	int s;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
 	    ("ssstrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
@@ -412,15 +412,15 @@ ssstrategy(struct buf *bp)
 	 */
 	if (!device_is_active(&ss->sc_dev)) {
 		if (periph->periph_flags & PERIPH_OPEN)
-			error = EIO;
+			bp->b_error = EIO;
 		else
-			error = ENODEV;
+			bp->b_error = ENODEV;
 		goto done;
 	}
 
 	/* If negative offset, error */
 	if (bp->b_blkno < 0) {
-		error = EINVAL;
+		bp->b_error = EINVAL;
 		goto done;
 	}
 
@@ -455,7 +455,8 @@ done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
-	biodone(bp, error, 0);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 
 /*
@@ -520,7 +521,9 @@ ssdone(struct scsipi_xfer *xs, int error)
 	struct buf *bp = xs->bp;
 
 	if (bp) {
-		biodone(bp, error, xs->resid);
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		biodone(bp);
 	}
 }
 

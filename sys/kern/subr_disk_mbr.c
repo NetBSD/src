@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.26.2.2 2007/07/15 13:27:43 ad Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.26.2.3 2007/08/19 19:24:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.26.2.2 2007/07/15 13:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.26.2.3 2007/08/19 19:24:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			rval = SCAN_FOUND;
 			*bdp = *db;
 			break;
-		} while ((a.bp->b_flags & B_ERROR) && (i += 2) < 10 &&
+		} while (a.bp->b_error && (i += 2) < 10 &&
 			i < lp->d_nsectors);
 	}
 

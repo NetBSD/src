@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.54 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.54.2.1 2007/08/19 19:24:30 ad Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.54 2007/03/04 06:02:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.54.2.1 2007/08/19 19:24:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -371,7 +371,6 @@ rastrategy(bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	/*
@@ -389,7 +388,6 @@ rastrategy(bp)
 	/* If disk is not online, try to put it online */
 	if (ra->ra_state == DK_CLOSED)
 		if (ra_putonline(ra) == MSCP_FAILED) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			goto done;
 		}
@@ -817,14 +815,12 @@ rxstrategy(bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 
 	/* If disk is not online, try to put it online */
 	if (rx->ra_state == DK_CLOSED)
 		if (rx_putonline(rx) == MSCP_FAILED) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			goto done;
 		}
@@ -1129,7 +1125,6 @@ rrioerror(usc, mp, bp)
 	switch (code & M_ST_MASK) {
 	/* The unit has fallen offline. Try to figure out why. */
 	case M_ST_OFFLINE:
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		ra->ra_state = DK_CLOSED;
 		if (code & M_OFFLINE_UNMOUNTED)

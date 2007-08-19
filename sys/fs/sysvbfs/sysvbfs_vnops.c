@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.11.4.2 2007/07/15 15:52:52 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.11.4.3 2007/08/19 19:24:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.11.4.2 2007/07/15 15:52:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.11.4.3 2007/08/19 19:24:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -658,14 +658,15 @@ sysvbfs_strategy(void *arg)
 	if (b->b_blkno == b->b_lblkno) {
 		error = VOP_BMAP(v, b->b_lblkno, NULL, &b->b_blkno, NULL);
 		if (error) {
-			biodone(b, error, 0);
+			b->b_error = error;
+			biodone(b);
 			return error;
 		}
 		if ((long)b->b_blkno == -1)
 			clrbuf(b);
 	}
 	if ((long)b->b_blkno == -1) {
-		biodone(b, 0, b->b_bcount);
+		biodone(b);
 		return 0;
 	}
 

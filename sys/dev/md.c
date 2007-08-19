@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.48.2.1 2007/05/13 17:36:21 ad Exp $	*/
+/*	$NetBSD: md.c,v 1.48.2.2 2007/08/19 19:24:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.48.2.1 2007/05/13 17:36:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.48.2.2 2007/08/19 19:24:21 ad Exp $");
 
 #include "opt_md.h"
 
@@ -309,7 +309,7 @@ mdwrite(dev_t dev, struct uio *uio, int flags)
 static void
 mdstrategy(struct buf *bp)
 {
-	int unit, error = 0;
+	int unit;
 	struct md_softc	*sc;
 	void *	addr;
 	size_t off, xfer;
@@ -318,7 +318,7 @@ mdstrategy(struct buf *bp)
 	sc = ramdisk_devs[unit];
 
 	if (sc->sc_type == MD_UNCONFIGURED) {
-		error = ENXIO;
+		bp->b_error = ENXIO;
 		goto done;
 	}
 
@@ -355,12 +355,13 @@ mdstrategy(struct buf *bp)
 		break;
 
 	default:
+		bp->b_resid = bp->b_bcount;
 	set_eio:
-		error = EIO;
+		bp->b_error = EIO;
 		break;
 	}
  done:
-	biodone(bp, error, bp->b_resid);
+	biodone(bp);
 }
 
 static int
@@ -503,7 +504,8 @@ md_server_loop(struct md_softc *sc)
 			bp->b_resid -= xfer;
 
 	done:
-		biodone(bp, error, bp->b_resid);
+		bp->b_error = error;
+		biodone(bp);
 	}
 }
 #endif	/* MEMORY_DISK_SERVER */

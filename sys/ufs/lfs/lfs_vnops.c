@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.201.2.9 2007/07/15 13:28:18 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.201.2.10 2007/08/19 19:25:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.9 2007/07/15 13:28:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201.2.10 2007/08/19 19:25:02 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1180,14 +1180,17 @@ lfs_strategy(void *v)
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		if (error) {
-			biodone(bp, error, 0);
+			bp->b_error = error;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
 			return (error);
 		}
 		if ((long)bp->b_blkno == -1) /* no valid data */
 			clrbuf(bp);
 	}
 	if ((long)bp->b_blkno < 0) { /* block is not on disk */
-		biodone(bp, 0, bp->b_bcount);
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.246.6.2 2007/05/27 14:30:08 ad Exp $ */
+/*	$NetBSD: wdc.c,v 1.246.6.3 2007/08/19 19:24:27 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.246.6.2 2007/05/27 14:30:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.246.6.3 2007/08/19 19:24:27 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -855,6 +855,8 @@ wdcintr(void *arg)
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	struct ata_xfer *xfer;
 	int ret;
+
+	KASSERT(curcpu()->ci_ilevel == IPL_BIO);
 
 	if (!device_is_active(&atac->atac_dev)) {
 		ATADEBUG_PRINT(("wdcintr: deactivated controller\n"),

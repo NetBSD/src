@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.9 2007/07/15 13:28:05 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.10 2007/08/19 19:24:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.9 2007/07/15 13:28:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.10 2007/08/19 19:24:57 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -933,10 +933,7 @@ nfs_doio_read(bp, uiop)
 		printf("nfs_doio:  type %x unexpected\n", vp->v_type);
 		break;
 	}
-	if (error) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = error;
-	}
+	bp->b_error = error;
 	return error;
 }
 
@@ -1076,7 +1073,6 @@ again:
 			goto again;
 		}
 		if (error) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = np->n_error = error;
 			np->n_flag |= NWRITEERR;
 		}
@@ -1140,7 +1136,6 @@ again:
 		/*
 		 * we got an error.
 		 */
-		bp->b_flags |= B_ERROR;
 		bp->b_error = np->n_error = error;
 		np->n_flag |= NWRITEERR;
 	}
@@ -1183,10 +1178,7 @@ nfs_doio_phys(bp, uiop)
 			nfs_clearcommit(bp->b_vp->v_mount);
 		}
 	}
-	if (error) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = error;
-	}
+	bp->b_error = error;
 	return error;
 }
 
@@ -1224,7 +1216,8 @@ nfs_doio(bp)
 	} else {
 		error = nfs_doio_write(bp, uiop);
 	}
-	biodone(bp, error, uiop->uio_resid);
+	bp->b_resid = uiop->uio_resid;
+	biodone(bp);
 	return (error);
 }
 

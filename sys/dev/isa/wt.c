@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.75.2.2 2007/07/01 21:48:02 ad Exp $	*/
+/*	$NetBSD: wt.c,v 1.75.2.3 2007/08/19 19:24:29 ad Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75.2.2 2007/07/01 21:48:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.75.2.3 2007/08/19 19:24:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,7 +587,7 @@ static void
 wtstrategy(struct buf *bp)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(bp->b_dev) & T_UNIT);
-	int s, error = 0;
+	int s;
 
 	bp->b_resid = bp->b_bcount;
 
@@ -598,19 +598,19 @@ wtstrategy(struct buf *bp)
 	if (bp->b_flags & B_READ) {
 		/* Check read access and no previous write to this tape. */
 		if ((sc->flags & TPREAD) == 0 || (sc->flags & TPWANY))
-			goto xit;
+			goto errxit;
 
 		/* For now, we assume that all data will be copied out */
 		/* If read command outstanding, just skip down */
 		if ((sc->flags & TPRO) == 0) {
 			if (!wtsense(sc, 1, TP_WRP)) {
 				/* Clear status. */
-				goto xit;
+				goto errxit;
 			}
 			if (!wtcmd(sc, QIC_RDDATA)) {
 				/* Set read mode. */
 				wtsense(sc, 1, TP_WRP);
-				goto xit;
+				goto errxit;
 			}
 			sc->flags |= TPRO | TPRANY;
 		}
@@ -618,18 +618,18 @@ wtstrategy(struct buf *bp)
 		/* Check write access and write protection. */
 		/* No previous read from this tape allowed. */
 		if ((sc->flags & TPWRITE) == 0 || (sc->flags & (TPWP | TPRANY)))
-			goto xit;
+			goto errxit;
 
 		/* If write command outstanding, just skip down */
 		if ((sc->flags & TPWO) == 0) {
 			if (!wtsense(sc, 1, 0)) {
 				/* Clear status. */
-				goto xit;
+				goto errxit;
 			}
 			if (!wtcmd(sc, QIC_WRTDATA)) {
 				/* Set write mode. */
 				wtsense(sc, 1, 0);
-				goto xit;
+				goto errxit;
 			}
 			sc->flags |= TPWO | TPWANY;
 		}
@@ -646,8 +646,12 @@ wtstrategy(struct buf *bp)
 	}
 	splx(s);
 
+	if (sc->flags & TPEXCEP) {
+errxit:
+		bp->b_error = EIO;
+	}
 xit:
-	biodone(bp, error, bp->b_resid);
+	biodone(bp);
 	return;
 }
 

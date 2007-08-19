@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.80.2.4 2007/07/15 13:27:38 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.80.2.5 2007/08/19 19:24:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.4 2007/07/15 13:27:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.80.2.5 2007/08/19 19:24:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,31 +174,19 @@ physio_done(struct work *wk, void *dummy)
 		    __func__, bp->b_error, dbtob(bp->b_blkno), endoffset,
 		    bp->b_blkno, bp->b_bcount, bp->b_flags));
 
+		mbp->b_flags = EIO;
 		if (mbp->b_endoffset == -1 || endoffset < mbp->b_endoffset) {
-			int error;
-
-			if ((bp->b_flags & B_ERROR) != 0) {
-				if (bp->b_error == 0) {
-					error = EIO; /* XXX */
-				} else {
-					error = bp->b_error;
-				}
-			} else {
-				error = 0; /* EOM */
-			}
-
 			DPRINTF(("%s: mbp=%p, error %d -> %d, endoff %" PRIu64
 			    " -> %" PRIu64 "\n",
 			    __func__, mbp,
-			    mbp->b_error, error,
+			    mbp->b_error, bp->b_error,
 			    mbp->b_endoffset, endoffset));
 
 			mbp->b_endoffset = endoffset;
-			mbp->b_error = error;
+			mbp->b_error = bp->b_error;
 		}
-		mbp->b_flags |= B_ERROR;
 	} else {
-		KASSERT((bp->b_flags & B_ERROR) == 0);
+		KASSERT(bp->b_error == 0);
 	}
 
 	mbp->b_running--;
@@ -325,7 +313,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			vaddr_t endp;
 
 			mutex_enter(&mbp->b_interlock);
-			if ((mbp->b_flags & B_ERROR) != 0) {
+			if (mbp->b_error != 0) {
 				goto done_locked;
 			}
 			error = physio_wait(mbp, sync ? 0 : concurrency,
@@ -431,7 +419,7 @@ done_locked:
 	}
 	mutex_exit(&mbp->b_interlock);
 
-	if ((mbp->b_flags & B_ERROR) != 0) {
+	if (mbp->b_error != 0) {
 		off_t delta;
 
 		delta = uio->uio_offset - mbp->b_endoffset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.8 2007/07/15 15:52:40 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.9 2007/08/19 19:24:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.8 2007/07/15 15:52:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.9 2007/08/19 19:24:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -450,10 +450,10 @@ vndstrategy(struct buf *bp)
 	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
 	struct disklabel *lp = vnd->sc_dkdev.dk_label;
 	daddr_t blkno;
-	int s = splbio(), error = 0;
+	int s = splbio();
 
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
-		error = ENXIO;
+		bp->b_error = ENXIO;
 		goto done;
 	}
 
@@ -461,7 +461,7 @@ vndstrategy(struct buf *bp)
 	 * The transfer must be a whole number of blocks.
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0) {
-		error = EINVAL;
+		bp->b_error = EINVAL;
 		goto done;
 	}
 
@@ -469,7 +469,7 @@ vndstrategy(struct buf *bp)
 	 * check if we're read-only.
 	 */
 	if ((vnd->sc_flags & VNF_READONLY) && !(bp->b_flags & B_READ)) {
-		error = EACCES;
+		bp->b_error = EACCES;
 		goto done;
 	}
 
@@ -521,7 +521,8 @@ vndstrategy(struct buf *bp)
 	return;
 
 done:
-	biodone(bp, error, bp->b_bcount);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 	splx(s);
 }
 
@@ -576,7 +577,6 @@ vndthread(void *arg)
 
 		if (vnd->sc_vp->v_mount == NULL) {
 			obp->b_error = ENXIO;
-			obp->b_flags |= B_ERROR;
 			goto done;
 		}
 #ifdef VND_COMPRESSION
@@ -632,7 +632,7 @@ vndthread(void *arg)
 		continue;
 
 done:
-		biodone(obp, obp->b_error, obp->b_resid);
+		biodone(obp);
 		s = splbio();
 	}
 
@@ -677,7 +677,6 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	off_t offset;
 	size_t resid;
 	struct vnode *vp;
-	int error;
 
 	doread = bp->b_flags & B_READ;
 	offset = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
@@ -694,9 +693,11 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 #endif
 
 	/* Issue the read or write operation. */
-	error = vn_rdwr(doread ? UIO_READ : UIO_WRITE,
+	bp->b_error =
+	    vn_rdwr(doread ? UIO_READ : UIO_WRITE,
 	    vp, bp->b_data, bp->b_bcount, offset,
 	    UIO_SYSSPACE, 0, vnd->sc_cred, &resid, NULL);
+	bp->b_resid = resid;
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
@@ -704,9 +705,9 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 		mutex_enter(&vp->v_interlock);
 		vp->v_numoutput++;
 		mutex_exit(&vp->v_interlock);
-	} 
+	}
 
-	biodone(bp, error, resid);
+	biodone(bp);
 }
 
 /*
@@ -821,7 +822,7 @@ vndiodone(struct buf *bp)
 #ifdef DEBUG
 	if (vnddebug & VDB_IO) {
 		printf("vndiodone1: bp %p iodone: error %d\n",
-		    bp, (bp->b_flags & B_ERROR) != 0 ? bp->b_error : 0);
+		    bp, bp->b_error);
 	}
 #endif
 	disk_unbusy(&vnd->sc_dkdev, bp->b_bcount - bp->b_resid,
@@ -830,9 +831,10 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
-	biodone(obp, bp->b_error, bp->b_resid);
-	buf_destroy(bp);
+	obp->b_error = bp->b_error;
+	obp->b_resid = bp->b_resid;
 	VND_PUTXFER(vnd, vnx);
+	biodone(obp);
 }
 
 /* ARGSUSED */
@@ -1742,7 +1744,6 @@ compstrategy(struct buf *bp, off_t bn)
 		/* check for good block number */
 		if (comp_block >= vnd->sc_comp_numoffs) {
 			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
 			splx(s);
 			return;
 		}
@@ -1757,7 +1758,6 @@ compstrategy(struct buf *bp, off_t bn)
 			    UIO_SYSSPACE, IO_UNIT, vnd->sc_cred, NULL, NULL);
 			if (error) {
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				VOP_UNLOCK(vnd->sc_vp, 0);
 				splx(s);
 				return;
@@ -1775,7 +1775,6 @@ compstrategy(struct buf *bp, off_t bn)
 					    vnd->sc_dev.dv_xname,
 					    vnd->sc_comp_stream.msg);
 				bp->b_error = EBADMSG;
-				bp->b_flags |= B_ERROR;
 				VOP_UNLOCK(vnd->sc_vp, 0);
 				splx(s);
 				return;
@@ -1799,7 +1798,6 @@ compstrategy(struct buf *bp, off_t bn)
 		    length_in_buffer, &auio);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			splx(s);
 			return;
 		}

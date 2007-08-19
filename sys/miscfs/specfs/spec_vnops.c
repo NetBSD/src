@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.6 2007/06/17 21:31:46 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.7 2007/08/19 19:24:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.6 2007/06/17 21:31:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.7 2007/08/19 19:24:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -386,8 +386,7 @@ spec_write(v)
 					bawrite(bp);
 				else
 					bdwrite(bp);
-				if (bp->b_flags & B_ERROR)
-					error = bp->b_error;
+				error = bp->b_error;
 			}
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
@@ -585,7 +584,9 @@ spec_strategy(v)
 	}
 
 	if (error) {
-		biodone(bp, error, 0);
+		bp->b_error = error;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
 		return (error);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.261.2.2 2007/07/01 21:48:59 ad Exp $	*/
+/*	$NetBSD: sd.c,v 1.261.2.3 2007/08/19 19:24:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.261.2.2 2007/07/01 21:48:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.261.2.3 2007/08/19 19:24:34 ad Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -661,7 +661,7 @@ sdstrategy(struct buf *bp)
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct disklabel *lp;
 	daddr_t blkno;
-	int s, error = 0;
+	int s;
 	bool sector_aligned;
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
@@ -673,9 +673,9 @@ sdstrategy(struct buf *bp)
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) == 0 ||
 	    !device_is_active(&sd->sc_dev)) {
 		if (periph->periph_flags & PERIPH_OPEN)
-			error = EIO;
+			bp->b_error = EIO;
 		else
-			error = ENODEV;
+			bp->b_error = ENODEV;
 		goto done;
 	}
 
@@ -691,7 +691,7 @@ sdstrategy(struct buf *bp)
 		sector_aligned = (bp->b_bcount % lp->d_secsize) == 0;
 	}
 	if (!sector_aligned || bp->b_blkno < 0) {
-		error = EINVAL;
+		bp->b_error = EINVAL;
 		goto done;
 	}
 	/*
@@ -753,7 +753,8 @@ done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
-	biodone(bp, error, bp->b_bcount);
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 }
 
 /*
@@ -809,7 +810,9 @@ sdstart(struct scsipi_periph *periph)
 		if (__predict_false(
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
 			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
-				biodone(bp, EIO, 0);
+				bp->b_error = EIO;
+				bp->b_resid = bp->b_bcount;
+				biodone(bp);
 				continue;
 			} else {
 				return;
@@ -938,12 +941,20 @@ sddone(struct scsipi_xfer *xs, int error)
 	}
 
 	if (bp) {
-		disk_unbusy(&sd->sc_dk, bp->b_bcount - xs->resid,
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error) {
+			/* on a read/write error bp->b_resid is zero, so fix */
+			bp->b_resid = bp->b_bcount;
+		}
+
+		disk_unbusy(&sd->sc_dk, bp->b_bcount - bp->b_resid,
 		    (bp->b_flags & B_READ));
 #if NRND > 0
 		rnd_add_uint32(&sd->rnd_source, bp->b_rawblkno);
 #endif
-		biodone(bp, error, xs->resid);
+
+		biodone(bp);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.12.6.1 2007/05/13 17:36:21 ad Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.12.6.2 2007/08/19 19:24:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,6 +80,6 @@ int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *);
 int	ldbegindetach(struct ld_softc *, int);
 void	ldenddetach(struct ld_softc *);
-void	lddone(struct ld_softc *, struct buf *, int);
+void	lddone(struct ld_softc *, struct buf *);
 
 #endif	/* !_DEV_LDVAR_H_ */
