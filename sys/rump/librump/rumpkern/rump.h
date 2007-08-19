@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.10 2007/08/16 19:50:19 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.11 2007/08/19 21:24:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,9 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
+
+#include "rumpvnode_if.h"
+#include "rumpdefs.h"
 
 struct lwp;
 extern struct lwp *curlwp;
