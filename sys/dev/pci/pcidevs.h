@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.890 2007/08/14 16:14:21 jnemeth Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.891 2007/08/19 00:40:38 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.890 2007/08/14 16:13:38 jnemeth Exp
+ *	NetBSD: pcidevs,v 1.891 2007/08/19 00:39:46 riz Exp
  */
 
 /*
@@ -2355,10 +2355,36 @@
 #define	PCI_PRODUCT_INTEL_82801H_EXP_6	0x2849		/* 82801H PCI Express Port #6 */
 #define	PCI_PRODUCT_INTEL_82801H_HDA	0x284b		/* 82801H High Definition Audio Controller */
 #define	PCI_PRODUCT_INTEL_82801H_THERMAL	0x284f		/* 82801H Thermal Controller */
+#define	PCI_PRODUCT_INTEL_82801IH_LPC	0x2912		/* 82801IH LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_82801IR_LPC	0x2916		/* 82801IR LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_82801IB_LPC	0x2918		/* 82801IB LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_1	0x2920		/* 82801I SATA Controller with 4 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_2	0x2921		/* 82801I SATA Controller with 2 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_AHCI6	0x2922		/* 82801I AHCI SATA Controller with 6 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_AHCI4	0x2923		/* 82801I AHCI SATA Controller with 4 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SATA_3	0x2926		/* 82801I SATA Controller with 2 ports */
+#define	PCI_PRODUCT_INTEL_82801I_SMB	0x2930		/* 82801I SMBus Controller */
+#define	PCI_PRODUCT_INTEL_82801I_THERMAL	0x2932		/* 82801I Thermal Controller */
+#define	PCI_PRODUCT_INTEL_82801I_USB_1	0x2934		/* 82801I USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_USB_2	0x2935		/* 82801I USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_USB_3	0x2936		/* 82801I USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_USB_4	0x2937		/* 82801I USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_USB_5	0x2938		/* 82801I USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_USB_6	0x2939		/* 82801I USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_EHCI_1	0x293a		/* 82801I USB EHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_EHCI_2	0x293c		/* 82801I USB EHCI Controller */
+#define	PCI_PRODUCT_INTEL_82801I_HDA	0x293e		/* 82801I High Definition Audio Controller */
+#define	PCI_PRODUCT_INTEL_82801I_EXP_1	0x2940		/* 82801I PCI Express Port #1 */
+#define	PCI_PRODUCT_INTEL_82801I_EXP_2	0x2942		/* 82801I PCI Express Port #2 */
+#define	PCI_PRODUCT_INTEL_82801I_EXP_3	0x2944		/* 82801I PCI Express Port #3 */
+#define	PCI_PRODUCT_INTEL_82801I_EXP_4	0x2946		/* 82801I PCI Express Port #4 */
+#define	PCI_PRODUCT_INTEL_82801I_EXP_5	0x2948		/* 82801I PCI Express Port #5 */
+#define	PCI_PRODUCT_INTEL_82801I_EXP_6	0x294a		/* 82801I PCI Express Port #6 */
 #define	PCI_PRODUCT_INTEL_82965Q_HB	0x2990		/* 82965Q Host Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_EXP	0x2991		/* 82965Q PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_IGD	0x2992		/* 82965Q Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82965Q_IGD_1	0x2993		/* 82965Q Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82801I_LAN	0x29c4		/* 82801I LAN Controller */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
