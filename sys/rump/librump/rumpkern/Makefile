@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2007/08/16 21:26:21 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2007/08/19 21:24:22 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -26,12 +26,32 @@ SRCS+=	clock_subr.c kern_stub.c param.c subr_hash.c subr_prf2.c	\
 # src/lib/libkern
 SRCS+=	__assert.c scanc.c skpc.c
 
+SRCS+=	rumpvnode_if.c
+
 RUMUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
 OBJS+=	${RUMUSEROBJDIR}/rumpuser.o
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
 		-I${.CURDIR}/opt -DMAXUSERS=32
+
+# Create a few files.  We can't include them directly, because that
+# would create hideous namespace lossage.  So just do some clever
+# (or less clever) renaming.
+#
+VOPTORUMPVOP=s/vop/rump_vop/g;/VOPARG/!s/VOP/RUMP_VOP/g;/vfs_op_desc/,\$$d
+RVNH=\#include \"rumpvnode_if.h\"
+rumpvnode_if.c: vnode_if.c
+	sed "${VOPTORUMPVOP};s/SYS_VNODE_IF_H/SYS_RUMPVNODE_IF_H/g"	\
+	    < ${NETBSDSRCDIR}/sys/sys/vnode_if.h > rumpvnode_if.h
+	# XXX: some creative kludging to simulate 'a\' (I have no
+	# clue how to make it work in a Makefile
+	sed "${VOPTORUMPVOP};/sys\/vnode.h/{x;s/.*/${RVNH}/;x;G;n;}"	\
+	    < ${NETBSDSRCDIR}/sys/kern/vnode_if.c > rumpvnode_if.c
+	sed -n '/define/s/NAMEI_/RUMP_NAMEI_/p'				\
+	    < ${NETBSDSRCDIR}/sys/sys/namei.h > rumpdefs.h
+
+CLEANFILES+=	rumpvnode_if.c rumpvnode_if.h rumpdefs.h
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
