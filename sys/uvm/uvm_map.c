@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.238 2007/07/21 19:21:54 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.239 2007/08/20 13:33:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.238 2007/07/21 19:21:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.239 2007/08/20 13:33:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4055,6 +4055,10 @@ uvmspace_free(struct vmspace *vm)
 	}
 	KASSERT(map->nentries == 0);
 	KASSERT(map->size == 0);
+	mutex_destroy(&map->misc_lock);
+	mutex_destroy(&map->hint_lock);
+	mutex_destroy(&map->mutex);
+	rw_destroy(&map->lock);
 	pmap_destroy(map->pmap);
 	pool_put(&uvm_vmspace_pool, vm);
 }
