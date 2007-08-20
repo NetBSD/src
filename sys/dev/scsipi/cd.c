@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.262.2.5 2007/08/20 18:16:15 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.262.2.6 2007/08/20 18:37:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.262.2.5 2007/08/20 18:16:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.262.2.6 2007/08/20 18:37:46 ad Exp $");
 
 #include "rnd.h"
 
@@ -2448,1001 +2448,501 @@ cd_setchan(struct cd_softc *cd, int p0, int p1, int p2, int p3, int flags)
 	struct {
 		union {
 			struct scsi_mode_parameter_header_6 small;
-			struct scsi_mode_parameter_header_10 big;
-		} header;
-		struct cd_audio_page page;
-	} data;
+;
+	int upc;
+{
+	struct mcd_mbox mbx;
 	int error;
-	int big, byte2;
-	struct cd_audio_page *page;
 
-	byte2 = SMS_DBD;
-try_again:
-	if ((error = cd_mode_sense(cd, byte2, &data, sizeof(data.page),
-	    AUDIO_PAGE, flags, &big)) != 0) {
-		if (byte2 == SMS_DBD) {
-			/* Device may not understand DBD; retry without */
-			byte2 = 0;
-			goto try_again;
-		}
-		return (error);
-	}
+	if (sc->lastupc == upc)
+		return 0;
+	if (sc->debug)
+		printf("%s: setting upc to %d\n", sc->sc_dev.dv_xname, upc);
+	sc->lastupc = MCD_UPC_UNKNOWN;
 
-	if (big)
-		page = (void *)((u_long)&data.header.big +
-				sizeof data.header.big +
-				_2btol(data.header.big.blk_desc_len));
-	else
-		page = (void *)((u_long)&data.header.small +
-				sizeof data.header.small +
-				data.header.small.blk_desc_len);
-
-	page->port[0].channels = p0;
-	page->port[1].channels = p1;
-	page->port[2].channels = p2;
-	page->port[3].channels = p3;
-
-	return (cd_mode_select(cd, SMS_PF, &data,
-	    sizeof(struct scsi_mode_page_header) + page->pg_length,
-	    flags, big));
-}
-
-static int
-cd_getvol(struct cd_softc *cd, struct ioc_vol *arg, int flags)
-{
-	struct {
-		union {
-			struct scsi_mode_parameter_header_6 small;
-			struct scsi_mode_parameter_header_10 big;
-		} header;
-		struct cd_audio_page page;
-	} data;
-	int error;
-	int big, byte2;
-	struct cd_audio_page *page;
-
-	byte2 = SMS_DBD;
-try_again:
-	if ((error = cd_mode_sense(cd, byte2, &data, sizeof(data.page),
-	    AUDIO_PAGE, flags, &big)) != 0) {
-		if (byte2 == SMS_DBD) {
-			/* Device may not understand DBD; retry without */
-			byte2 = 0;
-			goto try_again;
-		}
-		return (error);
-	}
-
-	if (big)
-		page = (void *)((u_long)&data.header.big +
-				sizeof data.header.big +
-				_2btol(data.header.big.blk_desc_len));
-	else
-		page = (void *)((u_long)&data.header.small +
-				sizeof data.header.small +
-				data.header.small.blk_desc_len);
-
-	arg->vol[0] = page->port[0].volume;
-	arg->vol[1] = page->port[1].volume;
-	arg->vol[2] = page->port[2].volume;
-	arg->vol[3] = page->port[3].volume;
-
-	return (0);
-}
-
-static int
-cd_setvol(struct cd_softc *cd, const struct ioc_vol *arg, int flags)
-{
-	struct {
-		union {
-			struct scsi_mode_parameter_header_6 small;
-			struct scsi_mode_parameter_header_10 big;
-		} header;
-		struct cd_audio_page page;
-	} data, mask;
-	int error;
-	int big, byte2;
-	struct cd_audio_page *page, *page2;
-
-	byte2 = SMS_DBD;
-try_again:
-	if ((error = cd_mode_sense(cd, byte2, &data, sizeof(data.page),
-	    AUDIO_PAGE, flags, &big)) != 0) {
-		if (byte2 == SMS_DBD) {
-			/* Device may not understand DBD; retry without */
-			byte2 = 0;
-			goto try_again;
-		}
-		return (error);
-	}
-	if ((error = cd_mode_sense(cd, byte2, &mask, sizeof(mask.page),
-	    AUDIO_PAGE|SMS_PCTRL_CHANGEABLE, flags, &big)) != 0)
-		return (error);
-
-	if (big) {
-		page = (void *)((u_long)&data.header.big +
-				sizeof data.header.big +
-				_2btol(data.header.big.blk_desc_len));
-		page2 = (void *)((u_long)&mask.header.big +
-				sizeof mask.header.big +
-				_2btol(mask.header.big.blk_desc_len));
-	} else {
-		page = (void *)((u_long)&data.header.small +
-				sizeof data.header.small +
-				data.header.small.blk_desc_len);
-		page2 = (void *)((u_long)&mask.header.small +
-				sizeof mask.header.small +
-				mask.header.small.blk_desc_len);
-	}
-
-	page->port[0].volume = arg->vol[0] & page2->port[0].volume;
-	page->port[1].volume = arg->vol[1] & page2->port[1].volume;
-	page->port[2].volume = arg->vol[2] & page2->port[2].volume;
-	page->port[3].volume = arg->vol[3] & page2->port[3].volume;
-
-	page->port[0].channels = CHANNEL_0;
-	page->port[1].channels = CHANNEL_1;
-
-	return (cd_mode_select(cd, SMS_PF, &data,
-	    sizeof(struct scsi_mode_page_header) + page->pg_length,
-	    flags, big));
-}
-
-static int
-cd_load_unload(struct cd_softc *cd, struct ioc_load_unload *args)
-{
-	struct scsipi_load_unload cmd;
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = LOAD_UNLOAD;
-	cmd.options = args->options;    /* ioctl uses MMC values */
-	cmd.slot = args->slot;
-
-	return (scsipi_command(cd->sc_periph, (void *)&cmd, sizeof(cmd), 0, 0,
-	    CDRETRIES, 200000, NULL, 0));
-}
-
-static int
-cd_setblksize(struct cd_softc *cd)
-{
-	struct {
-		union {
-			struct scsi_mode_parameter_header_6 small;
-			struct scsi_mode_parameter_header_10 big;
-		} header;
-		struct scsi_general_block_descriptor blk_desc;
-	} data;
-	int error;
-	int big, bsize;
-	struct scsi_general_block_descriptor *bdesc;
-
-	if ((error = cd_mode_sense(cd, 0, &data, sizeof(data.blk_desc), 0, 0,
-	    &big)) != 0)
-		return (error);
-
-	if (big) {
-		bdesc = (void *)(&data.header.big + 1);
-		bsize = _2btol(data.header.big.blk_desc_len);
-	} else {
-		bdesc = (void *)(&data.header.small + 1);
-		bsize = data.header.small.blk_desc_len;
-	}
-
-	if (bsize == 0) {
-printf("cd_setblksize: trying to change bsize, but no blk_desc\n");
-		return (EINVAL);
-	}
-	if (_3btol(bdesc->blklen) == 2048) {
-printf("cd_setblksize: trying to change bsize, but blk_desc is correct\n");
-		return (EINVAL);
-	}
-
-	_lto3b(2048, bdesc->blklen);
-
-	return (cd_mode_select(cd, SMS_PF, &data, sizeof(data.blk_desc), 0,
-	    big));
-}
-
-
-static int
-mmc_profile2class(uint16_t mmc_profile)
-{
-	switch (mmc_profile) {
-	case 0x01 : /* SCSI discs */
-	case 0x02 :
-		/* this can't happen really, cd.c wouldn't have matched */
-		return MMC_CLASS_DISC;
-	case 0x03 : /* Magneto Optical with sector erase */
-	case 0x04 : /* Magneto Optical write once        */
-	case 0x05 : /* Advance Storage Magneto Optical   */
-		return MMC_CLASS_MO;
-	case 0x00 : /* Unknown MMC profile, can also be CD-ROM */
-	case 0x08 : /* CD-ROM  */
-	case 0x09 : /* CD-R    */
-	case 0x0a : /* CD-RW   */
-		return MMC_CLASS_CD;
-	case 0x10 : /* DVD-ROM */
-	case 0x11 : /* DVD-R   */
-	case 0x12 : /* DVD-RAM */
-	case 0x13 : /* DVD-RW restricted overwrite */
-	case 0x14 : /* DVD-RW sequential */
-	case 0x1a : /* DVD+RW  */
-	case 0x1b : /* DVD+R   */
-	case 0x2a : /* DVD+RW Dual layer */
-	case 0x2b : /* DVD+R Dual layer */
-	case 0x50 : /* HD DVD-ROM */
-	case 0x51 : /* HD DVD-R   */
-	case 0x52 : /* HD DVD-RW; DVD-RAM like */
-		return MMC_CLASS_DVD;
-	case 0x40 : /* BD-ROM  */
-	case 0x41 : /* BD-R Sequential recording (SRM) */
-	case 0x42 : /* BD-R Ramdom Recording (RRM) */
-	case 0x43 : /* BD-RE */
-		return MMC_CLASS_BD;
-	}
-	return MMC_CLASS_UNKN;
-}
-
-
-/*
- * Drive/media combination is reflected in a series of features that can
- * either be current or dormant. We try to make sense out of them to create a
- * set of easy to use flags that abstract the device/media capabilities.
- */
-
-static void
-mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
-		    uint16_t feature, int cur, uint8_t *rpos)
-{
-	uint64_t flags;
-
-	if (cur == 1) {
-		flags = mmc_discinfo->mmc_cur;
-	} else {
-		flags = mmc_discinfo->mmc_cap;
-	}
-
-	switch (feature) {
-	case 0x0010 :	/* random readable feature */
-		mmc_discinfo->sector_size =  rpos[3] | (rpos[2] << 8) |
-					    (rpos[1] << 16) | (rpos[0] << 24);
-		mmc_discinfo->blockingnr  =  rpos[5] | (rpos[4] << 8);
-		if (mmc_discinfo->blockingnr > 1)
-			flags |= MMC_CAP_PACKET;
-
-		/* RW error page */
-		break;
-	case 0x0020 :	/* random writable feature */
-		flags |= MMC_CAP_RECORDABLE;
-		flags |= MMC_CAP_REWRITABLE;
-		break;
-	case 0x0021 :	/* incremental streaming write feature */
-		flags |= MMC_CAP_RECORDABLE;
-		flags |= MMC_CAP_SEQUENTIAL;
-		if (cur) {
-			mmc_discinfo->link_block_penalty = rpos[4];
-		}
-		if (rpos[2] & 1)
-			flags |= MMC_CAP_ZEROLINKBLK;
-		break;
-	case 0x0022 : 	/* (obsolete) erase support feature */
-		flags |= MMC_CAP_RECORDABLE;
-		flags |= MMC_CAP_ERASABLE;
-		break;
-	case 0x0023 :	/* formatting media support feature */
-		flags |= MMC_CAP_RECORDABLE;
-		flags |= MMC_CAP_FORMATTABLE;
-		break;
-	case 0x0024 :	/* hardware assised defect management feature */
-		flags |= MMC_CAP_HW_DEFECTFREE;
-		break;
-	case 0x0025 : 	/* write once */
-		flags |= MMC_CAP_RECORDABLE;
-		break;
-	case 0x0026 :	/* restricted overwrite feature */
-		flags |= MMC_CAP_RECORDABLE;
-		flags |= MMC_CAP_REWRITABLE;
-		flags |= MMC_CAP_STRICTOVERWRITE;
-		break;
-	case 0x0028 :	/* MRW formatted media support feature */
-		flags |= MMC_CAP_MRW;
-		break;
-	case 0x002c :	/* regid restricted overwrite feature */
-		flags |= MMC_CAP_RECORDABLE;
-		flags |= MMC_CAP_REWRITABLE;
-		flags |= MMC_CAP_STRICTOVERWRITE;
-		if (rpos[0] & 1) /* blank bit */
-			flags |= MMC_CAP_BLANKABLE;
-		break;
-	case 0x002d :	/* track at once recording feature */
-		flags |= MMC_CAP_RECORDABLE;
-		flags |= MMC_CAP_SEQUENTIAL;
-		break;
-	case 0x002f :	/* DVD-R/-RW write feature */
-		flags |= MMC_CAP_RECORDABLE;
-		if (rpos[0] & 2) /* DVD-RW bit */
-			flags |= MMC_CAP_BLANKABLE;
-		break;
-	case 0x0038 :	/* BD-R SRM with pseudo overwrite */
-		flags |= MMC_CAP_PSEUDOOVERWRITE;
-		break;
-	default :
-		/* ignore */
-		break;
-	}
-
-	if (cur == 1) {
-		mmc_discinfo->mmc_cur = flags;
-	} else {
-		mmc_discinfo->mmc_cap = flags;
-	}
-}
-
-static int
-mmc_getdiscinfo_cdrom(struct scsipi_periph *periph,
-		      struct mmc_discinfo *mmc_discinfo)
-{
-	struct scsipi_read_toc      gtoc_cmd;
-	struct scsipi_toc_header   *toc_hdr;
-	struct scsipi_toc_msinfo   *toc_msinfo;
-	const uint32_t buffer_size = 1024;
-	uint32_t req_size;
-	uint8_t  *buffer;
-	int error, flags;
-
-	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
-	/*
-	 * Fabricate mmc_discinfo for CD-ROM. Some values are really `dont
-	 * care' but others might be of interest to programs.
-	 */
-
-	mmc_discinfo->disc_state	 = MMC_STATE_FULL;
-	mmc_discinfo->last_session_state = MMC_STATE_FULL;
-	mmc_discinfo->bg_format_state    = MMC_BGFSTATE_COMPLETED;
-	mmc_discinfo->link_block_penalty = 7;	/* not relevant */
-
-	/* get number of sessions and first tracknr in last session */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
-	gtoc_cmd.opcode      = READ_TOC;
-	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant        */
-	gtoc_cmd.resp_format = CD_TOC_MSINFO;	/* multisession info   */
-	gtoc_cmd.from_track  = 0;		/* reserved, must be 0 */
-	req_size = sizeof(*toc_hdr) + sizeof(*toc_msinfo);
-	_lto2b(req_size, gtoc_cmd.data_len);
-
-	error = scsipi_command(periph,
-		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
-		(void *)buffer,    req_size,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
-		goto out;
-	toc_hdr    = (struct scsipi_toc_header *)  buffer;
-	toc_msinfo = (struct scsipi_toc_msinfo *) (buffer + 4);
-	mmc_discinfo->num_sessions = toc_hdr->last - toc_hdr->first + 1;
-	mmc_discinfo->first_track  = toc_hdr->first;
-	mmc_discinfo->first_track_last_session = toc_msinfo->tracknr;
-
-	/* get last track of last session */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	gtoc_cmd.resp_format  = CD_TOC_FORM;	/* formatted toc */
-	req_size = sizeof(*toc_hdr);
-	_lto2b(req_size, gtoc_cmd.data_len);
-
-	error = scsipi_command(periph,
-		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
-		(void *)buffer,    req_size,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
-		goto out;
-	toc_hdr    = (struct scsipi_toc_header *) buffer;
-	mmc_discinfo->last_track_last_session = toc_hdr->last;
-	mmc_discinfo->num_tracks = toc_hdr->last - toc_hdr->first + 1;
-
-	/* TODO how to handle disc_barcode and disc_id */
-	/* done */
-
-out:
-	free(buffer, M_TEMP);
-	return error;
-}
-
-static int
-mmc_getdiscinfo_dvdrom(struct scsipi_periph *periph,
-		       struct mmc_discinfo *mmc_discinfo)
-{
-	struct scsipi_read_toc   gtoc_cmd;
-	struct scsipi_toc_header toc_hdr;
-	uint32_t req_size;
-	int error, flags;
-
-	/*
-	 * Fabricate mmc_discinfo for DVD-ROM. Some values are really `dont
-	 * care' but others might be of interest to programs.
-	 */
-
-	mmc_discinfo->disc_state	 = MMC_STATE_FULL;
-	mmc_discinfo->last_session_state = MMC_STATE_FULL;
-	mmc_discinfo->bg_format_state    = MMC_BGFSTATE_COMPLETED;
-	mmc_discinfo->link_block_penalty = 16;	/* not relevant */
-
-	/* get number of sessions and first tracknr in last session */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
-	gtoc_cmd.opcode      = READ_TOC;
-	gtoc_cmd.addr_mode   = 0;		/* LBA                 */
-	gtoc_cmd.resp_format = CD_TOC_FORM;	/* multisession info   */
-	gtoc_cmd.from_track  = 1;		/* first track         */
-	req_size = sizeof(toc_hdr);
-	_lto2b(req_size, gtoc_cmd.data_len);
-
-	error = scsipi_command(periph,
-		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
-		(void *)&toc_hdr,  req_size,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
+	mbx.cmd.opcode = MCD_CMDCONFIGDRIVE;
+	mbx.cmd.length = sizeof(mbx.cmd.data.config) - 1;
+	mbx.cmd.data.config.subcommand = MCD_CF_READUPC;
+	mbx.cmd.data.config.data1 = upc;
+	mbx.res.length = 0;
+	if ((error = mcd_send(sc, &mbx, 1)) != 0)
 		return error;
 
-	/* DVD-ROM squashes the track/session space */
-	mmc_discinfo->num_sessions = toc_hdr.last - toc_hdr.first + 1;
-	mmc_discinfo->num_tracks   = mmc_discinfo->num_sessions;
-	mmc_discinfo->first_track  = toc_hdr.first;
-	mmc_discinfo->first_track_last_session = toc_hdr.last;
-	mmc_discinfo->last_track_last_session  = toc_hdr.last;
-
-	/* TODO how to handle disc_barcode and disc_id */
-	/* done */
+	sc->lastupc = upc;
 	return 0;
 }
 
-static int
-mmc_getdiscinfo(struct scsipi_periph *periph,
-		struct mmc_discinfo *mmc_discinfo)
+int
+mcd_toc_header(sc, th)
+	struct mcd_softc *sc;
+	struct ioc_toc_header *th;
 {
-	struct scsipi_get_configuration   gc_cmd;
-	struct scsipi_get_conf_data      *gc;
-	struct scsipi_get_conf_feature   *gcf;
-	struct scsipi_read_discinfo       di_cmd;
-	struct scsipi_read_discinfo_data  di;
-	const uint32_t buffer_size = 1024;
-	uint32_t feat_tbl_len, pos;
-	u_long   last_lba;
-	uint8_t  *buffer, *fpos;
-	int feature, last_feature, features_len, feature_cur, feature_len;
-	int lsb, msb, error, flags;
 
-	feat_tbl_len = buffer_size;
+	if (sc->debug)
+		printf("%s: mcd_toc_header: reading toc header\n",
+		    sc->sc_dev.dv_xname);
 
-	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
+	th->len = msf2hsg(sc->volinfo.vol_msf, 0);
+	th->starting_track = bcd2bin(sc->volinfo.trk_low);
+	th->ending_track = bcd2bin(sc->volinfo.trk_high);
 
-	/* initialise structure */
-	memset(mmc_discinfo, 0, sizeof(struct mmc_discinfo));
-	mmc_discinfo->mmc_profile = 0x00;	/* unknown */
-	mmc_discinfo->mmc_class   = MMC_CLASS_UNKN;
-	mmc_discinfo->mmc_cur     = 0;
-	mmc_discinfo->mmc_cap     = 0;
-	mmc_discinfo->blockingnr  = 1;	/* not relevant if non packet write */
-	mmc_discinfo->link_block_penalty = 0;
+	return 0;
+}
 
-	/* determine mmc profile and class */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-	memset(&gc_cmd, 0, sizeof(gc_cmd));
-	gc_cmd.opcode = GET_CONFIGURATION;
-	_lto2b(GET_CONF_NO_FEATURES_LEN, gc_cmd.data_len);
+int
+mcd_read_toc(sc)
+	struct mcd_softc *sc;
+{
+	struct ioc_toc_header th;
+	union mcd_qchninfo q;
+	int error, trk, idx, retry;
 
-	gc = (struct scsipi_get_conf_data *) buffer;
+	if ((error = mcd_toc_header(sc, &th)) != 0)
+		return error;
 
-	error = scsipi_command(periph,
-		(void *)&gc_cmd, sizeof(gc_cmd),
-		(void *) gc,     GET_CONF_NO_FEATURES_LEN,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
-		goto out;
+	if ((error = mcd_stop(sc)) != 0)
+		return error;
 
-	mmc_discinfo->mmc_profile = _2btol(gc->mmc_profile);
-	mmc_discinfo->mmc_class = mmc_profile2class(mmc_discinfo->mmc_profile);
+	if (sc->debug)
+		printf("%s: read_toc: reading qchannel info\n",
+		    sc->sc_dev.dv_xname);
 
-	/* assume 2048 sector size unless told otherwise */
-	mmc_discinfo->sector_size = 2048;
-	error = read_cd_capacity(periph, &mmc_discinfo->sector_size, &last_lba);
-	if (error)
-		goto out;
+	for (trk = th.starting_track; trk <= th.ending_track; trk++)
+		sc->toc[trk].toc.idx_no = 0x00;
+	trk = th.ending_track - th.starting_track + 1;
+	for (retry = 300; retry && trk > 0; retry--) {
+		if (mcd_getqchan(sc, &q, CD_TRACK_INFO) != 0)
+			break;
+		if (q.toc.trk_no != 0x00 || q.toc.idx_no == 0x00)
+			continue;
+		idx = bcd2bin(q.toc.idx_no);
+		if (idx < MCD_MAXTOCS &&
+		    sc->toc[idx].toc.idx_no == 0x00) {
+			sc->toc[idx] = q;
+			trk--;
+		}
+	}
 
-	mmc_discinfo->last_possible_lba = (uint32_t) last_lba - 1;
+	/* Inform the drive that we're finished so it turns off the light. */
+	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
+		return error;
 
-	/* Read in all features to determine device capabilities */
-	last_feature = feature = 0;
-	do {
-		/* determine mmc profile and class */
-		flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-		memset(&gc_cmd, 0, sizeof(gc_cmd));
-		gc_cmd.opcode = GET_CONFIGURATION;
-		_lto2b(last_feature, gc_cmd.start_at_feature);
-		_lto2b(feat_tbl_len, gc_cmd.data_len);
+	if (trk != 0)
+		return EINVAL;
 
-		error = scsipi_command(periph,
-			(void *)&gc_cmd, sizeof(gc_cmd),
-			(void *) gc,     feat_tbl_len,
-			CDRETRIES, 30000, NULL, flags);
-		if (error) {
-			/* ieeek... break out of loop... i dunno what to do */
+	/* Add a fake last+1 for mcd_playtracks(). */
+	idx = th.ending_track + 1;
+	sc->toc[idx].toc.control = sc->toc[idx-1].toc.control;
+	sc->toc[idx].toc.addr_type = sc->toc[idx-1].toc.addr_type;
+	sc->toc[idx].toc.trk_no = 0x00;
+	sc->toc[idx].toc.idx_no = 0xaa;
+	sc->toc[idx].toc.absolute_pos[0] = sc->volinfo.vol_msf[0];
+	sc->toc[idx].toc.absolute_pos[1] = sc->volinfo.vol_msf[1];
+	sc->toc[idx].toc.absolute_pos[2] = sc->volinfo.vol_msf[2];
+
+	return 0;
+}
+
+int
+mcd_toc_entries(sc, te, entries, count)
+	struct mcd_softc *sc;
+	struct ioc_read_toc_entry *te;
+	struct cd_toc_entry *entries;
+	int *count;
+{
+	int len = te->data_len;
+	struct ioc_toc_header header;
+	u_char trk;
+	daddr_t lba;
+	int error, n;
+
+	if (len < sizeof(struct cd_toc_entry))
+		return EINVAL;
+	if (te->address_format != CD_MSF_FORMAT &&
+	    te->address_format != CD_LBA_FORMAT)
+		return EINVAL;
+
+	/* Copy the TOC header. */
+	if ((error = mcd_toc_header(sc, &header)) != 0)
+		return error;
+
+	/* Verify starting track. */
+	trk = te->starting_track;
+	if (trk == 0x00)
+		trk = header.starting_track;
+	else if (trk == 0xaa)
+		trk = header.ending_track + 1;
+	else if (trk < header.starting_track ||
+		 trk > header.ending_track + 1)
+		return EINVAL;
+
+	/* Copy the TOC data. */
+	for (n = 0; trk <= header.ending_track + 1; n++, trk++) {
+		if (n * sizeof entries[0] > len)
+			break;
+		if (sc->toc[trk].toc.idx_no == 0x00)
+			continue;
+		entries[n].control = sc->toc[trk].toc.control;
+		entries[n].addr_type = sc->toc[trk].toc.addr_type;
+		entries[n].track = bcd2bin(sc->toc[trk].toc.idx_no);
+		switch (te->address_format) {
+		case CD_MSF_FORMAT:
+			entries[n].addr.addr[0] = 0;
+			entries[n].addr.addr[1] = bcd2bin(sc->toc[trk].toc.absolute_pos[0]);
+			entries[n].addr.addr[2] = bcd2bin(sc->toc[trk].toc.absolute_pos[1]);
+			entries[n].addr.addr[3] = bcd2bin(sc->toc[trk].toc.absolute_pos[2]);
+			break;
+		case CD_LBA_FORMAT:
+			lba = msf2hsg(sc->toc[trk].toc.absolute_pos, 0);
+			entries[n].addr.addr[0] = lba >> 24;
+			entries[n].addr.addr[1] = lba >> 16;
+			entries[n].addr.addr[2] = lba >> 8;
+			entries[n].addr.addr[3] = lba;
 			break;
 		}
-
-		features_len = _4btol(gc->data_len);
-
-		pos  = 0;
-		fpos = &gc->feature_desc[0];
-		while (pos < features_len - 4) {
-			gcf = (struct scsipi_get_conf_feature *) fpos;
-
-			feature     = _2btol(gcf->featurecode);
-			feature_cur = gcf->flags & 1;
-			feature_len = gcf->additional_length;
-
-			mmc_process_feature(mmc_discinfo,
-					    feature, feature_cur,
-					    gcf->feature_dependent);
-
-			last_feature = MAX(last_feature, feature);
-			assert((feature_len & 3) == 0);
-
-			pos  += 4 + feature_len;
-			fpos += 4 + feature_len;
-		}
-		/* unlikely to ever grow past our 1kb buffer */
-	} while (features_len >= 0xffff);
-
-#ifdef DEBUG
-	printf("CD mmc %d, mmc_cur 0x%"PRIx64", mmc_cap 0x%"PRIx64"\n",
-		mmc_discinfo->mmc_profile,
-	 	mmc_discinfo->mmc_cur, mmc_discinfo->mmc_cap);
-#endif
-
-	/* read in disc state and number of sessions and tracks */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	memset(&di_cmd, 0, sizeof(di_cmd));
-	di_cmd.opcode = READ_DISCINFO;
-	di_cmd.data_len[1] = READ_DISCINFO_BIGSIZE;
-
-	error = scsipi_command(periph,
-		(void *)&di_cmd, sizeof(di_cmd),
-		(void *)&di,     READ_DISCINFO_BIGSIZE,
-		CDRETRIES, 30000, NULL, flags);
-
-	if (error) {
-		/* discinfo call failed, emulate for cd-rom/dvd-rom */
-		if (mmc_discinfo->mmc_profile == 0x08) /* CD-ROM */
-			return mmc_getdiscinfo_cdrom(periph, mmc_discinfo);
-		if (mmc_discinfo->mmc_profile == 0x10) /* DVD-ROM */
-			return mmc_getdiscinfo_dvdrom(periph, mmc_discinfo);
-		/* CD/DVD drive is violating specs */
-		error = EIO;
-		goto out;
 	}
 
-	/* call went OK */
-	mmc_discinfo->disc_state         =  di.disc_state & 3;
-	mmc_discinfo->last_session_state = (di.disc_state >> 2) & 3;
-	mmc_discinfo->bg_format_state    = (di.disc_state2 & 3);
-
-	lsb = di.num_sessions_lsb;
-	msb = di.num_sessions_msb;
-	mmc_discinfo->num_sessions = lsb | (msb << 8);
-
-	mmc_discinfo->first_track = di.first_track;
-	lsb = di.first_track_last_session_lsb;
-	msb = di.first_track_last_session_msb;
-	mmc_discinfo->first_track_last_session = lsb | (msb << 8);
-	lsb = di.last_track_last_session_lsb;
-	msb = di.last_track_last_session_msb;
-	mmc_discinfo->last_track_last_session  = lsb | (msb << 8);
-
-	mmc_discinfo->num_tracks = mmc_discinfo->last_track_last_session -
-		mmc_discinfo->first_track + 1;
-
-	/* set misc. flags and parameters from this disc info */
-	if (di.disc_state  &  16)
-		mmc_discinfo->mmc_cur |= MMC_CAP_BLANKABLE;
-
-	if (di.disc_state2 & 128) {
-		mmc_discinfo->disc_id = _4btol(di.discid);
-		mmc_discinfo->disc_flags |= MMC_DFLAGS_DISCIDVALID;
-	}
-	if (di.disc_state2 &  64) {
-		mmc_discinfo->disc_barcode = _8btol(di.disc_bar_code);
-		mmc_discinfo->disc_flags |= MMC_DFLAGS_BARCODEVALID;
-	}
-	if (di.disc_state2 &  32)
-		mmc_discinfo->disc_flags |= MMC_DFLAGS_UNRESTRICTED;
-
-	if (di.disc_state2 &  16) {
-		mmc_discinfo->application_code = di.application_code;
-		mmc_discinfo->disc_flags |= MMC_DFLAGS_APPCODEVALID;
-	}
-
-	/* done */
-
-out:
-	free(buffer, M_TEMP);
-	return error;
+	*count = n;
+	return 0;
 }
 
-static int
-mmc_gettrackinfo_cdrom(struct scsipi_periph *periph,
-		       struct mmc_trackinfo *trackinfo)
+int
+mcd_stop(sc)
+	struct mcd_softc *sc;
 {
-	struct scsipi_read_toc            gtoc_cmd;
-	struct scsipi_toc_header         *toc_hdr;
-	struct scsipi_toc_rawtoc         *rawtoc;
-	uint32_t track_start, track_end, track_size;
-	uint32_t last_recorded, next_writable;
-	uint32_t lba, next_track_start, lead_out;
-	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
-	uint8_t *buffer;
-	uint8_t track_sessionnr, last_tracknr, sessionnr, adr, tno, point;
-	uint8_t tmin, tsec, tframe, pmin, psec, pframe;
-	int size, req_size;
-	int error, flags;
+	struct mcd_mbox mbx;
+	int error;
 
-	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
+	if (sc->debug)
+		printf("%s: mcd_stop: stopping play\n", sc->sc_dev.dv_xname);
 
-	/*
-	 * Emulate read trackinfo for CD-ROM using the raw-TOC.
-	 *
-	 * Not all information is present and this presents a problem.  Track
-	 * starts are known for each track but other values are deducted.
-	 *
-	 * For a complete overview of `magic' values used here, see the
-	 * SCSI/ATAPI MMC documentation. Note that the `magic' values have no
-	 * names, they are specified as numbers.
-	 */
+	mbx.cmd.opcode = MCD_CMDSTOPAUDIO;
+	mbx.cmd.length = 0;
+	mbx.res.length = 0;
+	if ((error = mcd_send(sc, &mbx, 1)) != 0)
+		return error;
 
-	/* get raw toc to process, first header to check size */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
-	gtoc_cmd.opcode      = READ_TOC;
-	gtoc_cmd.addr_mode   = CD_MSF;		/* not relevant     */
-	gtoc_cmd.resp_format = CD_TOC_RAW;	/* raw toc          */
-	gtoc_cmd.from_track  = 1;		/* first session    */
-	req_size = sizeof(*toc_hdr);
-	_lto2b(req_size, gtoc_cmd.data_len);
-
-	error = scsipi_command(periph,
-		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
-		(void *)buffer,    req_size,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
-		goto out;
-	toc_hdr = (struct scsipi_toc_header *) buffer;
-	if (_2btol(toc_hdr->length) > buffer_size - 2) {
-#ifdef DIAGNOSTIC
-		printf("increase buffersize in mmc_readtrackinfo_cdrom\n");
-#endif
-		error = ENOBUFS;
-		goto out;
-	}
-
-	/* read in complete raw toc */
-	req_size = _2btol(toc_hdr->length);
-	_lto2b(req_size, gtoc_cmd.data_len);
-
-	error = scsipi_command(periph,
-		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
-		(void *)buffer,    req_size,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
-		goto out;
-
-	toc_hdr = (struct scsipi_toc_header *) buffer;
-	rawtoc  = (struct scsipi_toc_rawtoc *) (buffer + 4);
-
-	track_start      = 0;
-	track_end        = 0;
-	track_size       = 0;
-	last_recorded    = 0;
-	next_writable    = 0;
-	flags            = 0;
-
-	last_tracknr     = 1;
-	next_track_start = 0;
-	track_sessionnr  = MAXTRACK;	/* by definition */
-	lead_out         = 0;
-
-	size = req_size - sizeof(struct scsipi_toc_header) + 1;
-	while (size > 0) {
-		/* get track start and session end */
-		tno       = rawtoc->tno;
-		sessionnr = rawtoc->sessionnr;
-		adr       = rawtoc->adrcontrol >> 4;
-		point     = rawtoc->point;
-		tmin      = rawtoc->min;
-		tsec      = rawtoc->sec;
-		tframe    = rawtoc->frame;
-		pmin      = rawtoc->pmin;
-		psec      = rawtoc->psec;
-		pframe    = rawtoc->pframe;
-
-		if (tno == 0 && sessionnr && adr == 1) {
-			lba = hmsf2lba(0, pmin, psec, pframe);
-			if (point == trackinfo->tracknr) {
-				track_start = lba;
-				track_sessionnr = sessionnr;
-			}
-			if (point == trackinfo->tracknr + 1) {
-				/* estimate size */
-				track_size = lba - track_start;
-				next_track_start = lba;
-			}
-			if (point == 0xa2) {
-				lead_out = lba;
-			}
-			if (point <= 0x63) {
-				/* CD's ok, DVD are glued */
-				last_tracknr = point;
-			}
-			if (sessionnr == track_sessionnr) {
-				last_recorded = lead_out;
-			}
-		}
-		if (tno == 0 && sessionnr && adr == 5) {
-			lba = hmsf2lba(0, tmin, tsec, tframe);
-			if (sessionnr == track_sessionnr) {
-				next_writable = lba;
-			}
-		}
-
-		rawtoc++;
-		size -= sizeof(struct scsipi_toc_rawtoc);
-	}
-
-	/* process found values; some voodoo */
-	/* if no tracksize tracknr is the last of the disc */
-	if ((track_size == 0) && last_recorded) {
-		track_size = last_recorded - track_start;
-	}
-	/* if last_recorded < tracksize, tracksize is overestimated */
-	if (last_recorded) {
-		if (last_recorded - track_start <= track_size) {
-			track_size = last_recorded - track_start;
-			flags |= MMC_TRACKINFO_LRA_VALID;
-		}
-	}
-	/* check if its a the last track of the sector */
-	if (next_writable) {
-		if (next_track_start > next_writable)
-			flags |= MMC_TRACKINFO_NWA_VALID;
-	}
-
-	/* no flag set -> no values */
-	if ((flags & MMC_TRACKINFO_LRA_VALID) == 0)
-		last_recorded = 0;
-	if ((flags & MMC_TRACKINFO_NWA_VALID) == 0)
-		next_writable = 0;
-
-	/* fill in */
-	/* trackinfo->tracknr preserved */
-	trackinfo->sessionnr  = track_sessionnr;
-	trackinfo->track_mode = 7;	/* data, incremental  */
-	trackinfo->data_mode  = 8;	/* 2048 bytes mode1   */
-
-	trackinfo->flags = flags;
-	trackinfo->track_start   = track_start;
-	trackinfo->next_writable = next_writable;
-	trackinfo->free_blocks   = 0;
-	trackinfo->packet_size   = 1;
-	trackinfo->track_size    = track_size;
-	trackinfo->last_recorded = last_recorded;
-
-out:
-	free(buffer, M_TEMP);
-	return error;
-
+	sc->audio_status = CD_AS_PLAY_COMPLETED;
+	return 0;
 }
 
-static int
-mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph, 
-			struct mmc_trackinfo *trackinfo)
+int
+mcd_getqchan(sc, q, qchn)
+	struct mcd_softc *sc;
+	union mcd_qchninfo *q;
+	int qchn;
 {
-	struct scsipi_read_toc            gtoc_cmd;
-	struct scsipi_toc_header         *toc_hdr;
-	struct scsipi_toc_formatted      *toc;
-	uint32_t tracknr, track_start, track_size;
-	uint32_t lba, lead_out;
-	const uint32_t buffer_size = 4 * 1024;	/* worst case TOC estimate */
-	uint8_t *buffer;
-	uint8_t last_tracknr;
-	int size, req_size;
-	int error, flags;
+	struct mcd_mbox mbx;
+	int error;
 
-	
-	buffer = malloc(buffer_size, M_TEMP, M_WAITOK);
-	/*
-	 * Emulate read trackinfo for DVD-ROM. We can't use the raw-TOC as the
-	 * CD-ROM emulation uses since the specification tells us that no such
-	 * thing is defined for DVD's. The reason for this is due to the large
-	 * number of tracks and that would clash with the `magic' values. This
-	 * suxs.
-	 *
-	 * Not all information is present and this presents a problem.
-	 * Track starts are known for each track but other values are
-	 * deducted.
-	 */
-
-	/* get formatted toc to process, first header to check size */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	bzero(&gtoc_cmd, sizeof(gtoc_cmd));
-	gtoc_cmd.opcode      = READ_TOC;
-	gtoc_cmd.addr_mode   = 0;		/* lba's please     */
-	gtoc_cmd.resp_format = CD_TOC_FORM;	/* formatted toc    */
-	gtoc_cmd.from_track  = 1;		/* first track      */
-	req_size = sizeof(*toc_hdr);
-	_lto2b(req_size, gtoc_cmd.data_len);
-
-	error = scsipi_command(periph,
-		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
-		(void *)buffer,    req_size,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
-		goto out;
-	toc_hdr = (struct scsipi_toc_header *) buffer;
-	if (_2btol(toc_hdr->length) > buffer_size - 2) {
-#ifdef DIAGNOSTIC
-		printf("incease buffersize in mmc_readtrackinfo_dvdrom\n");
-#endif
-		error = ENOBUFS;
-		goto out;
-	}
-
-	/* read in complete formatted toc */
-	req_size = _2btol(toc_hdr->length);
-	_lto2b(req_size, gtoc_cmd.data_len);
-
-	error = scsipi_command(periph,
-		(void *)&gtoc_cmd, sizeof(gtoc_cmd),
-		(void *)buffer,    req_size,
-		CDRETRIES, 30000, NULL, flags);
-	if (error)
-		goto out;
-
-	toc_hdr = (struct scsipi_toc_header *)     buffer;
-	toc     = (struct scsipi_toc_formatted *) (buffer + 4);
-
-	/* as in read disc info, all sessions are converted to tracks      */
-	/* track 1..  -> offsets, sizes can be (rougly) estimated (16 ECC) */
-	/* last track -> we got the size from the lead-out                 */
-
-	tracknr      = 0;
-	last_tracknr = toc_hdr->last;
-	track_start  = 0;
-	track_size   = 0;
-	lead_out     = 0;
-
-	size = req_size - sizeof(struct scsipi_toc_header) + 1;
-	while (size > 0) {
-		/* remember, DVD-ROM: tracknr == sessionnr */
-		lba     = _4btol(toc->msf_lba);
-		tracknr = toc->tracknr;
-		if (trackinfo->tracknr == tracknr) {
-			track_start = lba;
-		}
-		if (trackinfo->tracknr == tracknr+1) {
-			track_size  = lba - track_start;
-			track_size -= 16;	/* link block ? */
-		}
-		if (tracknr == 0xAA) {
-			lead_out = lba;
-		}
-		toc++;
-		size -= sizeof(struct scsipi_toc_formatted);
-	}
-	if (trackinfo->tracknr == last_tracknr) {
-		track_size = lead_out - track_start;
-	}
-
-	/* fill in */
-	/* trackinfo->tracknr preserved */
-	trackinfo->sessionnr  = trackinfo->tracknr;
-	trackinfo->track_mode = 0;	/* unknown */
-	trackinfo->data_mode  = 8;	/* 2048 bytes mode1   */
-
-	trackinfo->flags         = 0;
-	trackinfo->track_start   = track_start;
-	trackinfo->next_writable = 0;
-	trackinfo->free_blocks   = 0;
-	trackinfo->packet_size   = 16;	/* standard length 16 blocks ECC */
-	trackinfo->track_size    = track_size;
-	trackinfo->last_recorded = 0;
-
-out:
-	free(buffer, M_TEMP);
-	return error;
-}
-
-static int
-mmc_gettrackinfo(struct scsipi_periph *periph, 
-		 struct mmc_trackinfo *trackinfo)
-{
-	struct scsipi_read_trackinfo      ti_cmd;
-	struct scsipi_read_trackinfo_data ti;
-	struct scsipi_get_configuration   gc_cmd;
-	struct scsipi_get_conf_data       gc;
-	int error, flags;
-	int mmc_profile;
-
-	/* set up SCSI call with track number from trackinfo.tracknr */
-	flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT;
-	memset(&ti_cmd, 0, sizeof(ti_cmd));
-	ti_cmd.opcode    = READ_TRACKINFO;
-	ti_cmd.addr_type = READ_TRACKINFO_ADDR_TRACK;
-	ti_cmd.data_len[1] = READ_TRACKINFO_RETURNSIZE;
-
-	/* trackinfo.tracknr contains number of tracks to query */
-	_lto4b(trackinfo->tracknr, ti_cmd.address);
-	error = scsipi_command(periph,
-		(void *)&ti_cmd, sizeof(ti_cmd),
-		(void *)&ti,     READ_TRACKINFO_RETURNSIZE,
-		CDRETRIES, 30000, NULL, flags);
-
-	if (error) {
-		/* trackinfo call failed, emulate for cd-rom/dvd-rom */
-		/* first determine mmc profile */
-		flags = XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK;
-		memset(&gc_cmd, 0, sizeof(gc_cmd));
-		gc_cmd.opcode = GET_CONFIGURATION;
-		_lto2b(GET_CONF_NO_FEATURES_LEN, gc_cmd.data_len);
-
-		error = scsipi_command(periph,
-			(void *)&gc_cmd, sizeof(gc_cmd),
-			(void *)&gc,     GET_CONF_NO_FEATURES_LEN,
-			CDRETRIES, 30000, NULL, flags);
-		if (error)
+	if (qchn == CD_TRACK_INFO) {
+		if ((error = mcd_setmode(sc, MCD_MD_TOC)) != 0)
 			return error;
-		mmc_profile = _2btol(gc.mmc_profile);
-
-		/* choose emulation */
-		if (mmc_profile == 0x08) /* CD-ROM */
-			return mmc_gettrackinfo_cdrom(periph, trackinfo);
-		if (mmc_profile == 0x10) /* DVD-ROM */
-			return mmc_gettrackinfo_dvdrom(periph, trackinfo);
-		/* CD/DVD drive is violating specs */
-		return EIO;
+	} else {
+		if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
+			return error;
+	}
+	if (qchn == CD_MEDIA_CATALOG) {
+		if ((error = mcd_setupc(sc, MCD_UPC_ENABLE)) != 0)
+			return error;
+	} else {
+		if ((error = mcd_setupc(sc, MCD_UPC_DISABLE)) != 0)
+			return error;
 	}
 
-	/* (re)initialise structure */
-	memset(trackinfo, 0, sizeof(struct mmc_trackinfo));
+	mbx.cmd.opcode = MCD_CMDGETQCHN;
+	mbx.cmd.length = 0;
+	mbx.res.length = sizeof(mbx.res.data.qchninfo);
+	if ((error = mcd_send(sc, &mbx, 1)) != 0)
+		return error;
 
-	trackinfo->tracknr    = ti.track_lsb   | (ti.track_msb   << 8);
-	trackinfo->sessionnr  = ti.session_lsb | (ti.session_msb << 8);
-	trackinfo->track_mode = ti.track_info_1 & 0xf;
-	trackinfo->data_mode  = ti.track_info_2 & 0xf;
+	*q = mbx.res.data.qchninfo;
+	return 0;
+}
 
-	flags = 0;
-	if (ti.track_info_1 & 0x10)
-		flags |= MMC_TRACKINFO_COPY;
-	if (ti.track_info_1 & 0x20)
-		flags |= MMC_TRACKINFO_DAMAGED;
-	if (ti.track_info_2 & 0x10)
-		flags |= MMC_TRACKINFO_FIXED_PACKET;
-	if (ti.track_info_2 & 0x20)
-		flags |= MMC_TRACKINFO_INCREMENTAL;
-	if (ti.track_info_2 & 0x40)
-		flags |= MMC_TRACKINFO_BLANK;
-	if (ti.track_info_2 & 0x80)
-		flags |= MMC_TRACKINFO_RESERVED;
-	if (ti.data_valid   & 0x01)
-		flags |= MMC_TRACKINFO_NWA_VALID;
-	if (ti.data_valid   & 0x02)
-		flags |= MMC_TRACKINFO_LRA_VALID;
+int
+mcd_read_subchannel(sc, ch, info)
+	struct mcd_softc *sc;
+	struct ioc_read_subchannel *ch;
+	struct cd_sub_channel_info *info;
+{
+	int len = ch->data_len;
+	union mcd_qchninfo q;
+	daddr_t lba;
+	int error;
 
-	trackinfo->flags = flags;
-	trackinfo->track_start    = _4btol(ti.track_start);
-	trackinfo->next_writable  = _4btol(ti.next_writable);
-	trackinfo->free_blocks    = _4btol(ti.free_blocks);
-	trackinfo->packet_size    = _4btol(ti.packet_size);
-	trackinfo->track_size     = _4btol(ti.track_size);
-	trackinfo->last_recorded  = _4btol(ti.last_recorded);
+	if (sc->debug)
+		printf("%s: subchan: af=%d df=%d\n", sc->sc_dev.dv_xname,
+		    ch->address_format, ch->data_format);
+
+	if (len > sizeof(*info) || len < sizeof(info->header))
+		return EINVAL;
+	if (ch->address_format != CD_MSF_FORMAT &&
+	    ch->address_format != CD_LBA_FORMAT)
+		return EINVAL;
+	if (ch->data_format != CD_CURRENT_POSITION &&
+	    ch->data_format != CD_MEDIA_CATALOG)
+		return EINVAL;
+
+	if ((error = mcd_getqchan(sc, &q, ch->data_format)) != 0)
+		return error;
+
+	info->header.audio_status = sc->audio_status;
+	info->what.media_catalog.data_format = ch->data_format;
+
+	switch (ch->data_format) {
+	case CD_MEDIA_CATALOG:
+		info->what.media_catalog.mc_valid = 1;
+#if 0
+		info->what.media_catalog.mc_number =
+#endif
+		break;
+
+	case CD_CURRENT_POSITION:
+		info->what.position.track_number = bcd2bin(q.current.trk_no);
+		info->what.position.index_number = bcd2bin(q.current.idx_no);
+		switch (ch->address_format) {
+		case CD_MSF_FORMAT:
+			info->what.position.reladdr.addr[0] = 0;
+			info->what.position.reladdr.addr[1] = bcd2bin(q.current.relative_pos[0]);
+			info->what.position.reladdr.addr[2] = bcd2bin(q.current.relative_pos[1]);
+			info->what.position.reladdr.addr[3] = bcd2bin(q.current.relative_pos[2]);
+			info->what.position.absaddr.addr[0] = 0;
+			info->what.position.absaddr.addr[1] = bcd2bin(q.current.absolute_pos[0]);
+			info->what.position.absaddr.addr[2] = bcd2bin(q.current.absolute_pos[1]);
+			info->what.position.absaddr.addr[3] = bcd2bin(q.current.absolute_pos[2]);
+			break;
+		case CD_LBA_FORMAT:
+			lba = msf2hsg(q.current.relative_pos, 1);
+			/*
+			 * Pre-gap has index number of 0, and decreasing MSF
+			 * address.  Must be converted to negative LBA, per
+			 * SCSI spec.
+			 */
+			if (info->what.position.index_number == 0x00)
+				lba = -lba;
+			info->what.position.reladdr.addr[0] = lba >> 24;
+			info->what.position.reladdr.addr[1] = lba >> 16;
+			info->what.position.reladdr.addr[2] = lba >> 8;
+			info->what.position.reladdr.addr[3] = lba;
+			lba = msf2hsg(q.current.absolute_pos, 0);
+			info->what.position.absaddr.addr[0] = lba >> 24;
+			info->what.position.absaddr.addr[1] = lba >> 16;
+			info->what.position.absaddr.addr[2] = lba >> 8;
+			info->what.position.absaddr.addr[3] = lba;
+			break;
+		}
+		break;
+	}
 
 	return 0;
 }
 
+int
+mcd_playtracks(sc, p)
+	struct mcd_softc *sc;
+	struct ioc_play_track *p;
+{
+	struct mcd_mbox mbx;
+	int a = p->start_track;
+	int z = p->end_track;
+	int error;
+
+	if (sc->debug)
+		printf("%s: playtracks: from %d:%d to %d:%d\n",
+		    sc->sc_dev.dv_xname,
+		    a, p->start_index, z, p->end_index);
+
+	if (a < bcd2bin(sc->volinfo.trk_low) ||
+	    a > bcd2bin(sc->volinfo.trk_high) ||
+	    a > z ||
+	    z < bcd2bin(sc->volinfo.trk_low) ||
+	    z > bcd2bin(sc->volinfo.trk_high))
+		return EINVAL;
+
+	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
+		return error;
+
+	mbx.cmd.opcode = MCD_CMDREADSINGLESPEED;
+	mbx.cmd.length = sizeof(mbx.cmd.data.play);
+	mbx.cmd.data.play.start_msf[0] = sc->toc[a].toc.absolute_pos[0];
+	mbx.cmd.data.play.start_msf[1] = sc->toc[a].toc.absolute_pos[1];
+	mbx.cmd.data.play.start_msf[2] = sc->toc[a].toc.absolute_pos[2];
+	mbx.cmd.data.play.end_msf[0] = sc->toc[z+1].toc.absolute_pos[0];
+	mbx.cmd.data.play.end_msf[1] = sc->toc[z+1].toc.absolute_pos[1];
+	mbx.cmd.data.play.end_msf[2] = sc->toc[z+1].toc.absolute_pos[2];
+	sc->lastpb = mbx.cmd;
+	mbx.res.length = 0;
+	return mcd_send(sc, &mbx, 1);
+}
+
+int
+mcd_playmsf(sc, p)
+	struct mcd_softc *sc;
+	struct ioc_play_msf *p;
+{
+	struct mcd_mbox mbx;
+	int error;
+
+	if (sc->debug)
+		printf("%s: playmsf: from %d:%d.%d to %d:%d.%d\n",
+		    sc->sc_dev.dv_xname,
+		    p->start_m, p->start_s, p->start_f,
+		    p->end_m, p->end_s, p->end_f);
+
+	if ((p->start_m * 60 * 75 + p->start_s * 75 + p->start_f) >=
+	    (p->end_m * 60 * 75 + p->end_s * 75 + p->end_f))
+		return EINVAL;
+
+	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
+		return error;
+
+	mbx.cmd.opcode = MCD_CMDREADSINGLESPEED;
+	mbx.cmd.length = sizeof(mbx.cmd.data.play);
+	mbx.cmd.data.play.start_msf[0] = bin2bcd(p->start_m);
+	mbx.cmd.data.play.start_msf[1] = bin2bcd(p->start_s);
+	mbx.cmd.data.play.start_msf[2] = bin2bcd(p->start_f);
+	mbx.cmd.data.play.end_msf[0] = bin2bcd(p->end_m);
+	mbx.cmd.data.play.end_msf[1] = bin2bcd(p->end_s);
+	mbx.cmd.data.play.end_msf[2] = bin2bcd(p->end_f);
+	sc->lastpb = mbx.cmd;
+	mbx.res.length = 0;
+	return mcd_send(sc, &mbx, 1);
+}
+
+int
+mcd_playblocks(sc, p)
+	struct mcd_softc *sc;
+	struct ioc_play_blocks *p;
+{
+	struct mcd_mbox mbx;
+	int error;
+
+	if (sc->debug)
+		printf("%s: playblocks: blkno %d length %d\n",
+		    sc->sc_dev.dv_xname, p->blk, p->len);
+
+	if (p->blk > sc->disksize || p->len > sc->disksize ||
+	    (p->blk + p->len) > sc->disksize)
+		return 0;
+
+	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
+		return error;
+
+	mbx.cmd.opcode = MCD_CMDREADSINGLESPEED;
+	mbx.cmd.length = sizeof(mbx.cmd.data.play);
+	hsg2msf(p->blk, mbx.cmd.data.play.start_msf);
+	hsg2msf(p->blk + p->len, mbx.cmd.data.play.end_msf);
+	sc->lastpb = mbx.cmd;
+	mbx.res.length = 0;
+	return mcd_send(sc, &mbx, 1);
+}
+
+int
+mcd_pause(sc)
+	struct mcd_softc *sc;
+{
+	union mcd_qchninfo q;
+	int error;
+
+	/* Verify current status. */
+	if (sc->audio_status != CD_AS_PLAY_IN_PROGRESS)	{
+		printf("%s: pause: attempted when not playing\n",
+		    sc->sc_dev.dv_xname);
+		return EINVAL;
+	}
+
+	/* Get the current position. */
+	if ((error = mcd_getqchan(sc, &q, CD_CURRENT_POSITION)) != 0)
+		return error;
+
+	/* Copy it into lastpb. */
+	sc->lastpb.data.seek.start_msf[0] = q.current.absolute_pos[0];
+	sc->lastpb.data.seek.start_msf[1] = q.current.absolute_pos[1];
+	sc->lastpb.data.seek.start_msf[2] = q.current.absolute_pos[2];
+
+	/* Stop playing. */
+	if ((error = mcd_stop(sc)) != 0)
+		return error;
+
+	/* Set the proper status and exit. */
+	sc->audio_status = CD_AS_PLAY_PAUSED;
+	return 0;
+}
+
+int
+mcd_resume(sc)
+	struct mcd_softc *sc;
+{
+	struct mcd_mbox mbx;
+	int error;
+
+	if (sc->audio_status != CD_AS_PLAY_PAUSED)
+		return EINVAL;
+
+	if ((error = mcd_setmode(sc, MCD_MD_COOKED)) != 0)
+		return error;
+
+	mbx.cmd = sc->lastpb;
+	mbx.res.length = 0;
+	return mcd_send(sc, &mbx, 1);
+}
+
+int
+mcd_eject(sc)
+	struct mcd_softc *sc;
+{
+	struct mcd_mbox mbx;
+
+	mbx.cmd.opcode = MCD_CMDEJECTDISK;
+	mbx.cmd.length = 0;
+	mbx.res.length = 0;
+	return mcd_send(sc, &mbx, 0);
+}
+
+int
+mcd_setlock(sc, mode)
+	struct mcd_softc *sc;
+	int mode;
+{
+	struct mcd_mbox mbx;
+
+	mbx.cmd.opcode = MCD_CMDSETLOCK;
+	mbx.cmd.length = sizeof(mbx.cmd.data.lockmode);
+	mbx.cmd.data.lockmode.mode = mode;
+	mbx.res.length = 0;
+	return mcd_send(sc, &mbx, 1);
+}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          óè;èşÿƒÄ¿ÓRhÚaPèÅbşÿƒÄ¾ óéSşÿÿ‹ˆ¢ƒìh óè	èşÿƒÄShïaPè–bşÿƒÄéşÿÿ‰öU‰åSƒì‹„¾…Òu	ë9‰Ú…Ût2‹€z%uò€zvì‹B ú   ;ˆ¢}ÜƒìRè³8ÿÿƒÄ‰Ú…ÛuĞ‰ö‹Œ¾…Òuë8‰Ú…Ût2‹€z%uò€zvì‹B ú   ;ˆ¢}ÜƒìRè›8ÿÿƒÄ‰Ú…ÛuĞ‰ö‹]üÉÃv U‰åƒì‹U‹M¿àè9ĞtEƒìQRèGÿÿƒÄ…Àt‹Ìé…Òt‹”é…Ét¸   ÉÃƒìPè›ŸÿÿƒÄ…À•À¶ÀÉÃ‰ö¿âè9Áu°¡¬é…ÀtÌ¡é…ÀuÃëœU‰åVS‹]‹uƒìVSè3™şÿƒÄ…Àt%›CF…    Š`Í‹‚`Í€ä€fƒø.teø[^ÉÃ¡Ìé…ÀuğÆ‚`Í €I ‰u‰]eø[^ÉéOûÿÿv U‰åVS‹]‹ufƒ=äè „£   fƒ=æè tiƒì¿âèPSè\ÿÿÿXZ¿âè¿æè)ĞPSèCÿÿÿYXVSè:ÿÿÿXZV¿àè¿äè)ĞPè!ÿÿÿƒÄ‰u¿àè‰Eeø[^Ééÿÿÿ‰öƒìFÿPSè÷şÿÿYXVSèîşÿÿƒÄF‰E‰]eø[^Éé×şÿÿv ƒìVCÿPèÇşÿÿXZVSè¾şÿÿƒÄ‰uC‰Eeø[^Éé§şÿÿv U‰åWVSƒì‹u‹}¿Ş›C¿×‰UìB…`Í‰EğŠ@¨@„   ƒà<„ï   ¡Ìé…À„†   f;5~É„Á   f;5 Ê„    ƒìÿuìSè¨ÿÿƒÄ…Àtö@ u~‹UğŠBƒà¶Àƒø	vf¸{   eô[^_ÉÃƒìÿuìSè}şÿƒÄ…À…›   ‹Ìé…É…   ¸    eô[^_ÉÃv ƒìÿuìSè<ÿÿƒÄ…À„™   ¾@eô[^_ÉÃÿ$…`b¸^   ëÃ‰öf;=|É…Sÿÿÿ¸>   ë­f;=\Í…2ÿÿÿ¸<   ë™¸}   eô[^_ÉÃ¸#   ë…‹Eğ€x ‰Nÿÿÿ¸.   énÿÿÿ¸-   édÿÿÿ‹Uğ¾éYÿÿÿ¸+   éOÿÿÿ¸|   éEÿÿÿ¡Ìé…À…½şÿÿƒìÿuìSè³ÿÿƒÄ…À„¦şÿÿ¸$   éÿÿÿ‰öU‰åWVSƒì‹u‹}WVè^üÿÿƒÄ…Àteô[^_ÉÃv ¶FG…    ƒ`Í‰Eğƒì¿ÇP¿ÆPèûıÿÿƒÄ:ƒ`ÍtÁˆƒ`Í‹Eğ€`¿eô[^_ÉÃv U‰åWVSƒì‹M‹U‹}ƒùOw	…Òxƒú~WRQhõaèK=ÿÿƒÄeô[^_ÉÃ‰AB4…    `ÍöC@t¾†`Í9ÇtÑ‰øˆ†`Í€K ‰U‰Meô[^_Éé»÷ÿÿv U‰åVS‹u‹]ƒì¿ÃP¿ÆPè=ıÿÿƒÄ¾ÀPSVèWÿÿÿƒÄeø[^ÉÃU‰åSƒì‹]öC)tƒì¿CP¿CPèªÿÿÿ€c)ıƒÄ‹]üÉÃ‰öU‰åVS‹]¡Ìé…Àt{‹5”é…ötq¾   öC)t‹C;CtzƒìSè™ÿÿÿƒÄ…ötEöC)u?ŠC(„Àt
+‹\é…Ét_‹C¾@RP¿CP¿CPè¯şÿÿ€K)‹Cf‰Cf‹Cf‰CƒÄeø[^ÉÃ‰öƒìSèošÿÿƒÄ…À…{ÿÿÿ1öéyÿÿÿ…öt‚eø[^ÉÃ¾Àë£v U‰åSƒì‹x¾…Ûu	ëA‹…Ût:‹C€x;t9ƒìSèÿÿÿƒÄ÷C, € tÜƒì‹C,ÁèƒàPè®°  ƒÄ‹…ÛuÇ‹]üÉÃv 9êt4¿S¿K’BAŠ…aÍƒà<”À…    ŠC)ƒàû	ĞˆC)ë‹1ÀëèU‰åSƒì‹]¿CP¿CPè«ùÿÿƒÄ…Àuƒì¿CP¿CPèşÿÿƒÄ‹]üÉÃ‰öU‰åƒìöòètE¡¬é…À…È   f¡êèf;àè„!  ƒì¿ìèP¿êèPèAùÿÿƒÄ…À„Ş   ‰ö¡¬é…Àt¡é…À„¢   öòètf¡êèf;àètvP¾îèP¿âèP¿àèPèèüÿÿ€òè¡àèf£êèf¡âèf£ìèƒÄ¿àè¿âè€PQ€•aÍ@ÉÃ‰ö¡é…À„>ÿÿÿé&ÿÿÿ‰ö¡ìèf;âè…xÿÿÿëµ€%òè÷ƒì¿âèP¿àèPè=   ƒÄë‘ƒì¿ìèP¿êèPèÀüÿÿƒÄéÿÿÿ¡ìèf;âè…ÍşÿÿéíşÿÿU‰åWVSƒì‹]‹u¿àè9Ø„Ş   ƒìVSè¼‘şÿƒÄ…À„Á   ›CF<…`ÍŠGƒà„¥   ¶Àƒø%¿àè¿âè’BAŠ…aÍƒà<txƒìVSèÿÿ‰EğƒÄ…Àt0Š@)¨u)¨t	¡é…Àt¡0ë…À„Ç   ƒìPèÎ­  ƒÄë1ƒìVSèJÿÿ‰ÂƒÄ…Àt]ŠGƒà<tSP¾BPVSè6ûÿÿƒÄv €O@eô[^_ÉÃ¿âè9Æ…ÿÿÿ¡¬é…Àt¡é…À„ışÿÿeô[^_Éékıÿÿv ‹Eğ…Àt‹Eğö@)t8‹é…Éu.ƒìVSèôÿÿƒÄ…Àt0ŠGƒà<t&Rj$VSè±úÿÿƒÄéyÿÿÿƒìÿuğèûÿÿƒÄéeÿÿÿöG@t	€? …Vÿÿÿ€O`ƒìVSèøúÿÿVSè©òÿÿƒÄé9ÿÿÿU‰åVS‹u‹]¡äèf…À„   fƒ=æè taƒìS˜Ñà‰ò)ÂRèşÿÿXZS¿äè‰ò)ÂRè şÿÿYXSVè÷ıÿÿXZ¿æè‰Ú)ÂRVèãıÿÿƒÄ¿æèÑà)Ã‰]‰ueø[^ÉéÄıÿÿƒìCÿPVè·ıÿÿYXSVè®ıÿÿƒÄC‰EëÑv ƒìSFÿPè“ıÿÿXZSVèŠıÿÿƒÄ‰]F‰Eeø[^Éésıÿÿv U‰åƒìjPjh€aè,‚  U‰åƒìE‰Eüf¡ô@f£ôfHuIè¦_  ƒìh°aè!Uşÿh ½j	jhbènWşÿƒÄÿuüÿuèÀUşÿè‡f  Ç$bè‹îşÿƒÄÉÃƒìjèpWşÿU‰åƒì¡b‰Eü îèˆEıè™ñÿÿƒì¿âè@P¿àèHPè^  h ½jjhbèøVşÿ¿àèBf£¤ÊƒÄ¿âèƒÀPJRèÓ]  XZh ½EüPèSWşÿ¿àèBf£¤ÊYX¿âèƒÀPJRèŸ]  h ½jjhbèŒVşÿ¡àèƒÀf£¤Ê€òè¡àèf£êèf¡âèf£ìèƒÄ ÉÃv U‰åSƒì‹U‹EŠ]fƒúOwf…Àxfƒø~˜P¿ÂP¾ÃPh"bèg5ÿÿƒÄ‹]üÉÃv „Ût@ƒìƒÀ˜P¿ÂPè]  ¾Ó¡¨½H£¨½ƒÄ…Àx4¡ ½ˆ@£ ½fÿ¤Ê‹]üÉÃ˜‰E¿Â‰EÇE8b‹]üÉéş4ÿÿ;¸½|€ú
+u¿ƒìh ½RèUşÿƒÄë¹‰öU‰åWVSƒìöäéufƒ=àèRt	öYÍ@teô[^_ÉÃèªùÿÿf¡ˆó¿Ğ‰Uì¿5„ó9òf‰Eò¿†óf‹ô¿Ù9ÓZ›C‹uìF4…`Í‰Ïëv CƒÆXG9Ú|0öF tñ€fßQ¾P¿EòP¿ÇPèşÿÿƒÄ¿†óCƒÆXG9Ú}Ğ¿5„óÿEìfÿEò;uì}ŒfÇ„ó  fÇ†ó  fÇôP fÇˆó eô[^_ÉÃU‰åWVSƒì‹E‰Eè‹U‰Uäöäéteô[^_Éé:ıÿÿèá÷ÿÿ‹x¾…Òt!v ¿B9Eè¿B9Eä~€b)ı‰ö‹…Òuâè±÷ÿÿ‹Eä…ÀÃ   ‹Uè’BÅ`Í‰EğÇEì    ë8‰ö¡ô…À…˜   ƒì‹EìƒÀPÿuèèıZ  èœ\  ƒÄÿEìƒEğ‹Uì9Uätoƒ}ìÄƒì‹EìƒÀPÿuèèÎZ  èm\  ƒÄƒ}ìËƒ}èOÅ‹]ğ‹}è‹uè¿Eì‰Eàë¨@uFƒÃXGƒşPt¥ŠC¨ tëƒàßˆCP¾Pÿuà¿ÇPè$ıÿÿƒÄëÓƒ}äeô[^_ÉÃ‹EèHPè·íÿÿ^ƒ}ätç‹ô…ÛtİƒìjjèBZ  ƒÄeô[^_ÉéK\  v U‰åWVSƒìöäéteô[^_ÉéÒûÿÿèíÿÿ¡¬é…À…ó   ¿àèf‰êè¿âèf‰ìè’BAŠîèˆ…`Í¿êè’BA€…aÍ@€òèèöÿÿ¡x¾…Àt
+€`)ı‹ …ÀuöèşõÿÿÇEğ`Í1ÿ‹]ğ1öë¨@uFƒÃXƒşPt%ŠC¨ tìƒàßˆCP¾PWVèüÿÿƒÄFƒÃXƒşPuÛGƒEğƒÿu¼fÇôP fÇˆó fÇ„ó  fÇ†ó  €YÍ eô[^_ÉéÕìÿÿ¡é…À… ÿÿÿ€%òè÷éEÿÿÿU‰åƒìè¹şÿÿ1ÀÉÃU‰åƒì¡¬é…Àt
+‹é…Ét!R¾îèP¿âèP¿àèPèUûÿÿƒÄÉÃU‰åWVSƒì‹u‹}‰úfƒşÿ„•   fƒşşt¿×‰Uğ¿ŞƒìRSèÄnşÿƒÄ…Àtkfƒ= È …•   P¾"ÈPÿuğSèõúÿÿf¡ È¿Ğf‰4•àÆf‰<•âÆ@f£ ÈƒÄfƒøOH›C‹UğB€$…aÍßeô[^_ÉÃˆ"Èeô[^_ÉÃ‰öf…ÿ~3ˆ"ÈfÇ È  eô[^_ÉÃƒìhObèùÿÿƒÄë¦è)S  éaÿÿÿf¡ ÈHf£ ÈfƒøÿtN˜¿…àÆ¿4…âÆƒìVSè=öÿÿƒÄ›CF¾…`ÍPVSèúÿÿf¡ ÈHf£ ÈƒÄfƒøÿu³Æ"È fÇ È  éHÿÿÿ‰öU‰åWVSƒì‹]‹ufƒûş„‡   fƒûÿ„   f‹&Èf…Òxƒì¿$ÈP¿ÂPèUmşÿƒÄ…À…†   f…Ûx5¿Æ‰Eğ¿ûƒìPWè2mşÿƒÄ…À…»   f‰&Èf‰5$Èeô[^_ÉÃÆ#È fÇ&Èÿÿeô[^_ÉÃ‰ğ¢#Èeô[^_ÉÃf…öˆjÿÿÿ‰ğ¢#ÈfÇ&Èÿÿeô[^_ÉÃv èÓQ  ƒì¿$ÈP¿&ÈPèõÿÿ¿&È¿$ÈƒÄ’BA¾…`ÍPQRèÕøÿÿƒÄf…Û‰,ÿÿÿé\ÿÿÿP¾#ÈPÿuğWè²øÿÿƒÄé+ÿÿÿU‰åSƒìŠ]¾ÃPhˆbèXOşÿƒÄ…Àt1À‹]üÉÃ:ÀFt%¸ B=”Fså:$Bt‰öƒÀ=”FsÑ:Xuñ¸   ‹]üÉÃv U‰åWVSƒì‹Ef‰Eê‹Ìé…Ûusf…À„û  öäé…m  fƒ= Ê „  ¿àè¿âè’BAŠ•aÍƒà<„  €<•aÍ yÇEädéî  ƒìh´bèÆa  ƒÄ‹àèf‰Uì¿Úf‹âèf‰Mî¿Á‰Eğ›C4 ‹UğŠaÍÀè¶À¿Uê9Ğ„C  ŠaÍƒà<„Û  Sÿ‰Ş‹}ğ‹Eìf£Í’BGŠ…aÍƒà<t8„Àt4‹Mì‰ÈH˜€PW•	Íë	‰öƒèX„ÒtIŠƒâ€úuîf‰Í‹Uìf‰ Ë›CGŠ…¹Íƒà<t7„Àt3‰ÑA˜€PW•¹Íë	‰öƒÀX„ÒtAŠƒâ€úuîf‰ Ëf‹Mîf‰"É¶F ‹Mğ
+Š…]Íƒà<„§  „À„Ÿ  f‹]î‰ØH˜Â•]Íë
+@ÿƒê„ÉtK‰ÇŠ
+ƒá€ùuéf‰"Éf‹Eîf£¢Ê¶F ‹UğŠ…eÍƒà<t1„Àt-f‹Uî1ÉB˜ÃëA„ÀtBŠ…eÍƒà<uéf‰¢Ê¿¢Ê9øŒ   ¿ ËŠMêÁáˆMév ¿Í9Óv›C4Gë
+‰öCƒÆ9Ú|ZŠµaÍƒà
+EéˆµaÍ¡Ìé…ÀuÛƒìWSè‰ÿÿƒÄƒø©   fƒ}ê „ª   ƒìWSèhñÿÿƒÄ¿ ËCƒÆ9Ú}¦¿¢ÊG9øvÿÿÿfƒ}ê u	fÇ Ë  eô[^_ÉÃöäéu=fƒ= Ê t3¿àè¿âè’BAŠ•aÍƒà<t€<•aÍ ˆ÷   ÇEddeô[^_ÉéÙ^  ¿ ËéÿÿÿƒìWSèZéÿÿƒÄ¿ Ëé÷şÿÿƒìÿ5êèÙ›şÿZYPhbè˜^  ƒÄéVÿÿÿ‹}ğG>Š…aÍƒà¶Àƒø‹}ğO>Š…aÍƒà¶Àƒø~ds¶F‹MğAŠ…aÍƒà¶Àƒø~SÿéÒüÿÿSÿ’B‹MğAŠ…aÍƒà¶Àƒø‰ŞéªüÿÿÇE£béÿÿÿ‰Öé—üÿÿ‹}ğë—ƒìhdèè]  ƒÄéüÿÿ‹}ğéŠıÿÿÇE´déçşÿÿU‰åƒì‹M¶QÁâÕ    )Ğ€ˆ¬£€IQèÂÿÿ¸   ÉÃv U‰åWVSì$  ‹¤éhÅbh"?èoÿÿ‰…ÜşÿÿƒÄ…À„Œ   ‹…Üşÿÿö@…„   ‹Ìé…Ò…E  ƒìh|eè;]  ƒÄ…Û•Àf¶ğf…öu‹…ÜşÿÿŠPB}<‡€   ¶Àÿ$…4j¡¾…Àt	f…ö…v  ƒìjÿµÜşÿÿèÒ  ƒÄ…À…€  ¸   eô[^_ÉÃ¡Ìé…Àtƒìh@eè¼\  ƒÄ…Û•Àf¶ğf…ötƒìh¤eè\  ƒÄélÿÿÿƒì¶ÂPhjè(ÿÿ1ÛƒÄ‹…Üşÿÿ¶P•    Å    )Áö¬£uf…Ûu8ÁâÕ    )Ğ‹°¨£…ö„6  ƒìÿµÜşÿÿèÔÿÿ¸   ƒÄeô[^_ÉÃf…öuÃ€‰¬£ƒìj
+j è „şÿƒÄëÅƒìheèö[  1ÀƒÄeô[^_ÉÃè$¡şÿ‰Ã…À„-  f…ö…ƒ
+  ‹@fƒø~ƒì˜Pè·  ƒÄ…À…&  ƒì¶SÁâÕ    )Ğÿ° £h<fè[  €cïfÿC1ÛƒÄéşşÿÿf…ö„5  ƒìh3dèh[  »   ƒÄéÛşÿÿf…ö„´  ƒìhxièE[  [_hdjègaşÿÇ…ìşÿÿ    ƒÄ‹x¾…Û„º  ‹…ìşÿÿ@f‰…Úşÿÿë‰ö‹…Û„œ  ƒì¿CP¿CPèl„ÿÿƒÄƒøÜ‹{$f+½ìşÿÿf‰{$ƒì‹C¾@Ph0dèGşÿƒÄ…Àt‰øf+…Úşÿÿf‰C$fƒ{$ ƒìSè±ˆÿÿ»   ƒÄéşÿÿ1ÿ1Ûf…ötƒìjèÁµ  ƒÄ…Àt"ƒìSWèdşÿƒÄ…Àu¿GC€$…aÍ¿CƒûuÂGƒÿPuºècóÿÿƒìhHiè6Z  ³ƒÄé¬ıÿÿf…ö…Ù  ¸×%ƒìPhõcèZ  Ç…ğşÿÿ`ÍÇ…èşÿÿ    ƒÄ‹ğşÿÿ1ÿëTv ŠCƒàt@<„Œ  <„˜  öC@u*<	t&‰ö€K`Š< t„À…  ƒìÿµèşÿÿWèCèÿÿƒÄGƒÃXƒÿPtf…ötªƒìjèĞ´  ƒÄ…Àt™GƒÃXƒÿPuáÿ…èşÿÿƒ…ğşÿÿƒ½èşÿÿ…iÿÿÿ»   éØüÿÿf…ö„O  ƒìhièBY  [ÿµÜşÿÿèÚÿÿ€¤³¸   ƒÄéHüÿÿfƒşÿƒçƒÇ!¡„¾…À„ì  ‹àè1É1Òë‹ …À„   €x%uğ9X„*  AëäƒìjIè´  ƒÄ…À„z  ¿   f…ötƒÇ…ÿ„W  1Ûë ¹¬Bƒì˜P¿ÂPQè^5ÿÿCƒÄ9ß„3  f¡âè‹àèf…öuÏ1ÉëĞf…ö„  èsZ  1Ûéèûÿÿ1Ûƒ=Ìé ”Ãƒì1Àf…ö”ÀPèûõÿÿƒÄéÃûÿÿƒìhhè6X  ƒÄf…ö„   îèˆ…ôşÿÿ¾ôşÿÿƒìSh@ÉèÊDşÿƒÄ…À„Ë  ƒìShÀÊè±DşÿƒÄ…À„(  ƒìh|hèÙW  »   ƒÄéLûÿÿf…ö„ç  Ç…äşÿÿ   Ç…àşÿÿûÿÿÿ‹½àşÿÿ‹àşÿÿƒì¿âèØP¿àèPè
+ÿşÿƒÄ…Àtƒìj Pèè¨şÿƒÄC9äşÿÿ}ÅG9½äşÿÿ}¶1ÛéØúÿÿf…ö„î  ƒìh€gèBW  1ÛƒÄé¸úÿÿ‹x¾…Ût31ÿƒì¿CP¿CPèº`şÿƒÄ…Àtf…ö„ù  €c*ôG‹…ÛuÓ…ÿuœf…ö„  ƒìh,gèåV  1ÛƒÄé[úÿÿf…ö„E  ƒìhèfèÅV  ‹¤éÇ$d   èÛ±  Ã‰¤é1ÛƒÄé!úÿÿf…ö„Õ  ¡|¾…À„A  ‹àè9P…  ‹ …Àuñƒìh\cèiV  1ÛƒÄéßùÿÿf…ö„£  ƒìhÌgèIV  ƒÄ‹Œ¾…Òt‰ñÁá‹Z$…ÛtŠBƒàï	ÈˆB‹…Òuè‹¼é…É„²şÿÿf…ö…©şÿÿÇ¼é    ƒìÿ5°¾èÿÿZÿ5°¾è<æÿÿXÿ5°¾èCşÿ¡´¾fÇ@  `$ÿûÿÿÇ´¾    Ç°¾    1ÛƒÄé(ùÿÿ¡¾…Àt	f…ö…  ƒìjÿé—øÿÿf…ö…¿  ¡”¾…À„  ƒìh„fèiU  Xÿ5”¾èÿÿ1ÛƒÄéÓøÿÿv ŠCƒààƒÈˆCÆ#étûÿÿŠCƒààƒÈˆCÆ+é`ûÿÿƒìÿµèşÿÿWèmÛÿÿƒÄémûÿÿ€K*éşÿÿƒìÿµÜşÿÿè®’şÿƒÄé´øÿÿ…É…¸  …Ò„Å  f…ö„  ¸°cƒìPhºcèÆT  »   ƒÄé9øÿÿBé·ûÿÿƒìhğgè¦T  ƒÄéXşÿÿƒìh¬iè‘T  ƒÄ‹Lé…É„i  ƒìhdèsT  Ç…ìşÿÿ    ƒÄé7ùÿÿƒìh¬gèTT  1ÛƒÄéÊ÷ÿÿ¸ñcé"úÿÿƒìhÔiè3T  ƒÄ¡¼é…À„K  ƒìhDdèT  ¡´¾€@»   ƒÄé€÷ÿÿƒìhÕcèóS  YÿµÜşÿÿè‹ÿÿ€¤³ƒÄë.¸   RPhIh‡Nè¡ÿÿƒÄ…À…Ûöÿÿ¡Œ¾…À„Îöÿÿƒìjèç®  ƒÄ…ÀuÁƒìjèÖ®  ƒÄë·ƒìhgè€S  €ôè@1ÛƒÄéïöÿÿƒì¿âèP¿àèPèÇ£şÿ‰ÃèˆX  XZ¿âèP¿àèPè©£şÿƒÄ9Ã…Ìùÿÿ1Ûé§öÿÿôşÿÿƒìh@hèS  ‰$èœd  ü¹ÿÿÿÿ‰ß1Àò®ƒÄƒùıu×ƒì¾…ôşÿÿPè8ğÿÿƒÄ…ÀtÀé½úÿÿÇ…äşÿÿ   Ç…àşÿÿÿÿÿÿéûÿÿ¡€¾…À„L  ‹àè9P…‰  ‹ …Àuñƒìh¨hè”R  »   ƒÄéöÿÿƒì¶@ÁàÅ    )Âÿ² £h`fèdR  ¡¾€`¿1ÛƒÄéÑõÿÿƒìjèo­  xƒÄévùÿÿ¸ç%é^ıÿÿèñØÿÿ‹„¾…Ûu	ë%‹…Ût‰ú:SuóPj%¿CP¿CPèùçÿÿƒÄëÜècìÿÿf…ö„Æ  ¸°cƒìPhøhèÛQ  èRM  èñêÿÿ»   ƒÄéDõÿÿèÿ–şÿ‰Ã…À„‹  ƒì¶PÁâÕ    )Ğÿ° £h`fè’Q  €c¿1ÛƒÄéõÿÿƒì¶@ÁàÅ    )Âÿ² £hÜeèaQ  ¡¾€H@1ÛƒÄéÎôÿÿƒì¶PÁâÕ    )Ğÿ° £hÜeè+Q  €K@1ÛƒÄéôÿÿƒìhœcÿµÜşÿÿèòÎÿÿ¸   ƒÄé#ôÿÿè¼×ÿÿ‹|¾…ÛtPj$¿CP¿CPèÔæÿÿ‹ƒÄ…Ûuåè:ëÿÿƒìhlcèÁP  1ÛƒÄè3L  èÒéÿÿé-ôÿÿƒìhÊbÿµÜşÿÿè‚Îÿÿ¸   ƒÄé³óÿÿƒì¶SÁâÕ    )Ğÿ° £h fèjP  ‰$èÿÿ1ÛƒÄéØóÿÿ¡œ¾…À„A  ƒìh¸fè>P  Xÿ5œ¾èÖÿÿ1ÛƒÄé¨óÿÿ¸ç%é5şÿÿèİÖÿÿ‹€¾…ÛtPj$¿CP¿CPèõåÿÿ‹ƒÄ…Ûuåè[êÿÿƒìhĞhèâO  »   ƒÄéÿÿÿƒìhTgèÈO  1ÛƒÄé>óÿÿƒìShÀÊè8Áşÿ‹x¾ƒÄ…Òu	ë%‰Ú…Ût‹‹BŠ@:…ôşÿÿuêƒìRè%}ÿÿƒÄëÜƒì¾…ôşÿÿPhcègO  ƒÄŠ…ôşÿÿ:îè…ğõÿÿÇ„É1cÇğéÿÿÿÿ»   é´òÿÿƒìSh@Éè®ÀşÿƒÄ¾ôşÿÿé÷ÿÿƒìjè5ª  ‰Ã)ôéXZhdSè(UşÿL¸VUUU÷é‰ÈÁø)Â‰•ìşÿÿƒÄé®óÿÿÇ¼é @  W¿âèP¿àèPj_èòkÿÿY[h   Pè‘  ƒÄ¿âèP¿àèPj0èËkÿÿ_Zh   Pèf‘  ¡´¾fÇ@ »   ƒÄéêñÿÿƒìh‚cÿµÜşÿÿè?Ìÿÿ¸   ƒÄépñÿÿƒìhDcÿµÜşÿÿèÌÿÿ¸   ƒÄéPñÿÿƒìhæbÿµÜşÿÿèÿËÿÿ¸   ƒÄé0ñÿÿ¡¤¾…Àt/ƒìh÷bèôM  _ÿ5¤¾èŒÿÿÇ$M'èxO  1ÛƒÄéRñÿÿƒìhcÿµÜşÿÿè§Ëÿÿ¸   ƒÄéØğÿÿU‰åWƒì‹U‰×ü¹ÿÿÿÿ1Àò®÷ÑIÑéh‰¸   )ÈPRƒÁQÿ5Àjè86şÿƒÄ ‹}üÉÃU‰åWVSì  è#Ôÿÿƒìjjè£@  ^ÿ5Äjè77şÿY[h ë…ôşÿÿ‰…ğşÿÿPè¾5şÿÆ…ÿÿÿ XZ…ôşÿÿPjègÿÿÿƒÄÿ5øéh„j…ôşÿÿPè9şÿ_X…ôşÿÿPjè=ÿÿÿ‹„É¿{¹   ü‰Şó¦—Â’ÀƒÄ8Â…  ¸‰VPh’j…ôşÿÿPè¿8şÿY[…ôşÿÿPjèïşÿÿXZÿ5„É…ôşÿÿPè5şÿü¹ÿÿÿÿ1À‹½ğşÿÿò®÷ÑAÿƒÄƒøº   1Ò1À1Éë‰ö@ƒø€¼ôşÿÿ uğP‰Á‰Ğƒø~ê…É……   ±¸    ¾   Æ„ôşÿÿ Æ„ôşÿÿ ƒì…ôşÿÿPj	è_şÿÿ[_…ôşÿÿğPj
+èMşÿÿè´s  ƒÄPhj…ôşÿÿPèó7şÿZY…ôşÿÿPjè#şÿÿXÿ5Èjè·5şÿèvb  ƒÄeô[^_ÉÃB‰Öë€‰ÆëŒ¿'¹   ü‰Şó¦„Ğşÿÿƒì¾PhÀèF8şÿƒÄ…Àt
+¸‹jé³şÿÿ¸jé©şÿÿU‰å‹M‰Ê…Éx$Áú¡ô¾á  €x¸   Óà!Â‰ĞÉÃv Që×v IƒÉøA¸   Óà!Â‰ĞÉÃ‰öU‰åVSƒìP‹u]¨‰öPVjPSè’4şÿƒÄ…Àtƒìj
+Sè°7şÿƒÄ…Àtİ¸   eø[^ÉÃU‰åSƒìXÿujP]¬SèW4şÿƒÄ…Àt-ƒìj
+Sèu7şÿƒÄ…ÀtÆ  ƒìhlèJ  ‰$è–J  ƒÄ‹]üÉÃ‰öU‰åSƒì‹]Ç`»    ë‰öÿ(ÈƒìSèIÿÿÿƒÄ…ÀuêƒìSèµ6şÿ¡(È…Àx0‰ÃÁûC‰$è:şÿ£ôƒÄ…Ûx¡ôÆ Kƒûÿuñ‹]üÉÃƒÀëËv U‰åWVSƒì¡(È;`»
+eô[^_ÉÃ‰öƒìh¦Gh8lè‚5şÿ‰ÇƒÄ…ÀtÛ‹`»…Éˆš   ¡(È…ÀuƒìWè‰5şÿƒÄeô[^_ÉÃƒì+`»Pèã¤  ‰Ã1öƒÄë‰öƒìWèoşÿÿVèşÿÿƒÄƒøƒÛ F…ÛuãVè	şÿÿZ…ÀuØ‰ğ…öxM‰ÂÁúô‰ñá  €x1¸   Óàÿ`»ƒìWè]şÿÿƒÄéoÿÿÿƒìPèœşÿÿƒÄéUÿÿÿIƒÉøAëÈFë®U‰åWVSƒì1ö1ÿv SjEğPÿuè½ÿÿ‹EğƒÄƒøÿtJƒìƒÀ,Pè®8şÿ‰ÃƒÄ…ÿt1‰Q‹EğƒÀ,PSÿuèŠÿÿƒÄ‹S…Òu¡HÍ‰C@£HÍ‰Şë¢‰ö‰ÇëÍ…ÿt‹…Àtƒìh@lèÿÿÇ    ƒÄ‰øeô[^_ÉÃ‰öU‰åWVSƒì ‹}EìjPWè$ÿÿÇEà B‹Eì)Eà1öÇEÜ    ƒÄv PjEğPWèûÿÿ‹EğƒÄƒøÿtiƒìƒÀHPèì7şÿ‰ÃƒÄ‹EÜ…ÀtL‰P‹EğƒÀHPSWèÇÿÿƒÄ‹C…Àu¡HÍ‰C@£HÍ‹EàC‹C8…ÀtƒìWè½şÿÿ‰C8ƒÄ‰Şë‡v ‰]Üë±‹EÜ…Àt‹>…ÿtƒìhdlè9ÿÿÇ    ƒÄ‹EÜeô[^_ÉÃU‰åWVSƒì ‹ufÇøê j j Vè¡ÿÿ‰4$èUşÿÿ‰Ã£Œ¾ƒÄ…Àu	ë!‹…Ût‹C$…ÀtóƒìPSè%Š  ƒÄ‹…ÛuæƒìVèşÿÿ£ˆ¾‰4$è®şÿÿ£Á}ğƒÄjWVèÖ
+ÿÿ‹]ğè1şÿƒÄ9Ãt7ƒìVè4şÿÇ$ £èJ2şÿÇ$ølèÎ0şÿfÇøê  1ÀƒÄeô[^_ÉÃSjhHÍVè‚
+ÿÿƒÄjh„¢Vèr
+ÿÿƒÄjhì¢Vèb
+ÿÿƒÄjhˆ¢VèR
+ÿÿƒÄh  hàèVè?
+ÿÿƒÄ‹ê…ÉtEìRjPVè%
+ÿÿƒÄPjhøøVè
+ÿÿƒÄj<hÀÊVè
+ÿÿƒÄj<h@ÉVèô	ÿÿ‰4$èÌ’ÿÿƒÄëQv S¿EğPj Vè>
+ÿÿYÿuğèÿÿXZh°  h`¢èÔ/şÿ‰ÃƒÄ…ÀˆÄ   ƒì¿EğPSèeÿÿ‰$èñ2şÿƒÄPjWVèô0şÿƒÄƒøt j j j Vè 0şÿƒÄj j VèÓ	ÿÿ‰4$è»2şÿÇ$ £èï0şÿƒÄ‹¼é…Ûuy‹ê…Òt5‹x¾…Ût‹Eì9Cuë9Ct‹…ÛuõƒìhˆlèìÙÿÿƒÄ‰êè¶KşÿèYŞÿÿfÇøê  ¸   eô[^_ÉÃƒìh`¢hmè±ÙÿÿƒÄé"ÿÿÿ‹„¾…Ûu	ëK‹…ÛtD€{_uô‰°¾‹´¾…É…Zÿÿÿ‹„¾…Ûuë0‹…Ût*€{0uôfƒ{ tí‰´¾é0ÿÿÿƒìh-mèEÙÿÿƒÄë°ƒìhImè3ÙÿÿƒÄëÑ‰öU‰åWVSƒì$jjèš/şÿXZjjè/şÿ_Xh°  h £è>.şÿ‰ÆƒÄ…Àˆ"   ZÍƒà<„  ƒì¿„¢PVè¼ÿÿY[ÿ5Œ¾VèšÿÿXZÿ5ˆ¾VèŒÿÿ_Xÿ5ÁVèòÿÿè.şÿ‰Eğ}ğƒÄjWVèÿÿƒÄjhHÍVèÿÿƒÄjh„¢VèoÿÿƒÄjhì¢Vè_ÿÿƒÄjhˆ¢VèOÿÿƒÄh  hàèVè<ÿÿ¡êƒÄ…ÀtSjƒÀPVè#ÿÿƒÄQjhøøVèÿÿƒÄj<hÀÊVèÿÿƒÄj<h@ÉVèò
+ÿÿ‰4$ènÿÿÇEğ   ¿ì¢ƒÄ…Éª   º   ë‰ö‹UğB‰Uğ9ÑŒ’   ¿„¢9Ğtæfƒ¼€ë tÛƒìRèvÿÿXZj h`¢èœ/şÿ‰ÃƒÄ…Àˆã   Q¿EğPÿ5ğSèıÿÿ‰$èå/şÿƒÄjWVèY
+ÿÿXZ¿EğPVè8ÿÿÇ$`¢è .şÿƒÄ¿ì¢‹UğB‰Uğ9ÑnÿÿÿƒìVè/şÿ¿„¢‰$èëÿÿÇ$`¢èÃ-şÿÇ$    èÓÿÿÇ$`¢è«-şÿ¸   ƒÄeô[^_ÉÃfÿğèéîıÿÿ‹u…ötƒìh £è{-şÿ1ÀƒÄeô[^_ÉÃƒìh¨lèB  ƒÄëÔ‹]…ÛtƒìVè/şÿÇ$ £è@-şÿ1ÀƒÄë–ƒìh`¢hÔlèÇA  ‰4$èß.şÿÇ$ £è-şÿÇ$Tè3Åşÿ1ÀƒÄéZÿÿÿU‰åƒìjèıÿÿÇ$   è.şÿv U‰åƒìj èçüÿÿƒÄ…Àu1ÀÉÃƒìhdmè»T  Ç$    èÏ-şÿU‰åSƒì‹]€c)şÆC( SèĞÿÿƒÄ‰]‹]üÉé%ĞÿÿU‰åSƒì‹]€c*şSèxkÿÿƒÄöC)u‹]üÉÃ‰ö‰]‹]üÉé¨ÿÿÿU‰åWVSƒìjè|eşÿƒÄ…À„™   ¿àè¿äè¿âè¿æèÂ‹|¾…Étx‹5èèf¡ Êf‰Eò‰÷fÁïë‰ö‹	…ÉtX¿A9Ãuò¿A9ÂuêŠA¨ tãf…ötfƒ}ò tOÆEï ‰ø:EïuÌƒìŠAƒà¶Àÿ4…àhwmèC@  ƒÄ1Àeô[^_ÉÃƒìh„mè)@  ƒÄ1Àeô[^_ÉÃƒà<”EïëªU‰åWVSƒì,öäé…J  ¿àèpÿ¿Ö‰Uä‰EÔƒÀ9Ğ}  ÇEğ    f‹âèf‰UâBÿ¿ø¿Ê‰MØ‰ÈƒÀ9Ç3  ÇEì    ‹Mä‰AÑà‰EÜf‹Eâ‹MìDÿf‰Eêf95àè„0  ‹]ÜûŠaÍƒà<„p  <„  ƒìWÿuäèÙæşÿƒÄ…Àt
+ö@)…o  ‹|¾…Ûué™   ‹…Û„   f;suğf‹Eêf;CuæöC uàƒìjèNš  ƒÄ…ÀuÏƒìj èiBşÿZYŠCƒà¶Àÿ4…àh°mèİ>  ŠCƒàƒÄ<„9  €K ƒìWÿuäèØÈÿÿƒÄ…ÀuPj^WÿuäèÅÌÿÿƒÄ‹…Û…rÿÿÿf‹âè‹}ì}ØÿEì¿ÂƒÀ9ÇŒâşÿÿF‹MğMÔ‰MäÿEğ¿àèƒÀ9È‘şÿÿ¸   eô[^_ÉÃ‰öf9Ğ…Çşÿÿë°ƒìjè™  ƒÄ…Àu˜ŠaÍƒà ƒÈˆaÍƒìWÿuäèĞÿÿÇ$    èxAşÿƒÄf‹âèédÿÿÿƒìjè3™  ƒÄ…À…HÿÿÿŠaÍƒà ƒÈë®ƒìPè€üÿÿÇ$mèÀ=  ƒÄ¸   eô[^_ÉÃƒìhÀmè£=  ƒÄ¸   eô[^_ÉÃƒìSèüşÿƒÄWÿuähtCè9ÿÿƒÄéÿÿÿU‰åWVSƒìöäé…û  ‹àè¿Ëf‹=âè¿÷‰AFŠ…	Íƒâ„ê  €ú„á  f‰]ğ‰ØH˜€PV•	Íëv ƒèX€útfÿMğŠƒâuí‰AFŠ…¹Íƒâ„¡  €ú„˜  f‰]ä‰Ø@˜€PV•¹Íë	ƒÀX€útfÿEäŠƒâuí‰A 2Š…]Íƒã„W  €û„N  f‰}ò‰øH˜…]Íëƒè€útfÿMòŠƒâuí‰A 1Š…eÍƒâ„ğ  €ú„ç  f‰}æ1Ò‰ø@˜Áë‰öB€ûtfÿEæŠ…eÍƒãuçf‹Eæf9Eò  ÇEà    ÇEì    v ‹]äf9]ğ«   ¿EòEì‰Eè1ÿ¿Eğ‰EÜë@‰öƒìÿuèSèÌäşÿ‰ÆƒÄ…À„
+  ŠPˆĞƒà<„Ø   öÂ „®   G‹Eğøf;EäV‹]Üû›C‹MèAŠ•aÍƒà<tW<uŸŠ•aÍƒààƒÈˆ•aÍPj#ÿuèSècÉÿÿÿEàƒÄG‹Eğøf;Eä~«ÿEìf‹EòEìf;Eæ4ÿÿÿ‹Eàeô[^_ÉÃŠ•aÍƒààƒÈˆ•aÍPj+QSèÉÿÿÿEàƒÄéUÿÿÿv ƒÊ ˆVƒìÿuèSèòÄÿÿƒÄ…Àt_ÿEàé1ÿÿÿPÿuèShtCèxÿÿÿEà‰4$è)ùşÿƒÄéÿÿÿƒìÿuèSèâşÿƒÄ…À„øşÿÿö@)„îşÿÿƒìPè/ùÿÿÿEàƒÄéÚşÿÿVj^ÿuèSè€ÈÿÿƒÄëÇEà    ‹Eàeô[^_ÉÃf‰}æé9şÿÿf‰]ğéFıÿÿf‰]äéıÿÿf‰}òéĞıÿÿU‰å‹Eà	  ÉÃv U‰å‹U‹E9,ÈtÉÃ‰,ÈB\£4ÈÉÃU‰åVS¡,È‹pX‹4ÈÇ8È    …öt#1Û1Év ŠBĞè¶À¯BÃƒÂA9ñuê‰8È[^ÉÃU‰å‹JD)øéB<€YÍ…Ét	)Á‰Èx‰BDÉÃv 1ÀëôU‰åS‹U‹E¿àè9Ót#¿âè9Át)Ú)È¯Ò¯À9Â”À¶À[ÉÃv ¸   [ÉÃU‰åVS‹uŠ^+öÃt¸   eø[^ÉÃƒì‹F¾@PhämèÏ%şÿƒÄ…ÀuØƒã@tØ1Àfƒ~H •ÀëÌv U‰åSƒì‰Á¡,È…Àt/‹4È‹@X@ƒ9Ós‹A9uë‰ö9tƒÃ9ÓrõöA u&1Û‰Ø‹]üÉÃöA uóƒìhîmè—8  ƒÄ‰Ø‹]üÉÃƒìhøpè€8  1ÛƒÄëÈU‰åWVSì”   ‹E‹@‰…xÿÿÿ‹U‹Rf‰U€‹]f‹[f‰]‚¿û¿òWVè¾aÿÿ‰ÃƒÄƒøÑ  ‹Eö@+ „a  ‹EƒÀD‰…pÿÿÿfƒx …¬  ƒìWVèrˆşÿf‰E‹•pÿÿÿ‹Rf‰•|ÿÿÿ‹…pÿÿÿf‹@
+f‰…~ÿÿÿƒÄf9U€„7  fÇE¢  ‹…pÿÿÿfƒx „˜  ‹àèf‰•|ÿÿÿf¡âèf‰…~ÿÿÿfƒ} xƒì˜P¿ÂPèú‡şÿ¿UƒÄ9Ât	ƒû_  fÇEŒ fÇE˜  fÇEš  ‹E€f9…|ÿÿÿ„r  ‹]öC*…ù  h   E¬PUĞRSèTjÿÿf‰E–ƒÄfƒ}š …ö  fƒ}– !  ‹U€f‰Uˆf‹]‚f‰]ŠfÇE’ÿÿfÇE”  1ÿënfƒ}š töD½­@uUfƒ}Œ „_  ¿•|ÿÿÿ)Ó¿~ÿÿÿ)Î¿Eˆ)Ğ¿UŠ)Ê¯Û¯ö3¯À¯ÒĞ9Á}‹]„f‰]ˆf‹E†f‰EŠf‹Uf‰U’Gf9}–   f‰}f‹T½Ğf‰U„f‹\½Òf‰]†¿Ú¿u†›CFŠ…aÍƒà<	t‹U‹…pÿÿÿf;P„³   fƒ}˜ „@ÿÿÿPVSj\èrŞşÿ‰EœƒÄ…À„(ÿÿÿ‹U„f‰Uˆf‹]†f‰]Šf‹Ef‰E’‹]€f9]ˆu$f‹EŠf9E‚u1Àeô[^_ÉÃÇEœ    ‹]€f9]ˆtÜ¿E’‹D…¬öÄ…  öÄ„E  ƒì‹•xÿÿÿ¿BP¿BPè’  [^@Pÿuèbÿÿ1ÀƒÄeô[^_ÉÃfƒx „ğşÿÿé=ÿÿÿfÿE”ƒì¿E”Pè³  ƒÄ

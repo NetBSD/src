@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.7.4.2 2007/07/15 13:21:48 ad Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.7.4.3 2007/08/20 18:37:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.7.4.2 2007/07/15 13:21:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.7.4.3 2007/08/20 18:37:54 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -145,6 +145,7 @@ static const struct zyd_type {
 	ZYD_ZD1211B_DEV(ZYDAS,		ZD1211B),
 	ZYD_ZD1211B_DEV(ZYXEL,		M202),
 	ZYD_ZD1211B_DEV(ZYXEL,		G220V2),
+	ZYD_ZD1211B_DEV(PLANEX2,	GWUS54GXS),
 };
 #define zyd_lookup(v, p)	\
 	((const struct zyd_type *)usb_lookup(zyd_devs, v, p))
@@ -467,9 +468,6 @@ USB_DETACH(zyd)
 	usb_uncallout(sc->sc_amrr_ch, zyd_amrr_timeout, sc);
 
 	zyd_close_pipes(sc);
-
-	zyd_free_rx_list(sc);
-	zyd_free_tx_list(sc);
 
 	sc->attached = 0;
 

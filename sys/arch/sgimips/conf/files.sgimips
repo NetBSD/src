@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.41.10.2 2007/05/27 12:28:02 ad Exp $
+#	$NetBSD: files.sgimips,v 1.41.10.3 2007/08/20 18:38:41 ad Exp $
 
 maxpartitions 16
 
@@ -37,6 +37,7 @@ file dev/cons.c
 # Machine-dependent drivers
 include "arch/sgimips/ioc/files.ioc"
 include "arch/sgimips/dev/files.dev"
+defflag opt_sgimace.h MACE_NEEDS_DELAYS
 include "arch/sgimips/mace/files.mace"
 
 # Machine-independent drivers.

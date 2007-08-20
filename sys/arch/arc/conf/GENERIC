@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.145.8.2 2007/07/15 13:15:31 ad Exp $
+# $NetBSD: GENERIC,v 1.145.8.3 2007/08/20 18:37:24 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.145.8.2 $"
+#ident		"GENERIC-$Revision: 1.145.8.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -141,7 +141,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI networking
+#options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

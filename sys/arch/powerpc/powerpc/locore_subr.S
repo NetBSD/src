@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.30.6.1 2007/05/27 12:27:58 ad Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.30.6.2 2007/08/20 18:38:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -273,7 +273,7 @@ ENTRY_NOPROFILE(emptyidlespin)
  */
 	.globl	_C_LABEL(cpu_lwp_bootstrap)
 _C_LABEL(cpu_lwp_bootstrap):
-#if defined(MULTIPROCESSOR)
+#if defined(MULTIPROCESSOR) && 0
 	mr	%r28,%r3
 	mr	%r29,%r4
 	bl	_C_LABEL(proc_trampoline_mp)

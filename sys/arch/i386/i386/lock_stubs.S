@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.8.2 2007/07/29 10:18:48 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.3 2007/08/20 18:38:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -108,8 +108,6 @@ STUB(mutex_enter, mutex_vector_enter)		/* 0x0000, 20 bytes */
  * on multiprocessor systems, and comments in arch/x86/include/lock.h about
  * memory ordering on Intel x86 systems.
  */
-	ALIGN32
-
 STUB(mutex_exit, mutex_vector_exit)		/* 0x0020, 19 bytes */
 	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
@@ -122,8 +120,6 @@ STUB(mutex_exit, mutex_vector_exit)		/* 0x0020, 19 bytes */
  *
  * Acquire one hold on a RW lock.
  */
-	ALIGN64
-
 STUB(rw_enter, rw_vector_enter)			/* 0x0040, 60 bytes */
 	cmpl	$RW_READER, 8(%esp)
 	jne	2f
@@ -156,8 +152,6 @@ STUB(rw_enter, rw_vector_enter)			/* 0x0040, 60 bytes */
  *
  * Release one hold on a RW lock.
  */
-	ALIGN64
-
 STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
 	movl	RW_OWNER(%edx), %eax
 	testb	$RW_WRITE_LOCKED, %al
@@ -250,8 +244,6 @@ STUB(mutex_spin_exit, mutex_vector_exit)	/* 0x0100, 50 bytes */
 	ALIGN64
 LABEL(mutex_spin_exit_end)
 
-#if !defined(I386_CPU) && defined(I686_CPU) && !defined(DIAGNOSTIC)
-
 /*
  * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
  * Must be the same size as mutex_spin_exit().
@@ -292,10 +284,8 @@ ENTRY(i686_mutex_spin_exit)
 	movl	%ecx,4(%esp)
 LABEL(i686_mutex_spin_exit_patch)
 	jmp	_C_LABEL(Xspllower)
-	ALIGN64
+	.align	32
 LABEL(i686_mutex_spin_exit_end)
-
-#endif	/* !defined(I386_CPU) && defined(I686_CPU) && !defined(DIAGNOSTIC) */
 
 #else	/* !__XEN__ */
 
@@ -315,9 +305,7 @@ NENTRY(mutex_spin_exit)
  *
  * Perform an atomic compare-and-set operation.
  */
-	ALIGN64
-
-STUB(_lock_cas, _80386_lock_cas)		/* 32 bytes */
+STUB(_lock_cas, _80386_lock_cas)
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
 	LOCK
@@ -371,7 +359,6 @@ NENTRY(mb_memory)
 	ret
 END(mb_memory_end, 8)
 
-#ifdef I686_CPU
 NENTRY(sse2_mb_read)
 	lfence
 	ret
@@ -381,7 +368,6 @@ NENTRY(sse2_mb_memory)
 	mfence
 	ret
 END(sse2_mb_memory_end, 8)
-#endif	/* I686_CPU */
 
 /*
  * Make sure code after the ret is properly encoded with nopness

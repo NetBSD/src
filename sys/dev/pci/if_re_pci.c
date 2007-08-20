@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.26.2.1 2007/04/10 13:24:26 ad Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.26.2.2 2007/08/20 18:37:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -44,6 +44,8 @@
  * NetBSD bus-specific frontends for written by
  * Jonathan Stone <jonathan@netbsd.org>
  */
+
+#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -276,7 +278,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	/*
-	 * No power/enable/disable machinery for PCI attac;
+	 * No power/enable/disable machinery for PCI attach;
 	 * mark the card enabled now.
 	 */
 	sc->sc_flags |= RTK_ENABLED;

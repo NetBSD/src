@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.3.2.2 2007/04/10 13:24:30 ad Exp $	*/
+/*	$NetBSD: btuart.c,v 1.3.2.3 2007/08/20 18:36:43 ad Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3.2.2 2007/04/10 13:24:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3.2.3 2007/08/20 18:36:43 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3.2.2 2007/04/10 13:24:30 ad Exp $");
 
 #include "ioconf.h"
 
-#define BTUART_DEBUG
 #ifdef BTUART_DEBUG
 int btuart_debug = 1;
 #endif
@@ -370,7 +369,6 @@ init_ericsson(struct btuart_softc *sc)
 		{      B0, 0xff }
 	};
 
-printf("sc_baud=%d, init_speed=%d\n", sc->sc_baud, sc->sc_bth4hci.init_baud);
 	for (i = 0; ericsson_baudtbl[i].baud != sc->sc_baud; i++)
 		if (ericsson_baudtbl[i].baud == B0)
 			return EINVAL;

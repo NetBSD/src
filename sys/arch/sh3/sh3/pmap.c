@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61.2.2 2007/05/27 12:28:10 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61.2.3 2007/08/20 18:38:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.2.2 2007/05/27 12:28:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61.2.3 2007/08/20 18:38:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -889,7 +889,7 @@ pmap_clear_modify(struct vm_page *pg)
 }
 
 paddr_t
-pmap_phys_address(int cookie)
+pmap_phys_address(paddr_t cookie)
 {
 
 	return (sh3_ptob(cookie));

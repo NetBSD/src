@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.7.2.5 2007/07/15 15:52:50 ad Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.7.2.6 2007/08/20 18:37:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.5 2007/07/15 15:52:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.7.2.6 2007/08/20 18:37:53 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -501,9 +501,6 @@ USB_DETACH(rum)
 		usbd_abort_pipe(sc->sc_tx_pipeh);
 		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
-
-	rum_free_rx_list(sc);
-	rum_free_tx_list(sc);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);

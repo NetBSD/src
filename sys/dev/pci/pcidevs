@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.871.2.5 2007/07/15 13:21:37 ad Exp $
+$NetBSD: pcidevs,v 1.871.2.6 2007/08/20 18:37:22 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -600,6 +600,7 @@ vendor I4		0x17cf	I4
 vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
+vendor ATTANSIC		0x1969	Attansic Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
@@ -760,6 +761,7 @@ product ALI M1533	0x1533	M1533 PCI-ISA Bridge
 product ALI M1541	0x1541	M1541 Host-PCI Bridge
 product ALI M1543	0x1533	M1543 PCI-ISA Bridge
 product ALI M1563	0x1563	M1563 PCI-ISA Bridge
+product ALI M1689	0x1689	M1689 Host-PCI Bridge
 product ALI M3309	0x3309	M3309 MPEG Decoder
 product ALI M4803	0x5215	M4803
 product ALI M5257	0x5257	M5257 PCI Software Modem
@@ -871,31 +873,53 @@ product ALTIMA AC1001	0x03e9	AC1001 Gigabit Ethernet
 product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 
 /* AMD products */
-product AMD AMD64_HT	0x1100	AMD64 HyperTransport configuration
-product AMD AMD64_ADDR	0x1101	AMD64 Address Map configuration
-product AMD AMD64_DRAM	0x1102	AMD64 DRAM configuration
-product AMD AMD64_MISC	0x1103	AMD64 Miscellaneous configuration
+product AMD AMD64_HT	0x1100	K8 AMD64 HyperTransport configuration
+product AMD AMD64_ADDR	0x1101	K8 AMD64 Address Map configuration
+product AMD AMD64_DRAM	0x1102	K8 AMD64 DRAM configuration
+product AMD AMD64_MISC	0x1103	K8 AMD64 Miscellaneous configuration
+product AMD AMD64_F10_HT	0x1200	AMD64 Family10h HyperTransport configuration
+product AMD AMD64_F10_ADDR	0x1201	AMD64 Family10h Address Map configuration
+product AMD AMD64_F10_DRAM	0x1202	AMD64 Family10h DRAM configuration
+product AMD AMD64_F10_MISC	0x1203	AMD64 Family10h Miscellaneous configuration
+product AMD AMD64_F10_LINK	0x1204	AMD64 Family10h Link configuration
+product AMD AMD64_F11_HT	0x1300	AMD64 Family11h HyperTransport configuration
+product AMD AMD64_F11_ADDR	0x1301	AMD64 Family11h Address Map configuration
+product AMD AMD64_F11_DRAM	0x1302	AMD64 Family11h DRAM configuration
+product AMD AMD64_F11_MISC	0x1303	AMD64 Family11h Miscellaneous configuration
+product AMD AMD64_F11_LINK	0x1304	AMD64 Family11h Link configuration
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
+product AMD AM_1771_MBW	0x2003	Alchemy AM 1771 MBW
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
 product AMD GEODELX_PCHB	0x2080	Geode LX Host-PCI Bridge
 product AMD GEODELX_VGA 	0x2081	Geode LX VGA Controller
 product AMD GEODELX_AES 	0x2082	Geode LX AES Security Block
+product	AMD CS5536_PCISB	0x208f	CS5536 GeodeLink PCI South Bridge
 product AMD CS5536_PCIB	0x2090	CS5536 PCI-ISA Bridge
+product AMD CS5536_FLASH	0x2091	CS5536 Flash
+product AMD CS5536_AUDIO	0x2093	CS5536 Audio
 product AMD CS5536_OHCI	0x2094	CS5536 OHCI USB Controller
 product AMD CS5536_EHCI	0x2095	CS5536 EHCI USB Controller
+product AMD CS5536_UDC	0x2096	CS5536 UDC
+product AMD CS5536_UOC	0x2097	CS5536 UOC
 product AMD CS5536_IDE	0x209a	CS5536 IDE Controller
 product AMD SC520_SC	0x3000	Elan SC520 System Controller
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-PCI Bridge
-product AMD PBC756_ISA	0x7408	AMD756 PCI-ISA Bridge
-product AMD PBC756_IDE	0x7409	AMD756 IDE controller
-product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
-product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
+product AMD IGR4_AGP	0x700a	AMD IGR4 AGP Bridge
+product AMD IGR4_PPB	0x700b	AMD IGR4 PCI-PCI Bridge
 product AMD SC762_NB	0x700c	AMD762 Northbridge
 product AMD SC762_PPB	0x700d	AMD762 AGP Bridge
 product AMD SC761_SC	0x700e	AMD761 System Controller
 product AMD SC761_PPB	0x700f	AMD761 PCI-PCI Bridge
+product AMD PBC755_ISA	0x7400	AMD755 PCI-ISA Bridge
+product AMD PBC755_IDE	0x7401	AMD755 IDE controller
+product AMD PBC755_PMC	0x7403	AMD755 ACPI controller
+product AMD PBC755_USB	0x7404	AMD755 USB Host controller
+product AMD PBC756_ISA	0x7408	AMD756 PCI-ISA Bridge
+product AMD PBC756_IDE	0x7409	AMD756 IDE controller
+product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
+product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
 product AMD PBC766_ISA	0x7410	AMD766 Southbridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
@@ -911,14 +935,19 @@ product AMD PCIX8131_PPB	0x7450	AMD8131 PCI-X Tunnel
 product AMD PCIX8131_APIC	0x7451	AMD8131 IO Apic
 product AMD AGP8151_DEV	0x7454	AMD8151 AGP Device
 product AMD AGP8151_PPB	0x7455	AMD8151 AGP Bridge
-product	AMD PCIX_APIC	0x7459	AMD PCI-X IOAPIC
+product AMD PCIX_PPB	0x7458	AMD8123 PCI-X Bridge
+product	AMD PCIX_APIC	0x7459	AMD8132 PCI-X IOAPIC
 product AMD PBC8111	0x7460	AMD8111 I/O Hub
+product AMD PBC8111_USB_7461	0x7461	AMD8111 7461 USB Host Controller
+product AMD PBC8111_ETHER	0x7462	AMD8111 Ethernet
 product AMD PBC8111_USB		0x7464	AMD8111 USB Host Controller
 product AMD PBC8111_LPC		0x7468	AMD8111 LPC Controller
 product AMD PBC8111_IDE		0x7469	AMD8111 IDE Controller
 product AMD PBC8111_SMB		0x746a	AMD8111 SMBus Controller
 product AMD PBC8111_ACPI	0x746b	AMD8111 ACPI Controller
 product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
+product AMD PBC8111_MC97	0x746e	AMD8111 MC97 Modem
+product AMD PBC8111_AC_756b	0x756b	AMD8111 756b ACPI Controller
 
 /* American Megatrends products */
 product AMI MEGARAID		0x9010	MegaRAID
@@ -993,6 +1022,10 @@ product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
+
+/* Attansic Technology Corp. */
+product ATTANSIC ETHERNET_GIGA	0x1048	L1 Gigabit Ethernet Adapter
+product ATTANSIC ETHERNET_100	0x2048	L2 100 Mbit Ethernet Adapter
 
 /* ATI products */
 product ATI RADEON_RV380_3150	0x3150	Radeon Mobility X600 (M24) 3150
@@ -1829,6 +1862,10 @@ product MARVELL 88SX5080	0x5080	88SX5080 SATA
 product MARVELL 88SX5081	0x5081	88SX5081 SATA
 product MARVELL 88SX6041	0x6041	88SX6041 SATA
 product MARVELL 88SX6081	0x6081	88SX6041 SATA
+product MARVELL 88SE6101	0x6101	88SE6101 single-port PATA133 Controller
+product MARVELL 88SE6121	0x6121	88SE6121 SATA II Controller
+product MARVELL 88SE614X	0x6141	88SE614X SATA II PCI-E Controller
+product MARVELL 88SE6145	0x6145	88SE6145 SATA II PCI-E Controller
 product MARVELL	GT64130		0x6320	GT-64130 System Controller
 product MARVELL	GT64260		0x6430	GT-64260 System Controller
 product MARVELL	GT64360		0x6460	MV6436x System Controller
@@ -2311,10 +2348,36 @@ product INTEL 82801H_EXP_5	0x2847	82801H PCI Express Port #5
 product INTEL 82801H_EXP_6	0x2849	82801H PCI Express Port #6
 product INTEL 82801H_HDA	0x284b	82801H High Definition Audio Controller
 product INTEL 82801H_THERMAL	0x284f	82801H Thermal Controller
+product INTEL 82801IH_LPC	0x2912	82801IH LPC Interface Bridge
+product INTEL 82801IR_LPC	0x2916	82801IR LPC Interface Bridge
+product INTEL 82801IB_LPC	0x2918	82801IB LPC Interface Bridge
+product INTEL 82801I_SATA_1	0x2920	82801I SATA Controller with 4 ports
+product INTEL 82801I_SATA_2	0x2921	82801I SATA Controller with 2 ports
+product INTEL 82801I_SATA_AHCI6	0x2922	82801I AHCI SATA Controller with 6 ports
+product INTEL 82801I_SATA_AHCI4	0x2923	82801I AHCI SATA Controller with 4 ports
+product INTEL 82801I_SATA_3	0x2926	82801I SATA Controller with 2 ports
+product INTEL 82801I_SMB	0x2930	82801I SMBus Controller
+product INTEL 82801I_THERMAL	0x2932	82801I Thermal Controller
+product INTEL 82801I_USB_1	0x2934	82801I USB UHCI Controller
+product INTEL 82801I_USB_2	0x2935	82801I USB UHCI Controller
+product INTEL 82801I_USB_3	0x2936	82801I USB UHCI Controller
+product INTEL 82801I_USB_4	0x2937	82801I USB UHCI Controller
+product INTEL 82801I_USB_5	0x2938	82801I USB UHCI Controller
+product INTEL 82801I_USB_6	0x2939	82801I USB UHCI Controller
+product INTEL 82801I_EHCI_1	0x293a	82801I USB EHCI Controller
+product INTEL 82801I_EHCI_2	0x293c	82801I USB EHCI Controller
+product INTEL 82801I_HDA	0x293e	82801I High Definition Audio Controller
+product INTEL 82801I_EXP_1	0x2940	82801I PCI Express Port #1
+product INTEL 82801I_EXP_2	0x2942	82801I PCI Express Port #2
+product INTEL 82801I_EXP_3	0x2944	82801I PCI Express Port #3
+product INTEL 82801I_EXP_4	0x2946	82801I PCI Express Port #4
+product INTEL 82801I_EXP_5	0x2948	82801I PCI Express Port #5
+product INTEL 82801I_EXP_6	0x294a	82801I PCI Express Port #6
 product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
 product INTEL 82965Q_IGD_1	0x2993  82965Q Integrated Graphics Device
+product INTEL 82801I_LAN	0x29c4	82801I LAN Controller
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
@@ -2772,8 +2835,9 @@ product NVIDIA	NFORCE2_400_MCPT_AC	0x008a	nForce2 Ultra 400 AC-97
 product NVIDIA	NFORCE2_400_PPB		0x008b	nForce2 Ultra 400 PCI-PCI bridge
 product NVIDIA	NFORCE2_400_LAN2	0x008c	nForce2 Ultra 400 Ethernet
 product NVIDIA	NFORCE2_400_SATA	0x008e	nForce2 Ultra 400 Serial ATA Controller
-product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
 product NVIDIA	NFORCE3_PCIB	0x00d0	nForce3 PCI-ISA bridge
+product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
+product NVIDIA	NFORCE3_PPB2	0x00d2	nForce3 PCI-PCI
 product NVIDIA	NFORCE3_SMBUS	0x00d4	nForce3 SMBus controller
 product NVIDIA	NFORCE3_ATA133	0x00d5	nForce3 ATA133 IDE
 product NVIDIA	NFORCE3_LAN1	0x00d6	nForce3 Ethernet
@@ -3194,6 +3258,7 @@ product SERVERWORKS CIOB_E		0x0110	CIOB-E PCI-X bridge
 product SERVERWORKS OSB4		0x0200	OSB4 southbridge
 product SERVERWORKS CSB5		0x0201	CSB5 southbridge
 product SERVERWORKS CSB6		0x0203	CSB6 southbridge
+product SERVERWORKS HT1000SB		0x0205	HT1000SB southbridge
 product SERVERWORKS OSB4_IDE		0x0211	OSB4 IDE
 product SERVERWORKS CSB5_IDE		0x0212	CSB5 IDE
 product SERVERWORKS CSB6_RAID		0x0213	CSB6 IDE/RAID
@@ -3578,8 +3643,12 @@ product V3 V96DPC	0xc960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
 product VIATECH VT6305		0x0130	VT6305 IEEE 1394 Host Controller
+product VIATECH K8M800_0	0x0204	K8M800 Host
+product VIATECH K8T890_0	0x0238	K8T890 Host
 product VIATECH KT880		0x0269	KT880 CPU to PCI Bridge
+product VIATECH K8HTB_0		0x0282	K8HTB Host
 product VIATECH VT8363_HB	0x0305	VT8363 (Apollo KT133) Host Bridge
+product VIATECH VT3351_HB_0351	0x0351	VT3351 Host Bridge
 product VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 (Apollo MVP4) Host Bridge
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto)
@@ -3601,9 +3670,15 @@ product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH KT880_1		0x1269	KT880 CPU to PCI Bridge
+product VIATECH VT3351_HB_1351	0x1351	VT3351 Host Bridge
 product VIATECH VT82C586_IDE	0x1571	VT82C586 IDE Controller
 product VIATECH VT82C595_2	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH KT880_2		0x2269	KT880 CPU to PCI Bridge
+product VIATECH VT3351_HB_2351	0x2351	VT3351 Host Bridge
+product VIATECH VT8251_PPB_287A	0x287a	VT8251 PCI-PCI Bridge
+product VIATECH VT8251_PCIE1	0x287c	VT8251 PCIE Root Port1
+product VIATECH VT8251_PCIE2	0x287d	VT8251 PCIE Root Port2
+product VIATECH VT8251_VLINK	0x287e	VT8251 Ultra VLINK Controller
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
@@ -3624,9 +3699,11 @@ product VIATECH VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
 product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
+product VIATECH K8HTB		0x3188	K8HTB Host
+product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
 product	VIATECH VT3314_IG	0x3344	VT3314 CN900 UniChrome Integrated Graphics
 product VIATECH VT8237R_SATA	0x3349	VT8237R Integrated SATA Controller
-product VIATECH VT6421_RAID	0x3249	VT6421 Serial RAID Controller
+product VIATECH VT3351_HB_3351	0x3351	VT3351 Host Bridge
 product VIATECH KT880_3		0x3269	KT880 CPU to PCI bridge
 product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
 product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
@@ -3634,10 +3711,16 @@ product VIATECH VT8378		0x3205	VT8378 Apollo KM400 CPU to PCI Bridge
 product VIATECH VT8237		0x3227	VT8237 (Apollo KT600) PCI-ISA Bridge
 product	VIATECH	VT8237A_HDA	0x3288	VT8237A/VT8251 High Definition Audio Controller
 product	VIATECH	VT8237A_ISA	0x3337	VT8237A/VT82C586A PCI-ISA Bridge
+product VIATECH VT8237S_ISA	0x3372	VT8237S PCI-ISA Bridge
+product VIATECH VT8237A_PPB	0x337a	VT8237A PCI-PCI Bridge
+product VIATECH VT8237A_HB	0x337b	VT8237A Host Bridge
 product VIATECH KT880_4		0x4269	KT880 CPU to PCI Bridge
+product VIATECH VT3351_HB_4351	0x4351	VT3351 Host Bridge
+product VIATECH VT3351_IOAPIC	0x5351	VT3351 I/O APIC Interrupt Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8378_IG	0x7205	VT8378 KM400 UniChrome Integrated Graphics
 product VIATECH KT880_5		0x7269	KT880 CPU to PCI Bridge
+product VIATECH VT3351_HB_7351	0x7351	VT3351 Host Bridge
 product VIATECH VT8231		0x8231	VT8231 PCI-ISA Bridge
 product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 (Apollo KT133) PCI to AGP Bridge
@@ -3646,10 +3729,17 @@ product VIATECH VT8501AGP	0x8501	VT8501 (Apollo MVP4) CPU-AGP Bridge
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) CPU-AGP Bridge
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) CPU-AGP Bridge
 product VIATECH VT8605AGP	0x8605	VT8605 (Apollo ProMedia 133) Host-AGP Bridge
+product VIATECH K8T890_PPB_A238	0xa238	K8T890 PCI-PCI Bridge
 product VIATECH VT8633AGP	0xb091	VT8633 (Apollo Pro 266) CPU-AGP Bridge
 product VIATECH VT8366AGP	0xb099	VT8366 (Apollo KT266) CPU-AGP Bridge
 product VIATECH VT8377AGP	0xb168	VT8377 CPU-AGP Bridge
+product VIATECH K8HTB_AGP	0xb188	K8HTB AGP
 product VIATECH VT8377CEAGP	0xb198	VT8377CE CPU-AGP Bridge
+product VIATECH VT3237_PPB	0xb999	K8T890 North / VT8237 South PCI-PCI Bridge
+product VIATECH K8T890_PPB_C238	0xc238	K8T890 PCI-PCI Bridge
+product VIATECH K8T890_PPB_D238	0xd238	K8T890 PCI-PCI Bridge 
+product VIATECH K8T890_PPB_E238	0xe238	K8T890 PCI-PCI Bridge
+product VIATECH K8T890_PPB_F238	0xf238	K8T890 PCI-PCI Bridge
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_60x0		0x0000	GDT6000/6020/6050

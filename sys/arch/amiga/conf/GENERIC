@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.244.8.1 2007/06/09 23:54:55 ad Exp $
+# $NetBSD: GENERIC,v 1.244.8.2 2007/08/20 18:37:12 ad Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.59 2007/06/06 08:15:54 martin Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.62 2007/08/20 07:40:29 is Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.244.8.1 $"
+#ident 		"GENERIC-$Revision: 1.244.8.2 $"
 
 
 maxusers	8
@@ -70,7 +70,7 @@ options 	INET6		# IPV6
 
 #options 	MROUTING	# Multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -150,6 +150,7 @@ options 	COMPAT_15	# compatibility with NetBSD 1.5
 options 	COMPAT_16	# compatibility with NetBSD 1.6
 options 	COMPAT_20	# compatibility with NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
@@ -426,6 +427,8 @@ empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
 
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
+wdc*		at zbus0		# Buddha / Catweasel
+
 atabus* 	at wdc? channel ?	# ATA bus
 wd*		at atabus? drive ?	#  + drives
 atapibus*	at atabus?		# ATAPI bus

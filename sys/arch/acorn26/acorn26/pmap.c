@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.16.2.1 2007/03/13 16:49:53 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.16.2.2 2007/08/20 18:36:39 ad Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16.2.1 2007/03/13 16:49:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16.2.2 2007/08/20 18:36:39 ad Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -982,7 +982,7 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 
 paddr_t
 pmap_phys_address(ppn)
-	int ppn;
+	paddr_t ppn;
 {
 	panic("pmap_phys_address not implemented");
 }

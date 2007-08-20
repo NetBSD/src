@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.29.6.4 2007/07/15 13:21:16 ad Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.29.6.5 2007/08/20 18:36:51 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.29.6.4 2007/07/15 13:21:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.29.6.5 2007/08/20 18:36:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 		.rfact = RFACT(34, 34) / 2
 	},
 	{
-		.desc = "+3.3V",
+		.desc = "VIN3",
 		.type = ENVSYS_SVOLTS_DC,
 		.bank = 0,
 		.reg = 0x23,
@@ -391,7 +391,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 		.rfact = 0
 	},
 	{
-		.desc = "Unknown",
+		.desc = "VIN5",
 		.type = ENVSYS_SVOLTS_DC,
 		.bank = 0,
 		.reg = 0x25,
@@ -399,7 +399,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 		.rfact = RFACT_NONE / 2
 	},
 	{
-		.desc = "Unknown",
+		.desc = "VIN6",
 		.type = ENVSYS_SVOLTS_DC,
 		.bank = 0,
 		.reg = 0x26,
@@ -423,7 +423,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 		.rfact = RFACT_NONE / 2
 	},
 	{
-		.desc = "Unknown",
+		.desc = "VIN8",
 		.type = ENVSYS_SVOLTS_DC,
 		.bank = 5,
 		.reg = 0x52,

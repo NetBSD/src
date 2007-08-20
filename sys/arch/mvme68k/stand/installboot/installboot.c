@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.11 2005/12/11 12:18:19 christos Exp $ */
+/*	$NetBSD: installboot.c,v 1.11.30.1 2007/08/20 18:38:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -280,8 +280,8 @@ int	devfd;
 	if (fstatvfs(fd, &statvfsbuf) != 0)
 		err(1, "statfs: %s", boot);
 
-	if (strncmp(statvfsbuf.f_fstypename, "ffs", MFSNAMELEN) &&
-	    strncmp(statvfsbuf.f_fstypename, "ufs", MFSNAMELEN) ) {
+	if (strncmp(statvfsbuf.f_fstypename, "ffs", sizeof(statvfsbuf.f_fstypename)) &&
+	    strncmp(statvfsbuf.f_fstypename, "ufs", sizeof(statvfsbuf.f_fstypename)) ) {
 		errx(1, "%s: must be on an FFS filesystem", boot);
 	}
 

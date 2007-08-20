@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.13.30.1 2007/07/15 13:15:30 ad Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.13.30.2 2007/08/20 18:37:19 ad Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.13.30.1 2007/07/15 13:15:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.13.30.2 2007/08/20 18:37:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,11 @@ c_nec_pci_init(void)
 {
 
 	/*
+	 * Initialize interrupt priority
+	 */
+	ipl_sr_bits = nec_pci_ipl_sr_bits;
+
+	/*
 	 * Initialize I/O address offset
 	 */
 	arc_bus_space_init(&jazzio_bus, "jazzio",
@@ -212,6 +217,7 @@ c_nec_pci_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
+	arc_init_wired_map();
 	arc_wired_enter_page(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE,
 	    RD94_S_LOCAL_IO_BASE);
 	/*
@@ -236,11 +242,6 @@ c_nec_pci_init(void)
 	 * kseg2iobufsize will be refered from pmap_bootstrap().
 	 */
 	kseg2iobufsize = 0x02000000; /* 32MB: consumes 32KB for PTEs */
-
-	/*
-	 * Initialize interrupt priority
-	 */
-	ipl_sr_bits = nec_pci_ipl_sr_bits;
 
 	/*
 	 * Disable all interrupts. New masks will be set up

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.31.6.1 2007/07/29 10:18:50 ad Exp $	*/
+/*	$NetBSD: asm.h,v 1.31.6.2 2007/08/20 18:38:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -98,11 +98,7 @@
 
 #ifdef _KERNEL
 
-#if defined(MULTIPROCESSOR)
 #define CPUVAR(off) %fs:__CONCAT(CPU_INFO_,off)
-#else
-#define CPUVAR(off) _C_LABEL(cpu_info_primary)+__CONCAT(CPU_INFO_,off)
-#endif /* MULTIPROCESSOR */
 
 /* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
 #ifdef __ELF__

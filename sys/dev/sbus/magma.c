@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.40.2.2 2007/07/01 21:48:56 ad Exp $	*/
+/*	$NetBSD: magma.c,v 1.40.2.3 2007/08/20 18:37:45 ad Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.40.2.2 2007/07/01 21:48:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.40.2.3 2007/08/20 18:37:45 ad Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -207,7 +207,7 @@ dev_type_ioctl(mbppioctl);
 
 const struct cdevsw mbpp_cdevsw = {
 	mbppopen, mbppclose, mbpp_rw, mbpp_rw, mbppioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 /************************************************************************
@@ -430,7 +430,8 @@ magma_attach(parent, self, aux)
 		struct cd1400 *cd = &sc->ms_cd1400[chip];
 
 		cd->cd_clock = cd_clock;
-		cd->cd_reg = (char *)bh + card->mb_cd1400[chip];
+		cd->cd_reg = (char *)bus_space_vaddr(sa->sa_bustag, bh) +
+		    card->mb_cd1400[chip];
 
 		/* prom_getpropstring(node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
@@ -469,7 +470,8 @@ magma_attach(parent, self, aux)
 	for( chip = 0 ; chip < card->mb_ncd1190 ; chip++ ) {
 		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
-		cd->cd_reg = (char *)bh + card->mb_cd1190[chip];
+		cd->cd_reg = (char *)bus_space_vaddr(sa->sa_bustag, bh) +
+		    card->mb_cd1190[chip];
 
 		/* XXX don't know anything about these chips yet */
 		printf("%s: CD1190 %d addr %p (unsupported)\n",

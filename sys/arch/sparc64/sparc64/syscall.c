@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.20 2007/02/17 22:31:39 pavel Exp $ */
+/*	$NetBSD: syscall.c,v 1.20.4.1 2007/08/20 18:39:06 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,20 +86,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2007/02/17 22:31:39 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20.4.1 2007/08/20 18:39:06 ad Exp $");
 
 #define NEW_FPSTATE
-
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -485,20 +481,13 @@ child_return(arg)
 	void *arg;
 {
 	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l,
-			  (p->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
-#endif
+	ktrsysret((l->l_proc->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 }
 
 

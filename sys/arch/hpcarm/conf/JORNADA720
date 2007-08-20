@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.64 2007/03/01 14:57:38 kiyohara Exp $
+#	$NetBSD: JORNADA720,v 1.64.2.1 2007/08/20 18:38:03 ad Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.64.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -239,9 +239,11 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # Bluetooth PCMCIA Controllers
 bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc*	at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth Device Hub
 bthub*	at bt3c?
+bthub*	at btbc?
 bthub*	at btuart?
 
 # Bluetooth HID support
