@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.5.2.6 2007/08/20 18:08:55 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.5.2.7 2007/08/20 23:04:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.6 2007/08/20 18:08:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.7 2007/08/20 23:04:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -234,9 +234,11 @@ lockdebug_init(void)
 u_int
 lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 {
+#if 0
 	lockdebuglist_t *head;
-	struct cpu_info *ci;
 	lockdebuglk_t *lk;
+#endif
+	struct cpu_info *ci;
 	lockdebug_t *ld;
 
 	if (lo == NULL || panicstr != NULL)
@@ -302,10 +304,12 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 		lockdebug_unlock(&ld_spinner_lk);
 	}
 
+#if 0
 	/* Insert into address hash. */
 	lockdebug_mhash(lock, &lk, &head);
 	TAILQ_INSERT_HEAD(head, ld, ld_mchain);
 	lockdebug_unlock(lk);
+#endif
 
 	return ld->ld_id;
 }
@@ -318,7 +322,9 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 void
 lockdebug_free(volatile void *lock, u_int id)
 {
+#if 0
 	lockdebuglist_t *head;
+#endif
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
 
@@ -346,10 +352,12 @@ lockdebug_free(volatile void *lock, u_int id)
 	ld_nfree++;
 	lockdebug_unlock(&ld_free_lk);
 
+#if 0
 	/* Remove from address hash. */
 	lockdebug_mhash(lock, &lk, &head);
 	TAILQ_REMOVE(head, ld, ld_mchain);
 	lockdebug_unlock(lk);
+#endif
 }
 
 /*
@@ -612,6 +620,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 void
 lockdebug_mem_check(const char *func, void *base, size_t sz)
 {
+#if 0
 	lockdebuglist_t *head;
 	lockdebuglk_t *lk;
 	lockdebug_t *ld;
@@ -630,6 +639,7 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 		}
 	}
 	lockdebug_unlock(lk);
+#endif
 }
 
 /*
