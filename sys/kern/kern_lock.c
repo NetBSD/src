@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.110.2.9 2007/07/29 11:33:05 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.110.2.10 2007/08/20 18:09:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.9 2007/07/29 11:33:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.110.2.10 2007/08/20 18:09:11 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -253,7 +253,6 @@ lockpanic(volatile struct lock *lkp, const char *fmt, ...)
 	    "*10*", "*11*", "*12*", "*13*", "*14*", "*15*"
 	};
 #endif
-
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(s, sizeof(s), fmt, ap);
@@ -707,7 +706,9 @@ lockmgr(volatile struct lock *lkp, u_int flags,
 		    RETURN_ADDRESS);
 		if (error)
 			break;
-		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
+		lkp->lk_flags |= LK_HAVE_EXCL;
+		if ((extflags & LK_RESURRECT) == 0)
+			lkp->lk_flags |= LK_DRAINING;
 		SETHOLDER(lkp, pid, lid, cpu_num);
 #if defined(LOCKDEBUG)
 		lkp->lk_lock_file = file;
@@ -771,6 +772,8 @@ void
 assert_sleepable(struct simplelock *interlock, const char *msg)
 {
 
+	if (panicstr != NULL)
+		return;
 	LOCKDEBUG_BARRIER(&kernel_lock, 1);
 	if (CURCPU_IDLE_P()) {
 		panic("assert_sleepable: idle");
@@ -815,7 +818,8 @@ _kernel_lock_init(void)
 {
 
 	__cpu_simple_lock_init(&kernel_lock);
-	kernel_lock_id = LOCKDEBUG_ALLOC(&kernel_lock, &_kernel_lock_ops);
+	kernel_lock_id = LOCKDEBUG_ALLOC(&kernel_lock, &_kernel_lock_ops,
+	    (uintptr_t)__builtin_return_address(0));
 }
 
 /*
