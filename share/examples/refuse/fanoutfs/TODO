@@ -8,3 +8,4 @@ Get it working
 Create a path in dirs.v[0]
 do symlinks
 Manual page
+Write files into dirs.v[0]
