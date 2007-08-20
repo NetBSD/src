@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.88.2.3 2007/06/08 14:18:19 ad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.88.2.4 2007/08/20 21:28:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.88.2.3 2007/06/08 14:18:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.88.2.4 2007/08/20 21:28:29 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -273,7 +273,7 @@ searchloop:
 			entryoffsetinblock = 0;
 		}
 		/*
-		 * If still looking for a slot, and at a DIRBLKSIZE
+		 * If still looking for a slot, and at a DIRBLKSIZ
 		 * boundary, have to start looking for free space again.
 		 */
 		if (slotstatus == NONE &&
@@ -872,7 +872,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	/*
 	 * Increase size of directory if entry eats into new space.
 	 * This should never push the size past a new multiple of
-	 * DIRBLKSIZE.
+	 * DIRBLKSIZ.
 	 *
 	 * N.B. - THIS IS AN ARTIFACT OF 4.2 AND SHOULD NEVER HAPPEN.
 	 */

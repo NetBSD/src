@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.2.2.3 2007/07/15 13:27:29 ad Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.2.2.4 2007/08/20 21:26:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2.2.3 2007/07/15 13:27:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2.2.4 2007/08/20 21:26:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -163,7 +163,7 @@ struct vfsops hfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	NULL,				/* vfs_snapshot */
 	hfs_extattrctl,
-	NULL,				/* vfs_suspendctl */
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	hfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -176,8 +176,9 @@ static const struct genfs_ops hfs_genfsops = {
 
 int
 hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
+	struct nameidata nd;
 	struct hfs_args *args = data;
 	struct vnode *devvp;
 	struct hfsmount *hmp;
@@ -216,10 +217,10 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return error;
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 	
 		if (!update) {
 			/*
@@ -293,7 +294,7 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		goto error;
 	
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-		mp, l);
+		mp->mnt_op->vfs_name, mp, l);
 
 #ifdef HFS_DEBUG
 	if(!update) {

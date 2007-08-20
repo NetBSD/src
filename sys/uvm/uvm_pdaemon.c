@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.3 2007/07/15 15:53:08 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.4 2007/08/20 21:28:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.3 2007/07/15 15:53:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.4 2007/08/20 21:28:33 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -333,9 +333,9 @@ uvm_aiodone_worker(struct work *wk, void *dummy)
 	free = uvmexp.free;
 	(*bp->b_iodone)(bp);
 	if (free <= uvmexp.reserve_kernel) {
-		mutex_enter(&uvm_fpageqlock);
+		mutex_spin_enter(&uvm_fpageqlock);
 		wakeup(&uvm.pagedaemon);
-		mutex_exit(&uvm_fpageqlock);
+		mutex_spin_exit(&uvm_fpageqlock);
 	} else {
 		mutex_enter(&uvm_pagedaemon_lock);
 		wakeup(&uvmexp.free);

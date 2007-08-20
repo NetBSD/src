@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.26.10.3 2007/04/28 20:47:03 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.26.10.4 2007/08/20 21:28:32 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.26.10.3 2007/04/28 20:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.26.10.4 2007/08/20 21:28:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,12 +71,6 @@ kmutex_t uvm_swap_data_lock;
 kmutex_t uvm_scheduler_mutex;
 
 /*
- * local prototypes
- */
-
-extern kmutex_t uvm_uareas_lock;
-
-/*
  * uvm_init: init the VM system.   called from kern/init_main.c.
  */
 
@@ -99,7 +93,6 @@ uvm_init(void)
 
 	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
-	mutex_init(&uvm_uareas_lock, MUTEX_DEFAULT, IPL_NONE);
 	uvm_amap_init();
 
 	/*

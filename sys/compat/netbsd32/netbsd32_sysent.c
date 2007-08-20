@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_sysent.c,v 1.65 2007/03/04 07:54:08 christos Exp $ */
+/* $NetBSD: netbsd32_sysent.c,v 1.65.2.1 2007/08/20 21:26:00 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.65 2007/03/04 07:54:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysent.c,v 1.65.2.1 2007/08/20 21:26:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -188,13 +188,8 @@ struct sysent netbsd32_sysent[] = {
 	    sys_getegid },			/* 43 = getegid */
 	{ 4, s(struct netbsd32_profil_args), 0,
 	    netbsd32_profil },			/* 44 = netbsd32_profil */
-#if defined(KTRACE) || !defined(_KERNEL)
 	{ 4, s(struct netbsd32_ktrace_args), 0,
 	    netbsd32_ktrace },			/* 45 = netbsd32_ktrace */
-#else
-	{ 0, 0, 0,
-	    sys_nosys },			/* 45 = excluded netbsd32_ktrace */
-#endif
 	{ 3, s(struct netbsd32_sigaction_args), 0,
 	    netbsd32_sigaction },		/* 46 = netbsd32_sigaction */
 	{ 0, 0, SYCALL_MPSAFE | 0,
@@ -789,13 +784,8 @@ struct sysent netbsd32_sysent[] = {
 	    netbsd32_getsid },			/* 286 = netbsd32_getsid */
 	{ 2, s(struct netbsd32___clone_args), 0,
 	    netbsd32___clone },			/* 287 = netbsd32___clone */
-#if defined(KTRACE) || !defined(_KERNEL)
 	{ 4, s(struct netbsd32_fktrace_args), 0,
 	    netbsd32_fktrace },			/* 288 = netbsd32_fktrace */
-#else
-	{ 0, 0, 0,
-	    sys_nosys },			/* 288 = excluded netbsd32_fktrace */
-#endif
 	{ 5, s(struct netbsd32_preadv_args), 0,
 	    netbsd32_preadv },			/* 289 = netbsd32_preadv */
 	{ 5, s(struct netbsd32_pwritev_args), 0,
@@ -857,27 +847,27 @@ struct sysent netbsd32_sysent[] = {
 	    sys__lwp_exit },			/* 310 = _lwp_exit */
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys__lwp_self },			/* 311 = _lwp_self */
-	{ 2, s(struct netbsd32__lwp_wait_args), 0,
+	{ 2, s(struct netbsd32__lwp_wait_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_wait },		/* 312 = netbsd32__lwp_wait */
-	{ 1, s(struct netbsd32__lwp_suspend_args), 0,
+	{ 1, s(struct netbsd32__lwp_suspend_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_suspend },		/* 313 = netbsd32__lwp_suspend */
-	{ 1, s(struct netbsd32__lwp_continue_args), 0,
+	{ 1, s(struct netbsd32__lwp_continue_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_continue },		/* 314 = netbsd32__lwp_continue */
-	{ 1, s(struct netbsd32__lwp_wakeup_args), 0,
+	{ 1, s(struct netbsd32__lwp_wakeup_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_wakeup },		/* 315 = netbsd32__lwp_wakeup */
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys__lwp_getprivate },		/* 316 = _lwp_getprivate */
-	{ 1, s(struct netbsd32__lwp_setprivate_args), 0,
+	{ 1, s(struct netbsd32__lwp_setprivate_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_setprivate },		/* 317 = netbsd32__lwp_setprivate */
 	{ 2, s(struct netbsd32__lwp_kill_args), 0,
 	    netbsd32__lwp_kill },		/* 318 = netbsd32__lwp_kill */
-	{ 1, s(struct netbsd32__lwp_detach_args), 0,
+	{ 1, s(struct netbsd32__lwp_detach_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_detach },		/* 319 = netbsd32__lwp_detach */
-	{ 3, s(struct netbsd32__lwp_park_args), 0,
+	{ 4, s(struct netbsd32__lwp_park_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_park },		/* 320 = netbsd32__lwp_park */
-	{ 2, s(struct netbsd32__lwp_unpark_args), 0,
+	{ 2, s(struct netbsd32__lwp_unpark_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_unpark },		/* 321 = netbsd32__lwp_unpark */
-	{ 3, s(struct netbsd32__lwp_unpark_all_args), 0,
+	{ 3, s(struct netbsd32__lwp_unpark_all_args), SYCALL_MPSAFE | 0,
 	    netbsd32__lwp_unpark_all },		/* 322 = netbsd32__lwp_unpark_all */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 323 = unimplemented */

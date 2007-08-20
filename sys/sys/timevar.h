@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.7.6.2 2007/07/01 21:51:00 ad Exp $	*/
+/*	$NetBSD: timevar.h,v 1.7.6.3 2007/08/20 21:28:21 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -177,7 +177,8 @@ int	hzto(struct timeval *);
 void	inittimecounter(void);
 int	itimerdecr(struct ptimer *, int);
 void	itimerfire(struct ptimer *);
-int	itimerfix(struct timeval *tv);
+int	itimerfix(struct timeval *);
+int	itimespecfix(struct timespec *);
 int	ppsratecheck(struct timeval *, int *, int);
 int	ratecheck(struct timeval *, const struct timeval *);
 void	realtimerexpire(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.131.2.2 2007/07/15 13:27:59 ad Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.131.2.3 2007/08/20 21:28:02 ad Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.131.2.2 2007/07/15 13:27:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.131.2.3 2007/08/20 21:28:02 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2451,7 +2451,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		/* target lladdr option */
 		struct rtentry *rt_nexthop = NULL;
 		int len;
-		struct sockaddr_dl *sdl;
+		const struct sockaddr_dl *sdl;
 		struct nd_opt_hdr *nd_opt;
 		char *lladdr;
 
@@ -2466,13 +2466,13 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 		if (!(rt_nexthop->rt_flags & RTF_GATEWAY) &&
 		    (rt_nexthop->rt_flags & RTF_LLINFO) &&
 		    (rt_nexthop->rt_gateway->sa_family == AF_LINK) &&
-		    (sdl = (struct sockaddr_dl *)rt_nexthop->rt_gateway) &&
+		    (sdl = satocsdl(rt_nexthop->rt_gateway)) &&
 		    sdl->sdl_alen) {
 			nd_opt = (struct nd_opt_hdr *)p;
 			nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 			nd_opt->nd_opt_len = len >> 3;
 			lladdr = (char *)(nd_opt + 1);
-			bcopy(LLADDR(sdl), lladdr, ifp->if_addrlen);
+			memcpy(lladdr, CLLADDR(sdl), ifp->if_addrlen);
 			p += len;
 		}
 	}
@@ -2726,7 +2726,7 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		panic("icmp6_mtudisc_timeout: bad route to timeout");
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
-		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		rtrequest((int) RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	} else {
 		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
@@ -2741,7 +2741,7 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 		panic("icmp6_redirect_timeout: bad route to timeout");
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
-		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		rtrequest((int) RTM_DELETE, rt_getkey(rt),
 		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	}
 }

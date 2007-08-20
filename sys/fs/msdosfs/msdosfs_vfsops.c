@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.44.4.5 2007/07/29 11:37:10 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.44.4.6 2007/08/20 21:26:07 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.5 2007/07/29 11:37:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.6 2007/08/20 21:26:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -92,18 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.5 2007/07/29 11:37:10 ad E
 #define MSDOSFS_NAMEMAX(pmp) \
 	(pmp)->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12
 
-int msdosfs_mountroot(void);
-int msdosfs_mount(struct mount *, const char *, void *, size_t *,
-    struct nameidata *, struct lwp *);
-int msdosfs_start(struct mount *, int, struct lwp *);
-int msdosfs_unmount(struct mount *, int, struct lwp *);
-int msdosfs_root(struct mount *, struct vnode **);
-int msdosfs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
-int msdosfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int msdosfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int msdosfs_vget(struct mount *, ino_t, struct vnode **);
-int msdosfs_fhtovp(struct mount *, struct fid *, struct vnode **);
-int msdosfs_vptofh(struct vnode *, struct fid *, size_t *fh_size);
+VFS_PROTOS(msdosfs);
 
 int msdosfs_mountfs(struct vnode *, struct mount *, struct lwp *,
     struct msdosfs_args *);
@@ -141,7 +130,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	msdosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -247,14 +236,14 @@ msdosfs_mountroot()
  * special file to treat as a filesystem.
  */
 int
-msdosfs_mount(mp, path, data, data_len, ndp, l)
+msdosfs_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct vnode *devvp;	  /* vnode for blk device to mount */
 	struct msdosfs_args *args = data; /* holds data from mount request */
 	/* msdosfs specific mount control block */
@@ -343,12 +332,12 @@ msdosfs_mount(mp, path, data, data_len, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-	if ((error = namei(ndp)) != 0) {
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("namei %d\n", error));
 		return (error);
 	}
-	devvp = ndp->ni_vp;
+	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		DPRINTF(("not block\n"));
@@ -434,7 +423,7 @@ msdosfs_mount(mp, path, data, data_len, ndp, l)
 	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
 #endif
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 
 fail:
 	vrele(devvp);

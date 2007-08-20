@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.25.2.4 2007/07/15 13:27:31 ad Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.25.2.5 2007/08/20 21:26:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -53,8 +53,6 @@ extern const struct vnodeopv_desc puffs_fifoop_opv_desc;
 extern const struct vnodeopv_desc puffs_msgop_opv_desc;
 
 extern struct pool puffs_pnpool;
-
-#define PUFFS_NAMEPREFIX "puffs:"
 
 #define PUFFS_SIZEOPREQ_UIO_IN 1
 #define PUFFS_SIZEOPREQ_UIO_OUT 2
@@ -195,6 +193,8 @@ struct puffs_node {
 	struct timespec	pn_mc_ctime;
 	struct timespec	pn_mc_mtime;
 	u_quad_t	pn_mc_size;
+
+	voff_t		pn_serversize;
 
 	LIST_ENTRY(puffs_node) pn_hashent;
 };

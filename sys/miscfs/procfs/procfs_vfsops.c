@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.70.6.1 2007/07/15 13:27:51 ad Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.70.6.2 2007/08/20 21:27:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.70.6.1 2007/07/15 13:27:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.70.6.2 2007/08/20 21:27:50 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -101,18 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.70.6.1 2007/07/15 13:27:51 ad Ex
 
 #include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
-void	procfs_init(void);
-void	procfs_reinit(void);
-void	procfs_done(void);
-int	procfs_mount(struct mount *, const char *, void *, size_t *,
-			  struct nameidata *, struct lwp *);
-int	procfs_start(struct mount *, int, struct lwp *);
-int	procfs_unmount(struct mount *, int, struct lwp *);
-int	procfs_quotactl(struct mount *, int, uid_t, void *,
-			     struct lwp *);
-int	procfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	procfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int	procfs_vget(struct mount *, ino_t, struct vnode **);
+VFS_PROTOS(procfs);
 
 /*
  * VFS Operations.
@@ -126,7 +115,6 @@ procfs_mount(
     const char *path,
     void *data,
     size_t *data_len,
-    struct nameidata *ndp,
     struct lwp *l
 )
 {
@@ -167,7 +155,7 @@ procfs_mount(
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "procfs", UIO_SYSSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
 	if (*data_len >= sizeof *args)
 		pmnt->pmnt_flags = args->flags;
@@ -340,7 +328,7 @@ struct vfsops procfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	procfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

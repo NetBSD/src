@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.13 2006/10/25 04:04:46 thorpej Exp $	*/
+/*	$NetBSD: dkio.h,v 1.13.8.1 2007/08/20 21:28:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -33,7 +33,7 @@
 #define _SYS_DKIO_H_
 
 #include <sys/ioccom.h>
-#include <prop/proplib.h>
+#include <prop/plistref.h>
 
 /*
  * Disk-specific ioctls.

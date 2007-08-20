@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.3 2007/07/15 15:52:53 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.4 2007/08/20 21:26:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.3 2007/07/15 15:52:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.4 2007/08/20 21:26:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -67,7 +67,7 @@ MALLOC_JUSTDEFINE(M_TMPFSMNT, "tmpfs mount", "tmpfs mount structures");
 /* --------------------------------------------------------------------- */
 
 static int	tmpfs_mount(struct mount *, const char *, void *, size_t *,
-		    struct nameidata *, struct lwp *);
+		    struct lwp *);
 static int	tmpfs_start(struct mount *, int, struct lwp *);
 static int	tmpfs_unmount(struct mount *, int, struct lwp *);
 static int	tmpfs_root(struct mount *, struct vnode **);
@@ -87,7 +87,7 @@ static int	tmpfs_snapshot(struct mount *, struct vnode *,
 
 static int
 tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error;
 	ino_t nodes;
@@ -178,10 +178,12 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	mp->mnt_data = tmp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_fs_bshift = PAGE_SHIFT;
+	mp->mnt_dev_bshift = DEV_BSHIFT;
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 /* --------------------------------------------------------------------- */
@@ -465,7 +467,7 @@ struct vfsops tmpfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	tmpfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
-	vfs_stdsuspendctl,		/* vfs_suspendctl */
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	tmpfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.60.2.4 2007/07/15 13:27:12 ad Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.60.2.5 2007/08/20 21:25:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/shm.h>
 #include <sys/ucontext.h>
 #include <compat/sys/ucontext.h>
+#include <compat/sys/mount.h>
 
 /*
  * first, define the basic types we need.

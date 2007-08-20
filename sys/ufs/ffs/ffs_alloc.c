@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.98.2.5 2007/06/17 21:32:06 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.98.2.6 2007/08/20 21:28:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.5 2007/06/17 21:32:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.6 2007/08/20 21:28:24 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -161,8 +161,8 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 #endif /* DIAGNOSTIC */
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
 		goto nospace;
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
-	    freespace(fs, fs->fs_minfree) <= 0)
+	if (freespace(fs, fs->fs_minfree) <= 0 &&
+	    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		goto nospace;
 #ifdef QUOTA
 	mutex_exit(&ump->um_lock);
@@ -249,8 +249,8 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	if (cred == NOCRED)
 		panic("ffs_realloccg: missing credential");
 #endif /* DIAGNOSTIC */
-	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
-	    freespace(fs, fs->fs_minfree) <= 0) {
+	if (freespace(fs, fs->fs_minfree) <= 0 &&
+	    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		mutex_exit(&ump->um_lock);
 		goto nospace;
 	}
@@ -1598,8 +1598,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	} else {
 		dev = devvp->v_rdev;
 		cgblkno = fsbtodb(fs, cgtod(fs, cg));
-		if (TAILQ_FIRST(&ump->um_snapshots) != NULL &&
-		    ffs_snapblkfree(fs, devvp, bno, size, inum))
+		if (ffs_snapblkfree(fs, devvp, bno, size, inum))
 			return;
 	}
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||

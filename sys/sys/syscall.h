@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.183.2.4 2007/08/19 19:24:58 ad Exp $ */
+/* $NetBSD: syscall.h,v 1.183.2.5 2007/08/20 21:28:20 ad Exp $ */
 
 /*
  * System call numbers.
@@ -155,13 +155,9 @@
 /* syscall: "profil" ret: "int" args: "char *" "size_t" "u_long" "u_int" */
 #define	SYS_profil	44
 
-#if defined(KTRACE) || !defined(_KERNEL)
 /* syscall: "ktrace" ret: "int" args: "const char *" "int" "int" "int" */
 #define	SYS_ktrace	45
 
-#else
-				/* 45 is excluded ktrace */
-#endif
 /* syscall: "compat_13_sigaction13" ret: "int" args: "int" "const struct sigaction13 *" "struct sigaction13 *" */
 #define	SYS_compat_13_sigaction13	46
 
@@ -822,13 +818,9 @@
 /* syscall: "__clone" ret: "pid_t" args: "int" "void *" */
 #define	SYS___clone	287
 
-#if defined(KTRACE) || !defined(_KERNEL)
 /* syscall: "fktrace" ret: "int" args: "const int" "int" "int" "int" */
 #define	SYS_fktrace	288
 
-#else
-				/* 288 is excluded ktrace */
-#endif
 /* syscall: "preadv" ret: "ssize_t" args: "int" "const struct iovec *" "int" "int" "off_t" */
 #define	SYS_preadv	289
 
@@ -934,7 +926,7 @@
 /* syscall: "_lwp_detach" ret: "int" args: "lwpid_t" */
 #define	SYS__lwp_detach	319
 
-/* syscall: "_lwp_park" ret: "int" args: "const struct timespec *" "struct __ucontext *" "const void *" */
+/* syscall: "_lwp_park" ret: "int" args: "const struct timespec *" "lwpid_t" "const void *" "const void *" */
 #define	SYS__lwp_park	320
 
 /* syscall: "_lwp_unpark" ret: "int" args: "lwpid_t" "const void *" */
@@ -1147,6 +1139,9 @@
 /* syscall: "__mount50" ret: "int" args: "const char *" "const char *" "int" "void *" "size_t" */
 #define	SYS___mount50	410
 
-#define	SYS_MAXSYSCALL	411
+/* syscall: "mremap" ret: "void *" args: "void *" "size_t" "void *" "size_t" "int" */
+#define	SYS_mremap	411
+
+#define	SYS_MAXSYSCALL	412
 #define	SYS_NSYSENT	512
 #endif /* _SYS_SYSCALL_H_ */

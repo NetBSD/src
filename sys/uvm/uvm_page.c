@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.10 2007/07/29 11:32:20 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.11 2007/08/20 21:28:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.10 2007/07/29 11:32:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.11 2007/08/20 21:28:33 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -961,11 +961,11 @@ uvm_page_recolor(int newncolors)
 		return;
 	}
 
-	mutex_enter(&uvm_fpageqlock);
+	mutex_spin_enter(&uvm_fpageqlock);
 
 	/* Make sure we should still do this. */
 	if (newncolors <= uvmexp.ncolors) {
-		mutex_exit(&uvm_fpageqlock);
+		mutex_spin_exit(&uvm_fpageqlock);
 		free(bucketarray, M_VMPAGE);
 		return;
 	}
@@ -997,13 +997,13 @@ uvm_page_recolor(int newncolors)
 	}
 
 	if (have_recolored_pages) {
-		mutex_exit(&uvm_fpageqlock);
+		mutex_spin_exit(&uvm_fpageqlock);
 		free(oldbucketarray, M_VMPAGE);
 		return;
 	}
 
 	have_recolored_pages = true;
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 }
 
 /*
@@ -1081,7 +1081,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	KASSERT(obj == NULL || mutex_owned(&obj->vmobjlock));
 	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
 
-	mutex_enter(&uvm_fpageqlock);
+	mutex_spin_enter(&uvm_fpageqlock);
 
 	/*
 	 * This implements a global round-robin page coloring
@@ -1191,7 +1191,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 			zeroit = 1;
 		}
 	}
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 
 	pg->offset = off;
 	pg->uobject = obj;
@@ -1225,7 +1225,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	return(pg);
 
  fail:
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 	return (NULL);
 }
 
@@ -1433,7 +1433,7 @@ uvm_pagefree(struct vm_page *pg)
 	pg->uanon = (void *)0xdeadbeef;
 #endif
 
-	mutex_enter(&uvm_fpageqlock);
+	mutex_spin_enter(&uvm_fpageqlock);
 
 #ifdef DEBUG
 	if (iszero)
@@ -1448,7 +1448,7 @@ uvm_pagefree(struct vm_page *pg)
 	if (uvmexp.zeropages < UVM_PAGEZERO_TARGET)
 		uvm.page_idle_zero = vm_page_zero_enable;
 
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 }
 
 /*
@@ -1574,7 +1574,7 @@ uvm_pageidlezero(void)
 	int free_list, firstbucket;
 	static int nextbucket;
 
-	mutex_enter(&uvm_fpageqlock);
+	mutex_spin_enter(&uvm_fpageqlock);
 	firstbucket = nextbucket;
 	do {
 		if (sched_curcpu_runnable_p()) {
@@ -1595,7 +1595,7 @@ uvm_pageidlezero(void)
 				    nextbucket].pgfl_queues[PGFL_UNKNOWN],
 				    pg, pageq);
 				uvmexp.free--;
-				mutex_exit(&uvm_fpageqlock);
+				mutex_spin_exit(&uvm_fpageqlock);
 #ifdef PMAP_PAGEIDLEZERO
 				if (!PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg))) {
 
@@ -1606,7 +1606,7 @@ uvm_pageidlezero(void)
 					 * process now ready to run.
 					 */
 
-					mutex_enter(&uvm_fpageqlock);
+					mutex_spin_enter(&uvm_fpageqlock);
 					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
 					    PGFL_UNKNOWN], pg, pageq);
@@ -1619,7 +1619,7 @@ uvm_pageidlezero(void)
 #endif /* PMAP_PAGEIDLEZERO */
 				pg->flags |= PG_ZERO;
 
-				mutex_enter(&uvm_fpageqlock);
+				mutex_spin_enter(&uvm_fpageqlock);
 				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
 				    pg, pageq);
@@ -1630,7 +1630,7 @@ uvm_pageidlezero(void)
 		nextbucket = (nextbucket + 1) & uvmexp.colormask;
 	} while (nextbucket != firstbucket);
 quit:
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 }
 
 /*

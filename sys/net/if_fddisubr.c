@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.68 2007/03/07 22:20:05 liamjfoy Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.68.2.1 2007/08/20 21:27:53 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.68 2007/03/07 22:20:05 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.68.2.1 2007/08/20 21:27:53 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -214,7 +214,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct fddi_header *fh;
-	struct mbuf *mcopy = (struct mbuf *)0;
+	struct mbuf *mcopy = NULL;
 	struct ifnet *ifp = ifp0;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -382,11 +382,11 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
-		struct sockaddr_dl *sdl;
+		const struct sockaddr_dl *sdl;
 
-		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
+		if (rt && (sdl = satocsdl(rt->rt_gateway)) &&
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
-			memcpy(edst, LLADDR(sdl), sizeof(edst));
+			memcpy(edst, CLLADDR(sdl), sizeof(edst));
 		} else if ((error =
 			    iso_snparesolve(ifp, (const struct sockaddr_iso *)dst,
 					    (char *)edst, &snpalen)) != 0)

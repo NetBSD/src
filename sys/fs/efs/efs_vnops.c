@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.3.2.3 2007/08/19 19:24:49 ad Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.3.2.4 2007/08/20 21:26:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3.2.3 2007/08/19 19:24:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.3.2.4 2007/08/20 21:26:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,16 +305,24 @@ efs_readdir(void *v)
 	struct efs_dirblk *db;
 	struct uio *uio = ap->a_uio;
 	struct efs_inode *ei = EFS_VTOI(ap->a_vp);
+	off_t *cookies = NULL;
 	off_t offset;
-	int i, j, err, ret, s, slot;
-
-	/* XXX - ncookies, cookies for NFS */
+	int i, j, err, ret, s, slot, ncookies, maxcookies = 0;
 
 	if (ap->a_vp->v_type != VDIR)
 		return (ENOTDIR);
 
-	offset = 0;
+	if (ap->a_eofflag != NULL)
+		*ap->a_eofflag = false;
 
+	if (ap->a_ncookies != NULL) {
+		ncookies = 0;
+		maxcookies =
+		    uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
+		cookies = malloc(maxcookies * sizeof(off_t), M_TEMP, M_WAITOK);
+ 	}
+
+	offset = 0;
 	efs_extent_iterator_init(&exi, ei, 0);
 	while ((ret = efs_extent_iterator_next(&exi, &ex)) == 0) {
 		for (i = 0; i < ex.ex_length; i++) {
@@ -322,7 +330,7 @@ efs_readdir(void *v)
 			    ex.ex_bn + i, NULL, &bp);
 			if (err) {
 				brelse(bp, 0);
-				return (err);
+				goto exit_err;
 			}
 
 			db = (struct efs_dirblk *)bp->b_data;
@@ -351,15 +359,11 @@ efs_readdir(void *v)
 					continue;
 				}
 
-				if (offset > uio->uio_offset) {
-					/* XXX - shouldn't happen, right? */
+				/* XXX - shouldn't happen, right? */
+				if (offset > uio->uio_offset ||
+				    s > uio->uio_resid) {
 					brelse(bp, 0);
-					return (0);
-				}
-
-				if (s > uio->uio_resid) {
-					brelse(bp, 0);
-					return (0);
+					goto exit_ok;
 				}
 
 				dp = malloc(s, M_EFSTMP, M_ZERO | M_WAITOK);
@@ -377,7 +381,7 @@ efs_readdir(void *v)
 				if (err) {
 					brelse(bp, 0);
 					free(dp, M_EFSTMP);
-					return (err);
+					goto exit_err;
 				}
 
 				switch (be16toh(edi.di_mode) & EFS_IFMT) {
@@ -411,23 +415,47 @@ efs_readdir(void *v)
 				free(dp, M_EFSTMP);
 				if (err) {
 					brelse(bp, 0);
-					return (err);	
+					goto exit_err;	
 				}
 
 				offset += s;
+
+				if (cookies != NULL && maxcookies != 0) {
+					cookies[ncookies++] = offset;
+					if (ncookies == maxcookies) {
+						brelse(bp, 0);
+						goto exit_ok;
+					}
+				}
 			}
 
 			brelse(bp, 0);
 		}
 	}
 
-	if (ret != -1)
-		return (ret);
+	if (ret != -1) {
+		err = ret;
+		goto exit_err;
+	}
 
 	if (ap->a_eofflag != NULL)
 		*ap->a_eofflag = true;
 
+ exit_ok:
+	if (cookies != NULL) {
+		*ap->a_cookies = cookies;
+		*ap->a_ncookies = ncookies;
+	}
+
+	uio->uio_offset = offset;
+
 	return (0);
+
+ exit_err:
+	if (cookies != NULL)
+		free(cookies, M_TEMP);
+	
+	return (err);
 }
 
 static int

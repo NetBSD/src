@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.88.2.6 2007/06/09 23:58:11 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.88.2.7 2007/08/20 21:27:54 ad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.6 2007/06/09 23:58:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.7 2007/08/20 21:27:54 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.88.2.6 2007/06/09 23:58:11 ad Exp $");
 
 #include <net/if_gre.h>
 
+#include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 /*
  * It is not easy to calculate the right value for a GRE MTU.
@@ -338,6 +339,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 
 	*mtod(m, int *) = ip_gre_ttl;
 	m->m_len = sizeof(int);
+	KASSERT(so->so_proto && so->so_proto->pr_ctloutput);
 	rc = (*so->so_proto->pr_ctloutput)(PRCO_SETOPT, so, IPPROTO_IP, IP_TTL,
 	    &m);
 	m = NULL;
@@ -608,7 +610,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	u_int16_t etype = 0;
 	struct mobile_h mob_h;
 
-	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == 0 ||
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING) ||
 	    sc->g_src.s_addr == INADDR_ANY || sc->g_dst.s_addr == INADDR_ANY) {
 		m_freem(m);
 		error = ENETDOWN;
@@ -905,7 +908,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct oifreq *oifr = NULL;
 	struct ifreq ifrb;
 
-	cmd = cvtcmd(cmd);
+	cmd = compat_cvtcmd(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;

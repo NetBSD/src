@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.15 2007/08/20 12:30:34 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.16 2007/08/20 21:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.15 2007/08/20 12:30:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.16 2007/08/20 21:27:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,9 +185,8 @@ kmutex_t bqueue_lock;
 void *biodone_sih;
 
 /* Buffer pool for I/O buffers. */
-static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
-    &pool_allocator_nointr, IPL_NONE);
-
+struct pool bufpool;
+struct pool bufiopool;
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
@@ -412,6 +411,11 @@ bufinit(void)
 #ifdef PMAP_MAP_POOLPAGE
 	use_std = 1;
 #endif
+
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&bufiopool, sizeof(struct buf), 0, 0, 0, "biopl",
+	    NULL, IPL_BIO);
 
 	bufmempool_allocator.pa_backingmap = buf_map;
 	for (i = 0; i < NMEMPOOLS; i++) {
@@ -1841,9 +1845,6 @@ vfs_bufstats(void)
 #endif /* DEBUG */
 
 /* ------------------------------ */
-
-static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL,
-    IPL_NONE);
 
 static struct buf *
 getiobuf1(int prflags)

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.52.2.2 2007/06/17 21:31:18 ad Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.52.2.3 2007/08/20 21:27:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.52.2.2 2007/06/17 21:31:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.52.2.3 2007/08/20 21:27:26 ad Exp $");
 
 #include "opt_pax.h"
 
@@ -175,14 +175,19 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if (cmd->ev_len & PAGE_MASK)
 		return(EINVAL);
 
+	prot = cmd->ev_prot;
+	maxprot = UVM_PROT_ALL;
+#ifdef PAX_MPROTECT
+	pax_mprotect(l, &prot, &maxprot);
+#endif /* PAX_MPROTECT */
+
 	/*
-	 * first, attach to the object
+	 * check the file system's opinion about mmapping the file
 	 */
 
-        uobj = uvn_attach(vp, VM_PROT_READ|VM_PROT_EXECUTE);
-        if (uobj == NULL)
-                return(ENOMEM);
-	VREF(vp);
+	error = VOP_MMAP(vp, prot, p->p_cred, l);
+	if (error)
+		return error;
 
 	if ((vp->v_vflag & VV_MAPPED) == 0) {
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -193,15 +198,11 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 		VOP_UNLOCK(vp, 0);
 	}
 
-	prot = cmd->ev_prot;
-	maxprot = UVM_PROT_ALL;
-#ifdef PAX_MPROTECT
-	pax_mprotect(l, &prot, &maxprot);
-#endif /* PAX_MPROTECT */
-
 	/*
-	 * do the map
+	 * do the map, reference the object for this map entry
 	 */
+	uobj = &vp->v_uobj;
+	vref(vp);
 
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 		uobj, cmd->ev_offset, 0,

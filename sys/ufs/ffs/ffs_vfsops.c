@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.13 2007/08/20 03:22:44 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.14 2007/08/20 21:28:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.13 2007/08/20 03:22:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.14 2007/08/20 21:28:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -186,8 +186,9 @@ ffs_mountroot(void)
  */
 int
 ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
+	struct nameidata nd;
 	struct vnode *devvp = NULL;
 	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
@@ -218,10 +219,10 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return (error);
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*
@@ -437,7 +438,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error == 0)
 		(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
 		    sizeof(fs->fs_fsmnt));
@@ -823,7 +824,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
-	TAILQ_INIT(&ump->um_snapshots);
 	ump->um_fs = fs;
 	ump->um_ops = &ffs_ufsops;
 
@@ -1342,7 +1342,7 @@ loop:
 		    vp->v_type == VNON || ((ip->i_flag &
 		    (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		    vp->v_uobj.uo_npages == 0))
+		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
 			mutex_exit(&vp->v_interlock);
 			continue;
@@ -1604,6 +1604,7 @@ ffs_init(void)
 	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
 		  "dino2pl", &pool_allocator_nointr, IPL_NONE);
 	softdep_initialize();
+	ffs_snapshot_init();
 	ufs_init();
 }
 
@@ -1621,6 +1622,7 @@ ffs_done(void)
 		return;
 
 	/* XXX softdep cleanup ? */
+	ffs_snapshot_fini();
 	ufs_done();
 	pool_destroy(&ffs_dinode2_pool);
 	pool_destroy(&ffs_dinode1_pool);

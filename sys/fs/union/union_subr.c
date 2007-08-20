@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.24.6.2 2007/06/17 21:31:16 ad Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.24.6.3 2007/08/20 21:26:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.24.6.2 2007/06/17 21:31:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.24.6.3 2007/08/20 21:26:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,8 +267,10 @@ union_newsize(vp, uppersz, lowersz)
 	off_t sz;
 
 	/* only interested in regular files */
-	if (vp->v_type != VREG)
+	if (vp->v_type != VREG) {
+		uvm_vnp_setsize(vp, 0);
 		return;
+	}
 
 	un = VTOUNION(vp);
 	sz = VNOVAL;
@@ -337,9 +339,11 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	int docache;
 {
 	int error;
+	struct vattr va;
 	struct union_node *un = NULL;
 	struct vnode *xlowervp = NULLVP;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
+	voff_t uppersz, lowersz;
 	int hash = 0;
 	int vflag, iflag;
 	int try;
@@ -501,6 +505,14 @@ loop:
 		return (0);
 	}
 
+	uppersz = lowersz = VNOVAL;
+	if (uppervp != NULLVP)
+		if (VOP_GETATTR(uppervp, &va, FSCRED, NULL) == 0)
+			uppersz = va.va_size;
+	if (lowervp != NULLVP)
+		if (VOP_GETATTR(lowervp, &va, FSCRED, NULL) == 0)
+			lowersz = va.va_size;
+
 	if (docache) {
 		/*
 		 * otherwise lock the vp list while we call getnewvnode
@@ -539,15 +551,18 @@ loop:
 	un = VTOUNION(*vpp);
 	un->un_vnode = *vpp;
 	un->un_uppervp = uppervp;
-	un->un_uppersz = VNOVAL;
 	un->un_lowervp = lowervp;
-	un->un_lowersz = VNOVAL;
 	un->un_pvp = undvp;
 	if (undvp != NULLVP)
 		VREF(undvp);
 	un->un_dircache = 0;
 	un->un_openl = 0;
 	un->un_flags = UN_LOCKED;
+
+	un->un_uppersz = VNOVAL;
+	un->un_lowersz = VNOVAL;
+	union_newsize(*vpp, uppersz, lowersz);
+
 	if (un->un_uppervp)
 		un->un_flags |= UN_ULOCK;
 #ifdef DIAGNOSTIC

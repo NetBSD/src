@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.8 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.8.6.1 2007/08/20 21:26:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.8 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.8.6.1 2007/08/20 21:26:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -203,7 +203,7 @@ filecore_lookup(v)
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return error;
 	}
 
@@ -241,7 +241,7 @@ notfound:
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) lo1\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	/*
@@ -307,7 +307,7 @@ found:
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) lo4\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 		error = VFS_VGET(vdp->v_mount, dp->i_dirent.addr |
 		    (i << FILECORE_INO_INDEX), &tdp);
 		if (error)

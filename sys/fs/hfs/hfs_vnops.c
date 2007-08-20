@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.2.2.1 2007/04/10 13:26:34 ad Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.2.2.2 2007/08/20 21:26:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.2.2.1 2007/04/10 13:26:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.2.2.2 2007/08/20 21:26:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -336,7 +336,6 @@ hfs_vop_lookup(void *v)
 	const char *pname;
 	int error;
 	int flags;
-	int lockparent;			/* 1 => lockparent flag is set */
 	int result;				/* result of libhfs operations */
 
 #ifdef HFS_DEBUG
@@ -356,7 +355,6 @@ hfs_vop_lookup(void *v)
 	*vpp = NULL;
 
 	flags = cnp->cn_flags;
-	lockparent = flags & LOCKPARENT;
 
 
 	/*
@@ -392,16 +390,9 @@ hfs_vop_lookup(void *v)
 /*printf("DOTDOT ");*/
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, dp->h_parent, &tdp);
-		if (error != 0) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+		if (error != 0)
 			goto error;
-		}
-		if (lockparent && (flags & ISLASTCN)) {
-			if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0) {
-				vput(tdp);
-				goto error;
-			}
-		}
 		*vpp = tdp;
 /*	} else if (dp->h_rec.cnid == rec.file.cnid) {*/
 	} else if (cnp->cn_namelen == 1 && pname[0] == '.') {
@@ -468,9 +459,6 @@ hfs_vop_lookup(void *v)
 			error = VFS_VGET(vdp->v_mount, rec.file.cnid, &tdp);
 		if (error != 0)
 			goto error;
-		if (!lockparent || !(flags & ISLASTCN)) {
-			VOP_UNLOCK(pdp, 0);
-		}
 		*vpp = tdp;
 	}
 /*printf("\n");*/

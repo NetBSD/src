@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.8 2007/08/20 03:22:43 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.9 2007/08/20 21:27:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.8 2007/08/20 03:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.9 2007/08/20 21:27:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -130,8 +130,7 @@ const struct vnodeopv_desc spec_vnodeop_opv_desc =
  * Trivial lookup routine that always fails.
  */
 int
-spec_lookup(v)
-	void *v;
+spec_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
@@ -161,8 +160,7 @@ iskmemdev(dev_t dev)
  */
 /* ARGSUSED */
 int
-spec_open(v)
-	void *v;
+spec_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -243,8 +241,7 @@ spec_open(v)
  */
 /* ARGSUSED */
 int
-spec_read(v)
-	void *v;
+spec_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -317,8 +314,7 @@ spec_read(v)
  */
 /* ARGSUSED */
 int
-spec_write(v)
-	void *v;
+spec_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -402,8 +398,7 @@ spec_write(v)
  */
 /* ARGSUSED */
 int
-spec_ioctl(v)
-	void *v;
+spec_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
@@ -456,8 +451,7 @@ spec_ioctl(v)
 
 /* ARGSUSED */
 int
-spec_poll(v)
-	void *v;
+spec_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -495,8 +489,7 @@ spec_poll(v)
 
 /* ARGSUSED */
 int
-spec_kqfilter(v)
-	void *v;
+spec_kqfilter(void *v)
 {
 	struct vop_kqfilter_args /* {
 		struct vnode	*a_vp;
@@ -519,12 +512,32 @@ spec_kqfilter(v)
 }
 
 /*
+ * Allow mapping of only D_DISK.  This is called only for VBLK.
+ */
+int
+spec_mmap(void *v)
+{
+	struct vop_mmap_args /* {
+		struct vnode *a_vp;
+		vm_prot_t a_prot;
+		kauth_cred_t a_cred;
+		struct lwp *a_l;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	KASSERT(vp->v_type == VBLK);
+	if (bdev_type(vp->v_rdev) != D_DISK)
+		return EINVAL;
+
+	return 0;
+}
+
+/*
  * Synch buffers associated with a block device
  */
 /* ARGSUSED */
 int
-spec_fsync(v)
-	void *v;
+spec_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -545,8 +558,7 @@ spec_fsync(v)
  * Just call the device strategy routine
  */
 int
-spec_strategy(v)
-	void *v;
+spec_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -595,8 +607,7 @@ spec_strategy(v)
 }
 
 int
-spec_inactive(v)
-	void *v;
+spec_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -611,8 +622,7 @@ spec_inactive(v)
  * This is a noop, simply returning what one has been given.
  */
 int
-spec_bmap(v)
-	void *v;
+spec_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -636,8 +646,7 @@ spec_bmap(v)
  */
 /* ARGSUSED */
 int
-spec_close(v)
-	void *v;
+spec_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -758,8 +767,7 @@ spec_close(v)
  * Print out the contents of a special device vnode.
  */
 int
-spec_print(v)
-	void *v;
+spec_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -774,8 +782,7 @@ spec_print(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-spec_pathconf(v)
-	void *v;
+spec_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -815,8 +822,7 @@ spec_pathconf(v)
  * Advisory record locking support.
  */
 int
-spec_advlock(v)
-	void *v;
+spec_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;

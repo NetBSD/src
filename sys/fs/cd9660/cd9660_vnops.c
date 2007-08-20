@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.26.2.2 2007/08/19 19:24:49 ad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.26.2.3 2007/08/20 21:26:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26.2.2 2007/08/19 19:24:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.26.2.3 2007/08/20 21:26:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ cd9660_readdir(v)
 	if (ap->a_ncookies == NULL)
 		idp->cookies = NULL;
 	else {
-		ncookies = uio->uio_resid / 16;
+		ncookies = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 		idp->cookies = cookies;
 		idp->ncookies = ncookies;

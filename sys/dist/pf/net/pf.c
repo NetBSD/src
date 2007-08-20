@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.36.2.1 2007/06/08 14:14:59 ad Exp $	*/
+/*	$NetBSD: pf.c,v 1.36.2.2 2007/08/20 21:27:25 ad Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -103,6 +103,7 @@
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 #endif /* INET6 */
+
 
 #define DPFPRINTF(n, x)	if (pf_status.debug >= (n)) printf x
 

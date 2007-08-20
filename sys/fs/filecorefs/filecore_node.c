@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.8.4.2 2007/07/15 13:27:29 ad Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.8.4.3 2007/08/20 21:26:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.8.4.2 2007/07/15 13:27:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.8.4.3 2007/08/20 21:26:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ loop:
 	LIST_FOREACH(ip, &filecorehashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&filecore_ihash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -241,7 +241,7 @@ filecore_inactive(v)
 	 * so that it can be reused immediately.
 	 */
 	if (filecore_staleinode(ip))
-		vrecycle(vp, (struct simplelock *)0, l);
+		vrecycle(vp, NULL, l);
 	return error;
 }
 

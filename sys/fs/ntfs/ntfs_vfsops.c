@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.5 2007/07/29 11:37:10 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.49.2.6 2007/08/20 21:26:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.5 2007/07/29 11:37:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.49.2.6 2007/08/20 21:26:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ static int	ntfs_mount(struct mount *, char *, void *,
 				struct nameidata *, struct proc *);
 #else
 static int	ntfs_mount(struct mount *, const char *, void *, size_t *,
-				struct nameidata *, struct lwp *);
+				struct lwp *);
 #endif
 static int	ntfs_quotactl(struct mount *, int, uid_t, void *,
 				   struct lwp *);
@@ -94,17 +94,17 @@ static int	ntfs_fhtovp(struct mount *, struct fid *,
 				 struct sockaddr *, struct vnode **,
 				 int *, struct ucred **);
 #elif defined(__NetBSD__)
-static void	ntfs_init(void);
-static void	ntfs_reinit(void);
-static void	ntfs_done(void);
-static int	ntfs_fhtovp(struct mount *, struct fid *,
-				 struct vnode **);
-static int	ntfs_mountroot(void);
+static void     ntfs_init(void);
+static void     ntfs_reinit(void);
+static void     ntfs_done(void);
+static int      ntfs_fhtovp(struct mount *, struct fid *,
+				struct vnode **);
+static int      ntfs_mountroot(void);
 #else
-static int	ntfs_init(void);
-static int	ntfs_fhtovp(struct mount *, struct fid *,
-				 struct mbuf *, struct vnode **,
-				 int *, kauth_cred_t *);
+static int      ntfs_init(void);
+static int      ntfs_fhtovp(struct mount *, struct fid *,
+				struct mbuf *, struct vnode **,
+				int *, kauth_cred_t *);
 #endif
 
 static const struct genfs_ops ntfs_genfsops = {
@@ -227,18 +227,19 @@ ntfs_mount (
 #if defined(__FreeBSD__)
 	char *path,
 	void *data,
+	struct nameidata *ndp,
+	struct proc *p )
 #else
 	const char *path,
 	void *data,
 	size_t *data_len,
-#endif
-	struct nameidata *ndp,
-#if defined(__FreeBSD__)
-	struct proc *p )
-#else
 	struct lwp *l )
 #endif
 {
+	struct nameidata nd;
+#ifdef __NetBSD__
+	struct nameidata *ndp = &nd;
+#endif
 	int		err = 0, flags;
 	struct vnode	*devvp;
 #if defined(__FreeBSD__)
@@ -334,7 +335,7 @@ ntfs_mount (
 		 * Update device name only on success
 		 */
 		err = set_statvfs_info(NULL, UIO_USERSPACE, args->fspec,
-		    UIO_USERSPACE, mp, p);
+		    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, p);
 		if (err)
 			goto fail;
 
@@ -356,7 +357,7 @@ ntfs_mount (
 
 		/* Save "last mounted on" info for mount point (NULL pad)*/
 		err = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-		    UIO_USERSPACE, mp, l);
+		    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 		if (err)
 			goto fail;
 
@@ -643,8 +644,7 @@ ntfs_unmount(
 	/* vflush system vnodes */
 	error = vflush(mp,NULLVP,flags);
 	if (error) {
-		/* XXX should this be panic() ? */
-		printf("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
+		panic("ntfs_unmount: vflush failed(sysnodes): %d\n",error);
 	}
 
 	/* Check if the type of device node isn't VBAD before
@@ -660,6 +660,7 @@ ntfs_unmount(
 	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, l);
+	KASSERT(error == 0);
 	VOP_UNLOCK(ntmp->ntm_devvp, 0);
 
 	vrele(ntmp->ntm_devvp);
@@ -672,7 +673,7 @@ ntfs_unmount(
 	mp->mnt_flag &= ~MNT_LOCAL;
 	free(ntmp->ntm_ad, M_NTFSMNT);
 	FREE(ntmp, M_NTFSMNT);
-	return (error);
+	return (0);
 }
 
 static int
@@ -976,6 +977,7 @@ ntfs_vgetex(
 	}
 
 	genfs_node_init(vp, &ntfs_genfsops);
+	uvm_vnp_setsize(vp, 0); /* XXX notused */
 	VREF(ip->i_devvp);
 	*vpp = vp;
 	return (0);
@@ -1036,7 +1038,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	ntfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

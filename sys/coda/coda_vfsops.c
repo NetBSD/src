@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.54.6.2 2007/07/15 13:26:58 ad Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.54.6.3 2007/08/20 21:27:21 ad Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.54.6.2 2007/07/15 13:26:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.54.6.3 2007/08/20 21:27:21 ad Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -120,7 +120,7 @@ struct vfsops coda_vfsops = {
     (int (*)(void)) eopnotsupp,
     (int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
     vfs_stdextattrctl,
-    vfs_stdsuspendctl,
+    (void *)eopnotsupp,	/* vfs_suspendctl */
     coda_vnodeopv_descs,
     0,			/* vfs_refcount */
     { NULL, NULL },	/* vfs_list */
@@ -154,9 +154,9 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     const char *path,	/* path covered: ignored by the fs-layer */
     void *data,		/* Need to define a data type for this in netbsd? */
     size_t *data_len,
-    struct nameidata *ndp,	/* Clobber this to lookup the device name */
     struct lwp *l)		/* The ever-famous lwp pointer */
 {
+    struct nameidata nd;
     struct vnode *dvp;
     struct cnode *cp;
     dev_t dev;
@@ -188,9 +188,9 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
      * In order to get sys_mount() to do the copyin() we've set a
      * fixed size for the filename buffer.
      */
-    NDINIT(ndp, LOOKUP, FOLLOW, UIO_SYSSPACE, data, l);
-    error = namei(ndp);
-    dvp = ndp->ni_vp;
+    NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, data, l);
+    error = namei(&nd);
+    dvp = nd.ni_vp;
 
     if (error) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
@@ -276,8 +276,8 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
     else
 	MARK_INT_SAT(CODA_MOUNT_STATS);
 
-    return set_statvfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE, vfsp,
-	l);
+    return set_statvfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE,
+	vfsp->mnt_op->vfs_name, vfsp, l);
 }
 
 int

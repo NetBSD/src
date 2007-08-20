@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.30.4.1 2007/04/10 13:26:44 ad Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.30.4.2 2007/08/20 21:27:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30.4.1 2007/04/10 13:26:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30.4.2 2007/08/20 21:27:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30.4.1 2007/04/10 13:26:44 ad Exp $
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
+#include <sys/filedesc.h>
 #include <miscfs/procfs/procfs.h>
 
 #include <sys/lock.h>
@@ -91,9 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30.4.1 2007/04/10 13:26:44 ad Exp $
 #include <uvm/uvm.h>
 
 #define BUFFERSIZE (64 * 1024)
-
-extern int getcwd_common(struct vnode *, struct vnode *,
-			      char **, char *, int, int, struct lwp *);
 
 static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
 				struct lwp *curl, struct proc *p);

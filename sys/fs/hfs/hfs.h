@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.2.2.2 2007/07/15 13:27:29 ad Exp $	*/
+/*	$NetBSD: hfs.h,v 1.2.2.3 2007/08/20 21:26:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 #define HFS_DEFAULT_GID	0
 #define HFS_DEFAULT_DIR_MODE	0755
 #define HFS_DEFAULT_FILE_MODE	0755
-
-MALLOC_DECLARE(M_HFSMNT);	/* defined in hfs_vfsops.c */
 
 struct hfs_args {
 	char *fspec;		/* block special device to mount */
@@ -118,6 +116,10 @@ typedef struct {
 	kauth_cred_t cred;
 	struct lwp *l;
 } hfs_libcb_argsread;
+
+#ifdef _KERNEL
+
+MALLOC_DECLARE(M_HFSMNT);	/* defined in hfs_vfsops.c */
 
 /*
  * Convenience macros
@@ -184,27 +186,14 @@ uint64_t be64tohp(void**);
 
 
 /* hfs_vfsops.c */
-int hfs_mount (struct mount *, const char *, void *, size_t *,
-	struct nameidata *, struct lwp *);
+VFS_PROTOS(hfs);
+
 int hfs_mountfs (struct vnode *, struct mount *, struct lwp *, const char *);
-int hfs_start (struct mount *, int, struct lwp *);
-int hfs_unmount (struct mount *, int, struct lwp *);
-int hfs_root (struct mount *, struct vnode **);
-int hfs_quotactl (struct mount *, int, uid_t, void *, struct lwp *);
-int hfs_statvfs (struct mount *, struct statvfs *, struct lwp *);
-int hfs_sync (struct mount *, int, kauth_cred_t , struct lwp *);
-int hfs_vget (struct mount *, ino_t, struct vnode **);
 int hfs_vget_internal(struct mount *, ino_t, uint8_t, struct vnode **);
-int hfs_fhtovp (struct mount *, struct fid *, struct vnode **);
-int hfs_vptofh (struct vnode *, struct fid *, size_t *);
-void hfs_init (void);
-void hfs_reinit (void);
-void hfs_done (void);
-int hfs_mountroot (void);
-int hfs_extattrctl (struct mount *, int, struct vnode *, int, const char *,
-		     struct lwp *);
 
 /* hfs_vnops.c */
 extern int (**hfs_vnodeop_p) (void *);
+
+#endif /* _KERNEL */
 
 #endif /* !_FS_HFS_HFS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.78.2.3 2007/07/29 11:37:12 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.78.2.4 2007/08/20 21:28:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.78.2.3 2007/07/29 11:37:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.78.2.4 2007/08/20 21:28:28 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -103,7 +103,7 @@ struct vfsops mfs_vfsops = {
 	NULL,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,	/* vfs_suspendctl */
 	mfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -242,7 +242,7 @@ mfs_initminiroot(void *base)
 /* ARGSUSED */
 int
 mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	struct vnode *devvp;
 	struct mfs_args *args = data;
@@ -332,7 +332,7 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		return error;
 	(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,

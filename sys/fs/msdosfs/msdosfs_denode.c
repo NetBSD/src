@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.19.2.5 2007/07/15 13:27:30 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.19.2.6 2007/08/20 21:26:07 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.5 2007/07/15 13:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.19.2.6 2007/08/20 21:26:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ deget(pmp, dirclust, diroffset, depp)
 	genfs_node_init(nvp, &msdosfs_genfsops);
 	VREF(ldep->de_devvp);
 	*depp = ldep;
-	nvp->v_size = ldep->de_FileSize;
+	uvm_vnp_setsize(nvp, ldep->de_FileSize);
 	return (0);
 }
 

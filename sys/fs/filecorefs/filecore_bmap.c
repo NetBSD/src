@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.5 2006/05/15 01:29:02 christos Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.5.18.1 2007/08/20 21:26:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.5 2006/05/15 01:29:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.5.18.1 2007/08/20 21:26:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) bm1\n", bp);
 #endif
-			brelse(bp);
+			brelse(bp, 0);
 			return error;
 		}
 		ptr = (u_long *)(bp->b_data) + 1; /* skip map zone header */
@@ -215,7 +215,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 #ifdef FILECORE_DEBUG_BR
 					printf("brelse(%p) bm2\n", bp);
 #endif
-					brelse(bp);
+					brelse(bp, 0);
 					return 0;
 				} else
 					sect -= (n<<fcmp->drec.log2bpmb)
@@ -226,7 +226,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) bm3\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 		if (++zone == fcmp->drec.nzones) {
 			zone = 0;
 			zaddr=0;

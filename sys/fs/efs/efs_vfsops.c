@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.4.2.2 2007/07/15 16:15:30 ad Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.4.2.3 2007/08/20 21:26:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.4.2.2 2007/07/15 16:15:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.4.2.3 2007/08/20 21:26:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
 	efs_statvfs(mp, &mp->mnt_stat, l);
 
 	err = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (err)
 		free(emp, M_EFSMNT);
 
@@ -166,7 +166,7 @@ efs_mount_common(struct mount *mp, const char *path, struct vnode *devvp,
  */
 static int
 efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	struct efs_args *args = data;
 	struct nameidata devndp;
@@ -572,7 +572,7 @@ struct vfsops efs_vfsops = {
 	.vfs_root	= efs_root,
 	.vfs_quotactl	= (void *)eopnotsupp,
 	.vfs_statvfs	= efs_statvfs,
-	.vfs_sync	= (void *)eopnotsupp,
+	.vfs_sync	= (void *)nullop,
 	.vfs_vget	= efs_vget,
 	.vfs_fhtovp	= efs_fhtovp,
 	.vfs_vptofh	= efs_vptofh,
@@ -582,6 +582,7 @@ struct vfsops efs_vfsops = {
 	.vfs_mountroot	= (void *)eopnotsupp,
 	.vfs_snapshot	= (void *)eopnotsupp,
 	.vfs_extattrctl	= vfs_stdextattrctl,
+	.vfs_suspendctl	= (void *)eopnotsupp,
 	.vfs_opv_descs	= efs_vnodeopv_descs
 /*	.vfs_refcount */
 /*	.vfs_list */

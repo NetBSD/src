@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.165.2.4 2007/08/19 19:24:59 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.165.2.5 2007/08/20 21:28:21 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -223,7 +223,6 @@ struct sys_profil_args {
 	syscallarg(u_long) offset;
 	syscallarg(u_int) scale;
 };
-#if defined(KTRACE) || !defined(_KERNEL)
 
 struct sys_ktrace_args {
 	syscallarg(const char *) fname;
@@ -231,8 +230,6 @@ struct sys_ktrace_args {
 	syscallarg(int) facs;
 	syscallarg(int) pid;
 };
-#else
-#endif
 
 struct compat_13_sys_sigaction_args {
 	syscallarg(int) signum;
@@ -1237,7 +1234,6 @@ struct sys___clone_args {
 	syscallarg(int) flags;
 	syscallarg(void *) stack;
 };
-#if defined(KTRACE) || !defined(_KERNEL)
 
 struct sys_fktrace_args {
 	syscallarg(const int) fd;
@@ -1245,8 +1241,6 @@ struct sys_fktrace_args {
 	syscallarg(int) facs;
 	syscallarg(int) pid;
 };
-#else
-#endif
 
 struct sys_preadv_args {
 	syscallarg(int) fd;
@@ -1397,8 +1391,9 @@ struct sys__lwp_detach_args {
 
 struct sys__lwp_park_args {
 	syscallarg(const struct timespec *) ts;
-	syscallarg(struct __ucontext *) ucp;
+	syscallarg(lwpid_t) unpark;
 	syscallarg(const void *) hint;
+	syscallarg(const void *) unparkhint;
 };
 
 struct sys__lwp_unpark_args {
@@ -1787,6 +1782,14 @@ struct sys___mount50_args {
 	syscallarg(size_t) data_len;
 };
 
+struct sys_mremap_args {
+	syscallarg(void *) old_address;
+	syscallarg(size_t) old_size;
+	syscallarg(void *) new_address;
+	syscallarg(size_t) new_size;
+	syscallarg(int) flags;
+};
+
 /*
  * System call prototypes.
  */
@@ -1887,11 +1890,8 @@ int	sys_getegid(struct lwp *, void *, register_t *);
 
 int	sys_profil(struct lwp *, void *, register_t *);
 
-#if defined(KTRACE) || !defined(_KERNEL)
 int	sys_ktrace(struct lwp *, void *, register_t *);
 
-#else
-#endif
 int	compat_13_sys_sigaction(struct lwp *, void *, register_t *);
 
 #ifdef COMPAT_43
@@ -2312,11 +2312,8 @@ int	sys_getsid(struct lwp *, void *, register_t *);
 
 int	sys___clone(struct lwp *, void *, register_t *);
 
-#if defined(KTRACE) || !defined(_KERNEL)
 int	sys_fktrace(struct lwp *, void *, register_t *);
 
-#else
-#endif
 int	sys_preadv(struct lwp *, void *, register_t *);
 
 int	sys_pwritev(struct lwp *, void *, register_t *);
@@ -2529,5 +2526,7 @@ int	sys_aio_write(struct lwp *, void *, register_t *);
 int	sys_lio_listio(struct lwp *, void *, register_t *);
 
 int	sys___mount50(struct lwp *, void *, register_t *);
+
+int	sys_mremap(struct lwp *, void *, register_t *);
 
 #endif /* _SYS_SYSCALLARGS_H_ */

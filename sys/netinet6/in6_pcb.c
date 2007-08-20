@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.84.2.2 2007/06/08 14:17:53 ad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.84.2.3 2007/08/20 21:28:04 ad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.84.2.2 2007/06/08 14:17:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.84.2.3 2007/08/20 21:28:04 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -794,8 +794,8 @@ in6_losing(struct in6pcb *in6p)
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
 		if (rt->rt_flags & RTF_DYNAMIC) {
-			(void)rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway,
-			    rt_mask(rt), rt->rt_flags, NULL);
+			(void)rtrequest(RTM_DELETE, rt_getkey(rt),
+			    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
 		}
 		rtcache_free(&in6p->in6p_route);
 		/*

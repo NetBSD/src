@@ -1,768 +1,750 @@
-/* $NetBSD: spiflash.c,v 1.3.2.4 2007/08/20 18:16:16 ad Exp $ */
+/* $NetBSD: spiflash.c,v 1.3.2.5 2007/08/20 21:27:23 ad Exp $ */
 
 /*-
- * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
- * Copyright (c) 2006 Garrett D'Amore.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Portions of this code were written by Garrett D'Amore for the
- * Champaign-Urbana Community Wireless Network Project.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Roland C. Dowdeswell.
  *
- * Redistribution and use in source and binary forms, with or
- * without modification, are permitted provided that the following
- * conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above
- *    copyright notice, this list of conditions and the following
- *    disclaimer in the documentation and/or other materials provided
- *    with the distribution.
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgements:
- *      This product includes software developed by the Urbana-Champaign
- *      Independent Media Center.
- *	This product includes software developed by Garrett D'Amore.
- * 4. Urbana-Champaign Independent Media Center's name and Garrett
- *    D'Amore's name may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE URBANA-CHAMPAIGN INDEPENDENT
- * MEDIA CENTER AND GARRETT D'AMORE ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE URBANA-CHAMPAIGN INDEPENDENT
- * MEDIA CENTER OR GARRETT D'AMORE BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.2.4 2007/08/20 18:16:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.2.5 2007/08/20 21:27:23 ad Exp $");
 
+#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/file.h>
-#include <sys/ioctl.h>
-#include <sys/disk.h>
-#include <sys/disklabel.h>
+#include <sys/proc.h>
+#include <sys/errno.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/uio.h>
-#include <sys/kthread.h>
 #include <sys/malloc.h>
-#include <sys/errno.h>
+#include <sys/pool.h>
+#include <sys/ioctl.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
+#include <sys/vnode.h>
+#include <sys/lock.h>
+#include <sys/conf.h>
 
-#include <dev/spi/spivar.h>
-#include <dev/spi/spiflash.h>
+#include <dev/dkvar.h>
+#include <dev/cgdvar.h>
 
-/*
- * This is an MI block driver for SPI flash devices.  It could probably be
- * converted to some more generic framework, if someone wanted to create one
- * for NOR flashes.  Note that some flashes have the ability to handle
- * interrupts.
- */
+/* Entry Point Functions */
 
-struct spiflash_softc {
-	struct device		sc_dev;
-	struct disk		sc_dk;
+void	cgdattach(int);
 
-	struct spiflash_hw_if	sc_hw;
-	void			*sc_cookie;
+static dev_type_open(cgdopen);
+static dev_type_close(cgdclose);
+static dev_type_read(cgdread);
+static dev_type_write(cgdwrite);
+static dev_type_ioctl(cgdioctl);
+static dev_type_strategy(cgdstrategy);
+static dev_type_dump(cgddump);
+static dev_type_size(cgdsize);
 
-	const char		*sc_name;
-	struct spi_handle	*sc_handle;
-	int			sc_device_size;
-	int			sc_write_size;
-	int			sc_erase_size;
-	int			sc_read_size;
-	int			sc_device_blks;
-
-	struct bufq_state	*sc_waitq;
-	struct bufq_state	*sc_workq;
-	struct bufq_state	*sc_doneq;
-	lwp_t			*sc_thread;
+const struct bdevsw cgd_bdevsw = {
+	cgdopen, cgdclose, cgdstrategy, cgdioctl,
+	cgddump, cgdsize, D_DISK
 };
 
-#define	sc_getname	sc_hw.sf_getname
-#define	sc_gethandle	sc_hw.sf_gethandle
-#define	sc_getsize	sc_hw.sf_getsize
-#define	sc_getflags	sc_hw.sf_getflags
-#define	sc_erase	sc_hw.sf_erase
-#define	sc_write	sc_hw.sf_write
-#define	sc_read		sc_hw.sf_read
-#define	sc_getstatus	sc_hw.sf_getstatus
-#define	sc_setstatus	sc_hw.sf_setstatus
-
-struct spiflash_attach_args {
-	const struct spiflash_hw_if	*hw;
-	void				*cookie;
+const struct cdevsw cgd_cdevsw = {
+	cgdopen, cgdclose, cgdread, cgdwrite, cgdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-#define	STATIC
-STATIC int spiflash_match(struct device *, struct cfdata *, void *);
-STATIC void spiflash_attach(struct device *, struct device *, void *);
-STATIC int spiflash_print(void *, const char *);
-STATIC int spiflash_common_erase(spiflash_handle_t, size_t, size_t);
-STATIC int spiflash_common_write(spiflash_handle_t, size_t, size_t,
-    const uint8_t *);
-STATIC int spiflash_common_read(spiflash_handle_t, size_t, size_t, uint8_t *);
-STATIC void spiflash_process_done(spiflash_handle_t, int);
-STATIC void spiflash_process_read(spiflash_handle_t);
-STATIC void spiflash_process_write(spiflash_handle_t);
-STATIC void spiflash_thread(void *);
-STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
-STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
-STATIC int spiflash_sector(spiflash_handle_t, struct buf *);
+/* Internal Functions */
 
-CFATTACH_DECL(spiflash, sizeof(struct spiflash_softc),
-	      spiflash_match, spiflash_attach, NULL, NULL);
+static int	cgdstart(struct dk_softc *, struct buf *);
+static void	cgdiodone(struct buf *);
 
-#ifdef	SPIFLASH_DEBUG
-#define	DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
-#else
-#define	DPRINTF(x)	do {  } while (0/*CONSTCOND*/)
+static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
+static int	cgd_ioctl_clr(struct cgd_softc *, void *, struct lwp *);
+static int	cgdinit(struct cgd_softc *, const char *, struct vnode *,
+			struct lwp *);
+static void	cgd_cipher(struct cgd_softc *, void *, void *,
+			   size_t, daddr_t, size_t, int);
+
+/* Pseudo-disk Interface */
+
+static struct dk_intf the_dkintf = {
+	DTYPE_CGD,
+	"cgd",
+	cgdopen,
+	cgdclose,
+	cgdstrategy,
+	cgdstart,
+};
+static struct dk_intf *di = &the_dkintf;
+
+static struct dkdriver cgddkdriver = {
+	.d_strategy = cgdstrategy,
+	.d_minphys = minphys,
+};
+
+/* DIAGNOSTIC and DEBUG definitions */
+
+#if defined(CGDDEBUG) && !defined(DEBUG)
+#define DEBUG
 #endif
 
-extern struct cfdriver spiflash_cd;
+#ifdef DEBUG
+int cgddebug = 0;
 
-dev_type_open(spiflash_open);
-dev_type_close(spiflash_close);
-dev_type_read(spiflash_read);
-dev_type_write(spiflash_write);
-dev_type_ioctl(spiflash_ioctl);
-dev_type_strategy(spiflash_strategy);
+#define CGDB_FOLLOW	0x1
+#define CGDB_IO	0x2
+#define CGDB_CRYPTO	0x4
 
-const struct bdevsw spiflash_bdevsw = {
-	.d_open = spiflash_open,
-	.d_close = spiflash_close,
-	.d_strategy = spiflash_strategy,
-	.d_ioctl = spiflash_ioctl,
-	.d_dump = nodump,
-	.d_psize = nosize,
-	.d_flag = D_DISK,
-};
+#define IFDEBUG(x,y)		if (cgddebug & (x)) y
+#define DPRINTF(x,y)		IFDEBUG(x, printf y)
+#define DPRINTF_FOLLOW(y)	DPRINTF(CGDB_FOLLOW, y)
 
-const struct cdevsw spiflash_cdevsw = {
-	.d_open = spiflash_open,
-	.d_close = spiflash_close,
-	.d_read = spiflash_read,
-	.d_write = spiflash_write,
-	.d_ioctl = spiflash_ioctl,
-	.d_stop = nostop,
-	.d_tty = notty,
-	.d_poll = nopoll,
-	.d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
-	.d_flag = D_DISK,
-};
+static void	hexprint(const char *, void *, int);
 
-static struct dkdriver spiflash_dkdriver = { spiflash_strategy, NULL };
+#else
+#define IFDEBUG(x,y)
+#define DPRINTF(x,y)
+#define DPRINTF_FOLLOW(y)
+#endif
 
-spiflash_handle_t
-spiflash_attach_mi(const struct spiflash_hw_if *hw, void *cookie,
-    struct device *dev)
+#ifdef DIAGNOSTIC
+#define DIAGPANIC(x)		panic x
+#define DIAGCONDPANIC(x,y)	if (x) panic y
+#else
+#define DIAGPANIC(x)
+#define DIAGCONDPANIC(x,y)
+#endif
+
+/* Global variables */
+
+struct	cgd_softc *cgd_softc;
+int	numcgd = 0;
+
+/* Utility Functions */
+
+#define CGDUNIT(x)		DISKUNIT(x)
+#define GETCGD_SOFTC(_cs, x)	if (!((_cs) = getcgd_softc(x))) return ENXIO
+
+static struct cgd_softc *
+getcgd_softc(dev_t dev)
 {
-	struct spiflash_attach_args sfa;
-	sfa.hw = hw;
-	sfa.cookie = cookie;
+	int	unit = CGDUNIT(dev);
 
-	return (spiflash_handle_t)config_found(dev, &sfa, spiflash_print);
+	DPRINTF_FOLLOW(("getcgd_softc(0x%x): unit = %d\n", dev, unit));
+	if (unit >= numcgd)
+		return NULL;
+	return &cgd_softc[unit];
 }
 
-int
-spiflash_print(void *aux, const char *pnp)
+/* The code */
+
+static void
+cgdsoftc_init(struct cgd_softc *cs, int num)
 {
-	if (pnp != NULL)
-		printf("spiflash at %s\n", pnp);
+	char	sbuf[DK_XNAME_SIZE];
 
-	return UNCONF;
-}
-
-int
-spiflash_match(struct device *parent, struct cfdata *cf, void *aux)
-{
-
-	return 1;
+	memset(cs, 0x0, sizeof(*cs));
+	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
+	simple_lock_init(&cs->sc_slock);
+	dk_sc_init(&cs->sc_dksc, cs, sbuf);
+	pseudo_disk_init(&cs->sc_dksc.sc_dkdev, dksc->sc_xname, &cgddkdriver);
 }
 
 void
-spiflash_attach(struct device *parent, struct device *self, void *aux)
+cgdattach(int num)
 {
-	struct spiflash_softc *sc = device_private(self);
-	struct spiflash_attach_args *sfa = aux;
-	void *cookie = sfa->cookie;
+	int	i;
 
-	sc->sc_hw = *sfa->hw;
-	sc->sc_cookie = cookie;
-	sc->sc_name = sc->sc_getname(cookie);
-	sc->sc_handle = sc->sc_gethandle(cookie);
-	sc->sc_device_size = sc->sc_getsize(cookie, SPIFLASH_SIZE_DEVICE);
-	sc->sc_erase_size = sc->sc_getsize(cookie, SPIFLASH_SIZE_ERASE);
-	sc->sc_write_size = sc->sc_getsize(cookie, SPIFLASH_SIZE_WRITE);
-	sc->sc_read_size = sc->sc_getsize(cookie, SPIFLASH_SIZE_READ);
-	sc->sc_device_blks = sc->sc_device_size / DEV_BSIZE;
+	DPRINTF_FOLLOW(("cgdattach(%d)\n", num));
+	if (num <= 0) {
+		DIAGPANIC(("cgdattach: count <= 0"));
+		return;
+	}
 
-	if (sc->sc_read == NULL)
-		sc->sc_read = spiflash_common_read;
-	if (sc->sc_write == NULL)
-		sc->sc_write = spiflash_common_write;
-	if (sc->sc_erase == NULL)
-		sc->sc_erase = spiflash_common_erase;
+	cgd_softc = (void *)malloc(num * sizeof(*cgd_softc), M_DEVBUF, M_NOWAIT);
+	if (!cgd_softc) {
+		printf("WARNING: unable to malloc(9) memory for crypt disks\n");
+		DIAGPANIC(("cgdattach: cannot malloc(9) enough memory"));
+		return;
+	}
 
-	aprint_naive(": SPI flash\n");
-	aprint_normal(": %s SPI flash\n", sc->sc_name);
-	/* XXX: note that this has to change for boot-sectored flash */
-	aprint_normal("%s: %d KB, %d sectors of %d KB each\n",
-	    sc->sc_dev.dv_xname, sc->sc_device_size / 1024,
-	    sc->sc_device_size / sc->sc_erase_size,
-	    sc->sc_erase_size / 1024);
-
-	/* first-come first-served strategy works best for us */
-	bufq_alloc(&sc->sc_waitq, "fcfs", BUFQ_SORT_RAWBLOCK);
-	bufq_alloc(&sc->sc_workq, "fcfs", BUFQ_SORT_RAWBLOCK);
-	bufq_alloc(&sc->sc_doneq, "fcfs", BUFQ_SORT_RAWBLOCK);
-
-	sc->sc_dk.dk_driver = &spiflash_dkdriver;
-	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
-
-	disk_init(&sc->sc_dk);
-	disk_attach(&sc->sc_dk);
-
-	/* arrange to allocate the kthread */
-	kthread_create(PRI_NONE, 0, NULL, spiflash_thread, sc,
-	    &sc->sc_thread, "spiflash");
+	numcgd = num;
+	for (i=0; i<num; i++)
+		cgdsoftc_init(&cgd_softc[i], i);
 }
 
-int
-spiflash_open(dev_t dev, int flags, int mode, struct lwp *l)
+static int
+cgdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	spiflash_handle_t sc;
+	struct	cgd_softc *cs;
 
-	if ((sc = device_lookup(&spiflash_cd, DISKUNIT(dev))) == NULL)
-		return ENXIO;
+	DPRINTF_FOLLOW(("cgdopen(%d, %d)\n", dev, flags));
+	GETCGD_SOFTC(cs, dev);
+	return dk_open(di, &cs->sc_dksc, dev, flags, fmt, l);
+}
+
+static int
+cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
+{
+	struct	cgd_softc *cs;
+
+	DPRINTF_FOLLOW(("cgdclose(%d, %d)\n", dev, flags));
+	GETCGD_SOFTC(cs, dev);
+	return dk_close(di, &cs->sc_dksc, dev, flags, fmt, l);
+}
+
+static void
+cgdstrategy(struct buf *bp)
+{
+	struct	cgd_softc *cs = getcgd_softc(bp->b_dev);
+
+	DPRINTF_FOLLOW(("cgdstrategy(%p): b_bcount = %ld\n", bp,
+	    (long)bp->b_bcount));
+	/* XXXrcd: Should we test for (cs != NULL)? */
+	dk_strategy(di, &cs->sc_dksc, bp);
+	return;
+}
+
+static int
+cgdsize(dev_t dev)
+{
+	struct cgd_softc *cs = getcgd_softc(dev);
+
+	DPRINTF_FOLLOW(("cgdsize(%d)\n", dev));
+	if (!cs)
+		return -1;
+	return dk_size(di, &cs->sc_dksc, dev);
+}
+
+/*
+ * cgd_{get,put}data are functions that deal with getting a buffer
+ * for the new encrypted data.  We have a buffer per device so that
+ * we can ensure that we can always have a transaction in flight.
+ * We use this buffer first so that we have one less piece of
+ * malloc'ed data at any given point.
+ */
+
+static void *
+cgd_getdata(struct dk_softc *dksc, unsigned long size)
+{
+	struct	cgd_softc *cs =dksc->sc_osc;
+	void *	data = NULL;
+
+	simple_lock(&cs->sc_slock);
+	if (cs->sc_data_used == 0) {
+		cs->sc_data_used = 1;
+		data = cs->sc_data;
+	}
+	simple_unlock(&cs->sc_slock);
+
+	if (data)
+		return data;
+
+	return malloc(size, M_DEVBUF, M_NOWAIT);
+}
+
+static void
+cgd_putdata(struct dk_softc *dksc, void *data)
+{
+	struct	cgd_softc *cs =dksc->sc_osc;
+
+	if (data == cs->sc_data) {
+		simple_lock(&cs->sc_slock);
+		cs->sc_data_used = 0;
+		simple_unlock(&cs->sc_slock);
+	} else {
+		free(data, M_DEVBUF);
+	}
+}
+
+static int
+cgdstart(struct dk_softc *dksc, struct buf *bp)
+{
+	struct	cgd_softc *cs = dksc->sc_osc;
+	struct	buf *nbp;
+	void *	addr;
+	void *	newaddr;
+	daddr_t	bn;
+	struct	vnode *vp;
+
+	DPRINTF_FOLLOW(("cgdstart(%p, %p)\n", dksc, bp));
+	disk_busy(&dksc->sc_dkdev); /* XXX: put in dksubr.c */
+
+	bn = bp->b_rawblkno;
 
 	/*
-	 * XXX: We need to handle partitions here.  The problem is
-	 * that it isn't entirely clear to me how to deal with this.
-	 * There are devices that could be used "in the raw" with a
-	 * NetBSD label, but then you get into devices that have other
-	 * kinds of data on them -- some have VxWorks data, some have
-	 * RedBoot data, and some have other contraints -- for example
-	 * some devices might have a portion that is read-only,
-	 * whereas others might have a portion that is read-write.
-	 *
-	 * For now we just permit access to the entire device.
+	 * We attempt to allocate all of our resources up front, so that
+	 * we can fail quickly if they are unavailable.
 	 */
+
+	nbp = getiobuf_nowait();
+	if (nbp == NULL) {
+		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+		return -1;
+	}
+
+	/*
+	 * If we are writing, then we need to encrypt the outgoing
+	 * block into a new block of memory.  If we fail, then we
+	 * return an error and let the dksubr framework deal with it.
+	 */
+	newaddr = addr = bp->b_data;
+	if ((bp->b_flags & B_READ) == 0) {
+		newaddr = cgd_getdata(dksc, bp->b_bcount);
+		if (!newaddr) {
+			putiobuf(nbp);
+			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+			return -1;
+		}
+		cgd_cipher(cs, newaddr, addr, bp->b_bcount, bn,
+		    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
+	}
+
+	nbp->b_data = newaddr;
+	nbp->b_flags = bp->b_flags | B_CALL;
+	nbp->b_iodone = cgdiodone;
+	nbp->b_proc = bp->b_proc;
+	nbp->b_blkno = bn;
+	nbp->b_vp = cs->sc_tvn;
+	nbp->b_bcount = bp->b_bcount;
+	nbp->b_private = bp;
+
+	BIO_COPYPRIO(nbp, bp);
+
+	if ((nbp->b_flags & B_READ) == 0) {
+		vp = nbp->b_vp;
+		mutex_enter(&vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(&vp->v_interlock);
+	}
+	VOP_STRATEGY(cs->sc_tvn, nbp);
 	return 0;
 }
 
-int
-spiflash_close(dev_t dev, int flags, int mode, struct lwp *l)
+/* expected to be called at splbio() */
+static void
+cgdiodone(struct buf *nbp)
 {
-	spiflash_handle_t sc;
+	struct	buf *obp = nbp->b_private;
+	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
+	struct	dk_softc *dksc = &cs->sc_dksc;
 
-	if ((sc = device_lookup(&spiflash_cd, DISKUNIT(dev))) == NULL)
+	KDASSERT(cs);
+
+	DPRINTF_FOLLOW(("cgdiodone(%p)\n", nbp));
+	DPRINTF(CGDB_IO, ("cgdiodone: bp %p bcount %d resid %d\n",
+	    obp, obp->b_bcount, obp->b_resid));
+	DPRINTF(CGDB_IO, (" dev 0x%x, nbp %p bn %" PRId64 " addr %p bcnt %d\n",
+	    nbp->b_dev, nbp, nbp->b_blkno, nbp->b_data,
+	    nbp->b_bcount));
+	if (nbp->b_error != 0) {
+		obp->b_error = nbp->b_error;
+
+		printf("%s: error %d\n", dksc->sc_xname, obp->b_error);
+	}
+
+	/* Perform the decryption if we are reading.
+	 *
+	 * Note: use the blocknumber from nbp, since it is what
+	 *       we used to encrypt the blocks.
+	 */
+
+	if (nbp->b_flags & B_READ)
+		cgd_cipher(cs, obp->b_data, obp->b_data, obp->b_bcount,
+		    nbp->b_blkno, DEV_BSIZE, CGD_CIPHER_DECRYPT);
+
+	/* If we allocated memory, free it now... */
+	if (nbp->b_data != obp->b_data)
+		cgd_putdata(dksc, nbp->b_data);
+
+	putiobuf(nbp);
+
+	/* Request is complete for whatever reason */
+	obp->b_resid = 0;
+	if (obp->b_error != 0)
+		obp->b_resid = obp->b_bcount;
+	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
+	    (obp->b_flags & B_READ));
+	biodone(obp);
+	dk_iodone(di, dksc);
+}
+
+/* XXX: we should probably put these into dksubr.c, mostly */
+static int
+cgdread(dev_t dev, struct uio *uio, int flags)
+{
+	struct	cgd_softc *cs;
+	struct	dk_softc *dksc;
+
+	DPRINTF_FOLLOW(("cgdread(%d, %p, %d)\n", dev, uio, flags));
+	GETCGD_SOFTC(cs, dev);
+	dksc = &cs->sc_dksc;
+	if ((dksc->sc_flags & DKF_INITED) == 0)
 		return ENXIO;
+	return physio(cgdstrategy, NULL, dev, B_READ, minphys, uio);
+}
+
+/* XXX: we should probably put these into dksubr.c, mostly */
+static int
+cgdwrite(dev_t dev, struct uio *uio, int flags)
+{
+	struct	cgd_softc *cs;
+	struct	dk_softc *dksc;
+
+	DPRINTF_FOLLOW(("cgdwrite(%d, %p, %d)\n", dev, uio, flags));
+	GETCGD_SOFTC(cs, dev);
+	dksc = &cs->sc_dksc;
+	if ((dksc->sc_flags & DKF_INITED) == 0)
+		return ENXIO;
+	return physio(cgdstrategy, NULL, dev, B_WRITE, minphys, uio);
+}
+
+static int
+cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct	cgd_softc *cs;
+	struct	dk_softc *dksc;
+	struct	disk *dk;
+	int	ret;
+	int	part = DISKPART(dev);
+	int	pmask = 1 << part;
+
+	DPRINTF_FOLLOW(("cgdioctl(%d, %ld, %p, %d, %p)\n",
+	    dev, cmd, data, flag, l));
+	GETCGD_SOFTC(cs, dev);
+	dksc = &cs->sc_dksc;
+	dk = &dksc->sc_dkdev;
+	switch (cmd) {
+	case CGDIOCSET:
+	case CGDIOCCLR:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+	}
+
+	switch (cmd) {
+	case CGDIOCSET:
+		if (dksc->sc_flags & DKF_INITED)
+			ret = EBUSY;
+		else
+			ret = cgd_ioctl_set(cs, data, l);
+		break;
+	case CGDIOCCLR:
+		if (!(dksc->sc_flags & DKF_INITED)) {
+			ret = ENXIO;
+			break;
+		}
+		if (DK_BUSY(&cs->sc_dksc, pmask)) {
+			ret = EBUSY;
+			break;
+		}
+		ret = cgd_ioctl_clr(cs, data, l);
+		break;
+	default:
+		ret = dk_ioctl(di, dksc, dev, cmd, data, flag, l);
+		break;
+	}
+
+	return ret;
+}
+
+static int
+cgddump(dev_t dev, daddr_t blkno, void *va, size_t size)
+{
+	struct	cgd_softc *cs;
+
+	DPRINTF_FOLLOW(("cgddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
+	    (unsigned long)size));
+	GETCGD_SOFTC(cs, dev);
+	return dk_dump(di, &cs->sc_dksc, dev, blkno, va, size);
+}
+
+/*
+ * XXXrcd:
+ *  for now we hardcode the maximum key length.
+ */
+#define MAX_KEYSIZE	1024
+
+/* ARGSUSED */
+static int
+cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
+{
+	struct	 cgd_ioctl *ci = data;
+	struct	 vnode *vp;
+	int	 ret;
+	size_t	 keybytes;			/* key length in bytes */
+	const char *cp;
+	char	 *inbuf;
+
+	cp = ci->ci_disk;
+	if ((ret = dk_lookup(cp, l, &vp, UIO_USERSPACE)) != 0)
+		return ret;
+
+	inbuf = malloc(MAX_KEYSIZE, M_TEMP, M_WAITOK);
+
+	if ((ret = cgdinit(cs, cp, vp, l)) != 0)
+		goto bail;
+
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
+	ret = copyinstr(ci->ci_alg, inbuf, 256, NULL);
+	if (ret)
+		goto bail;
+	cs->sc_cfuncs = cryptfuncs_find(inbuf);
+	if (!cs->sc_cfuncs) {
+		ret = EINVAL;
+		goto bail;
+	}
+
+	/* right now we only support encblkno, so hard-code it */
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
+	ret = copyinstr(ci->ci_ivmethod, inbuf, MAX_KEYSIZE, NULL);
+	if (ret)
+		goto bail;
+	if (strcmp("encblkno", inbuf)) {
+		ret = EINVAL;
+		goto bail;
+	}
+
+	keybytes = ci->ci_keylen / 8 + 1;
+	if (keybytes > MAX_KEYSIZE) {
+		ret = EINVAL;
+		goto bail;
+	}
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
+	ret = copyin(ci->ci_key, inbuf, keybytes);
+	if (ret)
+		goto bail;
+
+	cs->sc_cdata.cf_blocksize = ci->ci_blocksize;
+	cs->sc_cdata.cf_mode = CGD_CIPHER_CBC_ENCBLKNO;
+	cs->sc_cdata.cf_priv = cs->sc_cfuncs->cf_init(ci->ci_keylen, inbuf,
+	    &cs->sc_cdata.cf_blocksize);
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
+	if (!cs->sc_cdata.cf_priv) {
+		printf("cgd: unable to initialize cipher\n");
+		ret = EINVAL;		/* XXX is this the right error? */
+		goto bail;
+	}
+	free(inbuf, M_TEMP);
+
+	bufq_alloc(&cs->sc_dksc.sc_bufq, "fcfs", 0);
+
+	cs->sc_data = malloc(MAXPHYS, M_DEVBUF, M_WAITOK);
+	cs->sc_data_used = 0;
+
+	cs->sc_dksc.sc_flags |= DKF_INITED;
+
+	/* Attach the disk. */
+	disk_attach(&cs->sc_dksc.sc_dkdev);
+
+	/* Try and read the disklabel. */
+	dk_getdisklabel(di, &cs->sc_dksc, 0 /* XXX ? */);
+
+	/* Discover wedges on this disk. */
+	dkwedge_discover(&cs->sc_dksc.sc_dkdev);
 
 	return 0;
+
+bail:
+	free(inbuf, M_TEMP);
+	(void)vn_close(vp, FREAD|FWRITE, l->l_cred, l);
+	return ret;
 }
 
-int
-spiflash_read(dev_t dev, struct uio *uio, int ioflag)
+/* ARGSUSED */
+static int
+cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 {
-
-	return physio(spiflash_strategy, NULL, dev, B_READ, minphys, uio);
-}
-
-int
-spiflash_write(dev_t dev, struct uio *uio, int ioflag)
-{
-
-	return physio(spiflash_strategy, NULL, dev, B_WRITE, minphys, uio);
-}
-
-int
-spiflash_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
-{
-	spiflash_handle_t sc;
-
-	if ((sc = device_lookup(&spiflash_cd, DISKUNIT(dev))) == NULL)
-		return ENXIO;
-
-	return EINVAL;
-}
-
-void
-spiflash_strategy(struct buf *bp)
-{
-	spiflash_handle_t sc;
 	int	s;
 
-	sc = device_lookup(&spiflash_cd, DISKUNIT(bp->b_dev));
-	if (sc == NULL) {
-		bp->b_error = ENXIO;
-		biodone(bp);
-		return;
-	}
+	/* Delete all of our wedges. */
+	dkwedge_delall(&cs->sc_dksc.sc_dkdev);
 
-	if (((bp->b_bcount % sc->sc_write_size) != 0) ||
-	    (bp->b_blkno < 0)) {
-		bp->b_error = EINVAL;
-		biodone(bp);
-		return;
-	}
-
-	/* no work? */
-	if (bp->b_bcount == 0) {
-		biodone(bp);
-		return;
-	}
-
-	if (bounds_check_with_mediasize(bp, DEV_BSIZE,
-		sc->sc_device_blks) <= 0) {
-		biodone(bp);
-		return;
-	}
-
-	bp->b_resid = bp->b_bcount;
-
-	/* all ready, hand off to thread for async processing */
+	/* Kill off any queued buffers. */
 	s = splbio();
-	BUFQ_PUT(sc->sc_waitq, bp);
-	wakeup(&sc->sc_thread);
+	bufq_drain(cs->sc_dksc.sc_bufq);
 	splx(s);
+	bufq_free(cs->sc_dksc.sc_bufq);
+
+	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_cred, l);
+	cs->sc_cfuncs->cf_destroy(cs->sc_cdata.cf_priv);
+	free(cs->sc_tpath, M_DEVBUF);
+	free(cs->sc_data, M_DEVBUF);
+	cs->sc_data_used = 0;
+	cs->sc_dksc.sc_flags &= ~DKF_INITED;
+	disk_detach(&cs->sc_dksc.sc_dkdev);
+
+	return 0;
 }
 
-void
-spiflash_process_done(spiflash_handle_t sc, int err)
+static int
+cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
+	struct lwp *l)
 {
-	struct buf	*bp;
-	int		cnt = 0;
-	int		flag = 0;
+	struct	dk_geom *pdg;
+	struct	partinfo dpart;
+	struct	vattr va;
+	size_t	size;
+	int	maxsecsize = 0;
+	int	ret;
+	char	*tmppath;
 
-	while ((bp = BUFQ_GET(sc->sc_doneq)) != NULL) {
-		flag = bp->b_flags & B_READ;
-		if ((bp->b_error = err) == 0)
-			bp->b_resid = 0;
-		cnt += bp->b_bcount - bp->b_resid;
-		biodone(bp);
+	cs->sc_dksc.sc_size = 0;
+	cs->sc_tvn = vp;
+	cs->sc_tpath = NULL;
+
+	tmppath = malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
+	ret = copyinstr(cpath, tmppath, MAXPATHLEN, &cs->sc_tpathlen);
+	if (ret)
+		goto bail;
+	cs->sc_tpath = malloc(cs->sc_tpathlen, M_DEVBUF, M_WAITOK);
+	memcpy(cs->sc_tpath, tmppath, cs->sc_tpathlen);
+
+	if ((ret = VOP_GETATTR(vp, &va, l->l_cred, l)) != 0)
+		goto bail;
+
+	cs->sc_tdev = va.va_rdev;
+
+	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred, l);
+	if (ret)
+		goto bail;
+
+	maxsecsize =
+	    ((dpart.disklab->d_secsize > maxsecsize) ?
+	    dpart.disklab->d_secsize : maxsecsize);
+	size = dpart.part->p_size;
+
+	if (!size) {
+		ret = ENODEV;
+		goto bail;
 	}
-	disk_unbusy(&sc->sc_dk, cnt, flag);
-}
 
-void
-spiflash_process_read(spiflash_handle_t sc)
-{
-	struct buf	*bp;
-	int		err = 0;
-
-	disk_busy(&sc->sc_dk);
-	while ((bp = BUFQ_GET(sc->sc_workq)) != NULL) {
-		size_t addr = bp->b_blkno * DEV_BSIZE;
-		uint8_t *data = bp->b_data;
-		int cnt = bp->b_resid;
-
-		BUFQ_PUT(sc->sc_doneq, bp);
-
-		DPRINTF(("read from addr %x, cnt %d\n", (unsigned)addr, cnt));
-
-		if ((err = sc->sc_read(sc, addr, cnt, data)) != 0) {
-			/* error occurred, fail all pending workq bufs */
-			bufq_move(sc->sc_doneq, sc->sc_workq);
-			break;
-		}
-		
-		bp->b_resid -= cnt;
-		data += cnt;
-		addr += cnt;
-	}
-	spiflash_process_done(sc, err);
-}
-
-void
-spiflash_process_write(spiflash_handle_t sc)
-{
-	int	len;
-	size_t	base;
-	daddr_t	blkno;
-	uint8_t	*save;
-	int	err = 0, neederase = 0;
-	struct buf *bp;
+	cs->sc_dksc.sc_size = size;
 
 	/*
-	 * due to other considerations, we are guaranteed that
-	 * we will only have multiple buffers if they are all in
-	 * the same erase sector.  Therefore we never need to look
-	 * beyond the first block to determine how much data we need
-	 * to save.
+	 * XXX here we should probe the underlying device.  If we
+	 *     are accessing a partition of type RAW_PART, then
+	 *     we should populate our initial geometry with the
+	 *     geometry that we discover from the device.
 	 */
+	pdg = &cs->sc_dksc.sc_geom;
+	pdg->pdg_secsize = DEV_BSIZE;
+	pdg->pdg_ntracks = 1;
+	pdg->pdg_nsectors = 1024 * (1024 / pdg->pdg_secsize);
+	pdg->pdg_ncylinders = cs->sc_dksc.sc_size / pdg->pdg_nsectors;
 
-	bp = BUFQ_PEEK(sc->sc_workq);
-	len = spiflash_nsectors(sc, bp)  * sc->sc_erase_size;
-	blkno = bp->b_blkno;
-	base = (blkno * DEV_BSIZE) & ~ (sc->sc_erase_size - 1);
-
-	/* get ourself a scratch buffer */
-	save = malloc(len, M_DEVBUF, M_WAITOK);
-
-	disk_busy(&sc->sc_dk);
-	/* read in as much of the data as we need */
-	DPRINTF(("reading in %d bytes\n", len));
-	if ((err = sc->sc_read(sc, base, len, save)) != 0) {
-		bufq_move(sc->sc_doneq, sc->sc_workq);	
-		spiflash_process_done(sc, err);
-		return;
-	}
-
-	/*
-	 * now coalesce the writes into the save area, but also
-	 * check to see if we need to do an erase
-	 */
-	while ((bp = BUFQ_GET(sc->sc_workq)) != NULL) {
-		uint8_t	*data, *dst;
-		int resid = bp->b_resid;
-
-		DPRINTF(("coalesce write, blkno %x, count %d, resid %d\n",
-			    (unsigned)bp->b_blkno, bp->b_bcount, resid));
-
-		data = bp->b_data;
-		dst = save + (bp->b_blkno - blkno) * DEV_BSIZE;
-
-		/*
-		 * NOR flash bits.  We can clear a bit, but we cannot
-		 * set a bit, without erasing.  This should help reduce
-		 * unnecessary erases.
-		 */
-		while (resid) {
-			if ((*data) & ~(*dst))
-				neederase = 1;
-			*dst++ = *data++;
-			resid--;
-		}
-
-		BUFQ_PUT(sc->sc_doneq, bp);
-	}
-	
-	/*
-	 * do the erase, if we need to.
-	 */
-	if (neederase) {
-		DPRINTF(("erasing from %x - %x\n", base, base + len));
-		if ((err = sc->sc_erase(sc, base, len)) != 0) {
-			spiflash_process_done(sc, err);
-			return;
-		}
-	}
-
-	/*
-	 * now write our save area, and finish up.
-	 */
-	DPRINTF(("flashing %d bytes to %x from %x\n", len,
-		    base, (unsigned)save));
-	err = sc->sc_write(sc, base, len, save);
-	spiflash_process_done(sc, err);
+bail:
+	free(tmppath, M_TEMP);
+	if (ret && cs->sc_tpath)
+		free(cs->sc_tpath, M_DEVBUF);
+	return ret;
 }
-
-
-int
-spiflash_nsectors(spiflash_handle_t sc, struct buf *bp)
-{
-	unsigned	addr, sector;
-
-	addr = bp->b_blkno * DEV_BSIZE;
-	sector = addr / sc->sc_erase_size;
-
-	addr += bp->b_bcount;
-	addr--;
-	return (((addr / sc->sc_erase_size)  - sector) + 1);
-}
-
-int
-spiflash_sector(spiflash_handle_t sc, struct buf *bp)
-{
-	unsigned	addr, sector;
-
-	addr = bp->b_blkno * DEV_BSIZE;
-	sector = addr / sc->sc_erase_size;
-
-	/* if it spans multiple blocks, error it */
-	addr += bp->b_bcount;
-	addr--;
-	if (sector != (addr / sc->sc_erase_size))
-		return -1;
-
-	return sector;
-}
-
-void
-spiflash_thread(void *arg)
-{
-	spiflash_handle_t sc = arg;
-	struct buf	*bp;
-	int		s;
-	int		sector;
-
-	s = splbio();
-	for (;;) {
-		if ((bp = BUFQ_GET(sc->sc_waitq)) == NULL) {
-			tsleep(&sc->sc_thread, PRIBIO, "spiflash_thread", 0);
-			continue;
-		}
-
-		BUFQ_PUT(sc->sc_workq, bp);
-
-		if (bp->b_flags & B_READ) {
-			/* just do the read */
-			spiflash_process_read(sc);
-			continue;
-		}
-
-		/*
-		 * Because writing a flash filesystem is particularly
-		 * painful, involving erase, modify, write, we prefer
-		 * to coalesce writes to the same sector together.
-		 */
-
-		sector = spiflash_sector(sc, bp);
-
-		/*
-		 * if the write spans multiple sectors, skip
-		 * coalescing.  (It would be nice if we could break
-		 * these up.  minphys is honored for read/write, but
-		 * not necessarily for bread.)
-		 */
-		if (sector < 0)
-			goto dowrite;
-
-		while ((bp = BUFQ_PEEK(sc->sc_waitq)) != NULL) {
-			/* can't deal with read requests! */
-			if (bp->b_flags & B_READ)
-				break;
-
-			/* is it for the same sector? */
-			if (spiflash_sector(sc, bp) != sector)
-				break;
-
-			bp = BUFQ_GET(sc->sc_waitq);
-			BUFQ_PUT(sc->sc_workq, bp);
-		}
-
-	dowrite:
-		spiflash_process_write(sc);
-	}
-}
-/*
- * SPI flash common implementation.
- */
 
 /*
- * Most devices take on the order of 1 second for each block that they
- * delete.
+ * Our generic cipher entry point.  This takes care of the
+ * IV mode and passes off the work to the specific cipher.
+ * We implement here the IV method ``encrypted block
+ * number''.
+ *
+ * For the encryption case, we accomplish this by setting
+ * up a struct uio where the first iovec of the source is
+ * the blocknumber and the first iovec of the dest is a
+ * sink.  We then call the cipher with an IV of zero, and
+ * the right thing happens.
+ *
+ * For the decryption case, we use the same basic mechanism
+ * for symmetry, but we encrypt the block number in the
+ * first iovec.
+ *
+ * We mainly do this to avoid requiring the definition of
+ * an ECB mode.
+ *
+ * XXXrcd: for now we rely on our own crypto framework defined
+ *         in dev/cgd_crypto.c.  This will change when we
+ *         get a generic kernel crypto framework.
  */
-int
-spiflash_common_erase(spiflash_handle_t sc, size_t start, size_t size)
+
+static void
+blkno2blkno_buf(char *sbuf, daddr_t blkno)
 {
-	int		rv;
+	int	i;
 
-	if ((start % sc->sc_erase_size) || (size % sc->sc_erase_size))
-		return EINVAL;
-
-	/* the second test is to test against wrap */ 
-	if ((start > sc->sc_device_size) ||
-	    ((start + size) > sc->sc_device_size))
-		return EINVAL;
-
-	/*
-	 * XXX: check protection status?  Requires master table mapping
-	 * sectors to status bits, and so forth.
+	/* Set up the blkno in blkno_buf, here we do not care much
+	 * about the final layout of the information as long as we
+	 * can guarantee that each sector will have a different IV
+	 * and that the endianness of the machine will not affect
+	 * the representation that we have chosen.
+	 *
+	 * We choose this representation, because it does not rely
+	 * on the size of buf (which is the blocksize of the cipher),
+	 * but allows daddr_t to grow without breaking existing
+	 * disks.
+	 *
+	 * Note that blkno2blkno_buf does not take a size as input,
+	 * and hence must be called on a pre-zeroed buffer of length
+	 * greater than or equal to sizeof(daddr_t).
 	 */
-
-	while (size) {
-		if ((rv = spiflash_write_enable(sc)) != 0) {
-			spiflash_write_disable(sc);
-			return rv;
-		}
-		if ((rv = spiflash_cmd(sc, SPIFLASH_CMD_ERASE, 3, start, 0,
-			 NULL, NULL)) != 0) {
-			spiflash_write_disable(sc);
-			return rv;
-		}
-
-		/*
-		 * The devices I have all say typical for sector erase
-		 * is ~1sec.  We check ten times that often.  (There
-		 * is no way to interrupt on this.)
-		 */
-		if ((rv = spiflash_wait(sc, hz / 10)) != 0)
-			return rv;
-
-		start += sc->sc_erase_size;
-		size -= sc->sc_erase_size;
-
-		/* NB: according to the docs I have, the write enable
-		 * is automatically cleared upon completion of an erase
-		 * command, so there is no need to explicitly disable it.
-		 */
+	for (i=0; i < sizeof(daddr_t); i++) {
+		*sbuf++ = blkno & 0xff;
+		blkno >>= 8;
 	}
-
-	return 0;
 }
 
-int
-spiflash_common_write(spiflash_handle_t sc, size_t start, size_t size,
-    const uint8_t *data)
+static void
+cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
+    size_t len, daddr_t blkno, size_t secsize, int dir)
 {
-	int		rv;
+	char		*dst = dstv;
+	char 		*src = srcv;
+	cfunc_cipher	*cipher = cs->sc_cfuncs->cf_cipher;
+	struct uio	dstuio;
+	struct uio	srcuio;
+	struct iovec	dstiov[2];
+	struct iovec	srciov[2];
+	size_t		blocksize = cs->sc_cdata.cf_blocksize;
+	char		sink[blocksize];
+	char		zero_iv[blocksize];
+	char		blkno_buf[blocksize];
 
-	if ((start % sc->sc_write_size) || (size % sc->sc_write_size))
-		return EINVAL;
+	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
-	while (size) {
-		int cnt;
+	DIAGCONDPANIC(len % blocksize != 0,
+	    ("cgd_cipher: len %% blocksize != 0"));
 
-		if ((rv = spiflash_write_enable(sc)) != 0) {
-			spiflash_write_disable(sc);
-			return rv;
-		}
+	/* ensure that sizeof(daddr_t) <= blocksize (for encblkno IVing) */
+	DIAGCONDPANIC(sizeof(daddr_t) > blocksize,
+	    ("cgd_cipher: sizeof(daddr_t) > blocksize"));
 
-		cnt = min(size, sc->sc_write_size);
-		if ((rv = spiflash_cmd(sc, SPIFLASH_CMD_PROGRAM, 3, start,
-			 cnt, data, NULL)) != 0) {
-			spiflash_write_disable(sc);
-			return rv;
-		}
+	memset(zero_iv, 0x0, sizeof(zero_iv));
 
-		/*
-		 * It seems that most devices can write bits fairly
-		 * quickly.  For example, one part I have access to
-		 * takes ~5msec to process the entire 256 byte page.
-		 * Probably this should be modified to cope with
-		 * device-specific timing, and maybe also take into
-		 * account systems with higher values of HZ (which
-		 * could benefit from sleeping.)
-		 */
-		if ((rv = spiflash_wait(sc, 0)) != 0)
-			return rv;
-
-		data += cnt;
-		start += cnt;
-		size -= cnt;
-	}
-
-	return 0;
-}
-
-int
-spiflash_common_read(spiflash_handle_t sc, size_t start, size_t size,
-    uint8_t *data)
-{
-	int		rv;
-
-	while (size) {
-		int cnt;
-
-		if (sc->sc_read_size > 0)
-			cnt = min(size, sc->sc_read_size);
-		else 
-			cnt = size;
-
-		if ((rv = spiflash_cmd(sc, SPIFLASH_CMD_READ, 3, start,
-			 cnt, NULL, data)) != 0) {
-			return rv;
-		}
-
-		start += cnt;
-		size -= cnt;
-	}
-
-	return 0;
-}
-
-/* read status register */
-int
-spiflash_read_status(spiflash_handle_t sc, uint8_t *sr)
-{
-
-	return spiflash_cmd(sc, SPIFLASH_CMD_RDSR, 0, 0, 1, NULL, sr);
-}
-
-int
-spiflash_write_enable(spiflash_handle_t sc)
-{
-
-	return spiflash_cmd(sc, SPIFLASH_CMD_WREN, 0, 0, 0, NULL, NULL);
-}
-
-int
-spiflash_write_disable(spiflash_handle_t sc)
-{
-
-	return spiflash_cmd(sc, SPIFLASH_CMD_WRDI, 0, 0, 0, NULL, NULL);
-}
-
-int
-spiflash_cmd(spiflash_handle_t sc, uint8_t cmd,
-    size_t addrlen, uint32_t addr,
-    size_t cnt, const uint8_t *wdata, uint8_t *rdata)
-{
-	struct spi_transfer	trans;
-	struct spi_chunk	chunk1, chunk2;
-	char buf[4];
-	int i;
-
-	buf[0] = cmd;
-
-	if (addrlen > 3)
-		return EINVAL;
-
-	for (i = addrlen; i > 0; i--) {
-		buf[i] = addr & 0xff;
-		addr >>= 8;
-	}
-	spi_transfer_init(&trans);
-	spi_chunk_init(&chunk1, addrlen + 1, buf, NULL);
-	spi_transfer_add(&trans, &chunk1);
-	if (cnt) {
-		spi_chunk_init(&chunk2, cnt, wdata, rdata);
-		spi_transfer_add(&trans, &chunk2);
-	}
-
-	spi_transfer(sc->sc_handle, &trans);
-	spi_wait(&trans);
-
-	if (trans.st_flags & SPI_F_ERROR)
-		return trans.st_errno;
-	return 0;
-}
-
-int
-spiflash_wait(spiflash_handle_t sc, int tmo)
-{
-	int	rv;
-	uint8_t	sr;
-
-	for (;;) {
-		if ((rv = spiflash_read_status(sc, &sr)) != 0)
-			return rv;
-
-		if ((sr & SPIFLASH_SR_BUSY) == 0)
-			break;
-		/*
-		 * The devices I have all say typical for sector
-		 * erase is ~1sec.  We check time times that often.
-		 * (There is no way to interrupt on this.)
-		 */
-		if (tmo)
-			tsleep(&sr, PWAIT, "spiflash_wait", tmo);
-	}
-	return 0;
-}
+	dstuio.uio_iov = dstiov;
+	dstuio.uio_iovcnt =

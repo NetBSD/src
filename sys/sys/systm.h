@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.196.2.1 2007/03/13 17:51:18 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.196.2.2 2007/08/20 21:28:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -304,6 +304,13 @@ void	dopowerhooks(int);
 #define PWR_SOFTRESUME	3
 #define PWR_SOFTSUSPEND	4
 #define PWR_SOFTSTANDBY	5
+#define PWR_NAMES \
+	"resume",	/* 0 */ \
+	"suspend",	/* 1 */ \
+	"standby",	/* 2 */ \
+	"softresume",	/* 3 */ \
+	"softsuspend",	/* 4 */ \
+	"softstandby"	/* 5 */
 
 /*
  * Mountroot hooks (and mountroot declaration).  Device drivers establish

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.7.2.1 2007/04/10 13:26:48 ad Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.7.2.2 2007/08/20 21:27:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.7.2.1 2007/04/10 13:26:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.7.2.2 2007/08/20 21:27:57 ad Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -690,7 +690,7 @@ hci_mtap(struct mbuf *m, struct hci_unit *unit)
 		if (pcb->hp_flags & HCI_DIRECTION) {
 			int dir = m->m_flags & M_LINK0 ? 1 : 0;
 
-			*ctl = sbcreatecontrol((void *)&dir, sizeof(dir),
+			*ctl = sbcreatecontrol(&dir, sizeof(dir),
 			    SCM_HCI_DIRECTION, BTPROTO_HCI);
 
 			if (*ctl != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.17.2.1 2007/03/13 16:51:54 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.17.2.2 2007/08/20 21:27:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.17.2.1 2007/03/13 16:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.17.2.2 2007/08/20 21:27:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -90,9 +90,7 @@ ras_lookup(struct proc *p, void *addr)
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			rp->ras_hits++;
 			startaddr = rp->ras_startaddr;
-#ifdef DIAGNOSTIC
 			DPRINTF(("RAS hit: p=%p %p\n", p, addr));
-#endif
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.128.2.4 2007/07/15 15:53:07 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.128.2.5 2007/08/20 21:28:31 ad Exp $	*/
 
 /*
  *
@@ -562,7 +562,7 @@ void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 void			ubc_release(void *, int);
 void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
-			    int);
+			    int, int);
 
 /* uvm_fault.c */
 #define uvm_fault(m, a, p) uvm_fault_internal(m, a, p, 0)
@@ -594,6 +594,7 @@ int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
 void			uvm_lwp_hold(struct lwp *);
 void			uvm_lwp_rele(struct lwp *);
+void			uvm_cpu_attach(struct cpu_info *);
 
 
 /* uvm_init.c */
@@ -662,7 +663,6 @@ vaddr_t			uvm_default_mapaddr(struct proc *, vaddr_t, vsize_t);
 int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 			    struct vm_map *, vaddr_t *, vsize_t,
 			    struct proc *, int);
-#define	UVM_MREMAP_FIXED	1
 
 /* uvm_object.c */
 int			uobj_wirepages(struct uvm_object *uobj, off_t start,
@@ -714,7 +714,6 @@ void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 void			uvm_vnp_sync(struct mount *);
-struct uvm_object	*uvn_attach(void *, vm_prot_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);

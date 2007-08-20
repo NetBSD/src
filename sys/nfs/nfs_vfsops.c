@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.174.2.5 2007/07/15 13:28:06 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.174.2.6 2007/08/20 21:28:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.5 2007/07/15 13:28:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.174.2.6 2007/08/20 21:28:13 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -120,7 +120,7 @@ struct vfsops nfs_vfsops = {
 	nfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,	/* vfs_suspendctl */
 	nfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -561,8 +561,7 @@ nfs_decode_args(nmp, argp, l)
 		if (nmp->nm_sotype == SOCK_DGRAM)
 			while (nfs_connect(nmp, (struct nfsreq *)0, l)) {
 				printf("nfs_args: retrying connect\n");
-				(void) tsleep((void *)&lbolt,
-					      PSOCK, "nfscn3", 0);
+				kpause("nfscn3", false, hz, NULL);
 			}
 	}
 }
@@ -579,7 +578,7 @@ nfs_decode_args(nmp, argp, l)
 /* ARGSUSED */
 int
 nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error;
 	struct nfs_args *args = data;
@@ -708,8 +707,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	 */
 
 	if (nfs_niothreads < 0) {
-		nfs_niothreads = NFS_DEFAULT_NIOTHREADS;
-		nfs_getset_niothreads(true);
+		nfs_set_niothreads(NFS_DEFAULT_NIOTHREADS);
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {
@@ -756,7 +754,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
 	nmp->nm_deadthresh = NFS_DEFDEADTHRESH;
-	error = set_statvfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, l);
+	error = set_statvfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE,
+	    mp->mnt_op->vfs_name, mp, l);
 	if (error)
 		goto bad;
 	nmp->nm_nam = nam;
@@ -968,7 +967,7 @@ loop:
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
@@ -999,15 +998,18 @@ nfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 static int
 sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node;
+	int val;
 	int error;
 
-	nfs_getset_niothreads(0);
-        error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	val = nfs_niothreads;
+	node = *rnode;
+	node.sysctl_data = &val;
+        error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
-	nfs_getset_niothreads(1);
+		return error;
 
-	return (0);
+	return nfs_set_niothreads(val);
 }
 
 SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
@@ -1040,7 +1042,7 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iothreads",
 		       SYSCTL_DESCR("Number of NFS client processes desired"),
-		       sysctl_vfs_nfs_iothreads, 0, &nfs_niothreads, 0,
+		       sysctl_vfs_nfs_iothreads, 0, NULL, 0,
 		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
 }
 

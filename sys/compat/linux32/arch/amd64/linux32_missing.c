@@ -1,4 +1,6 @@
-/*	$NetBSD: linux32_missing.c,v 1.2 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_missing.c,v 1.2.6.1 2007/08/20 21:25:55 ad Exp $ */
+
+#include <sys/cdefs.h>
 
 #include "opt_compat_linux32.h"
 

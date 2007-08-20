@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.8.4.4 2007/07/15 15:52:52 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.8.4.5 2007/08/20 21:26:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.8.4.4 2007/07/15 15:52:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.8.4.5 2007/08/20 21:26:11 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
-
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
@@ -76,8 +75,9 @@ int sysvbfs_mountfs(struct vnode *, struct mount *, struct lwp *);
 
 int
 sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
+	struct nameidata nd;
 	struct sysvbfs_args *args = data;
 	struct sysvbfs_mount *bmp = NULL;
 	struct vnode *devvp = NULL;
@@ -107,10 +107,10 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 
 	if (args->fspec != NULL) {
 		/* Look up the name and verify that it's sane. */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return (error);
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*
@@ -162,7 +162,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	}
 
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 int

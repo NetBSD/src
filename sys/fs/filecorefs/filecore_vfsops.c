@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.32.2.4 2007/07/29 11:37:09 ad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.32.2.5 2007/08/20 21:26:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.2.4 2007/07/29 11:37:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.2.5 2007/08/20 21:26:06 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -123,7 +123,7 @@ struct vfsops filecore_vfsops = {
 	NULL,				/* filecore_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	filecore_vnodeopv_descs,
 	0,
 	{ NULL, NULL }
@@ -187,14 +187,14 @@ filecore_mountroot()
  * mount system call
  */
 int
-filecore_mount(mp, path, data, data_len, ndp, l)
+filecore_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct vnode *devvp;
 	struct filecore_args *args = data;
 	int error;
@@ -225,10 +225,10 @@ filecore_mount(mp, path, data, data_len, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-	if ((error = namei(ndp)) != 0)
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-	devvp = ndp->ni_vp;
+	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
@@ -265,7 +265,7 @@ filecore_mount(mp, path, data, data_len, ndp, l)
 	}
 	fcmp = VFSTOFILECORE(mp);
 	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 /*
@@ -331,11 +331,10 @@ filecore_mountfs(devvp, mp, l, argp)
 	    * (fcdr->nzones / 2) - 8 * FILECORE_DISCREC_SIZE)
 	    << fcdr->log2bpmb) >> fcdr->log2secsize;
 	log2secsize = fcdr->log2secsize;
-	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf1\n", bp);
 #endif
-	brelse(bp);
+	brelse(bp, B_AGE);
 	bp = NULL;
 
 	/* Read the bootblock in the map */
@@ -365,11 +364,10 @@ filecore_mountfs(devvp, mp, l, argp)
 		fcmp->nblks=fcdr->disc_size / fcmp->blksize;
 	}
 
-	bp->b_flags |= B_AGE;
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf2\n", bp);
 #endif
-	brelse(bp);
+	brelse(bp, B_AGE);
 	bp = NULL;
 
 	mp->mnt_data = fcmp;
@@ -399,7 +397,7 @@ out:
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf3\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	}
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
@@ -633,7 +631,7 @@ filecore_vget(mp, ino, vpp)
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) vf4\n", bp);
 #endif
-			brelse(bp);
+			brelse(bp, 0);
 			*vpp = NULL;
 			return (error);
 		}
@@ -644,7 +642,7 @@ filecore_vget(mp, ino, vpp)
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vf5\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	}
 
 	ip->i_mnt = fcmp;
@@ -688,7 +686,7 @@ filecore_vget(mp, ino, vpp)
 	 */
 
 	genfs_node_init(vp, &filecore_genfsops);
-	vp->v_size = ip->i_size;
+	uvm_vnp_setsize(vp, ip->i_size);
 	*vpp = vp;
 	return (0);
 }
