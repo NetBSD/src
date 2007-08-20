@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.58 2007/08/20 15:16:06 is Exp $ */
+/*	$NetBSD: zbus.c,v 1.59 2007/08/20 15:18:03 is Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.58 2007/08/20 15:16:06 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.59 2007/08/20 15:18:03 is Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -174,7 +174,7 @@ static struct aconfdata aconftab[] = {
 	{ "aumld",	2145,	128 },	/* Melody MPEG layer 2 audio board */
 	/* Individual Computers Jens Schoenfeld */
 	{ "buddha",	4626,	0 },
-	{ "xsurf",	4626,	23 },	/* X-surf Ethernet */
+	{ "xsurf",	4626,	23 },	/* X-Surf Ethernet */
 	/* VMC Harald Frank */
 	{ "blst",	5001,	1},	/* ISDN Blaster */
 	{ "hyper4",	5001,	2},	/* Hypercom4-Zbus */
