@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.34 2007/08/20 16:52:59 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.35 2007/08/20 17:48:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.34 2007/08/20 16:52:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.35 2007/08/20 17:48:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.34 2007/08/20 16:52:59 martin
 #include <sys/syscallargs.h>
 
 #include <net/if.h>
+#include <net/bpf.h>
+#include <net/route.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <net/if_gre.h>
+#include <net/if_atm.h>
+#include <net/if_tap.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 
@@ -389,26 +399,99 @@ compat_43_sa_put(from)
 	return (0);
 }
 
-
-/*
- * XXX: The following check depends on the fact that the only struct
- * sized 0x20 bytes in the ifioctls is struct oifreq and struct ifcapreq.
- * If that changes, then we'll need to use an explicit list here.
- * (But the actual list is ~60 entries long and uses includes all over
- * the tree...)
- */
 u_long 
 compat_cvtcmd(u_long cmd)
 { 
 	u_long ncmd;
 
-#define ifcapreq(x) ((x) == SIOCGIFCAP || (x) == SIOCSIFCAP)
+	if (IOCPARM_LEN(cmd) != sizeof(struct oifreq))
+		return cmd;
 
-	ncmd = ((IOCPARM_LEN(cmd) == sizeof(struct oifreq) && !ifcapreq(cmd)) ?
-		((cmd & ~(IOCPARM_MASK << IOCPARM_SHIFT)) |
-		 (sizeof(struct ifreq) << IOCPARM_SHIFT)) : cmd);
+	ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | 
+		(sizeof(struct ifreq) << IOCPARM_SHIFT);
 
-	return ncmd;
+	switch (ncmd) {
+	case BIOCGETIF:
+	case BIOCSETIF:
+	case GREDSOCK:
+	case GREGADDRD:
+	case GREGADDRS:
+	case GREGPROTO:
+	case GRESADDRD:
+	case GRESADDRS:
+	case GRESPROTO:
+	case GRESSOCK:
+	case OBIOCGETIF:
+	case OOSIOCGIFADDR:
+	case OOSIOCGIFBRDADDR:
+	case OOSIOCGIFCONF:
+	case OOSIOCGIFDSTADDR:
+	case OOSIOCGIFNETMASK:
+	case OSIOCADDMULTI:
+	case OSIOCDELMULTI:
+	case OSIOCGIFFLAGS:
+	case OSIOCSIFADDR:
+	case OSIOCSIFBRDADDR:
+	case OSIOCSIFDSTADDR:
+	case OSIOCSIFFLAGS:
+	case OSIOCSIFMEDIA:
+	case OSIOCSIFNETMASK:
+	case OTAPGIFNAME:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+	case SIOCDIFADDR:
+	case SIOCDIFADDR_IN6:
+	case SIOCDIFPHYADDR:
+	case SIOCGDEFIFACE_IN6:
+	case SIOCGIFADDR:
+	case SIOCGIFADDR_IN6:
+	case SIOCGIFAFLAG_IN6:
+	case SIOCGIFALIFETIME_IN6:
+	case SIOCGIFBRDADDR:
+	case SIOCGIFDLT:
+	case SIOCGIFDSTADDR:
+	case SIOCGIFDSTADDR_IN6:
+	case SIOCGIFFLAGS:
+	case SIOCGIFGENERIC:
+	case SIOCGIFMETRIC:
+	case SIOCGIFMTU:
+	case SIOCGIFNETMASK:
+	case SIOCGIFNETMASK_IN6:
+	case SIOCGIFPDSTADDR:
+	case SIOCGIFPDSTADDR_IN6:
+	case SIOCGIFPSRCADDR:
+	case SIOCGIFPSRCADDR_IN6:
+	case SIOCGIFSTAT_ICMP6:
+	case SIOCGIFSTAT_IN6:
+	case SIOCGPVCSIF:
+	case SIOCGVH:
+	case SIOCIFCREATE:
+	case SIOCIFDESTROY:
+	case SIOCSDEFIFACE_IN6:
+	case SIOCSIFADDR:
+	case SIOCSIFADDR_IN6:
+	case SIOCSIFALIFETIME_IN6:
+	case SIOCSIFBRDADDR:
+	case SIOCSIFDSTADDR:
+	case SIOCSIFDSTADDR_IN6:
+	case SIOCSIFFLAGS:
+	case SIOCSIFGENERIC:
+	case SIOCSIFMEDIA:
+	case SIOCSIFMETRIC:
+	case SIOCSIFMTU:
+	case SIOCSIFNETMASK:
+	case SIOCSIFNETMASK_IN6:
+	case SIOCSNDFLUSH_IN6:
+	case SIOCSPFXFLUSH_IN6:
+	case SIOCSPVCSIF:
+	case SIOCSRTRFLUSH_IN6:
+	case SIOCSVH:
+	case TAPGIFNAME:
+        case OBIOCSETIF:
+        case OSIOCGIFCONF:
+		return ncmd;
+	}
+	return cmd;
 }
 
 int
