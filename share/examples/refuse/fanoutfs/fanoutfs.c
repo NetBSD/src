@@ -118,10 +118,10 @@ findentry(const char *path, char *name, size_t namesize, struct stat *sp)
 	for (i = 0 ; i < dirs.c ; i++) {
 		(void) snprintf(name, namesize, "%s%s", dirs.v[i], path);
 		if (stat(name, sp) == 0) {
-			return 1;
+			return i;
 		}
 	}
-	return 0;
+	return -1;
 }
 
 /* return 1 if the string `s' is present in the array */
@@ -155,6 +155,42 @@ printf("mkdirs: dir `%s'\n", name);
 	return 1;
 }
 
+/* copy a file, preserving mode, to make it writable */
+static int
+copyfile(char *from, char *to)
+{
+	struct stat	st;
+	char		buf[BUFSIZ * 10];
+	int		fdfrom;
+	int		fdto;
+	int		ret;
+	int		cc;
+
+	if ((fdfrom = open(from, O_RDONLY, 0666)) < 0) {
+		warn("can't open file `%s' for reading", from);
+		return 0;
+	}
+	(void) fstat(fdfrom, &st);
+	if ((fdto = open(to, O_WRONLY | O_CREAT | O_EXCL, st.st_mode & 07777)) < 0) {
+		warn("can't open file `%s' for reading", from);
+		close(fdfrom);
+		return 0;
+	}
+	for (ret = 1 ; ret && (cc = read(fdfrom, buf, sizeof(buf))) > 0 ; ) {
+		if (write(fdto, buf, cc) != cc) {
+			warn("short write");
+			ret = 0;
+		}
+	}
+	if (fchown(fdto, st.st_uid, st.st_gid) < 0) {
+		warn("bad fchown");
+		ret = 0;
+	}
+	(void) close(fdfrom);
+	(void) close(fdto);
+	return ret;
+}
+
 /* file system operations start here */
 
 /* perform the stat operation */
@@ -169,7 +205,7 @@ fanoutfs_getattr(const char *path, struct stat *st)
 		st->st_nlink = 2;
 		return 0;
 	}
-	if (!findentry(path, name, sizeof(name), st)) {
+	if (findentry(path, name, sizeof(name), st) < 0) {
 		return -ENOENT;
 	}
 	return 0;
@@ -217,10 +253,22 @@ fanoutfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int 
 fanoutfs_open(const char *path, struct fuse_file_info *fi)
 {
+	char	newname[MAXPATHLEN];
 	char	name[MAXPATHLEN];
+	int	d;
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if ((d = findentry(path, name, sizeof(name), NULL)) < 0) {
 		return -ENOENT;
+	}
+	if (d > 0 && (fi->flags & 0x3) != O_RDONLY) {
+		/* need to copy file to writable dir */
+		(void) snprintf(newname, sizeof(newname), "%s%s", dirs.v[0], path);
+		if (!mkdirs(newname)) {
+			return -ENOENT;
+		}
+		if (!copyfile(name, newname)) {
+			return -EPERM;
+		}
 	}
 	return 0;
 }
@@ -236,7 +284,7 @@ fanoutfs_read(const char *path, char *buf, size_t size, off_t offset,
 
 	(void) fi;
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if ((fd = open(name, O_RDONLY, 0666)) < 0) {
@@ -265,7 +313,7 @@ fanoutfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
 	(void) fi;
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if ((fd = open(name, O_WRONLY, 0666)) < 0) {
@@ -300,7 +348,7 @@ fanoutfs_unlink(const char *path)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (unlink(name) < 0) {
@@ -315,7 +363,7 @@ fanoutfs_access(const char *path, int acc)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (access(name, acc) < 0) {
@@ -330,7 +378,7 @@ fanoutfs_chmod(const char *path, mode_t mode)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (chmod(name, mode) < 0) {
@@ -345,7 +393,7 @@ fanoutfs_chown(const char *path, uid_t uid, gid_t gid)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (lchown(name, uid, gid) < 0) {
@@ -361,7 +409,7 @@ fanoutfs_rename(const char *from, const char *to)
 	char	fromname[MAXPATHLEN];
 	char	toname[MAXPATHLEN];
 
-	if (!findentry(from, fromname, sizeof(fromname), NULL)) {
+	if (findentry(from, fromname, sizeof(fromname), NULL) < 0) {
 		return -ENOENT;
 	}
 	(void) snprintf(toname, sizeof(toname), "%s%s", dirs.v[0], to);
@@ -382,7 +430,7 @@ fanoutfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 	char		name[MAXPATHLEN];
 	int		fd;
 
-	if (findentry(path, name, sizeof(name), &st)) {
+	if (findentry(path, name, sizeof(name), &st) >= 0) {
 		return -EEXIST;
 	}
 	if ((fd = open(name, O_RDWR | O_CREAT | O_EXCL, 0666)) < 0) {
@@ -399,7 +447,7 @@ fanoutfs_mknod(const char *path, mode_t mode, dev_t d)
 	struct stat	st;
 	char		name[MAXPATHLEN];
 
-	if (findentry(path, name, sizeof(name), &st)) {
+	if (findentry(path, name, sizeof(name), &st) >= 0) {
 		return -EEXIST;
 	}
 	if (mknod(name, mode, d) < 0) {
@@ -462,7 +510,7 @@ fanoutfs_readlink(const char *path, char *buf, size_t size)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (readlink(name, buf, size) < 0) {
@@ -477,7 +525,7 @@ fanoutfs_rmdir(const char *path)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (rmdir(name) < 0) {
@@ -492,7 +540,7 @@ fanoutfs_truncate(const char *path, off_t size)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (truncate(name, size) < 0) {
@@ -507,7 +555,7 @@ fanoutfs_utime(const char *path, struct utimbuf *t)
 {
 	char	name[MAXPATHLEN];
 
-	if (!findentry(path, name, sizeof(name), NULL)) {
+	if (findentry(path, name, sizeof(name), NULL) < 0) {
 		return -ENOENT;
 	}
 	if (utime(name, t) < 0) {
@@ -558,5 +606,5 @@ main(int argc, char **argv)
 	(void) signal(SIGHUP, sighup);
 	readconf(conffile);
 	(void) daemon(1, 1);
-	return fuse_main(argc, argv, &fanoutfs_oper);
+	return fuse_main(argc, argv, &fanoutfs_oper, NULL);
 }
