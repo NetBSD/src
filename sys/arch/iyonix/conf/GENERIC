@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 2007/06/09 11:34:03 kiyohara Exp $
+#	$NetBSD: GENERIC,v 1.40 2007/08/20 00:54:42 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.40 $"
 
 maxusers	32		# estimated number of users
 
@@ -721,12 +721,14 @@ midi*	at midibus?
 
 # Bluetooth PCMCIA Controllers
 #bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 #ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btbc?
 #bthub* at btuart?
 #bthub* at ubt?
 
