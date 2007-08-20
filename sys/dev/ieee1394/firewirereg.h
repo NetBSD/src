@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.4.2.1 2007/05/27 14:30:09 ad Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.4.2.2 2007/08/20 18:36:57 ad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -321,7 +321,6 @@ extern struct cfdriver ieee1394if_cd;
 #define bio_offset b_blkno
 #endif
 #define bio_resid b_resid
-#define BIO_ERROR B_ERROR
 #define BIO_READ B_READ
 #define BIO_WRITE B_WRITE
 #define MIN(a,b) (((a)<(b))?(a):(b))

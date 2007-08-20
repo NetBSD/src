@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.45.8.1 2007/07/15 13:21:07 ad Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.45.8.2 2007/08/20 18:36:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.45.8.1 2007/07/15 13:21:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.45.8.2 2007/08/20 18:36:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,6 +381,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].value_cur = p2[3].Integer.Value;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].state = ENVSYS_SVALID;
+	sc->sc_data[ACPIBAT_TECHNOLOGY].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_DVOLTAGE].value_cur = p2[4].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DVOLTAGE].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
@@ -453,13 +454,20 @@ acpibat_get_status(struct acpibat_softc *sc)
 	if (status & ACPIBAT_ST_CHARGING) {
 		sc->sc_data[ACPIBAT_CHARGERATE].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_CHARGERATE].value_cur = battrate * 1000;
+		sc->sc_data[ACPIBAT_DISCHARGERATE].state = ENVSYS_SINVALID;
 		sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_CHARGING].value_cur = 1;
 	} else if (status & ACPIBAT_ST_DISCHARGING) {
 		sc->sc_data[ACPIBAT_DISCHARGERATE].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_DISCHARGERATE].value_cur = battrate * 1000;
+		sc->sc_data[ACPIBAT_CHARGERATE].state = ENVSYS_SINVALID;
 		sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SVALID;
 		sc->sc_data[ACPIBAT_CHARGING].value_cur = 0;
+	} else if (!(status & (ACPIBAT_ST_CHARGING|ACPIBAT_ST_DISCHARGING))) {
+		sc->sc_data[ACPIBAT_CHARGING].state = ENVSYS_SVALID;
+		sc->sc_data[ACPIBAT_CHARGING].value_cur = 0;
+		sc->sc_data[ACPIBAT_CHARGERATE].state = ENVSYS_SINVALID;
+		sc->sc_data[ACPIBAT_DISCHARGERATE].state = ENVSYS_SINVALID;
 	}
 
 	sc->sc_data[ACPIBAT_CAPACITY].value_cur = p2[2].Integer.Value * 1000;
@@ -520,6 +528,7 @@ acpibat_print_stat(struct acpibat_softc *sc)
 {
 	const char *capstat, *chargestat;
 	int percent, denom;
+	int32_t value;
 
 	percent = 0;
 
@@ -530,14 +539,18 @@ acpibat_print_stat(struct acpibat_softc *sc)
 	else
 		capstat = "";
 
-	if (sc->sc_data[ACPIBAT_CHARGING].state == ENVSYS_SVALID)
-		chargestat = "charging";
-	else if (sc->sc_data[ACPIBAT_CHARGING].state == ENVSYS_SINVALID)
-		chargestat = "discharging";
-	else
+	if (sc->sc_data[ACPIBAT_CHARGING].state != ENVSYS_SVALID) {
 		chargestat = "idling";
+		value = 0;
+	} else if (sc->sc_data[ACPIBAT_CHARGING].value_cur == 0) {
+		chargestat = "discharging";
+		value = sc->sc_data[ACPIBAT_DISCHARGERATE].value_cur;
+	} else {
+		chargestat = "charging";
+		value = sc->sc_data[ACPIBAT_CHARGERATE].value_cur;
+	}
 
-	denom = sc->sc_data[ACPIBAT_DCAPACITY].value_cur / 100;
+	denom = sc->sc_data[ACPIBAT_LFCCAPACITY].value_cur / 100;
 	if (denom > 0)
 		percent = (sc->sc_data[ACPIBAT_CAPACITY].value_cur) / denom;
 
@@ -545,12 +558,7 @@ acpibat_print_stat(struct acpibat_softc *sc)
 	    "rate %d.%03d%s\n", sc->sc_dev.dv_xname, capstat, chargestat,
 	    SCALE(sc->sc_data[ACPIBAT_VOLTAGE].value_cur),
 	    SCALE(sc->sc_data[ACPIBAT_CAPACITY].value_cur), CAPUNITS(sc),
-	    percent,
-	    SCALE(sc->sc_data[ACPIBAT_CHARGING].value_cur ?
-	        sc->sc_data[ACPIBAT_CHARGERATE].value_cur :
-	        sc->sc_data[ACPIBAT_CHARGING].value_cur ?
-	        sc->sc_data[ACPIBAT_DISCHARGERATE].value_cur : 0),
-	        RATEUNITS(sc));
+	    percent, SCALE(value), RATEUNITS(sc));
 }
 
 static void

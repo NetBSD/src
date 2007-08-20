@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.17.2.5 2007/07/15 15:52:49 ad Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.17.2.6 2007/08/20 18:37:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.5 2007/07/15 15:52:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17.2.6 2007/08/20 18:37:50 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -119,7 +119,7 @@ static const struct power_event_description pswitch_event_desc[] = {
 static const struct power_event_description pswitch_type_desc[] = {
 	{ PSWITCH_TYPE_POWER, 		"power_button" },
 	{ PSWITCH_TYPE_SLEEP, 		"sleep_button" },
-	{ PSWITCH_TYPE_LID, 		"lid_button" },
+	{ PSWITCH_TYPE_LID, 		"lid_switch" },
 	{ PSWITCH_TYPE_RESET, 		"reset_button" },
 	{ PSWITCH_TYPE_ACADAPTER,	"acadapter" },
 	{ -1, NULL }

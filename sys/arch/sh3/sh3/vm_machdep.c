@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55.2.1 2007/05/27 12:28:10 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55.2.2 2007/08/20 18:38:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.2.1 2007/05/27 12:28:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55.2.2 2007/08/20 18:38:49 ad Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -142,6 +142,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack,
 
 	/* Copy flags */
 	l2->l_md.md_flags = l1->l_md.md_flags;
+	l2->l_md.md_astpending = 0;
 
 	pcb = NULL;		/* XXXGCC: -Wuninitialized */
 #ifdef SH3

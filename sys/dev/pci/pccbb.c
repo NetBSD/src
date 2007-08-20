@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.144 2007/02/04 21:04:37 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.144.6.1 2007/08/20 18:37:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.144 2007/02/04 21:04:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.144.6.1 2007/08/20 18:37:19 ad Exp $");
 
 /*
 #define CBB_DEBUG
@@ -561,9 +561,9 @@ pccbbattach(struct device *parent, struct device *self, void *aux)
 		 * register.  Ricoh CardBus bridges have special bits on Bridge
 		 * control reg (addr 0x3e on PCI config space).
 		 */
-		reg = pci_conf_read(pc, pa->pa_tag, PCI_BCR_INTR);
+		reg = pci_conf_read(pc, pa->pa_tag, PCI_BRIDGE_CONTROL_REG);
 		reg &= ~(CB_BCRI_RL_3E0_ENA | CB_BCRI_RL_3E2_ENA);
-		pci_conf_write(pc, pa->pa_tag, PCI_BCR_INTR, reg);
+		pci_conf_write(pc, pa->pa_tag, PCI_BRIDGE_CONTROL_REG, reg);
 		break;
 
 	default:
@@ -701,14 +701,14 @@ pccbb_pci_callback(struct device *self)
 #endif
 
 		cba.cba_cacheline = PCI_CACHELINE(bhlc);
-		cba.cba_lattimer = PCI_CB_LATENCY(busreg);
+		cba.cba_lattimer = PCI_LATTIMER(bhlc);
 
 		if (bootverbose) {
 			printf("%s: cacheline 0x%x lattimer 0x%x\n",
 			    sc->sc_dev.dv_xname, cba.cba_cacheline,
 			    cba.cba_lattimer);
-			printf("%s: bhlc 0x%x lscp 0x%x\n",
-			    sc->sc_dev.dv_xname, bhlc, busreg);
+			printf("%s: bhlc 0x%x\n",
+			    device_xname(&sc->sc_dev), bhlc);
 		}
 #if defined SHOW_REGS
 		cb_show_regs(sc->sc_pc, sc->sc_tag, sc->sc_base_memt,
@@ -756,61 +756,63 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	pcitag_t tag = sc->sc_tag;
 	bus_space_tag_t bmt = sc->sc_base_memt;
 	bus_space_handle_t bmh = sc->sc_base_memh;
-	pcireg_t reg;
+	pcireg_t bcr, bhlc, cbctl, csr, lscp, mfunc, slotctl, sockctl, sockmask,
+	    sysctrl;
 
 	/*
 	 * Set PCI command reg.
 	 * Some laptop's BIOSes (i.e. TICO) do not enable CardBus chip.
 	 */
-	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	/* I believe it is harmless. */
-	reg |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	csr |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
 	    PCI_COMMAND_MASTER_ENABLE);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	/*
 	 * Set CardBus latency timer.
 	 */
-	reg = pci_conf_read(pc, tag, PCI_CB_LSCP_REG);
-	if (PCI_CB_LATENCY(reg) < 0x20) {
-		reg &= ~(PCI_CB_LATENCY_MASK << PCI_CB_LATENCY_SHIFT);
-		reg |= (0x20 << PCI_CB_LATENCY_SHIFT);
-		pci_conf_write(pc, tag, PCI_CB_LSCP_REG, reg);
+	lscp = pci_conf_read(pc, tag, PCI_CB_LSCP_REG);
+	if (PCI_CB_LATENCY(lscp) < 0x20) {
+		lscp &= ~(PCI_CB_LATENCY_MASK << PCI_CB_LATENCY_SHIFT);
+		lscp |= (0x20 << PCI_CB_LATENCY_SHIFT);
+		pci_conf_write(pc, tag, PCI_CB_LSCP_REG, lscp);
 	}
 	DPRINTF(("CardBus latency timer 0x%x (%x)\n",
-	    PCI_CB_LATENCY(reg), pci_conf_read(pc, tag, PCI_CB_LSCP_REG)));
+	    PCI_CB_LATENCY(lscp), pci_conf_read(pc, tag, PCI_CB_LSCP_REG)));
 
 	/*
 	 * Set PCI latency timer.
 	 */
-	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
-	if (PCI_LATTIMER(reg) < 0x10) {
-		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
-		reg |= (0x10 << PCI_LATTIMER_SHIFT);
-		pci_conf_write(pc, tag, PCI_BHLC_REG, reg);
+	bhlc = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_LATTIMER(bhlc) < 0x10) {
+		bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+		bhlc |= (0x10 << PCI_LATTIMER_SHIFT);
+		pci_conf_write(pc, tag, PCI_BHLC_REG, bhlc);
 	}
 	DPRINTF(("PCI latency timer 0x%x (%x)\n",
-	    PCI_LATTIMER(reg), pci_conf_read(pc, tag, PCI_BHLC_REG)));
+	    PCI_LATTIMER(bhlc), pci_conf_read(pc, tag, PCI_BHLC_REG)));
 
 
 	/* Route functional interrupts to PCI. */
-	reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
-	reg |= CB_BCR_INTR_IREQ_ENABLE;		/* disable PCI Intr */
-	reg |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
-	reg |= CB_BCR_RESET_ENABLE;		/* assert reset */
-	pci_conf_write(pc, tag, PCI_BCR_INTR, reg);
+	bcr = pci_conf_read(pc, tag, PCI_BRIDGE_CONTROL_REG);
+	bcr |= CB_BCR_INTR_IREQ_ENABLE;		/* disable PCI Intr */
+	bcr |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
+	/* assert reset */
+	bcr |= PCI_BRIDGE_CONTROL_SECBR	<< PCI_BRIDGE_CONTROL_SHIFT;
+	pci_conf_write(pc, tag, PCI_BRIDGE_CONTROL_REG, bcr);
 
 	switch (sc->sc_chipset) {
 	case CB_TI113X:
-		reg = pci_conf_read(pc, tag, PCI_CBCTRL);
+		cbctl = pci_conf_read(pc, tag, PCI_CBCTRL);
 		/* This bit is shared, but may read as 0 on some chips, so set
 		   it explicitly on both functions. */
-		reg |= PCI113X_CBCTRL_PCI_IRQ_ENA;
+		cbctl |= PCI113X_CBCTRL_PCI_IRQ_ENA;
 		/* CSC intr enable */
-		reg |= PCI113X_CBCTRL_PCI_CSC;
+		cbctl |= PCI113X_CBCTRL_PCI_CSC;
 		/* functional intr prohibit | prohibit ISA routing */
-		reg &= ~(PCI113X_CBCTRL_PCI_INTR | PCI113X_CBCTRL_INT_MASK);
-		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
+		cbctl &= ~(PCI113X_CBCTRL_PCI_INTR | PCI113X_CBCTRL_INT_MASK);
+		pci_conf_write(pc, tag, PCI_CBCTRL, cbctl);
 		break;
 
 	case CB_TI12XX:
@@ -823,16 +825,16 @@ pccbb_chipinit(struct pccbb_softc *sc)
 		 *
 		 * The TI125X parts have a different register.
 		 */
-		reg = pci_conf_read(pc, tag, PCI12XX_MFUNC);
-		if (reg == 0) {
-			reg &= ~PCI12XX_MFUNC_PIN0;
-			reg |= PCI12XX_MFUNC_PIN0_INTA;
+		mfunc = pci_conf_read(pc, tag, PCI12XX_MFUNC);
+		if (mfunc == 0) {
+			mfunc &= ~PCI12XX_MFUNC_PIN0;
+			mfunc |= PCI12XX_MFUNC_PIN0_INTA;
 			if ((pci_conf_read(pc, tag, PCI_SYSCTRL) &
 			     PCI12XX_SYSCTRL_INTRTIE) == 0) {
-				reg &= ~PCI12XX_MFUNC_PIN1;
-				reg |= PCI12XX_MFUNC_PIN1_INTB;
+				mfunc &= ~PCI12XX_MFUNC_PIN1;
+				mfunc |= PCI12XX_MFUNC_PIN1_INTB;
 			}
-			pci_conf_write(pc, tag, PCI12XX_MFUNC, reg);
+			pci_conf_write(pc, tag, PCI12XX_MFUNC, mfunc);
 		}
 		/* fallthrough */
 
@@ -844,39 +846,39 @@ pccbb_chipinit(struct pccbb_softc *sc)
 		 */
 		pci_conf_write(pc, tag, PCI12XX_MMCTRL, 0);
 
-		reg = pci_conf_read(pc, tag, PCI_SYSCTRL);
-		reg |= PCI12XX_SYSCTRL_VCCPROT;
-		pci_conf_write(pc, tag, PCI_SYSCTRL, reg);
-		reg = pci_conf_read(pc, tag, PCI_CBCTRL);
-		reg |= PCI12XX_CBCTRL_CSC;
-		pci_conf_write(pc, tag, PCI_CBCTRL, reg);
+		sysctrl = pci_conf_read(pc, tag, PCI_SYSCTRL);
+		sysctrl |= PCI12XX_SYSCTRL_VCCPROT;
+		pci_conf_write(pc, tag, PCI_SYSCTRL, sysctrl);
+		cbctl = pci_conf_read(pc, tag, PCI_CBCTRL);
+		cbctl |= PCI12XX_CBCTRL_CSC;
+		pci_conf_write(pc, tag, PCI_CBCTRL, cbctl);
 		break;
 
 	case CB_TOPIC95B:
-		reg = pci_conf_read(pc, tag, TOPIC_SOCKET_CTRL);
-		reg |= TOPIC_SOCKET_CTRL_SCR_IRQSEL;
-		pci_conf_write(pc, tag, TOPIC_SOCKET_CTRL, reg);
-		reg = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
+		sockctl = pci_conf_read(pc, tag, TOPIC_SOCKET_CTRL);
+		sockctl |= TOPIC_SOCKET_CTRL_SCR_IRQSEL;
+		pci_conf_write(pc, tag, TOPIC_SOCKET_CTRL, sockctl);
+		slotctl = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
 		DPRINTF(("%s: topic slot ctrl reg 0x%x -> ",
-		    sc->sc_dev.dv_xname, reg));
-		reg |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
+		    sc->sc_dev.dv_xname, slotctl));
+		slotctl |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
 		    TOPIC_SLOT_CTRL_ID_LOCK | TOPIC_SLOT_CTRL_CARDBUS);
-		reg &= ~TOPIC_SLOT_CTRL_SWDETECT;
-		DPRINTF(("0x%x\n", reg));
-		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, reg);
+		slotctl &= ~TOPIC_SLOT_CTRL_SWDETECT;
+		DPRINTF(("0x%x\n", slotctl));
+		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, slotctl);
 		break;
 
 	case CB_TOPIC97:
-		reg = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
+		slotctl = pci_conf_read(pc, tag, TOPIC_SLOT_CTRL);
 		DPRINTF(("%s: topic slot ctrl reg 0x%x -> ",
-		    sc->sc_dev.dv_xname, reg));
-		reg |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
+		    sc->sc_dev.dv_xname, slotctl));
+		slotctl |= (TOPIC_SLOT_CTRL_SLOTON | TOPIC_SLOT_CTRL_SLOTEN |
 		    TOPIC_SLOT_CTRL_ID_LOCK | TOPIC_SLOT_CTRL_CARDBUS);
-		reg &= ~TOPIC_SLOT_CTRL_SWDETECT;
-		reg |= TOPIC97_SLOT_CTRL_PCIINT;
-		reg &= ~(TOPIC97_SLOT_CTRL_STSIRQP | TOPIC97_SLOT_CTRL_IRQP);
-		DPRINTF(("0x%x\n", reg));
-		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, reg);
+		slotctl &= ~TOPIC_SLOT_CTRL_SWDETECT;
+		slotctl |= TOPIC97_SLOT_CTRL_PCIINT;
+		slotctl &= ~(TOPIC97_SLOT_CTRL_STSIRQP | TOPIC97_SLOT_CTRL_IRQP);
+		DPRINTF(("0x%x\n", slotctl));
+		pci_conf_write(pc, tag, TOPIC_SLOT_CTRL, slotctl);
 		/* make sure to assert LV card support bits */
 		bus_space_write_1(sc->sc_base_memt, sc->sc_base_memh,
 		    0x800 + 0x3e,
@@ -903,9 +905,9 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 
 	/* CSC Interrupt: Card detect and power cycle interrupts on */
-	reg = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
-	reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
-	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, reg);
+	sockmask = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
+	sockmask |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
+	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, sockmask);
 	/* reset interrupt */
 	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
 	    bus_space_read_4(bmt, bmh, CB_SOCKET_EVENT));
@@ -1368,7 +1370,7 @@ pccbb_power(cardbus_chipset_tag_t ct, int command)
 		sock_ctrl &= ~CB_SOCKET_CTRL_VPPMASK;
 		bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
 		status &= ~CB_SOCKET_STAT_BADVCC;
-		bus_space_write_4(memt, memh, CB_SOCKET_STAT, status);
+		bus_space_write_4(memt, memh, CB_SOCKET_FORCE, status);
 		printf("new status 0x%x\n", bus_space_read_4(memt, memh,
 		    CB_SOCKET_STAT));
 		return 0;
@@ -1492,17 +1494,17 @@ cb_reset(struct pccbb_softc *sc)
 	 */
 	int reset_duration =
 	    (sc->sc_chipset == CB_RX5C47X ? 400 : 50);
-	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
+	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
 	bcr |= CB_BCR_RESET_ENABLE;
-	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
 	delay_ms(reset_duration, sc);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
 		/* Reset bit Deassert (bit 6 at 0x3E) */
 		bcr &= ~CB_BCR_RESET_ENABLE;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
 		delay_ms(reset_duration, sc);
 	}
 	/* No card found on the slot. Keep Reset. */
@@ -1725,9 +1727,9 @@ pccbb_intr_route(struct pccbb_softc *sc)
 	pcireg_t bcr, cbctrl;
 
 	/* initialize bridge intr routing */
-	bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
+	bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG);
 	bcr &= ~CB_BCR_INTR_IREQ_ENABLE;
-	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, bcr);
 
 	switch (sc->sc_chipset) {
 	case CB_TI113X:
@@ -1845,9 +1847,9 @@ pccbb_intr_disestablish(struct pccbb_softc *sc, void *ih)
 		DPRINTF(("pccbb_intr_disestablish: no interrupt handler\n"));
 
 		/* stop routing PCI intr */
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG);
 		reg |= CB_BCR_INTR_IREQ_ENABLE;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, reg);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, reg);
 
 		switch (sc->sc_chipset) {
 		case CB_TI113X:
@@ -2835,8 +2837,7 @@ pccbb_pcmcia_poll(void *arg)
 		break;
 	}
 
-	spsr =
-	    bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh,
+	spsr = bus_space_read_4(sc->sc_base_memt, sc->sc_base_memh,
 	    CB_SOCKET_STAT);
 
 #if defined PCCBB_PCMCIA_POLL_ONLY && defined LEVEL2
@@ -3224,14 +3225,14 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 	    (unsigned long)pci_conf_read(pc, tag, offs + 12) + align));
 
 	if (bst == sc->sc_memt) {
-		pcireg_t bcr = pci_conf_read(pc, tag, PCI_BCR_INTR);
+		pcireg_t bcr = pci_conf_read(pc, tag, PCI_BRIDGE_CONTROL_REG);
 
 		bcr &= ~(CB_BCR_PREFETCH_MEMWIN0 | CB_BCR_PREFETCH_MEMWIN1);
 		if (win[0].win_flags & PCCBB_MEM_CACHABLE)
 			bcr |= CB_BCR_PREFETCH_MEMWIN0;
 		if (win[1].win_flags & PCCBB_MEM_CACHABLE)
 			bcr |= CB_BCR_PREFETCH_MEMWIN1;
-		pci_conf_write(pc, tag, PCI_BCR_INTR, bcr);
+		pci_conf_write(pc, tag, PCI_BRIDGE_CONTROL_REG, bcr);
 	}
 }
 

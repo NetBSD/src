@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.19.2.5 2007/07/15 15:52:50 ad Exp $ */
+/*	$NetBSD: if_ural.c,v 1.19.2.6 2007/08/20 18:37:53 ad Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.19.2.5 2007/07/15 15:52:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.19.2.6 2007/08/20 18:37:53 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -555,9 +555,6 @@ USB_DETACH(ural)
 		usbd_abort_pipe(sc->sc_tx_pipeh);
 		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
-
-	ural_free_rx_list(sc);
-	ural_free_tx_list(sc);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);

@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.34.6.1 2007/05/27 12:26:52 ad Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.34.6.2 2007/08/20 18:36:47 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.34.6.1 2007/05/27 12:26:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.34.6.2 2007/08/20 18:36:47 ad Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -257,7 +257,7 @@ void
 alpha_ipi_microset(struct cpu_info *ci, struct trapframe *framep)
 {
 
-	cc_microset(ci);
+	cc_calibrate_cpu(ci);
 }
 
 void

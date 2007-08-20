@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.13.4.1 2007/03/13 16:49:56 ad Exp $	*/
+/*	$NetBSD: aica.c,v 1.13.4.2 2007/08/20 18:37:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.13.4.1 2007/03/13 16:49:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.13.4.2 2007/08/20 18:37:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ aica_attach(struct device *parent, struct device *self, void *aux)
 
 	/* load microcode, and clear memory */
 	bus_space_set_region_4(sc->sc_memt, sc->sc_aica_memh,
-	    0, 0, AICA_RAM_SIZE);
+	    0, 0, AICA_RAM_SIZE / 4);
 
 	aica_memwrite(sc, 0, aica_armcode, sizeof(aica_armcode));
 

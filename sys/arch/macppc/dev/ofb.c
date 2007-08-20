@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.56.2.1 2007/04/10 13:22:43 ad Exp $	*/
+/*	$NetBSD: ofb.c,v 1.56.2.2 2007/08/20 18:38:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.56.2.1 2007/04/10 13:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.56.2.2 2007/08/20 18:38:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.56.2.1 2007/04/10 13:22:43 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,7 +79,8 @@ struct ofb_softc {
 	
 	int sc_node, sc_ih, sc_mode;
 	paddr_t sc_fbaddr;
-	
+	uint32_t sc_fbsize;
+
 	struct vcons_data vd;
 };
 
@@ -192,13 +194,14 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_fbaddr = 0;
 	if (OF_getprop(sc->sc_node, "address", &sc->sc_fbaddr, 4) != 4)
-		OF_interpret("frame-buffer-adr", 1, 1, &sc->sc_fbaddr);
+		OF_interpret("frame-buffer-adr", 0, 1, &sc->sc_fbaddr);
 	if (sc->sc_fbaddr == 0) {
 		printf("%s: Unable to find the framebuffer address.\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	
+	sc->sc_fbsize = round_page(ri->ri_stride * ri->ri_height);
+
 	/* XXX */
 	if (OF_getprop(sc->sc_node, "assigned-addresses", sc->sc_addrs,
 	    sizeof(sc->sc_addrs)) == -1) {
@@ -257,8 +260,8 @@ ofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		/* we won't get here without any screen anyway */
 		if (ms != NULL) {
 			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_width;
-			wdf->width = ms->scr_ri.ri_height;
+			wdf->height = ms->scr_ri.ri_height;
+			wdf->width = ms->scr_ri.ri_width;
 			wdf->depth = ms->scr_ri.ri_depth;
 			wdf->cmsize = 256;
 			return 0;
@@ -281,6 +284,11 @@ ofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			return 0;
 		} else
 			return ENODEV;
+	case WSDISPLAYIO_LINEBYTES:
+		{
+			*(int *)data = ms->scr_ri.ri_stride;
+			return 0;
+		}
 	case WSDISPLAYIO_SMODE:
 		{
 			int new_mode = *(int*)data;
@@ -322,8 +330,9 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 	ri = &vd->active->scr_ri;
 	
 	/* framebuffer at offset 0 */
-	if (offset >=0 && offset < (ri->ri_stride * ri->ri_height))
-		return sc->sc_fbaddr + offset;
+	if ((offset >= 0) && (offset < sc->sc_fbsize))
+		return bus_space_mmap(sc->sc_memt, sc->sc_fbaddr, offset, prot,
+		    BUS_SPACE_MAP_LINEAR);
 
 	/*
 	 * restrict all other mappings to processes with superuser privileges
@@ -359,7 +368,6 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 		}
 		ap += 5;
 	}
-
 	return -1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.14.14.1 2007/07/15 13:15:30 ad Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.14.14.2 2007/08/20 18:37:18 ad Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.14.14.1 2007/07/15 13:15:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.14.14.2 2007/08/20 18:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,11 @@ c_magnum_init(void)
 {
 
 	/*
+	 * Initialize interrupt priority
+	 */
+	ipl_sr_bits = magnum_ipl_sr_bits;
+
+	/*
 	 * Initialize I/O address offset
 	 */
 	arc_bus_space_init(&jazzio_bus, "jazzio",
@@ -257,6 +262,7 @@ c_magnum_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
+	arc_init_wired_map();
 	arc_wired_enter_page(R4030_V_LOCAL_IO_BASE, R4030_P_LOCAL_IO_BASE,
 	    R4030_S_LOCAL_IO_BASE);
 	arc_wired_enter_page(PICA_V_INT_SOURCE, PICA_P_INT_SOURCE,
@@ -264,11 +270,6 @@ c_magnum_init(void)
 
 	arc_wired_enter_page(PICA_V_ISA_IO, PICA_P_ISA_IO, PICA_S_ISA_IO);
 	arc_wired_enter_page(PICA_V_ISA_MEM, PICA_P_ISA_MEM, PICA_S_ISA_MEM);
-
-	/*
-	 * Initialize interrupt priority
-	 */
-	ipl_sr_bits = magnum_ipl_sr_bits;
 
 	/*
 	 * Disable all interrupts. New masks will be set up

@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.35.12.1 2007/07/15 13:15:20 ad Exp $ */
+/* $NetBSD: types.h,v 1.35.12.2 2007/08/20 18:36:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -65,6 +65,8 @@ typedef	volatile int		__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_AST_PERPROC
+#define	__HAVE_GENERIC_TODR
+#define	__HAVE_TIMECOUNTER
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

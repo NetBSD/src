@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mace.c,v 1.5 2006/09/05 01:38:59 rumble Exp $	*/
+/*	$NetBSD: mcclock_mace.c,v 1.5.12.1 2007/08/20 18:38:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Antti Kantee.  All Rights Reserved.
@@ -11,11 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. The name of the company nor the name of the author may be used to
+ * 3. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
@@ -69,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.5 2006/09/05 01:38:59 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mace.c,v 1.5.12.1 2007/08/20 18:38:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520reg.h,v 1.4.6.1 2007/05/27 12:27:35 ad Exp $	*/
+/*	$NetBSD: elan520reg.h,v 1.4.6.2 2007/08/20 18:38:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@
 #define	MMCR_M_DPER_IRQ_ENB	__BIT(0)	/* Master Detected PERR
 						 * Interrupt Enable
 						 */
+
+#define	MMCR_HBTGTIRQCTL	0x62	/* Host Bridge Target Interrupt Ctrl */
 
 #define	MMCR_PCIHOSTMAP	0x0d14	/* PCI Host Bridge Interrupt Mapping */
 

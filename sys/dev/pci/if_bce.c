@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.14.2.2 2007/07/01 21:48:07 ad Exp $	 */
+/* $NetBSD: if_bce.c,v 1.14.2.3 2007/08/20 18:37:11 ad Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -33,6 +33,8 @@
  *
  * Cliff Wright cliff@snipe444.org
  */
+
+#include <sys/cdefs.h>
 
 #include "bpfilter.h"
 #include "vlan.h"

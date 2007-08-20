@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42.4.2 2007/06/09 23:54:57 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42.4.3 2007/08/20 18:37:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -211,6 +211,7 @@ void	arm32_vector_init(vaddr_t, int);
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct device *ci_dev;		/* Device corresponding to this CPU */
+	cpuid_t ci_cpuid;
 	u_int32_t ci_arm_cpuid;		/* aggregate CPU id */
 	u_int32_t ci_arm_cputype;	/* CPU type */
 	u_int32_t ci_arm_cpurev;	/* CPU revision */

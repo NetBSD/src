@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.461.2.3 2007/07/15 13:21:50 ad Exp $
+$NetBSD: usbdevs,v 1.461.2.4 2007/08/20 18:37:58 ad Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -385,6 +385,7 @@ vendor ATI2		0x0b6f	ATI
 vendor ZEEVO		0x0b7a	Zeevo, Inc.
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
+vendor PROLIFIC2	0x0b8c	Prolific Technology Inc
 vendor O2MICRO		0x0b97	O2 Micro
 vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
@@ -1745,6 +1746,7 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
 /* Planex Communications products */
 product PLANEX	GW_US11H	0x14ea	GW-US11H WLAN
 product PLANEX2 GW_US11S	0x3220	GW-US11S WLAN
+product PLANEX2 GWUS54GXS	0x5303	GW-US54GXS
 product PLANEX2 GWUS54HP	0xab01	GW-US54HP
 product PLANEX2 GWUS54MINI2	0xab50	GW-US54Mini2
 product PLANEX2 GWUS54SG	0xc002	GW-US54SG
@@ -1804,6 +1806,7 @@ product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
 product PROLIFIC PL2303X	0xaaa0	PL2303 Serial adapter (Pharos GPS)
 product PROLIFIC RSAQ3		0xaaa2	PL2303 Serial adapter (IODATA USB-RSAQ3)
+product PROLIFIC2 PL2303	0x2303	PL2303 Serial adapter (SMART Technologies)
 
 /* Putercom products */
 product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE

@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.53.2.2 2007/07/15 13:21:49 ad Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.53.2.3 2007/08/20 18:37:57 ad Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.53.2.2 2007/07/15 13:21:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.53.2.3 2007/08/20 18:37:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 	/* IOGEAR/ATEN UC-232A */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+	/* SMART Technologies USB to serial */
+	{ USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303 },
 	/* IOGEAR/ATENTRIPPLITE */
 	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
 	/* ELECOM UC-SGT */

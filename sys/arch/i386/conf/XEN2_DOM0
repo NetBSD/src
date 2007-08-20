@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.23.6.4 2007/07/15 13:16:10 ad Exp $
+# $NetBSD: XEN2_DOM0,v 1.23.6.5 2007/08/20 18:38:09 ad Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -653,13 +653,15 @@ midi*	at midibus?
 # Bluetooth Controller and Device support
 
 # Bluetooth PCMCIA Controllers
-# bt3c* at pcmcia? function ?             # 3Com 3CRWB6096-A
+#bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+#btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btbh?
 bthub* at ubt?
 
 # Bluetooth HID support

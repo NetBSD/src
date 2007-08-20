@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.46.2.1 2007/04/10 13:22:46 ad Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.46.2.2 2007/08/20 18:39:18 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.46.2.1 2007/04/10 13:22:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.46.2.2 2007/08/20 18:39:18 ad Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -226,9 +226,12 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		break;
 	case APIC_XRUPT_OVERRIDE:
 		isa_ovr = (MADT_INTERRUPT_OVERRIDE *)hdrp;
-		if (mp_verbose)
-			printf("mpacpi: ISA interrupt override  %d -> %d\n",
-			    isa_ovr->Source, isa_ovr->Interrupt);
+		if (mp_verbose) {
+			printf("mpacpi: ISA interrupt override %d -> %d (%d/%d)\n",
+			    isa_ovr->Source, isa_ovr->Interrupt,
+			    isa_ovr->Polarity,
+			    isa_ovr->TriggerMode);
+		}
 		if (isa_ovr->Source > 15 || isa_ovr->Source == 2 ||
 		    (isa_ovr->Source == 0 && isa_ovr->Interrupt == 2 &&
 			(acpi_softc->sc_quirks & ACPI_QUIRK_IRQ0)))

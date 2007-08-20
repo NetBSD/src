@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.10.30.1 2007/07/15 13:15:30 ad Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.10.30.2 2007/08/20 18:37:18 ad Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.10.30.1 2007/07/15 13:15:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.10.30.2 2007/08/20 18:37:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,11 @@ c_nec_eisa_init(void)
 {
 
 	/*
+	 * Initialize interrupt priority
+	 */
+	ipl_sr_bits = nec_eisa_ipl_sr_bits;
+
+	/*
 	 * Initialize I/O address offset
 	 */
 	arc_bus_space_init(&jazzio_bus, "jazzio",
@@ -164,17 +169,13 @@ c_nec_eisa_init(void)
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
 	 */
+	arc_init_wired_map();
 	arc_wired_enter_page(RD94_V_LOCAL_IO_BASE, RD94_P_LOCAL_IO_BASE,
 	    RD94_S_LOCAL_IO_BASE);
 
 	arc_wired_enter_page(RD94_V_EISA_IO, RD94_P_EISA_IO, RD94_S_EISA_IO);
 	arc_wired_enter_page(RD94_V_EISA_MEM, RD94_P_EISA_MEM,
 	    MIPS3_PG_SIZE_MASK_TO_SIZE(MIPS3_PG_SIZE_16M));
-
-	/*
-	 * Initialize interrupt priority
-	 */
-	ipl_sr_bits = nec_eisa_ipl_sr_bits;
 
 	/*
 	 * Disable all interrupts. New masks will be set up

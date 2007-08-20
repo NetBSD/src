@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.35.4.2 2007/05/27 12:28:08 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.35.4.3 2007/08/20 18:38:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,11 +79,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.35.4.2 2007/05/27 12:28:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.35.4.3 2007/08/20 18:38:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.35.4.2 2007/05/27 12:28:08 ad Exp $"
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
-
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
+
 #ifdef DDB
 #include <sh3/db_machdep.h>
 #endif
@@ -478,19 +475,13 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 	struct trapframe *tf = l->l_md.md_regs;
 
 	tf->tf_r0 = 0;
 	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
 
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }
 
 /*

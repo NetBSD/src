@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.20.8.3 2007/07/15 15:52:37 ad Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.20.8.4 2007/08/20 18:38:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.20.8.3 2007/07/15 15:52:37 ad Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.20.8.4 2007/08/20 18:38:48 ad Exp $")
 
 
 /*
@@ -461,7 +461,7 @@ NENTRY(sh_vector_interrupt)
 	/* ++uvmexp.intrs */
 	mov.l	.Li_uvmexp_intrs, r0
 	mov.l	@r0, r1
-	add	#1 r1
+	add	#1, r1
 	mov.l	r1, @r0
 	/* Dispatch interrupt handler */
 	mov.l	.Li_intc_intr, r0

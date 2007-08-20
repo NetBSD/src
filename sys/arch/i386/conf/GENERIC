@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.816.2.5 2007/07/15 13:16:07 ad Exp $
+# $NetBSD: GENERIC,v 1.816.2.6 2007/08/20 18:38:07 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.816.2.5 $"
+#ident 		"GENERIC-$Revision: 1.816.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -211,7 +211,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -610,6 +610,10 @@ lpt2	at isa? port 0x3bc
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
 
+# Intel ICH SMBus controller
+ichsmb*	at pci? dev ? function ?
+iic*	at ichsmb?
+
 # NVIDIA nForce2/3/4 SMBus controller
 nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
@@ -642,6 +646,11 @@ iic*	at piixpm?			# SMBus on PIIX4
 # VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
 #viaenv*	at pci? dev ? function ?
 
+# Serial Presence Detect capable memory modules
+#spdmem* at iic? addr 0x50
+#spdmem* at iic? addr 0x51
+#spdmem* at iic? addr 0x52
+#spdmem* at iic? addr 0x53
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -1300,12 +1309,14 @@ radio* at bktr?
 
 # Bluetooth PCMCIA Controllers
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btbc?
 bthub* at btuart?
 bthub* at ubt?
 

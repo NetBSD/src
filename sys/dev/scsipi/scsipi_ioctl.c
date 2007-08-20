@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.62.2.4 2007/08/19 19:24:34 ad Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.62.2.5 2007/08/20 18:37:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.62.2.4 2007/08/19 19:24:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.62.2.5 2007/08/20 18:37:47 ad Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -241,7 +241,7 @@ scsistrategy(struct buf *bp)
 		printf("scsistrategy: "
 		    "No matching ioctl request found in queue\n");
 		error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	screq = &si->si_screq;
 	periph = si->si_periph;
@@ -254,19 +254,19 @@ scsistrategy(struct buf *bp)
 		scsipi_printaddr(periph);
 		printf("physio split the request.. cannot proceed\n");
 		error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	if (screq->timeout == 0) {
 		error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	if (screq->cmdlen > sizeof(struct scsipi_generic)) {
 		scsipi_printaddr(periph);
 		printf("cmdlen too big\n");
 		error = EFAULT;
-		goto bad;
+		goto done;
 	}
 
 	if ((screq->flags & SCCMD_READ) && screq->datalen > 0)
@@ -283,7 +283,7 @@ scsistrategy(struct buf *bp)
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | XS_CTL_USERCMD);
 
-bad:
+ done:
 	bp->b_error = error;
 	biodone(bp);
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: syscall.c,v 1.13.6.1 2007/08/20 18:39:00 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,9 +49,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.6.1 2007/08/20 18:39:00 ad Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
 
@@ -60,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2007/02/09 21:55:12 ad Exp $");
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -383,22 +380,12 @@ void
 child_return(void *arg)
 {
 	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p;
-#endif
 
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
 	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
-#ifdef KTRACE
-	p = l->l_proc;
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_LOCK(1, l);
-		ktrsysret(l,
-			  (p->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
-		KERNEL_UNLOCK_LAST(l);
-	}
-#endif
+	ktrsysret((l->l_proc->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork,
+	    0, 0);
 }

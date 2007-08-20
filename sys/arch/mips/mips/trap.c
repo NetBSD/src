@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.209.2.3 2007/07/15 22:20:25 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.209.2.4 2007/08/20 18:38:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,10 +78,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.3 2007/07/15 22:20:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.4 2007/08/20 18:38:30 ad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
-#include "opt_ktrace.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 
@@ -94,9 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.209.2.3 2007/07/15 22:20:25 ad Exp $");
 #include <sys/syscall.h>
 #include <sys/user.h>
 #include <sys/buf.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 
@@ -181,10 +178,7 @@ child_return(void *arg)
 	frame->f_regs[_R_V1] = 1;
 	frame->f_regs[_R_A3] = 0;
 	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }
 
 #ifdef MIPS3_PLUS

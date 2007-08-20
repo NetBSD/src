@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4.6.1 2007/03/13 16:50:10 ad Exp $     */
+/*	$NetBSD: syscall.c,v 1.4.6.2 2007/08/20 18:39:14 ad Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4.6.1 2007/03/13 16:50:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4.6.2 2007/08/20 18:39:14 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -45,9 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4.6.1 2007/03/13 16:50:10 ad Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-#ifdef  KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <sys/pool.h>
 
 #include <uvm/uvm_extern.h>
@@ -253,9 +251,5 @@ child_return(void *arg)
 
 	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_addr->u_pcb.framep, 0);
-
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
+	ktrsysret(SYS_fork, 0, 0);
 }
