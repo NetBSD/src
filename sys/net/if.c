@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.195 2007/08/07 04:14:37 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.196 2007/08/20 04:49:40 skd Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.195 2007/08/07 04:14:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.196 2007/08/20 04:49:40 skd Exp $");
 
 #include "opt_inet.h"
 
@@ -1335,7 +1335,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 #ifdef COMPAT_OIFREQ
-	cmd = cvtcmd(cmd);
+	cmd = compat_cvtcmd(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
@@ -1386,6 +1386,8 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
 	case SIOCSDRVSPEC:
+	case SIOCG80211:
+	case SIOCS80211:
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
@@ -1555,17 +1557,19 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCGIFPDSTADDR:
 	case SIOCGLIFPHYADDR:
 	case SIOCGIFMEDIA:
+	case SIOCG80211:
+	case SIOCS80211:
+	case SIOCS80211NWID:
+	case SIOCS80211NWKEY:
+	case SIOCS80211POWER:
+	case SIOCS80211BSSID:
+	case SIOCS80211CHANNEL:
 		if (ifp->if_ioctl == NULL)
 			return EOPNOTSUPP;
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		break;
 
 	case SIOCSDRVSPEC:
-	case SIOCS80211NWID:
-	case SIOCS80211NWKEY:
-	case SIOCS80211POWER:
-	case SIOCS80211BSSID:
-	case SIOCS80211CHANNEL:
 	default:
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;
