@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.28.2.1 2007/04/13 15:47:03 ad Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.28.2.2 2007/08/20 21:28:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,6 +60,7 @@ struct mfs_args {
 #include <sys/mutex.h>
 
 #include <ufs/ufs/extattr.h>
+#include <ufs/ufs/quota.h>
 
 struct buf;
 struct inode;
@@ -99,8 +100,6 @@ struct ufsmount {
 	time_t	um_itime[MAXQUOTAS];		/* inode quota time limit */
 	char	um_qflags[MAXQUOTAS];		/* quota specific flags */
 	void	*um_oldfscompat;		/* save 4.2 rotbl */
-	TAILQ_HEAD(inodelst, inode) um_snapshots; /* list of active snapshots */
-	daddr_t	*um_snapblklist;		/* snapshot block hints list */
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
 	u_int64_t um_maxfilesize;

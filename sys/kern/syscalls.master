@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.168.2.7 2007/08/19 19:22:12 ad Exp $
+	$NetBSD: syscalls.master,v 1.168.2.8 2007/08/20 21:27:40 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -37,7 +37,6 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
-#include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -71,7 +70,7 @@
 5	STD MPSAFE	{ int sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
 6	STD MPSAFE	{ int sys_close(int fd); }
-7	STD MPSAFE	{ int sys_wait4(int pid, int *status, int options, \
+7	STD 		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
 8	COMPAT_43	{ int sys_creat(const char *path, mode_t mode); } ocreat
 9	STD MPSAFE	{ int sys_link(const char *path, const char *link); }
@@ -134,12 +133,8 @@
 43	STD MPSAFE	{ gid_t sys_getegid(void); }
 44	STD MPSAFE	{ int sys_profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
-#if defined(KTRACE) || !defined(_KERNEL)
 45	STD		{ int sys_ktrace(const char *fname, int ops, \
 			    int facs, int pid); }
-#else
-45	EXCL		ktrace
-#endif
 46	COMPAT_13 MPSAFE	{ int sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
@@ -201,7 +196,7 @@
 83	STD		{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
-84	COMPAT_43 MPSAFE	{ int sys_wait(void); } owait
+84	COMPAT_43 	{ int sys_wait(void); } owait
 85	COMPAT_12	{ int sys_swapon(const char *name); } oswapon
 86	STD		{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
@@ -217,7 +212,7 @@
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	STD MPSAFE	{ int sys_fsync(int fd); }
-96	STD 		{ int sys_setpriority(int which, id_t who, int prio); }
+96	STD MPSAFE	{ int sys_setpriority(int which, id_t who, int prio); }
 97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
@@ -248,9 +243,9 @@
 114	COMPAT_43	{ int sys_sendmsg(int s, void *msg, int flags); } \
 			    osendmsg
 115	OBSOL		vtrace
-116	STD		{ int sys_gettimeofday(struct timeval *tp, \
+116	STD MPSAFE	{ int sys_gettimeofday(struct timeval *tp, \
 			    void *tzp); }
-117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
+117	STD MPSAFE	{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
 119	OBSOL		resuba
@@ -290,7 +285,7 @@
 			    int *alen); } ogetpeername
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
 143	COMPAT_43	{ int sys_sethostid(int32_t hostid); } osethostid
-144	COMPAT_43	{ int sys_getrlimit(int which, \
+144	COMPAT_43 MPSAFE	{ int sys_getrlimit(int which, \
 			    struct orlimit *rlp); } ogetrlimit
 145	COMPAT_43	{ int sys_setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
@@ -490,11 +485,11 @@
 230	EXCL		shmdt
 231	EXCL		shmget
 #endif
-232	STD		{ int sys_clock_gettime(clockid_t clock_id, \
+232	STD MPSAFE	{ int sys_clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
 233	STD		{ int sys_clock_settime(clockid_t clock_id, \
 			    const struct timespec *tp); }
-234	STD		{ int sys_clock_getres(clockid_t clock_id, \
+234	STD MPSAFE	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
 235	STD		{ int sys_timer_create(clockid_t clock_id, \
 			    struct sigevent *evp, timer_t *timerid); }
@@ -586,12 +581,8 @@
 			    gid_t gid); }
 286	STD MPSAFE	{ pid_t sys_getsid(pid_t pid); }
 287	STD		{ pid_t sys___clone(int flags, void *stack); }
-#if defined(KTRACE) || !defined(_KERNEL)
 288	STD		{ int sys_fktrace(const int fd, int ops, \
 			    int facs, int pid); }
-#else
-288	EXCL		ktrace
-#endif
 289	STD MPSAFE	{ ssize_t sys_preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
@@ -636,11 +627,11 @@
 305	STD MPSAFE	{ int sys_issetugid(void); }
 306	STD MPSAFE	{ int sys_utrace(const char *label, void *addr, \
 				size_t len); }
-307	STD		{ int sys_getcontext(struct __ucontext *ucp); }
-308	STD		{ int sys_setcontext(const struct __ucontext *ucp); }
+307	STD MPSAFE	{ int sys_getcontext(struct __ucontext *ucp); }
+308	STD MPSAFE	{ int sys_setcontext(const struct __ucontext *ucp); }
 309	STD MPSAFE	{ int sys__lwp_create(const struct __ucontext *ucp, \
 				u_long flags, lwpid_t *new_lwp); }
-310	STD		{ int sys__lwp_exit(void); }
+310	STD MPSAFE	{ int sys__lwp_exit(void); }
 311	STD MPSAFE	{ lwpid_t sys__lwp_self(void); }
 312	STD MPSAFE	{ int sys__lwp_wait(lwpid_t wait_for, \
 				lwpid_t *departed); }
@@ -649,10 +640,11 @@
 315	STD MPSAFE	{ int sys__lwp_wakeup(lwpid_t target); }
 316	STD MPSAFE	{ void *sys__lwp_getprivate(void); }
 317	STD MPSAFE	{ void sys__lwp_setprivate(void *ptr); }
-318	STD		{ int sys__lwp_kill(lwpid_t target, int signo); }
+318	STD MPSAFE	{ int sys__lwp_kill(lwpid_t target, int signo); }
 319	STD MPSAFE	{ int sys__lwp_detach(lwpid_t target); }
 320	STD MPSAFE	{ int sys__lwp_park(const struct timespec *ts, \
-				struct __ucontext *ucp, const void *hint); }
+				lwpid_t unpark, const void *hint, \
+				const void *unparkhint); }
 321	STD MPSAFE	{ int sys__lwp_unpark(lwpid_t target, const void *hint); }
 322	STD MPSAFE	{ ssize_t sys__lwp_unpark_all(const lwpid_t *targets, \
 				size_t ntargets, const void *hint); }
@@ -681,7 +673,7 @@
 			    const void *tramp, int vers); }
 341	STD		{ int sys_pmc_get_info(int ctr, int op, void *args); }
 342	STD		{ int sys_pmc_control(int ctr, int op, void *args); }
-343	STD		{ int sys_rasctl(void *addr, size_t len, int op); }
+343	STD MPSAFE	{ int sys_rasctl(void *addr, size_t len, int op); }
 344	STD		{ int sys_kqueue(void); }
 345	STD		{ int sys_kevent(int fd, \
 			    const struct kevent *changelist, size_t nchanges, \
@@ -796,20 +788,22 @@
 
 ; Asynchronous I/O system calls
 399	STD		{ int sys_aio_cancel(int fildes, struct aiocb *aiocbp); }
-400	STD		{ int sys_aio_error(const struct aiocb *aiocbp); }
+400	STD MPSAFE	{ int sys_aio_error(const struct aiocb *aiocbp); }
 401	STD		{ int sys_aio_fsync(int op, struct aiocb *aiocbp); }
 402	STD		{ int sys_aio_read(struct aiocb *aiocbp); }
-403	STD		{ int sys_aio_return(struct aiocb *aiocbp); }
+403	STD MPSAFE	{ int sys_aio_return(struct aiocb *aiocbp); }
 404	STD		{ int sys_aio_suspend(const struct aiocb *const *list, \
 			    int nent, const struct timespec *timeout); }
 405	STD		{ int sys_aio_write(struct aiocb *aiocbp); }
 406	STD		{ int sys_lio_listio(int mode, struct aiocb *const *list, \
 			    int nent, struct sigevent *sig); }
+
 407	UNIMPL
 408	UNIMPL
 409	UNIMPL
 
-; More interface changes
 410	STD		{ int sys___mount50(const char *type, \
 			    const char *path, int flags, void *data, \
 			    size_t data_len); }
+411	STD		{ void *sys_mremap(void *old_address, size_t old_size, \
+			    void *new_address, size_t new_size, int flags); }

@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.10.20.2 2007/07/15 13:28:09 ad Exp $ */
+/* $NetBSD: envsys.h,v 1.10.20.3 2007/08/20 21:28:16 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ enum envsys_drive_states {
 #define ENVSYS_FMONWARNOVER	0x00000200	/* monitor a warnover state */
 #define ENVSYS_FMONDRVSTATE	0x00000400	/* monitor a drive state */
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
+#define ENVSYS_FNOTVALID 	0x00001000	/* sensor is invalid */
 
 #define ENVSYS_GETDICTIONARY		_IOWR('E', 0, struct plistref)
 #define ENVSYS_SETDICTIONARY		_IOWR('E', 1, struct plistref)

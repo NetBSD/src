@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.68.2.2 2007/07/15 15:52:57 ad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.68.2.3 2007/08/20 21:27:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.68.2.2 2007/07/15 15:52:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.68.2.3 2007/08/20 21:27:40 ad Exp $");
 
 #define SYSVSEM
 
@@ -77,11 +77,6 @@ struct sem_undo *semu_alloc(struct proc *);
 int semundo_adjust(struct proc *, struct sem_undo **, int, int, int);
 void semundo_clear(int, int);
 
-/*
- * XXXSMP Once we go MP, there needs to be a lock for the semaphore system.
- * Until then, we're saved by being a non-preemptive kernel.
- */
-
 void
 seminit(void)
 {
@@ -101,8 +96,8 @@ seminit(void)
 		panic("sysv_sem: cannot allocate memory");
 	sema = (void *)v;
 	sem = (void *)(sema + seminfo.semmni);
-	semu = (void *)(sem + seminfo.semmns);
-	semcv = (void *)(semu + seminfo.semmnu);
+	semcv = (void *)(sem + seminfo.semmns);
+	semu = (void *)(semcv + seminfo.semmni);
 
 	for (i = 0; i < seminfo.semmni; i++) {
 		sema[i]._sem_base = 0;
@@ -607,9 +602,11 @@ sys_semop(struct lwp *l, void *v, register_t *retval)
 
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
-	} else if (nsops <= seminfo.semopm)
+	} else if (nsops <= seminfo.semopm) {
+		KERNEL_LOCK(1, l);		/* XXXSMP */
 		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
-	else {
+		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
+	} else {
 		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
 		    seminfo.semopm, nsops));
 		return (E2BIG);
@@ -837,7 +834,9 @@ done:
  out:
 	mutex_exit(&semlock);
 	if (sops != small_sops) {
+		KERNEL_LOCK(1, l);		/* XXXSMP */
 		kmem_free(sops, nsops * sizeof(*sops));
+		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 	}
 	return error;
 }

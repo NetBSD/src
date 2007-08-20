@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.71.2.3 2007/07/01 21:50:54 ad Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.71.2.4 2007/08/20 21:28:07 ad Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.71.2.3 2007/07/01 21:50:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.71.2.4 2007/08/20 21:28:07 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -76,8 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.71.2.3 2007/07/01 21:50:54 ad Exp $");
 
 #include <net/net_osdep.h>
 
-#define SDL(s) ((struct sockaddr_dl *)s)
-
 struct dadq;
 static struct dadq *nd6_dad_find(struct ifaddr *);
 static void nd6_dad_starttimer(struct dadq *, int);
@@ -113,7 +111,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	int router = ip6_forwarding;
 	int tlladdr;
 	union nd_opts ndopts;
-	struct sockaddr_dl *proxydl = NULL;
+	const struct sockaddr_dl *proxydl = NULL;
 
 	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
 	if (nd_ns == NULL) {
@@ -232,7 +230,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 				IN6_IFF_NOTREADY|IN6_IFF_ANYCAST);
 			if (ifa) {
 				proxy = 1;
-				proxydl = SDL(rt->rt_gateway);
+				proxydl = satocsdl(rt->rt_gateway);
 				router = 0;	/* XXX */
 			}
 		}
@@ -309,7 +307,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		nd6_na_output(ifp, &in6_all, &taddr6,
 		    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
 		    (ip6_forwarding ? ND_NA_FLAG_ROUTER : 0),
-		    tlladdr, (struct sockaddr *)proxydl);
+		    tlladdr, (const struct sockaddr *)proxydl);
 		goto freeit;
 	}
 
@@ -318,7 +316,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	nd6_na_output(ifp, &saddr6, &taddr6,
 	    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
 	    (router ? ND_NA_FLAG_ROUTER : 0) | ND_NA_FLAG_SOLICITED,
-	    tlladdr, (struct sockaddr *)proxydl);
+	    tlladdr, (const struct sockaddr *)proxydl);
  freeit:
 	m_freem(m);
 	return;
@@ -654,7 +652,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	rt = nd6_lookup(&taddr6, 0, ifp);
 	if ((rt == NULL) ||
 	   ((ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) ||
-	   ((sdl = SDL(rt->rt_gateway)) == NULL))
+	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
 		goto freeit;
 
 	if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
@@ -668,8 +666,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		/*
 		 * Record link-layer address, and update the state.
 		 */
-		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy(lladdr, LLADDR(sdl), ifp->if_addrlen);
+		(void)sockaddr_dl_setaddr(sdl, lladdr, ifp->if_addrlen);
 		if (is_solicited) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
@@ -775,10 +772,10 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 * update the Destination Cache entries.
 			 */
 			struct nd_defrouter *dr;
-			struct in6_addr *in6;
+			const struct in6_addr *in6;
 			int s;
 
-			in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
+			in6 = &satocsin6(rt_getkey(rt))->sin6_addr;
 
 			/*
 			 * Lock to protect the default router list.
@@ -832,7 +829,7 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	const struct in6_addr *daddr6_0, *taddr6;
 	u_long flags;
 	int tlladdr;		/* 1 if include target link-layer address */
-	struct sockaddr *sdl0;	/* sockaddr_dl (= proxy NA) or NULL */
+	const struct sockaddr *sdl0;	/* sockaddr_dl (= proxy NA) or NULL */
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
@@ -845,7 +842,7 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	} u;
 	struct in6_addr *src, daddr6;
 	int icmp6len, maxlen, error;
-	void *mac;
+	const void *mac;
 	struct route ro;
 
 	mac = NULL;
@@ -945,10 +942,10 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 		if (sdl0 == NULL)
 			mac = nd6_ifptomac(ifp);
 		else if (sdl0->sa_family == AF_LINK) {
-			struct sockaddr_dl *sdl;
-			sdl = (struct sockaddr_dl *)sdl0;
+			const struct sockaddr_dl *sdl;
+			sdl = satocsdl(sdl0);
 			if (sdl->sdl_alen == ifp->if_addrlen)
-				mac = LLADDR(sdl);
+				mac = CLLADDR(sdl);
 		}
 	}
 	if (tlladdr && mac) {

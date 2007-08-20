@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.25.8.1 2007/07/15 13:27:57 ad Exp $	*/
+/*	$NetBSD: tcp.h,v 1.25.8.2 2007/08/20 21:28:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -100,6 +100,8 @@ struct tcphdr {
  * This is defined by RFC 1112 Sec 4.2.2.6.
  */
 #define	TCP_MSS		536
+
+#define	TCP_MINMSS	216
 
 #define	TCP_MAXWIN	65535	/* largest value for (unscaled) window */
 

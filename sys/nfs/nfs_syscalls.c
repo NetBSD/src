@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.107.2.10 2007/07/15 15:53:03 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.107.2.11 2007/08/20 21:28:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.10 2007/07/15 15:53:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.11 2007/08/20 21:28:12 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.107.2.10 2007/07/15 15:53:03 ad E
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -118,7 +119,13 @@ int nfsd_head_flag;
 MALLOC_DEFINE(M_NFSUID, "NFS uid", "Nfs uid mapping structure");
 
 #ifdef NFS
-struct nfs_iod nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+/*
+ * locking order:
+ *	nfs_iodlist_lock -> nid_lock -> nm_lock
+ */
+kmutex_t nfs_iodlist_lock;
+struct nfs_iodlist nfs_iodlist_idle;
+struct nfs_iodlist nfs_iodlist_all;
 int nfs_niothreads = -1; /* == "0, and has never been set" */
 #endif
 
@@ -178,7 +185,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 #endif
 	if (SCARG(uap, flag) & NFSSVC_BIOD) {
 #if defined(NFS) && defined(COMPAT_14)
-		error = nfssvc_iod(l);
+		error = kpause("nfsbiod", true, 0, NULL); /* dummy impl */
 #else
 		error = ENOSYS;
 #endif
@@ -544,9 +551,8 @@ nfssvc_nfsd(nsd, argp, l)
 			    (nfsd_head_flag & NFSD_CHECKSLP) != 0) {
 				slp = TAILQ_FIRST(&nfssvc_sockpending);
 				if (slp) {
-					KASSERT((slp->ns_flag &
-					    (SLP_VALID | SLP_DOREC))
-					    == (SLP_VALID | SLP_DOREC));
+					KASSERT((slp->ns_flag & SLP_DOREC)
+					    != 0);
 					TAILQ_REMOVE(&nfssvc_sockpending, slp,
 					    ns_pending);
 					slp->ns_flag &= ~SLP_DOREC;
@@ -562,11 +568,12 @@ nfssvc_nfsd(nsd, argp, l)
 				continue;
 			KASSERT(slp->ns_sref > 0);
 			if (slp->ns_flag & SLP_VALID) {
-				if (slp->ns_flag & SLP_DISCONN)
-					nfsrv_zapsock(slp);
-				else if ((slp->ns_flag & SLP_NEEDQ) != 0) {
+				if ((slp->ns_flag & SLP_NEEDQ) != 0) {
 					nfsrv_rcv(slp->ns_so, (void *)slp,
 					    M_WAIT);
+				}
+				if ((slp->ns_flag & SLP_DISCONN) != 0) {
+					nfsrv_zapsock(slp);
 				}
 				error = nfsrv_dorec(slp, nfsd, &nd);
 				getmicrotime(&tv);
@@ -819,6 +826,7 @@ nfsrv_zapsock(slp)
 	mutex_enter(&nfsd_lock);
 	if (slp->ns_flag & SLP_DOREC) {
 		TAILQ_REMOVE(&nfssvc_sockpending, slp, ns_pending);
+		slp->ns_flag &= ~SLP_DOREC;
 	}
 	mutex_exit(&nfsd_lock);
 
@@ -876,6 +884,7 @@ nfsrv_slpderef(slp)
 		struct file *fp;
 
 		mutex_enter(&nfsd_lock);
+		KASSERT((slp->ns_flag & SLP_DOREC) == 0);
 		TAILQ_REMOVE(&nfssvc_sockhead, slp, ns_chain);
 		mutex_exit(&nfsd_lock);
 
@@ -1002,65 +1011,72 @@ int nfs_defect = 0;
  * Never returns unless it fails or gets killed.
  */
 
-int
-nfssvc_iod(l)
-	struct lwp *l;
+static void
+nfssvc_iod(void *arg)
 {
 	struct buf *bp;
-	int i;
 	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
-	int error = 0;
-	struct proc *p = l->l_proc;
 
-	/*
-	 * Assign my position or return error if too many already running
-	 */
-	myiod = NULL;
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		if (nfs_asyncdaemon[i].nid_proc == NULL) {
-			myiod = &nfs_asyncdaemon[i];
-			break;
-		}
-	if (myiod == NULL)
-		return (EBUSY);
-	myiod->nid_proc = p;
-	nfs_numasync++;
-	uvm_lwp_hold(l);
-	/*
-	 * Just loop around doing our stuff until SIGKILL
-	 */
+	KERNEL_LOCK(1, curlwp);
+	myiod = kmem_alloc(sizeof(*myiod), KM_SLEEP);
+	mutex_init(&myiod->nid_lock, MUTEX_DEFAULT, IPL_NONE);
+	KERNEL_UNLOCK_LAST(curlwp);
+	cv_init(&myiod->nid_cv, "nfsiod");
+	myiod->nid_exiting = false;
+	myiod->nid_mount = NULL;
+	mutex_enter(&nfs_iodlist_lock);
+	LIST_INSERT_HEAD(&nfs_iodlist_all, myiod, nid_all);
+	mutex_exit(&nfs_iodlist_lock);
+
 	for (;;) {
+		mutex_enter(&nfs_iodlist_lock);
+		LIST_INSERT_HEAD(&nfs_iodlist_idle, myiod, nid_idle);
+		mutex_exit(&nfs_iodlist_lock);
+
 		mutex_enter(&myiod->nid_lock);
 		while (/*CONSTCOND*/ true) {
 			nmp = myiod->nid_mount;
 			if (nmp) {
-				mutex_enter(&nmp->nm_lock);
-				if (!TAILQ_EMPTY(&nmp->nm_bufq)) {
-					mutex_exit(&myiod->nid_lock);
-					break;
-				}
-				nmp->nm_bufqiods--;
-				mutex_exit(&nmp->nm_lock);
+				myiod->nid_mount = NULL;
+				break;
 			}
-			myiod->nid_want = p;
-			myiod->nid_mount = NULL;
-			error = cv_wait_sig(&myiod->nid_cv, &myiod->nid_lock);
-			if (error) {
+			if (__predict_false(myiod->nid_exiting)) {
+				/*
+				 * drop nid_lock to preserve locking order.
+				 */
 				mutex_exit(&myiod->nid_lock);
+				mutex_enter(&nfs_iodlist_lock);
+				mutex_enter(&myiod->nid_lock);
+				/*
+				 * recheck nid_mount because nfs_asyncio can
+				 * pick us in the meantime as we are still on
+				 * nfs_iodlist_lock.
+				 */
+				if (myiod->nid_mount != NULL) {
+					mutex_exit(&nfs_iodlist_lock);
+					continue;
+				}
+				LIST_REMOVE(myiod, nid_idle);
+				mutex_exit(&nfs_iodlist_lock);
 				goto quit;
 			}
+			cv_wait(&myiod->nid_cv, &myiod->nid_lock);
 		}
+		mutex_exit(&myiod->nid_lock);
 
+		mutex_enter(&nmp->nm_lock);
 		while ((bp = TAILQ_FIRST(&nmp->nm_bufq)) != NULL) {
 			/* Take one off the front of the list */
 			TAILQ_REMOVE(&nmp->nm_bufq, bp, b_freelist);
 			nmp->nm_bufqlen--;
-			if (nmp->nm_bufqlen < 2 * nfs_numasync) {
+			if (nmp->nm_bufqlen < 2 * nmp->nm_bufqiods) {
 				cv_broadcast(&nmp->nm_aiocv);
 			}
 			mutex_exit(&nmp->nm_lock);
+			KERNEL_LOCK(1, curlwp);
 			(void)nfs_doio(bp);
+			KERNEL_UNLOCK_LAST(curlwp);
 			mutex_enter(&nmp->nm_lock);
 			/*
 			 * If there are more than one iod on this mount, 
@@ -1068,84 +1084,93 @@ nfssvc_iod(l)
 			 * fairly between the mounts
 			 */
 			if (nfs_defect && nmp->nm_bufqiods > 1) {
-				myiod->nid_mount = NULL;
-				nmp->nm_bufqiods--;
 				break;
 			}
 		}
-		mutex_exit(&nmp->nm_lock);
-	}
-quit:
-	uvm_lwp_rele(l);
-	mutex_enter(&myiod->nid_lock);
-	nmp = myiod->nid_mount;
-	if (nmp) {
-		mutex_enter(&nmp->nm_lock);
+		KASSERT(nmp->nm_bufqiods > 0);
 		nmp->nm_bufqiods--;
 		mutex_exit(&nmp->nm_lock);
 	}
-	myiod->nid_want = NULL;
-	myiod->nid_mount = NULL;
-	myiod->nid_proc = NULL;
+quit:
+	KASSERT(myiod->nid_mount == NULL);
 	mutex_exit(&myiod->nid_lock);
-	nfs_numasync--;
 
-	return error;
-}
-
-void
-nfs_iodinit()
-{
-	int i;
-
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
-		struct nfs_iod *nid = &nfs_asyncdaemon[i];
-		mutex_init(&nid->nid_lock, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&nid->nid_cv, "nfsiod");
-	}
-}
-
-void
-start_nfsio(void *arg)
-{
-	nfssvc_iod(curlwp);
+	cv_destroy(&myiod->nid_cv);
+	KERNEL_LOCK(1, curlwp);
+	mutex_destroy(&myiod->nid_lock);
+	kmem_free(myiod, sizeof(*myiod));
+	KERNEL_UNLOCK_LAST(curlwp);
 
 	kthread_exit(0);
 }
 
 void
-nfs_getset_niothreads(set)
-	int set;
+nfs_iodinit()
 {
-	int i, have, start;
 
-	for (have = 0, i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		if (nfs_asyncdaemon[i].nid_proc != NULL)
-			have++;
+	mutex_init(&nfs_iodlist_lock, MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&nfs_iodlist_all);
+	LIST_INIT(&nfs_iodlist_idle);
+}
 
-	if (set) {
-		/* clamp to sane range */
-		nfs_niothreads = max(0, min(nfs_niothreads, NFS_MAXASYNCDAEMON));
+int
+nfs_set_niothreads(int newval)
+{
+	struct nfs_iod *nid;
+	int error = 0;
 
-		start = nfs_niothreads - have;
+#if defined(MULTIPROCESSOR)
+        int hold_count;
+#endif /* defined(MULTIPROCESSOR) */
 
-		while (start > 0) {
-			kthread_create(PRI_NONE, 0, NULL, start_nfsio, NULL,
-			    NULL, "nfsio");
-			start--;
-		}
+	KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 
-		for (i = 0; (start < 0) && (i < NFS_MAXASYNCDAEMON); i++)
-			if (nfs_asyncdaemon[i].nid_proc != NULL) {
-				mutex_enter(&proclist_mutex);
-				psignal(nfs_asyncdaemon[i].nid_proc, SIGKILL);
-				mutex_exit(&proclist_mutex);
-				start++;
+	mutex_enter(&nfs_iodlist_lock);
+	/* clamp to sane range */
+	nfs_niothreads = max(0, min(newval, NFS_MAXASYNCDAEMON));
+
+	while (nfs_numasync != nfs_niothreads && error == 0) {
+		while (nfs_numasync < nfs_niothreads) {
+
+			/*
+			 * kthread_create can wait for pagedaemon and
+			 * pagedaemon can wait for nfsiod which needs to acquire
+			 * nfs_iodlist_lock.
+			 */
+
+			mutex_exit(&nfs_iodlist_lock);
+			KERNEL_LOCK(1, curlwp);
+			error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+			    nfssvc_iod, NULL, NULL, "nfsio");
+			KERNEL_UNLOCK_LAST(curlwp);
+			mutex_enter(&nfs_iodlist_lock);
+			if (error) {
+				/* give up */
+				nfs_niothreads = nfs_numasync;
+				break;
 			}
-	} else {
-		if (nfs_niothreads >= 0)
-			nfs_niothreads = have;
+			nfs_numasync++;
+		}
+		while (nfs_numasync > nfs_niothreads) {
+			nid = LIST_FIRST(&nfs_iodlist_all);
+			if (nid == NULL) {
+				/* iod has not started yet. */
+				kpause("nfsiorm", false, hz, &nfs_iodlist_lock);
+				continue;
+			}
+			LIST_REMOVE(nid, nid_all);
+			mutex_enter(&nid->nid_lock);
+			KASSERT(!nid->nid_exiting);
+			nid->nid_exiting = true;
+			cv_signal(&nid->nid_cv);
+			mutex_exit(&nid->nid_lock);
+			nfs_numasync--;
+		}
 	}
+	mutex_exit(&nfs_iodlist_lock);
+
+	KERNEL_LOCK(hold_count, curlwp);
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.116.2.4 2007/07/14 22:09:43 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.116.2.5 2007/08/20 21:27:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.4 2007/07/14 22:09:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.5 2007/08/20 21:27:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,11 +381,16 @@ sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
+	struct rlimit rl;
 
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout(&p->p_rlimit[which], SCARG(uap, rlp),
-	    sizeof(struct rlimit)));
+
+	mutex_enter(&p->p_mutex);
+	memcpy(&rl, &p->p_rlimit[which], sizeof(rl));
+	mutex_exit(&p->p_mutex);
+
+	return copyout(&rl, SCARG(uap, rlp), sizeof(rl));
 }
 
 /*
@@ -477,26 +482,28 @@ sys_getrusage(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	struct rusage *rup;
+	struct rusage ru;
 	struct proc *p = l->l_proc;
 
 	switch (SCARG(uap, who)) {
-
 	case RUSAGE_SELF:
-		rup = &p->p_stats->p_ru;
 		mutex_enter(&p->p_smutex);
-		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL, NULL);
+		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
+		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 		mutex_exit(&p->p_smutex);
 		break;
 
 	case RUSAGE_CHILDREN:
-		rup = &p->p_stats->p_cru;
+		mutex_enter(&p->p_smutex);
+		memcpy(&ru, &p->p_stats->p_cru, sizeof(ru));
+		mutex_exit(&p->p_smutex);
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
-	return (copyout(rup, SCARG(uap, rusage), sizeof(struct rusage)));
+
+	return copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 }
 
 void

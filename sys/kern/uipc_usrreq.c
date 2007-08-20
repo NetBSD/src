@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.95.2.4 2007/06/08 14:17:28 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.95.2.5 2007/08/20 21:27:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95.2.4 2007/06/08 14:17:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.95.2.5 2007/08/20 21:27:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 		control = unp_addsockcred(l, control);
 	if (sbappendaddr(&so2->so_rcv, (const struct sockaddr *)sun, m,
 	    control) == 0) {
+		unp_dispose(control);
 		m_freem(control);
 		m_freem(m);
 		so2->so_rcv.sb_overflowed++;
@@ -330,6 +331,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = unp_connect(so, nam, l);
 				if (error) {
 				die:
+					unp_dispose(control);
 					m_freem(control);
 					m_freem(m);
 					break;
@@ -369,8 +371,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Wake up readers.
 			 */
 			if (control) {
-				if (sbappendcontrol(rcv, m, control) == 0)
+				if (sbappendcontrol(rcv, m, control) == 0) {
+					unp_dispose(control);
 					m_freem(control);
+				}
 			} else
 				sbappend(rcv, m);
 			snd->sb_mbmax -=
@@ -496,17 +500,22 @@ uipc_ctloutput(int op, struct socket *so, int level, int optname,
 
 	case PRCO_GETOPT:
 		switch (optname) {
+		case LOCAL_PEEREID:
+			if (unp->unp_flags & UNP_EIDSVALID) {
+				*mp = m = m_get(M_WAIT, MT_SOOPTS);
+				m->m_len = sizeof(struct unpcbid);
+				*mtod(m, struct unpcbid *) = unp->unp_connid;
+			} else {
+				error = EINVAL;
+			}
+			break;
 		case LOCAL_CREDS:
 			*mp = m = m_get(M_WAIT, MT_SOOPTS);
 			m->m_len = sizeof(int);
-			switch (optname) {
 
 #define	OPTBIT(bit)	(unp->unp_flags & (bit) ? 1 : 0)
 
-			case LOCAL_CREDS:
-				optval = OPTBIT(UNP_WANTCRED);
-				break;
-			}
+			optval = OPTBIT(UNP_WANTCRED);
 			*mtod(m, int *) = optval;
 			break;
 #undef OPTBIT
@@ -655,6 +664,10 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	unp->unp_vnode = vp;
 	unp->unp_addrlen = addrlen;
 	unp->unp_addr = sun;
+	unp->unp_connid.unp_pid = p->p_pid;
+	unp->unp_connid.unp_euid = kauth_cred_geteuid(p->p_cred);
+	unp->unp_connid.unp_egid = kauth_cred_getegid(p->p_cred);
+	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp, 0);
 	return (0);
 
@@ -669,11 +682,13 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	struct sockaddr_un *sun;
 	struct vnode *vp;
 	struct socket *so2, *so3;
-	struct unpcb *unp2, *unp3;
+	struct unpcb *unp, *unp2, *unp3;
 	size_t addrlen;
+	struct proc *p;
 	int error;
 	struct nameidata nd;
 
+	p = l->l_proc;
 	/*
 	 * Allocate a temporary sockaddr.  We have to allocate one extra
 	 * byte so that we can ensure that the pathname is nul-terminated.
@@ -711,6 +726,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			error = ECONNREFUSED;
 			goto bad;
 		}
+		unp = sotounpcb(so);
 		unp2 = sotounpcb(so2);
 		unp3 = sotounpcb(so3);
 		if (unp2->unp_addr) {
@@ -721,7 +737,15 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			unp3->unp_addrlen = unp2->unp_addrlen;
 		}
 		unp3->unp_flags = unp2->unp_flags;
+		unp3->unp_connid.unp_pid = p->p_pid;
+		unp3->unp_connid.unp_euid = kauth_cred_geteuid(p->p_cred);
+		unp3->unp_connid.unp_egid = kauth_cred_getegid(p->p_cred);
+		unp3->unp_flags |= UNP_EIDSVALID;
 		so2 = so3;
+		if (unp2->unp_flags & UNP_EIDSBIND) {
+			unp->unp_connid = unp2->unp_connid;
+			unp->unp_flags |= UNP_EIDSVALID;
+		}
 	}
 	error = unp_connect2(so, so2, PRU_CONNECT);
  bad:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.156.2.5 2007/07/15 13:27:41 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.156.2.6 2007/08/20 21:27:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.5 2007/07/15 13:27:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.156.2.6 2007/08/20 21:27:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -386,72 +386,6 @@ ioctl_copyout(int ioctlflags, const void *src, void *dst, size_t len)
 	return copyout(src, dst, len);
 }
 
-/*
- * General routine to allocate a hash table.
- * Allocate enough memory to hold at least `elements' list-head pointers.
- * Return a pointer to the allocated space and set *hashmask to a pattern
- * suitable for masking a value to use as an index into the returned array.
- */
-void *
-hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
-    int mflags, u_long *hashmask)
-{
-	u_long hashsize, i;
-	LIST_HEAD(, generic) *hashtbl_list;
-	TAILQ_HEAD(, generic) *hashtbl_tailq;
-	size_t esize;
-	void *p;
-
-	if (elements == 0)
-		panic("hashinit: bad cnt");
-	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
-		continue;
-
-	switch (htype) {
-	case HASH_LIST:
-		esize = sizeof(*hashtbl_list);
-		break;
-	case HASH_TAILQ:
-		esize = sizeof(*hashtbl_tailq);
-		break;
-	default:
-#ifdef DIAGNOSTIC
-		panic("hashinit: invalid table type");
-#else
-		return NULL;
-#endif
-	}
-
-	if ((p = malloc(hashsize * esize, mtype, mflags)) == NULL)
-		return (NULL);
-
-	switch (htype) {
-	case HASH_LIST:
-		hashtbl_list = p;
-		for (i = 0; i < hashsize; i++)
-			LIST_INIT(&hashtbl_list[i]);
-		break;
-	case HASH_TAILQ:
-		hashtbl_tailq = p;
-		for (i = 0; i < hashsize; i++)
-			TAILQ_INIT(&hashtbl_tailq[i]);
-		break;
-	}
-	*hashmask = hashsize - 1;
-	return (p);
-}
-
-/*
- * Free memory from hash table previosly allocated via hashinit().
- */
-void
-hashdone(void *hashtbl, struct malloc_type *mtype)
-{
-
-	free(hashtbl, mtype);
-}
-
-
 static void *
 hook_establish(hook_list_t *list, void (*fn)(void *), void *arg)
 {
@@ -735,45 +669,29 @@ dopowerhooks(int why)
 	struct powerhook_desc *dp;
 
 #ifdef POWERHOOK_DEBUG
-	printf("dopowerhooks ");
-	switch (why) {
-	case PWR_RESUME:
-		printf("resume");
-		break;
-	case PWR_SOFTRESUME:
-		printf("softresume");
-		break;
-	case PWR_SUSPEND:
-		printf("suspend");
-		break;
-	case PWR_SOFTSUSPEND:
-		printf("softsuspend");
-		break;
-	case PWR_STANDBY:
-		printf("standby");
-		break;
-	}
-	printf(":");
+	const char *why_name;
+	static const char * pwr_names[] = {PWR_NAMES};
+	why_name = why < __arraycount(pwr_names) ? pwr_names[why] : "???";
 #endif
 
 	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
 		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
 #ifdef POWERHOOK_DEBUG
-			printf(" %s", dp->sfd_name);
+			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
 #endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	} else {
 		CIRCLEQ_FOREACH(dp, &powerhook_list, sfd_list) {
 #ifdef POWERHOOK_DEBUG
-			printf(" %s", dp->sfd_name);
+			printf("dopowerhooks %s: %s (%p)\n", why_name, dp->sfd_name, dp);
 #endif
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}
 	}
 
 #ifdef POWERHOOK_DEBUG
-	printf(".\n");
+	printf("dopowerhooks: %s done\n", why_name);
 #endif
 }
 
@@ -1447,10 +1365,7 @@ trace_enter(struct lwp *l, register_t code,
 	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(l, code, realcode, callp, args);
-#endif /* KTRACE */
+	ktrsyscall(code, realcode, callp, args);
 
 #ifdef PTRACE
 	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
@@ -1489,10 +1404,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, code, error, rval);
-#endif /* KTRACE */
+	ktrsysret(code, error, rval);
 	
 #ifdef PTRACE
 	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==

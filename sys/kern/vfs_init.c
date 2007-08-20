@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.32.8.1 2007/03/13 16:51:59 ad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.32.8.2 2007/08/20 21:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.32.8.1 2007/03/13 16:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.32.8.2 2007/08/20 21:27:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -119,6 +119,9 @@ const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
 	&sync_vnodeop_opv_desc,
 	NULL,
 };
+
+struct vfs_list_head vfs_list =			/* vfs list */
+    LIST_HEAD_INITIALIZER(vfs_list);
 
 /*
  * This code doesn't work if the defn is **vnodop_defns with cc.
@@ -346,4 +349,127 @@ vfsinit(void)
 			panic("vfsinit");
 		}
 	}
+}
+
+/*
+ * Drop a reference to a file system type.
+ */
+void
+vfs_delref(struct vfsops *vfs)
+{
+
+	mutex_enter(&vfs_list_lock);
+	vfs->vfs_refcount--;
+	mutex_exit(&vfs_list_lock);
+}
+
+/*
+ * Establish a file system and initialize it.
+ */
+int
+vfs_attach(struct vfsops *vfs)
+{
+	struct vfsops *v;
+	int error = 0;
+
+	mutex_enter(&vfs_list_lock);
+
+	/*
+	 * Make sure this file system doesn't already exist.
+	 */
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
+		if (strcmp(vfs->vfs_name, v->vfs_name) == 0) {
+			error = EEXIST;
+			goto out;
+		}
+	}
+
+	/*
+	 * Initialize the vnode operations for this file system.
+	 */
+	vfs_opv_init(vfs->vfs_opv_descs);
+
+	/*
+	 * Now initialize the file system itself.
+	 */
+	(*vfs->vfs_init)();
+
+	/*
+	 * ...and link it into the kernel's list.
+	 */
+	LIST_INSERT_HEAD(&vfs_list, vfs, vfs_list);
+
+	/*
+	 * Sanity: make sure the reference count is 0.
+	 */
+	vfs->vfs_refcount = 0;
+ out:
+	mutex_exit(&vfs_list_lock);
+	return (error);
+}
+
+/*
+ * Remove a file system from the kernel.
+ */
+int
+vfs_detach(struct vfsops *vfs)
+{
+	struct vfsops *v;
+	int error = 0;
+
+	mutex_enter(&vfs_list_lock);
+
+	/*
+	 * Make sure no one is using the filesystem.
+	 */
+	if (vfs->vfs_refcount != 0) {
+		error = EBUSY;
+		goto out;
+	}
+
+	/*
+	 * ...and remove it from the kernel's list.
+	 */
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
+		if (v == vfs) {
+			LIST_REMOVE(v, vfs_list);
+			break;
+		}
+	}
+
+	if (v == NULL) {
+		error = ESRCH;
+		goto out;
+	}
+
+	/*
+	 * Now run the file system-specific cleanups.
+	 */
+	(*vfs->vfs_done)();
+
+	/*
+	 * Free the vnode operations vector.
+	 */
+	vfs_opv_free(vfs->vfs_opv_descs);
+ out:
+ 	mutex_exit(&vfs_list_lock);
+	return (error);
+}
+
+void
+vfs_reinit(void)
+{
+	struct vfsops *vfs;
+
+	mutex_enter(&vfs_list_lock);
+	LIST_FOREACH(vfs, &vfs_list, vfs_list) {
+		if (vfs->vfs_reinit) {
+			vfs->vfs_refcount++;
+			mutex_exit(&vfs_list_lock);
+			(*vfs->vfs_reinit)();
+			mutex_enter(&vfs_list_lock);
+			vfs->vfs_refcount--;
+		}
+	}
+	mutex_exit(&vfs_list_lock);
 }

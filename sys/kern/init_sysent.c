@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.189.2.7 2007/08/19 19:24:53 ad Exp $ */
+/* $NetBSD: init_sysent.c,v 1.189.2.8 2007/08/20 21:27:27 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,9 +8,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.189.2.7 2007/08/19 19:24:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.189.2.8 2007/08/20 21:27:27 ad Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -114,7 +113,7 @@ struct sysent sysent[] = {
 	    sys_open },				/* 5 = open */
 	{ 1, s(struct sys_close_args), SYCALL_MPSAFE | 0,
 	    sys_close },			/* 6 = close */
-	{ 4, s(struct sys_wait4_args), SYCALL_MPSAFE | 0,
+	{ 4, s(struct sys_wait4_args), 0,
 	    sys_wait4 },			/* 7 = wait4 */
 	{ 2, s(struct compat_43_sys_creat_args), 0,
 	    compat_43(sys_creat) },		/* 8 = compat_43 ocreat */
@@ -200,13 +199,8 @@ struct sysent sysent[] = {
 	    sys_getegid },			/* 43 = getegid */
 	{ 4, s(struct sys_profil_args), SYCALL_MPSAFE | 0,
 	    sys_profil },			/* 44 = profil */
-#if defined(KTRACE) || !defined(_KERNEL)
 	{ 4, s(struct sys_ktrace_args), 0,
 	    sys_ktrace },			/* 45 = ktrace */
-#else
-	{ 0, 0, 0,
-	    sys_nosys },			/* 45 = excluded ktrace */
-#endif
 	{ 3, s(struct compat_13_sys_sigaction_args), SYCALL_MPSAFE | 0,
 	    compat_13(sys_sigaction) },		/* 46 = compat_13 sigaction13 */
 #ifdef COMPAT_43
@@ -288,7 +282,7 @@ struct sysent sysent[] = {
 	    sys_setpgid },			/* 82 = setpgid */
 	{ 3, s(struct sys_setitimer_args), 0,
 	    sys_setitimer },			/* 83 = setitimer */
-	{ 0, 0, SYCALL_MPSAFE | 0,
+	{ 0, 0, 0,
 	    compat_43(sys_wait) },		/* 84 = compat_43 owait */
 	{ 1, s(struct compat_12_sys_swapon_args), 0,
 	    compat_12(sys_swapon) },		/* 85 = compat_12 oswapon */
@@ -312,7 +306,7 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 94 = unimplemented setdopt */
 	{ 1, s(struct sys_fsync_args), SYCALL_MPSAFE | 0,
 	    sys_fsync },			/* 95 = fsync */
-	{ 3, s(struct sys_setpriority_args), 0,
+	{ 3, s(struct sys_setpriority_args), SYCALL_MPSAFE | 0,
 	    sys_setpriority },			/* 96 = setpriority */
 	{ 3, s(struct compat_30_sys_socket_args), 0,
 	    compat_30(sys_socket) },		/* 97 = compat_30 socket */
@@ -352,9 +346,9 @@ struct sysent sysent[] = {
 	    compat_43(sys_sendmsg) },		/* 114 = compat_43 osendmsg */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 115 = obsolete vtrace */
-	{ 2, s(struct sys_gettimeofday_args), 0,
+	{ 2, s(struct sys_gettimeofday_args), SYCALL_MPSAFE | 0,
 	    sys_gettimeofday },			/* 116 = gettimeofday */
-	{ 2, s(struct sys_getrusage_args), 0,
+	{ 2, s(struct sys_getrusage_args), SYCALL_MPSAFE | 0,
 	    sys_getrusage },			/* 117 = getrusage */
 	{ 5, s(struct sys_getsockopt_args), 0,
 	    sys_getsockopt },			/* 118 = getsockopt */
@@ -408,7 +402,7 @@ struct sysent sysent[] = {
 	    compat_43(sys_gethostid) },		/* 142 = compat_43 ogethostid */
 	{ 1, s(struct compat_43_sys_sethostid_args), 0,
 	    compat_43(sys_sethostid) },		/* 143 = compat_43 osethostid */
-	{ 2, s(struct compat_43_sys_getrlimit_args), 0,
+	{ 2, s(struct compat_43_sys_getrlimit_args), SYCALL_MPSAFE | 0,
 	    compat_43(sys_getrlimit) },		/* 144 = compat_43 ogetrlimit */
 	{ 2, s(struct compat_43_sys_setrlimit_args), 0,
 	    compat_43(sys_setrlimit) },		/* 145 = compat_43 osetrlimit */
@@ -676,11 +670,11 @@ struct sysent sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 231 = excluded shmget */
 #endif
-	{ 2, s(struct sys_clock_gettime_args), 0,
+	{ 2, s(struct sys_clock_gettime_args), SYCALL_MPSAFE | 0,
 	    sys_clock_gettime },		/* 232 = clock_gettime */
 	{ 2, s(struct sys_clock_settime_args), 0,
 	    sys_clock_settime },		/* 233 = clock_settime */
-	{ 2, s(struct sys_clock_getres_args), 0,
+	{ 2, s(struct sys_clock_getres_args), SYCALL_MPSAFE | 0,
 	    sys_clock_getres },			/* 234 = clock_getres */
 	{ 3, s(struct sys_timer_create_args), 0,
 	    sys_timer_create },			/* 235 = timer_create */
@@ -811,13 +805,8 @@ struct sysent sysent[] = {
 	    sys_getsid },			/* 286 = getsid */
 	{ 2, s(struct sys___clone_args), 0,
 	    sys___clone },			/* 287 = __clone */
-#if defined(KTRACE) || !defined(_KERNEL)
 	{ 4, s(struct sys_fktrace_args), 0,
 	    sys_fktrace },			/* 288 = fktrace */
-#else
-	{ 0, 0, 0,
-	    sys_nosys },			/* 288 = excluded ktrace */
-#endif
 	{ 5, s(struct sys_preadv_args), SYCALL_MPSAFE | 0,
 	    sys_preadv },			/* 289 = preadv */
 	{ 5, s(struct sys_pwritev_args), SYCALL_MPSAFE | 0,
@@ -869,13 +858,13 @@ struct sysent sysent[] = {
 	    sys_issetugid },			/* 305 = issetugid */
 	{ 3, s(struct sys_utrace_args), SYCALL_MPSAFE | 0,
 	    sys_utrace },			/* 306 = utrace */
-	{ 1, s(struct sys_getcontext_args), 0,
+	{ 1, s(struct sys_getcontext_args), SYCALL_MPSAFE | 0,
 	    sys_getcontext },			/* 307 = getcontext */
-	{ 1, s(struct sys_setcontext_args), 0,
+	{ 1, s(struct sys_setcontext_args), SYCALL_MPSAFE | 0,
 	    sys_setcontext },			/* 308 = setcontext */
 	{ 3, s(struct sys__lwp_create_args), SYCALL_MPSAFE | 0,
 	    sys__lwp_create },			/* 309 = _lwp_create */
-	{ 0, 0, 0,
+	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys__lwp_exit },			/* 310 = _lwp_exit */
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys__lwp_self },			/* 311 = _lwp_self */
@@ -891,11 +880,11 @@ struct sysent sysent[] = {
 	    sys__lwp_getprivate },		/* 316 = _lwp_getprivate */
 	{ 1, s(struct sys__lwp_setprivate_args), SYCALL_MPSAFE | 0,
 	    sys__lwp_setprivate },		/* 317 = _lwp_setprivate */
-	{ 2, s(struct sys__lwp_kill_args), 0,
+	{ 2, s(struct sys__lwp_kill_args), SYCALL_MPSAFE | 0,
 	    sys__lwp_kill },			/* 318 = _lwp_kill */
 	{ 1, s(struct sys__lwp_detach_args), SYCALL_MPSAFE | 0,
 	    sys__lwp_detach },			/* 319 = _lwp_detach */
-	{ 3, s(struct sys__lwp_park_args), SYCALL_MPSAFE | 0,
+	{ 4, s(struct sys__lwp_park_args), SYCALL_MPSAFE | 0,
 	    sys__lwp_park },			/* 320 = _lwp_park */
 	{ 2, s(struct sys__lwp_unpark_args), SYCALL_MPSAFE | 0,
 	    sys__lwp_unpark },			/* 321 = _lwp_unpark */
@@ -941,7 +930,7 @@ struct sysent sysent[] = {
 	    sys_pmc_get_info },			/* 341 = pmc_get_info */
 	{ 3, s(struct sys_pmc_control_args), 0,
 	    sys_pmc_control },			/* 342 = pmc_control */
-	{ 3, s(struct sys_rasctl_args), 0,
+	{ 3, s(struct sys_rasctl_args), SYCALL_MPSAFE | 0,
 	    sys_rasctl },			/* 343 = rasctl */
 	{ 0, 0, 0,
 	    sys_kqueue },			/* 344 = kqueue */
@@ -1055,13 +1044,13 @@ struct sysent sysent[] = {
 	    sys___fhstat40 },			/* 398 = __fhstat40 */
 	{ 2, s(struct sys_aio_cancel_args), 0,
 	    sys_aio_cancel },			/* 399 = aio_cancel */
-	{ 1, s(struct sys_aio_error_args), 0,
+	{ 1, s(struct sys_aio_error_args), SYCALL_MPSAFE | 0,
 	    sys_aio_error },			/* 400 = aio_error */
 	{ 2, s(struct sys_aio_fsync_args), 0,
 	    sys_aio_fsync },			/* 401 = aio_fsync */
 	{ 1, s(struct sys_aio_read_args), 0,
 	    sys_aio_read },			/* 402 = aio_read */
-	{ 1, s(struct sys_aio_return_args), 0,
+	{ 1, s(struct sys_aio_return_args), SYCALL_MPSAFE | 0,
 	    sys_aio_return },			/* 403 = aio_return */
 	{ 3, s(struct sys_aio_suspend_args), 0,
 	    sys_aio_suspend },			/* 404 = aio_suspend */
@@ -1077,8 +1066,8 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 409 = unimplemented */
 	{ 5, s(struct sys___mount50_args), 0,
 	    sys___mount50 },			/* 410 = __mount50 */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 411 = filler */
+	{ 5, s(struct sys_mremap_args), 0,
+	    sys_mremap },			/* 411 = mremap */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 412 = filler */
 	{ 0, 0, 0,

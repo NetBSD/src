@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.135.2.6 2007/06/17 21:31:35 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.135.2.7 2007/08/20 21:27:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.6 2007/06/17 21:31:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.135.2.7 2007/08/20 21:27:45 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -202,11 +202,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 	if ((error = VOP_OPEN(vp, fmode, cred, l)) != 0)
 		goto bad;
-	if (vp->v_type == VREG &&
-	    uvn_attach(vp, fmode & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
-		error = EIO;
-		goto bad;
-	}
 	if (fmode & FWRITE) {
 		mutex_enter(&vp->v_interlock);
 		vp->v_writecount++;

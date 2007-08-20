@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.21.6.1 2007/07/15 13:27:14 ad Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.21.6.2 2007/08/20 21:26:01 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.21.6.1 2007/07/15 13:27:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.21.6.2 2007/08/20 21:26:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,11 +627,11 @@ osf1_cvt_statfs_from_native(bsfs, osfs)
 {
 
 	memset(osfs, 0, sizeof (struct osf1_statfs));
-	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, MFSNAMELEN))
+	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, sizeof(bsfs->f_fstypename)))
 		osfs->f_type = OSF1_MOUNT_UFS;
-	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
+	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, sizeof(bsfs->f_fstypename)))
 		osfs->f_type = OSF1_MOUNT_NFS;
-	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, MFSNAMELEN))
+	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, sizeof(bsfs->f_fstypename)))
 		osfs->f_type = OSF1_MOUNT_MFS;
 	else
 		/* uh oh...  XXX = PC, CDFS, PROCFS, etc. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.62.6.4 2007/07/15 13:27:50 ad Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.62.6.5 2007/08/20 21:27:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.62.6.4 2007/07/15 13:27:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.62.6.5 2007/08/20 21:27:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,22 +89,20 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.62.6.4 2007/07/15 13:27:50 ad Exp 
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	nullfs_mount(struct mount *, const char *, void *, size_t *,
-	    struct nameidata *, struct lwp *);
-int	nullfs_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(nullfs);
 
 /*
  * Mount null layer
  */
 int
-nullfs_mount(mp, path, data, data_len, ndp, l)
+nullfs_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct null_args *args = data;
 	struct vnode *lowerrootvp, *vp;
 	struct null_mount *nmp;
@@ -136,15 +134,15 @@ nullfs_mount(mp, path, data, data_len, ndp, l)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
 		UIO_USERSPACE, args->la.target, l);
-	if ((error = namei(ndp)) != 0)
+	if ((error = namei(&nd)) != 0)
 		return (error);
 
 	/*
 	 * Sanity check on lower vnode
 	 */
-	lowerrootvp = ndp->ni_vp;
+	lowerrootvp = nd.ni_vp;
 
 	/*
 	 * First cut at fixing up upper mount point
@@ -199,7 +197,7 @@ nullfs_mount(mp, path, data, data_len, ndp, l)
 	VOP_UNLOCK(vp, 0);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -300,7 +298,7 @@ struct vfsops nullfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	layerfs_snapshot,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	nullfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

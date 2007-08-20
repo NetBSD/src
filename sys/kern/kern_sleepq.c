@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.7.2.7 2007/07/01 21:50:40 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7.2.8 2007/08/20 21:27:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.7 2007/07/01 21:50:40 ad Exp $");
-
-#include "opt_ktrace.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.8 2007/08/20 21:27:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -56,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7.2.7 2007/07/01 21:50:40 ad Exp $
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/sleepq.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -240,11 +236,9 @@ sleepq_block(int timo, bool catch)
 	int error = 0, sig;
 	struct proc *p;
 	lwp_t *l = curlwp;
+	bool early = false;
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_CSW))
-		ktrcsw(l, 1, 0);
-#endif
+	ktrcsw(1, 0);
 
 	/*
 	 * If sleeping interruptably, check for pending signals, exits or
@@ -255,38 +249,37 @@ sleepq_block(int timo, bool catch)
 		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
-			error = EINTR;
-			goto catchit;
+			early = true;
 		}
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
-			error = EINTR;
-			goto catchit;
+			error = true;
 		}
 	}
 
-	if (timo)
-		callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
+	if (!early) {
+		if (timo)
+			callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 
-	mi_switch(l);
-	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
+		mi_switch(l);
+		l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
 
-	/*
-	 * When we reach this point, the LWP and sleep queue are unlocked.
-	 */
-	if (timo) {
 		/*
-		 * Even if the callout appears to have fired, we need to
-		 * stop it in order to synchronise with other CPUs.
+		 * When we reach this point, the LWP and sleep queue are unlocked.
 		 */
-		if (callout_stop(&l->l_tsleep_ch))
-			error = EWOULDBLOCK;
+		if (timo) {
+			/*
+			 * Even if the callout appears to have fired, we need to
+			 * stop it in order to synchronise with other CPUs.
+			 */
+			if (callout_stop(&l->l_tsleep_ch))
+				error = EWOULDBLOCK;
+		}
 	}
 
 	if (catch && error == 0) {
-  catchit:
 		p = l->l_proc;
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
@@ -298,10 +291,7 @@ sleepq_block(int timo, bool catch)
 		}
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_CSW))
-		ktrcsw(l, 0, 0);
-#endif
+	ktrcsw(0, 0);
 
 	KERNEL_LOCK(l->l_biglocks, l);
 	return error;

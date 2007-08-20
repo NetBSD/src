@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.56.2.13 2007/07/15 15:53:04 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.56.2.14 2007/08/20 21:28:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -278,6 +278,11 @@ void	*lwp_getspecific(specificdata_key_t);
 void	*_lwp_getspecific_by_lwp(lwp_t *, specificdata_key_t);
 #endif
 void	lwp_setspecific(specificdata_key_t, void *);
+
+/* Syscalls */
+int	lwp_park(struct timespec *, const void *);
+int	lwp_unpark(lwpid_t, const void *);
+
 
 /*
  * Lock an LWP. XXXLKM

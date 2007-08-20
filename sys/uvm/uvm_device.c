@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.49.4.1 2007/03/13 17:51:54 ad Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.49.4.2 2007/08/20 21:28:31 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.49.4.1 2007/03/13 17:51:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.49.4.2 2007/08/20 21:28:31 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -126,20 +126,16 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 	UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
 
-	KERNEL_LOCK(1, curlwp);
-
 	/*
 	 * before we do anything, ensure this device supports mmap
 	 */
 
 	cdev = cdevsw_lookup(device);
 	if (cdev == NULL) {
-		KERNEL_UNLOCK_ONE(curlwp);
 		return (NULL);
 	}
 	mapfn = cdev->d_mmap;
 	if (mapfn == NULL || mapfn == nommap || mapfn == nullmmap) {
-		KERNEL_UNLOCK_ONE(curlwp);
 		return(NULL);
 	}
 
@@ -147,10 +143,8 @@ udv_attach(void *arg, vm_prot_t accessprot,
 	 * Negative offsets on the object are not allowed.
 	 */
 
-	if (off < 0) {
-		KERNEL_UNLOCK_ONE(curlwp);
+	if (off < 0)
 		return(NULL);
-	}
 
 	/*
 	 * Check that the specified range of the device allows the
@@ -161,8 +155,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 	 */
 
 	while (size != 0) {
-		if ((*mapfn)(device, off, accessprot) == -1) {
-			KERNEL_UNLOCK_ONE(curlwp);
+		if (cdev_mmap(device, off, accessprot) == -1) {
 			return (NULL);
 		}
 		off += PAGE_SIZE; size -= PAGE_SIZE;
@@ -219,7 +212,6 @@ udv_attach(void *arg, vm_prot_t accessprot,
 				wakeup(lcv);
 			lcv->u_flags &= ~(UVM_DEVICE_WANTED|UVM_DEVICE_HOLD);
 			mutex_exit(&udv_lock);
-			KERNEL_UNLOCK_ONE(curlwp);
 			return(&lcv->u_obj);
 		}
 
@@ -264,7 +256,6 @@ udv_attach(void *arg, vm_prot_t accessprot,
 		udv->u_device = device;
 		LIST_INSERT_HEAD(&udv_list, udv, u_list);
 		mutex_exit(&udv_lock);
-		KERNEL_UNLOCK_ONE(curlwp);
 		return(&udv->u_obj);
 	}
 	/*NOTREACHED*/
@@ -368,13 +359,11 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct uvm_device *udv = (struct uvm_device *)uobj;
-	const struct cdevsw *cdev;
 	vaddr_t curr_va;
 	off_t curr_offset;
 	paddr_t paddr, mdpgno;
 	int lcv, retval;
 	dev_t device;
-	paddr_t (*mapfn)(dev_t, off_t, int);
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
@@ -391,20 +380,16 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		return(EIO);
 	}
 
-	KERNEL_LOCK(1, curlwp);
-
 	/*
 	 * get device map function.
 	 */
 
 	device = udv->u_device;
-	cdev = cdevsw_lookup(device);
-	if (cdev == NULL) {
+	if (cdevsw_lookup(device) == NULL) {
+		/* XXX This should not happen */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-		KERNEL_UNLOCK_ONE(curlwp);
 		return (EIO);
 	}
-	mapfn = cdev->d_mmap;
 
 	/*
 	 * now we must determine the offset in udv to use and the VA to
@@ -431,7 +416,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
-		mdpgno = (*mapfn)(device, curr_offset, access_type);
+		mdpgno = cdev_mmap(device, curr_offset, access_type);
 		if (mdpgno == -1) {
 			retval = EIO;
 			break;
@@ -453,7 +438,6 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			 * XXX Needs some rethinking for the PGO_ALLPAGES
 			 * XXX case.
 			 */
-			KERNEL_UNLOCK_ONE(curlwp);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
 			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
@@ -461,8 +445,6 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			return (ERESTART);
 		}
 	}
-
-	KERNEL_UNLOCK_ONE(curlwp);
 
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
 	pmap_update(ufi->orig_map->pmap);

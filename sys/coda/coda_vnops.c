@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.52.2.3 2007/07/15 15:52:38 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.52.2.4 2007/08/20 21:27:22 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.3 2007/07/15 15:52:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.52.2.4 2007/08/20 21:27:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1961,6 +1961,7 @@ make_coda_node(CodaFid *fid, struct mount *vfsp, short type)
 	vp->v_data = cp;
 	vp->v_type = type;
 	cp->c_vnode = vp;
+	uvm_vnp_setsize(vp, 0);
 	coda_save(cp);
 
     } else {

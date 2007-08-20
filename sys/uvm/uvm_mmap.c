@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.108.2.5 2007/06/17 21:32:21 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.108.2.6 2007/08/20 21:28:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.5 2007/06/17 21:32:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.108.2.6 2007/08/20 21:28:32 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1113,16 +1113,12 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			return (EACCES);
 
 		if (vp->v_type != VCHR) {
-			error = VOP_MMAP(vp, 0, curlwp->l_cred, curlwp);
+			error = VOP_MMAP(vp, prot, curlwp->l_cred, curlwp);
 			if (error) {
 				return error;
 			}
-
-			uobj = uvn_attach((void *)vp, (flags & MAP_SHARED) ?
-			   maxprot : (maxprot & ~VM_PROT_WRITE));
-
-			/* XXX for now, attach doesn't gain a ref */
-			VREF(vp);
+			vref(vp);
+			uobj = &vp->v_uobj;
 
 			/*
 			 * If the vnode is being mapped with PROT_EXEC,

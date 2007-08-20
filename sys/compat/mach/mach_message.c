@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.50.6.1 2007/03/13 16:50:18 ad Exp $ */
+/*	$NetBSD: mach_message.c,v 1.50.6.2 2007/08/20 21:25:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.50.6.1 2007/03/13 16:50:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.50.6.2 2007/08/20 21:25:56 ad Exp $");
 
-#include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
 #include "opt_compat_darwin.h"
 
@@ -52,9 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.50.6.1 2007/03/13 16:50:18 ad Exp
 #include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -188,11 +185,9 @@ mach_msg_send(l, msg, option, send_size)
 		goto out1;
 	}
 
-#ifdef KTRACE
 	/* Dump the Mach message */
-	if (KTRPOINT(p, KTR_MMSG))
-		ktrmmsg(l, (char *)sm, send_size);
-#endif
+	ktrmmsg((char *)sm, send_size);
+
 	/*
 	 * Handle rights in the message
 	 */
@@ -595,11 +590,9 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 			ret = MACH_RCV_INVALID_DATA;
 			goto unlock;
 		}
-#ifdef KTRACE
+
 		/* Dump the Mach message */
-		if (KTRPOINT(p, KTR_MMSG))
-			ktrmmsg(l, (char *)&sr, sizeof(sr));
-#endif
+		ktrmmsg((char *)&sr, sizeof(sr));
 		goto unlock;
 	}
 
@@ -654,11 +647,9 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 		ret = MACH_RCV_INVALID_DATA;
 		goto unlock;
 	}
-#ifdef KTRACE
+
 	/* Dump the Mach message */
-	if (KTRPOINT(p, KTR_MMSG))
-		ktrmmsg(l, (char *)mm->mm_msg, mm->mm_size);
-#endif
+	ktrmmsg((char *)mm->mm_msg, mm->mm_size);
 
 	free(mm->mm_msg, M_EMULDATA);
 	mach_message_put_shlocked(mm); /* decrease mp_count */
@@ -984,12 +975,10 @@ mach_ool_copyin(l, uaddr, kaddr, size, flags)
 		return error;
 	}
 
-#ifdef KTRACE
 	if (size > PAGE_SIZE)
 		size = PAGE_SIZE;
-	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
-		ktrmool(l, kaddr, size, uaddr);
-#endif
+	if ((flags & MACH_OOL_TRACE))
+		ktrmool(kaddr, size, uaddr);
 
 	*kaddr = kbuf;
 	return 0;
@@ -1037,12 +1026,10 @@ mach_ool_copyout(l, kaddr, uaddr, size, flags)
 	if ((error = copyout_proc(p, kaddr, (void *)ubuf, size)) != 0)
 		goto out;
 
-#ifdef KTRACE
 	if (size > PAGE_SIZE)
 		size = PAGE_SIZE;
-	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
-		ktrmool(l, kaddr, size, (void *)ubuf);
-#endif
+	if ((flags & MACH_OOL_TRACE))
+		ktrmool(kaddr, size, (void *)ubuf);
 
 out:
 	if (flags & MACH_OOL_FREE)

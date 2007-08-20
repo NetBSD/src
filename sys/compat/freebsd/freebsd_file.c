@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.24.2.2 2007/07/15 13:27:03 ad Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.24.2.3 2007/08/20 21:25:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.24.2.2 2007/07/15 13:27:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.24.2.3 2007/08/20 21:25:52 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.24.2.2 2007/07/15 13:27:03 ad Exp
 
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/common/compat_util.h>
+#include <compat/sys/mount.h>
 
 #define	ARRAY_LENGTH(array)	(sizeof(array)/sizeof(array[0]))
 

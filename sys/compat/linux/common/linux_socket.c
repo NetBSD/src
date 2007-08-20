@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.71.2.2 2007/07/15 13:27:11 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.71.2.3 2007/08/20 21:25:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71.2.2 2007/07/15 13:27:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71.2.3 2007/08/20 21:25:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
 #include "opt_inet.h"
 #endif /* defined(_KERNEL_OPT) */
 
@@ -78,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.71.2.2 2007/07/15 13:27:11 ad Exp
 #include <sys/kauth.h>
 
 #include <sys/syscallargs.h>
-#ifdef KTRACE 
 #include <sys/ktrace.h>
-#endif
 
 #include <lib/libkern/libkern.h>
 
@@ -1395,10 +1392,8 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 				error, osa, salen));
 		goto bad;
 	}
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktrkuser(l, "linux sockaddr", kosa, salen);
-#endif
+
+	ktrkuser("linux sockaddr", kosa, salen);
 
 	bdom = linux_to_bsd_domain(kosa->sa_family);
 	if (bdom == -1) {
@@ -1465,10 +1460,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 	sa->sa_family = bdom;
 	sa->sa_len = salen;
 	m->m_len = salen;
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_USER))
-		ktrkuser(l, "new sockaddr", kosa, salen);
-#endif
+	ktrkuser("new sockaddr", kosa, salen);
 
 #ifdef DEBUG_LINUX
 	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));

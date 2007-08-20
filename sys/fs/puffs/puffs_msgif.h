@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.19.6.4 2007/07/15 13:27:31 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.19.6.5 2007/08/20 21:26:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _PUFFS_MSGIF_H_
-#define _PUFFS_MSGIF_H_
+#ifndef _FS_PUFFS_PUFFS_MSGIF_H_
+#define _FS_PUFFS_PUFFS_MSGIF_H_
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -41,6 +41,8 @@
 #include <sys/statvfs.h>
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
+
+#include <uvm/uvm_prot.h>
 
 #define PUFFSOP_VFS	1
 #define PUFFSOP_VN	2
@@ -83,8 +85,14 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	14
+#define PUFFSVERSION	16
 #define PUFFSNAMESIZE	32
+
+#define PUFFS_TYPEPREFIX "puffs|"
+
+#define PUFFS_TYPELEN (_VFS_NAMELEN - (sizeof(PUFFS_TYPEPREFIX)+1))
+#define PUFFS_NAMELEN (_VFS_MNAMELEN-1)
+
 struct puffs_kargs {
 	unsigned int	pa_vers;
 	int		pa_fd;
@@ -103,7 +111,9 @@ struct puffs_kargs {
 
 	struct statvfs	pa_svfsb;
 	
-	char		pa_name[PUFFSNAMESIZE+1];   /* name for puffs type */
+	char		pa_typename[_VFS_NAMELEN];
+	char		pa_mntfromname[_VFS_MNAMELEN];
+
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
 };
 #define PUFFS_KFLAG_NOCACHE_NAME	0x01	/* don't use name cache     */
@@ -113,7 +123,7 @@ struct puffs_kargs {
 #define PUFFS_KFLAG_WTCACHE		0x08	/* write-through page cache */
 #define PUFFS_KFLAG_IAONDEMAND		0x10	/* inactive only on demand  */
 #define PUFFS_KFLAG_LOOKUP_FULLPNBUF	0x20	/* full pnbuf in lookup     */
-#define PUFFS_KFLAG_MASK		0x2f
+#define PUFFS_KFLAG_MASK		0x3f
 
 #define PUFFS_FHFLAG_DYNAMIC	0x01
 #define PUFFS_FHFLAG_NFSV2	0x02
@@ -300,6 +310,7 @@ struct puffs_flush {
 #define PUFFSFLUSHMULTIOP	_IOW ('p', 5, struct puffs_flushmulti)
 #endif
 #define PUFFSSUSPENDOP		_IO  ('p', 6)
+#define PUFFSREQSIZEOP		_IOR ('p', 7, size_t)
 
 
 /*
@@ -346,20 +357,6 @@ struct puffs_kcn {
 	long pkcn_namelen;		/* current component length	*/
 	long pkcn_consume;		/* IN: extra chars server ate   */
 };
-
-/*
- * XXX: figure out what to do with these, copied from namei.h for now
- */
-#define	PUFFSLOOKUP_LOOKUP	0	/* perform name lookup only */
-#define PUFFSLOOKUP_CREATE	1	/* setup for file creation */
-#define PUFFSLOOKUP_DELETE	2	/* setup for file deletion */
-#define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
-#define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
-
-#define PUFFSLOOKUP_FOLLOW	0x00004	/* follow final symlink */
-#define PUFFSLOOKUP_NOFOLLOW	0x00008	/* don't follow final symlink */
-#define PUFFSLOOKUP_ISLASTCN	0x08000 /* is last component of lookup */
-#define PUFFSLOOKUP_REQUIREDIR	0x80000 /* must be directory */
 
 
 /*
@@ -684,7 +681,7 @@ struct puffs_vnreq_advlock {
 struct puffs_vnreq_mmap {
 	struct puffs_req	pvn_pr;
 
-	int			pvnr_fflags;		/* OUT	*/
+	vm_prot_t		pvnr_prot;		/* OUT	*/
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
 	struct puffs_kcid	pvnr_cid;		/* OUT	*/
 };
@@ -729,4 +726,4 @@ struct puffs_vnreq_listextattr { };
 	memset(&a##_arg, 0, sizeof(struct puffs_vnreq_##a))
 #endif
 
-#endif /* _PUFFS_MSGIF_H_ */
+#endif /* _FS_PUFFS_PUFFS_MSGIF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.66.2.3 2007/07/15 13:28:06 ad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.66.2.4 2007/08/20 21:28:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -190,6 +190,8 @@ int nfs_request(struct nfsnode *, struct mbuf *, int, struct lwp *,
 int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *,
 	int, int, u_quad_t *, struct mbuf **, struct mbuf **, char **);
 void nfs_timer(void *);
+void nfs_timer_init(void);
+void nfs_timer_start(void);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_msg(struct lwp *, const char *, const char *);
@@ -284,10 +286,8 @@ int nfssvc_nfsd(struct nfsd_srvargs *, void *, struct lwp *);
 void nfsrv_zapsock(struct nfssvc_sock *);
 void nfsrv_slpderef(struct nfssvc_sock *);
 void nfsrv_init(int);
-int nfssvc_iod(struct lwp *);
 void nfs_iodinit(void);
-void start_nfsio(void *);
-void nfs_getset_niothreads(int);
+int nfs_set_niothreads(int);
 int nfs_getauth(struct nfsmount *, struct nfsreq *, kauth_cred_t, char **,
 	int *, char *, int *, NFSKERBKEY_T);
 int nfs_getnickauth(struct nfsmount *, kauth_cred_t, char **, int *, char *,

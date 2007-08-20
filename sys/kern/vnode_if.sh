@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.43.8.2 2007/06/17 21:31:36 ad Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.43.8.3 2007/08/20 21:27:46 ad Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -93,6 +93,7 @@ awk_parser='
 /^vop_/	{
 	name=$1;
 	argc=0;
+	willmake=-1;
 	next;
 }
 # Last line of description
@@ -127,6 +128,12 @@ awk_parser='
 		i++;
 	} else
 		willrele[argc] = 0;
+
+	if ($2 == "WILLMAKE") {
+		willmake=argc;
+		i++;
+	}
+
 	argtype[argc] = $i; i++;
 	while (i < NF) {
 		argtype[argc] = argtype[argc]" "$i;
@@ -367,12 +374,21 @@ function doit() {
 	printf("\terror = (VCALL(%s%s, VOFFSET(%s), &a));\n",
 		argname[0], arg0special, name);
 	printf("\tKERNEL_UNLOCK_ONE(curlwp);\n");
+	if (willmake != -1) {
+		printf("#ifdef DIAGNOSTIC\n");
+		printf("\tif (error == 0)\n"				\
+		    "\t\tKASSERT((*%s)->v_size != VSIZENOTSET\n"	\
+		    "\t\t    && (*%s)->v_writesize != VSIZENOTSET);\n",
+		    argname[willmake], argname[willmake]);
+		printf("#endif /* DIAGNOSTIC */\n");
+	}
 	printf("\treturn error;\n}\n");
 }
 BEGIN	{
 	printf("\n/* Special cases: */\n");
 	# start from 1 (vop_default is at 0)
 	argc=1;
+	willmake=-1;
 	argdir[0]="IN";
 	argtype[0]="struct buf *";
 	argname[0]="bp";

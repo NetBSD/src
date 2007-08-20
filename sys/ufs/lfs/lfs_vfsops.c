@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.231.4.9 2007/08/19 19:25:01 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.231.4.10 2007/08/20 21:28:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.9 2007/08/19 19:25:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.10 2007/08/20 21:28:27 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -157,7 +157,7 @@ struct vfsops lfs_vfsops = {
 	lfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,	/* vfs_suspendctl */
 	lfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -219,8 +219,8 @@ lfs_writerd(void *arg)
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
-			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
-				    MFSNAMELEN) == 0) {
+			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
+			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				fs = VFSTOUFS(mp)->um_lfs;
 				mutex_enter(&fs->lfs_interlock);
 				fsflags = 0;
@@ -369,8 +369,9 @@ lfs_mountroot()
  */
 int
 lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
+	struct nameidata nd;
 	struct vnode *devvp;
 	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
@@ -397,10 +398,10 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 		/*
 		 * Look up the name and verify that it's sane.
 		 */
-		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
-		if ((error = namei(ndp)) != 0)
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+		if ((error = namei(&nd)) != 0)
 			return (error);
-		devvp = ndp->ni_vp;
+		devvp = nd.ni_vp;
 
 		if (!update) {
 			/*
@@ -517,7 +518,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error == 0)
 		(void)strncpy(fs->lfs_fsmnt, mp->mnt_stat.f_mntonname,
 			      sizeof(fs->lfs_fsmnt));
@@ -1120,6 +1121,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 			&fs->lfs_interlock);
 	mutex_exit(&fs->lfs_interlock);
 
+retry:
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
 
@@ -1129,10 +1131,10 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	}
 
 	mutex_enter(&ufs_hashlock);
-	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+	if (ufs_ihashget(dev, ino, 0) != NULL) {
 		mutex_exit(&ufs_hashlock);
 		ungetnewvnode(vp);
-		return (0);
+		goto retry;
 	}
 
 	/* Translate the inode number to a disk address. */

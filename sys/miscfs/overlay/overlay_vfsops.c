@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.37.6.4 2007/07/15 13:27:50 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.37.6.5 2007/08/20 21:27:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.4 2007/07/15 13:27:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.5 2007/08/20 21:27:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37.6.4 2007/07/15 13:27:50 ad E
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	ov_mount(struct mount *, const char *, void *, size_t *,
-			  struct nameidata *, struct lwp *);
-int	ov_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(ov);
 
 #define	NOVERLAYNODECACHE	16
 
@@ -99,7 +97,7 @@ int	ov_unmount(struct mount *, int, struct lwp *);
  */
 int
 ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct nameidata *ndp, struct lwp *l)
+    struct lwp *l)
 {
 	int error = 0;
 	struct overlay_args *args = data;
@@ -188,7 +186,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 	nmp->ovm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -278,7 +276,7 @@ struct vfsops overlay_vfsops = {
 	NULL,				/* vfs_mountroot */
 	layerfs_snapshot,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	ov_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

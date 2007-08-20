@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.19.2.1 2007/08/19 19:24:50 ad Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.19.2.2 2007/08/20 21:26:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.19.2.1 2007/08/19 19:24:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.19.2.2 2007/08/20 21:26:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ filecore_read(v)
 #ifdef FILECORE_DEBUG_BR
 			printf("brelse(%p) vn1\n", bp);
 #endif
-			brelse(bp);
+			brelse(bp, 0);
 			return (error);
 		}
 
@@ -259,7 +259,7 @@ filecore_read(v)
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vn2\n", bp);
 #endif
-		brelse(bp);
+		brelse(bp, 0);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
 out:
@@ -309,7 +309,7 @@ filecore_readdir(v)
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
-		brelse(bp);
+		brelse(bp, 0);
 		return error;
 	}
 
@@ -317,7 +317,7 @@ filecore_readdir(v)
 		cookies = NULL;
 	else {
 		*ap->a_ncookies = 0;
-		ncookies = uio->uio_resid/16;
+		ncookies = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 	}
 
@@ -381,7 +381,7 @@ out:
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vn3\n", bp);
 #endif
-	brelse (bp);
+	brelse (bp, 0);
 
 	return (error);
 }

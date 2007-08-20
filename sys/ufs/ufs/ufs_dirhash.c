@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.13.2.5 2007/07/15 15:53:06 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.13.2.6 2007/08/20 21:28:28 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -26,6 +26,9 @@
  *
  * $FreeBSD: src/sys/ufs/ufs/ufs_dirhash.c,v 1.3.2.8 2004/12/08 11:54:13 dwmalone Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.13.2.6 2007/08/20 21:28:28 ad Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.

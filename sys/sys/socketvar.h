@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.93.2.3 2007/07/15 13:28:12 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.93.2.4 2007/08/20 21:28:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -81,6 +81,7 @@ struct sockbuf {
 #define	SB_NOINTR	0x40		/* operations not interruptible */
     	/* XXXLUKEM: 0x80 left for FreeBSD's SB_AIO */
 #define	SB_KNOTE	0x100		/* kernel note attached */
+#define	SB_AUTOSIZE	0x800		/* automatically size socket buffer */
 
 /*
  * Kernel structure per socket.

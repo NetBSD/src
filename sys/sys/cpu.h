@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.56.4 2007/07/15 22:20:28 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.56.5 2007/08/20 21:28:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -43,6 +43,9 @@ void cpu_idle(void);
 void cpu_need_resched(struct cpu_info *, int);
 #endif
 
+/* flags for cpu_need_resched */
+#define	RESCHED_IMMED	1
+
 #ifndef cpu_did_resched
 #define	cpu_did_resched()			\
 do {						\
@@ -50,11 +53,24 @@ do {						\
 } while (0)
 #endif
 
-/* flags for cpu_need_resched */
-#define	RESCHED_IMMED	1
+#ifndef CPU_INFO_ITERATOR
+#define	CPU_INFO_ITERATOR		int
+#define	CPU_INFO_FOREACH(cii, ci)	\
+    (void)cii, ci = curcpu(); ci != NULL; ci = NULL
+#endif
 
-lwp_t *cpu_switchto(lwp_t *, lwp_t *, bool);
+lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
+struct	cpu_info *cpu_lookup(cpuid_t);
+int	cpu_setonline(struct cpu_info *, bool);
 bool cpu_ipl_canblock_p(int);
 bool cpu_intr_p(void);
+
+extern kmutex_t cpu_lock;
+  
+static inline u_int
+cpu_index(struct cpu_info *ci)
+{
+	return ci->ci_index;
+}
 
 #endif	/* !_SYS_CPU_H_ */

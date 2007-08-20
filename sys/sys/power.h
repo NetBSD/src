@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.4.30.1 2007/07/15 13:28:11 ad Exp $	*/
+/*	$NetBSD: power.h,v 1.4.30.2 2007/08/20 21:28:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -121,7 +121,7 @@ struct pswitch_state {
  *
  *	sensor drive		To handle drive sensors.
  *
- * 	sensor indicator	To handle indicator sensors.
+ * 	sensor indicator	To handle indicator/integer sensors.
  */
 
 #define PENVSYS_TYPE_TEMP		10

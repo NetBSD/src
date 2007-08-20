@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5.8.3 2007/06/08 14:17:30 ad Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5.8.4 2007/08/20 21:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.3 2007/06/08 14:17:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.8.4 2007/08/20 21:27:45 ad Exp $");
 
 /*
  * File system transaction operations.
@@ -378,16 +378,6 @@ vfs_resume(struct mount *mp)
 	VFS_SUSPENDCTL(mp, SUSPEND_RESUME);
 	mutex_exit(&syncer_mutex);
 	mutex_exit(&vfs_suspend_lock);
-}
-
-/*
- * Default vfs_suspendctl routine for file systems that do not support it.
- */
-/*ARGSUSED*/
-int
-vfs_stdsuspendctl(struct mount *mp __unused, int mode __unused)
-{
-	return EOPNOTSUPP;
 }
 
 #if defined(DDB)

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.43 2007/03/04 06:03:32 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.43.2.1 2007/08/20 21:28:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.43 2007/03/04 06:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.43.2.1 2007/08/20 21:28:10 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -133,7 +133,7 @@ static struct sockaddr_iso
 	   Bcopy(r, &a.siso_addr, 1 + (r)->isoa_len);}
 #define S(x) ((struct sockaddr *)&(x))
 
-static struct sockaddr_dl blank_dl = {
+static const struct sockaddr_dl blank_dl = {
 	.sdl_len = sizeof(blank_dl),
 	.sdl_family = AF_LINK,
 };
@@ -208,8 +208,8 @@ llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 */
 			if (rt->rt_flags & RTF_CLONING) {
 				iso_setmcasts(ifp, req);
-				rt_setgate(rt, rt_key(rt),
-					   (struct sockaddr *) & blank_dl);
+				rt_setgate(rt,
+				    (const struct sockaddr *)&blank_dl);
 				return;
 			}
 			if (lc != 0)
@@ -344,9 +344,8 @@ iso_snparesolve(
 	} else if (iso_systype != SNPA_IS && known_is != 0 &&
 		   (sc = (struct llinfo_llc *) known_is->rt_llinfo) &&
 		   (sc->lc_flags & SNPA_VALID)) {
-		struct sockaddr_dl *sdl =
-		(struct sockaddr_dl *) (known_is->rt_gateway);
-		found_snpa = LLADDR(sdl);
+		const struct sockaddr_dl *sdl = satocsdl(known_is->rt_gateway);
+		found_snpa = CLLADDR(sdl);
 		addrlen = sdl->sdl_alen;
 	} else if (ifp->if_flags & IFF_BROADCAST) {
 		/*
@@ -391,8 +390,8 @@ snpac_free(
 	if (rt && (rt->rt_flags & RTF_UP) &&
 	    (rt->rt_flags & (RTF_DYNAMIC | RTF_MODIFIED))) {
 		RTFREE(rt);
-		rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway, rt_mask(rt),
-			  rt->rt_flags, (struct rtentry **) 0);
+		rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
+		    rt_mask(rt), rt->rt_flags, NULL);
 		RTFREE(rt);
 	}
 }
@@ -459,7 +458,7 @@ add:
 		rt = mrt;
 		rt->rt_refcnt--;
 	} else {
-		struct sockaddr_dl *sdl = (struct sockaddr_dl *) rt->rt_gateway;
+		struct sockaddr_dl *sdl = satosdl(rt->rt_gateway);
 		rt->rt_refcnt--;
 		if ((rt->rt_flags & RTF_LLINFO) == 0)
 			goto add;
@@ -602,13 +601,13 @@ snpac_logdefis(struct rtentry *sc)
 	known_is = sc;
 	sc->rt_refcnt++;
 	rt = rtalloc1((struct sockaddr *) & zsi, 0);
-	if (rt == 0)
-		rtrequest(RTM_ADD, sisotosa(&zsi), rt_key(sc), sisotosa(&zmk),
-			  RTF_DYNAMIC | RTF_GATEWAY, 0);
-	else {
+	if (rt == 0) {
+		rtrequest(RTM_ADD, sisotosa(&zsi), rt_getkey(sc),
+		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, 0);
+	} else {
 		if ((rt->rt_flags & RTF_DYNAMIC) &&
 		    (rt->rt_flags & RTF_GATEWAY) && rt_mask(rt)->sa_len == 0)
-			rt_setgate(rt, rt_key(rt), rt_key(sc));
+			rt_setgate(rt, rt_getkey(sc));
 	}
 }
 

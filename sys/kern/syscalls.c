@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.185.2.4 2007/08/19 19:24:55 ad Exp $ */
+/* $NetBSD: syscalls.c,v 1.185.2.5 2007/08/20 21:27:39 ad Exp $ */
 
 /*
  * System call names.
@@ -8,10 +8,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.185.2.4 2007/08/19 19:24:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.185.2.5 2007/08/20 21:27:39 ad Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -81,11 +80,7 @@ const char *const syscallnames[] = {
 	"pipe",			/* 42 = pipe */
 	"getegid",			/* 43 = getegid */
 	"profil",			/* 44 = profil */
-#if defined(KTRACE) || !defined(_KERNEL)
 	"ktrace",			/* 45 = ktrace */
-#else
-	"#45 (excluded ktrace)",		/* 45 = excluded ktrace */
-#endif
 	"compat_13_sigaction13",	/* 46 = compat_13 sigaction13 */
 #ifdef COMPAT_43
 	"getgid",			/* 47 = getgid */
@@ -406,11 +401,7 @@ const char *const syscallnames[] = {
 	"__posix_lchown",			/* 285 = __posix_lchown */
 	"getsid",			/* 286 = getsid */
 	"__clone",			/* 287 = __clone */
-#if defined(KTRACE) || !defined(_KERNEL)
 	"fktrace",			/* 288 = fktrace */
-#else
-	"#288 (excluded ktrace)",		/* 288 = excluded ktrace */
-#endif
 	"preadv",			/* 289 = preadv */
 	"pwritev",			/* 290 = pwritev */
 	"compat_16___sigaction14",	/* 291 = compat_16 __sigaction14 */
@@ -545,4 +536,5 @@ const char *const syscallnames[] = {
 	"#408 (unimplemented)",		/* 408 = unimplemented */
 	"#409 (unimplemented)",		/* 409 = unimplemented */
 	"__mount50",			/* 410 = __mount50 */
+	"mremap",			/* 411 = mremap */
 };

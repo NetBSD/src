@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.13 2007/08/20 03:22:42 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.14 2007/08/20 21:27:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.13 2007/08/20 03:22:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.14 2007/08/20 21:27:44 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_fileassoc.h"
-#include "opt_ktrace.h"
 #include "fss.h"
 #include "veriexec.h"
 
@@ -63,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.13 2007/08/20 03:22:42 ad E
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #ifdef FILEASSOC
 #include <sys/fileassoc.h>
 #endif /* FILEASSOC */
@@ -135,7 +132,7 @@ const int nmountcompatnames = sizeof(mountcompatnames) /
 
 static int
 mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
-    void *data, size_t *data_len, struct nameidata *ndp)
+    void *data, size_t *data_len)
 {
 	struct mount *mp;
 	int error = 0, saved_flags;
@@ -188,7 +185,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE);
 
-	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, l);
 
 #if defined(COMPAT_30) && defined(NFSSERVER)
 	if (error && data != NULL) {
@@ -227,11 +224,11 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 static int
 mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 {
-	char fstypename[MFSNAMELEN];
+	char fstypename[sizeof(((struct statvfs *)NULL)->f_fstypename)];
 	int error;
 
 	/* Copy file-system type from userspace.  */
-	error = copyinstr(fstype, fstypename, MFSNAMELEN, NULL);
+	error = copyinstr(fstype, fstypename, sizeof(fstypename), NULL);
 	if (error) {
 #if defined(COMPAT_09) || defined(COMPAT_43)
 		/*
@@ -263,8 +260,7 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
-    const char *path, int flags, void *data, size_t *data_len,
-    struct nameidata *ndp)
+    const char *path, int flags, void *data, size_t *data_len)
 {
 	struct mount *mp = NULL;
 	struct vnode *vp = *vpp;
@@ -329,7 +325,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
 	    MNT_IGNORE | MNT_RDONLY);
 
-	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, l);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	/*
@@ -364,7 +360,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 
 static int
 mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
-    void *data, size_t *data_len, struct nameidata *ndp)
+    void *data, size_t *data_len)
 {
 	struct mount *mp;
 	int error;
@@ -389,7 +385,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= MNT_GETARGS;
-	error = VFS_MOUNT(mp, path, data, data_len, ndp, l);
+	error = VFS_MOUNT(mp, path, data, data_len, l);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
 	vfs_unbusy(mp);
@@ -494,20 +490,18 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			error = EINVAL;
 			goto done;
 		}
-		error = mount_getargs(l, vp, path, flags, data_buf,
-		    &data_len, &nd);
+		error = mount_getargs(l, vp, path, flags, data_buf, &data_len);
 		if (error != 0)
 			goto done;
 		if (data_seg == UIO_USERSPACE)
 			error = copyout(data_buf, data, data_len);
 		*retval = data_len;
 	} else if (flags & MNT_UPDATE) {
-		error = mount_update(l, vp, path, flags, data_buf, &data_len,
-		    &nd);
+		error = mount_update(l, vp, path, flags, data_buf, &data_len);
 	} else {
 		/* Locking is handled internally in mount_domount(). */
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
-		    &data_len, &nd);
+		    &data_len);
 	}
 
     done:
@@ -1642,11 +1636,6 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	}
 	if ((error = VOP_OPEN(vp, flags, cred, l)) != 0)
 		goto bad;
-	if (vp->v_type == VREG &&
-	    uvn_attach(vp, flags & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
-		error = EIO;
-		goto bad;
-	}
 	if (flags & FWRITE)
 		vp->v_writecount++;
 
@@ -3494,14 +3483,7 @@ sys___getdents30(struct lwp *l, void *v, register_t *retval)
 	}
 	error = vn_readdir(fp, SCARG(uap, buf), UIO_USERSPACE,
 			SCARG(uap, count), &done, l, 0, 0);
-#ifdef KTRACE
-	if (!error && KTRPOINT(p, KTR_GENIO)) {
-		struct iovec iov;
-		iov.iov_base = SCARG(uap, buf);
-		iov.iov_len = done;
-		ktrgenio(l, SCARG(uap, fd), UIO_READ, &iov, done, 0);
-	}
-#endif
+	ktrgenio(SCARG(uap, fd), UIO_READ, SCARG(uap, buf), done, error);
 	*retval = done;
  out:
 	FILE_UNUSE(fp, l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.37.4.1 2007/03/13 17:51:58 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.37.4.2 2007/08/20 21:28:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.37.4.1 2007/03/13 17:51:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.37.4.2 2007/08/20 21:28:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	mutex_enter(&uvm_fpageqlock);
+	mutex_spin_enter(&uvm_fpageqlock);
 
 	/* Are there even any free pages? */
 	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
@@ -279,7 +279,7 @@ out:
 	 */
 
 	uvm_kick_pdaemon();
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 	return (error);
 }
 
@@ -337,7 +337,7 @@ again:
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	mutex_enter(&uvm_fpageqlock);
+	mutex_spin_enter(&uvm_fpageqlock);
 
 	/* Are there even any free pages? */
 	if (uvmexp.free <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
@@ -371,7 +371,7 @@ out:
 	 */
 
 	uvm_kick_pdaemon();
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 
 	if (error) {
 		if (waitok) {
@@ -440,7 +440,7 @@ uvm_pglistfree(struct pglist *list)
 	 * Lock the free list and free each page.
 	 */
 
-	mutex_enter(&uvm_fpageqlock);
+	mutex_spin_enter(&uvm_fpageqlock);
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
 		bool iszero;
 
@@ -467,5 +467,5 @@ uvm_pglistfree(struct pglist *list)
 			uvm.page_idle_zero = vm_page_zero_enable;
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
-	mutex_exit(&uvm_fpageqlock);
+	mutex_spin_exit(&uvm_fpageqlock);
 }

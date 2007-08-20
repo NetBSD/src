@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.235.2.6 2007/07/29 11:31:54 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.235.2.7 2007/08/20 21:28:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.6 2007/07/29 11:31:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.7 2007/08/20 21:28:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -526,7 +526,7 @@ vm_map_lock(struct vm_map *map)
 {
 
 	if ((map->flags & VM_MAP_INTRSAFE) != 0) {
-		mutex_enter(&map->mutex);
+		mutex_spin_enter(&map->mutex);
 		return;
 	}
 
@@ -574,7 +574,7 @@ vm_map_unlock(struct vm_map *map)
 {
 
 	if ((map->flags & VM_MAP_INTRSAFE) != 0)
-		mutex_exit(&map->mutex);
+		mutex_spin_exit(&map->mutex);
 	else {
 		KASSERT(rw_write_held(&map->lock));
 		rw_exit(&map->lock);
@@ -668,11 +668,11 @@ uvm_mapent_alloc_split(struct vm_map *map,
 	if (old_entry->flags & UVM_MAP_QUANTUM) {
 		struct vm_map_kernel *vmk = vm_map_to_kernel(map);
 
-		mutex_enter(&uvm_kentry_lock);
+		mutex_spin_enter(&uvm_kentry_lock);
 		me = vmk->vmk_merged_entries;
 		KASSERT(me);
 		vmk->vmk_merged_entries = me->next;
-		mutex_exit(&uvm_kentry_lock);
+		mutex_spin_exit(&uvm_kentry_lock);
 		KASSERT(me->flags & UVM_MAP_QUANTUM);
 	} else {
 		me = uvm_mapent_alloc(map, flags);
@@ -723,10 +723,10 @@ uvm_mapent_free_merged(struct vm_map *map, struct vm_map_entry *me)
 		    (me->flags & UVM_MAP_KERNEL));
 
 		vmk = vm_map_to_kernel(map);
-		mutex_enter(&uvm_kentry_lock);
+		mutex_spin_enter(&uvm_kentry_lock);
 		me->next = vmk->vmk_merged_entries;
 		vmk->vmk_merged_entries = me;
-		mutex_exit(&uvm_kentry_lock);
+		mutex_spin_exit(&uvm_kentry_lock);
 	} else {
 		uvm_mapent_free(me);
 	}
@@ -4403,14 +4403,14 @@ again:
 	/*
 	 * try to grab an entry from freelist.
 	 */
-	mutex_enter(&uvm_kentry_lock);
+	mutex_spin_enter(&uvm_kentry_lock);
 	ukh = LIST_FIRST(&vm_map_to_kernel(map)->vmk_kentry_free);
 	if (ukh) {
 		entry = uvm_kmapent_get(ukh);
 		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK)
 			LIST_REMOVE(ukh, ukh_listq);
 	}
-	mutex_exit(&uvm_kentry_lock);
+	mutex_spin_exit(&uvm_kentry_lock);
 
 	if (entry)
 		return entry;
@@ -4462,10 +4462,10 @@ again:
 	}
 	KASSERT(ukh->ukh_nused == 2);
 
-	mutex_enter(&uvm_kentry_lock);
+	mutex_spin_enter(&uvm_kentry_lock);
 	LIST_INSERT_HEAD(&vm_map_to_kernel(map)->vmk_kentry_free,
 	    ukh, ukh_listq);
-	mutex_exit(&uvm_kentry_lock);
+	mutex_spin_exit(&uvm_kentry_lock);
 
 	/*
 	 * return second entry.
@@ -4496,14 +4496,14 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	ukh = UVM_KHDR_FIND(entry);
 	map = ukh->ukh_map;
 
-	mutex_enter(&uvm_kentry_lock);
+	mutex_spin_enter(&uvm_kentry_lock);
 	uvm_kmapent_put(ukh, entry);
 	if (ukh->ukh_nused > 1) {
 		if (ukh->ukh_nused == UVM_KMAPENT_CHUNK - 1)
 			LIST_INSERT_HEAD(
 			    &vm_map_to_kernel(map)->vmk_kentry_free,
 			    ukh, ukh_listq);
-		mutex_exit(&uvm_kentry_lock);
+		mutex_spin_exit(&uvm_kentry_lock);
 		return;
 	}
 
@@ -4515,11 +4515,11 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 
 	if (LIST_FIRST(&vm_map_to_kernel(map)->vmk_kentry_free) == ukh &&
 	    LIST_NEXT(ukh, ukh_listq) == NULL) {
-		mutex_exit(&uvm_kentry_lock);
+		mutex_spin_exit(&uvm_kentry_lock);
 		return;
 	}
 	LIST_REMOVE(ukh, ukh_listq);
-	mutex_exit(&uvm_kentry_lock);
+	mutex_spin_exit(&uvm_kentry_lock);
 
 	KASSERT(ukh->ukh_nused == 1);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.126.2.2 2007/07/15 22:16:34 ad Exp $	*/
+/*	$NetBSD: conf.h,v 1.126.2.3 2007/08/20 21:28:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -211,6 +211,7 @@ int	ttyerrpoll (struct tty *, int, struct lwp *);
 int	ttynullioctl(struct tty *, u_long, void *, int, struct lwp *);
 
 int	iskmemdev(dev_t);
+int	seltrue_kqfilter(dev_t, struct knote *);
 #endif
 
 #ifdef _KERNEL

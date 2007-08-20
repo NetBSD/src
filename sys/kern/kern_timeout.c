@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.21.4.4 2007/07/15 15:52:55 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.21.4.5 2007/08/20 21:27:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21.4.4 2007/07/15 15:52:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.21.4.5 2007/08/20 21:27:36 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -217,8 +217,7 @@ callout_barrier(callout_impl_t *c)
 		ci->ci_data.cpu_callout_nwait++;
 		callout_ev_block.ev_count++;
 
-		lwp_lock(l);
-		lwp_unlock_to(l, &callout_lock);
+		sleepq_enter(&callout_sleepq, l);
 		sleepq_enqueue(&callout_sleepq, sched_kpri(l), ci,
 		    "callout", &sleep_syncobj);
 		sleepq_block(0, false);
@@ -576,6 +575,8 @@ callout_softclock(void *v)
 		c = CIRCQ_FIRST(&timeout_todo);
 		KASSERT(c->c_magic == CALLOUT_MAGIC);
 		KASSERT(c->c_func != NULL);
+		KASSERT((c->c_flags & CALLOUT_PENDING) != 0);
+		KASSERT((c->c_flags & CALLOUT_FIRED) == 0);
 		CIRCQ_REMOVE(&c->c_list);
 
 		/* If due run it, otherwise insert it into the right bucket. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.115.2.2 2007/06/08 14:17:44 ad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.115.2.3 2007/08/20 21:27:58 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.115.2.2 2007/06/08 14:17:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.115.2.3 2007/08/20 21:27:58 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -681,7 +681,7 @@ in_losing(struct inpcb *inp)
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
 		if (rt->rt_flags & RTF_DYNAMIC)
-			(void) rtrequest(RTM_DELETE, rt_key(rt),
+			(void) rtrequest(RTM_DELETE, rt_getkey(rt),
 				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
 				NULL);
 		/*

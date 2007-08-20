@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.57.2.1 2007/06/08 14:18:02 ad Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.57.2.2 2007/08/20 21:28:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.57.2.1 2007/06/08 14:18:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.57.2.2 2007/08/20 21:28:09 ad Exp $");
 
 #include "opt_eon.h"
 
@@ -289,15 +289,13 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	    (gate = info->rti_info[RTAX_GATEWAY]) != NULL) { /*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
-#define SDL(x) ((const struct sockaddr_dl *)x)
-#define SIN(x) ((const struct sockaddr_in *)x)
-			if (SDL(gate)->sdl_alen == 1)
-				el->el_snpaoffset = *(const u_char *)CLLADDR(SDL(gate));
+			if (satocsdl(gate)->sdl_alen == 1)
+				el->el_snpaoffset = *(const u_char *)CLLADDR(satocsdl(gate));
 			else
-				ipaddrloc = CLLADDR(SDL(gate));
+				ipaddrloc = CLLADDR(satocsdl(gate));
 			break;
 		case AF_INET:
-			ipaddrloc = &SIN(gate)->sin_addr;
+			ipaddrloc = &satocsin(gate)->sin_addr;
 			break;
 		default:
 			return;
@@ -348,8 +346,7 @@ eonoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sdst,
 	ifp->if_opackets++;
 	if (rt == NULL || (el = (struct eon_llinfo *)rt->rt_llinfo) == NULL) {
 		if (dst->siso_family == AF_LINK) {
-			const struct sockaddr_dl *sdl =
-			    (const struct sockaddr_dl *)dst;
+			const struct sockaddr_dl *sdl = satocsdl(dst);
 
 			ipaddrloc = CLLADDR(sdl);
 			alen = sdl->sdl_alen;

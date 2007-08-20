@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.63.6.4 2007/07/15 13:27:52 ad Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.63.6.5 2007/08/20 21:27:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.6.4 2007/07/15 13:27:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.6.5 2007/08/20 21:27:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,22 +57,20 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.63.6.4 2007/07/15 13:27:52 ad Exp 
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	umapfs_mount(struct mount *, const char *, void *, size_t *,
-			  struct nameidata *, struct lwp *);
-int	umapfs_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(umapfs);
 
 /*
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, data_len, ndp, l)
+umapfs_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct nameidata *ndp;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct umap_args *args = data;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
@@ -113,15 +111,15 @@ umapfs_mount(mp, path, data, data_len, ndp, l)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|LOCKLEAF,
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
 		UIO_USERSPACE, args->umap_target, l);
-	if ((error = namei(ndp)) != 0)
+	if ((error = namei(&nd)) != 0)
 		return (error);
 
 	/*
 	 * Sanity check on lower vnode
 	 */
-	lowerrootvp = ndp->ni_vp;
+	lowerrootvp = nd.ni_vp;
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("vp = %p, check for VDIR...\n", lowerrootvp);
 #endif
@@ -223,7 +221,7 @@ umapfs_mount(mp, path, data, data_len, ndp, l)
 	amp->umapm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->umap_target,
-	    UIO_USERSPACE, mp, l);
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -320,7 +318,7 @@ struct vfsops umapfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	layerfs_snapshot,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	umapfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },

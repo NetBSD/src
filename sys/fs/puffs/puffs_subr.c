@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.22.2.9 2007/08/19 19:24:51 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.22.2.10 2007/08/20 21:26:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.9 2007/08/19 19:24:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.22.2.10 2007/08/20 21:26:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -189,19 +189,20 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	}
 
 	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
+	memset(pnode, 0, sizeof(struct puffs_node));
+
 	pnode->pn_cookie = cookie;
-	pnode->pn_stat = 0;
 	pnode->pn_refcount = 1;
 
 	mutex_init(&pnode->pn_mtx, MUTEX_DEFAULT, IPL_NONE);
 	SLIST_INIT(&pnode->pn_sel.sel_klist);
-	pnode->pn_revents = 0;
 
 	plist = puffs_cookie2hashlist(pmp, cookie);
 	LIST_INSERT_HEAD(plist, pnode, pn_hashent);
 	vp->v_data = pnode;
 	vp->v_type = type;
 	pnode->pn_vp = vp;
+	pnode->pn_serversize = vsize;
 
 	genfs_node_init(vp, &puffs_genfsops);
 	*vpp = vp;
@@ -585,6 +586,7 @@ puffs_parkdone_asyncbioread(struct puffs_req *preq, void *arg)
 	free(preq, M_PUFFS);
 }
 
+/* XXX: userspace can leak kernel resources */
 void
 puffs_parkdone_poll(struct puffs_req *preq, void *arg)
 {
