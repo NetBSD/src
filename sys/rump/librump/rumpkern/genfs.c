@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.15 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.16 2007/08/20 22:58:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -169,8 +169,8 @@ genfs_getpages(void *v)
 	printf("a_offset: %x, startoff: 0x%x, endoff 0x%x\n", (int)ap->a_offset, (int)curoff, (int)endoff);
 
 	/* read everything into a buffer */
-	tmpbuf = rumpuser_malloc(remain, 0);
-	memset(tmpbuf, 0, remain);
+	tmpbuf = rumpuser_malloc(round_page(remain), 0);
+	memset(tmpbuf, 0, round_page(remain));
 	for (bufoff = 0; remain; remain -= xfersize, bufoff+=xfersize) {
 		struct vnode *devvp;
 		daddr_t lbn, bn;
@@ -303,7 +303,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	assert(curoff > smallest);
 
 	/* then we write */
-	for (bufoff = 0; bufoff < curoff - smallest; bufoff += xfersize) {
+	for (bufoff = 0; bufoff < MIN(curoff-smallest,eof); bufoff+=xfersize) {
 		struct vnode *devvp;
 		daddr_t bn, lbn;
 		int run, error;
@@ -317,6 +317,15 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 		xfersize = MIN(((lbn+1+run) << bshift) - (smallest+bufoff),
 		     curoff - (smallest+bufoff));
+
+		/*
+		 * We might run across blocks which aren't allocated yet.
+		 * A reason might be e.g. the write operation being still
+		 * in the kernel page cache while truncate has already
+		 * enlarged the file.  So just ignore those ranges.
+		 */
+		if (bn == -1)
+			continue;
 
 		/* only write max what we are allowed to write */
 		buf.b_bcount = xfersize;
