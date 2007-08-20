@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.32 2007/06/30 15:31:49 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.33 2007/08/20 04:49:41 skd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.32 2007/06/30 15:31:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.33 2007/08/20 04:49:41 skd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,6 +387,39 @@ compat_43_sa_put(from)
 		return (error);
 
 	return (0);
+}
+
+u_long 
+compat_cvtcmd(u_long cmd)
+{ 
+	u_long ncmd;
+
+	switch (cmd) {
+	case OSIOCSIFADDR:
+	case OOSIOCGIFADDR:
+	case OSIOCSIFDSTADDR:
+	case OOSIOCGIFDSTADDR:
+	case OSIOCSIFFLAGS:
+	case OSIOCGIFFLAGS:
+	case OOSIOCGIFBRDADDR:
+	case OSIOCSIFBRDADDR:
+	case OOSIOCGIFCONF:
+	case OOSIOCGIFNETMASK:
+	case OSIOCSIFNETMASK:
+        case OSIOCGIFCONF:
+	case OSIOCADDMULTI:
+	case OSIOCDELMULTI:
+	case OSIOCSIFMEDIA:
+	case OBIOCGETIF:
+        case OBIOCSETIF:
+	case OTAPGIFNAME:
+		ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | 
+			(sizeof(struct ifreq) << IOCPARM_SHIFT);
+		break;
+	default:
+		ncmd = cmd;
+	}
+	return (ncmd);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.100 2007/08/14 16:03:48 joerg Exp $ */
+/*	$NetBSD: if_gre.c,v 1.101 2007/08/20 04:49:41 skd Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.100 2007/08/14 16:03:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.101 2007/08/20 04:49:41 skd Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.100 2007/08/14 16:03:48 joerg Exp $");
 
 #include <net/if_gre.h>
 
+#include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
 /*
  * It is not easy to calculate the right value for a GRE MTU.
@@ -907,7 +908,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct oifreq *oifr = NULL;
 	struct ifreq ifrb;
 
-	cmd = cvtcmd(cmd);
+	cmd = compat_cvtcmd(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
