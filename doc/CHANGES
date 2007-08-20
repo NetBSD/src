@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.910 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.911 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -202,3 +202,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	spdmem(4): Add Serial Presence Detect driver/support. This decodes
 		technical specifications stored in the eeprom on common types
 		of memory modules. [tnn 20070818]
+	btbc(4): Add support for AnyCom BlueCard. [kiyohara 20070820]
