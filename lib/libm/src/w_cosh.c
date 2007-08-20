@@ -12,15 +12,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_cosh.c,v 1.9 2002/05/26 22:02:00 wiz Exp $");
+__RCSID("$NetBSD: w_cosh.c,v 1.10 2007/08/20 16:01:39 drochner Exp $");
 #endif
 
 /*
  * wrapper cosh(x)
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __weak_alias
+__weak_alias(cosh, _cosh)
+#endif
 
 double
 cosh(double x)		/* wrapper cosh */
