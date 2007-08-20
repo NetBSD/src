@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.33 2007/08/20 04:49:41 skd Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.34 2007/08/20 16:52:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.33 2007/08/20 04:49:41 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.34 2007/08/20 16:52:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,37 +389,26 @@ compat_43_sa_put(from)
 	return (0);
 }
 
+
+/*
+ * XXX: The following check depends on the fact that the only struct
+ * sized 0x20 bytes in the ifioctls is struct oifreq and struct ifcapreq.
+ * If that changes, then we'll need to use an explicit list here.
+ * (But the actual list is ~60 entries long and uses includes all over
+ * the tree...)
+ */
 u_long 
 compat_cvtcmd(u_long cmd)
 { 
 	u_long ncmd;
 
-	switch (cmd) {
-	case OSIOCSIFADDR:
-	case OOSIOCGIFADDR:
-	case OSIOCSIFDSTADDR:
-	case OOSIOCGIFDSTADDR:
-	case OSIOCSIFFLAGS:
-	case OSIOCGIFFLAGS:
-	case OOSIOCGIFBRDADDR:
-	case OSIOCSIFBRDADDR:
-	case OOSIOCGIFCONF:
-	case OOSIOCGIFNETMASK:
-	case OSIOCSIFNETMASK:
-        case OSIOCGIFCONF:
-	case OSIOCADDMULTI:
-	case OSIOCDELMULTI:
-	case OSIOCSIFMEDIA:
-	case OBIOCGETIF:
-        case OBIOCSETIF:
-	case OTAPGIFNAME:
-		ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | 
-			(sizeof(struct ifreq) << IOCPARM_SHIFT);
-		break;
-	default:
-		ncmd = cmd;
-	}
-	return (ncmd);
+#define ifcapreq(x) ((x) == SIOCGIFCAP || (x) == SIOCSIFCAP)
+
+	ncmd = ((IOCPARM_LEN(cmd) == sizeof(struct oifreq) && !ifcapreq(cmd)) ?
+		((cmd & ~(IOCPARM_MASK << IOCPARM_SHIFT)) |
+		 (sizeof(struct ifreq) << IOCPARM_SHIFT)) : cmd);
+
+	return ncmd;
 }
 
 int
