@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.16 2007/08/20 22:58:03 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.17 2007/08/20 22:59:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -235,8 +235,6 @@ genfs_getpages(void *v)
 
 /*
  * simplesimplesimple: we put all pages every time.
- *
- * ayh: I don't even want to think about bsize < PAGE_SIZE
  */
 int
 genfs_putpages(void *v)
