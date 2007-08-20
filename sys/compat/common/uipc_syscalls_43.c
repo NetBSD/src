@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.35 2007/08/20 17:48:17 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.36 2007/08/20 19:19:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.35 2007/08/20 17:48:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.36 2007/08/20 19:19:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,22 +421,6 @@ compat_cvtcmd(u_long cmd)
 	case GRESADDRS:
 	case GRESPROTO:
 	case GRESSOCK:
-	case OBIOCGETIF:
-	case OOSIOCGIFADDR:
-	case OOSIOCGIFBRDADDR:
-	case OOSIOCGIFCONF:
-	case OOSIOCGIFDSTADDR:
-	case OOSIOCGIFNETMASK:
-	case OSIOCADDMULTI:
-	case OSIOCDELMULTI:
-	case OSIOCGIFFLAGS:
-	case OSIOCSIFADDR:
-	case OSIOCSIFBRDADDR:
-	case OSIOCSIFDSTADDR:
-	case OSIOCSIFFLAGS:
-	case OSIOCSIFMEDIA:
-	case OSIOCSIFNETMASK:
-	case OTAPGIFNAME:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCDIFADDR:
@@ -487,8 +471,6 @@ compat_cvtcmd(u_long cmd)
 	case SIOCSRTRFLUSH_IN6:
 	case SIOCSVH:
 	case TAPGIFNAME:
-        case OBIOCSETIF:
-        case OSIOCGIFCONF:
 		return ncmd;
 	}
 	return cmd;
