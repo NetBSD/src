@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.10.2.1 2007/08/19 19:24:09 ad Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.10.2.2 2007/08/20 18:16:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.10.2.1 2007/08/19 19:24:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.10.2.2 2007/08/20 18:16:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -350,8 +350,10 @@ mmemdetach(struct device *self, int flags)
 		 * detach disks
 		 */
 		for (i = 0; i < sc->sc_npt; i++) {
-			if (sc->sc_pt[i].pt_flags & MMEM_PT_OK)
+			if (sc->sc_pt[i].pt_flags & MMEM_PT_OK) {
 				disk_detach(&sc->sc_pt[i].pt_dk);
+				disk_destroy(&sc->sc_pt[i].pt_dk);
+			}
 		}
 		free(sc->sc_pt, M_DEVBUF);
 	}
@@ -424,8 +426,7 @@ mmem_intr(void *dev, struct maple_response *response, int sz, int flags)
 			    pt->pt_info.icon,
 			    pt->pt_info.datasz);
 
-			pt->pt_dk.dk_driver = &mmemdkdriver;
-			pt->pt_dk.dk_name = pt->pt_name;
+			disk_init(&pt->pt_dk, pt->pt_name, &mmemdkdriver);
 			disk_attach(&pt->pt_dk);
 
 			mmem_defaultlabel(sc, pt, pt->pt_dk.dk_label);

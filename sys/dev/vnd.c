@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.9 2007/08/19 19:24:22 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.10 2007/08/20 18:16:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.9 2007/08/19 19:24:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.10 2007/08/20 18:16:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -285,7 +285,7 @@ vnd_attach(struct device *parent, struct device *self,
 	sc->sc_comp_buff = NULL;
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
-	pseudo_disk_init(&sc->sc_dkdev);
+	disk_init(&sc->sc_dkdev, self->dv_xname, NULL);
 }
 
 static int
@@ -296,6 +296,7 @@ vnd_detach(struct device *self, int flags)
 		return EBUSY;
 
 	bufq_free(sc->sc_tab);
+	disk_destroy(&sc->sc_dkdev);
 
 	return 0;
 }
@@ -1189,8 +1190,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 
 		/* Attach the disk. */
-		vnd->sc_dkdev.dk_name = vnd->sc_dev.dv_xname;
-		pseudo_disk_attach(&vnd->sc_dkdev);
+		disk_attach(&vnd->sc_dkdev);
 
 		/* Initialize the xfer and buffer pools. */
 		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
@@ -1258,7 +1258,7 @@ unlock_and_exit:
 		pool_destroy(&vnd->sc_vxpool);
 
 		/* Detatch the disk. */
-		pseudo_disk_detach(&vnd->sc_dkdev);
+		disk_detach(&vnd->sc_dkdev);
 		break;
 
 #ifdef COMPAT_30

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.70.2.2 2007/08/19 19:24:36 ad Exp $	*/
+/*	$NetBSD: xy.c,v 1.70.2.3 2007/08/20 18:16:16 ad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.70.2.2 2007/08/19 19:24:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.70.2.3 2007/08/20 18:16:16 ad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -641,8 +641,6 @@ xyattach(parent, self, aux)
 	 * to start with a clean slate.
 	 */
 	bzero(&xy->sc_dk, sizeof(xy->sc_dk));
-	xy->sc_dk.dk_driver = &xydkdriver;
-	xy->sc_dk.dk_name = xy->sc_dev.dv_xname;
 
 	/* if booting, init the xy_softc */
 
@@ -738,6 +736,7 @@ xyattach(parent, self, aux)
 
 	xy->hw_spt = spt = 0; /* XXX needed ? */
 	/* Attach the disk: must be before getdisklabel to malloc label */
+	disk_init(&xy->sc_dk, xy->sc_dev.dv_xname, &xydkdriver);
 	disk_attach(&xy->sc_dk);
 
 	if (xygetdisklabel(xy, buf) != XY_ERR_AOK)

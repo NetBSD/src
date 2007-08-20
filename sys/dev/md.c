@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.48.2.2 2007/08/19 19:24:21 ad Exp $	*/
+/*	$NetBSD: md.c,v 1.48.2.3 2007/08/20 18:16:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.48.2.2 2007/08/19 19:24:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.48.2.3 2007/08/20 18:16:10 ad Exp $");
 
 #include "opt_md.h"
 
@@ -67,11 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.48.2.2 2007/08/19 19:24:21 ad Exp $");
 #include <dev/md.h>
 
 /*
- * By default, include the user-space functionality.
+ * The user-space functionality is included by default.
  * Use  `options MEMORY_DISK_SERVER=0' to turn it off.
  */
 #ifndef MEMORY_DISK_SERVER
-#define	MEMORY_DISK_SERVER 1
+#error MEMORY_DISK_SERVER should be defined by opt_md.h
 #endif	/* MEMORY_DISK_SERVER */
 
 /*
@@ -179,8 +179,7 @@ md_attach(struct device *parent, struct device *self,
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	sc->sc_dkdev.dk_driver = &mddkdriver;
-	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
+	disk_init(&sc->sc_dkdev, sc->sc_dev.dv_xname, &mddkdriver);
 	disk_attach(&sc->sc_dkdev);
 }
 
