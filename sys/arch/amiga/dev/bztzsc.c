@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.28 2007/03/11 17:34:38 he Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.29 2007/08/20 19:23:45 is Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.28 2007/03/11 17:34:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.29 2007/08/20 19:23:45 is Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.28 2007/03/11 17:34:38 he Exp $");
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/bztzscvar.h>
 #include <amiga/dev/zbusvar.h>
+
+#ifdef __powerpc__
+#define badaddr(a)      badaddr_read(a, 2, NULL)
+#endif
 
 void	bztzscattach(struct device *, struct device *, void *);
 int	bztzscmatch(struct device *, struct cfdata *, void *);

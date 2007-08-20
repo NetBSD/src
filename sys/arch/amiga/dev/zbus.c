@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.59 2007/08/20 15:18:03 is Exp $ */
+/*	$NetBSD: zbus.c,v 1.60 2007/08/20 19:23:52 is Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.59 2007/08/20 15:18:03 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.60 2007/08/20 19:23:52 is Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -359,6 +359,7 @@ zbusprint(void *auxp, const char *pnp)
 void *
 zbusmap(void *pa, u_int size)
 {
+#if defined(__m68k__)
 	static vaddr_t nextkva = 0;
 	vaddr_t kva;
 
@@ -373,15 +374,12 @@ zbusmap(void *pa, u_int size)
 	nextkva += size;
 	if (nextkva > ZBUSADDR + ZBUSAVAIL)
 		panic("allocating too much Zorro I/O address space");
-#if defined(__powerpc__)
-/*
- * XXX we use direct constant mapping, so no need for:
- * physaccess((void *)kva, (void *)pa, size, PTE_RW|PTE_I);
- */
-#elif defined(__m68k__)
 	physaccess((void *)kva, (void *)pa, size, PG_RW|PG_CI);
-#else
-ERROR no support for this target CPU yet.
-#endif
 	return((void *)kva);
+#else
+/*
+ * XXX we use direct constant mapping
+ */
+	return(pa);
+#endif
 }
