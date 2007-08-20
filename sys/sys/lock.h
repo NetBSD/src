@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.69.2.4 2007/07/29 11:33:05 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.69.2.5 2007/08/20 18:10:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -163,13 +163,14 @@ struct lock {
  * or passed in as arguments to the lock manager. The LK_REENABLE flag may be
  * set only at the release of a lock obtained by drain.
  */
-#define	LK_EXTFLG_MASK	0x00700070	/* mask of external flags */
+#define	LK_EXTFLG_MASK	0x00f00070	/* mask of external flags */
 #define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
 #define	LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
 #define	LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
 #define	LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
 #define	LK_SETRECURSE	0x00100000	/* other locks while we have it OK */
 #define	LK_RECURSEFAIL  0x00200000	/* attempt at recursive lock fails */
+#define	LK_RESURRECT	0x00800000	/* immediately reenable drained lock */
 /*
  * Internal lock flags.
  *
