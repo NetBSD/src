@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.21 2007/03/04 06:03:45 christos Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.21.2.1 2007/08/20 22:59:47 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.21 2007/03/04 06:03:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.21.2.1 2007/08/20 22:59:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -213,4 +213,11 @@ void
 softdep_releasefile(struct inode *ip)
 {
 	panic("softdep_releasefile called");
+}
+
+void
+softdep_unmount(struct mount *mp)
+{
+
+	return;
 }
