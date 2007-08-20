@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.14 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.15 2007/08/20 15:58:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 #include <miscfs/genfs/genfs_node.h>
 #include <miscfs/genfs/genfs.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 void

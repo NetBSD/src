@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.12 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.13 2007/08/20 15:58:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,7 +55,7 @@
 
 #include <machine/pmap.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 /* dumdidumdum */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.7 2007/08/16 19:50:19 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.8 2007/08/20 15:58:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 struct proc rump_proc;
@@ -81,8 +81,8 @@ rump_init()
 	hostnamelen = strlen(hostname);
 }
 
-void
-rump_mountinit(struct mount **mpp, struct vfsops *vfsops)
+struct mount *
+rump_mnt_init(struct vfsops *vfsops, int mntflags)
 {
 	struct mount *mp;
 
@@ -90,12 +90,37 @@ rump_mountinit(struct mount **mpp, struct vfsops *vfsops)
 	memset(mp, 0, sizeof(struct mount));
 
 	mp->mnt_op = vfsops;
+	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
-	*mpp = mp;
+
+	return mp;
+}
+
+int
+rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen,
+	struct lwp *l)
+{
+	int rv;
+
+	rv = VFS_MOUNT(mp, path, data, dlen, l);
+	if (rv)
+		return rv;
+
+	rv = VFS_STATVFS(mp, &mp->mnt_stat, l);
+	if (rv) {
+		VFS_UNMOUNT(mp, MNT_FORCE, l);
+		return rv;
+	}
+
+	rv =  VFS_START(mp, 0, l);
+	if (rv)
+		VFS_UNMOUNT(mp, MNT_FORCE, l);
+
+	return rv;
 }
 
 void
-rump_mountdestroy(struct mount *mp)
+rump_mnt_destroy(struct mount *mp)
 {
 
 	rumpuser_free(mp);
@@ -233,9 +258,193 @@ rump_vfs_getopsbyname(const char *name)
 	return vfs_getopsbyname(name);
 }
 
+struct vattr*
+rump_vattr_init()
+{
+	struct vattr *vap;
+
+	vap = rumpuser_malloc(sizeof(struct vattr), 0);
+	vattr_null(vap);
+
+	return vap;
+}
+
 void
-rump_vattr_null(struct vattr *vap)
+rump_vattr_settype(struct vattr *vap, enum vtype vt)
 {
 
-	vattr_null(vap);
+	vap->va_type = vt;
+}
+
+void
+rump_vattr_setmode(struct vattr *vap, mode_t mode)
+{
+
+	vap->va_mode = mode;
+}
+
+void
+rump_vattr_setrdev(struct vattr *vap, dev_t dev)
+{
+
+	vap->va_rdev = dev;
+}
+
+void
+rump_vattr_free(struct vattr *vap)
+{
+
+	rumpuser_free(vap);
+}
+
+void
+rump_vp_incref(struct vnode *vp)
+{
+
+	++vp->v_usecount;
+}
+
+int
+rump_vp_getref(struct vnode *vp)
+{
+
+	return vp->v_usecount;
+}
+
+void
+rump_vp_decref(struct vnode *vp)
+{
+
+	--vp->v_usecount;
+}
+
+struct uio *
+rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
+{
+	struct uio *uio;
+	enum uio_rw uiorw;
+
+	switch (rw) {
+	case RUMPUIO_READ:
+		uiorw = UIO_READ;
+		break;
+	case RUMPUIO_WRITE:
+		uiorw = UIO_WRITE;
+		break;
+	}
+
+	uio = rumpuser_malloc(sizeof(struct uio), 0);
+	uio->uio_iov = rumpuser_malloc(sizeof(struct iovec), 0);
+
+	uio->uio_iov->iov_base = buf;
+	uio->uio_iov->iov_len = bufsize;
+
+	uio->uio_iovcnt = 1;
+	uio->uio_offset = offset;
+	uio->uio_resid = bufsize;
+	uio->uio_rw = uiorw;
+	uio->uio_vmspace = UIO_VMSPACE_SYS;
+
+	return uio;
+}
+
+size_t
+rump_uio_getresid(struct uio *uio)
+{
+
+	return uio->uio_resid;
+}
+
+off_t
+rump_uio_getoff(struct uio *uio)
+{
+
+	return uio->uio_offset;
+}
+
+size_t
+rump_uio_free(struct uio *uio)
+{
+	size_t resid;
+
+	resid = uio->uio_resid;
+	rumpuser_free(uio->uio_iov);
+	rumpuser_free(uio);
+
+	return resid;
+}
+
+void
+rump_vp_lock_exclusive(struct vnode *vp)
+{
+
+	/* we can skip vn_lock() */
+	VOP_LOCK(vp, LK_EXCLUSIVE);
+}
+
+void
+rump_vp_lock_shared(struct vnode *vp)
+{
+
+	VOP_LOCK(vp, LK_SHARED);
+}
+
+void
+rump_vp_unlock(struct vnode *vp)
+{
+
+	VOP_UNLOCK(vp, 0);
+}
+
+int
+rump_vp_islocked(struct vnode *vp)
+{
+
+	return VOP_ISLOCKED(vp);
+}
+
+int
+rump_vfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+{
+
+	return VFS_UNMOUNT(mp, mntflags, l);
+}
+
+int
+rump_vfs_root(struct mount *mp, struct vnode **vpp)
+{
+
+	return VFS_ROOT(mp, vpp);
+}
+
+/* XXX: statvfs is different from system to system */
+#if 0
+int
+rump_vfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+{
+
+	return VFS_STATVFS(mp, sbp, l);
+}
+#endif
+
+int
+rump_vfs_sync(struct mount *mp, int wait, rump_kauth_cred_t cred,
+	struct lwp *l)
+{
+
+	return VFS_SYNC(mp, wait ? MNT_WAIT : MNT_NOWAIT, (kauth_cred_t)cred,l);
+}
+
+int
+rump_vfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
+{
+
+	return VFS_FHTOVP(mp, fid, vpp);
+}
+
+int
+rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
+{
+
+	return VFS_VPTOFH(vp, fid, fidsize);
 }

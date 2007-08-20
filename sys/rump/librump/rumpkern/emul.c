@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.9 2007/08/15 22:13:15 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.10 2007/08/20 15:58:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,7 +48,7 @@
 
 #include <uvm/uvm_map.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 time_t time_second = 1;
