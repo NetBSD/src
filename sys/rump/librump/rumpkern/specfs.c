@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.5 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.6 2007/08/20 15:58:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 /* We have special special ops */

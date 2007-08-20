@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.3 2007/08/19 20:06:58 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.4 2007/08/20 15:58:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,10 +33,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/mount.h>
-#include <sys/dirent.h>
-
-#include <ufs/ufs/ufsmount.h>
+#include <dirent.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -46,12 +43,16 @@
 
 #include "ukfs.h"
 
+struct fscons_args {
+	char *fspec;
+};
+
 int
 main(int argc, char *argv[])
 {
 	uint8_t buf[8192];
 	struct ukfs *fs;
-	struct ufs_args args;
+	struct fscons_args args;
 	struct dirent *dent;
 	char *p;
 	int rv;
@@ -73,12 +74,14 @@ main(int argc, char *argv[])
 	rv = ukfs_getdents(fs, "/", 0, buf, sizeof(buf));
 	printf("rv %d\n", rv);
 
+#ifdef __NetBSD__
 	dent = (void *)buf;
 	while (rv) {
 		printf("%s\n", dent->d_name);
 		rv -= _DIRENT_SIZE(dent);
 		dent = _DIRENT_NEXT(dent);
 	}
+#endif
 
 	rv = ukfs_read(fs, "/etc/passwd", 0, buf, sizeof(buf));
 	printf("rv %d\n%s\n", rv, buf);
@@ -117,12 +120,14 @@ main(int argc, char *argv[])
 	rv = ukfs_getdents(fs, "/etc", 0, buf, sizeof(buf));
 	printf("rv %d\n", rv);
 
+#ifdef __NetBSD__
 	dent = (void *)buf;
 	while (rv) {
 		printf("%s\n", dent->d_name);
 		rv -= _DIRENT_SIZE(dent);
 		dent = _DIRENT_NEXT(dent);
 	}
+#endif
 
 	ukfs_release(fs, 1);
 }
