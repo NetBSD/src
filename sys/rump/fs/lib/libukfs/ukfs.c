@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.5 2007/08/20 15:58:13 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.6 2007/08/20 23:01:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -109,16 +109,6 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		warnx("VFS_MOUNT %d", rv);
 		goto out;
 	}
-
-	/* XXX: this doesn't belong here, but it'll be gone soon altogether */
-#if 0
-	if ((1<<mp->mnt_fs_bshift) < getpagesize()
-	    && (mntflags & MNT_RDONLY) == 0) {
-		rv = EOPNOTSUPP;
-		warnx("Sorry, fs bsize < PAGE_SIZE not yet supported for rw");
-		goto out;
-	}
-#endif
 	fs->ukfs_mp = mp;
 	rump_fakeblk_deregister(devpath);
 
