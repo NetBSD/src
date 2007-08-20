@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.95.2.4 2007/08/19 19:24:58 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.95.2.5 2007/08/20 03:22:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -256,7 +256,7 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	struct bio_ops bioops;
+extern	struct bio_ops *bioops;
 extern	u_int nbuf;		/* The number of buffer headers */
 
 __BEGIN_DECLS
