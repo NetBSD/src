@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.10 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.11 2007/08/20 15:58:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,7 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 int (**dead_vnodeop_p)(void *);

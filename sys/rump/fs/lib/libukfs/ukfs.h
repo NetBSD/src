@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.4 2007/08/19 15:57:39 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.5 2007/08/20 15:58:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/vnode.h>
+
+#include <stdint.h>
+
+struct vnode;
 
 struct ukfs;
 

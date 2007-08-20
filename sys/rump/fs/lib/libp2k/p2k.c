@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.15 2007/08/19 21:24:21 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.16 2007/08/20 15:58:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,30 +28,16 @@
  */
 
 #include <sys/types.h>
-#define __UIO_EXPOSE
-#include <sys/uio.h>
-#undef __UIO_EXPOSE
 #define __VFSOPS_EXPOSE
 #include <sys/mount.h>
-#undef __VFSOPS_EXPOSE
 #include <sys/lock.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
-#include <sys/vnode.h>
-#include <sys/vnode_if.h>
-
-#include <stdbool.h>
 
 #include <assert.h>
-#include <err.h>
-#define _KERNEL /* XXX */
 #include <errno.h>
-#undef _KERNEL
 #include <puffs.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "rump.h"
 #include "p2k.h"
@@ -455,19 +441,19 @@ p2k_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	int rv;
 
-	UKFS_UIOINIT(uio, iov, dent, *reslen, *readoff, UIO_READ);
+	uio = rump_uio_setup(dent, *reslen, *readoff, RUMPUIO_READ);
 
 	VLS(opc);
-	rv = RUMP_VOP_READDIR(opc, &uio, NULL, eofflag, NULL, NULL);
+	rv = RUMP_VOP_READDIR(opc, uio, NULL, eofflag, NULL, NULL);
 	VUL(opc);
 	if (rv == 0) {
-		*reslen = uio.uio_resid;
-		*readoff = uio.uio_offset;
+		*reslen = rump_uio_getresid(uio);
+		*readoff = rump_uio_getoff(uio);
 	}
+	rump_uio_free(uio);
 
 	return rv;
 }
@@ -476,17 +462,14 @@ int
 p2k_node_readlink(struct puffs_cc *pcc, void *opc,
 	const struct puffs_cred *pcr, char *linkname, size_t *linklen)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	int rv;
 
-	UKFS_UIOINIT(uio, iov, linkname, *linklen, 0, UIO_READ);
-
+	uio = rump_uio_setup(linkname, *linklen, 0, RUMPUIO_READ);
 	VLE(opc);
-	rv = RUMP_VOP_READLINK(opc, &uio, NULL);
+	rv = RUMP_VOP_READLINK(opc, uio, NULL);
 	VUL(opc);
-	if (rv == 0)
-		*linklen = uio.uio_offset;
+	*linklen -= rump_uio_free(uio);
 
 	return rv;
 }
@@ -495,17 +478,14 @@ int
 p2k_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	int rv;
 
-	UKFS_UIOINIT(uio, iov, buf, *resid, offset, UIO_READ);
-
+	uio = rump_uio_setup(buf, *resid, offset, RUMPUIO_READ);
 	VLS(opc);
-	rv = RUMP_VOP_READ(opc, &uio, ioflag, NULL);
+	rv = RUMP_VOP_READ(opc, uio, ioflag, NULL);
 	VUL(opc);
-	if (rv == 0)
-		*resid = uio.uio_resid;
+	*resid = rump_uio_free(uio);
 
 	return rv;
 }
@@ -514,17 +494,14 @@ int
 p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	int rv;
 
-	UKFS_UIOINIT(uio, iov, buf, *resid, offset, UIO_WRITE);
-
+	uio = rump_uio_setup(buf, *resid, offset, RUMPUIO_WRITE);
 	VLE(opc);
-	rv = RUMP_VOP_WRITE(opc, &uio, ioflag, NULL);
+	rv = RUMP_VOP_WRITE(opc, uio, ioflag, NULL);
 	VUL(opc);
-	if (rv == 0)
-		*resid = uio.uio_resid;
+	*resid = rump_uio_free(uio);
 
 	return rv;
 }

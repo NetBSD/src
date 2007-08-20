@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.4 2007/08/19 21:24:21 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.5 2007/08/20 15:58:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,14 +33,8 @@
  * involving system calls.
  */
 
-#define __UIO_EXPOSE
-#define __VFSOPS_EXPOSE
 #include <sys/types.h>
-#include <sys/uio.h>
-#include <sys/namei.h>
 #include <sys/time.h>
-#include <sys/vnode.h>
-#include <sys/vnode_if.h>
 
 #include <assert.h>
 #include <err.h>
@@ -55,7 +49,7 @@
 #include "rump.h"
 #include "ukfs.h"
 
-#define UKFS_MODE_DEFAULT 0555;
+#define UKFS_MODE_DEFAULT 0555
 
 struct ukfs {
 	struct mount *ukfs_mp;
@@ -74,9 +68,8 @@ ukfs_getrvp(struct ukfs *ukfs)
 	struct vnode *rvp;
 	int rv;
 
-	rv = VFS_ROOT(ukfs->ukfs_mp, &rvp);
+	rv = rump_vfs_root(ukfs->ukfs_mp, &rvp);
 	assert(rv == 0);
-	assert(rvp->v_flag & VROOT);
 
 	return rvp;
 }
@@ -103,41 +96,36 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	if (vfsops == NULL)
 		return NULL;
 
-	rump_mountinit(&mp, vfsops);
+	mp = rump_mnt_init(vfsops, mntflags);
 
 	fs = malloc(sizeof(struct ukfs));
 	if (fs == NULL)
 		return NULL;
 	memset(fs, 0, sizeof(struct ukfs));
 
-	mp->mnt_flag = mntflags;
 	rump_fakeblk_register(devpath);
-	rv = VFS_MOUNT(mp, mountpath, arg, &alen, curlwp);
+	rv = rump_mnt_mount(mp, mountpath, arg, &alen, curlwp);
 	if (rv) {
 		warnx("VFS_MOUNT %d", rv);
 		goto out;
 	}
 
 	/* XXX: this doesn't belong here, but it'll be gone soon altogether */
+#if 0
 	if ((1<<mp->mnt_fs_bshift) < getpagesize()
 	    && (mntflags & MNT_RDONLY) == 0) {
 		rv = EOPNOTSUPP;
 		warnx("Sorry, fs bsize < PAGE_SIZE not yet supported for rw");
 		goto out;
 	}
+#endif
 	fs->ukfs_mp = mp;
 	rump_fakeblk_deregister(devpath);
-
-	rv = VFS_STATVFS(mp, &mp->mnt_stat, NULL);
-	if (rv) {
-		warnx("VFS_STATVFS %d", rv);
-		goto out;
-	}
 
  out:
 	if (rv) {
 		if (fs->ukfs_mp)
-			rump_mountdestroy(fs->ukfs_mp);
+			rump_mnt_destroy(fs->ukfs_mp);
 		free(fs);
 		errno = rv;
 		fs = NULL;
@@ -152,28 +140,28 @@ ukfs_release(struct ukfs *fs, int dounmount)
 	int rv;
 
 	if (dounmount) {
-		rv = VFS_SYNC(fs->ukfs_mp, MNT_WAIT, rump_cred, curlwp);
-		rv += VFS_UNMOUNT(fs->ukfs_mp, 0, curlwp);
+		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
+		rv += rump_vfs_unmount(fs->ukfs_mp, 0, curlwp);
 		assert(rv == 0);
 	}
 
-	rump_mountdestroy(fs->ukfs_mp);
+	rump_mnt_destroy(fs->ukfs_mp);
 
 	free(fs);
 }
 
 /* don't need vn_lock(), since we don't have VXLOCK */
-#define VLE(a) RUMP_VOP_LOCK(a, LK_EXCLUSIVE)
-#define VLS(a) RUMP_VOP_LOCK(a, LK_SHARED)
-#define VUL(a) RUMP_VOP_UNLOCK(a, 0);
-#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
+#define VLE(a) rump_vp_lock_exclusive(a)
+#define VLS(a) rump_vp_lock_shared(a)
+#define VUL(a) rump_vp_unlock(a)
+#define AUL(a) assert(rump_vp_islocked(a) == 0)
 
 static void
 recycle(struct vnode *vp)
 {
 
 	/* XXXXX */
-	if (vp == NULL || vp->v_usecount != 0)
+	if (vp == NULL || rump_vp_getref(vp))
 		return;
 
 	VLE(vp);
@@ -275,21 +263,21 @@ int
 ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	struct vnode *vp;
+	size_t resid;
 	int rv, eofflag;
-
-	UKFS_UIOINIT(uio, iov, buf, bufsize, off, UIO_READ);
 
 	rv = ukfs_namei(ukfs_getrvp(ukfs), &dirname, RUMP_NAMEI_LOOKUP,
 	    NULL, &vp);
 	if (rv)
 		goto out;
 		
+	uio = rump_uio_setup(buf, bufsize, off, RUMPUIO_READ);
 	VLE(vp);
-	rv = RUMP_VOP_READDIR(vp, &uio, NULL, &eofflag, NULL, NULL);
+	rv = RUMP_VOP_READDIR(vp, uio, NULL, &eofflag, NULL, NULL);
 	VUL(vp);
+	resid = rump_uio_free(uio);
 
  out:
 	recycle(vp);
@@ -299,40 +287,40 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t off,
 		return -1;
 	}
 
-	return bufsize - uio.uio_resid;
+	return bufsize - resid;
 }
 
 enum ukfs_rw {UKFS_READ, UKFS_WRITE, UKFS_READLINK};
 
 static ssize_t
 readwrite(struct ukfs *ukfs, const char *filename, off_t off,
-	uint8_t *buf, size_t bufsize, enum uio_rw rw, enum ukfs_rw ukrw)
+	uint8_t *buf, size_t bufsize, enum rump_uiorw rw, enum ukfs_rw ukrw)
 {
-	struct uio uio;
-	struct iovec iov;
+	struct uio *uio;
 	struct vnode *vp;
+	size_t resid;
 	int rv;
-
-	UKFS_UIOINIT(uio, iov, buf, bufsize, off, rw);
 
 	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_LOOKUP,
 	    NULL, &vp);
 	if (rv)
 		goto out;
 
+	uio = rump_uio_setup(buf, bufsize, off, rw);
 	VLS(vp);
 	switch (ukrw) {
 	case UKFS_READ:
-		rv = RUMP_VOP_READ(vp, &uio, 0, NULL);
+		rv = RUMP_VOP_READ(vp, uio, 0, NULL);
 		break;
 	case UKFS_WRITE:
-		rv = RUMP_VOP_WRITE(vp, &uio, 0, NULL);
+		rv = RUMP_VOP_WRITE(vp, uio, 0, NULL);
 		break;
 	case UKFS_READLINK:
-		rv = RUMP_VOP_READLINK(vp, &uio, NULL);
+		rv = RUMP_VOP_READLINK(vp, uio, NULL);
 		break;
 	}
 	VUL(vp);
+	resid = rump_uio_free(uio);
 
  out:
 	recycle(vp);
@@ -342,7 +330,7 @@ readwrite(struct ukfs *ukfs, const char *filename, off_t off,
 		return -1;
 	}
 
-	return bufsize - uio.uio_resid;
+	return bufsize - resid;
 }
 
 ssize_t
@@ -351,7 +339,7 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 {
 
 	return readwrite(ukfs, filename, off, buf, bufsize,
-	    UIO_READ, UKFS_READ);
+	    RUMPUIO_READ, UKFS_READ);
 }
 
 ssize_t
@@ -360,7 +348,7 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 {
 
 	return readwrite(ukfs, filename, off, buf, bufsize,
-	    UIO_WRITE, UKFS_WRITE);
+	    RUMPUIO_WRITE, UKFS_WRITE);
 }
 
 static int
@@ -369,7 +357,7 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 {
 	struct componentname *cnp;
 	struct vnode *dvp = NULL, *vp = NULL;
-	struct vattr va;
+	struct vattr *vap;
 	int rv;
 	int (*do_fn)(struct vnode *, struct vnode **,
 		     struct componentname *, struct vattr *);
@@ -380,11 +368,6 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 		rv = EEXIST;
 	if (rv != EJUSTRETURN)
 		goto out;
-
-	rump_vattr_null(&va);
-	va.va_mode = mode;
-	va.va_rdev = dev;
-	va.va_type = vt;
 
 	switch (vt) {
 	case VDIR:
@@ -403,14 +386,21 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 		goto out;
 	}
 
+	vap = rump_vattr_init();
+	rump_vattr_settype(vap, vt);
+	rump_vattr_setmode(vap, mode);
+	rump_vattr_setrdev(vap, dev);
 	cnp = rump_makecn(RUMP_NAMEI_CREATE,
 	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
 	    strlen(filename), curlwp);
+
 	VLE(dvp);
-	rv = do_fn(dvp, &vp, cnp, &va);
+	rv = do_fn(dvp, &vp, cnp, vap);
 	if (rv == 0)
 		VUL(vp);
+
 	rump_freecn(cnp, 0);
+	rump_vattr_free(vap);
 
  out:
 	recycle(dvp);
@@ -527,10 +517,10 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 	if (rv)
 		goto out;
 
-	vp->v_usecount = 1; /* XXX kludge of the year */
+	rump_vp_incref(vp); /* XXX kludge of the year */
 	rv = ukfs_namei(ukfs_getrvp(ukfs), &f_create, RUMP_NAMEI_CREATE,
 	    &dvp, NULL);
-	vp->v_usecount = 0; /* XXX */
+	rump_vp_decref(vp); /* XXX */
 
 	if (rv == 0)
 		rv = EEXIST;
@@ -561,7 +551,7 @@ ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
 {
 	struct componentname *cnp;
 	struct vnode *dvp = NULL, *vp = NULL;
-	struct vattr va;
+	struct vattr *vap;
 	int rv;
 
 	rv = ukfs_namei(ukfs_getrvp(ukfs), &filename, RUMP_NAMEI_CREATE,
@@ -571,18 +561,20 @@ ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
 	if (rv != EJUSTRETURN)
 		goto out;
 
-	rump_vattr_null(&va);
-	va.va_mode = UKFS_MODE_DEFAULT;
-	va.va_type = VLNK;
-
+	vap = rump_vattr_init();
+	rump_vattr_setmode(vap, UKFS_MODE_DEFAULT);
+	rump_vattr_settype(vap, VLNK);
 	cnp = rump_makecn(RUMP_NAMEI_CREATE,
 	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
 	    strlen(filename), curlwp);
+
 	VLE(dvp);
-	rv = RUMP_VOP_SYMLINK(dvp, &vp, cnp, &va, linkname);
+	rv = RUMP_VOP_SYMLINK(dvp, &vp, cnp, vap, linkname);
 	if (rv == 0)
 		VUL(vp);
+
 	rump_freecn(cnp, 0);
+	rump_vattr_free(vap);
 
  out:
 	recycle(dvp);
@@ -602,5 +594,5 @@ ukfs_readlink(struct ukfs *ukfs, const char *filename,
 {
 
 	return readwrite(ukfs, filename, 0,
-	    (uint8_t *)linkbuf, buflen, UIO_READ, UKFS_READLINK);
+	    (uint8_t *)linkbuf, buflen, RUMPUIO_READ, UKFS_READLINK);
 }
