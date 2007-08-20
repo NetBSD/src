@@ -15,11 +15,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_sinf.c,v 1.7 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_sinf.c,v 1.8 2007/08/20 16:01:39 drochner Exp $");
 #endif
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#if 0 /* notyet */
+#ifdef __weak_alias
+__weak_alias(sinf, _sinf)
+#endif
+#endif
 
 float
 sinf(float x)

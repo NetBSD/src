@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_sin.c,v 1.10 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_sin.c,v 1.11 2007/08/20 16:01:39 drochner Exp $");
 #endif
 
 /* sin(x)
@@ -46,8 +46,15 @@ __RCSID("$NetBSD: s_sin.c,v 1.10 2002/05/26 22:01:58 wiz Exp $");
  *	TRIG(x) returns trig(x) nearly rounded
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#if 0 /* notyet */
+#ifdef __weak_alias
+__weak_alias(sin, _sin)
+#endif
+#endif
 
 double
 sin(double x)

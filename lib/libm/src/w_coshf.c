@@ -15,15 +15,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_coshf.c,v 1.6 2002/05/26 22:02:00 wiz Exp $");
+__RCSID("$NetBSD: w_coshf.c,v 1.7 2007/08/20 16:01:40 drochner Exp $");
 #endif
 
 /*
  * wrapper coshf(x)
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __weak_alias
+__weak_alias(coshf, _coshf)
+#endif
 
 float
 coshf(float x)		/* wrapper coshf */

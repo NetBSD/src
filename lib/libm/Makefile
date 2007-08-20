@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.78 2007/02/22 22:08:20 drochner Exp $
+#  $NetBSD: Makefile,v 1.79 2007/08/20 16:01:30 drochner Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -140,6 +140,16 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
 	llroundf.c s_frexp.c s_ldexp.c s_modf.c
+
+.PATH: ${.CURDIR}/complex
+COMMON_SRCS+= cabs.c cabsf.c carg.c cargf.c
+COMMON_SRCS+= creal.c crealf.c cimag.c cimagf.c conj.c conjf.c
+COMMON_SRCS+= csqrt.c cexp.c clog.c cpow.c
+COMMON_SRCS+= cephes_subr.c csin.c ccos.c ctan.c csinh.c ccosh.c ctanh.c
+COMMON_SRCS+= casin.c cacos.c catan.c casinh.c cacosh.c catanh.c
+COMMON_SRCS+= csqrtf.c cexpf.c clogf.c cpowf.c
+COMMON_SRCS+= cephes_subrf.c csinf.c ccosf.c ctanf.c csinhf.c ccoshf.c ctanhf.c
+COMMON_SRCS+= casinf.c cacosf.c catanf.c casinhf.c cacoshf.c catanhf.c
 
 .PATH:	${.CURDIR}/compat
 COMMON_SRCS+= compat_cabs.c compat_cabsf.c
