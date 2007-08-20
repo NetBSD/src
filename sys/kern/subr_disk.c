@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.85.2.2 2007/08/19 19:24:54 ad Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.85.2.3 2007/08/20 18:16:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.85.2.2 2007/08/19 19:24:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.85.2.3 2007/08/20 18:16:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -184,23 +184,28 @@ disk_find(const char *name)
 	return (NULL);
 }
 
-static void
-disk_init0(struct disk *diskp)
+void
+disk_init(struct disk *diskp, char *name, struct dkdriver *driver)
 {
 
 	/*
 	 * Initialize the wedge-related locks and other fields.
 	 */
-	lockinit(&diskp->dk_rawlock, PRIBIO, "dkrawlk", 0, 0);
-	lockinit(&diskp->dk_openlock, PRIBIO, "dkoplk", 0, 0);
+	mutex_init(&diskp->dk_rawlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&diskp->dk_openlock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&diskp->dk_wedges);
 	diskp->dk_nwedges = 0;
 	diskp->dk_labelsector = LABELSECTOR;
 	disk_blocksize(diskp, DEV_BSIZE);
+	diskp->dk_name = name;
+	diskp->dk_driver = driver;
 }
 
-static void
-disk_attach0(struct disk *diskp)
+/*
+ * Attach a disk.
+ */
+void
+disk_attach(struct disk *diskp)
 {
 
 	/*
@@ -223,12 +228,12 @@ disk_attach0(struct disk *diskp)
 	diskp->dk_stats = iostat_alloc(IOSTAT_DISK, diskp, diskp->dk_name);
 }
 
-static void
-disk_detach0(struct disk *diskp)
+/*
+ * Detach a disk.
+ */
+void
+disk_detach(struct disk *diskp)
 {
-
-	lockdestroy(&diskp->dk_openlock);
-	lockdestroy(&diskp->dk_rawlock);
 
 	/*
 	 * Remove from the drivelist.
@@ -250,57 +255,12 @@ disk_detach0(struct disk *diskp)
 	free(diskp->dk_cpulabel, M_DEVBUF);
 }
 
-/*
- * Attach a disk.
- */
 void
-disk_attach(struct disk *diskp)
+disk_destroy(struct disk *diskp)
 {
 
-	disk_init0(diskp);
-	disk_attach0(diskp);
-}
-
-/*
- * Detach a disk.
- */
-void
-disk_detach(struct disk *diskp)
-{
-
-	(void) lockmgr(&diskp->dk_openlock, LK_DRAIN, NULL);
-	(void) lockmgr(&diskp->dk_rawlock, LK_DRAIN, NULL);
-	disk_detach0(diskp);
-}
-
-/*
- * Initialize a pseudo disk.
- */
-void
-pseudo_disk_init(struct disk *diskp)
-{
-
-	disk_init0(diskp);
-}
-
-/*
- * Attach a pseudo disk.
- */
-void
-pseudo_disk_attach(struct disk *diskp)
-{
-
-	disk_attach0(diskp);
-}
-
-/*
- * Detach a pseudo disk.
- */
-void
-pseudo_disk_detach(struct disk *diskp)
-{
-
-	disk_detach0(diskp);
+	mutex_destroy(&diskp->dk_openlock);
+	mutex_destroy(&diskp->dk_rawlock);
 }
 
 /*

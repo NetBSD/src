@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.80.2.2 2007/08/19 19:24:11 ad Exp $	*/
+/*	$NetBSD: rd.c,v 1.80.2.3 2007/08/20 18:16:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.80.2.2 2007/08/19 19:24:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.80.2.3 2007/08/20 18:16:05 ad Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -382,7 +382,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	 * Initialize and attach the disk structure.
 	 */
 	memset(&sc->sc_dkdev, 0, sizeof(sc->sc_dkdev));
-	sc->sc_dkdev.dk_name = sc->sc_dev.dv_xname;
+	disk_init(&sc->sc_dkdev, sc->sc_dev.dv_xname, NULL);
 	disk_attach(&sc->sc_dkdev);
 
 	sc->sc_slave = ha->ha_slave;

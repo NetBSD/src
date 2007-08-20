@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.43.2.2 2007/07/15 15:53:03 ad Exp $	*/
+/*	$NetBSD: disk.h,v 1.43.2.3 2007/08/20 18:16:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -90,8 +90,9 @@
 #include <sys/dkio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/iostat.h>
+
 #include <prop/proplib.h>
 
 struct buf;
@@ -426,11 +427,11 @@ struct disk {
 	/*
 	 * Information required to be the parent of a disk wedge.
 	 */
-	struct lock	dk_rawlock;	/* lock on these fields */
-	struct vnode	*dk_rawvp;	/* vnode for the RAW_PART bdev */
+	kmutex_t	dk_rawlock;	/* lock on these fields */
 	u_int		dk_rawopens;	/* # of openes of rawvp */
+	struct vnode	*dk_rawvp;	/* vnode for the RAW_PART bdev */
 
-	struct lock	dk_openlock;	/* lock on these and openmask */
+	kmutex_t	dk_openlock;	/* lock on these and openmask */
 	u_int		dk_nwedges;	/* # of configured wedges */
 					/* all wedges on this disk */
 	LIST_HEAD(, dkwedge_softc) dk_wedges;
@@ -501,9 +502,8 @@ struct proc;
 
 void	disk_attach(struct disk *);
 void	disk_detach(struct disk *);
-void	pseudo_disk_init(struct disk *);
-void	pseudo_disk_attach(struct disk *);
-void	pseudo_disk_detach(struct disk *);
+void	disk_init(struct disk *, char *, struct dkdriver *);
+void	disk_destroy(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);
 void	disk_blocksize(struct disk *, int);

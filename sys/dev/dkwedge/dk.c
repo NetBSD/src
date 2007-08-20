@@ -1,7 +1,7 @@
-/*	$NetBSD: dk.c,v 1.22.2.7 2007/08/19 19:24:23 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.8 2007/08/20 18:16:12 ad Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.7 2007/08/19 19:24:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.8 2007/08/20 18:16:12 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.7 2007/08/19 19:24:23 ad Exp $");
 #include <sys/conf.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/kauth.h>
@@ -288,7 +287,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 * Wedge will be added; increment the wedge count for the parent.
 	 * Only allow this to happend if RAW_PART is the only thing open.
 	 */
-	(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&pdk->dk_openlock);
 	if (pdk->dk_openmask & ~(1 << RAW_PART))
 		error = EBUSY;
 	else {
@@ -315,7 +314,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 			LIST_INSERT_HEAD(&pdk->dk_wedges, sc, sc_plink);
 		}
 	}
-	(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&pdk->dk_openlock);
 	if (error) {
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
@@ -365,10 +364,10 @@ dkwedge_add(struct dkwedge_info *dkw)
 	}
 	rw_exit(&dkwedges_lock);
 	if (error) {
-		(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&pdk->dk_openlock);
 		pdk->dk_nwedges--;
 		LIST_REMOVE(sc, sc_plink);
-		(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&pdk->dk_openlock);
 
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
@@ -392,16 +391,15 @@ dkwedge_add(struct dkwedge_info *dkw)
 		dkwedges[sc->sc_cfdata.cf_unit] = NULL;
 		rw_exit(&dkwedges_lock);
 
-		(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&pdk->dk_openlock);
 		pdk->dk_nwedges--;
 		LIST_REMOVE(sc, sc_plink);
-		(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&pdk->dk_openlock);
 
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
 		return (ENOMEM);
 	}
-	sc->sc_dk.dk_name = sc->sc_dev->dv_xname;
 
 	/* Return the devname to the caller. */
 	strcpy(dkw->dkw_devname, sc->sc_dev->dv_xname);
@@ -411,6 +409,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 * of state to RUNNING atomic.
 	 */
 
+	disk_init(&sc->sc_dk, sc->sc_dev->dv_xname, NULL);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */
@@ -479,8 +478,8 @@ dkwedge_del(struct dkwedge_info *dkw)
 	vdevgone(cmaj, unit, unit, VCHR);
 
 	/* Clean up the parent. */
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_dk.dk_openlock);
+	mutex_enter(&sc->sc_parent->dk_rawlock);
 	if (sc->sc_dk.dk_openmask) {
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
@@ -490,8 +489,8 @@ dkwedge_del(struct dkwedge_info *dkw)
 		}
 		sc->sc_dk.dk_openmask = 0;
 	}
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_parent->dk_rawlock);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	/* Announce our departure. */
 	aprint_normal("%s at %s (%s) deleted\n", sc->sc_dev->dv_xname,
@@ -501,10 +500,10 @@ dkwedge_del(struct dkwedge_info *dkw)
 	/* Delete our pseudo-device. */
 	(void) config_detach(sc->sc_dev, DETACH_FORCE | DETACH_QUIET);
 
-	(void) lockmgr(&sc->sc_parent->dk_openlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_parent->dk_openlock);
 	sc->sc_parent->dk_nwedges--;
 	LIST_REMOVE(sc, sc_plink);
-	(void) lockmgr(&sc->sc_parent->dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_parent->dk_openlock);
 
 	/* Delete our buffer queue. */
 	bufq_free(sc->sc_bufq);
@@ -536,15 +535,15 @@ dkwedge_delall(struct disk *pdk)
 	struct dkwedge_softc *sc;
 
 	for (;;) {
-		(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&pdk->dk_openlock);
 		if ((sc = LIST_FIRST(&pdk->dk_wedges)) == NULL) {
 			KASSERT(pdk->dk_nwedges == 0);
-			(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+			mutex_exit(&pdk->dk_openlock);
 			return;
 		}
 		strcpy(dkw.dkw_parent, pdk->dk_name);
 		strcpy(dkw.dkw_devname, sc->sc_dev->dv_xname);
-		(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&pdk->dk_openlock);
 		(void) dkwedge_del(&dkw);
 	}
 }
@@ -586,7 +585,7 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 
 	dkwl->dkwl_ncopied = 0;
 
-	(void) lockmgr(&pdk->dk_openlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&pdk->dk_openlock);
 	LIST_FOREACH(sc, &pdk->dk_wedges, sc_plink) {
 		if (uio.uio_resid < sizeof(dkw))
 			break;
@@ -608,7 +607,7 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 		dkwl->dkwl_ncopied++;
 	}
 	dkwl->dkwl_nwedges = pdk->dk_nwedges;
-	(void) lockmgr(&pdk->dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&pdk->dk_openlock);
 
 	if (l != NULL) {
 		uvmspace_free(vm);
@@ -911,8 +910,8 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	 * opened.  The reason?  We see one dkopen() per open call, but
 	 * only dkclose() on the last close.
 	 */
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_dk.dk_openlock);
+	mutex_enter(&sc->sc_parent->dk_rawlock);
 	if (sc->sc_dk.dk_openmask == 0) {
 		if (sc->sc_parent->dk_rawopens == 0) {
 			KASSERT(sc->sc_parent->dk_rawvp == NULL);
@@ -944,8 +943,8 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
  popen_fail:
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_parent->dk_rawlock);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 	return (error);
 }
 
@@ -962,8 +961,8 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	KASSERT(sc->sc_dk.dk_openmask != 0);
 
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_dk.dk_openlock);
+	mutex_enter(&sc->sc_parent->dk_rawlock);
 
 	if (fmt == S_IFCHR)
 		sc->sc_dk.dk_copenmask &= ~1;
@@ -981,8 +980,8 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		}
 	}
 
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_parent->dk_rawlock);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return (error);
 }
@@ -1239,8 +1238,8 @@ dksize(dev_t dev)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_dk.dk_openlock);
+	mutex_enter(&sc->sc_parent->dk_rawlock);
 
 	/* Our content type is static, no need to open the device. */
 
@@ -1252,8 +1251,8 @@ dksize(dev_t dev)
 			rv = (int) sc->sc_size;
 	}
 
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_parent->dk_rawlock);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return (rv);
 }
@@ -1276,8 +1275,8 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL);
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_dk.dk_openlock);
+	mutex_enter(&sc->sc_parent->dk_rawlock);
 
 	/* Our content type is static, no need to open the device. */
 
@@ -1301,8 +1300,8 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	rv = (*bdev->d_dump)(sc->sc_pdev, blkno + sc->sc_offset, va, size);
 
 out:
-	(void) lockmgr(&sc->sc_parent->dk_rawlock, LK_RELEASE, NULL);
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_parent->dk_rawlock);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return rv;
 }

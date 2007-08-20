@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.39.2.1 2007/08/19 19:24:17 ad Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.39.2.2 2007/08/20 18:16:08 ad Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.39.2.1 2007/08/19 19:24:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.39.2.2 2007/08/20 18:16:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	rd->sc_disk.dk_name = rd->sc_dev.dv_xname;
+	disk_init(&rd->sc_disk, rd->sc_dev.dv_xname, NULL);
 	disk_attach(&rd->sc_disk);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.46.2.3 2007/08/19 19:24:21 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.46.2.4 2007/08/20 18:16:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.46.2.3 2007/08/19 19:24:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.46.2.4 2007/08/20 18:16:10 ad Exp $");
 
 #include "rnd.h"
 
@@ -116,8 +116,7 @@ ldattach(struct ld_softc *sc)
 	}
 
 	/* Initialise and attach the disk structure. */
-	sc->sc_dk.dk_driver = &lddkdriver;
-	sc->sc_dk.dk_name = sc->sc_dv.dv_xname;
+	disk_init(&sc->sc_dk, sc->sc_dv.dv_xname, &lddkdriver);
 	disk_attach(&sc->sc_dk);
 
 	if (sc->sc_maxxfer > MAXPHYS)
@@ -243,6 +242,7 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Detach from the disk list. */
 	disk_detach(&sc->sc_dk);
+	disk_destroy(&sc->sc_dk);
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -293,8 +293,7 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		return (ENODEV);
 	part = DISKPART(dev);
 
-	if ((error = lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&sc->sc_dk.dk_openlock);
 
 	if (sc->sc_dk.dk_openmask == 0) {
 		/* Load the partition info if not already loaded. */
@@ -321,11 +320,9 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
-	return (0);
-
+	error = 0;
  bad1:
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 	return (error);
 }
 
@@ -334,14 +331,13 @@ static int
 ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
-	int error, part, unit;
+	int part, unit;
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
 	sc = device_lookup(&ld_cd, unit);
 
-	if ((error = lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&sc->sc_dk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -362,7 +358,7 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			sc->sc_flags &= ~LDF_VLABEL;
 	}
 
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 	return (0);
 }
 
@@ -439,9 +435,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
-		if ((error = lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE,
-				     NULL)) != 0)
-			return (error);
+		mutex_enter(&sc->sc_dk.dk_openlock);
 		sc->sc_flags |= LDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
@@ -458,7 +452,7 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 			    sc->sc_dk.dk_cpulabel);
 
 		sc->sc_flags &= ~LDF_LABELLING;
-		(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_dk.dk_openlock);
 		break;
 
 	case DIOCKLABEL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.35.2.1 2007/08/19 19:24:31 ad Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.35.2.2 2007/08/20 18:16:13 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.35.2.1 2007/08/19 19:24:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.35.2.2 2007/08/20 18:16:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -134,8 +134,7 @@ ofdisk_attach(struct device *parent, struct device *self, void *aux)
 	of->sc_phandle = oba->oba_phandle;
 	of->sc_unit = oba->oba_unit;
 	of->sc_ihandle = 0;
-	of->sc_dk.dk_driver = &ofdisk_dkdriver;
-	of->sc_dk.dk_name = of->sc_dev.dv_xname;
+	disk_init(&of->sc_dk, &ofdisk_dkdriver, of->sc_dev.dv_xname);
 	disk_attach(&of->sc_dk);
 	printf("\n");
 
@@ -162,8 +161,7 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
 
 	part = DISKPART(dev);
 
-	if ((error = lockmgr(&of->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&of->sc_dk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -225,11 +223,10 @@ ofdisk_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
 	of->sc_dk.dk_openmask =
 	    of->sc_dk.dk_copenmask | of->sc_dk.dk_bopenmask;
 
-	(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
-	return 0;
 
+	error = 0;
  bad1:
-	(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&of->sc_dk.dk_openlock);
 	return (error);
 }
 
@@ -237,10 +234,8 @@ int
 ofdisk_close(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
-	int error;
 
-	if ((error = lockmgr(&of->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&of->sc_dk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -263,7 +258,7 @@ ofdisk_close(dev_t dev, int flags, int fmt, struct lwp *l)
 		of->sc_ihandle = 0;
 	}
 
-	(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&of->sc_dk.dk_openlock);
 	return 0;
 }
 
@@ -386,9 +381,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if ((error = lockmgr(&of->sc_dk.dk_openlock, LK_EXCLUSIVE,
-				     NULL)) != 0)
-			return (error);
+		mutex_enter(&of->sc_dk.dk_openlock);
 
 		error = setdisklabel(of->sc_dk.dk_label,
 		    lp, /*of->sc_dk.dk_openmask */0,
@@ -402,7 +395,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    DISKUNIT(dev), RAW_PART), ofdisk_strategy,
 			    of->sc_dk.dk_label, of->sc_dk.dk_cpulabel);
 
-		(void) lockmgr(&of->sc_dk.dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&of->sc_dk.dk_openlock);
 
 		return error;
 	}

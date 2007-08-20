@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.37.2.1 2007/08/19 19:24:18 ad Exp $ */
+/* $NetBSD: xbd.c,v 1.37.2.2 2007/08/20 18:16:09 ad Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.37.2.1 2007/08/19 19:24:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.37.2.2 2007/08/20 18:16:09 ad Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1148,7 +1148,7 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 
 	simple_lock_init(&xs->sc_slock);
 	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
-	xs->sc_dksc.sc_dkdev.dk_driver = &xbddkdriver;
+	disk_init(&xs->sc_dksc.sc_dkdev, xs->sc_dev.dv_xname, &xbddkdriver);
 	xbdinit(xs, xbda->xa_xd, xbda->xa_dkintf);
 
 #if NRND > 0
