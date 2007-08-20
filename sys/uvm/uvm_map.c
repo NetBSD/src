@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.239 2007/08/20 13:33:47 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.240 2007/08/20 13:34:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.239 2007/08/20 13:33:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.240 2007/08/20 13:34:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4965,10 +4965,10 @@ uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 	if ((flags & VM_MAP_INTRSAFE) != 0) {
 		ipl = IPL_VM;
 	} else {
-		rw_init(&map->lock);
 		ipl = IPL_NONE;
 	}
 
+	rw_init(&map->lock);
 	cv_init(&map->cv, "vm_map");
 	mutex_init(&map->misc_lock, MUTEX_DRIVER, ipl);
 	mutex_init(&map->mutex, MUTEX_DRIVER, ipl);
