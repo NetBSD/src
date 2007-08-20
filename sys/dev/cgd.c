@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.44.2.5 2007/08/20 18:16:10 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.44.2.6 2007/08/20 22:42:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.5 2007/08/20 18:16:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.6 2007/08/20 22:42:50 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -177,7 +177,7 @@ cgdsoftc_init(struct cgd_softc *cs, int num)
 	snprintf(sbuf, DK_XNAME_SIZE, "cgd%d", num);
 	simple_lock_init(&cs->sc_slock);
 	dk_sc_init(&cs->sc_dksc, cs, sbuf);
-	disk_init(&cs->sc_dksc.sc_dkdev, dksc->sc_xname, &cgddkdriver);
+	disk_init(&cs->sc_dksc.sc_dkdev, cs->sc_dksc.sc_xname, &cgddkdriver);
 }
 
 void

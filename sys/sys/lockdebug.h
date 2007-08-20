@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.3.2.3 2007/08/20 18:08:55 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.3.2.4 2007/08/20 22:42:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void	lockdebug_mem_check(const char *, void *, size_t);
 
 #else	/* LOCKDEBUG */
 
-#define	LOCKDEBUG_ALLOC(lock, ops)		0
+#define	LOCKDEBUG_ALLOC(lock, ops, addr)	0
 #define	LOCKDEBUG_FREE(lock, id)		/* nothing */
 #define	LOCKDEBUG_WANTLOCK(id, where, s)	/* nothing */
 #define	LOCKDEBUG_LOCKED(id, where, s)		/* nothing */
