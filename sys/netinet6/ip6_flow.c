@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.8 2007/05/02 22:39:04 dyoung Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.9 2007/08/20 19:42:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -268,9 +268,9 @@ ip6flow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
-	rtcache_check(&ip6f->ip6f_ro);
-	rt = ip6f->ip6f_ro.ro_rt;
-	if (rt == NULL || (rt->rt_ifp->if_flags & IFF_UP) == 0) {
+	if (rtcache_down(&ip6f->ip6f_ro) ||
+	    (rt = ip6f->ip6f_ro.ro_rt) == NULL ||
+	    (rt->rt_ifp->if_flags & IFF_UP) == 0) {
 	    	/* Route or interface is down */
 		return 0;
 	}
@@ -314,8 +314,7 @@ ip6flow_fastforward(struct mbuf *m)
 static void
 ip6flow_addstats(struct ip6flow *ip6f)
 {
-	rtcache_check(&ip6f->ip6f_ro);
-	if (ip6f->ip6f_ro.ro_rt != NULL)
+	if (!rtcache_down(&ip6f->ip6f_ro) && ip6f->ip6f_ro.ro_rt != NULL)
 		ip6f->ip6f_ro.ro_rt->rt_use += ip6f->ip6f_uses;
 	ip6stat.ip6s_fastforwardflows = ip6flow_inuse;
 	ip6stat.ip6s_cantforward += ip6f->ip6f_dropped;
@@ -364,8 +363,8 @@ ip6flow_reap(int just_one)
 			 * If this no longer points to a valid route -
 			 * reclaim it.
 			 */
-			rtcache_check(&ip6f->ip6f_ro);
-			if (ip6f->ip6f_ro.ro_rt == NULL)
+			if (rtcache_down(&ip6f->ip6f_ro) ||
+			    ip6f->ip6f_ro.ro_rt == NULL)
 				goto done;
 			/*
 			 * choose the one that's been least recently
@@ -408,8 +407,8 @@ ip6flow_slowtimo(void)
 
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
-		rtcache_check(&ip6f->ip6f_ro);	
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
+		    rtcache_down(&ip6f->ip6f_ro) ||
 		    ip6f->ip6f_ro.ro_rt == NULL) {
 			ip6flow_free(ip6f);
 		} else {
