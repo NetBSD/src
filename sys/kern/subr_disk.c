@@ -1,560 +1,491 @@
-e -1:
-			goto wraparound;
+/*	$NetBSD: subr_disk.c,v 1.85.2.5 2007/08/20 22:42:52 ad Exp $	*/
+
+/*-
+ * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1982, 1986, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.85.2.5 2007/08/20 22:42:52 ad Exp $");
+
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <sys/syslog.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
+#include <sys/sysctl.h>
+#include <lib/libkern/libkern.h>
+
+/*
+ * Compute checksum for disk label.
+ */
+u_int
+dkcksum(struct disklabel *lp)
+{
+	return dkcksum_sized(lp, lp->d_npartitions);
+}
+
+u_int
+dkcksum_sized(struct disklabel *lp, size_t npartitions)
+{
+	u_short *start, *end;
+	u_short sum = 0;
+
+	start = (u_short *)lp;
+	end = (u_short *)&lp->d_partitions[npartitions];
+	while (start < end)
+		sum ^= *start++;
+	return (sum);
+}
+
+/*
+ * Disk error is the preface to plaintive error messages
+ * about failing disk transfers.  It prints messages of the form
+
+hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
+
+ * if the offset of the error in the transfer and a disk label
+ * are both available.  blkdone should be -1 if the position of the error
+ * is unknown; the disklabel pointer may be null from drivers that have not
+ * been converted to use them.  The message is printed with printf
+ * if pri is LOG_PRINTF, otherwise it uses log at the specified priority.
+ * The message should be completed (with at least a newline) with printf
+ * or addlog, respectively.  There is no trailing space.
+ */
+#ifndef PRIdaddr
+#define PRIdaddr PRId64
+#endif
+void
+diskerr(const struct buf *bp, const char *dname, const char *what, int pri,
+    int blkdone, const struct disklabel *lp)
+{
+	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
+	void (*pr)(const char *, ...);
+	char partname = 'a' + part;
+	daddr_t sn;
+
+	if (/*CONSTCOND*/0)
+		/* Compiler will error this is the format is wrong... */
+		printf("%" PRIdaddr, bp->b_blkno);
+
+	if (pri != LOG_PRINTF) {
+		static const char fmt[] = "";
+		log(pri, fmt);
+		pr = addlog;
+	} else
+		pr = printf;
+	(*pr)("%s%d%c: %s %sing fsbn ", dname, unit, partname, what,
+	    bp->b_flags & B_READ ? "read" : "writ");
+	sn = bp->b_blkno;
+	if (bp->b_bcount <= DEV_BSIZE)
+		(*pr)("%" PRIdaddr, sn);
+	else {
+		if (blkdone >= 0) {
+			sn += blkdone;
+			(*pr)("%" PRIdaddr " of ", sn);
 		}
-		if (tmp->ownspace >= length)
-			goto listsearch;
+		(*pr)("%" PRIdaddr "-%" PRIdaddr "", bp->b_blkno,
+		    bp->b_blkno + (bp->b_bcount - 1) / DEV_BSIZE);
 	}
-	if (prev == NULL)
-		goto notfound;
+	if (lp && (blkdone >= 0 || bp->b_bcount <= lp->d_secsize)) {
+		sn += lp->d_partitions[part].p_offset;
+		(*pr)(" (%s%d bn %" PRIdaddr "; cn %" PRIdaddr "",
+		    dname, unit, sn, sn / lp->d_secpercyl);
+		sn %= lp->d_secpercyl;
+		(*pr)(" tn %" PRIdaddr " sn %" PRIdaddr ")",
+		    sn / lp->d_nsectors, sn % lp->d_nsectors);
+	}
+}
 
-	if (topdown) {
-		KASSERT(orig_hint >= prev->next->start - length ||
-		    prev->next->start - length > prev->next->start);
-		hint = prev->next->start - length;
-	} else {
-		KASSERT(orig_hint <= prev->end);
-		hint = prev->end;
-	}
-	switch (uvm_map_space_avail(&hint, length, uoffset, align,
-	    topdown, prev)) {
-	case 1:
-		entry = prev;
-		goto found;
-	case -1:
-		goto wraparound;
-	}
-	if (prev->ownspace >= length)
-		goto listsearch;
+/*
+ * Searches the iostatlist for the disk corresponding to the
+ * name provided.
+ */
+struct disk *
+disk_find(const char *name)
+{
+	struct io_stats *stat;
 
-	if (topdown)
-		tmp = RB_LEFT(prev, rb_entry);
+	stat = iostat_find(name);
+
+	if ((stat != NULL) && (stat->io_type == IOSTAT_DISK))
+		return stat->io_parent;
+
+	return (NULL);
+}
+
+void
+disk_init(struct disk *diskp, char *name, struct dkdriver *driver)
+{
+
+	/*
+	 * Initialize the wedge-related locks and other fields.
+	 */
+	mutex_init(&diskp->dk_rawlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&diskp->dk_openlock, MUTEX_DEFAULT, IPL_NONE);
+	LIST_INIT(&diskp->dk_wedges);
+	diskp->dk_nwedges = 0;
+	diskp->dk_labelsector = LABELSECTOR;
+	disk_blocksize(diskp, DEV_BSIZE);
+	diskp->dk_name = name;
+	diskp->dk_driver = driver;
+}
+
+/*
+ * Attach a disk.
+ */
+void
+disk_attach(struct disk *diskp)
+{
+
+	/*
+	 * Allocate and initialize the disklabel structures.  Note that
+	 * it's not safe to sleep here, since we're probably going to be
+	 * called during autoconfiguration.
+	 */
+	diskp->dk_label = malloc(sizeof(struct disklabel), M_DEVBUF, M_NOWAIT);
+	diskp->dk_cpulabel = malloc(sizeof(struct cpu_disklabel), M_DEVBUF,
+	    M_NOWAIT);
+	if ((diskp->dk_label == NULL) || (diskp->dk_cpulabel == NULL))
+		panic("disk_attach: can't allocate storage for disklabel");
+
+	memset(diskp->dk_label, 0, sizeof(struct disklabel));
+	memset(diskp->dk_cpulabel, 0, sizeof(struct cpu_disklabel));
+
+	/*
+	 * Set up the stats collection.
+	 */
+	diskp->dk_stats = iostat_alloc(IOSTAT_DISK, diskp, diskp->dk_name);
+}
+
+/*
+ * Detach a disk.
+ */
+void
+disk_detach(struct disk *diskp)
+{
+
+	/*
+	 * Remove from the drivelist.
+	 */
+	iostat_free(diskp->dk_stats);
+
+	/*
+	 * Release the disk-info dictionary.
+	 */
+	if (diskp->dk_info) {
+		prop_object_release(diskp->dk_info);
+		diskp->dk_info = NULL;
+	}
+
+	/*
+	 * Free the space used by the disklabel structures.
+	 */
+	free(diskp->dk_label, M_DEVBUF);
+	free(diskp->dk_cpulabel, M_DEVBUF);
+}
+
+void
+disk_destroy(struct disk *diskp)
+{
+
+	mutex_destroy(&diskp->dk_openlock);
+	mutex_destroy(&diskp->dk_rawlock);
+}
+
+/*
+ * Mark the disk as busy for metrics collection.
+ */
+void
+disk_busy(struct disk *diskp)
+{
+
+	iostat_busy(diskp->dk_stats);
+}
+
+/*
+ * Finished disk operations, gather metrics.
+ */
+void
+disk_unbusy(struct disk *diskp, long bcount, int read)
+{
+
+	iostat_unbusy(diskp->dk_stats, bcount, read);
+}
+
+/*
+ * Set the physical blocksize of a disk, in bytes.
+ * Only necessary if blocksize != DEV_BSIZE.
+ */
+void
+disk_blocksize(struct disk *diskp, int blocksize)
+{
+
+	diskp->dk_blkshift = DK_BSIZE2BLKSHIFT(blocksize);
+	diskp->dk_byteshift = DK_BSIZE2BYTESHIFT(blocksize);
+}
+
+/*
+ * Bounds checking against the media size, used for the raw partition.
+ * The sector size passed in should currently always be DEV_BSIZE,
+ * and the media size the size of the device in DEV_BSIZE sectors.
+ */
+int
+bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
+{
+	int64_t sz;
+
+	sz = howmany(bp->b_bcount, secsize);
+
+	if (bp->b_blkno + sz > mediasize) {
+		sz = mediasize - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
+			bp->b_resid = bp->b_bcount;
+			return 0;
+		}
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
+			bp->b_error = EINVAL;
+			return 0;
+		}
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	return 1;
+}
+
+/*
+ * Determine the size of the transfer, and make sure it is
+ * within the boundaries of the partition. Adjust transfer
+ * if needed, and signal errors or early completion.
+ */
+int
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
+{
+	struct disklabel *lp = dk->dk_label;
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	uint64_t p_size, p_offset, labelsector;
+	int64_t sz;
+
+	/* Protect against division by zero. XXX: Should never happen?!?! */
+	if (lp->d_secpercyl == 0) {
+		bp->b_error = EINVAL;
+		return -1;
+	}
+
+	p_size = p->p_size << dk->dk_blkshift;
+	p_offset = p->p_offset << dk->dk_blkshift;
+#if RAW_PART == 3
+	labelsector = lp->d_partitions[2].p_offset;
+#else
+	labelsector = lp->d_partitions[RAW_PART].p_offset;
+#endif
+	labelsector = (labelsector + dk->dk_labelsector) << dk->dk_blkshift;
+
+	sz = howmany(bp->b_bcount, DEV_BSIZE);
+	if ((bp->b_blkno + sz) > p_size) {
+		sz = p_size - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
+			bp->b_resid = bp->b_bcount;
+			return 0;
+		}
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
+			bp->b_error = EINVAL;
+			return -1;
+		}
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* Overwriting disk label? */
+	if (bp->b_blkno + p_offset <= labelsector &&
+	    bp->b_blkno + p_offset + sz > labelsector &&
+	    (bp->b_flags & B_READ) == 0 && !wlabel) {
+		bp->b_error = EROFS;
+		return -1;
+	}
+
+	/* calculate cylinder for disksort to order transfers with */
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
+	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	return 1;
+}
+
+int
+disk_read_sectors(void (*strat)(struct buf *), const struct disklabel *lp,
+    struct buf *bp, unsigned int sector, int count)
+{
+	bp->b_blkno = sector;
+	bp->b_bcount = count * lp->d_secsize;
+	bp->b_flags = (bp->b_flags & ~(B_WRITE | B_DONE)) | B_READ;
+	bp->b_cylinder = sector / lp->d_secpercyl;
+	(*strat)(bp);
+	return biowait(bp);
+}
+
+const char *
+convertdisklabel(struct disklabel *lp, void (*strat)(struct buf *),
+    struct buf *bp, uint32_t secperunit)
+{
+	struct partition rp, *altp, *p;
+	int geom_ok;
+
+	memset(&rp, 0, sizeof(rp));
+	rp.p_size = secperunit;
+	rp.p_fstype = FS_UNUSED;
+
+	/* If we can seek to d_secperunit - 1, believe the disk geometry. */
+	if (secperunit != 0 &&
+	    disk_read_sectors(strat, lp, bp, secperunit - 1, 1) == 0)
+		geom_ok = 1;
 	else
-		tmp = RB_RIGHT(prev, rb_entry);
-	for (;;) {
-		KASSERT(tmp && tmp->space >= length);
-		if (topdown)
-			child = RB_RIGHT(tmp, rb_entry);
-		else
-			child = RB_LEFT(tmp, rb_entry);
-		if (child && child->space >= length) {
-			tmp = child;
-			continue;
-		}
-		if (tmp->ownspace >= length)
-			break;
-		if (topdown)
-			tmp = RB_LEFT(tmp, rb_entry);
-		else
-			tmp = RB_RIGHT(tmp, rb_entry);
-	}
-
-	if (topdown) {
-		KASSERT(orig_hint >= tmp->next->start - length ||
-		    tmp->next->start - length > tmp->next->start);
-		hint = tmp->next->start - length;
-	} else {
-		KASSERT(orig_hint <= tmp->end);
-		hint = tmp->end;
-	}
-	switch (uvm_map_space_avail(&hint, length, uoffset, align,
-	    topdown, tmp)) {
-	case 1:
-		entry = tmp;
-		goto found;
-	case -1:
-		goto wraparound;
-	}
-
-	/*
-	 * The tree fails to find an entry because of offset or alignment
-	 * restrictions.  Search the list instead.
-	 */
- listsearch:
-	/*
-	 * Look through the rest of the map, trying to fit a new region in
-	 * the gap between existing regions, or after the very last region.
-	 * note: entry->end = base VA of current gap,
-	 *	 entry->next->start = VA of end of current gap
-	 */
-
-	for (;;) {
-		/* Update hint for current gap. */
-		hint = topdown ? entry->next->start - length : entry->end;
-
-		/* See if it fits. */
-		switch (uvm_map_space_avail(&hint, length, uoffset, align,
-		    topdown, entry)) {
-		case 1:
-			goto found;
-		case -1:
-			goto wraparound;
-		}
-
-		/* Advance to next/previous gap */
-		if (topdown) {
-			if (entry == &map->header) {
-				UVMHIST_LOG(maphist, "<- failed (off start)",
-				    0,0,0,0);
-				goto notfound;
-			}
-			entry = entry->prev;
-		} else {
-			entry = entry->next;
-			if (entry == &map->header) {
-				UVMHIST_LOG(maphist, "<- failed (off end)",
-				    0,0,0,0);
-				goto notfound;
-			}
-		}
-	}
-
- found:
-	SAVE_HINT(map, map->hint, entry);
-	*result = hint;
-	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
-	KASSERT( topdown || hint >= orig_hint);
-	KASSERT(!topdown || hint <= orig_hint);
-	KASSERT(entry->end <= hint);
-	KASSERT(hint + length <= entry->next->start);
-	return (entry);
-
- wraparound:
-	UVMHIST_LOG(maphist, "<- failed (wrap around)", 0,0,0,0);
-
-	return (NULL);
-
- notfound:
-	UVMHIST_LOG(maphist, "<- failed (notfound)", 0,0,0,0);
-
-	return (NULL);
-}
-
-/*
- *   U N M A P   -   m a i n   h e l p e r   f u n c t i o n s
- */
-
-/*
- * uvm_unmap_remove: remove mappings from a vm_map (from "start" up to "stop")
- *
- * => caller must check alignment and size
- * => map must be locked by caller
- * => we return a list of map entries that we've remove from the map
- *    in "entry_list"
- */
-
-void
-uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
-    struct vm_map_entry **entry_list /* OUT */,
-    struct uvm_mapent_reservation *umr, int flags)
-{
-	struct vm_map_entry *entry, *first_entry, *next;
-	vaddr_t len;
-	UVMHIST_FUNC("uvm_unmap_remove"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist,"(map=0x%x, start=0x%x, end=0x%x)",
-	    map, start, end, 0);
-	VM_MAP_RANGE_CHECK(map, start, end);
-
-	uvm_map_check(map, "unmap_remove entry");
-
-	/*
-	 * find first entry
-	 */
-
-	if (uvm_map_lookup_entry(map, start, &first_entry) == true) {
-		/* clip and go... */
-		entry = first_entry;
-		UVM_MAP_CLIP_START(map, entry, start, umr);
-		/* critical!  prevents stale hint */
-		SAVE_HINT(map, entry, entry->prev);
-	} else {
-		entry = first_entry->next;
-	}
-
-	/*
-	 * Save the free space hint
-	 */
-
-	if (map->first_free != &map->header && map->first_free->start >= start)
-		map->first_free = entry->prev;
-
-	/*
-	 * note: we now re-use first_entry for a different task.  we remove
-	 * a number of map entries from the map and save them in a linked
-	 * list headed by "first_entry".  once we remove them from the map
-	 * the caller should unlock the map and drop the references to the
-	 * backing objects [c.f. uvm_unmap_detach].  the object is to
-	 * separate unmapping from reference dropping.  why?
-	 *   [1] the map has to be locked for unmapping
-	 *   [2] the map need not be locked for reference dropping
-	 *   [3] dropping references may trigger pager I/O, and if we hit
-	 *       a pager that does synchronous I/O we may have to wait for it.
-	 *   [4] we would like all waiting for I/O to occur with maps unlocked
-	 *       so that we don't block other threads.
-	 */
-
-	first_entry = NULL;
-	*entry_list = NULL;
-
-	/*
-	 * break up the area into map entry sized regions and unmap.  note
-	 * that all mappings have to be removed before we can even consider
-	 * dropping references to amaps or VM objects (otherwise we could end
-	 * up with a mapping to a page on the free list which would be very bad)
-	 */
-
-	while ((entry != &map->header) && (entry->start < end)) {
-		KASSERT((entry->flags & UVM_MAP_FIRST) == 0);
-
-		UVM_MAP_CLIP_END(map, entry, end, umr);
-		next = entry->next;
-		len = entry->end - entry->start;
-
-		/*
-		 * unwire before removing addresses from the pmap; otherwise
-		 * unwiring will put the entries back into the pmap (XXX).
-		 */
-
-		if (VM_MAPENT_ISWIRED(entry)) {
-			uvm_map_entry_unwire(map, entry);
-		}
-		if (flags & UVM_FLAG_VAONLY) {
-
-			/* nothing */
-
-		} else if ((map->flags & VM_MAP_PAGEABLE) == 0) {
-
-			/*
-			 * if the map is non-pageable, any pages mapped there
-			 * must be wired and entered with pmap_kenter_pa(),
-			 * and we should free any such pages immediately.
-			 * this is mostly used for kmem_map and mb_map.
-			 */
-
-			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
-				uvm_km_pgremove_intrsafe(entry->start,
-				    entry->end);
-				pmap_kremove(entry->start, len);
-			}
-		} else if (UVM_ET_ISOBJ(entry) &&
-			   UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj)) {
-			KASSERT(vm_map_pmap(map) == pmap_kernel());
-
-			/*
-			 * note: kernel object mappings are currently used in
-			 * two ways:
-			 *  [1] "normal" mappings of pages in the kernel object
-			 *  [2] uvm_km_valloc'd allocations in which we
-			 *      pmap_enter in some non-kernel-object page
-			 *      (e.g. vmapbuf).
-			 *
-			 * for case [1], we need to remove the mapping from
-			 * the pmap and then remove the page from the kernel
-			 * object (because, once pages in a kernel object are
-			 * unmapped they are no longer needed, unlike, say,
-			 * a vnode where you might want the data to persist
-			 * until flushed out of a queue).
-			 *
-			 * for case [2], we need to remove the mapping from
-			 * the pmap.  there shouldn't be any pages at the
-			 * specified offset in the kernel object [but it
-			 * doesn't hurt to call uvm_km_pgremove just to be
-			 * safe?]
-			 *
-			 * uvm_km_pgremove currently does the following:
-			 *   for pages in the kernel object in range:
-			 *     - drops the swap slot
-			 *     - uvm_pagefree the page
-			 */
-
-			/*
-			 * remove mappings from pmap and drop the pages
-			 * from the object.  offsets are always relative
-			 * to vm_map_min(kernel_map).
-			 */
-
-			pmap_remove(pmap_kernel(), entry->start,
-			    entry->start + len);
-			uvm_km_pgremove(entry->start, entry->end);
-
-			/*
-			 * null out kernel_object reference, we've just
-			 * dropped it
-			 */
-
-			entry->etype &= ~UVM_ET_OBJ;
-			entry->object.uvm_obj = NULL;
-		} else if (UVM_ET_ISOBJ(entry) || entry->aref.ar_amap) {
-
-			/*
-			 * remove mappings the standard way.
-			 */
-
-			pmap_remove(map->pmap, entry->start, entry->end);
-		}
-
-#if defined(DEBUG)
-		if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
-
-			/*
-			 * check if there's remaining mapping,
-			 * which is a bug in caller.
-			 */
-
-			vaddr_t va;
-			for (va = entry->start; va < entry->end;
-			    va += PAGE_SIZE) {
-				if (pmap_extract(vm_map_pmap(map), va, NULL)) {
-					panic("uvm_unmap_remove: has mapping");
-				}
-			}
-
-			if (VM_MAP_IS_KERNEL(map)) {
-				uvm_km_check_empty(entry->start, entry->end,
-				    (map->flags & VM_MAP_INTRSAFE) != 0);
-			}
-		}
-#endif /* defined(DEBUG) */
-
-		/*
-		 * remove entry from map and put it on our list of entries
-		 * that we've nuked.  then go to next entry.
-		 */
-
-		UVMHIST_LOG(maphist, "  removed map entry 0x%x", entry, 0, 0,0);
-
-		/* critical!  prevents stale hint */
-		SAVE_HINT(map, entry, entry->prev);
-
-		uvm_map_entry_unlink(map, entry);
-		KASSERT(map->size >= len);
-		map->size -= len;
-		entry->prev = NULL;
-		entry->next = first_entry;
-		first_entry = entry;
-		entry = next;
-	}
-	if ((map->flags & VM_MAP_DYING) == 0) {
-		pmap_update(vm_map_pmap(map));
-	}
-
-	uvm_map_check(map, "unmap_remove leave");
-
-	/*
-	 * now we've cleaned up the map and are ready for the caller to drop
-	 * references to the mapped objects.
-	 */
-
-	*entry_list = first_entry;
-	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
-
-	if (map->flags & VM_MAP_WANTVA) {
-		mutex_enter(&map->misc_lock);
-		map->flags &= ~VM_MAP_WANTVA;
-		cv_broadcast(&map->cv);
-		mutex_exit(&map->misc_lock);
-	}
-}
-
-/*
- * uvm_unmap_detach: drop references in a chain of map entries
- *
- * => we will free the map entries as we traverse the list.
- */
-
-void
-uvm_unmap_detach(struct vm_map_entry *first_entry, int flags)
-{
-	struct vm_map_entry *next_entry;
-	UVMHIST_FUNC("uvm_unmap_detach"); UVMHIST_CALLED(maphist);
-
-	while (first_entry) {
-		KASSERT(!VM_MAPENT_ISWIRED(first_entry));
-		UVMHIST_LOG(maphist,
-		    "  detach 0x%x: amap=0x%x, obj=0x%x, submap?=%d",
-		    first_entry, first_entry->aref.ar_amap,
-		    first_entry->object.uvm_obj,
-		    UVM_ET_ISSUBMAP(first_entry));
-
-		/*
-		 * drop reference to amap, if we've got one
-		 */
-
-		if (first_entry->aref.ar_amap)
-			uvm_map_unreference_amap(first_entry, flags);
-
-		/*
-		 * drop reference to our backing object, if we've got one
-		 */
-
-		KASSERT(!UVM_ET_ISSUBMAP(first_entry));
-		if (UVM_ET_ISOBJ(first_entry) &&
-		    first_entry->object.uvm_obj->pgops->pgo_detach) {
-			(*first_entry->object.uvm_obj->pgops->pgo_detach)
-				(first_entry->object.uvm_obj);
-		}
-		next_entry = first_entry->next;
-		uvm_mapent_free(first_entry);
-		first_entry = next_entry;
-	}
-	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
-}
-
-/*
- *   E X T R A C T I O N   F U N C T I O N S
- */
-
-/*
- * uvm_map_reserve: reserve space in a vm_map for future use.
- *
- * => we reserve space in a map by putting a dummy map entry in the
- *    map (dummy means obj=NULL, amap=NULL, prot=VM_PROT_NONE)
- * => map should be unlocked (we will write lock it)
- * => we return true if we were able to reserve space
- * => XXXCDC: should be inline?
- */
-
-int
-uvm_map_reserve(struct vm_map *map, vsize_t size,
-    vaddr_t offset	/* hint for pmap_prefer */,
-    vsize_t align	/* alignment hint */,
-    vaddr_t *raddr	/* IN:hint, OUT: reserved VA */,
-    uvm_flag_t flags	/* UVM_FLAG_FIXED or 0 */)
-{
-	UVMHIST_FUNC("uvm_map_reserve"); UVMHIST_CALLED(maphist);
-
-	UVMHIST_LOG(maphist, "(map=0x%x, size=0x%x, offset=0x%x,addr=0x%x)",
-	    map,size,offset,raddr);
-
-	size = round_page(size);
-
-	/*
-	 * reserve some virtual space.
-	 */
-
-	if (uvm_map(map, raddr, size, NULL, offset, 0,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE|flags)) != 0) {
-	    UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
-		return (false);
-	}
-
-	UVMHIST_LOG(maphist, "<- done (*raddr=0x%x)", *raddr,0,0,0);
-	return (true);
-}
-
-/*
- * uvm_map_replace: replace a reserved (blank) area of memory with
- * real mappings.
- *
- * => caller must WRITE-LOCK the map
- * => we return true if replacement was a success
- * => we expect the newents chain to have nnewents entrys on it and
- *    we expect newents->prev to point to the last entry on the list
- * => note newents is allowed to be NULL
- */
-
-int
-uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
-    struct vm_map_entry *newents, int nnewents)
-{
-	struct vm_map_entry *oldent, *last;
-
-	uvm_map_check(map, "map_replace entry");
-
-	/*
-	 * first find the blank map entry at the specified address
-	 */
-
-	if (!uvm_map_lookup_entry(map, start, &oldent)) {
-		return (false);
-	}
-
-	/*
-	 * check to make sure we have a proper blank entry
-	 */
-
-	if (end < oldent->end && !VM_MAP_USE_KMAPENT(map)) {
-		UVM_MAP_CLIP_END(map, oldent, end, NULL);
-	}
-	if (oldent->start != start || oldent->end != end ||
-	    oldent->object.uvm_obj != NULL || oldent->aref.ar_amap != NULL) {
-		return (false);
-	}
-
-#ifdef DIAGNOSTIC
-
-	/*
-	 * sanity check the newents chain
-	 */
-
-	{
-		struct vm_map_entry *tmpent = newents;
-		int nent = 0;
-		vaddr_t cur = start;
-
-		while (tmpent) {
-			nent++;
-			if (tmpent->start < cur)
-				panic("uvm_map_replace1");
-			if (tmpent->start > tmpent->end || tmpent->end > end) {
-		printf("tmpent->start=0x%lx, tmpent->end=0x%lx, end=0x%lx\n",
-			    tmpent->start, tmpent->end, end);
-				panic("uvm_map_replace2");
-			}
-			cur = tmpent->end;
-			if (tmpent->next) {
-				if (tmpent->next->prev != tmpent)
-					panic("uvm_map_replace3");
-			} else {
-				if (newents->prev != tmpent)
-					panic("uvm_map_replace4");
-			}
-			tmpent = tmpent->next;
-		}
-		if (nent != nnewents)
-			panic("uvm_map_replace5");
-	}
+		geom_ok = 0;
+
+#if 0
+	printf("%s: secperunit (%" PRIu32 ") %s\n", __func__,
+	    secperunit, geom_ok ? "ok" : "not ok");
 #endif
 
-	/*
-	 * map entry is a valid blank!   replace it.   (this does all the
-	 * work of map entry link/unlink...).
-	 */
+	p = &lp->d_partitions[RAW_PART];
+	if (RAW_PART == 'c' - 'a')
+		altp = &lp->d_partitions['d' - 'a'];
+	else
+		altp = &lp->d_partitions['c' - 'a'];
 
-	if (newents) {
-		last = newents->prev;
+	if (lp->d_npartitions > RAW_PART && p->p_offset == 0 && p->p_size != 0)
+		;	/* already a raw partition */
+	else if (lp->d_npartitions > MAX('c', 'd') - 'a' &&
+		 altp->p_offset == 0 && altp->p_size != 0) {
+		/* alternate partition ('c' or 'd') is suitable for raw slot,
+		 * swap with 'd' or 'c'.
+		 */
+		rp = *p;
+		*p = *altp;
+		*altp = rp;
+	} else if (lp->d_npartitions <= RAW_PART &&
+	           lp->d_npartitions > 'c' - 'a') {
+		/* No raw partition is present, but the alternate is present.
+		 * Copy alternate to raw partition.
+		 */
+		lp->d_npartitions = RAW_PART + 1;
+		*p = *altp;
+	} else if (!geom_ok)
+		return "no raw partition and disk reports bad geometry";
+	else if (lp->d_npartitions <= RAW_PART) {
+		memset(&lp->d_partitions[lp->d_npartitions], 0,
+		    sizeof(struct partition) * (RAW_PART - lp->d_npartitions));
+		*p = rp;
+		lp->d_npartitions = RAW_PART + 1;
+	} else if (lp->d_npartitions < MAXPARTITIONS) {
+		memmove(p + 1, p,
+		    sizeof(struct partition) * (lp->d_npartitions - RAW_PART));
+		*p = rp;
+		lp->d_npartitions++;
+	} else
+		return "no raw partition and partition table is full";
+	return NULL;
+}
 
-		/* critical: flush stale hints out of map */
-		SAVE_HINT(map, map->hint, newents);
-		if (map->first_free == oldent)
-			map->first_free = last;
+/*
+ * disk_ioctl --
+ *	Generic disk ioctl handling.
+ */
+int
+disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
+	   struct lwp *l)
+{
+	int error;
 
-		last->next = oldent->next;
-		last->next->prev = last;
+	switch (cmd) {
+	case DIOCGDISKINFO:
+	    {
+		struct plistref *pref = (struct plistref *) data;
 
-		/* Fix RB tree */
-		uvm_rb_remove(map, oldent);
+		if (diskp->dk_info == NULL)
+			error = ENOTSUP;
+		else
+			error = prop_dictionary_copyout_ioctl(pref, cmd,
+							diskp->dk_info);
+		break;
+	    }
 
-		newents->prev = oldent->prev;
-		newents->prev->next = newents;
-		map->nentries = map->nentries + (nnewents - 1);
-
-		/* Fixup the RB tree */
-		{
-			int i;
-			struct vm_map_entry *tmp;
-
-			tmp = newents;
-			for (i = 0; i < nnewents && tmp; i++) {
-				uvm_rb_insert(map, tmp);
-				tmp = tmp->next;
-			}
-		}
-	} else {
-		/* NULL list of new entries: just remove the old one */
-		clear_hints(map, oldent);
-		uvm_map_entry_unlink(map, oldent);
+	default:
+		error = EPASSTHROUGH;
 	}
 
-	uvm_map_check(map, "map_repl
+	return (error);
+}
