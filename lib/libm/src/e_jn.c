@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_jn.c,v 1.12 2002/05/26 22:01:50 wiz Exp $");
+__RCSID("$NetBSD: e_jn.c,v 1.13 2007/08/20 16:01:39 drochner Exp $");
 #endif
 
 /*
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: e_jn.c,v 1.12 2002/05/26 22:01:50 wiz Exp $");
  *
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 

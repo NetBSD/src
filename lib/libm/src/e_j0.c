@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_j0.c,v 1.11 2002/05/26 22:01:50 wiz Exp $");
+__RCSID("$NetBSD: e_j0.c,v 1.12 2007/08/20 16:01:38 drochner Exp $");
 #endif
 
 /* __ieee754_j0(x), __ieee754_y0(x)
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: e_j0.c,v 1.11 2002/05/26 22:01:50 wiz Exp $");
  *	3. Special cases: y0(0)=-inf, y0(x<0)=NaN, y0(inf)=0.
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 

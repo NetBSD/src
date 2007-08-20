@@ -12,17 +12,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_asin.c,v 1.9 2002/05/26 22:01:59 wiz Exp $");
+__RCSID("$NetBSD: w_asin.c,v 1.10 2007/08/20 16:01:39 drochner Exp $");
 #endif
 
 /*
  * wrapper asin(x)
  */
 
-
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 
+#ifdef __weak_alias
+__weak_alias(asin, _asin)
+#endif
 
 double
 asin(double x)		/* wrapper asin */

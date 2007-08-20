@@ -12,15 +12,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_exp.c,v 1.9 2002/05/26 22:02:00 wiz Exp $");
+__RCSID("$NetBSD: w_exp.c,v 1.10 2007/08/20 16:01:40 drochner Exp $");
 #endif
 
 /*
  * wrapper exp(x)
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __weak_alias
+__weak_alias(exp, _exp)
+#endif
 
 static const double
 o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
