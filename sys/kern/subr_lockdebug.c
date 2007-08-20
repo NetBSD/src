@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.5.2.5 2007/07/29 11:34:47 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.5.2.6 2007/08/20 18:08:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.5 2007/07/29 11:34:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.5.2.6 2007/08/20 18:08:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,6 +91,7 @@ typedef struct lockdebug {
 	struct lwp	*ld_lwp;
 	uintptr_t	ld_locked;
 	uintptr_t	ld_unlocked;
+	uintptr_t	ld_initaddr;
 	u_int		ld_id;
 	uint16_t	ld_shares;
 	uint16_t	ld_cpu;
@@ -231,7 +232,7 @@ lockdebug_init(void)
  *	structure.
  */
 u_int
-lockdebug_alloc(volatile void *lock, lockops_t *lo)
+lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 {
 	lockdebuglist_t *head;
 	struct cpu_info *ci;
@@ -291,6 +292,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 	ld->ld_locked = 0;
 	ld->ld_unlocked = 0;
 	ld->ld_lwp = NULL;
+	ld->ld_initaddr = initaddr;
 
 	if (lo->lo_sleeplock) {
 		ld->ld_flags = LD_SLEEPER;
@@ -646,13 +648,15 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
 	    "shares wanted: %18u exclusive: %18u\n"
 	    "current cpu  : %18u last held: %18u\n"
 	    "current lwp  : %#018lx last held: %#018lx\n"
-	    "last locked  : %#018lx unlocked : %#018lx\n",
+	    "last locked  : %#018lx unlocked : %#018lx\n"
+	    "initialized  : %#018lx\n",
 	    (long)ld->ld_lock, (sleeper ? "sleep/adaptive" : "spin"),
 	    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
 	    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
 	    (unsigned)cpu_number(), (unsigned)ld->ld_cpu,
 	    (long)curlwp, (long)ld->ld_lwp,
-	    (long)ld->ld_locked, (long)ld->ld_unlocked);
+	    (long)ld->ld_locked, (long)ld->ld_unlocked,
+	    (long)ld->ld_initaddr);
 
 	if (ld->ld_lockops->lo_dump != NULL)
 		(*ld->ld_lockops->lo_dump)(ld->ld_lock);
