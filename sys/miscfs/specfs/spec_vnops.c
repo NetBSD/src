@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.7 2007/08/19 19:24:57 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.8 2007/08/20 03:22:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.7 2007/08/19 19:24:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.8 2007/08/20 03:22:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -559,9 +559,8 @@ spec_strategy(v)
 
 	error = 0;
 	bp->b_dev = vp->v_rdev;
-	if (!(bp->b_flags & B_READ) &&
-	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
-		(*bioops.io_start)(bp);
+	if (!(bp->b_flags & B_READ) && bioops != NULL)
+		(*bioops->io_start)(bp);
 
 	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
 		mutex_enter(&vp->v_spec_cow_lock);

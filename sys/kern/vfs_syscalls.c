@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.306.2.12 2007/08/15 11:45:39 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.306.2.13 2007/08/20 03:22:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.12 2007/08/15 11:45:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.306.2.13 2007/08/20 03:22:42 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3120,9 +3120,9 @@ sys_fsync(struct lwp *l, void *v, register_t *retval)
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0, l);
-	if (error == 0 && bioops.io_fsync != NULL &&
+	if (error == 0 && bioops != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp, 0);
+		(*bioops->io_fsync)(vp, 0);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, l);
 	return (error);
@@ -3193,9 +3193,9 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e, l);
 
-	if (error == 0 && bioops.io_fsync != NULL &&
+	if (error == 0 && bioops != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-		(*bioops.io_fsync)(vp, nflags);
+		(*bioops->io_fsync)(vp, nflags);
 
 	VOP_UNLOCK(vp, 0);
 out:

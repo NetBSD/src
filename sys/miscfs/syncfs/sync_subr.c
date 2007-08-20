@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.28.6.3 2007/06/23 18:06:04 ad Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.28.6.4 2007/08/20 03:22:43 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.28.6.3 2007/06/23 18:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.28.6.4 2007/08/20 03:22:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,8 +244,8 @@ sched_sync(void *v)
 		/*
 		 * Do soft update processing.
 		 */
-		if (bioops.io_sync)
-			(*bioops.io_sync)(NULL);
+		if (bioops != NULL)
+			(*bioops->io_sync)(NULL);
 
 		mutex_exit(&syncer_mutex);
 

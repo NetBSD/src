@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.13 2007/08/19 19:24:55 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.14 2007/08/20 03:22:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.13 2007/08/19 19:24:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.14 2007/08/20 03:22:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +151,7 @@ static void biodone2(struct buf *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-#if !defined(SOFTDEP) || !defined(FFS)
-struct bio_ops bioops;	/* I/O operation notification */
-#endif
+struct bio_ops *bioops;	/* I/O operation notification */
 
 /*
  * Insq/Remq for the buffer hash lists.
@@ -876,7 +874,7 @@ bawrite(struct buf *bp)
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
  * Call with the buffer interlock held.
  *
- * Note: called only from biodone() through ffs softdep's bioops.io_complete()
+ * Note: called only from biodone() through ffs softdep's io_complete()
  */
 void
 bdirty(struct buf *bp)
@@ -962,8 +960,8 @@ brelse(struct buf *bp, int set)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
-			(*bioops.io_deallocate)(bp);
+		if (bioops != NULL)
+			(*bioops->io_deallocate)(bp);
 		CLR(bp->b_flags, B_DONE|B_DELWRI);
 		if (bp->b_vp)
 			vp = bp->b_vp;
@@ -993,9 +991,8 @@ brelse(struct buf *bp, int set)
 			/* stale but valid data */
 			int has_deps;
 
-			if (LIST_FIRST(&bp->b_dep) != NULL &&
-			    bioops.io_countdeps)
-				has_deps = (*bioops.io_countdeps)(bp, 0);
+			if (bioops != NULL)
+				has_deps = (*bioops->io_countdeps)(bp, 0);
 			else
 				has_deps = 0;
 			bufq = has_deps ? &bufqueues[BQ_LRU] :
@@ -1324,8 +1321,8 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 	vp = bp->b_vp;
 
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
-		(*bioops.io_deallocate)(bp);
+	if (bioops != NULL)
+		(*bioops->io_deallocate)(bp);
 
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
@@ -1458,17 +1455,17 @@ static void
 biodone2(struct buf *bp)
 {
 
+	if (bioops != NULL) {
+		mutex_enter(&bqueue_lock);
+		(*bioops->io_complete)(bp);
+		mutex_exit(&bqueue_lock);
+	}
+
 	mutex_enter(&bp->b_interlock);
 	if (ISSET(bp->b_flags, B_DONE))
 		panic("biodone2 already");
 	SET(bp->b_flags, B_DONE);	/* note that it's done */
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
-
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete) {
-		mutex_exit(&bp->b_interlock);
-		(*bioops.io_complete)(bp);
-		mutex_enter(&bp->b_interlock);
-	}
 
 	/*
 	 * If necessary, call out.  Unlock the buffer before
@@ -1497,7 +1494,6 @@ biodone2(struct buf *bp)
 			vwakeup(bp);
 	}
 }
-
 
 static void
 biointr(void *cookie)
