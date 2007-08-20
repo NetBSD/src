@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.116 2007/08/18 11:35:55 tnn Exp $
+# $NetBSD: ALL,v 1.117 2007/08/20 00:54:41 kiyohara Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.116 $"
+#ident 		"ALL-$Revision: 1.117 $"
 
 maxusers	32		# estimated number of users
 
@@ -1310,12 +1310,14 @@ radio* at bktr?
 
 # Bluetooth PCMCIA Controllers
 bt3c* at pcmcia? function ?		# 3Com 3CRWB6096-A
+btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 
 # Bluetooth USB Controllers
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btbc?
 bthub* at btuart?
 bthub* at ubt?
 
