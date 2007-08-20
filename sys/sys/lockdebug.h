@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.3.2.2 2007/07/29 11:34:47 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.3.2.3 2007/08/20 18:08:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ void	lockdebug_lock_print(void *, void (*)(const char *, ...));
 
 #ifdef LOCKDEBUG
 
-u_int	lockdebug_alloc(volatile void *, lockops_t *);
+u_int	lockdebug_alloc(volatile void *, lockops_t *, uintptr_t);
 void	lockdebug_free(volatile void *, u_int);
 void	lockdebug_wantlock(u_int, uintptr_t, int);
 void	lockdebug_locked(u_int, uintptr_t, int);
@@ -70,7 +70,7 @@ void	lockdebug_unlocked(u_int, uintptr_t, int);
 void	lockdebug_barrier(volatile void *, int);
 void	lockdebug_mem_check(const char *, void *, size_t);
 
-#define	LOCKDEBUG_ALLOC(lock, ops)		lockdebug_alloc(lock, ops)
+#define	LOCKDEBUG_ALLOC(lock, ops, addr)	lockdebug_alloc(lock, ops, addr)
 #define	LOCKDEBUG_FREE(lock, id)		lockdebug_free(lock, id)
 #define	LOCKDEBUG_WANTLOCK(id, where, s)	lockdebug_wantlock(id, where, s)
 #define	LOCKDEBUG_LOCKED(id, where, s)		lockdebug_locked(id, where, s)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.6.2.5 2007/07/29 11:43:23 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.6.2.6 2007/08/20 18:08:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6.2.5 2007/07/29 11:43:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6.2.6 2007/08/20 18:08:55 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -203,7 +203,8 @@ rw_init(krwlock_t *rw)
 
 	memset(rw, 0, sizeof(*rw));
 
-	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops);
+	id = LOCKDEBUG_ALLOC(rw, &rwlock_lockops,
+	    (uintptr_t)__builtin_return_address(0));
 	RW_SETID(rw, id);
 }
 
