@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.41 2007/08/21 02:48:15 kiyohara Exp $
+#	$NetBSD: GENERIC,v 1.42 2007/08/21 05:29:18 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.41 $"
+#ident 		"GENERIC-$Revision: 1.42 $"
 
 maxusers	32		# estimated number of users
 
@@ -519,7 +519,7 @@ uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
 # PCMCIA USB controllers
-slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
 #usb*	at ehci?
