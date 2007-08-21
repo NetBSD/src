@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.6.8.1 2007/03/13 16:51:37 ad Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.6.8.2 2007/08/21 20:01:31 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.6.8.1 2007/03/13 16:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.6.8.2 2007/08/21 20:01:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -160,10 +160,14 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
-	if (TMPFS_PAGES_MAX(tmp) - tmp->tm_pages_used == 0)
+	mutex_enter(&tmp->tm_lock);
+	if (TMPFS_PAGES_MAX(tmp) - tmp->tm_pages_used == 0) {
+		mutex_exit(&tmp->tm_lock);
 		return NULL;
-
+	}
 	tmp->tm_pages_used += 1;
+	mutex_exit(&tmp->tm_lock);
+
 	page = pool_page_alloc_nointr(pp, flags);
 	KASSERT(page != NULL);
 
@@ -181,7 +185,10 @@ tmpfs_pool_page_free(struct pool *pp, void *v)
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
+	mutex_enter(&tmp->tm_lock);
 	tmp->tm_pages_used -= 1;
+	mutex_exit(&tmp->tm_lock);
+
 	pool_page_free_nointr(pp, v);
 }
 

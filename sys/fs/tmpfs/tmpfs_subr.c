@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.3 2007/08/20 21:26:11 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.4 2007/08/21 20:01:31 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.3 2007/08/20 21:26:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.4 2007/08/21 20:01:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -96,6 +96,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
     char *target, dev_t rdev, struct proc *p, struct tmpfs_node **node)
 {
 	struct tmpfs_node *nnode;
+	ino_t ino;
 
 	/* If the root directory of the 'tmp' file system is not yet
 	 * allocated, this must be the request to do it. */
@@ -107,17 +108,32 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	KASSERT(uid != VNOVAL && gid != VNOVAL && mode != VNOVAL);
 
 	nnode = NULL;
+	mutex_enter(&tmp->tm_lock);
 	if (LIST_EMPTY(&tmp->tm_nodes_avail)) {
 		KASSERT(tmp->tm_nodes_last <= tmp->tm_nodes_max);
-		if (tmp->tm_nodes_last == tmp->tm_nodes_max)
+		if (tmp->tm_nodes_last == tmp->tm_nodes_max) {
+			mutex_exit(&tmp->tm_lock);
 			return ENOSPC;
+		}
+		ino = tmp->tm_nodes_last++;
+		mutex_exit(&tmp->tm_lock);
 
 		nnode =
 		    (struct tmpfs_node *)TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
-		if (nnode == NULL)
+		if (nnode == NULL) {
+			mutex_enter(&tmp->tm_lock);
+			if (ino == tmp->tm_nodes_last - 1)
+				tmp->tm_nodes_last--;
+			else {
+				/* XXX Oops, just threw away inode number */
+			}
+			mutex_exit(&tmp->tm_lock);
 			return ENOSPC;
-		nnode->tn_id = tmp->tm_nodes_last++;
+		}
+		nnode->tn_id = ino;
 		nnode->tn_gen = arc4random();
+
+		mutex_enter(&tmp->tm_lock);
 	} else {
 		nnode = LIST_FIRST(&tmp->tm_nodes_avail);
 		LIST_REMOVE(nnode, tn_entries);
@@ -125,6 +141,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	}
 	KASSERT(nnode != NULL);
 	LIST_INSERT_HEAD(&tmp->tm_nodes_used, nnode, tn_entries);
+	mutex_exit(&tmp->tm_lock);
 
 	/* Generic initialization. */
 	nnode->tn_type = type;
@@ -140,6 +157,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_mode = mode;
 	nnode->tn_lockf = NULL;
 	nnode->tn_vnode = NULL;
+	mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Type-specific initialization. */
 	switch (nnode->tn_type) {
@@ -256,8 +274,8 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 		break;
 	}
 
+	mutex_enter(&tmp->tm_lock);
 	tmp->tm_pages_used -= pages;
-
 	LIST_REMOVE(node, tn_entries);
 	id = node->tn_id;
 	gen = node->tn_gen;
@@ -266,6 +284,7 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 	node->tn_type = VNON;
 	node->tn_gen = gen;
 	LIST_INSERT_HEAD(&tmp->tm_nodes_avail, node, tn_entries);
+	mutex_exit(&tmp->tm_lock);
 }
 
 /* --------------------------------------------------------------------- */
@@ -361,30 +380,29 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 	struct vnode *nvp;
 	struct vnode *vp;
 
-	vp = NULL;
-
-	if (node->tn_vnode != NULL) {
-		vp = node->tn_vnode;
-		vget(vp, LK_EXCLUSIVE | LK_RETRY);
-		error = 0;
-		goto out;
+	mutex_enter(&node->tn_vlock);
+	if ((vp = node->tn_vnode) != NULL) {
+		mutex_enter(&vp->v_interlock);
+		mutex_exit(&node->tn_vlock);
+		vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
+		*vpp = vp;
+		return 0;
 	}
 
 	/* Get a new vnode and associate it with our node. */
 	error = getnewvnode(VT_TMPFS, mp, tmpfs_vnodeop_p, &vp);
-	if (error != 0)
-		goto out;
-	KASSERT(vp != NULL);
+	if (error != 0) {
+		mutex_exit(&node->tn_vlock);
+		return error;
+	}
 
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0) {
-		vp->v_data = NULL;
+		mutex_exit(&node->tn_vlock);
 		ungetnewvnode(vp);
-		vp = NULL;
-		goto out;
+		return error;
 	}
 
-	vp->v_data = node;
 	vp->v_type = node->tn_type;
 
 	/* Type-specific initialization. */
@@ -396,8 +414,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		nvp = checkalias(vp, node->tn_spec.tn_dev.tn_rdev, mp);
 		if (nvp != NULL) {
 			/* Discard unneeded vnode, but save its inode. */
-			nvp->v_data = vp->v_data;
-			vp->v_data = NULL;
+			nvp->v_data = node;
 
 			/* XXX spec_vnodeops has no locking, so we have to
 			 * do it explicitly. */
@@ -413,15 +430,14 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 			vp = nvp;
 			error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			if (error != 0) {
-				vp->v_data = NULL;
-				vp = NULL;
-				goto out;
+				mutex_exit(&node->tn_vlock);
+				return error;
 			}
 		}
 		break;
 
 	case VDIR:
-		vp->v_vflag = node->tn_spec.tn_dir.tn_parent == node ? VV_ROOT : 0;
+		vp->v_vflag |= (node->tn_spec.tn_dir.tn_parent == node ? VV_ROOT : 0);
 		break;
 
 	case VFIFO:
@@ -440,14 +456,12 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 	}
 
 	uvm_vnp_setsize(vp, node->tn_size);
-
-	error = 0;
-
-out:
-	*vpp = node->tn_vnode = vp;
+	vp->v_data = node;
+	node->tn_vnode = vp;
+	mutex_exit(&node->tn_vlock);
+	*vpp = vp;
 
 	KASSERT(IFF(error == 0, *vpp != NULL && VOP_ISLOCKED(*vpp)));
-	KASSERT(*vpp == node->tn_vnode);
 
 	return error;
 }
@@ -938,7 +952,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	node->tn_size = newsize;
 	uvm_vnp_setsize(vp, newsize);
 
+	mutex_enter(&tmp->tm_lock);
 	tmp->tm_pages_used += (newpages - oldpages);
+	mutex_exit(&tmp->tm_lock);
 
 	error = 0;
 
