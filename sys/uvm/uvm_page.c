@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.119.4.11 2007/08/20 21:28:33 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119.4.12 2007/08/21 22:32:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.11 2007/08/20 21:28:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119.4.12 2007/08/21 22:32:26 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -442,12 +442,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	uvm_zerocheckkva = *kvm_startp;
 	*kvm_startp += PAGE_SIZE;
 #endif /* DEBUG */
-
-	/*
-	 * init locks for kernel threads
-	 */
-
-	mutex_init(&uvm_pagedaemon_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * init various thresholds.

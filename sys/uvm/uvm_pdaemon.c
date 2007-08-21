@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.4 2007/08/20 21:28:33 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.5 2007/08/21 22:32:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.4 2007/08/20 21:28:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.5 2007/08/21 22:32:26 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -104,6 +104,8 @@ static void	uvmpd_scan(void);
 static void	uvmpd_scan_queue(void);
 static void	uvmpd_tune(void);
 
+unsigned int uvm_pagedaemon_waiters;
+
 /*
  * XXX hack to avoid hangs when large processes fork.
  */
@@ -120,7 +122,8 @@ void
 uvm_wait(const char *wmsg)
 {
 	int timo = 0;
-	int s = splbio();
+
+	mutex_spin_enter(&uvm_fpageqlock);
 
 	/*
 	 * check for page daemon going to sleep (waiting for itself)
@@ -152,22 +155,23 @@ uvm_wait(const char *wmsg)
 #endif
 	}
 
-	mutex_enter(&uvm_pagedaemon_lock);
+	uvm_pagedaemon_waiters++;
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm_pagedaemon_lock, false, wmsg,
-	    timo);
-
-	splx(s);
+	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm_fpageqlock, false, wmsg, timo);
 }
 
 /*
  * uvm_kick_pdaemon: perform checks to determine if we need to
  * give the pagedaemon a nudge, and do so if necessary.
+ *
+ * => called with uvm_fpageqlock held.
  */
 
 void
 uvm_kick_pdaemon(void)
 {
+
+	KASSERT(mutex_owned(&uvm_fpageqlock));
 
 	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
 	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
@@ -239,13 +243,18 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
-		mutex_enter(&uvm_pagedaemon_lock);
+		bool needsscan;
 
-		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-		    &uvm_pagedaemon_lock, false, "pgdaemon", 0);
-		uvmexp.pdwoke++;
-		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+		mutex_spin_enter(&uvm_fpageqlock);
+		if (uvm_pagedaemon_waiters == 0 || uvmexp.paging > 0) {
+			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
+			UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
+			    &uvm_fpageqlock, false, "pgdaemon", 0);
+			uvmexp.pdwoke++;
+			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
+		} else {
+			mutex_spin_exit(&uvm_fpageqlock);
+		}
 
 		/*
 		 * now lock page queues and recompute inactive count
@@ -255,7 +264,9 @@ uvm_pageout(void *arg)
 		if (npages != uvmexp.npages || extrapages != uvm_extrapages) {
 			npages = uvmexp.npages;
 			extrapages = uvm_extrapages;
+			mutex_spin_enter(&uvm_fpageqlock);
 			uvmpd_tune();
+			mutex_spin_exit(&uvm_fpageqlock);
 		}
 
 		uvmpdpol_tune();
@@ -264,6 +275,7 @@ uvm_pageout(void *arg)
 		 * Estimate a hint.  Note that bufmem are returned to
 		 * system only when entire pool page is empty.
 		 */
+		mutex_spin_enter(&uvm_fpageqlock);
 		bufcnt = uvmexp.freetarg - uvmexp.free;
 		if (bufcnt < 0)
 			bufcnt = 0;
@@ -271,24 +283,28 @@ uvm_pageout(void *arg)
 		UVMHIST_LOG(pdhist,"  free/ftarg=%d/%d",
 		    uvmexp.free, uvmexp.freetarg, 0,0);
 
+		needsscan = uvmexp.free + uvmexp.paging < uvmexp.freetarg ||
+		    uvmpdpol_needsscan_p();
+		mutex_spin_exit(&uvm_fpageqlock);
+
 		/*
 		 * scan if needed
 		 */
-
-		if (uvmexp.free + uvmexp.paging < uvmexp.freetarg ||
-		    uvmpdpol_needsscan_p()) {
+		if (needsscan)
 			uvmpd_scan();
-		}
 
 		/*
 		 * if there's any free memory to be had,
 		 * wake up any waiters.
 		 */
 
+		mutex_spin_enter(&uvm_fpageqlock);
 		if (uvmexp.free > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0) {
 			wakeup(&uvmexp.free);
+			uvm_pagedaemon_waiters = 0;
 		}
+		mutex_spin_exit(&uvm_fpageqlock);
 
 		/*
 		 * scan done.  unlock page queues (the only lock we are holding)
@@ -322,7 +338,6 @@ void
 uvm_aiodone_worker(struct work *wk, void *dummy)
 {
 	struct buf *bp = (void *)wk;
-	int free;
 
 	KASSERT(&bp->b_work == wk);
 
@@ -330,17 +345,37 @@ uvm_aiodone_worker(struct work *wk, void *dummy)
 	 * process an i/o that's done.
 	 */
 
-	free = uvmexp.free;
 	(*bp->b_iodone)(bp);
-	if (free <= uvmexp.reserve_kernel) {
-		mutex_spin_enter(&uvm_fpageqlock);
+}
+
+void
+uvm_pageout_start(int npages)
+{
+
+	mutex_spin_enter(&uvm_fpageqlock);
+	uvmexp.paging += npages;
+	mutex_spin_exit(&uvm_fpageqlock);
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	mutex_spin_enter(&uvm_fpageqlock);
+	KASSERT(uvmexp.paging >= npages);
+	uvmexp.paging -= npages;
+
+	/*
+	 * wake up either of pagedaemon or LWPs waiting for it.
+	 */
+
+	if (uvmexp.free <= uvmexp.reserve_kernel) {
 		wakeup(&uvm.pagedaemon);
-		mutex_spin_exit(&uvm_fpageqlock);
 	} else {
-		mutex_enter(&uvm_pagedaemon_lock);
 		wakeup(&uvmexp.free);
-		mutex_exit(&uvm_pagedaemon_lock);
+		uvm_pagedaemon_waiters = 0;
 	}
+	mutex_spin_exit(&uvm_fpageqlock);
 }
 
 /*
@@ -492,6 +527,7 @@ swapcluster_flush(struct swapcluster *swc, bool now)
 	 */
 
 	uvmexp.pdpageouts++;
+	uvm_pageout_start(nused);
 	error = uvm_swap_put(slot, swc->swc_pages, nused, 0);
 	KASSERT(error == 0);
 
@@ -501,6 +537,13 @@ swapcluster_flush(struct swapcluster *swc, bool now)
 	 */
 
 	swc->swc_slot = 0;
+}
+
+static int
+swapcluster_nused(struct swapcluster *swc)
+{
+
+	return swc->swc_nused;
 }
 
 /*
@@ -619,7 +662,11 @@ uvmpd_scan_queue(void)
 		 * see if we've met the free target.
 		 */
 
-		if (uvmexp.free + uvmexp.paging >= uvmexp.freetarg << 2 ||
+		if (uvmexp.free + uvmexp.paging
+#if defined(VMSWAP)
+		    + swapcluster_nused(&swc)
+#endif /* defined(VMSWAP) */
+		    >= uvmexp.freetarg << 2 ||
 		    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 			UVMHIST_LOG(pdhist,"  met free target: "
 				    "exit loop", 0, 0, 0, 0);
@@ -800,7 +847,6 @@ uvmpd_scan_queue(void)
 		UVM_PAGE_OWN(p, "scan_queue");
 
 		p->flags |= PG_PAGEOUT;
-		uvmexp.paging++;
 		uvm_pagedequeue(p);
 
 		uvmexp.pgswapout++;
@@ -814,7 +860,6 @@ uvmpd_scan_queue(void)
 			p->flags &= ~(PG_BUSY|PG_PAGEOUT);
 			UVM_PAGE_OWN(p, NULL);
 			mutex_enter(&uvm_pageqlock);
-			uvmexp.paging--;
 			dirtyreacts++;
 			uvm_pageactivate(p);
 			mutex_exit(slock);

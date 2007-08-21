@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.10 2007/08/19 19:24:56 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.11 2007/08/21 22:32:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.10 2007/08/19 19:24:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.11 2007/08/21 22:32:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1352,7 +1352,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 				if (tpg->flags & PG_BUSY) {
 					tpg->flags |= freeflag;
 					if (pagedaemon) {
-						uvmexp.paging++;
+						uvm_pageout_start(1);
 						uvm_pagedequeue(tpg);
 					}
 				} else {
