@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.29.2.2 2007/08/04 12:33:10 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.29.2.3 2007/08/21 06:37:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.29.2.2 2007/08/04 12:33:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.29.2.3 2007/08/21 06:37:02 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,10 +371,10 @@ ehci_pci_power(device_t dv, pnp_request_t req, void *opaque)
 			break;
 		case PNP_STATE_D3:
 			val = PCI_PMCSR_STATE_D3;
+			status = ehci_power(dv, req, opaque);
 			s = splhardusb();
 			pci_conf_capture(pc, tag, &sc->sc_pciconf);
 			splx(s);
-			status = ehci_power(dv, req, opaque);
 			break;
 		default:
 			return PNP_STATUS_UNSUPPORTED;
