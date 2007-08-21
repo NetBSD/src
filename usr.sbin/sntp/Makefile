@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2003/12/05 11:34:58 drochner Exp $
+# $NetBSD: Makefile,v 1.2.16.1 2007/08/21 08:40:56 ghen Exp $
+
+USE_FORT?= yes	# network client/server
 
 PROG=	sntp
 SRCS=	internet.c main.c socket.c timing.c unix.c

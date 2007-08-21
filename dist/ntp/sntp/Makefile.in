@@ -45,41 +45,59 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = sntp$(EXEEXT)
+@NEED_LIBOPTS_TRUE@am__append_1 = libopts
 DIST_COMMON = README $(am__configure_deps) $(dist_man_MANS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/bincheck.mf $(top_srcdir)/configure config.guess \
-	config.sub depcomp install-sh missing
+	$(srcdir)/bincheck.mf $(srcdir)/config.h.in \
+	$(top_srcdir)/configure compile config.guess config.sub \
+	depcomp install-sh ltmain.sh missing
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
+	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno configure.status.lineno
 mkinstalldirs = $(install_sh) -d
+CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am__objects_1 =
-am_sntp_OBJECTS = internet.$(OBJEXT) main.$(OBJEXT) socket.$(OBJEXT) \
-	timing.$(OBJEXT) unix.$(OBJEXT) $(am__objects_1)
+am_sntp_OBJECTS = internet.$(OBJEXT) main.$(OBJEXT) \
+	sntp-opts.$(OBJEXT) socket.$(OBJEXT) timing.$(OBJEXT) \
+	unix.$(OBJEXT) $(am__objects_1)
 sntp_OBJECTS = $(am_sntp_OBJECTS)
 sntp_LDADD = $(LDADD)
-DEFAULT_INCLUDES = -I. -I$(srcdir)
+am__DEPENDENCIES_1 =
+sntp_DEPENDENCIES = $(am__DEPENDENCIES_1)
+DEFAULT_INCLUDES = -I. -I$(srcdir) -I.
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(sntp_SOURCES)
 DIST_SOURCES = $(sntp_SOURCES)
+RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
+	html-recursive info-recursive install-data-recursive \
+	install-exec-recursive install-info-recursive \
+	install-recursive installcheck-recursive installdirs-recursive \
+	pdf-recursive ps-recursive uninstall-info-recursive \
+	uninstall-recursive
 man1dir = $(mandir)/man1
 NROFF = nroff
-MANS = $(dist_man_MANS)
+MANS = $(dist_man_MANS) $(man_MANS)
 ETAGS = etags
 CTAGS = ctags
+DIST_SUBDIRS = libopts .
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -95,6 +113,7 @@ ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
+AR = @AR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -105,23 +124,39 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F77 = @F77@
+FFLAGS = @FFLAGS@
 INSTALL_DATA = @INSTALL_DATA@
+INSTALL_LIBOPTS_FALSE = @INSTALL_LIBOPTS_FALSE@
+INSTALL_LIBOPTS_TRUE = @INSTALL_LIBOPTS_TRUE@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
+LIBOPTS_CFLAGS = @LIBOPTS_CFLAGS@
+LIBOPTS_DIR = @LIBOPTS_DIR@
+LIBOPTS_LDADD = @LIBOPTS_LDADD@
 LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
+LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+NEED_LIBOPTS_FALSE = @NEED_LIBOPTS_FALSE@
+NEED_LIBOPTS_TRUE = @NEED_LIBOPTS_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -130,14 +165,21 @@ PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+RANLIB = @RANLIB@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
+ac_ct_F77 = @ac_ct_F77@
+ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
+am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
+am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -172,24 +214,41 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = foreign
+ACLOCAL_AMFLAGS = -I libopts/m4
+AM_CPPFLAGS = $(LIBOPTS_CFLAGS)
+LDADD = $(LIBOPTS_LDADD)
 NULL = 
-EXTRA_DIST = bincheck.mf
+#run_ag=         cd $(srcdir) && autogen -L $(top_srcdir)/include
+run_ag = cd $(srcdir) && autogen
+SUBDIRS = $(am__append_1) .
 sntp_SOURCES = \
 	header.h \
 	internet.c \
 	internet.h \
 	kludges.h \
 	main.c \
+	sntp-opts.c \
+	sntp-opts.h \
 	socket.c \
 	timing.c \
 	unix.c \
 	$(NULL)
 
 dist_man_MANS = sntp.1
-all: all-am
+EXTRA_DIST = bincheck.mf	\
+		COPYRIGHT	\
+		sntp-opts.def sntp.1 sntp-opts.texi sntp-opts.menu	\
+		autogen-version.def version.def
+
+BUILT_SOURCES = check-autogen-version.def check-version.def	\
+		sntp-opts.c sntp-opts.h sntp.1 sntp-opts.texi sntp-opts.menu
+
+man_MANS = sntp.1
+all: $(BUILT_SOURCES) config.h
+	$(MAKE) $(AM_MAKEFLAGS) all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .c .lo .o .obj
 am--refresh:
 	@:
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am $(srcdir)/bincheck.mf $(am__configure_deps)
@@ -223,16 +282,34 @@ $(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(srcdir) && $(AUTOCONF)
 $(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
+
+config.h: stamp-h1
+	@if test ! -f $@; then \
+	  rm -f stamp-h1; \
+	  $(MAKE) stamp-h1; \
+	else :; fi
+
+stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
+	@rm -f stamp-h1
+	cd $(top_builddir) && $(SHELL) ./config.status config.h
+$(srcdir)/config.h.in:  $(am__configure_deps) 
+	cd $(top_srcdir) && $(AUTOHEADER)
+	rm -f stamp-h1
+	touch $@
+
+distclean-hdr:
+	-rm -f config.h stamp-h1
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  if test -f $$p \
+	     || test -f $$p1 \
 	  ; then \
 	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
 	  else :; fi; \
 	done
 
@@ -245,7 +322,11 @@ uninstall-binPROGRAMS:
 	done
 
 clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
 sntp$(EXEEXT): $(sntp_OBJECTS) $(sntp_DEPENDENCIES) 
 	@rm -f sntp$(EXEEXT)
 	$(LINK) $(sntp_LDFLAGS) $(sntp_OBJECTS) $(sntp_LDADD) $(LIBS)
@@ -258,6 +339,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/internet.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sntp-opts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/timing.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/unix.Po@am__quote@
@@ -275,6 +357,22 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+.c.lo:
+@am__fastdepCC_TRUE@	if $(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
+
+distclean-libtool:
+	-rm -f libtool
 uninstall-info-am:
 install-man1: $(man1_MANS) $(man_MANS)
 	@$(NORMAL_INSTALL)
@@ -322,6 +420,77 @@ uninstall-man1:
 	  rm -f "$(DESTDIR)$(man1dir)/$$inst"; \
 	done
 
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+$(RECURSIVE_TARGETS):
+	@failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
+mostlyclean-recursive clean-recursive distclean-recursive \
+maintainer-clean-recursive:
+	@failcom='exit 1'; \
+	for f in x $$MAKEFLAGS; do \
+	  case $$f in \
+	    *=* | --[!k]*);; \
+	    *k*) failcom='fail=yes';; \
+	  esac; \
+	done; \
+	dot_seen=no; \
+	case "$@" in \
+	  distclean-* | maintainer-clean-*) list='$(DIST_SUBDIRS)' ;; \
+	  *) list='$(SUBDIRS)' ;; \
+	esac; \
+	rev=''; for subdir in $$list; do \
+	  if test "$$subdir" = "."; then :; else \
+	    rev="$$subdir $$rev"; \
+	  fi; \
+	done; \
+	rev="$$rev ."; \
+	target=`echo $@ | sed s/-recursive//`; \
+	for subdir in $$rev; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	  || eval $$failcom; \
+	done && test -z "$$fail"
+tags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
+	done
+ctags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) ctags); \
+	done
+
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
@@ -332,11 +501,24 @@ ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	mkid -fID $$unique
 tags: TAGS
 
-TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+TAGS: tags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	if ($(ETAGS) --etags-include --version) >/dev/null 2>&1; then \
+	  include_option=--etags-include; \
+	  empty_fix=.; \
+	else \
+	  include_option=--include; \
+	  empty_fix=; \
+	fi; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test ! -f $$subdir/TAGS || \
+	      tags="$$tags $$include_option=$$here/$$subdir/TAGS"; \
+	  fi; \
+	done; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -348,11 +530,11 @@ TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
 	    $$tags $$unique; \
 	fi
 ctags: CTAGS
-CTAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) \
+CTAGS: ctags-recursive $(HEADERS) $(SOURCES) config.h.in $(TAGS_DEPENDENCIES) \
 		$(TAGS_FILES) $(LISP)
 	tags=; \
 	here=`pwd`; \
-	list='$(SOURCES) $(HEADERS)  $(LISP) $(TAGS_FILES)'; \
+	list='$(SOURCES) $(HEADERS) config.h.in $(LISP) $(TAGS_FILES)'; \
 	unique=`for i in $$list; do \
 	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
 	  done | \
@@ -373,6 +555,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
+	$(mkdir_p) $(distdir)/libopts/m4
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
@@ -397,6 +580,21 @@ distdir: $(DISTFILES)
 	    test -f $(distdir)/$$file \
 	    || cp -p $$d/$$file $(distdir)/$$file \
 	    || exit 1; \
+	  fi; \
+	done
+	list='$(DIST_SUBDIRS)'; for subdir in $$list; do \
+	  if test "$$subdir" = .; then :; else \
+	    test -d "$(distdir)/$$subdir" \
+	    || $(mkdir_p) "$(distdir)/$$subdir" \
+	    || exit 1; \
+	    distdir=`$(am__cd) $(distdir) && pwd`; \
+	    top_distdir=`$(am__cd) $(top_distdir) && pwd`; \
+	    (cd $$subdir && \
+	      $(MAKE) $(AM_MAKEFLAGS) \
+	        top_distdir="$$top_distdir" \
+	        distdir="$$distdir/$$subdir" \
+	        distdir) \
+	      || exit 1; \
 	  fi; \
 	done
 	-find $(distdir) -type d ! -perm -777 -exec chmod a+rwx {} \; -o \
@@ -497,21 +695,24 @@ distcleancheck: distclean
 	       $(distcleancheck_listfiles) ; \
 	       exit 1; } >&2
 check-am: all-am
-check: check-am
-all-am: Makefile $(PROGRAMS) $(MANS)
-installdirs:
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-recursive
+all-am: Makefile $(PROGRAMS) $(MANS) config.h
+installdirs: installdirs-recursive
+installdirs-am:
 	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
-install: install-am
-install-exec: install-exec-am
-install-data: install-data-am
-uninstall: uninstall-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-recursive
+install-exec: install-exec-recursive
+install-data: install-data-recursive
+uninstall: uninstall-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 
-installcheck: installcheck-am
+installcheck: installcheck-recursive
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
 	  install_sh_PROGRAM="$(INSTALL_STRIP_PROGRAM)" INSTALL_STRIP_FLAG=-s \
@@ -527,24 +728,25 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-am
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
+clean: clean-recursive
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
-distclean: distclean-am
+distclean: distclean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-tags
+	distclean-hdr distclean-libtool distclean-tags
 
-dvi: dvi-am
+dvi: dvi-recursive
 
 dvi-am:
 
-html: html-am
+html: html-recursive
 
-info: info-am
+info: info-recursive
 
 info-am:
 
@@ -554,49 +756,86 @@ install-exec-am: install-binPROGRAMS
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 
-install-info: install-info-am
+install-info: install-info-recursive
 
 install-man: install-man1
 
 installcheck-am:
 
-maintainer-clean: maintainer-clean-am
+maintainer-clean: maintainer-clean-recursive
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
-mostlyclean: mostlyclean-am
+mostlyclean: mostlyclean-recursive
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic
+mostlyclean-am: mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool
 
-pdf: pdf-am
+pdf: pdf-recursive
 
 pdf-am:
 
-ps: ps-am
+ps: ps-recursive
 
 ps-am:
 
 uninstall-am: uninstall-binPROGRAMS uninstall-info-am uninstall-man
 
+uninstall-info: uninstall-info-recursive
+
 uninstall-man: uninstall-man1
 
-.PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
-	clean-binPROGRAMS clean-generic ctags dist dist-all dist-bzip2 \
+.PHONY: $(RECURSIVE_TARGETS) CTAGS GTAGS all all-am am--refresh check \
+	check-am clean clean-binPROGRAMS clean-generic clean-libtool \
+	clean-recursive ctags ctags-recursive dist dist-all dist-bzip2 \
 	dist-gzip dist-shar dist-tarZ dist-zip distcheck distclean \
-	distclean-compile distclean-generic distclean-tags \
+	distclean-compile distclean-generic distclean-hdr \
+	distclean-libtool distclean-recursive distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-binPROGRAMS \
 	install-data install-data-am install-exec install-exec-am \
 	install-exec-hook install-info install-info-am install-man \
 	install-man1 install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic pdf pdf-am \
-	ps ps-am tags uninstall uninstall-am uninstall-binPROGRAMS \
-	uninstall-info-am uninstall-man uninstall-man1
+	installdirs installdirs-am maintainer-clean \
+	maintainer-clean-generic maintainer-clean-recursive \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool mostlyclean-recursive pdf pdf-am ps ps-am \
+	tags tags-recursive uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am uninstall-man \
+	uninstall-man1
 
+
+FRC:
+check-autogen-version.def: FRC
+	@cd $(srcdir)							\
+	&& test -r ../include/autogen-version.def			\
+	&& ( if cmp -s ../include/autogen-version.def autogen-version.def; \
+	   then : ;							\
+	   else cp ../include/autogen-version.def autogen-version.def;	 \
+		echo "Installing new sntp/autogen-version.def file";	\
+	   fi )
+
+check-version.def: FRC
+	@cd $(srcdir)					\
+	&& test -r ../include/version.def		\
+	&& ( if cmp -s ../include/version.def version.def;	\
+	   then : ;						\
+	   else cp ../include/version.def version.def;		\
+		echo "Installing new sntp/version.def file";	\
+	   fi )
+
+$(srcdir)/sntp-opts.h: $(srcdir)/sntp-opts.c
+$(srcdir)/sntp-opts.c: $(srcdir)/sntp-opts.def $(srcdir)/version.def
+	$(run_ag) sntp-opts.def
+
+$(srcdir)/sntp.1: $(srcdir)/sntp-opts.def $(srcdir)/version.def
+	$(run_ag) -Tagman1.tpl -bsntp sntp-opts.def
+
+$(srcdir)/sntp-opts.texi $(srcdir)/sntp-opts.menu: $(srcdir)/sntp-opts.def $(srcdir)/version.def
+	$(run_ag) -Taginfo.tpl -DLEVEL=section sntp-opts.def
 
 install-exec-hook:
 	@case ${BINSUBDIR} in					\

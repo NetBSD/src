@@ -85,9 +85,6 @@
 /* Meinberg clocks */
 #define CLOCK_MEINBERG 1
 
-/* EES M201 MSF receiver */
-#define CLOCK_MSFEES 1
-
 /* Magnavox MX4200 GPS receiver */
 /* #undef CLOCK_MX4200 */
 
@@ -136,9 +133,6 @@
 /* KSI/Odetics TPRO/S GPS receiver/IRIG interface */
 /* #undef CLOCK_TPRO */
 
-/* TRAK 8810 GPS receiver */
-#define CLOCK_TRAK 1
-
 /* Trimble GPS receiver/TAIP protocol */
 #define CLOCK_TRIMTAIP 1
 
@@ -168,6 +162,9 @@
 
 /* Enable debugging? */
 #define DEBUG 1
+
+/* Enable processing time debugging? */
+/* #undef DEBUG_TIMING */
 
 /* Declaration style */
 /* #undef DECL_ADJTIME_0 */
@@ -274,8 +271,17 @@
 /* The number of minutes in a DST adjustment */
 #define DSTMINUTES 60
 
+/* fopen(3) accepts a 'b' in the mode flag */
+#define FOPEN_BINARY_FLAG "b"
+
+/* fopen(3) accepts a 't' in the mode flag */
+#define FOPEN_TEXT_FLAG "t"
+
 /* force ntpdate to step the clock if !defined(STEP_SLEW) ? */
 /* #undef FORCE_NTPDATE_STEP */
+
+/* What is getsockname()'s socklen type? */
+#define GETSOCKNAME_SOCKLEN_TYPE socklen_t
 
 /* Do we have a routing socket (struct rt_msghdr)? */
 #define HAS_ROUTING_SOCKET 1
@@ -289,6 +295,9 @@
 /* Define to 1 if you have the <bstring.h> header file. */
 /* #undef HAVE_BSTRING_H */
 
+/* Define to 1 if you have the `canonicalize_file_name' function. */
+/* #undef HAVE_CANONICALIZE_FILE_NAME */
+
 /* Do we have the CIOGETEV ioctl (SunOS, Linux)? */
 /* #undef HAVE_CIOGETEV */
 
@@ -301,8 +310,21 @@
 /* Define to 1 if you have the `daemon' function. */
 #define HAVE_DAEMON 1
 
+/* Define this if /dev/zero is readable device */
+#define HAVE_DEV_ZERO 1
+
+/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
+   */
+#define HAVE_DIRENT_H 1
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#define HAVE_DLFCN_H 1
+
 /* Use Rendezvous/DNS-SD registration */
 /* #undef HAVE_DNSREGISTRATION */
+
+/* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
+/* #undef HAVE_DOPRNT */
 
 /* Can we drop root privileges? */
 #define HAVE_DROPROOT 
@@ -354,6 +376,18 @@
 /* ISC: Use iflist_sysctl? */
 #define HAVE_IFLIST_SYSCTL 1
 
+/* Define to 1 if the system has the type `int16_t'. */
+#define HAVE_INT16_T 1
+
+/* Define to 1 if the system has the type `int32_t'. */
+#define HAVE_INT32_T 1
+
+/* Define to 1 if the system has the type `int8_t'. */
+#define HAVE_INT8_T 1
+
+/* Define to 1 if the system has the type `intptr_t'. */
+#define HAVE_INTPTR_T 1
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
@@ -380,6 +414,9 @@
 
 /* Define to 1 if you have the `gen' library (-lgen). */
 /* #undef HAVE_LIBGEN */
+
+/* Define to 1 if you have the <libgen.h> header file. */
+#define HAVE_LIBGEN_H 1
 
 /* Define to 1 if you have the `kvm' library (-lkvm). */
 #define HAVE_LIBKVM 1
@@ -413,6 +450,12 @@
 
 /* Define to 1 if you have the `syslog' library (-lsyslog). */
 /* #undef HAVE_LIBSYSLOG */
+
+/* Define to 1 if you have the `xnet' library (-lxnet). */
+/* #undef HAVE_LIBXNET */
+
+/* Define to 1 if you have the <limits.h> header file. */
+#define HAVE_LIMITS_H 1
 
 /* Do we have Linux capabilities? */
 /* #undef HAVE_LINUX_CAPABILITIES */
@@ -456,6 +499,12 @@
 /* Define to 1 if you have the `mlockall' function. */
 #define HAVE_MLOCKALL 1
 
+/* Define to 1 if you have the `mmap' function. */
+#define HAVE_MMAP 1
+
+/* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
+/* #undef HAVE_NDIR_H */
+
 /* Define to 1 if you have the <netdb.h> header file. */
 #define HAVE_NETDB_H 1
 
@@ -498,6 +547,9 @@
 /* Define to 1 if you have the `ntp_gettime' function. */
 #define HAVE_NTP_GETTIME 1
 
+/* Define this if pathfind(3) works */
+/* #undef HAVE_PATHFIND */
+
 /* Define to 1 if you have the `plock' function. */
 /* #undef HAVE_PLOCK */
 
@@ -525,6 +577,9 @@
 /* Define to 1 if you have the `readlink' function. */
 #define HAVE_READLINK 1
 
+/* Define this if we have a functional realpath(3C) */
+#define HAVE_REALPATH 1
+
 /* Define to 1 if you have the `recvmsg' function. */
 #define HAVE_RECVMSG 1
 
@@ -545,6 +600,9 @@
 
 /* Define to 1 if you have the `sched_setscheduler' function. */
 /* #undef HAVE_SCHED_SETSCHEDULER */
+
+/* Define to 1 if you have the <setjmp.h> header file. */
+#define HAVE_SETJMP_H 1
 
 /* Define to 1 if you have the `setlinebuf' function. */
 #define HAVE_SETLINEBUF 1
@@ -594,6 +652,12 @@
 /* Does struct sockaddr_storage have ss_family? */
 #define HAVE_SS_FAMILY_IN_SS 1
 
+/* Does struct sockaddr_storage have ss_len? */
+#define HAVE_SS_LEN_IN_SS 1
+
+/* Define to 1 if you have the <stdarg.h> header file. */
+#define HAVE_STDARG_H 1
+
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
 
@@ -612,11 +676,17 @@
 /* Define to 1 if you have the `strerror' function. */
 #define HAVE_STRERROR 1
 
+/* Define this if strftime() works */
+#define HAVE_STRFTIME 1
+
 /* Define to 1 if you have the <strings.h> header file. */
 #define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
+
+/* Define to 1 if you have the `strrchr' function. */
+#define HAVE_STRRCHR 1
 
 /* Define to 1 if you have the `strstr' function. */
 #define HAVE_STRSTR 1
@@ -651,6 +721,9 @@
 /* Define to 1 if you have the `sysctl' function. */
 #define HAVE_SYSCTL 1
 
+/* Define to 1 if you have the <sysexits.h> header file. */
+#define HAVE_SYSEXITS_H 1
+
 /* Define to 1 if you have the <sys/audioio.h> header file. */
 #define HAVE_SYS_AUDIOIO_H 1
 
@@ -662,6 +735,10 @@
 
 /* Define to 1 if you have the <sys/clockctl.h> header file. */
 #define HAVE_SYS_CLOCKCTL_H 1
+
+/* Define to 1 if you have the <sys/dir.h> header file, and it defines `DIR'.
+   */
+/* #undef HAVE_SYS_DIR_H */
 
 /* Define to 1 if you have the <sys/file.h> header file. */
 #define HAVE_SYS_FILE_H 1
@@ -675,6 +752,9 @@
 /* Define to 1 if you have the <sys/ipc.h> header file. */
 #define HAVE_SYS_IPC_H 1
 
+/* Define to 1 if you have the <sys/limits.h> header file. */
+/* #undef HAVE_SYS_LIMITS_H */
+
 /* Define to 1 if you have the <sys/lock.h> header file. */
 #define HAVE_SYS_LOCK_H 1
 
@@ -684,11 +764,18 @@
 /* Define to 1 if you have the <sys/modem.h> header file. */
 /* #undef HAVE_SYS_MODEM_H */
 
+/* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
+   */
+/* #undef HAVE_SYS_NDIR_H */
+
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
 
 /* Define to 1 if you have the <sys/pcl720.h> header file. */
 /* #undef HAVE_SYS_PCL720_H */
+
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#define HAVE_SYS_POLL_H 1
 
 /* Define to 1 if you have the <sys/ppsclock.h> header file. */
 /* #undef HAVE_SYS_PPSCLOCK_H */
@@ -698,6 +785,9 @@
 
 /* Define to 1 if you have the <sys/prctl.h> header file. */
 /* #undef HAVE_SYS_PRCTL_H */
+
+/* Define to 1 if you have the <sys/procset.h> header file. */
+/* #undef HAVE_SYS_PROCSET_H */
 
 /* Define to 1 if you have the <sys/proc.h> header file. */
 /* #undef HAVE_SYS_PROC_H */
@@ -768,6 +858,12 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Use sys/uio.h for struct iovec help */
+/* #undef HAVE_SYS_UIO_H */
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#define HAVE_SYS_UN_H 1
+
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #define HAVE_SYS_WAIT_H 1
 
@@ -813,6 +909,21 @@
 /* Does u_int8_t exist? */
 #define HAVE_TYPE_U_INT8_T 1
 
+/* Define to 1 if the system has the type `uint16_t'. */
+#define HAVE_UINT16_T 1
+
+/* Define to 1 if the system has the type `uint32_t'. */
+#define HAVE_UINT32_T 1
+
+/* Define to 1 if the system has the type `uint8_t'. */
+#define HAVE_UINT8_T 1
+
+/* Define to 1 if the system has the type `uintptr_t'. */
+#define HAVE_UINTPTR_T 1
+
+/* Define to 1 if the system has the type `uint_t'. */
+/* #undef HAVE_UINT_T */
+
 /* Define to 1 if you have the `umask' function. */
 #define HAVE_UMASK 1
 
@@ -828,11 +939,23 @@
 /* Define to 1 if you have the `updwtmpx' function. */
 #define HAVE_UPDWTMPX 1
 
+/* Define to 1 if you have the <utime.h> header file. */
+#define HAVE_UTIME_H 1
+
 /* Define to 1 if you have the <utmpx.h> header file. */
 #define HAVE_UTMPX_H 1
 
 /* Define to 1 if you have the <utmp.h> header file. */
 #define HAVE_UTMP_H 1
+
+/* Define to 1 if you have the <values.h> header file. */
+/* #undef HAVE_VALUES_H */
+
+/* Define to 1 if you have the <varargs.h> header file. */
+/* #undef HAVE_VARARGS_H */
+
+/* Define to 1 if you have the `vprintf' function. */
+#define HAVE_VPRINTF 1
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #define HAVE_VSNPRINTF 1
@@ -854,6 +977,9 @@
 
 /* Does struct sockaddr_storage have __ss_family? */
 /* #undef HAVE___SS_FAMILY_IN_SS */
+
+/* Does struct sockaddr_storage have __ss_len? */
+/* #undef HAVE___SS_LEN_IN_SS */
 
 /* Should we use the IRIG sawtooth filter? */
 /* #undef IRIG_SUCKS */
@@ -954,6 +1080,12 @@
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
 
+/* Define this if optional arguments are disallowed */
+/* #undef NO_OPTIONAL_OPT_ARGS */
+
+/* Should we avoid #warning on option name collisions? */
+/* #undef NO_OPTION_NAME_WARNINGS */
+
 /* Is there a problem using PARENB and IGNPAR (IRIX)? */
 /* #undef NO_PARENB_IGNPAR */
 
@@ -975,6 +1107,13 @@
 /* Should we open the broadcast socket? */
 #define OPEN_BCAST_SOCKET 1
 
+/* need to recreate sockets on changed routing? */
+#define OS_MISSES_SPECIFIC_ROUTE_UPDATES 1
+
+/* wildcard socket needs to set REUSEADDR when binding to interface addresses
+   */
+/* #undef OS_NEEDS_REUSEADDR_FOR_IFADDRBIND */
+
 /* Do we need to override the system's idea of HZ? */
 /* #undef OVERRIDE_HZ */
 
@@ -988,13 +1127,13 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.2p2"
+#define PACKAGE_STRING "ntp 4.2.4p2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.2p2"
+#define PACKAGE_VERSION "4.2.4p2"
 
 /* Do we have the ppsclock streams module? */
 /* #undef PPS */
@@ -1023,6 +1162,9 @@
 /* Basic refclock support? */
 #define REFCLOCK 1
 
+/* name of regex header file */
+#define REGEX_HEADER <regex.h>
+
 /* Do we want the ReliantUNIX clock hacks? */
 /* #undef RELIANTUNIX_CLOCK */
 
@@ -1032,11 +1174,17 @@
 /* Do we want the SCO clock hacks? */
 /* #undef SCO5_CLOCK */
 
+/* The size of a `char*', as computed by sizeof. */
+#define SIZEOF_CHARP 4
+
 /* The size of a `int', as computed by sizeof. */
 #define SIZEOF_INT 4
 
 /* The size of a `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
+
+/* The size of a `short', as computed by sizeof. */
+#define SIZEOF_SHORT 2
 
 /* The size of a `signed char', as computed by sizeof. */
 #define SIZEOF_SIGNED_CHAR 1
@@ -1059,11 +1207,8 @@
 /* Step, then slew the clock? */
 /* #undef STEP_SLEW */
 
-/* Do we have STREAMS/TLI? (Can we replace this with HAVE_SYS_STROPTS_H?) */
-/* #undef STREAMS_TLI */
-
 /* canonical system (cpu-vendor-os) of where we should run */
-#define STR_SYSTEM "i386-unknown-netbsdelf3.99.21"
+#define STR_SYSTEM "netbsd"
 
 /* Buggy syscall() (Solaris2.4)? */
 /* #undef SYSCALL_BUG */
@@ -1089,6 +1234,15 @@
 /* Do we have the tty_clk line discipline/streams module? */
 /* #undef TTYCLK */
 
+/* Provide a typedef for uintptr_t? */
+#ifndef HAVE_UINTPTR_T
+typedef unsigned int	uintptr_t;
+#define HAVE_UINTPTR_T 1
+#endif
+
+/* What type to use for setsockopt */
+#define TYPEOF_IP_MULTICAST_LOOP u_int
+
 /* Do we set process groups with -pid? */
 /* #undef UDP_BACKWARDS_SETOWN */
 
@@ -1105,10 +1259,13 @@
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.2p2"
+#define VERSION "4.2.4p2"
 
 /* ISC: Want IPv6? */
-/* #define WANT_IPV6 */
+/* #define WANT_IPV6  */
+
+/* Define this if a working libregex can be found */
+#define WITH_LIBREGEX 1
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -1117,8 +1274,12 @@
 /* Handle ss_family */
 #if !defined(HAVE_SS_FAMILY_IN_SS) && defined(HAVE___SS_FAMILY_IN_SS)
 # define ss_family __ss_family
-# define ss_len __ss_len
 #endif /* !defined(HAVE_SS_FAMILY_IN_SS) && defined(HAVE_SA_FAMILY_IN_SS) */
+
+/* Handle ss_len */
+#if !defined(HAVE_SS_LEN_IN_SS) && defined(HAVE___SS_LEN_IN_SS)
+# define ss_len __ss_len
+#endif /* !defined(HAVE_SS_LEN_IN_SS) && defined(HAVE_SA_LEN_IN_SS) */
 
 /* Define to 1 if on AIX 3.
    System headers sometimes define this.
@@ -1168,6 +1329,9 @@
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 /* #undef uid_t */
+
+/* Alternate uintptr_t for systems without it. */
+/* #undef uintptr_t */
 
 /* Does the compiler like "volatile"? */
 /* #undef volatile */

@@ -1,9 +1,9 @@
-/*	$NetBSD: clk_meinberg.c,v 1.4 2006/06/11 19:34:10 kardel Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.4.4.1 2007/08/21 08:39:59 ghen Exp $	*/
 
 /*
- * /src/NTP/ntp4-dev/libparse/clk_meinberg.c,v 4.12 2005/04/16 17:32:10 kardel RELEASE_20050508_A
+ * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_meinberg.c,v 4.12.2.1 2005/09/25 10:22:35 kardel RELEASE_20050925_A
  *  
- * clk_meinberg.c,v 4.12 2005/04/16 17:32:10 kardel RELEASE_20050508_A
+ * clk_meinberg.c,v 4.12.2.1 2005/09/25 10:22:35 kardel RELEASE_20050925_A
  *
  * Meinberg clock support
  *
@@ -648,7 +648,7 @@ gps_input(
       msg_buf->phase = MBG_NONE; /* buffer overflow - discard */
       parseio->parse_data[parseio->parse_index] = '\0';
       memcpy(parseio->parse_ldata, parseio->parse_data, (unsigned)(parseio->parse_index+1));
-      parseio->parse_ldsize = parseio->parse_index+1;
+      parseio->parse_ldsize = parseio->parse_index;
       return PARSE_INP_DATA;
     }
   
@@ -672,7 +672,7 @@ gps_input(
 	  parseprintf(DD_PARSE, ("gps_input: string complete\n"));
 	  parseio->parse_data[parseio->parse_index] = '\0';
 	  memcpy(parseio->parse_ldata, parseio->parse_data, (unsigned)(parseio->parse_index+1));
-	  parseio->parse_ldsize = parseio->parse_index+1;
+	  parseio->parse_ldsize = parseio->parse_index;
 	  parseio->parse_index = 0;
 	  return PARSE_INP_TIME;
 	}
@@ -737,6 +737,9 @@ int clk_meinberg_bs;
  * History:
  *
  * clk_meinberg.c,v
+ * Revision 4.12.2.1  2005/09/25 10:22:35  kardel
+ * cleanup buffer bounds
+ *
  * Revision 4.12  2005/04/16 17:32:10  kardel
  * update copyright
  *

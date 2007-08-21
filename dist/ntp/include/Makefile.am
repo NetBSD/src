@@ -1,7 +1,7 @@
 #AUTOMAKE_OPTIONS = ../util/ansi2knr no-dependencies
 AUTOMAKE_OPTIONS = ../util/ansi2knr
 ETAGS_ARGS = $(srcdir)/Makefile.am
-EXTRA_DIST = version.def
+EXTRA_DIST = autogen-version.def copyright.def debug-opt.def homerc.def version.def
 
 SUBDIRS = isc
 
@@ -28,6 +28,7 @@ noinst_HEADERS = \
 	ntp_control.h \
 	ntp_crypto.h \
 	ntp_datum.h \
+	ntp_debug.h \
 	ntp_filegen.h \
 	ntp_fp.h \
 	ntp_if.h \

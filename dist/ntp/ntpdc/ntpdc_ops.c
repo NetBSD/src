@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.6 2006/06/11 19:34:21 kardel Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.6.4.1 2007/08/21 08:40:18 ghen Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
@@ -80,6 +80,8 @@ static	void	clockstat	P((struct parse *, FILE *));
 static	void	fudge		P((struct parse *, FILE *));
 static	void	clkbug		P((struct parse *, FILE *));
 static	void	kerninfo	P((struct parse *, FILE *));
+static  void    get_if_stats    P((struct parse *, FILE *));
+static  void    do_if_reload    P((struct parse *, FILE *));
 
 /*
  * Commands we understand.  Ntpdc imports this.
@@ -119,10 +121,10 @@ struct xcmd opcmds[] = {
 	  { "", "", "", "" },
 	  "display event timer subsystem statistics" },
 	{ "addpeer",	addpeer,	{ NTP_ADD, OPT|NTP_STR, OPT|NTP_STR, OPT|NTP_STR },
-	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
+	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|dynamic|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
 	  "configure a new peer association" },
 	{ "addserver",	addserver,	{ NTP_ADD, OPT|NTP_STR, OPT|NTP_STR, OPT|NTP_STR },
-	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
+	  { "addr", "keyid", "version", "minpoll#|prefer|burst|iburst|dynamic|'minpoll N'|'maxpoll N'|'keyid N'|'version N' ..." },
 	  "configure a new server" },
 	{ "addrefclock",addrefclock,	{ NTP_ADD, OPT|NTP_UINT, OPT|NTP_STR, OPT|NTP_STR },
 	  { "addr", "mode", "minpoll|prefer", "minpoll|prefer" },
@@ -206,7 +208,12 @@ struct xcmd opcmds[] = {
 	{ "kerninfo",	kerninfo,	{ NO, NO, NO, NO },
 	  { "", "", "", "" },
 	  "display the kernel pll/pps variables" },
-
+	{ "ifstats",	get_if_stats,	{ NO, NO, NO, NO },
+	  { "", "", "", "" },
+	  "list interface statistics" },
+	{ "ifreload",	do_if_reload,	{ NO, NO, NO, NO },
+	  { "", "", "", "" },
+	  "reload interface configuration" },
 	{ 0,		0,		{ NO, NO, NO, NO },
 	  { "", "", "", "" }, "" }
 };
@@ -1327,6 +1334,8 @@ again:
 		    flags |= CONF_FLAG_PREFER;
 		else if (STREQ(pcmd->argval[items].string, "burst"))
 		    flags |= CONF_FLAG_BURST;
+		else if (STREQ(pcmd->argval[items].string, "dynamic"))
+                    flags |= CONF_FLAG_DYNAMIC;
 		else if (STREQ(pcmd->argval[items].string, "iburst"))
 		    flags |= CONF_FLAG_IBURST;
 		else if (!refc && STREQ(pcmd->argval[items].string, "keyid"))
@@ -3075,4 +3084,125 @@ again:
 		      (u_long)ntohl(ik->stbcnt));
 	(void)fprintf(fp, "calibration errors:   %ld\n",
 		      (u_long)ntohl(ik->errcnt));
+}
+
+#define IF_LIST_FMT     "%2d %c %48s %c %c %12.12s %03x %3d %2d %5d %5d %5d %2d %2d %3d %7d\n"
+#define IF_LIST_FMT_STR "%2s %c %48s %c %c %12.12s %3s %3s %2s %5s %5s %5s %2s %2s %3s %7s\n"
+#define IF_LIST_AFMT_STR "     %48s %c\n"
+#define IF_LIST_LABELS  "#", 'A', "Address/Mask/Broadcast", 'T', 'E', "IF name", "Flg", "TL", "#M", "recv", "sent", "drop", "S", "IX", "PC", "uptime"
+#define IF_LIST_LINE    "=====================================================================================================================\n"
+
+static void
+iflist(
+	FILE *fp,
+	struct info_if_stats *ifs,
+	int items,
+	int itemsize,
+	int res
+	)
+{
+	static char *actions = "?.+-";
+	struct sockaddr_storage saddr;
+
+	if (res != 0)
+	    return;
+
+	if (!checkitems(items, fp))
+	    return;
+
+	if (!checkitemsize(itemsize, sizeof(struct info_if_stats)))
+	    return;
+
+	fprintf(fp, IF_LIST_FMT_STR, IF_LIST_LABELS);
+	fprintf(fp, IF_LIST_LINE);
+	
+	while (items > 0) {
+		if (ntohl(ifs->v6_flag)) {
+			memcpy((char *)&GET_INADDR6(saddr), (char *)&ifs->unaddr.addr6, sizeof(ifs->unaddr.addr6));
+			saddr.ss_family = AF_INET6;
+		} else {
+			memcpy((char *)&GET_INADDR(saddr), (char *)&ifs->unaddr.addr, sizeof(ifs->unaddr.addr));
+			saddr.ss_family = AF_INET;
+		}
+#ifdef HAVE_SA_LEN_IN_STRUCT_SOCKADDR
+		saddr.ss_len = SOCKLEN(&saddr);
+#endif
+		fprintf(fp, IF_LIST_FMT,
+			ntohl(ifs->ifnum),
+			actions[(ifs->action >= 1 && ifs->action < 4) ? ifs->action : 0],
+			stoa((&saddr)), 'A',
+			ifs->ignore_packets ? 'D' : 'E',
+			ifs->name,
+			ntohl(ifs->flags),
+			ntohl(ifs->last_ttl),
+			ntohl(ifs->num_mcast),
+			ntohl(ifs->received),
+			ntohl(ifs->sent),
+			ntohl(ifs->notsent),
+			ntohl(ifs->scopeid),
+			ntohl(ifs->ifindex),
+			ntohl(ifs->peercnt),
+			ntohl(ifs->uptime));
+
+		if (ntohl(ifs->v6_flag)) {
+			memcpy((char *)&GET_INADDR6(saddr), (char *)&ifs->unmask.addr6, sizeof(ifs->unmask.addr6));
+			saddr.ss_family = AF_INET6;
+		} else {
+			memcpy((char *)&GET_INADDR(saddr), (char *)&ifs->unmask.addr, sizeof(ifs->unmask.addr));
+			saddr.ss_family = AF_INET;
+		}
+#ifdef HAVE_SA_LEN_IN_STRUCT_SOCKADDR
+		saddr.ss_len = SOCKLEN(&saddr);
+#endif
+		fprintf(fp, IF_LIST_AFMT_STR, stoa(&saddr), 'M');
+
+		if (!ntohl(ifs->v6_flag) && ntohl(ifs->flags) & (INT_BCASTOPEN)) {
+			memcpy((char *)&GET_INADDR(saddr), (char *)&ifs->unbcast.addr, sizeof(ifs->unbcast.addr));
+			saddr.ss_family = AF_INET;
+#ifdef HAVE_SA_LEN_IN_STRUCT_SOCKADDR
+			saddr.ss_len = SOCKLEN(&saddr);
+#endif
+			fprintf(fp, IF_LIST_AFMT_STR, stoa(&saddr), 'B');
+
+		}
+
+		ifs++;
+		items--;
+	}
+}
+
+/*ARGSUSED*/
+static void
+get_if_stats(
+	struct parse *pcmd,
+	FILE *fp
+	)
+{
+	struct info_if_stats *ifs;
+	int items;
+	int itemsize;
+	int res;
+
+	res = doquery(impl_ver, REQ_IF_STATS, 1, 0, 0, (char *)NULL, &items,
+		      &itemsize, (void *)&ifs, 0, 
+		      sizeof(struct info_if_stats));
+	iflist(fp, ifs, items, itemsize, res);
+}
+
+/*ARGSUSED*/
+static void
+do_if_reload(
+	struct parse *pcmd,
+	FILE *fp
+	)
+{
+	struct info_if_stats *ifs;
+	int items;
+	int itemsize;
+	int res;
+
+	res = doquery(impl_ver, REQ_IF_RELOAD, 1, 0, 0, (char *)NULL, &items,
+		      &itemsize, (void *)&ifs, 0, 
+		      sizeof(struct info_if_stats));
+	iflist(fp, ifs, items, itemsize, res);
 }
