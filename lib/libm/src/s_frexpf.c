@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_frexpf.c,v 1.9 2002/12/05 16:03:42 scw Exp $");
+__RCSID("$NetBSD: s_frexpf.c,v 1.10 2007/08/21 20:12:27 drochner Exp $");
 #endif
 
 #include "math.h"
@@ -40,6 +40,6 @@ frexpf(float x, int *eptr)
 	}
 	*eptr += (ix>>23)-126;
 	hx = (hx&0x807fffff)|0x3f000000;
-	*(int*)(void*)&x = hx;
+	SET_FLOAT_WORD(x,hx);
 	return x;
 }
