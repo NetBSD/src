@@ -1,4 +1,4 @@
-AUTOMAKE_OPTIONS=	../util/ansi2knr
+#AUTOMAKE_OPTIONS=	../util/ansi2knr
 
 bindir=		${exec_prefix}/${BINSUBDIR}
 #bin_PROGRAMS=	ntpdate ntptimeset
@@ -17,6 +17,9 @@ $(PROGRAMS): $(LDADD)
 
 ../libntp/libntp.a:
 	cd ../libntp && $(MAKE)
+
+$(top_srcdir)/version :
+	cd $(top_srcdir) && $(MAKE) version
 
 version.o: $(ntpdate_OBJECTS) ../libntp/libntp.a Makefile $(top_srcdir)/version
 	env CSET=`cat $(top_srcdir)/version` $(top_builddir)/scripts/mkver ntpdate

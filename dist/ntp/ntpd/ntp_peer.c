@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.3 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.3.4.1 2007/08/21 08:40:03 ghen Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -105,7 +105,8 @@ int peer_associations;			/* mobilized associations */
 int peer_preempt;			/* preemptable associations */
 static struct peer init_peer_alloc[INIT_PEER_ALLOC]; /* init alloc */
 
-static	void	getmorepeermem	P((void));
+static void	    getmorepeermem	 P((void));
+static struct interface *select_peerinterface P((struct peer *, struct sockaddr_storage *, struct interface *, u_char));
 
 /*
  * init_peer - initialize peer data structures and counters
@@ -258,7 +259,9 @@ findpeer(
 		*action = MATCH_ASSOC(NO_PEER, pkt_mode);
 		return ((struct peer *)0);
 	}
-	peer->dstadr = dstadr;
+
+	set_peerdstadr(peer, dstadr);
+
 	return (peer);
 }
 
@@ -343,6 +346,10 @@ unpeer(
 		printf("demobilize %u %d %d\n", peer_to_remove->associd,
 		    peer_associations, peer_preempt);
 #endif
+	set_peerdstadr(peer_to_remove, NULL);
+
+	/* XXXMEMLEAK? peer_clear->crypto allocation */
+
 	hash = NTP_HASH_ADDR(&peer_to_remove->srcadr);
 	peer_hash_count[hash]--;
 	peer_demobilizations++;
@@ -518,6 +525,193 @@ peer_config(
 	return (peer);
 }
 
+/*
+ * setup peer dstadr field keeping it in sync with the interface structures
+ */
+void
+set_peerdstadr(struct peer *peer, struct interface *interface)
+{
+	if (peer->dstadr != interface) {
+		if (interface != NULL &&
+		    (peer->cast_flags & MDF_BCLNT) &&
+		    (interface->flags & INT_MCASTIF) &&
+		    peer->burst) {
+			/*
+			 * don't accept updates to a true multicast reception
+			 * interface while a BCLNT peer is running it's
+			 * unicast protocol
+			 */
+			return;
+		}
+
+		if (peer->dstadr != NULL)
+		{
+			peer->dstadr->peercnt--;
+			ISC_LIST_UNLINK_TYPE(peer->dstadr->peers, peer, ilink, struct peer);
+		}
+
+		DPRINTF(4, ("set_peerdstadr(%s): change interface from %s to %s\n",
+			    stoa(&peer->srcadr),
+			    (peer->dstadr != NULL) ? stoa(&peer->dstadr->sin) : "<null>",
+			    (interface != NULL) ? stoa(&interface->sin) : "<null>"));
+
+		peer->dstadr = interface;
+
+		if (peer->dstadr != NULL)
+		{
+			ISC_LIST_APPEND(peer->dstadr->peers, peer, ilink);
+			peer->dstadr->peercnt++;
+		}
+	}
+}
+
+/*
+ * attempt to re-rebind interface if necessary
+ */
+static void
+peer_refresh_interface(struct peer *peer)
+{
+	struct interface *niface, *piface;
+
+	niface = select_peerinterface(peer, &peer->srcadr, NULL, peer->cast_flags);
+
+#ifdef DEBUG
+	if (debug > 3)
+	{
+		printf(
+			"peer_refresh_interface: %s->%s mode %d vers %d poll %d %d flags 0x%x 0x%x ttl %d key %08x: new interface: ",
+			peer->dstadr == NULL ? "<null>" : stoa(&peer->dstadr->sin),
+			stoa(&peer->srcadr),
+			peer->hmode, peer->version, peer->minpoll,
+			peer->maxpoll, peer->flags, peer->cast_flags,
+			peer->ttl, peer->keyid);
+		if (niface != NULL) 
+		{
+			printf("fd=%d, bfd=%d, name=%.16s, flags=0x%x, scope=%d, ",
+			       niface->fd,
+			       niface->bfd,
+			       niface->name,
+			       niface->flags,
+			       niface->scopeid);
+			/* Leave these as three printf calls. */
+			printf(", sin=%s",
+			       stoa((&niface->sin)));
+			if (niface->flags & INT_BROADCAST)
+				printf(", bcast=%s,",
+				       stoa((&niface->bcast)));
+			printf(", mask=%s\n",
+			       stoa((&niface->mask)));
+		}
+		else
+		{
+			printf("<NONE>\n");
+		}
+	}
+#endif
+
+	piface = peer->dstadr;
+
+	set_peerdstadr(peer, niface);
+
+	if (peer->dstadr) {
+                /*
+                 * clear crypto if we change the local address
+                 */
+                if (peer->dstadr != piface && !(peer->cast_flags & MDF_BCLNT)) {
+			peer_crypto_clear(peer);
+		}
+
+		/*
+	 	 * Broadcast needs the socket enabled for broadcast
+	 	 */
+		if (peer->cast_flags & MDF_BCAST) {
+			enable_broadcast(peer->dstadr, &peer->srcadr);
+		}
+
+		/*
+	 	 * Multicast needs the socket interface enabled for multicast
+	 	 */
+		if (peer->cast_flags & MDF_MCAST) {
+			enable_multicast_if(peer->dstadr, &peer->srcadr);
+		}
+	}
+}
+
+/*
+ * refresh_all_peerinterfaces - see that all interface bindings are up to date
+ */
+void
+refresh_all_peerinterfaces(void)
+{
+	struct peer *peer, *next_peer;
+	int n;
+
+	/*
+	 * this is called when the interface list has changed
+	 * give all peers a chance to find a better interface
+	 */
+	for (n = 0; n < NTP_HASH_SIZE; n++) {
+		for (peer = peer_hash[n]; peer != 0; peer = next_peer) {
+			next_peer = peer->next;
+			peer_refresh_interface(peer);
+		}
+	}
+}
+
+	
+/*
+ * find an interface suitable for the src address
+ */
+static struct interface *
+select_peerinterface(struct peer *peer, struct sockaddr_storage *srcadr, struct interface *dstadr, u_char cast_flags)
+{
+	struct interface *interface;
+  
+	/*
+	 * Initialize the peer structure and dance the interface jig.
+	 * Reference clocks step the loopback waltz, the others
+	 * squaredance around the interface list looking for a buddy. If
+	 * the dance peters out, there is always the wildcard interface.
+	 * This might happen in some systems and would preclude proper
+	 * operation with public key cryptography.
+	 */
+	if (ISREFCLOCKADR(srcadr))
+		interface = loopback_interface;
+	else
+		if (cast_flags & (MDF_BCLNT | MDF_ACAST | MDF_MCAST | MDF_BCAST)) {
+			interface = findbcastinter(srcadr);
+#ifdef DEBUG
+			if (debug > 3) {
+				if (interface != NULL)
+					printf("Found *-cast interface address %s, for address %s\n",
+					       stoa(&(interface)->sin), stoa(srcadr));
+				else
+					printf("No *-cast local address found for address %s\n",
+					       stoa(srcadr));
+			}
+#endif
+			/*
+			 * If it was a multicast packet, findbcastinter() may not
+			 * find it, so try a little harder.
+			 */
+			if (interface == ANY_INTERFACE_CHOOSE(srcadr))
+				interface = findinterface(srcadr);
+		}
+		else if (dstadr != NULL && dstadr != ANY_INTERFACE_CHOOSE(srcadr))
+			interface = dstadr;
+		else
+			interface = findinterface(srcadr);
+
+	/*
+	 * we do not bind to the wildcard interfaces for output 
+	 * as our (network) source address would be undefined and
+	 * crypto will not work without knowing the own transmit address
+	 */
+	if (interface != NULL && interface->flags & INT_WILDCARD)
+		interface = NULL;
+
+	return interface;
+}
 
 /*
  * newpeer - initialize a new peer association
@@ -563,75 +757,61 @@ newpeer(
 	if (++current_association_ID == 0)
 		++current_association_ID;
 
-#ifdef DEBUG
-	if (debug >2)
-		printf("newpeer: cast flags: 0x%x for address: %s\n",
-			cast_flags, stoa(srcadr));
-#endif
-	/*
-	 * Initialize the peer structure and dance the interface jig.
-	 * Reference clocks step the loopback waltz, the others
-	 * squaredance around the interface list looking for a buddy. If
-	 * the dance peters out, there is always the wildcard interface.
-	 * This might happen in some systems and would preclude proper
-	 * operation with public key cryptography.
-	 */
-	if (ISREFCLOCKADR(srcadr))
-		peer->dstadr = loopback_interface;
-	else if (cast_flags & (MDF_BCLNT | MDF_ACAST | MDF_MCAST | MDF_BCAST)) {
-		peer->dstadr = findbcastinter(srcadr);
-#ifdef DEBUG
-		if (debug > 1) {
-			if (peer->dstadr != NULL)
-				printf("Found broadcast interface address %s, for address %s\n",
-					stoa(&(peer->dstadr)->sin), stoa(srcadr));
-			else
-				printf("No broadcast local address found for address %s\n",
-					stoa(srcadr));
-		}
-#endif
-		/*
-		 * If it was a multicast packet, findbcastinter() may not
-		 * find it, so try a little harder.
-		 */
-		if (peer->dstadr == ANY_INTERFACE_CHOOSE(srcadr))
-			peer->dstadr = findinterface(srcadr);
-	} else if (dstadr != NULL && dstadr != ANY_INTERFACE_CHOOSE(srcadr))
-		peer->dstadr = dstadr;
-	else
-		peer->dstadr = findinterface(srcadr);
+	DPRINTF(3, ("newpeer: cast flags: 0x%x for address: %s\n",
+		    cast_flags, stoa(srcadr)));
 
+	ISC_LINK_INIT(peer, ilink);  /* set up interface link chain */
+
+	dstadr = select_peerinterface(peer, srcadr, dstadr, cast_flags);
+	
 	/*
 	 * If we can't find an interface to use we return a NULL
+	 * unless the DYNAMIC flag is set - then we expect the dynamic
+	 * interface detection code to bind us some day to an interface
 	 */
-	if (peer->dstadr == NULL)
+	if (dstadr == NULL && !(flags & FLAG_DYNAMIC))
 	{
-		msyslog(LOG_ERR, "Cannot find suitable interface for address %s", stoa(srcadr));
+		msyslog(LOG_ERR, "Cannot find existing interface for address %s", stoa(srcadr));
+
+		peer->next = peer_free;
+		peer_free = peer;
+		peer_associations--;
+		peer_free_count++;
+		
 		return (NULL);
 	}
-	/*
-	 * Broadcast needs the socket enabled for broadcast
-	 */
-	if (cast_flags & MDF_BCAST) {
-		enable_broadcast(peer->dstadr, srcadr);
-	}
-	/*
-	 * Multicast needs the socket interface enabled for multicast
-	 */
-	if (cast_flags & MDF_MCAST) {
-		enable_multicast_if(peer->dstadr, srcadr);
-	}
-#ifdef DEBUG
-	if (debug>2)
-		printf("newpeer: using fd %d and our addr %s\n",
-		    peer->dstadr->fd, stoa(&peer->dstadr->sin));
-#endif
+	
 	peer->srcadr = *srcadr;
 	peer->hmode = (u_char)hmode;
 	peer->version = (u_char)version;
 	peer->minpoll = (u_char)max(NTP_MINPOLL, minpoll);
 	peer->maxpoll = (u_char)min(NTP_MAXPOLL, maxpoll);
 	peer->flags = flags;
+
+	set_peerdstadr(peer, dstadr);
+
+#ifdef DEBUG
+	if (debug > 2) {
+		if (peer->dstadr)
+			printf("newpeer: using fd %d and our addr %s\n",
+			       peer->dstadr->fd, stoa(&peer->dstadr->sin));
+		else
+			printf("newpeer: local interface currently not bound\n");
+	}
+#endif
+	
+	/*
+	 * Broadcast needs the socket enabled for broadcast
+	 */
+	if (cast_flags & MDF_BCAST && peer->dstadr) {
+		enable_broadcast(peer->dstadr, srcadr);
+	}
+	/*
+	 * Multicast needs the socket interface enabled for multicast
+	 */
+	if (cast_flags & MDF_MCAST && peer->dstadr) {
+		enable_multicast_if(peer->dstadr, srcadr);
+	}
 	if (key != 0)
 		peer->flags |= FLAG_AUTHENABLE;
 	if (key > NTP_MAXKEY)
@@ -658,6 +838,7 @@ newpeer(
 	peer->timereset = current_time;
 	peer->timereachable = current_time;
 	peer->timereceived = current_time;
+
 #ifdef REFCLOCK
 	if (ISREFCLOCKADR(&peer->srcadr)) {
 
@@ -671,6 +852,8 @@ newpeer(
 			/*
 			 * Dump it, something screwed up
 			 */
+			set_peerdstadr(peer, NULL);
+	
 			peer->next = peer_free;
 			peer_free = peer;
 			peer_free_count++;
@@ -690,26 +873,22 @@ newpeer(
 	peer->ass_next = assoc_hash[i];
 	assoc_hash[i] = peer;
 	assoc_hash_count[i]++;
+
 #ifdef OPENSSL
 	if (peer->flags & FLAG_SKEY) {
 		sprintf(statstr, "newpeer %d", peer->associd);
 		record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-		if (debug)
-			printf("peer: %s\n", statstr);
-#endif
+		DPRINTF(1, ("peer: %s\n", statstr));
 	}
 #endif /* OPENSSL */
-#ifdef DEBUG
-	if (debug)
-		printf(
-		    "newpeer: %s->%s mode %d vers %d poll %d %d flags 0x%x 0x%x ttl %d key %08x\n",
-		    peer->dstadr == NULL ? "null" : stoa(&peer->dstadr->sin),
+
+	DPRINTF(1, ("newpeer: %s->%s mode %d vers %d poll %d %d flags 0x%x 0x%x ttl %d key %08x\n",
+		    peer->dstadr == NULL ? "<null>" : stoa(&peer->dstadr->sin),
 		    stoa(&peer->srcadr),
 		    peer->hmode, peer->version, peer->minpoll,
 		    peer->maxpoll, peer->flags, peer->cast_flags,
-		    peer->ttl, peer->keyid);
-#endif
+		    peer->ttl, peer->keyid));
+
 	return (peer);
 }
 

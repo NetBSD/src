@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.6 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.6.4.1 2007/08/21 08:40:10 ghen Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -210,7 +210,7 @@
 #define BAUD		300	/* modulation rate (bps) */
 #define OFFSET		128	/* companded sample offset */
 #define SIZE		256	/* decompanding table size */
-#define	MAXSIG		6000.	/* maximum signal level */
+#define	MAXAMP		6000.	/* maximum signal level */
 #define	MAXCLP		100	/* max clips above reference per s */
 #define LIMIT		1000.	/* soft limiter threshold */
 #define AGAIN		6.	/* baseband gain */
@@ -657,15 +657,15 @@ chu_audio_receive(
 		sample = up->comp[~*dpt++ & 0xff];
 
 		/*
-		 * Clip noise spikes greater than MAXSIG. If no clips,
+		 * Clip noise spikes greater than MAXAMP. If no clips,
 		 * increase the gain a tad; if the clips are too high, 
 		 * decrease a tad.
 		 */
-		if (sample > MAXSIG) {
-			sample = MAXSIG;
+		if (sample > MAXAMP) {
+			sample = MAXAMP;
 			up->clipcnt++;
-		} else if (sample < -MAXSIG) {
-			sample = -MAXSIG;
+		} else if (sample < -MAXAMP) {
+			sample = -MAXAMP;
 			up->clipcnt++;
 		}
 		chu_rf(peer, sample);

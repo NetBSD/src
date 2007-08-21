@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.330.2.2 2007/07/19 14:38:22 liamjfoy Exp $
+#	$NetBSD: NetBSD.dist,v 1.330.2.3 2007/08/21 08:40:53 ghen Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -348,6 +348,14 @@
 ./usr/share/doc/html/groff
 ./usr/share/doc/html/groff/mom
 ./usr/share/doc/html/postfix
+./usr/share/doc/html/ntp
+./usr/share/doc/html/ntp/build
+./usr/share/doc/html/ntp/build/scripts
+./usr/share/doc/html/ntp/drivers
+./usr/share/doc/html/ntp/drivers/icons
+./usr/share/doc/html/ntp/drivers/scripts
+./usr/share/doc/html/ntp/icons
+./usr/share/doc/html/ntp/scripts
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
 ./usr/share/doc/psd/02.implement

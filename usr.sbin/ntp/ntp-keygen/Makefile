@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/04 16:41:57 drochner Exp $
+#	$NetBSD: Makefile,v 1.1.18.1 2007/08/21 08:40:55 ghen Exp $
 
 PROG=	ntp-keygen
-NOMAN=	#defined
-SRCS=	ntp-keygen.c
+MAN=	ntp-keygen.8
+SRCS=	ntp-keygen.c ntp-keygen-opts.c
 
 NTPSRCDIR=	util
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.3.4.1 2007/08/21 08:40:11 ghen Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -71,6 +71,10 @@
 /*                                                                    */
 /*  2004/11/28                                                        */
 /*    [Add]    Support the Echo Keisokuki LT-2000 receiver            */
+/*                                                                    */
+/*  2006/11/04                                                        */
+/*    [Fix]    C-DEX JST2000                                          */
+/*             Thanks to Hideo Kuramatsu for the patch                */
 /*                                                                    */
 /**********************************************************************/
 
@@ -283,6 +287,7 @@ jjy_start ( int unit, struct peer *peer )
 		up->unittype = UNITTYPE_CDEX_JST2000 ;
 		up->lineexpect = 1 ;
 		up->charexpect[0] = 15 ; /* <STX>JYYMMDD HHMMSSS<ETX> */
+		break ;
 	case 3 :
 		up->unittype = UNITTYPE_ECHOKEISOKUKI_LT2000 ;
 		up->operationmode = 2 ;  /* Mode 2 : Continuous mode */

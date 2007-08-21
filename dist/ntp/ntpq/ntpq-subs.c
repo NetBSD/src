@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.7 2006/07/29 08:15:29 kardel Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.1.1.2.4.2 2007/08/21 08:40:21 ghen Exp $	*/
 
 /*
  * ntpq_ops.c - subroutines which are called to perform operations by ntpq
@@ -1418,6 +1418,13 @@ doprintpeers(
 				havevar[HAVE_REFID] = 1;
 				if (*value == '\0') {
 					dstadr_refid = "0.0.0.0";
+				} else if ((int)strlen(value) <= 4) {
+					refid_string[0] = '.';
+					(void) strcpy(&refid_string[1], value);
+					i = strlen(refid_string);
+					refid_string[i] = '.';
+					refid_string[i+1] = '\0';
+					dstadr_refid = refid_string;
 				} else if (decodenetnum(value, &dstadr)) {
 					if (SOCKNUL(&dstadr))
 						dstadr_refid = "0.0.0.0";
@@ -1428,13 +1435,6 @@ doprintpeers(
 					else
 						dstadr_refid =
 						    stoa(&dstadr);
-				} else if ((int)strlen(value) <= 4) {
-					refid_string[0] = '.';
-					(void) strcpy(&refid_string[1], value);
-					i = strlen(refid_string);
-					refid_string[i] = '.';
-					refid_string[i+1] = '\0';
-					dstadr_refid = refid_string;
 				} else {
 					havevar[HAVE_REFID] = 0;
 				}
@@ -1471,8 +1471,9 @@ doprintpeers(
 				havevar[HAVE_OFFSET] = 1;
 			break;
 			case CP_JITTER:
-			if (decodetime(value, &estjitter))
-				havevar[HAVE_JITTER] = 1;
+			if (pvl == peervarlist)
+				if (decodetime(value, &estjitter))
+					havevar[HAVE_JITTER] = 1;
 			break;
 			case CP_DISPERSION:
 			if (decodetime(value, &estdisp))

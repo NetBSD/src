@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.6 2006/06/18 21:35:57 kardel Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.6.4.1 2007/08/21 08:40:04 ghen Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -81,6 +81,9 @@ static FILEGEN loopstats;
 static FILEGEN clockstats;
 static FILEGEN rawstats;
 static FILEGEN sysstats;
+#ifdef DEBUG_TIMING
+static FILEGEN timingstats;
+#endif
 #ifdef OPENSSL
 static FILEGEN cryptostats;
 #endif /* OPENSSL */
@@ -120,6 +123,9 @@ init_util(void)
 	filegen_register(&statsdir[0], "cryptostats", &cryptostats);
 #endif /* OPENSSL */
 
+#ifdef DEBUG_TIMING
+	filegen_register(&statsdir[0], "timingstats", &timingstats);
+#endif
 }
 
 
@@ -261,11 +267,11 @@ write_stats(void)
 void
 stats_config(
 	int item,
-	char *invalue	/* only one type so far */
+	const char *invalue	/* only one type so far */
 	)
 {
 	FILE *fp;
-	char *value;
+	const char *value;
 	int len;
 
 	/*
@@ -460,6 +466,7 @@ record_peer_stats(
 		fflush(peerstats.fp);
 	}
 }
+
 /*
  * record_loop_stats - write loop filter statistics to file
  *
@@ -561,9 +568,9 @@ record_raw_stats(
 	now.l_ui %= 86400;
 	if (rawstats.fp != NULL) {
                 fprintf(rawstats.fp, "%lu %s %s %s %s %s %s %s\n",
-		    day, ulfptoa(&now, 3), stoa(srcadr), stoa(dstadr),
-		    ulfptoa(t1, 9), ulfptoa(t2, 9), ulfptoa(t3, 9),
-		    ulfptoa(t4, 9));
+			day, ulfptoa(&now, 3), stoa(srcadr), dstadr ? stoa(dstadr) : "-",
+			ulfptoa(t1, 9), ulfptoa(t2, 9), ulfptoa(t3, 9),
+			ulfptoa(t4, 9));
 		fflush(rawstats.fp);
 	}
 }
@@ -650,13 +657,45 @@ record_crypto_stats(
 }
 #endif /* OPENSSL */
 
+#ifdef DEBUG_TIMING
+/*
+ * record_crypto_stats - write crypto statistics to file
+ *
+ * file format:
+ * day (mjd)
+ * time (s past midnight)
+ * text message
+ */
+void
+record_timing_stats(
+	const char *text
+	)
+{
+	static unsigned int flshcnt;
+	l_fp	now;
+	u_long	day;
 
+	if (!stats_control)
+		return;
+
+	get_systime(&now);
+	filegen_setup(&timingstats, now.l_ui);
+	day = now.l_ui / 86400 + MJD_1900;
+	now.l_ui %= 86400;
+	if (timingstats.fp != NULL) {
+		fprintf(timingstats.fp, "%lu %s %s\n",
+			    day, lfptoa(&now, 3), text);
+		if (++flshcnt % 100 == 0)
+			fflush(timingstats.fp);
+	}
+}
+#endif
 /*
  * getauthkeys - read the authentication keys from the specified file
  */
 void
 getauthkeys(
-	char *keyfile
+	const char *keyfile
 	)
 {
 	int len;
@@ -750,3 +789,15 @@ sock_hash(
 
 	return hashVal;
 }
+
+#if notyet
+/*
+ * ntp_exit - document explicitly that ntpd has exited
+ */
+void
+ntp_exit(int retval)
+{
+  msyslog(LOG_ERR, "EXITING with return code %d", retval);
+  exit(retval);
+}
+#endif

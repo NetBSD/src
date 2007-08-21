@@ -3,7 +3,7 @@ repotype=stable
 # odd minor numbers are for -dev, even minor numbers are for -stable
 proto=4
 major=2
-minor=2
+minor=4
 version=${proto}.${major}.${minor}
 # Point.  3 cases:
 # - Numeric values increment
@@ -13,14 +13,19 @@ point=2
 # Special.  Normally unused.  A suffix.
 #special=ag
 special=
+# [???] To start an RC cycle: RC->yes
+# To release from an RC cycle: rcpoint-> GO
 # ReleaseCandidate. 'yes' or 'no'.
-#releasecandidate=yes
 releasecandidate=no
+#releasecandidate=no
 # ChangeLog tag
 CLTAG=NTP_4_2_0
 ###
-# The following is for ntp-stable.  3 cases:
+# The following is for ntp-stable.  2 cases:
 # - Numeric values increment
-# - empty 'increments' to 1
-# - NEW 'increments' to empty
-rcpoint=NEW
+# - GO triggers a release
+# - - rcpoint gets set to 0
+# - - releasecandidate gets set to no
+# - GRONK is for -dev
+rcpoint=
+#rcpoint=GRONK

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.9 2006/07/29 19:22:25 kardel Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.9.4.1 2007/08/21 08:40:13 ghen Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -1435,8 +1435,10 @@ oncore_consume(
 			for (i=1; i < rcvptr-1; i++)
 				if (rcvbuf[i] == '@' && rcvbuf[i+1] == '@')
 					break;
+#ifdef DEBUG
 			if (debug > 4)
 				printf("ONCORE[%d]: >>> skipping %d chars\n", instance->unit, i);
+#endif
 			if (i != rcvptr)
 				memcpy(rcvbuf, rcvbuf+i, (size_t)(rcvptr-i));
 			rcvptr -= i;
@@ -1449,8 +1451,10 @@ oncore_consume(
 			if (!strncmp(oncore_messages[m].flag, (char *)(rcvbuf+2), (size_t) 2))
 				break;
 		if (m == l) {
+#ifdef DEBUG
 			if (debug > 4)
 				printf("ONCORE[%d]: >>> Unknown MSG, skipping 4 (%c%c)\n", instance->unit, rcvbuf[2], rcvbuf[3]);
+#endif
 			memcpy(rcvbuf, rcvbuf+4, (size_t) 4);
 			rcvptr -= 4;
 			continue;
@@ -1469,8 +1473,10 @@ oncore_consume(
 		/* are we at the end of message? should be <Cksum><CR><LF> */
 
 		if (rcvbuf[l-2] != '\r' || rcvbuf[l-1] != '\n') {
+#ifdef DEBUG
 			if (debug)
 				printf("ONCORE[%d]: NO <CR><LF> at end of message\n", instance->unit);
+#endif
 		} else {	/* check the CheckSum */
 			if (oncore_checksum_ok(rcvbuf, l)) {
 				if (instance->shmem != NULL) {
@@ -1481,13 +1487,16 @@ oncore_consume(
 				oncore_msg_any(instance, rcvbuf, (size_t) (l-3), m);
 				if (oncore_messages[m].handler)
 					oncore_messages[m].handler(instance, rcvbuf, (size_t) (l-3));
-			} else if (debug) {
+			}
+#ifdef DEBUG
+			else if (debug) {
 				printf("ONCORE[%d]: Checksum mismatch!\n", instance->unit);
 				printf("ONCORE[%d]: @@%c%c ", instance->unit, rcvbuf[2], rcvbuf[3]);
 				for (i=4; i<l; i++)
 					printf("%03o ", rcvbuf[i]);
 				printf("\n");
 			}
+#endif
 		}
 
 		if (l != rcvptr)
@@ -1563,18 +1572,20 @@ oncore_get_timestamp(
 	if (instance->assert) {
 		tsp = &pps_i.assert_timestamp;
 
+#ifdef DEBUG
 		if (debug > 2) {
 			i = (u_long) pps_i.assert_sequence;
-#ifdef HAVE_STRUCT_TIMESPEC
+# ifdef HAVE_STRUCT_TIMESPEC
 			printf("ONCORE[%d]: serial/j (%lu, %lu) %ld.%09ld\n",
 			    instance->unit, i, j,
 			    (long)tsp->tv_sec, (long)tsp->tv_nsec);
-#else
+# else
 			printf("ONCORE[%d]: serial/j (%lu, %lu) %ld.%06ld\n",
 			    instance->unit, i, j,
 			    (long)tsp->tv_sec, (long)tsp->tv_usec);
-#endif
+# endif
 		}
+#endif
 
 		if (pps_i.assert_sequence == j) {
 			printf("ONCORE: oncore_get_timestamp, error serial pps\n");
@@ -1584,16 +1595,18 @@ oncore_get_timestamp(
 	} else {
 		tsp = &pps_i.clear_timestamp;
 
+#ifdef DEBUG
 		if (debug > 2) {
 			i = (u_long) pps_i.clear_sequence;
-#ifdef HAVE_STRUCT_TIMESPEC
+# ifdef HAVE_STRUCT_TIMESPEC
 			printf("ONCORE[%d]: serial/j (%lu, %lu) %ld.%09ld\n",
 			    instance->unit, i, j, (long)tsp->tv_sec, (long)tsp->tv_nsec);
-#else
+# else
 			printf("ONCORE[%d]: serial/j (%lu, %lu) %ld.%06ld\n",
 			    instance->unit, i, j, (long)tsp->tv_sec, (long)tsp->tv_usec);
-#endif
+# endif
 		}
+#endif
 
 		if (pps_i.clear_sequence == j) {
 			printf("ONCORE: oncore_get_timestamp, error serial pps\n");
@@ -1756,11 +1769,14 @@ oncore_get_timestamp(
 		    );
 	}
 
+#ifdef DEBUG
 	if (debug > 2) {
 		int n;
+
 		n = strlen(instance->pp->a_lastcode);
 		printf("ONCORE[%d]: len = %d %s\n", instance->unit, n, instance->pp->a_lastcode);
 	}
+#endif
 
 	/* and some things I dont understand (magic ntp things) */
 
@@ -1804,14 +1820,15 @@ oncore_msg_any(
 #endif
 	struct timeval tv;
 
+#ifdef DEBUG
 	if (debug > 3) {
-#ifdef HAVE_GETCLOCK
+# ifdef HAVE_GETCLOCK
 		(void) getclock(TIMEOFDAY, &ts);
 		tv.tv_sec = ts.tv_sec;
 		tv.tv_usec = ts.tv_nsec / 1000;
-#else
+# else
 		GETTIMEOFDAY(&tv, 0);
-#endif
+# endif
 		printf("ONCORE[%d]: %ld.%06ld\n", instance->unit, (long) tv.tv_sec, (long) tv.tv_usec);
 
 		if (!*fmt) {
@@ -1834,6 +1851,7 @@ oncore_msg_any(
 			printf("\n");
 		}
 	}
+#endif
 }
 
 
@@ -2453,12 +2471,14 @@ oncore_msg_CaFaIa(
 
 		instance->timeout = 0;
 
+#ifdef DEBUG
 		if (debug > 2) {
 			if (buf[2] == 'I')
 				printf("ONCORE[%d]: >>@@%ca %x %x %x\n", instance->unit, buf[2], buf[4], buf[5], buf[6]);
 			else
 				printf("ONCORE[%d]: >>@@%ca %x %x\n", instance->unit, buf[2], buf[4], buf[5]);
 		}
+#endif
 
 		antenna = (buf[4] & 0xc0) >> 6;
 		buf[4] &= ~0xc0;
@@ -3490,8 +3510,10 @@ oncore_sendmsg(
 {
 	u_char cs = 0;
 
+#ifdef DEBUG
 	if (debug > 4)
 		printf("ONCORE: Send @@%c%c %d\n", ptr[0], ptr[1], (int) len);
+#endif
 	write(fd, "@@", (size_t) 2);
 	write(fd, ptr, len);
 	while (len--)
@@ -3732,8 +3754,10 @@ oncore_wait_almanac(
 	)
 {
 	if (instance->rsm.bad_almanac) {
+#ifdef DEBUG
 		if (debug)
 			printf("ONCORE[%d]: waiting for almanac\n", instance->unit);
+#endif
 
 		/*
 		 * If we get here (first time) then we don't have an almanac in memory.

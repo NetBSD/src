@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.11 2007/06/19 09:26:32 liamjfoy Exp $
+# $NetBSD: mi,v 1.955.2.12 2007/08/21 08:40:52 ghen Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2128,6 +2128,7 @@
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
+./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdate.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdc.0			man-ntp-catman		.cat
@@ -4538,6 +4539,7 @@
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-netutil-man		.man
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
+./usr/share/man/man8/ntp-keygen.8		man-ntp-man		.man
 ./usr/share/man/man8/ntpd.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdate.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdc.8			man-ntp-man		.man
