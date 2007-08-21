@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_buddha.c,v 1.1 2007/08/20 07:40:29 is Exp $	*/
+/*	$NetBSD: wdc_buddha.c,v 1.2 2007/08/21 06:51:09 is Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -116,31 +116,31 @@ wdc_buddha_attach(struct device *parent, struct device *self, void *aux)
 		printf(": Buddha Flash\n");
 
 	/* XXX pio mode setting not implemented yet. */
-        sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
-        sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
-        sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
-        sc->sc_wdcdev.sc_atac.atac_nchannels = nchannels;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = nchannels;
 
-        wdc_allocate_regs(&sc->sc_wdcdev);
+	wdc_allocate_regs(&sc->sc_wdcdev);
 
-        for (ch = 0; ch < nchannels; ch++) {
-                struct ata_channel *cp;
-                struct wdc_regs *wdr;
-                int i;
+	for (ch = 0; ch < nchannels; ch++) {
+		struct ata_channel *cp;
+		struct wdc_regs *wdr;
+		int i;
 
-                cp = &sc->channels[ch];
-                sc->wdc_chanarray[ch] = cp;
+		cp = &sc->channels[ch];
+		sc->wdc_chanarray[ch] = cp;
 
-                cp->ch_channel = ch;
-                cp->ch_atac = &sc->sc_wdcdev.sc_atac;
-                cp->ch_queue =
-                    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
-                if (cp->ch_queue == NULL) {
-                        printf("%s: can't allocate memory for command queue\n",
-                            sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
-                        return;
-                }
-                cp->ch_ndrive = 2;
+		cp->ch_channel = ch;
+		cp->ch_atac = &sc->sc_wdcdev.sc_atac;
+		cp->ch_queue =
+		    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
+		if (cp->ch_queue == NULL) {
+			printf("%s: can't allocate memory for command queue\n",
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			return;
+		}
+		cp->ch_ndrive = 2;
 
 		/*
 		 * XXX According to the Buddha docs, we should use a method
@@ -154,7 +154,7 @@ wdc_buddha_attach(struct device *parent, struct device *self, void *aux)
 		 * for better performance.
 		 *		-is
 		 */
-                wdr = CHAN_TO_WDC_REGS(cp);
+		wdr = CHAN_TO_WDC_REGS(cp);
 
 		wdr->cmd_iot = &sc->sc_iot;
 		if (bus_space_map(wdr->cmd_iot, 0x210+ch*0x80, 8, 0,
@@ -167,22 +167,22 @@ wdc_buddha_attach(struct device *parent, struct device *self, void *aux)
 		wdr->ctl_iot = &sc->sc_iot;
 		if (bus_space_map(wdr->ctl_iot, 0x250+ch*0x80, 2, 0,
 		    &wdr->ctl_ioh)) {
-                        bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, 8);
+			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, 8);
 			printf("%s: couldn't map ctl registers\n",
 			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 
 		for (i = 0; i < WDC_NREG; i++) {
-		        if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
-		            i, i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
-		                printf("%s: couldn't subregion cmd regs\n",
-		                    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
-                                return;
-                        }
-                }
+			if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
+			    i, i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
+				printf("%s: couldn't subregion cmd regs\n",
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+				return;
+			}
+		}
 
-                wdc_init_shadow_regs(cp);
+		wdc_init_shadow_regs(cp);
 		wdcattach(cp);
 	}
 
