@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.6.1 2007/05/27 12:26:58 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.6.2 2007/08/21 23:58:49 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -83,30 +83,7 @@
 
 #include "assym.h"
 
-	.data
-	.globl	_C_LABEL(netisr)
 	.text
-
-#if 0
-#if defined(PROF) || defined(GPROF)
-/*
- * XXXX TODO
- */
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	CPUVAR(ILEVEL), %eax
-	movl	$IPL_HIGH, CPUVAR(ILEVEL)
-	ret
-
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movq	%rdi, %rcx
-	SPLLOWER(_C_LABEL(Xspllower))
-	ret
-#endif /* PROF || GPROF */
-#endif
 
 /*
  * int splraise(int s);
@@ -118,20 +95,6 @@ ENTRY(splraise)
 	cmpl	%edi,%eax
 	cmoval	%eax,%edi
 	movl	%edi,CPUVAR(ILEVEL)
-	ret
-
-/*
- * void softintr(int sir);
- *
- * Software interrupt registration.
- */
-	.align	32
-
-ENTRY(softintr)
-	movl	%edi,%ecx
-	movl	$1,%eax
-	shll	%cl,%eax
-	orl	%eax,CPUVAR(IPENDING)
 	ret
 
 /*
@@ -279,3 +242,69 @@ IDTVEC(doreti)
 	cli
 	jmp	5b
 3: 	INTRFASTEXIT
+
+/*
+ * softintr()
+ *
+ * Switch to the LWP assigned to handle interrupts from the given
+ * source.  We borrow the VM context from the interrupted LWP.
+ *
+ * On entry:
+ *
+ *	%rax		intrsource
+ *	%r13		address to return to
+ */
+IDTVEC(softintr)
+	pushq	$_C_LABEL(softintr_ret)	/* set up struct switchframe */
+	pushq	%rbx
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movq	CPUVAR(CURLWP),%r15
+	movq	IS_LWP(%rax),%rdi	/* switch to handler LWP */
+	movq	L_ADDR(%rdi),%rdx
+	movq	L_ADDR(%r15),%rcx
+	movq	%rdi,CPUVAR(CURLWP)
+	movq	%rsp,PCB_RSP(%rcx)
+	movq	%rbp,PCB_RBP(%rcx)
+	movq	PCB_RSP0(%rdx),%rsp	/* onto new stack */
+	sti
+	movl	IS_MAXLEVEL(%rax),%edi	/* ipl to run at */
+	movq	%r15,%rsi		/* interrupted LWP */
+	call	_C_LABEL(softint_dispatch)/* run handlers */
+	movq	L_ADDR(%r15),%rcx
+	movq	PCB_RSP(%rcx),%rsp
+	movq	%r15,CPUVAR(CURLWP)
+	popq	%r15			/* unwind switchframe */
+	addq	$(5 * 8),%rsp
+	cli
+	jmp	*%r13			/* back to splx/doreti */
+
+/*
+ * softintr_ret()
+ *
+ * Trampoline function that gets returned to by cpu_switchto() when
+ * an interrupt handler blocks.  On entry:
+ *
+ *	%rax		prevlwp from cpu_switchto()
+ */
+softintr_ret:
+	movl	CPUVAR(ILEVEL),%edx
+	leaq	L_MUTEX(%rax),%rdi	/* %eax from cpu_switchto */
+	movl	%edx,CPUVAR(MTX_OLDSPL)	/* preserve priority until return */
+	call	_C_LABEL(mutex_spin_exit)/* unlock the old LWP */
+	cli
+	jmp	*%r13			/* back to splx/doreti */
+
+/*
+ * void softint_trigger(uintptr_t machdep);
+ *
+ * Software interrupt registration.
+ */
+	.align	32
+
+ENTRY(softint_trigger)
+	orl	%edi,CPUVAR(IPENDING)	/* atomic on local cpu */
+	ret
