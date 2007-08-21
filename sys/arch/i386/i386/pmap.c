@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.15 2007/08/21 10:36:51 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.16 2007/08/21 10:41:31 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.15 2007/08/21 10:36:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.16 2007/08/21 10:41:31 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3568,8 +3568,8 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			    LAPIC_DLMODE_FIXED);
 			self->ci_need_tlbwait = 1;
 			splx(s);
-		} else if ((pmap->pm_cpus & ~ci->ci_cpumask) != 0 ||
-		    (kernel && (pmap->pm_kernel_cpus & ~ci->ci_cpumask) != 0)) {
+		} else if ((pm->pm_cpus & ~self->ci_cpumask) != 0 ||
+		    (kernel && (pm->pm_kernel_cpus & ~self->ci_cpumask) != 0)) {
 			/*
 			 * We don't bother traversing the CPU list if only
 			 * used by this CPU.
