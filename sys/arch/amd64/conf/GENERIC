@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.158 2007/08/21 05:29:18 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.159 2007/08/21 12:09:21 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.158 $"
+#ident 		"GENERIC-$Revision: 1.159 $"
 
 maxusers	32		# estimated number of users
 
@@ -901,13 +901,6 @@ wskbd* at btkbd? console ? mux 1
 
 # Bluetooth Audio support
 btsco* at bthub?
-
-
-# SD/MMC/SDIO Controller and Device support
-
-# SD/MMC controller
-sdhc*	at pci?		# SD Host Controller
-sdmmc*	at sdhc?	# SD/MMC bus
 
 
 # Mice
