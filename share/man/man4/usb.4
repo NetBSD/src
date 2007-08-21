@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.82 2007/07/12 21:26:03 xtraeme Exp $
+.\" $NetBSD: usb.4,v 1.83 2007/08/21 10:59:53 kiyohara Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 2007
+.Dd August 21, 2007
 .Dt USB 4
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Cd "ohci*   at cardbus? function ?"
 .Cd "ohci*   at pci? dev ? function ?"
 .Cd "slhci*  at isa? port ? irq ?"
+.Cd "slhci*  at pcmcia? function ?
 .Cd "uhci*   at cardbus? function ?"
 .Cd "uhci*   at pci? dev ? function ?"
 .Cd "usb*    at ehci? flags X"
@@ -131,10 +132,16 @@ driver Communication Data Class, Ethernet Networking Control Model devices
 driver for CATC USB-EL1201A USB Ethernet.
 .It kue
 driver for Kawasaki LSI KL5KUSB101B USB Ethernet.
+.It ral
+driver for Ralink RT2500USB IEEE 802.11a/b/g wireless network.
+.It rum
+driver for Ralink RT2501USB and RT2601USB IEEE 802.11a/b/g wireless network.
 .It uaudio
 driver for audio devices.
 .It ubsa
 driver for Belkin serial adapters.
+.It ubt
+driver for USB Bluetooth dongles.
 .It ucycom
 driver for Cypress microcontroller serial adapters.
 .It udav
@@ -193,6 +200,8 @@ driver for Topfield TF5000PVR range of digital video recorders.
 Handspring Visor driver.
 .It uvscom
 driver for SUNTAC Slipper U VS-10U serial adapter.
+.It zyd
+driver for ZyDAS ZD1211/ZD1211B IEEE 802.11b/g wireless network.
 .El
 .Sh INTRODUCTION TO USB
 The
@@ -522,9 +531,13 @@ specifications can be found at:
 .Xr kue 4 ,
 .Xr ohci 4 ,
 .Xr pci 4 ,
+.Xr pcmcia 4 ,
+.Xr ral 4 ,
+.Xr rum 4 ,
 .Xr slhci 4 ,
 .Xr uaudio 4 ,
 .Xr ubsa 4 ,
+.Xr ubt 4 ,
 .Xr ucom 4 ,
 .Xr ucycom 4 ,
 .Xr udsbr 4 ,
@@ -549,6 +562,7 @@ specifications can be found at:
 .Xr ustir 4 ,
 .Xr utoppy 4 ,
 .Xr uvisor 4 ,
+.Xr zyd 4 ,
 .Xr usbdevs 8
 .Sh HISTORY
 The
