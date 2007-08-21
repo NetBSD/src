@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.232 2007/08/21 08:50:19 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.233 2007/08/21 20:18:53 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8399,3 +8399,71 @@ usr.sbin/sntp/sntp.1				1.4
 	- better refclock support
 	[kardel, ticket #834]
 
+sys/kern/uipc_usrreq.c				1.98
+
+	PR kern/32842:
+	do not leak file descriptors when sending a datagram with SCM_RIGHTS
+	fails. Patch from Gary Thorpe, based on changes in FreeBSD and work
+	from Christian Biere.
+	[martin, ticket #810]
+
+distrib/sets/lists/base/mi			1.719
+
+	PR/36370 - Lloyd Parkes -- pckbd.fr_CA-iso8859-1 does not have share tag
+	[jnemeth, ticket #811]
+
+etc/defaults/security.conf			1.19
+
+	PR/36732 - Jim Bernard -- delete /usr/libexec/uucp/uucico from list of shells
+	[jnemeth, ticket #812]
+
+sys/arch/i386/i386/identcpu.c			1.67
+
+	Add some more AMD64 CPUID entries.
+	[tsutsui, ticket #814]
+
+sys/arch/alpha/alpha/dec_2000_300.c		1.14
+sys/arch/alpha/eisa/eisa_machdep.c		1.6
+sys/arch/alpha/include/eisa_machdep.h		1.8
+sys/arch/alpha/jensenio/jensenio.c		1.14
+sys/arch/alpha/jensenio/jensenio_intr.c		1.6
+sys/arch/alpha/jensenio/lpt_jensenio.c		1.6
+sys/arch/alpha/pci/sio.c			1.41
+
+	Avoid NULL pointer dereference in MD device_register() function.
+	Fixes a part of PR port-alpha/36628.
+
+	Backout changes on lpt_jensenio.c rev 1.2.
+	lpt at jensenio doesn't seem to have a specific interrupt vector
+	but uses a normal EISA interrupt.
+
+	Fixes another part of PR port-alpha/36628 and PR port-alpha/20386.
+
+	More fixes for Jensen, reported and tested by Christoph Franzen
+	in PR port-alpha/36628:
+	- make jensenio_eisa_maxslots() return 8 (instead of 16) since
+  	EISA config for slot 8-15 on jensen could return invalid values
+	- pass eisa_chipset_tag_t to eisa_init() and check eisa_maxslots()
+	on probing EISA config space
+	- pass M_ZERO to malloc(9) and make sure malloc(9) doesn't fail
+	- fix typo in a debug printf, add more debug printfs, and
+	  use #ifdef EISA_DEBUG to enable them
+	- cast uint8_t value to uint32_t before shift more than 8 bits
+	- check buffer region on reading compressed data from EISA config space
+
+	Check a correct value on a sanity check in jensenio_eisa_intr_map().
+
+	Fixes yet another bug on Jensen found on tracking PR port-alpha/36628.
+	[tsutsui, ticket #815]
+
+lib/libc/time/strftime.c			1.18
+
+	Make sure that %r honors the LC_TIME t_fmt_ampm.  This restores
+	functionality lost at revision 1.12!
+	[ginsbach, ticket #818]
+
+sys/dev/pci/if_bge.c				1.130
+
+	Add support for BCM5715.  Works seemingly well on hardware provided by
+	pavel@.  Thanks, Pavel!
+	[pavel, ticket #821]
