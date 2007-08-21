@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.45 2006/10/16 00:45:19 christos Exp $	*/
+/*	$NetBSD: atactl.c,v 1.46 2007/08/21 16:53:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.45 2006/10/16 00:45:19 christos Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.46 2007/08/21 16:53:18 bouyer Exp $");
 #endif
 
 
@@ -232,6 +232,24 @@ struct bitinfo ata_cmd_ext[] = {
 	{ ATA_CMDE_MS, "Media serial number" },
 	{ ATA_CMDE_SST, "SMART self-test" },
 	{ ATA_CMDE_SEL, "SMART error logging" },
+	{ 0, NULL },
+};
+
+struct bitinfo ata_sata_caps[] = {
+	{ SATA_SIGNAL_GEN1, "1.5Gb/s signaling" },
+	{ SATA_SIGNAL_GEN2, "3.0Gb/s signaling" },
+	{ SATA_NATIVE_CMDQ, "Native Command Queuing" },
+	{ SATA_HOST_PWR_MGMT, "Host-Initiated Interface Power Management" },
+	{ SATA_PHY_EVNT_CNT, "PHY Event Counters" },
+	{ 0, NULL },
+};
+
+struct bitinfo ata_sata_feat[] = {
+	{ SATA_NONZERO_OFFSETS, "Non-zero Offset DMA" },
+	{ SATA_DMA_SETUP_AUTO, "DMA Setup Auto Activate" },
+	{ SATA_DRIVE_PWR_MGMT, "Device-Initiated Interface Power Managment" },
+	{ SATA_IN_ORDER_DATA, "In-order Data Delivery" },
+	{ SATA_SW_STTNGS_PRS, "Software Settings Perservation" },
 	{ 0, NULL },
 };
 
@@ -886,7 +904,7 @@ device_identify(int argc, char *argv[])
 
 	if (inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK)
 		printf("Device supports command queue depth of %d\n",
-		       inqbuf->atap_queuedepth & 0xf);
+		       inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK);
 
 	printf("Device capabilities:\n");
 	print_bitinfo("\t", "\n", inqbuf->atap_capabilities1, ata_caps);
@@ -915,6 +933,19 @@ device_identify(int argc, char *argv[])
 		if (inqbuf->atap_cmd_ext != 0 && inqbuf->atap_cmd_ext != 0xffff)
 			print_bitinfo("\t", "\n", inqbuf->atap_cmd_ext,
 			    ata_cmd_ext);
+	}
+
+	if (inqbuf->atap_sata_caps != 0 && inqbuf->atap_sata_caps != 0xffff) {
+		printf("Serial ATA capabilities:\n");
+		print_bitinfo("\t", "\n", inqbuf->atap_sata_caps, ata_sata_caps);
+	}
+
+	if (inqbuf->atap_sata_features_supp != 0 && inqbuf->atap_sata_features_supp != 0xffff) {
+		printf("Serial ATA features:\n");
+		if (inqbuf->atap_sata_features_en != 0 && inqbuf->atap_sata_features_en != 0xffff)
+			print_bitinfo2("\t", "\n", inqbuf->atap_sata_features_supp, inqbuf->atap_sata_features_en, ata_sata_feat);
+		else
+			print_bitinfo("\t", "\n", inqbuf->atap_sata_features_supp, ata_sata_feat);
 	}
 
 	return;
