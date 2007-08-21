@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.43.8.3 2007/08/20 21:27:46 ad Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.43.8.4 2007/08/21 18:05:42 ad Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -350,7 +350,7 @@ function doit() {
 		if (i < (argc-1)) printf(",\n    ");
 	}
 	printf(")\n");
-	printf("{\n\tint error;\n\tstruct %s_args a;\n", name);
+	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n", name);
 	printf("#ifdef VNODE_LOCKDEBUG\n");
 	for (i=0; i<argc; i++) {
 		if (lockstate[i] != -1)
@@ -370,10 +370,11 @@ function doit() {
 			printf("#endif\n");
 		}
 	}
-	printf("\tKERNEL_LOCK(1, curlwp);\n");
+	printf("\tmpsafe = (%s%s->v_vflag & VV_MPSAFE);\n", argname[0], arg0special);
+	printf("\tif (!mpsafe) { KERNEL_LOCK(1, curlwp); }\n");
 	printf("\terror = (VCALL(%s%s, VOFFSET(%s), &a));\n",
 		argname[0], arg0special, name);
-	printf("\tKERNEL_UNLOCK_ONE(curlwp);\n");
+	printf("\tif (!mpsafe) { KERNEL_UNLOCK_ONE(curlwp); }\n");
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");
 		printf("\tif (error == 0)\n"				\

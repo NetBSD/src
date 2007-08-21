@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.18.6.2 2007/06/08 14:18:10 ad Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.18.6.3 2007/08/21 18:05:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -207,6 +207,7 @@ typedef struct fhandle	fhandle_t;
 #define	IMNT_WANTRDWR	0x00000004	/* upgrade to read/write requested */
 #define	IMNT_DTYPE	0x00000040	/* returns d_type fields */
 #define	IMNT_HAS_TRANS	0x00000080	/* supports transactions */
+#define	IMNT_MPSAFE	0x00000100	/* file system code MP safe */
 
 #define __MNT_FLAGS \
 	__MNT_BASIC_FLAGS \
@@ -251,6 +252,7 @@ typedef struct fhandle	fhandle_t;
 
 #define __IMNT_FLAG_BITS \
 	"\20" \
+        "\20IMNT_MPSAFE" \
 	"\10IMNT_HAS_TRANS" \
 	"\07IMNT_DTYPE" \
 	"\03IMNT_WANTRDWR" \

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.9 2007/08/20 21:28:22 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.10 2007/08/21 18:05:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -166,6 +166,7 @@ struct vnode {
 #define	VV_SYSTEM	0x00000002	/* vnode being used by kernel */
 #define	VV_ISTTY	0x00000004	/* vnode represents a tty */
 #define	VV_MAPPED	0x00000008	/* vnode might have user mappings */
+#define	VV_MPSAFE	0x00000010	/* file system code is MP safe */
 
 /* XXXAD ALIASED should be covered by spec lock? */
 
