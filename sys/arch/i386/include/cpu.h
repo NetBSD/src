@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.135.2.9 2007/07/29 10:18:50 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.135.2.10 2007/08/21 10:36:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,6 +83,7 @@ struct cpu_info {
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	int	ci_cpumask;		/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
@@ -92,6 +93,7 @@ struct cpu_info {
 	 */
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
+	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
 	int ci_want_pmapload;		/* pmap_load() is needed */
 	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */

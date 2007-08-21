@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.6.2 2007/07/29 10:18:50 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.6.3 2007/08/21 10:36:52 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,11 +36,11 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,6 +72,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 
@@ -143,6 +144,7 @@
 	orl	%edx,%eax
 
 #if NLAPIC > 0
+#ifdef MULTIPROCESSOR
 /*
  * General purpose IPI handler.
  */
@@ -179,10 +181,7 @@ IDTVEC(resume_lapic_ipi)
  * Multicast TLB shootdown handler for !kernel_pmap.
  */
 IDTVEC(intr_lapic_tlb_mcast)
-	/*
-	 * Save state, ack interrupt and count it.  Count locally
-	 * so other CPUs don't have to touch the counter's line.
-	 */
+	/* Save state. */
 	pushl	%eax
 	pushl	%ebx
 	pushl	%ecx
@@ -193,21 +192,22 @@ IDTVEC(intr_lapic_tlb_mcast)
 	movl	$GSEL(GCPU_SEL, SEL_KPL), %edx
 	movl	%eax, %ds
 	movl	%edx, %fs
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
-	addl	$1,CPUVAR(TLB_EVCNT)+EV_COUNT
-	adcl	$0,CPUVAR(TLB_EVCNT)+EV_COUNT+4
+	/* Count it. */
+	addl	$1, CPUVAR(TLB_EVCNT)+EV_COUNT
+	adcl	$0, CPUVAR(TLB_EVCNT)+EV_COUNT+4
 	/*
 	 * Find out what we need to invalidate, clear the mailbox
 	 * lock and notify the waiter of completion.  The 'xchgl'
 	 * below provides a load fence.
 	 */
-	movl	CPUVAR(PMAP_CPU),%ecx
+	movl	CPUVAR(PMAP_CPU), %ecx
 	movl	MB_ADDR1(%ecx), %eax
 	movl	MB_ADDR2(%ecx), %edx
 	xorl	%ebx, %ebx
 	xchgl	MB_POINTER(%ecx), %ebx
 	lock
 	incl	(%ebx)
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
 	je	4f
 1:
@@ -222,13 +222,14 @@ IDTVEC(intr_lapic_tlb_mcast)
 	 * invalidations for this pmap, then take the CPU out of
 	 * the pmap's bitmask.
 	 */
-	cmpl	$TLBSTATE_LAZY,CPUVAR(TLBSTATE)
+	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
 	jne	3f
-	movl	CPUVAR(PMAP),%edx
-	movl	CPUVAR(CPUID),%ecx
+	movl	CPUVAR(PMAP), %edx
+	movl	CPUVAR(CPUMASK), %ecx
+	notl	%ecx
 	lock
-	btrl	%ecx, PM_CPUS(%edx)
-	movl	$TLBSTATE_STALE,CPUVAR(TLBSTATE)
+	andl	%ecx, PM_CPUS(%edx)
+	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
 3:
 	/* Restore state and return. */
 	popl	%fs
@@ -240,8 +241,8 @@ IDTVEC(intr_lapic_tlb_mcast)
 	iret
 4:
 	/* Invalidate all user pages. */
-	movl	%cr3,%eax
-	movl	%eax,%cr3
+	movl	%cr3, %eax
+	movl	%eax, %cr3
 	jmp	2b
 
 /*
@@ -251,24 +252,22 @@ IDTVEC(intr_lapic_tlb_bcast)
 	/* Save state and ack the interrupt. */
 	pushl	%eax
 	pushl	%ebx
-	pushl	%ecx
 	pushl	%edx
 	pushl	%ds
 	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
 	movl	%eax, %ds
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	/*
 	 * Find out what we need to invalidate and notify the waiter
 	 * of completion.  If this is the last CPU to process the 
 	 * IPI, the mailbox becomes unlocked.  The 'lock' prefix below
 	 * provides a load fence.
 	 */
-	movl	$_C_LABEL(pmap_mbox),%ecx
-	movl	MB_ADDR1(%ecx), %eax
-	movl	MB_ADDR2(%ecx), %edx
-	movl	MB_GLOBAL(%ecx), %ebx
+	movl	_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
+	movl	_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
+	movl	_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
 	lock
-	incl	MB_TAIL(%ecx)
+	incl	_C_LABEL(pmap_mbox)+MB_TAIL
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
 	je,pn	3f
 1:
@@ -281,7 +280,6 @@ IDTVEC(intr_lapic_tlb_bcast)
 	/* Restore state & return */
 	popl	%ds
 	popl	%edx
-	popl	%ecx
 	popl	%ebx
 	popl	%eax
 	iret
@@ -292,15 +290,15 @@ IDTVEC(intr_lapic_tlb_bcast)
 	 * If the CPU understands global pages and we have been asked
 	 * to invalidate the entire TLB we arrive here.
 	 */
-	movl	%cr4,%eax
-	leal	-CR4_PGE(%eax),%edx
-	movl	%edx,%cr4
-	movl	%eax,%cr4
+	movl	%cr4, %eax
+	leal	-CR4_PGE(%eax), %edx
+	movl	%edx, %cr4
+	movl	%eax, %cr4
 	jmp	2b
 4:
 	/* Invalidate user TLB entries. */
-	movl	%cr3,%eax
-	movl	%eax,%cr3
+	movl	%cr3, %eax
+	movl	%eax, %cr3
 	jmp	2b
 
 #if defined(DDB)
@@ -320,6 +318,7 @@ IDTVEC(intrddbipi)
 	iret
 	jmp	1b
 #endif /* DDB */
+#endif /* MULTIPROCESSOR */
 	
 	/*
 	 * Interrupt from the local APIC timer.
