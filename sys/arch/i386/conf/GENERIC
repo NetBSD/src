@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.842 2007/08/20 00:54:42 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.843 2007/08/21 02:48:15 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.842 $"
+#ident 		"GENERIC-$Revision: 1.843 $"
 
 maxusers	32		# estimated number of users
 
@@ -1049,12 +1049,15 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
+# PCMCIA USB controllers   
+slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
 usb*	at gcscehci?
 usb*	at ohci?
+usb*	at slhci?
 usb*	at uhci?
-#usb*	at slhci?
 
 # USB Hubs
 uhub*	at usb?
