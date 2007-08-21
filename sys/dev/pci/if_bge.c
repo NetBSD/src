@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.132.6.2 2007/08/16 11:03:09 jmcneill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132.6.3 2007/08/21 06:56:48 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.2 2007/08/16 11:03:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.3 2007/08/21 06:56:48 joerg Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -183,7 +183,8 @@ static int	bge_rxthresh_nodenum;
 
 static int	bge_probe(device_t, cfdata_t, void *);
 static void	bge_attach(device_t, device_t, void *);
-static void	bge_powerhook(int, void *);
+static pnp_status_t
+		bge_pci_power(device_t, pnp_request_t, void *);
 static void	bge_release_resources(struct bge_softc *);
 static void	bge_txeof(struct bge_softc *);
 static void	bge_rxeof(struct bge_softc *);
@@ -198,7 +199,6 @@ static int	bge_ioctl(struct ifnet *, u_long, void *);
 static int	bge_init(struct ifnet *);
 static void	bge_stop(struct bge_softc *);
 static void	bge_watchdog(struct ifnet *);
-static void	bge_shutdown(void *);
 static int	bge_ifmedia_upd(struct ifnet *);
 static void	bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
@@ -296,41 +296,34 @@ CFATTACH_DECL(bge, sizeof(struct bge_softc),
 static u_int32_t
 bge_readmem_ind(struct bge_softc *sc, int off)
 {
-	struct pci_attach_args	*pa = &(sc->bge_pa);
 	pcireg_t val;
 
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MEMWIN_BASEADDR, off);
-	val = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MEMWIN_DATA);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MEMWIN_BASEADDR, off);
+	val = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MEMWIN_DATA);
 	return val;
 }
 
 static void
 bge_writemem_ind(struct bge_softc *sc, int off, int val)
 {
-	struct pci_attach_args	*pa = &(sc->bge_pa);
-
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MEMWIN_BASEADDR, off);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MEMWIN_DATA, val);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MEMWIN_BASEADDR, off);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MEMWIN_DATA, val);
 }
 
 #ifdef notdef
 static u_int32_t
 bge_readreg_ind(struct bge_softc *sc, int off)
 {
-	struct pci_attach_args	*pa = &(sc->bge_pa);
-
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_BASEADDR, off);
-	return(pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_DATA));
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_REG_BASEADDR, off);
+	return(pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_REG_DATA));
 }
 #endif
 
 static void
 bge_writereg_ind(struct bge_softc *sc, int off, int val)
 {
-	struct pci_attach_args	*pa = &(sc->bge_pa);
-
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_BASEADDR, off);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_REG_DATA, val);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_REG_BASEADDR, off);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_REG_DATA, val);
 }
 
 #ifdef notdef
@@ -339,12 +332,11 @@ bge_vpd_readbyte(struct bge_softc *sc, int addr)
 {
 	int i;
 	u_int32_t val;
-	struct pci_attach_args	*pa = &(sc->bge_pa);
 
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_VPD_ADDR, addr);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_VPD_ADDR, addr);
 	for (i = 0; i < BGE_TIMEOUT * 10; i++) {
 		DELAY(10);
-		if (pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_VPD_ADDR) &
+		if (pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_VPD_ADDR) &
 		    BGE_VPD_FLAG)
 			break;
 	}
@@ -354,7 +346,7 @@ bge_vpd_readbyte(struct bge_softc *sc, int addr)
 		return(0);
 	}
 
-	val = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_VPD_DATA);
+	val = pci_conf_read(sc->sc_pc, sc->sca_pcitag, BGE_PCI_VPD_DATA);
 
 	return((val >> ((addr % 4) * 8)) & 0xFF);
 }
@@ -1220,11 +1212,10 @@ bge_chipinit(struct bge_softc *sc)
 	u_int32_t		cachesize;
 	int			i;
 	u_int32_t		dma_rw_ctl;
-	struct pci_attach_args	*pa = &(sc->bge_pa);
 
 
 	/* Set endianness before we access any non-PCI registers. */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_INIT);
 
 	/* Set power state to D0. */
@@ -1249,11 +1240,11 @@ bge_chipinit(struct bge_softc *sc)
 	 */
 	for (i = BGE_STATS_BLOCK;
 	    i < BGE_STATS_BLOCK_END + 1; i += sizeof(u_int32_t))
-		BGE_MEMWIN_WRITE(pa->pa_pc, pa->pa_tag, i, 0);
+		BGE_MEMWIN_WRITE(sc->sc_pc, sc->sc_pcitag, i, 0);
 
 	for (i = BGE_STATUS_BLOCK;
 	    i < BGE_STATUS_BLOCK_END + 1; i += sizeof(u_int32_t))
-		BGE_MEMWIN_WRITE(pa->pa_pc, pa->pa_tag, i, 0);
+		BGE_MEMWIN_WRITE(sc->sc_pc, sc->sc_pcitag, i, 0);
 
 	/* Set up the PCI DMA control register. */
 	if (sc->bge_pcie) {
@@ -1271,7 +1262,7 @@ bge_chipinit(struct bge_softc *sc)
 #define DMA_CTRL_WRITE_PCIE_H20MARK_256         0x00380000
 
 		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
-		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		device_ctl = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 					   BGE_PCI_CONF_DEV_CTRL);
 		aprint_debug("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname,
 		    device_ctl);
@@ -1288,7 +1279,7 @@ bge_chipinit(struct bge_softc *sc)
 		} else {
 			dma_rw_ctl |= BGE_PCIDMA_RWCTL_PCIE_WRITE_WATRMARK_128;
 		}
-	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,BGE_PCI_PCISTATE) &
+	} else if (pci_conf_read(sc->sc_pc, sc->sc_pcitag,BGE_PCI_PCISTATE) &
 	    BGE_PCISTATE_PCI_BUSMODE) {
 		/* Conventional PCI bus */
 	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n", sc->bge_dev.dv_xname));
@@ -1334,7 +1325,7 @@ bge_chipinit(struct bge_softc *sc)
 		}
 	}
 
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL, dma_rw_ctl);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL, dma_rw_ctl);
 
 	/*
 	 * Set up general mode register.
@@ -1344,40 +1335,40 @@ bge_chipinit(struct bge_softc *sc)
 		    BGE_MODECTL_TX_NO_PHDR_CSUM|BGE_MODECTL_RX_NO_PHDR_CSUM);
 
 	/* Get cache line size. */
-	cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ);
+	cachesize = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ);
 
 	/*
 	 * Avoid violating PCI spec on certain chip revs.
 	 */
-	if (pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD) &
+	if (pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD) &
 	    PCIM_CMD_MWIEN) {
 		switch(cachesize) {
 		case 1:
-			PCI_SETBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
+			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 				   BGE_PCI_WRITE_BNDRY_16BYTES);
 			break;
 		case 2:
-			PCI_SETBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
+			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 				   BGE_PCI_WRITE_BNDRY_32BYTES);
 			break;
 		case 4:
-			PCI_SETBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
+			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 				   BGE_PCI_WRITE_BNDRY_64BYTES);
 			break;
 		case 8:
-			PCI_SETBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
+			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 				   BGE_PCI_WRITE_BNDRY_128BYTES);
 			break;
 		case 16:
-			PCI_SETBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
+			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 				   BGE_PCI_WRITE_BNDRY_256BYTES);
 			break;
 		case 32:
-			PCI_SETBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
+			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 				   BGE_PCI_WRITE_BNDRY_512BYTES);
 			break;
 		case 64:
-			PCI_SETBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
+			PCI_SETBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_DMA_RW_CTL,
 				   BGE_PCI_WRITE_BNDRY_1024BYTES);
 			break;
 		default:
@@ -1388,7 +1379,7 @@ bge_chipinit(struct bge_softc *sc)
 				    "supported; disabling PCI MWI\n",
 				    sc->bge_dev.dv_xname, cachesize);
 #endif
-			PCI_CLRBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD,
+			PCI_CLRBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD,
 			    PCIM_CMD_MWIEN);
 			break;
 		}
@@ -1398,7 +1389,7 @@ bge_chipinit(struct bge_softc *sc)
 	 * Disable memory write invalidate.  Apparently it is not supported
 	 * properly by these devices.
 	 */
-	PCI_CLRBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD, PCIM_CMD_MWIEN);
+	PCI_CLRBIT(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD, PCIM_CMD_MWIEN);
 
 
 #ifdef __brokenalpha__
@@ -1433,8 +1424,7 @@ bge_blockinit(struct bge_softc *sc)
 	 * ring RCBs, plus other things which live in NIC memory.
 	 */
 
-	pci_conf_write(sc->bge_pa.pa_pc, sc->bge_pa.pa_tag,
-	    BGE_PCI_MEMWIN_BASEADDR, 0);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MEMWIN_BASEADDR, 0);
 
 	/* Configure mbuf memory pool */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
@@ -2422,7 +2412,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	const struct bge_product *bp;
 	const struct bge_revision *br;
-	pci_chipset_tag_t	pc = pa->pa_pc;
+	pci_chipset_tag_t	pc = sc->sc_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	bus_dma_segment_t	seg;
@@ -2441,7 +2431,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
 
-	sc->bge_pa = *pa;
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pcitag = pa->pa_tag;
 
 	aprint_naive(": Ethernet controller\n");
 	aprint_normal(": %s\n", bp->bp_name);
@@ -2450,10 +2441,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Map control/status registers.
 	 */
 	DPRINTFN(5, ("Map control/status regs\n"));
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command = pci_conf_read(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, command);
+	command = pci_conf_read(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		aprint_error("%s: failed to enable memory mapping!\n",
@@ -2462,7 +2453,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	DPRINTFN(5, ("pci_mem_find\n"));
-	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, BGE_PCI_BAR0);
+	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_pcitag, BGE_PCI_BAR0);
  	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
@@ -2507,10 +2498,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * We do not have memory-mapped registers in this state,
 	 * so force device into D0 state before starting initialization.
 	 */
-	pm_ctl = pci_conf_read(pc, pa->pa_tag, BGE_PCI_PWRMGMT_CMD);
+	pm_ctl = pci_conf_read(pc, sc->sc_pcitag, BGE_PCI_PWRMGMT_CMD);
 	pm_ctl &= ~(PCI_PWR_D0|PCI_PWR_D1|PCI_PWR_D2|PCI_PWR_D3);
 	pm_ctl |= (1 << 8) | PCI_PWR_D0 ; /* D0 state */
-	pci_conf_write(pc, pa->pa_tag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
+	pci_conf_write(pc, sc->sc_pcitag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
 	DELAY(1000);	/* 27 usec is allegedly sufficent */
 
 	/*
@@ -2518,14 +2509,14 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * ASIC.
 	 */
 	sc->bge_chipid =
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
+	    pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL) &
 	    BGE_PCIMISCCTL_ASICREV;
 
 	/*
 	 * Detect PCI-Express devices
 	 * XXX: guessed from Linux/FreeBSD; no documentation
 	 */
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
+	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PCIEXPRESS,
 	        NULL, NULL) != 0)
 		sc->bge_pcie = 1;
 	else
@@ -2702,7 +2693,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		sc->bge_tbi = 1;
 
 	/* The SysKonnect SK-9D41 is a 1000baseSX card. */
-	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_SUBSYS) >> 16) ==
+	if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_SUBSYS) >> 16) ==
 	    SK_SUBSYSID_9D41)
 		sc->bge_tbi = 1;
 
@@ -2745,7 +2736,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (sc->bge_quirks & BGE_QUIRK_PCIX_DMA_ALIGN_BUG) {
 		/* If in PCI-X mode, work around the alignment bug. */
-		if ((pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE) &
+		if ((pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE) &
                     (BGE_PCISTATE_PCI_BUSMODE | BGE_PCISTATE_PCI_BUSSPEED)) ==
                          BGE_PCISTATE_PCI_BUSSPEED)
 		sc->bge_rx_alignment_bug = 1;
@@ -2780,11 +2771,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout, 0);
 
-	sc->bge_powerhook = powerhook_establish(sc->bge_dev.dv_xname,
-	    bge_powerhook, sc);
-	if (sc->bge_powerhook == NULL)
-		printf("%s: WARNING: unable to establish PCI power hook\n",
-		    sc->bge_dev.dv_xname);
+	/* register device power management hooks */
+	if (pnp_register(self, bge_pci_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 }
 
 static void
@@ -2800,16 +2790,15 @@ bge_release_resources(struct bge_softc *sc)
 static void
 bge_reset(struct bge_softc *sc)
 {
-	struct pci_attach_args *pa = &sc->bge_pa;
 	u_int32_t cachesize, command, pcistate, new_pcistate;
 	int i, val;
 
 	/* Save some important PCI state. */
-	cachesize = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ);
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD);
-	pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE);
+	cachesize = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ);
+	command = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD);
+	pcistate = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE);
 
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
 
@@ -2855,8 +2844,8 @@ bge_reset(struct bge_softc *sc)
 
 			DELAY(500000);
 			/* XXX: Magic Numbers */
-			reg = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_UNKNOWN0);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_UNKNOWN0,
+			reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_UNKNOWN0);
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_UNKNOWN0,
 			    reg | (1 << 15));
 		}
 		/*
@@ -2865,17 +2854,17 @@ bge_reset(struct bge_softc *sc)
 		 * Should be replaced with references to PCI config-space
 		 * capability block for PCI-Express.
 		 */
-		pci_conf_write(pa->pa_pc, pa->pa_tag,
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag,
 		    BGE_PCI_CONF_DEV_CTRL, 0xf5000);
 
 	}
 
 	/* Reset some of the PCI state that got zapped by reset */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD, command);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_CACHESZ, cachesize);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CMD, command);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ, cachesize);
 	bge_writereg_ind(sc, BGE_MISC_CFG, (65 << 1));
 
 	/* Enable memory arbiter. */
@@ -2921,7 +2910,7 @@ bge_reset(struct bge_softc *sc)
 	 * results.
 	 */
 	for (i = 0; i < BGE_TIMEOUT; i++) {
-		new_pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		new_pcistate = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 		    BGE_PCI_PCISTATE);
 		if ((new_pcistate & ~BGE_PCISTATE_RESERVED) ==
 		    (pcistate & ~BGE_PCISTATE_RESERVED))
@@ -4299,20 +4288,6 @@ bge_stop(struct bge_softc *sc)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-static void
-bge_shutdown(void *xsc)
-{
-	struct bge_softc *sc = (struct bge_softc *)xsc;
-
-	bge_stop(sc);
-	bge_reset(sc);
-}
-
-
 static int
 sysctl_bge_verify(SYSCTLFN_ARGS)
 {
@@ -4388,34 +4363,75 @@ err:
 	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
 
-static void
-bge_powerhook(int why, void *hdl)
+static pnp_status_t
+bge_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	struct bge_softc *sc = (struct bge_softc *)hdl;
+	struct bge_softc *sc = (struct bge_softc *)dv;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
-	struct pci_attach_args *pa = &(sc->bge_pa);
-	pci_chipset_tag_t pc = pa->pa_pc;
-	pcitag_t tag = pa->pa_tag;
+	pnp_status_t status;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
+	pci_chipset_tag_t pc;
+	pcireg_t val;
+	pcitag_t tag;
+	int off, s;
 
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-		bge_shutdown(sc);
+	status = PNP_STATUS_UNSUPPORTED;
+	pc = sc->sc_pc;
+	tag = sc->sc_pcitag;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
+
+		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
+			return PNP_STATUS_UNSUPPORTED;
+		caps->state = pci_pnp_capabilities(val);
+		status = PNP_STATUS_SUCCESS;
 		break;
-	case PWR_SOFTRESUME:
-		if (ifp->if_flags & IFF_UP) {
-			ifp->if_flags &= ~IFF_RUNNING;
-			bge_init(ifp);
+	case PNP_REQUEST_SET_STATE:
+		state = opaque;
+		switch (*state) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			s = splnet();
+			bge_stop(sc);
+			bge_reset(sc);
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
 		}
+
+		if (pci_set_powerstate(pc, tag, val) == 0) {
+			status = PNP_STATUS_SUCCESS;
+			if (*state != PNP_STATE_D0)
+				break;
+
+			s = splnet();
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			if (ifp->if_flags & IFF_UP) {
+				ifp->if_flags &= ~IFF_RUNNING;
+				bge_init(ifp);
+				bge_start(ifp);
+			}
+			splx(s);
+		}
+	case PNP_REQUEST_GET_STATE:
+		state = opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
+
+		*state = pci_pnp_powerstate(val);
+		status = PNP_STATUS_SUCCESS;
 		break;
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(pc, tag, &sc->bge_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->bge_pciconf);
-		break;
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
 	}
 
-	return;
+	return status;
 }
