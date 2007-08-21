@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.87.4.5 2007/08/20 21:28:30 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.87.4.6 2007/08/21 11:24:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.5 2007/08/20 21:28:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.87.4.6 2007/08/21 11:24:37 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -429,6 +429,7 @@ uao_free(struct uvm_aobj *aobj)
 	 * finally free the aobj itself
 	 */
 
+	UVM_OBJ_DESTROY(&aobj->u_obj);
 	pool_put(&uvm_aobj_pool, aobj);
 
 	/*

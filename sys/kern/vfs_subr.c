@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.13 2007/08/20 21:27:44 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.14 2007/08/21 11:24:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.13 2007/08/20 21:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.14 2007/08/21 11:24:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -150,7 +150,7 @@ vfs_drainvnodes(long target, struct lwp *l)
 		vp = getcleanvnode(l);
 		if (vp == NULL)
 			return EBUSY; /* give up */
-		mutex_destroy(&vp->v_interlock);
+		UVM_OBJ_DESTROY(&vp->v_uobj);
 		cv_destroy(&vp->v_cv);
 		lockdestroy(&vp->v_lock);
 		pool_put(&vnode_pool, vp);
@@ -1317,7 +1317,7 @@ vgonel(struct vnode *vp, struct lwp *l)
 		}
 		mutex_exit(&vnode_free_list_lock);
 		if (dofree) {
-			mutex_destroy(&vp->v_interlock);
+			UVM_OBJ_DESTROY(&vp->v_uobj);
 			cv_destroy(&vp->v_cv);
 			lockdestroy(&vp->v_lock);
 			pool_put(&vnode_pool, vp);

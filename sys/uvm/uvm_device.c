@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.49.4.2 2007/08/20 21:28:31 ad Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.49.4.3 2007/08/21 11:24:38 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.49.4.2 2007/08/20 21:28:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.49.4.3 2007/08/21 11:24:38 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -331,6 +331,7 @@ again:
 		wakeup(udv);
 	mutex_exit(&udv_lock);
 	mutex_exit(&uobj->vmobjlock);
+	UVM_OBJ_DESTROY(uobj);
 	FREE(udv, M_TEMP);
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 }
