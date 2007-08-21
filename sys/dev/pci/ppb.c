@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.34.22.2 2007/08/08 11:53:25 jmcneill Exp $	*/
+/*	$NetBSD: ppb.c,v 1.34.22.3 2007/08/21 06:55:31 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.2 2007/08/08 11:53:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.3 2007/08/21 06:55:31 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.34.22.2 2007/08/08 11:53:25 jmcneill Exp $
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
+#include <dev/pci/pcidevs.h>
 
 struct ppb_softc {
 	struct device sc_dev;		/* generic device glue */
@@ -72,6 +73,33 @@ ppbmatch(struct device *parent, struct cfdata *match,
 }
 
 static void
+ich6_disable_sci(struct device *self, pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t val;
+
+	/*
+	 * Intel I/O Controller Hub 6 Family Datasheet
+	 * Section 19.1.44
+	 *
+	 * Address Offset: D8
+	 *
+	 * Bit 31: Power Management SCI Enable
+	 * Bit 30: Hot Plug SCI Enable
+	 *
+	 * Disable both as NetBSD currently can't deal with the interrupts.
+	 */
+
+	val = pci_conf_read(pc, tag, 0xd8);
+	if ((val & 0xc000000) != 0) {
+		aprint_normal("%s: disabling unsupported PM and Hot Plug SCI\n",
+		    self->dv_xname);
+
+		val &= ~(0xc000000);
+		pci_conf_write(pc, tag, 0xd8, val);
+	}
+}
+
+static void
 ppbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ppb_softc *sc = (void *) self;
@@ -85,6 +113,12 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 	aprint_naive("\n");
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_0 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_0 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801FB_EXP_0))
+		ich6_disable_sci(self, pc, pa->pa_tag);
 
 	sc->sc_pc = pc;
 	sc->sc_tag = pa->pa_tag;
