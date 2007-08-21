@@ -1,7 +1,7 @@
-/*	$NetBSD: tmpfs.h,v 1.26 2007/02/22 06:37:00 thorpej Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.26.4.1 2007/08/21 20:01:30 ad Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -223,6 +223,9 @@ struct tmpfs_node {
 	 * allocated for it or it has been reclaimed). */
 	struct vnode *		tn_vnode;
 
+	/* Lock on tn_vnode. */
+	kmutex_t		tn_vlock;
+
 	/* Pointer to the node returned by tmpfs_lookup() after doing a
 	 * delete or a rename lookup; its value is only valid in these two
 	 * situations.  In case we were looking up . or .., it holds a null
@@ -293,6 +296,9 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
  * Internal representation of a tmpfs mount point.
  */
 struct tmpfs_mount {
+	/* Lock on global data */
+	kmutex_t		tm_lock;
+
 	/* Maximum number of memory pages available for use by the file
 	 * system, set during mount time.  This variable must never be
 	 * used directly as it may be bigger than the current amount of
