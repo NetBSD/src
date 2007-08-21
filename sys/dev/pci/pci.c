@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.3 2007/08/06 04:15:35 jmcneill Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.4 2007/08/21 06:33:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.3 2007/08/06 04:15:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.4 2007/08/21 06:33:51 joerg Exp $");
 
 #include "opt_pci.h"
 
@@ -484,6 +484,7 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(reg)) {
 	case 0:	/* standard device header */
+	case 1: /* PCI-PCI bridge header */
 		ofs = PCI_CAPLISTPTR_REG;
 		break;
 	case 2:	/* PCI-CardBus Bridge header */
