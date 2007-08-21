@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.49.4.4 2007/07/15 15:53:07 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.49.4.5 2007/08/21 22:32:25 yamt Exp $	*/
 
 /*
  *
@@ -121,7 +121,6 @@ extern struct uvm_object *uvm_kernel_object;
 
 extern kmutex_t uvm_pageqlock;		/* lock for active/inactive page q */
 extern kmutex_t uvm_fpageqlock;		/* lock for free page q */
-extern kmutex_t uvm_pagedaemon_lock;
 extern kmutex_t uvm_kentry_lock;
 extern kmutex_t uvm_swap_data_lock;
 extern kmutex_t uvm_scheduler_mutex;

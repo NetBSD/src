@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.231.4.10 2007/08/20 21:28:27 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.231.4.11 2007/08/21 22:32:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.10 2007/08/20 21:28:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.11 2007/08/21 22:32:27 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1613,7 +1613,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			KASSERT(!(pgs[i]->flags & PG_PAGEOUT));
 			pgs[i]->flags &= ~PG_DELWRI;
 			pgs[i]->flags |= PG_PAGEOUT;
-			uvmexp.paging++;
+			uvm_pageout_start(1);
 			mutex_enter(&uvm_pageqlock);
 			uvm_pageunwire(pgs[i]);
 			mutex_exit(&uvm_pageqlock);
@@ -1798,7 +1798,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		pg = pgs[i];
 
 		if (pg->flags & PG_PAGEOUT)
-			uvmexp.paging--;
+			uvm_pageout_done(1);
 		if (pg->flags & PG_DELWRI) {
 			uvm_pageunwire(pg);
 		}

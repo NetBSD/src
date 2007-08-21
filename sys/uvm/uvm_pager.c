@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.81.4.8 2007/08/20 03:22:45 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.81.4.9 2007/08/21 22:32:26 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.8 2007/08/20 03:22:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.9 2007/08/21 22:32:26 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -288,6 +288,7 @@ uvm_aio_aiodone(struct buf *bp)
 	struct uvm_object *uobj;
 	kmutex_t *slock;
 	int i, error, swslot;
+	int pageout_done = 0;
 	bool write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
@@ -373,7 +374,7 @@ uvm_aio_aiodone(struct buf *bp)
 			} else if (error == ENOMEM) {
 				if (pg->flags & PG_PAGEOUT) {
 					pg->flags &= ~PG_PAGEOUT;
-					uvmexp.paging--;
+					pageout_done++;
 				}
 				pg->flags &= ~PG_CLEAN;
 				uvm_pageactivate(pg);
@@ -423,7 +424,7 @@ uvm_aio_aiodone(struct buf *bp)
 
 		if (pg->flags & PG_PAGEOUT) {
 			pg->flags &= ~PG_PAGEOUT;
-			uvmexp.paging--;
+			pageout_done++;
 			uvmexp.pdfreed++;
 			pg->flags |= PG_RELEASED;
 		}
@@ -446,6 +447,7 @@ uvm_aio_aiodone(struct buf *bp)
 		}
 #endif /* defined(VMSWAP) */
 	}
+	uvm_pageout_done(pageout_done);
 	if (!swap) {
 		uvm_page_unbusy(pgs, npages);
 		mutex_exit(&uvm_pageqlock);
