@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8.2.1 2007/07/29 10:18:51 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.2 2007/08/21 10:34:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.1 2007/07/29 10:18:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.2 2007/08/21 10:34:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,10 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.1 2007/07/29 10:18:51 ad Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-
 #include <dev/isa/isareg.h>
+
+#include <machine/bus.h>
 #include <machine/isa_machdep.h>
+#include <machine/atomic.h>
 
 /*
  * Extent maps to manage I/O and memory space.  Allocate
@@ -272,7 +273,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 {
 	u_long pa, endpa;
 	vaddr_t va;
-	pt_entry_t *pte, opte;
+	pt_entry_t *pte;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
@@ -303,21 +304,17 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 *
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
-		 *
-		 * XXX extreme paranoia suggests tlb shootdown belongs here.
 		 */
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
-			opte = *pte;
 			if (cacheable)
-				*pte &= ~PG_N;
+				x86_atomic_clearbits_l(pte, PG_N);
 			else
-				*pte |= PG_N;
-			pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
+				x86_atomic_setbits_l(pte, PG_N);
+			pmap_tlb_shootdown(pmap_kernel(), va, 0, *pte);
 		}
 	}
 
-	pmap_tlb_shootwait();
 	pmap_update(pmap_kernel());
 
 	return 0;
@@ -362,17 +359,14 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			}
 #endif
 
-#if __NetBSD_Version__ > 104050000
 			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}
 			bpa += (bsh & PGOFSET);
-#else
-			bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
-#endif
-
 			pmap_kremove(va, endva - va);
+			pmap_update(pmap_kernel());
+
 			/*
 			 * Free the kernel virtual mapping.
 			 */
@@ -424,6 +418,8 @@ x86_memio_unmap(t, bsh, size)
 		bpa += (bsh & PGOFSET);
 
 		pmap_kremove(va, endva - va);
+		pmap_update(pmap_kernel());
+
 		/*
 		 * Free the kernel virtual mapping.
 		 */

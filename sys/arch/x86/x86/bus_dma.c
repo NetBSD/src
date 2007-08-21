@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.35.2.1 2007/07/29 10:18:51 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.35.2.2 2007/08/21 10:34:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.1 2007/07/29 10:18:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.2 2007/08/21 10:34:10 ad Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.1 2007/07/29 10:18:51 ad Exp $");
  * SUCH DAMAGE.
  */
 
+#include "ioapic.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -100,18 +102,14 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.1 2007/07/29 10:18:51 ad Exp $");
 
 #include <machine/bus.h>
 #include <machine/bus_private.h>
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#include <machine/atomic.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
 #include <uvm/uvm_extern.h>
-
-#include "ioapic.h"
-
-#if NIOAPIC > 0
-#include <machine/i82093var.h>
-#include <machine/mpbiosvar.h>
-#endif
 
 extern	paddr_t avail_end;
 
@@ -1012,18 +1010,16 @@ int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     size_t size, void **kvap, int flags)
 {
-	vaddr_t va;
+	vaddr_t sva, va, eva;
 	bus_addr_t addr;
 	int curseg;
 	int nocache;
-	int marked;
-	pt_entry_t *pte, opte;
+	pt_entry_t *pte, opte, xpte;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
 	size = round_page(size);
 	nocache = (flags & BUS_DMA_NOCACHE) != 0 && pmap_cpu_has_pg_n();
-	marked = 0;
 
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
 
@@ -1031,6 +1027,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return (ENOMEM);
 
 	*kvap = (void *)va;
+	sva = va;
+	eva = sva + size;
+	xpte = 0;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -1048,16 +1047,17 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				pte = kvtopte(va);
 				opte = *pte;
 				if ((opte & PG_N) == 0) {
-					*pte |= PG_N;
-					pmap_tlb_shootdown(pmap_kernel(),
-					    va, 0, opte);
-					marked = 1;
+					x86_atomic_setbits_l(pte, PG_N);
+					xpte |= opte;
 				}
 			}
 		}
 	}
-	if (marked)
-		pmap_tlb_shootwait();
+	if ((xpte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+		crit_enter();
+		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
+		crit_exit();
+	}
 	pmap_update(pmap_kernel());
 
 	return (0);
@@ -1072,32 +1072,26 @@ void
 _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 	pt_entry_t *pte, opte;
-	vaddr_t va, endva;
-	int marked;
+	vaddr_t va, sva, eva;
 
-	marked = 0;
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
 
 	size = round_page(size);
+	sva = (vaddr_t)kva;
+	eva = sva + size;
+
 	/*
          * mark pages cacheable again.
          */
-	for (va = (vaddr_t)kva, endva = (vaddr_t)kva + size;
-	     va < endva; va += PAGE_SIZE) {
+	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pte = kvtopte(va);
 		opte = *pte;
-		if ((opte & PG_N) != 0) {
-			*pte &= ~PG_N;
-			pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
-			marked = 1;
-		}
+		if ((opte & PG_N) != 0)
+			x86_atomic_clearbits_l(pte, PG_N);
 	}
-	if (marked)
-		pmap_tlb_shootwait();
-
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
 	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
