@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.6 2007/08/20 23:01:51 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.7 2007/08/21 13:57:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -221,9 +221,9 @@ ukfs_namei(struct vnode *rvp, const char **pnp, u_long op,
 			flags |= RUMP_NAMEI_ISDOTDOT;
 
 		VLE(dvp);
-		cnp = rump_makecn(op, flags, pn, pnlen, curlwp);
+		cnp = rump_makecn(op, flags, pn, pnlen, RUMPCRED_SUSER, curlwp);
 		rv = RUMP_VOP_LOOKUP(dvp, &vp, cnp);
-		rump_freecn(cnp, 1);
+		rump_freecn(cnp, RUMPCN_ISLOOKUP | RUMPCN_FREECRED);
 		VUL(dvp);
 		if (rv == 0)
 			VUL(vp);
@@ -382,14 +382,14 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 	rump_vattr_setrdev(vap, dev);
 	cnp = rump_makecn(RUMP_NAMEI_CREATE,
 	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
-	    strlen(filename), curlwp);
+	    strlen(filename), RUMPCRED_SUSER, curlwp);
 
 	VLE(dvp);
 	rv = do_fn(dvp, &vp, cnp, vap);
 	if (rv == 0)
 		VUL(vp);
 
-	rump_freecn(cnp, 0);
+	rump_freecn(cnp, RUMPCN_FREECRED);
 	rump_vattr_free(vap);
 
  out:
@@ -463,11 +463,11 @@ doremove(struct ukfs *ukfs, const char *filename,
 		goto out;
 
 	cnp = rump_makecn(RUMP_NAMEI_DELETE, 0, filename,
-	    strlen(filename), curlwp);
+	    strlen(filename), RUMPCRED_SUSER, curlwp);
 	VLE(dvp);
 	VLE(vp);
 	rv = do_fn(dvp, vp, cnp);
-	rump_freecn(cnp, 0);
+	rump_freecn(cnp, RUMPCN_FREECRED);
 
  out:
 	recycle(dvp);
@@ -519,10 +519,10 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 
 	cnp = rump_makecn(RUMP_NAMEI_CREATE,
 	    RUMP_NAMEI_HASBUF | RUMP_NAMEI_SAVENAME,
-	    f_create, strlen(f_create), curlwp);
+	    f_create, strlen(f_create), RUMPCRED_SUSER, curlwp);
 	VLE(dvp);
 	rv = RUMP_VOP_LINK(dvp, vp, cnp);
-	rump_freecn(cnp, 0);
+	rump_freecn(cnp, RUMPCN_FREECRED);
 
  out:
 	recycle(dvp);
@@ -556,14 +556,14 @@ ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
 	rump_vattr_settype(vap, VLNK);
 	cnp = rump_makecn(RUMP_NAMEI_CREATE,
 	    RUMP_NAMEI_HASBUF|RUMP_NAMEI_SAVENAME, filename,
-	    strlen(filename), curlwp);
+	    strlen(filename), RUMPCRED_SUSER, curlwp);
 
 	VLE(dvp);
 	rv = RUMP_VOP_SYMLINK(dvp, &vp, cnp, vap, linkname);
 	if (rv == 0)
 		VUL(vp);
 
-	rump_freecn(cnp, 0);
+	rump_freecn(cnp, RUMPCN_FREECRED);
 	rump_vattr_free(vap);
 
  out:

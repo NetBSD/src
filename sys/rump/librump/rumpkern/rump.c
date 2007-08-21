@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.8 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.9 2007/08/21 13:57:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -128,7 +128,7 @@ rump_mnt_destroy(struct mount *mp)
 
 struct componentname *
 rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
-	struct lwp *l)
+	rump_kauth_cred_t creds, struct lwp *l)
 {
 	struct componentname *cnp;
 
@@ -143,18 +143,21 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp->cn_nameptr = cnp->cn_pnbuf;
 	cnp->cn_namelen = namelen;
 
-	cnp->cn_cred = l->l_cred;
+	cnp->cn_cred = (kauth_cred_t)creds;
 	cnp->cn_lwp = l;
 
 	return cnp;
 }
 
 void
-rump_freecn(struct componentname *cnp, int islookup)
+rump_freecn(struct componentname *cnp, int flags)
 {
 
+	if (flags & RUMPCN_FREECRED)
+		rump_cred_destroy((rump_kauth_cred_t)cnp->cn_cred);
+
 	if (cnp->cn_flags & SAVENAME) {
-		if (islookup || cnp->cn_flags & SAVESTART)
+		if (flags & RUMPCN_ISLOOKUP || cnp->cn_flags & SAVESTART)
 			PNBUF_PUT(cnp->cn_pnbuf);
 	} else {
 		PNBUF_PUT(cnp->cn_pnbuf);
