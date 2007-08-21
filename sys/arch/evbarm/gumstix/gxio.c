@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.5 2007/08/21 11:39:11 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.6 2007/08/21 12:01:55 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.5 2007/08/21 11:39:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.6 2007/08/21 12:01:55 kiyohara Exp $");
 
 #include "opt_gxio.h"
 
@@ -63,8 +63,9 @@ static int gxiosearch(struct device *, struct cfdata *, const int *, void *);
 static int gxioprint(void *, const char *);
 
 void gxio_config_pin(void);
-void gxio_config_busheader(char *);
+void gxio_config_expansion(char *);
 static void gxio_config_gpio(const struct gxioconf *, char *);
+static void basix_config(void);
 static void cfstix_config(void);
 static void etherstix_config(void);
 static void netcf_config(void);
@@ -76,7 +77,7 @@ static void wifistix_cf_config(void);
 CFATTACH_DECL(
     gxio, sizeof(struct gxio_softc), gxiomatch, gxioattach, NULL, NULL);
 
-char busheader[MAX_BOOT_STRING]; 
+char busheader[MAX_BOOT_STRING];
 
 static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
 	/* Bluetooth module configuration */
@@ -85,10 +86,6 @@ static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
 
 	/* AC97 configuration */
 	{ 29, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
-
-	/* FFUART configuration : is connected only TXD/RXD */
-	{ 34, GPIO_ALT_FN_1_IN },	/* FFRXD */
-	{ 39, GPIO_ALT_FN_2_OUT },	/* FFTXD */
 
 #ifndef GXIO_BLUETOOTH_ON_HWUART
 	/* BTUART configuration */
@@ -114,6 +111,7 @@ static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
 };
 
 static const struct gxioconf busheader_conf[] = {
+	{ "basix",		basix_config },
 	{ "cfstix",		cfstix_config },
 	{ "etherstix",		etherstix_config },
 	{ "netcf",		netcf_config },
@@ -223,9 +221,22 @@ gxio_config_pin()
 }
 
 void
-gxio_config_busheader(char *expansion)
+gxio_config_expansion(char *expansion)
 {
+#ifdef GXIO_DEFAULT_EXPANSION
+	char default_expansion[] = GXIO_DEFAULT_EXPANSION;
+#endif
 
+	if (expansion == NULL) {
+#ifndef GXIO_DEFAULT_EXPANSION
+		return;
+#else
+		printf("not specified 'busheader=' in the boot args.\n");
+		printf("configure default expansion (%s)\n",
+		    GXIO_DEFAULT_EXPANSION);
+		expansion = default_expansion;
+#endif
+	}
 	gxio_config_gpio(busheader_conf, expansion);
 }
 
@@ -248,12 +259,25 @@ gxio_config_gpio(const struct gxioconf *gxioconflist, char *expansion)
 
 
 static void
+basix_config()
+{
+
+	pxa2x0_gpio_set_function(8, GPIO_ALT_FN_1_OUT);		/* MMCCS0 */
+	pxa2x0_gpio_set_function(53, GPIO_ALT_FN_1_OUT);	/* MMCCLK */
+#if 0
+	/* this configuration set by gxmci.c::pxamci_attach() */
+	pxa2x0_gpio_set_function(11, GPIO_IN);			/* nSD_DETECT */
+	pxa2x0_gpio_set_function(22, GPIO_IN);			/* nSD_WP */
+#endif
+}
+
+static void
 cfstix_config()
 {
 	u_int gpio, npoe_fn;
 
 #if 1
-	/* this configuration set by pxapcic_attach_common()::pxa2x0_pcic.c */
+	/* this configuration set by pxa2x0_pcic.c::pxapcic_attach_common() */
 #else
 	pxa2x0_gpio_set_function(11, GPIO_IN);		/* PCD1 */
 	pxa2x0_gpio_set_function(26, GPIO_IN);		/* PRDY1/~IRQ1 */
@@ -301,8 +325,7 @@ netduommc_config()
 {
 
 	netduo_config();
-
-	/* mmc not yet... */
+	basix_config();
 }
 
 static void
@@ -323,8 +346,7 @@ netmmc_config()
 {
 
 	etherstix_config();
-
-	/* mmc not yet... */
+	basix_config();
 }
 
 static void
@@ -332,7 +354,7 @@ wifistix_cf_config()
 {
 
 #if 1
-	/* this configuration set by pxapcic_attach_common()::pxa2x0_pcic.c */
+	/* this configuration set by pxa2x0_pcic.c::pxapcic_attach_common() */
 #else
 	pxa2x0_gpio_set_function(36, GPIO_IN);		/* PCD2 */
 	pxa2x0_gpio_set_function(27, GPIO_IN);		/* PRDY2/~IRQ2 */
