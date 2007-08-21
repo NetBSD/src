@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.62 2007/03/04 19:14:25 sketch Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.62.14.1 2007/08/21 06:48:01 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62 2007/03/04 19:14:25 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.1 2007/08/21 06:48:01 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -93,11 +93,8 @@ int iwi_debug = 4;
 static int	iwi_match(struct device *, struct cfdata *, void *);
 static void	iwi_attach(struct device *, struct device *, void *);
 static int	iwi_detach(struct device *, int);
-
-static void	iwi_shutdown(void *);
-static int	iwi_suspend(struct iwi_softc *);
-static int	iwi_resume(struct iwi_softc *);
-static void	iwi_powerhook(int, void *);
+static pnp_status_t
+		iwi_pci_power(device_t, pnp_request_t, void *);
 
 static int	iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
     int);
@@ -446,18 +443,9 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	iwi_sysctlattach(sc);	
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(iwi_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    iwi_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+	if (pnp_register(self, iwi_pci_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 	ieee80211_announce(ic);
 
@@ -471,6 +459,8 @@ iwi_detach(struct device* self, int flags)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
+
+	pnp_deregister(self);
 
 	if (ifp != NULL)
 		iwi_stop(ifp, 1);
@@ -494,9 +484,6 @@ iwi_detach(struct device* self, int flags)
 	}
 
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
-
-	powerhook_disestablish(sc->sc_powerhook);
-	shutdownhook_disestablish(sc->sc_sdhook);
 
 	return 0;
 }
@@ -798,71 +785,81 @@ iwi_free_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 	}
 }
 
-static void
-iwi_shutdown(void *arg)
+static pnp_status_t
+iwi_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	struct iwi_softc *sc = (struct iwi_softc *)arg;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct iwi_softc *sc = (struct iwi_softc *)dv;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	pnp_status_t status;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
+	pci_chipset_tag_t pc;
+	pcireg_t val;
+	pcitag_t tag;
+	int off, s;
 
-	iwi_stop(ifp, 1);
-}
+	status = PNP_STATUS_UNSUPPORTED;
+	pc = sc->sc_pct;
+	tag = sc->sc_pcitag;
 
-static int
-iwi_suspend(struct iwi_softc *sc)
-{
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
 
-	iwi_stop(ifp, 1);
+		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
+			return PNP_STATUS_UNSUPPORTED;
+		caps->state = pci_pnp_capabilities(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		state = opaque;
+		switch (*state) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			s = splnet();
+			iwi_stop(ifp, 1);
+			pci_conf_capture(pc, tag, &sc->sc_pciconf);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
 
-	return 0;
-}
+		if (pci_set_powerstate(pc, tag, val) == 0) {
+			status = PNP_STATUS_SUCCESS;
+			if (*state != PNP_STATE_D0)
+				break;
 
-static int
-iwi_resume(struct iwi_softc *sc)
-{
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-	pcireg_t data;
+			s = splnet();
+			pci_conf_restore(pc, tag, &sc->sc_pciconf);
+			/* clear device specific PCI configuration register 0x41 */
+			val = pci_conf_read(pc, tag, 0x40);
+			val &= ~0x0000ff00;
+			pci_conf_write(pc, tag, 0x40, val);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+			if (ifp->if_flags & IFF_UP) {
+				ifp->if_flags &= ~IFF_RUNNING;
+				iwi_init(ifp);
+				iwi_start(ifp);
+			}
+			splx(s);
+		}
+	case PNP_REQUEST_GET_STATE:
+		state = opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
 
-	if (ifp->if_flags & IFF_UP) {
-		iwi_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			iwi_start(ifp);
+		*state = pci_pnp_powerstate(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
 	}
 
-	return 0;
-}
-
-static void
-iwi_powerhook(int why, void *arg)
-{
-        struct iwi_softc *sc = arg;
-	pci_chipset_tag_t pc = sc->sc_pct;
-	pcitag_t tag = sc->sc_pcitag;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-		iwi_suspend(sc);
-		break;
-	case PWR_SOFTRESUME:
-		iwi_resume(sc);
-		break;
-	}
-	splx(s);
+	return status;
 }
 
 static struct ieee80211_node *
