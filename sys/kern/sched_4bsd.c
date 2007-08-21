@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.6 2007/08/20 21:27:36 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.7 2007/08/21 13:59:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.6 2007/08/20 21:27:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.7 2007/08/21 13:59:44 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -159,7 +159,7 @@ sched_tick(struct cpu_info *ci)
 		} else
 			spc->spc_flags |= SPCF_SEENRR;
 	}
-	cpu_need_resched(curcpu(), 0);
+	cpu_need_resched(ci, 0);
 	spc_unlock(ci);
 }
 

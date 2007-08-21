@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.11 2007/08/19 23:28:45 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.12 2007/08/21 13:59:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.11 2007/08/19 23:28:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.12 2007/08/21 13:59:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -599,7 +599,7 @@ softint_trigger(uintptr_t machdep)
 	l->l_mutex = ci->ci_schedstate.spc_mutex;
 	l->l_stat = LSRUN;
 	sched_enqueue(l, false);
-	cpu_need_resched(ci, 1);
+	cpu_need_resched(ci, RESCHED_IMMED);
 	spc_unlock(ci);
 }
 

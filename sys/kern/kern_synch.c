@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.12 2007/08/20 21:27:34 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.13 2007/08/21 13:59:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.12 2007/08/20 21:27:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.13 2007/08/21 13:59:43 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -677,8 +677,11 @@ suspendsched(void)
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
 	 * They'll trap into the kernel and suspend themselves in userret().
 	 */
-	for (CPU_INFO_FOREACH(cii, ci))
-		cpu_need_resched(ci, 0);
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		spc_lock(ci);
+		cpu_need_resched(ci, RESCHED_IMMED);
+		spc_unlock(ci);
+	}
 }
 
 /*
@@ -743,8 +746,8 @@ resched_cpu(struct lwp *l)
 	 * currently very pretty, and we also need to weigh the
 	 * cost of moving a process from one CPU to another.
 	 */
-	ci = (l->l_cpu != NULL) ? l->l_cpu : curcpu();
-	if (pri < ci->ci_schedstate.spc_curpriority)
+	ci = l->l_cpu;
+	if (pri > ci->ci_schedstate.spc_curpriority)
 		cpu_need_resched(ci, 0);
 }
 
