@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_roundf.c,v 1.1 2004/07/10 13:49:10 junyoung Exp $");
+__RCSID("$NetBSD: s_roundf.c,v 1.2 2007/08/21 20:10:27 drochner Exp $");
 #if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_roundf.c,v 1.1 2004/06/07 08:05:36 das Exp $");
 #endif
@@ -45,14 +45,15 @@ roundf(float x)
 		return (x);
 
 	if (x >= 0.0) {
-		t = ceilf(x);
-		if (t - x > 0.5)
-			t -= 1.0;
+		t = floorf(x);
+		if (x - t >= 0.5)
+			t += 1.0;
 		return (t);
 	} else {
-		t = ceilf(-x);
-		if (t + x > 0.5)
-			t -= 1.0;
+		x = -x;
+		t = floorf(x);
+		if (x - t >= 0.5)
+			t += 1.0;
 		return (-t);
 	}
 }
