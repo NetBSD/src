@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.8.3 2007/08/20 18:38:12 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.8.4 2007/08/21 00:29:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -193,9 +193,7 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
  *
  * Acquire a spin mutex and post a load fence.
  */
-	ALIGN64
-
-STUB(mutex_spin_enter, mutex_vector_enter)	/* 0x00c0, 51 bytes */
+STUB(mutex_spin_enter, mutex_vector_enter)
 	movl	CPUVAR(SELF), %eax
 	movl	CPU_INFO_ILEVEL(%eax), %ecx
 	subl	$1, CPU_INFO_MTX_COUNT(%eax)	/* decl does not set CF */
@@ -220,9 +218,7 @@ LABEL(mutex_spin_enter_end)
  *
  * Release a spin mutex and post a store fence.
  */
-	ALIGN64
-
-STUB(mutex_spin_exit, mutex_vector_exit)	/* 0x0100, 50 bytes */
+STUB(mutex_spin_exit, mutex_vector_exit)
 	movl	$0x0001, %eax			/* new + expected value */
 	cmpxchgb %ah, MTX_LOCK(%edx)
 	jnz,pn	_C_LABEL(mutex_vector_exit)
@@ -240,16 +236,14 @@ STUB(mutex_spin_exit, mutex_vector_exit)	/* 0x0100, 50 bytes */
 	movl	%ecx, CPU_INFO_ILEVEL(%eax)
 	sti
 1:	ret
-
-	ALIGN64
+	nop					/* XXX round up */
+	.align	32
 LABEL(mutex_spin_exit_end)
 
 /*
  * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
  * Must be the same size as mutex_spin_exit().
  */
-	ALIGN64
-
 ENTRY(i686_mutex_spin_exit)
 	mov	4(%esp),%edx
 	pushl	%edi
