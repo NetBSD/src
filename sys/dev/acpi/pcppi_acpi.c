@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi_acpi.c,v 1.5 2006/11/16 01:32:47 christos Exp $ */
+/* $NetBSD: pcppi_acpi.c,v 1.5.22.1 2007/08/21 07:20:12 joerg Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.5 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.5.22.1 2007/08/21 07:20:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,8 @@ pcppi_acpi_attach(struct device *parent, struct device *self,
 	}
 
 	pcppi_attach(sc);
+
+	(void)pnp_register(self, pnp_generic_power);
 
  out:
 	acpi_resource_cleanup(&res);
