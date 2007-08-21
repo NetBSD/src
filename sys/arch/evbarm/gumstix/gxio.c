@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.4 2007/04/20 13:00:08 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.5 2007/08/21 11:39:11 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.4 2007/04/20 13:00:08 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.5 2007/08/21 11:39:11 kiyohara Exp $");
 
 #include "opt_gxio.h"
 
@@ -52,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.4 2007/04/20 13:00:08 kiyohara Exp $");
 #include "locators.h"
 
 
-struct gpioconf {
-	int pin;
-	u_int value;
-};
 struct gxioconf {
 	const char *name;
 	void (*config)(void);
@@ -82,21 +78,13 @@ CFATTACH_DECL(
 
 char busheader[MAX_BOOT_STRING]; 
 
-struct gpioconf gpioconf[] = {
+static struct pxa2x0_gpioconf boarddep_gpioconf[] = {
 	/* Bluetooth module configuration */
 	{  7, GPIO_OUT | GPIO_SET },	/* power on */
 	{ 12, GPIO_ALT_FN_1_OUT },	/* 32kHz out. required by SingleStone */
 
 	/* AC97 configuration */
-#if 1
-	/* this configuration set by pxaacu_attach()::pxa2x0_ac97.c */
-#else
-	/* Don't reorder */
-	{ 31, GPIO_ALT_FN_2_OUT },	/* SYNC */
-	{ 30, GPIO_ALT_FN_2_OUT },	/* SDATA_OUT */
-	{ 28, GPIO_ALT_FN_1_IN },	/* BITCLK */
-	{ 29, GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
-#endif
+	{ 29, GPIO_CLR | GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
 
 	/* FFUART configuration : is connected only TXD/RXD */
 	{ 34, GPIO_ALT_FN_1_IN },	/* FFRXD */
@@ -104,8 +92,6 @@ struct gpioconf gpioconf[] = {
 
 #ifndef GXIO_BLUETOOTH_ON_HWUART
 	/* BTUART configuration */
-	{ 42, GPIO_ALT_FN_1_IN },	/* BTRXD */
-	{ 43, GPIO_ALT_FN_2_OUT },	/* BTTXD */
 	{ 44, GPIO_ALT_FN_1_IN },	/* BTCST */
 	{ 45, GPIO_ALT_FN_2_OUT },	/* BTRST */
 #else
@@ -115,10 +101,6 @@ struct gpioconf gpioconf[] = {
 	{ 44, GPIO_ALT_FN_3_IN },	/* HWCST */
 	{ 45, GPIO_ALT_FN_3_OUT },	/* HWRST */
 #endif
-
-	/* STUART configuration : is connected only TXD/RXD */
-	{ 46, GPIO_ALT_FN_2_IN },	/* RXD */
-	{ 47, GPIO_ALT_FN_1_OUT },	/* TXD */
 
 #ifndef GXIO_BLUETOOTH_ON_HWUART
 	/* HWUART configuration */
@@ -220,14 +202,24 @@ gxioprint(void *aux, const char *name)
 void
 gxio_config_pin()
 {
-	int i;
+	struct pxa2x0_gpioconf *gumstix_gpioconf[] = {
+		pxa25x_com_ffuart_gpioconf,
+		pxa25x_com_stuart_gpioconf,
+#ifndef GXIO_BLUETOOTH_ON_HWUART
+		pxa25x_com_btuart_gpioconf,
+#endif
+		pxa25x_com_hwuart_gpioconf,
+		pxa25x_i2c_gpioconf,
+		pxa25x_pxaacu_gpioconf,
+		boarddep_gpioconf,
+		NULL
+	};
 
 	/* XXX: turn off for power of bluetooth module */
 	pxa2x0_gpio_set_function(7, GPIO_OUT | GPIO_CLR);
 	delay(100);
 
-	for (i = 0; gpioconf[i].pin != -1; i++)
-		pxa2x0_gpio_set_function(gpioconf[i].pin, gpioconf[i].value);
+	pxa2x0_gpio_config(gumstix_gpioconf);
 }
 
 void
