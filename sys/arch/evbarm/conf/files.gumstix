@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.7 2007/08/21 12:26:17 kiyohara Exp $
+#	$NetBSD: files.gumstix,v 1.8 2007/08/21 12:36:18 kiyohara Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
@@ -28,3 +28,8 @@ file	arch/evbarm/gumstix/if_sm_gxio.c		sm_gxio
 # PCMCIA/CF socket
 attach	pxapcic at pxaip with pxapcic_gxpcic
 file	arch/evbarm/gumstix/gxpcic.c			pxapcic_gxpcic
+
+# Inter-Integrated Circuit controller
+device	gxiic: pxaiic, i2cbus
+attach	gxiic at pxaip
+file	arch/evbarm/gumstix/gxiic.c			gxiic
