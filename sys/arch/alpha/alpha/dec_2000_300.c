@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2000_300.c,v 1.11 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_2000_300.c,v 1.11.18.1 2007/08/21 20:00:29 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.11 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2000_300.c,v 1.11.18.1 2007/08/21 20:00:29 liamjfoy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 		isadev = dev;
 
 	if (scsiboot && (scsidev == NULL)) {
-		if (parent != eisadev)
+		if (eisadev == NULL || parent != eisadev)
 			return;
 		else {
 			struct eisa_attach_args *ea = aux;
@@ -286,7 +286,7 @@ dec_2000_300_device_register(struct device *dev, void *aux)
 		/*
 		 * XXX WHAT ABOUT ISA NETWORK CARDS?
 		 */
-		if (parent != eisadev)
+		if (eisadev == NULL || parent != eisadev)
 			return;
 		else {
 			struct eisa_attach_args *ea = aux;
