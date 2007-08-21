@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.16 2007/08/21 10:41:31 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.17 2007/08/21 13:06:53 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.16 2007/08/21 10:41:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.17 2007/08/21 13:06:53 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3159,11 +3159,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	/* get a pve. */
 	freepve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
-	if (freepve == NULL) {
-		if (!(flags & PMAP_CANFAIL))
-			panic("pmap_enter: no pv entries available");
-		return ENOMEM;
-	}
 
 	/* get lock */
 	rw_enter(&pmap_main_lock, RW_READER);
@@ -3241,6 +3236,13 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			/* We can not steal a pve - allocate one */
 			pve = freepve;
 			freepve = NULL;
+			if (pve == NULL) {
+				if (!(flags & PMAP_CANFAIL))
+					panic("pmap_enter: "
+					    "no pv entries available");
+				error = ENOMEM;
+				goto out;
+			}
   		}
 	} else {
 		new_pvh = NULL;
