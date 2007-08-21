@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.22.8.1 2007/03/13 17:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.22.8.2 2007/08/21 11:24:38 yamt Exp $	*/
 
 /*
  *
@@ -109,6 +109,11 @@ extern struct uvm_pagerops aobj_pager;
 		TAILQ_INIT(&(uobj)->memq);				\
 		(uobj)->uo_npages = 0;					\
 		(uobj)->uo_refs = (refs);				\
+	} while (/* CONSTCOND */ 0)
+
+#define	UVM_OBJ_DESTROY(uobj)						\
+	do {								\
+		mutex_destroy(&(uobj)->vmobjlock);			\
 	} while (/* CONSTCOND */ 0)
 
 #endif /* _KERNEL */
