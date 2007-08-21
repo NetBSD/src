@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.17 2007/08/21 12:36:18 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.18 2007/08/21 12:43:33 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -225,9 +225,9 @@ sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix, net{MMC,CF,DUO}
 sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd NIC)
 
 # Inter-Integrated Circuit controller
-gxiic0 at pxaip?
-iic*   at gxiic?
-#dsrtc*	at iic? addr 0x68	# Can mount DS1307 at console, breakout
+gxiic0	at pxaip?
+iic*	at gxiic?
+#dsrtc*	at iic? addr 0x68		# Can mount DS1307 at console, breakout
 
 # integrated PCMCIA/CF controller
 pxapcic0 at pxaip?				# cfstix, netCF
