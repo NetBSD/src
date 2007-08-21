@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.17 2007/08/20 03:22:44 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.18 2007/08/21 00:32:31 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.17 2007/08/20 03:22:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.18 2007/08/21 00:32:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1076,7 +1076,6 @@ softdep_initialize()
 	malloc_type_attach(M_PAGEDEP);
 	malloc_type_attach(M_INODEDEP);
 	malloc_type_attach(M_NEWBLK);
-	callout_init(&pause_timer_ch, CALLOUT_MPSAFE);
 
 	pool_init(&sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
 	    &pool_allocator_nointr, IPL_NONE);
@@ -1857,7 +1856,6 @@ setup_allocindir_phase2(bp, ip, aip)
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
 		bcopy(bp->b_data, newindirdep->ir_savebp->b_data, bp->b_bcount);
 		mutex_enter(&bqueue_lock);
-			
 	}
 }
 
