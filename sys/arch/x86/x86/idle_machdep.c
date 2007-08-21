@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.1.4.1 2007/06/09 21:37:05 ad Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.1.4.2 2007/08/21 11:03:25 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.1.4.1 2007/06/09 21:37:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.1.4.2 2007/08/21 11:03:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -66,7 +66,6 @@ cpu_idle_mwait(struct cpu_info *ci)
 		return;
 	}
 	mwait();
-	ci->ci_want_resched = 0;
 }
 
 #endif /* defined(I686_CPU) || defined(__x86_64__) */
@@ -82,7 +81,6 @@ cpu_idle_halt(struct cpu_info *ci)
 	} else {
 		enable_intr();
 	}
-	ci->ci_want_resched = 0;
 }
 
 void
