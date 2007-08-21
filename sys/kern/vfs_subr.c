@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.14 2007/08/21 11:24:37 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.15 2007/08/21 18:05:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.14 2007/08/21 11:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.15 2007/08/21 18:05:41 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -445,8 +445,13 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
 	vp->v_size = vp->v_writesize = VSIZENOTSET;
 
-	if (mp && error != EDEADLK)
-		vfs_unbusy(mp);
+	if (mp != NULL) {
+		if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
+			vp->v_vflag |= VV_MPSAFE;
+		if (error != EDEADLK)
+			vfs_unbusy(mp);
+	}
+
 	return (0);
 }
 
