@@ -48,7 +48,8 @@ subdir = util
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	ansi2knr.1 ansi2knr.c
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/define_dir.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
+	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
 	$(top_srcdir)/configure.ac
@@ -57,7 +58,7 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 audio_pcm_SOURCES = audio-pcm.c
@@ -83,9 +84,11 @@ longsize_SOURCES = longsize.c
 longsize_OBJECTS = longsize$U.$(OBJEXT)
 longsize_LDADD = $(LDADD)
 longsize_DEPENDENCIES = ../libntp/libntp.a
-ntp_keygen_SOURCES = ntp-keygen.c
-ntp_keygen_OBJECTS = ntp-keygen$U.$(OBJEXT)
-ntp_keygen_DEPENDENCIES = ../libntp/libntp.a
+am_ntp_keygen_OBJECTS = ntp-keygen$U.$(OBJEXT) \
+	ntp-keygen-opts$U.$(OBJEXT)
+ntp_keygen_OBJECTS = $(am_ntp_keygen_OBJECTS)
+am__DEPENDENCIES_1 =
+ntp_keygen_DEPENDENCIES = $(am__DEPENDENCIES_1) ../libntp/libntp.a
 ntptime_SOURCES = ntptime.c
 ntptime_OBJECTS = ntptime$U.$(OBJEXT)
 ntptime_LDADD = $(LDADD)
@@ -123,14 +126,21 @@ depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = audio-pcm.c byteorder.c hist.c $(jitter_SOURCES) kern.c \
-	longsize.c ntp-keygen.c ntptime.c pps-api.c precision.c sht.c \
-	testrs6000.c tg.c tickadj.c timetrim.c
+	longsize.c $(ntp_keygen_SOURCES) ntptime.c pps-api.c \
+	precision.c sht.c testrs6000.c tg.c tickadj.c timetrim.c
 DIST_SOURCES = audio-pcm.c byteorder.c hist.c $(jitter_SOURCES) kern.c \
-	longsize.c ntp-keygen.c ntptime.c pps-api.c precision.c sht.c \
-	testrs6000.c tg.c tickadj.c timetrim.c
+	longsize.c $(ntp_keygen_SOURCES) ntptime.c pps-api.c \
+	precision.c sht.c testrs6000.c tg.c tickadj.c timetrim.c
+man1dir = $(mandir)/man1
+NROFF = nroff
+MANS = $(man_MANS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -138,6 +148,7 @@ ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
+AR = @AR@
 ARLIB_DIR = @ARLIB_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -151,10 +162,15 @@ CHUTEST = @CHUTEST@
 CLKTEST = @CLKTEST@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DCFD = @DCFD@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -162,15 +178,23 @@ EF_LIBS = @EF_LIBS@
 EF_PROGS = @EF_PROGS@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F77 = @F77@
+FFLAGS = @FFLAGS@
 INSTALL_DATA = @INSTALL_DATA@
+INSTALL_LIBOPTS_FALSE = @INSTALL_LIBOPTS_FALSE@
+INSTALL_LIBOPTS_TRUE = @INSTALL_LIBOPTS_TRUE@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LCRYPTO = @LCRYPTO@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
+LIBOPTS_CFLAGS = @LIBOPTS_CFLAGS@
+LIBOPTS_DIR = @LIBOPTS_DIR@
+LIBOPTS_LDADD = @LIBOPTS_LDADD@
 LIBPARSE = @LIBPARSE@
 LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
@@ -183,9 +207,10 @@ MAKE_LIBPARSE_KERNEL = @MAKE_LIBPARSE_KERNEL@
 MAKE_NTPDSIM = @MAKE_NTPDSIM@
 MAKE_NTPTIME = @MAKE_NTPTIME@
 MAKE_PARSEKMODULE = @MAKE_PARSEKMODULE@
-MAKE_SNTP = @MAKE_SNTP@
 MAKE_TICKADJ = @MAKE_TICKADJ@
 MAKE_TIMETRIM = @MAKE_TIMETRIM@
+NEED_LIBOPTS_FALSE = @NEED_LIBOPTS_FALSE@
+NEED_LIBOPTS_TRUE = @NEED_LIBOPTS_TRUE@
 OBJEXT = @OBJEXT@
 OPENSSL = @OPENSSL@
 OPENSSL_INC = @OPENSSL_INC@
@@ -208,11 +233,16 @@ STRIP = @STRIP@
 TESTDCF = @TESTDCF@
 U = @U@
 VERSION = @VERSION@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
+ac_ct_F77 = @ac_ct_F77@
 ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
+am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
+am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -250,19 +280,32 @@ target_alias = @target_alias@
 
 #AUTOMAKE_OPTIONS = ../ansi2knr no-dependencies
 AUTOMAKE_OPTIONS = ansi2knr
-INCLUDES = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include $(LIBOPTS_CFLAGS)
 # LDADD might need RESLIB and ADJLIB
 LDADD = ../libntp/libntp.a
-ntp_keygen_LDADD = @LCRYPTO@ ../libntp/libntp.a
-#EXTRA_DIST=	README TAGS
-EXTRA_DIST = 
+ntp_keygen_SOURCES = ntp-keygen.c ntp-keygen-opts.c ntp-keygen-opts.h
+ntp_keygen_LDADD = @LCRYPTO@ $(LIBOPTS_LDADD) ../libntp/libntp.a
 ETAGS_ARGS = Makefile.am
+#EXTRA_DIST=	README TAGS
+EXTRA_DIST = ntp-keygen-opts.def ntp-keygen.1 ntp-keygen-opts.texi ntp-keygen-opts.menu
+BUILT_SOURCES = ntp-keygen-opts.c ntp-keygen-opts.h ntp-keygen.1	\
+		ntp-keygen-opts.texi ntp-keygen-opts.menu
+
+man_MANS = ntp-keygen.1
+run_ag = cd $(srcdir) && autogen -L ../include
+std_def_list = $(top_srcdir)/include/debug-opt.def		\
+		$(top_srcdir)/include/autogen-version.def 	\
+		$(top_srcdir)/include/copyright.def 		\
+		$(top_srcdir)/include/homerc.def 		\
+		$(top_srcdir)/include/version.def
+
 jitter_SOURCES = jitter.c jitter.h
 jitter_LDADD = 
-all: all-am
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -272,9 +315,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  util/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  util/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  util/Makefile
+	  $(AUTOMAKE) --foreign  util/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -298,10 +341,11 @@ install-binPROGRAMS: $(bin_PROGRAMS)
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  if test -f $$p \
+	     || test -f $$p1 \
 	  ; then \
 	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
 	  else :; fi; \
 	done
 
@@ -314,7 +358,11 @@ uninstall-binPROGRAMS:
 	done
 
 clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
 audio-pcm$(EXEEXT): $(audio_pcm_OBJECTS) $(audio_pcm_DEPENDENCIES) 
 	@rm -f audio-pcm$(EXEEXT)
 	$(LINK) $(audio_pcm_LDFLAGS) $(audio_pcm_OBJECTS) $(audio_pcm_LDADD) $(LIBS)
@@ -383,6 +431,7 @@ mostlyclean-kr:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kern$U.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/longsize$U.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntp-keygen$U.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntp-keygen-opts$U.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntptime$U.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pps-api$U.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/precision$U.Po@am__quote@
@@ -405,6 +454,13 @@ mostlyclean-kr:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+.c.lo:
+@am__fastdepCC_TRUE@	if $(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 audio-pcm_.c: audio-pcm.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/audio-pcm.c; then echo $(srcdir)/audio-pcm.c; else echo audio-pcm.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
 byteorder_.c: byteorder.c $(ANSI2KNR)
@@ -419,6 +475,8 @@ longsize_.c: longsize.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/longsize.c; then echo $(srcdir)/longsize.c; else echo longsize.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
 ntp-keygen_.c: ntp-keygen.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntp-keygen.c; then echo $(srcdir)/ntp-keygen.c; else echo ntp-keygen.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
+ntp-keygen-opts_.c: ntp-keygen-opts.c $(ANSI2KNR)
+	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntp-keygen-opts.c; then echo $(srcdir)/ntp-keygen-opts.c; else echo ntp-keygen-opts.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
 ntptime_.c: ntptime.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntptime.c; then echo $(srcdir)/ntptime.c; else echo ntptime.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
 pps-api_.c: pps-api.c $(ANSI2KNR)
@@ -435,12 +493,70 @@ tickadj_.c: tickadj.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/tickadj.c; then echo $(srcdir)/tickadj.c; else echo tickadj.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
 timetrim_.c: timetrim.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/timetrim.c; then echo $(srcdir)/timetrim.c; else echo timetrim.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
-audio-pcm_.$(OBJEXT) byteorder_.$(OBJEXT) hist_.$(OBJEXT) \
-jitter_.$(OBJEXT) kern_.$(OBJEXT) longsize_.$(OBJEXT) \
-ntp-keygen_.$(OBJEXT) ntptime_.$(OBJEXT) pps-api_.$(OBJEXT) \
-precision_.$(OBJEXT) sht_.$(OBJEXT) testrs6000_.$(OBJEXT) \
-tg_.$(OBJEXT) tickadj_.$(OBJEXT) timetrim_.$(OBJEXT) : $(ANSI2KNR)
+audio-pcm_.$(OBJEXT) audio-pcm_.lo byteorder_.$(OBJEXT) byteorder_.lo \
+hist_.$(OBJEXT) hist_.lo jitter_.$(OBJEXT) jitter_.lo kern_.$(OBJEXT) \
+kern_.lo longsize_.$(OBJEXT) longsize_.lo ntp-keygen_.$(OBJEXT) \
+ntp-keygen_.lo ntp-keygen-opts_.$(OBJEXT) ntp-keygen-opts_.lo \
+ntptime_.$(OBJEXT) ntptime_.lo pps-api_.$(OBJEXT) pps-api_.lo \
+precision_.$(OBJEXT) precision_.lo sht_.$(OBJEXT) sht_.lo \
+testrs6000_.$(OBJEXT) testrs6000_.lo tg_.$(OBJEXT) tg_.lo \
+tickadj_.$(OBJEXT) tickadj_.lo timetrim_.$(OBJEXT) timetrim_.lo : \
+$(ANSI2KNR)
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
+
+distclean-libtool:
+	-rm -f libtool
 uninstall-info-am:
+install-man1: $(man1_MANS) $(man_MANS)
+	@$(NORMAL_INSTALL)
+	test -z "$(man1dir)" || $(mkdir_p) "$(DESTDIR)$(man1dir)"
+	@list='$(man1_MANS) $(dist_man1_MANS) $(nodist_man1_MANS)'; \
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  case "$$ext" in \
+	    1*) ;; \
+	    *) ext='1' ;; \
+	  esac; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man1dir)/$$inst'"; \
+	  $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man1dir)/$$inst"; \
+	done
+uninstall-man1:
+	@$(NORMAL_UNINSTALL)
+	@list='$(man1_MANS) $(dist_man1_MANS) $(nodist_man1_MANS)'; \
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  case "$$ext" in \
+	    1*) ;; \
+	    *) ext='1' ;; \
+	  esac; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f '$(DESTDIR)$(man1dir)/$$inst'"; \
+	  rm -f "$(DESTDIR)$(man1dir)/$$inst"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -518,13 +634,15 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
-all-am: Makefile $(ANSI2KNR) $(PROGRAMS)
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
+all-am: Makefile $(ANSI2KNR) $(PROGRAMS) $(MANS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -548,15 +666,17 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic clean-krextra mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-krextra clean-libtool \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-tags
+	distclean-libtool distclean-tags
 
 dvi: dvi-am
 
@@ -568,13 +688,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-man
 
 install-exec-am: install-binPROGRAMS
 
 install-info: install-info-am
 
-install-man:
+install-man: install-man1
 
 installcheck-am:
 
@@ -585,7 +705,8 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic mostlyclean-kr
+mostlyclean-am: mostlyclean-compile mostlyclean-generic mostlyclean-kr \
+	mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -595,19 +716,34 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am uninstall-man
+
+uninstall-man: uninstall-man1
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic clean-krextra ctags distclean distclean-compile \
-	distclean-generic distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-man install-strip \
+	clean-generic clean-krextra clean-libtool ctags distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-binPROGRAMS install-data \
+	install-data-am install-exec install-exec-am install-info \
+	install-info-am install-man install-man1 install-strip \
 	installcheck installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-kr pdf pdf-am ps ps-am tags \
-	uninstall uninstall-am uninstall-binPROGRAMS uninstall-info-am
+	mostlyclean-generic mostlyclean-kr mostlyclean-libtool pdf \
+	pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am uninstall-man \
+	uninstall-man1
 
+
+$(srcdir)/ntp-keygen-opts.h: $(srcdir)/ntp-keygen-opts.c
+$(srcdir)/ntp-keygen-opts.c: $(srcdir)/ntp-keygen-opts.def $(std_def_list)
+	$(run_ag) ntp-keygen-opts.def
+
+$(srcdir)/ntp-keygen.1: $(srcdir)/ntp-keygen-opts.def $(std_def_list)
+	$(run_ag) -Tagman1.tpl -bntp-keygen ntp-keygen-opts.def
+
+$(srcdir)/ntp-keygen-opts.texi $(srcdir)/ntp-keygen-opts.menu: $(srcdir)/ntp-keygen-opts.def $(std_def_list)
+	$(run_ag) -Taginfo.tpl -DLEVEL=section ntp-keygen-opts.def
 
 ../libntp/libntp.a:
 	cd ../libntp && $(MAKE)

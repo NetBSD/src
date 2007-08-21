@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.3 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.3.4.1 2007/08/21 08:40:04 ghen Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -36,6 +36,8 @@
  * procedure to do cleanup and print a message.
  */
 
+volatile int interface_interval = 300;     /* update interface every 5 minutes as default */
+	  
 /*
  * Alarm flag.	The mainline code imports this.
  */
@@ -48,6 +50,7 @@ static	u_long adjust_timer;		/* second timer */
 static	u_long keys_timer;		/* minute timer */
 static	u_long stats_timer;		/* stats timer */
 static	u_long huffpuff_timer;		/* huff-n'-puff timer */
+static  u_long interface_timer;	        /* interface update timer */
 #ifdef OPENSSL
 static	u_long revoke_timer;		/* keys revoke timer */
 u_char	sys_revoke = KEY_REVOKE;	/* keys revoke timeout (log2 s) */
@@ -140,7 +143,7 @@ void
 init_timer(void)
 {
 # if defined SYS_WINNT & !defined(SYS_CYGWIN32)
-	HANDLE hToken;
+	HANDLE hToken = INVALID_HANDLE_VALUE;
 	TOKEN_PRIVILEGES tkp;
 # endif /* SYS_WINNT */
 
@@ -152,6 +155,7 @@ init_timer(void)
 	adjust_timer = 1;
 	stats_timer = 0;
 	huffpuff_timer = 0;
+	interface_timer = 0;
 	current_time = 0;
 	timer_overflows = 0;
 	timer_xmtcalls = 0;
@@ -338,6 +342,18 @@ timer(void)
 #endif /* OPENSSL */
 
 	/*
+	 * interface update timer
+	 */
+	if (interface_interval && interface_timer <= current_time) {
+		timer_interfacetimeout(current_time + interface_interval);
+#ifdef DEBUG
+	  if (debug)
+	    printf("timer: interface update\n");
+#endif
+	  interface_update(NULL, NULL);
+	}
+	
+	/*
 	 * Finally, periodically write stats.
 	 */
 	if (stats_timer <= current_time) {
@@ -374,6 +390,12 @@ alarming(
 #endif /* VMS */
 }
 #endif /* SYS_WINNT */
+
+void
+timer_interfacetimeout(u_long timeout)
+{
+	interface_timer = timeout;
+}
 
 
 /*

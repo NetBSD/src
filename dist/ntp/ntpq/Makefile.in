@@ -43,7 +43,8 @@ subdir = ntpq
 DIST_COMMON = README $(noinst_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/define_dir.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/libopts/m4/libopts.m4 \
+	$(top_srcdir)/m4/define_dir.m4 \
 	$(top_srcdir)/m4/hs_ulong_const.m4 \
 	$(top_srcdir)/m4/os_cflags.m4 $(top_srcdir)/version.m4 \
 	$(top_srcdir)/configure.ac
@@ -52,21 +53,30 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
-am_ntpq_OBJECTS = ntpq$U.$(OBJEXT) ntpq_ops$U.$(OBJEXT)
+am_ntpq_OBJECTS = ntpq$U.$(OBJEXT) ntpq-subs$U.$(OBJEXT) \
+	ntpq-opts$U.$(OBJEXT)
 ntpq_OBJECTS = $(am_ntpq_OBJECTS)
-ntpq_DEPENDENCIES = version.o ../libntp/libntp.a
+am__DEPENDENCIES_1 =
+ntpq_DEPENDENCIES = version.o $(am__DEPENDENCIES_1) ../libntp/libntp.a
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(ntpq_SOURCES)
 DIST_SOURCES = $(ntpq_SOURCES)
+man1dir = $(mandir)/man1
+NROFF = nroff
+MANS = $(man_MANS)
 HEADERS = $(noinst_HEADERS)
 ETAGS = etags
 CTAGS = ctags
@@ -75,6 +85,7 @@ ACLOCAL = @ACLOCAL@
 AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
+AR = @AR@
 ARLIB_DIR = @ARLIB_DIR@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
@@ -88,10 +99,15 @@ CHUTEST = @CHUTEST@
 CLKTEST = @CLKTEST@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DCFD = @DCFD@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
 ECHO_T = @ECHO_T@
@@ -99,15 +115,23 @@ EF_LIBS = @EF_LIBS@
 EF_PROGS = @EF_PROGS@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
+F77 = @F77@
+FFLAGS = @FFLAGS@
 INSTALL_DATA = @INSTALL_DATA@
+INSTALL_LIBOPTS_FALSE = @INSTALL_LIBOPTS_FALSE@
+INSTALL_LIBOPTS_TRUE = @INSTALL_LIBOPTS_TRUE@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LCRYPTO = @LCRYPTO@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
+LIBOPTS_CFLAGS = @LIBOPTS_CFLAGS@
+LIBOPTS_DIR = @LIBOPTS_DIR@
+LIBOPTS_LDADD = @LIBOPTS_LDADD@
 LIBPARSE = @LIBPARSE@
 LIBS = @LIBS@
+LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
@@ -120,9 +144,10 @@ MAKE_LIBPARSE_KERNEL = @MAKE_LIBPARSE_KERNEL@
 MAKE_NTPDSIM = @MAKE_NTPDSIM@
 MAKE_NTPTIME = @MAKE_NTPTIME@
 MAKE_PARSEKMODULE = @MAKE_PARSEKMODULE@
-MAKE_SNTP = @MAKE_SNTP@
 MAKE_TICKADJ = @MAKE_TICKADJ@
 MAKE_TIMETRIM = @MAKE_TIMETRIM@
+NEED_LIBOPTS_FALSE = @NEED_LIBOPTS_FALSE@
+NEED_LIBOPTS_TRUE = @NEED_LIBOPTS_TRUE@
 OBJEXT = @OBJEXT@
 OPENSSL = @OPENSSL@
 OPENSSL_INC = @OPENSSL_INC@
@@ -145,11 +170,16 @@ STRIP = @STRIP@
 TESTDCF = @TESTDCF@
 U = @U@
 VERSION = @VERSION@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
+ac_ct_F77 = @ac_ct_F77@
 ac_ct_RANLIB = @ac_ct_RANLIB@
 ac_ct_STRIP = @ac_ct_STRIP@
 am__fastdepCC_FALSE = @am__fastdepCC_FALSE@
 am__fastdepCC_TRUE = @am__fastdepCC_TRUE@
+am__fastdepCXX_FALSE = @am__fastdepCXX_FALSE@
+am__fastdepCXX_TRUE = @am__fastdepCXX_TRUE@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
 am__quote = @am__quote@
@@ -185,18 +215,29 @@ subdirs = @subdirs@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AUTOMAKE_OPTIONS = ../util/ansi2knr
-AM_CPPFLAGS = -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include $(LIBOPTS_CFLAGS)
 
 # LDADD might need RESLIB and ADJLIB
-ntpq_LDADD = version.o ../libntp/libntp.a @READLINE_LIBS@
+ntpq_LDADD = version.o @READLINE_LIBS@ $(LIBOPTS_LDADD) ../libntp/libntp.a
 DISTCLEANFILES = .version version.c
 noinst_HEADERS = ntpq.h
 ETAGS_ARGS = Makefile.am
-ntpq_SOURCES = ntpq.c ntpq_ops.c
-all: all-am
+EXTRA_DIST = ntpq-opts.def ntpq.1 ntpq-opts.texi ntpq-opts.menu
+BUILT_SOURCES = ntpq-opts.c ntpq-opts.h ntpq.1 ntpq-opts.texi ntpq-opts.menu
+man_MANS = ntpq.1
+run_ag = cd $(srcdir) && autogen -L ../include
+std_def_list = $(top_srcdir)/include/debug-opt.def		\
+		$(top_srcdir)/include/autogen-version.def 	\
+		$(top_srcdir)/include/copyright.def 		\
+		$(top_srcdir)/include/homerc.def 		\
+		$(top_srcdir)/include/version.def
+
+ntpq_SOURCES = ntpq.c ntpq-subs.c ntpq-opts.c ntpq-opts.h
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .c .o .obj
+.SUFFIXES: .c .lo .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -206,9 +247,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu  ntpq/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  ntpq/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  ntpq/Makefile
+	  $(AUTOMAKE) --foreign  ntpq/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -232,10 +273,11 @@ install-binPROGRAMS: $(bin_PROGRAMS)
 	@list='$(bin_PROGRAMS)'; for p in $$list; do \
 	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
 	  if test -f $$p \
+	     || test -f $$p1 \
 	  ; then \
 	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
-	   echo " $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
-	   $(INSTALL_PROGRAM_ENV) $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
+	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) '$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(binPROGRAMS_INSTALL) "$$p" "$(DESTDIR)$(bindir)/$$f" || exit 1; \
 	  else :; fi; \
 	done
 
@@ -248,7 +290,11 @@ uninstall-binPROGRAMS:
 	done
 
 clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  echo " rm -f $$p $$f"; \
+	  rm -f $$p $$f ; \
+	done
 ntpq$(EXEEXT): $(ntpq_OBJECTS) $(ntpq_DEPENDENCIES) 
 	@rm -f ntpq$(EXEEXT)
 	$(LINK) $(ntpq_LDFLAGS) $(ntpq_OBJECTS) $(ntpq_LDADD) $(LIBS)
@@ -265,7 +311,8 @@ mostlyclean-kr:
 	-test "$U" = "" || rm -f *_.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpq$U.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpq_ops$U.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpq-opts$U.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ntpq-subs$U.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -280,12 +327,76 @@ mostlyclean-kr:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(COMPILE) -c `$(CYGPATH_W) '$<'`
+
+.c.lo:
+@am__fastdepCC_TRUE@	if $(LTCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
+@am__fastdepCC_TRUE@	then mv -f "$(DEPDIR)/$*.Tpo" "$(DEPDIR)/$*.Plo"; else rm -f "$(DEPDIR)/$*.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 ntpq_.c: ntpq.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntpq.c; then echo $(srcdir)/ntpq.c; else echo ntpq.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
-ntpq_ops_.c: ntpq_ops.c $(ANSI2KNR)
-	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntpq_ops.c; then echo $(srcdir)/ntpq_ops.c; else echo ntpq_ops.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
-ntpq_.$(OBJEXT) ntpq_ops_.$(OBJEXT) : $(ANSI2KNR)
+ntpq-opts_.c: ntpq-opts.c $(ANSI2KNR)
+	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntpq-opts.c; then echo $(srcdir)/ntpq-opts.c; else echo ntpq-opts.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
+ntpq-subs_.c: ntpq-subs.c $(ANSI2KNR)
+	$(CPP) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntpq-subs.c; then echo $(srcdir)/ntpq-subs.c; else echo ntpq-subs.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > $@ || rm -f $@
+ntpq_.$(OBJEXT) ntpq_.lo ntpq-opts_.$(OBJEXT) ntpq-opts_.lo \
+ntpq-subs_.$(OBJEXT) ntpq-subs_.lo : $(ANSI2KNR)
+
+mostlyclean-libtool:
+	-rm -f *.lo
+
+clean-libtool:
+	-rm -rf .libs _libs
+
+distclean-libtool:
+	-rm -f libtool
 uninstall-info-am:
+install-man1: $(man1_MANS) $(man_MANS)
+	@$(NORMAL_INSTALL)
+	test -z "$(man1dir)" || $(mkdir_p) "$(DESTDIR)$(man1dir)"
+	@list='$(man1_MANS) $(dist_man1_MANS) $(nodist_man1_MANS)'; \
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  case "$$ext" in \
+	    1*) ;; \
+	    *) ext='1' ;; \
+	  esac; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man1dir)/$$inst'"; \
+	  $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man1dir)/$$inst"; \
+	done
+uninstall-man1:
+	@$(NORMAL_UNINSTALL)
+	@list='$(man1_MANS) $(dist_man1_MANS) $(nodist_man1_MANS)'; \
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
+	  case "$$i" in \
+	    *.1*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  case "$$ext" in \
+	    1*) ;; \
+	    *) ext='1' ;; \
+	  esac; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f '$(DESTDIR)$(man1dir)/$$inst'"; \
+	  rm -f "$(DESTDIR)$(man1dir)/$$inst"; \
+	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -363,13 +474,15 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
-all-am: Makefile $(PROGRAMS) $(HEADERS)
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
+all-am: Makefile $(PROGRAMS) $(MANS) $(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -394,15 +507,16 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
-clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
+clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
-	distclean-tags
+	distclean-libtool distclean-tags
 
 dvi: dvi-am
 
@@ -414,13 +528,13 @@ info: info-am
 
 info-am:
 
-install-data-am:
+install-data-am: install-man
 
 install-exec-am: install-binPROGRAMS
 
 install-info: install-info-am
 
-install-man:
+install-man: install-man1
 
 installcheck-am:
 
@@ -431,7 +545,8 @@ maintainer-clean-am: distclean-am maintainer-clean-generic
 
 mostlyclean: mostlyclean-am
 
-mostlyclean-am: mostlyclean-compile mostlyclean-generic mostlyclean-kr
+mostlyclean-am: mostlyclean-compile mostlyclean-generic mostlyclean-kr \
+	mostlyclean-libtool
 
 pdf: pdf-am
 
@@ -441,24 +556,41 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am uninstall-man
+
+uninstall-man: uninstall-man1
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic ctags distclean distclean-compile \
-	distclean-generic distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-exec install-exec-am \
-	install-info install-info-am install-man install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-kr pdf pdf-am ps ps-am tags \
-	uninstall uninstall-am uninstall-binPROGRAMS uninstall-info-am
+	clean-generic clean-libtool ctags distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-exec \
+	install-exec-am install-info install-info-am install-man \
+	install-man1 install-strip installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-kr mostlyclean-libtool pdf pdf-am ps ps-am tags \
+	uninstall uninstall-am uninstall-binPROGRAMS uninstall-info-am \
+	uninstall-man uninstall-man1
 
+
+$(srcdir)/ntpq-opts.h: $(srcdir)/ntpq-opts.c
+$(srcdir)/ntpq-opts.c: $(srcdir)/ntpq-opts.def $(std_def_list)
+	$(run_ag) ntpq-opts.def
+
+$(srcdir)/ntpq.1: $(srcdir)/ntpq-opts.def $(std_def_list)
+	$(run_ag) -Tagman1.tpl -bntpq ntpq-opts.def
+
+$(srcdir)/ntpq-opts.texi $(srcdir)/ntpq-opts.menu: $(srcdir)/ntpq-opts.def $(std_def_list)
+	$(run_ag) -Taginfo.tpl -DLEVEL=section ntpq-opts.def
 
 $(PROGRAMS): $(LDADD)
 
 ../libntp/libntp.a:
 	cd ../libntp && $(MAKE)
+
+$(top_srcdir)/version :
+	cd $(top_srcdir) && $(MAKE) version
 
 version.o: $(ntpq_OBJECTS) ../libntp/libntp.a Makefile $(top_srcdir)/version
 	env CSET=`cat $(top_srcdir)/version` $(top_builddir)/scripts/mkver ntpq

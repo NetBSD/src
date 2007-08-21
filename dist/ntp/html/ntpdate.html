@@ -11,7 +11,6 @@
 
 	<body>
 		<h3><tt>ntpdate</tt> - set the date and time via NTP</h3>
-		<img src="pic/rabbit.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Alice's Adventures in Wonderland</i>, Lewis Carroll</a>
 		<p>I told you it was eyeball and wristwatch.</p>
 		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">18:44</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="246">Thursday, July 28, 2005</csobj></p>
 		<br clear="left">
@@ -59,6 +58,8 @@
 			<dt><tt>-<i>v</i></tt>
 			<dd>Be verbose. This option will cause <tt>ntpdate</tt>'s version identification string to be logged.
 		</dl>
+		<h4>Diagnostics</h4>
+		<tt>ntpdate</tt>'s exit status is zero if it finds a server and updates the clock, and nonzero otherwise.
 		<h4>Files</h4>
 		<tt>/etc/ntp.keys</tt> - encryption keys used by <tt>ntpdate</tt>.
 		<h4>Bugs</h4>

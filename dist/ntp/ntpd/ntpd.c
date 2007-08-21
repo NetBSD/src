@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.10 2006/11/14 02:41:40 dogcow Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.10.2.1 2007/08/21 08:40:06 ghen Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -15,7 +15,10 @@
 #include <ntp_random.h>
 
 #ifdef SIM
-#include "ntpsim.h"
+# include "ntpsim.h"
+# include "ntpdsim-opts.h"
+#else
+# include "ntpd-opts.h"
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -147,20 +150,20 @@ int priority_done = 2;		/* 0 - Set priority */
 				/* 2 - Don't set priority */
 				/* 1 and 2 are pretty much the same */
 
+#ifdef DEBUG
 /*
  * Debugging flag
  */
-volatile int debug;
+volatile int debug = 0;		/* No debugging by default */
+#endif
 
-/*
- * Set the processing not to be in the forground
- */
-int forground_process = FALSE;
+int	listen_to_virtual_ips = 1;
+const char *specific_interface = NULL;        /* interface name or IP address to bind to */
 
 /*
  * No-fork flag.  If set, we do not become a background daemon.
  */
-int nofork;
+int nofork = 0;			/* Fork by default */
 
 #ifdef HAVE_DROPROOT
 int droproot = 0;
@@ -184,6 +187,8 @@ int initializing;
  * Version declaration
  */
 extern const char *Version;
+
+char const *progname;
 
 int was_alarmed;
 
@@ -210,15 +215,16 @@ static	RETSIGTYPE	no_debug	P((int));
 
 int 		ntpdmain		P((int, char **));
 static void	set_process_priority	P((void));
-static void init_logging P((char *));
+static void	init_logging		P((char const *));
+static void	setup_logfile		P((void));
 
 /*
  * Initialize the logging
  */
 void
-init_logging(char *name)
+init_logging(char const *name)
 {
-	char *cp;
+	const char *cp;
 
 	/*
 	 * Logging.  This may actually work on the gizmo board.  Find a name
@@ -251,6 +257,43 @@ init_logging(char *name)
 
 	NLOG(NLOG_SYSINFO) /* conditional if clause for conditional syslog */
 		msyslog(LOG_NOTICE, "%s", Version);
+}
+
+
+/*
+ * See if we should redirect the logfile
+ */
+
+void
+setup_logfile(
+	void
+	)
+{
+	if (HAVE_OPT( LOGFILE )) {
+		const char *my_optarg = OPT_ARG( LOGFILE );
+		FILE *new_file;
+
+		if(strcmp(my_optarg, "stderr") == 0)
+			new_file = stderr;
+		else if(strcmp(my_optarg, "stdout") == 0)
+			new_file = stdout;
+		else
+			new_file = fopen(my_optarg, "a");
+		if (new_file != NULL) {
+			NLOG(NLOG_SYSINFO)
+				msyslog(LOG_NOTICE, "logging to file %s", my_optarg);
+			if (syslog_file != NULL &&
+				fileno(syslog_file) != fileno(new_file))
+				(void)fclose(syslog_file);
+
+			syslog_file = new_file;
+			syslogit = 0;
+		}
+		else
+			msyslog(LOG_ERR,
+				"Cannot open log file %s",
+				my_optarg);
+	}
 }
 
 #ifdef SIM
@@ -419,11 +462,25 @@ ntpdmain(
 	struct sigaction sa;
 #endif
 
-	initializing = 1;		/* mark that we are initializing */
-	debug = 0;			/* no debugging by default */
-	nofork = 0;			/* will fork by default */
+	progname = argv[0];
 
-	init_logging(argv[0]);		/* Open the log file */
+	initializing = 1;		/* mark that we are initializing */
+
+	{
+		int optct = optionProcess(
+#ifdef SIM
+					  &ntpdsimOptions
+#else
+					  &ntpdOptions
+#endif
+					  , argc, argv);
+		argc -= optct;
+		argv += optct;
+	}
+
+	/* HMS: is this lame? Should we process -l first? */
+
+	init_logging(progname);		/* Open the log file */
 
 #ifdef HAVE_UMASK
 	{
@@ -445,6 +502,7 @@ ntpdmain(
 		if (uid)
 		{
 			msyslog(LOG_ERR, "ntpd: must be run as root, not uid %ld", (long)uid);
+			printf("must be run as root, not uid %ld", (long)uid);
 			exit(1);
 		}
 	}
@@ -459,28 +517,74 @@ ntpdmain(
 	}
 #endif
 
+	/* getstartup(argc, argv); / * startup configuration, may set debug */
+
+#ifdef DEBUG
+	debug = DESC(DEBUG_LEVEL).optOccCt;
+	if (debug)
+	    printf("%s\n", Version);
+#endif
+
+/*
+ * Enable the Multi-Media Timer for Windows?
+ */
+#ifdef SYS_WINNT
+	if (HAVE_OPT( MODIFYMMTIMER ))
+		set_mm_timer(MM_TIMER_HIRES);
+#endif
+
+	if (HAVE_OPT( NOFORK ) || HAVE_OPT( QUIT ))
+		nofork = 1;
+
+	if (HAVE_OPT( NOVIRTUALIPS ))
+		listen_to_virtual_ips = 0;
+
+	if (HAVE_OPT( INTERFACE )) {
+#if 0
+		int	ifacect = STACKCT_OPT( INTERFACE );
+		char**	ifaces  = STACKLST_OPT( INTERFACE );
+
+		/* malloc space for the array of names */
+		while (ifacect-- > 0) {
+			next_iface = *ifaces++;
+		}
+#else
+		specific_interface = OPT_ARG( INTERFACE );
+#endif
+	}
+
+	if (HAVE_OPT( NICE ))
+		priority_done = 0;
+
+#if defined(HAVE_SCHED_SETSCHEDULER)
+	if (HAVE_OPT( PRIORITY )) {
+		config_priority = OPT_VALUE_PRIORITY;
+		config_priority_override = 1;
+		priority_done = 0;
+	}
+#endif
+
 #ifdef SYS_WINNT
 	/*
 	 * Initialize the time structures and variables
 	 */
 	init_winnt_time();
-
 #endif
-	getstartup(argc, argv); /* startup configuration, may set debug */
 
-	if (debug)
-	    printf("%s\n", Version);
+	setup_logfile();
 
 	/*
 	 * Initialize random generator and public key pair
 	 */
 	get_systime(&now);
+
 	ntp_srandom((int)(now.l_i * now.l_uf));
 
 #ifdef HAVE_DNSREGISTRATION
-	msyslog(LOG_INFO, "Attemping to register mDNS\n");
+	/* HMS: does this have to happen this early? */
+	msyslog(LOG_INFO, "Attemping to register mDNS");
 	if ( DNSServiceRegister (&mdns, 0, 0, NULL, "_ntp._udp", NULL, NULL, htons(NTP_PORT), 0, NULL, NULL, NULL) != kDNSServiceErr_NoError ) {
-		msyslog(LOG_ERR, "Unable to register mDNS\n");
+		msyslog(LOG_ERR, "Unable to register mDNS");
 	}
 #endif
 
@@ -489,11 +593,11 @@ ntpdmain(
 	/*
 	 * Detach us from the terminal.  May need an #ifndef GIZMO.
 	 */
+	if (
 #  ifdef DEBUG
-	if (!debug && !nofork)
-#  else /* DEBUG */
-	if (!nofork)
+	    !debug &&
 #  endif /* DEBUG */
+	    !nofork)
 	{
 #  ifndef SYS_WINNT
 #   ifdef HAVE_DAEMON
@@ -580,8 +684,7 @@ ntpdmain(
 # endif /* NODETACH */
 #endif /* VMS */
 
-	debug = 0; /* will be immediately re-initialized 8-( */
-	getstartup(argc, argv); /* startup configuration, catch logfile this time */
+	setup_logfile();	/* We lost any redirect when we daemonized */
 
 #ifdef SCO5_CLOCK
 	/*
@@ -594,7 +697,7 @@ ntpdmain(
 	    if (fd >= 0) {
 		int zero = 0;
 		if (ioctl(fd, ACPU_LOCK, &zero) < 0)
-		    msyslog(LOG_ERR, "cannot lock to base CPU: %m\n");
+		    msyslog(LOG_ERR, "cannot lock to base CPU: %m");
 		close( fd );
 	    } /* else ...
 	       *   If we can't open the device, this probably just isn't
@@ -612,6 +715,7 @@ ntpdmain(
 	{
 	    struct rlimit rl;
 
+	    /* HMS: must make the rlim_cur amount configurable */
 	    if (getrlimit(RLIMIT_STACK, &rl) != -1
 		&& (rl.rlim_cur = 50 * 4096) < rl.rlim_max)
 	    {
@@ -646,7 +750,7 @@ ntpdmain(
 #   ifdef _AIX
 	/* 
 	 * set the stack limit for AIX for plock().
-	 * see get_aix_stack for more info.
+	 * see get_aix_stack() for more info.
 	 */
 	if (ulimit(SET_STACKLIM, (get_aix_stack() - 8*4096)) < 0)
 	{
@@ -711,6 +815,8 @@ ntpdmain(
 
 	/*
 	 * Call the init_ routines to initialize the data structures.
+	 *
+	 * Exactly what command-line options are we expecting here?
 	 */
 	init_auth();
 	init_util();
@@ -735,21 +841,17 @@ ntpdmain(
 				/* turn off in config if unwanted */
 
 	/*
-	 * Get configuration.  This (including argument list parsing) is
-	 * done in a separate module since this will definitely be different
-	 * for the gizmo board. While at it, save the host name for later
-	 * along with the length. The crypto needs this.
+	 * Get the configuration.  This is done in a separate module
+	 * since this will definitely be different for the gizmo board.
 	 */
-#ifdef DEBUG
-	debug = 0;
-#endif
+
 	getconfig(argc, argv);
+
 	loop_config(LOOP_DRIFTCOMP, old_drift / 1e6);
 #ifdef OPENSSL
 	crypto_setup();
 #endif /* OPENSSL */
 	initializing = 0;
-
 
 #ifdef HAVE_DROPROOT
 	if( droproot ) {
@@ -830,13 +932,32 @@ getgroup:
 			exit (-1);
 		}
 	
+#ifndef HAVE_LINUX_CAPABILITIES
+		/*
+		 * for now assume that the privilege to bind to privileged ports
+		 * is associated with running with uid 0 - should be refined on
+		 * ports that allow binding to NTP_PORT with uid != 0
+		 */
+		disable_dynamic_updates |= (sw_uid != 0);  /* also notifies routing message listener */
+#endif
+
+		if (disable_dynamic_updates && interface_interval) {
+			interface_interval = 0;
+			msyslog(LOG_INFO, "running in unprivileged mode disables dynamic interface tracking");
+		}
+
 #ifdef HAVE_LINUX_CAPABILITIES
 		do {
-			/*  We may be running under non-root uid now, but we still hold full root privileges!
-			 *  We drop all of them, except for the crucial one: cap_sys_time:
+			/*
+			 *  We may be running under non-root uid now, but we still hold full root privileges!
+			 *  We drop all of them, except for the crucial one or two: cap_sys_time and
+			 *  cap_net_bind_service if doing dynamic interface tracking.
 			 */
 			cap_t caps;
-			if( ! ( caps = cap_from_text( "cap_sys_time=ipe" ) ) ) {
+			char *captext = interface_interval ?
+			       	"cap_sys_time,cap_net_bind_service=ipe" :
+			       	"cap_sys_time=ipe";
+			if( ! ( caps = cap_from_text( captext ) ) ) {
 				msyslog( LOG_ERR, "cap_from_text() failed: %m" );
 				exit(-1);
 			}
@@ -877,9 +998,7 @@ getgroup:
 		int tot_full_recvbufs = GetReceivedBuffers();
 #else /* normal I/O */
 
-#if defined(HAVE_SIGNALED_IO)
-	block_io_and_alarm();
-# endif
+	BLOCK_IO_AND_ALARM();
 	was_alarmed = 0;
 	for (;;)
 	{
@@ -944,53 +1063,71 @@ getgroup:
 
 		if (was_alarmed)
 		{
-# ifdef HAVE_SIGNALED_IO
-			unblock_io_and_alarm();
-# endif /* HAVE_SIGNALED_IO */
+			UNBLOCK_IO_AND_ALARM();
 			/*
 			 * Out here, signals are unblocked.  Call timer routine
 			 * to process expiry.
 			 */
 			timer();
 			was_alarmed = 0;
-# ifdef HAVE_SIGNALED_IO
-                        block_io_and_alarm();
-# endif /* HAVE_SIGNALED_IO */
+                        BLOCK_IO_AND_ALARM();
 		}
 
 #endif /* HAVE_IO_COMPLETION_PORT */
 
-		rbuf = get_full_recv_buffer();
-		while (rbuf != NULL)
+#ifdef DEBUG_TIMING
 		{
-# ifdef HAVE_SIGNALED_IO
-			unblock_io_and_alarm();
-# endif /* HAVE_SIGNALED_IO */
-			/*
-			 * Call the data procedure to handle each received
-			 * packet.
-			 */
-			if (rbuf->receiver != NULL)	/* This should always be true */
-			{
-				(rbuf->receiver)(rbuf);
-			} else {
-				 msyslog(LOG_ERR, "receive buffer corruption - receiver found to be NULL - ABORTING");
-				 abort();
-			}
-# ifdef HAVE_SIGNALED_IO
-                        block_io_and_alarm();
-# endif /* HAVE_SIGNALED_IO */
-			freerecvbuf(rbuf);
+			l_fp pts;
+			l_fp tsa, tsb;
+			int bufcount = 0;
+			
+			get_systime(&pts);
+			tsa = pts;
+#endif
 			rbuf = get_full_recv_buffer();
+			while (rbuf != NULL)
+			{
+				UNBLOCK_IO_AND_ALARM();
+
+				/*
+				 * Call the data procedure to handle each received
+				 * packet.
+				 */
+				if (rbuf->receiver != NULL)	/* This should always be true */
+				{
+#ifdef DEBUG_TIMING
+					l_fp dts = pts;
+
+					L_SUB(&dts, &rbuf->recv_time);
+					DPRINTF(2, ("processing timestamp delta %s (with prec. fuzz)\n", lfptoa(&dts, 9)));
+					collect_timing(rbuf, "buffer processing delay", 1, &dts);
+					bufcount++;
+#endif
+					(rbuf->receiver)(rbuf);
+				} else {
+					msyslog(LOG_ERR, "receive buffer corruption - receiver found to be NULL - ABORTING");
+					abort();
+				}
+
+				BLOCK_IO_AND_ALARM();
+				freerecvbuf(rbuf);
+				rbuf = get_full_recv_buffer();
+			}
+#ifdef DEBUG_TIMING
+			get_systime(&tsb);
+			L_SUB(&tsb, &tsa);
+			if (bufcount) {
+				collect_timing(NULL, "processing", bufcount, &tsb);
+				DPRINTF(2, ("processing time for %d buffers %s\n", bufcount, lfptoa(&tsb, 9)));
+			}
 		}
+#endif
 
 		/*
 		 * Go around again
 		 */
 	}
-# ifdef HAVE_SIGNALED_IO
-	unblock_io_and_alarm();
-# endif /* HAVE_SIGNALED_IO */
+	UNBLOCK_IO_AND_ALARM();
 	return 1;
 }
 
@@ -1067,7 +1204,8 @@ lessdebug(
 }
 #endif
 #else /* not DEBUG */
-#ifndef SYS_WINNT/*
+#ifndef SYS_WINNT
+/*
  * no_debug - We don't do the debug here.
  */
 static RETSIGTYPE

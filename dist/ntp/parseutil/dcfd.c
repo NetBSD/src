@@ -1,4 +1,4 @@
-/*	$NetBSD: dcfd.c,v 1.3 2006/06/11 19:34:21 kardel Exp $	*/
+/*	$NetBSD: dcfd.c,v 1.3.4.1 2007/08/21 08:40:22 ghen Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/parseutil/dcfd.c,v 4.18 2005/10/07 22:08:18 kardel RELEASE_20051008_A
@@ -1610,10 +1610,10 @@ main(
 		{
 			struct sigaction act;
 
-			act.sa_handler   = tick;
 # ifdef HAVE_SA_SIGACTION_IN_STRUCT_SIGACTION
 			act.sa_sigaction = (void (*) P((int, siginfo_t *, void *)))0;
 # endif /* HAVE_SA_SIGACTION_IN_STRUCT_SIGACTION */
+			act.sa_handler   = tick;
 			sigemptyset(&act.sa_mask);
 			act.sa_flags     = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.4 2006/06/11 19:34:09 kardel Exp $	*/
+/*	$NetBSD: ntp.h,v 1.4.4.1 2007/08/21 08:39:39 ghen Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -14,6 +14,7 @@
 #include <ntp_random.h>
 
 #include <isc/boolean.h>
+#include <isc/list.h>
 
 /*
  * Calendar arithmetic - contributed by G. Healton
@@ -146,7 +147,6 @@ typedef char s_char;
 #define	MAXFILENAME	128	/* max length of file name */
 #define MAXHOSTNAME	512	/* max length of host/node name */
 #define NTP_MAXSTRLEN	256	/* max string length */
-#define MAXINTERFACES	512	/* max number of interfaces */
 
 /*
  * Operations for jitter calculations (these use doubles).
@@ -185,25 +185,32 @@ struct interface {
 	int last_ttl;			/* last TTL specified */
 	u_int32 addr_refid;		/* IPv4 addr or IPv6 hash */
 	int num_mcast;			/* No. of IP addresses in multicast socket */
+	u_long starttime;	        /* current_time as of creation of interface structure */
 	volatile long received;		/* number of incoming packets */
 	long sent;			/* number of outgoing packets */
 	long notsent;			/* number of send failures */
-	u_int ifindex;			/* Interface index */
 	u_int scopeid;			/* Scope used for Multicasting */
+	u_int ifindex;			/* interface index */
+	u_int ifnum;		        /* sequential interface instance count */
+        u_char phase;		        /* phase in update cycle */
 	isc_boolean_t ignore_packets;	/* Specify whether the packet should be ignored */
+        ISC_LIST(struct peer) peers;    /* list of peers for the interface */
+        u_int peercnt;		        /* number of peers referencinf this interface - informational only */
+        ISC_LINK(struct interface) link;     /* interface list */
 };
 
 /*
  * Flags for interfaces
  */
-#define INT_UP		 1	/* Interface is up */
-#define	INT_PPP		 2	/* Point-to-point interface */
-#define	INT_LOOPBACK	 4	/* the loopback interface */
-#define	INT_BROADCAST	 8	/* can broadcast out this interface */
-#define INT_MULTICAST	16	/* can multicast out this interface */
-#define	INT_BCASTOPEN	32	/* broadcast socket is open */
-#define INT_MCASTOPEN	64	/* multicasting enabled */
-
+#define INT_UP		0x001	/* Interface is up */
+#define	INT_PPP		0x002	/* Point-to-point interface */
+#define	INT_LOOPBACK	0x004	/* the loopback interface */
+#define	INT_BROADCAST	0x008	/* can broadcast out this interface */
+#define INT_MULTICAST	0x010	/* can multicast out this interface */
+#define	INT_BCASTOPEN	0x020	/* broadcast socket is open */
+#define INT_MCASTOPEN	0x040	/* multicasting enabled */
+#define INT_WILDCARD    0x080   /* wildcard interface - usually skipped */
+#define INT_MCASTIF     0x100	/* bound directly to MCAST address */
 /*
  * Define flasher bits (tests 1 through 11 in packet procedure)
  * These reveal the state at the last grumble from the peer and are
@@ -250,6 +257,7 @@ struct peer {
 	struct peer *ass_next;	/* link pointer in associd hash */
 	struct sockaddr_storage srcadr; /* address of remote host */
 	struct interface *dstadr; /* pointer to address on local host */
+        ISC_LINK(struct peer) ilink; /* interface link list */
 	associd_t associd;	/* association ID */
 	u_char	version;	/* version number */
 	u_char	hmode;		/* local association mode */
@@ -427,6 +435,7 @@ struct peer {
 #define FLAG_FIXPOLL	0x1000	/* stick at minpoll */
 #define FLAG_TRUE	0x2000	/* select truechimer */
 #define	FLAG_PREEMPT	0x4000	/* preemptable association */
+#define	FLAG_DYNAMIC	0x8000	/* dynamic addresses - allow configuration even if no interface is found */
 
 /*
  * Definitions for the clear() routine.  We use memset() to clear
@@ -872,6 +881,7 @@ struct restrictlist6 {
 #define	RESTRICT_FLAGS		1	/* add flags to restrict entry */
 #define	RESTRICT_UNFLAG		2	/* remove flags from restrict entry */
 #define	RESTRICT_REMOVE		3	/* remove a restrict entry */
+#define	RESTRICT_REMOVEIF       4	/* remove an interface restrict entry */
 
 /*
  * Endpoint structure for the select algorithm

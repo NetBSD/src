@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.h,v 1.3 2006/06/11 19:34:09 kardel Exp $	*/
+/*	$NetBSD: ntp_request.h,v 1.3.4.1 2007/08/21 08:39:40 ghen Exp $	*/
 
 /*
  * ntp_request.h - definitions for the ntpd remote query facility
@@ -112,6 +112,15 @@
  * or other data in the request packet padding.  The key used for requests
  * is implementation defined, but key 15 is suggested as a default.
  */
+
+/*
+ * union of raw addresses to save space
+ */
+union addrun
+{
+	struct in6_addr addr6;
+	struct in_addr  addr;
+};
 
 /*
  * A request packet.  These are almost a fixed length.
@@ -277,6 +286,8 @@ struct resp_pkt {
 #define	REQ_SET_PRECISION	41	/* (not used) */
 #define	REQ_MON_GETLIST_1	42	/* return collected v1 monitor data */
 #define	REQ_HOSTNAME_ASSOCID	43	/* Here is a hostname + assoc_id */
+#define REQ_IF_STATS		44	/* get interface statistics */
+#define REQ_IF_RELOAD		45	/* reload interface list */
 
 /* Determine size of pre-v6 version of structures */
 #define v4sizeof(type)		offsetof(type, v6_flag)
@@ -591,6 +602,7 @@ struct conf_peer {
 #define CONF_FLAG_IBURST	0x08
 #define CONF_FLAG_NOSELECT	0x10
 #define CONF_FLAG_SKEY		0x20
+#define CONF_FLAG_DYNAMIC	0x40
 
 /*
  * Structure for passing peer deletion information.  Currently
@@ -873,6 +885,36 @@ struct info_kernel {
 	int32 errcnt;
 	int32 stbcnt;
 };
+
+/*
+ * interface statistics
+ */
+struct info_if_stats {
+	union addrun unaddr;            /* address */
+        union addrun unbcast;	        /* broadcast */
+	union addrun unmask;	        /* mask */
+	u_int32 v6_flag;                /* is this v6 */
+	char name[32];			/* name of interface */
+	int32 flags;			/* interface flags */
+	int32 last_ttl;			/* last TTL specified */
+	int32 num_mcast;		/* No. of IP addresses in multicast socket */
+        int32 received;	                /* number of incoming packets */
+	int32 sent;			/* number of outgoing packets */
+	int32 notsent;			/* number of send failures */
+	int32 uptime;		        /* number of seconds this interface was active */
+	u_int32 scopeid;		/* Scope used for Multicasting */
+	u_int32 ifindex;		/* interface index - from system */
+	u_int32 ifnum;		        /* sequential interface number */
+        u_int32 peercnt;		/* number of peers referencinf this interface - informational only */
+	u_short family;			/* Address family */
+	u_char ignore_packets;	        /* Specify whether the packet should be ignored */
+        u_char action;		        /* reason the item is listed */
+	int32 _filler0;		        /* pad to a 64 bit size boundary */
+};
+
+#define IFS_EXISTS	1	/* just exists */
+#define IFS_CREATED	2	/* was just created */
+#define IFS_DELETED	3	/* was just delete */
 
 /*
  * Info returned with IP -> hostname lookup

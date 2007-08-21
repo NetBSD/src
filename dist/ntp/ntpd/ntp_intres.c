@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.6 2006/06/11 19:34:11 kardel Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.6.4.1 2007/08/21 08:40:01 ghen Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -255,7 +255,9 @@ ntp_intres(void)
 	readconf(in, req_file);
 	(void) fclose(in);
 
+#ifdef DEBUG
 	if (!debug )
+#endif
 		(void) unlink(req_file);
 
 	/*
@@ -791,8 +793,10 @@ request(
 		}
 		else if (n == 0)
 		{
+#ifdef DEBUG
 			if (debug)
 			    msyslog(LOG_INFO, "select() returned 0.");
+#endif
 			return 0;
 		}
 
@@ -1061,7 +1065,7 @@ readconf(
 		}
 
 		if ((intval[TOK_FLAGS] & ~(FLAG_AUTHENABLE | FLAG_PREFER |
-		    FLAG_NOSELECT | FLAG_BURST | FLAG_IBURST | FLAG_SKEY))
+		    FLAG_NOSELECT | FLAG_BURST | FLAG_IBURST | FLAG_SKEY | FLAG_DYNAMIC))
 		    != 0) {
 			msyslog(LOG_ERR, "invalid flags (%ld) in file %s",
 				intval[TOK_FLAGS], name);
@@ -1081,6 +1085,8 @@ readconf(
 		    flags |= CONF_FLAG_IBURST;
 		if (intval[TOK_FLAGS] & FLAG_SKEY)
 		    flags |= CONF_FLAG_SKEY;
+		if (intval[TOK_FLAGS] & FLAG_DYNAMIC)
+		    flags |= CONF_FLAG_DYNAMIC;
 
 		/*
 		 * This is as good as we can check it.  Add it in.
