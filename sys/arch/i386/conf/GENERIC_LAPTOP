@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.240 2007/08/20 00:54:42 kiyohara Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.241 2007/08/21 02:48:15 kiyohara Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.240 $"
+#ident 		"GENERIC-$Revision: 1.241 $"
 
 maxusers	32		# estimated number of users
 
@@ -707,9 +707,13 @@ ehci*	at cardbus? function ?		# Enhanced Host Controller
 ohci*	at cardbus? function ?		# Open Host Controller
 uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 
+# PCMCIA USB controllers
+slhci*	at pcmcia? function ?		# ScanLogic SL811HS
+
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
+usb*	at slhci?
 usb*	at uhci?
 
 # USB Hubs
