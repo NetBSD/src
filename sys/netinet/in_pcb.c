@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.118 2007/07/19 20:48:54 dyoung Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.119 2007/08/21 08:34:33 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.118 2007/07/19 20:48:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.119 2007/08/21 08:34:33 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -515,13 +515,9 @@ in_setsockaddr(struct inpcb *inp, struct mbuf *nam)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((void *)sin, sizeof (*sin));
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_port = inp->inp_lport;
-	sin->sin_addr = inp->inp_laddr;
+	sockaddr_in_init(sin, &inp->inp_laddr, inp->inp_lport);
+	nam->m_len = sin->sin_len;
 }
 
 void
@@ -532,13 +528,9 @@ in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((void *)sin, sizeof (*sin));
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_port = inp->inp_fport;
-	sin->sin_addr = inp->inp_faddr;
+	sockaddr_in_init(sin, &inp->inp_faddr, inp->inp_fport);
+	nam->m_len = sin->sin_len;
 }
 
 /*
