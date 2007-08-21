@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.6.1 2007/08/21 23:58:49 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,11 +36,11 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,6 +85,7 @@
 #include <machine/trap.h>
 #include <machine/intr.h>
 #include <machine/psl.h>
+#include <machine/specialreg.h>
 
 #include <net/netisr.h>
 
@@ -371,6 +372,120 @@ IDTVEC(resume_lapic_ltimer)
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
+/*
+ * Multicast TLB shootdown handler for !kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_mcast)
+	/*
+	 * Save state, ack interrupt and count it.  Count locally
+	 * so other CPUs don't have to touch the counter's line.
+	 */
+	testq	$SEL_UPL,8(%esp)
+	jz	0f
+	swapgs
+0:
+	pushq	%rax
+	pushq	%rbx
+	pushq	%rcx
+	pushq	%rdx
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	addl	$1,CPUVAR(TLB_EVCNT)+EV_COUNT
+	adcl	$0,CPUVAR(TLB_EVCNT)+EV_COUNT+4
+	/*
+	 * Find out what we need to invalidate, clear the mailbox
+	 * lock and notify the waiter of completion.  The 'xchgl'
+	 * below provides a load fence.
+	 */
+	movq	CPUVAR(PMAP_CPU),%rcx
+	movq	MB_ADDR1(%rcx), %rax
+	movq	MB_ADDR2(%rcx), %rdx
+	xorq	%rbx, %rbx
+	xchgq	MB_POINTER(%rcx), %rbx
+	lock
+	incq	(%rbx)
+	cmpq	$-1, %rax
+	je	5f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%rax)
+	addq	$PAGE_SIZE, %rax
+	cmpq	%rdx, %rax
+	jb	1b
+3:
+	/* Restore state and return. */
+	popq	%rdx
+	popq	%rcx
+	popq	%rbx
+	popq	%rax
+	testq	$SEL_UPL,8(%esp)
+	jz	4f
+	swapgs
+4:
+	iretq
+5:
+	/* Invalidate all user pages. */
+	movq	%cr3,%rax
+	movq	%rax,%cr3
+	jmp	3b
+
+/*
+ * Broadcast TLB shootdown handler for kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_bcast)
+	/* Save state and ack the interrupt. */
+	pushq	%rax
+	pushq	%rbx
+	pushq	%rdx
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
+	/*
+	 * Find out what we need to invalidate and notify the waiter
+	 * of completion.  If this is the last CPU to process the 
+	 * IPI, the mailbox becomes unlocked.  The 'lock' prefix below
+	 * provides a load fence.
+	 */
+	movq	_C_LABEL(pmap_mbox)+MB_ADDR1, %rax
+	movq	_C_LABEL(pmap_mbox)+MB_ADDR2, %rdx
+	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rbx
+	lock
+	incq	_C_LABEL(pmap_mbox)+MB_TAIL
+	cmpq	$-1, %rax
+	je,pn	3f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%rax)
+	addq	$PAGE_SIZE, %rax
+	cmpq	%rdx, %rax
+	jb	1b
+	/* Restore state & return */
+	popq	%rdx
+	popq	%rbx
+	popq	%rax
+	iretq
+3:
+	testq	%rbx, %rbx
+	jz	4f
+	/*
+	 * If we have been asked to invalidate the entire TLB
+	 * we arrive here.
+	 */
+	movq	%cr4,%rax
+	leaq	-CR4_PGE(%rax),%rdx
+	movq	%rdx,%cr4
+	movq	%rax,%cr4
+	/* Restore state & return */
+	popq	%rdx
+	popq	%rbx
+	popq	%rax
+	iretq
+4:
+	/* Invalidate user TLB entries. */
+	movq	%cr3,%rax
+	movq	%rax,%cr3
+	/* Restore state & return */
+	popq	%rdx
+	popq	%rbx
+	popq	%rax
+	iretq
 
 #define voidop(num)
 
@@ -728,72 +843,3 @@ _C_LABEL(ioapic_level_stubs):
 	.quad _C_LABEL(Xintr_ioapic_level31), _C_LABEL(Xrecurse_ioapic_level31)
 	.quad _C_LABEL(Xresume_ioapic_level31)
 #endif
-
-/*
- * Soft interrupt handlers
- */
-
-IDTVEC(softserial)
-	movl	$IPL_SOFTSERIAL, CPUVAR(ILEVEL)
-	sti
-	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movq	CPUVAR(ISOURCES) + SIR_SERIAL * 8, %r12
-	incq	IS_EVCNT(%r12)
-	movl	$X86_SOFTINTR_SOFTSERIAL,%edi
-	call	_C_LABEL(softintr_dispatch)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)
-#endif
-	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
-
-IDTVEC(softnet)
-	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
-	sti
-	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movq	CPUVAR(ISOURCES) + SIR_NET * 8, %r12
-	incq    IS_EVCNT(%r12)
-
-	xorq	%r12,%r12
-	xchgl	_C_LABEL(netisr),%r12d
-
-	/* XXX Do the legacy netisrs here for now. */
-#define DONETISR(s, c) \
-	.globl  _C_LABEL(c)	;\
-	testl	$(1 << s),%r12d	;\
-	jz	1f		;\
-	call	_C_LABEL(c)	;\
-1:
-#include <net/netisr_dispatch.h>
-	
-	movl	$X86_SOFTINTR_SOFTNET,%edi
-	call	_C_LABEL(softintr_dispatch)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)	
-#endif
-	decl	CPUVAR(IDEPTH)
-	jmp	*%r13
-
-IDTVEC(softclock)
-	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
-	sti
-	incl	CPUVAR(IDEPTH)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintlock)
-#endif
-	movq	CPUVAR(ISOURCES) + SIR_CLOCK * 8, %r12
-	incq	IS_EVCNT(%r12)
-
-	movl	$X86_SOFTINTR_SOFTCLOCK,%edi
-	call	_C_LABEL(softintr_dispatch)
-#ifdef MULTIPROCESSOR	
-	call	_C_LABEL(x86_softintunlock)		
-#endif
-	decl	CPUVAR(IDEPTH)
-	jmp	*%r13

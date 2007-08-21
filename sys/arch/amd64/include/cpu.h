@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.3 2007/05/27 12:27:00 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.4 2007/08/21 23:58:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,22 +61,27 @@ struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
 	void *ci_self200;		/* self + 0x200, see lock_stubs.S */
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
+
+	/*
+	 * Will be accessed by other CPUs.
+	 */
 	struct cpu_info *ci_next;
-
 	struct lwp *ci_curlwp;
-	struct simplelock ci_slock;
-	u_int ci_cpuid;
-	u_int ci_apicid;
-
-	u_int64_t ci_scratch;
-
+	struct pmap_cpu *ci_pmap_cpu;
 	struct lwp *ci_fpcurlwp;
 	int ci_fpsaving;
+	u_int ci_cpuid;
+	int ci_cpumask;			/* (1 << CPU ID) */
+	u_int ci_apicid;
+	struct cpu_data ci_data;	/* MI per-cpu data */
+	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
-	volatile u_int32_t ci_tlb_ipi_mask;
-
+	/*
+	 * Private members.
+	 */
+	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
+	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
+	u_int64_t ci_scratch;
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */

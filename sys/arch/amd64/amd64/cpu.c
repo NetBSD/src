@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15.2.3 2007/07/15 16:22:52 xtraeme Exp $ */
+/* $NetBSD: cpu.c,v 1.15.2.4 2007/08/21 23:58:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.3 2007/07/15 16:22:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.4 2007/08/21 23:58:48 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -276,9 +276,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #else
 	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
 #endif
+	ci->ci_cpumask = (1 << ci->ci_cpuid);
 	ci->ci_func = caa->cpu_func;
-
-	simple_lock_init(&ci->ci_slock);
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
 #if defined(MULTIPROCESSOR)
@@ -337,6 +336,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
+		pmap_cpu_init_early(ci);
+		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			identifycpu(ci);
@@ -353,7 +354,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	cpu_vm_init(ci);
 
-	cpus_attached |= (1 << ci->ci_cpuid);
+	cpus_attached |= ci->ci_cpumask;
 
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
@@ -387,10 +388,11 @@ cpu_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
-	cpus_running |= 1 << ci->ci_cpuid;
+	cpus_running |= ci->ci_cpumask;
 #endif
 }
 
+bool x86_mp_online;
 
 #ifdef MULTIPROCESSOR
 void
@@ -411,6 +413,8 @@ cpu_boot_secondary_processors(void)
 			continue;
 		cpu_boot_secondary(ci);
 	}
+
+	x86_mp_online = true;
 }
 
 static void
@@ -553,7 +557,8 @@ cpu_hatch(void *v)
 	enable_intr();
 	splx(s);
 
-	aprint_debug("%s: CPU %u running\n", ci->ci_dev->dv_xname, ci->ci_cpuid);
+	aprint_debug("%s: CPU %u running\n", ci->ci_dev->dv_xname,
+	    ci->ci_cpuid);
 }
 
 #if defined(DDB)
@@ -594,6 +599,7 @@ cpu_copy_trampoline(void)
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,	/* physical */
 	    VM_PROT_ALL);		/* protection */
+	pmap_update(pmap_kernel());
 	memcpy((void *)MP_TRAMPOLINE,
 	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
@@ -628,6 +634,7 @@ mp_cpu_start(struct cpu_info *ci)
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
 	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
 	pmap_kremove (0, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 
 #if NLAPIC > 0
 	/*
