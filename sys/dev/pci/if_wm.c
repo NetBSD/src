@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142.6.3 2007/08/10 20:50:52 he Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.142.6.4 2007/08/21 06:51:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.3 2007/08/10 20:50:52 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142.6.4 2007/08/21 06:51:57 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -267,7 +267,6 @@ struct wm_softc {
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 	struct pci_conf_state sc_pciconf;
@@ -521,7 +520,6 @@ static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
 
-static void	wm_shutdown(void *);
 static pnp_status_t wm_pci_power(device_t, pnp_request_t, void*);
 
 static void	wm_reset(struct wm_softc *);
@@ -1599,16 +1597,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(wm_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-
 	/* register device power management hooks */
 	pnp_register(self, wm_pci_power);
+	if (pnp_register(self, wm_pci_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 	return;
 
@@ -1638,19 +1631,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
 	return;
-}
-
-/*
- * wm_shutdown:
- *
- *	Make sure the interface is stopped at reboot time.
- */
-static void
-wm_shutdown(void *arg)
-{
-	struct wm_softc *sc = arg;
-
-	wm_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
 static pnp_status_t
@@ -1688,6 +1668,7 @@ wm_pci_power(device_t dv, pnp_request_t req, void *opaque)
 		case PNP_STATE_D3:
 			val = PCI_PMCSR_STATE_D3;
 			s = splnet();
+			wm_stop(ifp, 1);
 			pci_conf_capture(pc, tag, &sc->sc_pciconf);
 			splx(s);
 			break;
@@ -1702,10 +1683,11 @@ wm_pci_power(device_t dv, pnp_request_t req, void *opaque)
 
 			s = splnet();
 			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			ifp->if_flags &= ~IFF_RUNNING;
-			wm_init(ifp);
-			if (ifp->if_flags & IFF_RUNNING)
+			if (ifp->if_flags & IFF_UP) {
+				ifp->if_flags &= ~IFF_RUNNING;
+				wm_init(ifp);
 				wm_start(ifp);
+			}
 			splx(s);
 		}
 		break;
