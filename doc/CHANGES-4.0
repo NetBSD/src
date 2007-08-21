@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.231 2007/08/06 11:07:21 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.232 2007/08/21 08:50:19 ghen Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8368,4 +8368,34 @@ gnu/usr.sbin/postfix/util/Makefile		patch
 
 	Update Postfix to version 2.4.5.
 	[heas, ticket #813]
+
+dist/ntp/*					sync with HEAD as of 20070820
+distrib/sets/lists/base/mi			patch
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/misc/mi			patch
+etc/mtree/NetBSD.dist				patch
+usr.sbin/ntp/Makefile				1.8-1.9
+usr.sbin/ntp/Makefile.inc			1.16-1.18
+usr.sbin/ntp/html/Makefile			1.1-1.6
+usr.sbin/ntp/include/config.h			1.16-1.17
+usr.sbin/ntp/libopts/Makefile			1.1
+usr.sbin/ntp/ntp-keygen/Makefile		1.2
+usr.sbin/ntp/ntp-keygen/ntp-keygen.8		1.1-1.3
+usr.sbin/ntp/ntpd/Makefile			1.16-1.17
+usr.sbin/ntp/ntpd/ntpd.8			1.15-1.17
+usr.sbin/ntp/ntpdc/Makefile			1.6
+usr.sbin/ntp/ntpdc/ntpdc.8			1.13-1.15
+usr.sbin/ntp/ntpq/Makefile			1.7
+usr.sbin/ntp/ntpq/ntpq.8			1.16-1.18
+usr.sbin/ntp/scripts/mkver			1.6-1.7
+usr.sbin/sntp/Makefile				1.3
+usr.sbin/sntp/sntp.1				1.4
+
+	Upgrade NTP to version 4.2.4, plus other fixes.
+	Improvements in 4.2.4 (highlights):
+	- dynamic interface handling (no more restarts on wakeup/change in
+	  network connectivity)
+	- faster synchronisation
+	- better refclock support
+	[kardel, ticket #834]
 
