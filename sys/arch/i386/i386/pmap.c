@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.14 2007/08/18 06:04:11 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.15 2007/08/21 10:36:51 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.14 2007/08/18 06:04:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.15 2007/08/21 10:36:51 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -454,7 +454,7 @@ static void		 pmap_free_pv_doit(struct pmap *,
 static void		 pmap_free_pvpage(struct pmap_cpu *);
 static struct vm_page	*pmap_get_ptp(struct pmap *, int);
 static bool		 pmap_is_curpmap(struct pmap *);
-static bool		 pmap_is_active(struct pmap *, int, bool);
+static bool		 pmap_is_active(struct pmap *, struct cpu_info *, bool);
 static pt_entry_t	*pmap_map_ptes(struct pmap *, struct pmap **);
 static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					vaddr_t);
@@ -494,14 +494,13 @@ pmap_is_curpmap(struct pmap *pmap)
  */
 
 inline static bool
-pmap_is_active(struct pmap *pmap, int cpu_id, bool kernel)
+pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
 {
 
 	return (pmap == pmap_kernel() ||
-	    (pmap->pm_cpus & (1U << cpu_id)) != 0 ||
-	    (kernel && (pmap->pm_kernel_cpus & (1U << cpu_id)) != 0));
+	    (pmap->pm_cpus & ci->ci_cpumask) != 0 ||
+	    (kernel && (pmap->pm_kernel_cpus & ci->ci_cpumask) != 0));
 }
-
 
 static void
 pmap_apte_flush(struct pmap *pmap)
@@ -732,8 +731,10 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		panic("pmap_kenter_pa: PG_PS");
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+		/* XXX should coalesce */
+		crit_enter();
 		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
-		pmap_tlb_shootwait();
+		crit_exit();
 	}
 }
 
@@ -746,6 +747,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
  * => we assume the va is page aligned and the len is a multiple of PAGE_SIZE
  * => we assume kernel only unmaps valid addresses and thus don't bother
  *    checking the valid bit before doing TLB flushing
+ * => must be followed by call to pmap_update() before reuse of page
  */
 
 void
@@ -776,8 +778,9 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 		xpte |= opte;
 	}
 	if ((xpte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+		crit_enter();
 		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
-		pmap_tlb_shootwait();
+		crit_exit();
 	}
 }
 
@@ -1866,7 +1869,7 @@ pmap_reactivate(struct pmap *pmap)
 	uint32_t oldcpus;
 
 	ci = curcpu();
-	cpumask = 1U << ci->ci_cpuid;
+	cpumask = ci->ci_cpumask;
 
 	KASSERT(pmap->pm_pdirpa == rcr3());
 
@@ -1915,7 +1918,7 @@ pmap_load(void)
 	KASSERT(curcpu()->ci_want_pmapload);
  retry:
 	ci = curcpu();
-	cpumask = 1U << ci->ci_cpuid;
+	cpumask = ci->ci_cpumask;
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI); 
@@ -2009,6 +2012,8 @@ pmap_load(void)
 
 /*
  * pmap_deactivate: deactivate a process' pmap
+ *
+ * => must be called with kernel preemption disabled (high SPL is enough)
  */
 
 void
@@ -2021,7 +2026,14 @@ pmap_deactivate(struct lwp *l)
 		return;
 	}
 
-	crit_enter();
+	/*
+	 * wait for pending TLB shootdowns to complete.  necessary
+	 * because TLB shootdown state is per-CPU, and the LWP may
+	 * be coming off the CPU before it has a chance to call
+	 * pmap_update().
+	 */
+	pmap_tlb_shootwait();
+
 	ci = curcpu();
 
 	if (ci->ci_want_pmapload) {
@@ -2036,14 +2048,12 @@ pmap_deactivate(struct lwp *l)
 		 */
 
 		ci->ci_want_pmapload = 0;
-		crit_exit();
 		return;
 	}
 
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 
 	if (pmap == pmap_kernel()) {
-		crit_exit();
 		return;
 	}
 
@@ -2057,7 +2067,6 @@ pmap_deactivate(struct lwp *l)
 
 	KASSERT(ci->ci_tlbstate == TLBSTATE_VALID);
 	ci->ci_tlbstate = TLBSTATE_LAZY;
-	crit_exit();
 }
 
 /*
@@ -2751,7 +2760,10 @@ pmap_page_remove(struct vm_page *pg)
 		killlist = pve;
 	}
 	rw_exit(&pmap_main_lock);
+
+	crit_enter();
 	pmap_tlb_shootwait();
+	crit_exit();
 
 	/* Now we can free unused pvs and ptps. */
 	pmap_free_pvs(NULL, killlist);
@@ -2915,7 +2927,10 @@ no_tlb_shootdown:
 	}
 
 	rw_exit(&pmap_main_lock);
+
+	crit_enter();
 	pmap_tlb_shootwait();
+	crit_exit();
 
 	return(result != 0);
 }
@@ -3467,7 +3482,7 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
  *
  * => always invalidates locally before returning
  * => returns before remote CPUs have invalidated
- * => should be called with preemption disabled
+ * => must be called with preemption disabled
  */
 
 void
@@ -3505,7 +3520,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 	 * If the range is larger than 32 pages, then invalidate
 	 * everything.
 	 */
-	if (sva != (vaddr_t)-1LL && eva - sva > (32 << 12)) {
+	if (sva != (vaddr_t)-1LL && eva - sva > (32 * PAGE_SIZE)) {
 		sva = (vaddr_t)-1LL;
 		eva = sva;
 	}
@@ -3520,12 +3535,12 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		if (pte != 0 && (cpu_feature & CPUID_PGE) == 0)
 			pte = 0;
 
-		s = splvm();
 		if (pm == pmap_kernel()) {
 			/*
 			 * Mapped on all CPUs: use the broadcast mechanism.
 			 * Once we have the lock, increment the counter.
 			 */
+			s = splvm();
 			mb = &pmap_mbox;
 			count = SPINLOCK_BACKOFF_MIN;
 			do {
@@ -3551,8 +3566,14 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			mb->mb_global = pte;
 			x86_ipi(LAPIC_TLB_BCAST_VECTOR, LAPIC_DEST_ALLEXCL,
 			    LAPIC_DLMODE_FIXED);
-		} else {
+			self->ci_need_tlbwait = 1;
+			splx(s);
+		} else if ((pmap->pm_cpus & ~ci->ci_cpumask) != 0 ||
+		    (kernel && (pmap->pm_kernel_cpus & ~ci->ci_cpumask) != 0)) {
 			/*
+			 * We don't bother traversing the CPU list if only
+			 * used by this CPU.
+			 *
 			 * We can't do global flushes with the multicast
 			 * mechanism.
 			 */
@@ -3562,9 +3583,10 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			 * Take ownership of the shootdown mailbox on each
 			 * CPU, fill the details and fire it off.
 			 */
+			s = splvm();
 			for (CPU_INFO_FOREACH(cii, ci)) {
 				if (ci == self ||
-				    !pmap_is_active(pm, ci->ci_cpuid, kernel) ||
+				    !pmap_is_active(pm, ci, kernel) ||
 				    !(ci->ci_flags & CPUF_RUNNING))
 					continue;
 				selfmb->mb_head++;
@@ -3585,12 +3607,13 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				    LAPIC_DLMODE_FIXED))
 					panic("pmap_tlb_shootdown: ipi failed");
 			}
+			self->ci_need_tlbwait = 1;
+			splx(s);
 		}
-		splx(s);
 	}
 
 	/* Update the current CPU before waiting for others. */
-	if (!pmap_is_active(pm, self->ci_cpuid, kernel))
+	if (!pmap_is_active(pm, self, kernel))
 		return;
 
 	if (sva == (vaddr_t)-1LL) {
@@ -3610,7 +3633,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
  * pmap_tlb_shootwait: wait for pending TLB shootdowns to complete
  *
  * => only waits for operations generated by the current CPU
- * => should be called with preemption disabled
+ * => must be called with preemption disabled
  */
 
 void
@@ -3619,17 +3642,36 @@ pmap_tlb_shootwait(void)
 	struct cpu_info *self;
 	struct pmap_mbox *mb;
 
-	/* If we own the global mailbox, wait for it to drain. */
+	/*
+	 * Anything to do?  XXX Really we want to avoid touching the cache
+	 * lines of the two mailboxes, but the processor may read ahead.
+	 */
 	self = curcpu();
+	if (!self->ci_need_tlbwait)
+		return;
+	self->ci_need_tlbwait = 0;
+
+	/* If we own the global mailbox, wait for it to drain. */
 	mb = &pmap_mbox;
-	if (mb->mb_pointer == self) {
-		while (mb->mb_head != mb->mb_tail)
-			x86_pause();
-	}
+	while (mb->mb_pointer == self && mb->mb_head != mb->mb_tail)
+		x86_pause();
 
 	/* If we own other CPU's mailboxes, wait for them to drain. */
 	mb = &self->ci_pmap_cpu->pc_mbox;
 	KASSERT(mb->mb_pointer != &mb->mb_tail);
 	while (mb->mb_head != mb->mb_tail)
 		x86_pause();
+}
+
+/*
+ * pmap_update: process deferred invalidations
+ */
+
+void
+pmap_update(struct pmap *pm)
+{
+
+	crit_enter();
+	pmap_tlb_shootwait();
+	crit_exit();
 }
