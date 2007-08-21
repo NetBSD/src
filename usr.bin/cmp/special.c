@@ -1,4 +1,4 @@
-/*	$NetBSD: special.c,v 1.11 2006/06/03 18:55:02 christos Exp $	*/
+/*	$NetBSD: special.c,v 1.12 2007/08/21 14:09:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: special.c,v 1.11 2006/06/03 18:55:02 christos Exp $");
+__RCSID("$NetBSD: special.c,v 1.12 2007/08/21 14:09:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,10 +94,11 @@ c_special(int fd1, char *file1, off_t skip1, int fd2, char *file2, off_t skip2)
 			++line;
 	}
 
-eof:	if (ferror(fp1))
-		err(ERR_EXIT, "%s", file1);
+ eof:
+	if (ferror(fp1))
+		errmsg(file1, byte, line);
 	if (ferror(fp2))
-		err(ERR_EXIT, "%s", file2);
+		errmsg(file2, byte, line);
 	if (feof(fp1)) {
 		if (!feof(fp2))
 			eofmsg(file1, byte, line);
