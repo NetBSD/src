@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.181 2007/08/22 06:51:41 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.182 2007/08/22 23:47:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.181 2007/08/22 06:51:41 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.182 2007/08/22 23:47:13 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1165,7 +1165,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (errno == ERANGE || chunksize < 0) {
 				errno = ERANGE;
 				warn("Chunk-size `%.*s'",
-				    ep-xferbuf, xferbuf);
+				    (int)(ep-xferbuf), xferbuf);
 				goto cleanup_fetch_url;
 			}
 
