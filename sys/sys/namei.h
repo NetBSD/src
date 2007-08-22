@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.52 2007/08/22 15:39:32 pooka Exp $	*/
+/*	$NetBSD: namei.h,v 1.53 2007/08/22 17:50:26 pooka Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.2 2007/08/22 15:38:46 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.3 2007/08/22 17:49:40 pooka Exp 
  */
 
 /*
@@ -67,9 +67,9 @@ struct nameidata {
 	/*
 	 * Shared between namei and lookup/commit routines.
 	 */
-	size_t	ni_pathlen;		/* remaining chars in path */
-	const char *ni_next;		/* next location in pathname */
-	u_long	ni_loopcnt;		/* count of symlinks encountered */
+	size_t		ni_pathlen;	/* remaining chars in path */
+	const char	*ni_next;	/* next location in pathname */
+	unsigned int	ni_loopcnt;	/* count of symlinks encountered */
 	/*
 	 * Lookup parameters: this structure describes the subset of
 	 * information from the nameidata structure that is passed
@@ -79,18 +79,18 @@ struct nameidata {
 		/*
 		 * Arguments to lookup.
 		 */
-		u_long	cn_nameiop;	/* namei operation */
-		u_long	cn_flags;	/* flags to namei */
-		struct	lwp *cn_lwp;	/* lwp requesting lookup */
-		kauth_cred_t cn_cred;	/* credentials */
+		uint32_t	cn_nameiop;	/* namei operation */
+		uint32_t	cn_flags;	/* flags to namei */
+		struct		lwp *cn_lwp;	/* lwp requesting lookup */
+		kauth_cred_t 	cn_cred;	/* credentials */
 		/*
 		 * Shared between lookup and commit routines.
 		 */
-		char	*cn_pnbuf;	/* pathname buffer */
-		const char *cn_nameptr;	/* pointer to looked up name */
-		long	cn_namelen;	/* length of looked up component */
-		u_long	cn_hash;	/* hash value of looked up name */
-		long	cn_consume;	/* chars to consume in lookup() */
+		char		*cn_pnbuf;	/* pathname buffer */
+		const char 	*cn_nameptr;	/* pointer to looked up name */
+		size_t		cn_namelen;	/* length of looked up comp */
+		u_long		cn_hash;	/* hash val of looked up name */
+		size_t		cn_consume;	/* chars to consume in lookup */
 	} ni_cnd;
 };
 
