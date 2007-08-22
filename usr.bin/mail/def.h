@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.23 2006/12/06 16:26:24 christos Exp $	*/
+/*	$NetBSD: def.h,v 1.24 2007/08/22 03:42:06 dogcow Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.23 2006/12/06 16:26:24 christos Exp $
+ *	$NetBSD: def.h,v 1.24 2007/08/22 03:42:06 dogcow Exp $
  */
 
 /*
@@ -175,7 +175,7 @@ typedef struct mime_info mime_info_t;	/* phantom structure only to attach.c */
  * Given a file address, determine the block number it represents.
  */
 #define blockof(off)			((int) ((off) / 4096))
-#define offsetof(off)			((int) ((off) % 4096))
+#define blkoffsetof(off)		((int) ((off) % 4096))
 #define positionof(block, offset)	((off_t)(block) * 4096 + (offset))
 
 /*
