@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.48 2007/08/15 14:19:19 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.49 2007/08/22 17:54:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -85,7 +85,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	16
+#define PUFFSVERSION	17
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -350,12 +350,12 @@ struct puffs_kcid {
 /* puffs struct componentname built by kernel */
 struct puffs_kcn {
 	/* args */
-	u_long			pkcn_nameiop;	/* namei operation	*/
-	u_long			pkcn_flags;	/* flags		*/
+	uint32_t		pkcn_nameiop;	/* namei operation	*/
+	uint32_t		pkcn_flags;	/* flags		*/
 
 	char pkcn_name[MAXPATHLEN];	/* nulterminated path component */
-	long pkcn_namelen;		/* current component length	*/
-	long pkcn_consume;		/* IN: extra chars server ate   */
+	size_t pkcn_namelen;		/* current component length	*/
+	size_t pkcn_consume;		/* IN: extra chars server ate   */
 };
 
 
