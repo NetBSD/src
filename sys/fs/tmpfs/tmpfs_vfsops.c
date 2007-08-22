@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.5 2007/08/21 20:01:31 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.20.4.6 2007/08/22 20:24:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.5 2007/08/21 20:01:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.20.4.6 2007/08/22 20:24:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -256,19 +256,18 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		mutex_enter(&tmp->tm_lock);
 		node = next;
 	}
+	mutex_exit(&tmp->tm_lock);
+
 	node = LIST_FIRST(&tmp->tm_nodes_avail);
 	while (node != NULL) {
 		struct tmpfs_node *next;
 
 		next = LIST_NEXT(node, tn_entries);
 		LIST_REMOVE(node, tn_entries);
-		mutex_exit(&tmp->tm_lock);
 		mutex_destroy(&node->tn_vlock);
 		TMPFS_POOL_PUT(&tmp->tm_node_pool, node);
-		mutex_enter(&tmp->tm_lock);
 		node = next;
 	}
-	mutex_exit(&tmp->tm_lock);
 
 	tmpfs_pool_destroy(&tmp->tm_dirent_pool);
 	tmpfs_pool_destroy(&tmp->tm_node_pool);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.34.4.4 2007/08/21 20:01:31 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34.4.5 2007/08/22 20:24:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.4 2007/08/21 20:01:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34.4.5 2007/08/22 20:24:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -132,6 +132,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		}
 		nnode->tn_id = ino;
 		nnode->tn_gen = arc4random();
+		mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
 
 		mutex_enter(&tmp->tm_lock);
 	} else {
@@ -157,7 +158,6 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 	nnode->tn_mode = mode;
 	nnode->tn_lockf = NULL;
 	nnode->tn_vnode = NULL;
-	mutex_init(&nnode->tn_vlock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Type-specific initialization. */
 	switch (nnode->tn_type) {
@@ -234,8 +234,6 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 void
 tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 {
-	ino_t id;
-	unsigned long gen;
 	size_t pages;
 
 	switch (node->tn_type) {
@@ -277,12 +275,7 @@ tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 	mutex_enter(&tmp->tm_lock);
 	tmp->tm_pages_used -= pages;
 	LIST_REMOVE(node, tn_entries);
-	id = node->tn_id;
-	gen = node->tn_gen;
-	memset(node, 0, sizeof(struct tmpfs_node));
-	node->tn_id = id;
 	node->tn_type = VNON;
-	node->tn_gen = gen;
 	LIST_INSERT_HEAD(&tmp->tm_nodes_avail, node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
 }
@@ -479,7 +472,9 @@ tmpfs_free_vp(struct vnode *vp)
 
 	node = VP_TO_TMPFS_NODE(vp);
 
+	mutex_enter(&node->tn_vlock);
 	node->tn_vnode = NULL;
+	mutex_exit(&node->tn_vlock);
 	vp->v_data = NULL;
 }
 
@@ -562,7 +557,6 @@ out:
 		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 
-	KASSERT(!VOP_ISLOCKED(dvp));
 	KASSERT(IFF(error == 0, *vpp != NULL));
 
 	return error;
@@ -640,7 +634,6 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
-	bool found;
 	struct tmpfs_dirent *de;
 
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
@@ -650,17 +643,14 @@ tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
-	found = 0;
 	TAILQ_FOREACH(de, &node->tn_spec.tn_dir.tn_dir, td_entries) {
 		KASSERT(cnp->cn_namelen < 0xffff);
 		if (de->td_namelen == (uint16_t)cnp->cn_namelen &&
-		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0) {
-			found = 1;
+		    memcmp(de->td_name, cnp->cn_nameptr, de->td_namelen) == 0)
 			break;
-		}
 	}
 
-	return found ? de : NULL;
+	return de;
 }
 
 /* --------------------------------------------------------------------- */
