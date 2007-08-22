@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.97 2007/08/13 09:48:55 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.98 2007/08/22 17:54:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.97 2007/08/13 09:48:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.98 2007/08/22 17:54:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -437,7 +437,7 @@ puffs_lookup(void *v)
 
 	isdot = cnp->cn_namelen == 1 && *cnp->cn_nameptr == '.';
 
-	DPRINTF(("puffs_lookup: \"%s\", parent vnode %p, op: %lx\n",
+	DPRINTF(("puffs_lookup: \"%s\", parent vnode %p, op: %x\n",
 	    cnp->cn_nameptr, dvp, cnp->cn_nameiop));
 
 	/*
