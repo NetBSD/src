@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.180 2007/06/05 00:31:20 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.181 2007/08/22 06:51:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.180 2007/06/05 00:31:20 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.181 2007/08/22 06:51:41 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1146,31 +1146,52 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			/* Finally, suck down the file. */
 	do {
 		long chunksize;
+		short lastchunk;
 
 		chunksize = 0;
-					/* read chunksize */
+		lastchunk = 0;
+					/* read chunk-size */
 		if (ischunked) {
 			if (fgets(xferbuf, bufsize, fin) == NULL) {
-				warnx("Unexpected EOF reading chunksize");
+				warnx("Unexpected EOF reading chunk-size");
 				goto cleanup_fetch_url;
 			}
+			errno = 0;
 			chunksize = strtol(xferbuf, &ep, 16);
+			if (ep == xferbuf) {
+				warnx("Invalid chunk-size");
+				goto cleanup_fetch_url;
+			}
+			if (errno == ERANGE || chunksize < 0) {
+				errno = ERANGE;
+				warn("Chunk-size `%.*s'",
+				    ep-xferbuf, xferbuf);
+				goto cleanup_fetch_url;
+			}
 
 				/*
 				 * XXX:	Work around bug in Apache 1.3.9 and
 				 *	1.3.11, which incorrectly put trailing
-				 *	space after the chunksize.
+				 *	space after the chunk-size.
 				 */
 			while (*ep == ' ')
 				ep++;
 
+					/* skip [ chunk-ext ] */
+			if (*ep == ';') {
+				while (*ep && *ep != '\r')
+					ep++;
+			}
+
 			if (strcmp(ep, "\r\n") != 0) {
-				warnx("Unexpected data following chunksize");
+				warnx("Unexpected data following chunk-size");
 				goto cleanup_fetch_url;
 			}
-			DPRINTF("got chunksize of " LLF "\n", (LLT)chunksize);
-			if (chunksize == 0)
-				break;
+			DPRINTF("got chunk-size of " LLF "\n", (LLT)chunksize);
+			if (chunksize == 0) {
+				lastchunk = 1;
+				goto chunkdone;
+			}
 		}
 					/* transfer file or chunk */
 		while (1) {
@@ -1222,14 +1243,21 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					/* read CRLF after chunk*/
  chunkdone:
 		if (ischunked) {
-			if (fgets(xferbuf, bufsize, fin) == NULL)
-				break;
+			if (fgets(xferbuf, bufsize, fin) == NULL) {
+				warnx("Unexpected EOF reading chunk CRLF");
+				goto cleanup_fetch_url;
+			}
 			if (strcmp(xferbuf, "\r\n") != 0) {
 				warnx("Unexpected data following chunk");
 				goto cleanup_fetch_url;
 			}
+			if (lastchunk)
+				break;
 		}
 	} while (ischunked);
+
+/* XXX: deal with optional trailer & CRLF here? */
+
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
 			(void)putc('#', ttyout);
