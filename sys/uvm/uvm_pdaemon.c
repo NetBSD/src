@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.5 2007/08/21 22:32:26 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.6 2007/08/22 09:36:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.5 2007/08/21 22:32:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.6 2007/08/22 09:36:28 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -383,7 +383,7 @@ uvm_pageout_done(int npages)
  *
  * => called with pageq locked.
  * => resolve orphaned O->A loaned page.
- * => return the locked simplelock on success.  otherwise, return NULL.
+ * => return the locked mutex on success.  otherwise, return NULL.
  */
 
 kmutex_t *
