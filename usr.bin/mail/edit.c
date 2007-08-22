@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.21 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.22 2007/08/22 03:42:06 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.21 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: edit.c,v 1.22 2007/08/22 03:42:06 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ edit1(int *msgvec, int editortype)
 			(void)fseek(otf, 0L, 2);
 			size = ftell(otf);
 			mp->m_block = blockof(size);
-			mp->m_offset = offsetof(size);
+			mp->m_offset = blkoffsetof(size);
 			mp->m_size = fsize(fp);
 			mp->m_lines = 0;
 			mp->m_blines = 0;
