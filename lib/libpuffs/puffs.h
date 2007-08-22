@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.80 2007/08/18 10:26:05 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.81 2007/08/22 17:54:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -387,7 +387,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 25
+#define PUFFS_DEVEL_LIBVERSION 26
 #define puffs_init(a,b,c,d,e) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e)
 
