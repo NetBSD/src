@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.21.2.3 2007/07/15 13:27:14 ad Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.21.2.4 2007/08/22 20:26:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.21.2.3 2007/07/15 13:27:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.21.2.4 2007/08/22 20:26:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 {
 	struct proc *p = l->l_proc;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	ucp->uc_flags = 0;
 	ucp->uc_link = (uint32_t)(intptr_t)l->l_ctxlink;
@@ -345,7 +345,7 @@ setucontext32(struct lwp *l, const ucontext32_t *ucp)
 	struct proc *p = l->l_proc;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	if ((ucp->uc_flags & _UC_SIGMASK) != 0) {
 		error = sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
