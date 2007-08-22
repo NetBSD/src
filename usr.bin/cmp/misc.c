@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 2007/08/21 14:09:54 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 2007/08/22 16:59:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 2007/08/21 14:09:54 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 2007/08/22 16:59:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,8 +50,8 @@ void
 errmsg(char *file, off_t byte, off_t line)
 {
 	if (lflag)
-		err(ERR_EXIT, "%s: char %llu, line %llu", file,
-		    (unsigned long long)byte, (unsigned long long)line);
+		err(ERR_EXIT, "%s: char %lld, line %lld", file,
+		    (long long)byte, (long long)line);
 	else
 		err(ERR_EXIT, "%s", file);
 }
