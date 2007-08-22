@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.37.4.3 2007/08/20 21:26:12 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.37.4.4 2007/08/22 20:24:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37.4.3 2007/08/20 21:26:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.37.4.4 2007/08/22 20:24:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -231,11 +231,12 @@ tmpfs_lookup(void *v)
 				    cnp->cn_lwp);
 				if (error != 0)
 					goto out;
-				tnode->tn_lookup_dirent = de;
-			}
+			} else
+				de = NULL;
 
 			/* Allocate a new vnode on the matching entry. */
 			error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
+			tnode->tn_lookup_dirent = de;
 		}
 	}
 
@@ -698,8 +699,6 @@ out:
 	else
 		vput(dvp);
 
-	KASSERT(!VOP_ISLOCKED(dvp));
-
 	return error;
 }
 
@@ -718,7 +717,6 @@ tmpfs_link(void *v)
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(!VOP_ISLOCKED(vp));
 	KASSERT(cnp->cn_flags & HASBUF);
 	KASSERT(dvp != vp); /* XXX When can this be false? */
 
@@ -729,7 +727,7 @@ tmpfs_link(void *v)
 	 * needs the vnode to be locked. */
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
-		goto out;
+		goto out1;
 
 	/* XXX: Why aren't the following two tests done by the caller? */
 
@@ -775,16 +773,11 @@ tmpfs_link(void *v)
 	error = 0;
 
 out:
-	if (VOP_ISLOCKED(vp))
-		VOP_UNLOCK(vp, 0);
-
+	VOP_UNLOCK(vp, 0);
+out1:
 	PNBUF_PUT(cnp->cn_pnbuf);
 
 	vput(dvp);
-
-	/* XXX Locking status of dvp does not match manual page. */
-	KASSERT(!VOP_ISLOCKED(dvp));
-	KASSERT(!VOP_ISLOCKED(vp));
 
 	return error;
 }
@@ -811,7 +804,7 @@ tmpfs_rename(void *v)
 	struct tmpfs_node *tdnode;
 
 	KASSERT(VOP_ISLOCKED(tdvp));
-	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp)));
+	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
 	KASSERT(fcnp->cn_flags & HASBUF);
 	KASSERT(tcnp->cn_flags & HASBUF);
 
@@ -1024,6 +1017,7 @@ tmpfs_rmdir(void *v)
 	tmp = VFS_TO_TMPFS(dvp->v_mount);
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_DIR(vp);
+	error = 0;
 
 	/* Directories with more than two entries ('.' and '..') cannot be
 	 * removed. */
@@ -1061,24 +1055,16 @@ tmpfs_rmdir(void *v)
 
 	/* Release the parent. */
 	cache_purge(dvp); /* XXX Is this needed? */
-	vput(dvp);
 
 	/* Free the directory entry we just deleted.  Note that the node
 	 * referred by it will not be removed until the vnode is really
 	 * reclaimed. */
 	tmpfs_free_dirent(tmp, de, true);
 
-	/* Release the deleted vnode (will destroy the node, notify
-	 * interested parties and clean it from the cache). */
+ out:
+	/* Release the nodes. */
+	vput(dvp);
 	vput(vp);
-
-	error = 0;
-
-out:
-	if (error != 0) {
-		vput(dvp);
-		vput(vp);
-	}
 
 	return error;
 }
@@ -1265,8 +1251,6 @@ tmpfs_reclaim(void *v)
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 
-	KASSERT(!VOP_ISLOCKED(vp));
-
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 
@@ -1279,7 +1263,6 @@ tmpfs_reclaim(void *v)
 	if (node->tn_links == 0)
 		tmpfs_free_node(tmp, node);
 
-	KASSERT(!VOP_ISLOCKED(vp));
 	KASSERT(vp->v_data == NULL);
 
 	return 0;
