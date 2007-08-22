@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.19 2007/08/20 21:27:26 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.20 2007/08/22 00:49:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.19 2007/08/20 21:27:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.20 2007/08/22 00:49:38 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -634,7 +634,8 @@ main(void)
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create(PINOD, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PINOD, KTHREAD_MPSAFE, NULL, sched_sync,
+	    NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
