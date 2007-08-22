@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.12 2007/08/07 13:44:27 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.13 2007/08/22 17:57:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.12 2007/08/07 13:44:27 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.13 2007/08/22 17:57:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -147,6 +147,9 @@ puffsdump_req(struct puffs_req *preq)
 
 	if (isvn) {
 		switch (preq->preq_optype) {
+		case PUFFS_VN_LOOKUP:
+			puffsdump_lookup(preq);
+			break;
 		case PUFFS_VN_READ:
 		case PUFFS_VN_WRITE:
 			puffsdump_readwrite(preq);
@@ -169,6 +172,18 @@ puffsdump_rv(struct puffs_req *preq)
 	printf("\tRV reqid: %" PRIu64 ", result: %d %s\n",
 	    preq->preq_id, preq->preq_rv,
 	    preq->preq_rv ? strerror(preq->preq_rv) : "");
+
+#ifdef notyet
+	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
+		switch (preq->preq_optype) {
+		case PUFFS_VN_LOOKUP:
+			puffsdump_lookup_rv(preq);
+			break;
+		default:
+			break;
+		}
+	}
+#endif
 }
 
 void
@@ -178,25 +193,40 @@ puffsdump_cookie(void *c, const char *cookiename)
 	printf("\t%scookie: at %p\n", cookiename, c);
 }
 
-#if 0
 static const char *cn_opnames[] = {
 	"LOOKUP",
 	"CREATE",
 	"DELETE",
 	"RENAME"
 };
+
 void
-puffsdump_cn(struct puffs_cn *pcn)
+puffsdump_cn(struct puffs_kcn *pkcn)
 {
 
-	printf("\tpuffs_cn: %s (%sfollow)\n",
-	    cn_opnames[pcn->pcn_nameio & PUFFSLOOKUP_OPMASK],
-	    pcn->pcn_nameio&PUFFSLOOKUP_OPTIONS==PUFFSLOOKUP_NOFOLLOW?"no":"");
-	/*
-	TOFINISH
-	*/
+	printf("\t\tpuffs_cn: \"%s\", len %zu op %s (flags 0x%x)\n",
+	    pkcn->pkcn_name, pkcn->pkcn_namelen,
+	    cn_opnames[pkcn->pkcn_nameiop & NAMEI_OPMASK],
+	    pkcn->pkcn_flags);
 }
-#endif
+
+void
+puffsdump_lookup(struct puffs_req *preq)
+{
+	struct puffs_vnreq_lookup *lookup_vnreq = (void *)preq;
+
+	puffsdump_cn(&lookup_vnreq->pvnr_cn);
+}
+
+void
+puffsdump_lookup_rv(struct puffs_req *preq)
+{
+	struct puffs_vnreq_lookup *lookup_vnreq = (void *)preq;
+
+	printf("\t\tnew node %p, type 0x%x,\n\t\tsize 0x%"PRIu64", dev 0x%x\n",
+	    lookup_vnreq->pvnr_newnode, lookup_vnreq->pvnr_vtype,
+	    lookup_vnreq->pvnr_size, lookup_vnreq->pvnr_rdev);
+}
 
 void
 puffsdump_readwrite(struct puffs_req *preq)
