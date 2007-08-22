@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.80 2006/08/26 22:03:47 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.81 2007/08/22 16:30:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.80 2006/08/26 22:03:47 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.81 2007/08/22 16:30:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -940,6 +940,26 @@ calcsb(const char *dev, int devfd, struct fs *fs)
 		pfatal("%s: NOT LABELED AS A BSD FILE SYSTEM (%s)\n",
 		    dev, dkw.dkw_ptype);
 		return (0);
+	}
+	if (geo.dg_secsize == 0) {
+		pfatal("%s: CANNOT FIGURE OUT SECTOR SIZE\n", dev);
+		return 0;
+	}
+	if (geo.dg_secpercyl == 0) {
+		pfatal("%s: CANNOT FIGURE OUT SECTORS PER CYLINDER\n", dev);
+		return 0;
+	}
+	if (sblk.b_un.b_fs->fs_fsize == 0) {
+		pfatal("%s: CANNOT FIGURE OUT FRAG BLOCK SIZE\n", dev);
+		return 0;
+	}
+	if (sblk.b_un.b_fs->fs_fpg == 0) {
+		pfatal("%s: CANNOT FIGURE OUT FRAGS PER GROUP\n", dev);
+		return 0;
+	}
+	if (sblk.b_un.b_fs->fs_old_cpg == 0) {
+		pfatal("%s: CANNOT FIGURE OUT OLD CYLINDERS PER GROUP\n", dev);
+		return 0;
 	}
 	memcpy(fs, &sblk.b_un.b_fs, sizeof(struct fs));
 	nspf = fs->fs_fsize / geo.dg_secsize;
