@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.28 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: fio.c,v 1.29 2007/08/22 03:42:06 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.28 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: fio.c,v 1.29 2007/08/22 03:42:06 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ message_init(struct message *mp, off_t offset, short flags)
 	(void)memset(mp, 0, sizeof(*mp));
 	mp->m_flag = flags;
 	mp->m_block = blockof(offset);
-	mp->m_offset = offsetof(offset);
+	mp->m_offset = blkoffsetof(offset);
 }
 
 /*

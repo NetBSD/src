@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.8 2007/01/03 00:24:36 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.9 2007/08/22 03:42:06 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.8 2007/01/03 00:24:36 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.9 2007/08/22 03:42:06 dogcow Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -306,7 +306,7 @@ insert_new_mip(struct mime_info *this_mip, struct mime_info *top_mip,
 	this_mip->mi_flink = new_mip;
 
 	new_mip->mp = salloc_message(this_mip->mp->m_flag,
-	    (long)blockof(end_pos), offsetof(end_pos));
+	    (long)blockof(end_pos), blkoffsetof(end_pos));
 
 	new_mip->mi_parent.mip = top_mip;
 	new_mip->mi_parent.mp = top_mp;
