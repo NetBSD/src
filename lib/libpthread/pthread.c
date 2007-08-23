@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.79 2007/08/17 14:28:31 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.80 2007/08/23 19:13:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.79 2007/08/17 14:28:31 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.80 2007/08/23 19:13:23 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -603,9 +603,9 @@ pthread_detach(pthread_t thread)
 	if (thread->pt_magic != PT_MAGIC)
 		return EINVAL;
 
-	pthread_spinlock(&self->pt_lock);
+	pthread_spinlock(&thread->pt_lock);
 	thread->pt_flags |= PT_FLAG_DETACHED;
-	pthread_spinunlock(&self->pt_lock);
+	pthread_spinunlock(&thread->pt_lock);
 
 	if (_lwp_detach(thread->pt_lid) == 0)
 		return 0;
