@@ -1,4 +1,4 @@
-/*	$NetBSD: automatic.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $	*/
+/*	$NetBSD: automatic.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: automatic.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $");
+__RCSID("$NetBSD: automatic.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $");
 #endif
 
 #if HAVE_ASSERT_H
@@ -69,14 +69,12 @@ __RCSID("$NetBSD: automatic.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $");
 Boolean
 is_automatic_installed(const char *pkg)
 {
-	char    filename[BUFSIZ];
-	char   *value;
+	char *filename, *value;
 	Boolean ret;
 
 	assert(pkg[0] != '/');
 
-	(void)snprintf(filename, sizeof(filename), "%s/%s/%s",
-	    _pkgdb_getPKGDB_DIR(), pkg, INSTALLED_INFO_FNAME);
+	filename = pkgdb_pkg_file(pkg, INSTALLED_INFO_FNAME);
 
 	value = var_get(filename, AUTOMATIC_VARNAME);
 
@@ -86,6 +84,7 @@ is_automatic_installed(const char *pkg)
 	    ret = FALSE;
 	
 	free(value);
+	free(filename);
 
 	return ret;
 }
@@ -93,13 +92,16 @@ is_automatic_installed(const char *pkg)
 int
 mark_as_automatic_installed(const char *pkg, int value)
 {
-	char filename[BUFSIZ];
+	char *filename;
+	int retval;
 
 	assert(pkg[0] != '/');
 
-	(void)snprintf(filename, sizeof(filename), "%s/%s/%s",
-	    _pkgdb_getPKGDB_DIR(), pkg, INSTALLED_INFO_FNAME);
+	filename = pkgdb_pkg_file(pkg, INSTALLED_INFO_FNAME);
 
-	return var_set(filename, AUTOMATIC_VARNAME,
-		       value ? "yes" : NULL);
+	retval = var_set(filename, AUTOMATIC_VARNAME, value ? "yes" : NULL);
+
+	free(filename);
+
+	return retval;
 }
