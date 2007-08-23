@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16.2.4 2007/08/21 23:58:50 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.5 2007/08/23 12:13:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,7 +60,6 @@
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
-	void *ci_self200;		/* self + 0x200, see lock_stubs.S */
 
 	/*
 	 * Will be accessed by other CPUs.
@@ -102,9 +101,11 @@ struct cpu_info {
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
-	u_int32_t	ci_feature_flags;
+	int32_t		ci_cpuid_level;
+	uint32_t	ci_signature;
+	uint32_t	ci_feature_flags;
 	uint32_t	ci_feature2_flags;
-	u_int32_t	ci_signature;
+	uint32_t	ci_vendor[4];	 /* vendor string */
 	u_int64_t	ci_tsc_freq;
 
 	const struct cpu_functions *ci_func;
@@ -239,6 +240,7 @@ extern int biosbasemem;
 extern int biosextmem;
 extern int cpu;
 extern int cpu_feature;
+extern int cpu_feature2;
 extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
