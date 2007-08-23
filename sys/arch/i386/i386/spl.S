@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.15.6.5 2007/07/29 10:18:49 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.15.6.6 2007/08/23 13:18:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
 /*
  * int splraise(int s);
  */
-	.align	32
-
 ENTRY(splraise)
 	movl	4(%esp),%edx
 	movl	CPUVAR(ILEVEL),%eax
@@ -317,7 +315,7 @@ IDTVEC(softintr)
  *
  *	%eax		prevlwp from cpu_switchto()
  */
-softintr_ret:
+NENTRY(softintr_ret)
 	movl	CPUVAR(ILEVEL),%edx
 	pushl	L_MUTEX(%eax)		/* %eax from cpu_switchto */
 	movl	%edx,CPUVAR(MTX_OLDSPL)	/* preserve priority until return */
@@ -331,9 +329,7 @@ softintr_ret:
  *
  * Software interrupt registration.
  */
-	.align	32
-
-ENTRY(softint_trigger)
+NENTRY(softint_trigger)
 	movl	4(%esp),%eax
 	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
