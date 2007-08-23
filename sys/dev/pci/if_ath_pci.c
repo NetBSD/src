@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.21.6.1 2007/08/23 16:19:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21.6.1 2007/08/23 16:19:47 joerg Exp $");
 #endif
 
 /*
@@ -88,7 +88,6 @@ struct ath_pci_softc {
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	void			*sc_sdhook;
 };
 
 #define	BS_BAR	0x10
@@ -98,9 +97,8 @@ struct ath_pci_softc {
 static void ath_pci_attach(struct device *, struct device *, void *);
 static int ath_pci_detach(struct device *, int);
 static int ath_pci_match(struct device *, struct cfdata *, void *);
-static void ath_pci_shutdown(void *);
-static void ath_pci_powerhook(int, void *);
 static int ath_pci_detach(struct device *, int);
+static pnp_status_t ath_pci_power(device_t, pnp_request_t, void *);
 
 CFATTACH_DECL(ath_pci,
     sizeof(struct ath_pci_softc),
@@ -204,7 +202,6 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	pcireg_t mem_type;
-	void *phook;
 	const char *intrstr = NULL;
 
 	psc->sc_pc = pc;
@@ -254,26 +251,14 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	psc->sc_sdhook = shutdownhook_establish(ath_pci_shutdown, psc);
-	if (psc->sc_sdhook == NULL) {
-		aprint_error("couldn't make shutdown hook\n");
-		goto bad3;
-	}
-
-	phook = powerhook_establish(sc->sc_dev.dv_xname,
-	    ath_pci_powerhook, psc);
-	if (phook == NULL) {
-		aprint_error("couldn't make power hook\n");
-		goto bad3;
-	}
+	if (pnp_register(self, ath_pci_power) != PNP_STATUS_SUCCESS)
+		aprint_error("%s: couldn't establish power handler\n",
+		    device_xname(self));
 
 	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
 		return;
 
-	shutdownhook_disestablish(psc->sc_sdhook);
-	powerhook_disestablish(phook);
-
-bad3:	pci_intr_disestablish(pc, psc->sc_ih);
+	pci_intr_disestablish(pc, psc->sc_ih);
 bad2:	/* XXX */
 bad1:	/* XXX */
 bad:
@@ -285,40 +270,18 @@ ath_pci_detach(struct device *self, int flags)
 {
 	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
 
-	shutdownhook_disestablish(psc->sc_sdhook);
 	ath_detach(&psc->sc_sc);
+	pnp_deregister(self);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
 	return (0);
 }
 
-static void
-ath_pci_shutdown(void *self)
+static pnp_status_t
+ath_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
-	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
+	struct ath_pci_softc *sc = (struct ath_pci_softc *)dv;
 
-	ath_shutdown(&psc->sc_sc);
-}
-
-static void
-ath_pci_powerhook(int why, void *arg)
-{
-	struct ath_pci_softc *sc = arg;
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t tag = sc->sc_pcitag;
-
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-		ath_pci_shutdown(sc);
-		break;
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		ath_disable_retry(pc, tag);
-		break;
-	}
-
-	return;
+	return pci_net_generic_power(dv, req, opaque, sc->sc_pc, sc->sc_pcitag,
+	    &sc->sc_pciconf, &sc->sc_sc.sc_if);
 }
