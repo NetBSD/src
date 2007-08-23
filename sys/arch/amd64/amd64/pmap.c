@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.6 2007/08/23 17:16:44 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.7 2007/08/23 18:54:50 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.6 2007/08/23 17:16:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.7 2007/08/23 18:54:50 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2751,21 +2751,54 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	*myattrs &= ~clearbits;
 
 	SPLAY_FOREACH(pve, pvtree, &pvh->pvh_root) {
+		pt_entry_t *ptep;
 		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
 #ifdef DIAGNOSTIC
 		if (!pmap_pdes_valid(pve->pv_va, pdes, NULL))
 			panic("pmap_change_attrs: mapping without PTP "
 			      "detected");
 #endif
-
-		opte = ptes[pl1_i(pve->pv_va)];
+		ptep = &ptes[pl1_i(pve->pv_va)];
+		opte = *ptep;
+		KASSERT(pmap_valid_entry(opte));
+		KDASSERT((opte & PG_FRAME) == VM_PAGE_TO_PHYS(pg));
 		if (opte & clearbits) {
+			/* We need to do something */
+			if (clearbits == PG_RW) {
+				result |= PG_RW;
+
+				/*
+				 * On write protect we might not need to flush 
+				 * the TLB
+				 */
+
+				/* First zap the RW bit! */
+				pmap_pte_clearbits(ptep, PG_RW); 
+				opte = *ptep;
+
+				/*
+				 * Then test if it is not cached as RW the TLB
+				 */
+				if (!(opte & PG_M))
+					goto no_tlb_shootdown;
+			}
+
+			/*
+			 * Since we need a shootdown we might as well
+			 * always clear PG_U AND PG_M.
+			 */
+
+			/* zap! */
+			opte = pmap_pte_set(ptep, (opte & ~(PG_U | PG_M)));
+
 			result |= (opte & clearbits);
-			pmap_pte_clearbits(&ptes[pl1_i(pve->pv_va)],
-			    (opte & clearbits));
+			*myattrs |= (opte & ~(clearbits));
+
 			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, 0, opte);
 		}
-		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
+no_tlb_shootdown:
+		pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
+
 	}
 
 	rw_exit(&pmap_main_lock);
@@ -2891,7 +2924,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
 		if ((ptes[pl1_i(va)] & PG_W) != 0) {
-			ptes[pl1_i(va)] &= ~PG_W;
+			pmap_pte_clearbits(&ptes[pl1_i(va)], PG_W);
 			pmap->pm_stats.wired_count--;
 		}
 #ifdef DIAGNOSTIC
