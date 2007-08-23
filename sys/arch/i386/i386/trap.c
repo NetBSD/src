@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.2.3 2007/08/20 18:38:16 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.2.4 2007/08/23 19:28:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.3 2007/08/20 18:38:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.2.4 2007/08/23 19:28:14 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -440,25 +440,21 @@ copyfault:
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
-		KERNEL_LOCK(1, l);
 #ifdef VM86
 		if (frame->tf_eflags & PSL_VM) {
 			vm86_gpfault(l, type & ~T_USER);
-			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 #endif
 		/* If pmap_exec_fixup does something, let's retry the trap. */
 		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
 		    &l->l_addr->u_pcb)) {
-			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_addr = (void *)rcr2();
 		ksi.ksi_code = SEGV_ACCERR;
-		KERNEL_UNLOCK_LAST(l);
 		goto trapsignal;
 
 	case T_TSSFLT|T_USER:
@@ -646,7 +642,6 @@ copyfault:
 					pmap_load();
 				return;
 			}
-			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -708,9 +703,7 @@ copyfault:
 			else
 				ksi.ksi_code = TRAP_TRACE;
 			ksi.ksi_addr = (void *)frame->tf_eip;
-			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
@@ -753,9 +746,7 @@ out:
 	return;
 trapsignal:
 	ksi.ksi_trap = type & ~T_USER;
-	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -810,7 +801,5 @@ startlwp(arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
-
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
