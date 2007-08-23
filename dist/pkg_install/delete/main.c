@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2007/08/14 22:59:50 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.3 2007/08/23 15:19:13 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.1.1.2 2007/08/14 22:59:50 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.3 2007/08/23 15:19:13 joerg Exp $");
 #endif
 #endif
 
@@ -167,7 +167,7 @@ main(int argc, char **argv)
 				errx(EXIT_FAILURE, "error expanding '%s' ('%s' nonexistent?)", *argv, _pkgdb_getPKGDB_DIR());
 			}
 		} else {
-			char   *dbdir;
+			const char   *dbdir;
 
 			dbdir = _pkgdb_getPKGDB_DIR();
 			if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
