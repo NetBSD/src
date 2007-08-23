@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24.2.1 2007/08/20 18:37:06 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.2.2 2007/08/23 19:28:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.1 2007/08/20 18:37:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.2 2007/08/23 19:28:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,23 +262,19 @@ syscall_fancy(struct trapframe *frame)
 		}
 	}
 
-	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(l, code, code, NULL, argp)) != 0) {
-		KERNEL_UNLOCK_LAST(l);
-		goto out;
+	if ((error = trace_enter(l, code, code, NULL, argp)) == 0) {
+		rval[0] = 0;
+		rval[1] = 0;
+
+		if (callp->sy_flags & SYCALL_MPSAFE) {
+			error = (*callp->sy_call)(l, argp, rval);
+		} else {
+			KERNEL_LOCK(1, l);
+			error = (*callp->sy_call)(l, argp, rval);
+			KERNEL_UNLOCK_LAST(l);
+		}
 	}
 
-	rval[0] = 0;
-	rval[1] = 0;
-
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_UNLOCK_LAST(l);
-		error = (*callp->sy_call)(l, argp, rval);
-	} else {
-		error = (*callp->sy_call)(l, argp, rval);
-		KERNEL_UNLOCK_LAST(l);
-	}
-out:
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];
