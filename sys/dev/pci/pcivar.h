@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.74.14.1 2007/08/03 22:17:20 jmcneill Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.74.14.2 2007/08/23 09:32:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,6 +42,7 @@
  */
 
 #include <sys/device.h>
+#include <sys/pnp.h>
 #include <machine/bus.h>
 #include <dev/pci/pcireg.h>
 
@@ -251,6 +252,12 @@ int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
  */
 pnp_state_t	pci_pnp_powerstate(pcireg_t);
 pnp_state_t	pci_pnp_capabilities(pcireg_t);
+
+struct ifnet;
+
+pnp_status_t	pci_net_generic_power(device_t, pnp_request_t, void *,
+				      pci_chipset_tag_t, pcitag_t, 
+				      struct pci_conf_state *, struct ifnet *);
 
 #endif /* _KERNEL */
 

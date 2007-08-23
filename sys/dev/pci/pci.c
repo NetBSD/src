@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.103.22.4 2007/08/21 06:33:51 joerg Exp $	*/
+/*	$NetBSD: pci.c,v 1.103.22.5 2007/08/23 09:32:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.4 2007/08/21 06:33:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.5 2007/08/23 09:32:51 joerg Exp $");
 
 #include "opt_pci.h"
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.103.22.4 2007/08/21 06:33:51 joerg Exp $")
 #include <dev/pci/pcidevs.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <net/if.h>
 
 #include "locators.h"
 
@@ -889,6 +891,75 @@ pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag,
     void *sc, pcireg_t state)
 {
 	return 0;
+}
+
+pnp_status_t
+pci_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
+    pci_chipset_tag_t pc, pcitag_t tag, struct pci_conf_state *pciconf,
+    struct ifnet *ifp)
+{
+	pnp_status_t status;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
+	pcireg_t val;
+	int off, s;
+
+	status = PNP_STATUS_UNSUPPORTED;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
+
+		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
+			return PNP_STATUS_UNSUPPORTED;
+		caps->state = pci_pnp_capabilities(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		state = opaque;
+		switch (*state) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			s = splnet();
+			(*ifp->if_stop)(ifp, 1);
+			pci_conf_capture(pc, tag, pciconf);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		if (pci_set_powerstate(pc, tag, val) == 0) {
+			status = PNP_STATUS_SUCCESS;
+			if (*state != PNP_STATE_D0)
+				break;
+
+			s = splnet();
+			pci_conf_restore(pc, tag, pciconf);
+
+			if (ifp->if_flags & IFF_UP) {
+				ifp->if_flags &= ~IFF_RUNNING;
+				(*ifp->if_init)(ifp);
+				(*ifp->if_start)(ifp);
+			}
+			splx(s);
+		}
+	case PNP_REQUEST_GET_STATE:
+		state = opaque;
+		if (pci_get_powerstate(pc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
+
+		*state = pci_pnp_powerstate(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
+	}
+
+	return status;
 }
 
 CFATTACH_DECL2(pci, sizeof(struct pci_softc),

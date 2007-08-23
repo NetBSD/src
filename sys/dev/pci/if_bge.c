@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.132.6.3 2007/08/21 06:56:48 joerg Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.132.6.4 2007/08/23 09:32:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.3 2007/08/21 06:56:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.132.6.4 2007/08/23 09:32:50 joerg Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -197,7 +197,7 @@ static int	bge_intr(void *);
 static void	bge_start(struct ifnet *);
 static int	bge_ioctl(struct ifnet *, u_long, void *);
 static int	bge_init(struct ifnet *);
-static void	bge_stop(struct bge_softc *);
+static void	bge_stop(struct ifnet *, int);
 static void	bge_watchdog(struct ifnet *);
 static int	bge_ifmedia_upd(struct ifnet *);
 static void	bge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -2646,6 +2646,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = bge_ioctl;
+	ifp->if_stop = bge_stop;
 	ifp->if_start = bge_start;
 	ifp->if_init = bge_init;
 	ifp->if_watchdog = bge_watchdog;
@@ -3935,7 +3936,7 @@ bge_init(struct ifnet *ifp)
 	ifp = &sc->ethercom.ec_if;
 
 	/* Cancel pending I/O and flush buffers. */
-	bge_stop(sc);
+	bge_stop(ifp, 0);
 	bge_reset(sc);
 	bge_chipinit(sc);
 
@@ -4115,9 +4116,8 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 			} else if (!(sc->bge_if_flags & IFF_UP))
 				bge_init(ifp);
 		} else {
-			if (ifp->if_flags & IFF_RUNNING) {
-				bge_stop(sc);
-			}
+			if (ifp->if_flags & IFF_RUNNING)
+				bge_stop(ifp, 1);
 		}
 		sc->bge_if_flags = ifp->if_flags;
 		error = 0;
@@ -4207,9 +4207,9 @@ bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
  * RX and TX lists.
  */
 static void
-bge_stop(struct bge_softc *sc)
+bge_stop(struct ifnet *ifp, int disable)
 {
-	struct ifnet *ifp = &sc->ethercom.ec_if;
+	struct bge_softc *sc = ifp->if_softc;
 
 	callout_stop(&sc->bge_timeout);
 
@@ -4367,71 +4367,7 @@ static pnp_status_t
 bge_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	struct bge_softc *sc = (struct bge_softc *)dv;
-	struct ifnet *ifp = &sc->ethercom.ec_if;
-	pnp_status_t status;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	pci_chipset_tag_t pc;
-	pcireg_t val;
-	pcitag_t tag;
-	int off, s;
 
-	status = PNP_STATUS_UNSUPPORTED;
-	pc = sc->sc_pc;
-	tag = sc->sc_pcitag;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
-
-		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
-			return PNP_STATUS_UNSUPPORTED;
-		caps->state = pci_pnp_capabilities(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			val = PCI_PMCSR_STATE_D0;
-			break;
-		case PNP_STATE_D3:
-			val = PCI_PMCSR_STATE_D3;
-			s = splnet();
-			bge_stop(sc);
-			bge_reset(sc);
-			pci_conf_capture(pc, tag, &sc->sc_pciconf);
-			splx(s);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-
-		if (pci_set_powerstate(pc, tag, val) == 0) {
-			status = PNP_STATUS_SUCCESS;
-			if (*state != PNP_STATE_D0)
-				break;
-
-			s = splnet();
-			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			if (ifp->if_flags & IFF_UP) {
-				ifp->if_flags &= ~IFF_RUNNING;
-				bge_init(ifp);
-				bge_start(ifp);
-			}
-			splx(s);
-		}
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-		if (pci_get_powerstate(pc, tag, &val) != 0)
-			return PNP_STATUS_UNSUPPORTED;
-
-		*state = pci_pnp_powerstate(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		status = PNP_STATUS_UNSUPPORTED;
-	}
-
-	return status;
+	return pci_net_generic_power(dv, req, opaque, sc->sc_pc, sc->sc_pcitag,
+	    &sc->sc_pciconf, &sc->ethercom.ec_if);
 }
