@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.11.18.1 2007/07/18 13:36:17 skrll Exp $	*/
+/* 	$NetBSD: lock.h,v 1.11.18.2 2007/08/23 07:49:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,8 @@
 #define HPPA_LDCW_ALIGN	16
 
 #define __SIMPLELOCK_ALIGN(p) \
-    (unsigned long *)(((uintptr_t)(p) + HPPA_LDCW_ALIGN - 1) & ~(HPPA_LDCW_ALIGN - 1))
+    (volatile unsigned long *)(((uintptr_t)(p) + HPPA_LDCW_ALIGN - 1) & \
+    ~(HPPA_LDCW_ALIGN - 1))
 
 #define __SIMPLELOCK_RAW_LOCKED		0
 #define __SIMPLELOCK_RAW_UNLOCKED	1
@@ -65,7 +66,7 @@ __SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
 }
 
 static __inline int
-__ldcw(unsigned long *__ptr)
+__ldcw(volatile unsigned long *__ptr)
 {
 	int __val;
 
@@ -98,7 +99,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
-	unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
+	volatile unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
 
 	/*
 	 * Note, if we detect that the lock is held when
@@ -115,7 +116,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
-	unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
+	volatile unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
 
 	return (__ldcw(__aptr) != __SIMPLELOCK_RAW_LOCKED);
 }
@@ -123,7 +124,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
-	unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
+	volatile unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
 
 	__sync();
 	*__aptr = __SIMPLELOCK_RAW_UNLOCKED;
@@ -132,7 +133,7 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 static __inline void
 __cpu_simple_lock_set(__cpu_simple_lock_t *alp)
 {
-	unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
+	volatile unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
 
 	*__aptr = __SIMPLELOCK_RAW_LOCKED;
 }
@@ -140,7 +141,7 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *alp)
 static __inline void
 __cpu_simple_lock_clear(__cpu_simple_lock_t *alp)
 {
-	unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
+	volatile unsigned long *__aptr = __SIMPLELOCK_ALIGN(alp);
 
 	*__aptr = __SIMPLELOCK_RAW_UNLOCKED;
 }
