@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.6.6.2 2007/08/21 23:58:49 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.6.6.3 2007/08/23 13:19:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -271,8 +271,8 @@ IDTVEC(softintr)
 	movq	%rbp,PCB_RBP(%rcx)
 	movq	PCB_RSP0(%rdx),%rsp	/* onto new stack */
 	sti
-	movl	IS_MAXLEVEL(%rax),%edi	/* ipl to run at */
-	movq	%r15,%rsi		/* interrupted LWP */
+	movq	%r15,%rdi		/* interrupted LWP */
+	movl	IS_MAXLEVEL(%rax),%esi	/* ipl to run at */
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	movq	L_ADDR(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
@@ -290,9 +290,9 @@ IDTVEC(softintr)
  *
  *	%rax		prevlwp from cpu_switchto()
  */
-softintr_ret:
+NENTRY(softintr_ret)
 	movl	CPUVAR(ILEVEL),%edx
-	leaq	L_MUTEX(%rax),%rdi	/* %eax from cpu_switchto */
+	movq	L_MUTEX(%rax),%rdi	/* %eax from cpu_switchto */
 	movl	%edx,CPUVAR(MTX_OLDSPL)	/* preserve priority until return */
 	call	_C_LABEL(mutex_spin_exit)/* unlock the old LWP */
 	cli
@@ -305,6 +305,6 @@ softintr_ret:
  */
 	.align	32
 
-ENTRY(softint_trigger)
+NENTRY(softint_trigger)
 	orl	%edi,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
