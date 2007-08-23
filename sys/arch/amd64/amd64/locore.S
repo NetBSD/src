@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20.4.1 2007/05/27 12:26:57 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.20.4.2 2007/08/23 12:07:49 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -175,7 +175,7 @@ _C_LABEL(lapic_isr):
 #endif
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
-	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
@@ -185,6 +185,8 @@ _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
 _C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
+					#   instruction
+_C_LABEL(cpu_feature2):	.long	0	# feature flags from 'cpuid'
 					#   instruction
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
@@ -334,6 +336,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	cpuid
 	movl	%eax,RELOC(cpu_id)
 	movl	%edx,RELOC(cpu_feature)
+	movl	%ecx,RELOC(cpu_feature2)
 
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx
