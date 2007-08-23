@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.62.14.1 2007/08/21 06:48:01 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.62.14.2 2007/08/23 09:32:50 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.1 2007/08/21 06:48:01 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62.14.2 2007/08/23 09:32:50 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -789,77 +789,9 @@ static pnp_status_t
 iwi_pci_power(device_t dv, pnp_request_t req, void *opaque)
 {
 	struct iwi_softc *sc = (struct iwi_softc *)dv;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	pnp_status_t status;
-	pnp_state_t *state;
-	pnp_capabilities_t *caps;
-	pci_chipset_tag_t pc;
-	pcireg_t val;
-	pcitag_t tag;
-	int off, s;
 
-	status = PNP_STATUS_UNSUPPORTED;
-	pc = sc->sc_pct;
-	tag = sc->sc_pcitag;
-
-	switch (req) {
-	case PNP_REQUEST_GET_CAPABILITIES:
-		caps = opaque;
-
-		if (!pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &off, &val))
-			return PNP_STATUS_UNSUPPORTED;
-		caps->state = pci_pnp_capabilities(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	case PNP_REQUEST_SET_STATE:
-		state = opaque;
-		switch (*state) {
-		case PNP_STATE_D0:
-			val = PCI_PMCSR_STATE_D0;
-			break;
-		case PNP_STATE_D3:
-			val = PCI_PMCSR_STATE_D3;
-			s = splnet();
-			iwi_stop(ifp, 1);
-			pci_conf_capture(pc, tag, &sc->sc_pciconf);
-			splx(s);
-			break;
-		default:
-			return PNP_STATUS_UNSUPPORTED;
-		}
-
-		if (pci_set_powerstate(pc, tag, val) == 0) {
-			status = PNP_STATUS_SUCCESS;
-			if (*state != PNP_STATE_D0)
-				break;
-
-			s = splnet();
-			pci_conf_restore(pc, tag, &sc->sc_pciconf);
-			/* clear device specific PCI configuration register 0x41 */
-			val = pci_conf_read(pc, tag, 0x40);
-			val &= ~0x0000ff00;
-			pci_conf_write(pc, tag, 0x40, val);
-
-			if (ifp->if_flags & IFF_UP) {
-				ifp->if_flags &= ~IFF_RUNNING;
-				iwi_init(ifp);
-				iwi_start(ifp);
-			}
-			splx(s);
-		}
-	case PNP_REQUEST_GET_STATE:
-		state = opaque;
-		if (pci_get_powerstate(pc, tag, &val) != 0)
-			return PNP_STATUS_UNSUPPORTED;
-
-		*state = pci_pnp_powerstate(val);
-		status = PNP_STATUS_SUCCESS;
-		break;
-	default:
-		status = PNP_STATUS_UNSUPPORTED;
-	}
-
-	return status;
+	return pci_net_generic_power(dv, req, opaque, sc->sc_pct, sc->sc_pcitag,
+	    &sc->sc_pciconf, &sc->sc_if);
 }
 
 static struct ieee80211_node *
