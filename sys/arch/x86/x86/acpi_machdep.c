@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.13.22.2 2007/08/14 22:25:07 joerg Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.13.22.3 2007/08/23 09:25:30 joerg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.2 2007/08/14 22:25:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13.22.3 2007/08/23 09:25:30 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,10 +289,10 @@ acpi_md_OsDisableInterrupt(void)
 }
 
 void
-acpi_md_callback(struct device *acpi)
+acpi_md_callback(void)
 {
 #ifdef MPBIOS
 	if (!mpbios_scanned)
 #endif
-	mpacpi_find_interrupts(acpi);
+	mpacpi_find_interrupts(acpi_softc);
 }
