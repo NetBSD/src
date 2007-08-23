@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.17 2007/08/21 13:06:53 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.18 2007/08/23 12:10:14 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.17 2007/08/21 13:06:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.18 2007/08/23 12:10:14 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2289,15 +2289,13 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
-
-		if (opte & PG_U)
-			xpte |= opte;
+		xpte |= opte;
 
 		if (ptp) {
 			ptp->wire_count--;		/* dropping a PTE */
 			/* Make sure that the PDE is flushed */
-			if ((ptp->wire_count <= 1) && !(opte & PG_U))
-				xpte |= opte;
+			if (ptp->wire_count <= 1)
+				xpte |= PG_U;
 		}
 
 		/*
@@ -2621,7 +2619,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			ptp->mdpage.mp_link = empty_ptps;
 			empty_ptps = ptp;
 		}
-		if (xpte != 0)
+		if ((xpte & PG_U) != 0)
 			pmap_tlb_shootdown(pmap, sva, eva, xpte);
 	}
 	pmap_tlb_shootwait();
