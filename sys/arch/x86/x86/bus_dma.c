@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.35.2.3 2007/08/21 23:58:50 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.35.2.4 2007/08/23 12:12:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.3 2007/08/21 23:58:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.4 2007/08/23 12:12:51 ad Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35.2.3 2007/08/21 23:58:50 ad Exp $");
 #include <machine/bus_private.h>
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
-#include <machine/atomic.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -1047,11 +1046,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				pte = kvtopte(va);
 				opte = *pte;
 				if ((opte & PG_N) == 0) {
-#ifdef __x86_64__
-					x86_atomic_setbits_u64(pte, PG_N);
-#else
-					x86_atomic_setbits_l(pte, PG_N);
-#endif
+					pmap_pte_setbits(pte, PG_N);
 					xpte |= opte;
 				}
 			}
@@ -1093,13 +1088,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pte = kvtopte(va);
 		opte = *pte;
-		if ((opte & PG_N) != 0) {
-#ifdef __x86_64__
-			x86_atomic_clearbits_u64(pte, PG_N);
-#else
-			x86_atomic_clearbits_l(pte, PG_N);
-#endif
-		}
+		if ((opte & PG_N) != 0)
+			pmap_pte_clearbits(pte, PG_N);
 	}
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
 	pmap_update(pmap_kernel());

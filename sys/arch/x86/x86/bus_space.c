@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8.2.3 2007/08/21 23:58:50 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.4 2007/08/23 12:12:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.3 2007/08/21 23:58:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.2.4 2007/08/23 12:12:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,8 +272,8 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
-	vaddr_t va;
-	pt_entry_t *pte;
+	vaddr_t va, sva;
+	pt_entry_t *pte, xpte;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
@@ -283,12 +283,14 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		panic("x86_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	sva = uvm_km_alloc(kernel_map, endpa - pa, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
-	if (va == 0)
+	if (sva == 0)
 		return (ENOMEM);
 
-	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+	*bshp = (bus_space_handle_t)(sva + (bpa & PGOFSET));
+	va = sva;
+	xpte = 0;
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
@@ -298,30 +300,20 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * the mainboard has wired up device space non-cacheable
 		 * on those machines.
 		 *
-		 * Note that it's not necessary to use atomic ops to
-		 * fiddle with the PTE here, because we don't care
-		 * about mod/ref information.
-		 *
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
 		 */
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
-#ifdef __x86_64__
 			if (cacheable)
-				x86_atomic_clearbits_u64(pte, PG_N);
+				pmap_pte_clearbits(pte, PG_N);
 			else
-				x86_atomic_setbits_u64(pte, PG_N);
-#else
-			if (cacheable)
-				x86_atomic_clearbits_l(pte, PG_N);
-			else
-				x86_atomic_setbits_l(pte, PG_N);
-#endif
-			pmap_tlb_shootdown(pmap_kernel(), va, 0, *pte);
+				pmap_pte_setbits(pte, PG_N);
+			xpte |= *pte;
 		}
 	}
 
+	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
 	pmap_update(pmap_kernel());
 
 	return 0;
