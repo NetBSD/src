@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.303.2.4 2007/07/15 13:16:10 ad Exp $
+#	$NetBSD: files.i386,v 1.303.2.5 2007/08/23 12:13:57 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -356,7 +356,7 @@ file	arch/i386/i386/apmcall.S	apmbios
 
 device cpu
 attach cpu at cpubus
-file	arch/i386/i386/cpu.c		cpu
+file	arch/x86/x86/cpu.c		cpu
 
 # XBox LED & system support
 file	arch/i386/xbox/xbox.c			xbox

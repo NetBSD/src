@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.15.2.4 2007/08/21 23:58:48 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.1 2007/08/23 12:13:57 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.4 2007/08/21 23:58:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.2.1 2007/08/23 12:13:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -102,6 +102,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.4 2007/08/21 23:58:48 ad Exp $");
 #include <machine/gdt.h>
 #include <machine/mtrr.h>
 #include <machine/pio.h>
+
+#ifdef i386
+#include <machine/tlog.h>
+#endif
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -139,26 +143,39 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
+#ifdef TRAPLOG
+struct tlog tlog_primary;
+#endif
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
-	.ci_self200 = (uint8_t *)&cpu_info_primary + 0x200,
+	.ci_idepth = -1,
+	.ci_curlwp = &lwp0,
+#ifdef TRAPLOG
+	.ci_tlog_base = &tlog_primary,
+#endif /* !TRAPLOG */
 };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
-u_int32_t cpus_attached = 0;
+static void	cpu_set_tss_gates(struct cpu_info *ci);
+
+#ifdef i386
+static void	cpu_init_tss(struct i386tss *, void *, void *);
+#endif
+
+uint32_t cpus_attached = 0;
+
+extern char x86_64_doubleflt_stack[];
 
 #ifdef MULTIPROCESSOR
 /*
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
+struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
 
-u_int32_t cpus_running = 0;
-
-extern char x86_64_doubleflt_stack[];
+uint32_t cpus_running = 0;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -172,7 +189,7 @@ static void	cpu_copy_trampoline(void);
  * Called from lapic_boot_init() (from mpbios_scan()).
  */
 void
-cpu_init_first(void)
+cpu_init_first()
 {
 	int cpunum = lapic_cpu_number();
 
@@ -181,12 +198,14 @@ cpu_init_first(void)
 		cpu_info[cpunum] = &cpu_info_primary;
 	}
 
+	cpu_info_primary.ci_cpuid = cpunum;
 	cpu_copy_trampoline();
 }
 #endif
 
 int
-cpu_match(struct device *parent, struct cfdata *match, void *aux)
+cpu_match(struct device *parent, struct cfdata *match,
+    void *aux)
 {
 
 	return 1;
@@ -223,7 +242,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	printf("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
+	aprint_verbose("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
 	uvm_page_recolor(ncolors);
 }
 
@@ -243,11 +262,14 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
+		aprint_naive(": Application Processor\n");
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
 		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
-		if (cpu_info[cpunum] != NULL)
-			panic("CPU at apic id %d already attached?", cpunum);
+		if (cpu_info[cpunum] != NULL) {
+			printf("\n");
+			panic("cpu at apic id %d already attached?", cpunum);
+		}
 		cpu_info[cpunum] = ci;
 #endif
 #ifdef TRAPLOG
@@ -255,9 +277,12 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		    M_DEVBUF, M_WAITOK);
 #endif
 	} else {
+		aprint_naive(": %s Processor\n",
+		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
+			printf("\n");
 			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
 			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
@@ -266,7 +291,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ci->ci_self = ci;
-	ci->ci_self200 = (uint8_t *)ci + 0x200;
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
@@ -280,7 +304,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	ci->ci_func = caa->cpu_func;
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
-#if defined(MULTIPROCESSOR)
+#ifdef MULTIPROCESSOR
 		int error;
 
 		error = mi_cpu_attach(ci);
@@ -295,26 +319,33 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
-	/* further PCB init done later. */
+#ifdef i386
+	pmap_reference(pmap_kernel());
+	ci->ci_pmap = pmap_kernel();
+	ci->ci_tlbstate = TLBSTATE_STALE;
+#endif
 
-	printf(": ");
+	/* further PCB init done later. */
 
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		printf("(uniprocessor)\n");
+		aprint_normal(": (uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
+		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
 		break;
 
 	case CPU_ROLE_BP:
-		printf("(boot processor)\n");
+		aprint_normal(": (boot processor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
-
+		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
 #if NLAPIC > 0
 		/*
 		 * Enable local apic
@@ -331,11 +362,12 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		printf("(application processor)\n");
+		aprint_normal(": (application processor)\n");
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
+		cpu_set_tss_gates(ci);
 		pmap_cpu_init_early(ci);
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
@@ -345,11 +377,12 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		printf("%s: not started\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: not started\n", sc->sc_dev.dv_xname);
 #endif
 		break;
 
 	default:
+		printf("\n");
 		panic("unknown processor type??\n");
 	}
 	cpu_vm_init(ci);
@@ -360,8 +393,15 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 
-		aprint_verbose("%s: idle lwp at %p, idle sp at 0x%lx\n",
-		    sc->sc_dev.dv_xname, l, l->l_addr->u_pcb.pcb_rsp);
+		aprint_verbose(
+		    "%s: idle lwp at %p, idle sp at %p\n",
+		    sc->sc_dev.dv_xname, l,
+#ifdef i386
+		    (void *)l->l_addr->u_pcb.pcb_esp
+#else
+		    (void *)l->l_addr->u_pcb.pcb_rsp
+#endif
+		);
 	}
 #endif
 }
@@ -371,20 +411,70 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
  */
 
 void
-cpu_init(struct cpu_info *ci)
+cpu_init(ci)
+	struct cpu_info *ci;
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
 
+#ifdef i386
+	/*
+	 * On a 486 or above, enable ring 0 write protection.
+	 */
+	if (ci->ci_cpu_class >= CPUCLASS_486)
+		lcr0(rcr0() | CR0_WP);
+#else
 	lcr0(rcr0() | CR0_WP);
-	lcr4(rcr4() | CR4_PGE | CR4_OSFXSR | CR4_OSXMMEXCPT);
+#endif
+
+	/*
+	 * On a P6 or above, enable global TLB caching if the
+	 * hardware supports it.
+	 */
+	if (cpu_feature & CPUID_PGE)
+		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
+
+	/*
+	 * If we have FXSAVE/FXRESTOR, use them.
+	 */
+	if (cpu_feature & CPUID_FXSR) {
+		lcr4(rcr4() | CR4_OSFXSR);
+
+		/*
+		 * If we have SSE/SSE2, enable XMM exceptions.
+		 */
+		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
+			lcr4(rcr4() | CR4_OSXMMEXCPT);
+	}
 
 #ifdef MTRR
-	if ((ci->ci_flags & CPUF_AP) == 0)
-		i686_mtrr_init_first();
-	mtrr_init_cpu(ci);
-#endif
+	/*
+	 * On a P6 or above, initialize MTRR's if the hardware supports them.
+	 */
+	if (cpu_feature & CPUID_MTRR) {
+		if ((ci->ci_flags & CPUF_AP) == 0)
+			i686_mtrr_init_first();
+		mtrr_init_cpu(ci);
+	}
+
+#ifdef i386
+	if (strcmp((char *)(ci->ci_vendor), "AuthenticAMD") == 0) {
+		/*
+		 * Must be a K6-2 Step >= 7 or a K6-III.
+		 */
+		if (CPUID2FAMILY(ci->ci_signature) == 5) {
+			if (CPUID2MODEL(ci->ci_signature) > 8 ||
+			    (CPUID2MODEL(ci->ci_signature) == 8 &&
+			     CPUID2STEPPING(ci->ci_signature) >= 7)) {
+				mtrr_funcs = &k6_mtrr_funcs;
+				k6_mtrr_init_first();
+				mtrr_init_cpu(ci);
+			}
+		}
+	}
+#endif	/* i386 */
+#endif /* MTRR */
 
 #ifdef MULTIPROCESSOR
 	ci->ci_flags |= CPUF_RUNNING;
@@ -396,7 +486,7 @@ bool x86_mp_online;
 
 #ifdef MULTIPROCESSOR
 void
-cpu_boot_secondary_processors(void)
+cpu_boot_secondary_processors()
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -427,7 +517,7 @@ cpu_init_idle_lwp(struct cpu_info *ci)
 }
 
 void
-cpu_init_idle_lwps(void)
+cpu_init_idle_lwps()
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -445,23 +535,28 @@ cpu_init_idle_lwps(void)
 }
 
 void
-cpu_start_secondary(struct cpu_info *ci)
+cpu_start_secondary(ci)
+	struct cpu_info *ci;
 {
 	int i;
-	struct pmap *kmp = pmap_kernel();
-	extern u_int64_t mp_pdirpa;
-	extern vaddr_t lo32_vaddr;
-	extern paddr_t lo32_paddr;
+	struct pmap *kpm = pmap_kernel();
+	extern paddr_t mp_pdirpa;
 
+#ifdef __x86_64__
 	/*
 	 * The initial PML4 pointer must be below 4G, so if the
 	 * current one isn't, use a "bounce buffer"
+	 *
+	 * XXX move elsewhere, not per CPU.
 	 */
-	if (kmp->pm_pdirpa > 0xffffffff) {
-		memcpy((void *)lo32_vaddr, kmp->pm_pdir, PAGE_SIZE);
+	if (kpm->pm_pdirpa > 0xffffffff) {
+		extern vaddr_t lo32_vaddr;
+		extern paddr_t lo32_paddr;
+		memcpy((void *)lo32_vaddr, kpm->pm_pdir, PAGE_SIZE);
 		mp_pdirpa = lo32_paddr;
 	} else
-		mp_pdirpa = kmp->pm_pdirpa;
+#endif
+		mp_pdirpa = kpm->pm_pdirpa;
 
 	ci->ci_flags |= CPUF_AP;
 
@@ -477,7 +572,8 @@ cpu_start_secondary(struct cpu_info *ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_PRESENT)) {
-		aprint_error("%s: failed to become ready\n", ci->ci_dev->dv_xname);
+		aprint_error("%s: failed to become ready\n",
+		    ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -488,7 +584,8 @@ cpu_start_secondary(struct cpu_info *ci)
 }
 
 void
-cpu_boot_secondary(struct cpu_info *ci)
+cpu_boot_secondary(ci)
+	struct cpu_info *ci;
 {
 	int i;
 
@@ -498,7 +595,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		aprint_error("CPU failed to start\n");
+		aprint_error("%s: failed to start\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -520,10 +617,12 @@ cpu_hatch(void *v)
 	struct cpu_info *ci = (struct cpu_info *)v;
 	int s;
 
+#ifdef __x86_64__
 	cpu_init_msrs(ci);
-
+#endif
 	cpu_probe_features(ci);
 	cpu_feature &= ci->ci_feature_flags;
+	cpu_feature2 &= ci->ci_feature2_flags;
 
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_PRESENT)
@@ -546,19 +645,28 @@ cpu_hatch(void *v)
 	cpu_init_idt();
 	lapic_set_lvt();
 	gdt_init_cpu(ci);
-	fpuinit(ci);
 
+#ifdef i386
+	npxinit(ci);
+	lldt(GSEL(GLDT_SEL, SEL_KPL));
+#else
+	fpuinit(ci);
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
+#endif
 
 	cpu_init(ci);
 
 	s = splhigh();
+#ifdef i386
+	lapic_tpr = 0;
+#else
 	lcr8(0);
+#endif
 	enable_intr();
 	splx(s);
 
-	aprint_debug("%s: CPU %u running\n", ci->ci_dev->dv_xname,
-	    ci->ci_cpuid);
+	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
+	    (long)ci->ci_cpuid);
 }
 
 #if defined(DDB)
@@ -577,10 +685,10 @@ cpu_debug_dump(void)
 
 	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%p	%s	%u	%x	%x	%10p	%10p\n",
+		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : ci->ci_dev->dv_xname,
-		    ci->ci_cpuid,
+		    (long)ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
 		    ci->ci_curlwp,
 		    ci->ci_fpcurlwp);
@@ -589,7 +697,7 @@ cpu_debug_dump(void)
 #endif
 
 static void
-cpu_copy_trampoline(void)
+cpu_copy_trampoline()
 {
 	/*
 	 * Copy boot code.
@@ -606,6 +714,77 @@ cpu_copy_trampoline(void)
 }
 
 #endif
+
+#ifdef i386
+static void
+cpu_init_tss(struct i386tss *tss, void *stack, void *func)
+{
+	memset(tss, 0, sizeof *tss);
+	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	tss->__tss_cs = GSEL(GCODE_SEL, SEL_KPL);
+	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
+	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
+	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
+	tss->__tss_eip = (int)func;
+}
+
+/* XXX */
+#define IDTVEC(name)	__CONCAT(X, name)
+typedef void (vector)(void);
+extern vector IDTVEC(tss_trap08);
+#ifdef DDB
+extern vector Xintrddbipi;
+extern int ddb_vec;
+#endif
+
+static void
+cpu_set_tss_gates(struct cpu_info *ci)
+{
+	struct segment_descriptor sd;
+
+	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	    UVM_KMF_WIRED);
+	cpu_init_tss(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
+	    IDTVEC(tss_trap08));
+	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
+	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GTRAPTSS_SEL, SEL_KPL));
+
+#if defined(DDB) && defined(MULTIPROCESSOR)
+	/*
+	 * Set up separate handler for the DDB IPI, so that it doesn't
+	 * stomp on a possibly corrupted stack.
+	 *
+	 * XXX overwriting the gate set in db_machine_init.
+	 * Should rearrange the code so that it's set only once.
+	 */
+	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	    UVM_KMF_WIRED);
+	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
+	    Xintrddbipi);
+
+	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GIPITSS_SEL].sd = sd;
+
+	setgate(&idt[ddb_vec], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GIPITSS_SEL, SEL_KPL));
+#endif
+}
+#else
+static void
+cpu_set_tss_gates(struct cpu_info *ci)
+{
+
+}
+#endif	/* i386 */
 
 
 int
@@ -631,9 +810,10 @@ mp_cpu_start(struct cpu_info *ci)
 	dwordptr[0] = 0;
 	dwordptr[1] = MP_TRAMPOLINE >> 4;
 
-	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
-	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
-	pmap_kremove (0, PAGE_SIZE);
+	pmap_kenter_pa(0, 0, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
+	memcpy((uint8_t *)0x467, dwordptr, 4);
+	pmap_kremove(0, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 
 #if NLAPIC > 0
@@ -677,6 +857,7 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 	outb(IO_RTC+1, NVRAM_RESET_RST);
 }
 
+#ifdef __x86_64__
 typedef void (vector)(void);
 extern vector Xsyscall, Xsyscall32;
 
@@ -697,3 +878,4 @@ cpu_init_msrs(struct cpu_info *ci)
 	if (cpu_feature & CPUID_NOX)
 		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }
+#endif	/* __x86_64__ */

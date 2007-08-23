@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.33.2.4 2007/08/20 18:37:08 ad Exp $
+#	$NetBSD: files.amd64,v 1.33.2.5 2007/08/23 12:13:56 ad Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -94,7 +94,7 @@ file	arch/amd64/amd64/mainbus.c		mainbus
 
 device cpu
 attach cpu at cpubus
-file	arch/amd64/amd64/cpu.c		cpu
+file	arch/x86/x86/cpu.c		cpu
 
 include "dev/wsfb/files.wsfb"
 
