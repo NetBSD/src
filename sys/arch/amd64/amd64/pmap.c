@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.5 2007/08/23 12:08:59 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.6 2007/08/23 17:16:44 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.5 2007/08/23 12:08:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.6 2007/08/23 17:16:44 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -696,7 +696,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (opte & PG_PS)
 		panic("pmap_kenter_pa: PG_PS");
 #endif
-	if (pmap_valid_entry(opte)) {
+	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+		/* This should not happen, so no need to batch updates. */
 		crit_enter();
 		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
 		crit_exit();
@@ -765,9 +766,11 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 			      va);
 #endif
 	}
-	crit_enter();
-	pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
-	crit_exit();
+	if ((xpte & (PG_V | PG_U)) == (PG_V | PG_U)) {
+		crit_enter();
+		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
+		crit_exit();
+	}
 }
 
 /*
@@ -2016,9 +2019,18 @@ pmap_deactivate(struct lwp *l)
 	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	/*
+	 * wait for pending TLB shootdowns to complete.  necessary
+	 * because TLB shootdown state is per-CPU, and the LWP may
+	 * be coming off the CPU before it has a chance to call
+	 * pmap_update().
+	 */
+	pmap_tlb_shootwait();
+
+	/*
 	 * mark the pmap no longer in use by this processor. 
 	 */
 	x86_atomic_clearbits_ul(&pmap->pm_cpus, curcpu()->ci_cpumask);
+
 }
 
 /*
@@ -2297,8 +2309,12 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		pmap->pm_stats.resident_count--;
 		xpte |= opte;
 
-		if (ptp)
+		if (ptp) {
 			ptp->wire_count--;		/* dropping a PTE */
+			/* Make sure that the PDE is flushed */
+			if (ptp->wire_count <= 1)
+				xpte |= PG_U;
+		}
 
 		/*
 		 * if we are not on a pv_head list we are done.
@@ -2376,10 +2392,15 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		pmap->pm_stats.wired_count--;
 	pmap->pm_stats.resident_count--;
 
-	if (ptp)
-		ptp->wire_count--;		/* dropping a PTE */
+	if (opte & PG_U)
+		pmap_tlb_shootdown(pmap, va, 0, opte);
 
-	pmap_tlb_shootdown(pmap, va, 0, opte);
+	if (ptp) {
+		ptp->wire_count--;		/* dropping a PTE */
+		/* Make sure that the PDE is flushed */
+		if ((ptp->wire_count <= 1) && !(opte & PG_U))
+			pmap_tlb_shootdown(pmap, va, 0, opte);
+	}
 
 	/*
 	 * if we are not on a pv_head list we are done.
@@ -2543,7 +2564,8 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		}
 	}
 
-	pmap_tlb_shootdown(pmap, sva, eva, xpte);
+	if ((xpte & PG_U) != 0)
+		pmap_tlb_shootdown(pmap, sva, eva, xpte);
 	pmap_tlb_shootwait();
 	pmap_unmap_ptes(pmap);
 	rw_exit(&pmap_main_lock);
@@ -2606,7 +2628,9 @@ pmap_page_remove(struct vm_page *pg)
 			pve->pv_pmap->pm_stats.wired_count--;
 		pve->pv_pmap->pm_stats.resident_count--;
 
-		pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, 0, opte);
+		/* Shootdown only if referenced */
+		if (opte & PG_U)
+			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, 0, opte);
 
 		/* sync R/M bits */
 		vm_physmem[bank].pmseg.attrs[off] |= (opte & (PG_U|PG_M));
@@ -2626,7 +2650,10 @@ pmap_page_remove(struct vm_page *pg)
 	}
 	pmap_free_pvs(NULL, killlist);
 	rw_exit(&pmap_main_lock);
+
+	crit_enter();
 	pmap_tlb_shootwait();
+	crit_exit();
 }
 
 /*
@@ -2743,7 +2770,9 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 
 	rw_exit(&pmap_main_lock);
 
+	crit_enter();
 	pmap_tlb_shootwait();
+	crit_exit();
 
 	return(result != 0);
 }
@@ -2778,7 +2807,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *ptes, *spte, *epte;
 	pd_entry_t **pdes, opte, xpte;
-	vaddr_t blockend, va;
+	vaddr_t blockend, va, tva;
 
 	pmap_map_ptes(pmap, &ptes, &pdes);		/* locks pmap */
 
@@ -2824,8 +2853,10 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			xpte |= opte;
 			if ((opte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
 				pmap_pte_clearbits(spte, PG_RW);
-				pmap_tlb_shootdown(pmap, ptob(spte - ptes),
-				    0, opte);
+				if (*spte & PG_M) {
+					tva = x86_ptob(spte - ptes);
+					pmap_tlb_shootdown(pmap, tva, 0, opte);
+				}
 			}
 		}
 	}
