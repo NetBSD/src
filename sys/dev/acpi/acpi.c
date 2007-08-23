@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.101.16.7 2007/08/14 22:25:07 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101.16.8 2007/08/23 09:25:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.7 2007/08/14 22:25:07 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101.16.8 2007/08/23 09:25:29 joerg Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -222,7 +222,6 @@ acpi_probe(void)
 		return 0;
 	}
 
-
 	if (!acpi_force_load && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
 		printf("ACPI: BIOS implementation in listed as broken:\n");
 		printf("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
@@ -232,6 +231,29 @@ acpi_probe(void)
 			AcpiGbl_XSDT->AslCompilerId,
 		        AcpiGbl_XSDT->AslCompilerRevision);
 		printf("ACPI: not used. set acpi_force_load to use anyway.\n");
+		return 0;
+	}
+
+	/* Install the default address space handlers. */
+	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
+	    ACPI_ADR_SPACE_SYSTEM_MEMORY, ACPI_DEFAULT_HANDLER, NULL, NULL);
+	if (ACPI_FAILURE(rv)) {
+		printf("ACPI: unable to initialise SystemMemory handler: %s\n",
+		    AcpiFormatException(rv));
+		return 0;
+	}
+	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
+	    ACPI_ADR_SPACE_SYSTEM_IO, ACPI_DEFAULT_HANDLER, NULL, NULL);
+	if (ACPI_FAILURE(rv)) {
+		printf("ACPI: unable to initialise SystemIO handler: %s\n",
+		     AcpiFormatException(rv));
+		return 0;
+	}
+	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
+	    ACPI_ADR_SPACE_PCI_CONFIG, ACPI_DEFAULT_HANDLER, NULL, NULL);
+	if (ACPI_FAILURE(rv)) {
+		printf("ACPI: unabled to initialise PciConfig handler: %s\n",
+		    AcpiFormatException(rv));
 		return 0;
 	}
 
@@ -358,7 +380,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 		aprint_verbose("%s: SCI interrupting at int %d\n",
 		    sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
 
-	acpi_md_callback((struct device *)sc);
+	acpi_md_callback();
 
 	rv = AcpiEnableSubsystem(0);
 	if (ACPI_FAILURE(rv)) {
