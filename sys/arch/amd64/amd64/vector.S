@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10.6.1 2007/08/21 23:58:49 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.6.2 2007/08/23 12:09:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -380,7 +380,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	 * Save state, ack interrupt and count it.  Count locally
 	 * so other CPUs don't have to touch the counter's line.
 	 */
-	testq	$SEL_UPL,8(%esp)
+	testq	$SEL_UPL,8(%rsp)
 	jz	0f
 	swapgs
 0:
@@ -388,9 +388,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	pushq	%rbx
 	pushq	%rcx
 	pushq	%rdx
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
-	addl	$1,CPUVAR(TLB_EVCNT)+EV_COUNT
-	adcl	$0,CPUVAR(TLB_EVCNT)+EV_COUNT+4
+	incq	CPUVAR(TLB_EVCNT)+EV_COUNT
 	/*
 	 * Find out what we need to invalidate, clear the mailbox
 	 * lock and notify the waiter of completion.  The 'xchgl'
@@ -403,6 +401,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	xchgq	MB_POINTER(%rcx), %rbx
 	lock
 	incq	(%rbx)
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
 	je	5f
 1:
@@ -417,26 +416,25 @@ IDTVEC(intr_lapic_tlb_mcast)
 	popq	%rcx
 	popq	%rbx
 	popq	%rax
-	testq	$SEL_UPL,8(%esp)
+	testq	$SEL_UPL, 8(%rsp)
 	jz	4f
 	swapgs
 4:
 	iretq
 5:
 	/* Invalidate all user pages. */
-	movq	%cr3,%rax
-	movq	%rax,%cr3
+	movq	%cr3, %rax
+	movq	%rax, %cr3
 	jmp	3b
 
 /*
  * Broadcast TLB shootdown handler for kernel_pmap.
  */
 IDTVEC(intr_lapic_tlb_bcast)
-	/* Save state and ack the interrupt. */
+	/* Save state. */
 	pushq	%rax
 	pushq	%rbx
 	pushq	%rdx
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	/*
 	 * Find out what we need to invalidate and notify the waiter
 	 * of completion.  If this is the last CPU to process the 
@@ -448,6 +446,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rbx
 	lock
 	incq	_C_LABEL(pmap_mbox)+MB_TAIL
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
 	je,pn	3f
 1:
@@ -468,10 +467,10 @@ IDTVEC(intr_lapic_tlb_bcast)
 	 * If we have been asked to invalidate the entire TLB
 	 * we arrive here.
 	 */
-	movq	%cr4,%rax
-	leaq	-CR4_PGE(%rax),%rdx
-	movq	%rdx,%cr4
-	movq	%rax,%cr4
+	movq	%cr4, %rax
+	leaq	-CR4_PGE(%rax), %rdx
+	movq	%rdx, %cr4
+	movq	%rax, %cr4
 	/* Restore state & return */
 	popq	%rdx
 	popq	%rbx
@@ -479,8 +478,8 @@ IDTVEC(intr_lapic_tlb_bcast)
 	iretq
 4:
 	/* Invalidate user TLB entries. */
-	movq	%cr3,%rax
-	movq	%rax,%cr3
+	movq	%cr3, %rax
+	movq	%rax, %cr3
 	/* Restore state & return */
 	popq	%rdx
 	popq	%rbx
