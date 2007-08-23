@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.89.4.4 2007/08/21 10:36:53 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89.4.5 2007/08/23 12:11:08 ad Exp $	*/
 
 /*
  *
@@ -47,6 +47,8 @@
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
+#include <machine/atomic.h>
+
 #include <uvm/uvm_object.h>
 
 /*
@@ -491,6 +493,9 @@ kvtopte(vaddr_t va)
 	return (PTE_BASE + x86_btop(va));
 }
 
+#define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
+#define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
+#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 
