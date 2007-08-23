@@ -1,4 +1,4 @@
-/* $NetBSD: audit-packages.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $ */
+/* $NetBSD: audit-packages.c,v 1.1.1.4 2007/08/23 15:19:13 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Adrian Portelli <adrianp@NetBSD.org>.
@@ -126,10 +126,10 @@ int check_sig(char *);
 int pv_message(char *[]);
 int ap_ignore(char *[]);
 void show_info(char *);
-void set_pvfile(char *);
+void set_pvfile(const char *);
 char *clean_conf(char *);
 int get_confvalues(void);
-char *safe_strdup(char *);
+char *safe_strdup(const char *);
 
 /*
  * TODO:
@@ -574,6 +574,7 @@ char *
 clean_conf(char *conf_line)
 {
 	int i = 0;
+	size_t len = 0;
 	char *token = NULL;
 	char *cp;
 
@@ -600,6 +601,13 @@ clean_conf(char *conf_line)
 		}
 	}
 
+	len = strlen(token);
+
+	/* look for entries with no associated value */
+	if (len == 0) {
+		token = NULL;
+	}
+
 	return token;
 }
 
@@ -611,6 +619,9 @@ get_confvalues(void)
 	char *line_ptr = NULL;
 	char *line = NULL;
 	char *retval = NULL;
+	Boolean f_ignore = FALSE;
+	Boolean f_verify_bin = FALSE;
+	Boolean f_set_pvfile = FALSE;
 
 	if ((conf = fopen(conf_file, "r")) == NULL) {
 		if (verbose >= 2)
@@ -629,20 +640,29 @@ get_confvalues(void)
 		if ((line[0] == '#') || (line[0] == '\n'))
 			continue;
 
-		if (strncmp(line, "IGNORE_URLS", 11) == 0) {
+		if ((strncmp(line, "IGNORE_URLS", 11) == 0) && 
+		    (f_ignore == FALSE)) {
 			retval = clean_conf(line);
-			if (retval != NULL)
+			if (retval != NULL) {
 				ignore = safe_strdup(retval);
+				f_ignore = TRUE;
+			}
 		}
-		else if (strncmp(line, "GPG", 3) == 0) {
+		else if ((strncmp(line, "GPG", 3) == 0) &&
+		    (f_verify_bin == FALSE)) {
 			retval = clean_conf(line);
-			if (retval != NULL)
-				verify_bin = retval;
+			if (retval != NULL) {
+				verify_bin = safe_strdup(retval);
+				f_verify_bin = TRUE;
+			}
 		}
-		else if (strncmp(line, "PKGVULNDIR", 9) == 0) {
+		else if ((strncmp(line, "PKGVULNDIR", 9) == 0) && 
+		    (f_set_pvfile == FALSE)) {
 			retval = clean_conf(line);
-			if (retval != NULL)
+			if (retval != NULL) {
 				set_pvfile(retval);
+				f_set_pvfile = TRUE;
+			}
 		}
 
 		retval = NULL;
@@ -1035,7 +1055,7 @@ show_info(char *varname)
 
 /* set the location for the pkg-vulnerabilities file */
 void
-set_pvfile(char *vuln_dir)
+set_pvfile(const char *vuln_dir)
 {
 	char *pvloc = NULL;
 	size_t retval;
@@ -1053,7 +1073,7 @@ set_pvfile(char *vuln_dir)
 
 /* duplicate a string and check the return value */
 char *
-safe_strdup(char *dupe)
+safe_strdup(const char *dupe)
 {
 	char *retval;
 

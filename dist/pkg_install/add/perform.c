@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.4 2007/08/23 15:19:12 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.4 2007/08/23 15:19:12 joerg Exp $");
 #endif
 #endif
 
@@ -203,6 +203,173 @@ installprereq(const char *name, int *errc, int doupdate)
 	return ret;
 }
 
+static int
+pkg_do_installed(int *replacing, char replace_via[MaxPathSize], char replace_to[MaxPathSize],
+    Boolean is_depoted_pkg, const char *dbdir)
+{
+	char    replace_from[MaxPathSize];
+	char   *s;
+	char    buf[MaxPathSize];
+	char *best_installed;
+
+	if ((s = strrchr(PkgName, '-')) == NULL) {
+		warnx("Package name %s does not contain a version, bailing out", PkgName);
+		return -1;
+	}
+	
+	/*
+	 * See if the pkg is already installed. If so, we might want to
+	 * upgrade/replace it. Otherwise, just return and let pkg_do work.
+	 */
+	(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
+		(int)(s - PkgName) + 1, PkgName);
+	best_installed = find_best_matching_installed_pkg(buf);
+	if (best_installed == NULL)
+		return 0;
+
+	if (!Replace || Fake) {
+		if (is_depoted_pkg) {
+			free(best_installed);
+			return 0;
+		} else {
+			warnx("other version '%s' already installed", best_installed);
+			free(best_installed);
+			return 1;	/* close enough for government work */
+		}
+	}
+
+	/* XXX Should list the steps in Fake mode */
+	snprintf(replace_from, sizeof(replace_from), "%s/%s/" REQUIRED_BY_FNAME,
+		 dbdir, best_installed);
+	snprintf(replace_via, sizeof(replace_via), "%s/.%s." REQUIRED_BY_FNAME,
+		 dbdir, best_installed);
+	snprintf(replace_to, sizeof(replace_to), "%s/%s/" REQUIRED_BY_FNAME,
+		 dbdir, PkgName);
+
+	if (Verbose)
+		printf("Upgrading %s to %s.\n", best_installed, PkgName);
+
+	if (fexists(replace_from)) {  /* Are there any dependencies? */
+	  	/*
+		 * Upgrade step 1/4: Check if the new version is ok with all pkgs
+		 * (from +REQUIRED_BY) that require this pkg
+		 */
+		FILE *rb;                     /* +REQUIRED_BY file */
+		char pkg2chk[MaxPathSize];
+
+		rb = fopen(replace_from, "r");
+		if (! rb) {
+			warnx("Cannot open '%s' for reading%s", replace_from,
+			      Force ? " (proceeding anyways)" : "");
+			if (Force)
+				goto ignore_replace_depends_check;
+			else
+				return -1;
+		}
+		while (fgets(pkg2chk, sizeof(pkg2chk), rb)) {
+			package_t depPlist;
+			FILE *depf;
+			plist_t *depp;
+			char depC[MaxPathSize];
+							
+			depPlist.head = depPlist.tail = NULL;
+
+			s = strrchr(pkg2chk, '\n');
+			if (s)
+				*s = '\0'; /* strip trailing '\n' */
+							
+			/* 
+			 * step into pkg2chk, read it's +CONTENTS file and see if
+			 * all @pkgdep lines agree with PkgName (using pkg_match()) 
+			 */
+			snprintf(depC, sizeof(depC), "%s/%s/%s", dbdir, pkg2chk, CONTENTS_FNAME);
+			depf = fopen(depC , "r");
+			if (depf == NULL) {
+				warnx("Cannot check depends in '%s'%s", depC, 
+				      Force ? " (proceeding anyways)" : "!" );
+				if (Force)
+					goto ignore_replace_depends_check;
+				else
+					return -1;
+			}
+			read_plist(&depPlist, depf);
+			fclose(depf);
+							
+			for (depp = depPlist.head; depp; depp = depp->next) {
+				char base_new[MaxPathSize];
+				char base_exist[MaxPathSize];
+				char *s2;
+							
+				if (depp->type != PLIST_PKGDEP)
+					continue;
+
+				/*
+				 *  Prepare basename (no versions) of both pkgs,
+				 *  to see if we want to compare against that
+				 *  one at all. 
+				 */
+				strlcpy(base_new, PkgName, sizeof(base_new));
+				s2 = strpbrk(base_new, "<>[]?*{"); /* } */
+				if (s2)
+					*s2 = '\0';
+				else {
+					s2 = strrchr(base_new, '-');
+					if (s2)
+						*s2 = '\0';
+				}
+				strlcpy(base_exist, depp->name, sizeof(base_exist));
+				s2 = strpbrk(base_exist, "<>[]?*{"); /* } */
+				if (s2)
+					*s2 = '\0';
+				else {
+					s2 = strrchr(base_exist, '-');
+					if (s2)
+						*s2 = '\0';
+				}
+				if (strcmp(base_new, base_exist) == 0) {
+					/* Same pkg, so do the interesting compare */
+					if (pkg_match(depp->name, PkgName)) {
+						if (Verbose)
+							printf("@pkgdep check: %s is ok for %s (in %s pkg)\n",
+							       PkgName, depp->name, pkg2chk);
+					} else {
+						printf("Package %s requires %s, \n\tCannot replace with %s%s\n",
+						       pkg2chk, depp->name, PkgName,
+						       Force? " (proceeding anyways)" : "!");
+						if (! Force)
+							return -1;
+					}
+				}
+			}
+		}
+		fclose(rb);
+
+ignore_replace_depends_check:
+		/*
+		 * Upgrade step 2/4: Do the actual update by moving aside
+		 * the +REQUIRED_BY file, deinstalling the old pkg, adding
+		 * the new one and moving the +REQUIRED_BY file back
+		 * into place (finished in step 3/4)
+		 */
+		if (Verbose)
+			printf("mv %s %s\n", replace_from, replace_via);						
+		if (rename(replace_from, replace_via) != 0)
+			err(EXIT_FAILURE, "rename failed");
+
+		*replacing = 1;
+	}
+
+	if (Verbose) {
+		printf("%s/pkg_delete -K %s '%s'\n",
+			BINDIR, dbdir, best_installed);
+	}
+	fexec(BINDIR "/pkg_delete", "-K", dbdir, best_installed, NULL);
+
+	free(best_installed);
+
+	return 0;
+}
+
 /*
  * Install a single package
  * Returns 0 if everything is ok, >0 else
@@ -211,7 +378,6 @@ static int
 pkg_do(const char *pkg, lpkg_head_t *pkgs)
 {
 	char    playpen[MaxPathSize];
-	char    replace_from[MaxPathSize];
 	char    replace_via[MaxPathSize];
 	char    replace_to[MaxPathSize];
 	char   *buildinfo[BI_ENUM_COUNT];
@@ -423,7 +589,12 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	}
 
 	/* Protect against old packages with bogus @name fields */
-	PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
+	p = find_plist(&Plist, PLIST_NAME);
+	if (p->name == NULL) {
+		warnx("PLIST contains no @name field");
+		goto bomb;
+	}
+	PkgName = p->name;
 
 	if (fexists(VIEWS_FNAME))
 		is_depoted_pkg = TRUE;
@@ -474,158 +645,14 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 	}
 
 	/* See if some other version of us is already installed */
-	{
-		char   *s;
-
-		if ((s = strrchr(PkgName, '-')) != NULL) {
-			char    buf[MaxPathSize];
-			char *best_installed;
-
-			/*
-			 * See if the pkg is already installed. If so, we might
-			 * want to upgrade/replace it. 
-			 */
-			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
-				(int)(s - PkgName) + 1, PkgName);
-			best_installed = find_best_matching_installed_pkg(buf);
-			if (best_installed) {
-				if (Replace && !Fake) {
-					/* XXX Should list the steps in Fake mode */
-					snprintf(replace_from, sizeof(replace_from), "%s/%s/" REQUIRED_BY_FNAME,
-						 dbdir, best_installed);
-					snprintf(replace_via, sizeof(replace_via), "%s/.%s." REQUIRED_BY_FNAME,
-						 dbdir, best_installed);
-					snprintf(replace_to, sizeof(replace_to), "%s/%s/" REQUIRED_BY_FNAME,
-						 dbdir, PkgName);
-
-					if (Verbose)
-						printf("Upgrading %s to %s.\n", best_installed, PkgName);
-
-					if (fexists(replace_from)) {  /* Are there any dependencies? */
-					  	/*
-						 * Upgrade step 1/4: Check if the new version is ok with all pkgs
-						 * (from +REQUIRED_BY) that require this pkg
-						 */
-						FILE *rb;                     /* +REQUIRED_BY file */
-						char pkg2chk[MaxPathSize];
-
-						rb = fopen(replace_from, "r");
-						if (! rb) {
-							warnx("Cannot open '%s' for reading%s", replace_from,
-							      Force ? " (proceeding anyways)" : "");
-							if (Force)
-								goto ignore_replace_depends_check;
-							else
-								goto bomb;
-						}
-						while (fgets(pkg2chk, sizeof(pkg2chk), rb)) {
-							package_t depPlist;
-							FILE *depf;
-							plist_t *depp;
-							char depC[MaxPathSize];
-							
-							depPlist.head = depPlist.tail = NULL;
-
-							s = strrchr(pkg2chk, '\n');
-							if (s)
-								*s = '\0'; /* strip trailing '\n' */
-							
-							/* 
-							 * step into pkg2chk, read it's +CONTENTS file and see if
-							 * all @pkgdep lines agree with PkgName (using pkg_match()) 
-							 */
-							snprintf(depC, sizeof(depC), "%s/%s/%s", dbdir, pkg2chk, CONTENTS_FNAME);
-							depf = fopen(depC , "r");
-							if (depf == NULL) {
-								warnx("Cannot check depends in '%s'%s", depC, 
-								      Force ? " (proceeding anyways)" : "!" );
-								if (Force)
-									goto ignore_replace_depends_check;
-								else
-									goto bomb;
-							}
-							read_plist(&depPlist, depf);
-							fclose(depf);
-							
-							for (depp = depPlist.head; depp; depp = depp->next) {
-								char base_new[MaxPathSize];
-								char base_exist[MaxPathSize];
-								char *s2;
-								
-								if (depp->type != PLIST_PKGDEP)
-									continue;
-
-								/*  Prepare basename (no versions) of both pkgs,
-								 *  to see if we want to compare against that
-								 *  one at all. 
-								 */
-								strlcpy(base_new, PkgName, sizeof(base_new));
-								s2 = strpbrk(base_new, "<>[]?*{"); /* } */
-								if (s2)
-									*s2 = '\0';
-								else {
-									s2 = strrchr(base_new, '-');
-									if (s2)
-										*s2 = '\0';
-								}
-								strlcpy(base_exist, depp->name, sizeof(base_exist));
-								s2 = strpbrk(base_exist, "<>[]?*{"); /* } */
-								if (s2)
-									*s2 = '\0';
-								else {
-									s2 = strrchr(base_exist, '-');
-									if (s2)
-										*s2 = '\0';
-								}
-								if (strcmp(base_new, base_exist) == 0) {
-									/* Same pkg, so do the interesting compare */
-									if (pkg_match(depp->name, PkgName)) {
-										if (Verbose)
-											printf("@pkgdep check: %s is ok for %s (in %s pkg)\n",
-											       PkgName, depp->name, pkg2chk);
-									} else {
-										printf("Package %s requires %s, \n\tCannot replace with %s%s\n",
-										       pkg2chk, depp->name, PkgName,
-										       Force? " (proceeding anyways)" : "!");
-										if (! Force)
-											goto bomb;
-									}
-								}
-							}
-						}
-						fclose(rb);
-						
-ignore_replace_depends_check:
-						/*
-						 * Upgrade step 2/4: Do the actual update by moving aside
-						 * the +REQUIRED_BY file, deinstalling the old pkg, adding
-						 * the new one and moving the +REQUIRED_BY file back
-						 * into place (finished in step 3/4)
-						 */
-						if (Verbose)
-							printf("mv %s %s\n", replace_from, replace_via);						
-						rc = rename(replace_from, replace_via);
-						assert(rc == 0);
-						
-						replacing = 1;
-					}
-
-					if (Verbose) {
-						printf("%s/pkg_delete -K %s '%s'\n",
-							BINDIR,
-							dbdir,
-							best_installed);
-					}
-					fexec(BINDIR "/pkg_delete", "-K", dbdir, best_installed, NULL);
-				} else if (!is_depoted_pkg) {
-					warnx("other version '%s' already installed", best_installed);
-
-					errc = 1;
-					goto success;	/* close enough for government work */
-				}
-				free(best_installed);
-			}
-		}
+	switch (pkg_do_installed(&replacing, replace_via, replace_to, is_depoted_pkg, dbdir)) {
+	case 0:
+		break;
+	case 1:
+		errc = 1;
+		goto success;
+	case -1:
+		goto bomb;
 	}
 
 	/* See if there are conflicting packages installed */

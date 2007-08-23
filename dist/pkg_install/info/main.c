@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4 2007/08/23 15:19:14 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.4 2007/08/23 15:19:14 joerg Exp $");
 #endif
 #endif
 
@@ -315,7 +315,7 @@ main(int argc, char **argv)
 					errx(EXIT_FAILURE, "Error during search in pkgdb for %s", *argv);
 				}
 			} else {
-				char   *dbdir;
+				const char   *dbdir;
 
 				dbdir = _pkgdb_getPKGDB_DIR();
 				if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {

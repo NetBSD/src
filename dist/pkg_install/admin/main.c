@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4 2007/08/23 15:19:13 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.4 2007/08/23 15:19:13 joerg Exp $");
 #endif
 
 /*
@@ -229,8 +229,9 @@ add1pkg(const char *pkgdir)
 	FILE	       *f;
 	plist_t	       *p;
 	package_t	Plist;
-	char 		contents[MaxPathSize];
-	char	       *PkgDBDir, *PkgName, *dirp;
+	char 	       *contents;
+	const char	*PkgDBDir;
+	char *PkgName, *dirp;
 	char 		file[MaxPathSize];
 	char		dir[MaxPathSize];
 	int		cnt = 0;
@@ -239,14 +240,10 @@ add1pkg(const char *pkgdir)
 		err(EXIT_FAILURE, "cannot open pkgdb");
 
 	PkgDBDir = _pkgdb_getPKGDB_DIR();
-	(void) snprintf(contents, sizeof(contents), "%s/%s", PkgDBDir, pkgdir);
-	if (!(isdir(contents) || islinktodir(contents)))
-		errx(EXIT_FAILURE, "`%s' does not exist.", contents);
-
-	(void) strlcat(contents, "/", sizeof(contents));
-	(void) strlcat(contents, CONTENTS_FNAME, sizeof(contents));
+	contents = pkgdb_pkg_file(pkgdir, CONTENTS_FNAME);
 	if ((f = fopen(contents, "r")) == NULL)
 		errx(EXIT_FAILURE, "%s: can't open `%s'", pkgdir, CONTENTS_FNAME);
+	free(contents);
 
 	Plist.head = Plist.tail = NULL;
 	read_plist(&Plist, f);
@@ -323,7 +320,7 @@ rebuild(void)
 {
 	DIR	       *dp;
 	struct dirent  *de;
-	char	       *PkgDBDir;
+	const char     *PkgDBDir;
 	char		cachename[MaxPathSize];
 
 	pkgcnt = 0;
@@ -455,9 +452,7 @@ remove_required_by(const char *pkgname, void *cookie)
 {
 	char *path;
 
-	if (asprintf(&path, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkgname,
-		     REQUIRED_BY_FNAME) == -1)
-		errx(EXIT_FAILURE, "asprintf failed");
+	path = pkgdb_pkg_file(pkgname, REQUIRED_BY_FNAME);
 
 	if (unlink(path) == -1 && errno != ENOENT)
 		err(EXIT_FAILURE, "Cannot remove %s", path);
@@ -480,9 +475,7 @@ add_required_by(const char *pattern, const char *required_by)
 		return;
 	}
 
-	if (asprintf(&path, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), best_installed,
-		     REQUIRED_BY_FNAME) == -1)
-		errx(EXIT_FAILURE, "asprintf failed");
+	path = pkgdb_pkg_file(best_installed, REQUIRED_BY_FNAME);
 	free(best_installed);
 
 	if ((fd = open(path, O_WRONLY | O_APPEND | O_CREAT, 0644)) == -1)
@@ -505,9 +498,7 @@ add_depends_of(const char *pkgname, void *cookie)
 	package_t plist;
 	char *path;
 
-	if (asprintf(&path, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), pkgname,
-		     CONTENTS_FNAME) == -1)
-		errx(EXIT_FAILURE, "asprintf failed");
+	path = pkgdb_pkg_file(pkgname, CONTENTS_FNAME);
 	if ((fp = fopen(path, "r")) == NULL)
 		errx(EXIT_FAILURE, "Cannot read %s of package %s",
 		    CONTENTS_FNAME, pkgname);
@@ -847,9 +838,7 @@ set_installed_info_var(const char *name, void *cookie)
 	char *filename;
 	int retval;
 
-	if (asprintf(&filename, "%s/%s/%s", _pkgdb_getPKGDB_DIR(), name,
-		     INSTALLED_INFO_FNAME) == -1)
-		errx(EXIT_FAILURE, "asprintf failed");
+	filename = pkgdb_pkg_file(name, INSTALLED_INFO_FNAME);
 
 	retval = var_set(filename, arg->variable, arg->value);
 
