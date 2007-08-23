@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.22 2007/07/27 09:46:28 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.23 2007/08/23 15:19:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -99,6 +99,11 @@ struct psshfs_fid {
 	struct puffs_node *node;
 };
 
+struct psshfs_dirwait {
+	struct puffs_cc *dw_cc;
+	LIST_ENTRY(psshfs_dirwait) dw_entries;
+};
+
 struct psshfs_node {
 	struct puffs_node *parent;
 
@@ -124,11 +129,14 @@ struct psshfs_node {
 	char *fhand_w;
 	uint32_t fhand_r_len;
 	uint32_t fhand_w_len;
+
+	LIST_HEAD(, psshfs_dirwait) dw;
 };
 #define PSN_RECLAIMED	0x01
 #define PSN_HASFH	0x02
 #define PSN_READMAP	0x04
 #define PSN_WRITEMAP	0x08
+#define PSN_READDIR	0x10
 
 struct psshfs_ctx {
 	int sshfd;

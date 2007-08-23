@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.37 2007/07/29 17:50:22 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.38 2007/08/23 15:19:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.37 2007/07/29 17:50:22 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.38 2007/08/23 15:19:40 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -316,6 +316,12 @@ psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
 	return 0;
 }
 
+/*
+ * XXXX: I'm not really sure I'll export this symbol eventually,
+ * so fix this a bit in the future.
+ */
+void puffs_goto(struct puffs_cc *);
+
 int
 psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
@@ -325,16 +331,29 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *pd;
-	int i, rv;
+	int i, rv, set_readdir;
+
+	if (psn->stat & PSN_READDIR) {
+		struct psshfs_dirwait dw;
+
+		set_readdir = 0;
+		dw.dw_cc = pcc;
+		LIST_INSERT_HEAD(&psn->dw, &dw, dw_entries);
+		puffs_cc_yield(pcc);
+		LIST_REMOVE(&dw, dw_entries);
+	} else {
+		psn->stat |= PSN_READDIR;
+		set_readdir = 1;
+	}
 
 	*ncookies = 0;
 	rv = sftp_readdir(pcc, pctx, pn);
 	if (rv)
-		return rv;
+		goto out;
 
 	/* find next dirent */
 	for (i = *readoff;;i++) {
-		if (i == psn->dentnext)
+		if (i >= psn->dentnext)
 			goto out;
 		pd = &psn->dir[i];
 		if (pd->valid)
@@ -344,12 +363,14 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	for (;;) {
 		*readoff = i;
 		if (!puffs_nextdent(&dent, pd->entryname,
-		    pd->va.va_fileid, puffs_vtype2dt(pd->va.va_type), reslen))
-			return 0;
+		    pd->va.va_fileid, puffs_vtype2dt(pd->va.va_type), reslen)) {
+			rv = 0;
+			goto out;
+		}
 
 		/* find next entry, store possible nfs key */
 		do {
-			if (++i == psn->dentnext)
+			if (++i >= psn->dentnext)
 				goto out;
 			pd = &psn->dir[i];
 		} while (pd->valid == 0);
@@ -357,11 +378,23 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	}
 
  out:
-	if (i == psn->dentnext)
-		*eofflag = 1;
+	if (rv == 0) {
+		if (i >= psn->dentnext)
+			*eofflag = 1;
 
-	*readoff = i;
-	return 0;
+		*readoff = i;
+	}
+
+	if (set_readdir) {
+		struct psshfs_dirwait *dw;
+
+		while ((dw = LIST_FIRST(&psn->dw)) != NULL)
+			puffs_goto(dw->dw_cc);
+
+		psn->stat &= ~PSN_READDIR;
+	}
+
+	return rv;
 }
 
 int
