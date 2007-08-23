@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.4 2007/08/21 23:58:49 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.5 2007/08/23 12:08:59 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.4 2007/08/21 23:58:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.5 2007/08/23 12:08:59 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -511,8 +511,7 @@ static struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t, pd_entry_t **);
 static struct vm_page	*pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
 static void		 pmap_freepage(struct pmap *, struct vm_page *, int);
 static void		 pmap_free_ptp(struct pmap *, struct vm_page *,
-				       vaddr_t, pt_entry_t *,
-				       pd_entry_t **, int32_t *);
+				       vaddr_t, pt_entry_t *, pd_entry_t **);
 static bool		 pmap_is_curpmap(struct pmap *);
 static bool		 pmap_is_active(struct pmap *, struct cpu_info *);
 static void		 pmap_map_ptes(struct pmap *, pt_entry_t **,
@@ -521,10 +520,10 @@ static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					vaddr_t);
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
-					 pt_entry_t *, vaddr_t, int32_t *,
+					 pt_entry_t *, vaddr_t,
 					 int);
 static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
-					  vaddr_t, vaddr_t, vaddr_t, int32_t *,
+					  vaddr_t, vaddr_t, vaddr_t,
 					  int);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
@@ -743,29 +742,28 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 void
 pmap_kremove(vaddr_t sva, vsize_t len)
 {
-	pt_entry_t *pte, opte, xpte;
+	pt_entry_t *pte, xpte;
 	vaddr_t va, eva;
 
 	eva = sva + len;
 	xpte = 0;
 
-	for (va = sva; sva < eva; va += PAGE_SIZE) {
+	for (va = sva; va < eva; va += PAGE_SIZE) {
 		if (va < VM_MIN_KERNEL_ADDRESS)
 			pte = vtopte(va);
 		else
 			pte = kvtopte(va);
-		opte = pmap_pte_set(pte, 0); /* zap! */
+		xpte |= pmap_pte_set(pte, 0); /* zap! */
 #ifdef LARGEPAGES
 		/* XXX For now... */
-		if (opte & PG_PS)
+		if (xpte & PG_PS)
 			panic("pmap_kremove: PG_PS");
 #endif
 #ifdef DIAGNOSTIC
-		if (opte & PG_PVLIST)
+		if (xpte & PG_PVLIST)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx",
 			      va);
 #endif
-		xpte |= opte;
 	}
 	crit_enter();
 	pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
@@ -1576,7 +1574,7 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 
 static void
 pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
-	      pt_entry_t *ptes, pd_entry_t **pdes, int32_t *cpumaskp)
+	      pt_entry_t *ptes, pd_entry_t **pdes)
 {
 	unsigned long index;
 	int level;
@@ -2000,7 +1998,7 @@ pmap_activate(struct lwp *l)
 		/*
 		 * mark the pmap in use by this processor.
 		 */
-		x86_atomic_setbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
+		x86_atomic_setbits_ul(&pmap->pm_cpus, curcpu()->ci_cpumask);
 	}
 	if (pcb->pcb_flags & PCB_GS64)
 		wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
@@ -2020,8 +2018,7 @@ pmap_deactivate(struct lwp *l)
 	/*
 	 * mark the pmap no longer in use by this processor. 
 	 */
-	x86_atomic_clearbits_ul(&pmap->pm_cpus, (1U << cpu_number()));
-
+	x86_atomic_clearbits_ul(&pmap->pm_cpus, curcpu()->ci_cpumask);
 }
 
 /*
@@ -2264,7 +2261,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 
 static pt_entry_t
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-		 vaddr_t startva, vaddr_t endva, int32_t *cpumaskp, int flags)
+		 vaddr_t startva, vaddr_t endva, int flags)
 {
 	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
@@ -2298,7 +2295,6 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		if (opte & PG_W)
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
-
 		xpte |= opte;
 
 		if (ptp)
@@ -2359,7 +2355,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 static bool
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
-		vaddr_t va, int32_t *cpumaskp, int flags)
+		vaddr_t va, int flags)
 {
 	pt_entry_t opte;
 	int bank, off;
@@ -2383,7 +2379,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	if (ptp)
 		ptp->wire_count--;		/* dropping a PTE */
 
-	pmap_tlb_shootdown(pmap, va, va, opte);
+	pmap_tlb_shootdown(pmap, va, 0, opte);
 
 	/*
 	 * if we are not on a pv_head list we are done.
@@ -2444,7 +2440,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	paddr_t ptppa;
 	vaddr_t blkendva, va = sva;
 	struct vm_page *ptp;
-	int32_t cpumask = 0;
 
 	/*
 	 * we lock in the pmap => pv_head direction
@@ -2479,7 +2474,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[pl1_i(va)], va, &cpumask, flags);
+			    &ptes[pl1_i(va)], va, flags);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2487,8 +2482,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			 */
 
 			if (result && ptp && ptp->wire_count <= 1)
-				pmap_free_ptp(pmap, ptp, va, ptes, pdes,
-				    &cpumask);
+				pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 		}
 
 		pmap_tlb_shootwait();
@@ -2496,8 +2490,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		rw_exit(&pmap_main_lock);
 		return;
 	}
-
-	cpumask = 0;
 
 	for (/* null */ ; va < eva ; va = blkendva) {
 
@@ -2543,12 +2535,11 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 #endif
 		}
 		xpte |= pmap_remove_ptes(pmap, ptp,
-		    (vaddr_t)&ptes[pl1_i(va)], va, blkendva, &cpumask, flags);
+		    (vaddr_t)&ptes[pl1_i(va)], va, blkendva, flags);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
-			pmap_free_ptp(pmap, ptp, va, ptes,pdes,
-			    &cpumask);
+			pmap_free_ptp(pmap, ptp, va, ptes,pdes);
 		}
 	}
 
@@ -2576,7 +2567,6 @@ pmap_page_remove(struct vm_page *pg)
 #ifdef DIAGNOSTIC
 	pd_entry_t pde;
 #endif
-	int32_t cpumask = 0;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2626,7 +2616,7 @@ pmap_page_remove(struct vm_page *pg)
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
 				pmap_free_ptp(pve->pv_pmap, pve->pv_ptp,
-					      pve->pv_va, ptes, pdes, &cpumask);
+				    pve->pv_va, ptes, pdes);
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
@@ -3408,14 +3398,6 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 
 	if (ncpu > 1 && x86_mp_online) {
 		selfmb = &self->ci_pmap_cpu->pc_mbox;
-
-		/*
-		 * If the CPUs have no notion of global pages then
-		 * reload of %cr3 is sufficient.
-		 */
-		if (pte != 0 && (cpu_feature & CPUID_PGE) == 0)
-			pte = 0;
-
 		if (pm == pmap_kernel()) {
 			/*
 			 * Mapped on all CPUs: use the broadcast mechanism.
