@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.17 2007/08/21 13:57:17 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.18 2007/08/23 14:37:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -108,6 +108,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, fs, statvfs);
 	PUFFSOP_SET(pops, p2k, fs, unmount);
 	PUFFSOP_SET(pops, p2k, fs, sync);
+	PUFFSOP_SET(pops, p2k, fs, fhtonode);
+	PUFFSOP_SET(pops, p2k, fs, nodetofh);
 
 	PUFFSOP_SET(pops, p2k, node, lookup);
 	PUFFSOP_SET(pops, p2k, node, create);
@@ -144,6 +146,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
+	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
 	puffs_fakecc = 1;
 
 	if ((rv = puffs_mount(pu, mountpath, mntflags, ukfs_getrvp(ukfs)))== -1)
@@ -193,6 +196,38 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 	cred_destroy(cred);
 
 	return rv;
+}
+
+int
+p2k_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+	struct puffs_newinfo *pni)
+{
+	struct mount *mp = puffs_cc_getspecific(pcc);
+	struct vnode *vp;
+	enum vtype vtype;
+	voff_t vsize;
+	dev_t rdev;
+	int rv;
+
+	rv = VFS_FHTOVP(mp, fid, &vp);
+	if (rv)
+		return rv;
+
+	puffs_newinfo_setcookie(pni, vp);
+	rump_getvninfo(vp, &vtype, &vsize, &rdev);
+	puffs_newinfo_setvtype(pni, vtype);
+	puffs_newinfo_setsize(pni, vsize);
+	puffs_newinfo_setrdev(pni, rdev);
+
+	return 0;
+}
+
+int
+p2k_fs_nodetofh(struct puffs_cc *pcc, void *cookie, void *fid, size_t *fidsize)
+{
+	struct vnode *vp = cookie;
+
+	return VFS_VPTOFH(vp, fid, fidsize);
 }
 
 /* don't need vn_lock(), since we don't have VXLOCK */
@@ -512,12 +547,22 @@ p2k_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 {
 	rump_kauth_cred_t cred;
 	struct uio *uio;
+	off_t *vop_cookies;
+	int vop_ncookies;
 	int rv;
 
 	cred = cred_create(pcr);
 	uio = rump_uio_setup(dent, *reslen, *readoff, RUMPUIO_READ);
 	VLS(opc);
-	rv = RUMP_VOP_READDIR(opc, uio, cred, eofflag, NULL, NULL);
+	if (cookies) {
+		rv = RUMP_VOP_READDIR(opc, uio, cred, eofflag,
+		    &vop_cookies, &vop_ncookies);
+		memcpy(cookies, vop_cookies, vop_ncookies * sizeof(*cookies));
+		*ncookies = vop_ncookies;
+		free(vop_cookies);
+	} else {
+		rv = RUMP_VOP_READDIR(opc, uio, cred, eofflag, NULL, NULL);
+	}
 	VUL(opc);
 	if (rv == 0) {
 		*reslen = rump_uio_getresid(uio);
