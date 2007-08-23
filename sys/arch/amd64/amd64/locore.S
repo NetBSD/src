@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20.4.2 2007/08/23 12:07:49 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.20.4.3 2007/08/23 19:44:08 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1030,3 +1030,51 @@ iret_return:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
+
+/*
+ * void sse2_zero_page(void *pg)
+ *
+ * Zero a page without polluting the cache.
+ */
+ENTRY(sse2_zero_page)
+	movl	$PAGE_SIZE, %ecx
+	xorq	%rax, %rax
+	.align	16
+1:
+	movnti	%rax, 0(%rdi)
+	movnti	%rax, 8(%rdi)
+	movnti	%rax, 16(%rdi)
+	movnti	%rax, 24(%rdi)
+	movnti	%rax, 32(%rdi)
+	movnti	%rax, 40(%rdi)
+	movnti	%rax, 48(%rdi)
+	movnti	%rax, 56(%rdi)
+	subl	$64, %ecx
+	leaq	64(%rdi), %rdi
+	jnz	1b
+	sfence
+	ret
+
+/*
+ * void sse2_copy_page(void *src, void *dst)
+ *
+ * Copy a page without polluting the cache.
+ */
+ENTRY(sse2_copy_page)
+	movl	$PAGE_SIZE, %ecx
+	.align	16
+1:
+	movq	0(%rdi), %rax
+	movq	8(%rdi), %rdx
+	movq	16(%rdi), %r8
+	movq	24(%rdi), %r9
+	movnti	%rax, 0(%rsi)
+	movnti	%rdx, 8(%rsi)
+	movnti	%r8, 16(%rsi)
+	movnti	%r9, 24(%rsi)
+	subl	$32, %ecx
+	leaq	32(%rdi), %rdi
+	leaq	32(%rsi), %rsi
+	jnz	1b
+	sfence
+	ret
