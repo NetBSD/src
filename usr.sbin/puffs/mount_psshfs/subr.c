@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.25 2007/06/21 13:53:00 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.26 2007/08/23 15:19:40 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.25 2007/06/21 13:53:00 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.26 2007/08/23 15:19:40 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -413,6 +413,8 @@ makenode(struct puffs_usermount *pu, struct puffs_node *parent,
 	pd->entry = pn;
 	psn->parent = parent;
 	psn_parent->childcount++;
+
+	LIST_INIT(&psn->dw);
 
 	if (pd->getattr_pb) {
 		psn->getattr_pb = pd->getattr_pb;
