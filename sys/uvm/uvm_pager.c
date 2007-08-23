@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.81.4.9 2007/08/21 22:32:26 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.81.4.10 2007/08/23 13:15:19 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.9 2007/08/21 22:32:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.10 2007/08/23 13:15:19 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -296,11 +296,8 @@ uvm_aio_aiodone(struct buf *bp)
 	error = bp->b_error;
 	write = (bp->b_flags & B_READ) == 0;
 	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
-	if (write && !(bp->b_flags & B_NOCACHE) && bioops != NULL) {
-		mutex_enter(&bqueue_lock);
+	if (write && !(bp->b_flags & B_NOCACHE) && bioops != NULL)
 		(*bioops->io_pageiodone)(bp);
-		mutex_exit(&bqueue_lock);
-	}
 
 	uobj = NULL;
 	for (i = 0; i < npages; i++) {
