@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.75 2007/02/17 20:20:08 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.75.16.1 2007/08/23 14:22:37 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75 2007/02/17 20:20:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.75.16.1 2007/08/23 14:22:37 joerg Exp $");
 
 #include "opt_cardbus.h"
 
@@ -905,14 +905,39 @@ decode_tuple(u_int8_t *tuple, u_int8_t *end,
  * XXX: this is another reason why this code should be shared with PCI.
  */
 int
-cardbus_powerstate(cardbus_devfunc_t ct, pcitag_t tag, const int *newstate,
-    int *oldstate)
+cardbus_get_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t *state)
+{
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	int offset;
+	cardbusreg_t value, cap, now;
+
+	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset, &value))
+		return EOPNOTSUPP;
+
+	cap = value >> PCI_PMCR_SHIFT;
+	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
+	now = value & PCI_PMCSR_STATE_MASK;
+	switch (now) {
+	case PCI_PMCSR_STATE_D0:
+	case PCI_PMCSR_STATE_D1:
+	case PCI_PMCSR_STATE_D2:
+	case PCI_PMCSR_STATE_D3:
+		*state = now;
+		return 0;
+	default:
+		return EINVAL;
+	}
+}
+
+int
+cardbus_set_powerstate(cardbus_devfunc_t ct, cardbustag_t tag, cardbusreg_t state)
 {
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	int offset;
-	pcireg_t value, cap, now;
+	cardbusreg_t value, cap, now;
 
 	if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &offset,
 	    &value))
@@ -921,52 +946,29 @@ cardbus_powerstate(cardbus_devfunc_t ct, pcitag_t tag, const int *newstate,
 	cap = value >> 16;
 	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
 	now = value & PCI_PMCSR_STATE_MASK;
-	value &= ~PCI_PMCSR_STATE_MASK;
-	if (oldstate) {
-		switch (now) {
-		case PCI_PMCSR_STATE_D0:
-			*oldstate = PCI_PWR_D0;
-			break;
-		case PCI_PMCSR_STATE_D1:
-			*oldstate = PCI_PWR_D1;
-			break;
-		case PCI_PMCSR_STATE_D2:
-			*oldstate = PCI_PWR_D2;
-			break;
-		case PCI_PMCSR_STATE_D3:
-			*oldstate = PCI_PWR_D3;
-			break;
-		default:
-			return EINVAL;
-		}
-	}
-	if (newstate == NULL)
+	value &= ~PCI_PMCSR_STATE_MASK;	
+
+	if (now == state)
 		return 0;
-	switch (*newstate) {
-	case PCI_PWR_D0:
-		if (now == PCI_PMCSR_STATE_D0)
-			return 0;
+	switch (state) {
+	case PCI_PMCSR_STATE_D0:
 		value |= PCI_PMCSR_STATE_D0;
 		break;
-	case PCI_PWR_D1:
-		if (now == PCI_PMCSR_STATE_D1)
-			return 0;
+	case PCI_PMCSR_STATE_D1:
 		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3)
 			return EINVAL;
 		if (!(cap & PCI_PMCR_D1SUPP))
 			return EOPNOTSUPP;
 		value |= PCI_PMCSR_STATE_D1;
 		break;
-	case PCI_PWR_D2:
-		if (now == PCI_PMCSR_STATE_D2)
-			return 0;
+	case PCI_PMCSR_STATE_D2:
 		if (now == PCI_PMCSR_STATE_D3)
 			return EINVAL;
 		if (!(cap & PCI_PMCR_D2SUPP))
 			return EOPNOTSUPP;
 		value |= PCI_PMCSR_STATE_D2;
 		break;
-	case PCI_PWR_D3:
+	case PCI_PMCSR_STATE_D3:
 		if (now == PCI_PMCSR_STATE_D3)
 			return 0;
 		value |= PCI_PMCSR_STATE_D3;
@@ -974,47 +976,12 @@ cardbus_powerstate(cardbus_devfunc_t ct, pcitag_t tag, const int *newstate,
 	default:
 		return EINVAL;
 	}
+
 	cardbus_conf_write(cc, cf, tag, offset + PCI_PMCSR, value);
 	DELAY(1000);
 
 	return 0;
 }
-
-int
-cardbus_setpowerstate(const char *dvname, cardbus_devfunc_t ct, pcitag_t tag,
-    int newpwr)
-{
-	int oldpwr, error;
-
-	if ((error = cardbus_powerstate(ct, tag, &newpwr, &oldpwr)) != 0)
-		return error;
-
-	if (oldpwr == newpwr)
-		return 0;
-
-	if (oldpwr > newpwr) {
-		printf("%s: sleeping to power state D%d\n", dvname, oldpwr);
-		return 0;
-	}
-
-	/* oldpwr < newpwr */
-	switch (oldpwr) {
-	case PCI_PWR_D3:
-		/*
-		 * XXX: This is because none of the devices do
-		 * the necessary song and dance for now to wakeup
-		 * Once this
-		 */
-		printf("%s: cannot wake up from power state D%d\n",
-		    dvname, oldpwr);
-		return EINVAL;
-	default:
-		printf("%s: waking up from power state D%d\n",
-		    dvname, oldpwr);
-		return 0;
-	}
-}
-
 
 #ifdef CARDBUS_DEBUG
 static const char *tuple_name(int);
@@ -1074,3 +1041,98 @@ print_tuple(u_int8_t *tuple, int len, void *data)
 	}
 }
 #endif
+
+void
+cardbus_conf_capture(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
+    cardbustag_t tag, struct cardbus_conf_state *pcs)
+{
+	int off;
+
+	for (off = 0; off < 16; off++)
+		pcs->reg[off] = cardbus_conf_read(cc, cf, tag, (off * 4));
+}
+
+void
+cardbus_conf_restore(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
+    cardbustag_t tag, struct cardbus_conf_state *pcs)
+{
+	int off;
+	cardbusreg_t val;
+
+	for (off = 15; off >= 0; off--) {
+		val = cardbus_conf_read(cc, cf, tag, (off * 4));
+		if (val != pcs->reg[off])
+			cardbus_conf_write(cc, cf,tag, (off * 4), pcs->reg[off]);
+	}
+}
+
+#include <net/if.h>
+
+pnp_status_t
+cardbus_net_generic_power(device_t dv, pnp_request_t req, void *opaque,
+    cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, cardbustag_t tag,
+    struct cardbus_conf_state *cardbusconf, struct ifnet *ifp)
+{
+	pnp_status_t status;
+	pnp_state_t *state;
+	pnp_capabilities_t *caps;
+	cardbusreg_t val;
+	int off, s;
+
+	status = PNP_STATUS_UNSUPPORTED;
+
+	switch (req) {
+	case PNP_REQUEST_GET_CAPABILITIES:
+		caps = opaque;
+
+		if (!cardbus_get_capability(cc, cf, tag, PCI_CAP_PWRMGMT, &off, &val))
+			return PNP_STATUS_UNSUPPORTED;
+		caps->state = pci_pnp_capabilities(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	case PNP_REQUEST_SET_STATE:
+		state = opaque;
+		switch (*state) {
+		case PNP_STATE_D0:
+			val = PCI_PMCSR_STATE_D0;
+			break;
+		case PNP_STATE_D3:
+			val = PCI_PMCSR_STATE_D3;
+			s = splnet();
+			(*ifp->if_stop)(ifp, 1);
+			cardbus_conf_capture(cc, cf, tag, cardbusconf);
+			splx(s);
+			break;
+		default:
+			return PNP_STATUS_UNSUPPORTED;
+		}
+
+		if (cardbus_set_powerstate(cc, tag, val) == 0) {
+			status = PNP_STATUS_SUCCESS;
+			if (*state != PNP_STATE_D0)
+				break;
+
+			s = splnet();
+			cardbus_conf_restore(cc, cf, tag, cardbusconf);
+
+			if (ifp->if_flags & IFF_UP) {
+				ifp->if_flags &= ~IFF_RUNNING;
+				(*ifp->if_init)(ifp);
+				(*ifp->if_start)(ifp);
+			}
+			splx(s);
+		}
+	case PNP_REQUEST_GET_STATE:
+		state = opaque;
+		if (cardbus_get_powerstate(cc, tag, &val) != 0)
+			return PNP_STATUS_UNSUPPORTED;
+
+		*state = pci_pnp_powerstate(val);
+		status = PNP_STATUS_SUCCESS;
+		break;
+	default:
+		status = PNP_STATUS_UNSUPPORTED;
+	}
+
+	return status;
+}

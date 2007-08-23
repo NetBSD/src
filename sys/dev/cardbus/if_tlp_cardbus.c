@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.53 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.53.22.1 2007/08/23 14:22:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.53 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.53.22.1 2007/08/23 14:22:38 joerg Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -612,8 +612,7 @@ tlp_cardbus_setup(csc)
 		break;
 	}
 
-	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
-	    PCI_PWR_D0);
+	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
 
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
