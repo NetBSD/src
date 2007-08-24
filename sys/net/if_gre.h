@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.22 2007/05/06 02:47:52 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.23 2007/08/24 23:38:31 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,18 +59,22 @@ struct gre_softc {
 	kcondvar_t		sc_work_cv;
 	int			sc_haswork;
 	int			sc_running;
+	int			sc_dying;
 	struct ifqueue		sc_snd;
 	struct gre_soparm	sc_soparm;
+	struct gre_soparm	sc_newsoparm;
 	struct file		*sc_fp;
+	struct file		*sc_newfp;
 	LIST_ENTRY(gre_softc)	sc_list;
 	struct route route;	/* routing entry that determines, where a
 				   encapsulated packet should go */
 	int			sc_proto;	/* protocol of encapsulator */
+	struct uio		sc_uio;
 };
-#define	g_src		sc_soparm.sp_src
-#define	g_srcport	sc_soparm.sp_srcport
-#define	g_dst		sc_soparm.sp_dst
-#define	g_dstport	sc_soparm.sp_dstport
+#define	g_src		sc_newsoparm.sp_src
+#define	g_srcport	sc_newsoparm.sp_srcport
+#define	g_dst		sc_newsoparm.sp_dst
+#define	g_dstport	sc_newsoparm.sp_dstport
 
 struct gre_h {
 	u_int16_t flags;	/* GRE flags */
