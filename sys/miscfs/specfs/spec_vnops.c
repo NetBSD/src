@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.98.2.9 2007/08/20 21:27:51 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.98.2.10 2007/08/24 21:28:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.9 2007/08/20 21:27:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.98.2.10 2007/08/24 21:28:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -434,12 +434,6 @@ spec_ioctl(void *v)
 		    ap->a_fflag, ap->a_l);
 
 	case VBLK:
-		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) {
-			if (bdev_type(dev) == D_TAPE)
-				return (0);
-			else
-				return (1);
-		}
 		return bdev_ioctl(dev, ap->a_command, ap->a_data,
 		   ap->a_fflag, ap->a_l);
 
