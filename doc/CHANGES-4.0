@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.233 2007/08/21 20:18:53 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.234 2007/08/24 21:06:40 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8467,3 +8467,99 @@ sys/dev/pci/if_bge.c				1.130
 	Add support for BCM5715.  Works seemingly well on hardware provided by
 	pavel@.  Thanks, Pavel!
 	[pavel, ticket #821]
+
+etc/security					1.103
+
+	Add code to monitor the disk wedges (see dk(4)) configured on the
+	system. Based on a patch contributed by Andreas Wrede in PR misc/36747.
+	[tron, ticket #824]
+
+share/mk/bsd.own.mk				1.496
+tools/binstall/Makefile				1.6
+tools/binstall/Makefile				1.7
+usr.bin/xinstall/xinstall.c			1.102
+
+	- When compiling nbinstall for the tool chain, use the target strip
+	and not /usr/bin/strip. This makes nbinstall usable for
+	cross-compiling in pkgsrc.
+	- Fix a typo in a comment.
+	- Fix strip() in the context of (v)fork:
+	- Build the argument string first using asprintf (simpler) and
+	avoid leaking memory from the child in the parent.
+	- Don't use warn in the child, as stdio should be avoided.
+
+	Rename nbinstall to ${MACHINE_GNU_PLATFORM}-install as it calls the
+	target strip. Don't pass down strip as it is not needed any longer.
+	[joerg, ticket #823]
+
+sys/uvm/uvm_aobj.c				1.93
+
+	In uao_get(), drop object lock only after dropswap to avoid KASSERT panic.
+
+	Should fix tmpfs problem reported by riz on current-users.  yamt ok.
+	[pooka, ticket #825]
+
+sys/dev/pci/if_bnx.c				1.8
+
+	Pass the right value to VLAN_INPUT_TAG(), this makes vlan(4) on bnx(4) work.
+	[bouyer, ticket #826]
+
+sys/net/if_gre.c				1.99
+
+	- Check IFF_RUNNING | IFF_UP in gre_output() correctly.
+	[seanb, ticket #829]
+
+distrib/utils/sysinst/arch/i386/md.c		1.116
+
+	Add code that should preserve the 'drive serial number' field of the mbr.
+	Ought to stop the installer from stopping windows vista from being bootable.
+	[dsl, ticket #831]
+
+sbin/fdisk/fdisk.c				1.105
+
+	Preserve the mbr 'driver serial number' when copying in the netbsd
+	mbr code.  Should leave windows vista bootable.
+	Print the dsn from the mbr, not each pbr.
+	[dsl, ticket #832]
+
+include/stdio.h					1.70
+include/string.h				1.33
+include/strings.h				1.12
+include/unistd.h				1.112
+lib/libc/ssp/fgets_chk.c			1.4
+lib/libc/ssp/gets_chk.c				1.4
+lib/libc/ssp/snprintf_chk.c			1.4
+lib/libc/ssp/sprintf_chk.c			1.4
+lib/libc/ssp/vsnprintf_chk.c			1.4
+lib/libc/ssp/vsprintf_chk.c			1.4
+
+	Do not include SSP files unless _FORTIFY_SOURCE > 0.
+
+	Update includes so that this builds for USE_FORT=no too.
+	[kristerw, ticket #833]
+
+sys/dev/audio.c					1.223
+
+	au_setup_ports - don't hide ports->nports++ inside another expression,
+	especially if that other expression is the right hand side operand of
+	&& which is short-circuiting.  The effect was that audiorecord(1)
+	would always fail trying to set recording port with AUDIO_SETINFO.
+
+	Tested on wss@pnpbios.  It looks like this problem has been reported
+	as PR/35239, filed against port-hp700.
+	[uwe, ticket #835]
+
+sys/arch/m68k/fpsp/Makefile.inc			1.14
+
+	Allow for other info in opt_fpsp.h when trying to find out whether FPSP
+	is enabled.
+
+	Surely there are proper mechanisms that can be used to conditionally include
+	this file?
+	[tsutsui, ticket #836]
+
+usr.sbin/ypserv/ypserv/ypserv_proc.c		1.12
+
+	PR/36820: Geoff C. Wing: ypserv maplist functionality broken due to off-by-
+	one error.
+	[tron, ticket #837]
