@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_proc.c,v 1.11 2006/05/20 20:03:28 christos Exp $	*/
+/*	$NetBSD: ypserv_proc.c,v 1.11.4.1 2007/08/24 20:35:48 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_proc.c,v 1.11 2006/05/20 20:03:28 christos Exp $");
+__RCSID("$NetBSD: ypserv_proc.c,v 1.11.4.1 2007/08/24 20:35:48 liamjfoy Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -474,7 +474,7 @@ ypproc_maplist_2_svc(void *argp, struct svc_req *rqstp)
 		/* Eliminate impossible names. */
 		if ((strcmp(dp->d_name, ".") == 0) ||
 		    ((strcmp(dp->d_name, "..") == 0)) ||
-		    (dp->d_namlen < 4))
+		    (dp->d_namlen < 4) || (dp->d_namlen > YPMAXMAP + 3))
 			continue;
 
 		/* Check the file suffix. */
@@ -490,7 +490,7 @@ ypproc_maplist_2_svc(void *argp, struct svc_req *rqstp)
 
 			(void)memset(m, 0, sizeof(m));
 			(void)strlcpy(m->ypml_name, dp->d_name,
-			    (size_t)(dp->d_namlen - 3));
+			    (size_t)(dp->d_namlen - 2));
 			m->ypml_next = res.list;
 			res.list = m;
 		}
