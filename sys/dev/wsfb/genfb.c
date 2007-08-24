@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.6 2007/08/05 03:23:02 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.7 2007/08/24 19:12:21 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.6 2007/08/05 03:23:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.7 2007/08/24 19:12:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,8 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	prop_dictionary_t dict;
 	struct rasops_info *ri;
 	long defattr;
-	int console, i, j;
+	int i, j;
+	bool console;
  
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
