@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.122.2.3 2007/06/17 21:32:15 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.122.2.4 2007/08/24 23:28:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122.2.3 2007/06/17 21:32:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.122.2.4 2007/08/24 23:28:48 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -446,7 +446,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 				panic("lfs_markv: partial indirect block?"
 				    " size=%d\n", blkp->bi_size);
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
-			if (!(bp->b_flags & (B_DONE|B_DELWRI))) { /* B_CACHE */
+			if (!(bp->b_oflags & (BO_DONE|BO_DELWRI))) {
 				/*
 				 * The block in question was not found
 				 * in the cache; i.e., the block that
@@ -1153,7 +1153,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 		dip = lfs_ifind(ump->um_lfs, ino, bp);
 		if (dip == NULL) {
 			/* Assume write has not completed yet; try again */
-			brelse(bp, B_INVAL);
+			brelse(bp, BC_INVAL);
 			++retries;
 			if (retries > LFS_IFIND_RETRIES)
 				panic("lfs_fastvget: dinode not found");

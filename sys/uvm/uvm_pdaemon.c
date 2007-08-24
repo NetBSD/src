@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.6 2007/08/22 09:36:28 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.84.4.7 2007/08/24 23:28:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.6 2007/08/22 09:36:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.84.4.7 2007/08/24 23:28:49 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -312,7 +312,9 @@ uvm_pageout(void *arg)
 
 		mutex_exit(&uvm_pageqlock);
 
+		mutex_enter(&bufcache_lock);
 		buf_drain(bufcnt << PAGE_SHIFT);
+		mutex_exit(&bufcache_lock);
 
 		/*
 		 * drain pool resources now that we're not holding any locks

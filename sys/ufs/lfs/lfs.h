@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.118.6.3 2007/06/17 21:32:10 ad Exp $	*/
+/*	$NetBSD: lfs.h,v 1.118.6.4 2007/08/24 23:28:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -192,34 +192,35 @@ typedef struct lfs_res_blk {
 #define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
 
 # define LFS_LOCK_BUF(bp) do {						\
-	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
+	KASSERT(mutex_owned(&bufcache_lock));				\
+	if (((bp)->b_cflags & BC_LOCKED) == 0 && bp->b_iodone == NULL) {\
 		mutex_enter(&lfs_subsys_lock);				\
 		++locked_queue_count;					\
 		locked_queue_bytes += bp->b_bufsize;			\
-		mutex_exit(&lfs_subsys_lock);			\
+		mutex_exit(&lfs_subsys_lock);				\
 	}								\
-	(bp)->b_flags |= B_LOCKED;					\
+	(bp)->b_cflags |= BC_LOCKED;					\
 } while (0)
 
 # define LFS_UNLOCK_BUF(bp) do {					\
-	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {	\
+	KASSERT(mutex_owned(&bufcache_lock));				\
+	if (((bp)->b_cflags & BC_LOCKED) != 0 && bp->b_iodone == NULL) {\
 		mutex_enter(&lfs_subsys_lock);				\
 		--locked_queue_count;					\
 		locked_queue_bytes -= bp->b_bufsize;			\
 		if (locked_queue_count < LFS_WAIT_BUFS &&		\
 		    locked_queue_bytes < LFS_WAIT_BYTES)		\
 			wakeup(&locked_queue_count);			\
-		mutex_exit(&lfs_subsys_lock);			\
+		mutex_exit(&lfs_subsys_lock);				\
 	}								\
-	(bp)->b_flags &= ~B_LOCKED;					\
+	(bp)->b_cflags &= ~BC_LOCKED;					\
 } while (0)
 
 #ifdef _KERNEL
 
 extern u_long bufmem_lowater, bufmem_hiwater; /* XXX */
 
-# define LFS_IS_MALLOC_BUF(bp) (((bp)->b_flags & B_CALL) &&		\
-     (bp)->b_iodone == lfs_callback)
+# define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_callback)
 
 # ifdef DEBUG
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\

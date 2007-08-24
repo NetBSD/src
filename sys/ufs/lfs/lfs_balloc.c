@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.62.6.2 2007/05/13 17:36:43 ad Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.62.6.3 2007/08/24 23:28:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62.6.2 2007/05/13 17:36:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62.6.3 2007/08/24 23:28:46 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -266,7 +266,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 				if (!indirs[i].in_exists) {
 					clrbuf(ibp);
 					ibp->b_blkno = UNWRITTEN;
-				} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
+				} else if (!(ibp->b_oflags & (BO_DELWRI | BO_DONE))) {
 					ibp->b_blkno = fsbtodb(fs, idaddr);
 					ibp->b_flags |= B_READ;
 					VOP_STRATEGY(vp, ibp);
@@ -351,7 +351,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 #endif
 			VOP_BWRITE(ibp);
 		}
-	} else if (bpp && !(bp->b_flags & (B_DONE|B_DELWRI))) {
+	} else if (bpp && !(bp->b_oflags & (BO_DONE|BO_DELWRI))) {
 		/*
 		 * Not a brand new block, also not in the cache;
 		 * read it in from disk.
@@ -434,7 +434,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	 * release both and start over after waiting.
 	 */
 
-	if (bpp && ((*bpp)->b_flags & B_DELWRI)) {
+	if (bpp && ((*bpp)->b_oflags & BO_DELWRI)) {
 		if (!lfs_fits(fs, bb)) {
 			if (bpp)
 				brelse(*bpp, 0);
@@ -459,7 +459,8 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		allocbuf(*bpp, nsize, 1);
 
 		/* Adjust locked-list accounting */
-		if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {
+		if (((*bpp)->b_cflags & BC_LOCKED) != 0 &&
+		    (*bpp)->b_iodone == NULL) {
 			mutex_enter(&lfs_subsys_lock);
 			locked_queue_bytes += (*bpp)->b_bufsize - obufsize;
 			mutex_exit(&lfs_subsys_lock);

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.32.4.6 2007/08/20 21:26:12 ad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.32.4.7 2007/08/24 23:28:39 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.32.4.6 2007/08/20 21:26:12 ad Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.32.4.7 2007/08/24 23:28:39 ad Exp $");
 #endif /* not lint */
 
 
@@ -372,7 +372,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 		memcpy(dst, src, sector_size);
 	}
 	/* dispose first block */
-	brelse(bp, B_AGE);
+	brelse(bp, BC_AGE);
 
 	if (!error && (dscrlen > sector_size)) {
 		DPRINTF(DESCRIPTOR, ("multi block descriptor read\n"));
@@ -392,7 +392,7 @@ udf_read_descriptor(struct udf_mount *ump, uint32_t sector,
 			memcpy(pos, bp->b_data, sector_size);
 
 			/* dispose block */
-			brelse(bp, B_AGE);
+			brelse(bp, BC_AGE);
 		}
 		DPRINTFIF(DESCRIPTOR, error, ("read error on multi (%d)\n",
 		    error));
@@ -2707,29 +2707,30 @@ udf_read_file_extent(struct udf_node *node,
 		     uint32_t from, uint32_t sectors,
 		     uint8_t *blob)
 {
-	struct buf buf;
+	struct buf *buf;
 	uint32_t sector_size;
 	int rv;
 
-	buf_init(&buf);
+	buf = getiobuf(NULL, true);
 
 	sector_size = node->ump->discinfo.sector_size;
 
-	buf.b_bufsize = sectors * sector_size;
-	buf.b_data    = blob;
-	buf.b_bcount  = buf.b_bufsize;
-	buf.b_resid   = buf.b_bcount;
-	buf.b_flags   = B_BUSY | B_READ;
-	buf.b_vp      = node->vnode;
-	buf.b_proc    = NULL;
+	buf->b_bufsize = sectors * sector_size;
+	buf->b_data    = blob;
+	buf->b_bcount  = buf->b_bufsize;
+	buf->b_resid   = buf->b_bcount;
+	buf->b_cflags  = BC_BUSY;
+	buf->b_flags   = B_READ;
+	buf->b_vp      = node->vnode;
+	buf->b_proc    = NULL;
 
-	buf.b_blkno  = from;
-	buf.b_lblkno = 0;
-	BIO_SETPRIO(&buf, BPRIO_TIMELIMITED);
+	buf->b_blkno  = from;
+	buf->b_lblkno = 0;
+	BIO_SETPRIO(buf, BPRIO_TIMELIMITED);
 
-	udf_read_filebuf(node, &buf);
-	rv = biowait(&buf);
-	buf_destroy(&buf);
+	udf_read_filebuf(node, buf);
+	rv = biowait(buf);
+	putiobuf(buf);
 
 	return rv;
 }
@@ -2837,7 +2838,7 @@ udf_read_filebuf(struct udf_node *node, struct buf *buf)
 			rbuflen = run_length * sector_size;
 			rblk    = run_start  * (sector_size/DEV_BSIZE);
 
-			nestbuf = getiobuf();
+			nestbuf = getiobuf(NULL, true);
 			nestiobuf_setup(buf, nestbuf, buf_offset, rbuflen);
 			/* nestbuf is B_ASYNC */
 

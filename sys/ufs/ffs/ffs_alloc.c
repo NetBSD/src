@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.98.2.6 2007/08/20 21:28:24 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.98.2.7 2007/08/24 23:28:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.6 2007/08/20 21:28:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.98.2.7 2007/08/24 23:28:43 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -296,9 +296,9 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 				panic("bad blockno");
 			allocbuf(bp, nsize, 1);
 			memset((char *)bp->b_data + osize, 0, nsize - osize);
-			mutex_enter(&bp->b_interlock);
-			bp->b_flags |= B_DONE;
-			mutex_exit(&bp->b_interlock);
+			mutex_enter(bp->b_objlock);
+			bp->b_oflags |= BO_DONE;
+			mutex_exit(bp->b_objlock);
 			*bpp = bp;
 		}
 		if (blknop != NULL) {
@@ -378,9 +378,9 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 			bp->b_blkno = fsbtodb(fs, bno);
 			allocbuf(bp, nsize, 1);
 			memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
-			mutex_enter(&bp->b_interlock);
-			bp->b_flags |= B_DONE;
-			mutex_exit(&bp->b_interlock);
+			mutex_enter(bp->b_objlock);
+			bp->b_oflags |= BO_DONE;
+			mutex_exit(bp->b_objlock);
 			*bpp = bp;
 		}
 		if (blknop != NULL) {

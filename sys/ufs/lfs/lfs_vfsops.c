@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.231.4.11 2007/08/21 22:32:27 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.231.4.12 2007/08/24 23:28:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.11 2007/08/21 22:32:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231.4.12 2007/08/24 23:28:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -709,8 +709,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_ops = &lfs_ufsops;
 	ump->um_fstype = UFS1;
 	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
-		brelse(bp, B_INVAL);
-		brelse(abp, B_INVAL);
+		brelse(bp, BC_INVAL);
+		brelse(abp, BC_INVAL);
 	} else {
 		brelse(bp, 0);
 		brelse(abp, 0);
@@ -1201,7 +1201,7 @@ retry:
 	dip = lfs_ifind(fs, ino, bp);
 	if (dip == NULL) {
 		/* Assume write has not completed yet; try again */
-		brelse(bp, B_INVAL);
+		brelse(bp, BC_INVAL);
 		++retries;
 		if (retries > LFS_IFIND_RETRIES) {
 #ifdef DEBUG
@@ -1668,15 +1668,14 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	vp->v_numoutput += 2; /* one for biodone, one for aiodone */
 	mutex_exit(&vp->v_interlock);
 
-	mbp = getiobuf();
+	mbp = getiobuf(vp, true);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = npages << PAGE_SHIFT;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_flags = B_BUSY|B_WRITE|B_AGE|B_CALL;
+	mbp->b_cflags = BC_BUSY|BC_AGE;
 	mbp->b_iodone = uvm_aio_biodone;
-	mbp->b_vp = vp;
 
 	bp = NULL;
 	for (offset = startoffset;
@@ -1730,18 +1729,17 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			--vp->v_numoutput;
 			mutex_exit(&vp->v_interlock);
 		} else {
-			bp = getiobuf();
+			bp = getiobuf(vp, true);
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
 			bp->b_data = (char *)kva +
 			    (vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;
-			bp->b_flags = B_BUSY|B_WRITE|B_CALL;
+			bp->b_cflags = BC_BUSY;
 			bp->b_iodone = uvm_aio_biodone1;
 		}
 
 		/* XXX This is silly ... is this necessary? */
-		bp->b_vp = NULL;
 		mutex_enter(&vp->v_interlock);
 		bgetvp(vp, bp);
 		mutex_exit(&vp->v_interlock);

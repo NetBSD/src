@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.6 2007/08/20 18:16:14 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.226.2.7 2007/08/24 23:28:37 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.6 2007/08/20 18:16:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.226.2.7 2007/08/24 23:28:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2077,7 +2077,9 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
        struct proc *b_proc)
 {
 	/* bp->b_flags       = B_PHYS | rw_flag; */
-	bp->b_flags = B_CALL | rw_flag;	/* XXX need B_PHYS here too??? */
+	bp->b_flags = rw_flag;	/* XXX need B_PHYS here too??? */
+	bp->b_oflags = 0;
+	bp->b_cflags = 0;
 	bp->b_bcount = numSect << logBytesPerSector;
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_error = 0;
@@ -2093,7 +2095,9 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_private = cbArg;
 	bp->b_vp = b_vp;
 	if ((bp->b_flags & B_READ) == 0) {
+		mutex_enter(&bp->b_vp->v_interlock);
 		bp->b_vp->v_numoutput++;
+		mutex_exit(&bp->b_vp->v_interlock);
 	}
 
 }

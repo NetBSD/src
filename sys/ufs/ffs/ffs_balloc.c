@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.44.6.3 2007/07/15 13:28:14 ad Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.44.6.4 2007/08/24 23:28:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.44.6.3 2007/07/15 13:28:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.44.6.4 2007/08/24 23:28:43 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -460,19 +460,19 @@ fail:
 			}
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			if (bp->b_flags & B_DELWRI) {
+			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
 				    0, 0);
-				if (bp->b_flags & B_DELWRI) {
+				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
-					brelse(bp, B_INVAL);
+					brelse(bp, BC_INVAL);
 				}
 			} else {
-				brelse(bp, B_INVAL);
+				brelse(bp, BC_INVAL);
 			}
 		}
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
@@ -507,7 +507,7 @@ fail:
 		for (i = unwindidx + 1; i <= num; i++) {
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			brelse(bp, B_INVAL);
+			brelse(bp, BC_INVAL);
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
@@ -1013,19 +1013,19 @@ fail:
 			}
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			if (bp->b_flags & B_DELWRI) {
+			if (bp->b_oflags & BO_DELWRI) {
 				nb = fsbtodb(fs, cgtod(fs, dtog(fs,
 				    dbtofsb(fs, bp->b_blkno))));
 				bwrite(bp);
 				bp = getblk(ip->i_devvp, nb, (int)fs->fs_cgsize,
 				    0, 0);
-				if (bp->b_flags & B_DELWRI) {
+				if (bp->b_oflags & BO_DELWRI) {
 					bwrite(bp);
 				} else {
-					brelse(bp, B_INVAL);
+					brelse(bp, BC_INVAL);
 				}
 			} else {
-				brelse(bp, B_INVAL);
+				brelse(bp, BC_INVAL);
 			}
 		}
 		if (DOINGSOFTDEP(vp) && unwindidx == 0) {
@@ -1060,7 +1060,7 @@ fail:
 		for (i = unwindidx + 1; i <= num; i++) {
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->fs_bsize, 0,
 			    0);
-			brelse(bp, B_INVAL);
+			brelse(bp, BC_INVAL);
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {

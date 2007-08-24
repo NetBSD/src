@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.57.2.3 2007/06/09 23:58:18 ad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.57.2.4 2007/08/24 23:28:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57.2.3 2007/06/09 23:58:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.57.2.4 2007/08/24 23:28:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,7 +480,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->e2fs_bsize, 0, 0);
-	if (bp->b_flags & (B_DONE | B_DELWRI)) {
+	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->e2fs_bsize), lbn);
 	} else {
@@ -553,7 +553,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	if (copy != NULL) {
 		FREE(copy, M_TEMP);
 	} else {
-		brelse(bp, B_INVAL);
+		brelse(bp, BC_INVAL);
 	}
 
 	*countp = blocksreleased;

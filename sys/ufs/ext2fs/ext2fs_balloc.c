@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.31.8.1 2007/05/13 17:36:40 ad Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.31.8.2 2007/08/24 23:28:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.31.8.1 2007/05/13 17:36:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.31.8.2 2007/08/24 23:28:42 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -344,7 +344,7 @@ fail:
 		for (i = unwindidx + 1; i <= num; i++) {
 			bp = getblk(vp, indirs[i].in_lbn, (int)fs->e2fs_bsize,
 			    0, 0);
-			brelse(bp, B_INVAL);
+			brelse(bp, BC_INVAL);
 		}
 	}
 	if (deallocated) {

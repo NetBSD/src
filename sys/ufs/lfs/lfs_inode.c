@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.107.2.5 2007/07/15 13:28:17 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.107.2.6 2007/08/24 23:28:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.5 2007/07/15 13:28:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.107.2.6 2007/08/24 23:28:47 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -99,7 +99,7 @@ static int lfs_indirtrunc (struct inode *, daddr_t, daddr_t,
 			   daddr_t, int, long *, long *, long *, size_t *,
 			   struct lwp *);
 static int lfs_blkfree (struct lfs *, struct inode *, daddr_t, size_t, long *, size_t *);
-static int lfs_vtruncbuf(struct vnode *, daddr_t, int, int);
+static int lfs_vtruncbuf(struct vnode *, daddr_t, bool, int);
 
 /* Search a block for a specific dinode. */
 struct ufs1_dinode *
@@ -365,12 +365,12 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
 		allocbuf(bp, size, 1);
-		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {
+		if ((bp->b_cflags & BC_LOCKED) != 0 && bp->b_iodone == NULL) {
 			mutex_enter(&lfs_subsys_lock);
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
 			mutex_exit(&lfs_subsys_lock);
 		}
-		if (bp->b_flags & B_DELWRI)
+		if (bp->b_oflags & BO_DELWRI)
 			fs->lfs_avail += odb - btofsb(fs, size);
 		(void) VOP_BWRITE(bp);
 	} else { /* vp->v_type == VREG && length < osize && offset != 0 */
@@ -447,7 +447,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		newblks[i] = 0;
 
 	oip->i_size = oip->i_ffs1_size = osize;
-	error = lfs_vtruncbuf(ovp, lastblock + 1, 0, 0);
+	error = lfs_vtruncbuf(ovp, lastblock + 1, false, 0);
 	if (error && !allerror)
 		allerror = error;
 
@@ -737,7 +737,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	 */
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->lfs_bsize, 0, 0);
-	if (bp->b_flags & (B_DONE | B_DELWRI)) {
+	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->lfs_bsize), lbn);
 	} else {
@@ -813,12 +813,14 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	if (copy != NULL) {
 		lfs_free(fs, copy, LFS_NB_IBLOCK);
 	} else {
-		if (bp->b_flags & B_DELWRI) {
+		mutex_enter(&bufcache_lock);
+		if (bp->b_oflags & BO_DELWRI) {
 			LFS_UNLOCK_BUF(bp);
 			fs->lfs_avail += btofsb(fs, bp->b_bcount);
 			wakeup(&fs->lfs_avail);
 		}
-		brelse(bp, B_INVAL);
+		brelsel(bp, BC_INVAL);
+		mutex_exit(&bufcache_lock);
 	}
 
 	*countp = blocksreleased;
@@ -833,10 +835,10 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
  * invalidating blocks.
  */
 static int
-lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
+lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 {
 	struct buf *bp, *nbp;
-	int s, error;
+	int error;
 	struct lfs *fs;
 	voff_t off;
 
@@ -847,63 +849,56 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, int slpflag, int slptimeo)
 		return error;
 
 	fs = VTOI(vp)->i_lfs;
-	s = splbio();
 
 	ASSERT_SEGLOCK(fs);
-restart:
+
+	mutex_enter(&bufcache_lock);
+restart:	
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		mutex_enter(&bp->b_interlock);
-		if (bp->b_flags & B_BUSY) {
-			bp->b_flags |= B_WANTED;
-			error = mtsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
-			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
-				return (error);
-			}
+		error = bbusy(bp, catch, slptimeo);
+		if (error == EPASSTHROUGH)
 			goto restart;
+		if (error != 0) {
+			mutex_exit(&bufcache_lock);
+			return (error);
 		}
-		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
-		if (bp->b_flags & B_DELWRI) {
-			bp->b_flags &= ~B_DELWRI;
+		mutex_enter(bp->b_objlock);
+		if (bp->b_oflags & BO_DELWRI) {
+			bp->b_oflags &= ~BO_DELWRI;
 			fs->lfs_avail += btofsb(fs, bp->b_bcount);
 			wakeup(&fs->lfs_avail);
 		}
+		mutex_exit(bp->b_objlock);
 		LFS_UNLOCK_BUF(bp);
-		mutex_exit(&bp->b_interlock);
-		brelse(bp, 0);
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
 	}
 
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		mutex_enter(&bp->b_interlock);
-		if (bp->b_flags & B_BUSY) {
-			bp->b_flags |= B_WANTED;
-			error = mtsleep(bp, slpflag | (PRIBIO + 1) | PNORELOCK,
-			    "lfs_vtruncbuf", slptimeo, &bp->b_interlock);
-			if (error) {
-				splx(s);
-				return (error);
-			}
+		error = bbusy(bp, catch, slptimeo);
+		if (error == EPASSTHROUGH)
 			goto restart;
+		if (error != 0) {
+			mutex_exit(&bufcache_lock);
+			return (error);
 		}
-		bp->b_flags |= B_BUSY | B_INVAL | B_VFLUSH;
-		if (bp->b_flags & B_DELWRI) {
-			bp->b_flags &= ~B_DELWRI;
+		mutex_enter(bp->b_objlock);
+		if (bp->b_oflags & BO_DELWRI) {
+			bp->b_oflags &= ~BO_DELWRI;
 			fs->lfs_avail += btofsb(fs, bp->b_bcount);
 			wakeup(&fs->lfs_avail);
 		}
+		mutex_exit(bp->b_objlock);
 		LFS_UNLOCK_BUF(bp);
-		mutex_exit(&bp->b_interlock);
-		brelse(bp, 0);
+		brelsel(bp, BC_INVAL | BC_VFLUSH);
+		mutex_enter(&vp->v_interlock);
 	}
-
-	splx(s);
+	mutex_exit(&bufcache_lock);
 
 	return (0);
 }

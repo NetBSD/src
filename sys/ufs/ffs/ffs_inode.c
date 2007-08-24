@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.86.2.5 2007/07/15 13:28:15 ad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.86.2.6 2007/08/24 23:28:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.86.2.5 2007/07/15 13:28:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.86.2.6 2007/08/24 23:28:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -561,11 +561,9 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	 */
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->fs_bsize, 0, 0);
-	mutex_enter(&bp->b_interlock);
-	if (bp->b_flags & (B_DONE | B_DELWRI)) {
+	if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 		/* Braces must be here in case trace evaluates to nothing. */
 		trace(TR_BREADHIT, pack(vp, fs->fs_bsize), lbn);
-		mutex_exit(&bp->b_interlock);
 	} else {
 		trace(TR_BREADMISS, pack(vp, fs->fs_bsize), lbn);
 		curproc->p_stats->p_ru.ru_inblock++;	/* pay for read */
@@ -574,7 +572,6 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 			panic("ffs_indirtrunc: bad buffer size");
 		bp->b_blkno = dbn;
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		mutex_exit(&bp->b_interlock);
 		VOP_STRATEGY(vp, bp);
 		error = biowait(bp);
 	}
@@ -640,7 +637,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	if (copy != NULL) {
 		FREE(copy, M_TEMP);
 	} else {
-		brelse(bp, B_INVAL);
+		brelse(bp, BC_INVAL);
 	}
 
 	*countp = blocksreleased;

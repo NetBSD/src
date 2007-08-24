@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.337.2.8 2007/08/20 18:16:12 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.337.2.9 2007/08/24 23:28:35 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.8 2007/08/20 18:16:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.337.2.9 2007/08/24 23:28:35 ad Exp $");
 
 #include "opt_ata.h"
 
@@ -650,7 +650,9 @@ wd_split_mod15_write(struct buf *bp)
 	 * Advance the pointer to the second half and issue that command
 	 * using the same opening.
 	 */
-	bp->b_flags = obp->b_flags | B_CALL;
+	bp->b_flags = obp->b_flags;
+	bp->b_oflags = obp->b_oflags;
+	bp->b_cflags = obp->b_cflags;
 	bp->b_data = (char *)bp->b_data + bp->b_bcount;
 	bp->b_blkno += (bp->b_bcount / 512);
 	bp->b_rawblkno += (bp->b_bcount / 512);
@@ -685,7 +687,7 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		struct buf *nbp;
 
 		/* already at splbio */
-		nbp = getiobuf_nowait();
+		nbp = getiobuf(NULL, false);
 		if (__predict_false(nbp == NULL)) {
 			/* No memory -- fail the iop. */
 			bp->b_error = ENOMEM;
@@ -697,7 +699,6 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 
 		nbp->b_error = 0;
 		nbp->b_proc = bp->b_proc;
-		nbp->b_vp = NULLVP;
 		nbp->b_dev = bp->b_dev;
 
 		nbp->b_bcount = bp->b_bcount / 2;
@@ -707,7 +708,9 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 		nbp->b_blkno = bp->b_blkno;
 		nbp->b_rawblkno = bp->b_rawblkno;
 
-		nbp->b_flags = bp->b_flags | B_CALL;
+		nbp->b_flags = bp->b_flags;
+		nbp->b_oflags = bp->b_oflags;
+		nbp->b_cflags = bp->b_cflags;
 		nbp->b_iodone = wd_split_mod15_write;
 
 		/* Put ptr to orig buf in b_private and use new buf */
@@ -841,8 +844,7 @@ noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
 #endif
 	/* XXX Yuck, but we don't want to increment openings in this case */
-	if (__predict_false((bp->b_flags & B_CALL) != 0 &&
-			    bp->b_iodone == wd_split_mod15_write))
+	if (__predict_false(bp->b_iodone == wd_split_mod15_write))
 		biodone(bp);
 	else {
 		biodone(bp);

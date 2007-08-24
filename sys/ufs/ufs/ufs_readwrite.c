@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.76.4.6 2007/08/20 21:28:29 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.76.4.7 2007/08/24 23:28:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.76.4.6 2007/08/20 21:28:29 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.76.4.7 2007/08/24 23:28:49 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -467,7 +467,7 @@ WRITE(void *v)
 		 * so we need to invalidate it.
 		 */
 		if (error && (flags & B_CLRBUF) == 0) {
-			brelse(bp, B_INVAL);
+			brelse(bp, BC_INVAL);
 			break;
 		}
 #ifdef LFS_READWRITE

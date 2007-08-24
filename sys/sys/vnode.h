@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.167.2.10 2007/08/21 18:05:42 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.167.2.11 2007/08/24 23:28:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -96,6 +96,7 @@ LIST_HEAD(buflists, buf);
  *	s	syncer_data_lock
  *	u	locked by underlying filesystem
  *	v	v_vnlock
+ *	x	v_interlock + bufcache_lock to modify, either to inspect
  *
  * Each underlying filesystem allocates its own private area and hangs
  * it from v_data.
@@ -116,8 +117,8 @@ struct vnode {
 	int		(**v_op)(void *);	/* :: vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* f: vnode freelist */
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
-	struct buflists	v_cleanblkhd;		/* i: clean blocklist head */
-	struct buflists	v_dirtyblkhd;		/* i: dirty blocklist head */
+	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
+	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
 	int		v_synclist_slot;	/* s: synclist slot index */
 	TAILQ_ENTRY(vnode) v_synclist;		/* s: vnodes with dirty bufs */
 	LIST_HEAD(, namecache) v_dnclist;	/* n: namecaches (children) */

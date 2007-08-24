@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.3.16.2 2007/05/13 17:36:44 ad Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.3.16.3 2007/08/24 23:28:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifdef LFS_KERNEL_RFW
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.3.16.2 2007/05/13 17:36:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.3.16.3 2007/08/24 23:28:47 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -253,7 +253,7 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 		LFS_UNLOCK_BUF(bp);
 		fs->lfs_avail += btofsb(fs, bp->b_bcount);
 	}
-	brelse(bp, B_INVAL);
+	brelse(bp, BC_INVAL);
 
 	/*
 	 * Extend the file, if it is not large enough already.
@@ -389,7 +389,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 			}
 		}
 	}
-	brelse(dbp, B_AGE);
+	brelse(dbp, BC_AGE);
 
 	return 0;
 }
@@ -504,7 +504,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 					goto err2;
 				}
 				(*dp++) = ((u_long *)(dbp->b_data))[0];
-				brelse(dbp, B_AGE);
+				brelse(dbp, BC_AGE);
 			}
 			if (flags & CHECK_UPDATE) {
 				if ((error = update_inoblk(fs, offset, cred, l))
@@ -530,7 +530,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 					goto err2;
 				}
 				(*dp++) = ((u_long *)(dbp->b_data))[0];
-				brelse(dbp, B_AGE);
+				brelse(dbp, BC_AGE);
 			}
 			/* Account for and update any direct blocks */
 			if ((flags & CHECK_UPDATE) &&
@@ -584,7 +584,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	if (flags & CHECK_CKSUM)
 		free(datap, M_SEGMENT);
     err1:
-	brelse(bp, B_AGE);
+	brelse(bp, BC_AGE);
 
 	/* XXX should we update the serial number even for bad psegs? */
 	if ((flags & CHECK_UPDATE) && offset > 0 && fs->lfs_version > 1)

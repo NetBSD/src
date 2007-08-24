@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.32.2.5 2007/08/20 21:26:06 ad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.32.2.6 2007/08/24 23:28:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.2.5 2007/08/20 21:26:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.32.2.6 2007/08/24 23:28:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -334,7 +334,7 @@ filecore_mountfs(devvp, mp, l, argp)
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf1\n", bp);
 #endif
-	brelse(bp, B_AGE);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	/* Read the bootblock in the map */
@@ -367,7 +367,7 @@ filecore_mountfs(devvp, mp, l, argp)
 #ifdef FILECORE_DEBUG_BR
 	printf("brelse(%p) vf2\n", bp);
 #endif
-	brelse(bp, B_AGE);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	mp->mnt_data = fcmp;

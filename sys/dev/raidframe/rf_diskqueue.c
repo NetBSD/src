@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.49 2007/03/04 06:02:37 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.49.2.1 2007/08/24 23:28:36 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.49 2007/03/04 06:02:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.49.2.1 2007/08/24 23:28:36 ad Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -459,9 +459,9 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 
 	memset(p, 0, sizeof(RF_DiskQueueData_t));
 	if (waitflag == PR_WAITOK) {
-		p->bp = getiobuf();
+		p->bp = getiobuf(NULL, true);
 	} else {
-		p->bp = getiobuf_nowait();
+		p->bp = getiobuf(NULL, false);
 	}
 	if (p->bp == NULL) {
 		/* no memory for the buffer!?!? */

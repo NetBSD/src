@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.151.2.11 2007/08/20 21:28:10 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.151.2.12 2007/08/24 23:28:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.11 2007/08/20 21:28:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.151.2.12 2007/08/24 23:28:41 ad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -183,7 +183,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		bp = nfs_getcacheblk(vp, (daddr_t)0, NFS_MAXPATHLEN, l);
 		if (!bp)
 			return (EINTR);
-		if ((bp->b_flags & B_DONE) == 0) {
+		if ((bp->b_oflags & BO_DONE) == 0) {
 			bp->b_flags |= B_READ;
 			error = nfs_doio(bp);
 			if (error) {
@@ -227,7 +227,7 @@ diragain:
 		bp = nfs_getcacheblk(vp, NFSDC_BLKNO(ndp), NFS_DIRBLKSIZ, l);
 		if (!bp)
 		    return (EINTR);
-		if ((bp->b_flags & B_DONE) == 0) {
+		if ((bp->b_oflags & BO_DONE) == 0) {
 		    bp->b_flags |= B_READ;
 		    bp->b_dcookie = ndp->dc_blkcookie;
 		    error = nfs_doio(bp);
@@ -265,7 +265,7 @@ diragain:
 			KASSERT(bp->b_bcount != bp->b_resid ||
 			    ndp->dc_blkcookie == bp->b_dcookie);
 			nfs_putdircache(np, ndp);
-			brelse(bp, B_NOCACHE);
+			brelse(bp, BC_NOCACHE);
 			return 0;
 		}
 
@@ -393,11 +393,11 @@ diragain:
 			rabp = nfs_getcacheblk(vp, NFSDC_BLKNO(nndp),
 						NFS_DIRBLKSIZ, l);
 			if (rabp) {
-			    if ((rabp->b_flags & (B_DONE | B_DELWRI)) == 0) {
+			    if ((rabp->b_oflags & (BO_DONE | BO_DELWRI)) == 0) {
 				rabp->b_dcookie = nndp->dc_cookie;
 				rabp->b_flags |= (B_READ | B_ASYNC);
 				if (nfs_asyncio(rabp)) {
-				    brelse(rabp, B_INVAL);
+				    brelse(rabp, BC_INVAL);
 				}
 			    } else
 				brelse(rabp, 0);

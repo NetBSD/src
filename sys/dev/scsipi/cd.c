@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.262.2.7 2007/08/20 22:42:52 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.262.2.8 2007/08/24 23:28:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.262.2.7 2007/08/20 22:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.262.2.8 2007/08/24 23:28:37 ad Exp $");
 
 #include "rnd.h"
 
@@ -662,7 +662,7 @@ cdstrategy(struct buf *bp)
 			count = roundup(count, cd->params.blksize);
 
 			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
-			nbp = getiobuf_nowait();
+			nbp = getiobuf(NULL, false);
 			if (!nbp) {
 				/* No memory -- fail the iop. */
 				bp->b_error = ENOMEM;
@@ -679,14 +679,15 @@ cdstrategy(struct buf *bp)
 			/* Set up the IOP to the bounce buffer. */
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
-			nbp->b_vp = NULLVP;
 
 			nbp->b_bcount = count;
 			nbp->b_bufsize = count;
 
 			nbp->b_rawblkno = blkno;
 
-			nbp->b_flags = bp->b_flags | B_READ | B_CALL;
+			nbp->b_flags = bp->b_flags | B_READ;
+			nbp->b_oflags = bp->b_oflags;
+			nbp->b_cflags = bp->b_cflags;
 			nbp->b_iodone = cdbounce;
 
 			/* store bounce state in b_private and use new buf */
@@ -937,7 +938,7 @@ cdbounce(struct buf *bp)
 				obp->b_bcount);
 
 			/* We need to alloc a new buf. */
-			nbp = getiobuf_nowait();
+			nbp = getiobuf(NULL, false);
 			if (!nbp) {
 				/* No buf available. */
 				bp->b_error = ENOMEM;
@@ -948,7 +949,6 @@ cdbounce(struct buf *bp)
 			/* Set up the IOP to the bounce buffer. */
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
-			nbp->b_vp = NULLVP;
 
 			nbp->b_bcount = bp->b_bcount;
 			nbp->b_bufsize = bp->b_bufsize;
@@ -957,7 +957,9 @@ cdbounce(struct buf *bp)
 			nbp->b_rawblkno = bp->b_rawblkno;
 
 			/* We need to do a read-modify-write operation */
-			nbp->b_flags = obp->b_flags | B_CALL;
+			nbp->b_flags = obp->b_flags;
+			nbp->b_oflags = obp->b_oflags;
+			nbp->b_cflags = obp->b_cflags;
 			nbp->b_iodone = cdbounce;
 
 			/* Put ptr to orig buf in b_private and use new buf */

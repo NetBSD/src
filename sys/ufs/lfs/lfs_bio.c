@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.98.8.6 2007/08/20 21:28:26 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.98.8.7 2007/08/24 23:28:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.8.6 2007/08/20 21:28:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.98.8.7 2007/08/24 23:28:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,10 +451,10 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	fs = VFSTOUFS(vp->v_mount)->um_lfs;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	KASSERT(bp->b_flags & B_BUSY);
+	KASSERT(bp->b_cflags & BC_BUSY);
 	KASSERT(flags & BW_CLEAN || !LFS_IS_MALLOC_BUF(bp));
-	KASSERT((bp->b_flags & (B_DELWRI|B_LOCKED)) != B_DELWRI);
-	KASSERT((bp->b_flags & (B_DELWRI|B_LOCKED)) != B_LOCKED);
+	KASSERT(((bp->b_oflags | bp->b_cflags) & (BO_DELWRI|BC_LOCKED))
+	    != BO_DELWRI);
 
 	/*
 	 * Don't write *any* blocks if we're mounted read-only, or
@@ -463,13 +463,16 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * In particular the cleaner can't write blocks either.
 	 */
 	if (fs->lfs_ronly || (fs->lfs_pflags & LFS_PF_CLEAN)) {
-		bp->b_flags &= ~(B_DELWRI | B_READ);
+		bp->b_oflags &= ~BO_DELWRI;
+		bp->b_flags |= B_READ;
 		bp->b_error = 0;
+		mutex_enter(&bufcache_lock);
 		LFS_UNLOCK_BUF(bp);
 		if (LFS_IS_MALLOC_BUF(bp))
-			bp->b_flags &= ~B_BUSY;
+			bp->b_cflags &= ~BC_BUSY;
 		else
-			brelse(bp, 0);
+			brelsel(bp, 0);
+		mutex_exit(&bufcache_lock);
 		return (fs->lfs_ronly ? EROFS : 0);
 	}
 
@@ -477,7 +480,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * Set the delayed write flag and use reassignbuf to move the buffer
 	 * from the clean list to the dirty one.
 	 *
-	 * Set the B_LOCKED flag and unlock the buffer, causing brelse to move
+	 * Set the BC_LOCKED flag and unlock the buffer, causing brelse to move
 	 * the buffer onto the LOCKED free list.  This is necessary, otherwise
 	 * getnewbuf() would try to reclaim the buffers using bawrite, which
 	 * isn't going to work.
@@ -487,7 +490,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * enough space reserved so that there's room to write meta-data
 	 * blocks.
 	 */
-	if (!(bp->b_flags & B_LOCKED)) {
+	if ((bp->b_cflags & BC_LOCKED) == 0) {
 		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
 
 		ip = VTOI(vp);
@@ -499,20 +502,24 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		}
 		mutex_exit(&fs->lfs_interlock);
 		fs->lfs_avail -= fsb;
-		bp->b_flags |= B_DELWRI;
 
-		LFS_LOCK_BUF(bp);
-		bp->b_flags &= ~(B_READ | B_DONE);
-		bp->b_error = 0;
+		mutex_enter(&bufcache_lock);
 		mutex_enter(&vp->v_interlock);
+		bp->b_oflags = (bp->b_oflags | BO_DELWRI) & ~BO_DONE;
+		LFS_LOCK_BUF(bp);
+		bp->b_flags &= ~B_READ;
+		bp->b_error = 0;
 		reassignbuf(bp, bp->b_vp);
 		mutex_exit(&vp->v_interlock);
+		mutex_exit(&bufcache_lock);
 	}
 
-	if (bp->b_flags & B_CALL)
-		bp->b_flags &= ~B_BUSY;
+	mutex_enter(&bufcache_lock);
+	if (bp->b_iodone != NULL)
+		bp->b_cflags &= ~BC_BUSY;
 	else
-		brelse(bp, 0);
+		brelsel(bp, 0);
+	mutex_exit(&bufcache_lock);
 
 	return (0);
 }
@@ -760,7 +767,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	ASSERT_MAYBE_SEGLOCK(fs);
 	nbytes = roundup(size, fsbtob(fs, 1));
 
-	bp = getiobuf();
+	bp = getiobuf(vp, true);
 	if (nbytes) {
 		bp->b_data = lfs_malloc(fs, nbytes, type);
 		/* memset(bp->b_data, 0, nbytes); */
@@ -771,7 +778,6 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	if (bp == NULL)
 		panic("bp is NULL after malloc in lfs_newbuf");
 #endif
-	bp->b_vp = NULL;
 	mutex_enter(&vp->v_interlock);
 	bgetvp(vp, bp);
 	mutex_exit(&vp->v_interlock);
@@ -783,7 +789,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_iodone = lfs_callback;
-	bp->b_flags = B_BUSY | B_CALL | B_NOCACHE;
+	bp->b_cflags = BC_BUSY | BC_NOCACHE;
 	bp->b_private = fs;
 
 	return (bp);
@@ -799,7 +805,7 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 		brelvp(bp);
 		mutex_exit(&vp->v_interlock);
 	}
-	if (!(bp->b_flags & B_INVAL)) { /* B_INVAL indicates a "fake" buffer */
+	if (!(bp->b_cflags & BC_INVAL)) { /* BC_INVAL indicates a "fake" buffer */
 		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
 		bp->b_data = NULL;
 	}
@@ -817,7 +823,6 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 #define BQ_EMPTY	3		/* buffer headers with no memory */
 
 extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
-extern kmutex_t bqueue_lock;
 
 /*
  * Count buffers on the "locked" queue, and compare it to a pro-forma count.
@@ -830,9 +835,9 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 	int n = 0;
 	long int size = 0L;
 
-	mutex_enter(&bqueue_lock);
+	mutex_enter(&bufcache_lock);
 	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist) {
-		KASSERT(!(bp->b_flags & B_CALL));
+		KASSERT(bp->b_iodone == NULL);
 		n++;
 		size += bp->b_bufsize;
 #ifdef DIAGNOSTIC
@@ -855,7 +860,7 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 	}
 	*count = n;
 	*bytes = size;
-	mutex_exit(&bqueue_lock);
+	mutex_exit(&bufcache_lock);
 	return;
 }
 

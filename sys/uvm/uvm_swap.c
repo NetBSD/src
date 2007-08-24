@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.11 2007/08/19 19:25:04 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.12 2007/08/24 23:28:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.11 2007/08/19 19:25:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.12 2007/08/24 23:28:50 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1115,6 +1115,7 @@ swstrategy(struct buf *bp)
 		 * finally plug in swapdev vnode and start I/O
 		 */
 		bp->b_vp = vp;
+		bp->b_objlock = &vp->v_interlock;
 		VOP_STRATEGY(vp, bp);
 		return;
 
@@ -1258,7 +1259,9 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		 */
 		nbp = pool_get(&vndbuf_pool, PR_WAITOK);
 		buf_init(&nbp->vb_buf);
-		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
+		nbp->vb_buf.b_flags    = bp->b_flags;
+		nbp->vb_buf.b_cflags   = bp->b_cflags;
+		nbp->vb_buf.b_oflags   = bp->b_oflags;
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = sz;
 		nbp->vb_buf.b_error    = 0;
@@ -1663,19 +1666,19 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now allocate a buf for the i/o.
 	 */
 
-	bp = getiobuf();
+	bp = getiobuf(swapdev_vp, true);
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
 
-	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
+	bp->b_flags = BC_BUSY | BC_NOCACHE;
+	bp->b_flags = (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (void *)kva;
 	bp->b_blkno = startblk;
-	bp->b_vp = swapdev_vp;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;
 
 	/*
@@ -1693,7 +1696,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (async) {
-		bp->b_flags |= B_CALL;
 		bp->b_iodone = uvm_aio_biodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
 		if (curlwp == uvm.pagedaemon_lwp)
@@ -1731,8 +1733,11 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * now dispose of the buf and we're done.
 	 */
 
-	if (write)
+	if (write) {
+		mutex_enter(&swapdev_vp->v_interlock);
 		vwakeup(bp);
+		mutex_exit(&swapdev_vp->v_interlock);
+	}
 	putiobuf(bp);
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.44.2.6 2007/08/20 22:42:50 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.44.2.7 2007/08/24 23:28:34 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.6 2007/08/20 22:42:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.44.2.7 2007/08/24 23:28:34 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,7 +307,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	 * we can fail quickly if they are unavailable.
 	 */
 
-	nbp = getiobuf_nowait();
+	nbp = getiobuf(cs->sc_tvn, false);
 	if (nbp == NULL) {
 		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 		return -1;
@@ -331,11 +331,12 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 
 	nbp->b_data = newaddr;
-	nbp->b_flags = bp->b_flags | B_CALL;
+	nbp->b_flags = bp->b_flags;
+	nbp->b_oflags = bp->b_oflags;
+	nbp->b_cflags = bp->b_cflags;
 	nbp->b_iodone = cgdiodone;
 	nbp->b_proc = bp->b_proc;
 	nbp->b_blkno = bn;
-	nbp->b_vp = cs->sc_tvn;
 	nbp->b_bcount = bp->b_bcount;
 	nbp->b_private = bp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.21.30.1 2007/05/13 17:36:40 ad Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.21.30.2 2007/08/24 23:28:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.21.30.1 2007/05/13 17:36:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.21.30.2 2007/08/24 23:28:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,9 +211,9 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		if (metalbn == bn)
 			break;
 		if (daddr == 0) {
-			mutex_enter(&bqueue_lock);
+			mutex_enter(&bufcache_lock);
 			cbp = incore(vp, metalbn);
-			mutex_exit(&bqueue_lock);
+			mutex_exit(&bufcache_lock);
 			if (cbp == NULL)
 				break;
 		}
@@ -236,7 +236,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 			 return (ENOMEM);
 		}
-		if (bp->b_flags & (B_DONE | B_DELWRI)) {
+		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
 		}
 #ifdef DIAGNOSTIC
