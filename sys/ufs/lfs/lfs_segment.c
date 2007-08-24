@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198.2.9 2007/08/20 21:28:27 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.2.10 2007/08/24 23:28:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.9 2007/08/20 21:28:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.10 2007/08/24 23:28:47 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -117,7 +117,6 @@ MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
 extern int count_lock_queue(void);
 extern kmutex_t vnode_free_list_lock;		/* XXX */
-extern kmutex_t bqueue_lock;			/* XXX */
 
 static void lfs_generic_callback(struct buf *, void (*)(struct buf *));
 static void lfs_free_aiodone(struct buf *);
@@ -285,12 +284,10 @@ lfs_vflush(struct vnode *vp)
 
 	/* If the node is being written, wait until that is done */
 	mutex_enter(&vp->v_interlock);
-	s = splbio();
 	if (WRITEINPROG(vp)) {
 		ivndebug(vp,"vflush/writeinprog");
 		mtsleep(vp, (PRIBIO+1), "lfs_vw", 0, &vp->v_interlock);
 	}
-	splx(s);
 	mutex_exit(&vp->v_interlock);
 
 	/* Protect against VXLOCK deadlock in vinvalbuf() */
@@ -308,33 +305,33 @@ lfs_vflush(struct vnode *vp)
 		KASSERT(vp->v_numoutput == 0);
 		mutex_exit(&vp->v_interlock);
 	
+		mutex_enter(&bufcache_lock);
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
 
 			KASSERT((bp->b_flags & B_GATHERED) == 0);
-			if (bp->b_flags & B_DELWRI) { /* XXX always true? */
+			if (bp->b_oflags & BO_DELWRI) { /* XXX always true? */
 				fs->lfs_avail += btofsb(fs, bp->b_bcount);
 				wakeup(&fs->lfs_avail);
 			}
 			/* Copied from lfs_writeseg */
-			if (bp->b_flags & B_CALL) {
+			if (bp->b_iodone != NULL) {
+				mutex_exit(&bufcache_lock);
 				biodone(bp);
+				mutex_enter(&bufcache_lock);
 			} else {
 				bremfree(bp);
 				LFS_UNLOCK_BUF(bp);
 				mutex_enter(&vp->v_interlock);
-				mutex_enter(&bp->b_interlock);
-				bp->b_flags &= ~(B_READ | B_DELWRI |
-					 B_GATHERED);
-				bp->b_flags |= B_DONE;
+				bp->b_flags &= ~(B_READ | B_GATHERED);
+				bp->b_oflags = (bp->b_oflags & ~BO_DELWRI) | BO_DONE;
 				bp->b_error = 0;
 				reassignbuf(bp, vp);
-				brelse(bp, 0);
-				mutex_exit(&bp->b_interlock);
 				mutex_exit(&vp->v_interlock);
+				brelse(bp, 0);
 			}
 		}
-		splx(s);
+		mutex_exit(&bufcache_lock);
 		LFS_CLR_UINO(ip, IN_CLEANING);
 		LFS_CLR_UINO(ip, IN_MODIFIED | IN_ACCESSED);
 		ip->i_flag &= ~IN_ALLMOD;
@@ -952,7 +949,7 @@ lfs_update_iaddr(struct lfs *fs, struct segment *sp, struct inode *ip, daddr_t n
 		if (sntod(fs, sn) + btofsb(fs, fs->lfs_sumsize) ==
 		    fs->lfs_offset) {
 			LFS_SEGENTRY(sup, fs, sn, bp);
-			KASSERT(bp->b_flags & B_DELWRI);
+			KASSERT(bp->b_oflags & BO_DELWRI);
 			LFS_WRITESEGENTRY(sup, fs, sn, bp);
 			/* fs->lfs_flags |= LFS_IFDIRTY; */
 			redo_ifile |= 1;
@@ -1246,8 +1243,10 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	}
 
 	if (gotblk) {
+		mutex_enter(&bufcache_lock);
 		LFS_LOCK_BUF(bp);
-		brelse(bp, 0);
+		brelsel(bp, 0);
+		mutex_exit(&bufcache_lock);
 	}
 
 	/* Increment inode count in segment summary block. */
@@ -1356,7 +1355,8 @@ loop:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 #endif /* LFS_NO_BACKBUF_HACK */
-		if ((bp->b_flags & (B_BUSY|B_GATHERED)) || !match(fs, bp)) {
+		if ((bp->b_cflags & BC_BUSY) != 0 ||
+		    (bp->b_flags & B_GATHERED) != 0 || !match(fs, bp)) {
 #ifdef DEBUG
 			if (vp == fs->lfs_ivnode &&
 			    (bp->b_flags & (B_BUSY|B_GATHERED)) == B_BUSY)
@@ -1369,21 +1369,21 @@ loop:
 		}
 #ifdef DIAGNOSTIC
 # ifdef LFS_USE_B_INVAL
-		if ((bp->b_flags & (B_CALL|B_INVAL)) == B_INVAL) {
+		if ((bp->b_flags & BC_INVAL) != 0 && bp->b_iodone == NULL) {
 			DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
-			      " is B_INVAL\n", bp->b_lblkno));
+			      " is BC_INVAL\n", bp->b_lblkno));
 			VOP_PRINT(bp->b_vp);
 		}
 # endif /* LFS_USE_B_INVAL */
-		if (!(bp->b_flags & B_DELWRI))
-			panic("lfs_gather: bp not B_DELWRI");
-		if (!(bp->b_flags & B_LOCKED)) {
+		if (!(bp->b_oflags & BO_DELWRI))
+			panic("lfs_gather: bp not BO_DELWRI");
+		if (!(bp->b_cflags & BC_LOCKED)) {
 			DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
-			      " blk %" PRId64 " not B_LOCKED\n",
+			      " blk %" PRId64 " not BC_LOCKED\n",
 			      bp->b_lblkno,
 			      dbtofsb(fs, bp->b_blkno)));
 			VOP_PRINT(bp->b_vp);
-			panic("lfs_gather: bp not B_LOCKED");
+			panic("lfs_gather: bp not BC_LOCKED");
 		}
 #endif
 		if (lfs_gatherblock(sp, bp, &s)) {
@@ -1936,13 +1936,11 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr,
 	}
 
 	/* Get an empty buffer header, or maybe one with something on it */
-	bp = getiobuf();
-	bp->b_flags = B_BUSY | B_CALL;
+	bp = getiobuf(vp, true);
 	bp->b_dev = NODEV;
 	bp->b_blkno = bp->b_lblkno = addr;
 	bp->b_iodone = lfs_cluster_callback;
 	bp->b_private = cl;
-	bp->b_vp = vp;
 
 	return bp;
 }
@@ -1950,10 +1948,10 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr,
 int
 lfs_writeseg(struct lfs *fs, struct segment *sp)
 {
-	struct buf **bpp, *bp, *cbp, *newbp;
+	struct buf **bpp, *bp, *cbp, *newbp, *unbusybp;
 	SEGUSE *sup;
 	SEGSUM *ssp;
-	int i, s;
+	int i;
 	int do_again, nblocks, byteoffset;
 	size_t el_size;
 	struct lfs_cluster *cl;
@@ -2041,30 +2039,26 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	 * there are any, replace them with copies that have UNASSIGNED
 	 * instead.
 	 */
+	mutex_enter(&bufcache_lock);
 	for (bpp = sp->bpp, i = nblocks - 1; i--;) {
 		++bpp;
 		bp = *bpp;
-		if (bp->b_flags & B_CALL) { /* UBC or malloced buffer */
-			bp->b_flags |= B_BUSY;
+		if (bp->b_iodone != NULL) {	 /* UBC or malloced buffer */
+			bp->b_cflags |= BC_BUSY;
 			continue;
 		}
 
-		mutex_enter(&bp->b_interlock);
-		s = splbio();
-		while (bp->b_flags & B_BUSY) {
+		while (bp->b_cflags & BC_BUSY) {
 			DLOG((DLOG_SEG, "lfs_writeseg: avoiding potential"
 			      " data summary corruption for ino %d, lbn %"
 			      PRId64 "\n",
 			      VTOI(bp->b_vp)->i_number, bp->b_lblkno));
-			bp->b_flags |= B_WANTED;
-			mtsleep(bp, (PRIBIO + 1), "lfs_writeseg", 0,
-				&bp->b_interlock);
-			splx(s);
-			s = splbio();
+			bp->b_cflags |= BC_WANTED;
+			cv_wait(&bp->b_busy, &bufcache_lock);
 		}
-		bp->b_flags |= B_BUSY;
-		splx(s);
-		mutex_exit(&bp->b_interlock);
+		bp->b_cflags |= BC_BUSY;
+		mutex_exit(&bufcache_lock);
+		unbusybp = NULL;
 
 		/*
 		 * Check and replace indirect block UNWRITTEN bogosity.
@@ -2105,18 +2099,14 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				*bpp = newbp;
 				bp->b_flags &= ~B_GATHERED;
 				bp->b_error = 0;
-				if (bp->b_flags & B_CALL) {
+				if (bp->b_iodone != NULL) {
 					DLOG((DLOG_SEG, "lfs_writeseg: "
 					      "indir bp should not be B_CALL\n"));
 					biodone(bp);
 					bp = NULL;
 				} else {
 					/* Still on free list, leave it there */
-					s = splbio();
-					bp->b_flags &= ~B_BUSY;
-					if (bp->b_flags & B_WANTED)
-						wakeup(bp);
-					splx(s);
+					unbusybp = bp;
 					/*
 					 * We have to re-decrement lfs_avail
 					 * since this block is going to come
@@ -2130,7 +2120,15 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				lfs_freebuf(fs, newbp);
 			}
 		}
+		mutex_enter(&bufcache_lock);
+		if (unbusybp != NULL) {
+			unbusybp->b_cflags &= ~BC_BUSY;
+			if (unbusybp->b_cflags & BC_WANTED)
+				cv_broadcast(&bp->b_busy);
+		}
 	}
+	mutex_exit(&bufcache_lock);
+
 	/*
 	 * Compute checksum across data and then across summary; the first
 	 * block (the summary block) is skipped.  Set the create time here
@@ -2147,8 +2145,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		for (byteoffset = 0; byteoffset < (*bpp)->b_bcount;
 		     byteoffset += fs->lfs_bsize) {
 #ifdef LFS_USE_B_INVAL
-			if (((*bpp)->b_flags & (B_CALL | B_INVAL)) ==
-			    (B_CALL | B_INVAL)) {
+			if ((*bpp)->b_cflags & BC_INVAL) != 0 &&
+			    (*bpp)->b_iodone != NULL) {
 				if (copyin((void *)(*bpp)->b_saveaddr +
 					   byteoffset, dp, el_size)) {
 					panic("lfs_writeseg: copyin failed [1]:"
@@ -2200,7 +2198,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		cbp = lfs_newclusterbuf(fs, devvp, (*bpp)->b_blkno, i);
 		cl = cbp->b_private;
 
-		cbp->b_flags |= B_ASYNC | B_BUSY;
+		cbp->b_flags |= B_ASYNC;
+		cbp->b_cflags |= BC_BUSY;
 		cbp->b_bcount = 0;
 
 #if defined(DEBUG) && defined(DIAGNOSTIC)
@@ -2259,8 +2258,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			 * from the buffer indicated.
 			 * XXX == what do I do on an error?
 			 */
-			if ((bp->b_flags & (B_CALL|B_INVAL)) ==
-			    (B_CALL|B_INVAL)) {
+			if ((bp->b_cflags & BC_INVAL) != 0 &&
+			    bp->b_iodone != NULL) {
 				if (copyin(bp->b_saveaddr, p, bp->b_bcount))
 					panic("lfs_writeseg: "
 					    "copyin failed [2]");
@@ -2275,14 +2274,18 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			cbp->b_bcount += bp->b_bcount;
 			cl->bufsize += bp->b_bcount;
 
-			bp->b_flags &= ~(B_READ | B_DELWRI | B_DONE);
+			bp->b_flags &= ~B_READ;
 			bp->b_error = 0;
 			cl->bpp[cl->bufcount++] = bp;
+
 			vp = bp->b_vp;
+			mutex_enter(&bufcache_lock);
 			mutex_enter(&vp->v_interlock);
+			bp->b_oflags &= ~(BO_DELWRI | BO_DONE);
 			reassignbuf(bp, vp);
 			vp->v_numoutput++;
 			mutex_exit(&vp->v_interlock);
+			mutex_exit(&bufcache_lock);
 
 			bpp++;
 			i--;
@@ -2351,8 +2354,9 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	    LFS_SBPAD - sizeof(struct dlfs));
 	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
 
-	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
-	bp->b_flags &= ~(B_DONE | B_READ | B_DELWRI);
+	bp->b_cflags |= BC_BUSY;
+	bp->b_flags = (bp->b_flags & ~B_READ) | B_ASYNC;
+	bp->b_oflags &= ~(BO_DONE | BO_DELWRI);
 	bp->b_error = 0;
 	bp->b_iodone = lfs_supercallback;
 
@@ -2477,7 +2481,7 @@ lfs_cluster_aiodone(struct buf *bp)
 	/* Put the pages back, and release the buffer */
 	while (cl->bufcount--) {
 		tbp = cl->bpp[cl->bufcount];
-		KASSERT(tbp->b_flags & B_BUSY);
+		KASSERT(tbp->b_cflags & BC_BUSY);
 		if (error) {
 			tbp->b_error = error;
 		}
@@ -2493,11 +2497,11 @@ lfs_cluster_aiodone(struct buf *bp)
 
 		LFS_BCLEAN_LOG(fs, tbp);
 
-		if (!(tbp->b_flags & B_CALL)) {
-			KASSERT(tbp->b_flags & B_LOCKED);
-			mutex_enter(&bqueue_lock);
+		if (tbp->b_iodone == NULL) {
+			KASSERT(tbp->b_cflags & BC_LOCKED);
+			mutex_enter(&bufcache_lock);
 			bremfree(tbp);
-			mutex_exit(&bqueue_lock);
+			mutex_exit(&bufcache_lock);
 			if (vp) {
 				mutex_enter(&vp->v_interlock);
 				reassignbuf(tbp, vp);
@@ -2506,15 +2510,16 @@ lfs_cluster_aiodone(struct buf *bp)
 			tbp->b_flags |= B_ASYNC; /* for biodone */
 		}
 
-		if ((tbp->b_flags & (B_LOCKED | B_DELWRI)) == B_LOCKED)
+		if (((tbp->b_cflags | tbp->b_oflags) &
+		    (BC_LOCKED | BO_DELWRI)) == BC_LOCKED)
 			LFS_UNLOCK_BUF(tbp);
 
-		if (tbp->b_flags & B_DONE) {
+		if (tbp->b_oflags & BO_DONE) {
 			DLOG((DLOG_SEG, "blk %d biodone already (flags %lx)\n",
 				cl->bufcount, (long)tbp->b_flags));
 		}
 
-		if ((tbp->b_flags & B_CALL) && !LFS_IS_MALLOC_BUF(tbp)) {
+		if (tbp->b_iodone != NULL && !LFS_IS_MALLOC_BUF(tbp)) {
 			/*
 			 * A buffer from the page daemon.
 			 * We use the same iodone as it does,
@@ -2532,9 +2537,9 @@ lfs_cluster_aiodone(struct buf *bp)
 			}
 			/* Put it back the way it was */
 			tbp->b_flags |= B_ASYNC;
-			/* Master buffers have B_AGE */
+			/* Master buffers have BC_AGE */
 			if (tbp->b_private == tbp)
-				tbp->b_flags |= B_AGE;
+				tbp->b_flags |= BC_AGE;
 		}
 
 		biodone(tbp);

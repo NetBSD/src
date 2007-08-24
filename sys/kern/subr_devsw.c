@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.10.8.3 2007/07/15 15:52:55 ad Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.10.8.4 2007/08/24 23:28:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.10.8.3 2007/07/15 15:52:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.10.8.4 2007/08/24 23:28:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -630,6 +630,8 @@ void
 bdev_strategy(struct buf *bp)
 {
 	const struct bdevsw *d;
+
+	KASSERT((bp->b_oflags & BO_DONE) == 0);
 
 	if ((d = bdevsw_lookup(bp->b_dev)) == NULL)
 		panic("bdev_strategy");

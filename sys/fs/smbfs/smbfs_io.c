@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.24.8.3 2007/08/19 19:24:52 ad Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.24.8.4 2007/08/24 23:28:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.3 2007/08/19 19:24:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.24.8.4 2007/08/24 23:28:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,9 +347,9 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 		uiop->uio_offset = ((off_t)bp->b_blkno) << DEV_BSHIFT;
 		io.iov_base = bp->b_data;
 		uiop->uio_rw = UIO_WRITE;
-		bp->b_flags |= B_BUSY;
+		bp->b_cflags |= BC_BUSY;
 		error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
-		bp->b_flags &= ~B_BUSY;
+		bp->b_cflags &= ~BC_BUSY;
 
 
 #ifndef __NetBSD__ /* XXX */

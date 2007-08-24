@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.44.4.2 2007/06/08 14:18:19 ad Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.44.4.3 2007/08/24 23:28:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.44.4.2 2007/06/08 14:18:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.44.4.3 2007/08/24 23:28:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,9 +222,9 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 		if (metalbn == bn)
 			break;
 		if (daddr == 0) {
-			mutex_enter(&bqueue_lock);
+			mutex_enter(&bufcache_lock);
 			cbp = incore(vp, metalbn);
-			mutex_exit(&bqueue_lock);
+			mutex_exit(&bufcache_lock);
 			if (cbp == NULL)
 				break;
 		}
@@ -248,9 +248,7 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 			return (ENOMEM);
 		}
-		mutex_enter(&bp->b_interlock);
-		if (bp->b_flags & (B_DONE | B_DELWRI)) {
-			mutex_exit(&bp->b_interlock);
+		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
 		}
 #ifdef DIAGNOSTIC
@@ -261,7 +259,6 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-			mutex_exit(&bp->b_interlock);
 			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			VOP_STRATEGY(vp, bp);
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */

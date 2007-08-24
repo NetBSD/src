@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.22.2.8 2007/08/20 18:16:12 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.22.2.9 2007/08/24 23:28:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.8 2007/08/20 18:16:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.22.2.9 2007/08/24 23:28:36 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1055,7 +1055,7 @@ dkstart(struct dkwedge_softc *sc)
 		/* Instrumentation. */
 		disk_busy(&sc->sc_dk);
 
-		nbp = getiobuf_nowait();
+		nbp = getiobuf(sc->sc_parent->dk_rawvp, false);
 		if (nbp == NULL) {
 			/*
 			 * No resources to run this request; leave the
@@ -1070,12 +1070,13 @@ dkstart(struct dkwedge_softc *sc)
 		(void) BUFQ_GET(sc->sc_bufq);
 
 		nbp->b_data = bp->b_data;
-		nbp->b_flags = bp->b_flags | B_CALL;
+		nbp->b_flags = bp->b_flags;
+		nbp->b_oflags = bp->b_oflags;
+		nbp->b_cflags = bp->b_cflags;
 		nbp->b_iodone = dkiodone;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_blkno = bp->b_rawblkno;
 		nbp->b_dev = sc->sc_parent->dk_rawvp->v_rdev;
-		nbp->b_vp = sc->sc_parent->dk_rawvp;
 		nbp->b_bcount = bp->b_bcount;
 		nbp->b_private = bp;
 		BIO_COPYPRIO(nbp, bp);

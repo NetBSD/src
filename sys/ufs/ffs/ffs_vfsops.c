@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.14 2007/08/20 21:28:25 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.15 2007/08/24 23:28:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.14 2007/08/20 21:28:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.15 2007/08/24 23:28:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -748,7 +748,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 */
 	for (i = 0; ; i++) {
 		if (bp != NULL) {
-			brelse(bp, B_NOCACHE);
+			brelse(bp, BC_NOCACHE);
 			bp = NULL;
 		}
 		if (sblock_try[i] == -1) {
@@ -845,7 +845,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump->um_fstype = fstype;
 	if (fs->fs_sbsize < SBLOCKSIZE)
-		brelse(bp, B_INVAL);
+		brelse(bp, BC_INVAL);
 	else
 		brelse(bp, 0);
 	bp = NULL;
@@ -892,10 +892,10 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (bp->b_bcount != fs->fs_fsize)
 			error = EINVAL;
 		if (error) {
-			bset = B_INVAL;
+			bset = BC_INVAL;
 			goto out;
 		}
-		brelse(bp, B_INVAL);
+		brelse(bp, BC_INVAL);
 		bp = NULL;
 	}
 
@@ -1014,6 +1014,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #endif
 	}
 #endif /* UFS_EXTATTR */
+	mp->mnt_iflag |= IMNT_MPSAFE;
 	return (0);
 out:
 	if (fs)

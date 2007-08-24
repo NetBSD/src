@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.32.2.8 2007/08/19 19:24:20 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.32.2.9 2007/08/24 23:28:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.8 2007/08/19 19:24:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.32.2.9 2007/08/24 23:28:34 ad Exp $");
 
 #include "fss.h"
 
@@ -897,8 +897,8 @@ restart:
 		if (len > MAXPHYS)
 			len = MAXPHYS;
 
-		bp = getiobuf();
-		bp->b_flags = B_READ|B_CALL;
+		bp = getiobuf(NULL, true);
+		bp->b_flags = B_READ;
 		bp->b_bcount = len;
 		bp->b_bufsize = bp->b_bcount;
 		bp->b_error = 0;
@@ -906,7 +906,6 @@ restart:
 		bp->b_blkno = dblk;
 		bp->b_proc = NULL;
 		bp->b_dev = sc->sc_bdev;
-		bp->b_vp = NULLVP;
 		bp->b_private = scp;
 		bp->b_iodone = fss_cluster_iodone;
 
@@ -1021,7 +1020,7 @@ fss_bs_thread(void *arg)
 
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	nbp = getiobuf();
+	nbp = getiobuf(NULL, true);
 
 	nfreed = nio = 1;		/* Dont sleep the first time */
 
@@ -1159,7 +1158,6 @@ fss_bs_thread(void *arg)
 		nbp->b_blkno = bp->b_blkno;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_dev = sc->sc_bdev;
-		nbp->b_vp = NULLVP;
 
 		bdev_strategy(nbp);
 

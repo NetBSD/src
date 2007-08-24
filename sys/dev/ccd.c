@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.118.2.7 2007/08/20 18:16:09 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.118.2.8 2007/08/24 23:28:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.118.2.7 2007/08/20 18:16:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.118.2.8 2007/08/24 23:28:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,7 +838,9 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 	if (cbp == NULL)
 		return (NULL);
 	buf_init(&cbp->cb_buf);
-	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
+	cbp->cb_buf.b_flags = bp->b_flags;
+	cbp->cb_buf.b_oflags = bp->b_oflags;
+	cbp->cb_buf.b_cflags = bp->b_cflags;
 	cbp->cb_buf.b_iodone = ccdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
 	cbp->cb_buf.b_dev = ci->ci_dev;

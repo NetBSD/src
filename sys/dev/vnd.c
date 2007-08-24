@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.165.2.10 2007/08/20 18:16:11 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.165.2.11 2007/08/24 23:28:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.10 2007/08/20 18:16:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.165.2.11 2007/08/24 23:28:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -615,7 +615,9 @@ vndthread(void *arg)
 
 		bp = &vnx->vx_buf;
 		buf_init(bp);
-		bp->b_flags = (obp->b_flags & B_READ) | B_CALL;
+		bp->b_flags = (obp->b_flags & B_READ);
+		bp->b_oflags = obp->b_oflags;
+		bp->b_cflags = obp->b_cflags;
 		bp->b_iodone = vndiodone;
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
@@ -792,7 +794,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
 #endif
 
-		nbp = getiobuf();
+		nbp = getiobuf(vp, true);
 		nestiobuf_setup(bp, nbp, offset, sz);
 		nbp->b_blkno = nbn + btodb(off);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.3.2.5 2007/08/20 21:27:23 ad Exp $ */
+/* $NetBSD: spiflash.c,v 1.3.2.6 2007/08/24 23:28:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.2.5 2007/08/20 21:27:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.3.2.6 2007/08/24 23:28:38 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,7 +307,7 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	 * we can fail quickly if they are unavailable.
 	 */
 
-	nbp = getiobuf_nowait();
+	nbp = getiobuf(cs->sc_tvn, false);
 	if (nbp == NULL) {
 		disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 		return -1;
@@ -331,7 +331,9 @@ cgdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 
 	nbp->b_data = newaddr;
-	nbp->b_flags = bp->b_flags | B_CALL;
+	nbp->b_flags = bp->b_flags;
+	nbp->b_oflags = bp->b_oflags;
+	nbp->b_cflags = bp->b_cflags;
 	nbp->b_iodone = cgdiodone;
 	nbp->b_proc = bp->b_proc;
 	nbp->b_blkno = bn;

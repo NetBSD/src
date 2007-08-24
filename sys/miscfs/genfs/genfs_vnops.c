@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.11 2007/08/21 22:32:25 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.12 2007/08/24 23:28:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.11 2007/08/21 22:32:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.12 2007/08/24 23:28:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -723,13 +723,18 @@ startover:
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 
-	mbp = getiobuf();
+	mbp = getiobuf(vp, true);
 	mbp->b_bufsize = totalbytes;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_flags = B_BUSY|B_READ| (async ? B_CALL|B_ASYNC : 0);
-	mbp->b_iodone = (async ? uvm_aio_biodone : 0);
-	mbp->b_vp = vp;
+	mbp->b_cflags = BC_BUSY;
+	if (async) {
+		mbp->b_flags = B_READ | B_ASYNC;
+		mbp->b_iodone = uvm_aio_biodone;
+	} else {
+		mbp->b_flags = B_READ;
+		mbp->b_iodone = NULL;
+	}	
 	if (async)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else
@@ -857,7 +862,7 @@ startover:
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
 		} else {
-			bp = getiobuf();
+			bp = getiobuf(vp, true);
 			nestiobuf_setup(mbp, bp, offset - startoffset, iobytes);
 		}
 		bp->b_lblkno = 0;
@@ -1527,15 +1532,20 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		vp->v_numoutput += 2;
 		mutex_exit(&vp->v_interlock);
 	}
-	mbp = getiobuf();
+	mbp = getiobuf(vp, true);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
 	    vp, mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = len;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_flags = B_BUSY | brw | B_AGE | (async ? (B_CALL | B_ASYNC) : 0);
-	mbp->b_iodone = iodone;
-	mbp->b_vp = vp;
+	mbp->b_cflags = BC_BUSY | BC_AGE;
+	if (async) {
+		mbp->b_flags = brw | B_ASYNC;
+		mbp->b_iodone = iodone;
+	} else {
+		mbp->b_flags = brw;
+		mbp->b_iodone = NULL;
+	}
 	if (curlwp == uvm.pagedaemon_lwp)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else if (async)
@@ -1573,7 +1583,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		} else {
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
-			bp = getiobuf();
+			bp = getiobuf(vp, true);
 			nestiobuf_setup(mbp, bp, offset - startoffset, iobytes);
 		}
 		bp->b_lblkno = 0;
@@ -1775,9 +1785,8 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	vp->v_numoutput++;
 	mutex_exit(&vp->v_interlock);
 
-	bp = getiobuf();
-	bp->b_flags = B_BUSY | B_WRITE | B_AGE;
-	bp->b_vp = vp;
+	bp = getiobuf(vp, true);
+	bp->b_cflags = BC_BUSY | BC_AGE;
 	bp->b_lblkno = offset >> vp->v_mount->mnt_fs_bshift;
 	bp->b_data = (char *)kva;
 	bp->b_bcount = npages << PAGE_SHIFT;
@@ -1880,15 +1889,14 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 static void
 genfs_dio_iodone(struct buf *bp)
 {
-	int s;
 
 	KASSERT((bp->b_flags & B_ASYNC) == 0);
-	s = splbio();
-	if ((bp->b_flags & (B_READ | B_AGE)) == B_AGE) {
+	if ((bp->b_flags & B_READ) == 0 && (bp->b_cflags & BC_AGE) != 0) {
+		mutex_enter(bp->b_objlock);
 		vwakeup(bp);
+		mutex_exit(bp->b_objlock);
 	}
 	putiobuf(bp);
-	splx(s);
 }
 
 /*

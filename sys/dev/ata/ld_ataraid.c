@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.19.2.4 2007/08/19 19:24:22 ad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.19.2.5 2007/08/24 23:28:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.4 2007/08/19 19:24:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.19.2.5 2007/08/24 23:28:35 ad Exp $");
 
 #include "rnd.h"
 
@@ -247,7 +247,9 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	if (cbp == NULL)
 		return (NULL);
 	buf_init(&cbp->cb_buf);
-	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
+	cbp->cb_buf.b_flags = bp->b_flags;
+	cbp->cb_buf.b_oflags = bp->b_oflags;
+	cbp->cb_buf.b_cflags = bp->b_cflags;
 	cbp->cb_buf.b_iodone = sc->sc_iodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
 	cbp->cb_buf.b_vp = sc->sc_vnodes[comp];

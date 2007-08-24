@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.9 2007/08/20 21:28:25 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.10 2007/08/24 23:28:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.9 2007/08/20 21:28:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.10 2007/08/24 23:28:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,22 +290,19 @@ ffs_fsync(void *v)
 		if (error)
 			goto out;
 
-		mutex_enter(&bqueue_lock);
+		mutex_enter(&bufcache_lock);
 		for (i = 0; i < num; i++) {
 			if ((bp = incore(vp, ia[i].in_lbn)) == NULL)
 				continue;
-			mutex_enter(&bp->b_interlock);
-			if ((bp->b_flags & (B_BUSY | B_DELWRI)) != B_DELWRI) {
-				mutex_exit(&bp->b_interlock);
+			if ((bp->b_cflags & BC_BUSY) != 0 ||
+			    (bp->b_oflags & BO_DELWRI) == 0)
 				continue;
-			}
-			bp->b_flags |= B_BUSY | B_VFLUSH;
-			mutex_exit(&bp->b_interlock);
-			mutex_exit(&bqueue_lock);
+			bp->b_cflags |= BC_BUSY | BC_VFLUSH;
+			mutex_exit(&bufcache_lock);
 			bawrite(bp);
-			mutex_enter(&bqueue_lock);
+			mutex_enter(&bufcache_lock);
 		}
-		mutex_exit(&bqueue_lock);
+		mutex_exit(&bufcache_lock);
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
@@ -371,56 +368,54 @@ ffs_full_fsync(void *v)
 		if (error) {
 			return error;
 		}
-		mutex_enter(&vp->v_interlock);
-	}
+	} else
+		mutex_exit(&vp->v_interlock);
 
 	passes = NIADDR + 1;
 	skipmeta = 0;
 	if (ap->a_flags & FSYNC_WAIT)
 		skipmeta = 1;
 
+	mutex_enter(&bufcache_lock);
+	mutex_enter(&vp->v_interlock);
 loop:
 	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
-		mutex_enter(&bp->b_interlock);
-		bp->b_flags &= ~B_SCANNED;
-		mutex_exit(&bp->b_interlock);
+		bp->b_cflags &= ~BC_SCANNED;
 	}
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		mutex_enter(&bp->b_interlock);
-		if (bp->b_flags & (B_BUSY | B_SCANNED)) {
-			mutex_exit(&bp->b_interlock);
+		if (bp->b_cflags & (BC_BUSY | BC_SCANNED))
 			continue;
-		}
-		if ((bp->b_flags & B_DELWRI) == 0)
+		if ((bp->b_oflags & BO_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
-		if (skipmeta && bp->b_lblkno < 0) {
-			mutex_exit(&bp->b_interlock);
+		if (skipmeta && bp->b_lblkno < 0)
 			continue;
-		}
-		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
-		mutex_exit(&bp->b_interlock);
+		mutex_exit(&vp->v_interlock);
+		bp->b_cflags |= BC_BUSY | BC_VFLUSH | BC_SCANNED;
+		mutex_exit(&bufcache_lock);
 		/*
 		 * On our final pass through, do all I/O synchronously
 		 * so that we can find out if our flush is failing
 		 * because of write errors.
 		 */
-		mutex_exit(&vp->v_interlock);
 		if (passes > 0 || !(ap->a_flags & FSYNC_WAIT))
 			(void) bawrite(bp);
 		else if ((error = bwrite(bp)) != 0)
 			return (error);
-		mutex_enter(&vp->v_interlock);
 		/*
-		 * Since we may have slept during the I/O, we need
+		 * Since we unlocked during the I/O, we need
 		 * to start from a known point.
 		 */
+		mutex_enter(&bufcache_lock);
+		mutex_enter(&vp->v_interlock);
 		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
 	if (skipmeta) {
 		skipmeta = 0;
 		goto loop;
 	}
+	mutex_exit(&bufcache_lock);
+
 	if (ap->a_flags & FSYNC_WAIT) {
 		while (vp->v_numoutput) {
 			cv_wait(&vp->v_cv, &vp->v_interlock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.6 2007/08/20 21:26:04 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.7 2007/08/24 23:28:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.6 2007/08/20 21:26:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.40.2.7 2007/08/24 23:28:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -411,7 +411,7 @@ iso_mountfs(devvp, mp, l, argp)
 
 	isomp->volume_space_size += sess;
 
-	brelse(pribp, B_AGE);
+	brelse(pribp, BC_AGE);
 	pribp = NULL;
 
 	mp->mnt_data = isomp;
@@ -449,7 +449,7 @@ iso_mountfs(devvp, mp, l, argp)
 		 * The contents are valid,
 		 * but they will get reread as part of another vnode, so...
 		 */
-		brelse(bp, B_AGE);
+		brelse(bp, BC_AGE);
 		bp = NULL;
 	}
 	isomp->im_flags = argp->flags & (ISOFSMNT_NORRIP | ISOFSMNT_GENS |

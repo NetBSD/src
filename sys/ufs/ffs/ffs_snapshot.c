@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.8 2007/08/20 21:28:25 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.9 2007/08/24 23:28:44 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.8 2007/08/20 21:28:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.9 2007/08/24 23:28:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -399,7 +399,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		}
 		bcopy(bp->b_data, space, (u_int)len);
 		space = (char *)space + len;
-		brelse(bp, B_INVAL | B_NOCACHE);
+		brelse(bp, BC_INVAL | BC_NOCACHE);
 	}
 	if (fs->fs_contigsumsize > 0) {
 		copy_fs->fs_maxcluster = lp = space;
@@ -706,21 +706,20 @@ out:
 		    PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
 	if (!error) {
+		mutex_enter(&bufcache_lock);
 		mutex_enter(&vp->v_interlock);
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
-			mutex_enter(&bp->b_interlock);
 			mutex_exit(&vp->v_interlock);
-			if ((bp->b_flags & (B_DELWRI|B_BUSY)) != B_DELWRI)
-				panic("ffs_snapshot: not dirty or busy, bp %p",
-				    bp);
-			bp->b_flags |= B_BUSY|B_VFLUSH;
+			bp->b_cflags |= BC_BUSY|BC_VFLUSH;
 			if (LIST_FIRST(&bp->b_dep) == NULL)
-				bp->b_flags |= B_NOCACHE;
-			mutex_exit(&bp->b_interlock);
+				bp->b_cflags |= BC_NOCACHE;
+			mutex_exit(&bufcache_lock);
 			bwrite(bp);
+			mutex_enter(&bufcache_lock);
+			mutex_enter(&vp->v_interlock);
 		}
-		mutex_enter(&vp->v_interlock);
+		mutex_exit(&bufcache_lock);
 		while (vp->v_numoutput > 0)
 			cv_wait(&vp->v_cv, &vp->v_interlock);
 		mutex_exit(&vp->v_interlock);
@@ -952,7 +951,7 @@ indiracct_ufs1(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	 */
 	bp = getblk(cancelvp, lbn, fs->fs_bsize, 0, 0);
 	bp->b_blkno = fsbtodb(fs, blkno);
-	if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0 &&
+	if ((bp->b_oflags & (BO_DONE | BO_DELWRI)) == 0 &&
 	    (error = readfsblk(bp->b_vp, bp->b_data, fragstoblks(fs, blkno)))) {
 		brelse(bp, 0);
 		return (error);
@@ -1220,7 +1219,7 @@ indiracct_ufs2(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	 */
 	bp = getblk(cancelvp, lbn, fs->fs_bsize, 0, 0);
 	bp->b_blkno = fsbtodb(fs, blkno);
-	if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0 &&
+	if ((bp->b_oflags & (BO_DONE | BO_DELWRI)) == 0 &&
 	    (error = readfsblk(bp->b_vp, bp->b_data, fragstoblks(fs, blkno)))) {
 		brelse(bp, 0);
 		return (error);
@@ -2066,7 +2065,7 @@ readfsblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 	struct fs *fs = ip->i_fs;
 	struct buf *nbp;
 
-	nbp = getiobuf();
+	nbp = getiobuf(NULL, true);
 	nbp->b_flags = B_READ;
 	nbp->b_bcount = nbp->b_bufsize = fs->fs_bsize;
 	nbp->b_error = 0;
@@ -2074,7 +2073,6 @@ readfsblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 	nbp->b_blkno = nbp->b_rawblkno = fsbtodb(fs, blkstofrags(fs, lbn));
 	nbp->b_proc = NULL;
 	nbp->b_dev = ip->i_devvp->v_rdev;
-	nbp->b_vp = NULLVP;
 
 	bdev_strategy(nbp);
 
@@ -2145,7 +2143,10 @@ writevnblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 		return error;
 
 	bcopy(data, bp->b_data, fs->fs_bsize);
-	bp->b_flags |= B_NOCACHE;
+	mutex_enter(&bufcache_lock);
+	/* XXX Shouldn't need to lock for this, NOCACHE is only read later. */
+	bp->b_cflags |= BC_NOCACHE;
+	mutex_exit(&bufcache_lock);
 
 	return bwrite(bp);
 }

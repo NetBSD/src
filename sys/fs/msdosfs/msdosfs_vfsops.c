@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.44.4.6 2007/08/20 21:26:07 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.44.4.7 2007/08/24 23:28:38 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.6 2007/08/20 21:26:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.44.4.7 2007/08/24 23:28:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -513,7 +513,6 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 */
 	if ((error = bread(devvp, 0, secsize, NOCRED, &bp)) != 0)
 		goto error_exit;
-	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
@@ -720,7 +719,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	/*
 	 * Release the bootsector buffer.
 	 */
-	brelse(bp, 0);
+	brelse(bp, BC_AGE);
 	bp = NULL;
 
 	/*
@@ -821,7 +820,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 
 error_exit:;
 	if (bp)
-		brelse(bp, 0);
+		brelse(bp, BC_AGE);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);

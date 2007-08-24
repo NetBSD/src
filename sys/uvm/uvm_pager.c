@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.81.4.10 2007/08/23 13:15:19 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.81.4.11 2007/08/24 23:28:49 ad Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.10 2007/08/23 13:15:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81.4.11 2007/08/24 23:28:49 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -295,8 +295,8 @@ uvm_aio_aiodone(struct buf *bp)
 
 	error = bp->b_error;
 	write = (bp->b_flags & B_READ) == 0;
-	/* XXXUBC B_NOCACHE is for swap pager, should be done differently */
-	if (write && !(bp->b_flags & B_NOCACHE) && bioops != NULL)
+	/* XXXUBC BC_NOCACHE is for swap pager, should be done differently */
+	if (write && !(bp->b_cflags & BC_NOCACHE) && bioops != NULL)
 		(*bioops->io_pageiodone)(bp);
 
 	uobj = NULL;
@@ -468,8 +468,10 @@ uvm_aio_aiodone(struct buf *bp)
 		uvmexp.pdpending--;
 #endif /* defined(VMSWAP) */
 	}
-	if (write && (bp->b_flags & B_AGE) != 0) {
+	if (write && (bp->b_cflags & BC_AGE) != 0) {
+		mutex_enter(bp->b_objlock);
 		vwakeup(bp);
+		mutex_exit(bp->b_objlock);
 	}
 	putiobuf(bp);
 }

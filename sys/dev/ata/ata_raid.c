@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.21.2.2 2007/04/10 13:24:22 ad Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.21.2.3 2007/08/24 23:28:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.21.2.2 2007/04/10 13:24:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.21.2.3 2007/08/24 23:28:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -294,8 +294,7 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 	struct buf *bp;
 	int error;
 
-	bp = getiobuf();
-	bp->b_vp = vp;
+	bp = getiobuf(vp, NULL);
 	bp->b_blkno = blkno;
 	bp->b_bcount = bp->b_resid = size;
 	bp->b_flags = bflags;
