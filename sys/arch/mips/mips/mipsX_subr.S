@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.24 2007/05/27 13:57:30 tsutsui Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.25 2007/08/24 23:52:10 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1085,6 +1085,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 	REG_S	a2, TF_BASE+TF_REG_EPC(sp)
+	REG_S	MIPS_CURLWP, TF_BASE+TF_PAD(sp)	# XXX Atheros HAL
 /*
  * Call the interrupt handler.
  */
@@ -1100,6 +1101,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 #endif
 	mtc0	zero, MIPS_COP_0_STATUS		# Reset exl, trap possible.
 	COP0_SYNC
+	lw	MIPS_CURLWP, CPUVAR(CURLWP)	# XXX Atheros HAL
 	jal	_C_LABEL(cpu_intr)
 	and	a3, a0, a1			# 4th is STATUS & CAUSE
 /*
@@ -1118,6 +1120,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	nop
 	.set noat
 #endif
+	REG_L	MIPS_CURLWP, TF_BASE+TF_PAD(sp)	# XXX Atheros HAL
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
 	DYNAMIC_STATUS_MASK(a0, t0)		# machine dependent masking
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
