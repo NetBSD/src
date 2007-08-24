@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.38 2007/08/23 15:19:40 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.39 2007/08/24 13:33:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.38 2007/08/23 15:19:40 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.39 2007/08/24 13:33:51 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -295,8 +295,10 @@ psshfs_node_close(struct puffs_cc *pcc, void *opc, int flags,
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 
-	assert(psn->opencount != 0);
-	if (--psn->opencount == 0)
+	if (psn->opencount > 0)
+		psn->opencount--;
+
+	if (psn->opencount)
 		closehandles(pcc, psn);
 
 	return 0;
