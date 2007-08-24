@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.110.4.1 2007/07/22 18:44:39 liamjfoy Exp $	*/
+/*	$NetBSD: unistd.h,v 1.110.4.2 2007/08/24 20:07:38 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -364,5 +364,7 @@ extern	 char *suboptarg;	/* getsubopt(3) external variable */
 
 __END_DECLS
 
+#if _FORTIFY_SOURCE > 0
 #include <ssp/unistd.h>
+#endif
 #endif /* !_UNISTD_H_ */
