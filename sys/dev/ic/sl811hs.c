@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.13 2007/08/19 07:42:04 kiyohara Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.14 2007/08/24 01:49:08 kiyohara Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.13 2007/08/19 07:42:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.14 2007/08/24 01:49:08 kiyohara Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -2668,10 +2668,10 @@ slhci_do_attach(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
 
 #ifdef SLHCI_DEBUG
 	ssc = sc;
-#endif
 #ifdef USB_DEBUG
 	if (slhci_usbdebug >= 0)
 		usbdebug = slhci_usbdebug;
+#endif
 #endif
 
 	if (t->sltype == SLTYPE_SL811HS_R12)
