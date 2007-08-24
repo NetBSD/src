@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.31.2.1 2007/07/22 18:44:38 liamjfoy Exp $	*/
+/*	$NetBSD: string.h,v 1.31.2.2 2007/08/24 20:07:38 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -91,5 +91,7 @@ char	*strndup(const char *, size_t);
 #endif
 __END_DECLS
 
+#if _FORTIFY_SOURCE > 0
 #include <ssp/string.h>
+#endif
 #endif /* !defined(_STRING_H_) */
