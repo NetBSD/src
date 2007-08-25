@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.19 2007/07/21 09:29:07 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.20 2007/08/25 09:30:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.19 2007/07/21 09:29:07 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.20 2007/08/25 09:30:41 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -290,7 +290,7 @@ puffs_framebuf_getwindow(struct puffs_framebuf *pufbuf, size_t winoff,
 }
 
 static void
-errnotify(struct puffs_framebuf *pufbuf, int error)
+errnotify(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf, int error)
 {
 
 	pufbuf->rv = error;
@@ -298,8 +298,7 @@ errnotify(struct puffs_framebuf *pufbuf, int error)
 		puffs_goto(pufbuf->pcc);
 	} else if (pufbuf->fcb) {
 		pufbuf->istat &= ~ISTAT_NODESTROY;
-		pufbuf->fcb(puffs_cc_getusermount(pufbuf->pcc),
-		    pufbuf, pufbuf->fcb_arg, error);
+		pufbuf->fcb(pu, pufbuf, pufbuf->fcb_arg, error);
 	} else {
 		pufbuf->istat &= ~ISTAT_NODESTROY;
 		puffs_framebuf_destroy(pufbuf);
@@ -713,7 +712,7 @@ puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 
 		/* can't wait for result if we can't read */
 		if (fio->stat & FIO_RDGONE) {
-			errnotify(pufbuf, ENXIO);
+			errnotify(pu, pufbuf, ENXIO);
 			done = 1;
 		} else if ((pufbuf->istat & ISTAT_DIRECT)) {
 			pufbuf->istat &= ~ISTAT_NODESTROY;
@@ -881,13 +880,13 @@ puffs_framev_readclose(struct puffs_usermount *pu,
 			puffs_framebuf_destroy(fio->cur_in);
 			fio->cur_in = NULL;
 		} else {
-			errnotify(fio->cur_in, error);
+			errnotify(pu, fio->cur_in, error);
 		}
 	}
 
 	while ((pufbuf = TAILQ_FIRST(&fio->res_qing)) != NULL) {
 		TAILQ_REMOVE(&fio->res_qing, pufbuf, pfb_entries);
-		errnotify(pufbuf, error);
+		errnotify(pu, pufbuf, error);
 	}
 
 	EV_SET(&kev, fio->io_fd, EVFILT_READ, EV_DELETE, 0, 0, 0);
@@ -915,7 +914,7 @@ puffs_framev_writeclose(struct puffs_usermount *pu,
 
 	while ((pufbuf = TAILQ_FIRST(&fio->snd_qing)) != NULL) {
 		TAILQ_REMOVE(&fio->snd_qing, pufbuf, pfb_entries);
-		errnotify(pufbuf, error);
+		errnotify(pu, pufbuf, error);
 	}
 
 	EV_SET(&kev, fio->io_fd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
