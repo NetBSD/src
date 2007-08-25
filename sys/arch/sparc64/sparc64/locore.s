@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.253 2007/08/13 03:09:13 macallan Exp $	*/
+/*	$NetBSD: locore.s,v 1.254 2007/08/25 15:50:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5113,12 +5113,8 @@ _C_LABEL(cpu_initialize):
 	 */
 ENTRY(cpu_mp_startup)
 	wrpr    %g0, 0, %cleanwin
-	wrpr	%g0, 13, %pil
-	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
-	wr	%g0, FPRS_FEF, %fprs		! Turn on FPU
-
+!	wrpr	%g0, 0, %pstate
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
-
 	flushw
 
 	/*
@@ -5138,9 +5134,9 @@ ENTRY(cpu_mp_startup)
 	or	%l1, TTE_L|TTE_CP|TTE_CV|TTE_P|TTE_W, %l2	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=0|G=0
 #endif
 
-	!!
-	!!  Now, map in the interrupt stack & cpu_info as context==0
-	!!
+	/*
+	 *  Now, map in the interrupt stack & cpu_info as context==0
+	 */
 	set	TLB_TAG_ACCESS, %l5
 	set	1f, %o5
 	set	INTSTACK, %l0
@@ -5151,9 +5147,9 @@ ENTRY(cpu_mp_startup)
 	flush	%o5
 	flush	%l0
 1:
-	!!
-	!! Map in idle u area and kernel stack
-	!!
+	/*
+	 * Map in idle u area and kernel stack
+	 */
 	set	KSTACK_VA, %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
 	membar	#Sync
@@ -5162,21 +5158,21 @@ ENTRY(cpu_mp_startup)
 	flush	%o5
 	flush	%l0
 
-	!!
-	!! Set 0 as primary context XXX
-	!!
+	/*
+	 * Set 0 as primary context XXX
+	 */
 	mov	CTX_PRIMARY, %o0
 	stxa	%g0, [%o0] ASI_DMMU
 	flush	%o5
 
-!!! Make sure our stack's OK. 
-	LDPTR	[%g2 + CBA_INITSTACK], %l0
- 	add	%l0, - CC64FSZ - 80, %l0
+	/*
+	 * Temporarily use the interrupt stack
+	 */
 #ifdef _LP64
-	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
-	sub	%l0, BIAS, %l0			! and biased
+	set	((EINTSTACK - CC64FSZ - TF_SIZE)) & ~0x0f - BIAS, %sp
+#else
+	set	EINTSTACK - CC64FSZ - TF_SIZE, %sp
 #endif
-	mov	%l0, %sp
 	set	1, %fp
 	clr	%i7
 
@@ -5208,11 +5204,28 @@ ENTRY(cpu_mp_startup)
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table)
 	 mov	%l1, %o0
-	wrpr	%l1, 0, %tba			! Make sure the PROM didn't foul up.
+	wrpr	%l1, 0, %tba			! Make sure the PROM didn't
+						! foul up.
+	/*
+	 * Use this CPUs idlelewp's uarea stack
+	 */
+	sethi	%hi(CPUINFO_VA+CI_IDLELWP), %l0
+	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_IDLELWP)], %l0
+	set	USPACE - TF_SIZE - CC64FSZ, %l1
+	LDPTR	[%l0 + L_ADDR], %l0
+	add	%l0, %l1, %l0
+#ifdef _LP64
+	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
+	sub	%l0, BIAS, %l0			! and biased
+#endif
+	mov	%l0, %sp
 
 	/*
 	 * Switch to the kernel mode and run away.
 	 */
+	wrpr	%g0, 13, %pil
+	wrpr	%g0, PSTATE_INTR|PSTATE_PEF, %pstate
+	wr	%g0, FPRS_FEF, %fprs			! Turn on FPU
 	wrpr	%g0, WSTATE_KERN, %wstate
 
 	call	_C_LABEL(cpu_hatch)
