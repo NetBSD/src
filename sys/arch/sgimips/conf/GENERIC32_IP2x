@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.59.2.1 2007/06/06 19:21:53 bouyer Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.59.2.2 2007/08/25 09:00:08 liamjfoy Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.59.2.1 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.59.2.2 $"
 
 maxusers	32
 
@@ -138,7 +138,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.1 2007/06/05 20:50:05 bouyer Exp $
+# $NetBSD: GENERIC,v 1.177.2.2 2007/08/25 09:00:08 liamjfoy Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.1 $"
+#ident 		"GENERIC-$Revision: 1.177.2.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -143,7 +143,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
