@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.254 2007/08/25 15:50:24 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.255 2007/08/25 15:52:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5365,9 +5365,7 @@ ENTRY(openfirmware_exit)
 	wrpr	%l5, 0, %tba			! restore the ofw trap table
 
 	/* Arrange locked kernel stack as PROM stack */
-	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l5
-	LDPTR	[%l5 + %lo(CPUINFO_VA+CI_INITSTACK)], %l5
- 	add	%l5, - CC64FSZ - 80, %l5	! via syscall(boot_me_up) or somesuch
+	set	EINTSTACK  - CC64FSZ, %l5
 
 #ifdef _LP64
 	andn	%l5, 0x0f, %l5			! Needs to be 16-byte aligned
