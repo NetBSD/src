@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.27 2007/08/25 09:01:08 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.28 2007/08/25 09:22:39 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.27 2007/08/25 09:01:08 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.28 2007/08/25 09:22:39 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -382,7 +382,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	reqid = NEXTREQ(pctx);
 	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, dhand, dhandlen);
-	JUSTSEND(pb);
+	puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb, 1, 0);
 	free(dhand);
 
 	return rv;
