@@ -1,14 +1,12 @@
-/*	$NetBSD: vfs_subr2.c,v 1.4.4.3 2007/08/24 23:28:41 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.4.4.4 2007/08/25 00:12:25 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
- * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * NASA Ames Research Center, by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.3 2007/08/24 23:28:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.4 2007/08/25 00:12:25 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -256,9 +254,9 @@ restart:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		error = bbusy(bp, catch, slptimeo);
-		if (error == EPASSTHROUGH)
-			goto restart;
 		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
 			mutex_exit(&bufcache_lock);
 			return (error);
 		}
@@ -268,9 +266,9 @@ restart:
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		error = bbusy(bp, catch, slptimeo);
-		if (error == EPASSTHROUGH)
-			goto restart;
 		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
 			mutex_exit(&bufcache_lock);
 			return (error);
 		}
@@ -328,9 +326,9 @@ restart:
 		if (bp->b_lblkno < lbn)
 			continue;
 		error = bbusy(bp, catch, slptimeo);
-		if (error == EPASSTHROUGH)
-			goto restart;
 		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
 			mutex_exit(&bufcache_lock);
 			return (error);
 		}
@@ -342,9 +340,9 @@ restart:
 		if (bp->b_lblkno < lbn)
 			continue;
 		error = bbusy(bp, catch, slptimeo);
-		if (error == EPASSTHROUGH)
-			goto restart;
 		if (error != 0) {
+			if (error == EPASSTHROUGH)
+				goto restart;
 			mutex_exit(&bufcache_lock);
 			return (error);
 		}
