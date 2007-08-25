@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.234 2007/08/24 21:06:40 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.235 2007/08/25 10:33:24 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8563,3 +8563,24 @@ usr.sbin/ypserv/ypserv/ypserv_proc.c		1.12
 	PR/36820: Geoff C. Wing: ypserv maplist functionality broken due to off-by-
 	one error.
 	[tron, ticket #837]
+
+sys/arch/acorn32/conf/GENERIC			1.80
+sys/arch/alpha/conf/GENERIC			1.315
+sys/arch/amd64/conf/GENERIC			1.154
+sys/arch/amiga/conf/GENERIC			1.248
+sys/arch/amiga/conf/GENERIC.in			1.61
+sys/arch/arc/conf/GENERIC			1.148
+sys/arch/atari/conf/GENERIC.in			1.68
+sys/arch/cats/conf/GENERIC			1.116
+sys/arch/hp300/conf/GENERIC			1.141
+sys/arch/i386/conf/GENERIC			1.840
+sys/arch/i386/conf/GENERIC_LAPTOP		1.239
+sys/arch/mac68k/conf/GENERIC			1.182
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.68
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.66
+sys/arch/sparc/conf/GENERIC			1.200
+sys/arch/sparc64/conf/GENERIC			1.88
+
+	Remove iso(4) from GENERIC kernels, as discussed on tech-net@
+	Ok'ed by core@
+	[adrianp, ticket #820]
