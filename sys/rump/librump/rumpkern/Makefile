@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2007/08/21 13:57:17 pooka Exp $
+#	$NetBSD: Makefile,v 1.14 2007/08/25 10:22:31 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -39,8 +39,11 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 # would create hideous namespace lossage.  So just do some clever
 # (or less clever) renaming.
 #
+# Yes, this is borderline disgusting not to mention seriously
+# labile, but what are you gonna do for a quick hack?
+#
 VOPTORUMPVOP="-e s/vop/rump_vop/g;/VOPARG/!s/VOP/RUMP_VOP/g;/vfs_op_desc/,\$$d"
-VOPTORUMPVOP+="-e s/kauth_cred_t/rump_kauth_cred_t/g;s/vm_prot_t/int/g"
+VOPTORUMPVOP+="-e s/vm_prot_t/int/g"
 VOPTORUMPVOP+="-e s/voff_t/off_t/g;/sys\/buf\.h/s/.*/struct buf;/"
 RVNH=\#include \"rump.h\"
 rumpvnode_if.c: vnode_if.c

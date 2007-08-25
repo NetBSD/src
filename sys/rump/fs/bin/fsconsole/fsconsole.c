@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.4 2007/08/20 15:58:13 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.5 2007/08/25 10:22:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -53,7 +53,9 @@ main(int argc, char *argv[])
 	uint8_t buf[8192];
 	struct ukfs *fs;
 	struct fscons_args args;
+#ifdef __NetBSD__
 	struct dirent *dent;
+#endif
 	char *p;
 	int rv;
 

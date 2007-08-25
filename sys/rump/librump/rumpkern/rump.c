@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.9 2007/08/21 13:57:17 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.10 2007/08/25 10:22:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -128,7 +128,7 @@ rump_mnt_destroy(struct mount *mp)
 
 struct componentname *
 rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
-	rump_kauth_cred_t creds, struct lwp *l)
+	kauth_cred_t creds, struct lwp *l)
 {
 	struct componentname *cnp;
 
@@ -143,7 +143,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp->cn_nameptr = cnp->cn_pnbuf;
 	cnp->cn_namelen = namelen;
 
-	cnp->cn_cred = (kauth_cred_t)creds;
+	cnp->cn_cred = creds;
 	cnp->cn_lwp = l;
 
 	return cnp;
@@ -154,7 +154,7 @@ rump_freecn(struct componentname *cnp, int flags)
 {
 
 	if (flags & RUMPCN_FREECRED)
-		rump_cred_destroy((rump_kauth_cred_t)cnp->cn_cred);
+		rump_cred_destroy(cnp->cn_cred);
 
 	if (cnp->cn_flags & SAVENAME) {
 		if (flags & RUMPCN_ISLOOKUP || cnp->cn_flags & SAVESTART)
@@ -431,11 +431,10 @@ rump_vfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 #endif
 
 int
-rump_vfs_sync(struct mount *mp, int wait, rump_kauth_cred_t cred,
-	struct lwp *l)
+rump_vfs_sync(struct mount *mp, int wait, kauth_cred_t cred, struct lwp *l)
 {
 
-	return VFS_SYNC(mp, wait ? MNT_WAIT : MNT_NOWAIT, (kauth_cred_t)cred,l);
+	return VFS_SYNC(mp, wait ? MNT_WAIT : MNT_NOWAIT, cred, l);
 }
 
 int
