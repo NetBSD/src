@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.18 2007/08/25 00:14:25 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.19 2007/08/25 11:11:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.18 2007/08/25 00:14:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.19 2007/08/25 11:11:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1619,7 +1619,7 @@ fail:;
 		for (ihash = 0; ihash < bufhash+1; ihash++) {
 		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
 			if ((bp->b_cflags & (BC_BUSY|BC_INVAL)) == BC_BUSY &&
-			    (bp->f_fflags & B_READ) == 0)
+			    (bp->b_flags & B_READ) == 0)
 				vprint(NULL, bp->b_vp);
 		    }
 		}
