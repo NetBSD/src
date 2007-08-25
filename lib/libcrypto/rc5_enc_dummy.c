@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
 #include <openssl/rc5.h>
 #include "rc5_locl.h"
 
