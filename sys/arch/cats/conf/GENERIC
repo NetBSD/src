@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.2.1 2007/06/05 20:49:59 bouyer Exp $
+# $NetBSD: GENERIC,v 1.113.2.2 2007/08/25 09:00:03 liamjfoy Exp $
 #
 # GENERIC machine description file
 # 
@@ -94,7 +94,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
-options 	ISO,TPIP	# OSI
+#options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
