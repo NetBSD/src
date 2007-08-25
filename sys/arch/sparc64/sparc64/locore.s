@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.255 2007/08/25 15:52:41 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.256 2007/08/25 19:16:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4933,7 +4933,7 @@ dostart:
 #endif
 
 
-_C_LABEL(cpu_initialize):
+ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	/*
 	 * Step 5: is no more.
 	 */
@@ -4994,11 +4994,15 @@ _C_LABEL(cpu_initialize):
 	membar	#Sync
 	flush	%o5
 
-!!! Make sure our stack's OK.
+	!! Setup kernel stack (we rely on curlwp on this cpu
+	!! being lwp0 here and it's uarea is mapped special
+	!! and already accessible here)
 	flushw
-	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l0
-	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_INITSTACK)], %l0
- 	add	%l0, - CC64FSZ - 80, %l0	! via syscall(boot_me_up) or somesuch
+	sethi	%hi(CPUINFO_VA+CI_CURLWP), %l0
+	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_CURLWP)], %l0
+	set	USPACE - TF_SIZE - CC64FSZ, %l1
+	LDPTR	[%l0 + L_ADDR], %l0
+ 	add	%l1, %l0, %l0
 #ifdef _LP64
 	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
 	sub	%l0, BIAS, %l0			! and biased
