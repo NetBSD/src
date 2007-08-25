@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.1 2007/08/21 13:57:17 pooka Exp $	*/
+/*	$NetBSD: auth.c,v 1.2 2007/08/25 10:22:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@ struct kauth_cred {
 	gid_t cr_groups[0];
 };
 
-rump_kauth_cred_t
+kauth_cred_t
 rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 {
 	kauth_cred_t cred;
@@ -57,11 +57,11 @@ rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 	cred->cr_ngroups = ngroups;
 	memcpy(cred->cr_groups, groups, ngroups * sizeof(gid_t));
 
-	return (rump_kauth_cred_t)cred; /* blah */
+	return cred;
 }
 
 void
-rump_cred_destroy(rump_kauth_cred_t cred)
+rump_cred_destroy(kauth_cred_t cred)
 {
 
 	rumpuser_free(cred);

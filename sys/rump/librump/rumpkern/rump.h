@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.13 2007/08/21 13:57:17 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.14 2007/08/25 10:22:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,9 +38,12 @@ struct vnode;
 struct vattr;
 struct componentname;
 struct vfsops;
-struct rump_kauth_cred;
-typedef struct rump_kauth_cred *rump_kauth_cred_t;
 struct fid;
+
+#if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
+struct kauth_cred;
+typedef struct kauth_cred *kauth_cred_t;
+#endif
 
 struct lwp;
 extern struct lwp *curlwp;
@@ -55,7 +58,7 @@ int		rump_mnt_mount(struct mount *, const char *, void *,
 void		rump_mnt_destroy(struct mount *);
 
 struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
-				     rump_kauth_cred_t, struct lwp *);
+				     kauth_cred_t, struct lwp *);
 void			rump_freecn(struct componentname *, int);
 #define RUMPCN_ISLOOKUP 0x01
 #define RUMPCN_FREECRED 0x02
@@ -93,8 +96,8 @@ void	rump_vp_lock_shared(struct vnode *);
 void	rump_vp_unlock(struct vnode *);
 int	rump_vp_islocked(struct vnode *);
 
-rump_kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
-void			rump_cred_destroy(rump_kauth_cred_t);
+kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
+void		rump_cred_destroy(kauth_cred_t);
 
 #define RUMPCRED_SUSER	NULL
 #define WizardMode	RUMPCRED_SUSER /* COMPAT_NETHACK */
@@ -104,7 +107,7 @@ int	rump_vfs_root(struct mount *, struct vnode **);
 #if 0
 int	rump_vfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
 #endif
-int	rump_vfs_sync(struct mount *, int, rump_kauth_cred_t, struct lwp *);
+int	rump_vfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 

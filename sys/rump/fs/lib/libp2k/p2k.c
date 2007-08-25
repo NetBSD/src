@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.18 2007/08/23 14:37:40 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.19 2007/08/25 10:22:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,7 +45,7 @@
 
 PUFFSOP_PROTOS(p2k)
 
-static rump_kauth_cred_t
+static kauth_cred_t
 cred_create(const struct puffs_cred *pcr)
 {
 	gid_t groups[NGROUPS];
@@ -63,7 +63,7 @@ cred_create(const struct puffs_cred *pcr)
 }
 
 static __inline void
-cred_destroy(rump_kauth_cred_t cred)
+cred_destroy(kauth_cred_t cred)
 {
 
 	rump_cred_destroy(cred);
@@ -72,7 +72,7 @@ cred_destroy(rump_kauth_cred_t cred)
 static struct componentname *
 makecn(const struct puffs_cn *pcn)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 
 	cred = cred_create(pcn->pcn_cred);
 	return rump_makecn(pcn->pcn_nameiop, pcn->pcn_flags, pcn->pcn_name,
@@ -188,7 +188,7 @@ p2k_fs_sync(struct puffs_cc *pcc, int waitfor,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
 	struct mount *mp = puffs_cc_getspecific(pcc);
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -314,7 +314,7 @@ int
 p2k_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -330,7 +330,7 @@ int
 p2k_node_close(struct puffs_cc *pcc, void *opc, int flags,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -346,7 +346,7 @@ int
 p2k_node_access(struct puffs_cc *pcc, void *opc, int mode,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -362,7 +362,7 @@ int
 p2k_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -378,7 +378,7 @@ int
 p2k_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *vap,
 	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -394,7 +394,7 @@ int
 p2k_node_fsync(struct puffs_cc *pcc, void *opc, const struct puffs_cred *pcr,
 	int flags, off_t offlo, off_t offhi, const struct puffs_cid *pcid)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -410,7 +410,7 @@ int
 p2k_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
 	const struct puffs_cred *pcr)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -545,7 +545,7 @@ p2k_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	struct uio *uio;
 	off_t *vop_cookies;
 	int vop_ncookies;
@@ -578,7 +578,7 @@ int
 p2k_node_readlink(struct puffs_cc *pcc, void *opc,
 	const struct puffs_cred *pcr, char *linkname, size_t *linklen)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	struct uio *uio;
 	int rv;
 
@@ -597,7 +597,7 @@ int
 p2k_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	struct uio *uio;
 	int rv;
 
@@ -616,7 +616,7 @@ int
 p2k_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 	size_t *resid, const struct puffs_cred *pcr, int ioflag)
 {
-	rump_kauth_cred_t cred;
+	kauth_cred_t cred;
 	struct uio *uio;
 	int rv;
 
