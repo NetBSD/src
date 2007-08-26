@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stub.c,v 1.8 2007/08/26 23:49:42 pooka Exp $	*/
+/*	$NetBSD: lock.c,v 1.1 2007/08/26 23:49:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,64 +28,71 @@
  */
 
 #include <sys/param.h>
-#include <sys/mutex.h>
-#include <sys/rwlock.h>
+#include <sys/lock.h>
 
-void
-mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
+/* oh sweet crackmgr, what would I do without you? */
+int
+lockmgr(volatile struct lock *lock, u_int flags, struct simplelock *slock)
 {
+	u_int lktype = flags & LK_TYPE_MASK;
 
-	return;
+	switch (lktype) {
+	case LK_SHARED:
+	case LK_EXCLUSIVE:
+		lock->lk_flags = lktype;
+		lock->lk_recurselevel++;
+		break;
+
+	case LK_RELEASE:
+		assert(lock->lk_flags != 0);
+		if (--lock->lk_recurselevel == 0)
+			lock->lk_flags = 0;
+		break;
+
+	case LK_UPGRADE:
+	case LK_EXCLUPGRADE:
+		assert(lock->lk_flags == LK_SHARED);
+		lock->lk_flags = LK_EXCLUSIVE;
+		break;
+
+	case LK_DOWNGRADE:
+		assert(lock->lk_flags == LK_EXCLUSIVE);
+		lock->lk_flags = LK_SHARED;
+		break;
+
+	case LK_DRAIN:
+		lock->lk_flags = LK_EXCLUSIVE;
+		break;
+	}
+
+	return 0;
 }
 
 void
-mutex_destroy(kmutex_t *mtx)
+lockinit(struct lock *lock, pri_t prio, const char *wmesg, int timo,
+	int flags)
 {
 
-	return;
-}
-
-void
-mutex_enter(kmutex_t *mtx)
-{
-
-	return;
-}
-
-void
-mutex_exit(kmutex_t *mtx)
-{
-
-	return;
+	lock->lk_flags = 0;
 }
 
 int
-mutex_owned(kmutex_t *mtx)
+lockstatus(struct lock *lock)
 {
 
-	return 1;
+	return lock->lk_flags;
 }
 
 void
-rw_init(krwlock_t *rw)
+lockmgr_printinfo(volatile struct lock *lock)
 {
 
+	return;
 }
 
 void
-rw_destroy(krwlock_t *rw)
+transferlockers(struct lock *from, struct lock *to)
 {
 
-}
-
-void
-rw_enter(krwlock_t *rw, const krw_t op)
-{
-
-}
-
-void
-rw_exit(krwlock_t *rw)
-{
-
+	return;
 }
