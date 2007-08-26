@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.9 2007/07/09 21:00:38 ad Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.10 2007/08/26 22:45:56 dyoung Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.9 2007/07/09 21:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.10 2007/08/26 22:45:56 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2857,7 +2857,7 @@ rt2560_init(struct ifnet *ifp)
 	for (i = 0; i < N(rt2560_def_mac); i++)
 		RAL_WRITE(sc, rt2560_def_mac[i].reg, rt2560_def_mac[i].val);
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	rt2560_set_macaddr(sc, ic->ic_myaddr);
 
 	/* set basic rate set (will be updated later) */

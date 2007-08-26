@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.135 2007/08/10 12:27:35 taca Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.136 2007/08/26 22:45:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.135 2007/08/10 12:27:35 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.136 2007/08/26 22:45:57 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1669,9 +1669,9 @@ bge_blockinit(struct bge_softc *sc)
 
 	/* Set random backoff seed for TX */
 	CSR_WRITE_4(sc, BGE_TX_RANDOM_BACKOFF,
-	    LLADDR(ifp->if_sadl)[0] + LLADDR(ifp->if_sadl)[1] +
-	    LLADDR(ifp->if_sadl)[2] + LLADDR(ifp->if_sadl)[3] +
-	    LLADDR(ifp->if_sadl)[4] + LLADDR(ifp->if_sadl)[5] +
+	    CLLADDR(ifp->if_sadl)[0] + CLLADDR(ifp->if_sadl)[1] +
+	    CLLADDR(ifp->if_sadl)[2] + CLLADDR(ifp->if_sadl)[3] +
+	    CLLADDR(ifp->if_sadl)[4] + CLLADDR(ifp->if_sadl)[5] +
 	    BGE_TX_BACKOFF_SEED_MASK);
 
 	/* Set inter-packet gap */

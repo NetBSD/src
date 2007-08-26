@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.62 2007/03/04 19:14:25 sketch Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.63 2007/08/26 22:45:58 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62 2007/03/04 19:14:25 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.63 2007/08/26 22:45:58 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2359,7 +2359,7 @@ iwi_config(struct iwi_softc *sc)
 	uint32_t data;
 	int error, nchan, i;
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	DPRINTF(("Setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
 	error = iwi_cmd(sc, IWI_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN, 0);
