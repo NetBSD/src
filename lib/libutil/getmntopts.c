@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntopts.c,v 1.3 2003/08/07 16:44:58 agc Exp $	*/
+/*	$NetBSD: getmntopts.c,v 1.4 2007/08/26 22:46:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: getmntopts.c,v 1.3 2003/08/07 16:44:58 agc Exp $");
+__RCSID("$NetBSD: getmntopts.c,v 1.4 2007/08/26 22:46:15 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,11 @@ getmntopts(const char *options, const struct mntopt *m0, int *flagp,
 				*thisflagp &= ~m->m_flag;
 		} else if (!getmnt_silent) {
 			errx(1, errmsg, opt);
+		} else {
+			free(mp->optbuf);
+			free(mp);
+
+			return NULL;
 		}
 	}
 	return mp;
