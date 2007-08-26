@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.41 2007/08/05 23:20:44 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.42 2007/08/26 10:20:33 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -527,6 +527,11 @@ parse_dictionary(int fd)
 	rval = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &dict);
 	if (rval)
 		return rval;
+
+	if (prop_dictionary_count(dict) == 0) {
+		warnx("no drivers registered");
+		goto out;
+	}
 
 	if (mydevname) {
 		obj = prop_dictionary_get(dict, mydevname);
