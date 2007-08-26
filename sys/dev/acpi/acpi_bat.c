@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.52 2007/08/08 08:36:41 cube Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.53 2007/08/26 20:47:42 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.52 2007/08/08 08:36:41 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.53 2007/08/26 20:47:42 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,34 +367,28 @@ acpibat_get_info(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_WCAPACITY].units = capunit;
 	sc->sc_data[ACPIBAT_LCAPACITY].units = capunit;
 	sc->sc_data[ACPIBAT_CHARGERATE].units = rateunit;
-	sc->sc_data[ACPIBAT_CHARGERATE].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_DISCHARGERATE].units = rateunit;
-	sc->sc_data[ACPIBAT_DISCHARGERATE].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_CAPACITY].units = capunit;
 
 	sc->sc_data[ACPIBAT_DCAPACITY].value_cur = p2[1].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DCAPACITY].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_DCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].value_cur = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_LFCCAPACITY].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_LFCCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_CAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].value_cur = p2[3].Integer.Value;
 	sc->sc_data[ACPIBAT_TECHNOLOGY].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_TECHNOLOGY].flags |= ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_DVOLTAGE].value_cur = p2[4].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_DVOLTAGE].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_WCAPACITY].value_cur = p2[5].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_WCAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_WCAPACITY].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_WCAPACITY].flags |=
-	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX|ENVSYS_FMONNOTSUPP);
+	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX);
 	sc->sc_data[ACPIBAT_LCAPACITY].value_cur = p2[6].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_LCAPACITY].value_max = p2[2].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_LCAPACITY].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_LCAPACITY].flags |=
-	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX|ENVSYS_FMONNOTSUPP);
+	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX);
 	sc->sc_available = ABAT_ALV_INFO;
 
 	mutex_exit(&sc->sc_mtx);
@@ -474,12 +468,8 @@ acpibat_get_status(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_CAPACITY].state = ENVSYS_SVALID;
 	sc->sc_data[ACPIBAT_CAPACITY].flags |=
 	    (ENVSYS_FPERCENT|ENVSYS_FVALID_MAX);
-	sc->sc_data[ACPIBAT_CAPACITY].monitor = true;
-	sc->sc_data[ACPIBAT_CAPACITY].flags |=
-	    (ENVSYS_FMONCRITICAL|ENVSYS_FMONCRITUNDER|ENVSYS_FMONWARNUNDER);
 	sc->sc_data[ACPIBAT_VOLTAGE].value_cur = p2[3].Integer.Value * 1000;
 	sc->sc_data[ACPIBAT_VOLTAGE].state = ENVSYS_SVALID;
-	sc->sc_data[ACPIBAT_VOLTAGE].flags = ENVSYS_FMONNOTSUPP;
 
 	if (sc->sc_data[ACPIBAT_CAPACITY].value_cur <
 	    sc->sc_data[ACPIBAT_WCAPACITY].value_cur)
@@ -698,6 +688,21 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	INITDATA(ACPIBAT_CHARGING, ENVSYS_INDICATOR, "charging");
 
 #undef INITDATA
+
+	/* Enable monitoring for the charge sensor */
+	sc->sc_data[ACPIBAT_CAPACITY].monitor = true;
+	sc->sc_data[ACPIBAT_CAPACITY].flags =
+	    (ENVSYS_FMONCRITICAL|ENVSYS_FMONCRITUNDER|ENVSYS_FMONWARNUNDER);
+
+	/* Disable userland monitoring on these sensors */
+	sc->sc_data[ACPIBAT_VOLTAGE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_CHARGERATE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_DISCHARGERATE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_DCAPACITY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_LFCCAPACITY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_TECHNOLOGY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_WCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;	
