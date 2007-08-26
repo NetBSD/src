@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.4 2006/02/16 20:17:16 perry Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.5 2007/08/26 16:49:48 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,15 +40,13 @@
  * Intel 82801 Series I/O Controller Hub (ICH) -- LPC Interface Bridge part
  *   register definitions.
  */
-/*
- * Currently only necessory part is defined (specifically TCO timer function).
- */
 
 /*
  * PCI configuration registers
  */
 #define LPCIB_PCI_PMBASE	0x40
 #define LPCIB_PCI_ACPI_CNTL	0x44
+# define LPCIB_PCI_ACPI_CNTL_EN	(1 << 4)
 #define LPCIB_PCI_BIOS_CNTL	0x4e
 #define LPCIB_PCI_TCO_CNTL	0x54
 #define LPCIB_PCI_GPIO_BASE	0x58
@@ -79,8 +77,8 @@
 #define LPCIB_PCI_MON_TRP_MSK	oxcc
 #define LPCIB_PCI_GEN_CNTL	0xd0
 #define LPCIB_PCI_GEN_STA	0xd4
-# define LPCIB_PCI_GEN_STA_SAFE_MODE	(1<<2)
-# define LPCIB_PCI_GEN_STA_NO_REBOOT	(1<<1)
+# define LPCIB_PCI_GEN_STA_SAFE_MODE	(1 << 2)
+# define LPCIB_PCI_GEN_STA_NO_REBOOT	(1 << 1)
 #define LPCIB_PCI_BACK_CNTL	0xd5
 #define LPCIB_PCI_RTC_CONF	0xd8
 #define LPCIB_PCI_COM_DEC	0xe0
@@ -134,6 +132,12 @@
 #define LPCIB_PM_SS_CNTL	0x50		/* SpeedStep control */
 # define LPCIB_PM_SS_CNTL_ARB_DIS	0x01	/* disable arbiter */
 
+/* ICH Chipset Configuration Registers (ICH6 and newer) */
+#define LPCIB_RCBA		0xf0
+#define LPCIB_GCS_OFFSET	0x3410
+#define LPCIB_GCS_SIZE		4
+#define LPCIB_GCS_NO_REBOOT	0x20
+
 /*
  * System management TCO registers
  *  (offset from PMBASE)
@@ -141,12 +145,17 @@
 #define LPCIB_TCO_BASE		0x60
 #define LPCIB_TCO_RLD		(LPCIB_TCO_BASE+0x00)
 #define LPCIB_TCO_TMR		(LPCIB_TCO_BASE+0x01)
-# define LPCIB_TCO_TMR_MASK		0x3f
+#define LPCIB_TCO_TMR2		(LPCIB_TCO_BASE+0x12) /* ICH6 and newer */
+# define LPCIB_TCO_TMR_MASK 		0x3f
 #define LPCIB_TCO_DAT_IN	(LPCIB_TCO_BASE+0x02)
 #define LPCIB_TCO_DAT_OUT	(LPCIB_TCO_BASE+0x03)
 #define LPCIB_TCO1_STS		(LPCIB_TCO_BASE+0x04)
+# define LPCIB_TCO1_STS_TIMEOUT 	0x08
 #define LPCIB_TCO2_STS		(LPCIB_TCO_BASE+0x06)
+# define LPCIB_TCO2_STS_BOOT_STS 	0x04
+# define LPCIB_TCO2_STS_SECONDS_TO_STS 	0x02
 #define LPCIB_TCO1_CNT		(LPCIB_TCO_BASE+0x08)
+# define LPCIB_TCO1_CNT_TCO_LOCK 	(1 << 12)
 # define LPCIB_TCO1_CNT_TCO_TMR_HLT	(1 << 11)
 # define LPCIB_TCO1_CNT_SEND_NOW	(1 << 10)
 # define LPCIB_TCO1_CNT_NMI2SMI_EN	(1 << 9)
@@ -173,5 +182,8 @@ lpcib_tcotimer_second_to_tick(int tick)
 {
 	return tick * 10 / 6;
 }
-#define LPCIB_TCOTIMER_MIN_TICK	4
-#define LPCIB_TCOTIMER_MAX_TICK	0x3f
+
+#define LPCIB_TCOTIMER_MIN_TICK 	4
+#define LPCIB_TCOTIMER2_MIN_TICK	2
+#define LPCIB_TCOTIMER_MAX_TICK 	0x3f 	/* 39 seconds max */
+#define LPCIB_TCOTIMER2_MAX_TICK 	0x265	/* 613 seconds max */

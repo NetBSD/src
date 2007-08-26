@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.19 2006/11/27 19:58:20 drochner Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.1 2007/08/26 16:49:47 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,12 +41,12 @@
  *
  *  LPC Interface Bridge is basically a pcib (PCI-ISA Bridge), but has
  *  some power management and monitoring functions.
- *  Currently we support the watchdog timer, and SpeedStep on some
- *  systems.
+ *  Currently we support the watchdog timer, SpeedStep (on some systems)
+ *  and the power management timer.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19 2006/11/27 19:58:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.1 2007/08/26 16:49:47 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.19 2006/11/27 19:58:20 drochner Exp $
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/ic/i82801lpcreg.h>
+#include <dev/ic/acpipmtimer.h>
 
 struct lpcib_softc {
 	/* Device object. */
@@ -74,7 +75,7 @@ struct lpcib_softc {
 	struct sysmon_wdog	sc_smw;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-
+	
 	/* Power management */
 	void			*sc_powerhook;
 	struct pci_conf_state	sc_pciconf;
@@ -83,20 +84,26 @@ struct lpcib_softc {
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
-
 static void lpcib_powerhook(int, void *);
+
+static void pmtimer_configure(struct lpcib_softc *, struct pci_attach_args *);
 
 static void tcotimer_configure(struct lpcib_softc *, struct pci_attach_args *);
 static int tcotimer_setmode(struct sysmon_wdog *);
 static int tcotimer_tickle(struct sysmon_wdog *);
+static void tcotimer_stop(struct lpcib_softc *);
+static void tcotimer_start(struct lpcib_softc *);
+static void tcotimer_status_reset(struct lpcib_softc *);
+static int  tcotimer_disable_noreboot(struct lpcib_softc *, bus_space_tag_t,
+				      bus_space_handle_t);
 
-static void speedstep_configure(struct lpcib_softc *,
-				struct pci_attach_args *);
+static void speedstep_configure(struct lpcib_softc *, struct pci_attach_args *);
 static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 
 struct lpcib_softc *speedstep_cookie;	/* XXX */
+static int lpcib_ich6 = 0;
 
-/* Defined in arch/i386/pci/pcib.c. */
+/* Defined in arch/.../pci/pcib.c. */
 extern void pcibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ichlpcib, sizeof(struct lpcib_softc),
@@ -106,16 +113,14 @@ CFATTACH_DECL(ichlpcib, sizeof(struct lpcib_softc),
  * Autoconf callbacks.
  */
 static int
-lpcibmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+lpcibmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
 	/* We are ISA bridge, of course */
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE ||
-	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA) {
+	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA)
 		return 0;
-	}
 
 	/* Matches only Intel ICH */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
@@ -129,11 +134,16 @@ lpcibmatch(struct device *parent, struct cfdata *match,
 		case PCI_PRODUCT_INTEL_82801DB_LPC:	/* ICH4 */
 		case PCI_PRODUCT_INTEL_82801DB_ISA:	/* ICH4-M */
 		case PCI_PRODUCT_INTEL_82801EB_LPC:	/* ICH5 */
+			return 10;
 		case PCI_PRODUCT_INTEL_82801FB_LPC:	/* ICH6 */
 		case PCI_PRODUCT_INTEL_82801FBM_LPC:	/* ICH6-M */
 		case PCI_PRODUCT_INTEL_82801G_LPC:	/* ICH7 */
 		case PCI_PRODUCT_INTEL_82801GBM_LPC:	/* ICH7-M */
 		case PCI_PRODUCT_INTEL_82801GHM_LPC:	/* ICH7-M DH */
+		case PCI_PRODUCT_INTEL_82801H_LPC:	/* ICH8 */
+		case PCI_PRODUCT_INTEL_82801HH_LPC:	/* ICH8 DH */
+		case PCI_PRODUCT_INTEL_82801HO_LPC:	/* ICH8 DO */
+			lpcib_ich6 = 1;
 			return 10;	/* prior to pcib */
 		}
 	}
@@ -152,6 +162,21 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 
 	pcibattach(parent, self, aux);
 
+	/*
+	 * Part of our I/O registers are used as ACPI PM regs.
+	 * Since our ACPI subsystem accesses the I/O space directly so far,
+	 * we do not have to bother bus_space I/O map confliction.
+	 */
+	if (pci_mapreg_map(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
+			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
+		aprint_error("%s: can't map power management i/o space",
+		       sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* Set up the power management timer. */
+	pmtimer_configure(sc, pa);
+
 	/* Set up the TCO (watchdog). */
 	tcotimer_configure(sc, pa);
 
@@ -164,8 +189,6 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: can't establish powerhook\n",
 		    sc->sc_dev.dv_xname);
-
-	return;
 }
 
 static void
@@ -210,8 +233,30 @@ lpcib_powerhook(int why, void *opaque)
 
 		break;
 	}
+}
 
-	return;
+/*
+ * Initialize the power management timer.
+ */
+static void
+pmtimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+{
+	pcireg_t control;
+
+	/* 
+	 * Check if power management I/O space is enabled and enable the ACPI_EN
+	 * bit if it's disabled.
+	 */
+	control = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_PCI_ACPI_CNTL);
+	if ((control & LPCIB_PCI_ACPI_CNTL_EN) == 0) {
+		control |= LPCIB_PCI_ACPI_CNTL_EN;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, LPCIB_PCI_ACPI_CNTL,
+		    control);
+	}
+
+	/* Attach our PM timer with the generic acpipmtimer function */
+	acpipmtimer_attach(&sc->sc_dev, sc->sc_iot, sc->sc_ioh,
+	    LPCIB_PM1_TMR, 0);
 }
 
 /*
@@ -220,15 +265,55 @@ lpcib_powerhook(int why, void *opaque)
 static void
 tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 {
+	bus_space_handle_t gcs_memh;
 	pcireg_t pcireg;
-	unsigned int ioreg;
+	uint32_t ioreg;
+	unsigned int period;
 
+	/*
+	 * Map the memory space necessary for the GCS register.
+	 * This is only used for ICH6 or newer, to clear the NO_REBOOT
+	 * bit.
+	 */
+	if (lpcib_ich6) {
+		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_RCBA);
+		pcireg &= 0xffffc000;
+		if (bus_space_map(pa->pa_memt, pcireg + LPCIB_GCS_OFFSET,
+		    		  LPCIB_GCS_SIZE, 0, &gcs_memh)) {
+			aprint_error("%s: can't map GCS memory space; "
+			    "TCO timer disabled\n", sc->sc_dev.dv_xname);
+			return;
+		}
+	}
+
+	/* 
+	 * Clear the NO_REBOOT bit. If this fails, enabling the TCO_EN bit
+	 * in the SMI_EN register is the last chance.
+	 */
+	if (tcotimer_disable_noreboot(sc, pa->pa_memt, gcs_memh)) {
+		ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
+		ioreg |= LPCIB_SMI_EN_TCO_EN;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
+	}
+
+	/* Reset the watchdog status registers. */
+	tcotimer_status_reset(sc);
+
+	/* Explicitly stop the TCO timer. */
+	tcotimer_stop(sc);
+
+	/* 
+	 * Register the driver with the sysmon watchdog framework.
+	 */
 	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = tcotimer_setmode;
 	sc->sc_smw.smw_tickle = tcotimer_tickle;
-	sc->sc_smw.smw_period =
-		lpcib_tcotimer_tick_to_second(LPCIB_TCOTIMER_MAX_TICK);
+	if (lpcib_ich6)
+		period = LPCIB_TCOTIMER2_MAX_TICK;
+	else
+		period = LPCIB_TCOTIMER_MAX_TICK;
+	sc->sc_smw.smw_period = lpcib_tcotimer_tick_to_second(period);
 
 	if (sysmon_wdog_register(&sc->sc_smw)) {
 		aprint_error("%s: unable to register TCO timer"
@@ -237,58 +322,8 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 
-	/*
-	 * Part of our I/O registers are used as ACPI PM regs.
-	 * Since our ACPI subsystem accesses the I/O space directly so far,
-	 * we do not have to bother bus_space I/O map confliction.
-	 */
-	if (pci_mapreg_map(pa, LPCIB_PCI_PMBASE, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		sysmon_wdog_unregister(&sc->sc_smw);
-		aprint_error("%s: can't map i/o space; "
-		       "TCO timer disabled\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* Explicitly stop the TCO timer. */
-	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT);
-	if ((ioreg & LPCIB_TCO1_CNT_TCO_TMR_HLT) == 0)
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT,
-				  ioreg | LPCIB_TCO1_CNT_TCO_TMR_HLT);
-
-	/*
-	 * Enable TCO timeout SMI only if the hardware reset does not
-	 * work. We don't know what the SMBIOS does.
-	 */
-	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
-	ioreg &= ~LPCIB_SMI_EN_TCO_EN;
-
-	/*
-	 * And enable TCO timeout reset.
-	 * This logic works when the TCO timer expires twice.
-	 */
-	pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_PCI_GEN_STA);
-	if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
-		/* TCO timeout reset is disabled; try to enable it */
-		pci_conf_write(pa->pa_pc, pa->pa_tag, LPCIB_PCI_GEN_STA,
-			       pcireg & (~LPCIB_PCI_GEN_STA_NO_REBOOT));
-		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-					LPCIB_PCI_GEN_STA);
-		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
-			aprint_error("%s: TCO timer reboot disabled by hardware; "
-			       "hope SMBIOS properly handles it.\n",
-			       sc->sc_dev.dv_xname);
-			ioreg |= LPCIB_SMI_EN_TCO_EN;
-		}
-	}
-
-	if (ioreg & LPCIB_SMI_EN_GBL_SMI_EN)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
-
 	aprint_verbose("%s: TCO (watchdog) timer configured.\n",
 	    sc->sc_dev.dv_xname);
-
-	return;
 }
 
 /*
@@ -298,46 +333,50 @@ static int
 tcotimer_setmode(struct sysmon_wdog *smw)
 {
 	struct lpcib_softc *sc = smw->smw_cookie;
-	unsigned int ioreg, period;
+	unsigned int period;
+	uint16_t ich6period = 0;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		/* Stop the TCO timer. */
-		ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-					 LPCIB_TCO1_CNT);
-		if ((ioreg & LPCIB_TCO1_CNT_TCO_TMR_HLT) == 0)
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-					  LPCIB_TCO1_CNT,
-					  ioreg | LPCIB_TCO1_CNT_TCO_TMR_HLT);
+		tcotimer_stop(sc);
 	} else {
-		if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
-			period = LPCIB_TCOTIMER_MAX_TICK;
-			smw->smw_period =
-				lpcib_tcotimer_tick_to_second(period);
-		} else
-			period = lpcib_tcotimer_second_to_tick(smw->smw_period);
-		if (period < LPCIB_TCOTIMER_MIN_TICK ||
-		    period > LPCIB_TCOTIMER_MAX_TICK)
-			return EINVAL;
+		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
+		/* 
+		 * ICH5 or older are limited to 4s min and 39s max.
+		 * ICH6 or newer are limited to 2s min and 613s max.
+		 */
+		if (!lpcib_ich6) {
+			if (period < LPCIB_TCOTIMER_MIN_TICK ||
+			    period > LPCIB_TCOTIMER_MAX_TICK)
+				return EINVAL;
+		} else {
+			if (period < LPCIB_TCOTIMER2_MIN_TICK ||
+			    period > LPCIB_TCOTIMER2_MAX_TICK)
+				return EINVAL;
+		}
 
 		/* Stop the TCO timer, */
-		ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-					 LPCIB_TCO1_CNT);
-		if ((ioreg & LPCIB_TCO1_CNT_TCO_TMR_HLT) == 0)
-			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-					  LPCIB_TCO1_CNT,
-					  ioreg | LPCIB_TCO1_CNT_TCO_TMR_HLT);
+		tcotimer_stop(sc);
 
 		/* set the timeout, */
-		period |= (bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-					 LPCIB_TCO_TMR) & ~LPCIB_TCO_TMR_MASK);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-				  LPCIB_TCO_TMR, period);
+		if (lpcib_ich6) {
+			/* ICH6 or newer */
+			ich6period = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+						      LPCIB_TCO_TMR2);
+			ich6period &= 0xfc00;
+			bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+					  LPCIB_TCO_TMR2, ich6period | period);
+		} else {
+			/* ICH5 or older */
+			period |= bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+						   LPCIB_TCO_TMR);
+			period &= 0xc0;
+			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+					  LPCIB_TCO_TMR, period);
+		}
 
-		/* and restart the timer. */
-		bus_space_write_2(sc->sc_iot, sc->sc_ioh,
-				  LPCIB_TCO1_CNT,
-				  ioreg & ~LPCIB_TCO1_CNT_TCO_TMR_HLT);
-
+		/* and start/reload the timer. */
+		tcotimer_start(sc);
 		tcotimer_tickle(smw);
 	}
 
@@ -350,10 +389,83 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 	struct lpcib_softc *sc = smw->smw_cookie;
 
 	/* any value is allowed */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 0);
+	if (!lpcib_ich6)
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
+	else
+		bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
 
 	return 0;
 }
+
+static void
+tcotimer_stop(struct lpcib_softc *sc)
+{
+	uint16_t ioreg;
+
+	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT);
+	ioreg |= LPCIB_TCO1_CNT_TCO_TMR_HLT;
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT, ioreg);
+}
+
+static void
+tcotimer_start(struct lpcib_softc *sc)
+{
+	uint16_t ioreg;
+
+	ioreg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT);
+	ioreg &= ~LPCIB_TCO1_CNT_TCO_TMR_HLT;
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_CNT, ioreg);
+}
+
+static void
+tcotimer_status_reset(struct lpcib_softc *sc)
+{
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO1_STS,
+			  LPCIB_TCO1_STS_TIMEOUT);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO2_STS,
+			  LPCIB_TCO2_STS_BOOT_STS);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO2_STS,
+			  LPCIB_TCO2_STS_SECONDS_TO_STS);
+}
+
+/*
+ * Clear the NO_REBOOT bit, this enables reboots.
+ */
+static int
+tcotimer_disable_noreboot(struct lpcib_softc *sc, bus_space_tag_t gcs_memt,
+			  bus_space_handle_t gcs_memh)
+{
+	pcireg_t pcireg;
+	uint16_t status = 0;
+
+	if (!lpcib_ich6) {
+		pcireg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, 
+				       LPCIB_PCI_GEN_STA);
+		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
+			/* TCO timeout reset is disabled; try to enable it */
+			pcireg &= ~LPCIB_PCI_GEN_STA_NO_REBOOT;
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag,
+				       LPCIB_PCI_GEN_STA, pcireg);
+			if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT)
+				goto error;
+		}
+	} else {
+		status = bus_space_read_4(gcs_memt, gcs_memh, 0);
+		status &= ~LPCIB_GCS_NO_REBOOT;
+		bus_space_write_4(gcs_memt, gcs_memh, 0, status);
+		status = bus_space_read_4(gcs_memt, gcs_memh, 0);
+		bus_space_unmap(gcs_memt, gcs_memh, LPCIB_GCS_SIZE);
+		if (status & LPCIB_GCS_NO_REBOOT)
+			goto error;
+	}
+
+	return 0;
+error:
+	aprint_error("%s: TCO timer reboot disabled by hardware; "
+	    "hope SMBIOS properly handles it.\n", sc->sc_dev.dv_xname);
+	return EINVAL;
+}
+
 
 /*
  * Intel ICH SpeedStep support.
@@ -373,9 +485,9 @@ speedstep_bad_hb_check(struct pci_attach_args *pa)
 
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82815_FULL_HUB &&
 	    PCI_REVISION(pa->pa_class) < 5)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -414,10 +526,8 @@ speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 
 		/* XXX save the sc for IO tag/handle */
 		speedstep_cookie = sc;
-
 		aprint_verbose("%s: SpeedStep enabled\n", sc->sc_dev.dv_xname);
-	} else
-		aprint_verbose("%s: No SpeedStep\n", sc->sc_dev.dv_xname);
+	}
 
 	return;
 
@@ -432,8 +542,8 @@ static int
 speedstep_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode	node;
-	struct lpcib_softc *sc = speedstep_cookie;
-	uint8_t		state, state2;
+	struct lpcib_softc 	*sc = speedstep_cookie;
+	uint8_t			state, state2;
 	int			ostate, nstate, s, error = 0;
 
 	/*
@@ -468,8 +578,8 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 		ostate = 1;
 	else
 		ostate = 0;
-	if (ostate != nstate)
-	{
+
+	if (ostate != nstate) {
 		uint8_t cntl;
 
 		if (nstate == 0)
@@ -487,5 +597,5 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 	}
 	splx(s);
 out:
-	return (error);
+	return error;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.41 2007/08/06 06:40:41 kiyohara Exp $
+#	$NetBSD: files.amd64,v 1.42 2007/08/26 16:49:47 xtraeme Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -118,7 +118,7 @@ file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/amd64/pci/pcib.c			pcib | amdpcib
+file	arch/amd64/pci/pcib.c			pcib | amdpcib | ichlpcib
 
 device 	amdpcib {} : isabus
 attach 	amdpcib at pci
@@ -126,6 +126,10 @@ file 	arch/amd64/pci/amdpcib.c		amdpcib
 
 attach 	hpet at amdpcib with amdpcib_hpet
 file 	arch/amd64/pci/amdpcib_hpet.c		amdpcib_hpet
+
+device  ichlpcib: acpipmtimer, isabus, sysmon_wdog
+attach  ichlpcib at pci
+file    arch/x86/pci/ichlpcib.c 		ichlpcib
 
 device 	aapic
 attach 	aapic at pci
