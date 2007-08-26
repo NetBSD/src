@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.6 2007/06/10 20:56:35 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.7 2007/08/26 12:02:57 liamjfoy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -5696,6 +5696,10 @@ static const struct pci_product pci_products[] = {
 	    "DL-4000 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550SX,
+	    "DGE-550SX",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
 	    "DGE-528T Gigabit Ethernet",
 	},
@@ -5706,6 +5710,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2,
 	    "DGE-560T_2 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560SX,
+	    "DGE-560SX",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
@@ -6100,6 +6108,14 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88E8038",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8039,
+	    "Yukon 88E8039",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C033,
+	    "Yukon 88EC033",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
 	    "Yukon 88E8052",
 	},
@@ -6112,8 +6128,32 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88E8053",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_3,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8055,
+	    "Yukon 88E8055",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8056,
+	    "Yukon 88E8056",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_1,
 	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C036,
+	    "Yukon 88EC036",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C032,
+	    "Yukon 88EC032",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C034,
+	    "Yukon 88EC034",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C042,
+	    "Yukon 88EC042",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
@@ -12744,4 +12784,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2592;
+const int pci_nproducts = 2602;
