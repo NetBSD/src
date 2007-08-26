@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.3 2007/08/14 10:35:38 ghen Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.4 2007/08/26 20:04:55 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -28,4 +28,28 @@ dist/bind/lib/dns/include/dns/dispatch.h	1.1.1.5 via patch
 	Fix for a security issue in BIND 9.3.x (CVE-2007-2926):
 	Query id generation was cryptographically weak.
 	[adrianp, ticket #1829]
+
+sys/sys/socketvar.h				1.97
+	Fix a bug in sblock() that has existed since revision 1.1 from BSD:
+	correctly return an error if M_NOWAIT is passed to sblock() and the
+	operation might block.  This remarkably subtle macro bug appears to
+	be responsible for quite a few undiagnosed socket buffer corruption
+	and mbuf-related kernel panics.
+	[christos, ticket #1808]
+
+sbin/ping/ping.c				1.83 - 1.85
+
+	PR/28741: Michael Santos: ping does [not] drop root privileges
+	[ghen, ticket #1818]
+
+lib/libc/gen/Makefile.inc			1.143
+lib/libc/gen/cgetcap.3				1.1 - 1.3
+lib/libc/gen/getcap.3				delete
+
+	Both libcurses and libc installed a getcap(3) manpage, and both used it
+	as target for a bunch of MLINKS. This had the effect that whatever came
+	last in install overwrote everything from the other camp.
+	Solve this by renaming the libc page -- this makes sense because no
+	function is really named "getcap" here.
+	[bad, ticket #1821]
 
