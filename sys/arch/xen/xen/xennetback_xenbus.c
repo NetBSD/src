@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.15 2007/03/12 18:18:29 ad Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.16 2007/08/26 22:32:47 dyoung Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -717,7 +717,7 @@ xennetback_evthandler(void *arg)
 			struct ether_header *eh =
 			    (void*)(pkt_va + txreq->offset);
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				xni_pkt_unmap(pkt, pkt_va);
 				m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.51 2007/03/05 19:58:43 he Exp $ */
+/*	$NetBSD: if_ed.c,v 1.52 2007/08/26 22:29:28 dyoung Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.51 2007/03/05 19:58:43 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.52 2007/08/26 22:29:28 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -405,7 +405,7 @@ ed_init(struct ed_softc *sc)
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		NIC_PUT(sc, ED_P1_PAR0 + i, LLADDR(ifp->if_sadl)[i]);
+		NIC_PUT(sc, ED_P1_PAR0 + i, CLLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
 	ed_getmcaf(&sc->sc_ethercom, mcaf);

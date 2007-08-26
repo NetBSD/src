@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.27 2007/03/05 20:00:00 he Exp $ */
+/*	$NetBSD: if_qn.c,v 1.28 2007/08/26 22:29:28 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.27 2007/03/05 20:00:00 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.28 2007/08/26 22:29:28 dyoung Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -285,8 +285,8 @@ qninit(struct qn_softc *sc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		*((u_short volatile *)(sc->sc_nic_base+
 				       QNET_HARDWARE_ADDRESS+2*i)) =
-		    ((((u_short)LLADDR(ifp->if_sadl)[i]) << 8) |
-		    LLADDR(ifp->if_sadl)[i]);
+		    ((((u_short)CLLADDR(ifp->if_sadl)[i]) << 8) |
+		    CLLADDR(ifp->if_sadl)[i]);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
