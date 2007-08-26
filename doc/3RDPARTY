@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.548 2007/08/26 06:02:24 gdt Exp $
+#	$NetBSD: 3RDPARTY,v 1.549 2007/08/26 13:13:34 manu Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -406,7 +406,7 @@ Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
 Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
 Mailing List:	ipsec-tools-devel@lists.sourceforge.net
-Responsible:	manu
+Responsible:	manu, vanhu, mgrooms
 License:	BSD (3-clause)
 Notes:
 ipsec-tools is maintained within NetBSD src tree in src/crypto/dist/ipsec-tools
