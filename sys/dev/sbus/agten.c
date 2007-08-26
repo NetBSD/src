@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.1 2007/08/26 00:39:39 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.2 2007/08/26 07:24:28 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.1 2007/08/26 00:39:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.2 2007/08/26 07:24:28 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -126,7 +126,6 @@ CFATTACH_DECL(agten, sizeof(struct agten_softc),
 
 static int	agten_putcmap(struct agten_softc *, struct wsdisplay_cmap *);
 static int 	agten_getcmap(struct agten_softc *, struct wsdisplay_cmap *);
-static void	agten_restore_palette(struct agten_softc *);
 static int 	agten_putpalreg(struct agten_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 static void	agten_init(struct agten_softc *);
@@ -246,6 +245,7 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 		    dev->dv_xname);
 		return;
 	}
+
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
@@ -278,6 +278,9 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
+		i128_rectfill(sc->sc_bustag, sc->sc_i128_regh, 0, 0,
+		    sc->sc_width, sc->sc_height,
+		    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 	} else {
 		/*
 		 * since we're not the console we can postpone the rest
@@ -334,7 +337,7 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						agten_restore_palette(sc);
+						agten_init(sc);
 						vcons_redraw_screen(ms);
 					}
 				}
@@ -454,17 +457,6 @@ agten_getcmap(struct agten_softc *sc, struct wsdisplay_cmap *cm)
 	return 0;
 }
 
-static void
-agten_restore_palette(struct agten_softc *sc)
-{
-	int i;
-
-	for (i = 0; i < (1 << (sc->sc_depth - 1)); i++) {
-		agten_putpalreg(sc, i, sc->sc_cmap.cm_map[i][0],
-		    sc->sc_cmap.cm_map[i][1], sc->sc_cmap.cm_map[i][2]);
-	}
-}
-
 static int
 agten_putpalreg(struct agten_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
     uint8_t b)
@@ -497,7 +489,7 @@ agten_init(struct agten_softc *sc)
 	}
 
 	/* now set up some window attributes */
-	agten_write_idx(sc, /*IBM561_FB_WINTYPE*/IBM561_OL_WINTYPE);
+	agten_write_idx(sc, IBM561_OL_WINTYPE);
 	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x00);	
 	for (i = 1; i < 256; i++)
 		agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x01);
@@ -514,7 +506,7 @@ agten_init(struct agten_softc *sc)
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, RECT_RTW_XY, srcw);
 	junk = bus_space_read_4(sc->sc_bustag, sc->sc_p9100_regh, COMMAND_QUAD);
 
-	i128_init(sc->sc_bustag, sc->sc_p9100_regh, sc->sc_stride, 8);
+	i128_init(sc->sc_bustag, sc->sc_i128_regh, sc->sc_stride, 8);
 }
 
 static void
@@ -531,7 +523,7 @@ agten_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	width = ri->ri_font->fontwidth * ncols;
 	height = ri->ri_font->fontheight;
 	i128_bitblt(sc->sc_bustag, sc->sc_i128_regh, xs, y, xd, y, width,
-	    height, ROP_SRC);
+	    height, CR_COPY);
 }
 
 static void
@@ -564,7 +556,7 @@ agten_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	width = ri->ri_emuwidth;
 	height = ri->ri_font->fontheight * nrows;
 	i128_bitblt(sc->sc_bustag, sc->sc_i128_regh, x, ys, x, yd, width,
-	    height, ROP_SRC);
+	    height, CR_COPY);
 }
 
 static void
