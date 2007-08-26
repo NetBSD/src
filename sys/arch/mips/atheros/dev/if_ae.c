@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.6 2007/07/09 20:52:23 ad Exp $ */
+/* $Id: if_ae.c,v 1.7 2007/08/26 22:30:43 dyoung Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.6 2007/07/09 20:52:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.7 2007/08/26 22:30:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1347,7 +1347,7 @@ ae_init(struct ifnet *ifp)
 	struct ae_softc *sc = ifp->if_softc;
 	struct ae_txsoft *txs;
 	struct ae_rxsoft *rxs;
-	uint8_t *enaddr;
+	const uint8_t *enaddr;
 	int i, error = 0;
 
 	if ((error = ae_enable(sc)) != 0)
@@ -1450,7 +1450,7 @@ ae_init(struct ifnet *ifp)
 	/*
 	 * Set the station address.
 	 */
-	enaddr = LLADDR(ifp->if_sadl);
+	enaddr = CLLADDR(ifp->if_sadl);
 	AE_WRITE(sc, CSR_MACHI, enaddr[5] << 16 | enaddr[4]);
 	AE_WRITE(sc, CSR_MACLO, enaddr[3] << 24 | enaddr[2] << 16 |
 		enaddr[1] << 8 | enaddr[0]);
