@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.19 2007/08/23 17:11:05 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.20 2007/08/26 07:07:31 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.19 2007/08/23 17:11:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.20 2007/08/26 07:07:31 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1194,8 +1194,6 @@ pmap_alloc_pvpage(struct pmap_cpu *pc, struct pmap *pmap, int mode)
 	mutex_exit(&pc->pc_pv_lock);
 	pvpage = (struct pv_page *)uvm_km_alloc(kmem_map, PAGE_SIZE, 0,
 	    UVM_KMF_TRYLOCK|UVM_KMF_NOWAIT|UVM_KMF_WIRED);
-	if (pvpage == NULL)
-		printf("%s: fail\n", __func__);
 	mutex_enter(&pc->pc_pv_lock);
 
 	if (pvpage == NULL)
