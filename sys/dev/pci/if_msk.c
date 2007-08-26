@@ -1,5 +1,5 @@
-/* $NetBSD: if_msk.c,v 1.3 2006/11/16 01:33:09 christos Exp $ */
-/*	$OpenBSD: if_msk.c,v 1.11 2006/08/17 22:07:40 brad Exp $	*/
+/* $NetBSD: if_msk.c,v 1.3.4.1 2007/08/26 12:01:20 liamjfoy Exp $ */
+/*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -105,7 +105,7 @@ int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
 __inline int msk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
 void msk_rxeof(struct sk_if_softc *, u_int16_t, u_int32_t);
-void msk_txeof(struct sk_if_softc *);
+void msk_txeof(struct sk_if_softc *, int);
 int msk_encap(struct sk_if_softc *, struct mbuf *, u_int32_t *);
 void msk_start(struct ifnet *);
 int msk_ioctl(struct ifnet *, u_long, caddr_t);
@@ -125,15 +125,14 @@ int msk_init_tx_ring(struct sk_if_softc *);
 
 void msk_update_int_mod(struct sk_softc *);
 
-int msk_marv_miibus_readreg(struct device *, int, int);
-void msk_marv_miibus_writereg(struct device *, int, int, int);
-void msk_marv_miibus_statchg(struct device *);
+int msk_miibus_readreg(struct device *, int, int);
+void msk_miibus_writereg(struct device *, int, int, int);
+void msk_miibus_statchg(struct device *);
 
-u_int32_t msk_yukon_hash(caddr_t);
 void msk_setfilt(struct sk_if_softc *, caddr_t, int);
 void msk_setmulti(struct sk_if_softc *);
 void msk_setpromisc(struct sk_if_softc *);
-void msk_yukon_tick(void *);
+void msk_tick(void *);
 
 /* #define MSK_DEBUG 1 */
 #ifdef MSK_DEBUG
@@ -157,21 +156,32 @@ static const struct msk_product {
         pci_vendor_id_t         msk_vendor;
         pci_product_id_t        msk_product;
 } msk_products[] = {
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE550SX },
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560SX },
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DGE560T },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_1 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C032 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C033 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C034 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C036 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_C042 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8035 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8036 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8038 },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8039 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8050 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8052 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8053 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8055 },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_8056 },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021CU },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8021X },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8022X },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8061CU },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8062CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8061X },
+	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8062CU },
 	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKONII_8062X },
-	{ PCI_VENDOR_MARVELL,		PCI_PRODUCT_MARVELL_YUKON_3 },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK_9SXX },
 	{ PCI_VENDOR_SCHNEIDERKOCH,	PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21 }
 };
@@ -213,19 +223,11 @@ sk_win_write_1(struct sk_softc *sc, u_int32_t reg, u_int8_t x)
 }
 
 int
-msk_marv_miibus_readreg(struct device *dev, int phy, int reg)
+msk_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	u_int16_t val;
 	int i;
-
-	if (phy != 0 ||
-	    (sc_if->sk_phytype != SK_PHYTYPE_MARV_COPPER &&
-	     sc_if->sk_phytype != SK_PHYTYPE_MARV_FIBER)) {
-		DPRINTFN(9, ("msk_marv_miibus_readreg (skip) phy=%d, reg=%#x\n",
-			     phy, reg));
-		return (0);
-	}
 
         SK_YU_WRITE_2(sc_if, YUKON_SMICR, YU_SMICR_PHYAD(phy) |
 		      YU_SMICR_REGAD(reg) | YU_SMICR_OP_READ);
@@ -243,24 +245,24 @@ msk_marv_miibus_readreg(struct device *dev, int phy, int reg)
 		return (0);
 	}
         
- 	DPRINTFN(9, ("msk_marv_miibus_readreg: i=%d, timeout=%d\n", i,
+ 	DPRINTFN(9, ("msk_miibus_readreg: i=%d, timeout=%d\n", i,
 		     SK_TIMEOUT));
 
         val = SK_YU_READ_2(sc_if, YUKON_SMIDR);
 
-	DPRINTFN(9, ("msk_marv_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
+	DPRINTFN(9, ("msk_miibus_readreg phy=%d, reg=%#x, val=%#x\n",
 		     phy, reg, val));
 
 	return (val);
 }
 
 void
-msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
+msk_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
 	int i;
 
-	DPRINTFN(9, ("msk_marv_miibus_writereg phy=%d reg=%#x val=%#x\n",
+	DPRINTFN(9, ("msk_miibus_writereg phy=%d reg=%#x val=%#x\n",
 		     phy, reg, val));
 
 	SK_YU_WRITE_2(sc_if, YUKON_SMIDR, val);
@@ -269,7 +271,7 @@ msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
-		if (SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY)
+		if (!(SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY))
 			break;
 	}
 
@@ -278,23 +280,49 @@ msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 }
 
 void
-msk_marv_miibus_statchg(struct device *dev)
+msk_miibus_statchg(struct device *dev)
 {
-	DPRINTFN(9, ("msk_marv_miibus_statchg: gpcr=%x\n",
+	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct mii_data *mii = &sc_if->sk_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int gpcr;
+
+	gpcr = SK_YU_READ_2(sc_if, YUKON_GPCR);
+	gpcr &= (YU_GPCR_TXEN | YU_GPCR_RXEN);
+
+	if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		/* Set speed. */
+		gpcr |= YU_GPCR_SPEED_DIS;
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
+		case IFM_1000_SX:
+		case IFM_1000_LX:
+		case IFM_1000_CX:
+		case IFM_1000_T:
+			gpcr |= (YU_GPCR_GIG | YU_GPCR_SPEED);
+			break;
+		case IFM_100_TX:
+			gpcr |= YU_GPCR_SPEED;
+			break;
+		}
+
+		/* Set duplex. */
+		gpcr |= YU_GPCR_DPLX_DIS;
+		if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
+			gpcr |= YU_GPCR_DUPLEX;
+
+		/* Disable flow control. */
+		gpcr |= YU_GPCR_FCTL_DIS;
+		gpcr |= (YU_GPCR_FCTL_TX_DIS | YU_GPCR_FCTL_RX_DIS);
+	}
+
+	SK_YU_WRITE_2(sc_if, YUKON_GPCR, gpcr);
+
+	DPRINTFN(9, ("msk_miibus_statchg: gpcr=%x\n",
 		     SK_YU_READ_2(((struct sk_if_softc *)dev), YUKON_GPCR)));
 }
 
 #define HASH_BITS	6
   
-u_int32_t
-msk_yukon_hash(caddr_t addr)
-{
-	u_int32_t crc;
-
-	crc = ether_crc32_be(addr, ETHER_ADDR_LEN);
-	return (crc & ((1 << HASH_BITS) - 1));
-}
-
 void
 msk_setfilt(struct sk_if_softc *sc_if, caddr_t addr, int slot)
 {
@@ -314,6 +342,7 @@ msk_setmulti(struct sk_if_softc *sc_if)
 	struct ethercom *ec = &sc_if->sk_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep step;
+	u_int16_t reg;
 
 	/* First, zot all the existing filters. */
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH1, 0);
@@ -323,10 +352,16 @@ msk_setmulti(struct sk_if_softc *sc_if)
 
 
 	/* Now program new ones. */
+	reg = SK_YU_READ_2(sc_if, YUKON_RCR);
+	reg |= YU_RCR_UFLEN;
 allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
-		hashes[0] = 0xFFFFFFFF;
-		hashes[1] = 0xFFFFFFFF;
+		if ((ifp->if_flags & IFF_PROMISC) != 0)
+			reg &= ~(YU_RCR_UFLEN | YU_RCR_MUFLEN);
+		else if ((ifp->if_flags & IFF_ALLMULTI) != 0) {
+			hashes[0] = 0xFFFFFFFF;
+			hashes[1] = 0xFFFFFFFF;
+		}
 	} else {
 		/* First find the tail of the list. */
 		ETHER_FIRST_MULTI(step, ec, enm);
@@ -336,7 +371,8 @@ allmulti:
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto allmulti;
 			}
-			h = msk_yukon_hash(enm->enm_addrlo);
+			h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) &
+			    ((1 << HASH_BITS) - 1);
 			if (h < 32)
 				hashes[0] |= (1 << h);
 			else
@@ -344,12 +380,14 @@ allmulti:
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
+		reg |= YU_RCR_MUFLEN;
 	}
 
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH1, hashes[0] & 0xffff);
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH2, (hashes[0] >> 16) & 0xffff);
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH3, hashes[1] & 0xffff);
 	SK_YU_WRITE_2(sc_if, YUKON_MCAH4, (hashes[1] >> 16) & 0xffff);
+	SK_YU_WRITE_2(sc_if, YUKON_RCR, reg);
 }
 
 void
@@ -562,16 +600,13 @@ msk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		entry = malloc(sizeof(struct sk_jpool_entry),
 		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
+			sc_if->sk_cdata.sk_jumbo_buf = NULL;
 			aprint_error(": no memory for jumbo buffer queue!");
 			error = ENOBUFS;
 			goto out;
 		}
 		entry->slot = i;
-		if (i)
-			LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
-				 entry, jpool_entries);
-		else
-			LIST_INSERT_HEAD(&sc_if->sk_jinuse_listhead,
+		LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
 				 entry, jpool_entries);
 	}
 out:
@@ -631,12 +666,11 @@ msk_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 		panic("msk_jfree: can't find softc pointer!");
 
 	/* calculate the slot this buffer belongs to */
-
 	i = ((vaddr_t)buf
 	     - (vaddr_t)sc->sk_cdata.sk_jumbo_buf) / SK_JLEN;
 
 	if ((i < 0) || (i >= MSK_JSLOTS))
-		panic("sk_jfree: asked to free buffer that we don't manage!");
+		panic("msk_jfree: asked to free buffer that we don't manage!");
 
 	s = splvm();
 	entry = LIST_FIRST(&sc->sk_jinuse_listhead);
@@ -659,7 +693,6 @@ msk_ifmedia_upd(struct ifnet *ifp)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
-	msk_init(ifp);
 	mii_mediachg(&sc_if->sk_mii);
 	return (0);
 }
@@ -688,6 +721,16 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	s = splnet();
 
 	switch(command) {
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN)
+			return EINVAL;
+		else if (sc_if->sk_softc->sk_type != SK_YUKON_FE) {
+			if (ifr->ifr_mtu > SK_JUMBO_MTU)
+				error = EINVAL;
+		} else if (ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		ifp->if_mtu = ifr->ifr_mtu;
+		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		DPRINTFN(2,("msk_ioctl: SIOC[GS]IFMEDIA\n"));
@@ -718,7 +761,7 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 msk_update_int_mod(struct sk_softc *sc)
 {
-	u_int32_t sk_imtimer_ticks;
+	u_int32_t imtimer_ticks;
 
 	/*
  	 * Configure interrupt moderation. The moderation timer
@@ -731,10 +774,17 @@ msk_update_int_mod(struct sk_softc *sc)
 	 */
 	switch (sc->sk_type) {
 	case SK_YUKON_EC:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+	case SK_YUKON_EC_U:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	case SK_YUKON_FE:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE;
+		break;
+	case SK_YUKON_XL:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_XL;
 		break;
 	default:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
 	}
 	aprint_verbose("%s: interrupt moderation is %d us\n",
 	    sc->sk_dev.dv_xname, sc->sk_int_mod);
@@ -776,20 +826,44 @@ mskc_probe(struct device *parent, struct cfdata *match,
  */
 void msk_reset(struct sk_softc *sc)
 {
-	u_int32_t sk_imtimer_ticks;
+	u_int32_t imtimer_ticks, reg1;
 	int reg;
 
 	DPRINTFN(2, ("msk_reset\n"));
 
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_SW_RESET);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_RESET);
-	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_SET);
 
 	DELAY(1000);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_SW_UNRESET);
 	DELAY(2);
 	CSR_WRITE_1(sc, SK_CSR, SK_CSR_MASTER_UNRESET);
+	sk_win_write_1(sc, SK_TESTCTL1, 2);
+
+	reg1 = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1));
+	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
+		reg1 |= (SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
+	else
+		reg1 &= ~(SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
+	sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1), reg1);
+ 
+	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
+		sk_win_write_1(sc, SK_Y2_CLKGATE,
+		    SK_Y2_CLKGATE_LINK1_GATE_DIS |
+		    SK_Y2_CLKGATE_LINK2_GATE_DIS |
+		    SK_Y2_CLKGATE_LINK1_CORE_DIS |
+		    SK_Y2_CLKGATE_LINK2_CORE_DIS |
+		    SK_Y2_CLKGATE_LINK1_PCI_DIS | SK_Y2_CLKGATE_LINK2_PCI_DIS);
+	else
+		sk_win_write_1(sc, SK_Y2_CLKGATE, 0);
+ 
+	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_SET);
+	CSR_WRITE_2(sc, SK_LINK_CTRL + SK_WIN_LEN, SK_LINK_RESET_SET);
+	DELAY(1000);
 	CSR_WRITE_2(sc, SK_LINK_CTRL, SK_LINK_RESET_CLEAR);
+	CSR_WRITE_2(sc, SK_LINK_CTRL + SK_WIN_LEN, SK_LINK_RESET_CLEAR);
+
+	sk_win_write_1(sc, SK_TESTCTL1, 1);
 
 	DPRINTFN(2, ("msk_reset: sk_csr=%x\n", CSR_READ_1(sc, SK_CSR)));
 	DPRINTFN(2, ("msk_reset: sk_link_ctrl=%x\n",
@@ -817,6 +891,9 @@ void msk_reset(struct sk_softc *sc)
 	sk_win_write_1(sc, SK_RAMCTL, SK_RAMCTL_UNRESET);
 	for (reg = SK_TO0;reg <= SK_TO11; reg++)
 		sk_win_write_1(sc, reg, 36);
+	sk_win_write_1(sc, SK_RAMCTL + (SK_WIN_LEN / 2), SK_RAMCTL_UNRESET);
+	for (reg = SK_TO0;reg <= SK_TO11; reg++)
+		sk_win_write_1(sc, reg + (SK_WIN_LEN / 2), 36);
 
 	/*
 	 * Configure interrupt moderation. The moderation timer
@@ -829,12 +906,17 @@ void msk_reset(struct sk_softc *sc)
 	 */
 	switch (sc->sk_type) {
 	case SK_YUKON_EC:
-	case SK_YUKON_XL:
+	case SK_YUKON_EC_U:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
 	case SK_YUKON_FE:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE;
+		break;
+	case SK_YUKON_XL:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_XL;
 		break;
 	default:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
 	}
 
 	/* Reset status ring. */
@@ -850,18 +932,22 @@ void msk_reset(struct sk_softc *sc)
 	    sc->sk_status_map->dm_segs[0].ds_addr);
 	sk_win_write_4(sc, SK_STAT_BMU_ADDRHI,
 	    (u_int64_t)sc->sk_status_map->dm_segs[0].ds_addr >> 32);
-	sk_win_write_2(sc, SK_STAT_BMU_TX_THRESH, 10);
-	sk_win_write_1(sc, SK_STAT_BMU_FIFOWM, 16);
-	sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM, 16);
+	if ((sc->sk_workaround & SK_STAT_BMU_FIFOIWM) != 0) {
+		sk_win_write_2(sc, SK_STAT_BMU_TX_THRESH, SK_STAT_BMU_TXTHIDX_MSK);
+		sk_win_write_1(sc, SK_STAT_BMU_FIFOWM, 0x21);
+		sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM, 0x07);
+	} else {
+		sk_win_write_2(sc, SK_STAT_BMU_TX_THRESH, 0x000a);
+		sk_win_write_1(sc, SK_STAT_BMU_FIFOWM, 0x10);
+		sk_win_write_1(sc, SK_STAT_BMU_FIFOIWM,
+		    ((sc->sk_workaround & SK_WA_4109) != 0) ? 0x10 : 0x04);
+		sk_win_write_4(sc, SK_Y2_ISR_ITIMERINIT, 0x0190); /* 3.2us on Yukon-EC */
+	}
 
 #if 0
 	sk_win_write_4(sc, SK_Y2_LEV_ITIMERINIT, SK_IM_USECS(100));
-	sk_win_write_4(sc, SK_Y2_TX_ITIMERINIT, SK_IM_USECS(1000));
-
-	sk_win_write_4(sc, SK_Y2_ISR_ITIMERINIT, SK_IM_USECS(20));
-#else
-	sk_win_write_4(sc, SK_Y2_ISR_ITIMERINIT, SK_IM_USECS(4));
 #endif
+	sk_win_write_4(sc, SK_Y2_TX_ITIMERINIT, SK_IM_USECS(1000));
 
 	sk_win_write_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_ON);
 
@@ -956,23 +1042,6 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 		     sc_if->sk_rx_ramstart, sc_if->sk_rx_ramend,
 		     sc_if->sk_tx_ramstart, sc_if->sk_tx_ramend));
 
-	/* Read and save PHY type */
-	sc_if->sk_phytype = sk_win_read_1(sc, SK_EPROM1) & 0xF;
-
-	/* Set PHY address */
-	if ((sc_if->sk_phytype < SK_PHYTYPE_MARV_COPPER &&
-	     sc->sk_pmd != 'L' && sc->sk_pmd != 'S')) {
-		/* not initialized, punt */
-		sc_if->sk_phytype = SK_PHYTYPE_MARV_COPPER;
-
-		sc->sk_coppertype = 1;
-	}
-
-	sc_if->sk_phyaddr = SK_PHYADDR_MARV;
-
-	if (!(sc->sk_coppertype))
-		sc_if->sk_phytype = SK_PHYTYPE_MARV_FIBER;
-
 	/* Allocate the descriptor queues. */
 	if (bus_dmamem_alloc(sc->sc_dmatag, sizeof(struct msk_ring_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
@@ -1028,14 +1097,14 @@ msk_attach(struct device *parent, struct device *self, void *aux)
  	DPRINTFN(2, ("msk_attach: 1\n"));
 
 	sc_if->sk_mii.mii_ifp = ifp;
-	sc_if->sk_mii.mii_readreg = msk_marv_miibus_readreg;
-	sc_if->sk_mii.mii_writereg = msk_marv_miibus_writereg;
-	sc_if->sk_mii.mii_statchg = msk_marv_miibus_statchg;
+	sc_if->sk_mii.mii_readreg = msk_miibus_readreg;
+	sc_if->sk_mii.mii_writereg = msk_miibus_writereg;
+	sc_if->sk_mii.mii_statchg = msk_miibus_statchg;
 
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
 	    msk_ifmedia_upd, msk_ifmedia_sts);
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, MIIF_DOPAUSE|MIIF_FORCEANEG);
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
 		aprint_error("%s: no PHY found!\n", sc_if->sk_dev.dv_xname);
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
@@ -1045,7 +1114,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	callout_init(&sc_if->sk_tick_ch);
-	callout_setfunc(&sc_if->sk_tick_ch, msk_yukon_tick, sc_if);
+	callout_setfunc(&sc_if->sk_tick_ch, msk_tick, sc_if);
 	callout_schedule(&sc_if->sk_tick_ch, hz);
 
 	/*
@@ -1165,7 +1234,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_rev = (sk_win_read_1(sc, SK_CONFIG) >> 4);
 
 	/* bail out here if chip is not recognized */
-	if (!(SK_IS_YUKON(sc))) {
+	if (!(SK_IS_YUKON2(sc))) {
 		aprint_error(": unknown chip type: %d\n", sc->sk_type);
 		goto fail_1;
 	}
@@ -1232,69 +1301,84 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		     sc->sk_ramsize, sc->sk_ramsize / 1024,
 		     sc->sk_rboff));
 
-	/* Read and save physical media type */
-	sc->sk_pmd = sk_win_read_1(sc, SK_PMDTYPE);
-
-	if (sc->sk_pmd == 'T' || sc->sk_pmd == '1' ||
-	    (SK_IS_YUKON2(sc) && !(sc->sk_pmd == 'L' ||
-	    sc->sk_pmd == 'S')))
-		sc->sk_coppertype = 1;
-	else
-		sc->sk_coppertype = 0;
-
 	switch (sc->sk_type) {
 	case SK_YUKON_XL:
-		sc->sk_name = "Marvell Yukon-2 XL";
+		sc->sk_name = "Yukon-2 XL";
 		break;
 	case SK_YUKON_EC_U:
-		sc->sk_name = "Marvell Yukon-2 EC Ultra";
+		sc->sk_name = "Yukon-2 EC Ultra";
 		break;
 	case SK_YUKON_EC:
-		sc->sk_name = "Marvell Yukon-2 EC";
+		sc->sk_name = "Yukon-2 EC";
 		break;
 	case SK_YUKON_FE:
-		sc->sk_name = "Marvell Yukon-2 FE";
+		sc->sk_name = "Yukon-2 FE";
 		break;
 	default:
-		sc->sk_name = "Marvell Yukon (Unknown)";
+		sc->sk_name = "Yukon (Unknown)";
 	}
 
 	if (sc->sk_type == SK_YUKON_XL) {
 		switch (sc->sk_rev) {
 		case SK_YUKON_XL_REV_A0:
+			sc->sk_workaround = 0;
 			revstr = "A0";
 			break;
 		case SK_YUKON_XL_REV_A1:
+			sc->sk_workaround = SK_WA_4109;
 			revstr = "A1";
 			break;
 		case SK_YUKON_XL_REV_A2:
+			sc->sk_workaround = SK_WA_4109;
 			revstr = "A2";
 			break;
 		case SK_YUKON_XL_REV_A3:
+			sc->sk_workaround = SK_WA_4109;
 			revstr = "A3";
 			break;
 		default:
-			;
+			sc->sk_workaround = 0;
+			break;
 		}
 	}
 
 	if (sc->sk_type == SK_YUKON_EC) {
 		switch (sc->sk_rev) {
 		case SK_YUKON_EC_REV_A1:
+			sc->sk_workaround = SK_WA_43_418 | SK_WA_4109;
 			revstr = "A1";
 			break;
 		case SK_YUKON_EC_REV_A2:
+			sc->sk_workaround = SK_WA_4109;
 			revstr = "A2";
 			break;
 		case SK_YUKON_EC_REV_A3:
+			sc->sk_workaround = SK_WA_4109;
 			revstr = "A3";
 			break;
 		default:
-			;
+			sc->sk_workaround = 0;
+			break;
+		}
+	}
+
+	if (sc->sk_type == SK_YUKON_FE) {
+		sc->sk_workaround = SK_WA_4109;
+		switch (sc->sk_rev) {
+		case SK_YUKON_FE_REV_A1:
+			revstr = "A1";
+			break;
+		case SK_YUKON_FE_REV_A2:
+			revstr = "A2";
+			break;
+		default:
+			sc->sk_workaround = 0;
+			break;
 		}
 	}
 
 	if (sc->sk_type == SK_YUKON_EC_U) {
+		sc->sk_workaround = SK_WA_4109;
 		switch (sc->sk_rev) {
 		case SK_YUKON_EC_U_REV_A0:
 			revstr = "A0";
@@ -1302,8 +1386,12 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		case SK_YUKON_EC_U_REV_A1:
 			revstr = "A1";
 			break;
+		case SK_YUKON_EC_U_REV_B0:
+			revstr = "B0";
+			break;
 		default:
-			;
+			sc->sk_workaround = 0;
+			break;
 		}
 	}
 
@@ -1312,7 +1400,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	if (revstr != NULL)
 		aprint_normal(" rev. %s", revstr);
 	aprint_normal(" (0x%x): %s\n", sc->sk_rev, intrstr);
-
 
 	sc->sk_macs = 1;
 
@@ -1390,7 +1477,7 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct msk_tx_desc		*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur;
 	int			i;
 	struct sk_txmap_entry	*entry;
 	bus_dmamap_t		txmap;
@@ -1422,6 +1509,12 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 		return (ENOBUFS);
 	}
 
+	if (txmap->dm_nsegs > (MSK_TX_RING_CNT - sc_if->sk_cdata.sk_tx_cnt - 2)) {
+		DPRINTFN(2, ("msk_encap: too few descriptors free\n"));
+		bus_dmamap_unload(sc->sc_dmatag, txmap);
+		return (ENOBUFS);
+	}
+
 	DPRINTFN(2, ("msk_encap: dm_nsegs=%d\n", txmap->dm_nsegs));
 
 	/* Sync the DMA map. */
@@ -1429,21 +1522,16 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	    BUS_DMASYNC_PREWRITE);
 
 	for (i = 0; i < txmap->dm_nsegs; i++) {
-		if ((MSK_TX_RING_CNT - (sc_if->sk_cdata.sk_tx_cnt + cnt)) < 2) {
-			DPRINTFN(2, ("msk_encap: too few descriptors free\n"));
-			return (ENOBUFS);
-		}
 		f = &sc_if->sk_rdata->sk_tx_ring[frag];
 		f->sk_addr = htole32(txmap->dm_segs[i].ds_addr);
 		f->sk_len = htole16(txmap->dm_segs[i].ds_len);
 		f->sk_ctl = 0;
-		if (cnt == 0)
+		if (i == 0)
 			f->sk_opcode = SK_Y2_TXOPC_PACKET;
 		else
 			f->sk_opcode = SK_Y2_TXOPC_BUFFER | SK_Y2_TXOPC_OWN;
 		cur = frag;
 		SK_INC(frag, MSK_TX_RING_CNT);
-		cnt++;
 	}
 
 	sc_if->sk_cdata.sk_tx_chain[cur].sk_mbuf = m_head;
@@ -1462,7 +1550,7 @@ msk_encap(struct sk_if_softc *sc_if, struct mbuf *m_head, u_int32_t *txidx)
 	MSK_CDTXSYNC(sc_if, *txidx, 1,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-	sc_if->sk_cdata.sk_tx_cnt += cnt;
+	sc_if->sk_cdata.sk_tx_cnt += txmap->dm_nsegs;
 
 #ifdef MSK_DEBUG
 	if (mskdebug >= 2) {
@@ -1537,20 +1625,30 @@ void
 msk_watchdog(struct ifnet *ifp)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
+	u_int32_t reg;
+	int idx;
 
 	/*
 	 * Reclaim first as there is a possibility of losing Tx completion
 	 * interrupts.
 	 */
-	msk_txeof(sc_if);
-	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
-		aprint_error("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
+	if (sc_if->sk_port == SK_PORT_A)
+		reg = SK_STAT_BMU_TXA1_RIDX;
+	else
+		reg = SK_STAT_BMU_TXA2_RIDX;
 
-		ifp->if_oerrors++;
+	idx = sk_win_read_2(sc_if->sk_softc, reg);
+	if (sc_if->sk_cdata.sk_tx_cons != idx) {
+		msk_txeof(sc_if, idx);
+		if (sc_if->sk_cdata.sk_tx_cnt != 0) {
+			aprint_error("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
 
-		/* XXX Resets both ports; we shouldn't do that. */
-		msk_reset(sc_if->sk_softc);
-		msk_init(ifp);
+			ifp->if_oerrors++;
+
+			/* XXX Resets both ports; we shouldn't do that. */
+			msk_reset(sc_if->sk_softc);
+			msk_init(ifp);
+		}
 	}
 }
 
@@ -1650,13 +1748,14 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 }
 
 void
-msk_txeof(struct sk_if_softc *sc_if)
+msk_txeof(struct sk_if_softc *sc_if, int idx)
 {
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct msk_tx_desc	*cur_tx;
 	struct ifnet		*ifp = &sc_if->sk_ethercom.ec_if;
-	u_int32_t		idx, sk_ctl;
+	u_int32_t		sk_ctl;
 	struct sk_txmap_entry	*entry;
+	int			cons, prog;
 
 	DPRINTFN(2, ("msk_txeof\n"));
 
@@ -1664,24 +1763,25 @@ msk_txeof(struct sk_if_softc *sc_if)
 	 * Go through our tx ring and free mbufs for those
 	 * frames that have been sent.
 	 */
-	idx = sc_if->sk_cdata.sk_tx_cons;
-	while (idx != sk_win_read_2(sc, SK_STAT_BMU_TXA1_RIDX)) {
-		MSK_CDTXSYNC(sc_if, idx, 1,
+	cons = sc_if->sk_cdata.sk_tx_cons;
+	prog = 0;
+	while (cons != idx) {
+		if (sc_if->sk_cdata.sk_tx_cnt <= 0)
+			break;
+		prog++;
+		MSK_CDTXSYNC(sc_if, cons, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		cur_tx = &sc_if->sk_rdata->sk_tx_ring[idx];
-		sk_ctl = letoh32(cur_tx->sk_ctl);
+		cur_tx = &sc_if->sk_rdata->sk_tx_ring[cons];
+		sk_ctl = cur_tx->sk_ctl;
 #ifdef MSK_DEBUG
 		if (mskdebug >= 2)
-			msk_dump_txdesc(cur_tx, idx);
+			msk_dump_txdesc(cur_tx, cons);
 #endif
-		if (sk_ctl & SK_TXCTL_LASTFRAG)
+		if (sk_ctl & SK_Y2_TXCTL_LASTFRAG)
 			ifp->if_opackets++;
-		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
-			entry = sc_if->sk_cdata.sk_tx_map[idx];
-
-			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
-			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
+		if (sc_if->sk_cdata.sk_tx_chain[cons].sk_mbuf != NULL) {
+			entry = sc_if->sk_cdata.sk_tx_map[cons];
 
 			bus_dmamap_sync(sc->sc_dmatag, entry->dmamap, 0,
 			    entry->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1689,21 +1789,24 @@ msk_txeof(struct sk_if_softc *sc_if)
 			bus_dmamap_unload(sc->sc_dmatag, entry->dmamap);
 			SIMPLEQ_INSERT_TAIL(&sc_if->sk_txmap_head, entry,
 					  link);
-			sc_if->sk_cdata.sk_tx_map[idx] = NULL;
+			sc_if->sk_cdata.sk_tx_map[cons] = NULL;
+			m_freem(sc_if->sk_cdata.sk_tx_chain[cons].sk_mbuf);
+			sc_if->sk_cdata.sk_tx_chain[cons].sk_mbuf = NULL;
 		}
 		sc_if->sk_cdata.sk_tx_cnt--;
-		SK_INC(idx, MSK_TX_RING_CNT);
+		SK_INC(cons, MSK_TX_RING_CNT);
 	}
 	ifp->if_timer = sc_if->sk_cdata.sk_tx_cnt > 0 ? 5 : 0;
 
 	if (sc_if->sk_cdata.sk_tx_cnt < MSK_TX_RING_CNT - 2)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
-	sc_if->sk_cdata.sk_tx_cons = idx;
+	if (prog > 0)
+		sc_if->sk_cdata.sk_tx_cons = cons;
 }
 
 void
-msk_yukon_tick(void *xsc_if)
+msk_tick(void *xsc_if)
 {
 	struct sk_if_softc *sc_if = xsc_if;  
 	struct mii_data *mii = &sc_if->sk_mii;
@@ -1725,7 +1828,7 @@ msk_intr_yukon(struct sk_if_softc *sc_if)
 	}
 	/* TX underrun */
 	if ((status & SK_GMAC_INT_TX_UNDER) != 0) {
-		SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST,
+		SK_IF_WRITE_1(sc_if, 0, SK_TXMF1_CTRL_TEST,
 		    SK_TFCTL_TX_FIFO_UNDER);
 	}
 
@@ -1741,7 +1844,6 @@ msk_intr(void *xsc)
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
 	int			claimed = 0;
 	u_int32_t		status;
-	u_int16_t		idx;
 	struct msk_status_desc	*cur_st;
 
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
@@ -1767,13 +1869,13 @@ msk_intr(void *xsc)
 		msk_intr_yukon(sc_if1);
 	}
 
-	idx = CSR_READ_2(sc, SK_STAT_BMU_PUTIDX);
-	while (sc->sk_status_idx != idx) {
-		MSK_CDSTSYNC(sc, sc->sk_status_idx,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	MSK_CDSTSYNC(sc, sc->sk_status_idx,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	cur_st = &sc->sk_status_ring[sc->sk_status_idx];
 
-		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
-		switch (cur_st->sk_opcode & ~SK_Y2_STOPC_OWN) {
+	while (cur_st->sk_opcode & SK_Y2_STOPC_OWN) {
+		cur_st->sk_opcode &= ~SK_Y2_STOPC_OWN;
+		switch (cur_st->sk_opcode) {
 		case SK_Y2_STOPC_RXSTAT:
 			msk_rxeof(sc->sk_if[cur_st->sk_link],
 			    letoh16(cur_st->sk_len),
@@ -1783,14 +1885,26 @@ msk_intr(void *xsc)
 			    sc->sk_if[cur_st->sk_link]->sk_cdata.sk_rx_prod);
 			break;
 		case SK_Y2_STOPC_TXSTAT:
-			msk_txeof(sc->sk_if[cur_st->sk_link]);
+			if (sc_if0)
+				msk_txeof(sc_if0,
+				    letoh32(cur_st->sk_status)
+				    & SK_Y2_ST_TXA1_MSKL);
+			if (sc_if1)
+				msk_txeof(sc_if1,
+				    ((letoh32(cur_st->sk_status)
+					& SK_Y2_ST_TXA2_MSKL)
+					>> SK_Y2_ST_TXA2_SHIFTL)
+				    | ((letoh16(cur_st->sk_len) & SK_Y2_ST_TXA2_MSKH) << SK_Y2_ST_TXA2_SHIFTH));
 			break;
 		default:
 			aprint_error("opcode=0x%x\n", cur_st->sk_opcode);
 			break;
 		}
 		SK_INC(sc->sk_status_idx, MSK_STATUS_RING_CNT);
-		idx = CSR_READ_2(sc, SK_STAT_BMU_PUTIDX);
+
+		MSK_CDSTSYNC(sc, sc->sk_status_idx,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
 	}
 
 	if (status & SK_Y2_IMR_BMU) {
@@ -1819,7 +1933,7 @@ msk_intr(void *xsc)
 void
 msk_init_yukon(struct sk_if_softc *sc_if)
 {
-	u_int32_t		phy, v;
+	u_int32_t		v;
 	u_int16_t		reg;
 	struct sk_softc		*sc;
 	int			i;
@@ -1832,29 +1946,13 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	DPRINTFN(6, ("msk_init_yukon: 1\n"));
 
 	/* GMAC and GPHY Reset */
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
 	DELAY(1000);
 
 	DPRINTFN(6, ("msk_init_yukon: 2\n"));
 
-#if 0
-	phy = SK_GPHY_INT_POL_HI | SK_GPHY_DIS_FC | SK_GPHY_DIS_SLEEP |
-		SK_GPHY_ENA_XC | SK_GPHY_ANEG_ALL | SK_GPHY_ENA_PAUSE;
-#else
-	phy = SK_GPHY_ENA_PAUSE;
-#endif
-
-	if (sc->sk_coppertype)
-		phy |= SK_GPHY_COPPER;
-	else
-		phy |= SK_GPHY_FIBER;
-
-	DPRINTFN(3, ("msk_init_yukon: phy=%#x\n", phy));
-
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, phy | SK_GPHY_RESET_SET);
-	DELAY(1000);
-	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, phy | SK_GPHY_RESET_CLEAR);
+	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_CLEAR);
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_LOOP_OFF |
 		      SK_GMAC_PAUSE_ON | SK_GMAC_RESET_CLEAR);
 
@@ -1886,16 +1984,27 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	DPRINTFN(6, ("msk_init_yukon: 7\n"));
 	SK_YU_WRITE_2(sc_if, YUKON_RCR, YU_RCR_CRCR);
 
+	/* transmit control register */
+	SK_YU_WRITE_2(sc_if, YUKON_TCR, (0x04 << 10));
+
+	/* transmit flow control register */
+	SK_YU_WRITE_2(sc_if, YUKON_TFCR, 0xffff);
+
 	/* transmit parameter register */
 	DPRINTFN(6, ("msk_init_yukon: 8\n"));
 	SK_YU_WRITE_2(sc_if, YUKON_TPR, YU_TPR_JAM_LEN(0x3) |
-		      YU_TPR_JAM_IPG(0xb) | YU_TPR_JAM2DATA_IPG(0x1a) );
+		      YU_TPR_JAM_IPG(0xb) | YU_TPR_JAM2DATA_IPG(0x1c) | 0x04);
 
 	/* serial mode register */
 	DPRINTFN(6, ("msk_init_yukon: 9\n"));
-	SK_YU_WRITE_2(sc_if, YUKON_SMR, YU_SMR_DATA_BLIND(0x1c) |
-		      YU_SMR_MFL_VLAN | YU_SMR_MFL_JUMBO |
-		      YU_SMR_IPG_DATA(0x1e));
+	reg = YU_SMR_DATA_BLIND(0x1c) |
+	      YU_SMR_MFL_VLAN |
+	      YU_SMR_IPG_DATA(0x1e);
+
+	if (sc->sk_type != SK_YUKON_FE)
+		reg |= YU_SMR_MFL_JUMBO;
+
+	SK_YU_WRITE_2(sc_if, YUKON_SMR, reg);
 
 	DPRINTFN(6, ("msk_init_yukon: 10\n"));
 	/* Setup Yukon's address */
@@ -1931,14 +2040,10 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	    YU_RXSTAT_JABBER;
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_MASK, v);
 
-	/* Disable RX MAC FIFO Flush for YUKON-Lite Rev. A0 only */
-	if (sc->sk_type == SK_YUKON_LITE && sc->sk_rev == SK_YUKON_LITE_REV_A0)
-		v = SK_TFCTL_OPERATION_ON;
-	else
-		v = SK_TFCTL_OPERATION_ON | SK_RFCTL_FIFO_FLUSH_ON;
 	/* Configure RX MAC FIFO */
 	SK_IF_WRITE_1(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_RESET_CLEAR);
-	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, v);
+	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_OPERATION_ON |
+	    SK_RFCTL_FIFO_FLUSH_ON);
 
 	/* Increase flush threshould to 64 bytes */
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_THRESHOLD,
@@ -1965,7 +2070,7 @@ msk_init(struct ifnet *ifp)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct mii_data		*mii = &sc_if->sk_mii;
 	int			s;
-	uint32_t		imr, sk_imtimer_ticks;
+	uint32_t		imr, imtimer_ticks;
 
 
 	DPRINTFN(2, ("msk_init\n"));
@@ -2007,12 +2112,12 @@ msk_init(struct ifnet *ifp)
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, 0x00000016);
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, 0x00000d28);
 	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_BMU_CSR, 0x00000080);
-	SK_IF_WRITE_4(sc_if, 0, SK_RXQ1_WATERMARK, 0x00000600);
+	SK_IF_WRITE_2(sc_if, 0, SK_RXQ1_Y2_WM, 0x0600);	/* XXX ??? */
 
 	SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_BMU_CSR, 0x00000016);
 	SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_BMU_CSR, 0x00000d28);
 	SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_BMU_CSR, 0x00000080);
-	SK_IF_WRITE_4(sc_if, 1, SK_TXQA1_WATERMARK, 0x00000600);
+	SK_IF_WRITE_2(sc_if, 1, SK_TXQA1_Y2_WM, 0x0600);	/* XXX ??? */
 
 	/* Make sure the sync transmit queue is disabled. */
 	SK_IF_WRITE_4(sc_if, 1, SK_TXRBS1_CTLTST, SK_RBCTL_RESET);
@@ -2037,10 +2142,17 @@ msk_init(struct ifnet *ifp)
 	/* Set interrupt moderation if changed via sysctl. */
 	switch (sc->sk_type) {
 	case SK_YUKON_EC:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+	case SK_YUKON_EC_U:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		break;
+	case SK_YUKON_FE:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_FE;
+		break;
+	case SK_YUKON_XL:
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_XL;
 		break;
 	default:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
 	}
 	imr = sk_win_read_4(sc, SK_IMTIMERINIT);
 	if (imr != SK_IM_USECS(sc->sk_int_mod)) {
@@ -2119,7 +2231,7 @@ msk_stop(struct ifnet *ifp, int disable)
 	SK_IF_WRITE_4(sc_if, 1, SK_TXRBA1_CTLTST, SK_RBCTL_RESET|SK_RBCTL_OFF);
 	SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_OFF);
 	SK_IF_WRITE_1(sc_if, 0, SK_RXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
-	SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_RXLEDCTL_COUNTER_STOP);
+	SK_IF_WRITE_1(sc_if, 0, SK_TXLED1_CTL, SK_TXLEDCTL_COUNTER_STOP);
 	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_OFF);
 	SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL, SK_LINKLED_LINKSYNC_OFF);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.8 2006/09/09 16:17:50 riz Exp $ */
+/* $NetBSD: if_skreg.h,v 1.8.4.1 2007/08/26 12:01:19 liamjfoy Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 /*	$OpenBSD: if_skreg.h,v 1.10 2003/08/12 05:23:06 nate Exp $	*/
 /*	$OpenBSD: yukonreg.h,v 1.2 2003/08/12 05:23:06 nate Exp $	*/
-/*	$OpenBSD: if_skreg.h,v 1.37 2006/08/16 21:06:23 kettenis Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.41 2006/11/23 21:56:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -172,6 +172,7 @@
 #define SK_RAP		0x0000
 #define SK_CSR		0x0004
 #define SK_LED		0x0006
+/* XXX 0x0007 B0_POWER_CTRL */
 #define SK_ISR		0x0008	/* interrupt source */
 #define SK_IMR		0x000C	/* interrupt mask */
 #define SK_IESR		0x0010	/* interrupt hardware error source */
@@ -353,9 +354,9 @@
 #define SK_CONFIG	0x011A
 #define SK_CHIPVER	0x011B
 #define SK_EPROM0	0x011C
-#define SK_EPROM1	0x011D
+#define SK_EPROM1	0x011D		/* yukon/genesis */
 #define SK_Y2_CLKGATE	0x011D		/* yukon 2 */
-#define SK_EPROM2	0x011E
+#define SK_EPROM2	0x011E		/* yukon/genesis */
 #define SK_Y2_HWRES	0x011E		/* yukon 2 */
 #define SK_EPROM3	0x011F
 #define SK_EP_ADDR	0x0120
@@ -385,7 +386,7 @@
 #define SK_BLNKSTS	0x0179
 #define SK_BLNKTST	0x017A
 
-/* values for  SK_CHIPVER */
+/* Values for SK_CHIPVER */
 #define SK_GENESIS		0x0A
 #define SK_YUKON		0xB0
 #define SK_YUKON_LITE		0xB1
@@ -399,11 +400,11 @@
 #define SK_IS_GENESIS(sc) \
     ((sc)->sk_type == SK_GENESIS)
 #define SK_IS_YUKON(sc) \
-    ((sc)->sk_type >= SK_YUKON && (sc)->sk_type <= SK_YUKON_FE)
+    ((sc)->sk_type >= SK_YUKON && (sc)->sk_type <= SK_YUKON_LP)
 #define SK_IS_YUKON2(sc) \
     ((sc)->sk_type >= SK_YUKON_XL && (sc)->sk_type <= SK_YUKON_FE)
 
-/* known revisions in SK_CONFIG */
+/* Known revisions in SK_CONFIG */
 #define SK_YUKON_LITE_REV_A0	0x0 /* invented, see test in skc_attach */
 #define SK_YUKON_LITE_REV_A1	0x3
 #define SK_YUKON_LITE_REV_A3	0x7
@@ -419,19 +420,29 @@
 
 #define SK_YUKON_EC_U_REV_A0	0x1
 #define SK_YUKON_EC_U_REV_A1	0x2
+#define SK_YUKON_EC_U_REV_B0	0x3
+
+#define SK_YUKON_FE_REV_A1	0x1
+#define SK_YUKON_FE_REV_A2	0x3
+
+/* Workaround */
+#define SK_WA_43_418	0x01
+#define SK_WA_4109	0x02
 
 #define SK_IMCTL_IRQ_CLEAR	0x01
 #define SK_IMCTL_STOP		0x02
 #define SK_IMCTL_START		0x04
 
 /* Number of ticks per usec for interrupt moderation */
-#define SK_IMTIMER_TICKS_GENESIS	54
-#define SK_IMTIMER_TICKS_YUKON		78
+#define SK_IMTIMER_TICKS_GENESIS	53
+#define SK_IMTIMER_TICKS_YUKON		156
 #define SK_IMTIMER_TICKS_YUKON_EC	125
-#define SK_IM_USECS(x)		((x) * sk_imtimer_ticks)
+#define SK_IMTIMER_TICKS_YUKON_FE	100
+#define SK_IMTIMER_TICKS_YUKON_XL	156
+#define SK_IM_USECS(x)		((x) * imtimer_ticks)
 
 #define SK_IM_MIN	0
-#define SK_IM_DEFAULT	100
+#define SK_IM_DEFAULT	1000
 #define SK_IM_MAX	10000
 /*
  * The SK_EPROM0 register contains a byte that describes the
@@ -472,9 +483,9 @@
 #define SK_CONFIG_DIS_DSL_CLK	0x02
 
 #define SK_PMD_1000BASETX_ALT	0x31
+#define SK_PMD_1000BASECX	0x43
 #define SK_PMD_1000BASELX	0x4C
 #define SK_PMD_1000BASESX	0x53
-#define SK_PMD_1000BASECX	0x43
 #define SK_PMD_1000BASETX	0x54
 
 /* GPIO bits */
@@ -499,19 +510,19 @@
 #define SK_GPIO_DIR8		0x01000000
 #define SK_GPIO_DIR9           0x02000000
 
-#define SK_Y2_CLKGATE_LINK2_INACTIVE    0x80    /* port 2 inactive */
-#define SK_Y2_CLKGATE_LINK2_GATE_DIS    0x40    /* disable clock gate, 2 */
-#define SK_Y2_CLKGATE_LINK2_CORE_DIS    0x20    /* disable core clock, 2 */
-#define SK_Y2_CLKGATE_LINK2_PCI_DIS     0x10    /* disable pci clock, 2 */
-#define SK_Y2_CLKGATE_LINK1_INACTIVE    0x08    /* port 1 inactive */
-#define SK_Y2_CLKGATE_LINK1_GATE_DIS    0x04    /* disable clock gate, 1 */
-#define SK_Y2_CLKGATE_LINK1_CORE_DIS    0x02    /* disable core clock, 1 */
-#define SK_Y2_CLKGATE_LINK1_PCI_DIS     0x01    /* disable pci clock, 1 */
+#define	SK_Y2_CLKGATE_LINK2_INACTIVE	0x80	/* port 2 inactive */
+#define	SK_Y2_CLKGATE_LINK2_GATE_DIS	0x40	/* disable clock gate, 2 */
+#define	SK_Y2_CLKGATE_LINK2_CORE_DIS	0x20	/* disable core clock, 2 */
+#define	SK_Y2_CLKGATE_LINK2_PCI_DIS	0x10	/* disable pci clock, 2 */
+#define	SK_Y2_CLKGATE_LINK1_INACTIVE	0x08	/* port 1 inactive */
+#define	SK_Y2_CLKGATE_LINK1_GATE_DIS	0x04	/* disable clock gate, 1 */
+#define	SK_Y2_CLKGATE_LINK1_CORE_DIS	0x02	/* disable core clock, 1 */
+#define	SK_Y2_CLKGATE_LINK1_PCI_DIS	0x01	/* disable pci clock, 1 */
 
-#define SK_Y2_HWRES_LINK_1      0x01
-#define SK_Y2_HWRES_LINK_2      0x02
-#define SK_Y2_HWRES_LINK_MASK   (SK_Y2_HWRES_LINK_1 | SK_Y2_HWRES_LINK_2)
-#define SK_Y2_HWRES_LINK_DUAL   (SK_Y2_HWRES_LINK_1 | SK_Y2_HWRES_LINK_2)
+#define	SK_Y2_HWRES_LINK_1	0x01
+#define	SK_Y2_HWRES_LINK_2	0x02
+#define	SK_Y2_HWRES_LINK_MASK	(SK_Y2_HWRES_LINK_1 | SK_Y2_HWRES_LINK_2)
+#define	SK_Y2_HWRES_LINK_DUAL	(SK_Y2_HWRES_LINK_1 | SK_Y2_HWRES_LINK_2)
 
 /* Block 3 Ram interface and MAC arbiter registers */
 #define SK_RAMADDR	0x0180
@@ -856,8 +867,6 @@
 #define SK_TXQA1_Y2_PREF_GETIDX 0x06E0
 #define SK_TXQA1_Y2_PREF_PUTIDX 0x06E4
 #define SK_TXQA1_Y2_PREF_FIFOWP 0x06F0
-#define SK_TXQA1_Y2_PREF_PUTIDX 0x06E4
-#define SK_TXQA1_Y2_PREF_FIFOWP 0x06F0
 #define SK_TXQA1_Y2_PREF_FIFORP 0x06F4
 #define SK_TXQA1_Y2_PREF_FIFOWM 0x06F8
 #define SK_TXQA1_Y2_PREF_FIFOLV 0x06FC
@@ -977,13 +986,13 @@
 	(SK_TXBMU_TRANSFER_SM_UNRESET|SK_TXBMU_DESCWR_SM_UNRESET|	\
 	SK_TXBMU_DESCRD_SM_UNRESET|SK_TXBMU_SUPERVISOR_SM_UNRESET|	\
 	SK_TXBMU_PFI_SM_UNRESET|SK_TXBMU_FIFO_UNRESET|			\
-	SK_TXBMU_DESC_UNRESET)
+	SK_TXBMU_DESC_UNRESET|SK_TXBMU_POLL_ON)
 
 #define SK_TXBMU_OFFLINE		\
 	(SK_TXBMU_TRANSFER_SM_RESET|SK_TXBMU_DESCWR_SM_RESET|	\
 	SK_TXBMU_DESCRD_SM_RESET|SK_TXBMU_SUPERVISOR_SM_RESET|	\
 	SK_TXBMU_PFI_SM_RESET|SK_TXBMU_FIFO_RESET|		\
-	SK_TXBMU_DESC_RESET)
+	SK_TXBMU_DESC_RESET|SK_TXBMU_POLL_OFF)
 
 /* Block 16 -- Receive RAMbuffer 1 */
 #define SK_RXRB1_START		0x0800
@@ -1047,12 +1056,12 @@
 #define SK_TXRBA2_LVL		0x0BA4
 #define SK_TXRBA2_CTLTST	0x0BA8
 
-#define SK_RBCTL_RESET		0x00000001
-#define SK_RBCTL_UNRESET	0x00000002
-#define SK_RBCTL_OFF		0x00000004
-#define SK_RBCTL_ON		0x00000008
-#define SK_RBCTL_STORENFWD_OFF	0x00000010
-#define SK_RBCTL_STORENFWD_ON	0x00000020
+#define SK_RBCTL_RESET		0x01
+#define SK_RBCTL_UNRESET	0x02
+#define SK_RBCTL_OFF		0x04
+#define SK_RBCTL_ON		0x08
+#define SK_RBCTL_STORENFWD_OFF	0x10
+#define SK_RBCTL_STORENFWD_ON	0x20
 
 /* Block 24 -- RX MAC FIFO 1 regisrers and LINK_SYNC counter */
 #define SK_RXF1_END		0x0C00
@@ -1078,22 +1087,23 @@
 #define SK_RXMF1_END		0x0C40
 #define SK_RXMF1_THRESHOLD	0x0C44
 #define SK_RXMF1_CTRL_TEST	0x0C48
-#define SK_RXMF1_FLUSH_MASK     0x0C4C
+#define SK_RXMF1_FLUSH_MASK	0x0C4C
 #define SK_RXMF1_FLUSH_THRESHOLD        0x0C50
 #define SK_RXMF1_WRITE_PTR	0x0C60
 #define SK_RXMF1_WRITE_LEVEL	0x0C68
 #define SK_RXMF1_READ_PTR	0x0C70
 #define SK_RXMF1_READ_LEVEL	0x0C78
 
+/* Receive MAC FIFO 1 Control/Test */
 #define SK_RFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on*/
 #define SK_RFCTL_WR_PTR_TST_OFF	0x00002000	/* Write pointer test off */
 #define SK_RFCTL_WR_PTR_STEP	0x00001000	/* Write pointer increment */
 #define SK_RFCTL_RD_PTR_TST_ON	0x00000400	/* Read pointer test on */
 #define SK_RFCTL_RD_PTR_TST_OFF	0x00000200	/* Read pointer test off */
 #define SK_RFCTL_RD_PTR_STEP	0x00000100	/* Read pointer increment */
-#define SK_RFCTL_FIFO_FLUSH_OFF 0x00000080      /* RX FIFO Flsuh mode off */
-#define SK_RFCTL_FIFO_FLUSH_ON  0x00000040      /* RX FIFO Flush mode on */
-#define SK_RFCTL_RX_FIFO_OVER	0x00000040	/* Clear IRQ RX FIFO Overrun */
+#define SK_RFCTL_FIFO_FLUSH_ON	0x00000080	/* RX FIFO Flush mode on */
+#define SK_RFCTL_FIFO_FLUSH_OFF 0x00000040      /* RX FIFO Flsuh mode off */
+#define SK_RFCTL_RX_FIFO_OVER	0x00000020	/* Clear IRQ RX FIFO Overrun */
 #define SK_RFCTL_FRAME_RX_DONE	0x00000010	/* Clear IRQ Frame RX Done */
 #define SK_RFCTL_OPERATION_ON	0x00000008	/* Operational mode on */
 #define SK_RFCTL_OPERATION_OFF	0x00000004	/* Operational mode off */
@@ -1161,7 +1171,7 @@
 #define SK_TXLED1_CTL		0x0D28
 #define SK_TXLED1_TST		0x0D29
 
-/* Receive MAC FIFO 1 (Yukon Only) */
+/* Transmit MAC FIFO 1 (Yukon Only) */
 #define SK_TXMF1_END		0x0D40
 #define SK_TXMF1_THRESHOLD	0x0D44
 #define SK_TXMF1_CTRL_TEST	0x0D48
@@ -1172,6 +1182,7 @@
 #define SK_TXMF1_RESTART_PTR	0x0D74
 #define SK_TXMF1_READ_LEVEL	0x0D78
 
+/* Transmit MAC FIFO Control/Test */
 #define SK_TFCTL_WR_PTR_TST_ON	0x00004000	/* Write pointer test on*/
 #define SK_TFCTL_WR_PTR_TST_OFF	0x00002000	/* Write pointer test off */
 #define SK_TFCTL_WR_PTR_STEP	0x00001000	/* Write pointer increment */
@@ -1229,9 +1240,11 @@
 #define SK_DPT_INIT		0x0e00	/* Initial value 24 bits */
 #define SK_DPT_TIMER		0x0e04	/* Mul of 78.12MHz clk (24b) */
 
-#define SK_DPT_TIMER_CTRL	0x0e08	/* Timer Control 16 bits */
-#define SK_DPT_TCTL_STOP	0x0001	/* Stop Timer */
-#define SK_DPT_TCTL_START	0x0002	/* Start Timer */
+#define SK_DPT_TIMER_MAX	0x00ffffffff	/* 214.75ms at 78.125MHz */
+
+#define SK_DPT_TIMER_CTRL	0x0e08	/* Timer Control 8 bits */
+#define SK_DPT_TCTL_STOP	0x01	/* Stop Timer */
+#define SK_DPT_TCTL_START	0x02	/* Start Timer */
 
 #define SK_DPT_TIMER_TEST	0x0e0a	/* Timer Test 16 bits */
 #define SK_DPT_TTEST_STEP	0x0001	/* Timer Decrement */
@@ -1281,11 +1294,13 @@
 #define SK_STAT_BMU_ON		0x00000008
 #define SK_STAT_BMU_IRQ_CLEAR	0x00000010
 
+#define SK_STAT_BMU_TXTHIDX_MSK	0x0fff
+
 /* Block 30 -- GMAC/GPHY Control Registers (Yukon Only)*/
 #define SK_GMAC_CTRL		0x0f00	/* GMAC Control Register */
 #define SK_GPHY_CTRL		0x0f04	/* GPHY Control Register */
 #define SK_GMAC_ISR		0x0f08	/* GMAC Interrupt Source Register */
-#define SK_GMAC_IMR		0x0f08	/* GMAC Interrupt Mask Register */
+#define SK_GMAC_IMR		0x0f0c	/* GMAC Interrupt Mask Register */
 #define SK_LINK_CTRL		0x0f10	/* Link Control Register (LCR) */
 #define SK_WOL_CTRL		0x0f20	/* Wake on LAN Control Register */
 #define SK_MAC_ADDR_LOW		0x0f24	/* Mack Address Registers LOW */
@@ -1365,7 +1380,15 @@
 /* Block 32-33 -- Pattern Ram */
 #define SK_WOL_PRAM		0x1000
 
-/* Block 0x22 - 0x3f -- reserved */
+/* Block 0x22 - 0x37 -- reserved */
+
+/* Block 0x38 -- Y2 PCI config registers */
+#define SK_Y2_PCI_BASE		0x1c00
+
+/* Compute offset of mirrored PCI register */
+#define SK_Y2_PCI_REG(reg)	((reg) + SK_Y2_PCI_BASE)
+
+/* Block 0x39 - 0x3f -- reserved */
 
 /* Block 0x40 to 0x4F -- XMAC 1 registers */
 #define SK_XMAC1_BASE	0x2000
@@ -1489,6 +1512,9 @@
 #define SK_PCI_VPD_ADDR		0x0052
 #define SK_PCI_VPD_DATA		0x0054
 
+#define SK_Y2_REG1_PHY1_COMA	0x10000000
+#define SK_Y2_REG1_PHY2_COMA	0x20000000
+
 #define SK_PSTATE_MASK		0x0003
 #define SK_PSTATE_D0		0x0000
 #define SK_PSTATE_D1		0x0001
@@ -1540,6 +1566,16 @@ struct sk_type {
 	u_int16_t		sk_did;
 	const char		*sk_name;
 };
+
+#define SK_ADDR_LO(x)	((u_int64_t) (x) & 0xffffffff)
+#define SK_ADDR_HI(x)	((u_int64_t) (x) >> 32)
+
+#define SK_RING_ALIGN	64
+
+#define SK_ADDR_LO(x)	((u_int64_t) (x) & 0xffffffff)
+#define SK_ADDR_HI(x)	((u_int64_t) (x) >> 32)
+
+#define SK_RING_ALIGN	64
 
 /* RX queue descriptor data structure */
 struct sk_rx_desc {
@@ -1600,7 +1636,7 @@ struct sk_tx_desc {
 #define SK_TXSTAT	\
 	(SK_OPCODE_DEFAULT|SK_TXCTL_EOF_INTR|SK_TXCTL_LASTFRAG|SK_TXCTL_OWN)
 
-#define SK_RXBYTES(x)		(x) & 0x0000FFFF;
+#define SK_RXBYTES(x)		((x) & 0x0000FFFF);
 #define SK_TXBYTES		SK_RXBYTES
 
 #define SK_TX_RING_CNT		512
@@ -1640,6 +1676,22 @@ struct msk_status_desc {
 #define SK_Y2_STOPC_RXSTAT	0x60
 #define SK_Y2_STOPC_TXSTAT	0x68
 #define SK_Y2_STOPC_OWN		0x80
+
+#define SK_Y2_ST_TXA1_MSKL	0x00000fff
+#define SK_Y2_ST_TXA1_SHIFT	0
+
+#define SK_Y2_ST_TXA2_MSKL	0xff000000
+#define SK_Y2_ST_TXA2_SHIFTL	24
+#define SK_Y2_ST_TXA2_MSKH	0x000f
+#define SK_Y2_ST_TXA2_SHIFTH	8
+
+#define SK_Y2_ST_TXA1_MSKL	0x00000fff
+#define SK_Y2_ST_TXA1_SHIFT	0
+
+#define SK_Y2_ST_TXA2_MSKL	0xff000000
+#define SK_Y2_ST_TXA2_SHIFTL	24
+#define SK_Y2_ST_TXA2_MSKH	0x000f
+#define SK_Y2_ST_TXA2_SHIFTH	8
 
 #define MSK_TX_RING_CNT		512
 #define MSK_RX_RING_CNT		512
@@ -1681,7 +1733,7 @@ struct msk_status_desc {
 
 #define YU_GPSR_SPEED		0x8000	/* speed 0 - 10Mbps, 1 - 100Mbps */
 #define YU_GPSR_DUPLEX		0x4000	/* 0 - half duplex, 1 - full duplex */
-#define YU_GPSR_FCTL_TX		0x2000	/* flow control */
+#define YU_GPSR_FCTL_TX		0x2000	/* Tx flow control, 1 - disabled */
 #define YU_GPSR_LINK		0x1000	/* link status (down/up) */
 #define YU_GPSR_PAUSE		0x0800	/* flow control enable/disable */
 #define YU_GPSR_TX_IN_PROG	0x0400	/* transmit in progress */
@@ -1690,25 +1742,26 @@ struct msk_status_desc {
 #define YU_GPSR_MII_PHY_STC	0x0020	/* MII PHY status change */
 #define YU_GPSR_GIG_SPEED	0x0010	/* Gigabit Speed (0 - use speed bit) */
 #define YU_GPSR_PARTITION	0x0008	/* partition mode */
-#define YU_GPSR_FCTL_RX		0x0004	/* flow control enable/disable */
-#define YU_GPSR_PROMS_EN	0x0002	/* promiscuous mode enable/disable */
+#define YU_GPSR_FCTL_RX		0x0004	/* Rx flow control, 1 - disabled  */
+#define YU_GPSR_PROMS_EN	0x0002	/* promiscuous mode, 1 - enabled */
 
 /* General Purpose Control Register (GPCR) */
 #define YUKON_GPCR		0x0004
 
-#define YU_GPCR_FCTL_TX		0x2000	/* Transmit flow control 802.3x */
+#define YU_GPCR_FCTL_TX_DIS	0x2000	/* Disable Tx flow control 802.3x */
 #define YU_GPCR_TXEN		0x1000	/* Transmit Enable */
 #define YU_GPCR_RXEN		0x0800	/* Receive Enable */
-#define YU_GPCR_LPBK		0x0200	/* Loopback Enable */
+#define YU_GPCR_BURSTEN		0x0400	/* Burst Mode Enable */
+#define YU_GPCR_LPBK		0x0200	/* MAC Loopback Enable */
 #define YU_GPCR_PAR		0x0100	/* Partition Enable */
-#define YU_GPCR_GIG		0x0080	/* Gigabit Speed */
+#define YU_GPCR_GIG		0x0080	/* Gigabit Speed 1000Mbps */
 #define YU_GPCR_FLP		0x0040	/* Force Link Pass */
 #define YU_GPCR_DUPLEX		0x0020	/* Duplex Enable */
-#define YU_GPCR_FCTL_RX		0x0010	/* Receive flow control 802.3x */
-#define YU_GPCR_SPEED		0x0008	/* Port Speed */
-#define YU_GPCR_DPLX_EN		0x0004	/* Enable Auto-Update for duplex */
-#define YU_GPCR_FCTL_EN		0x0002	/* Enabel Auto-Update for 802.3x */
-#define YU_GPCR_SPEED_EN	0x0001	/* Enable Auto-Update for speed */
+#define YU_GPCR_FCTL_RX_DIS	0x0010	/* Disable Rx flow control 802.3x */
+#define YU_GPCR_SPEED		0x0008	/* Port Speed 100Mbps */
+#define YU_GPCR_DPLX_DIS	0x0004	/* Disable Auto-Update for duplex */
+#define YU_GPCR_FCTL_DIS	0x0002	/* Disable Auto-Update for 802.3x */
+#define YU_GPCR_SPEED_DIS	0x0001	/* Disable Auto-Update for speed */
 
 /* Transmit Control Register (TCR) */
 #define YUKON_TCR		0x0008
@@ -1846,6 +1899,42 @@ struct msk_status_desc {
 #define YU_RXSTAT_LENSHIFT      16
 
 #define YU_RXSTAT_BYTES(x)      ((x) >> YU_RXSTAT_LENSHIFT)
+
+/* Receive status */
+#define YU_RXSTAT_FOFL		0x00000001	/* Rx FIFO overflow */
+#define YU_RXSTAT_CRCERR	0x00000002	/* CRC error */
+#define YU_RXSTAT_FRAGMENT	0x00000008	/* fragment */
+#define YU_RXSTAT_LONGERR	0x00000010	/* too long packet */
+#define YU_RXSTAT_MIIERR	0x00000020	/* MII error */
+#define YU_RXSTAT_BADFC		0x00000040	/* bad flow-control packet */
+#define YU_RXSTAT_GOODFC	0x00000080	/* good flow-control packet */
+#define YU_RXSTAT_RXOK		0x00000100	/* receice OK (Good packet) */
+#define YU_RXSTAT_BROADCAST	0x00000200	/* broadcast packet */
+#define YU_RXSTAT_MULTICAST	0x00000400	/* multicast packet */
+#define YU_RXSTAT_RUNT		0x00000800	/* undersize packet */
+#define YU_RXSTAT_JABBER	0x00001000	/* jabber packet */
+#define YU_RXSTAT_VLAN		0x00002000	/* VLAN packet */
+#define YU_RXSTAT_LENSHIFT	16
+
+#define	YU_RXSTAT_BYTES(x)	((x) >> YU_RXSTAT_LENSHIFT)
+
+/* Receive status */
+#define YU_RXSTAT_FOFL		0x00000001	/* Rx FIFO overflow */
+#define YU_RXSTAT_CRCERR	0x00000002	/* CRC error */
+#define YU_RXSTAT_FRAGMENT	0x00000008	/* fragment */
+#define YU_RXSTAT_LONGERR	0x00000010	/* too long packet */
+#define YU_RXSTAT_MIIERR	0x00000020	/* MII error */
+#define YU_RXSTAT_BADFC		0x00000040	/* bad flow-control packet */
+#define YU_RXSTAT_GOODFC	0x00000080	/* good flow-control packet */
+#define YU_RXSTAT_RXOK		0x00000100	/* receice OK (Good packet) */
+#define YU_RXSTAT_BROADCAST	0x00000200	/* broadcast packet */
+#define YU_RXSTAT_MULTICAST	0x00000400	/* multicast packet */
+#define YU_RXSTAT_RUNT		0x00000800	/* undersize packet */
+#define YU_RXSTAT_JABBER	0x00001000	/* jabber packet */
+#define YU_RXSTAT_VLAN		0x00002000	/* VLAN packet */
+#define YU_RXSTAT_LENSHIFT	16
+
+#define	YU_RXSTAT_BYTES(x)	((x) >> YU_RXSTAT_LENSHIFT)
 
 /*
  * Registers and data structures for the XaQti Corporation XMAC II
@@ -2132,6 +2221,9 @@ struct msk_status_desc {
 #define XM_RXSTAT_VLAN_LEV1	0x00010000
 #define XM_RXSTAT_VLAN_LEV2	0x00020000
 #define XM_RXSTAT_LEN		0xFFFC0000
+#define XM_RXSTAT_LENSHIFT	18
+
+#define XM_RXSTAT_BYTES(x)	((x) >> XM_RXSTAT_LENSHIFT)
 
 /*
  * XMAC PHY registers, indirectly accessed through
