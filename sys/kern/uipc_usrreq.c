@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.80.2.2 2006/09/08 10:38:10 ghen Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.80.2.2.2.1 2007/08/26 20:27:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.2 2006/09/08 10:38:10 ghen Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80.2.2.2.1 2007/08/26 20:27:33 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,7 @@ unp_output(struct mbuf *m, struct mbuf *control, struct unpcb *unp,
 		control = unp_addsockcred(p, control);
 	if (sbappendaddr(&so2->so_rcv, (struct sockaddr *)sun, m,
 	    control) == 0) {
+		unp_dispose(control);
 		m_freem(control);
 		m_freem(m);
 		so2->so_rcv.sb_overflowed++;
@@ -318,6 +319,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 				error = unp_connect(so, nam, p);
 				if (error) {
 				die:
+					unp_dispose(control);
 					m_freem(control);
 					m_freem(m);
 					break;
@@ -354,8 +356,10 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			 * Wake up readers.
 			 */
 			if (control) {
-				if (sbappendcontrol(rcv, m, control) == 0)
+				if (sbappendcontrol(rcv, m, control) == 0) {
+					unp_dispose(control);
 					m_freem(control);
+				}
 			} else
 				sbappend(rcv, m);
 			snd->sb_mbmax -=
