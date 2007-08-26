@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.13 2007/08/07 04:27:44 dyoung Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.14 2007/08/26 23:07:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.13 2007/08/07 04:27:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.14 2007/08/26 23:07:16 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -522,7 +522,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 		}
 	}
 
-	memcpy(port->port_origlladdr, LLADDR(ifp_port->if_sadl),
+	memcpy(port->port_origlladdr, CLLADDR(ifp_port->if_sadl),
 	    ifp_port->if_addrlen);
 
 	/*
@@ -835,7 +835,7 @@ agr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCGIFADDR:
 		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 #if 0 /* notyet */

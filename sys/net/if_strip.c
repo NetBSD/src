@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.78 2007/08/07 04:41:15 dyoung Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.79 2007/08/26 22:59:08 dyoung Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.78 2007/08/07 04:41:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.79 2007/08/26 22:59:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -779,7 +779,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
-		/*bcopy(LLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
+		/*bcopy(CLLADDR(satocsdl(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
                 dldst = CLLADDR(satocsdl(rt->rt_gateway));
                 break;
 

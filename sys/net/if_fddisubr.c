@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.70 2007/08/07 04:38:17 dyoung Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.71 2007/08/26 23:07:16 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.70 2007/08/07 04:38:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.71 2007/08/26 23:07:16 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -786,7 +786,7 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+	sockaddr_dl_setaddr(ifp->if_sadl, lla, ifp->if_addrlen);
 
 	ifp->if_broadcastaddr = fddibroadcastaddr;
 #if NBPFILTER > 0

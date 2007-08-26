@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.34 2007/03/04 06:03:16 christos Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.35 2007/08/26 22:59:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.34 2007/03/04 06:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.35 2007/08/26 22:59:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -759,7 +759,7 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCGIFADDR:
 		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		    LLADDR(ifp->if_sadl), IEEE1394_ADDR_LEN);
+		    CLLADDR(ifp->if_sadl), IEEE1394_ADDR_LEN);
 		    break;
 
 	case SIOCSIFMTU:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.5 2007/03/04 06:00:02 christos Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.6 2007/08/26 23:07:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -151,7 +151,7 @@ int EtherInit(ha)
 		kvm_read(kvm, (u_long)ifap, &ifaddr, sizeof(struct ifaddr));
 		kvm_read(kvm, (u_long)ifaddr.ifa_addr, sdlp, sdllen);
 		if (sdlp->sdl_family == AF_LINK) {
-			memcpy(ha, LLADDR(sdlp), 6);
+			memcpy(ha, CLLADDR(sdlp), 6);
 			break;
 		}
 		ifap = ifaddr.ifa_list.tqe_next;

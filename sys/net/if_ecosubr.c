@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.23 2007/07/09 21:11:00 ad Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.24 2007/08/26 22:59:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.23 2007/07/09 21:11:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.24 2007/08/26 22:59:08 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -306,7 +306,7 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	eh = mtod(m, struct eco_header *);
 	*eh = ehdr;
 	if (!hdrcmplt)
-		memcpy(eh->eco_shost, LLADDR(ifp->if_sadl),
+		memcpy(eh->eco_shost, CLLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN);
 
 	if ((m->m_flags & M_BCAST) == 0) {
@@ -604,7 +604,7 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 		    ECO_ADDR_LEN) == 0) {
 			/* Broadcast */
 			eco_input(ifp, m);
-		} else if (memcmp(eh->eco_dhost, LLADDR(ifp->if_sadl),
+		} else if (memcmp(eh->eco_dhost, CLLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN) == 0) {
 			/* Unicast for us */
 			if (eh->eco_port == ECO_PORT_IMMEDIATE)
@@ -730,7 +730,7 @@ eco_immediate(struct ifnet *ifp, struct mbuf *m)
 		reh = mtod(n, struct eco_header *);
 		memcpy(reh->eco_dhost, eh->eco_shost,
 		    ECO_ADDR_LEN);
-		memcpy(reh->eco_shost, LLADDR(ifp->if_sadl),
+		memcpy(reh->eco_shost, CLLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN);
 		memcpy(mtod(n, void *) + ECO_SHDR_LEN, machinepeek_data,
 		    sizeof(machinepeek_data));
@@ -760,7 +760,7 @@ eco_ack(struct ifnet *ifp, struct mbuf *m)
 	n->m_len = n->m_pkthdr.len = ECO_SHDR_LEN;
 	reh = mtod(n, struct eco_header *);
 	memcpy(reh->eco_dhost, eh->eco_shost, ECO_ADDR_LEN);
-	memcpy(reh->eco_shost, LLADDR(ifp->if_sadl), ECO_ADDR_LEN);
+	memcpy(reh->eco_shost, CLLADDR(ifp->if_sadl), ECO_ADDR_LEN);
 	return n;
 }
 

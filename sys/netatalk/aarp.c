@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.24 2007/07/09 21:11:01 ad Exp $	*/
+/*	$NetBSD: aarp.c,v 1.25 2007/08/26 22:59:09 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.24 2007/07/09 21:11:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.25 2007/08/26 22:59:09 dyoung Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -179,7 +179,7 @@ aarpwhohas(ifp, sat)
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_REQUEST);
-	bcopy(LLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
 
 	/*
          * We need to check whether the output ethernet type should
@@ -341,7 +341,7 @@ at_aarpinput(ifp, m)
 	ea = mtod(m, struct ether_aarp *);
 
 	/* Check to see if from my hardware address */
-	if (!bcmp(ea->aarp_sha, LLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
+	if (!bcmp(ea->aarp_sha, CLLADDR(ifp->if_sadl), sizeof(ea->aarp_sha))) {
 		m_freem(m);
 		return;
 	}
@@ -449,7 +449,7 @@ at_aarpinput(ifp, m)
 		return;
 	}
 	bcopy(ea->aarp_sha, ea->aarp_tha, sizeof(ea->aarp_sha));
-	bcopy(LLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
 
 	/* XXX */
 	eh = (struct ether_header *) sa.sa_data;
@@ -586,7 +586,7 @@ aarpprobe(arp)
 	ea->aarp_hln = sizeof(ea->aarp_sha);
 	ea->aarp_pln = sizeof(ea->aarp_spu);
 	ea->aarp_op = htons(AARPOP_PROBE);
-	bcopy(LLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
+	bcopy(CLLADDR(ifp->if_sadl), ea->aarp_sha, sizeof(ea->aarp_sha));
 
 	eh = (struct ether_header *) sa.sa_data;
 
