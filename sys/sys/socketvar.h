@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.80 2004/09/03 18:14:09 darrenr Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.80.12.1 2007/08/26 19:51:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -226,7 +226,7 @@ do {									\
 #define	sblock(sb, wf)							\
 	((sb)->sb_flags & SB_LOCK ?					\
 	    (((wf) == M_WAITOK) ? sb_lock(sb) : EWOULDBLOCK) :		\
-	    ((sb)->sb_flags |= SB_LOCK), 0)
+	    ((sb)->sb_flags |= SB_LOCK, 0))
 
 /* release lock on sockbuf sb */
 #define	sbunlock(sb)							\
