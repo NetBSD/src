@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.63.2.2 2007/06/09 23:58:13 ad Exp $	*/
+/*	$NetBSD: nfs.h,v 1.63.2.3 2007/08/26 15:00:04 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -439,40 +439,56 @@ struct nfsuid {
 #define NU_NETFAM(u)	(((u)->nu_flag & NU_INETADDR) ? AF_INET : AF_ISO)
 #endif
 
+/*
+ * b: protected by SLP_BUSY
+ * g: protected by nfsd_lock
+ * s: protected by ns_lock
+ * a: protected by ns_alock
+ */
+
 struct nfssvc_sock {
 	kmutex_t ns_lock;
-	kcondvar_t ns_cv;
-	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
-	TAILQ_ENTRY(nfssvc_sock) ns_pending;	/* List of pending sockets */
+	kmutex_t ns_alock;
+	kcondvar_t ns_cv;			/* s: */
+	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* g: List of all nfssvc_sock */
+	TAILQ_ENTRY(nfssvc_sock) ns_pending;	/* g: List of pending sockets */
 	TAILQ_HEAD(, nfsuid) ns_uidlruhead;
 	struct file	*ns_fp;
 	struct socket	*ns_so;
 	struct mbuf	*ns_nam;
-	struct mbuf	*ns_raw;
-	struct mbuf	*ns_rawend;
-	struct mbuf	*ns_rec;
-	struct mbuf	*ns_recend;
-	struct mbuf	*ns_frag;
-	int		ns_flag;
-	int		ns_solock;
-	int		ns_cc;
-	int		ns_reclen;
+	struct mbuf	*ns_raw;		/* b: */
+	struct mbuf	*ns_rawend;		/* b: */
+	struct mbuf	*ns_rec;		/* b: */
+	struct mbuf	*ns_recend;		/* b: */
+	struct mbuf	*ns_frag;		/* b: */
+	int		ns_flags;		/* s: */
+	int		ns_aflags;		/* a: */
+	int		ns_gflags;		/* g: */
+	int		ns_sflags;		/* b: */
+	int		ns_cc;			/* b: */
+	int		ns_reclen;		/* b: */
 	int		ns_numuids;
-	u_int32_t	ns_sref;
-	SIMPLEQ_HEAD(, nfsrv_descript) ns_sendq; /* send reply list */
-	LIST_HEAD(, nfsrv_descript) ns_tq;	/* Write gather lists */
+	u_int32_t	ns_sref;		/* g: */
+	SIMPLEQ_HEAD(, nfsrv_descript) ns_sendq; /* s: send reply list */
+	LIST_HEAD(, nfsrv_descript) ns_tq;	/* g: Write gather lists */
 	LIST_HEAD(, nfsuid) ns_uidhashtbl[NFS_UIDHASHSIZ];
-	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript) ns_wdelayhashtbl[NFS_WDELAYHASHSIZ];
+	LIST_HEAD(nfsrvw_delayhash, nfsrv_descript) ns_wdelayhashtbl[NFS_WDELAYHASHSIZ]; /* g: */
 };
 
-/* Bits for "ns_flag" */
+/* Bits for "ns_flags" */
 #define	SLP_VALID	0x01
-#define	SLP_DOREC	0x02	/* on nfssvc_sockpending queue */
-#define	SLP_NEEDQ	0x04
-#define	SLP_DISCONN	0x08
 #define	SLP_BUSY	0x10
-#define	SLP_LASTFRAG	0x40
 #define	SLP_SENDING	0x80
+
+/* Bits for "ns_aflags" */
+#define	SLP_A_NEEDQ	0x01
+#define	SLP_A_DISCONN	0x04
+
+/* Bits for "ns_gflags" */
+#define	SLP_G_DOREC	0x02	/* on nfssvc_sockpending queue */
+
+/* Bits for "ns_sflags" */
+#define	SLP_S_LASTFRAG	0x40
 
 extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
 extern struct nfssvc_sockhead nfssvc_sockpending;

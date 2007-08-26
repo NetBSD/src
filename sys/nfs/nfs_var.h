@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.66.2.4 2007/08/20 21:28:13 ad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.66.2.5 2007/08/26 15:00:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -195,9 +195,11 @@ void nfs_timer_start(void);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_msg(struct lwp *, const char *, const char *);
-void nfsrv_rcv(struct socket *, void *, int);
+void nfsrv_soupcall(struct socket *, void *, int);
+void nfsrv_rcv(struct nfssvc_sock *);
 int nfsrv_getstream(struct nfssvc_sock *, int);
-int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **);
+int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **,
+    bool *);
 void nfsrv_wakenfsd(struct nfssvc_sock *);
 int nfsdsock_lock(struct nfssvc_sock *, bool);
 void nfsdsock_unlock(struct nfssvc_sock *);
@@ -206,6 +208,10 @@ int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
 void nfsdreq_init(void);
 struct nfsrv_descript *nfsdreq_alloc(void);
 void nfsdreq_free(struct nfsrv_descript *);
+
+void nfsdsock_setbits(struct nfssvc_sock *, int);
+void nfsdsock_clearbits(struct nfssvc_sock *, int);
+bool nfsdsock_testbits(struct nfssvc_sock *, int);
 
 /* nfs_srvcache.c */
 void nfsrv_initcache(void);
