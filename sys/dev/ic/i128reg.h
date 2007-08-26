@@ -1,4 +1,4 @@
-/*	$NetBSD: i128reg.h,v 1.1 2007/08/26 00:34:34 macallan Exp $ */
+/*	$NetBSD: i128reg.h,v 1.2 2007/08/26 07:24:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i128reg.h,v 1.1 2007/08/26 00:34:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i128reg.h,v 1.2 2007/08/26 07:24:58 macallan Exp $");
 
 /* 
  * register definition for Number Nine Imagine 128 graphics controllers
@@ -162,10 +162,10 @@ __KERNEL_RCSID(0, "$NetBSD: i128reg.h,v 1.1 2007/08/26 00:34:34 macallan Exp $")
 #define  PC_SPTR_MSK  0x00001F00
 #define  PC_SSCL_MSK  0x0000E000
 #define  PC_STATE_MSK 0xFFFF0000
-#define CLPTL     0x4080
+#define CLPTL     0x4080		/* clipping top/left */
 #define  CLPTLY_MSK   0x0000FFFF
 #define  CLPTLX_MSK   0xFFFF0000
-#define CLPBR     0x4084
+#define CLPBR     0x4084		/* clipping bottom/right */
 #define  CLPBRY_MSK   0x0000FFFF
 #define  CLPBRX_MSK   0xFFFF0000
 #define XY0_SRC   0x4088
