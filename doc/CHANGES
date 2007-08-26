@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.911 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.912 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -203,3 +203,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		technical specifications stored in the eeprom on common types
 		of memory modules. [tnn 20070818]
 	btbc(4): Add support for AnyCom BlueCard. [kiyohara 20070820]
+	ichlpcib: The driver has added support for the TCO (watchdog) on ICH6
+		or newer chipsets plus timecounter support. Also it can be
+		used on EM64T systems running the amd64 port. Adapted from
+		FreeBSD and OpenBSD. [xtraeme 20070826]
