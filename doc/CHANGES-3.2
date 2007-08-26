@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.88 2007/08/14 10:35:04 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.89 2007/08/26 19:09:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3372,4 +3372,77 @@ dist/bind/lib/dns/include/dns/dispatch.h	1.1.1.5 via patch
 	Fix for a security issue in BIND 9.3.x (CVE-2007-2926):
 	Query id generation was cryptographically weak.
 	[adrianp, ticket #1829]
+
+sys/kern/vfs_subr.c				1.289
+
+	Don't drain a vnode's lock when we are cleaning it out.  It still
+	might be used by upper layers in the vnode stack due to exported
+	lock pointers.  This introduces no difference to the normal case
+	and works around a problem where a lower layer vnode is cleaned
+	out before the upper layer due to forced unmount or revoke.  And
+	for cosmetics, set a vnode's lock export to NULL when it is cleaned
+	out.
+	[pooka, ticket #1809]
+
+sys/kern/kern_lock.c				1.118
+sys/kern/vfs_subr.c				1.295
+sys/sys/lock.h					1.72
+
+	Define a new lockmgr flag LK_RESURRECT which can be used in
+	conjunction with LK_DRAIN.  This has the same effect as LK_DRAIN
+	except it atomically does NOT mark the lock as drained.  This
+	guarantees that when we got the lock, we were the last one currently
+	waiting for the lock.
+
+	Use LK_DRAIN|LK_RESURRECT in vclean() to make sure there are no
+	waiters for the lock.  This should fix behaviour theoretized to be
+	caused by vfs_subr.c 1.289 which caused vclean() to run into
+	completion and free the vnode before all lock-waiters had been
+	processed.  Should therefore fix the "simple_lock: unitialized lock"
+	problems seen recently.
+
+	thanks to Juergen Hannken-Illjes for some analysis of the problem
+	and Erik Bertelsen for testing
+	[pooka, ticket #1816]
+
+etc/motd.beta					1.3
+etc/motd.current				1.4
+etc/motd.rc					1.3
+etc/motd.stable					1.3
+
+	Fix the URL to the send-pr form as it now lives in another  
+	address.  Not critical since the server has redirections to make the
+	old URL work, but these may disappear.
+	[jmmv, ticket #1814]
+
+sbin/ping/ping.c				1.79 - 1.80
+
+	PR/33623: Chuck Cranor: Ping stops when ran in the background
+	because it tries to set the tty not to print kerninfo. Change it
+	to only only play with the tty when ping is running in the foreground
+	(and will not stop when calling tcsetattr()).
+	Factor out the tty code and explain we prefer to stop in the ^Z bg case
+	when we exit, rather than kill the tty setting.
+	[ghen, ticket #1817]
+
+crypto/dist/ipsec-tools/ChangeLog		1.127
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.c 1.13
+
+	src/racoon/isakmp_xauth.c: Don't mix up RADIUS authentication and
+	authorization ports. Allow interoperability with freeradius
+	[manu, ticket #1823]
+
+sys/net/if_gre.c				1.99
+
+	Check IFF_RUNNING | IFF_UP in gre_output() correctly.
+	Fix a kernel recursion / lock up issue.
+	[seanb, ticket #1830]
+
+sys/dev/audio.c					1.223
+
+	Fix bug that would cause audiorecord(1) to always fail trying to set
+	recording port with AUDIO_SETINFO.
+	Tested on wss@pnpbios.  It looks like this problem has been reported
+	as PR/35239, filed against port-hp700.
+	[uwe, ticket #1831]
 
