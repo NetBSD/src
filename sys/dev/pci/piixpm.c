@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.14 2007/08/06 22:41:22 martin Exp $ */
+/* $NetBSD: piixpm.c,v 1.15 2007/08/26 17:17:06 xtraeme Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -38,9 +38,7 @@
 
 #include <dev/i2c/i2cvar.h>
 
-#ifdef __HAVE_TIMECOUNTER
 #include <dev/ic/acpipmtimer.h>
-#endif
 
 #ifdef PIIXPM_DEBUG
 #define DPRINTF(x) printf x
@@ -138,9 +136,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct i2cbus_attach_args iba;
 	pcireg_t base, conf;
-#ifdef __HAVE_TIMECOUNTER
 	pcireg_t pmmisc;
-#endif
 	pci_intr_handle_t ih;
 	char devinfo[256];
 	const char *intrstr = NULL;
@@ -164,7 +160,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
 	DPRINTF((": conf 0x%x", conf));
 
-#ifdef __HAVE_TIMECOUNTER
 	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
 	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
 		goto nopowermanagement;
@@ -194,8 +189,6 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 		(PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0 );
 
 nopowermanagement:
-#endif
-
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
 		aprint_normal("%s: SMBus disabled\n", sc->sc_dev.dv_xname);
 		return;
