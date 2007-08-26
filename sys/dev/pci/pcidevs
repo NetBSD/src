@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.891 2007/08/19 00:39:46 riz Exp $
+$NetBSD: pcidevs,v 1.892 2007/08/26 07:18:53 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2325,6 +2325,8 @@ product INTEL 82801G_IDE	0x27df	82801GB/GR IDE Controller
 product INTEL 82801G_EXP_5	0x27e0	82801GB/GR PCI Express Port #5
 product INTEL 82801G_EXP_6	0x27e2	82801GB/GR PCI Express Port #6
 product INTEL 82801H_LPC	0x2810	82801H LPC Interface Bridge
+product INTEL 82801HH_LPC 	0x2812	82801HH LPC Interface Bridge
+product INTEL 82801HO_LPC 	0x2814	82801HO LPC Interface Bridge
 product INTEL 82801H_SATA_1	0x2820	82801H SATA Controller
 product INTEL 82801H_SATA_AHCI6	0x2821	82801H AHCI SATA Controller with 6 ports
 product INTEL 82801H_SATA_RAID	0x2822	82801H RAID SATA Controller
