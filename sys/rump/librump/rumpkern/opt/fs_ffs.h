@@ -1,1 +1,3 @@
-/*	$NetBSD: fs_ffs.h,v 1.1 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: fs_ffs.h,v 1.2 2007/08/26 23:53:24 pooka Exp $	*/
+
+#define FFS
