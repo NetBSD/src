@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.46 2007/03/04 14:00:54 tsutsui Exp $ */
+/*	$NetBSD: if_ie.c,v 1.47 2007/08/26 22:32:21 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.46 2007/03/04 14:00:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.47 2007/08/26 22:32:21 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1461,7 +1461,7 @@ ieinit(struct ie_softc *sc)
 		cmd->com.ie_cmd_link = SWAP(0xffff);
 
 		(sc->sc_memcpy)((void *)&cmd->ie_address,
-		    LLADDR(ifp->if_sadl), sizeof(cmd->ie_address));
+		    CLLADDR(ifp->if_sadl), sizeof(cmd->ie_address));
 
 		if (cmd_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
 		    !(cmd->com.ie_cmd_status & IE_STAT_OK)) {
