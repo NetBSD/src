@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.53 2007/03/04 06:03:17 christos Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.54 2007/08/26 22:59:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.53 2007/03/04 06:03:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.54 2007/08/26 22:59:09 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -338,7 +338,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		/*
 		 * We inherit the parent's Ethernet address.
 		 */
-		ether_ifattach(ifp, LLADDR(p->if_sadl));
+		ether_ifattach(ifp, CLLADDR(p->if_sadl));
 		ifp->if_hdrlen = sizeof(struct ether_vlan_header); /* XXX? */
 		break;
 	    }
@@ -498,7 +498,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCGIFADDR:
 		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 	case SIOCSIFMTU:

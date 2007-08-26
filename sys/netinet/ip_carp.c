@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.14 2007/07/19 20:48:54 dyoung Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.15 2007/08/26 22:59:10 dyoung Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -1308,7 +1308,7 @@ carp_ourether(void *v, struct ether_header *eh, u_char iftype, int src)
 	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list)
 		if ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING) && vh->sc_state == MASTER &&
-		    !bcmp(ena, LLADDR(vh->sc_if.if_sadl),
+		    !bcmp(ena, CLLADDR(vh->sc_if.if_sadl),
 		    ETHER_ADDR_LEN)) {
 			return (&vh->sc_if);
 		    }

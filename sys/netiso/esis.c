@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.47 2007/07/19 20:48:59 dyoung Exp $	*/
+/*	$NetBSD: esis.c,v 1.48 2007/08/26 23:07:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.47 2007/07/19 20:48:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.48 2007/08/26 23:07:17 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -415,7 +415,7 @@ esis_rdoutput(
 
 	/* Insert the snpa of better next hop */
 	*cp++ = sdl->sdl_alen;
-	bcopy(LLADDR(sdl), cp, sdl->sdl_alen);
+	bcopy(CLLADDR(sdl), cp, sdl->sdl_alen);
 	cp += sdl->sdl_alen;
 	len += (sdl->sdl_alen + 1);
 
@@ -1152,7 +1152,7 @@ isis_output(struct mbuf *m, ...)
 	else {
 		siso.siso_data[0] = AFI_SNA;
 		siso.siso_nlen = sn_len + 1;
-		bcopy(LLADDR(sdl), siso.siso_data + 1, sn_len);
+		bcopy(CLLADDR(sdl), siso.siso_data + 1, sn_len);
 	}
 	error = (ifp->if_output) (ifp, m, sisotosa(&siso), 0);
 	if (error) {
