@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.127.2.3 2007/08/20 21:28:11 ad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.127.2.4 2007/08/26 15:00:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.127.2.3 2007/08/20 21:28:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.127.2.4 2007/08/26 15:00:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,7 +1021,7 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	int32_t t1;
 	char *bpos, *dpos;
 	int error = 0, rdonly, cache = 0, len = 0, forat_ret = 1;
-	int ioflags, aftat_ret = 1, s, adjust, v3, zeroing;
+	int ioflags, aftat_ret = 1, adjust, v3, zeroing;
 	char *cp2;
 	struct mbuf *mb, *mreq, *mrep, *md;
 	struct vnode *vp;
@@ -1103,8 +1103,8 @@ nfsmout:
 	    /*
 	     * Add this entry to the hash and time queues.
 	     */
-	    s = splsoftclock();
 	    owp = NULL;
+	    mutex_enter(&nfsd_lock);
 	    wp = LIST_FIRST(&slp->ns_tq);
 	    while (wp && wp->nd_time < nfsd->nd_time) {
 		owp = wp;
@@ -1144,7 +1144,7 @@ nfsmout:
 		    LIST_INSERT_HEAD(wpp, nfsd, nd_hash);
 		}
 	    }
-	    splx(s);
+	    mutex_exit(&nfsd_lock);
 	}
 
 	/*
@@ -1154,7 +1154,7 @@ nfsmout:
 loop1:
 	getmicrotime(&now);
 	cur_usec = (u_quad_t)now.tv_sec * 1000000 + (u_quad_t)now.tv_usec;
-	s = splsoftclock();
+	mutex_enter(&nfsd_lock);
 	for (nfsd = LIST_FIRST(&slp->ns_tq); nfsd; nfsd = owp) {
 		owp = LIST_NEXT(nfsd, nd_tq);
 		if (nfsd->nd_time > cur_usec)
@@ -1163,7 +1163,8 @@ loop1:
 		    continue;
 		LIST_REMOVE(nfsd, nd_tq);
 		LIST_REMOVE(nfsd, nd_hash);
-		splx(s);
+		mutex_exit(&nfsd_lock);
+
 		mrep = nfsd->nd_mrep;
 		nfsd->nd_mrep = NULL;
 		cred = nfsd->nd_cr;
@@ -1270,7 +1271,7 @@ loop1:
 		     * Done. Put it at the head of the timer queue so that
 		     * the final phase can return the reply.
 		     */
-		    s = splsoftclock();
+		    mutex_enter(&nfsd_lock);
 		    if (nfsd != swp) {
 			nfsd->nd_time = 0;
 			LIST_INSERT_HEAD(&slp->ns_tq, nfsd, nd_tq);
@@ -1279,21 +1280,22 @@ loop1:
 		    if (nfsd) {
 			LIST_REMOVE(nfsd, nd_tq);
 		    }
-		    splx(s);
+		    mutex_exit(&nfsd_lock);
 		} while (nfsd);
-		s = splsoftclock();
 		swp->nd_time = 0;
+
+		mutex_enter(&nfsd_lock);
 		LIST_INSERT_HEAD(&slp->ns_tq, swp, nd_tq);
-		splx(s);
+		mutex_exit(&nfsd_lock);
 		goto loop1;
 	}
+	mutex_exit(&nfsd_lock);
 	nfs_timer_start();
-	splx(s);
 
 	/*
 	 * Search for a reply to return.
 	 */
-	s = splsoftclock();
+	mutex_enter(&nfsd_lock);
 	LIST_FOREACH(nfsd, &slp->ns_tq, nd_tq) {
 		if (nfsd->nd_mreq) {
 		    LIST_REMOVE(nfsd, nd_tq);
@@ -1302,7 +1304,7 @@ loop1:
 		    break;
 		}
 	}
-	splx(s);
+	mutex_exit(&nfsd_lock);
 	return (0);
 }
 
@@ -1322,6 +1324,8 @@ nfsrvw_coalesce(owp, nfsd)
         int overlap;
         struct mbuf *mp;
 	struct nfsrv_descript *m;
+
+	KASSERT(mutex_owned(&nfsd_lock));
 
         LIST_REMOVE(nfsd, nd_hash);
         LIST_REMOVE(nfsd, nd_tq);
