@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.77 2004/05/13 20:27:38 kleink Exp $	*/
+/*	$NetBSD: ping.c,v 1.77.2.1 2007/08/26 18:53:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.77 2004/05/13 20:27:38 kleink Exp $");
+__RCSID("$NetBSD: ping.c,v 1.77.2.1 2007/08/26 18:53:05 bouyer Exp $");
 #endif
 
 #include <stdio.h>
@@ -241,7 +241,9 @@ static void jiggle(int), jiggle_flush(int);
 static void gethost(const char *, const char *,
 		    struct sockaddr_in *, char *, int);
 static void usage(void);
-
+#if defined(SIGINFO) && defined(NOKERNINFO)
+static int fgtty(int, struct termios *);
+#endif
 
 int
 main(int argc, char *argv[])
@@ -638,10 +640,10 @@ main(int argc, char *argv[])
 	(void)signal(SIGINT, prefinish);
 
 #if defined(SIGINFO) && defined(NOKERNINFO)
-	if (tcgetattr (0, &ts) != -1) {
+	if (fgtty(STDIN_FILENO, &ts) != -1) {
 		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
 		ts.c_lflag |= NOKERNINFO;
-		tcsetattr (STDIN_FILENO, TCSANOW, &ts);
+		(void)tcsetattr(STDIN_FILENO, TCSANOW, &ts);
 	}
 #endif
 
@@ -1340,6 +1342,22 @@ prefinish(int dummy)
 		npackets = ntransmitted;
 }
 
+#if defined(SIGINFO) && defined(NOKERNINFO)
+static int
+fgtty(int fd, struct termios *ts)
+{
+	pid_t ttypgrp, pgrp;
+
+	if (tcgetattr(fd, ts) == -1)
+		return -1;
+	if ((ttypgrp = tcgetpgrp(fd)) == -1)
+		return -1;
+	if ((pgrp = getpgid(0)) == -1)
+		return -1;
+
+	return ttypgrp == pgrp ? 0 : -1;
+}
+#endif
 
 /*
  * Print statistics and give up.
@@ -1351,9 +1369,16 @@ finish(int dummy)
 #if defined(SIGINFO) && defined(NOKERNINFO)
 	struct termios ts;
 
-	if (reset_kerninfo && tcgetattr (0, &ts) != -1) {
+	/*
+	 * Note that the following will suspend the ping program
+	 * if it is in the background. We could have used fgtty()
+	 * to avoid this, but then we would fail to restore the
+	 * tty setting. So we prefer to suspend here. XXX: NOKERNINFO
+	 * should prolly be a signal struct attribute
+	 */
+	if (reset_kerninfo && tcgetattr(STDIN_FILENO, &ts) != -1) {
 		ts.c_lflag &= ~NOKERNINFO;
-		tcsetattr (STDIN_FILENO, TCSANOW, &ts);
+		(void)tcsetattr(STDIN_FILENO, TCSANOW, &ts);
 	}
 	(void)signal(SIGINFO, SIG_IGN);
 #else
