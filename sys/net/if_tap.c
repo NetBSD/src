@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.30 2007/05/30 21:02:03 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.31 2007/08/26 22:59:08 dyoung Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.30 2007/05/30 21:02:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.31 2007/08/26 22:59:08 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -1286,7 +1286,7 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 	ifp = &sc->sc_ec.ec_if;
-	(void)ether_snprintf(addr, sizeof(addr), LLADDR(ifp->if_sadl));
+	(void)ether_snprintf(addr, sizeof(addr), CLLADDR(ifp->if_sadl));
 	node.sysctl_data = addr;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.9 2007/07/14 21:02:39 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.10 2007/08/26 22:59:08 dyoung Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -682,7 +682,7 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 	node = *rnode;
 	sc = node.sysctl_data;
 	ifp = &sc->sc_ec.ec_if;
-	(void)ether_snprintf(addr, sizeof(addr), LLADDR(ifp->if_sadl));
+	(void)ether_snprintf(addr, sizeof(addr), CLLADDR(ifp->if_sadl));
 	node.sysctl_data = addr;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
