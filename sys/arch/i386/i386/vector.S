@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.6.3 2007/08/21 10:36:52 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.6.4 2007/08/26 07:03:10 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -84,8 +84,6 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
-
-#include <net/netisr.h>
 
 #include "ioapic.h"
 #include "lapic.h"
