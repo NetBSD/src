@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.4 2007/08/26 20:04:55 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.5 2007/08/26 20:28:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -52,4 +52,12 @@ lib/libc/gen/getcap.3				delete
 	Solve this by renaming the libc page -- this makes sense because no
 	function is really named "getcap" here.
 	[bad, ticket #1821]
+
+sys/kern/uipc_usrreq.c				1.98
+
+	PR kern/32842:
+	do not leak file descriptors when sending a datagram with SCM_RIGHTS
+	fails. Patch from Gary Thorpe, based on changes in FreeBSD and work
+	from Christian Biere.
+	[martin, ticket #1820]
 
