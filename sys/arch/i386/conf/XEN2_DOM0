@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.30 2007/08/20 00:54:42 kiyohara Exp $
+# $NetBSD: XEN2_DOM0,v 1.31 2007/08/26 17:05:24 xtraeme Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -210,8 +210,8 @@ pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
-					# SpeedStep support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
