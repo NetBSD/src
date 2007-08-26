@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.2.2.4 2007/08/20 21:27:28 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.2.2.5 2007/08/26 12:04:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.4 2007/08/20 21:27:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.5 2007/08/26 12:04:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,10 +77,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.4 2007/08/20 21:27:28 ad Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
 void	cpuctlattach(int);
+
+static void	cpu_xc_online(struct schedstate_percpu *);
+static void	cpu_xc_offline(struct schedstate_percpu *);
 
 dev_type_ioctl(cpuctl_ioctl);
 
@@ -111,6 +115,7 @@ mi_cpu_attach(struct cpu_info *ci)
 	}
 
 	softint_init(ci);
+	xc_init_cpu(ci);
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 
@@ -209,12 +214,33 @@ cpu_lookup(cpuid_t id)
 	return NULL;
 }
 
+static void
+cpu_xc_offline(struct schedstate_percpu *spc)
+{
+	int s;
+
+	s = splsched();
+	spc->spc_flags |= SPCF_OFFLINE;
+	splx(s);
+}
+
+static void
+cpu_xc_online(struct schedstate_percpu *spc)
+{
+	int s;
+
+	s = splsched();
+	spc->spc_flags &= ~SPCF_OFFLINE;
+	splx(s);
+}
+
 int
 cpu_setonline(struct cpu_info *ci, bool online)
 {
 	struct schedstate_percpu *spc;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci2;
+	xcfunc_t func;
 	int nonline;
 
 	spc = &ci->ci_schedstate;
@@ -224,11 +250,7 @@ cpu_setonline(struct cpu_info *ci, bool online)
 	if (online) {
 		if ((spc->spc_flags & SPCF_OFFLINE) == 0)
 			return 0;
-		spc_lock(ci);
-		spc->spc_flags &= ~SPCF_OFFLINE;
-		cpu_need_resched(ci, true);
-		spc_unlock(ci);
-		spc->spc_lastmod = time_second;
+		func = (xcfunc_t)cpu_xc_online;
 	} else {
 		if ((spc->spc_flags & SPCF_OFFLINE) != 0)
 			return 0;
@@ -239,19 +261,11 @@ cpu_setonline(struct cpu_info *ci, bool online)
 		}
 		if (nonline == 1)
 			return EBUSY;
-		spc_lock(ci);
-		spc->spc_flags |= SPCF_OFFLINE;
-		cpu_need_resched(ci, true);
-		spc_unlock(ci);
-		do {
-			kpause("cpu", false, 1, NULL);
-#ifdef MULTIPROCESOR
-		} while (ci->ci_curlwp != ci->ci_data.cpu_idlelwp);
-#else
-		} while (0);
-#endif
-		spc->spc_lastmod = time_second;
+		func = (xcfunc_t)cpu_xc_offline;
 	}
+
+	xc_unicast(XC_WAIT, func, &ci->ci_schedstate, NULL, ci);
+	spc->spc_lastmod = time_second;
 
 	return 0;
 }

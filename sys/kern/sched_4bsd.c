@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.6.7 2007/08/21 13:59:44 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.6.8 2007/08/26 12:04:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.7 2007/08/21 13:59:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.6.8 2007/08/26 12:04:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -138,6 +138,9 @@ const int schedppq = PPQ;
 /*
  * Force switch among equal priority processes every 100ms.
  * Called from hardclock every hz/10 == rrticks hardclock ticks.
+ *
+ * There's no need to lock anywhere in this routine, as it's
+ * CPU-local and runs at IPL_SCHED (called from clock interrupt).
  */
 /* ARGSUSED */
 void
@@ -147,7 +150,6 @@ sched_tick(struct cpu_info *ci)
 
 	spc->spc_ticks = rrticks;
 
-	spc_lock(ci);
 	if (!CURCPU_IDLE_P()) {
 		if (spc->spc_flags & SPCF_SEENRR) {
 			/*
@@ -160,7 +162,6 @@ sched_tick(struct cpu_info *ci)
 			spc->spc_flags |= SPCF_SEENRR;
 	}
 	cpu_need_resched(ci, 0);
-	spc_unlock(ci);
 }
 
 #define	NICE_WEIGHT 	1			/* priorities per nice level */
