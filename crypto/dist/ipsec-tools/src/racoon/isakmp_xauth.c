@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.1.1.4.2.3 2005/11/21 21:12:30 tron Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.1.1.4.2.4 2007/08/26 19:03:35 bouyer Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.17.2.5 2005/05/20 07:31:09 manubsd Exp */
 
@@ -450,7 +450,7 @@ xauth_radius_init(void)
 
 	if ((isakmp_cfg_config.accounting == ISAKMP_CFG_ACCT_RADIUS) &&
 	    (radius_acct_state == NULL)) {
-		if ((radius_acct_state = rad_auth_open()) == NULL) {
+		if ((radius_acct_state = rad_acct_open()) == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Cannot init libradius\n");
 			return -1;
