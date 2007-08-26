@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.140 2005/01/06 15:29:35 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.140.2.1 2007/08/26 20:01:20 bouyer Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -48,7 +48,7 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 closefrom.3 confstr.3 \
 	endutxent.3 err.3 exec.3 extattr.3 \
 	fmtcheck.3 fmtmsg.3 fnmatch.3 fpclassify.3 fpgetmask.3 frexp.3 \
 	ftok.3 fts.3 \
-	getbsize.3 getcap.3 getcwd.3 getdevmajor.3 \
+	getbsize.3 cgetcap.3 getcwd.3 getdevmajor.3 \
 	getdomainname.3 getdiskbyname.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getlastlogx.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 \
@@ -86,10 +86,10 @@ MLINKS+=fpgetmask.3 fpgetround.3 fpgetmask.3 fpgetsticky.3 \
 	fpgetmask.3 fpsetsticky.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
 	fts.3 fts_set.3 fts.3 fts_close.3
-MLINKS+=getcap.3 cgetcap.3 getcap.3 cgetclose.3 getcap.3 cgetent.3 \
-	getcap.3 cgetfirst.3 getcap.3 cgetmatch.3 getcap.3 cgetnext.3 \
-	getcap.3 cgetnum.3 getcap.3 cgetset.3 getcap.3 cgetstr.3 \
-	getcap.3 cgetustr.3
+MLINKS+=cgetcap.3 cgetclose.3 cgetcap.3 cgetent.3 \
+	cgetcap.3 cgetfirst.3 cgetcap.3 cgetmatch.3 cgetcap.3 cgetnext.3 \
+	cgetcap.3 cgetnum.3 cgetcap.3 cgetset.3 cgetcap.3 cgetstr.3 \
+	cgetcap.3 cgetustr.3
 MLINKS+=getcwd.3 getwd.3
 MLINKS+=getdiskbyname.3 setdisktab.3
 MLINKS+=getdomainname.3 setdomainname.3
