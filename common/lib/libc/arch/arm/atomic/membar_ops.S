@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.1.2.3 2007/08/26 05:57:03 matt Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.1.2.1 2007/08/26 05:57:05 matt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -22,7 +22,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
+ *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -38,54 +38,24 @@
 
 #include "atomic_op_asm.h"
 
-#if defined(_ARM_ARCH_6)
-/*
- * ARMv6 has load-exclusive/store-exclusive which works for both user
- * and kernel.
- */
-ENTRY_NP(_atomic_cas_32)
-	mov	r3, r0			/* we need r0 for return value */
-1:
-	ldrex	r0, [r3]		/* load old value */
-	teq	r0, r1			/*   compare? */
-	RETc(ne)			/*     return if different */
-	strex	r4, r2, [r3]		/* store new value */
-	cmpeq	r4, #0			/*   succeed? */
-	bne	1b			/*     nope, try again. */
-	RET				/*    yes, return. */
-	END(_atomic_cas_32)
-#elif defined(_KERNEL)
-/*
- * ARM before ARMv6 doesn't have a compare-and-swap, so this is implemented
- * as a restartable atomic sequence.  See irq_dispatch.S.
- */
-ENTRY_NP(_atomic_cas_32)
-	mov	r3, r0			/* r3 = address */
+ENTRY_NP(_membar_producer)
+	mcr	p15, 0, r0, c7, c10, 4	 /* Data Synchronization Barrier */
+	RET
+	END(_membar_producer)
+ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
+ATOMIC_OP_ALIAS(membar_write,_membar_producer)
+STRONG_ALIAS(_membar_write,_membar_producer)
 
-	.globl	_C_LABEL(_atomic_cas_32_ras_start)
-_C_LABEL(_atomic_cas_32_ras_start):
-
-	ldr	r0, [r3]
-	teq	r0, r1
-	bne	1f
-	str	r2, [r3]
-
-	.globl	_C_LABEL(_atomic_cas_32_ras_end)
-_C_LABEL(_atomic_cas_32_ras_end):
-
-1:	RET				/* r0 contains old *addr */
-	END(_atomic_cas_32)
-#else /* _KERNEL */
-
-#error _atomic_cas_32 for user land still needs to be written
-
-#endif /* _KERNEL */
-
-ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
-ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
-ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_32)
-ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_32)
-STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
-STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
-STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
-
+ENTRY_NP(_membar_sync)
+	mcr	p15, 0, r0, c7, c10, 5	/* Data Memory Barrier */
+	RET
+	END(_membar_sync)
+ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
+ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
+ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
+ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
+ATOMIC_OP_ALIAS(membar_read,_membar_sync)
+STRONG_ALIAS(_membar_enter,_membar_sync)
+STRONG_ALIAS(_membar_exit,_membar_sync)
+STRONG_ALIAS(_membar_consumer,_membar_sync)
+STRONG_ALIAS(_membar_read,_membar_sync)

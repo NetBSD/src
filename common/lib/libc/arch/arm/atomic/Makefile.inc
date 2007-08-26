@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.2.1 2007/04/18 07:32:30 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.1.2.2 2007/08/26 05:57:03 matt Exp $
 
 .if defined(LIB) && (${LIB} == "kern")
 
@@ -25,7 +25,7 @@ SRCS+=	atomic_or_8_cas.c atomic_or_8_nv_cas.c \
 	atomic_or_16_cas.c atomic_or_16_nv_cas.c \
 	atomic_or_32_cas.c atomic_or_32_nv_cas.c
 
-SRCS+=	atomic_swap_8_cas.c atomic_swap_16_cas.c atomic_swap_32_cas.c
+SRCS+=	atomic_swap.S atomic_swap_16_cas.c
 
 SRCS+=	membar_ops_nop.c
 
