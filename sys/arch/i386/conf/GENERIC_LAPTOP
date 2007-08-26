@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.242 2007/08/24 13:34:58 nonaka Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.243 2007/08/26 17:05:23 xtraeme Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.242 $"
+#ident 		"GENERIC-$Revision: 1.243 $"
 
 maxusers	32		# estimated number of users
 
@@ -357,8 +357,8 @@ options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
-					# SpeedStep support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+					# watchdog and SpeedStep support
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
 #iic*	at viapcib?
