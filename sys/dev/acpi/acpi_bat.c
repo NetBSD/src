@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.53 2007/08/26 20:47:42 xtraeme Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.54 2007/08/26 20:52:15 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.53 2007/08/26 20:47:42 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.54 2007/08/26 20:52:15 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,6 +703,7 @@ acpibat_init_envsys(struct acpibat_softc *sc)
 	sc->sc_data[ACPIBAT_TECHNOLOGY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_data[ACPIBAT_WCAPACITY].flags = ENVSYS_FMONNOTSUPP;
+	sc->sc_data[ACPIBAT_LCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;	
