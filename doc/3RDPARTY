@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.549 2007/08/26 13:13:34 manu Exp $
+#	$NetBSD: 3RDPARTY,v 1.550 2007/08/26 13:38:27 manu Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -410,6 +410,23 @@ Responsible:	manu, vanhu, mgrooms
 License:	BSD (3-clause)
 Notes:
 ipsec-tools is maintained within NetBSD src tree in src/crypto/dist/ipsec-tools
+We don't run ipsec-tools' configure as part of the NetBSD build. configure
+generated files are available in the NetBSD source tree at:
+  src/lib/libipsec/config.h
+  src/lib/libipsec/package_version.h
+When configure.ac is updated, run the following:
+  cd src/crypto/dist/ipsec-tools
+  ./bootstrap
+  ./configure --enable-adminport --enable-hybrid --enable-frag \
+  	      --enable-natt --enable-dpd 
+Then copy package_version.h to src/lib/libipsec and merge config.h with
+src/lib/libipsec/config.h (it needs some manual tweaking)
+
+NOTE: As NetBSD HEAD and ipsec-tools HEAD are just the same thing, 
+NetBSD-current always contains latest ipsec-tools code. On the other hand,
+ipsec-tools has stable branches (e.g.: ipsec-tools-0_7-branch), which 
+are manually pulled up to NetBSD stable branches (e.g.: netbsd-4 is regularly
+sync with ipsec-tools-0_7-branch)
 
 Package:	KAME IPv6
 Version:	KAME/NetBSD SNAP kit
