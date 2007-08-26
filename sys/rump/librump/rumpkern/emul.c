@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.10 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.11 2007/08/26 23:51:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -314,4 +314,24 @@ void
 workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 {
 
+}
+
+void
+callout_init(callout_t *c, u_int flags)
+{
+
+}
+
+void
+callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+bool
+callout_stop(callout_t *c)
+{
+
+	panic("%s: not implemented", __func__);
 }
