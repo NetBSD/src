@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.13 2007/08/20 15:58:14 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.14 2007/08/26 23:51:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -344,6 +344,13 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 			return pg;
 
 	return NULL;
+}
+
+struct vm_page *
+uvm_pageratop(vaddr_t va)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 void
