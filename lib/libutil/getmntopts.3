@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.7 2004/02/24 15:12:51 wiz Exp $
+.\"	$NetBSD: getmntopts.3,v 1.8 2007/08/26 22:53:01 pooka Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)getmntopts.3	8.3 (Berkeley) 3/30/95
 .\"
-.Dd April 11, 2003
+.Dd August 26, 2007
 .Dt GETMNTOPTS 3
 .Os
 .Sh NAME
@@ -76,9 +76,9 @@ has the following format:
 .Bd -literal
 struct mntopt {
 	const char *m_option;	/* option name */
-	int m_inverse;		/* is this a negative option, e.g., "dev" */
+	int m_inverse;		/* negative option, e.g., "dev" */
 	int m_flag;		/* bit to set, e.g., MNT_RDONLY */
-	int m_altloc;		/* non-zero to use altflagp rather than flagp */
+	int m_altloc;		/* use altflagp rather than flagp */
 };
 .Ed
 .Pp
@@ -190,18 +190,23 @@ freemntopts(mp);
 returns
 .Dv NULL
 if an error occurred.
+Note that some bits may already have been set in
+.Va flagp
+and
+.Va altflagp
+even if
+.Dv NULL
+is returned.
 .Fn getmntoptstr
 returns
 .Dv NULL
 if the option does not have an argument, or the option string.
 .Fn getmntoptnum
-returns \-1 if an error occurred and
-.Va getmnt_silent
-is set.
+returns \-1 if an error occurred.
 .Sh DIAGNOSTICS
 If the external integer variable
 .Va getmnt_silent
-is non-zero then the
+is zero then the
 .Fn getmntopts
 function displays an error message and exits if an
 unrecognized option is encountered.
