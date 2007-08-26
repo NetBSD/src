@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.23 2007/07/09 21:00:51 ad Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.24 2007/08/26 22:45:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.23 2007/07/09 21:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.24 2007/08/26 22:45:57 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -777,7 +777,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (rxq->rxq_cmdsts & RX_STS_M) == 0 ||
 		    (rxq->rxq_cmdsts & RX_STS_HE) ||
 		    (eh->ether_dhost[0] & 1) != 0 ||
-		    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+		    memcmp(eh->ether_dhost, CLLADDR(ifp->if_sadl),
 			ETHER_ADDR_LEN) == 0) {
 			(*ifp->if_input)(ifp, m);
 			m = NULL;
@@ -1881,7 +1881,7 @@ gfe_hash_fill(struct gfe_softc *sc)
 	GE_FUNC_ENTER(sc, "gfe_hash_fill");
 
 	error = gfe_hash_entry_op(sc, GE_HASH_ADD, GE_RXPRIO_HI,
-	    LLADDR(sc->sc_ec.ec_if.if_sadl));
+	    CLLADDR(sc->sc_ec.ec_if.if_sadl));
 	if (error)
 		GE_FUNC_EXIT(sc, "!");
 		return error;

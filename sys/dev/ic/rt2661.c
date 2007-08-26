@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.15 2007/07/09 21:00:38 ad Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.16 2007/08/26 22:45:56 dyoung Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.15 2007/07/09 21:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.16 2007/08/26 22:45:56 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2745,7 +2745,7 @@ rt2661_init(struct ifnet *ifp)
 	for (i = 0; i < N(rt2661_def_mac); i++)
 		RAL_WRITE(sc, rt2661_def_mac[i].reg, rt2661_def_mac[i].val);
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	rt2661_set_macaddr(sc, ic->ic_myaddr);
 
 	/* set host ready */

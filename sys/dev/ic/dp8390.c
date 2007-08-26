@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.63 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.64 2007/08/26 22:45:55 dyoung Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.63 2007/03/04 06:01:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.64 2007/08/26 22:45:55 dyoung Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -350,7 +350,7 @@ dp8390_init(sc)
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		NIC_PUT(regt, regh, ED_P1_PAR0 + i,
-		    LLADDR(ifp->if_sadl)[i]);
+		    CLLADDR(ifp->if_sadl)[i]);
 
 	/* Set multicast filter on chip. */
 	dp8390_getmcaf(&sc->sc_ec, mcaf);

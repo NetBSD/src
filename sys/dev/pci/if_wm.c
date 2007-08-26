@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.142 2007/07/09 21:00:56 ad Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.143 2007/08/26 22:45:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.142 2007/07/09 21:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.143 2007/08/26 22:45:58 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3836,7 +3836,7 @@ wm_set_filter(struct wm_softc *sc)
 		size = WM_ICH8_RAL_TABSIZE;
 	else
 		size = WM_RAL_TABSIZE;
-	wm_set_ral(sc, LLADDR(ifp->if_sadl), 0);
+	wm_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
 	for (i = 1; i < size; i++)
 		wm_set_ral(sc, NULL, i);
 

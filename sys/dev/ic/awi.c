@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.74 2007/03/04 06:01:51 christos Exp $	*/
+/*	$NetBSD: awi.c,v 1.75 2007/08/26 22:45:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.74 2007/03/04 06:01:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.75 2007/08/26 22:45:55 dyoung Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -590,7 +590,7 @@ awi_init(struct ifnet *ifp)
 		return ENODEV;
 	}
 #if 0
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 #endif
 	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
 	sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
@@ -1135,7 +1135,7 @@ awi_mode_init(struct awi_softc *sc)
 		if (n == AWI_GROUP_ADDR_SIZE)
 			goto set_mib;
 		IEEE80211_ADDR_COPY(sc->sc_mib_addr.aGroup_Addresses[n],
-		    LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
+		    CLLADDR(satocsdl(ifma->ifma_addr)));
 		n++;
 	}
 #else

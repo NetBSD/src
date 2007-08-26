@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.77 2007/03/04 06:02:12 christos Exp $	*/
+/*	$NetBSD: if_el.c,v 1.78 2007/08/26 22:45:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.77 2007/03/04 06:02:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.78 2007/08/26 22:45:57 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -314,7 +314,7 @@ el_hardreset(sc)
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		bus_space_write_1(iot, ioh, i,
-		    LLADDR(sc->sc_ethercom.ec_if.if_sadl)[i]);
+		    CLLADDR(sc->sc_ethercom.ec_if.if_sadl)[i]);
 }
 
 /*

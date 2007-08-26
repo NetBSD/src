@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.23 2007/08/15 16:58:55 kiyohara Exp $ */
+/*	$NetBSD: if_ural.c,v 1.24 2007/08/26 22:45:59 dyoung Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.23 2007/08/15 16:58:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.24 2007/08/26 22:45:59 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2145,7 +2145,7 @@ ural_init(struct ifnet *ifp)
 	ural_set_txantenna(sc, sc->tx_ant);
 	ural_set_rxantenna(sc, sc->rx_ant);
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	ural_set_macaddr(sc, ic->ic_myaddr);
 
 	/*
