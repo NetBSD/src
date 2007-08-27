@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.112 2007/07/19 20:48:54 dyoung Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.113 2007/08/27 05:39:44 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.112 2007/07/19 20:48:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.113 2007/08/27 05:39:44 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -618,8 +618,7 @@ reflect:
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
 		rt = NULL;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
-		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		    sintosa(&icmpgw), (struct rtentry **)&rt);
+		    NULL, RTF_GATEWAY | RTF_HOST, sintosa(&icmpgw), &rt);
 		if (rt != NULL && icmp_redirtimeout != 0) {
 			i = rt_timer_add(rt, icmp_redirect_timeout,
 					 icmp_redirect_timeout_q);
