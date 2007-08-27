@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.26 2007/06/24 01:43:34 dyoung Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.27 2007/08/27 14:35:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,8 +109,7 @@ matchbiosdisks(void)
 	numbig = big ? big->num : 0;
 
 	/* First, count all native disks. */
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list)) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (is_valid_disk(dv))
 			x86_ndisks++;
 	}
@@ -143,8 +142,7 @@ matchbiosdisks(void)
 
 	/* XXX Code duplication from findroot(). */
 	n = -1;
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list)) {
+	TAILQ_FOREACH(dv, &alldev, dv_list) {
 		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
@@ -341,8 +339,7 @@ findroot(void)
 	}
 
 	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list)) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			struct cfdata *cd;
 			size_t len;
 
@@ -368,8 +365,7 @@ findroot(void)
 		 * because lower devices numbers are more likely to be the
 		 * boot device.
 		 */
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list)) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -408,8 +404,7 @@ findroot(void)
 		 * because lower device numbers are more likely to be the
 		 * boot device.
 		 */
-		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-		     dv = TAILQ_NEXT(dv, dv_list)) {
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -471,8 +466,7 @@ findroot(void)
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
 	snprintf(bf, sizeof(bf), "%s%d", name, unit);
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list)) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (strcmp(bf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;
