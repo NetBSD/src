@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.151 2007/08/26 22:45:56 dyoung Exp $	*/
+/*	$NetBSD: tulip.c,v 1.152 2007/08/27 07:33:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.151 2007/08/26 22:45:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.152 2007/08/27 07:33:17 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1923,7 +1923,7 @@ tlp_init(struct ifnet *ifp)
 	case TULIP_CHIP_AN985:
 	    {
 		u_int32_t reg;
-		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
 		      (enaddr[1] << 8) |
@@ -1941,7 +1941,7 @@ tlp_init(struct ifnet *ifp)
 	case TULIP_CHIP_AX88141:
 	    {
 		u_int32_t reg;
-		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
 		      (enaddr[1] << 8) |
