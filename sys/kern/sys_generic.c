@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.104 2007/08/15 12:07:34 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.105 2007/08/27 16:23:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.104 2007/08/15 12:07:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.105 2007/08/27 16:23:16 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ dofileread(lwp_t *l, int fd, struct file *fp, void *buf, size_t nbyte,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 	cnt -= auio.uio_resid;
-	ktrgenio(fd, UIO_READ, buf, nbyte, error);
+	ktrgenio(fd, UIO_READ, buf, cnt, error);
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
@@ -423,7 +423,7 @@ dofilewrite(lwp_t *l, int fd, struct file *fp, const void *buf,
 		}
 	}
 	cnt -= auio.uio_resid;
-	ktrgenio(fd, UIO_WRITE, buf, nbyte, error);
+	ktrgenio(fd, UIO_WRITE, buf, cnt, error);
 	*retval = cnt;
  out:
 	FILE_UNUSE(fp, l);
