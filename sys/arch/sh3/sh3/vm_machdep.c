@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.59 2007/08/21 01:13:05 uwe Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.60 2007/08/27 00:22:21 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2007/08/21 01:13:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2007/08/27 00:22:21 uwe Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2007/08/21 01:13:05 uwe Exp $");
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
+#include <sys/syscall.h>
+#include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -104,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.59 2007/08/21 01:13:05 uwe Exp $");
 #include <sh3/reg.h>
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
+#include <sh3/userret.h>
 
 extern void lwp_trampoline(void);
 extern void lwp_setfunc_trampoline(void);
@@ -253,6 +256,50 @@ sh3_setup_uarea(struct lwp *l)
 }
 
 
+/*
+ * fork &co pass this routine to newlwp to finish off child creation
+ * (see cpu_lwp_fork above and lwp_trampoline for details).
+ *
+ * When this function returns, new lwp returns to user mode.
+ */
+void
+child_return(void *arg)
+{
+	struct lwp *l = arg;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	tf->tf_r0 = 0;		/* fork(2) returns 0 in child */
+	tf->tf_ssr |= PSL_TBIT; /* syscall succeeded */
+
+	userret(l);
+	ktrsysret(SYS_fork, 0, 0);
+}
+
+
+/*
+ * struct emul e_startlwp (for _lwp_create(2))
+ */
+void
+startlwp(void *arg)
+{
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+	int error;
+
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#ifdef DIAGNOSTIC
+	if (error)
+		printf("startlwp: error %d from cpu_setmcontext()", error);
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l);
+}
+
+
+/*
+ * Exit hook
+ */
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
@@ -260,12 +307,17 @@ cpu_lwp_free(struct lwp *l, int proc)
 	/* Nothing to do */
 }
 
+
+/*
+ * lwp_free() hook
+ */
 void
 cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do */
 }
+
 
 #ifdef COREDUMP
 /*
