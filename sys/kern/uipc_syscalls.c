@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.116 2007/08/15 12:07:34 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.117 2007/08/27 20:09:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.116 2007/08/15 12:07:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.117 2007/08/27 20:09:44 dsl Exp $");
 
 #include "opt_pipe.h"
 
@@ -461,6 +461,8 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
 	struct iovec	*ktriov;
 
+	ktrkuser("msghdr", mp, sizeof *mp);
+
 	/* If the caller passed us stuff in mbufs, we must free them */
 	if (mp->msg_flags & MSG_NAMEMBUF)
 		to = mp->msg_name;
@@ -657,8 +659,10 @@ sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 			from);
 	if (from != NULL)
 		m_free(from);
-	if (error == 0)
+	if (error == 0) {
+		ktrkuser("msghdr", &msg, sizeof msg);
 		error = copyout(&msg, SCARG(uap, msg), sizeof(msg));
+	}
 
 	return (error);
 }
@@ -733,6 +737,7 @@ copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 			i = len;
 		}
 		error = copyout(mtod(m, void *), q, i);
+		ktrkuser("msgcontrol", mtod(m, void *), i);
 		if (error != 0) {
 			/* We must free all the SCM_RIGHTS */
 			m = control;
@@ -764,6 +769,8 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	int		i, len, error, iovlen;
 	struct socket	*so;
 	struct iovec	*ktriov;
+
+	ktrkuser("msghdr", mp, sizeof *mp);
 
 	*from = NULL;
 	if (control != NULL)
@@ -1095,6 +1102,7 @@ copyout_sockname(struct sockaddr *asa, unsigned int *alen, int flags,
 		if (len > addr->m_len)
 			len = addr->m_len;
 		/* Maybe this ought to copy a chain ? */
+		ktrkuser("sockname", mtod(addr, void *), len);
 		error = copyout(mtod(addr, void *), asa, len);
 	}
 
@@ -1195,6 +1203,7 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 		(void) m_free(m);
 		return (error);
 	}
+	ktrkuser("sockargs", mtod(m, void *), buflen);
 	*mp = m;
 	if (type == MT_SONAME) {
 		sa = mtod(m, struct sockaddr *);
