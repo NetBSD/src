@@ -1,4 +1,4 @@
-/*	$NetBSD: check_bound.c,v 1.4 2007/05/13 20:03:46 christos Exp $	*/
+/*	$NetBSD: check_bound.c,v 1.5 2007/08/27 19:53:33 dsl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -184,7 +184,7 @@ mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
 		allocated_uaddr = c_uaddr;
 	}
 
-#ifdef ND_DEBUG
+#ifdef RPCBIND_DEBUG
 	if (debugging) {
 		if (saddr == NULL) {
 			fprintf(stderr, "mergeaddr: client uaddr = %s\n",
@@ -200,7 +200,7 @@ mergeaddr(SVCXPRT *xprt, char *netid, char *uaddr, char *saddr)
 	 * This is all we should need for IP 4 and 6
 	 */
 	m_uaddr = addrmerge(svc_getrpccaller(xprt), s_uaddr, c_uaddr, netid);
-#ifdef ND_DEBUG
+#ifdef RPCBIND_DEBUG
 	if (debugging)
 		fprintf(stderr, "mergeaddr: uaddr = %s, merged uaddr = %s\n",
 				uaddr, m_uaddr);
