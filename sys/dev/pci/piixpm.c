@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.15 2007/08/26 17:17:06 xtraeme Exp $ */
+/* $NetBSD: piixpm.c,v 1.16 2007/08/27 15:57:13 xtraeme Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -64,7 +64,7 @@ struct piixpm_softc {
 	pcitag_t		sc_pcitag;
 
 	struct i2c_controller	sc_i2c_tag;
-	struct lock		sc_i2c_lock;
+	krwlock_t		sc_i2c_rwlock;
 	struct {
 		i2c_op_t     op;
 		void *      buf;
@@ -227,7 +227,7 @@ nopowermanagement:
 	aprint_normal("\n");
 
 	/* Attach I2C bus */
-	lockinit(&sc->sc_i2c_lock, PRIBIO | PCATCH, "iiclk", 0, 0);
+	rw_init(&sc->sc_i2c_rwlock);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = piixpm_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = piixpm_i2c_release_bus;
@@ -271,7 +271,8 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return (0);
 
-	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
+	rw_enter(&sc->sc_i2c_rwlock, RW_WRITER);
+	return 0;
 }
 
 void
@@ -282,7 +283,7 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_i2c_rwlock);
 }
 
 int
