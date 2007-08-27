@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.5 2007/08/26 18:39:43 xtraeme Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.6 2007/08/27 06:01:10 xtraeme Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -20,6 +20,9 @@
 /*
  * Intel ICH SMBus controller driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.6 2007/08/27 06:01:10 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
