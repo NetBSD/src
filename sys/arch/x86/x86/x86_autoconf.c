@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.28 2007/08/27 14:39:19 xtraeme Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.29 2007/08/27 14:41:03 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.28 2007/08/27 14:39:19 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.29 2007/08/27 14:41:03 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ matchbiosdisks(void)
 
 	/* XXX Code duplication from findroot(). */
 	n = -1;
-	TAILQ_FOREACH(dv, &alldev, dv_list) {
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
