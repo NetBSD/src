@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.205 2007/08/23 08:30:57 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.206 2007/08/27 15:57:00 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -366,7 +366,19 @@ Description:	Rototill the mips code to support LP64 mips and N32/N64 ABIs
 Status:		Active
 Start Date:	2007-07-17
 End Date:
-Base Tag:	
+Base Tag:	matt-mips64-base
+Maintainer:	Matt Thomas <matt@NetBSD.org>
+Scope:		kernel & userland
+Notes:	
+
+Branch:		matt-armv6
+Description:	Rototill the arm code to support features present in the
+		v6 of the ARM Architecure.  Additionally, clean up things
+		along the way to use common practices.
+Status:		Active
+Start Date:	2007-08-27
+End Date:
+Base Tag:	matt-armv6-base
 Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:	
