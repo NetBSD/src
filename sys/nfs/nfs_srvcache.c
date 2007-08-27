@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.38.2.4 2007/08/26 15:00:06 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.38.2.5 2007/08/27 12:55:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.38.2.4 2007/08/26 15:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.38.2.5 2007/08/27 12:55:23 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -211,6 +211,7 @@ nfsrv_unlockcache(rp)
 
 	KASSERT(mutex_owned(&nfsrv_reqcache_lock));
 
+	KASSERT((rp->rc_gflags & RC_G_LOCKED) != 0);
 	rp->rc_gflags &= ~RC_G_LOCKED;
 	cv_broadcast(&rp->rc_cv);
 }
@@ -289,7 +290,6 @@ found:
 	} else {
 		rp = TAILQ_FIRST(&nfsrvlruhead);
 		while ((rp->rc_gflags & RC_G_LOCKED) != 0) {
-			rp->rc_gflags |= RC_G_WANTED;
 			cv_wait(&rp->rc_cv, &nfsrv_reqcache_lock);
 			rp = TAILQ_FIRST(&nfsrvlruhead);
 		}
@@ -322,7 +322,10 @@ found:
 		/*
 		 * other thread made duplicate cache entry.
 		 */
+		KASSERT(numnfsrvcache > 0);
+		numnfsrvcache--;
 		mutex_exit(&nfsrv_reqcache_lock);
+		cleanentry(rp);
 		cv_destroy(&rp->rc_cv);
 		pool_put(&nfs_reqcache_pool, rp);
 		rp = rpdup;
@@ -380,18 +383,21 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 void
 nfsrv_cleancache()
 {
-	struct nfsrvcache *rp, *nextrp;
+	struct nfsrvcache *rp;
 
 	mutex_enter(&nfsrv_reqcache_lock);
-	for (rp = TAILQ_FIRST(&nfsrvlruhead); rp != 0; rp = nextrp) {
-		nextrp = TAILQ_NEXT(rp, rc_lru);
+	while ((rp = TAILQ_FIRST(&nfsrvlruhead)) != NULL) {
+		KASSERT((rp->rc_gflags & RC_G_LOCKED) == 0);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
-		KASSERT((rp->rc_gflags & (RC_G_LOCKED|RC_G_WANTED)) == 0);
+		KASSERT(numnfsrvcache > 0);
+		numnfsrvcache--;
+		mutex_exit(&nfsrv_reqcache_lock);
 		cleanentry(rp);
 		cv_destroy(&rp->rc_cv);
 		pool_put(&nfs_reqcache_pool, rp);
+		mutex_enter(&nfsrv_reqcache_lock);
 	}
-	numnfsrvcache = 0;
+	KASSERT(numnfsrvcache == 0);
 	mutex_exit(&nfsrv_reqcache_lock);
 }

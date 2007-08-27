@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrvcache.h,v 1.14.6.2 2007/08/26 15:00:07 yamt Exp $	*/
+/*	$NetBSD: nfsrvcache.h,v 1.14.6.3 2007/08/27 12:55:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -78,7 +78,6 @@ struct nfsrvcache {
 
 /* rc_gflags */
 #define	RC_G_LOCKED	0x01
-#define	RC_G_WANTED	0x02
 
 /* rc_flags */
 #define	RC_REPSTATUS	0x04
