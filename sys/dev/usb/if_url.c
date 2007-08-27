@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.27 2007/08/27 16:08:41 xtraeme Exp $	*/
+/*	$NetBSD: if_url.c,v 1.28 2007/08/27 17:49:54 xtraeme Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.27 2007/08/27 16:08:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.28 2007/08/27 17:49:54 xtraeme Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -374,6 +374,7 @@ USB_DETACH(url)
 
 	splx(s);
 
+	rw_destroy(&sc->sc_mii_rwlock);
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
