@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.87 2007/07/26 12:17:14 nonaka Exp $ */
+/* $NetBSD: wsconsio.h,v 1.88 2007/08/27 02:01:23 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -311,6 +311,7 @@ struct wsmouse_repeat {
 #define WSDISPLAY_TYPE_GENFB	45	/* generic nondescript framebuffer */
 #define WSDISPLAY_TYPE_CRIME	46	/* SGI O2 */
 #define WSDISPLAY_TYPE_PXALCD	47	/* PXA2x0 LCD controller */
+#define WSDISPLAY_TYPE_AG10	48	/* Fujitsu AG-10e */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
