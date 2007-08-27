@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwlock.9,v 1.7 2007/08/08 09:34:40 pooka Exp $
+.\"	$NetBSD: rwlock.9,v 1.8 2007/08/27 15:43:13 xtraeme Exp $
 .\"
 .\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 8, 2007
+.Dd August 27, 2007
 .Dt RWLOCK 9
 .Os
 .Sh NAME
@@ -164,9 +164,9 @@ Otherwise, return zero.
 Valid arguments to
 .Fa op
 are
-.Dv RW_READ
+.Dv RW_READER
 or
-.Dv RW_WRITE .
+.Dv RW_WRITER .
 .It Fn rw_tryupgrade "rw"
 .Pp
 Try to upgrade a lock from one read hold to a write hold.
