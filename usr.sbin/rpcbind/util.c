@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 2007/05/13 20:03:47 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.14 2007/08/27 19:53:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 #endif
 	servsin = newsin = NULL;		/* XXXGCC -Wuninitialized */
 
-#ifdef ND_DEBUG
+#ifdef RPCBIND_DEBUG
 	if (debugging)
 		fprintf(stderr, "addrmerge(caller, %s, %s, %s\n", serv_uaddr,
 		    clnt_uaddr, netid);
@@ -304,7 +304,7 @@ freeit:
 		free(clnt_nbp);
 	freeifaddrs(ifp);
 
-#ifdef ND_DEBUG
+#ifdef RPCBIND_DEBUG
 	if (debugging)
 		fprintf(stderr, "addrmerge: returning %s\n", ret);
 #endif
