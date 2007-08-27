@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.125 2007/07/19 20:48:53 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.126 2007/08/27 01:13:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.125 2007/07/19 20:48:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.126 2007/08/27 01:13:09 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -130,7 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.125 2007/07/19 20:48:53 dyoung Exp $");
 #endif
 
 #define SIN(s) ((struct sockaddr_in *)s)
-#define SDL(s) ((struct sockaddr_dl *)s)
 #define SRP(s) ((struct sockaddr_inarp *)s)
 
 /*
@@ -147,8 +146,12 @@ int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
 #define	rt_pksent rt_rmx.rmx_pksent
 
+static	struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
+	    const struct sockaddr *);
 static	void arptfree(struct llinfo_arp *);
 static	void arptimer(void *);
+static	struct llinfo_arp *arplookup1(struct mbuf *, const struct in_addr *,
+				      int, int, struct rtentry *);
 static	struct llinfo_arp *arplookup(struct mbuf *, const struct in_addr *,
 					  int, int);
 static	void in_arpinput(struct mbuf *);
@@ -169,6 +172,9 @@ int	arpinit_done = 0;
 struct	arpstat arpstat;
 struct	callout arptimer_ch;
 
+/* Prototype for RTF_CLONING routes. */
+static const struct sockaddr_dl null_sdl = {	.sdl_len = sizeof(null_sdl),
+						.sdl_family = AF_LINK};
 
 /* revarp state */
 struct	in_addr myip, srv_ip;
@@ -382,6 +388,35 @@ arptimer(void *arg)
 }
 
 /*
+ * We set the gateway for RTF_CLONING routes to a "prototype"
+ * link-layer sockaddr whose interface type (if_type) and interface
+ * index (if_index) fields are prepared.
+ */
+static struct sockaddr *
+arp_setgate(struct rtentry *rt, struct sockaddr *gate,
+    const struct sockaddr *netmask)
+{
+	/*
+	 * XXX: If this is a manually added route to interface
+	 * such as older version of routed or gated might provide,
+	 * restore cloning bit.
+	 */
+	if ((rt->rt_flags & RTF_HOST) == 0 && netmask != NULL &&
+	    satocsin(netmask)->sin_addr.s_addr != 0xffffffff)
+		rt->rt_flags |= RTF_CLONING;
+	if (rt->rt_flags & RTF_CLONING) {
+		/*
+		 * Case 1: This route should come from a route to iface.
+		 */
+		rt_setgate(rt, (const struct sockaddr *)&null_sdl);
+		gate = rt->rt_gateway;
+		satosdl(gate)->sdl_type = rt->rt_ifp->if_type;
+		satosdl(gate)->sdl_index = rt->rt_ifp->if_index;
+	}
+	return gate;
+}
+
+/*
  * Parallel to llc_rtrequest.
  */
 void
@@ -389,10 +424,6 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
-	static const struct sockaddr_dl null_sdl = {
-		.sdl_len = sizeof(null_sdl),
-		.sdl_family = AF_LINK,
-	};
 	size_t allocsize;
 	struct mbuf *mold;
 	int s;
@@ -455,23 +486,12 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 
 	switch (req) {
 
+	case RTM_SETGATE:
+		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
+		break;
 	case RTM_ADD:
-		/*
-		 * XXX: If this is a manually added route to interface
-		 * such as older version of routed or gated might provide,
-		 * restore cloning bit.
-		 */
-		if ((rt->rt_flags & RTF_HOST) == 0 &&
-		    satocsin(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
-			rt->rt_flags |= RTF_CLONING;
+		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
 		if (rt->rt_flags & RTF_CLONING) {
-			/*
-			 * Case 1: This route should come from a route to iface.
-			 */
-			rt_setgate(rt, (const struct sockaddr *)&null_sdl);
-			gate = rt->rt_gateway;
-			SDL(gate)->sdl_type = rt->rt_ifp->if_type;
-			SDL(gate)->sdl_index = rt->rt_ifp->if_index;
 			/*
 			 * Give this route an expiration time, even though
 			 * it's a "permanent" route, so that routes cloned
@@ -516,7 +536,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			arprequest(rt->rt_ifp,
 			    &satocsin(rt_getkey(rt))->sin_addr,
 			    &satocsin(rt_getkey(rt))->sin_addr,
-			    (u_char *)LLADDR(SDL(gate)));
+			    CLLADDR(satocsdl(gate)));
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
@@ -524,15 +544,15 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			log(LOG_DEBUG, "arp_rtrequest: bad gateway value\n");
 			break;
 		}
-		SDL(gate)->sdl_type = rt->rt_ifp->if_type;
-		SDL(gate)->sdl_index = rt->rt_ifp->if_index;
+		satosdl(gate)->sdl_type = rt->rt_ifp->if_type;
+		satosdl(gate)->sdl_index = rt->rt_ifp->if_index;
 		if (la != 0)
 			break; /* This happens on a route change */
 		/*
 		 * Case 2:  This route may come from cloning, or a manual route
 		 * add with a LL address.
 		 */
-		switch (SDL(gate)->sdl_type) {
+		switch (satocsdl(gate)->sdl_type) {
 #if NTOKEN > 0
 		case IFT_ISO88025:
 			allocsize = sizeof(*la) + sizeof(struct token_rif);
@@ -575,9 +595,9 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * interface.
 			 */
 			rt->rt_expire = 0;
-			Bcopy(LLADDR(rt->rt_ifp->if_sadl),
-			    LLADDR(SDL(gate)),
-			    SDL(gate)->sdl_alen = rt->rt_ifp->if_addrlen);
+			(void)sockaddr_dl_setaddr(satosdl(gate),
+			    CLLADDR(rt->rt_ifp->if_sadl),
+			    rt->rt_ifp->if_addrlen);
 			if (useloopback)
 				rt->rt_ifp = lo0ifp;
 			/*
@@ -683,16 +703,13 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
     const struct sockaddr *dst, u_char *desten)
 {
 	struct llinfo_arp *la;
-	struct sockaddr_dl *sdl;
+	const struct sockaddr_dl *sdl;
 	struct mbuf *mold;
 	int s;
 
-	if (rt)
-		la = (struct llinfo_arp *)rt->rt_llinfo;
-	else {
-		if ((la = arplookup(m, &satocsin(dst)->sin_addr, 1, 0)) != NULL)
-			rt = la->la_rt;
-	}
+	if ((la = arplookup1(m, &satocsin(dst)->sin_addr, 1, 0, rt)) != NULL)
+		rt = la->la_rt;
+
 	if (la == 0 || rt == 0) {
 		arpstat.as_allocfail++;
 		log(LOG_DEBUG,
@@ -701,14 +718,14 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		m_freem(m);
 		return (0);
 	}
-	sdl = SDL(rt->rt_gateway);
+	sdl = satocsdl(rt->rt_gateway);
 	/*
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
 	 */
 	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
-		bcopy(LLADDR(sdl), desten,
+		bcopy(CLLADDR(sdl), desten,
 		    min(sdl->sdl_alen, ifp->if_addrlen));
 		rt->rt_pksent = time_second; /* Time for last pkt sent */
 		return 1;
@@ -970,8 +987,7 @@ in_arpinput(struct mbuf *m)
 	myaddr = ia->ia_addr.sin_addr;
 
 	/* XXX checks for bridge case? */
-	if (!memcmp(ar_sha(ah), LLADDR(ifp->if_sadl),
-	    ifp->if_addrlen)) {
+	if (!memcmp(ar_sha(ah), CLLADDR(ifp->if_sadl), ifp->if_addrlen)) {
 		arpstat.as_rcvlocalsha++;
 		goto out;	/* it's from me, ignore it. */
 	}
@@ -994,9 +1010,9 @@ in_arpinput(struct mbuf *m)
 		goto reply;
 	}
 	la = arplookup(m, &isaddr, in_hosteq(itaddr, myaddr), 0);
-	if (la && (rt = la->la_rt) && (sdl = SDL(rt->rt_gateway))) {
+	if (la && (rt = la->la_rt) && (sdl = satosdl(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
-		    memcmp(ar_sha(ah), LLADDR(sdl), sdl->sdl_alen)) {
+		    memcmp(ar_sha(ah), CLLADDR(sdl), sdl->sdl_alen)) {
 			if (rt->rt_flags & RTF_STATIC) {
 				arpstat.as_rcvoverperm++;
 				log(LOG_INFO,
@@ -1069,7 +1085,7 @@ in_arpinput(struct mbuf *m)
 			}
 		}
 #endif /* NTOKEN > 0 */
-		memcpy(LLADDR(sdl), ar_sha(ah), sdl->sdl_alen = ah->ar_hln);
+		(void)sockaddr_dl_setaddr(sdl, ar_sha(ah), ah->ar_hln);
 		if (rt->rt_expire)
 			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
@@ -1099,7 +1115,7 @@ reply:
 		tha = ar_tha(ah);
 		if (tha)
 			memcpy(tha, ar_sha(ah), ah->ar_hln);
-		memcpy(ar_sha(ah), LLADDR(ifp->if_sadl), ah->ar_hln);
+		memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	} else {
 		la = arplookup(m, &itaddr, 0, SIN_PROXY);
 		if (la == 0)
@@ -1111,8 +1127,8 @@ reply:
 		tha = ar_tha(ah);
 		if (tha)
 			memcpy(tha, ar_sha(ah), ah->ar_hln);
-		sdl = SDL(rt->rt_gateway);
-		memcpy(ar_sha(ah), LLADDR(sdl), ah->ar_hln);
+		sdl = satosdl(rt->rt_gateway);
+		memcpy(ar_sha(ah), CLLADDR(sdl), ah->ar_hln);
 	}
 
 	memcpy(ar_tpa(ah), ar_spa(ah), ah->ar_pln);
@@ -1155,7 +1171,7 @@ static void arptfree(struct llinfo_arp *la)
 
 	if (rt == 0)
 		panic("arptfree");
-	if (rt->rt_refcnt > 0 && (sdl = SDL(rt->rt_gateway)) &&
+	if (rt->rt_refcnt > 0 && (sdl = satosdl(rt->rt_gateway)) &&
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_alen = 0;
 		la->la_asked = 0;
@@ -1165,11 +1181,18 @@ static void arptfree(struct llinfo_arp *la)
 	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, NULL);
 }
 
+static struct llinfo_arp *
+arplookup(struct mbuf *m, const struct in_addr *addr, int create, int proxy)
+{
+	return arplookup1(m, addr, create, proxy, NULL);
+}
+
 /*
  * Lookup or enter a new address in arptab.
  */
 static struct llinfo_arp *
-arplookup(struct mbuf *m, const struct in_addr *addr, int create, int proxy)
+arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
+    struct rtentry *rt0)
 {
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
@@ -1178,20 +1201,25 @@ arplookup(struct mbuf *m, const struct in_addr *addr, int create, int proxy)
 	const char *why = 0;
 
 	ah = mtod(m, struct arphdr *);
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr = *addr;
-	sin.sin_other = proxy ? SIN_PROXY : 0;
-	rt = rtalloc1(sintosa(&sin), create);
-	if (rt == 0)
-		return (0);
-	rt->rt_refcnt--;
+	if (rt0 == NULL) {
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = *addr;
+		sin.sin_other = proxy ? SIN_PROXY : 0;
+		rt = rtalloc1(sintosa(&sin), create);
+		if (rt == NULL)
+			return (NULL);
+		rt->rt_refcnt--;
+	} else
+		rt = rt0;
 
-	if ((rt->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) == RTF_LLINFO &&
-	    rt->rt_gateway->sa_family == AF_LINK)
+#define	IS_LLINFO(__rt)							  \
+	(((__rt)->rt_flags & (RTF_GATEWAY | RTF_LLINFO)) == RTF_LLINFO && \
+	 (__rt)->rt_gateway->sa_family == AF_LINK)
+
+
+	if (IS_LLINFO(rt))
 		return ((struct llinfo_arp *)rt->rt_llinfo);
-
-
 
 	if (create) {
 		if (rt->rt_flags & RTF_GATEWAY)
@@ -1320,7 +1348,7 @@ in_revarpinput(struct mbuf *m)
 		goto wake;
 	tha = ar_tha(ah);
 	KASSERT(tha);
-	if (bcmp(tha, LLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
+	if (bcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	memcpy(&srv_ip, ar_spa(ah), sizeof(srv_ip));
 	memcpy(&myip, ar_tpa(ah), sizeof(myip));
@@ -1358,10 +1386,10 @@ revarprequest(struct ifnet *ifp)
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
 	ah->ar_op = htons(ARPOP_REVREQUEST);
 
-	memcpy(ar_sha(ah), LLADDR(ifp->if_sadl), ah->ar_hln);
+	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
 	KASSERT(tha);
-	bcopy(LLADDR(ifp->if_sadl), tha, ah->ar_hln);
+	bcopy(CLLADDR(ifp->if_sadl), tha, ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
