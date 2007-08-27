@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.235 2007/08/25 10:33:24 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.236 2007/08/27 21:02:30 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8584,3 +8584,44 @@ sys/arch/sparc64/conf/GENERIC			1.88
 	Remove iso(4) from GENERIC kernels, as discussed on tech-net@
 	Ok'ed by core@
 	[adrianp, ticket #820]
+
+etc/etc.shark/MAKEDEV.conf			1.11
+sys/arch/shark/conf/majors.shark		1.23
+
+	Restore a device major for sd(4), which can be attached at atapibus(4).
+	Fixes part of PR port-shark/36693.
+
+	Restore targets for sd(4) devices, which can be attached at atapibus(4).
+	Closes PR port-shark/36693.
+	[tsutsui, ticket #838]
+
+sys/dev/pci/if_msk.c				1.4
+sys/dev/pci/if_msk.c				1.5
+sys/dev/pci/if_msk.c				1.6
+sys/dev/pci/if_msk.c				1.7
+sys/dev/pci/if_mskvar.h				1.2
+sys/dev/pci/if_mskvar.h				1.3
+sys/dev/pci/if_sk.c				1.36
+sys/dev/pci/if_skreg.h				1.10
+sys/dev/pci/if_skreg.h				1.11
+sys/dev/pci/if_skreg.h				1.9
+sys/dev/pci/pcidevs				1.866
+
+	Apply OpenBSD's rev. 1.33 to shut up "msk0: phy write timed out"
+
+	add some msk devices
+
+	sync with OpenBSD-current (many bugfixes, add some devices)
+
+	apply some patches from FreeBSD
+
+		- fix device timeout
+		- add some workaround
+		- TX underrun bug (grr...)
+		- and some bugs
+
+	fix bit definitions for the RX FIFO Flush mode
+
+	Apply OpenBSD's rev. 1.14 via patch:
+		- remove another Yukon Lite workaround.
+	[riz, ticket #816]
