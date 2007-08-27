@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_and_32.S,v 1.1.2.1 2007/08/26 05:57:03 matt Exp $	*/
+/*	$NetBSD: atomic_and_32.S,v 1.1.2.2 2007/08/27 08:12:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@ ENTRY_NP(_atomic_and_32)
 	mov	r3, r0			/* need r0 for return value */
 1:	ldrex	r0, [r3]		/* load old value (to be returned) */
 	and	r2, r0, r1		/* calculate new value */
-	strex	r4, r2, [r3]		/* try to store */
-	cmp	r4, #0			/*   succeed? */
+	strex	ip, r2, [r3]		/* try to store */
+	cmp	ip, #0			/*   succeed? */
 	bne	1b			/*     no, try again */
 	RET				/* return old value */
 	END(_atomic_and_32)
