@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.2 2007/08/26 07:24:28 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.2 2007/08/26 07:24:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -106,6 +106,9 @@ struct agten_softc {
 	bus_size_t		sc_i128_fbsz;
 	bus_space_handle_t 	sc_i128_regh;
 	bus_space_handle_t 	sc_p9100_regh;
+	bus_addr_t		sc_glint_fb;
+	bus_addr_t		sc_glint_regs;
+	uint32_t		sc_glint_fbsz;
 
 	uint32_t	sc_width;
 	uint32_t	sc_height;	/* panel width / height */
@@ -129,6 +132,7 @@ static int 	agten_getcmap(struct agten_softc *, struct wsdisplay_cmap *);
 static int 	agten_putpalreg(struct agten_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 static void	agten_init(struct agten_softc *);
+static void	agten_gfx(struct agten_softc *);
 
 static void	agten_copycols(void *, int, int, int, int);
 static void	agten_erasecols(void *, int, int, int, long);
@@ -226,6 +230,16 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	}
 	fb->fb_pixels = bus_space_vaddr(sc->sc_bustag, sc->sc_i128_fbh);
 
+	reg = prom_getpropint(node, "i128_reg_physaddr", -1);
+	if (sbus_bus_map(sc->sc_bustag,
+	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
+	    0x10000, 0, &sc->sc_i128_regh) != 0) {
+
+		aprint_error("%s: unable to map I128 registers\n",
+		    dev->dv_xname);
+		return;
+	}
+
 	reg = prom_getpropint(node, "p9100_reg_physaddr", -1);
 	if (sbus_bus_map(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
@@ -236,15 +250,13 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 		return;
 	}
 
-	reg = prom_getpropint(node, "i128_reg_physaddr", -1);
-	if (sbus_bus_map(sc->sc_bustag,
-	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
-	    0x10000, 0, &sc->sc_i128_regh) != 0) {
-
-		aprint_error("%s: unable to map I128 registers\n",
-		    dev->dv_xname);
-		return;
-	}
+	reg = prom_getpropint(node, "glint_fb0_physaddr", -1);
+	sc->sc_glint_fb = sbus_bus_addr(sc->sc_bustag,
+	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
+	sc->sc_glint_fbsz = prom_getpropint(node, "glint_fb0_size", -1);
+	reg = prom_getpropint(node, "glint_reg_physaddr", -1);
+	sc->sc_glint_regs = sbus_bus_addr(sc->sc_bustag,
+	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #if 0
@@ -309,13 +321,17 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 	switch (cmd) {
 
+		case WSDISPLAYIO_GTYPE:
+			*(u_int *)data = WSDISPLAY_TYPE_AG10;
+			return 0;
+
 		case WSDISPLAYIO_GINFO:
 			if (ms == NULL)
 				return ENODEV;
 			wdf = (void *)data;
 			wdf->height = ms->scr_ri.ri_height;
 			wdf->width = ms->scr_ri.ri_width;
-			wdf->depth = ms->scr_ri.ri_depth;
+			wdf->depth = 32;
 			wdf->cmsize = 256;
 			return 0;
 
@@ -328,7 +344,7 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			    (struct wsdisplay_cmap *)data);
 
 		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = sc->sc_stride;
+			*(u_int *)data = sc->sc_stride << 2;
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
@@ -339,6 +355,8 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 						agten_init(sc);
 						vcons_redraw_screen(ms);
+					} else {
+						agten_gfx(sc);
 					}
 				}
 			}
@@ -353,8 +371,8 @@ agten_mmap(void *v, void *vs, off_t offset, int prot)
 	struct vcons_data *vd = v;
 	struct agten_softc *sc = vd->cookie;
 
-	if (offset < sc->sc_i128_fbsz)
-		return bus_space_mmap(sc->sc_bustag, sc->sc_i128_fbh, offset,
+	if (offset < sc->sc_glint_fbsz)
+		return bus_space_mmap(sc->sc_bustag, sc->sc_glint_fb, offset,
 		    prot, BUS_SPACE_MAP_LINEAR);
 	return -1;
 }
@@ -488,12 +506,52 @@ agten_init(struct agten_softc *sc)
 		j += 3;
 	}
 
-	/* now set up some window attributes */
-	agten_write_idx(sc, IBM561_OL_WINTYPE);
-	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x00);	
-	for (i = 1; i < 256; i++)
-		agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x01);
+	/* then we set up a linear LUT for 24bit colour */
+	agten_write_idx(sc, IBM561_CMAP_TABLE + 256);
+	for (i = 0; i < 256; i++) {
+		agten_write_dac(sc, IBM561_CMD_CMAP, i);
+		agten_write_dac(sc, IBM561_CMD_CMAP, i);
+		agten_write_dac(sc, IBM561_CMD_CMAP, i);
+	}
+	
+	/* and the linear gamma maps */
+	agten_write_idx(sc, IBM561_RED_GAMMA_TABLE);
+	for (i = 0; i < 0x3ff; i+= 4)
+		agten_write_dac_10(sc, IBM561_CMD_GAMMA, i);
+	agten_write_idx(sc, IBM561_GREEN_GAMMA_TABLE);
+	for (i = 0; i < 0x3ff; i+= 4)
+		agten_write_dac_10(sc, IBM561_CMD_GAMMA, i);
+	agten_write_idx(sc, IBM561_BLUE_GAMMA_TABLE);
+	for (i = 0; i < 0x3ff; i+= 4)
+		agten_write_dac_10(sc, IBM561_CMD_GAMMA, i);
 
+	/* enable outouts, RGB mode */
+	agten_write_idx(sc, IBM561_CONFIG_REG3);
+	agten_write_dac(sc, IBM561_CMD, 0x41);
+
+	/* MUX 4:1 basic, 8bit overlay, 8bit WIDs */
+	agten_write_idx(sc, IBM561_CONFIG_REG1);
+	agten_write_dac(sc, IBM561_CMD, 0x2c);
+
+	/* now set up some window attributes */
+	
+	/* 
+	 * direct colour, 24 bit, transparency off, LUT from 0x100
+	 * we need to use direct colour and a linear LUT because for some
+	 * reason true color mode gives messed up colours
+	 */
+	agten_write_idx(sc, IBM561_FB_WINTYPE);
+	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x134);
+
+	/* use gamma LUTs, no crosshair, 0 is transparent */
+	agten_write_idx(sc, IBM561_AUXFB_WINTYPE);
+	agten_write_dac(sc, IBM561_CMD_FB_WAT, 0x0);	
+
+	/* overlay is 8 bit, opaque */
+	agten_write_idx(sc, IBM561_OL_WINTYPE);
+	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x00);
+
+	/* now we fill the WID fb with zeroes */
 	src = 0;
 	srcw = sc->sc_width << 16 | sc->sc_height;
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, FOREGROUND_COLOR,
@@ -508,6 +566,20 @@ agten_init(struct agten_softc *sc)
 
 	i128_init(sc->sc_bustag, sc->sc_i128_regh, sc->sc_stride, 8);
 }
+
+static void
+agten_gfx(struct agten_softc *sc)
+{
+	/* enable overlay transparency on colour 0x00 */
+	agten_write_idx(sc, IBM561_OL_WINTYPE);
+	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x01);
+
+	/* then blit the overlay full of 0x00 */
+	i128_rectfill(sc->sc_bustag, sc->sc_i128_regh, 0, 0, sc->sc_width,
+	    sc->sc_height, 0);
+
+	/* ... so we can see the 24bit framebuffer */	
+}	
 
 static void
 agten_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
