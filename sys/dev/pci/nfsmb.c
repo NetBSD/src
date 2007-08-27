@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.4 2007/08/14 14:18:17 kiyohara Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.5 2007/08/27 15:57:13 xtraeme Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,13 +26,13 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.4 2007/08/14 14:18:17 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.5 2007/08/27 15:57:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -73,7 +73,7 @@ struct nfsmb_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct i2c_controller sc_i2c;	/* i2c controller info */
-	struct lock sc_lock;
+	krwlock_t sc_rwlock;
 };
 
 
@@ -208,7 +208,7 @@ nfsmb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = nfsmb_exec;
 
-	lockinit(&sc->sc_lock, PZERO, "nfsmb", 0, 0);
+	rw_init(&sc->sc_rwlock);
 
 	if (bus_space_map(sc->sc_iot, nfsmbcap->nfsmb_addr, NFORCE_SMBSIZE, 0,
 	    &sc->sc_ioh) != 0) {
@@ -225,11 +225,9 @@ static int
 nfsmb_acquire_bus(void *cookie, int flags)
 {
 	struct nfsmb_softc *sc = cookie;
-	int err;
 
-	err = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
-
-	return err;
+	rw_enter(&sc->sc_rwlock, RW_WRITER);
+	return 0;
 }
 
 static void
@@ -237,9 +235,7 @@ nfsmb_release_bus(void *cookie, int flags)
 {
 	struct nfsmb_softc *sc = cookie;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
-
-	return;
+	rw_exit(&sc->sc_rwlock);
 }
 
 static int

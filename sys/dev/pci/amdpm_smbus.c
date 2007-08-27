@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.13 2007/08/27 12:07:39 xtraeme Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.14 2007/08/27 15:57:13 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,13 +32,15 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.13 2007/08/27 12:07:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.14 2007/08/27 15:57:13 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/rnd.h>
+#include <sys/rwlock.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -96,7 +98,7 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = amdpm_smbus_exec;
 
-	lockinit(&sc->sc_lock, PZERO, "amdpm_smbus", 0, 0);
+	rw_init(&sc->sc_rwlock);
 
 #ifdef XBOX
 #define XBOX_SMBA	0x8000
@@ -165,10 +167,9 @@ static int
 amdpm_smbus_acquire_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
-	int err;
 
-	err = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
-	return err;
+	rw_enter(&sc->sc_rwlock, RW_WRITER);
+	return 0;
 }
 
 static void
@@ -176,7 +177,7 @@ amdpm_smbus_release_bus(void *cookie, int flags)
 {
 	struct amdpm_softc *sc = cookie;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_rwlock);
 }
 
 static int

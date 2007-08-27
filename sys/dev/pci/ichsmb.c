@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.7 2007/08/27 09:09:22 xtraeme Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.8 2007/08/27 15:57:14 xtraeme Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,13 +22,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.7 2007/08/27 09:09:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.8 2007/08/27 15:57:14 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/proc.h>
 
 #include <machine/bus.h>
@@ -59,7 +59,7 @@ struct ichsmb_softc {
 	int			sc_poll;
 
 	struct i2c_controller	sc_i2c_tag;
-	struct lock		sc_i2c_lock;
+	krwlock_t 		sc_i2c_rwlock;
 	struct {
 		i2c_op_t     op;
 		void *       buf;
@@ -164,7 +164,7 @@ ichsmb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach I2C bus */
-	lockinit(&sc->sc_i2c_lock, PZERO, "smblk", 0, 0);
+	rw_init(&sc->sc_i2c_rwlock);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = ichsmb_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
@@ -183,9 +183,10 @@ ichsmb_i2c_acquire_bus(void *cookie, int flags)
 	struct ichsmb_softc *sc = cookie;
 
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
-		return (0);
+		return 0;
 
-	return (lockmgr(&sc->sc_i2c_lock, LK_EXCLUSIVE, NULL));
+	rw_enter(&sc->sc_i2c_rwlock, RW_WRITER);
+	return 0;
 }
 
 static void
@@ -196,7 +197,7 @@ ichsmb_i2c_release_bus(void *cookie, int flags)
 	if (cold || sc->sc_poll || (flags & I2C_F_POLL))
 		return;
 
-	lockmgr(&sc->sc_i2c_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_i2c_rwlock);
 }
 
 static int

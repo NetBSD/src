@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.26 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_url.c,v 1.27 2007/08/27 16:08:41 xtraeme Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.26 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.27 2007/08/27 16:08:41 xtraeme Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.26 2007/03/13 13:51:54 drochner Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -202,7 +202,7 @@ USB_ATTACH(url)
 	}
 
 	usb_init_task(&sc->sc_tick_task, url_tick_task, sc);
-	lockinit(&sc->sc_mii_lock, PZERO, "urlmii", 0, 0);
+	rw_init(&sc->sc_mii_rwlock);
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *)) url_stop_task, sc);
 
 	/* get control interface */
@@ -1358,7 +1358,7 @@ url_lock_mii(struct url_softc *sc)
 			__func__));
 
 	sc->sc_refcnt++;
-	lockmgr(&sc->sc_mii_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&sc->sc_mii_rwlock, RW_WRITER);
 }
 
 Static void
@@ -1367,7 +1367,7 @@ url_unlock_mii(struct url_softc *sc)
 	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),
 		       __func__));
 
-	lockmgr(&sc->sc_mii_lock, LK_RELEASE, NULL);
+	rw_exit(&sc->sc_mii_rwlock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 }
