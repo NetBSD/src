@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.14 2007/03/04 05:59:37 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.14.22.1 2007/08/28 16:57:42 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -63,6 +63,13 @@ struct pcb_arm32 {
 	u_int	pcb32_lr;
 	u_int	pcb32_pc;
 	u_int	pcb32_und_sp;
+
+	/*
+	 * ARMv6 has two user thread/process id registers which can hold
+	 * any 32bit quanttiies.
+	 */
+	u_int	pcb32_user_pid_rw;		/* p15, 0, Rd, c13, c0, 2 */
+	u_int	pcb32_user_pid_ro;		/* p15, 0, Rd, c13, c0, 3 */
 };
 #define	pcb_pagedir	pcb_un.un_32.pcb32_pagedir
 #define	pcb_pl1vec	pcb_un.un_32.pcb32_pl1vec
