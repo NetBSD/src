@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6.24.1 2007/08/28 18:04:34 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -44,10 +44,22 @@ extern	void		_start(void);
 	void		___start(int, char *[], char *[], struct ps_strings *,
 				const Obj_Entry *, void (*)(void));
 
+#ifdef __thumb__
+#define	GET_ENVP	"	lsl	r2, r0, #2\n" \
+			"	add	r2, r2, r1\n"
+#define	ALIGN_STACK	""
+#else
+#define	GET_ENVP	"	add	r2, r1, r0, lsl #2\n"
+#define	ALIGN_STACK	"	bic	sp, sp, #" ___STRING(STACKALIGNBYTES) "\n"
+#endif
+
 __asm("	.text			\n"
 "	.align	0		\n"
 "	.globl	_start		\n"
 "	.globl	__start		\n"
+#ifdef __thumb__
+"	.thumb_func		\n"
+#endif
 "_start:			\n"
 "__start:			\n"
 "	mov	r5, r2		/* cleanup */		\n"
@@ -56,11 +68,11 @@ __asm("	.text			\n"
 "	/* Get argc, argv, and envp from stack */	\n"
 "	ldr	r0, [sp, #0x0000]	\n"
 "	add	r1, sp, #0x0004		\n"
-"	add	r2, r1, r0, lsl #2	\n"
+	GET_ENVP 
 "	add	r2, r2, #0x0004		\n"
 "\n"
 "	/* Ensure the stack is properly aligned before calling C code. */\n"
-"	bic	sp, sp, #" ___STRING(STACKALIGNBYTES) "	\n"
+	ALIGN_STACK
 "	sub	sp, sp, #8	\n"
 "	str	r5, [sp, #4]	\n"
 "	str	r4, [sp, #0]	\n"
@@ -68,7 +80,7 @@ __asm("	.text			\n"
 "	b	" ___STRING(_C_LABEL(___start)) " ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.6 2002/01/01 01:31:06 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.6.24.1 2007/08/28 18:04:34 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 void
