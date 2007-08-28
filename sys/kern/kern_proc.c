@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.114 2007/08/10 21:50:48 dyoung Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.114.2.1 2007/08/28 18:43:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.114 2007/08/10 21:50:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.114.2.1 2007/08/28 18:43:44 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -194,22 +194,80 @@ static uint next_free_pt, last_free_pt;
 static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 
 /* Components of the first process -- never freed. */
-struct session session0;
-struct pgrp pgrp0;
-struct proc proc0;
-struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT);
-kauth_cred_t cred0;
+
+extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
+
+struct session session0 = {
+	.s_count = 1,
+	.s_sid = 0,
+};
+struct pgrp pgrp0 = {
+	.pg_members = LIST_HEAD_INITIALIZER(&pgrp0.pg_members),
+	.pg_session = &session0,
+};
 struct filedesc0 filedesc0;
-struct cwdinfo cwdi0;
-struct plimit limit0;
+struct cwdinfo cwdi0 = {
+	.cwdi_cmask = CMASK,		/* see cmask below */
+	.cwdi_refcnt = 1,
+};
+struct plimit limit0 = {
+	.pl_corename = defcorename,
+	.p_refcnt = 1,
+	.pl_rlimit = {
+		[0 ... __arraycount(limit0.pl_rlimit) - 1] = {
+			.rlim_cur = RLIM_INFINITY,
+			.rlim_max = RLIM_INFINITY,
+		},
+	},
+};
 struct pstats pstat0;
 struct vmspace vmspace0;
 struct sigacts sigacts0;
 struct turnstile turnstile0;
+struct proc proc0 = {
+	.p_lwps = LIST_HEAD_INITIALIZER(&proc0.p_lwps),
+	.p_sigwaiters = LIST_HEAD_INITIALIZER(&proc0.p_sigwaiters),
+	.p_nlwps = 1,
+	.p_nrlwps = 1,
+	.p_nlwpid = 1,		/* must match lwp.l_lid */
+	.p_refcnt = 1,
+	.p_pgrp = &pgrp0,
+	.p_comm = "system",
+	/*
+	 * Set P_NOCLDWAIT so that kernel threads are reparented to init(8)
+	 * when they exit.  init(8) can easily wait them out for us.
+	 */
+	.p_flag = PK_SYSTEM | PK_NOCLDWAIT,
+	.p_stat = SACTIVE,
+	.p_nice = NZERO,
+	.p_emul = &emul_netbsd,
+	.p_cwdi = &cwdi0,
+	.p_limit = &limit0,
+	.p_fd = &filedesc0.fd_fd,
+	.p_vmspace = &vmspace0,
+	.p_stats = &pstat0,
+	.p_sigacts = &sigacts0,
+};
+struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
+#ifndef LWP0_CPU_INFO
+	.l_cpu = LWP0_CPU_INFO,
+#endif
+	.l_proc = &proc0,
+	.l_lid = 1,
+	.l_flag = LW_INMEM | LW_SYSTEM,
+	.l_stat = LSONPROC,
+	.l_ts = &turnstile0,
+	.l_syncobj = &sched_syncobj,
+	.l_refcnt = 1,
+	.l_priority = PRIBIO,
+	.l_usrpri = PRIBIO,
+	.l_inheritedprio = MAXPRI,
+	.l_pi_lenders = SLIST_HEAD_INITIALIZER(&lwp0.l_pi_lenders),
+	.l_name = __UNCONST("swapper"),
+};
+kauth_cred_t cred0;
 
 extern struct user *proc0paddr;
-
-extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
 
 int nofile = NOFILE;
 int maxuprc = MAXUPRC;
@@ -298,7 +356,6 @@ proc0_init(void)
 	struct pgrp *pg;
 	struct session *sess;
 	struct lwp *l;
-	u_int i;
 	rlim_t lim;
 
 	p = &proc0;
@@ -321,54 +378,18 @@ proc0_init(void)
 	cv_init(&p->p_waitcv, "wait");
 	cv_init(&p->p_lwpcv, "lwpwait");
 
-	LIST_INIT(&p->p_lwps);
-	LIST_INIT(&p->p_sigwaiters);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
-
-	p->p_nlwps = 1;
-	p->p_nrlwps = 1;
-	p->p_nlwpid = l->l_lid;
-	p->p_refcnt = 1;
 
 	pid_table[0].pt_proc = p;
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
-	p->p_pgrp = pg;
 	pid_table[0].pt_pgrp = pg;
-	LIST_INIT(&pg->pg_members);
 	LIST_INSERT_HEAD(&pg->pg_members, p, p_pglist);
 
-	pg->pg_session = sess;
-	sess->s_count = 1;
-	sess->s_sid = 0;
-	sess->s_leader = p;
-
-	/*
-	 * Set P_NOCLDWAIT so that kernel threads are reparented to
-	 * init(8) when they exit.  init(8) can easily wait them out
-	 * for us.
-	 */
-	p->p_flag = PK_SYSTEM | PK_NOCLDWAIT;
-	p->p_stat = SACTIVE;
-	p->p_nice = NZERO;
-	p->p_emul = &emul_netbsd;
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
-	strlcpy(p->p_comm, "system", sizeof(p->p_comm));
-
-	l->l_flag = LW_INMEM | LW_SYSTEM;
-	l->l_stat = LSONPROC;
-	l->l_ts = &turnstile0;
-	l->l_syncobj = &sched_syncobj;
-	l->l_refcnt = 1;
-	l->l_cpu = curcpu();
-	l->l_priority = PRIBIO;
-	l->l_usrpri = PRIBIO;
-	l->l_inheritedprio = MAXPRI;
-	SLIST_INIT(&l->l_pi_lenders);
-	l->l_name = __UNCONST("swapper");
 
 	callout_init(&l->l_tsleep_ch, 0);
 	cv_init(&l->l_sigcv, "sigwait");
@@ -380,17 +401,10 @@ proc0_init(void)
 	l->l_cred = cred0;
 
 	/* Create the CWD info. */
-	p->p_cwdi = &cwdi0;
-	cwdi0.cwdi_cmask = cmask;
-	cwdi0.cwdi_refcnt = 1;
 	rw_init(&cwdi0.cwdi_lock);
 
 	/* Create the limits structures. */
-	p->p_limit = &limit0;
 	mutex_init(&limit0.p_lock, MUTEX_DEFAULT, IPL_NONE);
-	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
-		limit0.pl_rlimit[i].rlim_cur =
-		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
 
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
@@ -404,14 +418,11 @@ proc0_init(void)
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
-	limit0.pl_corename = defcorename;
-	limit0.p_refcnt = 1;
 
 	/* Configure virtual memory system, set vm rlimits. */
 	uvm_init_limits(p);
 
 	/* Initialize file descriptor table for proc0. */
-	p->p_fd = &filedesc0.fd_fd;
 	fdinit1(&filedesc0);
 
 	/*
@@ -421,14 +432,10 @@ proc0_init(void)
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
 	    trunc_page(VM_MAX_ADDRESS));
-	p->p_vmspace = &vmspace0;
 
 	l->l_addr = proc0paddr;				/* XXX */
 
-	p->p_stats = &pstat0;
-
 	/* Initialize signal state for proc0. */
-	p->p_sigacts = &sigacts0;
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_SPIN, IPL_NONE);
 	siginit(p);
 
