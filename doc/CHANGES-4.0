@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.236 2007/08/27 21:02:30 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.237 2007/08/28 11:59:03 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8625,3 +8625,35 @@ sys/dev/pci/pcidevs				1.866
 	Apply OpenBSD's rev. 1.14 via patch:
 		- remove another Yukon Lite workaround.
 	[riz, ticket #816]
+
+lib/libc/stdlib/atexit.c			1.18
+lib/libc/stdlib/atexit.c			1.19
+
+	Ensure that the struct atexit_handler has been removed from the list
+	of pending atexit handlers before the structure is reused.  This prevents
+	__cxa_finalize from going into an infinite loop when an atexit handler
+	register a new atexit handler.
+	[kristerw, ticket #839]
+
+usr.sbin/rpcbind/rpcb_svc_com.c			1.13
+
+	Initialise the 'fromlen' parameter for recvfrom() prior to the call, instead
+	of passing in a 'random' value off the stack.
+	This should fix the problems with ypbind on current.
+	[dsl, ticket #840]
+
+sys/arch/i386/i386/machdep.c			1.604
+
+	When collecting memory regions from the BIOS, ignore regions that are less
+	than a page size.
+	[xtraeme, ticket #841]
+
+lib/libcurses/resize.c				1.15
+lib/libcurses/tstp.c				1.36
+
+	Fix resizing bug where the values of LINES and/or COLS changed while we
+	were resizing windows, leading to inconsistencies between the sizes of
+	stdscr and curscr.
+
+	Should fix the curses part of PR lib/36702.
+	[jdc, ticket #842]
