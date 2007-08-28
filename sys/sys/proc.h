@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.253 2007/08/07 19:00:42 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.253.2.1 2007/08/28 18:33:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -456,11 +456,14 @@ do {									\
  */
 #if !defined(curlwp)
 #if defined(MULTIPROCESSOR)
-#define	curlwp		curcpu()->ci_curlwp	/* Current running LWP */
+#define	curlwp		curcpu()->ci_curlwp	/* Currently running LWP */
 #else
-extern struct lwp	*curlwp;		/* Current running LWP */
+extern struct lwp	*curlwp;		/* Currently running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curlwp */
+#if !defined(curlwp_set)
+#define curlwp_set(l)	((void)(curlwp = (l)))	/* set currently running lwp */
+#endif
 
 #define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
 #define	curproc		(curlwp->l_proc)
