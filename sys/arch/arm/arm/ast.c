@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.10 2007/02/18 07:25:34 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.10.24.1 2007/08/28 18:31:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10 2007/02/18 07:25:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10.24.1 2007/08/28 18:31:20 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,9 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.10 2007/02/18 07:25:34 matt Exp $");
  */
 void ast __P((struct trapframe *));
  
-int want_resched = 0;
-int astpending;
-
 void
 userret(struct lwp *l)
 {
@@ -81,7 +78,7 @@ userret(struct lwp *l)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
+	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 
@@ -123,10 +120,8 @@ ast(struct trapframe *tf)
 	}
 
 	/* Allow a forced task switch. */
-	if (want_resched)
+	if (l->l_cpu->ci_want_resched)
 		preempt();
 
 	userret(l);
 }
-
-/* End of ast.c */
