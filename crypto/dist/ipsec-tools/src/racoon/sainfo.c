@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.7 2006/11/16 00:30:55 mgrooms Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.7.2.1 2007/08/28 11:14:48 liamjfoy Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -40,11 +40,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in.h> 
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else 
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>

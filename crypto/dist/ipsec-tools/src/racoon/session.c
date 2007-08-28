@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.7 2006/09/30 16:14:18 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.7.2.1 2007/08/28 11:14:48 liamjfoy Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -47,11 +47,7 @@
 # define WIFEXITED(s)	(((s) & 255) == 0)
 #endif
 
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -228,8 +224,9 @@ session(void)
 
 		if (lcconf->rtsock >= 0 && FD_ISSET(lcconf->rtsock, &rfds)) {
 			if (update_myaddrs() && lcconf->autograbaddr)
-				sched_new(5, check_rtsock, NULL);
-			initfds();
+				check_rtsock(NULL);
+			else
+				initfds();
 		}
 	}
 }

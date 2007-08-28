@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.13.2.1 2007/05/13 10:14:05 jdc Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.13.2.2 2007/08/28 11:14:45 liamjfoy Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -40,11 +40,7 @@
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
 #include <sys/queue.h>
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -646,8 +642,11 @@ isakmp_info_send_d2(iph2)
 	 * It's nonsensical to negotiate phase 1 to send the information.
 	 */
 	iph1 = getph1byaddr(iph2->src, iph2->dst); 
-	if (iph1 == NULL)
+	if (iph1 == NULL){
+		plog(LLV_DEBUG2, LOCATION, NULL,
+			 "No ph1 handler found, could not send DELETE_SA\n");
 		return 0;
+	}
 
 	/* create delete payload */
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
@@ -1162,6 +1161,11 @@ purge_ipsec_spi(dst0, proto, spi, n)
 	size_t i;
 	caddr_t mhp[SADB_EXT_MAX + 1];
 
+	plog(LLV_DEBUG2, LOCATION, NULL,
+		 "purge_ipsec_spi:\n");
+	plog(LLV_DEBUG2, LOCATION, NULL, "dst0: %s\n", saddr2str(dst0));
+	plog(LLV_DEBUG2, LOCATION, NULL, "SPI: %08X\n", ntohl(spi[0]));
+
 	buf = pfkey_dump_sadb(ipsecdoi2pfkey_proto(proto));
 	if (buf == NULL) {
 		plog(LLV_DEBUG, LOCATION, NULL,
@@ -1208,6 +1212,10 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			msg = next;
 			continue;
 		}
+		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(src));
+		plog(LLV_DEBUG2, LOCATION, NULL, "dst: %s\n", saddr2str(dst));
+
+
 
 		/* XXX n^2 algorithm, inefficient */
 
