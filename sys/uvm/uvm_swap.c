@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.122.2.12 2007/08/24 23:28:50 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122.2.13 2007/08/28 15:10:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.12 2007/08/24 23:28:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122.2.13 2007/08/28 15:10:13 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1271,6 +1271,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		nbp->vb_buf.b_rawblkno = nbp->vb_buf.b_blkno;
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
 		nbp->vb_buf.b_vp       = vp;
+		nbp->vb_buf.b_objlock  = &vp->v_interlock;
 		if (vp->v_type == VBLK) {
 			nbp->vb_buf.b_dev = vp->v_rdev;
 		}
@@ -1341,6 +1342,7 @@ sw_reg_start(struct swapdev *sdp)
 		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
 		    bp, bp->b_vp, bp->b_blkno, bp->b_bcount);
 		vp = bp->b_vp;
+		KASSERT(bp->b_objlock == &vp->v_interlock);
 		if ((bp->b_flags & B_READ) == 0) {
 			mutex_enter(&vp->v_interlock);
 			vp->v_numoutput++;
@@ -1673,7 +1675,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
 
-	bp->b_flags = BC_BUSY | BC_NOCACHE;
+	bp->b_cflags = BC_BUSY | BC_NOCACHE;
 	bp->b_flags = (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
@@ -1703,6 +1705,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 	} else {
+		bp->b_iodone = NULL;
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	}
 	UVMHIST_LOG(pdhist,
