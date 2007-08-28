@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.193.2.7 2007/08/28 13:23:53 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.193.2.8 2007/08/28 13:25:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.7 2007/08/28 13:23:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.8 2007/08/28 13:25:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1411,7 +1411,7 @@ ttyflush(struct tty *tp, int rw)
 		CLR(tp->t_state, TS_TTSTOP);
 		cdev_stop(tp, rw);
 		FLUSHQ(&tp->t_outq);
-		wakeup((void *)&tp->t_outq);
+		cv_broadcast(&tp->t_outq.c_cv);
 		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 }
@@ -2211,7 +2211,7 @@ ttwakeup(struct tty *tp)
 		pgsignal(tp->t_pgrp, SIGIO, tp->t_session != NULL);
 		mutex_exit(&proclist_mutex);
 	}
-	wakeup((void *)&tp->t_rawq);
+	cv_broadcast(&tp->t_rawq.c_cv);
 }
 
 /*
