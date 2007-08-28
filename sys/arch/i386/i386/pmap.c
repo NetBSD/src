@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.20 2007/08/26 07:07:31 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.21 2007/08/28 11:59:51 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.20 2007/08/26 07:07:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.21 2007/08/28 11:59:51 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2647,7 +2647,7 @@ pmap_page_remove(struct vm_page *pg)
 	struct pv_head *pvh;
 	struct pv_entry *pve, *npve, *killlist = NULL;
 	pt_entry_t *ptes, opte;
-	TAILQ_HEAD(, vm_page) empty_ptps;
+	struct vm_page *empty_ptps = NULL;
 	struct vm_page *ptp;
 	struct pmap *pmap2;
 	vaddr_t tva;
@@ -2664,8 +2664,6 @@ pmap_page_remove(struct vm_page *pg)
 	if (SPLAY_ROOT(&pvh->pvh_root) == NULL) {
 		return;
 	}
-
-	TAILQ_INIT(&empty_ptps);
 
 	/* set pv_head => pmap locking */
 	rw_enter(&pmap_main_lock, RW_WRITER);
@@ -2744,8 +2742,8 @@ pmap_page_remove(struct vm_page *pg)
 				pve->pv_ptp->flags |= PG_ZERO;
 				/* Free only after the shootdown */
 				uvm_pagerealloc(pve->pv_ptp, NULL, 0);
-				TAILQ_INSERT_TAIL(&empty_ptps, pve->pv_ptp,
-				    listq);
+				pve->pv_ptp->mdpage.mp_link = empty_ptps;
+				empty_ptps = pve->pv_ptp;
 			}
 		}
 		
@@ -2762,8 +2760,10 @@ pmap_page_remove(struct vm_page *pg)
 
 	/* Now we can free unused pvs and ptps. */
 	pmap_free_pvs(NULL, killlist);
-	TAILQ_FOREACH(ptp, &empty_ptps, listq)
+	for (ptp = empty_ptps; ptp != NULL; ptp = empty_ptps) {
+		empty_ptps = ptp->mdpage.mp_link;
 		uvm_pagefree(ptp);
+	}
 }
 
 /*
