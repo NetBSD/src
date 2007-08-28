@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.16.2.1 2007/05/13 10:14:06 jdc Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.16.2.2 2007/08/28 11:14:46 liamjfoy Exp $	*/
 
-/* $Id: pfkey.c,v 1.16.2.1 2007/05/13 10:14:06 jdc Exp $ */
+/* $Id: pfkey.c,v 1.16.2.2 2007/08/28 11:14:46 liamjfoy Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,11 +65,7 @@
 #include <net/pfkeyv2.h>
 
 #include <netinet/in.h>
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 #include <fcntl.h>
 
 #include "libpfkey.h"
@@ -1282,6 +1278,15 @@ pk_recvupdate(mhp)
 
 	/* turn off schedule */
 	SCHED_KILL(iph2->scr);
+
+	/* Force the update of ph2's ports, as there is at least one
+	 * situation where they'll mismatch with ph1's values
+	 */
+
+#ifdef ENABLE_NATT
+	set_port(iph2->src, extract_port(iph2->ph1->local));
+	set_port(iph2->dst, extract_port(iph2->ph1->remote));
+#endif
 
 	/*
 	 * since we are going to reuse the phase2 handler, we need to

@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.8.2.1 2007/05/13 10:14:06 jdc Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.8.2.2 2007/08/28 11:14:48 liamjfoy Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -42,11 +42,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>
