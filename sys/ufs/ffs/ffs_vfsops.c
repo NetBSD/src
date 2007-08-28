@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.15 2007/08/24 23:28:45 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.16 2007/08/28 22:07:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.15 2007/08/24 23:28:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.16 2007/08/28 22:07:23 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1014,7 +1014,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 #endif
 	}
 #endif /* UFS_EXTATTR */
-	mp->mnt_iflag |= IMNT_MPSAFE;
 	return (0);
 out:
 	if (fs)
