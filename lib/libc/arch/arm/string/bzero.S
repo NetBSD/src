@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.3 2003/10/14 07:51:45 scw Exp $	*/
+/*	$NetBSD: bzero.S,v 1.3.22.1 2007/08/28 17:36:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,8 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <machine/asm.h>
 
 #define _BZERO
 #include "memset.S"
