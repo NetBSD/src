@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.49 2007/05/17 14:51:15 yamt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.49.12.1 2007/08/28 18:53:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49 2007/05/17 14:51:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.12.1 2007/08/28 18:53:02 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -88,7 +88,7 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
+struct cpu_info cpu_info_store = { .ci_cpl = IPL_HIGH, };
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;
@@ -427,10 +427,10 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 {
 	bool immed = (flags & RESCHED_IMMED) != 0;
 
-	if (want_resched && !immed)
+	if (ci->ci_want_resched && !immed)
 		return;
 
-	want_resched = 1;
+	ci->ci_want_resched = 1;
 	if (curlwp != ci->ci_data.cpu_idlelwp)
 		setsoftast();
 }
