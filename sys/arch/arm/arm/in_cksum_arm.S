@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.S,v 1.8 2006/10/08 12:41:51 bjh21 Exp $	*/
+/*	$NetBSD: in_cksum_arm.S,v 1.8.30.1 2007/08/28 19:39:09 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 #include "opt_inet.h"
 
 #include <machine/asm.h>
-RCSID("$NetBSD: in_cksum_arm.S,v 1.8 2006/10/08 12:41:51 bjh21 Exp $")
+RCSID("$NetBSD: in_cksum_arm.S,v 1.8.30.1 2007/08/28 19:39:09 matt Exp $")
 	
 #include "assym.h"
 
@@ -91,6 +91,7 @@ ENTRY(in_cksum)
 	and	r0, r0, r1
 	eor	r0, r0, r1
 	ldmfd	sp!, {r4-r11,pc}
+	END(in_cksum)
 
 
 #ifdef INET
@@ -223,6 +224,7 @@ ENTRY(in4_cksum)
 .Lin4_cksum_whoops:
 	adr	r0, .Lin4_cksum_whoops_str
 	bl	_C_LABEL(panic)
+	END(in_cksum4)
 .Lin4_cksum_whoops_str:
 	.asciz	"in4_cksum: out of mbufs\n"
 	.align	5
@@ -248,7 +250,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	str	lr, [sp, #-4]!		/* for SVC26 mode */
 #endif
-#ifdef __XSCALE__
+#if defined(__XSCALE__) || defined(_ARM_ARCH_6)
 	pld	[r0]			/* Pre-fetch the start of the buffer */
 #endif
 	mov	r2, #0
@@ -281,7 +283,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4		/* All done? */
 #else
-	moveq	pc, lr			/* All done? */
+	RETc(eq)			/* All done? */
 #endif
 
 	/* Buffer is now word aligned */
@@ -377,7 +379,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4
 #else
-	moveq	pc, lr
+	RETc(eq)
 #endif
 	cmp	r1, #0x20
 
@@ -414,7 +416,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4
 #else
-	moveq	pc, lr
+	RETc(eq)
 #endif
 
 .Lcksumdata_less_than_32:
@@ -461,7 +463,7 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldreq	pc, [sp], #4
 #else
-	moveq	pc, lr
+	RETc(eq)
 #endif
 
 	/* Deal with 1 to 3 remaining bytes, possibly misaligned */
@@ -490,5 +492,6 @@ ASENTRY_NP(L_cksumdata)
 #ifdef __PROG26
 	ldr	pc, [sp], #4
 #else
-	mov	pc, lr
+	RET
 #endif
+	ASEND(L_cksumdata)
