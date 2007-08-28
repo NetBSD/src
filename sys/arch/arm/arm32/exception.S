@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.14 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: exception.S,v 1.14.52.1 2007/08/28 18:51:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -45,11 +45,12 @@
  * Based on kate/display/abort.s
  */
 
+#include "opt_cpuoptions.h"
 #include "opt_ipkdb.h"
+#include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include "assym.h"
 
 	.text	
 	.align	0
