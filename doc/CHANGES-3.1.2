@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.5 2007/08/26 20:28:34 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.6 2007/08/28 13:33:25 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -60,4 +60,16 @@ sys/kern/uipc_usrreq.c				1.98
 	fails. Patch from Gary Thorpe, based on changes in FreeBSD and work
 	from Christian Biere.
 	[martin, ticket #1820]
+
+lib/libc/hash/sha2/sha2.c			patch
+sys/crypto/ripemd160/rmd160.c			patch
+sys/crypto/sha2/sha2.c				patch
+
+	Fix SIGBUS issues on strict alignment issues. Use le32dec in RMD160
+	as the data pointer to RMD160_Update doesn't have to be aligned.
+	In SHA256_Update and SHA512_Update, only operate directly on the passed
+	in data if no left-over in the context exists and the data is correctly
+	aligned. The problem was exposed by the audit-packages rewrite in C
+	and reported for the libnbcompat version in PR pkg/36662.
+	[joerg, ticket #1812]
 
