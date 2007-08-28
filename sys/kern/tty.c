@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.193.2.6 2007/07/01 21:50:41 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.193.2.7 2007/08/28 13:23:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.6 2007/07/01 21:50:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193.2.7 2007/08/28 13:23:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,6 @@ ttyclose(struct tty *tp)
 static int
 ttyinput_wlock(int c, struct tty *tp)
 {
-	const struct cdevsw *cdev;
 	int	iflag, lflag, i, error;
 	u_char	*cc;
 
@@ -493,9 +492,7 @@ ttyinput_wlock(int c, struct tty *tp)
 			if (CCEQ(cc[VSTOP], c)) {
 				if (!ISSET(tp->t_state, TS_TTSTOP)) {
 					SET(tp->t_state, TS_TTSTOP);
-					cdev = cdevsw_lookup(tp->t_dev);
-					if (cdev != NULL)
-						(*cdev->d_stop)(tp, 0);
+					cdev_stop(tp, 0);
 					return (0);
 				}
 				if (!CCEQ(cc[VSTART], c))
@@ -1110,13 +1107,10 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */
 	{
-		const struct cdevsw *cdev;
 		mutex_enter(&tp->t_lock);
 		if (!ISSET(tp->t_state, TS_TTSTOP)) {
 			SET(tp->t_state, TS_TTSTOP);
-			cdev = cdevsw_lookup(tp->t_dev);
-			if (cdev != NULL)
-				(*cdev->d_stop)(tp, 0);
+			cdev_stop(tp, 0);
 		}
 		mutex_exit(&tp->t_lock);
 		break;
@@ -1311,11 +1305,8 @@ ttykqfilter(dev_t dev, struct knote *kn)
 {
 	struct tty	*tp;
 	struct klist	*klist;
-	const struct cdevsw	*cdev;
 
-        if (((cdev = cdevsw_lookup(dev)) == NULL) ||
-	    (cdev->d_tty == NULL) ||
-	    ((tp = (*cdev->d_tty)(dev)) == NULL))
+	if ((tp = cdev_tty(dev)) == NULL)
 		return (ENXIO);
 
 	switch (kn->kn_filter) {
@@ -1407,7 +1398,6 @@ ttywflush(struct tty *tp)
 void
 ttyflush(struct tty *tp, int rw)
 {
-	const struct cdevsw *cdev;
 
 	if (rw & FREAD) {
 		FLUSHQ(&tp->t_canq);
@@ -1419,9 +1409,7 @@ ttyflush(struct tty *tp, int rw)
 	}
 	if (rw & FWRITE) {
 		CLR(tp->t_state, TS_TTSTOP);
-		cdev = cdevsw_lookup(tp->t_dev);
-		if (cdev != NULL)
-			(*cdev->d_stop)(tp, rw);
+		cdev_stop(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		wakeup((void *)&tp->t_outq);
 		selnotify(&tp->t_wsel, NOTE_SUBMIT);
