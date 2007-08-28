@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.12 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.12.4.1 2007/08/28 11:54:49 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.12 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.12.4.1 2007/08/28 11:54:49 liamjfoy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,6 +64,10 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 	if (win == NULL)
 		return ERR;
 
+#ifdef	DEBUG
+	__CTRACE(__CTRACE_WINDOW, "wresize: (%p, %d, %d)\n",
+	    win, nlines, ncols);
+#endif
 	nlines = req_nlines;
 	ncols = req_ncols;
 	if (win->orig == NULL) {
@@ -94,12 +98,20 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 	win->reqy = req_nlines;
 	win->reqx = req_ncols;
 
+	/* If someone resizes curscr, we must also resize __virtscr */
+	if (win == curscr) {
+		if ((__resizewin(__virtscr, nlines, ncols)) == ERR)
+			return ERR;
+		__virtscr->reqy = req_nlines;
+		__virtscr->reqx = req_ncols;
+	}
+
 	return OK;
 }
 
 /*
  * resizeterm --
- *      Resize the terminal window, resizing the dependent windows.
+ *	Resize the terminal window, resizing the dependent windows.
  */
 int
 resizeterm(int nlines, int ncols)
@@ -162,7 +174,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 {
 	__LINE			*lp, *olp, **newlines, *newlspace;
 	__LDATA			*sp;
-	__LDATA                 *newwspace;
+	__LDATA			*newwspace;
 	int			 i, j;
 	int			 y, x;
 	WINDOW			*swin;
