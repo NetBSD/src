@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.36 2007/08/15 12:07:24 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.36.2.1 2007/08/28 18:29:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36 2007/08/15 12:07:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36.2.1 2007/08/28 18:29:05 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -154,7 +154,10 @@ swi_handler(trapframe_t *frame)
 	if (frame->tf_spsr & PSR_T_bit) {
 		/* Map a Thumb SWI onto the bottom 256 ARM SWIs.  */
 		insn = fusword((void *)(frame->tf_pc - THUMB_INSN_SIZE));
-		insn = (insn & 0x00ff) | 0xef000000;
+		if (insn & 0x00ff)
+			insn = (insn & 0x00ff) | 0xef000000;
+		else
+			insn = frame->tf_ip | 0xef000000;
 	}
 	else
 #endif
