@@ -1,4 +1,4 @@
-/*      $NetBSD: strncmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $ */
+/*      $NetBSD: strncmp.S,v 1.1.18.1 2007/08/28 17:35:32 matt Exp $ */
 
 /*
  * Copyright (c) 2002 ARM Ltd
@@ -30,9 +30,28 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strncmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+RCSID("$NetBSD: strncmp.S,v 1.1.18.1 2007/08/28 17:35:32 matt Exp $")
 
 ENTRY(strncmp)
+#ifdef __thumb__
+	push	{r4, r5}
+	mov	r5, #0
+1:
+	cmp	r5, r2
+	beq	2f
+	ldrb	r3, [r0, r5]
+	ldrb	r4, [r1, r5]
+	cmp	r3, #0
+	beq	3f
+	cmp	r3, r4
+	bne	3f
+	add	r5, r5, #1
+	b	1b
+2:	mov	r3, r4
+3:	sub	r0, r3, r4
+	pop	{r4, r5}
+	RET
+#else
 /* if ((len - 1) < 0) return 0 */
 	subs	r2, r2, #1
 	movmi	r0, #0
@@ -49,3 +68,5 @@ ENTRY(strncmp)
 	beq	1b
 	sub	r0, r2, r3
 	RET
+#endif
+	END(strncmp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.1.18.1 2007/08/28 17:35:30 matt Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -13,6 +13,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifdef __thumb__
+#undef __thumb__
+	.code	32
+#endif
 
 #include <machine/asm.h>
 
