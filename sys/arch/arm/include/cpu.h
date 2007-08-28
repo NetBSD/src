@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2007/08/04 09:49:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.4.1 2007/08/28 16:54:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -77,6 +77,7 @@
 
 #ifndef _LKM
 #include "opt_multiprocessor.h"
+#include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
 #endif /* !_LKM */
 
@@ -98,6 +99,10 @@ extern int cpu_do_powersave;
 
 #ifdef __PROG32
 #ifdef _LOCORE
+#ifdef _ARM_ARCH_6
+#define IRQdisable	cprid	i
+#define IRQenable	cpsie	i
+#else
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
 	mrs	r0, cpsr ; \
@@ -111,6 +116,17 @@ extern int cpu_do_powersave;
 	bic	r0, r0, #(I32_bit) ; \
 	msr	cpsr_c, r0 ; \
 	ldmfd	sp!, {r0}		
+#endif /* _ARM_ARCH_6 */
+
+#if defined (PROCESS_ID_IS_CURCPU)
+#define GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
+#define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
+#define GET_CURPCB(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURPCB]
+#elif defined (PROCESS_ID_IS_CURLWP)
+#define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
+#define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
+#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_ADDR]
+#endif
 
 #else
 #define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
@@ -139,14 +155,13 @@ extern int cpu_do_powersave;
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
-extern int current_intr_depth;
 #ifdef __PROG32
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame)						\
-	((current_intr_depth > 1) ||					\
+	((curcpu()->ci_intr_depth > 1) ||				\
 	    (frame->cf_if.if_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
-#define CLKF_INTR(frame)	(current_intr_depth > 1) 
+#define CLKF_INTR(frame)	(curcpu()->ci_intr_depth > 1) 
 #endif
 
 /*
@@ -216,6 +231,12 @@ struct cpu_info {
 	u_int32_t ci_arm_cputype;	/* CPU type */
 	u_int32_t ci_arm_cpurev;	/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
+	int ci_cpl;			/* current processor level (spl) */
+	int ci_astpending;		/* */
+	int ci_want_resched;		/* resched() was called */
+	int ci_intr_depth;		/* */
+	struct lwp *ci_curlwp;		/* current lwp */
+	struct pcb *ci_curpcb;		/* current pcb */
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
@@ -226,9 +247,44 @@ struct cpu_info {
 
 #ifndef MULTIPROCESSOR
 extern struct cpu_info cpu_info_store;
+#if defined(PROCESS_ID_IS_CURLWP)
+static inline struct lwp *
+_curlwp(void)
+{
+	struct lwp *l;
+	__asm("mrc\tp15, 0, %0, c13, c0, 4" : "=r"(l));
+	return l;
+}
+
+static inline void
+_curlwp_set(struct lwp *l)
+{
+	__asm("mcr\tp15, 0, %0, c13, c0, 4" : "=r"(l));
+}
+
+#define	curlwp		(_curlwp())
+#define	curcpu()	(curlwp->l_cpu)
+#define	curlwp_set(l)	_curlwp_set(l)
+#elif defined(PROCESS_ID_IS_CURCPU)
+static inline struct cpu_info *
+curcpu(void)
+{
+	struct cpu_info *ci;
+	__asm("mrc\tp15, 0, %0, c13, c0, 4" : "=r"(ci));
+	return ci;
+}
+#else
 #define	curcpu()	(&cpu_info_store)
-#define cpu_number()	0
+#endif /* !PROCESS_ID_IS_CURCPU && !PROCESS_ID_IS_CURLWP */
+#ifndef curpcb
+#define	curpcb		(curcpu()->ci_curpcb)
 #endif
+#ifndef curlwp
+#define	curlwp		(curcpu()->ci_curlwp)
+#endif
+#define cpu_number()	0
+#define	LWP0_CPU_INFO	(&cpu_info_store)
+#endif /* !MULTIPROCESSOR */
 
 #ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -240,8 +296,7 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * Scheduling glue
  */
 
-extern int astpending;
-#define setsoftast() (astpending = 1)
+#define setsoftast() (curcpu()->ci_astpending = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -262,11 +317,6 @@ extern int want_resched;	/* resched() was called */
  * through trap(), marking the proc as needing a profiling tick.
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
-
-/*
- * reset want_resched, it's been processed.
- */
-#define	cpu_did_resched()	do { want_resched = 0; } while(0)
 
 #ifndef acorn26
 /*
@@ -308,5 +358,3 @@ void swi_handler(trapframe_t *);
 #endif /* _KERNEL */
 
 #endif /* !_ARM_CPU_H_ */
-
-/* End of cpu.h */
