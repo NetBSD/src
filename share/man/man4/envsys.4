@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.29 2007/07/02 20:07:23 xtraeme Exp $
+.\"	$NetBSD: envsys.4,v 1.30 2007/08/28 08:22:58 xtraeme Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 2, 2007
+.Dd August 28, 2007
 .Dt ENVSYS 4
 .Os
 .Sh NAME
@@ -308,6 +308,7 @@ and to print it in raw XML/plist format:
 int main(void)
 {
 	prop_dictionary_t dict;
+	char *buf;
 	int fd;
 
 	if ((fd = open(_DEV_SYSMON, O_RDONLY)) == -1)
@@ -318,8 +319,10 @@ int main(void)
 		err(EINVAL, "prop_dictionary_recv_ioctl");
 	}
 
-	(void)printf("%s", prop_dictionary_externalize(dict));
+	buf = prop_dictionary_externalize(dict);
+	(void)printf("%s", buf);
 	prop_object_release(dict);
+	free(buf);
 	(void)close(fd);
 
 	return EXIT_SUCCESS;
@@ -385,24 +388,5 @@ Many useful comments for this framework were from
 Jason R. Thorpe, Tim Rightnour and Michael Lorenz. Previous
 framework was implemented by Tim Rightnour and Bill Squier.
 .Sh SEE ALSO
-.Xr acpiacad 4 ,
-.Xr acpibat 4 ,
-.Xr acpitz 4 ,
-.Xr adt7467c 4 ,
-.Xr aiboost 4 ,
-.Xr ipmi 4 ,
-.Xr it 4 ,
-.Xr lm 4 ,
-.Xr lmtemp 4 ,
-.Xr mfi 4 ,
-.Xr nsclpcsio 4 ,
-.Xr owtemp 4 ,
-.Xr proplib 3 ,
-.Xr sparc/tctrl 4 ,
-.Xr sparc64/envctrl 4 ,
-.Xr tm121temp 4 ,
-.Xr ug 4 ,
-.Xr viaenv 4 ,
 .Xr envstat 8 ,
-.Xr sysmon_envsys 9 ,
-.Xr sysmon_power 9
+.Xr sysmon_envsys 9
