@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.69 2007/08/02 01:48:44 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.69.4.1 2007/08/28 18:43:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69 2007/08/02 01:48:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.69.4.1 2007/08/28 18:43:44 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -655,7 +655,7 @@ void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
 
-	curlwp = new;
+	curlwp_set(new);
 	if (prev != NULL) {
 		lwp_unlock(prev);
 	}
