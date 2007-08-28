@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.6 2007/08/28 13:33:25 ghen Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.7 2007/08/28 13:54:21 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -72,4 +72,24 @@ sys/crypto/sha2/sha2.c				patch
 	aligned. The problem was exposed by the audit-packages rewrite in C
 	and reported for the libnbcompat version in PR pkg/36662.
 	[joerg, ticket #1812]
+
+sys/arch/acorn32/conf/GENERIC			1.80 via patch
+sys/arch/amd64/conf/GENERIC			1.154 via patch
+sys/arch/amiga/conf/GENERIC			1.248 via patch
+sys/arch/amiga/conf/GENERIC.in			1.61 via patch
+sys/arch/arc/conf/GENERIC			1.148 via patch
+sys/arch/atari/conf/GENERIC.in			1.68 via patch
+sys/arch/cats/conf/GENERIC			1.116 via patch
+sys/arch/hp300/conf/GENERIC			1.141 via patch
+sys/arch/i386/conf/GENERIC			1.840 via patch
+sys/arch/i386/conf/GENERIC.MPACPI		patch
+sys/arch/i386/conf/GENERIC_LAPTOP		1.239 via patch
+sys/arch/mac68k/conf/GENERIC			1.182 via patch
+sys/arch/sgimips/conf/GENERIC32_IP2x		1.68 via patch
+sys/arch/sgimips/conf/GENERIC32_IP3x		1.66 via patch
+sys/arch/sparc/conf/GENERIC			1.200 via patch
+sys/arch/sparc64/conf/GENERIC			1.88 via patch
+
+	Remove iso(4) from GENERIC kernels.
+	[adrianp, ticket #1826]
 
