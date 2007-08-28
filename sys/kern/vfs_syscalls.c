@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.325 2007/08/15 12:07:35 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.326 2007/08/28 09:28:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.325 2007/08/15 12:07:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.326 2007/08/28 09:28:10 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -775,13 +775,14 @@ sys_quotactl(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
-	vrele(nd.ni_vp);
 	error = VFS_QUOTACTL(mp, SCARG(uap, cmd), SCARG(uap, uid),
 	    SCARG(uap, arg), l);
+	vrele(nd.ni_vp);
 	return (error);
 }
 
