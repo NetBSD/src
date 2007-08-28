@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.6 2004/08/21 11:20:10 rearnsha Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.6.16.1 2007/08/28 17:36:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -49,6 +49,26 @@
  */
 
 ENTRY(_setjmp)
+#ifdef __thumb__
+	push	{r4-r7}
+	ldr	r2, .L_setjmp_magic
+	add	r1, r0, #4
+	str	r2, [r1]
+	add	r0, r0, #52
+	/* Store integer registers */
+        stmia	r0!, {r4-r7}
+	mov	r4, r8
+	mov	r5, r9
+	mov	r6, r10
+	mov	r7, r11
+        stmia	r0!, {r4-r7}
+	mov	r4, r12
+	mov	r5, r13
+	mov	r6, r14
+        stmia	r0!, {r4-r6}
+
+        mov	r0, #0x00000000
+#else
 	ldr	r1, .L_setjmp_magic
 	str	r1, [r0], #4
 #ifdef SOFTFLOAT
@@ -64,16 +84,57 @@ ENTRY(_setjmp)
         stmia	r0, {r4-r14}
 
         mov	r0, #0x00000000
+#endif /* __thumb__ */
+	XPOP	{r4-r7}
         RET
 
-.L_setjmp_magic:
-	.word	_JB_MAGIC__SETJMP
-
 ENTRY(_longjmp)
+#ifdef __thumb__
+	add	r2, r0, #4
+	ldr	r3, [r2]
+	ldr	r2, .L_setjmp_magic
+	cmp	r2, r3
+	bne	.Lbotch
+
+	add	r0, r0, #52
+       	/* Restore integer registers */
+        ldmia	r0!, {r4-r7}
+	push	{r4-r7}		/* save for later */
+	ldmia	r0!, {r4-r7}
+	mov	r8, r4
+	mov	r9, r5
+	mov	r10, r6
+	mov	r11, r7
+	ldmia	r0!, {r4-r6}
+	mov	r12, r4
+
+	/* Validate sp and r14 */
+	cmp	r5, #0
+	beq	.Lbotch
+	cmp	r6, #0
+	beq	.Lbotch
+
+	mov	sp, r5
+	mov	lr, r6
+	/* Set return value */
+	mov	r0, r1
+	cmp	r0, #0
+	bne	1f
+	mov	r0, #1
+1:	pop	{r4-r7}
+	RET
+
+	/* validation failed, die die die. */
+.Lbotch:
+	bl	PLT_SYM(_C_LABEL(longjmperror))
+	bl	PLT_SYM(_C_LABEL(abort))
+	b	. - 8		/* Cannot get here */
+
+#else
 	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0], #4
 	teq	r2, r3
-	bne	botch
+	bne	.Lbotch
 
 #ifdef SOFTFLOAT
 	add	r0, r0, #52
@@ -90,7 +151,7 @@ ENTRY(_longjmp)
 	/* Validate sp and r14 */
 	teq	sp, #0
 	teqne	r14, #0
-	beq	botch
+	beq	.Lbotch
 
 	/* Set return value */
 	mov	r0, r1
@@ -99,7 +160,13 @@ ENTRY(_longjmp)
 	RET
 
 	/* validation failed, die die die. */
-botch:
-	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
-	bl	PIC_SYM(_C_LABEL(abort), PLT)
+.Lbotch:
+	bl	PLT_SYM(_C_LABEL(longjmperror))
+	bl	PLT_SYM(_C_LABEL(abort))
 	b	. - 8		/* Cannot get here */
+#endif
+
+	.p2align 2
+.L_setjmp_magic:
+	.word	_JB_MAGIC__SETJMP
+
