@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.12 2007/08/21 13:59:43 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.13 2007/08/28 12:29:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.12 2007/08/21 13:59:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.13 2007/08/28 12:29:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -700,6 +700,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
 		splx(s);
+		pmap_deactivate(l);
 		lwp_exit_switchaway(l);
 		/* NOTREACHED */
 	}
