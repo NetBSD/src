@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.8 2007/08/13 01:55:31 tsutsui Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.8.2.1 2007/08/28 21:53:06 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -104,12 +104,6 @@
 Ldisabled_mask:
 	.word	_C_LABEL(disabled_mask)
 
-Lcurrent_spl_level:	
-	.word	_C_LABEL(current_spl_level)
-
-Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
-
 Lvam_io_data:
 	.word	_C_LABEL(isa_io_bs_tag)
 
@@ -131,7 +125,7 @@ ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
-	ENABLE_ALIGNMENT_FAULTS
+	ENABLE_ALIGNMENT_FAULTS		/* cpuinfo is in r4 after execution */
 
 	/* Load r8 with the ISA 8259 irqs */
 	/* r8 <- irq's pending [15:0] */
@@ -164,10 +158,9 @@ ASENTRY_NP(irq_entry)
 	 * each time the interrupt handler is nested.
 	 */
 
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	add	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	/* Block the current requested interrupts */
 
@@ -206,9 +199,8 @@ Lfind_highest_ipl:
 
 	str	r0, [r1]	
 
-	ldr	r0, Lcurrent_spl_level
-	ldr	r1, [r0]
-	str	r9, [r0]
+	ldr	r1, [r4, #CI_CPL]
+	str	r9, [r4, #CI_CPL]
 	stmfd	sp!, {r1}
 
 	/* Update the IOMD irq masks */
@@ -267,8 +259,7 @@ nextirq:
 	bne	irqloop			/* no - loop back. */
 
 	ldmfd	sp!, {r2}
-	ldr	r1, Lcurrent_spl_level
-	str	r2, [r1]
+	str	r2, [r4, #CI_CPL]
 
 	/* Restore previous disabled mask */
 	ldmfd	sp!, {r2}
@@ -284,10 +275,9 @@ nextirq:
 	msr     cpsr_all, r0
 
 	/* Decrement the nest count */
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	sub	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	LOCK_CAS_CHECK
 
@@ -299,6 +289,9 @@ nextirq:
 
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
+
+Lcpu_info_store:
+	.word	_C_LABEL(cpu_info_store)
 
 LOCK_CAS_CHECK_LOCALS
 
@@ -316,8 +309,8 @@ ENTRY(irq_setmasks)
 	ldrh	r1, [r1]		/* get hardware bits of mask */
 /*	.word	0xe0d110b0 */		/* hand-assembled ldrh r1, [r1] */
 	ldr	r0, Lspl_masks
-	ldr	r2, Lcurrent_spl_level
-	ldr	r2, [r2]
+	ldr	r2, Lcpu_info_store
+	ldr	r2, [r2, #CI_CPL]
 	ldr	r2, [r0, r2, lsl #2]
 	and	r1, r1, r2
 	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
