@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.299.2.20 2007/08/22 00:49:38 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.299.2.21 2007/08/28 14:03:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.20 2007/08/22 00:49:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.299.2.21 2007/08/28 14:03:09 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -640,7 +640,7 @@ main(void)
 
 	/* Create the aiodone daemon kernel thread. */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PVM, IPL_NONE, 0))
+	    uvm_aiodone_worker, NULL, PVM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
 
 	vmem_rehash_start();

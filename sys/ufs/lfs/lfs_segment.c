@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198.2.11 2007/08/28 13:33:40 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.2.12 2007/08/28 14:03:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.11 2007/08/28 13:33:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.12 2007/08/28 14:03:09 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2442,9 +2442,11 @@ lfs_free_aiodone(struct buf *bp)
 {
 	struct lfs *fs;
 
+	KERNEL_LOCK(1, curlwp);
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_freebuf(fs, bp);
+	KERNEL_UNLOCK_LAST(curlwp);
 }
 
 static void
@@ -2452,6 +2454,7 @@ lfs_super_aiodone(struct buf *bp)
 {
 	struct lfs *fs;
 
+	KERNEL_LOCK(1, curlwp);
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
 	mutex_enter(&fs->lfs_interlock);
@@ -2461,6 +2464,7 @@ lfs_super_aiodone(struct buf *bp)
 	mutex_exit(&fs->lfs_interlock);
 	wakeup(&fs->lfs_sbactive);
 	lfs_freebuf(fs, bp);
+	KERNEL_UNLOCK_LAST(curlwp);
 }
 
 static void
@@ -2472,6 +2476,8 @@ lfs_cluster_aiodone(struct buf *bp)
 	struct vnode *vp, *devvp, *ovp;
 	struct inode *ip;
 	int error;
+
+	KERNEL_LOCK(1, curlwp);
 
 	error = bp->b_error;
 	cl = bp->b_private;
@@ -2590,6 +2596,8 @@ lfs_cluster_aiodone(struct buf *bp)
 	if (--fs->lfs_iocount <= 1)
 		wakeup(&fs->lfs_iocount);
 	mutex_exit(&fs->lfs_interlock);
+
+	KERNEL_UNLOCK_LAST(curlwp);
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
 	cl->bpp = NULL;
