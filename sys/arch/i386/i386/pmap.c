@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.21 2007/08/28 11:59:51 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.22 2007/08/28 12:03:58 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.21 2007/08/28 11:59:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.22 2007/08/28 12:03:58 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1186,14 +1186,9 @@ pmap_alloc_pvpage(struct pmap_cpu *pc, struct pmap *pmap, int mode)
 		return(pv);
 	}
 
-	/*
-	 * NOTE: If we are allocating a PV page for the kernel pmap, the
-	 * pmap is already locked!  (...but entering the mapping is safe...)
-	 */
-
 	mutex_exit(&pc->pc_pv_lock);
 	pvpage = (struct pv_page *)uvm_km_alloc(kmem_map, PAGE_SIZE, 0,
-	    UVM_KMF_TRYLOCK|UVM_KMF_NOWAIT|UVM_KMF_WIRED);
+	    UVM_KMF_NOWAIT|UVM_KMF_WIRED);
 	mutex_enter(&pc->pc_pv_lock);
 
 	if (pvpage == NULL)
