@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.237 2007/08/28 11:59:03 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.238 2007/08/28 13:41:46 ghen Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8657,3 +8657,17 @@ lib/libcurses/tstp.c				1.36
 
 	Should fix the curses part of PR lib/36702.
 	[jdc, ticket #842]
+
+etc/defaults/rc.conf				1.90
+etc/rc.d/postfix				1.14
+
+	Add some magic (similar to the one in rc.d/sendmail introduced with 2.0
+	release) to not start postfix if $postfix is not explicitely set and
+	another mailer is selected in /etc/mailer.conf. Also print a warning if it
+	happens because the mailer in rc.conf is the removed sendmail.
+
+	This prevents starting two MTAs at once if one uses a custom MTA.
+
+	As proposed on tech-userlevel, approved by martin.
+	[pavel, ticket #845]
+
