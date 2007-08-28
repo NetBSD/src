@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.198.2.10 2007/08/24 23:28:47 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.198.2.11 2007/08/28 13:33:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.10 2007/08/24 23:28:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.198.2.11 2007/08/28 13:33:40 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1359,7 +1359,8 @@ loop:
 		    (bp->b_flags & B_GATHERED) != 0 || !match(fs, bp)) {
 #ifdef DEBUG
 			if (vp == fs->lfs_ivnode &&
-			    (bp->b_flags & (B_BUSY|B_GATHERED)) == B_BUSY)
+			    (bp->b_cflags & BC_BUSY) != 0 &&
+			    (bp->b_flags & B_GATHERED) == 0)
 				log(LOG_NOTICE, "lfs_gather: ifile lbn %"
 				      PRId64 " busy (%x) at 0x%x",
 				      bp->b_lblkno, bp->b_flags,
