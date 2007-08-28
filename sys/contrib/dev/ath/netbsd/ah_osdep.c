@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.11 2007/08/24 23:52:11 ad Exp $
+ * $Id: ah_osdep.c,v 1.12 2007/08/28 00:12:46 nakayama Exp $
  */
 #include "opt_athhal.h"
 #include "athhal_options.h"
@@ -430,8 +430,9 @@ ath_hal_reg_read(struct ath_hal *ah, u_int32_t reg)
 #if _BYTE_ORDER == _BIG_ENDIAN
 	if (reg >= 0x4000 && reg < 0x5000)
 		ret = bus_space_read_4(t, h, reg);
+	else
 #endif
-	ret = bus_space_read_stream_4(t, h, reg);
+		ret = bus_space_read_stream_4(t, h, reg);
 	EXIT
 
 	return ret;
