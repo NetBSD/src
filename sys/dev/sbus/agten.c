@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.4 2007/08/28 00:21:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.3 2007/08/27 02:03:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.4 2007/08/28 00:21:43 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -114,7 +114,10 @@ struct agten_softc {
 	uint32_t	sc_height;	/* panel width / height */
 	uint32_t	sc_stride;
 	uint32_t	sc_depth;
-	
+
+	int sc_cursor_x;
+	int sc_cursor_y;
+
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 
 	int sc_mode;
@@ -138,6 +141,12 @@ static void	agten_copycols(void *, int, int, int, int);
 static void	agten_erasecols(void *, int, int, int, long);
 static void	agten_copyrows(void *, int, int, int);
 static void	agten_eraserows(void *, int, int, long);
+
+static void	agten_move_cursor(struct agten_softc *, int, int);
+static int	agten_do_cursor(struct agten_softc *sc,
+				struct wsdisplay_cursor *);
+
+uint16_t util_interleave(uint8_t, uint8_t);
 
 extern const u_char rasops_cmap[768];
 
@@ -361,6 +370,39 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+
+		case WSDISPLAYIO_GCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = sc->sc_cursor_x;
+				cp->y = sc->sc_cursor_y;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				agten_move_cursor(sc, cp->x, cp->y);
+			}
+			return 0;
+
+		case WSDISPLAYIO_GCURMAX:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = 64;
+				cp->y = 64;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURSOR:
+			{
+				struct wsdisplay_cursor *cursor = (void *)data;
+
+				return agten_do_cursor(sc, cursor);
+			}
 	}
 	return EPASSTHROUGH;
 }
@@ -564,6 +606,9 @@ agten_init(struct agten_softc *sc)
 	bus_space_write_4(sc->sc_bustag, sc->sc_p9100_regh, RECT_RTW_XY, srcw);
 	junk = bus_space_read_4(sc->sc_bustag, sc->sc_p9100_regh, COMMAND_QUAD);
 
+	/* initialize the cursor registers */
+	
+	/* initialize the Imagine 128 */
 	i128_init(sc->sc_bustag, sc->sc_i128_regh, sc->sc_stride, 8);
 }
 
@@ -651,4 +696,80 @@ agten_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 	bg = (uint32_t)ri->ri_devcmap[(fillattr >> 16) & 0xff];
 	i128_rectfill(sc->sc_bustag, sc->sc_i128_regh, x, y, width, height, bg);
+}
+
+static void
+agten_move_cursor(struct agten_softc *sc, int x, int y)
+{
+
+	sc->sc_cursor_x = x;
+	sc->sc_cursor_y = y;
+	agten_write_idx(sc, IBM561_CURSOR_X_REG);
+	agten_write_dac(sc, IBM561_CMD, x & 0xff);
+	agten_write_dac(sc, IBM561_CMD, (x >> 8) & 0xff);
+	agten_write_dac(sc, IBM561_CMD, y & 0xff);
+	agten_write_dac(sc, IBM561_CMD, (y >> 8) & 0xff);
+}
+
+static int
+agten_do_cursor(struct agten_softc *sc, struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		agten_write_idx(sc, IBM561_CURS_CNTL_REG);
+		agten_write_dac(sc, IBM561_CMD, cur->enable ?
+		    CURS_ENABLE : 0);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		agten_write_idx(sc, IBM561_HOTSPOT_X_REG);
+		agten_write_dac(sc, IBM561_CMD, cur->hot.x);
+		agten_write_dac(sc, IBM561_CMD, cur->hot.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		agten_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+	
+		agten_write_idx(sc, IBM561_CURSOR_LUT + cur->cmap.index + 2);
+		for (i = 0; i < cur->cmap.count; i++) {
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.red[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.green[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.blue[i]);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		int i;
+		uint16_t tmp;
+
+		agten_write_idx(sc, IBM561_CURSOR_BITMAP);
+		for (i = 0; i < 512; i++) {
+			tmp = util_interleave(cur->mask[i], cur->image[i]);
+			agten_write_dac(sc, IBM561_CMD, (tmp >> 8) & 0xff);
+			agten_write_dac(sc, IBM561_CMD, tmp & 0xff);
+		}
+	}
+	return 0;
+}
+
+uint16_t
+util_interleave(uint8_t b1, uint8_t b2)
+{
+	int i;
+	uint16_t ret = 0;
+	uint16_t mask = 0x8000;
+	uint8_t mask8 = 0x01;
+
+	for (i = 0; i < 8; i++) {
+		if (b1 & mask8)
+			ret |= mask;
+		mask = mask >> 1;
+		if (b2 & mask8)
+			ret |= mask;
+		mask = mask >> 1;
+		mask8 = mask8 << 1;
+	}
+	return ret;
 }
