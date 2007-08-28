@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.2 2007/06/20 22:31:21 scw Exp $	*/
+/*	$NetBSD: memmove.S,v 1.2.4.1 2007/08/28 17:35:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __thumb__
+#undef __thumb__
+	.code	32
+#endif
 #include <machine/asm.h>
 
 #ifndef _BCOPY
@@ -586,3 +590,9 @@ ENTRY(bcopy)
 .Lmemmove_bsrcul1l4:
 	add	r1, r1, #1
 	b	.Lmemmove_bl4
+
+#ifndef _BCOPY
+	END(memmove)
+#else
+	END(bcopy)
+#endif

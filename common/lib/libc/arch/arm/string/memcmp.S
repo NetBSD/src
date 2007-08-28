@@ -1,4 +1,4 @@
-/*      $NetBSD: memcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $ */
+/*      $NetBSD: memcmp.S,v 1.1.18.1 2007/08/28 17:35:30 matt Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -62,10 +62,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __thumb__
+#undef __thumb__
+	.code	32
+#endif
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcmp.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
-
+RCSID("$NetBSD: memcmp.S,v 1.1.18.1 2007/08/28 17:35:30 matt Exp $")
 ENTRY(memcmp)
 	mov	ip, r0
 #if defined(_KERNEL) && !defined(_STANDALONE)
@@ -178,3 +181,4 @@ ENTRY(memcmp)
 	sub	r0, r3, r2		/* r0 = b1#5 - b2#5 */
 	RET
 #endif
+	END(memcmp)

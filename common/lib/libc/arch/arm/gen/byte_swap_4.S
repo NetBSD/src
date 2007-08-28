@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.3 2006/02/04 23:14:48 uwe Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.3.18.1 2007/08/28 17:35:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,8 +48,30 @@ _ENTRY(_C_LABEL(ntohl))
 _ENTRY(_C_LABEL(htonl))
 #endif
 _PROF_PROLOGUE
+#ifdef __ARM_ARCH_6
+	rev		r0, r0
+#elif defined(__thumb__)
+	mov		r3, #16
+	mov		r2, r0
+	ror		r2, r2, r3
+	mov		r1, r0
+	eor		r1, r1, r2
+	mov		r2, #0xff
+	lsl		r2, r2, #16
+	bic		r1, r1, r3
+	mov		r2, #8
+	ror		r0, r0, r2
+	lsr		r1, r1, #8
+	eor		r0, r0, r1
+#else
 	eor		r1, r0, r0, ror #16
 	bic		r1, r1, #0x00FF0000
 	mov		r0, r0, ror #8
 	eor		r0, r0, r1, lsr #8
+#endif
 	RET
+#if defined(_KERNEL) || defined(_STANDALONE)
+	END(bswap32)
+#else
+	END(__bswap32)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: memset.S,v 1.1.18.1 2007/08/28 17:35:31 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -65,7 +65,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+#ifdef __thumb__
+#undef __thumb__
+	.code	32
+#endif
 #include <machine/asm.h>
 
 /*
@@ -233,3 +236,9 @@ ENTRY(memset)
 	strgeb	r3, [ip], #0x01		/* Set another byte */
 	strgtb	r3, [ip]		/* and a third */
 	RET				/* Exit */
+
+#ifdef _BZERO
+	END(bzero)
+#else
+	END(memset)
+#endif

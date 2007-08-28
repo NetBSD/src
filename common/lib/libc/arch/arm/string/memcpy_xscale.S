@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.2 2007/06/21 21:37:04 scw Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.2.4.1 2007/08/28 17:35:31 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,6 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __thumb__
+#undef __thumb__
+	.code	32
+#endif
 #include <machine/asm.h>
 
 /* LINTSTUB: Func: void *memcpy(void *dst, const void *src, size_t len) */
