@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.891 2007/08/26 07:19:11 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.892 2007/08/28 01:09:28 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.892 2007/08/26 07:18:53 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.893 2007/08/28 01:09:01 msaitoh Exp
  */
 
 /*
@@ -7264,6 +7264,22 @@ static const struct pci_product pci_products[] = {
 	    "i80003 Gigabit Ethernet (SERDES)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_AMT,
+	    "82801I (AMT) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE,
+	    "82801I LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_G,
+	    "82801I (G) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_GT,
+	    "82801I (GT) LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT,
 	    "i82801H IFE (GT) LAN Controller",
 	},
@@ -8378,6 +8394,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_6,
 	    "82801I PCI Express Port #6",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_C,
+	    "82801I (C) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
@@ -13388,4 +13408,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2750;
+const int pci_nproducts = 2755;
