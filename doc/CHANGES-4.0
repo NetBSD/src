@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.238 2007/08/28 13:41:46 ghen Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.239 2007/08/28 19:46:07 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8671,3 +8671,61 @@ etc/rc.d/postfix				1.14
 	As proposed on tech-userlevel, approved by martin.
 	[pavel, ticket #845]
 
+sys/arch/cobalt/cobalt/machdep.c		1.85
+sys/arch/cobalt/include/bootinfo.h		1.5
+sys/arch/cobalt/stand/boot/boot.c		1.6
+sys/arch/cobalt/stand/boot/boot.c		1.7
+sys/arch/cobalt/stand/boot/boot.c		1.8
+sys/arch/cobalt/stand/boot/boot.h		1.4
+sys/arch/cobalt/stand/boot/bootinfo.c		1.3
+sys/arch/cobalt/stand/boot/bootinfo.h		1.3
+sys/arch/cobalt/stand/boot/com.c		1.5
+sys/arch/cobalt/stand/boot/cons.c		1.4
+sys/arch/cobalt/stand/boot/devopen.c		1.2
+sys/arch/cobalt/stand/boot/ns16550.c		1.2
+sys/arch/cobalt/stand/boot/ns16550.h		1.2
+sys/arch/cobalt/stand/boot/pciide.c		1.6
+sys/arch/cobalt/stand/boot/prf.c		1.2
+sys/arch/cobalt/stand/boot/tgets.c		1.3
+sys/arch/cobalt/stand/boot/version		1.3
+sys/arch/cobalt/stand/boot/version		1.4
+sys/arch/cobalt/stand/boot/wd.c			1.6
+sys/arch/cobalt/stand/boot/wd.c			1.7
+sys/arch/cobalt/stand/boot/wdc.c		1.8
+sys/arch/cobalt/stand/boot/wdvar.h		1.7
+
+	Add support for booting off raidframe RAID1 mirrors.
+
+	Should close PR port-cobalt/36639, but with a different way
+	(which is similar with pmax) from a patch in the PR.
+
+	Misc KNF and cosmetics.
+
+	Parse boot_flags specified on boot prompt and
+	pass decoded boothowto value to kernel via bootinfo.
+
+	Lookup boothowto flags in bootinfo.
+
+	Parse "root=/dev/hdXN" args passed from the firmware and
+	set default boot device accordingly.
+	Requested and okay'ed by cyber@.
+	[tsutsui, ticket #843]
+
+sys/arch/shark/isa/clock.c			1.15
+sys/arch/shark/isa/isa_irq.S			1.8
+
+	Make clockintr() return 1 since it's always handled so that
+	clock interrupt is properly acounted by evcnt(9) in isa_irq.S.
+
+	In irq_setmasks(), refer spl_masks[current_spl_level] directly
+	rather than spl_mask which is a saved value in splraise() and
+	splx() functions because the latter one is not always sync'ed with
+	current_spl_level and interrupt state could be mangled.
+
+	Okay'ed by chris@, and should close PR port-shark/22355.
+	[tsutsui, ticket #844]
+
+sys/dev/pci/vga_pci.c				1.33
+
+	Allow 64bit memory BARs if we are compiling on 64bit archs.
+	[martin, ticket #848]
