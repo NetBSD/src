@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.116.2.5 2007/08/20 21:27:32 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.116.2.6 2007/08/28 12:32:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.5 2007/08/20 21:27:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.116.2.6 2007/08/28 12:32:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -989,7 +989,8 @@ again:
 		mutex_exit(&uihashtbl_lock);
 		/* Must not be called from interrupt context. */
 		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
-		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_SOFTNET);
+		/* XXX this could be IPL_SOFTNET */
+		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_VM);
 		goto again;
 	}
 	uip = newuip;
