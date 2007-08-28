@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561reg.h,v 1.3 2007/08/27 19:46:45 macallan Exp $ */
+/* $NetBSD: ibm561reg.h,v 1.4 2007/08/28 00:21:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 	#define CR3_RGB			0x01	/* 1 - RGB, 0 - BGR */
 
 #define IBM561_CONFIG_REG4		0x0004
-	#define CR4_FB_SLPIT_WID_MASK	0x78	/* number of FB WID bits */
+	#define CR4_FB_SPLIT_WID_MASK	0x78	/* number of FB WID bits */
 	#define CR4_ENABLE_SPLIT_WID	0x04
 	#define CR4_SELECT_OL_WID	0x02	/* 1 - use upper 4 bit for OL */
 	#define CR4_SELECT_FB_WID	0x01	/* 1 - use upper 4 bit for FB */
