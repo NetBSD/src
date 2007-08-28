@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.13 2006/09/07 15:26:08 christos Exp $
+# $NetBSD: postfix,v 1.13.2.1 2007/08/28 13:40:51 ghen Exp $
 #
 
 # PROVIDE: mail
@@ -69,5 +69,31 @@ postfix_op()
 	${postfix_command} ${rc_arg}
 }
 
+check_use_postfix()
+{
+	_mta_path=$(awk '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)
+	_postfix_path="/usr/libexec/postfix/sendmail"
+	_sendmail_path="/usr/libexec/sendmail/sendmail"
+
+	if [ "${postfix}" != "check" ]; then
+	    echo "${postfix}"
+	elif [ "${_mta_path}" = "${_postfix_path}" ]; then
+	    echo YES
+	else
+	    echo "WARNING: default postfix not used as not selected in mailer.conf" >&2
+	    if [ "${_mta_path}" = "${_sendmail_path}" -a \
+		! -x "${_mta_path}" ]; then
+		echo "WARNING: mailer.conf points to the removed sendmail" >&2
+		echo "update /etc/mailer.conf to get a working mailer configuration" >&2
+	    fi
+	    echo NO
+	fi
+}
+
+# force re-evaluation of /etc/rc.conf and resetting of $sendmail
+_rc_conf_loaded=false
+_rc_d_postfix=check
 load_rc_config $name
+unset _rc_d_postfix
+postfix=$(check_use_postfix)
 run_rc_command "$1"
