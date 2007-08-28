@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: ffs.S,v 1.1.18.1 2007/08/28 17:35:30 matt Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -28,9 +28,14 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __thumb__
+#undef __thumb__
+	.code	32
+#endif
+
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.1 2005/12/20 19:28:49 christos Exp $")
+RCSID("$NetBSD: ffs.S,v 1.1.18.1 2007/08/28 17:35:30 matt Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -82,4 +87,5 @@ ENTRY(ffs)
 	.byte	10,  0,  0, 25,  0,  0, 21, 27  /* 40-47 */
 	.byte	31,  0,  0,  0,  0, 24,  0, 20  /* 48-55 */
 	.byte   30,  0, 23, 19, 29, 18, 17,  0  /* 56-63 */
+	END(ffs)
 #endif

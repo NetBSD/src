@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_arm.S,v 1.1 2005/12/20 19:28:49 christos Exp $	*/
+/*	$NetBSD: memcpy_arm.S,v 1.1.18.1 2007/08/28 17:35:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __thumb__
+#undef __thumb__
+	.code	32
+#endif
 #include <machine/asm.h>
 
 /*
@@ -337,3 +341,4 @@ ENTRY(memcpy)
 .Lmemcpy_srcul3l4:
 	sub	r1, r1, #1
 	b	.Lmemcpy_l4
+	END(memcpy)
