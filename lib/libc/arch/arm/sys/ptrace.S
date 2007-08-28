@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.8 2004/08/21 11:30:17 rearnsha Exp $ */
+/*	$NetBSD: ptrace.S,v 1.8.16.1 2007/08/28 17:36:32 matt Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,41 +35,30 @@
 
 ENTRY(ptrace)
 #ifdef _REENTRANT
-	stmfd	sp!, {r0-r3, lr}
-	sub	sp, sp, #4	/* align stack */
-	bl	PIC_SYM(_C_LABEL(__errno), PLT)
-	add	sp, sp, #4	/* unalign stack */
-	mov	r1, #0x00000000
+	XPUSH	{r0-r3, lr}
+	sub	sp, sp, #4		/* align stack */
+	bl	PLT_SYM(_C_LABEL(__errno))
+	add	sp, sp, #4		/* unalign stack */
+	mov	r1, #0
 	str	r1, [r0]
-	ldmfd	sp!, {r0-r3, lr}
-#else
-	stmfd	sp!, {r0, r1}
-#ifdef PIC
-	/* Setup the GOT */
-	ldr	r0, .Lgot
-	add	r0, pc, r0
-.L1:
-	ldr	r1, .Lerrno
-	ldr	r1, [r0, r1]
-#else
-	ldr	r1, .Lerrno
-#endif /* PIC */
-	mov	r0, #0x00000000
+	XPOP	{r0-r3}
+#else /* _REENTRANT */
+	XPUSH	{r0-r1}
+	GOT_INIT(r0, .Lgot, .L1)
+	GOT_GET(r1, r0, .Lerrno)
+	mov	r0, #0
 	str	r0, [r1]
-	ldmfd	sp!, {r0, r1}
+	XPOP	{r0-r1}
 #endif /* _REENTRANT */
 
 	SYSTRAP(ptrace)
-	bcs	PIC_SYM(CERROR, PLT)
-	RET
+	_SYSCALL_CERROR_CHECK
+	XPOPRET
 
 #ifndef _REENTRANT
-#ifdef PIC
 	.align	0
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
-#endif /* PIC */
-
+	GOT_INITSYM(.Lgot, .L1)
 .Lerrno:
-	.word	PIC_SYM(_C_LABEL(errno), GOT)
+	.word	GOT_SYM(_C_LABEL(errno))
 #endif /* !_REENTRANT */
+END(ptrace)

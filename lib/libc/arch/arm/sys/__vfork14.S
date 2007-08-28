@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.7 2004/08/21 11:30:17 rearnsha Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.7.16.1 2007/08/28 17:36:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,10 +44,11 @@
 	.align	0
 
 ENTRY(__vfork14)
-	mov	r2, r14
+	mov	r2, lr
 	SYSTRAP(__vfork14)
-	bcs	PIC_SYM(CERROR, PLT)
-	mov	r14, r2
+	_SYSCALL_CERROR_CHECK
+	mov	lr, r2
 	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
 	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
 	RET
+END(__vfork14)

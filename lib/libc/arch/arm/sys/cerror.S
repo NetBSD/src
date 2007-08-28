@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.6 2004/08/21 11:30:17 rearnsha Exp $	*/
+/*	$NetBSD: cerror.S,v 1.6.16.1 2007/08/28 17:36:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,37 +35,31 @@
 
 ASENTRY(CERROR)
 #ifdef _REENTRANT
-	stmfd	sp!, {r4, lr}
+	XPUSH	{r4, lr}
 	mov	r4, r0
-	bl	PIC_SYM(_C_LABEL(__errno), PLT)
+	bl	PLT_SYM(_C_LABEL(__errno))
 	str	r4, [r0]
-	mvn	r0, #0x00000000
-	mvn	r1, #0x00000000
-	ldmfd	sp!, {r4, pc}
+#ifdef __thumb__
+	mov	r0, #0
+	mvn	r0, r0
 #else
-#ifdef PIC
-	/* Setup the GOT */
-	ldr	r3, .Lgot
-	add	r3, pc, r3
-.L1:
-	ldr	r1, .Lerrno
-	ldr	r1, [r3, r1]
+	mvn	r0, #0
+#endif
+	mov	r1, r0
+	XPOP	{r4, pc}
 #else
-	ldr	r1, .Lerrno
-#endif /* PIC */
+	GOT_INIT(r3, .Lgot, .L1)		/* Setup the GOT */
+	GOT_GET(r1, r3, .Lerrno)
 	str	r0, [r1]
-	mvn	r0, #0x00000000
-	mvn	r1, #0x00000000
+	mvn	r0, #0
+	mov	r1, r0
 	RET
 
-#ifdef PIC
 	.align	0
-.Lgot:
-	.word	_C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (.L1+4))
-#endif /* PIC */
+	GOT_INITSYM(.Lgot,.L1)
 
 	.globl	_C_LABEL(errno)
-
 .Lerrno:
-	.word	PIC_SYM(_C_LABEL(errno), GOT)
+	.word	GOT_SYM(_C_LABEL(errno))
 #endif /* _REENTRANT */
+ASEND(CERROR)

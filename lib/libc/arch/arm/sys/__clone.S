@@ -1,4 +1,4 @@
-/* $NetBSD: __clone.S,v 1.6 2006/04/24 19:00:30 snj Exp $ */
+/* $NetBSD: __clone.S,v 1.6.10.1 2007/08/28 17:36:30 matt Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher Gilbert
@@ -38,38 +38,62 @@ WEAK_ALIAS(clone, __clone)
  * int __clone(int (*fn)(void *), void *stack, int flags, void *arg);
  */
 ENTRY(__clone)
-
 	/* test stack and function are not null */
+#ifdef __thumb__
+	cmp	r0, #0
+	beq	.Leinval
+	cmp	r1, #0
+	beq	.Leinval
+#else
 	teq	r0, #0x00
 	teqne	r1, #0x00
 	beq	.Leinval
+#endif
 
 	/* place the func and its arg onto the child's stack */
+#ifdef __thumb__
+	sub	r1, #8
+	str	r0, [r1, #0]
+	str	r3, [r1, #4]
+#else
 	stmfd	r1!, {r0, r3} 
+#endif
 	
 	/* syscall expects (flags, stack) */
 	mov	r0, r2
 
 	SYSTRAP(__clone)
-	bcs	PIC_SYM(CERROR, PLT)
+	bcs	.Lcerror
 
 	/*
 	 * r1 and r0 are the same as from fork:
 	 * r1 == 0 in parent process, r1 == 1 in child process.
 	 * r0 == pid of child in parent, r0 == pid of parent in child.
 	 */
+#ifdef __thumb__
+	cmp	r1, #0
+	bne	1f
+	RET
+1:
+#else
 	teq	r1, #0x00
 
 	/* if this is the parent then just return the pid */
 	RETc(eq)
+#endif
 	/*
 	 * This is the child
 	 * load the function and arg off the stack
 	 */
-	ldmfd	sp!, {r1, r2}
+	XPOP	{r1, r2}
 
 	/* setup return address */
+#ifdef __thumb__
+	add	r0, pc, #.Lreturnhere - . - 8
+	mov	lr, r0
+#else
 	add	lr, pc, #.Lreturnhere - . - 8
+#endif
 
 	/* place arg in r0 */
 	mov	r0, r2
@@ -83,11 +107,13 @@ ENTRY(__clone)
 
 .Lreturnhere:
 	/* call _exit with the returned value */
-	b	PIC_SYM(_C_LABEL(_exit), PLT)
+	bl	PLT_SYM(_C_LABEL(_exit))
 
 	/* NOTREACHED */
 
 	/* error handler if func or stack is NULL */
 .Leinval:
-	mov	R0, #EINVAL
-	b	PIC_SYM(CERROR, PLT)
+	mov	r0, #EINVAL
+.Lcerror:
+	_SYSCALL_CERROR
+END(__clone)

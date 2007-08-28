@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.9 2004/08/21 11:18:40 rearnsha Exp $	*/
+/*	$NetBSD: SYS.h,v 1.9.16.1 2007/08/28 17:36:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,11 +38,55 @@
 #include <sys/syscall.h>
 #include <arm/swi.h>
 
+#ifdef __thumb__
+#ifdef __STDC__
+#define SYSTRAP(x) \
+	.if (SYS_ ## x & 256); \
+	push {r4}; \
+	mov r4, #SYS_ ## x - 255; \
+	add r4, r4, #255; \
+	mov ip, r4; \
+	pop {r4}; \
+	swi 0; \
+	.else; \
+	.if SYS_ ## x; \
+	swi SYS_ ## x; \
+	.else; \
+	push {r4}; \
+	mov r4, #SYS_ ## x; \
+	mov ip, r4; \
+	pop {r4}; \
+	swi 0; \
+	.endif; \
+	.endif
+#else
+#define SYSTRAP(x) \
+	.if (SYS_/**/x & 256); \
+	push {r4}; \
+	mov r4, #SYS_/**/x - 255; \
+	add r4, r4, #255; \
+	mov ip, r4; \
+	pop {r4}; \
+	swi 0; \
+	.else; \
+	.if SYS_/**/x; \
+	swi SYS_/**/x; \
+	.else; \
+	push {r4}; \
+	mov r4, #SYS_/**/x; \
+	mov ip, r4; \
+	pop {r4}; \
+	swi 0; \
+	.endif; \
+	.endif
+#endif
+#else
 #ifdef __STDC__
 #define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_ ## x
 #else
 #define SYSTRAP(x)	swi SWI_OS_NETBSD | SYS_/**/x
 #endif
+#endif /* __thumb__ */
 
 #ifdef __ELF__
 #define	CERROR		_C_LABEL(__cerror)
@@ -56,9 +100,29 @@
 	ENTRY(x);							\
 	SYSTRAP(y)
 
+#ifdef __thumb__
+#define	_SYSCALL_CERROR							\
+	push {lr};							\
+	sub sp, #4;		/* needs to be 8-byte aligned */	\
+	bl PLT_SYM(CERROR);						\
+	add sp, #4;							\
+	pop {pc}
+
+#define	_SYSCALL_CERROR_CHECK						\
+	bcc 99f;							\
+	_SYSCALL_CERROR;						\
+99:
+#else
+#define	_SYSCALL_CERROR_CHECK						\
+	bcs PLT_SYM(CERROR) /* tail call */
+
+#define	_SYSCALL_CERROR							\
+	b PLT_SYM(CERROR) /* tail call */
+#endif
+
 #define _SYSCALL(x, y)							\
 	_SYSCALL_NOERROR(x,y);						\
-	bcs PIC_SYM(CERROR, PLT)
+	_SYSCALL_CERROR_CHECK
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)

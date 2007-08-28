@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.8 2005/10/16 17:26:24 christos Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.8.10.1 2007/08/28 17:36:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,16 +46,48 @@
  */
 
 ENTRY(__setjmp14)
+#ifdef __thumb__
+	/* Get the signal mask. */
+	push	{r0, r4-r7, lr}
+	add	r0, r0, #(_JB_SIGMASK * 4)
+	mov	r2, r0
+	mov	r1, #0
+	mov	r0, #0
+	bl	PLT_SYM(_C_LABEL(__sigprocmask14))
+	pop	{r0}
+
+	ldr	r2, .Lsetjmp_magic
+	str	r2, [r0]
+
+	add	r0, r0, #56	/* skip magic and floating point */
+
+	/* Store integer registers */
+        stmia	r0!, {r4-r7}
+
+	mov	r4, r8
+	mov	r5, r9
+	mov	r6, r10
+	mov	r7, r11
+        stmia	r0!, {r4-r7}
+
+	mov	r4, r12
+	mov	r5, r13
+	mov	r6, r14
+        stmia	r0!, {r4-r6}
+
+        mov	r0, #0
+        pop	{r4-r7, pc}
+#else
 	/* Get the signal mask. */
 	stmfd	sp!, {r0-r2, r14}
 	add	r2, r0, #(_JB_SIGMASK * 4)
 	mov	r1, #0x00000000
 	mov	r0, #0x00000000
-	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
+	bl	PLT_SYM(_C_LABEL(__sigprocmask14))
 	ldmfd	sp!, {r0-r2, r14}
 
 	ldr	r1, .Lsetjmp_magic
-	str	r1, [r0], #4
+	str	r1, [r0]
 
 #ifdef SOFTFLOAT
 	add	r0, r0, #52
@@ -70,12 +102,53 @@ ENTRY(__setjmp14)
         stmia	r0, {r4-r14}
         mov	r0, #0x00000000
         RET
-
-.Lsetjmp_magic:
-	.word	_JB_MAGIC_SETJMP
-
+#endif /* __thumb__ */
 
 ENTRY(__longjmp14)
+#ifdef __thumb__
+	ldr	r2, .Lsetjmp_magic
+	ldr	r3, [r0]
+	cmp	r2, r3
+	bne	.Lbotch
+
+	/* Restore the signal mask. */
+	push	{r0, lr}
+	mov	r2, #0
+	add	r0, r0, #(_JB_SIGMASK * 4)
+	mov	r1, r0
+	mov	r0, #3				/* SIG_SETMASK */
+	bl	PLT_SYM(_C_LABEL(__sigprocmask14))
+	pop	{r0}
+
+	add	r0, r0, #56
+	/* Restore integer registers */
+        ldmia	r0!, {r4-r7}
+	push	{r4-r7}
+
+        ldmia	r0!, {r4-r7}
+	mov	r8, r4
+	mov	r9, r5
+	mov	r10, r6
+	mov	r11, r7
+
+        ldmia	r0!, {r4-r6}
+	mov	r12, r4
+	mov	sp, r5
+	mov	lr, r6
+
+	/* Validate sp and lr */
+	cmp	r5, #0		/* sp */
+	beq	.Lbotch
+	cmp	r6, #0		/* lr */
+	beq	.Lbotch
+
+	/* Set return value */
+
+	mov	r0, r1
+	bne	1f
+	mov	r0, #1
+1:	pop	{r4-r7, pc}
+#else
 	ldr	r2, .Lsetjmp_magic
 	ldr	r3, [r0]
 	teq	r2, r3
@@ -86,7 +159,7 @@ ENTRY(__longjmp14)
 	mov	r2, #0x00000000
 	add	r1, r0, #(_JB_SIGMASK * 4)
 	mov	r0, #3				/* SIG_SETMASK */
-	bl	PIC_SYM(_C_LABEL(__sigprocmask14), PLT)
+	bl	PLT_SYM(_C_LABEL(__sigprocmask14))
 	ldmfd	sp!, {r0-r2, r14}
 
 	add	r0, r0, #4
@@ -113,9 +186,14 @@ ENTRY(__longjmp14)
 	teq	r0, #0x00000000
 	moveq	r0, #0x00000001
 	RET
+#endif
 
 	/* validation failed, die die die. */
 .Lbotch:
-	bl	PIC_SYM(_C_LABEL(longjmperror), PLT)
-	bl	PIC_SYM(_C_LABEL(abort), PLT)
+	bl	PLT_SYM(_C_LABEL(longjmperror))
+	bl	PLT_SYM(_C_LABEL(abort))
 	b	. - 8		/* Cannot get here */
+
+	.p2align 2
+.Lsetjmp_magic:
+	.word	_JB_MAGIC_SETJMP
