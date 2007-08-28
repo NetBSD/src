@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.34 2006/08/25 17:04:32 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.34.2.1 2007/08/28 11:54:49 liamjfoy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.34 2006/08/25 17:04:32 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.34.2.1 2007/08/28 11:54:49 liamjfoy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -251,6 +251,7 @@ void
 __restartwin(void)
 {
 	struct winsize win;
+	int lines, cols;
 
 #ifdef DEBUG
 	__CTRACE("__restartwin\n");
@@ -266,7 +267,8 @@ __restartwin(void)
 	 * Check to see if the window size has changed.
 	 * If the application didn't update LINES and COLS,
 	 * set the * resized flag to tell getch() to push KEY_RESIZE.
-	 * Update curscr, stdscr and __virtscr to match the new size.
+	 * Update curscr (which also updates __virtscr) and stdscr
+	 * to match the new size.
 	 */
 	if (ioctl(fileno(_cursesi_screen->outfd), TIOCGWINSZ, &win) != -1 &&
 	    win.ws_row != 0 && win.ws_col != 0) {
@@ -279,12 +281,16 @@ __restartwin(void)
 			_cursesi_screen->resized = 1;
 		}
 	}
-	if (curscr->maxy != LINES || curscr->maxx != COLS)
-		wresize(curscr, LINES, COLS);
-	if (stdscr->maxy != LINES || stdscr->maxx != COLS)
-		wresize(stdscr, LINES, COLS);
-	if (__virtscr->maxy != LINES || __virtscr->maxx != COLS)
-		wresize(__virtscr, LINES, COLS);
+	/*
+	 * We need to make local copies of LINES and COLS, otherwise we
+	 * could lose if they are changed between wresize() calls.
+	 */
+	lines = LINES;
+	cols = COLS;
+	if (curscr->maxy != lines || curscr->maxx != cols)
+		wresize(curscr, lines, cols);
+	if (stdscr->maxy != lines || stdscr->maxx != cols)
+		wresize(stdscr, lines, cols);
 
 	/* save the new "default" terminal state */
 	(void) tcgetattr(fileno(_cursesi_screen->infd),
