@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.5.2.1 2007/05/13 10:14:06 jdc Exp $	*/
+/*	$NetBSD: policy.c,v 1.5.2.2 2007/08/28 11:14:47 liamjfoy Exp $	*/
 
 /*	$KAME: policy.c,v 1.46 2001/11/16 04:08:10 sakane Exp $	*/
 
@@ -39,11 +39,7 @@
 #include <sys/queue.h>
 
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>
