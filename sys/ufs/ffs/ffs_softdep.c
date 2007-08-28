@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.19 2007/08/24 23:28:44 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.20 2007/08/28 13:15:11 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.19 2007/08/24 23:28:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.20 2007/08/28 13:15:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -877,10 +877,6 @@ pagedep_lookup(ip, lbn, flags, pagedeppp)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("pagedep_lookup: lock not held");
-#endif
 	mp = ITOV(ip)->v_mount;
 	pagedephd = &pagedep_hashtbl[PAGEDEP_HASH(mp, ip->i_number, lbn)];
 top:
@@ -948,10 +944,6 @@ inodedep_lookup(fs, inum, flags, inodedeppp)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("inodedep_lookup: lock not held");
-#endif
 	firsttry = 1;
 	inodedephd = &inodedep_hashtbl[INODEDEP_HASH(fs, inum)];
 top:
@@ -1359,10 +1351,6 @@ bmsafemap_lookup(bp)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("bmsafemap_lookup: lock not held");
-#endif
 	for (wk = LIST_FIRST(&bp->b_dep); wk; wk = LIST_NEXT(wk, wk_list))
 		if (wk->wk_type == D_BMSAFEMAP)
 			return (WK_BMSAFEMAP(wk));
@@ -1541,10 +1529,6 @@ allocdirect_merge(adphead, newadp, oldadp)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("allocdirect_merge: lock not held");
-#endif
 	if (newadp->ad_oldblkno != oldadp->ad_newblkno ||
 	    newadp->ad_oldsize != oldadp->ad_newsize ||
 	    newadp->ad_lbn >= NDADDR)
@@ -2183,10 +2167,6 @@ free_allocdirect(adphead, adp, delayx)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("free_allocdirect: lock not held");
-#endif
 	if ((adp->ad_state & DEPCOMPLETE) == 0)
 		LIST_REMOVE(adp, ad_deps);
 	TAILQ_REMOVE(adphead, adp, ad_next);
@@ -2226,10 +2206,6 @@ free_newdirblk(newdirblk)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("free_newdirblk: lock not held");
-#endif
 	/*
 	 * If the pagedep is still linked onto the directory buffer
 	 * dependency chain, then some of the entries on the
@@ -2555,10 +2531,6 @@ free_allocindir(aip, inodedep)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("free_allocindir: lock not held");
-#endif
 	if ((aip->ai_state & DEPCOMPLETE) == 0)
 		LIST_REMOVE(aip, ai_deps);
 	if (aip->ai_state & ONWORKLIST)
@@ -2811,10 +2783,6 @@ free_diradd(dap)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
-#ifdef DEBUG
-	if (lk.lkt_held == NULL)
-		panic("free_diradd: lock not held");
-#endif
 	worklist_remove(&dap->da_list);
 	LIST_REMOVE(dap, da_pdlist);
 	if ((dap->da_state & DIRCHG) == 0) {
