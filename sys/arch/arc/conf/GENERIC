@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.4.4 2005/11/05 00:39:48 tron Exp $
+# $NetBSD: GENERIC,v 1.113.4.5 2007/08/28 13:49:41 ghen Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.113.4.4 $"
+#ident		"GENERIC-$Revision: 1.113.4.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -137,7 +137,7 @@ options 	INET6		# IPV6
 #options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
-options 	ISO,TPIP	# OSI networking
+#options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
