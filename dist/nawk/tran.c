@@ -285,6 +285,7 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 {
 	int fldno;
 
+	f += 0.0;		/* normalise negative zero to positive zero */
 	if ((vp->tval & (NUM | STR)) == 0) 
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
