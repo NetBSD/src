@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.180 2007/05/02 20:40:25 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.181 2007/08/28 23:45:39 cube Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.180 2007/05/02 20:40:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.181 2007/08/28 23:45:39 cube Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -887,10 +887,16 @@ spd_done:
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
 			error =
-			    (*ifp->if_output)(ifp, m, sintocsa(dst), ro->ro_rt);
+			    (*ifp->if_output)(ifp, m,
+				(m->m_flags & M_MCAST) ?
+				    sintocsa(rdst) : sintocsa(dst),
+				ro->ro_rt);
 		} else {
 			error =
-			    ip_tso_output(ifp, m, sintocsa(dst), ro->ro_rt);
+			    ip_tso_output(ifp, m,
+				(m->m_flags & M_MCAST) ?
+				    sintocsa(rdst) : sintocsa(dst),
+				ro->ro_rt);
 		}
 		goto done;
 	}
@@ -956,7 +962,9 @@ spd_done:
 			{
 				KASSERT((m->m_pkthdr.csum_flags &
 				    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-				error = (*ifp->if_output)(ifp, m, sintocsa(dst),
+				error = (*ifp->if_output)(ifp, m,
+				    (m->m_flags & M_MCAST) ?
+					sintocsa(rdst) : sintocsa(dst),
 				    ro->ro_rt);
 			}
 		} else
