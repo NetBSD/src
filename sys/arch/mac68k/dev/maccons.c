@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.7 2007/08/29 13:02:41 jmmv Exp $	*/
+/*	$NetBSD: maccons.c,v 1.8 2007/08/29 16:09:31 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.7 2007/08/29 13:02:41 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.8 2007/08/29 16:09:31 jmmv Exp $");
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -84,7 +84,7 @@ maccninit(struct consdev *cp)
 	 * note:  maccons_initted is initialized to (-1).
 	 */
 	if (++maccons_initted > 0) {
-		macfb_cnattach(mac68k_vidphys);
+		macfb_cnattach(mac68k_video.mv_phys);
 		akbd_cnattach();
 	}
 }
