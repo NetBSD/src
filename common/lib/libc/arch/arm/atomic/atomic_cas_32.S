@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32.S,v 1.1.2.4 2007/08/27 08:12:29 matt Exp $	*/
+/*	$NetBSD: atomic_cas_32.S,v 1.1.2.5 2007/08/29 07:03:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ ENTRY_NP(_atomic_cas_32)
 	teq	r0, r1			/*   compare? */
 	RETc(ne)			/*     return if different */
 	strex	ip, r2, [r3]		/* store new value */
-	cmpeq	ip, #0			/*   succeed? */
+	cmp	ip, #0			/*   succeed? */
 	bne	1b			/*     nope, try again. */
 	RET				/*    yes, return. */
 	END(_atomic_cas_32)
