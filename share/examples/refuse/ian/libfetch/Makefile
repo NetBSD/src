@@ -7,7 +7,6 @@ OPSYS!= uname -s
 .if ${OPSYS} == "NetBSD"
 MK_INET6_SUPPORT=yes
 MK_OPENSSL=yes
-#CPPFLAGS+='-D__FBSDID(x)=__RCSID(x)' '-D__DECONST(t,x)=__UNCONST(x)'
 CPPFLAGS+=-I${.OBJDIR}
 .endif
 
