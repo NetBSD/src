@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24.6.4 2007/08/26 07:03:10 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.6.5 2007/08/29 22:36:07 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -193,18 +193,12 @@ IDTVEC(intr_lapic_tlb_mcast)
 	/* Count it. */
 	addl	$1, CPUVAR(TLB_EVCNT)+EV_COUNT
 	adcl	$0, CPUVAR(TLB_EVCNT)+EV_COUNT+4
-	/*
-	 * Find out what we need to invalidate, clear the mailbox
-	 * lock and notify the waiter of completion.  The 'xchgl'
-	 * below provides a load fence.
-	 */
+	/* Find out what we need to invalidate. */
 	movl	CPUVAR(PMAP_CPU), %ecx
 	movl	MB_ADDR1(%ecx), %eax
 	movl	MB_ADDR2(%ecx), %edx
 	xorl	%ebx, %ebx
 	xchgl	MB_POINTER(%ecx), %ebx
-	lock
-	incl	(%ebx)
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
 	je	4f
@@ -215,6 +209,9 @@ IDTVEC(intr_lapic_tlb_mcast)
 	cmpl	%edx, %eax
 	jb	1b
 2:
+	/* Ack the request. */
+	lock
+	incl	(%ebx)
 	/*
 	 * Check the current TLB state.  If we don't want further
 	 * invalidations for this pmap, then take the CPU out of
@@ -254,17 +251,10 @@ IDTVEC(intr_lapic_tlb_bcast)
 	pushl	%ds
 	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
 	movl	%eax, %ds
-	/*
-	 * Find out what we need to invalidate and notify the waiter
-	 * of completion.  If this is the last CPU to process the 
-	 * IPI, the mailbox becomes unlocked.  The 'lock' prefix below
-	 * provides a load fence.
-	 */
+	/* Find out what we need to invalidate. */
 	movl	_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
 	movl	_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
 	movl	_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
-	lock
-	incl	_C_LABEL(pmap_mbox)+MB_TAIL
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpl	$-1, %eax
 	je,pn	3f
@@ -275,7 +265,9 @@ IDTVEC(intr_lapic_tlb_bcast)
 	cmpl	%edx, %eax
 	jb	1b
 2:
-	/* Restore state & return */
+	/* Ack the request, restore state & return. */
+	lock
+	incl	_C_LABEL(pmap_mbox)+MB_TAIL
 	popl	%ds
 	popl	%edx
 	popl	%ebx
