@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.71 2007/08/29 12:39:32 jmmv Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.72 2007/08/29 13:02:42 jmmv Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.71 2007/08/29 12:39:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.72 2007/08/29 13:02:42 jmmv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.71 2007/08/29 12:39:32 jmmv Exp
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/autoconf.h>
+#include <machine/video.h>
 
 #include <mac68k/mac68k/macrom.h>
 
@@ -84,10 +85,6 @@ u_long	high[8];
 u_long	maxaddr;	/* PA of the last physical page */
 int	vidlen;
 #define VIDMAPSIZE	btoc(vidlen)
-extern u_int32_t	mac68k_vidphys;
-extern u_int32_t	videoaddr;
-extern u_int32_t	videorowbytes;
-extern long		videoheight;
 static u_int32_t	newvideoaddr;
 
 extern void *	ROMBase;

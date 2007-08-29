@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.54 2007/08/29 12:39:32 jmmv Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.55 2007/08/29 13:02:42 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.54 2007/08/29 12:39:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.55 2007/08/29 13:02:42 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,18 +76,11 @@ __KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.54 2007/08/29 12:39:32 jmmv Exp $");
 #include <machine/cpu.h>
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
+#include <machine/video.h>
 
 #include <mac68k/nubus/nubus.h>
 #include <mac68k/obio/obiovar.h>
 #include <mac68k/dev/grfvar.h>
-
-extern u_int32_t	mac68k_vidphys;
-extern u_int32_t	mac68k_vidlen;
-extern long		videoaddr;
-extern long		videorowbytes;
-extern long		videobitdepth;
-extern long		videowidth;
-extern long		videoheight;
 
 static int	grfiv_mode(struct grf_softc *, int, void *);
 static int	grfiv_match(struct device *, struct cfdata *, void *);
