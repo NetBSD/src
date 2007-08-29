@@ -33,7 +33,7 @@
 #ifdef __NetBSD__
 /* general portability macros */
 #define __FBSDID(x)	__RCSID(x)
-#define __DECONST(t, a)	__UNCONST(a)
+#define __DECONST(t, a)	(t) __UNCONST(a)
 
 /* this one seems to be missing from ctype.h */
 #define ishexnumber(x)	isxdigit(x)
