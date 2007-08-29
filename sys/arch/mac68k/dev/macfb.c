@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.17 2007/08/29 13:02:41 jmmv Exp $ */
+/* $NetBSD: macfb.c,v 1.18 2007/08/29 16:09:32 jmmv Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.17 2007/08/29 13:02:41 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.18 2007/08/29 16:09:32 jmmv Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -333,17 +333,17 @@ macfb_cnattach(paddr_t addr)
 	struct macfb_devconfig *dc = &macfb_console_dc;
 	long defattr;
 
-	dc->dc_vaddr = m68k_trunc_page(videoaddr);
-	dc->dc_paddr = m68k_trunc_page(mac68k_vidphys);
+	dc->dc_vaddr = m68k_trunc_page(mac68k_video.mv_kvaddr);
+	dc->dc_paddr = m68k_trunc_page(mac68k_video.mv_phys);
 
-	dc->dc_wid = videowidth;
-	dc->dc_ht = videoheight;
-	dc->dc_depth = videobitdepth;
-	dc->dc_rowbytes = videorowbytes;
+	dc->dc_wid = mac68k_video.mv_width;
+	dc->dc_ht = mac68k_video.mv_height;
+	dc->dc_depth = mac68k_video.mv_depth;
+	dc->dc_rowbytes = mac68k_video.mv_stride;
 
-	dc->dc_size = (mac68k_vidlen > 0) ?
-	    mac68k_vidlen : dc->dc_ht * dc->dc_rowbytes;
-	dc->dc_offset = m68k_page_offset(mac68k_vidphys);
+	dc->dc_size = (mac68k_video.mv_len > 0) ?
+	    mac68k_video.mv_len : dc->dc_ht * dc->dc_rowbytes;
+	dc->dc_offset = m68k_page_offset(mac68k_video.mv_phys);
 
 	/* set up the display */
 	macfb_init(&macfb_console_dc);
