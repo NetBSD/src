@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.317 2007/08/29 12:39:32 jmmv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.318 2007/08/29 13:02:41 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.317 2007/08/29 12:39:32 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.318 2007/08/29 13:02:41 jmmv Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -159,6 +159,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.317 2007/08/29 12:39:32 jmmv Exp $");
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+#include <machine/video.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -208,20 +209,15 @@ u_long	nblog[NBMAXRANGES];	/* Start logical addr of this range */
 long	nblen[NBMAXRANGES];	/* Length of this range If the length is */
 				/* negative, all phys addrs are the same. */
 
-/* From Booter via locore */
-long	videoaddr;		/* Addr used in kernel for video */
-long	videorowbytes;		/* Length of row in video RAM */
-long	videobitdepth;		/* Number of bits per pixel */
-long	videowidth;		/* Framebuffer width */
-long	videoheight;		/* Framebuffer height */
-
-/*
- * Values for IIvx-like internal video
- * -- should be zero if it is not used (usual case).
- */
-u_int32_t mac68k_vidlog;	/* logical addr */
-u_int32_t mac68k_vidphys;	/* physical addr */
-u_int32_t mac68k_vidlen;	/* mem length */
+/* Definitions for the variables defined in machine/video.h */
+long	videoaddr;
+long	videorowbytes;
+long	videobitdepth;
+long	videowidth;
+long	videoheight;
+uint32_t mac68k_vidlog;
+uint32_t mac68k_vidphys;
+uint32_t mac68k_vidlen;
 
 /* Callback and cookie to run bell */
 int	(*mac68k_bell_callback)(void *, int, int, int);
