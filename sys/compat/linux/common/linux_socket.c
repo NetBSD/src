@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.78 2007/08/26 22:33:25 dyoung Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.79 2007/08/29 22:33:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.78 2007/08/26 22:33:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.79 2007/08/29 22:33:42 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1072,7 +1072,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				if (sadl->sdl_family != AF_LINK ||
 				    sadl->sdl_type != IFT_ETHER)
 					continue;
-				memcpy(&lreq.hwaddr.sa_data, LLADDR(sadl),
+				memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
 				       MIN(sadl->sdl_alen,
 					   sizeof(lreq.hwaddr.sa_data)));
 				lreq.hwaddr.sa_family =
@@ -1115,7 +1115,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 						/* not the reqested iface */
 						continue;
 					memcpy(&lreq.hwaddr.sa_data,
-					       LLADDR(sadl),
+					       CLLADDR(sadl),
 					       MIN(sadl->sdl_alen,
 						   sizeof(lreq.hwaddr.sa_data)));
 					lreq.hwaddr.sa_family =
