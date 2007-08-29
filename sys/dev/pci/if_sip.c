@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.113 2007/07/09 21:00:55 ad Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.114 2007/08/29 22:33:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.113 2007/07/09 21:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.114 2007/08/29 22:33:43 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2823,7 +2823,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
-	u_int8_t *cp;
+	const u_int8_t *cp;
 	struct ether_multistep step;
 	u_int32_t crc, mchash[16];
 
@@ -2917,7 +2917,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 	/*
 	 * Disable receive filter, and program the node address.
 	 */
-	cp = LLADDR(ifp->if_sadl);
+	cp = CLLADDR(ifp->if_sadl);
 	FILTER_EMIT(RFCR_RFADDR_NODE0, (cp[1] << 8) | cp[0]);
 	FILTER_EMIT(RFCR_RFADDR_NODE2, (cp[3] << 8) | cp[2]);
 	FILTER_EMIT(RFCR_RFADDR_NODE4, (cp[5] << 8) | cp[4]);
@@ -2969,7 +2969,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
-	u_int8_t *cp;
+	const u_int8_t *cp;
 	struct ether_multistep step;
 	u_int32_t crc, hash, slot, bit;
 #ifdef DP83820
@@ -3070,7 +3070,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	/*
 	 * Disable receive filter, and program the node address.
 	 */
-	cp = LLADDR(ifp->if_sadl);
+	cp = CLLADDR(ifp->if_sadl);
 	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH0, (cp[1] << 8) | cp[0]);
 	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH2, (cp[3] << 8) | cp[2]);
 	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH4, (cp[5] << 8) | cp[4]);
