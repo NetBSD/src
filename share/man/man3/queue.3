@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.33 2006/03/07 18:13:43 pooka Exp $
+.\"	$NetBSD: queue.3,v 1.34 2007/08/29 13:43:18 pooka Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -385,6 +385,36 @@ or
 .Li CIRCLEQ_HEAD .
 See the examples below for further explanation of how these
 macros are used.
+.Ss Summary of Operations
+The following table summarizes the supported macros for each type
+of data structure.
+.Pp
+.TS
+box tab(:);
+l | c | c | c | c | c | c
+l | c | c | c | c | c | c
+l | c | c | c | c | c | c
+l | c | c | c | c | c | c
+l | c | c | c | c | c | c
+l | c | c | c | c | c | c.
+:SLIST:LIST:SIMPLEQ:STAILQ:TAILQ:CIRCLEQ
+_
+_EMPTY:+:+:+:+:+:+
+_FIRST:+:+:+:+:+:+
+_FOREACH:+:+:+:+:+:+
+_FOREACH_REVERSE:-:-:-:-:+:+
+_INSERT_AFTER:+:+:+:+:+:+
+_INSERT_BEFORE:-:+:-:-:+:+
+_INSERT_HEAD:+:+:+:+:+:+
+_INSERT_TAIL:-:-:+:+:+:+
+_LAST:-:-:-:-:+:+
+_LOOP_NEXT:-:-:-:-:-:+
+_LOOP_PREV:-:-:-:-:-:+
+_NEXT:+:+:+:+:+:+
+_PREV:-:-:-:-:+:+
+_REMOVE:+:+:+:+:+:+
+_REMOVE_HEAD:+:-:+:+:-:-
+.TE
 .Sh SINGLY-LINKED LISTS
 A singly-linked list is headed by a structure defined by the
 .Nm SLIST_HEAD
