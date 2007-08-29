@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2007/05/17 14:51:16 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.12.1 2007/08/29 04:31:37 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2007/05/17 14:51:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.1 2007/08/29 04:31:37 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -961,7 +961,7 @@ pmap_use_l1(pmap_t pm)
 	 * Access to an L1 by the kernel pmap must not affect
 	 * the LRU list.
 	 */
-	if (current_intr_depth || pm == pmap_kernel())
+	if (curcpu()->ci_intr_depth || pm == pmap_kernel())
 		return;
 
 	l1 = pm->pm_l1;
