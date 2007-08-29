@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.49 2007/05/17 14:51:20 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.50 2007/08/29 23:38:04 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,13 +185,9 @@ define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_STAT			offsetof(struct lwp, l_stat)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
-define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_MUTEX			offsetof(struct lwp, l_mutex)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	P_FLAG			offsetof(struct proc, p_flag)
@@ -216,6 +212,7 @@ define	V_INTR			offsetof(struct uvmexp, intrs)
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
+define	PCB_ESP0		offsetof(struct pcb, pcb_esp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
@@ -283,15 +280,20 @@ define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
 
-define	CPU_INFO_SELF150	offsetof(struct cpu_info, ci_self150)
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
+define	CPU_INFO_PMAP_CPU	offsetof(struct cpu_info, ci_pmap_cpu)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
+define	TLBSTATE_LAZY		TLBSTATE_LAZY
+define	TLBSTATE_STALE		TLBSTATE_STALE
+define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
+define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
@@ -389,3 +391,14 @@ define	RW_HAS_WAITERS		RW_HAS_WAITERS
 define	RW_THREAD		RW_THREAD
 define	RW_READER		RW_READER
 define	RW_WRITER		RW_WRITER
+
+define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
+define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)
+define	MB_ADDR1		offsetof(struct pmap_mbox, mb_addr1)
+define	MB_ADDR2		offsetof(struct pmap_mbox, mb_addr2)
+define	MB_HEAD			offsetof(struct pmap_mbox, mb_head)
+define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
+
+define	PM_CPUS			offsetof(struct pmap, pm_cpus)
+
+define	EV_COUNT		offsetof(struct evcnt, ev_count)
