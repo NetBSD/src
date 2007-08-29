@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.81 2007/04/15 20:29:21 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.81.14.1 2007/08/29 04:42:11 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.81 2007/04/15 20:29:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.81.14.1 2007/08/29 04:42:11 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -96,6 +96,10 @@ int	arm_picache_ways;
 int	arm_pdcache_size;	/* and unified */
 int	arm_pdcache_line_size;
 int	arm_pdcache_ways;
+#if (ARM_MMU_V6) != 0
+int	arm_cache_prefer_mask;
+#endif
+ 
 
 int	arm_pcache_type;
 int	arm_pcache_unified;
@@ -697,16 +701,16 @@ struct cpu_functions arm11_cpufuncs = {
 
 	/* Cache operations */
 
-	.cf_icache_sync_all	= armv5_icache_sync_all,
-	.cf_icache_sync_range	= armv5_icache_sync_range,
+	.cf_icache_sync_all	= armv6_icache_sync_all,
+	.cf_icache_sync_range	= armv6_icache_sync_range,
 
-	.cf_dcache_wbinv_all	= armv5_dcache_wbinv_all,
-	.cf_dcache_wbinv_range	= armv5_dcache_wbinv_range,
-/*XXX*/	.cf_dcache_inv_range	= armv5_dcache_wbinv_range,
-	.cf_dcache_wb_range	= armv5_dcache_wb_range,
+	.cf_dcache_wbinv_all	= armv6_dcache_wbinv_all,
+	.cf_dcache_wbinv_range	= armv6_dcache_wbinv_range,
+	.cf_dcache_inv_range	= armv6_dcache_inv_range,
+	.cf_dcache_wb_range	= armv6_dcache_wb_range,
 
-	.cf_idcache_wbinv_all	= armv5_idcache_wbinv_all,
-	.cf_idcache_wbinv_range = armv5_idcache_wbinv_range,
+	.cf_idcache_wbinv_all	= armv6_idcache_wbinv_all,
+	.cf_idcache_wbinv_range = armv6_idcache_wbinv_range,
 
 	/* Other functions */
 
@@ -715,7 +719,7 @@ struct cpu_functions arm11_cpufuncs = {
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= (void *)cpufunc_nullop,
 
-	.cf_sleep		= (void *)cpufunc_nullop,
+	.cf_sleep		= arm11_cpu_sleep,
 
 	/* Soft functions */
 
@@ -1019,6 +1023,11 @@ get_cachetype_cp15()
 		} else {
 			arm_picache_ways = multiplier <<
 			    (CPU_CT_xSIZE_ASSOC(isize) - 1);
+#if (ARM_MMU_V6) > 0
+			if (CPU_CT_xSIZE_P & isize)
+				arm_cache_prefer_mask =
+				    (arm_picache_ways << PGSHIFT) - 1;
+#endif
 		}
 		arm_picache_size = multiplier << (CPU_CT_xSIZE_SIZE(isize) + 8);
 	}
@@ -1034,6 +1043,11 @@ get_cachetype_cp15()
 	} else {
 		arm_pdcache_ways = multiplier <<
 		    (CPU_CT_xSIZE_ASSOC(dsize) - 1);
+#if (ARM_MMU_V6) > 0
+		if (CPU_CT_xSIZE_P & dsize)
+			arm_cache_prefer_mask =
+			    (arm_pdcache_ways << PGSHIFT) - 1;
+#endif
 	}
 	arm_pdcache_size = multiplier << (CPU_CT_xSIZE_SIZE(dsize) + 8);
 
@@ -1246,19 +1260,17 @@ set_cpufuncs()
 		return 0;
 	}
 #endif /* CPU_ARM10 */
-#ifdef CPU_ARM11
+#if defined(CPU_ARM11)
 	if (cputype == CPU_ID_ARM1136JS ||
-	    cputype == CPU_ID_ARM1136JSR1) {
+	    cputype == CPU_ID_ARM1136JSR1 ||
+	    cputype == CPU_ID_ARM1176JS) {
 		cpufuncs = arm11_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
+		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
-		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		armv5_dcache_sets_max = 
-		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
-		    armv5_dcache_sets_inc;
-		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
-		armv5_dcache_index_max = 0U - armv5_dcache_index_inc;
 		pmap_pte_init_generic();
+		uvmexp.ncolors = arm_pdcache_ways;
+
 		return 0;
 	}
 #endif /* CPU_ARM11 */
@@ -1818,7 +1830,7 @@ late_abort_fixup(arg)
 	defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-	defined(CPU_ARM10) || defined(CPU_ARM11)
+	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARM1136)
 
 #define IGN	0
 #define OR	1
@@ -2198,6 +2210,9 @@ arm10_setup(args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -2213,7 +2228,7 @@ arm10_setup(args)
 }
 #endif	/* CPU_ARM9E || CPU_ARM10 */
 
-#ifdef CPU_ARM11
+#if defined(CPU_ARM11)
 struct cpu_option arm11_options[] = {
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -2228,6 +2243,14 @@ arm11_setup(args)
 	char *args;
 {
 	int cpuctrl, cpuctrlmask;
+
+#if defined(PROCESS_ID_IS_CURCPU)
+	/* set curcpu() */
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store)); 
+#elif defined(PROCESS_ID_IS_CURLWP)
+	/* set curlwp() */
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0)); 
+#endif
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
 	    | CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE
@@ -2247,6 +2270,12 @@ arm11_setup(args)
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -2307,6 +2336,12 @@ sa110_setup(args)
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
