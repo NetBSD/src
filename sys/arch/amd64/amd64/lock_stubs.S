@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3 2007/05/17 14:51:13 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4 2007/08/29 23:38:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -91,8 +91,6 @@ NENTRY(mutex_enter)				/* 0x0000, 25 bytes */
  * on multiprocessor systems, and comments in arch/x86/include/lock.h about
  * memory ordering on Intel x86 systems.
  */
-	.align	32
-
 NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
 	movq	CPUVAR(CURLWP), %rax
 	xorq	%rdx, %rdx
@@ -105,21 +103,19 @@ NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
  *
  * Acquire a spin mutex and post a load fence.
  */
-	.align	64
-
-NENTRY(mutex_spin_enter)			/* 0x0040, 58 bytes */
-	movq	CPUVAR(SELF200), %r8
+NENTRY(mutex_spin_enter)
+	movq	CPUVAR(SELF), %r8
 #if defined(FULL)
 	movl	$0x0100, %eax			/* new + expected value */
 #endif
-	movl	(CPU_INFO_ILEVEL-0x200)(%r8), %esi
-	subl	$1, (CPU_INFO_MTX_COUNT-0x200)(%r8)/* decl doesnt set CF */
+	movl	CPU_INFO_ILEVEL(%r8), %esi
+	subl	$1, CPU_INFO_MTX_COUNT(%r8)	/* decl doesnt set CF */
 	movzbl	MTX_IPL(%rdi), %ecx		/* new SPL */
-	cmovncl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %esi
+	cmovncl	CPU_INFO_MTX_OLDSPL(%r8), %esi
 	cmpl	%ecx, %esi			/* higher? */
-	movl	%esi, (CPU_INFO_MTX_OLDSPL-0x200)(%r8)
+	movl	%esi, CPU_INFO_MTX_OLDSPL(%r8)
 	cmovgl	%esi, %ecx
-	movl	%ecx, (CPU_INFO_ILEVEL-0x200)(%r8) /* splraiseipl() */
+	movl	%ecx, CPU_INFO_ILEVEL(%r8)	/* splraiseipl() */
 #if defined(FULL)
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
@@ -132,48 +128,46 @@ NENTRY(mutex_spin_enter)			/* 0x0040, 58 bytes */
  *
  * Release a spin mutex and post a load fence.
  */
-	.align	64
-
-NENTRY(mutex_spin_exit)				/* 0x0080, 60 bytes */
+NENTRY(mutex_spin_exit)
 #ifdef DIAGNOSTIC
 
 	movl	$0x0001, %eax			/* new + expected value */
-	movq	CPUVAR(SELF200), %r8
+	movq	CPUVAR(SELF), %r8
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* unlock */
 	jnz,pn	_C_LABEL(mutex_vector_exit)	/* hard case if problems */
-	movl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %edi
-	incl	(CPU_INFO_MTX_COUNT-0x200)(%r8)
+	movl	CPU_INFO_MTX_OLDSPL(%r8), %edi
+	incl	CPU_INFO_MTX_COUNT(%r8)
 	jnz	1f
-	cmpl	(CPU_INFO_ILEVEL-0x200)(%r8), %edi
+	cmpl	CPU_INFO_ILEVEL(%r8), %edi
 	jae	1f
-	movl	(CPU_INFO_IUNMASK-0x200)(%r8,%rdi,4), %esi
+	movl	CPU_INFO_IUNMASK(%r8,%rdi,4), %esi
 	cli	
-	testl	(CPU_INFO_IPENDING-0x200)(%r8), %esi
+	testl	CPU_INFO_IPENDING(%r8), %esi
 	jnz	_C_LABEL(Xspllower)
-	movl	%edi, (CPU_INFO_ILEVEL-0x200)(%r8)
+	movl	%edi, CPU_INFO_ILEVEL(%r8)
 	sti
 1:	rep					/* double byte ret as branch */
 	ret					/* target: see AMD docs */
 
 #else	/* DIAGNOSTIC */
 
-	movq	CPUVAR(SELF200), %rsi
+	movq	CPUVAR(SELF), %rsi
 #ifdef MULTIPROCESSOR
 	movb	$0x00, MTX_LOCK(%rdi)
 #endif
-	movl	(CPU_INFO_MTX_OLDSPL-0x200)(%rsi), %ecx
-	incl	(CPU_INFO_MTX_COUNT-0x200)(%rsi)
-	movl	(CPU_INFO_ILEVEL-0x200)(%rsi),%edx
+	movl	CPU_INFO_MTX_OLDSPL(%rsi), %ecx
+	incl	CPU_INFO_MTX_COUNT(%rsi)
+	movl	CPU_INFO_ILEVEL(%rsi),%edx
 	cmovnzl	%edx,%ecx
 	cmpl	%edx,%ecx			/* new level is lower? */
 	pushq	%rbx
 	jae,pn	2f
 1:
-	movl	(CPU_INFO_IPENDING-0x200)(%rsi),%eax
-	testl	%eax,(CPU_INFO_IUNMASK-0x200)(%rsi,%rcx,4)/* deferred interrupts? */
+	movl	CPU_INFO_IPENDING(%rsi),%eax
+	testl	%eax,CPU_INFO_IUNMASK(%rsi,%rcx,4)/* deferred interrupts? */
 	movl	%eax,%ebx
 	jnz,pn	3f
-	cmpxchg8b (CPU_INFO_ISTATE-0x200)(%rsi)	/* swap in new ilevel */
+	cmpxchg8b CPU_INFO_ISTATE(%rsi)		/* swap in new ilevel */
 	jnz,pn	1b
 2:
 	popq	%rbx
@@ -190,8 +184,6 @@ NENTRY(mutex_spin_exit)				/* 0x0080, 60 bytes */
  *
  * Acquire one hold on a RW lock.
  */
-	.align	64
-
 NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
 	cmpl	$RW_READER, %esi
 	jne	2f
@@ -224,8 +216,6 @@ NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
  *
  * Release one hold on a RW lock.
  */
-	.align	64
-
 NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 	movq	RW_OWNER(%rdi), %rax
 	testb	$RW_WRITE_LOCKED, %al
@@ -264,8 +254,6 @@ NENTRY(rw_exit)					/* 0x0100, 64 bytes */
  *
  * Perform an atomic compare-and-set operation.
  */
-	.align	32
-
 NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
 	movq	%rsi, %rax
 	LOCK
@@ -277,9 +265,6 @@ NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
 /*
  * Memory barrier operations.
  */
-
-	.align	8
-
 NENTRY(mb_read)
 	lfence
 	ret

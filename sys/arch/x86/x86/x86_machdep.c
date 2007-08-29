@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.11 2007/08/29 23:38:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.11 2007/08/29 23:38:06 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.10 2007/03/21 00:16:52 xtraeme Exp
 #include <sys/kcore.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 #include <x86/cpu_msr.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2007/05/17 14:51:13 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.10 2007/08/29 23:38:01 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
 include <sys/cpu_data.h>
+include <sys/evcnt.h>
 
 include <netinet/in.h>
 include <netinet/in_systm.h>
@@ -220,8 +221,9 @@ define	FRAMESIZE		sizeof(struct trapframe)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
 define  CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
-define  CPU_INFO_SELF200	offsetof(struct cpu_info, ci_self200)
 define  CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CPU_INFO_PMAP_CPU	offsetof(struct cpu_info, ci_pmap_cpu)
+define	CPU_INFO_TLB_EVCNT	offsetof(struct cpu_info, ci_tlb_evcnt)
 define  CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define  CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define  CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
@@ -285,3 +287,12 @@ define	RW_HAS_WAITERS	RW_HAS_WAITERS
 define	RW_THREAD	RW_THREAD
 define	RW_READER	RW_READER
 define	RW_WRITER	RW_WRITER
+
+define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
+define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)
+define	MB_ADDR1		offsetof(struct pmap_mbox, mb_addr1)
+define	MB_ADDR2		offsetof(struct pmap_mbox, mb_addr2)
+define	MB_HEAD			offsetof(struct pmap_mbox, mb_head)
+define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
+
+define	EV_COUNT		offsetof(struct evcnt, ev_count)

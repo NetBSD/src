@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 2007/08/29 22:21:51 dyoung Exp $	*/
+/*	$NetBSD: intr.c,v 1.31 2007/08/29 23:38:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2007/08/29 22:21:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2007/08/29 23:38:06 ad Exp $");
 
 #include "opt_noredzone.h"
 #include "opt_multiprocessor.h"
@@ -950,7 +950,8 @@ cpu_intr_init(struct cpu_info *ci)
 	intr_calculatemasks(ci);
 
 #if defined(INTRSTACKSIZE)
-	/* If the red zone is activated, protect both the top and
+	/*
+	 * If the red zone is activated, protect both the top and
 	 * the bottom of the stack with an unmapped page.
 	 */
 	istack = uvm_km_alloc(kernel_map,
@@ -964,8 +965,9 @@ cpu_intr_init(struct cpu_info *ci)
 	ci->ci_intrstack =
 	    (char *)istack + redzone_const_or_zero(PAGE_SIZE) + INTRSTACKSIZE -
 	    sizeof(register_t);
-	ci->ci_idepth = -1;
 #endif /* defined(INTRSTACKSIZE) */
+
+	ci->ci_idepth = -1;
 }
 
 #ifdef MULTIPROCESSOR
