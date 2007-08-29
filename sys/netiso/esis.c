@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.48 2007/08/26 23:07:17 dyoung Exp $	*/
+/*	$NetBSD: esis.c,v 1.49 2007/08/29 22:53:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.48 2007/08/26 23:07:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.49 2007/08/29 22:53:35 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -1134,7 +1134,8 @@ isis_output(struct mbuf *m, ...)
 	sn_len = sdl->sdl_alen;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISISOUTPUT]) {
-		u_char *cp = (u_char *) LLADDR(sdl), *cplim = cp + sn_len;
+		const u_char *cp = (const u_char *)CLLADDR(sdl),
+		             *cplim = cp + sn_len;
 		printf("isis_output: ifp %p (%s), to: ",
 		    ifp, ifp->if_xname);
 		while (cp < cplim) {
