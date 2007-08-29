@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10.6.4 2007/08/29 22:36:07 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.6.5 2007/08/29 22:42:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -419,7 +419,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	/* Invalidate all user pages. */
 	movq	%cr3, %rax
 	movq	%rax, %cr3
-	jmp	3b
+	jmp	2b
 
 /*
  * Broadcast TLB shootdown handler for kernel_pmap.
