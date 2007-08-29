@@ -1,4 +1,4 @@
-.\" $NetBSD: wlanctl.8,v 1.3 2005/01/27 21:01:18 hubertf Exp $
+.\" $NetBSD: wlanctl.8,v 1.4 2007/08/29 02:27:55 dogcow Exp $
 .\" Copyright (c) 2004 David Young.  All rights reserved.
 .\"
 .\" This code was written by David Young.
@@ -36,9 +36,11 @@
 .Nd examine IEEE 802.11 wireless LAN client/peer table
 .Sh SYNOPSIS
 .Nm wlanctl
+.Op Fl p
 .Ar interface
-.Op Ar ...
+.Op ...
 .Nm
+.Op Fl p
 .Fl a
 .Sh DESCRIPTION
 Use the
@@ -47,7 +49,9 @@ utility to print node tables from IEEE 802.11 interfaces.
 Use the
 .Fl a
 flag to print the nodes for all interfaces, or list one or more
-802.11 interfaces to select their tables for examination.
+802.11 interfaces to select their tables for examination. The
+.Fl p
+flag causes only nodes that do not have encryption enabled to be printed.
 For example, to examine the node tables for atw0, use:
 .Pp
 .Bd -literal -offset indent -compact
@@ -98,9 +102,11 @@ In the example node table, the first network node has MAC number
 The first node belongs to the 802.11 network identified
 by Basic Service Set Identifier (BSSID) 02:02:6f:20:f6:2e.
 .It Fa "node flags"
-Only one node flag,
-.Dq bss ,
-is presently defined.
+Only three node flags,
+.Dq bss, sta,
+and
+.Dq scan,
+are presently defined.
 The first node is distinguished from the rest by its node flags:
 flag
 .Dq bss
