@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.136 2007/08/26 22:45:57 dyoung Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.137 2007/08/29 22:33:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.136 2007/08/26 22:45:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.137 2007/08/29 22:33:42 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3938,7 +3938,7 @@ static int
 bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
-	u_int16_t *m;
+	const u_int16_t *m;
 	int s, error;
 
 	s = splnet();
@@ -3969,7 +3969,7 @@ bge_init(struct ifnet *ifp)
 	    ETHER_HDR_LEN + ETHER_CRC_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* Load our MAC address. */
-	m = (u_int16_t *)&(LLADDR(ifp->if_sadl)[0]);
+	m = (const u_int16_t *)&(CLLADDR(ifp->if_sadl)[0]);
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
 
