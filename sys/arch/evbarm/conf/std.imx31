@@ -1,0 +1,24 @@
+#	$NetBSD: std.imx31,v 1.1.2.1 2007/08/29 05:26:49 matt Exp $
+#
+# standard NetBSD/evbarm for SDP2430 options
+
+machine	evbarm arm
+include		"conf/std"	# MI standard options
+
+# Pull in i.mx31 config definitions.
+include "arch/evbarm/conf/files.imx31"
+
+options 	EXEC_ELF32
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options 	ARM32
+options 	ARM1136_PMC
+
+makeoptions	LOADADDRESS="0x80200000"
+makeoptions	BOARDTYPE="imx31"
+makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx31"
+makeoptions	CPPFLAGS+="-I$S/../../../include"
+
+options 	ARM_INTR_IMPL="<arch/arm/imx/imx31_intr.h>"
+options		ARM_GENERIC_TODR
