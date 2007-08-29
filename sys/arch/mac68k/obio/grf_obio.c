@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.53 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.54 2007/08/29 12:39:32 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.53 2007/03/04 06:00:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.54 2007/08/29 12:39:32 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,7 +86,8 @@ extern u_int32_t	mac68k_vidlen;
 extern long		videoaddr;
 extern long		videorowbytes;
 extern long		videobitdepth;
-extern u_long		videosize;
+extern long		videowidth;
+extern long		videoheight;
 
 static int	grfiv_mode(struct grf_softc *, int, void *);
 static int	grfiv_match(struct device *, struct cfdata *, void *);
@@ -339,8 +340,8 @@ grfiv_attach(struct device *parent, struct device *self, void *aux)
 	gm->mode_id = 0;
 	gm->psize = videobitdepth;
 	gm->ptype = 0;
-	gm->width = videosize & 0xffff;
-	gm->height = (videosize >> 16) & 0xffff;
+	gm->width = videowidth;
+	gm->height = videoheight;
 	gm->rowbytes = videorowbytes;
 	gm->hres = 80;				/* XXX hack */
 	gm->vres = 80;				/* XXX hack */

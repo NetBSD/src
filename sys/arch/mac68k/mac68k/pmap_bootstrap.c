@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.70 2007/08/01 23:48:24 dogcow Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.71 2007/08/29 12:39:32 jmmv Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.70 2007/08/01 23:48:24 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.71 2007/08/29 12:39:32 jmmv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -87,7 +87,7 @@ int	vidlen;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	videoaddr;
 extern u_int32_t	videorowbytes;
-extern u_int32_t	videosize;
+extern long		videoheight;
 static u_int32_t	newvideoaddr;
 
 extern void *	ROMBase;
@@ -130,7 +130,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	pt_entry_t protopte, *pte, *epte;
 	extern char start[];
 
-	vidlen = m68k_round_page(((videosize >> 16) & 0xffff) * videorowbytes +
+	vidlen = m68k_round_page(videoheight * videorowbytes +
 	    m68k_page_offset(mac68k_vidphys));
 
 	/*

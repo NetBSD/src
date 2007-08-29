@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.15 2007/03/04 06:00:07 christos Exp $ */
+/* $NetBSD: macfb.c,v 1.16 2007/08/29 12:39:31 jmmv Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.15 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macfb.c,v 1.16 2007/08/29 12:39:31 jmmv Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "grf.h"
@@ -121,7 +121,8 @@ static struct macfb_devconfig macfb_console_dc;
 extern long		videoaddr;
 extern long		videorowbytes;
 extern long		videobitdepth;
-extern u_long		videosize;
+extern long		videowidth;
+extern long		videoheight;
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	mac68k_vidlen;
@@ -344,8 +345,8 @@ macfb_cnattach(paddr_t addr)
 	dc->dc_vaddr = m68k_trunc_page(videoaddr);
 	dc->dc_paddr = m68k_trunc_page(mac68k_vidphys);
 
-	dc->dc_wid = videosize & 0xffff;
-	dc->dc_ht = (videosize >> 16) & 0xffff;
+	dc->dc_wid = videowidth;
+	dc->dc_ht = videoheight;
 	dc->dc_depth = videobitdepth;
 	dc->dc_rowbytes = videorowbytes;
 
