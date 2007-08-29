@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10.6.3 2007/08/26 06:56:30 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.10.6.4 2007/08/29 22:36:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -387,39 +387,35 @@ IDTVEC(intr_lapic_tlb_mcast)
 	pushq	%rcx
 	pushq	%rdx
 	incq	CPUVAR(TLB_EVCNT)+EV_COUNT
-	/*
-	 * Find out what we need to invalidate, clear the mailbox
-	 * lock and notify the waiter of completion.  The 'xchgl'
-	 * below provides a load fence.
-	 */
+	/* Find out what needs to be invalidated and unlock the mailbox. */
 	movq	CPUVAR(PMAP_CPU),%rcx
 	movq	MB_ADDR1(%rcx), %rax
 	movq	MB_ADDR2(%rcx), %rdx
 	xorq	%rbx, %rbx
 	xchgq	MB_POINTER(%rcx), %rbx
-	lock
-	incq	(%rbx)
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
-	je	5f
+	je	4f
 1:
 	/* Invalidate a single page or a range of pages. */
 	invlpg	(%rax)
 	addq	$PAGE_SIZE, %rax
 	cmpq	%rdx, %rax
 	jb	1b
-3:
+2:
 	/* Restore state and return. */
+	lock
+	incq	(%rbx)
 	popq	%rdx
 	popq	%rcx
 	popq	%rbx
 	popq	%rax
 	testq	$SEL_UPL, 8(%rsp)
-	jz	4f
+	jz	3f
 	swapgs
-4:
+3:
 	iretq
-5:
+4:
 	/* Invalidate all user pages. */
 	movq	%cr3, %rax
 	movq	%rax, %cr3
@@ -433,17 +429,10 @@ IDTVEC(intr_lapic_tlb_bcast)
 	pushq	%rax
 	pushq	%rbx
 	pushq	%rdx
-	/*
-	 * Find out what we need to invalidate and notify the waiter
-	 * of completion.  If this is the last CPU to process the 
-	 * IPI, the mailbox becomes unlocked.  The 'lock' prefix below
-	 * provides a load fence.
-	 */
+	/* Find out what needs to be invalidated. */
 	movq	_C_LABEL(pmap_mbox)+MB_ADDR1, %rax
 	movq	_C_LABEL(pmap_mbox)+MB_ADDR2, %rdx
 	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rbx
-	lock
-	incq	_C_LABEL(pmap_mbox)+MB_TAIL
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
 	cmpq	$-1, %rax
 	je,pn	3f
@@ -453,7 +442,10 @@ IDTVEC(intr_lapic_tlb_bcast)
 	addq	$PAGE_SIZE, %rax
 	cmpq	%rdx, %rax
 	jb	1b
-	/* Restore state & return */
+2:
+	/* Notify waiter of completion, restore state & return */
+	lock
+	incq	_C_LABEL(pmap_mbox)+MB_TAIL
 	popq	%rdx
 	popq	%rbx
 	popq	%rax
@@ -469,20 +461,12 @@ IDTVEC(intr_lapic_tlb_bcast)
 	leaq	-CR4_PGE(%rax), %rdx
 	movq	%rdx, %cr4
 	movq	%rax, %cr4
-	/* Restore state & return */
-	popq	%rdx
-	popq	%rbx
-	popq	%rax
-	iretq
+	jmp	2b
 4:
 	/* Invalidate user TLB entries. */
 	movq	%cr3, %rax
 	movq	%rax, %cr3
-	/* Restore state & return */
-	popq	%rdx
-	popq	%rbx
-	popq	%rax
-	iretq
+	jmp	2b
 
 #define voidop(num)
 
