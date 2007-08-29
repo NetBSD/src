@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.316 2007/06/02 12:07:04 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.317 2007/08/29 12:39:32 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.316 2007/06/02 12:07:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.317 2007/08/29 12:39:32 jmmv Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -212,7 +212,8 @@ long	nblen[NBMAXRANGES];	/* Length of this range If the length is */
 long	videoaddr;		/* Addr used in kernel for video */
 long	videorowbytes;		/* Length of row in video RAM */
 long	videobitdepth;		/* Number of bits per pixel */
-u_long	videosize;		/* height = 31:16, width = 15:0 */
+long	videowidth;		/* Framebuffer width */
+long	videoheight;		/* Framebuffer height */
 
 /*
  * Values for IIvx-like internal video
@@ -989,7 +990,8 @@ getenvvars(u_long flag, char *buf)
 	videoaddr = getenv("VIDEO_ADDR");
 	videorowbytes = getenv("ROW_BYTES");
 	videobitdepth = getenv("SCREEN_DEPTH");
-	videosize = getenv("DIMENSIONS");
+	videowidth = getenv("DIMENSIONS") & 0xffff;
+	videoheight = (getenv("DIMENSIONS") >> 16) & 0xffff;
 
 	/*
 	 * More misc stuff from booter.
