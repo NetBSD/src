@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.239 2007/08/28 19:46:07 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.240 2007/08/29 16:39:10 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8729,3 +8729,34 @@ sys/dev/pci/vga_pci.c				1.33
 
 	Allow 64bit memory BARs if we are compiling on 64bit archs.
 	[martin, ticket #848]
+
+dist/nawk/tran.c				1.10
+
+	awk: ensure that arithmetic never yields a negative zero result.
+	[apb, ticket #851]
+
+sys/arch/sparc64/sparc64/locore.s		patch
+
+	fix per-cpu mapping of cpuinfo/kernel stack on
+	sparc64 to not use the same physical page.
+	[martin, ticket #849]
+
+sys/dev/pci/if_wm.c				1.137
+sys/dev/pci/if_wm.c				1.138
+sys/dev/pci/if_wm.c				1.141
+sys/dev/pci/if_wm.c				1.144
+sys/dev/pci/if_wmreg.h				1.23
+sys/dev/pci/pcidevs				1.893
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/mii/igphy.c				1.12
+sys/dev/mii/miidevs				1.72
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+share/man/man4/wm.4				1.18
+
+	Fix for 82541 and 82547's reset bug.
+	Modify wm_reset() to make some device stable.
+	Add ICH9 support to wm.
+	Add I82566 support to igphy.
+	[masanobu, ticket #850]
