@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.48 2007/05/25 10:40:04 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.48.12.1 2007/08/29 04:17:02 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -80,14 +80,15 @@
 #include "opt_armfpe.h"
 #include "opt_arm32_pmap.h"
 #include "opt_multiprocessor.h"
+#include "opt_cpuoptions.h"
 #include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <arm/arm32/pte.h>
 #include <machine/param.h>
-#include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/asm.h>
+#include <machine/cpu.h>
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -99,15 +100,21 @@
  * These keep FIQ's enabled since FIQ's are special.
  */
 
+#ifdef _ARM_ARCH_6
+#define	IRQdisable	cpsid	i
+#define	IRQenable	cpsie	i
+#else
 #define IRQdisable \
 	mrs	r14, cpsr ; \
 	orr	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14 ; \
+	msr	cpsr_c, r14
 
 #define IRQenable \
 	mrs	r14, cpsr ; \
 	bic	r14, r14, #(I32_bit) ; \
-	msr	cpsr_c, r14 ; \
+	msr	cpsr_c, r14
+
+#endif
 
 /*
  * These are used for switching the translation table/DACR.
@@ -116,6 +123,13 @@
  *
  * XXX: This is not necessary if the vector table is relocated.
  */
+#ifdef _ARM_ARCH_6
+
+#define	IRQdisableALL	cpsid	if
+#define	IRQenableALL	cpsie	if
+
+#else
+
 #define IRQdisableALL \
 	mrs	r14, cpsr ; \
 	orr	r14, r14, #(I32_bit | F32_bit) ; \
@@ -126,36 +140,18 @@
 	bic	r14, r14, #(I32_bit | F32_bit) ; \
 	msr	cpsr_c, r14
 
+#endif
+
 	.text
 
-#ifdef MULTIPROCESSOR
+#if !defined(PROCESS_ID_IS_CURLWP) && !defined(PROCESS_ID_IS_CURCPU)
 .Lcpu_info_store:
 	.word	_C_LABEL(cpu_info_store)
-.Lcurlwp:
-	/* FIXME: This is bogus in the general case. */
-	.word	_C_LABEL(cpu_info_store) + CI_CURLWP
-
-.Lcurpcb:
-	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
-#else
-.Lcurlwp:
-	.word	_C_LABEL(curlwp)
-
-.Lcurpcb:
-	.word	_C_LABEL(curpcb)
 #endif
 
 .Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
 	
-#ifndef MULTIPROCESSOR
-	.data
-	.global	_C_LABEL(curpcb)
-_C_LABEL(curpcb):
-	.word	0x00000000
-	.text
-#endif
-
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
@@ -183,22 +179,29 @@ ENTRY(cpu_switchto)
 
 	IRQdisable
 
+#ifdef PROCESS_ID_CURCPU
+	GET_CURCPU(r7)
+#elif defined(PROCESS_ID_IS_CURLWP)
+	ldr	r7, [r4, #(L_CPU)]		/* get cpu from old lwp */
+	mcr	p15, 0, r6, c13, c0, 4		/* save new lwp */
+#else
+	/* XXX use curcpu() if MULTIPROCESSOR */
+	ldr	r7, .Lcpu_info_store
+#endif
 #ifdef MULTIPROCESSOR
-	/* XXX use curcpu() */
-	ldr	r0, .Lcpu_info_store
-	str	r0, [r6, #(L_CPU)]
+	str	r7, [r6, #(L_CPU)]
 #else
 	/* l->l_cpu initialized in fork1() for single-processor */
 #endif
 
+#if !defined(PROCESS_ID_IS_CURLWP)
 	/* We have a new curlwp now so make a note it */
-	ldr	r7, .Lcurlwp
-	str	r6, [r7]
+	str	r6, [r7, #(CI_CURLWP)]
+#endif
 
 	/* Hook in a new pcb */
-	ldr	r7, .Lcurpcb
 	ldr	r0, [r6, #(L_ADDR)]
-	str	r0, [r7]
+	str	r0, [r7, #(CI_CURPCB)]
 
 	/* At this point we can allow IRQ's again. */
 	IRQenable
@@ -235,6 +238,13 @@ ENTRY(cpu_switchto)
 	strd	r12, [r1, #(PCB_R12)]
 #endif
 
+#ifdef _ARM_ARCH_6
+	/*
+	 * Save user read/write thread/process id register
+	 */
+	mrc	p15, 0, r7, c13, c0, 2
+	str	r7, [r1, #(PCB_USER_PID_RW)]
+#endif
 	/*
 	 * NOTE: We can now use r8-r13 until it is time to restore
 	 * them for the new process.
@@ -253,14 +263,27 @@ ENTRY(cpu_switchto)
 	/* Get the user structure for the new process in r9 */
 	ldr	r9, [r6, #(L_ADDR)]
 
+#ifdef _ARM_ARCH_6
+	/*
+	 * Restore user thread/process id registers
+	 */
+	ldr	r7, [r9, #(PCB_USER_PID_RW)]
+	mcr	p15, 0, r7, c13, c0, 2
+	ldr	r7, [r9, #(PCB_USER_PID_RO)]
+	mcr	p15, 0, r7, c13, c0, 3
+#endif
 	/*
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
 	 */
         mrs	r3, cpsr
+#ifdef _ARM_ARCH_6
+	cpsie	i, #PSR_UND32_MODE
+#else
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
+#endif
 
 	str	sp, [r8, #(PCB_UND_SP)]
 
