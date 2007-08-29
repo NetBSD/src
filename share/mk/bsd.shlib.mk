@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.shlib.mk,v 1.5 2006/11/11 14:41:20 jmmv Exp $
+#	$NetBSD: bsd.shlib.mk,v 1.6 2007/08/29 21:34:17 hira Exp $
 
 .if !defined(_BSD_SHLIB_MK_)
 _BSD_SHLIB_MK_=1
@@ -30,7 +30,8 @@ SHLINKINSTALLDIR?= /libexec
 .endif
 
 .if ${MKDYNAMICROOT} == "no" || \
-    (${BINDIR:Ux} != "/bin" && ${BINDIR:Ux} != "/sbin")
+    (${BINDIR:Ux} != "/bin" && ${BINDIR:Ux} != "/sbin" && \
+     ${BINDIR:Ux} != "/libexec")
 SHLINKDIR?=	/usr/libexec
 .else
 SHLINKDIR?=	/libexec
