@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.240 2007/08/29 16:39:10 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.241 2007/08/29 19:09:13 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8760,3 +8760,19 @@ share/man/man4/wm.4				1.18
 	Add ICH9 support to wm.
 	Add I82566 support to igphy.
 	[masanobu, ticket #850]
+
+sys/dev/pci/pcidevs				patch
+share/man/man4/man4.i386/Makefile		new file
+share/man/man4/man4.i386/gcscide.4		patch
+sys/arch/i386/conf/ALL				patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/INSTALL_LARGE		patch
+sys/arch/i386/conf/files.i386			patch
+sys/arch/i386/pci/gcscide.c			new file
+distrib/sets/lists/man/mi			patch
+
+	Import i386/gcscide(4). A driver for the IDE Controller of the
+	AMD CS5535 Companion device found in the decTOP.
+
+	Supports Ultra DMA mode 4, Pio Mode 4 and MDMA mode 2.
+	[xtraeme, ticket #846]
