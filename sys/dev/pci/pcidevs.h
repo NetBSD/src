@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.7 2007/08/26 12:02:56 liamjfoy Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.8 2007/08/29 16:12:54 liamjfoy Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -2024,6 +2024,10 @@
 #define	PCI_PRODUCT_INTEL_82572EI	0x10b9		/* i82572EI 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT	0x10ba		/* i80003 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT	0x10bb		/* i80003 Gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_AMT	0x10bd		/* 82801I (AMT) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE	0x10c0		/* 82801I LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE_G	0x10c2		/* 82801I (G) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE_GT	0x10c3		/* 82801I (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
@@ -2275,6 +2279,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_EXP_5	0x2847		/* 82801H PCI Express Port #5 */
 #define	PCI_PRODUCT_INTEL_82801H_EXP_6	0x2849		/* 82801H PCI Express Port #6 */
 #define	PCI_PRODUCT_INTEL_82801H_HDA	0x284b		/* 82801H High Definition Audio Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_C	0x294c		/* 82801I (C) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_THERMAL	0x284f		/* 82801H Thermal Controller */
 #define	PCI_PRODUCT_INTEL_82965Q_HB	0x2990		/* 82965Q Host Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_EXP	0x2991		/* 82965Q PCI Express Bridge */

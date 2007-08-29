@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.7 2007/08/26 12:01:19 liamjfoy Exp $
+$NetBSD: pcidevs,v 1.855.2.8 2007/08/29 16:12:53 liamjfoy Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2017,6 +2017,10 @@ product INTEL 82546GB_QUAD_COPPER_KSP3 0x10b5 i82546GB quad-port Gigabit Etherne
 product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
 product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
 product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
+product INTEL 82801I_IGP_AMT	0x10bd	82801I (AMT) LAN Controller
+product INTEL 82801I_IFE	0x10c0	82801I LAN Controller
+product INTEL 82801I_IFE_G	0x10c2	82801I (G) LAN Controller
+product INTEL 82801I_IFE_GT	0x10c3	82801I (GT) LAN Controller
 product INTEL 82801H_IFE_GT 	0x10c4	i82801H IFE (GT) LAN Controller
 product INTEL 82801H_IFE_G 	0x10c5	i82801H IFE (G) LAN Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
@@ -2268,6 +2272,7 @@ product INTEL 82801H_EXP_4	0x2845	82801H PCI Express Port #4
 product INTEL 82801H_EXP_5	0x2847	82801H PCI Express Port #5
 product INTEL 82801H_EXP_6	0x2849	82801H PCI Express Port #6
 product INTEL 82801H_HDA	0x284b	82801H High Definition Audio Controller
+product INTEL 82801I_IGP_C	0x294c	82801I (C) LAN Controller
 product INTEL 82801H_THERMAL	0x284f	82801H Thermal Controller
 product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
