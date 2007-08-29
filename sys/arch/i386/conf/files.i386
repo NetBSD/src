@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.296.2.1 2007/06/19 09:26:31 liamjfoy Exp $
+#	$NetBSD: files.i386,v 1.296.2.2 2007/08/29 18:34:17 liamjfoy Exp $
 #
 # new style config file for i386 architecture
 #
@@ -53,9 +53,6 @@ defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 defflag opt_beep.h		BEEP_ONHALT
 defparam opt_beep.h		BEEP_ONHALT_COUNT
 defparam opt_beep.h		BEEP_ONHALT_PITCH BEEP_ONHALT_PERIOD
-
-# Enhanced SpeedStep
-defflag			ENHANCED_SPEEDSTEP
 
 # Multiboot support
 defflag opt_multiboot.h		MULTIBOOT
@@ -186,6 +183,11 @@ file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 device	elansc: sysmon_wdog, gpiobus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
+
+# AMD Geode CS5535 Companion IDE controller
+device	gcscide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	gcscide at pci
+file	arch/i386/pci/gcscide.c 	gcscide
 
 # AMD Geode SC1100 GCB area
 device  geodegcb {}
@@ -511,10 +513,6 @@ defflag opt_vesafb.h	VESAFB_PM
 device vesatext
 attach vesatext at vesabios
 file	arch/i386/bios/vesa_text.c	vesatext
-
-# Enhanced SpeedStep
-file	arch/i386/i386/est.c		enhanced_speedstep
-defflag	opt_est.h	EST_FREQ_USERWRITE
 
 # AMD PowerNow K7
 file   arch/i386/i386/powernow_k7.c	powernow_k7
