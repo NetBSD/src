@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.1 2007/08/28 16:54:46 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.4.2 2007/08/29 03:05:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -235,7 +235,9 @@ struct cpu_info {
 	int ci_astpending;		/* */
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
+#if !defined(PROCESS_ID_IS_CURLWP)
 	struct lwp *ci_curlwp;		/* current lwp */
+#endif
 	struct pcb *ci_curpcb;		/* current pcb */
 	struct evcnt ci_arm700bugcount;
 	int32_t ci_mtx_count;
