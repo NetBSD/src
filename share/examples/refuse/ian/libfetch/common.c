@@ -566,7 +566,7 @@ _fetch_writev(conn_t *conn, struct iovec *iov, int iovcnt)
 		}
 		if (iovcnt > 0) {
 			iov->iov_len -= wlen;
-			iov->iov_base = (char *)(__DECONST(char *, iov->iov_base)) + wlen;
+			iov->iov_base = (__DECONST(char *, iov->iov_base)) + wlen;
 		}
 	}
 	return (total);
