@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.49.12.1 2007/08/28 18:53:02 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.49.12.2 2007/08/29 04:18:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,9 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.12.1 2007/08/28 18:53:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.49.12.2 2007/08/29 04:18:44 matt Exp $");
 
 #include "opt_md.h"
+#include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -88,7 +89,12 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store = { .ci_cpl = IPL_HIGH, };
+struct cpu_info cpu_info_store = {
+	.ci_cpl = IPL_HIGH,
+#ifndef PROCESS_ID_IS_CURLWP
+	.ci_curlwp = &lwp0,
+#endif
+};
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;
