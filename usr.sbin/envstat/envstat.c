@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.42 2007/08/26 10:20:33 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.43 2007/08/29 16:55:17 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -830,9 +830,11 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 /* converts the value to degC or degF */
 #define CONVERTTEMP(a, b, c)					\
 do {								\
-	(a) = ((b) / 1000000.0) - 273.15;			\
+	if (b) 							\
+		(a) = ((b) / 1000000.0) - 273.15;		\
 	if (flags & ENVSYS_FFLAG) {				\
-		(a) = (9.0 / 5.0) * (a) + 32.0;			\
+		if (b)						\
+			(a) = (9.0 / 5.0) * (a) + 32.0;		\
 		(c) = "degF";					\
 	} else							\
 		(c) = "degC";					\
