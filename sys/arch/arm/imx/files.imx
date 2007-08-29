@@ -1,0 +1,21 @@
+#	$NetBSD: files.imx,v 1.1.2.1 2007/08/29 05:24:23 matt Exp $
+#
+# Configuration info for the Freescale i.MX31
+#
+
+file	arch/arm/imx/imx31_gpio.c
+file	arch/arm/imx/imx31_icu.c
+
+device	becc {}: pcibus
+# Board-specific front-end provides attachment.
+#file	arch/arm/xscale/becc.c			becc
+#file	arch/arm/xscale/becc_pci.c		becc
+#file	arch/arm/xscale/becc_pci_space_asm.S	becc
+#file	arch/arm/xscale/becc_space.c		becc
+
+# Reset button.
+#device	beccbut: sysmon_power, sysmon_taskq
+#attach	beccbut at becc
+#file	arch/arm/xscale/becc_button.c		beccbut
+
+include "arch/arm/pic/files.pic"
