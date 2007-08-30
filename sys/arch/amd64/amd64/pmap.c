@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 2007/08/29 23:38:02 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2007/08/29 23:38:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -3444,14 +3444,17 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 {
+#ifdef MULTIPROCESSOR
 	extern int _lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 	extern bool x86_mp_online;
-	struct cpu_info *ci, *self;
+	struct cpu_info *ci;
 	struct pmap_mbox *mb, *selfmb;
 	CPU_INFO_ITERATOR cii;
 	uintptr_t head;
 	u_int count;
 	int s;
+#endif	/* MULTIPROCESSOR */
+	struct cpu_info *self;
 	bool kernel;
 
 	KASSERT(eva == 0 || eva >= sva);
@@ -3481,6 +3484,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		eva = sva;
 	}
 
+#ifdef MULTIPROCESSOR
 	if (ncpu > 1 && x86_mp_online) {
 		selfmb = &self->ci_pmap_cpu->pc_mbox;
 		if (pm == pmap_kernel()) {
@@ -3558,6 +3562,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 			splx(s);
 		}
 	}
+#endif	/* MULTIPROCESSOR */
 
 	/* Update the current CPU before waiting for others. */
 	if (!pmap_is_active(pm, self))
