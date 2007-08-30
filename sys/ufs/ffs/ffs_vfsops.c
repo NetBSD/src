@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.196.6.16 2007/08/28 22:07:23 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196.6.17 2007/08/30 20:08:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.16 2007/08/28 22:07:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196.6.17 2007/08/30 20:08:57 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -974,7 +974,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_HAS_TRANS;
+	mp->mnt_iflag |= (IMNT_HAS_TRANS | IMNT_MPSAFE);
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1178,6 +1178,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		if ((error = ffs_flushfiles(mp, flags, l)) != 0)
 			return (error);
 	}
+	mutex_enter(&ump->um_lock);
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
 		printf("%s: unmount pending error: blocks %" PRId64
 		       " files %d\n",
@@ -1186,6 +1187,7 @@ ffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		fs->fs_pendinginodes = 0;
 		penderr = 1;
 	}
+	mutex_exit(&ump->um_lock);
 	if (fs->fs_ronly == 0 &&
 	    ffs_cgupdate(ump, MNT_WAIT) == 0 &&
 	    fs->fs_clean & FS_WASCLEAN) {
@@ -1277,6 +1279,7 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
+	mutex_enter(&ump->um_lock);
 	sbp->f_bsize = fs->fs_bsize;
 	sbp->f_frsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
@@ -1293,7 +1296,9 @@ ffs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
 	sbp->f_favail = sbp->f_ffree;
 	sbp->f_fresvd = 0;
+	mutex_exit(&ump->um_lock);
 	copy_statvfs_info(sbp, mp);
+
 	return (0);
 }
 
