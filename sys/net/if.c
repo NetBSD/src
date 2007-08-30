@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.196 2007/08/20 04:49:40 skd Exp $	*/
+/*	$NetBSD: if.c,v 1.197 2007/08/30 02:17:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.196 2007/08/20 04:49:40 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.197 2007/08/30 02:17:34 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -285,9 +285,7 @@ if_alloc_sadl(struct ifnet *ifp)
 
 	namelen = strlen(ifp->if_xname);
 	addrlen = ifp->if_addrlen;
-	socksize = roundup(
-	    MAX(sizeof(*sdl),
-	    sockaddr_dl_measure(namelen, addrlen)), sizeof(long));
+	socksize = roundup(sockaddr_dl_measure(namelen, addrlen), sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
 	memset(ifa, 0, ifasize);
@@ -295,11 +293,10 @@ if_alloc_sadl(struct ifnet *ifp)
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	mask = (struct sockaddr_dl *)(socksize + (char *)sdl);
 
-	sockaddr_dl_init(sdl, ifp->if_index, ifp->if_type,
+	sockaddr_dl_init(sdl, socksize, ifp->if_index, ifp->if_type,
 	    ifp->if_xname, namelen, NULL, addrlen);
 	mask->sdl_len = sockaddr_dl_measure(namelen, 0);
-	while (namelen != 0)
-		mask->sdl_data[--namelen] = 0xff;
+	memset(&mask->sdl_data[0], 0xff, namelen);
 
 	ifnet_addrs[ifp->if_index] = ifa;
 	IFAREF(ifa);

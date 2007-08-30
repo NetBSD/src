@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.251 2007/08/10 22:46:16 dyoung Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.252 2007/08/30 02:17:37 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.251 2007/08/10 22:46:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.252 2007/08/30 02:17:37 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2079,8 +2079,11 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inp->inp_flags & INP_RECVIF) {
 		struct sockaddr_dl sdl;
 
-		sockaddr_dl_init(&sdl, (m->m_pkthdr.rcvif != NULL) ?
-		    m->m_pkthdr.rcvif->if_index : 0, 0, NULL, 0, NULL, 0);
+		sockaddr_dl_init(&sdl, sizeof(sdl),
+		    (m->m_pkthdr.rcvif != NULL)
+		        ?  m->m_pkthdr.rcvif->if_index
+			: 0,
+			0, NULL, 0, NULL, 0);
 		*mp = sbcreatecontrol(&sdl, sdl.sdl_len, IP_RECVIF, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;

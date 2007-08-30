@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.20 2007/05/02 20:40:28 dyoung Exp $	*/
+/*	$NetBSD: iso.h,v 1.21 2007/08/30 02:17:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -224,7 +224,9 @@ sockaddr_iso_alloc(const struct iso_addr *addr, int flags)
 {
 	struct sockaddr *sa;
 
-	if ((sa = sockaddr_alloc(AF_ISO, flags)) == NULL)
+	sa = sockaddr_alloc(AF_ISO, sizeof(struct sockaddr_iso), flags);
+
+	if (sa == NULL)
 		return NULL;
 
 	if (sockaddr_iso_init1(satosiso(sa), addr) != 0) {
