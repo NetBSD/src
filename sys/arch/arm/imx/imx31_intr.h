@@ -1,4 +1,4 @@
-/* $NetBSD: imx31_intr.h,v 1.1.2.1 2007/08/29 05:24:24 matt Exp $ */
+/* $NetBSD: imx31_intr.h,v 1.1.2.2 2007/08/30 07:07:45 matt Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -127,13 +127,16 @@
 	"ext sens #2",	"ext sens #1",	"ext wdog",	"ext tv", }
 
 #include <arm/pic/picvar.h>
-#include <arm/pic/pic_softintr.h>
+#include <arm/pic/softintr.h>
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
 const char *
 	intr_typename(int);
+
+void imx31_irq_handler(void *);
+void imx31_icu_init(void);
 
 #endif /* !_LOCORE */
 
