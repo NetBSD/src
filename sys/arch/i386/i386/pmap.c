@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.209 2007/08/30 11:30:29 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.210 2007/08/30 18:14:11 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2007/08/30 11:30:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2007/08/30 18:14:11 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -3497,7 +3497,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 #ifdef MULTIPROCESSOR
 	extern int _lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 	extern bool x86_mp_online;
-	struct cpu_info *ci, *self;
+	struct cpu_info *ci;
 	struct pmap_mbox *mb, *selfmb;
 	CPU_INFO_ITERATOR cii;
 	uintptr_t head;
