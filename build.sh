@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.171 2007/06/26 12:59:38 apb Exp $
+#	$NetBSD: build.sh,v 1.172 2007/08/30 05:30:02 jnemeth Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -230,6 +230,7 @@ initdefaults()
 	do_sourcesets=false
 	do_syspkgs=false
 	do_iso_image=false
+	do_iso_image_source=false
 	do_params=false
 
 	# Create scratch directory
@@ -522,7 +523,8 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
 			DESTDIR should be populated beforehand.
     sourcesets          Create source sets in RELEASEDIR/source/sets.
     syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
-    iso-image           Create CD-ROM image in RELEASEDIR/MACHINE/installation.
+    iso-image           Create CD-ROM image in RELEASEDIR/iso.
+    iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
     params              Display various make(1) parameters.
 
  Options:
@@ -767,6 +769,10 @@ parseoptions()
 
 		iso-image)
 			op=iso_image	# used as part of a variable name
+			;;
+
+		iso-image-source)
+			op=iso_image_source   # used as part of a variable name
 			;;
 
 		kernel=*|releasekernel=*)
@@ -1083,7 +1089,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.171 2007/06/26 12:59:38 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.172 2007/08/30 05:30:02 jnemeth Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1266,7 +1272,7 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
-		obj|build|distribution|iso-image|release|sourcesets|syspkgs|params)
+		obj|build|distribution|iso-image|iso-image-source|release|sourcesets|syspkgs|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
