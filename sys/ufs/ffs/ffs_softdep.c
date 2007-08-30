@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.21 2007/08/30 09:55:14 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.22 2007/08/30 12:38:37 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.21 2007/08/30 09:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.22 2007/08/30 12:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -4724,7 +4724,7 @@ softdep_fsync_mountdev(vp)
 	mutex_enter(&bufcache_lock);
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
-		KASSERT(nbp->b_objlock == &vp->v_interlock);
+		KASSERT(bp->b_objlock == &vp->v_interlock);
 		/*
 		 * If it is already scheduled, skip to the next buffer.
 		 */
@@ -5766,6 +5766,7 @@ softdep_trackbufs(int delta, bool throttle)
 		}
 		KASSERT(softdep_lockedbufs >= -delta);
 		softdep_lockedbufs += delta;
+		mutex_exit(&softdep_tb_lock);
 		return;
 	}
 	while (throttle && softdep_lockedbufs >= nbuf >> 2) {
