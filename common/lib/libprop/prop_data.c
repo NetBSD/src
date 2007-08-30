@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.8 2007/08/16 21:44:07 joerg Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.9 2007/08/30 12:23:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,9 @@ static int		_prop_data_free(prop_stack_t, prop_object_t *);
 static bool	_prop_data_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_data_equals(void *, void *);
+static bool	_prop_data_equals(prop_object_t, prop_object_t,
+				  void **, void **,
+				  prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_data = {
 	.pot_type	=	PROP_TYPE_DATA,
@@ -177,27 +179,28 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 	return (true);
 }
 
+/* ARGSUSED */
 static bool
-_prop_data_equals(void *v1, void *v2)
+_prop_data_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_data_t pd1 = v1;
 	prop_data_t pd2 = v2;
 
-	if (! (prop_object_is_data(pd1) &&
-	       prop_object_is_data(pd2)))
-		return (false);
-
 	if (pd1 == pd2)
-		return (true);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 	if (pd1->pd_size != pd2->pd_size)
-		return (false);
+		return (_PROP_OBJECT_EQUALS_FALSE);
 	if (pd1->pd_size == 0) {
 		_PROP_ASSERT(pd1->pd_immutable == NULL);
 		_PROP_ASSERT(pd2->pd_immutable == NULL);
-		return (true);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 	}
-	return (memcmp(pd1->pd_immutable, pd2->pd_immutable,
-		       pd1->pd_size) == 0);
+	if (memcmp(pd1->pd_immutable, pd2->pd_immutable, pd1->pd_size) == 0)
+		return _PROP_OBJECT_EQUALS_TRUE;
+	else
+		return _PROP_OBJECT_EQUALS_FALSE;
 }
 
 static prop_data_t
@@ -359,8 +362,10 @@ prop_data_data_nocopy(prop_data_t pd)
 bool
 prop_data_equals(prop_data_t pd1, prop_data_t pd2)
 {
+	if (!prop_object_is_data(pd1) || !prop_object_is_data(pd2))
+		return (false);
 
-	return (_prop_data_equals(pd1, pd2));
+	return (prop_object_equals(pd1, pd2));
 }
 
 /*

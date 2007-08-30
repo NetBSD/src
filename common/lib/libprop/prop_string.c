@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.8 2007/08/16 21:44:08 joerg Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.9 2007/08/30 12:23:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -62,7 +62,9 @@ static int		_prop_string_free(prop_stack_t, prop_object_t *);
 static bool	_prop_string_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_string_equals(void *, void *);
+static bool	_prop_string_equals(prop_object_t, prop_object_t,
+				void **, void **,
+				prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_string = {
 	.pot_type	=	PROP_TYPE_STRING,
@@ -106,22 +108,23 @@ _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 	return (true);
 }
 
+/* ARGSUSED */
 static bool
-_prop_string_equals(void *v1, void *v2)
+_prop_string_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_string_t str1 = v1;
 	prop_string_t str2 = v2;
 
-	if (! (prop_object_is_string(str1) &&
-	       prop_object_is_string(str2)))
-		return (false);
-
 	if (str1 == str2)
-		return (true);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 	if (str1->ps_size != str2->ps_size)
-		return (false);
-	return (strcmp(prop_string_contents(str1),
-		       prop_string_contents(str2)) == 0);
+		return (_PROP_OBJECT_EQUALS_FALSE);
+	if (strcmp(prop_string_contents(str1), prop_string_contents(str2)))
+		return (_PROP_OBJECT_EQUALS_FALSE);
+	else
+		return (_PROP_OBJECT_EQUALS_TRUE);
 }
 
 static prop_string_t
@@ -392,8 +395,10 @@ prop_string_append_cstring(prop_string_t dst, const char *src)
 bool
 prop_string_equals(prop_string_t str1, prop_string_t str2)
 {
+	if (!prop_object_is_string(str1) || !prop_object_is_string(str2))
+		return (false);
 
-	return (_prop_string_equals(str1, str2));
+	return prop_object_equals(str1, str2);
 }
 
 /*
