@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.144 2007/08/28 01:10:34 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.145 2007/08/30 03:02:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.144 2007/08/28 01:10:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.145 2007/08/30 03:02:23 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -571,6 +571,7 @@ static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
 static int	wm_match(struct device *, struct cfdata *, void *);
 static void	wm_attach(struct device *, struct device *, void *);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
+static void	wm_get_auto_rd_dome(struct wm_softc *);
 static int	wm_get_swsm_semaphore(struct wm_softc *);
 static void	wm_put_swsm_semaphore(struct wm_softc *);
 static int	wm_poll_eerd_eewr_done(struct wm_softc *, int);
@@ -2871,7 +2872,6 @@ wm_tick(void *arg)
 static void
 wm_reset(struct wm_softc *sc)
 {
-	int i;
 
 	/*
 	 * Allocate on-chip memory according to the MTU size.
@@ -2999,16 +2999,8 @@ wm_reset(struct wm_softc *sc)
 		delay(10);
 		/* FALLTHROUGH */
 	default:
-		/* wait for eeprom to reload */
-		for (i = 10; i > 0; i--) {
-			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
-				break;
-			delay(1000);
-		}
-		if (i == 0) {
-			log(LOG_ERR, "%s: auto read from eeprom failed to "
-			    "complete\n", sc->sc_dev.dv_xname);
-		}
+		/* check EECD_EE_AUTORD */
+		wm_get_auto_rd_dome(sc);
 	}
 
 #if 0
@@ -3402,6 +3394,39 @@ wm_stop(struct ifnet *ifp, int disable)
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+}
+
+void
+wm_get_auto_rd_dome(struct wm_softc *sc)
+{
+	int i;
+
+	/* wait for eeprom to reload */
+	switch (sc->sc_type) {
+	case WM_T_82571:
+	case WM_T_82572:
+	case WM_T_82573:
+	case WM_T_80003:
+	case WM_T_ICH8:
+	case WM_T_ICH9:
+		for (i = 10; i > 0; i--) {
+			if (CSR_READ(sc, WMREG_EECD) & EECD_EE_AUTORD)
+				break;
+			delay(1000);
+		}
+		if (i == 0) {
+			log(LOG_ERR, "%s: auto read from eeprom failed to "
+			    "complete\n", sc->sc_dev.dv_xname);
+		}
+		break;
+	default:
+		delay(5000);
+		break;
+	}
+
+	/* Phy configuration starts after EECD_AUTO_RD is set */
+	if (sc->sc_type == WM_T_82573)
+		delay(25000);
 }
 
 /*
