@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.79 2007/05/02 20:40:24 dyoung Exp $	*/
+/*	$NetBSD: in.h,v 1.80 2007/08/30 02:17:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -580,7 +580,9 @@ sockaddr_in_alloc(const struct in_addr *addr, in_port_t port, int flags)
 {
 	struct sockaddr *sa;
 
-	if ((sa = sockaddr_alloc(AF_INET, flags)) == NULL)
+	sa = sockaddr_alloc(AF_INET, sizeof(struct sockaddr_in), flags);
+
+	if (sa == NULL)
 		return NULL;
 
 	sockaddr_in_init1(satosin(sa), addr, port);

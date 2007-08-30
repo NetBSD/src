@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.95 2007/07/21 03:12:10 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.96 2007/08/30 02:17:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.95 2007/07/21 03:12:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.96 2007/08/30 02:17:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -756,7 +756,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		LIST_INIT(&rt->rt_timer);
 		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__, __LINE__,
 		    (void *)rt->_rt_key);
-		if (rt_setkey(rt, dst, PR_NOWAIT) == NULL ||
+		if (rt_setkey(rt, dst, M_NOWAIT) == NULL ||
 		    rt_setgate(rt, gateway) != 0) {
 			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
@@ -766,11 +766,11 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if (netmask) {
 			rt_maskedcopy(dst, (struct sockaddr *)&maskeddst,
 			    netmask);
-			rt_setkey(rt, (struct sockaddr *)&maskeddst, PR_NOWAIT);
+			rt_setkey(rt, (struct sockaddr *)&maskeddst, M_NOWAIT);
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 			    __LINE__, (void *)rt->_rt_key);
 		} else {
-			rt_setkey(rt, dst, PR_NOWAIT);
+			rt_setkey(rt, dst, M_NOWAIT);
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 			    __LINE__, (void *)rt->_rt_key);
 		}
@@ -870,7 +870,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 	    __LINE__, (void *)rt->_rt_key);
-	if ((rt->rt_gateway = sockaddr_dup(gate, PR_NOWAIT)) == NULL)
+	if ((rt->rt_gateway = sockaddr_dup(gate, M_NOWAIT)) == NULL)
 		return ENOMEM;
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
@@ -1370,12 +1370,13 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 
 	if (ro->ro_sa != NULL && ro->ro_sa->sa_family == sa->sa_family) {
 		rtcache_clear(ro);
-		sockaddr_copy(ro->ro_sa, sa);
-		return 0;
+		if (sockaddr_copy(ro->ro_sa, ro->ro_sa->sa_len, sa) != NULL)
+			return 0;
+		sockaddr_free(ro->ro_sa);
 	} else if (ro->ro_sa != NULL)
 		rtcache_free(ro);	/* free ro_sa, wrong family */
 
-	if ((ro->ro_sa = sockaddr_dup(sa, PR_NOWAIT)) == NULL)
+	if ((ro->ro_sa = sockaddr_dup(sa, M_NOWAIT)) == NULL)
 		return ENOMEM;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.31 2007/08/26 22:59:08 dyoung Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.32 2007/08/30 02:17:35 dyoung Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.31 2007/08/26 22:59:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.32 2007/08/30 02:17:35 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -528,7 +528,8 @@ tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 	if (sa->sa_family != AF_LINK)
 		return (EINVAL);
 
-	memcpy(LLADDR(ifp->if_sadl), sa->sa_data, ETHER_ADDR_LEN);
+	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
+	    sa->sa_data, ETHER_ADDR_LEN);
 
 	return (0);
 }
@@ -1282,6 +1283,7 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	int error;
 	size_t len;
 	char addr[3 * ETHER_ADDR_LEN];
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	node = *rnode;
 	sc = node.sysctl_data;
@@ -1297,7 +1299,9 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Commit change */
-	if (ether_nonstatic_aton(LLADDR(ifp->if_sadl), addr) != 0)
+	if (ether_nonstatic_aton(enaddr, addr) != 0 ||
+	    sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, enaddr,
+	                        ETHER_ADDR_LEN) == NULL)
 		return (EINVAL);
 	return (error);
 }
