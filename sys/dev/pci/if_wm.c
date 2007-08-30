@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.145 2007/08/30 03:02:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.146 2007/08/30 05:48:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.145 2007/08/30 03:02:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.146 2007/08/30 05:48:50 msaitoh Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -571,7 +571,7 @@ static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
 static int	wm_match(struct device *, struct cfdata *, void *);
 static void	wm_attach(struct device *, struct device *, void *);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
-static void	wm_get_auto_rd_dome(struct wm_softc *);
+static void	wm_get_auto_rd_done(struct wm_softc *);
 static int	wm_get_swsm_semaphore(struct wm_softc *);
 static void	wm_put_swsm_semaphore(struct wm_softc *);
 static int	wm_poll_eerd_eewr_done(struct wm_softc *, int);
@@ -2872,6 +2872,7 @@ wm_tick(void *arg)
 static void
 wm_reset(struct wm_softc *sc)
 {
+	uint32_t reg;
 
 	/*
 	 * Allocate on-chip memory according to the MTU size.
@@ -2981,12 +2982,15 @@ wm_reset(struct wm_softc *sc)
 	}
 	delay(10000);
 
+	/* reload EEPROM */
 	switch(sc->sc_type) {
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
 	case WM_T_82543:
 	case WM_T_82544:
 		delay(10);
+		reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
+		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 		delay(2000);
 		break;
 	case WM_T_82541:
@@ -2996,11 +3000,15 @@ wm_reset(struct wm_softc *sc)
 		delay(20000);
 		break;
 	case WM_T_82573:
-		delay(10);
+		if (sc->sc_flags & WM_F_EEPROM_FLASH) {
+			delay(10);
+			reg = CSR_READ(sc, WMREG_CTRL_EXT) | CTRL_EXT_EE_RST;
+			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+		}
 		/* FALLTHROUGH */
 	default:
 		/* check EECD_EE_AUTORD */
-		wm_get_auto_rd_dome(sc);
+		wm_get_auto_rd_done(sc);
 	}
 
 #if 0
@@ -3397,7 +3405,7 @@ wm_stop(struct ifnet *ifp, int disable)
 }
 
 void
-wm_get_auto_rd_dome(struct wm_softc *sc)
+wm_get_auto_rd_done(struct wm_softc *sc)
 {
 	int i;
 
