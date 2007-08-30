@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.20 2007/08/28 13:15:11 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.21 2007/08/30 09:55:14 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.20 2007/08/28 13:15:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.21 2007/08/30 09:55:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -4722,7 +4722,6 @@ softdep_fsync_mountdev(vp)
 	if (vp->v_type != VBLK)
 		panic("softdep_fsync_mountdev: vnode not VBLK");
 	mutex_enter(&bufcache_lock);
-	mutex_enter(&vp->v_interlock);
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
 		KASSERT(nbp->b_objlock == &vp->v_interlock);
@@ -4743,14 +4742,12 @@ softdep_fsync_mountdev(vp)
 			continue;
 		bremfree(bp);
 		bp->b_cflags |= BC_BUSY;
-		mutex_exit(&vp->v_interlock);
 		mutex_exit(&bufcache_lock);
 		(void) bawrite(bp);
 		mutex_enter(&bufcache_lock);
 		/*
 		 * Since we unlocked, we need to start from a known point.
 		 */
-		mutex_enter(&vp->v_interlock);
 		nbp = vp->v_dirtyblkhd.lh_first;
 	}
 	mutex_exit(&bufcache_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.43.2.9 2007/08/24 23:28:44 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.43.2.10 2007/08/30 09:55:14 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.9 2007/08/24 23:28:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.43.2.10 2007/08/30 09:55:14 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -707,19 +707,18 @@ out:
 	}
 	if (!error) {
 		mutex_enter(&bufcache_lock);
-		mutex_enter(&vp->v_interlock);
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			nbp = LIST_NEXT(bp, b_vnbufs);
-			mutex_exit(&vp->v_interlock);
 			bp->b_cflags |= BC_BUSY|BC_VFLUSH;
 			if (LIST_FIRST(&bp->b_dep) == NULL)
 				bp->b_cflags |= BC_NOCACHE;
 			mutex_exit(&bufcache_lock);
 			bwrite(bp);
 			mutex_enter(&bufcache_lock);
-			mutex_enter(&vp->v_interlock);
 		}
 		mutex_exit(&bufcache_lock);
+
+		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput > 0)
 			cv_wait(&vp->v_cv, &vp->v_interlock);
 		mutex_exit(&vp->v_interlock);
