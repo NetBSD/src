@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.7 2007/08/24 19:12:21 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.8 2007/08/30 13:32:18 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.7 2007/08/24 19:12:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.8 2007/08/30 13:32:18 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 
 	j = 0;
-	for (i = 0; i < (1 << (sc->sc_depth - 1)); i++) {
+	for (i = 0; i < (1 << sc->sc_depth); i++) {
 
 		sc->sc_cmap_red[i] = rasops_cmap[j];
 		sc->sc_cmap_green[i] = rasops_cmap[j + 1];
@@ -354,7 +354,7 @@ genfb_restore_palette(struct genfb_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < (1 << (sc->sc_depth - 1)); i++) {
+	for (i = 0; i < (1 << sc->sc_depth); i++) {
 		genfb_putpalreg(sc, i, sc->sc_cmap_red[i],
 		    sc->sc_cmap_green[i], sc->sc_cmap_blue[i]);
 	}
