@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.19 2007/08/25 11:11:13 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.20 2007/08/30 20:07:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.19 2007/08/25 11:11:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.20 2007/08/30 20:07:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ struct bqueue {
 	buf_t			*bq_marker;
 } bufqueues[BQUEUES];
 
-kcondvar_t needbuffer_cv;
+static kcondvar_t needbuffer_cv;
 
 /*
  * Buffer queue lock.
@@ -215,7 +215,7 @@ kmutex_t bufcache_lock;
 kmutex_t buffer_lock;
 
 /* Software ISR for completed transfers. */
-void *biodone_sih;
+static void *biodone_sih;
 
 /* Buffer pool for I/O buffers. */
 struct pool bufpool;
@@ -804,7 +804,6 @@ bwrite(buf_t *bp)
 	 * to async, not sync writes (which is safe, but ugly).
 	 */
 	sync = !ISSET(bp->b_flags, B_ASYNC);
-	CLR(bp->b_flags, B_READ);
 	if (sync && mp != NULL && ISSET(mp->mnt_flag, MNT_ASYNC)) {
 		bdwrite(bp);
 		return (0);
@@ -826,6 +825,7 @@ bwrite(buf_t *bp)
 	 * Pay for the I/O operation and make sure the buf is on the correct
 	 * vnode queue.
 	 */
+	CLR(bp->b_flags, B_READ);
 	mutex_enter(bp->b_objlock);
 	wasdelayed = ISSET(bp->b_oflags, BO_DELWRI);
 	CLR(bp->b_oflags, BO_DONE | BO_DELWRI);
@@ -1009,7 +1009,6 @@ brelsel(buf_t *bp, int set)
 	KDASSERT(checkfreelist(bp, &bufqueues[BQ_AGE]));
 	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU]));
 	KDASSERT(checkfreelist(bp, &bufqueues[BQ_LOCKED]));
-
 
 	if ((bp->b_bufsize <= 0) || ISSET(bp->b_cflags, BC_INVAL)) {
 		/*
@@ -1480,11 +1479,8 @@ biodone2(buf_t *bp)
 	void (*callout)(buf_t *);
 	bool write;
 
-	if (bioops != NULL) {
-		mutex_enter(&bufcache_lock);
+	if (bioops != NULL)
 		(*bioops->io_complete)(bp);
-		mutex_exit(&bufcache_lock);
-	}
 
 	write = !ISSET(bp->b_flags, B_READ);
 
@@ -1734,7 +1730,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 
 	*oldlenp = needed;
 	if (oldp == NULL)
-		*oldlenp += KERN_BUFSLOP * sizeof(struct buf);
+		*oldlenp += KERN_BUFSLOP * sizeof(buf_t);
 
 	return (error);
 }
