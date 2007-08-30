@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.47 2007/08/30 18:01:26 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.48 2007/08/30 21:31:28 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.47 2007/08/30 18:01:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.48 2007/08/30 21:31:28 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -507,8 +507,6 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	LIST_FOREACH(lsme, &sysmon_envsys_list, sme_list) {
 	       if (strcmp(lsme->sme_name, sme->sme_name) == 0) {
 		       error = EEXIST;
-		       sme->sme_flags &= ~SME_FLAG_BUSY;
-		       mutex_exit(&sme_list_mtx);
 		       goto out;
 	       }
 	}
@@ -521,13 +519,6 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	 * checking firstly if sensor description is unique.
 	 */
 	for (i = 0; i < sme->sme_nsensors; i++) {
-		edata = &sme->sme_sensor_data[i];
-		/*
-		 * Check if sensor description is unique.
-		 */
-		if (sme_register_sensorname(edata))
-			continue;
-
 		/*
 		 * XXX:
 		 *
@@ -541,15 +532,20 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		if (i == 0)
 			sme->sme_sensor_data[0].sensor = 0;
 
-		SLIST_FOREACH(sd, &sme_dict_list, sme_dicts) {
-			if (sd->idx != i)
-				continue;
-			/*
-		 	 * Create all objects in sensor's dictionary.
-		 	 */
-			sme_add_sensor_dictionary(sme, array, sd->dict, edata);
-			break;
-		}
+		edata = &sme->sme_sensor_data[i];
+		/*
+		 * Check if sensor description is unique.
+		 */
+		if (sme_register_sensorname(edata))
+			continue;
+
+		SLIST_FOREACH(sd, &sme_dict_list, sme_dicts)
+			if (sd->idx == i)
+				break;
+		/*
+		 * Create all objects in sensor's dictionary.
+		 */
+		sme_add_sensor_dictionary(sme, array, sd->dict, edata);
 	}
 
 	/* 
@@ -579,15 +575,13 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	}
 
 	/*
-	 * Add the device into the list and initialize the counter
-	 * for unique sensors.
+	 * Add the device into the list.
 	 */
 #ifdef COMPAT_40
 	sme->sme_fsensor = sysmon_envsys_next_sensor_index;
 	sysmon_envsys_next_sensor_index += sme->sme_nsensors;
 #endif
 	LIST_INSERT_HEAD(&sysmon_envsys_list, sme, sme_list);
-	sme_uniqsensors = 0;
 
 out:
 	sme->sme_flags &= ~SME_FLAG_BUSY;
@@ -607,6 +601,7 @@ out2:
 		    __func__, sme->sme_name, error));
 		prop_object_release(array);
 	}
+	sme_uniqsensors = 0;
 	return error;
 }
 
