@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2007/03/09 06:45:20 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.20.1 2007/08/30 07:03:55 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -66,11 +66,12 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#define IST_LEVEL_LOW	 IST_LEVEL
-#define IST_LEVEL_HIGH   4
+#define IST_LEVEL_LOW	IST_LEVEL
+#define IST_LEVEL_HIGH	4
 #define IST_EDGE_FALLING IST_EDGE
-#define IST_EDGE_RISING  5
-#define IST_EDGE_BOTH    6
+#define IST_EDGE_RISING	5
+#define IST_EDGE_BOTH	6
+#define IST_SOFT	7
 
 #ifdef __OLD_INTERRUPT_CODE	/* XXX XXX XXX */
 
@@ -173,8 +174,10 @@ splraiseipl(ipl_cookie_t icookie)
 
 #include <sys/spl.h>
 
+#ifndef schednetisr
 /* Use generic software interrupt support. */
 #include <arm/softintr.h>
+#endif
 
 #endif /* ! _LOCORE */
 
