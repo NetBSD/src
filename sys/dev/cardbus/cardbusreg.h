@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusreg.h,v 1.1 2001/06/01 10:30:37 haya Exp $ */
+/*	$NetBSD: cardbusreg.h,v 1.2 2007/08/30 02:39:11 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -166,7 +166,7 @@ typedef u_int16_t cardbus_product_id_t;
 #  define CARDBUS_CIS_ASI_ROM   0x07
 #  define CARDBUS_CIS_ADDRMASK 0x0ffffff8
 #    define CARDBUS_CIS_ADDR(x) (CARDBUS_CIS_ADDRMASK & (x))
-#    define CARDBUS_CIS_ASI_BAR(x) (((CARDBUS_CIS_ASIMASK & (x))-1)*4+0x10)
+#    define CARDBUS_CIS_ASI_BAR(x) (((CARDBUS_CIS_ASIMASK & (x))-1)*4+CARDBUS_BASE0_REG)
 #    define CARDBUS_CIS_ASI_ROM_IMAGE(x) (((x) >> 28) & 0xf)
 
 #define	CARDBUS_INTERRUPT_REG   0x3c
