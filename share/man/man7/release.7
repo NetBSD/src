@@ -1,4 +1,4 @@
-.\"	$NetBSD: release.7,v 1.23 2007/04/09 08:19:54 apb Exp $
+.\"	$NetBSD: release.7,v 1.24 2007/08/30 10:45:03 jnemeth Exp $
 .\"
 .\" Copyright (c) 1997, 2000, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 9, 2007
+.Dd August 30, 2007
 .Dt RELEASE 7
 .Os
 .Sh NAME
@@ -159,6 +159,12 @@ command:
 CDROM images in ISO 9660 format, usually created with
 .Dq ./build.sh ... iso-image ...
 after a
+.Dq ./build.sh -x ... release ...
+in
+.Pa src
+or created with
+.Dq ./build.sh ... iso-image-source ...
+after a
 .Dq ./build.sh -x ... release sourcesets ...
 in
 .Pa src .
@@ -176,6 +182,11 @@ Images in this directory, unlike images in the
 directory, should contain file systems that
 have an internal layout that corresponds to
 a complete release for one or more machine types.
+If built with
+.Dq iso-image-source ,
+then it will also contain a
+.Dq source
+directory.
 These images are usually bootable.
 .Bl -tag -width "\*[Lt]machine_arch\*[Gt]cd.iso"
 .It Sy BSDSUM
