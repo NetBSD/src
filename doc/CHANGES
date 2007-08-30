@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.915 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.916 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -211,4 +211,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		accelerated framebuffer console. [macallan 20070826]
 	ag10e(4): Add XFree86 driver to run the AG-10e in 24bit with
 		acceleration. [macallan 20070830]
-	
+	build.sh: Add iso-image-source option which does iso-image with
+		source sets. [jnemeth 20070830]
