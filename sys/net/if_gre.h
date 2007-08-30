@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.24 2007/08/30 05:01:30 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.25 2007/08/30 05:54:07 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct gre_soparm {
 	struct in_addr	sp_dst;		/* destination address of gre packets */
 	in_port_t	sp_srcport;	/* source port of gre packets */
 	in_port_t	sp_dstport;	/* destination port of gre packets */
+	struct file	*sp_fp;
 };
 
 struct gre_softc {
@@ -63,14 +64,13 @@ struct gre_softc {
 	struct ifqueue		sc_snd;
 	struct gre_soparm	sc_soparm;
 	struct gre_soparm	sc_newsoparm;
-	struct file		*sc_fp;
-	struct file		*sc_newfp;
 	LIST_ENTRY(gre_softc)	sc_list;
 	struct route route;	/* routing entry that determines where a
 				   encapsulated packet should go */
 	int			sc_proto;	/* protocol of encapsulator */
 	struct uio		sc_uio;
 };
+
 #define	g_src		sc_newsoparm.sp_src
 #define	g_srcport	sc_newsoparm.sp_srcport
 #define	g_dst		sc_newsoparm.sp_dst
