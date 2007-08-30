@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.16 2007/08/30 12:23:54 joerg Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.17 2007/08/30 19:12:32 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -1023,7 +1023,7 @@ prop_object_retain(prop_object_t obj)
  *	free that. Do not recurse to avoid stack overflows.
  *
  *	This is a slow edge condition, but necessary to
- *	guaranty that an object can always be freed.
+ *	guarantee that an object can always be freed.
  */
 static void
 prop_object_release_emergency(prop_object_t obj)
