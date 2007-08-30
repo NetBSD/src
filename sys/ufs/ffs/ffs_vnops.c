@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.86.4.10 2007/08/24 23:28:45 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.86.4.11 2007/08/30 09:55:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.10 2007/08/24 23:28:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.86.4.11 2007/08/30 09:55:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,9 +376,8 @@ ffs_full_fsync(void *v)
 	if (ap->a_flags & FSYNC_WAIT)
 		skipmeta = 1;
 
-	mutex_enter(&bufcache_lock);
-	mutex_enter(&vp->v_interlock);
 loop:
+	mutex_enter(&bufcache_lock);
 	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
 		bp->b_cflags &= ~BC_SCANNED;
 	}
@@ -390,7 +389,6 @@ loop:
 			panic("ffs_fsync: not dirty");
 		if (skipmeta && bp->b_lblkno < 0)
 			continue;
-		mutex_exit(&vp->v_interlock);
 		bp->b_cflags |= BC_BUSY | BC_VFLUSH | BC_SCANNED;
 		mutex_exit(&bufcache_lock);
 		/*
@@ -407,16 +405,16 @@ loop:
 		 * to start from a known point.
 		 */
 		mutex_enter(&bufcache_lock);
-		mutex_enter(&vp->v_interlock);
 		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
+	mutex_exit(&bufcache_lock);
 	if (skipmeta) {
 		skipmeta = 0;
 		goto loop;
 	}
-	mutex_exit(&bufcache_lock);
 
 	if (ap->a_flags & FSYNC_WAIT) {
+		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
 			cv_wait(&vp->v_cv, &vp->v_interlock);
 		}
@@ -447,8 +445,7 @@ loop:
 				vprint("ffs_fsync: dirty", vp);
 #endif
 		}
-	} else
-		mutex_exit(&vp->v_interlock);
+	}
 
 	if (inodedeps_only)
 		waitfor = 0;
