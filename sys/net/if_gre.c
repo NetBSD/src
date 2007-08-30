@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.103 2007/08/30 04:58:25 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.104 2007/08/30 05:14:32 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.103 2007/08/30 04:58:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.104 2007/08/30 05:14:32 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -493,8 +493,6 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 	}
 	sc->sc_running = 0;
 	cv_signal(&sc->sc_join_cv);
-	/* must not touch sc after this! */
-	GRE_DPRINTF(sc, "%s: restore ipl\n", __func__);
 }
 
 static void
