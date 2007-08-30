@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.9 2007/08/30 13:36:27 jmmv Exp $ */
+/*	$NetBSD: genfb.c,v 1.10 2007/08/30 15:40:41 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.9 2007/08/30 13:36:27 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.10 2007/08/30 15:40:41 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,9 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	    &genfb_accessops);
 	sc->vd.init_screen = genfb_init_screen;
 
+	/* Do not print anything between this point and the screen
+	 * clear operation below.  Otherwise it will be lost. */
+
 	ri = &sc->sc_console_screen.scr_ri;
 
 	if (console) {
@@ -168,7 +171,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
+		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
+
+	/* Clear the whole screen to bring it to a known state. */
+	(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);
 
 	j = 0;
 	for (i = 0; i < (1 << sc->sc_depth); i++) {
