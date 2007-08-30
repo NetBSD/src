@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.15 2007/08/26 22:59:10 dyoung Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.16 2007/08/30 02:17:37 dyoung Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -1132,7 +1132,7 @@ carp_send_arp(struct carp_softc *sc)
 			continue;
 
 		in = &ifatoia(ifa)->ia_addr.sin_addr;
-		arprequest(sc->sc_carpdev, in, in, LLADDR(sc->sc_if.if_sadl));
+		arprequest(sc->sc_carpdev, in, in, CLLADDR(sc->sc_if.if_sadl));
 		DELAY(1000);	/* XXX */
 	}
 	splx(s);
@@ -1579,21 +1579,24 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 void
 carp_set_enaddr(struct carp_softc *sc)
 {
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	if (sc->sc_carpdev && sc->sc_carpdev->if_type == IFT_ISO88025) {
-		LLADDR(sc->sc_if.if_sadl)[0] = 3;
-		LLADDR(sc->sc_if.if_sadl)[1] = 0;
-		LLADDR(sc->sc_if.if_sadl)[2] = 0x40 >> (sc->sc_vhid - 1);
-		LLADDR(sc->sc_if.if_sadl)[3] = 0x40000 >> (sc->sc_vhid - 1);
-		LLADDR(sc->sc_if.if_sadl)[4] = 0;
-		LLADDR(sc->sc_if.if_sadl)[5] = 0;
+		enaddr[0] = 3;
+		enaddr[1] = 0;
+		enaddr[2] = 0x40 >> (sc->sc_vhid - 1);
+		enaddr[3] = 0x40000 >> (sc->sc_vhid - 1);
+		enaddr[4] = 0;
+		enaddr[5] = 0;
 	} else {
-		LLADDR(sc->sc_if.if_sadl)[0] = 0;
-		LLADDR(sc->sc_if.if_sadl)[1] = 0;
-		LLADDR(sc->sc_if.if_sadl)[2] = 0x5e;
-		LLADDR(sc->sc_if.if_sadl)[3] = 0;
-		LLADDR(sc->sc_if.if_sadl)[4] = 1;
-		LLADDR(sc->sc_if.if_sadl)[5] = sc->sc_vhid;
+		enaddr[0] = 0;
+		enaddr[1] = 0;
+		enaddr[2] = 0x5e;
+		enaddr[3] = 0;
+		enaddr[4] = 1;
+		enaddr[5] = sc->sc_vhid;
 	}
+	(void)sockaddr_dl_setaddr(sc->sc_if.if_sadl, sc->sc_if.if_sadl->sdl_len,
+	    enaddr, sizeof(enaddr));
 }
 
 void
