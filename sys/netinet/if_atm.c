@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.25 2007/08/07 04:37:04 dyoung Exp $       */
+/*      $NetBSD: if_atm.c,v 1.26 2007/08/30 02:17:36 dyoung Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.25 2007/08/07 04:37:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.26 2007/08/30 02:17:36 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -87,12 +87,11 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 #ifdef NATM
 	const struct sockaddr_in *sin;
 	struct natmpcb *npcb = NULL;
-	struct atm_pseudohdr *aph;
+	const struct atm_pseudohdr *aph;
 #endif
-	static const struct sockaddr_dl null_sdl = {
-		.sdl_len = sizeof(null_sdl),
-		.sdl_family = AF_LINK,
-	};
+	const struct ifnet *ifp = rt->rt_ifp;
+	uint8_t namelen = strlen(ifp->if_xname);
+	uint8_t addrlen = ifp->if_addrlen;
 
 	if (rt->rt_flags & RTF_GATEWAY)   /* link level requests only */
 		return;
@@ -113,10 +112,13 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 */
 
 		if ((rt->rt_flags & RTF_HOST) == 0) {
-			rt_setgate(rt, (const struct sockaddr *)&null_sdl);
+			struct sockaddr *sa;
+
+			sa = sockaddr_dl_alloc(ifp->if_index, ifp->if_type,
+			    NULL, namelen, NULL, addrlen, M_WAITOK);
+			rt_setgate(rt, sa);
+			sockaddr_free(sa);
 			gate = rt->rt_gateway;
-			satosdl(gate)->sdl_type = rt->rt_ifp->if_type;
-			satosdl(gate)->sdl_index = rt->rt_ifp->if_index;
 			break;
 		}
 
@@ -125,7 +127,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			break;
 		}
 		if (gate->sa_family != AF_LINK ||
-		    gate->sa_len < sizeof(null_sdl)) {
+		    gate->sa_len < sockaddr_dl_measure(namelen, addrlen)) {
 			log(LOG_DEBUG, "atm_rtrequest: bad gateway value");
 			break;
 		}
@@ -142,7 +144,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		sin = satocsin(rt_getkey(rt));
 		if (sin->sin_family != AF_INET)
 			goto failed;
-		aph = (struct atm_pseudohdr *) LLADDR(satosdl(gate));
+		aph = (const struct atm_pseudohdr *)CLLADDR(satosdl(gate));
 		npcb = npcb_add(NULL, rt->rt_ifp, ATM_PH_VCI(aph),
 						ATM_PH_VPI(aph));
 		if (npcb == NULL)
