@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15.22.1 2007/08/28 18:49:00 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.22.2 2007/08/30 01:01:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -172,8 +172,8 @@ void validate_trapframe __P((trapframe_t *, int));
 #define	ENABLE_ALIGNMENT_FAULTS						\
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode */	;\
 	teq	r0, #(PSR_USR32_MODE)					;\
-	bne	1f			/* Not USR mode skip AFLT */	;\
 	GET_CURCPU(r4)			/* r4 = cpuinfo */		;\
+	bne	1f			/* Not USR mode skip AFLT */	;\
 	ldr	r1, [r4, #CI_CURPCB]	/* get curpcb from cpu_info */	;\
 	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
 	tst	r1, #PCB_NOALIGNFLT					;\
