@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.114.2.1 2007/08/28 18:43:44 matt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.114.2.2 2007/08/30 00:28:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.114.2.1 2007/08/28 18:43:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.114.2.2 2007/08/30 00:28:50 matt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -249,7 +249,7 @@ struct proc proc0 = {
 	.p_sigacts = &sigacts0,
 };
 struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
-#ifndef LWP0_CPU_INFO
+#ifdef LWP0_CPU_INFO
 	.l_cpu = LWP0_CPU_INFO,
 #endif
 	.l_proc = &proc0,
