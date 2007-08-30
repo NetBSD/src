@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.1.2.1 2007/08/26 12:04:47 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.1.2.2 2007/08/30 20:02:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.1.2.1 2007/08/26 12:04:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.1.2.2 2007/08/30 20:02:33 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,13 +91,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.1.2.1 2007/08/26 12:04:47 ad Exp $"
 #define	PRI_XCALL	PRI_KERNEL_RT
 
 static void	xc_thread(void *);
-static void	xc_lowpri(u_int, xcfunc_t, void *, void *, struct cpu_info *);
+static uint64_t	xc_lowpri(u_int, xcfunc_t, void *, void *, struct cpu_info *);
 
 static kmutex_t		xc_lock;
 static xcfunc_t		xc_func;
 static void		*xc_arg1;
 static void		*xc_arg2;
-static struct cpu_info	*xc_cpu;
 static kcondvar_t	xc_busy;
 static struct evcnt	xc_unicast_ev;
 static struct evcnt	xc_broadcast_ev;
@@ -109,7 +108,7 @@ static uint64_t		xc_donep;
  * xc_init_cpu:
  *
  *	Initialize the cross-call subsystem.  Called once for each CPU
- *	in the system as it is attached.
+ *	in the system as they are attached.
  */
 void
 xc_init_cpu(struct cpu_info *ci)
@@ -140,14 +139,14 @@ xc_init_cpu(struct cpu_info *ci)
  *
  *	Trigger a call on all CPUs in the system.
  */
-void
+uint64_t
 xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
 {
 
 	if ((flags & XC_HIGHPRI) != 0) {
 		panic("xc_unicast: no high priority crosscalls yet");
 	} else {
-		xc_lowpri(flags, func, arg1, arg2, NULL);
+		return xc_lowpri(flags, func, arg1, arg2, NULL);
 	}
 }
 
@@ -156,7 +155,7 @@ xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
  *
  *	Trigger a call on one CPU.
  */
-void
+uint64_t
 xc_unicast(u_int flags, xcfunc_t func, void *arg1, void *arg2,
 	   struct cpu_info *ci)
 {
@@ -165,7 +164,7 @@ xc_unicast(u_int flags, xcfunc_t func, void *arg1, void *arg2,
 		panic("xc_unicast: no high priority crosscalls yet");
 	} else {
 		KASSERT(ci != NULL);
-		xc_lowpri(flags, func, arg1, arg2, ci);
+		return xc_lowpri(flags, func, arg1, arg2, ci);
 	}
 }
 
@@ -174,7 +173,7 @@ xc_unicast(u_int flags, xcfunc_t func, void *arg1, void *arg2,
  *
  *	Trigger a low priority call on one or more CPUs.
  */
-static void
+static uint64_t
 xc_lowpri(u_int flags, xcfunc_t func, void *arg1, void *arg2,
 	  struct cpu_info *ci)
 {
@@ -187,24 +186,41 @@ xc_lowpri(u_int flags, xcfunc_t func, void *arg1, void *arg2,
 	xc_arg1 = arg1;
 	xc_arg2 = arg2;
 	xc_func = func;
-	if ((xc_cpu = ci) == NULL) {
+	if (ci == NULL) {
 		xc_broadcast_ev.ev_count++;
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			xc_headp += 1;
+			ci->ci_data.cpu_xcall_pending = true;
 			cv_signal(&ci->ci_data.cpu_xcall);
 		}
 	} else {
 		xc_unicast_ev.ev_count++;
 		xc_headp += 1;
+		ci->ci_data.cpu_xcall_pending = true;
 		cv_signal(&ci->ci_data.cpu_xcall);
 	}
 	KASSERT(xc_tailp < xc_headp);
-	if ((flags & XC_WAIT) != 0) {
-		where = xc_headp;
-		do {
-			cv_wait(&xc_busy, &xc_lock);
-		} while (xc_donep < where); 
-	}
+	where = xc_headp;
+	mutex_exit(&xc_lock);
+
+	return where;
+}
+
+/*
+ * xc_wait:
+ *
+ *	Wait for a cross call to complete.
+ */
+void
+xc_wait(uint64_t where)
+{
+
+	if (xc_donep >= where)
+		return;
+
+	mutex_enter(&xc_lock);
+	while (xc_donep < where)
+		cv_wait(&xc_busy, &xc_lock);
 	mutex_exit(&xc_lock);
 }
 
@@ -224,13 +240,13 @@ xc_thread(void *cookie)
 
 	mutex_enter(&xc_lock);
 	for (;;) {
-		while (xc_headp == xc_tailp ||
-		    (xc_cpu != NULL && xc_cpu != ci)) {
+		while (!ci->ci_data.cpu_xcall_pending) {
 			if (xc_headp == xc_tailp)
 				cv_broadcast(&xc_busy);
 			cv_wait(&ci->ci_data.cpu_xcall, &xc_lock);
 			KASSERT(ci == curcpu());
 		}
+		ci->ci_data.cpu_xcall_pending = false;
 		func = xc_func;
 		arg1 = xc_arg1;
 		arg2 = xc_arg2;
