@@ -12,6 +12,7 @@ void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 int	pic_alloc_irq(struct pic_softc *pic);
 void	pic_disestablish_source(struct intrsource *is);
 void	pic_do_pending_ints(register_t psw, int newipl);
+void	pic_dispatch(struct intrsource *is, void *frame);
 
 #ifdef _INTR_PRIVATE
 
