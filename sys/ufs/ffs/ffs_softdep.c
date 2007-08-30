@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.22 2007/08/30 12:38:37 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.23 2007/08/30 20:07:07 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.22 2007/08/30 12:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.23 2007/08/30 20:07:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -193,7 +193,6 @@ void softdep_pageiodone1(struct buf *);
 void softdep_pageiodone(struct buf *);
 void softdep_flush_vnode(struct vnode *, daddr_t);
 static void softdep_trackbufs(int, bool);
-static void softdep_scanmp(void);
 
 #define	PCBP_BITMAP(off, size) \
 	(((1 << howmany((size), PAGE_SIZE)) - 1) << ((off) >> PAGE_SHIFT))
@@ -220,7 +219,6 @@ static struct bio_ops softdep_bioops = {
 	softdep_pageiodone,			/* io_pageiodone */
 };
 
-static kmutex_t softdep_tb_lock;
 static kcondvar_t softdep_tb_cv;
 
 /*
@@ -664,13 +662,13 @@ softdep_process_worklist(matchmnt)
 			    TYPENAME(wk->wk_type));
 			/* NOTREACHED */
 		}
+		mutex_enter(&bufcache_lock);
 
 		/*
 		 * If a umount operation wants to run the worklist
 		 * accurately, abort.
 		 */
 		if (softdep_worklist_req && matchmnt == NULL) {
-			mutex_enter(&bufcache_lock);
 			matchcnt = -1;
 			break;
 		}
@@ -692,7 +690,6 @@ softdep_process_worklist(matchmnt)
 		 * Process any new items on the delayed-free queue.
 		 */
 
-		mutex_enter(&bufcache_lock);
 		softdep_freequeue_process();
 	}
 	if (matchmnt == NULL) {
@@ -714,10 +711,10 @@ softdep_move_dependencies(oldbp, newbp)
 {
 	struct worklist *wk, *wktail;
 
+	mutex_enter(&bufcache_lock);
 	if (LIST_FIRST(&newbp->b_dep) != NULL)
 		panic("softdep_move_dependencies: need merge code");
 	wktail = 0;
-	mutex_enter(&bufcache_lock);
 	while ((wk = LIST_FIRST(&oldbp->b_dep)) != NULL) {
 		LIST_REMOVE(wk, wk_list);
 		if (wktail == 0)
@@ -772,9 +769,9 @@ softdep_flushworklist(oldmnt, countp, l)
 		if (error)
 			break;
 	}
-	softdep_worklist_busy = 0;
 
 	mutex_enter(&bufcache_lock);
+	softdep_worklist_busy = 0;
 	if (softdep_worklist_req)
 		cv_broadcast(&softdep_worklist_cv);
 	mutex_exit(&bufcache_lock);
@@ -1055,7 +1052,6 @@ softdep_initialize()
 	int i;
 
 	mutex_init(&emerginoblk_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&softdep_tb_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&freequeue_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&softdep_tb_cv, "softdbuf");
 	cv_init(&proc_wait_cv, "softdep");
@@ -1188,7 +1184,7 @@ softdep_mount(devvp, mp, fs, cred)
 	int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
-	softdep_scanmp();
+	bioops = &softdep_bioops;
 	mp->mnt_flag &= ~MNT_ASYNC;	/* XXXSMP */
 
 	/*
@@ -1227,28 +1223,6 @@ void
 softdep_unmount(struct mount *mp)
 {
 
-	softdep_scanmp();
-}
-
-/*
- * Scan mountpoints to determine whether softdep bioops need to be
- * installed.  XXX Ugly.
- */
-static void
-softdep_scanmp(void)
-{
-	struct mount *mp;
-
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
-		if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
-			break;
-	}
-	if (mp != NULL)
-		bioops = &softdep_bioops;
-	else
-		bioops = NULL;
-	mutex_exit(&mountlist_lock);
 }
 
 /*
@@ -1812,8 +1786,10 @@ setup_allocindir_phase2(bp, ip, aip)
 			mutex_exit(&bufcache_lock);
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
-				brelse(newindirdep->ir_savebp, 0);
+				mutex_enter(&bufcache_lock);
+				brelsel(newindirdep->ir_savebp, 0);
 				softdep_trackbufs(-1, false);
+				mutex_exit(&bufcache_lock);
 			}
 			workitem_free(newindirdep, D_INDIRDEP);
 		}
@@ -1832,12 +1808,12 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
-		softdep_trackbufs(1, true);
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
 		bcopy(bp->b_data, newindirdep->ir_savebp->b_data, bp->b_bcount);
 		mutex_enter(&bufcache_lock);
+		softdep_trackbufs(1, true);
 	}
 }
 
@@ -2476,8 +2452,8 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 		if (LIST_FIRST(&bp->b_dep) != NULL)
 			panic("indir_trunc: dangling dep");
 	} else {
-		mutex_exit(&bufcache_lock);
 		softdep_trackbufs(1, false);
+		mutex_exit(&bufcache_lock);
 		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
 		if (error)
 			return (error);
@@ -2514,8 +2490,10 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 		mutex_exit(&ump->um_lock);
 		*countp += nblocks;
 	}
-	brelse(bp, BC_INVAL | BC_NOCACHE);
+	mutex_enter(&bufcache_lock);
+	brelsel(bp, BC_INVAL | BC_NOCACHE);
 	softdep_trackbufs(-1, false);
+	mutex_exit(&bufcache_lock);
 	return (allerror);
 }
 
@@ -2911,7 +2889,7 @@ newdirrem(bp, dp, ip, isrmdir, prevdirremp)
 		mutex_enter(&bufcache_lock);
 	}
 
-	num_dirrem += 1;
+	num_dirrem += 1;	/* XXXAD not atomic */
 	dirrem = pool_get(&dirrem_pool, PR_WAITOK);
 	bzero(dirrem, sizeof(struct dirrem));
 	dirrem->dm_list.wk_type = D_DIRREM;
@@ -3197,7 +3175,7 @@ handle_workitem_remove(dirrem)
 		inodedep->id_nlinkdelta = ip->i_nlink - ip->i_ffs_effnlink;
 		mutex_exit(&bufcache_lock);
 		vput(vp);
-		num_dirrem -= 1;
+		num_dirrem -= 1;	/* XXXAD not atomic */
 		workitem_free(dirrem, D_DIRREM);
 		return;
 	}
@@ -3838,7 +3816,8 @@ softdep_disk_write_complete(bp)
 	struct inodedep *inodedep;
 	struct bmsafemap *bmsafemap;
 
-	KASSERT(mutex_owned(&bufcache_lock));
+	if (bp->b_vp == NULL || bp->b_vp->v_mount == NULL ||
+	    !DOINGSOFTDEP(bp->b_vp))
 
 	/*
 	 * If an error occurred while doing the write, then the data
@@ -3847,6 +3826,7 @@ softdep_disk_write_complete(bp)
 	if (bp->b_error != 0 && (bp->b_cflags & BC_INVAL) == 0)
 		return;
 
+	mutex_enter(&bufcache_lock);
 	LIST_INIT(&reattach);
 	while ((wk = LIST_FIRST(&bp->b_dep)) != NULL) {
 		worklist_remove(wk);
@@ -3942,6 +3922,7 @@ softdep_disk_write_complete(bp)
 		worklist_remove(wk);
 		worklist_insert(&bp->b_dep, wk);
 	}
+	mutex_exit(&bufcache_lock);
 }
 
 /*
@@ -5635,6 +5616,8 @@ softdep_deallocate_dependencies(bp)
 	struct buf *bp;
 {
 
+	KASSERT(mutex_owned(&bufcache_lock));
+
 	if (LIST_EMPTY(&bp->b_dep))
 		return;
 	if (bp->b_error == 0)
@@ -5759,22 +5742,21 @@ static void
 softdep_trackbufs(int delta, bool throttle)
 {
 
-	mutex_enter(&softdep_tb_lock);
+	KASSERT(mutex_owned(&bufcache_lock));
+
 	if (delta < 0) {
 		if (softdep_lockedbufs < nbuf >> 2) {
 			cv_broadcast(&softdep_tb_cv);
 		}
 		KASSERT(softdep_lockedbufs >= -delta);
 		softdep_lockedbufs += delta;
-		mutex_exit(&softdep_tb_lock);
 		return;
 	}
 	while (throttle && softdep_lockedbufs >= nbuf >> 2) {
 		speedup_syncer();
-		cv_wait(&softdep_tb_cv, &softdep_tb_lock);
+		cv_wait(&softdep_tb_cv, &bufcache_lock);
 	}
 	softdep_lockedbufs += delta;
-	mutex_exit(&softdep_tb_lock);
 }
 
 static struct buf *
