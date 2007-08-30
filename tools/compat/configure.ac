@@ -1,6 +1,22 @@
-#	$NetBSD: configure.ac,v 1.60 2006/10/09 14:59:05 christos Exp $
+#	$NetBSD: configure.ac,v 1.60.2.1 2007/08/30 22:37:36 pavel Exp $
 #
 # Autoconf definition file for libnbcompat.
+#
+# When you edit configure.ac:
+# 0. Create the tools versions of autoconf and autoheader:
+#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+#    (This might not work if you try it after editing configure.ac.)
+# 1. edit configure.ac
+# 2. Regenerate "configure" and "nbtool_config.h.in" from "configure.ac":
+#        cd ${SRCDIR}/tools/compat && ${TOOLDIR}/bin/nbmake-${MACHINE} regen
+#    (Please don't use a non-tools version of autoconf or autoheader.)
+# 3. Test that the tools still build:
+#        mv ${TOOLDIR} ${TOOLDIR}.bak
+#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+# 4. cvs commit files that you edited.
+# 5. Regen again, to pick up changed RCS IDs from the above commit:
+#        cd ${SRCDIR}/tools/compat && ${TOOLDIR}/bin/nbmake-${MACHINE} regen
+# 6. cvs commit files that were generated.
 #
 
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
@@ -8,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.60 2006/10/09 14:59:05 christos Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.60.2.1 2007/08/30 22:37:36 pavel Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -141,6 +157,8 @@ AC_CHECK_DECLS([strsuftoll],,,[#include <stdlib.h>])
 AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64, be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,, [#include <sys/types.h>])
 
 AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [#include <machine/bswap.h>])
+
+AC_CHECK_DECLS([be16enc, le16enc, be16dec, le16dec, be32enc, le32enc, be32dec, le32dec, be64enc, le64enc, be64dec, le64dec],,, [#include <sys/endian.h>])
 
 AC_CHECK_DECLS([fstatvfs],,, [#include <sys/statvfs.h>])
 
