@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.31 2007/08/29 23:38:06 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.32 2007/08/30 11:32:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,9 +140,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2007/08/29 23:38:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2007/08/30 11:32:09 ad Exp $");
 
-#include "opt_noredzone.h"
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
 
@@ -854,11 +853,11 @@ static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
 static inline int
 redzone_const_or_zero(int x)
 {
-#ifdef NOREDZONE
-	return 0;
-#else
+#ifdef DIAGNOSTIC
 	return x;
-#endif /* !NOREDZONE */
+#else
+	return 0;
+#endif /* !DIAGNOSTIC */
 }
 
 /*
