@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.1 2007/08/29 05:24:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.2 2007/08/30 07:08:15 matt Exp $");
 
 #define _INTR_PRIVATE
  
@@ -54,16 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.1 2007/08/29 05:24:23 matt Exp $
 
 #include <arm/imx/imx31_intrreg.h>
 
-static void avic_enable_irq(struct pic_softc *, irq);
-static void avic_disable_irq(struct pic_softc *, irq);
-static int avic_get_irq(struct pic_softc *);
+static void avic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
+static void avic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void avic_establish_irq(struct pic_softc *, int, int, int);
-static void avic_source_name(struct pic_softc *, int);
+static void avic_source_name(struct pic_softc *, int, char *, size_t);
 
 const struct pic_ops avic_pic_ops = {
-	.pic_enable_irq = avic_enable_irq,
-	.pic_reeable_irq = avic_enable_irq,
-	.pic_disable_irq = avic_disable_irq,
+	.pic_unblock_irqs = avic_unblock_irqs,
+	.pic_block_irqs = avic_block_irqs,
 	.pic_establish_irq = avic_establish_irq,
 	.pic_source_name = avic_source_name
 };
@@ -72,30 +70,63 @@ struct avic_softc {
 	struct pic_softc avic_pic;
 	bus_space_tag_t avic_memt;
 	bus_space_handle_t avic_memh;
-} avic_pic = {
+} pic_avic = {
 	.avic_pic = {
 		.pic_ops = &avic_pic_ops,
-		.pic_numintrs = 64,
+		.pic_maxsources = 64,
 		.pic_name = "avic",
 	},
 };
 
+#define	INTC_READ(avic, reg) \
+	bus_space_read_4((avic)->avic_memt, (avic)->avic_memh, (reg))
+#define	INTC_WRITE(avic, reg, val) \
+	bus_space_write_4((avic)->avic_memt, (avic)->avic_memh, (reg), (val))
+#define	HW_TO_SW_IPL(ipl)	((ipl) + 1)
+#define	SW_TO_HW_IPL(ipl)	((ipl) - 1)
+
 void
-avic_enable_irq(struct pic_softc *pic, int irq)
+avic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 {
 	struct avic_softc * const avic = (void *) pic;
-	INTC_WRITE(&avic_softc, INTR_ENNUM, irq);
+#if 0
+	if (irq_base == 0)
+		INTC_WRITE(avic, IMX31_INTENABLEL, irq_mask);
+	else
+		INTC_WRITE(avic, IMX31_INTENABLEH, irq_mask);
+#else
+	uint32_t irq;
+	while ((irq = ffs(irq_mask)) != 0) {
+		irq--;
+		irq_base += irq;
+		irq_mask >>= irq;
+		INTC_WRITE(avic, IMX31_INTENNUM, irq_base);
+	}
+#endif
 }
 
 void
-avic_disable_irq(struct pic_softc *pic, int irq)
+avic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 {
 	struct avic_softc * const avic = (void *) pic;
-	INTC_WRITE(&avic_softc, INTR_DISNUM, irq);
+#if 0
+	if (irq_base == 0)
+		INTC_WRITE(avic, IMX31_INTDISABLEL, irq_mask);
+	else
+		INTC_WRITE(avic, IMX31_INTDISABLEH, irq_mask);
+#else
+	uint32_t irq;
+	while ((irq = ffs(irq_mask)) != 0) {
+		irq--;
+		irq_base += irq;
+		irq_mask >>= irq;
+		INTC_WRITE(avic, IMX31_INTDISNUM, irq_base);
+	}
+#endif
 }
 
 void
-avic_establish(struct pic_softc *pic, int irq, int ipl, int type)
+avic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
 {
 	struct avic_softc * const avic = (void *) pic;
 	bus_addr_t priority_reg;
@@ -105,7 +136,7 @@ avic_establish(struct pic_softc *pic, int irq, int ipl, int type)
 	KASSERT(irq < 64);
 	KASSERT(ipl < 16);
 
-	priority_reg = INTR_NIPRIORITY0 - (irq >> 3);
+	priority_reg = IMX31_NIPRIORITY0 - (irq >> 3);
 	priority_shift = (irq & 7) * 4; 
 	v = INTC_READ(avic, priority_reg);
 	v &= ~(0x0f << priority_shift);
@@ -126,15 +157,15 @@ avic_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
 void
 imx31_irq_handler(void *frame)
 {
-	struct avic_softc * const avic = &avic_softc;
+	struct avic_softc * const avic = &pic_avic;
 	struct pic_softc * const pic = &avic->avic_pic;
 	int32_t saved_nimask;
-	int32_t vec;
-	int ipl;
+	int32_t irq;
+	int ipl, newipl, oldipl;
 
-	saved_nimask = INTC_READ(avic, INTR_NIMASK);
+	saved_nimask = INTC_READ(avic, IMX31_NIMASK);
 	for (;;) {
-		irq = INTC_READ(avic, INTR_NIVECSR);
+		irq = INTC_READ(avic, IMX31_NIVECSR);
 		if (irq < 0)
 			break;
 		ipl = (int16_t) irq;
@@ -148,7 +179,7 @@ imx31_irq_handler(void *frame)
 		 * mark it as pending and try again.
 		 */
 		newipl = HW_TO_SW_IPL(ipl);
-		if (newipl <= current_spl_level) {
+		if (newipl <= curcpu()->ci_cpl) {
 			pic_mark_pending(pic, irq);
 			continue;
 		}
@@ -158,7 +189,7 @@ imx31_irq_handler(void *frame)
 		 * interrupts and raise SPL to its equivalent.
 		 */
 
-		INTC_WRITE(avic, INTR_NIMASK, ipl);
+		INTC_WRITE(avic, IMX31_NIMASK, ipl);
 		oldipl = _splraise(newipl);
 		cpsie(I32_bit);
 
@@ -170,11 +201,13 @@ imx31_irq_handler(void *frame)
 		 */
 		cpsid(I32_bit);
 		splx(oldipl);
-		INTC_WRITE(avic, INTR_NIMASK, saved_nimask);
+		INTC_WRITE(avic, IMX31_NIMASK, saved_nimask);
 	}
 }
 
-avic_init(void)
+void
+imx31_icu_init(void)
 {
-	pic_add(&avic_softc.pic);
+	pic_add(&pic_avic.avic_pic, 0);
+	softintr_init();
 }
