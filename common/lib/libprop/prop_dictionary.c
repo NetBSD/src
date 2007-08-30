@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.19 2007/08/16 21:44:07 joerg Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.20 2007/08/30 12:23:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -116,7 +116,10 @@ static void		_prop_dictionary_emergency_free(prop_object_t);
 static bool	_prop_dictionary_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_dictionary_equals(void *, void *);
+static bool	_prop_dictionary_equals(prop_object_t, prop_object_t,
+				        void **, void **,
+					prop_object_t *, prop_object_t *);
+static void	_prop_dictionary_equals_finish(prop_object_t, prop_object_t);
 
 static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_type		=	PROP_TYPE_DICTIONARY,
@@ -124,13 +127,16 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_emergency_free	=	_prop_dictionary_emergency_free,
 	.pot_extern		=	_prop_dictionary_externalize,
 	.pot_equals		=	_prop_dictionary_equals,
+	.pot_equals_finish	=	_prop_dictionary_equals_finish,
 };
 
 static int		_prop_dict_keysym_free(prop_stack_t, prop_object_t *);
 static bool	_prop_dict_keysym_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_dict_keysym_equals(void *, void *);
+static bool	_prop_dict_keysym_equals(prop_object_t, prop_object_t,
+					 void **, void **,
+					 prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_dict_keysym = {
 	.pot_type	=	PROP_TYPE_DICT_KEYSYM,
@@ -236,21 +242,23 @@ _prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 	return (true);
 }
 
+/* ARGSUSED */
 static bool
-_prop_dict_keysym_equals(void *v1, void *v2)
+_prop_dict_keysym_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_dictionary_keysym_t pdk1 = v1;
 	prop_dictionary_keysym_t pdk2 = v2;
-
-	if (! (prop_object_is_dictionary_keysym(pdk1) &&
-	       prop_object_is_dictionary_keysym(pdk2)))
-		return (false);
 
 	/*
 	 * There is only ever one copy of a keysym at any given time,
 	 * so we can reduce this to a simple pointer equality check.
 	 */
-	return (pdk1 == pdk2);
+	if (pdk1 == pdk2)
+		return _PROP_OBJECT_EQUALS_TRUE;
+	else
+		return _PROP_OBJECT_EQUALS_FALSE;
 }
 
 static prop_dictionary_keysym_t
@@ -359,7 +367,7 @@ _prop_dictionary_free(prop_stack_t stack, prop_object_t *obj)
 	}
 
 	/* Otherwise, try to push the current object on the stack. */
-	if (!_prop_stack_push(stack, pd, NULL, NULL)) {
+	if (!_prop_stack_push(stack, pd, NULL, NULL, NULL)) {
 		/* Push failed, entering emergency release mode. */
 		return (_PROP_OBJECT_FREE_FAILED);
 	}
@@ -445,51 +453,67 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	return (rv);
 }
 
+/* ARGSUSED */
 static bool
-_prop_dictionary_equals(void *v1, void *v2)
+_prop_dictionary_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_dictionary_t dict1 = v1;
 	prop_dictionary_t dict2 = v2;
-	const struct _prop_dict_entry *pde1, *pde2;
-	unsigned int idx;
-	bool rv = false;
-
-	if (! (prop_object_is_dictionary(dict1) &&
-	       prop_object_is_dictionary(dict2)))
-		return (false);
+	uintptr_t idx;
+	bool rv = _PROP_OBJECT_EQUALS_FALSE;
 
 	if (dict1 == dict2)
-		return (true);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 
-	if ((uintptr_t)dict1 < (uintptr_t)dict2) {
-		_PROP_RWLOCK_RDLOCK(dict1->pd_rwlock);
-		_PROP_RWLOCK_RDLOCK(dict2->pd_rwlock);
-	} else {
-		_PROP_RWLOCK_RDLOCK(dict2->pd_rwlock);
-		_PROP_RWLOCK_RDLOCK(dict1->pd_rwlock);
+	_PROP_ASSERT(*stored_pointer1 == *stored_pointer2);
+
+	idx = (uintptr_t)*stored_pointer1;
+
+	if (idx == 0) {
+		if ((uintptr_t)dict1 < (uintptr_t)dict2) {
+			_PROP_RWLOCK_RDLOCK(dict1->pd_rwlock);
+			_PROP_RWLOCK_RDLOCK(dict2->pd_rwlock);
+		} else {
+			_PROP_RWLOCK_RDLOCK(dict2->pd_rwlock);
+			_PROP_RWLOCK_RDLOCK(dict1->pd_rwlock);
+		}
 	}
 
 	if (dict1->pd_count != dict2->pd_count)
 		goto out;
 
-	for (idx = 0; idx < dict1->pd_count; idx++) {
-		pde1 = &dict1->pd_array[idx];
-		pde2 = &dict2->pd_array[idx];
-
-		if (prop_dictionary_keysym_equals(pde1->pde_key,
-						  pde2->pde_key) == false)
-			goto out;
-		if (prop_object_equals(pde1->pde_objref,
-				       pde2->pde_objref) == false)
-			goto out;
+	if (idx == dict1->pd_count) {
+		rv = _PROP_OBJECT_EQUALS_TRUE;
+		goto out;
 	}
 
-	rv = true;
+	_PROP_ASSERT(idx < dict1->pd_count);
+
+	*stored_pointer1 = (void *)(idx + 1);
+	*stored_pointer2 = (void *)(idx + 1);
+
+	*next_obj1 = &dict1->pd_array[idx].pde_objref;
+	*next_obj2 = &dict2->pd_array[idx].pde_objref;
+
+	if (!prop_dictionary_keysym_equals(dict1->pd_array[idx].pde_key,
+					   dict2->pd_array[idx].pde_key))
+		goto out;
+
+	return (_PROP_OBJECT_EQUALS_RECURSE);
 
  out:
  	_PROP_RWLOCK_UNLOCK(dict1->pd_rwlock);
 	_PROP_RWLOCK_UNLOCK(dict2->pd_rwlock);
 	return (rv);
+}
+
+static void
+_prop_dictionary_equals_finish(prop_object_t v1, prop_object_t v2)
+{
+ 	_PROP_RWLOCK_UNLOCK(((prop_dictionary_t)v1)->pd_rwlock);
+ 	_PROP_RWLOCK_UNLOCK(((prop_dictionary_t)v2)->pd_rwlock);
 }
 
 static prop_dictionary_t
@@ -1039,8 +1063,11 @@ prop_dictionary_remove_keysym(prop_dictionary_t pd,
 bool
 prop_dictionary_equals(prop_dictionary_t dict1, prop_dictionary_t dict2)
 {
+	if (!prop_object_is_dictionary(dict1) ||
+	    !prop_object_is_dictionary(dict2))
+		return (false);
 
-	return (_prop_dictionary_equals(dict1, dict2));
+	return (prop_object_equals(dict1, dict2));
 }
 
 /*
@@ -1066,8 +1093,11 @@ bool
 prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
 			      prop_dictionary_keysym_t pdk2)
 {
+	if (!prop_object_is_dictionary_keysym(pdk1) ||
+	    !prop_object_is_dictionary_keysym(pdk2))
+		return (_PROP_OBJECT_EQUALS_FALSE);
 
-	return (_prop_dict_keysym_equals(pdk1, pdk2));
+	return (prop_object_equals(pdk1, pdk2));
 }
 
 /*
@@ -1223,8 +1253,9 @@ _prop_dictionary_internalize_body(prop_stack_t stack, prop_object_t *obj,
 	/*
 	 * Key is found, now wait for value to be parsed.
 	 */
-	if (_prop_stack_push(stack, *obj, tmpkey,
-			     _prop_dictionary_internalize_continue))
+	if (_prop_stack_push(stack, *obj,
+			     _prop_dictionary_internalize_continue,
+			     tmpkey, NULL))
 		return (false);
 
  bad:

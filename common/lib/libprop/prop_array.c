@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.10 2007/08/16 21:44:07 joerg Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.11 2007/08/30 12:23:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,10 @@ static void		_prop_array_emergency_free(prop_object_t);
 static bool	_prop_array_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_array_equals(void *, void *);
+static bool	_prop_array_equals(prop_object_t, prop_object_t,
+				   void **, void **,
+				   prop_object_t *, prop_object_t *);
+static void	_prop_array_equals_finish(prop_object_t, prop_object_t);
 
 static const struct _prop_object_type _prop_object_type_array = {
 	.pot_type		=	PROP_TYPE_ARRAY,
@@ -73,6 +76,7 @@ static const struct _prop_object_type _prop_object_type_array = {
 	.pot_emergency_free	=	_prop_array_emergency_free,
 	.pot_extern		=	_prop_array_externalize,
 	.pot_equals		=	_prop_array_equals,
+	.pot_equals_finish	=	_prop_array_equals_finish,
 };
 
 #define	prop_object_is_array(x) 	\
@@ -122,7 +126,7 @@ _prop_array_free(prop_stack_t stack, prop_object_t *obj)
 	}
 
 	/* Otherwise, try to push the current object on the stack. */
-	if (!_prop_stack_push(stack, pa, NULL, NULL)) {
+	if (!_prop_stack_push(stack, pa, NULL, NULL, NULL)) {
 		/* Push failed, entering emergency release mode. */
 		return (_PROP_OBJECT_FREE_FAILED);
 	}
@@ -194,44 +198,61 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	return (rv);
 }
 
+/* ARGSUSED */
 static bool
-_prop_array_equals(void *v1, void *v2)
+_prop_array_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_array_t array1 = v1;
 	prop_array_t array2 = v2;
-	unsigned int idx;
-	bool rv = false;
-
-	if (! (prop_object_is_array(array1) &&
-	       prop_object_is_array(array2)))
-		return (false);
+	uintptr_t idx;
+	bool rv = _PROP_OBJECT_EQUALS_FALSE;
 
 	if (array1 == array2)
-		return (true);
+		return (_PROP_OBJECT_EQUALS_TRUE);
 
-	if ((uintptr_t)array1 < (uintptr_t)array2) {
-		_PROP_RWLOCK_RDLOCK(array1->pa_rwlock);
-		_PROP_RWLOCK_RDLOCK(array2->pa_rwlock);
-	} else {
-		_PROP_RWLOCK_RDLOCK(array2->pa_rwlock);
-		_PROP_RWLOCK_RDLOCK(array1->pa_rwlock);
+	_PROP_ASSERT(*stored_pointer1 == *stored_pointer2);
+	idx = (uintptr_t)*stored_pointer1;
+
+	/* For the first iteration, lock the objects. */
+	if (idx == 0) {
+		if ((uintptr_t)array1 < (uintptr_t)array2) {
+			_PROP_RWLOCK_RDLOCK(array1->pa_rwlock);
+			_PROP_RWLOCK_RDLOCK(array2->pa_rwlock);
+		} else {
+			_PROP_RWLOCK_RDLOCK(array2->pa_rwlock);
+			_PROP_RWLOCK_RDLOCK(array1->pa_rwlock);
+		}
 	}
 
 	if (array1->pa_count != array2->pa_count)
 		goto out;
-	
-	for (idx = 0; idx < array1->pa_count; idx++) {
-		if (prop_object_equals(array1->pa_array[idx],
-				       array2->pa_array[idx]) == false)
-			goto out;
+	if (idx == array1->pa_count) {
+		rv = true;
+		goto out;
 	}
+	_PROP_ASSERT(idx < array1->pa_count);
 
-	rv = true;
+	*stored_pointer1 = (void *)(idx + 1);
+	*stored_pointer2 = (void *)(idx + 1);
+	
+	*next_obj1 = array1->pa_array[idx];
+	*next_obj2 = array2->pa_array[idx];
+
+	return (_PROP_OBJECT_EQUALS_RECURSE);
 
  out:
 	_PROP_RWLOCK_UNLOCK(array1->pa_rwlock);
 	_PROP_RWLOCK_UNLOCK(array2->pa_rwlock);
 	return (rv);
+}
+
+static void
+_prop_array_equals_finish(prop_object_t v1, prop_object_t v2)
+{
+	_PROP_RWLOCK_UNLOCK(((prop_array_t)v1)->pa_rwlock);
+	_PROP_RWLOCK_UNLOCK(((prop_array_t)v2)->pa_rwlock);
 }
 
 static prop_array_t
@@ -675,8 +696,10 @@ prop_array_remove(prop_array_t pa, unsigned int idx)
 bool
 prop_array_equals(prop_array_t array1, prop_array_t array2)
 {
+	if (!prop_object_is_array(array1) || !prop_object_is_array(array2))
+		return (false);
 
-	return (_prop_array_equals(array1, array2));
+	return (prop_object_equals(array1, array2));
 }
 
 /*
@@ -791,8 +814,8 @@ _prop_array_internalize_body(prop_stack_t stack, prop_object_t *obj,
 		return (true);
 	}
 
-	if (_prop_stack_push(stack, array, NULL,
-			     _prop_array_internalize_continue))
+	if (_prop_stack_push(stack, array,
+			     _prop_array_internalize_continue, NULL, NULL))
 		return (false);
 
  bad:

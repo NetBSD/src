@@ -1,4 +1,4 @@
-/* $NetBSD: prop_stack.h,v 1.1 2007/08/16 21:44:08 joerg Exp $ */
+/* $NetBSD: prop_stack.h,v 1.2 2007/08/30 12:23:54 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -38,15 +38,13 @@
 
 struct _prop_stack_intern_elem {
 	prop_object_t object;
-	void *object_data;
-	void *iterator;
+	void *object_data[3];
 };
 
 struct _prop_stack_extern_elem {
 	SLIST_ENTRY(_prop_stack_extern_elem) stack_link;
 	prop_object_t object;
-	void *object_data;
-	void *iterator;
+	void *object_data[3];
 };
 
 #define	PROP_STACK_INTERN_ELEMS	16
@@ -60,7 +58,7 @@ struct _prop_stack {
 typedef struct _prop_stack *prop_stack_t;
 
 void	_prop_stack_init(prop_stack_t);
-bool	_prop_stack_push(prop_stack_t, prop_object_t, void *, void *);
-bool	_prop_stack_pop(prop_stack_t, prop_object_t *, void **, void **);
+bool	_prop_stack_push(prop_stack_t, prop_object_t, void *, void *, void *);
+bool	_prop_stack_pop(prop_stack_t, prop_object_t *, void **, void **, void **);
 
 #endif
