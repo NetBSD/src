@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.23 2007/08/24 23:38:31 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.24 2007/08/30 05:01:30 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct gre_softc {
 	struct file		*sc_fp;
 	struct file		*sc_newfp;
 	LIST_ENTRY(gre_softc)	sc_list;
-	struct route route;	/* routing entry that determines, where a
+	struct route route;	/* routing entry that determines where a
 				   encapsulated packet should go */
 	int			sc_proto;	/* protocol of encapsulator */
 	struct uio		sc_uio;
