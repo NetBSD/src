@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.86.2.23 2007/08/30 20:07:07 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.86.2.24 2007/08/30 21:34:20 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.23 2007/08/30 20:07:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.86.2.24 2007/08/30 21:34:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1109,6 +1109,8 @@ softdep_initialize()
 	for (i = 0; i < PCBPHASHSIZE; i++) {
 		LIST_INIT(&pcbphashhead[i]);
 	}
+
+	bioops = &softdep_bioops;
 }
 
 /*
@@ -1184,7 +1186,6 @@ softdep_mount(devvp, mp, fs, cred)
 	int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
-	bioops = &softdep_bioops;
 	mp->mnt_flag &= ~MNT_ASYNC;	/* XXXSMP */
 
 	/*
