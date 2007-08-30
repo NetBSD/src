@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.2.2.5 2007/08/26 12:04:47 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.2.2.6 2007/08/30 20:02:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.5 2007/08/26 12:04:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.6 2007/08/30 20:02:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,6 +240,7 @@ cpu_setonline(struct cpu_info *ci, bool online)
 	struct schedstate_percpu *spc;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci2;
+	uint64_t where;
 	xcfunc_t func;
 	int nonline;
 
@@ -264,7 +265,8 @@ cpu_setonline(struct cpu_info *ci, bool online)
 		func = (xcfunc_t)cpu_xc_offline;
 	}
 
-	xc_unicast(XC_WAIT, func, &ci->ci_schedstate, NULL, ci);
+	where = xc_unicast(0, func, &ci->ci_schedstate, NULL, ci);
+	xc_wait(where);
 	spc->spc_lastmod = time_second;
 
 	return 0;

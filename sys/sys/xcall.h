@@ -1,4 +1,4 @@
-/*	$NetBSD: xcall.h,v 1.1.2.1 2007/08/26 12:04:48 ad Exp $	*/
+/*	$NetBSD: xcall.h,v 1.1.2.2 2007/08/30 20:02:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,16 +40,17 @@
 #define	_SYS_XCALL_H_
 
 #ifdef _KERNEL
-#define	XC_HIGHPRI	0x01
-#define	XC_WAIT		0x02
+#define	XC_HIGHPRI	0x01	/* high priority */
 
 typedef void (*xcfunc_t)(void *, void *);
 
 struct cpu_info;
 
-void	xc_init_cpu(struct cpu_info *);
-void	xc_broadcast(u_int, xcfunc_t, void *, void *);
-void	xc_unicast(u_int, xcfunc_t, void *, void *, struct cpu_info *);
+void		xc_init_cpu(struct cpu_info *);
+uint64_t	xc_broadcast(u_int, xcfunc_t, void *, void *);
+uint64_t	xc_unicast(u_int, xcfunc_t, void *, void *, struct cpu_info *);
+void		xc_wait(uint64_t);
+
 #endif	/* _KERNEL */
 
 #endif	/* _SYS_XCALL_H_ */

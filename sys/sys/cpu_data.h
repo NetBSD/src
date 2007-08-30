@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.7.6.6 2007/08/26 12:04:48 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.7.6.7 2007/08/30 20:02:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,8 @@ struct cpu_data {
 	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 	kcondvar_t	cpu_xcall;		/* cross-call support */
-		
+	bool		cpu_xcall_pending;	/* cross-call support */
+	
 	/*
 	 * This section is mostly CPU-private.
 	 */
