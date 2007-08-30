@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.12 2007/07/23 17:51:17 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.13 2007/08/30 18:01:26 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ typedef struct sme_event_drv {
 } sme_event_drv_t;
 
 /* common */
-extern	kmutex_t sme_mtx;	/* mutex to protect the sysmon envsys data */
 extern	kmutex_t sme_list_mtx;	/* mutex to protect the sysmon envsys list */
 extern	kmutex_t sme_event_mtx;	/* mutex to protect the sme event data */
 
@@ -109,9 +108,8 @@ LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
 LIST_HEAD(, sme_event) sme_events_list;
 
 /* functions to handle sysmon envsys devices */
-int	sysmon_envsys_createplist(struct sysmon_envsys *);
-void	sme_make_dictionary(struct sysmon_envsys *, prop_array_t,
-			    envsys_data_t *);
+void	sme_add_sensor_dictionary(struct sysmon_envsys *, prop_array_t,
+			    	  prop_dictionary_t, envsys_data_t *);
 int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
