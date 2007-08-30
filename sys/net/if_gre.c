@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.104 2007/08/30 05:14:32 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.105 2007/08/30 05:54:07 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.104 2007/08/30 05:14:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.105 2007/08/30 05:54:07 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -429,9 +429,9 @@ gre_reconf(struct gre_softc *sc, struct socket *so, lwp_t *l)
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
 
 shutdown:
-	if (sc->sc_fp != NULL) {
+	if (sc->sc_soparm.sp_fp != NULL) {
 		gre_upcall_remove(so);
-		gre_closef(&sc->sc_fp, curlwp);
+		gre_closef(&sc->sc_soparm.sp_fp, curlwp);
 		so = NULL;
 	} else if (so != NULL)
 		gre_sodestroy(&so);
@@ -442,10 +442,10 @@ shutdown:
 		GRE_DPRINTF(sc, "%s: down\n", __func__);
 	else if (sc->sc_proto != IPPROTO_UDP)
 		GRE_DPRINTF(sc, "%s: not UDP\n", __func__);
-	else if (sc->sc_newfp != NULL) {
-		sc->sc_fp = sc->sc_newfp;
-		sc->sc_newfp = NULL;
-		so = (struct socket *)sc->sc_fp->f_data;
+	else if (sc->sc_newsoparm.sp_fp != NULL) {
+		sc->sc_soparm.sp_fp = sc->sc_newsoparm.sp_fp;
+		sc->sc_newsoparm.sp_fp = NULL;
+		so = (struct socket *)sc->sc_soparm.sp_fp->f_data;
 		gre_upcall_add(so, sc);
 		sc->sc_soparm = sc->sc_newsoparm;
 	} else if (gre_socreate1(sc, l, &so) != 0) {
@@ -480,7 +480,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 		/* XXX optimize */ 
 		if ((ifp->if_flags & IFF_UP) != IFF_UP ||
 		    sc->sc_proto != IPPROTO_UDP || so == NULL ||
-		    sc->sc_newfp != NULL ||
+		    sc->sc_newsoparm.sp_fp != NULL ||
 		    memcmp(&sc->sc_soparm, &sc->sc_newsoparm,
 		           sizeof(sc->sc_soparm)) != 0)
 			so = gre_reconf(sc, so, l);
@@ -1114,14 +1114,14 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		fp->f_count++;
 		FILE_UNUSE(fp, NULL);
 
-		while (sc->sc_newfp != NULL && error == 0) {
+		while (sc->sc_newsoparm.sp_fp != NULL && error == 0) {
 			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 			error = cv_timedwait_sig(&sc->sc_soparm_cv, &sc->sc_mtx,
 					         MAX(1, hz / 2));
 		}
 		if (error == 0) {
 			GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-			sc->sc_newfp = fp;
+			sc->sc_newsoparm.sp_fp = fp;
 			ifp->if_flags |= IFF_UP;
 		}
 
