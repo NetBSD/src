@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.96 2007/08/30 02:17:35 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.97 2007/08/30 02:22:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.96 2007/08/30 02:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.97 2007/08/30 02:22:29 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -258,6 +258,7 @@ rtflushall(int family)
 void
 rtflush(struct route *ro)
 {
+	int s = splnet();
 	KASSERT(ro->ro_rt != NULL);
 	KASSERT(rtcache_getdst(ro) != NULL);
 
@@ -265,6 +266,7 @@ rtflush(struct route *ro)
 	ro->ro_rt = NULL;
 
 	LIST_REMOVE(ro, ro_rtcache_next);
+	splx(s);
  
 #if 0
 	if (rtcache_debug()) {
@@ -277,6 +279,7 @@ rtflush(struct route *ro)
 void
 rtcache(struct route *ro)
 {
+	int s;
 	struct domain *dom;
 
 	KASSERT(ro->ro_rt != NULL);
@@ -285,7 +288,9 @@ rtcache(struct route *ro)
 	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) == NULL)
 		return;
 
+	s = splnet();
 	LIST_INSERT_HEAD(&dom->dom_rtcache, ro, ro_rtcache_next);
+	splx(s);
 }
 
 /*
