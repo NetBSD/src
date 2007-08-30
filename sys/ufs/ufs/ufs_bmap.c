@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.44.4.3 2007/08/24 23:28:49 ad Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.44.4.4 2007/08/30 16:29:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.44.4.3 2007/08/24 23:28:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.44.4.4 2007/08/30 16:29:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,10 +256,10 @@ ufs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			panic("ufs_bmaparray: indirect block not in cache");
 #endif
 		else {
+			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			VOP_STRATEGY(vp, bp);
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
