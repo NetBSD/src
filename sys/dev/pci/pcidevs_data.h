@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.892 2007/08/28 01:09:28 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.893 2007/08/30 23:59:21 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.893 2007/08/28 01:09:01 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.894 2007/08/30 23:59:01 xtraeme Exp
  */
 
 /*
@@ -8288,6 +8288,10 @@ static const struct pci_product pci_products[] = {
 	    "82801H PCI Express Port #6",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_IDE,
+	    "82801H IDE Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_HDA,
 	    "82801H High Definition Audio Controller",
 	},
@@ -13408,4 +13412,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2755;
+const int pci_nproducts = 2756;

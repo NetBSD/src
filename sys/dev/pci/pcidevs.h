@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.893 2007/08/28 01:09:28 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.894 2007/08/30 23:59:21 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.893 2007/08/28 01:09:01 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.894 2007/08/30 23:59:01 xtraeme Exp
  */
 
 /*
@@ -2359,6 +2359,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_EXP_4	0x2845		/* 82801H PCI Express Port #4 */
 #define	PCI_PRODUCT_INTEL_82801H_EXP_5	0x2847		/* 82801H PCI Express Port #5 */
 #define	PCI_PRODUCT_INTEL_82801H_EXP_6	0x2849		/* 82801H PCI Express Port #6 */
+#define	PCI_PRODUCT_INTEL_82801HBM_IDE	0x2850		/* 82801H IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801H_HDA	0x284b		/* 82801H High Definition Audio Controller */
 #define	PCI_PRODUCT_INTEL_82801H_THERMAL	0x284f		/* 82801H Thermal Controller */
 #define	PCI_PRODUCT_INTEL_82801IH_LPC	0x2912		/* 82801IH LPC Interface Bridge */
