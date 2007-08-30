@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.1 2007/08/29 05:17:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.2 2007/08/30 07:05:23 matt Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -82,6 +82,14 @@ static void
 	pic_deliver_irqs(struct pic_softc *, register_t, int, void *);
 static void
 	pic_list_deliver_irqs(register_t, int, void *);
+
+struct pic_softc *pic_list[PIC_MAXPICS];
+volatile uint32_t pic_pending_pics[(PIC_MAXPICS + 31) / 32];
+volatile uint32_t pic_pending_ipls;
+uint32_t pic_pending_ipl_refcnt[NIPL];
+struct intrsources *pic_sources[PIC_MAXMAXSOURCES];
+
+
 
 int
 pic_handle_intr(void *arg)
@@ -161,14 +169,18 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 		pending_irqs = pic_find_pending_irqs_by_ipl(pic, ipl,
 		    *ipending);
 		if (pending_irqs == 0) {
+#if PIC_MAXPICS > 32
 			irq_count += 32;
-			if (irq_count >= pic->pic_maxsources)
+			if (__predict_true(irq_count >= pic->pic_maxsources))
 				break;
 			irq_base += 32;
 			ipending++;
 			if (irq_base > pic->pic_maxsources)
 				ipending = pic->pic_pending_irqs;
 			continue;
+#else
+			break;
+#endif
 		}
 		blocked_irqs = pending_irqs;
 		do {
@@ -177,23 +189,32 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 
 			atomic_nand_32(ipending, __BIT(irq));
 			is = pic->pic_sources[irq_base + irq];
-			if (__predict_false(frame != NULL
-			    && is->is_arg == NULL)) {
-				rv = (*is->is_func)(frame);
+			if (is != NULL) {
+				if (__predict_false(frame != NULL
+				    && is->is_arg == NULL)) {
+					rv = (*is->is_func)(frame);
+				} else {
+					if ((psw & I32_bit) == 0)
+						cpsie(I32_bit);
+					rv = (*is->is_func)(frame);
+					cpsid(I32_bit);
+				}
+				is->is_ev.ev_count++;
 			} else {
-				if ((psw & I32_bit) == 0)
-					cpsie(I32_bit);
-				rv = (*is->is_func)(frame);
-				cpsid(I32_bit);
+				blocked_irqs &= ~__BIT(irq);
 			}
-
-			is->is_ev.ev_count++;
 			pending_irqs = pic_find_pending_irqs_by_ipl(pic, ipl,
 			    *ipending);
 		} while (pending_irqs);
-		(*pic->pic_ops->pic_unblock_irqs)(pic, irq_base, blocked_irqs);
+		if (blocked_irqs)
+			(*pic->pic_ops->pic_unblock_irqs)(pic,
+			    irq_base, blocked_irqs);
 	}
 
+	/*
+	 * Since interrupts are disabled, we don't have to be too careful
+	 * about these.
+	 */
 	if (atomic_nand_32_nv(&pic->pic_pending_ipls, ipl_mask) == 0)
 		atomic_nand_32(&pic_pending_pics[pic->pic_id >> 5],
 		    __BIT(pic->pic_id & 0x1f));
@@ -263,4 +284,59 @@ pic_do_pending_ints(register_t psw, int newipl)
 		}
 	}
 	ci->ci_cpl = newipl;
+}
+
+int
+pic_add(struct pic_softc *pic, int irqbase)
+{
+	int idx, maybe_idx = -1;
+	int irqbase = -1;
+	for (idx = 0; idx < PIC_MAXPICS; idx++) {
+		if (maybe_idx == -1 && (xpic = pic_list[idx]) == NULL) {
+			maybe_idx = idx;
+			if (maybe_irq_base < xpic->pic_irqbase + xpic->pic_maxsoruces)
+				maybe_irqbase = xpic->pic_irqbase + xpic->pic_maxsoruces;
+			if (irqbase < 0)
+				break;
+			continues;
+		}
+		if (irqbase >= xpic->pic_irqbase + xpic->pic_maxsources)
+			continue;
+		if (irqbase + pic->pic_maxsources <= xpic->pic_irqbase)
+			continue;
+		printf("pic_add: pic %s (%u sources @ irq %u) conflicts"
+		    " with pic %s (%u sources @ irq %u)\n",
+		    pic->pic_name, pic->pic_maxsources, irqbase,
+		return -1;
+	}
+	if (irqbase < 0)
+		irqbase = maybe_irqbase;
+	idx = maybe_idx;
+	KASSERT(idx + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
+
+	pic->pic_sources = &pic_sources[irqbase];
+	pic->pic_irqbase = irqbase;
+	pic_list[idx] = pic;
+}
+
+int
+pic_alloc_irq(struct pic_softc *pic)
+{
+}
+
+void *
+pic_establish(struct pic_softc *pic, int irq, int ipl, int level,
+	int (*func)(void *), void *arg)
+{
+}
+
+void *
+pic_disestablish(void *arg)
+{
+	struct intrsource * const is = arg;
+	struct pic_softc * const pic = is->is_pic;
+	const int irq = is->is_irq;
+
+	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~31, __BIT(irq));
+	pic->pic_sources[irq] = NULL;
 }
