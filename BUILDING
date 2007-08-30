@@ -3,21 +3,6 @@ BUILDING(8)             NetBSD System Manager's Manual             BUILDING(8)
 NAME
      BUILDING -- Procedure for building NetBSD from source code.
 
-STATUS
-     This document is a work-in-progress.  As such, the information described
-     here may not match the reality of the build system as of this writing.
-     Once this document is completely in sync with reality, this paragraph
-     will be removed.
-
-     Discrepancies between this documentation and the current reality of
-     implementation are noted specially, as with the note below:
-
-     Note: This document applies only to platforms which use the new toolchain
-     as indicated by the default setting of TOOLCHAIN_MISSING in <bsd.own.mk>.
-     Platforms which have not yet been switched to the new toolchain should
-     continue building traditionally, using the notes specified in the file
-     UPDATING.
-
 REQUIREMENTS
      NetBSD is designed to be buildable on most POSIX-compliant host systems.
      The basic build procedure is the same whether compiling natively (on the
