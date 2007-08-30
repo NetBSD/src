@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.20 2007/04/22 23:42:38 macallan Exp $
+# $NetBSD: md.sparc,v 1.21 2007/08/30 04:45:02 macallan Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -70,6 +70,7 @@
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/X11/etc/xmodmap.std
 ./usr/X11R6/lib/libxf86config.a
+./usr/X11R6/lib/modules/drivers/ag10e_drv.o
 ./usr/X11R6/lib/modules/drivers/ati_drv.o
 ./usr/X11R6/lib/modules/drivers/atimisc_drv.o
 ./usr/X11R6/lib/modules/drivers/r128_drv.o
@@ -155,6 +156,7 @@
 ./usr/X11R6/man/cat1/xf86cfg.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xf86config.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/acecad.0			-unknown-		.cat
+./usr/X11R6/man/cat4/ag10e.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/ati.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/citron.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/dmc.0			-unknown-		.cat
@@ -199,6 +201,7 @@
 ./usr/X11R6/man/man1/xf86cfg.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86config.1		-unknown-		.man
 ./usr/X11R6/man/man4/acecad.4			-unknown-		.man
+./usr/X11R6/man/man4/ag10e.4			-unknown-		.man
 ./usr/X11R6/man/man4/ati.4			-unknown-		.man
 ./usr/X11R6/man/man4/citron.4			-unknown-		.man
 ./usr/X11R6/man/man4/dmc.4			-unknown-		.man
