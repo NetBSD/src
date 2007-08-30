@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.102 2007/08/24 23:38:31 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.103 2007/08/30 04:58:25 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.102 2007/08/24 23:38:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.103 2007/08/30 04:58:25 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -320,8 +320,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct socket **sop)
 
 	if (sc->g_srcport == 0) {
 		if ((rc = gre_getsockname(so, m, l)) != 0) {
-			GRE_DPRINTF(sc, "%s: gre_getsockname failed\n",
-			    __func__);
+			GRE_DPRINTF(sc, "%s: gre_getsockname\n", __func__);
 			goto out;
 		}
 		sc->g_srcport = sin->sin_port;
@@ -342,7 +341,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct socket **sop)
 	    &m);
 	m = NULL;
 	if (rc != 0) {
-		printf("%s: setopt ttl failed\n", __func__);
+		GRE_DPRINTF(sc, "%s: setopt ttl failed\n", __func__);
 		rc = 0;
 	}
 out:
@@ -368,8 +367,7 @@ gre_do_recv(struct gre_softc *sc, struct socket *so, lwp_t *l)
 
 		flags = MSG_DONTWAIT;
 		sc->sc_uio.uio_resid = 1000000;
-		rc = (*so->so_receive)(so, NULL, &sc->sc_uio, &m, NULL,
-		    &flags);
+		rc = (*so->so_receive)(so, NULL, &sc->sc_uio, &m, NULL, &flags);
 		/* TBD Back off if ECONNREFUSED (indicates
 		 * ICMP Port Unreachable)?
 		 */
@@ -382,19 +380,16 @@ gre_do_recv(struct gre_softc *sc, struct socket *so, lwp_t *l)
 			    sc->sc_if.if_xname, rc, (void *)m);
 			continue;
 		} else
-			GRE_DPRINTF(sc, "%s: so_receive ok\n",
-			    __func__);
+			GRE_DPRINTF(sc, "%s: so_receive ok\n", __func__);
 		if (m->m_len < sizeof(*gh) &&
 		    (m = m_pullup(m, sizeof(*gh))) == NULL) {
-			GRE_DPRINTF(sc, "%s: m_pullup failed\n",
-			    __func__);
+			GRE_DPRINTF(sc, "%s: m_pullup failed\n", __func__);
 			continue;
 		}
 		gh = mtod(m, const struct gre_h *);
 
-		if (gre_input3(sc, m, 0, gh, 1) == 0) {
-			GRE_DPRINTF(sc, "%s: dropping unsupported\n",
-			    __func__);
+		if (gre_input3(sc, m, 0, gh, 0) == 0) {
+			GRE_DPRINTF(sc, "%s: dropping unsupported\n", __func__);
 			m_freem(m);
 		}
 	}
@@ -407,13 +402,14 @@ gre_do_send(struct gre_softc *sc, struct socket *so, lwp_t *l)
 		int rc;
 		struct mbuf *m;
 
+		mutex_enter(&sc->sc_mtx);
 		IF_DEQUEUE(&sc->sc_snd, m);
+		mutex_exit(&sc->sc_mtx);
 		if (m == NULL)
 			break;
 		GRE_DPRINTF(sc, "%s: dequeue\n", __func__);
 		if ((so->so_state & SS_ISCONNECTED) == 0) {
-			GRE_DPRINTF(sc, "%s: not connected\n",
-			    __func__);
+			GRE_DPRINTF(sc, "%s: not connected\n", __func__);
 			m_freem(m);
 			continue;
 		}
@@ -444,9 +440,9 @@ shutdown:
 		GRE_DPRINTF(sc, "%s: dying\n", __func__);
 	else if ((ifp->if_flags & IFF_UP) != IFF_UP)
 		GRE_DPRINTF(sc, "%s: down\n", __func__);
-	else if (sc->sc_proto != IPPROTO_UDP) {
+	else if (sc->sc_proto != IPPROTO_UDP)
 		GRE_DPRINTF(sc, "%s: not UDP\n", __func__);
-	} else if (sc->sc_newfp != NULL) {
+	else if (sc->sc_newfp != NULL) {
 		sc->sc_fp = sc->sc_newfp;
 		sc->sc_newfp = NULL;
 		so = (struct socket *)sc->sc_fp->f_data;
@@ -459,9 +455,8 @@ shutdown:
 	cv_signal(&sc->sc_soparm_cv);
 	if (so != NULL)
 		sc->sc_if.if_flags |= IFF_RUNNING;
-	else if (sc->sc_proto == IPPROTO_UDP) {
+	else if (sc->sc_proto == IPPROTO_UDP)
 		sc->sc_if.if_flags &= ~IFF_RUNNING;
-	}
 	return so;
 }
 
@@ -472,7 +467,6 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 	struct socket *so = NULL;
 
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
-	mutex_enter(&sc->sc_mtx);
 
 	while (!sc->sc_dying) {
 		while (sc->sc_haswork == 0) {
@@ -480,23 +474,27 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 			cv_wait(&sc->sc_work_cv, &sc->sc_mtx);
 		}
 		sc->sc_haswork = 0;
+
 		GRE_DPRINTF(sc, "%s: awake\n", __func__);
+
 		/* XXX optimize */ 
 		if ((ifp->if_flags & IFF_UP) != IFF_UP ||
 		    sc->sc_proto != IPPROTO_UDP || so == NULL ||
 		    sc->sc_newfp != NULL ||
-		    memcmp(&sc->sc_soparm, &sc->sc_newsoparm, sizeof(sc->sc_soparm)) != 0)
+		    memcmp(&sc->sc_soparm, &sc->sc_newsoparm,
+		           sizeof(sc->sc_soparm)) != 0)
 			so = gre_reconf(sc, so, l);
-		if (so == NULL)
-			continue;
-		gre_do_recv(sc, so, l);
-		gre_do_send(sc, so, l);
+		mutex_exit(&sc->sc_mtx);
+		if (so != NULL) {
+			gre_do_recv(sc, so, l);
+			gre_do_send(sc, so, l);
+		}
+		mutex_enter(&sc->sc_mtx);
 	}
 	sc->sc_running = 0;
 	cv_signal(&sc->sc_join_cv);
 	/* must not touch sc after this! */
 	GRE_DPRINTF(sc, "%s: restore ipl\n", __func__);
-	mutex_exit(&sc->sc_mtx);
 }
 
 static void
@@ -504,7 +502,10 @@ gre_thread(void *arg)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 
+	mutex_enter(&sc->sc_mtx);
 	gre_thread1(sc, curlwp);
+	mutex_exit(&sc->sc_mtx);
+
 	/* must not touch sc after this! */
 	kthread_exit(0);
 }
@@ -664,9 +665,9 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		 * the destination address in the IP header.
 		 * Else we also need to save and change the source
 		 */
-		if (in_hosteq(ip->ip_src, sc->g_src)) {
+		if (in_hosteq(ip->ip_src, sc->g_src))
 			msiz = MOB_H_SIZ_S;
-		} else {
+		else {
 			mob_h.proto |= MOB_H_SBIT;
 			mob_h.osrc = ip->ip_src.s_addr;
 			ip->ip_src.s_addr = sc->g_src.s_addr;
