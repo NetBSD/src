@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_bool.c,v 1.11 2007/08/16 21:44:07 joerg Exp $	*/
+/*	$NetBSD: prop_bool.c,v 1.12 2007/08/30 12:23:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -54,7 +54,9 @@ static int		_prop_bool_free(prop_stack_t, prop_object_t *);
 static bool	_prop_bool_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_bool_equals(void *, void *);
+static bool	_prop_bool_equals(prop_object_t, prop_object_t,
+				  void **, void **,
+				  prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_bool = {
 	.pot_type	=	PROP_TYPE_BOOL,
@@ -89,21 +91,27 @@ _prop_bool_externalize(struct _prop_object_externalize_context *ctx,
 	    pb->pb_value ? "true" : "false"));
 }
 
+/* ARGSUSED */
 static bool
-_prop_bool_equals(void *v1, void *v2)
+_prop_bool_equals(prop_object_t v1, prop_object_t v2,
+    void **stored_pointer1, void **stored_pointer2,
+    prop_object_t *next_obj1, prop_object_t *next_obj2)
 {
 	prop_bool_t b1 = v1;
 	prop_bool_t b2 = v2;
 
 	if (! (prop_object_is_bool(b1) &&
 	       prop_object_is_bool(b2)))
-		return (false);
+		return (_PROP_OBJECT_EQUALS_FALSE);
 
 	/*
 	 * Since we only ever allocate one true and one false,
 	 * save ourselves a couple of memory operations.
 	 */
-	return (b1 == b2);
+	if (b1 == b2)
+		return (_PROP_OBJECT_EQUALS_TRUE);
+	else
+		return (_PROP_OBJECT_EQUALS_FALSE);
 }
 
 static prop_bool_t
@@ -185,8 +193,10 @@ prop_bool_true(prop_bool_t pb)
 bool
 prop_bool_equals(prop_bool_t b1, prop_bool_t b2)
 {
+	if (!prop_object_is_bool(b1) || !prop_object_is_bool(b2))
+		return (false);
 
-	return (_prop_bool_equals(b1, b2));
+	return (prop_object_equals(b1, b2));
 }
 
 /*
