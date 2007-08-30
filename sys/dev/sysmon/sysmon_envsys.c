@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.48 2007/08/30 21:31:28 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.49 2007/08/30 23:44:32 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.48 2007/08/30 21:31:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.49 2007/08/30 23:44:32 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -116,49 +116,35 @@ static const struct sme_sensor_type sme_sensor_type[] = {
 	{ -1,			-1,			"unknown" }
 };
 
-struct sme_sensor_state {
-	int		type;
-	const char 	*desc;
+static const struct sme_sensor_type sme_sensor_state[] = {
+	{ ENVSYS_SVALID,	-1, 	"valid" },
+	{ ENVSYS_SINVALID,	-1, 	"invalid" },
+	{ ENVSYS_SCRITICAL,	-1, 	"critical" },
+	{ ENVSYS_SCRITUNDER,	-1, 	"critical-under" },
+	{ ENVSYS_SCRITOVER,	-1, 	"critical-over" },
+	{ ENVSYS_SWARNUNDER,	-1, 	"warning-under" },
+	{ ENVSYS_SWARNOVER,	-1, 	"warning-over" },
+	{ -1,			-1, 	"unknown" }
 };
 
-static const struct sme_sensor_state sme_sensor_state[] = {
-	{ ENVSYS_SVALID,	"valid" },
-	{ ENVSYS_SINVALID,	"invalid" },
-	{ ENVSYS_SCRITICAL,	"critical" },
-	{ ENVSYS_SCRITUNDER,	"critical-under" },
-	{ ENVSYS_SCRITOVER,	"critical-over" },
-	{ ENVSYS_SWARNUNDER,	"warning-under" },
-	{ ENVSYS_SWARNOVER,	"warning-over" },
-	{ -1,			"unknown" }
+static const struct sme_sensor_type sme_sensor_drive_state[] = {
+	{ ENVSYS_DRIVE_EMPTY,		-1, 	"drive state is unknown" },
+	{ ENVSYS_DRIVE_READY,		-1, 	"drive is ready" },
+	{ ENVSYS_DRIVE_POWERUP,		-1, 	"drive is powering up" },
+	{ ENVSYS_DRIVE_ONLINE,		-1, 	"drive is online" },
+	{ ENVSYS_DRIVE_IDLE,		-1, 	"drive is idle" },
+	{ ENVSYS_DRIVE_ACTIVE,		-1, 	"drive is active" },
+	{ ENVSYS_DRIVE_REBUILD,		-1, 	"drive is rebuilding" },
+	{ ENVSYS_DRIVE_POWERDOWN,	-1, 	"drive is powering down" },
+	{ ENVSYS_DRIVE_FAIL,		-1, 	"drive failed" },
+	{ ENVSYS_DRIVE_PFAIL,		-1, 	"drive degraded" },
+	{ -1,				-1, 	"unknown" }
 };
 
-static const struct sme_sensor_state sme_sensor_drive_state[] = {
-	{ ENVSYS_DRIVE_EMPTY,		"drive state is unknown" },
-	{ ENVSYS_DRIVE_READY,		"drive is ready" },
-	{ ENVSYS_DRIVE_POWERUP,		"drive is powering up" },
-	{ ENVSYS_DRIVE_ONLINE,		"drive is online" },
-	{ ENVSYS_DRIVE_IDLE,		"drive is idle" },
-	{ ENVSYS_DRIVE_ACTIVE,		"drive is active" },
-	{ ENVSYS_DRIVE_REBUILD,		"drive is rebuilding" },
-	{ ENVSYS_DRIVE_POWERDOWN,	"drive is powering down" },
-	{ ENVSYS_DRIVE_FAIL,		"drive failed" },
-	{ ENVSYS_DRIVE_PFAIL,		"drive degraded" },
-	{ -1,				"unknown" }
-};
-
-struct sme_sensor_names {
-	SLIST_ENTRY(sme_sensor_names) sme_names;
-	int	assigned;
-	char	desc[ENVSYS_DESCLEN];
-};
-
-
-static SLIST_HEAD(, sme_sensor_names) sme_names_list;
 static prop_dictionary_t sme_propd;
 static kcondvar_t sme_list_cv;
-static int sme_uniqsensors = 0;
 
-kmutex_t sme_list_mtx, sme_event_mtx;
+kmutex_t sme_list_mtx, sme_event_mtx, sme_event_init_mtx;
 kcondvar_t sme_event_cv;
 
 #ifdef COMPAT_40
@@ -167,7 +153,7 @@ static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
 #endif
 
 static void sysmon_envsys_release(struct sysmon_envsys *);
-static int sme_register_sensorname(envsys_data_t *);
+static int sme_register_sensorname(struct sysmon_envsys *, envsys_data_t *);
 
 /*
  * sysmon_envsys_init:
@@ -236,16 +222,16 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */		
 		mutex_enter(&sme_list_mtx);
 		LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
-			if (sme == NULL)
-				continue;
-
+			sme->sme_flags |= SME_FLAG_BUSY;
 			error = sme_update_dictionary(sme);
 			if (error) {
 				DPRINTF(("%s: sme_update_dictionary, "
 				    "error=%d\n", __func__, error));
+				sme->sme_flags &= ~SME_FLAG_BUSY;
 				mutex_exit(&sme_list_mtx);
 				return error;
 			}
+			sme->sme_flags &= ~SME_FLAG_BUSY;
 		}
 		mutex_exit(&sme_list_mtx);
 		/*
@@ -513,7 +499,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	/* 
 	 * Initialize the singly linked list for sensor descriptions.
 	 */
-	SLIST_INIT(&sme_names_list);
+	SLIST_INIT(&sme->sme_names_list);
 	/*
 	 * Iterate over all sensors and create a dictionary per sensor,
 	 * checking firstly if sensor description is unique.
@@ -536,7 +522,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 		/*
 		 * Check if sensor description is unique.
 		 */
-		if (sme_register_sensorname(edata))
+		if (sme_register_sensorname(sme, edata))
 			continue;
 
 		SLIST_FOREACH(sd, &sme_dict_list, sme_dicts)
@@ -585,6 +571,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 
 out:
 	sme->sme_flags &= ~SME_FLAG_BUSY;
+	sme->sme_uniqsensors = 0;
 	mutex_exit(&sme_list_mtx);
 	/*
 	 * Remove all items from the singly linked list, we don't
@@ -601,7 +588,6 @@ out2:
 		    __func__, sme->sme_name, error));
 		prop_object_release(array);
 	}
-	sme_uniqsensors = 0;
 	return error;
 }
 
@@ -625,15 +611,15 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 		cv_wait(&sme_list_cv, &sme_list_mtx);
 	}
 	LIST_REMOVE(sme, sme_list);
-	mutex_exit(&sme_list_mtx);
 	/*
 	 * Remove all sensor descriptions from the singly linked list.
 	 */
-	while (!SLIST_EMPTY(&sme_names_list)) {
-		snames = SLIST_FIRST(&sme_names_list);
-		SLIST_REMOVE_HEAD(&sme_names_list, sme_names);
+	while (!SLIST_EMPTY(&sme->sme_names_list)) {
+		snames = SLIST_FIRST(&sme->sme_names_list);
+		SLIST_REMOVE_HEAD(&sme->sme_names_list, sme_names);
 		kmem_free(snames, sizeof(*snames));
 	}
+	mutex_exit(&sme_list_mtx);
 	/* 
 	 * Unregister all events associated with this device.
 	 */
@@ -712,13 +698,13 @@ sysmon_envsys_find_40(u_int idx)
  * 	+ Registers a sensor name into the list maintained per device.
  */
 static int
-sme_register_sensorname(envsys_data_t *edata)
+sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct sme_sensor_names *snames, *snames2 = NULL;
 
 	KASSERT(edata != NULL);
 
-	SLIST_FOREACH(snames2, &sme_names_list, sme_names) {
+	SLIST_FOREACH(snames2, &sme->sme_names_list, sme_names) {
 		/* 
 		 * Match sensors with empty and duplicate description.
 		 */
@@ -739,8 +725,8 @@ sme_register_sensorname(envsys_data_t *edata)
 	snames->assigned = true;
 	(void)strlcpy(snames->desc, edata->desc, sizeof(snames->desc));
 	DPRINTF(("%s: registering sensor name=%s\n", __func__, edata->desc));
-	SLIST_INSERT_HEAD(&sme_names_list, snames, sme_names);
-	sme_uniqsensors++;
+	SLIST_INSERT_HEAD(&sme->sme_names_list, snames, sme_names);
+	sme->sme_uniqsensors++;
 
 	return 0;
 }
@@ -755,8 +741,8 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		    	  prop_dictionary_t dict, envsys_data_t *edata)
 {
 	const struct sme_sensor_type *est = sme_sensor_type;
-	const struct sme_sensor_state *ess = sme_sensor_state;
-	const struct sme_sensor_state *esds = sme_sensor_drive_state;
+	const struct sme_sensor_type *ess = sme_sensor_state;
+	const struct sme_sensor_type *esds = sme_sensor_drive_state;
 	sme_event_drv_t *sme_evdrv_t = NULL;
 	int i, j;
 
@@ -928,7 +914,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 *
 	 */
 
-	if (!prop_array_set(array, sme_uniqsensors - 1, dict)) {
+	if (!prop_array_set(array, sme->sme_uniqsensors - 1, dict)) {
 		DPRINTF(("%s: prop_array_add\n", __func__));
 		goto invalidate_sensor;
 	}
@@ -969,8 +955,8 @@ int
 sme_update_dictionary(struct sysmon_envsys *sme)
 {
 	const struct sme_sensor_type *est = sme_sensor_type;
-	const struct sme_sensor_state *ess = sme_sensor_state;
-	const struct sme_sensor_state *esds = sme_sensor_drive_state;
+	const struct sme_sensor_type *ess = sme_sensor_state;
+	const struct sme_sensor_type *esds = sme_sensor_drive_state;
 	envsys_data_t *edata = NULL;
 	prop_object_t array, dict;
 	int i, j, error, invalid;

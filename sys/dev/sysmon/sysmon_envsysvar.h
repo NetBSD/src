@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.13 2007/08/30 18:01:26 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.14 2007/08/30 23:44:32 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ extern	kmutex_t sme_list_mtx;	/* mutex to protect the sysmon envsys list */
 extern	kmutex_t sme_event_mtx;	/* mutex to protect the sme event data */
 
 /* mutex to intialize/destroy the sysmon envsys events framework */
-extern	kmutex_t sme_event_init_mtx;
+extern kmutex_t sme_event_init_mtx;
 
 /* condition variable to wait for the worker thread to finish */
 extern	kcondvar_t sme_event_cv;

@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.20 2007/08/30 18:01:26 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.21 2007/08/30 23:44:32 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.20 2007/08/30 18:01:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.21 2007/08/30 23:44:32 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -199,11 +199,11 @@ sme_event_register(sme_event_t *see)
 	 * before.
 	 */
 	mutex_enter(&sme_event_init_mtx);
+	mutex_exit(&sme_event_mtx);
 	if (sme_events_initialized == false)
 		error = sme_events_init();
 	mutex_exit(&sme_event_init_mtx);
 
-	mutex_exit(&sme_event_mtx);
 	return error;
 }
 
@@ -248,8 +248,10 @@ sme_event_unregister_all(struct sysmon_envsys *sme)
 	}
 
 	if (LIST_EMPTY(&sme_events_list)) {
+		mutex_enter(&sme_event_init_mtx);
 		mutex_exit(&sme_event_mtx);
 		sme_events_destroy();
+		mutex_exit(&sme_event_init_mtx);
 		return;
 	}
 
@@ -297,8 +299,10 @@ sme_event_unregister(const char *sensor, int type)
 	 * 	- destroy the workqueue.
 	 */
 	if (LIST_EMPTY(&sme_events_list)) {
+		mutex_enter(&sme_event_init_mtx);
 		mutex_exit(&sme_event_mtx);
 		sme_events_destroy();
+		mutex_exit(&sme_event_init_mtx);
 		goto out;
 	}
 	mutex_exit(&sme_event_mtx);
@@ -500,11 +504,9 @@ out:
 void
 sme_events_destroy(void)
 {
-	mutex_enter(&sme_event_init_mtx);
 	callout_stop(&seeco);
 	sme_events_initialized = false;
 	DPRINTF(("%s: events framework destroyed\n", __func__));
-	mutex_exit(&sme_event_init_mtx);
 	callout_destroy(&seeco);
 	workqueue_destroy(seewq);
 }
