@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.241 2007/08/29 19:09:13 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.242 2007/08/31 10:11:29 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8776,3 +8776,20 @@ distrib/sets/lists/man/mi			patch
 
 	Supports Ultra DMA mode 4, Pio Mode 4 and MDMA mode 2.
 	[xtraeme, ticket #846]
+
+sys/arch/sparc64/sparc64/pmap.c			patch
+
+	[sparc64] adapt pmap_extract() to fixed per-CPU memory mappings
+	[martin, ticket #854]
+
+sys/arch/macppc/conf/GENERIC			patch
+
+	Comment out the radeonfb driver since it causes trouble on
+	some machines. Disable until I can fix it.
+	[macallan, ticket #853]
+
+share/mk/bsd.shlib.mk				1.6
+
+	Use /libexec/ld.elf_so instead of /usr/libexec/ld.elf_so for the
+	programs which are located in /libexec.
+	[hira, ticket #852]
