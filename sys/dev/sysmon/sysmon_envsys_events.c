@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.21 2007/08/30 23:44:32 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.22 2007/08/31 00:35:08 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.21 2007/08/30 23:44:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.22 2007/08/31 00:35:08 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -343,12 +343,12 @@ do {									\
 			    "error=%d sensor=%s event=%s\n",		\
 			    __func__, error, sed_t->edata->desc, (c));	\
 		else {							\
-			mutex_enter(&sme_list_mtx);			\
 			(void)strlcat(str, (c), sizeof(str));		\
+			mutex_enter(&sme_event_mtx);			\
 			prop_dictionary_set_bool(sed_t->sdict,		\
 						 str,			\
 						 true);			\
-			mutex_exit(&sme_list_mtx);			\
+			mutex_exit(&sme_event_mtx);			\
 		}							\
 	}								\
 } while (/* CONSTCOND */ 0)
@@ -479,6 +479,8 @@ sme_events_init(void)
 {
 	int error;
 
+	KASSERT(mutex_owned(&sme_event_init_mtx));
+
 	error = workqueue_create(&seewq, "envsysev",
 	    sme_events_worker, NULL, 0, IPL_SOFTCLOCK, WQ_MPSAFE);
 	if (error)
@@ -504,6 +506,8 @@ out:
 void
 sme_events_destroy(void)
 {
+	KASSERT(mutex_owned(&sme_event_init_mtx));
+
 	callout_stop(&seeco);
 	sme_events_initialized = false;
 	DPRINTF(("%s: events framework destroyed\n", __func__));
