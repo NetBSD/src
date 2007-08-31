@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184.2.2 2007/05/25 08:04:35 pavel Exp $	*/
+/*	$NetBSD: pmap.c,v 1.184.2.3 2007/08/31 09:26:11 liamjfoy Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.2.2 2007/05/25 08:04:35 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.2.3 2007/08/31 09:26:11 liamjfoy Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2066,7 +2066,7 @@ pmap_extract(pm, va, pap)
 			*pap = pa;
 		return TRUE;
 	} else if (pm == pmap_kernel() && va >= KSTACK_VA && va < (KSTACK_VA + 64*KB)) {
-		pa = (paddr_t)(curcpu()->ci_paddr - KSTACK_VA + va);
+		pa = (paddr_t)(curcpu()->ci_paddr - KSTACK_VA + va + 64*KB);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract (kstack): va=%lx pa=%llx\n",
 		    (u_long)va, (unsigned long long)pa));
 		if (pap != NULL)
