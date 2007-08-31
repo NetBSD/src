@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.14 2007/08/31 15:15:16 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.15 2007/08/31 15:18:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.14 2007/08/31 15:15:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.15 2007/08/31 15:18:12 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -315,7 +315,6 @@ preempt(void)
  * Compute the amount of time during which the current lwp was running.
  *
  * - update l_rtime unless it's an idle lwp.
- * - update l_runtime for the next lwp.
  */
 
 void
