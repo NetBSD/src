@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.49 2007/08/30 23:44:32 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.50 2007/08/31 00:35:08 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.49 2007/08/30 23:44:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.50 2007/08/31 00:35:08 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -703,6 +703,7 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct sme_sensor_names *snames, *snames2 = NULL;
 
 	KASSERT(edata != NULL);
+	KASSERT(mutex_owned(&sme_list_mtx));
 
 	SLIST_FOREACH(snames2, &sme->sme_names_list, sme_names) {
 		/* 
@@ -747,6 +748,8 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	int i, j;
 
 	i = j = 0;
+
+	KASSERT(mutex_owned(&sme_list_mtx));
 
 	/* find the correct unit for this sensor. */
 	for (i = 0; est[i].type != -1; i++)
@@ -960,6 +963,8 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 	envsys_data_t *edata = NULL;
 	prop_object_t array, dict;
 	int i, j, error, invalid;
+
+	KASSERT(mutex_owned(&sme_list_mtx));
 
 	error = invalid = 0;
 	array = dict = NULL;
