@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.894 2007/08/30 23:59:21 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.895 2007/08/31 01:17:39 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.894 2007/08/30 23:59:01 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.895 2007/08/31 01:17:20 xtraeme Exp
  */
 
 /*
@@ -3670,6 +3670,7 @@
 #define	PCI_PRODUCT_VIATECH_VT82C561	0x0561		/* VT82C561 */
 #define	PCI_PRODUCT_VIATECH_VT82C586A_IDE	0x0571		/* VT82C586A IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C576	0x0576		/* VT82C576 3V */
+#define	PCI_PRODUCT_VIATECH_CX700_IDE	0x0581		/* CX700 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C580VP	0x0585		/* VT82C580 (Apollo VP) Host-PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C586_ISA	0x0586		/* VT82C586 PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237A_SATA	0x0591		/* VT8237A Integrated SATA Controller */
