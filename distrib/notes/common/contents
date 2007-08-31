@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.123.2.1 2007/07/19 14:38:14 liamjfoy Exp $
+.\"	$NetBSD: contents,v 1.123.2.2 2007/08/31 20:48:56 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,6 +72,13 @@ A gzipped
 kernel containing code for everything supported in this release.  This 
 kernel also supports SMP on systems with more than one CPU.
 .\}
+.if \n[i386] \{\
+.			It Pa netbsd-GENERIC.NOACPI.gz
+A gzipped
+.Nx
+kernel containing code for everything supported in this release but without
+ACPI support, for use on legacy hardware.
+.\}
 .
 .if \n[amd64] \{\
 .			It Pa netbsd-INSTALL.gz
@@ -111,38 +118,24 @@ A version of
 .Li GENERIC
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
-.			It Pa netbsd-GENERIC_TINY.gz
-A version of
-.Li GENERIC
-intended to run on machines with less than 8 MB.
-.			It Pa netbsd-GENERIC_PS2TINY.gz
-A version of
-.Li GENERIC
-intended to run on IBM PS/2 machines.
 .
 .			It Pa netbsd-INSTALL.gz
-A somewhat smaller kernel, which you can use to boot the system
+A somewhat smaller installation kernel, which you can use to boot the system
 on memory-tight systems.
 This is the same kernel as present on the miniroot and on many
 install floppies.
 .
-.			It Pa netbsd-INSTALL_TINY.gz
-A version of
-.Li INSTALL
-intended to run on machines with less than 8 MB.
-.			It Pa netbsd-INSTALL_SMALL.gz
-A version of
-.Li INSTALL
-intended to fit on 5.25"/1.2 MB diskettes.
 .			It Pa netbsd-INSTALL_LAPTOP.gz
 A version of
 .Li INSTALL
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
-.			It Pa netbsd-INSTALL_PS2.gz
+.			It Pa netbsd-INSTALL_LARGE.gz
 A version of
 .Li INSTALL
-that has MCA stuff enabled to allow installing on IBM PS/2 machines.
+that has ACPI and some large disk and network driver, to allow installing
+on the newest machines.
+This is the default boot kernel from the ISO images.
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
@@ -277,10 +270,14 @@ see below.
 .		It Pa bootfs/
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
-.if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
+.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
 \n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
+.\}
+.if \n[i386]:\n[amd64] \{\
+.		It Pa cdrom/
+\*M bootable cdrom images; see below.
 .\}
 .
 .if \n[alpha] \{\
@@ -325,7 +322,7 @@ Method), below.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen]:\n[amd64] \{\
+.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen] \{\
 .		It Pa misc/
 .
 .ie \n[alpha] \{\

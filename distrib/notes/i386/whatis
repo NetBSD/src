@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.19 2006/10/30 18:36:44 hubertf Exp $
+.\"	$NetBSD: whatis,v 1.19.2.1 2007/08/31 20:48:59 pavel Exp $
 .
 This is the twelfth major release of
 .Nx
@@ -12,9 +12,15 @@ See the supported hardware list for details.
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
-Support for booting off RAIDframe RAID-1 mirrors
+Default kernels now have ACPI enabled by default. If this cause problems
+on your hardware, use userconf and
+.Ic disable acpi
+to boot without ACPI support.
+You can also boot a legacy kernel from cdrom using:
+.Ic boot Ar nbnoacpi ,
+and choose to install the GENERIC.NOACPI kernel set from sysinst.
 .It
-Increase the maximum number of partitions per disklabel from 8 to 16.
+TBD
 .bullet)
 .Pp
 .Nx \*V

@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.31 2006/04/20 03:33:01 uwe Exp $
+.\"	$NetBSD: macros,v 1.31.4.1 2007/08/31 20:48:57 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -168,7 +168,7 @@
 .\" Macro for `UNIX-like', since we don't want to just use `UNIX'
 .
 .de Ul
-.Ux -like
+.Ux Ns -like
 ..
 .
 .\" setsize <G> <U>

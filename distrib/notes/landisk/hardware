@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1.2.2 2007/04/16 19:58:47 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.1.2.3 2007/08/31 20:48:59 pavel Exp $
 .
 .Nx*M
 supports Hitachi SH-4 based machines that use SH\~IPL+g firmware.
