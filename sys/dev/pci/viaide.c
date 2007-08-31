@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.43 2007/08/31 01:37:46 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.44 2007/08/31 01:42:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.43 2007/08/31 01:37:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.44 2007/08/31 01:42:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	},
 	{ PCI_PRODUCT_VIATECH_CX700_IDE,
 	  0,
-	  "VIA Technologies CX700 IDE Controller",
+	  NULL,
 	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
@@ -445,12 +445,15 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8237:
-		case PCI_PRODUCT_VIATECH_CX700_IDE:
 			aprint_normal("VT8237 ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8237A_ISA:
 			aprint_normal("VT8237A ATA133 controller\n");
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			break;
+		case PCI_PRODUCT_VIATECH_CX700_IDE:
+			aprint_normal("CX700 ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
