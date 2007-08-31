@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.246.2.1 2007/06/05 20:50:07 bouyer Exp $
+# $NetBSD: GENERIC,v 1.246.2.2 2007/08/31 09:48:07 liamjfoy Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.246.2.1 $"
+#ident 		"GENERIC-$Revision: 1.246.2.2 $"
 
 maxusers	32
 
@@ -277,8 +277,9 @@ ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
 
-radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
-options		RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
+# radeonfb causes trouble on some hardware so it's experimental for now
+#radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
+#options		RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 
