@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.41 2007/03/27 00:04:04 garbled Exp $	*/
+/*	$NetBSD: viaide.c,v 1.42 2007/08/31 01:22:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.41 2007/03/27 00:04:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.42 2007/08/31 01:22:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE,
 	  0,
 	  NULL,
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_CX700_IDE,
+	  0,
+	  "VIA Technologies CX700 IDE Controller",
 	  via_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
