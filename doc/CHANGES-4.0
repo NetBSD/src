@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.244 2007/08/31 14:36:32 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.245 2007/08/31 15:02:17 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8814,3 +8814,7 @@ usr.sbin/trpt/trpt.8				1.16
 	PR/36867 - Zafer Aydogan -- trsp is no longer
 	[jnemeth, ticket #855]
 
+share/mk/bsd.sys.mk
+
+	Disable ssp for sh3 on netbsd-4
+	[uwe, ticket #857]
