@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LARGE,v 1.1.2.5 2007/08/29 18:34:17 liamjfoy Exp $
+#	$NetBSD: INSTALL_LARGE,v 1.1.2.6 2007/08/31 20:09:27 pavel Exp $
 #
 #	INSTALL_LARGE -- INSTALL suitable for modern machines
 #
@@ -17,7 +17,8 @@ bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 txp*	at pci? dev ? function ?	# 3com 3cr990
 vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
-
+jmide* 	at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* at jmide?
 gcscide*	at pci? dev ? function ? 	# AMD CS5535 Companion IDE controllers
 
 # CardBus bridge support
