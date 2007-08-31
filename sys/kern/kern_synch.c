@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.13 2007/08/21 13:59:43 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.14 2007/08/31 15:15:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.13 2007/08/21 13:59:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.14 2007/08/31 15:15:16 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -319,7 +319,7 @@ preempt(void)
  */
 
 void
-updatertime(lwp_t *l, struct timeval *tv)
+updatertime(lwp_t *l, const struct timeval *tv)
 {
 	long s, u;
 
