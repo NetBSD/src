@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.23 2007/08/31 09:12:55 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.24 2007/08/31 10:13:27 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.23 2007/08/31 09:12:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.24 2007/08/31 10:13:27 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -154,41 +154,92 @@ SYSCTL_SETUP(sysctl_kern_envsys_timeout_setup, "sysctl kern.envsys subtree")
 			CTL_CREATE, CTL_EOL);
 }
 
-
 /*
  * sme_event_register:
  *
- * 	+ Registers a sysmon envsys event.
- * 	+ Creates a new sysmon envsys event.
+ * 	+ Registers a new sysmon envsys event or updates any event
+ * 	  already in the queue.
  */
 int
-sme_event_register(sme_event_t *see)
+sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
+		   const char *drvn, const char *objkey,
+		   int32_t critval, int crittype, int powertype)
 {
-	sme_event_t *lsee;
+	sme_event_t *see = NULL;
+	prop_object_t obj;
+	bool critvalup = false;
 	int error = 0;
 
-	KASSERT(see != NULL);
+	KASSERT(sdict != NULL || edata != NULL);
 
 	mutex_enter(&sme_event_mtx);
 	/* 
-	 * Ensure that we don't add events for the same sensor
-	 * and with the same type.
+	 * check if the event is already on the list and return
+	 * EEXIST if value provided hasn't been changed.
 	 */
-	LIST_FOREACH(lsee, &sme_events_list, see_list) {
-		if (strcmp(lsee->pes.pes_sensname,
-		    see->pes.pes_sensname) == 0) {
-			if (lsee->type == see->type) {
-				DPRINTF(("%s: dev=%s sensor=%s type=%d "
-				    "(already exists)\n", __func__,
-				    see->pes.pes_dvname,
-				    see->pes.pes_sensname, see->type));
-				mutex_exit(&sme_event_mtx);
-				return EEXIST;
+	LIST_FOREACH(see, &sme_events_list, see_list) {
+		if (strcmp(edata->desc, see->pes.pes_sensname) == 0)
+			if (crittype == see->type) {
+				if (see->critval == critval) {
+					DPRINTF(("%s: dev=%s sensor=%s type=%d "
+				    	    "(already exists)\n", __func__,
+				    	    see->pes.pes_dvname,
+				    	    see->pes.pes_sensname, see->type));
+					mutex_exit(&sme_event_mtx);
+					return EEXIST;
+				}
+				critvalup = true;
+				break;
 			}
+	}
+
+	/* 
+	 * Critical condition operation requested by userland.
+	 */
+	if (objkey && critval && critvalup) {
+		obj = prop_dictionary_get(sdict, objkey);
+		if (obj != NULL) {
+			/* 
+			 * object is already in dictionary and value
+			 * provided is not the same than we have
+			 * currently,  update the critical value.
+			 */
+			see->critval = critval;
+			DPRINTF(("%s: sensor=%s type=%d (critval updated)\n",
+				 __func__, edata->desc, see->type));
+			error = sme_sensor_upint32(sdict, objkey, critval);
+			mutex_exit(&sme_event_mtx);
+			return error;
 		}
 	}
 
-	DPRINTF(("%s: dev=%s sensor=%s snum=%d type=%d "
+	/* 
+	 * The event is not in on the list or in a dictionary, create a new
+	 * sme event, assign required members and update the object in
+	 * the dictionary.
+	 */
+	see = NULL;
+	see = kmem_zalloc(sizeof(*see), KM_NOSLEEP);
+	if (see == NULL) {
+		mutex_exit(&sme_event_mtx);
+		return ENOMEM;
+	}
+
+	see->critval = critval;
+	see->type = crittype;
+	(void)strlcpy(see->pes.pes_dvname, drvn,
+	    sizeof(see->pes.pes_dvname));
+	see->pes.pes_type = powertype;
+	(void)strlcpy(see->pes.pes_sensname, edata->desc,
+	    sizeof(see->pes.pes_sensname));
+	see->snum = edata->sensor;
+	error = sme_sensor_upint32(sdict, objkey, critval);
+	if (error) {
+		mutex_exit(&sme_event_mtx);
+		return error;
+	}
+
+	DPRINTF(("%s: registering dev=%s sensor=%s snum=%d type=%d "
 	    "critval=%" PRIu32 "\n", __func__,
 	    see->pes.pes_dvname, see->pes.pes_sensname,
 	    see->snum, see->type, see->critval));
@@ -203,7 +254,8 @@ sme_event_register(sme_event_t *see)
 	if (sme_events_initialized == false)
 		error = sme_events_init();
 	mutex_exit(&sme_event_init_mtx);
-
+	if (error)
+		kmem_free(see, sizeof(*see));
 	return error;
 }
 
@@ -331,7 +383,7 @@ do {									\
 	if (sed_t->edata->flags & (a)) {				\
 		char str[32] = "monitoring-state-";			\
 									\
-		error = sme_event_add(sed_t->sdict,			\
+		error = sme_event_register(sed_t->sdict,		\
 				      sed_t->edata,			\
 				      sed_t->sme->sme_name,		\
 				      NULL,				\
@@ -379,90 +431,6 @@ do {									\
 
 	/* we are done, free memory now */
 	kmem_free(sed_t, sizeof(*sed_t));
-}
-
-/*
- * sme_event_add:
- *
- * 	+ Initializes or updates a sysmon envsys event.
- */
-int
-sme_event_add(prop_dictionary_t sdict, envsys_data_t *edata,
-	      const char *drvn, const char *objkey,
-	      int32_t critval, int crittype, int powertype)
-{
-	sme_event_t *see = NULL;
-	prop_object_t obj;
-	bool critvalup = false;
-	int error = 0;
-
-	KASSERT(sdict != NULL || edata != NULL);
-
-	mutex_enter(&sme_event_mtx);
-	/* 
-	 * check if the event is already on the list and return
-	 * EEXIST if value provided hasn't been changed.
-	 */
-	LIST_FOREACH(see, &sme_events_list, see_list) {
-		if (strcmp(edata->desc, see->pes.pes_sensname) == 0)
-			if (crittype == see->type) {
-				if (see->critval == critval) {
-					mutex_exit(&sme_event_mtx);
-					return EEXIST;
-				}
-				critvalup = true;
-				break;
-			}
-	}
-
-	/* 
-	 * Critical condition operation requested by userland.
-	 */
-	if (objkey && critval && critvalup) {
-		obj = prop_dictionary_get(sdict, objkey);
-		if (obj != NULL) {
-			/* 
-			 * object is already in dictionary and value
-			 * provided is not the same than we have
-			 * currently,  update the critical value.
-			 */
-			see->critval = critval;
-			DPRINTF(("%s: sensor=%s type=%d (critval updated)\n",
-				 __func__, edata->desc, see->type));
-			error = sme_sensor_upint32(sdict, objkey, critval);
-			mutex_exit(&sme_event_mtx);
-			return error;
-		}
-	}
-
-	/* 
-	 * The event is not in on the list or in a dictionary, create a new
-	 * sme event, assign required members and update the object in
-	 * the dictionary.
-	 */
-	see = NULL;
-	see = kmem_zalloc(sizeof(*see), KM_NOSLEEP);
-	if (see == NULL) {
-		mutex_exit(&sme_event_mtx);
-		return ENOMEM;
-	}
-
-	see->critval = critval;
-	see->type = crittype;
-	(void)strlcpy(see->pes.pes_dvname, drvn,
-	    sizeof(see->pes.pes_dvname));
-	see->pes.pes_type = powertype;
-	(void)strlcpy(see->pes.pes_sensname, edata->desc,
-	    sizeof(see->pes.pes_sensname));
-	see->snum = edata->sensor;
-	error = sme_sensor_upint32(sdict, objkey, critval);
-	mutex_exit(&sme_event_mtx);
-	if (error)
-		return error;
-	error = sme_event_register(see);
-	if (error)
-		kmem_free(see, sizeof(*see));
-	return error;
 }
 
 /*

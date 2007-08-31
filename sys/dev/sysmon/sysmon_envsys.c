@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.50 2007/08/31 00:35:08 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.51 2007/08/31 10:13:27 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.50 2007/08/31 00:35:08 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.51 2007/08/31 10:13:27 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1270,7 +1270,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			}
 
 			critval = prop_number_integer_value(obj2);
-			error = sme_event_add(dict,
+			error = sme_event_register(dict,
 					      edata,
 					      sme->sme_name,
 					      "critical-capacity",
@@ -1291,7 +1291,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			}
 
 			critval = prop_number_integer_value(obj2);
-			error = sme_event_add(dict,
+			error = sme_event_register(dict,
 					      edata,
 					      sme->sme_name,
 					      "critical-max-limit",
@@ -1312,7 +1312,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 			}
 
 			critval = prop_number_integer_value(obj2);
-			error = sme_event_add(dict,
+			error = sme_event_register(dict,
 					      edata,
 					      sme->sme_name,
 					      "critical-min-limit",
