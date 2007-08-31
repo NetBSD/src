@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60.2.6 2007/05/12 20:28:47 pavel Exp $
+# $NetBSD: INSTALL,v 1.60.2.7 2007/08/31 20:09:29 pavel Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.60.2.6 $"
+#ident 		"INSTALL-$Revision: 1.60.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -348,6 +348,8 @@ cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 ixpide* 	at pci? dev ? function ?	# ATI IXP IDE controllers
+jmide* 		at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
+ahcisata* 	at jmide?
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
