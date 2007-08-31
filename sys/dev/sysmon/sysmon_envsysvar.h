@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.14 2007/08/30 23:44:32 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.15 2007/08/31 10:13:27 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -115,12 +115,11 @@ int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
 
 /* functions to handle sysmon envsys events */
-int	sme_event_register(struct sme_event *);
+int	sme_event_register(prop_dictionary_t, envsys_data_t *, const char *,
+			   const char *, int32_t, int, int);
 int	sme_event_unregister(const char *, int);
 void	sme_event_unregister_all(struct sysmon_envsys *);
 void	sme_event_drvadd(void *);
-int	sme_event_add(prop_dictionary_t, envsys_data_t *,
-		      const char *, const char *, int32_t, int, int);
 int	sme_events_init(void);
 void	sme_events_destroy(void);
 void	sme_events_check(void *);
