@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.16 2006/10/22 21:11:56 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.16.2.1 2007/08/31 23:03:01 pavel Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.16 2006/10/22 21:11:56 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.16.2.1 2007/08/31 23:03:01 pavel Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -166,8 +166,9 @@ static int cd9660_copy_stat_info(cd9660node *, cd9660node *, int);
 #endif
 static cd9660node *cd9660_create_virtual_entry(const char *, cd9660node *, int,
     int);
-static cd9660node *cd9660_create_file(const char *, cd9660node *);
-static cd9660node *cd9660_create_directory(const char *, cd9660node *);
+static cd9660node *cd9660_create_file(const char *, cd9660node *, cd9660node *);
+static cd9660node *cd9660_create_directory(const char *, cd9660node *,
+    cd9660node *);
 static cd9660node *cd9660_create_special_directory(u_char, cd9660node *);
 
 
@@ -954,13 +955,6 @@ cd9660_sorted_child_insert(cd9660node *parent, cd9660node *cn_new)
 	/* TODO: Optimize? */
 	cn_new->parent = parent;
 
-#if 0	/* XXXDCY did this serve any purpose when head was a cd9660node? */
-	if (head == cn_new) {
-		head->parent->child = head;
-		return;
-	}
-#endif
-
 	/*
 	 * first will either be 0, the . or the ..
 	 * if . or .., this means no other entry may be written before first
@@ -972,7 +966,8 @@ cd9660_sorted_child_insert(cd9660node *parent, cd9660node *cn_new)
 		 * Dont insert a node twice -
 		 * that would cause an infinite loop
 		 */
-		assert(cn_new != cn);
+		if (cn_new == cn)
+			return;
 
 		compare = cd9660_compare_filename(cn_new->isoDirRecord->name,
 			cn->isoDirRecord->name);
@@ -1254,18 +1249,19 @@ cd9660_rrip_move_directory(cd9660node *dir)
 	if (diskStructure.rr_moved_dir == NULL) {
 		diskStructure.rr_moved_dir =
 			cd9660_create_directory(ISO_RRIP_DEFAULT_MOVE_DIR_NAME,
-				diskStructure.rootNode);
+				diskStructure.rootNode, dir);
 		if (diskStructure.rr_moved_dir == NULL)
 			return 0;
 	}
 
 	/* Create a file with the same ORIGINAL name */
-	tfile = cd9660_create_file(dir->node->name, dir->parent);
+	tfile = cd9660_create_file(dir->node->name, dir->parent, dir);
 	if (tfile == NULL)
 		return NULL;
 
 	diskStructure.rock_ridge_move_count++;
-	sprintf(newname,"%08i", diskStructure.rock_ridge_move_count);
+	snprintf(newname, sizeof(newname), "%08i",
+	    diskStructure.rock_ridge_move_count);
 
 	/* Point to old parent */
 	dir->rr_real_parent = dir->parent;
@@ -1991,7 +1987,7 @@ cd9660_create_virtual_entry(const char *name, cd9660node *parent, int file,
 }
 
 static cd9660node *
-cd9660_create_file(const char * name, cd9660node *parent)
+cd9660_create_file(const char * name, cd9660node *parent, cd9660node *me)
 {
 	cd9660node *temp;
 
@@ -2002,6 +1998,10 @@ cd9660_create_file(const char * name, cd9660node *parent)
 	temp->fileDataLength = 0;
 
 	temp->type = CD9660_TYPE_FILE | CD9660_TYPE_VIRTUAL;
+
+	if ((temp->node->inode = calloc(1, sizeof(fsinode))) == NULL)
+		return NULL;
+	*temp->node->inode = *me->node->inode;
 
 	if (cd9960_translate_node_common(temp) == 0)
 		return NULL;
@@ -2015,7 +2015,7 @@ cd9660_create_file(const char * name, cd9660node *parent)
  * @returns cd9660node * Pointer to the new directory
  */
 static cd9660node *
-cd9660_create_directory(const char *name, cd9660node *parent)
+cd9660_create_directory(const char *name, cd9660node *parent, cd9660node *me)
 {
 	cd9660node *temp;
 
@@ -2025,6 +2025,10 @@ cd9660_create_directory(const char *name, cd9660node *parent)
 	temp->node->type |= S_IFDIR;
 
 	temp->type = CD9660_TYPE_DIR | CD9660_TYPE_VIRTUAL;
+
+	if ((temp->node->inode = calloc(1, sizeof(fsinode))) == NULL)
+		return NULL;
+	*temp->node->inode = *me->node->inode;
 
 	if (cd9960_translate_node_common(temp) == 0)
 		return NULL;
