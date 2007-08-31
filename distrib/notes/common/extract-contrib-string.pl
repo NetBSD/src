@@ -159,7 +159,7 @@ while(<>) {
                 $msg .= "\n" if $msg!~/\n$/;
 
 
-		# Split up into seperate paragraphs
+		# Split up into separate paragraphs
 		#
 		$msgs=$msg;
 		$msgs=~s/(This (software|product))/|$1/g;
