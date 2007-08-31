@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.252 2007/08/31 22:59:43 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.253 2007/08/31 23:04:57 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9429,3 +9429,9 @@ lib/libcrypto/man/ssl.3						patch
 
 	Sync openssl with HEAD - update to 0.9.8e.
 	[mjf, ticket #828]
+
+usr.sbin/makefs/cd9660.c			1.19
+
+	Fix deep directory move rock-ridge extension.
+	[christos, ticket #757]
+
