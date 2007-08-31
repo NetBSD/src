@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.251 2007/08/31 22:58:26 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.252 2007/08/31 22:59:43 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8759,7 +8759,7 @@ share/man/man4/wm.4				1.18
 	Modify wm_reset() to make some device stable.
 	Add ICH9 support to wm.
 	Add I82566 support to igphy.
-	[masanobu, ticket #850]
+	[msaitoh, ticket #850]
 
 sys/dev/pci/pcidevs				patch
 share/man/man4/man4.i386/Makefile		new file
