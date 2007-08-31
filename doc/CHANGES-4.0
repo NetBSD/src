@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.249 2007/08/31 21:56:00 xtraeme Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.250 2007/08/31 22:29:02 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8862,7 +8862,6 @@ sys/dev/pci/pcidevs.h				regenerate
 
 	Add workaround for panic if an ATAPI device on ahcisata is
 	found.
-
 	[bouyer, ticket #678]
 
 sys/dev/ic/ahcisata_core.c			1.2
@@ -8870,7 +8869,6 @@ sys/dev/ic/ahcisata_core.c			1.2
 	* Add bus_dmamap_sync calls for cmd structure.
 	* During initialization, use the right port index when setting up the
 	  physical pointers for a port. Fixes issue with non-contiguous ports.
-
 	[bouyer, ticket #746]
 
 sys/dev/mii/brgphy.c				1.34
@@ -8885,3 +8883,53 @@ sys/dev/pci/if_bgereg.h				1.43
 	Stone and fixes from OpenBSD for various hardware bugs/errata.
 	[phil, ticket #819]
 
+crypto/dist/ipsec-tools/ChangeLog				patch
+crypto/dist/ipsec-tools/NEWS					patch
+crypto/dist/ipsec-tools/configure.ac				patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_dump_policy.c	patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_get_policylen.c	patch
+crypto/dist/ipsec-tools/src/libipsec/ipsec_strerror.c		patch
+crypto/dist/ipsec-tools/src/libipsec/key_debug.c		patch
+crypto/dist/ipsec-tools/src/libipsec/libpfkey.h			patch
+crypto/dist/ipsec-tools/src/libipsec/pfkey.c			patch
+crypto/dist/ipsec-tools/src/libipsec/pfkey_dump.c		patch
+crypto/dist/ipsec-tools/src/libipsec/policy_parse.y		patch
+crypto/dist/ipsec-tools/src/libipsec/policy_token.l		patch
+crypto/dist/ipsec-tools/src/libipsec/test-policy-priority.c	patch
+crypto/dist/ipsec-tools/src/racoon/admin.c			patch
+crypto/dist/ipsec-tools/src/racoon/backupsa.c			patch
+crypto/dist/ipsec-tools/src/racoon/cfparse.y			patch
+crypto/dist/ipsec-tools/src/racoon/cftoken.l			patch
+crypto/dist/ipsec-tools/src/racoon/eaytest.c			patch
+crypto/dist/ipsec-tools/src/racoon/grabmyaddr.c			patch
+crypto/dist/ipsec-tools/src/racoon/handler.c			patch
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c			patch
+crypto/dist/ipsec-tools/src/racoon/isakmp.c			patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c			patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c			patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_quick.c		patch
+crypto/dist/ipsec-tools/src/racoon/isakmp_xauth.c		patch
+crypto/dist/ipsec-tools/src/racoon/kmpstat.c			patch
+crypto/dist/ipsec-tools/src/racoon/main.c			patch
+crypto/dist/ipsec-tools/src/racoon/oakley.c			patch
+crypto/dist/ipsec-tools/src/racoon/pfkey.c			patch
+crypto/dist/ipsec-tools/src/racoon/policy.c			patch
+crypto/dist/ipsec-tools/src/racoon/policy.h			patch
+crypto/dist/ipsec-tools/src/racoon/proposal.c			patch
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5		patch
+crypto/dist/ipsec-tools/src/racoon/remoteconf.c			patch
+crypto/dist/ipsec-tools/src/racoon/sainfo.c			patch
+crypto/dist/ipsec-tools/src/racoon/security.c			patch
+crypto/dist/ipsec-tools/src/racoon/session.c			patch
+crypto/dist/ipsec-tools/src/racoon/sockmisc.c			patch
+crypto/dist/ipsec-tools/src/racoon/strnames.c			patch
+crypto/dist/ipsec-tools/src/racoon/var.h			patch
+crypto/dist/ipsec-tools/src/racoon/doc/README.plainrsa		patch
+crypto/dist/ipsec-tools/src/setkey/parse.y			patch
+crypto/dist/ipsec-tools/src/setkey/setkey.c			patch
+crypto/dist/ipsec-tools/src/setkey/token.l			patch
+lib/libipsec/config.h						patch
+lib/libipsec/package_version.h					patch
+
+	Import ipsec-tools 0.7
+	[manu, ticket #830]
