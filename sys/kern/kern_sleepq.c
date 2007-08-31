@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.12 2007/08/15 12:07:33 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.13 2007/08/31 15:27:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.12 2007/08/15 12:07:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.13 2007/08/31 15:27:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -247,19 +247,18 @@ sleepq_block(int timo, bool catch)
 	if (catch) {
 		l->l_flag |= LW_SINTR;
 		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
-			/* lwp_unsleep() will release the lock */
-			lwp_unsleep(l);
 			early = true;
 		}
 		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
 			l->l_flag &= ~LW_CANCELLED;
-			/* lwp_unsleep() will release the lock */
-			lwp_unsleep(l);
 			early = true;
 		}
 	}
 
-	if (!early) {
+	if (early) {
+		/* lwp_unsleep() will release the lock */
+		lwp_unsleep(l);
+	} else {
 		if (timo)
 			callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 		mi_switch(l);
