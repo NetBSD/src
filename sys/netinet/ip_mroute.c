@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.104 2007/07/09 21:11:11 ad Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.105 2007/08/31 21:56:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.104 2007/07/09 21:11:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.105 2007/08/31 21:56:43 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -850,11 +850,6 @@ get_api_config(struct mbuf *m)
 	return (0);
 }
 
-static struct sockaddr_in sin = {
-	.sin_len = sizeof(sin),
-	.sin_family = AF_INET
-};
-
 /*
  * Add a vif to the vif table
  */
@@ -867,6 +862,7 @@ add_vif(struct mbuf *m)
 	struct ifnet *ifp;
 	struct ifreq ifr;
 	int error, s;
+	struct sockaddr_in sin;
 
 	if (m == NULL || m->m_len < sizeof(struct vifctl))
 		return (EINVAL);
@@ -893,7 +889,7 @@ add_vif(struct mbuf *m)
 	} else
 #endif
 	{
-		sin.sin_addr = vifcp->vifc_lcl_addr;
+		sockaddr_in_init(&sin, &vifcp->vifc_lcl_addr, 0);
 		ifa = ifa_ifwithaddr(sintosa(&sin));
 		if (ifa == NULL)
 			return (EADDRNOTAVAIL);
@@ -948,9 +944,8 @@ add_vif(struct mbuf *m)
 			return (EOPNOTSUPP);
 
 		/* Enable promiscuous reception of all IP multicasts. */
-		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
+		sockaddr_in_init(&sin, &zeroin_addr, 0);
+		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)&ifr);
 		if (error)
 			return (error);
@@ -1010,6 +1005,7 @@ reset_vif(struct vif *vifp)
 	struct mbuf *m, *n;
 	struct ifnet *ifp;
 	struct ifreq ifr;
+	struct sockaddr_in sin;
 
 	callout_stop(&vifp->v_repq_ch);
 
@@ -1032,9 +1028,8 @@ reset_vif(struct vif *vifp)
 		reg_vif_num = VIFI_INVALID;
 #endif
 	} else {
-		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
-		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
+		sockaddr_in_init(&sin, &zeroin_addr, 0);
+		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
 		ifp = vifp->v_ifp;
 		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)&ifr);
 	}
@@ -1399,6 +1394,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 	struct mfc *rt;
 	static int srctun = 0;
 	struct mbuf *mm;
+	struct sockaddr_in sin;
 	int s;
 	vifi_t vifi;
 
@@ -1560,7 +1556,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 
 			mrtstat.mrts_upcalls++;
 
-			sin.sin_addr = ip->ip_src;
+			sockaddr_in_init(&sin, &ip->ip_src, 0);
 			if (socket_send(ip_mrouter, mm, &sin) < 0) {
 				log(LOG_WARNING,
 				    "ip_mforward: ip_mrouter socket queue full\n");
@@ -1696,6 +1692,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 	struct ip  *ip = mtod(m, struct ip *);
 	vifi_t vifi;
 	struct vif *vifp;
+	struct sockaddr_in sin;
 	int plen = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
 /*
@@ -1794,7 +1791,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 
 				mrtstat.mrts_upcalls++;
 
-				sin.sin_addr = im->im_src;
+				sockaddr_in_init(&sin, im->im_src, 0);
 				if (socket_send(ip_mrouter, mm, &sin) < 0) {
 					log(LOG_WARNING,
 					    "ip_mforward: ip_mrouter socket queue full\n");
@@ -2439,7 +2436,7 @@ rsvp_input(struct mbuf *m, struct ifnet *ifp)
 {
 	int vifi, s;
 	struct ip *ip = mtod(m, struct ip *);
-	static struct sockaddr_in rsvp_src = { sizeof(sin), AF_INET };
+	struct sockaddr_in rsvp_src;
 
 	if (rsvpdebug)
 		printf("rsvp_input: rsvp_on %d\n", rsvp_on);
@@ -2503,7 +2500,7 @@ rsvp_input(struct mbuf *m, struct ifnet *ifp)
 		return;
 	}
 
-	rsvp_src.sin_addr = ip->ip_src;
+	sockaddr_in_init(&rsvp_src, &ip->ip_src, 0);
 
 	if (rsvpdebug && m)
 		printf("rsvp_input: m->m_len = %d, sbspace() = %d\n",
