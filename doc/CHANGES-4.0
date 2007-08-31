@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.248 2007/08/31 20:22:53 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.249 2007/08/31 21:56:00 xtraeme Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8872,4 +8872,16 @@ sys/dev/ic/ahcisata_core.c			1.2
 	  physical pointers for a port. Fixes issue with non-contiguous ports.
 
 	[bouyer, ticket #746]
+
+sys/dev/mii/brgphy.c				1.34
+sys/dev/mii/miidevs				1.71
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+sys/dev/pci/if_bge.c				1.133
+sys/dev/pci/if_bge.c				1.134
+sys/dev/pci/if_bgereg.h				1.43
+
+	Add support for BCM5755 and BCM5754/5787.  Suggestions from Jonathan
+	Stone and fixes from OpenBSD for various hardware bugs/errata.
+	[phil, ticket #819]
 
