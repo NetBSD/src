@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.5 2004/05/22 14:16:59 kleink Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.6 2007/08/31 16:24:24 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@
 #define	INT64_MAX	0x7fffffffffffffffLL		/* int64_t	  */
 
 /* maximum values of exact-width unsigned integer types */
-#define	UINT8_MAX	0xffU				/* uint8_t	  */
-#define	UINT16_MAX	0xffffU				/* uint16_t	  */
+#define	UINT8_MAX	0xff				/* uint8_t	  */
+#define	UINT16_MAX	0xffff				/* uint16_t	  */
 #define	UINT32_MAX	0xffffffffU			/* uint32_t	  */
 #define	UINT64_MAX	0xffffffffffffffffULL		/* uint64_t	  */
 
@@ -78,8 +78,8 @@
 #define	INT_LEAST64_MAX	0x7fffffffffffffffLL		/* int_least64_t  */
 
 /* maximum values of minimum-width unsigned integer types */
-#define	UINT_LEAST8_MAX	 0xffU				/* uint_least8_t  */
-#define	UINT_LEAST16_MAX 0xffffU			/* uint_least16_t */
+#define	UINT_LEAST8_MAX	 0xff				/* uint_least8_t  */
+#define	UINT_LEAST16_MAX 0xffff				/* uint_least16_t */
 #define	UINT_LEAST32_MAX 0xffffffffU			/* uint_least32_t */
 #define	UINT_LEAST64_MAX 0xffffffffffffffffULL		/* uint_least64_t */
 
@@ -98,7 +98,7 @@
 #define	INT_FAST64_MAX	0x7fffffffffffffffLL		/* int_fast64_t	  */
 
 /* maximum values of fastest minimum-width unsigned integer types */
-#define	UINT_FAST8_MAX	0xffU				/* uint_fast8_t	  */
+#define	UINT_FAST8_MAX	0xff				/* uint_fast8_t	  */
 #define	UINT_FAST16_MAX	0xffffffffU			/* uint_fast16_t  */
 #define	UINT_FAST32_MAX	0xffffffffU			/* uint_fast32_t  */
 #define	UINT_FAST64_MAX	0xffffffffffffffffULL		/* uint_fast64_t  */
