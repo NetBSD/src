@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.105 2007/08/31 21:56:43 dyoung Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.106 2007/08/31 23:40:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.105 2007/08/31 21:56:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.106 2007/08/31 23:40:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1791,7 +1791,7 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 
 				mrtstat.mrts_upcalls++;
 
-				sockaddr_in_init(&sin, im->im_src, 0);
+				sockaddr_in_init(&sin, &im->im_src, 0);
 				if (socket_send(ip_mrouter, mm, &sin) < 0) {
 					log(LOG_WARNING,
 					    "ip_mforward: ip_mrouter socket queue full\n");
