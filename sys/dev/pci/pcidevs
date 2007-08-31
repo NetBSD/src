@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.894 2007/08/30 23:59:01 xtraeme Exp $
+$NetBSD: pcidevs,v 1.895 2007/08/31 01:17:20 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3663,6 +3663,7 @@ product VIATECH VT82C505	0x0505	VT82C505 (Pluto)
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C586A_IDE	0x0571	VT82C586A IDE Controller
 product VIATECH VT82C576	0x0576	VT82C576 3V
+product VIATECH CX700_IDE 	0x0581	CX700 IDE Controller
 product VIATECH VT82C580VP	0x0585	VT82C580 (Apollo VP) Host-PCI Bridge
 product VIATECH VT82C586_ISA	0x0586	VT82C586 PCI-ISA Bridge
 product VIATECH VT8237A_SATA	0x0591	VT8237A Integrated SATA Controller
