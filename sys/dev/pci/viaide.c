@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.42 2007/08/31 01:22:12 xtraeme Exp $	*/
+/*	$NetBSD: viaide.c,v 1.43 2007/08/31 01:37:46 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.42 2007/08/31 01:22:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.43 2007/08/31 01:37:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,6 +245,31 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	  "NVIDIA MCP65 Serial ATA Controller",
 	  via_sata_chip_map_6
 	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_IDE,
+	  0,
+	  "NVIDIA MCP67 IDE Controller",
+	  via_chip_map,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA2,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA3,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
+	{ PCI_PRODUCT_NVIDIA_MCP67_SATA4,
+	  0,
+	  "NVIDIA MCP67 Serial ATA Controller",
+	  via_sata_chip_map_6,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -420,6 +445,7 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		case PCI_PRODUCT_VIATECH_VT8237:
+		case PCI_PRODUCT_VIATECH_CX700_IDE:
 			aprint_normal("VT8237 ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
@@ -463,6 +489,7 @@ unknown:
 		case PCI_PRODUCT_NVIDIA_MCP55_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP61_IDE:
 		case PCI_PRODUCT_NVIDIA_MCP65_IDE:
+		case PCI_PRODUCT_NVIDIA_MCP67_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		}
