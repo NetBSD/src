@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.24 2007/08/31 10:13:27 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.25 2007/08/31 22:44:39 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.24 2007/08/31 10:13:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.25 2007/08/31 22:44:39 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -266,29 +266,29 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
  * 	  sysmon envsys device.
  */
 void
-sme_event_unregister_all(struct sysmon_envsys *sme)
+sme_event_unregister_all(const char *sme_name)
 {
 	sme_event_t *see;
 	int evcounter = 0;
 
-	KASSERT(sme != NULL);
+	KASSERT(sme_name != NULL);
 
 	mutex_enter(&sme_event_mtx);
 	LIST_FOREACH(see, &sme_events_list, see_list) {
-		if (strcmp(see->pes.pes_dvname, sme->sme_name) == 0)
+		if (strcmp(see->pes.pes_dvname, sme_name) == 0)
 			evcounter++;
 	}
 
 	DPRINTF(("%s: total events %d (%s)\n", __func__,
-	    evcounter, sme->sme_name));
+	    evcounter, sme_name));
 
 	while ((see = LIST_FIRST(&sme_events_list)) != NULL) {
 		if (evcounter == 0)
 			break;
 
-		if (strcmp(see->pes.pes_dvname, sme->sme_name) == 0) {
+		if (strcmp(see->pes.pes_dvname, sme_name) == 0) {
 			DPRINTF(("%s: event %s %d removed (%s)\n", __func__,
-			    see->pes.pes_sensname, see->type, sme->sme_name));
+			    see->pes.pes_sensname, see->type, sme_name));
 
 			while (see->see_flags & SME_EVENT_WORKING)
 				cv_wait(&sme_event_cv, &sme_event_mtx);

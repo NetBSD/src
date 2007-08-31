@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.51 2007/08/31 10:13:27 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.52 2007/08/31 22:44:39 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.51 2007/08/31 10:13:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.52 2007/08/31 22:44:39 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -199,7 +199,7 @@ sysmonclose_envsys(dev_t dev, int flag, int mode, struct lwp *l)
 /*
  * sysmonioctl_envsys:
  *
- *	+ Perform an envsys control request.
+ *	+ Perform a sysmon envsys control request.
  */
 int
 sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -424,8 +424,8 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 /*
  * sysmon_envsys_register:
  *
- *	+ Register an envsys device.
- *	+ Create device dictionary.
+ *	+ Register a sysmon envsys device.
+ *	+ Create array of dictionaries for a device.
  */
 int
 sysmon_envsys_register(struct sysmon_envsys *sme)
@@ -586,17 +586,15 @@ out2:
 	if (error) {
 		DPRINTF(("%s: failed to register '%s' (%d)\n",
 		    __func__, sme->sme_name, error));
-		prop_object_release(array);
 	}
+	prop_object_release(array);
 	return error;
 }
 
 /*
  * sysmon_envsys_unregister:
  *
- *	+ Unregister an envsys device.
- *	+ Unregister all events associated with this device.
- *	+ Remove device dictionary.
+ *	+ Unregister a sysmon envsys device.
  */
 void
 sysmon_envsys_unregister(struct sysmon_envsys *sme)
@@ -623,7 +621,7 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	/* 
 	 * Unregister all events associated with this device.
 	 */
-	sme_event_unregister_all(sme);
+	sme_event_unregister_all(sme->sme_name);
 	/*
 	 * Remove the device from the global dictionary.
 	 */
@@ -633,7 +631,7 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 /*
  * sysmon_envsys_find:
  *
- *	+ Find an envsys device.
+ *	+ Find a sysmon envsys device.
  */
 struct sysmon_envsys *
 sysmon_envsys_find(const char *name)
@@ -661,7 +659,7 @@ again:
 /*
  * sysmon_envsys_release:
  *
- * 	+ Release an envsys device.
+ * 	+ Release a sysmon envsys device.
  */
 void
 sysmon_envsys_release(struct sysmon_envsys *sme)
@@ -695,7 +693,7 @@ sysmon_envsys_find_40(u_int idx)
 /*
  * sme_register_sensorname:
  *
- * 	+ Registers a sensor name into the list maintained per device.
+ * 	+ Register a sensor description into the list maintained per device.
  */
 static int
 sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
@@ -733,9 +731,9 @@ sme_register_sensorname(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 /*
- * sme_make_dictionary:
+ * sme_add_sensor_dictionary:
  *
- * 	+ Create sensor's dictionary in device's array.
+ * 	+ Add the objects into the dictionary.
  */
 void
 sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
@@ -952,7 +950,6 @@ invalidate_sensor:
  *
  * 	+ Update per-sensor dictionaries with new values if there were
  * 	  changes, otherwise the object in dictionary is untouched.
- * 	+ Send a critical event if any sensor is in a critical condition.
  */
 int
 sme_update_dictionary(struct sysmon_envsys *sme)
@@ -1120,8 +1117,8 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 /*
  * sme_userset_dictionary:
  *
- * 	+ Parses the userland dictionary and run the appropiate
- * 	  tasks that were requested.
+ * 	+ Parse the userland dictionary and run the appropiate
+ * 	  task that was requested.
  */
 int
 sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
