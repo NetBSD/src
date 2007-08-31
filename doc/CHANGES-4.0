@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.242 2007/08/31 10:11:29 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.243 2007/08/31 11:40:33 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8793,3 +8793,12 @@ share/mk/bsd.shlib.mk				1.6
 	Use /libexec/ld.elf_so instead of /usr/libexec/ld.elf_so for the
 	programs which are located in /libexec.
 	[hira, ticket #852]
+
+sys/arch/i386/i386/identcpu.c			1.68
+sys/arch/i386/i386/identcpu.c			1.69
+
+	Do not disable the TSC in the AMD Geode GX2 500. It's known to work.
+
+	For 586 based National Semiconductor CPUs, use amd_cpu_cacheinfo to
+	print cache information.
+	[xtraeme, ticket #847]
