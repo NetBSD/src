@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.21 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.22 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -637,6 +637,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[xtraeme 20070508]
 	xen: Add timecounter support. [jld 20070512]
 	ipf(8): Updated to version 4.1.22. [martin 20070515]
+	kernel: add jmide(4), a driver for the JMicron Technology JMB36x
+		PCIe to SATA II/PATA controllers. [bouyer 20070515]
 	postfix(1): Updated to 2.4.1 [heas 20070519]
 	mpt(4): Add support for newer SAS and similar devices. [tron 20070727]
 	postfix(1): Updated to 2.4.5 [heas 20070802]
