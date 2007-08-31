@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.893 2007/08/30 23:59:21 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.894 2007/08/31 01:17:40 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.894 2007/08/30 23:59:01 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.895 2007/08/31 01:17:20 xtraeme Exp
  */
 
 /*
@@ -12580,6 +12580,10 @@ static const struct pci_product pci_products[] = {
 	    "VT82C576 3V",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_IDE,
+	    "CX700 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C580VP,
 	    "VT82C580 (Apollo VP) Host-PCI Bridge",
 	},
@@ -13412,4 +13416,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2756;
+const int pci_nproducts = 2757;
