@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51.2.5 2007/08/21 19:53:00 liamjfoy Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.51.2.6 2007/08/31 11:33:47 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.5 2007/08/21 19:53:00 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.6 2007/08/31 11:33:47 liamjfoy Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -429,7 +429,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			cyrix6x86_cpu_setup,
 			NULL,
-			NULL,
+			amd_cpu_cacheinfo,
 		},
 		/* Family 6, not yet available from NSC */
 		{
@@ -619,6 +619,11 @@ cyrix6x86_cpu_setup(ci)
 	 * so this should really be optional. XXX
 	 */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
+	/*
+	 * Do not disable the TSC on the Geode GX, it's reported to
+	 * work fine.
+	 */
+	if (ci->ci_signature != 0x552)
 	disable_tsc(ci);
 
 	/* enable access to ccr4/ccr5 */
