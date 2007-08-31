@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.245 2007/08/31 15:02:17 liamjfoy Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.246 2007/08/31 19:39:08 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8818,3 +8818,13 @@ share/mk/bsd.sys.mk
 
 	Disable ssp for sh3 on netbsd-4
 	[uwe, ticket #857]
+
+tools/compat/Makefile				1.50
+tools/compat/compat_defs.h			1.60
+tools/compat/configure.ac			1.62-1.64
+tools/compat/configure				regenerate
+tools/compat/nbtool_config.h.in			regenerate
+
+	Provide definitions for {be,le}{16,32,64}{enc,dec} if necessary.
+	[apb, ticket #827]
+
