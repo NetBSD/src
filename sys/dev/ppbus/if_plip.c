@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.13 2007/04/04 16:31:05 drochner Exp $ */
+/* $NetBSD: if_plip.c,v 1.14 2007/09/01 04:32:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.13 2007/04/04 16:31:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.14 2007/09/01 04:32:50 dyoung Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -445,7 +445,7 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 		case AF_INET:
 			break;
 		default:
