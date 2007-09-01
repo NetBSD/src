@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2007/09/01 10:47:44 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2007/09/01 10:47:44 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
 
 #include <x86/i82489reg.h>
 #include <x86/i82489var.h>
+
 
 /*
  * general info:
@@ -185,8 +186,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
  *  - pv_page/pv_page_info: pv_entry's are allocated out of pv_page's.
  *      if we run out of pv_entry's we allocate a new pv_page and free
  *      its pv_entrys.
- * - pmap_remove_record: a list of virtual addresses whose mappings
- *	have been changed.   used for TLB flushing.
  */
 
 /*
@@ -238,7 +237,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
  *		=> failure: no free vm_pages, etc.
  *			save VA for later call to [a], go to plan 3.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
- *
  */
 
 /*
@@ -246,7 +244,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
  *
  * we have the following locks that we must contend with:
  *
- * "normal" locks:
+ * RW locks:
  *
  *  - pmap_main_lock
  *    this lock is used to prevent deadlock and/or provide mutex
@@ -260,6 +258,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
  *    the "pv_list => pmap" lockers must gain a write-lock on
  *    pmap_main_lock before locking.    since only one thread
  *    can write-lock a lock at a time, this provides mutex.
+ *
+ * mutexes:
  *
  * - pmap lock (per pmap, part of uvm_object)
  *   this lock protects the fields in the pmap structure including
@@ -280,8 +280,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2007/08/30 11:30:29 ad Exp $");
  * - pmaps_lock
  *   this lock protects the list of active pmaps (headed by "pmaps").
  *   we lock it when adding or removing pmaps from this list.
- *
- * XXX: would be nice to have per-CPU VAs for the above 4
  *
  * tlb shootdown
  *
@@ -361,7 +359,7 @@ struct pmap_cpu {
 
 union {
 	struct pmap_cpu pc;
-	uint8_t padding[128];	
+	uint8_t padding[128];
 } pmap_cpu[X86_MAXPROCS] __aligned(64);
 
 /*
@@ -451,7 +449,6 @@ static struct pmap_head pmaps;
 
 struct pool pmap_pmap_pool;
 
-
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
  * X86_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
@@ -484,7 +481,6 @@ int	pmap_pdp_ctor(void *, void *, int);
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
-
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
 
@@ -499,6 +495,7 @@ extern int end;
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
 #endif
+
 
 /*
  * local prototypes
@@ -548,7 +545,7 @@ static void		pmap_alloc_level(pd_entry_t **, vaddr_t, int,
 					 long *);
 
 /*
- * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
+ * p m a p   h e l p e r   f u n c t i o n s
  */
 
 /*
@@ -559,6 +556,7 @@ static void		pmap_alloc_level(pd_entry_t **, vaddr_t, int,
 inline static bool
 pmap_is_curpmap(struct pmap *pmap)
 {
+
 	return((pmap == pmap_kernel()) ||
 	       (pmap->pm_pdirpa == (paddr_t) rcr3()));
 }
@@ -575,7 +573,7 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci)
 	    (pmap->pm_cpus & ci->ci_cpumask) != 0);
 }
 
-inline static void
+static void
 pmap_apte_flush(struct pmap *pmap)
 {
 
@@ -597,7 +595,7 @@ pmap_apte_flush(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-inline static void
+static void
 pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
 {
 	pd_entry_t opde, npde;
@@ -649,9 +647,10 @@ pmap_map_ptes(struct pmap *pmap, pd_entry_t **ptepp, pd_entry_t ***pdeppp)
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-inline static void
+static void
 pmap_unmap_ptes(struct pmap *pmap)
 {
+
 	if (pmap == pmap_kernel()) {
 		/* re-enable preemption */
 		crit_exit();
@@ -750,6 +749,7 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
  * => we assume the va is page aligned and the len is a multiple of PAGE_SIZE
  * => we assume kernel only unmaps valid addresses and thus don't bother
  *    checking the valid bit before doing TLB flushing
+ * => must be followed by call to pmap_update() before reuse of page
  */
 
 void
@@ -960,7 +960,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * as well; we could waste less space if we knew the largest
 	 * CPU ID beforehand.
 	 */
-	csrcp = (void *) virtual_avail;  csrc_pte = pte;
+	csrcp = (char *) virtual_avail;  csrc_pte = pte;
 
 	cdstp = (char *) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
 
@@ -1631,7 +1631,6 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  * => pmap should be locked
  */
 
-
 static struct vm_page *
 pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 {
@@ -2133,9 +2132,7 @@ vtophys(vaddr_t va)
  */
 
 void
-pmap_virtual_space(startp, endp)
-	vaddr_t *startp;
-	vaddr_t *endp;
+pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 {
 	*startp = virtual_avail;
 	*endp = virtual_end;
@@ -2145,7 +2142,6 @@ pmap_virtual_space(startp, endp)
  * pmap_map: map a range of PAs into kvm.
  *
  * => used during crash dump
- * => does not do TLB shootdowns
  * => XXX: pmap_map() should be phased out?
  */
 
@@ -2168,7 +2164,6 @@ pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 	pmap_update(pmap_kernel());
 	return va;
 }
-
 
 /*
  * pmap_zero_page: zero a page
@@ -2819,7 +2814,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 		}
 no_tlb_shootdown:
 		pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
-
 	}
 
 	rw_exit(&pmap_main_lock);
@@ -2831,8 +2825,9 @@ no_tlb_shootdown:
 	return(result != 0);
 }
 
+
 /*
- * p m a p   p r o t e c t i o n   f u n c t i o n s
+ * p m a p   P r o t e c t i o n   f u n c t i o n s
  */
 
 /*
