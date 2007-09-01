@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.170.2.20 2007/08/30 20:07:06 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.170.2.21 2007/09/01 12:55:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.20 2007/08/30 20:07:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.170.2.21 2007/09/01 12:55:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,8 +218,8 @@ kmutex_t buffer_lock;
 static void *biodone_sih;
 
 /* Buffer pool for I/O buffers. */
-struct pool bufpool;
-struct pool bufiopool;
+static pool_cache_t buf_cache;
+static pool_cache_t bufio_cache;
 
 /* XXX - somewhat gross.. */
 #if MAXBSIZE == 0x2000
@@ -372,7 +372,7 @@ bremfree(buf_t *bp)
 }
 
 /*
- * Add a reference to an buffer structure that came from bufpool.
+ * Add a reference to an buffer structure that came from buf_cache.
  */
 static inline void
 bref(buf_t *bp)
@@ -385,7 +385,7 @@ bref(buf_t *bp)
 }
 
 /*
- * Free an unused buffer structure that came from bufpool.
+ * Free an unused buffer structure that came from buf_cache.
  */
 static inline void
 brele(buf_t *bp)
@@ -399,7 +399,7 @@ brele(buf_t *bp)
 #ifdef DEBUG
 		memset((char *)bp, 0, sizeof(*bp));
 #endif
-		pool_put(&bufpool, bp);
+		pool_cache_put(buf_cache, bp);
 	}
 }
 
@@ -478,10 +478,10 @@ bufinit(void)
 	use_std = 1;
 #endif
 
-	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
-	    &pool_allocator_nointr, IPL_NONE);
-	pool_init(&bufiopool, sizeof(struct buf), 0, 0, 0, "biopl",
-	    NULL, IPL_BIO);
+	buf_cache = pool_cache_init(sizeof(buf_t), 0, 0, 0,
+	    "bufpl", NULL, IPL_SOFTBIO, NULL, NULL, NULL);
+	bufio_cache = pool_cache_init(sizeof(buf_t), 0, 0, 0,
+	    "biopl", NULL, IPL_BIO, NULL, NULL, NULL);
 
 	bufmempool_allocator.pa_backingmap = buf_map;
 	for (i = 0; i < NMEMPOOLS; i++) {
@@ -1276,7 +1276,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 	 */
 	if (!from_bufq && buf_lotsfree()) {
 		mutex_exit(&bufcache_lock);
-		bp = pool_get(&bufpool, PR_NOWAIT);
+		bp = pool_cache_get(buf_cache, PR_NOWAIT);
 		if (bp != NULL) {
 			memset((char *)bp, 0, sizeof(*bp));
 			buf_init(bp);
@@ -1477,42 +1477,33 @@ static void
 biodone2(buf_t *bp)
 {
 	void (*callout)(buf_t *);
-	bool write;
 
 	if (bioops != NULL)
 		(*bioops->io_complete)(bp);
 
-	write = !ISSET(bp->b_flags, B_READ);
-
 	mutex_enter(bp->b_objlock);
+	/* Note that the transfer is done. */
 	if (ISSET(bp->b_oflags, BO_DONE))
 		panic("biodone2 already");
-	SET(bp->b_oflags, BO_DONE);	/* note that it's done */
+	SET(bp->b_oflags, BO_DONE);
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
-	/*
-	 * If necessary, call out.  Unlock the buffer before
-	 * calling iodone() as the buffer isn't valid any more
-	 * when it return.
-	 */
+	/* Wake up waiting writers. */
+	if (!ISSET(bp->b_flags, B_READ))
+		vwakeup(bp);
+
 	if ((callout = bp->b_iodone) != NULL) {
-		/* But note callout done */
+		/* Note callout done, then call out. */
 		bp->b_iodone = NULL;
-		if (write)			/* wake up writer */
-			vwakeup(bp);
 		mutex_exit(bp->b_objlock);
 		(*callout)(bp);
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
-		/* If async, release */
-		if (write)			/* wake up writer */
-			vwakeup(bp);
+		/* If async, release. */
 		mutex_exit(bp->b_objlock);
 		brelse(bp, 0);
 	} else {
-		/* Or just wakeup the buffer */
+		/* Otherwise just wake up waiters in biowait(). */
 		cv_broadcast(&bp->b_done);
-		if (write)			/* wake up writer */
-			vwakeup(bp);
 		mutex_exit(bp->b_objlock);
 	}
 }
@@ -1872,7 +1863,7 @@ getiobuf(struct vnode *vp, bool waitok)
 {
 	buf_t *bp;
 
-	bp = pool_get(&bufiopool, (waitok ? PR_WAITOK : PR_NOWAIT));
+	bp = pool_cache_get(bufio_cache, (waitok ? PR_WAITOK : PR_NOWAIT));
 	if (bp == NULL)
 		return bp;
 
@@ -1891,7 +1882,7 @@ putiobuf(buf_t *bp)
 {
 
 	buf_destroy(bp);
-	pool_put(&bufiopool, bp);
+	pool_cache_put(bufio_cache, bp);
 }
 
 /*
