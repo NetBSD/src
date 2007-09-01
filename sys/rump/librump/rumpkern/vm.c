@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.15 2007/09/01 21:40:58 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.16 2007/09/01 23:40:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -415,8 +415,8 @@ void
 uvm_aio_aiodone(struct buf *bp)
 {
 
-	if ((bp->b_flags & (B_READ | B_NOCACHE)) == 0 && bioops.io_pageiodone)
-		bioops.io_pageiodone(bp);
+	if ((bp->b_flags & (B_READ | B_NOCACHE)) == 0 && bioopsp)
+		bioopsp->io_pageiodone(bp);
 }
 
 void
