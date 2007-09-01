@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212 2007/09/01 09:14:31 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.213 2007/09/01 09:15:09 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2007/09/01 09:14:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2007/09/01 09:15:09 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1028,8 +1028,7 @@ pmap_bootstrap(vaddr_t kva_start)
 
 /*
  * pmap_init: called from uvm_init, our job is to get the pmap
- * system ready to manage mappings... this mainly means initing
- * the pv_entry stuff.
+ * system ready to manage mappings...
  */
 
 void
