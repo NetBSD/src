@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.895 2007/08/31 01:17:39 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.896 2007/09/01 21:47:39 ober Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.895 2007/08/31 01:17:20 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.896 2007/09/01 21:43:33 ober Exp
  */
 
 /*
@@ -2338,6 +2338,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_LPC	0x2810		/* 82801H LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801HH_LPC	0x2812		/* 82801HH LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801HO_LPC	0x2814		/* 82801HO LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_82801HBM_LPC	0x2815		/* 82801HBM LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801H_SATA_1	0x2820		/* 82801H SATA Controller */
 #define	PCI_PRODUCT_INTEL_82801H_SATA_AHCI6	0x2821		/* 82801H AHCI SATA Controller with 6 ports */
 #define	PCI_PRODUCT_INTEL_82801H_SATA_RAID	0x2822		/* 82801H RAID SATA Controller */
