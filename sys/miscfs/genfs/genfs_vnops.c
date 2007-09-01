@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.150.2.12 2007/08/24 23:28:41 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.150.2.13 2007/09/01 15:34:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.12 2007/08/24 23:28:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.150.2.13 2007/09/01 15:34:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1215,7 +1215,13 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 					*busypg = pg;
 				break;
 			}
-			KASSERT(!pagedaemon);
+			if (pagedaemon) {
+				/*
+				 * someone has taken the page while we
+				 * dropped the lock for fstrans_start.
+				 */
+				break;
+			}
 			if (by_list) {
 				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
 				UVMHIST_LOG(ubchist, "curmp next %p",
