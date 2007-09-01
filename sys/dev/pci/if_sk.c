@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.37.2.4 2007/08/20 18:37:15 ad Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.37.2.5 2007/09/01 12:56:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -967,7 +967,7 @@ sk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	LIST_INSERT_HEAD(&sc->sk_jfree_listhead, entry, jpool_entries);
 
 	if (__predict_true(m != NULL))
-		pool_cache_put(&mbpool_cache, m);
+		pool_cache_put(mb_cache, m);
 	splx(s);
 }
 

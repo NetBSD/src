@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.9.2.4 2007/08/20 18:37:16 ad Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.9.2.5 2007/09/01 12:56:47 ad Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.9.2.4 2007/08/20 18:37:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.9.2.5 2007/09/01 12:56:47 ad Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -576,18 +576,14 @@ wpi_free_rbuf(struct mbuf* m, void *buf, size_t size, void *arg)
 {
 	struct wpi_rbuf *rbuf = arg;
 	struct wpi_softc *sc = rbuf->sc;
-	int s;
 
 	/* put the buffer back in the free list */
 
 	SLIST_INSERT_HEAD(&sc->rxq.freelist, rbuf, next);
 	sc->rxq.nb_free_entries ++;
 
-	if (__predict_true(m != NULL)) {
-		s = splvm();
-		pool_cache_put(&mbpool_cache, m);
-		splx(s);
-	}
+	if (__predict_true(m != NULL))
+		pool_cache_put(mb_cache, m);
 }
 
 static int

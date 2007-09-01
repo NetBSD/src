@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.43.4.3 2007/07/03 13:14:02 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.43.4.4 2007/09/01 12:56:52 ad Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.43.4.3 2007/07/03 13:14:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.43.4.4 2007/09/01 12:56:52 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -52,9 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.43.4.3 2007/07/03 13:14:02 yamt Exp $
 #include <uvm/uvm_swap.h>
 #include <uvm/uvm_pdpolicy.h>
 
-static POOL_INIT(uvm_anon_pool, sizeof(struct vm_anon), 0, 0, 0, "anonpl",
-    &pool_allocator_nointr, IPL_NONE);
-static struct pool_cache uvm_anon_pool_cache;
+static struct pool_cache uvm_anon_cache;
 
 static int uvm_anon_ctor(void *, void *, int);
 static void uvm_anon_dtor(void *, void *);
@@ -66,8 +64,8 @@ void
 uvm_anon_init(void)
 {
 
-	pool_cache_init(&uvm_anon_pool_cache, &uvm_anon_pool,
-	    uvm_anon_ctor, uvm_anon_dtor, NULL);
+	pool_cache_bootstrap(&uvm_anon_cache, sizeof(struct vm_anon), 0, 0, 0,
+	    "anonpl", NULL, IPL_NONE, uvm_anon_ctor, uvm_anon_dtor, NULL);
 }
 
 static int
@@ -103,7 +101,7 @@ uvm_analloc(void)
 {
 	struct vm_anon *anon;
 
-	anon = pool_cache_get(&uvm_anon_pool_cache, PR_NOWAIT);
+	anon = pool_cache_get(&uvm_anon_cache, PR_NOWAIT);
 	if (anon) {
 		KASSERT(anon->an_ref == 0);
 		KASSERT(mutex_owned(&anon->an_lock) == 0);
@@ -233,7 +231,7 @@ uvm_anfree(struct vm_anon *anon)
 	KASSERT(anon->an_swslot == 0);
 #endif /* defined(VMSWAP) */
 
-	pool_cache_put(&uvm_anon_pool_cache, anon);
+	pool_cache_put(&uvm_anon_cache, anon);
 	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
 }
 
