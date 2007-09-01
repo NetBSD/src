@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.28 2005/12/24 20:07:15 perry Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.29 2007/09/01 22:01:53 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2005/12/24 20:07:15 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.29 2007/09/01 22:01:53 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ mac68k_bsr2_gen(bus_space_tag_t t, bus_space_handle_t *h, bus_size_t offset)
 
 	v = mac68k_bsrs2_gen(t, h, offset);
 	if (h->swapped) {
-		bswap16(v);
+		v = bswap16(v);
 	}
 	return v;
 }
