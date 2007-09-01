@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.34 2007/07/27 09:46:27 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.35 2007/09/01 16:43:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.34 2007/07/27 09:46:27 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.35 2007/09/01 16:43:11 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 	if (ioctl(pctx.sshfd, FIONBIO, &x) == -1)
 		err(1, "nonblocking descriptor");
 
-	puffs_framev_init(pu, psbuf_read, psbuf_write, psbuf_cmp,
+	puffs_framev_init(pu, psbuf_read, psbuf_write, psbuf_cmp, NULL,
 	    puffs_framev_unmountonclose);
 	if (puffs_framev_addfd(pu, pctx.sshfd,
 	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE) == -1)
