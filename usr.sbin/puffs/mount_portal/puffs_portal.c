@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.9 2007/08/15 14:19:19 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.10 2007/09/01 16:43:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.9 2007/08/15 14:19:19 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.10 2007/09/01 16:43:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -441,7 +441,7 @@ main(int argc, char *argv[])
 		err(1, "cannot read cfg \"%s\"", cfg);
 
 	puffs_ml_setloopfn(pu, portal_loopfn);
-	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL, NULL);
+	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL,NULL,NULL);
 	if (puffs_mount(pu,  argv[1], mntflags, PORTAL_ROOT) == -1)
 		err(1, "mount");
 	if (puffs_mainloop(pu, lflags) == -1)
