@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.85 2007/08/29 22:33:42 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.86 2007/09/01 07:32:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.85 2007/08/29 22:33:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.86 2007/09/01 07:32:25 dyoung Exp $");
 #endif
 
 /*
@@ -5263,10 +5263,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				ath_mode_init(sc);
 			error = 0;

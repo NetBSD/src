@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.61 2007/08/27 14:48:55 dyoung Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.62 2007/09/01 07:32:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.61 2007/08/27 14:48:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.62 2007/09/01 07:32:27 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1309,10 +1309,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.

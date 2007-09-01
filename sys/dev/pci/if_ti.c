@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.75 2007/08/29 22:33:43 dyoung Exp $ */
+/* $NetBSD: if_ti.c,v 1.76 2007/09/01 07:32:30 dyoung Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.75 2007/08/29 22:33:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.76 2007/09/01 07:32:30 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2835,10 +2835,7 @@ static int ti_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->ethercom) :
-		    ether_delmulti(ifr, &sc->ethercom);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				ti_setmulti(sc);
 			error = 0;

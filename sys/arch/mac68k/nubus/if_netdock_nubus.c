@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.13 2007/03/05 21:27:10 he Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.14 2007/09/01 07:32:23 dyoung Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.13 2007/03/05 21:27:10 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.14 2007/09/01 07:32:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -418,13 +418,7 @@ netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		if (cmd == SIOCADDMULTI)
-			err = ether_addmulti(ifr, &sc->sc_ethercom);
-		else
-			err = ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (err == ENETRESET) {
+		if ((err = ether_ioct(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				temp = ifp->if_flags & IFF_UP;
 				netdock_reset(sc);
