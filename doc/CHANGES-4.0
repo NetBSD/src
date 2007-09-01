@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.253 2007/08/31 23:04:57 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.254 2007/09/01 07:44:58 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -8649,6 +8649,7 @@ sys/arch/i386/i386/machdep.c			1.604
 	[xtraeme, ticket #841]
 
 lib/libcurses/resize.c				1.15
+lib/libcurses/resize.c				patch
 lib/libcurses/tstp.c				1.36
 
 	Fix resizing bug where the values of LINES and/or COLS changed while we
