@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211 2007/09/01 09:12:29 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.212 2007/09/01 09:14:31 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2007/09/01 09:12:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2007/09/01 09:14:31 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -855,11 +855,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	kpm = pmap_kernel();
-	mutex_init(&kpm->pm_obj.vmobjlock, MUTEX_DEFAULT, IPL_NONE);
-	kpm->pm_obj.pgops = NULL;
-	TAILQ_INIT(&kpm->pm_obj.memq);
-	kpm->pm_obj.uo_npages = 0;
-	kpm->pm_obj.uo_refs = 1;
+	UVM_OBJ_INIT(&kpm->pm_obj, NULL, 1);
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
 	kpm->pm_pdirpa = (uint32_t) lwp0.l_addr->u_pcb.pcb_cr3;
