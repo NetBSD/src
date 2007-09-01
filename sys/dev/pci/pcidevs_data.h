@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.894 2007/08/31 01:17:40 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.895 2007/09/01 21:47:39 ober Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.895 2007/08/31 01:17:20 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.896 2007/09/01 21:43:33 ober Exp
  */
 
 /*
@@ -8204,6 +8204,10 @@ static const struct pci_product pci_products[] = {
 	    "82801HO LPC Interface Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_LPC,
+	    "82801HBM LPC Interface Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_1,
 	    "82801H SATA Controller",
 	},
@@ -13416,4 +13420,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2757;
+const int pci_nproducts = 2758;
