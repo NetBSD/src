@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.52 2007/09/01 08:15:27 jnemeth Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.53 2007/09/01 09:32:19 jnemeth Exp $
 .\"
 .\" Copyright (c) 2001-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1178,20 +1178,6 @@ Perform
 Perform
 .Dq make iso-image-source .
 .
-.It Sy iso-dir Ns = Ns Ar directory
-When combined with
-.Dq iso-image
-or
-.Dq iso-image-source ,
-it will cause
-.Ar directory
-to be added to the CD-ROM image.
-If
-.Ar directory
-does not start with
-.Dq /
-then it will be made relative to RELEASEDIR.
-.
 .El
 .
 .Pp
@@ -1216,6 +1202,21 @@ This will also append the build idenfitier to the name of the
 .Dq make
 wrapper script so that the resulting name is of the form
 .Dq Sy \*[toolprefix]make-MACHINE-BUILDID .
+.
+.It Fl C Ar cddir
+Set the value of
+.Sy CDEXTRA
+to
+.Ar cddir .
+If a relative path is specified, it will be converted to an
+absolute path before being used.
+When combined with
+.Dq iso-image
+or
+.Dq iso-image-source ,
+it will cause the contents of
+.Ar cddir
+to be added to the CD-ROM image.
 .
 .It Fl D Ar dest
 Set the value of
