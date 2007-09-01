@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.210 2007/08/30 18:14:11 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211 2007/09/01 09:12:29 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2007/08/30 18:14:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2007/09/01 09:12:29 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -472,11 +472,11 @@ static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					vaddr_t);
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
-					 pt_entry_t *, vaddr_t, int32_t *,
-					 int, struct pv_entry **);
+					 pt_entry_t *, vaddr_t, int,
+					 struct pv_entry **);
 static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
-					  vaddr_t, vaddr_t, vaddr_t, int32_t *,
-					  int, struct pv_entry **);
+					  vaddr_t, vaddr_t, vaddr_t, int,
+					  struct pv_entry **);
 #define PMAP_REMOVE_ALL		0	/* remove all mappings */
 #define PMAP_REMOVE_SKIPWIRED	1	/* skip wired mappings */
 
@@ -2260,8 +2260,8 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 
 static pt_entry_t
 pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
-		 vaddr_t startva, vaddr_t endva, int32_t *cpumaskp,
-		 int flags, struct pv_entry **pv_tofree)
+		 vaddr_t startva, vaddr_t endva, int flags,
+		 struct pv_entry **pv_tofree)
 {
 	struct pv_entry *pve;
 	pt_entry_t *pte = (pt_entry_t *) ptpva;
@@ -2357,8 +2357,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 static bool
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
-		vaddr_t va, int32_t *cpumaskp, int flags,
-		struct pv_entry **pv_tofree)
+		vaddr_t va, int flags, struct pv_entry **pv_tofree)
 {
 	pt_entry_t opte;
 	struct pv_entry *pve;
@@ -2453,7 +2452,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	paddr_t ptppa;
 	vaddr_t blkendva, va = sva, tva;
 	struct vm_page *ptp, *empty_ptps = NULL;
-	int32_t cpumask = 0;
 	struct pmap *pmap2;
 
 	/*
@@ -2495,8 +2493,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-			    &ptes[x86_btop(va)], va, &cpumask,
-			    flags, &pv_tofree);
+			    &ptes[x86_btop(va)], va, flags, &pv_tofree);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2590,7 +2587,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		}
 		xpte |= pmap_remove_ptes(pmap, ptp,
 		    (vaddr_t)&ptes[x86_btop(va)], va, blkendva,
-		    &cpumask, flags, &pv_tofree);
+		    flags, &pv_tofree);
 
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
