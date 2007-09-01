@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.20 2007/08/25 09:30:41 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.21 2007/09/01 16:42:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.20 2007/08/25 09:30:41 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.21 2007/09/01 16:42:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -655,10 +655,19 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		if ((pufbuf->istat & ISTAT_DIRECT) == 0) {
 			appbuf = findbuf(pu, fctrl, fio, pufbuf);
 
-			/* XXX: error delivery? */
+			/*
+			 * No request for this frame?  If fs implements
+			 * gotfb, give frame to that.  Otherwise drop it.
+			 */
 			if (appbuf == NULL) {
-				/* errno = ENOMSG; */
-				return;
+				if (fctrl->gotfb)
+					fctrl->gotfb(pu, pufbuf);
+
+				/* XXX: ugly */
+				pufbuf->istat &= ~ISTAT_NODESTROY;
+				fio->cur_in = NULL;
+				puffs_framebuf_destroy(pufbuf);
+				continue;
 			}
 			
 			moveinfo(pufbuf, appbuf);
@@ -992,7 +1001,8 @@ puffs_framev_unmountonclose(struct puffs_usermount *pu, int fd, int what)
 void
 puffs_framev_init(struct puffs_usermount *pu,
 	puffs_framev_readframe_fn rfb, puffs_framev_writeframe_fn wfb,
-	puffs_framev_cmpframe_fn cmpfb, puffs_framev_fdnotify_fn fdnotfn)
+	puffs_framev_cmpframe_fn cmpfb, puffs_framev_gotframe_fn gotfb,
+	puffs_framev_fdnotify_fn fdnotfn)
 {
 	struct puffs_framectrl *pfctrl;
 
@@ -1000,6 +1010,7 @@ puffs_framev_init(struct puffs_usermount *pu,
 	pfctrl->rfb = rfb;
 	pfctrl->wfb = wfb;
 	pfctrl->cmpfb = cmpfb;
+	pfctrl->gotfb = gotfb;
 	pfctrl->fdnotfn = fdnotfn;
 }
 
