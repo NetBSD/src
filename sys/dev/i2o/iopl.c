@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.27 2007/08/26 22:36:35 dyoung Exp $	*/
+/*	$NetBSD: iopl.c,v 1.28 2007/09/01 07:43:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.27 2007/08/26 22:36:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.28 2007/09/01 07:43:36 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1940,11 +1940,7 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
 			ifr = (struct ifreq *)data;
-			if (cmd == SIOCADDMULTI)
-				rv = ether_addmulti(ifr, &sc->sc_if.sci_ec);
-			else
-				rv = ether_delmulti(ifr, &sc->sc_if.sci_ec);
-			if (rv == ENETRESET) {
+			if ((rv = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 				if (ifp->if_flags & IFF_RUNNING)
 					rv = iopl_filter_ether(sc);
 				else
