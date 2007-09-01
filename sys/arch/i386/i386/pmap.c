@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.213 2007/09/01 09:15:09 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.214 2007/09/01 10:47:43 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2007/09/01 09:15:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2007/09/01 10:47:43 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -184,9 +184,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2007/09/01 09:15:09 yamt Exp $");
  *		=> success: we have an unmapped VA, continue to [b]
  *		=> failure: unable to lock kmem_map or out of VA in it.
  *			move on to plan 3.
- *		[b] allocate a page in kmem_object for the VA
+ *		[b] allocate a page for the VA
  *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: kmem_object locked, no free vm_pages, etc.
+ *		=> failure: no free vm_pages, etc.
  *			save VA for later call to [a], go to plan 3.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
@@ -411,7 +411,7 @@ struct pool pmap_pmap_pool;
 
 #ifdef MULTIPROCESSOR
 #define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
-#define VASLEW(va,id) ((char *)(va)+(id)*NPTECL*PAGE_SIZE)
+#define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
 #else
 #define PTESLEW(pte, id) (pte)
 #define VASLEW(va,id) (va)
@@ -421,7 +421,7 @@ struct pool pmap_pmap_pool;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte;
-static void *csrcp, *cdstp, *zerop, *ptpp;
+static char *csrcp, *cdstp, *zerop, *ptpp;
 
 /*
  * pool and cache that PDPs are allocated from
@@ -642,6 +642,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		mutex_exit(&pmap2->pm_obj.vmobjlock);
 	}
 
+	/* re-enable preemption */
 	crit_exit();
 }
 
@@ -736,7 +737,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | pmap_pg_g;
 
-	opte = x86_atomic_testset_ul(pte, npte); /* zap! */
+	opte = pmap_pte_set(pte, npte); /* zap! */
 #ifdef LARGEPAGES
 	/* XXX For now... */
 	if (opte & PG_PS)
@@ -776,7 +777,7 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 			pte = vtopte(va);
 		else
 			pte = kvtopte(va);
-		xpte |= x86_atomic_testset_ul(pte, 0); /* zap! */
+		xpte |= pmap_pte_set(pte, 0); /* zap! */
 #ifdef LARGEPAGES
 		/* XXX For now... */
 		if (xpte & PG_PS)
@@ -1014,6 +1015,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	/*
 	 * initialize the PDE pool and cache.
 	 */
+
 	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
 	    &pool_allocator_nointr, IPL_NONE);
 	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
@@ -2141,7 +2143,7 @@ pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 }
 
 /*
- * pmap_map: map a range of PAs into kvm
+ * pmap_map: map a range of PAs into kvm.
  *
  * => used during crash dump
  * => XXX: pmap_map() should be phased out?
@@ -2283,7 +2285,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		}
 
 		/* atomically save the old PTE and zap! it */
-		opte = x86_atomic_testset_ul(pte, 0);
+		opte = pmap_pte_set(pte, 0);
 		pmap_exec_account(pmap, startva, opte, 0);
 		KASSERT(pmap_valid_entry(opte));
 
@@ -2366,7 +2368,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	/* atomically save the old PTE and zap! it */
-	opte = x86_atomic_testset_ul(pte, 0);
+	opte = pmap_pte_set(pte, 0);
 	pmap_exec_account(pmap, va, opte, 0);
 	KASSERT(pmap_valid_entry(opte));
 
@@ -2498,7 +2500,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			if (result && ptp && ptp->wire_count <= 1) {
 				KASSERT(ptp->wire_count == 1);
 				/* zap! */
-				opte = x86_atomic_testset_ul(
+				opte = pmap_pte_set(
 				    &pmap->pm_pdir[pdei(va)], 0);
 				KDASSERT((opte & PG_FRAME) ==
 				    VM_PAGE_TO_PHYS(ptp));
@@ -2588,8 +2590,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		if (ptp && ptp->wire_count <= 1) {
 			KASSERT(ptp->wire_count == 1);
 			/* zap! */
-			opte = x86_atomic_testset_ul(
-			    &pmap->pm_pdir[pdei(va)], 0);
+			opte = pmap_pte_set(&pmap->pm_pdir[pdei(va)], 0);
 			KDASSERT((opte & PG_FRAME) == VM_PAGE_TO_PHYS(ptp));
 #if defined(MULTIPROCESSOR)
 			/*
@@ -2689,7 +2690,7 @@ pmap_page_remove(struct vm_page *pg)
 #endif
 
 		/* atomically save the old PTE and zap! it */
-		opte = x86_atomic_testset_ul(&ptes[x86_btop(pve->pv_va)], 0);
+		opte = pmap_pte_set(&ptes[x86_btop(pve->pv_va)], 0);
 		KASSERT(pmap_valid_entry(opte));
 		KDASSERT((opte & PG_FRAME) == VM_PAGE_TO_PHYS(pg));
 
@@ -2718,7 +2719,7 @@ pmap_page_remove(struct vm_page *pg)
 					    pve->pv_va, 0, opte);
 
 				/* zap! */
-				opte = x86_atomic_testset_ul(
+				opte = pmap_pte_set(
 				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
 				    0);
 				KDASSERT((opte & PG_FRAME) ==
@@ -2894,7 +2895,7 @@ pmap_clear_attrs(struct vm_page *pg, int clearbits)
 				 */
 
 				/* First zap the RW bit! */
-				x86_atomic_clearbits_l(ptep, PG_RW); 
+				pmap_pte_clearbits(ptep, PG_RW); 
 				opte = *ptep;
 
 				/*
@@ -2910,8 +2911,7 @@ pmap_clear_attrs(struct vm_page *pg, int clearbits)
 			 */
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(ptep,
-			    (opte & ~(PG_U | PG_M)));
+			opte = pmap_pte_set(ptep, (opte & ~(PG_U | PG_M)));
 
 			result |= (opte & clearbits);
 			*myattrs |= (opte & ~(clearbits));
@@ -2958,8 +2958,7 @@ no_tlb_shootdown:
  */
 
 void
-pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
-    vm_prot_t prot)
+pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *ptes, *epte, xpte;
 	volatile pt_entry_t *spte;
@@ -3010,7 +3009,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
 			opte = *spte;
 			xpte |= opte;
 			if ((opte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
-				x86_atomic_clearbits_l(spte, PG_RW); /* zap! */
+				pmap_pte_clearbits(spte, PG_RW); /* zap! */
 				if (*spte & PG_M) {
 					tva = x86_ptob(spte - ptes);
 					pmap_tlb_shootdown(pmap, tva, 0, opte);
@@ -3051,7 +3050,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
 		if ((ptes[x86_btop(va)] & PG_W) != 0) {
-		  x86_atomic_clearbits_l(&ptes[x86_btop(va)], PG_W);
+			pmap_pte_clearbits(&ptes[x86_btop(va)], PG_W);
 			pmap->pm_stats.wired_count--;
 		}
 #ifdef DIAGNOSTIC
@@ -3199,7 +3198,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		npte |= (opte & PG_PVLIST);
 
 		/* zap! */
-		opte = x86_atomic_testset_ul(ptep, npte);
+		opte = pmap_pte_set(ptep, npte);
 
 		/*
 		 * if this is on the PVLIST, sync R/M bit
@@ -3277,7 +3276,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			pmap_lock_pvhs(old_pvh, new_pvh);
 
 			/* zap! */
-			opte = x86_atomic_testset_ul(ptep, npte);
+			opte = pmap_pte_set(ptep, npte);
 
 			pve = pmap_remove_pv(old_pvh, pmap, va);
 			KASSERT(pve != 0);
@@ -3306,7 +3305,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		mutex_spin_exit(&new_pvh->pvh_lock);
 	}
 
-	opte = x86_atomic_testset_ul(ptep, npte);   /* zap! */
+	opte = pmap_pte_set(ptep, npte);   /* zap! */
 
 shootdown_test:
 	/* Update page attributes if needed */
