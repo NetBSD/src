@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.12.4.1 2007/08/28 11:54:49 liamjfoy Exp $	*/
+/*	$NetBSD: resize.c,v 1.12.4.2 2007/09/01 07:43:40 pavel Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.12.4.1 2007/08/28 11:54:49 liamjfoy Exp $");
+__RCSID("$NetBSD: resize.c,v 1.12.4.2 2007/09/01 07:43:40 pavel Exp $");
 #endif
 #endif				/* not lint */
 
@@ -65,7 +65,7 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 		return ERR;
 
 #ifdef	DEBUG
-	__CTRACE(__CTRACE_WINDOW, "wresize: (%p, %d, %d)\n",
+	__CTRACE("wresize: (%p, %d, %d)\n",
 	    win, nlines, ncols);
 #endif
 	nlines = req_nlines;
