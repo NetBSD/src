@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.32 2007/09/01 07:32:23 dyoung Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.33 2007/09/01 14:27:56 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.32 2007/09/01 07:32:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.33 2007/09/01 14:27:56 jmmv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -173,7 +173,6 @@ mcioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mc_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 
 	int	s = splnet(), err = 0;
 
