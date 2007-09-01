@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.26 2007/09/01 00:12:07 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.27 2007/09/01 12:46:04 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.26 2007/09/01 00:12:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.27 2007/09/01 12:46:04 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -234,12 +234,18 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	    sizeof(see->pes.pes_sensname));
 	see->snum = edata->sensor;
 
+	LIST_INSERT_HEAD(&sme_events_list, see, see_list);
+	if (objkey && critval) {
+		error = sme_sensor_upint32(sdict, objkey, critval);
+		if (error) {
+			mutex_exit(&sme_event_mtx);
+			goto out;
+		}
+	}
 	DPRINTF(("%s: registering dev=%s sensor=%s snum=%d type=%d "
 	    "critval=%" PRIu32 "\n", __func__,
 	    see->pes.pes_dvname, see->pes.pes_sensname,
 	    see->snum, see->type, see->critval));
-
-	LIST_INSERT_HEAD(&sme_events_list, see, see_list);
 	/*
 	 * Initialize the events framework if it wasn't initialized
 	 * before.
@@ -249,6 +255,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	if (sme_events_initialized == false)
 		error = sme_events_init();
 	mutex_exit(&sme_event_init_mtx);
+out:
 	if (error)
 		kmem_free(see, sizeof(*see));
 	return error;
