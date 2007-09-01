@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.254 2007/09/01 07:44:58 pavel Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.255 2007/09/01 09:35:35 liamjfoy Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -9436,3 +9436,8 @@ usr.sbin/makefs/cd9660.c			1.19
 	Fix deep directory move rock-ridge extension.
 	[christos, ticket #757]
 
+gnu/usr.bin/groff/tmac/mdoc.local		patch
+sys/sys/param.h					patch
+
+	Welcome to NetBSD 4.0_RC1.
+	[liamjfoy]
