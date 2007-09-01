@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.14 2007/09/01 07:32:23 dyoung Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.15 2007/09/01 14:27:56 jmmv Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.14 2007/09/01 07:32:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.15 2007/09/01 14:27:56 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -377,7 +377,6 @@ static int
 netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
 	struct netdock_softc *sc = ifp->if_softc;
 	int s = splnet();
 	int err = 0;
@@ -418,7 +417,7 @@ netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if ((err = ether_ioct(ifp, cmd, data)) == ENETRESET) {
+		if ((err = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				temp = ifp->if_flags & IFF_UP;
 				netdock_reset(sc);
