@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.117 2007/08/27 20:09:44 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.118 2007/09/01 17:04:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.117 2007/08/27 20:09:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.118 2007/09/01 17:04:58 dsl Exp $");
 
 #include "opt_pipe.h"
 
@@ -1092,7 +1092,7 @@ copyout_sockname(struct sockaddr *asa, unsigned int *alen, int flags,
 			return error;
 	} else
 		len = *alen;
-	if (len <= 0)
+	if (len < 0)
 		return EINVAL;
 
 	if (addr == NULL) {
