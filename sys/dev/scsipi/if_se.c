@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.68 2007/09/01 17:57:02 dyoung Exp $	*/
+/*	$NetBSD: if_se.c,v 1.69 2007/09/01 17:59:45 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.68 2007/09/01 17:57:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.69 2007/09/01 17:59:45 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -886,6 +886,9 @@ se_set_multi(sc, addr)
 
 	PROTOCMD(ctron_ether_set_multi, set_multi_cmd);
 	_lto2b(sizeof(addr), set_multi_cmd.length);
+	/* XXX sizeof(addr) is the size of the pointer.  Surely it
+	 * is too small? --dyoung
+	 */
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&set_multi_cmd, sizeof(set_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
@@ -906,6 +909,9 @@ se_remove_multi(sc, addr)
 
 	PROTOCMD(ctron_ether_remove_multi, remove_multi_cmd);
 	_lto2b(sizeof(addr), remove_multi_cmd.length);
+	/* XXX sizeof(addr) is the size of the pointer.  Surely it
+	 * is too small? --dyoung
+	 */
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&remove_multi_cmd, sizeof(remove_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
