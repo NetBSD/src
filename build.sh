@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.173 2007/09/01 08:15:27 jnemeth Exp $
+#	$NetBSD: build.sh,v 1.174 2007/09/01 09:32:19 jnemeth Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -231,7 +231,6 @@ initdefaults()
 	do_syspkgs=false
 	do_iso_image=false
 	do_iso_image_source=false
-	do_iso_dir=false
 	do_params=false
 
 	# Create scratch directory
@@ -500,9 +499,9 @@ usage()
 	fi
 	cat <<_usage_
 
-Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
-		[-M obj] [-m mach] [-N noisy] [-O obj] [-R release] [-T tools]
-		[-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
+Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cddir] [-D dest]
+		[-j njob] [-M obj] [-m mach] [-N noisy] [-O obj] [-R release]
+		[-T tools] [-V var=[value]] [-w wrapper] [-X x11src] [-Z var]
 		operation [...]
 
  Build operations (all imply "obj" and "tools"):
@@ -532,6 +531,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
  Options:
     -a arch     Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
     -B buildId  Set BUILDID to buildId.
+    -C cddir    Set CDEXTRA to cddir.
     -D dest     Set DESTDIR to dest.  [Default: destdir.MACHINE]
     -E          Set "expert" mode; disables various safety checks.
                 Should not be used without expert knowledge of the build system.
@@ -570,7 +570,7 @@ _usage_
 
 parseoptions()
 {
-	opts='a:B:bD:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:xX:Z:'
+	opts='a:B:bC:D:dEhi:j:k:M:m:N:nO:oR:rT:tUuV:w:xX:Z:'
 	opt_a=no
 
 	if type getopts >/dev/null 2>&1; then
@@ -612,6 +612,11 @@ parseoptions()
 
 		-b)
 			usage "'-b' has been replaced by 'makewrapper'"
+			;;
+
+		-C)
+			eval ${optargcmd}; resolvepath
+			iso_dir=${OPTARG}
 			;;
 
 		-D)
@@ -775,15 +780,6 @@ parseoptions()
 
 		iso-image-source)
 			op=iso_image_source   # used as part of a variable name
-			;;
-
-		iso-dir=*)
-			arg=${op#*=}
-			op=iso_dir	# used as part of a variable name
-			[ -n "${arg}" ] ||
-			    bomb "Must supply a directory with \`${op}=...'"
-			OPTARG=$arg; resolvepath
-			iso_dir=$OPTARG
 			;;
 
 		kernel=*|releasekernel=*)
@@ -1100,7 +1096,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.173 2007/09/01 08:15:27 jnemeth Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.174 2007/09/01 09:32:19 jnemeth Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1294,10 +1290,6 @@ main()
 			    CDEXTRA=$iso_dir ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
-			;;
-
-		iso-dir=*)
-			# no-op
 			;;
 
 		kernel=*)
