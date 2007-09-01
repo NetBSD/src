@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.22 2007/08/28 12:03:58 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.23 2007/09/01 12:56:44 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.22 2007/08/28 12:03:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.23 2007/09/01 12:56:44 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -389,7 +389,7 @@ static struct pmap_head pmaps;
  * pool that pmap structures are allocated from
  */
 
-struct pool pmap_pmap_pool;
+static struct pool_cache pmap_cache;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
@@ -415,7 +415,6 @@ static void *csrcp, *cdstp, *zerop, *ptpp;
  * pool and cache that PDPs are allocated from
  */
 
-struct pool pmap_pdp_pool;
 struct pool_cache pmap_pdp_cache;
 u_int pmap_pdp_cache_generation;
 
@@ -1000,16 +999,14 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * initialize the pmap pool.
 	 */
 
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    &pool_allocator_nointr, IPL_NONE);
+	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
+	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	/*
-	 * initialize the PDE pool and cache.
+	 * initialize the PDE cache.
 	 */
-	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, 0, 0, "pdppl",
-	    &pool_allocator_nointr, IPL_NONE);
-	pool_cache_init(&pmap_pdp_cache, &pmap_pdp_pool,
-	    pmap_pdp_ctor, NULL, NULL);
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
+	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, NULL, NULL);
 
 	/*
 	 * ensure the TLB is sync'd with reality by flushing it...
@@ -1515,7 +1512,6 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 
 	/*
 	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
-	 * WE MUST NOT BLOCK!
 	 */
 
 	/* fetch the physical address of the page directory. */
@@ -1551,7 +1547,7 @@ pmap_create(void)
 	struct pmap *pmap;
 	u_int gen;
 
-	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
+	pmap = pool_cache_get(&pmap_cache, PR_WAITOK);
 
 	/* init uvm_object */
 	mutex_init(&pmap->pm_obj.vmobjlock, MUTEX_DEFAULT, IPL_NONE);
@@ -1677,7 +1673,7 @@ pmap_destroy(struct pmap *pmap)
 #endif
 
 	mutex_destroy(&pmap->pm_obj.vmobjlock);
-	pool_put(&pmap_pmap_pool, pmap);
+	pool_cache_put(&pmap_cache, pmap);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.47.6.3 2007/08/20 21:28:18 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.47.6.4 2007/09/01 12:56:52 ad Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
@@ -182,11 +182,10 @@ struct	namecache {
 
 struct mount;
 
-extern struct pool pnbuf_pool;		/* pathname buffer pool */
-extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
+extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
-#define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
-#define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
+#define	PNBUF_GET()	pool_cache_get(pnbuf_cache, PR_WAITOK)
+#define	PNBUF_PUT(pnb)	pool_cache_put(pnbuf_cache, (pnb))
 
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);

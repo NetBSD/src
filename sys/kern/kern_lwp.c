@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.61.2.18 2007/08/23 19:28:15 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.61.2.19 2007/09/01 12:56:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.18 2007/08/23 19:28:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.61.2.19 2007/09/01 12:56:48 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -567,7 +567,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	if (isfree == NULL) {
 		l2 = pool_get(&lwp_pool, PR_WAITOK);
 		memset(l2, 0, sizeof(*l2));
-		l2->l_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
+		l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
 		SLIST_INIT(&l2->l_pi_lenders);
 	} else {
 		l2 = isfree;
@@ -905,7 +905,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 * We don't recycle the VM resources at this time.
 	 */
 	if (!recycle && l->l_ts != &turnstile0)
-		pool_cache_put(&turnstile_cache, l->l_ts);
+		pool_cache_put(turnstile_cache, l->l_ts);
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif

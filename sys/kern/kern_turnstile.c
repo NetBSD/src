@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.6.2.6 2007/07/01 21:27:59 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.6.2.7 2007/09/01 12:56:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.6 2007/07/01 21:27:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.7 2007/09/01 12:56:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -84,9 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6.2.6 2007/07/01 21:27:59 ad Ex
 #define	TS_HASH(obj)	(((uintptr_t)(obj) >> 3) & TS_HASH_MASK)
 
 tschain_t	turnstile_tab[TS_HASH_SIZE];
-
-struct pool turnstile_pool;
-struct pool_cache turnstile_cache;
+pool_cache_t	turnstile_cache;
 
 int	turnstile_ctor(void *, void *, int);
 
@@ -109,10 +107,9 @@ turnstile_init(void)
 		mutex_init(&tc->tc_mutex, MUTEX_SPIN, IPL_SCHED);
 	}
 
-	pool_init(&turnstile_pool, sizeof(turnstile_t), 0, 0, 0,
-	    "tstilepl", &pool_allocator_nointr, IPL_NONE);
-	pool_cache_init(&turnstile_cache, &turnstile_pool,
-	    turnstile_ctor, NULL, NULL);
+	turnstile_cache = pool_cache_init(sizeof(turnstile_t), 0, 0, 0,
+	    "tstilepl", NULL, IPL_NONE, turnstile_ctor, NULL, NULL);
+	KASSERT(turnstile_cache != NULL);
 
 	(void)turnstile_ctor(NULL, &turnstile0, 0);
 }

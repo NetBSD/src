@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.27.2.5 2007/07/15 13:27:44 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.27.2.6 2007/09/01 12:56:48 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.5 2007/07/15 13:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.27.2.6 2007/09/01 12:56:48 ad Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -107,13 +107,12 @@ LIST_HEAD(vmem_hashlist, vmem_btag);
 #define	QC_NAME_MAX	16
 
 struct qcache {
-	struct pool qc_pool;
-	struct pool_cache qc_cache;
+	pool_cache_t qc_cache;
 	vmem_t *qc_vmem;
 	char qc_name[QC_NAME_MAX];
 };
 typedef struct qcache qcache_t;
-#define	QC_POOL_TO_QCACHE(pool)	((qcache_t *)(pool))
+#define	QC_POOL_TO_QCACHE(pool)	((qcache_t *)(pool->pr_qcache))
 #endif /* defined(QCACHE) */
 
 /* vmem arena */
@@ -236,8 +235,7 @@ xfree(void *p)
 /* ---- boundary tag */
 
 #if defined(_KERNEL)
-static struct pool_cache bt_poolcache;
-static POOL_INIT(bt_pool, sizeof(bt_t), 0, 0, 0, "vmembtpl", NULL, IPL_VM);
+static struct pool_cache bt_cache;
 #endif /* defined(_KERNEL) */
 
 static bt_t *
@@ -246,13 +244,8 @@ bt_alloc(vmem_t *vm, vm_flag_t flags)
 	bt_t *bt;
 
 #if defined(_KERNEL)
-	int s;
-
-	/* XXX bootstrap */
-	s = splvm();
-	bt = pool_cache_get(&bt_poolcache,
+	bt = pool_cache_get(&bt_cache,
 	    (flags & VM_SLEEP) != 0 ? PR_WAITOK : PR_NOWAIT);
-	splx(s);
 #else /* defined(_KERNEL) */
 	bt = malloc(sizeof *bt);
 #endif /* defined(_KERNEL) */
@@ -265,12 +258,7 @@ bt_free(vmem_t *vm, bt_t *bt)
 {
 
 #if defined(_KERNEL)
-	int s;
-
-	/* XXX bootstrap */
-	s = splvm();
-	pool_cache_put(&bt_poolcache, bt);
-	splx(s);
+	pool_cache_put(&bt_cache, bt);
 #else /* defined(_KERNEL) */
 	free(bt);
 #endif /* defined(_KERNEL) */
@@ -507,17 +495,19 @@ qc_init(vmem_t *vm, size_t qcache_max, int ipl)
 		qc->qc_vmem = vm;
 		snprintf(qc->qc_name, sizeof(qc->qc_name), "%s-%zu",
 		    vm->vm_name, size);
-		pool_init(&qc->qc_pool, size, ORDER2SIZE(vm->vm_quantum_shift),
-		    0, PR_NOALIGN | PR_NOTOUCH /* XXX */, qc->qc_name, pa,
-		    ipl);
+		qc->qc_cache = pool_cache_init(size,
+		    ORDER2SIZE(vm->vm_quantum_shift), 0,
+		    PR_NOALIGN | PR_NOTOUCH /* XXX */,
+		    qc->qc_name, pa, ipl, NULL, NULL, NULL);
+		KASSERT(qc->qc_cache != NULL);	/* XXX */
 		if (prevqc != NULL &&
-		    qc->qc_pool.pr_itemsperpage ==
-		    prevqc->qc_pool.pr_itemsperpage) {
-			pool_destroy(&qc->qc_pool);
+		    qc->qc_cache->pc_pool.pr_itemsperpage ==
+		    prevqc->qc_cache->pc_pool.pr_itemsperpage) {
+			pool_cache_destroy(qc->qc_cache);
 			vm->vm_qcache[i - 1] = prevqc;
 			continue;
 		}
-		pool_cache_init(&qc->qc_cache, &qc->qc_pool, NULL, NULL, NULL);
+		qc->qc_cache->pc_pool.pr_qcache = qc;
 		vm->vm_qcache[i - 1] = qc;
 		prevqc = qc;
 	}
@@ -538,8 +528,7 @@ qc_destroy(vmem_t *vm)
 		if (prevqc == qc) {
 			continue;
 		}
-		pool_cache_destroy(&qc->qc_cache);
-		pool_destroy(&qc->qc_pool);
+		pool_cache_destroy(qc->qc_cache);
 		prevqc = qc;
 	}
 }
@@ -560,7 +549,7 @@ qc_reap(vmem_t *vm)
 		if (prevqc == qc) {
 			continue;
 		}
-		if (pool_reclaim(&qc->qc_pool) != 0) {
+		if (pool_cache_reclaim(qc->qc_cache) != 0) {
 			didsomething = true;
 		}
 		prevqc = qc;
@@ -576,7 +565,8 @@ vmem_init(void)
 {
 
 	mutex_init(&vmem_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	pool_cache_init(&bt_poolcache, &bt_pool, NULL, NULL, NULL);
+	pool_cache_bootstrap(&bt_cache, sizeof(bt_t), 0, 0, 0, "vmembt",
+	    NULL, IPL_VM, NULL, NULL, NULL);
 	return 0;
 }
 #endif /* defined(_KERNEL) */
@@ -881,7 +871,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size0, vm_flag_t flags)
 		int qidx = size >> vm->vm_quantum_shift;
 		qcache_t *qc = vm->vm_qcache[qidx - 1];
 
-		return (vmem_addr_t)pool_cache_get(&qc->qc_cache,
+		return (vmem_addr_t)pool_cache_get(qc->qc_cache,
 		    vmf_to_prf(flags));
 	}
 #endif /* defined(QCACHE) */
@@ -1050,7 +1040,7 @@ vmem_free(vmem_t *vm, vmem_addr_t addr, vmem_size_t size)
 		int qidx = (size + vm->vm_quantum_mask) >> vm->vm_quantum_shift;
 		qcache_t *qc = vm->vm_qcache[qidx - 1];
 
-		return pool_cache_put(&qc->qc_cache, (void *)addr);
+		return pool_cache_put(qc->qc_cache, (void *)addr);
 	}
 #endif /* defined(QCACHE) */
 
