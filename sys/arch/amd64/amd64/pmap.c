@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2007/09/01 10:47:44 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2007/09/01 10:53:02 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2007/09/01 10:47:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 2007/09/01 10:53:02 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -2827,7 +2827,7 @@ no_tlb_shootdown:
 
 
 /*
- * p m a p   P r o t e c t i o n   f u n c t i o n s
+ * p m a p   p r o t e c t i o n   f u n c t i o n s
  */
 
 /*
