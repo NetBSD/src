@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.69 2007/08/30 02:17:34 dyoung Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.70 2007/09/01 06:50:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.69 2007/08/30 02:17:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.70 2007/09/01 06:50:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -199,26 +199,15 @@ sockaddr_alloc(sa_family_t af, socklen_t socklen, int flags)
 	return sa;
 }
 
-static void
-sockaddr_fixlen(struct sockaddr *dst, socklen_t socklen, uint8_t deslen)
-{
-	if (socklen < deslen)
-		panic("%s: source too long, %d bytes", __func__, deslen);
-	dst->sa_len = deslen;
-}
-
 struct sockaddr *
 sockaddr_copy(struct sockaddr *dst, socklen_t socklen,
     const struct sockaddr *src)
 {
-	KASSERT(dst->sa_family == src->sa_family);
-
-	if (__predict_false(dst->sa_len < src->sa_len))
-		sockaddr_fixlen(dst, socklen, src->sa_len);
-
-	memcpy(dst, src, src->sa_len);
-
-	return dst;
+	if (__predict_false(socklen < src->sa_len)) {
+		panic("%s: source too long, %d < %d bytes", __func__, socklen,
+		    src->sa_len);
+	}
+	return memcpy(dst, src, src->sa_len);
 }
 
 int
