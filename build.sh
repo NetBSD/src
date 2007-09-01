@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.172 2007/08/30 05:30:02 jnemeth Exp $
+#	$NetBSD: build.sh,v 1.173 2007/09/01 08:15:27 jnemeth Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -231,6 +231,7 @@ initdefaults()
 	do_syspkgs=false
 	do_iso_image=false
 	do_iso_image_source=false
+	do_iso_dir=false
 	do_params=false
 
 	# Create scratch directory
@@ -525,6 +526,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-D dest] [-j njob]
     syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
     iso-image           Create CD-ROM image in RELEASEDIR/iso.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
+    iso-dir=cddir	Add the contents of \`cddir' to an CD-ROM image.
     params              Display various make(1) parameters.
 
  Options:
@@ -773,6 +775,15 @@ parseoptions()
 
 		iso-image-source)
 			op=iso_image_source   # used as part of a variable name
+			;;
+
+		iso-dir=*)
+			arg=${op#*=}
+			op=iso_dir	# used as part of a variable name
+			[ -n "${arg}" ] ||
+			    bomb "Must supply a directory with \`${op}=...'"
+			OPTARG=$arg; resolvepath
+			iso_dir=$OPTARG
 			;;
 
 		kernel=*|releasekernel=*)
@@ -1089,7 +1100,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.172 2007/08/30 05:30:02 jnemeth Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.173 2007/09/01 08:15:27 jnemeth Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1272,10 +1283,21 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
-		obj|build|distribution|iso-image|iso-image-source|release|sourcesets|syspkgs|params)
+		obj|build|distribution|release|sourcesets|syspkgs|params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
+			;;
+
+		iso-image|iso-image-source)
+			${runcmd} "${makewrapper}" ${parallel} \
+			    CDEXTRA=$iso_dir ${op} ||
+			    bomb "Failed to make ${op}"
+			statusmsg "Successful make ${op}"
+			;;
+
+		iso-dir=*)
+			# no-op
 			;;
 
 		kernel=*)

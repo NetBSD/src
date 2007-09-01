@@ -624,6 +624,15 @@ BUILDING
 
      iso-image     Perform ``make iso-image''.
 
+     iso-image-source
+                   Perform ``make iso-image-source''.
+
+     iso-dir=directory
+                   When combined with ``iso-image'' or ``iso-image-source'',
+                   it will cause directory to be added to the CD-ROM image.
+                   If directory does not start with ``/'' then it will be made
+                   relative to RELEASEDIR.
+
      The following command line options alter the behaviour of the build.sh
      operations described above:
 
@@ -799,4 +808,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          August 30, 2007                         NetBSD
+NetBSD                         September 1, 2007                        NetBSD
