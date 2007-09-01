@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.67 2007/09/01 07:32:32 dyoung Exp $	*/
+/*	$NetBSD: if_se.c,v 1.68 2007/09/01 17:57:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.67 2007/09/01 07:32:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.68 2007/09/01 17:57:02 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -978,6 +978,7 @@ se_ioctl(ifp, cmd, data)
 	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct sockaddr *sa;
 	int s, error = 0;
 
 	s = splnet();
@@ -1051,14 +1052,20 @@ se_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		sa = sockaddr_dup(ifreq_getaddr(cmd, ifr), M_NOWAIT);
+		if (sa == NULL) {
+			error = ENOBUFS;
+			break;
+		}
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				error = (cmd == SIOCADDMULTI) ?
-				   se_set_multi(sc, ifreq_getaddr(cmd, ifr)->sa_data) :
-				   se_remove_multi(sc, ifreq_getaddr(cmd, ifr)->sa_data);
+				   se_set_multi(sc, sa->sa_data) :
+				   se_remove_multi(sc, sa->sa_data);
 			} else
 				error = 0;
 		}
+		sockaddr_free(sa);
 		break;
 
 	default:
