@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.c,v 1.17 2007/08/20 22:59:17 pooka Exp $	*/
+/*	$NetBSD: genfs.c,v 1.18 2007/09/01 21:45:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -197,7 +197,7 @@ genfs_getpages(void *v)
 		buf.b_bcount = xfersize;
 		buf.b_blkno = bn;
 		buf.b_lblkno = 0;
-		buf.b_flags = B_READ;
+		buf.b_flags = B_READ | B_BUSY;
 		buf.b_vp = vp;
 
 		VOP_STRATEGY(devvp, &buf);
@@ -264,6 +264,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	size_t xfersize;
 	int bshift = vp->v_mount->mnt_fs_bshift;
 	int bsize = 1 << bshift;
+	int async = (flags & PGO_SYNCIO) == 0;
 
  restart:
 	/* check if all pages are clean */
@@ -289,13 +290,17 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	/* we need to flush */
 	for (curoff = smallest; curoff < eof; curoff += PAGE_SIZE) {
+		void *curva;
+
 		if (curoff - smallest >= MAXPHYS)
 			break;
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg == NULL)
 			break;
-		memcpy(databuf + (curoff-smallest),
-		    (void *)pg->uanon, PAGE_SIZE);
+		curva = databuf + (curoff-smallest);
+		memcpy(curva, (void *)pg->uanon, PAGE_SIZE);
+		rumpvm_enterva((vaddr_t)curva, pg);
+
 		pg->flags |= PG_CLEAN;
 	}
 	assert(curoff > smallest);
@@ -339,11 +344,17 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		    (int)(smallest + bufoff + buf.b_bcount),
 		    (int)eof);
 
+		buf.b_bufsize = round_page(buf.b_bcount);
 		buf.b_lblkno = 0;
 		buf.b_blkno = bn + (((smallest+bufoff)&(bsize-1))>>DEV_BSHIFT);
 		buf.b_data = databuf + bufoff;
-		buf.b_flags = B_WRITE;
 		buf.b_vp = vp;
+		buf.b_flags = B_WRITE | B_BUSY;
+		buf.b_iodone = uvm_aio_biodone;
+		if (async) {
+			buf.b_flags |= B_CALL | B_ASYNC;
+			buf.b_iodone = uvm_aio_biodone;
+		}
 
 		vp->v_numoutput++;
 		VOP_STRATEGY(devvp, &buf);
@@ -351,6 +362,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 			panic("%s: VOP_STRATEGY lazy bum %d",
 			    __func__, buf.b_error);
 	}
+	rumpvm_flushva();
 
 	goto restart;
 }
