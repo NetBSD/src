@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.39 2007/08/26 22:29:28 dyoung Exp $ */
+/*	$NetBSD: if_es.c,v 1.40 2007/09/01 07:32:22 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.39 2007/08/26 22:29:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.40 2007/09/01 07:32:22 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1041,11 +1041,7 @@ esioctl(register struct ifnet *ifp, u_long command, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

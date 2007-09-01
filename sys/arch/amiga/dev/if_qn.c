@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.28 2007/08/26 22:29:28 dyoung Exp $ */
+/*	$NetBSD: if_qn.c,v 1.29 2007/09/01 07:32:23 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.28 2007/08/26 22:29:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.29 2007/09/01 07:32:23 dyoung Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -899,11 +899,7 @@ qnioctl(register struct ifnet *ifp, u_long command, void *data)
 	case SIOCDELMULTI:
 		log(LOG_INFO, "qnioctl: multicast not done yet\n");
 #if 0
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

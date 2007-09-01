@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.47 2007/08/26 22:32:21 dyoung Exp $ */
+/*	$NetBSD: if_ie.c,v 1.48 2007/09/01 07:32:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.47 2007/08/26 22:32:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.48 2007/09/01 07:32:24 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1591,11 +1591,7 @@ ieioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

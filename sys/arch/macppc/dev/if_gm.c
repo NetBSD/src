@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.29 2007/07/09 20:52:22 ad Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.30 2007/09/01 07:32:23 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.29 2007/07/09 20:52:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.30 2007/09/01 07:32:23 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -854,11 +854,7 @@ gmac_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
