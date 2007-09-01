@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.5 2007/08/30 04:18:18 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.6 2007/09/01 03:45:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.5 2007/08/30 04:18:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.6 2007/09/01 03:45:14 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -113,6 +113,7 @@ struct agten_softc {
 
 	int sc_cursor_x;
 	int sc_cursor_y;
+	int sc_video;			/* video output enabled */
 
 	/* some /dev/fb* stuff */
 	int sc_fb_is_open;
@@ -120,7 +121,6 @@ struct agten_softc {
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 
 	int sc_mode;
-	int sc_video, sc_powerstate;
 	uint32_t sc_bg;
 	struct vcons_data vd;
 };
@@ -149,8 +149,8 @@ static int	agten_do_cursor(struct agten_softc *sc,
 static int	agten_do_sun_cursor(struct agten_softc *sc,
 				struct fbcursor *);
 
-uint16_t util_interleave(uint8_t, uint8_t);
-uint16_t util_interleave_lin(uint8_t, uint8_t);
+static uint16_t util_interleave(uint8_t, uint8_t);
+static uint16_t util_interleave_lin(uint8_t, uint8_t);
 
 extern const u_char rasops_cmap[768];
 
@@ -237,6 +237,7 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->sc_fb_is_open = 0;
+	sc->sc_video = -1;
 	sc->sc_bustag = sa->sa_bustag;
 #if 0
 	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
@@ -348,7 +349,7 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	fb->fb_type.fb_depth = 32;
 	fb->fb_linebytes = sc->sc_stride;
 	fb_attach(fb, console);
-
+	agten_set_video(sc, 1);	/* make sure video's on */
 }
 
 static int
@@ -374,6 +375,14 @@ agten_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf->width = ms->scr_ri.ri_width;
 			wdf->depth = 32;
 			wdf->cmsize = 256;
+			return 0;
+
+		case WSDISPLAYIO_GVIDEO:
+			*(int *)data = sc->sc_video;
+			return 0;
+
+		case WSDISPLAYIO_SVIDEO:
+			agten_set_video(sc, *(int *)data);
 			return 0;
 
 		case WSDISPLAYIO_GETCMAP:
@@ -607,6 +616,11 @@ agten_init(struct agten_softc *sc)
 	agten_write_idx(sc, IBM561_CONFIG_REG1);
 	agten_write_dac(sc, IBM561_CMD, 0x2c);
 
+	/* use internal PLL, enable video output */
+	agten_write_idx(sc, IBM561_CONFIG_REG2);
+	agten_write_dac(sc, IBM561_CMD, CR2_ENABLE_CLC | CR2_PLL_REF_SELECT |
+	    CR2_PIXEL_CLOCK_SELECT | CR2_ENABLE_RGB_OUTPUT);
+
 	/* now set up some window attributes */
 	
 	/* 
@@ -661,14 +675,24 @@ agten_gfx(struct agten_softc *sc)
 static void
 agten_set_video(struct agten_softc *sc, int flag)
 {
-	/* not there yet */
+	uint8_t reg = 
+	    CR2_ENABLE_CLC | CR2_PLL_REF_SELECT | CR2_PIXEL_CLOCK_SELECT;
+
+	if (flag == sc->sc_video)
+		return;
+
+	agten_write_idx(sc, IBM561_CONFIG_REG2);
+	agten_write_dac(sc, IBM561_CMD, flag ? reg | CR2_ENABLE_RGB_OUTPUT :
+	    reg);
+
+	sc->sc_video = flag;
 }
 
 static int
 agten_get_video(struct agten_softc *sc)
 {
-	/* since we don't turn video off yet */
-	return 1;
+
+	return sc->sc_video;
 }
 
 static void
@@ -886,7 +910,10 @@ util_interleave_lin(uint8_t b1, uint8_t b2)
 static void
 agten_fb_unblank(struct device *dev)
 {
-	/* nothing yet */
+	struct agten_softc *sc = (void *)dev;
+
+	agten_init(sc);
+	agten_set_video(sc, 1);
 }
 
 static int
