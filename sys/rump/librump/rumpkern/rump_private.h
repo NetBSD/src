@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.1 2007/08/20 23:05:46 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.2 2007/09/01 21:45:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -71,5 +71,8 @@ int	rump_ubc_magic_uiomove(size_t, struct uio *);
 void		rumpvm_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 void		rumpvm_freepage(struct vm_page *);
+
+void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
+void		rumpvm_flushva(void);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */
