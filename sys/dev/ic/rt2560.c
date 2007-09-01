@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.11 2007/09/01 07:32:28 dyoung Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.12 2007/09/01 07:34:03 dyoung Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.11 2007/09/01 07:32:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.12 2007/09/01 07:34:03 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1346,7 +1346,6 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 
 #if NBPFILTER > 0
 		if (sc->sc_drvbpf != NULL) {
-			struct mbuf mb;
 			struct rt2560_rx_radiotap_header *tap = &sc->sc_rxtap;
 			uint32_t tsf_lo, tsf_hi;
 
@@ -1364,12 +1363,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 			tap->wr_antenna = sc->rx_ant;
 			tap->wr_antsignal = desc->rssi;
 
-			M_COPY_PKTHDR(&mb, m);
-			mb.m_data = (void *)tap;
-			mb.m_len = sc->sc_txtap_len;
-			mb.m_next = m;
-			mb.m_pkthdr.len += mb.m_len;
-			bpf_mtap(sc->sc_drvbpf, &mb);
+			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 		}
 #endif
 
@@ -1820,7 +1814,6 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
 		struct rt2560_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
@@ -1829,12 +1822,7 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		M_COPY_PKTHDR(&mb, m0);
-		mb.m_data = (void *)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
-		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 #endif
 
@@ -2064,7 +2052,6 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
-		struct mbuf mb;
 		struct rt2560_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
@@ -2073,13 +2060,7 @@ rt2560_tx_data(struct rt2560_softc *sc, struct mbuf *m0,
 		tap->wt_chan_flags = htole16(ic->ic_ibss_chan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		M_COPY_PKTHDR(&mb, m0);
-		mb.m_data = (void *)tap;
-		mb.m_len = sc->sc_txtap_len;
-		mb.m_next = m0;
-		mb.m_pkthdr.len += mb.m_len;
-		bpf_mtap(sc->sc_drvbpf, &mb);
-		
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 #endif
 
