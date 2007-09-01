@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.48 2007/07/11 19:15:02 he Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.49 2007/09/01 04:32:50 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.48 2007/07/11 19:15:02 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.49 2007/09/01 04:32:50 dyoung Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -964,7 +964,7 @@ bah_ioctl(ifp, command, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 		case AF_INET:
 		case AF_INET6:
 			error = 0;
