@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.30 2006/10/29 22:32:53 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.31 2007/09/01 16:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -60,6 +60,7 @@ void	 groups(void *, VARENT *, int);
 void	 groupnames(void *, VARENT *, int);
 void	 logname(void *, VARENT *, int);
 void	 longtname(void *, VARENT *, int);
+void	 lname(void *, VARENT *, int);
 void	 lstarted(void *, VARENT *, int);
 void	 lstate(void *, VARENT *, int);
 void	 maxrss(void *, VARENT *, int);

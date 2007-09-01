@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.100 2007/07/28 17:05:50 dsl Exp $	*/
+/*	$NetBSD: print.c,v 1.101 2007/09/01 16:54:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.100 2007/07/28 17:05:50 dsl Exp $");
+__RCSID("$NetBSD: print.c,v 1.101 2007/09/01 16:54:39 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1431,5 +1431,22 @@ putimeval(void *arg, VARENT *ve, int mode)
 		m -= h * MINSPERHOUR;
 		(void)printf( "%*u:%.2u:%.2lu.%.2lu", v->width - 9, h, m, secs,
 		    usec / 10000u );
+	}
+}
+
+void
+lname(void *arg, VARENT *ve, int mode)
+{
+	struct kinfo_lwp *l;
+	VAR *v;
+
+	l = arg;
+	v = ve->var;
+	if (l->l_name && l->l_name[0] != '\0') {
+		strprintorsetwidth(v, l->l_name, mode);
+		v->width = min(v->width, KI_LNAMELEN);
+	} else {
+		if (mode == PRINTMODE)
+			(void)printf("%-*s", v->width, "-");
 	}
 }
