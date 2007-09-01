@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.1.2.13 2007/08/28 12:29:01 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.1.2.14 2007/09/01 15:23:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.13 2007/08/28 12:29:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.1.2.14 2007/09/01 15:23:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -212,8 +212,10 @@ typedef struct softint {
 	struct cpu_info		*si_cpu;
 	uintptr_t		si_machdep;
 	struct evcnt		si_evcnt;
+	struct evcnt		si_evcnt_block;
 	int			si_active;
 	char			si_name[8];
+	char			si_name_block[8+6];
 } softint_t;
 
 typedef struct softhand {
@@ -239,7 +241,6 @@ u_int		softint_timing;
 static u_int	softint_max;
 static kmutex_t	softint_lock;
 static void	*softint_netisr_sih;
-struct evcnt	softint_block;
 
 /*
  * softint_init_isr:
@@ -269,6 +270,10 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 	    (int)ci->ci_cpuid);
 	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
 	   "softint", si->si_name);
+	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%d",
+	    desc, (int)ci->ci_cpuid);
+	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_INTR, NULL,
+	   "softint", si->si_name_block);
 
 	si->si_lwp->l_private = si;
 	softint_init_md(si->si_lwp, level, &si->si_machdep);
@@ -295,8 +300,6 @@ softint_init(struct cpu_info *ci)
 		softint_bytes = round_page(softint_bytes);
 		softint_max = (softint_bytes - sizeof(softcpu_t)) /
 		    sizeof(softhand_t);
-		evcnt_attach_dynamic(&softint_block, EVCNT_TYPE_INTR,
-		    NULL, "softint", "block");
 	}
 
 	sc = (softcpu_t *)uvm_km_alloc(kernel_map, softint_bytes, 0,
@@ -709,3 +712,17 @@ softint_dispatch(lwp_t *pinned, int s)
 }
 
 #endif	/* !__HAVE_FAST_SOFTINTS */
+
+/*
+ * softint_block:
+ *
+ *	Update statistics when the soft interrupt blocks.
+ */
+void
+softint_block(lwp_t *l)
+{
+	softint_t *si = l->l_private;
+
+	KASSERT((l->l_flag & LW_INTR) != 0);
+	si->si_evcnt_block.ev_count++;
+}

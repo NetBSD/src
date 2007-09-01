@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.186.2.15 2007/08/31 15:18:12 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.186.2.16 2007/09/01 15:23:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.15 2007/08/31 15:18:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.186.2.16 2007/09/01 15:23:58 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -386,7 +386,7 @@ mi_switch(lwp_t *l)
 	if (l->l_switchto != NULL) {
 		if ((l->l_flag & LW_INTR) != 0) {
 			returning = true;
-			softint_block.ev_count++;
+			softint_block(l);
 			if ((l->l_flag & LW_TIMEINTR) != 0)
 				updatertime(l, &tv);
 		}
