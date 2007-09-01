@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.10 2007/08/25 10:22:31 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.11 2007/09/01 22:10:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -334,6 +334,8 @@ rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 	case RUMPUIO_WRITE:
 		uiorw = UIO_WRITE;
 		break;
+	default:
+		panic("%s: invalid rw %d", __func__, rw);
 	}
 
 	uio = rumpuser_malloc(sizeof(struct uio), 0);
