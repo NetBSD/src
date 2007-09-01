@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.283.2.15 2007/08/21 18:05:41 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.283.2.16 2007/09/01 12:23:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.15 2007/08/21 18:05:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.283.2.16 2007/09/01 12:23:08 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -184,7 +184,7 @@ try_nextlist:
 		 */
 		if ((vp->v_iflag & VI_XLOCK) == 0 &&
 		    ((vp->v_iflag & VI_LAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
-				break;
+			break;
 		}
 		mutex_exit(&vp->v_interlock);
 	}

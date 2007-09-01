@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.4.4.4 2007/08/25 00:12:25 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.4.4.5 2007/09/01 12:23:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.4 2007/08/25 00:12:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.4.5 2007/09/01 12:23:09 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -217,7 +217,7 @@ vwakeup(struct buf *bp)
 
 	if (--vp->v_numoutput < 0)
 		panic("vwakeup: neg numoutput, vp %p", vp);
-	if (vp->v_numoutput <= 0)
+	if (vp->v_numoutput == 0)
 		cv_broadcast(&vp->v_cv);
 }
 
