@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.104 2007/08/03 08:45:36 pooka Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.105 2007/09/01 23:40:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.104 2007/08/03 08:45:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.105 2007/09/01 23:40:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -573,8 +573,8 @@ spec_strategy(void *v)
 	error = 0;
 	bp->b_dev = vp->v_rdev;
 	if (!(bp->b_flags & B_READ) &&
-	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
-		(*bioops.io_start)(bp);
+	    (LIST_FIRST(&bp->b_dep)) != NULL && bioopsp)
+		bioopsp->io_start(bp);
 
 	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
 		SPEC_COW_LOCK(vp->v_specinfo, s);

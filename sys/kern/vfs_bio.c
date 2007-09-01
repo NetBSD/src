@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.176 2007/08/11 19:56:53 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.177 2007/09/01 23:40:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,10 +79,9 @@
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
-#include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.176 2007/08/11 19:56:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.177 2007/09/01 23:40:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +146,8 @@ static int checkfreelist(struct buf *, struct bqueue *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-#if !defined(SOFTDEP) || !defined(FFS)
-struct bio_ops bioops;	/* I/O operation notification */
-#endif
+
+struct bio_ops *bioopsp;	/* can be overriden by ffs_softdep */
 
 /*
  * Insq/Remq for the buffer hash lists.
@@ -851,7 +849,7 @@ bawrite(struct buf *bp)
 /*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
  * Call at splbio() and with the buffer interlock locked.
- * Note: called only from biodone() through ffs softdep's bioops.io_complete()
+ * Note: called only from biodone() through ffs softdep's bioopsp->io_complete()
  */
 void
 bdirty(struct buf *bp)
@@ -937,8 +935,8 @@ brelse(struct buf *bp)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
-			(*bioops.io_deallocate)(bp);
+		if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+			bioopsp->io_deallocate(bp);
 		CLR(bp->b_flags, B_DONE|B_DELWRI);
 		if (bp->b_vp) {
 			reassignbuf(bp, bp->b_vp);
@@ -970,9 +968,8 @@ brelse(struct buf *bp)
 			/* stale but valid data */
 			int has_deps;
 
-			if (LIST_FIRST(&bp->b_dep) != NULL &&
-			    bioops.io_countdeps)
-				has_deps = (*bioops.io_countdeps)(bp, 0);
+			if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+				has_deps = bioopsp->io_countdeps(bp, 0);
 			else
 				has_deps = 0;
 			bufq = has_deps ? &bufqueues[BQ_LRU] :
@@ -1275,8 +1272,8 @@ start:
 	if (bp->b_vp)
 		brelvp(bp);
 
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
-		(*bioops.io_deallocate)(bp);
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+		bioopsp->io_deallocate(bp);
 
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
@@ -1387,8 +1384,8 @@ biodone(struct buf *bp)
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
-		(*bioops.io_complete)(bp);
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+		bioopsp->io_complete(bp);
 
 	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
 		vwakeup(bp);
