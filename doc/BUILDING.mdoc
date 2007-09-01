@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.51 2007/08/30 10:29:02 jnemeth Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.52 2007/09/01 08:15:27 jnemeth Exp $
 .\"
 .\" Copyright (c) 2001-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd August 30, 2007
+.Dd September 1, 2007
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -1173,6 +1173,24 @@ Perform
 .It Sy iso-image
 Perform
 .Dq make iso-image .
+.
+.It Sy iso-image-source
+Perform
+.Dq make iso-image-source .
+.
+.It Sy iso-dir Ns = Ns Ar directory
+When combined with
+.Dq iso-image
+or
+.Dq iso-image-source ,
+it will cause
+.Ar directory
+to be added to the CD-ROM image.
+If
+.Ar directory
+does not start with
+.Dq /
+then it will be made relative to RELEASEDIR.
 .
 .El
 .
