@@ -1,7 +1,7 @@
-/*	$NetBSD: pool.h,v 1.55.6.2 2007/03/13 17:51:18 ad Exp $	*/
+/*	$NetBSD: pool.h,v 1.55.6.3 2007/09/01 12:55:16 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,52 +59,18 @@
 #endif /* defined(_KERNEL) */
 #endif
 
-#define	PCG_NOBJECTS		16
+/*
+ * 256 byte pool_cache_group if _LP64
+ * 128 byte pool_cache_group if !_LP64 and sizeof(paddr_t) == 4
+ *
+ * Both will be aligned to CACHE_LINE_SIZE.
+ */
+#define	PCG_NOBJECTS		15
 
 #define	POOL_PADDR_INVALID	((paddr_t) -1)
 
 #ifdef __POOL_EXPOSE
-/* The pool cache group. */
-struct pool_cache_group {
-	LIST_ENTRY(pool_cache_group)
-		pcg_list;	/* link in the pool cache's group list */
-	u_int	pcg_avail;	/* # available objects */
-				/* pointers to the objects */
-	struct {
-		void *pcgo_va;	/* cache object virtual address */
-		paddr_t pcgo_pa;/* cache object physical address */
-	} pcg_objects[PCG_NOBJECTS];
-};
-
-LIST_HEAD(pool_cache_grouplist,pool_cache_group);
-struct pool_cache {
-	LIST_ENTRY(pool_cache)
-			pc_poollist;	/* entry on pool's group list */
-	struct pool_cache_grouplist
-			pc_emptygroups;	/* list of empty cache groups */
-	struct pool_cache_grouplist
-			pc_fullgroups;	/* list of full cache groups */
-	struct pool_cache_grouplist
-			pc_partgroups;	/* list of partial cache groups */
-	struct pool	*pc_pool;	/* parent pool */
-	kmutex_t	pc_lock;	/* mutex */
-
-	int		(*pc_ctor)(void *, void *, int);
-	void		(*pc_dtor)(void *, void *);
-	void		*pc_arg;
-
-	/* Statistics. */
-	unsigned long	pc_hits;	/* cache hits */
-	unsigned long	pc_misses;	/* cache misses */
-
-	unsigned long	pc_ngroups;	/* # cache groups */
-
-	unsigned long	pc_nitems;	/* # objects currently in cache */
-
-#if defined(_KERNEL)
-	void		*pc_freecheck;
-#endif
-};
+struct pool;
 
 struct pool_allocator {
 	void		*(*pa_alloc)(struct pool *, int);
@@ -138,8 +104,7 @@ struct pool {
 			pr_partpages;	/* Partially-allocated pages */
 	struct pool_item_header	*pr_curpage;
 	struct pool	*pr_phpool;	/* Pool item header pool */
-	LIST_HEAD(,pool_cache)
-			pr_cachelist;	/* Caches for this pool */
+	struct pool_cache *pr_cache;	/* Cache for this pool */
 	unsigned int	pr_size;	/* Size of item */
 	unsigned int	pr_align;	/* Requested alignment, must be 2^n */
 	unsigned int	pr_itemoffset;	/* Align this offset in item */
@@ -153,6 +118,7 @@ struct pool {
 	unsigned int	pr_nout;	/* # items currently allocated */
 	unsigned int	pr_hardlimit;	/* hard limit to number of allocated
 					   items */
+	unsigned int	pr_refcnt;	/* ref count for pagedaemon, etc */
 	struct pool_allocator *pr_alloc;/* back-end allocator */
 	TAILQ_ENTRY(pool) pr_alloc_list;/* link on allocator's pool list */
 
@@ -224,8 +190,61 @@ struct pool {
 #if defined(_KERNEL)
 	struct callback_entry pr_reclaimerentry;
 	void		*pr_freecheck;
+	void		*pr_qcache;
 #endif
 };
+
+/* The pool cache group. */
+typedef struct pool_cache_group {
+	struct pool_cache_group	*pcg_next;	/* link to next group */
+	u_int			pcg_avail;	/* # available objects */
+	struct {
+		void	*pcgo_va;		/* object virtual address */
+		paddr_t	pcgo_pa;		/* object physical address */
+	} pcg_objects[PCG_NOBJECTS];
+} pcg_t;
+
+typedef struct pool_cache_cpu {
+	struct pool_cache_group	*cc_current;
+	struct pool_cache_group	*cc_previous;	
+	struct pool_cache	*cc_cache;
+	struct cpu_info		*cc_cpu;	
+	lwp_t			*cc_busy;
+	uint64_t		cc_misses;
+	uint64_t		cc_hits;
+	int			cc_ipl;
+	ipl_cookie_t		cc_iplcookie;
+} pool_cache_cpu_t;
+
+struct pool_cache {
+	/* Pool layer. */
+	struct pool	pc_pool;
+	
+	/* Cache layer. */
+	kmutex_t	pc_lock;	/* locks cache layer */
+	LIST_ENTRY(pool_cache)
+			pc_cachelist;	/* entry on global cache list */
+	pcg_t		*pc_emptygroups;/* list of empty cache groups */
+	pcg_t		*pc_fullgroups;	/* list of full cache groups */
+	int		pc_ncpu;	/* number cpus set up */
+	int		(*pc_ctor)(void *, void *, int);
+	void		(*pc_dtor)(void *, void *);
+	void		*pc_arg;	/* for ctor/ctor */
+	uint64_t	pc_hits;	/* cache layer hits */
+	uint64_t	pc_misses;	/* cache layer misses */
+	uint64_t	pc_contended;	/* contention events on cache */
+	unsigned int	pc_nempty;	/* empty groups in cache */
+	unsigned int	pc_nfull;	/* full groups in cache */
+	unsigned int	pc_refcnt;	/* ref count for pagedaemon, etc */
+	void		*pc_freecheck;
+
+	/* CPU layer. */
+	pool_cache_cpu_t pc_cpu0 __aligned(CACHE_LINE_SIZE);
+	void		*pc_cpus[MAXCPUS] __aligned(CACHE_LINE_SIZE);
+};
+
+typedef struct pool_cache *pool_cache_t;
+
 #endif /* __POOL_EXPOSE */
 
 #ifdef _KERNEL
@@ -237,6 +256,7 @@ struct pool {
  */
 extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
+extern struct pool_allocator pool_allocator_meta;
 #ifdef POOL_SUBPAGE
 /* The above are subpage allocators in this case. */
 extern struct pool_allocator pool_allocator_kmem_fullpage;
@@ -303,18 +323,30 @@ int		pool_chk(struct pool *, const char *);
 /*
  * Pool cache routines.
  */
-void		pool_cache_init(struct pool_cache *, struct pool *,
-		    int (*)(void *, void *, int),
-		    void (*)(void *, void *),
+pool_cache_t	pool_cache_init(size_t, u_int, u_int, u_int, const char *,
+		    struct pool_allocator *, int, int (*)(void *, void *, int),
+		    void (*)(void *, void *), void *);
+void		pool_cache_bootstrap(pool_cache_t, size_t, u_int, u_int, u_int,
+		    const char *, struct pool_allocator *, int,
+		    int (*)(void *, void *, int), void (*)(void *, void *),
 		    void *);
-void		pool_cache_destroy(struct pool_cache *);
-void		*pool_cache_get_paddr(struct pool_cache *, int, paddr_t *);
+void		pool_cache_destroy(pool_cache_t);
+void		*pool_cache_get_paddr(pool_cache_t, int, paddr_t *);
+void		pool_cache_put_paddr(pool_cache_t, void *, paddr_t);
+void		pool_cache_destruct_object(pool_cache_t, void *);
+void		pool_cache_invalidate(pool_cache_t);
+bool		pool_cache_reclaim(pool_cache_t);
+void		pool_cache_set_drain_hook(pool_cache_t,
+		    void (*)(void *, int), void *);
+void		pool_cache_setlowat(pool_cache_t, int);
+void		pool_cache_sethiwat(pool_cache_t, int);
+void		pool_cache_sethardlimit(pool_cache_t, int, const char *, int);
+void		pool_cache_cpu_init(struct cpu_info *);
+
 #define		pool_cache_get(pc, f) pool_cache_get_paddr((pc), (f), NULL)
-void		pool_cache_put_paddr(struct pool_cache *, void *, paddr_t);
 #define		pool_cache_put(pc, o) pool_cache_put_paddr((pc), (o), \
 				          POOL_PADDR_INVALID)
-void		pool_cache_destruct_object(struct pool_cache *, void *);
-void		pool_cache_invalidate(struct pool_cache *);
+
 #endif /* _KERNEL */
 
 #endif /* _SYS_POOL_H_ */
