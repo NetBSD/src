@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.235.2.7 2007/08/20 21:28:32 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.235.2.8 2007/09/01 12:57:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.7 2007/08/20 21:28:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235.2.8 2007/09/01 12:57:56 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -138,18 +138,16 @@ UVMMAP_EVCNT_DEFINE(ukh_free)
 const char vmmapbsy[] = "vmmapbsy";
 
 /*
- * pool for vmspace structures.
+ * cache for vmspace structures.
  */
 
-POOL_INIT(uvm_vmspace_pool, sizeof(struct vmspace), 0, 0, 0, "vmsppl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool_cache uvm_vmspace_cache;
 
 /*
- * pool for dynamically-allocated map entries.
+ * cache for dynamically-allocated map entries.
  */
 
-POOL_INIT(uvm_map_entry_pool, sizeof(struct vm_map_entry), 0, 0, 0, "vmmpepl",
-    &pool_allocator_nointr, IPL_NONE);
+static struct pool_cache uvm_map_entry_cache;
 
 MALLOC_DEFINE(M_VMMAP, "VM map", "VM map structures");
 MALLOC_DEFINE(M_VMPMAP, "VM pmap", "VM pmap");
@@ -640,7 +638,7 @@ uvm_mapent_alloc(struct vm_map *map, int flags)
 	if (VM_MAP_USE_KMAPENT(map)) {
 		me = uvm_kmapent_alloc(map, flags);
 	} else {
-		me = pool_get(&uvm_map_entry_pool, pflags);
+		me = pool_cache_get(&uvm_map_entry_cache, pflags);
 		if (__predict_false(me == NULL))
 			return NULL;
 		me->flags = 0;
@@ -695,7 +693,7 @@ uvm_mapent_free(struct vm_map_entry *me)
 	if (me->flags & UVM_MAP_KERNEL) {
 		uvm_kmapent_free(me);
 	} else {
-		pool_put(&uvm_map_entry_pool, me);
+		pool_cache_put(&uvm_map_entry_cache, me);
 	}
 }
 
@@ -836,8 +834,7 @@ uvm_map_unreference_amap(struct vm_map_entry *entry, int flags)
 
 
 /*
- * uvm_map_init: init mapping system at boot time.   note that we allocate
- * and init the static pool of struct vm_map_entry *'s for the kernel here.
+ * uvm_map_init: init mapping system at boot time.
  */
 
 void
@@ -863,6 +860,15 @@ uvm_map_init(void)
 	 */
 
 	mutex_init(&uvm_kentry_lock, MUTEX_DRIVER, IPL_VM);
+
+	/*
+	 * initialize caches.
+	 */
+
+	pool_cache_bootstrap(&uvm_map_entry_cache, sizeof(struct vm_map_entry),
+	    0, 0, 0, "vmmpepl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&uvm_vmspace_cache, sizeof(struct vmspace),
+	    0, 0, 0, "vmsppl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -3849,7 +3855,7 @@ uvmspace_alloc(vaddr_t vmin, vaddr_t vmax)
 	struct vmspace *vm;
 	UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
-	vm = pool_get(&uvm_vmspace_pool, PR_WAITOK);
+	vm = pool_cache_get(&uvm_vmspace_cache, PR_WAITOK);
 	uvmspace_init(vm, NULL, vmin, vmax);
 	UVMHIST_LOG(maphist,"<- done (vm=0x%x)", vm,0,0,0);
 	return (vm);
@@ -4063,7 +4069,7 @@ uvmspace_free(struct vmspace *vm)
 	mutex_destroy(&map->mutex);
 	rw_destroy(&map->lock);
 	pmap_destroy(map->pmap);
-	pool_put(&uvm_vmspace_pool, vm);
+	pool_cache_put(&uvm_vmspace_cache, vm);
 }
 
 /*
