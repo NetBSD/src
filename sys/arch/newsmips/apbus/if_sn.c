@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.24 2007/06/17 05:53:02 tsutsui Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.25 2007/09/01 07:32:24 dyoung Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.24 2007/06/17 05:53:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.25 2007/09/01 07:32:24 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -297,13 +297,7 @@ snioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *) data;
-		if (cmd == SIOCADDMULTI)
-			err = ether_addmulti(ifr, &sc->sc_ethercom);
-		else
-			err = ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (err == ENETRESET) {
+		if ((err = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!

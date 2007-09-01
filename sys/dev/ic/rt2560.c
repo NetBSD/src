@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.10 2007/08/26 22:45:56 dyoung Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.11 2007/09/01 07:32:28 dyoung Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.10 2007/08/26 22:45:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.11 2007/09/01 07:32:28 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2252,7 +2252,6 @@ rt2560_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rt2560_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -2272,12 +2271,8 @@ rt2560_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET)
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
 

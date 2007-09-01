@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.63 2007/08/26 22:45:58 dyoung Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.64 2007/09/01 07:32:29 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.63 2007/08/26 22:45:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.64 2007/09/01 07:32:29 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1934,10 +1934,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/* setup multicast filter, etc */
 			error = 0;
 		}

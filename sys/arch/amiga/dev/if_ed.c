@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.52 2007/08/26 22:29:28 dyoung Exp $ */
+/*	$NetBSD: if_ed.c,v 1.53 2007/09/01 07:32:22 dyoung Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.52 2007/08/26 22:29:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.53 2007/09/01 07:32:22 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -928,11 +928,7 @@ ed_ioctl(register struct ifnet *ifp, u_long command, void *data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

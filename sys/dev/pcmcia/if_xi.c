@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.61 2007/08/29 22:33:43 dyoung Exp $ */
+/*	$NetBSD: if_xi.c,v 1.62 2007/09/01 07:32:31 dyoung Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.61 2007/08/29 22:33:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.62 2007/09/01 07:32:31 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1015,10 +1015,7 @@ xi_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
