@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.2.2.6 2007/08/30 20:02:33 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.2.2.7 2007/09/01 12:55:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.6 2007/08/30 20:02:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.7 2007/09/01 12:55:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.2.2.6 2007/08/30 20:02:33 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/xcall.h>
+#include <sys/pool.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -116,6 +117,7 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	softint_init(ci);
 	xc_init_cpu(ci);
+	pool_cache_cpu_init(ci);
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 
