@@ -627,12 +627,6 @@ BUILDING
      iso-image-source
                    Perform ``make iso-image-source''.
 
-     iso-dir=directory
-                   When combined with ``iso-image'' or ``iso-image-source'',
-                   it will cause directory to be added to the CD-ROM image.
-                   If directory does not start with ``/'' then it will be made
-                   relative to RELEASEDIR.
-
      The following command line options alter the behaviour of the build.sh
      operations described above:
 
@@ -643,6 +637,12 @@ BUILDING
                build idenfitier to the name of the ``make'' wrapper script so
                that the resulting name is of the form
                ``nbmake-MACHINE-BUILDID''.
+
+     -C cddir  Set the value of CDEXTRA to cddir.  If a relative path is spec-
+               ified, it will be converted to an absolute path before being
+               used.  When combined with ``iso-image'' or
+               ``iso-image-source'', it will cause the contents of cddir to be
+               added to the CD-ROM image.
 
      -D dest   Set the value of DESTDIR to dest.  If a relative path is speci-
                fied, it will be converted to an absolute path before being
