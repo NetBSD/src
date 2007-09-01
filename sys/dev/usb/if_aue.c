@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.103 2007/08/29 22:33:43 dyoung Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.104 2007/09/01 07:32:32 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.103 2007/08/29 22:33:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.104 2007/09/01 07:32:32 dyoung Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1613,10 +1613,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->aue_ec) :
-			ether_delmulti(ifr, &sc->aue_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 #if defined(__NetBSD__)
 				workqueue_enqueue(sc->wqp,&sc->wk, NULL);
