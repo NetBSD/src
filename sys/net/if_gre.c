@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.106 2007/09/02 01:49:49 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.107 2007/09/02 01:50:58 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.106 2007/09/02 01:49:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.107 2007/09/02 01:50:58 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -891,7 +891,7 @@ gre_closef(struct file **fpp, struct lwp *l)
 }
 
 static int
-gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 {
 	u_char oproto;
 	struct file *fp;
@@ -905,20 +905,9 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sockaddr_in si;
 	const struct sockaddr *sa;
 	int error = 0;
-#ifdef COMPAT_OIFREQ
-	u_long ocmd = cmd;
-	struct oifreq *oifr = NULL;
-	struct ifreq ifrb;
 
-	cmd = compat_cvtcmd(cmd);
-	if (cmd != ocmd) {
-		oifr = data;
-		data = ifr = &ifrb;
-		ifreqo2n(oifr, ifr);
-	} else
-#endif
-		ifr = data;
-	
+	ifr = data;
+
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 	case SIOCSIFMTU:
@@ -1178,10 +1167,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = EINVAL;
 		break;
 	}
-#ifdef COMPAT_OIFREQ
-	if (cmd != ocmd)
-		ifreqn2o(oifr, ifr);
-#endif
 	mutex_exit(&sc->sc_mtx);
 	return error;
 }
