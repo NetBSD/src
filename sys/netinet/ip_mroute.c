@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.106 2007/08/31 23:40:08 dyoung Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.107 2007/09/02 03:12:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.106 2007/08/31 23:40:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.107 2007/09/02 03:12:23 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1497,7 +1497,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			splx(s);
 			return (ENOBUFS);
 		}
-		mb0 = m_copy(m, 0, M_COPYALL);
+		mb0 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 		M_PULLUP(mb0, hlen);
 		if (mb0 == NULL) {
 			free(rte, M_MRTABLE);
@@ -1539,7 +1539,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			 * Make a copy of the header to send to the user level
 			 * process
 			 */
-			mm = m_copy(m, 0, hlen);
+			mm = m_copym(m, 0, hlen, M_DONTWAIT);
 			M_PULLUP(mm, hlen);
 			if (mm == NULL)
 				goto fail1;
@@ -1776,7 +1776,8 @@ ip_mdq(struct mbuf *m, struct ifnet *ifp, struct mfc *rt)
 			if (delta > ASSERT_MSG_TIME) {
 				struct igmpmsg *im;
 				int hlen = ip->ip_hl << 2;
-				struct mbuf *mm = m_copy(m, 0, hlen);
+				struct mbuf *mm =
+				    m_copym(m, 0, hlen, M_DONTWAIT);
 
 				M_PULLUP(mm, hlen);
 				if (mm == NULL)
@@ -1873,7 +1874,7 @@ phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	 * the IP header is actually copied, not just referenced,
 	 * so that ip_output() only scribbles on the copy.
 	 */
-	mb_copy = m_copy(m, 0, M_COPYALL);
+	mb_copy = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 	M_PULLUP(mb_copy, hlen);
 	if (mb_copy == NULL)
 		return;
@@ -1910,7 +1911,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	mb_copy->m_pkthdr.len = len;
 	mb_copy->m_len = sizeof(multicast_encap_iphdr);
 
-	if ((mb_copy->m_next = m_copy(m, 0, M_COPYALL)) == NULL) {
+	if ((mb_copy->m_next = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 		m_freem(mb_copy);
 		return;
 	}
@@ -3170,7 +3171,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
      * Copy the old packet & pullup its IP header into the
      * new mbuf so we can modify it.
      */
-    mb_copy = m_copy(m, 0, M_COPYALL);
+    mb_copy = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
     if (mb_copy == NULL)
 	return NULL;
     mb_copy = m_pullup(mb_copy, ip->ip_hl << 2);
@@ -3532,7 +3533,7 @@ pim_input(struct mbuf *m, ...)
 	 * actions (e.g., send back PIM_REGISTER_STOP).
 	 * XXX: here m->m_data points to the outer IP header.
 	 */
-	mcp = m_copy(m, 0, iphlen + PIM_REG_MINLEN);
+	mcp = m_copym(m, 0, iphlen + PIM_REG_MINLEN, M_DONTWAIT);
 	if (mcp == NULL) {
 	    log(LOG_ERR,
 		"pim_input: pim register: could not copy register head\n");
