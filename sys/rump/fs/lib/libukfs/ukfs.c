@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.8 2007/09/02 13:29:50 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.9 2007/09/02 13:54:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -236,7 +236,7 @@ ukfs_namei(struct vnode *rvp, const char **pnp, u_long op,
 
 		pn += pnlen;
 	}
-	assert(flags & RUMP_NAMEI_ISLASTCN);
+	assert((rv != 0) || (flags & RUMP_NAMEI_ISLASTCN));
 	if (vp && vpp == NULL)
 		recycle(vp);
 
