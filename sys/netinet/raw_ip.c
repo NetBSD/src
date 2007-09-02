@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.98 2007/09/02 03:12:23 dyoung Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.99 2007/09/02 07:18:55 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.98 2007/09/02 03:12:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.99 2007/09/02 07:18:55 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -184,7 +184,7 @@ rip_input(struct mbuf *m, ...)
 			/* do not inject data to pcb */
 		}
 #endif /*IPSEC*/
-		else if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) != NULL) {
+		else if ((n = m_copypacket(m, M_DONTWAIT)) != NULL) {
 			if (last->inp_flags & INP_CONTROLOPTS ||
 			    last->inp_socket->so_options & SO_TIMESTAMP)
 				ip_savecontrol(last, &opts, ip, n);
