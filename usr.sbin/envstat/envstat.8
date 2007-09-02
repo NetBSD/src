@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.22 2007/08/07 10:17:17 seb Exp $
+.\"	$NetBSD: envstat.8,v 1.23 2007/09/02 21:25:24 xtraeme Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 7, 2007
+.Dd September 2, 2007
 .Dt ENVSTAT 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Nd utility to handle environmental sensors
 .Sh SYNOPSIS
 .Nm
-.Op Fl Dflx
+.Op Fl DIflx
 .Op Fl d Ar device
 .Op Fl i Ar interval
 .Op Fl m Ar critical=... critmax=... critmin=... desc=... rfact=...
@@ -70,6 +70,11 @@ Display the names of the drivers that were registered with
 the
 .Xr envsys 4
 framework, one per line.
+.It Fl I
+This flags skips the sensors with invalid state, they are showed up
+with the
+.Em N/A
+string by default.
 .It Fl d
 Display only the sensors for a given
 .Ar driver .
