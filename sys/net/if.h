@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.125 2007/08/31 21:02:15 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.126 2007/09/02 00:24:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -565,6 +565,7 @@ struct	ifreq {
 #define	ifr_buflen	ifr_ifru.ifru_b.b_buflen
 };
 
+#ifdef _KERNEL
 #define	ifreq_setdstaddr	ifreq_setaddr
 #define	ifreq_setbroadaddr	ifreq_setaddr
 #define	ifreq_getdstaddr	ifreq_getaddr
@@ -575,6 +576,7 @@ ifreq_getaddr(u_long cmd, const struct ifreq *ifr)
 {
 	return &ifr->ifr_addr;
 }
+#endif /* _KERNEL */
 
 struct ifcapreq {
 	char		ifcr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
