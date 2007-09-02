@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.107 2007/09/02 03:12:23 dyoung Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.108 2007/09/02 07:18:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.107 2007/09/02 03:12:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.108 2007/09/02 07:18:55 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1497,7 +1497,7 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 			splx(s);
 			return (ENOBUFS);
 		}
-		mb0 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+		mb0 = m_copypacket(m, M_DONTWAIT);
 		M_PULLUP(mb0, hlen);
 		if (mb0 == NULL) {
 			free(rte, M_MRTABLE);
@@ -1874,7 +1874,7 @@ phyint_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	 * the IP header is actually copied, not just referenced,
 	 * so that ip_output() only scribbles on the copy.
 	 */
-	mb_copy = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+	mb_copy = m_copypacket(m, M_DONTWAIT);
 	M_PULLUP(mb_copy, hlen);
 	if (mb_copy == NULL)
 		return;
@@ -1911,7 +1911,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	mb_copy->m_pkthdr.len = len;
 	mb_copy->m_len = sizeof(multicast_encap_iphdr);
 
-	if ((mb_copy->m_next = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
+	if ((mb_copy->m_next = m_copypacket(m, M_DONTWAIT)) == NULL) {
 		m_freem(mb_copy);
 		return;
 	}
@@ -3171,7 +3171,7 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
      * Copy the old packet & pullup its IP header into the
      * new mbuf so we can modify it.
      */
-    mb_copy = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+    mb_copy = m_copypacket(m, M_DONTWAIT);
     if (mb_copy == NULL)
 	return NULL;
     mb_copy = m_pullup(mb_copy, ip->ip_hl << 2);

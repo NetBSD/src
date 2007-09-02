@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.182 2007/09/02 03:12:23 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.183 2007/09/02 07:18:55 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.182 2007/09/02 03:12:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.183 2007/09/02 07:18:55 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1969,7 +1969,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 	struct ip *ip;
 	struct mbuf *copym;
 
-	copym = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+	copym = m_copypacket(m, M_DONTWAIT);
 	if (copym != NULL
 	 && (copym->m_flags & M_EXT || copym->m_len < sizeof(struct ip)))
 		copym = m_pullup(copym, sizeof(struct ip));
