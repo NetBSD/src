@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.11 2007/09/01 22:10:10 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.12 2007/09/02 13:29:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -73,6 +73,9 @@ rump_init()
 	rump_proc.p_cwdi = &rump_cwdi;
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_proc.p_limit = &rump_limits;
+
+	/* should be "enough" */
+	syncdelay = 0;
 
 	vfsinit();
 	bufinit();
@@ -416,10 +419,18 @@ rump_vfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 }
 
 int
-rump_vfs_root(struct mount *mp, struct vnode **vpp)
+rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 {
+	int rv;
 
-	return VFS_ROOT(mp, vpp);
+	rv = VFS_ROOT(mp, vpp);
+	if (rv)
+		return rv;
+
+	if (!lock)
+		VOP_UNLOCK(*vpp, 0);
+
+	return 0;
 }
 
 /* XXX: statvfs is different from system to system */
@@ -451,4 +462,12 @@ rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 {
 
 	return VFS_VPTOFH(vp, fid, fidsize);
+}
+
+void
+rump_bioops_sync()
+{
+
+	if (bioopsp)
+		bioopsp->io_sync(NULL);
 }
