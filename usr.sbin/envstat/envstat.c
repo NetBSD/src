@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.43 2007/08/29 16:55:17 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.44 2007/09/02 19:36:59 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ struct envsys_sensor {
 	char	desc[ENVSYS_DESCLEN];
 	char	type[ENVSYS_DESCLEN];
 	char	drvstate[ENVSYS_DESCLEN];
+	char	genstr[ENVSYS_DESCLEN];
 };
 
 static int interval, flags, width;
@@ -660,6 +661,13 @@ find_sensors(prop_array_t array)
 			    prop_string_cstring_nocopy(obj1),
 			    sizeof(gesen[gnelems].drvstate));
 
+		/* get current generic state string */
+		obj1 = prop_dictionary_get(obj, "generic-state-string");
+		if (obj1 != NULL)
+			(void)strlcpy(gesen[gnelems].genstr,
+			    prop_string_cstring_nocopy(obj1),
+			    sizeof(gesen[gnelems].genstr));
+
 		/* get current value */
 		obj1 = prop_dictionary_get(obj, "cur-value");
 		gesen[gnelems].cur_value = prop_number_integer_value(obj1);
@@ -822,8 +830,12 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 			(void)printf(": %10s\n", invalid);
 			continue;
 		}
+		
+		if (strcmp(es[i].type, "Generic string") == 0) {
 
-		if (strcmp(es[i].type, "Indicator") == 0) {
+			(void)printf(": %10s", es[i].genstr);
+
+		} else if (strcmp(es[i].type, "Indicator") == 0) {
 
 			(void)printf(": %10s", es[i].cur_value ? "ON" : "OFF");
 

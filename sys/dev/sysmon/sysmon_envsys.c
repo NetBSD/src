@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.53 2007/09/01 13:43:10 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.54 2007/09/02 19:36:59 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.53 2007/09/01 13:43:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.54 2007/09/02 19:36:59 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,6 +113,7 @@ static const struct sme_sensor_type sme_sensor_type[] = {
 	{ ENVSYS_INDICATOR,	PENVSYS_TYPE_INDICATOR,	"Indicator" },
 	{ ENVSYS_INTEGER,	PENVSYS_TYPE_INDICATOR,	"Integer" },
 	{ ENVSYS_DRIVE,		PENVSYS_TYPE_DRIVE,	"Drive" },
+	{ ENVSYS_GSTRING,	-1, 			"Generic string" },
 	{ -1,			-1,			"unknown" }
 };
 
@@ -811,6 +812,51 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		goto invalidate_sensor;
 
 	/*
+	 * Add the monitoring boolean object:
+	 *
+	 * 		...
+	 * 		<key>monitoring-supported</key>
+	 * 		<true/>
+	 *		...
+	 * 
+	 * always false on Drive, Generic strings and Indicator types.
+	 * They cannot be monitored.
+	 *
+	 */
+	if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
+	    (edata->units == ENVSYS_INDICATOR) ||
+	    (edata->units == ENVSYS_DRIVE) ||
+	    (edata->units == ENVSYS_GSTRING)) {
+		if (sme_sensor_upbool(dict, "monitoring-supported", false))
+			return;
+	} else {
+		if (sme_sensor_upbool(dict, "monitoring-supported", true))
+			return;
+	}
+
+	/*
+	 * Add the generic-state-string object for gstring sensors:
+	 *
+	 * 		...
+	 * 		<key>generic-state-string</key>
+	 * 		<string>NORMAL</string>
+	 * 		...
+	 */
+	if (edata->units == ENVSYS_GSTRING) {
+		if (strlen(edata->genstr) == 0) {
+			DPRINTF(("%s: invalid generic state string for "
+			    "sensor=%s\n", __func__, edata->desc));
+			goto invalidate_sensor;
+		}
+		if (sme_sensor_upstring(dict,
+					"generic-state-string",
+					edata->genstr))
+			goto invalidate_sensor;
+
+		goto add_sensor;
+	}
+
+	/*
 	 * add the percentage boolean object:
 	 *
 	 * 		...
@@ -821,28 +867,6 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	if (edata->flags & ENVSYS_FPERCENT)
 		if (sme_sensor_upbool(dict, "want-percentage", true))
 			return;
-
-	/*
-	 * Add the monitoring boolean object:
-	 *
-	 * 		...
-	 * 		<key>monitoring-supported</key>
-	 * 		<true/>
-	 *		...
-	 * 
-	 * always false on Drive and Indicator types, they
-	 * cannot be monitored.
-	 *
-	 */
-	if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
-	    (edata->units == ENVSYS_INDICATOR) ||
-	    (edata->units == ENVSYS_DRIVE)) {
-		if (sme_sensor_upbool(dict, "monitoring-supported", false))
-			return;
-	} else {
-		if (sme_sensor_upbool(dict, "monitoring-supported", true))
-			return;
-	}
 
 	/*
 	 * Add the drive-state object for drive sensors:
@@ -861,7 +885,9 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			return;
 	}
 
-	/* if sensor is enabled, add the following properties... */	
+	/* 
+	 * if sensor is enabled, add the following properties...
+	 */
 	if (edata->state == ENVSYS_SVALID) {
 		/*
 		 * 	...
@@ -921,6 +947,7 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 *
 	 */
 
+add_sensor:
 	if (!prop_array_set(array, sme->sme_uniqsensors - 1, dict)) {
 		DPRINTF(("%s: prop_array_add\n", __func__));
 		goto invalidate_sensor;
@@ -1035,6 +1062,22 @@ sme_update_dictionary(struct sysmon_envsys *sme)
 		error = sme_sensor_upstring(dict, "type", est[j].desc);
 		if (error)
 			break;
+
+		/*
+		 * Update the generic-state-string object for gstring
+		 * sensors, they only need the following objects:
+		 *
+		 * 	description, generic-state-string, state and type.
+		 *
+		 */
+		if (edata->units == ENVSYS_GSTRING) {
+			error = sme_sensor_upstring(dict,
+						    "generic-state-string",
+						    edata->genstr);
+			if (error)
+				break;
+			continue;
+		}
 
 		/* update sensor current value */
 		error = sme_sensor_upint32(dict,
