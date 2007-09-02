@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.25 2007/08/30 05:54:07 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.26 2007/09/02 01:49:49 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,10 @@ struct gre_softc {
 	struct uio		sc_uio;
 };
 
-#define	g_src		sc_newsoparm.sp_src
-#define	g_srcport	sc_newsoparm.sp_srcport
-#define	g_dst		sc_newsoparm.sp_dst
-#define	g_dstport	sc_newsoparm.sp_dstport
+#define	sc_src		sc_newsoparm.sp_src
+#define	sc_srcport	sc_newsoparm.sp_srcport
+#define	sc_dst		sc_newsoparm.sp_dst
+#define	sc_dstport	sc_newsoparm.sp_dstport
 
 struct gre_h {
 	u_int16_t flags;	/* GRE flags */
