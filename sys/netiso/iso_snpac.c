@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.46 2007/08/30 02:17:39 dyoung Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.47 2007/09/02 19:42:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.46 2007/08/30 02:17:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.47 2007/09/02 19:42:22 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -201,14 +201,18 @@ llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * or from a default route.
 			 */
 			if (rt->rt_flags & RTF_CLONING) {
-				struct sockaddr *sa;
+				union {
+					struct sockaddr sa;
+					struct sockaddr_dl sdl;
+					struct sockaddr_storage ss;
+				} u;
 
 				iso_setmcasts(ifp, req);
-				sa = sockaddr_dl_alloc(ifp->if_index,
-				    ifp->if_type, NULL, strlen(ifp->if_xname),
-				    NULL, ifp->if_addrlen, M_WAITOK);
-				rt_setgate(rt, sa);
-				sockaddr_free(sa);
+				sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+				    ifp->if_index, ifp->if_type,
+				    NULL, strlen(ifp->if_xname),
+				    NULL, ifp->if_addrlen);
+				rt_setgate(rt, &u.sa);
 				return;
 			}
 			if (lc != 0)
