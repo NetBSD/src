@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.30 2007/08/28 08:22:58 xtraeme Exp $
+.\"	$NetBSD: envsys.4,v 1.31 2007/09/02 20:35:03 xtraeme Exp $
 .\"
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 28, 2007
+.Dd September 2, 2007
 .Dt ENVSYS 4
 .Os
 .Sh NAME
@@ -108,6 +108,8 @@ and all available properties set on it:
 		\&<integer\&>406000\&<\&/integer\&>
 		\&<key\&>description\&<\&/key\&>
 		\&<string\&>sensor0\&<\&/string\&>
+		\&<key\&>generic-state-string\&<\&/key\&>
+		\&<string\&>NORMAL\&<\&/string\&>
 		\&<key\&>max-value\&<\&/key\&>
 		\&<integer\&>3894000\&<\&/integer\&>
 		\&<key\&>min-value\&<\&/key\&>
@@ -157,6 +159,13 @@ Critical min limit set previously by the
 Current value in the sensor.
 .It Fa description
 Description of the sensor.
+.It Fa generic-state-string
+This is a generic string that
+.Xr envstat 8
+will use to print as
+.Em current value .
+Only used in sensors with type of
+.Em ENVSYS_GSTRING .
 .It Fa max-value
 Current max value in the sensor.
 .It Fa min-value
