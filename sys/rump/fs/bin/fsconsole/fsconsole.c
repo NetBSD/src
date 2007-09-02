@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.5 2007/08/25 10:22:31 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.6 2007/09/02 13:55:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -75,6 +75,8 @@ main(int argc, char *argv[])
 
 	rv = ukfs_getdents(fs, "/", 0, buf, sizeof(buf));
 	printf("rv %d\n", rv);
+	if (rv == -1)
+		rv = 0;
 
 #ifdef __NetBSD__
 	dent = (void *)buf;
@@ -121,6 +123,8 @@ main(int argc, char *argv[])
 
 	rv = ukfs_getdents(fs, "/etc", 0, buf, sizeof(buf));
 	printf("rv %d\n", rv);
+	if (rv == -1)
+		rv = 0;
 
 #ifdef __NetBSD__
 	dent = (void *)buf;
