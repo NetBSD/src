@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.15 2007/08/30 02:17:36 dyoung Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.16 2007/09/02 19:42:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.15 2007/08/30 02:17:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.16 2007/09/02 19:42:21 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -689,19 +689,19 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 			error = (*ifp_port->if_init)(ifp_port);
 		}
 #else
-		struct sockaddr *sa;
+		union {
+			struct sockaddr sa;
+			struct sockaddr_dl sdl;
+			struct sockaddr_storage ss;
+		} u;
 		struct ifaddr ifa;
 
-		sa = sockaddr_dl_alloc(0, ifp_port->if_type, NULL, 0,
-		    port->port_origlladdr, ifp_port->if_addrlen, M_WAITOK);
-		if (sa == NULL)
-			error = ENOMEM;
-		else {
-			memset(&ifa, 0, sizeof(ifa));
-			ifa.ifa_addr = sa;
-			error = agrport_ioctl(port, SIOCSIFADDR, &ifa);
-			sockaddr_free(sa);
-		}
+		sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+		    0, ifp_port->if_type, NULL, 0,
+		    port->port_origlladdr, ifp_port->if_addrlen);
+		memset(&ifa, 0, sizeof(ifa));
+		ifa.ifa_addr = &u.sa;
+		error = agrport_ioctl(port, SIOCSIFADDR, &ifa);
 #endif
 		if (error) {
 			printf("%s: if_init error %d\n", __func__, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.127 2007/08/30 02:17:36 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.128 2007/09/02 19:42:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.127 2007/08/30 02:17:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.128 2007/09/02 19:42:22 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -405,15 +405,18 @@ arp_setgate(struct rtentry *rt, struct sockaddr *gate,
 	    satocsin(netmask)->sin_addr.s_addr != 0xffffffff)
 		rt->rt_flags |= RTF_CLONING;
 	if (rt->rt_flags & RTF_CLONING) {
-		struct sockaddr *sa;
+		union {
+			struct sockaddr sa;
+			struct sockaddr_storage ss;
+			struct sockaddr_dl sdl;
+		} u;
 		/*
 		 * Case 1: This route should come from a route to iface.
 		 */
-		sa = sockaddr_dl_alloc(ifp->if_index, ifp->if_type,
-		    NULL, namelen, NULL, addrlen, M_WAITOK);
-		rt_setgate(rt, sa);
+		sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+		    ifp->if_index, ifp->if_type, NULL, namelen, NULL, addrlen);
+		rt_setgate(rt, &u.sa);
 		gate = rt->rt_gateway;
-		sockaddr_free(sa);
 	}
 	return gate;
 }
