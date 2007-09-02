@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.20 2007/09/02 00:41:25 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.21 2007/09/02 00:44:07 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,13 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.20 2007/09/02 00:41:25 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.21 2007/09/02 00:44:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
