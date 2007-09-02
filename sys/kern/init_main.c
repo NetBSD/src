@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.312 2007/08/04 11:03:00 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.313 2007/09/02 00:41:24 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312 2007/08/04 11:03:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.313 2007/09/02 00:41:24 xtraeme Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_multiprocessor.h"
@@ -85,10 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312 2007/08/04 11:03:00 ad Exp $");
 #include "opt_ktrace.h"
 #include "opt_pax.h"
 
-#include "sysmon_taskq.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
+#include "sysmon_taskq.h"
+#include "sysmon_wdog.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -186,7 +187,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312 2007/08/04 11:03:00 ad Exp $");
 
 #include <dev/cons.h>
 
-#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0
+#if NSYSMON_ENVSYS > 0 || NSYSMON_POWER > 0 || NSYSMON_WDOG > 0
 #include <dev/sysmon/sysmonvar.h>
 #endif
 
@@ -379,6 +380,7 @@ main(void)
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
 
+	/* Initialize the system monitor subsystems. */
 #if NSYSMON_TASKQ > 0
 	sysmon_task_queue_preinit();
 #endif
@@ -390,6 +392,11 @@ main(void)
 #if NSYSMON_POWER > 0
 	sysmon_power_init();
 #endif
+
+#if NSYSMON_WDOG > 0
+	sysmon_wdog_init();
+#endif
+
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
