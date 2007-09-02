@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.6.6.1 2007/08/03 22:17:19 jmcneill Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.6.6.2 2007/09/02 12:50:36 jmcneill Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -186,4 +186,6 @@ struct wpi_softc {
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
 #endif
+
+	bool		is_scanning;
 };
