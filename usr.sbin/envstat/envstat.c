@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.44 2007/09/02 19:36:59 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.45 2007/09/02 21:25:25 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #define ENVSYS_FFLAG	0x00000002	/* show temp in farenheit */
 #define ENVSYS_LFLAG	0x00000004	/* list sensors */
 #define ENVSYS_XFLAG	0x00000008	/* externalize dictionary */
+#define ENVSYS_IFLAG 	0x00000010	/* skips invalid sensors */
 
 /*
  * Operation flags for -m.
@@ -115,34 +116,34 @@ int main(int argc, char **argv)
 
 	setprogname(argv[0]);
 
-	while ((c = getopt(argc, argv, "Dd:fi:lm:rs:w:x")) != -1) {
+	while ((c = getopt(argc, argv, "DId:fi:lm:rs:w:x")) != -1) {
 		switch (c) {
+		case 'D':	/* list registered devices */
+			flags |= ENVSYS_DFLAG;
+			break;
+		case 'I':	/* Skips invalid sensors */
+			flags |= ENVSYS_IFLAG;
+			break;
 		case 'd':	/* show sensors of a specific device */
 			mydevname = strdup(optarg);
 			if (mydevname == NULL)
 				err(ENOMEM, "out of memory");
+			break;
+		case 'f':	/* display temperature in Farenheit */
+			flags |= ENVSYS_FFLAG;
 			break;
 		case 'i':	/* wait time between intervals */
 			interval = strtoul(optarg, &endptr, 10);
 			if (*endptr != '\0')
 				errx(1, "interval must be an integer");
 			break;
-		case 'D':	/* list registered devices */
-			flags |= ENVSYS_DFLAG;
-			break;
-		case 'f':	/* display temperature in Farenheit */
-			flags |= ENVSYS_FFLAG;
-			break;
 		case 'l':	/* list sensors */
 			flags |= ENVSYS_LFLAG;
 			break;
-		case 'w':	/* width value for the lines */
-			width = strtoul(optarg, &endptr, 10);
-			if (*endptr != '\0')
-				errx(1, "width must be an integer");
-			break;
-		case 'x':	/* print the dictionary in raw format */
-			flags |= ENVSYS_XFLAG;
+		case 'm':
+			userreq = strdup(optarg);
+			if (userreq == NULL)
+				err(ENOMEM, "out of memory");
 			break;
 		case 'r':
 			/* 
@@ -155,10 +156,13 @@ int main(int argc, char **argv)
 			if (sensors == NULL)
 				err(ENOMEM, "out of memory");
 			break;
-		case 'm':
-			userreq = strdup(optarg);
-			if (userreq == NULL)
-				err(ENOMEM, "out of memory");
+		case 'w':	/* width value for the lines */
+			width = strtoul(optarg, &endptr, 10);
+			if (*endptr != '\0')
+				errx(1, "width must be an integer");
+			break;
+		case 'x':	/* print the dictionary in raw format */
+			flags |= ENVSYS_XFLAG;
 			break;
 		case '?':
 		default:
@@ -166,6 +170,9 @@ int main(int argc, char **argv)
 			/* NOTREACHED */
 		}
 	}
+
+	argc -= optind;
+	argv += optind;
 
 	if ((fd = open(_PATH_DEV_SYSMON, O_RDONLY)) == -1)
 		err(EXIT_FAILURE, "open");
@@ -824,13 +831,17 @@ print_sensors(struct envsys_sensor *es, size_t nelems)
 		if (sensors && !es[i].visible)
 			continue;
 
+		/* Do not print invalid sensors if -I is set */
+		if ((flags & ENVSYS_IFLAG) && es[i].invalid)
+			continue;
+
 		(void)printf("%*.*s", (int)maxlen, (int)maxlen, es[i].desc);
 
 		if (es[i].invalid) {
 			(void)printf(": %10s\n", invalid);
 			continue;
 		}
-		
+
 		if (strcmp(es[i].type, "Generic string") == 0) {
 
 			(void)printf(": %10s", es[i].genstr);
@@ -953,7 +964,7 @@ do {								\
 static int
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-Dflrx] ", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-DIflrx] ", getprogname());
 	(void)fprintf(stderr, "[-m ...] [-s s1,s2 ] [-w num] ");
 	(void)fprintf(stderr, "[-i num] [-d ...]\n");
 	exit(EXIT_FAILURE);
