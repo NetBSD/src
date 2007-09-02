@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467var.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: adt7467var.h,v 1.3 2007/09/02 01:41:29 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -35,11 +35,10 @@
 #define ADT7456VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.2 2005/12/11 12:21:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.3 2007/09/02 01:41:29 macallan Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
-#include <machine/autoconf.h>
 #include <dev/sysmon/sysmonvar.h>
 #include "sysmon_envsys.h"
 
