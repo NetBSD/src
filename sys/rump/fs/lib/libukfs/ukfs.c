@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.7 2007/08/21 13:57:17 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.8 2007/09/02 13:29:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@ ukfs_getrvp(struct ukfs *ukfs)
 	struct vnode *rvp;
 	int rv;
 
-	rv = rump_vfs_root(ukfs->ukfs_mp, &rvp);
+	rv = rump_vfs_root(ukfs->ukfs_mp, &rvp, 0);
 	assert(rv == 0);
 
 	return rvp;
