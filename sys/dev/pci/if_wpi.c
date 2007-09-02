@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.23 2007/09/02 11:37:30 degroote Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.24 2007/09/02 12:18:05 degroote Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.23 2007/09/02 11:37:30 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.24 2007/09/02 12:18:05 degroote Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -296,17 +296,10 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 		goto fail3;
 	}
 
-	error = wpi_alloc_tx_ring(sc, &sc->svcq, WPI_SVC_RING_COUNT, 5);
-	if (error != 0) {
-		aprint_error("%s: could not allocate service ring\n",
-			sc->sc_dev.dv_xname);
-		goto fail4;
-	}
-
 	if (wpi_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		aprint_error("%s: could not allocate Rx ring\n",
 			sc->sc_dev.dv_xname);
-		goto fail5;
+		goto fail4;
 	}
 
 	ic->ic_ifp = ifp;
@@ -380,7 +373,6 @@ wpi_attach(struct device *parent __unused, struct device *self, void *aux)
 
 	return;
 
-fail5:  wpi_free_tx_ring(sc, &sc->svcq);
 fail4:  wpi_free_tx_ring(sc, &sc->cmdq);
 fail3:  while (--ac >= 0)
 			wpi_free_tx_ring(sc, &sc->txq[ac]);
@@ -409,7 +401,6 @@ wpi_detach(struct device* self, int flags __unused)
 	for (ac = 0; ac < 4; ac++)
 		wpi_free_tx_ring(sc, &sc->txq[ac]);
 	wpi_free_tx_ring(sc, &sc->cmdq);
-	wpi_free_tx_ring(sc, &sc->svcq);
 	wpi_free_rx_ring(sc, &sc->rxq);
 	wpi_free_rpool(sc);
 	wpi_free_shared(sc);
@@ -3185,7 +3176,6 @@ wpi_stop(struct ifnet *ifp, int disable)
 	for (ac = 0; ac < 4; ac++)
 		wpi_reset_tx_ring(sc, &sc->txq[ac]);
 	wpi_reset_tx_ring(sc, &sc->cmdq);
-	wpi_reset_tx_ring(sc, &sc->svcq);
 
 	/* reset Rx ring */
 	wpi_reset_rx_ring(sc, &sc->rxq);
