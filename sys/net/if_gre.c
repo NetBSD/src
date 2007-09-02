@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.108 2007/09/02 07:01:41 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.109 2007/09/02 07:03:22 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.108 2007/09/02 07:01:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.109 2007/09/02 07:03:22 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -813,8 +813,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 static int
 gre_kick(struct gre_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_if;
-
 	if (!sc->sc_running)
 		return EBUSY;
 	gre_wakeup(sc);
