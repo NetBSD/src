@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.119 2007/08/30 02:17:38 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.120 2007/09/02 19:42:22 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.119 2007/08/30 02:17:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.120 2007/09/02 19:42:22 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1175,17 +1175,21 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 */
 		if ((rt->rt_flags & RTF_CLONING) ||
 		    ((rt->rt_flags & RTF_LLINFO) && !ln)) {
-			struct sockaddr *sa;
+			union {
+				struct sockaddr sa;
+				struct sockaddr_dl sdl;
+				struct sockaddr_storage ss;
+			} u;
 			/*
 			 * Case 1: This route should come from a route to
 			 * interface (RTF_CLONING case) or the route should be
 			 * treated as on-link but is currently not
 			 * (RTF_LLINFO && !ln case).
 			 */
-			sa = sockaddr_dl_alloc(ifp->if_index, ifp->if_type,
-			    NULL, namelen, NULL, addrlen, M_WAITOK);
-			rt_setgate(rt, sa);
-			sockaddr_free(sa);
+			sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+			    ifp->if_index, ifp->if_type,
+			    NULL, namelen, NULL, addrlen);
+			rt_setgate(rt, &u.sa);
 			gate = rt->rt_gateway;
 			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
 			    __LINE__, (void *)rt->_rt_key);
