@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.16 2007/08/30 23:46:29 xtraeme Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.17 2007/09/02 00:41:25 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -126,6 +126,8 @@ int	sysmonioctl_wdog(dev_t, u_long, void *, int, struct lwp *);
 
 int     sysmon_wdog_register(struct sysmon_wdog *);
 void    sysmon_wdog_unregister(struct sysmon_wdog *);
+
+void	sysmon_wdog_init(void);
 
 /*****************************************************************************
  * Power management support
