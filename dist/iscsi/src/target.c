@@ -889,7 +889,11 @@ login_command_t(target_session_t * sess, uint8_t *header)
 		}
 		set_session_parameters(sess->params, &sess->sess_params);
 #ifdef HAVE_SYSLOG_H
-		syslog(LOG_INFO, "> %s login from %s on %s", param_val(sess->params, "SessionType"), param_val(sess->params, "InitiatorName"), sess->initiator);
+		syslog(LOG_INFO, "> %s login from %s on %s disk %d",
+			param_val(sess->params, "SessionType"),
+			param_val(sess->params, "InitiatorName"),
+			sess->initiator,
+			sess->d);
 #endif
 	}
 	/* No errors */
@@ -1610,7 +1614,7 @@ target_listen(globals_t *gp)
 		/* Accept connection, spawn session thread, and */
 		/* clean up old threads */
 
-		sess->d = i = iscsi_waitfor_connection(gp->sockv, gp->sockc, gp->config_file, &newconn);
+		i = iscsi_waitfor_connection(gp->sockv, gp->sockc, gp->config_file, &newconn);
 
 		iscsi_trace(TRACE_NET_DEBUG, __FILE__, __LINE__, "waiting for %s connection on port %hd\n",
 			iscsi_address_family(gp->famv[i]),
