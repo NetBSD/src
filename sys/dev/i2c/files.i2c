@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.15 2007/08/18 11:26:36 tnn Exp $
+#	$NetBSD: files.i2c,v 1.16 2007/09/02 01:40:46 macallan Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -93,9 +93,10 @@ attach	ddc at iic
 file	dev/i2c/ddc.c			ddc | ddc_read_edid
 
 # SGS TDA7433 audio mixer
-device sgsmix
-attach sgsmix at iic
+device	sgsmix
+attach	sgsmix at iic
 file	dev/i2c/sgsmix.c		sgsmix needs-flag
+defflag	opt_sgsmix.h	SGSMIX_DEBUG
 
 # Xbox PIC16LC System Management Controller
 device	pic16lc: sysmon_envsys
