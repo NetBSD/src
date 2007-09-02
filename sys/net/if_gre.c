@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.107 2007/09/02 01:50:58 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.108 2007/09/02 07:01:41 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.107 2007/09/02 01:50:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.108 2007/09/02 07:01:41 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -288,7 +288,6 @@ static int
 gre_socreate1(struct gre_softc *sc, struct lwp *l, struct socket **sop)
 {
 	int rc;
-	struct gre_soparm *sp = &sc->sc_soparm;
 	struct mbuf *m;
 	struct sockaddr_in *sin;
 	struct socket *so;
@@ -351,7 +350,7 @@ out:
 		gre_sodestroy(sop);
 	else {
 		sc->sc_if.if_flags |= IFF_RUNNING;
-		*sp = sc->sc_newsoparm;
+		sc->sc_soparm = sc->sc_newsoparm;
 	}
 
 	return rc;
@@ -430,6 +429,7 @@ gre_reconf(struct gre_softc *sc, struct socket *so, lwp_t *l)
 
 shutdown:
 	if (sc->sc_soparm.sp_fp != NULL) {
+		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		gre_upcall_remove(so);
 		gre_closef(&sc->sc_soparm.sp_fp, curlwp);
 		so = NULL;
@@ -443,11 +443,10 @@ shutdown:
 	else if (sc->sc_proto != IPPROTO_UDP)
 		GRE_DPRINTF(sc, "%s: not UDP\n", __func__);
 	else if (sc->sc_newsoparm.sp_fp != NULL) {
-		sc->sc_soparm.sp_fp = sc->sc_newsoparm.sp_fp;
+		sc->sc_soparm = sc->sc_newsoparm;
 		sc->sc_newsoparm.sp_fp = NULL;
 		so = (struct socket *)sc->sc_soparm.sp_fp->f_data;
 		gre_upcall_add(so, sc);
-		sc->sc_soparm = sc->sc_newsoparm;
 	} else if (gre_socreate1(sc, l, &so) != 0) {
 		sc->sc_dying = 1;
 		goto shutdown;
@@ -482,7 +481,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 		    sc->sc_proto != IPPROTO_UDP || so == NULL ||
 		    sc->sc_newsoparm.sp_fp != NULL ||
 		    memcmp(&sc->sc_soparm, &sc->sc_newsoparm,
-		           sizeof(sc->sc_soparm)) != 0)
+		           offsetof(struct gre_soparm, sp_fp)) != 0)
 			so = gre_reconf(sc, so, l);
 		mutex_exit(&sc->sc_mtx);
 		if (so != NULL) {
@@ -816,8 +815,7 @@ gre_kick(struct gre_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
-	if (sc->sc_proto == IPPROTO_UDP && (ifp->if_flags & IFF_UP) == IFF_UP &&
-	    !sc->sc_running)
+	if (!sc->sc_running)
 		return EBUSY;
 	gre_wakeup(sc);
 	return 0;
@@ -1102,6 +1100,8 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		 */
 
 		fp->f_count++;
+		GRE_DPRINTF(sc, "%s: l.%d f_count %d\n", __func__, __LINE__,
+		    fp->f_count);
 		FILE_UNUSE(fp, NULL);
 
 		while (sc->sc_newsoparm.sp_fp != NULL && error == 0) {
