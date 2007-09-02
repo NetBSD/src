@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.161 2007/08/02 13:12:35 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.162 2007/09/02 03:12:23 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.161 2007/08/02 13:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.162 2007/09/02 03:12:23 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -528,7 +528,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		m->m_len += len;
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
-		m->m_next = m_copy(m0, off, (int) len);
+		m->m_next = m_copym(m0, off, (int) len, M_DONTWAIT);
 		if (m->m_next == NULL) {
 			m_freem(m);
 			return (ENOBUFS);
