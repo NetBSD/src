@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.22 2007/08/17 16:52:52 pavel Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.23 2007/09/03 01:29:51 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.22 2007/08/17 16:52:52 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.23 2007/09/03 01:29:51 xtraeme Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -196,6 +196,7 @@ sysmon_power_init(void)
 static int
 sysmon_queue_power_event(power_event_t *pev)
 {
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
 
 	if (sysmon_power_event_queue_count == SYSMON_MAX_POWER_EVENTS)
 		return 0;
@@ -217,6 +218,8 @@ sysmon_queue_power_event(power_event_t *pev)
 static int
 sysmon_get_power_event(power_event_t *pev)
 {
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+
 	if (sysmon_power_event_queue_count == 0)
 		return 0;
 
@@ -236,6 +239,8 @@ sysmon_get_power_event(power_event_t *pev)
 static void
 sysmon_power_event_queue_flush(void)
 {
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+
 	sysmon_power_event_queue_head = 0;
 	sysmon_power_event_queue_tail = 0;
 	sysmon_power_event_queue_count = 0;
@@ -252,6 +257,8 @@ sysmon_power_daemon_task(void *pev_data, int event)
 {
 	power_event_t pev;
 	int rv, error = 0;
+
+	KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
 
 	/*
 	 * If a power management daemon is connected, then simply
