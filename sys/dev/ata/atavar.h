@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.69.2.2 2006/12/30 20:47:54 yamt Exp $	*/
+/*	$NetBSD: atavar.h,v 1.69.2.3 2007/09/03 14:33:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -369,7 +369,7 @@ struct ata_channel {
 	struct ata_queue *ch_queue;
 
 	/* The channel kernel thread */
-	struct proc *ch_thread;
+	struct lwp *ch_thread;
 };
 
 /*

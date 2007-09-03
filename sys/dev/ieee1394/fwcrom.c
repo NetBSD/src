@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.3.6.2 2006/06/21 15:04:08 yamt Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.3.6.3 2007/09/03 14:35:25 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,11 +35,16 @@
 
 #ifdef __FreeBSD__
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/firewire/fwcrom.c,v 1.12 2004/08/29 13:45:55 simokawa Exp $");
+__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwcrom.c,v 1.14 2006/02/04 21:37:39 imp Exp $");
 #endif
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
+
+#ifdef _BOOT
+#include <stand.h>
+#include <bootstrap.h>
+#else
 #if defined(_KERNEL) || defined(TEST)
 #include <sys/queue.h>
 #endif
@@ -53,6 +58,7 @@ __FBSDID("$FreeBSD: src/sys/dev/firewire/fwcrom.c,v 1.12 2004/08/29 13:45:55 sim
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
+#endif
 #endif
 
 #ifdef __DragonFly__
@@ -80,7 +86,7 @@ __FBSDID("$FreeBSD: src/sys/dev/firewire/fwcrom.c,v 1.12 2004/08/29 13:45:55 sim
 #endif
 
 #define MAX_ROM (1024 - sizeof(uint32_t) * 5)
-#define CROM_END(cc) ((vm_offset_t)(cc)->stack[0].dir + MAX_ROM - 1)
+#define CROM_END(cc) ((char *)(cc)->stack[0].dir + MAX_ROM - 1)
 
 void
 crom_init_context(struct crom_context *cc, uint32_t *p)
@@ -140,7 +146,7 @@ again:
 	ptr->index ++;
 check:
 	if (ptr->index < ptr->dir->crc_len &&
-			(vm_offset_t)crom_get(cc) <= CROM_END(cc))
+			(char *)crom_get(cc) <= CROM_END(cc))
 		return;
 
 	if (ptr->index < ptr->dir->crc_len)
@@ -210,13 +216,13 @@ crom_parse_text(struct crom_context *cc, char *buf, int len)
 
 	reg = crom_get(cc);
 	if (reg->key != CROM_TEXTLEAF ||
-			(vm_offset_t)(reg + reg->val) > CROM_END(cc)) {
+			(char *)(reg + reg->val) > CROM_END(cc)) {
 		strncpy(buf, nullstr, len);
 		return;
 	}
 	textleaf = (struct csrtext *)(reg + reg->val);
 
-	if ((vm_offset_t)textleaf + textleaf->crc_len > CROM_END(cc)) {
+	if ((char *)textleaf + textleaf->crc_len > CROM_END(cc)) {
 		strncpy(buf, nullstr, len);
 		return;
 	}
@@ -253,7 +259,7 @@ crom_crc(uint32_t *ptr, int len)
 	return((uint16_t) crc);
 }
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_BOOT)
 static void
 crom_desc_specver(uint32_t spec, uint32_t ver, char *buf, int len)
 {
@@ -401,7 +407,7 @@ crom_desc(struct crom_context *cc, char *buf, int len)
 }
 #endif
 
-#if defined(_KERNEL) || defined(TEST)
+#if defined(_KERNEL) || defined(_BOOT) || defined(TEST)
 
 int
 crom_add_quad(struct crom_chunk *chunk, uint32_t entry)
@@ -424,12 +430,12 @@ crom_add_entry(struct crom_chunk *chunk, int key, int val)
 	union {
 		struct csrreg reg;
 		uint32_t i;
-	} u;
+	} foo;
 	
-	u.reg.key = key;
-	u.reg.val = val;
+	foo.reg.key = key;
+	foo.reg.val = val;
 
-	return(crom_add_quad(chunk, u.i));
+	return(crom_add_quad(chunk, foo.i));
 }
 
 int
@@ -507,7 +513,7 @@ crom_load(struct crom_src *src, uint32_t *buf, int maxlen)
 {
 	struct crom_chunk *chunk, *parent;
 	struct csrhdr *hdr;
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_BOOT)
 	uint32_t *ptr;
 	int i;
 #endif
@@ -548,7 +554,7 @@ crom_load(struct crom_src *src, uint32_t *buf, int maxlen)
 	hdr->crc_len = count - 1;
 	hdr->crc = crom_crc(&buf[1], hdr->crc_len);
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_BOOT)
 	/* byte swap */
 	ptr = buf;
 	for (i = 0; i < count; i ++) {

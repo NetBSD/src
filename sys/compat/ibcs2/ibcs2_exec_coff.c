@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.14.2.2 2006/12/30 20:47:32 yamt Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.14.2.3 2007/09/03 14:32:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.14.2.2 2006/12/30 20:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.14.2.3 2007/09/03 14:32:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ coff_find_section(l, vp, fp, sh, s_type)
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
 		siz = sizeof(struct coff_scnhdr);
-		error = vn_rdwr(UIO_READ, vp, (caddr_t) sh,
+		error = vn_rdwr(UIO_READ, vp, (void *) sh,
 		    siz, pos, UIO_SYSSPACE, IO_NODELOCKED, l->l_cred,
 		    &resid, NULL);
 		if (error) {
@@ -540,8 +540,7 @@ coff_load_shlib(l, path, epp)
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	CHECK_ALT_EXIST(l, NULL, path);	/* path is on kernel stack */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_SYSSPACE, path, l);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("coff_load_shlib: can't find library %s\n", path));
@@ -549,7 +548,7 @@ coff_load_shlib(l, path, epp)
 	}
 
 	siz = sizeof(struct coff_filehdr);
-	error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t) fhp, siz, 0,
+	error = vn_rdwr(UIO_READ, nd.ni_vp, (void *) fhp, siz, 0,
 	    UIO_SYSSPACE, IO_NODELOCKED, l->l_cred, &resid, l);
 	if (error) {
 	    DPRINTF(("filehdr read error %d\n", error));

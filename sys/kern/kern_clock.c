@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.94.4.3 2007/02/26 09:11:04 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.94.4.4 2007/09/03 14:40:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.3 2007/02/26 09:11:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.4 2007/09/03 14:40:43 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -93,12 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.3 2007/02/26 09:11:04 yamt Exp
 #include <sys/timex.h>
 #include <sys/sched.h>
 #include <sys/time.h>
-#ifdef __HAVE_TIMECOUNTER
 #include <sys/timetc.h>
-#endif
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <sys/cpu.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -352,8 +348,6 @@ volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
 #endif /* !__HAVE_TIMECOUNTER */
 
-void	*softclock_si;
-
 #ifdef __HAVE_TIMECOUNTER
 static u_int get_intr_timecount(struct timecounter *);
 
@@ -384,10 +378,6 @@ initclocks(void)
 {
 	int i;
 
-	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
-	if (softclock_si == NULL)
-		panic("initclocks: unable to register softclock intr");
-
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
 	 * code do its bit.
@@ -404,13 +394,12 @@ initclocks(void)
 	cpu_initclocks();
 
 	/*
-	 * Compute profhz/stathz/rrticks, and fix profhz if needed.
+	 * Compute profhz and stathz, fix profhz if needed.
 	 */
 	i = stathz ? stathz : hz;
 	if (profhz == 0)
 		profhz = i;
 	psratio = profhz / i;
-	rrticks = hz / 10;
 	if (schedhz == 0) {
 		/* 16Hz is best */
 		statscheddiv = i / 16;
@@ -513,7 +502,7 @@ hardclock(struct clockframe *frame)
 #endif /* __HAVE_TIMECOUNTER */
 
 	l = curlwp;
-	if (l) {
+	if (!CURCPU_IDLE_P()) {
 		p = l->l_proc;
 		/*
 		 * Run current process's virtual and profile time, as needed.
@@ -533,8 +522,8 @@ hardclock(struct clockframe *frame)
 	 */
 	if (stathz == 0)
 		statclock(frame);
-	if ((--ci->ci_schedstate.spc_rrticks) <= 0)
-		roundrobin(ci);
+	if ((--ci->ci_schedstate.spc_ticks) <= 0)
+		sched_tick(ci);
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -878,165 +867,7 @@ hardclock(struct clockframe *frame)
 	 * very low CPU priority, so we don't keep the relatively high
 	 * clock interrupt priority any longer than necessary.
 	 */
-	if (callout_hardclock())
-		softintr_schedule(softclock_si);
-}
-
-#ifdef __HAVE_TIMECOUNTER
-/*
- * Compute number of hz until specified time.  Used to compute second
- * argument to callout_reset() from an absolute time.
- */
-int
-hzto(struct timeval *tvp)
-{
-	struct timeval now, tv;
-
-	tv = *tvp;	/* Don't modify original tvp. */
-	getmicrotime(&now);
-	timersub(&tv, &now, &tv);
-	return tvtohz(&tv);
-}
-#endif /* __HAVE_TIMECOUNTER */
-
-/*
- * Compute number of ticks in the specified amount of time.
- */
-int
-tvtohz(struct timeval *tv)
-{
-	unsigned long ticks;
-	long sec, usec;
-
-	/*
-	 * If the number of usecs in the whole seconds part of the time
-	 * difference fits in a long, then the total number of usecs will
-	 * fit in an unsigned long.  Compute the total and convert it to
-	 * ticks, rounding up and adding 1 to allow for the current tick
-	 * to expire.  Rounding also depends on unsigned long arithmetic
-	 * to avoid overflow.
-	 *
-	 * Otherwise, if the number of ticks in the whole seconds part of
-	 * the time difference fits in a long, then convert the parts to
-	 * ticks separately and add, using similar rounding methods and
-	 * overflow avoidance.  This method would work in the previous
-	 * case, but it is slightly slower and assumes that hz is integral.
-	 *
-	 * Otherwise, round the time difference down to the maximum
-	 * representable value.
-	 *
-	 * If ints are 32-bit, then the maximum value for any timeout in
-	 * 10ms ticks is 248 days.
-	 */
-	sec = tv->tv_sec;
-	usec = tv->tv_usec;
-
-	if (usec < 0) {
-		sec--;
-		usec += 1000000;
-	}
-
-	if (sec < 0 || (sec == 0 && usec <= 0)) {
-		/*
-		 * Would expire now or in the past.  Return 0 ticks.
-		 * This is different from the legacy hzto() interface,
-		 * and callers need to check for it.
-		 */
-		ticks = 0;
-	} else if (sec <= (LONG_MAX / 1000000))
-		ticks = (((sec * 1000000) + (unsigned long)usec + (tick - 1))
-		    / tick) + 1;
-	else if (sec <= (LONG_MAX / hz))
-		ticks = (sec * hz) +
-		    (((unsigned long)usec + (tick - 1)) / tick) + 1;
-	else
-		ticks = LONG_MAX;
-
-	if (ticks > INT_MAX)
-		ticks = INT_MAX;
-
-	return ((int)ticks);
-}
-
-#ifndef __HAVE_TIMECOUNTER
-/*
- * Compute number of hz until specified time.  Used to compute second
- * argument to callout_reset() from an absolute time.
- */
-int
-hzto(struct timeval *tv)
-{
-	unsigned long ticks;
-	long sec, usec;
-	int s;
-
-	/*
-	 * If the number of usecs in the whole seconds part of the time
-	 * difference fits in a long, then the total number of usecs will
-	 * fit in an unsigned long.  Compute the total and convert it to
-	 * ticks, rounding up and adding 1 to allow for the current tick
-	 * to expire.  Rounding also depends on unsigned long arithmetic
-	 * to avoid overflow.
-	 *
-	 * Otherwise, if the number of ticks in the whole seconds part of
-	 * the time difference fits in a long, then convert the parts to
-	 * ticks separately and add, using similar rounding methods and
-	 * overflow avoidance.  This method would work in the previous
-	 * case, but it is slightly slower and assume that hz is integral.
-	 *
-	 * Otherwise, round the time difference down to the maximum
-	 * representable value.
-	 *
-	 * If ints are 32-bit, then the maximum value for any timeout in
-	 * 10ms ticks is 248 days.
-	 */
-	s = splclock();
-	sec = tv->tv_sec - time.tv_sec;
-	usec = tv->tv_usec - time.tv_usec;
-	splx(s);
-
-	if (usec < 0) {
-		sec--;
-		usec += 1000000;
-	}
-
-	if (sec < 0 || (sec == 0 && usec <= 0)) {
-		/*
-		 * Would expire now or in the past.  Return 0 ticks.
-		 * This is different from the legacy hzto() interface,
-		 * and callers need to check for it.
-		 */
-		ticks = 0;
-	} else if (sec <= (LONG_MAX / 1000000))
-		ticks = (((sec * 1000000) + (unsigned long)usec + (tick - 1))
-		    / tick) + 1;
-	else if (sec <= (LONG_MAX / hz))
-		ticks = (sec * hz) +
-		    (((unsigned long)usec + (tick - 1)) / tick) + 1;
-	else
-		ticks = LONG_MAX;
-
-	if (ticks > INT_MAX)
-		ticks = INT_MAX;
-
-	return ((int)ticks);
-}
-#endif /* !__HAVE_TIMECOUNTER */
-
-/*
- * Compute number of ticks in the specified amount of time.
- */
-int
-tstohz(struct timespec *ts)
-{
-	struct timeval tv;
-
-	/*
-	 * usec has great enough resolution for hz, so convert to a
-	 * timeval and use tvtohz() above.
-	 */
-	TIMESPEC_TO_TIMEVAL(&tv, ts);
-	return tvtohz(&tv);
+	callout_hardclock();
 }
 
 /*
@@ -1049,7 +880,7 @@ void
 startprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	if ((p->p_stflag & PST_PROFIL) == 0) {
 		p->p_stflag |= PST_PROFIL;
@@ -1069,7 +900,7 @@ void
 stopprofclock(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+	KASSERT(mutex_owned(&p->p_stmutex));
 
 	if (p->p_stflag & PST_PROFIL) {
 		p->p_stflag &= ~PST_PROFIL;
@@ -1128,6 +959,16 @@ proftick(struct clockframe *frame)
 }
 #endif
 
+void
+schedclock(struct lwp *l)
+{
+
+	if ((l->l_flag & LW_IDLE) != 0)
+		return;
+
+	sched_schedclock(l);
+}
+
 /*
  * Statistics clock.  Grab profile sample, and if divider reaches 0,
  * do process and kernel statistics.
@@ -1158,11 +999,17 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	if ((p = (l ? l->l_proc : NULL)) != NULL)
+	if ((l->l_flag & LW_IDLE) != 0) {
+		/*
+		 * don't account idle lwps as swapper.
+		 */
+		p = NULL;
+	} else {
+		p = l->l_proc;
 		mutex_spin_enter(&p->p_stmutex);
-	if (CLKF_USERMODE(frame)) {
-		KASSERT(p != NULL);
+	}
 
+	if (CLKF_USERMODE(frame)) {
 		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0) {
@@ -1194,8 +1041,10 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && (p->p_stflag & PST_PROFIL))
+		if (p != NULL && profsrc == PROFSRC_CLOCK &&
+		    (p->p_stflag & PST_PROFIL)) {
 			addupc_intr(l, LWP_PC(l));
+		}
 #endif
 		if (--spc->spc_pscnt > 0) {
 			if (p != NULL)
@@ -1214,31 +1063,34 @@ statclock(struct clockframe *frame)
 		 * so that we know how much of its real time was spent
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
-		if (CLKF_INTR(frame)) {
-			if (p != NULL)
+		if (CLKF_INTR(frame) || (l->l_flag & LW_INTR) != 0) {
+			if (p != NULL) {
 				p->p_iticks++;
+			}
 			spc->spc_cp_time[CP_INTR]++;
 		} else if (p != NULL) {
 			p->p_sticks++;
 			spc->spc_cp_time[CP_SYS]++;
-		} else
+		} else {
 			spc->spc_cp_time[CP_IDLE]++;
+		}
 	}
 	spc->spc_pscnt = psdiv;
 
 	if (p != NULL) {
-		++p->p_cpticks;
+		++l->l_cpticks;
 		mutex_spin_exit(&p->p_stmutex);
+	}
 
-		/*
-		 * If no separate schedclock is provided, call it here
-		 * at about 16 Hz.
-		 */
-		if (schedhz == 0)
-			if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-				schedclock(l);
-				ci->ci_schedstate.spc_schedticks = statscheddiv;
-			}
+	/*
+	 * If no separate schedclock is provided, call it here
+	 * at about 16 Hz.
+	 */
+	if (schedhz == 0) {
+		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
+			schedclock(l);
+			ci->ci_schedstate.spc_schedticks = statscheddiv;
+		}
 	}
 }
 
@@ -1639,5 +1491,11 @@ getmicrotime(struct timeval *tvp)
 	s = splclock();
 	*tvp = time;
 	splx(s);
+}
+
+u_int64_t
+tc_getfrequency(void)
+{
+	return hz;
 }
 #endif /* !__HAVE_TIMECOUNTER */

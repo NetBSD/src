@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.42.4.3 2007/02/26 09:09:20 yamt Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.42.4.4 2007/09/03 14:32:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.42.4.3 2007/02/26 09:09:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.42.4.4 2007/09/03 14:32:22 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -71,9 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.42.4.3 2007/02/26 09:09:20 yamt Ex
 /*
  * Most ioctl command are just converted to their NetBSD values,
  * and passed on. The ones that take structure pointers and (flag)
- * values need some massaging. This is done the usual way by
- * allocating stackgap memory, letting the actual ioctl call do its
- * work there and converting back the data afterwards.
+ * values need some massaging.
  */
 int
 linux_sys_ioctl(l, v, retval)
@@ -84,7 +82,7 @@ linux_sys_ioctl(l, v, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	int error;
 

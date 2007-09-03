@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.25 2005/02/04 02:10:47 perry Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.25.6.1 2007/09/03 14:38:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.25 2005/02/04 02:10:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ledma.c,v 1.25.6.1 2007/09/03 14:38:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -384,7 +384,7 @@ leattach_ledma(parent, self, aux)
 
 	/* Map DMA buffer into kernel space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
-			       (caddr_t *)&sc->sc_mem,
+			       (void **)&sc->sc_mem,
 			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s @ ledma: DMA buffer map error %d\n",
 			self->dv_xname, error);

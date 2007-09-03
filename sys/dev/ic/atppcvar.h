@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.6 2005/02/27 00:27:00 perry Exp $ */
+/* $NetBSD: atppcvar.h,v 1.6.4.1 2007/09/03 14:34:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -95,7 +95,7 @@ extern int atppc_verbose;
 /* Single softintr callback entry */
 struct atppc_handler_node {
 	void (*func)(void *);
-	void * arg;
+	void *arg;
 	SLIST_ENTRY(atppc_handler_node) entries;
 };
 
@@ -120,7 +120,7 @@ struct atppc_softc {
 	struct device * child;
 
         /* Opaque handle used for interrupt handler establishment */
-	void * sc_ieh;
+	void *sc_ieh;
 
 	/* List of soft interrupts to call */
 	SLIST_HEAD(handler_list, atppc_handler_node) sc_handler_listhead;
@@ -141,9 +141,9 @@ struct atppc_softc {
 	int (*sc_dma_start)(struct atppc_softc *, void *, u_int, u_int8_t);
 	int (*sc_dma_finish)(struct atppc_softc *);
 	int (*sc_dma_abort)(struct atppc_softc *);
-	int (*sc_dma_malloc)(struct device *, caddr_t *, bus_addr_t *,
+	int (*sc_dma_malloc)(struct device *, void **, bus_addr_t *,
 		bus_size_t);
-	void (*sc_dma_free)(struct device *, caddr_t *, bus_addr_t *,
+	void (*sc_dma_free)(struct device *, void **, bus_addr_t *,
 		bus_size_t);
 
 	/* Microsequence related members */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.3.2.2 2007/02/26 09:11:05 yamt Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.3.2.3 2007/09/03 14:40:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.3.2.2 2007/02/26 09:11:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.3.2.3 2007/09/03 14:40:43 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -85,7 +85,6 @@ coredump(struct lwp *l, const char *pattern)
 	kauth_cred_t		cred;
 	struct nameidata	nd;
 	struct vattr		vattr;
-	struct mount		*mp;
 	struct coredump_iostate	io;
 	int			error, error1;
 	char			*name = NULL;
@@ -93,7 +92,7 @@ coredump(struct lwp *l, const char *pattern)
 	p = l->l_proc;
 	vm = p->p_vmspace;
 
-	rw_enter(&proclist_lock, RW_READER);	/* p_session */
+	mutex_enter(&proclist_lock);	/* p_session */
 	mutex_enter(&p->p_mutex);
 
 	/*
@@ -102,7 +101,7 @@ coredump(struct lwp *l, const char *pattern)
 	 */
 	if ((p->p_flag & PK_SUGID) && !security_setidcore_dump) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return EPERM;
 	}
 
@@ -114,7 +113,7 @@ coredump(struct lwp *l, const char *pattern)
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return EFBIG;		/* better error code? */
 	}
 
@@ -125,7 +124,6 @@ coredump(struct lwp *l, const char *pattern)
 	kauth_cred_hold(p->p_cred);
 	cred = p->p_cred;
 
-restart:
 	/*
 	 * The core dump will go in the current working directory.  Make
 	 * sure that the directory is still there and that the mount flags
@@ -136,7 +134,7 @@ restart:
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
 		error = EPERM;
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		goto done;
 	}
 
@@ -150,7 +148,7 @@ restart:
 	}
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&p->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (error)
 		goto done;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
@@ -158,18 +156,6 @@ restart:
 	    S_IRUSR | S_IWUSR)) != 0)
 		goto done;
 	vp = nd.ni_vp;
-
-	if (vn_start_write(vp, &mp, V_NOWAIT) != 0) {
-		VOP_UNLOCK(vp, 0);
-		if ((error = vn_close(vp, FWRITE, cred, l)) != 0)
-			goto done;
-		if ((error = vn_start_write(NULL, &mp,
-		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
-			goto done;
-		rw_enter(&proclist_lock, RW_READER);	/* p_session */
-		mutex_enter(&p->p_mutex);
-		goto restart;
-	}
 
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
@@ -199,7 +185,6 @@ restart:
 	error = (*p->p_execsw->es_coredump)(l, &io);
  out:
 	VOP_UNLOCK(vp, 0);
-	vn_finished_write(mp, 0);
 	error1 = vn_close(vp, FWRITE, cred, l);
 	if (error == 0)
 		error = error1;
@@ -216,7 +201,7 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 	char		*d, *end;
 	int		i;
 
-	LOCK_ASSERT(rw_read_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	for (s = src, d = dst, end = d + len; *s != '\0'; s++) {
 		if (*s == '%') {

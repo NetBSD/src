@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.8 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.8.10.1 2007/09/03 14:36:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct dmamem {
 	bus_dma_segment_t *segs;
 	int		nsegs;
 	int		rsegs;
-	caddr_t		kaddr;
+	void *		kaddr;
 	bus_dmamap_t    map;
 };
 

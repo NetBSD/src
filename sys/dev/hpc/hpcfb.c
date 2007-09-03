@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.32.2.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.32.2.3 2007/09/03 14:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.32.2.2 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.32.2.3 2007/09/03 14:34:00 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -180,14 +180,13 @@ int	hpcfbmatch(struct device *, struct cfdata *, void *);
 void	hpcfbattach(struct device *, struct device *, void *);
 int	hpcfbprint(void *, const char *);
 
-int	hpcfb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int	hpcfb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	hpcfb_mmap(void *, void *, off_t, int);
 
 void	hpcfb_refresh_screen(struct hpcfb_softc *);
 void	hpcfb_doswitch(struct hpcfb_softc *);
 
 #ifdef HPCFB_JUMP
-static void	hpcfb_create_thread(void *);
 static void	hpcfb_thread(void *);
 #endif /* HPCFB_JUMP */
 
@@ -318,7 +317,7 @@ hpcfbattach(struct device *parent,
 
 	sc->sc_polling = 0; /* XXX */
 	sc->sc_mapping = 0; /* XXX */
-	callout_init(&sc->sc_switch_callout);
+	callout_init(&sc->sc_switch_callout, 0);
 
 	/* Add a power hook to power management */
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
@@ -338,28 +337,20 @@ hpcfbattach(struct device *parent,
 	/*
 	 * Create a kernel thread to scroll,
 	 */
-	kthread_create(hpcfb_create_thread, sc);
+	if (kthread_create(PRI_NONE, 0, NULL, hpcfb_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		/*
+		 * We were unable to create the HPCFB thread; bail out.
+		 */
+		sc->sc_thread = 0;
+		printf("%s: unable to create thread, kernel "
+		    "hpcfb scroll support disabled\n",
+		    sc->sc_dev.dv_xname);
+	}
 #endif /* HPCFB_JUMP */
 }
 
 #ifdef HPCFB_JUMP
-void
-hpcfb_create_thread(void *arg)
-{
-	struct hpcfb_softc *sc = arg;
-
-	if (kthread_create1(hpcfb_thread, sc, &sc->sc_thread,
-	    "%s", sc->sc_dev.dv_xname) == 0)
-		return;
-
-	/*
-	 * We were unable to create the HPCFB thread; bail out.
-	 */
-	sc->sc_thread = 0;
-	printf("%s: unable to create thread, kernel hpcfb scroll support disabled\n",
-	    sc->sc_dev.dv_xname);
-}
-
 void
 hpcfb_thread(void *arg)
 {
@@ -443,7 +434,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	ri = &dc->dc_rinfo;
 	memset(ri, 0, sizeof(struct rasops_info));
 	ri->ri_depth = fbconf->hf_pixel_width;
-	ri->ri_bits = (caddr_t)fbaddr;
+	ri->ri_bits = (void *)fbaddr;
 	ri->ri_width = fbconf->hf_width;
 	ri->ri_height = fbconf->hf_height;
 	ri->ri_stride = fbconf->hf_bytes_per_line;
@@ -497,7 +488,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
 	dc->dc_scroll = 0;
-	callout_init(&dc->dc_scroll_ch);
+	callout_init(&dc->dc_scroll_ch, 0);
 #endif /* HPCFB_JUMP */
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
 	/* hook rasops in hpcfb_ops */
@@ -554,7 +545,7 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 }
 
 int
-hpcfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+hpcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct hpcfb_softc *sc = v;

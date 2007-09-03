@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.58.2.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.58.2.3 2007/09/03 14:38:17 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.58.2.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.58.2.3 2007/09/03 14:38:17 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -587,7 +587,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	}
 	(void) strcpy(diskPtr->devname, p);
 
-	l = LIST_FIRST(&raidPtr->engine_thread->p_lwps);
+	l = raidPtr->engine_thread;
 
 	/* Let's start by claiming the component is fine and well... */
 	diskPtr->status = rf_ds_optimal;
@@ -602,7 +602,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		return (0);
 	}
 
-	error = dk_lookup(diskPtr->devname, l, &vp);
+	error = dk_lookup(diskPtr->devname, l, &vp, UIO_SYSSPACE);
 	if (error) {
 		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {
@@ -664,7 +664,7 @@ static int rf_check_label_vitals(RF_Raid_t *raidPtr, int row, int column,
 		fatal_error = 1;
 	}
 	if (mod_counter != ci_label->mod_counter) {
-		printf("%s has a different modfication count: %d %d\n",
+		printf("%s has a different modification count: %d %d\n",
 		       dev_name, mod_counter, ci_label->mod_counter);
 	}
 

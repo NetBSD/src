@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.1.16.3 2007/02/26 09:09:26 yamt Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.1.16.4 2007/09/03 14:32:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.1.16.3 2007/02/26 09:09:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.1.16.4 2007/09/03 14:32:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,7 +83,7 @@ linux32_sys_waitpid(l, v, retval)
 	struct linux_sys_wait4_args ua;
 
 	SCARG(&ua, pid) = SCARG(uap, pid);
-	SCARG(&ua, status) = NETBSD32PTR64(SCARG(uap, status));
+	SCARG(&ua, status) = SCARG_P32(uap, status);
 	SCARG(&ua, options) = SCARG(uap, options);
 	SCARG(&ua, rusage) = NULL;
 

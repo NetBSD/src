@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.4.4.2 2007/02/26 09:10:01 yamt Exp $	*/
+/*	$NetBSD: gpib.c,v 1.4.4.3 2007/09/03 14:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.4.4.2 2007/02/26 09:10:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.4.4.3 2007/09/03 14:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,7 +602,7 @@ int
 gpibioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

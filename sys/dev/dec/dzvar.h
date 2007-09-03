@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.7 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.7.6.1 2007/09/03 14:33:34 yamt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -100,8 +100,8 @@ struct	dz_softc {
 		int		(*dz_catch)(void *, int); /* Fast catch recv */
 		struct	tty *	dz_tty;		/* what we work on */
 #ifdef notyet
-		caddr_t		dz_mem;		/* pointers to clist output */
-		caddr_t		dz_end;		/*   allowing pdma action */
+		void *		dz_mem;		/* pointers to clist output */
+		void *		dz_end;		/*   allowing pdma action */
 #endif
 	} sc_dz[NDZLINE];
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.8.6.2 2007/02/26 09:10:42 yamt Exp $	*/
+/*	$NetBSD: event_var.h,v 1.8.6.3 2007/09/03 14:38:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@ struct evvar {
 	selnotify(&(ev)->ev_sel, 0); \
 	if ((ev)->ev_wanted) { \
 		(ev)->ev_wanted = 0; \
-		wakeup((caddr_t)(ev)); \
+		wakeup((void *)(ev)); \
 	} \
 	if ((ev)->ev_async) { \
 		mutex_enter(&proclist_mutex); \

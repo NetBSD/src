@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos.h,v 1.18.16.1 2006/06/21 14:59:42 yamt Exp $	*/
+/*	$NetBSD: sunos.h,v 1.18.16.2 2007/09/03 14:32:49 yamt Exp $	*/
 
 #ifndef _COMPAT_SUNOS_SUNOS_H_
 #define _COMPAT_SUNOS_SUNOS_H_
@@ -21,7 +21,7 @@ typedef char *		sunos_charp;
 
 struct sunos_nfs_args {
 	struct	sockaddr_in *addr;	/* file server address */
-	caddr_t	fh;			/* file handle to be mounted */
+	void *	fh;			/* file handle to be mounted */
 	int	flags;			/* flags */
 	int	wsize;			/* write size in bytes */
 	int	rsize;			/* read size in bytes */

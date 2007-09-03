@@ -1,4 +1,4 @@
-/* $NetBSD: xio.h,v 1.2.62.1 2006/12/30 20:49:50 yamt Exp $ */
+/* $NetBSD: xio.h,v 1.2.62.2 2007/09/03 14:39:31 yamt Exp $ */
 
 /*
  *
@@ -53,7 +53,7 @@ struct xd_iocmd {
 	u_short sectcnt;/* in,out: sector count (hw_spt on read drive param) */
 	u_short dlen;	/* in: length of data buffer (good sanity check) */
 	u_int block;	/* in: block number */
-	caddr_t dptr;	/* in: data buffer to do I/O from */
+	void *dptr;	/* in: data buffer to do I/O from */
 };
 
 #ifndef DIOSXDCMD

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.61.2.2 2006/12/30 20:49:34 yamt Exp $	*/
+/*	$NetBSD: ss.c,v 1.61.2.3 2007/09/03 14:38:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.61.2.2 2006/12/30 20:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.61.2.3 2007/09/03 14:38:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	 */
 	bufq_alloc(&ss->buf_queue, "fcfs", 0);
 
-	callout_init(&ss->sc_callout);
+	callout_init(&ss->sc_callout, 0);
 
 	/*
 	 * look for non-standard scanners with help of the quirk table
@@ -411,7 +411,6 @@ ssstrategy(struct buf *bp)
 	 * If the device has been made invalid, error out
 	 */
 	if (!device_is_active(&ss->sc_dev)) {
-		bp->b_flags |= B_ERROR;
 		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
@@ -421,7 +420,6 @@ ssstrategy(struct buf *bp)
 
 	/* If negative offset, error */
 	if (bp->b_blkno < 0) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EINVAL;
 		goto done;
 	}
@@ -490,7 +488,7 @@ ssstart(struct scsipi_periph *periph)
 		/* if a special awaits, let it proceed first */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -525,8 +523,6 @@ ssdone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
-			bp->b_flags |= B_ERROR;
 		biodone(bp);
 	}
 }
@@ -537,7 +533,7 @@ ssdone(struct scsipi_xfer *xs, int error)
  * knows about the internals of this device
  */
 int
-ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+ssioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;

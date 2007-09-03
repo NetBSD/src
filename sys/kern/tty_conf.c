@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.47.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.47.2.3 2007/09/03 14:41:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.47.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.47.2.3 2007/09/03 14:41:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ do {								\
  */
 /*ARGSUSED*/
 int
-ttynullioctl(struct tty *tp, u_long cmd, char *data, int flags, struct lwp *l)
+ttynullioctl(struct tty *tp, u_long cmd, void *data, int flags, struct lwp *l)
 {
 
 	return (EPASSTHROUGH);

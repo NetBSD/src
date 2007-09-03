@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.47.4.1 2006/06/21 15:05:02 yamt Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.47.4.2 2007/09/03 14:36:12 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.47.4.1 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.47.4.2 2007/09/03 14:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -245,9 +245,7 @@ raopen(dev, flag, fmt, l)
 
 	part = DISKPART(dev);
 
-	if ((error = lockmgr(&ra->ra_disk.dk_openlock, LK_EXCLUSIVE,
-			     NULL)) != 0)
-		return (error);
+	mutex_enter(&ra->ra_disk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -283,7 +281,7 @@ raopen(dev, flag, fmt, l)
 	 */
 #if notyet
 	while (ra->ra_state != DK_OPEN)
-		if ((error = tsleep((caddr_t)ra, (PZERO + 1) | PCATCH,
+		if ((error = tsleep((void *)ra, (PZERO + 1) | PCATCH,
 		    devopn, 0))) {
 			splx(s);
 			return (error);
@@ -301,11 +299,9 @@ raopen(dev, flag, fmt, l)
 		break;
 	}
 	ra->ra_disk.dk_openmask |= mask;
-	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
-	return 0;
-
+	error = 0;
  bad1:
-	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&ra->ra_disk.dk_openlock);
 	return (error);
 }
 
@@ -318,11 +314,9 @@ raclose(dev, flags, fmt, l)
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
-	int error, mask = (1 << DISKPART(dev));
+	int mask = (1 << DISKPART(dev));
 
-	if ((error = lockmgr(&ra->ra_disk.dk_openlock, LK_EXCLUSIVE,
-			     NULL)) != 0)
-		return (error);
+	mutex_enter(&ra->ra_disk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -350,7 +344,7 @@ raclose(dev, flags, fmt, l)
 		ra->ra_wlabel = 0;
 	}
 #endif
-	(void) lockmgr(&ra->ra_disk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&ra->ra_disk.dk_openlock);
 	return (0);
 }
 
@@ -371,7 +365,6 @@ rastrategy(bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > ra_cd.cd_ndevs || (ra = ra_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	/*
@@ -389,7 +382,6 @@ rastrategy(bp)
 	/* If disk is not online, try to put it online */
 	if (ra->ra_state == DK_CLOSED)
 		if (ra_putonline(ra) == MSCP_FAILED) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			goto done;
 		}
@@ -439,7 +431,7 @@ int
 raioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -489,9 +481,7 @@ raioctl(dev, cmd, data, flag, l)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
-			if ((error = lockmgr(&ra->ra_disk.dk_openlock,
-					     LK_EXCLUSIVE, NULL)) != 0)
-				break;
+			mutex_enter(&ra->ra_disk.dk_openlock);
 			error = setdisklabel(lp, tp, 0, 0);
 			if ((error == 0) && (cmd == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
@@ -503,8 +493,7 @@ raioctl(dev, cmd, data, flag, l)
 				error = writedisklabel(dev, rastrategy, lp,0);
 				ra->ra_wlabel = 0;
 			}
-			(void) lockmgr(&ra->ra_disk.dk_openlock,
-				       LK_RELEASE, NULL);
+			mutex_exit(&ra->ra_disk.dk_openlock);
 		}
 		break;
 
@@ -586,7 +575,7 @@ int
 radump(dev, blkno, va, size)
 	dev_t	dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t	size;
 {
 	return ENXIO;
@@ -817,14 +806,12 @@ rxstrategy(bp)
 	unit = DISKUNIT(bp->b_dev);
 	if (unit > rx_cd.cd_ndevs || (rx = rx_cd.cd_devs[unit]) == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 
 	/* If disk is not online, try to put it online */
 	if (rx->ra_state == DK_CLOSED)
 		if (rx_putonline(rx) == MSCP_FAILED) {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			goto done;
 		}
@@ -876,7 +863,7 @@ int
 rxioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -916,7 +903,7 @@ int
 rxdump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 
@@ -1019,7 +1006,7 @@ rronline(usc, mp)
 	struct rx_softc *rx = (struct rx_softc *)usc;
 	struct disklabel *dl;
 
-	wakeup((caddr_t)&rx->ra_state);
+	wakeup((void *)&rx->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to bring on line failed: ", usc->dv_xname);
 		mscp_printevent(mp);
@@ -1129,7 +1116,6 @@ rrioerror(usc, mp, bp)
 	switch (code & M_ST_MASK) {
 	/* The unit has fallen offline. Try to figure out why. */
 	case M_ST_OFFLINE:
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		ra->ra_state = DK_CLOSED;
 		if (code & M_OFFLINE_UNMOUNTED)

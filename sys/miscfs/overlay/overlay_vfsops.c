@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.30.2.3 2007/02/26 09:11:29 yamt Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.30.2.4 2007/09/03 14:41:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30.2.3 2007/02/26 09:11:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30.2.4 2007/09/03 14:41:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.30.2.3 2007/02/26 09:11:29 yamt
 #include <miscfs/overlay/overlay.h>
 #include <miscfs/genfs/layer_extern.h>
 
-int	ov_mount(struct mount *, const char *, void *,
-			  struct nameidata *, struct lwp *);
-int	ov_unmount(struct mount *, int, struct lwp *);
+VFS_PROTOS(ov);
 
 #define	NOVERLAYNODECACHE	16
 
@@ -98,11 +96,11 @@ int	ov_unmount(struct mount *, int, struct lwp *);
  * Mount overlay layer
  */
 int
-ov_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp, struct lwp *l)
+ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
+    struct lwp *l)
 {
 	int error = 0;
-	struct overlay_args args;
+	struct overlay_args *args = data;
 	struct vnode *lowerrootvp, *vp;
 	struct overlay_mount *nmp;
 	struct layer_mount *lmp;
@@ -111,19 +109,17 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	printf("ov_mount(mp = %p)\n", mp);
 #endif
 
+	if (*data_len < sizeof *args)
+		return EINVAL;
+
 	if (mp->mnt_flag & MNT_GETARGS) {
 		lmp = MOUNTTOLAYERMOUNT(mp);
 		if (lmp == NULL)
 			return EIO;
-		args.la.target = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->la.target = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	/*
-	 * Get argument
-	 */
-	error = copyin(data, &args, sizeof(struct overlay_args));
-	if (error)
-		return (error);
 
 	/*
 	 * Update is not supported
@@ -146,7 +142,6 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	memset(nmp, 0, sizeof(struct overlay_mount));
 
 	mp->mnt_data = nmp;
-	mp->mnt_leaf = lowerrootvp->v_mount->mnt_leaf;
 	nmp->ovm_vfs = lowerrootvp->v_mount;
 	if (nmp->ovm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
@@ -190,8 +185,8 @@ ov_mount(struct mount *mp, const char *path, void *data,
 	vp->v_flag |= VROOT;
 	nmp->ovm_rootvp = vp;
 
-	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
-	    UIO_USERSPACE, mp, l);
+	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -216,17 +211,7 @@ ov_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
-	/*
-	 * Clear out buffer cache.  I don't think we
-	 * ever get anything cached at this level at the
-	 * moment, but who knows...
-	 */
-#if 0
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp, 1))
-		return (EBUSY);
-#endif
-	if (overlay_rootvp->v_usecount > 1)
+	if (overlay_rootvp->v_usecount > 1 && (mntflags & MNT_FORCE) == 0)
 		return (EBUSY);
 	if ((error = vflush(mp, overlay_rootvp, flags)) != 0)
 		return (error);
@@ -273,6 +258,7 @@ const struct vnodeopv_desc * const ov_vnodeopv_descs[] = {
 
 struct vfsops overlay_vfsops = {
 	MOUNT_OVERLAY,
+	sizeof (struct overlay_args),
 	ov_mount,
 	layerfs_start,
 	ov_unmount,
@@ -289,7 +275,7 @@ struct vfsops overlay_vfsops = {
 	NULL,				/* vfs_mountroot */
 	layerfs_snapshot,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	ov_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

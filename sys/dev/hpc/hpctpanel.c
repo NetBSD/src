@@ -1,4 +1,4 @@
-/*	$NetBSD: hpctpanel.c,v 1.3.2.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: hpctpanel.c,v 1.3.2.2 2007/09/03 14:34:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.3.2.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.3.2.2 2007/09/03 14:34:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.3.2.1 2006/06/21 15:02:46 yamt Exp $
 #include <machine/platid_mask.h>
 
 int
-hpc_tpanel_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
+hpc_tpanel_ioctl(struct tpcalib_softc *sc, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct wsmouse_id *id;

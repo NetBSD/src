@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.52.2.2 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.52.2.3 2007/09/03 14:35:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52.2.2 2006/12/30 20:48:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.52.2.3 2007/09/03 14:35:15 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -204,15 +204,15 @@ void	smc91cxx_copy_tx_frame(struct smc91cxx_softc *, struct mbuf *);
 void	smc91cxx_resume(struct smc91cxx_softc *);
 void	smc91cxx_stop(struct smc91cxx_softc *);
 void	smc91cxx_watchdog(struct ifnet *);
-int	smc91cxx_ioctl(struct ifnet *, u_long, caddr_t);
+int	smc91cxx_ioctl(struct ifnet *, u_long, void *);
 
-static inline int ether_cmp(void *, void *);
+static inline int ether_cmp(const void *, const void *);
 static inline int
 ether_cmp(va, vb)
-	void *va, *vb;
+	const void *va, *vb;
 {
-	u_int8_t *a = va;
-	u_int8_t *b = vb;
+	const u_int8_t *a = va;
+	const u_int8_t *b = vb;
 
 	return ((a[5] != b[5]) || (a[4] != b[4]) || (a[3] != b[3]) ||
 		(a[2] != b[2]) || (a[1] != b[1]) || (a[0] != b[0]));
@@ -370,6 +370,8 @@ smc91cxx_attach(sc, myea)
 			  RND_TYPE_NET, 0);
 #endif
 
+	callout_init(&sc->sc_mii_callout, 0);
+
 	/* The attach is successful. */
 	sc->sc_flags |= SMC_FLAGS_ATTACHED;
 }
@@ -475,7 +477,7 @@ smc91cxx_init(sc)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
-	u_int8_t *enaddr;
+	const u_int8_t *enaddr;
 	int s, i;
 
 	s = splnet();
@@ -497,7 +499,7 @@ smc91cxx_init(sc)
 
 	/* Set the Ethernet address. */
 	SMC_SELECT_BANK(sc, 1);
-	enaddr = (u_int8_t *)LLADDR(ifp->if_sadl);
+	enaddr = (const u_int8_t *)CLLADDR(ifp->if_sadl);
 	for (i = 0; i < ETHER_ADDR_LEN; i += 2) {
 		tmp = enaddr[i + 1] << 8 | enaddr[i];
 		bus_space_write_2(bst, bsh, IAR_ADDR0_REG_W + i, tmp);
@@ -1162,7 +1164,7 @@ smc91cxx_read(sc)
 	 * is aligned.
 	 */
 	if ((sc->sc_flags & SMC_FLAGS_32BIT_READ) == 0) {
-		m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t) +
+		m->m_data = (char *) ALIGN(mtod(m, char *) +
 		    sizeof(struct ether_header)) - sizeof(struct ether_header);
 
 		eh = mtod(m, struct ether_header *);
@@ -1177,7 +1179,7 @@ smc91cxx_read(sc)
 	} else {
 		u_int8_t *dp;
 
-		m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t));
+		m->m_data = (void *) ALIGN(mtod(m, void *));
 		eh = mtod(m, struct ether_header *);
 		dp = data = mtod(m, u_int8_t *);
 		if (packetlen > 3)
@@ -1202,7 +1204,7 @@ smc91cxx_read(sc)
 		/*
 		 * Drop packet looped back from myself.
 		 */
-		if (ether_cmp(eh->ether_shost, LLADDR(ifp->if_sadl)) == 0) {
+		if (ether_cmp(eh->ether_shost, CLLADDR(ifp->if_sadl)) == 0) {
 			m_freem(m);
 			goto out;
 		}
@@ -1244,7 +1246,7 @@ int
 smc91cxx_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct smc91cxx_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1307,10 +1309,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.

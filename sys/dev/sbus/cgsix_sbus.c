@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.17.2.1 2006/06/21 15:06:47 yamt Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.17.2.2 2007/09/03 14:38:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.17.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.17.2.2 2007/09/03 14:38:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ cgsixmatch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0) ? 100 : 0;
 }
 
 
@@ -187,7 +187,10 @@ cgsixattach(parent, self, aux)
 
 	isconsole = fb_is_console(node);
 
-	/* we need the address of the framebuffer, no matter if we're console or not. */
+	/*
+	 * we need the address of the framebuffer, no matter if we're console or
+	 * not.
+	 */
 	sc->sc_ramsize = prom_getpropint(node, "fbmapped", 1024 * 1024);
 	if (sbus_bus_map(sa->sa_bustag,
 			sa->sa_slot,
@@ -197,7 +200,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map pixels\n", self->dv_xname);
 		return;
 	}
-	sc->sc_fb.fb_pixels = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh);
+	sc->sc_fb.fb_pixels = (void *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	cg6attach(sc, name, isconsole);
 }

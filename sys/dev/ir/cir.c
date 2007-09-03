@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.9.16.2 2007/02/26 09:10:14 yamt Exp $	*/
+/*	$NetBSD: cir.c,v 1.9.16.3 2007/09/03 14:35:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.9.16.2 2007/02/26 09:10:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.9.16.3 2007/09/03 14:35:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ cirwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+cirioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct cir_softc *sc;
 	int error;

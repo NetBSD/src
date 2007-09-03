@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932reg.h,v 1.3 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: dp83932reg.h,v 1.3.16.1 2007/09/03 14:34:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -246,6 +246,8 @@ struct sonic_cda32 {
 #define	IMR_LCD		(1U << 12)	/* Load CAM Done */
 #define	IMR_HBL		(1U << 13)	/* Heartbeat Lost */
 #define	IMR_BR		(1U << 14)	/* Bus Retry Occurred */
+
+#define	IMR_ALL		0x7fff
 
 #define	SONIC_ISR	0x05	/* Interrupt Status Register */
 	/* See IMR bits. */

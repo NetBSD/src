@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.68.2.1 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: ess.c,v 1.68.2.2 2007/09/03 14:35:33 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.68.2.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.68.2.2 2007/09/03 14:35:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -811,8 +811,8 @@ int
 ess_setup_sc(struct ess_softc *sc, int doinit)
 {
 
-	callout_init(&sc->sc_poll1_ch);
-	callout_init(&sc->sc_poll2_ch);
+	callout_init(&sc->sc_poll1_ch, 0);
+	callout_init(&sc->sc_poll2_ch, 0);
 
 	/* Reset the chip. */
 	if (ess_reset(sc) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.27.4.3 2007/02/26 09:09:07 yamt Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.27.4.4 2007/09/03 14:32:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.27.4.3 2007/02/26 09:09:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.27.4.4 2007/09/03 14:32:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.27.4.3 2007/02/26 09:09:07 yamt Exp 
 #include <sys/mount.h>
 #include <sys/ipc.h>
 #include <sys/user.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/mman.h>
 
 #include <machine/cpu.h>
@@ -174,12 +175,7 @@ hpux_sys_creat(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_open_args oa;
-	caddr_t sg;
-
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	SCARG(&oa, path) = SCARG(uap, path);
 	SCARG(&oa, flags) = O_CREAT | O_TRUNC | O_WRONLY;
@@ -212,9 +208,6 @@ hpux_sys_open(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sys_open_args oa;
 	int flags, nflags, error;
-	caddr_t sg;
-
-	sg = stackgap_init(p, 0);
 
 	/*
 	 * Deal with the mode flags first, since they will affect
@@ -239,14 +232,6 @@ hpux_sys_open(l, v, retval)
 		nflags |= O_EXCL;
 	if (flags & HPUXNONBLOCK)
 		nflags |= O_NDELAY;
-
-	/*
-	 * Do the alternate pathname check.
-	 */
-	if (SCARG(&oa, flags) & O_CREAT)
-		CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
-	else
-		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/*
 	 * Fill in the new arguments and call the NetBSD open(2).
@@ -335,7 +320,7 @@ hpux_sys_fcntl(l, v, retval)
 		vp = (struct vnode *)fp->f_data;
 
 		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), &hfl, sizeof (hfl));
+		error = copyin((void *)SCARG(uap, arg), &hfl, sizeof (hfl));
 		if (error)
 			return (error);
 
@@ -377,7 +362,7 @@ hpux_sys_fcntl(l, v, retval)
 		vp = (struct vnode *)fp->f_data;
 
 		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), &hfl, sizeof (hfl));
+		error = copyin((void *)SCARG(uap, arg), &hfl, sizeof (hfl));
 		if (error)
 			return (error);
 
@@ -397,7 +382,7 @@ hpux_sys_fcntl(l, v, retval)
 		hfl.hl_pid = fl.l_pid;
 		hfl.hl_type = fl.l_type;
 		hfl.hl_whence = fl.l_whence;
-		return (copyout(&hfl, (caddr_t)SCARG(uap, arg),
+		return (copyout(&hfl, (void *)SCARG(uap, arg),
 		    sizeof (hfl)));
 
 	default:
@@ -448,29 +433,17 @@ hpux_sys_fstat(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___fstat30_args fsa;
 	struct hpux_stat tmphst;
-	struct stat *st, tmpst;
-	caddr_t sg;
+	struct stat sb;
 	int error;
 
-	sg = stackgap_init(p, 0);
+	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	if (error)
+		return error;
 
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
+	bsd_to_hpux_stat(&sb, &tmphst);
 
-	SCARG(&fsa, fd) = SCARG(uap, fd);
-	SCARG(&fsa, sb) = st;
-
-	if ((error = sys___fstat30(l, &fsa, retval)))
-		return (error);
-
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
-
-	bsd_to_hpux_stat(&tmpst, &tmphst);
-
-	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat)));
+	return copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat));
 }
 
 /*
@@ -483,7 +456,7 @@ hpux_sys_stat(l, v, retval)
 	register_t *retval;
 {
 
-	return (hpux_stat1(l, v, retval, 0));
+	return (hpux_stat1(l, v, retval, FOLLOW));
 }
 
 /*
@@ -496,51 +469,34 @@ hpux_sys_lstat(l, v, retval)
 	register_t *retval;
 {
 
-	return (hpux_stat1(l, v, retval, 1));
+	return (hpux_stat1(l, v, retval, NOFOLLOW));
 }
 
 /*
  * Do the meat of stat(2) and lstat(2).
  */
 static int
-hpux_stat1(l, v, retval, dolstat)
+hpux_stat1(l, v, retval, flags)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
-	int dolstat;
+	int flags;
 {
 	struct hpux_sys_stat_args /* {
 		syscallarg(const char *) path;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___stat30_args sa;
 	struct hpux_stat tmphst;
-	struct stat *st, tmpst;
-	caddr_t sg;
+	struct stat sb;
 	int error;
 
-	sg = stackgap_init(p, 0);
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	SCARG(&sa, ub) = st;
-	SCARG(&sa, path) = SCARG(uap, path);
-
-	if (dolstat)
-		error = sys___lstat30(l, &sa, retval);
-	else
-		error = sys___stat30(l, &sa, retval);
-
+	error = do_sys_stat(l, SCARG(uap, path), flags, &sb);
 	if (error)
 		return (error);
 
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
+	bsd_to_hpux_stat(&sb, &tmphst);
 
-	bsd_to_hpux_stat(&tmpst, &tmphst);
-
-	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat)));
+	return copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat));
 }
 
 /*
@@ -556,29 +512,17 @@ hpux_sys_fstat_6x(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___fstat30_args fsa;
 	struct hpux_ostat tmphst;
-	struct stat *st, tmpst;
-	caddr_t sg;
+	struct stat sb;
 	int error;
 
-	sg = stackgap_init(p, 0);
+	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	if (error)
+		return error;
 
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
+	bsd_to_hpux_ostat(&sb, &tmphst);
 
-	SCARG(&fsa, fd) = SCARG(uap, fd);
-	SCARG(&fsa, sb) = st;
-
-	if ((error = sys___fstat30(l, &fsa, retval)))
-		return (error);
-
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
-
-	bsd_to_hpux_ostat(&tmpst, &tmphst);
-
-	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_ostat)));
+	return copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_ostat));
 }
 
 /*
@@ -594,28 +538,15 @@ hpux_sys_stat_6x(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___stat30_args sa;
 	struct hpux_ostat tmphst;
-	struct stat *st, tmpst;
-	caddr_t sg;
+	struct stat sb;
 	int error;
 
-	sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-	SCARG(&sa, ub) = st;
-	SCARG(&sa, path) = SCARG(uap, path);
-
-	if ((error = sys___stat30(l, &sa, retval)))
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	if (error)
 		return (error);
 
-	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
-		return (error);
-
-	bsd_to_hpux_ostat(&tmpst, &tmphst);
+	bsd_to_hpux_ostat(&sb, &tmphst);
 
 	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_ostat)));
 }
@@ -699,10 +630,6 @@ hpux_sys_access(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_access(l, uap, retval));
 }
@@ -719,10 +646,6 @@ hpux_sys_unlink(l, v, retval)
 	struct hpux_sys_unlink_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_unlink(l, uap, retval));
 }
@@ -739,10 +662,6 @@ hpux_sys_chdir(l, v, retval)
 	struct hpux_sys_chdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_chdir(l, uap, retval));
 }
@@ -761,11 +680,7 @@ hpux_sys_mknod(l, v, retval)
 		syscallarg(int) mode;
 		syscallarf(int) dev;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
 	struct sys_mkfifo_args bma;
-
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	/*
 	 * BSD handles FIFOs separately.
@@ -791,10 +706,6 @@ hpux_sys_chmod(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_chmod(l, uap, retval));
 }
@@ -813,10 +724,6 @@ hpux_sys_chown(l, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/* XXX What about older HP-UX executables? */
 
@@ -836,11 +743,6 @@ hpux_sys_rename(l, v, retval)
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, to));
 
 	return (sys___posix_rename(l, uap, retval));
 }
@@ -858,10 +760,6 @@ hpux_sys_mkdir(l, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 
 	return (sys_mkdir(l, uap, retval));
 }
@@ -878,10 +776,6 @@ hpux_sys_rmdir(l, v, retval)
 	struct hpux_sys_rmdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (sys_rmdir(l, uap, retval));
 }
@@ -899,11 +793,6 @@ hpux_sys_symlink(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) link;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, link));
 
 	return (sys_symlink(l, uap, retval));
 }
@@ -922,10 +811,6 @@ hpux_sys_readlink(l, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
 	return (sys_readlink(l, uap, retval));
 }
@@ -943,10 +828,6 @@ hpux_sys_truncate(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(long) length;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	return (compat_43_sys_truncate(l, uap, retval));
 }

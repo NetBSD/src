@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.1.14.1 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.1.14.2 2007/09/03 14:33:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.1.14.1 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.1.14.2 2007/09/03 14:33:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 		int j;
 		char ptype_guid_str[UUID_STR_LEN], ent_guid_str[UUID_STR_LEN];
 
-		ent = (struct gpt_ent *)((caddr_t)buf + (i * entsz));
+		ent = (struct gpt_ent *)((char *)buf + (i * entsz));
 
 		uuid_dec_le(ent->ent_type, &ptype_guid);
 		if (memcmp(&ptype_guid, &ent_type_unused,

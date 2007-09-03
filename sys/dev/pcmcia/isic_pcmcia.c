@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.28.2.1 2006/12/30 20:49:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.28.2.2 2007/09/03 14:38:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -380,8 +380,8 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 	sc->sc_freeflag2 = 0;
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
-	callout_init(&sc->sc_T3_callout);
-	callout_init(&sc->sc_T4_callout);
+	callout_init(&sc->sc_T3_callout, 0);
+	callout_init(&sc->sc_T4_callout, 0);
 #endif
 
 	/* announce chip versions */

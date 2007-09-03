@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.18.4.2 2007/02/26 09:09:34 yamt Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.18.4.3 2007/09/03 14:32:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.18.4.2 2007/02/26 09:09:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.18.4.3 2007/09/03 14:32:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,15 +93,11 @@ osf1_sys_fcntl(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_fcntl_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_fcntl_args a;
 	struct osf1_flock oflock;
 	struct flock nflock;
 	unsigned long xfl, leftovers;
-	caddr_t sg;
 	int error;
-
-	sg = stackgap_init(p, 0);
 
 	SCARG(&a, fd) = SCARG(uap, fd);
 
@@ -152,17 +148,18 @@ osf1_sys_fcntl(l, v, retval)
 			SCARG(&a, cmd) = F_SETLK;
 		else if (SCARG(uap, cmd) == OSF1_F_SETLKW)
 			SCARG(&a, cmd) = F_SETLKW;
-		SCARG(&a, arg) = stackgap_alloc(p, &sg, sizeof nflock);
 
 		error = copyin(SCARG(uap, arg), &oflock, sizeof oflock);
-		if (error == 0)
-			error = osf1_cvt_flock_to_native(&oflock, &nflock);
-		if (error == 0)
-			error = copyout(&nflock, SCARG(&a, arg),
-			    sizeof nflock);
 		if (error != 0)
-			return (error);
-		break;
+			return error;
+		error = osf1_cvt_flock_to_native(&oflock, &nflock);
+		if (error != 0)
+			return error;
+		error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(&a, cmd), &nflock);
+		if (SCARG(&a, cmd) != F_GETLK || error != 0)
+			return error;
+		osf1_cvt_flock_from_native(&nflock, &oflock);
+		return copyout(&oflock, SCARG(uap, arg), sizeof oflock);
 
 	case OSF1_F_RGETLK:		/* [lock mgr op] XXX not supported */
 	case OSF1_F_RSETLK:		/* [lock mgr op] XXX not supported */
@@ -194,15 +191,6 @@ osf1_sys_fcntl(l, v, retval)
 		xfl |= emul_flags_translate(osf1_fcntl_getsetfl_flags_rxtab,
 		    leftovers, NULL);
 		retval[0] = xfl;
-		break;
-
-	case OSF1_F_GETLK:
-		error = copyin(SCARG(&a, arg), &nflock, sizeof nflock);
-		if (error == 0) {
-			osf1_cvt_flock_from_native(&nflock, &oflock);
-			error = copyout(&oflock, SCARG(uap, arg),
-			    sizeof oflock);
-		}
 		break;
 	}
 
@@ -256,7 +244,7 @@ osf1_sys_fstat(l, v, retval)
 
 	osf1_cvt_stat_from_native(&ub, &oub);
 	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 
 	return (error);
@@ -288,7 +276,7 @@ osf1_sys_fstat2(l, v, retval)
 
 	osf1_cvt_stat2_from_native(&ub, &oub);
 	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 
 	return (error);

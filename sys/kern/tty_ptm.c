@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.4.12.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.4.12.3 2007/09/03 14:41:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.4.12.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.4.12.3 2007/09/03 14:41:15 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.4.12.2 2006/12/30 20:50:07 yamt Exp $"
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/signalvar.h>
-#include <sys/uio.h>
 #include <sys/filedesc.h>
 #include <sys/conf.h>
 #include <sys/poll.h>
@@ -92,15 +91,15 @@ pty_makedev(char ms, int minor)
 static dev_t
 pty_getfree(void)
 {
-	extern struct simplelock pt_softc_mutex;
+	extern kmutex_t pt_softc_mutex;
 	int i;
 
-	simple_lock(&pt_softc_mutex);
+	mutex_enter(&pt_softc_mutex);
 	for (i = 0; i < npty; i++) {
 		if (pty_isfree(i, 0))
 			break;
 	}
-	simple_unlock(&pt_softc_mutex);
+	mutex_exit(&pt_softc_mutex);
 	return pty_makedev('t', i);
 }
 
@@ -365,7 +364,7 @@ ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 static int
 /*ARGSUSED*/
-ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 	dev_t newdev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.9 2005/07/01 12:37:35 peter Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.9.2.1 2007/09/03 14:40:03 yamt Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
@@ -121,8 +121,13 @@ pfi_initialize(void)
 		return;
 
 	TAILQ_INIT(&pfi_statehead);
+#ifdef __NetBSD__
+	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
+	    "pfiaddrpl", &pool_allocator_nointr, IPL_NONE);
+#else
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
+#endif
 	pfi_buffer_max = 64;
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
@@ -532,9 +537,9 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 	}
 	/* mask network address bits */
 	if (net < 128)
-		((caddr_t)p)[p->pfra_net/8] &= ~(0xFF >> (p->pfra_net%8));
+		((char *)p)[p->pfra_net/8] &= ~(0xFF >> (p->pfra_net%8));
 	for (i = (p->pfra_net+7)/8; i < sizeof(p->pfra_u); i++)
-		((caddr_t)p)[i] = 0;
+		((char *)p)[i] = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.108.2.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.108.2.3 2007/09/03 14:38:18 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108.2.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.108.2.3 2007/09/03 14:38:18 yamt Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -541,7 +541,7 @@ rf_ConfigureRDFreeList(RF_ShutdownList_t **listp)
 RF_RaidAccessDesc_t *
 rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 		    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
-		    caddr_t bufPtr, void *bp, RF_RaidAccessFlags_t flags,
+		    void *bufPtr, void *bp, RF_RaidAccessFlags_t flags,
 		    const RF_AccessState_t *states)
 {
 	RF_RaidAccessDesc_t *desc;
@@ -632,16 +632,16 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
  * failures in a parity group.
  *
  * type should be read or write async_flag should be RF_TRUE or
- * RF_FALSE bp_in is a buf pointer.  void * to facilitate ignoring it
+ * RF_FALSE bp_in is a buf pointer.  void *to facilitate ignoring it
  * outside the kernel
  ********************************************************************/
 int
 rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, int async_flag,
 	    RF_RaidAddr_t raidAddress, RF_SectorCount_t numBlocks,
-	    caddr_t bufPtr, struct buf *bp, RF_RaidAccessFlags_t flags)
+	    void *bufPtr, struct buf *bp, RF_RaidAccessFlags_t flags)
 {
 	RF_RaidAccessDesc_t *desc;
-	caddr_t lbufPtr = bufPtr;
+	void *lbufPtr = bufPtr;
 
 	raidAddress += rf_raidSectorOffset;
 

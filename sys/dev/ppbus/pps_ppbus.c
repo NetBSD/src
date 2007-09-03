@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.2.4.2 2006/12/30 20:49:30 yamt Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.2.4.3 2007/09/03 14:38:09 yamt Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.2.4.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.2.4.3 2007/09/03 14:38:09 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -209,7 +209,7 @@ ppsintr(void *arg)
 }
 
 static int
-ppsioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+ppsioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
 	int error = 0;

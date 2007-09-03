@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.6.4.1 2006/06/21 15:05:02 yamt Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.6.4.2 2007/09/03 14:36:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.6.4.1 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.6.4.2 2007/09/03 14:36:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ lpt_attach_subr(sc)
 {
 
 	sc->sc_state = 0;
-	callout_init(&sc->sc_wakeup_ch);
+	callout_init(&sc->sc_wakeup_ch, 0);
 }
 
 /*
@@ -207,7 +207,7 @@ lptopen(dev, flag, mode, l)
 			return (EBUSY);
 		}
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t) sc, LPTPRI | PCATCH, "lptopen", STEP);
+		error = tsleep((void *) sc, LPTPRI | PCATCH, "lptopen", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return (error);
@@ -294,7 +294,7 @@ pushbytes(sc)
 					tic = tic + tic + 1;
 					if (tic > TIMEOUT)
 						tic = TIMEOUT;
-					error = tsleep((caddr_t) sc,
+					error = tsleep((void *) sc,
 					    LPTPRI | PCATCH, "lptpsh", tic);
 					if (error != EWOULDBLOCK)
 						return (error);
@@ -319,7 +319,7 @@ pushbytes(sc)
 				(void) lpt_intr(sc);
 				splx(s);
 			}
-			error = tsleep((caddr_t) sc, LPTPRI | PCATCH,
+			error = tsleep((void *) sc, LPTPRI | PCATCH,
 			    "lptwrite2", 0);
 			if (error)
 				return (error);
@@ -381,7 +381,7 @@ lpt_intr(sc)
 
 	if (sc->sc_count == 0) {
 		/* none, wake up the top half to get more */
-		wakeup((caddr_t) sc);
+		wakeup((void *) sc);
 	}
 
 	return (1);
@@ -392,7 +392,7 @@ int
 lptioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.212.2.3 2007/02/26 09:10:38 yamt Exp $
+$NetBSD: pcmciadevs,v 1.212.2.4 2007/09/03 14:38:05 yamt Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -159,6 +159,7 @@ product ALVARION BREEZENET	0x0001 Alvarion Ltd. BreezeNET PC-DS.11b
 /* Anycom */
 product ANYCOM LSE041		0x0004 AnyCom BlueCard LSE041 R1B
 product ANYCOM LSE039		0x0008 Anycom Bluetooth CF Card LSE039
+product ANYCOM LSE139		0x000b Anycom Bluetooth CF Card LSE139
 
 /* Archos */
 product	ARCHOS ARC_ATAPI	0x0043 MiniCD

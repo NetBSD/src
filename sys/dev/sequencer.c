@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.29.2.3 2007/02/26 09:09:56 yamt Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.29.2.4 2007/09/03 14:33:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.3 2007/02/26 09:09:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.4 2007/09/03 14:33:16 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -147,7 +147,7 @@ sequencerattach(int n)
 
 	for (n = 0; n < NSEQUENCER; n++) {
 		sc = &seqdevs[n];
-		callout_init(&sc->sc_callout);
+		callout_init(&sc->sc_callout, 0);
 		sc->sih = softintr_establish(IPL_SOFTSERIAL, seq_softintr, sc);
 	}
 }
@@ -460,7 +460,7 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+sequencerioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
@@ -529,10 +529,10 @@ sequencerioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 
 	case SEQUENCER_OUTOFBAND:
 		DPRINTFN(3, ("sequencer_ioctl: OOB=%02x %02x %02x %02x %02x %02x %02x %02x\n",
-			     *(u_char *)addr, *(u_char *)(addr+1),
-			     *(u_char *)(addr+2), *(u_char *)(addr+3),
-			     *(u_char *)(addr+4), *(u_char *)(addr+5),
-			     *(u_char *)(addr+6), *(u_char *)(addr+7)));
+			     *(u_char *)addr, *((u_char *)addr+1),
+			     *((u_char *)addr+2), *((u_char *)addr+3),
+			     *((u_char *)addr+4), *((u_char *)addr+5),
+			     *((u_char *)addr+6), *((u_char *)addr+7)));
 		if ( !(sc->flags & FWRITE ) )
 		        return EBADF;
 		error = seq_do_command(sc, (seq_event_t *)addr);
@@ -1169,19 +1169,23 @@ static struct midi_dev *
 midiseq_open(int unit, int flags)
 {
 	extern struct cfdriver midi_cd;
-	extern const struct cdevsw midi_cdevsw;
 	int error;
 	struct midi_dev *md;
 	struct midi_softc *sc;
 	struct midi_info mi;
+	int major;
+	dev_t dev;
+	
+	major = devsw_name2blk("midi", NULL, 0);
+	dev = makedev(major, unit);
 
-	midi_getinfo(makedev(0, unit), &mi);
+	midi_getinfo(dev, &mi);
 	if ( !(mi.props & MIDI_PROP_CAN_INPUT) )
 	        flags &= ~FREAD;
 	if ( 0 == ( flags & ( FREAD | FWRITE ) ) )
 	        return 0;
 	DPRINTFN(2, ("midiseq_open: %d %d\n", unit, flags));
-	error = (*midi_cdevsw.d_open)(makedev(0, unit), flags, 0, 0);
+	error = cdev_open(dev, flags, 0, 0);
 	if (error)
 		return (0);
 	sc = midi_cd.cd_devs[unit];
@@ -1202,10 +1206,14 @@ midiseq_open(int unit, int flags)
 static void
 midiseq_close(struct midi_dev *md)
 {
-	extern const struct cdevsw midi_cdevsw;
+	int major;
+	dev_t dev;
+	
+	major = devsw_name2blk("midi", NULL, 0);
+	dev = makedev(major, md->unit);
 
 	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));
-	(*midi_cdevsw.d_close)(makedev(0, md->unit), 0, 0, 0);
+	cdev_close(dev, 0, 0, 0);
 	free(md, M_DEVBUF);
 }
 

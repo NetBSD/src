@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.8.4.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf.c,v 1.8.4.2 2007/09/03 14:38:13 yamt Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.8.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.8.4.2 2007/09/03 14:38:13 yamt Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -151,7 +151,7 @@ struct rfc_softc {
 	bus_space_handle_t sc_ioh;	/* bus_space I/O handle */
 	bus_dma_tag_t sc_dmat;		/* bus_dma DMA tag */
 	bus_dmamap_t sc_dmam;		/* bus_dma DMA map */
-	caddr_t sc_bufidx;		/* current position in buffer data */
+	void *sc_bufidx;		/* current position in buffer data */
 	int sc_curchild;		/* child whos bufq is in work */
 	int sc_bytesleft;		/* bytes left to transfer */
 	u_int8_t type;			/* controller type, 1 or 2 */
@@ -565,7 +565,6 @@ rfstrategy(struct buf *buf)
 
 	i = DISKUNIT(buf->b_dev);
 	if (i >= rf_cd.cd_ndevs || (rf_sc = rf_cd.cd_devs[i]) == NULL) {
-		buf->b_flags |= B_ERROR;
 		buf->b_error = ENXIO;
 		biodone(buf);
 		return;
@@ -701,7 +700,7 @@ rfc_intr(void *intarg)
 				 * can only handle blocks that are a multiple
 				 * of the physical block size
 				 */
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			RFS_SETCMD(rf_sc->sc_state, (rfc_sc->sc_curbuf->b_flags
 			    & B_READ) != 0 ? RFS_RSEC : RFS_FBUF);
@@ -715,7 +714,7 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error reading secotr: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES) );
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			RFS_SETCMD(rf_sc->sc_state, RFS_EBUF);
 			break;
@@ -730,12 +729,13 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error writing secotr: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES) );
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			if (rfc_sc->sc_bytesleft > i) {
 				rfc_sc->sc_bytesleft -= i;
-				rfc_sc->sc_bufidx += i;
+				rfc_sc->sc_bufidx =
+				    (char *)rfc_sc->sc_bufidx + i;
 			} else {
 				biodone(rfc_sc->sc_curbuf);
 				rf_sc = get_new_buf( rfc_sc);
@@ -756,7 +756,7 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error while DMA: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES));
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			RFS_SETCMD(rf_sc->sc_state, RFS_WSEC);
 			break;
@@ -772,12 +772,13 @@ rfc_intr(void *intarg)
 				printf("rfc_intr: Error while DMA: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES));
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			if (rfc_sc->sc_bytesleft > i) {
 				rfc_sc->sc_bytesleft -= i;
-				rfc_sc->sc_bufidx += i;
+				rfc_sc->sc_bufidx =
+				    (char *)rfc_sc->sc_bufidx + i;
 			} else {
 				biodone(rfc_sc->sc_curbuf);
 				rf_sc = get_new_buf( rfc_sc);
@@ -797,7 +798,7 @@ rfc_intr(void *intarg)
 			panic("Impossible state in rfc_intr(1).\n");
 		}
 
-		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
+		if (rfc_sc->sc_curbuf->b_error != 0) {
 			/*
 			 * An error occurred while processing this buffer.
 			 * Finish it and try to get a new buffer to process.
@@ -826,7 +827,7 @@ rfc_intr(void *intarg)
 			if (i != 0) {
 				printf("rfc_intr: Error loading dmamap: %d\n",
 				i);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -838,7 +839,7 @@ rfc_intr(void *intarg)
 			    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
 			    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 1);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				bus_dmamap_unload(rfc_sc->sc_dmat,
 				rfc_sc->sc_dmam);
 			}
@@ -851,7 +852,7 @@ rfc_intr(void *intarg)
 			if (i != 0) {
 				printf("rfc_intr: Error loading dmamap: %d\n",
 				    i);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -863,7 +864,7 @@ rfc_intr(void *intarg)
 			    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
 			    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 0);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				bus_dmamap_unload(rfc_sc->sc_dmat,
 				    rfc_sc->sc_dmam);
 			}
@@ -874,7 +875,7 @@ rfc_intr(void *intarg)
 			    ((rf_sc->sc_state & RFS_DENS) == 0
 			    ? RX2_BYTE_SD : RX2_BYTE_DD);
 			if (i > RX2_TRACKS * RX2_SECTORS) {
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -883,7 +884,7 @@ rfc_intr(void *intarg)
 			    | ((rf_sc->sc_state& RFS_DENS) == 0 ? 0 : RX2CS_DD),
 			    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 0);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			break;
 		case RFS_RSEC:	/* Read Sector */
@@ -892,7 +893,7 @@ rfc_intr(void *intarg)
 			    ((rf_sc->sc_state & RFS_DENS) == 0
 			    ? RX2_BYTE_SD : RX2_BYTE_DD);
 			if (i > RX2_TRACKS * RX2_SECTORS) {
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 				break;
 			}
 			disk_busy(&rf_sc->sc_disk);
@@ -901,7 +902,7 @@ rfc_intr(void *intarg)
 			    | ((rf_sc->sc_state& RFS_DENS) == 0 ? 0 : RX2CS_DD),
 			    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
 				disk_unbusy(&rf_sc->sc_disk, 0, 1);
-				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				rfc_sc->sc_curbuf->b_error = EIO;
 			}
 			break;
 		case RFS_NOTINIT: /* Device is not open */
@@ -915,7 +916,7 @@ rfc_intr(void *intarg)
 			panic("Impossible state in rfc_intr(2).\n");
 		}
 
-		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
+		if (rfc_sc->sc_curbuf->b_error != 0) {
 			/*
 			 * An error occurred while processing this buffer.
 			 * Finish it and try to get a new buffer to process.
@@ -938,7 +939,7 @@ rfc_intr(void *intarg)
 
 
 int
-rfdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+rfdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 
 	/* A 0.5MB floppy is much to small to take a system dump... */
@@ -1090,7 +1091,7 @@ rfwrite(dev_t dev, struct uio *uio, int ioflag)
 
 
 int
-rfioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
 	struct rf_softc *rf_sc;
 	int unit;

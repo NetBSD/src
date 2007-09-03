@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.74.2.3 2007/02/26 09:10:51 yamt Exp $ */
+/* $NetBSD: wsconsio.h,v 1.74.2.4 2007/09/03 14:39:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -308,6 +308,10 @@ struct wsmouse_repeat {
 #define	WSDISPLAY_TYPE_VESA	42	/* VESA BIOS framebuffer */
 #define	WSDISPLAY_TYPE_XILFB 	43 	/* Xilinx TFT cores */
 #define WSDISPLAY_TYPE_LIGHT	44	/* SGI Light (a.k.a. Entry/Starter) */
+#define WSDISPLAY_TYPE_GENFB	45	/* generic nondescript framebuffer */
+#define WSDISPLAY_TYPE_CRIME	46	/* SGI O2 */
+#define WSDISPLAY_TYPE_PXALCD	47	/* PXA2x0 LCD controller */
+#define WSDISPLAY_TYPE_AG10	48	/* Fujitsu AG-10e */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

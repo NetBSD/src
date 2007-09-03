@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.2.18.2 2006/06/21 15:04:08 yamt Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.2.18.3 2007/09/03 14:35:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __FBSDID
-__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.c,v 1.31 2005/01/06 01:42:41 imp Exp $");
+__FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.c,v 1.32 2007/03/16 05:11:42 simokawa Exp $");
 #endif
 
 #if defined(__FreeBSD__)
@@ -216,7 +216,7 @@ struct fwmem_softc {
 static struct fw_xfer *
 fwmem_xfer_req(
 	struct fw_device *fwdev,
-	caddr_t sc,
+	void *sc,
 	int spd,
 	int slen,
 	int rlen,
@@ -245,7 +245,7 @@ fwmem_xfer_req(
 struct fw_xfer *
 fwmem_read_quad(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,
@@ -282,7 +282,7 @@ fwmem_read_quad(
 struct fw_xfer *
 fwmem_write_quad(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,
@@ -318,7 +318,7 @@ fwmem_write_quad(
 struct fw_xfer *
 fwmem_read_block(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,
@@ -356,7 +356,7 @@ fwmem_read_block(
 struct fw_xfer *
 fwmem_write_block(
 	struct fw_device *fwdev,
-	caddr_t	sc,
+	void *	sc,
 	uint8_t spd,
 	uint16_t dst_hi,
 	uint32_t dst_lo,
@@ -456,7 +456,6 @@ fwmem_biodone(struct fw_xfer *xfer)
 	if (bp->bio_error != 0) {
 		if (fwmem_debug)
 			printf("%s: err=%d\n", __func__, bp->bio_error);
-		bp->bio_flags |= BIO_ERROR;
 		bp->bio_resid = bp->bio_bcount;
 	}
 
@@ -527,7 +526,6 @@ error:
 		if (fwmem_debug)
 			printf("%s: err=%d\n", __func__, err);
 		bp->bio_error = err;
-		bp->bio_flags |= BIO_ERROR;
 		bp->bio_resid = bp->bio_bcount;
 		biodone(bp);
 	}

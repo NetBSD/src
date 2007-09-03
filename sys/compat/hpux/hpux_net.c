@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.30.16.3 2007/02/26 09:09:07 yamt Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.30.16.4 2007/09/03 14:32:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,11 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.30.16.3 2007/02/26 09:09:07 yamt Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ktrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.30.16.4 2007/09/03 14:32:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +108,7 @@ struct hpux_sys_setsockopt_args {
 	syscallarg(int) s;
 	syscallarg(int) level;
 	syscallarg(int) name;
-	syscallarg(caddr_t) val;
+	syscallarg(void *) val;
 	syscallarg(int) valsize;
 };
 
@@ -120,7 +116,7 @@ struct hpux_sys_getsockopt_args {
 	syscallarg(int) s;
 	syscallarg(int) level;
 	syscallarg(int) name;
-	syscallarg(caddr_t) val;
+	syscallarg(void *) val;
 	syscallarg(int *) avalsize;
 };
 
@@ -190,28 +186,19 @@ hpux_sys_netioctl(l, v, retval)
 	int *args, i;
 	int code;
 	int error;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
 
 	args = SCARG(uap, args);
 	code = SCARG(uap, call) - MINBSDIPCCODE;
 	if (code < 0 || code >= NUMBSDIPC || hpuxtobsdipc[code].rout == NULL)
 		return (EINVAL);
 	if ((i = hpuxtobsdipc[code].nargs * sizeof (int)) &&
-	    (error = copyin((caddr_t)args, (caddr_t)uap, (u_int)i))) {
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(l, code + MINBSDIPCCODE,
-			    code + MINBSDIPCCODE, NULL, (register_t *)uap);
-#endif
+	    (error = copyin((void *)args, (void *)uap, (u_int)i))) {
+		ktrsyscall(code + MINBSDIPCCODE, code + MINBSDIPCCODE, NULL,
+		    (register_t *)uap);
 		return (error);
 	}
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(l, code + MINBSDIPCCODE,
-		    code + MINBSDIPCCODE, NULL, (register_t *)uap);
-#endif
+	ktrsyscall(code + MINBSDIPCCODE, code + MINBSDIPCCODE, NULL,
+	    (register_t *)uap);
 	return ((*hpuxtobsdipc[code].rout)(l, uap, retval));
 }
 
@@ -264,7 +251,7 @@ hpux_sys_setsockopt(l, v, retval)
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		if ((error = copyin(SCARG(uap, val), mtod(m, void *),
 		    (u_int)SCARG(uap, valsize)))) {
 			(void) m_free(m);
 			goto out;
@@ -312,7 +299,7 @@ hpux_sys_setsockopt2(l, v, retval)
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		if ((error = copyin(SCARG(uap, val), mtod(m, void *),
 		    (u_int)SCARG(uap, valsize)))) {
 			(void) m_free(m);
 			goto out;
@@ -343,8 +330,8 @@ hpux_sys_getsockopt(l, v, retval)
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
 	if (SCARG(uap, val)) {
-		if ((error = copyin((caddr_t)SCARG(uap, avalsize),
-		    (caddr_t)&valsize, sizeof (valsize))))
+		if ((error = copyin((void *)SCARG(uap, avalsize),
+		    (void *)&valsize, sizeof (valsize))))
 			goto out;
 	} else
 		valsize = 0;
@@ -362,11 +349,11 @@ hpux_sys_getsockopt(l, v, retval)
 		}
 		if (valsize > m->m_len)
 			valsize = m->m_len;
-		error = copyout(mtod(m, caddr_t), SCARG(uap, val),
+		error = copyout(mtod(m, void *), SCARG(uap, val),
 		    (u_int)valsize);
 		if (error == 0)
-			error = copyout((caddr_t)&valsize,
-			    (caddr_t)SCARG(uap, avalsize), sizeof (valsize));
+			error = copyout((void *)&valsize,
+			    (void *)SCARG(uap, avalsize), sizeof (valsize));
 	}
  bad:
 	if (m != NULL)

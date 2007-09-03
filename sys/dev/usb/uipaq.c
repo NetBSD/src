@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.2.18.3 2007/02/26 09:10:46 yamt Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.2.18.4 2007/09/03 14:39:15 yamt Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -136,9 +136,6 @@ USB_DECLARE_DRIVER(uipaq);
 USB_MATCH(uipaq)
 {
 	USB_MATCH_START(uipaq, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	DPRINTFN(20,("uipaq: vendor=0x%x, product=0x%x\n",
 	    uaa->vendor, uaa->product));

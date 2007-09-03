@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.2.6.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.2.6.2 2007/09/03 14:34:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ mxkp_attach(struct matrixkp_softc *sc)
 {
 	u_int32_t i;
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, mxkp_poll, sc);
 	if (sc->poll_freq > hz || sc->poll_freq == 0)
 		sc->poll_freq = hz;
@@ -194,7 +194,7 @@ mxkp_set_leds(void *v, int leds)
 }
 
 int
-mxkp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mxkp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSKBDIO_GTYPE:

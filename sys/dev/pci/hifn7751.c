@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.23.2.2 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.23.2.3 2007/09/03 14:36:51 yamt Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.23.2.2 2006/12/30 20:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.23.2.3 2007/09/03 14:36:51 yamt Exp $");
 
 #include "rnd.h"
 
@@ -255,7 +255,7 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
 	int rseg;
-	caddr_t kva;
+	void *kva;
 
 	hp = hifn_lookup(pa);
 	if (hp == NULL) {
@@ -444,7 +444,7 @@ hifn_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_tickto, hifn_tick, sc);
 	timeout_add(&sc->sc_tickto, hz);
 #else
-	callout_init(&sc->sc_tickto);
+	callout_init(&sc->sc_tickto, 0);
 	callout_reset(&sc->sc_tickto, hz, hifn_tick, sc);
 #endif
 	return;
@@ -542,7 +542,7 @@ hifn_init_pubrng(struct hifn_softc *sc)
 #ifdef	__OpenBSD__
 		timeout_set(&sc->sc_rngto, hifn_rng, sc);
 #else	/* !__OpenBSD__ */
-		callout_init(&sc->sc_rngto);
+		callout_init(&sc->sc_rngto, 0);
 #endif	/* !__OpenBSD__ */
 	}
 
@@ -2461,7 +2461,7 @@ hifn_abort(struct hifn_softc *sc)
 
 			if (cmd->srcu.src_m != cmd->dstu.dst_m) {
 				m_freem(cmd->srcu.src_m);
-				crp->crp_buf = (caddr_t)cmd->dstu.dst_m;
+				crp->crp_buf = (void *)cmd->dstu.dst_m;
 			}
 
 			/* non-shared buffers cannot be restarted */
@@ -2522,7 +2522,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		if (cmd->srcu.src_m != cmd->dstu.dst_m) {
-			crp->crp_buf = (caddr_t)cmd->dstu.dst_m;
+			crp->crp_buf = (void *)cmd->dstu.dst_m;
 			totlen = cmd->src_map->dm_mapsize;
 			for (m = cmd->dstu.dst_m; m != NULL; m = m->m_next) {
 				if (totlen < m->m_len) {
@@ -2541,11 +2541,11 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
-			    cmd->sloplen, (caddr_t)&dma->slop[cmd->slopidx]);
+			    cmd->sloplen, (void *)&dma->slop[cmd->slopidx]);
 		else if (crp->crp_flags & CRYPTO_F_IOV)
 			cuio_copyback((struct uio *)crp->crp_buf,
 			    cmd->src_map->dm_mapsize - cmd->sloplen,
-			    cmd->sloplen, (caddr_t)&dma->slop[cmd->slopidx]);
+			    cmd->sloplen, (void *)&dma->slop[cmd->slopidx]);
 	}
 
 	i = dma->dstk; u = dma->dstu;
@@ -2619,7 +2619,7 @@ hifn_callback(struct hifn_softc *sc, struct hifn_command *cmd, u_int8_t *resbuf)
 				m_copyback((struct mbuf *)crp->crp_buf,
 				    crd->crd_inject, len, macbuf);
 			else if ((crp->crp_flags & CRYPTO_F_IOV) && crp->crp_mac)
-				bcopy((caddr_t)macbuf, crp->crp_mac, len);
+				bcopy((void *)macbuf, crp->crp_mac, len);
 			break;
 		}
 	}
@@ -2962,7 +2962,7 @@ hifn_callback_comp(struct hifn_softc *sc, struct hifn_command *cmd,
 	m = cmd->dstu.dst_m;
 	if (m->m_flags & M_PKTHDR)
 		m->m_pkthdr.len = olen;
-	crp->crp_buf = (caddr_t)m;
+	crp->crp_buf = (void *)m;
 	for (; m != NULL; m = m->m_next) {
 		if (olen >= m->m_len)
 			olen -= m->m_len;

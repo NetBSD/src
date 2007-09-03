@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.22.4.2 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.22.4.3 2007/09/03 14:35:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -622,8 +622,8 @@ isicattach(int flags, struct isic_softc *sc)
 #endif
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
-	callout_init(&sc->sc_T3_callout);
-	callout_init(&sc->sc_T4_callout);
+	callout_init(&sc->sc_T3_callout, 0);
+	callout_init(&sc->sc_T4_callout, 0);
 #endif
 
 	/* announce manufacturer and card type */

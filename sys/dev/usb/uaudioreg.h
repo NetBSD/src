@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.12 2004/11/05 19:08:29 kent Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.12.12.1 2007/09/03 14:39:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,13 @@ typedef struct {
 	uByte		bRefresh;
 	uByte		bSynchAddress;
 } UPACKED usb_endpoint_descriptor_audio_t;
+
+/* generic, for iteration */
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+} UPACKED uaudio_cs_descriptor_t;
 
 struct usb_audio_control_descriptor {
 	uByte		bLength;

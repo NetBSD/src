@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.24.4.3 2007/02/26 09:11:19 yamt Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.24.4.4 2007/09/03 14:41:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.4.3 2007/02/26 09:11:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.4.4 2007/09/03 14:41:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,25 +99,19 @@ static int
 cttywrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct vnode *ttyvp = cttyvp(curproc);
-	struct mount *mp;
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
-	mp = NULL;
-	if (ttyvp->v_type != VCHR &&
-	    (error = vn_start_write(ttyvp, &mp, V_WAIT | V_PCATCH)) != 0)
-		return (error);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
 	VOP_UNLOCK(ttyvp, 0);
-	vn_finished_write(mp, 0);
 	return (error);
 }
 
 /*ARGSUSED*/
 static int
-cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+cttyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct vnode *ttyvp = cttyvp(l->l_proc);
 	int rv;
@@ -127,13 +121,13 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	if (cmd == TIOCSCTTY)		/* XXX */
 		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
-		rw_enter(&proclist_lock, RW_WRITER);
+		mutex_enter(&proclist_lock);
 		if (!SESS_LEADER(l->l_proc)) {
 			l->l_proc->p_lflag &= ~PL_CONTROLT;
 			rv = 0;
 		} else
 			rv = EINVAL;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (rv);
 	}
 	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, l));

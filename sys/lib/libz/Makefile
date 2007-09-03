@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.18.1 2006/06/21 15:10:23 yamt Exp $
+#	$NetBSD: Makefile,v 1.13.18.2 2007/09/03 14:41:34 yamt Exp $
 
 LIB=	z
 NOPIC=	# defined
@@ -6,7 +6,7 @@ NOPROFILE=# defined
 
 ZDISTDIR:=${.PARSEDIR}/../../../common/dist/zlib
 
-CPPFLAGS+=	-I${ZDISTDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
+CPPFLAGS+=	-I${ZDISTDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS}
 
 .PATH.c: ${ZDISTDIR} ${.PARSEDIR}
 

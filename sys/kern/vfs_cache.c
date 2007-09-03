@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.61.12.3 2007/02/26 09:11:21 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.61.12.4 2007/09/03 14:41:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.61.12.3 2007/02/26 09:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.61.12.4 2007/09/03 14:41:20 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -87,7 +87,7 @@ TAILQ_HEAD(, namecache) nclruhead;		/* LRU chain */
 struct	nchstats nchstats;		/* cache effectiveness statistics */
 
 POOL_INIT(namecache_pool, sizeof(struct namecache), 0, 0, 0, "ncachepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 MALLOC_DEFINE(M_CACHE, "namecache", "Dynamically allocated cache entries");
 
@@ -187,7 +187,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	}
 
 	if (cnp->cn_namelen > NCHNAMLEN) {
-		/* XXXSMP - updating stats without lock; do we care? */
+		/* Unlocked, but only for stats. */
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
 		goto fail;
@@ -271,13 +271,13 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 * Check that the lock succeeded.
 	 */
 	if (error) {
-		/* XXXSMP - updating stats without lock; do we care? */
+		/* Unlocked, but only for stats. */
 		nchstats.ncs_badhits++;
 		*vpp = NULL;
 		return (-1);
 	}
 
-	/* XXXSMP - updating stats without lock; do we care? */
+	/* Unlocked, but only for stats. */
 	nchstats.ncs_goodhits++;
 	*vpp = vp;
 	return (0);
@@ -313,7 +313,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 	}
 
 	if (cnp->cn_namelen > NCHNAMLEN) {
-		/* XXXSMP - updating stats without lock; do we care? */
+		/* Unlocked, but only for stats. */
 		nchstats.ncs_long++;
 		cnp->cn_flags &= ~MAKEENTRY;
 		goto fail;

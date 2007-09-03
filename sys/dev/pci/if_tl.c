@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.70.2.2 2006/12/30 20:48:45 yamt Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.70.2.3 2007/09/03 14:37:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.70.2.2 2006/12/30 20:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.70.2.3 2007/09/03 14:37:04 yamt Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -122,7 +122,7 @@ static int tl_pci_match(struct device *, struct cfdata *, void *);
 static void tl_pci_attach(struct device *, struct device *, void *);
 static int tl_intr(void *);
 
-static int tl_ifioctl(struct ifnet *, ioctl_cmd_t, caddr_t);
+static int tl_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
 static int tl_mediachange(struct ifnet *);
 static void tl_mediastatus(struct ifnet *, struct ifmediareq *);
 static void tl_ifwatchdog(struct ifnet *);
@@ -310,8 +310,8 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	callout_init(&sc->tl_tick_ch);
-	callout_init(&sc->tl_restart_ch);
+	callout_init(&sc->tl_tick_ch, 0);
+	callout_init(&sc->tl_restart_ch, 0);
 
 	tp = tl_lookup_product(pa->pa_id);
 	if (tp == NULL)
@@ -427,7 +427,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	        PAGE_SIZE, 0, PAGE_SIZE,
 	        &sc->ctrl_segs, 1, &sc->ctrl_nsegs, BUS_DMA_NOWAIT) != 0 ||
 	    bus_dmamem_map(sc->tl_dmatag, &sc->ctrl_segs,
-		sc->ctrl_nsegs, PAGE_SIZE, (caddr_t*)&sc->ctrl,
+		sc->ctrl_nsegs, PAGE_SIZE, (void **)&sc->ctrl,
 		BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
 			printf("%s: can't allocate DMA memory for lists\n",
 			    sc->sc_dev.dv_xname);
@@ -1255,7 +1255,7 @@ static int
 tl_ifioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	ioctl_cmd_t cmd;
-	caddr_t data;
+	void *data;
 {
 	struct tl_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1357,7 +1357,7 @@ tbdinit:
 			}
 		}
 		m_copydata(mb_head, 0, mb_head->m_pkthdr.len,
-		    mtod(mn, caddr_t));
+		    mtod(mn, void *));
 		mn->m_pkthdr.len = mn->m_len = mb_head->m_pkthdr.len;
 		m_freem(mb_head);
 		mb_head = mn;

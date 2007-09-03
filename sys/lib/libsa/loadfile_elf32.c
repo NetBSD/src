@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.10.4.1 2006/06/21 15:10:23 yamt Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.10.4.2 2007/09/03 14:41:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -318,6 +318,9 @@ ELFNAMEEND(loadfile)(fd, elf, marks, flags)
 		    (IS_DATA(phdr[i]) && (flags & LOAD_DATA))) {
 
 		loadseg:
+			if (marks[MARK_DATA] == 0 && IS_DATA(phdr[i]))
+				marks[MARK_DATA] = LOADADDR(phdr[i].p_vaddr);
+
 			/* Read in segment. */
 			PROGRESS(("%s%lu", first ? "" : "+",
 			    (u_long)phdr[i].p_filesz));

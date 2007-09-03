@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.36 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.36.4.1 2007/09/03 14:38:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -145,7 +145,7 @@ struct ubinfo {
 	bus_dmamap_t ui_dmam;
 	bus_dma_segment_t ui_seg;
 	int ui_rseg;
-	caddr_t ui_vaddr;
+	void *ui_vaddr;
 	bus_addr_t ui_baddr;
 	bus_size_t ui_size;
 };

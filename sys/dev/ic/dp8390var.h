@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.26 2005/02/26 10:29:20 bsh Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.26.4.1 2007/09/03 14:34:29 yamt Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -80,7 +80,7 @@ struct dp8390_softc {
 	void	(*stop_card)(struct dp8390_softc *);
 	void	(*read_hdr)(struct dp8390_softc *, int, struct dp8390_ring *);
 	void	(*recv_int)(struct dp8390_softc *);
-	int	(*ring_copy)(struct dp8390_softc *, int, caddr_t, u_short);
+	int	(*ring_copy)(struct dp8390_softc *, int, void *, u_short);
 	int	(*write_mbuf)(struct dp8390_softc *, struct mbuf *, int);
 
 	int	(*sc_enable)(struct dp8390_softc *);
@@ -160,7 +160,7 @@ struct dp8390_softc {
 
 int	dp8390_config(struct dp8390_softc *);
 int	dp8390_intr(void *);
-int	dp8390_ioctl(struct ifnet *, u_long, caddr_t);
+int	dp8390_ioctl(struct ifnet *, u_long, void *);
 void	dp8390_start(struct ifnet *);
 void	dp8390_watchdog(struct ifnet *);
 void	dp8390_reset(struct dp8390_softc *);

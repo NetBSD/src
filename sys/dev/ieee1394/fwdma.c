@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.5.6.3 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.5.6.4 2007/09/03 14:35:26 yamt Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -74,7 +74,6 @@ __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwdma.c,v 1.7 2005/01/0
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
-#include <machine/vmparam.h>
 
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>

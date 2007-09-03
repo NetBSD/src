@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.11.4.1 2006/12/30 20:47:42 yamt Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.11.4.2 2007/09/03 14:32:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.11.4.1 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.11.4.2 2007/09/03 14:32:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -212,9 +212,9 @@ mach_semaphore_init(void)
 	LIST_INIT(&mach_semaphore_list);
 	lockinit(&mach_semaphore_list_lock, PZERO|PCATCH, "mach_sem", 0, 0);
 	pool_init(&mach_semaphore_list_pool, sizeof (struct mach_semaphore),
-	    0, 0, 0, "mach_sem_pool", NULL);
+	    0, 0, 0, "mach_sem_pool", NULL, IPL_NONE);
 	pool_init(&mach_waiting_lwp_pool, sizeof (struct mach_waiting_lwp),
-	    0, 0, 0, "mach_waitp_pool", NULL);
+	    0, 0, 0, "mach_waitp_pool", NULL, IPL_NONE);
 
 	return;
 }

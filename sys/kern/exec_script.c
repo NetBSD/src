@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.41.2.3 2007/02/26 09:11:03 yamt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.41.2.4 2007/09/03 14:40:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.41.2.3 2007/02/26 09:11:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.41.2.4 2007/09/03 14:40:39 yamt Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -203,7 +203,7 @@ check_shell:
 		epp->ep_flags |= EXEC_HASFD;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
-		fp->f_data = (caddr_t) epp->ep_vp;
+		fp->f_data = (void *) epp->ep_vp;
 		fp->f_flag = FREAD;
 		FILE_SET_MATURE(fp);
 		FILE_UNUSE(fp, l);
@@ -272,10 +272,10 @@ check_shell:
 	scriptvp = epp->ep_vp;
 	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
 
-	if ((error = check_exec(l, epp)) == 0) {
-		/* note that we've clobbered the header */
-		epp->ep_flags |= EXEC_DESTR|EXEC_HASES;
-
+	error = check_exec(l, epp);
+	/* note that we've clobbered the header */
+	epp->ep_flags |= EXEC_DESTR;
+	if (error == 0) {
 		/*
 		 * It succeeded.  Unlock the script and
 		 * close it if we aren't using it any more.
@@ -314,8 +314,6 @@ check_shell:
 #ifdef FDSCRIPTS
 fail:
 #endif
-	/* note that we've clobbered the header */
-	epp->ep_flags |= EXEC_DESTR;
 
 	/* kill the opened file descriptor, else close the file */
         if (epp->ep_flags & EXEC_HASFD) {

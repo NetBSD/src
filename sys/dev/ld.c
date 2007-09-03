@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.37.2.2 2007/02/26 09:09:54 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.37.2.3 2007/09/03 14:33:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37.2.2 2007/02/26 09:09:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37.2.3 2007/09/03 14:33:13 yamt Exp $");
 
 #include "rnd.h"
 
@@ -293,8 +293,7 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		return (ENODEV);
 	part = DISKPART(dev);
 
-	if ((error = lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&sc->sc_dk.dk_openlock);
 
 	if (sc->sc_dk.dk_openmask == 0) {
 		/* Load the partition info if not already loaded. */
@@ -321,11 +320,9 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
-	return (0);
-
+	error = 0;
  bad1:
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 	return (error);
 }
 
@@ -334,14 +331,13 @@ static int
 ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ld_softc *sc;
-	int error, part, unit;
+	int part, unit;
 
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
 	sc = device_lookup(&ld_cd, unit);
 
-	if ((error = lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&sc->sc_dk.dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -362,7 +358,7 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			sc->sc_flags &= ~LDF_VLABEL;
 	}
 
-	(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_dk.dk_openlock);
 	return (0);
 }
 
@@ -384,7 +380,7 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 
 /* ARGSUSED */
 static int
-ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
+ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 {
 	struct ld_softc *sc;
 	int part, unit, error;
@@ -396,12 +392,12 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
 	sc = device_lookup(&ld_cd, unit);
-	error = 0;
 
 	error = disk_ioctl(&sc->sc_dk, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		memcpy(addr, sc->sc_dk.dk_label, sizeof(struct disklabel));
@@ -439,9 +435,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
-		if ((error = lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE,
-				     NULL)) != 0)
-			return (error);
+		mutex_enter(&sc->sc_dk.dk_openlock);
 		sc->sc_flags |= LDF_LABELLING;
 
 		error = setdisklabel(sc->sc_dk.dk_label,
@@ -458,7 +452,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 			    sc->sc_dk.dk_cpulabel);
 
 		sc->sc_flags &= ~LDF_LABELLING;
-		(void) lockmgr(&sc->sc_dk.dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_dk.dk_openlock);
 		break;
 
 	case DIOCKLABEL:
@@ -557,7 +551,7 @@ ldstrategy(struct buf *bp)
 
 	if ((sc->sc_flags & LDF_DETACH) != 0) {
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 
 	lp = sc->sc_dk.dk_label;
@@ -568,7 +562,7 @@ ldstrategy(struct buf *bp)
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0 || bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/* If it's a null transfer, return immediately. */
@@ -606,8 +600,6 @@ ldstrategy(struct buf *bp)
 	splx(s);
 	return;
 
- bad:
-	bp->b_flags |= B_ERROR;
  done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
@@ -653,7 +645,6 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 			} else {
 				(void) BUFQ_GET(sc->sc_bufq);
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 				mutex_exit(&sc->sc_mutex);
 				biodone(bp);
@@ -669,7 +660,7 @@ void
 lddone(struct ld_softc *sc, struct buf *bp)
 {
 
-	if ((bp->b_flags & B_ERROR) != 0) {
+	if (bp->b_error != 0) {
 		diskerr(bp, "ld", "error", LOG_PRINTF, 0, sc->sc_dk.dk_label);
 		printf("\n");
 	}
@@ -778,8 +769,9 @@ ldgetdefaultlabel(struct ld_softc *sc, struct disklabel *lp)
  * Take a dump.
  */
 static int
-lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+lddump(dev_t dev, daddr_t blkno, void *vav, size_t size)
 {
+	char *va = vav;
 	struct ld_softc *sc;
 	struct disklabel *lp;
 	int unit, part, nsects, sectoff, towrt, nblk, maxblkcnt, rv;

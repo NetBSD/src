@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.6.2.2 2006/12/30 20:49:51 yamt Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.6.2.3 2007/09/03 14:39:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -105,7 +105,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.16 2006/03/29 11:19:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.62.2.20 2007/05/31 12:27:36 darrenr Exp";
 #endif
 
 #ifdef INET
@@ -195,7 +195,7 @@ aproxy_t *ap;
 			return -1;
 		}
 
-	for (a = ap_proxylist; a->apr_p; a = a->apr_next)
+	for (a = ap_proxylist; (a != NULL); a = a->apr_next)
 		if ((a->apr_p == ap->apr_p) &&
 		    !strncmp(a->apr_label, ap->apr_label,
 			     sizeof(ap->apr_label))) {
@@ -292,13 +292,14 @@ ipnat_t *nat;
 }
 
 
-int appr_ioctl(data, cmd, mode)
+int appr_ioctl(data, cmd, mode, ctx)
 caddr_t data;
 ioctlcmd_t cmd;
 int mode;
+void *ctx;
 {
 	ap_ctl_t ctl;
-	caddr_t ptr;
+	void *ptr;
 	int error;
 
 	mode = mode;	/* LINT */
@@ -310,7 +311,7 @@ int mode;
 		ptr = NULL;
 
 		if (ctl.apc_dsize > 0) {
-			KMALLOCS(ptr, caddr_t, ctl.apc_dsize);
+			KMALLOCS(ptr, void *, ctl.apc_dsize);
 			if (ptr == NULL)
 				error = ENOMEM;
 			else {
@@ -820,7 +821,7 @@ int inc;
 
 	if (ipf_proxy_debug > 8)
 		printf("appr_fixseqack: seq %x ack %x\n",
-			ntohl(tcp->th_seq), ntohl(tcp->th_ack));
+			(u_32_t)ntohl(tcp->th_seq), (u_32_t)ntohl(tcp->th_ack));
 	return ch ? 2 : 0;
 }
 #endif

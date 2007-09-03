@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.34 2005/05/30 04:21:39 christos Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.34.2.1 2007/09/03 14:39:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -88,10 +88,17 @@ usbd_status usbd_intr_transfer(usbd_xfer_handle, usbd_pipe_handle,
 void usb_detach_wait(device_ptr_t);
 void usb_detach_wakeup(device_ptr_t);
 
-const usb_descriptor_t *usb_find_desc(usbd_device_handle dev, int type,
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+} UPACKED usb_cdc_descriptor_t;
+
+const usb_cdc_descriptor_t *usb_find_desc(usbd_device_handle dev, int type,
 				      int subtype);
-const usb_descriptor_t *usb_find_desc_if(usbd_device_handle dev, int type,
+const usb_cdc_descriptor_t *usb_find_desc_if(usbd_device_handle dev, int type,
 					 int subtype,
 					 usb_interface_descriptor_t *id);
-#define USBD_SUBTYPE_ANY (~0)
+#define USBD_CDCSUBTYPE_ANY (~0)
 

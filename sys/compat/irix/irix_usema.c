@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.12.4.3 2007/02/26 09:09:12 yamt Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.12.4.4 2007/09/03 14:32:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.12.4.3 2007/02/26 09:09:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.12.4.4 2007/09/03 14:32:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/condvar.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -103,7 +104,7 @@ static struct irix_waiting_proc_rec *iur_proc_getfirst
  * at driver attach time, in irix_usemaattach().
  */
 struct vfsops irix_usema_dummy_vfsops = {
-	"usema_dummy",
+	"usema_dummy", 0,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
 	NULL,
@@ -179,17 +180,17 @@ irix_usema_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void * a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
 	u_long cmd = ap->a_command;
-	caddr_t data = ap->a_data;
+	struct irix_ioctl_usrdata *iiu = ap->a_data;
 	struct vnode *vp = ap->a_vp;
 	struct irix_usema_rec *iur;
 	struct irix_waiting_proc_rec *iwpr;
-	struct irix_ioctl_usrdata iiu;
+	void *data;
 	register_t *retval;
 	int error;
 
@@ -201,15 +202,13 @@ irix_usema_ioctl(v)
 	/*
 	 * Some ioctl commands need to set the ioctl return value. In
 	 * irix_sys_ioctl(), we copy the return value address and the
-	 * data argument to the stackgap in a struct irix_ioctl_usrdata.
+	 * original data argument to a struct irix_ioctl_usrdata.
 	 * The address of this structure is passed as the data argument
 	 * to the vnode layer. We therefore need to read this structure
 	 * to get the real data argument and the retval address.
 	 */
-	if ((error = copyin(data, &iiu, sizeof(iiu))) != 0)
-		return error;
-	data = iiu.iiu_data;
-	retval = iiu.iiu_retval;
+	data = iiu->iiu_data;
+	retval = iiu->iiu_retval;
 
 	switch (cmd) {
 	case IRIX_UIOCABLOCKQ: /* semaphore has been blocked */
@@ -224,8 +223,9 @@ irix_usema_ioctl(v)
 			return EBADF;
 
 		if ((iwpr = iur_proc_getfirst(iur)) != NULL) {
+			extern kcondvar_t select_cv;
 			iur_proc_release(iur, iwpr);
-			wakeup((void *)&selwait);
+			cv_broadcast(&select_cv);
 		}
 		break;
 

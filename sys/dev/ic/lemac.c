@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.28.2.1 2006/12/30 20:48:03 yamt Exp $ */
+/* $NetBSD: lemac.c,v 1.28.2.2 2007/09/03 14:34:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.28.2.1 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.28.2.2 2007/09/03 14:34:53 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -300,13 +300,13 @@ lemac_input(
 	}
     }
     m->m_data += 2;
-    memcpy(m->m_data, (caddr_t)&eh, sizeof(eh));
+    memcpy(m->m_data, (void *)&eh, sizeof(eh));
     if (LEMAC_USE_PIO_MODE(sc)) {
 	LEMAC_INSB(sc, LEMAC_REG_DAT, length - sizeof(eh),
-		   mtod(m, caddr_t) + sizeof(eh));
+		   mtod(m, char *) + sizeof(eh));
     } else {
 	LEMAC_GETBUF16(sc, offset + sizeof(eh), (length - sizeof(eh)) / 2,
-		      (void *) (mtod(m, caddr_t) + sizeof(eh)));
+		      (void *)(mtod(m, char *) + sizeof(eh)));
 	if (length & 1)
 	    m->m_data[length - 1] = LEMAC_GET8(sc, offset + length - 1);
     }
@@ -748,7 +748,7 @@ static int
 lemac_ifioctl(
     struct ifnet *ifp,
     u_long cmd,
-    caddr_t data)
+    void *data)
 {
     lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
     int s;
@@ -788,12 +788,7 @@ lemac_ifioctl(
 	    /*
 	     * Update multicast listeners
 	     */
-	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti((struct ifreq *)data, &sc->sc_ec);
-	    else
-		error = ether_delmulti((struct ifreq *)data, &sc->sc_ec);
-
-	    if (error == ENETRESET) {
+	    if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		/* reset multicast filtering */
 		if (ifp->if_flags & IFF_RUNNING)
 		    lemac_init(sc);

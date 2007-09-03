@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.33 2005/05/30 04:25:32 christos Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.33.2.1 2007/09/03 14:38:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.33 2005/05/30 04:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.33.2.1 2007/09/03 14:38:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ scsipi_alloc_periph(int malloc_flag)
 		periph->periph_freetags[i] = 0xffffffff;
 
 	TAILQ_INIT(&periph->periph_xferq);
-	callout_init(&periph->periph_callout);
+	callout_init(&periph->periph_callout, 0);
 
 	return periph;
 }

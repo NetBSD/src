@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.17.2.2 2007/02/26 09:10:47 yamt Exp $	*/
+/*	$NetBSD: umct.c,v 1.17.2.3 2007/09/03 14:39:17 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.17.2.2 2007/02/26 09:10:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.17.2.3 2007/09/03 14:39:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,9 +159,6 @@ USB_DECLARE_DRIVER(umct);
 USB_MATCH(umct)
 {
 	USB_MATCH_START(umct, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (umct_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

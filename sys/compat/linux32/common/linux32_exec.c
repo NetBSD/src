@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.1.16.4 2007/02/26 09:09:25 yamt Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.1.16.5 2007/09/03 14:32:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.16.4 2007/02/26 09:09:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.1.16.5 2007/09/03 14:32:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ linux32_e_proc_init(p, parent, forkflags)
 		 * use our own vmspace.
 		 */
 		vm = (parent) ? parent->p_vmspace : p->p_vmspace;
-		s->p_break = vm->vm_daddr + ctob(vm->vm_dsize);
+		s->p_break = (char *)vm->vm_daddr + ctob(vm->vm_dsize);
 
 		/*
 		 * Linux threads are emulated as NetBSD processes (not lwp)

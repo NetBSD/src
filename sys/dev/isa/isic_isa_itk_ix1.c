@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.2 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.10.4.3 2007/09/03 14:35:40 yamt Exp $");
 
 #include "opt_isicisa.h"
 
@@ -264,9 +264,9 @@ isic_attach_itkix1(struct isa_device *dev)
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
 	/* setup ISAC and HSCX base addr */
-	ISAC_BASE = (caddr_t) sc->sc_port;
-	HSCX_A_BASE = (caddr_t) sc->sc_port + 1;
-	HSCX_B_BASE = (caddr_t) sc->sc_port + 2;
+	ISAC_BASE = (void *) sc->sc_port;
+	HSCX_A_BASE = (void *) sc->sc_port + 1;
+	HSCX_B_BASE = (void *) sc->sc_port + 2;
 
 	/* Read HSCX A/B VSTR.  Expected value is 0x05 (V2.1) or 0x04 (V2.0). */
 	hv1 = HSCX_READ(0, H_VSTR) & 0xf;

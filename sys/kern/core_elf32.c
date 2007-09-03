@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.18.2.3 2007/02/26 09:11:02 yamt Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.18.2.4 2007/09/03 14:40:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.18.2.3 2007/02/26 09:11:02 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.18.2.4 2007/09/03 14:40:39 yamt Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -346,11 +346,11 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct lwp *l,
 		    sizeof(cpi.cpi_sigcatch));
 
 		cpi.cpi_pid = p->p_pid;
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		cpi.cpi_ppid = p->p_pptr->p_pid;
 		cpi.cpi_pgrp = p->p_pgid;
 		cpi.cpi_sid = p->p_session->s_sid;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 
 		cpi.cpi_ruid = kauth_cred_getuid(l->l_cred);
 		cpi.cpi_euid = kauth_cred_geteuid(l->l_cred);
@@ -427,9 +427,9 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(intreg));
 	if (iocookie) {
-		PHOLD(l);
+		uvm_lwp_hold(l);
 		error = elf_process_read_regs(l, &intreg);
-		PRELE(l);
+		uvm_lwp_rele(l);
 		if (error)
 			return (error);
 
@@ -448,9 +448,9 @@ ELFNAMEEND(coredump_note)(struct proc *p, struct lwp *l, void *iocookie,
 #ifdef PT_GETFPREGS
 	notesize = sizeof(nhdr) + elfround(namesize) + elfround(sizeof(freg));
 	if (iocookie) {
-		PHOLD(l);
+		uvm_lwp_hold(l);
 		error = elf_process_read_fpregs(l, &freg);
-		PRELE(l);
+		uvm_lwp_rele(l);
 		if (error)
 			return (error);
 

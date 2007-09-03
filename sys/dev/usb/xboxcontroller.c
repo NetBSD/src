@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.3.6.2 2007/02/26 09:10:50 yamt Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.3.6.3 2007/09/03 14:39:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.3.6.2 2007/02/26 09:10:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.3.6.3 2007/09/03 14:39:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static void xboxcontroller_intr(usbd_xfer_handle, usbd_private_handle,
 				usbd_status);
 
 static int xboxcontroller_wsmouse_enable(void *);
-static int xboxcontroller_wsmouse_ioctl(void *, u_long, caddr_t, int,
+static int xboxcontroller_wsmouse_ioctl(void *, u_long, void *, int,
 					struct lwp *);
 static void xboxcontroller_wsmouse_disable(void *);
 
@@ -89,9 +89,6 @@ USB_DECLARE_DRIVER(xboxcontroller);
 USB_MATCH(xboxcontroller)
 {
 	USB_MATCH_START(xboxcontroller, uaa);
-
-	if (uaa->iface != NULL)
-		return UMATCH_NONE;
 
 	if (uaa->vendor == USB_VENDOR_MICROSOFT) {
 		switch (uaa->product) {
@@ -319,7 +316,7 @@ xboxcontroller_wsmouse_disable(void *opaque)
 }
 
 static int
-xboxcontroller_wsmouse_ioctl(void *opaque, u_long cmd, caddr_t data, int flag,
+xboxcontroller_wsmouse_ioctl(void *opaque, u_long cmd, void *data, int flag,
 			     struct lwp *l)
 {
 

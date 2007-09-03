@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.14.2.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.14.2.3 2007/09/03 14:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.14.2.2 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.14.2.3 2007/09/03 14:34:00 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_btnmgr.h"
@@ -110,7 +110,7 @@ const struct cdevsw btnmgr_cdevsw = {
 /* wskbd accessopts */
 int	btnmgr_wskbd_enable(void *, int);
 void	btnmgr_wskbd_set_leds(void *, int);
-int	btnmgr_wskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	btnmgr_wskbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wskbd_accessops btnmgr_wskbd_accessops = {
 	btnmgr_wskbd_enable,
@@ -279,7 +279,7 @@ btnmgr_wskbd_set_leds(void *scx, int leds)
 }
 
 int
-btnmgr_wskbd_ioctl(void *scx, u_long cmd, caddr_t data, int flag,
+btnmgr_wskbd_ioctl(void *scx, u_long cmd, void *data, int flag,
 		   struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
@@ -333,7 +333,7 @@ btnmgrwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-btnmgrioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+btnmgrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	return (EINVAL);
 }

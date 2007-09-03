@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.8.4.2 2006/12/30 20:47:54 yamt Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.8.4.3 2007/09/03 14:33:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.8.4.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.8.4.3 2007/09/03 14:33:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,6 +296,8 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 	pinfo->battery_state = APM_BATT_UNKNOWN; /* ignored */
 	pinfo->battery_life = APM_BATT_LIFE_UNKNOWN;
 
+	sysmonopen_envsys(0, 0, 0, &lwp0);
+
 	for (i = 0;; i++) {
 		const char *desc;
 		int data;
@@ -316,13 +318,13 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 		DPRINTF(("%d %s %d %d\n", i, desc, data, flags));
 		if ((flags & ENVSYS_FCURVALID) == 0)
 			continue;
-		if (strstr(desc, " disconnected")) {
-			pinfo->ac_state = data ? APM_AC_OFF : APM_AC_ON;
+		if (strstr(desc, " connected")) {
+			pinfo->ac_state = data ? APM_AC_ON : APM_AC_OFF;
 		} else if (strstr(desc, " present") && data == 0)
 			pinfo->battery_flags |= APM_BATT_FLAG_NO_SYSTEM_BATTERY;
 		else if (strstr(desc, " charging") && data)
 			pinfo->battery_flags |= APM_BATT_FLAG_CHARGING;
-		else if (strstr(desc, " discharging") && data)
+		else if (strstr(desc, " charging") && !data)
 			pinfo->battery_flags &= ~APM_BATT_FLAG_CHARGING;
 		else if (strstr(desc, " warn cap"))
 			warncap = data / 1000;
@@ -345,6 +347,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 			discharge_valid = 1;
 		}
 	}
+	sysmonclose_envsys(0, 0, 0, &lwp0);
 
 	if (cap_valid > 0)  {
 		if (warncap != -1 && cap < warncap)
