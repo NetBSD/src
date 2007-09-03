@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.161 2007/08/29 09:44:56 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.162 2007/09/03 20:04:22 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161 $"
+#ident 		"GENERIC-$Revision: 1.162 $"
 
 maxusers	32		# estimated number of users
 
@@ -750,14 +750,23 @@ upl*	at uhub? port ?
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
 
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
 
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
+uftdi*  at uhub? port ? 	# FTDI FT8U100AX serial adapter
+ucom*   at uftdi? portno ?
 
-uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
+uipaq*  at uhub? port ? 	# iPAQ PDAs
+ucom*   at uipaq? portno ?
+
+umct*   at uhub? port ? 	# MCT USB-RS232 serial adapter
+ucom*   at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*   at uplcom? portno ?
+
+uslsa*  at uhub? port ? 	# Silicon Labs USB-RS232 serial adapter
+ucom*   at uslsa? portno ?
 
 uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
