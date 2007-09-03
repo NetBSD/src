@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.17.4.2 2007/02/26 09:10:42 yamt Exp $	*/
+/*	$NetBSD: event.c,v 1.17.4.3 2007/09/03 14:38:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17.4.2 2007/02/26 09:10:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17.4.3 2007/09/03 14:38:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -109,7 +109,7 @@ ev_read(ev, uio, flags)
 			return (EWOULDBLOCK);
 		}
 		ev->ev_wanted = 1;
-		error = tsleep((caddr_t)ev, PEVENT | PCATCH, "firm_event", 0);
+		error = tsleep((void *)ev, PEVENT | PCATCH, "firm_event", 0);
 		if (error) {
 			splx(s);
 			return (error);
@@ -130,7 +130,7 @@ ev_read(ev, uio, flags)
 	if ((curproc->p_flag & PK_32) && ev_out32_hook != NULL)
 		error = (*ev_out32_hook)(&ev->ev_q[ev->ev_get], cnt, uio);
 	else
-		error = uiomove((caddr_t)&ev->ev_q[ev->ev_get],
+		error = uiomove((void *)&ev->ev_q[ev->ev_get],
 		    cnt * sizeof(struct firm_event), uio);
 	n -= cnt;
 	/*
@@ -146,7 +146,7 @@ ev_read(ev, uio, flags)
 	if ((curproc->p_flag & PK_32) && ev_out32_hook != NULL)
 		error = (*ev_out32_hook)(&ev->ev_q[0], cnt, uio);
 	else
-		error = uiomove((caddr_t)&ev->ev_q[0],
+		error = uiomove((void *)&ev->ev_q[0],
 	    cnt * sizeof(struct firm_event), uio);
 	ev->ev_get = cnt;
 	return (error);

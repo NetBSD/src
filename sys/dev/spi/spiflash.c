@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.2.8.2 2006/12/30 20:49:37 yamt Exp $ */
+/* $NetBSD: spiflash.c,v 1.2.8.3 2007/09/03 14:38:44 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.2.8.2 2006/12/30 20:49:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.2.8.3 2007/09/03 14:38:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ struct spiflash_softc {
 	struct bufq_state	*sc_waitq;
 	struct bufq_state	*sc_workq;
 	struct bufq_state	*sc_doneq;
-	struct proc		*sc_thread;
+	lwp_t			*sc_thread;
 };
 
 #define	sc_getname	sc_hw.sf_getname
@@ -119,7 +119,6 @@ STATIC void spiflash_process_done(spiflash_handle_t, int);
 STATIC void spiflash_process_read(spiflash_handle_t);
 STATIC void spiflash_process_write(spiflash_handle_t);
 STATIC void spiflash_thread(void *);
-STATIC void spiflash_thread_create(void *);
 STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
 STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
 STATIC int spiflash_sector(spiflash_handle_t, struct buf *);
@@ -149,7 +148,7 @@ const struct bdevsw spiflash_bdevsw = {
 	.d_ioctl = spiflash_ioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
-	.d_type = D_DISK,
+	.d_flag = D_DISK,
 };
 
 const struct cdevsw spiflash_cdevsw = {
@@ -163,7 +162,7 @@ const struct cdevsw spiflash_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_type = D_DISK,
+	.d_flag = D_DISK,
 };
 
 static struct dkdriver spiflash_dkdriver = { spiflash_strategy, NULL };
@@ -232,13 +231,14 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	bufq_alloc(&sc->sc_workq, "fcfs", BUFQ_SORT_RAWBLOCK);
 	bufq_alloc(&sc->sc_doneq, "fcfs", BUFQ_SORT_RAWBLOCK);
 
-	/* arrange to allocate the kthread */
-	kthread_create(spiflash_thread_create, sc);
-
 	sc->sc_dk.dk_driver = &spiflash_dkdriver;
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 
 	disk_attach(&sc->sc_dk);
+
+	/* arrange to allocate the kthread */
+	kthread_create(PRI_NONE, 0, NULL, spiflash_thread, sc,
+	    &sc->sc_thread, "spiflash");
 }
 
 int
@@ -290,7 +290,7 @@ spiflash_write(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-spiflash_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+spiflash_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	spiflash_handle_t sc;
 
@@ -309,7 +309,6 @@ spiflash_strategy(struct buf *bp)
 	sc = device_lookup(&spiflash_cd, DISKUNIT(bp->b_dev));
 	if (sc == NULL) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
@@ -317,7 +316,6 @@ spiflash_strategy(struct buf *bp)
 	if (((bp->b_bcount % sc->sc_write_size) != 0) ||
 	    (bp->b_blkno < 0)) {
 		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
@@ -352,9 +350,7 @@ spiflash_process_done(spiflash_handle_t sc, int err)
 
 	while ((bp = BUFQ_GET(sc->sc_doneq)) != NULL) {
 		flag = bp->b_flags & B_READ;
-		if ((bp->b_error = err) != 0)
-			bp->b_flags |= B_ERROR;
-		else
+		if ((bp->b_error = err) == 0)
 			bp->b_resid = 0;
 		cnt += bp->b_bcount - bp->b_resid;
 		biodone(bp);
@@ -563,16 +559,6 @@ spiflash_thread(void *arg)
 		spiflash_process_write(sc);
 	}
 }
-
-void
-spiflash_thread_create(void *arg)
-{
-	spiflash_handle_t sc = arg;
-
-	kthread_create1(spiflash_thread, arg, &sc->sc_thread,
-	    "spiflash_thread");
-}
-
 /*
  * SPI flash common implementation.
  */

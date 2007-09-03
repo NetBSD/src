@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.12.4.2 2007/02/26 09:09:14 yamt Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.12.4.3 2007/09/03 14:32:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.12.4.2 2007/02/26 09:09:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.12.4.3 2007/09/03 14:32:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -227,7 +227,7 @@ linux_sys_ptrace_arch(l, v, retval)
 		linux_regs->esp = regs->r_esp;
 		linux_regs->xss = regs->r_ss;
 
-		error = copyout(linux_regs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_regs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_reg));
 		goto out;
 
@@ -236,7 +236,7 @@ linux_sys_ptrace_arch(l, v, retval)
 		MALLOC(linux_regs, struct linux_reg *, sizeof(struct linux_reg),
 			M_TEMP, M_WAITOK);
 
-		error = copyin((caddr_t)SCARG(uap, data), linux_regs,
+		error = copyin((void *)SCARG(uap, data), linux_regs,
 		    sizeof(struct linux_reg));
 		if (error != 0)
 			goto out;
@@ -275,7 +275,7 @@ linux_sys_ptrace_arch(l, v, retval)
 
 		memcpy(linux_fpregs, fpregs,
 			min(sizeof(struct linux_fpctx), sizeof(struct fpreg)));
-		error = copyout(linux_fpregs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_fpregs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_fpctx));
 		goto out;
 
@@ -284,7 +284,7 @@ linux_sys_ptrace_arch(l, v, retval)
 			M_TEMP, M_WAITOK);
 		MALLOC(linux_fpregs, struct linux_fpctx *,
 			sizeof(struct linux_fpctx), M_TEMP, M_WAITOK);
-		error = copyin((caddr_t)SCARG(uap, data), linux_fpregs,
+		error = copyin((void *)SCARG(uap, data), linux_fpregs,
 		    sizeof(struct linux_fpctx));
 		if (error != 0)
 			goto out;
@@ -299,7 +299,7 @@ linux_sys_ptrace_arch(l, v, retval)
 	case  LINUX_PTRACE_PEEKUSR:
 		addr = SCARG(uap, addr);
 
-		PHOLD(lt);	/* need full process info */
+		uvm_lwp_hold(lt);	/* need full process info */
 		error = 0;
 		if (addr < LUSR_OFF(lusr_startgdb)) {
 			/* XXX should provide appropriate register */
@@ -344,7 +344,7 @@ linux_sys_ptrace_arch(l, v, retval)
 			error = 1;
 		}
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		if (!error)
 			return 0;
@@ -361,9 +361,9 @@ linux_sys_ptrace_arch(l, v, retval)
 			if (t->p_emul != &emul_linux)
 				return EINVAL;
 
-			PHOLD(lt);
+			uvm_lwp_hold(lt);
 			((struct linux_emuldata *)t->p_emuldata)->debugreg[off] = data;
-			PRELE(lt);
+			uvm_lwp_rele(lt);
 			return (0);
 		}
 

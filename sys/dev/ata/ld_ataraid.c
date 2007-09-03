@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.13.12.2 2006/12/30 20:47:54 yamt Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.13.12.3 2007/09/03 14:33:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13.12.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13.12.3 2007/09/03 14:33:28 yamt Exp $");
 
 #include "rnd.h"
 
@@ -135,7 +135,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 	if (ld_ataraid_initialized == 0) {
 		ld_ataraid_initialized = 1;
 		pool_init(&ld_ataraid_cbufpl, sizeof(struct cbuf), 0,
-		    0, 0, "ldcbuf", NULL);
+		    0, 0, "ldcbuf", NULL, IPL_BIO);
 	}
 
 	sc->sc_aai = aai;	/* this data persists */
@@ -239,7 +239,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 
 static struct cbuf *
 ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
-    u_int comp, daddr_t bn, caddr_t addr, long bcount)
+    u_int comp, daddr_t bn, void *addr, long bcount)
 {
 	struct cbuf *cbp;
 
@@ -273,7 +273,7 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 	struct ataraid_disk_info *adi;
 	SIMPLEQ_HEAD(, cbuf) cbufq;
 	struct cbuf *cbp;
-	caddr_t addr;
+	char *addr;
 	daddr_t bn;
 	long bcount, rcount;
 	u_int comp;
@@ -338,7 +338,7 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 	struct ataraid_disk_info *adi;
 	SIMPLEQ_HEAD(, cbuf) cbufq;
 	struct cbuf *cbp, *other_cbp;
-	caddr_t addr;
+	char *addr;
 	daddr_t bn, cbn, tbn, off;
 	long bcount, rcount;
 	u_int comp;
@@ -456,7 +456,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		/* You are alone */
 		other_cbp->cb_other = NULL;
 
-	if (cbp->cb_buf.b_flags & B_ERROR) {
+	if (cbp->cb_buf.b_error != 0) {
 		/*
 		 * Mark this component broken.
 		 */
@@ -471,14 +471,14 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		 * If we didn't see an error yet and we are reading
 		 * RAID1 disk, try another component.
 		 */
-		if ((bp->b_flags & B_ERROR) == 0 &&
+		if (bp->b_error == 0 &&
 		    (cbp->cb_buf.b_flags & B_READ) != 0 &&
 		    (aai->aai_level & AAI_L_RAID1) != 0 &&
 		    cbp->cb_comp < aai->aai_width) {
 			cbp->cb_comp += aai->aai_width;
 			adi = &aai->aai_disks[cbp->cb_comp];
 			if (adi->adi_status & ADI_S_ONLINE) {
-				cbp->cb_buf.b_flags &= ~B_ERROR;
+				cbp->cb_buf.b_error = 0;
 				VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 				goto out;
 			}
@@ -492,7 +492,6 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 			 */
 			;
 		else {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = cbp->cb_buf.b_error ?
 			    cbp->cb_buf.b_error : EIO;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.31.4.3 2007/02/26 09:10:38 yamt Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.31.4.4 2007/09/03 14:38:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.31.4.3 2007/02/26 09:10:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.31.4.4 2007/09/03 14:38:04 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -235,7 +235,7 @@ void cnw_transmit(struct cnw_softc *, struct mbuf *);
 struct mbuf *cnw_read(struct cnw_softc *);
 void cnw_recv(struct cnw_softc *);
 int cnw_intr(void *arg);
-int cnw_ioctl(struct ifnet *, u_long, caddr_t);
+int cnw_ioctl(struct ifnet *, u_long, void *);
 void cnw_watchdog(struct ifnet *);
 static int cnw_setdomain(struct cnw_softc *, int);
 static int cnw_setkey(struct cnw_softc *, int);
@@ -1026,7 +1026,7 @@ int
 cnw_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct cnw_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1098,10 +1098,7 @@ cnw_ioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				cnw_init(sc);
 			error = 0;
@@ -1109,7 +1106,7 @@ cnw_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCGCNWDOMAIN:
-		((struct ifreq *)data)->ifr_domain = sc->sc_domain;
+		ifr->ifr_domain = sc->sc_domain;
 		break;
 
 	case SIOCSCNWDOMAIN:

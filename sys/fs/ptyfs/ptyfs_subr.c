@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.2.14.1 2006/06/21 15:09:30 yamt Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.2.14.2 2007/09/03 14:40:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.1 2006/06/21 15:09:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.2 2007/09/03 14:40:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.1 2006/06/21 15:09:30 yamt Exp
 #include <sys/tty.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>

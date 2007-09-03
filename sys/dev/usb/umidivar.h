@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.7.16.1 2006/12/30 20:49:39 yamt Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.7.16.2 2007/09/03 14:39:18 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -95,9 +95,7 @@ struct umidi_endpoint {
 	int			num_open;
 	int			num_jacks;
 	int			soliciting;
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void			*solicit_cookie;
-#endif
 	int			armed;
 	struct umidi_jack	*jacks[UMIDI_MAX_EPJACKS];
 	u_int16_t		this_schedule; /* see UMIDI_MAX_EPJACKS */

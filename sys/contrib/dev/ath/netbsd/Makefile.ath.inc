@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ath.inc,v 1.6.14.3 2006/12/30 20:47:49 yamt Exp $
+#	$NetBSD: Makefile.ath.inc,v 1.6.14.4 2007/09/03 14:33:06 yamt Exp $
 
 # Rules for building a HAL on various platforms.  We put them here
 # to centralize them all in one place.
@@ -41,9 +41,6 @@ ATH_HAL=i386-elf
 
 .elif ${MACHINE_ARCH} == "powerpc"
 ATH_HAL=powerpc-be-elf
-
-.elif ${MACHINE_ARCH} == "sh5el"
-ATH_HAL=sh4-le-elf
 
 .elif ${MACHINE_ARCH} == "sparc"
 ATH_HAL=sparc-be-elf

@@ -1,4 +1,4 @@
-/* $NetBSD: i82596var.h,v 1.4.2.1 2006/12/30 20:48:02 yamt Exp $ */
+/* $NetBSD: i82596var.h,v 1.4.2.2 2007/09/03 14:34:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -160,7 +160,7 @@ struct iee_softc {
 	bus_dmamap_t sc_tx_map[IEE_NCB];
 	struct mbuf *sc_rx_mbuf[IEE_NRFD];
 	struct mbuf *sc_tx_mbuf[IEE_NCB];
-	caddr_t sc_shmem_addr;
+	uint8_t *sc_shmem_addr;
 	int sc_next_cb;
 	int sc_next_tbd;
 	int sc_rx_done;

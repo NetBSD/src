@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbvar.h,v 1.2.38.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: hpcfbvar.h,v 1.2.38.2 2007/09/03 14:34:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -40,7 +40,7 @@
  * video access functions (must be provided by all video).
  */
 struct hpcfb_accessops {
-	int	(*ioctl)(void *, u_long, caddr_t, int, struct lwp *);
+	int	(*ioctl)(void *, u_long, void *, int, struct lwp *);
 	paddr_t	(*mmap)(void *, off_t, int);
 	void	(*cursor)(void *, int, int, int, int, int);
 	void	(*bitblit)(void *, int, int, int, int, int, int);

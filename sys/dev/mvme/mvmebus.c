@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.9 2004/06/06 13:34:36 he Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.9.12.1 2007/09/03 14:36:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.9 2004/06/06 13:34:36 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.9.12.1 2007/09/03 14:36:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -871,7 +871,7 @@ mvmebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	bus_dma_segment_t *segs;
 	int nsegs;
 	size_t size;
-	caddr_t *kvap;
+	void **kvap;
 	int flags;
 {
 	struct mvmebus_softc *sc = t->_cookie;
@@ -882,7 +882,7 @@ mvmebus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 void
 mvmebus_dmamem_unmap(t, kva, size)
 	bus_dma_tag_t t;
-	caddr_t kva;
+	void *kva;
 	size_t size;
 {
 	struct mvmebus_softc *sc = t->_cookie;

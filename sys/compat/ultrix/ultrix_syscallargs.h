@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscallargs.h,v 1.43.4.1 2006/12/30 20:47:49 yamt Exp $ */
+/* $NetBSD: ultrix_syscallargs.h,v 1.43.4.2 2007/09/03 14:33:03 yamt Exp $ */
 
 /*
  * System call argument lists.
@@ -54,7 +54,7 @@ struct ultrix_sys_mount_args {
 	syscallarg(char *) dir;
 	syscallarg(int) rdonly;
 	syscallarg(int) type;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct ultrix_sys_access_args {
@@ -75,7 +75,7 @@ struct ultrix_sys_lstat_args {
 struct ultrix_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct ultrix_sys_execve_args {
@@ -85,7 +85,7 @@ struct ultrix_sys_execve_args {
 };
 
 struct ultrix_sys_mmap_args {
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(size_t) len;
 	syscallarg(int) prot;
 	syscallarg(u_int) flags;
@@ -126,7 +126,7 @@ struct ultrix_sys_setsockopt_args {
 	syscallarg(int) s;
 	syscallarg(int) level;
 	syscallarg(int) name;
-	syscallarg(caddr_t) val;
+	syscallarg(void *) val;
 	syscallarg(int) valsize;
 };
 
@@ -183,7 +183,7 @@ struct ultrix_sys_quotactl_args {
 	syscallarg(int) cmd;
 	syscallarg(char *) special;
 	syscallarg(int) uid;
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 };
 
 struct ultrix_sys_exportfs_args {

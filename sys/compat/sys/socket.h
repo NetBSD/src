@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.3.18.3 2006/12/30 20:47:49 yamt Exp $	*/
+/*	$NetBSD: socket.h,v 1.3.18.4 2007/09/03 14:33:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -34,7 +34,22 @@
 #ifndef _COMPAT_SYS_SOCKET_H_
 #define	_COMPAT_SYS_SOCKET_H_
 
-#if defined(_NETBSD_SOURCE)
+#ifdef _KERNEL_OPT
+
+#include "opt_compat_linux.h"
+#include "opt_compat_svr4.h"
+#include "opt_compat_ultrix.h"
+#include "opt_compat_43.h"
+
+#if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
+    defined(COMPAT_ULTRIX) || defined(LKM)
+#define COMPAT_OSOCK
+#endif
+
+#else
+#define COMPAT_OSOCK
+#endif
+
 /*
  * 4.3 compat sockaddr
  */
@@ -47,11 +62,11 @@ struct osockaddr {
  * 4.3-compat message header
  */
 struct omsghdr {
-	caddr_t		msg_name;	/* optional address */
+	void *		msg_name;	/* optional address */
 	int		msg_namelen;	/* size of address */
 	struct iovec	*msg_iov;	/* scatter/gather array */
 	int		msg_iovlen;	/* # elements in msg_iov */
-	caddr_t		msg_accrights;	/* access rights sent/received */
+	void *		msg_accrights;	/* access rights sent/received */
 	int		msg_accrightslen;
 };
 
@@ -59,12 +74,12 @@ struct omsghdr {
 __BEGIN_DECLS
 struct socket;
 struct proc;
-int compat_ifioctl(struct socket *, u_long, caddr_t, struct lwp *);
+u_long compat_cvtcmd(u_long cmd);
+int compat_ifioctl(struct socket *, u_long, u_long, void *, struct lwp *);
+int compat43_set_accrights(struct msghdr *, void *, int);
 __END_DECLS
 #else
 int	__socket30(int, int, int);
-#endif
-
 #endif
 
 #endif /* !_COMPAT_SYS_SOCKET_H_ */

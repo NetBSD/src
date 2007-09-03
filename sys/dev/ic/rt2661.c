@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.9.4.3 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.9.4.4 2007/09/03 14:35:07 yamt Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.9.4.3 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.9.4.4 2007/09/03 14:35:07 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -130,7 +130,7 @@ static int	rt2661_tx_data(struct rt2661_softc *, struct mbuf *,
 static void	rt2661_start(struct ifnet *);
 static void	rt2661_watchdog(struct ifnet *);
 static int	rt2661_reset(struct ifnet *);
-static int	rt2661_ioctl(struct ifnet *, u_long, caddr_t);
+static int	rt2661_ioctl(struct ifnet *, u_long, void *);
 static void	rt2661_bbp_write(struct rt2661_softc *, uint8_t, uint8_t);
 static uint8_t	rt2661_bbp_read(struct rt2661_softc *, uint8_t);
 static void	rt2661_rf_write(struct rt2661_softc *, uint8_t, uint32_t);
@@ -356,8 +356,8 @@ rt2661_attach(void *xsc, int id)
 
 	sc->sc_id = id;
 
-	callout_init(&sc->scan_ch);
-	callout_init(&sc->rssadapt_ch);
+	callout_init(&sc->scan_ch, 0);
+	callout_init(&sc->rssadapt_ch, 0);
 
 	/* wait for NIC to initialize */
 	for (ntries = 0; ntries < 1000; ntries++) {
@@ -568,7 +568,7 @@ rt2661_alloc_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring,
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    count * RT2661_TX_DESC_SIZE, (caddr_t *)&ring->desc,
+	    count * RT2661_TX_DESC_SIZE, (void **)&ring->desc,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map desc DMA memory\n",
@@ -659,7 +659,7 @@ rt2661_free_tx_ring(struct rt2661_softc *sc, struct rt2661_tx_ring *ring)
 		bus_dmamap_sync(sc->sc_dmat, ring->map, 0,
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)ring->desc,
 		    ring->count * RT2661_TX_DESC_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}
@@ -714,7 +714,7 @@ rt2661_alloc_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring,
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    count * RT2661_RX_DESC_SIZE, (caddr_t *)&ring->desc,
+	    count * RT2661_RX_DESC_SIZE, (void **)&ring->desc,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map desc DMA memory\n",
@@ -819,7 +819,7 @@ rt2661_free_rx_ring(struct rt2661_softc *sc, struct rt2661_rx_ring *ring)
 		bus_dmamap_sync(sc->sc_dmat, ring->map, 0,
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)ring->desc,
 		    ring->count * RT2661_RX_DESC_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}
@@ -1813,7 +1813,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 			}
 		}
 
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, void *));
 		m_freem(m0);
 		mnew->m_len = mnew->m_pkthdr.len;
 		m0 = mnew;
@@ -2024,11 +2024,10 @@ rt2661_reset(struct ifnet *ifp)
 }
 
 static int
-rt2661_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+rt2661_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rt2661_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -2048,13 +2047,8 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-
-
-		if (error == ENETRESET)
+		/* XXX no h/w multicast filter? --dyoung */
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
 
@@ -2745,7 +2739,7 @@ rt2661_init(struct ifnet *ifp)
 	for (i = 0; i < N(rt2661_def_mac); i++)
 		RAL_WRITE(sc, rt2661_def_mac[i].reg, rt2661_def_mac[i].val);
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	rt2661_set_macaddr(sc, ic->ic_myaddr);
 
 	/* set host ready */

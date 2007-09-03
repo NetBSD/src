@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.46.12.3 2007/02/26 09:10:38 yamt Exp $
+#	$NetBSD: files.pcmcia,v 1.46.12.4 2007/09/03 14:38:03 yamt Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -141,3 +141,12 @@ file	dev/pcmcia/opl_esl.c			opl_esl
 device	bt3c: btbus, bluetooth, firmload
 attach	bt3c at pcmcia
 file	dev/pcmcia/bt3c.c			bt3c		needs-flag
+
+# USB controller
+attach	slhci at pcmcia with slhci_pcmcia
+file	dev/pcmcia/slhci_pcmcia.c		slhci_pcmcia
+
+# AnyCom BlueCard LSE041/039/139
+device	btbc: btbus, bluetooth
+attach	btbc at pcmcia
+file	dev/pcmcia/btbc.c			btbc

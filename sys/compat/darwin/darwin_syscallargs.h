@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.46 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.46.4.1 2007/09/03 14:31:57 yamt Exp $ */
 
 /*
  * System call argument lists.
@@ -92,7 +92,7 @@ struct bsd_sys_unmount_args {
 struct darwin_sys_ptrace_args {
 	syscallarg(int) req;
 	syscallarg(pid_t) pid;
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(int) data;
 };
 
@@ -351,9 +351,9 @@ struct darwin_sys_getattrlist_args {
 
 struct darwin_sys_load_shared_file_args {
 	syscallarg(char *) filename;
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(u_long) len;
-	syscallarg(caddr_t *) base;
+	syscallarg(void **) base;
 	syscallarg(int) count;
 	syscallarg(mach_sf_mapping_t *) mappings;
 	syscallarg(int *) flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.104.2.3 2007/02/26 09:09:52 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.104.2.4 2007/09/03 14:33:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.3 2007/02/26 09:09:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.4 2007/09/03 14:33:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ static void	ccdintr(struct ccd_softc *, struct buf *);
 static int	ccdinit(struct ccd_softc *, char **, struct vnode **,
 		    struct lwp *);
 static struct ccdbuf *ccdbuffer(struct ccd_softc *, struct buf *,
-		    daddr_t, caddr_t, long);
+		    daddr_t, void *, long);
 static void	ccdgetdefaultlabel(struct ccd_softc *, struct disklabel *);
 static void	ccdgetdisklabel(dev_t);
 static void	ccdmakedisklabel(struct ccd_softc *);
@@ -255,7 +255,7 @@ ccdattach(int num)
 
 	/* Initialize the component buffer pool. */
 	pool_init(&ccd_cbufpool, sizeof(struct ccdbuf), 0,
-	    0, 0, "ccdpl", NULL);
+	    0, 0, "ccdpl", NULL, IPL_BIO);
 
 	/* Initialize per-softc structures. */
 	for (i = 0; i < num; i++) {
@@ -671,7 +671,6 @@ ccdstrategy(struct buf *bp)
 			printf("ccdstrategy: unit %d: not inited\n", unit);
 #endif
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 
@@ -713,7 +712,7 @@ ccdstart(struct ccd_softc *cs)
 	long bcount, rcount;
 	struct buf *bp;
 	struct ccdbuf *cbp;
-	caddr_t addr;
+	char *addr;
 	daddr_t bn;
 	SIMPLEQ_HEAD(, ccdbuf) cbufq;
 
@@ -766,7 +765,7 @@ ccdstart(struct ccd_softc *cs)
 			SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 			if ((cbp->cb_buf.b_flags & B_READ) == 0)
 				cbp->cb_buf.b_vp->v_numoutput++;
-			DEV_STRATEGY(&cbp->cb_buf);
+			bdev_strategy(&cbp->cb_buf);
 		}
 	}
 }
@@ -775,7 +774,7 @@ ccdstart(struct ccd_softc *cs)
  * Build a component buffer header.
  */
 static struct ccdbuf *
-ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, caddr_t addr,
+ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
     long bcount)
 {
 	struct ccdcinfo *ci;
@@ -885,7 +884,7 @@ ccdintr(struct ccd_softc *cs, struct buf *bp)
 	/*
 	 * Request is done for better or worse, wakeup the top half.
 	 */
-	if (bp->b_flags & B_ERROR)
+	if (bp->b_error != 0)
 		bp->b_resid = bp->b_bcount;
 	disk_unbusy(&cs->sc_dkdev, (bp->b_bcount - bp->b_resid),
 	    (bp->b_flags & B_READ));
@@ -920,11 +919,8 @@ ccdiodone(struct buf *vbp)
 	}
 #endif
 
-	if (cbp->cb_buf.b_flags & B_ERROR) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = cbp->cb_buf.b_error ?
-		    cbp->cb_buf.b_error : EIO;
-
+	if (cbp->cb_buf.b_error != 0) {
+		bp->b_error = cbp->cb_buf.b_error;
 		printf("%s: error %d on component %d\n",
 		       cs->sc_xname, bp->b_error, cbp->cb_comp);
 	}
@@ -985,7 +981,7 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = ccdunit(dev);
 	int s, i, j, lookedup = 0, error = 0;
@@ -1098,7 +1094,8 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			if (ccddebug & CCDB_INIT)
 				printf("ccdioctl: lookedup = %d\n", lookedup);
 #endif
-			if ((error = dk_lookup(cpp[i], l, &vpp[i])) != 0) {
+			if ((error = dk_lookup(cpp[i], l, &vpp[i],
+			    UIO_USERSPACE)) != 0) {
 				for (j = 0; j < lookedup; ++j)
 					(void)vn_close(vpp[j], FREAD|FWRITE,
 					    uc, l);
@@ -1345,7 +1342,7 @@ ccdsize(dev_t dev)
 }
 
 static int
-ccddump(dev_t dev, daddr_t blkno, caddr_t va,
+ccddump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 

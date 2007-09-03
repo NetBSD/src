@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.27.2.2 2006/12/30 20:48:49 yamt Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.27.2.3 2007/09/03 14:37:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.27.2.2 2006/12/30 20:48:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.27.2.3 2007/09/03 14:37:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ static int	vga_pci_lookup_quirks(struct pci_attach_args *);
 CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL);
 
-static int	vga_pci_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	vga_pci_ioctl(void *, u_long, void *, int, struct lwp *);
 static paddr_t	vga_pci_mmap(void *, off_t, int);
 
 static const struct vga_funcs vga_pci_funcs = {
@@ -193,6 +193,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 			/* Don't bother fetching I/O BARs. */
 			continue;
 		}
+#ifndef __LP64__
 		if (PCI_MAPREG_MEM_TYPE(psc->sc_bars[bar].vb_type) ==
 		    PCI_MAPREG_MEM_TYPE_64BIT) {
 			/* XXX */
@@ -201,6 +202,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 			bar++;
 			continue;
 		}
+#endif
 		if (pci_mapreg_info(psc->sc_pc, psc->sc_pcitag, reg,
 		     psc->sc_bars[bar].vb_type,
 		     &psc->sc_bars[bar].vb_base,
@@ -214,6 +216,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	vga_common_attach(sc, pa->pa_iot, pa->pa_memt, WSDISPLAY_TYPE_PCIVGA,
 			  vga_pci_lookup_quirks(pa), &vga_pci_funcs);
+
+	config_found_ia(self, "drm", aux, vga_drm_print);
 }
 
 int
@@ -225,8 +229,17 @@ vga_pci_cnattach(bus_space_tag_t iot, bus_space_tag_t memt,
 	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_PCIVGA, 0));
 }
 
+int
+vga_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
+}
+
+
 static int
-vga_pci_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vga_pci_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vga_config *vc = v;
 	struct vga_pci_softc *psc = (void *) vc->softc;

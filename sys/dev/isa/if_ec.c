@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.24.4.2 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.24.4.3 2007/09/03 14:35:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.24.4.2 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.24.4.3 2007/09/03 14:35:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ void	ec_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
 void	ec_init_card(struct dp8390_softc *);
 int	ec_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
-int	ec_ring_copy(struct dp8390_softc *, int, caddr_t, u_short);
+int	ec_ring_copy(struct dp8390_softc *, int, void *, u_short);
 void	ec_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
 int	ec_fake_test_mem(struct dp8390_softc *);
 int	ec_test_mem(struct dp8390_softc *);
@@ -706,7 +706,7 @@ int
 ec_ring_copy(sc, src, dst, amount)
 	struct dp8390_softc *sc;
 	int src;
-	caddr_t dst;
+	void *dst;
 	u_short amount;
 {
 	struct ec_softc *esc = (struct ec_softc *)sc;
@@ -721,7 +721,7 @@ ec_ring_copy(sc, src, dst, amount)
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
-		dst += tmp_amount;
+		dst = (char *)dst + tmp_amount;
 	}
 
 	ec_readmem(esc, src, dst, amount);

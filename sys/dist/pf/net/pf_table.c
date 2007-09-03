@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.6.2.2 2006/12/30 20:49:56 yamt Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.6.2.3 2007/09/03 14:40:04 yamt Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.62 2004/12/07 18:02:04 mcbride Exp $	*/
 
 /*
@@ -195,12 +195,21 @@ int			 pfr_ktable_cnt;
 void
 pfr_initialize(void)
 {
+#ifdef __NetBSD__
+	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
+	    "pfrktable", &pool_allocator_oldnointr, IPL_NONE);
+	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfrkentry", &pool_allocator_oldnointr, IPL_NONE);
+	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
+	    "pfrkentry2", NULL, IPL_SOFTNET);
+#else
 	pool_init(&pfr_ktable_pl, sizeof(struct pfr_ktable), 0, 0, 0,
 	    "pfrktable", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry", &pool_allocator_oldnointr);
 	pool_init(&pfr_kentry_pl2, sizeof(struct pfr_kentry), 0, 0, 0,
 	    "pfrkentry2", NULL);
+#endif
 
 	pfr_sin.sin_len = sizeof(pfr_sin);
 	pfr_sin.sin_family = AF_INET;
@@ -731,10 +740,10 @@ pfr_validate_addr(struct pfr_addr *ad)
 		return (-1);
 	}
 	if (ad->pfra_net < 128 &&
-		(((caddr_t)ad)[ad->pfra_net/8] & (0xFF >> (ad->pfra_net%8))))
+		(((char *)ad)[ad->pfra_net/8] & (0xFF >> (ad->pfra_net%8))))
 			return (-1);
 	for (i = (ad->pfra_net+7)/8; i < sizeof(ad->pfra_u); i++)
-		if (((caddr_t)ad)[i])
+		if (((char *)ad)[i])
 			return (-1);
 	if (ad->pfra_not && ad->pfra_not != 1)
 		return (-1);
@@ -1950,9 +1959,9 @@ pfr_destroy_ktable(struct pfr_ktable *kt, int flushaddr)
 		pfr_destroy_kentries(&addrq);
 	}
 	if (kt->pfrkt_ip4 != NULL)
-		free((caddr_t)kt->pfrkt_ip4, M_RTABLE);
+		free((void *)kt->pfrkt_ip4, M_RTABLE);
 	if (kt->pfrkt_ip6 != NULL)
-		free((caddr_t)kt->pfrkt_ip6, M_RTABLE);
+		free((void *)kt->pfrkt_ip6, M_RTABLE);
 	if (kt->pfrkt_shadow != NULL)
 		pfr_destroy_ktable(kt->pfrkt_shadow, flushaddr);
 	if (kt->pfrkt_rs != NULL) {

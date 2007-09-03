@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.20 2005/02/27 00:26:59 perry Exp $ */
+/*	$NetBSD: bi.c,v 1.20.4.1 2007/09/03 14:33:29 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.20 2005/02/27 00:26:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi.c,v 1.20.4.1 2007/09/03 14:33:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ bi_attach(sc)
 			    nodenr);
 			return;
 		}
-		if (badaddr((caddr_t)ba.ba_ioh, 4) ||
+		if (badaddr((void *)ba.ba_ioh, 4) ||
 		    (bus_space_read_2(ba.ba_iot, ba.ba_ioh, 0) == 0)) {
 			bus_space_unmap(ba.ba_iot, ba.ba_ioh, BI_NODESIZE);
 			continue;

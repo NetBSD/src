@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.6.4.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.6.4.3 2007/09/03 14:38:11 yamt Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.3 2007/09/03 14:38:11 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -168,7 +168,7 @@ static	int qtmatch(struct device *, struct cfdata *, void *);
 static	void qtattach(struct device *, struct device *, void *);
 static	void qtintr(void *);
 static	int qtinit(struct ifnet *);
-static	int qtioctl(struct ifnet *, u_long, caddr_t);
+static	int qtioctl(struct ifnet *, u_long, void *);
 static	int qtturbo(struct qt_softc *);
 static	void qtstart(struct ifnet *ifp);
 static	void qtstop(struct ifnet *ifp, int disable);
@@ -613,7 +613,7 @@ int
 qtioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	u_long	cmd;
-	caddr_t	data;
+	void *	data;
 	{
 	int s, error;
 

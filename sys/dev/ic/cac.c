@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.30.2.3 2007/02/26 09:10:07 yamt Exp $	*/
+/*	$NetBSD: cac.c,v 1.30.2.4 2007/09/03 14:34:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.30.2.3 2007/02/26 09:10:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.30.2.4 2007/09/03 14:34:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&sc->sc_ccbs,
+	    (void **)&sc->sc_ccbs,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
@@ -366,7 +366,7 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 {
 	struct cac_ccb *ccb;
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	timo *= 1000;
 
@@ -396,7 +396,7 @@ static int
 cac_ccb_start(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	if (ccb != NULL)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_ccb_queue, ccb, ccb_chain);
@@ -426,7 +426,7 @@ cac_ccb_done(struct cac_softc *sc, struct cac_ccb *ccb)
 
 	error = 0;
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 #ifdef DIAGNOSTIC
 	if ((ccb->ccb_flags & CAC_CCB_ACTIVE) == 0)
@@ -493,7 +493,7 @@ static void
 cac_ccb_free(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	ccb->ccb_flags = 0;
 	if (SIMPLEQ_EMPTY(&sc->sc_ccb_free))
@@ -509,7 +509,7 @@ static int
 cac_l0_fifo_full(struct cac_softc *sc)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	return (cac_inl(sc, CAC_REG_CMD_FIFO) == 0);
 }
@@ -518,9 +518,10 @@ static void
 cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, (caddr_t)ccb - sc->sc_ccbs,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    (char *)ccb - (char *)sc->sc_ccbs,
 	    sizeof(struct cac_ccb), BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	cac_outl(sc, CAC_REG_CMD_FIFO, ccb->ccb_paddr);
 }
@@ -531,7 +532,7 @@ cac_l0_completed(struct cac_softc *sc)
 	struct cac_ccb *ccb;
 	paddr_t off;
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	if ((off = cac_inl(sc, CAC_REG_DONE_FIFO)) == 0)
 		return (NULL);
@@ -541,7 +542,7 @@ cac_l0_completed(struct cac_softc *sc)
 		    sc->sc_dv.dv_xname, (long)off);
 
 	off = (off & ~3) - sc->sc_ccbs_paddr;
-	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
+	ccb = (struct cac_ccb *)((char *)sc->sc_ccbs + off);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off, sizeof(struct cac_ccb),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -556,7 +557,7 @@ static int
 cac_l0_intr_pending(struct cac_softc *sc)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	return (cac_inl(sc, CAC_REG_INTR_PENDING) & CAC_INTR_ENABLE);
 }
@@ -565,7 +566,7 @@ static void
 cac_l0_intr_enable(struct cac_softc *sc, int state)
 {
 
-	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
+	KASSERT(mutex_owned(&sc->sc_mutex));
 
 	cac_outl(sc, CAC_REG_INTR_MASK,
 	    state ? CAC_INTR_ENABLE : CAC_INTR_DISABLE);

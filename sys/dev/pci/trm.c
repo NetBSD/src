@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.20.2.2 2006/12/30 20:48:48 yamt Exp $	*/
+/*	$NetBSD: trm.c,v 1.20.2.3 2007/09/03 14:37:22 yamt Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.20.2.2 2006/12/30 20:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.20.2.3 2007/09/03 14:37:22 yamt Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -505,7 +505,7 @@ trm_init(struct trm_softc *sc)
 		return (1);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    all_sgsize, (caddr_t *) &sc->sc_sglist,
+	    all_sgsize, (void **) &sc->sc_sglist,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf(": unable to map SCSI REQUEST BLOCKS, "
 		    "error = %d\n", error);

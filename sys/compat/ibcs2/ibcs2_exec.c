@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.63.2.3 2007/02/26 09:09:08 yamt Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.63.2.4 2007/09/03 14:32:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.63.2.3 2007/02/26 09:09:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.63.2.4 2007/09/03 14:32:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -127,7 +127,7 @@ ibcs2_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	if (epp->ep_es->es_makecmds == exec_ibcs2_xout_makecmds)
+	if (epp->ep_esch->es_makecmds == exec_ibcs2_xout_makecmds)
 		p->p_emuldata = IBCS2_EXEC_XENIX;
 	else
 		p->p_emuldata = IBCS2_EXEC_OTHER;

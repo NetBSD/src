@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.12 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.12.4.1 2007/09/03 14:34:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -76,7 +76,7 @@ struct dpt_softc {
 	struct eata_sp	*sc_stp;	/* EATA status packet */
 	int		sc_stpoff;	/* status packet offset in dmamap */
 	u_int32_t	sc_stppa;	/* status packet physical address */
-	caddr_t		sc_scr;		/* scratch area */
+	void *		sc_scr;		/* scratch area */
 	int		sc_scroff;	/* scratch area offset in dmamap */
 	u_int32_t	sc_scrpa;	/* scratch area physical address */
 	int		sc_hbaid[3];	/* ID of HBA on each channel */

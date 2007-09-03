@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.38.4.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.38.4.2 2007/09/03 14:38:19 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.38.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.38.4.2 2007/09/03 14:38:19 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -77,7 +77,7 @@ static void rf_FreeASMList(RF_AccessStripeMap_t *asm_list);
 
 RF_AccessStripeMapHeader_t *
 rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
-	     RF_SectorCount_t numBlocks, caddr_t buffer, int remap)
+	     RF_SectorCount_t numBlocks, void *buffer, int remap)
 {
 	RF_RaidLayout_t *layoutPtr = &(raidPtr->Layout);
 	RF_AccessStripeMapHeader_t *asm_hdr = NULL;
@@ -182,7 +182,7 @@ rf_MapAccess(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddress,
 			pda_p->numSector = RF_MIN(endAddress, nextStripeUnitAddress) - raidAddress;
 			RF_ASSERT(pda_p->numSector != 0);
 			rf_ASMCheckStatus(raidPtr, pda_p, asm_p, disks, 0);
-			pda_p->bufPtr = buffer + rf_RaidAddressToByte(raidPtr, (raidAddress - startAddress));
+			pda_p->bufPtr = (char *)buffer + rf_RaidAddressToByte(raidPtr, (raidAddress - startAddress));
 			asm_p->totalSectorsAccessed += pda_p->numSector;
 			asm_p->numStripeUnitsAccessed++;
 

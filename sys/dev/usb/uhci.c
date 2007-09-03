@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.189.2.3 2007/02/26 09:10:45 yamt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.189.2.4 2007/09/03 14:39:12 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.189.2.3 2007/02/26 09:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.189.2.4 2007/09/03 14:39:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ UREAD4(uhci_softc_t *sc, bus_size_t r)
 
 #define UHCI_INTR_ENDPT 1
 
-struct usbd_bus_methods uhci_bus_methods = {
+const struct usbd_bus_methods uhci_bus_methods = {
 	uhci_open,
 	uhci_softintr,
 	uhci_poll,
@@ -329,7 +329,7 @@ struct usbd_bus_methods uhci_bus_methods = {
 	uhci_freex,
 };
 
-struct usbd_pipe_methods uhci_root_ctrl_methods = {
+const struct usbd_pipe_methods uhci_root_ctrl_methods = {
 	uhci_root_ctrl_transfer,
 	uhci_root_ctrl_start,
 	uhci_root_ctrl_abort,
@@ -338,7 +338,7 @@ struct usbd_pipe_methods uhci_root_ctrl_methods = {
 	uhci_root_ctrl_done,
 };
 
-struct usbd_pipe_methods uhci_root_intr_methods = {
+const struct usbd_pipe_methods uhci_root_intr_methods = {
 	uhci_root_intr_transfer,
 	uhci_root_intr_start,
 	uhci_root_intr_abort,
@@ -347,7 +347,7 @@ struct usbd_pipe_methods uhci_root_intr_methods = {
 	uhci_root_intr_done,
 };
 
-struct usbd_pipe_methods uhci_device_ctrl_methods = {
+const struct usbd_pipe_methods uhci_device_ctrl_methods = {
 	uhci_device_ctrl_transfer,
 	uhci_device_ctrl_start,
 	uhci_device_ctrl_abort,
@@ -356,7 +356,7 @@ struct usbd_pipe_methods uhci_device_ctrl_methods = {
 	uhci_device_ctrl_done,
 };
 
-struct usbd_pipe_methods uhci_device_intr_methods = {
+const struct usbd_pipe_methods uhci_device_intr_methods = {
 	uhci_device_intr_transfer,
 	uhci_device_intr_start,
 	uhci_device_intr_abort,
@@ -365,7 +365,7 @@ struct usbd_pipe_methods uhci_device_intr_methods = {
 	uhci_device_intr_done,
 };
 
-struct usbd_pipe_methods uhci_device_bulk_methods = {
+const struct usbd_pipe_methods uhci_device_bulk_methods = {
 	uhci_device_bulk_transfer,
 	uhci_device_bulk_start,
 	uhci_device_bulk_abort,
@@ -374,7 +374,7 @@ struct usbd_pipe_methods uhci_device_bulk_methods = {
 	uhci_device_bulk_done,
 };
 
-struct usbd_pipe_methods uhci_device_isoc_methods = {
+const struct usbd_pipe_methods uhci_device_isoc_methods = {
 	uhci_device_isoc_transfer,
 	uhci_device_isoc_start,
 	uhci_device_isoc_abort,
@@ -573,6 +573,7 @@ uhci_activate(device_ptr_t self, enum devact act)
 		return (EOPNOTSUPP);
 
 	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
 		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
 		break;
@@ -764,6 +765,7 @@ uhci_power(int why, void *v)
 			    sc->sc_intr_xfer);
 		sc->sc_bus.use_polling++;
 		uhci_run(sc, 0); /* stop the controller */
+		cmd &= ~UHCI_CMD_RS;
 
 		/* save some state if BIOS doesn't */
 		sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
@@ -3009,7 +3011,7 @@ usb_device_descriptor_t uhci_devd = {
 	1			/* # of configurations */
 };
 
-usb_config_descriptor_t uhci_confd = {
+const usb_config_descriptor_t uhci_confd = {
 	USB_CONFIG_DESCRIPTOR_SIZE,
 	UDESC_CONFIG,
 	{USB_CONFIG_DESCRIPTOR_SIZE +
@@ -3022,7 +3024,7 @@ usb_config_descriptor_t uhci_confd = {
 	0			/* max power */
 };
 
-usb_interface_descriptor_t uhci_ifcd = {
+const usb_interface_descriptor_t uhci_ifcd = {
 	USB_INTERFACE_DESCRIPTOR_SIZE,
 	UDESC_INTERFACE,
 	0,
@@ -3034,7 +3036,7 @@ usb_interface_descriptor_t uhci_ifcd = {
 	0
 };
 
-usb_endpoint_descriptor_t uhci_endpd = {
+const usb_endpoint_descriptor_t uhci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
 	UE_DIR_IN | UHCI_INTR_ENDPT,
@@ -3043,7 +3045,7 @@ usb_endpoint_descriptor_t uhci_endpd = {
 	255
 };
 
-usb_hub_descriptor_t uhci_hubd_piix = {
+const usb_hub_descriptor_t uhci_hubd_piix = {
 	USB_HUB_DESCRIPTOR_SIZE,
 	UDESC_HUB,
 	2,
@@ -3269,7 +3271,12 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			totlen = 1;
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				totlen = uhci_str(buf, len, "\001");
+				if (len > 0)
+					*(u_int8_t *)buf = 4;
+				if (len >=  4) {
+		USETW(((usb_string_descriptor_t *)buf)->bString[0], 0x0409);
+					totlen = 4;
+				}
 				break;
 			case 1: /* Vendor */
 				totlen = uhci_str(buf, len, sc->sc_vendor);

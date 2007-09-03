@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.41.2.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.41.2.3 2007/09/03 14:38:17 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.41.2.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.41.2.3 2007/09/03 14:38:17 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -440,7 +440,7 @@ rf_DiskIOPromote(RF_DiskQueue_t *queue, RF_StripeNum_t parityStripeID,
 
 RF_DiskQueueData_t *
 rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
-		       RF_SectorCount_t nsect, caddr_t bf,
+		       RF_SectorCount_t nsect, void *bf,
 		       RF_StripeNum_t parityStripeID,
 		       RF_ReconUnitNum_t which_ru,
 		       int (*wakeF) (void *, int), void *arg,

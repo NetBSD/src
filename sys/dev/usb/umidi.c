@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.23.2.2 2006/12/30 20:49:39 yamt Exp $	*/
+/*	$NetBSD: umidi.c,v 1.23.2.3 2007/09/03 14:39:18 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.23.2.2 2006/12/30 20:49:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.23.2.3 2007/09/03 14:39:18 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.23.2.2 2006/12/30 20:49:39 yamt Exp $");
 #include <sys/poll.h>
 #include <sys/lock.h>
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -162,21 +160,15 @@ USB_DECLARE_DRIVER(umidi);
 
 USB_MATCH(umidi)
 {
-	USB_MATCH_START(umidi, uaa);
-	usb_interface_descriptor_t *id;
+	USB_IFMATCH_START(umidi, uaa);
 
 	DPRINTFN(1,("umidi_match\n"));
-
-	if (uaa->iface == NULL)
-		return UMATCH_NONE;
 
 	if (umidi_search_quirk(uaa->vendor, uaa->product, uaa->ifaceno))
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id!=NULL &&
-	    id->bInterfaceClass==UICLASS_AUDIO &&
-	    id->bInterfaceSubClass==UISUBCLASS_MIDISTREAM)
+	if (uaa->class == UICLASS_AUDIO &&
+	    uaa->subclass == UISUBCLASS_MIDISTREAM)
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	return UMATCH_NONE;
@@ -185,7 +177,7 @@ USB_MATCH(umidi)
 USB_ATTACH(umidi)
 {
 	usbd_status err;
-	USB_ATTACH_START(umidi, sc, uaa);
+	USB_IFATTACH_START(umidi, sc, uaa);
 	char *devinfop;
 
 	DPRINTFN(1,("umidi_attach\n"));
@@ -477,9 +469,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	err = usbd_open_pipe(sc->sc_iface, ep->addr, 0, &ep->pipe);
 	if (err)
 	    usbd_free_xfer(ep->xfer);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	ep->solicit_cookie = softintr_establish(IPL_SOFTCLOCK,out_solicit,ep);
-#endif
 quit:
 	return err;
 }
@@ -491,9 +481,7 @@ free_pipe(struct umidi_endpoint *ep)
 	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
 	usbd_free_xfer(ep->xfer);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_disestablish(ep->solicit_cookie);
-#endif
 }
 
 
@@ -652,6 +640,7 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 {
 	/* This driver currently supports max 1in/1out bulk endpoints */
 	usb_descriptor_t *desc;
+	umidi_cs_descriptor_t *udesc;
 	usb_endpoint_descriptor_t *epd;
 	int out_addr, in_addr, i;
 	int dir;
@@ -673,28 +662,28 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 				in_addr = epd->bEndpointAddress;
 		}
 	}
-	desc = NEXT_D(desc);
+	udesc = (umidi_cs_descriptor_t *)NEXT_D(desc);
 
 	/* count jacks */
-	if (!(desc->bDescriptorType==UDESC_CS_INTERFACE &&
-	      desc->bDescriptorSubtype==UMIDI_MS_HEADER))
+	if (!(udesc->bDescriptorType==UDESC_CS_INTERFACE &&
+	      udesc->bDescriptorSubtype==UMIDI_MS_HEADER))
 		return USBD_INVAL;
-	remain = (size_t)UGETW(TO_CSIFD(desc)->wTotalLength) -
-		(size_t)desc->bLength;
-	desc = NEXT_D(desc);
+	remain = (size_t)UGETW(TO_CSIFD(udesc)->wTotalLength) -
+		(size_t)udesc->bLength;
+	udesc = (umidi_cs_descriptor_t *)NEXT_D(udesc);
 
 	while (remain>=sizeof(usb_descriptor_t)) {
-		descsize = desc->bLength;
+		descsize = udesc->bLength;
 		if (descsize>remain || descsize==0)
 			break;
-		if (desc->bDescriptorType==UDESC_CS_INTERFACE &&
+		if (udesc->bDescriptorType==UDESC_CS_INTERFACE &&
 		    remain>=UMIDI_JACK_DESCRIPTOR_SIZE) {
-			if (desc->bDescriptorSubtype==UMIDI_OUT_JACK)
+			if (udesc->bDescriptorSubtype==UMIDI_OUT_JACK)
 				sc->sc_out_num_jacks++;
-			else if (desc->bDescriptorSubtype==UMIDI_IN_JACK)
+			else if (udesc->bDescriptorSubtype==UMIDI_IN_JACK)
 				sc->sc_in_num_jacks++;
 		}
-		desc = NEXT_D(desc);
+		udesc = (umidi_cs_descriptor_t *)NEXT_D(udesc);
 		remain-=descsize;
 	}
 
@@ -1522,7 +1511,6 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	ep->next_schedule |= 1<<(out_jack->cable_number);
 	++ ep->num_scheduled;
 	if ( !ep->armed  &&  !ep->soliciting ) {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 		/*
 		 * It would be bad to call out_solicit directly here (the
 		 * caller need not be reentrant) but a soft interrupt allows
@@ -1532,16 +1520,6 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 		 */
 		ep->soliciting = 1;
 		softintr_schedule(ep->solicit_cookie);
-#else
-		/*
-		 * This alternative is a little less desirable, because if the
-		 * writer has several messages to go at once, the first will go
-		 * in a USB frame all to itself, and the rest in a full-size
-		 * transfer one frame later (solicited on the first frame's
-		 * completion interrupt). But it's simple.
-		 */
-		ep->armed = (USBD_IN_PROGRESS == start_output_transfer(ep));
-#endif
 	}
 	splx(s);
 	

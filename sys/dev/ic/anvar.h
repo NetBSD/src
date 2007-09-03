@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.11.2.1 2006/06/21 15:02:52 yamt Exp $	*/
+/*	$NetBSD: anvar.h,v 1.11.2.2 2007/09/03 14:34:18 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -147,7 +147,7 @@ struct an_softc	{
 	}			sc_buf;
 
 	/* radiotap header */
-	caddr_t			sc_drvbpf;
+	void *			sc_drvbpf;
 	union {
 		struct an_rx_radiotap_header	tap;
 		u_int8_t			pad[64];

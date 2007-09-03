@@ -1,4 +1,4 @@
-/*	$NetBSD: umidireg.h,v 1.3 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: umidireg.h,v 1.3.16.1 2007/09/03 14:39:18 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,6 +44,13 @@
 #define UMIDI_EMBEDDED	0x01
 #define UMIDI_EXTERNAL	0x02
 
+/* generic, for iteration */
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+} UPACKED umidi_cs_descriptor_t;
+
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
@@ -72,7 +79,7 @@ typedef struct {
 
 
 #define TO_D(p) ((usb_descriptor_t *)(p))
-#define NEXT_D(desc) TO_D((caddr_t)(desc)+(desc)->bLength)
+#define NEXT_D(desc) TO_D((char *)(desc)+(desc)->bLength)
 #define TO_IFD(desc) ((usb_interface_descriptor_t *)(desc))
 #define TO_CSIFD(desc) ((umidi_cs_interface_descriptor_t *)(desc))
 #define TO_EPD(desc) ((usb_endpoint_descriptor_t *)(desc))

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.59.4.1 2006/06/21 15:06:28 yamt Exp $ */
+/*      $NetBSD: if_qe.c,v 1.59.4.2 2007/09/03 14:38:10 yamt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.59.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.59.4.2 2007/09/03 14:38:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -110,7 +110,7 @@ static	void	qeattach(struct device *, struct device *, void *);
 static	void	qeinit(struct qe_softc *);
 static	void	qestart(struct ifnet *);
 static	void	qeintr(void *);
-static	int	qeioctl(struct ifnet *, u_long, caddr_t);
+static	int	qeioctl(struct ifnet *, u_long, void *);
 static	int	qe_add_rxbuf(struct qe_softc *, int);
 static	void	qe_setup(struct qe_softc *);
 static	void	qetimeout(struct ifnet *);
@@ -163,7 +163,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	 * so that the DEQNA has a reason to interrupt.
 	 */
 	ui.ui_size = PROBESIZE;
-	ui.ui_vaddr = (caddr_t)&ring[0];
+	ui.ui_vaddr = (void *)&ring[0];
 	if ((error = uballoc((void *)parent, &ui, UBA_CANTWAIT)))
 		return 0;
 
@@ -646,7 +646,7 @@ qeintr(void *arg)
  * Process an ioctl request.
  */
 int
-qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -698,11 +698,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		/*
 		 * Update our multicast list.
 		 */
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->sc_ec):
-			ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

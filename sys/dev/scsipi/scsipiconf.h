@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.100.2.2 2006/12/30 20:49:34 yamt Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.100.2.3 2007/09/03 14:38:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ struct scsipi_adapter {
 		    scsipi_adapter_req_t, void *);
 	void	(*adapt_minphys)(struct buf *);
 	int	(*adapt_ioctl)(struct scsipi_channel *, u_long,
-		    caddr_t, int, struct proc *);
+		    void *, int, struct proc *);
 	int	(*adapt_enable)(struct device *, int);
 	int	(*adapt_getgeom)(struct scsipi_periph *,
 			struct disk_parms *, u_long);
@@ -283,7 +283,7 @@ struct scsipi_channel {
 
 	int	chan_defquirks;		/* default device's quirks */
 
-	struct proc *chan_thread;	/* completion thread */
+	struct lwp *chan_thread;	/* completion thread */
 	int	chan_tflags;		/* flags for the completion thread */
 
 	int	chan_qfreeze;		/* freeze count for queue */
@@ -388,7 +388,7 @@ struct scsipi_periph {
 	/* Pending scsipi_xfers on this peripherial. */
 	struct scsipi_xfer_queue periph_xferq;
 
-	struct callout periph_callout;
+	callout_t periph_callout;
 
 	/* xfer which has a pending CHECK_CONDITION */
 	struct scsipi_xfer *periph_xscheck;
@@ -498,9 +498,9 @@ typedef enum {
 struct scsipi_xfer {
 	TAILQ_ENTRY(scsipi_xfer) channel_q; /* entry on channel queue */
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
-	struct callout xs_callout;	/* callout for adapter use */
+	callout_t xs_callout;		/* callout for adapter use */
 	int	xs_control;		/* control flags */
-	volatile int xs_status;	/* status flags */
+	volatile int xs_status;		/* status flags */
 	struct scsipi_periph *xs_periph;/* peripherial doing the xfer */
 	int	xs_retries;		/* the number of times to retry */
 	int	xs_requeuecnt;		/* number of requeues */
@@ -663,7 +663,7 @@ int	scsipi_thread_call_callback(struct scsipi_channel *,
 	    void *);
 void	scsipi_async_event(struct scsipi_channel *,
 	    scsipi_async_event_t, void *);
-int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, caddr_t,
+int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, void *,
 	    int, struct lwp *);
 
 void	scsipi_print_xfer_mode(struct scsipi_periph *);

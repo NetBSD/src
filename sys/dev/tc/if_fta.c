@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.22.22.1 2006/06/21 15:07:30 yamt Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.22.22.2 2007/09/03 14:38:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.22.22.1 2006/06/21 15:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fta.c,v 1.22.22.2 2007/09/03 14:38:54 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -81,7 +81,7 @@ static void
 pdq_tc_attach(
     struct device * const parent,
     struct device * const self,
-    void * const aux)
+    void *const aux)
 {
     pdq_softc_t * const sc = device_private(self);
     struct tc_attach_args * const ta = (struct tc_attach_args *) aux;

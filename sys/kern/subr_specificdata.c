@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.7.6.3 2007/02/26 09:11:15 yamt Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.7.6.4 2007/09/03 14:41:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.7.6.3 2007/02/26 09:11:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.7.6.4 2007/09/03 14:41:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -316,8 +316,6 @@ specificdata_fini(specificdata_domain_t sd, specificdata_reference *ref)
 /*
  * specificdata_getspecific --
  *	Get a datum from a container.
- *
- *	Note: This routine is guaranteed not to sleep.
  */
 void *
 specificdata_getspecific(specificdata_domain_t sd, specificdata_reference *ref,
@@ -345,8 +343,6 @@ specificdata_getspecific(specificdata_domain_t sd, specificdata_reference *ref,
  *	that no other thread could cause the specificdata_reference
  *	to become invalid (i.e. point at the wrong container) by
  *	issuing a setspecific call or destroying the container.
- *
- *	Note #2: This routine is guaranteed not to sleep.
  */
 void *
 specificdata_getspecific_unlocked(specificdata_domain_t sd,

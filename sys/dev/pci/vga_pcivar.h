@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pcivar.h,v 1.3 2005/02/27 00:27:34 perry Exp $ */
+/* $NetBSD: vga_pcivar.h,v 1.3.4.1 2007/09/03 14:37:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,3 +35,5 @@
 
 int vga_pci_cnattach(bus_space_tag_t, bus_space_tag_t,
 			  pci_chipset_tag_t, int, int, int);
+
+int vga_drm_print(void *aux, const char *pnp);

@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.22.4.2 2006/12/30 20:48:04 yamt Exp $ */
+/* $NetBSD: vgavar.h,v 1.22.4.3 2007/09/03 14:35:21 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -42,7 +42,7 @@ struct vga_handle {
 #define vh_memh 	vh_ph.ph_memh
 
 struct vga_funcs {
-	int (*vf_ioctl)(void *, u_long, caddr_t, int, struct lwp *);
+	int (*vf_ioctl)(void *, u_long, void *, int, struct lwp *);
 	paddr_t (*vf_mmap)(void *, off_t, int);
 };
 

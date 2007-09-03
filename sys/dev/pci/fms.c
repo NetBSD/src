@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.24.2.1 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: fms.c,v 1.24.2.2 2007/09/03 14:36:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.24.2.1 2006/12/30 20:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.24.2.2 2007/09/03 14:36:50 yamt Exp $");
 
 #include "mpu.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.24.2.1 2006/12/30 20:48:43 yamt Exp $");
 
 struct fms_dma {
 	struct fms_dma *next;
-	caddr_t addr;
+	void *addr;
 	size_t size;
 	bus_dmamap_t map;
 	bus_dma_segment_t seg;

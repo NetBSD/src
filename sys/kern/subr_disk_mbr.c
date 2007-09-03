@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.6.4.3 2007/02/26 09:11:14 yamt Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.6.4.4 2007/09/03 14:41:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,11 +54,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.6.4.3 2007/02/26 09:11:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.6.4.4 2007/09/03 14:41:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/bootblock.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
@@ -92,6 +93,7 @@ typedef struct mbr_args {
 	int		found_mbr;	/* set if disk has a valid mbr */
 	uint		label_sector;	/* where we found the label */
 	int		action;
+	uint32_t	secperunit;
 #define READ_LABEL	1
 #define UPDATE_LABEL	2
 #define WRITE_LABEL	3
@@ -104,15 +106,9 @@ static int write_netbsd_label(mbr_args_t *, mbr_partition_t *, int, uint);
 static int
 read_sector(mbr_args_t *a, uint sector, int count)
 {
-	struct buf *bp = a->bp;
 	int error;
 
-	bp->b_blkno = sector;
-	bp->b_bcount = count * a->lp->d_secsize;
-	bp->b_flags = (bp->b_flags & ~(B_WRITE | B_DONE)) | B_READ;
-	bp->b_cylinder = sector / a->lp->d_secpercyl;
-	(*a->strat)(bp);
-	error = biowait(bp);
+	error = disk_read_sectors(a->strat, a->lp, a->bp, sector, count);
 	if (error != 0)
 		a->error = error;
 	return error;
@@ -264,6 +260,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
+	a.secperunit = lp->d_secperunit;
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -337,7 +334,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			rval = SCAN_FOUND;
 			*bdp = *db;
 			break;
-		} while ((a.bp->b_flags & B_ERROR) && (i += 2) < 10 &&
+		} while (a.bp->b_error && (i += 2) < 10 &&
 			i < lp->d_nsectors);
 	}
 
@@ -432,13 +429,13 @@ validate_label(mbr_args_t *a, uint label_sector)
 	 * the disk sector, and (IIRC) labels within 8k of the disk start.
 	 */
 	dlp = (void *)a->bp->b_data;
-	dlp_lim = a->bp->b_data + a->bp->b_bcount - sizeof *dlp;
+	dlp_lim = (char *)a->bp->b_data + a->bp->b_bcount - sizeof *dlp;
 	for (;; dlp = (void *)((char *)dlp + sizeof(long))) {
 		if ((char *)dlp > dlp_lim) {
 			if (a->action != WRITE_LABEL)
 				return SCAN_CONTINUE;
 			/* Write at arch. dependant default location */
-			dlp_byte = a->bp->b_data + LABELOFFSET;
+			dlp_byte = (char *)a->bp->b_data + LABELOFFSET;
 			if (label_sector)
 				dlp_byte += MBR_LABELSECTOR * a->lp->d_secsize;
 			else
@@ -458,6 +455,9 @@ validate_label(mbr_args_t *a, uint label_sector)
 	switch (a->action) {
 	case READ_LABEL:
 		*a->lp = *dlp;
+		if ((a->msg = convertdisklabel(a->lp, a->strat, a->bp,
+		                              a->secperunit)) != NULL)
+			return SCAN_ERROR;
 		a->label_sector = label_sector;
 		return SCAN_FOUND;
 	case UPDATE_LABEL:

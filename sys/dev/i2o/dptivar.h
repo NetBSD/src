@@ -1,4 +1,4 @@
-/*	$NetBSD: dptivar.h,v 1.4 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: dptivar.h,v 1.4.4.1 2007/09/03 14:34:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct dpti_softc {
 };
 
 struct dpti_ptbuf {
-	caddr_t	db_ptr;
+	void *	db_ptr;
 	struct	proc *db_proc;
 	int	db_size;
 	int	db_out;

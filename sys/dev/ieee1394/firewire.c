@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.8.4.3 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: firewire.c,v 1.8.4.4 2007/09/03 14:35:25 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -32,7 +32,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/firewire.c,v 1.80 2005/01/06 01:42:41 imp Exp $
+ * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/firewire.c,v 1.86 2007/03/30 15:43:56 simokawa Exp $
  *
  */
 
@@ -609,7 +609,7 @@ firewire_print(void *aux, const char *pnp)
 		aprint_normal("%s at %s", fwa->name, pnp);
 
 	return UNCONF;
-}               
+}
 #endif
 
 static void
@@ -1472,13 +1472,12 @@ static void
 fw_kthread_create0(void *arg)
 {
 	struct firewire_comm *fc = (struct firewire_comm *)arg;
-	fw_thread *p;
 
 	config_pending_incr();
 
 	/* create thread */
 	if (THREAD_CREATE(fw_bus_probe_thread,
-	    (void *)fc, &p, "fw%d_probe", device_get_unit(fc->bdev))) {
+	    (void *)fc, NULL, "fw%d_probe", device_get_unit(fc->bdev))) {
 
 		device_printf(fc->bdev, "unable to create thread");
 		panic("fw_kthread_create");
@@ -2004,7 +2003,7 @@ fw_rcv(struct fw_rcv_buf *rb)
 			selwakeuppri(&xferq->rsel, FWPRI);
 		if (xferq->flag & FWXFERQ_WAKEUP) {
 			xferq->flag &= ~FWXFERQ_WAKEUP;
-			wakeup((caddr_t)xferq);
+			wakeup((void *)xferq);
 		}
 		if (xferq->flag & FWXFERQ_HANDLER) {
 			xferq->hand(xferq);
@@ -2122,7 +2121,7 @@ fw_vmaccess(struct fw_xfer *xfer){
 			xfer->send.len = 12;
 			sfp = (struct fw_pkt *)xfer->send.buf;
 			bcopy(rfp->mode.wreqb.payload,
-				(caddr_t)ntohl(rfp->mode.wreqb.dest_lo), ntohs(rfp->mode.wreqb.len));
+				(void *)ntohl(rfp->mode.wreqb.dest_lo), ntohs(rfp->mode.wreqb.len));
 			sfp->mode.wres.tcode = FWTCODE_WRES;
 			sfp->mode.wres.rtcode = 0;
 			break;
@@ -2137,7 +2136,7 @@ fw_vmaccess(struct fw_xfer *xfer){
 			xfer->send.buf = malloc(16 + rfp->mode.rreqb.len, M_FW, M_NOWAIT);
 			xfer->send.len = 16 + ntohs(rfp->mode.rreqb.len);
 			sfp = (struct fw_pkt *)xfer->send.buf;
-			bcopy((caddr_t)ntohl(rfp->mode.rreqb.dest_lo),
+			bcopy((void *)ntohl(rfp->mode.rreqb.dest_lo),
 				sfp->mode.rresb.payload, (uint16_t)ntohs(rfp->mode.rreqb.len));
 			sfp->mode.rresb.tcode = FWTCODE_RRESB;
 			sfp->mode.rresb.len = rfp->mode.rreqb.len;

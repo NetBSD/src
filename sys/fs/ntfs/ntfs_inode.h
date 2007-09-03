@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.2.4.1 2006/06/21 15:09:29 yamt Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.2.4.2 2007/09/03 14:40:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -112,7 +112,7 @@ struct fnode {
 	u_int32_t       f_lastdblnum;
 	u_int32_t       f_lastdoff;
 	u_int32_t       f_lastdnum;
-	caddr_t         f_dirblbuf;
+	void *        f_dirblbuf;
 	u_int32_t       f_dirblsz;
 };
 

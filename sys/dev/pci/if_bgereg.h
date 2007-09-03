@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.24.4.3 2007/02/26 09:10:25 yamt Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.24.4.4 2007/09/03 14:36:53 yamt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -275,6 +275,8 @@
 #define BGE_CHIPID_BCM5715_A0		0x90000000
 #define BGE_CHIPID_BCM5715_A1		0x90010000
 #define BGE_CHIPID_BCM5715_A3		0x90030000
+#define BGE_CHIPID_BCM5787_A0		0xb0000000
+#define BGE_CHIPID_BCM5787_A1		0xb0010000
 #define BGE_CHIPID_BCM5787_A2		0xb0020000
 #define BGE_CHIPID_BCM5906_A1		0xc0010000
 
@@ -1127,7 +1129,7 @@
 #define BGE_HCC_RX_COAL_TICKS_INT	0x3C18 /* ticks during interrupt */
 #define BGE_HCC_TX_COAL_TICKS_INT	0x3C1C /* ticks during interrupt */
 #define BGE_HCC_RX_MAX_COAL_BDS_INT	0x3C20 /* BDs during interrupt */
-#define BGE_HCC_TX_MAX_COAL_BDS_INT	0x3C34 /* BDs during interrupt */
+#define BGE_HCC_TX_MAX_COAL_BDS_INT	0x3C24 /* BDs during interrupt */
 #define BGE_HCC_STATS_TICKS		0x3C28
 #define BGE_HCC_STATS_ADDR_HI		0x3C30
 #define BGE_HCC_STATS_ADDR_LO		0x3C34
@@ -2336,8 +2338,8 @@ struct bge_chain_data {
 	bus_dmamap_t		bge_rx_std_map[BGE_STD_RX_RING_CNT];
 	bus_dmamap_t		bge_rx_jumbo_map;
 	/* Stick the jumbo mem management stuff here too. */
-	caddr_t			bge_jslots[BGE_JSLOTS];
-	caddr_t			bge_jumbo_buf;
+	void *			bge_jslots[BGE_JSLOTS];
+	void *			bge_jumbo_buf;
 };
 
 #define BGE_JUMBO_DMA_ADDR(sc, m) \

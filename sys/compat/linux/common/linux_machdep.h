@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.12.2.2 2006/12/30 20:47:38 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.12.2.3 2007/09/03 14:32:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,10 @@
 #include <compat/linux/arch/amd64/linux_machdep.h>
 #else
 #error Undefined linux_machdep.h machine type.
+#endif
+
+#ifndef LINUX_UNAME_ARCH
+#define LINUX_UNAME_ARCH machine
 #endif
 
 #ifdef _KERNEL

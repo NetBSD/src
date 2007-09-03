@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.72.6.1 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: if_el.c,v 1.72.6.2 2007/09/03 14:35:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.72.6.1 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.72.6.2 2007/09/03 14:35:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -92,7 +92,7 @@ struct el_softc {
  */
 int elintr(void *);
 void elinit(struct el_softc *);
-int elioctl(struct ifnet *, u_long, caddr_t);
+int elioctl(struct ifnet *, u_long, void *);
 void elstart(struct ifnet *);
 void elwatchdog(struct ifnet *);
 void elreset(struct el_softc *);
@@ -314,7 +314,7 @@ el_hardreset(sc)
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		bus_space_write_1(iot, ioh, i,
-		    LLADDR(sc->sc_ethercom.ec_if.if_sadl)[i]);
+		    CLLADDR(sc->sc_ethercom.ec_if.if_sadl)[i]);
 }
 
 /*
@@ -685,7 +685,7 @@ int
 elioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct el_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

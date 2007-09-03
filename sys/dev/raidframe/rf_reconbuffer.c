@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.22 2005/02/27 00:27:45 perry Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.22.4.1 2007/09/03 14:38:22 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.22 2005/02/27 00:27:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.22.4.1 2007/09/03 14:38:22 yamt Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -125,7 +125,7 @@ rf_SubmitReconBufferBasic(RF_ReconBuffer_t *rbuf, int keep_it,
 	RF_ReconParityStripeStatus_t *pssPtr;
 	RF_ReconBuffer_t *targetRbuf, *t = NULL;	/* temporary rbuf
 							 * pointers */
-	caddr_t ta;		/* temporary data buffer pointer */
+	void *ta;		/* temporary data buffer pointer */
 	RF_CallbackDesc_t *cb, *p;
 	int     retcode = 0;
 

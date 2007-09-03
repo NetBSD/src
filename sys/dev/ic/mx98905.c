@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.6.16.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.6.16.2 2007/09/03 14:34:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.6.16.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.6.16.2 2007/09/03 14:34:59 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -303,7 +303,7 @@ int
 mx98905_ring_copy(sc, src, dst, amount)
 	struct dp8390_softc *sc;
 	int src;
-	caddr_t dst;
+	void *dst;
 	u_short amount;
 {
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;

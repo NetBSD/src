@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.12.2.2 2006/12/30 20:48:45 yamt Exp $ */
+/* $NetBSD: if_txp.c,v 1.12.2.3 2007/09/03 14:37:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.12.2.2 2006/12/30 20:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.12.2.3 2007/09/03 14:37:04 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -92,7 +92,7 @@ void txp_attach(struct device *, struct device *, void *);
 int txp_intr(void *);
 void txp_tick(void *);
 void txp_shutdown(void *);
-int txp_ioctl(struct ifnet *, u_long, caddr_t);
+int txp_ioctl(struct ifnet *, u_long, void *);
 void txp_start(struct ifnet *);
 void txp_stop(struct txp_softc *);
 void txp_init(struct txp_softc *);
@@ -338,7 +338,7 @@ txp_attach(struct device *parent, struct device *self, void *aux)
 
 	txp_capabilities(sc);
 
-	callout_init(&sc->sc_tick);
+	callout_init(&sc->sc_tick, 0);
 	callout_setfunc(&sc->sc_tick, txp_tick, sc);
 
 	/*
@@ -1259,7 +1259,7 @@ int
 txp_ioctl(ifp, command, data)
 	struct ifnet *ifp;
 	u_long command;
-	caddr_t data;
+	void *data;
 {
 	struct txp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1300,11 +1300,7 @@ txp_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
@@ -1445,7 +1441,7 @@ txp_start(ifp)
 					goto oactive1;
 				}
 			}
-			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, void *));
 			mnew->m_pkthdr.len = mnew->m_len = m->m_pkthdr.len;
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);

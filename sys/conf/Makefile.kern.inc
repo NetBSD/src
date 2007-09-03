@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.68.2.3 2007/02/26 09:09:45 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.68.2.4 2007/09/03 14:33:04 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -89,7 +89,7 @@ AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
 CFLAGS+=	-fno-strict-aliasing
 .endif
 
-.if ${USE_SSP:Uno} == "yes"
+.if ${USE_FORT:Uno} == "yes"
 CFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 .endif
@@ -373,6 +373,11 @@ lint: ${LOBJS}
 	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${LOBJS}
 .endif
 
+# List of kernel images that will be installed into the root file system.
+# Some platforms may need to install more than one (e.g. a netbsd.aout file
+# to be loaded directly by the firmware), so this can be overriden by them.
+KERNIMAGES?=	netbsd
+
 .if !target(install)
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
@@ -380,10 +385,12 @@ MACHINE_NAME!=  uname -n
 install: install-kernel-${MACHINE_NAME}
 .if !target(install-kernel-${MACHINE_NAME})
 install-kernel-${MACHINE_NAME}:
-	rm -f ${DESTDIR}/onetbsd
-	ln ${DESTDIR}/netbsd ${DESTDIR}/onetbsd
-	cp netbsd ${DESTDIR}/nnetbsd
-	mv ${DESTDIR}/nnetbsd ${DESTDIR}/netbsd
+.for _K in ${KERNIMAGES}
+	rm -f ${DESTDIR}/o${_K}
+	ln ${DESTDIR}/${_K} ${DESTDIR}/o${_K}
+	cp ${_K} ${DESTDIR}/n${_K}
+	mv ${DESTDIR}/n${_K} ${DESTDIR}/${_K}
+.endfor
 .endif
 .endif
 

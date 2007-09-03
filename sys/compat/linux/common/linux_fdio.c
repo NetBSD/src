@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fdio.c,v 1.7.18.2 2007/02/26 09:09:18 yamt Exp $	*/
+/*	$NetBSD: linux_fdio.c,v 1.7.18.3 2007/09/03 14:32:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.7.18.2 2007/02/26 09:09:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.7.18.3 2007/09/03 14:32:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ linux_ioctl_fdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		error = copyout(&ldrive, SCARG(uap, data), sizeof ldrive);
 		break;
 	case LINUX_FDGETPRM:
-		error = ioctlf(fp, FDIOCGETFORMAT, (caddr_t)&fparams, l);
+		error = ioctlf(fp, FDIOCGETFORMAT, (void *)&fparams, l);
 		if (error != 0)
 			break;
 		lflop.size = fparams.ncyl * fparams.nspt * fparams.ntrk;

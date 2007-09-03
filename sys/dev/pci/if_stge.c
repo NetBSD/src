@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.28.2.2 2006/12/30 20:48:45 yamt Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.28.2.3 2007/09/03 14:37:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.28.2.2 2006/12/30 20:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.28.2.3 2007/09/03 14:37:03 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -151,7 +151,7 @@ struct stge_softc {
 
 	struct mii_data sc_mii;		/* MII/media information */
 
-	struct callout sc_tick_ch;	/* tick callout */
+	callout_t sc_tick_ch;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -269,7 +269,7 @@ do {									\
 
 static void	stge_start(struct ifnet *);
 static void	stge_watchdog(struct ifnet *);
-static int	stge_ioctl(struct ifnet *, u_long, caddr_t);
+static int	stge_ioctl(struct ifnet *, u_long, void *);
 static int	stge_init(struct ifnet *);
 static void	stge_stop(struct ifnet *, int);
 
@@ -401,7 +401,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	const struct stge_product *sp;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	sp = stge_lookup(pa);
 	if (sp == NULL) {
@@ -481,7 +481,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct stge_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct stge_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -728,7 +728,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct stge_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -1016,7 +1016,7 @@ stge_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+stge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct stge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1319,7 +1319,7 @@ stge_rxintr(struct stge_softc *sc)
 			}
 			nm->m_data += 2;
 			nm->m_pkthdr.len = nm->m_len = len;
-			m_copydata(m, 0, len, mtod(nm, caddr_t));
+			m_copydata(m, 0, len, mtod(nm, void *));
 			m_freem(m);
 			m = nm;
 		}
@@ -1543,7 +1543,7 @@ stge_init(struct ifnet *ifp)
 	/* Set the station address. */
 	for (i = 0; i < 6; i++)
 		bus_space_write_1(st, sh, STGE_StationAddress0 + i,
-		    LLADDR(ifp->if_sadl)[i]);
+		    CLLADDR(ifp->if_sadl)[i]);
 
 	/*
 	 * Set the statistics masks.  Disable all the RMON stats,

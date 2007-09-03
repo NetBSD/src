@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.12.4.2 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: dzms.c,v 1.12.4.3 2007/09/03 14:33:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.12.4.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.12.4.3 2007/09/03 14:33:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ CFATTACH_DECL(dzms, sizeof(struct dzms_softc),
     dzms_match, dzms_attach, NULL, NULL);
 
 static int  dzms_enable(void *);
-static int  dzms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int  dzms_ioctl(void *, u_long, void *, int, struct lwp *);
 static void dzms_disable(void *);
 
 const struct wsmouse_accessops dzms_accessops = {
@@ -180,7 +180,7 @@ static int
 dzms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

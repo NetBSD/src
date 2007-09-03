@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.18.2.3 2007/02/26 09:10:05 yamt Exp $	*/
+/*	$NetBSD: iopl.c,v 1.18.2.4 2007/09/03 14:34:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,9 +46,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.3 2007/02/26 09:10:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.4 2007/09/03 14:34:07 yamt Exp $");
 
-#include "opt_i2o.h"
 #include "opt_inet.h"
 #include "bpfilter.h"
 
@@ -121,7 +120,7 @@ static void	iopl_munge_ether(struct mbuf *, u_int8_t *);
 static void	iopl_munge_fddi(struct mbuf *, u_int8_t *);
 
 static int	iopl_init(struct ifnet *);
-static int	iopl_ioctl(struct ifnet *, u_long, caddr_t);
+static int	iopl_ioctl(struct ifnet *, u_long, void *);
 static void	iopl_start(struct ifnet *);
 static void	iopl_stop(struct ifnet *, int);
 
@@ -992,7 +991,7 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 					continue;
 				}
 				m0->m_data += sc->sc_rx_prepad;
-				m_copydata(m, 0, len, mtod(m0, caddr_t) + off);
+				m_copydata(m, 0, len, mtod(m0, void *) + off);
 				off = 0;
 			} else if (!first) {
 				/*
@@ -1391,7 +1390,7 @@ iopl_init(struct ifnet *ifp)
 		sc->sc_flags |= (IOPL_MEDIA_CHANGE | IOPL_INITTED);
 		splx(s);
 
-		callout_init(&sc->sc_pg_callout);
+		callout_init(&sc->sc_pg_callout, 0);
 
 		sc->sc_next_pg = -1;
 		iopl_tick_sched(sc);
@@ -1458,7 +1457,7 @@ iopl_init(struct ifnet *ifp)
 	 * Try to set the active MAC address.
 	 */
 	memset(hwaddr, 0, sizeof(hwaddr));
-	memcpy(hwaddr, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+	memcpy(hwaddr, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 	iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_MAC_ADDRESS,
 	    hwaddr, sizeof(hwaddr), I2O_PARAM_LAN_MAC_ADDRESS_localaddr);
 
@@ -1870,7 +1869,7 @@ iopl_filter_generic(struct iopl_softc *sc, u_int64_t *tbl)
  * Handle control operations.
  */
 static int
-iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+iopl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iopl_softc *sc;
 	struct ifaddr *ifa;
@@ -1931,7 +1930,7 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		case SIOCGIFADDR:
 			ifr = (struct ifreq *)data;
 			memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
-			    LLADDR(ifp->if_sadl), 6);
+			    CLLADDR(ifp->if_sadl), 6);
 			break;
 
 		case SIOCSIFFLAGS:
@@ -1941,11 +1940,7 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
 			ifr = (struct ifreq *)data;
-			if (cmd == SIOCADDMULTI)
-				rv = ether_addmulti(ifr, &sc->sc_if.sci_ec);
-			else
-				rv = ether_delmulti(ifr, &sc->sc_if.sci_ec);
-			if (rv == ENETRESET) {
+			if ((rv = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 				if (ifp->if_flags & IFF_RUNNING)
 					rv = iopl_filter_ether(sc);
 				else

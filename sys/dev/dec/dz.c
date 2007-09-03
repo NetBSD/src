@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.16.4.2 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: dz.c,v 1.16.4.3 2007/09/03 14:33:33 yamt Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.16.4.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.16.4.3 2007/09/03 14:33:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	DZ_WRITE_BYTE(dr_dtr, 0);
 	DZ_WRITE_BYTE(dr_break, 0);
 	DZ_BARRIER();
+	DELAY(50000);
 
 	/* Initialize our softc structure. Should be done in open? */
 
@@ -198,7 +199,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 
 	if (dz_timer == 0) {
 		dz_timer = 1;
-		callout_init(&dzscan_ch);
+		callout_init(&dzscan_ch, 0);
 		callout_reset(&dzscan_ch, hz, dzscan, NULL);
 	}
 	printf("\n");
@@ -235,7 +236,7 @@ dzrint(void *arg)
 		cn_check_magic(tp->t_dev, mcc, dz_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((caddr_t)&tp->t_rawq);
+			wakeup((void *)&tp->t_rawq);
 			continue;
 		}
 
@@ -370,7 +371,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+		error = ttysleep(tp, (void *)&tp->t_rawq,
 				TTIPRI | PCATCH, ttopen, 0);
 		tp->t_wopen--;
 		if (error)
@@ -450,7 +451,7 @@ dzpoll(dev, events, l)
 
 /*ARGSUSED*/
 int
-dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+dzioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	dz_softc *sc;
 	struct tty *tp;
@@ -549,7 +550,7 @@ dzstart(struct tty *tp)
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)cl);
+			wakeup((void *)cl);
 		}
 		selwakeup(&tp->t_wsel);
 	}
@@ -599,6 +600,9 @@ dzparam(struct tty *tp, struct termios *t)
 
 	s = spltty();
 
+	/* XXX This is wrong.  Flush output or the chip gets very confused. */
+	ttywait(tp);
+
 	lpr = DZ_LPR_RX_ENABLE | ((ispeed&0xF)<<8) | line;
 
 	switch (cflag & CSIZE)
@@ -625,8 +629,9 @@ dzparam(struct tty *tp, struct termios *t)
 
 	DZ_WRITE_WORD(dr_lpr, lpr);
 	DZ_BARRIER();
-
 	(void) splx(s);
+	DELAY(10000);
+
 	return (0);
 }
 
@@ -691,6 +696,8 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 		DZ_WRITE_BYTE(dr_dtr, DZ_READ_BYTE(dr_dtr) & ~bit);
 	}
 
+	DZ_BARRIER();
+
 	if (mbits & DML_BRK) {
 		sc->sc_brk |= bit;
 		DZ_WRITE_BYTE(dr_break, sc->sc_brk);
@@ -701,6 +708,7 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 
 	DZ_BARRIER();
 	(void) splx(s);
+
 	return (mbits);
 }
 

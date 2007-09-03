@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.173.2.3 2007/02/26 09:11:19 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.173.2.4 2007/09/03 14:41:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.3 2007/02/26 09:11:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.4 2007/09/03 14:41:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,12 +163,12 @@ unsigned char const char_type[] = {
 #undef	TB
 #undef	VT
 
-struct simplelock ttylist_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t ttylist_lock;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 
 POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -321,7 +321,7 @@ ttyclose(struct tty *tp)
 	TTY_UNLOCK(tp);
 	splx(s);
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	s = spltty();
 	TTY_LOCK(tp);
 	if (tp->t_session != NULL) {
@@ -330,7 +330,7 @@ ttyclose(struct tty *tp)
 	}
 	TTY_UNLOCK(tp);
 	splx(s);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return (0);
 }
@@ -821,7 +821,7 @@ ttyoutput(int c, struct tty *tp)
  */
 /* ARGSUSED */
 int
-ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 	struct proc *p = l ? l->l_proc : NULL;
@@ -1160,13 +1160,13 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 	case TIOCSCTTY:			/* become controlling tty */
-		rw_enter(&proclist_lock, RW_WRITER);
+		mutex_enter(&proclist_lock);
 
 		/* Session ctty vnode pointer set in vnode layer. */
 		if (!SESS_LEADER(p) ||
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
 		    (tp->t_session != p->p_session))) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (EPERM);
 		}
 
@@ -1183,7 +1183,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
 		p->p_lflag |= PL_CONTROLT;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		break;
 	case FIOSETOWN: {		/* set pgrp of tty */
 		pid_t pgid = *(int *)data;
@@ -1192,7 +1192,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (tp->t_session != NULL && !isctty(p, tp))
 			return (ENOTTY);
 
-		rw_enter(&proclist_lock, RW_READER); 
+		mutex_enter(&proclist_lock); 
 
 		if (pgid < 0) {
 			pgrp = pg_find(-pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
@@ -1207,11 +1207,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		}
 
 		if (pgrp->pg_session != p->p_session) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (EPERM);
 		}
 		tp->t_pgrp = pgrp;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		break;
 	}
 	case TIOCSPGRP: {		/* set pgrp of tty */
@@ -1219,16 +1219,16 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		if (!isctty(p, tp))
 			return (ENOTTY);
-		rw_enter(&proclist_lock, RW_READER); 
+		mutex_enter(&proclist_lock); 
 		pgrp = pg_find(*(int *)data, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 		if (pgrp == NULL)
 			return (EINVAL);
 		if (pgrp->pg_session != p->p_session) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (EPERM);
 		}
 		tp->t_pgrp = pgrp;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		break;
 	}
 	case TIOCSTAT:			/* get load avg stats */
@@ -1239,7 +1239,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		splx(s);
 		break;
 	case TIOCSWINSZ:		/* set window size */
-		if (memcmp((caddr_t)&tp->t_winsize, data,
+		if (memcmp((void *)&tp->t_winsize, data,
 		    sizeof(struct winsize))) {
 			tp->t_winsize = *(struct winsize *)data;
 			mutex_enter(&proclist_mutex);
@@ -1481,7 +1481,7 @@ ttyflush(struct tty *tp, int rw)
 		if (cdev != NULL)
 			(*cdev->d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
-		wakeup((caddr_t)&tp->t_outq);
+		wakeup((void *)&tp->t_outq);
 		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 }
@@ -2333,7 +2333,7 @@ ttwakeup(struct tty *tp)
 		pgsignal(tp->t_pgrp, SIGIO, tp->t_session != NULL);
 		mutex_exit(&proclist_mutex);
 	}
-	wakeup((caddr_t)&tp->t_rawq);
+	wakeup((void *)&tp->t_rawq);
 }
 
 /*
@@ -2383,6 +2383,7 @@ ttyinfo(struct tty *tp, int fromsig)
 	struct proc	*p, *pick = NULL;
 	struct timeval	utime, stime;
 	int		tmp;
+	fixpt_t		pctcpu = 0;
 	const char	*msg;
 
 	if (ttycheckoutq_wlock(tp, 0) == 0)
@@ -2417,12 +2418,15 @@ ttyinfo(struct tty *tp, int fromsig)
 	}
 
 	ttyprintf_nolock(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
-	LIST_FOREACH(l, &pick->p_lwps, l_sibling)
+	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
 	    ttyprintf_nolock(tp, "%s%s",
 	    l->l_stat == LSONPROC ? "running" :
 	    l->l_stat == LSRUN ? "runnable" :
 	    l->l_wmesg ? l->l_wmesg : "iowait",
 		(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
+	    pctcpu += l->l_pctcpu;
+	}
+	pctcpu += pick->p_pctcpu;
 
 	mutex_enter(&pick->p_smutex);
 	calcru(pick, &utime, &stime, NULL, NULL);
@@ -2448,7 +2452,7 @@ ttyinfo(struct tty *tp, int fromsig)
 
 #define	pgtok(a)	(((u_long) ((a) * PAGE_SIZE) / 1024))
 	/* Print percentage CPU. */
-	tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
+	tmp = (pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
 	ttyprintf_nolock(tp, "%d%% ", tmp / 100);
 
 	/* Print resident set size. */
@@ -2599,11 +2603,17 @@ ttysleep(struct tty *tp, void *chan, int pri, const char *wmesg, int timo)
 void
 tty_attach(struct tty *tp)
 {
+	static bool again;
 
-	simple_lock(&ttylist_slock);
+	if (!again) {
+		again = true;
+		mutex_init(&ttylist_lock, MUTEX_DEFAULT, IPL_NONE);
+	}
+
+	mutex_enter(&ttylist_lock);
 	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
 	++tty_count;
-	simple_unlock(&ttylist_slock);
+	mutex_exit(&ttylist_lock);
 }
 
 /*
@@ -2613,14 +2623,14 @@ void
 tty_detach(struct tty *tp)
 {
 
-	simple_lock(&ttylist_slock);
+	mutex_enter(&ttylist_lock);
 	--tty_count;
 #ifdef DIAGNOSTIC
 	if (tty_count < 0)
 		panic("tty_detach: tty_count < 0");
 #endif
 	TAILQ_REMOVE(&ttylist, tp, tty_link);
-	simple_unlock(&ttylist_slock);
+	mutex_exit(&ttylist_lock);
 }
 
 /*
@@ -2634,7 +2644,7 @@ ttymalloc(void)
 	tp = pool_get(&tty_pool, PR_WAITOK);
 	memset(tp, 0, sizeof(*tp));
 	simple_lock_init(&tp->t_slock);
-	callout_init(&tp->t_rstrt_ch);
+	callout_init(&tp->t_rstrt_ch, 0);
 	/* XXX: default to 1024 chars for now */
 	clalloc(&tp->t_rawq, 1024, 1);
 	clalloc(&tp->t_canq, 1024, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.13.4.1 2006/06/21 15:06:28 yamt Exp $ */
+/*	$NetBSD: ts.c,v 1.13.4.2 2007/09/03 14:38:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.13.4.2 2007/09/03 14:38:14 yamt Exp $");
 
 #undef	TSDEBUG
 
@@ -363,8 +363,8 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 		return;
 	biowait(bp);
 	if (bp->b_flags & B_WANTED)
-		wakeup((caddr_t)bp);
-	bp->b_flags &= B_ERROR;
+		wakeup((void *)bp);
+	bp->b_flags = 0;
 }
 
 /*
@@ -660,7 +660,6 @@ tsintr(void *arg)
 #ifdef TSDEBUG
 			printf("TS_TC_TSA: EOT\n");
 #endif
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			break;
 		}
@@ -730,7 +729,6 @@ tsintr(void *arg)
 		if (sc->sc_rtc++ == 8) {
 			printf("%s: failed 8 retries\n", XNAME);
 			prtstat(sc, sr);
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			break;
 		}
@@ -750,7 +748,6 @@ tsintr(void *arg)
 		if (sc->sc_rtc++ == 8) {
 			printf("%s: failed 8 retries\n", XNAME);
 			prtstat(sc, sr);
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			break;
 		}
@@ -764,7 +761,6 @@ tsintr(void *arg)
 		 * has labels or sequence numbers.
 		 */
 		printf("Tape position lost\n");
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
 
@@ -794,8 +790,6 @@ tsintr(void *arg)
 			uba_done((void *)device_parent(&sc->sc_dev));
 		}
 		bp->b_resid = sc->sc_vts->status.rbpcr;
-		if ((bp->b_flags & B_ERROR) == 0)
-			bp->b_error = 0;
 		biodone (bp);
 	}
 	tsstart(sc, 0);
@@ -924,7 +918,7 @@ int
 tsioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {
@@ -997,16 +991,15 @@ tsioctl(dev, cmd, data, flag, p)
 #endif
 				return (EIO);
 			}
-			if (bp->b_flags & B_ERROR) {
+			if (bp->b_error != 0) {
 #ifdef TSDEBUG
 				printf("error in ioctl %d\n", mtop->mt_op);
 #endif
 				break;
 			}
 		} while (--callcount > 0);
-		if (bp->b_flags & B_ERROR)
-			if ((error = bp->b_error) == 0)
-				return (EIO);
+		if (bp->b_error != 0)
+			error = bp->b_error;
 		return (error);
 
 	case MTIOCGET:			/* get tape status */
@@ -1066,7 +1059,7 @@ int
 tsdump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 	return EIO;

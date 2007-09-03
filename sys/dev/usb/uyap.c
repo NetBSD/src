@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.8 2005/05/11 10:02:29 augustss Exp $	*/
+/*	$NetBSD: uyap.c,v 1.8.2.1 2007/09/03 14:39:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.8 2005/05/11 10:02:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.8.2.1 2007/09/03 14:39:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,6 @@ USB_DECLARE_DRIVER(uyap);
 USB_MATCH(uyap)
 {
 	USB_MATCH_START(uyap, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	/* Match the boot device. */
 	if (uaa->vendor == USB_VENDOR_SILICONPORTALS &&

@@ -1,4 +1,4 @@
-/* $NetBSD: lptvar.h,v 1.7 2005/02/27 00:27:44 perry Exp $ */
+/* $NetBSD: lptvar.h,v 1.7.4.1 2007/09/03 14:38:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@ struct lpt_softc {
 
 	int sc_flags;		/* flags from lptio.h */
 
-	char *sc_inbuf;
-	char *sc_outbuf;
+	void *sc_inbuf;
+	void *sc_outbuf;
 	bus_addr_t sc_in_baddr;
 	bus_addr_t sc_out_baddr;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.60.4.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.60.4.3 2007/09/03 14:34:54 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.60.4.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.60.4.3 2007/09/03 14:34:54 yamt Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.60.4.2 2006/12/30 20:48:03 yamt Exp $"
 
 /* Standard driver entry points.  These can be static. */
 void	mb86960_init(struct mb86960_softc *);
-int	mb86960_ioctl(struct ifnet *, u_long, caddr_t);
+int	mb86960_ioctl(struct ifnet *, u_long, void *);
 void	mb86960_start(struct ifnet *);
 void	mb86960_reset(struct mb86960_softc *);
 void	mb86960_watchdog(struct ifnet *);
@@ -1171,7 +1171,7 @@ mb86960_intr(void *arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-mb86960_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1247,11 +1247,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		/* Update our multicast list. */
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

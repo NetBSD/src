@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.1.30.2 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: spic.c,v 1.1.30.3 2007/09/03 14:35:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1.30.2 2006/12/30 20:48:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.1.30.3 2007/09/03 14:35:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static int spicerror = 0;
 
 static int	spic_enable(void *);
 static void	spic_disable(void *);
-static int	spic_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	spic_ioctl(void *, u_long, void *, int, struct lwp *);
 
 static const struct wsmouse_accessops spic_accessops = {
 	spic_enable,
@@ -259,7 +259,7 @@ spic_attach(struct spic_softc *sc)
 		printf("spic_attach %x %x\n", sc->sc_iot, (uint)sc->sc_ioh);
 #endif
 
-	callout_init(&sc->sc_poll);
+	callout_init(&sc->sc_poll, 0);
 
 	spic_call1(sc, 0x82);
 	spic_call2(sc, 0x81, 0xff);
@@ -330,7 +330,7 @@ spic_disable(void *v)
 }
 
 static int
-spic_ioctl(void *v, u_long cmd, caddr_t data,
+spic_ioctl(void *v, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	switch (cmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.2 2001/12/04 20:47:58 jdolecek Exp $	*/
+/*	$NetBSD: espvar.h,v 1.2.36.1 2007/09/03 14:35:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct esp_softc {
 
 	bus_dmamap_t	sc_xfer;
 
-	caddr_t		*sc_xfer_addr;
+	void *		*sc_xfer_addr;
 	size_t		*sc_xfer_len;
 
 	volatile int sc_flags;

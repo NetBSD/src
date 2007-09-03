@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.214.2.3 2007/02/26 09:10:38 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.214.2.4 2007/09/03 14:38:06 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.221 2007/02/10 03:14:03 ichiro Exp
+ *	NetBSD: pcmciadevs,v 1.222 2007/08/20 00:29:43 kiyohara Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -187,6 +187,8 @@
 #define	PCMCIA_PRODUCT_ANYCOM_LSE041	0x0004
 #define	PCMCIA_CIS_ANYCOM_LSE039	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ANYCOM_LSE039	0x0008
+#define	PCMCIA_CIS_ANYCOM_LSE139	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ANYCOM_LSE139	0x000b
 
 /* Archos */
 #define	PCMCIA_CIS_ARCHOS_ARC_ATAPI	{ NULL, NULL, NULL, NULL }

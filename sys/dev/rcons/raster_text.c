@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_text.c,v 1.7 2003/08/07 16:31:20 agc Exp $ */
+/*	$NetBSD: raster_text.c,v 1.7.16.1 2007/09/03 14:38:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.7 2003/08/07 16:31:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.7.16.1 2007/09/03 14:38:26 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -242,7 +242,7 @@ raster_alloc( width, height, depth )
     r->depth = depth;
     r->linelongs = linelongs;
     r->pixels = (u_int32_t*) (r + 1);
-    r->data = (caddr_t) 0;
+    r->data = (void *) 0;
     return r;
     }
 #endif

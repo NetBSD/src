@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.4.12.1 2006/12/30 20:48:41 yamt Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.4.12.2 2007/09/03 14:36:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ struct amr_softc {
 	bus_dma_tag_t		amr_dmat;
 	pci_chipset_tag_t	amr_pc;
 	void			*amr_ih;
-	struct proc		*amr_thread;
+	struct lwp		*amr_thread;
 	int			amr_flags;
 
 	struct amr_mailbox	*amr_mbox;

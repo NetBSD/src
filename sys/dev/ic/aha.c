@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.47.4.2 2006/12/30 20:48:01 yamt Exp $	*/
+/*	$NetBSD: aha.c,v 1.47.4.3 2007/09/03 14:34:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47.4.2 2006/12/30 20:48:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.47.4.3 2007/09/03 14:34:12 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -939,7 +939,7 @@ aha_init(struct aha_softc *sc)
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct aha_control), (caddr_t *)&sc->sc_control,
+	    sizeof(struct aha_control), (void **)&sc->sc_control,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control structures, error = %d\n",
 		    sc->sc_dev.dv_xname, error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.3.2.3 2007/02/26 09:10:45 yamt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.3.2.4 2007/09/03 14:39:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -104,9 +104,6 @@ USB_DECLARE_DRIVER(ugensa);
 USB_MATCH(ugensa)
 {
 	USB_MATCH_START(ugensa, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	DPRINTFN(20,("ugensa: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));

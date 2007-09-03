@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.11.4.2 2007/02/26 09:09:17 yamt Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.11.4.3 2007/09/03 14:32:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.4.2 2007/02/26 09:09:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.4.3 2007/09/03 14:32:19 yamt Exp $");
 
 #include "opt_ptrace.h"
 
@@ -197,7 +197,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		linux_regs->ldsisr = 0;
 		linux_regs->lresult = 0;
 
-		error = copyout(linux_regs, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_regs, (void *)SCARG(uap, data),
 			 sizeof(struct linux_pt_regs));
 		goto out;
 
@@ -206,7 +206,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		MALLOC(linux_regs, struct linux_pt_regs*, sizeof(*linux_regs),
 		    M_TEMP, M_WAITOK);
 
-		error = copyin((caddr_t)SCARG(uap, data), linux_regs,
+		error = copyin((void *)SCARG(uap, data), linux_regs,
 			 sizeof(struct linux_pt_regs));
 		if (error != 0)
 			goto out;
@@ -238,7 +238,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 
 		memcpy(linux_fpreg, fpregs,
 			min(32*sizeof(double), sizeof(struct fpreg)));
-		error = copyout(linux_fpreg, (caddr_t)SCARG(uap, data),
+		error = copyout(linux_fpreg, (void *)SCARG(uap, data),
 			 32*sizeof(double));
 		goto out;
 
@@ -247,7 +247,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		    M_TEMP, M_WAITOK);
 		MALLOC(linux_fpreg, double *,
 		    32*sizeof(double), M_TEMP, M_WAITOK);
-		error = copyin((caddr_t)SCARG(uap, data), linux_fpreg,
+		error = copyin((void *)SCARG(uap, data), linux_fpreg,
 			 32*sizeof(double));
 		if (error != 0)
 			goto out;
@@ -266,7 +266,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		if (error)
 			goto out;
 
-		PHOLD(lt);	/* need full process info */
+		uvm_lwp_hold(lt);	/* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -309,13 +309,13 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			error = 1;
 		}
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		if (error)
 			goto out;
 
 		error = copyout (retval,
-		    (caddr_t)SCARG(uap, data), sizeof retval);
+		    (void *)SCARG(uap, data), sizeof retval);
 		*retval = SCARG(uap, data);
 
 		goto out;
@@ -329,7 +329,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		if (error)
 			goto out;
 
-		PHOLD(lt);       /* need full process info */
+		uvm_lwp_hold(lt);       /* need full process info */
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -371,7 +371,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			error = 1;
 		}
 
-		PRELE(lt);
+		uvm_lwp_rele(lt);
 
 		error = process_write_regs(lt,regs);
 		if (error)

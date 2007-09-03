@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.11.4.2 2007/02/26 09:10:07 yamt Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.11.4.3 2007/09/03 14:34:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 	(((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8))
 #define	CAC_GET4(x)							\
 	((((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8)) |		\
-	(((u_char *)&(x))[0] << 16 | (((u_char *)&(x))[1] << 24)))
+	(((u_char *)&(x))[2] << 16 | (((u_char *)&(x))[3] << 24)))
 
 struct cac_softc;
 struct cac_ccb;
@@ -116,7 +116,7 @@ struct cac_softc {
 	bus_dmamap_t		sc_dmamap;
 	int			sc_nunits;
 	void			*sc_ih;
-	caddr_t			sc_ccbs;
+	void *			sc_ccbs;
 	paddr_t			sc_ccbs_paddr;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_queue;

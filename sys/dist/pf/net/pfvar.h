@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.9.2.2 2006/12/30 20:49:56 yamt Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.9.2.3 2007/09/03 14:40:04 yamt Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -1216,7 +1216,7 @@ struct pfioc_state_kill {
 struct pfioc_states {
 	int	ps_len;
 	union {
-		caddr_t		 psu_buf;
+		void *		 psu_buf;
 		struct pf_state	*psu_states;
 	} ps_u;
 #define ps_buf		ps_u.psu_buf
@@ -1226,7 +1226,7 @@ struct pfioc_states {
 struct pfioc_src_nodes {
 	int	psn_len;
 	union {
-		caddr_t		 psu_buf;
+		void *		 psu_buf;
 		struct pf_src_node	*psu_src_nodes;
 	} psn_u;
 #define psn_buf		psn_u.psu_buf
@@ -1608,20 +1608,6 @@ int pfil_ifaddr_wrapper(void *, struct mbuf **, struct ifnet *, int);
 #define	PRIu32	"u"	/* XXX */
 #endif
 #if !defined(__OpenBSD__)
-#if !defined(__NetBSD__)
-#include <sys/kernel.h> /* mono_time */
-static __inline void getmicrouptime(struct timeval *);
-static __inline void
-getmicrouptime(struct timeval *tvp)
-{
-	int s;
-
-	s = splclock();
-	*tvp = mono_time;
-	splx(s);
-}
-#define	time_second	time.tv_sec
-#endif /* !__NetBSD__ */
 #define	m_copym2	m_dup
 #define	pool_allocator_oldnointr	pool_allocator_nointr
 #endif /* !__OpenBSD__ */

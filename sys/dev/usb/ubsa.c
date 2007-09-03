@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.12.2.2 2007/02/26 09:10:44 yamt Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.12.2.3 2007/09/03 14:39:09 yamt Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.12.2.2 2007/02/26 09:10:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.12.2.3 2007/09/03 14:39:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,9 +249,6 @@ USB_DECLARE_DRIVER(ubsa);
 USB_MATCH(ubsa)
 {
 	USB_MATCH_START(ubsa, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (ubsa_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

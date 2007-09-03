@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.4 2007/02/26 09:10:59 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.5 2007/09/03 14:40:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.4 2007/02/26 09:10:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.5 2007/09/03 14:40:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.4 2007/02/26 09:10:59 yamt E
 #endif
 #define	ROUND_SECTOR(x)		(((x) + 511) & ~511)
 
-MALLOC_DEFINE(M_SYSVBFS_VNODE, "sysvbfs vnode", "sysvbfs vnode structures");
+MALLOC_JUSTDEFINE(M_SYSVBFS_VNODE, "sysvbfs vnode", "sysvbfs vnode structures");
 
 int
 sysvbfs_lookup(void *arg)
@@ -659,7 +659,6 @@ sysvbfs_strategy(void *arg)
 		error = VOP_BMAP(v, b->b_lblkno, NULL, &b->b_blkno, NULL);
 		if (error) {
 			b->b_error = error;
-			b->b_flags |= B_ERROR;
 			biodone(b);
 			return error;
 		}

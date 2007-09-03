@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.11.4.3 2007/02/26 09:11:01 yamt Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.11.4.4 2007/09/03 14:40:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.11.4.3 2007/02/26 09:11:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.11.4.4 2007/09/03 14:40:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1112,7 +1112,7 @@ union_mmap(v)
 {
 	struct vop_mmap_args /* {
 		struct vnode *a_vp;
-		int  a_fflags;
+		vm_prot_t a_prot;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
@@ -2024,6 +2024,9 @@ union_putpages(v)
 
 	ap->a_vp = OTHERVP(vp);
 	simple_unlock(&vp->v_interlock);
+	if (ap->a_flags & PGO_RECLAIM) {
+		return 0;
+	}
 	simple_lock(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;

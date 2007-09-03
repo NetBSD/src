@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.10.18.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.10.18.3 2007/09/03 14:38:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.10.18.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.10.18.3 2007/09/03 14:38:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -138,7 +138,7 @@ sysmonclose(dev_t dev, int flag, int mode, struct lwp *l)
  *	Perform a control request.
  */
 int
-sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sysmonioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 

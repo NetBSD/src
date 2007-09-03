@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.3.4.2 2007/02/26 09:10:01 yamt Exp $	*/
+/*	$NetBSD: ppi.c,v 1.3.4.3 2007/09/03 14:33:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.3.4.2 2007/02/26 09:10:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.3.4.3 2007/09/03 14:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,8 +172,8 @@ ppiattach(parent, self, aux)
 	sc->sc_ic = ga->ga_ic;
 	sc->sc_address = ga->ga_address;
 
-	callout_init(&sc->sc_timo_ch);
-	callout_init(&sc->sc_start_ch);
+	callout_init(&sc->sc_timo_ch, 0);
+	callout_init(&sc->sc_start_ch, 0);
 
 	if (gpibregister(sc->sc_ic, sc->sc_address, ppicallback, sc,
 	    &sc->sc_hdl)) {
@@ -452,7 +452,7 @@ int
 ppiioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

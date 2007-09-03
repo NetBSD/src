@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.7.2.2 2006/12/30 20:49:56 yamt Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.7.2.3 2007/09/03 14:40:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.7.2.2 2006/12/30 20:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.7.2.3 2007/09/03 14:40:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -577,7 +577,7 @@ cd9660_rrip_loop(isodir, ana, table)
 				     ana->imp->logical_block_size, NOCRED, &bp))
 				/* what to do now? */
 				break;
-			phead = (ISO_SUSP_HEADER *)(bp->b_data + ana->iso_ce_off);
+			phead = (ISO_SUSP_HEADER *)((char *)bp->b_data + ana->iso_ce_off);
 			pend = (ISO_SUSP_HEADER *)((char *)phead + ana->iso_ce_len);
 		} else
 			break;

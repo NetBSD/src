@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.99.2.2 2007/02/26 09:09:45 yamt Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.99.2.3 2007/09/03 14:33:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.2 2007/02/26 09:09:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.3 2007/09/03 14:33:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -282,7 +282,7 @@ ultrix_sys_select(struct lwp *l, void *v, register_t *retval)
 
 	/* Check for negative timeval */
 	if (SCARG(uap, tv)) {
-		error = copyin((caddr_t)SCARG(uap, tv), (caddr_t)&atv,
+		error = copyin((void *)SCARG(uap, tv), (void *)&atv,
 			       sizeof(atv));
 		if (error)
 			goto done;
@@ -388,7 +388,7 @@ ultrix_sys_setsockopt(struct lwp *l, void *v, register_t *retval)
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
+		error = copyin(SCARG(uap, val), mtod(m, void *),
 		    (u_int)SCARG(uap, valsize));
 		if (error) {
 			(void) m_free(m);
@@ -439,7 +439,7 @@ ultrix_sys_uname(struct lwp *l, void *v, register_t *retval)
 	*dp = '\0';
 	strncpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
-	return copyout((caddr_t)&sut, (caddr_t)SCARG(uap, name),
+	return copyout((void *)&sut, (void *)SCARG(uap, name),
 	    sizeof(struct ultrix_utsname));
 }
 
@@ -473,7 +473,7 @@ ultrix_sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 	struct sys_nfssvc_args outuap;
 	struct sockaddr sa;
 	int error;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	memset(&outuap, 0, sizeof outuap);
 	SCARG(&outuap, fd) = SCARG(uap, fd);
@@ -604,7 +604,7 @@ ultrix_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 	sigpending1(l, &ss);
 	mask = ss.__bits[0];
 
-	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
+	return (copyout((void *)&mask, (void *)SCARG(uap, mask), sizeof(int)));
 }
 
 int
@@ -788,12 +788,9 @@ int
 ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 {
 	struct ultrix_sys_fcntl_args *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
 	struct ultrix_flock ufl;
-	struct flock fl, *flp = NULL;	/* XXX gcc */
-	caddr_t sg;
-	struct sys_fcntl_args *args, fca;
+	struct flock fl;
 
 	switch (SCARG(uap, cmd)) {
 	case F_GETLK:
@@ -805,35 +802,15 @@ ultrix_sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		error = ultrix_to_bsd_flock(&ufl, &fl);
 		if (error)
 			return (error);
-		sg = stackgap_init(p, 0);
-		flp = (struct flock *)stackgap_alloc(p, &sg, sizeof(*flp));
-		error = copyout(&fl, flp, sizeof(*flp));
-		if (error)
-			return (error);
-
-		SCARG(&fca, fd) = SCARG(uap, fd);
-		SCARG(&fca, cmd) = SCARG(uap, cmd);
-		SCARG(&fca, arg) = flp;
-		args = &fca;
-		break;
-	default:
-		args = v;
-		break;
-	}
-
-	error = sys_fcntl(l, args, retval);
-	if (error)
-		return (error);
-
-	switch (SCARG(uap, cmd)) {
-	case F_GETLK:
-		error = copyin(flp, &fl, sizeof(fl));
-		if (error)
-			return (error);
+		error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(uap, cmd), &fl);
+		if (SCARG(uap, cmd) != F_GETLK || error != 0)
+			return error;
 		bsd_to_ultrix_flock(&fl, &ufl);
-		error = copyout(&ufl, SCARG(uap, arg), sizeof(ufl));
+		return copyout(&ufl, SCARG(uap, arg), sizeof(ufl));
+
+	default:
 		break;
 	}
 
-	return (error);
+	return sys_fcntl(l, v, retval);
 }

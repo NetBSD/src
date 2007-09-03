@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.28.2.3 2007/02/26 09:09:19 yamt Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.28.2.4 2007/09/03 14:32:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.28.2.3 2007/02/26 09:09:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.28.2.4 2007/09/03 14:32:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.28.2.3 2007/02/26 09:09:19 yamt E
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/namei.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
@@ -130,69 +132,38 @@ linux_sys_fstat64(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys___fstat30_args fsa;
 	struct linux_stat64 tmplst;
-	struct stat *st,tmpst;
-	caddr_t sg;
+	struct stat tmpst;
 	int error;
 
-	sg = stackgap_init(p, 0);
-
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-
-	SCARG(&fsa, fd) = SCARG(uap, fd);
-	SCARG(&fsa, sb) = st;
-
-	if ((error = sys___fstat30(l, &fsa, retval)))
-		return error;
-
-	if ((error = copyin(st, &tmpst, sizeof tmpst)))
+	error = do_sys_fstat(l,  SCARG(uap, fd), &tmpst);
+	if (error != 0)
 		return error;
 
 	bsd_to_linux_stat(&tmpst, &tmplst);
 
-	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
-		return error;
-
-	return 0;
+	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
 
 static int
-linux_do_stat64(l, v, retval, dolstat)
+linux_do_stat64(l, v, retval, flags)
 	struct lwp *l;
 	void *v;
 	register_t *retval;
-	int dolstat;
+	int flags;
 {
-	struct proc *p = l->l_proc;
-	struct sys___stat30_args sa;
 	struct linux_stat64 tmplst;
-	struct stat *st, tmpst;
-	caddr_t sg;
+	struct stat tmpst;
 	int error;
 	struct linux_sys_stat64_args *uap = v;
 
-	sg = stackgap_init(p, 0);
-	st = stackgap_alloc(p, &sg, sizeof (struct stat));
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-
-	SCARG(&sa, ub) = st;
-	SCARG(&sa, path) = SCARG(uap, path);
-
-	if ((error = (dolstat ? sys___lstat30(l, &sa, retval) :
-				sys___stat30(l, &sa, retval))))
-		return error;
-
-	if ((error = copyin(st, &tmpst, sizeof tmpst)))
+	error = do_sys_stat(l, SCARG(uap, path), flags, &tmpst);
+	if (error != 0)
 		return error;
 
 	bsd_to_linux_stat(&tmpst, &tmplst);
 
-	if ((error = copyout(&tmplst, SCARG(uap, sp), sizeof tmplst)))
-		return error;
-
-	return 0;
+	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
 
 int
@@ -206,7 +177,7 @@ linux_sys_stat64(l, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 
-	return linux_do_stat64(l, uap, retval, 0);
+	return linux_do_stat64(l, uap, retval, FOLLOW);
 }
 
 int
@@ -220,7 +191,7 @@ linux_sys_lstat64(l, v, retval)
 		syscallarg(struct linux_stat64 *) sp;
 	} */ *uap = v;
 
-	return linux_do_stat64(l, uap, retval, 1);
+	return linux_do_stat64(l, uap, retval, NOFOLLOW);
 }
 
 int
@@ -234,10 +205,6 @@ linux_sys_truncate64(l, v, retval)
 		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct sys_truncate_args ta;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	/* Linux doesn't have the 'pad' pseudo-parameter */
 	SCARG(&ta, path) = SCARG(uap, path);
@@ -331,31 +298,20 @@ linux_sys_fcntl64(l, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_fcntl_args fca;
 	struct linux_flock64 lfl;
-	struct flock bfl, *bfp;
+	struct flock bfl;
 	int error;
-	caddr_t sg;
 	void *arg = SCARG(uap, arg);
 	int cmd = SCARG(uap, cmd);
 	int fd = SCARG(uap, fd);
 
 	switch (cmd) {
 	case LINUX_F_GETLK64:
-		sg = stackgap_init(p, 0);
-		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
 		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
 			return error;
 		linux_to_bsd_flock64(&bfl, &lfl);
-		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
-			return error;
-		SCARG(&fca, fd) = fd;
-		SCARG(&fca, cmd) = F_GETLK;
-		SCARG(&fca, arg) = bfp;
-		if ((error = sys_fcntl(l, &fca, retval)) != 0)
-			return error;
-		if ((error = copyin(bfp, &bfl, sizeof bfl)) != 0)
+		error = do_fcntl_lock(l, fd, F_GETLK, &bfl);
+		if (error != 0)
 			return error;
 		bsd_to_linux_flock64(&lfl, &bfl);
 		return copyout(&lfl, arg, sizeof lfl);
@@ -365,14 +321,7 @@ linux_sys_fcntl64(l, v, retval)
 		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
 			return error;
 		linux_to_bsd_flock64(&bfl, &lfl);
-		sg = stackgap_init(p, 0);
-		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
-		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
-			return error;
-		SCARG(&fca, fd) = fd;
-		SCARG(&fca, cmd) = cmd;
-		SCARG(&fca, arg) = bfp;
-		return sys_fcntl(l, &fca, retval);
+		return do_fcntl_lock(l, fd, cmd, &bfl);
 	default:
 		return linux_sys_fcntl(l, v, retval);
 	}
@@ -409,9 +358,9 @@ linux_sys_getdents64(l, v, retval)
 	} */ *uap = v;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t	inp, tbuf;		/* BSD-format */
+	char *inp, *tbuf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */
-	caddr_t outp;			/* Linux-format */
+	char *outp;			/* Linux-format */
 	int resid, linux_reclen = 0;	/* Linux-format */
 	struct file *fp;
 	struct uio auio;
@@ -468,7 +417,7 @@ again:
 		goto out;
 
 	inp = tbuf;
-	outp = (caddr_t)SCARG(uap, dent);
+	outp = (void *)SCARG(uap, dent);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
@@ -506,7 +455,7 @@ again:
 		idb.d_off = off;
 		idb.d_reclen = (u_short)linux_reclen;
 		strcpy(idb.d_name, bdp->d_name);
-		if ((error = copyout((caddr_t)&idb, outp, linux_reclen)))
+		if ((error = copyout((void *)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
@@ -516,7 +465,7 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (caddr_t)SCARG(uap, dent))
+	if (outp == (void *)SCARG(uap, dent))
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
 

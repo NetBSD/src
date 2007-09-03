@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.137.2.3 2007/02/26 09:10:13 yamt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.137.2.4 2007/09/03 14:35:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.3 2007/02/26 09:10:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.4 2007/09/03 14:35:17 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -97,7 +97,7 @@ static const struct tulip_txthresh_tab tlp_dm9102_txthresh_tab[] =
 
 static void	tlp_start(struct ifnet *);
 static void	tlp_watchdog(struct ifnet *);
-static int	tlp_ioctl(struct ifnet *, u_long, caddr_t);
+static int	tlp_ioctl(struct ifnet *, u_long, void *);
 static int	tlp_init(struct ifnet *);
 static void	tlp_stop(struct ifnet *, int);
 
@@ -201,8 +201,8 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
 
-	callout_init(&sc->sc_nway_callout);
-	callout_init(&sc->sc_tick_callout);
+	callout_init(&sc->sc_nway_callout, 0);
+	callout_init(&sc->sc_tick_callout, 0);
 
 	/*
 	 * NOTE: WE EXPECT THE FRONT-END TO INITIALIZE sc_regshift!
@@ -413,7 +413,7 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg,
-	    sizeof(struct tulip_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct tulip_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -578,7 +578,7 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct tulip_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
@@ -672,7 +672,7 @@ tlp_detach(struct tulip_softc *sc)
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct tulip_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
@@ -788,7 +788,7 @@ tlp_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -1000,7 +1000,7 @@ tlp_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-tlp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+tlp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1376,7 +1376,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		 * Note that we use clusters for incoming frames, so the
 		 * buffer is virtually contiguous.
 		 */
-		memcpy(mtod(m, caddr_t), mtod(rxs->rxs_mbuf, caddr_t), len);
+		memcpy(mtod(m, void *), mtod(rxs->rxs_mbuf, void *), len);
 
 		/* Allow the receive descriptor to continue using its mbuf. */
 		TULIP_INIT_RXDESC(sc, i);
@@ -1427,7 +1427,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		if (sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY &&
 		    (ifp->if_flags & IFF_PROMISC) == 0 &&
 		    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			   ETHER_ADDR_LEN) != 0) {
 			m_freem(m);
 			continue;
@@ -1913,7 +1913,7 @@ tlp_init(struct ifnet *ifp)
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++) {
 			bus_space_write_1(sc->sc_st, sc->sc_sh,
-			    cpa + i, LLADDR(ifp->if_sadl)[i]);
+			    cpa + i, CLLADDR(ifp->if_sadl)[i]);
 		}
 		break;
 	    }
@@ -1923,7 +1923,7 @@ tlp_init(struct ifnet *ifp)
 	case TULIP_CHIP_AN985:
 	    {
 		u_int32_t reg;
-		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
 		      (enaddr[1] << 8) |
@@ -1941,7 +1941,7 @@ tlp_init(struct ifnet *ifp)
 	case TULIP_CHIP_AX88141:
 	    {
 		u_int32_t reg;
-		u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+		const u_int8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
 		      (enaddr[1] << 8) |
@@ -2643,7 +2643,7 @@ tlp_filter_setup(struct tulip_softc *sc)
 	DPRINTF(sc, ("%s: tlp_filter_setup: sc_flags 0x%08x\n",
 	    sc->sc_dev.dv_xname, sc->sc_flags));
 
-	memcpy(enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+	memcpy(enaddr, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
 	/*
 	 * If there are transmissions pending, wait until they have

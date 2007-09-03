@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.23.2.3 2007/02/26 09:10:54 yamt Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.23.2.4 2007/09/03 14:40:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.23.2.3 2007/02/26 09:10:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.23.2.4 2007/09/03 14:40:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,32 +58,18 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.23.2.3 2007/02/26 09:10:54 yamt Exp $
 #include <sys/kauth.h>
 #include <fs/adosfs/adosfs.h>
 
-void adosfs_init __P((void));
-void adosfs_reinit __P((void));
-void adosfs_done __P((void));
-int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		      struct lwp *));
-int adosfs_start __P((struct mount *, int, struct lwp *));
-int adosfs_unmount __P((struct mount *, int, struct lwp *));
-int adosfs_root __P((struct mount *, struct vnode **));
-int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
-int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
-int adosfs_sync __P((struct mount *, int, kauth_cred_t, struct lwp *));
-int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
-int adosfs_vptofh __P((struct vnode *, struct fid *, size_t *));
+VFS_PROTOS(adosfs);
 
 int adosfs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
 int adosfs_loadbitmap __P((struct adosfsmount *));
 
 struct simplelock adosfs_hashlock;
 
-POOL_INIT(adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
-    &pool_allocator_nointr);
+struct pool adosfs_node_pool;
 
-MALLOC_DEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
-MALLOC_DEFINE(M_ANODE, "adosfs anode", "adosfs anode structures and tables");
-MALLOC_DEFINE(M_ADOSFSBITMAP, "adosfs bitmap", "adosfs bitmap");
+MALLOC_JUSTDEFINE(M_ADOSFSMNT, "adosfs mount", "adosfs mount structures");
+MALLOC_JUSTDEFINE(M_ANODE, "adosfs anode","adosfs anode structures and tables");
+MALLOC_JUSTDEFINE(M_ADOSFSBITMAP, "adosfs bitmap", "adosfs bitmap");
 
 static const struct genfs_ops adosfs_genfsops = {
 	.gop_size = genfs_size,
@@ -92,47 +78,49 @@ static const struct genfs_ops adosfs_genfsops = {
 int (**adosfs_vnodeop_p) __P((void *));
 
 int
-adosfs_mount(mp, path, data, ndp, l)
+adosfs_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
-	struct nameidata *ndp;
+	size_t *data_len;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct vnode *devvp;
-	struct adosfs_args args;
+	struct adosfs_args *args = data;
 	struct adosfsmount *amp;
 	int error;
 	mode_t accessmode;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		amp = VFSTOADOSFS(mp);
 		if (amp == NULL)
 			return EIO;
-		args.uid = amp->uid;
-		args.gid = amp->gid;
-		args.mask = amp->mask;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->uid = amp->uid;
+		args->gid = amp->gid;
+		args->mask = amp->mask;
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	error = copyin(data, &args, sizeof(struct adosfs_args));
-	if (error)
-		return(error);
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 
-	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+	if ((mp->mnt_flag & MNT_UPDATE) && args->fspec == NULL)
 		return EOPNOTSUPP;
 
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
-	if ((error = namei(ndp)) != 0)
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-	devvp = ndp->ni_vp;
+	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
@@ -164,11 +152,11 @@ adosfs_mount(mp, path, data, ndp, l)
 		return (error);
 	}
 	amp = VFSTOADOSFS(mp);
-	amp->uid = args.uid;
-	amp->gid = args.gid;
-	amp->mask = args.mask;
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
-	    mp, l);
+	amp->uid = args->uid;
+	amp->gid = args->gid;
+	amp->mask = args->mask;
+	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 int
@@ -453,7 +441,7 @@ adosfs_vget(mp, an, vpp)
 		 * convert from BCPL string and
 		 * from: "part:dir/file" to: "/part/dir/file"
 		 */
-		nam = bp->b_data + (6 * sizeof(long));
+		nam = (char *)bp->b_data + (6 * sizeof(long));
 		namlen = strlen(nam);
 		tmp = nam;
 		while (*tmp && *tmp != ':')
@@ -489,7 +477,7 @@ adosfs_vget(mp, an, vpp)
 	/*
 	 * copy in name (from original block)
 	 */
-	nam = bp->b_data + (ap->nwords - 20) * sizeof(u_int32_t);
+	nam = (char *)bp->b_data + (ap->nwords - 20) * sizeof(u_int32_t);
 	namlen = *(u_char *)nam++;
 	if (namlen > 30) {
 #ifdef DIAGNOSTIC
@@ -598,7 +586,7 @@ adosfs_vget(mp, an, vpp)
 	genfs_node_init(vp, &adosfs_genfsops);
 	*vpp = vp;
 	brelse(bp);
-	vp->v_size = ap->fsize;
+	uvm_vnp_setsize(vp, ap->fsize);
 	return (0);
 }
 
@@ -792,25 +780,23 @@ adosfs_sync(mp, waitfor, uc, l)
 void
 adosfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_ADOSFSMNT);
 	malloc_type_attach(M_ANODE);
 	malloc_type_attach(M_ADOSFSBITMAP);
 	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0, "adosndpl",
-	    &pool_allocator_nointr);
-#endif
+	    &pool_allocator_nointr, IPL_NONE);
 	simple_lock_init(&adosfs_hashlock);
 }
 
 void
 adosfs_done()
 {
-#ifdef _LKM
+
 	pool_destroy(&adosfs_node_pool);
 	malloc_type_detach(M_ADOSFSBITMAP);
 	malloc_type_detach(M_ANODE);
 	malloc_type_detach(M_ADOSFSMNT);
-#endif
 }
 
 SYSCTL_SETUP(sysctl_vfs_adosfs_setup, "sysctl vfs.adosfs subtree setup")
@@ -847,6 +833,7 @@ const struct vnodeopv_desc *adosfs_vnodeopv_descs[] = {
 
 struct vfsops adosfs_vfsops = {
 	MOUNT_ADOSFS,
+	sizeof (struct adosfs_args),
 	adosfs_mount,
 	adosfs_start,
 	adosfs_unmount,
@@ -863,7 +850,7 @@ struct vfsops adosfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	adosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

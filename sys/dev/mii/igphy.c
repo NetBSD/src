@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.5.12.3 2007/02/26 09:10:18 yamt Exp $	*/
+/*	$NetBSD: igphy.c,v 1.5.12.4 2007/09/03 14:36:10 yamt Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.5.12.3 2007/02/26 09:10:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.5.12.4 2007/09/03 14:36:10 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -122,6 +122,9 @@ static const struct mii_phy_funcs igphy_funcs = {
 static const struct mii_phydesc igphys[] = {
 	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_IGP01E1000,
 	  MII_STR_yyINTEL_IGP01E1000 },
+
+	{ MII_OUI_yyINTEL,		MII_MODEL_yyINTEL_I82566,
+	  MII_STR_yyINTEL_I82566 },
 
 	{0,				0,
 	 NULL },

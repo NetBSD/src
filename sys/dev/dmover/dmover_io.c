@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.17.6.3 2007/02/26 09:10:01 yamt Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.17.6.4 2007/09/03 14:33:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.17.6.3 2007/02/26 09:10:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.17.6.4 2007/09/03 14:33:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -138,9 +138,9 @@ dmoverioattach(int count)
 {
 
 	pool_init(&dmio_state_pool, sizeof(struct dmio_state),
-	    0, 0, 0, "dmiostate", NULL);
+	    0, 0, 0, "dmiostate", NULL, IPL_SOFTCLOCK);
 	pool_init(&dmio_usrreq_state_pool, sizeof(struct dmio_usrreq_state),
-	    0, 0, 0, "dmiourstate", NULL);
+	    0, 0, 0, "dmiourstate", NULL, IPL_SOFTCLOCK);
 }
 
 /*
@@ -320,7 +320,7 @@ dmio_usrreq_fini(struct dmio_state *ds, struct dmio_usrreq_state *dus)
 		free(dus->dus_uio_in, M_TEMP);
 	}
 
-	workqueue_enqueue(dmio_cleaner, &dus->dus_work);
+	workqueue_enqueue(dmio_cleaner, &dus->dus_work, NULL);
 }
 
 static void

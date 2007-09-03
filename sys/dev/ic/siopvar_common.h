@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.32.4.1 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.32.4.2 2007/09/03 14:35:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -203,7 +203,7 @@ int	siop_iwr(struct siop_common_cmd *);
 
 void	siop_minphys(struct buf *);
 int	siop_ioctl(struct scsipi_channel *, u_long,
-		caddr_t, int, struct proc *);
+		void *, int, struct proc *);
 void 	siop_ma (struct siop_common_cmd *);
 void 	siop_sdp(struct siop_common_cmd *, int);
 void 	siop_update_resid(struct siop_common_cmd *, int);

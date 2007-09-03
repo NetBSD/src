@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.201.2.3 2007/02/26 09:11:05 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.201.2.4 2007/09/03 14:40:45 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.3 2007/02/26 09:11:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.4 2007/09/03 14:40:45 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.3 2007/02/26 09:11:05 yamt Exp
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+
+#include <compat/common/compat_util.h>
 
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
@@ -240,7 +242,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
-	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME;
+	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME | TRYEMULROOT;
 	/* first get the vnode */
 	if ((error = namei(ndp)) != 0)
 		return error;
@@ -288,7 +290,6 @@ check_exec(struct lwp *l, struct exec_package *epp)
 #endif /* PAX_SEGVGUARD */
 
 	/* now we have the file, get the exec header */
-	uvn_attach(vp, VM_PROT_READ);
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
 			UIO_SYSSPACE, 0, l->l_cred, &resid, NULL);
 	if (error)
@@ -308,35 +309,45 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	 * address space
 	 */
 	error = ENOEXEC;
-	for (i = 0; i < nexecs && error != 0; i++) {
+	for (i = 0; i < nexecs; i++) {
 		int newerror;
 
 		epp->ep_esch = execsw[i];
 		newerror = (*execsw[i]->es_makecmds)(l, epp);
+
+		if (!newerror) {
+			/* Seems ok: check that entry point is sane */
+			if (epp->ep_entry > VM_MAXUSER_ADDRESS) {
+				error = ENOEXEC;
+				break;
+			}
+
+			/* check limits */
+			if ((epp->ep_tsize > MAXTSIZ) ||
+			    (epp->ep_dsize > (u_quad_t)l->l_proc->p_rlimit
+						    [RLIMIT_DATA].rlim_cur)) {
+				error = ENOMEM;
+				break;
+			}
+			return 0;
+		}
+
+		if (epp->ep_emul_root != NULL) {
+			vrele(epp->ep_emul_root);
+			epp->ep_emul_root = NULL;
+		}
+		if (epp->ep_interp != NULL) {
+			vrele(epp->ep_interp);
+			epp->ep_interp = NULL;
+		}
+
 		/* make sure the first "interesting" error code is saved. */
-		if (!newerror || error == ENOEXEC)
+		if (error == ENOEXEC)
 			error = newerror;
 
-		/* if es_makecmds call was successful, update epp->ep_es */
-		if (!newerror && (epp->ep_flags & EXEC_HASES) == 0)
-			epp->ep_es = execsw[i];
-
-		if (epp->ep_flags & EXEC_DESTR && error != 0)
+		if (epp->ep_flags & EXEC_DESTR)
+			/* Error from "#!" code, tidied up by recursive call */
 			return error;
-	}
-	if (!error) {
-		/* check that entry point is sane */
-		if (epp->ep_entry > VM_MAXUSER_ADDRESS)
-			error = ENOEXEC;
-
-		/* check limits */
-		if ((epp->ep_tsize > MAXTSIZ) ||
-		    (epp->ep_dsize >
-		     (u_quad_t)l->l_proc->p_rlimit[RLIMIT_DATA].rlim_cur))
-			error = ENOMEM;
-
-		if (!error)
-			return (0);
 	}
 
 	/*
@@ -453,9 +464,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (error)
 		goto clrflg;
 
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pathbuf, l);
+	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf, l);
 #else
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, path, l);
+	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_USERSPACE, path, l);
 #endif /* SYSTRACE */
 
 	/*
@@ -475,6 +486,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pack.ep_vmcmds.evs_used = 0;
 	pack.ep_vap = &attr;
 	pack.ep_flags = 0;
+	pack.ep_emul_root = NULL;
+	pack.ep_interp = NULL;
+	pack.ep_esch = NULL;
 
 #ifdef LKM
 	rw_enter(&exec_lock, RW_READER);
@@ -535,10 +549,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 				error = E2BIG;
 			goto bad;
 		}
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_EXEC_ARG))
-			ktrkmem(l, KTR_EXEC_ARG, dp, len - 1);
-#endif
+		ktrexecarg(dp, len - 1);
 		dp += len;
 		i++;
 		argc++;
@@ -559,10 +570,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 					error = E2BIG;
 				goto bad;
 			}
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_EXEC_ENV))
-				ktrkmem(l, KTR_EXEC_ENV, dp, len - 1);
-#endif
+			ktrexecenv(dp, len - 1);
 			dp += len;
 			i++;
 			envc++;
@@ -571,22 +579,26 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	dp = (char *) ALIGN(dp);
 
-	szsigcode = pack.ep_es->es_emul->e_esigcode -
-	    pack.ep_es->es_emul->e_sigcode;
+	szsigcode = pack.ep_esch->es_emul->e_esigcode -
+	    pack.ep_esch->es_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
 		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
 		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
 
+#ifdef STACKLALIGN	/* arm, etc. */
+	len = STACKALIGN(len);	/* make the stack "safely" aligned */
+#else
 	len = ALIGN(len);	/* make the stack "safely" aligned */
+#endif
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
 		error = ENOMEM;
@@ -626,13 +638,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Now map address space */
 	vm = p->p_vmspace;
-	vm->vm_taddr = (caddr_t) pack.ep_taddr;
+	vm->vm_taddr = (void *)pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
-	vm->vm_daddr = (caddr_t) pack.ep_daddr;
+	vm->vm_daddr = (void*)pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
-	vm->vm_maxsaddr = (caddr_t) pack.ep_maxsaddr;
-	vm->vm_minsaddr = (caddr_t) pack.ep_minsaddr;
+	vm->vm_maxsaddr = (void *)pack.ep_maxsaddr;
+	vm->vm_minsaddr = (void *)pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -717,7 +729,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif /* __MACHINE_STACK_GROWS_UP */
 
 	/* Now copy argc, args & environ to new stack */
-	error = (*pack.ep_es->es_copyargs)(l, &pack, &arginfo, &stack, argp);
+	error = (*pack.ep_esch->es_copyargs)(l, &pack, &arginfo, &stack, argp);
 	if (error) {
 		DPRINTF(("execve: copyargs failed %d\n", error));
 		goto exec_abort;
@@ -769,12 +781,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_sflag & PS_PPWAIT) != 0) {
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		mutex_enter(&p->p_smutex);
 		p->p_sflag &= ~PS_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(&p->p_smutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 	}
 
 	/*
@@ -813,10 +825,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * root set it.
 		 */
 		if (p->p_tracep) {
-			mutex_enter(&ktrace_mutex);
+			mutex_enter(&ktrace_lock);
 			if (!(p->p_traceflag & KTRFAC_ROOT))
 				ktrderef(p);
-			mutex_exit(&ktrace_mutex);
+			mutex_exit(&ktrace_lock);
 		}
 #endif
 		if (attr.va_mode & S_ISUID)
@@ -872,17 +884,28 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_es->es_emul->e_setregs)(l, &pack, (u_long) stack);
-	if (pack.ep_es->es_setregs)
-		(*pack.ep_es->es_setregs)(l, &pack, (u_long) stack);
+	(*pack.ep_esch->es_emul->e_setregs)(l, &pack, (u_long) stack);
+	if (pack.ep_esch->es_setregs)
+		(*pack.ep_esch->es_setregs)(l, &pack, (u_long) stack);
 
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_es->es_emul)) {
+	if (exec_sigcode_map(p, pack.ep_esch->es_emul)) {
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
 
 	free(pack.ep_hdr, M_EXEC);
+
+	/* The emulation root will usually have been found when we looked
+	 * for the elf interpreter (or similar), if not look now. */
+	if (pack.ep_esch->es_emul->e_path != NULL && pack.ep_emul_root == NULL)
+		emul_find_root(l, &pack);
+
+	/* Any old emulation root got removed by fdcloseexec */
+	p->p_cwdi->cwdi_edir = pack.ep_emul_root;
+	pack.ep_emul_root = NULL;
+	if (pack.ep_interp != NULL)
+		vrele(pack.ep_interp);
 
 	/*
 	 * Call emulation specific exec hook. This can setup per-process
@@ -895,29 +918,26 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * resources held previously by this process.
 	 */
 	if (p->p_emul && p->p_emul->e_proc_exit
-	    && p->p_emul != pack.ep_es->es_emul)
+	    && p->p_emul != pack.ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
 	 * from &pack.
 	 */
-        if (pack.ep_es->es_emul->e_proc_exec)
-                (*pack.ep_es->es_emul->e_proc_exec)(p, &pack);
+        if (pack.ep_esch->es_emul->e_proc_exec)
+                (*pack.ep_esch->es_emul->e_proc_exec)(p, &pack);
 
 	/* update p_emul, the old value is no longer needed */
-	p->p_emul = pack.ep_es->es_emul;
+	p->p_emul = pack.ep_esch->es_emul;
 
 	/* ...and the same for p_execsw */
-	p->p_execsw = pack.ep_es;
+	p->p_execsw = pack.ep_esch;
 
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(l);
-#endif
+	ktremul();
 
 #ifdef LKM
 	rw_exit(&exec_lock);
@@ -946,7 +966,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		p->p_nrlwps--;
 		mutex_exit(&p->p_smutex);
 		mutex_exit(&proclist_mutex);
-		mi_switch(l, NULL);
+		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
@@ -983,6 +1003,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
  freehdr:
 	free(pack.ep_hdr, M_EXEC);
+	if (pack.ep_emul_root != NULL)
+		vrele(pack.ep_emul_root);
+	if (pack.ep_interp != NULL)
+		vrele(pack.ep_interp);
 
 #ifdef SYSTRACE
  clrflg:
@@ -1014,6 +1038,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 	free(pack.ep_hdr, M_EXEC);
+	if (pack.ep_emul_root != NULL)
+		vrele(pack.ep_emul_root);
+	if (pack.ep_interp != NULL)
+		vrele(pack.ep_interp);
 
 	/*
 	 * Acquire the sched-state mutex (exit1() will release it).  Since
@@ -1045,7 +1073,7 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
 		return error;
 
-	dp = (char *) (cpp + argc + envc + 2 + pack->ep_es->es_arglen);
+	dp = (char *) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */
@@ -1161,7 +1189,7 @@ emul_unregister(const char *name)
 	 * emul_unregister() is running quite sendomly, it's better
 	 * to do expensive check here than to use any locking.
 	 */
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
 		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
@@ -1170,7 +1198,7 @@ emul_unregister(const char *name)
 			}
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (error)
 		goto out;

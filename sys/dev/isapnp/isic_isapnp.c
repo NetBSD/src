@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.19.4.3 2007/02/26 09:10:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.19.4.4 2007/09/03 14:35:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -314,8 +314,8 @@ isic_isapnp_attach(struct device *parent,
 	sc->sc_freeflag2 = 0;
 
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
-	callout_init(&sc->sc_T3_callout);
-	callout_init(&sc->sc_T4_callout);
+	callout_init(&sc->sc_T3_callout, 0);
+	callout_init(&sc->sc_T4_callout, 0);
 #endif
 
 	/* announce chip versions */

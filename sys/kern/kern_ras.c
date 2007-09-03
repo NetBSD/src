@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.10.4.3 2007/02/26 09:11:09 yamt Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.10.4.4 2007/09/03 14:40:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.3 2007/02/26 09:11:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.4 2007/09/03 14:40:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.3 2007/02/26 09:11:09 yamt Exp $
 #include <uvm/uvm_extern.h>
 
 POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 #define MAX_RAS_PER_PROC	16
 
@@ -71,17 +71,17 @@ int ras_debug = 0;
  * otherwise we return -1.  If we do perform a restart, we
  * mark the sequence as hit.
  */
-caddr_t
-ras_lookup(struct proc *p, caddr_t addr)
+void *
+ras_lookup(struct proc *p, void *addr)
 {
 	struct ras *rp;
-	caddr_t startaddr;
+	void *startaddr;
 
-	startaddr = (caddr_t)-1;
+	startaddr = (void *)-1;
 
 #ifdef DIAGNOSTIC
-	if (addr < (caddr_t)VM_MIN_ADDRESS ||
-	    addr > (caddr_t)VM_MAXUSER_ADDRESS)
+	if (addr < (void *)VM_MIN_ADDRESS ||
+	    addr > (void *)VM_MAXUSER_ADDRESS)
 		return (startaddr);
 #endif
 
@@ -90,9 +90,7 @@ ras_lookup(struct proc *p, caddr_t addr)
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			rp->ras_hits++;
 			startaddr = rp->ras_startaddr;
-#ifdef DIAGNOSTIC
 			DPRINTF(("RAS hit: p=%p %p\n", p, addr));
-#endif
 			break;
 		}
 	}
@@ -182,7 +180,9 @@ ras_purgeall(struct proc *p)
                 DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,
                     rp->ras_endaddr, rp->ras_hits));
 		LIST_REMOVE(rp, ras_list);
+		mutex_exit(&p->p_rasmutex);
 		pool_put(&ras_pool, rp);
+		mutex_enter(&p->p_rasmutex);
 	}
 	mutex_exit(&p->p_rasmutex);
 
@@ -196,15 +196,15 @@ ras_purgeall(struct proc *p)
  * an error.
  */
 static int
-ras_install(struct proc *p, caddr_t addr, size_t len)
+ras_install(struct proc *p, void *addr, size_t len)
 {
 	struct ras *rp;
 	struct ras *newrp;
-	caddr_t endaddr = addr + len;
+	void *endaddr = (char *)addr + len;
 	int nras = 0;
 
-	if (addr < (caddr_t)VM_MIN_ADDRESS ||
-	    endaddr > (caddr_t)VM_MAXUSER_ADDRESS)
+	if (addr < (void *)VM_MIN_ADDRESS ||
+	    endaddr > (void *)VM_MAXUSER_ADDRESS)
 		return (EINVAL);
 
 	if (len <= 0)
@@ -214,10 +214,13 @@ ras_install(struct proc *p, caddr_t addr, size_t len)
 again:
 	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
-		if (++nras >= ras_per_proc ||
-		    (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr)) {
+		if (++nras >= ras_per_proc) {
 			mutex_exit(&p->p_rasmutex);
 			return (EINVAL);
+		}
+		if (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr) {
+			mutex_exit(&p->p_rasmutex);
+			return (EEXIST);
 		}
 	}
 	if (newrp == NULL) {
@@ -239,10 +242,10 @@ again:
  * match, otherwise we return an error.
  */
 static int
-ras_purge(struct proc *p, caddr_t addr, size_t len)
+ras_purge(struct proc *p, void *addr, size_t len)
 {
 	struct ras *rp;
-	caddr_t endaddr = addr + len;
+	void *endaddr = (char *)addr + len;
 	int error = ESRCH;
 
 	mutex_enter(&p->p_rasmutex);
@@ -272,12 +275,12 @@ sys_rasctl(struct lwp *l, void *v, register_t *retval)
 #if defined(__HAVE_RAS)
 
 	struct sys_rasctl_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) op;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t addr;
+	void *addr;
 	size_t len;
 	int op;
 	int error;
@@ -286,7 +289,7 @@ sys_rasctl(struct lwp *l, void *v, register_t *retval)
 	 * first, extract syscall args from the uap.
 	 */
 
-	addr = (caddr_t)SCARG(uap, addr);
+	addr = (void *)SCARG(uap, addr);
 	len = (size_t)SCARG(uap, len);
 	op = SCARG(uap, op);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.9.4.1 2006/06/21 15:05:02 yamt Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.9.4.2 2007/09/03 14:36:15 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9.4.1 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.9.4.2 2007/09/03 14:36:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ pckbc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 		t->t_ioh_c = ioh_c;
 		t->t_addr = regs[0].addr;
 		t->t_cmdbyte = KC8_CPU; /* Enable ports */
-		callout_init(&t->t_cleanup);
+		callout_init(&t->t_cleanup, 0);
 	}
 
 	t->t_sc = sc;

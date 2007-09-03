@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.8.16.1 2006/06/21 15:05:05 yamt Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.8.16.2 2007/09/03 14:37:15 yamt Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -37,7 +37,6 @@
 
 #define PCI_SOCKBASE 0x10	/* Socket Base Address Register */
 #define PCI_BUSNUM   0x18	/* latency timer, Subordinate bus number */
-#define PCI_BCR_INTR 0x3C	/* intr line, intr pin, bridge control regs */
 #define PCI_LEGACY 0x44		/* legacy IO register address (32 bits) */
 #define	PCI_SYSCTRL 0x80	/* System control */
 #define PCI_CBCTRL 0x90		/* Retry status, Card ctrl, Device ctrl */

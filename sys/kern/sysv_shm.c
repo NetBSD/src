@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.84.2.3 2007/02/26 09:11:19 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.84.2.4 2007/09/03 14:41:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.84.2.3 2007/02/26 09:11:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.84.2.4 2007/09/03 14:41:13 yamt Exp $");
 
 #define SYSVSHM
 
@@ -116,7 +116,7 @@ static kmutex_t	shm_lock;
 static int	shm_last_free, shm_committed, shm_use_phys;
 
 static POOL_INIT(shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
-    "shmmp", &pool_allocator_nointr);
+    "shmmp", &pool_allocator_nointr, IPL_NONE);
 
 struct shmmap_state {
 	unsigned int nitems;
@@ -235,7 +235,7 @@ shmmap_getprivate(struct proc *p)
 	memset(shmmap_s, 0, sizeof(struct shmmap_state));
 	shmmap_s->nrefs = 1;
 	SLIST_INIT(&shmmap_s->entries);
-	p->p_vmspace->vm_shm = (caddr_t)shmmap_s;
+	p->p_vmspace->vm_shm = (void *)shmmap_s;
 
 	if (!oshmmap_s)
 		return (shmmap_s);
@@ -503,7 +503,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 					/*
 					 * In fact, uvm_map_pageable could fail
 					 * only if arguments are invalid,
-					 * otherwise it should allways return 0.
+					 * otherwise it should always return 0.
 					 */
 					return EIO;
 				}
@@ -534,7 +534,7 @@ shmget_existing(struct lwp *l, struct sys_shmget_args *uap, int mode,
 		 * allocation failed or it was freed).
 		 */
 		shmseg->shm_perm.mode |= SHMSEG_WANTED;
-		error = tsleep((caddr_t)shmseg, PLOCK | PCATCH, "shmget", 0);
+		error = tsleep((void *)shmseg, PLOCK | PCATCH, "shmget", 0);
 		if (error)
 			return error;
 		return EAGAIN;
@@ -609,7 +609,7 @@ shmget_allocate_segment(struct lwp *l, struct sys_shmget_args *uap, int mode,
 		 * them up now.
 		 */
 		shmseg->shm_perm.mode &= ~SHMSEG_WANTED;
-		wakeup((caddr_t)shmseg);
+		wakeup((void *)shmseg);
 	}
 
 	/* Lock the memory */

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.15.2.2 2006/12/30 20:47:50 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.15.2.3 2007/09/03 14:33:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.2 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.3 2007/09/03 14:33:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,7 @@ dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	DPRINTF_FOLLOW(("dk_open(%s, %p, 0x%x, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
-	if ((ret = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return ret;
-
+	mutex_enter(&dk->dk_openlock);
 	part = DISKPART(dev);
 
 	/*
@@ -149,7 +147,7 @@ dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
 done:
-	lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&dk->dk_openlock);
 	return ret;
 }
 
@@ -160,14 +158,12 @@ dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 {
 	int	part = DISKPART(dev);
 	int	pmask = 1 << part;
-	int	ret;
 	struct disk *dk = &dksc->sc_dkdev;
 
 	DPRINTF_FOLLOW(("dk_close(%s, %p, 0x%x, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
-	if ((ret = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return ret;
+	mutex_enter(&dk->dk_openlock);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -179,7 +175,7 @@ dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	}
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
-	lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&dk->dk_openlock);
 	return 0;
 }
 
@@ -196,7 +192,6 @@ dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 	if (!(dksc->sc_flags & DKF_INITED)) {
 		DPRINTF_FOLLOW(("dk_strategy: not inited\n"));
 		bp->b_error  = ENXIO;
-		bp->b_flags |= B_ERROR;
 		biodone(bp);
 		return;
 	}
@@ -297,7 +292,7 @@ dk_size(struct dk_intf *di, struct dk_softc *dksc, dev_t dev)
 
 int
 dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-	    u_long cmd, caddr_t data, int flag, struct lwp *l)
+	    u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct	disklabel *lp;
 	struct	disk *dk;
@@ -376,11 +371,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		lp = (struct disklabel *)data;
 
 		dk = &dksc->sc_dkdev;
-		error = lockmgr(&dk->dk_openlock, LK_EXCLUSIVE, NULL);
-		if (error) {
-			break;
-		}
-
+		mutex_enter(&dk->dk_openlock);
 		dksc->sc_flags |= DKF_LABELLING;
 
 		error = setdisklabel(dksc->sc_dkdev.dk_label,
@@ -397,7 +388,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 		}
 
 		dksc->sc_flags &= ~DKF_LABELLING;
-		error = lockmgr(&dk->dk_openlock, LK_RELEASE, NULL);
+		mutex_exit(&dk->dk_openlock);
 		break;
 
 	case DIOCWLABEL:
@@ -516,7 +507,7 @@ static volatile int	dk_dumping = 0;
 /* ARGSUSED */
 int
 dk_dump(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
-    daddr_t blkno, caddr_t va, size_t size)
+    daddr_t blkno, void *va, size_t size)
 {
 
 	/*
@@ -635,7 +626,8 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
  * set *vpp to the file's vnode.
  */
 int
-dk_lookup(const char *path, struct lwp *l, struct vnode **vpp)
+dk_lookup(const char *path, struct lwp *l, struct vnode **vpp,
+    enum uio_seg segflg)
 {
 	struct nameidata nd;
 	struct vnode *vp;
@@ -645,7 +637,7 @@ dk_lookup(const char *path, struct lwp *l, struct vnode **vpp)
 	if (l == NULL)
 		return ESRCH;	/* Is ESRCH the best choice? */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, segflg, path, l);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: vn_open error = %d\n", error));

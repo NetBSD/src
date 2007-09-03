@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.5.2.2 2006/12/30 20:48:45 yamt Exp $ */
+/* $NetBSD: if_vge.c,v 1.5.2.3 2007/09/03 14:37:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.5.2.2 2006/12/30 20:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.5.2.3 2007/09/03 14:37:05 yamt Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -207,7 +207,7 @@ struct vge_softc {
 	int			sc_if_flags;
 	int			sc_link;
 	int			sc_camidx;
-	struct callout		sc_timeout;
+	callout_t		sc_timeout;
 
 	bus_dmamap_t		sc_cddmamap;
 #define sc_cddma		sc_cddmamap->dm_segs[0].ds_addr
@@ -310,7 +310,7 @@ static void vge_txeof(struct vge_softc *);
 static int vge_intr(void *);
 static void vge_tick(void *);
 static void vge_start(struct ifnet *);
-static int vge_ioctl(struct ifnet *, u_long, caddr_t);
+static int vge_ioctl(struct ifnet *, u_long, void *);
 static int vge_init(struct ifnet *);
 static void vge_stop(struct vge_softc *);
 static void vge_watchdog(struct ifnet *);
@@ -398,7 +398,7 @@ vge_m_defrag(struct mbuf *mold, int flags)
 		mn->m_len = MIN(sz, MCLBYTES);
 
 		m_copydata(mold, mold->m_pkthdr.len - sz, mn->m_len,
-		     mtod(mn, caddr_t));
+		     mtod(mn, void *));
 
 		sz -= mn->m_len;
 
@@ -845,7 +845,7 @@ vge_allocmem(struct vge_softc *sc)
 	/* Map the memory to kernel VA space */
 
 	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
-	    sizeof(struct vge_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct vge_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error("%s: could not map control data dma memory\n",
@@ -922,7 +922,7 @@ vge_allocmem(struct vge_softc *sc)
  fail_4:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_3:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct vge_control_data));
  fail_2:
 	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
@@ -1069,7 +1069,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-	callout_init(&sc->sc_timeout);
+	callout_init(&sc->sc_timeout, 0);
 	callout_setfunc(&sc->sc_timeout, vge_tick, sc);
 
 	/*
@@ -1793,6 +1793,7 @@ vge_init(struct ifnet *ifp)
 
 	/* Initialize the RX descriptors and mbufs. */
 	memset(sc->sc_rxdescs, 0, sizeof(sc->sc_rxdescs));
+	sc->sc_rx_consumed = 0;
 	for (i = 0; i < VGE_NRXDESC; i++) {
 		if (vge_newbuf(sc, i, NULL) == ENOBUFS) {
 			aprint_error("%s: unable to allocate or map "
@@ -1801,7 +1802,6 @@ vge_init(struct ifnet *ifp)
 		}
 	}
 	sc->sc_rx_prodidx = 0;
-	sc->sc_rx_consumed = 0;
 	sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
 
 	/* Initialize the  TX descriptors and mbufs. */
@@ -2042,7 +2042,7 @@ vge_miibus_statchg(struct device *self)
 }
 
 static int
-vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vge_softc *sc;
 	struct ifreq *ifr;
@@ -2085,11 +2085,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

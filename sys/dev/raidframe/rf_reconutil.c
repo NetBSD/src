@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.25.4.1 2006/06/21 15:06:29 yamt Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.25.4.2 2007/09/03 14:38:23 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.25.4.1 2006/06/21 15:06:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.25.4.2 2007/09/03 14:38:23 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -224,7 +224,7 @@ rf_MakeReconBuffer(RF_Raid_t *raidPtr, RF_RowCol_t col, RF_RbufType_t type)
 	u_int   recon_buffer_size = rf_RaidAddressToByte(raidPtr, layoutPtr->SUsPerRU * layoutPtr->sectorsPerStripeUnit);
 
 	t = pool_get(&rf_pools.reconbuffer, PR_WAITOK);
-	RF_Malloc(t->buffer, recon_buffer_size, (caddr_t));
+	RF_Malloc(t->buffer, recon_buffer_size, (void *));
 	t->raidPtr = raidPtr;
 	t->col = col;
 	t->priority = RF_IO_RECON_PRIORITY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.64.2.3 2007/02/26 09:11:31 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.64.2.4 2007/09/03 14:41:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64.2.3 2007/02/26 09:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64.2.4 2007/09/03 14:41:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,10 +295,13 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	case PFScmdline:	/* /proc/N/cmdline = -r--r--r-- */
 	case PFSemul:	/* /proc/N/emul = -r--r--r-- */
 	case PFSmeminfo:	/* /proc/meminfo = -r--r--r-- */
+	case PFScpustat:	/* /proc/stat = -r--r--r-- */
 	case PFSdevices:	/* /proc/devices = -r--r--r-- */
 	case PFScpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
 	case PFSuptime:	/* /proc/uptime = -r--r--r-- */
 	case PFSmounts:	/* /proc/mounts = -r--r--r-- */
+	case PFSloadavg:	/* /proc/loadavg = -r--r--r-- */
+	case PFSstatm:	/* /proc/N/statm = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -434,6 +437,18 @@ procfs_rw(v)
 
 	case PFScpuinfo:
 		error = procfs_docpuinfo(curl, p, pfs, uio);
+		break;
+
+	case PFScpustat:
+		error = procfs_docpustat(curl, p, pfs, uio);
+		break;
+
+	case PFSloadavg:
+		error = procfs_doloadavg(curl, p, pfs, uio);
+		break;
+
+	case PFSstatm:
+		error = procfs_do_pid_statm(curl, l, pfs, uio);
 		break;
 
 	case PFSfd:
@@ -578,6 +593,8 @@ void
 procfs_hashdone()
 {
 	hashdone(pfs_hashtbl, M_UFSMNT);
+	mutex_destroy(&pfs_hashlock);
+	mutex_destroy(&pfs_ihash_lock);
 }
 
 struct vnode *
@@ -668,7 +685,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 	struct proc *tp;
 	int error = 0;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	if (pid == 0)
 		tp = &proc0;
@@ -681,7 +698,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 		mutex_exit(&tp->p_mutex);
 	}
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	*bunghole = tp;
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.16.4.1 2006/06/21 14:59:35 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.16.4.2 2007/09/03 14:32:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -34,7 +34,7 @@
 		if (size > sizeof(stkbuf)) \
 			data = memp = malloc(size, M_IOCTLOPS, M_WAITOK); \
 		else \
-			data = (caddr_t)stkbuf; \
+			data = (void *)stkbuf; \
 		__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
 			data32, (struct type *)data, cmd); \
 		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, l); \
@@ -48,8 +48,8 @@
 #endif
 
 /* from <sys/dkio.h> */
-typedef int32_t netbsd32_disklabel_tp_t;
-typedef int32_t netbsd32_partition_tp_t;
+typedef netbsd32_pointer_t netbsd32_disklabel_tp_t;
+typedef netbsd32_pointer_t netbsd32_partition_tp_t;
 struct netbsd32_partinfo {
 	netbsd32_disklabel_tp_t disklab;
 	netbsd32_partition_tp_t part;
@@ -162,7 +162,7 @@ struct	netbsd32_ifreq {
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
-		netbsd32_caddr_t	ifru_data;
+		netbsd32_caddr_t ifru_data;
 	} ifr_ifru;
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
@@ -214,7 +214,7 @@ struct	netbsd32_ifreq {
 struct	netbsd32_ifconf {
 	int	ifc_len;		/* size of associated buffer */
 	union {
-		netbsd32_caddr_t	ifcu_buf;
+		netbsd32_caddr_t ifcu_buf;
 		netbsd32_ifreq_tp_t ifcu_req;
 	} ifc_ifcu;
 #define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */

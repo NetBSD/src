@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.15.2.1 2006/06/21 15:06:47 yamt Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.15.2.2 2007/09/03 14:38:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.15.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.15.2.2 2007/09/03 14:38:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ cgthreeattach_sbus(parent, self, args)
 		name = "cgthree";
 
 	if (sa->sa_npromvaddrs != 0)
-		fb->fb_pixels = (caddr_t)(u_long)sa->sa_promvaddrs[0];
+		fb->fb_pixels = (void *)(u_long)sa->sa_promvaddrs[0];
 	if (isconsole && fb->fb_pixels == NULL) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag,

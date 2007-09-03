@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.12 2005/02/27 00:27:02 perry Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.12.4.1 2007/09/03 14:34:56 yamt Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -9,11 +9,11 @@
  */
 
 #if defined(__FreeBSD__)
-typedef void * bus_space_tag_t;
+typedef void *bus_space_tag_t;
 typedef u_int32_t pci_chipset_tag_t;
-typedef caddr_t bus_space_handle_t;
+typedef void *bus_space_handle_t;
 typedef u_int32_t bus_size_t;
-typedef caddr_t bus_addr_t;
+typedef void *bus_addr_t;
 
 #define bus_space_read_4(t, h, o) ((void) t,                            \
     (*(volatile u_int32_t *)((h) + (o))))

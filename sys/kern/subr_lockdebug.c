@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.4.2.2 2007/02/26 09:11:14 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.4.2.3 2007/09/03 14:41:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.4.2.2 2007/02/26 09:11:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.4.2.3 2007/09/03 14:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.4.2.2 2007/02/26 09:11:14 yamt 
 #define	LD_LOCKED	0x01
 #define	LD_SLEEPER	0x02
 
-#define	LD_NOID		LD_MAX_LOCKS
+#define	LD_NOID		(LD_MAX_LOCKS + 1)
 
 typedef union lockdebuglk {
 	struct {
@@ -110,20 +110,22 @@ lockdebuglist_t		ld_all;
 int			ld_nfree;
 int			ld_freeptr;
 int			ld_recurse;
+bool			ld_nomore;
 lockdebug_t		*ld_table[LD_MAX_LOCKS / LD_BATCH];
 
 lockdebug_t		ld_prime[LD_BATCH];
 
-void	lockdebug_abort1(lockdebug_t *, lockdebuglk_t *lk, const char *,
-			 const char *);
-void	lockdebug_more(void);
+static void	lockdebug_abort1(lockdebug_t *, lockdebuglk_t *lk,
+				 const char *, const char *);
+static void	lockdebug_more(void);
+static void	lockdebug_init(void);
 
 static inline void
 lockdebug_lock(lockdebuglk_t *lk)
 {
 	int s;
 	
-	s = spllock();
+	s = splhigh();
 	__cpu_simple_lock(&lk->lk_lock);
 	lk->lk_oldspl = s;
 }
@@ -175,7 +177,7 @@ lockdebug_lookup(u_int id, lockdebuglk_t **lk)
  *	Initialize the lockdebug system.  Allocate an initial pool of
  *	lockdebug structures before the VM system is up and running.
  */
-void
+static void
 lockdebug_init(void)
 {
 	lockdebug_t *ld;
@@ -213,21 +215,17 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 	struct cpu_info *ci;
 	lockdebug_t *ld;
 
-	if (ld_freeptr == 0) {
-		printf("lockdebug_alloc: not initialized yet, lock=%p\n",
-		    __UNVOLATILE(lock));
+	if (lo == NULL || panicstr != NULL)
 		return LD_NOID;
-	}
-
-	if (panicstr != NULL)
-		return LD_NOID;
+	if (ld_freeptr == 0)
+		lockdebug_init();
 
 	ci = curcpu();
 
 	/*
 	 * Pinch a new debug structure.  We may recurse because we call
 	 * kmem_alloc(), which may need to initialize new locks somewhere
-	 * down the path.  If not recursing, we try to maintain at keep
+	 * down the path.  If not recursing, we try to maintain at least
 	 * LD_SLOP structures free, which should hopefully be enough to
 	 * satisfy kmem_alloc().  If we can't provide a structure, not to
 	 * worry: we'll just mark the lock as not having an ID.
@@ -236,7 +234,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 	ci->ci_lkdebug_recurse++;
 
 	if (TAILQ_EMPTY(&ld_free)) {
-		if (ci->ci_lkdebug_recurse > 1) {
+		if (ci->ci_lkdebug_recurse > 1 || ld_nomore) {
 			ci->ci_lkdebug_recurse--;
 			lockdebug_unlock(&ld_free_lk);
 			return LD_NOID;
@@ -323,12 +321,12 @@ lockdebug_free(volatile void *lock, u_int id)
  *	Allocate a batch of debug structures and add to the free list.
  *	Must be called with ld_free_lk held.
  */
-void
+static void
 lockdebug_more(void)
 {
 	lockdebug_t *ld;
 	void *block;
-	int i, base;
+	int i, base, m;
 
 	while (ld_nfree < LD_SLOP) {
 		lockdebug_unlock(&ld_free_lk);
@@ -350,9 +348,13 @@ lockdebug_more(void)
 		ld_nfree += LD_BATCH;
 		ld = block;
 		base <<= LD_BATCH_SHIFT;
+		m = min(LD_MAX_LOCKS, base + LD_BATCH);
 
-		for (i = 0; i < LD_BATCH; i++, ld++) {
-			ld->ld_id = i + base;
+		if (m == LD_MAX_LOCKS)
+			ld_nomore = true;
+
+		for (i = base; i < m; i++, ld++) {
+			ld->ld_id = i;
 			TAILQ_INSERT_TAIL(&ld_free, ld, ld_chain);
 			TAILQ_INSERT_TAIL(&ld_all, ld, ld_achain);
 		}
@@ -592,7 +594,7 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
  *
  *	Dump information about a known lock.
  */
-void
+static void
 lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 		 const char *msg)
 {
@@ -638,7 +640,7 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
  *	An error has been trapped - dump lock info and call panic().
  */
 void
-lockdebug_abort(int id, volatile void *lock, lockops_t *ops,
+lockdebug_abort(u_int id, volatile void *lock, lockops_t *ops,
 		const char *func, const char *msg)
 {
 #ifdef LOCKDEBUG

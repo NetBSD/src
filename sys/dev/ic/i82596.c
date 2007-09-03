@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.10.2.1 2006/12/30 20:48:02 yamt Exp $ */
+/* $NetBSD: i82596.c,v 1.10.2.2 2007/09/03 14:34:40 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.10.2.1 2006/12/30 20:48:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.10.2.2 2007/09/03 14:34:40 yamt Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -90,11 +90,10 @@ static void iee_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /* interface routines to upper protocols */
 static void iee_start(struct ifnet *);			/* initiate output */
-static int iee_ioctl(struct ifnet *, u_long, caddr_t);	/* ioctl routine */
+static int iee_ioctl(struct ifnet *, u_long, void *);	/* ioctl routine */
 static int iee_init(struct ifnet *);			/* init routine */
 static void iee_stop(struct ifnet *, int);		/* stop routine */
 static void iee_watchdog(struct ifnet *);		/* timer routine */
-static void iee_drain(struct ifnet *);			/* release resources */
 
 /* internal helper functions */
 static void iee_cb_setup(struct iee_softc *, uint32_t);
@@ -421,7 +420,7 @@ iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 	case IEE_CB_CMD_NOP:	/* NOP CMD */
 		break;
 	case IEE_CB_CMD_IAS:	/* Individual Address Setup */
-		memcpy(__UNVOLATILE(cb->cb_ind_addr), LLADDR(ifp->if_sadl),
+		memcpy(__UNVOLATILE(cb->cb_ind_addr), CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN);
 		break;
 	case IEE_CB_CMD_CONF:	/* Configure */
@@ -536,7 +535,6 @@ iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia,
 	ifp->if_init = iee_init;	/* init routine */
 	ifp->if_stop = iee_stop;	/* stop routine */
 	ifp->if_watchdog = iee_watchdog;	/* timer routine */
-	ifp->if_drain = iee_drain;	/* routine to release resources */
 	IFQ_SET_READY(&ifp->if_snd);
 	/* iee supports IEEE 802.1Q Virtual LANs, see vlan(4). */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -643,7 +641,7 @@ iee_start(struct ifnet *ifp)
 				continue;
 			}
 			m_copydata(sc->sc_tx_mbuf[t], 0,
-			    sc->sc_tx_mbuf[t]->m_pkthdr.len, mtod(m, caddr_t));
+			    sc->sc_tx_mbuf[t]->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = sc->sc_tx_mbuf[t]->m_pkthdr.len;
 			m->m_len = sc->sc_tx_mbuf[t]->m_pkthdr.len;
 			m_freem(sc->sc_tx_mbuf[t]);
@@ -697,7 +695,7 @@ iee_start(struct ifnet *ifp)
 
 /* ioctl routine */
 int
-iee_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+iee_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iee_softc *sc = ifp->if_softc;
 	int s;
@@ -928,15 +926,5 @@ iee_watchdog(struct ifnet *ifp)
 		printf("%s: iee_watchdog: setup timeout %d\n",
 		    sc->sc_dev.dv_xname, ++sc->sc_setup_timeout);
 	iee_init(ifp);
-	return;
-}
-
-
-
-/* routine to release res. */
-void
-iee_drain(struct ifnet *ifp)
-{
-	iee_stop(ifp, 0);
 	return;
 }

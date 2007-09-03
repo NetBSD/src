@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.7.6.1 2006/12/30 20:48:02 yamt Exp $ */
+/*	$NetBSD: gemreg.h,v 1.7.6.2 2007/09/03 14:34:34 yamt Exp $ */
 
 /*
  *
@@ -583,8 +583,8 @@
  * GEM descriptor table structures.
  */
 struct gem_desc {
-	uint64_t	gd_flags;
-	uint64_t	gd_addr;
+	volatile uint64_t	gd_flags;
+	volatile uint64_t	gd_addr;
 };
 
 /* Transmit flags */

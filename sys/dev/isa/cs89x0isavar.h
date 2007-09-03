@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isavar.h,v 1.3 2005/02/04 02:10:40 perry Exp $ */
+/* $NetBSD: cs89x0isavar.h,v 1.3.6.1 2007/09/03 14:35:32 yamt Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -38,6 +38,6 @@ struct cs_softc_isa {
 
 	bus_size_t sc_dmasize;		/* DMA size (16k or 64k) */
 	bus_addr_t sc_dmaaddr;		/* DMA address */
-	caddr_t	sc_dmabase;		/* base DMA address (KVA) */
-	caddr_t	sc_dmacur;		/* current DMA address (KVA) */
+	char *sc_dmabase;		/* base DMA address (KVA) */
+	char *sc_dmacur;		/* current DMA address (KVA) */
 };

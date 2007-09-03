@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.30.6.2 2006/12/30 20:49:34 yamt Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.30.6.3 2007/09/03 14:38:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.30.6.2 2006/12/30 20:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.30.6.3 2007/09/03 14:38:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -547,7 +547,7 @@ mustek_get_status(struct ss_softc *ss, int timeout, int update)
 		    (timeout-- <= 0))
 			break;
 		/* please wait a second */
-		tsleep((caddr_t)mustek_get_status, PRIBIO + 1, "mtkrdy", hz);
+		tsleep((void *)mustek_get_status, PRIBIO + 1, "mtkrdy", hz);
 	}
 
 	if (update) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.56.2.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.56.2.3 2007/09/03 14:39:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.56.2.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.56.2.3 2007/09/03 14:39:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ Static void	ucom_hwiflow(struct ucom_softc *);
 Static int	ucomparam(struct tty *, struct termios *);
 Static void	ucomstart(struct tty *);
 Static void	ucom_shutdown(struct ucom_softc *);
-Static int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
+Static int	ucom_do_ioctl(struct ucom_softc *, u_long, void *,
 			      int, struct lwp *);
 Static void	ucom_dtr(struct ucom_softc *, int);
 Static void	ucom_rts(struct ucom_softc *, int);
@@ -588,7 +588,7 @@ ucomtty(dev_t dev)
 }
 
 int
-ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
@@ -601,7 +601,7 @@ ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 Static int
-ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
+ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 	      int flag, struct lwp *l)
 {
 	struct tty *tp = sc->sc_tty;

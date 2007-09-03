@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.84.2.3 2007/02/26 09:11:27 yamt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.84.2.4 2007/09/03 14:41:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84.2.3 2007/02/26 09:11:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84.2.4 2007/09/03 14:41:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ loop:
 	fd->fd_fd = -1;
 	fd->fd_link = 0;
 	fd->fd_ix = ix;
+	uvm_vnp_setsize(*vpp, 0);
 	VOP_LOCK(*vpp, LK_EXCLUSIVE);
 	LIST_INSERT_HEAD(fc, fd, fd_hash);
 
@@ -429,7 +430,7 @@ fdesc_open(v)
 		return EDUPFD;
 
 	case Fctty:
-		return ((*ctty_cdevsw.d_open)(devctty, ap->a_mode, 0, ap->a_l));
+		return cdev_open(devctty, ap->a_mode, 0, ap->a_l);
 	case Froot:
 	case Fdevfd:
 	case Flink:
@@ -457,8 +458,9 @@ fdesc_attr(fd, vap, cred, l)
 
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
-		simple_unlock(&fp->f_slock);
+		FILE_USE(fp);
 		error = VOP_GETATTR((struct vnode *) fp->f_data, vap, cred, l);
+		FILE_UNUSE(fp, l);
 		if (error == 0 && vap->va_type == VDIR) {
 			/*
 			 * directories can cause loops in the namespace,
@@ -837,7 +839,7 @@ fdesc_read(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = (*ctty_cdevsw.d_read)(devctty, ap->a_uio, ap->a_ioflag);
+		error = cdev_read(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -865,8 +867,7 @@ fdesc_write(v)
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
 		VOP_UNLOCK(vp, 0);
-		error = (*ctty_cdevsw.d_write)(devctty, ap->a_uio,
-					       ap->a_ioflag);
+		error = cdev_write(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
@@ -894,9 +895,8 @@ fdesc_ioctl(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = (*ctty_cdevsw.d_ioctl)(devctty, ap->a_command,
-					       ap->a_data, ap->a_fflag,
-					       ap->a_l);
+		error = cdev_ioctl(devctty, ap->a_command, ap->a_data,
+		    ap->a_fflag, ap->a_l);
 		break;
 
 	default:
@@ -920,7 +920,7 @@ fdesc_poll(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		revents = (*ctty_cdevsw.d_poll)(devctty, ap->a_events, ap->a_l);
+		revents = cdev_poll(devctty, ap->a_events, ap->a_l);
 		break;
 
 	default:
@@ -946,7 +946,7 @@ fdesc_kqfilter(v)
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = (*ctty_cdevsw.d_kqfilter)(devctty, ap->a_kn);
+		error = cdev_kqfilter(devctty, ap->a_kn);
 		break;
 
 	case Fdesc:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.183.2.3 2007/02/26 09:11:11 yamt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.183.2.4 2007/09/03 14:40:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,10 +75,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183.2.3 2007/02/26 09:11:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183.2.4 2007/09/03 14:40:56 yamt Exp $");
 
 #include "opt_defcorename.h"
-#include "opt_ktrace.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -91,9 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183.2.3 2007/02/26 09:11:11 yamt E
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 #include <machine/stdarg.h>
 
 #define	MAXDESCLEN	1024
@@ -153,7 +150,7 @@ __link_set_decl(sysctl_funcs, sysctl_setup_func);
  * from anywhere.
  */
 krwlock_t sysctl_treelock;
-caddr_t sysctl_memaddr;
+void *sysctl_memaddr;
 size_t sysctl_memsize;
 
 /*
@@ -187,16 +184,7 @@ sysctl_copyin(struct lwp *l, const void *uaddr, void *kaddr, size_t len)
 
 	if (l != NULL) {
 		error = copyin(uaddr, kaddr, len);
-#ifdef KTRACE
-		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
-			struct iovec iov;
-
-			iov.iov_base = (void *)(vaddr_t)uaddr;
-			iov.iov_len = len;
-			ktrgenio(l, -1, UIO_WRITE, &iov, len, error);
-		}
-#endif
-
+		ktrmibio(-1, UIO_WRITE, uaddr, len, error);
 	} else {
 		error = kcopy(uaddr, kaddr, len);
 	}
@@ -211,15 +199,7 @@ sysctl_copyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 
 	if (l != NULL) {
 		error = copyout(kaddr, uaddr, len);
-#ifdef KTRACE
-		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
-			struct iovec iov;
-
-			iov.iov_base = (void *)(vaddr_t)uaddr;
-			iov.iov_len = len;
-			ktrgenio(l, -1, UIO_READ, &iov, len, error);
-		}
-#endif
+		ktrmibio(-1, UIO_READ, uaddr, len, error);
 	} else {
 		error = kcopy(kaddr, uaddr, len);
 	}
@@ -235,15 +215,7 @@ sysctl_copyinstr(struct lwp *l, const void *uaddr, void *kaddr,
 
 	if (l != NULL) {
 		error = copyinstr(uaddr, kaddr, len, done);
-#ifdef KTRACE
-		if (!error && KTRPOINT(l->l_proc, KTR_MIB)) {
-			struct iovec iov;
-
-			iov.iov_base = (void *)(vaddr_t)uaddr;
-			iov.iov_len = len;
-			ktrgenio(l, -1, UIO_WRITE, &iov, len, error);
-		}
-#endif
+		ktrmibio(-1, UIO_WRITE, uaddr, len, error);
 	} else {
 		error = copystr(uaddr, kaddr, len, done);
 	}
@@ -327,10 +299,8 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MIB)) 
-		ktrmib(l, name, SCARG(uap, namelen));
-#endif
+	ktrmib(name, SCARG(uap, namelen));
+
 	/*
 	 * wire old so that copyout() is less likely to fail?
 	 */
@@ -1860,7 +1830,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 		d->descr_num = node[i].sysctl_num;
 		d->descr_ver = node[i].sysctl_ver;
 		d->descr_len = sz; /* includes trailing nul */
-		sz = (caddr_t)NEXT_DESCR(d) - (caddr_t)d;
+		sz = (char *)NEXT_DESCR(d) - (char *)d;
 		if (oldp != NULL && left >= sz) {
 			error = sysctl_copyout(l, d, oldp, sz);
 			if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.68.2.2 2006/12/30 20:48:02 yamt Exp $	*/
+/*	$NetBSD: awi.c,v 1.68.2.3 2007/09/03 14:34:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.68.2.2 2006/12/30 20:48:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.68.2.3 2007/09/03 14:34:22 yamt Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -159,7 +159,7 @@ static int  awi_init(struct ifnet *);
 static void awi_stop(struct ifnet *, int);
 static void awi_start(struct ifnet *);
 static void awi_watchdog(struct ifnet *);
-static int  awi_ioctl(struct ifnet *, u_long, caddr_t);
+static int  awi_ioctl(struct ifnet *, u_long, void *);
 static int  awi_media_change(struct ifnet *);
 static void awi_media_status(struct ifnet *, struct ifmediareq *);
 static int  awi_mode_init(struct awi_softc *);
@@ -590,7 +590,7 @@ awi_init(struct ifnet *ifp)
 		return ENODEV;
 	}
 #if 0
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 #endif
 	memset(&sc->sc_mib_mac.aDesired_ESS_ID, 0, AWI_ESS_ID_SIZE);
 	sc->sc_mib_mac.aDesired_ESS_ID[0] = IEEE80211_ELEMID_SSID;
@@ -919,7 +919,7 @@ awi_watchdog(struct ifnet *ifp)
 }
 
 static int
-awi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct awi_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -954,9 +954,7 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef __FreeBSD__
 		error = ENETRESET;	/* XXX */
 #else
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ec) :
-		    ether_delmulti(ifr, &sc->sc_ec);
+		error = ether_ioctl(ifp, cmd, data);
 #endif
 		if (error == ENETRESET) {
 			/* do not rescan */
@@ -1135,7 +1133,7 @@ awi_mode_init(struct awi_softc *sc)
 		if (n == AWI_GROUP_ADDR_SIZE)
 			goto set_mib;
 		IEEE80211_ADDR_COPY(sc->sc_mib_addr.aGroup_Addresses[n],
-		    LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
+		    CLLADDR(satocsdl(ifma->ifma_addr)));
 		n++;
 	}
 #else
@@ -1338,7 +1336,7 @@ awi_devget(struct awi_softc *sc, u_int32_t off, u_int16_t len)
 		if (top == NULL) {
 			int hdrlen = sizeof(struct ieee80211_frame) +
 			    sizeof(struct llc);
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + hdrlen) - hdrlen;
 			m->m_len -= newdata - m->m_data;
 			m->m_data = newdata;
@@ -2174,16 +2172,16 @@ awi_ether_modcap(struct awi_softc *sc, struct mbuf *m)
 		if (m == NULL)
 			return NULL;
 	}
-	memcpy(&wh, mtod(m, caddr_t), sizeof(wh));
+	memcpy(&wh, mtod(m, void *), sizeof(wh));
 	if (wh.i_fc[0] != (IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_DATA))
 		return m;
-	memcpy(&eh, mtod(m, caddr_t) + sizeof(wh), sizeof(eh));
+	memcpy(&eh, mtod(m, char *) + sizeof(wh), sizeof(eh));
 	m_adj(m, sizeof(eh) - sizeof(*llc));
 	if (ic->ic_opmode == IEEE80211_M_IBSS ||
 	    ic->ic_opmode == IEEE80211_M_AHDEMO)
 		IEEE80211_ADDR_COPY(wh.i_addr2, eh.ether_shost);
-	memcpy(mtod(m, caddr_t), &wh, sizeof(wh));
-	llc = (struct llc *)(mtod(m, caddr_t) + sizeof(wh));
+	memcpy(mtod(m, void *), &wh, sizeof(wh));
+	llc = (struct llc *)(mtod(m, char *) + sizeof(wh));
 	llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 	llc->llc_control = LLC_UI;
 	llc->llc_snap.org_code[0] = 0;

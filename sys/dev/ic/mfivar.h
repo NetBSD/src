@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.2.6.2 2006/12/30 20:48:03 yamt Exp $ */
+/* $NetBSD: mfivar.h,v 1.2.6.3 2007/09/03 14:34:55 yamt Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -16,9 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <dev/sysmon/sysmonvar.h>
+#include <sys/envsys.h>
+
 #define DEVNAME(_s)     ((_s)->sc_dev.dv_xname)
 
-/* #define MFI_DEBUG */
+// #define MFI_DEBUG
 #ifdef MFI_DEBUG
 extern uint32_t			mfi_debug;
 #define DPRINTF(x...)		do { if (mfi_debug) printf(x); } while(0)
@@ -40,7 +43,7 @@ struct mfi_mem {
 	bus_dmamap_t		am_map;
 	bus_dma_segment_t	am_seg;
 	size_t			am_size;
-	caddr_t			am_kva;
+	void *			am_kva;
 };
 
 #define MFIMEM_MAP(_am)		((_am)->am_map)
@@ -115,7 +118,7 @@ struct mfi_softc {
 	}			sc_ld[MFI_MAX_LD];
 
 	/* scsi ioctl from sd device */
-	int			(*sc_ioctl)(struct device *, u_long, caddr_t);
+	int			(*sc_ioctl)(struct device *, u_long, void *);
 
 	/* firmware determined max, totals and other information*/
 	uint32_t		sc_max_cmds;
@@ -142,7 +145,9 @@ struct mfi_softc {
 
 	struct mfi_ccb_list	sc_ccb_freeq;
 
-	struct sensor		*sc_sensors;
+	struct sysmon_envsys    sc_envsys;
+#define sc_sensor_data  sc_envsys.sme_sensor_data
+
 };
 
 int	mfi_attach(struct mfi_softc *sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.9.2.2 2007/02/26 09:09:54 yamt Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.9.2.3 2007/09/03 14:33:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct fss_cache {
 	struct fss_softc *fc_softc;	/* Backlink to our softc */
 	volatile int	fc_xfercount;	/* Number of outstanding transfers */
 	u_int32_t	fc_cluster;	/* Cluster number of this entry */
-	caddr_t		fc_data;	/* Data */
+	void *		fc_data;	/* Data */
 };
 
 struct fss_softc {
@@ -162,7 +162,7 @@ struct fss_softc {
 	off_t		sc_bs_size;	/* Its size in bytes */
 	int		sc_bs_bshift;	/* Shift of backing store block */
 	u_int32_t	sc_bs_bmask;	/* Mask of backing store block */
-	struct proc	*sc_bs_proc;	/* Our kernel thread */
+	struct lwp	*sc_bs_lwp;	/* Our kernel thread */
 	int		sc_clshift;	/* Shift of cluster size */
 	u_int32_t	sc_clmask;	/* Mask of cluster size */
 	u_int32_t	sc_clcount;	/* # clusters in file system */

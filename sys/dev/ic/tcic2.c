@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.20.2.2 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.20.2.3 2007/09/03 14:35:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.20.2.2 2006/12/30 20:48:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.20.2.3 2007/09/03 14:35:16 yamt Exp $");
 
 #undef	TCICDEBUG
 
@@ -457,8 +457,8 @@ tcic_create_event_thread(arg)
 		panic("tcic_create_event_thread: unknown tcic socket");
 	}
 
-	if (kthread_create1(tcic_event_thread, h, &h->event_thread,
-	    "%s,%s", h->sc->dev.dv_xname, cs)) {
+	if (kthread_create(PRI_NONE, 0, NULL, tcic_event_thread, h,
+	    &h->event_thread, "%s,%s", h->sc->dev.dv_xname, cs)) {
 		printf("%s: unable to create event thread for sock 0x%02x\n",
 		    h->sc->dev.dv_xname, h->sock);
 		panic("tcic_create_event_thread");

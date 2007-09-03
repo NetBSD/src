@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4.6.4 2007/02/26 09:09:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4.6.5 2007/09/03 14:32:34 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -147,9 +147,7 @@ struct ndisproc {
 };
 
 static void ndis_return(void *);
-//#ifdef NDIS_LKM
-/*static*/ int ndis_create_kthreads(void);
-//#endif
+static int ndis_create_kthreads(void);
 static void ndis_destroy_kthreads(void);
 static void ndis_stop_thread(int);
 static int ndis_enlarge_thrqueue(int);
@@ -265,15 +263,6 @@ MOD_MISC( "ndisapi");
 
 #ifndef NDIS_LKM
 int ndis_lkm_handle(struct lkm_table *lkmtp, int cmd);
-void call_ndis_create_kthreads(void *arg);
-
-/* Just to schedule ndis_create_kthreads() to be called after init
- * has been created.
- */
-void call_ndis_create_kthreads(void *arg)
-{
-	ndis_create_kthreads();
-}
 #endif
 
 /*static*/ int
@@ -300,15 +289,9 @@ ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 			patch++;
 		}
 
-#ifdef NDIS_LKM
-		ndis_create_kthreads();
-#else
-		/* Shedule threads to be created after autoconfiguration */
-		kthread_create(call_ndis_create_kthreads, NULL);
-#endif
-
 		TAILQ_INIT(&ndis_devhead);
 
+		ndis_create_kthreads();
 		break;
 	case LKM_E_UNLOAD:
 		/* stop kthreads */
@@ -1409,7 +1392,7 @@ ndis_return_packet(buf, arg)
 	void			*buf;	/* not used */
 	void			*arg;
 #else
-ndis_return_packet(struct mbuf *m, caddr_t buf,
+ndis_return_packet(struct mbuf *m, void *buf,
     size_t size, void *arg)
 #endif
 

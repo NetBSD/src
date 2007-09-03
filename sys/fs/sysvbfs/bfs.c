@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.2.16.4 2007/02/26 09:10:59 yamt Exp $	*/
+/*	$NetBSD: bfs.c,v 1.2.16.5 2007/09/03 14:40:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.2.16.4 2007/02/26 09:10:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.2.16.5 2007/09/03 14:40:34 yamt Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.2.16.4 2007/02/26 09:10:59 yamt Exp $");
 #include <sys/time.h>
 
 #ifdef _KERNEL
-MALLOC_DEFINE(M_BFS, "sysvbfs core", "sysvbfs internal structures");
+MALLOC_JUSTDEFINE(M_BFS, "sysvbfs core", "sysvbfs internal structures");
 #define	__MALLOC(s, t, f)	malloc(s, t, f)
 #define	__FREE(a, s, t)		free(a, t)
 #elif defined _STANDALONE

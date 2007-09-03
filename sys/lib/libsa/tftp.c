@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.18.4.1 2006/06/21 15:10:23 yamt Exp $	 */
+/*	$NetBSD: tftp.c,v 1.18.4.2 2007/09/03 14:41:33 yamt Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -345,7 +345,7 @@ tftp_read(f, addr, size, resid)
 			bcopy(tftpfile->lastdata.t.th_data + offinblock,
 			    addr, count);
 
-			addr = (caddr_t)addr + count;
+			addr = (char *)addr + count;
 			tftpfile->off += count;
 			size -= count;
 

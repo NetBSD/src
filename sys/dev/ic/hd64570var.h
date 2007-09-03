@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.6 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.6.16.1 2007/09/03 14:34:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -184,7 +184,7 @@ struct sca_softc {
 			bus_dma_tag_t	d_dmat;	/* bus DMA tag */
 			bus_dmamap_t	d_dmam;	/* bus DMA map */
 			bus_dma_segment_t d_seg;	/* bus DMA segment */
-			caddr_t		d_dma_addr;	/* kva  of segment */
+			void *		d_dma_addr;	/* kva  of segment */
 			bus_size_t	d_allocsize;	/* size of region */
 		} u_dma;
 	} sc_u;

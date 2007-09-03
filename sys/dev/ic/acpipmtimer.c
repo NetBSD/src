@@ -1,4 +1,7 @@
-/* $NetBSD: acpipmtimer.c,v 1.1.16.2 2006/12/30 20:48:00 yamt Exp $ */
+/* $NetBSD: acpipmtimer.c,v 1.1.16.3 2007/09/03 14:34:10 yamt Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.1.16.3 2007/09/03 14:34:10 yamt Exp $");
 
 #include <sys/types.h>
 
@@ -56,7 +59,7 @@ acpipmtimer_attach(struct device *dev,
 
 	tc->tc.tc_priv = tc;
 	tc_init(&tc->tc);
-	aprint_normal("%s %d-bit timer\n", tc->tc.tc_name,
+	aprint_normal("%s: %d-bit timer\n", tc->tc.tc_name,
 		      (flags & ACPIPMT_32BIT ? 32 : 24));
 	return (0);
 }

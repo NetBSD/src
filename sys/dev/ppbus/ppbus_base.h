@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.h,v 1.4 2005/02/27 00:27:44 perry Exp $ */
+/* $NetBSD: ppbus_base.h,v 1.4.4.1 2007/09/03 14:38:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -154,8 +154,8 @@ int ppbus_write(struct device *, char *, int, int, size_t *);
 int ppbus_read(struct device *, char *, int, int, size_t *);
 int ppbus_exec_microseq(struct device *, struct ppbus_microseq * *);
 int ppbus_io(struct device *, int, u_char *, int, u_char);
-int ppbus_dma_malloc(struct device *, caddr_t *, bus_addr_t *, bus_size_t);
-int ppbus_dma_free(struct device *, caddr_t *, bus_addr_t *, bus_size_t);
+int ppbus_dma_malloc(struct device *, void **, bus_addr_t *, bus_size_t);
+int ppbus_dma_free(struct device *, void **, bus_addr_t *, bus_size_t);
 int ppbus_add_handler(struct device *, void (*)(void *), void *);
 int ppbus_remove_handler(struct device *, void (*)(void *));
 

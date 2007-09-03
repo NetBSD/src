@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.102.2.2 2006/12/30 20:48:45 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.102.2.3 2007/09/03 14:37:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.2 2006/12/30 20:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.3 2007/09/03 14:37:01 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -238,7 +238,7 @@ struct sip_softc {
 
 	struct mii_data sc_mii;		/* MII/media information */
 
-	struct callout sc_tick_ch;	/* tick callout */
+	callout_t sc_tick_ch;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -424,7 +424,7 @@ do {									\
 
 static void	SIP_DECL(start)(struct ifnet *);
 static void	SIP_DECL(watchdog)(struct ifnet *);
-static int	SIP_DECL(ioctl)(struct ifnet *, u_long, caddr_t);
+static int	SIP_DECL(ioctl)(struct ifnet *, u_long, void *);
 static int	SIP_DECL(init)(struct ifnet *);
 static void	SIP_DECL(stop)(struct ifnet *, int);
 
@@ -670,7 +670,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	u_int32_t reg;
 #endif /* DP83820 */
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 
 	sip = SIP_DECL(lookup)(pa);
 	if (sip == NULL) {
@@ -784,7 +784,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct sip_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct sip_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1126,7 +1126,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct sip_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -1257,7 +1257,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -1519,7 +1519,7 @@ SIP_DECL(watchdog)(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, caddr_t data)
+SIP_DECL(ioctl)(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct sip_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1967,7 +1967,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			nm->m_data += 2;
 			nm->m_pkthdr.len = nm->m_len = len;
-			m_copydata(m, 0, len, mtod(nm, caddr_t));
+			m_copydata(m, 0, len, mtod(nm, void *));
 			m_freem(m);
 			m = nm;
 		}
@@ -1982,7 +1982,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			 * of the data two bytes further in (in the first
 			 * buffer of the chain only).
 			 */
-			memmove(mtod(m, caddr_t) + 2, mtod(m, caddr_t),
+			memmove(mtod(m, char *) + 2, mtod(m, void *),
 			    m->m_len);
 			m->m_data += 2;
 		}
@@ -2145,8 +2145,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			if (m == NULL)
 				goto dropit;
 			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
-			memcpy(mtod(m, caddr_t),
-			    mtod(rxs->rxs_mbuf, caddr_t), len);
+			memcpy(mtod(m, void *),
+			    mtod(rxs->rxs_mbuf, void *), len);
 			SIP_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize,
@@ -2194,7 +2194,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * Note that we use clusters for incoming frames, so the
 		 * buffer is virtually contiguous.
 		 */
-		memcpy(mtod(m, caddr_t), mtod(rxs->rxs_mbuf, caddr_t), len);
+		memcpy(mtod(m, void *), mtod(rxs->rxs_mbuf, void *), len);
 
 		/* Allow the receive descriptor to continue using its mbuf. */
 		SIP_INIT_RXDESC(sc, i);
@@ -2823,7 +2823,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
-	u_int8_t *cp;
+	const u_int8_t *cp;
 	struct ether_multistep step;
 	u_int32_t crc, mchash[16];
 
@@ -2917,7 +2917,7 @@ SIP_DECL(sis900_set_filter)(struct sip_softc *sc)
 	/*
 	 * Disable receive filter, and program the node address.
 	 */
-	cp = LLADDR(ifp->if_sadl);
+	cp = CLLADDR(ifp->if_sadl);
 	FILTER_EMIT(RFCR_RFADDR_NODE0, (cp[1] << 8) | cp[0]);
 	FILTER_EMIT(RFCR_RFADDR_NODE2, (cp[3] << 8) | cp[2]);
 	FILTER_EMIT(RFCR_RFADDR_NODE4, (cp[5] << 8) | cp[4]);
@@ -2969,7 +2969,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
-	u_int8_t *cp;
+	const u_int8_t *cp;
 	struct ether_multistep step;
 	u_int32_t crc, hash, slot, bit;
 #ifdef DP83820
@@ -3070,7 +3070,7 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 	/*
 	 * Disable receive filter, and program the node address.
 	 */
-	cp = LLADDR(ifp->if_sadl);
+	cp = CLLADDR(ifp->if_sadl);
 	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH0, (cp[1] << 8) | cp[0]);
 	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH2, (cp[3] << 8) | cp[2]);
 	FILTER_EMIT(RFCR_NS_RFADDR_PMATCH4, (cp[5] << 8) | cp[4]);

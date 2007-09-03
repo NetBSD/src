@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.75.2.3 2007/02/26 09:09:09 yamt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.75.2.4 2007/09/03 14:32:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.3 2007/02/26 09:09:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.4 2007/09/03 14:32:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.3 2007/02/26 09:09:09 yamt Exp
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
+#include <sys/prot.h>
 #include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
@@ -124,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.3 2007/02/26 09:09:09 yamt Exp
 #include <sys/utsname.h>
 #include <sys/unistd.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <netinet/in.h>
 #include <sys/syscallargs.h>
@@ -151,6 +153,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.3 2007/02/26 09:09:09 yamt Exp
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_sysi86.h>
 #include <compat/ibcs2/ibcs2_exec.h>
+
+#include <compat/sys/mount.h>
 
 int
 ibcs2_sys_ulimit(l, v, retval)
@@ -216,35 +220,28 @@ ibcs2_sys_waitsys(l, v, retval)
 		syscallarg(int) a3;
 	} */ *uap = v;
 #endif
-	struct proc *p = l->l_proc;
 	int error;
-	struct sys_wait4_args w4;
-	caddr_t sg;
-
-	sg = stackgap_init(p, 0);
-
-	SCARG(&w4, rusage) = NULL;
-	SCARG(&w4, status) = stackgap_alloc(p, &sg, sizeof(int));
+	int pid, options, status, was_zombie;
 
 #if defined(__i386__)
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
 	if ((l->l_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
 		/* waitpid */
-		SCARG(&w4, pid) = SCARG(uap, a1);
-		SCARG(&w4, options) = SCARG(uap, a3);
+		pid = SCARG(uap, a1);
+		options = SCARG(uap, a3);
 	} else {
 #endif
 		/* wait */
-		SCARG(&w4, pid) = WAIT_ANY;
-		SCARG(&w4, options) = 0;
+		pid = WAIT_ANY;
+		options = 0;
 #if defined(__i386__)
 	}
 #endif
 
-	if ((error = sys_wait4(l, &w4, retval)) != 0)
-		return error;
-
-	return copyin(SCARG(&w4, status), &retval[1], sizeof(int));
+	error = do_sys_wait(l, &pid, &status, options, NULL, &was_zombie);
+	retval[0] = pid;
+	retval[1] = status;
+	return error;
 }
 
 int
@@ -258,10 +255,6 @@ ibcs2_sys_execv(l, v, retval)
 		syscallarg(char **) argp;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	caddr_t sg;
-
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -282,10 +275,6 @@ ibcs2_sys_execve(l, v, retval)
 		syscallarg(char **) envp;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	caddr_t sg;
-
-	sg = stackgap_init(l->l_proc, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -343,7 +332,7 @@ ibcs2_sys_mount(struct lwp *l, void *v,
 		return error;
 
 	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
-		SCARG(uap, type) = (caddr_t)STACK_ALLOC();
+		SCARG(uap, type) = (void *)STACK_ALLOC();
 		if (error = copyout("ffs", SCARG(uap, type), sizeof("ffs")))
 			return error;
 	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
@@ -403,9 +392,9 @@ ibcs2_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, tbuf;	/* BSD-format */
+	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* iBCS2-format */
+	char *outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
 	struct file *fp;
 	struct uio auio;
@@ -533,9 +522,9 @@ ibcs2_sys_read(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, tbuf;	/* BSD-format */
+	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* iBCS2-format */
+	char *outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
 	struct file *fp;
 	struct uio auio;
@@ -663,21 +652,18 @@ ibcs2_sys_mknod(l, v, retval)
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-        caddr_t sg = stackgap_init(p, 0);
 
-        CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	if (S_ISFIFO(SCARG(uap, mode))) {
-                struct sys_mkfifo_args ap;
-                SCARG(&ap, path) = SCARG(uap, path);
-                SCARG(&ap, mode) = SCARG(uap, mode);
+		struct sys_mkfifo_args ap;
+		SCARG(&ap, path) = SCARG(uap, path);
+		SCARG(&ap, mode) = SCARG(uap, mode);
 		return sys_mkfifo(l, uap, retval);
 	} else {
-                struct sys_mknod_args ap;
-                SCARG(&ap, path) = SCARG(uap, path);
-                SCARG(&ap, mode) = SCARG(uap, mode);
-                SCARG(&ap, dev) = SCARG(uap, dev);
-                return sys_mknod(l, &ap, retval);
+		struct sys_mknod_args ap;
+		SCARG(&ap, path) = SCARG(uap, path);
+		SCARG(&ap, mode) = SCARG(uap, mode);
+		SCARG(&ap, dev) = SCARG(uap, dev);
+		return sys_mknod(l, &ap, retval);
 	}
 }
 
@@ -691,41 +677,40 @@ ibcs2_sys_getgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(ibcs2_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error, i;
-	ibcs2_gid_t iset[NGROUPS_MAX];
-	gid_t nset[NGROUPS_MAX];
-	struct sys_getgroups_args sa;
-	int gidsetsize;
-	caddr_t sg = stackgap_init(p, 0);
+	ibcs2_gid_t iset[16];
+	ibcs2_gid_t *gidset;
+	unsigned int ngrps;
+	int i, n, j;
+	int error;
 
-	gidsetsize = SCARG(uap, gidsetsize);
-	if (gidsetsize > NGROUPS_MAX)
+	ngrps = kauth_cred_ngroups(l->l_cred);
+	*retval = ngrps;
+	if (SCARG(uap, gidsetsize) == 0)
+		return 0;
+	if (SCARG(uap, gidsetsize) < ngrps)
 		return EINVAL;
 
-	SCARG(&sa, gidsetsize) = gidsetsize;
-
-	if (gidsetsize) {
-		SCARG(&sa, gidset) = stackgap_alloc(p, &sg, NGROUPS_MAX *
-						    sizeof(gid_t *));
-	}
-	if ((error = sys_getgroups(l, &sa, retval)) != 0)
-		return error;
-	if (gidsetsize) {
-		gidsetsize = retval[0];
-		if (gidsetsize < 0)
-			gidsetsize = 0;
-		error = copyin(SCARG(&sa, gidset), nset,
-		    sizeof(gid_t) * gidsetsize);
-		if (error)
+	gidset = SCARG(uap, gidset);
+	for (i = 0; i < (n = ngrps); i += n, gidset += n) {
+		n -= i;
+		if (n > __arraycount(iset))
+			n = __arraycount(iset);
+		for (j = 0; j < n; j++)
+			iset[j] = kauth_cred_group(l->l_cred, i + j);
+		error = copyout(iset, gidset, n * sizeof(iset[0]));
+		if (error != 0)
 			return error;
-		for (i = 0; i < gidsetsize; i++)
-			iset[i] = (ibcs2_gid_t)nset[i];
-		error = copyout(iset, SCARG(uap, gidset),
-		    sizeof(ibcs2_gid_t) * retval[0]);
 	}
-        return error;
+
+	return 0;
 }
+
+/*
+ * It is very unlikly that any problem using 16bit groups is written
+ * to allow for more than 16 of them, so don't bother trying to
+ * support that.
+ */
+#define COMPAT_NGROUPS16 16
 
 int
 ibcs2_sys_setgroups(l, v, retval)
@@ -737,32 +722,31 @@ ibcs2_sys_setgroups(l, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(ibcs2_gid_t *) gidset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error, i;
-	ibcs2_gid_t iset[NGROUPS_MAX];
-	struct sys_setgroups_args sa;
-	gid_t gp[NGROUPS_MAX], *ngid;
-	caddr_t sg = stackgap_init(p, 0);
 
-	if (SCARG(uap, gidsetsize) > NGROUPS_MAX ||
-	    SCARG(uap, gidsetsize) < 0 )
+	ibcs2_gid_t iset[COMPAT_NGROUPS16];
+	kauth_cred_t ncred;
+	int error;
+	gid_t grbuf[COMPAT_NGROUPS16];
+	unsigned int i, ngroups = SCARG(uap, gidsetsize);
+
+	if (ngroups > COMPAT_NGROUPS16)
 		return EINVAL;
-	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
-
-	if (SCARG(&sa, gidsetsize)) {
-		error = copyin(SCARG(uap, gidset), iset,
-		    sizeof(ibcs2_gid_t) * SCARG(uap, gidsetsize));
-		if (error)
-			return error;
-	}
-	for (i = 0; i < SCARG(&sa, gidsetsize); i++)
-		gp[i]= (gid_t)iset[i];
-	ngid = stackgap_alloc(p, &sg, NGROUPS_MAX * sizeof(gid_t));
-	error = copyout(gp, ngid, SCARG(&sa, gidsetsize) * sizeof(gid_t));
-	if (error)
+	error = copyin(SCARG(uap, gidset), iset, ngroups);
+	if (error != 0)
 		return error;
-	SCARG(&sa, gidset) = ngid;
-	return sys_setgroups(l, &sa, retval);
+
+	for (i = 0; i < ngroups; i++)
+		grbuf[i] = iset[i];
+
+	ncred = kauth_cred_alloc();
+	error = kauth_cred_setgroups(ncred, grbuf, SCARG(uap, gidsetsize),
+	    -1, UIO_SYSSPACE);
+	if (error != 0) {
+		kauth_cred_free(ncred);
+		return error;
+	}
+
+	return kauth_proc_setgroups(l, ncred);
 }
 
 int
@@ -845,7 +829,7 @@ ibcs2_sys_pathconf(l, v, retval)
 		syscallarg(int) name;
 	} */ *uap = v;
 	SCARG(uap, name)++;	/* iBCS2 _PC_* defines are offset by one */
-        return sys_pathconf(l, uap, retval);
+	return sys_pathconf(l, uap, retval);
 }
 
 int
@@ -859,7 +843,7 @@ ibcs2_sys_fpathconf(l, v, retval)
 		syscallarg(int) name;
 	} */ *uap = v;
 	SCARG(uap, name)++;	/* iBCS2 _PC_* defines are offset by one */
-        return sys_fpathconf(l, uap, retval);
+	return sys_fpathconf(l, uap, retval);
 }
 
 int
@@ -943,33 +927,25 @@ ibcs2_sys_alarm(l, v, retval)
 		syscallarg(unsigned) sec;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
+	struct itimerval it, oit;
 	int error;
-        struct itimerval it, *itp, *oitp;
-	struct sys_setitimer_args sa;
-	caddr_t sg = stackgap_init(p, 0);
 
-        itp = stackgap_alloc(p, &sg, sizeof(*itp));
-	oitp = stackgap_alloc(p, &sg, sizeof(*oitp));
-
-        timerclear(&it.it_interval);
-        it.it_value.tv_sec = SCARG(uap, sec);
-        it.it_value.tv_usec = 0;
-
-	if ((error = copyout(&it, itp, sizeof(*itp))) != 0)
+	error = dogetitimer(p, ITIMER_REAL, &oit);
+	if (error != 0)
 		return error;
 
-	SCARG(&sa, which) = ITIMER_REAL;
-	SCARG(&sa, itv) = itp;
-	SCARG(&sa, oitv) = oitp;
-        error = sys_setitimer(l, &sa, retval);
+	timerclear(&it.it_interval);
+	it.it_value.tv_sec = SCARG(uap, sec);
+	it.it_value.tv_usec = 0;
+
+	error = dosetitimer(p, ITIMER_REAL, &it);
 	if (error)
 		return error;
-	if ((error = copyin(oitp, &it, sizeof(it))) != 0)
-		return error;
-        if (it.it_value.tv_usec)
-                it.it_value.tv_sec++;
-        *retval = it.it_value.tv_sec;
-        return 0;
+
+	if (oit.it_value.tv_usec)
+		oit.it_value.tv_sec++;
+	*retval = oit.it_value.tv_sec;
+	return 0;
 }
 
 int
@@ -1013,32 +989,24 @@ ibcs2_sys_times(l, v, retval)
 	struct ibcs2_sys_times_args /* {
 		syscallarg(struct tms *) tp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
-	struct sys_getrusage_args ga;
 	struct tms tms;
-        struct timeval t;
-	caddr_t sg = stackgap_init(p, 0);
-        struct rusage *ru = stackgap_alloc(p, &sg, sizeof(*ru));
+	struct timeval t;
+	struct rusage *ru;
 #define CONVTCK(r)      (r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
-	SCARG(&ga, who) = RUSAGE_SELF;
-	SCARG(&ga, rusage) = ru;
-	error = sys_getrusage(l, &ga, retval);
-	if (error)
-                return error;
-        tms.tms_utime = CONVTCK(ru->ru_utime);
-        tms.tms_stime = CONVTCK(ru->ru_stime);
+	ru = &l->l_proc->p_stats->p_ru;
+	mutex_enter(&l->l_proc->p_smutex);
+	calcru(l->l_proc, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	mutex_exit(&l->l_proc->p_smutex);
+	tms.tms_utime = CONVTCK(ru->ru_utime);
+	tms.tms_stime = CONVTCK(ru->ru_stime);
 
-	SCARG(&ga, who) = RUSAGE_CHILDREN;
-        error = sys_getrusage(l, &ga, retval);
-	if (error)
-		return error;
-        tms.tms_cutime = CONVTCK(ru->ru_utime);
-        tms.tms_cstime = CONVTCK(ru->ru_stime);
+	ru = &l->l_proc->p_stats->p_cru;
+	tms.tms_cutime = CONVTCK(ru->ru_utime);
+	tms.tms_cstime = CONVTCK(ru->ru_stime);
 
 	microtime(&t);
-        *retval = CONVTCK(t);
+	*retval = CONVTCK(t);
 
 	return copyout(&tms, SCARG(uap, tp), sizeof(tms));
 }
@@ -1052,23 +1020,14 @@ ibcs2_sys_stime(l, v, retval)
 	struct ibcs2_sys_stime_args /* {
 		syscallarg(long *) timep;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
+	struct timeval tv;
 	int error;
-	struct sys_settimeofday_args sa;
-	caddr_t sg = stackgap_init(p, 0);
-	struct timeval *tvp;
 
-	tvp = stackgap_alloc(p, &sg, sizeof(*SCARG(&sa, tv)));
-	SCARG(&sa, tzp) = NULL;
-	error = copyin((caddr_t)SCARG(uap, timep),
-		       (void *)&tvp->tv_sec, sizeof(long));
+	error = copyin(SCARG(uap, timep), &tv.tv_sec, sizeof(long));
 	if (error)
 		return error;
-	tvp->tv_usec = 0;
-	SCARG(&sa, tv) = tvp;
-	if ((error = sys_settimeofday(l, &sa, retval)) != 0)
-		return EPERM;
-	return 0;
+	tv.tv_usec = 0;
+	return settimeofday1(&tv, false, NULL, l, true);
 }
 
 int
@@ -1082,28 +1041,25 @@ ibcs2_sys_utime(l, v, retval)
 		syscallarg(struct ibcs2_utimbuf *) buf;
 	} */ *uap = v;
 	int error;
-	struct sys_utimes_args sa;
-	struct timeval *tp;
+	struct timeval *tptr;
+	struct timeval tp[2];
 
-	caddr_t sg = stackgap_init(l->l_proc, 0);
-	tp = stackgap_alloc(l->l_proc, &sg, 2 * sizeof(struct timeval *));
-        CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
 		struct ibcs2_utimbuf ubuf;
 
-		error = copyin((caddr_t)SCARG(uap, buf), (caddr_t)&ubuf,
-		    sizeof(ubuf));
+		error = copyin(SCARG(uap, buf), &ubuf, sizeof(ubuf));
 		if (error)
 			return error;
 		tp[0].tv_sec = ubuf.actime;
 		tp[0].tv_usec = 0;
 		tp[1].tv_sec = ubuf.modtime;
 		tp[1].tv_usec = 0;
-		SCARG(&sa, tptr) = tp;
+		tptr = tp;
 	} else
-		SCARG(&sa, tptr) = NULL;
-	return sys_utimes(l, &sa, retval);
+		tptr = NULL;
+
+	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
+			    tptr, UIO_SYSSPACE);
 }
 
 int
@@ -1139,7 +1095,7 @@ ibcs2_sys_pgrpsys(l, v, retval)
 {
 	struct ibcs2_sys_pgrpsys_args /* {
 		syscallarg(int) type;
-		syscallarg(caddr_t) dummy;
+		syscallarg(void *) dummy;
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
 	} */ *uap = v;
@@ -1193,9 +1149,9 @@ ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval)
 #define IBCS2_TEXTLOCK	2
 #define IBCS2_DATALOCK	4
 
-        if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
 	    NULL) != 0)
-                return EPERM;
+		return EPERM;
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
 	case IBCS2_PROCLOCK:
@@ -1212,7 +1168,7 @@ ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
 	struct ibcs2_sys_uadmin_args /* {
 		syscallarg(int) cmd;
 		syscallarg(int) func;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	int error;
 
@@ -1267,7 +1223,7 @@ ibcs2_sys_sysfs(struct lwp *l, void *v, register_t *retval)
 {
 	struct ibcs2_sys_sysfs_args /* {
 		syscallarg(int) cmd;
-		syscallarg(caddr_t) d1;
+		syscallarg(void *) d1;
 		syscallarg(char *) buf;
 	} */ *uap = v;
 
@@ -1293,17 +1249,20 @@ xenix_sys_rdchk(l, v, retval)
 	struct xenix_sys_rdchk_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
+	struct file *fp;
+	int nbytes;
 	int error;
-	struct sys_ioctl_args sa;
-	caddr_t sg = stackgap_init(p, 0);
 
-	SCARG(&sa, fd) = SCARG(uap, fd);
-	SCARG(&sa, com) = FIONREAD;
-	SCARG(&sa, data) = stackgap_alloc(p, &sg, sizeof(int));
-	if ((error = sys_ioctl(l, &sa, retval)) != 0)
+	if ((fp = fd_getfile(l->l_proc->p_fd, SCARG(uap, fd))) == NULL)
+		return (EBADF);
+	FILE_USE(fp);
+	error = (*fp->f_ops->fo_ioctl)(fp, FIONREAD, &nbytes, l);
+	FILE_UNUSE(fp, l);
+
+	if (error != 0)
 		return error;
-	*retval = (*((int*)SCARG(&sa, data))) ? 1 : 0;
+
+	*retval = nbytes ? 1 : 0;
 	return 0;
 }
 
@@ -1334,22 +1293,17 @@ xenix_sys_nap(l, v, retval)
 	struct xenix_sys_nap_args /* {
 		syscallarg(long) millisec;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error;
-	struct sys_nanosleep_args na;
-        struct timespec *rqtp;
-        struct timespec *rmtp;
-	caddr_t sg = stackgap_init(p, 0);
+	struct timespec rqt;
+	struct timespec rmt;
 
-	rqtp = stackgap_alloc(p, &sg, sizeof(struct timespec));
-	rmtp = stackgap_alloc(p, &sg, sizeof(struct timespec));
-	rqtp->tv_sec = 0;
-	rqtp->tv_nsec = SCARG(uap, millisec) * 1000;
-	SCARG(&na, rqtp) = rqtp;
-	SCARG(&na, rmtp) = rmtp;
-	if ((error = sys_nanosleep(l, &na, retval)) != 0)
+	rqt.tv_sec = 0;
+	rqt.tv_nsec = SCARG(uap, millisec) * 1000;
+	error = nanosleep1(l, &rqt, &rmt);
+	/* If interrupted we can either report EINTR, or the time left */
+	if (error != 0 && error != EINTR)
 		return error;
-	*retval = rmtp->tv_nsec / 1000;
+	*retval = rmt.tv_nsec / 1000;
 	return 0;
 }
 
@@ -1362,9 +1316,7 @@ ibcs2_sys_unlink(l, v, retval)
 	struct ibcs2_sys_unlink_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	return sys_unlink(l, uap, retval);
 }
 
@@ -1377,9 +1329,7 @@ ibcs2_sys_chdir(l, v, retval)
 	struct ibcs2_sys_chdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	return sys_chdir(l, uap, retval);
 }
 
@@ -1393,9 +1343,7 @@ ibcs2_sys_chmod(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	return sys_chmod(l, uap, retval);
 }
 
@@ -1410,9 +1358,7 @@ ibcs2_sys_chown(l, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	return sys___posix_chown(l, uap, retval);
 }
 
@@ -1425,9 +1371,7 @@ ibcs2_sys_rmdir(l, v, retval)
 	struct ibcs2_sys_rmdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	return sys_rmdir(l, uap, retval);
 }
 
@@ -1441,9 +1385,7 @@ ibcs2_sys_mkdir(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	return sys_mkdir(l, uap, retval);
 }
 
@@ -1457,10 +1399,7 @@ ibcs2_sys_symlink(l, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) link;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, link));
 	return sys_symlink(l, uap, retval);
 }
 
@@ -1474,10 +1413,7 @@ ibcs2_sys_rename(l, v, retval)
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, to));
 	return sys___posix_rename(l, uap, retval);
 }
 
@@ -1492,9 +1428,7 @@ ibcs2_sys_readlink(l, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 	return sys_readlink(l, uap, retval);
 }
 
@@ -1510,7 +1444,7 @@ ibcs2_sys_mmap(l, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_mmap_args /* {
-		syscallarg(ibcs2_caddr_t) addr;
+		syscallarg(ibcs2_void *) addr;
 		syscallarg(ibcs2_size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
@@ -1543,10 +1477,10 @@ ibcs2_sys_memcntl(l, v, retval)
 	register_t *retval;
 {
 	struct ibcs2_sys_memcntl_args /* {
-		syscallarg(ibcs2_caddr_t) addr;
+		syscallarg(ibcs2_void *) addr;
 		syscallarg(ibcs2_size_t) len;
 		syscallarg(int) cmd;
-		syscallarg(ibcs2_caddr_t) arg;
+		syscallarg(ibcs2_void *) arg;
 		syscallarg(int) attr;
 		syscallarg(int) mask;
 	} */ *uap = v;
@@ -1592,14 +1526,14 @@ ibcs2_sys_gettimeofday(struct lwp *l, void *v,
 		syscallarg(struct timeval *) tp;
 	} */ *uap = v;
 
-        if (SCARG(uap, tp)) {
-                struct timeval atv;
+	if (SCARG(uap, tp)) {
+		struct timeval atv;
 
-                microtime(&atv);
-                return copyout(&atv, SCARG(uap, tp), sizeof (atv));
-        }
+		microtime(&atv);
+		return copyout(&atv, SCARG(uap, tp), sizeof (atv));
+	}
 
-        return 0;
+	return 0;
 }
 
 int
@@ -1611,11 +1545,11 @@ ibcs2_sys_settimeofday(l, v, retval)
 	struct ibcs2_sys_settimeofday_args /* {
 		syscallarg(struct timeval *) tp;
 	} */ *uap = v;
-        struct sys_settimeofday_args ap;
+	struct sys_settimeofday_args ap;
 
-        SCARG(&ap, tv) = SCARG(uap, tp);
-        SCARG(&ap, tzp) = NULL;
-        return sys_settimeofday(l, &ap, retval);
+	SCARG(&ap, tv) = SCARG(uap, tp);
+	SCARG(&ap, tzp) = NULL;
+	return sys_settimeofday(l, &ap, retval);
 }
 
 int
@@ -1664,14 +1598,8 @@ xenix_sys_locking(l, v, retval)
 	      syscallarg(int) blk;
 	      syscallarg(int) size;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sys_fcntl_args fa;
-	struct flock *flp, fl;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	int cmd, error;
-	off_t off;
-	caddr_t sg = stackgap_init(p, 0);
+	struct flock fl;
+	int cmd;
 
 	switch SCARG(uap, blk) {
 	case X_LK_GETLK:
@@ -1680,13 +1608,6 @@ xenix_sys_locking(l, v, retval)
 		return ibcs2_sys_fcntl(l, v, retval);
 	}
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
-		return (EBADF);
-	FILE_USE(fp);
-	off = fp->f_offset;
-	FILE_UNUSE(fp, l);
-
-	fl.l_start = off;
 	switch SCARG(uap, blk) {
 	case X_LK_UNLCK:
 		cmd = F_SETLK;
@@ -1695,6 +1616,10 @@ xenix_sys_locking(l, v, retval)
 	case X_LK_LOCK:
 		cmd = F_SETLKW;
 		fl.l_type = F_WRLCK;
+		break;
+	case X_LK_RLCK:
+		cmd = F_SETLKW;
+		fl.l_type = F_RDLCK;
 		break;
 	case X_LK_NBRLCK:
 		cmd = F_SETLK;
@@ -1708,14 +1633,8 @@ xenix_sys_locking(l, v, retval)
 		return EINVAL;
 	}
 	fl.l_len = SCARG(uap, size);
-	fl.l_whence = SEEK_SET;
+	fl.l_start = 0;
+	fl.l_whence = SEEK_CUR;
 
-	flp = stackgap_alloc(p, &sg, sizeof(*flp));
-	if ((error = copyout(&fl, flp, sizeof(*flp))) != 0)
-		return error;
-	SCARG(&fa, fd) = SCARG(uap, fd);
-	SCARG(&fa, cmd) = cmd;
-	SCARG(&fa, arg) = flp;
-
-	return sys_fcntl(l, &fa, retval);
+	return do_fcntl_lock(l, SCARG(uap, fd), cmd, &fl);
 }

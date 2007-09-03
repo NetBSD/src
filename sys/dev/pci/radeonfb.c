@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.8.2.3 2007/02/26 09:10:35 yamt Exp $ */
+/* $NetBSD: radeonfb.c,v 1.8.2.4 2007/09/03 14:37:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.3 2007/02/26 09:10:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.4 2007/09/03 14:37:21 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -96,10 +96,11 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.3 2007/02/26 09:10:35 yamt Exp $"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/radeonfbreg.h>
 #include <dev/pci/radeonfbvar.h>
+#include "opt_radeonfb.h"
 
 static int radeonfb_match(struct device *, struct cfdata *, void *);
 static void radeonfb_attach(struct device *, struct device *, void *);
-static int radeonfb_ioctl(void *, void *, unsigned long, caddr_t, int,
+static int radeonfb_ioctl(void *, void *, unsigned long, void *, int,
     struct lwp *);
 static paddr_t radeonfb_mmap(void *, void *, off_t, int);
 static int radeonfb_scratch_test(struct radeonfb_softc *, int, uint32_t);
@@ -174,8 +175,8 @@ static void radeonfb_pickres(struct radeonfb_display *, uint16_t *,
 static const struct videomode *radeonfb_port_mode(struct radeonfb_softc *, 
     struct radeonfb_port *, int, int);
 
+static int radeonfb_drm_print(void *, const char *);
 
-#define	RADEON_DEBUG
 #ifdef	RADEON_DEBUG
 int	radeon_debug = 1;
 #define	DPRINTF(x)	\
@@ -193,7 +194,6 @@ int	radeon_debug = 1;
 #ifndef	RADEON_DEFAULT_MODE
 /* any reasonably modern display should handle this */
 #define	RADEON_DEFAULT_MODE	"1024x768x60"
-//#define	RADEON_DEFAULT_MODE	"1280x1024x60"
 #endif
 
 const char	*radeonfb_default_mode = RADEON_DEFAULT_MODE;
@@ -444,8 +444,11 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_devinfo);
 
+	DPRINTF((prop_dictionary_externalize(device_properties(dev))));
+
 	KASSERT(radeonfb_devices[i].devid != 0);
 	sc->sc_pt = pa->pa_tag;
+	sc->sc_iot = pa->pa_iot;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_family = radeonfb_devices[i].family;
 	sc->sc_flags = radeonfb_devices[i].flags;
@@ -491,6 +494,22 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		break;
 	}
 
+	if ((sc->sc_family == RADEON_RV200) ||
+	    (sc->sc_family == RADEON_RV250) ||
+	    (sc->sc_family == RADEON_RV280) ||
+	    (sc->sc_family == RADEON_RV350)) {
+		bool inverted = 0;
+		/* backlight level is linear */
+		DPRINTF(("found RV* chip, backlight is supposedly linear\n"));
+		prop_dictionary_get_bool(device_properties(&sc->sc_dev),
+		    "backlight_level_reverted", &inverted);
+		if (inverted) {
+			DPRINTF(("nope, it's inverted\n"));
+			sc->sc_flags |= RFB_INV_BLIGHT;
+		}
+	} else
+		sc->sc_flags |= RFB_INV_BLIGHT;
+
 	/*
 	 * XXX: to support true multihead, this must change.
 	 */
@@ -506,12 +525,6 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		&sc->sc_regsz) != 0) {
 		aprint_error("%s: unable to map registers!\n", XNAME(sc));
 		goto error;
-	}
-
-	if (pci_mapreg_map(pa, RADEON_MAPREG_IO, PCI_MAPREG_TYPE_IO,	0,
-		&sc->sc_iot, &sc->sc_ioh, &sc->sc_ioaddr,
-		&sc->sc_iosz) != 0) {
-		aprint_error("%s: unable to map IO registers!\n", XNAME(sc));
 	}
 
 	/* scratch register test... */
@@ -872,10 +885,12 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		radeonfb_blank(dp, 0);
 		
 		/* Initialise delayed lvds operations for backlight. */
-		callout_init(&dp->rd_bl_lvds_co);
+		callout_init(&dp->rd_bl_lvds_co, 0);
 		callout_setfunc(&dp->rd_bl_lvds_co,
 				radeonfb_lvds_callout, dp);
 	}
+
+	config_found_ia(dev, "drm", aux, radeonfb_drm_print);
 
 	return;
 
@@ -890,9 +905,17 @@ error:
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_memsz);
 }
 
+static int
+radeonfb_drm_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("direct rendering for %s", pnp);
+	return (UNSUPP);
+}
+
 int
 radeonfb_ioctl(void *v, void *vs,
-    unsigned long cmd, caddr_t d, int flag, struct lwp *l)
+    unsigned long cmd, void *d, int flag, struct lwp *l)
 {
 	struct vcons_data	*vd;
 	struct radeonfb_display	*dp;
@@ -956,6 +979,8 @@ radeonfb_ioctl(void *v, void *vs,
 			dp->rd_wsmode = *(int *)d;
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
+				radeonfb_engine_init(dp);
+				radeonfb_modeswitch(dp);
 				vcons_redraw_screen(dp->rd_vd.active);
 			}
 		}
@@ -1077,8 +1102,8 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 #ifdef macppc
 	/* allow mapping of IO space */
 	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot, 
+		    0);	
 		return pa;
 	}	
 #endif /* macppc */
@@ -1543,6 +1568,7 @@ nobios:
 		char	edid[128];
 		uint8_t	ddc;
 		struct edid_info *eip = &sc->sc_ports[i].rp_edid;
+		prop_data_t edid_data;
 
 		DPRINTF(("Port #%d:\n", i));
 		DPRINTF(("    conn = %d\n", sc->sc_ports[i].rp_conn_type));
@@ -1551,12 +1577,30 @@ nobios:
 		DPRINTF(("    tmds = %d\n", sc->sc_ports[i].rp_tmds_type));
 
 		sc->sc_ports[i].rp_edid_valid = 0;
-		ddc = sc->sc_ports[i].rp_ddc_type;
-		if (ddc != RADEON_DDC_NONE) {
-			if ((radeonfb_i2c_read_edid(sc, ddc, edid) == 0) &&
-			    (edid_parse(edid, eip) == 0)) {
+		/* first look for static EDID data */
+		if ((edid_data = prop_dictionary_get(device_properties(
+		    &sc->sc_dev), "EDID")) != NULL) {
+
+			aprint_normal("%s: using static EDID\n",
+			    sc->sc_dev.dv_xname);
+			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
+			if (edid_parse(edid, eip) == 0) {
+
 				sc->sc_ports[i].rp_edid_valid = 1;
 				edid_print(eip);
+			}
+		}
+		/* if we didn't find any we'll try to talk to the monitor */
+		if (sc->sc_ports[i].rp_edid_valid != 1) {
+
+			ddc = sc->sc_ports[i].rp_ddc_type;
+			if (ddc != RADEON_DDC_NONE) {
+				if ((radeonfb_i2c_read_edid(sc, ddc, edid)
+				    == 0) && (edid_parse(edid, eip) == 0)) {
+
+					sc->sc_ports[i].rp_edid_valid = 1;
+					edid_print(eip);
+				}
 			}
 		}
 	}
@@ -3330,6 +3374,12 @@ radeonfb_pickres(struct radeonfb_display *dp, uint16_t *x, uint16_t *y,
 	}
 }
 
+/*
+ * backlight levels are linear on:
+ * - RV200, RV250, RV280, RV350
+ * - but NOT on PowerBook4,3 6,3 6,5
+ * according to Linux' radeonfb
+ */
 
 /* Get the current backlight level for the display.  */
 
@@ -3349,9 +3399,8 @@ radeonfb_get_backlight(struct radeonfb_display *dp)
 	 * On some chips, we should negate the backlight level. 
 	 * XXX Find out on which chips. 
 	 */
-#ifdef RADEONFB_BACKLIGHT_NEGATED
+	if (dp->rd_softc->sc_flags & RFB_INV_BLIGHT)
 	level = RADEONFB_BACKLIGHT_MAX - level;
-#endif /* RADEONFB_BACKLIGHT_NEGATED */
 
 	splx(s);
 
@@ -3377,11 +3426,10 @@ radeonfb_set_backlight(struct radeonfb_display *dp, int level)
 	sc = dp->rd_softc;
 
 	/* On some chips, we should negate the backlight level. */
-#ifdef RADEONFB_BACKLIGHT_NEGATED
+	if (dp->rd_softc->sc_flags & RFB_INV_BLIGHT) {
 	rlevel = RADEONFB_BACKLIGHT_MAX - level;
-#else
+	} else
 	rlevel = level;
-#endif /* RADEONFB_BACKLIGHT_NEGATED */
 
 	callout_stop(&dp->rd_bl_lvds_co);
 	radeonfb_engine_idle(sc);

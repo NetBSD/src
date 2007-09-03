@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.11.22.1 2006/12/30 20:48:02 yamt Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.11.22.2 2007/09/03 14:34:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ struct ex_txdesc {
 #define DPDMEMPAD_DMADDR(sc)	((sc)->sc_dpddma + DPDMEMPAD_OFF)
 
 #define DPD_DMADDR(s,t) \
-	((s)->sc_dpddma + ((caddr_t)((t)->tx_dpd) - (caddr_t)((s)->sc_dpd)))
+	((s)->sc_dpddma + ((char *)((t)->tx_dpd) - (char *)((s)->sc_dpd)))
 
 /*
  * Frame Start Header bitfields.

@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.2.10.1 2006/06/21 15:09:23 yamt Exp $ */
+/* $NetBSD: unicode.h,v 1.2.10.2 2007/09/03 14:40:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@
  * Routines for handling Unicode encoded in UTF-8 form, code derived from
  * src/lib/libc/locale/utf2.c.
  */
+static u_int16_t wget_utf8(const char **, size_t *) __unused;
+static int wput_utf8(char *, size_t, u_int16_t) __unused;
 
 /*
  * Read one UTF8-encoded character off the string, shift the string pointer
@@ -117,7 +119,7 @@ wget_utf8(const char **str, size_t *sz)
 	case 3:
 		if ((s[1] & 0xC0) != 0x80 || (s[2] & 0xC0) != 0x80)
 			goto decoding_error;
-		rune = ((s[0] & 0x1F) << 12) | ((s[1] & 0x3F) << 6)
+		rune = ((s[0] & 0x0F) << 12) | ((s[1] & 0x3F) << 6)
 		    | (s[2] & 0x3F);
 		break;
 	}
@@ -141,7 +143,7 @@ wput_utf8(char *s, size_t n, u_int16_t wc)
 			return 0;
 		}
 
-		s[0] = 0xE0 | ((wc >> 12) & 0x0F);
+		s[0] = 0xE0 | (wc >> 12);
 		s[1] = 0x80 | ((wc >> 6) & 0x3F);
 		s[2] = 0x80 | ((wc) & 0x3F);
 		return 3;
@@ -151,7 +153,7 @@ wput_utf8(char *s, size_t n, u_int16_t wc)
 			return 0;
 		}
 
-		s[0] = 0xC0 | ((wc >> 6) & 0x1F);
+		s[0] = 0xC0 | (wc >> 6);
 		s[1] = 0x80 | ((wc) & 0x3F);
 		return 2;
 	} else {

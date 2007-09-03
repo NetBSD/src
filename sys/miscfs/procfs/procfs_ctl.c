@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.28.4.3 2007/02/26 09:11:30 yamt Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.28.4.4 2007/09/03 14:41:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.3 2007/02/26 09:11:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.4 2007/09/03 14:41:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.3 2007/02/26 09:11:30 yamt Exp
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -140,7 +142,7 @@ procfs_control(curl, l, op, sig, pfs)
 	struct proc *p = l->l_proc;
 	int error = 0;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	mutex_enter(&p->p_mutex);
 
 	switch (op) {
@@ -251,7 +253,7 @@ procfs_control(curl, l, op, sig, pfs)
 
 	if (error != 0) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (error);
 	}
 
@@ -290,10 +292,10 @@ procfs_control(curl, l, op, sig, pfs)
 	case PROCFS_CTL_RUN:
 	case PROCFS_CTL_DETACH:
 #ifdef PT_STEP
-		PHOLD(l);
+		uvm_lwp_hold(l);
 		/* XXXAD locking? */
 		error = process_sstep(l, op == PROCFS_CTL_STEP);
-		PRELE(l);
+		uvm_lwp_rele(l);
 		if (error)
 			break;
 #endif
@@ -328,12 +330,12 @@ procfs_control(curl, l, op, sig, pfs)
 				psignal(p, sig);
 		}
 		mutex_exit(&p->p_smutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (error);
 
 	case PROCFS_CTL_WAIT:
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 
 		/*
 		 * Wait for the target process to stop.
@@ -352,7 +354,7 @@ procfs_control(curl, l, op, sig, pfs)
 	}
 
 	mutex_exit(&p->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (error);
 }
 

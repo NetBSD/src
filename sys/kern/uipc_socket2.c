@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.68.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.68.2.3 2007/09/03 14:41:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68.2.3 2007/09/03 14:41:19 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -113,9 +113,9 @@ soisconnected(struct socket *so)
 	if (head && soqremque(so, 0)) {
 		soqinsque(head, so, 1);
 		sorwakeup(head);
-		wakeup((caddr_t)&head->so_timeo);
+		wakeup((void *)&head->so_timeo);
 	} else {
-		wakeup((caddr_t)&so->so_timeo);
+		wakeup((void *)&so->so_timeo);
 		sorwakeup(so);
 		sowwakeup(so);
 	}
@@ -127,7 +127,7 @@ soisdisconnecting(struct socket *so)
 
 	so->so_state &= ~SS_ISCONNECTING;
 	so->so_state |= (SS_ISDISCONNECTING|SS_CANTRCVMORE|SS_CANTSENDMORE);
-	wakeup((caddr_t)&so->so_timeo);
+	wakeup((void *)&so->so_timeo);
 	sowwakeup(so);
 	sorwakeup(so);
 }
@@ -138,7 +138,7 @@ soisdisconnected(struct socket *so)
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISCONNECTED|SS_ISDISCONNECTING);
 	so->so_state |= (SS_CANTRCVMORE|SS_CANTSENDMORE|SS_ISDISCONNECTED);
-	wakeup((caddr_t)&so->so_timeo);
+	wakeup((void *)&so->so_timeo);
 	sowwakeup(so);
 	sorwakeup(so);
 }
@@ -163,7 +163,7 @@ sonewconn(struct socket *head, int connstatus)
 	so = pool_get(&socket_pool, PR_NOWAIT);
 	if (so == NULL)
 		return (NULL);
-	memset((caddr_t)so, 0, sizeof(*so));
+	memset((void *)so, 0, sizeof(*so));
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
@@ -180,6 +180,12 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_snd.sb_mowner = head->so_snd.sb_mowner;
 #endif
 	(void) soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat);
+	so->so_snd.sb_lowat = head->so_snd.sb_lowat;
+	so->so_rcv.sb_lowat = head->so_rcv.sb_lowat;
+	so->so_rcv.sb_timeo = head->so_rcv.sb_timeo;
+	so->so_snd.sb_timeo = head->so_snd.sb_timeo;
+	so->so_rcv.sb_flags |= head->so_rcv.sb_flags & SB_AUTOSIZE;
+	so->so_snd.sb_flags |= head->so_snd.sb_flags & SB_AUTOSIZE;
 	soqinsque(head, so, soqueue);
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
@@ -190,7 +196,7 @@ sonewconn(struct socket *head, int connstatus)
 	}
 	if (connstatus) {
 		sorwakeup(head);
-		wakeup((caddr_t)&head->so_timeo);
+		wakeup((void *)&head->so_timeo);
 		so->so_state |= connstatus;
 	}
 	return (so);
@@ -271,7 +277,7 @@ sbwait(struct sockbuf *sb)
 {
 
 	sb->sb_flags |= SB_WAIT;
-	return (tsleep((caddr_t)&sb->sb_cc,
+	return (tsleep((void *)&sb->sb_cc,
 	    (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH, netio,
 	    sb->sb_timeo));
 }
@@ -287,7 +293,7 @@ sb_lock(struct sockbuf *sb)
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
-		error = tsleep((caddr_t)&sb->sb_flags,
+		error = tsleep((void *)&sb->sb_flags,
 		    (sb->sb_flags & SB_NOINTR) ?  PSOCK : PSOCK|PCATCH,
 		    netlck, 0);
 		if (error)
@@ -309,7 +315,7 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;
-		wakeup((caddr_t)&sb->sb_cc);
+		wakeup((void *)&sb->sb_cc);
 	}
 	if (sb->sb_flags & SB_ASYNC) {
 		int band;
@@ -759,7 +765,7 @@ sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 		}
 	}
 	m->m_len = asa->sa_len;
-	memcpy(mtod(m, caddr_t), asa, asa->sa_len);
+	memcpy(mtod(m, void *), asa, asa->sa_len);
 	if (n)
 		n->m_next = m0;		/* concatenate data to control */
 	else
@@ -810,7 +816,7 @@ m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
 	KASSERT(salen <= MHLEN);
 #endif
 	m->m_len = salen;
-	memcpy(mtod(m, caddr_t), asa, salen);
+	memcpy(mtod(m, void *), asa, salen);
 	m->m_next = m0;
 	m->m_pkthdr.len = salen + m0->m_pkthdr.len;
 
@@ -982,7 +988,7 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		    m->m_len <= MCLBYTES / 4 && /* XXX Don't copy too much */
 		    m->m_len <= M_TRAILINGSPACE(n) &&
 		    n->m_type == m->m_type) {
-			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
+			memcpy(mtod(n, char *) + n->m_len, mtod(m, void *),
 			    (unsigned)m->m_len);
 			n->m_len += m->m_len;
 			sb->sb_cc += m->m_len;
@@ -1104,7 +1110,7 @@ sbdroprecord(struct sockbuf *sb)
  * with the specified type for presentation on a socket buffer.
  */
 struct mbuf *
-sbcreatecontrol(caddr_t p, int size, int type, int level)
+sbcreatecontrol(void *p, int size, int type, int level)
 {
 	struct cmsghdr	*cp;
 	struct mbuf	*m;

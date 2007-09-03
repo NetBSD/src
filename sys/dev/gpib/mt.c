@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.3.12.2 2007/02/26 09:10:01 yamt Exp $ */
+/*	$NetBSD: mt.c,v 1.3.12.3 2007/09/03 14:33:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.3.12.2 2007/02/26 09:10:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.3.12.3 2007/09/03 14:33:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,8 @@ mtattach(parent, self, aux)
 	sc->sc_flags = MTF_EXISTS;
 
 	bufq_alloc(&sc->sc_tab, "fcfs", 0);
-	callout_init(&sc->sc_start_ch);
-	callout_init(&sc->sc_intr_ch);
+	callout_init(&sc->sc_start_ch, 0);
+	callout_init(&sc->sc_intr_ch, 0);
 
 	if (gpibregister(sc->sc_ic, sc->sc_slave, mtcallback, sc,
 	    &sc->sc_hdl)) {
@@ -407,7 +407,7 @@ mtopen(dev, flag, mode, l)
 			goto errout;
 		if (!(sc->sc_flags & MTF_REW))
 			break;
-		if (tsleep((caddr_t) &lbolt, PCATCH | (PZERO + 1),
+		if (tsleep((void *) &lbolt, PCATCH | (PZERO + 1),
 		    "mt", 0) != 0) {
 			error = EINTR;
 			goto errout;
@@ -524,7 +524,7 @@ mtcommand(dev, cmd, cnt)
 		bp->b_flags = B_BUSY | B_CMD;
 		mtstrategy(bp);
 		biowait(bp);
-		if (bp->b_flags & B_ERROR) {
+		if (bp->b_error != 0) {
 			error = (int) (unsigned) bp->b_error;
 			break;
 		}
@@ -581,7 +581,6 @@ mtstrategy(bp)
 #if 0 /* XXX see above */
 	    error:
 #endif
-			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
 			biodone(bp);
 			return;
@@ -693,7 +692,7 @@ mtstart(sc)
 		    case 2:
 			if (bp->b_cmd != MTNOP || !(bp->b_flags & B_CMD)) {
 				bp->b_error = EBUSY;
-				goto errdone;
+				goto done;
 			}
 			goto done;
 
@@ -708,7 +707,7 @@ mtstart(sc)
 			    case MTWEOF:
 			    case MTFSR:
 				bp->b_error = ENOSPC;
-				goto errdone;
+				goto done;
 
 			    case MTBSF:
 			    case MTOFFL:
@@ -812,7 +811,7 @@ mtstart(sc)
 	} else {
 		if (sc->sc_flags & MTF_PASTEOT) {
 			bp->b_error = ENOSPC;
-			goto errdone;
+			goto done;
 		}
 		if (bp->b_flags & B_READ) {
 			sc->sc_flags |= MTF_IO;
@@ -839,8 +838,6 @@ fatalerror:
 	 */
 	sc->sc_flags &= MTF_EXISTS | MTF_OPEN | MTF_REW;
 	bp->b_error = EIO;
-errdone:
-	bp->b_flags |= B_ERROR;
 done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	(void)BUFQ_GET(sc->sc_tab);
@@ -958,7 +955,6 @@ mtintr(sc)
 		if (sc->sc_flags & MTF_ATEOT)
 			sc->sc_flags |= MTF_PASTEOT;
 		else {
-			bp->b_flags |= B_ERROR;
 			bp->b_error = ENOSPC;
 			sc->sc_flags |= MTF_ATEOT;
 		}
@@ -1000,7 +996,6 @@ mtintr(sc)
 error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
-			bp->b_flags |= B_ERROR;
 		}
 	}
 	/*
@@ -1051,7 +1046,7 @@ int
 mtioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

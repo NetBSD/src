@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.14.4.2 2006/12/30 20:50:16 yamt Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.14.4.3 2007/09/03 14:41:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
  *
  * $FreeBSD: src/sys/libkern/arc4random.c,v 1.9 2001/08/30 12:30:58 bde Exp $
  */
+
+#include <sys/cdefs.h>
 
 #ifdef _KERNEL
 #include "rnd.h"

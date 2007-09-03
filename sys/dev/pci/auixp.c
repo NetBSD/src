@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.9.2.2 2006/12/30 20:48:41 yamt Exp $ */
+/* $NetBSD: auixp.c,v 1.9.2.3 2007/09/03 14:36:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9.2.2 2006/12/30 20:48:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9.2.3 2007/09/03 14:36:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -686,7 +686,7 @@ auixp_program_dma_chain(struct auixp_softc *sc, struct auixp_dma *dma)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	/* get hardware start address of DMA chain and set valid-flag in it */
-	/* XXX allways at start? XXX */
+	/* XXX always at start? XXX */
 	value = DMAADDR(dma);
 	value = value | ATI_REG_LINKPTR_EN;
 
@@ -775,7 +775,7 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 	 * NOTE, we can assume its in one block since we asked for it to be in
 	 * one contiguous blob; XXX change this? XXX
 	 */
-	blocks = (size_t) (((caddr_t) end) - ((caddr_t) start)) / blksize;
+	blocks = (size_t) (((char *) end) - ((char *) start)) / blksize;
 
 	/* lookup `start' address in our list of DMA area's */
 	SLIST_FOREACH(sound_dma, &sc->sc_dma_list, dma_chain) {
@@ -850,7 +850,7 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 	 * NOTE, we can assume its in one block since we asked for it to be in
 	 * one contiguous blob; XXX change this? XXX
 	 */
-	blocks = (size_t) (((caddr_t) end) - ((caddr_t) start)) / blksize;
+	blocks = (size_t) (((char *) end) - ((char *) start)) / blksize;
 
 	/* lookup `start' address in our list of DMA area's */
 	SLIST_FOREACH(sound_dma, &sc->sc_dma_list, dma_chain) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.29.4.2 2006/12/30 20:49:33 yamt Exp $	*/
+/*	$NetBSD: magma.c,v 1.29.4.3 2007/09/03 14:38:31 yamt Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.29.4.2 2006/12/30 20:49:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.29.4.3 2007/09/03 14:38:31 yamt Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -207,7 +207,7 @@ dev_type_ioctl(mbppioctl);
 
 const struct cdevsw mbpp_cdevsw = {
 	mbppopen, mbppclose, mbpp_rw, mbpp_rw, mbppioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 /************************************************************************
@@ -404,11 +404,11 @@ magma_attach(parent, self, aux)
 	}
 
 	/* the SVCACK* lines are daisychained */
-	sc->ms_svcackr = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackr = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackr;
-	sc->ms_svcackt = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackt = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackt;
-	sc->ms_svcackm = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackm = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackm;
 
 	/*
@@ -430,7 +430,8 @@ magma_attach(parent, self, aux)
 		struct cd1400 *cd = &sc->ms_cd1400[chip];
 
 		cd->cd_clock = cd_clock;
-		cd->cd_reg = (caddr_t)bh + card->mb_cd1400[chip];
+		cd->cd_reg = (char *)bus_space_vaddr(sa->sa_bustag, bh) +
+		    card->mb_cd1400[chip];
 
 		/* prom_getpropstring(node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
@@ -469,7 +470,8 @@ magma_attach(parent, self, aux)
 	for( chip = 0 ; chip < card->mb_ncd1190 ; chip++ ) {
 		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
-		cd->cd_reg = (caddr_t)bh + card->mb_cd1190[chip];
+		cd->cd_reg = (char *)bus_space_vaddr(sa->sa_bustag, bh) +
+		    card->mb_cd1190[chip];
 
 		/* XXX don't know anything about these chips yet */
 		printf("%s: CD1190 %d addr %p (unsupported)\n",
@@ -1104,7 +1106,7 @@ int
 mttyioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {
@@ -1482,8 +1484,8 @@ mbpp_attach(parent, dev, args)
 	for( port = 0 ; port < sc->ms_board->mb_npar ; port++ ) {
 		mp = &ms->ms_port[port];
 
-		callout_init(&mp->mp_timeout_ch);
-		callout_init(&mp->mp_start_ch);
+		callout_init(&mp->mp_timeout_ch, 0);
+		callout_init(&mp->mp_start_ch, 0);
 
 		if( sc->ms_ncd1190 )
 			mp->mp_cd1190 = &sc->ms_cd1190[port];
@@ -1572,7 +1574,7 @@ int
 mbppioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {
@@ -1624,7 +1626,7 @@ mbpp_rw(dev, uio, flag)
 	int port = MAGMA_PORT(dev);
 	struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
 	struct mbpp_port *mp = &ms->ms_port[port];
-	caddr_t buffer, ptr;
+	char *buffer, *ptr;
 	int buflen, cnt, len;
 	int s, error = 0;
 	int gotdata = 0;
@@ -1757,7 +1759,7 @@ mbpp_start(arg)
 int
 mbpp_send(mp, ptr, len)
 	struct mbpp_port *mp;
-	caddr_t ptr;
+	void *ptr;
 	int len;
 {
 	int s;
@@ -1803,7 +1805,7 @@ mbpp_send(mp, ptr, len)
 int
 mbpp_recv(mp, ptr, len)
 	struct mbpp_port *mp;
-	caddr_t ptr;
+	void *ptr;
 	int len;
 {
 	int s;

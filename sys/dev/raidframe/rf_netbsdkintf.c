@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.187.2.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.187.2.3 2007/09/03 14:38:20 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.187.2.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.187.2.3 2007/09/03 14:38:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -209,7 +209,7 @@ MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 /* prototypes */
 static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
-    dev_t, RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*) (struct buf *),
+    dev_t, RF_SectorNum_t, RF_SectorCount_t, void *, void (*) (struct buf *),
     void *, int, struct proc *);
 static void raidinit(RF_Raid_t *);
 
@@ -451,7 +451,9 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	int retcode;
 	int raidID;
 	int rootID;
+	int col;
 	int num_root;
+	char *devname;
 
 	rootID = 0;
 	num_root = 0;
@@ -500,8 +502,48 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	if (num_root == 1) {
 		booted_device = raid_softc[rootID].sc_dev;
 	} else if (num_root > 1) {
-		/* we can't guess.. require the user to answer... */
-		boothowto |= RB_ASKNAME;
+
+		/* 
+		 * Maybe the MD code can help. If it cannot, then
+		 * setroot() will discover that we have no
+		 * booted_device and will ask the user if nothing was
+		 * hardwired in the kernel config file 
+		 */
+
+		if (booted_device == NULL)
+			cpu_rootconf();
+		if (booted_device == NULL) 
+			return;
+
+		num_root = 0;
+		for (raidID = 0; raidID < numraid; raidID++) {
+			if (raidPtrs[raidID]->valid == 0)
+				continue;
+
+			if (raidPtrs[raidID]->root_partition == 0)
+				continue;
+
+			for (col = 0; col < raidPtrs[raidID]->numCol; col++) {
+				devname = raidPtrs[raidID]->Disks[col].devname;
+				devname += sizeof("/dev/") - 1;
+				if (strncmp(devname, booted_device->dv_xname, 
+					    strlen(booted_device->dv_xname)) != 0)
+					continue;
+#ifdef DEBUG
+				printf("raid%d includes boot device %s\n",
+				       raidID, devname);
+#endif
+				num_root++;
+				rootID = raidID;
+			}
+		}
+ 
+		if (num_root == 1) {
+			booted_device = raid_softc[rootID].sc_dev;
+		} else {
+			/* we can't guess.. require the user to answer... */
+			boothowto |= RB_ASKNAME;
+		}
 	}
 }
 
@@ -542,7 +584,7 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev, daddr_t blkno, caddr_t va,
+raiddump(dev_t dev, daddr_t blkno, void *va,
     size_t  size)
 {
 	/* Not implemented. */
@@ -705,18 +747,15 @@ raidstrategy(struct buf *bp)
 
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	if (raidID >= numraid || !raidPtrs[raidID]) {
 		bp->b_error = ENODEV;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	raidPtr = raidPtrs[raidID];
 	if (!raidPtr->valid) {
 		bp->b_error = ENODEV;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 	if (bp->b_bcount == 0) {
@@ -803,7 +842,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
@@ -1819,7 +1858,6 @@ raidstart(RF_Raid_t *raidPtr)
 		if ((sum > raidPtr->totalSectors) || (sum < raid_addr)
 		    || (sum < num_blocks) || (sum < pb)) {
 			bp->b_error = ENOSPC;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
@@ -1831,7 +1869,6 @@ raidstart(RF_Raid_t *raidPtr)
 
 		if (bp->b_bcount & raidPtr->sectorMask) {
 			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			RF_LOCK_MUTEX(raidPtr->mutex);
@@ -1865,7 +1902,6 @@ raidstart(RF_Raid_t *raidPtr)
 
 		if (rc) {
 			bp->b_error = rc;
-			bp->b_flags |= B_ERROR;
 			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			/* continue loop */
@@ -1983,10 +2019,10 @@ KernelWakeupFunc(struct buf *bp)
 	}
 #endif
 
-	/* XXX Ok, let's get aggressive... If B_ERROR is set, let's go
+	/* XXX Ok, let's get aggressive... If b_error is set, let's go
 	 * ballistic, and mark the component as hosed... */
 
-	if (bp->b_flags & B_ERROR) {
+	if (bp->b_error != 0) {
 		/* Mark the disk as dead */
 		/* but only mark it once... */
 		/* and only if it wouldn't leave this RAID set
@@ -2013,7 +2049,7 @@ KernelWakeupFunc(struct buf *bp)
 
 	/* Fill in the error value */
 
-	req->error = (bp->b_flags & B_ERROR) ? bp->b_error : 0;
+	req->error = bp->b_error;
 
 	simple_lock(&queue->raidPtr->iodone_lock);
 
@@ -2035,7 +2071,7 @@ KernelWakeupFunc(struct buf *bp)
  */
 static void
 InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
-       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t bf,
+       RF_SectorNum_t startSect, RF_SectorCount_t numSect, void *bf,
        void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
        struct proc *b_proc)
 {
@@ -2484,11 +2520,9 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 void
 rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 {
-	struct proc *p;
 	struct lwp *l;
 
-	p = raidPtr->engine_thread;
-	l = LIST_FIRST(&p->p_lwps);
+	l = curlwp;
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
@@ -2497,7 +2531,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, p->p_cred, l);
+			(void) vn_close(vp, FREAD | FWRITE, l->l_cred, l);
 		}
 	}
 }
@@ -2745,18 +2779,17 @@ rf_find_raid_components()
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
 			    NOCRED, 0);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			vput(vp);
 			if (error) {
 				printf("RAIDframe: can't get wedge info for "
 				    "dev %s (%d)\n", dv->dv_xname, error);
-out:
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
-				vput(vp);
 				continue;
 			}
 
 			if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0)
-				goto out;
+				continue;
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
 			    dv->dv_xname, dkw.dkw_size);
@@ -3371,7 +3404,7 @@ void
 rf_pool_init(struct pool *p, size_t size, const char *w_chan,
 	     size_t xmin, size_t xmax)
 {
-	pool_init(p, size, 0, 0, 0, w_chan, NULL);
+	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
 	pool_prime(p, xmin);
 	pool_setlowat(p, xmin);

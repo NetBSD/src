@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.21.4.1 2006/06/21 15:06:28 yamt Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.21.4.2 2007/09/03 14:38:15 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.21.4.1 2006/06/21 15:06:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.21.4.2 2007/09/03 14:38:15 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -137,7 +137,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	RF_RaidAddr_t address;
 	int     length;
 	RF_PhysDiskAddr_t *physPtr;
-	caddr_t buffer;
+	void *buffer;
 
 	lastdag_h = NULL;
 	asmh_u = asmh_b = NULL;
@@ -240,7 +240,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 						 * stripe-unit accesses */
 						address = physPtr->raidAddress + k;
 						length = 1;
-						buffer = physPtr->bufPtr + (k * (1 << raidPtr->logBytesPerSector));
+						buffer = (char *)physPtr->bufPtr + (k * (1 << raidPtr->logBytesPerSector));
 
 						asmhle = rf_AllocASMHeaderListElem();
 						if (failed_stripe->asmh_b == NULL) {

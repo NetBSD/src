@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.9.4.4 2007/02/26 09:10:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.9.4.5 2007/09/03 14:35:29 yamt Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -173,9 +173,9 @@ static void ndis_tick		(void *);
 static void ndis_ticktask	(void *);
 static void ndis_start		(struct ifnet *);
 static void ndis_starttask	(void *);
-static int ndis_ioctl		(struct ifnet *, u_long, caddr_t);
-static int ndis_wi_ioctl_get	(struct ifnet *, u_long, caddr_t);
-static int ndis_wi_ioctl_set	(struct ifnet *, u_long, caddr_t);
+static int ndis_ioctl		(struct ifnet *, u_long, void *);
+static int ndis_wi_ioctl_get	(struct ifnet *, u_long, void *);
+static int ndis_wi_ioctl_set	(struct ifnet *, u_long, void *);
 #ifdef __FreeBSD__
 static void ndis_init		(void *);
 #else /* __NetBSD__ */
@@ -368,7 +368,7 @@ ndis_setmulti(sc)
 #ifdef __FreeBSD__
 		if (ifma->ifma_addr->sa_family != AF_LINK)
 			continue;
-		bcopy(LLADDR((struct sockaddr_dl *)ifma->ifma_addr),
+		bcopy(CLLADDR(satosdl(ifma->ifma_addr)),
 		    mclist + (ETHER_ADDR_LEN * len), ETHER_ADDR_LEN);
 #else /* __NetBSD__ */
 /*
@@ -1291,7 +1291,7 @@ ndis_rxeof(adapter, packets, pktcnt)
 #ifdef __FreeBSD__			
 				ndis_return_packet(sc, p);
 #else /* __NetBSD__ */
-				ndis_return_packet(NULL, (caddr_t)sc, 0, p);
+				ndis_return_packet(NULL, (void *)sc, 0, p);
 #endif
 		} else {
 			if (p->np_oob.npo_status == NDIS_STATUS_RESOURCES) {
@@ -2545,7 +2545,7 @@ static int
 ndis_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
-	caddr_t			data;
+	void *			data;
 {
 	struct ndis_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
@@ -2680,7 +2680,7 @@ static int
 ndis_wi_ioctl_get(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
-	caddr_t			data;
+	void *			data;
 {
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
@@ -2761,7 +2761,7 @@ static int
 ndis_wi_ioctl_set(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
-	caddr_t			data;
+	void *			data;
 {
 	struct wi_req		wreq;
 	struct ifreq		*ifr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.31.4.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.31.4.3 2007/09/03 14:38:15 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.31.4.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.31.4.3 2007/09/03 14:38:15 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -116,7 +116,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 	badDisk = &raidPtr->Disks[fcol];
 
-	l = LIST_FIRST(&raidPtr->engine_thread->p_lwps);
+	l = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the first time. Close
 	 * it before trying to open it again.. */
@@ -136,7 +136,8 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[fcol].devname);
 
-	retcode = dk_lookup(raidPtr->Disks[fcol].devname, l, &vp);
+	retcode = dk_lookup(raidPtr->Disks[fcol].devname, l, &vp,
+	    UIO_SYSSPACE);
 
 	if (retcode) {
 		printf("raid%d: copyback: dk_lookup on device: %s failed: %d!\n",

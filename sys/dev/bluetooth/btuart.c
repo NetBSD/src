@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.1.2.2 2007/02/26 09:10:00 yamt Exp $	*/
+/*	$NetBSD: btuart.c,v 1.1.2.3 2007/09/03 14:33:31 yamt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.2 2007/02/26 09:10:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.3 2007/09/03 14:33:31 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.2 2007/02/26 09:10:00 yamt Exp $");
 
 #include "ioconf.h"
 
-#define BTUART_DEBUG
 #ifdef BTUART_DEBUG
 int btuart_debug = 1;
 #endif
@@ -117,7 +116,7 @@ static void bth4init_input(struct hci_unit *, struct mbuf *);
 
 static int bth4open(dev_t, struct tty *);
 static int bth4close(struct tty *, int);
-static int bth4ioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+static int bth4ioctl(struct tty *, u_long, void *, int, struct lwp *);
 static int bth4input(int, struct tty *);
 static int bth4start(struct tty *);
 
@@ -370,15 +369,11 @@ init_ericsson(struct btuart_softc *sc)
 		{      B0, 0xff }
 	};
 
-printf("sc_baud=%d, init_speed=%d\n", sc->sc_baud, sc->sc_bth4hci.init_baud);
 	for (i = 0; ericsson_baudtbl[i].baud != sc->sc_baud; i++)
 		if (ericsson_baudtbl[i].baud == B0)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
@@ -434,9 +429,6 @@ init_digi(struct btuart_softc *sc)
 	}
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 #define HCI_CMD_DIGIANSWER_SET_UART_BAUD_RATE	0xfc07		/* XXXX */
@@ -516,9 +508,6 @@ init_csr(struct btuart_softc *sc)
 	} bccmd;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 	p->opcode = opcode;
@@ -548,7 +537,7 @@ init_csr(struct btuart_softc *sc)
 		/*
 		 * XXXX:
 		 * We will have to check the HCI_EVENT_VENDOR packet. For
-		 * instance, it might be a different HCI_EVENT_VENDOR packet. 
+		 * instance, it might be a different HCI_EVENT_VENDOR packet.
 		 */
 		if (error != 0) {
 			printf("%s: CSR set UART speed failed: Status 0x%02x\n",
@@ -588,9 +577,6 @@ init_swave(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	/* first send 'param access set' command. */
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
@@ -673,9 +659,6 @@ init_st(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	p->type = HCI_CMD_PKT;
 #define HCI_CMD_ST_SET_UART_BAUD_RATE	0xfc46	/* XXXX */
@@ -708,8 +691,6 @@ firmload_stlc2500(struct btuart_softc *sc, int size, char *buf)
 	uint8_t seq;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 	seq = 0;
 	offset = 0;
 	error = 0;
@@ -762,9 +743,6 @@ init_stlc2500(struct btuart_softc *sc)
 	const char *suffix[] = { ".ptc", ".ssf", NULL };
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
-
 	p = mtod(m, hci_cmd_hdr_t *);
 	opcode = htole16(HCI_CMD_READ_LOCAL_VER);
 	p->type = HCI_CMD_PKT;
@@ -845,7 +823,7 @@ init_stlc2500(struct btuart_softc *sc)
 	/*
 	 * XXXX:
 	 * We do not know the beginning point of this character string.
-	 * Because it doesn't know the event of this packet. 
+	 * Because it doesn't know the event of this packet.
 	 *
 	 * printf("%s: %s\n", sc->sc_dev.dv_xname, ???);
 	 */
@@ -931,8 +909,6 @@ init_bcm2035(struct btuart_softc *sc)
 			return EINVAL;
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	if (m == NULL)
-		return ENOMEM;
 
 	/*
 	 * XXXX: Should we send some commands?
@@ -1066,7 +1042,7 @@ bth4open(dev_t device __unused, struct tty *tp)
 	static char name[] = "btuart";
 
 	if ((error = kauth_authorize_device_tty(l->l_cred,
-	    KAUTH_DEVICE_TTY_OPEN, tp)) != 0)
+	    KAUTH_GENERIC_ISSUSER, tp)) != 0)
 		return error;
 
 	s = spltty();
@@ -1088,7 +1064,7 @@ bth4open(dev_t device __unused, struct tty *tp)
 	cfdata->cf_name = name;
 	cfdata->cf_atname = name;
 	cfdata->cf_unit = unit;
-	cfdata->cf_fstate = FSTATE_STAR,
+	cfdata->cf_fstate = FSTATE_STAR;
 
 	printf("%s%d at tty major %d minor %d",
 	    name, unit, major(tp->t_dev), minor(tp->t_dev));
@@ -1150,7 +1126,7 @@ bth4close(struct tty *tp, int flag __unused)
 
 /* ARGSUSED */
 static int
-bth4ioctl(struct tty *tp, u_long cmd, caddr_t data,
+bth4ioctl(struct tty *tp, u_long cmd, void *data,
     int flag __unused, struct lwp *l __unused)
 {
 	struct btuart_softc *sc = (struct btuart_softc *)tp->t_sc;

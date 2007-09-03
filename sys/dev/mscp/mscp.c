@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.22.4.1 2006/06/21 15:05:02 yamt Exp $	*/
+/*	$NetBSD: mscp.c,v 1.22.4.2 2007/09/03 14:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.22.4.1 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.22.4.2 2007/09/03 14:36:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -189,7 +189,7 @@ loop:
 		mi->mi_rsp.mri_next = nextrsp;
 		if (mi->mi_wantcredits && mi->mi_credits > MSCP_MINCREDITS) {
 			mi->mi_wantcredits = 0;
-			wakeup((caddr_t) &mi->mi_wantcredits);
+			wakeup((void *) &mi->mi_wantcredits);
 		}
 		return;
 	}
@@ -369,10 +369,7 @@ rwend:
 		 * WHAT STATUS WILL THESE HAVE?	 IT SURE WOULD BE NICE
 		 * IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
 		 */
-		if (error) {
-			bp->b_flags |= B_ERROR;
-			bp->b_error = error;
-		}
+		bp->b_error = error;
 		if (st == M_ST_OFFLINE || st == M_ST_AVAILABLE) {
 #ifdef notyet
 			(*md->md_offline)(ui, mp);

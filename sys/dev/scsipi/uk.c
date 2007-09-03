@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.45.4.2 2006/12/30 20:49:34 yamt Exp $	*/
+/*	$NetBSD: uk.c,v 1.45.4.3 2007/09/03 14:38:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.45.4.2 2006/12/30 20:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.45.4.3 2007/09/03 14:38:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ ukclose(dev_t dev, int flag, int fmt, struct lwp *l)
  * Only does generic scsi ioctls.
  */
 static int
-ukioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+ukioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 

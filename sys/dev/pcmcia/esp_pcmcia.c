@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.26.4.1 2006/12/30 20:49:17 yamt Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.26.4.2 2007/09/03 14:38:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.26.4.1 2006/12/30 20:49:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.26.4.2 2007/09/03 14:38:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ void	esp_pcmcia_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	esp_pcmcia_dma_isintr(struct ncr53c9x_softc *);
 void	esp_pcmcia_dma_reset(struct ncr53c9x_softc *);
 int	esp_pcmcia_dma_intr(struct ncr53c9x_softc *);
-int	esp_pcmcia_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+int	esp_pcmcia_dma_setup(struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *);
 void	esp_pcmcia_dma_go(struct ncr53c9x_softc *);
 void	esp_pcmcia_dma_stop(struct ncr53c9x_softc *);
@@ -201,7 +201,7 @@ esp_pcmcia_init(esc)
 	sc->sc_glue = &esp_pcmcia_glue;
 
 #ifdef ESP_PCMCIA_POLL
-	callout_init(&esc->sc_poll_ch);
+	callout_init(&esc->sc_poll_ch, 0);
 #endif
 
 	sc->sc_rev = NCR_VARIANT_ESP406;
@@ -412,14 +412,14 @@ esp_pcmcia_dma_intr(sc)
 int
 esp_pcmcia_dma_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
+	void **addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;
 {
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = (void *)addr;
 	esc->sc_pdmalen = len;
 	esc->sc_datain = datain;
 	esc->sc_dmasize = *dmasize;

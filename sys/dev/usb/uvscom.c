@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.15.2.1 2006/12/30 20:49:40 yamt Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.15.2.2 2007/09/03 14:39:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.15.2.1 2006/12/30 20:49:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.15.2.2 2007/09/03 14:39:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,9 +261,6 @@ MODULE_VERSION(uvscom, UVSCOM_MODVER);
 USB_MATCH(uvscom)
 {
 	USB_MATCH_START(uvscom, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (uvscom_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);

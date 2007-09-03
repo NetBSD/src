@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.8.2.3 2007/02/26 09:09:18 yamt Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.8.2.4 2007/09/03 14:32:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * structure.
  */
 struct linux_emuldata_shared {
-	caddr_t	p_break;	/* Processes' idea of break */
+	void *	p_break;	/* Processes' idea of break */
 	int refs;
 	pid_t group_pid;	/* PID of Linux process (group of threads) */
 	/* List of Linux threads (NetBSD processes) in the Linux process */

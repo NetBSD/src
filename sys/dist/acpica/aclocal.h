@@ -120,7 +120,7 @@
 
 #define ACPI_WAIT_FOREVER               0xFFFF  /* UINT16, as per ACPI spec */
 
-typedef void *                          ACPI_MUTEX;
+typedef void *                         ACPI_MUTEX;
 typedef UINT32                          ACPI_MUTEX_HANDLE;
 
 

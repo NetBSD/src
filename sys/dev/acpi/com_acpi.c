@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.15.12.2 2006/12/30 20:47:54 yamt Exp $ */
+/* $NetBSD: com_acpi.c,v 1.15.12.3 2007/09/03 14:33:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.15.12.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.15.12.3 2007/09/03 14:33:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ static const char * const com_acpi_ids[] = {
 	"IBM0071",	/* IBM ThinkPad IRDA device */
 	"SMCF010",	/* SMC SuperIO IRDA device */
 	"NSC6001",	/* NSC IRDA device */
+	"FUJ02E6",	/* Fujitsu Serial Pen Tablet */
 	NULL
 };
 

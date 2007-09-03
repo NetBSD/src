@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.114.2.3 2007/02/26 09:09:56 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.114.2.4 2007/09/03 14:33:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.3 2007/02/26 09:09:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.4 2007/09/03 14:33:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -452,11 +452,8 @@ vndstrategy(struct buf *bp)
 	daddr_t blkno;
 	int s = splbio();
 
-	bp->b_resid = bp->b_bcount;
-
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 
@@ -465,7 +462,6 @@ vndstrategy(struct buf *bp)
 	 */
 	if ((bp->b_bcount % lp->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		bp->b_flags |= B_ERROR;
 		goto done;
 	}
 
@@ -474,7 +470,11 @@ vndstrategy(struct buf *bp)
 	 */
 	if ((vnd->sc_flags & VNF_READONLY) && !(bp->b_flags & B_READ)) {
 		bp->b_error = EACCES;
-		bp->b_flags |= B_ERROR;
+		goto done;
+	}
+
+	/* If it's a nil transfer, wake up the top half now. */
+	if (bp->b_bcount == 0) {
 		goto done;
 	}
 
@@ -491,10 +491,6 @@ vndstrategy(struct buf *bp)
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
 	}
-
-	/* If it's a nil transfer, wake up the top half now. */
-	if (bp->b_bcount == 0)
-		goto done;
 
 	/*
 	 * Put the block number in terms of the logical blocksize
@@ -523,7 +519,9 @@ vndstrategy(struct buf *bp)
 	wakeup(&vnd->sc_tab);
 	splx(s);
 	return;
+
 done:
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 	splx(s);
 }
@@ -579,7 +577,6 @@ vndthread(void *arg)
 
 		if (vnd->sc_vp->v_mount == NULL) {
 			obp->b_error = ENXIO;
-			obp->b_flags |= B_ERROR;
 			goto done;
 		}
 #ifdef VND_COMPRESSION
@@ -622,7 +619,7 @@ vndthread(void *arg)
 		bp->b_private = obp;
 		bp->b_vp = vnd->sc_vp;
 		bp->b_data = obp->b_data;
-		bp->b_bcount = bp->b_resid = obp->b_bcount;
+		bp->b_bcount = obp->b_bcount;
 		BIO_COPYPRIO(bp, obp);
 
 		/* Handle the request using the appropriate operations. */
@@ -701,10 +698,6 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	    vp, bp->b_data, bp->b_bcount, offset,
 	    UIO_SYSSPACE, 0, vnd->sc_cred, &resid, NULL);
 	bp->b_resid = resid;
-	if (bp->b_error != 0)
-		bp->b_flags |= B_ERROR;
-	else
-		KASSERT(!(bp->b_flags & B_ERROR));
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */
@@ -727,20 +720,15 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	int bsize, error, flags, skipped;
 	size_t resid, sz;
 	off_t bn, offset;
-	struct mount *mp;
 
 	flags = obp->b_flags;
 
-	mp = NULL;
 	if (!(flags & B_READ)) {
 		int s;
 		
 		s = splbio();
 		V_INCR_NUMOUTPUT(bp->b_vp);
 		splx(s);
-
-		vn_start_write(vnd->sc_vp, &mp, V_WAIT);
-		KASSERT(mp != NULL);
 	}
 
 	/* convert to a byte offset within the file. */
@@ -757,6 +745,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 	 * the client rather than the server.
 	 */
 	error = 0;
+	bp->b_resid = bp->b_bcount;
 	for (offset = 0, resid = bp->b_resid; resid;
 	    resid -= sz, offset += sz) {
 		struct buf *nbp;
@@ -817,11 +806,6 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 		bn += sz;
 	}
 	nestiobuf_done(bp, skipped, error);
-
-	if (!(flags & B_READ)) {
-		KASSERT(mp != NULL);
-		vn_finished_write(mp, 0);
-	}
 }
 
 static void
@@ -836,7 +820,7 @@ vndiodone(struct buf *bp)
 #ifdef DEBUG
 	if (vnddebug & VDB_IO) {
 		printf("vndiodone1: bp %p iodone: error %d\n",
-		    bp, (bp->b_flags & B_ERROR) != 0 ? bp->b_error : 0);
+		    bp, bp->b_error);
 	}
 #endif
 	disk_unbusy(&vnd->sc_dkdev, bp->b_bcount - bp->b_resid,
@@ -845,7 +829,6 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
-	obp->b_flags |= bp->b_flags & B_ERROR;
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	VND_PUTXFER(vnd, vnx);
@@ -918,7 +901,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 /* ARGSUSED */
 static int
-vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -1019,7 +1002,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			M_TEMP, M_WAITOK);
  
 			/* read compressed file header */
-			error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t)ch,
+			error = vn_rdwr(UIO_READ, nd.ni_vp, (void *)ch,
 			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if(error) {
@@ -1059,7 +1042,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  
 			/* read in the offsets */
 			error = vn_rdwr(UIO_READ, nd.ni_vp,
-			  (caddr_t)vnd->sc_comp_offsets,
+			  (void *)vnd->sc_comp_offsets,
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
@@ -1186,8 +1169,8 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		vnd->sc_flags |= VNF_INITED;
 
 		/* create the kernel thread, wait for it to be up */
-		error = kthread_create1(vndthread, vnd, &vnd->sc_kthread,
-		    vnd->sc_dev.dv_xname);
+		error = kthread_create(PRI_NONE, 0, NULL, vndthread, vnd,
+		    &vnd->sc_kthread, vnd->sc_dev.dv_xname);
 		if (error)
 			goto close_and_exit;
 		while ((vnd->sc_flags & VNF_KTHREAD) == 0) {
@@ -1209,7 +1192,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		/* Initialize the xfer and buffer pools. */
 		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
-		    0, 0, "vndxpl", NULL);
+		    0, 0, "vndxpl", NULL, IPL_BIO);
 
 		/* Try and read the disklabel. */
 		vndgetdisklabel(dev, vnd);
@@ -1595,7 +1578,7 @@ vndsize(dev_t dev)
 }
 
 static int
-vnddump(dev_t dev, daddr_t blkno, caddr_t va,
+vnddump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 
@@ -1736,7 +1719,7 @@ compstrategy(struct buf *bp, off_t bn)
 	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
 	u_int32_t comp_block;
 	struct uio auio;
-	caddr_t addr;
+	char *addr;
 	int s;
 
 	/* set up constants for data move */
@@ -1745,6 +1728,7 @@ compstrategy(struct buf *bp, off_t bn)
 
 	/* read, and transfer the data */
 	addr = bp->b_data;
+	bp->b_resid = bp->b_bcount;
 	s = splbio();
 	while (bp->b_resid > 0) {
 		unsigned length;
@@ -1758,7 +1742,6 @@ compstrategy(struct buf *bp, off_t bn)
 		/* check for good block number */
 		if (comp_block >= vnd->sc_comp_numoffs) {
 			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
 			splx(s);
 			return;
 		}
@@ -1773,7 +1756,6 @@ compstrategy(struct buf *bp, off_t bn)
 			    UIO_SYSSPACE, IO_UNIT, vnd->sc_cred, NULL, NULL);
 			if (error) {
 				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
 				VOP_UNLOCK(vnd->sc_vp, 0);
 				splx(s);
 				return;
@@ -1791,7 +1773,6 @@ compstrategy(struct buf *bp, off_t bn)
 					    vnd->sc_dev.dv_xname,
 					    vnd->sc_comp_stream.msg);
 				bp->b_error = EBADMSG;
-				bp->b_flags |= B_ERROR;
 				VOP_UNLOCK(vnd->sc_vp, 0);
 				splx(s);
 				return;
@@ -1815,7 +1796,6 @@ compstrategy(struct buf *bp, off_t bn)
 		    length_in_buffer, &auio);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			splx(s);
 			return;
 		}

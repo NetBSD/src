@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.h,v 1.1.16.3 2006/12/30 20:47:38 yamt Exp $ */
+/*	$NetBSD: linux32_missing.h,v 1.1.16.4 2007/09/03 14:32:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -56,7 +56,7 @@ struct linux_sys_llseek_args {
         syscallarg(int) fd; 
         syscallarg(u_int32_t) ohigh;  
         syscallarg(u_int32_t) olow;
-        syscallarg(caddr_t) res;
+        syscallarg(void *) res;
         syscallarg(int) whence;
 };
 

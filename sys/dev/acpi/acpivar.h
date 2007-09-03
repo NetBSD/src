@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.23.2.2 2006/12/30 20:47:54 yamt Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.23.2.3 2007/09/03 14:33:20 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -83,6 +83,7 @@ struct acpi_devnode {
 	ACPI_DEVICE_INFO *ad_devinfo;	/* our ACPI device info */
 	struct acpi_scope *ad_scope;	/* backpointer to scope */
 	struct device	*ad_device;	/* pointer to configured device */
+	char		ad_name[5];	/* Human-readable device name */
 };
 
 /*

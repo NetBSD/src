@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.18.2.3 2007/02/26 09:10:23 yamt Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.18.2.4 2007/09/03 14:36:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.18.2.3 2007/02/26 09:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.18.2.4 2007/09/03 14:36:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +182,15 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 
 	/* Enable workaround for dropped interrupts as required */
-	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
+	switch (sc->sc.sc_id_vendor) {
+	case PCI_VENDOR_ATI:
+	case PCI_VENDOR_VIATECH:
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
+		aprint_normal("%s: dropped intr workaround enabled\n", devname);
+		break;
+	default:
+		break;
+	}
 
 	/*
 	 * Find companion controllers.  According to the spec they always
@@ -203,17 +210,20 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	ehci_get_ownership(&sc->sc, pc, tag);
 
-	r = ehci_init(&sc->sc);
-	if (r != USBD_NORMAL_COMPLETION) {
-		aprint_error("%s: init failed, error=%d\n", devname, r);
-		return;
-	}
-
+	/*
+	 * Establish our powerhook before ehci_init() does its powerhook.
+	 */
 	sc->sc_powerhook = powerhook_establish(
 	    USBDEVNAME(sc->sc.sc_bus.bdev) , ehci_pci_powerhook, sc);
 	if (sc->sc_powerhook == NULL)
 		aprint_error("%s: couldn't establish powerhook\n",
 		    devname);
+
+	r = ehci_init(&sc->sc);
+	if (r != USBD_NORMAL_COMPLETION) {
+		aprint_error("%s: init failed, error=%d\n", devname, r);
+		return;
+	}
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -301,6 +311,10 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		}
 		addr = EHCI_CAP_GET_NEXT(cap);
 	}
+
+	/* If the USB legacy capability is not specified, we are done */
+	if (addr == 0)
+		return;
 
 	legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
 	/* Ask BIOS to give up ownership */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.3.2.2 2007/02/26 09:10:07 yamt Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.3.2.3 2007/09/03 14:34:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.3.2.2 2007/02/26 09:10:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.3.2.3 2007/09/03 14:34:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,7 +86,7 @@ m_defrag(struct mbuf *m0, int flags)
 		m_free(m);
 		return NULL;
 	}
-	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+	m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 	m->m_len = m->m_pkthdr.len;
 	return m;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.47.2.3 2007/02/26 09:09:23 yamt Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.47.2.4 2007/09/03 14:32:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.3 2007/02/26 09:09:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.4 2007/09/03 14:32:25 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -483,7 +483,7 @@ int
 linux_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct linux_sys_sigsuspend_args /* {
-		syscallarg(caddr_t) restart;
+		syscallarg(void *) restart;
 		syscallarg(int) oldmask;
 		syscallarg(int) mask;
 	} */ *uap = v;

@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.11.4.1 2006/06/21 15:04:36 yamt Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.11.4.2 2007/09/03 14:35:50 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.11.4.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.11.4.2 2007/09/03 14:35:50 yamt Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -419,9 +419,9 @@ isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 
 	/* setup ISAC and HSCX base addr */
 
-	ISAC_BASE   = (caddr_t) ((u_int)dev->id_iobase | ELSA_IDISAC);
-	HSCX_A_BASE = (caddr_t) ((u_int)dev->id_iobase | ELSA_IDHSCXA);
-	HSCX_B_BASE = (caddr_t) ((u_int)dev->id_iobase | ELSA_IDHSCXB);
+	ISAC_BASE   = (void *) ((u_int)dev->id_iobase | ELSA_IDISAC);
+	HSCX_A_BASE = (void *) ((u_int)dev->id_iobase | ELSA_IDHSCXA);
+	HSCX_B_BASE = (void *) ((u_int)dev->id_iobase | ELSA_IDHSCXB);
 
 	/*
 	 * Read HSCX A/B VSTR.  Expected value for the ELSA QuickStep 1000pro
@@ -600,7 +600,7 @@ isic_attach_Eqs1pi(struct isic_softc *sc)
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
-	callout_init(&sc->sc_driver_callout);
+	callout_init(&sc->sc_driver_callout, 0);
 	sc->sc_driver_specific = 0;
 }
 

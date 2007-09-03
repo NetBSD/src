@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.3.12.3 2007/02/26 09:10:02 yamt Exp $	*/
+/*	$NetBSD: i2c.c,v 1.3.12.4 2007/09/03 14:34:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -56,7 +56,6 @@ struct iic_softc {
 };
 
 static void	iic_smbus_intr_thread(void *);
-static void	iic_smbus_intr_thread1(void *);
 
 int
 iicbus_print(void *aux, const char *pnp)
@@ -110,17 +109,45 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
+	i2c_addr_t addr;
+	i2c_tag_t ic;
+	int rv;
+	int found = 0;
+	uint8_t cmd = 0, val;
 
 	aprint_naive(": I2C bus\n");
 	aprint_normal(": I2C bus\n");
 
 	sc->sc_tag = iba->iba_tag;
 	sc->sc_type = iba->iba_type;
-	sc->sc_tag->ic_devname = self->dv_xname;
+	ic = sc->sc_tag;
+	ic->ic_devname = self->dv_xname;
 
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));
-	kthread_create(iic_smbus_intr_thread, sc->sc_tag);
+
+	rv = kthread_create(PRI_NONE, 0, NULL, iic_smbus_intr_thread,
+	    ic, &ic->ic_intr_thread, "%s", ic->ic_devname);
+	if (rv)
+		printf("%s: unable to create intr thread\n", ic->ic_devname);
+
+	if (sc->sc_type == I2C_TYPE_SMBUS) {
+		for (addr = 0x0; addr < 0x80; addr++) {
+			iic_acquire_bus(ic, 0);
+			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
+			    &cmd, 1, &val, 1, 0) == 0) {
+				if (found == 0)
+					aprint_normal("%s: devices at",
+							ic->ic_devname);
+				found++;
+				aprint_normal(" 0x%02x", addr);
+			}
+			iic_release_bus(ic, 0);
+		}
+		if (found == 0)
+			aprint_normal("%s: no devices found", ic->ic_devname);
+		aprint_normal("\n");
+	}
 
 	/*
 	 * Attach all i2c devices described in the kernel
@@ -130,7 +157,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-iic_smbus_intr_thread1(void *aux)
+iic_smbus_intr_thread(void *aux)
 {
 	i2c_tag_t ic;
 	struct ic_intr_list *il;
@@ -152,20 +179,6 @@ iic_smbus_intr_thread1(void *aux)
 	}
 
 	kthread_exit(0);
-}
-
-static void
-iic_smbus_intr_thread(void *aux)
-{
-	i2c_tag_t ic;
-	int rv;
-
-	ic = (i2c_tag_t)aux;
-
-	rv = kthread_create1(iic_smbus_intr_thread1, ic, &ic->ic_intr_thread,
-	    "%s", ic->ic_devname);
-	if (rv)
-		printf("%s: unable to create intr thread\n", ic->ic_devname);
 }
 
 void *

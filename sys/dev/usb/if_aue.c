@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.91.2.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.91.2.3 2007/09/03 14:39:01 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.91.2.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.91.2.3 2007/09/03 14:39:01 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -249,7 +249,7 @@ Static void aue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void aue_tick(void *);
 Static void aue_tick_task(void *);
 Static void aue_start(struct ifnet *);
-Static int aue_ioctl(struct ifnet *, u_long, caddr_t);
+Static int aue_ioctl(struct ifnet *, u_long, void *);
 Static void aue_init(void *);
 Static void aue_stop(struct aue_softc *);
 Static void aue_watchdog(struct ifnet *);
@@ -267,7 +267,7 @@ Static void aue_lock_mii(struct aue_softc *);
 Static void aue_unlock_mii(struct aue_softc *);
 
 Static void aue_setmulti(struct aue_softc *);
-Static u_int32_t aue_crc(caddr_t);
+Static u_int32_t aue_crc(void *);
 Static void aue_reset(struct aue_softc *);
 
 Static int aue_csr_read_1(struct aue_softc *, int);
@@ -580,9 +580,10 @@ aue_miibus_statchg(device_ptr_t dev)
 #define AUE_BITS	6
 
 Static u_int32_t
-aue_crc(caddr_t addr)
+aue_crc(void *addrv)
 {
 	u_int32_t		idx, bit, data, crc;
+	char *addr = addrv;
 
 	/* Compute CRC for the address value. */
 	crc = 0xFFFFFFFF; /* initial value */
@@ -711,9 +712,6 @@ aue_reset(struct aue_softc *sc)
 USB_MATCH(aue)
 {
 	USB_MATCH_START(aue, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (aue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -1396,7 +1394,7 @@ aue_init(void *xsc)
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mii_data		*mii = GET_MII(sc);
 	int			i, s;
-	u_char			*eaddr;
+	const u_char		*eaddr;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __func__));
 
@@ -1416,7 +1414,7 @@ aue_init(void *xsc)
 #if defined(__OpenBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
 #elif defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
+	eaddr = CLLADDR(ifp->if_sadl);
 #endif /* defined(__NetBSD__) */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		aue_csr_write_1(sc, AUE_PAR0 + i, eaddr[i]);
@@ -1556,7 +1554,7 @@ aue_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 Static int
-aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct aue_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
@@ -1615,13 +1613,10 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (command == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->aue_ec) :
-			ether_delmulti(ifr, &sc->aue_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 #if defined(__NetBSD__)
-				workqueue_enqueue(sc->wqp,&sc->wk);
+				workqueue_enqueue(sc->wqp,&sc->wk, NULL);
 				/* XXX */
 #else
 				aue_init(sc);

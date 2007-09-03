@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.29.4.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: dl.c,v 1.29.4.3 2007/09/03 14:38:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29.4.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.29.4.3 2007/09/03 14:38:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ dlrint(void *arg)
 		cc = c & 0xFF;
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			wakeup((caddr_t)&tp->t_rawq);
+			wakeup((void *)&tp->t_rawq);
 			return;
 		}
 
@@ -406,7 +406,7 @@ dlpoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
+dlioctl(dev_t dev, unsigned long cmd, void *data, int flag, struct lwp *l)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -471,7 +471,7 @@ dlstart(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

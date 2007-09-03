@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.6.2.1 2006/06/21 15:02:11 yamt Exp $ */
+/* $NetBSD: dkvar.h,v 1.6.2.2 2007/09/03 14:33:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,11 +111,11 @@ void	dk_start(struct dk_intf *, struct dk_softc *);
 void	dk_iodone(struct dk_intf *, struct dk_softc *);
 int	dk_size(struct dk_intf *, struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_intf *, struct dk_softc *, dev_t,
-		 u_long, caddr_t, int, struct lwp *);
+		 u_long, void *, int, struct lwp *);
 int	dk_dump(struct dk_intf *, struct dk_softc *, dev_t,
-		daddr_t, caddr_t, size_t);
+		daddr_t, void *, size_t);
 void	dk_getdisklabel(struct dk_intf *, struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_intf *, struct dk_softc *,
 			   struct disklabel *);
 
-int	dk_lookup(const char *, struct lwp *, struct vnode **);
+int	dk_lookup(const char *, struct lwp *, struct vnode **, enum uio_seg);

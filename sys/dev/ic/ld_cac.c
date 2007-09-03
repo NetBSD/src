@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.11.4.3 2007/02/26 09:10:09 yamt Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.11.4.4 2007/09/03 14:34:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.11.4.3 2007/02/26 09:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.11.4.4 2007/09/03 14:34:52 yamt Exp $");
 
 #include "rnd.h"
 
@@ -220,7 +220,6 @@ ld_cac_done(struct device *dv, void *context, int error)
 	}
 
 	if (rv) {
-		bp->b_flags |= B_ERROR;
 		bp->b_error = rv;
 		bp->b_resid = bp->b_bcount;
 	} else

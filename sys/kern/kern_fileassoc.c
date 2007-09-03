@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.18.2.3 2007/02/26 09:11:06 yamt Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.18.2.4 2007/09/03 14:40:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.18.2.3 2007/02/26 09:11:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.18.2.4 2007/09/03 14:40:46 yamt Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -59,6 +59,7 @@ static struct fileassoc_table *fileassoc_table_resize(struct fileassoc_table *);
 
 static specificdata_domain_t fileassoc_domain;
 static specificdata_key_t fileassoc_mountspecific_key;
+static ONCE_DECL(control);
 
 /*
  * Hook entry.
@@ -196,7 +197,6 @@ fileassoc_register(const char *name, fileassoc_cleanup_cb_t cleanup_cb,
 	int error;
 	specificdata_key_t key;
 	struct fileassoc *assoc;
-	static ONCE_DECL(control);
 
 	error = RUN_ONCE(&control, fileassoc_init);
 	if (error) {
@@ -236,7 +236,12 @@ fileassoc_deregister(fileassoc_t assoc)
 static struct fileassoc_table *
 fileassoc_table_lookup(struct mount *mp)
 {
+	int error;
 
+	error = RUN_ONCE(&control, fileassoc_init);
+	if (error) {
+		return NULL;
+	}
 	return mount_getspecific(mp, fileassoc_mountspecific_key);
 }
 
@@ -402,7 +407,8 @@ fileassoc_table_delete(struct mount *mp)
  * Run a callback for each hook entry in a table.
  */
 int
-fileassoc_table_run(struct mount *mp, fileassoc_t assoc, fileassoc_cb_t cb)
+fileassoc_table_run(struct mount *mp, fileassoc_t assoc, fileassoc_cb_t cb,
+    void *cookie)
 {
 	struct fileassoc_table *tbl;
 	struct fileassoc_hashhead *hh;
@@ -421,7 +427,7 @@ fileassoc_table_run(struct mount *mp, fileassoc_t assoc, fileassoc_cb_t cb)
 
 			data = file_getdata(mhe, assoc);
 			if (data != NULL)
-				cb(data);
+				cb(data, cookie);
 		}
 	}
 

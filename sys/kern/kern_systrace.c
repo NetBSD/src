@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.46.2.3 2007/02/26 09:11:12 yamt Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.46.2.4 2007/09/03 14:40:57 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.46.2.3 2007/02/26 09:11:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.46.2.4 2007/09/03 14:40:57 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -86,7 +86,7 @@ int	systracef_close(struct file *, struct lwp *);
 int	systracef_read(struct file *, off_t *, struct uio *, kauth_cred_t);
 int	systracef_write(struct file *, off_t *, struct uio *, kauth_cred_t);
 int	systracef_select(struct file *, int, struct proc *);
-int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *);
+int	systracef_ioctl(struct file *, u_long, void *, struct proc *);
 int	systracef_stat(struct file *, struct stat *, struct proc *);
 int	systracef_close(struct file *, struct proc *);
 #endif
@@ -161,7 +161,7 @@ int	systrace_policy(struct fsystrace *, struct systrace_policy *);
 int	systrace_preprepl(struct str_process *, struct systrace_replace *);
 int	systrace_replace(struct str_process *, size_t, register_t []);
 int	systrace_getcwd(struct fsystrace *, struct str_process *);
-int	systrace_fname(struct str_process *, caddr_t, size_t);
+int	systrace_fname(struct str_process *, void *, size_t);
 void	systrace_replacefree(struct str_process *);
 
 int	systrace_processready(struct str_process *);
@@ -195,11 +195,11 @@ static const struct fileops systracefops = {
 
 #ifdef __NetBSD__
 POOL_INIT(systr_proc_pl, sizeof(struct str_process), 0, 0, 0, "strprocpl",
-    NULL);
+    NULL, IPL_NONE);
 POOL_INIT(systr_policy_pl, sizeof(struct str_policy), 0, 0, 0, "strpolpl",
-    NULL);
+    NULL, IPL_NONE);
 POOL_INIT(systr_msgcontainer_pl, sizeof(struct str_msgcontainer), 0, 0, 0,
-    "strmsgpl", NULL);
+    "strmsgpl", NULL, IPL_NONE);
 
 kmutex_t systrace_mutex;
 #else /* ! __NetBSD__ */
@@ -238,7 +238,7 @@ systracef_read(struct file *fp, off_t *poff, struct uio *uio, kauth_cred_t cred,
 	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 	if ((cont = TAILQ_FIRST(&fst->messages)) != NULL) {
-		error = uiomove((caddr_t)&cont->msg,
+		error = uiomove((void *)&cont->msg,
 		    sizeof(struct str_message), uio);
 		if (!error) {
 			TAILQ_REMOVE(&fst->messages, cont, next);
@@ -286,7 +286,7 @@ int
 systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	int ret = 0;
-	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
+	struct fsystrace *fst = fp->f_data;
 #ifdef __NetBSD__
 	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdp;
@@ -303,6 +303,7 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case STRIOCDETACH:
 	case STRIOCREPORT:
+	case STRIOCGETCWD:
 		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
@@ -319,11 +320,6 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	case STRIOCSCRIPTNAME:
 		pid = ((struct systrace_scriptname *)data)->sn_pid;
-		if (!pid)
-			ret = EINVAL;
-		break;
-	case STRIOCGETCWD:
-		pid = *(pid_t *)data;
 		if (!pid)
 			ret = EINVAL;
 		break;
@@ -425,9 +421,13 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	}
 
-	mutex_enter(&p->p_mutex);
-	proc_delref(strp->proc);
-	mutex_exit(&p->p_mutex);
+	if (strp) {
+		struct proc *q = strp->proc;
+
+		mutex_enter(&q->p_mutex);
+		proc_delref(q);
+		mutex_exit(&q->p_mutex);
+	}
  unlock:
 	SYSTRACE_UNLOCK(fst, curlwp);
 
@@ -496,9 +496,9 @@ systracef_close(struct file *fp, struct lwp *l)
 		struct proc *q = strp->proc;
 
 		systrace_detach(strp);
-		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
+		mutex_enter(&proclist_lock);	/* XXXSMP */
 		psignal(q, SIGKILL);
-		rw_exit(&proclist_lock);		/* XXXSMP */
+		mutex_exit(&proclist_lock);		/* XXXSMP */
 	}
 
 	/* Clean up fork and exit messages */
@@ -580,7 +580,7 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 void
 systrace_wakeup(struct fsystrace *fst)
 {
-	wakeup((caddr_t)fst);
+	wakeup((void *)fst);
 	selwakeup(&fst->si);
 }
 
@@ -590,22 +590,22 @@ systrace_find(struct str_process *strp)
 	struct proc *proc;
 	int error;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	if ((proc = p_find(strp->pid, PFIND_LOCKED)) == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (NULL);
 	}
 
 	mutex_enter(&proc->p_mutex);
 	if (proc != strp->proc || !ISSET(proc->p_flag, PK_SYSTRACE)) {
 		mutex_exit(&proc->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (NULL);
 	}
 	error = proc_addref(proc);
 	mutex_exit(&proc->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return (error ? NULL : proc);
 }
@@ -652,9 +652,9 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 
 	if (systrace_insert_process(fst, p, &strp)) {
 		/* We need to kill the child */
-		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
+		mutex_enter(&proclist_lock);	/* XXXSMP */
 		psignal(p, SIGKILL);
-		rw_exit(&proclist_lock);		/* XXXSMP */
+		mutex_exit(&proclist_lock);		/* XXXSMP */
 		goto out;
 	}
 
@@ -1136,13 +1136,14 @@ systrace_getcwd(struct fsystrace *fst, struct str_process *strp)
 
 	/* Store our current values */
 	fst->fd_pid = strp->pid;
+	rw_enter(&mycwdp->cwdi_lock, RW_READER);
 	fst->fd_cdir = mycwdp->cwdi_cdir;
 	fst->fd_rdir = mycwdp->cwdi_rdir;
-
 	if ((mycwdp->cwdi_cdir = cwdp->cwdi_cdir) != NULL)
 		VREF(mycwdp->cwdi_cdir);
 	if ((mycwdp->cwdi_rdir = cwdp->cwdi_rdir) != NULL)
 		VREF(mycwdp->cwdi_rdir);
+	rw_exit(&mycwdp->cwdi_lock);
 #else
 	myfdp = curlwp->p_fd;
 	fdp = strp->proc->p_fd;
@@ -1228,16 +1229,16 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	int error = 0;
 	struct proc *proc, *p = curproc;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	if ((proc = p_find(pid, PFIND_LOCKED)) == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (ESRCH);
 	}
 
 	mutex_enter(&proc->p_mutex);
 	error = proc_addref(proc);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (error != 0) {
 		mutex_exit(&proc->p_mutex);
@@ -1393,7 +1394,7 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 
 	/* Adjust the offset */
 	repl = strp->replace;
-	repl->strr_base = (caddr_t)(repl + 1);
+	repl->strr_base = (void *)(repl + 1);
 
 	return (0);
 }
@@ -1407,7 +1408,7 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 {
 	struct proc *p = strp->proc;
 	struct systrace_replace *repl = strp->replace;
-	caddr_t sg, kdata, udata, kbase, ubase;
+	void *sg, *kdata, *udata, *kbase, *ubase;
 	int i, maxarg, ind, ret = 0;
 
 	maxarg = argsize/sizeof(register_t);
@@ -1434,8 +1435,8 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 			args[ind] = repl->strr_off[i];
 			continue;
 		}
-		kdata = kbase + repl->strr_off[i];
-		udata = ubase + repl->strr_off[i];
+		kdata = (char *)kbase + repl->strr_off[i];
+		udata = (char *)ubase + repl->strr_off[i];
 		if (repl->strr_flags[i] & SYSTR_NOLINKS) {
 			ret = systrace_fname(strp, kdata, repl->strr_offlen[i]);
 			if (ret != 0)
@@ -1455,7 +1456,7 @@ systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
 }
 
 int
-systrace_fname(struct str_process *strp, caddr_t kdata, size_t len)
+systrace_fname(struct str_process *strp, void *kdata, size_t len)
 {
 	if (strp->nfname >= SYSTR_MAXFNAME || len < 2)
 		return EINVAL;
@@ -1644,7 +1645,7 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc,
 	if (strp == NULL)
 		return (ENOBUFS);
 
-	memset((caddr_t)strp, 0, sizeof(struct str_process));
+	memset((void *)strp, 0, sizeof(struct str_process));
 	strp->pid = proc->p_pid;
 	strp->proc = proc;
 	strp->parent = fst;
@@ -1693,7 +1694,7 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 	DPRINTF(("%s: allocating %d -> %lu\n", __func__,
 		     maxents, (u_long)maxents * sizeof(int)));
 
-	memset((caddr_t)pol, 0, sizeof(struct str_policy));
+	memset((void *)pol, 0, sizeof(struct str_policy));
 
 	pol->sysent = (u_char *)malloc(maxents * sizeof(u_char),
 	    M_XDATA, M_WAITOK);

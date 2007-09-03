@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2005/05/30 18:35:54 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.16.2.1 2007/09/03 14:41:34 yamt Exp $
 
 .if !target(assym.h)
 S!=	cd ${.CURDIR}/../../..;pwd
@@ -30,21 +30,6 @@ assym.h: ${GENASSYM_DIR}/genassym.cf
 	${TOOL_GENASSYM} -- ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 		< ${GENASSYM_DIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
-
-.if defined(COMPAT_UTIL_OVERRIDE) && !empty(COMPAT_UTIL_OVERRIDE)
-# compat_util.c symbol redifinitions
-CPPFLAGS+=	-Demul_find=${COMPAT_UTIL_OVERRIDE}_emul_find				\
-		-Dstackgap_init=${COMPAT_UTIL_OVERRIDE}_stackgap_init			\
-		-Demul_flags_translate=${COMPAT_UTIL_OVERRIDE}_emul_flags_translate	\
-		-Dstackgap_alloc=${COMPAT_UTIL_OVERRIDE}_stackgap_alloc		 	\
-		-Dcompat_offseterr=${COMPAT_UTIL_OVERRIDE}_compat_offseterr		\
-		-Demul_find_interp=${COMPAT_UTIL_OVERRIDE}_emul_find_interp
-
-# get emul_find() and friends
-.PATH: $S/compat/common
-SRCS+=	compat_util.c
-
-.endif
 
 .include "../Makefile.inc"
 .endif

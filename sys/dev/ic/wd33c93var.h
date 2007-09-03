@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.4.4.2 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.4.4.3 2007/09/03 14:35:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@ struct wd33c93_softc {
 
 
 	/* Data about the current nexus (updated for every cmd switch) */
-	caddr_t	sc_daddr;		/* Current data pointer */
+	void *	sc_daddr;		/* Current data pointer */
 	size_t	sc_dleft;		/* Data left to transfer */
 	ssize_t	sc_tcnt;		/* number of bytes transfered */
 
@@ -171,10 +171,12 @@ struct wd33c93_softc {
 	int	sc_rev;			/* Chip revision */
 	int	sc_cfflags;		/* Copy of config flags */
 	int	sc_maxxfer;		/* Maximum transfer size */
-	uint8_t	sc_maxoffset;		/* Maximum sync ofset (bytes) */
+	uint8_t	sc_maxoffset;		/* Maximum sync offset (bytes) */
+	uint8_t sc_minsyncperiod;	/* Minimum supported sync xfer period */
 	uint8_t	sc_syncperiods[7];	/* Sync transfer periods (4ns units) */
+	uint8_t	sc_fsyncperiods[3];	/* Sync transfer periods for Fast SCSI*/
 
-	int  (*sc_dmasetup) (struct wd33c93_softc *, caddr_t *,
+	int  (*sc_dmasetup) (struct wd33c93_softc *, void **,
 					    size_t *, int, size_t *);
 	int  (*sc_dmago) (struct wd33c93_softc *);
 	void (*sc_dmastop) (struct wd33c93_softc *);
@@ -220,6 +222,11 @@ struct wd33c93_softc {
 #define	SBIC_CHIP_WD33C93B	3
 
 #define SBIC_CHIP_LIST		{"UNKNOWN", "WD33C93", "WD33C93A", "WD33C93B"}
+
+/* macros for sc_cfflags */
+#define CFFLAGS_NODISC(_cf, _t) ((_cf) & (1 << ( 0 + (_t))))
+#define CFFLAGS_NOSYNC(_cf, _t) ((_cf) & (1 << ( 8 + (_t))))
+#define CFFLAGS_NOTAGS(_cf, _t) ((_cf) & (1 << (16 + (_t))))
 
 /*
  * States returned by our state machine

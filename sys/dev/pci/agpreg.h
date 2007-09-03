@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.8.4.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.8.4.2 2007/09/03 14:36:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -78,11 +78,19 @@
 #define AGP_INTEL_ATTBASE	0xb8
 
 /*
- * Config offsets for VIA AGP chipsets.
+ * Config offsets for VIA AGP 2.x chipsets.
  */
 #define AGP_VIA_GARTCTRL	0x80
 #define AGP_VIA_APSIZE		0x84
 #define AGP_VIA_ATTBASE		0x88
+
+/*
+ * Config offsets for VIA AGP 3.0 chipsets.
+ */
+#define AGP3_VIA_GARTCTRL	0x90
+#define AGP3_VIA_APSIZE		0x94
+#define AGP3_VIA_ATTBASE	0x98
+#define AGP_VIA_AGPSEL		0xfd
 
 /*
  * Config offsets for SiS AGP chipsets.
@@ -216,7 +224,53 @@
 #define 	AGP_I915_GCC1_GMS_STOLEN_0M	0x00
 #define 	AGP_I915_GCC1_GMS_STOLEN_1M	0x10
 #define 	AGP_I915_GCC1_GMS_STOLEN_8M	0x30
+#define 	AGP_I915_GCC1_GMS_STOLEN_16M	0x40
+#define 	AGP_I915_GCC1_GMS_STOLEN_32M	0x50
+#define 	AGP_I915_GCC1_GMS_STOLEN_48M	0x60
+#define 	AGP_I915_GCC1_GMS_STOLEN_64M	0x70
 #define AGP_I915_MSAC			0x62
 #define 	AGP_I915_MSAC_APER_128M		0x02
+
+/*
+ * Config registers for 965G/965Q
+ */
+#define AGP_I965_MMADR			0x10
+#define AGP_I965_GMADR			0x18
+
+#define AGP_I965_GTT			0x80000
+
+/*
+ * AMD64 GART registers
+ */
+#define	AGP_AMD64_APCTRL		0x90
+#define	AGP_AMD64_APBASE		0x94
+#define	AGP_AMD64_ATTBASE		0x98
+#define	AGP_AMD64_CACHECTRL		0x9c
+#define	AGP_AMD64_APCTRL_GARTEN		0x00000001
+#define	AGP_AMD64_APCTRL_SIZE_MASK	0x0000000e
+#define	AGP_AMD64_APCTRL_DISGARTCPU	0x00000010
+#define	AGP_AMD64_APCTRL_DISGARTIO	0x00000020
+#define	AGP_AMD64_APCTRL_DISWLKPRB	0x00000040
+#define	AGP_AMD64_APBASE_MASK		0x00007fff
+#define	AGP_AMD64_ATTBASE_MASK		0xfffffff0
+#define	AGP_AMD64_CACHECTRL_INVGART	0x00000001
+#define	AGP_AMD64_CACHECTRL_PTEERR	0x00000002
+
+/*
+ * NVIDIA nForce3 registers
+ */
+#define AGP_AMD64_NVIDIA_0_APBASE	0x10
+#define AGP_AMD64_NVIDIA_1_APBASE1	0x50
+#define AGP_AMD64_NVIDIA_1_APLIMIT1	0x54
+#define AGP_AMD64_NVIDIA_1_APSIZE	0xa8
+#define AGP_AMD64_NVIDIA_1_APBASE2	0xd8
+#define AGP_AMD64_NVIDIA_1_APLIMIT2	0xdc
+
+/*
+ * ULi M1689 registers
+ */
+#define AGP_AMD64_ULI_APBASE		0x10
+#define AGP_AMD64_ULI_HTT_FEATURE	0x50
+#define AGP_AMD64_ULI_ENU_SCR		0x54
 
 #endif /* !_PCI_AGPREG_H_ */

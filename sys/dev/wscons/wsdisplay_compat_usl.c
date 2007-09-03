@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.26.10.3 2007/02/26 09:10:51 yamt Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.26.10.4 2007/09/03 14:39:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.26.10.3 2007/02/26 09:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.26.10.4 2007/09/03 14:39:33 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -61,8 +61,8 @@ struct usl_syncdata {
 	int s_frsig; /* unused */
 	void (*s_callback)(void *, int, int);
 	void *s_cbarg;
-	struct callout s_attach_ch;
-	struct callout s_detach_ch;
+	callout_t s_attach_ch;
+	callout_t s_detach_ch;
 };
 
 static int usl_sync_init(struct wsscreen *, struct usl_syncdata **,
@@ -109,8 +109,8 @@ usl_sync_init(struct wsscreen *scr, struct usl_syncdata **sdp,
 	sd->s_acqsig = acqsig;
 	sd->s_relsig = relsig;
 	sd->s_frsig = frsig;
-	callout_init(&sd->s_attach_ch);
-	callout_init(&sd->s_detach_ch);
+	callout_init(&sd->s_attach_ch, 0);
+	callout_init(&sd->s_detach_ch, 0);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
 		free(sd, M_DEVBUF);
@@ -289,7 +289,7 @@ usl_attachtimeout(void *arg)
 }
 
 int
-wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
+wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	int idx, maxidx;
@@ -360,7 +360,7 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 
 int
 wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
-		     u_long cmd, caddr_t data, int flag, struct lwp *l)
+		     u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	int intarg = 0, res;

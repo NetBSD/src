@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.36.2.2 2006/12/30 20:49:51 yamt Exp $ */
+/* $NetBSD: wsmouse.c,v 1.36.2.3 2007/09/03 14:39:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.36.2.2 2006/12/30 20:49:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.36.2.3 2007/09/03 14:39:42 yamt Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -173,7 +173,7 @@ struct wsmouse_softc {
 
 	struct wsmouse_repeat	sc_repeat;
 	int			sc_repeat_button;
-	struct callout		sc_repeat_callout;
+	callout_t		sc_repeat_callout;
 	unsigned int		sc_repeat_delay;
 };
 
@@ -182,7 +182,7 @@ static void wsmouse_attach(struct device *, struct device *, void *);
 static int  wsmouse_detach(struct device *, int);
 static int  wsmouse_activate(struct device *, enum devact);
 
-static int  wsmouse_do_ioctl(struct wsmouse_softc *, u_long, caddr_t,
+static int  wsmouse_do_ioctl(struct wsmouse_softc *, u_long, void *,
 			     int, struct lwp *);
 
 #if NWSMUX > 0
@@ -190,7 +190,7 @@ static int  wsmouse_mux_open(struct wsevsrc *, struct wseventvar *);
 static int  wsmouse_mux_close(struct wsevsrc *);
 #endif
 
-static int  wsmousedoioctl(struct device *, u_long, caddr_t, int, struct lwp *);
+static int  wsmousedoioctl(struct device *, u_long, void *, int, struct lwp *);
 
 static int  wsmousedoopen(struct wsmouse_softc *, struct wseventvar *);
 
@@ -255,7 +255,7 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 	memset(&sc->sc_repeat, 0, sizeof(sc->sc_repeat));
 	sc->sc_repeat_button = -1;
 	sc->sc_repeat_delay = 0;
-	callout_init(&sc->sc_repeat_callout);
+	callout_init(&sc->sc_repeat_callout, 0);
 
 #if NWSMUX > 0
 	sc->sc_base.me_ops = &wsmouse_srcops;
@@ -662,7 +662,7 @@ wsmouseread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-wsmouseioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+wsmouseioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	return (wsmousedoioctl(wsmouse_cd.cd_devs[minor(dev)],
 			       cmd, data, flag, l));
@@ -670,7 +670,7 @@ wsmouseioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
 int
-wsmousedoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+wsmousedoioctl(struct device *dv, u_long cmd, void *data, int flag,
 	       struct lwp *l)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)dv;
@@ -684,7 +684,7 @@ wsmousedoioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 }
 
 int
-wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data,
+wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, void *data,
 		 int flag, struct lwp *l)
 {
 	int error;

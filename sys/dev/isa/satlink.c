@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.25.4.2 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: satlink.c,v 1.25.4.3 2007/09/03 14:35:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.25.4.2 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.25.4.3 2007/09/03 14:35:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,14 +80,14 @@ struct satlink_softc {
 	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	int	sc_drq;			/* the DRQ we're using */
 	bus_size_t sc_bufsize;		/* DMA buffer size */
-	caddr_t	sc_buf;			/* ring buffer for incoming data */
+	void *	sc_buf;			/* ring buffer for incoming data */
 	int	sc_uptr;		/* user index into ring buffer */
 	int	sc_sptr;		/* satlink index into ring buffer */
 	int	sc_flags;		/* misc. flags. */
 	int	sc_lastresid;		/* residual */
 	struct selinfo sc_selq;		/* our select/poll queue */
 	struct	satlink_id sc_id;	/* ID cached at attach time */
-	struct callout sc_ch;		/* callout pseudo-interrupt */
+	callout_t sc_ch;		/* callout pseudo-interrupt */
 };
 
 /* sc_flags */
@@ -95,7 +95,7 @@ struct satlink_softc {
 #define	SATF_DATA		0x02	/* waiting for data */
 
 /*
- * Our pesudo-interrupt.  Since up to 328 bytes can arrive in 1/100 of
+ * Our pseudo-interrupt.  Since up to 328 bytes can arrive in 1/100 of
  * a second, this gives us 3280 bytes per timeout.
  */
 #define	SATLINK_TIMEOUT		(hz/10)
@@ -209,7 +209,7 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_id.sid_grpid, sc->sc_id.sid_userid,
 	    sc->sc_id.sid_serial);
 
-	callout_init(&sc->sc_ch);
+	callout_init(&sc->sc_ch, 0);
 
 	sc->sc_bufsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 
@@ -343,7 +343,7 @@ satlinkread(dev, uio, flags)
 		/*
 		 * Easy case - no wrap-around.
 		 */
-		error = uiomove(&sc->sc_buf[sc->sc_uptr], count, uio);
+		error = uiomove((char *)sc->sc_buf + sc->sc_uptr, count, uio);
 		if (error == 0) {
 			sc->sc_uptr += count;
 			if (sc->sc_uptr == sc->sc_bufsize)
@@ -359,7 +359,7 @@ satlinkread(dev, uio, flags)
 	oresid = uio->uio_resid;
 	if (wrapcnt > uio->uio_resid)
 		wrapcnt = uio->uio_resid;
-	error = uiomove(&sc->sc_buf[sc->sc_uptr], wrapcnt, uio);
+	error = uiomove((char *)sc->sc_buf + sc->sc_uptr, wrapcnt, uio);
 	sc->sc_uptr = 0;
 	if (error != 0 || wrapcnt == oresid)
 		return (error);
@@ -375,7 +375,7 @@ satlinkread(dev, uio, flags)
 }
 
 int
-satlinkioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+satlinkioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
 	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
