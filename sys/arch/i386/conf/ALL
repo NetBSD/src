@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.119 2007/09/01 17:54:48 dyoung Exp $
+# $NetBSD: ALL,v 1.120 2007/09/03 20:02:58 xtraeme Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.119 $"
+#ident 		"ALL-$Revision: 1.120 $"
 
 maxusers	32		# estimated number of users
 
@@ -1134,6 +1134,9 @@ upl*	at uhub? port ?
 # Serial adapters
 ubsa*	at uhub? port ?		# Belkin serial adapter
 ucom*	at ubsa? portno ?
+
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*   at uchcom? portno ?
 
 uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
