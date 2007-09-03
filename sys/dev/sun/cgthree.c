@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.11.2.1 2006/06/21 15:07:30 yamt Exp $ */
+/*	$NetBSD: cgthree.c,v 1.11.2.2 2007/09/03 14:38:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.11.2.1 2006/06/21 15:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.11.2.2 2007/09/03 14:38:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ int
 cgthreeioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {

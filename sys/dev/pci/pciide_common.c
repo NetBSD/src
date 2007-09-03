@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.27.2.3 2007/02/26 09:10:34 yamt Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.27.2.4 2007/09/03 14:37:19 yamt Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.27.2.3 2007/02/26 09:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.27.2.4 2007/09/03 14:37:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -562,7 +562,7 @@ pciide_dma_table_setup(sc, channel, drive)
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    dma_table_size,
-	    (caddr_t *)&dma_maps->dma_table,
+	    (void **)&dma_maps->dma_table,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 		    channel, "map", drive, error);

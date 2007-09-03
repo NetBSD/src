@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.6 2005/02/27 00:27:21 perry Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.6.4.1 2007/09/03 14:35:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
 
 struct gfe_dmamem {
 	bus_dmamap_t gdm_map;		/* dmamem'ed memory */
-	caddr_t gdm_kva;		/* kva of tx memory */
+	void *gdm_kva;		/* kva of tx memory */
 	int gdm_nsegs;			/* # of segment in gdm_segs */
 	int gdm_maxsegs;		/* maximum # of segments allowed */
 	size_t gdm_size;		/* size of memory region */

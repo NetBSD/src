@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.7.16.3 2007/02/26 09:09:05 yamt Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.7.16.4 2007/09/03 14:31:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.7.16.3 2007/02/26 09:09:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.7.16.4 2007/09/03 14:31:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -110,18 +110,10 @@ freebsd_sys_ptrace(l, v, retval)
 	struct freebsd_sys_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	int error;
-	caddr_t sg;
-	struct {
-		struct reg regs;
-		struct fpreg fpregs;
-	} *nrp;
 	struct sys_ptrace_args npa;
-	struct freebsd_ptrace_reg fr;
 #ifdef _LKM
 	sy_call_t sys_ptrace = sysent[SYS_ptrace].sy_call;
 #endif
@@ -145,21 +137,40 @@ freebsd_sys_ptrace(l, v, retval)
 		/* These requests are compatible with NetBSD */
 		return sys_ptrace(l, uap, retval);
 
+#if 0
+/*
+ * XXX: I've commented out this code, it is broken on too many fronts to fix.
+ *	1) It is doing an unlocked read-modify-write cycle on process that
+ *	   I assume might be running!
+ *	   and in code that might sleep (due to a pagefault), never mind
+ *	   what happens on an SMP system
+ *      2) It accesses data in userspace without using copyin/out.
+ *	3) It all looks like a nasty hack that isn't likely to work.
+ *	4) It uses the stackgap.
+ * dsl June 2007
+ */
 	case FREEBSD_PT_READ_U:
 	case FREEBSD_PT_WRITE_U:
+    {
+	int error;
+	struct {
+		struct reg regs;
+		struct fpreg fpregs;
+	} *nrp;
+	struct freebsd_ptrace_reg fr;
 		sg = stackgap_init(p, 0);
 		nrp = stackgap_alloc(p, &sg, sizeof(*nrp));
 #ifdef PT_GETREGS
 		SCARG(&npa, req) = PT_GETREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
-		SCARG(&npa, addr) = (caddr_t)&nrp->regs;
+		SCARG(&npa, addr) = (void *)&nrp->regs;
 		if ((error = sys_ptrace(l, &npa, retval)) != 0)
 			return error;
 #endif
 #ifdef PT_GETFPREGS
 		SCARG(&npa, req) = PT_GETFPREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
-		SCARG(&npa, addr) = (caddr_t)&nrp->fpregs;
+		SCARG(&npa, addr) = (void *)&nrp->fpregs;
 		if ((error = sys_ptrace(l, &npa, retval)) != 0)
 			return error;
 #endif
@@ -173,25 +184,27 @@ freebsd_sys_ptrace(l, v, retval)
 			error = freebsd_ptrace_setregs(&fr,
 			    SCARG(uap, addr), SCARG(uap, data));
 			if (error)
-			    return error;
+				return error;
 			freebsd_to_netbsd_ptrace_regs(&fr,
 						&nrp->regs, &nrp->fpregs);
 #ifdef PT_SETREGS
 			SCARG(&npa, req) = PT_SETREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
-			SCARG(&npa, addr) = (caddr_t)&nrp->regs;
+			SCARG(&npa, addr) = (void *)&nrp->regs;
 			if ((error = sys_ptrace(l, &npa, retval)) != 0)
 				return error;
 #endif
 #ifdef PT_SETFPREGS
 			SCARG(&npa, req) = PT_SETFPREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
-			SCARG(&npa, addr) = (caddr_t)&nrp->fpregs;
+			SCARG(&npa, addr) = (void *)&nrp->fpregs;
 			if ((error = sys_ptrace(l, &npa, retval)) != 0)
 				return error;
 #endif
 			return 0;
 		}
+    }
+#endif
 
 	default:			/* It was not a legal request. */
 		return (EINVAL);

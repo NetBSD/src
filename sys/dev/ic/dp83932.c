@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.12 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.12.4.1 2007/09/03 14:34:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12 2005/02/27 00:27:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12.4.1 2007/09/03 14:34:30 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12 2005/02/27 00:27:01 perry Exp $");
 
 void	sonic_start(struct ifnet *);
 void	sonic_watchdog(struct ifnet *);
-int	sonic_ioctl(struct ifnet *, u_long, caddr_t);
+int	sonic_ioctl(struct ifnet *, u_long, void *);
 int	sonic_init(struct ifnet *);
 void	sonic_stop(struct ifnet *, int);
 
@@ -124,7 +124,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    cdatasize + ETHER_PAD_LEN, (caddr_t *) &sc->sc_cdata16,
+	    cdatasize + ETHER_PAD_LEN, (void **) &sc->sc_cdata16,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -249,7 +249,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t) sc->sc_cdata16, cdatasize);
+	bus_dmamem_unmap(sc->sc_dmat, (void *) sc->sc_cdata16, cdatasize);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
@@ -344,7 +344,7 @@ sonic_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -545,7 +545,7 @@ sonic_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 int
-sonic_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+sonic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s, error;
 
@@ -649,11 +649,13 @@ sonic_txintr(struct sonic_softc *sc)
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			tda32 = &sc->sc_tda32[i];
 			status = sonic32toh(sc, tda32->tda_status);
+			SONIC_CDTXSYNC32(sc, i, BUS_DMASYNC_PREREAD);
 		} else {
 			SONIC_CDTXSYNC16(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			tda16 = &sc->sc_tda16[i];
 			status = sonic16toh(sc, tda16->tda_status);
+			SONIC_CDTXSYNC16(sc, i, BUS_DMASYNC_PREREAD);
 		}
 
 		if ((status & ~(TCR_EXDIS|TCR_CRCI|TCR_POWC|TCR_PINT)) == 0)
@@ -713,6 +715,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			SONIC_CDRXSYNC32(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			rda32 = &sc->sc_rda32[i];
+			SONIC_CDRXSYNC32(sc, i, BUS_DMASYNC_PREREAD);
 			if (rda32->rda_inuse != 0)
 				break;
 			status = sonic32toh(sc, rda32->rda_status);
@@ -724,6 +727,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			SONIC_CDRXSYNC16(sc, i,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			rda16 = &sc->sc_rda16[i];
+			SONIC_CDRXSYNC16(sc, i, BUS_DMASYNC_PREREAD);
 			if (rda16->rda_inuse != 0)
 				break;
 			status = sonic16toh(sc, rda16->rda_status);
@@ -794,7 +798,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			 * Note that we use a cluster for incoming frames,
 			 * so the buffer is virtually contiguous.
 			 */
-			memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t),
+			memcpy(mtod(m, void *), mtod(ds->ds_mbuf, void *),
 			    len);
 			SONIC_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
@@ -816,7 +820,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			 * Note that we use a cluster for incoming frames,
 			 * so the buffer is virtually contiguous.
 			 */
-			memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t),
+			memcpy(mtod(m, void *), mtod(ds->ds_mbuf, void *),
 			    len);
 			SONIC_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
@@ -864,9 +868,17 @@ void
 sonic_reset(struct sonic_softc *sc)
 {
 
-	CSR_WRITE(sc, SONIC_CR, 0);	/* ensure RST is clear */
+	/* stop TX, RX and timer, and ensure RST is clear */
+	CSR_WRITE(sc, SONIC_CR, CR_STP | CR_RXDIS | CR_HTX);
+	delay(1000);
+
 	CSR_WRITE(sc, SONIC_CR, CR_RST);
 	delay(1000);
+
+	/* clear all interrupts */
+	CSR_WRITE(sc, SONIC_IMR, 0);
+	CSR_WRITE(sc, SONIC_ISR, IMR_ALL);
+
 	CSR_WRITE(sc, SONIC_CR, 0);
 	delay(1000);
 }
@@ -898,12 +910,9 @@ sonic_init(struct ifnet *ifp)
 	 * Bring the SONIC into reset state, and program the DCR.
 	 *
 	 * Note: We don't bother optimizing the transmit and receive
-	 * thresholds, here.  We just use the most conservative values:
-	 *
-	 *	- Rx: 4 bytes (RFT0,RFT0 == 0,0)
-	 *	- Tx: 28 bytes (TFT0,TFT1 == 1,1)
+	 * thresholds, here. TFT/RFT values should be set in MD attachments.
 	 */
-	reg = sc->sc_dcr | DCR_TFT0 | DCR_TFT1;
+	reg = sc->sc_dcr;
 	if (sc->sc_32bit)
 		reg |= DCR_DW;
 	CSR_WRITE(sc, SONIC_CR, CR_RST);
@@ -1185,7 +1194,7 @@ sonic_set_filter(struct sonic_softc *sc)
 	}
 
 	/* Put our station address in the first CAM slot. */
-	sonic_set_camentry(sc, entry, LLADDR(ifp->if_sadl));
+	sonic_set_camentry(sc, entry, CLLADDR(ifp->if_sadl));
 	camvalid |= (1U << entry);
 	entry++;
 

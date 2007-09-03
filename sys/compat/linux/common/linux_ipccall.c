@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.25.4.1 2007/02/26 09:09:21 yamt Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.25.4.2 2007/09/03 14:32:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.25.4.1 2007/02/26 09:09:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.25.4.2 2007/09/03 14:32:23 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -96,7 +96,7 @@ linux_sys_ipc(l, v, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap = v;
 
 	switch (SCARG(uap, what)) {
@@ -178,7 +178,7 @@ linux_semop(l, uap, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap;
 	register_t *retval;
 {
@@ -199,7 +199,7 @@ linux_semget(l, uap, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap;
 	register_t *retval;
 {
@@ -224,7 +224,7 @@ linux_msgsnd(l, uap, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap;
 	register_t *retval;
 {
@@ -246,7 +246,7 @@ linux_msgrcv(l, uap, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap;
 	register_t *retval;
 {
@@ -274,7 +274,7 @@ linux_msgget(l, uap, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap;
 	register_t *retval;
 {
@@ -301,7 +301,7 @@ linux_shmdt(l, uap, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap;
 	register_t *retval;
 {
@@ -323,7 +323,7 @@ linux_shmget(l, uap, retval)
 		syscallarg(int) a1;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
-		syscallarg(caddr_t) ptr;
+		syscallarg(void *) ptr;
 	} */ *uap;
 	register_t *retval;
 {

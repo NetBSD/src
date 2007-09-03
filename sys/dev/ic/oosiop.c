@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.7.4.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.7.4.2 2007/09/03 14:35:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.7.4.1 2006/06/21 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.7.4.2 2007/09/03 14:35:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ oosiop_attach(struct oosiop_softc *sc)
 		return;
 	}
 	err = bus_dmamem_map(sc->sc_dmat, &seg, nseg, scrsize,
-	    (caddr_t *)&sc->sc_scr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    (void **)&sc->sc_scr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err) {
 		printf(": failed to map script memory, err=%d\n", err);
 		return;
@@ -273,7 +273,7 @@ oosiop_alloc_cb(struct oosiop_softc *sc, int ncb)
 		return (err);
 	}
 	err = bus_dmamem_map(sc->sc_dmat, &seg, nseg, xfersize,
-	    (caddr_t *)(void *)&xfer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    (void **)(void *)&xfer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err) {
 		printf(": failed to map xfer block memory, err=%d\n", err);
 		return (err);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.18.1 2007/02/26 09:11:10 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.18.2 2007/09/03 14:40:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.18.1 2007/02/26 09:11:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.18.2 2007/09/03 14:40:54 yamt Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -140,16 +140,25 @@ RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
 #endif
 
 #ifndef __HAVE_RW_STUBS
-__strong_alias(rw_enter, rw_vector_enter);
-__strong_alias(rw_exit, rw_vector_exit);
+__strong_alias(rw_enter,rw_vector_enter);
+__strong_alias(rw_exit,rw_vector_exit);
 #endif
 
-void	rw_dump(volatile void *);
+static void	rw_dump(volatile void *);
+static lwp_t	*rw_owner(wchan_t);
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
 	1,
 	rw_dump
+};
+
+syncobj_t rw_syncobj = {
+	SOBJ_SLEEPQ_SORTED,
+	turnstile_unsleep,
+	turnstile_changepri,
+	sleepq_lendpri,
+	rw_owner,
 };
 
 /*
@@ -206,7 +215,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	uintptr_t owner, incr, need_wait, set_wait, curthread;
 	turnstile_t *ts;
 	int queue;
-	struct lwp *l;
+	lwp_t *l;
 	LOCKSTAT_TIMER(slptime);
 	LOCKSTAT_FLAG(lsflag);
 
@@ -219,11 +228,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 #ifdef LOCKDEBUG
 	if (panicstr == NULL) {
 		simple_lock_only_held(NULL, "rw_enter");
-#ifdef MULTIPROCESSOR
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
-#else
-		LOCKDEBUG_BARRIER(NULL, 1);
-#endif
 	}
 #endif
 
@@ -299,7 +304,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
-		turnstile_block(ts, queue, rw);
+		turnstile_block(ts, queue, rw, &rw_syncobj);
 
 		/* If we wake up and arrive here, we've been handed the lock. */
 		RW_RECEIVE(rw);
@@ -309,7 +314,6 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		    LB_RWLOCK | (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2),
 		    1, slptime);
 
-		turnstile_unblock();
 		break;
 	}
 
@@ -331,7 +335,7 @@ rw_vector_exit(krwlock_t *rw)
 	uintptr_t curthread, owner, decr, new;
 	turnstile_t *ts;
 	int rcnt, wcnt;
-	struct lwp *l;
+	lwp_t *l;
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
@@ -421,7 +425,7 @@ rw_vector_exit(krwlock_t *rw)
 			}
 
 			/* Wake the writer. */
-			turnstile_wakeup(ts, TS_WRITER_Q, wcnt, l);
+			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);
 		} else {
 			RW_DASSERT(rw, rcnt != 0);
 
@@ -488,6 +492,7 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
+
 	return 1;
 }
 
@@ -669,4 +674,22 @@ rw_lock_held(krwlock_t *rw)
 		return 1;
 
 	return (rw->rw_owner & RW_THREAD) != 0;
+}
+
+/*
+ * rw_owner:
+ *
+ *	Return the current owner of an RW lock, but only if it is write
+ *	held.  Used for priority inheritance.
+ */
+static lwp_t *
+rw_owner(wchan_t obj)
+{
+	krwlock_t *rw = (void *)(uintptr_t)obj; /* discard qualifiers */
+	uintptr_t owner = rw->rw_owner;
+
+	if ((owner & RW_WRITE_LOCKED) == 0)
+		return NULL;
+
+	return (void *)(owner & RW_THREAD);
 }

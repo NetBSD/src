@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.2.4.2 2006/12/30 20:48:44 yamt Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.2.4.3 2007/09/03 14:36:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.2.4.2 2006/12/30 20:48:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.2.4.3 2007/09/03 14:36:57 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -199,7 +199,7 @@ struct kse_softc {
 	struct ifmedia sc_media;	/* ifmedia information */
 	int sc_media_status;		/* PHY */
 	int sc_media_active;		/* PHY */
-	struct callout sc_callout;	/* tick callout */
+	callout_t sc_callout;		/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -283,7 +283,7 @@ static void kse_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(kse, sizeof(struct kse_softc),
     kse_match, kse_attach, NULL, NULL);
 
-static int kse_ioctl(struct ifnet *, u_long, caddr_t);
+static int kse_ioctl(struct ifnet *, u_long, void *);
 static void kse_start(struct ifnet *);
 static void kse_watchdog(struct ifnet *);
 static int kse_init(struct ifnet *);
@@ -416,7 +416,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_0;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
-	    sizeof(struct kse_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct kse_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
 		printf("%s: unable to map control data, error = %d\n",
@@ -457,7 +457,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
-	callout_init(&sc->sc_callout);
+	callout_init(&sc->sc_callout, 0);
 
 	ifmedia_init(&sc->sc_media, 0, ifmedia_upd, ifmedia_sts);
 	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10_T, 0, NULL);
@@ -511,7 +511,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct kse_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
@@ -520,7 +520,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-kse_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct kse_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

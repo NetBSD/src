@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.6.6.3 2007/02/26 09:10:23 yamt Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.6.6.4 2007/09/03 14:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.3 2007/02/26 09:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.4 2007/09/03 14:36:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ struct wsscreen_list chipsfb_screenlist = {
 	sizeof(_chipsfb_scrlist) / sizeof(struct wsscreen_descr *), _chipsfb_scrlist
 };
 
-static int	chipsfb_ioctl(void *, void *, u_long, caddr_t, int,
+static int	chipsfb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	chipsfb_mmap(void *, void *, off_t, int);
 static void	chipsfb_clearscreen(struct chipsfb_softc *);
@@ -278,7 +278,8 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	prop_dictionary_t dict;
 	pcireg_t screg;
 	ulong defattr;
-	int console = 0, width, height, i, j;
+	bool console = false;
+	int width, height, i, j;
 	uint32_t bg, fg, ul;
 
 	dict = device_properties(self);
@@ -309,7 +310,7 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* IO-mapped registers */
-	if (bus_space_map(sc->sc_iot, 0x0, PAGE_SIZE, 0, &sc->sc_ioregh) != 0) {
+	if (bus_space_map(sc->sc_iot, 0x0, 0x400, 0, &sc->sc_ioregh) != 0) {
 		aprint_error("%s: failed to map IO registers.\n",
 		    sc->sc_dev.dv_xname);
 	}
@@ -685,6 +686,10 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct chipsfb_softc *sc = scr->scr_cookie;
 
+	if (__predict_false((unsigned int)row > ri->ri_rows ||
+	    (unsigned int)col > ri->ri_cols))
+		return;
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		uint8_t *data;
 		int fg, bg, uc;
@@ -808,7 +813,7 @@ chipsfb_restore_palette(struct chipsfb_softc *sc)
  */
 
 static int
-chipsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+chipsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;

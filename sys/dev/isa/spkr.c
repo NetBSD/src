@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.18.2.2 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: spkr.c,v 1.18.2.3 2007/09/03 14:35:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.18.2.2 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.18.2.3 2007/09/03 14:35:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,7 +483,7 @@ int spkrclose(dev_t dev, int flags, int mode,
     return(0);
 }
 
-int spkrioctl(dev_t dev, u_long cmd, caddr_t data, int	flag,
+int spkrioctl(dev_t dev, u_long cmd, void *data, int	flag,
     struct lwp *l)
 {
 #ifdef SPKRDEBUG
@@ -503,7 +503,7 @@ int spkrioctl(dev_t dev, u_long cmd, caddr_t data, int	flag,
     }
     else if (cmd == SPKRTUNE)
     {
-	tone_t  *tp = (tone_t *)(*(caddr_t *)data);
+	tone_t  *tp = (tone_t *)(*(void **)data);
 	tone_t ttp;
 	int error;
 

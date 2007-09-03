@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.88.2.2 2006/12/30 20:49:30 yamt Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.88.2.3 2007/09/03 14:38:22 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,13 +33,12 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.88.2.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.88.2.3 2007/09/03 14:38:22 yamt Exp $");
 
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
-
-#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
@@ -413,7 +412,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return (EINVAL);
 	}
 #endif
-	lwp = LIST_FIRST(&raidPtr->engine_thread->p_lwps);
+	lwp = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the
 	   first time. Close it before trying to open it again.. */
@@ -438,7 +437,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	       raidPtr->Disks[col].devname);
 #endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	retcode = dk_lookup(raidPtr->Disks[col].devname, lwp, &vp);
+	retcode = dk_lookup(raidPtr->Disks[col].devname, lwp, &vp, UIO_SYSSPACE);
 
 	if (retcode) {
 		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,

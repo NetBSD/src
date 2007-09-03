@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.11.34.2 2006/12/30 20:49:51 yamt Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.11.34.3 2007/09/03 14:39:42 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
 struct wskbd_accessops {
 	int	(*enable)(void *, int);
 	void    (*set_leds)(void *, int);
-	int     (*ioctl)(void *, u_long, caddr_t, int, struct lwp *);
+	int     (*ioctl)(void *, u_long, void *, int, struct lwp *);
 };
 
 /*

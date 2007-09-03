@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.30.2.2 2006/12/30 20:48:48 yamt Exp $ */
+/*      $NetBSD: sv.c,v 1.30.2.3 2007/09/03 14:37:22 yamt Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.30.2.2 2006/12/30 20:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.30.2.3 2007/09/03 14:37:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ static int	sv_intr(void *);
 
 struct sv_dma {
 	bus_dmamap_t map;
-	caddr_t addr;
+	void *addr;
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;

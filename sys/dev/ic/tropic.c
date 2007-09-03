@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.25.2.1 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: tropic.c,v 1.25.2.2 2007/09/03 14:35:17 yamt Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25.2.1 2006/12/30 20:48:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25.2.2 2007/09/03 14:35:17 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -435,8 +435,8 @@ tr_attach(sc)
 	printf("%s: address %s ring speed %d Mbps\n", sc->sc_dev.dv_xname,
 	    token_sprintf(myaddr), (sc->sc_init_status & RSP_16) ? 16 : 4);
 
-	callout_init(&sc->sc_init_callout);
-	callout_init(&sc->sc_reinit_callout);
+	callout_init(&sc->sc_init_callout, 0);
+	callout_init(&sc->sc_reinit_callout, 0);
 
 	sc->sc_sdhook = shutdownhook_establish(tr_shutdown, sc);
 	return 0;
@@ -1508,7 +1508,7 @@ struct ifnet *ifp;
 		 * Make sure data after the MAC header is aligned.
 		 */
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			   ALIGN(m->m_data + sizeof(struct token_header)) -
 			   sizeof(struct token_header);
 			len -= newdata - m->m_data;
@@ -1541,7 +1541,7 @@ int
 tr_ioctl(ifp, cmd, data)
 struct ifnet *ifp;
 u_long cmd;
-caddr_t data;
+void *data;
 {
 	struct tr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;

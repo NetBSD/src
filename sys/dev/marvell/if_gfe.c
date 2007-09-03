@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.16.4.1 2006/06/21 15:04:36 yamt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.16.4.2 2007/09/03 14:35:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16.4.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16.4.2 2007/09/03 14:35:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -151,7 +151,7 @@ STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int,
 	size_t, int);
 STATIC void gfe_dmamem_free(struct gfe_softc *, struct gfe_dmamem *);
 
-STATIC int gfe_ifioctl (struct ifnet *, u_long, caddr_t);
+STATIC int gfe_ifioctl (struct ifnet *, u_long, void *);
 STATIC void gfe_ifstart (struct ifnet *);
 STATIC void gfe_ifwatchdog (struct ifnet *);
 
@@ -245,7 +245,7 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error(": failed to map registers\n");
 	}
 
-	callout_init(&sc->sc_co);
+	callout_init(&sc->sc_co, 0);
 
 	data = bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, ETH_EPAR);
 	phyaddr = ETH_EPAR_PhyAD_GET(data, sc->sc_macno);
@@ -426,7 +426,7 @@ gfe_dmamem_free(struct gfe_softc *sc, struct gfe_dmamem *gdm)
 }
 
 int
-gfe_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct gfe_softc * const sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -471,10 +471,7 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI)
-		    ? ether_addmulti(ifr, &sc->sc_ec)
-		    : ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				error = gfe_whack(sc, GE_WHACK_CHANGE);
 			else
@@ -777,7 +774,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (rxq->rxq_cmdsts & RX_STS_M) == 0 ||
 		    (rxq->rxq_cmdsts & RX_STS_HE) ||
 		    (eh->ether_dhost[0] & 1) != 0 ||
-		    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+		    memcmp(eh->ether_dhost, CLLADDR(ifp->if_sadl),
 			ETHER_ADDR_LEN) == 0) {
 			(*ifp->if_input)(ifp, m);
 			m = NULL;
@@ -1120,7 +1117,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	intrmask = sc->sc_intrmask;
 
 	m_copydata(m, 0, m->m_pkthdr.len,
-	    txq->txq_buf_mem.gdm_kva + txq->txq_outptr);
+	    (char *)txq->txq_buf_mem.gdm_kva + (int)txq->txq_outptr);
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
 	    txq->txq_outptr, buflen, BUS_DMASYNC_PREWRITE);
 	txd->ed_bufptr = htogt32(txq->txq_buf_busaddr + txq->txq_outptr);
@@ -1881,7 +1878,7 @@ gfe_hash_fill(struct gfe_softc *sc)
 	GE_FUNC_ENTER(sc, "gfe_hash_fill");
 
 	error = gfe_hash_entry_op(sc, GE_HASH_ADD, GE_RXPRIO_HI,
-	    LLADDR(sc->sc_ec.ec_if.if_sadl));
+	    CLLADDR(sc->sc_ec.ec_if.if_sadl));
 	if (error)
 		GE_FUNC_EXIT(sc, "!");
 		return error;

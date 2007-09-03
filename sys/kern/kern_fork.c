@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.122.2.3 2007/02/26 09:11:06 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.122.2.4 2007/09/03 14:40:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.3 2007/02/26 09:11:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.4 2007/09/03 14:40:47 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -287,9 +287,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * then copy the section that is copied directly from the parent.
 	 */
 	memset(&p2->p_startzero, 0,
-	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
+	    (unsigned) ((char *)&p2->p_endzero - (char *)&p2->p_startzero));
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
-	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+	    (unsigned) ((char *)&p2->p_endcopy - (char *)&p2->p_startcopy));
 
 	CIRCLEQ_INIT(&p2->p_sigpend.sp_info);
 
@@ -319,8 +319,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
 	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
-	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
-	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_NONE);
+	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_HIGH);
+	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&p2->p_refcv, "drainref");
 	cv_init(&p2->p_waitcv, "wait");
@@ -362,9 +362,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_limit = limcopy(p1);
 		mutex_exit(&p1->p_mutex);
 	} else {
-		simple_lock(&p1->p_limit->p_slock);
+		mutex_enter(&p1->p_limit->p_lock);
 		p1->p_limit->p_refcnt++;
-		simple_unlock(&p1->p_limit->p_slock);
+		mutex_exit(&p1->p_limit->p_lock);
 		p2->p_limit = p1->p_limit;
 	}
 
@@ -375,6 +375,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_pptr = parent;
 	LIST_INIT(&p2->p_children);
 
+	p2->p_aio = NULL;
 
 #ifdef KTRACE
 	/*
@@ -382,11 +383,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * If not inherited, these were zeroed above.
 	 */
 	if (p1->p_traceflag & KTRFAC_INHERIT) {
-		mutex_enter(&ktrace_mutex);
+		mutex_enter(&ktrace_lock);
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			ktradref(p2);
-		mutex_exit(&ktrace_mutex);
+		mutex_exit(&ktrace_lock);
 	}
 #endif
 
@@ -397,7 +398,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
 	p2->p_sflag |=
 	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
-	scheduler_fork_hook(p1, p2);
+	sched_proc_fork(p1, p2);
 	mutex_exit(&p1->p_smutex);
 
 	p2->p_stflag = p1->p_stflag;
@@ -424,8 +425,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * This begins the section where we must prevent the parent
 	 * from being swapped.
 	 */
-	PHOLD(l1);
-
+	uvm_lwp_hold(l1);
 	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
 
 	/*
@@ -440,7 +440,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * It's now safe for the scheduler and other processes to see the
 	 * child process.
 	 */
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_lflag & PL_CONTROLT)
 		p2->p_lflag |= PL_CONTROLT;
@@ -453,7 +453,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	mutex_exit(&proclist_mutex);
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 #ifdef SYSTRACE
 	/* Tell systrace what's happening. */
@@ -468,7 +468,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Now can be swapped.
 	 */
-	PRELE(l1);
+	uvm_lwp_rele(l1);
 
 	/*
 	 * Notify any interested parties about the new process.
@@ -490,10 +490,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (rnewprocp != NULL)
 		*rnewprocp = p2;
 
-#ifdef KTRACE
-	if (KTRPOINT(p2, KTR_EMUL))
+	if (ktrpoint(KTR_EMUL))
 		p2->p_traceflag |= KTRFAC_TRC_EMUL;
-#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue except
@@ -520,7 +518,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		lwp_lock(l2);
 		l2->l_stat = LSRUN;
 		l2->l_flag |= tmp;
-		setrunqueue(l2);
+		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}
 
@@ -557,19 +555,3 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	return (0);
 }
-
-#if defined(MULTIPROCESSOR)
-/*
- * XXX This is a slight hack to get newly-formed processes to
- * XXX acquire the kernel lock as soon as they run.
- */
-void
-proc_trampoline_mp(void)
-{
-	struct lwp *l;
-
-	l = curlwp;
-
-	KERNEL_LOCK(1, l);
-}
-#endif

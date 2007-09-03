@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.17.2.1 2006/06/21 15:06:27 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.17.2.2 2007/09/03 14:38:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.17.2.1 2006/06/21 15:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.17.2.2 2007/09/03 14:38:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -178,7 +178,7 @@ static	int dematch(struct device *, struct cfdata *, void *);
 static	void deattach(struct device *, struct device *, void *);
 static	void dewait(struct de_softc *, const char *);
 static	int deinit(struct ifnet *);
-static	int deioctl(struct ifnet *, u_long, caddr_t);
+static	int deioctl(struct ifnet *, u_long, void *);
 static	void dereset(struct device *);
 static	void destop(struct ifnet *, int);
 static	void destart(struct ifnet *);
@@ -258,7 +258,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	DE_WLOW(CMD_GETCMD);
 	dewait(sc, "read addr ");
 
-	bcopy((caddr_t)&sc->sc_dedata->dc_pcbb.pcbb2, myaddr, sizeof (myaddr));
+	bcopy((void *)&sc->sc_dedata->dc_pcbb.pcbb2, myaddr, sizeof (myaddr));
 	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname, c,
 		ether_sprintf(myaddr));
 
@@ -583,7 +583,7 @@ next:		rp->r_lenerr = 0;
  * Process an ioctl request.
  */
 int
-deioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+deioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s, error = 0;
 

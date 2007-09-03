@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.52.4.2 2006/12/30 20:49:18 yamt Exp $ */
+/*	$NetBSD: if_xi.c,v 1.52.4.3 2007/09/03 14:38:04 yamt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.52.4.2 2006/12/30 20:49:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.52.4.3 2007/09/03 14:38:04 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -145,10 +145,10 @@ int xidebug = 0;
 STATIC int xi_enable(struct xi_softc *);
 STATIC void xi_disable(struct xi_softc *);
 STATIC void xi_cycle_power(struct xi_softc *);
-STATIC int xi_ether_ioctl(struct ifnet *, u_long cmd, caddr_t);
+STATIC int xi_ether_ioctl(struct ifnet *, u_long cmd, void *);
 STATIC void xi_full_reset(struct xi_softc *);
 STATIC void xi_init(struct xi_softc *);
-STATIC int xi_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int xi_ioctl(struct ifnet *, u_long, void *);
 STATIC int xi_mdi_read(struct device *, int, int);
 STATIC void xi_mdi_write(struct device *, int, int, int);
 STATIC int xi_mediachange(struct ifnet *);
@@ -485,7 +485,7 @@ xi_get(sc)
 			len = MCLBYTES;
 		}
 		if (top == NULL) {
-			caddr_t newdata = (caddr_t)ALIGN(m->m_data +
+			char *newdata = (char *)ALIGN(m->m_data +
 			    sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -924,7 +924,7 @@ STATIC int
 xi_ether_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct xi_softc *sc = ifp->if_softc;
@@ -965,7 +965,7 @@ STATIC int
 xi_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct xi_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1015,10 +1015,7 @@ xi_ioctl(ifp, cmd, data)
 			break;
 		}
 
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
@@ -1056,12 +1053,12 @@ xi_set_address(sc)
 	int page, num;
 	int i;
 	u_int8_t x;
-	u_int8_t *enaddr;
+	const u_int8_t *enaddr;
 	u_int8_t indaddr[64];
 
 	DPRINTF(XID_CONFIG, ("xi_set_address()\n"));
 
-	enaddr = (u_int8_t *)LLADDR(ifp->if_sadl);
+	enaddr = (const u_int8_t *)CLLADDR(ifp->if_sadl);
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)
 		for (i = 0; i < 6; i++)
 			indaddr[i] = enaddr[5 - i];

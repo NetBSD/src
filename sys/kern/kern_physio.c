@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.61.2.3 2007/02/26 09:11:08 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.61.2.4 2007/09/03 14:40:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.61.2.3 2007/02/26 09:11:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.61.2.4 2007/09/03 14:40:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,30 +175,18 @@ physio_done(struct work *wk, void *dummy)
 		    bp->b_blkno, bp->b_bcount, bp->b_flags));
 
 		if (mbp->b_endoffset == -1 || endoffset < mbp->b_endoffset) {
-			int error;
-
-			if ((bp->b_flags & B_ERROR) != 0) {
-				if (bp->b_error == 0) {
-					error = EIO; /* XXX */
-				} else {
-					error = bp->b_error;
-				}
-			} else {
-				error = 0; /* EOM */
-			}
-
 			DPRINTF(("%s: mbp=%p, error %d -> %d, endoff %" PRIu64
 			    " -> %" PRIu64 "\n",
 			    __func__, mbp,
-			    mbp->b_error, error,
+			    mbp->b_error, bp->b_error,
 			    mbp->b_endoffset, endoffset));
 
 			mbp->b_endoffset = endoffset;
-			mbp->b_error = error;
+			mbp->b_error = bp->b_error;
 		}
-		mbp->b_flags |= B_ERROR;
+		mbp->b_error = EIO;
 	} else {
-		KASSERT((bp->b_flags & B_ERROR) == 0);
+		KASSERT(bp->b_error == 0);
 	}
 
 	mbp->b_running--;
@@ -223,7 +211,7 @@ physio_biodone(struct buf *bp)
 	KASSERT(bp->b_resid <= bp->b_bcount);
 #endif /* defined(DIAGNOSTIC) */
 
-	workqueue_enqueue(physio_workqueue, &bp->b_work);
+	workqueue_enqueue(physio_workqueue, &bp->b_work, NULL);
 }
 
 static int
@@ -317,7 +305,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	mbp->b_running = 0;
 	mbp->b_endoffset = -1;
 
-	PHOLD(l);
+	uvm_lwp_hold(l);
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
 		bool sync = true;
@@ -328,7 +316,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			vaddr_t endp;
 
 			simple_lock(&mbp->b_interlock);
-			if ((mbp->b_flags & B_ERROR) != 0) {
+			if (mbp->b_error != 0) {
 				goto done_locked;
 			}
 			error = physio_wait(mbp, sync ? 0 : concurrency,
@@ -419,7 +407,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			bp = NULL;
 
 			iovp->iov_len -= todo;
-			iovp->iov_base = (caddr_t)iovp->iov_base + todo;
+			iovp->iov_base = (char *)iovp->iov_base + todo;
 			uio->uio_offset += todo;
 			uio->uio_resid -= todo;
 		}
@@ -434,7 +422,7 @@ done_locked:
 	}
 	simple_unlock(&mbp->b_interlock);
 
-	if ((mbp->b_flags & B_ERROR) != 0) {
+	if (mbp->b_error != 0) {
 		off_t delta;
 
 		delta = uio->uio_offset - mbp->b_endoffset;
@@ -476,7 +464,7 @@ done_locked:
 		simple_unlock(&obp->b_interlock);
 		splx(s);
 	}
-	PRELE(l);
+	uvm_lwp_rele(l);
 
 	DPRINTF(("%s: done: off=%" PRIu64 ", resid=%zu\n",
 	    __func__, uio->uio_offset, uio->uio_resid));

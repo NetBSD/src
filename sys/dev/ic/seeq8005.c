@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.37 2005/02/27 00:27:02 perry Exp $ */
+/* $NetBSD: seeq8005.c,v 1.37.4.1 2007/09/03 14:35:10 yamt Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.37 2005/02/27 00:27:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.37.4.1 2007/09/03 14:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ int seeq8005_debug = 0;
  */
 
 static int ea_init(struct ifnet *);
-static int ea_ioctl(struct ifnet *, u_long, caddr_t);
+static int ea_ioctl(struct ifnet *, u_long, void *);
 static void ea_start(struct ifnet *);
 static void ea_watchdog(struct ifnet *);
 static void ea_chipreset(struct seeq8005_softc *);
@@ -724,7 +724,7 @@ ea_select_buffer(struct seeq8005_softc *sc, int bufcode)
 
 /* Must be called at splnet */
 static void
-ea_set_address(struct seeq8005_softc *sc, int which, u_int8_t const *ea)
+ea_set_address(struct seeq8005_softc *sc, int which, const u_int8_t *ea)
 {
 	int i;
 
@@ -777,7 +777,7 @@ ea_init(struct ifnet *ifp)
 	}
 
 	/* Write the station address - the receiver must be off */
-	ea_set_address(sc, 0, (u_int8_t *)LLADDR(ifp->if_sadl));
+	ea_set_address(sc, 0, (const u_int8_t *)CLLADDR(ifp->if_sadl));
 
 	/* Split board memory into Rx and Tx. */
 	ea_select_buffer(sc, SEEQ_BUFCODE_TX_EAP);
@@ -1321,8 +1321,9 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
                 }
 		if (top == 0) {
 			/* Make sure the payload is aligned */
-			caddr_t newdata = (caddr_t)
-			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			char *newdata = (char *)
+			    ALIGN((char*)m->m_data + 
+				sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
 			m->m_len = len;
@@ -1346,7 +1347,7 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
  * Process an ioctl request.  Mostly boilerplate.
  */
 static int
-ea_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ea_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct seeq8005_softc *sc = ifp->if_softc;
 	int s, error = 0;

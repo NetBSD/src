@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.7.2.2 2006/12/30 20:48:46 yamt Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.7.2.3 2007/09/03 14:37:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.7.2.2 2006/12/30 20:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.7.2.3 2007/09/03 14:37:11 yamt Exp $");
 
 #include "rnd.h"
 
@@ -203,7 +203,6 @@ ld_amr_handler(struct amr_ccb *ac)
 		printf("%s: cmd status 0x%02x\n", sc->sc_ld.sc_dv.dv_xname,
 		    ac->ac_status);
 
-		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 	} else

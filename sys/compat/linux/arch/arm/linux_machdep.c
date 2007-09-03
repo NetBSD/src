@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15.2.3 2007/02/26 09:09:13 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.4 2007/09/03 14:32:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.3 2007/02/26 09:09:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.4 2007/09/03 14:32:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+		fp = (struct linux_sigframe *)((char *)l->l_sigstk.ss_sp +
 					  l->l_sigstk.ss_size);
 	else
 		fp = (struct linux_sigframe *)tf->tf_usr_sp;
@@ -224,7 +224,7 @@ linux_sys_sigreturn(l, v, retval)
 	 * program jumps out of a signal handler.
 	 */
 	sfp = (struct linux_sigframe *)tf->tf_usr_sp;
-	if (copyin((caddr_t)sfp, &frame, sizeof(*sfp)) != 0)
+	if (copyin((void *)sfp, &frame, sizeof(*sfp)) != 0)
 		return (EFAULT);
 
 	/*
@@ -293,7 +293,7 @@ linux_machdepioctl(l, v, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;

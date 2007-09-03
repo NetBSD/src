@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.25.2.3 2007/02/26 09:10:16 yamt Exp $	*/
+/*	$NetBSD: ym.c,v 1.25.2.4 2007/09/03 14:35:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.3 2007/02/26 09:10:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.4 2007/09/03 14:35:47 yamt Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -217,7 +217,7 @@ ym_attach(struct ym_softc *sc)
 	struct audio_attach_args arg;
 
 	ac = &sc->sc_ad1848.sc_ad1848;
-	callout_init(&sc->sc_powerdown_ch);
+	callout_init(&sc->sc_powerdown_ch, 0);
 
 	/* Mute the output to reduce noise during initialization. */
 	ym_mute(sc, SA3_VOL_L, 1);

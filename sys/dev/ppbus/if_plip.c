@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.6.4.1 2006/06/21 15:06:27 yamt Exp $ */
+/* $NetBSD: if_plip.c,v 1.6.4.2 2007/09/03 14:38:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.6.4.1 2006/06/21 15:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.6.4.2 2007/09/03 14:38:07 yamt Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -195,15 +195,15 @@ CFATTACH_DECL(plip, sizeof(struct lp_softc), lp_probe, lp_attach, lp_detach,
 /* Functions for the lp interface */
 static void lpinittables(void);
 static void lpfreetables(void);
-static int lpioctl(struct ifnet *, u_long, caddr_t);
-static int lpoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+static int lpioctl(struct ifnet *, u_long, void *);
+static int lpoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	struct rtentry *);
 static void lpstart(struct ifnet *);
 static void lp_intr(void *);
 
 
 static int
-lp_probe(struct device * parent, struct cfdata * match, void * aux)
+lp_probe(struct device * parent, struct cfdata * match, void *aux)
 {
 	struct ppbus_attach_args * args = aux;
 
@@ -217,7 +217,7 @@ lp_probe(struct device * parent, struct cfdata * match, void * aux)
 }
 
 static void
-lp_attach(struct device * parent, struct device * self, void * aux)
+lp_attach(struct device * parent, struct device * self, void *aux)
 {
 	struct lp_softc * lp = device_private(self);
 	struct ifnet * ifp = &lp->sc_if;
@@ -345,7 +345,7 @@ lpfreetables (void)
 
 /* Process an ioctl request. */
 static int
-lpioctl (struct ifnet *ifp, u_long cmd, caddr_t data)
+lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct device * dev = ifp->if_softc;
 	struct device * ppbus = device_parent(dev);
@@ -445,7 +445,7 @@ lpioctl (struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EAFNOSUPPORT;		/* XXX */
 			break;
 		}
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 		case AF_INET:
 			break;
 		default:
@@ -706,7 +706,7 @@ lpoutbyte(u_char byte, int spin, struct device * ppbus)
 
 /* Queue a packet for delivery */
 static int
-lpoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct rtentry *rt)
 {
 	struct device * dev = ifp->if_softc;

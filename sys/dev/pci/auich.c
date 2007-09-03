@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.97.2.3 2007/02/26 09:10:20 yamt Exp $	*/
+/*	$NetBSD: auich.c,v 1.97.2.4 2007/09/03 14:36:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97.2.3 2007/02/26 09:10:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97.2.4 2007/09/03 14:36:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.97.2.3 2007/02/26 09:10:20 yamt Exp $");
 
 struct auich_dma {
 	bus_dmamap_t map;
-	caddr_t addr;
+	void *addr;
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;
@@ -383,6 +383,7 @@ static const struct audio_format auich_modem_formats[AUICH_MODEM_NFORMATS] = {
 
 #define	PCIID_ICH3MODEM		PCI_ID_CODE0(INTEL, 82801CA_MOD)
 #define PCIID_ICH4MODEM		PCI_ID_CODE0(INTEL, 82801DB_MOD)
+#define PCIID_ICH6MODEM 	PCI_ID_CODE0(INTEL, 82801FB_ACM)
 
 struct auich_devtype {
 	pcireg_t	id;
@@ -418,6 +419,7 @@ static const struct auich_devtype auich_modem_devices[] = {
 #ifdef AUICH_ATTACH_MODEM
 	{ PCIID_ICH3MODEM, "i82801CA (ICH3) AC-97 Modem", "ICH3MODEM" },
 	{ PCIID_ICH4MODEM, "i82801DB (ICH4) AC-97 Modem", "ICH4MODEM" },
+	{ PCIID_ICH6MODEM, "i82801FB (ICH6) AC-97 Modem", "ICH6MODEM" },
 #endif
 	{ 0,		NULL,				NULL },
 };
@@ -1422,7 +1424,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 		return EINVAL;
 	}
 
-	size = (size_t)((caddr_t)end - (caddr_t)start);
+	size = (size_t)((char *)end - (char *)start);
 
 	sc->pcmo.intr = intr;
 	sc->pcmo.arg = arg;
@@ -1458,7 +1460,7 @@ auich_trigger_input(void *v, void *start, void *end, int blksize,
 		return EINVAL;
 	}
 
-	size = (size_t)((caddr_t)end - (caddr_t)start);
+	size = (size_t)((char *)end - (char *)start);
 
 	sc->pcmi.intr = intr;
 	sc->pcmi.arg = arg;
@@ -1573,7 +1575,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 
 	if ((error = bus_dmamem_map(sc->dmat, &seg, rseg,
 				    sizeof(struct auich_cdata),
-				    (caddr_t *) &sc->sc_cdata,
+				    (void **) &sc->sc_cdata,
 				    sc->sc_dmamap_flags)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -1605,7 +1607,7 @@ auich_alloc_cdata(struct auich_softc *sc)
  fail_3:
 	bus_dmamap_destroy(sc->dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->dmat, (caddr_t) sc->sc_cdata,
+	bus_dmamem_unmap(sc->dmat, (void *) sc->sc_cdata,
 	    sizeof(struct auich_cdata));
  fail_1:
 	bus_dmamem_free(sc->dmat, &seg, rseg);

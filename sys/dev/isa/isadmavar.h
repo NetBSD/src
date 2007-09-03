@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.20 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.20.6.1 2007/09/03 14:35:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct isa_mem {
 	int chan;
 	bus_size_t size;
 	bus_addr_t addr;
-	caddr_t kva;
+	void *kva;
 	struct isa_mem *next;
 };
 
@@ -126,8 +126,8 @@ int	   _isa_dmamem_alloc(struct isa_dma_state *, int, bus_size_t,
 void	   _isa_dmamem_free(struct isa_dma_state *, int, bus_addr_t,
 	       bus_size_t);
 int	   _isa_dmamem_map(struct isa_dma_state *, int, bus_addr_t,
-	       bus_size_t, caddr_t *, int);
-void	   _isa_dmamem_unmap(struct isa_dma_state *, int, caddr_t,
+	       bus_size_t, void **, int);
+void	   _isa_dmamem_unmap(struct isa_dma_state *, int, void *,
 	       size_t);
 paddr_t	   _isa_dmamem_mmap(struct isa_dma_state *, int, bus_addr_t,
 	       bus_size_t, off_t, int, int);

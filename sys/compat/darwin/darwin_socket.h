@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.h,v 1.4 2004/10/27 19:29:57 david Exp $ */
+/*	$NetBSD: darwin_socket.h,v 1.4.12.1 2007/09/03 14:31:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -80,7 +80,5 @@
 
 extern unsigned char native_to_darwin_af[];
 extern unsigned char darwin_to_native_af[];
-int native_to_darwin_sockaddr(struct sockaddr *, struct sockaddr_storage *);
-int darwin_to_native_sockaddr(struct sockaddr *, struct sockaddr_storage *);
 
 #endif /* _DARWIN_SOCKET_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.32.4.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: lance.c,v 1.32.4.3 2007/09/03 14:34:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.32.4.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.32.4.3 2007/09/03 14:34:51 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -126,7 +126,7 @@ void lance_mediastatus(struct ifnet *, struct ifmediareq *);
 static inline u_int16_t ether_cmp(void *, void *);
 
 void lance_stop(struct ifnet *, int);
-int lance_ioctl(struct ifnet *, u_long, caddr_t);
+int lance_ioctl(struct ifnet *, u_long, void *);
 void lance_watchdog(struct ifnet *);
 
 /*
@@ -365,7 +365,7 @@ lance_put(sc, boff, m)
 			MFREE(m, n);
 			continue;
 		}
-		(*sc->sc_copytobuf)(sc, mtod(m, caddr_t), boff, len);
+		(*sc->sc_copytobuf)(sc, mtod(m, void *), boff, len);
 		boff += len;
 		tlen += len;
 		MFREE(m, n);
@@ -408,7 +408,7 @@ lance_get(sc, boff, totlen)
 		}
 
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -416,7 +416,7 @@ lance_get(sc, boff, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		(*sc->sc_copyfrombuf)(sc, mtod(m, caddr_t), boff, len);
+		(*sc->sc_copyfrombuf)(sc, mtod(m, void *), boff, len);
 		boff += len;
 
 		totlen -= len;
@@ -558,7 +558,7 @@ int
 lance_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct lance_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -567,20 +567,13 @@ lance_ioctl(ifp, cmd, data)
 	s = splnet();
 
 	switch (cmd) {
-
 	case SIOCSIFADDR:
 	case SIOCSIFFLAGS:
 		error = ether_ioctl(ifp, cmd, data);
 		break;
-
-
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -692,7 +685,7 @@ lance_copytobuf_contig(sc, from, boff, len)
 	void *from;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
+	char *buf = sc->sc_mem;
 
 	/*
 	 * Just call memcpy() to do the work.
@@ -706,7 +699,7 @@ lance_copyfrombuf_contig(sc, to, boff, len)
 	void *to;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
+	char *buf = sc->sc_mem;
 
 	/*
 	 * Just call memcpy() to do the work.
@@ -719,7 +712,7 @@ lance_zerobuf_contig(sc, boff, len)
 	struct lance_softc *sc;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
+	char *buf = sc->sc_mem;
 
 	/*
 	 * Just let memset() do the work
@@ -747,8 +740,8 @@ lance_copytobuf_gap2(sc, fromv, boff, len)
 	int boff;
 	int len;
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t from = fromv;
+	volatile void *buf = sc->sc_mem;
+	void *from = fromv;
 	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
@@ -775,8 +768,8 @@ lance_copyfrombuf_gap2(sc, tov, boff, len)
 	void *tov;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t to = tov;
+	volatile void *buf = sc->sc_mem;
+	void *to = tov;
 	volatile u_int16_t *bptr;
 	u_int16_t tmp;
 
@@ -804,7 +797,7 @@ lance_zerobuf_gap2(sc, boff, len)
 	struct lance_softc *sc;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
+	volatile void *buf = sc->sc_mem;
 	volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
@@ -834,9 +827,9 @@ lance_copytobuf_gap16(sc, fromv, boff, len)
 	int boff;
 	int len;
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t from = fromv;
-	caddr_t bptr;
+	volatile void *buf = sc->sc_mem;
+	void *from = fromv;
+	void *bptr;
 	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
@@ -858,9 +851,9 @@ lance_copyfrombuf_gap16(sc, tov, boff, len)
 	void *tov;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t to = tov;
-	caddr_t bptr;
+	volatile void *buf = sc->sc_mem;
+	void *to = tov;
+	void *bptr;
 	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
@@ -881,8 +874,8 @@ lance_zerobuf_gap16(sc, boff, len)
 	struct lance_softc *sc;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t bptr;
+	volatile void *buf = sc->sc_mem;
+	void *bptr;
 	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);

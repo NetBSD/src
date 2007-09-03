@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.13.16.1 2006/06/21 15:04:08 yamt Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.13.16.2 2007/09/03 14:35:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -339,7 +339,7 @@ struct fwohcidb_tr{
 	struct fw_xfer *xfer;
 	struct fwohcidb *db;
 	bus_dmamap_t dma_map;
-	caddr_t buf;
+	void *buf;
 	bus_addr_t bus_addr;
 	int dbcnt;
 };

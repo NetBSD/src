@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.67.2.3 2007/02/26 09:11:29 yamt Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.67.2.4 2007/09/03 14:41:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.67.2.3 2007/02/26 09:11:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.67.2.4 2007/09/03 14:41:53 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -61,30 +61,19 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.67.2.3 2007/02/26 09:11:29 yamt 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
 
-MALLOC_DEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
+MALLOC_JUSTDEFINE(M_KERNFSMNT, "kernfs mount", "kernfs mount structures");
 
 dev_t rrootdev = NODEV;
 
-void	kernfs_init(void);
-void	kernfs_reinit(void);
-void	kernfs_done(void);
+VFS_PROTOS(kernfs);
+
 void	kernfs_get_rrootdev(void);
-int	kernfs_mount(struct mount *, const char *, void *,
-	    struct nameidata *, struct lwp *);
-int	kernfs_start(struct mount *, int, struct lwp *);
-int	kernfs_unmount(struct mount *, int, struct lwp *);
-int	kernfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	kernfs_quotactl(struct mount *, int, uid_t, void *,
-			     struct lwp *);
-int	kernfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int	kernfs_vget(struct mount *, ino_t, struct vnode **);
 
 void
 kernfs_init()
 {
-#ifdef _LKM
+
 	malloc_type_attach(M_KERNFSMNT);
-#endif
 	kernfs_hashinit();
 }
 
@@ -97,10 +86,9 @@ kernfs_reinit()
 void
 kernfs_done()
 {
-#ifdef _LKM
-	malloc_type_detach(M_KERNFSMNT);
-#endif
+
 	kernfs_hashdone();
+	malloc_type_detach(M_KERNFSMNT);
 }
 
 void
@@ -127,8 +115,8 @@ kernfs_get_rrootdev()
  * Mount the Kernel params filesystem
  */
 int
-kernfs_mount(struct mount *mp, const char *path, void *data,
-    struct nameidata *ndp, struct lwp *l)
+kernfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
+    struct lwp *l)
 {
 	int error = 0;
 	struct kernfs_mount *fmp;
@@ -138,8 +126,10 @@ kernfs_mount(struct mount *mp, const char *path, void *data,
 		return (EINVAL);
 	}
 
-	if (mp->mnt_flag & MNT_GETARGS)
+	if (mp->mnt_flag & MNT_GETARGS) {
+		*data_len = 0;
 		return 0;
+	}
 	/*
 	 * Update is a no-op
 	 */
@@ -157,7 +147,7 @@ kernfs_mount(struct mount *mp, const char *path, void *data,
 	vfs_getnewfsid(mp);
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "kernfs",
-	    UIO_SYSSPACE, mp, l)) != 0) {
+	    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l)) != 0) {
 		free(fmp, M_KERNFSMNT);
 		return error;
 	}
@@ -282,6 +272,7 @@ const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 
 struct vfsops kernfs_vfsops = {
 	MOUNT_KERNFS,
+	0,
 	kernfs_mount,
 	kernfs_start,
 	kernfs_unmount,
@@ -298,7 +289,7 @@ struct vfsops kernfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	kernfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

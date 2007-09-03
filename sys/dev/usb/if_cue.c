@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.43.2.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.43.2.3 2007/09/03 14:39:02 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43.2.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43.2.3 2007/09/03 14:39:02 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -152,7 +152,7 @@ Static void cue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void cue_tick(void *);
 Static void cue_tick_task(void *);
 Static void cue_start(struct ifnet *);
-Static int cue_ioctl(struct ifnet *, u_long, caddr_t);
+Static int cue_ioctl(struct ifnet *, u_long, void *);
 Static void cue_init(void *);
 Static void cue_stop(struct cue_softc *);
 Static void cue_watchdog(struct ifnet *);
@@ -464,9 +464,6 @@ cue_reset(struct cue_softc *sc)
 USB_MATCH(cue)
 {
 	USB_MATCH_START(cue, uaa);
-
-	if (uaa->iface != NULL)
-		return (UMATCH_NONE);
 
 	return (cue_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -1034,7 +1031,7 @@ cue_init(void *xsc)
 	struct cue_softc	*sc = xsc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			i, s, ctl;
-	u_char			*eaddr;
+	const u_char		*eaddr;
 
 	if (sc->cue_dying)
 		return;
@@ -1060,7 +1057,7 @@ cue_init(void *xsc)
 #if defined(__OpenBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
 #elif defined(__NetBSD__)
-	eaddr = LLADDR(ifp->if_sadl);
+	eaddr = CLLADDR(ifp->if_sadl);
 #endif
 	/* Set MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
@@ -1155,7 +1152,7 @@ cue_open_pipes(struct cue_softc	*sc)
 }
 
 Static int
-cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct cue_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;

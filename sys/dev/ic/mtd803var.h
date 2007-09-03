@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803var.h,v 1.3 2005/02/04 02:10:36 perry Exp $ */
+/* $NetBSD: mtd803var.h,v 1.3.6.1 2007/09/03 14:34:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct mtd_softc {
 	bus_dma_tag_t		dma_tag;
 	struct mtd_desc *	desc;
 	bus_dmamap_t		desc_dma_map;
-	caddr_t			buf;
+	void *			buf;
 	bus_dmamap_t		buf_dma_map;
 
 #if NRND > 0

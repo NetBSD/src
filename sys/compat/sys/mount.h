@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.3.6.3 2006/12/30 20:47:48 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.3.6.4 2007/09/03 14:33:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -38,6 +38,7 @@
 #include "opt_compat_43.h"
 #endif
 
+#define MFSNAMELEN	16
 
 struct statfs12 {
 	short	f_type;			/* type of file system */

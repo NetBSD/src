@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsecvar.h,v 1.1 2003/08/01 00:08:56 jonathan Exp $	*/
+/*	$NetBSD: ubsecvar.h,v 1.1.18.1 2007/09/03 14:37:24 yamt Exp $	*/
 /*	$OpenBSD: ubsecvar.h,v 1.36 2003/06/04 16:02:41 jason Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 struct ubsec_dma_alloc {
 	u_int32_t		dma_paddr;
-	caddr_t			dma_vaddr;
+	void *			dma_vaddr;
 	bus_dmamap_t		dma_map;
 	bus_dma_segment_t	dma_seg;
 	bus_size_t		dma_size;

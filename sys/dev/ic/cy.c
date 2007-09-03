@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.37.4.3 2007/02/26 09:10:08 yamt Exp $	*/
+/*	$NetBSD: cy.c,v 1.37.4.4 2007/09/03 14:34:28 yamt Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.37.4.3 2007/02/26 09:10:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.37.4.4 2007/09/03 14:34:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -67,8 +67,8 @@ static int      cy_open = 0;
 static int      cy_events = 0;
 
 int	cy_attached_ttys;
-
-struct callout cy_poll_callout = CALLOUT_INITIALIZER;
+bool	cy_callout_init;
+callout_t cy_poll_callout;
 
 /*
  * Common probe routine
@@ -174,6 +174,11 @@ cy_attach(struct cy_softc *sc)
 {
 	int port, cy_chip, num_chips, cdu, chip;
 	int cy_clock;
+
+	if (!cy_callout_init) {
+		cy_callout_init = true;
+		callout_init(&cy_poll_callout, 0);
+	}
 
 	num_chips = sc->sc_nchips;
 	if (num_chips == 0)
@@ -490,7 +495,7 @@ cytty(dev_t dev)
  * ioctl routine
  */
 int
-cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;

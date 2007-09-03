@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.20.2.3 2007/02/26 09:10:55 yamt Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.20.2.4 2007/09/03 14:40:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.20.2.3 2007/02/26 09:10:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.20.2.4 2007/09/03 14:40:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -94,7 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.20.2.3 2007/02/26 09:10:55 yam
 #include <fs/filecorefs/filecore_node.h>
 #include <fs/filecorefs/filecore_mount.h>
 
-MALLOC_DEFINE(M_FILECOREMNT, "filecore mount", "Filecore FS mount structures");
+MALLOC_JUSTDEFINE(M_FILECOREMNT,
+    "filecore mount", "Filecore FS mount structures");
 
 extern const struct vnodeopv_desc filecore_vnodeop_opv_desc;
 
@@ -105,6 +106,7 @@ const struct vnodeopv_desc * const filecore_vnodeopv_descs[] = {
 
 struct vfsops filecore_vfsops = {
 	MOUNT_FILECORE,
+	sizeof (struct filecore_args),
 	filecore_mount,
 	filecore_start,
 	filecore_unmount,
@@ -121,7 +123,7 @@ struct vfsops filecore_vfsops = {
 	NULL,				/* filecore_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	filecore_vnodeopv_descs,
 	0,
 	{ NULL, NULL }
@@ -185,46 +187,48 @@ filecore_mountroot()
  * mount system call
  */
 int
-filecore_mount(mp, path, data, ndp, l)
+filecore_mount(mp, path, data, data_len, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
-	struct nameidata *ndp;
+	size_t *data_len;
 	struct lwp *l;
 {
+	struct nameidata nd;
 	struct vnode *devvp;
-	struct filecore_args args;
+	struct filecore_args *args = data;
 	int error;
 	struct filecore_mnt *fcmp = NULL;
+
+	if (*data_len < sizeof *args)
+		return EINVAL;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		fcmp = VFSTOFILECORE(mp);
 		if (fcmp == NULL)
 			return EIO;
-		args.flags = fcmp->fc_mntflags;
-		args.uid = fcmp->fc_uid;
-		args.gid = fcmp->fc_gid;
-		args.fspec = NULL;
-		return copyout(&args, data, sizeof(args));
+		args->flags = fcmp->fc_mntflags;
+		args->uid = fcmp->fc_uid;
+		args->gid = fcmp->fc_gid;
+		args->fspec = NULL;
+		*data_len = sizeof *args;
+		return 0;
 	}
-	error = copyin(data, &args, sizeof (struct filecore_args));
-	if (error)
-		return (error);
 
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 
-	if ((mp->mnt_flag & MNT_UPDATE) && args.fspec == NULL)
+	if ((mp->mnt_flag & MNT_UPDATE) && args->fspec == NULL)
 		return EINVAL;
 
 	/*
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
-	if ((error = namei(ndp)) != 0)
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-	devvp = ndp->ni_vp;
+	devvp = nd.ni_vp;
 
 	if (devvp->v_type != VBLK) {
 		vrele(devvp);
@@ -248,7 +252,7 @@ filecore_mount(mp, path, data, ndp, l)
 		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = filecore_mountfs(devvp, mp, l, &args);
+		error = filecore_mountfs(devvp, mp, l, args);
 	else {
 		if (devvp != fcmp->fc_devvp)
 			error = EINVAL;	/* needs translation */
@@ -260,8 +264,8 @@ filecore_mount(mp, path, data, ndp, l)
 		return error;
 	}
 	fcmp = VFSTOFILECORE(mp);
-	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
-	    mp, l);
+	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
+	    mp->mnt_op->vfs_name, mp, l);
 }
 
 /*
@@ -321,7 +325,8 @@ filecore_mountfs(devvp, mp, l, argp)
 		error = EINVAL;
 		goto out;
 	}
-	fcdr = (struct filecore_disc_record *)(bp->b_data+FILECORE_BB_DISCREC);
+	fcdr = (struct filecore_disc_record *)((char *)(bp->b_data) +
+	    FILECORE_BB_DISCREC);
 	map = ((((8 << fcdr->log2secsize) - fcdr->zone_spare)
 	    * (fcdr->nzones / 2) - 8 * FILECORE_DISCREC_SIZE)
 	    << fcdr->log2bpmb) >> fcdr->log2secsize;
@@ -341,7 +346,7 @@ filecore_mountfs(devvp, mp, l, argp)
 #endif
 	if (error != 0)
 		goto out;
-       	fcdr = (struct filecore_disc_record *)(bp->b_data + 4);
+       	fcdr = (struct filecore_disc_record *)((char *)(bp->b_data) + 4);
 	fcmp = malloc(sizeof *fcmp, M_FILECOREMNT, M_WAITOK);
 	memset(fcmp, 0, sizeof *fcmp);
 	if (fcdr->log2bpmb > fcdr->log2secsize)
@@ -399,10 +404,6 @@ out:
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
 	VOP_UNLOCK(devvp, 0);
-	if (fcmp) {
-		free(fcmp, M_FILECOREMNT);
-		mp->mnt_data = NULL;
-	}
 	return error;
 }
 
@@ -434,11 +435,6 @@ filecore_unmount(mp, mntflags, l)
 
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#if 0
-	mntflushbuf(mp, 0);
-	if (mntinvalbuf(mp))
-		return EBUSY;
-#endif
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 
@@ -692,7 +688,7 @@ filecore_vget(mp, ino, vpp)
 	 */
 
 	genfs_node_init(vp, &filecore_genfsops);
-	vp->v_size = ip->i_size;
+	uvm_vnp_setsize(vp, ip->i_size);
 	*vpp = vp;
 	return (0);
 }

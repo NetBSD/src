@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.27.4.2 2007/02/26 09:09:07 yamt Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.27.4.3 2007/09/03 14:32:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.27.4.2 2007/02/26 09:09:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.27.4.3 2007/09/03 14:32:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ hpux_sys_sigprocmask(l, v, retval)
 	 * (proc sigmask should not be changed if call fails for any reason)
 	 */
 	if (SCARG(uap, oset)) {
-		memset((caddr_t)&sigset, 0, sizeof(sigset));
+		memset((void *)&sigset, 0, sizeof(sigset));
 		mutex_enter(&l->l_proc->p_smutex);
 		bsdtohpuxmask(&l->l_sigmask, &sigset.sigset[0]);
 		mutex_exit(&l->l_proc->p_smutex);
@@ -349,7 +349,7 @@ hpux_sys_sigaction(l, v, retval)
 	if (SCARG(uap, osa)) {
 		mutex_enter(&l->l_proc->p_smutex);
 		sa->hpux_sa_handler = bsa->sa_handler;
-		memset((caddr_t)&sa->hpux_sa_mask, 0, sizeof(sa->hpux_sa_mask));
+		memset((void *)&sa->hpux_sa_mask, 0, sizeof(sa->hpux_sa_mask));
 		bsdtohpuxmask(&bsa->sa_mask, &sa->hpux_sa_mask.sigset[0]);
 		sa->hpux_sa_flags = 0;
 		if (bsa->sa_flags & SA_ONSTACK)
@@ -414,7 +414,9 @@ hpux_sys_ssig_6x(l, v, retval)
 	if ((a &~ 0377) ||
 	    (sa->sa_handler != SIG_DFL && sa->sa_handler != SIG_IGN &&
 	     ((int)sa->sa_handler) & 1)) {
+	     	mutex_enter(&proclist_mutex);
 		psignal(p, SIGSYS);
+		mutex_exit(&proclist_mutex);
 		return (0);
 	}
 	if (a <= 0 || a >= NSIG || a == SIGKILL || a == SIGSTOP ||

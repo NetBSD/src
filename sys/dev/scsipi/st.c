@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.181.2.2 2006/12/30 20:49:34 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.181.2.3 2007/09/03 14:38:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181.2.2 2006/12/30 20:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181.2.3 2007/09/03 14:38:43 yamt Exp $");
 
 #include "opt_scsi.h"
 
@@ -99,9 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.181.2.2 2006/12/30 20:49:34 yamt Exp $");
 #define NOREW_MODE	1
 #define EJECT_MODE	2
 #define CTRL_MODE	3
-
-#define	FALSE		0
-#define	TRUE		1
 
 #ifndef		ST_MOUNT_DELAY
 #define		ST_MOUNT_DELAY		0
@@ -385,7 +382,7 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	 */
 	bufq_alloc(&st->buf_queue, "fcfs", 0);
 
-	callout_init(&st->sc_callout);
+	callout_init(&st->sc_callout, 0);
 
 	/*
 	 * Check if the drive is a known criminal and take
@@ -1093,7 +1090,7 @@ ststrategy(struct buf *bp)
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 
 	/*
@@ -1104,7 +1101,7 @@ ststrategy(struct buf *bp)
 			printf("%s: bad request, must be multiple of %d\n",
 			    st->sc_dev.dv_xname, st->blksize);
 			bp->b_error = EIO;
-			goto bad;
+			goto done;
 		}
 	}
 	/*
@@ -1115,7 +1112,7 @@ ststrategy(struct buf *bp)
 		printf("%s: bad request, must be between %d and %d\n",
 		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	s = splbio();
 
@@ -1135,8 +1132,6 @@ ststrategy(struct buf *bp)
 
 	splx(s);
 	return;
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
@@ -1178,7 +1173,7 @@ ststart(struct scsipi_periph *periph)
 		/* if a special awaits, let it proceed first */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -1191,7 +1186,6 @@ ststart(struct scsipi_periph *periph)
 			if ((bp = BUFQ_GET(st->buf_queue)) != NULL) {
 				/* make sure that one implies the other.. */
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-				bp->b_flags |= B_ERROR;
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
@@ -1224,7 +1218,6 @@ ststart(struct scsipi_periph *periph)
 					 */
 					if (st_space(st, 0, SP_FILEMARKS, 0)) {
 						BUFQ_GET(st->buf_queue);
-						bp->b_flags |= B_ERROR;
 						bp->b_error = EIO;
 						biodone(bp);
 						continue;
@@ -1233,7 +1226,6 @@ ststart(struct scsipi_periph *periph)
 					BUFQ_GET(st->buf_queue);
 					bp->b_resid = bp->b_bcount;
 					bp->b_error = 0;
-					bp->b_flags &= ~B_ERROR;
 					st->flags &= ~ST_AT_FILEMARK;
 					biodone(bp);
 					continue;	/* seek more work */
@@ -1247,10 +1239,8 @@ ststart(struct scsipi_periph *periph)
 		if (st->flags & (ST_EOM_PENDING|ST_EIO_PENDING)) {
 			BUFQ_GET(st->buf_queue);
 			bp->b_resid = bp->b_bcount;
-			if (st->flags & ST_EIO_PENDING) {
+			if (st->flags & ST_EIO_PENDING)
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
-			}
 			st->flags &= ~(ST_EOM_PENDING|ST_EIO_PENDING);
 			biodone(bp);
 			continue;	/* seek more work */
@@ -1336,8 +1326,6 @@ stdone(struct scsipi_xfer *xs, int error)
 	if (bp) {
 		bp->b_error = error;
 		bp->b_resid = xs->resid;
-		if (error)
-			bp->b_flags |= B_ERROR;
 
 		if ((bp->b_flags & B_READ) == B_WRITE)
 			st->flags |= ST_WRITTEN;
@@ -1390,7 +1378,7 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
  * knows about the internals of this device
  */
 static int
-stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
+stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 {
 	int error = 0;
 	int unit;
@@ -1481,7 +1469,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
 		case MTBSR:	/* backward space record */
 			number = -number;
 		case MTFSR:	/* forward space record */
-			error = st_check_eod(st, TRUE, &nmarks, flags);
+			error = st_check_eod(st, true, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
@@ -2398,7 +2386,7 @@ bad:			free(bf, M_TEMP);
 }
 
 static int
-stdump(dev_t dev, daddr_t blkno, caddr_t va,
+stdump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 

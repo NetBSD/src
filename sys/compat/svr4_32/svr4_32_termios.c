@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.9.4.2 2007/02/26 09:09:44 yamt Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.9.4.3 2007/09/03 14:33:01 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.9.4.2 2007/02/26 09:09:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.9.4.3 2007/09/03 14:33:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -507,7 +507,7 @@ svr4_32_term_ioctl(fp, l, retval, fd, cmd, data)
 	register_t *retval;
 	int fd;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct termios 		bt;
 	struct svr4_32_termios	st;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.5.2.2 2007/02/26 09:09:58 yamt Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.5.2.3 2007/09/03 14:33:24 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.5.2.2 2007/02/26 09:09:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.5.2.3 2007/09/03 14:33:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -120,7 +120,7 @@ CFATTACH_DECL(adbms, sizeof(struct adbms_softc),
     adbms_match, adbms_attach, NULL, NULL);
 
 static int adbms_enable(void *);
-static int adbms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int adbms_ioctl(void *, u_long, void *, int, struct lwp *);
 static void adbms_disable(void *);
 
 /*
@@ -163,7 +163,7 @@ adbms_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_adbdev->cookie = sc;
 	sc->sc_adbdev->handler = adbms_handler;
 	sc->sc_us = ADBTALK(sc->sc_adbdev->current_addr, 0);
-	printf(" addr %d ", sc->sc_adbdev->current_addr);
+	printf(" addr %d: ", sc->sc_adbdev->current_addr);
 
 	sc->sc_class = MSCLASS_MOUSE;
 	sc->sc_buttons = 1;
@@ -668,7 +668,7 @@ adbms_enable(void *v)
 }
 
 static int
-adbms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+adbms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {

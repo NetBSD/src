@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.25 2005/02/26 12:45:06 simonb Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.25.4.1 2007/09/03 14:38:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.25 2005/02/26 12:45:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.25.4.1 2007/09/03 14:38:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ if_ubaminit(struct ifubinfo *ifu, struct uba_softc *uh, int size,
 	struct mbuf *m;
 	int totsz, i, error, rseg, nm = nr;
 	bus_dma_segment_t seg;
-	caddr_t vaddr;
+	void *vaddr;
 
 #ifdef DIAGNOSTIC
 	if (size > MCLBYTES)
@@ -142,7 +142,7 @@ if_ubaminit(struct ifubinfo *ifu, struct uba_softc *uh, int size,
 	 * Load the tx maps with DMA memory (common case).
 	 */
 	for (i = 0; i < nw; i++) {
-		ifw[i].ifw_vaddr = vaddr + size * i;
+		ifw[i].ifw_vaddr = (char *)vaddr + size * i;
 		ifw[i].ifw_size = size;
 		bus_dmamap_load(uh->uh_dmat, ifw[i].ifw_map,
 		    ifw[i].ifw_vaddr, ifw[i].ifw_size, NULL, BUS_DMA_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.60.2.3 2007/02/26 09:11:31 yamt Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.60.2.4 2007/09/03 14:41:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.60.2.3 2007/02/26 09:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.60.2.4 2007/09/03 14:41:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -101,18 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.60.2.3 2007/02/26 09:11:31 yamt 
 
 #include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
-void	procfs_init(void);
-void	procfs_reinit(void);
-void	procfs_done(void);
-int	procfs_mount(struct mount *, const char *, void *,
-			  struct nameidata *, struct lwp *);
-int	procfs_start(struct mount *, int, struct lwp *);
-int	procfs_unmount(struct mount *, int, struct lwp *);
-int	procfs_quotactl(struct mount *, int, uid_t, void *,
-			     struct lwp *);
-int	procfs_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int	procfs_sync(struct mount *, int, kauth_cred_t, struct lwp *);
-int	procfs_vget(struct mount *, ino_t, struct vnode **);
+VFS_PROTOS(procfs);
 
 /*
  * VFS Operations.
@@ -125,12 +114,12 @@ procfs_mount(
     struct mount *mp,
     const char *path,
     void *data,
-    struct nameidata *ndp,
+    size_t *data_len,
     struct lwp *l
 )
 {
 	struct procfsmount *pmnt;
-	struct procfs_args args;
+	struct procfs_args *args = data;
 	int error;
 
 	if (UIO_MX & (UIO_MX-1)) {
@@ -139,26 +128,23 @@ procfs_mount(
 	}
 
 	if (mp->mnt_flag & MNT_GETARGS) {
+		if (*data_len < sizeof *args)
+			return EINVAL;
+
 		pmnt = VFSTOPROC(mp);
 		if (pmnt == NULL)
 			return EIO;
-		args.version = PROCFS_ARGSVERSION;
-		args.flags = pmnt->pmnt_flags;
-		return copyout(&args, data, sizeof(args));
+		args->version = PROCFS_ARGSVERSION;
+		args->flags = pmnt->pmnt_flags;
+		*data_len = sizeof *args;
+		return 0;
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	if (data != NULL) {
-		error = copyin(data, &args, sizeof args);
-		if (error != 0)
-			return error;
-
-		if (args.version != PROCFS_ARGSVERSION)
-			return EINVAL;
-	} else
-		args.flags = 0;
+	if (*data_len >= sizeof *args && args->version != PROCFS_ARGSVERSION)
+		return EINVAL;
 
 	pmnt = (struct procfsmount *) malloc(sizeof(struct procfsmount),
 	    M_UFSMNT, M_WAITOK);   /* XXX need new malloc type */
@@ -169,9 +155,12 @@ procfs_mount(
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "procfs", UIO_SYSSPACE,
-	    mp, l);
+	    mp->mnt_op->vfs_name, mp, l);
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
-	pmnt->pmnt_flags = args.flags;
+	if (*data_len >= sizeof *args)
+		pmnt->pmnt_flags = args->flags;
+	else
+		pmnt->pmnt_flags = 0;
 
 	return error;
 }
@@ -322,6 +311,7 @@ const struct vnodeopv_desc * const procfs_vnodeopv_descs[] = {
 
 struct vfsops procfs_vfsops = {
 	MOUNT_PROCFS,
+	sizeof (struct procfs_args),
 	procfs_mount,
 	procfs_start,
 	procfs_unmount,
@@ -338,7 +328,7 @@ struct vfsops procfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
-	vfs_stdsuspendctl,
+	(void *)eopnotsupp,		/* vfs_suspendctl */
 	procfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

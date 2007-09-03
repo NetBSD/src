@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.5.6.1 2006/12/30 20:47:57 yamt Exp $ */
+/* $NetBSD: vsxxx.c,v 1.5.6.2 2007/09/03 14:33:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.5.6.1 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.5.6.2 2007/09/03 14:33:34 yamt Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.5.6.1 2006/12/30 20:47:57 yamt Exp $");
 extern struct cfdriver vsms_cd;
 
 static int  vsxxx_enable(void *);
-static int  vsxxx_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int  vsxxx_ioctl(void *, u_long, void *, int, struct proc *);
 static void vsxxx_disable(void *);
 
 struct wsmouse_accessops vsxxx_accessops = {	/* EXPORT */
@@ -107,7 +107,7 @@ static int
 vsxxx_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {

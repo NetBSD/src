@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.11.10.1 2006/06/21 15:09:24 yamt Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.11.10.2 2007/09/03 14:40:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11.10.1 2006/06/21 15:09:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11.10.2 2007/09/03 14:40:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ filecore_read(v)
 			return (error);
 		}
 
-		error = uiomove(bp->b_data + on, (int)n, uio);
+		error = uiomove((char *)(bp->b_data) + on, (int)n, uio);
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vn2\n", bp);
 #endif
@@ -317,7 +317,7 @@ filecore_readdir(v)
 		cookies = NULL;
 	else {
 		*ap->a_ncookies = 0;
-		ncookies = uio->uio_resid/16;
+		ncookies = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 	}
 
@@ -461,7 +461,6 @@ filecore_strategy(v)
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
 		if (error) {
 			bp->b_error = error;
-			bp->b_flags |= B_ERROR;
 			biodone(bp);
 			return (error);
 		}

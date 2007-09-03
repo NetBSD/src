@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.2.18.2 2006/06/21 15:00:00 yamt Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.2.18.3 2007/09/03 14:33:02 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct __ksiginfo32 {
 		struct {
 			pid_t _pid;
 			uid_t _uid;
-			sigval32_t _sigval;
+			sigval32_t _value;
 		} _rt;
 
 		struct {

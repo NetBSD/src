@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.9.2.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.9.2.2 2007/09/03 14:32:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
 /* !!!: This should be at least as large as any other struct here. */
 struct linux_socketcall_dummy_args {
 	int dummy_ints[4];		/* Max 4 ints */
-	void * dummy_ptrs[3];		/* Max 3 pointers */
+	void *dummy_ptrs[3];		/* Max 3 pointers */
 };
 
 struct linux_sys_socket_args {

@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.8 2005/02/27 15:33:58 perry Exp $
+#	$NetBSD: devlist2h.awk,v 1.8.4.1 2007/09/03 14:38:54 yamt Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -123,7 +123,7 @@ END {
 
 	printf("\n") > dfile
 
-	printf("struct tc_knowndev tc_knowndevs[] = {\n") > dfile
+	printf("const struct tc_knowndev tc_knowndevs[] = {\n") > dfile
 	for (i = 1; i <= ndevices; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    \"%-8s\",\n", devices[i, 0]) \

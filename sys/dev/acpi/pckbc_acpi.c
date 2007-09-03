@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.15.12.2 2006/12/30 20:47:54 yamt Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.15.12.3 2007/09/03 14:33:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.15.12.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.15.12.3 2007/09/03 14:33:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ pckbc_acpi_attach(struct device *parent, struct device *self,
 			t->t_ioh_c = ioh_c;
 			t->t_addr = io0->ar_base;
 			t->t_cmdbyte = KC8_CPU;	/* Enable ports */
-			callout_init(&t->t_cleanup);
+			callout_init(&t->t_cleanup, 0);
 		}
 
 		t->t_sc = &first->sc_pckbc;

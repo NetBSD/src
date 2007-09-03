@@ -51,7 +51,7 @@ void mxkp_debounce(struct matrixkp_softc *, u_int32_t *, u_int32_t *);
 void mxkp_wskbd_event(struct matrixkp_softc *, u_int32_t *, u_int32_t *);
 int  mxkp_enable(void *, int);
 void mxkp_set_leds(void *, int);
-int  mxkp_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int  mxkp_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wskbd_accessops mxkp_accessops;
 

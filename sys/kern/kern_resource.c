@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.98.2.3 2007/02/26 09:11:09 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.98.2.4 2007/09/03 14:40:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.98.2.3 2007/02/26 09:11:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.98.2.4 2007/09/03 14:40:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,7 @@ rlim_t maxsmap = MAXSSIZ;
 
 struct uihashhead *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
-struct simplelock uihashtbl_slock = SIMPLELOCK_INITIALIZER;
-
+kmutex_t uihashtbl_lock;
 
 /*
  * Resource controls and accounting.
@@ -83,7 +82,7 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 	int low = NZERO + PRIO_MAX + 1;
 	int who = SCARG(uap, who);
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		if (who == 0)
@@ -121,10 +120,10 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	default:
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (EINVAL);
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (low == NZERO + PRIO_MAX + 1)
 		return (ESRCH);
@@ -145,7 +144,7 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 	int found = 0, error = 0;
 	int who = SCARG(uap, who);
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		if (who == 0)
@@ -194,7 +193,7 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 		error = EINVAL;
 		break;
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (found == 0)
 		return (ESRCH);
 	return (error);
@@ -211,7 +210,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	kauth_cred_t cred = l->l_cred;
 	int onice;
 
-	LOCK_ASSERT(mutex_owned(&chgp->p_mutex));
+	KASSERT(mutex_owned(&chgp->p_mutex));
 
 	if (n > PRIO_MAX)
 		n = PRIO_MAX;
@@ -230,8 +229,7 @@ donice(struct lwp *l, struct proc *chgp, int n)
 		mutex_spin_exit(&chgp->p_stmutex);
 		goto again;
 	}
-	chgp->p_nice = n;
-	(void)resetprocpriority(chgp);
+	sched_nice(chgp, n);
 	mutex_spin_exit(&chgp->p_stmutex);
 	return (0);
 }
@@ -383,11 +381,16 @@ sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
+	struct rlimit rl;
 
 	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout(&p->p_rlimit[which], SCARG(uap, rlp),
-	    sizeof(struct rlimit)));
+
+	mutex_enter(&p->p_mutex);
+	memcpy(&rl, &p->p_rlimit[which], sizeof(rl));
+	mutex_exit(&p->p_mutex);
+
+	return copyout(&rl, SCARG(uap, rlp), sizeof(rl));
 }
 
 /*
@@ -484,26 +487,28 @@ sys_getrusage(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) who;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	struct rusage *rup;
+	struct rusage ru;
 	struct proc *p = l->l_proc;
 
 	switch (SCARG(uap, who)) {
-
 	case RUSAGE_SELF:
-		rup = &p->p_stats->p_ru;
 		mutex_enter(&p->p_smutex);
-		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL, NULL);
+		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
+		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 		mutex_exit(&p->p_smutex);
 		break;
 
 	case RUSAGE_CHILDREN:
-		rup = &p->p_stats->p_cru;
+		mutex_enter(&p->p_smutex);
+		memcpy(&ru, &p->p_stats->p_cru, sizeof(ru));
+		mutex_exit(&p->p_smutex);
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
-	return (copyout(rup, SCARG(uap, rusage), sizeof(struct rusage)));
+
+	return copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 }
 
 void
@@ -535,29 +540,29 @@ limcopy(struct proc *p)
 	char *corename;
 	size_t l;
 
-	LOCK_ASSERT(mutex_owned(&p->p_mutex));
+	KASSERT(mutex_owned(&p->p_mutex));
 
 	mutex_exit(&p->p_mutex);
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
-	simple_lock_init(&newlim->p_slock);
+	mutex_init(&newlim->p_lock, MUTEX_DEFAULT, IPL_NONE);
 	newlim->p_lflags = 0;
 	newlim->p_refcnt = 1;
 	mutex_enter(&p->p_mutex);
 
 	for (;;) {
 		lim = p->p_limit;
-		simple_lock(&lim->p_slock);
+		mutex_enter(&lim->p_lock);
 		if (lim->pl_corename != defcorename) {
 			l = strlen(lim->pl_corename) + 1;
 
-			simple_unlock(&lim->p_slock);
+			mutex_exit(&lim->p_lock);
 			mutex_exit(&p->p_mutex);
 			corename = malloc(l, M_TEMP, M_WAITOK);
 			mutex_enter(&p->p_mutex);
-			simple_lock(&lim->p_slock);
+			mutex_enter(&lim->p_lock);
 
 			if (l != strlen(lim->pl_corename) + 1) {
-				simple_unlock(&lim->p_slock);
+				mutex_exit(&lim->p_lock);
 				mutex_exit(&p->p_mutex);
 				free(corename, M_TEMP);
 				mutex_enter(&p->p_mutex);
@@ -572,7 +577,7 @@ limcopy(struct proc *p)
 			strlcpy(newlim->pl_corename, lim->pl_corename, l);
 		else
 			newlim->pl_corename = defcorename;
-		simple_unlock(&lim->p_slock);
+		mutex_exit(&lim->p_lock);
 		break;
 	}
 
@@ -584,9 +589,9 @@ limfree(struct plimit *lim)
 {
 	int n;
 
-	simple_lock(&lim->p_slock);
+	mutex_enter(&lim->p_lock);
 	n = --lim->p_refcnt;
-	simple_unlock(&lim->p_slock);
+	mutex_exit(&lim->p_lock);
 	if (n > 0)
 		return;
 #ifdef DIAGNOSTIC
@@ -595,6 +600,7 @@ limfree(struct plimit *lim)
 #endif
 	if (lim->pl_corename != defcorename)
 		free(lim->pl_corename, M_TEMP);
+	mutex_destroy(&lim->p_lock);
 	pool_put(&plimit_pool, lim);
 }
 
@@ -607,11 +613,11 @@ pstatscopy(struct pstats *ps)
 	newps = pool_get(&pstats_pool, PR_WAITOK);
 
 	memset(&newps->pstat_startzero, 0,
-	(unsigned) ((caddr_t)&newps->pstat_endzero -
-		    (caddr_t)&newps->pstat_startzero));
+	(unsigned) ((char *)&newps->pstat_endzero -
+		    (char *)&newps->pstat_startzero));
 	memcpy(&newps->pstat_startcopy, &ps->pstat_startcopy,
-	((caddr_t)&newps->pstat_endcopy -
-	 (caddr_t)&newps->pstat_startcopy));
+	((char *)&newps->pstat_endcopy -
+	 (char *)&newps->pstat_startcopy));
 
 	return (newps);
 
@@ -947,6 +953,23 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
 }
 
+void
+uid_init(void)
+{
+
+	/*
+	 * XXXSMP This could be at IPL_SOFTNET, but for now we want
+	 * to to be deadlock free, so it must be at IPL_VM.
+	 */
+	mutex_init(&uihashtbl_lock, MUTEX_DRIVER, IPL_VM);
+
+	/*
+	 * Ensure that uid 0 is always in the user hash table, as
+	 * sbreserve() expects it available from interrupt context.
+	 */
+	(void)uid_find(0);
+}
+
 struct uidinfo *
 uid_find(uid_t uid)
 {
@@ -957,26 +980,28 @@ uid_find(uid_t uid)
 	uipp = UIHASH(uid);
 
 again:
-	simple_lock(&uihashtbl_slock);
+	mutex_enter(&uihashtbl_lock);
 	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid) {
-			simple_unlock(&uihashtbl_slock);
-			if (newuip)
+			mutex_exit(&uihashtbl_lock);
+			if (newuip) {
 				free(newuip, M_PROC);
+				mutex_destroy(&newuip->ui_lock);
+			}
 			return uip;
 		}
-
 	if (newuip == NULL) {
-		simple_unlock(&uihashtbl_slock);
+		mutex_exit(&uihashtbl_lock);
+		/* Must not be called from interrupt context. */
 		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
+		mutex_init(&newuip->ui_lock, MUTEX_DRIVER, IPL_SOFTNET);
 		goto again;
 	}
 	uip = newuip;
 
 	LIST_INSERT_HEAD(uipp, uip, ui_hash);
 	uip->ui_uid = uid;
-	simple_lock_init(&uip->ui_slock);
-	simple_unlock(&uihashtbl_slock);
+	mutex_exit(&uihashtbl_lock);
 
 	return uip;
 }
@@ -989,16 +1014,15 @@ int
 chgproccnt(uid_t uid, int diff)
 {
 	struct uidinfo *uip;
-	int s;
 
 	if (diff == 0)
 		return 0;
 
 	uip = uid_find(uid);
-	UILOCK(uip, s);
+	mutex_enter(&uip->ui_lock);
 	uip->ui_proccnt += diff;
 	KASSERT(uip->ui_proccnt >= 0);
-	UIUNLOCK(uip, s);
+	mutex_exit(&uip->ui_lock);
 	return uip->ui_proccnt;
 }
 
@@ -1006,18 +1030,16 @@ int
 chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t xmax)
 {
 	rlim_t nsb;
-	int s;
 
-	UILOCK(uip, s);
+	mutex_enter(&uip->ui_lock);
 	nsb = uip->ui_sbsize + to - *hiwat;
 	if (to > *hiwat && nsb > xmax) {
-		UIUNLOCK(uip, s);
-		splx(s);
+		mutex_exit(&uip->ui_lock);
 		return 0;
 	}
 	*hiwat = to;
 	uip->ui_sbsize = nsb;
 	KASSERT(uip->ui_sbsize >= 0);
-	UIUNLOCK(uip, s);
+	mutex_exit(&uip->ui_lock);
 	return 1;
 }

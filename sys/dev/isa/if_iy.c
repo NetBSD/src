@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.68.2.2 2006/12/30 20:48:26 yamt Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.68.2.3 2007/09/03 14:35:38 yamt Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.68.2.2 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.68.2.3 2007/09/03 14:35:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -144,7 +144,7 @@ struct iy_softc {
 };
 
 void iywatchdog(struct ifnet *);
-int iyioctl(struct ifnet *, u_long, caddr_t);
+int iyioctl(struct ifnet *, u_long, void *);
 int iyintr(void *);
 void iyinit(struct iy_softc *);
 void iystop(struct iy_softc *);
@@ -477,7 +477,7 @@ struct iy_softc *sc;
 		bus_space_write_1(iot, ioh, EEPROM_REG, temp & ~0x10);
 
 	for (i=0; i<6; ++i) {
-		bus_space_write_1(iot, ioh, I_ADD(i), LLADDR(ifp->if_sadl)[i]);
+		bus_space_write_1(iot, ioh, I_ADD(i), CLLADDR(ifp->if_sadl)[i]);
 	}
 
 	temp = bus_space_read_1(iot, ioh, REG1);
@@ -644,7 +644,7 @@ struct ifnet *ifp;
 	u_int len, pad, last, end;
 	u_int llen, residual;
 	int avail;
-	caddr_t data;
+	char *data;
 	unsigned temp;
 	u_int16_t resval, stat;
 	bus_space_tag_t iot;
@@ -761,7 +761,7 @@ struct ifnet *ifp;
 		residual = resval = 0;
 
 		while ((m = m0)!=0) {
-			data = mtod(m, caddr_t);
+			data = mtod(m, void *);
 			llen = m->m_len;
 			if (residual) {
 #ifdef IYDEBUG
@@ -1063,7 +1063,7 @@ iyget(sc, iot, ioh, rxlen)
 #ifdef IYDEBUG
 			printf("%s: received odd mbuf\n", sc->sc_dev.dv_xname);
 #endif
-			*(mtod(m, caddr_t)) = bus_space_read_stream_2(iot, ioh,
+			*(mtod(m, char *)) = bus_space_read_stream_2(iot, ioh,
 			    MEM_PORT_REG);
 		}
 		m->m_len = len;
@@ -1196,7 +1196,7 @@ int
 iyioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct iy_softc *sc;
 	struct ifaddr *ifa;
@@ -1267,11 +1267,7 @@ iyioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom):
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

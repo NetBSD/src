@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.8.10.2 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.8.10.3 2007/09/03 14:36:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -48,8 +48,8 @@
 /* DMA */
 struct cs428x_dma {
 	bus_dmamap_t map;
-	caddr_t addr;		/* real DMA buffer */
-	caddr_t dum;		/* dummy buffer for audio driver */
+	void *addr;		/* real DMA buffer */
+	void *dum;		/* dummy buffer for audio driver */
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;
@@ -74,7 +74,10 @@ enum cs428x_flags {
 struct cs428x_softc {
 	struct device	      sc_dev;
 
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pt;
 	pci_intr_handle_t *   sc_ih;
+	pci_intr_handle_t intrh;
 
 	/* I/O (BA0) */
 	bus_space_tag_t	      ba0t;
@@ -140,6 +143,7 @@ struct cs428x_softc {
 	/* Power Management */
 	char	sc_suspend;
 	void   *sc_powerhook;		/* Power Hook */
+	struct pci_conf_state sc_pciconf;
 
 	/* CLKRUN hack (CS428X_FLAG_CLKRUN), only for CS4280 */
 	int sc_active;

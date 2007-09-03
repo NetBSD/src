@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.2.12.3 2007/02/26 09:10:35 yamt Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.2.12.4 2007/09/03 14:37:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -303,6 +303,7 @@ struct radeonfb_softc {
 #define	RFB_R300	(1 << 5)	/* R300 variants -- newer parts */
 #define	RFB_RV100	(1 << 6)	/* RV100 variants -- previous gen */
 #define	RFB_ATOM	(1 << 7)	/* ATOM bios */
+#define RFB_INV_BLIGHT	(1 << 8)	/* backlight level inverted */
 
 #define	IS_MOBILITY(sc)	((sc)->sc_flags & RFB_MOB)
 #define	HAS_CRTC2(sc)	(((sc)->sc_flags & RFB_NCRTC2) == 0)

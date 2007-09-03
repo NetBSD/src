@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.3 2007/02/26 09:10:56 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.4 2007/09/03 14:40:26 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.3 2007/02/26 09:10:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.4 2007/09/03 14:40:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,7 +533,7 @@ msdosfs_read(v)
 			brelse(bp);
 			return (error);
 		}
-		error = uiomove(bp->b_data + on, (int) n, uio);
+		error = uiomove((char *)bp->b_data + on, (int) n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
@@ -605,7 +605,9 @@ msdosfs_write(v)
 	 */
 	if (((uio->uio_offset + uio->uio_resid) >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
+		mutex_enter(&proclist_mutex);
 		psignal(p, SIGXFSZ);
+		mutex_exit(&proclist_mutex);
 		return (EFBIG);
 	}
 
@@ -1467,7 +1469,7 @@ msdosfs_readdir(v)
 	uio_off = uio->uio_offset;
 
 	if (ap->a_ncookies) {
-		nc = uio->uio_resid / 16;
+		nc = uio->uio_resid / _DIRENT_MINSIZE((struct dirent *)0);
 		cookies = malloc(nc * sizeof (off_t), M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
@@ -1551,8 +1553,8 @@ msdosfs_readdir(v)
 		 * Convert from dos directory entries to fs-independent
 		 * directory entries.
 		 */
-		for (dentp = (struct direntry *)(bp->b_data + on);
-		     (char *)dentp < bp->b_data + on + n;
+		for (dentp = (struct direntry *)((char *)bp->b_data + on);
+		     (char *)dentp < (char *)bp->b_data + on + n;
 		     dentp++, offset += sizeof(struct direntry)) {
 #if 0
 

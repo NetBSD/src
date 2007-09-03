@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.69.6.2 2006/12/30 20:48:48 yamt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.69.6.3 2007/09/03 14:37:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -212,7 +212,7 @@ const struct pci_quirkdata *
  * Helper functions for user access to the PCI bus.
  */
 struct proc;
-int	pci_devioctl(pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
+int	pci_devioctl(pci_chipset_tag_t, pcitag_t, u_long, void *,
 	    int flag, struct lwp *);
 
 /*

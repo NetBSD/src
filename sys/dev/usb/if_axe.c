@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.9.2.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.9.2.3 2007/09/03 14:39:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.9.2.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.9.2.3 2007/09/03 14:39:02 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -178,7 +178,7 @@ Static void axe_tick_task(void *);
 Static void axe_rxstart(struct ifnet *);
 #endif
 Static void axe_start(struct ifnet *);
-Static int axe_ioctl(struct ifnet *, u_long, caddr_t);
+Static int axe_ioctl(struct ifnet *, u_long, void *);
 Static void axe_init(void *);
 Static void axe_stop(struct axe_softc *);
 Static void axe_watchdog(struct ifnet *);
@@ -426,10 +426,6 @@ axe_reset(struct axe_softc *sc)
 USB_MATCH(axe)
 {
 	USB_MATCH_START(axe, uaa);
-
-	if (!uaa->iface) {
-		return(UMATCH_NONE);
-	}
 
 	return (axe_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
@@ -1175,7 +1171,7 @@ axe_init(void *xsc)
 }
 
 Static int
-axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct axe_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
@@ -1243,9 +1239,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 #ifdef __NetBSD__
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->axe_ec) :
-			ether_delmulti(ifr, &sc->axe_ec);
+		error = ether_ioctl(ifp, cmd, data);
 #else
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->arpcom) :

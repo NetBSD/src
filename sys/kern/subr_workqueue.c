@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_workqueue.c,v 1.3.6.4 2007/02/26 09:11:16 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.3.6.5 2007/09/03 14:41:07 yamt Exp $	*/
 
 /*-
- * Copyright (c)2002, 2005 YAMAMOTO Takashi,
+ * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.6.4 2007/02/26 09:11:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.6.5 2007/09/03 14:41:07 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/systm.h>
 #include <sys/kthread.h>
 #include <sys/kmem.h>
@@ -37,33 +38,68 @@ __KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.6.4 2007/02/26 09:11:16 yamt 
 #include <sys/workqueue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/queue.h>
 
-SIMPLEQ_HEAD(workqhead, work);
+typedef struct work_impl {
+	SIMPLEQ_ENTRY(work_impl) wk_entry;
+} work_impl_t;
+
+SIMPLEQ_HEAD(workqhead, work_impl);
 
 struct workqueue_queue {
 	kmutex_t q_mutex;
 	kcondvar_t q_cv;
 	struct workqhead q_queue;
-	struct proc *q_worker;
+	struct lwp *q_worker;
 };
 
 struct workqueue {
-	struct workqueue_queue wq_queue; /* todo: make this per-cpu */
-
 	void (*wq_func)(struct work *, void *);
 	void *wq_arg;
+	int wq_flags;
+
 	const char *wq_name;
-	int wq_prio;
-	ipl_cookie_t wq_ipl;
+	pri_t wq_prio;
+	void *wq_ptr;
 };
 
+#ifdef MULTIPROCESSOR
+#define	CPU_ALIGN_SIZE		CACHE_LINE_SIZE
+#else
+#define	CPU_ALIGN_SIZE		(ALIGNBYTES + 1)
+#endif
+
+#define	WQ_SIZE		(roundup2(sizeof(struct workqueue), CPU_ALIGN_SIZE))
+#define	WQ_QUEUE_SIZE	(roundup2(sizeof(struct workqueue_queue), CPU_ALIGN_SIZE))
+
 #define	POISON	0xaabbccdd
+
+static size_t
+workqueue_size(int flags)
+{
+
+	return WQ_SIZE
+	    + ((flags & WQ_PERCPU) != 0 ? ncpu : 1) * WQ_QUEUE_SIZE
+	    + CPU_ALIGN_SIZE;
+}
+
+static struct workqueue_queue *
+workqueue_queue_lookup(struct workqueue *wq, struct cpu_info *ci)
+{
+	u_int idx = 0;
+
+	if (wq->wq_flags & WQ_PERCPU) {
+		idx = ci ? cpu_index(ci) : cpu_index(curcpu());
+	}
+
+	return (void *)((intptr_t)(wq) + WQ_SIZE + (idx * WQ_QUEUE_SIZE));
+}
 
 static void
 workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 {
-	struct work *wk;
-	struct work *next;
+	work_impl_t *wk;
+	work_impl_t *next;
 
 	/*
 	 * note that "list" is not a complete SIMPLEQ.
@@ -71,15 +107,19 @@ workqueue_runlist(struct workqueue *wq, struct workqhead *list)
 
 	for (wk = SIMPLEQ_FIRST(list); wk != NULL; wk = next) {
 		next = SIMPLEQ_NEXT(wk, wk_entry);
-		(*wq->wq_func)(wk, wq->wq_arg);
+		(*wq->wq_func)((void *)wk, wq->wq_arg);
 	}
 }
 
 static void
-workqueue_run(struct workqueue *wq)
+workqueue_worker(void *cookie)
 {
-	struct workqueue_queue *q = &wq->wq_queue;
-	
+	struct workqueue *wq = cookie;
+	struct workqueue_queue *q;
+
+	/* find the workqueue of this kthread */
+	q = workqueue_queue_lookup(wq, curlwp->l_cpu);
+
 	for (;;) {
 		struct workqhead tmp;
 
@@ -103,27 +143,11 @@ workqueue_run(struct workqueue *wq)
 }
 
 static void
-workqueue_worker(void *arg)
-{
-	struct workqueue *wq = arg;
-	struct lwp *l;
-
-	l = curlwp;
-	lwp_lock(l);
-	l->l_priority = wq->wq_prio;
-	l->l_usrpri = wq->wq_prio;
-	lwp_unlock(l);
-
-	workqueue_run(wq);
-}
-
-static void
 workqueue_init(struct workqueue *wq, const char *name,
     void (*callback_func)(struct work *, void *), void *callback_arg,
-    int prio, int ipl)
+    pri_t prio, int ipl)
 {
 
-	wq->wq_ipl = makeiplcookie(ipl);
 	wq->wq_prio = prio;
 	wq->wq_name = name;
 	wq->wq_func = callback_func;
@@ -131,22 +155,34 @@ workqueue_init(struct workqueue *wq, const char *name,
 }
 
 static int
-workqueue_initqueue(struct workqueue *wq, int ipl)
+workqueue_initqueue(struct workqueue *wq, struct workqueue_queue *q,
+    int ipl, struct cpu_info *ci)
 {
-	struct workqueue_queue *q = &wq->wq_queue;
-	int error;
+	int error, ktf;
 
-	mutex_init(&q->q_mutex, MUTEX_SPIN, ipl);
+	KASSERT(q->q_worker == NULL);
+
+	mutex_init(&q->q_mutex, MUTEX_DRIVER, ipl);
 	cv_init(&q->q_cv, wq->wq_name);
 	SIMPLEQ_INIT(&q->q_queue);
-	error = kthread_create1(workqueue_worker, wq, &q->q_worker,
-	    wq->wq_name);
-
+	ktf = ((wq->wq_flags & WQ_MPSAFE) != 0 ? KTHREAD_MPSAFE : 0);
+	if (ci) {
+		error = kthread_create(wq->wq_prio, ktf, ci, workqueue_worker,
+		    wq, &q->q_worker, "%s/%u", wq->wq_name, (u_int)ci->ci_cpuid);
+	} else {
+		error = kthread_create(wq->wq_prio, ktf, ci, workqueue_worker,
+		    wq, &q->q_worker, "%s", wq->wq_name);
+	}
+	if (error != 0) {
+		mutex_destroy(&q->q_mutex);
+		cv_destroy(&q->q_cv);
+		KASSERT(q->q_worker == NULL);
+	}
 	return error;
 }
 
 struct workqueue_exitargs {
-	struct work wqe_wk;
+	work_impl_t wqe_wk;
 	struct workqueue_queue *wqe_q;
 };
 
@@ -160,7 +196,8 @@ workqueue_exit(struct work *wk, void *arg)
 	 * only competition at this point is workqueue_finiqueue.
 	 */
 
-	KASSERT(q->q_worker == curproc);
+	KASSERT(q->q_worker == curlwp);
+	KASSERT(SIMPLEQ_EMPTY(&q->q_queue));
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
 	cv_signal(&q->q_cv);
@@ -169,12 +206,11 @@ workqueue_exit(struct work *wk, void *arg)
 }
 
 static void
-workqueue_finiqueue(struct workqueue *wq)
+workqueue_finiqueue(struct workqueue *wq, struct workqueue_queue *q)
 {
-	struct workqueue_queue *q = &wq->wq_queue;
 	struct workqueue_exitargs wqe;
 
-	wq->wq_func = workqueue_exit;
+	KASSERT(wq->wq_func == workqueue_exit);
 
 	wqe.wqe_q = q;
 	KASSERT(SIMPLEQ_EMPTY(&q->q_queue));
@@ -195,44 +231,77 @@ workqueue_finiqueue(struct workqueue *wq)
 int
 workqueue_create(struct workqueue **wqp, const char *name,
     void (*callback_func)(struct work *, void *), void *callback_arg,
-    int prio, int ipl, int flags)
+    pri_t prio, int ipl, int flags)
 {
 	struct workqueue *wq;
-	int error;
+	struct workqueue_queue *q;
+	void *ptr;
+	int error = 0;
 
-	wq = kmem_alloc(sizeof(*wq), KM_SLEEP);
-	if (wq == NULL) {
-		return ENOMEM;
-	}
+	KASSERT(sizeof(work_impl_t) <= sizeof(struct work));
+
+	ptr = kmem_zalloc(workqueue_size(flags), KM_SLEEP);
+	wq = (void *)roundup2((intptr_t)ptr, CPU_ALIGN_SIZE);
+	wq->wq_ptr = ptr;
+	wq->wq_flags = flags;
 
 	workqueue_init(wq, name, callback_func, callback_arg, prio, ipl);
 
-	error = workqueue_initqueue(wq, ipl);
-	if (error) {
-		kmem_free(wq, sizeof(*wq));
-		return error;
+	if (flags & WQ_PERCPU) {
+		struct cpu_info *ci;
+		CPU_INFO_ITERATOR cii;
+
+		/* create the work-queue for each CPU */
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			q = workqueue_queue_lookup(wq, ci);
+			error = workqueue_initqueue(wq, q, ipl, ci);
+			if (error) {
+				break;
+			}
+		}
+	} else {
+		/* initialize a work-queue */
+		q = workqueue_queue_lookup(wq, NULL);
+		error = workqueue_initqueue(wq, q, ipl, NULL);
 	}
 
-	*wqp = wq;
-	return 0;
+	if (error != 0) {
+		workqueue_destroy(wq);
+	} else {
+		*wqp = wq;
+	}
+
+	return error;
 }
 
 void
 workqueue_destroy(struct workqueue *wq)
 {
+	struct workqueue_queue *q;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
 
-	workqueue_finiqueue(wq);
-	kmem_free(wq, sizeof(*wq));
+	wq->wq_func = workqueue_exit;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		q = workqueue_queue_lookup(wq, ci);
+		if (q->q_worker != NULL) {
+			workqueue_finiqueue(wq, q);
+		}
+	}
+	kmem_free(wq->wq_ptr, workqueue_size(wq->wq_flags));
 }
 
 void
-workqueue_enqueue(struct workqueue *wq, struct work *wk)
+workqueue_enqueue(struct workqueue *wq, struct work *wk0, struct cpu_info *ci)
 {
-	struct workqueue_queue *q = &wq->wq_queue;
+	struct workqueue_queue *q;
+	work_impl_t *wk = (void *)wk0;
+
+	KASSERT(wq->wq_flags & WQ_PERCPU || ci == NULL);
+	q = workqueue_queue_lookup(wq, ci);
 
 	mutex_enter(&q->q_mutex);
-	if (SIMPLEQ_EMPTY(&q->q_queue))
-		cv_signal(&q->q_cv);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, wk, wk_entry);
+	cv_signal(&q->q_cv);
 	mutex_exit(&q->q_mutex);
 }

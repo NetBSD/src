@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.40.2.2 2006/12/30 20:48:02 yamt Exp $ */
+/*	$NetBSD: gem.c,v 1.40.2.3 2007/09/03 14:34:33 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.40.2.2 2006/12/30 20:48:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.40.2.3 2007/09/03 14:34:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.40.2.2 2006/12/30 20:48:02 yamt Exp $");
 
 static void	gem_start(struct ifnet *);
 static void	gem_stop(struct ifnet *, int);
-int		gem_ioctl(struct ifnet *, u_long, caddr_t);
+int		gem_ioctl(struct ifnet *, u_long, void *);
 void		gem_tick(void *);
 void		gem_watchdog(struct ifnet *);
 void		gem_shutdown(void *);
@@ -171,7 +171,7 @@ gem_attach(sc, enaddr)
 
 /* XXX should map this in with correct endianness */
 	if ((error = bus_dmamem_map(sc->sc_dmatag, &sc->sc_cdseg, sc->sc_cdnseg,
-	    sizeof(struct gem_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct gem_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -179,7 +179,7 @@ gem_attach(sc, enaddr)
 	}
 
 	nullbuf =
-	    (caddr_t)sc->sc_control_data + sizeof(struct gem_control_data);
+	    (char *)sc->sc_control_data + sizeof(struct gem_control_data);
 
 	if ((error = bus_dmamap_create(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), 1,
@@ -444,7 +444,7 @@ gem_attach(sc, enaddr)
 		    sc->sc_dev.dv_xname);
 #endif
 
-	callout_init(&sc->sc_tick_ch);
+	callout_init(&sc->sc_tick_ch, 0);
 	return;
 
 	/*
@@ -467,11 +467,11 @@ gem_attach(sc, enaddr)
  fail_5:
 	bus_dmamap_destroy(sc->sc_dmatag, sc->sc_nulldmamap);
  fail_4:
-	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)nullbuf, ETHER_MIN_TX);
+	bus_dmamem_unmap(sc->sc_dmatag, (void *)nullbuf, ETHER_MIN_TX);
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmatag, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmatag, (void *)sc->sc_control_data,
 	    sizeof(struct gem_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmatag, &sc->sc_cdseg, sc->sc_cdnseg);
@@ -929,7 +929,7 @@ gem_init_regs(struct gem_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
-	const u_char *laddr = LLADDR(ifp->if_sadl);
+	const u_char *laddr = CLLADDR(ifp->if_sadl);
 	u_int32_t v;
 
 	/* These regs are not cleared on reset */
@@ -1093,7 +1093,7 @@ gem_start(ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmatag, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -1340,15 +1340,15 @@ gem_tint(sc)
 		    txs->txs_ndescs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-#ifdef GEM_DEBUG
+#ifdef GEM_DEBUG	/* XXX DMA synchronization? */
 		if (ifp->if_flags & IFF_DEBUG) {
 			int i;
 			printf("    txsoft %p transmit chain:\n", txs);
 			for (i = txs->txs_firstdesc;; i = GEM_NEXTTX(i)) {
 				printf("descriptor %d: ", i);
-				printf("gd_flags: 0x%016llx\t", (long long)
+				printf("gd_flags: 0x%016" PRIx64 "\t",
 					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
-				printf("gd_addr: 0x%016llx\n", (long long)
+				printf("gd_addr: 0x%016" PRIx64 "\n",
 					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
 				if (i == txs->txs_lastdesc)
 					break;
@@ -1404,10 +1404,9 @@ gem_tint(sc)
 
 #if 0
 	DPRINTF(sc, ("gem_tint: GEM_TX_STATE_MACHINE %x "
-		"GEM_TX_DATA_PTR %llx "
-		"GEM_TX_COMPLETION %x\n",
+		"GEM_TX_DATA_PTR %" PRIx64 "GEM_TX_COMPLETION %" PRIx32 "\n",
 		bus_space_read_4(sc->sc_bustag, sc->sc_h1, GEM_TX_STATE_MACHINE),
-		((long long) bus_space_read_4(sc->sc_bustag, sc->sc_h1,
+		((uint64_t)bus_space_read_4(sc->sc_bustag, sc->sc_h1,
 			GEM_TX_DATA_PTR_HI) << 32) |
 			     bus_space_read_4(sc->sc_bustag, sc->sc_h1,
 			GEM_TX_DATA_PTR_LO),
@@ -1474,6 +1473,7 @@ gem_rint(sc)
 		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
+			GEM_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			/*
 			 * We have processed all of the receive buffers.
 			 */
@@ -1545,7 +1545,7 @@ gem_rint(sc)
 			if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
 				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN -
 					 ETHER_VLAN_ENCAP_LEN;
-				eh = (struct ether_header *) mtod(m, caddr_t) +
+				eh = (struct ether_header *) mtod(m, void *) +
 					ETHER_VLAN_ENCAP_LEN;
 			} else {
 				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN;
@@ -1553,7 +1553,7 @@ gem_rint(sc)
 			}
 			if (ntohs(eh->ether_type) != ETHERTYPE_IP)
 				goto swcsum;
-			ip = (struct ip *) ((caddr_t)eh + ETHER_HDR_LEN);
+			ip = (struct ip *) ((char *)eh + ETHER_HDR_LEN);
 
 			/* IPv4 only */
 			if (ip->ip_v != IPVERSION)
@@ -1585,7 +1585,7 @@ gem_rint(sc)
 					goto swcsum;
 				if (pktlen < (hlen + sizeof(struct udphdr)))
 					goto swcsum;
-				uh = (struct udphdr *)((caddr_t)ip + hlen);
+				uh = (struct udphdr *)((char *)ip + hlen);
 				/* no checksum */
 				if (uh->uh_sum == 0)
 					goto swcsum;
@@ -1605,7 +1605,7 @@ gem_rint(sc)
 
 				optsum = 0;
 				temp = hlen - sizeof(struct ip);
-				opts = (uint16_t *) ((caddr_t) ip +
+				opts = (uint16_t *) ((char *) ip +
 					sizeof(struct ip));
 
 				while (temp > 1) {
@@ -2034,7 +2034,7 @@ int
 gem_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct gem_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

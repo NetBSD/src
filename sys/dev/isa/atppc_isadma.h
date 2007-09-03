@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isadma.h,v 1.3 2005/02/27 00:27:17 perry Exp $ */
+/* $NetBSD: atppc_isadma.h,v 1.3.4.1 2007/09/03 14:35:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 Bruce J.A. Nourish
@@ -34,7 +34,7 @@ int atppc_isadma_start(isa_chipset_tag_t, int, void *, u_int,
 	u_int8_t);
 int atppc_isadma_finish(isa_chipset_tag_t, int);
 int atppc_isadma_abort(isa_chipset_tag_t, int);
-int atppc_isadma_malloc(isa_chipset_tag_t, int, caddr_t *, bus_addr_t *,
+int atppc_isadma_malloc(isa_chipset_tag_t, int, void **, bus_addr_t *,
 	bus_size_t);
-void atppc_isadma_free(isa_chipset_tag_t, int, caddr_t *, bus_addr_t *,
+void atppc_isadma_free(isa_chipset_tag_t, int, void **, bus_addr_t *,
 	bus_size_t);

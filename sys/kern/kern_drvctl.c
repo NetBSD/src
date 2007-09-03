@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.1.14.2 2006/12/30 20:50:05 yamt Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.1.14.3 2007/09/03 14:40:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.1.14.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.1.14.3 2007/09/03 14:40:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ rescanbus(const char *busname, const char *ifattr,
 }
 
 int
-drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
+drvctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *p)
 {
 	int res;
 	char *ifattr;
@@ -157,8 +157,10 @@ drvctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *p)
 				      M_WAITOK);
 			res = copyin(d->locators, locs,
 				     d->numlocators * sizeof(int));
-			if (res)
+			if (res) {
+				free(locs, M_DEVBUF);
 				return (res);
+			}
 		} else
 			locs = 0;
 		res = rescanbus(d->busname, ifattr, d->numlocators, locs);

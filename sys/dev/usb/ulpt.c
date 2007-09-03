@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.69.2.2 2006/12/30 20:49:39 yamt Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.69.2.3 2007/09/03 14:39:16 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.69.2.2 2006/12/30 20:49:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.69.2.3 2007/09/03 14:39:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,26 +199,22 @@ USB_DECLARE_DRIVER(ulpt);
 
 USB_MATCH(ulpt)
 {
-	USB_MATCH_START(ulpt, uaa);
-	usb_interface_descriptor_t *id;
+	USB_IFMATCH_START(ulpt, uaa);
 
 	DPRINTFN(10,("ulpt_match\n"));
-	if (uaa->iface == NULL)
-		return (UMATCH_NONE);
-	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id != NULL &&
-	    id->bInterfaceClass == UICLASS_PRINTER &&
-	    id->bInterfaceSubClass == UISUBCLASS_PRINTER &&
-	    (id->bInterfaceProtocol == UIPROTO_PRINTER_UNI ||
-	     id->bInterfaceProtocol == UIPROTO_PRINTER_BI ||
-	     id->bInterfaceProtocol == UIPROTO_PRINTER_1284))
+
+	if (uaa->class == UICLASS_PRINTER &&
+	    uaa->subclass == UISUBCLASS_PRINTER &&
+	    (uaa->proto == UIPROTO_PRINTER_UNI ||
+	     uaa->proto == UIPROTO_PRINTER_BI ||
+	     uaa->proto == UIPROTO_PRINTER_1284))
 		return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 	return (UMATCH_NONE);
 }
 
 USB_ATTACH(ulpt)
 {
-	USB_ATTACH_START(ulpt, sc, uaa);
+	USB_IFATTACH_START(ulpt, sc, uaa);
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *ifcd = usbd_get_interface_descriptor(iface);
@@ -544,7 +540,7 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "ulptop", STEP);
+		error = tsleep((void *)sc, LPTPRI | PCATCH, "ulptop", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			goto done;
@@ -833,7 +829,7 @@ ulpt_tick(void *xsc)
 }
 
 int
-ulptioctl(dev_t dev, u_long cmd, caddr_t data,
+ulptioctl(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	return ENODEV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.6.4.1 2007/02/26 09:09:10 yamt Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.6.4.2 2007/09/03 14:32:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.6.4.1 2007/02/26 09:09:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.6.4.2 2007/09/03 14:32:08 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -123,7 +123,7 @@ irix_sys_uname(l, v, retval)
 	strncpy(sut.machine, irix_si_hw_name, sizeof(sut.machine));
 	sut.machine[sizeof(sut.machine) - 1] = '\0';
 
-	return copyout((caddr_t) &sut, (caddr_t) SCARG(uap, name),
+	return copyout((void *) &sut, (void *) SCARG(uap, name),
 	    sizeof(struct irix_utsname));
 }
 

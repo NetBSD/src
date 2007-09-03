@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.2.26.1 2006/12/30 20:47:54 yamt Exp $ */
+/*	$NetBSD: apm.c,v 1.2.26.2 2007/09/03 14:33:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2.26.1 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2.26.2 2007/09/03 14:33:24 yamt Exp $");
 
 #include "opt_apm.h"
 
@@ -108,7 +108,6 @@ int	apmdebug = 0;
 
 static void	apm_event_handle(struct apm_softc *, u_int, u_int);
 static void	apm_periodic_check(struct apm_softc *);
-static void	apm_create_thread(void *);
 static void	apm_thread(void *);
 static void	apm_perror(const char *, int, ...)
 		    __attribute__((__format__(__printf__,1,3)));
@@ -693,27 +692,17 @@ apm_attach(struct apm_softc *sc)
 	 * Create a kernel thread to periodically check for APM events,
 	 * and notify other subsystems when they occur.
 	 */
-	kthread_create(apm_create_thread, sc);
-
-	return;
-}
-
-void
-apm_create_thread(void *arg)
-{
-	struct apm_softc *sc = arg;
-
-	if (kthread_create1(apm_thread, sc, &sc->sc_thread,
-			    "%s", sc->sc_dev.dv_xname) == 0)
-		return;
-
-	/*
-	 * We were unable to create the APM thread; bail out.
-	 */
-	if (sc->sc_ops->aa_disconnect)
-		(*sc->sc_ops->aa_disconnect)(sc->sc_cookie);
-	printf("%s: unable to create thread, kernel APM support disabled\n",
-	       sc->sc_dev.dv_xname);
+	if (kthread_create(PRI_NONE, 0, NULL, apm_thread, sc,
+	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0) {
+		/*
+		 * We were unable to create the APM thread; bail out.
+		 */
+		if (sc->sc_ops->aa_disconnect)
+			(*sc->sc_ops->aa_disconnect)(sc->sc_cookie);
+		printf("%s: unable to create thread, "
+		    "kernel APM support disabled\n",
+		    sc->sc_dev.dv_xname);
+	}
 }
 
 void
@@ -809,7 +798,7 @@ apmclose(dev_t dev, int flag, int mode,
 }
 
 int
-apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+apmioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];

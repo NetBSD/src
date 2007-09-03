@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.2.14.1 2006/06/21 15:02:55 yamt Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.2.14.2 2007/09/03 14:34:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,15 +40,15 @@
  * Intel 82801 Series I/O Controller Hub (ICH) -- LPC Interface Bridge part
  *   register definitions.
  */
-/*
- * Currently only necessory part is defined (specifically TCO timer function).
- */
 
+#ifndef _DEV_IC_I82801LPGREG_H_
+#define _DEV_IC_I82801LPGREG_H_
 /*
  * PCI configuration registers
  */
 #define LPCIB_PCI_PMBASE	0x40
 #define LPCIB_PCI_ACPI_CNTL	0x44
+# define LPCIB_PCI_ACPI_CNTL_EN	(1 << 4)
 #define LPCIB_PCI_BIOS_CNTL	0x4e
 #define LPCIB_PCI_TCO_CNTL	0x54
 #define LPCIB_PCI_GPIO_BASE	0x58
@@ -79,8 +79,8 @@
 #define LPCIB_PCI_MON_TRP_MSK	oxcc
 #define LPCIB_PCI_GEN_CNTL	0xd0
 #define LPCIB_PCI_GEN_STA	0xd4
-# define LPCIB_PCI_GEN_STA_SAFE_MODE	(1<<2)
-# define LPCIB_PCI_GEN_STA_NO_REBOOT	(1<<1)
+# define LPCIB_PCI_GEN_STA_SAFE_MODE	(1 << 2)
+# define LPCIB_PCI_GEN_STA_NO_REBOOT	(1 << 1)
 #define LPCIB_PCI_BACK_CNTL	0xd5
 #define LPCIB_PCI_RTC_CONF	0xd8
 #define LPCIB_PCI_COM_DEC	0xe0
@@ -135,18 +135,102 @@
 # define LPCIB_PM_SS_CNTL_ARB_DIS	0x01	/* disable arbiter */
 
 /*
+ * SMBus controller registers.
+ */
+
+/* PCI configuration registers */
+#define LPCIB_SMB_BASE	0x20		/* SMBus base address */
+#define LPCIB_SMB_HOSTC	0x40		/* host configuration */
+#define LPCIB_SMB_HOSTC_HSTEN	(1 << 0)	/* enable host controller */
+#define LPCIB_SMB_HOSTC_SMIEN	(1 << 1)	/* generate SMI */
+#define LPCIB_SMB_HOSTC_I2CEN	(1 << 2)	/* enable I2C commands */
+
+/* SMBus I/O registers */
+#define LPCIB_SMB_HS	0x00		/* host status */
+#define LPCIB_SMB_HS_BUSY		(1 << 0)	/* running a command */
+#define LPCIB_SMB_HS_INTR		(1 << 1)	/* command completed */
+#define LPCIB_SMB_HS_DEVERR	(1 << 2)	/* command error */
+#define LPCIB_SMB_HS_BUSERR	(1 << 3)	/* transaction collision */
+#define LPCIB_SMB_HS_FAILED	(1 << 4)	/* failed bus transaction */
+#define LPCIB_SMB_HS_SMBAL	(1 << 5)	/* SMBALERT# asserted */
+#define LPCIB_SMB_HS_INUSE	(1 << 6)	/* bus semaphore */
+#define LPCIB_SMB_HS_BDONE	(1 << 7)	/* byte received/transmitted */
+#define LPCIB_SMB_HS_BITS		"\020\001BUSY\002INTR\003DEVERR\004BUSERR\005FAILED\006SMBAL\007INUSE\010BDONE"
+#define LPCIB_SMB_HC	0x02		/* host control */
+#define LPCIB_SMB_HC_INTREN	(1 << 0)	/* enable interrupts */
+#define LPCIB_SMB_HC_KILL		(1 << 1)	/* kill current transaction */
+#define LPCIB_SMB_HC_CMD_QUICK	(0 << 2)	/* QUICK command */
+#define LPCIB_SMB_HC_CMD_BYTE	(1 << 2)	/* BYTE command */
+#define LPCIB_SMB_HC_CMD_BDATA	(2 << 2)	/* BYTE DATA command */
+#define LPCIB_SMB_HC_CMD_WDATA	(3 << 2)	/* WORD DATA command */
+#define LPCIB_SMB_HC_CMD_PCALL	(4 << 2)	/* PROCESS CALL command */
+#define LPCIB_SMB_HC_CMD_BLOCK	(5 << 2)	/* BLOCK command */
+#define LPCIB_SMB_HC_CMD_I2CREAD	(6 << 2)	/* I2C READ command */
+#define LPCIB_SMB_HC_CMD_BLOCKP	(7 << 2)	/* BLOCK PROCESS command */
+#define LPCIB_SMB_HC_LASTB	(1 << 5)	/* last byte in block */
+#define LPCIB_SMB_HC_START	(1 << 6)	/* start transaction */
+#define LPCIB_SMB_HC_PECEN	(1 << 7)	/* enable PEC */
+#define LPCIB_SMB_HCMD	0x03		/* host command */
+#define LPCIB_SMB_TXSLVA	0x04		/* transmit slave address */
+#define LPCIB_SMB_TXSLVA_READ	(1 << 0)	/* read direction */
+#define LPCIB_SMB_TXSLVA_ADDR(x)	(((x) & 0x7f) << 1) /* 7-bit address */
+#define LPCIB_SMB_HD0	0x05		/* host data 0 */
+#define LPCIB_SMB_HD1	0x06		/* host data 1 */
+#define LPCIB_SMB_HBDB	0x07		/* host block data byte */
+#define LPCIB_SMB_PEC	0x08		/* PEC data */
+#define LPCIB_SMB_RXSLVA	0x09		/* receive slave address */
+#define LPCIB_SMB_SD	0x0a		/* receive slave data */
+#define LPCIB_SMB_SD_MSG0(x)	((x) & 0xff)	/* data message byte 0 */
+#define LPCIB_SMB_SD_MSG1(x)	((x) >> 8)	/* data message byte 1 */
+#define LPCIB_SMB_AS	0x0c		/* auxiliary status */
+#define LPCIB_SMB_AS_CRCE		(1 << 0)	/* CRC error */
+#define LPCIB_SMB_AS_TCO		(1 << 1)	/* advanced TCO mode */
+#define LPCIB_SMB_AC	0x0d		/* auxiliary control */
+#define LPCIB_SMB_AC_AAC		(1 << 0)	/* automatically append CRC */
+#define LPCIB_SMB_AC_E32B		(1 << 1)	/* enable 32-byte buffer */
+#define LPCIB_SMB_SMLPC	0x0e		/* SMLink pin control */
+#define LPCIB_SMB_SMLPC_LINK0	(1 << 0)	/* SMLINK0 pin state */
+#define LPCIB_SMB_SMLPC_LINK1	(1 << 1)	/* SMLINK1 pin state */
+#define LPCIB_SMB_SMLPC_CLKC	(1 << 2)	/* SMLINK0 pin is untouched */
+#define LPCIB_SMB_SMBPC	0x0f		/* SMBus pin control */
+#define LPCIB_SMB_SMBPC_CLK	(1 << 0)	/* SMBCLK pin state */
+#define LPCIB_SMB_SMBPC_DATA	(1 << 1)	/* SMBDATA pin state */
+#define LPCIB_SMB_SMBPC_CLKC	(1 << 2)	/* SMBCLK pin is untouched */
+#define LPCIB_SMB_SS	0x10		/* slave status */
+#define LPCIB_SMB_SS_HN		(1 << 0)	/* Host Notify command */
+#define LPCIB_SMB_SCMD	0x11		/* slave command */
+#define LPCIB_SMB_SCMD_INTREN	(1 << 0)	/* enable interrupts on HN */
+#define LPCIB_SMB_SCMD_WKEN	(1 << 1)	/* wake on HN */
+#define LPCIB_SMB_SCMD_SMBALDS	(1 << 2)	/* disable SMBALERT# intr */
+#define LPCIB_SMB_NDADDR	0x14		/* notify device address */
+#define LPCIB_SMB_NDADDR_ADDR(x)	((x) >> 1)	/* 7-bit address */
+#define LPCIB_SMB_NDLOW	0x16		/* notify data low byte */
+#define LPCIB_SMB_NDHIGH	0x17		/* notify data high byte */
+
+/* ICH Chipset Configuration Registers (ICH6 and newer) */
+#define LPCIB_RCBA		0xf0
+#define LPCIB_GCS_OFFSET	0x3410
+#define LPCIB_GCS_SIZE		4
+#define LPCIB_GCS_NO_REBOOT	0x20
+
+/*
  * System management TCO registers
  *  (offset from PMBASE)
  */
 #define LPCIB_TCO_BASE		0x60
 #define LPCIB_TCO_RLD		(LPCIB_TCO_BASE+0x00)
 #define LPCIB_TCO_TMR		(LPCIB_TCO_BASE+0x01)
-# define LPCIB_TCO_TMR_MASK		0x3f
+#define LPCIB_TCO_TMR2		(LPCIB_TCO_BASE+0x12) /* ICH6 and newer */
+# define LPCIB_TCO_TMR_MASK 		0x3f
 #define LPCIB_TCO_DAT_IN	(LPCIB_TCO_BASE+0x02)
 #define LPCIB_TCO_DAT_OUT	(LPCIB_TCO_BASE+0x03)
 #define LPCIB_TCO1_STS		(LPCIB_TCO_BASE+0x04)
+# define LPCIB_TCO1_STS_TIMEOUT 	0x08
 #define LPCIB_TCO2_STS		(LPCIB_TCO_BASE+0x06)
+# define LPCIB_TCO2_STS_BOOT_STS 	0x04
+# define LPCIB_TCO2_STS_SECONDS_TO_STS 	0x02
 #define LPCIB_TCO1_CNT		(LPCIB_TCO_BASE+0x08)
+# define LPCIB_TCO1_CNT_TCO_LOCK 	(1 << 12)
 # define LPCIB_TCO1_CNT_TCO_TMR_HLT	(1 << 11)
 # define LPCIB_TCO1_CNT_SEND_NOW	(1 << 10)
 # define LPCIB_TCO1_CNT_NMI2SMI_EN	(1 << 9)
@@ -163,15 +247,20 @@
  *  - 6 bit; values of 0-3 will be ignored and should not be attempted
  */
 static __inline int
-lpcib_tcotimer_tick_to_second(int tick)
+lpcib_tcotimer_tick_to_second(int ltick)
 {
-	return tick * 6 / 10;
+	return ltick * 6 / 10;
 }
 
 static __inline int
-lpcib_tcotimer_second_to_tick(int tick)
+lpcib_tcotimer_second_to_tick(int ltick)
 {
-	return tick * 10 / 6;
+	return ltick * 10 / 6;
 }
-#define LPCIB_TCOTIMER_MIN_TICK	4
-#define LPCIB_TCOTIMER_MAX_TICK	0x3f
+
+#define LPCIB_TCOTIMER_MIN_TICK 	4
+#define LPCIB_TCOTIMER2_MIN_TICK	2
+#define LPCIB_TCOTIMER_MAX_TICK 	0x3f 	/* 39 seconds max */
+#define LPCIB_TCOTIMER2_MAX_TICK 	0x265	/* 613 seconds max */
+
+#endif /*  _DEV_IC_I82801LPGREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.1.2.3 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: bthub.c,v 1.1.2.4 2007/09/03 14:33:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.1.2.3 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.1.2.4 2007/09/03 14:33:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -149,7 +149,7 @@ bthub_detach(struct device *self, int flags)
  */
 
 int
-bthubioctl(dev_t devno, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
+bthubioctl(dev_t devno, unsigned long cmd, void *data, int flag, struct lwp *l)
 {
 	prop_dictionary_t dict;
 	int err;
@@ -198,7 +198,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		sc = (struct bthub_softc *)bthub_cd.cd_devs[unit];
 		if (sc == NULL)
 			continue;
-		
+
 		prop = device_properties(&sc->sc_dev);
 		obj = prop_dictionary_get(prop, BTDEVladdr);
 		if (prop_data_equals(laddr, obj))
@@ -208,7 +208,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 	/* validate remote address */
 	raddr = prop_dictionary_get(dict, BTDEVraddr);
 	if (prop_data_size(raddr) != sizeof(bdaddr_t)
-	    || bdaddr_any(prop_data_data_nocopy(raddr))) 
+	    || bdaddr_any(prop_data_data_nocopy(raddr)))
 		return EINVAL;
 
 	/* validate service name */
@@ -233,12 +233,12 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 
 	switch (cmd) {
 	case BTDEV_ATTACH:	/* attach BTDEV */
-		if (dev != NULL) 
+		if (dev != NULL)
 			return EADDRINUSE;
 
 		dev = (struct btdev *)config_found((struct device *)sc,
 						dict, bthub_print);
-		if (dev == NULL) 
+		if (dev == NULL)
 			return ENXIO;
 
 		prop = device_properties(&dev->sc_dev);
@@ -250,7 +250,7 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		break;
 
 	case BTDEV_DETACH:	/* detach BTDEV */
-		if (dev == NULL) 
+		if (dev == NULL)
 			return ENXIO;
 
 		LIST_REMOVE(dev, sc_next);

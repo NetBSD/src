@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.14 2005/06/01 18:16:22 drochner Exp $ */
+/* $NetBSD: isic_pci_elsa_qs1p.c,v 1.14.2.1 2007/09/03 14:37:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -32,7 +32,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.14 2005/06/01 18:16:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.14.2.1 2007/09/03 14:37:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -267,7 +267,7 @@ isic_attach_Eqs1pp(psc, pa)
 	IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
 		(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
 	IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);	/* set all output lines high */
-	callout_init(&((struct pci_isic_softc *)sc)->ledcallout);
+	callout_init(&((struct pci_isic_softc *)sc)->ledcallout, 0);
 
 	/* disable any interrupts */
 	IPAC_WRITE(IPAC_MASK, 0xff);

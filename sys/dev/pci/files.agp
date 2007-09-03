@@ -1,4 +1,4 @@
-#	$NetBSD: files.agp,v 1.3 2004/08/30 10:30:38 drochner Exp $
+#	$NetBSD: files.agp,v 1.3.12.1 2007/09/03 14:36:49 yamt Exp $
 
 define	agpbus { }
 
@@ -14,6 +14,9 @@ file	dev/pci/agp_ali.c	agp_ali & agp		needs-flag
 define	agp_amd
 file	dev/pci/agp_amd.c	agp_amd & agp		needs-flag
 
+define	agp_apple
+file	dev/pci/agp_apple.c	agp_apple & agp		needs-flag
+
 define	agp_i810
 file	dev/pci/agp_i810.c	agp_i810 & agp		needs-flag
 
@@ -25,3 +28,6 @@ file	dev/pci/agp_sis.c	agp_sis & agp		needs-flag
 
 define	agp_via
 file	dev/pci/agp_via.c	agp_via & agp		needs-flag
+
+define	agp_amd64
+file	dev/pci/agp_amd64.c	agp_amd64 & agp		needs-flag

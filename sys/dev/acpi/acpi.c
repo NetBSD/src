@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.76.2.3 2007/02/26 09:09:57 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.76.2.4 2007/09/03 14:33:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76.2.3 2007/02/26 09:09:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76.2.4 2007/09/03 14:33:18 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -599,6 +599,8 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 	ACPI_BUFFER buf;
 	ACPI_DEVICE_INFO *devinfo;
 	ACPI_STATUS rv;
+	ACPI_NAME_UNION *anu;
+	int i, clear = 0;
 
 	rv = AcpiGetType(handle, &type);
 	if (ACPI_SUCCESS(rv)) {
@@ -640,6 +642,19 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 			ad->ad_level = level;
 			ad->ad_scope = as;
 			ad->ad_type = type;
+
+			anu = (ACPI_NAME_UNION *)&devinfo->Name;
+			ad->ad_name[4] = '\0';
+			for (i = 3, clear = 0; i >= 0; i--) {
+				if (!clear && anu->Ascii[i] == '_')
+					ad->ad_name[i] = '\0';
+				else {
+					ad->ad_name[i] = anu->Ascii[i];
+					clear = 1;
+				}
+			}
+			if (ad->ad_name[0] == '\0')
+				ad->ad_name[0] = '_';
 
 			TAILQ_INSERT_TAIL(&as->as_devnodes, ad, ad_list);
 
@@ -684,7 +699,8 @@ acpi_print(void *aux, const char *pnp)
 			    aa->aa_node->ad_devinfo->HardwareId.Value;
 			char *str;
 
-			aprint_normal("%s ", pnpstr);
+			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
+			    pnpstr);
 			rv = acpi_eval_string(aa->aa_node->ad_handle,
 			    "_STR", &str);
 			if (ACPI_SUCCESS(rv)) {
@@ -707,14 +723,16 @@ acpi_print(void *aux, const char *pnp)
 
 #endif
 		} else {
-			aprint_normal("ACPI Object Type '%s' (0x%02x) ",
-			   AcpiUtGetTypeName(aa->aa_node->ad_devinfo->Type),
-			   aa->aa_node->ad_devinfo->Type);
+			aprint_normal("%s (ACPI Object Type '%s' "
+			    "[0x%02x]) ", aa->aa_node->ad_name,
+			     AcpiUtGetTypeName(aa->aa_node->ad_devinfo->Type),
+			     aa->aa_node->ad_devinfo->Type);
 		}
 		aprint_normal("at %s", pnp);
 	} else {
+		aprint_normal(" (%s", aa->aa_node->ad_name);
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
-			aprint_normal(" (%s", aa->aa_node->ad_devinfo->HardwareId.Value);
+			aprint_normal(", %s", aa->aa_node->ad_devinfo->HardwareId.Value);
 			if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_UID) {
 				const char *uid;
 
@@ -723,8 +741,8 @@ acpi_print(void *aux, const char *pnp)
 					uid = "<null>";
 				aprint_normal("-%s", uid);
 			}
-			aprint_normal(")");
 		}
+		aprint_normal(")");
 	}
 
 	return UNCONF;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.6.2.2 2007/02/26 09:11:16 yamt Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.6.2.3 2007/09/03 14:41:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.6.2.2 2007/02/26 09:11:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.6.2.3 2007/09/03 14:41:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,44 +59,19 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.6.2.2 2007/02/26 09:11:16 yamt Exp $")
 #define	LWP_UNPARK_MAX		1024
 
 syncobj_t lwp_park_sobj = {
-	SOBJ_SLEEPQ_SORTED,
+	SOBJ_SLEEPQ_FIFO,
 	sleepq_unsleep,
-	sleepq_changepri
+	sleepq_changepri,
+	sleepq_lendpri,
+	syncobj_noowner,
 };
 
 sleeptab_t	lwp_park_tab;
-
-#ifdef LWP_COUNTERS
-struct evcnt	lwp_ev_park_early = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "_lwp_park", "unparked early");
-struct evcnt	lwp_ev_park_raced = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "_lwp_park", "raced");
-struct evcnt	lwp_ev_park_miss = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "_lwp_park", "not parked");
-struct evcnt	lwp_ev_park_bcast = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "_lwp_park", "broadcast unpark");
-struct evcnt	lwp_ev_park_targ = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "_lwp_park", "targeted unpark");
-struct evcnt	lwp_ev_park = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
-    NULL, "_lwp_park", "parked");
-
-#define	LWP_COUNT(ev, val)	(ev).ev_count += (val)	/* XXXSMP */
-#else
-#define	LWP_COUNT(ev, val)	/* nothing */
-#endif
 
 void
 lwp_sys_init(void)
 {
 	sleeptab_init(&lwp_park_tab);
-#ifdef LWP_COUNTERS
-	evcnt_attach_static(&lwp_ev_park_early);
-	evcnt_attach_static(&lwp_ev_park_raced);
-	evcnt_attach_static(&lwp_ev_park_miss);
-	evcnt_attach_static(&lwp_ev_park_bcast);
-	evcnt_attach_static(&lwp_ev_park_targ);
-	evcnt_attach_static(&lwp_ev_park);
-#endif
 }
 
 /* ARGSUSED */
@@ -131,9 +106,22 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 		return ENOMEM;
 	}
 
-	newlwp(l, p, uaddr, inmem,
+	error = newlwp(l, p, uaddr, inmem,
 	    SCARG(uap, flags) & LWP_DETACHED,
 	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2);
+	if (error) {
+		uvm_uarea_free(uaddr);
+		pool_put(&lwp_uc_pool, newuc);
+		return error;
+	}
+
+	lid = l2->l_lid;
+	error = copyout(&lid, SCARG(uap, new_lwp), sizeof(lid));
+	if (error) {
+		lwp_exit(l2);
+		pool_put(&lwp_uc_pool, newuc);
+		return error;
+	}
 
 	/*
 	 * Set the new LWP running, unless the caller has requested that
@@ -142,25 +130,20 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	 */
 	mutex_enter(&p->p_smutex);
 	lwp_lock(l2);
-	lid = l2->l_lid;
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0 &&
 	    (l->l_flag & (LW_WREBOOT | LW_WSUSPEND | LW_WEXIT)) == 0) {
 	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
 	    		l2->l_stat = LSSTOP;
 		else {
-			LOCK_ASSERT(lwp_locked(l2, &sched_mutex));
+			KASSERT(lwp_locked(l2, l2->l_cpu->ci_schedstate.spc_mutex));
 			p->p_nrlwps++;
 			l2->l_stat = LSRUN;
-			setrunqueue(l2);
+			sched_enqueue(l2, false);
 		}
 	} else
 		l2->l_stat = LSSUSPENDED;
 	lwp_unlock(l2);
 	mutex_exit(&p->p_smutex);
-
-	error = copyout(&lid, SCARG(uap, new_lwp), sizeof(lid));
-	if (error)
-		return error;
 
 	return 0;
 }
@@ -238,6 +221,36 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	 * Suspension of the current LWP will happen on return to userspace.
 	 */
 	error = lwp_suspend(l, t);
+	if (error) {
+		mutex_exit(&p->p_smutex);
+		return error;
+	}
+
+	/*
+	 * Wait for:
+	 *  o process exiting
+	 *  o target LWP suspended
+	 *  o target LWP not suspended and L_WSUSPEND clear
+	 *  o target LWP exited
+	 */
+	for (;;) {
+		error = cv_wait_sig(&p->p_lwpcv, &p->p_smutex);
+		if (error) {
+			error = ERESTART;
+			break;
+		}
+		if (lwp_find(p, SCARG(uap, target)) == NULL) {
+			error = ESRCH;
+			break;
+		}
+		if ((l->l_flag | t->l_flag) & (LW_WCORE | LW_WEXIT)) {
+			error = ERESTART;
+			break;
+		}
+		if (t->l_stat == LSSUSPENDED ||
+		    (t->l_flag & LW_WSUSPEND) == 0)
+			break;
+	}
 	mutex_exit(&p->p_smutex);
 
 	return error;
@@ -287,26 +300,22 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	}
 
 	lwp_lock(t);
+	t->l_flag |= (LW_CANCELLED | LW_UNPARKED);
 
 	if (t->l_stat != LSSLEEP) {
+		lwp_unlock(t);
 		error = ENODEV;
-		goto bad;
-	}
-
-	if ((t->l_flag & LW_SINTR) == 0) {
+	} else if ((t->l_flag & LW_SINTR) == 0) {
+		lwp_unlock(t);
 		error = EBUSY;
-		goto bad;
+	} else {
+		/* Wake it up.  lwp_unsleep() will release the LWP lock. */
+		lwp_unsleep(t);
+		error = 0;
 	}
 
-	/* wake it up  setrunnable() will release the LWP lock. */
-	t->l_flag |= LW_CANCELLED;
-	setrunnable(t);
 	mutex_exit(&p->p_smutex);
-	return 0;
 
- bad:
- 	lwp_unlock(t);
-	mutex_exit(&p->p_smutex);
 	return error;
 }
 
@@ -415,17 +424,22 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 			p->p_ndlwps++;
 			t->l_prflag |= LPR_DETACHED;
 			if (t->l_stat == LSZOMB) {
-				cv_broadcast(&p->p_lwpcv);
-				lwp_free(t, 0, 0); /* releases proc mutex */
+				/* Releases proc mutex. */
+				lwp_free(t, false, false);
 				return 0;
 			}
 			error = 0;
+
+			/*
+			 * Have any LWPs sleeping in lwp_wait() recheck
+			 * for deadlock.
+			 */
+			cv_broadcast(&p->p_lwpcv);
 		} else
 			error = EINVAL;
 	} else
 		error = ESRCH;
 
-	cv_broadcast(&p->p_lwpcv);
 	mutex_exit(&p->p_smutex);
 
 	return error;
@@ -434,7 +448,126 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 static inline wchan_t
 lwp_park_wchan(struct proc *p, const void *hint)
 {
+
 	return (wchan_t)((uintptr_t)p ^ (uintptr_t)hint);
+}
+
+int
+lwp_unpark(lwpid_t target, const void *hint)
+{
+	sleepq_t *sq;
+	wchan_t wchan;
+	int swapin;
+	proc_t *p;
+	lwp_t *t;
+
+	/*
+	 * Easy case: search for the LWP on the sleep queue.  If
+	 * it's parked, remove it from the queue and set running.
+	 */
+	p = curproc;
+	wchan = lwp_park_wchan(p, hint);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+
+	TAILQ_FOREACH(t, &sq->sq_queue, l_sleepchain)
+		if (t->l_proc == p && t->l_lid == target)
+			break;
+
+	if (__predict_true(t != NULL)) {
+		swapin = sleepq_remove(sq, t);
+		sleepq_unlock(sq);
+		if (swapin)
+			uvm_kick_scheduler();
+		return 0;
+	}
+
+	/*
+	 * The LWP hasn't parked yet.  Take the hit and mark the
+	 * operation as pending.
+	 */
+	sleepq_unlock(sq);
+
+	mutex_enter(&p->p_smutex);
+	if ((t = lwp_find(p, target)) == NULL) {
+		mutex_exit(&p->p_smutex);
+		return ESRCH;
+	}
+
+	/*
+	 * It may not have parked yet, we may have raced, or it
+	 * is parked on a different user sync object.
+	 */
+	lwp_lock(t);
+	if (t->l_syncobj == &lwp_park_sobj) {
+		/* Releases the LWP lock. */
+		lwp_unsleep(t);
+	} else {
+		/*
+		 * Set the operation pending.  The next call to _lwp_park
+		 * will return early.
+		 */
+		t->l_flag |= LW_UNPARKED;
+		lwp_unlock(t);
+	}
+
+	mutex_exit(&p->p_smutex);
+	return 0;
+}
+
+int
+lwp_park(struct timespec *ts, const void *hint)
+{
+	struct timespec tsx;
+	sleepq_t *sq;
+	wchan_t wchan;
+	int timo, error;
+	lwp_t *l;
+
+	/* Fix up the given timeout value. */
+	if (ts != NULL) {
+		getnanotime(&tsx);
+		timespecsub(ts, &tsx, &tsx);
+		if (tsx.tv_sec < 0 || (tsx.tv_sec == 0 && tsx.tv_nsec <= 0))
+			return ETIMEDOUT;
+		if ((error = itimespecfix(&tsx)) != 0)
+			return error;
+		timo = tstohz(&tsx);
+		KASSERT(timo != 0);
+	} else
+		timo = 0;
+
+	/* Find and lock the sleep queue. */
+	l = curlwp;
+	wchan = lwp_park_wchan(l->l_proc, hint);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+
+	/*
+	 * Before going the full route and blocking, check to see if an
+	 * unpark op is pending.
+	 */
+	lwp_lock(l);
+	if ((l->l_flag & (LW_CANCELLED | LW_UNPARKED)) != 0) {
+		l->l_flag &= ~(LW_CANCELLED | LW_UNPARKED);
+		lwp_unlock(l);
+		sleepq_unlock(sq);
+		return EALREADY;
+	}
+	lwp_unlock_to(l, sq->sq_mutex);
+	l->l_biglocks = 0;
+	sleepq_enqueue(sq, sched_kpri(l), wchan, "parked", &lwp_park_sobj);
+	error = sleepq_block(timo, true);
+	switch (error) {
+	case EWOULDBLOCK:
+		error = ETIMEDOUT;
+		break;
+	case ERESTART:
+		error = EINTR;
+		break;
+	default:
+		/* nothing */
+		break;
+	}
+	return error;
 }
 
 /*
@@ -447,60 +580,29 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys__lwp_park_args /* {
 		syscallarg(const struct timespec *)	ts;
-		syscallarg(ucontext_t *)		uc;
+		syscallarg(lwpid_t)			unpark;
 		syscallarg(const void *)		hint;
+		syscallarg(const void *)		unparkhint;
 	} */ *uap = v;
-	const struct timespec *tsp;
-	struct timespec ts, tsx;
-	struct timeval tv;
-	sleepq_t *sq;
-	wchan_t wchan;
-	int timo, error;
+	struct timespec ts, *tsp;
+	int error;
 
-	/* Fix up the given timeout value. */
-	if ((tsp = SCARG(uap, ts)) != NULL) {
-		if ((error = copyin(tsp, &ts, sizeof(ts))) != 0)
+	if (SCARG(uap, ts) == NULL)
+		tsp = NULL;
+	else {
+		error = copyin(SCARG(uap, ts), &ts, sizeof(ts));
+		if (error != 0)
 			return error;
-		getnanotime(&tsx);
-		timespecsub(&ts, &tsx, &ts);
-		tv.tv_sec = ts.tv_sec;
-		tv.tv_usec = ts.tv_nsec / 1000;
-		if (tv.tv_sec < 0 || (tv.tv_sec == 0 && tv.tv_usec < 0))
-			return ETIMEDOUT;
-		if ((error = itimerfix(&tv)) != 0)
-			return error;
-		timo = tvtohz(&tv);
-	} else
-		timo = 0;
-
-	/* Find and lock the sleep queue. */
-	wchan = lwp_park_wchan(l->l_proc, SCARG(uap, hint));
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
-
-	/*
-	 * Before going the full route and blocking, check to see if an
-	 * unpark op is pending.
-	 */
-	if ((l->l_flag & LW_CANCELLED) != 0) {
-		sleepq_lwp_lock(l);
-		l->l_flag &= ~LW_CANCELLED;
-		sleepq_lwp_unlock(l);
-		sleepq_unlock(sq);
-		LWP_COUNT(lwp_ev_park_early, 1);
-		return EALREADY;
+		tsp = &ts;
 	}
 
-	/*
-	 * For now we ignore the ucontext argument.  In the future, we may
-	 * put our stack up to be recycled.  If it's binned, a trampoline
-	 * function could call sleepq_unblock() on our behalf.
-	 */
-	LWP_COUNT(lwp_ev_park, 1);
-	sleepq_enter(sq, l);
-	sleepq_block(sq, sched_kpri(l), wchan, "parked", timo, 1,
-	    &lwp_park_sobj);
-	error = sleepq_unblock(timo, 1);
-	return error == EWOULDBLOCK ? ETIMEDOUT : error;
+	if (SCARG(uap, unpark) != 0) {
+		error = lwp_unpark(SCARG(uap, unpark), SCARG(uap, unparkhint));
+		if (error != 0)
+			return error;
+	}
+
+	return lwp_park(tsp, SCARG(uap, hint));
 }
 
 int
@@ -510,67 +612,8 @@ sys__lwp_unpark(struct lwp *l, void *v, register_t *retval)
 		syscallarg(lwpid_t)		target;
 		syscallarg(const void *)	hint;
 	} */ *uap = v;
-	struct proc *p;
-	struct lwp *t;
-	sleepq_t *sq;
-	lwpid_t target;
-	wchan_t wchan;
-	int swapin;
 
-	p = l->l_proc;
-	target = SCARG(uap, target);
-
-	/*
-	 * Easy case: search for the LWP on the sleep queue.  If
-	 * it's parked, remove it from the queue and set running.
-	 */
-	wchan = lwp_park_wchan(p, SCARG(uap, hint));
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
-
-	TAILQ_FOREACH(t, &sq->sq_queue, l_sleepchain)
-		if (t->l_proc == p && t->l_lid == target)
-			break;
-
-	if (t == NULL) {
-		/*
-		 * The LWP hasn't parked yet.  Take the hit
-		 * and mark the operation as pending.
-		 */
-		sleepq_unlock(sq);
-		mutex_enter(&p->p_smutex);
-		if ((t = lwp_find(p, target)) == NULL) {
-			mutex_exit(&p->p_smutex);
-			return ESRCH;
-		}
-		lwp_lock(t);
-		mutex_exit(&p->p_smutex);
-
-		if (t->l_sleepq == sq) {
-			/*
-			 * We have raced, and the LWP is now parked.
-			 * Wake it in the usual way.
-			 */
-			KASSERT(t->l_syncobj == &lwp_park_sobj);
-			LOCK_ASSERT(lwp_locked(t, sq->sq_mutex));
-			LWP_COUNT(lwp_ev_park_raced, 1);
-		} else {
-			/*
-			 * It many not have parked yet, or is parked
-			 * on a different user sync object.  The
-			 * latter is an application error.
-			 */
-			t->l_flag |= LW_CANCELLED;
-			lwp_unlock(t);
-			return 0;
-		}
-	}
-
-	swapin = sleepq_remove(sq, t);
-	sleepq_unlock(sq);
-	if (swapin)
-		uvm_kick_scheduler();
-	LWP_COUNT(lwp_ev_park_targ, 1);
-	return 0;
+	return lwp_unpark(SCARG(uap, target), SCARG(uap, hint));
 }
 
 int
@@ -587,7 +630,7 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 	wchan_t wchan;
 	lwpid_t targets[32], *tp, *tpp, *tmax, target;
 	int swapin, error;
-	u_int ntargets, unparked;
+	u_int ntargets;
 	size_t sz;
 
 	p = l->l_proc;
@@ -628,7 +671,6 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 		return error;
 	}
 
-	unparked = 0;
 	swapin = 0;
 	wchan = lwp_park_wchan(p, SCARG(uap, hint));
 	sq = sleeptab_lookup(&lwp_park_tab, wchan);
@@ -646,7 +688,6 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 
 		if (t != NULL) {
 			swapin |= sleepq_remove(sq, t);
-			unparked++;
 			continue;
 		}
 
@@ -662,28 +703,25 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 			continue;
 		}
 		lwp_lock(t);
-		mutex_exit(&p->p_smutex);
 
-		if (t->l_sleepq == sq) {
-			/*
-			 * We have raced, and the LWP is now parked.
-			 * Wake it in the usual way.
-			 */
-			KASSERT(t->l_syncobj == &lwp_park_sobj);
-			LOCK_ASSERT(lwp_locked(t, sq->sq_mutex));
-			LWP_COUNT(lwp_ev_park_raced, 1);
-			swapin |= sleepq_remove(sq, t);
-			unparked++;
+		/*
+		 * It may not have parked yet, we may have raced, or
+		 * it is parked on a different user sync object.
+		 */
+		if (t->l_syncobj == &lwp_park_sobj) {
+			/* Releases the LWP lock. */
+			lwp_unsleep(t);
 		} else {
 			/*
-			 * It many not have parked yet, or is parked
-			 * on a different user sync object.  The
-			 * latter is an application error.
+			 * Set the operation pending.  The next call to
+			 * _lwp_park will return early.
 			 */
-			t->l_flag |= LW_CANCELLED;
+			t->l_flag |= LW_UNPARKED;
 			lwp_unlock(t);
-			sleepq_lock(sq);
 		}
+
+		mutex_exit(&p->p_smutex);
+		sleepq_lock(sq);
 	}
 
 	sleepq_unlock(sq);
@@ -694,8 +732,6 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 	}
 	if (swapin)
 		uvm_kick_scheduler();
-	LWP_COUNT(lwp_ev_park_bcast, unparked);
-	LWP_COUNT(lwp_ev_park_miss, (ntargets - unparked));
-	/* XXXAD return unparked; */
+
 	return 0;
 }

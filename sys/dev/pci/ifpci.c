@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci.c,v 1.16.4.2 2006/12/30 20:48:46 yamt Exp $	*/
+/* $NetBSD: ifpci.c,v 1.16.4.3 2007/09/03 14:37:08 yamt Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.16.4.2 2006/12/30 20:48:46 yamt Exp $
+ *	$Id: ifpci.c,v 1.16.4.3 2007/09/03 14:37:08 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.16.4.2 2006/12/30 20:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.16.4.3 2007/09/03 14:37:08 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -286,8 +286,8 @@ ifpci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": Fritz!PCI card\n");
 
 	/* initialize sc */
-	callout_init(&sc->sc_T3_callout);
-	callout_init(&sc->sc_T4_callout);
+	callout_init(&sc->sc_T3_callout, 0);
+	callout_init(&sc->sc_T4_callout, 0);
 
 	/* setup io mappings */
 	sc->sc_cardtyp = CARD_TYPEP_AVMA1PCI;
@@ -914,7 +914,7 @@ avma1pp_disable(struct isic_softc *sc)
 }
 
 static int
-avma1pp_intr(void * parm)
+avma1pp_intr(void *parm)
 {
 	struct isic_softc *sc = parm;
 	int ret = 0;

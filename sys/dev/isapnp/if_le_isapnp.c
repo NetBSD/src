@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.26.4.2 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.26.4.3 2007/09/03 14:35:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.26.4.2 2006/12/30 20:48:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.26.4.3 2007/09/03 14:35:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ le_isapnp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	if (bus_dmamem_map(dmat, &seg, rseg, LE_ISAPNP_MEMSIZE,
-	    (caddr_t *)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf(": couldn't map memory for card\n");
 		return;
 	}

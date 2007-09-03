@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.58.2.3 2007/02/26 09:10:41 yamt Exp $	*/
+/*	$NetBSD: if_se.c,v 1.58.2.4 2007/09/03 14:38:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58.2.3 2007/02/26 09:10:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58.2.4 2007/09/03 14:38:39 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -201,7 +201,7 @@ static void	se_ifstart(struct ifnet *);
 static void	sestart(struct scsipi_periph *);
 
 static void	sedone(struct scsipi_xfer *, int);
-static int	se_ioctl(struct ifnet *, u_long, caddr_t);
+static int	se_ioctl(struct ifnet *, u_long, void *);
 static void	sewatchdog(struct ifnet *);
 
 static inline u_int16_t ether_cmp(void *, void *);
@@ -311,8 +311,8 @@ seattach(parent, self, aux)
 	printf("\n");
 	SC_DEBUG(periph, SCSIPI_DB2, ("seattach: "));
 
-	callout_init(&sc->sc_ifstart_ch);
-	callout_init(&sc->sc_recv_ch);
+	callout_init(&sc->sc_ifstart_ch, 0);
+	callout_init(&sc->sc_recv_ch, 0);
 
 
 	/*
@@ -606,7 +606,7 @@ se_get(sc, data, totlen)
 		}
 
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -614,7 +614,7 @@ se_get(sc, data, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, caddr_t), data, len);
+		memcpy(mtod(m, void *), data, len);
 		data += len;
 
 		totlen -= len;
@@ -886,6 +886,9 @@ se_set_multi(sc, addr)
 
 	PROTOCMD(ctron_ether_set_multi, set_multi_cmd);
 	_lto2b(sizeof(addr), set_multi_cmd.length);
+	/* XXX sizeof(addr) is the size of the pointer.  Surely it
+	 * is too small? --dyoung
+	 */
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&set_multi_cmd, sizeof(set_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
@@ -906,6 +909,9 @@ se_remove_multi(sc, addr)
 
 	PROTOCMD(ctron_ether_remove_multi, remove_multi_cmd);
 	_lto2b(sizeof(addr), remove_multi_cmd.length);
+	/* XXX sizeof(addr) is the size of the pointer.  Surely it
+	 * is too small? --dyoung
+	 */
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&remove_multi_cmd, sizeof(remove_multi_cmd),
 	    addr, sizeof(addr), SERETRIES, SETIMEOUT, NULL, XS_CTL_DATA_OUT);
@@ -973,11 +979,12 @@ static int
 se_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct sockaddr *sa;
 	int s, error = 0;
 
 	s = splnet();
@@ -1051,17 +1058,20 @@ se_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET) {
+		sa = sockaddr_dup(ifreq_getaddr(cmd, ifr), M_NOWAIT);
+		if (sa == NULL) {
+			error = ENOBUFS;
+			break;
+		}
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				error = (cmd == SIOCADDMULTI) ?
-				   se_set_multi(sc, ifr->ifr_addr.sa_data) :
-				   se_remove_multi(sc, ifr->ifr_addr.sa_data);
+				   se_set_multi(sc, sa->sa_data) :
+				   se_remove_multi(sc, sa->sa_data);
 			} else
 				error = 0;
 		}
+		sockaddr_free(sa);
 		break;
 
 	default:
@@ -1181,7 +1191,7 @@ int
 seioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct lwp *l;
 {

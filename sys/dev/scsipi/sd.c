@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.240.2.3 2007/02/26 09:10:42 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.240.2.4 2007/09/03 14:38:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.3 2007/02/26 09:10:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.4 2007/09/03 14:38:41 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.3 2007/02/26 09:10:42 yamt Exp $");
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/sdvar.h>
+
+#include <prop/proplib.h>
 
 #define	SDUNIT(dev)			DISKUNIT(dev)
 #define	SDPART(dev)			DISKPART(dev)
@@ -131,6 +133,7 @@ static int	sdmatch(struct device *, struct cfdata *, void *);
 static void	sdattach(struct device *, struct device *, void *);
 static int	sdactivate(struct device *, enum devact);
 static int	sddetach(struct device *, int);
+static void	sd_set_properties(struct sd_softc *);
 
 CFATTACH_DECL(sd, sizeof(struct sd_softc), sdmatch, sdattach, sddetach,
     sdactivate);
@@ -237,7 +240,7 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	bufq_alloc(&sd->buf_queue, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
-	callout_init(&sd->sc_callout);
+	callout_init(&sd->sc_callout, 0);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -327,6 +330,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&sd->sc_dk);
+
+	sd_set_properties(sd);
 }
 
 static int
@@ -421,8 +426,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	part = SDPART(dev);
 
-	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&sd->sc_dk.dk_openlock);
 
 	/*
 	 * If there are wedges, and this is not RAW_PART, then we
@@ -563,7 +567,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (0);
 
  bad3:
@@ -581,7 +585,7 @@ sdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		scsipi_adapter_delref(adapt);
 
  bad1:
-	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (error);
 }
 
@@ -596,11 +600,8 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct scsipi_periph *periph = sd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = SDPART(dev);
-	int error;
 
-	if ((error = lockmgr(&sd->sc_dk.dk_openlock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
-
+	mutex_enter(&sd->sc_dk.dk_openlock);
 	switch (fmt) {
 	case S_IFCHR:
 		sd->sc_dk.dk_copenmask &= ~(1 << part);
@@ -640,7 +641,7 @@ sdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 		scsipi_adapter_delref(adapt);
 	}
 
-	(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
+	mutex_exit(&sd->sc_dk.dk_openlock);
 	return (0);
 }
 
@@ -671,7 +672,7 @@ sdstrategy(struct buf *bp)
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
-		goto bad;
+		goto done;
 	}
 
 	lp = sd->sc_dk.dk_label;
@@ -687,7 +688,7 @@ sdstrategy(struct buf *bp)
 	}
 	if (!sector_aligned || bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	/*
 	 * If it's a null transfer, return immediatly
@@ -744,8 +745,6 @@ sdstrategy(struct buf *bp)
 	splx(s);
 	return;
 
-bad:
-	bp->b_flags |= B_ERROR;
 done:
 	/*
 	 * Correctly set the buf to indicate a completed xfer
@@ -795,7 +794,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -808,7 +807,6 @@ sdstart(struct scsipi_periph *periph)
 		    (periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)) {
 			if ((bp = BUFQ_GET(sd->buf_queue)) != NULL) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
 				biodone(bp);
 				continue;
@@ -943,8 +941,7 @@ sddone(struct scsipi_xfer *xs, int error)
 		bp->b_resid = xs->resid;
 		if (error) {
 			/* on a read/write error bp->b_resid is zero, so fix */
-			bp->b_resid  =bp->b_bcount;
-			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 		}
 
 		disk_unbusy(&sd->sc_dk, bp->b_bcount - bp->b_resid,
@@ -1005,7 +1002,7 @@ sdwrite(dev_t dev, struct uio *uio, int ioflag)
  * Knows about the internals of this device
  */
 static int
-sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -1094,9 +1091,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = lockmgr(&sd->sc_dk.dk_openlock,
-				     LK_EXCLUSIVE, NULL)) != 0)
-			goto bad;
+		mutex_enter(&sd->sc_dk.dk_openlock);
 		sd->flags |= SDF_LABELLING;
 
 		error = setdisklabel(sd->sc_dk.dk_label,
@@ -1114,8 +1109,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 		}
 
 		sd->flags &= ~SDF_LABELLING;
-		(void) lockmgr(&sd->sc_dk.dk_openlock, LK_RELEASE, NULL);
-bad:
+		mutex_exit(&sd->sc_dk.dk_openlock);
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
 			free(newlabel, M_TEMP);
@@ -1487,7 +1481,7 @@ static int sddoingadump;
  * at offset 'dumplo' into the partition.
  */
 static int
-sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+sddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct sd_softc *sd;	/* disk unit to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
@@ -1593,7 +1587,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		/* update block count */
 		totwrt -= nwrt;
 		blkno += nwrt;
-		va += sectorsize * nwrt;
+		va = (char *)va + sectorsize * nwrt;
 	}
 	sddoingadump = 0;
 	return (0);
@@ -1684,24 +1678,37 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	union {
 		struct scsipi_read_capacity_10_data data;
 		struct scsipi_read_capacity_16_data data16;
-	} data;
+	} *datap;
+	uint64_t rv;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd.opcode = READ_CAPACITY_10;
 
 	/*
+	 * Don't allocate data buffer on stack;
+	 * The lower driver layer might use the same stack and
+	 * if it uses region which is in the same cacheline,
+	 * cache flush ops against the data buffer won't work properly.
+	 */
+	datap = malloc(sizeof(*datap), M_TEMP, M_WAITOK);
+	if (datap == NULL)
+		return 0;
+
+	/*
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks
 	 */
-	memset(&data.data, 0, sizeof(data.data));
+	rv = 0;
+	memset(datap, 0, sizeof(datap->data));
 	if (scsipi_command(periph, (void *)&cmd.cmd, sizeof(cmd.cmd),
-	    (void *)&data.data, sizeof(data.data), SCSIPIRETRIES, 20000, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
-		return (0);
+	    (void *)datap, sizeof(datap->data), SCSIPIRETRIES, 20000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT) != 0)
+		goto out;
 
-	if (_4btol(data.data.addr) != 0xffffffff) {
-		*blksize = _4btol(data.data.length);
-		return (_4btol(data.data.addr) + 1);
+	if (_4btol(datap->data.addr) != 0xffffffff) {
+		*blksize = _4btol(datap->data.length);
+		rv = _4btol(datap->data.addr) + 1;
+		goto out;
 	}
 
 	/*
@@ -1712,17 +1719,20 @@ sd_read_capacity(struct scsipi_periph *periph, int *blksize, int flags)
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.cmd16.opcode = READ_CAPACITY_16;
 	cmd.cmd16.byte2 = SRC16_SERVICE_ACTION;
-	_lto4b(sizeof(data.data16), cmd.cmd16.len);
+	_lto4b(sizeof(datap->data16), cmd.cmd16.len);
 
-	memset(&data.data16, 0, sizeof(data.data16));
+	memset(datap, 0, sizeof(datap->data16));
 	if (scsipi_command(periph, (void *)&cmd.cmd16, sizeof(cmd.cmd16),
-	    (void *)&data.data16, sizeof(data.data16), SCSIPIRETRIES, 20000,
-	    NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
-		return (0);
+	    (void *)datap, sizeof(datap->data16), SCSIPIRETRIES, 20000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT) != 0)
+		goto out;
 
-	*blksize = _4btol(data.data16.length);
-	return (_8btol(data.data16.addr) + 1);
+	*blksize = _4btol(datap->data16.length);
+	rv = _8btol(datap->data16.addr) + 1;
+
+ out:
+	free(datap, M_TEMP);
+	return rv;
 }
 
 static int
@@ -2229,4 +2239,45 @@ sd_setcache(struct sd_softc *sd, int bits)
 	return (sd_mode_select(sd, byte2|SMS_PF, &scsipi_sense,
 	    sizeof(struct scsi_mode_page_header) +
 	    pages->caching_params.pg_length, 0, big));
+}
+
+static void
+sd_set_properties(struct sd_softc *sd)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    sd->params.disksize);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    sd->params.blksize);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+	    sd->params.sectors);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+	    sd->params.heads);
+
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    sd->params.cyls);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&sd->sc_dev),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = sd->sc_dk.dk_info;
+	sd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
 }

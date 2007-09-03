@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780_subr.c,v 1.6.4.1 2006/06/21 15:02:54 yamt Exp $ */
+/* $NetBSD: hd44780_subr.c,v 1.6.4.2 2007/09/03 14:34:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.6.4.1 2006/06/21 15:02:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd44780_subr.c,v 1.6.4.2 2007/09/03 14:34:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ const struct wsdisplay_emulops hlcd_emulops = {
 	hlcd_allocattr
 };
 
-static int	hlcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	hlcd_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	hlcd_mmap(void *, void *, off_t, int);
 static int	hlcd_alloc_screen(void *, const struct wsscreen_descr *,
 		    void **, int *, int *, long *);
@@ -232,7 +232,7 @@ hlcd_ioctl(v, vs, cmd, data, flag, l)
 	void *v;
 	void *vs;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -429,7 +429,7 @@ hd44780_attach_subr(sc)
 	memset(sc->sc_screen.image, ' ', PAGE_SIZE);
 	sc->sc_curscr = NULL;
 	sc->sc_curchip = 0;
-	callout_init(&sc->redraw);
+	callout_init(&sc->redraw, 0);
 	callout_setfunc(&sc->redraw, hlcd_redraw, sc);
 }
 
@@ -507,7 +507,7 @@ int
 hd44780_ioctl_subr(sc, cmd, data)
 	struct hd44780_chip *sc;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	u_int8_t tmp;
 	int error = 0;

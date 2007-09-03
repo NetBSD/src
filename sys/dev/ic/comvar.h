@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.48.6.2 2006/12/30 20:48:02 yamt Exp $	*/
+/*	$NetBSD: comvar.h,v 1.48.6.3 2007/09/03 14:34:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -231,12 +231,3 @@ int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
 int com_activate(struct device *, enum devact);
 void com_cleanup(void *);
-
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef __NO_SOFT_SERIAL_INTERRUPT
-#define	IPL_SERIAL	IPL_TTY
-#define	splserial()	spltty()
-#define	IPL_SOFTSERIAL	IPL_TTY
-#define	splsoftserial()	spltty()
-#endif
-#endif

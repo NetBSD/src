@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.c,v 1.9.4.1 2006/12/30 20:50:01 yamt Exp $	*/
+/*	$NetBSD: smbfs_subr.c,v 1.9.4.2 2007/09/03 14:40:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.9.4.1 2006/12/30 20:50:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.9.4.2 2007/09/03 14:40:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_subr.c,v 1.9.4.1 2006/12/30 20:50:01 yamt Exp 
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
 
-MALLOC_DEFINE(M_SMBFSDATA, "SMBFS data", "SMBFS private data");
+MALLOC_JUSTDEFINE(M_SMBFSDATA, "SMBFS data", "SMBFS private data");
 
 /*
  * Time & date conversion routines taken from msdosfs. Although leap

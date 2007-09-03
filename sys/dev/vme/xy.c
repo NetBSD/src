@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.59.2.3 2007/02/26 09:10:51 yamt Exp $	*/
+/*	$NetBSD: xy.c,v 1.59.2.4 2007/09/03 14:39:31 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.59.2.3 2007/02/26 09:10:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.59.2.4 2007/09/03 14:39:31 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -166,7 +166,7 @@ int	xyc_reset(struct xyc_softc *, int, struct xy_iorq *, int,
 		  struct xy_softc *);
 inline void xyc_rqinit(struct xy_iorq *, struct xyc_softc *,
 			struct xy_softc *, int, u_long, int,
-			caddr_t, struct buf *);
+			void *, struct buf *);
 void	xyc_rqtopb(struct xy_iorq *, struct xy_iopb *, int, int);
 void	xyc_start(struct xyc_softc *, struct xy_iorq *);
 int	xyc_startbuf(struct xyc_softc *, struct xy_softc *, struct buf *);
@@ -175,9 +175,9 @@ void	xyc_tick(void *);
 int	xyc_unbusy(struct xyc *, int);
 void	xyc_xyreset(struct xyc_softc *, struct xy_softc *);
 int	xy_dmamem_alloc(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
-			int *, bus_size_t, caddr_t *, bus_addr_t *);
+			int *, bus_size_t, void **, bus_addr_t *);
 void	xy_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
-			int, bus_size_t, caddr_t);
+			int, bus_size_t, void *);
 
 /* machine interrupt hook */
 int	xycintr(void *);
@@ -315,7 +315,7 @@ xy_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 	bus_dma_segment_t	*seg;
 	int			*nsegp;
 	bus_size_t		len;
-	caddr_t			*kvap;
+	void *			*kvap;
 	bus_addr_t		*dmap;
 {
 	int nseg;
@@ -352,7 +352,7 @@ xy_dmamem_free(tag, map, seg, nseg, len, kva)
 	bus_dma_segment_t	*seg;
 	int			nseg;
 	bus_size_t		len;
-	caddr_t			kva;
+	void *			kva;
 {
 
 	bus_dmamap_unload(tag, map);
@@ -489,7 +489,7 @@ xycattach(parent, self, aux)
 	/* Get DMA buffer for iorq descriptors */
 	if ((error = xy_dmamem_alloc(xyc->dmatag, xyc->iopmap, &seg, &rseg,
 				     XYC_MAXIOPB * sizeof(struct xy_iopb),
-				     (caddr_t *)&xyc->iopbase,
+				     (void **)&xyc->iopbase,
 				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xyc->sc_dev.dv_xname, error);
@@ -576,7 +576,7 @@ xycattach(parent, self, aux)
 	evcnt_attach_dynamic(&xyc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    xyc->sc_dev.dv_xname, "intr");
 
-	callout_init(&xyc->sc_tick_ch);
+	callout_init(&xyc->sc_tick_ch, 0);
 
 	/* now we must look for disks using autoconfig */
 	xa.fullmode = XY_SUB_POLL;
@@ -633,8 +633,8 @@ xyattach(parent, self, aux)
 	int			rseg, error;
 	bus_dma_segment_t	seg;
 	bus_addr_t		busaddr;
-	caddr_t			dmaddr;
-	caddr_t			buf;
+	void *			dmaddr;
+	char *			buf;
 
 	/*
 	 * Always re-initialize the disk structure.  We want statistics
@@ -684,13 +684,13 @@ xyattach(parent, self, aux)
 	buf = NULL;
 	if ((error = xy_dmamem_alloc(xyc->dmatag, xyc->auxmap, &seg, &rseg,
 				     XYFM_BPS,
-				     (caddr_t *)&buf,
+				     (void **)&buf,
 				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
-	dmaddr = (caddr_t)(u_long)BUS_ADDR_PADDR(busaddr);
+	dmaddr = (void *)(u_long)BUS_ADDR_PADDR(busaddr);
 
 	/* first try and reset the drive */
 	error = xyc_cmd(xyc, XYCMD_RST, 0, xy->xy_drive, 0, 0, 0, fmode);
@@ -884,7 +884,7 @@ int
 xydump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 	int     unit, part;
@@ -923,7 +923,7 @@ int
 xyioctl(dev, command, addr, flag, l)
 	dev_t   dev;
 	u_long  command;
-	caddr_t addr;
+	void *addr;
 	int     flag;
 	struct lwp *l;
 
@@ -1176,7 +1176,7 @@ xystrategy(bp)
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % xy->sc_dk.dk_label->d_secsize) != 0) {
 		bp->b_error = EINVAL;
-		goto bad;
+		goto done;
 	}
 	/* do we need to attach the drive? */
 
@@ -1187,13 +1187,13 @@ xystrategy(bp)
 		xyattach((struct device *)xy->parent, (struct device *)xy, &xa);
 		if (xy->state == XY_DRIVE_UNKNOWN) {
 			bp->b_error = EIO;
-			goto bad;
+			goto done;
 		}
 	}
 	if (xy->state != XY_DRIVE_ONLINE && DISKPART(bp->b_dev) != RAW_PART) {
 		/* no I/O to unlabeled disks, unless raw partition */
 		bp->b_error = EIO;
-		goto bad;
+		goto done;
 	}
 	/* short circuit zero length request */
 
@@ -1238,8 +1238,6 @@ xystrategy(bp)
 	splx(s);
 	return;
 
-bad:				/* tells upper layers we have an error */
-	bp->b_flags |= B_ERROR;
 done:				/* tells upper layers we are done with this
 				 * buf */
 	bp->b_resid = bp->b_bcount;
@@ -1295,7 +1293,7 @@ xyc_rqinit(rq, xyc, xy, md, blk, cnt, db, bp)
 	int     md;
 	u_long  blk;
 	int     cnt;
-	caddr_t db;
+	void *db;
 	struct buf *bp;
 {
 	rq->xyc = xyc;
@@ -1487,7 +1485,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	/* init iorq and load iopb from it */
 	xyc_rqinit(iorq, xycsc, xysc, XY_SUB_NORM | XY_MODE_VERBO, block,
 		   bp->b_bcount / XYFM_BPS,
-		   (caddr_t)(u_long)iorq->dmamap->dm_segs[0].ds_addr,
+		   (void *)(u_long)iorq->dmamap->dm_segs[0].ds_addr,
 		   bp);
 
 	xyc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XYCMD_RD : XYCMD_WR, 0);
@@ -1835,7 +1833,6 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
 			switch (XY_STATE(iorq->mode)) {
 			case XY_SUB_NORM:
 			    iorq->buf->b_error = EIO;
-			    iorq->buf->b_flags |= B_ERROR;
 			    iorq->buf->b_resid = iorq->sectcnt * XYFM_BPS;
 
 			    bus_dmamap_sync(xycsc->dmatag, iorq->dmamap, 0,
@@ -2017,7 +2014,6 @@ xyc_remove_iorq(xycsc)
 			bp = iorq->buf;
 			if (errs) {
 				bp->b_error = EIO;
-				bp->b_flags |= B_ERROR;
 				bp->b_resid = iorq->sectcnt * XYFM_BPS;
 			} else {
 				bp->b_resid = 0;	/* done */
@@ -2210,7 +2206,7 @@ xyc_ioctlcmd(xy, dev, xio)
 
 {
 	int     s, rqno, dummy = 0;
-	caddr_t dvmabuf = NULL, buf = NULL;
+	char *dvmabuf = NULL, *buf = NULL;
 	struct xyc_softc *xycsc;
 	int			rseg, error;
 	bus_dma_segment_t	seg;
@@ -2249,11 +2245,11 @@ xyc_ioctlcmd(xy, dev, xio)
 
 		if ((error = xy_dmamem_alloc(xycsc->dmatag, xycsc->auxmap,
 					     &seg, &rseg,
-					     xio->dlen, &buf,
+					     xio->dlen, (void **)&buf,
 					     &busbuf)) != 0) {
 			return (error);
 		}
-		dvmabuf = (caddr_t)(u_long)BUS_ADDR_PADDR(busbuf);
+		dvmabuf = (void *)(u_long)BUS_ADDR_PADDR(busbuf);
 
 		if (xio->cmd == XYCMD_WR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {

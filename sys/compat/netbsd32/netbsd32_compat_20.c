@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.3 2007/02/26 09:09:30 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.4 2007/09/03 14:32:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.3 2007/02/26 09:09:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.4 2007/09/03 14:32:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,18 @@ compat_20_netbsd32_from_statvfs(sbp, sb32p)
 	sb32p->f_spare[3] = 0;
 #if 1
 	/* May as well do the whole batch in one go */
-	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN+MNAMELEN+MNAMELEN);
+	(void)memcpy(sb32p->f_fstypename, sbp->f_fstypename,
+	    sizeof(sb32p->f_fstypename) +
+	    sizeof(sb32p->f_mntonname) +
+	    sizeof(sb32p->f_mntfromname));
 #else
 	/* If we want to be careful */
-	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN);
-	memcpy(sb32p->f_mntonname, sbp->f_mntonname, MNAMELEN);
-	memcpy(sb32p->f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+	(void)memcpy(sb32p->f_fstypename, sbp->f_fstypename,
+	    sizeof(sb32p->f_fstypename));
+	(void)memcpy(sb32p->f_mntonname, sbp->f_mntonname,
+	    sizeof(sb32p->f_mntonname));
+	(void)memcpy(sb32p->f_mntfromname, sbp->f_mntfromname,
+	    sizeof(sb32p->f_mntfromname));
 #endif
 }
 
@@ -97,11 +103,11 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct netbsd32_statfs sb32;
-	caddr_t sfsp;
+	void *sfsp;
 	long count, maxcount, error;
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statfs);
-	sfsp = (caddr_t)NETBSD32PTR64(SCARG(uap, buf));
+	sfsp = SCARG_P32(uap, buf);
 	simple_lock(&mountlist_slock);
 	count = 0;
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
@@ -113,7 +119,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 			sp = &mp->mnt_stat;
 			/*
 			 * If MNT_NOWAIT or MNT_LAZY is specified, do not
-			 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
+			 * refresh the fsstat cache. MNT_WAIT or MNT_LAZY
 			 * overrides MNT_NOWAIT.
 			 */
 			if (SCARG(uap, flags) != MNT_NOWAIT &&
@@ -133,7 +139,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 				vfs_unbusy(mp);
 				return (error);
 			}
-			sfsp += sizeof(sb32);
+			sfsp = (char *)sfsp + sizeof(sb32);
 		}
 		count++;
 		simple_lock(&mountlist_slock);
@@ -164,8 +170,7 @@ compat_20_netbsd32_statfs(l, v, retval)
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
-	    (char *)NETBSD32PTR64(SCARG(uap, path)), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -175,8 +180,7 @@ compat_20_netbsd32_statfs(l, v, retval)
 		return (error);
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);
-	return (copyout(&s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
-	    sizeof(s32)));
+	return copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
 }
 
 int
@@ -205,8 +209,7 @@ compat_20_netbsd32_fstatfs(l, v, retval)
 		goto out;
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	compat_20_netbsd32_from_statvfs(sp, &s32);
-	error = copyout(&s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
-	    sizeof(s32));
+	error = copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
  out:
 	FILE_UNUSE(fp, l);
 	return (error);

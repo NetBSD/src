@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.28 2004/12/21 16:41:24 fvdl Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.28.10.1 2007/09/03 14:39:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.28 2004/12/21 16:41:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.28.10.1 2007/09/03 14:39:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ usb_allocmem(usbd_bus_handle bus, size_t size, size_t align, usb_dma_t *p)
 		}
 		b->flags = 0;
 		for (i = 0; i < USB_MEM_BLOCK; i += USB_MEM_SMALL) {
-			f = (struct usb_frag_dma *)(b->kaddr + i);
+			f = (struct usb_frag_dma *)((char *)b->kaddr + i);
 			f->block = b;
 			f->offs = i;
 			LIST_INSERT_HEAD(&usb_frag_freelist, f, next);

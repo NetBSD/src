@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.h,v 1.11 2004/03/20 04:22:05 oster Exp $	*/
+/*	$NetBSD: rf_map.h,v 1.11.16.1 2007/09/03 14:38:19 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 /* mapping structure allocation and free routines */
 RF_AccessStripeMapHeader_t *rf_MapAccess(RF_Raid_t *, RF_RaidAddr_t,
-					 RF_SectorCount_t, caddr_t, int);
+					 RF_SectorCount_t, void *, int);
 void rf_MarkFailuresInASMList(RF_Raid_t *, RF_AccessStripeMapHeader_t *);
 int rf_ConfigureMapModule(RF_ShutdownList_t **);
 RF_AccessStripeMapHeader_t *rf_AllocAccessStripeMapHeader(void);

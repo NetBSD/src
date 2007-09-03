@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.43.4.2 2006/12/30 20:48:04 yamt Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.43.4.3 2007/09/03 14:35:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.43.4.2 2006/12/30 20:48:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.43.4.3 2007/09/03 14:35:15 yamt Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -137,7 +137,7 @@ void	bah_reset(struct bah_softc *);
 void	bah_stop(struct bah_softc *);
 void	bah_start(struct ifnet *);
 int	bahintr(void *);
-int	bah_ioctl(struct ifnet *, unsigned long, caddr_t);
+int	bah_ioctl(struct ifnet *, unsigned long, void *);
 void	bah_watchdog(struct ifnet *);
 void	bah_srint(void *vsc);
 static	void bah_tint(struct bah_softc *, int);
@@ -220,7 +220,7 @@ bah_attach_subr(sc)
 		(void (*)(void *))bah_start, ifp);
 #endif
 
-	callout_init(&sc->sc_recon_ch);
+	callout_init(&sc->sc_recon_ch, 0);
 }
 
 /*
@@ -458,7 +458,7 @@ bah_start(ifp)
 	for (mp = m; mp; mp = mp->m_next) {
 		if ((len = mp->m_len)) {		/* YAMS */
 			bus_space_write_region_1(bst_m, mem, bah_ram_ptr,
-			    mtod(mp, caddr_t), len);
+			    mtod(mp, void *), len);
 
 			bah_ram_ptr += len;
 		}
@@ -907,10 +907,10 @@ bah_reconwatch(arg)
  * This code needs some work - it looks pretty ugly.
  */
 int
-bah_ioctl(ifp, command, data)
+bah_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-	u_long command;
-	caddr_t data;
+	u_long cmd;
+	void *data;
 {
 	struct bah_softc *sc;
 	struct ifaddr *ifa;
@@ -925,10 +925,10 @@ bah_ioctl(ifp, command, data)
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
 	printf("%s: ioctl() called, cmd = 0x%x\n",
-	    sc->sc_dev.dv_xname, command);
+	    sc->sc_dev.dv_xname, cmd);
 #endif
 
-	switch (command) {
+	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
@@ -964,7 +964,7 @@ bah_ioctl(ifp, command, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		switch (ifr->ifr_addr.sa_family) {
+		switch (ifreq_getaddr(cmd, ifr)->sa_family) {
 		case AF_INET:
 		case AF_INET6:
 			error = 0;

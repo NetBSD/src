@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.14.4.1 2006/06/21 15:02:45 yamt Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.14.4.2 2007/09/03 14:33:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.14.4.1 2006/06/21 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.14.4.2 2007/09/03 14:33:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ CFATTACH_DECL(dzkbd, sizeof(struct dzkbd_softc),
 
 static int	dzkbd_enable(void *, int);
 static void	dzkbd_set_leds(void *, int);
-static int	dzkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	dzkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wskbd_accessops dzkbd_accessops = {
 	dzkbd_enable,
@@ -174,8 +174,10 @@ dzkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (!isconsole)
+	if (!isconsole) {
+		DELAY(100000);
 		lk201_init(&dzi->dzi_ks);
+	}
 
 	/* XXX should identify keyboard ID here XXX */
 	/* XXX layout and the number of LED is varying XXX */
@@ -272,7 +274,7 @@ static int
 dzkbd_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

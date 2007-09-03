@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.146.2.3 2007/02/26 09:11:21 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.146.2.4 2007/09/03 14:41:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,10 +79,9 @@
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
-#include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.3 2007/02/26 09:11:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.4 2007/09/03 14:41:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +130,8 @@ static int buf_lotsfree(void);
 static int buf_canrelease(void);
 static inline u_long buf_mempoolidx(u_long);
 static inline u_long buf_roundsize(u_long);
-static inline caddr_t buf_malloc(size_t);
-static void buf_mrelease(caddr_t, size_t);
+static inline void *buf_malloc(size_t);
+static void buf_mrelease(void *, size_t);
 static inline void binsheadfree(struct buf *, struct bqueue *);
 static inline void binstailfree(struct buf *, struct bqueue *);
 int count_lock_queue(void); /* XXX */
@@ -147,9 +146,8 @@ static int checkfreelist(struct buf *, struct bqueue *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-#if !defined(SOFTDEP) || !defined(FFS)
-struct bio_ops bioops;	/* I/O operation notification */
-#endif
+
+struct bio_ops *bioopsp;	/* can be overriden by ffs_softdep */
 
 /*
  * Insq/Remq for the buffer hash lists.
@@ -179,10 +177,10 @@ int needbuffer;
 struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
 
 /*
- * Buffer pool for I/O buffers.
+ * Buffer pools for I/O buffers.
  */
-static POOL_INIT(bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
-    &pool_allocator_nointr);
+static struct pool bufpool;
+static struct pool bufiopool;
 
 
 /* XXX - somewhat gross.. */
@@ -397,6 +395,11 @@ bufinit(void)
 	use_std = 1;
 #endif
 
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&bufiopool, sizeof(struct buf), 0, 0, 0, "biopl",
+	    NULL, IPL_BIO);
+
 	bufmempool_allocator.pa_backingmap = buf_map;
 	for (i = 0; i < NMEMPOOLS; i++) {
 		struct pool_allocator *pa;
@@ -410,7 +413,7 @@ bufinit(void)
 		pa = (size <= PAGE_SIZE && use_std)
 			? &pool_allocator_nointr
 			: &bufmempool_allocator;
-		pool_init(pp, size, 0, 0, 0, name, pa);
+		pool_init(pp, size, 0, 0, 0, name, pa, IPL_NONE);
 		pool_setlowat(pp, 1);
 		pool_sethiwat(pp, 1);
 	}
@@ -436,10 +439,9 @@ static int
 buf_lotsfree(void)
 {
 	int try, thresh;
-	struct lwp *l = curlwp;
 
 	/* Always allocate if doing copy on write */
-	if (l->l_pflag & LP_UFSCOW)
+	if (curlwp->l_pflag & LP_UFSCOW)
 		return 1;
 
 	/* Always allocate if less than the low water mark. */
@@ -527,11 +529,11 @@ buf_roundsize(u_long size)
 	return (1 << (buf_mempoolidx(size) + MEMPOOL_INDEX_OFFSET));
 }
 
-static inline caddr_t
+static inline void *
 buf_malloc(size_t size)
 {
 	u_int n = buf_mempoolidx(size);
-	caddr_t addr;
+	void *addr;
 	int s;
 
 	while (1) {
@@ -556,7 +558,7 @@ buf_malloc(size_t size)
 }
 
 static void
-buf_mrelease(caddr_t addr, size_t size)
+buf_mrelease(void *addr, size_t size)
 {
 
 	pool_put(&bmempools[buf_mempoolidx(size)], addr);
@@ -570,8 +572,6 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
     int async)
 {
 	struct buf *bp;
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
 	struct mount *mp;
 
 	bp = getblk(vp, blkno, size, 0, 0);
@@ -597,7 +597,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 		VOP_STRATEGY(vp, bp);
 
 		/* Pay for the read. */
-		p->p_stats->p_ru.ru_inblock++;
+		curproc->p_stats->p_ru.ru_inblock++;
 	} else if (async) {
 		brelse(bp);
 	}
@@ -688,8 +688,6 @@ int
 bwrite(struct buf *bp)
 {
 	int rv, sync, wasdelayed, s;
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct mount *mp;
 
@@ -735,7 +733,8 @@ bwrite(struct buf *bp)
 
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 
-	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
+	CLR(bp->b_flags, (B_READ | B_DONE | B_DELWRI));
+	bp->b_error = 0;
 
 	/*
 	 * Pay for the I/O operation and make sure the buf is on the correct
@@ -744,7 +743,7 @@ bwrite(struct buf *bp)
 	if (wasdelayed)
 		reassignbuf(bp, bp->b_vp);
 	else
-		p->p_stats->p_ru.ru_oublock++;
+		curproc->p_stats->p_ru.ru_oublock++;
 
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	V_INCR_NUMOUTPUT(bp->b_vp);
@@ -795,14 +794,10 @@ vn_bwrite(void *v)
 void
 bdwrite(struct buf *bp)
 {
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
-	const struct bdevsw *bdev;
 	int s;
 
 	/* If this is a tape block, write the block now. */
-	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev != NULL && bdev->d_type == D_TAPE) {
+	if (bdev_type(bp->b_dev) == D_TAPE) {
 		bawrite(bp);
 		return;
 	}
@@ -820,7 +815,7 @@ bdwrite(struct buf *bp)
 
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
-		p->p_stats->p_ru.ru_oublock++;
+		curproc->p_stats->p_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 	}
 
@@ -854,13 +849,11 @@ bawrite(struct buf *bp)
 /*
  * Same as first half of bdwrite, mark buffer dirty, but do not release it.
  * Call at splbio() and with the buffer interlock locked.
- * Note: called only from biodone() through ffs softdep's bioops.io_complete()
+ * Note: called only from biodone() through ffs softdep's bioopsp->io_complete()
  */
 void
 bdirty(struct buf *bp)
 {
-	struct lwp *l  = (curlwp != NULL ? curlwp : &lwp0);	/* XXX */
-	struct proc *p = l->l_proc;
 
 	LOCK_ASSERT(simple_lock_held(&bp->b_interlock));
 	KASSERT(ISSET(bp->b_flags, B_BUSY));
@@ -869,7 +862,7 @@ bdirty(struct buf *bp)
 
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
 		SET(bp->b_flags, B_DELWRI);
-		p->p_stats->p_ru.ru_oublock++;
+		curproc->p_stats->p_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 	}
 }
@@ -909,11 +902,11 @@ brelse(struct buf *bp)
 	 */
 
 	/* If it's locked, don't report an error; try again later. */
-	if (ISSET(bp->b_flags, (B_LOCKED|B_ERROR)) == (B_LOCKED|B_ERROR))
-		CLR(bp->b_flags, B_ERROR);
+	if (ISSET(bp->b_flags, B_LOCKED) && bp->b_error != 0)
+		bp->b_error = 0;
 
 	/* If it's not cacheable, or an error, mark it invalid. */
-	if (ISSET(bp->b_flags, (B_NOCACHE|B_ERROR)))
+	if (ISSET(bp->b_flags, B_NOCACHE) || bp->b_error != 0)
 		SET(bp->b_flags, B_INVAL);
 
 	if (ISSET(bp->b_flags, B_VFLUSH)) {
@@ -924,7 +917,8 @@ brelse(struct buf *bp)
 		 * otherwise leave it in its current position.
 		 */
 		CLR(bp->b_flags, B_VFLUSH);
-		if (!ISSET(bp->b_flags, B_ERROR|B_INVAL|B_LOCKED|B_AGE)) {
+		if (!ISSET(bp->b_flags, B_INVAL|B_LOCKED|B_AGE) &&
+		    bp->b_error == 0) {
 			KDASSERT(!debug_verify_freelist || checkfreelist(bp, &bufqueues[BQ_LRU]));
 			goto already_queued;
 		} else {
@@ -941,8 +935,8 @@ brelse(struct buf *bp)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
-			(*bioops.io_deallocate)(bp);
+		if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+			bioopsp->io_deallocate(bp);
 		CLR(bp->b_flags, B_DONE|B_DELWRI);
 		if (bp->b_vp) {
 			reassignbuf(bp, bp->b_vp);
@@ -974,9 +968,8 @@ brelse(struct buf *bp)
 			/* stale but valid data */
 			int has_deps;
 
-			if (LIST_FIRST(&bp->b_dep) != NULL &&
-			    bioops.io_countdeps)
-				has_deps = (*bioops.io_countdeps)(bp, 0);
+			if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+				has_deps = bioopsp->io_countdeps(bp, 0);
 			else
 				has_deps = 0;
 			bufq = has_deps ? &bufqueues[BQ_LRU] :
@@ -1047,7 +1040,7 @@ start:
 		simple_lock(&bp->b_interlock);
 		if (ISSET(bp->b_flags, B_BUSY)) {
 			simple_unlock(&bqueue_slock);
-			if (curproc == uvm.pagedaemon_proc) {
+			if (curlwp == uvm.pagedaemon_lwp) {
 				simple_unlock(&bp->b_interlock);
 				splx(s);
 				return NULL;
@@ -1132,7 +1125,7 @@ void
 allocbuf(struct buf *bp, int size, int preserve)
 {
 	vsize_t oldsize, desired_size;
-	caddr_t addr;
+	void *addr;
 	int s, delta;
 
 	desired_size = buf_roundsize(size);
@@ -1229,7 +1222,7 @@ start:
 		/*
 		 * XXX: !from_bufq should be removed.
 		 */
-		if (!from_bufq || curproc != uvm.pagedaemon_proc) {
+		if (!from_bufq || curlwp != uvm.pagedaemon_lwp) {
 			/* wait for a free buffer of any kind */
 			needbuffer = 1;
 			ltsleep(&needbuffer, slpflag|(PRIBIO + 1),
@@ -1279,8 +1272,8 @@ start:
 	if (bp->b_vp)
 		brelvp(bp);
 
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
-		(*bioops.io_deallocate)(bp);
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+		bioopsp->io_deallocate(bp);
 
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
@@ -1358,13 +1351,7 @@ biowait(struct buf *bp)
 	simple_lock(&bp->b_interlock);
 	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))
 		ltsleep(bp, PRIBIO + 1, "biowait", 0, &bp->b_interlock);
-
-	/* check errors. */
-	if (ISSET(bp->b_flags, B_ERROR))
-		error = bp->b_error ? bp->b_error : EIO;
-	else
-		error = 0;
-
+	error = bp->b_error;
 	simple_unlock(&bp->b_interlock);
 	splx(s);
 	return (error);
@@ -1397,8 +1384,8 @@ biodone(struct buf *bp)
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
-		(*bioops.io_complete)(bp);
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioopsp)
+		bioopsp->io_complete(bp);
 
 	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
 		vwakeup(bp);
@@ -1740,8 +1727,6 @@ vfs_bufstats(void)
 
 /* ------------------------------ */
 
-static POOL_INIT(bufiopool, sizeof(struct buf), 0, 0, 0, "biopl", NULL);
-
 static struct buf *
 getiobuf1(int prflags)
 {
@@ -1796,11 +1781,8 @@ nestiobuf_iodone(struct buf *bp)
 	KASSERT(mbp != bp);
 
 	error = 0;
-	if ((bp->b_flags & B_ERROR) != 0) {
-		error = EIO;
-		/* check if an error code was returned */
-		if (bp->b_error)
-			error = bp->b_error;
+	if (bp->b_error != 0) {
+		error = bp->b_error;
 	} else if ((bp->b_bcount < bp->b_bufsize) || (bp->b_resid > 0)) {
 		/*
 		 * Not all got transfered, raise an error. We have no way to
@@ -1834,7 +1816,7 @@ nestiobuf_setup(struct buf *mbp, struct buf *bp, int offset, size_t size)
 	bp->b_vp = vp;
 	bp->b_flags = B_BUSY | B_CALL | B_ASYNC | b_read;
 	bp->b_iodone = nestiobuf_iodone;
-	bp->b_data = mbp->b_data + offset;
+	bp->b_data = (char *)mbp->b_data + offset;
 	bp->b_resid = bp->b_bcount = size;
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_private = mbp;
@@ -1866,12 +1848,11 @@ nestiobuf_done(struct buf *mbp, int donebytes, int error)
 	s = splbio();
 	KASSERT(mbp->b_resid >= donebytes);
 	if (error) {
-		mbp->b_flags |= B_ERROR;
 		mbp->b_error = error;
 	}
 	mbp->b_resid -= donebytes;
 	if (mbp->b_resid == 0) {
-		if ((mbp->b_flags & B_ERROR) != 0) {
+		if (mbp->b_error != 0) {
 			mbp->b_resid = mbp->b_bcount; /* be conservative */
 		}
 		biodone(mbp);
