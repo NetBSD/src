@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.11 2006/02/16 19:19:49 tnozaki Exp $	*/
+/*	$NetBSD: rune.h,v 1.12 2007/09/03 20:31:56 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -73,7 +73,6 @@
  * Other namespace conversion.
  */
 
-#define rune_t			__nbrune_t
 #define _RUNE_ISCACHED		_NB_RUNE_ISCACHED
 #define _CACHED_RUNES		_NB_CACHED_RUNES
 #define _DEFAULT_INVALID_RUNE	_NB_DEFAULT_INVALID_RUNE
