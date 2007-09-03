@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.53 2007/09/01 07:32:22 dyoung Exp $ */
+/*	$NetBSD: if_ed.c,v 1.54 2007/09/03 11:30:04 he Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.53 2007/09/01 07:32:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.54 2007/09/03 11:30:04 he Exp $");
 
 #include "bpfilter.h"
 
@@ -855,16 +855,15 @@ edintr(void *arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-ed_ioctl(register struct ifnet *ifp, u_long command, void *data)
+ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ed_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (command) {
+	switch (cmd) {
 
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
