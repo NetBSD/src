@@ -17,7 +17,7 @@ all:	$(PROG)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 fsstone: fsstone.o $(LIBS)
 	$(CC) $(CFLAGS) -o $@ fsstone.o $(LIBS) $(SYSLIBS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.4 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.4.28.1 2007/09/03 07:04:03 wrstuden Exp $	*/
 
 /*
  * Copyright 1997
@@ -304,9 +304,6 @@ nextirq:
 	/* NOT REACHED */
 	b	. - 8
 
-Lspl_mask:
-	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
-
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
 
@@ -323,8 +320,10 @@ ENTRY(irq_setmasks)
 	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
 	ldrh	r1, [r1]		/* get hardware bits of mask */
 /*	.word	0xe0d110b0 */		/* hand-assembled ldrh r1, [r1] */
-	ldr	r2, Lspl_mask		/* Block due to current spl level */
+	ldr	r0, Lspl_masks
+	ldr	r2, Lcurrent_spl_level
 	ldr	r2, [r2]
+	ldr	r2, [r0, r2, lsl #2]
 	and	r1, r1, r2
 	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
 	ldr	r2, [r2]

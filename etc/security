@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.100.2.1 2007/05/08 09:53:46 pavel Exp $
+#	$NetBSD: security,v 1.100.2.1.2.1 2007/09/03 06:57:48 wrstuden Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -40,7 +40,7 @@ if [ ! -d "$work_dir" ]; then
 	mkdir -p "$work_dir"
 fi
 
-SECUREDIR=`mktemp -d /tmp/_securedir.XXXXXX` || exit 1
+SECUREDIR=$(mktemp -d -t _securedir) || exit 1
 
 trap "/bin/rm -rf $SECUREDIR ; exit 0" EXIT INT QUIT PIPE
 
@@ -849,13 +849,13 @@ if checkyesno check_disklabels; then
 		migrate_file "$file" "$work_dir/${file##*/}"
 	done
 
-		# generate list of old disklabels & fdisks and remove them
-	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* 2>/dev/null |
+		# generate list of old disklabels, fdisks & wedges and remove them
+	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* $work_dir/wedges.* 2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' > $LABELS
 	xargs rm < $LABELS
 
-		# generate disklabels of all disks excluding:	cd fd md st
-	disks=`iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d|st|nfs/ { print $1; }'`
+		# generate disklabels of all disks excluding:	cd dk fd md st
+	disks=`iostat -x | awk 'NR > 1 && $1 !~ /^[cfm]d|dk|st|nfs/ { print $1; }'`
 	for i in $disks; do
 		disklabel $i > "$work_dir/disklabel.$i" 2>/dev/null
 	done
@@ -868,8 +868,16 @@ if checkyesno check_disklabels; then
 		done
 	fi
 
-		# append list of new disklabels and fdisks
-	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* 2>/dev/null |
+		# if dkctl is available, generate dkctl listwedges for:	ed ld sd wd cgd ofdisk ra rl raid
+	if [ -x /sbin/dkctl ]; then
+		disks=`iostat -x| awk 'NR > 1 && $1 ~ /^[elsw]d|cgd|ofdisk|r[al]|raid/ { print $1; }'`
+		for i in $disks; do
+			/sbin/dkctl $i listwedges > "$work_dir/wedges.$i" 2>/dev/null
+		done
+	fi
+
+		# append list of new disklabels, fdisks and wedges
+	ls -1d $work_dir/disklabel.* $work_dir/fdisk.* $work_dir/wedges.* 2>/dev/null |
 	    egrep -v '\.(backup|current)(,v)?$' >> $LABELS
 	CHANGELIST="$LABELS $CHANGELIST"
 fi

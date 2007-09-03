@@ -63,8 +63,6 @@
 #include <openssl/mdc2.h>
 
 #include <sys/cdefs.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #ifdef __weak_alias
 #define MDC2_Init	_MDC2_Init

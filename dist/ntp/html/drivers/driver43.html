@@ -11,7 +11,6 @@
 	<body>
 		<h3>RIPE NCC interface for Trimble Palisade</h3>
 		<hr>
-		<img src="../pic/driver43_2.jpg" alt="Trimble Acutime 2000" align="right">
 		<h4>Synopsis</h4>
 		Address: 127.127.43.<i>u</i><br>
 		Reference ID: <tt>RIPENCC</tt><br>
@@ -22,7 +21,7 @@
 		<p>The reason why we created a seperated driver for an antenna for which already a (vendor supplied) driver exist is a design decision. To be more specific, the standard Trimble interface uses a 12 pin connector. The cable sold by Trimble to connect to this wire is a very thick cable. Certainly not something you wish to run for several 100 meters through your building. And if you wanted to run it for 100 meters, you always would have to really run the cable, and didn't have the option to use existing wiring.<br>
 		</p>
 		<p>This is where we wanted more flexibility. We wanted to be able to use existing wiring in buildings. That leaded us to CAT-5(UTP) which only gives us 8 wires. Therefor we decided to redesing the use of the Trimble antenna. The Trimble supports two modes: EVENT driver and PPS mode. The default is to use the EVENT mode which needs all 12 wires. We only use the PPS timestamps for which we have enough with 8 wires. For our purposes this is more than fine.</p>
-		More information about the project can be found on the <a href="http://www.ripe.net/test-traffic" target="_new">Test Traffic Measurements</a> website. <img src="../pic/driver43_1.gif" alt="RIPE NCC clock card" align="right">
+		More information about the project can be found on the <a href="http://www.ripe.net/test-traffic" target="_new">Test Traffic Measurements</a> website. 
 		<h4>RIPE NCC clock card</h4>
 		<p>The card is very a simple PCI card. The only feature on the bus it uses is the power supply. It uses this power supply to power the Trimble GPS antenna.</p>
 		<p>The card basicly just is a RS422 to RS232 converter. It gets the Trimble's RS422 signal on a RJ45 connector and transforms that to RS232 on a DIN9 connector. This connector should be loopbacked on the back of the machine to the serial port. As said, the card doesn't do any PCI data transfers.</p>

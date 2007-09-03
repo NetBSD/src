@@ -1,4 +1,4 @@
-/*	$NetBSD: printportcmp.c,v 1.1.1.1.18.1 2007/05/07 17:04:58 pavel Exp $	*/
+/*	$NetBSD: printportcmp.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:36 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 by Darren Reed.

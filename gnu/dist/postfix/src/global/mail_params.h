@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.13 2006/11/07 03:09:19 rpaulo Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.13.4.1 2007/09/03 07:00:04 wrstuden Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -43,9 +43,12 @@ extern bool var_show_unk_rcpt_table;
   * What problem classes should be reported to the postmaster via email.
   * Default is bad problems only. See mail_error(3). Even when mail notices
   * are disabled, problems are still logged to the syslog daemon.
+  * 
+  * Do not add "protocol" to the default setting. It gives Postfix a bad
+  * reputation: people get mail whenever spam software makes a mistake.
   */
 #define VAR_NOTIFY_CLASSES	"notify_classes"
-#define DEF_NOTIFY_CLASSES	"resource, software"
+#define DEF_NOTIFY_CLASSES	"resource, software"	/* Not: "protocol" */
 extern char *var_notify_classes;
 
  /*
@@ -634,10 +637,10 @@ extern char *var_relocated_maps;
   * queue before it is sent back.
   */
 #define VAR_QUEUE_RUN_DELAY	"queue_run_delay"
-#define DEF_QUEUE_RUN_DELAY     "1000s"
+#define DEF_QUEUE_RUN_DELAY     "300s"
 
 #define VAR_MIN_BACKOFF_TIME	"minimal_backoff_time"
-#define DEF_MIN_BACKOFF_TIME    "1000s"
+#define DEF_MIN_BACKOFF_TIME    DEF_QUEUE_RUN_DELAY
 extern int var_min_backoff_time;
 
 #define VAR_MAX_BACKOFF_TIME	"maximal_backoff_time"
@@ -677,13 +680,23 @@ extern int var_qmgr_msg_rcpt_limit;
 
 #define VAR_XPORT_RCPT_LIMIT	"default_recipient_limit"
 #define _XPORT_RCPT_LIMIT	"_recipient_limit"
-#define DEF_XPORT_RCPT_LIMIT	10000
+#define DEF_XPORT_RCPT_LIMIT	20000
 extern int var_xport_rcpt_limit;
 
 #define VAR_STACK_RCPT_LIMIT	"default_extra_recipient_limit"
 #define _STACK_RCPT_LIMIT	"_extra_recipient_limit"
 #define DEF_STACK_RCPT_LIMIT	1000
 extern int var_stack_rcpt_limit;
+
+#define VAR_XPORT_REFILL_LIMIT	"default_recipient_refill_limit"
+#define _XPORT_REFILL_LIMIT	"_recipient_refill_limit"
+#define DEF_XPORT_REFILL_LIMIT	100
+extern int var_xport_refill_limit;
+
+#define VAR_XPORT_REFILL_DELAY	"default_recipient_refill_delay"
+#define _XPORT_REFILL_DELAY	"_recipient_refill_delay"
+#define DEF_XPORT_REFILL_DELAY	"5s"
+extern int var_xport_refill_delay;
 
  /*
   * Queue manager: default job scheduler parameters.
@@ -805,7 +818,7 @@ extern int var_event_drain;
   * IPC connection before closing it because it is idle for too much time.
   */
 #define VAR_IPC_IDLE		"ipc_idle"
-#define DEF_IPC_IDLE		"100s"
+#define DEF_IPC_IDLE		"5s"
 extern int var_ipc_idle_limit;
 
  /*
@@ -1019,6 +1032,24 @@ extern int var_smtp_pix_thresh;
 #define VAR_LMTP_PIX_DELAY	"lmtp_pix_workaround_delay_time"
 #define DEF_LMTP_PIX_DELAY	"10s"
 extern int var_smtp_pix_delay;
+
+ /*
+  * Courageous people may want to turn off PIX bug workarounds.
+  */
+#define	PIX_BUG_DISABLE_ESMTP		"disable_esmtp"
+#define	PIX_BUG_DELAY_DOTCRLF		"delay_dotcrlf"
+#define VAR_SMTP_PIX_BUG_WORDS		"smtp_pix_workarounds"
+#define DEF_SMTP_PIX_BUG_WORDS		PIX_BUG_DISABLE_ESMTP "," \
+					PIX_BUG_DELAY_DOTCRLF
+#define VAR_LMTP_PIX_BUG_WORDS		"lmtp_pix_workarounds"
+#define DEF_LMTP_PIX_BUG_WORDS		DEF_SMTP_PIX_BUG_WORDS
+extern char *var_smtp_pix_bug_words;
+
+#define VAR_SMTP_PIX_BUG_MAPS		"smtp_pix_workaround_maps"
+#define DEF_SMTP_PIX_BUG_MAPS		""
+#define VAR_LMTP_PIX_BUG_MAPS		"lmtp_pix_workaround_maps"
+#define DEF_LMTP_PIX_BUG_MAPS		""
+extern char *var_smtp_pix_bug_maps;
 
 #define VAR_SMTP_DEFER_MXADDR	"smtp_defer_if_no_mx_address_found"
 #define DEF_SMTP_DEFER_MXADDR	0
@@ -1505,6 +1536,10 @@ extern char *var_lmtp_sasl_path;
   * SASL-based relay etc. control.
   */
 #define PERMIT_SASL_AUTH	"permit_sasl_authenticated"
+
+#define VAR_CYRUS_SASL_AUTHZID	"send_cyrus_sasl_authzid"
+#define DEF_CYRUS_SASL_AUTHZID	0
+extern int var_cyrus_sasl_authzid;
 
  /*
   * LMTP client. Timeouts inspired by RFC 1123. The LMTP recipient limit
@@ -2086,7 +2121,7 @@ extern char *var_virt_mailbox_base;
 extern int var_virt_mailbox_limit;
 
 #define VAR_VIRT_MAILBOX_LOCK		"virtual_mailbox_lock"
-#define DEF_VIRT_MAILBOX_LOCK		"fcntl"
+#define DEF_VIRT_MAILBOX_LOCK		"fcntl, dotlock"
 extern char *var_virt_mailbox_lock;
 
  /*
@@ -2666,7 +2701,7 @@ extern char *var_tls_low_clist;
 extern char *var_tls_export_clist;
 
 #define VAR_TLS_NULL_CLIST	"tls_null_cipherlist"
-#define DEF_TLS_NULL_CLIST	"!aNULL:eNULL+kRSA"
+#define DEF_TLS_NULL_CLIST	"eNULL:!aNULL"
 extern char *var_tls_null_clist;
 
  /*

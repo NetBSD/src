@@ -1,4 +1,4 @@
-/*	$NetBSD: gethost.c,v 1.1.1.2.12.1 2007/05/07 17:04:34 pavel Exp $	*/
+/*	$NetBSD: gethost.c,v 1.1.1.2.12.1.2.1 2007/09/03 06:53:59 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 by Darren Reed.

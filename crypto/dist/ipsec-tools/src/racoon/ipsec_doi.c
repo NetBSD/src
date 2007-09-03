@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.22.2.1 2007/05/13 10:14:04 jdc Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.22.2.1.2.1 2007/09/03 06:51:11 wrstuden Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -39,11 +39,7 @@
 
 #include <netinet/in.h>
 
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -3476,6 +3472,14 @@ ipsecdoi_chkcmpids( idt, ids, exact )
 			"check and compare ids : id type mismatch %s != %s\n",
 			s_ipsecdoi_ident(id_bs->type),
 			s_ipsecdoi_ident(id_bt->type));
+
+		return 1;
+	}
+
+	if(id_bs->proto_id != id_bt->proto_id){
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"check and compare ids : proto_id mismatch %d != %d\n",
+			id_bs->proto_id, id_bt->proto_id);
 
 		return 1;
 	}

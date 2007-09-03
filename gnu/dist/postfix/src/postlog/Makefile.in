@@ -19,7 +19,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -64,6 +64,7 @@ depend: $(MAKES)
 postlog.o: ../../include/mail_conf.h
 postlog.o: ../../include/mail_params.h
 postlog.o: ../../include/mail_task.h
+postlog.o: ../../include/mail_version.h
 postlog.o: ../../include/msg.h
 postlog.o: ../../include/msg_output.h
 postlog.o: ../../include/msg_syslog.h

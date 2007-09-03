@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_ioctl.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
+/*	$NetBSD: ifiter_ioctl.c,v 1.3.6.1 2007/09/03 06:55:31 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -448,8 +448,10 @@ static isc_result_t
 linux_if_inet6_current(isc_interfaceiter_t *iter) {
 	char address[33];
 	char name[IF_NAMESIZE+1];
+	char strbuf[ISC_STRERRORSIZE];
 	struct in6_addr addr6;
-	int ifindex, prefix, flag3, flag4;
+	struct ifreq ifreq;
+	int ifindex, prefix, scope, flags;
 	int res;
 	unsigned int i;
 
@@ -461,8 +463,13 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
 		return (ISC_R_FAILURE);
 	}
 
+	/*
+	 * Format for /proc/net/if_inet6:
+	 * (see iface_proc_info() in net/ipv6/addrconf.c)
+	 * <addr6:32> <ifindex:2> <prefix:2> <scope:2> <flags:2> <name:8>
+	 */
 	res = sscanf(iter->entry, "%32[a-f0-9] %x %x %x %x %16s\n",
-		     address, &ifindex, &prefix, &flag3, &flag4, name);
+		     address, &ifindex, &prefix, &scope, &flags, name);
 	if (res != 6) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 			      "/proc/net/if_inet6:sscanf() -> %d (expected 6)",
@@ -482,12 +489,43 @@ linux_if_inet6_current(isc_interfaceiter_t *iter) {
 		addr6.s6_addr[i] = byte;
 	}
 	iter->current.af = AF_INET6;
-	iter->current.flags = INTERFACE_F_UP;
-	isc_netaddr_fromin6(&iter->current.address, &addr6);
-	if (isc_netaddr_islinklocal(&iter->current.address)) {
-		isc_netaddr_setzone(&iter->current.address,
-				    (isc_uint32_t)ifindex);
+	/* iter->current.ifindex = ifindex; */
+	iter->current.flags = 0;
+
+	memset(&ifreq, 0, sizeof(ifreq));
+	INSIST(sizeof(ifreq.ifr_name) <= sizeof(iter->current.name));
+	strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+
+	if (ioctl(iter->socket, SIOCGIFFLAGS, (char *) &ifreq) < 0) {
+		isc__strerror(errno, strbuf, sizeof(strbuf));
+		UNEXPECTED_ERROR(__FILE__, __LINE__,
+				 "%s: getting interface flags: %s",
+				 ifreq.ifr_name, strbuf);
+		return (ISC_R_IGNORE);
 	}
+
+	if ((ifreq.ifr_flags & IFF_UP) != 0)
+		iter->current.flags |= INTERFACE_F_UP;
+#ifdef IFF_POINTOPOINT
+	if ((ifreq.ifr_flags & IFF_POINTOPOINT) != 0) 
+		iter->current.flags |= INTERFACE_F_POINTTOPOINT;
+#endif
+	if ((ifreq.ifr_flags & IFF_LOOPBACK) != 0)
+		iter->current.flags |= INTERFACE_F_LOOPBACK;
+	if ((ifreq.ifr_flags & IFF_BROADCAST) != 0)
+		iter->current.flags |= INTERFACE_F_BROADCAST;
+#ifdef IFF_MULTICAST
+	if ((ifreq.ifr_flags & IFF_MULTICAST) != 0)
+		iter->current.flags |= INTERFACE_F_MULTICAST;
+#endif
+
+	/*
+	 * enable_multicast_if() requires scopeid for setsockopt,
+	 * so associate address with their corresponding ifindex.
+	 */
+	isc_netaddr_fromin6(&iter->current.address, &addr6);
+	isc_netaddr_setzone(&iter->current.address, (isc_uint32_t)ifindex);
+
 	for (i = 0; i < 16; i++) {
 		if (prefix > 8) {
 			addr6.s6_addr[i] = 0xff;

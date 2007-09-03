@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.123 2006/11/26 19:21:55 martin Exp $
+.\"	$NetBSD: contents,v 1.123.4.1 2007/09/03 06:57:26 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,6 +72,13 @@ A gzipped
 kernel containing code for everything supported in this release.  This 
 kernel also supports SMP on systems with more than one CPU.
 .\}
+.if \n[i386] \{\
+.			It Pa netbsd-GENERIC.NOACPI.gz
+A gzipped
+.Nx
+kernel containing code for everything supported in this release but without
+ACPI support, for use on legacy hardware.
+.\}
 .
 .if \n[amd64] \{\
 .			It Pa netbsd-INSTALL.gz
@@ -111,38 +118,24 @@ A version of
 .Li GENERIC
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
-.			It Pa netbsd-GENERIC_TINY.gz
-A version of
-.Li GENERIC
-intended to run on machines with less than 8 MB.
-.			It Pa netbsd-GENERIC_PS2TINY.gz
-A version of
-.Li GENERIC
-intended to run on IBM PS/2 machines.
 .
 .			It Pa netbsd-INSTALL.gz
-A somewhat smaller kernel, which you can use to boot the system
+A somewhat smaller installation kernel, which you can use to boot the system
 on memory-tight systems.
 This is the same kernel as present on the miniroot and on many
 install floppies.
 .
-.			It Pa netbsd-INSTALL_TINY.gz
-A version of
-.Li INSTALL
-intended to run on machines with less than 8 MB.
-.			It Pa netbsd-INSTALL_SMALL.gz
-A version of
-.Li INSTALL
-intended to fit on 5.25"/1.2 MB diskettes.
 .			It Pa netbsd-INSTALL_LAPTOP.gz
 A version of
 .Li INSTALL
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
-.			It Pa netbsd-INSTALL_PS2.gz
+.			It Pa netbsd-INSTALL_LARGE.gz
 A version of
 .Li INSTALL
-that has MCA stuff enabled to allow installing on IBM PS/2 machines.
+that has ACPI and some large disk and network driver, to allow installing
+on the newest machines.
+This is the default boot kernel from the ISO images.
 .\}
 .if \n[mac68k] \{\
 .			It Pa netbsd-GENERIC.gz
@@ -277,10 +270,14 @@ see below.
 .		It Pa bootfs/
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
-.if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
+.if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
 \n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
+.\}
+.if \n[i386]:\n[amd64] \{\
+.		It Pa cdrom/
+\*M bootable cdrom images; see below.
 .\}
 .
 .if \n[alpha] \{\
@@ -325,7 +322,7 @@ Method), below.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen]:\n[amd64] \{\
+.if !\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen] \{\
 .		It Pa misc/
 .
 .ie \n[alpha] \{\
@@ -561,7 +558,6 @@ everything described below.
 .if \n[evbmips] .setsize 20 72
 .if \n[evbppc] .setsize 18 51
 .if \n[evbsh3] .setsize 17 46
-.if \n[evbsh5] .setsize 105 294
 .if \n[hp300] .setsize 16 46
 .if \n[hp700] .setsize 20 67		\" XXX old
 .if \n[hpcarm] .setsize 18 50
@@ -626,7 +622,6 @@ system call and library manual pages.
 .if \n[evbmips] .setsize 21 88
 .if \n[evbppc] .setsize 23 83
 .if \n[evbsh3] .setsize 20 71
-.if \n[evbsh5] .setsize 23 85
 .if \n[hp300] .setsize 18 69
 .if \n[hp700] .setsize 9 42			\" XXX old
 .if \n[hpcarm] .setsize 21 76
@@ -697,7 +692,6 @@ This set includes the games and their manual pages.
 .if \n[evbmips] .setsize 4 9
 .if \n[evbppc] .setsize 3 8
 .if \n[evbsh3] .setsize 3 7
-.if \n[evbsh5] .setsize 9 23
 .if \n[hp300] .setsize 3 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 3 8
@@ -1025,7 +1019,6 @@ all related programs, and their manual pages.
 .if \n[evbmips] .setsize 3 9
 .if \n[evbppc] .setsize 2 7
 .if \n[evbsh3] .setsize 2 7
-.if \n[evbsh5] .setsize 4 13
 .if \n[hp300] .setsize 2 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 2 7
@@ -1104,7 +1097,6 @@ This does not include the X servers.
 .if \n[evbmips] .setsize 7 24
 .if \n[evbppc] .setsize 7 19
 .if \n[evbsh3] .setsize 7 18
-.if \n[evbsh5] .setsize 78 193
 .if \n[hp300] .setsize 6 17
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 6 18
@@ -1160,7 +1152,6 @@ The extra libraries and include files needed to compile X source code.
 .if \n[evbmips] .setsize 10 39
 .if \n[evbppc] .setsize 13 44
 .if \n[evbsh3] .setsize 12 39
-.if \n[evbsh5] .setsize 6 27
 .if \n[hp300] .setsize 10 37
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 13 44
@@ -1215,7 +1206,6 @@ Fonts needed by the X server and by X clients.
 .if \n[evbmips] .setsize 31 39
 .if \n[evbppc] .setsize 31 39
 .if \n[evbsh3] .setsize 31 39
-.if \n[evbsh5] .setsize 31 39
 .if \n[hp300] .setsize 31 39
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 31 39
@@ -1326,7 +1316,6 @@ servers with man pages and the runtime configuration file.
 .if \n[evbmips] .setsize 4 14
 .if \n[evbppc] .setsize 4 10
 .if \n[evbsh3] .setsize 4 8
-.if \n[evbsh5] .setsize 7 20
 .if \n[hp300] .setsize 3 7
 .if \n[hp700] .setsize -unknown- -unknown-
 .if \n[hpcarm] .setsize 5 11

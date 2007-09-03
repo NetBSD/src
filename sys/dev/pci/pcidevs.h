@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.5 2007/05/02 04:50:36 snj Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.5.2.1 2007/09/03 07:04:38 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.855.2.10 2007/08/31 20:09:26 pavel Exp
  */
 
 /*
@@ -609,6 +609,7 @@
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
+#define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
@@ -880,6 +881,13 @@
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* PCscsi-PCI SCSI */
+#define	PCI_PRODUCT_AMD_GEODELX_PCHB	0x2080		/* Geode LX Host-PCI Bridge */
+#define	PCI_PRODUCT_AMD_GEODELX_VGA	0x2081		/* Geode LX VGA Controller */
+#define	PCI_PRODUCT_AMD_GEODELX_AES	0x2082		/* Geode LX AES Security Block */
+#define	PCI_PRODUCT_AMD_CS5536_PCIB	0x2090		/* CS5536 PCI-ISA Bridge */
+#define	PCI_PRODUCT_AMD_CS5536_OHCI	0x2094		/* CS5536 OHCI USB Controller */
+#define	PCI_PRODUCT_AMD_CS5536_EHCI	0x2095		/* CS5536 EHCI USB Controller */
+#define	PCI_PRODUCT_AMD_CS5536_IDE	0x209a		/* CS5536 IDE Controller */
 #define	PCI_PRODUCT_AMD_SC520_SC	0x3000		/* Elan SC520 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-PCI Bridge */
@@ -1621,9 +1629,11 @@
 #define	PCI_PRODUCT_DLINK_DFE690TXD	0x1340		/* DFE-690TXD 10/100 Ethernet */
 #define	PCI_PRODUCT_DLINK_DWL610	0x3300		/* DWL-610 802.11b WLAN */
 #define	PCI_PRODUCT_DLINK_DL4000	0x4000		/* DL-4000 Gigabit Ethernet */
+#define	PCI_PRODUCT_DLINK_DGE550SX	0x4001		/* DGE-550SX */
 #define	PCI_PRODUCT_DLINK_DGE528T	0x4300		/* DGE-528T Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE560T	0x4b00		/* DGE-560T Gigabit Ethernet */
 #define	PCI_PRODUCT_DLINK_DGE560T_2	0x4b01		/* DGE-560T_2 Gigabit Ethernet */
+#define	PCI_PRODUCT_DLINK_DGE560SX	0x4b02		/* DGE-560SX */
 #define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T Gigabit Ethernet */
 
 /* Distributed Processing Technology products */
@@ -1766,10 +1776,18 @@
 #define	PCI_PRODUCT_MARVELL_YUKON_8035	0x4350		/* Yukon 88E8035 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8036	0x4351		/* Yukon 88E8036 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8038	0x4352		/* Yukon 88E8038 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8039	0x4353		/* Yukon 88E8039 */
+#define	PCI_PRODUCT_MARVELL_YUKON_C033	0x4356		/* Yukon 88EC033 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8052	0x4360		/* Yukon 88E8052 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8050	0x4361		/* Yukon 88E8050 */
 #define	PCI_PRODUCT_MARVELL_YUKON_8053	0x4362		/* Yukon 88E8053 */
-#define	PCI_PRODUCT_MARVELL_YUKON_3	0x4363		/* Yukon */
+#define	PCI_PRODUCT_MARVELL_YUKON_8055	0x4363		/* Yukon 88E8055 */
+#define	PCI_PRODUCT_MARVELL_YUKON_8056	0x4364		/* Yukon 88E8056 */
+#define	PCI_PRODUCT_MARVELL_YUKON_1	0x4365		/* Yukon */
+#define	PCI_PRODUCT_MARVELL_YUKON_C036	0x4366		/* Yukon 88EC036 */
+#define	PCI_PRODUCT_MARVELL_YUKON_C032	0x4367		/* Yukon 88EC032 */
+#define	PCI_PRODUCT_MARVELL_YUKON_C034	0x4368		/* Yukon 88EC034 */
+#define	PCI_PRODUCT_MARVELL_YUKON_C042	0x4369		/* Yukon 88EC042 */
 #define	PCI_PRODUCT_MARVELL_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_MARVELL_BELKIN	0x5005		/* Belkin Gigabit Ethernet */
 #define	PCI_PRODUCT_MARVELL_88SX5040	0x5040		/* 88SX5040 SATA */
@@ -2007,6 +2025,10 @@
 #define	PCI_PRODUCT_INTEL_82572EI	0x10b9		/* i82572EI 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT	0x10ba		/* i80003 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT	0x10bb		/* i80003 Gigabit Ethernet (SERDES) */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_AMT	0x10bd		/* 82801I (AMT) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE	0x10c0		/* 82801I LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE_G	0x10c2		/* 82801I (G) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IFE_GT	0x10c3		/* 82801I (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
@@ -2258,6 +2280,7 @@
 #define	PCI_PRODUCT_INTEL_82801H_EXP_5	0x2847		/* 82801H PCI Express Port #5 */
 #define	PCI_PRODUCT_INTEL_82801H_EXP_6	0x2849		/* 82801H PCI Express Port #6 */
 #define	PCI_PRODUCT_INTEL_82801H_HDA	0x284b		/* 82801H High Definition Audio Controller */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_C	0x294c		/* 82801I (C) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_THERMAL	0x284f		/* 82801H Thermal Controller */
 #define	PCI_PRODUCT_INTEL_82965Q_HB	0x2990		/* 82965Q Host Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_EXP	0x2991		/* 82965Q PCI Express Bridge */
@@ -2354,6 +2377,14 @@
 /* I. T. T. products */
 #define	PCI_PRODUCT_ITT_AGX016	0x0001		/* AGX016 */
 #define	PCI_PRODUCT_ITT_ITT3204	0x0002		/* ITT3204 MPEG Decoder */
+
+/* JMicron products */
+#define	PCI_PRODUCT_JMICRON_JMB360	0x02360		/* JMB360 SATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB361	0x02361		/* JMB361 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB363	0x02363		/* JMB363 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB365	0x02365		/* JMB365 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB366	0x02366		/* JMB366 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB368	0x02368		/* JMB368 PATA controller */
 
 /* JNI products */
 #define	PCI_PRODUCT_JNI_JNIC1460	0x1460		/* JNIC-1460 Fibre-Channel adapter */
@@ -2532,6 +2563,12 @@
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
+#define	PCI_PRODUCT_NS_CS5535_HB	0x0028		/* CS5535 Host-PCI Bridge */
+#define	PCI_PRODUCT_NS_CS5535_ISA	0x002b		/* CS5535 PCI-ISA Bridge */
+#define	PCI_PRODUCT_NS_CS5535_IDE	0x002d		/* CS5535 IDE Controller */
+#define	PCI_PRODUCT_NS_CS5535_AUDIO	0x002e		/* CS5535 Audio Controller */
+#define	PCI_PRODUCT_NS_CS5535_USB	0x002f		/* CS5535 USB Host Controller */
+#define	PCI_PRODUCT_NS_CS5535_VIDEO	0x0030		/* CS5535 Video Controller */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 #define	PCI_PRODUCT_NS_SC1100_IDE	0x0502		/* SC1100 PCI IDE */
 #define	PCI_PRODUCT_NS_SC1100_AUDIO	0x0503		/* SC1100 XpressAUDIO */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
+/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.1.8.1 2007/09/03 07:00:56 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -66,6 +66,11 @@
 #include <msg.h>
 #include <mymalloc.h>
 #include <stringops.h>
+
+ /*
+  * Global library
+  */
+#include <mail_params.h>
 
  /*
   * Application-specific
@@ -161,7 +166,7 @@ static int xsasl_cyrus_client_get_user(void *context, int unused_id,
 				               const char **result,
 				               unsigned *len)
 {
-    const char *myname = "xsasl_cyrus_get_user";
+    const char *myname = "xsasl_cyrus_client_get_user";
     XSASL_CYRUS_CLIENT *client = (XSASL_CYRUS_CLIENT *) context;
 
     if (msg_verbose)
@@ -184,7 +189,7 @@ static int xsasl_cyrus_client_get_user(void *context, int unused_id,
 static int xsasl_cyrus_client_get_passwd(sasl_conn_t *conn, void *context,
 				            int id, sasl_secret_t **psecret)
 {
-    const char *myname = "xsasl_cyrus_get_passwd";
+    const char *myname = "xsasl_cyrus_client_get_passwd";
     XSASL_CYRUS_CLIENT *client = (XSASL_CYRUS_CLIENT *) context;
     int     len;
 
@@ -331,7 +336,8 @@ XSASL_CLIENT *xsasl_cyrus_client_create(XSASL_CLIENT_IMPL *unused_impl,
 
     if ((sasl_status = SASL_CLIENT_NEW(service, server,
 				       NULL_CLIENT_ADDR, NULL_SERVER_ADDR,
-				       custom_callbacks, NULL_SECFLAGS,
+				 var_cyrus_sasl_authzid ? custom_callbacks :
+				       custom_callbacks + 1, NULL_SECFLAGS,
 				       &sasl_conn)) != SASL_OK) {
 	msg_warn("per-session SASL client initialization: %s",
 		 xsasl_cyrus_strerror(sasl_status));

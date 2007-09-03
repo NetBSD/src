@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51.2.4 2007/04/20 20:31:25 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.51.2.4.2.1 2007/09/03 07:03:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.4 2007/04/20 20:31:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.4.2.1 2007/09/03 07:03:33 wrstuden Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -429,7 +429,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			},
 			cyrix6x86_cpu_setup,
 			NULL,
-			NULL,
+			amd_cpu_cacheinfo,
 		},
 		/* Family 6, not yet available from NSC */
 		{
@@ -619,6 +619,11 @@ cyrix6x86_cpu_setup(ci)
 	 * so this should really be optional. XXX
 	 */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
+	/*
+	 * Do not disable the TSC on the Geode GX, it's reported to
+	 * work fine.
+	 */
+	if (ci->ci_signature != 0x552)
 	disable_tsc(ci);
 
 	/* enable access to ccr4/ccr5 */
@@ -832,8 +837,10 @@ amd_amd64_name(struct cpu_info *ci)
 				break;
 			case 0x2:	/* rev BH-E4 (Manchester) */
 			case 0x4:	/* rev BH-F2 (Windsor) */
-			case 0x6:	/* rev BH-G1 (Brisbane) */
 				ret = "Athlon 64 X2";
+				break;
+			case 0x6:	/* rev BH-G1 (Brisbane) */
+				ret = "Athlon X2 or Athlon 64 X2";
 				break;
 			}
 			break;
@@ -841,10 +848,8 @@ amd_amd64_name(struct cpu_info *ci)
 			switch (extmodel) {
 			case 0x0:	/* rev DH-CG (Newcastle) */
 			case 0x1:	/* rev DH-D0 (Winchester) */
-				ret = "Athlon 64 or Sempron";
-				break;
 			case 0x2:	/* rev DH-E3/E6 */
-				ret = "Sempron";
+				ret = "Athlon 64 or Sempron";
 				break;
 			}
 			break;
@@ -862,6 +867,7 @@ amd_amd64_name(struct cpu_info *ci)
 			case 0x2:	/* rev DH-E3/E6 (Venice/Palermo) */
 			case 0x4:	/* rev DH-F2 (Orleans/Manila) */
 			case 0x5:	/* rev DH-F2 (Orleans/Manila) */
+			case 0x6:	/* rev DH-G1 */
 				ret = "Athlon 64 or Sempron";
 				break;
 			}

@@ -92,28 +92,41 @@ by the mail delivering process that creates the connection.  To get
 the same performance improvement as with a shared connection cache,
 non-shared connections need to be kept open for a longer time. </p>
 
+<p> The scache(8) server, introduced with Postfix version 2.2,
+maintains the shared connection cache.  With Postfix version 2.2,
+only the smtp(8) client has support to access this cache.  </p>
+
 <blockquote>
 
 <table>
 
-<tr> <td> Internet &lt;-- </td> <td align="center" bgcolor="#f0f0ff">
-<br> smtp(8) <br> &nbsp; </td> <td> <tt> &lt;-&gt; </tt> </td> <td
-align="center" bgcolor="#f0f0ff"> <br> scache(8) <br> &nbsp; </td>
-<td> <tt> &lt;-&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff">
-<br> smtp(8) <br> &nbsp; </td> <td> --&gt; Internet </td>
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> smtp(8) </td> <td colspan="2"> <tt>
+--&gt; </tt> Internet </td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> qmgr(8) </td> <td> </td>
+<td align="center" rowspan="3"> &nbsp; </td> <td align="center"
+rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td> <td> &nbsp; </td>
+</tr>
+
+<tr> <td> </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="2" bgcolor="#f0f0ff"> smtp(8) </td> <td align="left"> <tt>
+--&gt; </tt> Internet </td> </tr>
+
+<tr> <td colspan="3"> </td> <td align="center"><tt>^<br>|</tt></td>
+<td> &nbsp; </td> </tr>
+
+<tr> <td colspan="3"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> scache(8) </td> </tr>
 
 </table>
 
 </blockquote>
 
-<p> The scache(8) server, introduced with Postfix version 2.2,
-maintains the shared connection cache.  With Postfix version 2.2,
-only the smtp(8) client has support to access this cache.  </p>
-
 <p> When SMTP connection caching is enabled (see next section), the
 smtp(8) client does not disconnect after a mail transaction, but
 gives the connection to the scache(8) server which keeps the
-connection open for a limited amount of time.  </p>
+connection open for a limited amount of time. </p>
 
 <p> After handing over the open connection to the scache(8) server,
 the smtp(8) client continues with some other mail delivery request.

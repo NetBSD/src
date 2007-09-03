@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2006/11/20 07:13:36 skrll Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2007/09/03 07:01:05 wrstuden Exp $
 
 MKPRIVATELIB=	yes
 
@@ -49,12 +49,6 @@ CPPFLAGS.${f}.c=		-DGENERATOR_FILE
 
 # XXX
 COPTS.varasm.c=			-Wno-error
-
-# XXX
-.if ${MACHINE_CPU} == "sh5"
-NOGCCERROR=			# defined
-COPTS.reload1.c=		-O1
-.endif
 
 
 # Headers that host objects depend on (except gen*rtl*)

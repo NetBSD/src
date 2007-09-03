@@ -57,4 +57,34 @@ echo Copying the OpenSSL DLL.
 copy ..\..\openssl-0.9.8d\out32dll\libeay32.dll ..\Build\Release\
 copy ..\..\openssl-0.9.8d\out32dll\libeay32.dll ..\Build\Debug\
 
+rem
+rem set vcredist here so that it is correctly expanded in the if body 
+rem
+set vcredist=BootStrapper\Packages\vcredist_x86\vcredist_x86.exe
+
+if Defined FrameworkSDKDir (
+
+rem
+rem vcredist_x86.exe path relative to FrameworkSDKDir
+rem
+
+if Exist "%FrameworkSDKDir%\%vcredist%" (
+
+echo Copying Visual C x86 Redistributable Installer
+
+rem
+rem Use /Y so we allways have the current version of the installer.
+rem
+
+copy /Y "%FrameworkSDKDir%\%vcredist%" ..\Build\Release\
+copy /Y "%FrameworkSDKDir%\%vcredist%" ..\Build\Debug\
+
+) else (
+	echo "**** %FrameworkSDKDir%\%vcredist% not found ****"
+)
+) else (
+	echo "**** Warning FrameworkSDKDir not defined ****"
+	echo "****         Run vsvars32.bat            ****"
+)
+
 rem Done

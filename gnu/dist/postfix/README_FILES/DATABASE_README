@@ -44,7 +44,8 @@ Benefits of the Postfix (key, value) query interface:
     lookups" below.
   * You can use Berkeley DB files with fixed lookup strings for simple address
     rewriting operations and you can use regular expression tables for the more
-    complicated work.
+    complicated work. In other words, you don't have to put everything into the
+    same table.
 
 PPoossttffiixx lliissttss vveerrssuuss ttaabblleess
 
@@ -124,7 +125,8 @@ update fails because the disk is full or because something else happens. This
 is because commands such as postmap(1) or postalias(1) overwrite existing
 files. If the update fails in the middle then you have no usable database, and
 Postfix will stop working. This is not an issue with the CDB database type
-available with Postfix 2.2 and later, because CDB database rebuilds are atomic.
+available with Postfix 2.2 and later: CDB creates a new file, and renames the
+file upon successful completion.
 
 With multi-file databases such as DBM, there is no simple solution. With
 Berkeley DB and other "one file" databases, it is possible to add some extra
@@ -244,7 +246,7 @@ To find out what database types your Postfix system supports, use the "ppooss
         in tcp_table(5). The lookup table name is "tcp:host:port" where "host"
         specifies a symbolic hostname or a numeric IP address, and "port"
         specifies a symbolic service name or a numeric port number. This
-        protocol is not available up to and including Postfix version 2.2.
+        protocol is not available up to and including Postfix version 2.4.
     uunniixx (read-only)
         A limited way to query the UNIX authentication database. The following
         tables are implemented:

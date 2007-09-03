@@ -21,7 +21,7 @@ all: $(LIB)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 

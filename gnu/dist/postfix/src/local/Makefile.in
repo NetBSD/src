@@ -24,7 +24,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -353,6 +353,7 @@ local.o: ../../include/mail_addr.h
 local.o: ../../include/mail_conf.h
 local.o: ../../include/mail_params.h
 local.o: ../../include/mail_server.h
+local.o: ../../include/mail_version.h
 local.o: ../../include/maps.h
 local.o: ../../include/mbox_conf.h
 local.o: ../../include/msg.h

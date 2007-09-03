@@ -48,8 +48,8 @@ VIRTUAL(5)                                                          VIRTUAL(5)
        text  file that serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.
        The result, an indexed file in <b>dbm</b> or <b>db</b> format,  is  used
        for fast searching by the mail system. Execute the command
-       "<b>postmap /etc/postfix/virtual</b>" in  order  to  rebuild  the
-       indexed file after changing the text file.
+       "<b>postmap /etc/postfix/virtual</b>" to rebuild an indexed  file
+       after changing the corresponding text file.
 
        When  the  table  is provided via other means such as NIS,
        LDAP or SQL, the same lookups are  done  as  for  ordinary
@@ -58,9 +58,9 @@ VIRTUAL(5)                                                          VIRTUAL(5)
        Alternatively,  the  table  can  be provided as a regular-
        expression map where patterns are given as regular expres-
        sions,  or lookups can be directed to TCP-based server. In
-       that case, the lookups are done in  a  slightly  different
+       those case, the lookups are done in a  slightly  different
        way  as  described below under "REGULAR EXPRESSION TABLES"
-       and "TCP-BASED TABLES".
+       or "TCP-BASED TABLES".
 
 <b>CASE FOLDING</b>
        The search string is folded to lowercase  before  database
@@ -109,15 +109,24 @@ VIRTUAL(5)                                                          VIRTUAL(5)
               Redirect mail for other users in <i>domain</i> to <i>address</i>.
               This form has the lowest precedence.
 
+              Note:  @<i>domain</i>  is a wild-card. With this form, the
+              Postfix SMTP server accepts mail for any  recipient
+              in  <i>domain</i>,  regardless  of  whether that recipient
+              exists.  This may turn  your  mail  system  into  a
+              backscatter  source: Postfix first accepts mail for
+              non-existent recipients and then  tries  to  return
+              that  mail  as  "undeliverable" to the often forged
+              sender address.
+
 <b>RESULT ADDRESS REWRITING</b>
        The lookup result is subject to address rewriting:
 
-       <b>o</b>      When  the  result  has  the  form @<i>otherdomain</i>, the
-              result becomes the same <i>user</i> in <i>otherdomain</i>.   This
+       <b>o</b>      When the result  has  the  form  @<i>otherdomain</i>,  the
+              result  becomes the same <i>user</i> in <i>otherdomain</i>.  This
               works only for the first address in a multi-address
               lookup result.
 
-       <b>o</b>      When "<b><a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a>=yes</b>", append  "<b>@$<a href="postconf.5.html#myorigin">myorigin</a></b>"
+       <b>o</b>      When  "<b><a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a>=yes</b>", append "<b>@$<a href="postconf.5.html#myorigin">myorigin</a></b>"
               to addresses without "@domain".
 
        <b>o</b>      When "<b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a>=yes</b>", append "<b>.$<a href="postconf.5.html#mydomain">mydomain</a></b>"
@@ -125,29 +134,29 @@ VIRTUAL(5)                                                          VIRTUAL(5)
 
 <b>ADDRESS EXTENSION</b>
        When a mail address localpart contains the optional recip-
-       ient  delimiter  (e.g., <i>user+foo</i>@<i>domain</i>), the lookup order
+       ient delimiter (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order
        becomes: <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and
        @<i>domain</i>.
 
-       The   <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>   parameter  controls
-       whether an unmatched address extension  (<i>+foo</i>)  is  propa-
+       The  <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>   parameter   controls
+       whether  an  unmatched  address extension (<i>+foo</i>) is propa-
        gated to the result of table lookup.
 
 <b>VIRTUAL ALIAS DOMAINS</b>
-       Besides  virtual aliases, the virtual alias table can also
+       Besides virtual aliases, the virtual alias table can  also
        be used to implement <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domains</a>. With a virtual
-       alias  domain,  all  recipient  addresses  are  aliased to
+       alias domain,  all  recipient  addresses  are  aliased  to
        addresses in other domains.
 
        Virtual alias domains are not to be confused with the vir-
        tual mailbox domains that are implemented with the Postfix
        <a href="virtual.8.html"><b>virtual</b>(8)</a>  mail  delivery  agent.  With  virtual  mailbox
-       domains,  each recipient address can have its own mailbox.
+       domains, each recipient address can have its own  mailbox.
 
-       With a <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a>, the virtual  domain  has  its
-       own  user  name  space. Local (i.e. non-virtual) usernames
-       are not visible in a <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a>. In  particular,
-       local  <a href="aliases.5.html"><b>aliases</b>(5)</a>  and local mailing lists are not visible
+       With  a  virtual  alias domain, the virtual domain has its
+       own user name space. Local  (i.e.  non-virtual)  usernames
+       are  not visible in a <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a>. In particular,
+       local <a href="aliases.5.html"><b>aliases</b>(5)</a> and local mailing lists are  not  visible
        as <i>localname@virtual-alias.domain</i>.
 
        Support for a <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a> looks like:
@@ -155,105 +164,105 @@ VIRTUAL(5)                                                          VIRTUAL(5)
        /etc/postfix/<a href="postconf.5.html">main.cf</a>:
            <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 
-           Note: some systems use <b>dbm</b> databases instead of  <b>hash</b>.
-           See  the output from "<b>postconf -m</b>" for available data-
-           base types.
+       Note: some systems use <b>dbm</b> databases instead of <b>hash</b>.  See
+       the output  from  "<b>postconf  -m</b>"  for  available  database
+       types.
 
        /etc/postfix/<a href="virtual.8.html">virtual</a>:
-           <i>virtual-alias.domain anything</i> (right-hand content does not matter)
-           <i>postmaster@virtual-alias.domain      postmaster</i>
-           <i>user1@virtual-alias.domain   address1</i>
-           <i>user2@virtual-alias.domain   address2, address3</i>
+           <i>virtual-alias.domain     anything</i> (right-hand content does not matter)
+           <i>postmaster@virtual-alias.domain  postmaster</i>
+           <i>user1@virtual-alias.domain       address1</i>
+           <i>user2@virtual-alias.domain       address2, address3</i>
 
-       The <i>virtual-alias.domain anything</i> entry is required for  a
+       The  <i>virtual-alias.domain anything</i> entry is required for a
        <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a>. <b>Without this entry, mail is rejected</b>
-       <b>with "relay access denied", or bounces  with  "mail  loops</b>
+       <b>with  "relay  access  denied", or bounces with "mail loops</b>
        <b>back to myself".</b>
 
-       Do  not  specify <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a> names in the <a href="postconf.5.html"><b>main.cf</b></a>
+       Do not specify <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a> names in  the  <a href="postconf.5.html"><b>main.cf</b></a>
        <b><a href="postconf.5.html#mydestination">mydestination</a></b> or <b><a href="postconf.5.html#relay_domains">relay_domains</a></b> configuration parameters.
 
-       With a virtual  alias  domain,  the  Postfix  SMTP  server
-       accepts   mail  for  <i>known-user@virtual-alias.domain</i>,  and
-       rejects  mail  for  <i>unknown-user</i>@<i>virtual-alias.domain</i>   as
+       With  a  virtual  alias  domain,  the  Postfix SMTP server
+       accepts  mail  for  <i>known-user@virtual-alias.domain</i>,   and
+       rejects   mail  for  <i>unknown-user</i>@<i>virtual-alias.domain</i>  as
        undeliverable.
 
-       Instead  of  specifying  the <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a> name via
-       the <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a></b> table, you may also specify it  via
+       Instead of specifying the virtual alias  domain  name  via
+       the  <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a></b> table, you may also specify it via
        the <a href="postconf.5.html"><b>main.cf</a> <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a></b> configuration parameter.
-       This latter parameter uses the same syntax as the  <a href="postconf.5.html"><b>main.cf</b></a>
+       This  latter parameter uses the same syntax as the <a href="postconf.5.html"><b>main.cf</b></a>
        <b><a href="postconf.5.html#mydestination">mydestination</a></b> configuration parameter.
 
 <b>REGULAR EXPRESSION TABLES</b>
-       This  section  describes how the table lookups change when
+       This section describes how the table lookups  change  when
        the table is given in the form of regular expressions. For
-       a  description  of regular expression lookup table syntax,
+       a description of regular expression lookup  table  syntax,
        see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each pattern is a regular expression that  is  applied  to
+       Each  pattern  is  a regular expression that is applied to
        the entire address being looked up. Thus, <i>user@domain</i> mail
-       addresses are not broken up into their  <i>user</i>  and  <i>@domain</i>
+       addresses  are  not  broken up into their <i>user</i> and <i>@domain</i>
        constituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and
        <i>foo</i>.
 
-       Patterns are applied in the order as specified in the  ta-
-       ble,  until  a  pattern  is  found that matches the search
+       Patterns  are applied in the order as specified in the ta-
+       ble, until a pattern is  found  that  matches  the  search
        string.
 
-       Results are the same as with indexed  file  lookups,  with
-       the  additional feature that parenthesized substrings from
+       Results  are  the  same as with indexed file lookups, with
+       the additional feature that parenthesized substrings  from
        the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>TCP-BASED TABLES</b>
-       This section describes how the table lookups  change  when
+       This  section  describes how the table lookups change when
        lookups are directed to a TCP-based server. For a descrip-
        tion of the TCP client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_ta-</b></a>
        <a href="tcp_table.5.html"><b>ble</b>(5)</a>.  This feature is not available up to and including
-       Postfix version 2.3.
+       Postfix version 2.4.
 
        Each lookup operation uses the entire address once.  Thus,
-       <i>user@domain</i>  mail  addresses  are not broken up into their
+       <i>user@domain</i> mail addresses are not broken  up  into  their
        <i>user</i> and <i>@domain</i> constituent parts, nor is <i>user+foo</i> broken
        up into <i>user</i> and <i>foo</i>.
 
        Results are the same as with indexed file lookups.
 
 <b>BUGS</b>
-       The  table format does not understand quoting conventions.
+       The table format does not understand quoting  conventions.
 
 <b>CONFIGURATION PARAMETERS</b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant
-       to  this  topic.  See  the Postfix <a href="postconf.5.html"><b>main.cf</b></a> file for syntax
-       details and for default values. Use the  "<b>postfix  reload</b>"
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
+       to this topic. See the Postfix  <a href="postconf.5.html"><b>main.cf</b></a>  file  for  syntax
+       details  and  for default values. Use the "<b>postfix reload</b>"
        command after a configuration change.
 
        <b><a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a></b>
               List of virtual aliasing tables.
 
        <b><a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a></b>
-              List  of  <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domains</a>. This uses the same
+              List of <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domains</a>. This uses  the  same
               syntax as the <b><a href="postconf.5.html#mydestination">mydestination</a></b> parameter.
 
        <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>
-              A list of address rewriting  or  forwarding  mecha-
-              nisms  that propagate an address extension from the
-              original address to the result.   Specify  zero  or
-              more   of   <b>canonical</b>,   <b>virtual</b>,  <b>alias</b>,  <b>forward</b>,
+              A  list  of  address rewriting or forwarding mecha-
+              nisms that propagate an address extension from  the
+              original  address  to  the result.  Specify zero or
+              more  of  <b>canonical</b>,   <b>virtual</b>,   <b>alias</b>,   <b>forward</b>,
               <b>include</b>, or <b>generic</b>.
 
        Other parameters of interest:
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b>
-              The network interface addresses  that  this  system
+              The  network  interface  addresses that this system
               receives mail on.  You need to stop and start Post-
               fix when this parameter changes.
 
        <b><a href="postconf.5.html#mydestination">mydestination</a></b>
-              List of domains that  this  mail  system  considers
+              List  of  domains  that  this mail system considers
               local.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a></b>
-              The  domain  that  is  appended to any address that
+              The domain that is appended  to  any  address  that
               does not have a domain.
 
        <b><a href="postconf.5.html#owner_request_special">owner_request_special</a></b>
@@ -272,12 +281,12 @@ VIRTUAL(5)                                                          VIRTUAL(5)
        <a href="canonical.5.html">canonical(5)</a>, canonical address mapping
 
 <b>README FILES</b>
-       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="ADDRESS_REWRITING_README.html">ADDRESS_REWRITING_README</a>, address rewriting guide
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
        <a href="VIRTUAL_README.html">VIRTUAL_README</a>, domain hosting guide
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

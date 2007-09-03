@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.586.2.4 2007/04/20 20:31:25 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.586.2.4.2.1 2007/09/03 07:03:34 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.4 2007/04/20 20:31:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.4.2.1 2007/09/03 07:03:34 wrstuden Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1612,6 +1612,13 @@ init386(paddr_t first_avail)
 			case BIM_NVS:
 				break;
 			default:
+				continue;
+			}
+
+			/*
+			 * If the segment is smaller than a page, skip it.
+			 */
+			if (bim->entry[x].size < NBPG) {
 				continue;
 			}
 

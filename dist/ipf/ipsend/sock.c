@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.9.4.2 2007/05/07 17:04:28 pavel Exp $	*/
+/*	$NetBSD: sock.c,v 1.9.4.2.2.1 2007/09/03 06:53:51 wrstuden Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed

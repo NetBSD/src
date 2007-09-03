@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.5 2007/05/02 04:50:37 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.5.2.1 2007/09/03 07:04:39 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.855.2.10 2007/08/31 20:09:26 pavel Exp
  */
 
 /*
@@ -2248,6 +2248,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Datum Inc. Bancomm-Timing Division",
 	},
 	{
+	    PCI_VENDOR_JMICRON,
+	    "JMicron Technology",
+	},
+	{
 	    PCI_VENDOR_HINT,
 	    "HiNT",
 	},
@@ -2372,7 +2376,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 583;
+const int pci_nvendors = 584;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -3150,6 +3154,34 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
 	    "PCscsi-PCI SCSI",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_PCHB,
+	    "Geode LX Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_VGA,
+	    "Geode LX VGA Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_AES,
+	    "Geode LX AES Security Block",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_PCIB,
+	    "CS5536 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_OHCI,
+	    "CS5536 OHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_EHCI,
+	    "CS5536 EHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_IDE,
+	    "CS5536 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC520_SC,
@@ -5668,6 +5700,10 @@ static const struct pci_product pci_products[] = {
 	    "DL-4000 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550SX,
+	    "DGE-550SX",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
 	    "DGE-528T Gigabit Ethernet",
 	},
@@ -5678,6 +5714,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2,
 	    "DGE-560T_2 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560SX,
+	    "DGE-560SX",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
@@ -6072,6 +6112,14 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88E8038",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8039,
+	    "Yukon 88E8039",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C033,
+	    "Yukon 88EC033",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
 	    "Yukon 88E8052",
 	},
@@ -6084,8 +6132,32 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88E8053",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_3,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8055,
+	    "Yukon 88E8055",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8056,
+	    "Yukon 88E8056",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_1,
 	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C036,
+	    "Yukon 88EC036",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C032,
+	    "Yukon 88EC032",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C034,
+	    "Yukon 88EC034",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C042,
+	    "Yukon 88EC042",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
@@ -6894,6 +6966,22 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
 	    "i80003 Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_AMT,
+	    "82801I (AMT) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE,
+	    "82801I LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_G,
+	    "82801I (G) LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_GT,
+	    "82801I (GT) LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT,
@@ -7900,6 +7988,10 @@ static const struct pci_product pci_products[] = {
 	    "82801H High Definition Audio Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_C,
+	    "82801I (C) LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_THERMAL,
 	    "82801H Thermal Controller",
 	},
@@ -8234,6 +8326,30 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_ITT3204,
 	    "ITT3204 MPEG Decoder",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
+	    "JMB360 SATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB361,
+	    "JMB361 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB363,
+	    "JMB363 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB365,
+	    "JMB365 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB366,
+	    "JMB366 SATA/PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
+	    "JMB368 PATA controller",
 	},
 	{
 	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
@@ -8706,6 +8822,30 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83820,
 	    "DP83820 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_HB,
+	    "CS5535 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_ISA,
+	    "CS5535 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_IDE,
+	    "CS5535 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_AUDIO,
+	    "CS5535 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_USB,
+	    "CS5535 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_VIDEO,
+	    "CS5535 Video Controller",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
@@ -12716,4 +12856,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2585;
+const int pci_nproducts = 2619;

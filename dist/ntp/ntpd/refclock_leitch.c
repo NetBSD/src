@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_leitch.c,v 1.3 2006/03/18 14:08:29 kardel Exp $	*/
+/*	$NetBSD: refclock_leitch.c,v 1.3.6.1 2007/09/03 06:56:15 wrstuden Exp $	*/
 
 /*
  * refclock_leitch - clock driver for the Leitch CSD-5300 Master Clock
@@ -50,14 +50,20 @@
 #define LEITCH_DESCRIPTION "Leitch: CSD 5300 Master Clock System Driver"
 #define LEITCH232 "/dev/leitch%d"	/* name of radio device */
 #define SPEED232 B300		/* uart speed (300 baud) */ 
+#ifdef DEBUG
 #define leitch_send(A,M) \
 if (debug) fprintf(stderr,"write leitch %s\n",M); \
 if ((write(A->leitchio.fd,M,sizeof(M)) < 0)) {\
-						      if (debug) \
-									 fprintf(stderr, "leitch_send: unit %d send failed\n", A->unit); \
-																		 else \
-																			      msyslog(LOG_ERR, "leitch_send: unit %d send failed %m",A->unit);}
-		
+	if (debug) \
+	    fprintf(stderr, "leitch_send: unit %d send failed\n", A->unit); \
+	else \
+	    msyslog(LOG_ERR, "leitch_send: unit %d send failed %m",A->unit);}
+#else
+#define leitch_send(A,M) \
+if ((write(A->leitchio.fd,M,sizeof(M)) < 0)) {\
+	msyslog(LOG_ERR, "leitch_send: unit %d send failed %m",A->unit);}
+#endif
+
 #define STATE_IDLE 0
 #define STATE_DATE 1
 #define STATE_TIME1 2

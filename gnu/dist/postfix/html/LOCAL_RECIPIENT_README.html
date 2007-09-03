@@ -64,7 +64,7 @@ recipients are either UNIX accounts or local aliases: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> = <a href="proxymap.8.html">proxy</a>:unix:passwd.byname $<a href="postconf.5.html#alias_maps">alias_maps</a>
 </pre>
 </blockquote>
@@ -74,14 +74,18 @@ specify: </p>
 
 <blockquote>
 <pre>
-/etc/postfix/main.cf:
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> =
 </pre>
 </blockquote>
 
 <p> That is, an empty value. With this setting, the Postfix SMTP
 server will not reject mail with "User unknown in local recipient
-table". </p>
+table". <b> Don't do this on systems that receive mail directly 
+from the Internet. With today's worms and viruses, Postfix will
+become a backscatter source: it accepts mail for non-existent
+recipients and then tries to return that mail as "undeliverable"
+to the often forged sender address</b>. </p>
 
 <h2><a name="change">When you need to change the local_recipient_maps
 setting in main.cf</a></h2>
@@ -91,7 +95,7 @@ setting in main.cf</a></h2>
     <li> <p> Problem: you don't use the default Postfix <a href="local.8.html">local(8)</a>
     delivery agent for domains matching $<a href="postconf.5.html#mydestination">mydestination</a>, $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a>,
     or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>. For example, you redefined the
-    "<a href="postconf.5.html#local_transport">local_transport</a>" setting in main.cf.  </p>
+    "<a href="postconf.5.html#local_transport">local_transport</a>" setting in <a href="postconf.5.html">main.cf</a>.  </p>
 
     <p> Solution: your <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> setting needs to specify
     a database that lists all the known user names or addresses
@@ -100,7 +104,7 @@ setting in main.cf</a></h2>
     specify: </p>
 
 <pre>
-/etc/postfix/main.cf
+/etc/postfix/<a href="postconf.5.html">main.cf</a>
     <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a> localhost.$<a href="postconf.5.html#mydomain">mydomain</a> localhost ...
     <a href="postconf.5.html#local_transport">local_transport</a> = virtual
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> = $<a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a>
@@ -119,7 +123,7 @@ setting in main.cf</a></h2>
     non-UNIX users: </p>
 
 <pre>
-/etc/postfix/main.cf
+/etc/postfix/<a href="postconf.5.html">main.cf</a>
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> = <a href="proxymap.8.html">proxy</a>:unix:passwd.byname, $<a href="postconf.5.html#alias_maps">alias_maps</a>,
         &lt;the database with non-UNIX accounts&gt;
 </pre>
@@ -136,7 +140,7 @@ setting in main.cf</a></h2>
     </p>
 
 <pre>
-/etc/postfix/main.cf
+/etc/postfix/<a href="postconf.5.html">main.cf</a>
     <a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a> =
 </pre>
 

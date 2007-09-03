@@ -1,4 +1,4 @@
-/*	$NetBSD: backupsa.c,v 1.6.2.1 2007/05/13 10:14:04 jdc Exp $	*/
+/*	$NetBSD: backupsa.c,v 1.6.2.1.2.1 2007/09/03 06:51:08 wrstuden Exp $	*/
 
 /*	$KAME: backupsa.c,v 1.16 2001/12/31 20:13:40 thorpej Exp $	*/
 
@@ -43,11 +43,7 @@
 #include <ctype.h>
 
 #include <netinet/in.h>
-#ifndef HAVE_NETINET6_IPSEC
-#include <netinet/ipsec.h>
-#else
-#include <netinet6/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>

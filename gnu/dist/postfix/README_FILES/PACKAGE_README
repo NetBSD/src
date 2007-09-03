@@ -11,10 +11,10 @@ for general use.
 GGeenneerraall ddiissttrriibbuuttiioonnss:: pplleeaassee pprroovviiddee aa ssmmaallll ddeeffaauulltt mmaaiinn..ccff ffiillee
 
 The installed main.cf file must be small. PLEASE resist the temptation to list
-all 400+ parameters in the main.cf file. Postfix is supposed to be easy to
-configure. Listing all 400+ in main.cf defeats the purpose. It is an invitation
-for hobbyists to make random changes without understanding what they do, and
-gets them into endless trouble.
+all parameters in the main.cf file. Postfix is supposed to be easy to
+configure. Listing all parameters in main.cf defeats the purpose. It is an
+invitation for hobbyists to make random changes without understanding what they
+do, and gets them into endless trouble.
 
 GGeenneerraall ddiissttrriibbuuttiioonnss:: pplleeaassee iinncclluuddee RREEAADDMMEE oorr HHTTMMLL ffiilleess
 

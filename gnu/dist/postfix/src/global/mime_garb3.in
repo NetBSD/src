@@ -1,0 +1,29 @@
+From: Some One <user@example.com>
+To: Some One <user@example.com>
+Subject: Test
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed;
+  boundary="Boundary-00=_mvhpFky0yqNhsa4"
+junk in primary header
+
+--Boundary-00=_mvhpFky0yqNhsa4
+Content-Type: text/plain;
+  charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+junk in multipart header
+
+This is a test
+--Boundary-00=_mvhpFky0yqNhsa4
+Content-Type: message/rfc822;
+  name="forwarded message"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+=46rom user@example.com Thu Jan 11 13:08:21 CET 2007
+To: user@example.com
+=46rom: Some One <user@example.com>
+Subject: Forwarded Test
+
+Blah
+

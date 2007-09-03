@@ -11,7 +11,10 @@
 #	The Postfix mail system uses optional lookup tables.
 #	These tables are usually in \fBdbm\fR or \fBdb\fR format.
 #	Alternatively, lookup tables can be specified in CIDR
-#	(Classless Inter-Domain Routing) form.
+#	(Classless Inter-Domain Routing) form. In this case, each
+#	input is compared against a list of patterns. When a match
+#	is found, the corresponding result is returned and the search
+#	is terminated.
 #
 #	To find out what types of lookup tables your Postfix system
 #	supports use the "\fBpostconf -m\fR" command.
@@ -37,7 +40,7 @@
 #	will be matched regardless of redundant zero characters.
 #
 #	Note: address information may be enclosed inside "[]" but
-#	this form is not recommended.
+#	this form is not required.
 #
 #	IPv6 support is available in Postfix 2.2 and later.
 # .IP "\fInetwork_address     result\fR"
@@ -55,17 +58,16 @@
 #	Patterns are applied in the order as specified in the table, until a
 #	pattern is found that matches the search string.
 # EXAMPLE SMTPD ACCESS MAP
+# .nf
 #	/etc/postfix/main.cf:
-# .ti +4
-#	smtpd_client_restrictions = ... cidr:/etc/postfix/client.cidr ...
+#	    smtpd_client_restrictions = ... cidr:/etc/postfix/client.cidr ...
 #
 #	/etc/postfix/client.cidr:
-# .in +4
-#	# Rule order matters. Put more specific whitelist entries
-#	# before more general blacklist entries.
-#       192.168.1.1             OK
-#       192.168.0.0/16          REJECT
-# .in -4
+#	    # Rule order matters. Put more specific whitelist entries
+#	    # before more general blacklist entries.
+#	    192.168.1.1             OK
+#	    192.168.0.0/16          REJECT
+# .fi
 # SEE ALSO
 #	postmap(1), Postfix lookup table manager
 #	regexp_table(5), format of regular expression tables
@@ -81,7 +83,6 @@
 # AUTHOR(S)
 #	The CIDR table lookup code was originally written by:
 #	Jozsef Kadlecsik
-#	kadlec@blackhole.kfki.hu
 #	KFKI Research Institute for Particle and Nuclear Physics
 #	POB. 49
 #	1525 Budapest, Hungary

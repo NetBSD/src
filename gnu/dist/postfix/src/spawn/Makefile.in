@@ -18,7 +18,7 @@ $(PROG):	$(OBJS) $(LIBS)
 $(OBJS): ../../conf/makedefs.out
 
 Makefile: Makefile.in
-	(cat ../../conf/makedefs.out $?) >$@
+	cat ../../conf/makedefs.out $? >$@
 
 test:	$(TESTPROG)
 
@@ -62,6 +62,7 @@ spawn.o: ../../include/dict.h
 spawn.o: ../../include/mail_conf.h
 spawn.o: ../../include/mail_params.h
 spawn.o: ../../include/mail_server.h
+spawn.o: ../../include/mail_version.h
 spawn.o: ../../include/msg.h
 spawn.o: ../../include/mymalloc.h
 spawn.o: ../../include/set_eugid.h

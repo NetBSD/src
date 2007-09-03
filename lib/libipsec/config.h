@@ -106,9 +106,6 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Use <netinet6/ipsec.h> */
-#define HAVE_NETINET6_IPSEC 
-
 /* Define to 1 if you have the <openssl/aes.h> header file. */
 #define HAVE_OPENSSL_AES_H 1
 
@@ -225,13 +222,16 @@
 #define PACKAGE_NAME "ipsec-tools"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ipsec-tools 0.7-beta3"
+#define PACKAGE_STRING "ipsec-tools 0.7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ipsec-tools"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.7-beta3"
+#define PACKAGE_VERSION "0.7"
+
+/* Path to ipsec.h */
+#define PATH_IPSEC_H <netinet6/ipsec.h>
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
@@ -249,7 +249,7 @@
 #define VA_COPY va_copy
 
 /* Version number of package */
-#define VERSION "0.7-beta3"
+#define VERSION "0.7"
 
 /* SHA2 support */
 #define WITH_SHA2 

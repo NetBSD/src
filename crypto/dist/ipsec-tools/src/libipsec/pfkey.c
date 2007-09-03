@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.11.2.1 2007/05/13 10:14:03 jdc Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.11.2.1.2.1 2007/09/03 06:51:06 wrstuden Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -40,11 +40,7 @@
 #include <sys/socket.h>
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
-#ifdef HAVE_NETINET6_IPSEC
-#  include <netinet6/ipsec.h>
-#else
-#  include <netinet/ipsec.h>
-#endif
+#include PATH_IPSEC_H
 
 #include <stdlib.h>
 #include <unistd.h>

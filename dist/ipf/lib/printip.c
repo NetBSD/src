@@ -1,4 +1,4 @@
-/*	$NetBSD: printip.c,v 1.1.1.1.18.1 2007/05/07 17:04:55 pavel Exp $	*/
+/*	$NetBSD: printip.c,v 1.1.1.1.18.1.2.1 2007/09/03 06:54:31 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.

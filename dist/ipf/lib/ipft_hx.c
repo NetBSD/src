@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_hx.c,v 1.6.4.1 2007/05/07 17:04:39 pavel Exp $	*/
+/*	$NetBSD: ipft_hx.c,v 1.6.4.1.2.1 2007/09/03 06:54:06 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2000-2005 by Darren Reed.

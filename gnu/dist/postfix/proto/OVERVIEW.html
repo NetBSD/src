@@ -359,8 +359,7 @@ is optimized for delivery to mailbox servers such as Cyrus.  The
 advantage of this setup is that one Postfix machine can feed multiple
 mailbox servers over LMTP. The opposite is true as well:  one
 mailbox server can be fed over LMTP by multiple Postfix machines.
-The LMTP_README document gives examples of how to use the lmtp(8)
-client.  </p>
+</p>
 
 <li> <p> The local(8) delivery agent understands UNIX-style mailboxes,
 qmail-compatible maildir files, Sendmail-style system-wide aliases(5)
@@ -461,12 +460,13 @@ bgcolor="#f0f0ff"> <br> smtpd(8)<br><br> </td> <td> <tt> &lt;-&gt;
 
 </table>
 
-<li> <p> The bounce(8), defer(8) and trace(8) servers each maintain
-their own queue directory trees with per-message logfiles. This
-information is used to send delivery or non-delivery notifications
-to the sender. </p>
+<li> <p> The bounce(8), defer(8) and trace(8) services each maintain
+their own queue directory trees with per-message logfiles. Postfix
+uses this information when sending "failed", "delayed" or "success"
+delivery status notifications to the sender. </p>
 
-<p> The trace(8) service implements support for the Postfix "sendmail
+<p> The trace(8) service also implements support for the Postfix
+"sendmail
 -bv" and "sendmail -v" commands which produce reports about how
 Postfix delivers mail, and is available with Postfix version 2.1
 and later. See <a href="DEBUG_README.html#trace_mail"> DEBUG_README
@@ -550,15 +550,30 @@ of times that a connection may be reused.  </p>
 
 <p> When delivering mail to a destination with multiple mail servers,
 connection caching can help to skip over a non-responding server,
-and thus dramatically speed up delivery.  </p>
+and thus dramatically speed up delivery. SMTP connection caching
+is available in Postfix version 2.2 and later.  More information
+about this feature is in the CONNECTION_CACHE_README document. </p>
 
 <table>
 
-<tr> <td align="center" bgcolor="#f0f0ff"> <br> smtp(8) <br>
-&nbsp; </td> <td> <tt> &lt;-&gt; </tt> </td> <td align="center"
-bgcolor="#f0f0ff"> <br> scache(8) <br> &nbsp; </td> <td> <tt>
-&lt;-&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff"> <br>
-smtp(8) <br> &nbsp; </td>
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> smtp(8) </td> <td colspan="2"> <tt>
+--&gt; </tt> Internet </td> </tr>
+ 
+<tr> <td align="center" bgcolor="#f0f0ff"> qmgr(8) </td> <td> </td>
+<td align="center" rowspan="3"> &nbsp; </td> <td align="center"
+rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td> <td> &nbsp; </td>
+</tr>
+ 
+<tr> <td> </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="2" bgcolor="#f0f0ff"> smtp(8) </td> <td align="left"> <tt>
+--&gt; </tt> Internet </td> </tr>
+ 
+<tr> <td colspan="3"> </td> <td align="center"><tt>^<br>|</tt></td>
+<td> &nbsp; </td> </tr>
+ 
+<tr> <td colspan="3"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> scache(8) </td> </tr>
 
 </table>
 

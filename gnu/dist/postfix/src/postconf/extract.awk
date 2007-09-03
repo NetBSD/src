@@ -22,7 +22,7 @@
     }
 }
 /^(static| )*CONFIG_STR_TABLE .*\{/,/\};/ { 
-    if ($1 ~ /VAR/) {
+    if ($1 ~ /^VAR/) {
 	print "char *" substr($3,2,length($3)-2) ";" > "str_vars.h"
 	if (++stab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    print |"sed 's/[ 	][ 	]*/ /g' > str_table.h"
@@ -30,7 +30,7 @@
     }
 }
 /^(static| )*CONFIG_RAW_TABLE .*\{/,/\};/ { 
-    if ($1 ~ /VAR/) {
+    if ($1 ~ /^VAR/) {
 	print "char *" substr($3,2,length($3)-2) ";" > "raw_vars.h"
 	if (++rtab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    print |"sed 's/[ 	][ 	]*/ /g' > raw_table.h"
@@ -38,7 +38,7 @@
     }
 }
 /^(static| )*CONFIG_BOOL_TABLE .*\{/,/\};/ { 
-    if ($1 ~ /VAR/) {
+    if ($1 ~ /^VAR/) {
 	print "int " substr($3,2,length($3)-2) ";" > "bool_vars.h"
 	if (++btab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    print |"sed 's/[ 	][ 	]*/ /g' > bool_table.h"
@@ -46,7 +46,7 @@
     }
 }
 /^(static| )*CONFIG_TIME_TABLE .*\{/,/\};/ { 
-    if ($1 ~ /VAR/) {
+    if ($1 ~ /^VAR/) {
 	print "int " substr($3,2,length($3)-2) ";" > "time_vars.h"
 	if (++ttab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    print |"sed 's/[ 	][ 	]*/ /g' > time_table.h" 

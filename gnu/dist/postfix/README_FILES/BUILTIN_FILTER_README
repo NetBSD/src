@@ -18,8 +18,8 @@ application is given in the BACKSCATTER_README document.
 Because the built-in filter is optimized for stopping specific worms and virus
 outbreaks, it has limitations that make it NOT suitable for general junk email
 and virus detection. For that, you should use one of the external content
-inspection methods that are described in the FILTER_README and
-SMTPD_PROXY_README documents.
+inspection methods that are described in the FILTER_README, SMTPD_PROXY_README
+and MILTER_README documents.
 
 The following diagram gives an over-all picture of how Postfix built-in content
 inspection works:

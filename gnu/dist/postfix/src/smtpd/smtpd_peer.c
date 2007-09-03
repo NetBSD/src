@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.14 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.14.6.1 2007/09/03 07:00:40 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -145,6 +145,13 @@ void    smtpd_peer_init(SMTPD_STATE *state)
      * Milter applications as {if_name} and {if_addr}, then we also must be
      * able to provide this via the XCLIENT command for Milter testing.
      * 
+     * XXX If we make local or remote port information available to policy
+     * servers or Milter applications, then we must also make this testable
+     * with the XCLIENT command, otherwise there will be confusion.
+     * 
+     * XXX If we make local or remote port information available via logging,
+     * then we must also support these attributes with the XFORWARD command.
+     * 
      * XXX If support were to be added for Milter applications in down-stream
      * MTAs, then consistency demands that we propagate a lot of Sendmail
      * macro information via the XFORWARD command. Otherwise we could end up
@@ -157,7 +164,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
     /*
      * If peer went away, give up.
      */
-    if (errno == ECONNRESET || errno == ECONNABORTED) {
+    if (errno != 0 && errno != ENOTSOCK) {
 	state->name = mystrdup(CLIENT_NAME_UNKNOWN);
 	state->reverse_name = mystrdup(CLIENT_NAME_UNKNOWN);
 	state->addr = mystrdup(CLIENT_ADDR_UNKNOWN);
@@ -169,13 +176,33 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 
     /*
      * Convert the client address to printable address and hostname.
+     * 
+     * XXX If we're given an IPv6 (or IPv4) connection from, e.g., inetd, while
+     * Postfix IPv6 (or IPv4) support is turned off, don't (skip to the final
+     * else clause, pretend the origin is localhost[127.0.0.1], and become an
+     * open relay).
      */
     else if (errno == 0
-	     && strchr((char *) proto_info->sa_family_list, sa->sa_family)) {
+	     && (sa->sa_family == AF_INET
+#ifdef AF_INET6
+		 || sa->sa_family == AF_INET6
+#endif
+		 )) {
 	MAI_HOSTNAME_STR client_name;
 	MAI_HOSTADDR_STR client_addr;
 	int     aierr;
 	char   *colonp;
+
+	/*
+	 * Sanity check: we can't use sockets that we're not configured for.
+	 */
+	if (strchr((char *) proto_info->sa_family_list, sa->sa_family) == 0)
+	    msg_fatal("cannot handle socket type %s with \"%s = %s\"",
+#ifdef AF_INET6
+		      sa->sa_family == AF_INET6 ? "AF_INET6" :
+#endif
+		      sa->sa_family == AF_INET ? "AF_INET" :
+		      "other", VAR_INET_PROTOCOLS, var_inet_protocols);
 
 	/*
 	 * Sorry, but there are some things that we just cannot do while

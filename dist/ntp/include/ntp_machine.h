@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_machine.h,v 1.3 2006/06/11 19:34:09 kardel Exp $	*/
+/*	$NetBSD: ntp_machine.h,v 1.3.6.1 2007/09/03 06:55:28 wrstuden Exp $	*/
 
 /*
  * Collect all machine dependent idiosyncrasies in one place.
@@ -55,8 +55,6 @@ HOW TO GET IP INTERFACE INFORMATION
   streams. For these systems, you must use send the SIOCGIFCONF down
   the stream in an I_STR ioctl. This ususally also implies
   USE_STREAMS_DEVICE FOR IF_CONFIG. Dell UNIX is a notable exception.
-
-  STREAMS_TLI - use ioctl(I_STR) to implement ioctl(SIOCGIFCONF)
 
 WHAT DOES IOCTL(SIOCGIFCONF) RETURN IN THE BUFFER
 

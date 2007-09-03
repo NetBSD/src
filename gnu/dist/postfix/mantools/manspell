@@ -3,5 +3,5 @@
 for file
 do
     echo ==== $file ====
-    deroff $file | spell
-done | fgrep -vf proto/stop
+    deroff $file | spell | fgrep -vf proto/stop
+done

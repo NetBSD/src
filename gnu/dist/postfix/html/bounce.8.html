@@ -26,19 +26,20 @@ BOUNCE(8)                                                            BOUNCE(8)
        <b>o</b>      Append a recipient (non-)delivery status record  to
               a per-message log file.
 
-       <b>o</b>      Enqueue a bounce message, with a copy of a per-mes-
-              sage log file and  of  the  corresponding  message.
-              When  the  bounce message is enqueued successfully,
-              the per-message log file is deleted.
+       <b>o</b>      Enqueue  a  delivery  status  notification message,
+              with a copy of a per-message log file  and  of  the
+              corresponding  message.   When  the delivery status
+              notification message is enqueued successfully,  the
+              per-message log file is deleted.
 
        The software does a best notification effort. A non-deliv-
-       ery  notification  is  sent  even when the log file or the
+       ery notification is sent even when the  log  file  or  the
        original message cannot be read.
 
-       Optionally, a bounce (defer,  trace)  client  can  request
-       that   the  per-message  log  file  be  deleted  when  the
-       requested operation fails.  This is used by  clients  that
-       cannot  retry  transactions by themselves, and that depend
+       Optionally,  a  bounce  (defer,  trace) client can request
+       that  the  per-message  log  file  be  deleted  when   the
+       requested  operation  fails.  This is used by clients that
+       cannot retry transactions by themselves, and  that  depend
        on retry logic in their own client.
 
 <b>STANDARDS</b>
@@ -53,25 +54,25 @@ BOUNCE(8)                                                            BOUNCE(8)
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to  <a href="postconf.5.html"><b>main.cf</b></a>  are  picked  up  automatically,   as
+       Changes   to  <a href="postconf.5.html"><b>main.cf</b></a>  are  picked  up  automatically,  as
        <a href="bounce.8.html"><b>bounce</b>(8)</a> processes run for only a limited amount of time.
        Use the command "<b>postfix reload</b>" to speed up a change.
 
-       The text below provides  only  a  parameter  summary.  See
+       The  text  below  provides  only  a parameter summary. See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#2bounce_notice_recipient">2bounce_notice_recipient</a> (postmaster)</b>
-              The  recipient of undeliverable mail that cannot be
+              The recipient of undeliverable mail that cannot  be
               returned to the sender.
 
        <b><a href="postconf.5.html#backwards_bounce_logfile_compatibility">backwards_bounce_logfile_compatibility</a> (yes)</b>
-              Produce additional <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile  records  that
+              Produce  additional  <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile records that
               can be read by Postfix versions before 2.0.
 
        <b><a href="postconf.5.html#bounce_notice_recipient">bounce_notice_recipient</a> (postmaster)</b>
-              The  recipient of postmaster notifications with the
+              The recipient of postmaster notifications with  the
               message  headers  of  mail  that  Postfix  did  not
-              deliver  and  of  SMTP  conversation transcripts of
+              deliver and of  SMTP  conversation  transcripts  of
               mail that Postfix did not receive.
 
        <b><a href="postconf.5.html#bounce_size_limit">bounce_size_limit</a> (50000)</b>
@@ -79,21 +80,21 @@ BOUNCE(8)                                                            BOUNCE(8)
               sent in a non-delivery notification.
 
        <b><a href="postconf.5.html#bounce_template_file">bounce_template_file</a> (empty)</b>
-              Pathname  of  a configuration file with bounce mes-
+              Pathname of a configuration file with  bounce  mes-
               sage templates.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How  much time a Postfix daemon process may take to
-              handle a request  before  it  is  terminated  by  a
+              How much time a Postfix daemon process may take  to
+              handle  a  request  before  it  is  terminated by a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#delay_notice_recipient">delay_notice_recipient</a> (postmaster)</b>
-              The  recipient of postmaster notifications with the
-              message headers of mail that  cannot  be  delivered
+              The recipient of postmaster notifications with  the
+              message  headers  of  mail that cannot be delivered
               within $<a href="postconf.5.html#delay_warning_time">delay_warning_time</a> time units.
 
        <b><a href="postconf.5.html#deliver_lock_attempts">deliver_lock_attempts</a> (20)</b>
@@ -101,7 +102,7 @@ BOUNCE(8)                                                            BOUNCE(8)
               sive lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#deliver_lock_delay">deliver_lock_delay</a> (1s)</b>
-              The time between attempts to acquire  an  exclusive
+              The  time  between attempts to acquire an exclusive
               lock on a mailbox file or <a href="bounce.8.html"><b>bounce</b>(8)</a> logfile.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -109,8 +110,8 @@ BOUNCE(8)                                                            BOUNCE(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#internal_mail_filter_classes">internal_mail_filter_classes</a> (empty)</b>
-              What categories of Postfix-generated mail are  sub-
-              ject   to   before-queue   content   inspection  by
+              What  categories of Postfix-generated mail are sub-
+              ject  to   before-queue   content   inspection   by
               <a href="postconf.5.html#non_smtpd_milters">non_smtpd_milters</a>, <a href="postconf.5.html#header_checks">header_checks</a> and <a href="postconf.5.html#body_checks">body_checks</a>.
 
        <b><a href="postconf.5.html#mail_name">mail_name</a> (Postfix)</b>
@@ -119,13 +120,14 @@ BOUNCE(8)                                                            BOUNCE(8)
               bounced mail.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits for the next service request
-              before exiting.
+              The  maximum  amount  of  time that an idle Postfix
+              daemon process waits  for  an  incoming  connection
+              before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of connection requests before  a
-              Postfix daemon process terminates.
+              The  maximal  number of incoming connections that a
+              Postfix daemon process will service  before  termi-
+              nating voluntarily.
 
        <b><a href="postconf.5.html#notify_classes">notify_classes</a> (resource, software)</b>
               The  list of error classes that are reported to the
