@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.3.6.1 2007/08/15 13:48:46 skrll Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.3.6.2 2007/09/03 10:22:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -92,12 +92,11 @@ typedef struct sme_event_drv {
 } sme_event_drv_t;
 
 /* common */
-extern	kmutex_t sme_mtx;	/* mutex to protect the sysmon envsys data */
 extern	kmutex_t sme_list_mtx;	/* mutex to protect the sysmon envsys list */
 extern	kmutex_t sme_event_mtx;	/* mutex to protect the sme event data */
 
 /* mutex to intialize/destroy the sysmon envsys events framework */
-extern	kmutex_t sme_event_init_mtx;
+extern kmutex_t sme_event_init_mtx;
 
 /* condition variable to wait for the worker thread to finish */
 extern	kcondvar_t sme_event_cv;
@@ -109,20 +108,18 @@ LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
 LIST_HEAD(, sme_event) sme_events_list;
 
 /* functions to handle sysmon envsys devices */
-int	sysmon_envsys_createplist(struct sysmon_envsys *);
-void	sme_make_dictionary(struct sysmon_envsys *, prop_array_t,
-			    envsys_data_t *);
+void	sme_add_sensor_dictionary(struct sysmon_envsys *, prop_array_t,
+			    	  prop_dictionary_t, envsys_data_t *);
 int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
 
 /* functions to handle sysmon envsys events */
-int	sme_event_register(struct sme_event *);
+int	sme_event_register(prop_dictionary_t, envsys_data_t *, const char *,
+			   const char *, int32_t, int, int);
 int	sme_event_unregister(const char *, int);
-void	sme_event_unregister_all(struct sysmon_envsys *);
+void	sme_event_unregister_all(const char *);
 void	sme_event_drvadd(void *);
-int	sme_event_add(prop_dictionary_t, envsys_data_t *,
-		      const char *, const char *, int32_t, int, int);
 int	sme_events_init(void);
 void	sme_events_destroy(void);
 void	sme_events_check(void *);

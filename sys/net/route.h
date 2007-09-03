@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.56.2.1 2007/08/15 13:49:42 skrll Exp $	*/
+/*	$NetBSD: route.h,v 1.56.2.2 2007/09/03 10:23:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -197,6 +197,9 @@ struct rt_msghdr {
 #define RTM_IFINFO	0xf	/* iface/link going up/down etc. */
 #define	RTM_IFANNOUNCE	0x10	/* iface arrival/departure */
 #define	RTM_IEEE80211	0x11	/* IEEE80211 wireless event */
+#define	RTM_SETGATE	0x12	/* set prototype gateway for clones
+				 * (see example in arp_rtrequest).
+				 */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */

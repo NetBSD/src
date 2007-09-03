@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.24 2007/03/05 19:48:19 he Exp $ */
+/*	$NetBSD: grf_et.c,v 1.24.14.1 2007/09/03 10:18:20 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.24 2007/03/05 19:48:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.24.14.1 2007/09/03 10:18:20 skrll Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -1069,7 +1069,7 @@ et_load_mon(struct grf_softc *gp, struct grfettext_mode *md)
 	/* provide all needed information in grf device-independent locations */
 	gp->g_data = (void *) gv;
 	gi = &gp->g_display;
-	gi->gd_regaddr = (void *) ztwopa(ba);
+	gi->gd_regaddr = ztwopa(__UNVOLATILE(ba));
 	gi->gd_regsize = 64 * 1024;
 	gi->gd_fbaddr = (void *) kvtop(__UNVOLATILE(gp->g_fbkva));
 	gi->gd_fbsize = et_fbsize;

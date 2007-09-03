@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.312 2007/07/08 01:13:26 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.312.4.1 2007/09/03 10:19:02 skrll Exp $
 #
 # new style config file for i386 architecture
 #
@@ -224,9 +224,9 @@ attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib | viapcib
 
 # PCI-LPC bridges
-device	ichlpcib: isabus, sysmon_wdog
+device	ichlpcib: acpipmtimer, isabus, sysmon_wdog
 attach	ichlpcib at pci
-file	arch/i386/pci/ichlpcib.c	ichlpcib
+file 	arch/x86/pci/ichlpcib.c 	ichlpcib
 
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
@@ -356,7 +356,7 @@ file	arch/i386/i386/apmcall.S	apmbios
 
 device cpu
 attach cpu at cpubus
-file	arch/i386/i386/cpu.c		cpu
+file	arch/x86/x86/cpu.c		cpu
 
 # XBox LED & system support
 file	arch/i386/xbox/xbox.c			xbox

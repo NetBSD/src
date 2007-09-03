@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 2007/06/23 15:22:18 dsl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.2.6.1 2007/09/03 10:19:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2007/06/23 15:22:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2.6.1 2007/09/03 10:19:53 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -91,6 +91,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2007/06/23 15:22:18 dsl Exp $");
 #include <machine/pmc.h>
 #endif
 
+/* XXX needs changes from vmlocking branch */
+#define	mutex_enter(x)	/* nothing */
+#define	mutex_exit(x)	/* nothing */
+
 extern struct vm_map *kernel_map;
 
 int x86_get_ioperm(struct lwp *, void *, register_t *);
@@ -120,14 +124,14 @@ x86_get_ldt_len(struct lwp *l)
 	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	int nldt;
 
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		nldt = pmap->pm_ldt_len;
 	} else {
 		nldt = NLDT;
 	}
-	simple_unlock(&pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 	return nldt;
 #endif
 }
@@ -189,7 +193,7 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	    ua->start + ua->num > 8192)
 		return (EINVAL);
 
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		nldt = pmap->pm_ldt_len;
@@ -200,7 +204,7 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 	}
 
 	if (ua->start > nldt) {
-		simple_unlock(&pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		return (EINVAL);
 	}
 
@@ -216,7 +220,7 @@ x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *ua, union descriptor *cp)
 #endif
 
 	memcpy(cp, lp, num * sizeof(union descriptor));
-	simple_unlock(&pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 
 	return 0;
 #endif
@@ -343,7 +347,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	new_len = 0;
 	free_ldt = NULL;
 	free_len = 0;
-	simple_lock(&pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 	if (pmap->pm_ldt == 0 || (ua->start + ua->num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
@@ -353,12 +357,12 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 			ldt_len *= 2;
 		new_len = ldt_len * sizeof(union descriptor);
 
-		simple_unlock(&pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
 		    new_len, 0, UVM_KMF_WIRED);
 		memset(new_ldt, 0, new_len);
 		sel = ldt_alloc(new_ldt, new_len);
-		simple_lock(&pmap->pm_lock);
+		mutex_enter(&pmap->pm_lock);
 
 		if (pmap->pm_ldt != NULL && ldt_len <= pmap->pm_ldt_len) {
 			/*
@@ -406,7 +410,7 @@ copy:
 	for (i = 0, n = ua->start; i < ua->num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
 
-	simple_unlock(&pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 
 	if (new_ldt != NULL)
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, new_len,

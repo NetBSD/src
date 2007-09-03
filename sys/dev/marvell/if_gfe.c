@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.23 2007/07/09 21:00:51 ad Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.23.2.1 2007/09/03 10:20:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.23 2007/07/09 21:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.23.2.1 2007/09/03 10:20:56 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -471,10 +471,7 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI)
-		    ? ether_addmulti(ifr, &sc->sc_ec)
-		    : ether_delmulti(ifr, &sc->sc_ec);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING)
 				error = gfe_whack(sc, GE_WHACK_CHANGE);
 			else
@@ -777,7 +774,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (rxq->rxq_cmdsts & RX_STS_M) == 0 ||
 		    (rxq->rxq_cmdsts & RX_STS_HE) ||
 		    (eh->ether_dhost[0] & 1) != 0 ||
-		    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
+		    memcmp(eh->ether_dhost, CLLADDR(ifp->if_sadl),
 			ETHER_ADDR_LEN) == 0) {
 			(*ifp->if_input)(ifp, m);
 			m = NULL;
@@ -1881,7 +1878,7 @@ gfe_hash_fill(struct gfe_softc *sc)
 	GE_FUNC_ENTER(sc, "gfe_hash_fill");
 
 	error = gfe_hash_entry_op(sc, GE_HASH_ADD, GE_RXPRIO_HI,
-	    LLADDR(sc->sc_ec.ec_if.if_sadl));
+	    CLLADDR(sc->sc_ec.ec_if.if_sadl));
 	if (error)
 		GE_FUNC_EXIT(sc, "!");
 		return error;

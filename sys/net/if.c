@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.193.2.1 2007/08/15 13:49:38 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.193.2.2 2007/09/03 10:23:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.193.2.1 2007/08/15 13:49:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.193.2.2 2007/09/03 10:23:07 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -285,9 +285,7 @@ if_alloc_sadl(struct ifnet *ifp)
 
 	namelen = strlen(ifp->if_xname);
 	addrlen = ifp->if_addrlen;
-	socksize = roundup(
-	    MAX(sizeof(*sdl),
-	    sockaddr_dl_measure(namelen, addrlen)), sizeof(long));
+	socksize = roundup(sockaddr_dl_measure(namelen, addrlen), sizeof(long));
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
 	memset(ifa, 0, ifasize);
@@ -295,11 +293,10 @@ if_alloc_sadl(struct ifnet *ifp)
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	mask = (struct sockaddr_dl *)(socksize + (char *)sdl);
 
-	sockaddr_dl_init(sdl, ifp->if_index, ifp->if_type,
+	sockaddr_dl_init(sdl, socksize, ifp->if_index, ifp->if_type,
 	    ifp->if_xname, namelen, NULL, addrlen);
 	mask->sdl_len = sockaddr_dl_measure(namelen, 0);
-	while (namelen != 0)
-		mask->sdl_data[--namelen] = 0xff;
+	memset(&mask->sdl_data[0], 0xff, namelen);
 
 	ifnet_addrs[ifp->if_index] = ifa;
 	IFAREF(ifa);
@@ -1335,7 +1332,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 
 #ifdef COMPAT_OIFREQ
-	cmd = cvtcmd(cmd);
+	cmd = compat_cvtcmd(cmd);
 	if (cmd != ocmd) {
 		oifr = data;
 		data = ifr = &ifrb;
@@ -1386,6 +1383,8 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
 	case SIOCSDRVSPEC:
+	case SIOCG80211:
+	case SIOCS80211:
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
@@ -1555,17 +1554,19 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCGIFPDSTADDR:
 	case SIOCGLIFPHYADDR:
 	case SIOCGIFMEDIA:
+	case SIOCG80211:
+	case SIOCS80211:
+	case SIOCS80211NWID:
+	case SIOCS80211NWKEY:
+	case SIOCS80211POWER:
+	case SIOCS80211BSSID:
+	case SIOCS80211CHANNEL:
 		if (ifp->if_ioctl == NULL)
 			return EOPNOTSUPP;
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		break;
 
 	case SIOCSDRVSPEC:
-	case SIOCS80211NWID:
-	case SIOCS80211NWKEY:
-	case SIOCS80211POWER:
-	case SIOCS80211BSSID:
-	case SIOCS80211CHANNEL:
 	default:
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;
@@ -1665,6 +1666,29 @@ ifconf(u_long cmd, void *data)
 	else
 		ifc->ifc_len = -space;
 	return (0);
+}
+
+int
+ifreq_setaddr(const u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
+{
+	uint8_t len;
+	u_long ncmd;
+	const uint8_t osockspace = sizeof(ifr->ifr_addr);
+	const uint8_t sockspace = sizeof(ifr->ifr_ifru.ifru_space);
+
+#ifdef INET6
+	if (cmd == SIOCGIFPSRCADDR_IN6 || cmd == SIOCGIFPDSTADDR_IN6)
+		len = MIN(sizeof(struct sockaddr_in6), sa->sa_len);
+	else
+#endif /* INET6 */
+	if ((ncmd = compat_cvtcmd(cmd)) != cmd)
+		len = MIN(sockspace, sa->sa_len);
+	else
+		len = MIN(osockspace, sa->sa_len);
+	sockaddr_copy(&ifr->ifr_addr, len, sa);
+	if (len < sa->sa_len)
+		return EFBIG;
+	return 0;
 }
 
 /*

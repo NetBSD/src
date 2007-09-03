@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 2007/03/04 06:01:02 christos Exp $     */
+/*	$NetBSD: trap.c,v 1.108.14.1 2007/09/03 10:19:40 skrll Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,10 +33,9 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2007/03/04 06:01:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108.14.1 2007/09/03 10:19:40 skrll Exp $");
 
 #include "opt_ddb.h"
-#include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/types.h>
@@ -64,9 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2007/03/04 06:01:02 christos Exp $");
 #include <machine/db_machdep.h>
 #endif
 #include <kern/syscalls.c>
-#ifdef KTRACE
 #include <sys/ktrace.h>
-#endif
 
 #ifdef TRAPDEBUG
 volatile int faultdebug = 0;

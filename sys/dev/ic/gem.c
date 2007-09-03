@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.57 2007/07/09 21:00:35 ad Exp $ */
+/*	$NetBSD: gem.c,v 1.57.2.1 2007/09/03 10:20:20 skrll Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.57 2007/07/09 21:00:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.57.2.1 2007/09/03 10:20:20 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -929,7 +929,7 @@ gem_init_regs(struct gem_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
-	const u_char *laddr = LLADDR(ifp->if_sadl);
+	const u_char *laddr = CLLADDR(ifp->if_sadl);
 	u_int32_t v;
 
 	/* These regs are not cleared on reset */

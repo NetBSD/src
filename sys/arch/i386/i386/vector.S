@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.24 2007/01/13 17:54:26 cube Exp $	*/
+/*	$NetBSD: vector.S,v 1.24.18.1 2007/09/03 10:19:04 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,11 +36,11 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -148,6 +148,9 @@
 
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
+/*
+ * General purpose IPI handler.
+ */
 IDTVEC(recurse_lapic_ipi)
 	pushfl
 	pushl	%cs
@@ -176,6 +179,122 @@ IDTVEC(resume_lapic_ipi)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
 	INTRFASTEXIT
+
+/*
+ * Multicast TLB shootdown handler for !kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_mcast)
+	/* Save state. */
+	pushl	%eax
+	pushl	%ebx
+	pushl	%ecx
+	pushl	%edx
+	pushl	%ds
+	pushl	%fs
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	$GSEL(GCPU_SEL, SEL_KPL), %edx
+	movl	%eax, %ds
+	movl	%edx, %fs
+	/* Count it. */
+	addl	$1, CPUVAR(TLB_EVCNT)+EV_COUNT
+	adcl	$0, CPUVAR(TLB_EVCNT)+EV_COUNT+4
+	/* Find out what we need to invalidate. */
+	movl	CPUVAR(PMAP_CPU), %ecx
+	movl	MB_ADDR1(%ecx), %eax
+	movl	MB_ADDR2(%ecx), %edx
+	xorl	%ebx, %ebx
+	xchgl	MB_POINTER(%ecx), %ebx
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	cmpl	$-1, %eax
+	je	4f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%eax)
+	addl	$PAGE_SIZE, %eax
+	cmpl	%edx, %eax
+	jb	1b
+2:
+	/* Ack the request. */
+	lock
+	incl	(%ebx)
+	/*
+	 * Check the current TLB state.  If we don't want further
+	 * invalidations for this pmap, then take the CPU out of
+	 * the pmap's bitmask.
+	 */
+	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
+	jne	3f
+	movl	CPUVAR(PMAP), %edx
+	movl	CPUVAR(CPUMASK), %ecx
+	notl	%ecx
+	lock
+	andl	%ecx, PM_CPUS(%edx)
+	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
+3:
+	/* Restore state and return. */
+	popl	%fs
+	popl	%ds
+	popl	%edx
+	popl	%ecx
+	popl	%ebx
+	popl	%eax
+	iret
+4:
+	/* Invalidate all user pages. */
+	movl	%cr3, %eax
+	movl	%eax, %cr3
+	jmp	2b
+
+/*
+ * Broadcast TLB shootdown handler for kernel_pmap.
+ */
+IDTVEC(intr_lapic_tlb_bcast)
+	/* Save state and ack the interrupt. */
+	pushl	%eax
+	pushl	%ebx
+	pushl	%edx
+	pushl	%ds
+	movl	$GSEL(GDATA_SEL, SEL_KPL), %eax
+	movl	%eax, %ds
+	/* Find out what we need to invalidate. */
+	movl	_C_LABEL(pmap_mbox)+MB_ADDR1, %eax
+	movl	_C_LABEL(pmap_mbox)+MB_ADDR2, %edx
+	movl	_C_LABEL(pmap_mbox)+MB_GLOBAL, %ebx
+	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	cmpl	$-1, %eax
+	je,pn	3f
+1:
+	/* Invalidate a single page or a range of pages. */
+	invlpg	(%eax)
+	addl	$PAGE_SIZE, %eax
+	cmpl	%edx, %eax
+	jb	1b
+2:
+	/* Ack the request, restore state & return. */
+	lock
+	incl	_C_LABEL(pmap_mbox)+MB_TAIL
+	popl	%ds
+	popl	%edx
+	popl	%ebx
+	popl	%eax
+	iret
+3:
+	testl	%ebx, %ebx
+	jz	4f
+	/*
+	 * If the CPU understands global pages and we have been asked
+	 * to invalidate the entire TLB we arrive here.
+	 */
+	movl	%cr4, %eax
+	leal	-CR4_PGE(%eax), %edx
+	movl	%edx, %cr4
+	movl	%eax, %cr4
+	jmp	2b
+4:
+	/* Invalidate user TLB entries. */
+	movl	%cr3, %eax
+	movl	%eax, %cr3
+	jmp	2b
 
 #if defined(DDB)
 IDTVEC(intrddbipi)

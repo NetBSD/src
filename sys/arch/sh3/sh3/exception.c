@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.38 2007/05/17 14:51:28 yamt Exp $	*/
+/*	$NetBSD: exception.c,v 1.38.4.1 2007/09/03 10:19:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,24 +79,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.38 2007/05/17 14:51:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.38.4.1 2007/09/03 10:19:33 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
+#include <sys/user.h>
+#include <sys/proc.h>
 #include <sys/signal.h>
-#include <sys/syscall.h>
 
-#ifdef KTRACE
-#include <sys/ktrace.h>
-#endif
 #ifdef DDB
 #include <sh3/db_machdep.h>
 #endif
@@ -466,51 +460,4 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		userret(l);
 	}
-}
-
-/*
- * void child_return(void *arg):
- *
- *	uvm_fork sets this routine to proc_trampoline's service function.
- *	when return from here, jump to user-land.
- */
-void
-child_return(void *arg)
-{
-	struct lwp *l = arg;
-#ifdef KTRACE
-	struct proc *p = l->l_proc;
-#endif
-	struct trapframe *tf = l->l_md.md_regs;
-
-	tf->tf_r0 = 0;
-	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
-
-	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(l, SYS_fork, 0, 0);
-#endif
-}
-
-/*
- * void startlwp(void *arg):
- *
- *	Start a new LWP.
- */
-void
-startlwp(void *arg)
-{
-	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
-	int error;
-
-	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#ifdef DIAGNOSTIC
-	if (error)
-		printf("startlwp: error %d from cpu_setmcontext()", error);
-#endif
-	pool_put(&lwp_uc_pool, uc);
-
-	userret(l);
 }

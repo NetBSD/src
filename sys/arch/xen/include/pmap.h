@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2007/02/21 22:59:55 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.16.1 2007/09/03 10:19:54 skrll Exp $	*/
 /*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -512,6 +512,9 @@ vtomach(vaddr_t va)
 	return xpmap_ptom((pte & PG_FRAME) | (va & ~PG_FRAME));
 }
 
+#define pmap_pte_set(p, n)		x86_atomic_testset_ul(p, n)
+#define pmap_pte_setbits(p, b)		x86_atomic_setbits_l(p, b)
+#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_l(p, b)
 #define pmap_cpu_has_pg_n()		(cpu_class != CPUCLASS_386)
 #define pmap_cpu_has_invlpg()		(cpu_class != CPUCLASS_386)
 

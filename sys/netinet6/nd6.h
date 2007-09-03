@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.47.2.1 2007/08/15 13:49:52 skrll Exp $	*/
+/*	$NetBSD: nd6.h,v 1.47.2.2 2007/09/03 10:23:49 skrll Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ void nd6_na_output(struct ifnet *, const struct in6_addr *,
 void nd6_ns_input(struct mbuf *, int, int);
 void nd6_ns_output(struct ifnet *, const struct in6_addr *,
 	const struct in6_addr *, struct llinfo_nd6 *, int);
-void *nd6_ifptomac(struct ifnet *);
+const void *nd6_ifptomac(const struct ifnet *);
 void nd6_dad_start(struct ifaddr *, int);
 void nd6_dad_stop(struct ifaddr *);
 void nd6_dad_duplicated(struct ifaddr *);

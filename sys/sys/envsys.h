@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.13.2.1 2007/08/15 13:50:54 skrll Exp $ */
+/* $NetBSD: envsys.h,v 1.13.2.2 2007/09/03 10:23:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ struct envsys_data {
 	int32_t		value_avg;	/* avg value */
 	bool		monitor;	/* monitoring enabled/disabled */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
+	char 		genstr[ENVSYS_DESCLEN];	/* generic sensor string */
 };
 
 typedef struct envsys_data envsys_data_t;
@@ -85,6 +86,7 @@ enum envsys_units {
 	ENVSYS_INDICATOR,		/* Indicator */
 	ENVSYS_INTEGER,			/* Integer */
 	ENVSYS_DRIVE,			/* Drive */
+	ENVSYS_GSTRING,			/* Generic string */
 	ENVSYS_NSENSORS
 };
 

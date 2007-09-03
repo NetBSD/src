@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.66.2.1 2007/08/15 13:49:18 skrll Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.66.2.2 2007/09/03 10:23:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.66.2.1 2007/08/15 13:49:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.66.2.2 2007/09/03 10:23:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -51,6 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.66.2.1 2007/08/15 13:49:18 skrll E
 #include <sys/unpcb.h>
 #include <sys/file.h>
 #include <sys/kauth.h>
+
+MALLOC_DECLARE(M_SOCKADDR);
+
+MALLOC_DEFINE(M_SOCKADDR, "sockaddr", "socket endpoints");
 
 void	pffasttimo(void *);
 void	pfslowtimo(void *);
@@ -119,12 +123,6 @@ domain_attach(struct domain *dp)
 			(*pr->pr_init)();
 	}
 
-	if (dp->dom_sa_pool != NULL) {
-		pool_setlowat(dp->dom_sa_pool, 32);
-		if (pool_prime(dp->dom_sa_pool, 32) != 0)
-			printf("%s: pool_prime failed\n", __func__);
-	}
-
 	if (max_linkhdr < 16)		/* XXX */
 		max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
@@ -188,45 +186,28 @@ pffindproto(int family, int protocol, int type)
 }
 
 struct sockaddr *
-sockaddr_alloc(sa_family_t af, int flags)
+sockaddr_alloc(sa_family_t af, socklen_t socklen, int flags)
 {
-	const struct domain *dom;
 	struct sockaddr *sa;
+	socklen_t reallen = MAX(socklen, offsetof(struct sockaddr, sa_data[0]));
 
-	if ((dom = pffinddomain(af)) == NULL)
-		return NULL;
-
-	if ((sa = pool_get(dom->dom_sa_pool, flags)) == NULL)
+	if ((sa = malloc(reallen, M_SOCKADDR, flags)) == NULL)
 		return NULL;
 
 	sa->sa_family = af;
-	sa->sa_len = dom->dom_sa_len;
+	sa->sa_len = reallen;
 	return sa;
 }
 
-static void
-sockaddr_fixlen(struct sockaddr *dst, uint8_t deslen)
-{
-	struct domain *dom;
-
-	if ((dom = pffinddomain(dst->sa_family)) == NULL)
-		panic("%s: unknown domain %d", __func__, dst->sa_family);
-	if (dom->dom_sa_len < deslen)
-		panic("%s: source too long, %d bytes", __func__, deslen);
-	dst->sa_len = dom->dom_sa_len;
-}
-
 struct sockaddr *
-sockaddr_copy(struct sockaddr *dst, const struct sockaddr *src)
+sockaddr_copy(struct sockaddr *dst, socklen_t socklen,
+    const struct sockaddr *src)
 {
-	KASSERT(dst->sa_family == src->sa_family);
-
-	if (__predict_false(dst->sa_len < src->sa_len))
-		sockaddr_fixlen(dst, src->sa_len);
-
-	memcpy(dst, src, src->sa_len);
-
-	return dst;
+	if (__predict_false(socklen < src->sa_len)) {
+		panic("%s: source too long, %d < %d bytes", __func__, socklen,
+		    src->sa_len);
+	}
+	return memcpy(dst, src, src->sa_len);
 }
 
 int
@@ -266,23 +247,16 @@ sockaddr_dup(const struct sockaddr *src, int flags)
 {
 	struct sockaddr *dst;
 
-	if ((dst = sockaddr_alloc(src->sa_family, flags)) == NULL)
+	if ((dst = sockaddr_alloc(src->sa_family, src->sa_len, flags)) == NULL)
 		return NULL;
 
-	KASSERT(dst->sa_len >= src->sa_len);
-
-	return sockaddr_copy(dst, src);
+	return sockaddr_copy(dst, dst->sa_len, src);
 }
 
 void
 sockaddr_free(struct sockaddr *sa)
 {
-	const struct domain *dom;
-
-	if ((dom = pffinddomain(sa->sa_family)) == NULL)
-		panic("%s: no such domain %d\n", __func__, sa->sa_family);
-
-	pool_put(dom->dom_sa_pool, sa);
+	free(sa, M_SOCKADDR);
 }
 
 /*

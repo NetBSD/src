@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.8 2007/07/16 06:56:23 nisimura Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.8.2.1 2007/09/03 10:22:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.8 2007/07/16 06:56:23 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.8.2.1 2007/09/03 10:22:03 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -468,9 +468,6 @@ USB_DETACH(zyd)
 	usb_uncallout(sc->sc_amrr_ch, zyd_amrr_timeout, sc);
 
 	zyd_close_pipes(sc);
-
-	zyd_free_rx_list(sc);
-	zyd_free_tx_list(sc);
 
 	sc->attached = 0;
 
@@ -2453,7 +2450,7 @@ zyd_init(struct ifnet *ifp)
 
 	zyd_stop(ifp, 0);
 
-	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
+	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	DPRINTF(("setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
 	error = zyd_set_macaddr(sc, ic->ic_myaddr);
 	if (error != 0)

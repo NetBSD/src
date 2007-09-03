@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.87 2007/06/13 21:08:29 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.87.2.1 2007/09/03 10:23:43 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.87 2007/06/13 21:08:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.87.2.1 2007/09/03 10:23:43 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -404,9 +404,6 @@ const struct protosw inetsw[] = {
 
 extern struct ifqueue ipintrq;
 
-POOL_INIT(sockaddr_in_pool, sizeof(struct sockaddr_in), 0, 0, 0,
-    "sockaddr_in_pool", NULL, IPL_NET);
-
 struct domain inetdomain = {
 	.dom_family = PF_INET, .dom_name = "internet", .dom_init = NULL,
 	.dom_externalize = NULL, .dom_dispose = NULL,
@@ -424,8 +421,6 @@ struct domain inetdomain = {
 	.dom_ifqueues = { &ipintrq, NULL },
 	.dom_link = { NULL },
 	.dom_mowner = MOWNER_INIT("",""),
-	.dom_sa_pool = &sockaddr_in_pool,
-	.dom_sa_len = sizeof(struct sockaddr_in),
 	.dom_sa_cmpofs = offsetof(struct sockaddr_in, sin_addr),
 	.dom_sa_cmplen = sizeof(struct in_addr),
 	.dom_rtcache = LIST_HEAD_INITIALIZER(inetdomain.dom_rtcache)

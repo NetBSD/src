@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.39 2007/03/05 18:25:29 he Exp $ */
+/*	$NetBSD: afsc.c,v 1.39.14.1 2007/09/03 10:18:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.39 2007/03/05 18:25:29 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.39.14.1 2007/09/03 10:18:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.39 2007/03/05 18:25:29 he Exp $");
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
 #include <amiga/dev/zbusvar.h>
+
+#ifdef __powerpc__
+#define badaddr(a)      badaddr_read(a, 2, NULL)
+#endif
 
 void afscattach(struct device *, struct device *, void *);
 int afscmatch(struct device *, struct cfdata *, void *);

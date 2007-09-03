@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.171.2.1 2007/08/15 13:49:17 skrll Exp $
+	$NetBSD: syscalls.master,v 1.171.2.2 2007/09/03 10:23:04 skrll Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -37,7 +37,6 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
-#include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -134,12 +133,8 @@
 43	STD MPSAFE	{ gid_t sys_getegid(void); }
 44	STD MPSAFE	{ int sys_profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
-#if defined(KTRACE) || !defined(_KERNEL)
 45	STD		{ int sys_ktrace(const char *fname, int ops, \
 			    int facs, int pid); }
-#else
-45	EXCL		ktrace
-#endif
 46	COMPAT_13 MPSAFE	{ int sys_sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
@@ -217,7 +212,7 @@
 			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	STD		{ int sys_fsync(int fd); }
-96	STD 		{ int sys_setpriority(int which, id_t who, int prio); }
+96	STD MPSAFE	{ int sys_setpriority(int which, id_t who, int prio); }
 97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
 98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
@@ -250,7 +245,7 @@
 115	OBSOL		vtrace
 116	STD MPSAFE	{ int sys_gettimeofday(struct timeval *tp, \
 			    void *tzp); }
-117	STD		{ int sys_getrusage(int who, struct rusage *rusage); }
+117	STD MPSAFE	{ int sys_getrusage(int who, struct rusage *rusage); }
 118	STD		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
 119	OBSOL		resuba
@@ -290,7 +285,7 @@
 			    int *alen); } ogetpeername
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
 143	COMPAT_43	{ int sys_sethostid(int32_t hostid); } osethostid
-144	COMPAT_43	{ int sys_getrlimit(int which, \
+144	COMPAT_43 MPSAFE	{ int sys_getrlimit(int which, \
 			    struct orlimit *rlp); } ogetrlimit
 145	COMPAT_43	{ int sys_setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
@@ -586,12 +581,8 @@
 			    gid_t gid); }
 286	STD MPSAFE	{ pid_t sys_getsid(pid_t pid); }
 287	STD		{ pid_t sys___clone(int flags, void *stack); }
-#if defined(KTRACE) || !defined(_KERNEL)
 288	STD		{ int sys_fktrace(const int fd, int ops, \
 			    int facs, int pid); }
-#else
-288	EXCL		ktrace
-#endif
 289	STD		{ ssize_t sys_preadv(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
@@ -636,8 +627,8 @@
 305	STD MPSAFE	{ int sys_issetugid(void); }
 306	STD MPSAFE	{ int sys_utrace(const char *label, void *addr, \
 				size_t len); }
-307	STD		{ int sys_getcontext(struct __ucontext *ucp); }
-308	STD		{ int sys_setcontext(const struct __ucontext *ucp); }
+307	STD MPSAFE	{ int sys_getcontext(struct __ucontext *ucp); }
+308	STD MPSAFE	{ int sys_setcontext(const struct __ucontext *ucp); }
 309	STD		{ int sys__lwp_create(const struct __ucontext *ucp, \
 				u_long flags, lwpid_t *new_lwp); }
 310	STD		{ int sys__lwp_exit(void); }
@@ -797,10 +788,10 @@
 
 ; Asynchronous I/O system calls
 399	STD		{ int sys_aio_cancel(int fildes, struct aiocb *aiocbp); }
-400	STD		{ int sys_aio_error(const struct aiocb *aiocbp); }
+400	STD MPSAFE	{ int sys_aio_error(const struct aiocb *aiocbp); }
 401	STD		{ int sys_aio_fsync(int op, struct aiocb *aiocbp); }
 402	STD		{ int sys_aio_read(struct aiocb *aiocbp); }
-403	STD		{ int sys_aio_return(struct aiocb *aiocbp); }
+403	STD MPSAFE	{ int sys_aio_return(struct aiocb *aiocbp); }
 404	STD		{ int sys_aio_suspend(const struct aiocb *const *list, \
 			    int nent, const struct timespec *timeout); }
 405	STD		{ int sys_aio_write(struct aiocb *aiocbp); }

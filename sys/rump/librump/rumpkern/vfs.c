@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.10.2.2 2007/08/15 13:50:42 skrll Exp $	*/
+/*	$NetBSD: vfs.c,v 1.10.2.3 2007/09/03 10:23:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 #include <sys/lock.h>
 #include <sys/lockf.h>
 #include <sys/stat.h>
@@ -42,7 +43,7 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
-#include "rump.h"
+#include "rump_private.h"
 #include "rumpuser.h"
 
 int (**dead_vnodeop_p)(void *);
@@ -174,6 +175,7 @@ vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
 	struct mount *mp = vp->v_mount;
 
 	if (vp->v_data != (void *)1) {
+		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
 		VOP_RECLAIM(vp, l);
 		vp->v_data = (void *)1; /* O(1) hack ;) */
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);

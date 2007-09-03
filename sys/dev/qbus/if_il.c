@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.16 2007/03/04 06:02:29 christos Exp $	*/
+/*	$NetBSD: if_il.c,v 1.16.10.1 2007/09/03 10:21:58 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.16 2007/03/04 06:02:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.16.10.1 2007/09/03 10:21:58 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -305,8 +305,7 @@ ilinit(struct ifnet *ifp)
 	 * wedge the board.
 	 */
 	if (sc->sc_flags & ILF_SETADDR) {
-		bcopy((void *)LLADDR(ifp->if_sadl),
-		    (void *)&sc->sc_isu, ETHER_ADDR_LEN);
+		bcopy(CLLADDR(ifp->if_sadl), &sc->sc_isu, ETHER_ADDR_LEN);
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
@@ -317,8 +316,8 @@ ilinit(struct ifnet *ifp)
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
 		if (ilwait(sc, "verifying setaddr"))
 			return 0;
-		if (memcmp((void *)sc->sc_stats.ils_addr,
-		    (void *)LLADDR(ifp->if_sadl), ETHER_ADDR_LEN) != 0) {
+		if (memcmp(sc->sc_stats.ils_addr,
+		    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN) != 0) {
 			printf("%s: setaddr didn't work\n",
 			    sc->sc_dev.dv_xname);
 			return 0;
@@ -593,7 +592,7 @@ iltotal(struct il_softc *sc)
 		*sum++ += *interval++;
 	sc->sc_if.if_collisions = sc->sc_sum.ils_collis;
 	if ((sc->sc_flags & ILF_SETADDR) &&
-	    (memcmp((void *)sc->sc_stats.ils_addr, LLADDR(ifp->if_sadl),
+	    (memcmp(sc->sc_stats.ils_addr, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) != 0)) {
 		log(LOG_ERR, "%s: physaddr reverted\n", sc->sc_dev.dv_xname);
 		sc->sc_flags &= ~ILF_RUNNING;

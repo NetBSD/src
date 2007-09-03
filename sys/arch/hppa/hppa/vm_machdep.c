@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 2007/07/12 14:15:38 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27.4.1 2007/09/03 10:19:00 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27 2007/07/12 14:15:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27.4.1 2007/09/03 10:19:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,6 +132,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (round_page(sizeof(struct user)) > PAGE_SIZE)
 		panic("USPACE too small for user");
 #endif
+
+	l2->l_md.md_flags = 0;
 
 	/* Flush the parent LWP out of the FPU. */
 	hppa_fpu_flush(l1);
