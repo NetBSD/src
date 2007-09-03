@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2.6.2 2007/09/03 16:47:47 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.2.6.3 2007/09/03 18:04:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.2 2007/09/03 16:47:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.6.3 2007/09/03 18:04:58 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -450,7 +450,10 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 
 		if (ci->ci_flags & CPUF_PRIMARY)
 			return PNP_STATUS_SUCCESS;
+		if ((ci->ci_flags & CPUF_PRESENT) == 0)
+			return PNP_STATUS_SUCCESS;
 
+		mutex_enter(&cpu_lock);
 #ifdef MULTIPROCESSOR
 		if (*pstate == PNP_STATE_D0 && sc->sc_pmstate != PNP_STATE_D0) {
 			s = splhigh();
@@ -466,11 +469,10 @@ cpu_power(device_t dv, pnp_request_t req, void *opaque)
 #endif
 
 		err = cpu_setonline(ci, *pstate == PNP_STATE_D0 ? true : false);
+		mutex_exit(&cpu_lock);
 		if (err)
 			return PNP_STATUS_BUSY;
 		sc->sc_pmstate = *pstate;
-		if (sc->sc_pmstate == PNP_STATE_D0)
-			cpu_need_resched(ci, 0);
 		break;
 	default:
 		return PNP_STATUS_UNSUPPORTED;
