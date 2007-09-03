@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.102 2007/07/09 21:00:36 ad Exp $	*/
+/*	$NetBSD: i82557.c,v 1.102.6.1 2007/09/03 16:48:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.102 2007/07/09 21:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.102.6.1 2007/09/03 16:48:02 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1840,7 +1840,7 @@ fxp_init(struct ifnet *ifp)
 	cb_ias->cb_command = htole16(FXP_CB_COMMAND_IAS | FXP_CB_COMMAND_EL);
 	/* BIG_ENDIAN: no need to swap to store 0xffffffff */
 	cb_ias->link_addr = 0xffffffff;
-	memcpy(cb_ias->macaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+	memcpy(cb_ias->macaddr, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 
 	FXP_CDIASSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 

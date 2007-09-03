@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.1.2.2 2007/08/16 11:03:55 jmcneill Exp $	*/
+/*	$NetBSD: namei.src,v 1.1.2.3 2007/09/03 16:49:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -60,9 +60,9 @@ struct nameidata {
 	/*
 	 * Shared between namei and lookup/commit routines.
 	 */
-	size_t	ni_pathlen;		/* remaining chars in path */
-	const char *ni_next;		/* next location in pathname */
-	u_long	ni_loopcnt;		/* count of symlinks encountered */
+	size_t		ni_pathlen;	/* remaining chars in path */
+	const char	*ni_next;	/* next location in pathname */
+	unsigned int	ni_loopcnt;	/* count of symlinks encountered */
 	/*
 	 * Lookup parameters: this structure describes the subset of
 	 * information from the nameidata structure that is passed
@@ -72,18 +72,18 @@ struct nameidata {
 		/*
 		 * Arguments to lookup.
 		 */
-		u_long	cn_nameiop;	/* namei operation */
-		u_long	cn_flags;	/* flags to namei */
-		struct	lwp *cn_lwp;	/* lwp requesting lookup */
-		kauth_cred_t cn_cred;	/* credentials */
+		uint32_t	cn_nameiop;	/* namei operation */
+		uint32_t	cn_flags;	/* flags to namei */
+		struct		lwp *cn_lwp;	/* lwp requesting lookup */
+		kauth_cred_t 	cn_cred;	/* credentials */
 		/*
 		 * Shared between lookup and commit routines.
 		 */
-		char	*cn_pnbuf;	/* pathname buffer */
-		const char *cn_nameptr;	/* pointer to looked up name */
-		long	cn_namelen;	/* length of looked up component */
-		u_long	cn_hash;	/* hash value of looked up name */
-		long	cn_consume;	/* chars to consume in lookup() */
+		char		*cn_pnbuf;	/* pathname buffer */
+		const char 	*cn_nameptr;	/* pointer to looked up name */
+		size_t		cn_namelen;	/* length of looked up comp */
+		u_long		cn_hash;	/* hash val of looked up name */
+		size_t		cn_consume;	/* chars to consume in lookup */
 	} ni_cnd;
 };
 
@@ -133,7 +133,7 @@ NAMEIFL	ISWHITEOUT	0x0020000	/* found whiteout */
 NAMEIFL	DOWHITEOUT	0x0040000	/* do whiteouts */
 NAMEIFL	REQUIREDIR	0x0080000	/* must be a directory */
 NAMEIFL	CREATEDIR	0x0200000	/* trailing slashes are ok */
-NAMEIFL	PARAMASK	0x03fff00	/* mask of parameter descriptors */
+NAMEIFL	PARAMASK	0x02fff00	/* mask of parameter descriptors */
 /*
  * Initialization of an nameidata structure.
  */

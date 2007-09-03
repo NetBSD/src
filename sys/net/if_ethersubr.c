@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.151.4.1 2007/08/09 02:37:23 jmcneill Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.151.4.2 2007/09/03 16:48:54 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.151.4.1 2007/08/09 02:37:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.151.4.2 2007/09/03 16:48:54 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -398,7 +398,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			if (mcopy) {
 				eh = mtod(mcopy, struct ether_header *);
 				memcpy(eh->ether_dhost, edst, sizeof(edst));
-				memcpy(eh->ether_shost, LLADDR(ifp->if_sadl),
+				memcpy(eh->ether_shost, CLLADDR(ifp->if_sadl),
 				    sizeof(edst));
 			}
 		}
@@ -462,12 +462,12 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	if (hdrcmplt)
 		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 	else
-	 	memcpy(eh->ether_shost, LLADDR(ifp->if_sadl),
+	 	memcpy(eh->ether_shost, CLLADDR(ifp->if_sadl),
 		    sizeof(eh->ether_shost));
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
-	 	memcpy(eh->ether_shost, LLADDR(ifp0->if_sadl),
+	 	memcpy(eh->ether_shost, CLLADDR(ifp0->if_sadl),
 		    sizeof(eh->ether_shost));
 	}
 #endif /* NCARP > 0 */
@@ -651,7 +651,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * if it came from us.
 		 */
 		if ((ifp->if_flags & IFF_SIMPLEX) == 0 &&
-		    memcmp(LLADDR(ifp->if_sadl), eh->ether_shost,
+		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_shost,
 		    ETHER_ADDR_LEN) == 0) {
 			m_freem(m);
 			return;
@@ -712,7 +712,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif /* NCARP > 0 */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
 		    (ifp->if_flags & IFF_PROMISC) != 0 &&
-		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			   ETHER_ADDR_LEN) != 0) {
 			m->m_flags |= M_PROMISC;
 		}
@@ -988,7 +988,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				/* XXX we can optimize here? */
 				if (m->m_flags & (M_BCAST | M_MCAST))
 					memcpy(eh->ether_dhost,
-					    LLADDR(ifp->if_sadl),
+					    CLLADDR(ifp->if_sadl),
 					    ETHER_ADDR_LEN);
 				sa.sa_family = AF_UNSPEC;
 				sa.sa_len = sizeof(sa);
@@ -1075,7 +1075,8 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
+	    lla, ifp->if_addrlen);
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
@@ -1459,7 +1460,8 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				break;
 			}
 
-			memcpy(LLADDR(ifp->if_sadl), CLLADDR(sdl),
+			(void)sockaddr_dl_setaddr(ifp->if_sadl,
+			    ifp->if_sadl->sdl_len, CLLADDR(sdl),
 			    ifp->if_addrlen);
 
 			/* Set new address. */
@@ -1483,7 +1485,7 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCGIFADDR:
 		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+		    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 		break;
 
 	case SIOCSIFMTU:

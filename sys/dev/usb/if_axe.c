@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.19 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.19.10.1 2007/09/03 16:48:41 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.19 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.19.10.1 2007/09/03 16:48:41 jmcneill Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1239,9 +1239,7 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 #ifdef __NetBSD__
-		error = (cmd == SIOCADDMULTI) ?
-			ether_addmulti(ifr, &sc->axe_ec) :
-			ether_delmulti(ifr, &sc->axe_ec);
+		error = ether_ioctl(ifp, cmd, data);
 #else
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->arpcom) :

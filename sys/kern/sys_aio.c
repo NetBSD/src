@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.6 2007/07/11 00:40:42 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.6.8.1 2007/09/03 16:48:49 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.6 2007/07/11 00:40:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.6.8.1 2007/09/03 16:48:49 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -355,10 +355,10 @@ aio_process(struct aio_job *a_job)
 		} else if (a_job->aio_op & AIO_SYNC) {
 			error = VOP_FSYNC(vp, fp->f_cred,
 			    FSYNC_WAIT, 0, 0, curlwp);
-			if (error == 0 && bioops.io_fsync != NULL &&
+			if (error == 0 && bioopsp != NULL &&
 			    vp->v_mount &&
 			    (vp->v_mount->mnt_flag & MNT_SOFTDEP))
-			    (*bioops.io_fsync)(vp, 0);
+			    bioopsp->io_fsync(vp, 0);
 		}
 		VOP_UNLOCK(vp, 0);
 		FILE_UNUSE(fp, curlwp);

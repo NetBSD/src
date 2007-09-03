@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.69.4.1 2007/08/09 02:37:23 jmcneill Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.69.4.2 2007/09/03 16:48:55 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.69.4.1 2007/08/09 02:37:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.69.4.2 2007/09/03 16:48:55 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -194,6 +194,7 @@ extern u_char	aarp_org_code[ 3 ];
 #endif
 
 #define	FDDIADDR(ifp)		LLADDR((ifp)->if_sadl)
+#define	CFDDIADDR(ifp)		CLLADDR((ifp)->if_sadl)
 
 static	int fddi_output(struct ifnet *, struct mbuf *,
 	    const struct sockaddr *, struct rtentry *);
@@ -400,7 +401,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			if (mcopy) {
 				fh = mtod(mcopy, struct fddi_header *);
 				memcpy(fh->fddi_dhost, edst, sizeof (edst));
-				memcpy(fh->fddi_shost, FDDIADDR(ifp),
+				memcpy(fh->fddi_shost, CFDDIADDR(ifp),
 				    sizeof (edst));
 			}
 		}
@@ -516,7 +517,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	if (hdrcmplt)
 		memcpy(fh->fddi_shost, esrc, sizeof(fh->fddi_shost));
 	else
-		memcpy(fh->fddi_shost, FDDIADDR(ifp), sizeof(fh->fddi_shost));
+		memcpy(fh->fddi_shost, CFDDIADDR(ifp), sizeof(fh->fddi_shost));
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP)
@@ -565,7 +566,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	} else if ((ifp->if_flags & IFF_PROMISC)
-	    && memcmp(FDDIADDR(ifp), (void *)fh->fddi_dhost,
+	    && memcmp(CFDDIADDR(ifp), (void *)fh->fddi_dhost,
 		    sizeof(fh->fddi_dhost)) != 0) {
 		m_freem(m);
 		return;
@@ -719,7 +720,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			l->llc_ssap = c;
 			eh = (struct ether_header *)sa.sa_data;
 			if (m->m_flags & (M_BCAST | M_MCAST))
-				memcpy(eh->ether_dhost, FDDIADDR(ifp), 6);
+				memcpy(eh->ether_dhost, CFDDIADDR(ifp), 6);
 			sa.sa_family = AF_UNSPEC;
 			sa.sa_len = sizeof(sa);
 			for (i = 0; i < 6; i++) {
@@ -786,7 +787,8 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	if_alloc_sadl(ifp);
-	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+	sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, lla,
+	    ifp->if_addrlen);
 
 	ifp->if_broadcastaddr = fddibroadcastaddr;
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.63 2007/05/17 14:51:31 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.63.8.1 2007/09/03 16:47:41 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,7 +120,6 @@ struct cpu_info {
 
 	/* Spinning up the CPU */
 	void			(*ci_spinup)(void);
-	void			*ci_initstack;
 	paddr_t			ci_paddr;
 
 	int			ci_number;
@@ -157,8 +156,6 @@ struct cpu_bootargs {
 	vaddr_t cb_ekdata;
 
 	paddr_t	cb_cpuinfo;
-
-	void	*cb_initstack;
 };
 
 extern struct cpu_bootargs *cpu_args;

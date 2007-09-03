@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.26 2007/07/09 21:00:33 ad Exp $	*/
+/*	$NetBSD: iopl.c,v 1.26.6.1 2007/09/03 16:47:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.26 2007/07/09 21:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.26.6.1 2007/09/03 16:47:56 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1457,7 +1457,7 @@ iopl_init(struct ifnet *ifp)
 	 * Try to set the active MAC address.
 	 */
 	memset(hwaddr, 0, sizeof(hwaddr));
-	memcpy(hwaddr, LLADDR(ifp->if_sadl), ifp->if_addrlen);
+	memcpy(hwaddr, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 	iop_field_set(iop, sc->sc_tid, I2O_PARAM_LAN_MAC_ADDRESS,
 	    hwaddr, sizeof(hwaddr), I2O_PARAM_LAN_MAC_ADDRESS_localaddr);
 
@@ -1930,7 +1930,7 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case SIOCGIFADDR:
 			ifr = (struct ifreq *)data;
 			memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
-			    LLADDR(ifp->if_sadl), 6);
+			    CLLADDR(ifp->if_sadl), 6);
 			break;
 
 		case SIOCSIFFLAGS:
@@ -1940,11 +1940,7 @@ iopl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case SIOCADDMULTI:
 		case SIOCDELMULTI:
 			ifr = (struct ifreq *)data;
-			if (cmd == SIOCADDMULTI)
-				rv = ether_addmulti(ifr, &sc->sc_if.sci_ec);
-			else
-				rv = ether_delmulti(ifr, &sc->sc_if.sci_ec);
-			if (rv == ENETRESET) {
+			if ((rv = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 				if (ifp->if_flags & IFF_RUNNING)
 					rv = iopl_filter_ether(sc);
 				else

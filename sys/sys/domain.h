@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.25 2007/05/02 20:40:29 dyoung Exp $	*/
+/*	$NetBSD: domain.h,v 1.25.6.1 2007/09/03 16:49:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,8 +74,6 @@ struct	domain {
 	struct ifqueue *dom_ifqueues[2]; /* ifqueue for domain */
 	STAILQ_ENTRY(domain) dom_link;
 	struct	mowner dom_mowner;
-	struct pool	*dom_sa_pool;
-	uint_fast8_t	dom_sa_len;
 	uint_fast8_t	dom_sa_cmpofs;
 	uint_fast8_t	dom_sa_cmplen;
 	struct dom_rtlist dom_rtcache;

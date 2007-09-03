@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.9.6.1 2007/08/09 02:37:28 jmcneill Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.9.6.2 2007/09/03 16:49:11 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -58,24 +58,33 @@ struct lwp;
  */
 
 struct cpu_data {
+	/*
+	 * The first section is likely to be touched by other CPUs -
+	 * it is cache hot.
+	 */
+	lwp_t		*cpu_biglock_wanted;	/* LWP spinning on biglock */
+	void		*cpu_callout;		/* running callout */
+	void		*cpu_callout_cancel;	/* callout to be cancelled */
+	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
-	struct lwp	*cpu_idlelwp;		/* idle lwp */
+		
+	/*
+	 * This section is mostly CPU-private.
+	 */
+	lwp_t		*cpu_idlelwp;		/* idle lwp */
+	void		*cpu_lockstat;		/* lockstat private tables */
 	u_int		cpu_index;		/* CPU index */
-	u_int		cpu_biglock_count;
-	struct lwp	*cpu_biglock_wanted;
-	/* For LOCKDEBUG. */
+	u_int		cpu_biglock_count;	/* # recursive holds */
 	u_int		cpu_spin_locks;		/* # of spinlockmgr locks */
 	u_int		cpu_simple_locks;	/* # of simple locks held */
-	void		*cpu_lockstat;		/* lockstat private tables */
 	u_int		cpu_spin_locks2;	/* # of spin locks held XXX */
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	u_int		cpu_netisrs;		/* legacy netisrs XXX */
-	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
-	void		*cpu_callout;		/* running callout */
-	void		*cpu_callout_cancel;	/* callout to be cancelled */
-	
+	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
+	u_int		cpu_uarea_cnt;		/* count of free uareas */
+	vaddr_t		cpu_uarea_list;		/* free uareas */
 };
 
 /* compat definitions */

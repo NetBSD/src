@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.17 2007/07/09 21:00:34 ad Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.17.6.1 2007/09/03 16:47:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.17 2007/07/09 21:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.17.6.1 2007/09/03 16:47:57 jmcneill Exp $");
 
 #include "bpfilter.h"
 
@@ -1252,7 +1252,7 @@ sf_add_rxbuf(struct sf_softc *sc, int idx)
 }
 
 static void
-sf_set_filter_perfect(struct sf_softc *sc, int slot, uint8_t *enaddr)
+sf_set_filter_perfect(struct sf_softc *sc, int slot, const uint8_t *enaddr)
 {
 	uint32_t reg0, reg1, reg2;
 
@@ -1325,7 +1325,7 @@ sf_set_filter(struct sf_softc *sc)
 	 * First, write the station address to the perfect filter
 	 * table.
 	 */
-	sf_set_filter_perfect(sc, 0, LLADDR(ifp->if_sadl));
+	sf_set_filter_perfect(sc, 0, CLLADDR(ifp->if_sadl));
 
 	/*
 	 * Now set the hash bits for each multicast address in our

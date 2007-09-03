@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.48 2007/03/05 19:48:19 he Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.48.18.1 2007/09/03 16:47:11 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.48 2007/03/05 19:48:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.48.18.1 2007/09/03 16:47:11 jmcneill Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -121,16 +121,18 @@ extern unsigned char kernel_font_8x11[];
 
 /* Convert big-endian long into little-endian long. */
 
+#ifdef __m68k__
 #define M2I(val)                                                         \
 	__asm volatile (" rorw #8,%0   ;                               \
 			    swap %0      ;                               \
 			    rorw #8,%0   ; " : "=d" (val) : "0" (val));
-
-#define M2INS(val)                                                       \
-	__asm volatile (" rorw #8,%0   ;                               \
-			    swap %0      ;                               \
-			    rorw #8,%0   ;                               \
- 			    swap %0	     ; " : "=d" (val) : "0" (val));
+#else
+#define M2I(val)                                                         \
+	val = ((val & 0xff000000) >> 24) |                               \
+	      ((val & 0x00ff0000) >> 8 ) |                               \
+	      ((val & 0x0000ff00) << 8 ) |                               \
+	      ((val & 0x000000ff) << 24)
+#endif
 
 #define ACM_OFFSET	(0x00b00000)
 #define LM_OFFSET	(0x00c00000)

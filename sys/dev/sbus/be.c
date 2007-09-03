@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.53 2007/07/09 21:01:20 ad Exp $	*/
+/*	$NetBSD: be.c,v 1.53.6.1 2007/09/03 16:48:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.53 2007/07/09 21:01:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.53.6.1 2007/09/03 16:48:38 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1042,11 +1042,7 @@ beioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom):
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.

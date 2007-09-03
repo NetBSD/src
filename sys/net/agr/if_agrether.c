@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.5 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.5.14.1 2007/09/03 16:49:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.5 2007/03/04 06:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.5.14.1 2007/09/03 16:49:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -99,7 +99,7 @@ agrether_ctor(struct agr_softc *sc, struct ifnet *ifp_port)
 
 	sc->sc_iftprivate = priv;
 
-	ether_ifattach(ifp, LLADDR(ifp_port->if_sadl));
+	ether_ifattach(ifp, CLLADDR(ifp_port->if_sadl));
 	ec->ec_capabilities =
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING | ETHERCAP_JUMBO_MTU;
 

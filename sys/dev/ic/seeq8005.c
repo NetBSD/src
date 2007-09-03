@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.40 2007/03/05 17:47:49 he Exp $ */
+/* $NetBSD: seeq8005.c,v 1.40.14.1 2007/09/03 16:48:07 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.40 2007/03/05 17:47:49 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.40.14.1 2007/09/03 16:48:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,7 +724,7 @@ ea_select_buffer(struct seeq8005_softc *sc, int bufcode)
 
 /* Must be called at splnet */
 static void
-ea_set_address(struct seeq8005_softc *sc, int which, u_int8_t const *ea)
+ea_set_address(struct seeq8005_softc *sc, int which, const u_int8_t *ea)
 {
 	int i;
 
@@ -777,7 +777,7 @@ ea_init(struct ifnet *ifp)
 	}
 
 	/* Write the station address - the receiver must be off */
-	ea_set_address(sc, 0, (u_int8_t *)LLADDR(ifp->if_sadl));
+	ea_set_address(sc, 0, (const u_int8_t *)CLLADDR(ifp->if_sadl));
 
 	/* Split board memory into Rx and Tx. */
 	ea_select_buffer(sc, SEEQ_BUFCODE_TX_EAP);

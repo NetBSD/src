@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.31 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.31.10.1 2007/09/03 16:48:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.31 2007/03/13 13:51:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.31.10.1 2007/09/03 16:48:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ int uftdidebug = 0;
 
 #define UFTDI_CONFIG_INDEX	0
 #define UFTDI_IFACE_INDEX	0
-
+#define UFTDI_MAX_PORTS		2
 
 /*
  * These are the maximum number of bytes transferred per frame.
@@ -89,15 +89,16 @@ int uftdidebug = 0;
 struct uftdi_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
-	usbd_interface_handle	sc_iface;	/* interface */
+	usbd_interface_handle	sc_iface[UFTDI_MAX_PORTS];	/* interface */
 
 	enum uftdi_type		sc_type;
 	u_int			sc_hdrlen;
+	u_int			sc_numports;
 
 	u_char			sc_msr;
 	u_char			sc_lsr;
 
-	device_ptr_t		sc_subdev;
+	device_ptr_t		sc_subdev[UFTDI_MAX_PORTS];
 
 	u_char			sc_dying;
 
@@ -183,7 +184,7 @@ USB_ATTACH(uftdi)
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
 	char *devname = USBDEVNAME(sc->sc_dev);
-	int i;
+	int i,idx;
 	usbd_status err;
 	struct ucom_attach_args uca;
 
@@ -197,23 +198,13 @@ USB_ATTACH(uftdi)
 		goto bad;
 	}
 
-	err = usbd_device2interface_handle(dev, UFTDI_IFACE_INDEX, &iface);
-	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
-		       devname, usbd_errstr(err));
-		goto bad;
-	}
-
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
-	id = usbd_get_interface_descriptor(iface);
-
 	sc->sc_udev = dev;
-	sc->sc_iface = iface;
-
+	sc->sc_numports = 1;
 	switch( uaa->vendor ) {
 	case USB_VENDOR_FTDI:
 		switch (uaa->product) {
@@ -221,6 +212,9 @@ USB_ATTACH(uftdi)
 			sc->sc_type = UFTDI_TYPE_SIO;
 			sc->sc_hdrlen = 1;
 			break;
+		case USB_PRODUCT_FTDI_SERIAL_2232C:
+			sc->sc_numports = 2;
+			/* FALLTHROUGH */
 		default:		/* Most uftdi devices are 8U232AM */
 			sc->sc_type = UFTDI_TYPE_8U232AM;
 			sc->sc_hdrlen = 0;
@@ -231,57 +225,70 @@ USB_ATTACH(uftdi)
 		sc->sc_hdrlen = 0;
 	}
 
-	uca.bulkin = uca.bulkout = -1;
-	for (i = 0; i < id->bNumEndpoints; i++) {
-		int addr, dir, attr;
-		ed = usbd_interface2endpoint_descriptor(iface, i);
-		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor"
-			       ": %s\n", devname, usbd_errstr(err));
+	for (idx = UFTDI_IFACE_INDEX; idx < sc->sc_numports; idx++) {
+		err = usbd_device2interface_handle(dev, idx, &iface);
+		if (err) {
+			printf("\n%s: failed to get interface idx=%d, err=%s\n",
+				   devname, idx, usbd_errstr(err));
 			goto bad;
 		}
 
-		addr = ed->bEndpointAddress;
-		dir = UE_GET_DIR(ed->bEndpointAddress);
-		attr = ed->bmAttributes & UE_XFERTYPE;
-		if (dir == UE_DIR_IN && attr == UE_BULK)
-			uca.bulkin = addr;
-		else if (dir == UE_DIR_OUT && attr == UE_BULK)
-			uca.bulkout = addr;
-		else {
-			printf("%s: unexpected endpoint\n", devname);
+		id = usbd_get_interface_descriptor(iface);
+
+		sc->sc_iface[idx] = iface;
+
+		uca.bulkin = uca.bulkout = -1;
+		for (i = 0; i < id->bNumEndpoints; i++) {
+			int addr, dir, attr;
+			ed = usbd_interface2endpoint_descriptor(iface, i);
+			if (ed == NULL) {
+				printf("%s: could not read endpoint descriptor"
+					   ": %s\n", devname, usbd_errstr(err));
+				goto bad;
+			}
+
+			addr = ed->bEndpointAddress;
+			dir = UE_GET_DIR(ed->bEndpointAddress);
+			attr = ed->bmAttributes & UE_XFERTYPE;
+			if (dir == UE_DIR_IN && attr == UE_BULK)
+				uca.bulkin = addr;
+			else if (dir == UE_DIR_OUT && attr == UE_BULK)
+				uca.bulkout = addr;
+			else {
+				printf("%s: unexpected endpoint\n", devname);
+				goto bad;
+			}
+		}
+		if (uca.bulkin == -1) {
+			printf("%s: Could not find data bulk in\n",
+				   USBDEVNAME(sc->sc_dev));
 			goto bad;
 		}
-	}
-	if (uca.bulkin == -1) {
-		printf("%s: Could not find data bulk in\n",
-		       USBDEVNAME(sc->sc_dev));
-		goto bad;
-	}
-	if (uca.bulkout == -1) {
-		printf("%s: Could not find data bulk out\n",
-		       USBDEVNAME(sc->sc_dev));
-		goto bad;
-	}
+		if (uca.bulkout == -1) {
+			printf("%s: Could not find data bulk out\n",
+				   USBDEVNAME(sc->sc_dev));
+			goto bad;
+		}
 
-	uca.portno = FTDI_PIT_SIOA;
-	/* bulkin, bulkout set above */
-	uca.ibufsize = UFTDIIBUFSIZE;
-	uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
-	uca.ibufsizepad = UFTDIIBUFSIZE;
-	uca.opkthdrlen = sc->sc_hdrlen;
-	uca.device = dev;
-	uca.iface = iface;
-	uca.methods = &uftdi_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+		uca.portno = FTDI_PIT_SIOA + idx;
+		/* bulkin, bulkout set above */
+		uca.ibufsize = UFTDIIBUFSIZE;
+		uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
+		uca.ibufsizepad = UFTDIIBUFSIZE;
+		uca.opkthdrlen = sc->sc_hdrlen;
+		uca.device = dev;
+		uca.iface = iface;
+		uca.methods = &uftdi_methods;
+		uca.arg = sc;
+		uca.info = NULL;
+
+		DPRINTF(("uftdi: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
+		sc->sc_subdev[idx] = config_found_sm_loc(self, "ucombus", NULL, &uca,
+											ucomprint, ucomsubmatch);
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
-
-	DPRINTF(("uftdi: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
-					    ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 
@@ -295,15 +302,16 @@ int
 uftdi_activate(device_ptr_t self, enum devact act)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
-	int rv = 0;
+	int rv = 0,i;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_subdev != NULL)
-			rv = config_deactivate(sc->sc_subdev);
+		for (i=0; i < sc->sc_numports; i++)
+			if (sc->sc_subdev[i] != NULL)
+				rv = config_deactivate(sc->sc_subdev[i]);
 		sc->sc_dying = 1;
 		break;
 	}
@@ -314,13 +322,15 @@ int
 uftdi_detach(device_ptr_t self, int flags)
 {
 	struct uftdi_softc *sc = (struct uftdi_softc *)self;
+	int i;
 
 	DPRINTF(("uftdi_detach: sc=%p flags=%d\n", sc, flags));
 	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL) {
-		config_detach(sc->sc_subdev, flags);
-		sc->sc_subdev = NULL;
-	}
+	for (i=0; i < sc->sc_numports; i++)
+		if (sc->sc_subdev[i] != NULL) {
+			config_detach(sc->sc_subdev[i], flags);
+			sc->sc_subdev[i] = NULL;
+		}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -394,7 +404,7 @@ uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 			 lsr, sc->sc_lsr));
 		sc->sc_msr = msr;
 		sc->sc_lsr = lsr;
-		ucom_status_change((struct ucom_softc *)sc->sc_subdev);
+		ucom_status_change((struct ucom_softc *)sc->sc_subdev[portno-1]);
 	}
 
 	/* Pick up status and adjust data part. */

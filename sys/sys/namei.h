@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.50.6.1 2007/08/16 11:03:54 jmcneill Exp $	*/
+/*	$NetBSD: namei.h,v 1.50.6.2 2007/09/03 16:49:13 jmcneill Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.1 2007/08/15 14:08:11 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.3 2007/08/22 17:49:40 pooka Exp 
  */
 
 /*
@@ -67,9 +67,9 @@ struct nameidata {
 	/*
 	 * Shared between namei and lookup/commit routines.
 	 */
-	size_t	ni_pathlen;		/* remaining chars in path */
-	const char *ni_next;		/* next location in pathname */
-	u_long	ni_loopcnt;		/* count of symlinks encountered */
+	size_t		ni_pathlen;	/* remaining chars in path */
+	const char	*ni_next;	/* next location in pathname */
+	unsigned int	ni_loopcnt;	/* count of symlinks encountered */
 	/*
 	 * Lookup parameters: this structure describes the subset of
 	 * information from the nameidata structure that is passed
@@ -79,18 +79,18 @@ struct nameidata {
 		/*
 		 * Arguments to lookup.
 		 */
-		u_long	cn_nameiop;	/* namei operation */
-		u_long	cn_flags;	/* flags to namei */
-		struct	lwp *cn_lwp;	/* lwp requesting lookup */
-		kauth_cred_t cn_cred;	/* credentials */
+		uint32_t	cn_nameiop;	/* namei operation */
+		uint32_t	cn_flags;	/* flags to namei */
+		struct		lwp *cn_lwp;	/* lwp requesting lookup */
+		kauth_cred_t 	cn_cred;	/* credentials */
 		/*
 		 * Shared between lookup and commit routines.
 		 */
-		char	*cn_pnbuf;	/* pathname buffer */
-		const char *cn_nameptr;	/* pointer to looked up name */
-		long	cn_namelen;	/* length of looked up component */
-		u_long	cn_hash;	/* hash value of looked up name */
-		long	cn_consume;	/* chars to consume in lookup() */
+		char		*cn_pnbuf;	/* pathname buffer */
+		const char 	*cn_nameptr;	/* pointer to looked up name */
+		size_t		cn_namelen;	/* length of looked up comp */
+		u_long		cn_hash;	/* hash val of looked up name */
+		size_t		cn_consume;	/* chars to consume in lookup */
 	} ni_cnd;
 };
 
@@ -140,7 +140,7 @@ struct nameidata {
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
-#define	PARAMASK	0x03fff00	/* mask of parameter descriptors */
+#define	PARAMASK	0x02fff00	/* mask of parameter descriptors */
 /*
  * Initialization of an nameidata structure.
  */
@@ -257,6 +257,6 @@ extern struct nchstats nchstats;
 #define NAMEI_DOWHITEOUT	0x0040000
 #define NAMEI_REQUIREDIR	0x0080000
 #define NAMEI_CREATEDIR	0x0200000
-#define NAMEI_PARAMASK	0x03fff00
+#define NAMEI_PARAMASK	0x02fff00
 
 #endif /* !_SYS_NAMEI_H_ */

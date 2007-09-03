@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.108 2007/07/14 22:27:15 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.108.6.1 2007/09/03 16:49:16 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.108 2007/07/14 22:27:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.108.6.1 2007/09/03 16:49:16 jmcneill Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -85,10 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.108 2007/07/14 22:27:15 ad Exp $");
 #include <sys/buf.h>
 #include <sys/user.h>
 #include <sys/syncobj.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
-
-#include <machine/cpu.h>
 
 /*
  * local prototypes
@@ -96,10 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.108 2007/07/14 22:27:15 ad Exp $");
 
 static void uvm_swapout(struct lwp *);
 
-#define UVM_NUAREA_MAX 16
-static vaddr_t uvm_uareas;
-static int uvm_nuarea;
-kmutex_t uvm_uareas_lock;
+#define UVM_NUAREA_HIWAT	20
+#define	UVM_NUAREA_LOWAT	16
+
 #define	UAREA_NEXTFREE(uarea)	(*(vaddr_t *)(UAREA_TO_USER(uarea)))
 
 void uvm_uarea_free(vaddr_t);
@@ -281,72 +279,121 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 }
 
 /*
+ * uvm_cpu_attach: initialize per-CPU data structures.
+ */
+
+void
+uvm_cpu_attach(struct cpu_info *ci)
+{
+
+	mutex_init(&ci->ci_data.cpu_uarea_lock, MUTEX_DEFAULT, IPL_NONE);
+	ci->ci_data.cpu_uarea_cnt = 0;
+	ci->ci_data.cpu_uarea_list = 0;
+}
+
+/*
  * uvm_uarea_alloc: allocate a u-area
  */
 
 bool
 uvm_uarea_alloc(vaddr_t *uaddrp)
 {
+	struct cpu_info *ci;
 	vaddr_t uaddr;
 
 #ifndef USPACE_ALIGN
 #define USPACE_ALIGN    0
 #endif
 
-	mutex_enter(&uvm_uareas_lock);
-	if (uvm_nuarea > 0) {
-		uaddr = uvm_uareas;
-		uvm_uareas = UAREA_NEXTFREE(uaddr);
-		uvm_nuarea--;
-		mutex_exit(&uvm_uareas_lock);
-		*uaddrp = uaddr;
-		return true;
-	} else {
-		mutex_exit(&uvm_uareas_lock);
-		*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
-		    UVM_KMF_PAGEABLE);
-		return false;
+	ci = curcpu();
+
+	if (ci->ci_data.cpu_uarea_cnt > 0) {
+		mutex_enter(&ci->ci_data.cpu_uarea_lock);
+		if (ci->ci_data.cpu_uarea_cnt == 0) {
+			mutex_exit(&ci->ci_data.cpu_uarea_lock);
+		} else {
+			uaddr = ci->ci_data.cpu_uarea_list;
+			ci->ci_data.cpu_uarea_list = UAREA_NEXTFREE(uaddr);
+			ci->ci_data.cpu_uarea_cnt--;
+			mutex_exit(&ci->ci_data.cpu_uarea_lock);
+			*uaddrp = uaddr;
+			return true;
+		}
 	}
+
+	*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
+	    UVM_KMF_PAGEABLE);
+	return false;
 }
 
 /*
- * uvm_uarea_free: free a u-area; never blocks
+ * uvm_uarea_free: free a u-area
  */
 
 void
 uvm_uarea_free(vaddr_t uaddr)
 {
-	mutex_enter(&uvm_uareas_lock);
-	UAREA_NEXTFREE(uaddr) = uvm_uareas;
-	uvm_uareas = uaddr;
-	uvm_nuarea++;
-	mutex_exit(&uvm_uareas_lock);
+	struct cpu_info *ci;
+
+	ci = curcpu();
+
+	mutex_enter(&ci->ci_data.cpu_uarea_lock);
+	UAREA_NEXTFREE(uaddr) = ci->ci_data.cpu_uarea_list;
+	ci->ci_data.cpu_uarea_list = uaddr;
+	ci->ci_data.cpu_uarea_cnt++;
+	mutex_exit(&ci->ci_data.cpu_uarea_lock);
 }
 
 /*
  * uvm_uarea_drain: return memory of u-areas over limit
  * back to system
+ *
+ * => if asked to drain as much as possible, drain all cpus.
+ * => if asked to drain to low water mark, drain local cpu only.
  */
 
 void
 uvm_uarea_drain(bool empty)
 {
-	int leave = empty ? 0 : UVM_NUAREA_MAX;
-	vaddr_t uaddr;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	vaddr_t uaddr, nuaddr;
+	int count;
 
-	if (uvm_nuarea <= leave)
+	if (empty) {
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			mutex_enter(&ci->ci_data.cpu_uarea_lock);
+			count = ci->ci_data.cpu_uarea_cnt;
+			uaddr = ci->ci_data.cpu_uarea_list;
+			ci->ci_data.cpu_uarea_cnt = 0;
+			ci->ci_data.cpu_uarea_list = 0;
+			mutex_exit(&ci->ci_data.cpu_uarea_lock);
+
+			while (count != 0) {
+				nuaddr = UAREA_NEXTFREE(uaddr);
+				uvm_km_free(kernel_map, uaddr, USPACE,
+				    UVM_KMF_PAGEABLE);
+				uaddr = nuaddr;
+				count--;
+			}
+		}
 		return;
-
-	mutex_enter(&uvm_uareas_lock);
-	while(uvm_nuarea > leave) {
-		uaddr = uvm_uareas;
-		uvm_uareas = UAREA_NEXTFREE(uaddr);
-		uvm_nuarea--;
-		mutex_exit(&uvm_uareas_lock);
-		uvm_km_free(kernel_map, uaddr, USPACE, UVM_KMF_PAGEABLE);
-		mutex_enter(&uvm_uareas_lock);
 	}
-	mutex_exit(&uvm_uareas_lock);
+
+	ci = curcpu();
+	if (ci->ci_data.cpu_uarea_cnt > UVM_NUAREA_HIWAT) {
+		mutex_enter(&ci->ci_data.cpu_uarea_lock);
+		while (ci->ci_data.cpu_uarea_cnt > UVM_NUAREA_LOWAT) {
+			uaddr = ci->ci_data.cpu_uarea_list;
+			ci->ci_data.cpu_uarea_list = UAREA_NEXTFREE(uaddr);
+			ci->ci_data.cpu_uarea_cnt--;
+			mutex_exit(&ci->ci_data.cpu_uarea_lock);
+			uvm_km_free(kernel_map, uaddr, USPACE,
+			    UVM_KMF_PAGEABLE);
+			mutex_enter(&ci->ci_data.cpu_uarea_lock);
+		}
+		mutex_exit(&ci->ci_data.cpu_uarea_lock);
+	}
 }
 
 /*

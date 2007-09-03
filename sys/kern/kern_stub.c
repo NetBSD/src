@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.2.14.1 2007/08/16 11:03:34 jmcneill Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.2.14.2 2007/09/03 16:48:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.2.14.1 2007/08/16 11:03:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.2.14.2 2007/09/03 16:48:48 jmcneill Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -117,7 +117,7 @@ __weak_alias(sys_utrace,sys_nosys);
 
 int	ktrace_on;			/* Misc */
 __weak_alias(ktruser,enosys);
-__weak_alias(ktrpoint,nullop);
+__weak_alias(ktr_point,nullop);
 #endif	/* KTRACE */
 
 /*

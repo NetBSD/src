@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.1.4.1 2007/08/09 02:37:24 jmcneill Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.1.4.2 2007/09/03 16:48:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.1.4.1 2007/08/09 02:37:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.1.4.2 2007/09/03 16:48:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -54,9 +54,6 @@ static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 
 DOMAIN_DEFINE(linkdomain);	/* forward define and add to link set */
 
-POOL_INIT(sockaddr_dl_pool, sizeof(struct sockaddr_dl), 0, 0, 0,
-    "sockaddr_dl_pool", NULL, IPL_NET);
-
 struct domain linkdomain = {
 	.dom_family = AF_LINK,
 	.dom_name = "link",
@@ -64,8 +61,6 @@ struct domain linkdomain = {
 	.dom_dispose = NULL,
 	.dom_protosw = NULL,
 	.dom_protoswNPROTOSW = NULL,
-	.dom_sa_pool = &sockaddr_dl_pool,
-	.dom_sa_len = sizeof(struct sockaddr_dl),
 	.dom_sockaddr_cmp = sockaddr_dl_cmp
 };
 
@@ -114,23 +109,62 @@ sockaddr_dl_measure(uint8_t namelen, uint8_t addrlen)
 	return offsetof(struct sockaddr_dl, sdl_data[namelen + addrlen]);
 }
 
-void
-sockaddr_dl_init(struct sockaddr_dl *sdl, uint16_t ifindex, uint8_t type,
-    const void *name, uint8_t namelen, const void *addr, uint8_t addrlen)
+struct sockaddr *
+sockaddr_dl_alloc(uint16_t ifindex, uint8_t type,
+    const void *name, uint8_t namelen, const void *addr, uint8_t addrlen,
+    int flags)
 {
+	struct sockaddr *sa;
+	socklen_t len;
+
+	len = sockaddr_dl_measure(namelen, addrlen);
+	sa = sockaddr_alloc(AF_LINK, len, flags);
+
+	if (sa == NULL)
+		return NULL;
+
+	if (sockaddr_dl_init(satosdl(sa), len, ifindex, type, name, namelen,
+	    addr, addrlen) == NULL) {
+		sockaddr_free(sa);
+		return NULL;
+	}
+
+	return sa;
+}
+
+struct sockaddr_dl *
+sockaddr_dl_init(struct sockaddr_dl *sdl, socklen_t socklen, uint16_t ifindex,
+    uint8_t type, const void *name, uint8_t namelen, const void *addr,
+    uint8_t addrlen)
+{
+	socklen_t len;
+
 	sdl->sdl_family = AF_LINK;
 	sdl->sdl_slen = 0;
-	sdl->sdl_len = sockaddr_dl_measure(namelen, addrlen);
-	KASSERT(sdl->sdl_len <= sizeof(*sdl));
+	len = sockaddr_dl_measure(namelen, addrlen);
+	if (len > socklen) {
+		sdl->sdl_len = socklen;
+#ifdef DIAGNOSTIC
+		printf("%s: too long: %" PRIu8 " > %" PRIu8 "\n", __func__, len,
+		    socklen);
+#endif
+		return NULL;
+	}
+	sdl->sdl_len = len;
 	sdl->sdl_index = ifindex;
 	sdl->sdl_type = type;
-	memset(&sdl->sdl_data[0], 0, sizeof(sdl->sdl_data));
-	if (name != NULL)
+	memset(&sdl->sdl_data[0], 0, namelen + addrlen);
+	if (name != NULL) {
 		memcpy(&sdl->sdl_data[0], name, namelen);
-	sdl->sdl_nlen = namelen;
-	if (addr != NULL)
+		sdl->sdl_nlen = namelen;
+	} else
+		sdl->sdl_nlen = 0;
+	if (addr != NULL) {
 		memcpy(&sdl->sdl_data[sdl->sdl_nlen], addr, addrlen);
-	sdl->sdl_alen = addrlen;
+		sdl->sdl_alen = addrlen;
+	} else
+		sdl->sdl_alen = 0;
+	return sdl;
 }
 
 static int
@@ -183,19 +217,21 @@ sockaddr_dl_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
 }
 
 struct sockaddr_dl *
-sockaddr_dl_setaddr(struct sockaddr_dl *sdl, const void *addr, uint8_t addrlen)
+sockaddr_dl_setaddr(struct sockaddr_dl *sdl, socklen_t socklen,
+    const void *addr, uint8_t addrlen)
 {
-	uint_fast8_t endofs;
+	socklen_t len;
 
-	endofs =
-	    offsetof(struct sockaddr_dl, sdl_data[sdl->sdl_nlen + addrlen]);
-
-	if (endofs > sizeof(struct sockaddr_dl)) {
-		printf("%s: too long: %" PRIu8 " bytes\n", __func__, addrlen);
-		sdl->sdl_alen = 0;
+	len = sockaddr_dl_measure(sdl->sdl_nlen, addrlen);
+	if (len > socklen) {
+#ifdef DIAGNOSTIC
+		printf("%s: too long: %" PRIu8 " > %" PRIu8 "\n", __func__, len,
+		    socklen);
+#endif
 		return NULL;
 	}
 	memcpy(&sdl->sdl_data[sdl->sdl_nlen], addr, addrlen);
 	sdl->sdl_alen = addrlen;
+	sdl->sdl_len = len;
 	return sdl;
 }

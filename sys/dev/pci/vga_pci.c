@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.32.8.1 2007/08/03 22:17:22 jmcneill Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.32.8.2 2007/09/03 16:48:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.1 2007/08/03 22:17:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.32.8.2 2007/09/03 16:48:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 			/* Don't bother fetching I/O BARs. */
 			continue;
 		}
+#ifndef __LP64__
 		if (PCI_MAPREG_MEM_TYPE(psc->sc_bars[bar].vb_type) ==
 		    PCI_MAPREG_MEM_TYPE_64BIT) {
 			/* XXX */
@@ -205,6 +206,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 			bar++;
 			continue;
 		}
+#endif
 		if (pci_mapreg_info(psc->sc_pc, psc->sc_pcitag, reg,
 		     psc->sc_bars[bar].vb_type,
 		     &psc->sc_bars[bar].vb_base,

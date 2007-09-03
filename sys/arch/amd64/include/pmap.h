@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2007/02/21 22:59:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.20.1 2007/09/03 16:47:03 jmcneill Exp $	*/
 
 /*
  *
@@ -82,6 +82,8 @@
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
+#include <machine/atomic.h>
+
 #include <uvm/uvm_object.h>
 #endif
 
@@ -339,6 +341,7 @@ struct pv_entry {                       /* locked by its list's pvh_lock */
         struct pmap *pv_pmap;           /* the pmap */
         vaddr_t pv_va;                  /* the virtual address */
         struct vm_page *pv_ptp;         /* the vm_page of the PTP */
+	struct pmap_cpu *pv_alloc_cpu;	/* CPU allocated from */
 };    
 
 /*
@@ -404,7 +407,6 @@ extern long nkptp[], nbpd[], nkptpmax[];
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define	pmap_update(pmap)		/* nothing (yet) */
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
@@ -438,9 +440,8 @@ void		pmap_changeprot_local(vaddr_t, vm_prot_t);
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t, int32_t *));
-void	pmap_tlb_shootnow __P((int32_t));
-void	pmap_do_tlb_shootdown __P((struct cpu_info *));
+void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, vaddr_t, pt_entry_t));
+void	pmap_tlb_shootwait __P((void));
 void	pmap_prealloc_lowmem_ptps __P((void));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
@@ -569,12 +570,17 @@ kvtopte(vaddr_t va)
 }
 
 #define pmap_pte_set(p, n)		x86_atomic_testset_u64(p, n)
+#define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
 #define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
 #define pmap_cpu_has_pg_n()		(1)
 #define pmap_cpu_has_invlpg		(1)
 
 paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
+void	pmap_cpu_init_early(struct cpu_info *);
+void	pmap_cpu_init_late(struct cpu_info *);
+void	sse2_zero_page(void *);
+void	sse2_copy_page(void *, void *);
 
 #if 0   /* XXXfvdl was USER_LDT, need to check if that can be supported */
 void	pmap_ldt_cleanup __P((struct lwp *));
@@ -585,6 +591,19 @@ void	pmap_ldt_cleanup __P((struct lwp *));
  * Hooks for the pool allocator.
  */
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
+
+/*
+ * TLB shootdown mailbox.
+ */
+
+struct pmap_mbox {
+	volatile void		*mb_pointer;
+	volatile uintptr_t	mb_addr1;
+	volatile uintptr_t	mb_addr2;
+	volatile uintptr_t	mb_head;
+	volatile uintptr_t	mb_tail;
+	volatile uintptr_t	mb_global;
+};
 
 #endif /* _KERNEL && !_LOCORE */
 #endif	/* _AMD64_PMAP_H_ */

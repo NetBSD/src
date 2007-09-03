@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8 2007/03/04 06:01:09 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.18.1 2007/09/03 16:47:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2007/03/04 06:01:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.18.1 2007/09/03 16:47:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,10 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2007/03/04 06:01:09 christos Exp $
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
-
 #include <dev/isa/isareg.h>
+
+#include <machine/bus.h>
 #include <machine/isa_machdep.h>
+#include <machine/atomic.h>
 
 /*
  * Extent maps to manage I/O and memory space.  Allocate
@@ -271,9 +272,8 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
-	vaddr_t va;
-	pt_entry_t *pte;
-	int32_t cpumask = 0;
+	vaddr_t va, sva;
+	pt_entry_t *pte, xpte;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
@@ -283,12 +283,14 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		panic("x86_mem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+	sva = uvm_km_alloc(kernel_map, endpa - pa, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
-	if (va == 0)
+	if (sva == 0)
 		return (ENOMEM);
 
-	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+	*bshp = (bus_space_handle_t)(sva + (bpa & PGOFSET));
+	va = sva;
+	xpte = 0;
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
@@ -298,27 +300,20 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * the mainboard has wired up device space non-cacheable
 		 * on those machines.
 		 *
-		 * Note that it's not necessary to use atomic ops to
-		 * fiddle with the PTE here, because we don't care
-		 * about mod/ref information.
-		 *
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
-		 *
-		 * XXX extreme paranoia suggests tlb shootdown belongs here.
 		 */
 		if (pmap_cpu_has_pg_n()) {
 			pte = kvtopte(va);
 			if (cacheable)
-				*pte &= ~PG_N;
+				pmap_pte_clearbits(pte, PG_N);
 			else
-				*pte |= PG_N;
-			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
-			    &cpumask);
+				pmap_pte_setbits(pte, PG_N);
+			xpte |= *pte;
 		}
 	}
 
-	pmap_tlb_shootnow(cpumask);
+	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
 	pmap_update(pmap_kernel());
 
 	return 0;
@@ -363,17 +358,14 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			}
 #endif
 
-#if __NetBSD_Version__ > 104050000
 			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}
 			bpa += (bsh & PGOFSET);
-#else
-			bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
-#endif
-
 			pmap_kremove(va, endva - va);
+			pmap_update(pmap_kernel());
+
 			/*
 			 * Free the kernel virtual mapping.
 			 */
@@ -425,6 +417,8 @@ x86_memio_unmap(t, bsh, size)
 		bpa += (bsh & PGOFSET);
 
 		pmap_kremove(va, endva - va);
+		pmap_update(pmap_kernel());
+
 		/*
 		 * Free the kernel virtual mapping.
 		 */

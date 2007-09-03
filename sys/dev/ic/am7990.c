@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.68 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: am7990.c,v 1.68.44.1 2007/09/03 16:47:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.68 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.68.44.1 2007/09/03 16:47:57 jmcneill Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -172,7 +172,7 @@ am7990_meminit(struct lance_softc *sc)
 	 * Update our private copy of the Ethernet address.
 	 * We NEED the copy so we can ensure its alignment!
 	 */
-	memcpy(sc->sc_enaddr, LLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
+	memcpy(sc->sc_enaddr, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
 	myaddr = sc->sc_enaddr;
 
 	init.init_padr[0] = (myaddr[1] << 8) | myaddr[0];

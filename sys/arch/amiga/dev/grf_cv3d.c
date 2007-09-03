@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.21 2007/03/05 19:48:19 he Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.21.18.1 2007/09/03 16:47:10 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.21 2007/03/05 19:48:19 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.21.18.1 2007/09/03 16:47:10 jmcneill Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -89,6 +89,15 @@ Note: IO Regbase is needed fo wakeup of the board otherwise use
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cv3dreg.h>
 #include <amiga/dev/zbusvar.h>
+
+/*
+ * finish all bus operations, flush pipelines
+ */
+#if defined(__m68k__)
+#define cpu_sync() __asm volatile ("nop")
+#elif defined(__powerpc__)
+#define cpu_sync() __asm volatile ("sync; isync")
+#endif
 
 int	grfcv3dmatch(struct device *, struct cfdata *, void *);
 void	grfcv3dattach(struct device *, struct device *, void *);
@@ -1714,9 +1723,9 @@ cv3d_setup_hwc(struct grf_softc *gp)
 		return;
 
 	/* reset colour stack */
-#if 0
+#if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm volatile("nop");
+	cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -1729,9 +1738,9 @@ cv3d_setup_hwc(struct grf_softc *gp)
 	*hwc = 0;
 	*hwc = 0;
 
-#if 0
+#if !defined(__m68k__)
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	__asm volatile("nop");
+	cpu_sync();
 #else
 	/* do it in assembler, the above does't seem to work */
 	__asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -1962,7 +1971,7 @@ cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm volatile("nop");
+		cpu_sync();
 		switch (depth) {
 		    case 8:
 		    case 15:
@@ -1981,7 +1990,7 @@ cv3d_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		__asm volatile("nop");
+		cpu_sync();
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);

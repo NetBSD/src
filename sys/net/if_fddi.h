@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddi.h,v 1.12 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if_fddi.h,v 1.12.14.1 2007/09/03 16:48:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -83,8 +83,6 @@ struct	fddi_header {
 #define	fddibroadcastaddr	etherbroadcastaddr
 #define	fddi_ipmulticast_min	ether_ipmulticast_min
 #define	fddi_ipmulticast_max	ether_ipmulticast_max
-#define	fddi_addmulti		ether_addmulti
-#define	fddi_delmulti		ether_delmulti
 #define	fddi_sprintf		ether_sprintf
 
 #if defined(__NetBSD__)

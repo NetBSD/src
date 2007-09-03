@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.20.22.2 2007/08/09 02:37:03 jmcneill Exp $ */
+/* $NetBSD: lapic.c,v 1.20.22.3 2007/09/03 16:47:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.2 2007/08/09 02:37:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20.22.3 2007/09/03 16:47:48 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -224,6 +224,10 @@ lapic_boot_init(lapic_base)
 #ifdef MULTIPROCESSOR
 	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
+	idt_allocmap[LAPIC_TLB_MCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
+	idt_allocmap[LAPIC_TLB_BCAST_VECTOR] = 1;
+	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
 #endif
 	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);

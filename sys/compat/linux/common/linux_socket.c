@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.76.6.1 2007/08/16 11:02:48 jmcneill Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.76.6.2 2007/09/03 16:47:51 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76.6.1 2007/08/16 11:02:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.76.6.2 2007/09/03 16:47:51 jmcneill Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1066,13 +1066,13 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		found=1;
 		if ((ifa = ifp->if_addrlist.tqh_first) != 0) {
 			for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-				sadl = (struct sockaddr_dl *)ifa->ifa_addr;
+				sadl = satosdl(ifa->ifa_addr);
 				/* only return ethernet addresses */
 				/* XXX what about FDDI, etc. ? */
 				if (sadl->sdl_family != AF_LINK ||
 				    sadl->sdl_type != IFT_ETHER)
 					continue;
-				memcpy(&lreq.hwaddr.sa_data, LLADDR(sadl),
+				memcpy(&lreq.hwaddr.sa_data, CLLADDR(sadl),
 				       MIN(sadl->sdl_alen,
 					   sizeof(lreq.hwaddr.sa_data)));
 				lreq.hwaddr.sa_family =
@@ -1105,7 +1105,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				continue;
 			else
 				for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
-					sadl = (struct sockaddr_dl *)ifa->ifa_addr;
+					sadl = satosdl(ifa->ifa_addr);
 					/* only return ethernet addresses */
 					/* XXX what about FDDI, etc. ? */
 					if (sadl->sdl_family != AF_LINK ||
@@ -1115,7 +1115,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 						/* not the reqested iface */
 						continue;
 					memcpy(&lreq.hwaddr.sa_data,
-					       LLADDR(sadl),
+					       CLLADDR(sadl),
 					       MIN(sadl->sdl_alen,
 						   sizeof(lreq.hwaddr.sa_data)));
 					lreq.hwaddr.sa_family =
